@@ -2450,25 +2450,56 @@ void ActionNameVars::lookForFuncParamNames(Funcdata &data,const vector<Varnode *
   }
 }
 
-int4 ActionNameVars::apply(Funcdata &data)
+/// \brief Link symbols associated with a given \e spacebase Varnode
+///
+/// Look for PTRSUB ops which indicate a symbol reference within the address space
+/// referred to by the \e spacebase Varnode.  Decode any symbol reference and link it
+/// to the appropriate HighVariable
+/// \param vn is the given \e spacebase Varnode
+/// \param data is the function containing the Varnode
+/// \param namerec is used to store any recovered Symbol without a name
+void ActionNameVars::linkSpacebaseSymbol(Varnode *vn,Funcdata &data,vector<Varnode *> &namerec)
+
+{
+  if (!vn->isConstant() && !vn->isInput()) return;
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->code() != CPUI_PTRSUB) continue;
+    Symbol *sym = data.linkSymbolReference(op->getIn(1));
+    if ((sym != (Symbol *)0) && sym->isNameUndefined())
+      namerec.push_back(vn);
+  }
+}
+
+void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
 
 {
   const AddrSpaceManager *manage = data.getArch();
   VarnodeLocSet::const_iterator iter,enditer;
   AddrSpace *spc;
-  vector<Varnode *> namerec;	// Name representatives of symbols that need names
+  AddrSpace *constSpace = manage->getConstantSpace();
+  enditer = data.endLoc(constSpace);
+  for(iter=data.beginLoc(constSpace);iter!=enditer;++iter) {
+    Varnode *curvn = *iter;
+    if (curvn->getSymbolEntry() != (SymbolEntry *)0)
+      data.linkSymbol(curvn);		// Special equate symbol
+    else if (curvn->isSpacebase())
+      linkSpacebaseSymbol(curvn, data, namerec);
+  }
 
   for(int4 i=0;i<manage->numSpaces();++i) { // Build a list of nameable highs
     spc = manage->getSpace(i);
     if (spc == (AddrSpace *)0) continue;
+    if (spc == constSpace) continue;
     enditer = data.endLoc(spc);
     for(iter=data.beginLoc(spc);iter!=enditer;++iter) {
       Varnode *curvn = *iter;
       if (curvn->isFree()) {
-	if (curvn->getSymbolEntry() != (SymbolEntry *)0)
-	  data.linkSymbol(curvn);		// Special equate symbol
 	continue;
       }
+      if (curvn->isSpacebase())
+	linkSpacebaseSymbol(curvn, data, namerec);
       Varnode *vn = curvn->getHigh()->getNameRepresentative();
       if (vn != curvn) continue; // Hit each high only once
       HighVariable *high = vn->getHigh();
@@ -2484,7 +2515,14 @@ int4 ActionNameVars::apply(Funcdata &data)
       }
     }
   }
+}
 
+int4 ActionNameVars::apply(Funcdata &data)
+
+{
+  vector<Varnode *> namerec;
+
+  linkSymbols(data, namerec);
   lookForRecommendedNames(data); // Make sure recommended names hit before subfunc
   lookForBadJumpTables(data);
   lookForFuncParamNames(data,namerec);

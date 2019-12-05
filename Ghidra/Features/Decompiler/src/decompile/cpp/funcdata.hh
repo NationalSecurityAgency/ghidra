@@ -383,6 +383,7 @@ public:
   void calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
+  Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
   void buildDynamicSymbol(Varnode *vn);				///< Build a \e dynamic Symbol associated with the given Varnode
   bool attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash);
   Merge &getMerge(void) { return covermerge; }			///< Get the Merge object for \b this function

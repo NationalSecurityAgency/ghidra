@@ -973,6 +973,35 @@ Symbol *Funcdata::linkSymbol(Varnode *vn)
   return sym;
 }
 
+/// A reference to a symbol (i.e. &varname) is typically stored as a PTRSUB operation, where the
+/// first input Varnode is a \e spacebase Varnode indicating whether the symbol is on the \e stack or at
+/// a \e global RAM location.  The second input Varnode is a constant encoding the address of the symbol.
+/// This method takes this constant Varnode, recovers the symbol it is referring to, and stores
+/// on the HighVariable object attached to the Varnode.
+/// \param vn is the constant Varnode (second input) to a PTRSUB operation
+/// \return the symbol being referred to or null
+Symbol *Funcdata::linkSymbolReference(Varnode *vn)
+
+{
+  PcodeOp *op = vn->loneDescend();
+  Varnode *in0 = op->getIn(0);
+  TypePointer *ptype = (TypePointer *)in0->getHigh()->getType();
+  if (ptype->getMetatype() != TYPE_PTR) return (Symbol *)0;
+  TypeSpacebase *sb = (TypeSpacebase *)ptype->getPtrTo();
+  if (sb->getMetatype() != TYPE_SPACEBASE)
+      return (Symbol *)0;
+  Scope *scope = sb->getMap();
+  Address addr = sb->getAddress(vn->getOffset(),in0->getSize(),op->getAddr());
+  if (addr.isInvalid())
+    throw LowlevelError("Unable to generate proper address from spacebase");
+  SymbolEntry *entry = scope->queryContainer(addr,1,Address());
+  if (entry == (SymbolEntry *)0)
+    return (Symbol *)0;
+  int4 off = (int4)(addr.getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
+  vn->getHigh()->setSymbol(entry->getSymbol(), off);
+  return entry->getSymbol();
+}
+
 /// If a Symbol is already attached, no change is made. Otherwise a special \e dynamic Symbol is
 /// created that is associated with the Varnode via a hash of its local data-flow (rather
 /// than its storage address).

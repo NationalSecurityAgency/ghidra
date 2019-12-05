@@ -770,16 +770,11 @@ void PrintC::opPtrsub(const PcodeOp *op)
     }
   }
   else if (ct->getMetatype() == TYPE_SPACEBASE) {
-    TypeSpacebase *sb = (TypeSpacebase *)ct;
-    Scope *scope = sb->getMap();
-    Address addr = sb->getAddress(op->getIn(1)->getOffset(),in0->getSize(),op->getAddr());
-    if (addr.isInvalid())
-      throw LowlevelError("Unable to generate proper address from spacebase");
-    SymbolEntry *entry = scope->queryContainer(addr,1,Address());
-    Datatype *ct = (Datatype *)0;
+    HighVariable *high = op->getIn(1)->getHigh();
+    Symbol *symbol = high->getSymbol();
     arrayvalue = false;
-    if (entry != (SymbolEntry *)0) {
-      ct = entry->getSymbol()->getType();
+    if (symbol != (Symbol *)0) {
+      ct = symbol->getType();
 	   // The '&' is dropped if the output type is an array
       if (ct->getMetatype()==TYPE_ARRAY) {
 	arrayvalue = valueon;	// If printing value, use [0]
@@ -795,18 +790,21 @@ void PrintC::opPtrsub(const PcodeOp *op)
       if (arrayvalue)
 	pushOp(&subscript,op);
     }
-    if (entry == (SymbolEntry *)0)
+    if (symbol == (Symbol *)0) {
+      TypeSpacebase *sb = (TypeSpacebase *)ct;
+      Address addr = sb->getAddress(op->getIn(1)->getOffset(),in0->getSize(),op->getAddr());
       pushUnnamedLocation(addr,(Varnode *)0,op);
+    }
     else {
-      int4 off = (int4)(addr.getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
+      int4 off = high->getSymbolOffset();
       if (off == 0)
-	pushSymbol(entry->getSymbol(),(Varnode *)0,op);
+	pushSymbol(symbol,(Varnode *)0,op);
       else {
 	// If this "value" is getting used as a storage location
 	// we can't use a cast in its description, so turn off
 	// casting when printing the partial symbol
 	//	Datatype *exttype = ((mods & print_store_value)!=0) ? (Datatype *)0 : ct;
-	pushPartialSymbol(entry->getSymbol(),off,0,(Varnode *)0,op,(Datatype *)0);
+	pushPartialSymbol(symbol,off,0,(Varnode *)0,op,(Datatype *)0);
       }
     }
     if (arrayvalue)
