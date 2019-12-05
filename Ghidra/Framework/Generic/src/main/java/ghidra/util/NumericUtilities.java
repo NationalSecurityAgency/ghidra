@@ -18,10 +18,13 @@ package ghidra.util;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import util.CollectionUtils;
 
 public final class NumericUtilities {
 	public static final BigInteger MAX_UNSIGNED_LONG = new BigInteger("ffffffffffffffff", 16);
@@ -694,9 +697,7 @@ public final class NumericUtilities {
 	 * @return hex string representation
 	 */
 	public static String convertBytesToString(Iterable<Byte> bytes, String delimiter) {
-
-		Stream<Byte> stream = StreamSupport.stream(bytes.spliterator(), false);
-		return convertBytesToString(stream, delimiter);
+		return convertBytesToString(CollectionUtils.asStream(bytes), delimiter);
 	}
 
 	/**

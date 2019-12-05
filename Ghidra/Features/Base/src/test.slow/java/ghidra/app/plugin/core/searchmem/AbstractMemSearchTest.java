@@ -19,15 +19,14 @@ import static org.junit.Assert.*;
 
 import java.awt.Container;
 import java.awt.Window;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
 
 import org.junit.After;
-
-import com.google.common.collect.Lists;
 
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
@@ -47,6 +46,7 @@ import ghidra.test.AbstractProgramBasedTest;
 import ghidra.util.Msg;
 import ghidra.util.search.memory.MemSearchResult;
 import ghidra.util.table.GhidraTable;
+import util.CollectionUtils;
 
 /**
  * Base class for memory search tests.  
@@ -192,7 +192,7 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 
 		AddressSet addressSet = runSwing(() -> markers.getAddressSet());
 		AddressIterator it = addressSet.getAddresses(true);
-		List<Address> list = Lists.newArrayList((Iterator<Address>) it);
+		List<Address> list = CollectionUtils.asStream(it).collect(Collectors.toList());
 
 		assertListEqualUnordered("Search markers not correctly generated", expected, list);
 	}
@@ -208,8 +208,7 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 
 	protected void performSearchTest(List<Address> expected, String buttonText) throws Exception {
 
-		for (int i = 0; i < expected.size(); i++) {
-			Address addr = expected.get(i);
+		for (Address addr : expected) {
 			pressSearchButton(buttonText);
 			assertEquals("Found", getStatusText());
 			cb.updateNow();

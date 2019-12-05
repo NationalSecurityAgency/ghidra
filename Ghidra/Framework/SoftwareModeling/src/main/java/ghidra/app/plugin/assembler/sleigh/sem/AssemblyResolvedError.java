@@ -17,8 +17,6 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-
 /**
  * A {@link AssemblyResolution} indicating the occurrence of a (usually semantic) error
  * 
@@ -49,7 +47,7 @@ public class AssemblyResolvedError extends AssemblyResolution {
 	/**
 	 * @see AssemblyResolution#error(String, String, List)
 	 */
-	AssemblyResolvedError(String description, ImmutableList<? extends AssemblyResolution> children,
+	AssemblyResolvedError(String description, List<? extends AssemblyResolution> children,
 			String error) {
 		super(description, children);
 		AssemblyTreeResolver.dbg.println(error);

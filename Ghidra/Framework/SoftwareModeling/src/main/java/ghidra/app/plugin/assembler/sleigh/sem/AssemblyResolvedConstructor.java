@@ -24,15 +24,11 @@ import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.lang3.StringUtils;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-
 import ghidra.app.plugin.assembler.AssemblySelector;
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
 import ghidra.app.plugin.processors.sleigh.ConstructState;
 import ghidra.app.plugin.processors.sleigh.ContextOp;
-import ghidra.util.StringUtilities;
 
 /**
  * A {@link AssemblyResolution} indicating successful application of a constructor
@@ -57,8 +53,8 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	protected final AssemblyPatternBlock ins;
 	protected final AssemblyPatternBlock ctx;
 
-	protected final ImmutableSet<AssemblyResolvedBackfill> backfills;
-	protected final ImmutableSet<AssemblyResolvedConstructor> forbids;
+	protected final Set<AssemblyResolvedBackfill> backfills;
+	protected final Set<AssemblyResolvedConstructor> forbids;
 
 	@Override
 	protected int computeHash() {
@@ -98,14 +94,14 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * @see AssemblyResolution#resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
 	 */
 	AssemblyResolvedConstructor(String description,
-			ImmutableList<? extends AssemblyResolution> children, AssemblyPatternBlock ins,
-			AssemblyPatternBlock ctx, ImmutableSet<AssemblyResolvedBackfill> backfills,
-			ImmutableSet<AssemblyResolvedConstructor> forbids) {
+			List<? extends AssemblyResolution> children, AssemblyPatternBlock ins,
+			AssemblyPatternBlock ctx, Set<AssemblyResolvedBackfill> backfills,
+			Set<AssemblyResolvedConstructor> forbids) {
 		super(description, children);
 		this.ins = ins;
 		this.ctx = ctx;
-		this.backfills = backfills == null ? ImmutableSet.of() : backfills;
-		this.forbids = forbids == null ? ImmutableSet.of() : forbids;
+		this.backfills = backfills == null ? Set.of() : backfills;
+		this.forbids = forbids == null ? Set.of() : forbids;
 	}
 
 	/**
@@ -120,7 +116,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * @return the decoded resolution
 	 */
 	public static AssemblyResolvedConstructor fromString(String str, String description,
-			ImmutableList<AssemblyResolution> children) {
+			List<AssemblyResolution> children) {
 		AssemblyPatternBlock ins = null;
 		if (str.startsWith(INS)) {
 			int end = str.indexOf(SEP);
@@ -172,7 +168,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 			newForbids.add(f.shift(amt));
 		}
 		return new AssemblyResolvedConstructor(description, children, newIns, ctx,
-			ImmutableSet.copyOf(newBackfills), ImmutableSet.copyOf(newForbids));
+			Collections.unmodifiableSet(newBackfills), Collections.unmodifiableSet(newForbids));
 	}
 
 	/**
@@ -214,7 +210,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 			}
 		}
 		return new AssemblyResolvedConstructor(description, children, ins, ctx, backfills,
-			ImmutableSet.copyOf(newForbids));
+			Collections.unmodifiableSet(newForbids));
 	}
 
 	/**
@@ -270,7 +266,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 		Set<AssemblyResolvedConstructor> newForbids = new HashSet<>(this.forbids);
 		newForbids.addAll(that.forbids);
 		return new AssemblyResolvedConstructor(description, children, newIns, newCtx,
-			ImmutableSet.copyOf(newBackfills), ImmutableSet.copyOf(newForbids));
+			Collections.unmodifiableSet(newBackfills), Collections.unmodifiableSet(newForbids));
 	}
 
 	/**
@@ -282,7 +278,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 		Set<AssemblyResolvedBackfill> newBackfills = new HashSet<>(this.backfills);
 		newBackfills.add(bf);
 		return new AssemblyResolvedConstructor(description, children, ins, ctx,
-			ImmutableSet.copyOf(newBackfills), forbids);
+			Collections.unmodifiableSet(newBackfills), forbids);
 	}
 
 	/**
@@ -294,7 +290,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 		Set<AssemblyResolvedConstructor> combForbids = new HashSet<>(this.forbids);
 		combForbids.addAll(more);
 		return new AssemblyResolvedConstructor(description, children, ins, ctx, backfills,
-			ImmutableSet.copyOf(more));
+			Collections.unmodifiableSet(more));
 	}
 
 	/**
@@ -446,7 +442,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 			newForbids.add((AssemblyResolvedConstructor) t);
 		}
 		return new AssemblyResolvedConstructor(description, children, ins, ctx, backfills,
-			ImmutableSet.copyOf(newForbids));
+			Collections.unmodifiableSet(newForbids));
 	}
 
 	/**

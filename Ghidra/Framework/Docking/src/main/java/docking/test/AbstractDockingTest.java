@@ -37,8 +37,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
 
-import com.google.common.collect.Sets;
-
 import docking.*;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
@@ -1137,7 +1135,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	public static Set<DockingActionIf> getActionsByOwnerAndName(DockingTool tool, String owner,
 			String name) {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
-		return Sets.filter(ownerActions, action -> action.getName().equals(name));
+		return ownerActions.stream()
+				.filter(action -> action.getName().equals(name))
+				.collect(Collectors.toSet());
 	}
 
 	/**

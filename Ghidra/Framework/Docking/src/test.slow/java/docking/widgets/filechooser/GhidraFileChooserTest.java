@@ -36,14 +36,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.*;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.*;
-
-import com.google.common.collect.Iterables;
 
 import docking.*;
 import docking.action.DockingAction;
@@ -1755,7 +1754,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		CompletableFuture<List<File>> results = showMultiSelectionChooser(files.parent, FILES_ONLY);
 
-		selectFiles(Iterables.concat(files.files, files.dirs));
+		selectFiles(CollectionUtils.asIterable(
+			IteratorUtils.chainedIterator(files.files.iterator(), files.dirs.iterator())));
 
 		pressOk();
 		assertChooserHidden();
@@ -1769,11 +1769,13 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		CompletableFuture<List<File>> results =
 			showMultiSelectionChooser(files.parent, GhidraFileChooserMode.FILES_AND_DIRECTORIES);
 
-		selectFiles(Iterables.concat(files.files, files.dirs));
+		selectFiles(CollectionUtils.asIterable(
+			IteratorUtils.chainedIterator(files.files.iterator(), files.dirs.iterator())));
 
 		pressOk();
 		assertChooserHidden();
-		assertChosen(results, Iterables.concat(files.files, files.dirs)); // dirs are dropped
+		assertChosen(results, CollectionUtils.asIterable(
+			IteratorUtils.chainedIterator(files.files.iterator(), files.dirs.iterator()))); // dirs are dropped
 	}
 
 //==================================================================================================

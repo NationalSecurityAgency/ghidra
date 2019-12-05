@@ -25,7 +25,7 @@
 
 import java.util.*;
 
-import com.google.common.collect.Iterators;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.parallel.*;
@@ -53,12 +53,12 @@ public class CompareFunctionSizesScript extends GhidraScript {
 					throws Exception {
 				InstructionIterator instIter = currentProgram.getListing().getInstructions(
 					results.getFunction().getBody(), true);
-				int numInstructions = Iterators.size(instIter);
+				int numInstructions = IteratorUtils.size(instIter);
 				//indicate failure of decompilation by having 0 high pcode ops
 				int numHighOps = 0;
 				if (results.getHighFunction() != null &&
 					results.getHighFunction().getPcodeOps() != null) {
-					numHighOps = Iterators.size(results.getHighFunction().getPcodeOps());
+					numHighOps = IteratorUtils.size(results.getHighFunction().getPcodeOps());
 				}
 				return new FuncBodyData(results.getFunction(), numInstructions, numHighOps);
 			}
@@ -66,7 +66,7 @@ public class CompareFunctionSizesScript extends GhidraScript {
 
 		Set<Function> funcsToDecompile = new HashSet<>();
 		FunctionIterator fIter = currentProgram.getFunctionManager().getFunctionsNoStubs(true);
-		Iterators.addAll(funcsToDecompile, fIter);
+		fIter.forEach(e -> funcsToDecompile.add(e));
 
 		if (funcsToDecompile.isEmpty()) {
 			popup("No functions to decompile!");
