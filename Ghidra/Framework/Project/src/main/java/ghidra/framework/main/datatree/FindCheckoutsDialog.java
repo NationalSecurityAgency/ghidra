@@ -132,7 +132,8 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ProjectDataActionContext(null, null, null, null, getFileList(), null, true);
+		return new ProjectDataActionContext(null, folder.getProjectData(), null, null,
+			getFileList(), null, true);
 	}
 
 	private class MyCellRenderer extends GTableCellRenderer {
