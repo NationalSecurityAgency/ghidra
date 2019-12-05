@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 
@@ -58,9 +58,9 @@ public class VersionControlSlowScreenShots extends GhidraScreenShotGenerator {
 	public void tearDown() throws Exception {
 
 		// super.tearDown();  don't do this; use our tool instead
-
-		frontEnd.dispose();
-
+		if (frontEnd != null) {
+			frontEnd.dispose();
+		}
 		showResults();
 	}
 
