@@ -221,7 +221,7 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 
 	private boolean hasEncodingError(String s) {
 		return s.codePoints().anyMatch(
-			codePoint -> StringUtilities.isUnicodeReplacementCodePoint(codePoint));
+			codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
 	}
 
 	private ByteMemBufferImpl getScalarOperandAsMemBuffer(Address addr, Scalar scalar,

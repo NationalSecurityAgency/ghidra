@@ -47,6 +47,18 @@ public class StringRenderBuilder {
 	}
 
 	/**
+	 * Returns true if the current formatted string starts with a quoted text section,
+	 * instead of a byte value section.  Useful to indicate if
+	 * the string could have a prefix applied to it (ie. u8"text")
+	 * <p>
+	 * 
+	 * @return boolean true if this string will start with a quoted text section
+	 */
+	public boolean startsWithQuotedText() {
+		return sb.length() > 0 && sb.charAt(0) == quoteChar;
+	}
+
+	/**
 	 * Append the characters in the specified string. The added characters will
 	 * be shown in a quoted text region.
 	 *

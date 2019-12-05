@@ -410,14 +410,17 @@ public class BitFieldDataType extends AbstractDataType {
 		AbstractIntegerDataType intDT = (AbstractIntegerDataType) dt;
 		if (intDT.getFormatSettingsDefinition().getFormat(
 			settings) == FormatSettingsDefinition.CHAR) {
+			if (big.signum() < 0) {
+				big = big.add(BigInteger.valueOf(2).pow(bitSize));
+			}
 			int bytesLen = BitFieldDataType.getMinimumStorageSize(bitSize);
-			byte[] bytes = DataConverter.getInstance(getDataOrganization().isBigEndian()).getBytes(
-				big, bytesLen);
+			byte[] bytes = DataConverter.getInstance(buf.isBigEndian()).getBytes(big, bytesLen);
 			if (!EndianSettingsDefinition.ENDIAN.isBigEndian(settings, buf)) {
 				bytes = ArrayUtilities.reverse(bytes);
 			}
 
-			return StringDataInstance.getCharRepresentation(this, bytes, settings);
+			return StringDataInstance.getCharRepresentation(this, bytes, settings,
+				buf.isBigEndian());
 		}
 
 		return intDT.getRepresentation(big, settings, effectiveBitSize);

@@ -1063,16 +1063,4 @@ public class StringUtilities {
 		}
 		return new String(new int[] { codePoint }, 0, 1);
 	}
-
-	/**
-	 * Returns true if the specified code point is the 'replacement' code point 0xFFFD,
-	 * which is used when decoding bytes into unicode chars and there was a bad or invalid
-	 * sequence that does not have a mapping. (ie. decoding byte char 0x80 as US-ASCII)
-	 *
-	 * @param codePoint to test
-	 * @return boolean true if the char is 0xFFFD (ie. UNICODE REPLACEMENT char)
-	 */
-	public static boolean isUnicodeReplacementCodePoint(int codePoint) {
-		return codePoint == UNICODE_REPLACEMENT;
-	}
 }

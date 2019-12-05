@@ -231,7 +231,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		}
 
 		if (getFormatSettingsDefinition().getFormat(settings) == FormatSettingsDefinition.CHAR) {
-			return StringDataInstance.getCharRepresentation(this, bytes, settings);
+			return StringDataInstance.getCharRepresentation(this, bytes, settings, !isLE);
 		}
 
 		return getRepresentation(new BigInteger(bytes), settings, 8 * length);

@@ -18,19 +18,39 @@ package ghidra.program.model.data;
 /**
  * Controls strings termination
  * <ul>
- * <li>{@link StringLayoutEnum#FIXED_LEN} (ie. fixed length, trailing nulls trimmed, interior nulls retained)
- * <li>{@link StringLayoutEnum#NULL_TERMINATED_UNBOUNDED} (ie. null terminated and ignores data instance length)
- * <li>{@link StringLayoutEnum#NULL_TERMINATED_BOUNDED} (ie. null-terminated and limited to data instance)
- * <li>{@link StringLayoutEnum#PASCAL_255} (ie. pascal string, using 1 byte for length field, max 255 char elements)
- * <li>{@link StringLayoutEnum#PASCAL_64k} (ie. pascal string, using 2 bytes for length field, max 64k char elements)
+ * <li>{@link StringLayoutEnum#FIXED_LEN}
+ * <li>{@link StringLayoutEnum#CHAR_SEQ}
+ * <li>{@link StringLayoutEnum#NULL_TERMINATED_UNBOUNDED}
+ * <li>{@link StringLayoutEnum#NULL_TERMINATED_BOUNDED}
+ * <li>{@link StringLayoutEnum#PASCAL_255}
+ * <li>{@link StringLayoutEnum#PASCAL_64k}
  * </ul>
  */
 public enum StringLayoutEnum {
+	/**
+	 * Fixed length string, trailing nulls trimmed, interior nulls retained.
+	 */
 	FIXED_LEN("fixed length"),
+	/**
+	 * Fixed length sequence of characters, all nulls retained.
+	 */
+	CHAR_SEQ("char sequence"),
+	/**
+	 * Null terminated string that ignores it's container's length when searching for terminating null character.
+	 */
 	NULL_TERMINATED_UNBOUNDED("null-terminated & unbounded"),
+	/**
+	 * Null-terminated string that is limited to it's container's length.
+	 */
 	NULL_TERMINATED_BOUNDED("null-terminated & bounded"),
-	PASCAL_255("pascal255"), // prefixed with 1 byte length field which stores number of chars (not bytes) in string
-	PASCAL_64k("pascal64k");// prefixed with 2 byte length field which stores number of chars (not bytes) in string
+	/**
+	 * Pascal string, using 1 byte for length field, max 255 char elements.
+	 */
+	PASCAL_255("pascal255"),
+	/**
+	 * Pascal string, using 2 bytes for length field, max 64k char elements
+	 */
+	PASCAL_64k("pascal64k");
 
 	private final String s;
 
@@ -43,13 +63,42 @@ public enum StringLayoutEnum {
 		return s;
 	}
 
+	/**
+	 * Returns true if this layout is one of the pascal types.
+	 * 
+	 * @return boolean true if pascal
+	 */
 	public boolean isPascal() {
 		return this == PASCAL_255 || this == PASCAL_64k;
 	}
 
+	/**
+	 * Returns true if this layout is one of the null terminated types.
+	 * 
+	 * @return boolean true if null terminated string
+	 */
 	public boolean isNullTerminated() {
 		return this == NULL_TERMINATED_UNBOUNDED ||
-			this == StringLayoutEnum.NULL_TERMINATED_BOUNDED;
+			this == NULL_TERMINATED_BOUNDED;
+	}
+
+	/**
+	 * Returns true if this layout should have its trailing null characters trimmed.
+	 * 
+	 * @return boolean true if trailing nulls should be trimmed
+	 */
+	public boolean shouldTrimTrailingNulls() {
+		return this == NULL_TERMINATED_UNBOUNDED || this == NULL_TERMINATED_BOUNDED ||
+			this == FIXED_LEN;
+	}
+
+	/**
+	 * Returns true if this layout is one of the fixed-size types.
+	 * 
+	 * @return boolean true if fixed length
+	 */
+	public boolean isFixedLen() {
+		return this == FIXED_LEN || this == CHAR_SEQ;
 	}
 
 }

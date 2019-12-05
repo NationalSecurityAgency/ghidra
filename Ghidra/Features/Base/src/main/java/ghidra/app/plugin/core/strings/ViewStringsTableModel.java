@@ -361,7 +361,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 			String s = StringDataInstance.getStringDataInstance(data).getStringValue();
 
 			return (s != null) && s.chars().anyMatch(
-				codePoint -> StringUtilities.isUnicodeReplacementCodePoint(codePoint));
+				codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
 		}
 
 		@Override

@@ -514,45 +514,46 @@ public class StringDataTypeTest extends AbstractGTest {
 	}
 
 	//-------------------------------------------------------------------------------------
-	// StringDataInstance.hasNullTerminator()
+	// StringDataInstance.isMissingNullTerminator()
 	//-------------------------------------------------------------------------------------
 
 	@Test
 	public void testHasNullTerm() {
 		ByteMemBufferImpl buf = mb(false, 'a', 'b', 0);
 
-		assertTrue(mkSDI(termString, buf, newset(), buf.getLength()).hasNullTerminator());
+		assertFalse(mkSDI(termString, buf, newset(), buf.getLength()).isMissingNullTerminator());
 	}
 
 	@Test
 	public void testHasNullTermEOF() {
 		ByteMemBufferImpl buf = mb(false, 'a', 'b');
 
-		assertFalse(mkSDI(termString, buf, newset(), buf.getLength()).hasNullTerminator());
+		assertTrue(mkSDI(termString, buf, newset(), buf.getLength()).isMissingNullTerminator());
 	}
 
 	@Test
 	public void testHasNullTermUTF16() {
 		ByteMemBufferImpl buf = mb(false, 'a', 0, 'b', 0, 0, 0);
 
-		assertTrue(mkSDI(termUtf16String, buf, newset(), buf.getLength()).hasNullTerminator());
+		assertFalse(
+			mkSDI(termUtf16String, buf, newset(), buf.getLength()).isMissingNullTerminator());
 	}
 
 	@Test
 	public void testHasNullTermFixed() {
 		ByteMemBufferImpl buf = mb(false, 'a', 'b', 'c', 0, 0, 0);
 
-		assertFalse(mkSDI(fixedlenString, buf, newset(), 2).hasNullTerminator());
-		assertFalse(mkSDI(fixedlenString, buf, newset(), 3).hasNullTerminator());
-		assertTrue(mkSDI(fixedlenString, buf, newset(), 4).hasNullTerminator());
+		assertTrue(mkSDI(fixedlenString, buf, newset(), 2).isMissingNullTerminator());
+		assertTrue(mkSDI(fixedlenString, buf, newset(), 3).isMissingNullTerminator());
+		assertFalse(mkSDI(fixedlenString, buf, newset(), 4).isMissingNullTerminator());
 	}
 
 	@Test
 	public void testHasNullTermFixedUTF16() {
 		ByteMemBufferImpl buf = mb(false, 'a', 0, 'b', 0, 'c', 0, 0, 0, 0, 0);
 
-		assertFalse(mkSDI(fixedUtf16String, buf, newset(), 4).hasNullTerminator());
-		assertFalse(mkSDI(fixedUtf16String, buf, newset(), 6).hasNullTerminator());
-		assertTrue(mkSDI(fixedUtf16String, buf, newset(), 8).hasNullTerminator());
+		assertTrue(mkSDI(fixedUtf16String, buf, newset(), 4).isMissingNullTerminator());
+		assertTrue(mkSDI(fixedUtf16String, buf, newset(), 6).isMissingNullTerminator());
+		assertFalse(mkSDI(fixedUtf16String, buf, newset(), 8).isMissingNullTerminator());
 	}
 }

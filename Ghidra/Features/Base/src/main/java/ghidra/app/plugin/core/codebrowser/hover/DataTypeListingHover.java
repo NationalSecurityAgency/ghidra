@@ -146,7 +146,7 @@ public class DataTypeListingHover extends AbstractDataTypeHover implements Listi
 				result += String.format("<br>Translated value: %s",
 					HTMLUtilities.friendlyEncodeHTML(sdi.getTranslatedValue()));
 			}
-			if (!sdi.isPascal() && !sdi.hasNullTerminator()) {
+			if (sdi.isMissingNullTerminator()) {
 				result += "<br>Missing NULL terminator.";
 			}
 			if (sdi.getStringLength() > dataInstance.getLength()) {
