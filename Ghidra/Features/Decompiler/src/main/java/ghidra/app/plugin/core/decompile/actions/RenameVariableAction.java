@@ -25,7 +25,6 @@ import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -59,25 +58,8 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 		// op could be a PTRSUB, need to dig it out...
 		else if (tokenAtCursor instanceof ClangVariableToken) {
 			PcodeOp op = ((ClangVariableToken) tokenAtCursor).getPcodeOp();
-			if (op == null) {
-				return null;
-			}
-			if (op.getOpcode() == PcodeOp.PTRSUB) {
-				vnode = op.getInput(0);
-				if (vnode.isRegister()) {
-					AddressSpace stackspace =
-						controller.getProgram().getAddressFactory().getStackSpace();
-					if (stackspace != null) {
-						Address caddr = op.getInput(1).getAddress();
-						storageAddress = stackspace.getAddress(caddr.getOffset());
-					}
-				}
-				else {
-					Address caddr = op.getInput(1).getAddress();
-					storageAddress =
-						controller.getLocation().getAddress().getNewAddress(caddr.getOffset());
-				}
-			}
+			storageAddress =
+				HighFunctionDBUtil.getSpacebaseReferenceAddress(controller.getProgram(), op);
 		}
 		return storageAddress;
 	}
@@ -94,9 +76,13 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 		}
 		else {
 			GlobalSymbolMap gsym = hfunc.getGlobalSymbolMap();
-			HighSymbol hsym = gsym.getSymbol(addr);
+			HighCodeSymbol hsym = gsym.getSymbol(addr);
 			if (hsym != null) {
 				res = hsym.getHighVariable();
+				if (res == null) {
+					Varnode vnrep = new Varnode(addr, hsym.getSize());
+					res = new HighGlobal(hsym, vnrep, null);
+				}
 			}
 		}
 		return res;

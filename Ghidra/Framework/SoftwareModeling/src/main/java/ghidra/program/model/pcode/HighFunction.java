@@ -357,19 +357,29 @@ public class HighFunction extends PcodeSyntaxTree {
 			HighSymbol sym = null;
 			if (symref != 0) {
 				sym = localSymbols.getSymbol(symref);
-				if (sym != null) {
-					var = sym.getHighVariable();
+				if (sym == null) {
+					sym = globalSymbols.getSymbol(symref);
 				}
-			}
-			if (var == null) {
 				if (sym instanceof DynamicSymbol) {
+					var = sym.getHighVariable();
 					var = new HighConstant(sym.getName(), tp, rep, getPCAddress(rep),
 						(DynamicSymbol) sym);
 					sym.setHighVariable(var);
 				}
-				else {
-					var = new HighConstant(null, tp, rep, getPCAddress(rep), this);
+				else if (sym == null) {
+					sym = globalSymbols.populateSymbol(symref, null, -1);
+					if (sym == null) {
+						PcodeOp op = ((VarnodeAST) rep).getLoneDescend();
+						Address addr =
+							HighFunctionDBUtil.getSpacebaseReferenceAddress(func.getProgram(), op);
+						if (addr != null) {
+							sym = globalSymbols.newSymbol(symref, addr, DataType.DEFAULT, 1);
+						}
+					}
 				}
+			}
+			if (var == null) {
+				var = new HighConstant(null, tp, rep, getPCAddress(rep), this);
 			}
 		}
 		else if (classstring.equals("global")) {

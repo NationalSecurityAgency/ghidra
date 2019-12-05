@@ -17,8 +17,7 @@ package ghidra.program.model.pcode;
 
 import java.util.*;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -640,4 +639,34 @@ public class HighFunctionDBUtil {
 		return datsym;
 	}
 
+	/**
+	 * Get the Address referred to by a spacebase reference. Address-of references are encoded in
+	 * the p-code syntax tree as: vn = PTRSUB(<spacebase>, #const).  This decodes the reference and
+	 * returns the Address
+	 * @param program is the program containing the Address
+	 * @param op is the PTRSUB op encoding the reference
+	 * @return the recovered Address (or null if not correct form)
+	 */
+	public static Address getSpacebaseReferenceAddress(Program program, PcodeOp op) {
+		Address storageAddress = null;
+		if (op == null) {
+			return storageAddress;
+		}
+		if (op.getOpcode() == PcodeOp.PTRSUB) {
+			Varnode vnode = op.getInput(0);
+			if (vnode.isRegister()) {
+				AddressSpace stackspace = program.getAddressFactory().getStackSpace();
+				if (stackspace != null) {
+					Address caddr = op.getInput(1).getAddress();
+					storageAddress = stackspace.getAddress(caddr.getOffset());
+				}
+			}
+			else {
+				Address caddr = op.getInput(1).getAddress();
+				storageAddress = program.getAddressFactory().getDefaultAddressSpace().getAddress(
+					caddr.getOffset());
+			}
+		}
+		return storageAddress;
+	}
 }

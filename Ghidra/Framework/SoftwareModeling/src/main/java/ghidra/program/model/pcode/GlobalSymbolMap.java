@@ -21,6 +21,7 @@ import java.util.Iterator;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
@@ -70,6 +71,17 @@ public class GlobalSymbolMap {
 		Symbol symbol = symbolTable.getSymbol(id);
 		if (symbol == null || !(symbol instanceof CodeSymbol)) {
 			return null;
+		}
+		if (dataType == null) {
+			Object dataObj = symbol.getObject();
+			if (dataObj instanceof Data) {
+				dataType = ((Data) dataObj).getDataType();
+				sz = dataType.getLength();
+			}
+			else {
+				dataType = DataType.DEFAULT;
+				sz = 1;
+			}
 		}
 		HighCodeSymbol highSym = new HighCodeSymbol((CodeSymbol) symbol, dataType, sz, func);
 		insertSymbol(highSym, symbol.getAddress());
