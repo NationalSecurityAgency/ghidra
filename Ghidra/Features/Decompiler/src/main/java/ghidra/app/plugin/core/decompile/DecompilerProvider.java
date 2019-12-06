@@ -125,14 +125,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		@Override
 		public void serviceRemoved(Class<?> interfaceClass, Object service) {
-			if (interfaceClass.equals(GraphService.class)) {
+			if (interfaceClass.equals(GraphDisplayBroker.class)) {
 				graphServiceRemoved();
 			}
 		}
 
 		@Override
 		public void serviceAdded(Class<?> interfaceClass, Object service) {
-			if (interfaceClass.equals(GraphService.class)) {
+			if (interfaceClass.equals(GraphDisplayBroker.class)) {
 				graphServiceAdded();
 			}
 		}
@@ -967,7 +967,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	private void graphServiceRemoved() {
-		if (graphASTControlFlowAction != null && tool.getService(GraphService.class) == null) {
+		if (graphASTControlFlowAction == null) {
+			return;
+		}
+		if (tool.getService(GraphDisplayBroker.class) == null) {
 			tool.removeAction(graphASTControlFlowAction);
 			graphASTControlFlowAction.dispose();
 			graphASTControlFlowAction = null;
@@ -975,7 +978,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	private void graphServiceAdded() {
-		if (graphASTControlFlowAction == null && tool.getService(GraphService.class) != null) {
+		GraphDisplayBroker service = tool.getService(GraphDisplayBroker.class);
+		if (service != null && service.getDefaultGraphDisplayProvider() != null) {
 			graphASTControlFlowAction = new GraphASTControlFlowAction();
 			addLocalAction(graphASTControlFlowAction);
 		}

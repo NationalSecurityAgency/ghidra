@@ -968,8 +968,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		saveAsAction.setMenuBarData(menuData);
 
 		saveAsAction.setEnabled(true);
-		saveAsAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
+		saveAsAction
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Tool_Changes"));
 
 		addAction(saveAction);
 		addAction(saveAsAction);
@@ -994,8 +994,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 			new String[] { ToolConstants.MENU_FILE, exportPullright, "Export Tool..." });
 		menuData.setMenuSubGroup(Integer.toString(subGroup++));
 		exportToolAction.setMenuBarData(menuData);
-		exportToolAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
+		exportToolAction
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Export_Tool"));
 		addAction(exportToolAction);
 
 		DockingAction exportDefautToolAction =
@@ -1340,7 +1340,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		eventMgr.addEventProducer(eventClass);
 	}
 
-	void addEventListener(Class<? extends PluginEvent> eventClass, PluginEventListener listener) {
+	public void addEventListener(Class<? extends PluginEvent> eventClass,
+			PluginEventListener listener) {
 		eventMgr.addEventListener(eventClass, listener);
 	}
 
@@ -1356,7 +1357,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		eventMgr.removeAllEventListener(listener);
 	}
 
-	void removeEventListener(Class<? extends PluginEvent> eventClass,
+	public void removeEventListener(Class<? extends PluginEvent> eventClass,
 			PluginEventListener listener) {
 		eventMgr.removeEventListener(eventClass, listener);
 	}

@@ -1,0 +1,67 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Graphing</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <A name="Default_Graph_Display"/>
+    <H1>Default Graph Display</H1>
+    <H2>Visualization of a Graph</H2>
+
+	<BLOCKQUOTE>
+    <P>The visualization display will show the graph in a new window or in a new tab of a previously created graph window.</P>
+		<BLOCKQUOTE>
+	<BLOCKQUOTE>
+		<P align="left"><IMG src="images/DefaultGraphDisplay.png" border="1"></P>
+	</BLOCKQUOTE>
+	</BLOCKQUOTE>	
+	</BLOCKQUOTE>	
+    <H2>Manipulating the Graph:</H2>
+    <ul>
+      <li>MouseButton1+drag will translate the display in the x and y axis</li>
+      <li>Mouse Wheel will zoom in and out</li>
+      <li>Ctrl+MouseButton1 will select a vertex or edge</li>
+      <ul>
+        <li>Shift+Ctrl+MouseButton1 over an unselected vertex will add that vertex to the selection</li>
+        <li>Shift+Ctrl+MouseButton1 over a previously selected vertex will remove that vertex from the selection</li>
+      </ul>
+      <li>Ctrl+MouseButton1+drag on an empty area will create a rectangular area and select enclosed vertices</li>
+      <li>Ctrl+MouseButton1+drag over a vertex will reposition all selected vertices</li>
+    </ul>
+    <H2>Upper-right Icon Buttons:</H2>
+    <ul>
+      <li>The <IMG src="images/fingerPointer.png"> toggle button, when 'set' will cause a located vertex (red arrow) to be scrolled to the center of the view</li>
+      <li>The <IMG src="images/sat2.png" width="16" height="16"> button will open a satellite mini view of the graph in the lower right corner. The mini-view can be manipulated with the mouse to affect the main view</li>
+      <li>The <IMG src="images/reload3.png"> button will reset any visual transformations on the graph and center it at a best-effort size</li>
+      <li>The <IMG src="images/magnifier.png"> button will open a rectangular magnification lens in the graph view</li>
+      <ul>
+        <li>MouseButton1 click-drag on the lens center circle to move the magnifier lens</li>
+        <li>MouseButton1 click-draw on a lens edge diamond to resize the magnifier lens </li>
+        <li>MouseButton1 click on the upper-right circle-cross to dispose of the magnifier lens</li>
+        <li>Ctrl-MouseWheel to change the magnification of the lens</li>
+      </ul>
+      <li>The <IMG src="images/view-filter.png"> button will open a Filter dialog. Select buttons in the dialog to hide specific vertices or edges in the display</li>
+      <ul>
+        <li>The Filter dialog buttons are created by examining the graph vertex/edge properties to discover candidates for filtering</li>
+      </ul>
+      <li>Pull-Down the <IMG src="images/katomic.png" width="16" height="16"> Arrangement menu to select one of several graph layout algorithms.</li>
+      <ul>
+        <li>Force Balanced is a <b>Force Directed Layout Algorithm</b> using the the <b>Kamada Kawai</b> approach. It attempts to balance the graph by considering vertices and edge connections.</li>
+        <li>Force Directed is a <b>Force Directed Layout Algorithm</b> using the <b>Fructermann Reingold</b> approach. It pushes unconnected vertices apart and draws connected vertices together.</li>
+        <li>Circle will arrange vertices in a Circle. If there are not too many edges (less than specified in the jungrapht.circle.reduceEdgeCrossingMaxEdges property with a default of 200), it will attempt to reduce edge crossing by rearranging the vertices.</li>
+        <li>Compact Hierarchical is the <b>TidierTree Layout Algorithm</b>. It builds a tree structure and attempts to reduce horizontal space.</li>
+        <li>Hierarchical MinCross is the <b>Sugiyama Layout Algorithm</b>. It attempts to route edges around vertices in order to reduce crossing.</li>
+        <li>Hierarchical is a basic Tree algorithm. It prioritizes 'important' edges while constructing the tree.</li>
+        <li>Hierarchical Multi Row is the Tree algorithm above, but it will create new rows (typewriter fashion) to reduce horizontal spread.</li>
+        <li>Radial is a Tree structure with the root(s) at the center and child vertices radiating outwards.</li>
+      </ul>
+    
+  </BODY>
+</HTML>
