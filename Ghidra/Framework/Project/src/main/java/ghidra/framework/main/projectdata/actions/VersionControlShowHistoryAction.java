@@ -75,7 +75,7 @@ public class VersionControlShowHistoryAction extends VersionControlAction {
 		}
 
 		VersionHistoryDialog dialog = new VersionHistoryDialog(domainFiles.get(0));
-		tool.showDialog(dialog, tool.getToolFrame());
+		tool.showDialog(dialog);
 	}
 
 }

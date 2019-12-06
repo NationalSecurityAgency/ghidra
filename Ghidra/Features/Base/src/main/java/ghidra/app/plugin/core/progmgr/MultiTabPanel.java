@@ -310,6 +310,10 @@ public class MultiTabPanel extends JPanel {
 					hideListWindow();
 				}
 
+				if (e.isPopupTrigger()) {
+					return; // allow popup triggers to show actions without changing tabs
+				}
+
 				// Tracker SCR 3605 - hitting 'X' to close tab doesn't work if tab is not selected
 				if (e.getSource() == iconLabel) {
 					doRemoveProgram(program);

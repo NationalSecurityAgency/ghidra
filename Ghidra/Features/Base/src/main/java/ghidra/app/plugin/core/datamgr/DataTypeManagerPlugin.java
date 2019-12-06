@@ -125,9 +125,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			@Override
 			public void archiveClosed(Archive archive) {
 				if (archive instanceof ProjectArchive) {
-					// Program is handled by deactivation event
-					((ProjectArchive) archive).getDomainObject().removeListener(
-						DataTypeManagerPlugin.this);
+					ProjectArchive projectArchive = (ProjectArchive) archive;
+					projectArchive.getDomainObject().removeListener(DataTypeManagerPlugin.this);
 				}
 			}
 
@@ -137,11 +136,10 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 					addRecentlyOpenedArchiveFile(((FileArchive) archive).getFile());
 				}
 				else if (archive instanceof ProjectArchive) {
-					((ProjectArchive) archive).getDomainObject().addListener(
-						DataTypeManagerPlugin.this);
+					ProjectArchive projectArchive = (ProjectArchive) archive;
+					projectArchive.getDomainObject().addListener(DataTypeManagerPlugin.this);
 					addRecentlyOpenedProjectArchive((ProjectArchive) archive);
 				}
-				// Program is handled by activation.
 			}
 
 			@Override
@@ -267,8 +265,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	public void dispose() {
 		tool.removePopupActionProvider(this);
-		provider.dispose();
-		close();
+		dataTypeManagerHandler.closeAllArchives();
 		dataTypeManagerHandler.dispose();
 	}
 
@@ -347,7 +344,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	protected void close() {
-		dataTypeManagerHandler.closeAllArchives();
+		provider.dispose();
 	}
 
 	public DataTypeManagerHandler getDataTypeManagerHandler() {
