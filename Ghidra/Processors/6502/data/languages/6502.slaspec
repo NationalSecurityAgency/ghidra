@@ -194,7 +194,8 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	B = 1;
 	pushSR();
 	I = 1;
-	goto 0xFFFE;
+	local target:2 = 0xFFFE;
+	goto [*:2 target];
 }
 
 :BVC  REL			is op=0x50; REL
