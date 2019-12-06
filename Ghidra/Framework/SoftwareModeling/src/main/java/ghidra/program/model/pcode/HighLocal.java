@@ -16,18 +16,23 @@
 package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.VariableStorage;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.xml.SpecXmlUtils;
+import ghidra.xml.XmlElement;
+import ghidra.xml.XmlPullParser;
 
 public class HighLocal extends HighVariable {
 
-	private Address pcaddr; // null or Address of PcodeOp which defines the representative
+	private Address pcaddr; 	// null or Address of PcodeOp which defines the representative
 	private HighSymbol symbol;
-	private long hash = 0; // 60-bit hash value, 0 indicates not-yet-computed or not-applicable
+
+	/**
+	 * Constructor for use with restoreXml
+	 * @param high is the HighFunction containing this local variable
+	 */
+	public HighLocal(HighFunction high) {
+		super(high);
+	}
 
 	public HighLocal(DataType type, Varnode vn, Varnode[] inst, Address pc, HighSymbol sym) {
 		super(sym.getName(), type, vn, inst, sym.getHighFunction());
@@ -47,51 +52,30 @@ public class HighLocal extends HighVariable {
 		return pcaddr;
 	}
 
-	protected int getFirstUseOffset() {
-		if (pcaddr == null || getRepresentative().getAddress().isStackAddress()) {
-			return 0;
-		}
-		return (int) pcaddr.subtract(getHighFunction().getFunction().getEntryPoint());
-	}
-
 	@Override
-	public VariableStorage getStorage() {
-
-		Program program = getHighFunction().getFunction().getProgram();
-		Varnode represent = getRepresentative();
-
-		if (symbol instanceof DynamicSymbol || represent.isUnique()) {
-			long ourHash = buildDynamicHash();
-			try {
-				return new VariableStorage(program, AddressSpace.HASH_SPACE.getAddress(ourHash),
-					represent.getSize());
-			}
-			catch (InvalidInputException e) {
-				throw new AssertException("Unexpected exception", e);
-			}
+	public void restoreXml(XmlPullParser parser) throws PcodeXMLException {
+		XmlElement el = parser.start("high");
+		long symref = SpecXmlUtils.decodeLong(el.getAttribute("symref"));
+		offset = -1;
+		String attrString = el.getAttribute("offset");
+		if (attrString != null) {
+			offset = SpecXmlUtils.decodeInt(attrString);
 		}
+		restoreInstances(parser, el);
+		symbol = function.getLocalSymbolMap().getSymbol(symref);
+		if (symbol == null) {
+			throw new PcodeXMLException("HighLocal is missing symbol");
+		}
+		if (offset < 0) {
+			name = symbol.getName();
+		}
+		else {
+			name = "UNNAMED";
+		}
+		pcaddr = symbol.getPCAddress();
+		symbol.setHighVariable(this);
 
-		if (symbol instanceof MappedSymbol) {
-			return ((MappedSymbol) symbol).getStorage();
-		}
-
-		return super.getStorage();
-	}
-
-	public long buildDynamicHash() {
-		if (hash != 0) {
-			return hash;
-		}
-		if (symbol instanceof DynamicSymbol) {
-			hash = ((DynamicSymbol) symbol).getHash();
-			pcaddr = symbol.getPCAddress();
-		}
-		else if (getRepresentative().isUnique()) {
-			DynamicHash dynamicHash = new DynamicHash(getRepresentative(), getHighFunction());
-			hash = dynamicHash.getHash();
-			pcaddr = dynamicHash.getAddress();
-		}
-		return hash;
+		parser.end(el);
 	}
 
 }

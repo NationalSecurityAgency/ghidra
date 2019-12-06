@@ -607,7 +607,6 @@ void Funcdata::saveVarnodeXml(ostream &s,VarnodeLocSet::const_iterator iter,Varn
 void Funcdata::saveXmlHigh(ostream &s) const
 
 {
-  int4 j;
   Varnode *vn;
   HighVariable *high;
 
@@ -620,32 +619,7 @@ void Funcdata::saveXmlHigh(ostream &s) const
     high = vn->getHigh();
     if (high->isMark()) continue;
     high->setMark();
-    vn = high->getNameRepresentative(); // Get representative varnode
-    s << "<high ";
-    //    a_v(s,"name",high->getName());
-    a_v_u(s,"repref",vn->getCreateIndex());
-    if (high->isSpacebase()||high->isImplied()) // This is a special variable
-      a_v(s,"class",string("other"));
-    else if (high->isPersist()&&high->isAddrTied()) // Global variable
-      a_v(s,"class",string("global"));
-    else if (high->isConstant())
-      a_v(s,"class",string("constant"));
-    else if (!high->isPersist())
-      a_v(s,"class",string("local"));
-    else
-      a_v(s,"class",string("other"));
-    if (high->isTypeLock())
-      a_v_b(s,"typelock",true);
-    if (high->getSymbol() != (Symbol *)0)
-      a_v_u(s,"symref",high->getSymbol()->getId());
-    s << '>';
-    high->getType()->saveXml(s);
-    for(j=0;j<high->numInstances();++j) {
-      s << "<addr ";
-      a_v_u(s,"ref",high->getInstance(j)->getCreateIndex());
-      s << "/>";
-    }
-    s << "</high>";
+    high->saveXml(s);
   }
   for(iter=beginLoc();iter!=endLoc();++iter) {
     vn = *iter;

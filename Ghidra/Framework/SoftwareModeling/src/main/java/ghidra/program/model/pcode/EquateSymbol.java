@@ -33,19 +33,20 @@ public class EquateSymbol extends DynamicSymbol {
 	private long value;			// Value of the equate
 	private int convert;		// Non-zero if this is a conversion equate
 	
-	public EquateSymbol() {
+	public EquateSymbol(HighFunction func) {
+		super(func);
 	}
 
 	public EquateSymbol(long uniqueId, String nm, long val, HighFunction func, Address addr,
-			long hash, int format) {
-		super(uniqueId, nm, DataType.DEFAULT, 1, func, addr, hash, format);
+			long hash) {
+		super(uniqueId, nm, DataType.DEFAULT, 1, func, addr, hash);
 		value = val;
 		convert = FORMAT_DEFAULT;
 	}
 	
 	public EquateSymbol(long uniqueId, int conv, long val, HighFunction func, Address addr,
-			long hash, int format) {
-		super(uniqueId, "", DataType.DEFAULT, 1, func, addr, hash, format);
+			long hash) {
+		super(uniqueId, "", DataType.DEFAULT, 1, func, addr, hash);
 		value = val;
 		convert = conv;
 	}
@@ -53,9 +54,9 @@ public class EquateSymbol extends DynamicSymbol {
 	public long getValue() { return value; }
 
 	@Override
-	public void restoreXML(XmlPullParser parser, HighFunction func) throws PcodeXMLException {
+	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement symel = parser.start("equatesymbol");
-		restoreSymbolXML(symel, func);
+		restoreSymbolXML(symel);
 		type = DataType.DEFAULT;
 		size = 1;
 		convert = FORMAT_DEFAULT;
@@ -84,15 +85,9 @@ public class EquateSymbol extends DynamicSymbol {
 		if (size == 0) {
 			throw new PcodeXMLException("Invalid symbol 0-sized data-type: " + type.getName());
 		}
+		restoreEntryXML(parser);
 		while(parser.peek().isStart()) {
-			long hash = 0;
-			int format = 0;
-			XmlElement addrel = parser.start("hash");
-			hash = SpecXmlUtils.decodeLong(addrel.getAttribute("val"));
-			format = SpecXmlUtils.decodeInt(addrel.getAttribute("format"));
-			parser.end(addrel);
-			Address addr = parseRangeList(parser);
-			addReference(addr,hash,format);
+			parser.discardSubTree();
 		}
 	}
 

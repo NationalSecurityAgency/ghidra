@@ -30,7 +30,8 @@ public class MappedSymbol extends HighSymbol {
 	private VariableStorage storage;
 	private int slot;		// parameter slot, -1 for non-parameter
 
-	public MappedSymbol() {	// For use with restoreXML
+	public MappedSymbol(HighFunction func) {	// For use with restoreXML
+		super(func);
 	}
 
 	public MappedSymbol(long uniqueId, String name, DataType dt, VariableStorage store,
@@ -44,22 +45,14 @@ public class MappedSymbol extends HighSymbol {
 		}
 		this.storage = store;
 		this.slot = slot;
-		Varnode rep = function.createFromStorage(null, storage, dt.getLength());
-		HighVariable var;
-		if (slot < 0) {
-			var = new HighLocal(type, rep, null, pcaddr, this);
-		}
-		else {
-			var = new HighParam(type, rep, pcaddr, slot, this);
-		}
-		setHighVariable(var);
-		var.setHighOnInstances();
 	}
 
+	@Override
 	public VariableStorage getStorage() {
 		return storage;
 	}
 
+	@Override
 	public boolean isParameter() {
 		return slot >= 0;
 	}
@@ -88,9 +81,9 @@ public class MappedSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser, HighFunction func) throws PcodeXMLException {
+	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement symel = parser.start("symbol");
-		restoreSymbolXML(symel, func);
+		restoreSymbolXML(symel);
 		slot = -1;
 		int cat = -1;
 		if (symel.hasAttribute("cat")) {
@@ -99,7 +92,7 @@ public class MappedSymbol extends HighSymbol {
 				slot = SpecXmlUtils.decodeInt(symel.getAttribute("index"));
 			}
 		}
-		type = func.getDataTypeManager().readXMLDataType(parser);
+		type = function.getDataTypeManager().readXMLDataType(parser);
 		parser.end(symel);
 
 		if (slot >= 0 && name.startsWith("$$undef")) {
@@ -107,10 +100,17 @@ public class MappedSymbol extends HighSymbol {
 			name = "param_" + Integer.toString(slot + 1);
 		}
 
+		restoreEntryXML(parser);
+		while (parser.peek().isStart()) {
+			parser.discardSubTree();
+		}
+	}
+
+	@Override
+	protected void restoreEntryXML(XmlPullParser parser) throws PcodeXMLException {
 		Program program = function.getFunction().getProgram();
 		AddressFactory addrFactory = function.getAddressFactory();
 
-		Address addr = null;
 		XmlElement addrel = parser.start("addr");
 		int sz = type.getLength();
 		if (sz == 0) {
@@ -123,8 +123,7 @@ public class MappedSymbol extends HighSymbol {
 				storage = new VariableStorage(program, varAddr, sz);
 			}
 			else {
-				addr = varAddr;
-				storage = func.readXMLVarnodePieces(addrel, varAddr);
+				storage = function.readXMLVarnodePieces(addrel, varAddr);
 			}
 		}
 		catch (InvalidInputException e) {
@@ -134,16 +133,6 @@ public class MappedSymbol extends HighSymbol {
 		parser.end(addrel);
 
 		pcaddr = parseRangeList(parser);
-		Varnode rep = function.createFromStorage(addr, storage, sz);
-		HighVariable var;
-		if (slot < 0) {
-			var = new HighLocal(type, rep, null, pcaddr, this);
-		}
-		else {
-			var = new HighParam(type, rep, pcaddr, slot, this);
-		}
-		setHighVariable(var);
-		var.setHighOnInstances();
 	}
 
 	public static String buildSymbolXML(PcodeDataTypeManager dtmanage, long uniqueId, String nm,

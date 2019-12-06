@@ -16,7 +16,12 @@
 package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.VariableStorage;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -26,53 +31,25 @@ import ghidra.xml.XmlPullParser;
  *
  */
 public class DynamicSymbol extends HighSymbol {
-	public static class Entry {
-		public final Address pcaddr;
-		public final long hash;
-		public final int format;
+	protected long hash;			// Hash encoding the specific Varnode
 		
-		public Entry(Address addr,long h,int f) {
-			pcaddr = addr;
-			hash = h;
-			format = f;
-		}
-	}
-
-	private Entry[] refs;
-
-	public DynamicSymbol() {		// For use with restoreXML
-		refs = new Entry[0];
+	public DynamicSymbol(HighFunction func) {		// For use with restoreXML
+		super(func);
 	}
 
 	public DynamicSymbol(long uniqueId, String nm, DataType tp, int size, HighFunction func,
-			Address addr, long hash, int format) {
+			Address addr, long hash) {
 		super(uniqueId, nm, tp, size, addr, func);
-		refs = new Entry[1];
-		refs[0] = new Entry(addr,hash,format);
+		this.hash = hash;
 	}
 
 	public long getHash() {
-		return refs[0].hash;
-	}
-
-	public void addReference(Address addr,long hash,int format) {
-		Entry[] newrefs = new Entry[refs.length + 1];
-		for(int i=0;i<refs.length;++i) {
-			newrefs[i] = refs[i];
-		}
-		newrefs[refs.length] = new Entry(addr,hash,format);
-		refs = newrefs;
-		if (refs.length == 1)
-		 {
-			pcaddr = addr;		// Store first address as official pcaddr for symbol
-		}
+		return hash;
 	}
 
 	protected void buildHashXML(StringBuilder buf) {
-		for (Entry ref : refs) {
-			buf.append("<hash val=\"0x").append(Long.toHexString(ref.hash)).append("\"/>");
-			buildRangelistXML(buf, ref.pcaddr);
-		}		
+		buf.append("<hash val=\"0x").append(Long.toHexString(hash)).append("\"/>");
+		buildRangelistXML(buf, pcaddr);
 	}
 
 	@Override
@@ -88,25 +65,39 @@ public class DynamicSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser, HighFunction func) throws PcodeXMLException {
+	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement symel = parser.start("symbol");
-		restoreSymbolXML(symel, func);
-		type = func.getDataTypeManager().readXMLDataType(parser);
+		restoreSymbolXML(symel);
+		type = function.getDataTypeManager().readXMLDataType(parser);
 		size = type.getLength();
 		parser.end(symel);
 
 		if (size == 0) {
 			throw new PcodeXMLException("Invalid symbol 0-sized data-type: " + type.getName());
 		}
+		restoreEntryXML(parser);
 		while(parser.peek().isStart()) {
-			long hash = 0;
-			int format = 0;
-			XmlElement addrel = parser.start("hash");
-			hash = SpecXmlUtils.decodeLong(addrel.getAttribute("val"));
-			format = SpecXmlUtils.decodeInt(symel.getAttribute("format"));
-			parser.end(addrel);
-			Address addr = parseRangeList(parser);
-			addReference(addr,hash,format);
+			parser.discardSubTree();
+		}
+	}
+
+	@Override
+	protected void restoreEntryXML(XmlPullParser parser) throws PcodeXMLException {
+		XmlElement addrel = parser.start("hash");
+		hash = SpecXmlUtils.decodeLong(addrel.getAttribute("val"));
+		parser.end(addrel);
+		pcaddr = parseRangeList(parser);
+	}
+
+	@Override
+	public VariableStorage getStorage() {
+		Program program = function.getFunction().getProgram();
+		try {
+			return new VariableStorage(program, AddressSpace.HASH_SPACE.getAddress(getHash()),
+				getSize());
+		}
+		catch (InvalidInputException e) {
+			throw new AssertException("Unexpected exception", e);
 		}
 	}
 
@@ -128,5 +119,24 @@ public class DynamicSymbol extends HighSymbol {
 		res.append(dtmanage.buildTypeRef(dt, length));
 		res.append("</symbol>\n");
 		return res.toString();
+	}
+
+	/**
+	 * Build dynamic VariableStorage for a unique variable
+	 * @param vn is the variable in the unique space
+	 * @param high is the HighFunction containing the variable
+	 * @return the dynamic VariableStorage
+	 */
+	public static VariableStorage buildDynamicStorage(Varnode vn, HighFunction high) {
+		DynamicHash dynamicHash = new DynamicHash(vn, high);
+		Program program = high.getFunction().getProgram();
+		long ourHash = dynamicHash.getHash();
+		try {
+			return new VariableStorage(program, AddressSpace.HASH_SPACE.getAddress(ourHash),
+				vn.getSize());
+		}
+		catch (InvalidInputException e) {
+			throw new AssertException("Unexpected exception", e);
+		}
 	}
 }

@@ -359,6 +359,46 @@ int4 HighVariable::instanceIndex(const Varnode *vn) const
   return -1;
 }
 
+/// \param s is the output stream to write XML to
+void HighVariable::saveXml(ostream &s) const
+
+{
+  Varnode *vn = getNameRepresentative(); // Get representative varnode
+  s << "<high ";
+  //    a_v(s,"name",high->getName());
+  a_v_u(s,"repref",vn->getCreateIndex());
+  if (isSpacebase()||isImplied()) // This is a special variable
+    a_v(s,"class",string("other"));
+  else if (isPersist()&&isAddrTied()) // Global variable
+    a_v(s,"class",string("global"));
+  else if (isConstant())
+    a_v(s,"class",string("constant"));
+  else if (!isPersist() && (symbol != (Symbol *)0)) {
+    if (symbol->getCategory() == 0)
+      a_v(s,"class",string("param"));
+    else
+      a_v(s,"class",string("local"));
+  }
+  else {
+    a_v(s,"class",string("other"));
+  }
+  if (isTypeLock())
+    a_v_b(s,"typelock",true);
+  if (symbol != (Symbol *)0) {
+    a_v_u(s,"symref",symbol->getId());
+    if (symboloffset >= 0)
+      a_v_i(s, "offset", symboloffset);
+  }
+  s << '>';
+  getType()->saveXml(s);
+  for(int4 j=0;j<inst.size();++j) {
+    s << "<addr ";
+    a_v_u(s,"ref",inst[j]->getCreateIndex());
+    s << "/>";
+  }
+  s << "</high>";
+}
+
 #ifdef MERGEMULTI_DEBUG
 /// \brief Check that there are no internal Cover intersections within \b this
 ///

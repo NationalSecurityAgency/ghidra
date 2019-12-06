@@ -18,7 +18,11 @@ package ghidra.program.model.pcode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.scalar.Scalar;
+import ghidra.util.xml.SpecXmlUtils;
+import ghidra.xml.XmlElement;
+import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -31,6 +35,14 @@ public class HighConstant extends HighVariable {
 	private Address pcaddr;		// null or Address of PcodeOp which defines the representative
 
 	/**
+	 * Constructor for use with restoreXml
+	 * @param func is the HighFunction this constant belongs to
+	 */
+	public HighConstant(HighFunction func) {
+		super(func);
+	}
+
+	/**
 	 * Construct a constant NOT associated with a symbol
 	 * @param name name of variable
 	 * @param type data type of variable
@@ -41,19 +53,6 @@ public class HighConstant extends HighVariable {
 	public HighConstant(String name, DataType type, Varnode vn, Address pc, HighFunction func) {
 		super(name, type, vn, null, func);
 		pcaddr = pc;
-	}
-
-	/**
-	 * Construct constant associated with a dynamic symbol
-	 * @param name name of variable
-	 * @param type data type of variable
-	 * @param vn constant varnode
-	 * @param pc code unit address where constant is used
-	 * @param sym associated dynamic symbol
-	 */
-	public HighConstant(String name, DataType type, Varnode vn, Address pc, DynamicSymbol sym) {
-		this(name, type, vn, pc, sym.getHighFunction());
-		symbol = sym;
 	}
 
 	@Override
@@ -86,6 +85,38 @@ public class HighConstant extends HighVariable {
 			value >>= shiftCnt;
 		}
 		return new Scalar(getSize() * 8, value, signed);
+	}
+
+	@Override
+	public void restoreXml(XmlPullParser parser) throws PcodeXMLException {
+		XmlElement el = parser.start("high");
+		long symref = SpecXmlUtils.decodeLong(el.getAttribute("symref"));
+		restoreInstances(parser, el);
+		pcaddr = function.getPCAddress(represent);
+		if (symref != 0) {
+			HighSymbol sym = function.getLocalSymbolMap().getSymbol(symref);
+			if (sym == null) {
+				sym = function.getGlobalSymbolMap().getSymbol(symref);
+			}
+			if (sym instanceof DynamicSymbol) {
+				symbol = (DynamicSymbol) sym;
+				name = sym.getName();
+				sym.setHighVariable(this);
+			}
+			else if (sym == null) {
+				GlobalSymbolMap globalMap = function.getGlobalSymbolMap();
+				Program program = function.getFunction().getProgram();
+				sym = globalMap.populateSymbol(symref, null, -1);
+				if (sym == null) {
+					PcodeOp op = ((VarnodeAST) represent).getLoneDescend();
+					Address addr = HighFunctionDBUtil.getSpacebaseReferenceAddress(program, op);
+					if (addr != null) {
+						sym = globalMap.newSymbol(symref, addr, DataType.DEFAULT, 1);
+					}
+				}
+			}
+		}
+		parser.end(el);
 	}
 
 }

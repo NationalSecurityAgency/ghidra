@@ -314,7 +314,15 @@ HighVariable *Funcdata::findHigh(const string &name) const
   if (symList.empty()) return (HighVariable *)0;
   Symbol *sym = symList[0];
   SymbolEntry *entry = sym->getFirstWholeMap();
-  
+
+  if (entry->isDynamic()) {
+    DynamicHash dhash;
+    Varnode *vn = dhash.findVarnode(this, entry->getFirstUseAddress(), entry->getHash());
+    if (vn == (Varnode *)0 || vn->isAnnotation())
+      return (HighVariable *)0;
+    return vn->getHigh();
+  }
+
   VarnodeLocSet::const_iterator iter,enditer;
   HighVariable *high;
 

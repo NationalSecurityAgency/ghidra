@@ -24,7 +24,6 @@ import org.xml.sax.*;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -209,41 +208,29 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	private void readHighXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("high");
+		XmlElement el = parser.peek();
 		String classstring = el.getAttribute("class");
-		long symref = SpecXmlUtils.decodeLong(el.getAttribute("symref"));
-		int repref = SpecXmlUtils.decodeInt(el.getAttribute("repref"));
-		Varnode rep = getRef(repref);
-		if (rep == null) {
-			throw new PcodeXMLException("Undefined varnode reference");
+		HighVariable var;
+		switch (classstring.charAt(0)) {
+			case 'o':
+				var = new HighOther(this);
+				break;
+			case 'g':
+				var = new HighGlobal(this);
+				break;
+			case 'l':
+				var = new HighLocal(this);
+				break;
+			case 'p':
+				var = new HighParam(this);
+				break;
+			case 'c':
+				var = new HighConstant(this);
+				break;
+			default:
+				throw new PcodeXMLException("Unknown HighVariable class string: " + classstring);
 		}
-
-		DataType type = null;
-
-		ArrayList<Varnode> vnlist = new ArrayList<Varnode>();
-		int sz = -1;
-		if (parser.peek().isStart()) {
-			type = getDataTypeManager().readXMLDataType(parser);
-		}
-
-		if (type == null) {
-			throw new PcodeXMLException("Missing <type> for HighVariable");
-		}
-
-		// TODO: I'm not sure the decompiler's type size is preserved
-		// by the conversion to a GHIDRA type
-		sz = type.getLength();
-
-		while (parser.peek().isStart()) {
-			Varnode vn = Varnode.readXML(parser, this);
-			vnlist.add(vn);
-		}
-		Varnode[] vnarray = new Varnode[vnlist.size()];
-		vnlist.toArray(vnarray);
-		// VARDO: does rep varnode size differ from type length ?
-		newHigh(symref, type, sz, vnarray, rep, classstring);
-
-		parser.end(el);
+		var.restoreXml(parser);
 	}
 
 	private void readHighlistXML(XmlPullParser parser) throws PcodeXMLException {
@@ -329,97 +316,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		parser.end(el);
 	}
 
-	private HighVariable newHigh(long symref, DataType tp, int sz, Varnode[] inst, Varnode rep,
-			String classstring) throws PcodeXMLException {
-		HighVariable var = null;
-		if (classstring.equals("local")) {
-			HighSymbol sym = null;
-			if (symref != 0) {
-				sym = localSymbols.getSymbol(symref);
-			}
-			if (sym != null) {
-				var = sym.getHighVariable();
-			}
-			if (var == null) {
-				if (sym instanceof DynamicSymbol) {
-					// establish HighLocal for DynamicSymbol
-					var = new HighLocal(tp, rep, inst, sym.getPCAddress(), sym);
-					sym.setHighVariable(var);
-				}
-				else {
-					// The variable may be a partial, in which case
-					// we treat it as special
-					var = new HighOther(tp, rep, inst, getPCAddress(rep), this);
-				}
-			}
-		}
-		else if (classstring.equals("constant")) {
-			HighSymbol sym = null;
-			if (symref != 0) {
-				sym = localSymbols.getSymbol(symref);
-				if (sym == null) {
-					sym = globalSymbols.getSymbol(symref);
-				}
-				if (sym instanceof DynamicSymbol) {
-					var = sym.getHighVariable();
-					var = new HighConstant(sym.getName(), tp, rep, getPCAddress(rep),
-						(DynamicSymbol) sym);
-					sym.setHighVariable(var);
-				}
-				else if (sym == null) {
-					sym = globalSymbols.populateSymbol(symref, null, -1);
-					if (sym == null) {
-						PcodeOp op = ((VarnodeAST) rep).getLoneDescend();
-						Address addr =
-							HighFunctionDBUtil.getSpacebaseReferenceAddress(func.getProgram(), op);
-						if (addr != null) {
-							sym = globalSymbols.newSymbol(symref, addr, DataType.DEFAULT, 1);
-						}
-					}
-				}
-			}
-			if (var == null) {
-				var = new HighConstant(null, tp, rep, getPCAddress(rep), this);
-			}
-		}
-		else if (classstring.equals("global")) {
-			HighCodeSymbol sym = null;
-			if (symref != 0) {
-				sym = globalSymbols.getSymbol(symref);
-			}
-			if (sym == null) {
-				sym = globalSymbols.populateSymbol(symref, tp, sz);
-				if (sym == null) {
-					sym = globalSymbols.newSymbol(symref, rep.getAddress(), tp, sz);
-					if (sym == null) {
-						throw new PcodeXMLException(
-							"Bad global storage: " + rep.getAddress().toString());
-					}
-				}
-			}
-			var = new HighGlobal(sym, rep, inst);
-			sym.setHighVariable(var);
-		}
-		else if (classstring.equals("other")) {
-// TODO: How do these compare with local ??
-			var = new HighOther(tp, rep, inst, getPCAddress(rep), this);
-		}
-		else {
-			throw new PcodeXMLException("Bad class string: " + classstring);
-		}
-		if (rep.getSize() == var.getSize()) {
-			var.attachInstances(inst, rep);
-		}
-		else { // Make sure varnodes are linked to HighVariable even if not formal instances, why do we do this???
-			for (Varnode element : inst) {
-				((VarnodeAST) element).setHigh(var);
-			}
-		}
-		var.setHighOnInstances();
-		return var;
-	}
-
-	private Address getPCAddress(Varnode rep) {
+	protected Address getPCAddress(Varnode rep) {
 		Address pcaddr = null;
 		if (!rep.isAddrTied()) {
 			pcaddr = rep.getPCAddress();

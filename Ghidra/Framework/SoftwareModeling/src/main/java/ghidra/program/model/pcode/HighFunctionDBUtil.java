@@ -97,7 +97,7 @@ public class HighFunctionDBUtil {
 		List<Parameter> params = new ArrayList<Parameter>();
 		int paramCnt = symbolMap.getNumParams();
 		for (int i = 0; i < paramCnt; ++i) {
-			HighParam param = symbolMap.getParam(i);
+			HighSymbol param = symbolMap.getParamSymbol(i);
 			String name = param.getName();
 			DataType dataType;
 			if (useDataTypes) {
@@ -201,23 +201,20 @@ public class HighFunctionDBUtil {
 		Iterator<HighSymbol> iter = highFunction.getLocalSymbolMap().getSymbols();
 		while (iter.hasNext()) {
 			HighSymbol sym = iter.next();
-			HighVariable high = sym.getHighVariable();
-			if ((high instanceof HighParam) || !(high instanceof HighLocal)) {
+			if (sym.isParameter() || sym.isGlobal()) {
 				continue;
 			}
-
-			HighLocal local = (HighLocal) high;
-			String name = local.getName();
+			String name = sym.getName();
 			try {
-				Variable var = clearConflictingLocalVariables(local);
+				Variable var = clearConflictingLocalVariables(sym);
 				if (var == null) {
-					var = createLocalVariable(local, null, null, source);
+					var = createLocalVariable(sym, null, null, source);
 					if (name != null) {
 						var.setName(name, source);
 					}
 				}
 				else {
-					var.setDataType(local.getDataType(), local.getStorage(), false, source);
+					var.setDataType(sym.getDataType(), sym.getStorage(), false, source);
 					var.setName(name, source);
 				}
 			}
@@ -229,28 +226,29 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Create a local DB variable with a default name
-	 * @param local
-	 * @param dt data type or null to use local data type defined by local high variable
-	 * @param storage storage or null to use storage defined by local high variable
-	 * @param source
-	 * @return
-	 * @throws InvalidInputException
-	 * @throws DuplicateNameException
+	 * Create a local DB variable with a default name. Storage and data-type for the variable
+	 * can be provided explicitly, or they can be taken from a decompiler symbol.
+	 * @param symbol is the decompiler symbol
+	 * @param dt is the given data-type or null (to use the symbol's data-type)
+	 * @param storage is the given storage or null (to use the symbol's storage)
+	 * @param source is the desired SourceType of the new variable
+	 * @return the new local variable
+	 * @throws InvalidInputException is a valid variable can't be created
 	 */
-	private static Variable createLocalVariable(HighLocal local, DataType dt,
+	private static Variable createLocalVariable(HighSymbol symbol, DataType dt,
 			VariableStorage storage, SourceType source) throws InvalidInputException {
-		Function function = local.getHighFunction().getFunction();
+		Function function = symbol.getHighFunction().getFunction();
 		Program program = function.getProgram();
 		if (storage == null || storage.isUniqueStorage()) {
-			storage = local.getStorage();
+			storage = symbol.getStorage();
 		}
 		if (dt == null) {
-			dt = local.getDataType();
+			dt = symbol.getDataType();
 		}
-		Variable var = new LocalVariableImpl(null, local.getFirstUseOffset(), dt, storage, program);
+		Variable var =
+			new LocalVariableImpl(null, symbol.getFirstUseOffset(), dt, storage, program);
 		try {
-			var = function.addLocalVariable(var, SourceType.ANALYSIS);
+			var = function.addLocalVariable(var, source);
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertException("Unexpected exception with default name", e);
@@ -258,7 +256,7 @@ public class HighFunctionDBUtil {
 
 		Register reg = var.getRegister();
 		if (reg != null) {
-			program.getReferenceManager().addRegisterReference(local.getPCAddress(), -1, reg,
+			program.getReferenceManager().addRegisterReference(symbol.getPCAddress(), -1, reg,
 				RefType.WRITE, source);
 		}
 
@@ -282,13 +280,15 @@ public class HighFunctionDBUtil {
 		long hash = var.getFirstStorageVarnode().getOffset();
 		Iterator<HighSymbol> symbols = highFunction.getLocalSymbolMap().getSymbols();
 		while (symbols.hasNext()) {
-			HighVariable high = symbols.next().getHighVariable();
-			if (!(high instanceof HighLocal)) {
+			HighSymbol symbol = symbols.next();
+			if (!(symbol instanceof DynamicSymbol)) {
 				continue;
 			}
 			// Note: assumes there is only one hash method used for unique locals
-			if (((HighLocal) high).buildDynamicHash() == hash) {
-				return true;
+			if (((DynamicSymbol) symbol).getHash() == hash) {
+				if (symbol.getHighVariable() != null) {
+					return true;		// Hash successfully attached to a variable
+				}
 			}
 		}
 		return false;
@@ -301,25 +301,22 @@ public class HighFunctionDBUtil {
 	 * exists within the function at the same first-use-offset.
 	 * @return existing variable with identical storage and first-use offset or null
 	 */
-	private static Variable clearConflictingLocalVariables(HighLocal local) {
+	private static Variable clearConflictingLocalVariables(HighSymbol local) {
 
-		if (local instanceof HighParam) {
-			throw new IllegalArgumentException();
+		if (local instanceof MappedSymbol) {
+			if (((MappedSymbol) local).getSlot() >= 0) {	// Don't clear parameters
+				throw new IllegalArgumentException();
+			}
 		}
 
 		HighFunction highFunction = local.getHighFunction();
 		Function func = highFunction.getFunction();
 
-		HighSymbol symbol = local.getSymbol();
 		VariableStorage storage = local.getStorage();
 		int firstUseOffset = local.getFirstUseOffset();
-		if (symbol instanceof DynamicSymbol || storage.isUniqueStorage()) {
+		if (local instanceof DynamicSymbol) {
 
-			if (!(symbol instanceof DynamicSymbol)) {
-				return null;
-			}
-
-			DynamicSymbol dynamicSym = (DynamicSymbol) symbol;
+			DynamicSymbol dynamicSym = (DynamicSymbol) local;
 			for (Variable ul : func.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER)) {
 				// Note: assumes there is only one hash method used for unique locals
 				if (ul.getFirstStorageVarnode().getOffset() == dynamicSym.getHash()) {
@@ -352,15 +349,15 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Get database parameter which corresponds to HighParam, where we anticipate that
-	 * the parameter will be modified to match the HighParam. The entire prototype is
+	 * Get database parameter which corresponds to the given symbol, where we anticipate that
+	 * the parameter will be modified to match the symbol. The entire prototype is
 	 * committed to the database if necessary. An exception is thrown if a modifiable parameter
 	 * can't be found/created.
-	 * @param param is the HighParam describing the desired function parameter
+	 * @param param is the HighSymbol describing the desired function parameter
 	 * @return the matching parameter that can be modified
 	 * @throws InvalidInputException if the desired parameter cannot be modified
 	 */
-	private static Parameter getDatabaseParameter(HighParam param) throws InvalidInputException {
+	private static Parameter getDatabaseParameter(MappedSymbol param) throws InvalidInputException {
 
 		HighFunction highFunction = param.getHighFunction();
 		Function function = highFunction.getFunction();
@@ -392,10 +389,9 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Retype the specified variable in the database.  All parameters may be flushed
+	 * Rename and/or retype the specified variable in the database.  All parameters may be flushed
 	 * to the database if typed parameter inconsistency detected.
-	 * Only variable types HighParam, HighLocal and HighGlobal are supported.
-	 * @param variable
+	 * @param variable is the symbol being updated
 	 * @param name new variable name or null to use retain current variable name
 	 * @param dataType newly assigned data type or null to retain current variable datatype.
 	 * Only a fixed-length data type may be specified.  If size varies from the current size,
@@ -407,7 +403,7 @@ public class HighFunctionDBUtil {
 	 * variable/label within the function's namespace
 	 * @throws UnsupportedOperationException if unsupported variable type is specified
 	 */
-	public static void updateDBVariable(HighVariable variable, String name, DataType dataType,
+	public static void updateDBVariable(HighSymbol variable, String name, DataType dataType,
 			SourceType source) throws InvalidInputException, DuplicateNameException {
 
 		HighFunction highFunction = variable.getHighFunction();
@@ -427,10 +423,11 @@ public class HighFunctionDBUtil {
 
 		boolean isRename = name != null;
 
-		if (variable instanceof HighParam) {
-			HighParam param = (HighParam) variable;
-			Parameter dbParam = getDatabaseParameter(param);
-			VariableStorage storage = param.getStorage();
+		if (variable.isParameter()) {
+			MappedSymbol mappedSymbol = (MappedSymbol) variable;
+
+			Parameter dbParam = getDatabaseParameter(mappedSymbol);
+			VariableStorage storage = mappedSymbol.getStorage();
 			if (dataType != null) {
 				if (resized && function.hasCustomVariableStorage()) {
 					VariableStorage newStorage =
@@ -445,12 +442,20 @@ public class HighFunctionDBUtil {
 				dbParam.setName(name, source);
 			}
 		}
-		else if (variable instanceof HighLocal) {
-			HighLocal local = (HighLocal) variable;
-			VariableStorage storage = local.getStorage();
+		else if (!variable.isGlobal()) {
+			Variable var;
+			VariableStorage storage;
+			HighVariable tmpHigh = variable.getHighVariable();
+			if (tmpHigh != null && tmpHigh.getRepresentative().isUnique()) {
+				storage =
+					DynamicSymbol.buildDynamicStorage(tmpHigh.getRepresentative(), highFunction);
+				var = null;
+			}
+			else {
+				storage = variable.getStorage();
+				var = clearConflictingLocalVariables(variable);
+			}
 			boolean usesHashStorage = storage.isHashStorage();
-
-			Variable var = clearConflictingLocalVariables(local);
 			if (dataType == null) {
 				if (var != null) {
 					dataType = var.getDataType();	// Use preexisting datatype if it fits in desired storage
@@ -463,21 +468,21 @@ public class HighFunctionDBUtil {
 			if (resized) {
 				if (usesHashStorage) {
 					throw new InvalidInputException(
-						"Variable size (" + local.getSize() + ") may not be changed: type '" +
+						"Variable size (" + variable.getSize() + ") may not be changed: type '" +
 							dataType.getName() + "' length is " + dataType.getLength());
 				}
 				storage = VariableUtilities.resizeStorage(storage, dataType, true, function);
 			}
 
 			if (var == null) {
-				var = createLocalVariable(local, dataType, storage, source);
+				var = createLocalVariable(variable, dataType, storage, source);
 			}
 			else {
 				// fixup reused variable
 				var.setDataType(dataType, storage, true, source);
-				if (name == null) {
-					name = local.getName(); // must update name if not specified
-				}
+			}
+			if (name == null) {
+				name = variable.getName(); // must update name if not specified
 			}
 			try {
 				// must set/correct name
@@ -499,7 +504,7 @@ public class HighFunctionDBUtil {
 				}
 			}
 		}
-		else if (variable instanceof HighGlobal) {
+		else {	// A global symbol
 
 			VariableStorage storage = variable.getStorage();
 			if (!storage.isMemoryStorage()) {
@@ -507,21 +512,20 @@ public class HighFunctionDBUtil {
 					"Database supports global memory variables only");
 			}
 
-			HighGlobal global = (HighGlobal) variable;
 			if (name == null) {
-				name = global.getName();
+				name = variable.getName();
 				if (name != null && SymbolUtilities.isDynamicSymbolPattern(name, true)) {
 					name = null;
 				}
 			}
 
 			if (dataType != null) {
-				setGlobalDataType(global, dataType);
+				setGlobalDataType(variable, dataType);
 			}
 
 			if (name != null) {
 				try {
-					setGlobalName((HighGlobal) variable, variable.getName(), source);
+					setGlobalName(variable, variable.getName(), source);
 				}
 				catch (DuplicateNameException e) {
 					if (isRename) {
@@ -530,13 +534,9 @@ public class HighFunctionDBUtil {
 				}
 			}
 		}
-		else {
-			throw new UnsupportedOperationException(
-				"Database support not provided for " + variable.getClass().getSimpleName());
-		}
 	}
 
-	private static void setGlobalName(HighGlobal global, String name, SourceType source)
+	private static void setGlobalName(HighSymbol global, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
 		Program program = global.getHighFunction().getFunction().getProgram();
 		VariableStorage storage = global.getStorage();
@@ -554,7 +554,7 @@ public class HighFunctionDBUtil {
 		}
 	}
 
-	private static Data setGlobalDataType(HighGlobal global, DataType dt)
+	private static Data setGlobalDataType(HighSymbol global, DataType dt)
 			throws InvalidInputException {
 		Program program = global.getHighFunction().getFunction().getProgram();
 		VariableStorage storage = global.getStorage();

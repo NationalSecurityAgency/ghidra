@@ -64,9 +64,5 @@ public class ClangVariableDecl extends ClangTokenGroup {
 		}
 		typevar = sym.getHighVariable();
 		datatype = sym.getDataType();
-		if (typevar == null) {
-			Msg.error(this, "High variable not found: " + sym.getName());
-			return;
-		}
 	}
 }

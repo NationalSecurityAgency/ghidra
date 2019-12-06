@@ -15,11 +15,12 @@
  */
 package ghidra.program.model.pcode;
 
+import java.util.ArrayList;
+
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.VariableStorage;
-import ghidra.util.Msg;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.xml.SpecXmlUtils;
+import ghidra.xml.XmlElement;
+import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -29,11 +30,20 @@ import ghidra.util.exception.InvalidInputException;
  */
 public abstract class HighVariable {
 
-	private String name;
-	private DataType type;
-	private Varnode represent;		// A representative varnode
-	private Varnode[] instances;	// Instances of this high-level variable
-	private HighFunction function;	// associated function
+	protected String name;
+	protected DataType type;
+	protected Varnode represent;		// A representative varnode
+	protected Varnode[] instances;		// Instances of this high-level variable
+	protected int offset = -1;			// Offset (in bytes) into containing symbol (-1 indicates whole match)
+	protected HighFunction function;	// associated function
+
+	/**
+	 * Constructor for use with restoreXml
+	 * @param func is the HighFunction this variable belongs to
+	 */
+	protected HighVariable(HighFunction func) {
+		function = func;
+	}
 
 	protected HighVariable(String nm, DataType tp, Varnode rep, Varnode[] inst, HighFunction func) {
 		name = nm;
@@ -105,6 +115,15 @@ public abstract class HighVariable {
 	public abstract HighSymbol getSymbol();
 
 	/**
+	 * Get the offset of this variable into its containing HighSymbol.  If the value
+	 * is -1, this indicates that this HighVariable matches the size and storage of the symbol.
+	 * @return the offset
+	 */
+	public int getOffset() {
+		return offset;
+	}
+
+	/**
 	 * Attach an instance or additional location the variable can be found in.
 	 * 
 	 * @param inst varnode where variable can reside.
@@ -121,16 +140,46 @@ public abstract class HighVariable {
 		}
 	}
 
-	public VariableStorage getStorage() {
-		Program program = getHighFunction().getFunction().getProgram();
-		try {
-			if (represent != null && (represent.isAddress() || represent.isRegister())) {
-				return new VariableStorage(program, represent);
-			}
+	/**
+	 * Restore the data-type and the Varnode instances of this HighVariable.
+	 * The "representative" Varnode is also populated.
+	 * @param parser is the XML stream
+	 * @param el is the root <high> tag
+	 * @throws PcodeXMLException if the XML is not valid
+	 */
+	protected void restoreInstances(XmlPullParser parser, XmlElement el)
+			throws PcodeXMLException {
+		int repref = SpecXmlUtils.decodeInt(el.getAttribute("repref"));
+		Varnode rep = function.getRef(repref);
+		if (rep == null) {
+			throw new PcodeXMLException("Undefined varnode reference");
 		}
-		catch (InvalidInputException e) {
-			Msg.error(this, "Failed to define variable storage: " + this, e);
+
+		type = null;
+
+		ArrayList<Varnode> vnlist = new ArrayList<Varnode>();
+		if (parser.peek().isStart()) {
+			type = function.getDataTypeManager().readXMLDataType(parser);
 		}
-		return VariableStorage.UNASSIGNED_STORAGE;
+
+		if (type == null) {
+			throw new PcodeXMLException("Missing <type> for HighVariable");
+		}
+
+		while (parser.peek().isStart()) {
+			Varnode vn = Varnode.readXML(parser, function);
+			vnlist.add(vn);
+		}
+		Varnode[] vnarray = new Varnode[vnlist.size()];
+		vnlist.toArray(vnarray);
+		attachInstances(vnarray, rep);
+		setHighOnInstances();
 	}
+
+	/**
+	 * Restore this HighVariable from a <high> XML tag
+	 * @param parser is the XML stream
+	 * @throws PcodeXMLException if the XML is not valid
+	 */
+	public abstract void restoreXml(XmlPullParser parser) throws PcodeXMLException;
 }

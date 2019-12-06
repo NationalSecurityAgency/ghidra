@@ -99,6 +99,10 @@ public class GlobalSymbolMap {
 	 * @return the new HighSymbol or null
 	 */
 	public HighCodeSymbol newSymbol(long id, Address addr, DataType dataType, int sz) {
+		if (dataType == null) {
+			dataType = DataType.DEFAULT;
+			sz = 1;
+		}
 		HighCodeSymbol symbol = new HighCodeSymbol(id, addr, dataType, sz, func);
 		insertSymbol(symbol, addr);
 		return symbol;

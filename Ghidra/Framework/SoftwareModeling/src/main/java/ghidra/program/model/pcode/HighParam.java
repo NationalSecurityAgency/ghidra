@@ -17,6 +17,7 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -25,6 +26,14 @@ import ghidra.program.model.data.DataType;
  */
 public class HighParam extends HighLocal {
 	private int slot;
+
+	/**
+	 * Constructor for use with restoreXml
+	 * @param high is the HighFunction containing this parameter
+	 */
+	public HighParam(HighFunction high) {
+		super(high);
+	}
 
 	/**
 	 * @param tp data type of variable
@@ -46,8 +55,13 @@ public class HighParam extends HighLocal {
 	}
 
 	@Override
-	protected int getFirstUseOffset() {
-		return 0;
+	public void restoreXml(XmlPullParser parser) throws PcodeXMLException {
+		super.restoreXml(parser);
+		slot = 0;
+		HighSymbol sym = getSymbol();
+		if (sym instanceof MappedSymbol) {
+			slot = ((MappedSymbol) sym).getSlot();
+		}
 	}
 
 }

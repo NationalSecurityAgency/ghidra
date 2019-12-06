@@ -101,7 +101,7 @@ public class LocalSymbolMap {
 			HighSymbol sym;
 			if (storage.isHashStorage()) {
 				sym = newDynamicSymbol(id, name, dt, sz, storage.getFirstVarnode().getOffset(),
-					defAddr, 0);
+					defAddr);
 			}
 			else {
 				sym = newMappedSymbol(id, name, dt, storage, defAddr, -1);
@@ -167,16 +167,16 @@ public class LocalSymbolMap {
 		String typename = node.getAttribute("type");
 		HighSymbol res = null;
 		if (typename == null) {
-			res = new MappedSymbol();
+			res = new MappedSymbol(func);
 		}
 		else if (typename.equals("dynamic")) {
-			res = new DynamicSymbol();
+			res = new DynamicSymbol(func);
 		}
 		else if (typename.equals("equate")) {
-			res = new EquateSymbol();
+			res = new EquateSymbol(func);
 		}
 
-		res.restoreXML(parser, func);
+		res.restoreXML(parser);
 		parser.end(node);
 		insertSymbol(res);
 		return res;
@@ -225,7 +225,7 @@ public class LocalSymbolMap {
 		ArrayList<MappedSymbol> parms = new ArrayList<MappedSymbol>();
 		while (parser.peek().isStart()) {
 			HighSymbol sym = parseSymbolXML(parser);
-			if (sym instanceof MappedSymbol && ((MappedSymbol) sym).isParameter()) {
+			if (sym.isParameter()) {
 				parms.add((MappedSymbol) sym);
 			}
 		}
@@ -339,11 +339,11 @@ public class LocalSymbolMap {
 	}
 
 	public DynamicSymbol newDynamicSymbol(long id, String nm, DataType dt, int sz, long hash,
-			Address pcaddr, int format) {
+			Address pcaddr) {
 		if (id == 0) {
 			id = getNextId();
 		}
-		DynamicSymbol sym = new DynamicSymbol(id, nm, dt, sz, func, pcaddr, hash, format);
+		DynamicSymbol sym = new DynamicSymbol(id, nm, dt, sz, func, pcaddr, hash);
 		insertSymbol(sym);
 		return sym;
 	}
@@ -365,23 +365,21 @@ public class LocalSymbolMap {
 	}
 
 	private void newEquateSymbol(long uniqueId, String nm, long val, long hash, Address addr,
-			int format,
 			TreeMap<String, DynamicSymbol> constantSymbolMap) {
 		DynamicSymbol eqSymbol = constantSymbolMap.get(nm);
 		if (eqSymbol != null) {
-			eqSymbol.addReference(addr, hash, format);	// New reference to same symbol
-			return;
+			return;			// New reference to same symbol
 		}
 		if (uniqueId == 0) {
 			uniqueId = getNextId();
 		}
 		int conv = EquateSymbol.convertName(nm, val);
 		if (conv < 0) {
-			eqSymbol = new EquateSymbol(uniqueId, nm, val, func, addr, hash, format);
+			eqSymbol = new EquateSymbol(uniqueId, nm, val, func, addr, hash);
 			eqSymbol.setNameLock(true);
 		}
 		else {
-			eqSymbol = new EquateSymbol(uniqueId, conv, val, func, addr, hash, format);
+			eqSymbol = new EquateSymbol(uniqueId, conv, val, func, addr, hash);
 		}
 		//Do NOT setTypeLock
 		constantSymbolMap.put(nm, eqSymbol);
@@ -410,7 +408,7 @@ public class LocalSymbolMap {
 					if (constantSymbolMap == null) {
 						constantSymbolMap = new TreeMap<String, DynamicSymbol>();
 					}
-					newEquateSymbol(0, eq.getDisplayName(), eq.getValue(), element, defAddr, 0,
+					newEquateSymbol(0, eq.getDisplayName(), eq.getValue(), element, defAddr,
 						constantSymbolMap);
 				}
 			}

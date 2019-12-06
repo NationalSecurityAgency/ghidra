@@ -129,13 +129,6 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 
 		boolean commitRequired = checkFullCommit(var, hfunction);
 		if (commitRequired) {
-//			int resp = OptionDialog.showOptionDialog(tool.getToolFrame(),
-//				"Parameter Commit Required",
-//				"Retyping a parameter requires all other parameters to be committed!\nContinue with retype?",
-//				"Continue");
-//			if (resp != OptionDialog.OPTION_ONE) {
-//				return;
-//			}
 			exactSpot = null;		// Don't try to split out if commit is required
 		}
 
@@ -176,7 +169,7 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 					Msg.showError(this, null, "Parameter Commit Failed", e.getMessage());
 				}
 			}
-			HighFunctionDBUtil.updateDBVariable(var, null, dt, SourceType.USER_DEFINED);
+			HighFunctionDBUtil.updateDBVariable(var.getSymbol(), null, dt, SourceType.USER_DEFINED);
 			successfulMod = true;
 		}
 		catch (DuplicateNameException e) {
@@ -298,7 +291,7 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 		}
 
 		for (int i = 0; i < numParams; i++) {
-			HighParam param = localSymbolMap.getParam(i);
+			MappedSymbol param = localSymbolMap.getParamSymbol(i);
 			if (param.getSlot() != i) {
 				return true;
 			}
@@ -350,11 +343,10 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 				return false;
 			}
 		}
-		if (variable instanceof HighConstant) {
-//		getPopupMenuData().setMenuItemName("Retype Constant");
-//		return true;
+		if (variable.getSymbol() == null) {
+			return false;
 		}
-		else if (variable instanceof HighLocal) {
+		if (variable instanceof HighLocal) {
 			getPopupMenuData().setMenuItemName("Retype Variable");
 			return true;
 		}
@@ -412,7 +404,7 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 					return;
 				}
 				variable = RenameVariableAction.forgeHighVariable(addr, controller);
-				if (variable == null) {
+				if (variable == null || variable.getSymbol() == null || variable.getOffset() >= 0) {
 					return;
 				}
 			}

@@ -129,6 +129,7 @@ public:
   bool isUnattached(void) const { return inst.empty(); }	///< Return \b true if \b this has no member Varnode
   bool isTypeLock(void) const { updateType(); return ((flags & Varnode::typelock)!=0); }	///< Return \b true if \b this is \e typelocked
   bool isNameLock(void) const { updateFlags(); return ((flags & Varnode::namelock)!=0); }	///< Return \b true if \b this is \e namelocked
+  void saveXml(ostream &s) const;		///< Save the variable to stream as an XML \<high\> tag
 #ifdef MERGEMULTI_DEBUG
   void verifyCover(void) const;
 #endif

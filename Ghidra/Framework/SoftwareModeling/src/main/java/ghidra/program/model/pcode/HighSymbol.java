@@ -18,6 +18,7 @@ package ghidra.program.model.pcode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -37,7 +38,8 @@ public abstract class HighSymbol {
 	
 	private HighVariable highVariable;
 
-	public HighSymbol() {	// For use with restoreXML
+	public HighSymbol(HighFunction func) {	// For use with restoreXML
+		function = func;
 	}
 
 	public HighSymbol(long uniqueId, String nm, DataType tp, int sz, Address pc,
@@ -80,6 +82,13 @@ public abstract class HighSymbol {
 		return pcaddr;
 	}
 
+	protected int getFirstUseOffset() {
+		if (pcaddr == null) {
+			return 0;
+		}
+		return (int) pcaddr.subtract(getHighFunction().getFunction().getEntryPoint());
+	}
+
 	public HighFunction getHighFunction() {
 		return function;
 	}
@@ -108,13 +117,32 @@ public abstract class HighSymbol {
 		return readonly;
 	}
 
+	/**
+	 * Is this symbol a parameter for a function
+	 * @return true if this is a parameter
+	 */
+	public boolean isParameter() {
+		return false;
+	}
+
+	/**
+	 * Is this symbol in the global scope or some other global namespace
+	 * @return true if this is global
+	 */
+	public boolean isGlobal() {
+		return false;
+	}
+
+	public abstract VariableStorage getStorage();
+
 	public abstract String buildXML();
 	
-	public abstract void restoreXML(XmlPullParser parser, HighFunction func)
+	public abstract void restoreXML(XmlPullParser parser)
 			throws PcodeXMLException;
-	
-	protected void restoreSymbolXML(XmlElement symel, HighFunction func) throws PcodeXMLException {
-		function = func;
+
+	protected abstract void restoreEntryXML(XmlPullParser parser) throws PcodeXMLException;
+
+	protected void restoreSymbolXML(XmlElement symel) throws PcodeXMLException {
 		id = SpecXmlUtils.decodeLong(symel.getAttribute("id"));
 		if (id == 0) {
 			throw new PcodeXMLException("missing unique symbol id");

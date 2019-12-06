@@ -151,6 +151,9 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 				return false;
 			}
 		}
+		if (variable.getSymbol() == null) {
+			return false;
+		}
 		if (variable instanceof HighLocal) {
 			getPopupMenuData().setMenuItemName("Rename Variable");
 			return true;
@@ -159,11 +162,6 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 			getPopupMenuData().setMenuItemName("Rename Global");
 			return true;
 		}
-//TODO: Constant equates do not work properly with decompiler
-//	else if (variable instanceof HighConstant) {
-//		getPopupMenuData().setMenuItemName("Rename Constant");
-//		return true;
-//	}
 		return false;
 	}
 
@@ -179,20 +177,18 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 				variable = forgeHighVariable(addr, controller);
 			}
 		}
-//TODO: Constant equates do not work properly with decompiler
-//	if (variable instanceof HighConstant) {
-//		nameTask =
-//			new RenameConstantTask(tool, tokenAtCursor.getText(), (HighConstant) variable,
-//				controller.getProgram());
-//	}
-//	else 
 		if (variable instanceof HighLocal) {
 			nameTask =
-				new RenameVariableTask(tool, variable.getName(), controller.getHighFunction(),
-					variable, tokenAtCursor.getVarnode(), SourceType.USER_DEFINED);
+				new RenameVariableTask(tool, variable.getSymbol().getName(),
+					controller.getHighFunction(), variable, tokenAtCursor.getVarnode(),
+					SourceType.USER_DEFINED);
 		}
 		else if (variable instanceof HighGlobal) {
-			Address addr = variable.getRepresentative().getAddress();
+			Address addr = null;
+			HighSymbol sym = variable.getSymbol();
+			if (sym instanceof HighCodeSymbol) {
+				addr = ((HighCodeSymbol) sym).getStorage().getMinAddress();
+			}
 			if (addr == null || !addr.isMemoryAddress()) {
 				Msg.showError(this, tool.getToolFrame(), "Rename Failed",
 					"Memory storage not found for global variable");

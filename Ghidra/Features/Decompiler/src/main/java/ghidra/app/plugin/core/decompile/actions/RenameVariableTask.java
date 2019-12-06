@@ -55,7 +55,7 @@ public class RenameVariableTask extends RenameTask {
 				HighFunctionDBUtil.commitReturnToDatabase(hfunction, signatureSrcType);
 			}
 		}
-		HighFunctionDBUtil.updateDBVariable(var, newName, null, srctype);
+		HighFunctionDBUtil.updateDBVariable(var.getSymbol(), newName, null, srctype);
 	}
 
 	@Override
@@ -79,6 +79,10 @@ public class RenameVariableTask extends RenameTask {
 				errorMsg = "Rename Failed: " + e.getMessage();
 				return false;
 			}
+		}
+		if (var.getSymbol() == null) {
+			errorMsg = "Rename Failed: No symbol";
+			return false;
 		}
 		return true;
 	}
