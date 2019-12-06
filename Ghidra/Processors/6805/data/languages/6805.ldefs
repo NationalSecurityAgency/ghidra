@@ -18,4 +18,15 @@
 	<external_name tool="IDA-PRO" name="6808"/>
 	<external_name tool="IDA-PRO" name="6809"/>
   </language>
+  <language processor="6805"
+            endian="big"
+            size="16"
+            variant="MC146805E2"
+            version="1.0"
+            slafile="mc146805e2.sla"
+            processorspec="mc146805e2.pspec"
+            id="6805:BE:16:MC146805E2">
+    <description>Motorola MC146805E2 16-bit Microcontroller</description>
+    <compiler name="default" spec="6805.cspec" id="default"/>
+   </language>
 </language_definitions>
