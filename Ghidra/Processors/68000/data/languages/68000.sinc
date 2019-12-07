@@ -1586,23 +1586,21 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 											  getbit(CF,regdn,31); VF=0; resflags(regdn); }
 :ror eaw			is (opbig=0xe6 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw			{ eaw = (eaw<<15)|(eaw>>1); getbit(CF,eaw,15); VF=0; resflags(eaw); }
 
-:roxl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=2 & regdnb	{ sreg:2 = (zext(regdnb)<<1)|zext(XF); sreg=(sreg<<cntreg)|(sreg>>(9-cntreg));
-											  XF = (sreg & 1)!=0; sreg=sreg>>1; regdnb=sreg:1; CF=XF; VF=0; resflags(regdnb); }
-:roxl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=2 & regdnw	{ sreg:4 = (zext(regdnw)<<1)|zext(XF); sreg=(sreg<<cntreg)|(sreg>>(17-cntreg));
-											  XF = (sreg & 1)!=0; sreg=sreg>>1; regdnw=sreg:2; CF=XF; VF=0; resflags(regdnw); }
-:roxl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=2 & regdn 	{ sreg:8 = (zext(regdn)<<1)|zext(XF); sreg=(sreg<<cntreg)|(sreg>>(33-cntreg));
-											  XF = (sreg & 1)!=0; sreg=sreg>>1; regdn=sreg:4; CF=XF; VF=0; resflags(regdn); }
-:roxl eaw			is (opbig=0xe5 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw			{ sreg:4 = (zext(eaw)<<1)|zext(XF); sreg=(sreg<<1)|(sreg>>16);
-											  XF = (sreg & 1)!=0; sreg=sreg>>1; eaw=sreg:2; CF=XF; VF=0; resflags(eaw); }
+:roxl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=2 & regdnb	{ CF=(regdnb&(1<<( 8-cntreg)))!=0; regdnb=(zext(XF)<<(cntreg-1))|(regdnb<<cntreg)|(regdnb>>(9-cntreg));
+                                                                                      XF=CF; VF=0; resflags(regdnb); }
+:roxl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=2 & regdnw	{ CF=(regdnw&(1<<(16-cntreg)))!=0; regdnw=(zext(XF)<<(cntreg-1))|(regdnw<<cntreg)|(regdnw>>(17-cntreg));
+                                                                                      XF=CF; VF=0; resflags(regdnw); }
+:roxl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=2 & regdn 	{ CF=(regdn &(1<<(32-cntreg)))!=0; regdn =(zext(XF)<<(cntreg-1))|(regdn <<cntreg)|(regdn >>(33-cntreg));
+                                                                                      XF=CF; VF=0; resflags(regdn ); }
+:roxl eaw			is (opbig=0xe5 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw		{ CF=(eaw&0x8000)!=0; eaw=zext(XF)|(eaw<<1)|(eaw>>16); XF=CF; VF=0; resflags(eaw); }
 
-:roxr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=2 & regdnb	{ sreg:2 = (zext(regdnb)<<1)|zext(XF); sreg=(sreg<<(9-cntreg))|(sreg>>cntreg);
-											  XF = (sreg & 1)!=0; sreg=sreg>>1; regdnb=sreg:1; CF=XF; VF=0; resflags(regdnb); }
-:roxr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=2 & regdnw	{ sreg:4 = (zext(regdnw)<<1)|zext(XF); sreg=(sreg<<(17-cntreg))|(sreg>>cntreg);
-											  XF = (sreg & 1)!=0; sreg=sreg>>1; regdnw=sreg:2; CF=XF; VF=0; resflags(regdnw); }
-:roxr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=2 & regdn 	{ sreg:8 = (zext(regdn)<<1)|zext(XF); sreg=(sreg<<(33-cntreg))|(sreg>>cntreg);
-											  XF = (sreg & 1)!=0; sreg=sreg>>1; regdn=sreg:4; CF=XF; VF=0; resflags(regdn); }
-:roxr eaw			is (opbig=0xe4 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw			{ sreg:4 = (zext(eaw)<<1)|zext(XF); sreg=(sreg<<16)|(sreg>>1);
-											  XF = (sreg & 1)!=0; sreg=sreg>>1; eaw=sreg:2; CF=XF; VF=0; resflags(eaw); }
+:roxr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=2 & regdnb	{ CF=(regdnb&(1<<(cntreg-1)))!=0; regdnb=(zext(XF)<<( 8-cntreg))|(regdnb>>cntreg)|(regdnb<<(9 -cntreg));
+                                                                                      XF=CF; VF=0; resflags(regdnb); }
+:roxr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=2 & regdnw	{ CF=(regdnw&(1<<(cntreg-1)))!=0; regdnw=(zext(XF)<<(16-cntreg))|(regdnw>>cntreg)|(regdnw<<(17-cntreg));
+                                                                                      XF=CF; VF=0; resflags(regdnw); }
+:roxr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=2 & regdn 	{ CF=(regdn &(1<<(cntreg-1)))!=0; regdn =(zext(XF)<<(32-cntreg))|(regdn >>cntreg)|(regdn <<(33-cntreg));
+                                                                                      XF=CF; VF=0; resflags(regdn); }
+:roxr eaw			is (opbig=0xe4 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw		{ CF=(eaw&1)!=0; eaw=(zext(XF)<<15)|(eaw>>1); XF=CF; VF=0; resflags(eaw); }
 
 :rtd "#"^d16			is opbig=0x4e & op37=14 & op02=4; d16				{ PC = *SP; SP = SP + 4 + d16; return [PC]; }
 :rte				is d16=0x4e73							{ tmp:4 = 0; return [tmp]; }
