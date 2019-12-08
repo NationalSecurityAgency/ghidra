@@ -86,7 +86,7 @@ public class PeDataType extends FactoryStructureDataType {
 				return;
 			}
 
-			addComponent(struct, ntHeader.toDataType(), NTHeader.NAME);
+			addComponent(struct, ntHeader.toDataType(), ntHeader.getName());
 
 			SectionHeader[] sections = ntHeader.getFileHeader().getSectionHeaders();
 			for (SectionHeader section : sections) {
