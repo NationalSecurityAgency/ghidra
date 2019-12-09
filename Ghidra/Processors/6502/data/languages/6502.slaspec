@@ -189,7 +189,13 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :BRK   is op=0x00
 {
-	goto inst_start;
+	*:2 (SP - 1) = inst_next;
+	SP = SP - 2;
+	B = 1;
+	pushSR();
+	I = 1;
+	local target:2 = 0xFFFE;
+	goto [*:2 target];
 }
 
 :BVC  REL			is op=0x50; REL
