@@ -1,12 +1,8 @@
 /* ###
  * IP: Public Domain
- * REVIEWED: YES
  * NOTE: https://github.com/soffes/pngdefry
  */
 package ghidra.file.formats.ios.png;
-
-import ghidra.file.formats.zlib.ZLIB;
-import ghidra.util.task.TaskMonitor;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -14,6 +10,9 @@ import java.util.*;
 import java.util.zip.*;
 
 import org.apache.commons.compress.utils.IOUtils;
+
+import ghidra.file.formats.zlib.ZLIB;
+import ghidra.util.task.TaskMonitor;
 
 public class CrushedPNGUtil {
 
@@ -30,7 +29,7 @@ public class CrushedPNGUtil {
 		boolean foundCgBI = false;
 		IHDRChunk ihdrChunk = null;
 		byte[] repackArray = null;
-		List<PNGChunk> wantedChunks = new ArrayList<PNGChunk>();
+		List<PNGChunk> wantedChunks = new ArrayList<>();
 		ByteArrayOutputStream idatStream = new ByteArrayOutputStream();
 
 		for (PNGChunk chunk : png.getChunkArray()) {
@@ -523,6 +522,7 @@ public class CrushedPNGUtil {
 					break;
 
 			}
+			srcPtr += 4 * width;
 		}
 	}
 
