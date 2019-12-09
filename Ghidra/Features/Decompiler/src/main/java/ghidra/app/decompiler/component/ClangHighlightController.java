@@ -83,6 +83,10 @@ public abstract class ClangHighlightController {
 		return null;
 	}
 
+	public TokenHighlightColors getSecondaryHighlightColors() {
+		return secondaryHighlightColors;
+	}
+
 	public TokenHighlights getPrimaryHighlightedTokens() {
 		return primaryHighlightTokens;
 	}
@@ -164,22 +168,6 @@ public abstract class ClangHighlightController {
 		addPrimaryHighlights(tokens, hlColor);
 	}
 
-	public void toggleSecondaryMultiHighlight(ClangToken token,
-			Supplier<? extends Collection<ClangToken>> lazyTokens) {
-
-		String text = token.getText();
-
-		// toggle the highlight		
-		HighlightToken highlight = secondaryHighlightTokens.get(token);
-		if (highlight == null) {
-			Color highlightColor = secondaryHighlightColors.getColor(text);
-			addSecondaryHighlights(lazyTokens, highlightColor);
-		}
-		else {
-			removeSecondaryHighlights(lazyTokens);
-		}
-	}
-
 	public boolean hasPrimaryHighlight(ClangToken token) {
 		return primaryHighlightTokens.contains(token);
 	}
@@ -204,7 +192,7 @@ public abstract class ClangHighlightController {
 		return hlToken;
 	}
 
-	private void removeSecondaryHighlights(Supplier<? extends Collection<ClangToken>> tokens) {
+	public void removeSecondaryMultiHighlight(Supplier<? extends Collection<ClangToken>> tokens) {
 		for (ClangToken clangToken : tokens.get()) {
 			secondaryHighlightTokens.remove(clangToken);
 			updateHighlightColor(clangToken);
@@ -212,7 +200,14 @@ public abstract class ClangHighlightController {
 		notifyListeners();
 	}
 
-	public void addSecondaryHighlights(Supplier<? extends Collection<ClangToken>> tokens,
+	public void addSecondaryMultiHighlight(ClangToken token,
+			Supplier<? extends Collection<ClangToken>> tokens) {
+		String text = token.getText();
+		Color highlightColor = secondaryHighlightColors.getColor(text);
+		addSecondaryMultiHighlight(tokens, highlightColor);
+	}
+
+	public void addSecondaryMultiHighlight(Supplier<? extends Collection<ClangToken>> tokens,
 			Color hlColor) {
 		Function<ClangToken, Color> colorProvider = token -> hlColor;
 		addTokensToHighlights(tokens.get(), colorProvider, secondaryHighlightTokens);

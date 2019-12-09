@@ -67,6 +67,10 @@ public class TokenHighlights implements Iterable<HighlightToken> {
 		return highFunction.getFunction();
 	}
 
+	public boolean isEmpty() {
+		return size() == 0;
+	}
+
 	public int size() {
 		return highlightsByToken.size();
 	}

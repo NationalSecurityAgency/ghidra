@@ -88,8 +88,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private SelectAllAction selectAllAction;
 
-	private ToggleSecondaryHighlightAction setHighlightAction;
-	private RemoveSecondaryHighlightsAction removePanelHighlightsAction;
+	private SetSecondaryHighlightAction setSecondaryHighlightAction;
+	private SetSecondaryHighlightColorChooserAction setSecondaryHighlightColorChooserAction;
+	private RemoveAllSecondaryHighlightsAction removeAllSecondadryHighlightsAction;
+	private RemoveSecondaryHighlightAction removeSecondaryHighlightAction;
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
@@ -821,11 +823,17 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		//
 		// Highlight
 		//
-		setHighlightAction = new ToggleSecondaryHighlightAction();
-		setGroupInfo(setHighlightAction, highlightGroup, subGroupPosition++);
+		setSecondaryHighlightAction = new SetSecondaryHighlightAction();
+		setGroupInfo(setSecondaryHighlightAction, highlightGroup, subGroupPosition++);
 
-		removePanelHighlightsAction = new RemoveSecondaryHighlightsAction();
-		setGroupInfo(removePanelHighlightsAction, highlightGroup, subGroupPosition++);
+		setSecondaryHighlightColorChooserAction = new SetSecondaryHighlightColorChooserAction();
+		setGroupInfo(setSecondaryHighlightColorChooserAction, highlightGroup, subGroupPosition++);
+
+		removeSecondaryHighlightAction = new RemoveSecondaryHighlightAction();
+		setGroupInfo(removeSecondaryHighlightAction, highlightGroup, subGroupPosition++);
+
+		removeAllSecondadryHighlightsAction = new RemoveAllSecondaryHighlightsAction();
+		setGroupInfo(removeAllSecondadryHighlightsAction, highlightGroup, subGroupPosition++);
 
 		//
 		// Comments
@@ -892,8 +900,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(lockProtoAction);
 		addLocalAction(lockLocalAction);
 		addLocalAction(renameVarAction);
-		addLocalAction(setHighlightAction);
-		addLocalAction(removePanelHighlightsAction);
+		addLocalAction(setSecondaryHighlightAction);
+		addLocalAction(setSecondaryHighlightColorChooserAction);
+		addLocalAction(removeSecondaryHighlightAction);
+		addLocalAction(removeAllSecondadryHighlightsAction);
 		addLocalAction(retypeVarAction);
 		addLocalAction(decompilerCreateStructureAction);
 		tool.addAction(listingCreateStructureAction);

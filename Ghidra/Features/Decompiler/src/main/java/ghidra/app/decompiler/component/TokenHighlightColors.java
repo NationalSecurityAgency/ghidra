@@ -16,8 +16,7 @@
 package ghidra.app.decompiler.component;
 
 import java.awt.Color;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A class to create and store colors related to token names
@@ -27,6 +26,7 @@ public class TokenHighlightColors {
 	private int minColorSaturation = 100;
 	private int defaultColorAlpha = 100;
 	private Map<String, Color> colorsByName = new HashMap<>();
+	private List<Color> recentColors = new ArrayList<>();
 
 	private Color generateColor() {
 		return new Color((int) (minColorSaturation + Math.random() * (256 - minColorSaturation)),
@@ -37,5 +37,14 @@ public class TokenHighlightColors {
 
 	public Color getColor(String text) {
 		return colorsByName.computeIfAbsent(text, t -> generateColor());
+	}
+
+	public void setColor(String text, Color color) {
+		colorsByName.put(text, color);
+		recentColors.add(color);
+	}
+
+	public List<Color> getRecentColors() {
+		return recentColors;
 	}
 }

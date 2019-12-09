@@ -149,8 +149,12 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			String tokenName = entry.getKey();
 			Color color = entry.getValue();
 			Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(tokenName);
-			highlightController.addSecondaryHighlights(lazyTokens, color);
+			highlightController.addSecondaryMultiHighlight(lazyTokens, color);
 		}
+	}
+
+	public TokenHighlightColors getSecondaryHighlightColors() {
+		return highlightController.getSecondaryHighlightColors();
 	}
 
 	public TokenHighlights getSecondaryHighlightedTokens() {
@@ -162,8 +166,19 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		highlightController.removeSecondaryHighlights(function);
 	}
 
-	public void toggleSecondaryHighlight(ClangToken token, Supplier<List<ClangToken>> lazyTokens) {
-		highlightController.toggleSecondaryMultiHighlight(token, lazyTokens);
+	public void removeSecondaryHighlight(ClangToken token) {
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
+		highlightController.removeSecondaryMultiHighlight(lazyTokens);
+	}
+
+	public void addSecondaryHighlight(ClangToken token) {
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
+		highlightController.addSecondaryMultiHighlight(token, lazyTokens);
+	}
+
+	public void addSecondaryHighlight(ClangToken token, Color color) {
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
+		highlightController.addSecondaryMultiHighlight(lazyTokens, color);
 	}
 
 	private void togglePrimaryHighlight(FieldLocation location, Field field, Color highlightColor) {
@@ -971,7 +986,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 			Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(name);
 			Color color = hlToken.getColor();
-			highlightController.addSecondaryHighlights(lazyTokens, color);
+			highlightController.addSecondaryMultiHighlight(lazyTokens, color);
 			repaint();
 		});
 	}

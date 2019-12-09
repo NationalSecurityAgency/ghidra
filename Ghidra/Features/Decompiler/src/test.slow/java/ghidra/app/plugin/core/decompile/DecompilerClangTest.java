@@ -18,14 +18,18 @@ package ghidra.app.plugin.core.decompile;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.swing.JButton;
+
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import docking.options.editor.GhidraColorChooser;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.field.Field;
@@ -304,7 +308,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertEquals("_printf", text1);
 
 		Color color = highlight();
-		assertAllFieldsHighlightedExceptForToken(token1, color);
+		assertAllFieldsSecondaryHighlighted(token1, color);
 
 		// 5:30 "a->name"
 		line = 5;
@@ -316,7 +320,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		Color color2 = highlight();
 		assertAllFieldsHighlighted(text1, color);
-		assertAllFieldsHighlightedExceptForToken(token2, color2);
+		assertAllFieldsSecondaryHighlighted(token2, color2);
 
 		// 2:1 "void"
 		line = 2;
@@ -329,7 +333,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		Color color3 = highlight();
 		assertAllFieldsHighlighted(text1, color);
 		assertAllFieldsHighlighted(text2, color2);
-		assertAllFieldsHighlightedExceptForToken(token3, color3);
+		assertAllFieldsSecondaryHighlighted(token3, color3);
 	}
 
 	@Test
@@ -381,7 +385,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		line = 5;
 		charPosition = 2;
 		setDecompilerLocation(line, charPosition);
-		clearSecondaryHighlight();
+		removeSecondaryHighlight();
 
 		assertNoFieldsSecondaryHighlighted(text);
 		assertAllFieldsHighlighted(text2, color2);
@@ -478,7 +482,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		token = getToken();
 		text = token.getText();
 		assertEquals("bob", text);
-		assertAllFieldsHighlightedExceptForToken(token, color);
+		assertAllFieldsSecondaryHighlighted(token, color);
 	}
 
 	@Test
@@ -516,7 +520,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		Color color = highlight();
 
-		clearSecondaryHighlight();
+		removeSecondaryHighlight();
 
 		assertNoFieldsSecondaryHighlighted(text);
 
@@ -558,7 +562,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertEquals("_printf", text);
 
 		Color color = highlight();
-		assertAllFieldsHighlightedExceptForToken(token, color);
+		assertAllFieldsSecondaryHighlighted(token, color);
 
 		setDecompilerLocation(line, charPosition + 1);
 		assertCombinedHighlightColor(token);
@@ -664,7 +668,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		token = getToken();
 		assertCombinedHighlightColor(token);
-		assertAllFieldsHighlightedExceptForToken(token, color);
+		assertAllFieldsSecondaryHighlighted(token, color);
 
 		// no click away and make sure the secondary highlight color returns
 		// 10:19 "&a"
@@ -754,19 +758,87 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertAllFieldsHighlighted(clone, secondaryHighlightText, color);
 
 		// ensure one field provider does not affect the other
-		clearSecondaryHighlight();
+		removeSecondaryHighlight();
 		assertNoFieldsSecondaryHighlighted(secondaryHighlightText);
 		assertAllFieldsHighlighted(clone, secondaryHighlightText, color);
 	}
 
 	@Test
 	public void testSecondaryHighlighting_ChooseColors() {
-		fail();
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token = getToken();
+		String secondaryHighlightText = token.getText();
+		assertEquals("_printf", secondaryHighlightText);
+
+		Color myColor = Color.PINK;
+		highlightWithColorChooser(myColor);
+		assertAllFieldsSecondaryHighlighted(token, myColor);
 	}
 
 	@Test
-	public void testSecondaryHighlighting_PersistColors() {
-		fail();
+	public void testSecondaryHighlighting_ChooseColors_ColorIsLaterReusedForSameToken() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token = getToken();
+		String secondaryHighlightText = token.getText();
+		assertEquals("_printf", secondaryHighlightText);
+
+		Color myColor = Color.PINK;
+		highlightWithColorChooser(myColor);
+
+		removeSecondaryHighlight();
+
+		Color hlColor2 = highlight();
+		assertEquals(myColor, hlColor2);
 	}
 
 //==================================================================================================
@@ -897,7 +969,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	private void clearAllHighlights() {
 
 		DockingActionIf highlightAction =
-			getAction(decompiler, RemoveSecondaryHighlightsAction.NAME);
+			getAction(decompiler, RemoveAllSecondaryHighlightsAction.NAME);
 		performAction(highlightAction);
 	}
 
@@ -905,31 +977,55 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		ClangToken token = getToken();
 
-		DockingActionIf highlightAction =
-			getAction(decompiler, ToggleSecondaryHighlightAction.NAME);
+		DockingActionIf highlightAction = getAction(decompiler, SetSecondaryHighlightAction.NAME);
 		performAction(highlightAction);
 
-		DecompilerController controller = provider.getController();
-		DecompilerPanel panel = controller.getDecompilerPanel();
-		TokenHighlights highlights = panel.getSecondaryHighlightedTokens();
-		HighlightToken ht = highlights.get(token);
+		HighlightToken ht = getSecondaryHighlight(token);
 		assertNotNull("No highlight for token: " + token, ht);
 		return ht.getColor();
 	}
 
-	private void clearSecondaryHighlight() {
-
-		ClangToken token = getToken();
-
-		DockingActionIf highlightAction =
-			getLocalAction(provider, ToggleSecondaryHighlightAction.NAME);
-		performAction(highlightAction, provider.getActionContext(null), true);
-
+	private HighlightToken getSecondaryHighlight(ClangToken token) {
 		DecompilerController controller = provider.getController();
 		DecompilerPanel panel = controller.getDecompilerPanel();
 		TokenHighlights highlights = panel.getSecondaryHighlightedTokens();
 		HighlightToken ht = highlights.get(token);
-		assertNull("Token should not be highlighted: " + token, ht);
+		return ht;
+	}
+
+	private void highlightWithColorChooser(Color color) {
+
+		ClangToken token = getToken();
+
+		DockingActionIf highlightAction =
+			getAction(decompiler, SetSecondaryHighlightColorChooserAction.NAME);
+		performAction(highlightAction, false);
+
+		Window w = waitForWindow("Please Choose a Color");
+		GhidraColorChooser colorChooser = findComponent(w, GhidraColorChooser.class);
+		JButton okButton = findButtonByText(w, "OK");
+		runSwing(() -> {
+			colorChooser.setColor(color);
+			okButton.doClick();
+		});
+		waitForSwing();
+
+		HighlightToken ht = getSecondaryHighlight(token);
+		assertNotNull("No highlight for token: " + token, ht);
+		Color hlColor = ht.getColor();
+		assertEquals(color, hlColor);
+	}
+
+	private void removeSecondaryHighlight() {
+
+		ClangToken token = getToken();
+
+		DockingActionIf highlightAction =
+			getLocalAction(provider, RemoveSecondaryHighlightAction.NAME);
+		performAction(highlightAction, provider.getActionContext(null), true);
+
+		HighlightToken ht = getSecondaryHighlight(token);
+		assertNull("Token should not be highlighted - '" + token + "': ", ht);
 	}
 
 	private void assertAllFieldsPrimaryHighlighted(String name) {
@@ -942,10 +1038,17 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertAllFieldsHighlighted(name, cm, noIgnores);
 	}
 
-	private void assertAllFieldsHighlightedExceptForToken(ClangToken token, Color color) {
+	private void assertAllFieldsSecondaryHighlighted(ClangToken token, Color color) {
 		Predicate<ClangToken> ignores = t -> t == token;
 		String name = token.getText();
 		assertAllFieldsHighlighted(name, color, ignores);
+
+		// test the token under the cursor directly, as that may have a combined highlight applied
+		Color combinedColor = getCombinedHighlightColor(token);
+		ColorMatcher cm = new ColorMatcher(color, combinedColor);
+		Color actual = token.getHighlight();
+		assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
+			"; found: " + toString(actual), cm.matches(actual));
 	}
 
 	private void assertNoFieldsSecondaryHighlighted(String name) {
