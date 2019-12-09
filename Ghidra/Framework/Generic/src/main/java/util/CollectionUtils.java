@@ -399,6 +399,19 @@ public class CollectionUtils {
 	}
 
 	/**
+	 * Combines all collections passed-in into a pass-through not creating a new collection) 
+	 * Iterable.
+	 * 
+	 * @param iterables the iterables to combine
+	 * @return the iterable
+	 */
+	@SafeVarargs
+	public static <T> Iterable<T> asIterable(Iterable<T>... iterables) {
+		Stream<T> s = asStream(iterables);
+		return asIterable(s.iterator());
+	}
+
+	/**
 	 * Turns the given iterator into a stream
 	 * 
 	 * @param iterator the iterator

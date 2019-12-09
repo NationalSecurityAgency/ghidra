@@ -226,6 +226,21 @@ public class CollectionUtilsTest {
 	}
 
 	@Test
+	public void testAsIterable_Collections() {
+
+		List<String> original = Arrays.asList("One", "Two", "Three", "Four");
+		Collection<String> a = Arrays.asList(original.get(0), original.get(1));
+		Collection<String> b = Arrays.asList(original.get(2));
+		Collection<String> c = Collections.emptyList();
+		Collection<String> d = Arrays.asList(original.get(3));
+		Iterable<String> iterable = CollectionUtils.asIterable(a, b, c, d);
+
+		List<String> result = new ArrayList<>();
+		iterable.forEach(s -> result.add(s));
+		assertEquals(original, result);
+	}
+
+	@Test
 	public void testAsList_UnknownToType() {
 		List<String> list = new ArrayList<>();
 		list.add("A");

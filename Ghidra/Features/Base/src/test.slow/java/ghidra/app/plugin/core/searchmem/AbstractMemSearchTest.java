@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.junit.After;
 
 import docking.action.DockingActionIf;
@@ -46,7 +47,6 @@ import ghidra.test.AbstractProgramBasedTest;
 import ghidra.util.Msg;
 import ghidra.util.search.memory.MemSearchResult;
 import ghidra.util.table.GhidraTable;
-import util.CollectionUtils;
 
 /**
  * Base class for memory search tests.  
@@ -192,7 +192,7 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 
 		AddressSet addressSet = runSwing(() -> markers.getAddressSet());
 		AddressIterator it = addressSet.getAddresses(true);
-		List<Address> list = CollectionUtils.asStream(it).collect(Collectors.toList());
+		List<Address> list = IteratorUtils.toList(it);
 
 		assertListEqualUnordered("Search markers not correctly generated", expected, list);
 	}

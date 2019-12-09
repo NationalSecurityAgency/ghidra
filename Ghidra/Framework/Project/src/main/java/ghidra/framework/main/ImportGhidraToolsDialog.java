@@ -163,7 +163,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		Set<ToolTemplate> extraTools = ToolUtils.getExtraApplicationTools();
 
 		Stream<String> defaultToolNames = defaultTools.stream().map(ToolTemplate::getPath);
-		Stream<String> extraToolNames = extraTools.parallelStream().map(ToolTemplate::getPath);
+		Stream<String> extraToolNames = extraTools.stream().map(ToolTemplate::getPath);
 
 		int elementCount = defaultTools.size() + extraTools.size();
 		tools = new String[elementCount];

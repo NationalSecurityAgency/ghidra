@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 
-import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1754,8 +1753,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		CompletableFuture<List<File>> results = showMultiSelectionChooser(files.parent, FILES_ONLY);
 
-		selectFiles(CollectionUtils.asIterable(
-			IteratorUtils.chainedIterator(files.files.iterator(), files.dirs.iterator())));
+		selectFiles(CollectionUtils.asIterable(files.files, files.dirs));
 
 		pressOk();
 		assertChooserHidden();
@@ -1769,13 +1767,11 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		CompletableFuture<List<File>> results =
 			showMultiSelectionChooser(files.parent, GhidraFileChooserMode.FILES_AND_DIRECTORIES);
 
-		selectFiles(CollectionUtils.asIterable(
-			IteratorUtils.chainedIterator(files.files.iterator(), files.dirs.iterator())));
+		selectFiles(CollectionUtils.asIterable(files.files, files.dirs));
 
 		pressOk();
 		assertChooserHidden();
-		assertChosen(results, CollectionUtils.asIterable(
-			IteratorUtils.chainedIterator(files.files.iterator(), files.dirs.iterator()))); // dirs are dropped
+		assertChosen(results, CollectionUtils.asIterable(files.files, files.dirs)); // dirs are dropped
 	}
 
 //==================================================================================================
