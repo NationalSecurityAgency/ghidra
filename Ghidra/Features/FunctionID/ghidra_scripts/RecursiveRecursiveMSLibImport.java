@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import generic.stl.Pair;
 import ghidra.app.script.GhidraScript;
@@ -33,43 +34,38 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 public class RecursiveRecursiveMSLibImport extends GhidraScript {
 	final static Predicate<Loader> LOADER_FILTER = new SingleLoaderFilter(MSCoffLoader.class);
-	final static LoadSpecChooser LOADSPEC_CHOOSER = new LoadSpecChooser() {
-		@Override
-		public LoadSpec choose(List<LoadSpec> loadSpecs) {
-			for (LoadSpec loadSpec : loadSpecs) {
-				LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
-				if (lcsp.compilerSpecID.getIdAsString().equals("windows")) {
+	final static LoadSpecChooser LOADSPEC_CHOOSER = loadMap -> {
+		Stream<LoadSpec> loadSpecStream = loadMap.values().stream().flatMap(e -> e.stream());
+		Iterable<LoadSpec> loadSpecs = CollectionUtils.asIterable(loadSpecStream.iterator());
+		for (LoadSpec loadSpec : loadSpecs) {
+			LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
+			if (lcsp.compilerSpecID.getIdAsString().equals("windows")) {
+				return loadSpec;
+			}
+		}
+		for (LoadSpec loadSpec : loadSpecs) {
+			LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
+			try {
+				if (lcsp.getLanguageDescription().getEndian() == Endian.LITTLE &&
+					lcsp.getLanguageDescription().getVariant().contains("v7")) {
 					return loadSpec;
 				}
 			}
-			for (LoadSpec loadSpec : loadSpecs) {
-				LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
-				try {
-					if (lcsp.getLanguageDescription().getEndian() == Endian.LITTLE &&
-						lcsp.getLanguageDescription().getVariant().contains("v7")) {
-						return loadSpec;
-					}
-				}
-				catch (LanguageNotFoundException e) {
-					// ignore...not sure why this happened
-				}
+			catch (LanguageNotFoundException e) {
+				// ignore...not sure why this happened
 			}
-			for (LoadSpec loadSpec : loadSpecs) {
-				LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
-				if (lcsp.compilerSpecID.getIdAsString().equals("gcc")) {
-					return loadSpec;
-				}
+		}
+		for (LoadSpec loadSpec : loadSpecs) {
+			LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
+			if (lcsp.compilerSpecID.getIdAsString().equals("gcc")) {
+				return loadSpec;
 			}
-			return null;
 		}
-
-		@Override
-		public boolean usePreferred() {
-			return true;
-		}
+		return null;
 	};
 
 	@Override
