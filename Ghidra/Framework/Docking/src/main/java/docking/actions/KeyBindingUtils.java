@@ -22,6 +22,7 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 
@@ -31,8 +32,6 @@ import org.apache.logging.log4j.Logger;
 import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
-
-import com.google.common.collect.Sets;
 
 import docking.DockingTool;
 import docking.DockingUtils;
@@ -493,10 +492,10 @@ public class KeyBindingUtils {
 	 */
 	public static Set<DockingActionIf> getActions(Set<DockingActionIf> allActions, String owner,
 			String name) {
-
-		Set<DockingActionIf> ownerMatch =
-			Sets.filter(allActions, action -> action.getOwner().equals(owner));
-		return Sets.filter(ownerMatch, action -> action.getName().equals(name));
+		return allActions.stream()
+				.filter(a -> a.getOwner().equals(owner))
+				.filter(a -> a.getName().equals(name))
+				.collect(Collectors.toSet());
 	}
 
 	/**

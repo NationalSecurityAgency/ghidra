@@ -43,8 +43,6 @@ import org.apache.logging.log4j.*;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.*;
 
-import com.google.common.collect.Iterables;
-
 import docking.*;
 import docking.action.DockingAction;
 import docking.test.AbstractDockingTest;
@@ -1755,7 +1753,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		CompletableFuture<List<File>> results = showMultiSelectionChooser(files.parent, FILES_ONLY);
 
-		selectFiles(Iterables.concat(files.files, files.dirs));
+		selectFiles(CollectionUtils.asIterable(files.files, files.dirs));
 
 		pressOk();
 		assertChooserHidden();
@@ -1769,11 +1767,11 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		CompletableFuture<List<File>> results =
 			showMultiSelectionChooser(files.parent, GhidraFileChooserMode.FILES_AND_DIRECTORIES);
 
-		selectFiles(Iterables.concat(files.files, files.dirs));
+		selectFiles(CollectionUtils.asIterable(files.files, files.dirs));
 
 		pressOk();
 		assertChooserHidden();
-		assertChosen(results, Iterables.concat(files.files, files.dirs)); // dirs are dropped
+		assertChosen(results, CollectionUtils.asIterable(files.files, files.dirs)); // dirs are dropped
 	}
 
 //==================================================================================================
