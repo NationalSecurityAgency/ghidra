@@ -251,7 +251,7 @@ class DefaultCompositeMember extends CompositeMember {
 			transformLastMemberIntoFlexArray(lastMember);
 
 			// remove trailing fat caused by use of insert operations
-			trimReconstructionFat(preferredSize);
+			adjustSize(preferredSize);
 		}
 		else if (isUnionContainer()) {
 			updateContainerNameAndCategoryPath("u");
@@ -262,11 +262,20 @@ class DefaultCompositeMember extends CompositeMember {
 		alignComposite(preferredSize);
 	}
 
-	private void trimReconstructionFat(int preferredSize) {
+	/**
+	 * Adjust unaligned structure following member reconstruction.
+	 * @param preferredSize preferred size
+	 */
+	private void adjustSize(int preferredSize) {
 		if (!isStructureContainer()) {
 			return;
 		}
 		Structure struct = (Structure) getDataType();
+
+		if (struct.getLength() < preferredSize) {
+			struct.growStructure(preferredSize - struct.getLength());
+			return;
+		}
 
 		DataTypeComponent dtc = struct.getComponentAt(preferredSize);
 		if (dtc == null) {
