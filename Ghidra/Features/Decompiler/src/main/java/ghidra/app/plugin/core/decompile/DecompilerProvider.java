@@ -785,21 +785,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		editDataTypeAction = new EditDataTypeAction(tool, controller);
 		setGroupInfo(editDataTypeAction, variableGroup, subGroupPosition++);
 
-		defUseHighlightAction = new HighlightDefinedUseAction(controller);
-		setGroupInfo(defUseHighlightAction, variableGroup, subGroupPosition++);
-
-		forwardSliceAction = new ForwardSliceAction(controller);
-		setGroupInfo(forwardSliceAction, variableGroup, subGroupPosition++);
-
-		backwardSliceAction = new BackwardsSliceAction();
-		setGroupInfo(backwardSliceAction, variableGroup, subGroupPosition++);
-
-		forwardSliceToOpsAction = new ForwardSliceToPCodeOpsAction(controller);
-		setGroupInfo(forwardSliceToOpsAction, variableGroup, subGroupPosition++);
-
-		backwardSliceToOpsAction = new BackwardsSliceToPCodeOpsAction(controller);
-		setGroupInfo(backwardSliceToOpsAction, variableGroup, subGroupPosition++);
-
 		//
 		// Listing action for Creating Structure on a Variable
 		//
@@ -817,12 +802,29 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		lockLocalAction = new CommitLocalsAction(tool, controller);
 		setGroupInfo(lockLocalAction, commitGroup, subGroupPosition++);
 
-		String highlightGroup = "4 - Highlight Group";
 		subGroupPosition = 0; // reset for the next group
 
 		//
 		// Highlight
 		//
+		String highlightGroup = "4a - Highlight Group";
+		tool.setMenuGroup(new String[] { "Highlight" }, highlightGroup);
+		defUseHighlightAction = new HighlightDefinedUseAction(controller);
+		setGroupInfo(defUseHighlightAction, highlightGroup, subGroupPosition++);
+
+		forwardSliceAction = new ForwardSliceAction(controller);
+		setGroupInfo(forwardSliceAction, highlightGroup, subGroupPosition++);
+
+		backwardSliceAction = new BackwardsSliceAction();
+		setGroupInfo(backwardSliceAction, highlightGroup, subGroupPosition++);
+
+		forwardSliceToOpsAction = new ForwardSliceToPCodeOpsAction(controller);
+		setGroupInfo(forwardSliceToOpsAction, highlightGroup, subGroupPosition++);
+
+		backwardSliceToOpsAction = new BackwardsSliceToPCodeOpsAction(controller);
+		setGroupInfo(backwardSliceToOpsAction, highlightGroup, subGroupPosition++);
+
+		tool.setMenuGroup(new String[] { "Secondary Highlight" }, highlightGroup);
 		setSecondaryHighlightAction = new SetSecondaryHighlightAction();
 		setGroupInfo(setSecondaryHighlightAction, highlightGroup, subGroupPosition++);
 

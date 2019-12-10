@@ -31,7 +31,7 @@ public class ForwardSliceToPCodeOpsAction extends AbstractDecompilerAction {
 		super("Highlight Forward Inst Slice");
 		this.controller = controller;
 		setPopupMenuData(
-			new MenuData(new String[] { "Highlight Forward Inst Slice" }, "Decompile"));
+			new MenuData(new String[] { "Highlight", "Forward Inst Slice" }, "Decompile"));
 	}
 
 	@Override

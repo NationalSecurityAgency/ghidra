@@ -32,7 +32,8 @@ public class SetSecondaryHighlightColorChooserAction extends AbstractSetSecondar
 	public SetSecondaryHighlightColorChooserAction() {
 		super(NAME);
 
-		setPopupMenuData(new MenuData(new String[] { NAME + "..." }, "Decompile"));
+		setPopupMenuData(
+			new MenuData(new String[] { "Secondary Highlight", "Set Highlight..." }, "Decompile"));
 	}
 
 	@Override

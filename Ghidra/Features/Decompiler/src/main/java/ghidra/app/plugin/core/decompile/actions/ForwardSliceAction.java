@@ -30,7 +30,7 @@ public class ForwardSliceAction extends AbstractDecompilerAction {
 	public ForwardSliceAction(DecompilerController controller) {
 		super("Highlight Forward Slice");
 		this.controller = controller;
-		setPopupMenuData(new MenuData(new String[] { "Highlight Forward Slice" }, "Decompile"));
+		setPopupMenuData(new MenuData(new String[] { "Highlight", "Forward Slice" }, "Decompile"));
 	}
 
 	@Override

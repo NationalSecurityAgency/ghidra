@@ -30,7 +30,7 @@ public class HighlightDefinedUseAction extends AbstractDecompilerAction {
 	public HighlightDefinedUseAction(DecompilerController controller) {
 		super("Highlight Defined Use");
 		this.controller = controller;
-		setPopupMenuData(new MenuData(new String[] { "Highlight Def-use" }, "Decompile"));
+		setPopupMenuData(new MenuData(new String[] { "Highlight", "Def-use" }, "Decompile"));
 	}
 
 	@Override

@@ -31,7 +31,7 @@ public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 		super("Highlight Backward Inst Slice");
 		this.controller = controller;
 		setPopupMenuData(
-			new MenuData(new String[] { "Highlight Backward Inst Slice" }, "Decompile"));
+			new MenuData(new String[] { "Highlight", "Backward Inst Slice" }, "Decompile"));
 	}
 
 	@Override

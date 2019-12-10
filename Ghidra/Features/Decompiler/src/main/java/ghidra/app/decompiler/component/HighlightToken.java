@@ -17,11 +17,11 @@ package ghidra.app.decompiler.component;
 
 import java.awt.Color;
 
-import ghidra.app.decompiler.ClangFunction;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.program.model.listing.Function;
 
-// TODO better name:  TokenHighlight
+/**
+ * A class to used to track a {@link Decompiler} token along with its highlight color
+ */
 public class HighlightToken {
 
 	private ClangToken token;
@@ -38,17 +38,6 @@ public class HighlightToken {
 
 	public Color getColor() {
 		return color;
-	}
-
-	public Function getFunction() {
-		if (token == null) {
-			return null;
-		}
-		ClangFunction clangFunc = token.getClangFunction();
-		if (clangFunc == null) {
-			return null;
-		}
-		return clangFunc.getHighFunction().getFunction();
 	}
 
 	@Override

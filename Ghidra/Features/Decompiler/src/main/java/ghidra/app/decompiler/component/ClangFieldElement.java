@@ -15,7 +15,8 @@
  */
 package ghidra.app.decompiler.component;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
 
 import javax.swing.JComponent;
 
@@ -37,9 +38,9 @@ public class ClangFieldElement extends AbstractTextFieldElement {
 
 	@Override
 	public void paint(JComponent c, Graphics g, int x, int y) {
-		Paint highlightColor = token.getHighlight();
+		Color highlightColor = token.getHighlight();
 		if (highlightColor != null) {
-			((Graphics2D) g).setPaint(highlightColor);
+			g.setColor(highlightColor);
 			g.fillRect(x, y - getHeightAbove(), getStringWidth(),
 				getHeightAbove() + getHeightBelow());
 		}
@@ -48,7 +49,7 @@ public class ClangFieldElement extends AbstractTextFieldElement {
 
 		if (token.isMatchingToken()) {
 			// paint a bounding box around the token
-			((Graphics2D) g).setPaint(Color.GRAY);
+			g.setColor(Color.GRAY);
 			int offset = 1;
 			g.drawRect(x - offset, y - getHeightAbove() - offset, getStringWidth() + (offset * 2),
 				getHeightAbove() + getHeightBelow() + (offset * 2));

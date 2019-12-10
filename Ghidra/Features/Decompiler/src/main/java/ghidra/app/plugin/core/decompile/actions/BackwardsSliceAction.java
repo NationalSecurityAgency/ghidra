@@ -31,7 +31,7 @@ public class BackwardsSliceAction extends AbstractDecompilerAction {
 
 	public BackwardsSliceAction() {
 		super("Highlight Backward Slice");
-		setPopupMenuData(new MenuData(new String[] { NAME }, "Decompile"));
+		setPopupMenuData(new MenuData(new String[] { "Highlight", "Backward Slice" }, "Decompile"));
 	}
 
 	@Override

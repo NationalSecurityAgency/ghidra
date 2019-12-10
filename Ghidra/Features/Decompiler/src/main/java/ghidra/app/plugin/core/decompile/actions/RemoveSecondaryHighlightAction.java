@@ -34,7 +34,8 @@ public class RemoveSecondaryHighlightAction extends AbstractDecompilerAction {
 	public RemoveSecondaryHighlightAction() {
 		super(NAME);
 
-		setPopupMenuData(new MenuData(new String[] { NAME }, "Decompile"));
+		setPopupMenuData(
+			new MenuData(new String[] { "Secondary Highlight", "Remove Highlight" }, "Decompile"));
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, getName()));
 	}
 
