@@ -770,6 +770,24 @@ void PcodeOpBank::moveSequenceDead(PcodeOp *firstop,PcodeOp *lastop,PcodeOp *pre
     deadlist.splice(previter,deadlist,firstop->insertiter,enditer);
 }
 
+/// Incidental COPYs are not considered active use of parameter passing Varnodes by
+/// parameter analysis algorithms.
+/// \param firstop is the start of the range of incidental COPY ops
+/// \param lastop is the end of the range of incidental COPY ops
+void PcodeOpBank::markIncidentalCopy(PcodeOp *firstop,PcodeOp *lastop)
+
+{
+  list<PcodeOp *>::iterator iter = firstop->insertiter;
+  list<PcodeOp *>::iterator enditer = lastop->insertiter;
+  ++enditer;
+  while(iter != enditer) {
+    PcodeOp *op = *iter;
+    ++iter;
+    if (op->code() == CPUI_COPY)
+      op->setAdditionalFlag(PcodeOp::incidental_copy);
+  }
+}
+
 /// Find the first PcodeOp at or after the given Address assuming they have not
 /// yet been broken up into basic blocks. Take into account delay slots.
 /// \param addr is the given Address

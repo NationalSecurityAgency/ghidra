@@ -120,9 +120,12 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Find a data type with the given name.
-	 * @param nm name of data type
-	 * @return may return null if no data type exists with the given name
+	 * Find a base/built-in data-type with the given name and/or id.  If an id is provided and
+	 * a corresponding data-type exists, this data-type is returned. Otherwise the first
+	 * built-in data-type with a matching name is returned
+	 * @param nm name of data-type
+	 * @param idstr is an optional string containing a data-type id number
+	 * @return the data-type object or null if no matching data-type exists
 	 */
 	public DataType findBaseType(String nm, String idstr) {
 		long id = 0;
@@ -242,8 +245,13 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * @param type to be converted
-	 * @return either a typeref tag giving the name, or a full type tag
+	 * Generate an XML tag describing the given data-type. Most data-types produce a <type> tag,
+	 * fully describing the data-type. Where possible a <typeref> tag is produced, which just gives
+	 * the name of the data-type, deferring a full description of the data-type. For certain simple or
+	 * nameless data-types, a <type> tag is emitted giving a full description.
+	 * @param type is the data-type to be converted
+	 * @param size is the size in bytes of the specific instance of the data-type
+	 * @return a StringBuilder containing the XML tag
 	 */
 	public StringBuilder buildTypeRef(DataType type, int size) {
 		if (type != null && type.getDataTypeManager() != progDataTypes) {
@@ -424,7 +432,7 @@ public class PcodeDataTypeManager {
 			resBuf.append(">\n");
 			for (long key : keys) {
 				resBuf.append("<val");
-				SpecXmlUtils.encodeStringAttribute(resBuf, "name", enumDt.getName(key));
+				SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", enumDt.getName(key));
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "value", key);
 				resBuf.append("/>");
 			}
