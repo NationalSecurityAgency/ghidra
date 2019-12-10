@@ -543,8 +543,9 @@ public class Constructor {
 			}
 			else if (defexp != null) {
 				TokenPattern tmppat = defexp.genMinPattern(oppattern);
-				if (null == tmppat)
-				    throw new SleighError("operand " + sym.getName() + " has an issue", location);
+				if (null == tmppat) {
+					throw new SleighError("operand " + sym.getName() + " has an issue", location);
+				}
 				oppattern.push_back(tmppat);
 			}
 			else {
@@ -573,8 +574,9 @@ public class Constructor {
 		// in bytes
 
 		OperandResolve resolve = new OperandResolve(operands);
-		if (!pateq.resolveOperandLeft(resolve))
+		if (!pateq.resolveOperandLeft(resolve)) {
 			throw new SleighError("Unable to resolve operand offsets", location);
+		}
 
 		// Unravel relative offsets to absolute (if possible)
 		for (int i = 0; i < operands.size(); ++i) {
