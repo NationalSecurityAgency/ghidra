@@ -212,6 +212,9 @@
     <optional>
       <attribute name="dynamic"/>
     </optional>
+    <optional>
+      <attribute name="incidentalcopy"/>
+    </optional>
     <interleave>
       <zeroOrMore>
         <element name="input"><ref name="inject_parameter_type"/></element>

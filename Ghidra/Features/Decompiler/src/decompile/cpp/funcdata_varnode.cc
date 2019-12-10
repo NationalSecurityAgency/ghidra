@@ -1341,13 +1341,7 @@ bool Funcdata::ancestorOpUse(int4 maxlevel,const Varnode *invn,
 
     return false;
   case CPUI_COPY:
-    if ((invn->getSpace()->getType()==IPTR_INTERNAL)||(invn->isAddrForce())) {
-				// Bit of a kludge to take into account
-				// uniq <- LOAD             uniq=stackX
-				//                  <->
-				// call(  uniq )            call( uniq )
-				// 
-				// We follow copys into uniques
+    if ((invn->getSpace()->getType()==IPTR_INTERNAL)||def->isIncidentalCopy()||def->getIn(0)->isIncidentalCopy()) {
       if (!ancestorOpUse(maxlevel-1,def->getIn(0),op,trial)) return false;
       return true;
     }
@@ -1442,7 +1436,8 @@ int4 AncestorRealistic::enterNode(State &state)
   case CPUI_SUBPIECE:
     // Extracting to a temporary, or to the same storage location, or otherwise incidental
     // are viewed as just another node on the path to traverse
-    if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL||op->getIn(0)->isIncidentalCopy()
+    if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL
+	|| op->isIncidentalCopy() || op->getIn(0)->isIncidentalCopy()
 	|| (op->getOut()->overlap(*op->getIn(0)) == (int4)op->getIn(1)->getOffset())) {
       stateStack.push_back(State(op,0));
       return enter_node;		// Push into the new node
@@ -1461,7 +1456,8 @@ int4 AncestorRealistic::enterNode(State &state)
   case CPUI_COPY:
     // Copies to a temporary, or between varnodes with same storage location, or otherwise incidental
     // are viewed as just another node on the path to traverse
-    if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL||op->getIn(0)->isIncidentalCopy()
+    if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL
+	|| op->isIncidentalCopy() || op->getIn(0)->isIncidentalCopy()
 	|| (op->getOut()->getAddr() == op->getIn(0)->getAddr())) {
       stateStack.push_back(State(op,0));
       return enter_node;		// Push into the new node
@@ -1471,7 +1467,7 @@ int4 AncestorRealistic::enterNode(State &state)
     do {
       Varnode *vn = op->getIn(0);
       if ((!vn->isMark())&&(vn->isInput())) {
-	if (vn->isUnaffected()||(!vn->isDirectWrite()))
+	if (!vn->isDirectWrite())
 	  return pop_fail;
       }
       op = vn->getDef();

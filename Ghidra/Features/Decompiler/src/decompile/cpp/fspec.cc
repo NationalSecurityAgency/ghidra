@@ -4106,6 +4106,7 @@ int4 FuncCallSpecs::transferLockedInputParam(ProtoParameter *param)
     if (startaddr < curtrial.getAddress()) continue;
     Address trialend = curtrial.getAddress() + (curtrial.getSize() - 1);
     if (trialend < lastaddr) continue;
+    if (curtrial.isDefinitelyNotUsed()) return 0;	// Trial has already been stripped
     return curtrial.getSlot();
   }
   if (startaddr.getSpace()->getType() == IPTR_SPACEBASE)
