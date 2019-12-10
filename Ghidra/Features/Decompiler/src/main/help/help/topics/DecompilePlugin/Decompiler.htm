@@ -572,9 +572,9 @@
     <P style="margin-left: 80px;">Ghidra will do stack analysis that will recover parameters and
     return types, but for many programs, the analysis the decompiler does is better.</P>
 
-    <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0">There is a
-    prototype plug-in that automatically pulls in the decompiler derived information and applies it
-    to each function as the function is created.</P>
+    <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0">The
+    Decompiler Parameter ID analyzer automatically pulls in the decompiler derived 
+    information and applies it to each function as the function is created.</P>
 
     <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0"> If a variable
     displayed in the assembly window has an undefined type, the decompiler will still respect the
@@ -597,11 +597,12 @@
     on the stack, but for many programs, the analysis the decompiler does is better.<BR>
     </P>
 
-    <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0"> There is a
-    prototype plug-in that automatically pulls in the decompiler derived information and applies it
-    to each function as the function is created.&nbsp; The plugin by default will not commit local
-    variable definitions, either stack or register locals.&nbsp; Committing locals automatically
-    can be turned on by changing the analysis options for the Decompiler Parameter ID plugin.&nbsp;
+    <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0">he
+    Decompiler Parameter ID analyzer automatically pulls in the decompiler derived 
+    information and applies it to each function as the function is created.  The analyzer by default 
+    will not commit local variable definitions, either stack or register locals.  
+    Committing locals automatically 
+    can be turned on by changing the Decompiler Parameter ID analysis options.
     In most cases it is better to commit locals only for certain functions that you really care
     about, or after the data type definitions (structures, etc...) have settled down for the
     program you are Reverse Engineering.<BR>

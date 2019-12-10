@@ -24,6 +24,11 @@ import ghidra.app.decompiler.ClangToken;
  */
 public interface TokenHighlightColorProvider {
 
-	// TODO null if no match;  d0cme
+	/**
+	 * Returns a color for the given token
+	 * 
+	 * @param token the token
+	 * @return the color
+	 */
 	public Color getColor(ClangToken token);
 }

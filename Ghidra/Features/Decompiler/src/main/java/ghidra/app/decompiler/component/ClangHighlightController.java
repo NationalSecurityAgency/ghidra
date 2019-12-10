@@ -145,8 +145,7 @@ public abstract class ClangHighlightController {
 		tokenHighlights.clear();
 	}
 
-	public void togglePrimaryMultiHighlight(ClangToken token, Color hlColor,
-			Supplier<List<ClangToken>> tokens) {
+	public void togglePrimaryHighlights(Color hlColor, Supplier<List<ClangToken>> tokens) {
 
 		boolean isAllHighlighted = true;
 		for (ClangToken otherToken : tokens.get()) {
@@ -176,9 +175,14 @@ public abstract class ClangHighlightController {
 		return secondaryHighlightTokens.contains(token);
 	}
 
-	public void removeSecondaryHighlights(ghidra.program.model.listing.Function function) {
-		Set<HighlightToken> oldHighlights =
-			secondaryHighlightTokens.removeTokensByFunction(function);
+	public Set<HighlightToken> getSecondaryHighlightsByFunction(
+			ghidra.program.model.listing.Function f) {
+		Set<HighlightToken> highlights = secondaryHighlightTokens.getHighlightsByFunction(f);
+		return highlights;
+	}
+
+	public void removeSecondaryHighlights(ghidra.program.model.listing.Function f) {
+		Set<HighlightToken> oldHighlights = secondaryHighlightTokens.removeHighlightsByFunction(f);
 		for (HighlightToken hl : oldHighlights) {
 			ClangToken token = hl.getToken();
 			updateHighlightColor(token);
@@ -186,13 +190,11 @@ public abstract class ClangHighlightController {
 		notifyListeners();
 	}
 
-	public HighlightToken removeSecondaryHighlight(ClangToken token) {
-		HighlightToken hlToken = secondaryHighlightTokens.get(token);
+	public void removeSecondaryHighlights(ClangToken token) {
 		secondaryHighlightTokens.remove(token);
-		return hlToken;
 	}
 
-	public void removeSecondaryMultiHighlight(Supplier<? extends Collection<ClangToken>> tokens) {
+	public void removeSecondaryHighlights(Supplier<? extends Collection<ClangToken>> tokens) {
 		for (ClangToken clangToken : tokens.get()) {
 			secondaryHighlightTokens.remove(clangToken);
 			updateHighlightColor(clangToken);
@@ -200,14 +202,13 @@ public abstract class ClangHighlightController {
 		notifyListeners();
 	}
 
-	public void addSecondaryMultiHighlight(ClangToken token,
+	public void addSecondaryHighlights(String tokenText,
 			Supplier<? extends Collection<ClangToken>> tokens) {
-		String text = token.getText();
-		Color highlightColor = secondaryHighlightColors.getColor(text);
-		addSecondaryMultiHighlight(tokens, highlightColor);
+		Color highlightColor = secondaryHighlightColors.getColor(tokenText);
+		addSecondaryHighlights(tokens, highlightColor);
 	}
 
-	public void addSecondaryMultiHighlight(Supplier<? extends Collection<ClangToken>> tokens,
+	public void addSecondaryHighlights(Supplier<? extends Collection<ClangToken>> tokens,
 			Color hlColor) {
 		Function<ClangToken, Color> colorProvider = token -> hlColor;
 		addTokensToHighlights(tokens.get(), colorProvider, secondaryHighlightTokens);

@@ -24,7 +24,12 @@ import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
-// TODO docme
+/**
+ * A class to provider a color for highlight a variable using one of the 'slice' actions
+ * 
+ * @see ForwardSliceAction
+ * @see BackwardsSliceAction
+ */
 public class SliceHighlightColorProvider implements TokenHighlightColorProvider {
 
 	private Set<Varnode> varnodes;

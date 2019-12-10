@@ -24,8 +24,9 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.HighFunction;
 
 /**
- * A simple class to manage {@link HighlightToken}s used to create secondary highlights in the
- * Decompiler
+ * A simple class to manage {@link HighlightToken}s used to create highlights in the Decompiler.
+ * This class allows clients to access highlights either by a {@link ClangToken} or a 
+ * {@link HighlightToken}.
  */
 public class TokenHighlights implements Iterable<HighlightToken> {
 
@@ -52,9 +53,6 @@ public class TokenHighlights implements Iterable<HighlightToken> {
 	}
 
 	private Function getFunction(ClangToken t) {
-
-		// TODO verify that we can always get a function
-
 		ClangFunction cFunction = t.getClangFunction();
 		if (cFunction == null) {
 			return null;
@@ -67,44 +65,87 @@ public class TokenHighlights implements Iterable<HighlightToken> {
 		return highFunction.getFunction();
 	}
 
+	/**
+	 * Returns true if there are not highlights
+	 * @return true if there are not highlights
+	 */
 	public boolean isEmpty() {
 		return size() == 0;
 	}
 
+	/**
+	 * Returns the number of highlights
+	 * @return the number of highlights
+	 */
 	public int size() {
 		return highlightsByToken.size();
 	}
 
+	/**
+	 * Adds the given highlight to this container
+	 * @param t the highlight
+	 */
 	public void add(HighlightToken t) {
 		highlightsByToken.put(getKey(t), t);
 	}
 
+	/**
+	 * Gets the current highlight for the given token
+	 * @param t the token
+	 * @return the highlight
+	 */
 	public HighlightToken get(ClangToken t) {
 		return highlightsByToken.get(getKey(t));
 	}
 
+	/**
+	 * Returns all highlights for the given function
+	 * 
+	 * @param f the function
+	 * @return the highlights
+	 */
+	public Set<HighlightToken> getHighlightsByFunction(Function f) {
+		Set<HighlightToken> results = new HashSet<>();
+		Set<TokenKey> keys = getHighlightKeys(f);
+		for (TokenKey key : keys) {
+			HighlightToken hl = highlightsByToken.get(key);
+			results.add(hl);
+		}
+
+		return results;
+	}
+
+	/**
+	 * Returns true if this class has a highlight for the given token
+	 * @param t the token
+	 * @return true if this class has a highlight for the given token
+	 */
 	public boolean contains(ClangToken t) {
 		return highlightsByToken.containsKey(getKey(t));
 	}
 
+	/**
+	 * Removes all highlights from this container
+	 */
 	public void clear() {
 		highlightsByToken.clear();
 	}
 
-	public boolean contains(HighlightToken t) {
-		return highlightsByToken.containsKey(getKey(t));
-	}
-
-	// TODO examine this method and others for removal
-	public void remove(HighlightToken t) {
-		highlightsByToken.remove(getKey(t));
-	}
-
+	/**
+	 * Removes the highlight for the given token
+	 * @param t the token
+	 */
 	public void remove(ClangToken t) {
 		highlightsByToken.remove(getKey(t));
 	}
 
-	public Set<HighlightToken> removeTokensByFunction(Function function) {
+	/**
+	 * Removes all highlights associated with the given function
+	 * 
+	 * @param function the function
+	 * @return the removed highlights; empty if no highlights existed
+	 */
+	public Set<HighlightToken> removeHighlightsByFunction(Function function) {
 		Set<HighlightToken> oldHighlights = new HashSet<>();
 		Set<TokenKey> keys = getHighlightKeys(function);
 		for (TokenKey key : keys) {

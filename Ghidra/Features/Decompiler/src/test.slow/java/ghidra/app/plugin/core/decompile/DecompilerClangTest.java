@@ -841,9 +841,98 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertEquals(myColor, hlColor2);
 	}
 
+	@Test
+	public void testSecondaryHighlighting_GetsReappliedAfterRefresh() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token = getToken();
+
+		Color color = highlight();
+		assertAllFieldsSecondaryHighlighted(token, color);
+
+		refresh();
+
+		setDecompilerLocation(line, charPosition);
+		token = getToken();
+		assertAllFieldsSecondaryHighlighted(token, color);
+	}
+
+	@Test
+	public void testSecondaryHighlighting_GetsReappliedAfterReturningToPreviousFunction() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token = getToken();
+
+		Color color = highlight();
+		assertAllFieldsSecondaryHighlighted(token, color);
+
+		decompile("100000bf0"); // 'main'
+		assertNoFieldsSecondaryHighlighted(token.getText());
+
+		decompile("100000d60"); // '_call_structure_A'
+		setDecompilerLocation(line, charPosition);
+		token = getToken();
+		assertAllFieldsSecondaryHighlighted(token, color);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void refresh() {
+
+		DockingActionIf action = getAction(decompiler, "Refresh");
+		performAction(action);
+		waitForDecompiler();
+	}
 
 	private DecompilerProvider cloneDecompiler() {
 
@@ -1093,7 +1182,6 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		DecompilerController controller = theProvider.getController();
 		DecompilerPanel panel = controller.getDecompilerPanel();
 		List<ClangToken> tokensWithName = panel.findTokensByName(name);
-		assertFalse(tokensWithName.isEmpty());
 		for (ClangToken otherToken : tokensWithName) {
 			if (ignore.test(otherToken)) {
 				continue;

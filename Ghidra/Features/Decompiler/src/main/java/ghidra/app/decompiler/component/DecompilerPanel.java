@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -52,6 +53,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
+import util.CollectionUtils;
 
 /**
  * Class to handle the display of a decompiled function
@@ -149,7 +151,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			String tokenName = entry.getKey();
 			Color color = entry.getValue();
 			Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(tokenName);
-			highlightController.addSecondaryMultiHighlight(lazyTokens, color);
+			highlightController.addSecondaryHighlights(lazyTokens, color);
 		}
 	}
 
@@ -167,26 +169,40 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public void removeSecondaryHighlight(ClangToken token) {
-		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
-		highlightController.removeSecondaryMultiHighlight(lazyTokens);
+		removeSecondaryHighlight(token.getText());
+	}
+
+	private void removeSecondaryHighlight(String tokenText) {
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(tokenText);
+		highlightController.removeSecondaryHighlights(lazyTokens);
 	}
 
 	public void addSecondaryHighlight(ClangToken token) {
-		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
-		highlightController.addSecondaryMultiHighlight(token, lazyTokens);
+		String tokenText = token.getText();
+		addSecondaryHighlight(tokenText);
+	}
+
+	private void addSecondaryHighlight(String tokenText) {
+		Supplier<List<ClangToken>> lazyTokens = () -> {
+			return findTokensByName(tokenText);
+		};
+		highlightController.addSecondaryHighlights(tokenText, lazyTokens);
 	}
 
 	public void addSecondaryHighlight(ClangToken token, Color color) {
-		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
-		highlightController.addSecondaryMultiHighlight(lazyTokens, color);
+		addSecondaryHighlight(token.getText(), color);
+	}
+
+	private void addSecondaryHighlight(String tokenText, Color color) {
+		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(tokenText);
+		highlightController.addSecondaryHighlights(lazyTokens, color);
 	}
 
 	private void togglePrimaryHighlight(FieldLocation location, Field field, Color highlightColor) {
 
 		ClangToken token = ((ClangTextField) field).getToken(location);
 		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
-		highlightController.togglePrimaryMultiHighlight(token, middleMouseHighlightColor,
-			lazyTokens);
+		highlightController.togglePrimaryHighlights(middleMouseHighlightColor, lazyTokens);
 	}
 
 	@Override
@@ -229,17 +245,48 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		decompilerHoverProvider.setProgram(decompileData.getProgram());
 
-		/*
-		 * Give user notice when seeing the decompile of a non-function.
-		 */
+		// give user notice when seeing the decompile of a non-function
 		useNonFunctionColor = function instanceof UndefinedFunction;
 		setBackground(originalBackgroundColor);
+
 		if (clipboard != null) {
 			clipboard.selectionChanged(null);
 		}
 
 		// don't highlight search results across functions
 		currentSearchLocation = null;
+
+		reapplySecondaryHighlights();
+	}
+
+	private void reapplySecondaryHighlights() {
+
+		Function function = decompileData.getFunction();
+		if (function == null) {
+			return;
+		}
+
+		// The existing highlights are based on the previously generated tokens, which no longer
+		// exist.  Use those tokens to highlight the current tokens, which are conceptually the 
+		// same tokens.
+		Set<HighlightToken> oldHighlights =
+			highlightController.getSecondaryHighlightsByFunction(function);
+
+		//@formatter:off
+		Map<String, List<ClangToken>> tokensByName =
+			CollectionUtils.asStream(oldHighlights)
+						   .map(ht -> ht.getToken())
+						   .collect(Collectors.groupingBy(t -> t.getText()))
+						   ;
+		//@formatter:on
+
+		Set<Entry<String, List<ClangToken>>> entries = tokensByName.entrySet();
+		for (Entry<String, List<ClangToken>> entry : entries) {
+			String name = entry.getKey();
+			List<ClangToken> oldTokens = entry.getValue();
+			highlightController.removeSecondaryHighlights(() -> oldTokens);
+			addSecondaryHighlight(name);
+		}
 	}
 
 	private void setLocation(DecompileData oldData, DecompileData newData) {
@@ -972,22 +1019,23 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * to the new token.
 	 * 
 	 * @param token the token being renamed
-	 * @param name the new name of the token
+	 * @param newName the new name of the token
 	 */
-	public void tokenRenamed(ClangToken token, String name) {
+	public void tokenRenamed(ClangToken token, String newName) {
 
 		if (!highlightController.hasSecondaryHighlight(token)) {
 			return;
 		}
 
+		TokenHighlightColors colors = highlightController.getSecondaryHighlightColors();
+		String oldName = token.getText();
+		Color hlColor = colors.getColor(oldName);
+		highlightController.removeSecondaryHighlights(token);
+
 		controller.doWhenNotBusy(() -> {
 
-			HighlightToken hlToken = highlightController.removeSecondaryHighlight(token);
-
-			Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(name);
-			Color color = hlToken.getColor();
-			highlightController.addSecondaryMultiHighlight(lazyTokens, color);
-			repaint();
+			Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(newName);
+			highlightController.addSecondaryHighlights(lazyTokens, hlColor);
 		});
 	}
 
