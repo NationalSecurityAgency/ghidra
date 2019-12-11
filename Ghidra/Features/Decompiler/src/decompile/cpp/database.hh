@@ -179,7 +179,8 @@ public:
     force_oct = 3,		///< Force octal printing of constant symbol
     force_bin = 4,		///< Force binary printing of constant symbol
     force_char = 5,		///< Force integer to be printed as a character constant
-    size_typelock = 8	        ///< Only the size of the symbol is typelocked
+    size_typelock = 8,	        ///< Only the size of the symbol is typelocked
+    isolate = 16		///< Symbol should not speculatively merge automatically
   };
   /// \brief Construct given a name and data-type
   Symbol(Scope *sc,const string &nm,Datatype *ct)
@@ -204,6 +205,8 @@ public:
   Scope *getScope(void) const { return scope; }			///< Get the scope owning \b this Symbol
   SymbolEntry *getFirstWholeMap(void) const;	 		///< Get the first entire mapping of the symbol
   SymbolEntry *getMapEntry(const Address &addr) const;	 	///< Get first mapping of the symbol that contains the given Address
+  int4 numEntries(void) const { return mapentry.size(); }	///< Return the number of SymbolEntrys
+  SymbolEntry *getMapEntry(int4 i) const { return &(*mapentry[i]); }	///< Return the i-th SymbolEntry for \b this Symbol
   int4 getResolutionDepth(const Scope *useScope) const;		///< Get the number of scope names to print to resolve symbol in given context
   void saveXmlHeader(ostream &s) const;				///< Save basic Symbol properties as XML attributes
   void restoreXmlHeader(const Element *el);			///< Restore basic Symbol properties from XML
@@ -718,6 +721,7 @@ protected:
   vector<EntryMap *> maptable;			///< Rangemaps of SymbolEntry, one map for each address space
   vector<vector<Symbol *> > category;		///< References to Symbol objects organized by category
   list<SymbolEntry> dynamicentry;		///< Dynamic symbol entries
+  SymbolNameTree multiEntrySet;			///< Set of symbols with multiple entries
   uint8 nextUniqueId;				///< Next available symbol id
 public:
   ScopeInternal(const string &nm,Architecture *g);	///< Construct the Scope
@@ -765,6 +769,8 @@ public:
   virtual int4 getCategorySize(int4 cat) const;
   virtual Symbol *getCategorySymbol(int4 cat,int4 ind) const;
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind);
+  set<Symbol *>::const_iterator beginMultiEntry(void) const { return multiEntrySet.begin(); }	///< Start of symbols with more than one entry
+  set<Symbol *>::const_iterator endMultiEntry(void) const { return multiEntrySet.end(); }	///< End of symbols with more than one entry
   static void savePathXml(ostream &s,const vector<string> &vec);	///< Save a path with \<val> tags
   static void restorePathXml(vector<string> &vec,const Element *el);	///< Restore path from \<val> tags
 };

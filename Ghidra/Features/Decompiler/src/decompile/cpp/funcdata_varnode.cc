@@ -1010,6 +1010,32 @@ Symbol *Funcdata::linkSymbolReference(Varnode *vn)
   return entry->getSymbol();
 }
 
+/// Look for Varnodes that are (should be) mapped to the given SymbolEntry and
+/// add them to the end of the result list.
+/// \param entry is the given SymbolEntry to match
+/// \param res is the container holding the result list of matching Varnodes
+void Funcdata::findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> res) const
+
+{
+  if (entry->isDynamic()) {
+    DynamicHash dhash;
+    Varnode *vn = dhash.findVarnode(this,entry->getFirstUseAddress(),entry->getHash());
+    if (vn != (Varnode *)0)
+      res.push_back(vn);
+  }
+  else {
+    VarnodeLocSet::const_iterator iter = beginLoc(entry->getSize(),entry->getAddr());
+    VarnodeLocSet::const_iterator enditer = endLoc(entry->getSize(),entry->getAddr());
+    for(;iter!=enditer;++iter) {
+      Varnode *vn = *iter;
+      Address addr = vn->getUsePoint(*this);
+      if (entry->inUse(addr)) {
+	res.push_back(vn);
+      }
+    }
+  }
+}
+
 /// If a Symbol is already attached, no change is made. Otherwise a special \e dynamic Symbol is
 /// created that is associated with the Varnode via a hash of its local data-flow (rather
 /// than its storage address).

@@ -380,6 +380,17 @@ public:
   virtual int4 apply(Funcdata &data) { data.getMerge().mergeOpcode(CPUI_COPY); return 0; }
 };
 
+/// \brief Try to merge Varnodes specified by Symbols with multiple SymbolEntrys
+class ActionMergeMultiEntry : public Action {
+public:
+  ActionMergeMultiEntry(const string &g) : Action(rule_onceperfunc,"mergemultientry",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionMergeMultiEntry(getGroup());
+  }
+  virtual int4 apply(Funcdata &data) { data.getMerge().mergeMultiEntry(); return 0; }
+};
+
 /// \brief Try to merge Varnodes of the same type (if they don't hold different values at the same time)
 class ActionMergeType : public Action {
 public:
