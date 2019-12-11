@@ -1893,6 +1893,8 @@ Datatype *TypeFactory::downChain(Datatype *ptrtype,uintb &off)
   pt = pt->getSubType(off,&off);
   if (pt == (Datatype *)0)
     return (Datatype *)0;
+  if (pt->metatype == TYPE_ARRAY)
+    return getTypePointerAbsolute(ptype->size, pt, ptype->getWordSize());
   return getTypePointer(ptype->size,pt,ptype->getWordSize());
 }
 
