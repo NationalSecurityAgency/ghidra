@@ -225,8 +225,8 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 				int index = Collections.binarySearch(allChildrenList, node);
 				if (index < 0) {
 					index = -index - 1;
+					addNode(index, node);
 				}
-				addNode(index, node);
 				// kick tree to refilter if filter in place so that nodes will stay expaned see
 				// SCR #7895
 //				tree.setFilterText(tree.getFilterText());
