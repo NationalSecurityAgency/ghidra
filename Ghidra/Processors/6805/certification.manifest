@@ -5,3 +5,10 @@ data/languages/6805.cspec||GHIDRA||||END|
 data/languages/6805.ldefs||GHIDRA||||END|
 data/languages/6805.pspec||GHIDRA||reviewed||END|
 data/languages/6805.slaspec||GHIDRA||||END|
+data/languages/6809.cspec||GHIDRA||||END|
+data/languages/6809.pspec||GHIDRA||||END|
+data/languages/6809.slaspec||GHIDRA||||END|
+data/languages/6x09.sinc||GHIDRA||||END|
+data/languages/6x09_exg_tfr.sinc||GHIDRA||||END|
+data/languages/6x09_pull.sinc||GHIDRA||||END|
+data/languages/6x09_push.sinc||GHIDRA||||END|
