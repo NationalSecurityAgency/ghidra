@@ -757,8 +757,9 @@ public class SymbolicPropogator {
 			return nextAddr;
 		}
 
+		Address minInstrAddress = instruction.getMinAddress();
 		if (debug) {
-			Msg.info(this, instruction.getMinAddress() + "   " + instruction);
+			Msg.info(this, minInstrAddress + "   " + instruction);
 		}
 
 		int mustClearAllUntil_PcodeIndex = -1;
@@ -830,7 +831,7 @@ public class SymbolicPropogator {
 							val1 = vContext.getValue(in[0], evaluator);
 							lval1 = vContext.getConstant(val1, evaluator);
 							vt = vContext.getVarnode(
-								instruction.getMinAddress().getAddressSpace().getBaseSpaceID(),
+								minInstrAddress.getAddressSpace().getBaseSpaceID(),
 								lval1, 0);
 							makeReference(vContext, instruction, ptype, -1, vt,
 								instruction.getFlowType(), monitor);
@@ -911,7 +912,7 @@ public class SymbolicPropogator {
 							if (target.isMemoryAddress()) {
 								vContext.propogateResults(false);
 								conflict |= vContext.mergeToFutureFlowState(
-									instruction.getMinAddress(), target);
+									minInstrAddress, target);
 							}
 							func = prog.getFunctionManager().getFunctionAt(target);
 							if (func == null && ptype == PcodeOp.CALLIND) {
@@ -983,7 +984,7 @@ public class SymbolicPropogator {
 								instruction.getAddress());
 						}
 						vContext.propogateResults(false);
-						conflict |= vContext.mergeToFutureFlowState(instruction.getMinAddress(),
+						conflict |= vContext.mergeToFutureFlowState(minInstrAddress,
 							in[0].getAddress());
 						pcodeIndex = ops.length; // break out of the processing
 						break;
@@ -996,13 +997,13 @@ public class SymbolicPropogator {
 							if ((pcodeIndex + sequenceOffset) >= ops.length) {
 								vContext.propogateResults(false);
 								conflict |= vContext.mergeToFutureFlowState(
-									instruction.getMinAddress(), instruction.getFallThrough());
+									minInstrAddress, instruction.getFallThrough());
 							}
 						}
 						else if (in[0].isAddress()) {
 							vt = in[0];
 							vContext.propogateResults(false);
-							conflict |= vContext.mergeToFutureFlowState(instruction.getMinAddress(),
+							conflict |= vContext.mergeToFutureFlowState(minInstrAddress,
 								in[0].getAddress());
 						}
 
@@ -1044,7 +1045,7 @@ public class SymbolicPropogator {
 										// we don't know what will happen from here on, but anything before should in theory propagate
 										vContext.propogateResults(true);
 										conflict |= vContext.mergeToFutureFlowState(
-											instruction.getMinAddress(),
+											minInstrAddress,
 											instruction.getFallThrough());
 									}
 									// everything that is in the cache from here on should be cleared
@@ -1070,7 +1071,8 @@ public class SymbolicPropogator {
 								}
 							}
 							else if (!evaluator.followFalseConditionalBranches()) {
-								nextAddr = in[0].getAddress();
+								// pcode addresses are raw addresses, make sure address is in same instruction space
+								nextAddr = minInstrAddress.getAddressSpace().getOverlayAddress(in[0].getAddress());
 								pcodeIndex = ops.length; // break out of the processing
 							}
 						}
@@ -1434,7 +1436,7 @@ public class SymbolicPropogator {
 		}
 		else {
 			if (fallthru != null) {
-				conflict |= vContext.mergeToFutureFlowState(instruction.getMinAddress(), fallthru);
+				conflict |= vContext.mergeToFutureFlowState(minInstrAddress, fallthru);
 			}
 		}
 
