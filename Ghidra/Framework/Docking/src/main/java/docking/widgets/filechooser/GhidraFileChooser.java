@@ -815,22 +815,21 @@ public class GhidraFileChooser extends DialogComponentProvider
 	}
 
 	String getDisplayName(File file) {
-		if (file != null) {
-			if (GhidraFileChooser.MY_COMPUTER.equals(getCurrentDirectory())) {
-				String str = getModel().getDescription(file);
-				if (str == null || str.length() == 0) {
-					str = file.getAbsolutePath();
-				}
-				return str;
-			}
-			else if (GhidraFileChooser.RECENT.equals(getCurrentDirectory())) {
-				return file.getAbsolutePath() + "  ";
-			}
-			else {
-				return getFilename(file) + "  ";
-			}
+		if (file == null) {
+			return "";
 		}
-		return "";
+
+		if (GhidraFileChooser.MY_COMPUTER.equals(getCurrentDirectory())) {
+			String str = getModel().getDescription(file);
+			if (str == null || str.length() == 0) {
+				str = file.getAbsolutePath();
+			}
+			return str;
+		}
+		else if (GhidraFileChooser.RECENT.equals(getCurrentDirectory())) {
+			return file.getAbsolutePath() + "  ";
+		}
+		return getFilename(file) + "  ";
 	}
 
 	private void setDirectoryList(File directory, List<File> files) {

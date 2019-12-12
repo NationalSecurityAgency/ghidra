@@ -29,6 +29,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
@@ -80,14 +82,16 @@ public class GTable extends JTable {
 		KeyStroke.getKeyStroke(KeyEvent.VK_A, CONTROL_KEY_MODIFIER_MASK);
 
 	private static final String LAST_EXPORT_FILE = "LAST_EXPORT_DIR";
+	private static final KeyStroke ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
 
-	private int userDefinedRowHeight;
+	public static final long AUTO_LOOKUP_TIMEOUT = 800;
+	private static final int AUTO_LOOKUP_MAX_SEARCH_ROWS = 50000;
+	private long keyTimeout = AUTO_LOOKUP_TIMEOUT;
 
 	private boolean isInitialized;
 	private boolean enableActionKeyBindings;
 	private KeyListener autoLookupListener;
-	private long lastLookupTime;
-	private String lookupString;
+	private AutoLookupResult lastLookup;
 	private int lookupColumn = -1;
 
 	/** A list of default renderers created by this table */
@@ -106,10 +110,9 @@ public class GTable extends JTable {
 	private SelectionManager selectionManager;
 	private Integer visibleRowCount;
 
-	public static final long KEY_TIMEOUT = 800;//made public for JUnits...
-	private static final KeyStroke ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
-
+	private int userDefinedRowHeight;
 	private TableModelListener rowHeightListener = e -> adjustRowHeight();
+
 	private TableColumnModelListener tableColumnModelListener = null;
 	private final Map<Integer, GTableCellRenderingData> columnRenderingDataMap = new HashMap<>();
 
@@ -273,115 +276,144 @@ public class GTable extends JTable {
 		}
 	}
 
-	private int getRow(TableModel model, String keyString) {
-		if (keyString == null) {
+	private String getValueString(int row, int col) {
+		TableCellRenderer renderer = getCellRenderer(row, col);
+		if (renderer instanceof JLabel) {
+			prepareRenderer(renderer, row, col);
+			return ((JLabel) renderer).getText();
+		}
+
+		Object obj = getValueAt(row, col);
+		return obj == null ? null : obj.toString();
+	}
+
+	private int lookupText(String text) {
+		if (text == null) {
 			return -1;
 		}
 
-		int currRow = getSelectedRow();
-		if (currRow >= 0 && currRow < getRowCount() - 1) {
-			if (keyString.length() == 1) {
-				++currRow;
+		int row = getSelectedRow();
+		if (row >= 0 && row < getRowCount() - 1) {
+			if (text.length() == 1) {
+				// fresh search; ignore the current row, could be from a previous match
+				++row;
 			}
-			Object obj = getValueAt(currRow, convertColumnIndexToView(lookupColumn));
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
-				return currRow;
+
+			int col = convertColumnIndexToView(lookupColumn);
+			if (textMatches(text, row, col)) {
+				return row;
 			}
 		}
-		if (model instanceof SortedTableModel) {
-			SortedTableModel sortedModel = (SortedTableModel) model;
+
+		if (dataModel instanceof SortedTableModel) {
+			SortedTableModel sortedModel = (SortedTableModel) dataModel;
 			if (lookupColumn == sortedModel.getPrimarySortColumnIndex()) {
-				return autoLookupBinary(sortedModel, keyString);
+				return autoLookupBinary(sortedModel, text);
 			}
 		}
-		return autoLookupLinear(keyString);
+		return autoLookupLinear(text);
 	}
 
-	private int autoLookupLinear(String keyString) {
-		int rowCount = getRowCount();
-		int startRow = getSelectedRow();
+	private boolean textMatches(String text, int row, int col) {
+		String value = getValueString(row, col);
+		return StringUtils.startsWithIgnoreCase(value, text);
+	}
+
+	private int autoLookupLinear(String text) {
+		int max = AUTO_LOOKUP_MAX_SEARCH_ROWS;
+		int rows = getRowCount();
+		int start = getSelectedRow();
 		int counter = 0;
 		int col = convertColumnIndexToView(lookupColumn);
-		for (int i = startRow + 1; i < rowCount; i++) {
-			Object obj = getValueAt(i, col);
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
+
+		// first search from the current row until the last row
+		for (int i = start + 1; i < rows && counter < max; i++, counter++) {
+			if (textMatches(text, i, col)) {
 				return i;
-			}
-			if (counter++ > TableUtils.MAX_SEARCH_ROWS) {
-				return -1;
 			}
 		}
-		for (int i = 0; i < startRow; i++) {
-			Object obj = getValueAt(i, col);
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
+
+		// then wrap the search to be from the beginning to the current row
+		for (int i = 0; i < start && counter < max; i++, counter++) {
+			if (textMatches(text, i, col)) {
 				return i;
-			}
-			if (counter++ > TableUtils.MAX_SEARCH_ROWS) {
-				return -1;
 			}
 		}
 		return -1;
 	}
 
-	private int autoLookupBinary(SortedTableModel model, String keyString) {
-		String modifiedLookupString = keyString;
+	private int autoLookupBinary(SortedTableModel model, String text) {
+
+		int index = binarySearch(model, text);
+		int col = convertColumnIndexToView(lookupColumn);
+		if (textMatches(text, index, col)) {
+			return index;
+		}
+		if (index - 1 >= 0) {
+			if (textMatches(text, index - 1, col)) {
+				return index - 1;
+			}
+		}
+		if (index + 1 < model.getRowCount()) {
+			if (textMatches(text, index + 1, col)) {
+				return index + 1;
+			}
+		}
+
+		return -1;
+	}
+
+	private int binarySearch(SortedTableModel model, String text) {
 
 		int sortedOrder = 1;
 		int primarySortColumnIndex = model.getPrimarySortColumnIndex();
 		TableSortState columnSortState = model.getTableSortState();
 		ColumnSortState sortState = columnSortState.getColumnSortState(primarySortColumnIndex);
 
+		// if sorted descending, then reverse the search direction and change the lookup text to 
+		// so that a match will come after the range we seek, which is before the desired text
+		// when sorted in reverse
 		if (!sortState.isAscending()) {
 			sortedOrder = -1;
-			int lastCharPos = modifiedLookupString.length() - 1;
-			char lastChar = modifiedLookupString.charAt(lastCharPos);
+			int lastPos = text.length() - 1;
+			char lastChar = text.charAt(lastPos);
 			++lastChar;
-			modifiedLookupString = modifiedLookupString.substring(0, lastCharPos) + lastChar;
+			text = text.substring(0, lastPos) + lastChar;
 		}
 
 		int min = 0;
-		int max = model.getRowCount() - 1;
+		int rows = model.getRowCount();
+		int max = rows - 1;
 		int col = convertColumnIndexToView(lookupColumn);
 		while (min < max) {
-			int i = (min + max) / 2;
-
-			Object obj = getValueAt(i, col);
-			if (obj == null) {
-				obj = "";
-			}
-
-			int compare = modifiedLookupString.toString().compareToIgnoreCase(obj.toString());
+			int mid = (min + max) / 2;
+			String value = getValueString(mid, col);
+			int compare = text.compareToIgnoreCase(value);
 			compare *= sortedOrder;
 
 			if (compare < 0) {
-				max = i - 1;
+				max = mid - 1;
 			}
 			else if (compare > 0) {
-				min = i + 1;
+				min = mid + 1;
 			}
-			else {//compare == 0, MATCH!
-				return i;
-			}
-		}
-
-		String value = getValueAt(min, col).toString();
-		if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-			return min;
-		}
-		if (min - 1 >= 0) {
-			value = getValueAt(min - 1, col).toString();
-			if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-				return min - 1;
-			}
-		}
-		if (min + 1 < dataModel.getRowCount()) {
-			value = getValueAt(min + 1, col).toString();
-			if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-				return min + 1;
+			else { // exact match
+				return mid;
 			}
 		}
 
-		return -1;
+		return min;
+	}
+
+	/**
+	 * Sets the delay between keystrokes after which each keystroke is considered a new lookup
+	 * @param timeout the timeout
+	 * @see #setAutoLookupColumn(int)
+	 * @see #AUTO_LOOKUP_TIMEOUT
+	 */
+	public void setAutoLookupTimeout(long timeout) {
+		keyTimeout = timeout;
+		lastLookup = null;
 	}
 
 	/**
@@ -409,25 +441,25 @@ public class GTable extends JTable {
 						return;
 					}
 
-					if (isIgnorableKeyEvent(e)) {
+					AutoLookupResult lookup = lastLookup;
+					if (lookup == null) {
+						lookup = new AutoLookupResult();
+					}
+
+					lookup.keyTyped(e);
+					if (lookup.shouldSkip()) {
 						return;
 					}
 
-					long when = e.getWhen();
-					if (when - lastLookupTime > KEY_TIMEOUT) {
-						lookupString = "" + e.getKeyChar();
-					}
-					else {
-						lookupString += "" + e.getKeyChar();
-					}
-
-					int row = getRow(dataModel, lookupString);
+					int row = lookupText(lookup.getText());
+					lookup.setFoundMatch(row >= 0);
 					if (row >= 0) {
 						setRowSelectionInterval(row, row);
 						Rectangle rect = getCellRect(row, 0, false);
 						scrollRectToVisible(rect);
 					}
-					lastLookupTime = when;
+
+					lastLookup = lookup;
 				}
 			};
 		}
@@ -698,9 +730,6 @@ public class GTable extends JTable {
 		return super.processKeyBinding(ks, e, condition, pressed);
 	}
 
-	/**
-	 * @see javax.swing.JTable#getDefaultRenderer(java.lang.Class)
-	 */
 	@Override
 	public TableCellRenderer getDefaultRenderer(Class<?> columnClass) {
 		if (columnClass == null) {
@@ -1544,6 +1573,52 @@ public class GTable extends JTable {
 		public boolean isValidComponentContext(ActionContext context) {
 			Component sourceComponent = context.getSourceComponent();
 			return sourceComponent instanceof GTable;
+		}
+	}
+
+	private class AutoLookupResult {
+		private long lastTime;
+		private String text;
+		private boolean foundPreviousMatch;
+		private boolean skip;
+
+		public void keyTyped(KeyEvent e) {
+			skip = false;
+
+			if (isIgnorableKeyEvent(e)) {
+				skip = true;
+				return;
+			}
+
+			String eventChar = Character.toString(e.getKeyChar());
+			long when = e.getWhen();
+			if (when - lastTime > keyTimeout) {
+				text = eventChar;
+			}
+			else {
+				text += eventChar;
+
+				if (!foundPreviousMatch) {
+					// The given character is being added to the previous search.  If that search
+					// was fruitless, then so too will be this one, since we use a 
+					// 'starts with' match.
+					skip = true;
+				}
+			}
+
+			lastTime = when;
+		}
+
+		void setFoundMatch(boolean foundMatch) {
+			foundPreviousMatch = foundMatch;
+		}
+
+		String getText() {
+			return text;
+		}
+
+		boolean shouldSkip() {
+			return skip;
 		}
 	}
 }

@@ -22,13 +22,15 @@ import static docking.widgets.filechooser.GhidraFileChooserMode.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
-import java.awt.Dimension;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.io.*;
 import java.nio.file.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,8 +50,7 @@ import docking.action.DockingAction;
 import docking.test.AbstractDockingTest;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.SpyDropDownWindowVisibilityListener;
-import docking.widgets.table.ColumnSortState;
-import docking.widgets.table.TableSortState;
+import docking.widgets.table.*;
 import generic.concurrent.ConcurrentQ;
 import ghidra.framework.*;
 import ghidra.framework.preferences.Preferences;
@@ -151,7 +152,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForChooser();
 
 		File newCurrentDirectory = getCurrentDirectory();
-		assertTrue(!currentDirectory.equals(newCurrentDirectory));
+		assertFalse(currentDirectory.equals(newCurrentDirectory));
 
 		JButton backButton = (JButton) getInstanceField("backButton", chooser);
 		assertTrue(backButton.isEnabled());
@@ -180,7 +181,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForChooser();
 		waitForSwing();
 
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		final File newFile = getNewlyCreatedFile(dirlist);
 		waitForFile(newFile, DEFAULT_TIMEOUT_MILLIS);
 		stopListEdit(dirlist);
@@ -244,7 +245,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
 		//       parallel mode
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		removeFocusListeners(dirlist);
 
 		pressNewFolderButton();
@@ -276,7 +277,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	public void testNewFolderInList() throws Exception {
 		setMode(DIRECTORIES_ONLY);
 
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 
 		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
 		//       parallel mode
@@ -407,10 +408,10 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		File tempfile = File.createTempFile(getName(), ".tmp", tempdir);
 		tempfile.deleteOnExit();
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		assertNotNull(dirlist);
 		DirectoryListModel dirmodel = (DirectoryListModel) dirlist.getModel();
-		assertTrue(!dirmodel.contains(tempfile));
+		assertFalse(dirmodel.contains(tempfile));
 
 		pressRefreshButton();
 		waitForChooser();
@@ -420,7 +421,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		pressRefreshButton();
 		waitForChooser();
 
-		assertTrue(!dirmodel.contains(tempfile));
+		assertFalse(dirmodel.contains(tempfile));
 
 		// verify back stack is not corrupted!!!
 		assertEquals(size, history.size());
@@ -434,7 +435,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		pressNewFolderButton();
 		waitForSwing();
 
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		File newFile = getNewlyCreatedFile(dirlist);
 		waitForFile(newFile, DEFAULT_TIMEOUT_MILLIS);
 
@@ -450,7 +451,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForFile(newFile, DEFAULT_TIMEOUT_MILLIS);
 
 		// verify we did not go into the selected directory
-		assertTrue(!newFile.equals(getCurrentDirectory()));
+		assertFalse(newFile.equals(getCurrentDirectory()));
 	}
 
 	/*
@@ -700,7 +701,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testDirectoryInDirectory() throws Exception {
 		setMode(FILES_AND_DIRECTORIES);
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 
 		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
 		//       parallel mode
@@ -961,24 +962,24 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	public void testShowDetails() throws Exception {
 		JPanel cardPanel = (JPanel) findComponentByName(chooser.getComponent(), "CARD_PANEL");
 		JList<?> dirlist = (JList<?>) findComponentByName(chooser.getComponent(), "LIST");
-		JTable dirtable = (JTable) findComponentByName(chooser.getComponent(), "TABLE");
+		JTable dirtable = getTableView();
 		JScrollPane scrollpane1 = (JScrollPane) cardPanel.getComponent(0);
 		JScrollPane scrollpane2 = (JScrollPane) cardPanel.getComponent(1);
 		assertEquals(dirtable, scrollpane1.getViewport().getComponent(0));
 		assertEquals(dirlist, scrollpane2.getViewport().getComponent(0));
-		assertTrue(!scrollpane1.isVisible());
+		assertFalse(scrollpane1.isVisible());
 		assertTrue(scrollpane2.isVisible());
 
 		pressDetailsButton();
 		waitForChooser();
 
 		assertTrue(scrollpane1.isVisible());
-		assertTrue(!scrollpane2.isVisible());
+		assertFalse(scrollpane2.isVisible());
 
 		pressDetailsButton();
 		waitForChooser();
 
-		assertTrue(!scrollpane1.isVisible());
+		assertFalse(scrollpane1.isVisible());
 		assertTrue(scrollpane2.isVisible());
 		close();
 	}
@@ -987,7 +988,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	public void testSortingByFileName() throws Exception {
 		pressDetailsButton();
 		waitForSwing();
-		JTable dirtable = (JTable) findComponentByName(chooser.getComponent(), "TABLE");
+		JTable dirtable = getTableView();
 		DirectoryTableModel model = (DirectoryTableModel) dirtable.getModel();
 		JTableHeader header = dirtable.getTableHeader();
 		Rectangle rect = header.getHeaderRect(DirectoryTableModel.FILE_COL);
@@ -1004,7 +1005,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testSortingByFileSzie() throws Exception {
 		pressDetailsButton();
-		JTable dirtable = (JTable) findComponentByName(chooser.getComponent(), "TABLE");
+		JTable dirtable = getTableView();
 		DirectoryTableModel model = (DirectoryTableModel) dirtable.getModel();
 		JTableHeader header = dirtable.getTableHeader();
 		Rectangle rect = header.getHeaderRect(DirectoryTableModel.SIZE_COL);
@@ -1021,7 +1022,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testSortingByFileDate() throws Exception {
 		pressDetailsButton();
-		JTable dirtable = (JTable) findComponentByName(chooser.getComponent(), "TABLE");
+		JTable dirtable = getTableView();
 		DirectoryTableModel model = (DirectoryTableModel) dirtable.getModel();
 		JTableHeader header = dirtable.getTableHeader();
 		Rectangle rect = header.getHeaderRect(DirectoryTableModel.TIME_COL);
@@ -1103,7 +1104,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		setFile(regularFile);
 
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		File file = getSelectedFile(dirlist, DEFAULT_TIMEOUT_MILLIS);
 		assertNotNull(file);
 		assertEquals(regularFile.getName().toUpperCase(), file.getName().toUpperCase());
@@ -1153,7 +1154,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		File directory = new File(getTestDirectoryPath());
 		setFile(directory);
 
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		File selectedFile = getSelectedFile(dirlist, DEFAULT_TIMEOUT_MILLIS);
 		assertNotNull(selectedFile);
 		assertEquals(directory.getName().toUpperCase(), selectedFile.getName().toUpperCase());
@@ -1325,23 +1326,6 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertEquals(wantedFile, selectedFile);
 	}
 
-	private List<File> getExistingFiles(File dir, int count) {
-		assertTrue(dir.isDirectory());
-
-		File[] files = dir.listFiles(f -> f.isFile());
-		assertTrue("Dir does not contain enough files - '" + dir + "'; count = " + count,
-			files.length >= count);
-
-		// create some consistency between runs
-		Arrays.sort(files, (f1, f2) -> f1.getName().compareTo(f2.getName()));
-
-		List<File> result = new ArrayList<>();
-		for (int i = 0; i < count; i++) {
-			result.add(files[i]);
-		}
-		return result;
-	}
-
 	@Test
 	public void testRenameInList() throws Exception {
 		doRenameTest(chooser.getActionManager(), "LIST_EDITOR_FIELD");
@@ -1349,7 +1333,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 	@Test
 	public void testRenameInTable() throws Exception {
-		pressDetailsButton();
+		setTableMode();
 		waitForSwing();
 		doRenameTest(chooser.getActionManager(), "TABLE_EDITOR_FIELD");
 	}
@@ -1545,31 +1529,6 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertFalse(containsRecentFile(file));
 	}
 
-	private boolean containsRecentFile(File file) {
-
-		@SuppressWarnings("unchecked")
-		List<RecentGhidraFile> recents =
-			(List<RecentGhidraFile>) getInstanceField("recentList", chooser);
-		for (RecentGhidraFile recent : recents) {
-			File actual = recent.getAbsoluteFile();
-			if (file.equals(actual)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private ActionContext createDirListContext() {
-
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
-		return new ActionContext(null, dirlist);
-	}
-
-	private boolean isEnabled(DockingAction action, ActionContext context) {
-		return runSwing(() -> action.isEnabledForContext(context));
-	}
-
 	@Test
 	public void testFileFilter() throws Exception {
 		JList<?> dirlist = (JList<?>) findComponentByName(chooser.getComponent(), "LIST");
@@ -1669,6 +1628,109 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		boolean isSelected = newDetailsButtons.isSelected();
 
 		assertEquals(!wasSelected, isSelected);
+	}
+
+	@Test
+	public void testFilenameAutoLookup_InTable() throws Exception {
+
+		// Note: the table auto lookup is tested elsewhere.  This test is just making sure that 
+		//       the feature responds within the file chooser.
+
+		// dir file names start with 'a_...', 'b_...', etc
+		TestFiles files = createAlphabeticMixedDirectory();
+
+		showMultiSelectionChooser(files.parent, FILES_ONLY);
+
+		setTableMode();
+		GTable table = getTableView();
+		int testTimeoutMs = 100;
+		table.setAutoLookupTimeout(testTimeoutMs);
+
+		selectFile(table, 0);
+		focus(table);
+
+		triggerText(table, "b");
+		assertSelectedIndex(table, 1);
+
+		sleep(testTimeoutMs);
+		triggerText(table, "c");
+		assertSelectedIndex(table, 2);
+
+		sleep(testTimeoutMs);
+		triggerText(table, "d");
+		assertSelectedIndex(table, 3);
+
+		sleep(testTimeoutMs);
+		triggerText(table, "b");
+		assertSelectedIndex(table, 1);
+	}
+
+	@Test
+	public void testFilenameAutoLookup_InList() throws Exception {
+
+		// dir file names start with 'a_...', 'b_...', etc
+		TestFiles files = createAlphabeticMixedDirectory();
+
+		showMultiSelectionChooser(files.parent, FILES_ONLY);
+
+		setListMode();
+		DirectoryList list = getListView();
+		int testTimeoutMs = 100;
+		list.setAutoLookupTimeout(testTimeoutMs);
+
+		selectFile(list, 0);
+		focus(list);
+
+		triggerText(list, "b");
+		assertSelectedIndex(list, 1);
+
+		sleep(testTimeoutMs);
+		triggerText(list, "c");
+		assertSelectedIndex(list, 2);
+
+		sleep(testTimeoutMs);
+		triggerText(list, "d");
+		assertSelectedIndex(list, 3);
+
+		sleep(testTimeoutMs);
+		triggerText(list, "b");
+		assertSelectedIndex(list, 1);
+	}
+
+	@Test
+	public void testFilenameAutoLookup_InList_SimilarNames() throws Exception {
+
+		// dir file names start with 'dir1', 'dir1', 'file1...', 'file2...', etc
+		TestFiles files = createMixedDirectory();
+
+		showMultiSelectionChooser(files.parent, FILES_ONLY);
+
+		DirectoryList list = getListView();
+		int testTimeoutMs = 100;
+		list.setAutoLookupTimeout(testTimeoutMs);
+
+		setListMode();
+		selectFile(list, 0);
+		focus(list);
+
+		triggerText(list, "d");
+		assertSelectedIndex(list, 1);
+
+		sleep(testTimeoutMs);
+		triggerText(list, "d");
+		assertSelectedIndex(list, 2);
+
+		sleep(testTimeoutMs);
+		triggerText(list, "f");
+		assertSelectedIndex(list, 3);
+
+		sleep(testTimeoutMs);
+		triggerText(list, "f");
+		assertSelectedIndex(list, 4);
+
+		sleep(testTimeoutMs);
+		triggerText(list, "d");
+		assertSelectedIndex(list, 0);
 	}
 
 	@Test
@@ -1778,6 +1840,71 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 // Private Methods
 //==================================================================================================
 
+	private List<File> getExistingFiles(File dir, int count) {
+		assertTrue(dir.isDirectory());
+	
+		File[] files = dir.listFiles(f -> f.isFile());
+		assertTrue("Dir does not contain enough files - '" + dir + "'; count = " + count,
+			files.length >= count);
+	
+		// create some consistency between runs
+		Arrays.sort(files, (f1, f2) -> f1.getName().compareTo(f2.getName()));
+	
+		List<File> result = new ArrayList<>();
+		for (int i = 0; i < count; i++) {
+			result.add(files[i]);
+		}
+		return result;
+	}
+
+	private boolean containsRecentFile(File file) {
+	
+		@SuppressWarnings("unchecked")
+		List<RecentGhidraFile> recents =
+			(List<RecentGhidraFile>) getInstanceField("recentList", chooser);
+		for (RecentGhidraFile recent : recents) {
+			File actual = recent.getAbsoluteFile();
+			if (file.equals(actual)) {
+				return true;
+			}
+		}
+	
+		return false;
+	}
+
+	private ActionContext createDirListContext() {
+	
+		DirectoryList dirlist = getListView();
+		return new ActionContext(null, dirlist);
+	}
+
+	private boolean isEnabled(DockingAction action, ActionContext context) {
+		return runSwing(() -> action.isEnabledForContext(context));
+	}
+
+	private void assertSelectedIndex(DirectoryList list, int expected) {
+		int actual = runSwing(() -> list.getSelectedIndex());
+		assertEquals("Wrong list index selected", expected, actual);
+	}
+
+	private void assertSelectedIndex(GTable table, int expected) {
+		int actual = runSwing(() -> table.getSelectedRow());
+		assertEquals("Wrong table row selected", expected, actual);
+	}
+
+	private void selectFile(DirectoryList list, int index) {
+		runSwing(() -> list.setSelectedIndex(index));
+	}
+
+	private void selectFile(GTable table, int index) {
+		runSwing(() -> table.getSelectionModel().setSelectionInterval(index, index));
+	}
+
+	private void focus(Component c) {
+		runSwing(() -> c.requestFocus());
+		waitForSwing();
+	}
+
 	private void setFile(File file) throws Exception {
 		setFile(file, true);
 	}
@@ -1800,7 +1927,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 	private void selectFiles(Iterable<File> files) {
 
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		runSwing(() -> dirlist.setSelectedFiles(files));
 	}
 
@@ -1816,6 +1943,26 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	private void pressCancel() {
 		pressButtonByText(chooser.getComponent(), "Cancel");
 		waitForSwing();
+	}
+
+	private void setTableMode() {
+		AbstractButton button = (AbstractButton) findComponentByName(chooser.getComponent(),
+			"DETAILS_BUTTON");
+		boolean isSelected = runSwing(() -> button.isSelected());
+		if (!isSelected) {
+			// toggle from the table 'details mode'
+			pressDetailsButton();
+		}
+	}
+
+	private void setListMode() {
+		AbstractButton button = (AbstractButton) findComponentByName(chooser.getComponent(),
+			"DETAILS_BUTTON");
+		boolean isSelected = runSwing(() -> button.isSelected());
+		if (isSelected) {
+			// toggle from the table 'details mode'
+			pressDetailsButton();
+		}
 	}
 
 	private void pressDetailsButton() {
@@ -2179,6 +2326,12 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		return file;
 	}
 
+	private File myCreateTempFileWithPrefix(File parent, String prefix) throws IOException {
+		File file = File.createTempFile(prefix + '_' + getName(), null, parent);
+		file.deleteOnExit();
+		return file;
+	}
+
 	private File myCreateTempDirectory(File parent, String name) throws IOException {
 
 		File userDir = new File(parent, name);
@@ -2224,7 +2377,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 				" and current value: " + editorField.getText());
 		}
 
-		assertTrue(!tempfile.exists());
+		assertFalse(tempfile.exists());
 		File newTempFile = new File(tempfile.getParentFile(), name);
 		newTempFile.deleteOnExit();
 		assertTrue("New file was not created after a rename: " + newTempFile, newTempFile.exists());
@@ -2236,7 +2389,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			assertEquals(name, selectedFile.getName());
 		}
 		else {
-			DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+			DirectoryList dirlist = getListView();
 			File selectedFile = getSelectedFile(dirlist, DEFAULT_TIMEOUT_MILLIS);
 			assertEquals(name, selectedFile.getName());
 		}
@@ -2341,7 +2494,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 	private void assertChooserListContains(File expected) {
 
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		ListModel<?> model = dirlist.getModel();
 		int size = model.getSize();
 		for (int i = 0; i < size; i++) {
@@ -2381,8 +2534,12 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		return dirmodel.getFile(selectedIndex);
 	}
 
-	private DirectoryList getDirectoryListViewOfFileChooser() {
+	private DirectoryList getListView() {
 		return (DirectoryList) findComponentByName(chooser.getComponent(), "LIST");
+	}
+
+	private GTable getTableView() {
+		return (GTable) findComponentByName(chooser.getComponent(), "TABLE");
 	}
 
 	private void debugChooser() {
@@ -2402,7 +2559,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// files loaded in the table and list
 		Msg.debug(this, "\ttable contents: ");
-		JTable dirtable = (JTable) findComponentByName(chooser.getComponent(), "TABLE");
+		JTable dirtable = getTableView();
 		DirectoryTableModel tableModel = (DirectoryTableModel) dirtable.getModel();
 		int size = tableModel.getRowCount();
 		for (int i = 0; i < size; i++) {
@@ -2410,7 +2567,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		}
 
 		Msg.debug(this, "\tlist contents: ");
-		DirectoryList dirlist = getDirectoryListViewOfFileChooser();
+		DirectoryList dirlist = getListView();
 		ListModel<?> model = dirlist.getModel();
 		size = model.getSize();
 		for (int i = 0; i < size; i++) {
@@ -2455,9 +2612,29 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		File subdir1 = myCreateTempDirectory(dir, "dir1");
 		File subdir2 = myCreateTempDirectory(dir, "dir2");
 		File subdir3 = myCreateTempDirectory(dir, "dir3");
-		File file1 = myCreateTempFile(dir, "file1");
-		File file2 = myCreateTempFile(dir, "file2");
-		File file3 = myCreateTempFile(dir, "file3");
+		File file1 = myCreateTempFileWithPrefix(dir, "file1");
+		File file2 = myCreateTempFileWithPrefix(dir, "file2");
+		File file3 = myCreateTempFileWithPrefix(dir, "file3");
+
+		files.parent = dir;
+		files.addDirs(subdir1, subdir2, subdir3);
+		files.addFiles(file1, file2, file3);
+
+		return files;
+	}
+
+	/** Create a temp dir that contains multiple temp dirs and files */
+	private TestFiles createAlphabeticMixedDirectory() throws IOException {
+
+		File dir = createTempDirectory("MixedDir");
+		TestFiles files = new TestFiles(dir);
+
+		File subdir1 = myCreateTempDirectory(dir, "a_dir1");
+		File subdir2 = myCreateTempDirectory(dir, "b_dir2");
+		File subdir3 = myCreateTempDirectory(dir, "c_dir3");
+		File file1 = myCreateTempFileWithPrefix(dir, "d_file1");
+		File file2 = myCreateTempFileWithPrefix(dir, "e_file2");
+		File file3 = myCreateTempFileWithPrefix(dir, "f_file3");
 
 		files.parent = dir;
 		files.addDirs(subdir1, subdir2, subdir3);

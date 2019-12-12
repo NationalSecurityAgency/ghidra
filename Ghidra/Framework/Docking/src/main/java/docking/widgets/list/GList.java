@@ -36,7 +36,7 @@ import docking.widgets.table.GTable;
 public class GList<T> extends JList<T> implements GComponent {
 
 	/**The timeout for the auto-lookup feature*/
-	public static final long KEY_TIMEOUT = GTable.KEY_TIMEOUT;//made public for JUnits...
+	public static final long AUTO_LOOKUP_TIMEOUT = GTable.AUTO_LOOKUP_TIMEOUT;
 
 	/**
 	 * Constructs a <code>GhidraList</code> with an empty model.

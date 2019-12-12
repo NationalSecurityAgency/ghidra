@@ -455,7 +455,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 		triggerText(table, "si");
 		assertEquals(6, table.getSelectedRow());
 
-		sleep(GTable.KEY_TIMEOUT);
+		sleep(GTable.AUTO_LOOKUP_TIMEOUT);
 
 		// try again with the sort in the other direction
 		selectFirstRow();

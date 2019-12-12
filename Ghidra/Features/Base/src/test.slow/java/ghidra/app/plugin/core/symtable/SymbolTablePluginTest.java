@@ -392,24 +392,26 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		});
 
 		waitForNotBusy(symbolTable);
+		int testTimeoutMs = 100;
+		symbolTable.setAutoLookupTimeout(testTimeoutMs);
 
 		selectRow(0);
 
 		triggerAutoLookup("a");
 		assertEquals(findRow("a", "Global"), symbolTable.getSelectedRow());
-		sleep(GTable.KEY_TIMEOUT);
+		sleep(testTimeoutMs);
 
 		triggerAutoLookup("ab");
 		assertEquals(findRow("ab", "Global"), symbolTable.getSelectedRow());
-		sleep(GTable.KEY_TIMEOUT);
+		sleep(testTimeoutMs);
 
 		triggerAutoLookup("abc");
 		assertEquals(findRow("abc", "Global"), symbolTable.getSelectedRow());
-		sleep(GTable.KEY_TIMEOUT);
+		sleep(testTimeoutMs);
 
 		triggerAutoLookup("abcd");
 		assertEquals(findRow("abc1", "Global"), symbolTable.getSelectedRow());
-		sleep(GTable.KEY_TIMEOUT);
+		sleep(testTimeoutMs);
 
 		selectRow(0);
 		triggerAutoLookup("abc12");
