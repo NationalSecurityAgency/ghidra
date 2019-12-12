@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.datamgr;
 
 import java.awt.Component;
 import java.awt.Point;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +30,7 @@ import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.MultiActionDockingAction;
 import docking.widgets.OptionDialog;
 import docking.widgets.PopupWindow;
@@ -357,22 +357,34 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
 		archiveGTree = new DataTypeArchiveGTree(plugin);
-		archiveGTree.addMouseListener(new MouseAdapter() {
+		archiveGTree.addMouseListener(new GMouseListenerAdapter() {
+
+			private GTreeNode lastClickedNode;
+
+			@Override
+			public void doubleClickTriggered(MouseEvent e) {
+
+				Point point = e.getPoint();
+				GTreeNode clickedNode = archiveGTree.getNodeForLocation(point.x, point.y);
+				if (clickedNode == null) {
+					return;
+				}
+
+				if (clickedNode != lastClickedNode) {
+					// this can happen when the tree moves during a double-click
+					return;
+				}
+
+				editNode(clickedNode);
+			}
 
 			@Override
 			public void mouseClicked(MouseEvent e) {
-
-				if (e.getClickCount() >= 2 && SwingUtilities.isLeftMouseButton(e)) {
-					Point point = e.getPoint();
-					GTreeNode clickedNode = archiveGTree.getNodeForLocation(point.x, point.y);
-					if (clickedNode == null) {
-						return;
-					}
-
-					editNode(clickedNode);
-				}
+				super.mouseClicked(e);
+				Point point = e.getPoint();
+				GTreeNode clickedNode = archiveGTree.getNodeForLocation(point.x, point.y);
+				lastClickedNode = clickedNode;
 			}
-
 		});
 
 		archiveGTree.addGTModelListener(new TreeModelListener() {
