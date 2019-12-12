@@ -23,6 +23,10 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import ghidra.framework.model.*;
 
+/**
+ * A context that understands files that live in a {@link Project}.  Most of the clients of
+ * this context will use its notion of selected {@link DomainFile}s and folders.
+ */
 public class ProjectDataActionContext extends ActionContext implements DomainFileContext {
 
 	private List<DomainFolder> selectedFolders;
