@@ -1553,13 +1553,24 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Returns the relocation table associated to the specified section header.
-	 * Or, null if one does not exist.
+	 * Returns the relocation table associated to the specified section header,
+	 * or null if one does not exist.
+	 * @param relocSection section header corresponding to relocation table
 	 * @return the relocation table associated to the specified section header
 	 */
 	public ElfRelocationTable getRelocationTable(ElfSectionHeader relocSection) {
+		return getRelocationTableAtOffset(relocSection.getOffset());
+	}
+
+	/**
+	 * Returns the relocation table located at the specified fileOffset,
+	 * or null if one does not exist.
+	 * @param fileOffset file offset corresponding to start of relocation table
+	 * @return the relocation table located at the specified fileOffset or null
+	 */
+	public ElfRelocationTable getRelocationTableAtOffset(long fileOffset) {
 		for (int i = 0; i < relocationTables.length; i++) {
-			if (relocationTables[i].getFileOffset() == relocSection.getOffset()) {
+			if (relocationTables[i].getFileOffset() == fileOffset) {
 				return relocationTables[i];
 			}
 		}

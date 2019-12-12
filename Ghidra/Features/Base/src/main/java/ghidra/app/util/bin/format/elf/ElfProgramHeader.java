@@ -343,7 +343,8 @@ public class ElfProgramHeader
 			// TODO: unsure if we will encounter this situation 
 			throw new UnsupportedOperationException("unsupported use of filtered load segment");
 		}
-		long addressableUnitSize = p_filesz / p_memsz; // FIXME: verify unit size computation approach !
+		// TODO: additional validation of this approach is needed
+		long addressableUnitSize = p_filesz / getAdjustedLoadSize();
 		return (addressableUnitSize * (virtualAddress - getVirtualAddress())) + p_offset;
 	}
 
