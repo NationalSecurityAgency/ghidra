@@ -167,6 +167,7 @@ protected:
   uint2 catindex;		///< Index within category
   uint8 symbolId;		///< Unique id, 0=unassigned
   vector<list<SymbolEntry>::iterator> mapentry;	///< List of storage locations labeled with \b this Symbol
+  uint4 wholeCount;		///< Number of SymbolEntries that map to the whole Symbol
   virtual ~Symbol(void) {}	///< Destructor
   void setDisplayFormat(uint4 val);	///< Set the display format for \b this Symbol
   void setSymbolId(uint8 val) { symbolId = val; }	///< Assign a unique id to the symbol
@@ -184,10 +185,10 @@ public:
   };
   /// \brief Construct given a name and data-type
   Symbol(Scope *sc,const string &nm,Datatype *ct)
-  { scope=sc; name=nm; nameDedup=0; type=ct; flags=0; dispflags=0; category=-1; symbolId = 0; }
+  { scope=sc; name=nm; nameDedup=0; type=ct; flags=0; dispflags=0; category=-1; symbolId=0; wholeCount=0; }
 
   /// \brief Construct for use with restoreXml()
-  Symbol(Scope *sc) { scope=sc; nameDedup=0; flags=0; dispflags=0; category=-1; symbolId = 0; }
+  Symbol(Scope *sc) { scope=sc; nameDedup=0; flags=0; dispflags=0; category=-1; symbolId = 0; wholeCount=0; }
 
   const string &getName(void) const { return name; }		///< Get the local name of the symbol
   Datatype *getType(void) const { return type; }		///< Get the data-type

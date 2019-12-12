@@ -31,7 +31,7 @@ import ghidra.xml.XmlPullParser;
  */
 public class HighConstant extends HighVariable {
 
-	private DynamicSymbol symbol;
+	private HighSymbol symbol;
 	private Address pcaddr;		// null or Address of PcodeOp which defines the representative
 
 	/**
@@ -94,24 +94,23 @@ public class HighConstant extends HighVariable {
 		restoreInstances(parser, el);
 		pcaddr = function.getPCAddress(represent);
 		if (symref != 0) {
-			HighSymbol sym = function.getLocalSymbolMap().getSymbol(symref);
-			if (sym == null) {
-				sym = function.getGlobalSymbolMap().getSymbol(symref);
+			symbol = function.getLocalSymbolMap().getSymbol(symref);
+			if (symbol == null) {
+				symbol = function.getGlobalSymbolMap().getSymbol(symref);
 			}
-			if (sym instanceof DynamicSymbol) {
-				symbol = (DynamicSymbol) sym;
-				name = sym.getName();
-				sym.setHighVariable(this);
+			if (symbol instanceof DynamicSymbol) {
+				name = symbol.getName();
+				symbol.setHighVariable(this);
 			}
-			else if (sym == null) {
+			else if (symbol == null) {
 				GlobalSymbolMap globalMap = function.getGlobalSymbolMap();
 				Program program = function.getFunction().getProgram();
-				sym = globalMap.populateSymbol(symref, null, -1);
-				if (sym == null) {
+				symbol = globalMap.populateSymbol(symref, null, -1);
+				if (symbol == null) {
 					PcodeOp op = ((VarnodeAST) represent).getLoneDescend();
 					Address addr = HighFunctionDBUtil.getSpacebaseReferenceAddress(program, op);
 					if (addr != null) {
-						sym = globalMap.newSymbol(symref, addr, DataType.DEFAULT, 1);
+						symbol = globalMap.newSymbol(symref, addr, DataType.DEFAULT, 1);
 					}
 				}
 			}

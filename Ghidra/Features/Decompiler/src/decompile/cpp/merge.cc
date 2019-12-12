@@ -822,13 +822,15 @@ void Merge::mergeMultiEntry(void)
     int4 conflictCount = 0;
     for(int4 i=0;i<numEntries;++i) {
       int4 prevSize = mergeList.size();
-      data.findLinkedVarnodes(symbol->getMapEntry(i), mergeList);
+      SymbolEntry *entry = symbol->getMapEntry(i);
+      if (entry->getSize() != symbol->getType()->getSize())
+	continue;
+      data.findLinkedVarnodes(entry, mergeList);
       if (mergeList.size() == prevSize)
 	skipCount += 1;		// Did not discover any Varnodes corresponding to a particular SymbolEntry
     }
     if (mergeList.empty()) continue;
     HighVariable *high = mergeList[0]->getHigh();
-    Datatype *ct = high->getType();
     updateHigh(high);
     for(int4 i=0;i<mergeList.size();++i) {
       HighVariable *newHigh = mergeList[i]->getHigh();
@@ -1109,7 +1111,7 @@ void Merge::buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 po
     }
   }
   if (count > 0 && domCopyIsNew) {
-    high->merge(domVn->getHigh(),false);
+    high->merge(domVn->getHigh(),true);
   }
 }
 

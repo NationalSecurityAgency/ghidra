@@ -27,12 +27,10 @@ void Funcdata::setVarnodeProperties(Varnode *vn) const
   // One more chance to find entry, now that we know usepoint
     uint4 vflags=0;
     SymbolEntry *entry = localmap->queryProperties(vn->getAddr(),vn->getSize(),vn->getUsePoint(*this),vflags);
-    if (entry != (SymbolEntry *)0) { // Let entry try to force type
-      entry->updateType(vn);
-      if (entry->getSymbol()->isTypeLocked())
-	vn->mapentry = entry;
-    }
-    vn->setFlags(vflags & ~Varnode::typelock); // typelock set by updateType
+    if (entry != (SymbolEntry *)0) // Let entry try to force type
+      vn->setSymbolProperties(entry);
+    else
+      vn->setFlags(vflags & ~Varnode::typelock); // typelock set by updateType
   }
 
   if (vn->cover == (Cover *)0) {
@@ -108,12 +106,10 @@ Varnode *Funcdata::newVarnodeOut(int4 s,const Address &m,PcodeOp *op)
 
   uint4 vflags = 0;
   SymbolEntry *entry = localmap->queryProperties(m,s,op->getAddr(),vflags);
-  if (entry != (SymbolEntry *)0) {
-    entry->updateType(vn);
-    if (entry->getSymbol()->isTypeLocked())
-      vn->mapentry = entry;
-  }
-  vn->setFlags(vflags & ~Varnode::typelock); // Typelock set by updateType
+  if (entry != (SymbolEntry *)0)
+    vn->setSymbolProperties(entry);
+  else
+    vn->setFlags(vflags & ~Varnode::typelock); // Typelock set by updateType
 
   return vn;
 }
@@ -153,12 +149,10 @@ Varnode *Funcdata::newVarnode(int4 s,const Address &m,Datatype *ct)
 
   uint4 vflags=0;
   SymbolEntry *entry = localmap->queryProperties(vn->getAddr(),vn->getSize(),Address(),vflags);
-  if (entry != (SymbolEntry *)0) { // Let entry try to force type
-    entry->updateType(vn);
-    if (entry->getSymbol()->isTypeLocked())
-      vn->mapentry = entry;
-  }
-  vn->setFlags(vflags & ~Varnode::typelock); // Typelock set by updateType
+  if (entry != (SymbolEntry *)0)	// Let entry try to force type
+    vn->setSymbolProperties(entry);
+  else
+    vn->setFlags(vflags & ~Varnode::typelock); // Typelock set by updateType
 
   return vn;
 }
@@ -949,33 +943,19 @@ Symbol *Funcdata::linkSymbol(Varnode *vn)
   Symbol *sym = high->getSymbol();
   if (sym != (Symbol *)0) return sym; // Symbol already assigned
 
-  entry = vn->getSymbolEntry();	// Check if we have a symbol already cached
-  if (entry == (SymbolEntry *)0) {
-    Address usepoint = vn->getUsePoint(*this);
-    // Find any entry overlapping base address
-    entry = localmap->queryProperties(vn->getAddr(),1,usepoint,flags);
-    if (entry != (SymbolEntry *)0) {
-      sym = entry->getSymbol();
-    }
-    else {			// Must create a symbol entry
-      if (!vn->isPersist()) {	// Only create local symbol
-	entry = localmap->addSymbol("",high->getType(),vn->getAddr(),usepoint);
-	sym = entry->getSymbol();
-      }
-    }
-  }
-  else
+  Address usepoint = vn->getUsePoint(*this);
+  // Find any entry overlapping base address
+  entry = localmap->queryProperties(vn->getAddr(), 1, usepoint, flags);
+  if (entry != (SymbolEntry *) 0) {
     sym = entry->getSymbol();
-  if (sym != (Symbol *)0) {
-    int4 offset;
-    if (sym->getCategory() == 1)		// For equates we don't care about size
-      offset = -1;
-    else if ((sym->getType()->getSize() == vn->getSize())&&
-	    (entry->getAddr() == vn->getAddr())&&(!entry->isPiece())) // A matching entry
-      offset = -1;
-    else
-      offset = vn->getAddr().overlap(0,entry->getAddr(),sym->getType()->getSize()) + entry->getOffset();
-    high->setSymbol(sym,offset);
+    vn->setSymbolEntry(entry);
+  }
+  else {			// Must create a symbol entry
+    if (!vn->isPersist()) {	// Only create local symbol
+      entry = localmap->addSymbol("", high->getType(), vn->getAddr(), usepoint);
+      sym = entry->getSymbol();
+      vn->setSymbolEntry(entry);
+    }
   }
 
   return sym;
@@ -1006,7 +986,7 @@ Symbol *Funcdata::linkSymbolReference(Varnode *vn)
   if (entry == (SymbolEntry *)0)
     return (Symbol *)0;
   int4 off = (int4)(addr.getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
-  vn->getHigh()->setSymbol(entry->getSymbol(), off);
+  vn->setSymbolReference(entry, off);
   return entry->getSymbol();
 }
 
@@ -1014,7 +994,7 @@ Symbol *Funcdata::linkSymbolReference(Varnode *vn)
 /// add them to the end of the result list.
 /// \param entry is the given SymbolEntry to match
 /// \param res is the container holding the result list of matching Varnodes
-void Funcdata::findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> res) const
+void Funcdata::findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) const
 
 {
   if (entry->isDynamic()) {
@@ -1057,7 +1037,7 @@ void Funcdata::buildDynamicSymbol(Varnode *vn)
     throw RecovError("Unable to find unique hash for varnode");
 
   Symbol *sym = localmap->addDynamicSymbol("",high->getType(),dhash.getAddress(),dhash.getHash());
-  high->setSymbol(sym,-1);
+  vn->setSymbolEntry(sym->getFirstWholeMap());
 }
 
 /// \brief Map properties of a dynamic symbol to a Varnode
@@ -1078,21 +1058,70 @@ bool Funcdata::attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash)
   if (vn == (Varnode *)0) return false;
   if (entry->getSymbol()->getCategory() == 1) {	// Is this an equate symbol
     if (vn->mapentry != entry) {		// Check we haven't marked this before
-      uint4 flags = entry->getAllFlags();		// Mark that the varnode is mapped
-      vn->setFlags(flags & ~Varnode::typelock);	// Don't pass data-type and typelock to Varnode
-      vn->mapentry = entry;
+      vn->setSymbolEntry(entry);
       return true;
     }
   }
-  else if (entry->updateType(vn)) {
-    if (entry->getSize() != vn->getSize()) return false;
-    uint4 flags = entry->getAllFlags();
-    vn->setFlags(flags & ~Varnode::typelock); // Mark that the varnode is mapped
-    if (entry->getSymbol()->isTypeLocked())
-      vn->mapentry = entry;
+  else if (entry->getSize() == vn->getSize()) {
+    vn->setSymbolProperties(entry);
     return true;
   }
   return false;
+}
+
+/// \brief Map the name of a dynamic symbol to a Varnode
+///
+/// Given a dynamic mapping, try to find the mapped Varnode, then attach the Symbol to the Varnode.
+/// The name of the Symbol is used, but the data-type and possibly other properties are not
+/// put on the Varnode.
+/// \param entry is the (dynamic) Symbol entry
+/// \param dhash is the dynamic mapping information
+/// \return \b true if a Varnode was adjusted
+bool Funcdata::attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash)
+
+{
+  dhash.clear();
+  Varnode *vn = dhash.findVarnode(this,entry->getFirstUseAddress(),entry->getHash());
+  if (vn == (Varnode *)0)
+    return false;
+  if (vn->getSymbolEntry() == entry) return false; // Already applied it
+  Symbol *sym = entry->getSymbol();
+  if (vn->getSize() != entry->getSize()) {
+    ostringstream s;
+    s << "Unable to use symbol ";
+    if (!sym->isNameUndefined())
+	s << sym->getName() << ' ';
+    s << ": Size does not match variable it labels";
+    warningHeader(s.str());
+    return false;
+  }
+
+  if (vn->isImplied()) {	// This should be finding an explicit, but a cast may have been inserted
+    Varnode *newvn = (Varnode *)0;
+    // Look at the "other side" of the cast
+    if (vn->isWritten() && (vn->getDef()->code() == CPUI_CAST))
+	newvn = vn->getDef()->getIn(0);
+    else {
+	PcodeOp *castop = vn->loneDescend();
+	if ((castop != (PcodeOp *)0)&&(castop->code() == CPUI_CAST))
+	  newvn = castop->getOut();
+    }
+    // See if the varnode on the other side is explicit
+    if ((newvn != (Varnode *)0)&&(newvn->isExplicit()))
+	vn = newvn;		// in which case we use it
+  }
+
+  vn->setSymbolEntry(entry);
+  if (!sym->isTypeLocked()) {	// If the dynamic symbol did not lock its type
+    localmap->retypeSymbol(sym,vn->getType()); // use the type propagated into the varnode
+  }
+  else if (sym->getType() != vn->getType()) {
+    ostringstream s;
+    s << "Unable to use type for symbol " << sym->getName();
+    warningHeader(s.str());
+    localmap->retypeSymbol(sym,vn->getType()); // use the type propagated into the varnode
+  }
+  return true;
 }
 
 /// \brief Replace all read references to the first Varnode with a second Varnode

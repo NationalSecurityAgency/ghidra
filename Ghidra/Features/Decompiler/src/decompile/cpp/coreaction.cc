@@ -3890,67 +3890,17 @@ int4 ActionDynamicSymbols::apply(Funcdata &data)
 
 {
   ScopeLocal *localmap = data.getScopeLocal();
-  list<SymbolEntry>::const_iterator iter,enditer;
+  list<SymbolEntry>::iterator iter,enditer;
   iter = localmap->beginDynamic();
   enditer = localmap->endDynamic();
   DynamicHash dhash;
   while(iter != enditer) {
-    const SymbolEntry &entry( *iter );
+    SymbolEntry *entry = &(*iter);
     ++iter;
-    Symbol *sym = entry.getSymbol();
-    dhash.clear();
-    Varnode *vn = dhash.findVarnode(&data,entry.getFirstUseAddress(),entry.getHash());
-    if (vn == (Varnode *)0) {
-      //      localmap->removeSymbol(sym); // If it didn't map to anything, remove it
-      continue;
-    }
-    if (vn->getSymbolEntry() == &entry) continue; // Already applied it
-    if (vn->getSize() != entry.getSize()) {
-      ostringstream s;
-      s << "Unable to use symbol ";
-      if (!sym->isNameUndefined())
-	s << sym->getName() << ' ';
-      s << ": Size does not match variable it labels";
-      data.warningHeader(s.str());
-      //      localmap->removeSymbol(sym); // Don't use the symbol
-      continue;
-    }
-    if (vn->getSymbolEntry() == &entry) continue; // Already applied it
-
-    if (vn->isImplied()) {	// This should be finding an explicit, but a cast may have been inserted
-      Varnode *newvn = (Varnode *)0;
-      // Look at the "other side" of the cast
-      if (vn->isWritten() && (vn->getDef()->code() == CPUI_CAST))
-	newvn = vn->getDef()->getIn(0);
-      else {
-	PcodeOp *castop = vn->loneDescend();
-	if ((castop != (PcodeOp *)0)&&(castop->code() == CPUI_CAST))
-	  newvn = castop->getOut();
-      }
-      // See if the varnode on the other side is explicit
-      if ((newvn != (Varnode *)0)&&(newvn->isExplicit()))
-	vn = newvn;		// in which case we use it
-    }
-
-    int4 offset;
-    if (!entry.isPiece())
-      offset = -1;
-    else
-      offset = entry.getOffset();
-    vn->getHigh()->setSymbol(sym,offset);
-    if (!sym->isTypeLocked()) {	// If the dynamic symbol did not lock its type
-      localmap->retypeSymbol(sym,vn->getType()); // use the type propagated into the varnode
-    }
-    else if (sym->getType() != vn->getType()) {
-      ostringstream s;
-      s << "Unable to use type for symbol " << sym->getName();
-      data.warningHeader(s.str());
-      localmap->retypeSymbol(sym,vn->getType()); // use the type propagated into the varnode
-    }
     // FIXME: Setting the symbol here (for the first time) gives the type no time to propagate properly
     // Currently the casts aren't set properly
-
-    count += 1;
+    if (data.attemptDynamicMappingLate(entry, dhash))
+      count += 1;
   }
   return 0;
 }

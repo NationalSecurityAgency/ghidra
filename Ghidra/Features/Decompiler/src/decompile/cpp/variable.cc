@@ -23,13 +23,56 @@ HighVariable::HighVariable(Varnode *vn)
 
 {
   numMergeClasses = 1;
-  highflags = HighVariable::flagsdirty | HighVariable::typedirty | HighVariable::coverdirty;
+  highflags = flagsdirty | typedirty | coverdirty;
   flags = 0;
   type = (Datatype *)0;
   symbol = (Symbol *)0;
   symboloffset = -1;
   inst.push_back(vn);
   vn->setHigh( this, numMergeClasses-1 );
+  if (vn->getSymbolEntry() != (SymbolEntry *)0)
+    setSymbol(vn);
+}
+
+/// The given Varnode \b must be a member and \b must have a non-null SymbolEntry
+void HighVariable::setSymbol(Varnode *vn) const
+
+{
+  SymbolEntry *entry = vn->getSymbolEntry();
+  if (symbol != (Symbol *)0 && symbol != entry->getSymbol()) {
+    if ((highflags & symboldirty)==0) {
+      ostringstream s;
+      s << "Symbols \"" << symbol->getName() << "\" and \"" << entry->getSymbol()->getName();
+      s << "\" assigned to the same variable";
+      throw LowlevelError(s.str());
+    }
+  }
+  symbol = entry->getSymbol();
+  if (entry->isDynamic())	// Dynamic symbols match whole variable
+    symboloffset = -1;
+  else if (symbol->getCategory() == 1)
+    symboloffset = -1;			// For equates, we don't care about size
+  else if (symbol->getType()->getSize() == vn->getSize() &&
+      entry->getAddr() == vn->getAddr() && !entry->isPiece())
+    symboloffset = -1;			// A matching entry
+  else
+    symboloffset = vn->getAddr().overlap(0,entry->getAddr(),symbol->getType()->getSize()) + entry->getOffset();
+
+  highflags &= ~((uint4)symboldirty);		// We are no longer dirty
+}
+
+/// Link information to \b this from a Symbol that is not attached to a member Varnode.
+/// This only works for a HighVariable with a constant member Varnode.  This used when there
+/// is a constant address reference to the Symbol and the Varnode holds the reference, not
+/// the actual value of the Symbol.
+/// \param sym is the given Symbol to attach
+/// \off is the byte offset into the Symbol of the reference
+void HighVariable::setSymbolReference(Symbol *sym,int4 off)
+
+{
+  symbol = sym;
+  symboloffset = off;
+  highflags &= ~((uint4)symboldirty);
 }
 
 /// Only update if the cover is marked as \e dirty.
@@ -38,8 +81,8 @@ HighVariable::HighVariable(Varnode *vn)
 void HighVariable::updateCover(void) const
 
 {
-  if ((highflags & HighVariable::coverdirty)==0) return; // Cover info is upto date
-  highflags &= ~HighVariable::coverdirty;
+  if ((highflags & coverdirty)==0) return; // Cover info is upto date
+  highflags &= ~coverdirty;
 
   wholecover.clear();
   if (!inst[0]->hasCover()) return;
@@ -53,11 +96,11 @@ void HighVariable::updateCover(void) const
 void HighVariable::updateFlags(void) const
 
 {
-  vector<Varnode *>::const_iterator iter;
-  uint4 fl;
+  if ((highflags & flagsdirty)==0) return; // flags are up to date
 
-  if ((highflags & HighVariable::flagsdirty)==0) return; // flags are up to date
-  fl = 0;
+  vector<Varnode *>::const_iterator iter;
+  uint4 fl = 0;
+
   for(iter=inst.begin();iter!=inst.end();++iter)
     fl |= (*iter)->getFlags();
 
@@ -65,7 +108,7 @@ void HighVariable::updateFlags(void) const
   flags &= (Varnode::mark | Varnode::typelock);
 				// Update all but these
   flags |= fl & ~(Varnode::mark | Varnode::directwrite | Varnode::typelock );
-  highflags &= ~HighVariable::flagsdirty; // Clear the dirty flag
+  highflags &= ~flagsdirty; // Clear the dirty flag
 }
 
 /// Using Datatype::typeOrder, find the member Varnode with the most specific data-type.
@@ -98,8 +141,8 @@ void HighVariable::updateType(void) const
 {
   Varnode *vn;
 
-  if ((highflags&HighVariable::typedirty)==0) return; // Type is up to date
-  highflags &= ~HighVariable::typedirty; // Mark type as clean
+  if ((highflags&typedirty)==0) return; // Type is up to date
+  highflags &= ~typedirty; // Mark type as clean
   if ((highflags & type_finalized)!=0) return;	// Type has been finalized
   vn = getTypeRepresentative();
 
@@ -108,6 +151,24 @@ void HighVariable::updateType(void) const
   flags &= ~Varnode::typelock;
   if (vn->isTypeLock())
     flags |= Varnode::typelock;
+}
+
+void HighVariable::updateSymbol(void) const
+
+{
+  if ((highflags & symboldirty)==0) return; // flags are up to date
+  highflags &= ~((uint4)symboldirty);
+  vector<Varnode *>::const_iterator iter;
+  symbol = (Symbol *)0;
+  Varnode *vn = (Varnode *)0;
+
+  for(iter=inst.begin();iter!=inst.end();++iter) {
+    Varnode *tmpvn = *iter;
+    if (tmpvn->getSymbolEntry() != (SymbolEntry *)0)
+      vn = tmpvn;
+  }
+  if (vn != (Varnode *)0)
+    setSymbol(vn);
 }
 
 /// Compare two Varnode objects based just on their storage address
@@ -193,7 +254,9 @@ void HighVariable::remove(Varnode *vn)
   for(;iter!=inst.end();++iter) {
     if (*iter == vn) {
       inst.erase(iter);
-      highflags |= (HighVariable::flagsdirty|HighVariable::coverdirty|HighVariable::typedirty);
+      highflags |= (flagsdirty|coverdirty|typedirty);
+      if (vn->getSymbolEntry() != (SymbolEntry *)0)
+	highflags |= symboldirty;
       return;
     }
   }
@@ -219,12 +282,14 @@ void HighVariable::merge(HighVariable *tv2,bool isspeculative)
 
   if (tv2 == this) return;
 
-//   if (isAddrTied() && tv2->isAddrTied()) {
-//     if (tied_varnode()->getAddr() != tv2->tied_varnode()->getAddr())
-//       throw LowlevelError("Merging different addrtieds");
-//   }
-
-  highflags |= (HighVariable::flagsdirty|HighVariable::typedirty);
+  highflags |= (flagsdirty|typedirty);
+  if (tv2->symbol != (Symbol *)0) {		// Check if we inherit a Symbol
+    if ((tv2->highflags & symboldirty)==0) {
+      symbol = tv2->symbol;			// Overwrite our Symbol (assume it is the same)
+      symboloffset = tv2->symboloffset;
+      highflags &= ~((uint4)symboldirty);	// Mark that we are not symbol dirty
+    }
+  }
 
   if (isspeculative) {
     for(i=0;i<tv2->inst.size();++i) {
@@ -246,10 +311,10 @@ void HighVariable::merge(HighVariable *tv2,bool isspeculative)
   std::merge(instcopy.begin(),instcopy.end(),tv2->inst.begin(),tv2->inst.end(),inst.begin(),compareJustLoc);
   tv2->inst.clear();
 
-  if (((highflags&HighVariable::coverdirty)==0)&&((tv2->highflags&HighVariable::coverdirty)==0))
+  if (((highflags&coverdirty)==0)&&((tv2->highflags&coverdirty)==0))
     wholecover.merge(tv2->wholecover);
   else
-    highflags |= HighVariable::coverdirty;
+    highflags |= coverdirty;
 
   delete tv2;
 }

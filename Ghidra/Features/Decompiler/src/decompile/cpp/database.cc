@@ -1656,8 +1656,11 @@ SymbolEntry *ScopeInternal::addMapInternal(Symbol *sym,uint4 exfl,const Address 
   list<SymbolEntry>::iterator iter = rangemap->insert(initdata,addr.getOffset(),lastaddress.getOffset());
   // Store reference to map in symbol
   sym->mapentry.push_back(iter);
-  if (sym->mapentry.size() == 2)
-    multiEntrySet.insert(sym);
+  if (sz == sym->type->getSize()) {
+    sym->wholeCount += 1;
+    if (sym->wholeCount == 2)
+      multiEntrySet.insert(sym);
+  }
   return &(*iter);
 }
 
@@ -1668,8 +1671,11 @@ SymbolEntry *ScopeInternal::addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 h
   list<SymbolEntry>::iterator iter = dynamicentry.end();
   --iter;
   sym->mapentry.push_back(iter); // Store reference to map entry in symbol
-  if (sym->mapentry.size() == 2)
-    multiEntrySet.insert(sym);
+  if (sz == sym->type->getSize()) {
+    sym->wholeCount += 1;
+    if (sym->wholeCount == 2)
+      multiEntrySet.insert(sym);
+  }
   return &dynamicentry.back();
 }
 
@@ -1894,7 +1900,7 @@ void ScopeInternal::removeSymbol(Symbol *symbol)
       list.pop_back();
   }
 
-  if (symbol->mapentry.size() > 1)
+  if (symbol->wholeCount > 1)
     multiEntrySet.erase(symbol);
   // Remove each mapping of the symbol
   for(iter=symbol->mapentry.begin();iter!=symbol->mapentry.end();++iter) {
@@ -1914,12 +1920,12 @@ void ScopeInternal::renameSymbol(Symbol *sym,const string &newname)
 
 {
   nametree.erase(sym);		// Erase under old name
-  if (sym->mapentry.size() > 1)
+  if (sym->wholeCount > 1)
     multiEntrySet.erase(sym);	// The multi-entry set is sorted by name, remove
   string oldname = sym->name;
   sym->name = newname;
   insertNameTree(sym);
-  if (sym->mapentry.size() > 1)
+  if (sym->wholeCount > 1)
     multiEntrySet.insert(sym);	// Reenter into the multi-entry set now that name is changed
 }
 
@@ -1943,6 +1949,7 @@ void ScopeInternal::retypeSymbol(Symbol *sym,Datatype *ct)
       // Remove the map entry
       rangemap->erase(iter);
       sym->mapentry.pop_back();	// Remove reference to map entry
+      sym->wholeCount = 0;
 
       // Now we are ready to change the type
       sym->type = ct;
