@@ -61,14 +61,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 
 	@Override
 	public void actionPerformed(DomainFileContext context) {
-
-		try {
-			context.setBusy(true);
-			checkOut(context.getSelectedFiles());
-		}
-		finally {
-			context.setBusy(false);
-		}
+		checkOut(context.getSelectedFiles());
 	}
 
 	/**

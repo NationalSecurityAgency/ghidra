@@ -32,7 +32,8 @@ import docking.help.HelpService;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.DepthFirstIterator;
 import docking.widgets.tree.support.GTreeSelectionListener;
-import ghidra.framework.main.*;
+import ghidra.framework.main.FrontEndPlugin;
+import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -337,9 +338,8 @@ public class ProjectDataTreePanel extends JPanel {
 			}
 		}
 
-		DomainFileOperationTracker fileTracker = plugin.getFileOperationTracker();
 		ProjectDataTreeActionContext context =
-			new ProjectDataTreeActionContext(provider, projectData, fileTracker, selectionPaths,
+			new ProjectDataTreeActionContext(provider, projectData, selectionPaths,
 				domainFolderList, domainFileList, tree, isActiveProject);
 		boolean isTransient = tool == null; // null for stand-alone dialog, not the project's tree
 		context.setTransient(isTransient);

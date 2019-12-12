@@ -20,7 +20,6 @@ import java.util.List;
 import javax.swing.tree.TreePath;
 
 import docking.ComponentProvider;
-import ghidra.framework.main.DomainFileOperationTracker;
 import ghidra.framework.main.datatable.ProjectDataActionContext;
 import ghidra.framework.model.*;
 
@@ -30,10 +29,10 @@ public class ProjectDataTreeActionContext extends ProjectDataActionContext {
 	private DataTree tree;
 
 	public ProjectDataTreeActionContext(ComponentProvider provider, ProjectData projectData,
-			DomainFileOperationTracker fileTracker, TreePath[] selectionPaths,
+			TreePath[] selectionPaths,
 			List<DomainFolder> folderList, List<DomainFile> fileList, DataTree tree,
 			boolean isActiveProject) {
-		super(provider, projectData, fileTracker, getContextObject(selectionPaths), folderList,
+		super(provider, projectData, getContextObject(selectionPaths), folderList,
 			fileList, tree, isActiveProject);
 		this.selectionPaths = selectionPaths;
 		this.tree = tree;

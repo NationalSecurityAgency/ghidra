@@ -30,7 +30,6 @@ import docking.help.HelpService;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.*;
-import ghidra.framework.main.DomainFileOperationTracker;
 import ghidra.framework.main.FrontEndPlugin;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -103,8 +102,9 @@ public class ProjectDataTablePanel extends JPanel {
 				checkOpen(e);
 			}
 		});
-		gTable.getSelectionModel().addListSelectionListener(
-			e -> plugin.getTool().contextChanged(null));
+		gTable.getSelectionModel()
+				.addListSelectionListener(
+					e -> plugin.getTool().contextChanged(null));
 		gTable.setDefaultRenderer(Date.class, new DateCellRenderer());
 		gTable.setDefaultRenderer(DomainFileType.class, new TypeCellRenderer());
 
@@ -282,8 +282,7 @@ public class ProjectDataTablePanel extends JPanel {
 			list.add(info.getDomainFile());
 		}
 
-		DomainFileOperationTracker fileTracker = plugin.getFileOperationTracker();
-		return new ProjectDataActionContext(provider, projectData, fileTracker,
+		return new ProjectDataActionContext(provider, projectData,
 			model.getRowObject(selectedRows[0]), null, list, gTable, true);
 	}
 

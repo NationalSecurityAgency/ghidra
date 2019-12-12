@@ -43,7 +43,6 @@ import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.datatype.DataTypeUrl;
-import ghidra.framework.main.DomainFileOperationTracker;
 import ghidra.framework.main.datatree.ArchiveProvider;
 import ghidra.framework.main.datatree.VersionControlDataTypeArchiveUndoCheckoutAction;
 import ghidra.framework.main.projectdata.actions.*;
@@ -344,8 +343,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			isToolbarAction = false;
 		}
 
-		DomainFileOperationTracker fileTracker = plugin.getFileOperationTracker();
-		return new DataTypesActionContext(this, plugin.getProgram(), fileTracker, archiveGTree,
+		return new DataTypesActionContext(this, plugin.getProgram(), archiveGTree,
 			clickedNode, isToolbarAction);
 	}
 
@@ -456,8 +454,9 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 		previewScrollPane = new JScrollPane(previewPane);
 
-		DockingWindowManager.getHelpService().registerHelp(previewScrollPane,
-			new HelpLocation("DataTypeManagerPlugin", "Preview_Window"));
+		DockingWindowManager.getHelpService()
+				.registerHelp(previewScrollPane,
+					new HelpLocation("DataTypeManagerPlugin", "Preview_Window"));
 	}
 
 	private DataType locateDataType(HyperlinkEvent event) {

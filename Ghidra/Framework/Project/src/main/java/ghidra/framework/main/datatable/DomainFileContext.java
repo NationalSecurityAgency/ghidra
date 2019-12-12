@@ -20,7 +20,7 @@ import java.util.List;
 import ghidra.framework.model.DomainFile;
 
 /**
- * A context that provides to the client
+ * A context that provides information to actions about domain files that are selected in the tool
  */
 public interface DomainFileContext {
 
@@ -43,23 +43,4 @@ public interface DomainFileContext {
 	 * @return true if in the active project
 	 */
 	public boolean isInActiveProject();
-
-	/**
-	 * Returns true if the the current context is busy.  This is used by actions to signal to
-	 * the environment that they are performing a long-running operation.
-	 * @return true if busy
-	 */
-	public boolean isBusy();
-
-	/**
-	 * Sets this context to busy.  This is used by actions to signal to
-	 * the environment that they are performing a long-running operation.
-	 * <p>
-	 * Note: context state is not maintained by the tool.  Thus, the notion of being busy will
-	 * not be maintained across calls to <code>getActionContext()</code>.  Further, if implementors
-	 * wish to track business, then they must do so themselves.
-	 * 
-	 * @param isBusy true if busy
-	 */
-	public void setBusy(boolean isBusy);
 }

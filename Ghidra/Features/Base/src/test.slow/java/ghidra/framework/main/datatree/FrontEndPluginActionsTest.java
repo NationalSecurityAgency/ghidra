@@ -871,7 +871,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		}
 
-		return new ProjectDataTreeActionContext(null, null, null, paths, folderList, fileList, tree,
+		return new ProjectDataTreeActionContext(null, null, paths, folderList, fileList, tree,
 			true);
 	}
 }

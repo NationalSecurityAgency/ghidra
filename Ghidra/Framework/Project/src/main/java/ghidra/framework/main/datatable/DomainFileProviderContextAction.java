@@ -17,6 +17,8 @@ package ghidra.framework.main.datatable;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.main.FrontEndTool;
 
 public abstract class DomainFileProviderContextAction extends DockingAction {
 
@@ -30,12 +32,12 @@ public abstract class DomainFileProviderContextAction extends DockingAction {
 			return false;
 		}
 
-		DomainFileContext context = (DomainFileContext) actionContext;
-		if (context.isBusy()) {
+		FrontEndTool tool = AppInfo.getFrontEndTool();
+		if (tool.isExecutingCommand()) {
 			return false;
 		}
 
-		return isEnabledForContext(context);
+		return isEnabledForContext((DomainFileContext) actionContext);
 	}
 
 	protected boolean isEnabledForContext(DomainFileContext context) {
@@ -67,11 +69,12 @@ public abstract class DomainFileProviderContextAction extends DockingAction {
 			return false;
 		}
 
-		DomainFileContext fileContext = (DomainFileContext) context;
-		if (fileContext.isBusy()) {
+		FrontEndTool tool = AppInfo.getFrontEndTool();
+		if (tool.isExecutingCommand()) {
 			return false;
 		}
-		return isAddToPopup(fileContext);
+
+		return isAddToPopup((DomainFileContext) context);
 	}
 
 	protected boolean isAddToPopup(DomainFileContext context) {

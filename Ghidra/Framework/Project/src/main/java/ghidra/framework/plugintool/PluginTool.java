@@ -21,8 +21,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.ImageIcon;
@@ -57,8 +57,7 @@ import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
 import ghidra.util.*;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.*;
 
 /**
  * Base class that is a container to manage plugins and their actions, and to coordinate the 
@@ -88,12 +87,13 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 	private String subTitle;
 
 	private ServiceManager serviceMgr;
-	private ToolTaskManager taskMgr;
 	private OptionsManager optionsMgr;
 	private PluginManager pluginMgr;
 	private EventManager eventMgr;
 	private DialogManager dialogMgr;
 	private PropertyChangeSupport propertyChangeMgr;
+	private ToolTaskManager taskMgr;
+	private Set<TaskListener> executingTaskListeners = Collections.synchronizedSet(new HashSet<>());
 
 	private OptionsChangeListener optionsListener = new ToolOptionsListener();
 	protected ManagePluginsDialog manageDialog;
@@ -455,6 +455,7 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 
 	private void disposeManagers() {
 		taskMgr.dispose();
+		executingTaskListeners.clear();
 	}
 
 	@Override
@@ -647,7 +648,7 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 	 * @return true if there is a command being executed
 	 */
 	public boolean isExecutingCommand() {
-		return taskMgr.isBusy();
+		return taskMgr.isBusy() || !executingTaskListeners.isEmpty();
 	}
 
 	/**
@@ -695,6 +696,25 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 	}
 
 	/**
+	 * Launch the task in a new thread
+	 * @param task task to run in a new thread
+	 * @param delay number of milliseconds to delay the display of task monitor dialog
+	 */
+	public void execute(Task task, int delay) {
+		task.addTaskListener(new TaskBusyListener());
+		new TaskLauncher(task, getToolFrame(), delay);
+	}
+
+	/**
+	 * Launch the task in a new thread
+	 * @param task task to run in a new thread
+	 */
+	public void execute(Task task) {
+		task.addTaskListener(new TaskBusyListener());
+		new TaskLauncher(task, winMgr.getActiveWindow());
+	}
+
+	/**
 	 * Get the options for the given category name; if no options exist with
 	 * the given name, then one is created.
 	 */
@@ -736,23 +756,6 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 	 */
 	public ToolOptions[] getOptions() {
 		return optionsMgr.getOptions();
-	}
-
-	/**
-	 * Launch the task in a new thread.
-	 * @param task task to run in a new thread
-	 * @param delay number of milliseconds to delay the display of task monitor dialog
-	 */
-	public void execute(Task task, int delay) {
-		new TaskLauncher(task, getToolFrame(), delay);
-	}
-
-	/**
-	 * Launch the task in a new thread.
-	 * @param task task to run in a new thread
-	 */
-	public void execute(Task task) {
-		new TaskLauncher(task, winMgr.getActiveWindow());
 	}
 
 	/**
@@ -1497,4 +1500,20 @@ public abstract class PluginTool extends AbstractDockingTool implements Tool, Se
 		}
 	}
 
+	private class TaskBusyListener implements TaskListener {
+
+		TaskBusyListener() {
+			executingTaskListeners.add(this);
+		}
+
+		@Override
+		public void taskCompleted(Task t) {
+			executingTaskListeners.remove(this);
+		}
+
+		@Override
+		public void taskCancelled(Task t) {
+			executingTaskListeners.remove(this);
+		}
+	}
 }

@@ -21,7 +21,6 @@ import java.util.List;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import ghidra.framework.main.DomainFileOperationTracker;
 import ghidra.framework.model.*;
 
 public class ProjectDataActionContext extends ActionContext implements DomainFileContext {
@@ -32,38 +31,17 @@ public class ProjectDataActionContext extends ActionContext implements DomainFil
 	private boolean isActiveProject;
 	private ProjectData projectData;
 	private boolean isTransient;
-	private DomainFileOperationTracker fileTracker;
 
 	public ProjectDataActionContext(ComponentProvider provider, ProjectData projectData,
 			Object contextObject, List<DomainFolder> selectedFolders,
 			List<DomainFile> selectedFiles, Component comp, boolean isActiveProject) {
-		this(provider, projectData, null, contextObject, selectedFolders, selectedFiles, comp,
-			isActiveProject);
-	}
 
-	public ProjectDataActionContext(ComponentProvider provider, ProjectData projectData,
-			DomainFileOperationTracker fileTracker, Object contextObject,
-			List<DomainFolder> selectedFolders, List<DomainFile> selectedFiles, Component comp,
-			boolean isActiveProject) {
 		super(provider, contextObject, comp);
 		this.projectData = projectData;
-		this.fileTracker = fileTracker;
 		this.selectedFolders = selectedFolders;
 		this.selectedFiles = selectedFiles;
 		this.comp = comp;
 		this.isActiveProject = isActiveProject;
-	}
-
-	@Override
-	public boolean isBusy() {
-		return fileTracker != null && fileTracker.isBusy();
-	}
-
-	@Override
-	public void setBusy(boolean isBusy) {
-		if (fileTracker != null) {
-			fileTracker.setBusy(isBusy);
-		}
 	}
 
 	@Override
