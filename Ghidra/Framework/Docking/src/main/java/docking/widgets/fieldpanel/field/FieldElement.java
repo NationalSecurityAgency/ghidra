@@ -39,7 +39,7 @@ public interface FieldElement {
 
 	/**
 	 * Returns the length of the text within this element.  This is a convenience method for 
-	 * calling <tt>getText().length()</tt>.
+	 * calling <code>getText().length()</code>.
 	 * @return the length of the text within this element.
 	 */
 	public int length();

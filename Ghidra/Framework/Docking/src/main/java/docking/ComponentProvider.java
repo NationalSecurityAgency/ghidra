@@ -175,7 +175,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	public abstract JComponent getComponent();
 
 	/**
-	 * A method that allows children to set the <tt>instanceID</tt> to a desired value (useful for
+	 * A method that allows children to set the <code>instanceID</code> to a desired value (useful for
 	 * restoring saved IDs).
 	 * <p>
 	 * Note: this can be called only once during the lifetime of the calling instance; otherwise, an 

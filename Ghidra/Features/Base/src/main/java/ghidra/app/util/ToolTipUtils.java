@@ -53,7 +53,7 @@ public class ToolTipUtils {
 	}
 
 	/**
-	 * Examines the give <tt>dataType</tt> and creates a tool tip for it, 
+	 * Examines the give <code>dataType</code> and creates a tool tip for it, 
 	 * depending upon its actual class type.
 	 * 
 	 * @param  dataType The data type from which a tool tip will be 

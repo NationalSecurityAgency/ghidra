@@ -26,13 +26,13 @@ import ghidra.util.exception.*;
 /**
  * A class to hold utility methods for working with namespaces.
  * <p>
- * <a name="examples"></a>
+ * <a id="examples"></a>
  * Example string format:
  * <ul>
  *     <li>global{@link Namespace#NAMESPACE_DELIMITER ::}child1{@link Namespace#NAMESPACE_DELIMITER ::}child2
  *     <li>child1
  * </ul>
- * <a name="assumptions"></a>
+ * <a id="assumptions"></a>
  * <b>Assumptions for creating namespaces from a path string: </b>
  * <ul>
  *     <li>All elements of a namespace path should be namespace symbols and not other

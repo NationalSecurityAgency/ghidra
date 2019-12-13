@@ -34,7 +34,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * <p>
  * The various methods dictate when the client will get a callback:<p>
  * <ul>
- * 	<li>{@link #update()} - if this is the first call to <tt>update</tt>, then do the work
+ * 	<li>{@link #update()} - if this is the first call to <code>update</code>, then do the work
  *                          immediately; otherwise, buffer the update request until the
  *                          timeout has expired.</li>
  *  <li>{@link #updateNow()} - perform the callback now.</li>
@@ -93,7 +93,7 @@ public class SwingUpdateManager {
 	/**
 	 * Constructs a new SwingUpdateManager
 	 * <p>
-	 * <b>Note: </b>The <tt>minDelay</tt> will always be at least {@link #MIN_DELAY_FLOOR}, regardless of
+	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, regardless of
 	 * the given value.
 	 *
 	 * @param minDelay the minimum number of milliseconds to wait once the event stream stops
@@ -107,7 +107,7 @@ public class SwingUpdateManager {
 	/**
 	 * Constructs a new SwingUpdateManager
 	 * <p>
-	 * <b>Note: </b>The <tt>minDelay</tt> will always be at least {@link #MIN_DELAY_FLOOR}, regardless of
+	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, regardless of
 	 * the given value.
 	 *
 	 * @param minDelay the minimum number of milliseconds to wait once the event stream stops
@@ -122,7 +122,7 @@ public class SwingUpdateManager {
 	/**
 	 * Constructs a new SwingUpdateManager
 	 * <p>
-	 * <b>Note: </b>The <tt>minDelay</tt> will always be at least {@link #MIN_DELAY_FLOOR}, regardless of
+	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, regardless of
 	 * the given value.
 	 *
 	 * @param minDelay the minimum number of milliseconds to wait once the event stream stops

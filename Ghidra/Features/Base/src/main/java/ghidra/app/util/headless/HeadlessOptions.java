@@ -318,7 +318,7 @@ public class HeadlessOptions {
 
 	/**
 	 * This method can be used to enable recursive processing of files during
-	 * <tt>-import</tt> or <tt>-process</tt> modes.  In order for recursive processing of files to
+	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of files to
 	 * occur, the user must have specified a directory (and not a specific file)
 	 * for the Headless Analyzer to import or process.
 	 * 

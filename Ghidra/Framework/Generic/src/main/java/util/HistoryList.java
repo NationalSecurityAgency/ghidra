@@ -107,7 +107,7 @@ public class HistoryList<T> {
 	}
 
 	/**
-	 * Adds an item to this history list.  <tt>null</tt> values are ignored.
+	 * Adds an item to this history list.  <code>null</code> values are ignored.
 	 * 
 	 * <p>Calls to this method during selection notification will have no effect.  If you need
 	 * to update the history during a notification, then you must do so at a later time, perhaps

@@ -23,7 +23,7 @@ import java.awt.dnd.*;
  * Adapter class that receives notifications in order to
  * provide drag over effects.
  * <p> When the operation ends, this class receives a
- * <tt>dragDropEnd</tt> message, and is responsible for
+ * <code>dragDropEnd</code> message, and is responsible for
  * checking the success of the operation. If the operation was
  * successful, and if it was a Move, then
  * this class will remove the source data.

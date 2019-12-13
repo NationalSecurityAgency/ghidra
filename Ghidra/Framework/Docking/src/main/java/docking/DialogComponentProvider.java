@@ -1002,7 +1002,7 @@ public class DialogComponentProvider
 
 	/**
 	 * Sets the button to make "Default" when the dialog is shown.  If no default button is
-	 * desired, then pass <tt>null</tt> as the <tt>button</tt> value.
+	 * desired, then pass <code>null</code> as the <code>button</code> value.
 	 * @param button the button to make default enabled.
 	 */
 	public void setDefaultButton(JButton button) {

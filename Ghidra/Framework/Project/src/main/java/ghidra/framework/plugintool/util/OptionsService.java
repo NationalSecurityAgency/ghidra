@@ -61,9 +61,9 @@ public interface OptionsService {
      *    
      * @param category The category of options to have displayed
      * @param filterText An optional value used to filter the nodes visible in the options tree.
-     *                   You may pass <tt>null</tt> or the empty string <tt>""</tt> here if you
+     *                   You may pass <code>null</code> or the empty string <code>""</code> here if you
      *                   do not desire filtering.
-     * @throws IllegalArgumentException if the given <tt>category</tt> value does not exist in
+     * @throws IllegalArgumentException if the given <code>category</code> value does not exist in
      *                                  the tree of options.
      */
     public void showOptionsDialog(String category, String filterText);

@@ -19,7 +19,7 @@ package docking;
 /**
  * An enum that holds the values for order of keybinding precedence, in order from 
  * highest priority to lowest.  For a more detailed description of how Ghidra processes
- * key events see <tt>ghidra.KeyBindingOverrideKeyDispatcher.dispatchKeyEvent(KeyEvent)</tt>
+ * key events see <code>ghidra.KeyBindingOverrideKeyDispatcher.dispatchKeyEvent(KeyEvent)</code>
  */
 public enum KeyBindingPrecedence {
     

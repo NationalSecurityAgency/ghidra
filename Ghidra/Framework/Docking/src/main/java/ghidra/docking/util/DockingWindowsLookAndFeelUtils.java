@@ -112,8 +112,8 @@ public class DockingWindowsLookAndFeelUtils {
 	/**
 	 * Set the look and feel (LAF) indicated by the string passed in as a parameter.  
 	 * The string value can be either the class name of the LAF, as returned by 
-	 * <tt>LookAndFeelInfo.getClassName()</tt> or the name as returned by 
-	 * <tt>LookAndFeelInfo.getName()</tt>.
+	 * <code>LookAndFeelInfo.getClassName()</code> or the name as returned by 
+	 * <code>LookAndFeelInfo.getName()</code>.
 	 * <p>
 	 * Note: to be effective, this call needs to be made before any components have been created
 	 * and shown.

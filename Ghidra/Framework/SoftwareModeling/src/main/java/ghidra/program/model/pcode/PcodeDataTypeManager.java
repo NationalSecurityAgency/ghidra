@@ -245,10 +245,10 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Generate an XML tag describing the given data-type. Most data-types produce a <type> tag,
-	 * fully describing the data-type. Where possible a <typeref> tag is produced, which just gives
+	 * Generate an XML tag describing the given data-type. Most data-types produce a {@code <type>} tag,
+	 * fully describing the data-type. Where possible a {@code <typeref>} tag is produced, which just gives
 	 * the name of the data-type, deferring a full description of the data-type. For certain simple or
-	 * nameless data-types, a <type> tag is emitted giving a full description.
+	 * nameless data-types, a {@code <type>} tag is emitted giving a full description.
 	 * @param type is the data-type to be converted
 	 * @param size is the size in bytes of the specific instance of the data-type
 	 * @return a StringBuilder containing the XML tag

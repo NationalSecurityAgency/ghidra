@@ -38,7 +38,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * made visible through the UI.
  * <p>
  * This model will also discover other system columns that understand how to render
- * <tt>ROW_TYPE</tt> data directly.  Also, if you create a {@link TableRowMapper mapper}(s) for
+ * <code>ROW_TYPE</code> data directly.  Also, if you create a {@link TableRowMapper mapper}(s) for
  * your row type, then this model will load columns for each type for which a mapper was created,
  * all as optional, hidden columns.
  * <p>

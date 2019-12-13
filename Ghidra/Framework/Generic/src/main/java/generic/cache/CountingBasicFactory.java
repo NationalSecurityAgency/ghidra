@@ -41,8 +41,8 @@ public abstract class CountingBasicFactory<T> implements BasicFactory<T> {
 	 * The method subclass use to create {@link T}s. 
 	 * 
 	 * @param itemNumber the number of the item being created--
-	 * 						<font size="5"><b>one-based</b></font>; the first item 
-	 *                   	is item <tt>1</tt>.
+	 * 						<span style="font-size:24px"><b>one-based</b></span>; the first item 
+	 *                   	is item <code>1</code>.
 	 * @return a new instance of {@link T}.
 	 * @throws Exception any Exception encountered during creation
 	 */

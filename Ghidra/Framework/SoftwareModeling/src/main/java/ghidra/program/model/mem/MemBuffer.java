@@ -90,7 +90,7 @@ public interface MemBuffer {
 	}
 
 	/**
-	 * Reads <tt>b.length</tt> bytes from this memory buffer
+	 * Reads <code>b.length</code> bytes from this memory buffer
 	 * starting at the address of this memory buffer plus the given memoryBufferOffset
 	 * from that position.  The actual number of bytes may be fewer
 	 * if bytes can't be read.

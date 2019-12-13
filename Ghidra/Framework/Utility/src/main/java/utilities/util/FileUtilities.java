@@ -493,8 +493,8 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Copies the contents of <tt>originalDir</tt> to <tt>copyDir</tt>.  If the <tt>originalDir</tt>
-	 * does not exist, then this method will do nothing.  If <tt>copyDir</tt> does not exist, then
+	 * Copies the contents of <code>originalDir</code> to <code>copyDir</code>.  If the <code>originalDir</code>
+	 * does not exist, then this method will do nothing.  If <code>copyDir</code> does not exist, then
 	 * it will be created as necessary.
 	 *
 	 * @param originalDir The directory from which to extract contents
@@ -635,7 +635,7 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Copy the <tt>in</tt> stream to the <tt>out</tt> stream.  The output stream will
+	 * Copy the <code>in</code> stream to the <code>out</code> stream.  The output stream will
 	 * <b>not</b> be closed when the copy operation is finished.
 	 *
 	 * @param in source input stream
@@ -843,7 +843,7 @@ public final class FileUtilities {
 	/**
 	 * Returns true if the given file:
 	 * <ol>
-	 *  <li> is <tt>null</tt>, or  </li>
+	 *  <li> is <code>null</code>, or  </li>
 	 * 	<li>{@link File#isFile()} is true, </li>
 	 *  <li>and {@link File#length()} is == 0.</li>
 	 *  </ol>
@@ -890,7 +890,7 @@ public final class FileUtilities {
 	 * the paths are the same or unrelated, then null is returned.
 	 *
 	 * <P>For example, given, in this order, two files with these paths
-	 *  <tt>/a/b</tt> and <tt>/a/b/c</tt>, this method will return 'c'.
+	 *  <code>/a/b</code> and <code>/a/b/c</code>, this method will return 'c'.
 	 *
 	 * @param f1 the parent file
 	 * @param f2 the child file

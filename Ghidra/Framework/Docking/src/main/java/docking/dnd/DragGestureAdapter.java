@@ -25,7 +25,7 @@ import java.awt.event.InputEvent;
 /**
  * This class receives notification when the user intitiates a
  * drag and drop operation; it is responsible for getting the
- * <tt>Transferable</tt> and telling the <TT>DragSource</TT> to 
+ * <code>Transferable</code> and telling the <code>DragSource</code> to 
  * start the drag.
  */
 public class DragGestureAdapter implements DragGestureListener {
@@ -44,11 +44,11 @@ public class DragGestureAdapter implements DragGestureListener {
     }
     
 	/**
-	 * A <tt>DragGestureRecognizer</tt> has detected a 
+	 * A <code>DragGestureRecognizer</code> has detected a 
 	 * platform-dependent Drag and Drop action initiating gesture
 	 * and is notifying this Listener in order for it to initiate
 	 * the action for the user.
-	 * <p>The <tt>DragGestureRecognizer</tt> hides the platform-specific
+	 * <p>The <code>DragGestureRecognizer</code> hides the platform-specific
 	 * events that initate a drag and drop operation.
 	 * 
 	 * @param e event describing the gesture that has just occurred

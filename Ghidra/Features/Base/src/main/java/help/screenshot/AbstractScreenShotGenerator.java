@@ -1364,7 +1364,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	 * screen coordinates.   This allows you to capture a sub-component of a UI, drawing
 	 * rectangles around children of said sub-component.
 	 * 
-	 * <P>If you are unsure of what to pass for <tt>root</tt>, the call 
+	 * <P>If you are unsure of what to pass for <code>root</code>, the call 
 	 * {@link #drawRectangleAround(JComponent, Color, int)} instead.
 	 * 
 	 * @param component the component to be en-rectangled

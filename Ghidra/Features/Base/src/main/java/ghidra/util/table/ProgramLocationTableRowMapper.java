@@ -34,7 +34,7 @@ import docking.widgets.table.*;
  * <p>
  * This interface is an ExtensionPoint so that once created, they will be ingested automatically
  * by Ghidra.  Once discovered, these mappers will be used to provide dynamic columns to to 
- * tables with row types that match <tt>ROW_TYPE</tt>.
+ * tables with row types that match <code>ROW_TYPE</code>.
  * <p>
  * This column is an extension of {@link TableRowMapper} that has knowledge of 
  * {@link ProgramLocationTableColumn}s, which means that it knows how to generate 

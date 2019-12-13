@@ -83,9 +83,9 @@ public class Relocation {
 	}
 
 	/**
-	 * The name of the symbol being relocated or <tt>null</tt> if there is no symbol name.
+	 * The name of the symbol being relocated or <code>null</code> if there is no symbol name.
 	 * 
-	 * @return the name of the symbol being relocated or <tt>null</tt> if there is no symbol name.
+	 * @return the name of the symbol being relocated or <code>null</code> if there is no symbol name.
 	 */
 	public String getSymbolName() {
 		return symbolName;

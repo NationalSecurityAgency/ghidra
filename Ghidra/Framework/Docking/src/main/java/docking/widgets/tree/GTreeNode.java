@@ -45,15 +45,15 @@ import util.CollectionUtils;
  * 		<li>getIcon()</li>
  * </ul>
  *
- * <a name="usage"></a>Usage Notes:
+ * <a id="usage"></a>Usage Notes:
  * <ul>
- * 	<li>The <b><tt>equals()</tt></b> method:  The <tt>GTree</tt> has the ability to remember expanded and
+ * 	<li>The <b><code>equals()</code></b> method:  The <code>GTree</code> has the ability to remember expanded and
  *      selected states.  This will only work if the nodes in the saved state can be matched
- *      with the nodes in the <tt>GTree</tt>.  Java will do this by using the <tt>equals()</tt> method.
- *      There is a potential problem with this usage.  If nodes within the <tt>GTree</tt> get rebuilt (
+ *      with the nodes in the <code>GTree</code>.  Java will do this by using the <code>equals()</code> method.
+ *      There is a potential problem with this usage.  If nodes within the <code>GTree</code> get rebuilt (
  *      i.e., new nodes are created), then, by default, the expanded and selected state
- *      feature will be unable to find the correct nodes, since the default <tt>equals()</tt>
- *      method on <tt>GTreeNode</tt> performs a comparison based upon instances.  To fix this problem,
+ *      feature will be unable to find the correct nodes, since the default <code>equals()</code>
+ *      method on <code>GTreeNode</code> performs a comparison based upon instances.  To fix this problem,
  *      the {@link #equals(Object)} method has been implemented such that nodes are considered equal if they have
  *      the same name. The {@link #hashCode()} method will return the hash of the name.  The name
  *      attribute was chosen because it should be the most unique and descriptive piece of information

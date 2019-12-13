@@ -74,9 +74,9 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * This variable can be in one of three states:
 	 * 	<ul>
 	 * 		<li>null - signals that there is no filter change taking place</li>
-	 * 		<li>An instance of <tt>NullTableFitler</tt> - the client has removed the current
+	 * 		<li>An instance of <code>NullTableFitler</code> - the client has removed the current
 	 *          filter by calling {@link #setTableFilter(TableFilter)} with a null value</li>
-	 * 		<li>An instance of a custom <tt>TableFitler</tt> - the client has changed the
+	 * 		<li>An instance of a custom <code>TableFitler</code> - the client has changed the
 	 *          filter to a non-null value by calling {@link #setTableFilter(TableFilter)}</li>
 	 *  </ul>
 	 */
@@ -406,7 +406,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * Override this to change how filtering is performed.  This implementation will do nothing
-	 * if a <tt>TableFilter</tt> has not been set via a call to {@link #setTableFilter(TableFilter)}.
+	 * if a <code>TableFilter</code> has not been set via a call to {@link #setTableFilter(TableFilter)}.
 	 * 
 	 *
 	 * @param data The list of data to be filtered.
@@ -463,7 +463,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	}
 
 	/**
-	 * Sets the given <tt>TableFitler</tt> on this model.  This table filter will then be used
+	 * Sets the given <code>TableFitler</code> on this model.  This table filter will then be used
 	 * by this model in the default {@link #doFilter(List, TableSortingContext, TaskMonitor)}
 	 * method.
 	 * @param tableFitler The filter to use for table filtering.

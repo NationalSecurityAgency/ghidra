@@ -44,7 +44,7 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 /**
  * Edge render for the {@link VisualGraph} system
  * 
- * <h2><center>Implementation Notes</center></h2>
+ * <h2 style="text-align:center">Implementation Notes</h2>
  * 
  * <h3>Jung Vertex/Edge Rendering</h3>
  * <p>Jung creates shapes for vertices (see {@link VertexShapeFactory}) that are centered.  They

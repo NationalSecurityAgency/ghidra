@@ -85,7 +85,7 @@ public abstract class AbstractColumnConstraintEditor<T> implements ColumnConstra
 	 * <p>
 	 * Subclasses should override this method if they choose to provide a
 	 * detailed constraint editor. This is an optional feature, and this implementation
-	 * returns null to satisfy the <tt>ColumnConstraintEditor</tt> contract.
+	 * returns null to satisfy the <code>ColumnConstraintEditor</code> contract.
 	 *
 	 * @see #getDetailComponent()
 	 * @return the editors detail component; null in this implementation

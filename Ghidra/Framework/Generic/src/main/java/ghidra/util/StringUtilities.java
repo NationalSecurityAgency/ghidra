@@ -309,7 +309,7 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the given string starts with <tt>prefix</tt> ignoring case.
+	 * Returns true if the given string starts with <code>prefix</code> ignoring case.
 	 * <p>
 	 * Note: This method is equivalent to calling:
 	 * <pre>
@@ -318,7 +318,7 @@ public class StringUtilities {
 	 *
 	 * @param string the string which may contain the prefix
 	 * @param prefix the prefix to test against
-	 * @return true if the given string starts with <tt>prefix</tt> ignoring case.
+	 * @return true if the given string starts with <code>prefix</code> ignoring case.
 	 */
 	public static boolean startsWithIgnoreCase(String string, String prefix) {
 		if ((string == null) || (prefix == null)) {
@@ -328,7 +328,7 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if the given string ends with <tt>postfix</tt>, ignoring case.
+	 * Returns true if the given string ends with <code>postfix</code>, ignoring case.
 	 * <p>
 	 * Note: This method is equivalent to calling:
 	 * <pre>
@@ -336,9 +336,9 @@ public class StringUtilities {
 	 * 	string.regionMatches( true, startOffset, postfix, 0, postfix.length() );
 	 * </pre>
 	 *
-	 * @param string the string which may end with <tt>postfix</tt>
+	 * @param string the string which may end with <code>postfix</code>
 	 * @param postfix the string for which to test existence
-	 * @return true if the given string ends with <tt>postfix</tt>, ignoring case.
+	 * @return true if the given string ends with <code>postfix</code>, ignoring case.
 	 */
 	public static boolean endsWithIgnoreCase(String string, String postfix) {
 		if ((string == null) || (postfix == null)) {
@@ -349,11 +349,11 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if all the given <tt>searches</tt> are contained in the given string.
+	 * Returns true if all the given <code>searches</code> are contained in the given string.
 	 *
 	 * @param toSearch the string to search
 	 * @param searches the strings to find
-	 * @return true if all the given <tt>searches</tt> are contained in the given string.
+	 * @return true if all the given <code>searches</code> are contained in the given string.
 	 */
 	public static boolean containsAll(CharSequence toSearch, CharSequence... searches) {
 		if (StringUtils.isEmpty(toSearch) || ArrayUtils.isEmpty(searches)) {
@@ -369,12 +369,12 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Returns true if all the given <tt>searches</tt> are contained in the given string,
+	 * Returns true if all the given <code>searches</code> are contained in the given string,
 	 * ignoring case.
 	 *
 	 * @param toSearch the string to search
 	 * @param searches the strings to find
-	 * @return true if all the given <tt>searches</tt> are contained in the given string.
+	 * @return true if all the given <code>searches</code> are contained in the given string.
 	 */
 	public static boolean containsAllIgnoreCase(CharSequence toSearch, CharSequence... searches) {
 		if (StringUtils.isEmpty(toSearch) || ArrayUtils.isEmpty(searches)) {
@@ -838,7 +838,7 @@ public class StringUtilities {
 	}
 
 	/**
-	 * Limits the given string to the given <tt>max</tt> number of characters.  If the string is
+	 * Limits the given string to the given <code>max</code> number of characters.  If the string is
 	 * larger than the given length, then it will be trimmed to fit that length <b>after adding
 	 * ellipses</b>
 	 *

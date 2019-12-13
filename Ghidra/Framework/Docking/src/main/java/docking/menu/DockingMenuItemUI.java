@@ -44,7 +44,7 @@ import docking.util.GraphicsUtils;
  * <pre>
  * [Checkbox][Icon][Menu Item Content][Menu Pull-right/Accelerator Text]
  * </pre>
- * To display the <b>Menu Item Content</b> in a tabular fashion, use the <tt>'\t'</tt> character 
+ * To display the <b>Menu Item Content</b> in a tabular fashion, use the <code>'\t'</code> character 
  * to delimit the data into columns.  This class will align all menu items in the given menu  
  * based upon the largest number of columns in the group and the largest width for each column.
  */
