@@ -413,7 +413,8 @@ model {
 				b.cppCompiler.define "_SECURE_SCL=0"
 				b.cppCompiler.define "_HAS_ITERATOR_DEBUGGING=0"
 				// b.cppCompiler.args "/Zi"		// for DEBUG, uncomment this line
-				// b.linker.args "/DEBUG"          // for DEBUG, uncomment this line
+				// b.cppCompiler.args "/FS"		// for DEBUG, uncomment this line
+				// b.linker.args "/DEBUG"		// for DEBUG, uncomment this line
 				if (b.targetPlatform.operatingSystem.windows) {
 					b.cppCompiler.define "WINDOWS"
 					b.cppCompiler.define "_WINDOWS"
