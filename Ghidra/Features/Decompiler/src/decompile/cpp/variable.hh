@@ -49,7 +49,8 @@ public:
     symboldirty = 8,		///< The symbol attachment is dirty
     copy_in1 = 8,		///< There exists at least 1 COPY into \b this HighVariable from other HighVariables
     copy_in2 = 16,		///< There exists at least 2 COPYs into \b this HighVariable from other HighVariables
-    type_finalized = 32		///< Set if a final data-type is locked in and dirtying is disabled
+    type_finalized = 32,	///< Set if a final data-type is locked in and dirtying is disabled
+    unmerged = 64		///< Set if part of a multi-entry Symbol but did not get merged with other SymbolEntrys
   };
 private:
   friend class Varnode;
@@ -79,10 +80,12 @@ private:
   void flagsDirty(void) const { highflags |= HighVariable::flagsdirty; }	///< Mark the boolean properties as \e dirty
   void coverDirty(void) const { highflags |= HighVariable::coverdirty; }	///< Mark the cover as \e dirty
   void typeDirty(void) const { highflags |= HighVariable::typedirty; }		///< Mark the data-type as \e dirty
+  void setUnmerged(void) const { highflags |= unmerged; }	///< Mark \b this as having merge problems
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
   Datatype *getType(void) const { updateType(); return type; }	///< Get the data-type
-  Symbol *getSymbol(void) const { updateSymbol(); return symbol; }	///< Get the Symbol associated with \b this
+  Symbol *getSymbol(void) const { updateSymbol(); return symbol; }	///< Get the Symbol associated with \b this or null
+  SymbolEntry *getSymbolEntry(void) const;			/// Get the SymbolEntry mapping to \b this or null
   int4 getSymbolOffset(void) const { return symboloffset; }	///< Get the Symbol offset associated with \b this
   int4 numInstances(void) const { return inst.size(); }		///< Get the number of member Varnodes \b this has
   Varnode *getInstance(int4 i) const { return inst[i]; }	///< Get the i-th member Varnode
@@ -111,6 +114,7 @@ public:
   void setMark(void) const { flags |= Varnode::mark; }		///< Set the mark on this variable
   void clearMark(void) const { flags &= ~Varnode::mark; }	///< Clear the mark on this variable
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); }	///< Return \b true if \b this is marked
+  bool isUnmerged(void) const { return ((highflags&unmerged)!=0); }	///< Return \b true if \b this has merge problems
 
   /// \brief Determine if \b this HighVariable has an associated cover.
   ///

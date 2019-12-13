@@ -232,6 +232,21 @@ bool Symbol::isNameUndefined(void) const
   return ((name.size()==15)&&(0==name.compare(0,7,"$$undef")));
 }
 
+/// If the given value is \b true, any Varnodes that map directly to \b this Symbol,
+/// will not be speculatively merged with other Varnodes.  (Required merges will still happen).
+/// \param val is the given boolean value
+void Symbol::setIsolated(bool val)
+
+{
+  if (val) {
+    dispflags |= isolate;
+    flags |= Varnode::typelock;		// Isolated Symbol must be typelocked
+    checkSizeTypeLock();
+  }
+  else
+    dispflags &= ~((uint4)isolate);
+}
+
 /// \return the first SymbolEntry
 SymbolEntry *Symbol::getFirstWholeMap(void) const
 
@@ -260,6 +275,24 @@ SymbolEntry *Symbol::getMapEntry(const Address &addr) const
   }
   //  throw LowlevelError("No mapping at desired address for symbol: "+name);
   return (SymbolEntry *)0;
+}
+
+/// Among all the SymbolEntrys that map \b this entire Symbol, calculate
+/// the position of the given SymbolEntry within the list.
+/// \param entry is the given SymbolEntry
+/// \return its position within the list or -1 if it is not in the list
+int4 Symbol::getMapEntryPosition(const SymbolEntry *entry) const
+
+{
+  int4 pos = 0;
+  for(int4 i=0;i<mapentry.size();++i) {
+    const SymbolEntry *tmp = &(*mapentry[i]);
+    if (tmp == entry)
+      return pos;
+    if (entry->getSize() == type->getSize())
+      pos += 1;
+  }
+  return -1;
 }
 
 /// A value of 0 means the base Symbol name is visible and not overridden in the given use scope.
@@ -313,18 +346,20 @@ void Symbol::saveXmlHeader(ostream &s) const
     a_v_b(s,"indirectstorage",true);
   if ((flags&Varnode::hiddenretparm)!=0)
     a_v_b(s,"hiddenretparm",true);
+  if ((dispflags&isolate)!=0)
+    a_v_b(s,"merge",false);
   int4 format = getDisplayFormat();
   if (format != 0) {
     s << " format=\"";
-    if (format == Symbol::force_hex)
+    if (format == force_hex)
       s << "hex\"";
-    else if (format == Symbol::force_dec)
+    else if (format == force_dec)
       s << "dec\"";
-    else if (format == Symbol::force_char)
+    else if (format == force_char)
       s << "char\"";
-    else if (format == Symbol::force_oct)
+    else if (format == force_oct)
       s << "oct\"";
-    else if (format == Symbol::force_bin)
+    else if (format == force_bin)
       s << "bin\"";
     else
       s << "hex\"";
@@ -355,15 +390,15 @@ void Symbol::restoreXmlHeader(const Element *el)
 	if (attName == "format") {
 	  const string &formString(el->getAttributeValue(i));
 	  if (formString == "hex")
-	    dispflags |= Symbol::force_hex;
+	    dispflags |= force_hex;
 	  else if (formString == "dec")
-	    dispflags |= Symbol::force_dec;
+	    dispflags |= force_dec;
 	  else if (formString == "char")
-	    dispflags |= Symbol::force_char;
+	    dispflags |= force_char;
 	  else if (formString == "oct")
-	    dispflags |= Symbol::force_oct;
+	    dispflags |= force_oct;
 	  else if (formString == "bin")
-	    dispflags |= Symbol::force_bin;
+	    dispflags |= force_bin;
 	}
 	break;
       case 'h':
@@ -383,6 +418,14 @@ void Symbol::restoreXmlHeader(const Element *el)
 	else if (attName == "indirectstorage") {
 	  if (xml_readbool(el->getAttributeValue(i)))
 	    flags |= Varnode::indirectstorage;
+	}
+	break;
+      case 'm':
+	if (attName == "merge") {
+	  if (!xml_readbool(el->getAttributeValue(i))) {
+	    dispflags |= isolate;
+	    flags |= Varnode::typelock;
+	  }
 	}
 	break;
       case 'n':

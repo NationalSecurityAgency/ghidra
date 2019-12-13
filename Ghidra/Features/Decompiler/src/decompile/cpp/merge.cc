@@ -102,14 +102,14 @@ bool Merge::mergeTestRequired(HighVariable *high_out,HighVariable *high_in)
   }
   else if (high_out->isExtraOut())
     return false;
-  if (high_in->isMapped() && high_out->isMapped()) {
-    Symbol *symbolIn = high_in->getSymbol();
-    Symbol *symbolOut = high_out->getSymbol();
-    if (symbolIn != (Symbol *)0 && symbolOut != (Symbol *)0) {
-      if (symbolIn != symbolOut) return false;		// Map to different symbols
-      if (high_in->getSymbolOffset() != high_out->getSymbolOffset())
-	return false;					// Map to different parts of same symbol
-    }
+
+  Symbol *symbolIn = high_in->getSymbol();
+  Symbol *symbolOut = high_out->getSymbol();
+  if (symbolIn != (Symbol *) 0 && symbolOut != (Symbol *) 0) {
+    if (symbolIn != symbolOut)
+      return false;		// Map to different symbols
+    if (high_in->getSymbolOffset() != high_out->getSymbolOffset())
+      return false;			// Map to different parts of same symbol
   }
 
   return true;
@@ -145,6 +145,14 @@ bool Merge::mergeTestAdjacent(HighVariable *high_out,HighVariable *high_in)
     Varnode *vn = high_in->getInputVarnode();
     if (vn->isIllegalInput()&&(!vn->isIndirectOnly())) return false;
   }
+  Symbol *symbol = high_in->getSymbol();
+  if (symbol != (Symbol *)0)
+    if (symbol->isIsolated())
+      return false;
+  symbol = high_out->getSymbol();
+  if (symbol != (Symbol *)0)
+    if (symbol->isIsolated())
+      return false;
   return true;
 }
 
@@ -837,10 +845,14 @@ void Merge::mergeMultiEntry(void)
       if (newHigh == high) continue;		// Varnodes already merged
       updateHigh(newHigh);
       if (!mergeTestRequired(high, newHigh)) {
+	symbol->setMergeProblems();
+	newHigh->setUnmerged();
 	conflictCount += 1;
 	continue;
       }
       if (!merge(high,newHigh,false)) {		// Attempt the merge
+	symbol->setMergeProblems();
+	newHigh->setUnmerged();
 	conflictCount += 1;
 	continue;
       }

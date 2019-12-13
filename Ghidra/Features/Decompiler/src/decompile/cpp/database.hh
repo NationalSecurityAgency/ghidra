@@ -181,7 +181,8 @@ public:
     force_bin = 4,		///< Force binary printing of constant symbol
     force_char = 5,		///< Force integer to be printed as a character constant
     size_typelock = 8,	        ///< Only the size of the symbol is typelocked
-    isolate = 16		///< Symbol should not speculatively merge automatically
+    isolate = 16,		///< Symbol should not speculatively merge automatically
+    merge_problems = 32		///< Set if some SymbolEntrys did not get merged
   };
   /// \brief Construct given a name and data-type
   Symbol(Scope *sc,const string &nm,Datatype *ct)
@@ -203,11 +204,17 @@ public:
   bool isIndirectStorage(void) const { return ((flags&Varnode::indirectstorage)!=0); }	///< Is storage really a pointer to the true Symbol
   bool isHiddenReturn(void) const { return ((flags&Varnode::hiddenretparm)!=0); }	///< Is this a reference to the function return value
   bool isNameUndefined(void) const;				///< Does \b this have an undefined name
+  bool isMultiEntry(void) const { return (wholeCount > 1); }	///< Does \b this have more than one \e entire mapping
+  bool hasMergeProblems(void) const { return ((dispflags & merge_problems)!=0); } ///< Were some SymbolEntrys not merged
+  void setMergeProblems(void) { dispflags |= merge_problems; }	///< Mark that some SymbolEntrys could not be merged
+  bool isIsolated(void) const { return ((dispflags & isolate)!=0); }	///< Return \b true if \b this is isolated from speculative merging
+  void setIsolated(bool val);					///< Set whether \b this Symbol should be speculatively merged
   Scope *getScope(void) const { return scope; }			///< Get the scope owning \b this Symbol
   SymbolEntry *getFirstWholeMap(void) const;	 		///< Get the first entire mapping of the symbol
   SymbolEntry *getMapEntry(const Address &addr) const;	 	///< Get first mapping of the symbol that contains the given Address
   int4 numEntries(void) const { return mapentry.size(); }	///< Return the number of SymbolEntrys
   SymbolEntry *getMapEntry(int4 i) const { return &(*mapentry[i]); }	///< Return the i-th SymbolEntry for \b this Symbol
+  int4 getMapEntryPosition(const SymbolEntry *entry) const;	///< Position of given SymbolEntry within \b this multi-entry Symbol
   int4 getResolutionDepth(const Scope *useScope) const;		///< Get the number of scope names to print to resolve symbol in given context
   void saveXmlHeader(ostream &s) const;				///< Save basic Symbol properties as XML attributes
   void restoreXmlHeader(const Element *el);			///< Restore basic Symbol properties from XML

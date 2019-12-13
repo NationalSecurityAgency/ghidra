@@ -262,6 +262,20 @@ void HighVariable::remove(Varnode *vn)
   }
 }
 
+/// Assuming there is a Symbol attached to \b this, run through the Varnode members
+/// until we find one with a SymbolEntry corresponding to the Symbol and return it.
+/// \return the SymbolEntry that mapped the Symbol to \b this or null if no Symbol is attached
+SymbolEntry *HighVariable::getSymbolEntry(void) const
+
+{
+  for(int4 i=0;i<inst.size();++i) {
+    SymbolEntry *entry = inst[i]->getSymbolEntry();
+    if (entry != (SymbolEntry *)0 && entry->getSymbol() == symbol)
+      return entry;
+  }
+  return (SymbolEntry *)0;
+}
+
 /// The data-type its dirtying mechanism is disabled.  The data-type will not change, unless
 /// this method is called again.
 /// \param tp is the data-type to set

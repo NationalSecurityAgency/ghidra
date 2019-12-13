@@ -1639,6 +1639,21 @@ void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
   else
     tokenColor = EmitXml::var_color;
   // FIXME: resolve scopes
+  if (sym->hasMergeProblems() && vn != (Varnode *)0) {
+    HighVariable *high = vn->getHigh();
+    if (high->isUnmerged()) {
+      ostringstream s;
+      s << sym->getName();
+      SymbolEntry *entry = high->getSymbolEntry();
+      if (entry != (SymbolEntry *)0) {
+	s << '$' << dec << entry->getSymbol()->getMapEntryPosition(entry);
+      }
+      else
+	s << "$$";
+      pushAtom(Atom(s.str(),vartoken,tokenColor,op,vn));
+      return;
+    }
+  }
   pushAtom(Atom(sym->getName(),vartoken,tokenColor,op,vn));
 }
 
@@ -2180,14 +2195,19 @@ bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
   MapIterator iter = scope->begin();
   MapIterator enditer = scope->end();
   for(;iter!=enditer;++iter) {
-    if ((*iter)->isPiece()) continue; // Don't do a partial entry
-    Symbol *sym = (*iter)->getSymbol();
+    const SymbolEntry *entry = *iter;
+    if (entry->isPiece()) continue; // Don't do a partial entry
+    Symbol *sym = entry->getSymbol();
     if (sym->getCategory() != cat) continue;
     if (sym->getName().size() == 0) continue;
     if (dynamic_cast<FunctionSymbol *>(sym) != (FunctionSymbol *)0)
       continue;
     if (dynamic_cast<LabSymbol *>(sym) != (LabSymbol *)0)
       continue;
+    if (sym->isMultiEntry()) {
+      if (sym->getFirstWholeMap() != entry)
+	continue;		// Only emit the first SymbolEntry for declaration of multi-entry Symbol
+    }
     notempty = true;
     emitVarDeclStatement(sym);
   }

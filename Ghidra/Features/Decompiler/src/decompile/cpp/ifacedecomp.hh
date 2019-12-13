@@ -304,6 +304,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcIsolate : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcRemove : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
