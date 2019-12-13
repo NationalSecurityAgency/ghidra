@@ -10,7 +10,7 @@
   </global>
   <stackpointer register="SP" space="INTMEM" growth="positive"/>
   <default_proto>
-    <prototype name="__stdcall" extrapop="-2" stackshift="-2" strategy="register">
+    <prototype name="__stdcall" extrapop="2" stackshift="2" strategy="register">
       <input>
         <pentry minsize="1" maxsize="1">
           <register name="ACC"/>
