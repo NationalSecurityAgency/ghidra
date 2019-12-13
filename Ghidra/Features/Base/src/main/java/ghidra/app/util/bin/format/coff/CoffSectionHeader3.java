@@ -20,28 +20,31 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 
 /**
- * A 0x30 byte COFF section header
+ * A 0x2c byte COFF section header
  */
-class CoffSectionHeader2 extends CoffSectionHeader {
+class CoffSectionHeader3 extends CoffSectionHeader {
 
-	CoffSectionHeader2(BinaryReader reader, CoffFileHeader header) throws IOException {
+	CoffSectionHeader3(BinaryReader reader, CoffFileHeader header) throws IOException {
 		super();
 
 		this._header = header;
 
 		readName(reader);
 
-		s_paddr    = reader.readNextInt();
-		s_vaddr    = reader.readNextInt();
-		s_size     = reader.readNextInt();
-		s_scnptr   = reader.readNextInt();
-		s_relptr   = reader.readNextInt();
-		s_lnnoptr  = reader.readNextInt();
-		s_nreloc   = reader.readNextInt();
-		s_nlnno    = reader.readNextInt();
-		s_flags    = reader.readNextInt();
-		s_reserved = reader.readNextShort();
-		s_page     = reader.readNextShort();
+		s_paddr = reader.readNextInt();
+		s_vaddr = reader.readNextInt();
+		s_size = reader.readNextInt();
+		s_scnptr = reader.readNextInt();
+		s_relptr = reader.readNextInt();
+		s_lnnoptr = reader.readNextInt();
+		s_nreloc = reader.readNextShort() & 0xffff;
+		s_nlnno = reader.readNextShort() & 0xffff;
+		s_flags = reader.readNextInt();
+
+		reader.readNextInt(); // section alignment, currently unused
+
+		s_reserved = 0;
+		s_page = 0;
 	}
 
 }
