@@ -553,22 +553,26 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		while (instr != null && numInstr++ <= MAX_NUMBER_OF_THUNKING_INSTRUCTIONS) {
 			flowType = instr.getFlowType();
 
-			// Keep track of any read/writes to registers, need to see if there are any side-effects
-			// check Pcode, any writes to memory are bad
-			PcodeOp[] pcode = instr.getPcode(false);
-			for (PcodeOp element : pcode) {
-				PcodeOp pcodeOp = element;
+			// check for side effects if requested
+			if (checkForSideEffects) {
 
-				// Storing to a location is not allowed for a thunk
-				//   as a side-effect of the thunk.
-				if (pcodeOp.getOpcode() == PcodeOp.STORE) {
-					return null;
-				}
+				// Keep track of any read/writes to registers, need to see if there are any side-effects
+				// check Pcode, any writes to memory are bad
+				PcodeOp[] pcode = instr.getPcode(false);
+				for (PcodeOp element : pcode) {
+					PcodeOp pcodeOp = element;
 
-				// record any used registers, checking for use of an unexpected unset register
-				if (!addRegisterUsage(program, setAtStartRegisters, setRegisters, usedRegisters, pcodeOp,
-					allow8bitNonUse)) {
-					return null;
+					// Storing to a location is not allowed for a thunk
+					//   as a side-effect of the thunk.
+					if (pcodeOp.getOpcode() == PcodeOp.STORE) {
+						return null;
+					}
+
+					// record any used registers, checking for use of an unexpected unset register
+					if (!addRegisterUsage(program, setAtStartRegisters, setRegisters, usedRegisters, pcodeOp,
+						allow8bitNonUse)) {
+						return null;
+					}
 				}
 			}
 
