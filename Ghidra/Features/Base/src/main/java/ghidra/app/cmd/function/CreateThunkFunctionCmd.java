@@ -795,13 +795,15 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		}
 		// check the parent varnode
 		Register register = program.getRegister(regVarnode);
-		Register parentRegister = register.getParentRegister();
-		if (parentRegister == null) {
-			return false;
+		if (register != null) {
+			Register parentRegister = register.getParentRegister();
+			if (parentRegister != null) {
+				Varnode parentVarnode =
+					new Varnode(parentRegister.getAddress(), parentRegister.getBitLength() / 8);
+				return setRegisters.contains(parentVarnode);
+			}
 		}
-		Varnode parentVarnode =
-			new Varnode(parentRegister.getAddress(), parentRegister.getBitLength() / 8);
-		return setRegisters.contains(parentVarnode);
+		return false;
 	}
 
 	private static Address getFlowingAddress(Program program, Instruction instr) {
