@@ -31,7 +31,7 @@ public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 		super("Highlight Backward Inst Slice");
 		this.controller = controller;
 		setPopupMenuData(
-			new MenuData(new String[] { "Highlight Backward Inst Slice" }, "Decompile"));
+			new MenuData(new String[] { "Highlight", "Backward Inst Slice" }, "Decompile"));
 	}
 
 	@Override
@@ -51,10 +51,9 @@ public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 			PcodeOp op = tokenAtCursor.getPcodeOp();
 			Set<PcodeOp> backwardSlice = DecompilerUtils.getBackwardSliceToPCodeOps(varnode);
 			backwardSlice.add(op);
-			decompilerPanel.clearHighlights();
+			decompilerPanel.clearPrimaryHighlights();
 			decompilerPanel.addPcodeOpHighlights(backwardSlice,
-				decompilerPanel.getDefaultHighlightColor());
-			decompilerPanel.repaint();
+				decompilerPanel.getCurrentVariableHighlightColor());
 		}
 	}
 

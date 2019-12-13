@@ -15,12 +15,33 @@
  */
 package ghidra.app.decompiler.component;
 
-import docking.widgets.fieldpanel.LayoutModel;
+import java.awt.Color;
 
-public interface DecompilerHighlightService {
-	
-	public LayoutModel getLayoutModel();
-	
-	public void clearHighlights();
+import ghidra.app.decompiler.ClangToken;
 
+/**
+ * A class to used to track a {@link Decompiler} token along with its highlight color
+ */
+public class HighlightToken {
+
+	private ClangToken token;
+	private Color color;
+
+	public HighlightToken(ClangToken token, Color color) {
+		this.token = token;
+		this.color = color;
+	}
+
+	public ClangToken getToken() {
+		return token;
+	}
+
+	public Color getColor() {
+		return color;
+	}
+
+	@Override
+	public String toString() {
+		return token.toString() + "; color=" + color;
+	}
 }

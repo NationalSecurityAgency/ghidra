@@ -15,25 +15,21 @@
  */
 package ghidra.app.decompiler.component;
 
-import ghidra.app.decompiler.ClangSyntaxToken;
-import ghidra.app.decompiler.ClangToken;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.decompiler.ClangSyntaxToken;
+import ghidra.app.decompiler.ClangToken;
 
 /**
  * Class to handle location based highlights for a decompiled function.
  */
-
 public class LocationClangHighlightController extends ClangHighlightController {
-
-	public LocationClangHighlightController() {
-	}
 
 	@Override
 	public void fieldLocationChanged(FieldLocation location, Field field, EventTrigger trigger) {
 
-		clearHighlights();
+		clearPrimaryHighlights();
 
 		if (!(field instanceof ClangTextField)) {
 			return;
@@ -44,12 +40,9 @@ public class LocationClangHighlightController extends ClangHighlightController {
 			return;
 		}
 
-//		// clear any highlighted searchResults
-//		decompilerPanel.setSearchResults(null);
-
-		addHighlight(tok, defaultHighlightColor);
+		addPrimaryHighlight(tok, defaultHighlightColor);
 		if (tok instanceof ClangSyntaxToken) {
-			addHighlightParen((ClangSyntaxToken) tok, defaultParenColor);
+			addPrimaryHighlightToTokensForParenthesis((ClangSyntaxToken) tok, defaultParenColor);
 			addHighlightBrace((ClangSyntaxToken) tok, defaultParenColor);
 		}
 	}

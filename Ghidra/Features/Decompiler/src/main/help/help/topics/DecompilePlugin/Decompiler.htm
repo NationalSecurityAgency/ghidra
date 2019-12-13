@@ -572,9 +572,9 @@
     <P style="margin-left: 80px;">Ghidra will do stack analysis that will recover parameters and
     return types, but for many programs, the analysis the decompiler does is better.</P>
 
-    <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0">There is a
-    prototype plug-in that automatically pulls in the decompiler derived information and applies it
-    to each function as the function is created.</P>
+    <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0">The
+    Decompiler Parameter ID analyzer automatically pulls in the decompiler derived 
+    information and applies it to each function as the function is created.</P>
 
     <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0"> If a variable
     displayed in the assembly window has an undefined type, the decompiler will still respect the
@@ -597,11 +597,12 @@
     on the stack, but for many programs, the analysis the decompiler does is better.<BR>
     </P>
 
-    <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0"> There is a
-    prototype plug-in that automatically pulls in the decompiler derived information and applies it
-    to each function as the function is created.&nbsp; The plugin by default will not commit local
-    variable definitions, either stack or register locals.&nbsp; Committing locals automatically
-    can be turned on by changing the analysis options for the Decompiler Parameter ID plugin.&nbsp;
+    <P style="margin-left: 80px;"><IMG alt="" src="../../shared/note.png" border="0">he
+    Decompiler Parameter ID analyzer automatically pulls in the decompiler derived 
+    information and applies it to each function as the function is created.  The analyzer by default 
+    will not commit local variable definitions, either stack or register locals.  
+    Committing locals automatically 
+    can be turned on by changing the Decompiler Parameter ID analysis options.
     In most cases it is better to commit locals only for certain functions that you really care
     about, or after the data type definitions (structures, etc...) have settled down for the
     program you are Reverse Engineering.<BR>
@@ -719,6 +720,79 @@
         <P>Highlight Backward Inst Slice highlights all instructions in the function that
         contribute to the creation of the value in the variable under the cursor.</P>
       </BLOCKQUOTE>
+
+	  <BR>
+	  <BR>
+	  <BR>
+	  <!-- Secondary Highlights -->
+	  <BLOCKQUOTE>
+	  	
+	  	<H2>Secondary Highlights</H2>
+	  	<BLOCKQUOTE>
+	  	<P>
+	  		Secondary highlights are highlights that you can apply to text that will
+	  		stay until you remove them (this is in contrast to normal highlights, which go 
+	  		away whenever you click in the Decompiler).  Further, each secondary highlight will get a 
+	  		different color (chosen randomly or by the user).   The Decompiler will remember
+	  		the color previously used for a particular highlighted piece of text <b>for a
+	  		given Ghidra session</b>.  Use the actions listed below to add and remove 
+	  		secondary highlights. 
+	  	</P>
+	  
+	  	<H3><A name="Set_Secondary_Highlight"></A>Set Secondary Highlight</H3>
+
+	      <BLOCKQUOTE>
+	        <P>
+	        Use this action to apply a secondary highlight to all text matching the text of the
+	        token under the cursor.  This action will reuse the previously applied color for 
+	        that text or choose a new color randomly.   This action is accessible from the 
+	        context menu via 
+	        <b>Secondary Highlight<img border="0" src="../../shared/arrow.gif">Set Highlight</b>
+	        </P>
+	      </BLOCKQUOTE>
+	      
+	    <H3><A name="Set_Secondary_Highlight_With_Color"></A>Set Secondary Highlight With Color</H3>
+
+	      <BLOCKQUOTE>
+	        <P>
+	        Use this action to apply a secondary highlight to all text matching the text of the
+	        token under the cursor.  This action will show a Color Chooser dialog initialized with
+	        the previously applied color for 
+	        that text or choose a new color randomly.   This action is accessible from the 
+	        context menu via 
+	        <b>Secondary Highlight<img border="0" src="../../shared/arrow.gif">Set Highlight...</b>
+	        </P>
+	      </BLOCKQUOTE>
+	  
+	  <H3><A name="Remove_Secondary_Highlight"></A>Remove Secondary Highlight</H3>
+
+	      <BLOCKQUOTE>
+	        <P>
+	        Use this action to remove an existing secondary highlight under the cursor.  
+	        This action is accessible from the context menu via 
+	        <b>Secondary Highlight<img border="0" src="../../shared/arrow.gif">Remove Highlight</b>
+	        </P>
+	      </BLOCKQUOTE>
+	      
+	      
+	   <H3><A name="Remove_All_Secondary_Highlights"></A>Remove All Secondary Highlights</H3>
+
+	      <BLOCKQUOTE>
+	        <P>
+	        Use this action to remove all existing secondary highlights.  
+	        This action is accessible from the context menu via 
+	        <b>Secondary Highlight<img border="0" src="../../shared/arrow.gif">Remove All Highlights</b>
+	        </P>
+	      </BLOCKQUOTE>
+	  	
+	  
+	  	</BLOCKQUOTE>
+	  </BLOCKQUOTE>
+
+	  <!-- End Secondary Highlights -->
+	  <BR>
+	  <BR>
+	  <BR>
 
       <H3><A name="Rename_Variable"></A>Rename Variable</H3>
 

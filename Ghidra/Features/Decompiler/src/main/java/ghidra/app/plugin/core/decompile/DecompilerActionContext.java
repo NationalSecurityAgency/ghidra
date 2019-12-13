@@ -23,7 +23,9 @@ import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.RestrictedAddressSetContext;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
+import ghidra.util.UndefinedFunction;
 import utility.function.Callback;
 
 public class DecompilerActionContext extends NavigatableActionContext
@@ -53,6 +55,15 @@ public class DecompilerActionContext extends NavigatableActionContext
 
 	public DecompilerPanel getDecompilerPanel() {
 		return getComponentProvider().getDecompilerPanel();
+	}
+
+	public Function getFunction() {
+		return getComponentProvider().getController().getFunction();
+	}
+
+	public boolean hasRealFunction() {
+		Function f = getFunction();
+		return f != null && !(f instanceof UndefinedFunction);
 	}
 
 	/**

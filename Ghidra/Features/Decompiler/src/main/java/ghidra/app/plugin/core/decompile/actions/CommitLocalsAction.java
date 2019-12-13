@@ -22,12 +22,10 @@ import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.UndefinedFunction;
 
 public class CommitLocalsAction extends AbstractDecompilerAction {
 	private final DecompilerController controller;
@@ -55,8 +53,7 @@ public class CommitLocalsAction extends AbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		Function function = controller.getFunction();
-		if (function == null || function instanceof UndefinedFunction) {
+		if (!context.hasRealFunction()) {
 			return false;
 		}
 		return getHighFunction() != null;

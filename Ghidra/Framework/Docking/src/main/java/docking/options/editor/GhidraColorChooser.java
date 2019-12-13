@@ -15,14 +15,13 @@
  */
 package docking.options.editor;
 
-import java.awt.Color;
-import java.awt.Component;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
-import javax.swing.JColorChooser;
-import javax.swing.JDialog;
+import javax.swing.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
 public class GhidraColorChooser extends JColorChooser {
@@ -31,6 +30,7 @@ public class GhidraColorChooser extends JColorChooser {
 
 	private String title = DEFAULT_TITLE;
 	private RecentColorCache recentColorCache = new RecentColorCache();
+	private String activeTabName;
 
 	public GhidraColorChooser() {
 		super();
@@ -54,18 +54,72 @@ public class GhidraColorChooser extends JColorChooser {
 		return recentColorCache.getMRUColorList();
 	}
 
+	/**
+	 * Sets the active tab of this chooser to be the given tab name, if it exists (the color chooser
+	 * UI may be different, depending upon the current Look and Feel)
+	 * 
+	 * @param tabName the tab name
+	 */
+	public void setActiveTab(String tabName) {
+		activeTabName = tabName;
+	}
+
 	@SuppressWarnings("deprecation")
 	public Color showDialog(Component centerOverComponent) {
 		maybeInstallSettableColorSwatchChooserPanel();
 
 		OKListener okListener = new OKListener();
 		JDialog dialog = createDialog(centerOverComponent, title, true, this, okListener, null);
+		doSetActiveTab(dialog);
+
 		dialog.show(); // blocks until user brings dialog down...
 		Color color = okListener.getColor();
 		if (color != null) {
 			recentColorCache.addColor(color);
 		}
 		return color; // null if the user cancels
+	}
+
+	private void doSetActiveTab(JDialog dialog) {
+		if (activeTabName == null) {
+			return;
+		}
+
+		JTabbedPane pane = findTabbedPane(dialog);
+		if (pane == null) {
+			return;
+		}
+
+		int n = pane.getTabCount();
+		for (int i = 0; i < n; i++) {
+			String tabTitle = pane.getTitleAt(i);
+			if (activeTabName.equals(tabTitle)) {
+				pane.setSelectedIndex(i);
+				return;
+			}
+		}
+	}
+
+	private JTabbedPane findTabbedPane(Component component) {
+		if (!(component instanceof Container)) {
+			return null;
+		}
+
+		Container parent = (Container) component;
+		if (parent instanceof JTabbedPane) {
+			return (JTabbedPane) parent;
+		}
+
+		int n = parent.getComponentCount();
+		for (int i = 0; i < n; i++) {
+			Component child = parent.getComponent(i);
+			JTabbedPane pane = findTabbedPane(child);
+			if (pane != null) {
+				return pane;
+			}
+		}
+
+		return null;
 	}
 
 	private void maybeInstallSettableColorSwatchChooserPanel() {
@@ -87,7 +141,13 @@ public class GhidraColorChooser extends JColorChooser {
 		SettableColorSwatchChooserPanel newSwatchPanel =
 			new SettableColorSwatchChooserPanel(mruColorList);
 		AbstractColorChooserPanel[] newChooserPanels =
-			new AbstractColorChooserPanel[] { newSwatchPanel, chooserPanels[1], chooserPanels[2] };
+			new AbstractColorChooserPanel[chooserPanels.length];
+		newChooserPanels[0] = newSwatchPanel;
+		for (int i = 1; i < chooserPanels.length; i++) {
+			AbstractColorChooserPanel panel = chooserPanels[i];
+			newChooserPanels[i] = panel;
+		}
+
 		setChooserPanels(newChooserPanels);
 	}
 

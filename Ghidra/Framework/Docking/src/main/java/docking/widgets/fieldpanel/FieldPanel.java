@@ -1633,8 +1633,8 @@ public class FieldPanel extends JPanel
 			if (e.getButton() != MouseEvent.BUTTON1) {
 				return;
 			}
-			cursorHandler.setCursorPos(e.getX(), e.getY(), null);
-			cursorHandler.notifyCursorChanged(EventTrigger.GUI_ACTION);
+
+			cursorHandler.setCursorPos(e.getX(), e.getY(), EventTrigger.GUI_ACTION);
 			if (!selectionHandler.isInProgress() && !didDrag) {
 				selectionHandler.clearSelection();
 			}

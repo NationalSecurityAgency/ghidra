@@ -15,8 +15,7 @@
  */
 package ghidra.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +77,6 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 
 	@After
 	public void tearDown() throws Exception {
-		env.release(program);
 		env.dispose();
 	}
 

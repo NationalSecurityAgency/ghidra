@@ -29,6 +29,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
+import utility.function.Callback;
 
 public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 
@@ -155,6 +156,11 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 	@Override
 	public void setStatusMessage(String message) {
 		// stub
+	}
+
+	@Override
+	public void doWheNotBusy(Callback c) {
+		// stub 
 	}
 
 	public void clearAndShowMessage(String message) {

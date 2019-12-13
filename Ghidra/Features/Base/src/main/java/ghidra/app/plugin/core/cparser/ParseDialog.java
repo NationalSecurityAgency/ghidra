@@ -31,7 +31,6 @@ import docking.action.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.InputDialog;
-import docking.widgets.dialogs.InputDialogListener;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.pathmanager.PathnameTablePanel;
@@ -446,8 +445,7 @@ class ParseDialog extends DialogComponentProvider {
 
 	private void saveAs(ComboBoxItem item) {
 
-		InputDialog d =
-			new InputDialog("Enter Profile Name", "Profile Name", (InputDialogListener) null);
+		InputDialog d = new InputDialog("Enter Profile Name", "Profile Name");
 		plugin.getTool().showDialog(d, getComponent());
 
 		String name = d.getValue();
