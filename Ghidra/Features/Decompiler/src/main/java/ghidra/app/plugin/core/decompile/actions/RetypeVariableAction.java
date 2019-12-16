@@ -291,8 +291,8 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 		}
 
 		for (int i = 0; i < numParams; i++) {
-			MappedSymbol param = localSymbolMap.getParamSymbol(i);
-			if (param.getSlot() != i) {
+			HighSymbol param = localSymbolMap.getParamSymbol(i);
+			if (param.getCategoryIndex() != i) {
 				return true;
 			}
 			VariableStorage storage = param.getStorage();

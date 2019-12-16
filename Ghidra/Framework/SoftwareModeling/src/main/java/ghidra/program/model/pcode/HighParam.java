@@ -57,11 +57,8 @@ public class HighParam extends HighLocal {
 	@Override
 	public void restoreXml(XmlPullParser parser) throws PcodeXMLException {
 		super.restoreXml(parser);
-		slot = 0;
 		HighSymbol sym = getSymbol();
-		if (sym instanceof MappedSymbol) {
-			slot = ((MappedSymbol) sym).getSlot();
-		}
+		slot = sym.getCategoryIndex();
 	}
 
 }

@@ -26,14 +26,26 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 
+/**
+ * A container for global symbols in the decompiler's model of a function. It contains
+ * HighSymbol objects for any symbol accessed by the particular function that is in either
+ * the global scope or some other global namespace. Currently the container is populated
+ * indirectly from the HighGlobal objects marshaled back from the decompiler, using either
+ * the populateSymbol() or newSymbol() methods. HighSymbols are stored by Address and by id,
+ * which matches the formal SymbolDB id when it exists.
+ */
 public class GlobalSymbolMap {
 	private Program program;
-	private HighFunction func;
-	private SymbolTable symbolTable;
-	private HashMap<Address, HighCodeSymbol> addrMappedSymbols;	// Hashed by addr
-	private HashMap<Long, HighCodeSymbol> symbolMap;  			// Hashed by unique key
+	private HighFunction func;			// Is the full decompiler model of the function to which this belongs
+	private SymbolTable symbolTable;	// Used for cross-referencing with Ghidra's database backed Symbols
+	private HashMap<Address, HighCodeSymbol> addrMappedSymbols;	// Look up symbols by address
+	private HashMap<Long, HighCodeSymbol> symbolMap;  			// Look up symbol by id
 	private long uniqueSymbolId;		// Next available symbol id
 
+	/**
+	 * Construct a global symbol map attached to a particular function model.
+	 * @param f is the decompiler function model
+	 */
 	public GlobalSymbolMap(HighFunction f) {
 		program = f.getFunction().getProgram();
 		func = f;
@@ -108,14 +120,28 @@ public class GlobalSymbolMap {
 		return symbol;
 	}
 
+	/**
+	 * Retrieve a HighSymbol based on an id
+	 * @param id is the id
+	 * @return the matching HighSymbol or null
+	 */
 	public HighCodeSymbol getSymbol(long id) {
 		return symbolMap.get(id);
 	}
 
+	/**
+	 * Retrieve a HighSymbol based on an Address
+	 * @param addr is the given Address
+	 * @return the matching HighSymbol or null
+	 */
 	public HighCodeSymbol getSymbol(Address addr) {
 		return addrMappedSymbols.get(addr);
 	}
 
+	/**
+	 * Get an iterator over all HighSymbols in this container
+	 * @return the iterator
+	 */
 	public Iterator<HighCodeSymbol> getSymbols() {
 		return symbolMap.values().iterator();
 	}

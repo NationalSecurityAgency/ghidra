@@ -98,11 +98,7 @@ public class HighConstant extends HighVariable {
 			if (symbol == null) {
 				symbol = function.getGlobalSymbolMap().getSymbol(symref);
 			}
-			if (symbol instanceof DynamicSymbol) {
-				name = symbol.getName();
-				symbol.setHighVariable(this);
-			}
-			else if (symbol == null) {
+			if (symbol == null) {
 				GlobalSymbolMap globalMap = function.getGlobalSymbolMap();
 				Program program = function.getFunction().getProgram();
 				symbol = globalMap.populateSymbol(symref, null, -1);
@@ -113,6 +109,10 @@ public class HighConstant extends HighVariable {
 						symbol = globalMap.newSymbol(symref, addr, DataType.DEFAULT, 1);
 					}
 				}
+			}
+			else if (symbol.getFirstWholeMap() instanceof DynamicEntry) {
+				name = symbol.getName();
+				symbol.setHighVariable(this);
 			}
 		}
 		parser.end(el);

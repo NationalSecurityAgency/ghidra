@@ -482,26 +482,6 @@ public class HighFunction extends PcodeSyntaxTree {
 		return resBuf.toString();
 	}
 
-	/**
-	 * Build the XML representation of only the shell function info not including everything known
-	 * about the function.
-	 *
-	 * @param name name of the function
-	 * @param addr address the function is located at
-	 *
-	 * @return the XML string
-	 */
-	static public String buildFunctionShellXML(String name, Address addr) {
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<function");
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", name);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", 1);
-		resBuf.append(">\n");
-		resBuf.append(Varnode.buildXMLAddress(addr));
-		resBuf.append("</function>\n");
-		return resBuf.toString();
-	}
-
 	public static ErrorHandler getErrorHandler(final Object errOriginator,
 			final String targetName) {
 		return new ErrorHandler() {

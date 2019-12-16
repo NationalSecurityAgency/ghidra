@@ -40,8 +40,10 @@ public class HighFunctionDBUtil {
 	public static final String AUTO_CAT = "/auto_proto"; // Category for auto generated prototypes
 
 	/**
-	 * Commit function return to the underlying database.
-	 * @param highFunction
+	 * Commit the decompiler's version of the function return data-type to the database.
+	 * The decompiler's version of the prototype model is committed as well
+	 * @param highFunction is the decompiler's model of the function
+	 * @param source is the desired SourceType for the commit
 	 */
 	public static void commitReturnToDatabase(HighFunction highFunction, SourceType source) {
 		try {
@@ -84,7 +86,9 @@ public class HighFunctionDBUtil {
 
 		List<Parameter> params = getParameters(highFunction, useDataTypes);
 
-		commitParamsToDatabase(function, highFunction.getFunctionPrototype(), params,
+		FunctionPrototype functionPrototype = highFunction.getFunctionPrototype();
+		String modelName = (functionPrototype != null) ? functionPrototype.getModelName() : null;
+		commitParamsToDatabase(function, modelName, params,
 			highFunction.getFunctionPrototype().isVarArg(), true, source);
 	}
 
@@ -113,21 +117,25 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Commit the specified parameter list to the specified function.
-	 * @param function
-	 * @param params
+	 * Commit a specified set of parameters for the given function to the database.
+	 * The name, data-type, and storage is committed for each parameter.  The parameters are
+	 * provided along with a formal PrototypeModel.  If the parameters fit the model, they are
+	 * committed using "dynamic" storage. Otherwise, they are committed using "custom" storage.
+	 * @param function is the Function being modified
+	 * @param modelName is the name of the underlying PrototypeModel
+	 * @param params is the formal list of parameter objects
+	 * @param hasVarArgs is true if the prototype can take variable arguments
 	 * @param renameConflicts if true any name conflicts will be resolved
 	 * by renaming the conflicting local variable/label
 	 * @param source source type
 	 * @throws DuplicateNameException if commit of parameters caused conflict with other
 	 * local variable/label.  Should not occur if renameConflicts is true.
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException for invalid variable names or for parameter data-types that aren't fixed length
+	 * @throws DuplicateNameException is there are collisions between variable names in the function's scope 
 	 */
-	public static void commitParamsToDatabase(Function function, FunctionPrototype prototype,
+	public static void commitParamsToDatabase(Function function, String modelName,
 			List<Parameter> params, boolean hasVarArgs, boolean renameConflicts, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
-
-		String modelName = prototype != null ? prototype.getModelName() : null;
 
 		try {
 			function.updateFunction(modelName, null, params,
@@ -180,6 +188,7 @@ public class HighFunctionDBUtil {
 				break;
 			}
 			catch (DuplicateNameException e) {
+				// Continue looping until we get a unique symbol name
 			}
 			catch (InvalidInputException e) {
 				break;
@@ -188,9 +197,10 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Commit all local variables to the underlying database.
-	 * @param highFunction
-	 * @param source source type
+	 * Commit local variables from the decompiler's model of the function to the database.
+	 * This does NOT include formal function parameters.
+	 * @param highFunction is the decompiler's model of the function
+	 * @param source is the desired SourceType for the commit
 	 */
 	public static void commitLocalsToDatabase(HighFunction highFunction, SourceType source) {
 
@@ -281,11 +291,12 @@ public class HighFunctionDBUtil {
 		Iterator<HighSymbol> symbols = highFunction.getLocalSymbolMap().getSymbols();
 		while (symbols.hasNext()) {
 			HighSymbol symbol = symbols.next();
-			if (!(symbol instanceof DynamicSymbol)) {
+			SymbolEntry entry = symbol.getFirstWholeMap();
+			if (!(entry instanceof DynamicEntry)) {
 				continue;
 			}
 			// Note: assumes there is only one hash method used for unique locals
-			if (((DynamicSymbol) symbol).getHash() == hash) {
+			if (((DynamicEntry) entry).getHash() == hash) {
 				if (symbol.getHighVariable() != null) {
 					return true;		// Hash successfully attached to a variable
 				}
@@ -303,8 +314,9 @@ public class HighFunctionDBUtil {
 	 */
 	private static Variable clearConflictingLocalVariables(HighSymbol local) {
 
-		if (local instanceof MappedSymbol) {
-			if (((MappedSymbol) local).getSlot() >= 0) {	// Don't clear parameters
+		SymbolEntry entry = local.getFirstWholeMap();
+		if (entry instanceof MappedEntry) {
+			if (local.isParameter()) {	// Don't clear parameters
 				throw new IllegalArgumentException();
 			}
 		}
@@ -314,12 +326,12 @@ public class HighFunctionDBUtil {
 
 		VariableStorage storage = local.getStorage();
 		int firstUseOffset = local.getFirstUseOffset();
-		if (local instanceof DynamicSymbol) {
+		if (entry instanceof DynamicEntry) {
 
-			DynamicSymbol dynamicSym = (DynamicSymbol) local;
+			DynamicEntry dynamicEntry = (DynamicEntry) entry;
 			for (Variable ul : func.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER)) {
 				// Note: assumes there is only one hash method used for unique locals
-				if (ul.getFirstStorageVarnode().getOffset() == dynamicSym.getHash()) {
+				if (ul.getFirstStorageVarnode().getOffset() == dynamicEntry.getHash()) {
 					return ul;
 				}
 			}
@@ -357,12 +369,12 @@ public class HighFunctionDBUtil {
 	 * @return the matching parameter that can be modified
 	 * @throws InvalidInputException if the desired parameter cannot be modified
 	 */
-	private static Parameter getDatabaseParameter(MappedSymbol param) throws InvalidInputException {
+	private static Parameter getDatabaseParameter(HighSymbol param) throws InvalidInputException {
 
 		HighFunction highFunction = param.getHighFunction();
 		Function function = highFunction.getFunction();
 
-		int slot = param.getSlot();
+		int slot = param.getCategoryIndex();
 		Parameter[] parameters = function.getParameters();
 		if (slot < parameters.length) {
 			if (parameters[slot].isAutoParameter()) {
@@ -424,10 +436,8 @@ public class HighFunctionDBUtil {
 		boolean isRename = name != null;
 
 		if (variable.isParameter()) {
-			MappedSymbol mappedSymbol = (MappedSymbol) variable;
-
-			Parameter dbParam = getDatabaseParameter(mappedSymbol);
-			VariableStorage storage = mappedSymbol.getStorage();
+			Parameter dbParam = getDatabaseParameter(variable);
+			VariableStorage storage = variable.getStorage();
 			if (dataType != null) {
 				if (resized && function.hasCustomVariableStorage()) {
 					VariableStorage newStorage =
@@ -448,7 +458,7 @@ public class HighFunctionDBUtil {
 			HighVariable tmpHigh = variable.getHighVariable();
 			if (tmpHigh != null && tmpHigh.getRepresentative().isUnique()) {
 				storage =
-					DynamicSymbol.buildDynamicStorage(tmpHigh.getRepresentative(), highFunction);
+					DynamicEntry.buildDynamicStorage(tmpHigh.getRepresentative(), highFunction);
 				var = null;
 			}
 			else {
@@ -591,26 +601,26 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Commit an override of a calls prototype to the database
-	 * @param function is the Function whose call is being overriden
-	 * @param callsite is the address of the call
-	 * @param sig signature override
-	 * @throws InvalidInputException
-	 * @throws DuplicateNameException
+	 * Commit an overriding prototype for a particular call site to the database. The override
+	 * only applies to the function(s) containing the actual call site. Calls to the same function from
+	 * other sites are unaffected.  This is used typically either for indirect calls are for calls to
+	 * a function with a variable number of parameters.
+	 * @param function is the Function whose call site is being overridden
+	 * @param callsite is the address of the calling instruction (the call site)
+	 * @param sig is the overriding function signature
+	 * @throws InvalidInputException if there are problems committing the override symbol
 	 */
 	public static void writeOverride(Function function, Address callsite, FunctionSignature sig)
-			throws InvalidInputException, DuplicateNameException {
+			throws InvalidInputException {
 
 		ParameterDefinition[] params = sig.getArguments();
-		FunctionSignatureImpl fsig = new FunctionSignatureImpl("tmpname"); // Empty datatype, will get renamed later
+		FunctionDefinitionDataType fsig = new FunctionDefinitionDataType("tmpname"); // Empty datatype, will get renamed later
 		fsig.setGenericCallingConvention(sig.getGenericCallingConvention());
 		fsig.setArguments(params);
 		fsig.setReturnType(sig.getReturnType());
 		fsig.setVarArgs(sig.hasVarArgs());
 
-		FunctionDefinitionDataType dt = new FunctionDefinitionDataType(fsig);
-
-		DataTypeSymbol datsym = new DataTypeSymbol(dt, "prt", AUTO_CAT);
+		DataTypeSymbol datsym = new DataTypeSymbol(fsig, "prt", AUTO_CAT);
 		Program program = function.getProgram();
 		SymbolTable symtab = program.getSymbolTable();
 		DataTypeManager dtmanage = program.getDataTypeManager();
@@ -623,9 +633,9 @@ public class HighFunctionDBUtil {
 
 	/**
 	 * Read a call prototype override which corresponds to the specified override code symbol
-	 * @param sym special call override code symbol whose address corresponds to a callsite
+	 * @param sym special call override code symbol whose address corresponds to a call site
 	 * @return call prototype override DataTypeSymbol or null if associated function signature
-	 * datatype could not be found
+	 * data-type could not be found
 	 */
 	public static DataTypeSymbol readOverride(Symbol sym) {
 		DataTypeSymbol datsym = DataTypeSymbol.readSymbol(AUTO_CAT, sym);
