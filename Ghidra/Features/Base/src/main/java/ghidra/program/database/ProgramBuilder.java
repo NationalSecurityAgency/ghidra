@@ -70,6 +70,7 @@ public class ProgramBuilder {
 	public static final String _MIPS_6432 = "MIPS:BE:64:64-32addr";
 	public static final String _PPC_32 = "PowerPC:BE:32:default";
 	public static final String _PPC_6432 = "PowerPC:BE:64:64-32addr";
+	public static final String _PPC_64 = "PowerPC:BE:64:default";
 
 	public static final String _TOY_BE = "Toy:BE:32:default";
 	public static final String _TOY_BE_POSITIVE = "Toy:BE:32:posStack";
@@ -80,6 +81,8 @@ public class ProgramBuilder {
 	public static final String _TOY64_LE = "Toy:LE:64:default";
 
 	public static final String _TOY = _TOY_BE;
+
+	private static final String LANGUAGE_DELIMITER = ":";
 
 	protected static final String _TOY_LANGUAGE_PREFIX = "Toy:";
 
@@ -249,37 +252,43 @@ public class ProgramBuilder {
 		}
 
 		ResourceFile ldefFile = null;
-		if (_X86.equals(languageName) || _X64.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("x86", "languages/x86.ldefs");
+		if (languageName.contains(LANGUAGE_DELIMITER)) {
+			switch (languageName.split(LANGUAGE_DELIMITER)[0]) {
+				case "x86":
+					ldefFile = Application.getModuleDataFile("x86", "languages/x86.ldefs");
+					break;
+				case "8051":
+					ldefFile = Application.getModuleDataFile("8051", "languages/8051.ldefs");
+					break;
+				case "sparc":
+					ldefFile = Application.getModuleDataFile("Sparc", "languages/SparcV9.ldefs");
+					break;
+				case "ARM":
+					ldefFile = Application.getModuleDataFile("ARM", "languages/ARM.ldefs");
+					break;
+				case "AARCH64":
+					ldefFile = Application.getModuleDataFile("AARCH64", "languages/AARCH64.ldefs");
+					break;
+				case "MIPS":
+					ldefFile = Application.getModuleDataFile("MIPS", "languages/mips.ldefs");
+					break;
+				case "Toy":
+					ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
+					break;
+				case "PowerPC":
+					ldefFile = Application.getModuleDataFile("PowerPC", "languages/ppc.ldefs");
+					break;
+				default:
+					break;
+			}
 		}
-		else if (_X86_16_REAL_MODE.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("x86", "languages/x86.ldefs");
-		}
-		else if (_8051.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("8051", "languages/8051.ldefs");
-		}
-		else if (_SPARC64.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("Sparc", "languages/SparcV9.ldefs");
-		}
-		else if (_ARM.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("ARM", "languages/ARM.ldefs");
-		}
-		else if (_AARCH64.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("AARCH64", "languages/AARCH64.ldefs");
-		}
-		else if (_MIPS.equals(languageName) || _MIPS_6432.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("MIPS", "languages/mips.ldefs");
-		}
-		else if (languageName.startsWith(_TOY_LANGUAGE_PREFIX)) {
-			ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
-		}
-		else if (_PPC_32.equals(languageName) || _PPC_6432.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("PowerPC", "languages/ppc.ldefs");
-		}
-
 		if (ldefFile != null) {
 			LanguageService languageService = DefaultLanguageService.getLanguageService(ldefFile);
-			language = languageService.getLanguage(new LanguageID(languageName));
+			try {
+				language = languageService.getLanguage(new LanguageID(languageName));
+			} catch (LanguageNotFoundException e) {
+				throw new LanguageNotFoundException("Unsupported test language: " + languageName);
+			}
 			LANGUAGE_CACHE.put(languageName, language);
 			return language;
 		}
