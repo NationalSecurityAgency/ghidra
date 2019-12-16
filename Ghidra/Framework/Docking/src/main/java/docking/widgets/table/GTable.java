@@ -87,7 +87,7 @@ public class GTable extends JTable {
 	private boolean enableActionKeyBindings;
 	private KeyListener autoLookupListener;
 
-	private GTableAutoLookup autoLookup = new GTableAutoLookup(this);
+	private AutoLookup autoLookup = createAutoLookup();
 
 	/** A list of default renderers created by this table */
 	protected List<TableCellRenderer> defaultGTableRendererList = new ArrayList<>();
@@ -187,6 +187,14 @@ public class GTable extends JTable {
 		return new GTableColumnModel(this);
 	}
 
+	/**
+	 * Allows subclasses to change the type of {@link AutoLookup} created by this table
+	 * @return the auto lookup 
+	 */
+	protected AutoLookup createAutoLookup() {
+		return new GTableAutoLookup(this);
+	}
+
 	@Override
 	public void setColumnModel(TableColumnModel columnModel) {
 		super.setColumnModel(columnModel);
@@ -279,6 +287,10 @@ public class GTable extends JTable {
 	 */
 	public void setAutoLookupTimeout(long timeout) {
 		autoLookup.setTimeout(timeout);
+	}
+
+	protected AutoLookup getAutoLookup() {
+		return autoLookup;
 	}
 
 	/**

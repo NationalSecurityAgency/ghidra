@@ -66,6 +66,16 @@ public abstract class AutoLookup {
 	public abstract boolean isSorted(int column);
 
 	/**
+	 * A method that subclasses can override to affect whether this class uses a binary search
+	 * for a particular column
+	 * @param column the column
+	 * @return true if the binary search algorithm will work on the given column
+	 */
+	protected boolean canBinarySearchColumn(int column) {
+		return isSorted(column);
+	}
+
+	/**
 	 * Returns true if the currently sorted column is sorted ascending.  This is used in 
 	 * conjunction with {@link #isSorted(int)}.  If that method returns false, then this method
 	 * will not be called. 
@@ -97,6 +107,7 @@ public abstract class AutoLookup {
 	 */
 	public void setColumn(int column) {
 		this.lookupColumn = column;
+		lastLookup = null;
 	}
 
 	/**
@@ -148,7 +159,7 @@ public abstract class AutoLookup {
 			}
 		}
 
-		if (isSorted(lookupColumn)) {
+		if (canBinarySearchColumn(lookupColumn)) {
 			return autoLookupBinary(text);
 		}
 		return autoLookupLinear(text);
@@ -295,6 +306,7 @@ public abstract class AutoLookup {
 					// was fruitless, then so too will be this one, since we use a 
 					// 'starts with' match.
 					skip = true;
+					when = lastTime;  // don't save time if no match found; trigger a timeout
 				}
 			}
 

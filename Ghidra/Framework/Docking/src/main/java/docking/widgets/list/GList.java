@@ -38,7 +38,7 @@ import docking.widgets.GComponent;
  */
 public class GList<T> extends JList<T> implements GComponent {
 
-	private GListAutoLookup<T> autoLookup = new GListAutoLookup<T>(this);
+	private AutoLookup autoLookup = createAutoLookup();
 
 	/**
 	 * Constructs a <code>GhidraList</code> with an empty model.
@@ -91,7 +91,7 @@ public class GList<T> extends JList<T> implements GComponent {
 
 		addKeyListener(new KeyAdapter() {
 			@Override
-			public void keyReleased(KeyEvent e) {
+			public void keyPressed(KeyEvent e) {
 				autoLookup.keyTyped(e);
 			}
 		});
@@ -112,4 +112,13 @@ public class GList<T> extends JList<T> implements GComponent {
 		// only the object's toString(), which will not always match what the user sees on screen
 		return -1;
 	}
+
+	/**
+	 * Allows subclasses to change the type of {@link AutoLookup} created by this list
+	 * @return the auto lookup 
+	 */
+	protected AutoLookup createAutoLookup() {
+		return new GListAutoLookup<>(this);
+	}
+
 }

@@ -29,7 +29,7 @@ public class GTableAutoLookup extends AutoLookup {
 
 	private GTable table;
 
-	GTableAutoLookup(GTable table) {
+	public GTableAutoLookup(GTable table) {
 		this.table = table;
 	}
 
