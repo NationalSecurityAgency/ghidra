@@ -18,12 +18,10 @@
  */
 package docking.widgets.filechooser;
 
-import static org.apache.commons.lang3.StringUtils.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
@@ -46,10 +44,6 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 	private JLabel listEditorLabel;
 	private JTextField listEditorField;
 	private JPanel listEditor;
-
-	private long keyTimeout = AUTO_LOOKUP_TIMEOUT;
-	private long lastLookupTime;
-	private String lastLookupText;
 
 	/** The file being edited */
 	private File editedFile;
@@ -119,20 +113,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					e.consume();
 					handleEnterKey();
-					return;
 				}
-
-				String eventChar = Character.toString(e.getKeyChar());
-				long when = e.getWhen();
-				if (when - lastLookupTime > keyTimeout) {
-					lastLookupText = eventChar;
-				}
-				else {
-					lastLookupText += eventChar;
-				}
-
-				lastLookupTime = when;
-				lookupText(lastLookupText);
 			}
 		});
 
@@ -208,75 +189,6 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		listEditorField.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
 		add(listEditor);
-	}
-
-	private void lookupText(String text) {
-		if (text == null) {
-			return;
-		}
-
-		int row = getSelectedIndex();
-		int rows = getModel().getSize();
-		if (row >= 0 && row < rows - 1) {
-			if (text.length() == 1) {
-				// fresh search; ignore the current row, could be from a previous match
-				++row;
-			}
-
-			File file = getModel().getElementAt(row);
-			String name = chooser.getDisplayName(file);
-			if (!name.isEmpty() && startsWithIgnoreCase(name, text)) {
-				setSelectedFile(getFile(row));
-				return;
-			}
-		}
-
-		int index = autoLookupBinary(text);
-		if (index >= 0) {
-			setSelectedFile(getFile(index));
-		}
-	}
-
-	private int autoLookupBinary(String text) {
-
-		// caveat: for this search to work, the data must be ascending sorted
-		List<File> files = model.getAllFiles();
-		File key = new File(lastLookupText);
-		Comparator<File> comparator = (f1, f2) -> {
-			String n1 = chooser.getDisplayName(f1);
-			return compareIgnoreCase(n1, text);
-		};
-
-		int index = Collections.binarySearch(files, key, comparator);
-		if (index < 0) {
-			index = -index - 1;
-		}
-
-		File file = files.get(index);
-		String name = chooser.getDisplayName(file);
-		if (startsWithIgnoreCase(name, text)) {
-			return index;
-		}
-
-		int before = index - 1;
-		if (before >= 0) {
-			file = files.get(before);
-			name = chooser.getDisplayName(file);
-			if (startsWithIgnoreCase(name, text)) {
-				return before;
-			}
-		}
-
-		int after = index + 1;
-		if (after < files.size()) {
-			file = files.get(after);
-			name = chooser.getDisplayName(file);
-			if (startsWithIgnoreCase(name, text)) {
-				return after;
-			}
-		}
-
-		return -1;
 	}
 
 	private void handleEnterKey() {
@@ -386,17 +298,6 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 				return;
 			}
 		}
-	}
-
-	/**
-	 * Sets the delay between keystrokes after which each keystroke is considered a new lookup
-	 * @param timeout the timeout
-	 * @see #AUTO_LOOKUP_TIMEOUT
-	 */
-	public void setAutoLookupTimeout(long timeout) {
-		keyTimeout = timeout;
-		lastLookupText = null;
-		lastLookupTime = 0;
 	}
 
 	void setSelectedFiles(Iterable<File> files) {

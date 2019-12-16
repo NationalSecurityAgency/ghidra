@@ -59,7 +59,6 @@ import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.worker.Worker;
 import util.CollectionUtils;
-import util.HistoryList;
 import utilities.util.FileUtilities;
 
 public class GhidraFileChooserTest extends AbstractDockingTest {
@@ -123,7 +122,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		setFile(testDir);
 
 		for (int i = files.size() - 1; i >= 0; --i) {
-			pressBackButton();
+			pressBack();
 			File parentFile = files.get(i).getParentFile();
 			waitForChooser();
 			assertEquals(
@@ -148,8 +147,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	public void testBackForSCR_3392() throws Exception {
 		File currentDirectory = getCurrentDirectory();
 
-		pressButtonByName(chooser.getComponent(), "MY_COMPUTER_BUTTON", false);
-		waitForChooser();
+		pressMyComputer();
 
 		File newCurrentDirectory = getCurrentDirectory();
 		assertFalse(currentDirectory.equals(newCurrentDirectory));
@@ -157,7 +155,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		JButton backButton = (JButton) getInstanceField("backButton", chooser);
 		assertTrue(backButton.isEnabled());
 
-		pressBackButton();
+		pressBack();
 		waitForChooser();
 
 		newCurrentDirectory = getCurrentDirectory();
@@ -190,12 +188,12 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForChooser();
 
 		// back should now go to the 'home' dir
-		pressBackButton();
+		pressBack();
 		waitForChooser();
 		assertEquals("Did not go back to the home directory", homeDir, getCurrentDirectory());
 
 		// finally,  go back to the start dir
-		pressBackButton();
+		pressBack();
 		waitForChooser();
 		assertEquals("Did not go back to the start directory", startDir.getParentFile(),
 			getCurrentDirectory());
@@ -257,9 +255,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			(JTextField) findComponentByName(chooser.getComponent(), "LIST_EDITOR_FIELD");
 		assertNotNull(editorField);
 
-		// Now, press the "My Computer" button...
-		pressButtonByName(chooser.getComponent(), "MY_COMPUTER_BUTTON", false);
-		waitForChooser();
+		pressMyComputer();
 
 		// Next, double-click the root drive entry
 		DirectoryListModel model = (DirectoryListModel) dirlist.getModel();
@@ -403,8 +399,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	public void testRefresh() throws Exception {
 		setDir(tempdir);
 
-		HistoryList<File> history = chooser.getHistory();
-		int size = history.size();
+		int size = chooser.getHistorySize();
 
 		File tempfile = File.createTempFile(getName(), ".tmp", tempdir);
 		tempfile.deleteOnExit();
@@ -413,18 +408,18 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		DirectoryListModel dirmodel = (DirectoryListModel) dirlist.getModel();
 		assertFalse(dirmodel.contains(tempfile));
 
-		pressRefreshButton();
+		pressRefresh();
 		waitForChooser();
 
 		assertTrue(dirmodel.contains(tempfile));
 		assertTrue(tempfile.delete());
-		pressRefreshButton();
+		pressRefresh();
 		waitForChooser();
 
 		assertFalse(dirmodel.contains(tempfile));
 
 		// verify back stack is not corrupted!!!
-		assertEquals(size, history.size());
+		assertEquals(size, size = chooser.getHistorySize());
 	}
 
 	// refresh was navigating into the selected directory
@@ -447,7 +442,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		});
 
 		// press refresh
-		pressRefreshButton();
+		pressRefresh();
 		waitForFile(newFile, DEFAULT_TIMEOUT_MILLIS);
 
 		// verify we did not go into the selected directory
@@ -961,7 +956,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testShowDetails() throws Exception {
 		JPanel cardPanel = (JPanel) findComponentByName(chooser.getComponent(), "CARD_PANEL");
-		JList<?> dirlist = (JList<?>) findComponentByName(chooser.getComponent(), "LIST");
+		DirectoryList dirlist = getListView();
 		JTable dirtable = getTableView();
 		JScrollPane scrollpane1 = (JScrollPane) cardPanel.getComponent(0);
 		JScrollPane scrollpane2 = (JScrollPane) cardPanel.getComponent(1);
@@ -1048,8 +1043,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		}
 
 		setMode(DIRECTORIES_ONLY);
-		pressButtonByName(chooser.getComponent(), "RECENT_BUTTON", false);
-		waitForChooser();
+		pressRecent();
 
 		// make a selection
 		File fileToSelect = files.get(0).getParentFile();
@@ -1067,9 +1061,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		// make sure the user cannot type in relative filenames when in a special dir (like
 		// Recent and My Computer)
 
-		// press the recent button
-		pressButtonByName(chooser.getComponent(), "RECENT_BUTTON", false);
-		waitForChooser();
+		pressRecent();
 
 		setFilenameFieldText("foo");
 
@@ -1078,8 +1070,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertTrue("The file chooser accepted an invalid file parented by the RECENTs directory",
 			chooser.isShowing());
 
-		pressButtonByName(chooser.getComponent(), "MY_COMPUTER_BUTTON", false);
-		waitForChooser();
+		pressMyComputer();
 
 		setFilenameFieldText("foo");
 
@@ -1340,10 +1331,9 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 	@Test
 	public void testMyComputer() throws Exception {
-		pressButtonByName(chooser.getComponent(), "MY_COMPUTER_BUTTON", false);
-		waitForChooser();
+		pressMyComputer();
 
-		JList<?> dirlist = (JList<?>) findComponentByName(chooser.getComponent(), "LIST");
+		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
 		File[] roots = chooser.getModel().getRoots();
 		assertEquals(roots.length, listModel.getSize());
@@ -1455,7 +1445,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			getCurrentDirectory());
 
 		// check the chooser contents
-		JList<?> dirlist = (JList<?>) findComponentByName(chooser.getComponent(), "LIST");
+		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
 		File[] listing = chooser.getModel().getListing(homeDir, null);
 		assertEquals(listing.length, listModel.getSize());
@@ -1473,10 +1463,9 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			show();
 		}
 
-		pressButtonByName(chooser.getComponent(), "RECENT_BUTTON", false);
-		waitForChooser();
+		pressRecent();
 
-		JList<?> dirlist = (JList<?>) findComponentByName(chooser.getComponent(), "LIST");
+		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
 		for (File element : files) {
 			assertTrue("model does not contain the recent file: " + element.getParentFile(),
@@ -1504,8 +1493,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			show();
 		}
 
-		pressButtonByName(chooser.getComponent(), "RECENT_BUTTON", false);
-		waitForChooser();
+		pressRecent();
 
 		// must re-retrieve the action, since we created a new chooser
 		actionManager = chooser.getActionManager();
@@ -1531,7 +1519,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 	@Test
 	public void testFileFilter() throws Exception {
-		JList<?> dirlist = (JList<?>) findComponentByName(chooser.getComponent(), "LIST");
+		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
 		runSwing(() -> chooser.setFileFilter(new ExtensionFileFilter("exe", "Executables")));
 
@@ -1642,7 +1630,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		showMultiSelectionChooser(files.parent, FILES_ONLY);
 
 		setTableMode();
-		GTable table = getTableView();
+		DirectoryTable table = getTableView();
 		int testTimeoutMs = 100;
 		table.setAutoLookupTimeout(testTimeoutMs);
 
@@ -1731,6 +1719,42 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		sleep(testTimeoutMs);
 		triggerText(list, "d");
 		assertSelectedIndex(list, 0);
+	}
+
+	@Test
+	public void testFocus_FilesViewStaysFocusedAfterRefresh() throws Exception {
+
+		DirectoryList list = getListView();
+		focus(list);
+
+		clickMyComputer();
+		assertTrue(list.hasFocus());
+
+		clickRecent();
+		assertTrue(list.hasFocus());
+
+		clickBack();
+		assertTrue(list.hasFocus());
+	}
+
+	@Test
+	public void testHistoryRestoresSelectedFiles() throws Exception {
+
+		File startDir = createTempDir();
+		setDir(startDir);
+		createFileSubFile(startDir, 3);
+
+		pressUp();
+		selectFile(getListView(), 1);
+
+		pressUp();
+		selectFile(getListView(), 2);
+
+		pressBack();
+		assertSelectedIndex(getListView(), 1);
+
+		pressForward();
+		assertSelectedIndex(getListView(), 2);
 	}
 
 	@Test
@@ -1842,14 +1866,14 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 	private List<File> getExistingFiles(File dir, int count) {
 		assertTrue(dir.isDirectory());
-	
+
 		File[] files = dir.listFiles(f -> f.isFile());
 		assertTrue("Dir does not contain enough files - '" + dir + "'; count = " + count,
 			files.length >= count);
-	
+
 		// create some consistency between runs
 		Arrays.sort(files, (f1, f2) -> f1.getName().compareTo(f2.getName()));
-	
+
 		List<File> result = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
 			result.add(files[i]);
@@ -1858,7 +1882,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	private boolean containsRecentFile(File file) {
-	
+
 		@SuppressWarnings("unchecked")
 		List<RecentGhidraFile> recents =
 			(List<RecentGhidraFile>) getInstanceField("recentList", chooser);
@@ -1868,12 +1892,12 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 				return true;
 			}
 		}
-	
+
 		return false;
 	}
 
 	private ActionContext createDirListContext() {
-	
+
 		DirectoryList dirlist = getListView();
 		return new ActionContext(null, dirlist);
 	}
@@ -1892,12 +1916,14 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertEquals("Wrong table row selected", expected, actual);
 	}
 
-	private void selectFile(DirectoryList list, int index) {
+	private File selectFile(DirectoryList list, int index) {
 		runSwing(() -> list.setSelectedIndex(index));
+		return runSwing(() -> list.getSelectedFile());
 	}
 
-	private void selectFile(GTable table, int index) {
+	private File selectFile(DirectoryTable table, int index) {
 		runSwing(() -> table.getSelectionModel().setSelectionInterval(index, index));
+		return runSwing(() -> table.getSelectedFile());
 	}
 
 	private void focus(Component c) {
@@ -1970,6 +1996,37 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForSwing();
 	}
 
+	private void pressMyComputer() throws Exception {
+		pressButtonByName(chooser.getComponent(), "MY_COMPUTER_BUTTON", false);
+		waitForChooser();
+	}
+
+	private void clickMyComputer() throws Exception {
+		AbstractButton button =
+			(AbstractButton) findComponentByName(chooser.getComponent(), "MY_COMPUTER_BUTTON");
+		leftClick(button, 5, 5);
+		waitForChooser();
+	}
+
+	private void clickRecent() throws Exception {
+		AbstractButton button =
+			(AbstractButton) findComponentByName(chooser.getComponent(), "RECENT_BUTTON");
+		leftClick(button, 5, 5);
+		waitForChooser();
+	}
+
+	private void clickBack() throws Exception {
+		AbstractButton button =
+			(AbstractButton) findComponentByName(chooser.getComponent(), "BACK_BUTTON");
+		leftClick(button, 5, 5);
+		waitForChooser();
+	}
+
+	private void pressRecent() throws Exception {
+		pressButtonByName(chooser.getComponent(), "RECENT_BUTTON", false);
+		waitForChooser();
+	}
+
 	private void pressHome() {
 		pressButtonByName(chooser.getComponent(), "HOME_BUTTON", false);
 		waitForSwing();
@@ -1985,14 +2042,27 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForSwing();
 	}
 
-	private void pressRefreshButton() {
+	private void pressRefresh() {
 		pressButtonByName(chooser.getComponent(), "REFRESH_BUTTON");
 		waitForSwing();
 	}
 
-	private void pressBackButton() {
+	private void pressBack() throws Exception {
 		pressButtonByName(chooser.getComponent(), "BACK_BUTTON");
 		waitForSwing();
+		waitForChooser();
+	}
+
+	private void pressForward() throws Exception {
+		pressButtonByName(chooser.getComponent(), "FORWARD_BUTTON");
+		waitForSwing();
+		waitForChooser();
+	}
+
+	private void pressUp() throws Exception {
+		pressButtonByName(chooser.getComponent(), "UP_BUTTON");
+		waitForSwing();
+		waitForChooser();
 	}
 
 	private void setDir(final File dir) throws Exception {
@@ -2538,8 +2608,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		return (DirectoryList) findComponentByName(chooser.getComponent(), "LIST");
 	}
 
-	private GTable getTableView() {
-		return (GTable) findComponentByName(chooser.getComponent(), "TABLE");
+	private DirectoryTable getTableView() {
+		return (DirectoryTable) findComponentByName(chooser.getComponent(), "TABLE");
 	}
 
 	private void debugChooser() {

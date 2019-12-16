@@ -15,12 +15,15 @@
  */
 package docking.widgets.list;
 
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Vector;
 
 import javax.swing.*;
+import javax.swing.text.Position.Bias;
 
+import docking.widgets.AutoLookup;
 import docking.widgets.GComponent;
-import docking.widgets.table.GTable;
 
 /**
  * A sub-class of JList that provides an auto-lookup feature.
@@ -35,8 +38,7 @@ import docking.widgets.table.GTable;
  */
 public class GList<T> extends JList<T> implements GComponent {
 
-	/**The timeout for the auto-lookup feature*/
-	public static final long AUTO_LOOKUP_TIMEOUT = GTable.AUTO_LOOKUP_TIMEOUT;
+	private GListAutoLookup<T> autoLookup = new GListAutoLookup<T>(this);
 
 	/**
 	 * Constructs a <code>GhidraList</code> with an empty model.
@@ -86,5 +88,28 @@ public class GList<T> extends JList<T> implements GComponent {
 			GComponent.setHTMLRenderingFlag((JComponent) getCellRenderer(), false);
 		}
 		addListSelectionListener(e -> ensureIndexIsVisible(getSelectedIndex()));
+
+		addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				autoLookup.keyTyped(e);
+			}
+		});
+	}
+
+	/**
+	 * Sets the delay between keystrokes after which each keystroke is considered a new lookup
+	 * @param timeout the timeout
+	 * @see AutoLookup#KEY_TYPING_TIMEOUT
+	 */
+	public void setAutoLookupTimeout(long timeout) {
+		autoLookup.setTimeout(timeout);
+	}
+
+	@Override
+	public int getNextMatch(String prefix, int startIndex, Bias bias) {
+		// disable the default lookup algorithm, as it does not use the renderer, but 
+		// only the object's toString(), which will not always match what the user sees on screen
+		return -1;
 	}
 }
