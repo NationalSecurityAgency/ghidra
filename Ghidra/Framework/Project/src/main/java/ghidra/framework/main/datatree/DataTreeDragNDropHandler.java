@@ -36,7 +36,7 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 	public static DataFlavor localDomainFileFlavor = createLocalTreeFlavor();
 
 	public static DataFlavor[] allSupportedFlavors =
-		{ localDomainFileTreeFlavor, localDomainFileFlavor };
+		{ localDomainFileTreeFlavor, localDomainFileFlavor, DataFlavor.stringFlavor };
 
 	// create a data flavor that is an List of GTreeNodes
 	private static DataFlavor createLocalTreeNodeFlavor() {
@@ -146,12 +146,23 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 			return removeDuplicates(transferNodes);
 		}
 		else if (flavor == localDomainFileFlavor) {
-			// filter the list of nodes to get just file nodes, and convert each node to its
-			// corresponding domainFile
-			return transferNodes.stream().//
-				filter(DomainFileNode.class::isInstance).//
-				map(node -> ((DomainFileNode) node).getDomainFile()).//
-				collect(Collectors.toList());
+			// filter for file nodes and convert each node to its corresponding domainFile
+			//@formatter:off
+			return transferNodes.stream()
+				.filter(DomainFileNode.class::isInstance)
+				.map(node -> ((DomainFileNode) node).getDomainFile())
+				.collect(Collectors.toList())
+				;
+			//@formatter:on
+		}
+		else if (flavor == DataFlavor.stringFlavor) {
+			// allow users to copy the names of nodes
+			//@formatter:off
+			return transferNodes.stream()
+				.map(node -> node.getName())
+				.collect(Collectors.joining("\n"))
+				;
+			//@formatter:on
 		}
 		throw new AssertException("Called with a flavor that we didn't say we supported");
 	}
@@ -160,10 +171,13 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 
 		List<GTreeNode> folderNodes = getDomainFolderNodes(allNodes);
 
-		// check each file--if it has a parent in the list, then it is not needed as a separate entry
-		return allNodes.stream().//
-			filter(node -> !isChildOfFolders(folderNodes, node)).//
-			collect(Collectors.toList());
+		// if a file has a parent in the list, then it is not needed as a separate entry
+		//@formatter:off
+		return allNodes.stream()
+			.filter(node -> !isChildOfFolders(folderNodes, node))
+			.collect(Collectors.toList())
+			;
+		//@formatter:on
 	}
 
 	private List<GTreeNode> getDomainFolderNodes(List<GTreeNode> nodeList) {
@@ -189,7 +203,8 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 		return false;
 	}
 
-	public static void addActiveDataFlavorHandler(DataFlavor flavor, DataTreeFlavorHandler handler) {
+	public static void addActiveDataFlavorHandler(DataFlavor flavor,
+			DataTreeFlavorHandler handler) {
 		activeProjectDropFlavorHandlerMap.put(flavor, handler);
 	}
 
