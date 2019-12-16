@@ -1358,7 +1358,8 @@ with : ARMcondCk=1 {
 
 :hlt immed6				is TMode=1 & op6=0b1011101010 & immed6
 {
-	software_hlt(immed6:4);
+	pc = software_hlt(immed6:4);
+	goto [pc];
 }
 
 :bkpt immed8				is TMode=1 & ItCond & op8=0xbe & immed8
@@ -1384,14 +1385,16 @@ with : ARMcondCk=1 {
 :udf^ItCond "#"thc0007			is TMode=1 & ItCond & op8 = 0xde & thc0007
 {
 	build ItCond;
-	software_udf(thc0007:4);
+	pc = software_udf(thc0007:4);
+	goto [pc];
 }
 @endif
 
 :udf^ItCond "#"tmp			is TMode=1 & ItCond & op4=0xf7f & thc0003; op12=0xa & thc0011 [tmp = thc0003 << 12 | thc0011;]
 {
 	build ItCond;
-	software_udf(tmp:4);
+	pc = software_udf(tmp:4);
+	goto [pc];
 }
 
 @endif # VERSION_5

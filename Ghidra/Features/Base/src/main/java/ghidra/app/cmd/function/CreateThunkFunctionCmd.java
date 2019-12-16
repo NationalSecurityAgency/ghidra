@@ -50,8 +50,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	private Function referencedFunction;
 	private List<Address> referringThunkAddresses = new ArrayList<>();
 	private boolean checkForSideEffects = true;
-	
-	private static final int MAX_NUMBER_OF_THUNKING_INSTRUCTIONS = 5;
+
+	private static final int MAX_NUMBER_OF_THUNKING_INSTRUCTIONS = 8;
 
 	static String DEFAULT_FUNCTION_COMMENT = " THUNK-FUNCTION";
 
@@ -147,7 +147,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		Program program = (Program) obj;
 
 		FunctionManager functionMgr = program.getFunctionManager();
-		
+
 		if (referencedFunctionAddr == Address.NO_ADDRESS) {
 			referencedFunctionAddr = null;
 		}
@@ -269,10 +269,10 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			}
 			referencedFunctionAddr = referencedSymbol.getAddress();
 		}
-		else if ((referencedFunctionAddr == null || referencedFunctionAddr == Address.NO_ADDRESS) && autoThunkOK) {
+		else if ((referencedFunctionAddr == null || referencedFunctionAddr == Address.NO_ADDRESS) &&
+			autoThunkOK) {
 			// first try to get the address that is already there
-			referencedFunctionAddr =
-				getThunkedExternalFunctionAddress(program, entry);
+			referencedFunctionAddr = getThunkedExternalFunctionAddress(program, entry);
 			if (referencedFunctionAddr == null) {
 				referencedFunctionAddr = getThunkedAddr(program, entry, checkForSideEffects);
 			}
@@ -280,7 +280,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			if (referencedFunctionAddr == null || referencedFunctionAddr == Address.NO_ADDRESS) {
 				try {
 					if (resolveComputableFlow(program, entry, monitor)) {
-						referencedFunctionAddr = getThunkedAddr(program, entry, checkForSideEffects);
+						referencedFunctionAddr =
+							getThunkedAddr(program, entry, checkForSideEffects);
 					}
 				}
 				catch (CancelledException e) {
@@ -479,7 +480,6 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		return referencedFunction;
 	}
 
-
 	/**
 	 * if the code starting at entry is a thunk, return the thunked addess if known.
 	 * 
@@ -500,7 +500,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	 *
 	 * @return address that the thunk thunks,Address.NO_ADDRESS if thunk but unknown addr, null otherwise
 	 */
-	public static Address getThunkedAddr(Program program, Address entry, boolean checkForSideEffects) {
+	public static Address getThunkedAddr(Program program, Address entry,
+			boolean checkForSideEffects) {
 		// General algorithm:
 		//
 		// get function, if has no other calls, and no other flow
@@ -566,8 +567,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 				}
 
 				// record any used registers, checking for use of an unexpected unset register
-				if (!addRegisterUsage(program, setAtStartRegisters, setRegisters, usedRegisters, pcodeOp,
-					allow8bitNonUse)) {
+				if (checkForSideEffects && !addRegisterUsage(program, setAtStartRegisters,
+					setRegisters, usedRegisters, pcodeOp, allow8bitNonUse)) {
 					return null;
 				}
 			}
@@ -586,8 +587,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			}
 
 			// reached a flow, end of the line, gotta see what we have
-			return getFlowingAddrFromFinalState(program, instr, flowType,
-					checkForSideEffects, setRegisters, usedRegisters);
+			return getFlowingAddrFromFinalState(program, instr, flowType, checkForSideEffects,
+				setRegisters, usedRegisters);
 		}
 
 		return null;
@@ -664,8 +665,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	}
 
 	private static Address getFlowingAddrFromFinalState(Program program, Instruction instr,
-			FlowType flowType, boolean checkForSideEffects,
-			HashSet<Varnode> setRegisters, HashSet<Varnode> usedRegisters) {
+			FlowType flowType, boolean checkForSideEffects, HashSet<Varnode> setRegisters,
+			HashSet<Varnode> usedRegisters) {
 
 		// conditional jumps can't be thunks.
 		// any other flow, not good
@@ -736,8 +737,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	 *         false if input register found that was not initialized
 	 */
 	private static boolean addRegisterUsage(Program program, HashSet<Varnode> setAtStartRegisters,
-			 HashSet<Varnode> setRegisters, HashSet<Varnode> usedRegisters,
-			 PcodeOp pcode, boolean allow8bitNonUse) {
+			HashSet<Varnode> setRegisters, HashSet<Varnode> usedRegisters, PcodeOp pcode,
+			boolean allow8bitNonUse) {
 		int opcode = pcode.getOpcode();
 		Varnode output = pcode.getOutput();
 

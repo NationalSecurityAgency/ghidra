@@ -17,6 +17,7 @@ package ghidra.app.plugin.exceptionhandlers.gcc.structures.ehFrame;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.data.CreateArrayCmd;
+import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
 import ghidra.app.plugin.exceptionhandlers.gcc.datatype.UnsignedLeb128DataType;
@@ -29,6 +30,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -265,8 +267,11 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		DataType encodedDt = cie.getFDEDecoder().getDataType(program);
 
 		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
-		program.getReferenceManager().addMemoryReference(addr, pcBeginAddr, RefType.DATA,
-			SourceType.ANALYSIS, 0);
+		if (pcBeginAddr.getOffset() != 0x0) {
+			pcBeginAddr = pcBeginAddr.add(program.getImageBase().getOffset());
+			program.getReferenceManager().addMemoryReference(addr, pcBeginAddr, RefType.DATA,
+				SourceType.ANALYSIS, 0);
+		}
 
 		curSize += encodedLen;
 		return addr.add(encodedLen);
@@ -385,9 +390,15 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		CreateArrayCmd arrayCmd = null;
 
 		// Create initial instructions array with remaining bytes.
-		int instructionLength = intLength - curSize;
-		arrayCmd = new CreateArrayCmd(addr, instructionLength, new ByteDataType(), BYTE_LEN);
-		arrayCmd.applyTo(program);
+		int instructionLength = intLength - curSize;		
+		ArrayDataType adt = new ArrayDataType(ByteDataType.dataType, instructionLength, BYTE_LEN);
+		try {
+			program.getListing().createData(addr, adt, adt.getLength());
+		}
+		catch (CodeUnitInsertionException e) {
+			CreateDataCmd dataCmd = new CreateDataCmd(addr, adt);
+			dataCmd.applyTo(program);
+		}
 
 		SetCommentCmd.createComment(program, addr, "(FDE) Call Frame Instructions",
 			CodeUnit.EOL_COMMENT);
