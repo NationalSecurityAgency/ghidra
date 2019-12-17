@@ -543,6 +543,7 @@ int4 RuleShiftBitops::applyOp(PcodeOp *op,Funcdata &data)
   if (!constvn->isConstant()) return 0;	// Must be a constant shift
   Varnode *vn = op->getIn(0);
   if (!vn->isWritten()) return 0;
+  if (vn->getSize() > sizeof(uintb)) return 0;	// FIXME: Can't exceed uintb precision
   int4 sa;
   bool leftshift;
 
@@ -3216,7 +3217,7 @@ int4 RuleSignShift::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
-/// \class RuleSignShift
+/// \class RuleTestSign
 /// \brief Convert sign-bit test to signed comparison:  `(V s>> 0x1f) != 0   =>  V s< 0`
 void RuleTestSign::getOpList(vector<uint4> &oplist) const
 
@@ -4972,6 +4973,7 @@ int4 RuleEmbed::applyOp(PcodeOp *op,Funcdata &data)
   PcodeOp *subop;
   int4 i;
 
+  if (op->getOut()->getSize() > sizeof(uintb)) return 0;	// FIXME: Can't exceed uintb precision
   for(i=0;i<2;++i) {
     subout = op->getIn(i);
     if (!subout->isWritten()) continue;
@@ -5001,8 +5003,6 @@ int4 RuleEmbed::applyOp(PcodeOp *op,Funcdata &data)
       }
     }
 
-    // Be careful of precision limit when constructing mask
-    if (subout->getSize() + c > sizeof(uintb)) continue;
     uintb mask = calc_mask(subout->getSize());
     mask <<= 8*c;
 
@@ -7334,7 +7334,7 @@ int4 RuleSplitFlow::applyOp(PcodeOp *op,Funcdata &data)
     return 0;
   SplitFlow splitFlow(&data,vn,loSize);
   if (!splitFlow.doTrace()) return 0;
-  splitFlow.doReplacement();
+  splitFlow.apply();
   return 1;
 }
 
@@ -7699,13 +7699,13 @@ int4 RuleSubfloatConvert::applyOp(PcodeOp *op,Funcdata &data)
   if (outsize > insize) {
     SubfloatFlow subflow(&data,outvn,insize);
     if (!subflow.doTrace()) return 0;
-    subflow.doReplacement();
+    subflow.apply();
     return 1;
   }
   else {
     SubfloatFlow subflow(&data,invn,outsize);
     if (!subflow.doTrace()) return 0;
-    subflow.doReplacement();
+    subflow.apply();
     return 1;
   }
   return 0;

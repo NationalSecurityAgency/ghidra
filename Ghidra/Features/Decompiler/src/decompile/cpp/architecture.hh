@@ -30,6 +30,7 @@
 #include "comment.hh"
 #include "userop.hh"
 #include "options.hh"
+#include "transform.hh"
 #include "prefersplit.hh"
 
 #ifdef CPUI_STATISTICS
@@ -151,6 +152,7 @@ public:
   vector<TypeOp *> inst;	///< Registered p-code instructions
   UserOpManage userops;		///< Specifically registered user-defined p-code ops
   vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
+  vector<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
   ActionDatabase allacts;	///< Actions that can be applied in this architecture
   bool loadersymbols_parsed;	///< True if loader symbols have been read
 #ifdef CPUI_STATISTICS
@@ -165,6 +167,8 @@ public:
   bool hasModel(const string &nm) const;		///< Does this Architecture have a specific PrototypeModel
   bool highPtrPossible(const Address &loc,int4 size) const; ///< Are pointers possible to the given location?
   AddrSpace *getSpaceBySpacebase(const Address &loc,int4 size) const; ///< Get space associated with a \e spacebase register
+  const LanedRegister *getLanedRegister(const Address &loc,int4 size) const;	///< Get LanedRegister associated with storage
+  int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
   void setDefaultModel(const string &nm);		///< Set the default PrototypeModel
   void clearAnalysis(Funcdata *fd);			///< Clear analysis specific to a function
   void readLoaderSymbols(void);		 		///< Read any symbols from loader into database
@@ -255,11 +259,12 @@ protected:
   void parseProtoEval(const Element *el);		///< Apply prototype evaluation configuration
   void parseDefaultProto(const Element *el);		///< Apply default prototype model configuration
   void parseGlobal(const Element *el);			///< Apply global space configuration
-  void addOtherSpace(void);                         ////add OTHER space and all of its overlays to the symboltab
+  void addOtherSpace(void);                         	///< Add OTHER space and all of its overlays to the symboltab
   void parseReadOnly(const Element *el);		///< Apply read-only region configuration
   void parseVolatile(const Element *el);		///< Apply volatile region configuration
   void parseReturnAddress(const Element *el);		///< Apply return address configuration
   void parseIncidentalCopy(const Element *el);		///< Apply incidental copy configuration
+  void parseLaneSizes(const Element *el);		///< Apply lane size configuration
   void parseStackPointer(const Element *el);		///< Apply stack pointer configuration
   void parseDeadcodeDelay(const Element *el);		///< Apply dead-code delay configuration
   void parseFuncPtrAlign(const Element *el);		///< Apply function pointer alignment configuration

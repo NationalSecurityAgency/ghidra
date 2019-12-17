@@ -56,7 +56,8 @@ class Funcdata {
     restart_pending = 0x200,	///< Analysis must be restarted (because of new override info)
     unimplemented_present = 0x400,	///< Set if function contains unimplemented instructions
     baddata_present = 0x800,	///< Set if function flowed into bad data
-    double_precis_on = 0x1000	///< Set if we are performing double precision recovery
+    double_precis_on = 0x1000,	///< Set if we are performing double precision recovery
+    big_varnodes_generated = 0x2000	///< Set when search for laned registers is complete
   };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
@@ -80,6 +81,7 @@ class Funcdata {
   Merge covermerge;		///< Variable range intersection algorithms
   ParamActive *activeoutput;	///< Data for assessing which parameters are passed to \b this function
   Override localoverride;	///< Overrides of data-flow, prototypes, etc. that are local to \b this function
+  map<VarnodeData,const LanedRegister *> lanedMap;	///< Current storage locations which may be laned registers
 
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
@@ -130,6 +132,8 @@ public:
   bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Has data-type recovery processes started
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
+  bool isLanedRegComplete(void) const { return ((flags&big_varnodes_generated)!=0); }	///< Have potential laned registers been generated
+  void setLanedRegGenerated(void) { flags |= big_varnodes_generated; }	///< Mark that laned registers have been collected
 
   /// \brief Toggle whether \b this is being used for jump-table recovery
   ///
@@ -346,13 +350,18 @@ public:
   /// \brief End of (input or free) Varnodes at a given storage address
   VarnodeDefSet::const_iterator endDef(uint4 fl,const Address &addr) const { return vbank.endDef(fl,addr); }
 
+  void markLanedVarnode(Varnode *vn,const LanedRegister *lanedReg);	///< Mark Varnode as potential laned register
+  map<VarnodeData,const LanedRegister *>::const_iterator beginLaneAccess(void) const { return lanedMap.begin(); }	///< Beginning iterator over laned accesses
+  map<VarnodeData,const LanedRegister *>::const_iterator endLaneAccess(void) const { return lanedMap.end(); }	///< Ending iterator over laned accesses
+  void clearLanedAccessMap(void) { lanedMap.clear(); }	///< Clear records from the laned access list
+
   HighVariable *findHigh(const string &name) const;	///< Find a high-level variable by name
   void mapGlobals(void);			///< Make sure there is a Symbol entry for all global Varnodes
   bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,const ParamTrial &trial) const;
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial) const;
   bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial) const;
   bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
-  void splitVarnode(Varnode *vn,int4 lowsize,Varnode *&vnlo,Varnode *& vnhi);
+  void transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image
   bool replaceVolatile(Varnode *vn);		///< Replace accesses of the given Varnode with \e volatile operations
   void markIndirectOnly(void);			///< Mark \e illegal \e input Varnodes used only in INDIRECTs
@@ -385,9 +394,8 @@ public:
   PcodeOp *cloneOp(const PcodeOp *op,const SeqNum &seq);	/// Clone a PcodeOp into \b this function
   PcodeOp *canonicalReturnOp(void) const;			/// Find a representative CPUI_RETURN op for \b this function
   PcodeOp *newIndirectOp(PcodeOp *indeffect,const Address &addr,int4 size,uint4 extraFlags);
-  void setIndirectCreation(PcodeOp *op,PcodeOp *indeffect,Varnode *outvn,bool possibleout);
   PcodeOp *newIndirectCreation(PcodeOp *indeffect,const Address &addr,int4 size,bool possibleout);
-  void truncateIndirect(PcodeOp *indop);			///< Convert CPUI_INDIRECT into an \e indirect \e creation
+  void markIndirectCreation(PcodeOp *indop,bool possibleOutput);	///< Convert CPUI_INDIRECT into an \e indirect \e creation
   PcodeOp *findOp(const SeqNum &sq) { return obank.findOp(sq); }	///< Find PcodeOp with given sequence number
   void opInsertBefore(PcodeOp *op,PcodeOp *follow);		///< Insert given PcodeOp before a specific op
   void opInsertAfter(PcodeOp *op,PcodeOp *prev);		///< Insert given PcodeOp after a specific op

@@ -286,6 +286,21 @@ void Funcdata::destroyVarnode(Varnode *vn)
   vbank.destroy(vn);
 }
 
+/// Record the given Varnode as a potential laned register access.
+/// The address and size of the Varnode is recorded, anticipating that new
+/// Varnodes at the same storage location may be created
+/// \param vn is the given Varnode to mark
+/// \param lanedReg is the laned register record to associate with the Varnode
+void Funcdata::markLanedVarnode(Varnode *vn,const LanedRegister *lanedReg)
+
+{
+  VarnodeData storage;
+  storage.space = vn->getSpace();
+  storage.offset = vn->getOffset();
+  storage.size = vn->getSize();
+  lanedMap[storage] = lanedReg;
+}
+
 /// Look up the Symbol visible in \b this function's Scope and return the HighVariable
 /// associated with it.  If the Symbol doesn't exist or there is no Varnode holding at least
 /// part of the value of the Symbol, NULL is returned.
@@ -479,34 +494,22 @@ void Funcdata::setHighLevel(void)
     assignHigh(*iter);
 }
 
-/// \brief Create two new Varnodes which split the given Varnode
+/// \brief Copy properties from an existing Varnode to a new Varnode
 ///
-/// Attributes are copied from the original into the split pieces if appropriate
-/// \param vn is the given Varnode
-/// \param lowsize is the desired size in bytes of the least significant portion
-/// \param vnlo will hold the least significant portion
-/// \param vnhi will hold the most significant portion
-void Funcdata::splitVarnode(Varnode *vn,int4 lowsize,Varnode *& vnlo,Varnode *& vnhi)
+/// The new Varnode is assumed to overlap the storage of the existing Varnode.
+/// Properties like boolean flags and \e consume bits are copied as appropriate.
+/// \param vn is the existing Varnode
+/// \param newVn is the new Varnode that has its properties set
+/// \param lsbOffset is the significance offset of the new Varnode within the exising
+void Funcdata::transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset)
 
 {
-  int4 highsize = vn->getSize() - lowsize;
-  Address addrhi = vn->getAddr();
-  Address addrlo = addrhi;
-  uintb consumehi = vn->getConsume() >> 8*lowsize;
-  uintb consumelo = vn->getConsume() & calc_mask(lowsize);
-  if (vn->getSpace()->isBigEndian())
-    addrlo = addrhi + highsize;
-  else
-    addrhi = addrhi + lowsize;
+  uintb newConsume = (vn->getConsume() >> 8*lsbOffset) & calc_mask(newVn->getSize());
 
-  uint4 vnflags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce|Varnode::auto_live);
-  vnhi = newVarnode(highsize,addrhi);
-  vnlo = newVarnode(lowsize,addrlo);
+  uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce|Varnode::auto_live);
 
-  vnhi->setFlags(vnflags);	// Preserve addrforce setting
-  vnlo->setFlags(vnflags);
-  vnhi->setConsume(consumehi);
-  vnlo->setConsume(consumelo);
+  newVn->setFlags(vnFlags);	// Preserve addrforce setting
+  newVn->setConsume(newConsume);
 }
 
 /// Treat the given Varnode as read-only, look up its value in LoadImage
@@ -534,6 +537,9 @@ bool Funcdata::fillinReadOnly(Varnode *vn)
     }
     return false;		// No change was made
   }
+
+  if (vn->getSize() > sizeof(uintb))
+    return false;		// Constant will exceed precision
 
   uintb res;
   uint1 bytes[32];

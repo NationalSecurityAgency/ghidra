@@ -295,6 +295,7 @@ model {
 		                include "rangeutil.cc"
 		                include "ruleaction.cc"
 		                include "subflow.cc"
+		                include "transform.cc"
 		                include "blockaction.cc"
 		                include "merge.cc"
 		                include "double.cc"
