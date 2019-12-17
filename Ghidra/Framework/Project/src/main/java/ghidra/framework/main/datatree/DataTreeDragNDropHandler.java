@@ -147,22 +147,16 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 		}
 		else if (flavor == localDomainFileFlavor) {
 			// filter for file nodes and convert each node to its corresponding domainFile
-			//@formatter:off
 			return transferNodes.stream()
-				.filter(DomainFileNode.class::isInstance)
-				.map(node -> ((DomainFileNode) node).getDomainFile())
-				.collect(Collectors.toList())
-				;
-			//@formatter:on
+					.filter(DomainFileNode.class::isInstance)
+					.map(node -> ((DomainFileNode) node).getDomainFile())
+					.collect(Collectors.toList());
 		}
 		else if (flavor == DataFlavor.stringFlavor) {
 			// allow users to copy the names of nodes
-			//@formatter:off
 			return transferNodes.stream()
-				.map(node -> node.getName())
-				.collect(Collectors.joining("\n"))
-				;
-			//@formatter:on
+					.map(node -> node.getName())
+					.collect(Collectors.joining("\n"));
 		}
 		throw new AssertException("Called with a flavor that we didn't say we supported");
 	}
@@ -172,12 +166,9 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 		List<GTreeNode> folderNodes = getDomainFolderNodes(allNodes);
 
 		// if a file has a parent in the list, then it is not needed as a separate entry
-		//@formatter:off
 		return allNodes.stream()
-			.filter(node -> !isChildOfFolders(folderNodes, node))
-			.collect(Collectors.toList())
-			;
-		//@formatter:on
+				.filter(node -> !isChildOfFolders(folderNodes, node))
+				.collect(Collectors.toList());
 	}
 
 	private List<GTreeNode> getDomainFolderNodes(List<GTreeNode> nodeList) {
