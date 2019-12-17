@@ -181,7 +181,7 @@ public class ConcurrentQBuilder<I, R> {
 	/**
 	 * @see ConcurrentQ#setMonitor(TaskMonitor, boolean)
 	 * <p>
-	 * The default value is <tt>true</tt>. 
+	 * The default value is <code>true</code>. 
 	 */
 	public ConcurrentQBuilder<I, R> setCancelClearsAllJobs(boolean clearAllJobs) {
 		this.cancelClearsAllJobs = clearAllJobs;

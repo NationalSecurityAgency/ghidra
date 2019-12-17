@@ -29,7 +29,7 @@ import ghidra.graph.GEdge;
  * separately.  A hovered vertex is one that the user moves the mouse over; a focused vertex is
  * one that is selected.
  * 
- * <A NAME="articulations"></A>
+ * <a id="articulations"></A>
  * <P><U>Articulations</U> - The start and end points are always part of the
  * edge.  Any additional points on the edge are considered articulation points.  Thus, an edge
  * without articulations will be drawn as a straight line.  An edge with articulations will

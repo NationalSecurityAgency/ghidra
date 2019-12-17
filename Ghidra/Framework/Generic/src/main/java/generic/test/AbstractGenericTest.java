@@ -502,7 +502,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Sets the instance field by the given name on the given object instance.
 	 * <p>
-	 * Note: if the field is static, then the <tt>ownerInstance</tt> field can
+	 * Note: if the field is static, then the <code>ownerInstance</code> field can
 	 * be the class of the object that contains the variable.
 	 *
 	 * @param fieldName The name of the field to retrieve.
@@ -524,7 +524,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * Gets the instance field by the given name on the given object instance.
 	 * The value is a primitive wrapper if it is a primitive type.
 	 * <p>
-	 * Note: if the field is static, then the <tt>ownerInstance</tt> field can
+	 * Note: if the field is static, then the <code>ownerInstance</code> field can
 	 * be the class of the object that contains the variable.
 	 *
 	 * @param fieldName The name of the field to retrieve.
@@ -570,9 +570,9 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Uses reflection to execute the method denoted by the given method name.
 	 * If any value is returned from the method execution, then it will be
-	 * returned from this method. Otherwise, <tt>null</tt> is returned.
+	 * returned from this method. Otherwise, <code>null</code> is returned.
 	 * <p>
-	 * Note: if the method is static, then the <tt>ownerInstance</tt> field can
+	 * Note: if the method is static, then the <code>ownerInstance</code> field can
 	 * be the class of the object that contains the method.
 	 *
 	 * @param methodName The name of the method to execute.
@@ -1775,7 +1775,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Creates a file path with a filename that is under the system temp
 	 * directory. The path returned will not point to an existing file. The
-	 * suffix of the file will be <tt>.tmp</tt>.
+	 * suffix of the file will be <code>.tmp</code>.
 	 * 
 	 * @param name the filename
 	 * @return a new file path
@@ -1839,7 +1839,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * prefix and the given suffix. The final filename will also include the
 	 * current test name, as well as any data added by
 	 * {@link File#createTempFile(String, String)}. The file suffix will be
-	 * <tt>.tmp</tt>
+	 * <code>.tmp</code>
 	 * <p>
 	 * The file will be marked to delete on JVM exit. This will not work if the
 	 * JVM is taken down the hard way, as when pressing the stop button in

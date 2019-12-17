@@ -258,8 +258,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Waits for a window with the given name.  If <tt>parentWindow</tt> is not null, then it
-	 * will be used to find subordinate windows.  If <tt>parentWindow</tt> is null, then all
+	 * Waits for a window with the given name.  If <code>parentWindow</code> is not null, then it
+	 * will be used to find subordinate windows.  If <code>parentWindow</code> is null, then all
 	 * existing frames will be searched.
 	 *
 	 * @param parentWindow The parent of the window for which to search, or null to search all
@@ -364,7 +364,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * Check for and display message component text associated with
 	 * ErrLogDialog and OptionDialog windows.
 	 * @param w any window
-	 * @return the message string if one can be found; <tt>null</tt> otherwise
+	 * @return the message string if one can be found; <code>null</code> otherwise
 	 */
 	public static String checkMessageDisplay(Window w) {
 		Component c = findComponentByName(w, "MESSAGE-COMPONENT");
@@ -634,7 +634,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * Waits for the first window of the given class.
 	 *
 	 * @param ghidraClass The class of the dialog the user desires
-	 * @return The first occurrence of a dialog that extends the given <tt>ghirdraClass</tt>
+	 * @return The first occurrence of a dialog that extends the given <code>ghirdraClass</code>
 	 * @see #waitForDialogComponent(Window, Class, int)
 	 */
 	public static <T extends DialogComponentProvider> T waitForDialogComponent(
@@ -644,13 +644,13 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Waits for the first window of the given class.  This method assumes that the desired dialog
-	 * is parented by <tt>parentWindow</tt>.
+	 * is parented by <code>parentWindow</code>.
 	 *
 	 * @param parentWindow The parent of the desired dialog; may be null
 	 * @param clazz The class of the dialog the user desires
 	 * @param timeoutMS The max amount of time in milliseconds to wait for the requested dialog
 	 *        to appear.
-	 * @return The first occurrence of a dialog that extends the given <tt>ghirdraClass</tt>
+	 * @return The first occurrence of a dialog that extends the given <code>ghirdraClass</code>
 	 * @deprecated Instead call one of the methods that does not take a timeout
 	 *             (we are standardizing timeouts).  The timeouts passed to this method will
 	 *             be ignored in favor of the standard value.
@@ -748,7 +748,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Searches for the first occurrence of a {@link ComponentProvider} that is an instance of
-	 * the given <tt>providerClass</tt>.
+	 * the given <code>providerClass</code>.
 	 *
 	 * @param clazz The class of the ComponentProvider to locate
 	 * @return The component provider, or null if one cannot be found
@@ -778,10 +778,10 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Searches for the first occurrence of a {@link ComponentProvider} that is an instance of
-	 * the given <tt>providerClass</tt>.  This method will repeat the search every
+	 * the given <code>providerClass</code>.  This method will repeat the search every
 	 * {@link #DEFAULT_WAIT_DELAY} milliseconds
 	 * until the provider is found, or the maximum number of searches has been reached, where
-	 * <tt>maximum number of searches = MaxTimeMS / {@link #DEFAULT_WAIT_DELAY} </tt>
+	 * <code>maximum number of searches = MaxTimeMS / {@link #DEFAULT_WAIT_DELAY} </code>
 	 *
 	 * @param clazz The class of the ComponentProvider to locate
 	 * @return The component provider, or null if one cannot be found
@@ -867,9 +867,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * <p>
 	 * Note: this method assumes the given node is not a RootNode, but a child thereof
 	 *
-	 * @param node The <tt>Node</tt> instance that contains the desired <tt>ComponentProvider</tt>
+	 * @param node The <code>Node</code> instance that contains the desired <code>ComponentProvider</code>
 	 *        or other nodes.
-	 * @param providerClass The <tt>ComponentProvider</tt> class for which to search.
+	 * @param providerClass The <code>ComponentProvider</code> class for which to search.
 	 */
 	private static ComponentProvider getComponentProviderFromNode(Object node,
 			Class<? extends ComponentProvider> providerClass) {
@@ -906,10 +906,10 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Searches for the first occurrence of a {@link ComponentProvider} that is an instance of
-	 * the given <tt>providerClass</tt>.  This method will repeat the search every
+	 * the given <code>providerClass</code>.  This method will repeat the search every
 	 * {@link #DEFAULT_WAIT_DELAY} milliseconds
 	 * until the provider is found, or the maximum number of searches has been reached, where
-	 * <tt>maximum number of searches = MaxTimeMS / {@link #DEFAULT_WAIT_DELAY} </tt>
+	 * <code>maximum number of searches = MaxTimeMS / {@link #DEFAULT_WAIT_DELAY} </code>
 	 *
 	 * @param parentWindow The window that will become the parent window of the provider (this is
 	 *        typically the tool's frame).
@@ -1012,7 +1012,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Finds the toggle button with the given name inside of the given container and then
-	 * ensures that the selected state of the button matches <tt>selected</tt>.
+	 * ensures that the selected state of the button matches <code>selected</code>.
 	 * <p>
 	 * Note: this works for any instanceof {@link JToggleButton}, such as:
 	 * <ul>
@@ -1049,7 +1049,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Ensures that the selected state of the button matches <tt>selected</tt>.
+	 * Ensures that the selected state of the button matches <code>selected</code>.
 	 * <p>
 	 * Note: this works for most toggle button implementations which are derived from
 	 * AbstractButton and relay on {@link AbstractButton#isSelected()} and

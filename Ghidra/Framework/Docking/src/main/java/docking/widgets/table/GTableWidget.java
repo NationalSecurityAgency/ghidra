@@ -28,7 +28,7 @@ import javax.swing.table.TableColumnModel;
 
 /**
  * A GUI that provides a filterable table.  You are required to provide the method names
- * of <TT>T</TT> that should be used to create columns in the table.
+ * of <code>T</code> that should be used to create columns in the table.
  *
  * @param <T> the row object type that will be in the table
  */

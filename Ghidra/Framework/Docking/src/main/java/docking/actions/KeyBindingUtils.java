@@ -573,7 +573,7 @@ public class KeyBindingUtils {
 
 	/**
 	 * Updates the given data with system-independent versions of key modifiers.  For example, 
-	 * the <tt>control</tt> key will be converted to the <tt>command</tt> key on the Mac.
+	 * the <code>control</code> key will be converted to the <code>command</code> key on the Mac.
 	 * 
 	 * @param keyStroke the keystroke to validate
 	 * @return the potentially changed keystroke

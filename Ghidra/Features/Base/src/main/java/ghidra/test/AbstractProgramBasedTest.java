@@ -37,7 +37,7 @@ import utility.function.ExceptionalFunction;
  * This class will create for you a tool, a {@link TestEnv} and will open the program 
  * specified by {@link #getProgramName()}.
  * 
- * <P>To use this class, you must call {@link #initialize()} from your test or <tt>setUp</tt> 
+ * <P>To use this class, you must call {@link #initialize()} from your test or <code>setUp</code> 
  * method.
  * 
  * <P>Note: if you are loading a pre-existing program, then simply override 

@@ -236,7 +236,7 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Returns the {@link SelectionManager} in use by this GTable.  <tt>null</tt> is returned
+	 * Returns the {@link SelectionManager} in use by this GTable.  <code>null</code> is returned
 	 * if the user has installed their own {@link ListSelectionModel}.
 	 * 
 	 * @return the selection manager
@@ -880,7 +880,7 @@ public class GTable extends JTable {
 	 * <ul>
 	 *     <li>Wrap tooltip text content with an &lt;html&gt; tag so that it is possible for
 	 *         the content to be formatted in a manner that is easier for the user read, and</li>
-	 *     <li>Enable any <tt>default</tt> {@link GTableCellRenderer} instances to render
+	 *     <li>Enable any <code>default</code> {@link GTableCellRenderer} instances to render
 	 *         HTML content, which they do not do by default.</li>
 	 * </ul>
 	 * <p>

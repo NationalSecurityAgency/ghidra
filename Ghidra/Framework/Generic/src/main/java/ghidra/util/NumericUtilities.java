@@ -497,7 +497,7 @@ public final class NumericUtilities {
 	/**
 	 * Render <code>number</code> in different bases using the default signedness mode.
 	 * <p>This invokes {@linkplain #formatNumber(long, int, SignednessFormatMode)} with a
-	 * <tt>mode</tt> parameter of <tt>{@linkplain SignednessFormatMode#DEFAULT}</tt>.
+	 * <code>mode</code> parameter of <code>{@linkplain SignednessFormatMode#DEFAULT}</code>.
 	 *
 	 * @param number The number to represent
 	 * @param radix the base in which <code>number</code> is represented
@@ -511,29 +511,29 @@ public final class NumericUtilities {
 	/**
 	 * Provide renderings of <code>number</code> in different bases:
 	 * <ul>
-	 * <li> 0 - renders <code>number</code> as an escaped character sequence</li>
-	 * <li> 2 - renders <code>number</code> as a base-2 integer</li>
-	 * <li> 8 - renders <code>number</code> as a base-8 integer</li>
-	 * <li> 10 - renders <code>number</code> as a base-10 integer</li>
-	 * <li> 16 (default) - renders <code>number</code> base-16 integer</li>
+	 * <li> <code>0</code> - renders <code>number</code> as an escaped character sequence</li>
+	 * <li> <code>2</code> - renders <code>number</code> as a <code>base-2</code> integer</li>
+	 * <li> <code>8</code> - renders <code>number</code> as a <code>base-8</code> integer</li>
+	 * <li> <code>10</code> - renders <code>number</code> as a <code>base-10</code> integer</li>
+	 * <li> <code>16</code> (default) - renders <code>number</code> as a <code>base-16</code> integer</li>
 	 * </ul>
 	 * <table><caption></caption>
-	 * <tr><th>Number</th><th>Radix</th><th>DEFAULT Mode Alias</th><th><i>UNSIGNED</i> Mode Value</th><th><i>SIGNED</i> Mode Value</th></tr>
+	 * <tr><th>Number</th><th>Radix</th><th>DEFAULT Mode Alias</th><th style="text-align:center"><i>UNSIGNED</i> Mode Value</th><th><i>SIGNED</i> Mode Value</th></tr>
 	 * <tr><td>&nbsp;</td><td></td><td><i></i></td><td></td><td></td></tr>
-	 * <tr align=right><td>100</td><td>2</td><td><i>UNSIGNED</i></td><td>1100100b</td><td>1100100b</td></tr>
-	 * <tr align=right><td>100</td><td>8</td><td><i>UNSIGNED</i></td><td>144o</td><td>144o</td></tr>
-	 * <tr align=right><td>100</td><td>10</td><td><i>SIGNED</i></td><td>100</td><td>100</td></tr>
-	 * <tr align=right><td>100</td><td>16</td><td><i>UNSIGNED</i></td><td>64h</td><td>64h</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>100</td><td>2</td><td><i>UNSIGNED</i></td><td>1100100b</td><td>1100100b</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>100</td><td>8</td><td><i>UNSIGNED</i></td><td>144o</td><td>144o</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>100</td><td>10</td><td><i>SIGNED</i></td><td>100</td><td>100</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>100</td><td>16</td><td><i>UNSIGNED</i></td><td>64h</td><td>64h</td></tr>
 	 * <tr><td>&nbsp;</td><td></td><td><i></i></td><td></td><td></td></tr>
-	 * <tr align=right><td>-1</td><td>2</td><td><i>UNSIGNED</i></td><td>1111111111111111111111111111111111111111111111111111111111111111b</td><td>-1b</td></tr>
-	 * <tr align=right><td>-1</td><td>8</td><td><i>UNSIGNED</i></td><td>1777777777777777777777o</td><td>-1o</td></tr>
-	 * <tr align=right><td>-1</td><td>10</td><td><i>SIGNED</i></td><td>18446744073709551615</td><td>-1</td></tr>
-	 * <tr align=right><td>-1</td><td>16</td><td><i>UNSIGNED</i></td><td>ffffffffffffffffh</td><td>-1h</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>-1</td><td>2</td><td><i>UNSIGNED</i></td><td>1111111111111111111111111111111111111111111111111111111111111111b</td><td>-1b</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>-1</td><td>8</td><td><i>UNSIGNED</i></td><td>1777777777777777777777o</td><td>-1o</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>-1</td><td>10</td><td><i>SIGNED</i></td><td>18446744073709551615</td><td>-1</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>-1</td><td>16</td><td><i>UNSIGNED</i></td><td>ffffffffffffffffh</td><td>-1h</td></tr>
 	 *<tr><td>&nbsp;</td><td></td><td><i></i></td><td></td><td></td></tr>
-	 * <tr align=right><td>-100</td><td>2</td><td><i>UNSIGNED</i></td><td>1111111111111111111111111111111111111111111111111111111110011100b</td><td>-1100100b</td></tr>
-	 * <tr align=right><td>-100</td><td>8</td><td><i>UNSIGNED</i></td><td>1777777777777777777634o</td><td>-144o</td></tr>
-	 * <tr align=right><td>-100</td><td>10</td><td><i>SIGNED</i></td><td>18446744073709551516</td><td>-100</td></tr>
-	 * <tr align=right><td>-100</td><td>16</td><td><i>UNSIGNED</i></td><td>ffffffffffffff9ch</td><td>-64h</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>-100</td><td>2</td><td><i>UNSIGNED</i></td><td>1111111111111111111111111111111111111111111111111111111110011100b</td><td>-1100100b</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>-100</td><td>8</td><td><i>UNSIGNED</i></td><td>1777777777777777777634o</td><td>-144o</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>-100</td><td>10</td><td><i>SIGNED</i></td><td>18446744073709551516</td><td>-100</td></tr>
+	 * <tr style="text-align:right;font-family: monospace"><td>-100</td><td>16</td><td><i>UNSIGNED</i></td><td>ffffffffffffff9ch</td><td>-64h</td></tr>
 	 * </table>
 	 * @param number The number to represent
 	 * @param radix The base in which <code>number</code> is represented

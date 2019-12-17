@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +25,7 @@ import java.util.ArrayList;
 /**
  * Class to handle notifications of drag and drop operations that occur
  * on the DropTarget object. The DropTarget is the component that accepts
- * drops during a drag and drop operation. The <tt>drop</tt>
+ * drops during a drag and drop operation. The <code>drop</code>
  * method actually transfers the data.
  */
 public class DropTgtAdapter implements DropTargetListener {

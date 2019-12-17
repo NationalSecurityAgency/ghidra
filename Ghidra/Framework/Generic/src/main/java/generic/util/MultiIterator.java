@@ -20,7 +20,7 @@ import java.util.*;
 import ghidra.util.exception.AssertException;
 
 /**
- * An iterator that is comprised of one or more {@link PeekableIterator}s.  The type <tt>T</tt> of the 
+ * An iterator that is comprised of one or more {@link PeekableIterator}s.  The type <code>T</code> of the 
  * the iterators must either implement {@link Comparable} directly or you must provide a 
  * {@link Comparator} for comparing the types.  Further, it is assumed that the iterators return
  * values in sorted order.  If the sorted order is reversed, then that must be indicated in 

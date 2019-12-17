@@ -600,7 +600,7 @@ public class FlatProgramAPI {
 	 * starting from the address. If the start address is null, then the find will start
 	 * from the minimum address of the program.
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -629,7 +629,7 @@ public class FlatProgramAPI {
 	 * the given byte string, starting from the address. If the start address is null, then the
 	 * find will start from the minimum address of the program.
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -655,7 +655,7 @@ public class FlatProgramAPI {
 	 * the given byte string, starting from the address. If the start address is null, then the
 	 * find will start from the minimum address of the program.
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -699,7 +699,7 @@ public class FlatProgramAPI {
 	 *
 	 * Note: The ranges within the addressSet are NOT treated as a contiguous set when searching
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80
@@ -731,7 +731,7 @@ public class FlatProgramAPI {
 	 * treated as a contiguous set when searching.
 	 *
 	 * <p>
-	 * The <tt>byteString</tt> may contain regular expressions.  The following
+	 * The <code>byteString</code> may contain regular expressions.  The following
 	 * highlights some example search strings (note the use of double backslashes ("\\")):
 	 * <pre>
 	 *             "\\x80" - A basic search pattern for a byte value of 0x80

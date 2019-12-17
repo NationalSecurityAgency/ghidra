@@ -214,8 +214,8 @@ public class Scalar implements Comparable<Scalar> {
 	}
 
 	/**
-	 * <p>Adds the integer n to <tt>this</tt>.
-	 * Computes (<tt>this = this + n</tt>).
+	 * <p>Adds the integer n to <code>this</code>.
+	 * Computes (<code>this = this + n</code>).
 	 * @param n the value to add to this scalars value to produce a new scalar.
 	 */
 	public Scalar add(long n) {
@@ -279,7 +279,7 @@ public class Scalar implements Comparable<Scalar> {
 	}
 
 	/**
-	 * <p>Sets <tt>this = this &lt;&lt; n</tt>.</p>
+	 * <p>Sets <code>this = this &lt;&lt; n</code>.</p>
 	 * @param n the number of bits to shift left.
 	 * @throws ArithmeticException if n &lt; 0.
 	 */
@@ -291,7 +291,7 @@ public class Scalar implements Comparable<Scalar> {
 	}
 
 	/**
-	 * <p>Sets <tt>this = this &gt;&gt; n</tt> using 0 as the fill bit.</p>
+	 * <p>Sets <code>this = this &gt;&gt; n</code> using 0 as the fill bit.</p>
 	 * @param n the number of bits to shift right.
 	 * @throws ArithmeticException if n &lt; 0.
 	 */
@@ -303,7 +303,7 @@ public class Scalar implements Comparable<Scalar> {
 	}
 
 	/**
-	 * <p>Sets <tt>this = this &gt;&gt; n</tt> replicating the sign bit.</p>
+	 * <p>Sets <code>this = this &gt;&gt; n</code> replicating the sign bit.</p>
 	 * @param n the number of bits to arithmetically shift.
 	 * @throws ArithmeticException if n &lt; 0.
 	 */
@@ -315,7 +315,7 @@ public class Scalar implements Comparable<Scalar> {
 	}
 
 	/**
-	 * <p>Sets <tt>this = this - n</tt>.</p>
+	 * <p>Sets <code>this = this - n</code>.</p>
 	 * @param n the value to subtract from this scalar to produce a new scalar.
 	 */
 	public Scalar subtract(long n) {

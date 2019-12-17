@@ -32,7 +32,7 @@ import ghidra.util.HelpLocation;
 import resources.Icons;
 
 /**
- * <a name="description"></a>
+ * <a id="description"></a>
  * An action used to trigger navigation callback on instances of {@link JTable}.  Users can 
  * toggle this action to control navigation that is based upon selection.
  * <p>

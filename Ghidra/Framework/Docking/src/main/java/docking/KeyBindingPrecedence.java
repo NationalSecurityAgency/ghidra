@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +18,7 @@ package docking;
 /**
  * An enum that holds the values for order of keybinding precedence, in order from 
  * highest priority to lowest.  For a more detailed description of how Ghidra processes
- * key events see <tt>ghidra.KeyBindingOverrideKeyDispatcher.dispatchKeyEvent(KeyEvent)</tt>
+ * key events see <code>ghidra.KeyBindingOverrideKeyDispatcher.dispatchKeyEvent(KeyEvent)</code>
  */
 public enum KeyBindingPrecedence {
     

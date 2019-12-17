@@ -62,7 +62,7 @@ import utility.function.Callback;
  * <u>Filter Reminder</u><br>
  * The filter text will flash as the table (by default) gains focus.  This is done to remind the
  * user that the data has been filtered.  To change the component that triggers the flashing use
- * {@link #setFocusComponent(Component)}, where the <tt>Component</tt> parameter is the
+ * {@link #setFocusComponent(Component)}, where the <code>Component</code> parameter is the
  * component that will trigger focus flashing when it gains focus.  To disable focus flashing,
  * pass in null to {@link #setFocusComponent(Component)}.
  * <p>
@@ -74,7 +74,7 @@ import utility.function.Callback;
  *
  * <b><u>Important Usage Notes</u></b>
  * <ul>
- *     <li><b><a name="translation"></a>You must translate row values retrieved from the table using
+ *     <li><b><a id="translation"></a>You must translate row values retrieved from the table using
  *     this panel.</b>
  *     <p>
  *     Since this class wraps the given table with a new model, you must use this class to
@@ -82,15 +82,15 @@ import utility.function.Callback;
  *     code snippet below will give the incorrect value:
  *     <pre>
  *         JTable table = ...
- *         <font color="red">int selectedRowNumber = table.getSelectedRow();</font>
+ *         <span style="color:red">int selectedRowNumber = table.getSelectedRow();</span>
  *     </pre>
  *     Instead, you must translate the returned value from above, as in the following snippet:
  *     <pre>
  *         JTable table = ...
- *         <font color="green">
+ *         <span style="color:green">
  *         int selectedRowNumber = table.getSelectedRow();
  *         int modelRowNumber = tableFilterPanel.getModelRow( selectedRowNumber );  // see {@link #getModelRow(int)}
- *         </font>
+ *         </span>
  *     </pre>
  *
  *     <li><b>This class may set a new model on the given table, which can affect how tables are sized.</b>
@@ -904,7 +904,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	 * multiple instances created in the same place will cause them all to share the same key and
 	 * thus to have the same filter settings when they are created initially.
 	 * <p>
-	 * As an example, consider a plugin that creates <tt>n</tt> providers.  If each provider uses
+	 * As an example, consider a plugin that creates <code>n</code> providers.  If each provider uses
 	 * a filter panel, then each provider will share the same filter settings when that provider
 	 * is created.  If this is not what you want, then you need to override this method to
 	 * generate a unique key for each provider.

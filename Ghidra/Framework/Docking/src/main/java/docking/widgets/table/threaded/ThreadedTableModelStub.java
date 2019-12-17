@@ -23,7 +23,7 @@ import ghidra.util.task.TaskMonitor;
  * A version of {@link ThreadedTableModel} for clients that do not need a DATA_SOURCE.  
  * <p>
  * <b>
- * Note: this class will change a <tt>null</tt> value for the {@link ServiceProvider} parameter
+ * Note: this class will change a <code>null</code> value for the {@link ServiceProvider} parameter
  * to a stubbed version.  If your model needs a real service provider, then you can pass a 
  * non-null value.
  * </b>

@@ -148,7 +148,7 @@ public class DockingUtils {
 
 	/**
 	 * Checks if the mouseEvent has the "control" key down.  On windows, this is actually
-	 * the <tt>control</tt> key.  On Mac, it is the <tt>command</tt> key.
+	 * the <code>control</code> key.  On Mac, it is the <code>command</code> key.
 	 * 
 	 * @param mouseEvent the event to check 
 	 * @return true if the control key is pressed
@@ -161,7 +161,7 @@ public class DockingUtils {
 
 	/**
 	 * Checks if the mouseEvent has the "control" key down.  On windows, this is actually
-	 * the <tt>control</tt> key.  On Mac, it is the <tt>command</tt> key.
+	 * the <code>control</code> key.  On Mac, it is the <code>command</code> key.
 	 * 
 	 * @param keyEvent the event to check 
 	 * @return true if the control key is pressed
@@ -307,16 +307,16 @@ public class DockingUtils {
 	 * <p>
 	 * <u>Notes</u>
 	 * Historically, to make a component transparent you would call 
-	 * {@link JComponent#setOpaque(boolean)} with a <tt>false</tt> value.  However, it turns out
-	 * that the definition and the implementation of this method are at odds.  <tt>setOpaque(false)</tt>
+	 * {@link JComponent#setOpaque(boolean)} with a <code>false</code> value.  However, it turns out
+	 * that the definition and the implementation of this method are at odds.  <code>setOpaque(false)</code>
 	 * is meant to signal that some part of the component is transparent, so the parent component
 	 * needs to be painted.  Most LaFs implemented this by not painting the background of the
 	 * component, but used the parent's color instead.  The Nimbus LaF actually honors the 
-	 * contract of <tt>setOpaque()</tt>, which has the effect of painting the components 
+	 * contract of <code>setOpaque()</code>, which has the effect of painting the components 
 	 * background by default.
 	 * <p>
 	 * This method allows components to achieve transparency when they used to 
-	 * rely on <tt>setOpaque(false)</tt>.
+	 * rely on <code>setOpaque(false)</code>.
 	 * 
 	 * @param c the component to be made transparent
 	 */

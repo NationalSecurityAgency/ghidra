@@ -270,7 +270,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	/**
 	 * A default sort method that uses the {@link Collections#sort(List, Comparator)} method for
 	 * sorting.  Implementors with reasonably sized data sets can rely on this method.  For data
-	 * sets that can become large, the <tt>ThreadedTableModel</tt> is the recommended base class, 
+	 * sets that can become large, the <code>ThreadedTableModel</code> is the recommended base class, 
 	 * as it handles loading/sorting/filtering in a threaded way.
 	 * 
 	 * @param data The data to be sorted
@@ -303,7 +303,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 	/**
 	 * Fires an event to let the listeners (like JTable) know that things have been changed. 
-	 * This method exists so that subclasses have a way to call the various <tt>tableChanged()</tt>
+	 * This method exists so that subclasses have a way to call the various <code>tableChanged()</code>
 	 * methods without triggering this class's overridden version.
 	 * @param dataChanged True signals that the actual data has changed; false signals that the
 	 *        data is the same, with exception that attributes of that data may be different.

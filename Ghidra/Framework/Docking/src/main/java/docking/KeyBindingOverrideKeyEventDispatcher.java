@@ -33,7 +33,7 @@ import ghidra.util.exception.AssertException;
  * processing.  See {@link #dispatchKeyEvent(KeyEvent)} for a more detailed explanation of how
  * Ghidra processes key events.
  * <p>
- * {@link #install()} must be called in order to install this <tt>Singleton</tt> into Java's 
+ * {@link #install()} must be called in order to install this <code>Singleton</code> into Java's 
  * key event processing system.
  */
 public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher {
@@ -98,9 +98,9 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 * There are some exceptions to this processing chain:
 	 * <ol>
 	 *      <li>We don't do any processing when the focused component is an instance of 
-	 *          <tt>JTextComponent</tt>.</li>
+	 *          <code>JTextComponent</code>.</li>
 	 *      <li>We don't do any processing if the active window is an instance of 
-	 *          <tt>DockingDialog</tt>.</li>
+	 *          <code>DockingDialog</code>.</li>
 	 * </ol>
 	 * 
 	 * @see java.awt.KeyEventDispatcher#dispatchKeyEvent(java.awt.event.KeyEvent)

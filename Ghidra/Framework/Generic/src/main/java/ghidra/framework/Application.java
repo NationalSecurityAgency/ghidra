@@ -579,7 +579,7 @@ public class Application {
 	 * <b>Note:  Be sure you understand that there may be multiple application root
 	 * directories in development mode.</b>  In general you should not be using this method for 
 	 * searching for files yourself, but instead using 
-	 * the various <tt>find*</tt> methods of this class.    
+	 * the various <code>find*</code> methods of this class.    
 	 * 
 	 * @return Returns the application root directory.
 	 * @see #getApplicationRootDirectories()

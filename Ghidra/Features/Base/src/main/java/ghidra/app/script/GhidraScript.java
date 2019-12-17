@@ -950,10 +950,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
-	 * A convenience method to print a formatted String using Java's <tt>printf</tt>
+	 * A convenience method to print a formatted String using Java's <code>printf</code>
 	 * feature, which is similar to that of the C programming language.
 	 * For a full description on Java's
-	 * <tt>printf</tt> usage, see {@link java.util.Formatter}.
+	 * <code>printf</code> usage, see {@link java.util.Formatter}.
 	 * <p>
 	 * For examples, see the included <code>FormatExampleScript</code>.
 	 * <p>
@@ -1535,8 +1535,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Sets this script's highlight state (both the local variable
-	 * <tt>currentHighlight</tt> and the
-	 * <tt>GhidraState</tt>'s currentHighlight) to the given address set.  Also sets the tool's highlight
+	 * <code>currentHighlight</code> and the
+	 * <code>GhidraState</code>'s currentHighlight) to the given address set.  Also sets the tool's highlight
 	 * if the tool exists. (Same as calling setCurrentHightlight(set);
 	 * @param set the set of addresses to include in the highlight.  May be null.
 	 */
@@ -1859,8 +1859,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	/**
 	 * Attempts to locate a value from script arguments
 	 *  or a script properties file using
-	 * the given <tt>keys</tt> as the lookup key for the latter.  The given <tt>parser</tt> will
-	 * be called to turn the String into a <tt>T</tt>.
+	 * the given <code>keys</code> as the lookup key for the latter.  The given <code>parser</code> will
+	 * be called to turn the String into a <code>T</code>.
 	 *
 	 * @param transformer the function to turn a String into a T
 	 * @param key the values used to create a key for lookup in the script properties file
@@ -1883,7 +1883,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @return null if no value was found in the aforementioned sources
 	 *
 	 * @throws IllegalArgumentException if the loaded String value cannot be parsed into a
-	 *                                  <tt>T</tt>.
+	 *                                  <code>T</code>.
 	 */
 	private <T> T loadAskValue(T defaultValue, StringTransformer<T> transformer, String key) {
 
@@ -1936,7 +1936,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	/**
 	 * A generic method to execute user prompting for a value.  This method handles:
 	 * <ol>
-	 * 	<li>Checking for a previously chosen value; using the optional <tt>defaultValue</tt> as a fallback</li>
+	 * 	<li>Checking for a previously chosen value; using the optional <code>defaultValue</code> as a fallback</li>
 	 * 	<li>Calling the provided function to execute the client-specific ask UI</li>
 	 * 	<li>Storing the chosen result after the dialog is closed</li>
 	 * </ol>

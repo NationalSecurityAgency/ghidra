@@ -73,7 +73,7 @@ public interface ColumnConstraintEditor<T> {
 
 	/**
 	 * If the editor contains and invalid value, this message should indicate
-	 * why the value is invalid. Only called if <tt>hasValidValue()</tt> returns false.
+	 * why the value is invalid. Only called if <code>hasValidValue()</code> returns false.
 	 * @return an error message, or an empty string if no error
 	 */
 	public String getErrorMessage();

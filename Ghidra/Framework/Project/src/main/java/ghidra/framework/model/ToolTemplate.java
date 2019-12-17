@@ -57,7 +57,7 @@ public interface ToolTemplate {
 
 	/**
 	 * Get the icon for this tool template.  This is equivalent to calling
-	 * <tt>getIconURL().getIcon()</tt>
+	 * <code>getIconURL().getIcon()</code>
 	 * @return the icon for this tool template.
 	 */
 	ImageIcon getIcon();

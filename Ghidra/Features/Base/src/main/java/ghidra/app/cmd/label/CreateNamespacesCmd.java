@@ -28,14 +28,14 @@ import ghidra.util.exception.InvalidInputException;
  * string.  Thus, when providing a namespace string, do not include the name
  * of anything other than namespaces, such as the name of a symbol.
  * <p>
- * <a name="examples"></a>
+ * <a id="examples"></a>
  * Example strings:
  * <ul>
  *     <li>global{@link Namespace#NAMESPACE_DELIMITER ::}child1{@link Namespace#NAMESPACE_DELIMITER ::}child2
  *     <li>child1
  * </ul>
  * <p>
- * <a name="assumptions"></a>
+ * <a id="assumptions"></a>
  * To view the assumptions for creating namespaces from a path string, see
  * the {@link NamespaceUtils} class.
  *
@@ -79,7 +79,7 @@ public class CreateNamespacesCmd implements Command {
 	 * @param parentNamespace The namespace to be used as the starting parent
 	 *        of the namespaces that will be created.
 	 * @param source the source of the namespace
-	 * @throws NullPointerException if <tt>namespaceString</tt> is <tt>null</tt>.
+	 * @throws NullPointerException if <code>namespaceString</code> is <code>null</code>.
 	 * @see   <a href="#examples">example format</a>
 	 * @see   <a href="#assumptions">assumptions</a>
 	 */

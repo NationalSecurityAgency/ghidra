@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +38,7 @@ public interface FieldElement {
 
 	/**
 	 * Returns the length of the text within this element.  This is a convenience method for 
-	 * calling <tt>getText().length()</tt>.
+	 * calling <code>getText().length()</code>.
 	 * @return the length of the text within this element.
 	 */
 	public int length();
