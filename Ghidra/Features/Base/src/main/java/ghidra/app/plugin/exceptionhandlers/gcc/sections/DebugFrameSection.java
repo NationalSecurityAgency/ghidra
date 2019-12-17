@@ -100,6 +100,9 @@ public class DebugFrameSection extends AbstractFrameSection {
 		}
 
 		while (curAddress != null && curAddress.compareTo(curMemBlock.getEnd()) < 0) {
+			if (monitor.isCancelled()) {
+				return regions;
+			}
 
 			/* Get the Common Information Entry */
 			Cie cie = getCie(curAddress);
