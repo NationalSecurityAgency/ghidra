@@ -31,12 +31,17 @@ public class CoffSymbolAuxTagName implements CoffSymbolAux {
 	private int      nextEntryIndex;
 	private byte []  unused3;
 
-	CoffSymbolAuxTagName(BinaryReader reader) throws IOException {
+	CoffSymbolAuxTagName(BinaryReader reader, short magic) throws IOException {
 		unused1         = reader.readNextByteArray(6);
 		size            = reader.readNextShort();
 		unused2         = reader.readNextByteArray(4);
 		nextEntryIndex  = reader.readNextInt();
-		unused3         = reader.readNextByteArray(2);
+		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC ||
+				magic == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC) {
+			unused3         = reader.readNextByteArray(8);
+		} else {
+			unused3         = reader.readNextByteArray(8);
+		}
 	}
 
 	public byte [] getUnused1() {

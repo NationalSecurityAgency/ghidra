@@ -30,11 +30,16 @@ public class CoffSymbolAuxSection implements CoffSymbolAux {
 	private short    lineNumberCount;
 	private byte []  unused;
 
-	CoffSymbolAuxSection(BinaryReader reader) throws IOException {
+	CoffSymbolAuxSection(BinaryReader reader, short magic) throws IOException {
 		sectionLength     = reader.readNextInt();
 		relocationCount   = reader.readNextShort();
 		lineNumberCount   = reader.readNextShort();
-		unused            = reader.readNextByteArray(10);
+		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC ||
+				magic == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC) {
+			unused        = reader.readNextByteArray(16);
+		} else {
+			unused        = reader.readNextByteArray(10);
+		}
 	}
 
 	public int getSectionLength() {

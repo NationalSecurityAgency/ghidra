@@ -28,9 +28,14 @@ public class CoffSymbolAuxFilename implements CoffSymbolAux {
 	private byte [] filename;
 	private byte [] unused;
 
-	CoffSymbolAuxFilename(BinaryReader reader) throws IOException {
+	CoffSymbolAuxFilename(BinaryReader reader, short magic) throws IOException {
 		filename = reader.readNextByteArray(CoffConstants.FILE_NAME_LENGTH);
-		unused   = reader.readNextByteArray(4);
+		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC ||
+				magic == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC) {
+			unused   = reader.readNextByteArray(10);
+		} else {
+			unused   = reader.readNextByteArray(4);
+		}
 	}
 
 	public String getFilename() {

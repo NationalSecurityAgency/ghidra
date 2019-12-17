@@ -27,33 +27,33 @@ final class CoffSymbolAuxFactory {
 		if (symbol.getDerivedType(1) == CoffSymbolType.DT_NON && symbol.getBasicType() == CoffSymbolType.T_NULL) {
 
 			if (symbol.getStorageClass() == CoffSymbolStorageClass.C_FILE) {
-				return new CoffSymbolAuxFilename(reader);
+				return new CoffSymbolAuxFilename(reader, symbol.getFileHeaderMagic());
 			}
 			if (symbol.getStorageClass() == CoffSymbolStorageClass.C_STAT) {
-				return new CoffSymbolAuxSection(reader);
+				return new CoffSymbolAuxSection(reader, symbol.getFileHeaderMagic());
 			}
 			if (symbol.getStorageClass() == CoffSymbolStorageClass.C_STRTAG ||
 				symbol.getStorageClass() == CoffSymbolStorageClass.C_UNTAG ||
 				symbol.getStorageClass() == CoffSymbolStorageClass.C_ENTAG) {
-				return new CoffSymbolAuxTagName(reader);
+				return new CoffSymbolAuxTagName(reader, symbol.getFileHeaderMagic());
 			}
 			if (symbol.getStorageClass() == CoffSymbolStorageClass.C_EOS) {
-				return new CoffSymbolAuxEndOfStruct(reader);
+				return new CoffSymbolAuxEndOfStruct(reader, symbol.getFileHeaderMagic());
 			}
 			if (symbol.getStorageClass() == CoffSymbolStorageClass.C_BLOCK) {
-				return new CoffSymbolAuxBeginningOfBlock(reader);
+				return new CoffSymbolAuxBeginningOfBlock(reader, symbol.getFileHeaderMagic());
 			}
 			if (symbol.getStorageClass() == CoffSymbolStorageClass.C_FCN) {
-				return new CoffSymbolAuxFunction(reader);
+				return new CoffSymbolAuxFunction(reader, symbol.getFileHeaderMagic());
 			}
 		}
 
 		if (symbol.getDerivedType(1) == CoffSymbolType.DT_FCN) {
 			if (symbol.getStorageClass() == CoffSymbolStorageClass.C_EXT) {
-				return new CoffSymbolAuxFunction(reader);
+				return new CoffSymbolAuxFunction(reader, symbol.getFileHeaderMagic());
 			}
 			if (symbol.getStorageClass() == CoffSymbolStorageClass.C_STAT) {
-				return new CoffSymbolAuxFunction(reader);
+				return new CoffSymbolAuxFunction(reader, symbol.getFileHeaderMagic());
 			}
 		}
 
@@ -64,11 +64,11 @@ final class CoffSymbolAuxFactory {
 				case CoffSymbolStorageClass.C_MOS:
 				case CoffSymbolStorageClass.C_MOU:
 				case CoffSymbolStorageClass.C_TPDEF:
-					return new CoffSymbolAuxArray(reader);
+					return new CoffSymbolAuxArray(reader, symbol.getFileHeaderMagic());
 			}
 		}
 
-		return new CoffSymbolAuxDefault(reader);
+		return new CoffSymbolAuxDefault(reader, symbol.getFileHeaderMagic());
 	}
 	
 }

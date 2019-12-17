@@ -80,7 +80,7 @@ public class CoffSectionHeader implements StructConverter {
 					: BigEndianDataConverter.INSTANCE;
 			int nameIndex = dc.getInt(nameBytes, 4);//string table index
 			int stringTableIndex = _header.getSymbolTablePointer() +
-				(_header.getSymbolTableEntries() * CoffConstants.SYMBOL_SIZEOF);
+				(_header.getSymbolTableEntries() * _header.getSectionSize());
 			s_name = reader.readAsciiString(stringTableIndex + nameIndex);
 		}
 		else {
