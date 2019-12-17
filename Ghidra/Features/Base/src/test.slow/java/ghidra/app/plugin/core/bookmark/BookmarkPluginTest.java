@@ -624,6 +624,21 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr("1001010"), bookmark.getAddress());
 	}
 
+	@Test
+	public void testRemoveBookmarksByType() {
+
+		List<Bookmark> list = getBookmarks(program.getBookmarkManager());
+		assertFalse(list.isEmpty());
+
+		BookmarkManager bm = program.getBookmarkManager();
+		tx(program, () -> {
+			bm.removeBookmarks(BookmarkType.ALL_TYPES);
+		});
+
+		list = getBookmarks(program.getBookmarkManager());
+		assertTrue(list.isEmpty());
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
@@ -636,7 +651,6 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void loadDefaultTool() throws Exception {
-//		env = new TestEnv();
 		program = buildProgram();
 
 		// UNUSUAL CODE ALERT!: 
