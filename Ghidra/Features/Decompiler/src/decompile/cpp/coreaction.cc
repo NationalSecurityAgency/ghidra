@@ -4745,6 +4745,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RuleFloatRange("analysis") );
 	actprop->addRule( new RulePiece2Zext("analysis") );
 	actprop->addRule( new RulePiece2Sext("analysis") );
+	actprop->addRule( new RulePopcountBoolXor("analysis") );
 	actprop->addRule( new RuleSubvarAnd("subvar") );
 	actprop->addRule( new RuleSubvarSubpiece("subvar") );
 	actprop->addRule( new RuleSplitFlow("subvar") );
