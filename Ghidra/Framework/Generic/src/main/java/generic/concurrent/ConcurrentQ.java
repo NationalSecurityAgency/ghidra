@@ -67,9 +67,9 @@ import ghidra.util.task.TaskMonitor;
  *         }
  * };
  * 
- * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();
+ * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>()};
  * builder.setThreadPoolName("Thread Pool Name");
- * }<span style="color:blue"><b>builder.setListener(itemListener);</b></span>
+ * <span style="color:blue"><b>builder.setListener(itemListener);</b></span>
  * concurrentQ = builder.build(callback);
  * ...
  * ...
@@ -87,11 +87,11 @@ import ghidra.util.task.TaskMonitor;
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
  *         // do work here...
  *     }
- * };
+ * };}
  *
- * ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();
+ * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();}
  * builder.setThreadPoolName("Thread Pool Name");
- * }<span style="color:blue"><b>builder.setCollectResults(true);</b></span>{@code
+ * <span style="color:blue"><b>builder.setCollectResults(true);</b></span>
  * concurrentQ = builder.getQueue(callback);
  * ...
  * ...
@@ -99,15 +99,16 @@ import ghidra.util.task.TaskMonitor;
  * concurrentQ.add(item);
  * concurrentQ.add(item);
  * ...
- * }<span style="color:blue"><b>{@literal List<QResult<I, R>> results = concurrentQ.waitForResults();}</b></span>{@literal
+ * 
+ * <span style="color:blue"><b>{@literal List<QResult<I, R>> results = concurrentQ.waitForResults();}</b></span>{@literal
  * // process the results...
  * 
  * }</pre>
  * <hr>
  * <p>
  * <u>Put Items, <b>Blocking While Full</b>, and Handle Results in Any Order as They Available:</u>
- * <pre>{@literal
- * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
+ * <pre>
+ * {@literal QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>()} {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
  *         // do work here...
  *     }
@@ -120,14 +121,14 @@ import ghidra.util.task.TaskMonitor;
  *         }
  * };
  * 
- * ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();
- * 	builder.setThreadPoolName("Thread Pool Name");
- * }<span style="color:blue"><b>builder.setQueue(new LinkedBlockingQueue(100));</b></span>{@literal
+ * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>()};
+ * builder.setThreadPoolName("Thread Pool Name");
+ * <span style="color:blue"><b>builder.setQueue(new LinkedBlockingQueue(100));</b></span>
  * concurrentQ = builder.getQueue(callback);
  * ...
  * ...
- * Iterator<ITEM> iterator = <get an iterator for 1000s of items somewhere>
- * }<span style="color:blue"><b>{@code concurrentQ.offer(iterator); // this call will block when the queue fills up (100 items or more)}</b></span>
+ * {@literal Iterator<ITEM> iterator = <get an iterator for 1000s of items somewhere>}
+ * <span style="color:blue"><b>{@code concurrentQ.offer(iterator); // this call will block when the queue fills up (100 items or more)}</b></span>
  * 
  * </pre>
  * <hr>
