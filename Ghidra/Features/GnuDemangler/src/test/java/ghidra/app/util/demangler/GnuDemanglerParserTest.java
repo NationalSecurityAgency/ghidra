@@ -62,6 +62,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"_ZTv0_n24_NSt19basic_ostringstreamIcSt11char_traitsIcE14pool_allocatorIcEED0Ev");// virtual thunk
 		demangle(process, parser, "_ZTch0_h16_NK8KHotKeys13WindowTrigger4copyEPNS_10ActionDataE");// covariant return thunk
 
+		demangle(process, parser, "_ZNK2cc14ScrollSnapTypeneERKS0_");
+
 		List<String> list = loadTextResource(GnuDemanglerParserTest.class, "libMagick.symbols.txt");
 		for (String mangled : list) {
 			if (mangled == null) {
@@ -73,8 +75,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		System.out.println("Elapsed Time: " + (System.currentTimeMillis() - start));
 	}
 
-	private void demangle(GnuDemanglerNativeProcess process, GnuDemanglerParser parser, String mangled)
-			throws IOException {
+	private void demangle(GnuDemanglerNativeProcess process, GnuDemanglerParser parser,
+			String mangled) throws IOException {
 		String demangled = process.demangle(mangled);
 		assertNotNull(demangled);
 		assertNotEquals(mangled, demangled);
@@ -165,6 +167,16 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"covariant return thunk [nv:0] [nv:16] to KHotKeys::WindowTrigger::copy(KHotKeys::ActionData*) const");
 		assertTrue(parse instanceof DemangledThunk);
 		assertName(parse, "copy", "KHotKeys", "WindowTrigger");
+
+		try {
+			parse = parser.parse(
+				"_ZZN12GrGLFunctionIFPKhjEEC1IZN13skia_bindings28CreateGLES2InterfaceBindingsEPN3gpu5gles214GLES2InterfaceEPNS6_14ContextSupportEE3$_0EET_ENUlPKvjE_8__invokeESF_j",
+				"GrGLFunction<unsigned char const* (unsigned int)>::GrGLFunction<skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0>(skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0)::{lambda(void const*, unsigned int)#1}::__invoke(void const*, unsigned int)");
+			assertNull("Shouldn't have parsed", parser);
+		}
+		catch (Exception exc) {
+			// should get an exception
+		}
 	}
 
 	private void assertName(DemangledObject demangledObj, String name, String... namespaces) {
@@ -193,9 +205,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertTrue(object instanceof DemangledFunction);
 
-		assertEquals(
-			"undefined glob_fn9(" +
-				"char,int,long,long long,unsigned int,unsigned long,float,double,long double,bool,void *,void * *)",
+		assertEquals("undefined glob_fn9(" +
+			"char,int,long,long long,unsigned int,unsigned long,float,double,long double,bool,void *,void * *)",
 			object.getSignature(false));
 	}
 
