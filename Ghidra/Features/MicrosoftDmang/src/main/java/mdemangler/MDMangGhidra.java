@@ -46,10 +46,6 @@ public class MDMangGhidra extends MDMang {
 		return dataTypeResult;
 	}
 
-	private DemangledType processNamespace(MDQualifiedBasicName qualifiedBasicName) {
-		return processNamespace(qualifiedBasicName.getQualification());
-	}
-
 	public DemangledType processNamespace(MDQualifiedName qualifiedName) {
 		return processNamespace(qualifiedName.getQualification());
 	}
@@ -183,8 +179,8 @@ public class MDMangGhidra extends MDMang {
 				}
 				else {
 					variable = new DemangledVariable(
-						objectCPP.getQualifiedName().getBasicName().toString());
-					variable.setNamespace(processNamespace(objectCPP.getQualifiedName()));
+						objectCPP.getName());
+					variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				}
 				variable.setDatatype(dt);
 				resultObject = variable;
@@ -204,8 +200,8 @@ public class MDMangGhidra extends MDMang {
 			}
 			else if (typeinfo instanceof MDFunctionInfo) {
 				DemangledFunction function =
-					new DemangledFunction(objectCPP.getQualifiedName().getBasicName().toString());
-				function.setNamespace(processNamespace(objectCPP.getQualifiedName()));
+					new DemangledFunction(objectCPP.getName());
+				function.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = function;
 				objectResult = processFunction((MDFunctionInfo) typeinfo, function);
 				// Any other special values to be set?
@@ -233,8 +229,8 @@ public class MDMangGhidra extends MDMang {
 			else if (typeinfo instanceof MDVxTable) { //Includes VFTable, VBTable, and RTTI4
 				MDVxTable vxtable = (MDVxTable) typeinfo;
 				DemangledVariable variable =
-					new DemangledVariable(objectCPP.getQualifiedName().getBasicName().toString());
-				variable.setNamespace(processNamespace(objectCPP.getQualifiedName()));
+					new DemangledVariable(objectCPP.getName());
+				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				variable.setConst(vxtable.isConst());
 				variable.setVolatile(vxtable.isVolatile());
 				variable.setPointer64(vxtable.isPointer64());
@@ -245,8 +241,8 @@ public class MDMangGhidra extends MDMang {
 			}
 			else if (typeinfo instanceof AbstractMDMetaClass) { //Includes all RTTI, except RTTI4
 				DemangledVariable variable =
-					new DemangledVariable(objectCPP.getQualifiedName().getBasicName().toString());
-				variable.setNamespace(processNamespace(objectCPP.getQualifiedName()));
+					new DemangledVariable(objectCPP.getName());
+				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
 				//  customer complaints or other fall-out from having created a variable here.
@@ -254,8 +250,8 @@ public class MDMangGhidra extends MDMang {
 			}
 			else if (typeinfo instanceof MDGuard) {
 				DemangledVariable variable =
-					new DemangledVariable(objectCPP.getQualifiedName().getBasicName().toString());
-				variable.setNamespace(processNamespace(objectCPP.getQualifiedName()));
+					new DemangledVariable(objectCPP.getName());
+				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
 				//  customer complaints or other fall-out from having created a variable here.
@@ -264,8 +260,8 @@ public class MDMangGhidra extends MDMang {
 			else {
 				// Any others (e.g., case '9')
 				DemangledVariable variable =
-					new DemangledVariable(objectCPP.getQualifiedName().getBasicName().toString());
-				variable.setNamespace(processNamespace(objectCPP.getQualifiedName()));
+					new DemangledVariable(objectCPP.getName());
+				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = variable;
 				// The following code would be an alternative, depending on whether we get
 				//  customer complaints or other fall-out from having created a variable here.
@@ -288,9 +284,9 @@ public class MDMangGhidra extends MDMang {
 			}
 		}
 		else {
-			String baseName = objectCPP.getQualifiedName().getBasicName().toString();
-			if (objectCPP.getQualifiedName().isString()) {
-				MDString mstring = objectCPP.getQualifiedName().getBasicName().getMDString();
+			String baseName = objectCPP.getName();
+			if (objectCPP.isString()) {
+				MDString mstring = objectCPP.getMDString();
 				DemangledString demangledString = new DemangledString(mstring.getName(),
 					mstring.toString(), mstring.getLength(), mstring.isUnicode());
 				resultObject = demangledString;
@@ -298,7 +294,7 @@ public class MDMangGhidra extends MDMang {
 			else if (baseName.length() != 0) {
 				DemangledVariable variable;
 				variable = new DemangledVariable(baseName);
-				variable.setNamespace(processNamespace(objectCPP.getQualifiedName()));
+				variable.setNamespace(processNamespace(objectCPP.getQualfication()));
 				resultObject = variable;
 			}
 		}
@@ -803,13 +799,10 @@ public class MDMangGhidra extends MDMang {
 
 	@Override
 	public MDObjectCPP getEmbeddedObject(MDObjectCPP obj) {
-		MDObjectCPP embedded = obj.getQualifiedName().getBasicName().getEmbeddedObject();
-		if (embedded != null) {
-			return embedded;
-		}
-		return obj;
+		return obj.getEmbeddedObject();
 	}
 }
 
 /******************************************************************************/
 /******************************************************************************/
+
