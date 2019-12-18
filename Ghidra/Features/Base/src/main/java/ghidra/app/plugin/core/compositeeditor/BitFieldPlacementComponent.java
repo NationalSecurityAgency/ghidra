@@ -371,8 +371,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		repaint();
 	}
 
-	void applyBitField(DataType baseDataType, String fieldName, boolean deleteConflicts,
-			CompositeChangeListener listener) {
+	void applyBitField(DataType baseDataType, String fieldName, String fieldComment,
+			boolean deleteConflicts, CompositeChangeListener listener) {
 		if (composite == null) {
 			throw new IllegalStateException("Composite not loaded");
 		}
@@ -408,18 +408,21 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 		try {
 			String name = (fieldName != null && fieldName.length() != 0) ? fieldName : null;
+			String comment =
+				(fieldComment != null && fieldComment.length() != 0) ? fieldComment : null;
 			DataTypeComponent dtc;
 			if (composite instanceof Union) {
 				throw new UnsupportedOperationException(
 					"Union modification not currently supported");
 //				dtc = composite.insertBitField(ordinal, allocationByteSize,
 //					bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
-//					null);
+//					comment);
 			}
 //			else {
 			Structure struct = (Structure) composite;
 			dtc = struct.insertBitFieldAt(allocationByteOffset, allocationByteSize,
-				bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name, null);
+				bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
+				comment);
 //			}
 			if (listener != null) {
 				listener.componentChanged(dtc.getOrdinal());
