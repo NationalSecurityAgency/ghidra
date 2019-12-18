@@ -112,9 +112,14 @@ public class StringRenderBuilder {
 	 * <p>
 	 * {@literal { 0, 1, 2 } -> 00,01,02}
 	 *
-	 * @param bytes
+	 * @param bytes to convert to hex and append.  If null, append "???"
 	 */
 	public void addByteSeq(byte[] bytes) {
+		if (bytes == null) {
+			ensureByteMode();
+			sb.append("???");
+			return;
+		}
 		for (int i = 0; i < bytes.length; i++) {
 			ensureByteMode();
 			String valStr = Integer.toHexString(bytes[i] & 0xff).toUpperCase();

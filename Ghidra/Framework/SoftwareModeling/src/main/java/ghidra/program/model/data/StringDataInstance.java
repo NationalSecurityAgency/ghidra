@@ -684,8 +684,8 @@ public class StringDataInstance {
 
 		// if we get the same number of characters out that we put into the decoder,
 		// then its a good chance there is a one-to-one correspondence between original char
-		// and decoded char.
-		boolean canRecoverOriginalCharBytes =
+		// offsets and decoded char offsets.
+		boolean isByteToStringCharEquiv =
 			stringValue.length() == ((stringBytes.length - aci.byteStartOffset) / charSize);
 
 		stringValue = stringLayout.shouldTrimTrailingNulls() ? trimNulls(stringValue) : stringValue;
@@ -701,22 +701,10 @@ public class StringDataInstance {
 		// For each 32bit character in the java string try to add it to the StringRenderBuilder
 		for (int i = 0, strLength = stringValue.length(); i < strLength;) {
 			int codePoint = stringValue.codePointAt(i);
-			byte[] originalCharBytes;
-			if (canRecoverOriginalCharBytes) {
-				originalCharBytes = new byte[charSize];
-				System.arraycopy(stringBytes, i * charSize + aci.byteStartOffset, originalCharBytes,
-					0, charSize);
-			}
-			else {
-				// can't get original bytes, cheat and run the codePoint through the charset
-				// to get what should be the same as the original bytes.
-				String singleCharStr = new String(new int[] { codePoint }, 0, 1);
-				originalCharBytes = convertStringToBytes(singleCharStr, aci);
-			}
 
 			RENDER_ENUM currentCharRenderSetting = renderSetting;
-			if (codePoint == StringUtilities.UNICODE_REPLACEMENT && canRecoverOriginalCharBytes &&
-				isMismatchedCharBytes(originalCharBytes, codePoint)) {
+			if (codePoint == StringUtilities.UNICODE_REPLACEMENT && isByteToStringCharEquiv &&
+				!isReplacementCharAt(stringBytes, i * charSize + aci.byteStartOffset)) {
 				// if this is a true decode error and we can recover the original bytes,
 				// then force the render mode to byte seq.
 				currentCharRenderSetting = RENDER_ENUM.BYTE_SEQ;
@@ -753,7 +741,8 @@ public class StringDataInstance {
 						strBuf.addCodePointChar(codePoint);
 						break;
 					case BYTE_SEQ:
-						strBuf.addByteSeq(originalCharBytes);
+						strBuf.addByteSeq(getOriginalBytes(isByteToStringCharEquiv, i, codePoint,
+							stringBytes, aci));
 						break;
 					case ESC_SEQ:
 						strBuf.addEscapedCodePoint(codePoint);
@@ -777,6 +766,26 @@ public class StringDataInstance {
 			}
 		}
 		return prefix + strBuf.toString();
+	}
+
+	private byte[] getOriginalBytes(boolean isByteToStringCharEquiv, int charOffset, int codePoint,
+			byte[] stringBytes, AdjustedCharsetInfo aci) {
+
+		if (isByteToStringCharEquiv) {
+			byte[] originalCharBytes = new byte[charSize];
+			System.arraycopy(stringBytes, charOffset * charSize + aci.byteStartOffset,
+				originalCharBytes, 0, charSize);
+			return originalCharBytes;
+		}
+
+		// can't get original bytes, cheat and run the codePoint through the charset
+		// to get what should be the same as the original bytes.
+		String singleCharStr = new String(new int[] { codePoint }, 0, 1);
+		Charset cs = Charset.isSupported(aci.charsetName) ? Charset.forName(aci.charsetName) : null;
+		if (cs == null || !cs.canEncode()) {
+			return null;
+		}
+		return singleCharStr.getBytes(cs);
 	}
 
 	/**
@@ -837,10 +846,13 @@ public class StringDataInstance {
 			StringRenderBuilder.DOUBLE_QUOTE);
 	}
 
-	private boolean isMismatchedCharBytes(byte[] originalCharBytes, int codePoint) {
-		long originalValue = DataConverter.getInstance(buf.isBigEndian()).getValue(
-			originalCharBytes, Math.min(charSize, originalCharBytes.length));
-		return originalValue != codePoint;
+	private boolean isReplacementCharAt(byte[] stringBytes, int byteOffset) {
+		if (byteOffset + charSize > stringBytes.length) {
+			return false;
+		}
+		long origCodePointValue = DataConverter.getInstance(buf.isBigEndian()).getValue(stringBytes,
+			byteOffset, charSize);
+		return origCodePointValue == StringUtilities.UNICODE_REPLACEMENT;
 	}
 
 	private static String getTranslatedStringRepresentation(String translatedString) {
