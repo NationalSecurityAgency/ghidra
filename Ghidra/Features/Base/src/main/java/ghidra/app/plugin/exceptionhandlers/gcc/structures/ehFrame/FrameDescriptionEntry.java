@@ -24,6 +24,7 @@ import ghidra.app.plugin.exceptionhandlers.gcc.datatype.UnsignedLeb128DataType;
 import ghidra.app.plugin.exceptionhandlers.gcc.sections.CieSource;
 import ghidra.app.plugin.exceptionhandlers.gcc.sections.DebugFrameSection;
 import ghidra.app.plugin.exceptionhandlers.gcc.structures.gccexcepttable.LSDATable;
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -268,7 +269,14 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
 		if (pcBeginAddr.getOffset() != 0x0) {
-			pcBeginAddr = pcBeginAddr.add(program.getImageBase().getOffset());
+			// if the program was moved from a preferred image base, need to adjust
+			// the beginning of frame pointer
+			Long oib = ElfLoader.getElfOriginalImageBase(program);
+			if (oib != null) {
+				long imageBaseOffset = program.getImageBase().getOffset() - oib;
+				pcBeginAddr = pcBeginAddr.add(imageBaseOffset);
+			}
+
 			program.getReferenceManager().addMemoryReference(addr, pcBeginAddr, RefType.DATA,
 				SourceType.ANALYSIS, 0);
 		}
@@ -390,7 +398,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		CreateArrayCmd arrayCmd = null;
 
 		// Create initial instructions array with remaining bytes.
-		int instructionLength = intLength - curSize;		
+		int instructionLength = intLength - curSize;
 		ArrayDataType adt = new ArrayDataType(ByteDataType.dataType, instructionLength, BYTE_LEN);
 		try {
 			program.getListing().createData(addr, adt, adt.getLength());
