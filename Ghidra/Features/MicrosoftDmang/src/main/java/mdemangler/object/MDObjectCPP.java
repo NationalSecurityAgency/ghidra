@@ -146,12 +146,22 @@ public class MDObjectCPP extends MDObject {
 		}
 	}
 
+	/**
+	 * Processes the hashed object in the normal fashion.
+	 * @throws MDException On parsing error.
+	 */
 	public void processHashedObject() throws MDException {
 		hashedObject = new MDHashedObject(dmang);
 		hashedObject.parse();
 		hashedObjectFlag = true;
 	}
 
+	/**
+	 * Always throws an exception, mimicking the MSFT "failure" behavior, which cuts the parsing
+	 *  process short...  This is one of two choice methods than can be used.
+	 * @throws MDException always.
+	 * @see #processHashedObject()
+	 */
 	public void processHashedObjectMSVC() throws MDException {
 		throw new MDException("cannot parse hashed symbol");
 	}
