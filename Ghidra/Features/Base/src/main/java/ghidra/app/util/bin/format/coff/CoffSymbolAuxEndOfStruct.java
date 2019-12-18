@@ -30,16 +30,11 @@ public class CoffSymbolAuxEndOfStruct implements CoffSymbolAux {
 	private short   size; //of structure, union, or enumeration
 	private byte [] unused2;
 
-	CoffSymbolAuxEndOfStruct(BinaryReader reader, short magic) throws IOException {
+	CoffSymbolAuxEndOfStruct(BinaryReader reader) throws IOException {
 		tagIndex = reader.readNextInt();
 		unused1  = reader.readNextByteArray(2);
 		size     = reader.readNextShort();
-		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC ||
-				magic == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC) {
-			unused2  = reader.readNextByteArray(16);
-		} else {
-			unused2  = reader.readNextByteArray(10);
-		}
+		unused2  = reader.readNextByteArray(10);
 	}
 
 	public int getTagIndex() {

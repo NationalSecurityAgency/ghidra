@@ -34,7 +34,7 @@ public class CoffSymbolAuxArray implements CoffSymbolAux {
 	private short   fourthDimension;
 	private byte [] unused;
 
-	CoffSymbolAuxArray(BinaryReader reader, short magic) throws IOException {
+	CoffSymbolAuxArray(BinaryReader reader) throws IOException {
 		tagIndex        = reader.readNextInt();
 		lineNumber      = reader.readNextShort();
 		arraySize       = reader.readNextShort();
@@ -42,12 +42,7 @@ public class CoffSymbolAuxArray implements CoffSymbolAux {
 		secondDimension = reader.readNextShort();
 		thirdDimension  = reader.readNextShort();
 		fourthDimension = reader.readNextShort();
-		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC ||
-				magic == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC) {
-			unused          = reader.readNextByteArray(8);
-		} else {
-			unused          = reader.readNextByteArray(2);
-		}
+		unused          = reader.readNextByteArray(2);
 	}
 
 	public int getTagIndex() {

@@ -80,21 +80,6 @@ public class CoffFileHeader implements StructConverter {
 	public short getSectionCount() {
 		return f_nscns;
 	}
-	
-	/**
-	 * Returns the size of the section header in this COFF file.
-	 * @return the size of the section header in this COFF file
-	 */
-	public int getSectionSize() {
-		if ((f_magic == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC) ||
-				(f_magic == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC)) {
-			// i960 is aligned and padded differently
-			return 24;
-		}
-		else {
-			return 18;
-		}
-	}
 
 	/**
 	 * Returns the time stamp of when this file was created.

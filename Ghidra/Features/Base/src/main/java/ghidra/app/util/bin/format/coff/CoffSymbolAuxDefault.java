@@ -27,13 +27,8 @@ class CoffSymbolAuxDefault implements CoffSymbolAux {
 
 	private byte [] bytes;
 
-	CoffSymbolAuxDefault(BinaryReader reader, short magic) throws IOException {
-		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC ||
-				magic == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC) {
-			bytes = reader.readNextByteArray(24);
-		} else {
-			bytes = reader.readNextByteArray(18);
-		}
+	CoffSymbolAuxDefault(BinaryReader reader) throws IOException {
+		bytes = reader.readNextByteArray(CoffConstants.SYMBOL_SIZEOF);
 	}
 
 	public byte [] getBytes() {

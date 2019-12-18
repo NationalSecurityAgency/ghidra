@@ -27,12 +27,9 @@ public class CoffSymbol implements StructConverter {
 	private String e_name;
 	private int e_value;
 	private short e_scnum;
-	private int e_type;
-	private short e_flags;
+	private short e_type;
 	private byte e_sclass;
 	private byte e_numaux;
-	private short f_magic;
-	private byte [] unused;
 
 	private List<CoffSymbolAux> _auxiliarySymbols = new ArrayList<CoffSymbolAux>();
 
@@ -43,33 +40,19 @@ public class CoffSymbol implements StructConverter {
 			int nameIndex = reader.readNextInt();//string table index
 			int stringTableIndex =
 				header.getSymbolTablePointer() +
-					(header.getSymbolTableEntries() * header.getSectionSize());
+					(header.getSymbolTableEntries() * CoffConstants.SYMBOL_SIZEOF);
 			e_name = reader.readAsciiString(stringTableIndex + nameIndex);
 		}
 		else {
 			e_name = reader.readNextAsciiString(CoffConstants.SYMBOL_NAME_LENGTH);
 		}
 
-		if (header.getMagic() == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC ||
-				header.getMagic() == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC) {
-			e_value = reader.readNextInt();
-			e_scnum = reader.readNextShort();
-			e_flags = reader.readNextShort();
-			e_type = reader.readNextInt();
-			e_sclass = reader.readNextByte();
-			e_numaux = reader.readNextByte();
-			f_magic = header.getMagic();
-			unused = reader.readNextByteArray(2);
-		} else {
-			e_value = reader.readNextInt();
-			e_scnum = reader.readNextShort();
-			e_flags = 0;
-			e_type = reader.readNextShort();
-			e_sclass = reader.readNextByte();
-			e_numaux = reader.readNextByte();
-			f_magic = header.getMagic();
-			unused = reader.readNextByteArray(0);
-		}
+		e_value = reader.readNextInt();
+		e_scnum = reader.readNextShort();
+		e_type = reader.readNextShort();
+		e_sclass = reader.readNextByte();
+		e_numaux = reader.readNextByte();
+
 		for (int i = 0; i < e_numaux; ++i) {
 			_auxiliarySymbols.add(CoffSymbolAuxFactory.read(reader, this));
 		}
@@ -79,10 +62,6 @@ public class CoffSymbol implements StructConverter {
 //		w.println(e_name + ", " + e_type + ", " + e_scnum + ", " + e_sclass + ", 0x" + Integer.toHexString(e_value) + ", " + e_numaux );
 //	}
 
-	public short getFileHeaderMagic() {
-		return f_magic;
-	}
-	
 	public String getName() {
 		return e_name;
 	}

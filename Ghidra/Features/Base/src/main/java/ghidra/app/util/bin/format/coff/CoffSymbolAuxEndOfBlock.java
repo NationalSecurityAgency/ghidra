@@ -29,16 +29,10 @@ public class CoffSymbolAuxEndOfBlock implements CoffSymbolAux {
 	private short   sourceLineNumber;
 	private byte [] unused2;
 
-	CoffSymbolAuxEndOfBlock(BinaryReader reader, short magic) throws IOException {
+	CoffSymbolAuxEndOfBlock(BinaryReader reader) throws IOException {
 		unused1          = reader.readNextByteArray(4);
 		sourceLineNumber = reader.readNextShort();
-		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_I960ROMAGIC ||
-				magic == CoffMachineType.IMAGE_FILE_MACHINE_I960RWMAGIC) {
-			unused2          = reader.readNextByteArray(18);
-		}
-		else {
-			unused2          = reader.readNextByteArray(12);
-		}
+		unused2          = reader.readNextByteArray(12);
 	}
 
 	public byte[] getUnused1() {

@@ -27,6 +27,10 @@ public class CoffConstants {
 	 */
 	public final static int SYMBOL_NAME_LENGTH          =   8;
 	/**
+	 * Length (in bytes) of a symbol data structure.
+	 */
+	public final static int SYMBOL_SIZEOF               =  18;
+	/**
 	 * Max-length (in bytes) of a file name.
 	 */
 	public final static int FILE_NAME_LENGTH            =  14;
