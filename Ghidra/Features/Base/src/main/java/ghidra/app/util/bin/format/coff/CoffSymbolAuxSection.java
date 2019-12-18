@@ -25,10 +25,13 @@ import java.io.IOException;
 
 public class CoffSymbolAuxSection implements CoffSymbolAux {
 
-	private int      sectionLength;
-	private short    relocationCount;
-	private short    lineNumberCount;
-	private byte []  unused;
+	protected int      sectionLength;
+	protected short    relocationCount;
+	protected short    lineNumberCount;
+	protected byte []  unused;
+
+	protected CoffSymbolAuxSection() {		
+	}
 
 	CoffSymbolAuxSection(BinaryReader reader) throws IOException {
 		sectionLength     = reader.readNextInt();

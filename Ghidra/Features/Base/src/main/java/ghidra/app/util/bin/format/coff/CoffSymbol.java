@@ -24,14 +24,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CoffSymbol implements StructConverter {
-	private String e_name;
-	private int e_value;
-	private short e_scnum;
-	private short e_type;
-	private byte e_sclass;
-	private byte e_numaux;
+	protected String e_name;
+	protected int e_value;
+	protected short e_scnum;
+	protected int e_type;
+	protected byte e_sclass;
+	protected byte e_numaux;
 
-	private List<CoffSymbolAux> _auxiliarySymbols = new ArrayList<CoffSymbolAux>();
+	protected List<CoffSymbolAux> _auxiliarySymbols = new ArrayList<CoffSymbolAux>();
+
+	protected CoffSymbol() {	
+	}
 
 	CoffSymbol(BinaryReader reader, CoffFileHeader header) throws IOException {
 

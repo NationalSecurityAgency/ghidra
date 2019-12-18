@@ -25,11 +25,14 @@ import java.io.IOException;
 
 public class CoffSymbolAuxFunction implements CoffSymbolAux {
 
-	private int     tagIndex;
-	private int     size;
-	private int     filePointerToLineNumber;
-	private int     nextEntryIndex;
-	private byte [] unused;
+	protected int     tagIndex;
+	protected int     size;
+	protected int     filePointerToLineNumber;
+	protected int     nextEntryIndex;
+	protected byte [] unused;
+
+	protected CoffSymbolAuxFunction() {		
+	}
 
 	CoffSymbolAuxFunction(BinaryReader reader) throws IOException {
 		tagIndex                = reader.readNextInt();

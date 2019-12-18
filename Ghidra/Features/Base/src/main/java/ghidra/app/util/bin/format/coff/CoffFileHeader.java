@@ -104,6 +104,14 @@ public class CoffFileHeader implements StructConverter {
 	public int getSymbolTableEntries() {
 		return f_nsyms;
 	}
+	
+	/**
+	 * Returns the length of symbols in the symbol table.
+	 * @return the length of symbols in the symbol table
+	 */
+	public int getSymbolTableLength() {
+		return f_nsyms * CoffConstants.SYMBOL_SIZEOF;
+	}
 
 	/**
 	 * Returns the size in bytes of the optional header.

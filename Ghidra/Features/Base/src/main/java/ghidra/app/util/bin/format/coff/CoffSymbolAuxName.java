@@ -25,10 +25,13 @@ import java.io.IOException;
 
 public class CoffSymbolAuxName implements CoffSymbolAux {
 
-	private int     tagIndex;
-	private byte [] unused1;
-	private short   size;
-	private byte [] unused2;
+	protected int     tagIndex;
+	protected byte [] unused1;
+	protected short   size;
+	protected byte [] unused2;
+
+	protected CoffSymbolAuxName() {		
+	}
 
 	CoffSymbolAuxName(BinaryReader reader) throws IOException {
 		tagIndex   = reader.readNextInt();

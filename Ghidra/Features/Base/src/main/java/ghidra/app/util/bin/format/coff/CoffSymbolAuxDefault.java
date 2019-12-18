@@ -25,7 +25,10 @@ import java.io.IOException;
 
 class CoffSymbolAuxDefault implements CoffSymbolAux {
 
-	private byte [] bytes;
+	protected byte [] bytes;
+
+	protected CoffSymbolAuxDefault() {
+	}
 
 	CoffSymbolAuxDefault(BinaryReader reader) throws IOException {
 		bytes = reader.readNextByteArray(CoffConstants.SYMBOL_SIZEOF);
