@@ -213,8 +213,13 @@ public class FileCache {
 	}
 
 	private boolean isCacheFileName(String s) {
-		byte[] bytes = NumericUtilities.convertStringToBytes(s);
-		return (bytes != null) && bytes.length == MD5_BYTE_LEN;
+		try {
+			byte[] bytes = NumericUtilities.convertStringToBytes(s);
+			return (bytes != null) && bytes.length == MD5_BYTE_LEN;
+		}
+		catch (IllegalArgumentException e) {
+			return false;
+		}
 	}
 
 	/**
