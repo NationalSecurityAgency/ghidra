@@ -1002,7 +1002,6 @@ define token instr(32)
 	IMM_11_15_VLE=(11,14)
 	IMM_16_20_VLE=(16,20)
 	IMM_21_25_VLE=(21,25) 
-	SIMM_0_10_VLE=(0,10) signed
 	SIMM_11_14_VLE=(11,14) signed
 	SIMM_21_25_VLE=(21,25) signed
 	SCL_VLE=(8,9)
@@ -1069,7 +1068,7 @@ attach variables [ D A B C S TH RA RB RS RT regp]
 attach variables [ BFA BI_CR CRFD CRFS CR_A CR_B CR_D CR_X ]
 	[cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7] ;
 
-attach variables [ BI_CR_VLE ]
+attach variables [ BI_CR_VLE BF_VLE ]
 	[cr0 cr1 cr2 cr3 ] ;
 
 attach variables [ fD fB fA fC fS fT ]

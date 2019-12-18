@@ -68,7 +68,7 @@ abstract class IndexTable {
 	 * @param indexTableRecord specifies the index parameters.
 	 * @throws IOException thrown if IO error occurs
 	 */
-	IndexTable(Table primaryTable, TableRecord indexTableRecord) {
+	IndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
 		if (!primaryTable.useLongKeys())
 			throw new AssertException("Only long-key tables may be indexed");
 		this.db = primaryTable.getDBHandle();
@@ -87,7 +87,7 @@ abstract class IndexTable {
 	 * @return IndexTable index table
 	 * @throws IOException thrown if IO error occurs
 	 */
-	static IndexTable getIndexTable(DBHandle db, TableRecord indexTableRecord) {
+	static IndexTable getIndexTable(DBHandle db, TableRecord indexTableRecord) throws IOException {
 		String name = indexTableRecord.getName();
 		Table primaryTable = db.getTable(name);
 		if (primaryTable == null)

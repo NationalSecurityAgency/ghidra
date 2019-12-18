@@ -208,6 +208,7 @@ public:
   void restoreXmlBody(List::const_iterator iter);		///< Restore details of the Symbol from XML
   virtual void saveXml(ostream &s) const;			///< Save \b this Symbol to an XML stream
   virtual void restoreXml(const Element *el);			///< Restore \b this Symbol from an XML stream
+  virtual int4 getBytesConsumed(void) const;			///< Get number of bytes consumed within the address->symbol map
 };
 
 /// Force a specific display format for constant symbols
@@ -235,14 +236,16 @@ inline bool SymbolEntry::isAddrTied(void) const {
 /// Symbol is thus associated with all the meta-data about the function.
 class FunctionSymbol : public Symbol {
   Funcdata *fd;				///< The underlying meta-data object for the function
+  int4 consumeSize;			///< Minimum number of bytes to consume with the start address
   virtual ~FunctionSymbol(void);
-  void buildType(int4 size);		///< Build the data-type associated with \b this Symbol
+  void buildType(void);			///< Build the data-type associated with \b this Symbol
 public:
   FunctionSymbol(Scope *sc,const string &nm,int4 size);	///< Construct given the name
   FunctionSymbol(Scope *sc,int4 size);			///< Constructor for use with restoreXml
   Funcdata *getFunction(void);				///< Get the underlying Funcdata object
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el);
+  virtual int4 getBytesConsumed(void) const { return consumeSize; }
 };
 
 /// \brief A Symbol that holds \b equate information for a constant

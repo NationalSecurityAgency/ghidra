@@ -6,9 +6,9 @@ apply plugin: 'eclipse'
 
 eclipse.project.name = 'Processors HCS12'
 
-sleighCompile {
-	args '-l'
-}
+sleighCompileOptions = [
+	'-l'
+]
 
 dependencies {
 	compile project(':Base')

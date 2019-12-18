@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,80 +26,77 @@ import java.util.NoSuchElementException;
  * correspond to an index value.
  */
 class FixedIndexTable extends IndexTable {
-	
-	private static final Class<?>[] fieldClasses = {
-	    BinaryField.class, 	// index data
+
+	private static final Class<?>[] fieldClasses = { BinaryField.class, 	// index data
 	};
-	
-	private static final String[] fieldNames = {
-		"IndexBuffer"
-	};
-		
+
+	private static final String[] fieldNames = { "IndexBuffer" };
+
 	private static Schema indexSchema = new Schema(0, "IndexKey", fieldClasses, fieldNames);
-		
+
 	/**
 	 * Construct a new secondary index which is based upon a field within the
 	 * primary table specified by name.
-	 * @param db database handle
 	 * @param primaryTable primary table.
 	 * @param colIndex identifies the indexed column within the primary table.
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs 
 	 */
 	FixedIndexTable(Table primaryTable, int colIndex) throws IOException {
-		this(primaryTable,  
-			primaryTable.getDBHandle().getMasterTable().createTableRecord(primaryTable.getName(), indexSchema, colIndex));
+		this(primaryTable, primaryTable.getDBHandle().getMasterTable().createTableRecord(
+			primaryTable.getName(), indexSchema, colIndex));
 	}
-	
+
 	/**
 	 * Construct a new or existing secondary index. An existing index must have
 	 * its' root ID specified within the tableRecord.
-	 * @param db database handle
-	 * @param bufferMgr database buffer manager
+	 * @param primaryTable primary table.
 	 * @param indexTableRecord specifies the index parameters.
+	 * @throws IOException thrown if an IO error occurs 
 	 */
-	FixedIndexTable(Table primaryTable, TableRecord indexTableRecord) {
+	FixedIndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
 		super(primaryTable, indexTableRecord);
 	}
-	
+
 	/**
 	 * Find all primary keys which correspond to the specified indexed field
 	 * value.
-	 * @param field the field value to search for.
+	 * @param indexValue the field value to search for.
 	 * @return list of primary keys
+	 * @throws IOException thrown if an IO error occurs 
 	 */
 	@Override
-    long[] findPrimaryKeys(Field indexValue) throws IOException {
+	long[] findPrimaryKeys(Field indexValue) throws IOException {
 		if (!indexValue.getClass().equals(fieldType.getClass()))
 			throw new IllegalArgumentException("Incorrect indexed field type");
 		Record indexRecord = indexTable.getRecord(indexValue.getLongValue());
 		if (indexRecord == null)
 			return emptyKeyArray;
 		IndexBuffer indexBuffer = new IndexBuffer(indexValue, indexRecord.getBinaryData(0));
-		return indexBuffer.getPrimaryKeys();		
+		return indexBuffer.getPrimaryKeys();
 	}
-	
+
 	/**
 	 * Get the number of primary keys which correspond to the specified indexed field
 	 * value.
-	 * @param field the field value to search for.
+	 * @param indexValue the field value to search for.
 	 * @return key count
 	 */
 	@Override
-    int getKeyCount(Field indexValue) throws IOException {
+	int getKeyCount(Field indexValue) throws IOException {
 		if (!indexValue.getClass().equals(fieldType.getClass()))
 			throw new IllegalArgumentException("Incorrect indexed field type");
 		Record indexRecord = indexTable.getRecord(indexValue.getLongValue());
 		if (indexRecord == null)
 			return 0;
 		IndexBuffer indexBuffer = new IndexBuffer(indexValue, indexRecord.getBinaryData(0));
-		return indexBuffer.keyCount;		
+		return indexBuffer.keyCount;
 	}
-	
+
 	/*
 	 * @see ghidra.framework.store.db.IndexTable#addEntry(ghidra.framework.store.db.Record)
 	 */
 	@Override
-    void addEntry(Record record) throws IOException {
+	void addEntry(Record record) throws IOException {
 		Field indexField = record.getField(colIndex);
 		long secondaryKey = indexField.getLongValue();
 		Record indexRecord = indexTable.getRecord(secondaryKey);
@@ -117,7 +113,7 @@ class FixedIndexTable extends IndexTable {
 	 * @see ghidra.framework.store.db.IndexTable#deleteEntry(ghidra.framework.store.db.Record)
 	 */
 	@Override
-    void deleteEntry(Record record) throws IOException {
+	void deleteEntry(Record record) throws IOException {
 		Field indexField = record.getField(colIndex);
 		long secondaryKey = indexField.getLongValue();
 		Record indexRecord = indexTable.getRecord(secondaryKey);
@@ -134,7 +130,7 @@ class FixedIndexTable extends IndexTable {
 			}
 		}
 	}
-	
+
 	/**
 	 * Get the index buffer associated with the specified index key
 	 * @param indexKey index key
@@ -145,30 +141,32 @@ class FixedIndexTable extends IndexTable {
 		Record indexRec = indexTable.getRecord(indexKey.getLongValue());
 		return indexRec != null ? new IndexBuffer(indexKey, indexRec.getBinaryData(0)) : null;
 	}
-	
+
 	/*
 	 * @see ghidra.framework.store.db.IndexTable#indexIterator()
 	 */
 	@Override
-    DBFieldIterator indexIterator() throws IOException {
+	DBFieldIterator indexIterator() throws IOException {
 		return new IndexLongIterator();
 	}
-	
+
 	/*
 	 * @see ghidra.framework.store.db.IndexTable#indexIterator(ghidra.framework.store.db.Field, ghidra.framework.store.db.Field, boolean)
 	 */
 	@Override
-    DBFieldIterator indexIterator(Field minField, Field maxField, boolean atMin) throws IOException {
+	DBFieldIterator indexIterator(Field minField, Field maxField, boolean atMin)
+			throws IOException {
 		long min = minField != null ? minField.getLongValue() : Long.MIN_VALUE;
 		long max = maxField != null ? maxField.getLongValue() : Long.MAX_VALUE;
 		return new IndexLongIterator(min, max, atMin);
 	}
-	
+
 	/*
 	 * @see db.IndexTable#indexIterator(db.Field, db.Field, db.Field, boolean)
 	 */
 	@Override
-    DBFieldIterator indexIterator(Field minField, Field maxField, Field startField, boolean before) throws IOException {
+	DBFieldIterator indexIterator(Field minField, Field maxField, Field startField, boolean before)
+			throws IOException {
 		if (startField == null) {
 			throw new IllegalArgumentException("starting index value required");
 		}
@@ -176,39 +174,39 @@ class FixedIndexTable extends IndexTable {
 		long max = maxField != null ? maxField.getLongValue() : Long.MAX_VALUE;
 		return new IndexLongIterator(min, max, startField.getLongValue(), before);
 	}
-	
+
 	/**
 	 * Iterates over index field values within a specified range.
 	 */
 	class IndexLongIterator implements DBFieldIterator {
-		
+
 		private Field lastKey;
 		private Field keyField;
 		private DBLongIterator indexIterator;
 		private boolean hasNext = false;
 		private boolean hasPrev = false;
-		
+
 		/**
 		 * Construct an index field iterator starting with the minimum index value.
 		 */
 		IndexLongIterator() throws IOException {
 			indexIterator = indexTable.longKeyIterator();
 		}
-		
+
 		/**
 		 * Construct an index field iterator.  The iterator is positioned at index 
 		 * value identified by startValue.
 		 * @param startValue minimum index value or null if no minimum
 		 * @param endValue maximum index value or null if no maximum
 		 * @param atStart if true initial position is before startValue, else position
-	 	 * is after endValue
+		 * is after endValue
 		 * @throws IOException
 		 */
 		IndexLongIterator(long minValue, long maxValue, boolean atMin) throws IOException {
-			
+
 			long start = atMin ? minValue : maxValue;
 			indexIterator = indexTable.longKeyIterator(minValue, maxValue, start);
-			
+
 			if (indexIterator.hasNext()) {
 				indexIterator.next();
 				if (atMin) {
@@ -216,17 +214,18 @@ class FixedIndexTable extends IndexTable {
 				}
 			}
 		}
-		
+
 		/**
 		 * @param min
 		 * @param max
 		 * @param longValue
 		 * @param before
 		 */
-		public IndexLongIterator(long minValue, long maxValue, long start, boolean before) throws IOException {
+		public IndexLongIterator(long minValue, long maxValue, long start, boolean before)
+				throws IOException {
 
 			indexIterator = indexTable.longKeyIterator(minValue, maxValue, start);
-			
+
 			if (indexIterator.hasNext()) {
 				long val = indexIterator.next();
 				if (before || val != start) {
@@ -235,6 +234,7 @@ class FixedIndexTable extends IndexTable {
 			}
 		}
 
+		@Override
 		public boolean hasNext() throws IOException {
 			if (hasNext)
 				return true;
@@ -244,12 +244,14 @@ class FixedIndexTable extends IndexTable {
 				keyField.setLongValue(key);
 				hasNext = true;
 				hasPrev = false;
-			} catch (NoSuchElementException e) {
-				return false;	
+			}
+			catch (NoSuchElementException e) {
+				return false;
 			}
 			return true;
 		}
 
+		@Override
 		public boolean hasPrevious() throws IOException {
 			if (hasPrev)
 				return true;
@@ -259,12 +261,14 @@ class FixedIndexTable extends IndexTable {
 				keyField.setLongValue(key);
 				hasNext = false;
 				hasPrev = true;
-			} catch (NoSuchElementException e) {
-				return false;	
+			}
+			catch (NoSuchElementException e) {
+				return false;
 			}
 			return true;
 		}
 
+		@Override
 		public Field next() throws IOException {
 			if (hasNext || hasNext()) {
 				hasNext = false;
@@ -274,7 +278,8 @@ class FixedIndexTable extends IndexTable {
 			}
 			return null;
 		}
-		
+
+		@Override
 		public Field previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
 				hasNext = true;
@@ -290,6 +295,7 @@ class FixedIndexTable extends IndexTable {
 		 * index value (lastKey).
 		 * @see db.DBFieldIterator#delete()
 		 */
+		@Override
 		public boolean delete() throws IOException {
 			if (lastKey == null)
 				return false;
@@ -305,11 +311,11 @@ class FixedIndexTable extends IndexTable {
 					// primary records.  Invoking this method allows the iterator to
 					// recover from the index table change. 
 					indexIterator.delete();
-				}  
+				}
 				lastKey = null;
 				return true;
 			}
 		}
 	}
-	
+
 }

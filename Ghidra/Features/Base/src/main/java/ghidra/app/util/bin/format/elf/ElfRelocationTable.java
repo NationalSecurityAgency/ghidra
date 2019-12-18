@@ -141,6 +141,14 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 	}
 
 	/**
+	 * Get number of relocation entries contained within this table
+	 * @return relocation entry count
+	 */
+	public int getRelocationCount() {
+		return relocs.length;
+	}
+
+	/**
 	 * Returns the associated symbol table.
 	 * A relocation object contains a symbol index.
 	 * This index is into this symbol table.

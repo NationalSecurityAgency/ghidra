@@ -16,7 +16,7 @@
  */
 package ghidra.pcodeCPort.slgh_compile.regression;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.*;
 import java.util.*;
@@ -167,11 +167,9 @@ public class SleighCompileRegressionTest extends AbstractGenericTest {
 
 	private int runActualCompiler(File inputFile, File actualFile)
 			throws JDOMException, IOException, RecognitionException {
-		return SleighCompileLauncher.runMain(
-			new String[] { "-DMIPS=../../../../../../ghidra/Ghidra/Processors/MIPS",
-				"-D8051=../../../../../../ghidra/Ghidra/Processors/8051",
-				inputFile.getAbsolutePath(), actualFile.getAbsolutePath() },
-			new HashMap<String, String>());
+		return SleighCompileLauncher.runMain(new String[] { "-DBaseDir=../../../../../../",
+			"-DMIPS=ghidra/Ghidra/Processors/MIPS", "-D8051=ghidra/Ghidra/Processors/8051",
+			inputFile.getAbsolutePath(), actualFile.getAbsolutePath() });
 	}
 
 	private static final Pattern SPACEMATCH = Pattern.compile("^\\s*<print piece=\" \"/>\\s*$");

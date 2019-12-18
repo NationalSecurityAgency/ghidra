@@ -807,7 +807,7 @@ public class DBHandle {
 	 * Load existing tables from database.
 	 * @throws IOException thrown if IO error occurs.
 	 */
-	private void loadTables() {
+	private void loadTables() throws IOException {
 
 		tables = new Hashtable<>();
 		TableRecord[] tableRecords = masterTable.getTableRecords();

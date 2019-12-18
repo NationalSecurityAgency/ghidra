@@ -74,9 +74,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		addedSourceArchiveIds = new HashSet<Long>();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#dataTypeChanged(long)
-	 */
 	@Override
 	public synchronized void dataTypeChanged(long id) {
 		if (!inTransaction) {
@@ -88,9 +85,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#dataTypeAdded(long)
-	 */
 	@Override
 	public synchronized void dataTypeAdded(long id) {
 		if (!inTransaction) {
@@ -99,25 +93,16 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		tmpAddedDataTypeIds.add(new Long(id));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#getDataTypeChanges()
-	 */
 	@Override
 	public synchronized long[] getDataTypeChanges() {
 		return getLongs(changedDataTypeIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#getDataTypeAdditions()
-	 */
 	@Override
 	public synchronized long[] getDataTypeAdditions() {
 		return getLongs(addedDataTypeIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#categoryChanged(long)
-	 */
 	@Override
 	public synchronized void categoryChanged(long id) {
 		if (!inTransaction) {
@@ -129,9 +114,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#categoryAdded(long)
-	 */
 	@Override
 	public synchronized void categoryAdded(long id) {
 		if (!inTransaction) {
@@ -140,25 +122,16 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		tmpAddedCategoryIds.add(new Long(id));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#getCategoryChanges()
-	 */
 	@Override
 	public synchronized long[] getCategoryChanges() {
 		return getLongs(changedCategoryIds);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#getCategoryAdditions()
-	 */
 	@Override
 	public synchronized long[] getCategoryAdditions() {
 		return getLongs(addedCategoryIds);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#archiveAdded(long)
-	 */
 	@Override
 	public void sourceArchiveAdded(long id) {
 		if (!inTransaction) {
@@ -167,9 +140,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		tmpAddedSourceArchiveIds.add(new Long(id));
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#archiveChanged(long)
-	 */
 	@Override
 	public void sourceArchiveChanged(long id) {
 		if (!inTransaction) {
@@ -181,17 +151,11 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#getArchiveAdditions()
-	 */
 	@Override
 	public long[] getSourceArchiveAdditions() {
 		return getLongs(addedSourceArchiveIds);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.listing.DataTypeChangeSet#getArchiveChanges()
-	 */
 	@Override
 	public long[] getSourceArchiveChanges() {
 		return getLongs(changedSourceArchiveIds);
@@ -213,9 +177,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		clearUndo();
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#startTransaction()
-	 */
 	@Override
 	public synchronized void startTransaction() {
 		redoList.clear();
@@ -229,9 +190,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		tmpAddedSourceArchiveIds = new HashSet<Long>();
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#endTransaction(boolean)
-	 */
 	@Override
 	public synchronized void endTransaction(boolean commit) {
 		if (!inTransaction) {
@@ -268,9 +226,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#undo()
-	 */
 	@Override
 	public synchronized void undo() {
 		MyChangeDiff diff = undoList.removeLast();
@@ -283,9 +238,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		redoList.addLast(diff);
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#redo()
-	 */
 	@Override
 	public synchronized void redo() {
 		MyChangeDiff diff = redoList.removeLast();
@@ -298,26 +250,17 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		undoList.addLast(diff);
 	}
 
-	/**
-	 * @see ghidra.framework.model.ChangeSet#clearUndo()
-	 */
 	@Override
 	public synchronized void clearUndo() {
 		undoList.clear();
 		redoList.clear();
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectDBChangeSet#setMaxUndos(int)
-	 */
 	@Override
 	public synchronized void setMaxUndos(int numUndos) {
 		this.numUndos = numUndos;
 	}
 
-	/**
-	 * @see ghidra.framework.model.ChangeSet#read(ghidra.framework.store.db.DBHandle)
-	 */
 	@Override
 	public synchronized void read(DBHandle dbh) throws IOException {
 
@@ -343,6 +286,9 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 	private void readIdRecords(DBHandle dbh, String tableName, Set<Long> ids) throws IOException {
 		Table table = dbh.getTable(tableName);
 		if (table != null) {
+			if (table.getSchema().getVersion() != 0) {
+				throw new IOException("Change data produced with newer version of Ghidra");
+			}
 			RecordIterator it = table.iterator();
 			while (it.hasNext()) {
 				Record rec = it.next();
@@ -351,9 +297,6 @@ class DataTypeArchiveDBChangeSet implements DataTypeArchiveChangeSet, DomainObje
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.ChangeSet#write(ghidra.framework.store.db.DBHandle)
-	 */
 	@Override
 	public synchronized void write(DBHandle dbh, boolean isRecoverySave) throws IOException {
 
