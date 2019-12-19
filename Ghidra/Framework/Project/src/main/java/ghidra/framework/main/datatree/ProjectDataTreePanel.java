@@ -119,8 +119,8 @@ public class ProjectDataTreePanel extends JPanel {
 	}
 
 	/**
-	 * Update the project name.
-	 * @param newName
+	 * Update the project name
+	 * @param newName the new name
 	 */
 	public void updateProjectName(String newName) {
 		if (root instanceof DomainFolderRootNode) {
@@ -338,8 +338,9 @@ public class ProjectDataTreePanel extends JPanel {
 			}
 		}
 
-		ProjectDataTreeActionContext context = new ProjectDataTreeActionContext(provider,
-			projectData, selectionPaths, domainFolderList, domainFileList, tree, isActiveProject);
+		ProjectDataTreeActionContext context =
+			new ProjectDataTreeActionContext(provider, projectData, selectionPaths,
+				domainFolderList, domainFileList, tree, isActiveProject);
 		boolean isTransient = tool == null; // null for stand-alone dialog, not the project's tree
 		context.setTransient(isTransient);
 		return context;

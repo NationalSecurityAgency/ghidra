@@ -20,7 +20,7 @@ import java.util.List;
 
 import docking.widgets.OptionDialog;
 import ghidra.framework.client.*;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatable.DomainFileProviderContextAction;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -50,7 +50,7 @@ public abstract class VersionControlAction extends DomainFileProviderContextActi
 	 * or is version controlled.
 	 */
 	@Override
-	public boolean isAddToPopup(DomainFileProvider context) {
+	public boolean isAddToPopup(DomainFileContext context) {
 
 		if (!context.isInActiveProject()) {
 			return false;

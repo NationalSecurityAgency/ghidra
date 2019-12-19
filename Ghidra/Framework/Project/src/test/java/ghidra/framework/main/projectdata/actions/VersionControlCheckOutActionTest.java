@@ -15,7 +15,7 @@
  */
 package ghidra.framework.main.projectdata.actions;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -179,6 +179,10 @@ public class VersionControlCheckOutActionTest extends AbstractDockingTest {
 		spyLogger.assertLogMessage("Checkout", "completed", "1");
 		assertNoDisplayedMessages();
 	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================
 
 	private void checkout(VersionControlCheckOutAction action, Set<DomainFile> files) {
 		runSwing(() -> action.checkOut(files), false);

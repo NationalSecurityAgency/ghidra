@@ -170,9 +170,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#serviceAdded(java.lang.Class, java.lang.Object)
-	 */
 	@Override
 	public void serviceAdded(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == CodeViewerService.class) {
@@ -616,10 +613,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return new Class[] { DataTypeArchive.class };
 	}
 
-	/**
-	 * Method called if the plugin supports this domain file.
-	 * @param data the data to be used by the running tool
-	 */
 	@Override
 	public boolean acceptData(DomainFile[] data) {
 		if (data == null || data.length == 0) {
@@ -780,6 +773,14 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return true;
 	}
 
+	public DataTypeConflictHandler getConflictHandler() {
+		return provider.getConflictHandler();
+	}
+
+	void setStatus(String message) {
+		tool.setStatusInfo(message);
+	}
+
 	public static boolean isValidTypeDefBaseType(Component parent, DataType dataType) {
 		if (dataType instanceof FactoryDataType) {
 			Msg.showError(DataTypeManagerPlugin.class, parent, "TypeDef not allowed",
@@ -797,13 +798,5 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			return false;
 		}
 		return true;
-	}
-
-	public DataTypeConflictHandler getConflictHandler() {
-		return provider.getConflictHandler();
-	}
-
-	void setStatus(String message) {
-		tool.setStatusInfo(message);
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,32 @@
  */
 package ghidra.framework.main.datatable;
 
-import ghidra.framework.model.DomainFile;
-
 import java.util.List;
 
-public interface DomainFileProvider {
-	List<DomainFile> getSelectedFiles();
+import ghidra.framework.model.DomainFile;
 
-	int getFileCount();
+/**
+ * A context that provides information to actions about domain files that are selected in the tool
+ */
+public interface DomainFileContext {
 
-	boolean isInActiveProject();
+	/**
+	 * The selected files or empty if no files are selected
+	 * @return the files
+	 */
+	public List<DomainFile> getSelectedFiles();
+
+	/**
+	 * Returns the count of selected files
+	 * @return the count of selected files
+	 */
+	public int getFileCount();
+
+	/**
+	 * True if the current set of files is in the active project (false implies a non-active, 
+	 * read-only project)
+	 * 
+	 * @return true if in the active project
+	 */
+	public boolean isInActiveProject();
 }

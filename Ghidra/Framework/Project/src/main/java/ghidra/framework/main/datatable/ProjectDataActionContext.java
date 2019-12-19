@@ -23,7 +23,11 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import ghidra.framework.model.*;
 
-public class ProjectDataActionContext extends ActionContext implements DomainFileProvider {
+/**
+ * A context that understands files that live in a {@link Project}.  Most of the clients of
+ * this context will use its notion of selected {@link DomainFile}s and folders.
+ */
+public class ProjectDataActionContext extends ActionContext implements DomainFileContext {
 
 	private List<DomainFolder> selectedFolders;
 	private List<DomainFile> selectedFiles;
@@ -35,6 +39,7 @@ public class ProjectDataActionContext extends ActionContext implements DomainFil
 	public ProjectDataActionContext(ComponentProvider provider, ProjectData projectData,
 			Object contextObject, List<DomainFolder> selectedFolders,
 			List<DomainFile> selectedFiles, Component comp, boolean isActiveProject) {
+
 		super(provider, contextObject, comp);
 		this.projectData = projectData;
 		this.selectedFolders = selectedFolders;

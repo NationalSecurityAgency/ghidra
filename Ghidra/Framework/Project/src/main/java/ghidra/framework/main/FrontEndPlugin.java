@@ -1009,9 +1009,6 @@ public class FrontEndPlugin extends Plugin
 		tool.addLocalAction(frontEndProvider, propertiesAction);
 	}
 
-	/**
-	 * Delete the tool template from the tool chest.
-	 */
 	private void delete(String toolName) {
 		if (!confirmDelete(toolName + " from your local tool chest?")) {
 			return;
@@ -1049,17 +1046,11 @@ public class FrontEndPlugin extends Plugin
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.main.FrontEndService#addProjectListener(ghidra.framework.model.ProjectListener)
-	 */
 	@Override
 	public void addProjectListener(ProjectListener l) {
 		((FrontEndTool) tool).addProjectListener(l);
 	}
 
-	/**
-	 * @see ghidra.framework.main.FrontEndService#removeProjectListener(ghidra.framework.model.ProjectListener)
-	 */
 	@Override
 	public void removeProjectListener(ProjectListener l) {
 		if (tool != null) { // tool is null when we've been disposed
