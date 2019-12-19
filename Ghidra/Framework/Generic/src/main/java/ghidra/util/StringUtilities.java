@@ -15,10 +15,10 @@
  */
 package ghidra.util;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -555,9 +555,9 @@ public class StringUtilities {
 			length *= -1;
 		}
 
-		int numFillers = length - source.length();
-		StringBuffer buffer = new StringBuffer();
-		for (int f = 0; f < numFillers; f++) {
+		int n = length - source.length();
+		StringBuilder buffer = new StringBuilder();
+		for (int i = 0; i < n; i++) {
 			buffer.append(filler);
 		}
 
@@ -756,23 +756,6 @@ public class StringUtilities {
 		return new String(bytes);
 	}
 
-	/**
-	 * Turn the given data into an attractive string, with the separator of your choosing
-	 *
-	 * @param collection the data from which a string will be generated
-	 * @param separator the string used to separate elements
-	 * @return a string representation of the given list
-	 */
-	public static String toString(Collection<?> collection, String separator) {
-		if (collection == null) {
-			return null;
-		}
-
-		String asString =
-			collection.stream().map(o -> o.toString()).collect(Collectors.joining(separator));
-		return "[ " + asString + " ]";
-	}
-
 	public static String toStringWithIndent(Object o) {
 		if (o == null) {
 			return "null";
@@ -781,19 +764,6 @@ public class StringUtilities {
 		String asString = o.toString();
 		String indented = indentLines(asString, "\t");
 		return indented;
-	}
-
-	/**
-	 * Reverse the characters in the given string
-	 *
-	 * @param s the string to reverse
-	 * @return the reversed string
-	 */
-	public static String reverse(String s) {
-		if (s == null) {
-			return null;
-		}
-		return new StringBuilder(s).reverse().toString();
 	}
 
 	/**

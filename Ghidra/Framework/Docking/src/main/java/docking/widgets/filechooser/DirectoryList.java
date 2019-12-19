@@ -29,8 +29,10 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
 import docking.event.mouse.GMouseListenerAdapter;
+import docking.widgets.AutoLookup;
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GList;
+import docking.widgets.list.GListAutoLookup;
 import ghidra.util.exception.AssertException;
 
 class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryModelIf {
@@ -110,31 +112,9 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
-				if (e.getKeyCode() != KeyEvent.VK_ENTER) {
-					return;
-				}
-				e.consume();
-
-				int[] selectedIndices = getSelectedIndices();
-				if (selectedIndices.length == 0) {
-					chooser.okCallback();
-					// this implies the user has somehow put focus into the table, but has not
-					// made a selection...just let the chooser decide what to do
-					return;
-				}
-
-				if (selectedIndices.length > 1) {
-					// let the chooser decide what to do with multiple rows selected
-					chooser.okCallback();
-					return;
-				}
-
-				File file = model.getFile(selectedIndices[0]);
-				if (chooser.getModel().isDirectory(file)) {
-					chooser.setCurrentDirectory(file);
-				}
-				else {
-					chooser.userChoseFile(file);
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					e.consume();
+					handleEnterKey();
 				}
 			}
 		});
@@ -213,6 +193,31 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		add(listEditor);
 	}
 
+	private void handleEnterKey() {
+
+		int[] selectedIndices = getSelectedIndices();
+		if (selectedIndices.length == 0) {
+			chooser.okCallback();
+			// this implies the user has somehow put focus into the table, but has not
+			// made a selection...just let the chooser decide what to do
+			return;
+		}
+
+		if (selectedIndices.length > 1) {
+			// let the chooser decide what to do with multiple rows selected
+			chooser.okCallback();
+			return;
+		}
+
+		File file = model.getFile(selectedIndices[0]);
+		if (chooser.getModel().isDirectory(file)) {
+			chooser.setCurrentDirectory(file);
+		}
+		else {
+			chooser.userChoseFile(file);
+		}
+	}
+
 	private void maybeSelectItem(MouseEvent e) {
 		Point point = e.getPoint();
 		int index = locationToIndex(point);
@@ -249,6 +254,16 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			selectedFiles.add(model.getFile(index));
 		}
 		chooser.userSelectedFiles(selectedFiles);
+	}
+
+	@Override
+	protected AutoLookup createAutoLookup() {
+		return new GListAutoLookup<>(this) {
+			@Override
+			protected boolean canBinarySearchColumn(int column) {
+				return false;
+			}
+		};
 	}
 
 	@Override

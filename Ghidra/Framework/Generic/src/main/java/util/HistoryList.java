@@ -16,7 +16,10 @@
 package util;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.FixedSizeStack;
@@ -47,7 +50,7 @@ import ghidra.util.datastruct.FixedSizeStack;
 public class HistoryList<T> {
 
 	private final FixedSizeStack<T> historyStack;
-	private final Consumer<T> itemSelectedCallback;
+	private final BiConsumer<T, T> itemSelectedCallback;
 	private int historyIndex;
 	private boolean isBroadcasting;
 
@@ -64,6 +67,20 @@ public class HistoryList<T> {
 	 *        going back or forward
 	 */
 	public HistoryList(int size, Consumer<T> itemSelectedCallback) {
+		this(size, asBiConsumer(itemSelectedCallback));
+	}
+
+	/**
+	 * The sized passed here limits the size of the list, with the oldest items being dropped
+	 * as the list grows.  The given callback will be called when {@link #goBack()} or 
+	 * {@link #goForward()} are called.
+	 * 
+	 * @param size the max number of items to keep in the list
+	 * @param itemSelectedCallback the function to call when the client selects an item by 
+	 *        going back or forward.  This callback will be passed the newly selected item as 
+	 *        the first argument and the previously selected item as the second argument.
+	 */
+	public HistoryList(int size, BiConsumer<T, T> itemSelectedCallback) {
 		Objects.requireNonNull(itemSelectedCallback, "Item selected callback cannot be null");
 
 		if (size < 1) {
@@ -72,6 +89,10 @@ public class HistoryList<T> {
 
 		this.itemSelectedCallback = itemSelectedCallback;
 		this.historyStack = new FixedSizeStack<>(size);
+	}
+
+	private static <T> BiConsumer<T, T> asBiConsumer(Consumer<T> consumer) {
+		return (t, ignored) -> consumer.accept(t);
 	}
 
 //==================================================================================================
@@ -170,9 +191,10 @@ public class HistoryList<T> {
 			return;
 		}
 
+		T leaving = getCurrentHistoryItem();
 		T t = historyStack.get(--historyIndex);
 		dropNull();
-		broadcast(t);
+		broadcast(t, leaving);
 	}
 
 	/**
@@ -198,8 +220,9 @@ public class HistoryList<T> {
 			return;
 		}
 
+		T leaving = getCurrentHistoryItem();
 		T t = historyStack.get(++historyIndex);
-		broadcast(t);
+		broadcast(t, leaving);
 	}
 
 	/**
@@ -342,10 +365,10 @@ public class HistoryList<T> {
 		historyStack.remove(itemIndex);
 	}
 
-	private void broadcast(T t) {
+	private void broadcast(T t, T leaving) {
 		try {
 			isBroadcasting = true;
-			itemSelectedCallback.accept(t);
+			itemSelectedCallback.accept(t, leaving);
 		}
 		finally {
 			isBroadcasting = false;
@@ -362,6 +385,9 @@ public class HistoryList<T> {
 	@Override
 	public String toString() {
 
+		String key = "    items: ";
+		String newlinePad = StringUtils.repeat(' ', key.length());
+
 		StringBuilder buffy = new StringBuilder();
 		for (int i = 0; i < historyStack.size(); i++) {
 			T t = historyStack.get(i);
@@ -377,13 +403,13 @@ public class HistoryList<T> {
 			}
 
 			if (i != historyStack.size() - 1) {
-				buffy.append(',').append(' ');
+				buffy.append(',').append('\n').append(newlinePad);
 			}
 		}
 
 		//@formatter:off
 		return "{\n" +
-			"\titems: " + buffy.toString() + "\n" + 
+			key + buffy.toString() + "\n" + 
 		"}";
 		//@formatter:on				
 	}

@@ -33,6 +33,7 @@ import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
 import docking.actions.ToolActions;
+import docking.widgets.AutoLookup;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -80,15 +81,13 @@ public class GTable extends JTable {
 		KeyStroke.getKeyStroke(KeyEvent.VK_A, CONTROL_KEY_MODIFIER_MASK);
 
 	private static final String LAST_EXPORT_FILE = "LAST_EXPORT_DIR";
-
-	private int userDefinedRowHeight;
+	private static final KeyStroke ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
 
 	private boolean isInitialized;
 	private boolean enableActionKeyBindings;
 	private KeyListener autoLookupListener;
-	private long lastLookupTime;
-	private String lookupString;
-	private int lookupColumn = -1;
+
+	private AutoLookup autoLookup = createAutoLookup();
 
 	/** A list of default renderers created by this table */
 	protected List<TableCellRenderer> defaultGTableRendererList = new ArrayList<>();
@@ -106,10 +105,9 @@ public class GTable extends JTable {
 	private SelectionManager selectionManager;
 	private Integer visibleRowCount;
 
-	public static final long KEY_TIMEOUT = 800;//made public for JUnits...
-	private static final KeyStroke ESCAPE = KeyStroke.getKeyStroke("ESCAPE");
-
+	private int userDefinedRowHeight;
 	private TableModelListener rowHeightListener = e -> adjustRowHeight();
+
 	private TableColumnModelListener tableColumnModelListener = null;
 	private final Map<Integer, GTableCellRenderingData> columnRenderingDataMap = new HashMap<>();
 
@@ -187,6 +185,14 @@ public class GTable extends JTable {
 	@Override
 	protected TableColumnModel createDefaultColumnModel() {
 		return new GTableColumnModel(this);
+	}
+
+	/**
+	 * Allows subclasses to change the type of {@link AutoLookup} created by this table
+	 * @return the auto lookup 
+	 */
+	protected AutoLookup createAutoLookup() {
+		return new GTableAutoLookup(this);
 	}
 
 	@Override
@@ -273,115 +279,18 @@ public class GTable extends JTable {
 		}
 	}
 
-	private int getRow(TableModel model, String keyString) {
-		if (keyString == null) {
-			return -1;
-		}
-
-		int currRow = getSelectedRow();
-		if (currRow >= 0 && currRow < getRowCount() - 1) {
-			if (keyString.length() == 1) {
-				++currRow;
-			}
-			Object obj = getValueAt(currRow, convertColumnIndexToView(lookupColumn));
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
-				return currRow;
-			}
-		}
-		if (model instanceof SortedTableModel) {
-			SortedTableModel sortedModel = (SortedTableModel) model;
-			if (lookupColumn == sortedModel.getPrimarySortColumnIndex()) {
-				return autoLookupBinary(sortedModel, keyString);
-			}
-		}
-		return autoLookupLinear(keyString);
+	/**
+	 * Sets the delay between keystrokes after which each keystroke is considered a new lookup
+	 * @param timeout the timeout
+	 * @see #setAutoLookupColumn(int)
+	 * @see AutoLookup#KEY_TYPING_TIMEOUT
+	 */
+	public void setAutoLookupTimeout(long timeout) {
+		autoLookup.setTimeout(timeout);
 	}
 
-	private int autoLookupLinear(String keyString) {
-		int rowCount = getRowCount();
-		int startRow = getSelectedRow();
-		int counter = 0;
-		int col = convertColumnIndexToView(lookupColumn);
-		for (int i = startRow + 1; i < rowCount; i++) {
-			Object obj = getValueAt(i, col);
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
-				return i;
-			}
-			if (counter++ > TableUtils.MAX_SEARCH_ROWS) {
-				return -1;
-			}
-		}
-		for (int i = 0; i < startRow; i++) {
-			Object obj = getValueAt(i, col);
-			if (obj != null && obj.toString().toLowerCase().startsWith(keyString.toLowerCase())) {
-				return i;
-			}
-			if (counter++ > TableUtils.MAX_SEARCH_ROWS) {
-				return -1;
-			}
-		}
-		return -1;
-	}
-
-	private int autoLookupBinary(SortedTableModel model, String keyString) {
-		String modifiedLookupString = keyString;
-
-		int sortedOrder = 1;
-		int primarySortColumnIndex = model.getPrimarySortColumnIndex();
-		TableSortState columnSortState = model.getTableSortState();
-		ColumnSortState sortState = columnSortState.getColumnSortState(primarySortColumnIndex);
-
-		if (!sortState.isAscending()) {
-			sortedOrder = -1;
-			int lastCharPos = modifiedLookupString.length() - 1;
-			char lastChar = modifiedLookupString.charAt(lastCharPos);
-			++lastChar;
-			modifiedLookupString = modifiedLookupString.substring(0, lastCharPos) + lastChar;
-		}
-
-		int min = 0;
-		int max = model.getRowCount() - 1;
-		int col = convertColumnIndexToView(lookupColumn);
-		while (min < max) {
-			int i = (min + max) / 2;
-
-			Object obj = getValueAt(i, col);
-			if (obj == null) {
-				obj = "";
-			}
-
-			int compare = modifiedLookupString.toString().compareToIgnoreCase(obj.toString());
-			compare *= sortedOrder;
-
-			if (compare < 0) {
-				max = i - 1;
-			}
-			else if (compare > 0) {
-				min = i + 1;
-			}
-			else {//compare == 0, MATCH!
-				return i;
-			}
-		}
-
-		String value = getValueAt(min, col).toString();
-		if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-			return min;
-		}
-		if (min - 1 >= 0) {
-			value = getValueAt(min - 1, col).toString();
-			if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-				return min - 1;
-			}
-		}
-		if (min + 1 < dataModel.getRowCount()) {
-			value = getValueAt(min + 1, col).toString();
-			if (value.toLowerCase().startsWith(keyString.toLowerCase())) {
-				return min + 1;
-			}
-		}
-
-		return -1;
+	protected AutoLookup getAutoLookup() {
+		return autoLookup;
 	}
 
 	/**
@@ -394,7 +303,7 @@ public class GTable extends JTable {
 	 * @param lookupColumn the column in which auto-lookup will be enabled
 	 */
 	public void setAutoLookupColumn(int lookupColumn) {
-		this.lookupColumn = lookupColumn;
+		autoLookup.setColumn(convertColumnIndexToView(lookupColumn));
 
 		if (autoLookupListener == null) {
 			autoLookupListener = new KeyAdapter() {
@@ -409,25 +318,7 @@ public class GTable extends JTable {
 						return;
 					}
 
-					if (isIgnorableKeyEvent(e)) {
-						return;
-					}
-
-					long when = e.getWhen();
-					if (when - lastLookupTime > KEY_TIMEOUT) {
-						lookupString = "" + e.getKeyChar();
-					}
-					else {
-						lookupString += "" + e.getKeyChar();
-					}
-
-					int row = getRow(dataModel, lookupString);
-					if (row >= 0) {
-						setRowSelectionInterval(row, row);
-						Rectangle rect = getCellRect(row, 0, false);
-						scrollRectToVisible(rect);
-					}
-					lastLookupTime = when;
+					autoLookup.keyTyped(e);
 				}
 			};
 		}
@@ -439,30 +330,6 @@ public class GTable extends JTable {
 		else {
 			removeKeyListener(autoLookupListener);
 		}
-	}
-
-	private boolean isIgnorableKeyEvent(KeyEvent event) {
-
-		// ignore modified keys, except for SHIFT
-		if (!isUnmodifiedOrShift(event.getModifiersEx())) {
-			return true;
-		}
-
-		if (event.isActionKey() || event.getKeyChar() == KeyEvent.CHAR_UNDEFINED ||
-			Character.isISOControl(event.getKeyChar())) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean isUnmodifiedOrShift(int modifiers) {
-		if (modifiers == 0) {
-			return true;
-		}
-
-		int shift = InputEvent.SHIFT_DOWN_MASK;
-		return (modifiers | shift) != shift;
 	}
 
 	/**
@@ -698,9 +565,6 @@ public class GTable extends JTable {
 		return super.processKeyBinding(ks, e, condition, pressed);
 	}
 
-	/**
-	 * @see javax.swing.JTable#getDefaultRenderer(java.lang.Class)
-	 */
 	@Override
 	public TableCellRenderer getDefaultRenderer(Class<?> columnClass) {
 		if (columnClass == null) {
