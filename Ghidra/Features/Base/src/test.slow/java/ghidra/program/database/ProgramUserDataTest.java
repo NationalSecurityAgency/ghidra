@@ -103,7 +103,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			if (value instanceof String) {
 				StringPropertyMap map =
-					userData.getStringPropery(testName.getMethodName(), propertyName, true);
+					userData.getStringProperty(testName.getMethodName(), propertyName, true);
 				map.add(addr, (String) value);
 			}
 			else {
@@ -176,7 +176,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 			// Verify user data content
 			ProgramUserData userData = program.getProgramUserData();
 			StringPropertyMap map =
-				userData.getStringPropery(testName.getMethodName(), "STRING", false);
+				userData.getStringProperty(testName.getMethodName(), "STRING", false);
 			assertEquals("Str0", map.getString(space.getAddress(0)));
 			assertEquals("Str10", map.getString(space.getAddress(10)));
 			assertNull(map.getString(space.getAddress(20)));
@@ -241,7 +241,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 			// Verify user data content
 			ProgramUserData userData = program.getProgramUserData();
 			StringPropertyMap map =
-				userData.getStringPropery(testName.getMethodName(), "STRING", false);
+				userData.getStringProperty(testName.getMethodName(), "STRING", false);
 			assertEquals("Str0", map.getString(space.getAddress(0)));
 			assertEquals("Str10", map.getString(space.getAddress(10)));
 			assertNull(map.getString(space.getAddress(20)));
@@ -264,7 +264,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 			// Verify user data content
 			ProgramUserData userData = program.getProgramUserData();
 			StringPropertyMap map =
-				userData.getStringPropery(testName.getMethodName(), "STRING", false);
+				userData.getStringProperty(testName.getMethodName(), "STRING", false);
 			assertEquals("Str0", map.getString(space.getAddress(0)));
 			assertEquals("Str10a", map.getString(space.getAddress(10)));
 			assertEquals("Str20a", map.getString(space.getAddress(20)));
@@ -314,7 +314,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 			// Verify user data content
 			ProgramUserData userData = program.getProgramUserData();
 			StringPropertyMap map =
-				userData.getStringPropery(testName.getMethodName(), "STRING", false);
+				userData.getStringProperty(testName.getMethodName(), "STRING", false);
 			assertEquals("Str0", map.getString(space.getAddress(0)));
 			assertEquals("Str10", map.getString(space.getAddress(10)));
 			assertNull(map.getString(space.getAddress(20)));
