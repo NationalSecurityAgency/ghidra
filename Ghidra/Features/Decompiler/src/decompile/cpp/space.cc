@@ -17,9 +17,11 @@
 #include "translate.hh"
 
 /// Calculate \e highest based on \e addressSize, and \e wordsize.
+/// This also calculates the default pointerLowerBound
 void AddrSpace::calcScaleMask(void)
 
 {
+  pointerLowerBound = (addressSize < 3) ? 0x100: 0x1000;
   highest = calc_mask(addressSize); // Maximum address
   highest = highest * wordsize + (wordsize-1); // Maximum byte address
 }
@@ -47,6 +49,7 @@ AddrSpace::AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp,const s
   index = ind;
   delay = dl;
   deadcodedelay = dl;		// Deadcode delay initially starts the same as heritage delay
+  minimumPointerSize = 0;	// (initially) assume pointers must match the space size exactly
   shortcut = ' ';		// Placeholder meaning shortcut is unassigned
 
   // These are the flags we allow to be set from constructor
@@ -72,6 +75,7 @@ AddrSpace::AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp)
   type = tp;
   flags = (heritaged | does_deadcode);		// Always on unless explicitly turned off in derived constructor
   wordsize = 1;
+  minimumPointerSize = 0;
   shortcut = ' ';
   // We let big_endian get set by attribute
 }
@@ -102,6 +106,7 @@ void AddrSpace::truncateSpace(uint4 newsize)
 {
   setFlags(truncated);
   addressSize = newsize;
+  minimumPointerSize = newsize;
   calcScaleMask();
 }
 

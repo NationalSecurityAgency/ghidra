@@ -83,7 +83,8 @@ public:
     overlaybase = 64,		///< This is the base space for overlay space(s)
     truncated = 128,		///< Space is truncated from its original size, expect pointers larger than this size
     hasphysical = 256,		///< Has physical memory associated with it
-    is_otherspace = 512		///< Quick check for the OtherSpace derived class
+    is_otherspace = 512,	///< Quick check for the OtherSpace derived class
+    has_nearpointers = 0x400	///< Does there exist near pointers into this space
   };
   enum {
     constant_space_index = 0,	///< Reserved index for the constant space
@@ -96,11 +97,13 @@ private:
   int4 refcount;		///< Number of managers using this space
   uint4 flags;			///< Attributes of the space
   uintb highest;	        ///< Highest (byte) offset into this space
+  uintb pointerLowerBound;	///< Offset below which we don't search for pointers
   char shortcut;		///< Shortcut character for printing
 protected:
   string name;			///< Name of this space
   uint4 addressSize;		///< Size of an address into this space in bytes
   uint4 wordsize;		///< Size of unit being addressed (1=byte)
+  int4 minimumPointerSize;	///< Smallest size of a pointer into \b this space (in bytes)
   int4 index;			///< An integer identifier for the space
   int4 delay;			///< Delay in heritaging this space
   int4 deadcodedelay;		///< Delay before deadcode removal is allowed on this space
@@ -123,6 +126,8 @@ public:
   uint4 getWordSize(void) const; ///< Get the addressable unit size
   uint4 getAddrSize(void) const; ///< Get the size of the space
   uintb getHighest(void) const;  ///< Get the highest byte-scaled address
+  uintb getPointerLowerBound(void) const;	///< Get lower bound for assuming an offset is a pointer
+  int4 getMinimumPtrSize(void) const;	///< Get the minimum pointer size for \b this space
   uintb wrapOffset(uintb off) const; ///< Wrap -off- to the offset that fits into this space
   char getShortcut(void) const; ///< Get the shortcut character
   bool isHeritaged(void) const;	///< Return \b true if dataflow has been traced
@@ -134,6 +139,7 @@ public:
   bool isOverlayBase(void) const; ///< Return \b true if other spaces overlay this space
   bool isOtherSpace(void) const;	///< Return \b true if \b this is the \e other address space
   bool isTruncated(void) const; ///< Return \b true if this space is truncated from its original size
+  bool hasNearPointers(void) const;	///< Return \b true if \e near (truncated) pointers into \b this space are possible
   void printOffset(ostream &s,uintb offset) const;  ///< Write an address offset to a stream
 
   virtual int4 numSpacebase(void) const;	///< Number of base registers associated with this space
@@ -153,6 +159,7 @@ public:
   static uintb byteToAddress(uintb val,uint4 ws); ///< Scale from byte units to addressable units
   static int4 addressToByteInt(int4 val,uint4 ws); ///< Scale int4 from addressable units to byte units
   static int4 byteToAddressInt(int4 val,uint4 ws); ///< Scale int4 from byte units to addressable units
+  static bool compareByIndex(const AddrSpace *a,const AddrSpace *b);	///< Compare two spaces by their index
 };
 
 /// \brief Special AddrSpace for representing constants during analysis.
@@ -333,6 +340,19 @@ inline uintb AddrSpace::getHighest(void) const {
   return highest;
 }
 
+/// Constant offsets are tested against \b this bound as a quick filter before
+/// attempting to lookup symbols.
+/// \return the minimum offset that will be inferred as a pointer
+inline uintb AddrSpace::getPointerLowerBound(void) const {
+  return pointerLowerBound;
+}
+
+/// A value of 0 means the size must match exactly. If the space is truncated, or
+/// if there exists near pointers, this value may be non-zero.
+inline int4 AddrSpace::getMinimumPtrSize(void) const {
+  return minimumPointerSize;
+}
+
 /// Calculate \e off modulo the size of this address space in
 /// order to construct the offset "equivalent" to \e off that
 /// fits properly into this space
@@ -416,6 +436,10 @@ inline bool AddrSpace::isTruncated(void) const {
   return ((flags&truncated)!=0);
 }
 
+inline bool AddrSpace::hasNearPointers(void) const {
+  return ((flags&has_nearpointers)!=0);
+}
+
 /// Some spaces are "virtual", like the stack spaces, where addresses are really relative to a
 /// base pointer stored in a register, like the stackpointer.  This routine will return non-zero
 /// if \b this space is virtual and there is 1 (or more) associated pointer registers
@@ -490,4 +514,13 @@ inline int4 AddrSpace::addressToByteInt(int4 val,uint4 ws) {
 inline int4 AddrSpace::byteToAddressInt(int4 val,uint4 ws) {
   return val/ws;
 }
+
+/// For sorting a sequence of address spaces.
+/// \param a is the first space
+/// \param b is the second space
+/// \return \b true if the first space should come before the second
+inline bool AddrSpace::compareByIndex(const AddrSpace *a,const AddrSpace *b) {
+  return (a->index < b->index);
+}
+
 #endif

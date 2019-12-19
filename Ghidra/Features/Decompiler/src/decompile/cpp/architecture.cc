@@ -94,7 +94,6 @@ Architecture::Architecture(void)
   aggressive_ext_trim = false;
   readonlypropagate = false;
   infer_pointers = true;
-  pointer_lowerbound = 0x1000;
   funcptr_align = 0;
   flowoptions = 0;
   defaultfp = (ProtoModel *)0;
@@ -306,21 +305,19 @@ void Architecture::collectBehaviors(vector<OpBehavior *> &behave) const
   }
 }
 
-/// A \b near pointer is some form of truncated pointer that needs
-/// \e segment or other information to fully form an address.
 /// This method searches for a user-defined segment op registered
-/// for the space
+/// for the given space.
 /// \param spc is the address space to check
-/// \return true if the space supports a segment operation
-bool Architecture::hasNearPointers(AddrSpace *spc) const
+/// \return the SegmentOp object or null
+SegmentOp *Architecture::getSegmentOp(AddrSpace *spc) const
 
 {
-  if (spc->getIndex() >= userops.numSegmentOps()) return false;
+  if (spc->getIndex() >= userops.numSegmentOps()) return (SegmentOp *)0;
   SegmentOp *segdef = userops.getSegmentOp(spc->getIndex());
-  if (segdef == (SegmentOp *)0) return false;
+  if (segdef == (SegmentOp *)0) return (SegmentOp *)0;
   if (segdef->getResolve().space != (AddrSpace *)0)
-    return true;
-  return false;
+    return segdef;
+  return (SegmentOp *)0;
 }
 
 /// Establish details of the prototype for a given function symbol
@@ -601,6 +598,12 @@ void Architecture::buildInstructions(DocumentStorage &store)
   TypeOp::registerInstructions(inst,types,translate);
 }
 
+void Architecture::postSpecFile(void)
+
+{
+  cacheAddrSpaceProperties();
+}
+
 /// Once the processor is known, the Translate object can be built and
 /// fully initialized. Processor and compiler specific configuration is performed
 /// \param store will hold parsed configuration information
@@ -615,8 +618,6 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
   insertSpace( new FspecSpace(this,translate,"fspec",numSpaces()));
   insertSpace( new IopSpace(this,translate,"iop",numSpaces()));
   insertSpace( new JoinSpace(this,translate,"join",numSpaces()));
-  if (translate->getDefaultSize() < 3) // For small architectures
-    pointer_lowerbound = 0x100;	// assume constants are pointers starting at a much lower bound
   userops.initialize(this);
   if (translate->getAlignment() <= 8)
     min_funcsymbol_size = translate->getAlignment();
@@ -639,6 +640,48 @@ void Architecture::initializeSegments(void)
     if (sop == (SegmentOp *)0) continue;
     SegmentedResolver *rsolv = new SegmentedResolver(this,sop->getSpace(),sop);
     insertResolver(sop->getSpace(),rsolv);
+  }
+}
+
+/// Determine the minimum pointer size for the space and whether or not there are near pointers.
+/// Set up an ordered list of inferable spaces (where constant pointers can be infered).
+/// Inferable spaces include the default space and anything explicitly listed
+/// in the cspec \<global> tag that is not a register space. An initial list of potential spaces is
+/// passed in that needs to be ordered, filtered, and deduplicated.
+void Architecture::cacheAddrSpaceProperties(void)
+
+{
+  vector<AddrSpace *> copyList = inferPtrSpaces;
+  copyList.push_back(getDefaultSpace());	// Make sure the default space is their
+  inferPtrSpaces.clear();
+  sort(copyList.begin(),copyList.end(),AddrSpace::compareByIndex);
+  AddrSpace *lastSpace = (AddrSpace *)0;
+  for(int4 i=0;i<copyList.size();++i) {
+    AddrSpace *spc = copyList[i];
+    if (spc == lastSpace) continue;
+    lastSpace = spc;
+    if (spc->getDelay() == 0) continue;		// Don't put in a register space
+    if (spc->getType() == IPTR_SPACEBASE) continue;
+    if (spc->isOtherSpace()) continue;
+    if (spc->isOverlay()) continue;
+    inferPtrSpaces.push_back(spc);
+  }
+
+  int4 defPos = -1;
+  for(int4 i=0;i<inferPtrSpaces.size();++i) {
+    AddrSpace *spc = inferPtrSpaces[i];
+    if (spc == getDefaultSpace())
+      defPos = i;
+    SegmentOp *segOp = getSegmentOp(spc);
+    if (segOp != (SegmentOp *)0) {
+      int4 val = segOp->getInnerSize();
+      markNearPointers(spc, val);
+    }
+  }
+  if (defPos > 0) {		// Make sure the default space comes first
+    AddrSpace *tmp = inferPtrSpaces[0];
+    inferPtrSpaces[0] = inferPtrSpaces[defPos];
+    inferPtrSpaces[defPos] = tmp;
   }
 }
 
@@ -749,7 +792,9 @@ void Architecture::parseGlobal(const Element *el)
   for(iter=list.begin();iter!=list.end();++iter) {
     Range range;
     range.restoreXml(*iter,this);
-    symboltab->addRange(scope,range.getSpace(),range.getFirst(),range.getLast());
+    AddrSpace *spc = range.getSpace();
+    inferPtrSpaces.push_back(spc);
+    symboltab->addRange(scope,spc,range.getFirst(),range.getLast());
     if (range.getSpace()->isOverlayBase()) { // If the address space is overlayed
       // We need to duplicate the range being marked as global into the overlay space(s)
       int4 num = numSpaces();

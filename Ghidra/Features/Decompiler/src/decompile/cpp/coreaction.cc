@@ -934,6 +934,66 @@ int4 ActionShadowVar::apply(Funcdata &data)
   return 0;
 }
 
+/// \brief Make a limited search for a LOAD or STORE so we can see the AddrSpace being accessed
+///
+/// We traverse forward through the given PcodeOp, through INT_ADD, INDIRECT, COPY, and MULTIEQUAL
+/// until we hit a LOAD or STORE.
+/// \param op is the given PcodeOp to start the search from
+/// \return the discovered AddrSpace or null
+AddrSpace *ActionConstantPtr::searchForLoadStore(PcodeOp *op)
+
+{
+  for(int4 i=0;i<3;++i) {
+    switch(op->code()) {
+      case CPUI_INT_ADD:
+      case CPUI_COPY:
+      case CPUI_INDIRECT:
+      case CPUI_MULTIEQUAL:
+	op = op->getOut()->loneDescend();
+	break;
+      case CPUI_LOAD:
+      case CPUI_STORE:
+	return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+      default:
+	return (AddrSpace *)0;
+    }
+    if (op == (PcodeOp *)0) break;
+  }
+  return (AddrSpace *)0;
+}
+
+/// \brief Select the AddrSpace in which we infer with the given constant is a pointer
+///
+/// The constant must match the AddrSpace address size. If there is more than one possible match,
+/// search for more information in the syntax tree.
+/// \param vn is the given constant Varnode
+/// \param op is the PcodeOp which uses the constant
+/// \param spaceList is the list of address spaces to select from
+/// \return the selected address space or null
+AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vector<AddrSpace *> &spaceList)
+
+{
+  AddrSpace *resSpace = (AddrSpace *)0;
+  for(int4 i=0;i<spaceList.size();++i) {
+    AddrSpace *spc = spaceList[i];
+    int4 minSize = spc->getMinimumPtrSize();
+    if (minSize == 0) {
+      if (vn->getSize() != spc->getAddrSize())
+	continue;
+    }
+    else if (vn->getSize() < minSize)
+      continue;
+    if (resSpace != (AddrSpace *)0) {
+      AddrSpace *searchSpc = searchForLoadStore(op);
+      if (searchSpc != (AddrSpace *)0)
+	resSpace = searchSpc;
+      break;
+    }
+    resSpace = spc;
+  }
+  return resSpace;
+}
+
 /// \brief Determine if given Varnode might be a pointer constant.
 ///
 /// If it is a pointer, return the symbol it points to, or NULL otherwise. If it is determined
@@ -1001,7 +1061,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
       return (SymbolEntry *)0;
     }
     // Make sure the constant is in the expected range for a pointer
-    if ((glb->pointer_lowerbound != 0)&&(glb->pointer_lowerbound > vn->getOffset()))
+    if (spc->getPointerLowerBound() > vn->getOffset())
       return (SymbolEntry *)0;
     // Check if the constant looks like a single bit or mask
     if (bit_transitions(vn->getOffset(),vn->getSize()) < 3)
@@ -1032,13 +1092,8 @@ int4 ActionConstantPtr::apply(Funcdata &data)
   VarnodeLocSet::const_iterator begiter,enditer;
   Architecture *glb = data.getArch();
   AddrSpace *cspc = glb->getConstantSpace();
-  AddrSpace *rspc = glb->getDefaultSpace();
   SymbolEntry *entry;
   Varnode *vn;
-  bool arenearpointers = glb->hasNearPointers(rspc);
-  int4 minsize = rspc->isTruncated() ? rspc->getAddrSize() : 0;
-  if (minsize > 0)
-    arenearpointers = true;
 
   begiter = data.beginLoc(cspc);
   enditer = data.endLoc(cspc);
@@ -1054,12 +1109,8 @@ int4 ActionConstantPtr::apply(Funcdata &data)
 
     PcodeOp *op = vn->loneDescend();
     if (op == (PcodeOp *)0) continue;
-    if (arenearpointers) {
-      if (vn->getSize() < minsize) continue;
-    }
-    else {
-      if (vn->getSize() != rspc->getAddrSize()) continue;
-    }
+    AddrSpace *rspc = selectInferSpace(vn, op, glb->inferPtrSpaces);
+    if (rspc == (AddrSpace *)0) continue;
     int4 slot = op->getSlot(vn);
     OpCode opc = op->code();
     if (opc == CPUI_INT_ADD) {

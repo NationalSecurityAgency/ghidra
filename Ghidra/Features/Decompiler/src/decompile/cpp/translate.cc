@@ -456,6 +456,16 @@ void AddrSpaceManager::assignShortcut(AddrSpace *spc)
   spc->shortcut = (char)shortcut;
 }
 
+/// \param spc is the AddrSpace to mark
+/// \param size is the (minimum) size of a near pointer in bytes
+void AddrSpaceManager::markNearPointers(AddrSpace *spc,int4 size)
+
+{
+  spc->setFlags(AddrSpace::has_nearpointers);
+  if (spc->minimumPointerSize == 0 && spc->addressSize != size)
+    spc->minimumPointerSize = size;
+}
+
 /// All address spaces have a unique name associated with them.
 /// This routine retrieves the AddrSpace object based on the
 /// desired name.

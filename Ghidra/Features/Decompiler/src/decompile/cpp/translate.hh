@@ -235,6 +235,7 @@ protected:
   void setDefaultSpace(int4 index); ///< Set the default address space
   void setReverseJustified(AddrSpace *spc); ///< Set reverse justified property on this space
   void assignShortcut(AddrSpace *spc);	///< Select a shortcut character for a new space
+  void markNearPointers(AddrSpace *spc,int4 size);	///< Mark that given space can be accessed with near pointers
   void insertSpace(AddrSpace *spc); ///< Add a new address space to the model
   void copySpaces(const AddrSpaceManager *op2);	///< Copy spaces from another manager
   void addSpacebasePointer(SpacebaseSpace *basespace,const VarnodeData &ptrdata,int4 truncSize,bool stackGrowth); ///< Set the base register of a spacebase space
