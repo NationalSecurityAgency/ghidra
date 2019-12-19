@@ -25,9 +25,14 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.FixedSizeHashMap;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class LibraryLookupTable {
+
+	static final String EXPORTS_FILE_EXTENSION = ".exports";
+	static final String ORDINAL_MAPPING_FILE_EXTENSION = ".ord";
+
 	private static final int MAX_CACHE_ITEMS = 10;
 
 	private static Map<String, LibrarySymbolTable> cacheMap =
@@ -111,12 +116,12 @@ public class LibraryLookupTable {
 	}
 
 	public synchronized static ResourceFile createFile(Program program, boolean overwrite,
-			TaskMonitor monitor) throws IOException {
+			TaskMonitor monitor) throws IOException, CancelledException {
 		return createFile(program, overwrite, false, monitor);
 	}
 
 	public synchronized static ResourceFile createFile(Program program, boolean overwrite,
-			boolean inSystem, TaskMonitor monitor) throws IOException {
+			boolean inSystem, TaskMonitor monitor) throws IOException, CancelledException {
 		ResourceFile file = null;
 		int size = program.getLanguage().getLanguageDescription().getSize();
 
@@ -152,22 +157,35 @@ public class LibraryLookupTable {
 			symTab.applyOrdinalFile(existingDefFile, false);
 		}
 
-		if (!monitor.isCancelled()) {
-			File f = file.getFile(true);
-			if (f == null) {
-				Msg.warn(LibraryLookupTable.class, "Can't write to installation directory");
-			}
-			else {
-				symTab.write(f, new File(program.getExecutablePath()), version);
-			}
+		monitor.checkCanceled();
+
+		File f = file.getFile(true);
+		if (f == null) {
+			Msg.warn(LibraryLookupTable.class, "Can't write to installation directory");
+		}
+		else {
+			symTab.write(f, new File(program.getExecutablePath()), version);
 		}
 
 		return file;
 	}
 
 	/**
-	 * Get the symbol table associated with the DLL name.
-	 * 
+	 * Get the symbol table associated with the DLL name.  If not previously
+	 * generated for the given dllName, it will be constructed from a .exports
+	 * file found within the 'symbols' resource area.  If a .exports file
+	 * is not found a similarly named .ord file will be used if found.  The 
+	 * .exports file is a Ghidra XML file formatted file, while the .ord file
+	 * is produced with the Visual Studio DUMPBIN /EXPORTS command.  The default 
+	 * resource area is located within the directory
+	 * <pre>
+	 *   Ghidra/Features/Base/data/symbols/[win32|win64]
+	 * </pre>
+	 * Alternatively, a user specific resource directory may be used which 
+	 * is located at 
+	 * <pre>
+	 *   &lt;USER_HOME&gt;/.ghidra/&lt;.ghidraVersion&gt;/symbols/[win32|win64]
+	 * </pre>
 	 * The cacheMap is a static cache which always returns the same
 	 * instance for a given DLL name.
 	 * 
@@ -212,19 +230,19 @@ public class LibraryLookupTable {
 	}
 
 	synchronized static ResourceFile getExistingExportsFile(String dllName, int size) {
-		return getExistingExtensionedFile(dllName, ".exports", size);
+		return getExistingExtensionedFile(dllName, EXPORTS_FILE_EXTENSION, size);
 	}
 
 	synchronized static ResourceFile getNewExportsFile(String dllName, int size) {
-		return getNewExtensionedFile(dllName, ".exports", size);
+		return getNewExtensionedFile(dllName, EXPORTS_FILE_EXTENSION, size);
 	}
 
 	private static ResourceFile getNewSystemExportsFile(String name, int size) {
-		return getNewSystemExtensionedFile(name, ".exports", size);
+		return getNewSystemExtensionedFile(name, EXPORTS_FILE_EXTENSION, size);
 	}
 
 	synchronized static ResourceFile getExistingOrdinalFile(String dllName, int size) {
-		return getExistingExtensionedFile(dllName, ".ord", size);
+		return getExistingExtensionedFile(dllName, ORDINAL_MAPPING_FILE_EXTENSION, size);
 	}
 
 	synchronized static boolean hasFileAndPathAndTimeStampMatch(File libraryFile, int size) {

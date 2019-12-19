@@ -1,0 +1,31 @@
+Microsoft ordinal to symbol mapping file
+produced using the DUMPBIN /EXPORTS command
+
+This test file is intended to be representitive 
+of the ordinal mapping table format which whose 
+start is identified by the table header starting 
+with the word 'ordinal'
+
+    ordinal    hint RVA     name
+    
+          1         xyz     SymbolName1
+          2       2 abc     SymbolName2
+          
+          ; comments
+
+         20         123     [NONAME] SymbolName3 x y z
+         30       3 456     [NONAME] SymbolName4 a b c
+         25      18         AppPolicyGetClrCompat (forwarded to kernelbase.AppPolicyGetClrCompat)
+         
+         40         567     SymbolName5 (forwarded to ...
+         
+          ; the following symbol will be discarded since it has no name mapping
+         50         910     [NONAME]
+      
+         60         899     [NONAME] SymbolName6 x y z
+
+    Summary
+    
+         other summary information
+            
+    

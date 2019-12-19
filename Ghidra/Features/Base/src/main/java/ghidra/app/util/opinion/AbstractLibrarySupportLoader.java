@@ -139,7 +139,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 
 		if (options != null) {
 			for (Option option : options) {
@@ -336,8 +337,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 		Address imageBaseAddr = language.getAddressFactory().getDefaultAddressSpace().getAddress(
 			loadSpec.getDesiredImageBase());
-		Program program = createProgram(provider, programName, imageBaseAddr, getName(),
-			language, compilerSpec, consumer);
+		Program program = createProgram(provider, programName, imageBaseAddr, getName(), language,
+			compilerSpec, consumer);
 
 		int transactionID = program.startTransaction("importing");
 		boolean success = false;
@@ -623,8 +624,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
 			LoadSpec loadSpec, List<Option> options, MessageLog log, Object consumer,
-			Set<String> unprocessedLibs, List<Program> programList,
-			TaskMonitor monitor) throws CancelledException, IOException {
+			Set<String> unprocessedLibs, List<Program> programList, TaskMonitor monitor)
+			throws CancelledException, IOException {
 
 		if (!libFile.isFile()) {
 			return false;
@@ -658,8 +659,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
 			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, Set<String> unprocessedLibs, List<Program> programList,
-			TaskMonitor monitor)
-			throws CancelledException, IOException {
+			TaskMonitor monitor) throws CancelledException, IOException {
 
 		Program lib = null;
 		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
@@ -670,6 +670,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			return false;
 		}
 		if (!isLoadLibraries(options)) {
+			// TODO: LibraryLookupTable support currently assumes Windows for x86 (32 or 64 bit).
+			//       Need to investigate adding support for other architectures
 			if (LibraryLookupTable.hasFileAndPathAndTimeStampMatch(libFile, size)) {
 				return true;// no need to really import it
 			}
@@ -710,9 +712,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param monitor the task monitor
 	 * @param size the language size
 	 * @param program the loaded library program
+	 * @throws CancelledException thrown is task cancelled
+	 * 
 	 */
 	protected void createExportsFile(String libName, File libFile, MessageLog log,
-			TaskMonitor monitor, int size, Program program) {
+			TaskMonitor monitor, int size, Program program) throws CancelledException {
 
 		if (!LibraryLookupTable.libraryLookupTableFileExists(libName, size) ||
 			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(libFile, size)) {
@@ -728,8 +732,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		}
 	}
 
-	protected LoadSpec getLoadSpec(LoadSpec loadSpec, ByteProvider provider)
-			throws IOException {
+	protected LoadSpec getLoadSpec(LoadSpec loadSpec, ByteProvider provider) throws IOException {
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Collection<LoadSpec> loadSpecs = findSupportedLoadSpecs(provider);
 		if (loadSpecs != null) { // shouldn't be null, but protect against rogue loaders
@@ -758,9 +761,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		// Check based on the original program name, not on the name I gave this program
 		int size = program.getLanguage().getLanguageDescription().getSize();
 
-		LibrarySymbolTable symtab =
-			LibraryLookupTable.getSymbolTable(new File(program.getExecutablePath()).getName(),
-				size);
+		LibrarySymbolTable symtab = LibraryLookupTable.getSymbolTable(
+			new File(program.getExecutablePath()).getName(), size);
 		if (symtab == null) {
 			// now try based on the name given to the program
 			symtab = LibraryLookupTable.getSymbolTable(program.getName(), size);
