@@ -214,11 +214,6 @@ public abstract class ClangHighlightController {
 		addTokensToHighlights(tokens.get(), colorProvider, secondaryHighlightTokens);
 	}
 
-	@Deprecated // for use by subclasses 
-	protected void addHighlight(ClangToken tok, Color hlColor) {
-		addPrimaryHighlight(tok, hlColor);
-	}
-
 	public void addPrimaryHighlights(Supplier<? extends Collection<ClangToken>> tokens,
 			Color hlColor) {
 		Function<ClangToken, Color> colorProvider = token -> hlColor;
@@ -391,7 +386,7 @@ public abstract class ClangHighlightController {
 		listeners.remove(listener);
 	}
 
-	private void notifyListeners() {
+	protected void notifyListeners() {
 		for (ClangHighlightListener listener : listeners) {
 			listener.tokenHighlightsChanged();
 		}
