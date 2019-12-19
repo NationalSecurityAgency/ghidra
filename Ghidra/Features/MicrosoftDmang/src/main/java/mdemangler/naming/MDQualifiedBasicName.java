@@ -61,11 +61,27 @@ public class MDQualifiedBasicName extends MDParsableItem {
 		return -1;
 	}
 
+	/**
+	 * Returns {@code true} if the symbol's Basic Name is of a {@link MDString} type.
+	 *  @return {@code true} if Basic Name is of {@link MDString} type.
+	 */
 	public boolean isString() {
 		if (basicName == null) {
 			return false;
 		}
 		return basicName.isString();
+	}
+
+	/**
+	 * Returns the {@link MDString} from the Basic Name if it is a symbol of that type; else
+	 *  returns null.
+	 *  @return the {@link MDString} or null if does not exist.
+	 */
+	public MDString getMDString() {
+		if (isString()) {
+			return basicName.getMDString();
+		}
+		return null;
 	}
 
 	@Override
