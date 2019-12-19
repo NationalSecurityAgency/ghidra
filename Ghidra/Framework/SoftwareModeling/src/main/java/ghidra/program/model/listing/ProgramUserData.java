@@ -45,7 +45,7 @@ public interface ProgramUserData extends UserData {
 	 * @return property map
 	 * @throws PropertyTypeMismatchException if a conflicting map definition was found
 	 */
-	public StringPropertyMap getStringPropery(String owner, String propertyName, boolean create)
+	public StringPropertyMap getStringProperty(String owner, String propertyName, boolean create)
 			throws PropertyTypeMismatchException;
 
 	/**

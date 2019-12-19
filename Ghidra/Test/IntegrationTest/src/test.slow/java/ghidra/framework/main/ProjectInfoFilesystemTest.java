@@ -231,7 +231,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 			int txId = programUserData.startTransaction();
 			try {
 				StringPropertyMap propertyMap =
-					programUserData.getStringPropery("TEST", "userProp1", true);
+					programUserData.getStringProperty("TEST", "userProp1", true);
 				propertyMap.add(addressFactory.getAddress("0100"), "userValue100");
 				propertyMap.add(addressFactory.getAddress("0200"), "userValue200");
 			}
@@ -271,7 +271,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 			AddressFactory addressFactory = p.getAddressFactory();
 			ProgramUserData programUserData = p.getProgramUserData();
 			StringPropertyMap propertyMap =
-				programUserData.getStringPropery("TEST", "userProp1", false);
+				programUserData.getStringProperty("TEST", "userProp1", false);
 			AddressIterator propertyIterator = propertyMap.getPropertyIterator();
 			Address addr = addressFactory.getAddress("0100");
 			assertEquals(addr, propertyIterator.next());
