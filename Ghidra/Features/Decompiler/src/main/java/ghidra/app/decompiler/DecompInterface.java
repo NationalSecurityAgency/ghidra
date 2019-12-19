@@ -44,7 +44,7 @@ import ghidra.xml.XmlPullParser;
  * to it, and if the underlying decompiler process crashes,
  * it automatically respawns the process and reinitializes
  * it the next time it is needed.  The basic usage pattern
- * is as follows
+ * is as follows<pre>
  * 
  *   // Instantiate the interface
  *   DecompInterface ifc = new DecompInterface();
@@ -76,7 +76,7 @@ import ghidra.xml.XmlPullParser;
  *   HighFunction hfunc = res.getHighFunction();
  *   ...
  *   
- * 
+ * </pre>
  */
 public class DecompInterface {
 
