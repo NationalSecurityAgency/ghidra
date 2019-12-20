@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.xml.sax.*;
 
+import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
@@ -78,6 +79,17 @@ public class HighFunction extends PcodeSyntaxTree {
 	 */
 	public Function getFunction() {
 		return func;
+	}
+
+	/**
+	 * Get the id with the associated function symbol, if it exists
+	 * @return the id or 0 otherwise
+	 */
+	public long getID() {
+		if (func instanceof FunctionDB) {
+			return func.getSymbol().getID();
+		}
+		return 0;
 	}
 
 	/**
@@ -423,15 +435,19 @@ public class HighFunction extends PcodeSyntaxTree {
 	 * this doesn't need to be strictly accurate as it is only used to associate the function with
 	 * addresses near its entry point.
 	 *
+	 * @param id is the id associated with the function symbol
 	 * @param entryPoint pass null to use the function entryPoint, pass an address to force an entry point
 	 * @param size describes how many bytes the function occupies as code
 	 * @return the XML string
 	 */
-	public String buildFunctionXML(Address entryPoint, int size) {
+	public String buildFunctionXML(long id, Address entryPoint, int size) {
 		// Functions aren't necessarily contiguous with the smallest address being the entry point
 		// So size needs to be smaller than size of the contiguous chunk containing the entry point
 		StringBuilder resBuf = new StringBuilder();
 		resBuf.append("<function");
+		if (id != 0) {
+			SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
+		}
 		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getName(showNamespace));
 		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 		if (func.isInline()) {

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import ghidra.program.database.symbol.CodeSymbol;
+import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Data;
@@ -38,8 +39,8 @@ public class GlobalSymbolMap {
 	private Program program;
 	private HighFunction func;			// Is the full decompiler model of the function to which this belongs
 	private SymbolTable symbolTable;	// Used for cross-referencing with Ghidra's database backed Symbols
-	private HashMap<Address, HighCodeSymbol> addrMappedSymbols;	// Look up symbols by address
-	private HashMap<Long, HighCodeSymbol> symbolMap;  			// Look up symbol by id
+	private HashMap<Address, HighSymbol> addrMappedSymbols;	// Look up symbols by address
+	private HashMap<Long, HighSymbol> symbolMap;  			// Look up symbol by id
 	private long uniqueSymbolId;		// Next available symbol id
 
 	/**
@@ -50,12 +51,12 @@ public class GlobalSymbolMap {
 		program = f.getFunction().getProgram();
 		func = f;
 		symbolTable = program.getSymbolTable();
-		addrMappedSymbols = new HashMap<Address, HighCodeSymbol>();
-		symbolMap = new HashMap<Long, HighCodeSymbol>();
+		addrMappedSymbols = new HashMap<Address, HighSymbol>();
+		symbolMap = new HashMap<Long, HighSymbol>();
 		uniqueSymbolId = 0;
 	}
 
-	private void insertSymbol(HighCodeSymbol sym, Address addr) {
+	private void insertSymbol(HighSymbol sym, Address addr) {
 		long uniqueId = sym.getId();
 		if ((uniqueId >> 56) == (HighSymbol.ID_BASE >> 56)) {
 			long val = uniqueId & 0x7fffffff;
@@ -68,34 +69,44 @@ public class GlobalSymbolMap {
 	}
 
 	/**
-	 * Create a HighCodeSymbol based on the id of the underlying CodeSymbol. The CodeSymbol
+	 * Create a HighSymbol based on the id of the underlying Ghidra Symbol. The Symbol
 	 * is looked up in the SymbolTable and then a HighSymbol is created with the name and
-	 * dataType associated with the CodeSymbol. If a CodeSymbol cannot be found, null is returned.
+	 * dataType associated with the Symbol. If a Symbol cannot be found, null is returned.
 	 * @param id is the database id of the CodeSymbol
 	 * @param dataType is the recovered data-type of the symbol
 	 * @param sz is the size in bytes of the desired symbol
 	 * @return the CodeSymbol wrapped as a HighSymbol or null
 	 */
-	public HighCodeSymbol populateSymbol(long id, DataType dataType, int sz) {
+	public HighSymbol populateSymbol(long id, DataType dataType, int sz) {
 		if ((id >> 56) == (HighSymbol.ID_BASE >> 56)) {
 			return null;		// This is an internal id, not a database key
 		}
 		Symbol symbol = symbolTable.getSymbol(id);
-		if (symbol == null || !(symbol instanceof CodeSymbol)) {
+		if (symbol == null) {
 			return null;
 		}
-		if (dataType == null) {
-			Object dataObj = symbol.getObject();
-			if (dataObj instanceof Data) {
-				dataType = ((Data) dataObj).getDataType();
-				sz = dataType.getLength();
+		HighSymbol highSym = null;
+		if (symbol instanceof CodeSymbol) {
+			if (dataType == null) {
+				Object dataObj = symbol.getObject();
+				if (dataObj instanceof Data) {
+					dataType = ((Data) dataObj).getDataType();
+					sz = dataType.getLength();
+				}
+				else {
+					dataType = DataType.DEFAULT;
+					sz = 1;
+				}
 			}
-			else {
-				dataType = DataType.DEFAULT;
-				sz = 1;
-			}
+			highSym = new HighCodeSymbol((CodeSymbol) symbol, dataType, sz, func);
 		}
-		HighCodeSymbol highSym = new HighCodeSymbol((CodeSymbol) symbol, dataType, sz, func);
+		else if (symbol instanceof FunctionSymbol) {
+			highSym = new HighFunctionShellSymbol(id, symbol.getName(), symbol.getAddress(),
+				func.getDataTypeManager());
+		}
+		else {
+			return null;
+		}
 		insertSymbol(highSym, symbol.getAddress());
 		return highSym;
 	}
@@ -125,7 +136,7 @@ public class GlobalSymbolMap {
 	 * @param id is the id
 	 * @return the matching HighSymbol or null
 	 */
-	public HighCodeSymbol getSymbol(long id) {
+	public HighSymbol getSymbol(long id) {
 		return symbolMap.get(id);
 	}
 
@@ -134,7 +145,7 @@ public class GlobalSymbolMap {
 	 * @param addr is the given Address
 	 * @return the matching HighSymbol or null
 	 */
-	public HighCodeSymbol getSymbol(Address addr) {
+	public HighSymbol getSymbol(Address addr) {
 		return addrMappedSymbols.get(addr);
 	}
 
@@ -142,7 +153,7 @@ public class GlobalSymbolMap {
 	 * Get an iterator over all HighSymbols in this container
 	 * @return the iterator
 	 */
-	public Iterator<HighCodeSymbol> getSymbols() {
+	public Iterator<HighSymbol> getSymbols() {
 		return symbolMap.values().iterator();
 	}
 }

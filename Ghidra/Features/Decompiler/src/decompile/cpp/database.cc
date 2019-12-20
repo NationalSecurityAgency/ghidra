@@ -572,10 +572,12 @@ void FunctionSymbol::saveXml(ostream &s) const
 
 {
   if (fd != (Funcdata *)0)
-    fd->saveXml(s,false);	// Save the function itself
+    fd->saveXml(s,symbolId,false);	// Save the function itself
   else {
     s << "<functionshell";
     a_v(s,"name",name);
+    if (symbolId != 0)
+      a_v_u(s,"id",symbolId);
     s << "/>\n";
   }
 }
@@ -585,7 +587,7 @@ void FunctionSymbol::restoreXml(const Element *el)
 {
   if (el->getName() == "function") {
     fd = new Funcdata("",scope,Address());
-    fd->restoreXml(el);
+    symbolId = fd->restoreXml(el);
     name = fd->getName();
     if (consumeSize < fd->getSize()) {
       if ((fd->getSize()>1)&&(fd->getSize() <= 8))
@@ -593,7 +595,17 @@ void FunctionSymbol::restoreXml(const Element *el)
     }
   }
   else {			// functionshell
-    name = el->getAttributeValue("name");
+    symbolId = 0;
+    for(int4 i=0;i<el->getNumAttributes();++i) {
+      const string &attrName(el->getAttributeName(i));
+      if (attrName == "name")
+	name = el->getAttributeValue(i);
+      else if (attrName == "id") {
+	istringstream s(el->getAttributeValue(i));
+	s.unsetf(ios::dec | ios::hex | ios::oct);
+	s >> symbolId;
+      }
+    }
   }
 }
 

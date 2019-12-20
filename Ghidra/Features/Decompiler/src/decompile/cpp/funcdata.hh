@@ -171,8 +171,8 @@ public:
   void printVarnodeTree(ostream &s) const;		///< Print a description of all Varnodes to a stream
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
-  void saveXml(ostream &s,bool savetree) const;		///< Emit an XML description of \b this function to stream
-  void restoreXml(const Element *el);			///< Restore the state of \b this function from an XML description
+  void saveXml(ostream &s,uint8 id,bool savetree) const;	///< Emit an XML description of \b this function to stream
+  uint8 restoreXml(const Element *el);			///< Restore the state of \b this function from an XML description
   void saveXmlJumpTable(ostream &s) const;		///< Emit an XML description of jump-tables to stream
   void restoreXmlJumpTable(const Element *el);		///< Restore jump-tables from an XML description
   void saveXmlTree(ostream &s) const;			///< Save an XML description of the p-code tree to stream

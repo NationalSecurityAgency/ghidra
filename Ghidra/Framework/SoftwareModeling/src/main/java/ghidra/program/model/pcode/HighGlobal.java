@@ -28,7 +28,7 @@ import ghidra.xml.XmlPullParser;
  */
 public class HighGlobal extends HighVariable {
 
-	private HighCodeSymbol symbol;
+	private HighSymbol symbol;
 
 	/**
 	 * Constructor for use with restoreXml
@@ -38,7 +38,7 @@ public class HighGlobal extends HighVariable {
 		super(high);
 	}
 
-	public HighGlobal(HighCodeSymbol sym, Varnode vn, Varnode[] inst) {
+	public HighGlobal(HighSymbol sym, Varnode vn, Varnode[] inst) {
 		super(sym.getName(), sym.getDataType(), vn, inst, sym.getHighFunction());
 		symbol = sym;
 	}

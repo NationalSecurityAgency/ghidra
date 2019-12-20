@@ -37,7 +37,7 @@ public class HighFunctionSymbol extends HighSymbol {
 	 * @param function is the decompiler model of the function
 	 */
 	public HighFunctionSymbol(Address addr, int size, HighFunction function) {
-		super(0, "", DataType.DEFAULT, function);
+		super(function.getID(), "", DataType.DEFAULT, function);
 		VariableStorage store;
 		try {
 			store = new VariableStorage(getProgram(), addr, size);
@@ -50,10 +50,15 @@ public class HighFunctionSymbol extends HighSymbol {
 	}
 
 	@Override
+	public boolean isGlobal() {
+		return true;
+	}
+
+	@Override
 	public void saveXML(StringBuilder buf) {
 		MappedEntry entry = (MappedEntry) getFirstWholeMap();
 		String funcString =
-			function.buildFunctionXML(entry.getStorage().getMinAddress(), entry.getSize());
+			function.buildFunctionXML(getId(), entry.getStorage().getMinAddress(), entry.getSize());
 		buf.append(funcString);
 	}
 }

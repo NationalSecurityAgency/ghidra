@@ -672,7 +672,7 @@ public class DecompileCallback {
 					func = listing.getFunctionAt(extRef.getToAddress());
 					if (func == null) {
 						HighSymbol shellSymbol =
-							new HighFunctionShellSymbol(extRef.getLabel(), addr, dtmanage);
+							new HighFunctionShellSymbol(0, extRef.getLabel(), addr, dtmanage);
 						return buildResult(shellSymbol, null);
 					}
 				}

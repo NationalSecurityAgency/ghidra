@@ -29,12 +29,13 @@ public class HighFunctionShellSymbol extends HighSymbol {
 
 	/**
 	 * Construct the function shell given a name and address
+	 * @param id is an id to associate with the new symbol
 	 * @param nm is the given name
 	 * @param addr is the given address
 	 * @param manage is PcodeDataTypeManager to facilitate XML marshaling
 	 */
-	public HighFunctionShellSymbol(String nm, Address addr, PcodeDataTypeManager manage) {
-		super(0, nm, DataType.DEFAULT, true, true, manage);
+	public HighFunctionShellSymbol(long id, String nm, Address addr, PcodeDataTypeManager manage) {
+		super(id, nm, DataType.DEFAULT, true, true, manage);
 		VariableStorage store;
 		try {
 			store = new VariableStorage(getProgram(), addr, 1);
@@ -44,6 +45,11 @@ public class HighFunctionShellSymbol extends HighSymbol {
 		}
 		MappedEntry entry = new MappedEntry(this, store, null);
 		addMapEntry(entry);
+	}
+
+	@Override
+	public boolean isGlobal() {
+		return true;
 	}
 
 	@Override

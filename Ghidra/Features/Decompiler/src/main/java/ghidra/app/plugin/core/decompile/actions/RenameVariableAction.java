@@ -76,7 +76,7 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 		}
 		else {
 			GlobalSymbolMap gsym = hfunc.getGlobalSymbolMap();
-			HighCodeSymbol hsym = gsym.getSymbol(addr);
+			HighSymbol hsym = gsym.getSymbol(addr);
 			if (hsym != null) {
 				res = hsym.getHighVariable();
 				if (res == null) {
