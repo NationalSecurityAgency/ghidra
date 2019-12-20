@@ -587,10 +587,11 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		int byteSize = allocationByteSize;
 		int x = BYTE_SEPARATOR_THICKNESS;
 
-		// start close to the left clip bounds
-		Rectangle clipBounds = g.getClipBounds();
-		int maxX = clipBounds.x + clipBounds.width - 1;
-		int startIndex = clipBounds.x / byteWidth;
+		// start close to the left visible edge
+		JViewport viewPort = (JViewport) getParent();
+		Rectangle bounds = viewPort.getViewRect();
+		int maxX = bounds.x + bounds.width - 1;
+		int startIndex = bounds.x / byteWidth;
 		x += startIndex * byteWidth;
 
 		for (int i = startIndex; i < byteSize; i++) {
