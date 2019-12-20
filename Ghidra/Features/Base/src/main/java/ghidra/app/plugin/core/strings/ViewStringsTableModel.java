@@ -30,6 +30,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.StringUtilities;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
@@ -38,6 +39,7 @@ import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.field.AbstractProgramLocationTableColumn;
 import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
 
 /**
  * Table model for the "Defined Strings" table.
@@ -111,9 +113,10 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		Listing listing = localProgram.getListing();
 
 		monitor.setCancelEnabled(true);
-		monitor.initialize((int) listing.getNumDefinedData());
-
-		for (Data stringInstance : DefinedDataIterator.definedStrings(localProgram)) {
+		monitor.initialize(listing.getNumDefinedData());
+		Swing.allowSwingToProcessEvents();
+		for (Data stringInstance : CollectionUtils.asIterable(
+			DefinedDataIterator.definedStrings(localProgram))) {
 			accumulator.add(createIndexedStringInstanceLocation(localProgram, stringInstance));
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
@@ -139,7 +142,8 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 	}
 
 	public void addDataInstance(Program localProgram, Data data, TaskMonitor monitor) {
-		for (Data stringInstance : DefinedDataIterator.definedStrings(data)) {
+		for (Data stringInstance : CollectionUtils.asIterable(
+			DefinedDataIterator.definedStrings(data))) {
 			addObject(createIndexedStringInstanceLocation(localProgram, stringInstance));
 		}
 	}

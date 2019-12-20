@@ -66,6 +66,25 @@ public class StringDataInstance {
 	}
 
 	/**
+	 * Returns true if the specified {@link DataType} is (or could be) a
+	 * string.
+	 * <p>
+	 * Arrays of char-like elements (see {@link ArrayStringable}) are treated
+	 * as string data types.  The actual data instance needs to be inspected
+	 * to determine if the array is an actual string.
+	 * <p>
+	 * @param dt DataType to test
+	 * @return boolean true if data type is or could be a string
+	 */
+	public static boolean isStringDataType(DataType dt) {
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
+		return dt instanceof AbstractStringDataType || (dt instanceof Array &&
+			ArrayStringable.getArrayStringable(((Array) dt).getDataType()) != null);
+	}
+	
+	/**
 	 * Returns true if the {@link Data} instance is one of the many 'char' data types.
 	 * 
 	 * @param data {@link Data} instance to test, null ok
