@@ -578,12 +578,12 @@ public class FlatProgramAPI {
 
 	/**
 	 * Returns the repeatable comment at the specified address.  The comment returned is the raw text
-	 * of the comment.  Contrastingly, calling {@link #getRepeatableCommentAsRendered(Address)} will
+	 * of the comment.  Contrastingly, calling {@link GhidraScript#getRepeatableCommentAsRendered(Address)} will
 	 * return the text of the comment as it is rendered in the display.
 	 * @param address the address to get the comment
 	 * @return the repeatable comment at the specified address or null
 	 * if one does not exist
-	 * @see #getRepeatableCommentAsRendered(Address)
+	 * @see GhidraScript#getRepeatableCommentAsRendered(Address)
 	 */
 	public final String getRepeatableComment(Address address) {
 		return currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
