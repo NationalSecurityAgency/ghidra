@@ -307,7 +307,8 @@ it_thfcc: "lt"	is fcond=11	{ tmp:1 = (NG == OV); export tmp; }
 it_thfcc: "gt"	is fcond=12	{ tmp:1 = !ZR && (NG == OV); export tmp; }
 it_thfcc: "le"	is fcond=13	{ tmp:1 = !ZR && (NG == OV); export tmp; }
 it_thfcc: "al"	is fcond=14	{ tmp:1 = 1; export tmp; }
-it_thfcc: "nv"	is fcond=15	{ tmp:1 = 1; export tmp; } # Unpredictable
+
+@define IT_THFCC    "it_thfcc & (thc0707=0 | thc0606=0 | thc0505=0)"
 
 ByteRotate: "#"^rot		is throt [rot = throt << 3; ] { export *[const]:1 rot; }
 
@@ -1843,7 +1844,7 @@ XYZ:                    is TMode=1 & sop0003=8  { }
 XYZ:  X^Y^Z             is TMode=1 & X & Y & Z  { }
 
 
-:it^XYZ   it_thfcc     is TMode=1 & op8=0xbf & XYZ & it_thfcc & thc0507 & thc0004
+:it^XYZ   it_thfcc     is TMode=1 & op8=0xbf & XYZ & $(IT_THFCC) & thc0507 & thc0004
  [ itmode=0; cond_base = thc0507; cond_shft=thc0004; globalset(inst_next,condit); ]
 {
 	# just sets up the condition and If Then/Else mask

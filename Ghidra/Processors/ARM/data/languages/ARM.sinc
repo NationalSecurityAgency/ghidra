@@ -263,7 +263,7 @@ thfcc: "lt"	is cond_full=11	{ local tmp:1 = (NG != OV); export tmp; }
 thfcc: "gt"	is cond_full=12	{ local tmp:1 = !ZR && (NG == OV); export tmp; }
 thfcc: "le"	is cond_full=13	{ local tmp:1 = ZR || (NG != OV); export tmp; }
 thfcc: "al" is cond_full=14 { local tmp:1 = 1; export tmp; } #can happen
-thfcc: "nv" is cond_full=15 { local tmp:1 = 0; export tmp; } #unpredictable, shouldn't happen
+#thfcc: "nv" is cond_full=15 { local tmp:1 = 0; export tmp; } #unpredictable, shouldn't happen
 
 
 # no ITcondition
