@@ -48,7 +48,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	private static final Color ACTIVE_BITFIELD_BITS_COLOR = Color.green;
 	private static final Color CONFLICT_BITS_COLOR = Color.yellow;
 	private static final Color BITFIELD_COMPONENT_COLOR = new Color(0xbfbfff);
-	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xa4a4ff);
+	private static final Color NON_BITFIELD_COMPONENT_COLOR = new Color(0xa0a0ff);
 	private static final Color INTERIOR_LINE_COLOR = new Color(0xd4d4d4);
 
 	private int bitWidth = 10;
@@ -418,8 +418,8 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		repaint();
 	}
 
-	void applyBitField(DataType baseDataType, String fieldName, boolean deleteConflicts,
-			CompositeChangeListener listener) {
+	void applyBitField(DataType baseDataType, String fieldName, String fieldComment,
+			boolean deleteConflicts, CompositeChangeListener listener) {
 		if (!editUseEnabled) {
 			throw new IllegalStateException("component not constructed for edit use");
 		}
@@ -458,18 +458,21 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 		try {
 			String name = (fieldName != null && fieldName.length() != 0) ? fieldName : null;
+			String comment =
+				(fieldComment != null && fieldComment.length() != 0) ? fieldComment : null;
 			DataTypeComponent dtc;
 			if (composite instanceof Union) {
 				throw new UnsupportedOperationException(
 					"Union modification not currently supported");
 //				dtc = composite.insertBitField(ordinal, allocationByteSize,
 //					bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
-//					null);
+//					comment);
 			}
 //			else {
 			Structure struct = (Structure) composite;
 			dtc = struct.insertBitFieldAt(allocationByteOffset, allocationByteSize,
-				bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name, null);
+				bitFieldAllocation.bitOffset, baseDataType, bitFieldAllocation.bitSize, name,
+				comment);
 //			}
 			if (listener != null) {
 				listener.componentChanged(dtc.getOrdinal());
@@ -588,8 +591,6 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 	@Override
 	public void paintComponent(Graphics g) {
 
-		//super.paintComponent(g);
-
 		int height = getHeight();
 		int width = getWidth();
 
@@ -620,10 +621,11 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		int byteSize = allocationByteSize;
 		int x = BYTE_SEPARATOR_THICKNESS;
 
-		// start close to the left clip bounds
-		Rectangle clipBounds = g.getClipBounds();
-		int maxX = clipBounds.x + clipBounds.width - 1;
-		int startIndex = clipBounds.x / byteWidth;
+		// start close to the left visible edge
+		JViewport viewPort = (JViewport) getParent();
+		Rectangle bounds = viewPort.getViewRect();
+		int maxX = bounds.x + bounds.width - 1;
+		int startIndex = bounds.x / byteWidth;
 		x += startIndex * byteWidth;
 
 		for (int i = startIndex; i < byteSize; i++) {
@@ -686,11 +688,14 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		DataTypeComponent prevDtc = null;
 		BitAttributes prevAttrs = null;
 
-		// start close to the left clip bounds
-		Rectangle clipBounds = g.getClipBounds();
-		int maxX = clipBounds.x + clipBounds.width - 1;
+		// Limit rendered bits to those contained within the visible view port
+		// of this scrolled component.  
+
+		JViewport viewPort = (JViewport) getParent();
+		Rectangle bounds = viewPort.getViewRect();
+		int maxX = bounds.x + bounds.width - 1;
 		int width = bitAttributes[0].rectangle.width;
-		int startIndex = (clipBounds.x / (bitAttributes[0].rectangle.width)) -
+		int startIndex = (bounds.x / (bitAttributes[0].rectangle.width)) -
 			(8 * bitFieldAllocation.leftChopBytes);
 		x += startIndex * width;
 
@@ -698,7 +703,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		for (bitIndex = startIndex; bitIndex < bitAttributes.length; bitIndex++) {
 			BitAttributes attrs = bitAttributes[bitIndex];
 			if (x > maxX) {
-				break; // right clip - return early
+				break; // right visible edge exceeded - return early
 			}
 			boolean paintRightLine = bitIndex != (bitAttributes.length - 1);
 			attrs.paint(g, prevAttrs, paintRightLine);
@@ -708,12 +713,14 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 				paintComponentLabel(g, prevDtc, dtcRectangle);
 				prevDtc = null;
 			}
+			Rectangle visibleBitRect = attrs.rectangle.intersection(bounds);
 			if (prevDtc == null) {
 				prevDtc = dtc;
-				dtcRectangle = new Rectangle(attrs.rectangle.intersection(clipBounds));
+				dtcRectangle = visibleBitRect;
 			}
-			dtcRectangle.add(attrs.rectangle.intersection(clipBounds));
-
+			else {
+				dtcRectangle.add(visibleBitRect);
+			}
 			if (attrs.unallocated) {
 				paintDit(g, attrs.rectangle);
 			}
@@ -768,6 +775,7 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 		int textY = r.y + (r.height + fontMetrics.getMaxAscent() - BYTE_SEPARATOR_THICKNESS) / 2;
 		int textX = r.x + (r.width - BYTE_SEPARATOR_THICKNESS - strWidth) / 2;
+
 		g.drawString(name, textX, textY);
 
 		g.setColor(curColor);
