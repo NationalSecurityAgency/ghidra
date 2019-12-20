@@ -33,9 +33,11 @@ import ghidra.util.exception.DuplicateNameException;
  */
 class PointerDB extends DataTypeDB implements Pointer {
 
+	private static final SettingsDefinition[] POINTER_SETTINGS_DEFINITIONS =
+		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
+
 	private PointerDBAdapter adapter;
 	private String displayName;
-	private SettingsDefinition[] settingsDef;
 
 	/**
 	 * Constructor
@@ -74,9 +76,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		return pointerName;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Pointer#getDataType()
-	 */
 	@Override
 	public DataType getDataType() {
 		lock.acquire();
@@ -91,18 +90,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	@Override
 	public SettingsDefinition[] getSettingsDefinitions() {
-		lock.acquire();
-		try {
-			checkIsValid();
-			if (settingsDef == null) {
-				DataType dt = newPointer(getDataType());
-				settingsDef = dt.getSettingsDefinitions();
-			}
-			return settingsDef;
-		}
-		finally {
-			lock.release();
-		}
+		return POINTER_SETTINGS_DEFINITIONS;
 	}
 
 	@Override
@@ -126,9 +114,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#clone(ghidra.program.model.data.DataTypeManager)
-	 */
 	@Override
 	public final DataType clone(DataTypeManager dtm) {
 		if (dtm == getDataTypeManager()) {
@@ -143,9 +128,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		return clone(dtm);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getName()
-	 */
 	@Override
 	public String getDisplayName() {
 		validate(lock);
@@ -166,9 +148,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		return localDisplayName;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getMnemonic(ghidra.docking.settings.Settings)
-	 */
 	@Override
 	public String getMnemonic(Settings settings) {
 		lock.acquire();
@@ -185,9 +164,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Pointer#isDynamicallySized()
-	 */
 	@Override
 	public boolean isDynamicallySized() {
 		lock.acquire();
@@ -200,9 +176,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		lock.acquire();
@@ -219,9 +192,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		lock.acquire();
@@ -250,9 +220,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		lock.acquire();
@@ -278,9 +245,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		return Address.class;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		lock.acquire();
@@ -298,9 +262,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isEquivalent(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean isEquivalent(DataType dt) {
 		if (dt == null) {
@@ -339,9 +300,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 			otherDataType.getPathName());
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeReplaced(ghidra.program.model.data.DataType, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
 		if (newDt == this) {
@@ -371,9 +329,6 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeDeleted(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeDeleted(DataType dt) {
 		if (getDataType() == dt) {
@@ -440,26 +395,17 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#setCategoryPath(ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void setCategoryPath(CategoryPath path) throws DuplicateNameException {
 		// not permitted to move - follows base type (see updatePath)
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dependsOn(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean dependsOn(DataType dt) {
 		DataType myDt = getDataType();
 		return (myDt != null && (myDt == dt || myDt.dependsOn(dt)));
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Pointer#newPointer(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public Pointer newPointer(DataType dataType) {
 		if (isDynamicallySized()) {

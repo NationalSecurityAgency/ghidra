@@ -21,6 +21,7 @@ import java.util.*;
 
 import db.Record;
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -28,9 +29,6 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.UniversalID;
-import ghidra.util.datastruct.LongObjectHashtable;
-import ghidra.util.datastruct.ObjectLongHashtable;
-import ghidra.util.exception.NoValueException;
 
 /**
  * Database implementation for the enumerated data type.
@@ -38,10 +36,13 @@ import ghidra.util.exception.NoValueException;
  */
 class EnumDB extends DataTypeDB implements Enum {
 
+	private static final SettingsDefinition[] ENUM_SETTINGS_DEFINITIONS =
+		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
+
 	private EnumDBAdapter adapter;
 	private EnumValueDBAdapter valueAdapter;
-	private ObjectLongHashtable<String> nameMap;
-	private LongObjectHashtable<String> valueMap;
+	private Map<String, Long> nameMap; // name to value
+	private Map<Long, List<String>> valueMap; // value to names
 	private List<BitGroup> bitGroups;
 
 	EnumDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache, EnumDBAdapter adapter,
@@ -49,9 +50,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		super(dataMgr, cache, record);
 		this.adapter = adapter;
 		this.valueAdapter = valueAdapter;
-		nameMap = new ObjectLongHashtable<>();
-		valueMap = new LongObjectHashtable<>();
-		initialize();
 	}
 
 	@Override
@@ -64,71 +62,109 @@ class EnumDB extends DataTypeDB implements Enum {
 		return record.getString(EnumDBAdapter.ENUM_NAME_COL);
 	}
 
+	@Override
+	public SettingsDefinition[] getSettingsDefinitions() {
+		return ENUM_SETTINGS_DEFINITIONS;
+	}
+
+	private void initializeIfNeeded() {
+		if (nameMap != null) {
+			return;
+		}
+		try {
+			initialize();
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
+		}
+	}
+
 	private void initialize() throws IOException {
 		bitGroups = null;
-		nameMap.removeAll();
-		valueMap.removeAll();
+		nameMap = new HashMap<>();
+		valueMap = new HashMap<>();
+
 		long[] ids = valueAdapter.getValueIdsInEnum(key);
 
 		for (int i = 0; i < ids.length; i++) {
 			Record rec = valueAdapter.getRecord(ids[i]);
 			String valueName = rec.getString(EnumValueDBAdapter.ENUMVAL_NAME_COL);
 			long value = rec.getLongValue(EnumValueDBAdapter.ENUMVAL_VALUE_COL);
-			nameMap.put(valueName, value);
-			valueMap.put(value, valueName);
+			addToCache(valueName, value);
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Enum#getValue(java.lang.String)
-	 */
+	private void addToCache(String valueName, long value) {
+		nameMap.put(valueName, value);
+		List<String> list = valueMap.computeIfAbsent(value, v -> new ArrayList<>());
+		list.add(valueName);
+	}
+
+	private boolean removeFromCache(String valueName) {
+		Long value = nameMap.remove(valueName);
+		if (value == null) {
+			return false;
+		}
+		List<String> list = valueMap.get(value);
+		Iterator<String> iter = list.iterator();
+		while (iter.hasNext()) {
+			if (valueName.equals(iter.next())) {
+				iter.remove();
+				break;
+			}
+		}
+		if (list.isEmpty()) {
+			valueMap.remove(value);
+		}
+		return true;
+	}
+
 	@Override
-	public long getValue(String name) throws NoSuchElementException {
+	public long getValue(String valueName) throws NoSuchElementException {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return nameMap.get(name);
-		}
-		catch (NoValueException e) {
-			throw new NoSuchElementException(name + " does not exist in this enum");
+			initializeIfNeeded();
+			Long value = nameMap.get(valueName);
+			if (value == null) {
+				throw new NoSuchElementException("No value for " + valueName);
+			}
+			return value;
 		}
 		finally {
 			lock.release();
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Enum#getName(long)
-	 */
 	@Override
 	public String getName(long value) {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return valueMap.get(value);
+			initializeIfNeeded();
+			List<String> list = valueMap.get(value);
+			if (list == null || list.isEmpty()) {
+				return null;
+			}
+			return list.get(0);
 		}
 		finally {
 			lock.release();
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
 	@Override
 	public boolean isDynamicallySized() {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Enum#getValues()
-	 */
 	@Override
 	public long[] getValues() {
 		lock.acquire();
 		try {
 			checkIsValid();
-			long[] values = valueMap.getKeys();
+			initializeIfNeeded();
+			long[] values = valueMap.keySet().stream().mapToLong(Long::longValue).toArray();
 			Arrays.sort(values);
 			return values;
 		}
@@ -137,31 +173,25 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Enum#getNames()
-	 */
 	@Override
 	public String[] getNames() {
 		lock.acquire();
 		try {
 			checkIsValid();
-			String[] names = nameMap.getKeys(new String[nameMap.size()]);
-			Arrays.sort(names);
-			return names;
+			initializeIfNeeded();
+			return nameMap.keySet().toArray(new String[nameMap.size()]);
 		}
 		finally {
 			lock.release();
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Enum#getCount()
-	 */
 	@Override
 	public int getCount() {
 		lock.acquire();
 		try {
 			checkIsValid();
+			initializeIfNeeded();
 			return nameMap.size();
 		}
 		finally {
@@ -169,58 +199,62 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Enum#add(java.lang.String, long)
-	 */
 	@Override
-	public void add(String name, long value) {
+	public void add(String valueName, long value) {
 		lock.acquire();
-		bitGroups = null;
 		try {
 			checkDeleted();
-			if (nameMap.contains(name)) {
-				throw new IllegalArgumentException(name + " already exists in this enum");
+			checkValue(value);
+			initializeIfNeeded();
+			if (nameMap.containsKey(valueName)) {
+				throw new IllegalArgumentException(valueName + " already exists in this enum");
 			}
-			try {
-				valueAdapter.createRecord(key, name, value);
-				nameMap.put(name, value);
-				if (!valueMap.contains(value)) {
-					valueMap.put(value, name);
-				}
-				adapter.updateRecord(record, true);
-				dataMgr.dataTypeChanged(this);
-			}
-			catch (IOException e) {
-				dataMgr.dbError(e);
-			}
+			bitGroups = null;
+			valueAdapter.createRecord(key, valueName, value);
+			adapter.updateRecord(record, true);
+			addToCache(valueName, value);
+			dataMgr.dataTypeChanged(this);
+
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
 		}
 		finally {
 			lock.release();
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Enum#remove(java.lang.String)
-	 */
+	private void checkValue(long value) {
+		int length = getLength();
+		if (length == 8) {
+			return; // all long values permitted
+		}
+		// compute maximum enum value as a positive value: (2^length)-1
+		long max = (1L << (getLength() * 8)) - 1;
+		if (value > max) {
+			throw new IllegalArgumentException(
+				getName() + " enum value 0x" + Long.toHexString(value) +
+					" is outside the range of 0x0 to 0x" + Long.toHexString(max));
+
+		}
+	}
+
 	@Override
-	public void remove(String name) {
+	public void remove(String valueName) {
 		lock.acquire();
-		bitGroups = null;
 		try {
 			checkDeleted();
-			if (!nameMap.contains(name)) {
+			initializeIfNeeded();
+			if (!removeFromCache(valueName)) {
 				return;
 			}
-			long value = nameMap.get(name);
-			nameMap.remove(name);
-			if (name.equals(valueMap.get(value))) {
-				valueMap.remove(value);
-			}
+			bitGroups = null;
+
 			long[] ids = valueAdapter.getValueIdsInEnum(key);
 
 			for (int i = 0; i < ids.length; i++) {
 				Record rec = valueAdapter.getRecord(ids[i]);
-				if (name.equals(rec.getString(EnumValueDBAdapter.ENUMVAL_NAME_COL))) {
+				if (valueName.equals(rec.getString(EnumValueDBAdapter.ENUMVAL_NAME_COL))) {
 					valueAdapter.removeRecord(ids[i]);
 					break;
 				}
@@ -231,17 +265,11 @@ class EnumDB extends DataTypeDB implements Enum {
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
-		catch (NoValueException e) {
-			// can't happen
-		}
 		finally {
 			lock.release();
 		}
 	}
 
-	/*
-	 * @see ghidra.program.model.data.Enum#replace(ghidra.program.model.data.Enum)
-	 */
 	@Override
 	public void replaceWith(DataType dataType) {
 		if (!(dataType instanceof Enum)) {
@@ -249,30 +277,33 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 		Enum enumm = (Enum) dataType;
 		lock.acquire();
-		bitGroups = null;
 		try {
 			checkDeleted();
-			int oldLength = getLength();
-			nameMap.removeAll();
-			valueMap.removeAll();
+
+			bitGroups = null;
+			nameMap = new HashMap<>();
+			valueMap = new HashMap<>();
+
 			long[] ids = valueAdapter.getValueIdsInEnum(key);
 			for (int i = 0; i < ids.length; i++) {
 				valueAdapter.removeRecord(ids[i]);
 			}
-			String[] names = enumm.getNames();
-			for (int i = 0; i < names.length; i++) {
-				if (nameMap.contains(names[i])) {
-					throw new IllegalArgumentException(names[i] + " already exists in this Enum");
-				}
-				long value = enumm.getValue(names[i]);
-				valueAdapter.createRecord(key, names[i], value);
-				nameMap.put(names[i], value);
-				valueMap.put(value, names[i]);
+
+			int oldLength = getLength();
+			int newLength = enumm.getLength();
+
+			if (oldLength != newLength) {
+				record.setByteValue(EnumDBAdapter.ENUM_SIZE_COL, (byte) newLength);
+				adapter.updateRecord(record, true);
 			}
 
-			int newLength = enumm.getLength();
-			record.setByteValue(EnumDBAdapter.ENUM_SIZE_COL, (byte) newLength);
-			adapter.updateRecord(record, true);
+			String[] names = enumm.getNames();
+			for (int i = 0; i < names.length; i++) {
+				long value = enumm.getValue(names[i]);
+				valueAdapter.createRecord(key, names[i], value);
+				adapter.updateRecord(record, true);
+				addToCache(names[i], value);
+			}
 
 			if (oldLength != newLength) {
 				notifySizeChanged();
@@ -308,9 +339,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		return enumDataType;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getMnemonic(ghidra.docking.settings.Settings)
-	 */
 	@Override
 	public String getMnemonic(Settings settings) {
 		lock.acquire();
@@ -323,9 +351,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getLength()
-	 */
 	@Override
 	public int getLength() {
 		lock.acquire();
@@ -338,9 +363,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		lock.acquire();
@@ -354,9 +376,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.Enum#setDescription(java.lang.String)
-	 */
 	@Override
 	public void setDescription(String description) {
 		lock.acquire();
@@ -374,9 +393,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		lock.acquire();
@@ -412,9 +428,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		return Scalar.class;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
-	 */
 	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		lock.acquire();
@@ -501,9 +514,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		return valueName;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isEquivalent(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean isEquivalent(DataType dt) {
 		if (dt == this) {
@@ -513,7 +523,6 @@ class EnumDB extends DataTypeDB implements Enum {
 			return false;
 		}
 
-		checkIsValid();
 		Enum enumm = (Enum) dt;
 		if (!DataTypeUtilities.equalsIgnoreConflict(getName(), enumm.getName()) ||
 			getLength() != enumm.getLength() || getCount() != enumm.getCount()) {
@@ -536,16 +545,15 @@ class EnumDB extends DataTypeDB implements Enum {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.program.database.DatabaseObject#refresh()
-	 */
 	@Override
 	protected boolean refresh() {
 		try {
+			nameMap = null;
+			valueMap = null;
+			bitGroups = null;
 			Record rec = adapter.getRecord(key);
 			if (rec != null) {
 				record = rec;
-				initialize();
 				return super.refresh();
 			}
 		}
@@ -555,9 +563,6 @@ class EnumDB extends DataTypeDB implements Enum {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeReplaced(ghidra.program.model.data.DataType, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
 		// not applicable
@@ -575,17 +580,11 @@ class EnumDB extends DataTypeDB implements Enum {
 		adapter.updateRecord(record, true);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeDeleted(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeDeleted(DataType dt) {
 		// not applicable
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeNameChanged(ghidra.program.model.data.DataType, java.lang.String)
-	 */
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
 		// not applicable
