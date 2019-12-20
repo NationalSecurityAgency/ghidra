@@ -296,16 +296,22 @@ List<String> getExternalDependencies(Project project) {
 
 	// for each dependency in the compile configuration
 	Configuration runtimeConfig = project.configurations.runtime
+	runtimeConfig.allDependencies.each { dep ->
 		
-	runtimeConfig.resolvedConfiguration.getFiles { dep ->
-		dep.class.toString().contains("DefaultExternalModuleDependency")
-	}.each { f ->
-		// if we found the path, then add it to the list
-		if (!f.getAbsolutePath().contains("libsForBuild")) {
-			list.add(f)
-		}			
-	}
+		// if the dependency is an external jar
+		if (dep.class.toString().contains("DefaultExternalModuleDependency")) {
 	
+			// loop back through all the dependency files, looking for one that contains the dependency name.
+			String depPath = runtimeConfig.find {
+				it.name.contains(dep.name)
+			}
+			
+			// if we found the path, then add it to the list
+			if (depPath && !depPath.contains("libsForBuild")) {
+				list.add(depPath)
+			}
+		}	
+	}
 	return list
 }
 
