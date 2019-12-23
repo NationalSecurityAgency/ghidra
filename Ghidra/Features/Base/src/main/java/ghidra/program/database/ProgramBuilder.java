@@ -695,6 +695,14 @@ public class ProgramBuilder {
 		return c;
 	}
 
+	public void applyFixedLengthDataType(String addressString, DataType dt, int length)
+			throws CodeUnitInsertionException {
+		startTransaction();
+		DataUtilities.createData(program, addr(addressString), dt, length, false,
+			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+		endTransaction();
+	}
+
 	public void applyDataType(String addressString, DataType dt) {
 		applyDataType(addressString, dt, 1);
 	}
@@ -874,7 +882,7 @@ public class ProgramBuilder {
 	}
 
 	public Data createString(String address, String string, Charset charset, boolean nullTerminate,
-			AbstractStringDataType dataType) throws Exception {
+			DataType dataType) throws Exception {
 		if (nullTerminate) {
 			string = string + "\0";
 		}
@@ -883,7 +891,7 @@ public class ProgramBuilder {
 	}
 
 	public Data createString(String address, byte[] stringBytes, Charset charset,
-			AbstractStringDataType dataType) throws Exception {
+			DataType dataType) throws Exception {
 		Address addr = addr(address);
 		setBytes(address, stringBytes);
 		if (dataType != null) {

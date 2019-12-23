@@ -23,7 +23,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 
 /**
- * Iterator that visits each defined data instance in a Program or in the footprint of
+ * Iterator that visits each defined data instance in the initialized memory of a Program or in the footprint of
  * a specified data element.
  * <p>
  * Data elements that are nested inside of composites or arrays are visited, not just the
@@ -32,7 +32,7 @@ import ghidra.program.model.listing.*;
 public class DefinedDataIterator implements DataIterator {
 
 	/**
-	 * Creates a new iterator that traverses the entire Program's address space, visiting
+	 * Creates a new iterator that traverses the entire Program's address space, returning
 	 * data instances that successfully match the predicate.
 	 *
 	 * @param program Program to search
@@ -45,7 +45,21 @@ public class DefinedDataIterator implements DataIterator {
 	}
 
 	/**
-	 * Creates a new iterator that traverses the entire Program's address space.
+	 * Creates a new iterator that traverses the entire Program's address space, returning
+	 * data instances that successfully match the predicate.
+	 *
+	 * @param program Program to search
+	 * @param dataInstancePredicate {@link Predicate} that tests each data instance's properties
+	 * @return new iterator
+	 */
+	public static DefinedDataIterator byDataInstance(Program program,
+			Predicate<Data> dataInstancePredicate) {
+		return new DefinedDataIterator(program, null, null, dataInstancePredicate);
+	}
+
+	/**
+	 * Creates a new iterator that traverses the entire Program's address space returning
+	 * data instances that are strings.
 	 *
 	 * @param program Ghidra {@link Program} to search
 	 * @return new iterator
@@ -57,7 +71,8 @@ public class DefinedDataIterator implements DataIterator {
 	}
 
 	/**
-	 * Creates a new iterator that traverses a portion of the Program's address space.
+	 * Creates a new iterator that traverses a portion of the Program's address space returning
+	 * data instances that are strings.
 	 *
 	 * @param program Ghidra {@link Program} to search
 	 * @param addrs addresses to limit the iteration to
@@ -84,6 +99,12 @@ public class DefinedDataIterator implements DataIterator {
 
 	private Predicate<DataType> dataTypePredicate;
 	private Predicate<Data> dataInstancePredicate;
+
+	/**
+	 * LIFO stack of iterators.  Newly found iterators of sub-components are
+	 * pushed onto the end and become the current iterator.  When an iterator is exhausted, 
+	 * it is popped of the end and the uncovered iterator is now the current.    
+	 */
 	private Deque<DataIterator> itStack = new ArrayDeque<>();
 	private Data currentDataResult;
 
@@ -101,7 +122,7 @@ public class DefinedDataIterator implements DataIterator {
 		this.dataTypePredicate = dataTypePredicate;
 		this.dataInstancePredicate = dataInstancePredicate;
 
-		itStack.addLast(DataIterator.Of(singleDataInstance));
+		itStack.addLast(DataIterator.of(singleDataInstance));
 	}
 
 	@Override
@@ -160,6 +181,8 @@ public class DefinedDataIterator implements DataIterator {
 			return recursiveMatchesDataTypePredicate(elementDT);
 		}
 		else if (dt instanceof Structure) {
+			// handle Structures and general Composite's separately so
+			// we can focus on just the defined elements of a structure
 			Structure comp = (Structure) dt;
 			for (DataTypeComponent dtc : comp.getDefinedComponents()) {
 				if (recursiveMatchesDataTypePredicate(dtc.getDataType())) {

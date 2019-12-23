@@ -26,9 +26,15 @@ import util.CollectionUtils;
  * @see CollectionUtils#asIterable
  */
 public interface DataIterator extends Iterator<Data> {
-	public static final DataIterator EMPTY = Of(/*nothing*/);
+	public static final DataIterator EMPTY = of(/*nothing*/);
 
-	public static DataIterator Of(Data... dataInstances) {
+	/**
+	 * Create a DataIterator that returns a sequence of the specified items.
+	 * 
+	 * @param dataInstances variable length list of items that will be iterated
+	 * @return new Iterator 
+	 */
+	public static DataIterator of(Data... dataInstances) {
 		return new IteratorWrapper(Arrays.asList(dataInstances).iterator());
 	}
 
