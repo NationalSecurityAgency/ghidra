@@ -35,19 +35,17 @@ import resources.ResourceManager;
  */
 public class UnpackageAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon unpackageIcon =
-		ResourceManager.loadImage("images/Unpackage.gif");
-	private final static String ACTION_NAME = "Unpackage Component";
+	private final static ImageIcon ICON = ResourceManager.loadImage("images/Unpackage.gif");
+	public final static String ACTION_NAME = "Unpackage Component";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Replace the selected composite with its components";
-	private KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0);
-	private static String[] popupPath = new String[] { ACTION_NAME };
+	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, 0);
+	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
 	public UnpackageAction(StructureEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null,
-			unpackageIcon);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
-		setKeyBindingData(new KeyBindingData(keyStroke));
+		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		adjustEnablement();
 	}
 

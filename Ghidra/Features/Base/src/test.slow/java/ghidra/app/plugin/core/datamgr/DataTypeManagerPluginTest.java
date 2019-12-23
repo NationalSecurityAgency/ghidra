@@ -39,9 +39,13 @@ import docking.DockingUtils;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
 import docking.actions.KeyBindingUtils;
+import docking.tool.ToolConstants;
+import docking.tool.util.DockingToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.context.ProgramActionContext;
+import ghidra.app.plugin.core.compositeeditor.ApplyAction;
+import ghidra.app.plugin.core.compositeeditor.CompositeEditorTableAction;
 import ghidra.app.plugin.core.datamgr.actions.CreateTypeDefDialog;
 import ghidra.app.plugin.core.datamgr.archive.Archive;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
@@ -50,6 +54,7 @@ import ghidra.app.plugin.core.function.EditFunctionSignatureDialog;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
@@ -57,7 +62,6 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.test.*;
-import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassFilter;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.TaskMonitor;
@@ -749,9 +753,27 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("Tom", fun.getArguments()[2].getName());
 	}
 
-	//==================================================================================================
-	// Private methods
-	//==================================================================================================
+	@Test
+	public void testEditorActionsGetRegisteredWithoutEditing() {
+
+		// the owner for the action is the tool, since the registered item is just a placeholder
+		// because the editor actions are shared actions
+		String owner = " (" + ToolConstants.SHARED_OWNER + ')';
+		String actionName = CompositeEditorTableAction.EDIT_ACTION_PREFIX + ApplyAction.ACTION_NAME;
+		String optionName = actionName + owner;
+		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
+
+		String message = "Editor action was not registered before editor was shown";
+		assertTrue(message, options.isRegistered(optionName));
+
+		DockingActionIf action = getAction(tool, ToolConstants.SHARED_OWNER, actionName);
+		assertNotNull(message, action);
+	}
+
+//==================================================================================================
+// Private methods
+//==================================================================================================
+
 	private void editSignature(String name, String newSignature) {
 		expandNode(programNode);
 		GTreeNode child = programNode.getChild(name);
@@ -986,7 +1008,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	/**
 	 * This directory is bin in eclipse; it will be a resources directory in the classpath when run 
-	 * in batch mode.  
+	 * in batch mode.   The directory is one specifically created by and for this test.
 	 * @return class output directory
 	 * @throws FileNotFoundException Could not find class output directory
 	 */
@@ -1008,12 +1030,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		try {
 			File binDir = getClassesDirectory();
 			if (binDir.isDirectory()) {
-				Msg.debug(this, "\tdeleting the bin dir...");
-				boolean success = FileUtilities.deleteDir(binDir);
-				Msg.debug(this, "\tsuccess?: " + success);
-			}
-			else {
-				Msg.debug(this, "NOT a directory - not deleting!");
+				FileUtilities.deleteDir(binDir);
 			}
 		}
 		catch (FileNotFoundException e) {

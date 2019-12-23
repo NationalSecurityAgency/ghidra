@@ -20,6 +20,8 @@ import java.util.Map.Entry;
 
 import javax.swing.KeyStroke;
 
+import org.apache.commons.collections4.Bag;
+import org.apache.commons.collections4.bag.HashBag;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
@@ -34,11 +36,25 @@ import ghidra.framework.options.ToolOptions;
  * allows plugins to create actions that share keybindings without having to manage those 
  * keybindings themselves.
  * 
+ * <p>Some ways this class is used:
+ * <ol>
+ * 	<li>As a central action to manage key bindings for multiple actions from different clients 
+ *      (plugins) that are conceptually the same.  When the plugins are loaded 
+ *      these actions get registered and are wired to listen to key binding changes to this stub. 
+ * 	</li>
+ *  <li>As a placeholder action to manage key bindings for actions that have not yet been 
+ *      registered and may not get registered during the lifetime of a single tool session.
+ *      This can happen when a plugin has transient component providers that only get shown
+ *      upon a user request.  This stub allows the key binding for those actions to be managed,
+ *      even if they do not get registered when the tool is shown.
+ *  </li>
+ * </ol>
+ * 
  * <p>Clients should not be using this class directly.
  */
 public class SharedStubKeyBindingAction extends DockingAction implements OptionsChangeListener {
 
-	static final String SHARED_OWNER = ToolConstants.TOOL_OWNER;
+	static final String SHARED_OWNER = ToolConstants.SHARED_OWNER;
 
 	/**
 	 * We save the client actions for later validate and options updating.  We also need the
@@ -50,27 +66,54 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 	private WeakHashMap<DockingActionIf, KeyStroke> clientActions = new WeakHashMap<>();
 
 	private ToolOptions keyBindingOptions;
+	private Bag<String> actionOwners = new HashBag<String>();
 
 	/**
 	 * Creates a new dummy action by the given name and default keystroke value
 	 * 
 	 * @param name The name of the action--this will be displayed in the options as the name of
 	 *             key binding's action
+	 * @param defaultKs the default key stroke for this stub.  The key stroke will be validated
+	 *        each time an action is added to this stub to ensure that the defaults are in sync.
 	 * @param options the tool's key binding options
 	 */
-	SharedStubKeyBindingAction(String name, ToolOptions options) {
-		super(name, SHARED_OWNER);
+	SharedStubKeyBindingAction(String name, KeyStroke defaultKs, ToolOptions options) {
+		// Note: we need to have this stub registered to use key bindings so that the options will
+		//       restore the saved key binding to this class, which will then notify any of the
+		//       shared actions using this stub.
+		super(name, SHARED_OWNER, KeyBindingType.INDIVIDUAL);
 		this.keyBindingOptions = options;
 
 		// Dummy keybinding actions don't have help--the real action does
 		DockingWindowManager.getHelpService().excludeFromHelp(this);
 
+		setUnvalidatedKeyBindingData(new KeyBindingData(defaultKs));
+
 		// A listener to keep the shared, stub keybindings in sync with their clients 
 		options.addOptionsChangeListener(this);
 	}
 
+	/**
+	 * Adds the given owner name to this stub.  This is used to display all known clients of
+	 * the action represented by this stub.  Normally, when this class has actions, the names
+	 * of each action's owner would be used directly.  However, this class can also be used as 
+	 * a placeholder, when no actions have yet been registered.  In that case, the owner has 
+	 * to be set directly on this stub.
+	 *  
+	 * @param owner the name of the client that owns the actions that may get registered with
+	 *        this stub
+	 */
+	void addActionOwner(String owner) {
+		if (DockingWindowManager.DOCKING_WINDOWS_OWNER.equals(owner)) {
+			// Special case: special system-level action owner; the user does not need to see
+			return;
+		}
+		actionOwners.add(owner);
+	}
+
 	void removeClientAction(DockingActionIf action) {
 		clientActions.remove(action);
+		actionOwners.remove(action.getOwner());
 	}
 
 	void addClientAction(DockingActionIf action) {
@@ -88,42 +131,18 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 
 	@Override
 	public String getOwnerDescription() {
-		List<String> owners = getDistinctOwners();
+		List<String> owners = new LinkedList<>(actionOwners.uniqueSet());
 		if (owners.size() == 1) {
 			return owners.get(0);
 		}
 
-		boolean hasTool = owners.remove(ToolConstants.TOOL_OWNER);
+		boolean hasTool = owners.remove(SHARED_OWNER);
 		Collections.sort(owners);
 		if (hasTool) {
-			owners.add(0, ToolConstants.TOOL_OWNER);
+			owners.add(0, SHARED_OWNER);
 		}
 
 		return StringUtils.join(owners, ", ");
-	}
-
-	private List<String> getDistinctOwners() {
-		List<String> results = new ArrayList<>();
-		Set<DockingActionIf> actions = clientActions.keySet();
-		for (DockingActionIf action : actions) {
-			String owner = action.getOwner();
-			if (DockingWindowManager.DOCKING_WINDOWS_OWNER.equals(owner)) {
-				// special case: this is the owner for special system-level actions
-				continue;
-			}
-
-			if (!results.contains(owner)) {
-				results.add(owner);
-			}
-		}
-
-		if (results.isEmpty()) {
-			// This implies we have an action owned by the DockingWindowManager 
-			// (the DOCKING_WINDOWS_OWNER).  In this case, use the Tool as the owner.
-			results.add(SHARED_OWNER);
-		}
-
-		return results;
 	}
 
 	private KeyStroke validateActionsHaveTheSameDefaultKeyStroke(DockingActionIf newAction) {

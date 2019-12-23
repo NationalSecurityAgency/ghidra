@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,16 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import ghidra.util.exception.UsrException;
-
-import java.awt.Event;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.KeyBindingData;
-
+import ghidra.util.exception.UsrException;
+import resources.ResourceManager;
 
 /**
  * Action for use in the composite data type editor.
@@ -35,34 +32,36 @@ import docking.action.KeyBindingData;
  */
 public class MoveUpAction extends CompositeEditorTableAction {
 
-    private final static ImageIcon moveUpIcon = ResourceManager.loadImage("images/up.png");
-    private final static String ACTION_NAME = "Move Components Up";
-    private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
-    private final static String DESCRIPTION = "Move selected components up";
-    private KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_UP, Event.ALT_MASK);
-    private static String[] popupPath = new String[] { ACTION_NAME };
+	private final static ImageIcon ICON = ResourceManager.loadImage("images/up.png");
+	public final static String ACTION_NAME = "Move Components Up";
+	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
+	private final static String DESCRIPTION = "Move selected components up";
+	private final static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
-    public MoveUpAction(CompositeEditorProvider provider) {
-        super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null, moveUpIcon);
-        setDescription(DESCRIPTION);
-        setKeyBindingData( new KeyBindingData( keyStroke ) );
+	private final static KeyStroke KEY_STROKE =
+		KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK);
+
+	public MoveUpAction(CompositeEditorProvider provider) {
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
+		setDescription(DESCRIPTION);
+		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		adjustEnablement();
-    }
-    
-    @Override
-    public void actionPerformed(ActionContext context) {
+	}
+
+	@Override
+	public void actionPerformed(ActionContext context) {
 		try {
 			model.moveUp();
-		} catch (UsrException e1) {
+		}
+		catch (UsrException e1) {
 			model.setStatus(e1.getMessage(), true);
 		}
 		requestTableFocus();
-    }
-    
-    @Override
-    public void adjustEnablement() {
-        setEnabled(model.isMoveUpAllowed());
-    }
-    
-}
+	}
 
+	@Override
+	public void adjustEnablement() {
+		setEnabled(model.isMoveUpAllowed());
+	}
+
+}

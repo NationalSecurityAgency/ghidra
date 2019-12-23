@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,63 +15,50 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import ghidra.util.Msg;
-import ghidra.util.exception.UsrException;
-
 import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
-import docking.action.*;
-
+import docking.action.KeyBindingData;
+import ghidra.util.Msg;
+import ghidra.util.exception.UsrException;
 import resources.ResourceManager;
-
 
 public class ClearAction extends CompositeEditorTableAction {
 
+	public final static String ACTION_NAME = "Clear Components";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
-	private final static ImageIcon CLEAR_ICON = ResourceManager.loadImage("images/erase16.png");
-    private final static String[] popupPath = new String[] { "Clear" };
-	private KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, 0);
+	private final static ImageIcon ICON = ResourceManager.loadImage("images/erase16.png");
+	private final static String[] POPUP_PATH = new String[] { "Clear" };
+	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_C, 0);
 
-	/**
-	 * 
-	 * @param owner
-	 * @param cycleGroup
-	 */
 	public ClearAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + "Clear Components", 
-			  GROUP_NAME, popupPath, null, CLEAR_ICON);
-			  
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
+
 		setDescription("Clear the selected components");
-		setKeyBindingData(new KeyBindingData(keyStroke));
+		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		adjustEnablement();
 	}
-	
-	/* (non-Javadoc)
-	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-	 */
-	 @Override
-    public void actionPerformed(ActionContext context) {
+
+	@Override
+	public void actionPerformed(ActionContext context) {
 		try {
 			model.clearSelectedComponents();
-		} catch (OutOfMemoryError memExc) {
+		}
+		catch (OutOfMemoryError memExc) {
 			String errMsg = "Couldn't clear components. Out of memory.";
 			Msg.showError(this, null, "Out of Memory", errMsg, memExc);
-		} catch (UsrException ue) {
+		}
+		catch (UsrException ue) {
 			model.setStatus(ue.getMessage());
 		}
 		requestTableFocus();
-	 }
-    
-	 /* (non-Javadoc)
-	  * @see ghidra.app.plugin.datamanager.editor.CompositeEditorAction#adjustEnablement()
-	  */
-	 @Override
-    public void adjustEnablement() {
-		 setEnabled(model.isClearAllowed());
-	 }
-	 
+	}
+
+	@Override
+	public void adjustEnablement() {
+		setEnabled(model.isClearAllowed());
+	}
 }

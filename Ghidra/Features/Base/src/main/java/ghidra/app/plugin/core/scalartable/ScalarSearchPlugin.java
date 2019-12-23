@@ -163,6 +163,6 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 		//               providers are created, as they would only appear in the options at
 		//               that point.
 		//
-		DeleteTableRowAction.registerDummy(tool);
+		DeleteTableRowAction.registerDummy(tool, getName());
 	}
 }
