@@ -134,9 +134,6 @@ public class XmlTestHelper {
 		}
 	}
 
-	/**
-	 * Return true if the given line is in the the xml list.
-	 */
 	public boolean containsXml(String line) {
 		boolean contains = xmlList.contains(line);
 		return contains;
@@ -182,33 +179,18 @@ public class XmlTestHelper {
 			exception.printStackTrace();
 		}
 
-		/**
-		 * @see org.xml.sax.ErrorHandler#fatalError(org.xml.sax.SAXParseException)
-		 */
 		@Override
 		public void fatalError(SAXParseException exception) throws SAXException {
 			exception.printStackTrace();
 
 		}
 
-		/**
-		 * @see org.xml.sax.ErrorHandler#warning(org.xml.sax.SAXParseException)
-		 */
 		@Override
 		public void warning(SAXParseException exception) throws SAXException {
 			exception.printStackTrace();
 		}
 	}
 
-	/**
-	 * @param programName the program name
-	 * @return the program
-	 * @throws VersionException
-	 * @throws InvalidNameException
-	 * @throws DuplicateNameException
-	 * @throws CancelledException
-	 * @throws FileNotFoundException if the file is not found
-	 */
 	public Program loadResourceProgram(String programName) throws IOException, CancelledException,
 			DuplicateNameException, InvalidNameException, VersionException {
 		File file = AbstractGenericTest.getTestDataFile(programName);
@@ -218,14 +200,6 @@ public class XmlTestHelper {
 		return getProject().importProgramFast(file);
 	}
 
-	/**
-	 * See {@link #assertXMLFilesEquals(XmlPullParser, XmlPullParser) assertXMLFilesEquals()}
-	 *
-	 * @param expectedXMLFile
-	 * @param testXMLFile
-	 * @throws SAXException
-	 * @throws IOException
-	 */
 	public static void assertXMLFilesEquals(File expectedXMLFile, File testXMLFile)
 			throws SAXException, IOException {
 
@@ -235,22 +209,18 @@ public class XmlTestHelper {
 		assertXMLFilesEquals(expectedXMLParser, testXMLParser);
 	}
 
-	/**
+	/*
 	 * Compares 2 xml files and fails if there is any difference between the two.
-	 * <p>
+	 *
 	 * Elements must be ordered in the same order.  Attribute values are not order sensitive.
-	 * <p>
+	 *
 	 * Inter-node whitespace differences are ignored.
-	 * <p>
+	 *
 	 * DTD definitions are ignored.
-	 * <p>
-	 * @param expectedXMLParser
-	 * @param testXMLParser
-	 * @throws SAXException
-	 * @throws IOException
+	 *
 	 */
 	public static void assertXMLFilesEquals(XmlPullParser expectedXMLParser,
-			XmlPullParser testXMLParser) throws SAXException, IOException {
+			XmlPullParser testXMLParser) {
 
 		Deque<String> currentPath = new ArrayDeque<>();
 
@@ -275,7 +245,8 @@ public class XmlTestHelper {
 
 			if (expectedElement.isStart()) {
 				Map<String, String> testAttrs = testElement.getAttributes();
-				for (Entry<String, String> expectedAttr : expectedElement.getAttributes().entrySet()) {
+				for (Entry<String, String> expectedAttr : expectedElement.getAttributes()
+						.entrySet()) {
 					if (!testAttrs.containsKey(expectedAttr.getKey())) {
 						failWithInfo("Attribute " + expectedAttr.getKey() + " missing",
 							expectedXMLParser, testXMLParser, expectedElement, testElement,
