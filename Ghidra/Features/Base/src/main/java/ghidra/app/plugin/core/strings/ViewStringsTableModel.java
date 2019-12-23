@@ -39,7 +39,6 @@ import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.field.AbstractProgramLocationTableColumn;
 import ghidra.util.table.field.AddressBasedLocation;
 import ghidra.util.task.TaskMonitor;
-import util.CollectionUtils;
 
 /**
  * Table model for the "Defined Strings" table.
@@ -115,8 +114,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		monitor.setCancelEnabled(true);
 		monitor.initialize(listing.getNumDefinedData());
 		Swing.allowSwingToProcessEvents();
-		for (Data stringInstance : CollectionUtils.asIterable(
-			DefinedDataIterator.definedStrings(localProgram))) {
+		for (Data stringInstance : DefinedDataIterator.definedStrings(localProgram)) {
 			accumulator.add(createIndexedStringInstanceLocation(localProgram, stringInstance));
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
@@ -142,8 +140,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 	}
 
 	public void addDataInstance(Program localProgram, Data data, TaskMonitor monitor) {
-		for (Data stringInstance : CollectionUtils.asIterable(
-			DefinedDataIterator.definedStrings(data))) {
+		for (Data stringInstance : DefinedDataIterator.definedStrings(data)) {
 			addObject(createIndexedStringInstanceLocation(localProgram, stringInstance));
 		}
 	}

@@ -28,7 +28,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.task.TaskMonitor;
-import util.CollectionUtils;
 
 public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegrationTest {
 
@@ -228,7 +227,7 @@ public class DemangledAddressTableTest extends AbstractGhidraHeadlessIntegration
 	private void assertPointersAt(int totalNonPointerData, int totalInstructions, String... addrs) {
 		Listing listing = program.getListing();
 		int index = 0;
-		for (Data d : CollectionUtils.asIterable(listing.getDefinedData(true))) {
+		for (Data d : listing.getDefinedData(true)) {
 			if (d.isPointer()) {
 				assertTrue("too many pointers found, expected only " + addrs.length,
 					index < addrs.length);

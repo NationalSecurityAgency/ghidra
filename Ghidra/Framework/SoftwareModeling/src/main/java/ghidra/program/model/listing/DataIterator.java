@@ -25,7 +25,7 @@ import util.CollectionUtils;
  *
  * @see CollectionUtils#asIterable
  */
-public interface DataIterator extends Iterator<Data> {
+public interface DataIterator extends Iterator<Data>, Iterable<Data>  {
 	public static final DataIterator EMPTY = of(/*nothing*/);
 
 	/**
@@ -43,6 +43,11 @@ public interface DataIterator extends Iterator<Data> {
 
 	@Override
 	public Data next();
+
+	@Override
+	default Iterator<Data> iterator() {
+		return this;
+	}
 
 	// --------------------------------------------------------------------------------
 	// Helper static stuff

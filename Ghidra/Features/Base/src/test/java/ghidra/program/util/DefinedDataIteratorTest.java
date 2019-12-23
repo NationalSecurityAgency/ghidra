@@ -79,7 +79,7 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		builder.createString("0x10", "test1", StandardCharsets.UTF_8, true, stringDT);
 		builder.applyFixedLengthDataType("0x100", struct1DT, struct1DT.getLength());
 
-		List<Data> list = CollectionUtils.asList(
+		List<Data> list = CollectionUtils.asList((Iterable<Data>)
 			DefinedDataIterator.byDataType(program, dt -> dt instanceof IntegerDataType));
 
 		assertTrue(list.get(0).getAddress().getOffset() == 0x0);
@@ -94,7 +94,8 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		builder.createString("0x10", "test1", StandardCharsets.UTF_8, true, stringDT);
 		builder.applyFixedLengthDataType("0x100", struct1DT, struct1DT.getLength());
 
-		List<Data> list = CollectionUtils.asList(DefinedDataIterator.definedStrings(program));
+		List<Data> list =
+			CollectionUtils.asList((Iterable<Data>) DefinedDataIterator.definedStrings(program));
 
 		assertTrue(list.get(0).getAddress().getOffset() == 0x10);
 		assertTrue(list.get(1).getAddress().getOffset() == 0x100 + 10);
@@ -113,7 +114,8 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		int lastEle = numElements - 1;
 		int elementSize = structArray.getElementLength();
 
-		List<Data> list = CollectionUtils.asList(DefinedDataIterator.definedStrings(program));
+		List<Data> list =
+			CollectionUtils.asList((Iterable<Data>) DefinedDataIterator.definedStrings(program));
 
 		assertEquals(list.get(0).getAddress().getOffset(), 0x10);
 		assertEquals(list.get(1 + 0).getAddress().getOffset(), 0x100 + 10);
@@ -135,14 +137,14 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		builder.applyFixedLengthDataType("0x20", intDT, intTD.getLength());
 
 		// iterating by data type ignores typedefs, so we should get all 3 ints
-		List<Data> list = CollectionUtils.asList(
+		List<Data> list = CollectionUtils.asList((Iterable<Data>)
 			DefinedDataIterator.byDataType(program, dt -> dt instanceof IntegerDataType));
 
 		assertEquals(3, list.size());
 
 		// iterating by data instance, we can inspect the actual data type and get the
 		// typedef
-		list = CollectionUtils.asList(DefinedDataIterator.byDataInstance(program,
+		list = CollectionUtils.asList((Iterable<Data>) DefinedDataIterator.byDataInstance(program,
 			data -> data.getDataType() instanceof TypeDef));
 		assertEquals(2, list.size());
 	}
