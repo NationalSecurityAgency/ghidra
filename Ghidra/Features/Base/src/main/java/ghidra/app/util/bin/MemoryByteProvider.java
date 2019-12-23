@@ -52,6 +52,9 @@ public class MemoryByteProvider implements ByteProvider {
 	 * 
 	 * @param index absolute index in this ByteProvider to convert into an Address
 	 * @return {@link Address}
+	 * @throws AddressOutOfBoundsException if wrapping is not supported by the 
+	 * corresponding address space and the addition causes an out-of-bounds
+	 * error
 	 */
 	public Address getAddress(long index) {
 		return baseAddress.add(index);
