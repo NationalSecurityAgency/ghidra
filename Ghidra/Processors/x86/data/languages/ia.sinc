@@ -963,8 +963,6 @@ spec_rm64: "qword ptr "^Mem	is Mem				{ export *:8 Mem; }
 @endif
 
 n1: "1"	is epsilon			{ tmp:1 = 1; export tmp; }
-n3: "3"	is epsilon			{ tmp:1 = 0x3; export tmp; }
-n29: "29"	is epsilon		{ tmp:1 = 0x29; export tmp; }
 
 @ifdef IA64
 # Handle sign extension in 64-bit mode for 32-bit destination registers
@@ -2689,8 +2687,8 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 :INSD^rep^reptail eseDI4,DX is vexMode=0 & rep & reptail & opsize=1 & byte=0x6d & eseDI4 & DX   { eseDI4 = in(DX); }
 :INSD^rep^reptail eseDI4,DX is vexMode=0 & rep & reptail & opsize=2 & byte=0x6d & eseDI4 & DX   { eseDI4 = in(DX); }
 
-:INT n3         is vexMode=0 & byte=0xcc & n3                       { tmp:1 = 0x3; intloc:$(SIZE) = swi(tmp); call [intloc]; return [0:1]; }
-:INT n29       is vexMode=0 & byte=0xcd; byte=0x29 & n29            { tmp:1 = 0x29; intloc:$(SIZE) = swi(tmp); call [intloc]; return [0:1]; }
+:INT1           is vexMode=0 & byte=0xf1                            { tmp:1 = 0x1; intloc:$(SIZE) = swi(tmp); call [intloc]; return [0:1]; }
+:INT3           is vexMode=0 & byte=0xcc                            { tmp:1 = 0x3; intloc:$(SIZE) = swi(tmp); call [intloc]; return [0:1]; }
 :INT imm8       is vexMode=0 & byte=0xcd; imm8                      { tmp:1 = imm8; intloc:$(SIZE) = swi(tmp); call [intloc]; }
 :INTO           is vexMode=0 & byte=0xce & bit64=0
 {
