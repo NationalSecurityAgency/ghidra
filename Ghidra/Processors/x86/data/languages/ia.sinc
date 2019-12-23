@@ -1934,7 +1934,7 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
     CF = ((*:1 ptr >> (Reg32 & 0x7)) & 1) != 0;
 }
 @ifdef IA64
-:BT r64,Reg64		is vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; mod=3 & r64 & Reg64		{ CF = ((r64 >> (Reg64 & 0x1f)) & 1) != 0; }
+:BT r64,Reg64		is vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; mod=3 & r64 & Reg64		{ CF = ((r64 >> (Reg64 & 0x3f)) & 1) != 0; }
 :BT Mem,Reg64		is vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; Mem & Reg64 ...		{ local ptr = Mem + (Reg64 s>> 3);
 											  CF = ((*:1 ptr >> (Reg64 & 0x7)) & 1) != 0; }
 @endif
