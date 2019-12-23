@@ -1193,7 +1193,18 @@ public class FieldPanel extends JPanel
 		cursorHandler.doCursorEnd(trigger);
 	}
 
-	private FieldLocation getLocationForPoint(int x, int y) {
+	public Point getPointForLocation(FieldLocation location) {
+
+		AnchoredLayout layout = findLayoutOnScreen(location.getIndex());
+		if (layout == null) {
+			return null;
+		}
+		Rectangle r =
+			layout.getCursorRect(location.fieldNum, location.row, location.col);
+		return r.getLocation();
+	}
+
+	public FieldLocation getLocationForPoint(int x, int y) {
 		FieldLocation location = new FieldLocation();
 		// delegate to the appropriate layout to do the work
 		Layout layout = findLayoutAt(y);

@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.decompile;
 
 import static org.junit.Assert.*;
 
+import java.awt.Point;
 import java.util.List;
 
 import org.junit.After;
@@ -76,10 +77,15 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 
 	protected void setDecompilerLocation(int line, int charPosition) {
 
-		runSwing(() -> provider.setCursorLocation(line, charPosition));
 		DecompilerPanel panel = provider.getDecompilerPanel();
 		FieldPanel fp = panel.getFieldPanel();
-		click(fp, 1, true);
+		FieldLocation loc = loc(line, charPosition);
+
+		// scroll to the field to make sure it has been built so that we can get its point
+		fp.scrollTo(loc);
+		Point p = fp.getPointForLocation(loc);
+
+		click(fp, p, 1, true);
 		waitForSwing();
 	}
 
