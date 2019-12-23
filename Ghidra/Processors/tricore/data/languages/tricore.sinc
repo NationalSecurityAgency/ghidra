@@ -2102,11 +2102,16 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT E[c], D[a], D[b] (RR)
-:dvinit Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Re2831 & op1627=0x1a0
+:dvinit Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x1a0
 {
 	#TODO  divide sequence
-	Re2831 = sext(Rd0811);
-	$(PSW_V) = ((Rd1215 == 0) || ((Rd1215 == 0xFFFFFFFF) && (Rd0811 == 0x80000000)));
+	local dividend:4 = Rd0811;
+	local divisor:4 = Rd1215;
+
+	Ree2831 = dividend;
+	Reo2831 = 0xFFFFFFFF * zext(dividend[31,1]);
+
+	$(PSW_V) = ((divisor == 0) || ((divisor == 0xFFFFFFFF) && (dividend == 0x80000000)));
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
@@ -2114,13 +2119,15 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.B E[c], D[a], D[b] (RR)
-:dvinit.b Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Re2831 & op1627=0x5a0
+:dvinit.b Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x5a0
 {
 	#TODO  divide sequence
-	local quotient_sign = !(Rd0811[31,1] == Rd1215[31,1]);
-	Re2831[24,40] = sext(Rd0811);
-	ternary(Re2831[0,24], quotient_sign, 0xFFFFFF, 0);
-	$(PSW_V) = ((Rd1215 == 0) || ((Rd1215 == 0xFFFFFFFF) && (Rd0811 == 0xFFFFFF80)));
+	local dividend:4 = Rd0811;
+	local divisor:4 = Rd1215;
+	local quotient_sign = !(dividend[31,1] == divisor[31,1]);
+	Ree2831 = (dividend << 24) | (0xFFFFFF * zext(quotient_sign));
+	Reo2831 = dividend s>> 8;
+	$(PSW_V) = ((divisor == 0) || ((divisor == 0xFFFFFFFF) && (dividend == 0xFFFFFF80)));
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
@@ -2128,11 +2135,15 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.BU E[c], D[a], D[b] (RR)
-:dvinit.bu Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Re2831 & op1627=0x4a0
+:dvinit.bu Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x4a0
 {
 	#TODO  divide sequence
-	Re2831 = zext(Rd0811) << 24;
-	$(PSW_V) = (Rd1215 == 0);
+	local dividend:4 = Rd0811;		# D[a]
+	local divisor:4 = Rd1215;		# D[b]
+
+	Ree2831 = dividend << 24;
+	Reo2831 = dividend >> 8;
+	$(PSW_V) = (divisor == 0);
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
@@ -2140,12 +2151,16 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.H E[c], D[a], D[b] (RR)
-:dvinit.h Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Re2831 & op1627=0x3a0
+:dvinit.h Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x3a0
 {
 	#TODO  divide sequence
-	local quotient_sign = !(Rd0811[31,1] == Rd1215[31,1]);
-	Re2831 = (sext(Rd0811) << 16) | zext(quotient_sign * 0xffff);
-	$(PSW_V) = ((Rd1215 == 0) || ((Rd1215 == 0xFFFFFFFF) && (Rd0811 == 0xFFFF8000)));
+	local dividend:4 = Rd0811;		# D[a]
+	local divisor:4 = Rd1215;		# D[b]
+	local quotient_sign = !(dividend[31,1] == divisor[31,1]);
+
+	Ree2831 = (dividend << 16) | (zext(quotient_sign) * 0xFFFF);
+	Reo2831 = dividend s>> 16;
+	$(PSW_V) = ((divisor == 0) || ((divisor == 0xFFFFFFFF) && (dividend == 0xFFFF8000)));
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
@@ -2153,11 +2168,15 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
 # DVINIT.HU E[c], D[a], D[b] (RR)
-:dvinit.hu Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Re2831 & op1627=0x2a0
+:dvinit.hu Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0x2a0
 {
 	#TODO  divide sequence
-	Re2831 = zext(Rd0811) << 16;
-	$(PSW_V) = (Rd1215 == 0);
+	local dividend:4 = Rd0811;		# D[a]
+	local divisor:4 = Rd1215;		# D[b]
+
+	Ree2831 = dividend << 16;
+	Reo2831 = dividend >> 16;
+	$(PSW_V) = (divisor == 0);
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
@@ -2168,10 +2187,12 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 :dvinit.u Ree2831/Reo2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x4b ; Ree2831 & Reo2831 & op1627=0xa0
 {
 	#TODO  divide sequence
-	local tmp:4 = Rd0811;
+	local dividend:4 = Rd0811;		# D[a]
+	local divisor:4 = Rd1215;		# D[b]
+
+	Ree2831 = dividend;
 	Reo2831 = 0;
-	Ree2831 = tmp;
-	$(PSW_V) = (Rd1215 == 0);
+	$(PSW_V) = (divisor == 0);
 	$(PSW_SV) = $(PSW_V) | $(PSW_SV);
 	$(PSW_AV) = 0;
 }
