@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<compiler_spec>
+  <data_organization>
+    <pointer_size value="2" />
+  </data_organization>
+  <global>
+    <range space="ram"/>
+  </global>
+  <stackpointer register="R6" space="ram"/>
+  <default_proto>
+    <prototype name="unknown" extrapop="0" stackshift="0" strategy="register">
+      <input/>
+      <output/>
+      <unaffected>
+        <register name="R6" />
+      </unaffected>
+    </prototype>
+  </default_proto>
+</compiler_spec>

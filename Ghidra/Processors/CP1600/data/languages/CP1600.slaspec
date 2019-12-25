@@ -1,0 +1,651 @@
+define endian=big;
+define alignment=2;
+define space ram type=ram_space wordsize=2 size=2 default;
+define space register type=register_space size=2;
+
+define register offset=0x00 size=2 [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+define register offset=0x10 size=1 [ I D C O Z S ]; # Status bits
+define register offset=0x20 size=4 [ contextreg ];
+
+define token opcode_word (16)
+	clear              = (10, 15)
+	reg3_5             = (3, 5)
+	reg0_2             = (0, 2)
+	reg0_1             = (0, 1)
+	operation_size     = (2, 2)
+	
+	branch_sign        = (5, 5)
+	branch_external    = (4, 4)
+	branch_condition   = (0, 3)
+	external_condition = (0, 3)
+	
+	opcode6_9          = (6, 9)
+	opcode3_9          = (3, 9)
+	opcode2_9          = (2, 9)
+	opcode1_9          = (1, 9)
+	opcode0_9          = (0, 9)
+;
+
+define token jump_token (32)
+	unused_jump = (26, 31)
+	reg24_25    = (24, 25)
+	address_hi  = (18, 23)
+	jump_type   = (16, 17)
+	address_lo  = (0, 9)
+;
+
+define token double16 (32)
+	unused_lo = (17, 31)
+	value_lo  = (16, 23)
+	unused_hi = (8, 15)
+	value_hi  = (0, 7)
+;
+
+define token immediate16 (16)
+	imm16  = (0, 15)
+	addr16 = (0, 15)
+;
+
+define context contextreg
+	doublebyte = (0, 0)
+;
+
+attach variables [ reg0_1        ] [ R0 R1 R2 R3             ];
+attach variables [ reg0_2 reg3_5 ] [ R0 R1 R2 R3 R4 R5 R6 R7 ];
+attach variables [ reg24_25      ] [ R4 R5 R6 R7             ]; # R7 is not used.
+
+################################################################
+
+jmpdest16:     reloc is address_hi & address_lo [ reloc = (address_hi << 10) + address_lo; ] { export *:2 reloc;                         }
+branchdest16:  reloc is branch_sign=0 ; imm16   [ reloc = inst_start + 2 + imm16;          ] { export *:2 reloc;                         }
+branchdest16:  reloc is branch_sign=1 ; imm16   [ reloc = inst_start + 2 - imm16;          ] { export *:2 reloc;                         }
+splitimm16:    split is value_hi & value_lo     [ split = (value_hi << 8) + value_lo;      ] { local tmp:2 = split & 0xFFFF; export tmp; }
+
+################################################################
+
+macro resultFlags(value) {
+	Z = value == 0;
+	S = value s< 0; 
+}
+
+macro addition(first, second) {
+	local tmpC = carry(first, second);
+	local tmpO = scarry(first, second);
+	first = first + second;
+	C = tmpC;
+	O = tmpO;
+	resultFlags(first);
+}
+
+macro readHalfDoubleWord(reg, dest) {
+	if (reg != R6) goto <read>;
+	reg = reg - 1;
+	<read>
+	local __tmp__:2 = reg;
+	local __ptr__:2 = *__tmp__;
+	dest = (*:2 (__ptr__)) & 0x00FF;
+	if ((reg != R4) || (reg != R5)) goto <done>;
+	reg = reg + 1;
+	<done>
+}
+
+macro readDoubleWord(reg, dest) {
+	local __tmpl__:2 = 0;
+	readHalfDoubleWord(reg, __tmpl__);
+	local __tmph__:2 = 0;
+	readHalfDoubleWord(reg, __tmph__);
+	dest = (__tmph__ << 8) | __tmpl__;
+}
+
+macro comparison(first, second) {
+	local __val__ = first - second;
+	O = sborrow(first, second);
+	C = first < second; 
+	resultFlags(__val__);
+}
+
+macro subtraction(first, second) {
+	local __val__ = first - second;
+	O = sborrow(first, second);
+	C = first < second; 
+	resultFlags(__val__);
+	first = __val__;
+}
+
+################################################################
+
+define pcodeop TerminateCurrentInterrupt;
+define pcodeop SoftwareInterrupt;
+
+################################################################
+
+:ADD addr16, reg0_2 is opcode3_9=0x0058 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local ptr:2 = addr16;
+	addition(reg0_2, *(*:2 ptr));
+}
+
+:ADCR reg0_2 is opcode3_9=0x0005 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local oldC = zext(C);
+	addition(reg0_2, oldC);
+}
+
+:ADDR reg3_5, reg0_2 is opcode6_9=0x0003 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	addition(reg0_2, reg3_5);
+}
+
+:AND addr16, reg0_2 is opcode3_9=0x0070 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local ptr:2 = addr16;
+	reg0_2 = reg0_2 & *(*:2 ptr);
+	resultFlags(reg0_2);
+}
+
+:ANDR reg3_5, reg0_2 is opcode6_9=0x0006 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg0_2 & reg3_5;
+	resultFlags(reg0_2);
+}
+
+:B branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=0) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	goto branchdest16;
+}
+
+:BC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=1) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (C == 1) goto branchdest16;
+}
+
+:BEQ branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=4) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (Z == 1) goto branchdest16;
+}
+
+:BESC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=15) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (S == C) goto branchdest16;
+}
+
+:BGE branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=13) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (S == O) goto branchdest16;
+}
+
+:BGT branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=14) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if ((Z == 0) || (S == O)) goto branchdest16;
+}
+
+:BLE branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=6) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if ((Z == 1) || (S != O)) goto branchdest16;
+}
+
+:BLT branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=5) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (S != O) goto branchdest16;
+}
+
+:BMI branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=11) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (S == 1) goto branchdest16;
+}
+
+:BNC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=9) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (C == 0) goto branchdest16;
+}
+
+:BNEQ branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=12) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (Z == 0) goto branchdest16;
+}
+
+:BNOV branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=10) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (O == 0) goto branchdest16;
+}
+
+:BOV branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=2) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (O == 1) goto branchdest16;
+}
+
+:BPL branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=3) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (S == 0) goto branchdest16;
+}
+
+:BUSC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=7) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	if (S != C) goto branchdest16;
+}
+
+:BEXT branchdest16, #external_condition is (opcode6_9=0x0008 & branch_external=1 & external_condition) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	goto branchdest16;
+}  
+
+:CLRC is opcode0_9=0x0006 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	C = 0;
+}
+
+:CMP addr16, reg0_2 is opcode3_9=0x0068 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local ptr:2 = addr16;
+	comparison(reg0_2, *(*:2 ptr));
+}
+
+:CMPR reg3_5, reg0_2 is opcode6_9=0x0005 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	comparison(reg0_2, reg3_5);
+}
+
+:COMR reg0_2 is opcode3_9=0x0003 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = ~reg0_2;
+	resultFlags(reg0_2);
+}
+
+:DECR reg0_2 is opcode3_9=0x0002 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg0_2 - 1;
+	resultFlags(reg0_2);
+}
+
+:DIS is opcode0_9=0x0003 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	I = 0;
+}
+
+:EIS is opcode0_9=0x0002 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	I = 1;
+}
+
+:GSWD reg0_1 is opcode2_9=0x000C & reg0_1 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local mask:2 = (zext(S) << 7) + (zext(Z) << 6) + (zext(O) << 5) + (zext(C) << 4);
+	reg0_1 = (mask << 8) + mask; 
+}
+
+:HLT is opcode0_9=0x0000 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	goto inst_start;
+}
+
+:INCR reg0_2 is opcode3_9=0x0001 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg0_2 + 1;
+	resultFlags(reg0_2);
+}
+
+:J jmpdest16 is opcode0_9=0x0004 ; jump_type=0 & reg24_25=R7 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	goto jmpdest16;
+}
+
+:JD jmpdest16 is opcode0_9=0x0004 ; jump_type=2 & reg24_25=R7 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	I = 0;
+	goto jmpdest16;
+}
+
+:JE jmpdest16 is opcode0_9=0x0004 ; jump_type=1 & reg24_25=R7 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	I = 1;
+	goto jmpdest16;
+}
+
+:JSR reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=0 & reg24_25 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg24_25 = inst_next;
+	call jmpdest16;
+}
+
+:JSRD reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=2 & reg24_25 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	I = 0;
+	reg24_25 = inst_next;
+	call jmpdest16;
+}
+
+:JSRE reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=1 & reg24_25 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	I = 1;
+	reg24_25 = inst_next;
+	call jmpdest16;
+}
+
+:MOVR reg3_5, reg0_2 is opcode6_9=0x0002 & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg3_5;
+	resultFlags(reg0_2);
+}
+
+:MVI addr16, reg0_2 is opcode3_9=0x0050 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local ptr:2 = addr16;
+	reg0_2 = *(*:2 ptr);
+}
+
+:MVO reg0_2, addr16 is opcode3_9=0x0048 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local ptr:2 = addr16;
+	*ptr = reg0_2;
+}
+
+:MVO@ reg0_2, reg3_5 is opcode6_9=0x0009 & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local ptr:2 = reg3_5; 
+	*ptr = reg0_2;
+	if ((reg3_5 != R4) && (reg3_5 != R5) && (reg3_5 != R6)) goto inst_next;
+	reg3_5 = reg3_5 + 1;
+}
+
+:MVOI reg0_2 is opcode3_9=0x004F & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmp:2 = inst_start + 2;
+	*tmp = reg0_2;
+}
+
+:NEGR reg0_2 is opcode3_9=0x0004 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmp = reg0_2 ^ 0xFFFF;
+	local tmpC = carry(tmp, 1);
+	local tmpO = scarry(tmp, 1);
+	reg0_2 = -reg0_2;
+	C = tmpC;
+	O = tmpO;
+	resultFlags(reg0_2);
+}
+
+:NOP is opcode1_9=0x001A [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+}
+
+:NOPP is opcode6_9=0x0008 & branch_external=0 & branch_condition=8 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+}
+
+:RSWD reg0_2 is opcode3_9=0x0007 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	C = (reg0_2 & 0b00001000) != 0;
+	O = (reg0_2 & 0b00010000) != 0;
+	Z = (reg0_2 & 0b00100000) != 0;
+	S = (reg0_2 & 0b01000000) != 0;
+}
+
+:SDBD is opcode0_9=0x0001 [ doublebyte=1; globalset(inst_next, doublebyte); ] {
+	D = 1;
+}
+
+:SETC is opcode0_9=0x0007 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	C = 1;
+}
+
+:SIN is opcode1_9=0x001B [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	SoftwareInterrupt();
+}
+
+:SUB addr16, reg0_2 is opcode3_9=0x0060 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local ptr:2 = addr16;
+	subtraction(reg0_2, *(*:2 ptr));
+}
+
+:SUBR reg3_5, reg0_2 is opcode6_9=0x0004 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	subtraction(reg0_2, reg3_5);
+}
+
+:TCI is opcode0_9=0x0005 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	TerminateCurrentInterrupt();
+}
+
+:XOR addr16, reg0_2 is opcode3_9=0x0078 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local ptr:2 = addr16;
+	reg0_2 = reg0_2 ^ *(*:2 ptr);
+	resultFlags(reg0_2);
+}
+
+:XORR reg3_5, reg0_2 is opcode6_9=0x0007 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg0_2 ^ reg3_5;
+	resultFlags(reg0_2);
+}
+
+with : operation_size=0 {
+
+:RLC reg0_2, 1 is opcode3_9=0x000A & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpC = (reg0_2 & 0x8000) != 0;
+	local tmpS = (reg0_2 & 0x4000) != 0;
+	reg0_2 = (reg0_2 << 1) + zext(C);
+	C = tmpC;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:RRC reg0_2, 1 is opcode3_9=0x000E & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpC = (reg0_2 & 0x0001) != 0;
+	local tmpS = (reg0_2 & 0x0100) != 0;
+	reg0_2 = (reg0_2 >> 1) | (zext(C) << 15);
+	C = tmpC;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:SAR reg0_2, 1 is opcode3_9=0x000D & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpS = (reg0_2 & 0x0100) != 0;
+	reg0_2 = reg0_2 s>> 1;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:SARC reg0_2, 1 is opcode3_9=0x000F & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpC = (reg0_2 & 0x0001) != 0;
+	local tmpS = (reg0_2 & 0x0100) != 0;
+	reg0_2 = reg0_2 s>> 1;
+	C = tmpC;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:SLL reg0_2, 1 is opcode3_9=0x0009 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpS = (reg0_2 & 0x4000) != 0;
+	reg0_2 = reg0_2 << 1;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:SLLC reg0_2, 1 is opcode3_9=0x000B & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpC = (reg0_2 & 0x8000) != 0;
+	local tmpS = (reg0_2 & 0x4000) != 0;
+	reg0_2 = reg0_2 << 1;
+	C = tmpC;
+	S = tmpS;
+	Z = reg0_2 == 0;
+} 
+
+:SLR reg0_2, 1 is opcode3_9=0x000C & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpS = (reg0_2 & 0x0100) != 0;
+	reg0_2 = reg0_2 >> 1;
+	S = tmpS;
+	Z = reg0_2 == 0;
+} 
+
+:SWAP reg0_2, 1 is opcode3_9=0x0008 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpS = (reg0_2 & 0x8000) != 0;
+	local tmp = (reg0_2 << 8) & 0xFF00;
+	reg0_2 = tmp | ((reg0_2 >> 8) & 0x00FF);
+	S = tmpS;
+}
+
+}
+
+with : operation_size=1 {
+
+:RLC reg0_2, 2 is opcode3_9=0x000A & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpC = (reg0_2 & 0x8000) != 0;
+	local tmpO = (reg0_2 & 0x4000) != 0;
+	local tmpS = (reg0_2 & 0x2000) != 0;
+	reg0_2 = (reg0_2 << 2) + (zext(C) << 1) + zext(O);
+	C = tmpC;
+	O = tmpO;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:RRC reg0_2, 2 is opcode3_9=0x000E & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpC = (reg0_2 & 0x0001) != 0;
+	local tmpO = (reg0_2 & 0x0002) != 0;
+	local tmpS = (reg0_2 & 0x0200) != 0;
+	reg0_2 = (reg0_2 >> 2) | (zext(C) << 14) | (zext(O) << 15);
+	C = tmpC;
+	O = tmpO;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:SAR reg0_2, 2 is opcode3_9=0x000D & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpS = (reg0_2 & 0x0200) != 0;
+	reg0_2 = reg0_2 s>> 2;
+	S = tmpS;
+	Z = reg0_2 == 0;	
+}
+
+:SARC reg0_2, 2 is opcode3_9=0x000F & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpC = (reg0_2 & 0x0001) != 0;
+	local tmpO = (reg0_2 & 0x0002) != 0;
+	local tmpS = (reg0_2 & 0x0200) != 0;
+	reg0_2 = reg0_2 s>> 2;
+	C = tmpC;
+	O = tmpO;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:SLL reg0_2, 2 is opcode3_9=0x0009 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpS = (reg0_2 & 0x2000) != 0;
+	reg0_2 = reg0_2 << 2;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:SLLC reg0_2, 2 is opcode3_9=0x000B & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpC = (reg0_2 & 0x8000) != 0;
+	local tmpO = (reg0_2 & 0x4000) != 0;
+	local tmpS = (reg0_2 & 0x2000) != 0;
+	reg0_2 = reg0_2 << 2;
+	C = tmpC;
+	O = tmpO;
+	S = tmpS;
+	Z = reg0_2 == 0;
+} 
+
+:SLR reg0_2, 2 is opcode3_9=0x000C & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpS = (reg0_2 & 0x0200) != 0;
+	reg0_2 = reg0_2 >> 2;
+	S = tmpS;
+	Z = reg0_2 == 0;
+}
+
+:SWAP reg0_2, 2 is opcode3_9=0x0008 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmpS = (reg0_2 & 0x0080) != 0;
+	reg0_2 = (reg0_2 << 8) | (reg0_2 & 0x00FF);
+	S = tmpS;
+}
+
+}
+
+with : doublebyte=0 {
+
+:ADD@ reg3_5, reg0_2 is opcode6_9=0x000B & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readHalfDoubleWord(reg3_5, val);
+	addition(reg0_2, val);
+}
+
+:ADDI #imm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	addition(reg0_2, imm16);
+}
+
+:AND@ reg3_5, reg0_2 is opcode6_9=0x000E & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readHalfDoubleWord(reg3_5, val);
+	reg0_2 = reg0_2 & val;
+	resultFlags(reg0_2);
+}
+
+:ANDI #imm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg0_2 & imm16;
+	resultFlags(reg0_2);
+}
+
+:CMP@ reg3_5, reg0_2 is opcode6_9=0x000D & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmp:2 = 0;
+	readHalfDoubleWord(reg3_5, tmp);
+	comparison(reg0_2, tmp);
+}
+
+:CMPI #imm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	comparison(reg0_2, imm16);
+}
+
+:MVI@ reg3_5, reg0_2 is opcode6_9=0x000A & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readHalfDoubleWord(reg3_5, val);
+	reg0_2 = val;
+}
+
+:MVII #imm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = imm16;
+}
+
+:SUB@ reg3_5, reg0_2 is opcode6_9=0x000C & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readHalfDoubleWord(reg3_5, val);
+	subtraction(reg0_2, val);
+}
+
+:SUBI #imm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	subtraction(reg0_2, imm16);
+}
+
+:XOR@ reg3_5, reg0_2 is opcode6_9=0x000F & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readHalfDoubleWord(reg3_5, val);
+	reg0_2 = reg0_2 ^ val;
+	resultFlags(reg0_2);
+}
+
+:XORI #imm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg0_2 ^ imm16;
+	resultFlags(reg0_2);
+}
+
+}
+
+with : doublebyte=1 {
+
+:ADD@ reg3_5, reg0_2 is opcode6_9=0x000B & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readDoubleWord(reg3_5, val);
+	addition(reg0_2, val);
+}
+
+:ADDI #splitimm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	addition(reg0_2, splitimm16);
+}
+
+:AND@ reg3_5, reg0_2 is opcode6_9=0x000E & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readDoubleWord(reg3_5, val);
+	reg0_2 = reg0_2 & val;
+	resultFlags(reg0_2);
+}
+
+:ANDI #splitimm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg0_2 & splitimm16;
+	resultFlags(reg0_2);
+}
+
+:CMP@ reg3_5, reg0_2 is opcode6_9=0x000D & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local tmp:2 = 0;
+	readDoubleWord(reg3_5, tmp);
+	comparison(reg0_2, tmp);
+}
+
+:CMPI #splitimm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	comparison(reg0_2, splitimm16);
+}
+
+:MVI@ reg3_5, reg0_2 is opcode6_9=0x000A & reg0_2 & reg3_5 [ globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readDoubleWord(reg3_5, val);
+	reg0_2 = val;
+}
+
+:MVII #splitimm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = splitimm16;
+}
+
+:SUB@ reg3_5, reg0_2 is opcode6_9=0x000C & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readDoubleWord(reg3_5, val);
+	subtraction(reg0_2, val);
+}
+
+:SUBI #splitimm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	subtraction(reg0_2, splitimm16);
+}
+
+:XOR@ reg3_5, reg0_2 is opcode6_9=0x000F & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	local val:2 = 0;
+	readDoubleWord(reg3_5, val);
+	reg0_2 = reg0_2 ^ val;
+	resultFlags(reg0_2);
+}
+
+:XORI #splitimm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+	reg0_2 = reg0_2 ^ splitimm16;
+	resultFlags(reg0_2);
+}
+
+}
+
