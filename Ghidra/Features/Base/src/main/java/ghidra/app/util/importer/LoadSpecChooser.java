@@ -15,11 +15,7 @@
  */
 package ghidra.app.util.importer;
 
-import java.util.Collection;
-import java.util.Map;
-
-import ghidra.app.util.opinion.LoadSpec;
-import ghidra.app.util.opinion.Loader;
+import ghidra.app.util.opinion.*;
 
 /**
  * Chooses a {@link LoadSpec} for a {@link Loader} to use based on some criteria
@@ -30,10 +26,10 @@ public interface LoadSpecChooser {
 	/**
 	 * Chooses a {@link LoadSpec} for a {@link Loader} to use based on some criteria
 	 * 
-	 * @param loadMap A {@link Map} of {@link Loader}s to their respective {@link LoadSpec}s
-	 * @return The chosen {@link LoadSpec}
+	 * @param loadMap A {@link LoadMap}
+	 * @return The chosen {@link LoadSpec}, or null if one could not be found
 	 */
-	public LoadSpec choose(Map<Loader, Collection<LoadSpec>> loadMap);
+	public LoadSpec choose(LoadMap loadMap);
 
 	/**
 	 * Chooses the first "preferred" {@link LoadSpec}
@@ -43,8 +39,8 @@ public interface LoadSpecChooser {
 	public static final LoadSpecChooser CHOOSE_THE_FIRST_PREFERRED = loadMap -> {
 		return loadMap.values()
 				.stream()
-				.flatMap(e -> e.stream())
-				.filter(e -> e != null && e.isPreferred())
+				.flatMap(loadSpecs -> loadSpecs.stream())
+				.filter(loadSpec -> loadSpec != null && loadSpec.isPreferred())
 				.findFirst()
 				.orElse(null);
 	};

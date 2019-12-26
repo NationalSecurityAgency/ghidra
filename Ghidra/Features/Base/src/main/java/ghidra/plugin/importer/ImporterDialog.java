@@ -68,7 +68,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	private ProgramManager programManager;
 	protected FSRL fsrl;
 	protected List<Option> options;
-	private Map<Loader, Collection<LoadSpec>> loadMap;
+	private LoadMap loadMap;
 	protected LanguageCompilerSpecPair selectedLanguage;
 	private DomainFolder destinationFolder;
 	private boolean languageNeeded;
@@ -96,17 +96,15 @@ public class ImporterDialog extends DialogComponentProvider {
 	 * option which requires the DomainFolder to already exist). The two destination paths work together
 	 * to specify the final Ghidra project folder where the imported binary is placed.
 	 */
-	public ImporterDialog(PluginTool tool, ProgramManager programManager,
-			Map<Loader, Collection<LoadSpec>> loadMap, ByteProvider byteProvider,
-			String suggestedDestinationPath) {
+	public ImporterDialog(PluginTool tool, ProgramManager programManager, LoadMap loadMap,
+			ByteProvider byteProvider, String suggestedDestinationPath) {
 		this("Import " + byteProvider.getFSRL().getPath(), tool, loadMap, byteProvider,
 			suggestedDestinationPath);
 		this.programManager = programManager;
 	}
 
-	protected ImporterDialog(String title, PluginTool tool,
-			Map<Loader, Collection<LoadSpec>> loadMap, ByteProvider byteProvider,
-			String suggestedDestinationPath) {
+	protected ImporterDialog(String title, PluginTool tool, LoadMap loadMap,
+			ByteProvider byteProvider, String suggestedDestinationPath) {
 		super(title);
 		this.tool = tool;
 		this.programManager = tool.getService(ProgramManager.class);

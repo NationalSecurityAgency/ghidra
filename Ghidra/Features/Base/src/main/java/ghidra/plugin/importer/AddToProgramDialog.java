@@ -15,12 +15,11 @@
  */
 package ghidra.plugin.importer;
 
-import java.util.*;
+import java.util.List;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.opinion.LoadSpec;
-import ghidra.app.util.opinion.Loader;
+import ghidra.app.util.opinion.*;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
@@ -47,9 +46,8 @@ public class AddToProgramDialog extends ImporterDialog {
 	 * @param byteProvider the ByteProvider from which the bytes from the source can be read.
 	 * @param addToProgram the program to which the newly imported data will be added
 	 */
-	protected AddToProgramDialog(PluginTool tool, FSRL fsrl,
-			Map<Loader, Collection<LoadSpec>> loadMap, ByteProvider byteProvider,
-			Program addToProgram) {
+	protected AddToProgramDialog(PluginTool tool, FSRL fsrl, LoadMap loadMap,
+			ByteProvider byteProvider, Program addToProgram) {
 		super("Add To Program:  " + fsrl.getPath(), tool, loadMap, byteProvider, null);
 		this.addToProgram = addToProgram;
 		folderNameTextField.setText(getFolderName(addToProgram));

@@ -17,7 +17,8 @@ package ghidra.app.util.importer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 import generic.stl.Pair;
@@ -202,8 +203,7 @@ public final class AutoImporter {
 
 	private static LoadSpec getLoadSpec(Predicate<Loader> loaderFilter,
 			LoadSpecChooser loadSpecChooser, ByteProvider provider) {
-		Map<Loader, Collection<LoadSpec>> loadMap =
-			LoaderService.getSupportedLoadSpecs(provider, loaderFilter);
+		LoadMap loadMap = LoaderService.getSupportedLoadSpecs(provider, loaderFilter);
 
 		LoadSpec loadSpec = loadSpecChooser.choose(loadMap);
 		if (loadSpec != null) {

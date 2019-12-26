@@ -16,7 +16,6 @@
 package ghidra.app.util.importer;
 
 import java.util.Collection;
-import java.util.Map;
 
 import ghidra.app.util.opinion.*;
 import ghidra.program.model.lang.*;
@@ -46,22 +45,11 @@ public class LcsHintLoadSpecChooser implements LoadSpecChooser {
 	}
 
 	@Override
-	public LoadSpec choose(Map<Loader, Collection<LoadSpec>> loadMap) {
+	public LoadSpec choose(LoadMap loadMap) {
 		
-		// We need to reduce the set of matching loaders down to one.  The only requirement is that
-		// if we do reduce, make sure we don't reduce it to the BinaryLoader.
-		Loader loader;
-		if (loadMap.size() > 1) {
-			loader = loadMap.keySet()
-					.stream()
-					.filter(e -> e.getTier() != LoaderTier.UNTARGETED_LOADER)
-					.findFirst()
-					.orElse(null);
-		}
-		else if (loadMap.size() == 1) {
-			loader = loadMap.keySet().iterator().next();
-		}
-		else {
+		// Use the highest priority loader (it will be the first one)
+		Loader loader = loadMap.keySet().stream().findFirst().orElse(null);
+		if (loader == null) {
 			return null;
 		}
 

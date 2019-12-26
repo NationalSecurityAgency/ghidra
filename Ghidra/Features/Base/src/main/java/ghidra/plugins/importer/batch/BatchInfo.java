@@ -357,8 +357,7 @@ public class BatchInfo {
 
 		try (ByteProvider provider =
 			FileSystemService.getInstance().getByteProvider(fsrl, monitor)) {
-			Map<Loader, Collection<LoadSpec>> loadMap =
-				pollLoadersForLoadSpecs(provider, fsrl, monitor);
+			LoadMap loadMap = pollLoadersForLoadSpecs(provider, fsrl, monitor);
 			for (Loader loader : loadMap.keySet()) {
 				Collection<LoadSpec> loadSpecs = loadMap.get(loader);
 				BatchSegregatingCriteria bsc =
@@ -380,8 +379,7 @@ public class BatchInfo {
 		}
 	}
 
-	private Map<Loader, Collection<LoadSpec>> pollLoadersForLoadSpecs(ByteProvider provider,
-			FSRL fsrl, TaskMonitor monitor) {
+	private LoadMap pollLoadersForLoadSpecs(ByteProvider provider, FSRL fsrl, TaskMonitor monitor) {
 		monitor.setMessage(fsrl.getName());
 		return LoaderService.getSupportedLoadSpecs(provider,
 			loader -> !(loader instanceof BinaryLoader));

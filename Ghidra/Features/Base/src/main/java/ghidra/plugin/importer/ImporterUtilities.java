@@ -271,8 +271,8 @@ public class ImporterUtilities {
 				return;
 			}
 
-			Map<Loader, Collection<LoadSpec>> loadMap = LoaderService.getSupportedLoadSpecs(
-				provider, loader -> loader.supportsLoadIntoProgram());
+			LoadMap loadMap = LoaderService.getSupportedLoadSpecs(provider,
+				loader -> loader.supportsLoadIntoProgram());
 
 			SystemUtilities.runSwingLater(() -> {
 				AddToProgramDialog dialog =
@@ -309,8 +309,7 @@ public class ImporterUtilities {
 		try {
 
 			ByteProvider provider = FileSystemService.getInstance().getByteProvider(fsrl, monitor);
-			Map<Loader, Collection<LoadSpec>> loadMap =
-				LoaderService.getAllSupportedLoadSpecs(provider);
+			LoadMap loadMap = LoaderService.getAllSupportedLoadSpecs(provider);
 
 			SystemUtilities.runSwingLater(() -> {
 				ImporterDialog importerDialog =
