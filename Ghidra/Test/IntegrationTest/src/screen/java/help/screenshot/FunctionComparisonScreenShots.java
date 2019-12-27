@@ -15,15 +15,17 @@
  */
 package help.screenshot;
 
-import java.awt.Rectangle;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import org.junit.Test;
 
-import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
+import docking.widgets.dialogs.TableChooserDialog;
+import docking.widgets.table.GFilterTable;
+import docking.widgets.table.GTable;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.functioncompare.*;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
@@ -37,6 +39,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
+import util.CollectionUtils;
 
 public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 
@@ -47,10 +50,6 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 	private Program sourceProgram;
 	private Program destinationProgram;
 
-	public FunctionComparisonScreenShots() {
-		super();
-	}
-
 	@Override
 	public void setUp() throws Exception {
 		super.setUp();
@@ -60,6 +59,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 		sourceProgram = loadProgram(TEST_SOURCE_PROGRAM_NAME);
 	}
 
+	@Override
 	public void tearDown() throws Exception {
 		super.tearDown();
 	}
@@ -125,13 +125,9 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionComparisonProviderManager providerMgr =
 			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		FunctionComparisonProvider functionComparisonProvider =
-			providerMgr.compareFunctions(f1, f2);
+		providerMgr.compareFunctions(f1, f2);
 
-		waitForSwing();
-
-		captureProvider(functionComparisonProvider);
-		crop(new Rectangle(261, 2, 24, 24));
+		captureActionIcon("Add Functions To Comparison");
 	}
 
 	@Test
@@ -141,13 +137,9 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionComparisonProviderManager providerMgr =
 			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		FunctionComparisonProvider functionComparisonProvider =
-			providerMgr.compareFunctions(f1, f2);
+		providerMgr.compareFunctions(f1, f2);
 
-		waitForSwing();
-
-		captureProvider(functionComparisonProvider);
-		crop(new Rectangle(351, 2, 24, 24));
+		captureActionIcon("Remove Functions");
 	}
 
 	@Test
@@ -157,16 +149,9 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionComparisonProviderManager providerMgr =
 			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		Set<Function> functions = new HashSet<>();
-		functions.add(f1);
-		functions.add(f2);
-		FunctionComparisonProvider functionComparisonProvider =
-			providerMgr.compareFunctions(functions);
+		providerMgr.compareFunctions(CollectionUtils.asSet(f1, f2));
 
-		waitForSwing();
-
-		captureProvider(functionComparisonProvider);
-		crop(new Rectangle(293, 2, 24, 24));
+		captureActionIcon("Compare Next Function");
 	}
 
 	@Test
@@ -176,19 +161,13 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionComparisonProviderManager providerMgr =
 			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		Set<Function> functions = new HashSet<>();
-		functions.add(f1);
-		functions.add(f2);
 		FunctionComparisonProvider functionComparisonProvider =
-			providerMgr.compareFunctions(functions);
+			providerMgr.compareFunctions(CollectionUtils.asSet(f1, f2));
 		MultiFunctionComparisonPanel panel =
 			(MultiFunctionComparisonPanel) functionComparisonProvider.getComponent();
 		panel.getFocusedComponent().setSelectedIndex(1);
 
-		waitForSwing();
-
-		captureProvider(functionComparisonProvider);
-		crop(new Rectangle(315, 2, 24, 24));
+		captureActionIcon("Compare Previous Function");
 	}
 
 	@Test
@@ -198,15 +177,47 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionComparisonProviderManager providerMgr =
 			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		Set<Function> functions = new HashSet<>();
-		functions.add(f1);
-		functions.add(f2);
-		providerMgr.compareFunctions(functions);
+		providerMgr.compareFunctions(CollectionUtils.asSet(f1, f2));
+		waitForSwing();
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
 		performAction(openTableAction);
-		DialogComponentProvider table = waitForDialogComponent("Select Functions");
-		captureDialog(table);
+
+		TableChooserDialog<?> dialog =
+			waitForDialogComponent(TableChooserDialog.class);
+		setColumnSizes(dialog);
+		captureDialog(dialog);
+	}
+
+	private void setColumnSizes(TableChooserDialog<?> dialog) {
+		// note: these values are rough values found by trial-and-error
+
+		GFilterTable<?> filter = (GFilterTable<?>) getInstanceField("gFilterTable", dialog);
+		GTable table = filter.getTable();
+		runSwing(new Runnable() {
+			@Override
+			public void run() {
+				TableColumnModel columnModel = table.getColumnModel();
+				int columnCount = columnModel.getColumnCount();
+				for (int i = 0; i < columnCount; i++) {
+					TableColumn column = columnModel.getColumn(i);
+					Object headerValue = column.getHeaderValue();
+					if ("Name".equals(headerValue)) {
+						column.setPreferredWidth(100);
+					}
+					else if ("Location".equals(headerValue)) {
+						column.setPreferredWidth(70);
+					}
+					else if ("Function Signature".equals(headerValue)) {
+						column.setPreferredWidth(200);
+					}
+					else if ("Function Size".equals(headerValue)) {
+						column.setPreferredWidth(25);
+					}
+				}
+			}
+		});
+
 	}
 
 	private Function getFunction(Program program1, Address entryPoint) {
