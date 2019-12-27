@@ -167,7 +167,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		tool.setMenuGroup(new String[] { DisassociateAction.MENU_NAME }, "SYNC");
 		tool.setMenuGroup(new String[] { RECENTLY_OPENED_MENU }, "Recent");
 		tool.setMenuGroup(new String[] { STANDARD_ARCHIVE_MENU }, "Recent");
-
 	}
 
 	@Override

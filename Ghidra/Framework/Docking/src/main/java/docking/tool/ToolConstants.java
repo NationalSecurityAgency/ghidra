@@ -15,6 +15,7 @@
  */
 package docking.tool;
 
+import docking.action.KeyBindingType;
 import docking.tool.util.DockingToolConstants;
 
 /**
@@ -92,6 +93,13 @@ public interface ToolConstants extends DockingToolConstants {
 	 * This is used when an action has the tool as its owner
 	 */
 	public static final String TOOL_OWNER = "Tool";
+
+	/**
+	 * This is used when many actions wish to share a key binding.  
+	 * 
+	 * @see KeyBindingType#SHARED
+	 */
+	public static final String SHARED_OWNER = "Shared";
 
 	/**
 	 * Name of options for a tool

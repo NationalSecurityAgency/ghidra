@@ -22,6 +22,8 @@ import javax.swing.ComboBoxModel;
 import javax.swing.JPanel;
 
 import docking.ComponentProvider;
+import docking.actions.SharedDockingActionPlaceholder;
+import docking.actions.ToolActions;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
@@ -88,9 +90,8 @@ public class DataTypeEditorManager
 	 * @param dt data type to be edited
 	 * @return true if this service can invoke an editor for changing the data type.
 	 */
-	public boolean isEditable(DataType dataType) {
-		if ((dataType instanceof Enum) || (dataType instanceof Union) ||
-			(dataType instanceof Structure)) {
+	public boolean isEditable(DataType dt) {
+		if ((dt instanceof Enum) || (dt instanceof Union) || (dt instanceof Structure)) {
 			return true;
 		}
 		return false;
@@ -138,6 +139,34 @@ public class DataTypeEditorManager
 		editorList.add(editor);
 	}
 
+	private void installEditorActions() {
+
+		registerAction(ApplyAction.ACTION_NAME);
+		registerAction(InsertUndefinedAction.ACTION_NAME);
+		registerAction(MoveUpAction.ACTION_NAME);
+		registerAction(MoveDownAction.ACTION_NAME);
+		registerAction(ClearAction.ACTION_NAME);
+		registerAction(DuplicateAction.ACTION_NAME);
+		registerAction(DuplicateMultipleAction.ACTION_NAME);
+		registerAction(DeleteAction.ACTION_NAME);
+		registerAction(PointerAction.ACTION_NAME);
+		registerAction(ArrayAction.ACTION_NAME);
+		registerAction(FindReferencesToField.ACTION_NAME);
+		registerAction(UnpackageAction.ACTION_NAME);
+		registerAction(EditComponentAction.ACTION_NAME);
+		registerAction(EditFieldAction.ACTION_NAME);
+		registerAction(HexNumbersAction.ACTION_NAME);
+		registerAction(CreateInternalStructureAction.ACTION_NAME);
+		registerAction(ShowComponentPathAction.ACTION_NAME);
+		registerAction(AddBitFieldAction.ACTION_NAME);
+		registerAction(EditBitFieldAction.ACTION_NAME);
+	}
+
+	private void registerAction(String name) {
+		ToolActions toolActions = plugin.getTool().getToolActions();
+		toolActions.registerSharedActionPlaceholder(new DtSharedActionPlaceholder(name));
+	}
+
 	/**
 	 * Checks for editor changes that have not been saved to the data type and prompts the user to save
 	 * them if necessary. It then closes the editor.
@@ -155,7 +184,8 @@ public class DataTypeEditorManager
 	}
 
 	/**
-	 * Get a list of data type path names for data types that are currently being edited.
+	 * Get a list of data type path names for data types that are currently being edited
+	 * @return a list of data type path names for data types that are currently being edited.
 	 */
 	public List<DataTypePath> getEditsInProgress() {
 		List<DataTypePath> paths = new ArrayList<>();
@@ -168,7 +198,7 @@ public class DataTypeEditorManager
 	/**
 	 * Get the category for the data type being edited; the data type
 	 * may be new and not yet added to the category
-	 * @param dataTypePathname the full path name of the data type that is being
+	 * @param dataTypePath the full path name of the data type that is being
 	 * edited if it were written to the category for this editor.
 	 * @return category associated with the data type or null.
 	 */
@@ -325,9 +355,6 @@ public class DataTypeEditorManager
 		return false;
 	}
 
-	/**
-	 * Notifies all editors that a domain object restore has occurred.
-	 */
 	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
 		// Create a copy of the list since restore may remove an editor from the original list.
 		ArrayList<EditorProvider> list = new ArrayList<>(editorList);
@@ -352,7 +379,6 @@ public class DataTypeEditorManager
 	/**
 	 * If the specified data type is being edited for the indicated category, this gets that editor.
 	 * @param dataType the data type
-	 * @param category the category where the edited data type is to be written (saved).
 	 * @return the editor or null.
 	 */
 	public EditorProvider getEditor(DataType dataType) {
@@ -373,6 +399,8 @@ public class DataTypeEditorManager
 	private void initialize() {
 		editorList = new ArrayList<>();
 		editorOptionMgr = new EditorOptionManager(plugin);
+
+		installEditorActions();
 	}
 
 	/**
@@ -568,7 +596,7 @@ public class DataTypeEditorManager
 
 		@Override
 		protected void installCallingConventionWidget(JPanel parentPanel) {
-			callingConventionComboBox = new GhidraComboBox();
+			callingConventionComboBox = new GhidraComboBox<>();
 			GenericCallingConvention[] values = GenericCallingConvention.values();
 			String[] choices = new String[values.length];
 			for (int i = 0; i < values.length; i++) {
@@ -662,4 +690,24 @@ public class DataTypeEditorManager
 		}
 	}
 
+	// small class to register actions by name before the various editors have been shown
+	private class DtSharedActionPlaceholder implements SharedDockingActionPlaceholder {
+
+		private String name;
+
+		DtSharedActionPlaceholder(String name) {
+			this.name = CompositeEditorTableAction.EDIT_ACTION_PREFIX + name;
+		}
+
+		@Override
+		public String getOwner() {
+			// all of our shared actions belong to the plugin
+			return plugin.getName();
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+	}
 }
