@@ -98,6 +98,22 @@ impliedval16: reg3_5 is reg3_5 & (target3_5=0 | target3_5=1 | target3_5=2 | targ
 	export tmp;
 }
 
+cc: ""    is branch_external=0 & branch_condition=0  { local tmp:1 = 1; export tmp; }
+cc: "C"   is branch_external=0 & branch_condition=1  { export C; }
+cc: "OV"  is branch_external=0 & branch_condition=2  { export O; }
+cc: "PL"  is branch_external=0 & branch_condition=3  { local tmp = !S; export tmp; }
+cc: "EQ"  is branch_external=0 & branch_condition=4  { export Z; }
+cc: "LT"  is branch_external=0 & branch_condition=5  { local tmp = S != O; export tmp; }
+cc: "LE"  is branch_external=0 & branch_condition=6  { local tmp = (Z == 1) || (S != O); export tmp; }
+cc: "USC" is branch_external=0 & branch_condition=7  { local tmp = S != C; export tmp; }
+cc: "NC"  is branch_external=0 & branch_condition=9  { local tmp = !C; export tmp; }
+cc: "NOV" is branch_external=0 & branch_condition=10 { local tmp = !O; export tmp; }
+cc: "MI"  is branch_external=0 & branch_condition=11 { export S; }
+cc: "NEQ" is branch_external=0 & branch_condition=12 { local tmp = !Z; export tmp; }
+cc: "GE"  is branch_external=0 & branch_condition=13 { local tmp = S == O; export tmp; }
+cc: "GT"  is branch_external=0 & branch_condition=14 { local tmp = (Z == 0) || (S == O); export tmp; }
+cc: "ESC" is branch_external=0 & branch_condition=15 { local tmp = S == C; export tmp; }
+
 ################################################################
 
 macro resultFlags(value) {
@@ -170,67 +186,12 @@ define pcodeop SoftwareInterrupt;
 	resultFlags(reg0_2);
 }
 
-:B branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=0) ... & branchdest16 {
+:B^cc branchdest16 is (opcode6_9=0x0008 & cc) ... & branchdest16 {
+	if (!cc) goto inst_next;
 	goto branchdest16;
 }
 
-:BC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=1) ... & branchdest16 {
-	if (C == 1) goto branchdest16;
-}
-
-:BEQ branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=4) ... & branchdest16 {
-	if (Z == 1) goto branchdest16;
-}
-
-:BESC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=15) ... & branchdest16 {
-	if (S == C) goto branchdest16;
-}
-
-:BGE branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=13) ... & branchdest16 {
-	if (S == O) goto branchdest16;
-}
-
-:BGT branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=14) ... & branchdest16 {
-	if ((Z == 0) || (S == O)) goto branchdest16;
-}
-
-:BLE branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=6) ... & branchdest16 {
-	if ((Z == 1) || (S != O)) goto branchdest16;
-}
-
-:BLT branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=5) ... & branchdest16 {
-	if (S != O) goto branchdest16;
-}
-
-:BMI branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=11) ... & branchdest16 {
-	if (S == 1) goto branchdest16;
-}
-
-:BNC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=9) ... & branchdest16 {
-	if (C == 0) goto branchdest16;
-}
-
-:BNEQ branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=12) ... & branchdest16 {
-	if (Z == 0) goto branchdest16;
-}
-
-:BNOV branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=10) ... & branchdest16 {
-	if (O == 0) goto branchdest16;
-}
-
-:BOV branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=2) ... & branchdest16 {
-	if (O == 1) goto branchdest16;
-}
-
-:BPL branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=3) ... & branchdest16 {
-	if (S == 0) goto branchdest16;
-}
-
-:BUSC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=7) ... & branchdest16 {
-	if (S != C) goto branchdest16;
-}
-
-:BEXT branchdest16, #external_condition is (opcode6_9=0x0008 & branch_external=1 & external_condition) ... & branchdest16 {
+:BEXT branchdest16, external_condition is (opcode6_9=0x0008 & branch_external=1 & external_condition) ... & branchdest16 {
 	goto branchdest16;
 }  
 
