@@ -29,12 +29,16 @@ import docking.action.DockingActionIf;
 import docking.widgets.dialogs.TableChooserDialog;
 import docking.widgets.table.GFilterTable;
 import generic.test.AbstractGenericTest;
+import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.function.FunctionPlugin;
 import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
 import ghidra.app.plugin.core.functionwindow.FunctionTableModel;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
+import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 
@@ -52,12 +56,17 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 	private Function bat;
 	private FunctionComparisonPlugin plugin;
 	private FunctionComparisonProvider provider;
+	private FunctionPlugin functionPlugin;
+	private CodeBrowserPlugin cbPlugin;
 
 	@Before
 	public void setUp() throws Exception {
 		env = new TestEnv();
 		plugin = env.addPlugin(FunctionComparisonPlugin.class);
+		functionPlugin = env.addPlugin(FunctionPlugin.class);
+		cbPlugin = env.addPlugin(CodeBrowserPlugin.class);
 		assertNotNull(plugin);
+		assertNotNull(functionPlugin);
 		buildTestProgram1();
 		buildTestProgram2();
 		showTool(plugin.getTool());
@@ -195,6 +204,28 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		assert (provider.getModel().getSourceFunctions().size() == 2);
 	}
 
+	@Test
+	public void testDeleteFunctionFromListing() {
+		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
+		provider = plugin.compareFunctions(functions);
+		provider.setVisible(true);
+
+		assert (provider.getModel().getSourceFunctions().size() == 2);
+		assert (provider.getModel().getSourceFunctions().contains(foo));
+		assert (provider.getModel().getSourceFunctions().contains(bar));
+
+		Address addr = program1.getAddressFactory().getAddress("10018cf");
+		ProgramLocation loc = new ProgramLocation(program1, addr);
+		cbPlugin.goTo(loc);
+		DockingActionIf deleteAction = getAction(functionPlugin, "Delete Function");
+		performAction(deleteAction);
+
+		waitForSwing();
+
+		assert (provider.getModel().getSourceFunctions().size() == 1);
+		assert (provider.getModel().getSourceFunctions().contains(bar));
+	}
+
 	/**
 	 * Builds a program with 2 functions
 	 */
@@ -207,7 +238,7 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		DataType dt = new ByteDataType();
 		Parameter p = new ParameterImpl(null, dt, builder.getProgram());
 		foo = builder.createEmptyFunction("Foo", "10018cf", 10, null, p);
-		bat = builder.createEmptyFunction("Bar", "100299e", 130, null, p, p, p);
+		bat = builder.createEmptyFunction("Bat", "100299e", 130, null, p, p, p);
 
 		program1 = builder.getProgram();
 		AbstractGenericTest.setInstanceField("recordChanges", program1, Boolean.TRUE);
