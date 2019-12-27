@@ -111,7 +111,6 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
 		provider = plugin.compareFunctions(functions);
 		provider.setVisible(true);
-
 		waitForSwing();
 
 		// Must do this or there will be no "active" provider in the actions
@@ -133,7 +132,6 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
 		provider = plugin.compareFunctions(functions);
 		provider.setVisible(true);
-
 		waitForSwing();
 
 		// Must do this or there will be no "active" provider in the actions
@@ -178,7 +176,6 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo);
 		provider = plugin.compareFunctions(functions);
 		provider.setVisible(true);
-
 		waitForSwing();
 
 		// Must do this or there will be no "active" provider in the actions
@@ -186,6 +183,7 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		clickComponentProvider(provider);
 
 		assert (provider.getModel().getSourceFunctions().size() == 1);
+		assert (provider.getModel().getSourceFunctions().contains(foo));
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
 		performAction(openTableAction);
@@ -202,8 +200,15 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		pressButtonByText(chooser, "OK");
 		waitForSwing();
 		assert (provider.getModel().getSourceFunctions().size() == 2);
+		assert (provider.getModel().getSourceFunctions().contains(foo));
+		assert (provider.getModel().getSourceFunctions().contains(bat));
 	}
 
+	/**
+	 * Verifies that if we delete a function from the listing that is currently
+	 * being shown in a comparison provider, it will be removed from that
+	 * comparison provider
+	 */
 	@Test
 	public void testDeleteFunctionFromListing() {
 		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
