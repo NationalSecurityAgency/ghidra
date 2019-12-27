@@ -45,7 +45,7 @@ define token immediate16 (16)
 ;
 
 define context contextreg
-	doublebyte = (0, 0)
+	doublebyte = (0, 0) noflow
 ;
 
 attach variables [ reg0_1        ] [ R0 R1 R2 R3             ];
@@ -136,204 +136,204 @@ define pcodeop SoftwareInterrupt;
 
 ################################################################
 
-:ADD addr16, reg0_2 is opcode3_9=0x0058 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ADD addr16, reg0_2 is opcode3_9=0x0058 & reg0_2 ; addr16 {
 	local ptr:2 = addr16;
 	addition(reg0_2, *:2 ptr);
 }
 
-:ADD@ impliedval16, reg0_2 is opcode6_9=0x000B & reg0_2 & impliedval16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ADD@ impliedval16, reg0_2 is opcode6_9=0x000B & reg0_2 & impliedval16 {
 	addition(reg0_2, impliedval16);
 }
 
-:ADCR reg0_2 is opcode3_9=0x0005 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ADCR reg0_2 is opcode3_9=0x0005 & reg0_2 {
 	local oldC = zext(C);
 	addition(reg0_2, oldC);
 }
 
-:ADDR reg3_5, reg0_2 is opcode6_9=0x0003 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ADDR reg3_5, reg0_2 is opcode6_9=0x0003 & reg3_5 & reg0_2 {
 	addition(reg0_2, reg3_5);
 }
 
-:AND addr16, reg0_2 is opcode3_9=0x0070 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:AND addr16, reg0_2 is opcode3_9=0x0070 & reg0_2 ; addr16 {
 	local ptr:2 = addr16;
 	reg0_2 = reg0_2 & *:2 ptr;
 	resultFlags(reg0_2);
 }
 
-:AND@ impliedval16, reg0_2 is opcode6_9=0x000E & reg0_2 & impliedval16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:AND@ impliedval16, reg0_2 is opcode6_9=0x000E & reg0_2 & impliedval16 {
 	reg0_2 = reg0_2 & impliedval16;
 	resultFlags(reg0_2);
 }
 
-:ANDR reg3_5, reg0_2 is opcode6_9=0x0006 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ANDR reg3_5, reg0_2 is opcode6_9=0x0006 & reg3_5 & reg0_2 {
 	reg0_2 = reg0_2 & reg3_5;
 	resultFlags(reg0_2);
 }
 
-:B branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=0) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:B branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=0) ... & branchdest16 {
 	goto branchdest16;
 }
 
-:BC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=1) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=1) ... & branchdest16 {
 	if (C == 1) goto branchdest16;
 }
 
-:BEQ branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=4) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BEQ branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=4) ... & branchdest16 {
 	if (Z == 1) goto branchdest16;
 }
 
-:BESC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=15) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BESC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=15) ... & branchdest16 {
 	if (S == C) goto branchdest16;
 }
 
-:BGE branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=13) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BGE branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=13) ... & branchdest16 {
 	if (S == O) goto branchdest16;
 }
 
-:BGT branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=14) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BGT branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=14) ... & branchdest16 {
 	if ((Z == 0) || (S == O)) goto branchdest16;
 }
 
-:BLE branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=6) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BLE branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=6) ... & branchdest16 {
 	if ((Z == 1) || (S != O)) goto branchdest16;
 }
 
-:BLT branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=5) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BLT branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=5) ... & branchdest16 {
 	if (S != O) goto branchdest16;
 }
 
-:BMI branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=11) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BMI branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=11) ... & branchdest16 {
 	if (S == 1) goto branchdest16;
 }
 
-:BNC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=9) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BNC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=9) ... & branchdest16 {
 	if (C == 0) goto branchdest16;
 }
 
-:BNEQ branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=12) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BNEQ branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=12) ... & branchdest16 {
 	if (Z == 0) goto branchdest16;
 }
 
-:BNOV branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=10) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BNOV branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=10) ... & branchdest16 {
 	if (O == 0) goto branchdest16;
 }
 
-:BOV branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=2) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BOV branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=2) ... & branchdest16 {
 	if (O == 1) goto branchdest16;
 }
 
-:BPL branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=3) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BPL branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=3) ... & branchdest16 {
 	if (S == 0) goto branchdest16;
 }
 
-:BUSC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=7) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BUSC branchdest16 is (opcode6_9=0x0008 & branch_external=0 & branch_condition=7) ... & branchdest16 {
 	if (S != C) goto branchdest16;
 }
 
-:BEXT branchdest16, #external_condition is (opcode6_9=0x0008 & branch_external=1 & external_condition) ... & branchdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:BEXT branchdest16, #external_condition is (opcode6_9=0x0008 & branch_external=1 & external_condition) ... & branchdest16 {
 	goto branchdest16;
 }  
 
-:CLRC is opcode0_9=0x0006 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:CLRC is opcode0_9=0x0006 {
 	C = 0;
 }
 
-:CMP addr16, reg0_2 is opcode3_9=0x0068 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:CMP addr16, reg0_2 is opcode3_9=0x0068 & reg0_2 ; addr16  {
 	local ptr:2 = addr16;
 	comparison(reg0_2, *:2 ptr);
 }
 
-:CMP@ impliedval16, reg0_2 is opcode6_9=0x000D & reg0_2 & impliedval16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:CMP@ impliedval16, reg0_2 is opcode6_9=0x000D & reg0_2 & impliedval16 {
 	comparison(reg0_2, impliedval16);
 }
 
-:CMPR reg3_5, reg0_2 is opcode6_9=0x0005 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:CMPR reg3_5, reg0_2 is opcode6_9=0x0005 & reg3_5 & reg0_2 {
 	comparison(reg0_2, reg3_5);
 }
 
-:COMR reg0_2 is opcode3_9=0x0003 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:COMR reg0_2 is opcode3_9=0x0003 & reg0_2 {
 	reg0_2 = ~reg0_2;
 	resultFlags(reg0_2);
 }
 
-:DECR reg0_2 is opcode3_9=0x0002 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:DECR reg0_2 is opcode3_9=0x0002 & reg0_2 {
 	reg0_2 = reg0_2 - 1;
 	resultFlags(reg0_2);
 }
 
-:DIS is opcode0_9=0x0003 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:DIS is opcode0_9=0x0003 {
 	I = 0;
 }
 
-:EIS is opcode0_9=0x0002 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:EIS is opcode0_9=0x0002 {
 	I = 1;
 }
 
-:GSWD reg0_1 is opcode2_9=0x000C & reg0_1 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:GSWD reg0_1 is opcode2_9=0x000C & reg0_1 {
 	local mask:2 = (zext(S) << 7) + (zext(Z) << 6) + (zext(O) << 5) + (zext(C) << 4);
 	reg0_1 = (mask << 8) + mask; 
 }
 
-:HLT is opcode0_9=0x0000 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:HLT is opcode0_9=0x0000 {
 	goto inst_start;
 }
 
-:INCR reg0_2 is opcode3_9=0x0001 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:INCR reg0_2 is opcode3_9=0x0001 & reg0_2 {
 	reg0_2 = reg0_2 + 1;
 	resultFlags(reg0_2);
 }
 
-:J jmpdest16 is opcode0_9=0x0004 ; jump_type=0 & target24_25=3 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:J jmpdest16 is opcode0_9=0x0004 ; jump_type=0 & target24_25=3 & jmpdest16 {
 	goto jmpdest16;
 }
 
-:JD jmpdest16 is opcode0_9=0x0004 ; jump_type=2 & target24_25=3 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:JD jmpdest16 is opcode0_9=0x0004 ; jump_type=2 & target24_25=3 & jmpdest16 {
 	I = 0;
 	goto jmpdest16;
 }
 
-:JE jmpdest16 is opcode0_9=0x0004 ; jump_type=1 & target24_25=3 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:JE jmpdest16 is opcode0_9=0x0004 ; jump_type=1 & target24_25=3 & jmpdest16 {
 	I = 1;
 	goto jmpdest16;
 }
 
-:JSR reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=0 & reg24_25 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:JSR reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=0 & reg24_25 & jmpdest16 {
 	reg24_25 = inst_next;
 	call jmpdest16;
 }
 
-:JSRD reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=2 & reg24_25 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:JSRD reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=2 & reg24_25 & jmpdest16 {
 	I = 0;
 	reg24_25 = inst_next;
 	call jmpdest16;
 }
 
-:JSRE reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=1 & reg24_25 & jmpdest16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:JSRE reg24_25, jmpdest16 is opcode0_9=0x0004 ; jump_type=1 & reg24_25 & jmpdest16 {
 	I = 1;
 	reg24_25 = inst_next;
 	call jmpdest16;
 }
 
-:MOVR reg3_5, reg0_2 is opcode6_9=0x0002 & reg0_2 & reg3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:MOVR reg3_5, reg0_2 is opcode6_9=0x0002 & reg0_2 & reg3_5 {
 	reg0_2 = reg3_5;
 	resultFlags(reg0_2);
 }
 
-:MVI addr16, reg0_2 is opcode3_9=0x0050 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:MVI addr16, reg0_2 is opcode3_9=0x0050 & reg0_2 ; addr16 {
 	local ptr:2 = addr16;
 	reg0_2 = *(*:2 ptr);
 }
 
-:MVI@ impliedval16, reg0_2 is opcode6_9=0x000A & reg0_2 & impliedval16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:MVI@ impliedval16, reg0_2 is opcode6_9=0x000A & reg0_2 & impliedval16 {
 	reg0_2 = impliedval16;
 }
 
-:MVO reg0_2, addr16 is opcode3_9=0x0048 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:MVO reg0_2, addr16 is opcode3_9=0x0048 & reg0_2 ; addr16 {
 	local ptr:2 = addr16;
 	*ptr = reg0_2;
 }
 
-:MVO@ reg0_2, reg3_5 is opcode6_9=0x0009 & reg0_2 & reg3_5 & target3_5 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:MVO@ reg0_2, reg3_5 is opcode6_9=0x0009 & reg0_2 & reg3_5 & target3_5 {
 	local ptr:2 = reg3_5; 
 	*ptr = reg0_2;
 	local target:2 = target3_5;
@@ -341,12 +341,12 @@ define pcodeop SoftwareInterrupt;
 	reg3_5 = reg3_5 + 1;
 }
 
-:MVOI reg0_2 is opcode3_9=0x004F & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:MVOI reg0_2 is opcode3_9=0x004F & reg0_2 ; imm16 {
 	local tmp:2 = inst_start + 2;
 	*tmp = reg0_2;
 }
 
-:NEGR reg0_2 is opcode3_9=0x0004 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:NEGR reg0_2 is opcode3_9=0x0004 & reg0_2 {
 	local tmp = reg0_2 ^ 0xFFFF;
 	local tmpC = carry(tmp, 1);
 	local tmpO = scarry(tmp, 1);
@@ -356,13 +356,13 @@ define pcodeop SoftwareInterrupt;
 	resultFlags(reg0_2);
 }
 
-:NOP is opcode1_9=0x001A [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:NOP is opcode1_9=0x001A {
 }
 
-:NOPP is opcode6_9=0x0008 & branch_external=0 & branch_condition=8 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:NOPP is opcode6_9=0x0008 & branch_external=0 & branch_condition=8 ; imm16 {
 }
 
-:RSWD reg0_2 is opcode3_9=0x0007 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:RSWD reg0_2 is opcode3_9=0x0007 & reg0_2 {
 	C = (reg0_2 & 0b00001000) != 0;
 	O = (reg0_2 & 0b00010000) != 0;
 	Z = (reg0_2 & 0b00100000) != 0;
@@ -373,48 +373,48 @@ define pcodeop SoftwareInterrupt;
 	D = 1;
 }
 
-:SETC is opcode0_9=0x0007 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SETC is opcode0_9=0x0007 {
 	C = 1;
 }
 
-:SIN is opcode1_9=0x001B [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SIN is opcode1_9=0x001B {
 	SoftwareInterrupt();
 }
 
-:SUB addr16, reg0_2 is opcode3_9=0x0060 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SUB addr16, reg0_2 is opcode3_9=0x0060 & reg0_2 ; addr16 {
 	local ptr:2 = addr16;
 	subtraction(reg0_2, *:2 ptr);
 }
 
-:SUB@ impliedval16, reg0_2 is opcode6_9=0x000C & reg0_2 & impliedval16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SUB@ impliedval16, reg0_2 is opcode6_9=0x000C & reg0_2 & impliedval16 {
 	subtraction(reg0_2, impliedval16);
 }
 
-:SUBR reg3_5, reg0_2 is opcode6_9=0x0004 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SUBR reg3_5, reg0_2 is opcode6_9=0x0004 & reg3_5 & reg0_2 {
 	subtraction(reg0_2, reg3_5);
 }
 
-:TCI is opcode0_9=0x0005 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:TCI is opcode0_9=0x0005 {
 	TerminateCurrentInterrupt();
 }
 
-:XOR addr16, reg0_2 is opcode3_9=0x0078 & reg0_2 ; addr16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:XOR addr16, reg0_2 is opcode3_9=0x0078 & reg0_2 ; addr16 {
 	local ptr:2 = addr16;
 	reg0_2 = reg0_2 ^ *:2 ptr;
 	resultFlags(reg0_2);
 }
 
-:XOR@ impliedval16, reg0_2 is opcode6_9=0x000F & reg0_2 & impliedval16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:XOR@ impliedval16, reg0_2 is opcode6_9=0x000F & reg0_2 & impliedval16 {
 	reg0_2 = reg0_2 ^ impliedval16;
 	resultFlags(reg0_2);
 }
 
-:XORR reg3_5, reg0_2 is opcode6_9=0x0007 & reg3_5 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:XORR reg3_5, reg0_2 is opcode6_9=0x0007 & reg3_5 & reg0_2 {
 	reg0_2 = reg0_2 ^ reg3_5;
 	resultFlags(reg0_2);
 }
 
-:RLC reg0_2, 1 is opcode3_9=0x000A & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:RLC reg0_2, 1 is opcode3_9=0x000A & reg0_2 {
 	local tmpC = (reg0_2 & 0x8000) != 0;
 	local tmpS = (reg0_2 & 0x4000) != 0;
 	reg0_2 = (reg0_2 << 1) + zext(C);
@@ -423,7 +423,7 @@ define pcodeop SoftwareInterrupt;
 	Z = reg0_2 == 0;
 }
 
-:RRC reg0_2, 1 is opcode3_9=0x000E & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:RRC reg0_2, 1 is opcode3_9=0x000E & reg0_2 {
 	local tmpC = (reg0_2 & 0x0001) != 0;
 	local tmpS = (reg0_2 & 0x0100) != 0;
 	reg0_2 = (reg0_2 >> 1) | (zext(C) << 15);
@@ -432,14 +432,14 @@ define pcodeop SoftwareInterrupt;
 	Z = reg0_2 == 0;
 }
 
-:SAR reg0_2, 1 is opcode3_9=0x000D & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SAR reg0_2, 1 is opcode3_9=0x000D & reg0_2 {
 	local tmpS = (reg0_2 & 0x0100) != 0;
 	reg0_2 = reg0_2 s>> 1;
 	S = tmpS;
 	Z = reg0_2 == 0;
 }
 
-:SARC reg0_2, 1 is opcode3_9=0x000F & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SARC reg0_2, 1 is opcode3_9=0x000F & reg0_2 {
 	local tmpC = (reg0_2 & 0x0001) != 0;
 	local tmpS = (reg0_2 & 0x0100) != 0;
 	reg0_2 = reg0_2 s>> 1;
@@ -448,14 +448,14 @@ define pcodeop SoftwareInterrupt;
 	Z = reg0_2 == 0;
 }
 
-:SLL reg0_2, 1 is opcode3_9=0x0009 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SLL reg0_2, 1 is opcode3_9=0x0009 & reg0_2 {
 	local tmpS = (reg0_2 & 0x4000) != 0;
 	reg0_2 = reg0_2 << 1;
 	S = tmpS;
 	Z = reg0_2 == 0;
 }
 
-:SLLC reg0_2, 1 is opcode3_9=0x000B & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SLLC reg0_2, 1 is opcode3_9=0x000B & reg0_2 {
 	local tmpC = (reg0_2 & 0x8000) != 0;
 	local tmpS = (reg0_2 & 0x4000) != 0;
 	reg0_2 = reg0_2 << 1;
@@ -464,14 +464,14 @@ define pcodeop SoftwareInterrupt;
 	Z = reg0_2 == 0;
 } 
 
-:SLR reg0_2, 1 is opcode3_9=0x000C & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SLR reg0_2, 1 is opcode3_9=0x000C & reg0_2 {
 	local tmpS = (reg0_2 & 0x0100) != 0;
 	reg0_2 = reg0_2 >> 1;
 	S = tmpS;
 	Z = reg0_2 == 0;
 } 
 
-:SWAP reg0_2, 1 is opcode3_9=0x0008 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SWAP reg0_2, 1 is opcode3_9=0x0008 & reg0_2 {
 	local tmpS = (reg0_2 & 0x8000) != 0;
 	local tmp = (reg0_2 << 8) & 0xFF00;
 	reg0_2 = tmp | ((reg0_2 >> 8) & 0x00FF);
@@ -480,7 +480,7 @@ define pcodeop SoftwareInterrupt;
 
 with : operation_size=1 {
 
-:RLC reg0_2, 2 is opcode3_9=0x000A & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:RLC reg0_2, 2 is opcode3_9=0x000A & reg0_2 {
 	local tmpC = (reg0_2 & 0x8000) != 0;
 	local tmpO = (reg0_2 & 0x4000) != 0;
 	local tmpS = (reg0_2 & 0x2000) != 0;
@@ -491,7 +491,7 @@ with : operation_size=1 {
 	Z = reg0_2 == 0;
 }
 
-:RRC reg0_2, 2 is opcode3_9=0x000E & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:RRC reg0_2, 2 is opcode3_9=0x000E & reg0_2 {
 	local tmpC = (reg0_2 & 0x0001) != 0;
 	local tmpO = (reg0_2 & 0x0002) != 0;
 	local tmpS = (reg0_2 & 0x0200) != 0;
@@ -502,14 +502,14 @@ with : operation_size=1 {
 	Z = reg0_2 == 0;
 }
 
-:SAR reg0_2, 2 is opcode3_9=0x000D & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SAR reg0_2, 2 is opcode3_9=0x000D & reg0_2 {
 	local tmpS = (reg0_2 & 0x0200) != 0;
 	reg0_2 = reg0_2 s>> 2;
 	S = tmpS;
 	Z = reg0_2 == 0;	
 }
 
-:SARC reg0_2, 2 is opcode3_9=0x000F & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SARC reg0_2, 2 is opcode3_9=0x000F & reg0_2 {
 	local tmpC = (reg0_2 & 0x0001) != 0;
 	local tmpO = (reg0_2 & 0x0002) != 0;
 	local tmpS = (reg0_2 & 0x0200) != 0;
@@ -520,14 +520,14 @@ with : operation_size=1 {
 	Z = reg0_2 == 0;
 }
 
-:SLL reg0_2, 2 is opcode3_9=0x0009 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SLL reg0_2, 2 is opcode3_9=0x0009 & reg0_2 {
 	local tmpS = (reg0_2 & 0x2000) != 0;
 	reg0_2 = reg0_2 << 2;
 	S = tmpS;
 	Z = reg0_2 == 0;
 }
 
-:SLLC reg0_2, 2 is opcode3_9=0x000B & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SLLC reg0_2, 2 is opcode3_9=0x000B & reg0_2 {
 	local tmpC = (reg0_2 & 0x8000) != 0;
 	local tmpO = (reg0_2 & 0x4000) != 0;
 	local tmpS = (reg0_2 & 0x2000) != 0;
@@ -538,14 +538,14 @@ with : operation_size=1 {
 	Z = reg0_2 == 0;
 } 
 
-:SLR reg0_2, 2 is opcode3_9=0x000C & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SLR reg0_2, 2 is opcode3_9=0x000C & reg0_2 {
 	local tmpS = (reg0_2 & 0x0200) != 0;
 	reg0_2 = reg0_2 >> 2;
 	S = tmpS;
 	Z = reg0_2 == 0;
 }
 
-:SWAP reg0_2, 2 is opcode3_9=0x0008 & reg0_2 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SWAP reg0_2, 2 is opcode3_9=0x0008 & reg0_2 {
 	local tmpS = (reg0_2 & 0x0080) != 0;
 	reg0_2 = (reg0_2 << 8) | (reg0_2 & 0x00FF);
 	S = tmpS;
@@ -553,56 +553,56 @@ with : operation_size=1 {
 
 }
 
-:ADDI imm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ADDI imm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; imm16 {
 	addition(reg0_2, imm16);
 }
 
-:ANDI imm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ANDI imm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; imm16 {
 	reg0_2 = reg0_2 & imm16;
 	resultFlags(reg0_2);
 }
 
-:CMPI imm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:CMPI imm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; imm16 {
 	comparison(reg0_2, imm16);
 }
 
-:MVII imm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:MVII imm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; imm16 {
 	reg0_2 = imm16;
 }
 
-:SUBI imm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SUBI imm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; imm16 {
 	subtraction(reg0_2, imm16);
 }
 
-:XORI imm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; imm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:XORI imm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; imm16 {
 	reg0_2 = reg0_2 ^ imm16;
 	resultFlags(reg0_2);
 }
 
 with : doublebyte=1 {
 
-:ADDI splitimm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ADDI splitimm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; splitimm16 {
 	addition(reg0_2, splitimm16);
 }
 
-:ANDI splitimm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:ANDI splitimm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; splitimm16 {
 	reg0_2 = reg0_2 & splitimm16;
 	resultFlags(reg0_2);
 }
 
-:CMPI splitimm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:CMPI splitimm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; splitimm16 {
 	comparison(reg0_2, splitimm16);
 }
 
-:MVII splitimm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:MVII splitimm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; splitimm16 {
 	reg0_2 = splitimm16;
 }
 
-:SUBI splitimm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:SUBI splitimm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; splitimm16 {
 	subtraction(reg0_2, splitimm16);
 }
 
-:XORI splitimm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; splitimm16 [ doublebyte=0; globalset(inst_next, doublebyte); ] {
+:XORI splitimm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; splitimm16 {
 	reg0_2 = reg0_2 ^ splitimm16;
 	resultFlags(reg0_2);
 }
