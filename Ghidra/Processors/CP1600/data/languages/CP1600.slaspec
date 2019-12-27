@@ -4,7 +4,7 @@ define space ram type=ram_space wordsize=2 size=2 default;
 define space register type=register_space size=2;
 
 define register offset=0x00 size=2 [ R0 R1 R2 R3 R4 R5 R6 R7 ];
-define register offset=0x10 size=1 [ I D C O Z S ];
+define register offset=0x10 size=1 [ I C O Z S ];
 define register offset=0x20 size=4 [ contextreg ];
 
 define token opcode_word (16)
@@ -331,7 +331,6 @@ define pcodeop SoftwareInterrupt;
 }
 
 :SDBD is opcode0_9=0x0001 [ doublebyte=1; globalset(inst_next, doublebyte); ] {
-	D = 1;
 }
 
 :SETC is opcode0_9=0x0007 {
