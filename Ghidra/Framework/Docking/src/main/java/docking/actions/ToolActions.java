@@ -18,7 +18,6 @@ package docking.actions;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
-import java.util.Map.Entry;
 
 import javax.swing.Action;
 import javax.swing.KeyStroke;
@@ -243,9 +242,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 			result.addAll(actions);
 		}
 
-		Set<Entry<String, SharedStubKeyBindingAction>> entries = sharedActionMap.entrySet();
-		for (Entry<String, SharedStubKeyBindingAction> entry : entries) {
-			SharedStubKeyBindingAction stub = entry.getValue();
+		Collection<SharedStubKeyBindingAction> values = sharedActionMap.values();
+		for (SharedStubKeyBindingAction stub : values) {
 			String stubOwner = stub.getOwner();
 			if (stubOwner.equals(owner)) {
 				result.add(stub);
