@@ -777,6 +777,7 @@ class XmlExporter(IdaXml):
         self.start_element(DATATYPES, True)
         self.export_structures()
         self.export_enums()
+        self.export_hexrays_types()
         self.end_element(DATATYPES)
         self.display_cpu_time(timer)
 
@@ -2184,6 +2185,120 @@ class XmlExporter(IdaXml):
         xml_declaration += "\n<?program_dtd version=\"1\"?>\n"
         self.write_to_xmlfile(xml_declaration)
 
+    def export_hexrays_types(self):
+        """
+        Exports information about standard HexRays datatypes.
+        It's needed for parsing of function's signatures.
+        """
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_BOOL1")
+        self.write_attribute(DATATYPE, "bool")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_BOOL2")
+        self.write_attribute(DATATYPE, "undefined2")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_BOOL4")
+        self.write_attribute(DATATYPE, "undefined4")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int8")
+        self.write_attribute(DATATYPE, "sbyte")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int16")
+        self.write_attribute(DATATYPE, "sword")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int32")
+        self.write_attribute(DATATYPE, "sdword")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int64")
+        self.write_attribute(DATATYPE, "sqword")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__int128")
+        self.write_attribute(DATATYPE, "int16")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_BYTE")
+        self.write_attribute(DATATYPE, "undefined1")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_WORD")
+        self.write_attribute(DATATYPE, "undefined2")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_DWORD")
+        self.write_attribute(DATATYPE, "undefined4")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_QWORD")
+        self.write_attribute(DATATYPE, "undefined8")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_OWORD")
+        self.write_attribute(DATATYPE, "int16")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_TBYTE")
+        self.write_attribute(DATATYPE, "float10")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_UNKNOWN")
+        self.write_attribute(DATATYPE, "undefined")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "BYTE")
+        self.write_attribute(DATATYPE, "undefined1")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "WORD")
+        self.write_attribute(DATATYPE, "undefined2")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "DWORD")
+        self.write_attribute(DATATYPE, "undefined4")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "LONG")
+        self.write_attribute(DATATYPE, "undefined4")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "_QWORD")
+        self.write_attribute(DATATYPE, "undefined8")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__ptr32")
+        self.write_attribute(DATATYPE, "pointer32")
+        self.close_tag()
+
+        self.start_element(TYPE_DEF)
+        self.write_attribute(NAME, "__ptr64")
+        self.write_attribute(DATATYPE, "pointer64")
+        self.close_tag()
 
 class XmlImporter(IdaXml):
     """
