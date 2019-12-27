@@ -36,6 +36,7 @@ import javax.swing.tree.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DockingWindowManager;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.JTreeMouseListenerDelegate;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.table.AutoscrollAdapter;
@@ -228,10 +229,6 @@ public class GTree extends JPanel implements BusyListener {
 		});
 
 		tree = new AutoScrollTree(model);
-		tree.setRowHeight(-1);// variable size rows
-		tree.setSelectionModel(new GTreeSelectionModel());
-		tree.setInvokesStopCellEditing(true);// clicking outside the cell editor will trigger a save, not a cancel
-		ToolTipManager.sharedInstance().registerComponent(tree);
 
 		setLayout(new BorderLayout());
 
@@ -1233,6 +1230,22 @@ public class GTree extends JPanel implements BusyListener {
 		public AutoScrollTree(TreeModel model) {
 			super(model);
 			scroller = new AutoscrollAdapter(this, 5);
+
+			setRowHeight(-1);// variable size rows
+			setSelectionModel(new GTreeSelectionModel());
+			setInvokesStopCellEditing(true);// clicking outside the cell editor will trigger a save, not a cancel
+
+			updateDefaultKeyBindings();
+
+			ToolTipManager.sharedInstance().registerComponent(this);
+		}
+
+		private void updateDefaultKeyBindings() {
+
+			// Remove the edit keybinding, as the GTree triggers editing via a task, since it
+			// is multi-threaded.  Doing this allows users to assign their own key bindings to 
+			// the edit task.
+			KeyBindingUtils.clearKeyBinding(this, "startEditing");
 		}
 
 		@Override
