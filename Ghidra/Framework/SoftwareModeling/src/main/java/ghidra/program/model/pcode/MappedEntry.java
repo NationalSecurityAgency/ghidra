@@ -16,6 +16,7 @@
 package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.AbstractFloatDataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.MemoryBlock;
@@ -85,7 +86,7 @@ public class MappedEntry extends SymbolEntry {
 	public void saveXml(StringBuilder buf) {
 		int logicalsize = 0; // Assume datatype size and storage size are the same
 		int typeLength = symbol.type.getLength();
-		if (typeLength != storage.size() && typeLength > 0) {
+		if (typeLength != storage.size() && symbol.type instanceof AbstractFloatDataType) {
 			logicalsize = typeLength; // Force a logicalsize
 		}
 		String addrRes = Varnode.buildXMLAddress(storage.getVarnodes(), logicalsize);

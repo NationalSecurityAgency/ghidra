@@ -456,7 +456,7 @@ public class HighFunctionDBUtil {
 			Variable var;
 			VariableStorage storage;
 			HighVariable tmpHigh = variable.getHighVariable();
-			if (tmpHigh != null && tmpHigh.getRepresentative().isUnique()) {
+			if (tmpHigh != null && tmpHigh.requiresDynamicStorage()) {
 				storage =
 					DynamicEntry.buildDynamicStorage(tmpHigh.getRepresentative(), highFunction);
 				var = null;

@@ -177,6 +177,22 @@ public abstract class HighVariable {
 	}
 
 	/**
+	 * Return true in when the HighVariable should be recorded (in the database) using dynamic storage
+	 * rather than using the actual address space and offset of the representative varnode.  Dynamic storage
+	 * is typically needed if the actual storage is ephemeral (in the unique space).
+	 * @return true if this needs dynamic storage
+	 */
+	public boolean requiresDynamicStorage() {
+		if (represent.isUnique()) {
+			return true;		// Temporary Varnodes always need dynamic storage
+		}
+		if (represent.getAddress().isStackAddress() && !represent.isAddrTied()) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Restore this HighVariable from a <high> XML tag
 	 * @param parser is the XML stream
 	 * @throws PcodeXMLException if the XML is not valid
