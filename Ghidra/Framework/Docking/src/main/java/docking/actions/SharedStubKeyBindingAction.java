@@ -145,6 +145,20 @@ public class SharedStubKeyBindingAction extends DockingAction implements Options
 		return StringUtils.join(owners, ", ");
 	}
 
+	@Override
+	public String getDescription() {
+
+		Set<DockingActionIf> actions = clientActions.keySet();
+		for (DockingActionIf action : actions) {
+			String description = action.getDescription();
+			if (!StringUtils.isBlank(description)) {
+				return description;
+			}
+		}
+
+		return super.getDescription();
+	}
+
 	private KeyStroke validateActionsHaveTheSameDefaultKeyStroke(DockingActionIf newAction) {
 
 		// this value may be null
