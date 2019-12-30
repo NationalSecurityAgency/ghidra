@@ -187,8 +187,7 @@ define pcodeop SoftwareInterrupt;
 }
 
 :B^cc branchdest16 is (opcode6_9=0x0008 & cc) ... & branchdest16 {
-	if (!cc) goto inst_next;
-	goto branchdest16;
+	if (cc) goto branchdest16;
 }
 
 :BEXT branchdest16, external_condition is (opcode6_9=0x0008 & branch_external=1 & external_condition) ... & branchdest16 {
