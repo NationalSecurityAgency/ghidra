@@ -255,7 +255,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * Adds the given action to the system and associates it with this provider.
 	 * @param action The action to add.
 	 */
-	protected void addLocalAction(DockingActionIf action) {
+	public void addLocalAction(DockingActionIf action) {
 		if (actionSet.contains(action)) {
 			return;
 		}
