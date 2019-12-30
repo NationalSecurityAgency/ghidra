@@ -39,7 +39,7 @@ import ghidra.util.SystemUtilities;
  *
  *
  */
-public class DecompileOptions { //
+public class DecompileOptions {
 	private final static String PREDICATE_OPTIONSTRING = "Analysis.Simplify predication";
 	private final static String PREDICATE_OPTIONDESCRIPTION =
 		"If set, multiple conditionally executed instructions " +
@@ -623,6 +623,10 @@ public class DecompileOptions { //
 
 	public int getMaxWidth() {
 		return maxwidth;
+	}
+
+	public void setMaxWidth(int maxwidth) {
+		this.maxwidth = maxwidth;
 	}
 
 	public Color getKeywordColor() {
