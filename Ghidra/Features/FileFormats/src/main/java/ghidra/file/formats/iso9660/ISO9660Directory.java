@@ -20,6 +20,8 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 import java.io.*;
+import java.time.DateTimeException;
+import java.time.LocalDateTime;
 
 public class ISO9660Directory implements StructConverter {
 
@@ -128,7 +130,7 @@ public class ISO9660Directory implements StructConverter {
 	 */
 	@Override
 	public String toString() {
-		StringBuffer buff = new StringBuffer();
+		StringBuilder buff = new StringBuilder();
 
 		buff.append("Directory Record Length: 0x" + Integer.toHexString(directoryRecordLength) +
 			"\n");
@@ -222,32 +224,62 @@ public class ISO9660Directory implements StructConverter {
 		return (byte) ((flagByte >>> flagIndex) & 1);
 	}
 
+	/**
+	 * Parses the given buffer as an ISO9660 timestamp and returns it as a
+	 * human readable string representation.
+	 *
+	 * Invalid buffers that are still big enough to hold a timestamp are
+	 * still parsed and converted, albeit they are marked as invalid when
+	 * presented to the user.
+	 *
+	 * @param byteArray the buffer to parse (both standard and extended
+	 *                     formats are handled).
+	 * @return a string with the human readable timestamp.
+	 */
 	private String createDateTimeString(byte[] byteArray) {
-
-		if (byteArray != null) {
-			if (byteArray.length > 6) {
-				int timeOffset = byteArray[byteArray.length - 1];
-				int i1, i2, i3, i4, i5, i6;
-				i1 = 1900 + byteArray[0]; //Years since 1900
-				i2 = byteArray[1]; 	//Month of year
-				i3 = byteArray[2];  //Day of month
-				i4 = byteArray[3];  //Hour of day
-				i5 = byteArray[4];  //Minute of hour
-				i6 = byteArray[5];  //Second of minute
-
-				//Time zone offset from GMT in 15 minute intervals, 
-				//starting at interval -48 (west) and running up to 
-				//interval 52 (east)
-				int timeZone = (-48 + timeOffset) / 4; //GMT offset
-				String dateTime =
-					String.format("%d-%d-%d %d:ds:%d GMT%d", i1, i2, i3, i4, i5, i6, timeZone);
-
-				return dateTime;
-			}
-
+		if (byteArray == null || byteArray.length < 7) {
+			return "INVALID (truncated or missing)";
 		}
-		return "";
 
+		// Time zone offset from GMT in 15 minute intervals,
+		// starting at interval -48 (west) and running up to
+		// interval 52 (east)
+		int timeOffset = byteArray[byteArray.length - 1];
+
+		int i1, i2, i3, i4, i5, i6;
+		i1 = 1900 + byteArray[0]; // Years since 1900
+		i2 = byteArray[1];        // Month of year
+		i3 = byteArray[2];        // Day of month
+		i4 = byteArray[3];        // Hour of day
+		i5 = byteArray[4];        // Minute of hour
+		i6 = byteArray[5];        // Second of minute
+
+		// The buffer contains an invalid timezone offset.
+		boolean validBuffer = true;
+		if (timeOffset < -48 || timeOffset > 52) {
+			validBuffer = false;
+		}
+
+		// The buffer contains an invalid date/time.
+		try {
+			LocalDateTime.of(i1, i2, i3, i4, i5, i6);
+		} catch (DateTimeException exception) {
+			validBuffer = false;
+		}
+
+		StringBuilder builder = new StringBuilder();
+		if (!validBuffer) {
+			builder.append("INVALID (");
+		}
+		int timezoneIntegral = timeOffset / 4;
+		int timezoneFractional = (Math.abs(timeOffset) % 4) * 15;
+		builder.append(String.format("%04d-%02d-%02d %02d:%02d:%02d GMT%c%02d%02d", i1, i2, i3,
+				i4, i5, i6, timezoneIntegral < 0 ? '-' : '+', timezoneIntegral, timezoneFractional));
+		if (!validBuffer) {
+			builder.append(")");
+		}
+
+		return builder.toString();
 	}
 
 	private void setReaderToBigEndian(BinaryReader reader) {
