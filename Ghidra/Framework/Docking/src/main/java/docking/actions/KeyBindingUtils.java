@@ -402,6 +402,36 @@ public class KeyBindingUtils {
 	}
 
 	/**
+	 * Clears the currently assigned Java key binding for the action by the given name.  This
+	 * method will find the currently assigned key binding, if any, and then remove it.
+	 * 
+	 * @param component the component for which to clear the key binding
+	 * @param actionName the name of the action that should not have a key binding
+	 * @see LookAndFeel
+	 */
+	public static void clearKeyBinding(JComponent component, String actionName) {
+
+		InputMap inputMap = component.getInputMap(JComponent.WHEN_FOCUSED);
+		if (inputMap == null) {
+			return;
+		}
+
+		KeyStroke keyStroke = null;
+		KeyStroke[] keys = inputMap.allKeys();
+		for (KeyStroke ks : keys) {
+			Object object = inputMap.get(ks);
+			if (actionName.equals(object)) {
+				keyStroke = ks;
+				break;
+			}
+		}
+
+		if (keyStroke != null) {
+			clearKeyBinding(component, keyStroke);
+		}
+	}
+
+	/**
 	 * Returns the registered action for the given keystroke, or null of no
 	 * action is bound to that keystroke.
 	 * 
@@ -906,5 +936,4 @@ public class KeyBindingUtils {
 
 		return selectedFile;
 	}
-
 }
