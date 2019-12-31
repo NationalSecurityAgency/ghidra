@@ -32,9 +32,10 @@ import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
 import docking.action.KeyBindingData;
 import docking.actions.KeyBindingUtils;
+import docking.help.Help;
+import docking.help.HelpService;
 import docking.tool.util.DockingToolConstants;
-import docking.widgets.MultiLineLabel;
-import docking.widgets.OptionDialog;
+import docking.widgets.*;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.table.*;
 import ghidra.framework.options.Options;
@@ -44,6 +45,7 @@ import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
+import resources.Icons;
 import resources.ResourceManager;
 
 /**
@@ -56,6 +58,7 @@ public class KeyBindingsPanel extends JPanel {
 	private final static int ACTION_NAME = 0;
 	private final static int KEY_BINDING = 1;
 	private final static int PLUGIN_NAME = 2;
+
 	private static final int FONT_SIZE = 11;
 
 	private JTextPane statusLabel;
@@ -79,6 +82,7 @@ public class KeyBindingsPanel extends JPanel {
 	private boolean firingTableDataChanged;
 	private PropertyChangeListener propertyChangeListener;
 	private GTableFilterPanel<DockingActionIf> tableFilterPanel;
+	private EmptyBorderButton helpButton;
 
 	public KeyBindingsPanel(PluginTool tool, Options options) {
 		this.tool = tool;
@@ -203,6 +207,7 @@ public class KeyBindingsPanel extends JPanel {
 		JScrollPane sp = new JScrollPane(actionTable);
 		actionTable.setPreferredScrollableViewportSize(new Dimension(400, 100));
 		actionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		actionTable.setHTMLRenderingEnabled(true);
 
 		adjustTableColumns();
 
@@ -231,7 +236,7 @@ public class KeyBindingsPanel extends JPanel {
 		statusLabel = new JTextPane();
 		statusLabel.setEnabled(false);
 		DockingUtils.setTransparent(statusLabel);
-		statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 5));
 		statusLabel.setContentType("text/html"); // render any HTML we find in descriptions
 
 		// make sure the label gets enough space
@@ -240,9 +245,27 @@ public class KeyBindingsPanel extends JPanel {
 		Font f = new Font("SansSerif", Font.PLAIN, FONT_SIZE);
 		statusLabel.setFont(f);
 
+		helpButton = new EmptyBorderButton(Icons.HELP_ICON);
+		helpButton.setEnabled(false);
+		helpButton.addActionListener(e -> {
+			DockingActionIf action = getSelectedAction();
+			HelpService hs = Help.getHelpService();
+			hs.showHelp(action, false, KeyBindingsPanel.this);
+		});
+
+		JPanel helpButtonPanel = new JPanel();
+		helpButtonPanel.setLayout(new BoxLayout(helpButtonPanel, BoxLayout.PAGE_AXIS));
+		helpButtonPanel.add(helpButton);
+		helpButtonPanel.add(Box.createVerticalGlue());
+
+		JPanel lowerStatusPanel = new JPanel();
+		lowerStatusPanel.setLayout(new BoxLayout(lowerStatusPanel, BoxLayout.X_AXIS));
+		lowerStatusPanel.add(helpButtonPanel);
+		lowerStatusPanel.add(statusLabel);
+
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.add(keyPanel);
-		panel.add(statusLabel);
+		panel.add(lowerStatusPanel);
 		return panel;
 	}
 
@@ -260,9 +283,9 @@ public class KeyBindingsPanel extends JPanel {
 		// the content of the left-hand side label
 		MultiLineLabel mlabel =
 			new MultiLineLabel("To add or change a key binding, select an action\n" +
-				" and type any key combination.\n" +
+				"and type any key combination\n \n" +
 				"To remove a key binding, select an action and\n" +
-				"press <Enter> or <Backspace>.");
+				"press <Enter> or <Backspace>");
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
@@ -451,13 +474,21 @@ public class KeyBindingsPanel extends JPanel {
 		unappliedChanges = changes;
 	}
 
-	private String getSelectedAction() {
+	private DockingActionIf getSelectedAction() {
 		if (selectionModel.isSelectionEmpty()) {
 			return null;
 		}
 		int selectedRow = actionTable.getSelectedRow();
 		int modelRow = tableFilterPanel.getModelRow(selectedRow);
-		return tableActions.get(modelRow).getFullName();
+		return tableActions.get(modelRow);
+	}
+
+	private String getSelectedActionName() {
+		DockingActionIf action = getSelectedAction();
+		if (action == null) {
+			return null;
+		}
+		return action.getFullName();
 	}
 
 	private void addToKeyMap(KeyStroke ks, String actionName) {
@@ -580,7 +611,7 @@ public class KeyBindingsPanel extends JPanel {
 			return;
 		}
 
-		String selectedActionName = getSelectedAction();
+		String selectedActionName = getSelectedActionName();
 		if (selectedActionName != null) {
 			if (processKeyStroke(selectedActionName, ks)) {
 				String keyStrokeText = KeyEntryTextField.parseKeyStroke(ks);
@@ -645,11 +676,14 @@ public class KeyBindingsPanel extends JPanel {
 				return;
 			}
 
-			String fullActionName = getSelectedAction();
+			helpButton.setEnabled(false);
+			String fullActionName = getSelectedActionName();
 			if (fullActionName == null) {
+				statusLabel.setText("");
 				return;
 			}
 
+			helpButton.setEnabled(true);
 			KeyStroke ks = keyStrokesByFullName.get(fullActionName);
 			String ksName = "";
 			clearInfoPanel();
@@ -672,12 +706,14 @@ public class KeyBindingsPanel extends JPanel {
 			if (description == null || description.trim().isEmpty()) {
 				description = action.getName();
 			}
+
 			statusLabel.setText("<html>" + HTMLUtilities.escapeHTML(description));
 		}
 	}
 
 	private class KeyBindingsTableModel extends AbstractSortedTableModel<DockingActionIf> {
-		private final String[] columnNames = { "Action Name", "KeyBinding", "Plugin Name" };
+		private final String[] columnNames =
+			{ "Action Name", "KeyBinding", "Plugin Name" };
 
 		KeyBindingsTableModel() {
 			super(0);
@@ -694,7 +730,6 @@ public class KeyBindingsPanel extends JPanel {
 			switch (columnIndex) {
 				case ACTION_NAME:
 					return action.getName();
-
 				case KEY_BINDING:
 					KeyStroke ks = keyStrokesByFullName.get(action.getFullName());
 					if (ks != null) {

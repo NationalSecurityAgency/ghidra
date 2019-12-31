@@ -604,7 +604,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		// Show new call tree action
 		//
 		DockingAction newCallTree =
-			new DockingAction("Show Call Tree For Function", plugin.getName()) {
+			new DockingAction("Show Call Trees For Function", plugin.getName()) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					GTree gTree = (GTree) context.getContextObject();
@@ -671,6 +671,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			"Call_Tree_Context_Action_Show_Call_Tree_For_Function"));
 		newCallTree.setPopupMenuData(new MenuData(new String[] { "Show Call Tree For Function" },
 			CallTreePlugin.PROVIDER_ICON, newTreeMenu));
+		newCallTree.setDescription("Show the Function Call Tree window for the function " +
+			"selected in the call tree");
 		tool.addLocalAction(this, newCallTree);
 	}
 
