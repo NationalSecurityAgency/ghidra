@@ -34,9 +34,10 @@ public class CompareFunctionsFromListingAction extends CompareFunctionsAction {
 	 * Constructor
 	 * 
 	 * @param tool the plugin tool
+	 * @param owner the action owner
 	 */
-	public CompareFunctionsFromListingAction(PluginTool tool) {
-		super(tool);
+	public CompareFunctionsFromListingAction(PluginTool tool, String owner) {
+		super(tool, owner);
 	}
 
 	@Override

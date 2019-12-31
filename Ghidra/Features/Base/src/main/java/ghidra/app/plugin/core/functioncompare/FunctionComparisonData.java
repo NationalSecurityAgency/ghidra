@@ -143,6 +143,17 @@ class FunctionComparisonData {
 	}
 
 	/**
+	 * Returns true if this class holds no function, data or address set
+	 * information
+	 * 
+	 * @return true if this class holds no function, data or address set
+	 * information
+	 */
+	public boolean isEmpty() {
+		return function == null && data == null && addressSet == null;
+	}
+
+	/**
 	 * Resets all fields in this model to a nominal state
 	 */
 	public void clear() {
@@ -150,5 +161,24 @@ class FunctionComparisonData {
 		this.data = null;
 		this.addressSet = new AddressSet();
 		this.program = null;
+	}
+
+	public String toString() {
+		String str = "";
+
+		if (function != null) {
+			str = function.getName();
+		}
+		else if (data != null) {
+			str = data.getAddress().toString();
+		}
+		else if (addressSet != null) {
+			str = addressSet.toString();
+		}
+		else {
+			str = "none";
+		}
+
+		return str;
 	}
 }

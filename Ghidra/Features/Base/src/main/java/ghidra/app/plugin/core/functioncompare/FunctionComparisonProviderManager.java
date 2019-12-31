@@ -160,6 +160,16 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	}
 
 	/**
+	 * Removes a subscriber who no longer wishes to receive provider activation
+	 * events
+	 * 
+	 * @param listener the subscriber to remove
+	 */
+	public void removeProviderListener(ComponentProviderActivationListener listener) {
+		listeners.remove(listener);
+	}
+
+	/**
 	 * Closes all the comparison providers that contain a function from 
 	 * the given program
 	 * 

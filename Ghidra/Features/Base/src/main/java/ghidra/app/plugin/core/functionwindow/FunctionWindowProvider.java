@@ -128,9 +128,7 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		functionTable.setPreferredScrollableViewportSize(new Dimension(350, 150));
 		functionTable.setRowSelectionAllowed(true);
 		functionTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		functionTable.getSelectionModel()
-				.addListSelectionListener(
-					e -> plugin.setActionsEnabled(functionTable.getSelectedRowCount() > 0));
+		functionTable.getSelectionModel().addListSelectionListener(e -> tool.contextChanged(this));
 
 		functionModel.addTableModelListener(e -> {
 			int rowCount = functionModel.getRowCount();

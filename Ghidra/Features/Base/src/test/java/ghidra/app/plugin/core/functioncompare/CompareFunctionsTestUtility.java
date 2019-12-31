@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.*;
 
 import ghidra.program.model.listing.Function;
@@ -23,7 +26,7 @@ import ghidra.program.model.listing.Function;
  * Helper methods for use with function comparison tests
  * 
  * @see {@link CompareFunctionsTest}
- * @see {@link CompareFunctionsTestSlow}
+ * @see {@link CompareFunctionsSlowTest}
  */
 public class CompareFunctionsTestUtility {
 
@@ -38,8 +41,8 @@ public class CompareFunctionsTestUtility {
 			Function... functions) {
 		Set<Function> funcs = new HashSet<>(Arrays.asList(functions));
 		Set<Function> fcs = provider.getModel().getSourceFunctions();
-		assert (fcs.size() == funcs.size());
-		assert (fcs.containsAll(funcs));
+		assertEquals(fcs.size(), funcs.size());
+		assertTrue(fcs.containsAll(funcs));
 	}
 
 	/**
@@ -54,8 +57,8 @@ public class CompareFunctionsTestUtility {
 			Function source, Function... targets) {
 		Set<Function> targetsAsList = new HashSet<>(Arrays.asList(targets));
 		Set<Function> tgts = provider.getModel().getTargetFunctions(source);
-		assert (tgts.size() == targetsAsList.size());
-		assert (tgts.containsAll(targetsAsList));
+		assertEquals(tgts.size(), targetsAsList.size());
+		assertTrue(tgts.containsAll(targetsAsList));
 	}
 
 	/**

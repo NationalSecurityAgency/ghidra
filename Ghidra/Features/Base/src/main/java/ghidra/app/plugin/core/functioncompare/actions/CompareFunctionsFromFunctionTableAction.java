@@ -21,7 +21,7 @@ import docking.ActionContext;
 import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
 import ghidra.app.plugin.core.functionwindow.FunctionTableModel;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
 import ghidra.util.table.GhidraTable;
 
 /**
@@ -41,9 +41,10 @@ public class CompareFunctionsFromFunctionTableAction extends CompareFunctionsAct
 	 * Constructor
 	 * 
 	 * @param tool the plugin tool
+	 * @param owner the action owner
 	 */
-	public CompareFunctionsFromFunctionTableAction(PluginTool tool) {
-		super(tool);
+	public CompareFunctionsFromFunctionTableAction(PluginTool tool, String owner) {
+		super(tool, owner);
 	}
 
 	@Override
@@ -66,12 +67,9 @@ public class CompareFunctionsFromFunctionTableAction extends CompareFunctionsAct
 			return Collections.emptySet();
 		}
 		FunctionTableModel model = (FunctionTableModel) table.getModel();
-		Program program = model.getProgram();
-		FunctionManager functionManager = program.getFunctionManager();
 		List<FunctionRowObject> functionRowObjects = model.getRowObjects(selectedRows);
 		for (FunctionRowObject functionRowObject : functionRowObjects) {
-			long key = functionRowObject.getKey();
-			Function rowFunction = functionManager.getFunction(key);
+			Function rowFunction = functionRowObject.getFunction();
 			functions.add(rowFunction);
 		}
 		return functions;

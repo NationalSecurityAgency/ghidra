@@ -181,7 +181,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 		waitForSwing();
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
-		performAction(openTableAction);
+		performAction(openTableAction, false);
 
 		TableChooserDialog<?> dialog =
 			waitForDialogComponent(TableChooserDialog.class);

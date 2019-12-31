@@ -66,7 +66,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 * @param provider the comparison provider associated with this panel
 	 * @param tool the active plugin tool
 	 */
-	public MultiFunctionComparisonPanel(FunctionComparisonProvider provider,
+	public MultiFunctionComparisonPanel(MultiFunctionComparisonProvider provider,
 			PluginTool tool) {
 		super(provider, tool, null, null);
 
@@ -79,16 +79,6 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 		// comparison panel because the name of the function/data being shown 
 		// is already visible in the combo box
 		getComparisonPanels().forEach(p -> p.setShowTitles(false));
-	}
-
-	/**
-	 * Clears the given functions from the comparison panel (both the 
-	 * source and target lists) (the default for this method is to only clear
-	 * out the functions visible in the left/right panels)
-	 */
-	@Override
-	public void removeFunctions(Set<Function> functions) {
-		((MultiFunctionComparisonProvider) provider).removeFunctions(functions);
 	}
 
 	/**
@@ -105,9 +95,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 			reloadTargetList(selectedSource);
 			loadFunctions(selectedSource, (Function) targetFunctionsCBModel.getSelectedItem());
 
-			((FunctionComparisonProvider) provider).setTabText(this);
-			((FunctionComparisonProvider) provider)
-					.setTitle(((FunctionComparisonProvider) provider).getTabText());
+			updateTabText();
 
 			// Fire a notification to update the UI state; without this the 
 			// actions would not be properly enabled/disabled
@@ -182,6 +170,16 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	}
 
 	/**
+	 * Sets the text on the current tab to match whatever is displayed in the
+	 * comparison panels
+	 */
+	private void updateTabText() {
+		String tabText = getDescription();
+		provider.setTabText(tabText);
+		provider.setTitle(tabText);
+	}
+
+	/**
 	 * Sets a given function to be the selected item in a given combo
 	 * box. If the function isn't found, the first item in the box is
 	 * set.
@@ -238,6 +236,8 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 				// to load the targets associated with it
 				reloadTargetList((Function) sourceFunctionsCBModel.getSelectedItem());
 
+				updateTabText();
+
 				// Fire a notification to update the UI state; without this the 
 				// actions would not be properly enabled/disabled
 				tool.contextChanged(provider);
@@ -274,6 +274,8 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 				Function selected = (Function) targetFunctionsCBModel.getSelectedItem();
 				loadFunctions((Function) sourceFunctionsCBModel.getSelectedItem(), selected);
+
+				updateTabText();
 
 				// Fire a notification to update the UI state; without this the 
 				// actions would not be properly enabled/disabled

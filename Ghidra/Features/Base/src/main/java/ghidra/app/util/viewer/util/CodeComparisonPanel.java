@@ -39,8 +39,8 @@ import ghidra.util.classfinder.ExtensionPoint;
  * discovered by the {@link FunctionComparisonPanel} class and included as a 
  * form of comparing two sections of code within the same or different programs
  * <p>
- * NOTE: ALL CodeComparisonPanel CLASSES MUST END IN <
- * code>CodeComparisonPanel</code> so they are discoverable by the 
+ * NOTE: ALL CodeComparisonPanel CLASSES MUST END IN
+ * <code>CodeComparisonPanel</code> so they are discoverable by the 
  * {@link ClassSearcher} 
  */
 public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> extends JPanel

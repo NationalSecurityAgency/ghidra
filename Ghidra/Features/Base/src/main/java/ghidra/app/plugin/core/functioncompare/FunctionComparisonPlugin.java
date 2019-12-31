@@ -76,7 +76,8 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	@Override
 	protected void init() {
-		CompareFunctionsAction compareFunctionsAction = new CompareFunctionsFromListingAction(tool);
+		CompareFunctionsAction compareFunctionsAction =
+			new CompareFunctionsFromListingAction(tool, getName());
 		tool.addAction(compareFunctionsAction);
 	}
 
@@ -130,6 +131,12 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	public void addFunctionComparisonProviderListener(
 			ComponentProviderActivationListener listener) {
 		functionComparisonManager.addProviderListener(listener);
+	}
+
+	@Override
+	public void removeFunctionComparisonProviderListener(
+			ComponentProviderActivationListener listener) {
+		functionComparisonManager.removeProviderListener(listener);
 	}
 
 	@Override

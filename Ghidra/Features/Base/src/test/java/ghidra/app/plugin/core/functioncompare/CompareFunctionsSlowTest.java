@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Window;
 import java.util.Date;
@@ -25,10 +27,10 @@ import javax.swing.JPanel;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.dialogs.TableChooserDialog;
 import docking.widgets.table.GFilterTable;
-import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
 import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
@@ -46,7 +48,7 @@ import ghidra.test.TestEnv;
  * Tests for the {@link FunctionComparisonPlugin function comparison plugin} 
  * that involve the GUI
  */
-public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTest {
+public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 	private Program program1;
@@ -65,8 +67,6 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		plugin = env.addPlugin(FunctionComparisonPlugin.class);
 		functionPlugin = env.addPlugin(FunctionPlugin.class);
 		cbPlugin = env.addPlugin(CodeBrowserPlugin.class);
-		assertNotNull(plugin);
-		assertNotNull(functionPlugin);
 		buildTestProgram1();
 		buildTestProgram2();
 		showTool(plugin.getTool());
@@ -84,7 +84,7 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		provider = plugin.compareFunctions(functions);
 		provider = waitForComponentProvider(FunctionComparisonProvider.class);
 		plugin.removeFunction(foo, provider);
-		assert (!provider.isVisible());
+		assertFalse(provider.isVisible());
 	}
 
 	@Test
@@ -120,11 +120,15 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		DockingActionIf nextAction = getAction(plugin, "Compare Next Function");
 		DockingActionIf prevAction = getAction(plugin, "Compare Previous Function");
 
-		assert (nextAction.isEnabled());
-		assert (!prevAction.isEnabled());
+		ActionContext context = provider.getActionContext(null);
+		assertTrue(nextAction.isEnabledForContext(context));
+		assertFalse(prevAction.isEnabledForContext(context));
+
 		performAction(nextAction);
-		assert (!nextAction.isEnabled());
-		assert (prevAction.isEnabled());
+
+		context = provider.getActionContext(null);
+		assertFalse(nextAction.isEnabledForContext(context));
+		assertTrue(prevAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -141,11 +145,15 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		DockingActionIf nextAction = getAction(plugin, "Compare Next Function");
 		DockingActionIf prevAction = getAction(plugin, "Compare Previous Function");
 
-		assert (nextAction.isEnabled());
-		assert (!prevAction.isEnabled());
+		ActionContext context = provider.getActionContext(null);
+		assertTrue(nextAction.isEnabledForContext(context));
+		assertFalse(prevAction.isEnabledForContext(context));
+
 		performAction(nextAction);
-		assert (!nextAction.isEnabled());
-		assert (prevAction.isEnabled());
+
+		context = provider.getActionContext(null);
+		assertFalse(nextAction.isEnabledForContext(context));
+		assertTrue(prevAction.isEnabledForContext(context));
 
 		JPanel rightPanel =
 			provider.getComponent().getDualListingPanel().getRightPanel().getFieldPanel();
@@ -153,8 +161,9 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		waitForSwing();
 		provider.getComponent().updateActionEnablement();
 
-		assert (nextAction.isEnabled());
-		assert (!prevAction.isEnabled());
+		context = provider.getActionContext(null);
+		assertTrue(nextAction.isEnabledForContext(context));
+		assertFalse(prevAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -163,11 +172,15 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		provider = plugin.compareFunctions(functions);
 		provider.setVisible(true);
 
+		// Must do this or the context for the action initiated below will be
+		// for the listing, not the comparison provider
+		clickComponentProvider(provider);
+
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
 		performAction(openTableAction);
 
 		Window selectWindow = waitForWindowByTitleContaining("Select Functions");
-		assert (selectWindow != null);
+		assertNotNull(selectWindow);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -182,26 +195,26 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		// initiated below
 		clickComponentProvider(provider);
 
-		assert (provider.getModel().getSourceFunctions().size() == 1);
-		assert (provider.getModel().getSourceFunctions().contains(foo));
+		assertTrue(provider.getModel().getSourceFunctions().size() == 1);
+		assertTrue(provider.getModel().getSourceFunctions().contains(foo));
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
 		performAction(openTableAction);
 
 		TableChooserDialog<FunctionTableModel> chooser =
 			waitForDialogComponent(TableChooserDialog.class);
-		assert (chooser != null);
+		assertNotNull(chooser);
 
 		GFilterTable<FunctionRowObject> table =
 			(GFilterTable<FunctionRowObject>) getInstanceField("gFilterTable", chooser);
-		assert (table.getModel().getRowCount() == 2);
+		assertTrue(table.getModel().getRowCount() == 2);
 		clickTableCell(table.getTable(), 1, 0, 1);
 
 		pressButtonByText(chooser, "OK");
 		waitForSwing();
-		assert (provider.getModel().getSourceFunctions().size() == 2);
-		assert (provider.getModel().getSourceFunctions().contains(foo));
-		assert (provider.getModel().getSourceFunctions().contains(bat));
+		assertTrue(provider.getModel().getSourceFunctions().size() == 2);
+		assertTrue(provider.getModel().getSourceFunctions().contains(foo));
+		assertTrue(provider.getModel().getSourceFunctions().contains(bat));
 	}
 
 	/**
@@ -215,9 +228,9 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		provider = plugin.compareFunctions(functions);
 		provider.setVisible(true);
 
-		assert (provider.getModel().getSourceFunctions().size() == 2);
-		assert (provider.getModel().getSourceFunctions().contains(foo));
-		assert (provider.getModel().getSourceFunctions().contains(bar));
+		assertTrue(provider.getModel().getSourceFunctions().size() == 2);
+		assertTrue(provider.getModel().getSourceFunctions().contains(foo));
+		assertTrue(provider.getModel().getSourceFunctions().contains(bar));
 
 		Address addr = program1.getAddressFactory().getAddress("10018cf");
 		ProgramLocation loc = new ProgramLocation(program1, addr);
@@ -227,8 +240,8 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 
 		waitForSwing();
 
-		assert (provider.getModel().getSourceFunctions().size() == 1);
-		assert (provider.getModel().getSourceFunctions().contains(bar));
+		assertTrue(provider.getModel().getSourceFunctions().size() == 1);
+		assertTrue(provider.getModel().getSourceFunctions().contains(bar));
 	}
 
 	/**
@@ -246,7 +259,6 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		bat = builder.createEmptyFunction("Bat", "100299e", 130, null, p, p, p);
 
 		program1 = builder.getProgram();
-		AbstractGenericTest.setInstanceField("recordChanges", program1, Boolean.TRUE);
 		return builder;
 	}
 
@@ -264,7 +276,6 @@ public class CompareFunctionsTestSlow extends AbstractGhidraHeadedIntegrationTes
 		bar = builder.createEmptyFunction("Bar", "10018cf", 10, null, p);
 
 		program2 = builder.getProgram();
-		AbstractGenericTest.setInstanceField("recordChanges", program2, Boolean.TRUE);
 		return builder;
 	}
 }

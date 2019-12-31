@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.functioncompare.actions;
 
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.ScaledImageIconWrapper;
@@ -86,6 +86,9 @@ public class OpenFunctionTableAction extends DockingAction {
 		HelpLocation helpLocation = new HelpLocation(MultiFunctionComparisonPanel.HELP_TOPIC,
 			"Add_To_Comparison");
 		setHelpLocation(helpLocation);
+
+		KeyBindingData data = new KeyBindingData('A', InputEvent.SHIFT_DOWN_MASK);
+		setKeyBindingData(data);
 	}
 
 	@Override
@@ -95,27 +98,27 @@ public class OpenFunctionTableAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		Runnable runnable = () -> {
-			FunctionComparisonProvider provider =
-				(FunctionComparisonProvider) context.getComponentProvider();
-			Program currentProgram = programManagerService.getCurrentProgram();
-			FunctionTableModel model = new FunctionTableModel(tool, currentProgram);
-			model.reload(programManagerService.getCurrentProgram());
+		if (!(context.getComponentProvider() instanceof FunctionComparisonProvider)) {
+			return;
+		}
 
-			TableChooserDialog<FunctionRowObject> diag =
-				new TableChooserDialog<>("Select Functions: " + currentProgram.getName(),
-					model, true);
-			tool.showDialog(diag);
-			List<FunctionRowObject> rows = diag.getSelectionItems();
-			if (CollectionUtils.isBlank(rows)) {
-				return; // the table chooser can return null if the operation was cancelled
-			}
+		FunctionComparisonProvider provider =
+			(FunctionComparisonProvider) context.getComponentProvider();
+		Program currentProgram = programManagerService.getCurrentProgram();
+		FunctionTableModel model = new FunctionTableModel(tool, currentProgram);
+		model.reload(programManagerService.getCurrentProgram());
 
-			Set<Function> functions =
-				rows.stream().map(row -> row.getFunction()).collect(Collectors.toSet());
-			comparisonService.compareFunctions(new HashSet<>(functions), provider);
-		};
+		TableChooserDialog<FunctionRowObject> diag =
+			new TableChooserDialog<>("Select Functions: " + currentProgram.getName(),
+				model, true);
+		tool.showDialog(diag);
+		List<FunctionRowObject> rows = diag.getSelectionItems();
+		if (CollectionUtils.isBlank(rows)) {
+			return; // the table chooser can return null if the operation was cancelled
+		}
 
-		SystemUtilities.runSwingLater(runnable);
+		Set<Function> functions =
+			rows.stream().map(row -> row.getFunction()).collect(Collectors.toSet());
+		comparisonService.compareFunctions(new HashSet<>(functions), provider);
 	}
 }

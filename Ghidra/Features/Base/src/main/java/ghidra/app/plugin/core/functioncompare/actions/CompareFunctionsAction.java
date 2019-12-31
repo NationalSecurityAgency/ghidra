@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.functioncompare.actions;
 
+import java.awt.event.InputEvent;
 import java.util.Set;
 
 import javax.swing.Icon;
@@ -57,9 +58,10 @@ public abstract class CompareFunctionsAction extends DockingAction {
 	 * Constructor
 	 * 
 	 * @param tool the plugin tool
+	 * @param owner the action owner (usually the plugin name)
 	 */
-	public CompareFunctionsAction(PluginTool tool) {
-		super("Compare Functions", tool.getName());
+	public CompareFunctionsAction(PluginTool tool, String owner) {
+		super("Compare Functions", owner, KeyBindingType.SHARED);
 		this.comparisonService = tool.getService(FunctionComparisonService.class);
 		setActionAttributes();
 	}
@@ -101,5 +103,8 @@ public abstract class CompareFunctionsAction extends DockingAction {
 			new ToolBarData(getToolBarIcon(), CREATE_COMPARISON_GROUP);
 		setToolBarData(newToolBarData);
 		setHelpLocation(new HelpLocation("FunctionComparison", "Function_Comparison"));
+
+		KeyBindingData data = new KeyBindingData('C', InputEvent.SHIFT_DOWN_MASK);
+		setKeyBindingData(data);
 	}
 }

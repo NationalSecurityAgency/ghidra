@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
@@ -64,7 +64,6 @@ public class CompareFunctionsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 		DummyPluginTool tool = new DummyPluginTool();
 		plugin = new FunctionComparisonPlugin(tool);
-		assertNotNull(plugin);
 		buildTestProgram1();
 		buildTestProgram2();
 
@@ -81,7 +80,7 @@ public class CompareFunctionsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSetNoFunctions() throws Exception {
 		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet();
 		FunctionComparisonProvider provider = plugin.compareFunctions(functions);
-		assert (provider == null);
+		assertNull(provider);
 	}
 
 	@Test

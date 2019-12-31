@@ -125,7 +125,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	public void modelChanged(List<FunctionComparison> model) {
 		this.model.setComparisons(model);
 		functionComparisonPanel.reload();
-		setTabText(functionComparisonPanel);
+		setTabText(functionComparisonPanel.getDescription());
 		closeIfEmpty();
 	}
 
@@ -226,24 +226,11 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Creates the text that is displayed on the tab for this provider
-	 * 
-	 * @param comparisonPanel the function comparison panel for this provider
-	 */
-	public void setTabText(FunctionComparisonPanel comparisonPanel) {
-		Function leftFunction = comparisonPanel.getLeftFunction();
-		Function rightFunction = comparisonPanel.getRightFunction();
-		String tabText = (leftFunction == null && rightFunction == null) ? "No Functions Yet"
-				: getTabText(leftFunction, rightFunction);
-		setTabText(tabText);
-	}
-
-	/**
 	 * Perform initialization for this provider and its panel
 	 */
 	protected void initFunctionComparisonPanel() {
 		setTransient();
-		setTabText(functionComparisonPanel);
+		setTabText(functionComparisonPanel.getDescription());
 		addSpecificCodeComparisonActions();
 		tool.addPopupActionProvider(this);
 		setHelpLocation(new HelpLocation(HELP_TOPIC, "Function Comparison"));
@@ -265,19 +252,6 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		if (isEmpty()) {
 			closeComponent();
 		}
-	}
-
-	/**
-	 * Returns the text that should be displayed in the tab, given the two
-	 * left/right functions
-	 * 
-	 * @param leftFunction
-	 * @param rightFunction
-	 * @return the tab text
-	 */
-	private String getTabText(Function leftFunction, Function rightFunction) {
-		return ((leftFunction != null) ? leftFunction.getName() : "none") + " & " +
-			((rightFunction != null) ? rightFunction.getName() : "none");
 	}
 
 	/**

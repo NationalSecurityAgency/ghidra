@@ -93,6 +93,5 @@ public class PreviousFunctionAction extends DockingAction {
 		MultiFunctionComparisonPanel panel = (MultiFunctionComparisonPanel) provider.getComponent();
 		JComboBox<Function> focusedComponent = panel.getFocusedComponent();
 		focusedComponent.setSelectedIndex(focusedComponent.getSelectedIndex() - 1);
-		provider.contextChanged();
 	}
 }

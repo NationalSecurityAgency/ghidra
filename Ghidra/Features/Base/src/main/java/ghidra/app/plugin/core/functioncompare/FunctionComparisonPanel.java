@@ -168,21 +168,6 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Removes the functions in the left/right panels if they are in the
-	 * given set
-	 * 
-	 * @param functions the functions to remove
-	 */
-	public void removeFunctions(Set<Function> functions) {
-		if (functions.contains(leftComparisonData.getFunction())) {
-			setLeftFunction(null);
-		}
-		if (functions.contains(rightComparisonData.getFunction())) {
-			setRightFunction(null);
-		}
-	}
-
-	/**
 	 * Get the actions for this FunctionComparisonPanel
 	 * 
 	 * @return an array containing the actions
@@ -204,16 +189,16 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		Data rightData = rightComparisonData.getData();
 
 		if (leftFunc != null && rightFunc != null) {
-			return "Function comparison of " + leftFunc.getName(true) + " & " +
+			return leftFunc.getName(true) + " & " +
 				rightFunc.getName(true);
 		}
 		if (leftData != null && rightData != null) {
-			return "Function comparison of " + leftData.getDataType().getName() + " & " +
+			return leftData.getDataType().getName() + " & " +
 				rightData.getDataType().getName();
 		}
 
 		// Otherwise give a simple description for address sets
-		return "Function comparison";
+		return "Nothing selected";
 	}
 
 	/**
@@ -233,20 +218,20 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Returns true if the comparison window has no functions to display in
+	 * Returns true if the comparison window has no information to display in
 	 * either the left or right panel
 	 * 
-	 * @return true if the comparison window has no functions to display
+	 * @return true if the comparison window has no information to display
 	 */
 	public boolean isEmpty() {
-		return getLeftFunction() == null || getRightFunction() == null;
+		return leftComparisonData.isEmpty() || rightComparisonData.isEmpty();
 	}
 
 	/**
 	 * Gets the ListingCodeComparisonPanel being displayed by this panel 
 	 * if one exists
 	 * 
-	 * @return the ListingCodeComparisonPanel or null
+	 * @return the comparison panel or null
 	 */
 	public ListingCodeComparisonPanel getDualListingPanel() {
 		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
@@ -258,9 +243,6 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		return null;
 	}
 
-	/**
-	 * Invoked when a new tab on the panel has been selected
-	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		tabChanged();
@@ -386,6 +368,24 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Returns the comparison data object for the left panel
+	 * 
+	 * @return the comparison data object for the left panel
+	 */
+	public FunctionComparisonData getLeftComparisonData() {
+		return leftComparisonData;
+	}
+
+	/**
+	 * Returns the comparison data object for the right panel
+	 * 
+	 * @return the comparison data object for the right panel
+	 */
+	public FunctionComparisonData getRightComparisonData() {
+		return rightComparisonData;
 	}
 
 	/**
@@ -635,25 +635,6 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Comparator that lets CodeComparisonPanels be sorted based on their
-	 * title names
-	 */
-	private class CodeComparisonPanelComparator
-			implements Comparator<CodeComparisonPanel<? extends FieldPanelCoordinator>> {
-
-		@Override
-		public int compare(CodeComparisonPanel<? extends FieldPanelCoordinator> o1,
-				CodeComparisonPanel<? extends FieldPanelCoordinator> o2) {
-			if (o1 == o2) {
-				return 0;
-			}
-			String title1 = o1.getTitle();
-			String title2 = o2.getTitle();
-			return title1.compareTo(title2);
-		}
-	}
-
-	/**
 	 * Action that sets the scrolling state of the comparison panels
 	 */
 	private class ToggleScrollLockAction extends ToggleDockingAction {
@@ -716,10 +697,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 				}
 			}
 
-			// Sort the list of code comparison panels so they display in the same order
-			// each time for the user.
-			CodeComparisonPanelComparator comparator = new CodeComparisonPanelComparator();
-			codeComparisonPanels.sort(comparator);
+			codeComparisonPanels.sort((p1, p2) -> p1.getTitle().compareTo(p2.getTitle()));
 		}
 		return codeComparisonPanels;
 	}

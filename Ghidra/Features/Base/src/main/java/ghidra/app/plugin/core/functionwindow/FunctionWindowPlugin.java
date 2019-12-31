@@ -51,7 +51,6 @@ import ghidra.util.task.SwingUpdateManager;
 	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Function Viewer",
 	description = "Provides a window that displays the list of functions in the program.",
-	servicesRequired = { FunctionComparisonService.class },
 	eventsConsumed = { ProgramClosedPluginEvent.class }
 )
 //@formatter:on
@@ -78,9 +77,7 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 	@Override
 	public void init() {
 		super.init();
-
 		provider = new FunctionWindowProvider(this);
-		functionComparisonService = tool.getService(FunctionComparisonService.class);
 		createActions();
 
 		/**
@@ -90,11 +87,6 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 		provider.getTable().getSelectionModel().addListSelectionListener(x -> {
 			tool.contextChanged(provider);
 		});
-
-		// Listen for providers being opened/closed to we can disable the 
-		// add-to-comparison action if there are no comparison windows
-		// open.
-		functionComparisonService.addFunctionComparisonProviderListener(this);
 	}
 
 	@Override
@@ -107,6 +99,26 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 			provider.dispose();
 		}
 		super.dispose();
+	}
+
+	@Override
+	public void serviceAdded(Class<?> interfaceClass, Object service) {
+		if (interfaceClass == FunctionComparisonService.class) {
+			functionComparisonService = (FunctionComparisonService) service;
+
+			// Listen for providers being opened/closed to we can disable 
+			// comparison actions if there are no comparison providers
+			// open
+			functionComparisonService.addFunctionComparisonProviderListener(this);
+		}
+	}
+
+	@Override
+	public void serviceRemoved(Class<?> interfaceClass, Object service) {
+		if (interfaceClass == FunctionComparisonService.class) {
+			functionComparisonService.removeFunctionComparisonProviderListener(this);
+			functionComparisonService = null;
+		}
 	}
 
 	@Override
@@ -205,23 +217,9 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 
-		compareFunctionsAction = new CompareFunctionsFromFunctionTableAction(tool);
+		compareFunctionsAction = new CompareFunctionsFromFunctionTableAction(tool, getName());
 		tool.addLocalAction(provider, compareFunctionsAction);
 	}
-
-//	private void installDummyAction(DockingAction action) {
-//		DummyKeyBindingsOptionsAction dummyAction =
-//			new DummyKeyBindingsOptionsAction(action.getName(), null);
-//		tool.addAction(dummyAction);
-//
-//		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
-//		options.addOptionsChangeListener(this);
-//
-//		KeyStroke keyStroke = options.getKeyStroke(dummyAction.getFullName(), null);
-//		if (keyStroke != null) {
-//			action.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-//		}
-//	}
 
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
@@ -235,11 +233,6 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 			KeyStroke keyStroke = (KeyStroke) newValue;
 			compareFunctionsAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
 		}
-	}
-
-	void setActionsEnabled(boolean enabled) {
-		selectAction.setEnabled(enabled);
-		compareFunctionsAction.setEnabled(enabled);
 	}
 
 	void showFunctions() {

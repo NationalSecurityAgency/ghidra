@@ -27,7 +27,6 @@ import ghidra.app.plugin.core.functioncompare.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskLauncher;
 
 /**
@@ -114,7 +113,7 @@ public class FunctionComparisonModel {
 	 * Note: It is assumed that when using this method, all functions can be
 	 * compared with all other functions; meaning each function will be added as 
 	 * both a source AND a target. To specify a specific source/target
-	 * relationship, see {@link #compareFunctions(Function, Function)}.
+	 * relationship, use {@link #compareFunctions(Function, Function)}.
 	 * 
 	 * @param functions the set of functions to compare
 	 */
@@ -295,13 +294,11 @@ public class FunctionComparisonModel {
 
 			// Now loop over the given functions and create new comparisons
 			for (Function f : functions) {
-				try {
-					monitor.checkCanceled();
-				}
-				catch (CancelledException e) {
+				if (monitor.isCancelled()) {
 					Msg.info(this, "Function comparison operation cancelled");
 					return;
 				}
+
 				FunctionComparison fc = new FunctionComparison();
 				fc.setSource(f);
 				fc.addTargets(functions);
