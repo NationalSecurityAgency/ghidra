@@ -33,12 +33,10 @@ public class EditDataTypeAction extends AbstractDecompilerAction {
 	private final PluginTool tool;
 
 	public EditDataTypeAction(PluginTool tool, DecompilerController controller) {
-		super("EditDataType");
+		super("Edit Data Type");
 		this.tool = tool;
 		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Edit Data Type" }, "Decompile"));
-//		setKeyBindingData( new KeyBindingData( KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK ) );
-
 	}
 
 	@Override
