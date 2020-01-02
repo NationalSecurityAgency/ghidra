@@ -303,11 +303,30 @@ class DefaultCompositeMember extends CompositeMember {
 	private void alignComposite(int preferredSize) {
 
 		Composite copy = (Composite) memberDataType.copy(dataTypeManager);
-		copy.setInternallyAligned(true);
 
+		int pack = 0;
+		copy.setPackingValue(pack);
+
+		boolean alignOK = isGoodAlignment(copy, preferredSize);
+		if (!alignOK) {
+			pack = 1;
+			copy.setPackingValue(pack);
+			alignOK = isGoodAlignment(copy, preferredSize);
+		}
+		if (alignOK) {
+			((Composite) memberDataType).setPackingValue(pack);
+		}
+		else if (errorConsumer != null && !isClass) { // don't complain about Class structs which always fail
+			String anonymousStr = parent != null ? " anonymous " : "";
+			errorConsumer.accept("PDB " + anonymousStr + memberType +
+				" reconstruction failed to align " + memberDataType.getPathName());
+		}
+	}
+
+	private boolean isGoodAlignment(Composite testCompsosite, int preferredSize) {
 		boolean alignOK = true;
-		if (preferredSize > 0 && copy.getNumComponents() != 0) {
-			alignOK = (copy.getLength() == preferredSize);
+		if (preferredSize > 0 && testCompsosite.getNumComponents() != 0) {
+			alignOK = (testCompsosite.getLength() == preferredSize);
 		}
 
 		if (alignOK && isStructureContainer()) {
@@ -315,7 +334,7 @@ class DefaultCompositeMember extends CompositeMember {
 			Structure struct = (Structure) memberDataType;
 			DataTypeComponent[] unalignedComponents = struct.getDefinedComponents();
 			int index = 0;
-			for (DataTypeComponent dtc : copy.getComponents()) {
+			for (DataTypeComponent dtc : testCompsosite.getComponents()) {
 				DataTypeComponent unalignedDtc = unalignedComponents[index++];
 				if (!isComponentUnchanged(dtc, unalignedDtc)) {
 					alignOK = false;
@@ -323,15 +342,7 @@ class DefaultCompositeMember extends CompositeMember {
 				}
 			}
 		}
-
-		if (alignOK) {
-			((Composite) memberDataType).setInternallyAligned(true);
-		}
-		else if (errorConsumer != null && !isClass) { // don't complain about Class structs which always fail
-			String anonymousStr = parent != null ? " anonymous " : "";
-			errorConsumer.accept("PDB " + anonymousStr + memberType +
-				" reconstruction failed to align " + memberDataType.getPathName());
-		}
+		return alignOK;
 	}
 
 	private boolean isComponentUnchanged(DataTypeComponent dtc, DataTypeComponent unalignedDtc) {
