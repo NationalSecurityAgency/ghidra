@@ -25,8 +25,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.widgets.tree.*;
@@ -158,7 +156,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 				return;
 			}
 
-			goToUniquelySelectedSymbol();
+			maybeGoToSymbol();
 			contextChanged();
 		});
 
@@ -173,7 +171,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 				// For now, just attempt to perform the goto.  It may get called twice, but this
 				// should have no real impact on performance.
 
-				goToUniquelySelectedSymbol();
+				maybeGoToSymbol();
 			}
 		});
 
@@ -182,14 +180,10 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		return newTree;
 	}
 
-	private void goToUniquelySelectedSymbol() {
+	private void maybeGoToSymbol() {
 
 		TreePath[] paths = tree.getSelectionPaths();
-		if (ArrayUtils.isEmpty(paths)) {
-			return;
-		}
-
-		if (paths.length > 1) {
+		if (paths == null || paths.length != 1) {
 			return;
 		}
 
