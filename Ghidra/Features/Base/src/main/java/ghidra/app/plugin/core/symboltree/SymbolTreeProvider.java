@@ -18,11 +18,14 @@ package ghidra.app.plugin.core.symboltree;
 import java.awt.BorderLayout;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -148,30 +151,59 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		SymbolGTree newTree = new SymbolGTree(rootNode, plugin);
 
 		newTree.addGTreeSelectionListener(e -> {
+
 			EventOrigin origin = e.getEventOrigin();
 			if (origin != EventOrigin.USER_GENERATED) {
-				return;
-			}
-
-			TreePath[] paths = tree.getSelectionPaths();
-			Object object = paths[0].getLastPathComponent();
-			if (!(object instanceof SymbolNode)) {
 				contextChanged();
 				return;
 			}
 
-			SymbolNode node = (SymbolNode) object;
-			Symbol symbol = node.getSymbol();
-			SymbolType type = symbol.getSymbolType();
-			if (!type.isNamespace() || type == SymbolType.FUNCTION) {
-				plugin.goTo(symbol);
-			}
+			goToUniquelySelectedSymbol();
 			contextChanged();
+		});
+
+		newTree.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+
+				// This code serves to perform navigation in  the case that the selection handler
+				// above does not, as is the case when the node is already selected.  This code 
+				// will get called on the mouse release, whereas the selection handler gets called
+				// on the mouse pressed.
+				// For now, just attempt to perform the goto.  It may get called twice, but this
+				// should have no real impact on performance.
+
+				goToUniquelySelectedSymbol();
+			}
 		});
 
 		newTree.setEditable(true);
 
 		return newTree;
+	}
+
+	private void goToUniquelySelectedSymbol() {
+
+		TreePath[] paths = tree.getSelectionPaths();
+		if (ArrayUtils.isEmpty(paths)) {
+			return;
+		}
+
+		if (paths.length > 1) {
+			return;
+		}
+
+		Object object = paths[0].getLastPathComponent();
+		if (!(object instanceof SymbolNode)) {
+			return;
+		}
+
+		SymbolNode node = (SymbolNode) object;
+		Symbol symbol = node.getSymbol();
+		SymbolType type = symbol.getSymbolType();
+		if (!type.isNamespace() || type == SymbolType.FUNCTION) {
+			plugin.goTo(symbol);
+		}
 	}
 
 	private void createActions() {
@@ -367,10 +399,6 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		tree.refilterLater();
 	}
 
-	private void symbolChanged(Symbol symbol, String oldName) {
-		addTask(new SymbolChangedTask(tree, symbol, oldName));
-	}
-
 	private void symbolChanged(Symbol symbol) {
 		addTask(new SymbolChangedTask(tree, symbol));
 	}
@@ -547,16 +575,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	private class SymbolChangedTask extends AbstactSymbolUpdateTask {
 
-		// will not be null; may be equal to the current name
-		private String oldName;
-
 		SymbolChangedTask(GTree tree, Symbol symbol) {
-			this(tree, symbol, symbol.getName());
-		}
-
-		SymbolChangedTask(GTree tree, Symbol symbol, String oldName) {
 			super(tree, symbol);
-			this.oldName = Objects.requireNonNull(oldName);
 		}
 
 		@Override
@@ -638,8 +658,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 				if (eventType == ChangeManager.DOCR_SYMBOL_RENAMED) {
 					Symbol symbol = (Symbol) object;
-					String oldName = (String) rec.getOldValue();
-					symbolChanged(symbol, oldName);
+					symbolChanged(symbol);
 				}
 				else if (eventType == ChangeManager.DOCR_SYMBOL_DATA_CHANGED ||
 					eventType == ChangeManager.DOCR_SYMBOL_SCOPE_CHANGED ||

@@ -103,7 +103,7 @@ public class GTreeSelectionModel extends DefaultTreeSelectionModel {
 	 */
 	final public void userRemovedSelectionPath(TreePath path) {
 		currentEventOrigin = EventOrigin.USER_GENERATED;
-		super.removeSelectionPath(path);
+		super.removeSelectionPaths(new TreePath[] { path });
 		currentEventOrigin = EventOrigin.USER_GENERATED;
 	}
 
