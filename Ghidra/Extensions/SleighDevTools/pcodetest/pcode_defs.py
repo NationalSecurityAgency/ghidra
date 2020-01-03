@@ -663,3 +663,12 @@ PCodeTest({
     'has_double': 0,
     'has_longlong': 0,
 })
+
+PCodeTest({
+    'name': 'Xtensa',
+    'build_all': 1,
+    'build_exe': 1,
+    'toolchain': 'Xtensa/xtensa-lx106-elf',
+    'language_id': 'Xtensa:LE:32:default',
+    'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-lx106-elf/%(gcc_version)s -lgcc',
+})
