@@ -67,7 +67,7 @@ define token insn(24)
     u1_12       = (12,12)
     u4_8.11     =  (8,11)
     u8_4.11     =  (4,11)
-    # s4_8.11     =  (8,11)  signed
+    s4_8.11     =  (8,11)  signed
     u2_6.7      =  (6,7)
     u3_5.7      =  (5,7)
     u4_4.7      =  (4,7)
@@ -138,11 +138,8 @@ u5_4.7_12:  tmp is u1_12 & u4_4.7   [ tmp = (u1_12 << 4) | u4_4.7;  ] { export *
 u5_8.11_4:  tmp is u1_4 & u4_8.11   [ tmp = (u1_4  << 4) | u4_8.11; ] { export *[const]:1 tmp; }
 
 # Signed 12-bit (extended to 16) immediate, used by MOVI.
-s16_16.23_8.11: tmp is u4_8.11 & u8_16.23 [
-   # FIXME: This table, and the fields used, should be signed, but using s4_8.11 and s8_16.23
-   # somehow confuses Ghidra.
-   tmp = (0xf000 * (u4_8.11 >> 3)) | # Sign-extend.
-           (u4_8.11 << 8) | u8_16.23;
+s16_16.23_8.11: tmp is s4_8.11 & u8_16.23 [
+   tmp = (s4_8.11 << 8) | u8_16.23;
 ] { export *[const]:2 tmp; }
 
 # An “asymmetric” immediate from -32..95, used by MOVI.N.
