@@ -480,11 +480,13 @@ macro extract_bit(val, bit, result) {
 # ILL - Illegal Instruction, pg. 358.
 :ill is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & at = 0 & op0 = 0 {
     ill();
+    goto inst_start;
 }
 
 # ILL.N - Narrow Illegal Instruction, pg. 359.
 :ill.n is n_ar = 0b1111 & n_as = 0 & n_at = 0b0110 & n_op0 = 0b1101 {
     ill();
+    goto inst_start;
 }
 
 # IPF - Instruction Cache Prefetch, pg. 360.
