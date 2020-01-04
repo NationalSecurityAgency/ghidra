@@ -1202,9 +1202,10 @@ macro extract_bit(val, bit, result) {
     br = nan(fs) || nan(ft) || fs f== ft;
 }
 
-# UFLOAT.S - Convert Unsigned Fixed to Single, pg. 550. XXX: How is this different from float.as?
+# UFLOAT.S - Convert Unsigned Fixed to Single, pg. 550.
 :ufloat.s fr, as, u4_4.7 is op2 = 0b1101 & op1 = 0b1010 & fr & as & u4_4.7 & op0 = 0 {
-    local f = int2float(as);
+    local tmp:8 = zext(as);
+    local f = int2float(tmp);
     local d = int2float(1:2 << u4_4.7:2);
     fr = d f/ f;
 }
