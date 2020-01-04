@@ -1069,13 +1069,13 @@ macro extract_bit(val, bit, result) {
 
 # SLL - Shift Left Logical, pg. 524.
 :sll ar, as is op2 = 0b1010 & op1 = 0b0001 & ar & as & at = 0 & op0 = 0 {
-    local sa:1 = 32 - (sar & 0xf); # XXX check this
+    local sa:1 = 32 - (sar & 0xf);
     ar = as << sa;
 }
 
 # SLLI - Shift Left Logical Immediate, pg. 525.
 :slli ar, as, u5_4.7_20 is u3_21.23 = 0 & u5_4.7_20 & op1 = 0b0001 & ar & as & op0 = 0 {
-    local sa:1 = 32 - u5_4.7_20; # XXX check this
+    local sa:1 = 32 - u5_4.7_20;
     ar = as << sa;
 }
 
