@@ -323,11 +323,13 @@ public class FlatProgramAPI {
 	public final MemoryBlock createMemoryBlock(String name, Address start, InputStream input,
 			long length, boolean overlay) throws Exception {
 		if (input == null) {
-			return currentProgram.getMemory().createUninitializedBlock(name, start, length,
-				overlay);
+			return currentProgram.getMemory()
+					.createUninitializedBlock(name, start, length,
+						overlay);
 		}
-		return currentProgram.getMemory().createInitializedBlock(name, start, input, length,
-			monitor, overlay);
+		return currentProgram.getMemory()
+				.createInitializedBlock(name, start, input, length,
+					monitor, overlay);
 	}
 
 	/**
@@ -341,8 +343,9 @@ public class FlatProgramAPI {
 	public final MemoryBlock createMemoryBlock(String name, Address start, byte[] bytes,
 			boolean overlay) throws Exception {
 		ByteArrayInputStream input = new ByteArrayInputStream(bytes);
-		return currentProgram.getMemory().createInitializedBlock(name, start, input, bytes.length,
-			monitor, overlay);
+		return currentProgram.getMemory()
+				.createInitializedBlock(name, start, input, bytes.length,
+					monitor, overlay);
 	}
 
 	/**
@@ -1797,8 +1800,9 @@ public class FlatProgramAPI {
 	 */
 	public final Reference addInstructionXref(Address from, Address to, int opIndex,
 			FlowType type) {
-		return currentProgram.getReferenceManager().addMemoryReference(from, to, type,
-			SourceType.USER_DEFINED, opIndex);
+		return currentProgram.getReferenceManager()
+				.addMemoryReference(from, to, type,
+					SourceType.USER_DEFINED, opIndex);
 	}
 
 	/**
@@ -2268,8 +2272,9 @@ public class FlatProgramAPI {
 	 * @return the equate defined at the operand index of the instruction
 	 */
 	public final Equate getEquate(Instruction instruction, int operandIndex, long value) {
-		return currentProgram.getEquateTable().getEquate(instruction.getMinAddress(), operandIndex,
-			value);
+		return currentProgram.getEquateTable()
+				.getEquate(instruction.getMinAddress(), operandIndex,
+					value);
 	}
 
 	/**
@@ -2279,8 +2284,9 @@ public class FlatProgramAPI {
 	 * @return the equate defined at the operand index of the instruction
 	 */
 	public final List<Equate> getEquates(Instruction instruction, int operandIndex) {
-		return currentProgram.getEquateTable().getEquates(instruction.getMinAddress(),
-			operandIndex);
+		return currentProgram.getEquateTable()
+				.getEquates(instruction.getMinAddress(),
+					operandIndex);
 	}
 
 	/**
@@ -2291,8 +2297,9 @@ public class FlatProgramAPI {
 	public final Equate getEquate(Data data) {
 		Object obj = data.getValue();
 		if (obj instanceof Scalar) {
-			return currentProgram.getEquateTable().getEquate(data.getMinAddress(), 0,
-				((Scalar) obj).getValue());
+			return currentProgram.getEquateTable()
+					.getEquate(data.getMinAddress(), 0,
+						((Scalar) obj).getValue());
 		}
 		return null;
 	}
@@ -2359,39 +2366,41 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Creates a NOTE book mark at the specified address.
-	 * NOTE: if a NOTE book mark already exists at the
-	 * address with same category, it will be replaced.
-	 * @param address  the address to create the book mark
-	 * @param category the book mark category (it can be null)
-	 * @param note  the book mark text
-	 * @return the newly created book mark
+	 * Creates a <code>NOTE</code> bookmark at the specified address
+	 * <br>
+	 * NOTE: if a <code>NOTE</code> bookmark already exists at the address, it will be replaced.
+	 * This is intentional and is done to match the behavior of setting bookmarks from the UI.
+	 * 
+	 * @param address  the address to create the bookmark
+	 * @param category the bookmark category (it may be null)
+	 * @param note  the bookmark text
+	 * @return the newly created bookmark
 	 */
 	public final Bookmark createBookmark(Address address, String category, String note) {
-		/**
-		 * Are you wondering why is this check here? ...SEE SCR #2296
-		 */
+
+		// enforce one bookmark per address, as this is what the UI does
 		Bookmark[] existingBookmarks = getBookmarks(address);
 		if (existingBookmarks != null && existingBookmarks.length > 0) {
 			existingBookmarks[0].set(category, note);
 			return existingBookmarks[0];
 		}
-		return currentProgram.getBookmarkManager().setBookmark(address, BookmarkType.NOTE, category,
-			note);
+
+		BookmarkManager bkm = currentProgram.getBookmarkManager();
+		return bkm.setBookmark(address, BookmarkType.NOTE, category, note);
 	}
 
 	/**
-	 * Returns all of the NOTE book marks defined at the specified address.
-	 * @param address the address to retrieve the book mark
-	 * @return the book marks at the specified address
+	 * Returns all of the NOTE bookmarks defined at the specified address
+	 * @param address the address to retrieve the bookmark
+	 * @return the bookmarks at the specified address
 	 */
 	public final Bookmark[] getBookmarks(Address address) {
 		return currentProgram.getBookmarkManager().getBookmarks(address, BookmarkType.NOTE);
 	}
 
 	/**
-	 * Removes the specified book mark.
-	 * @param bookmark the book mark to remove
+	 * Removes the specified bookmark.
+	 * @param bookmark the bookmark to remove
 	 */
 	public final void removeBookmark(Bookmark bookmark) {
 		currentProgram.getBookmarkManager().removeBookmark(bookmark);
