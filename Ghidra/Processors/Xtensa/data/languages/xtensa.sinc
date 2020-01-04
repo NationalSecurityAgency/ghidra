@@ -164,25 +164,10 @@ n_u6_12.15_sb2: tmp is n_u4_12.15  [ tmp = n_u4_12.15 << 2; ] { export *[const]:
 s5_12.15_oex:  tmp is u4_12.15      [ tmp = (2 << u4_12.15) * -1; ] { export *[const]:2 tmp; }
 
 # Some 4-bit immediates with mappings that can’t be (easily) expressed in a single disassembly action.
-# FIXME: “foo: tmp is u4_foo [ tmp = u4_foo; ]” doesn’t work when a more special constructor exists.
 
 # n_u4_4.7 with 0 being -1, used by ADDI.N.
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 0  [ tmp = -1; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 1  [ tmp =  1; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 2  [ tmp =  2; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 3  [ tmp =  3; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 4  [ tmp =  4; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 5  [ tmp =  5; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 6  [ tmp =  6; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 7  [ tmp =  7; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 8  [ tmp =  8; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 9  [ tmp =  9; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 10 [ tmp = 10; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 11 [ tmp = 11; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 12 [ tmp = 12; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 13 [ tmp = 13; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 14 [ tmp = 14; ] { export *[const]:4 tmp; }
-n_s4_4.7_nozero: tmp is n_u4_4.7 = 15 [ tmp = 15; ] { export *[const]:4 tmp; }
+n_s4_4.7_nozero: tmp is n_u4_4.7 = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
+n_s4_4.7_nozero: tmp is n_u4_4.7      [ tmp = n_u4_4.7+0; ] { export *[const]:4 tmp; }
 
 # B4CONST(ar) (Branch Immediate) encodings, pg. 41 f.
 r_b4const: tmp is ar = 0         [ tmp = 0xffffffff; ] { export *[const]:4 tmp; }
