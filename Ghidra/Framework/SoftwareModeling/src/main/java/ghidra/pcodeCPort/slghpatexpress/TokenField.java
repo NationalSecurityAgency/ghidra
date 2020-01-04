@@ -36,6 +36,7 @@ public class TokenField extends PatternValue {
 	private int bitstart, bitend; // Bits within the token, 0 bit is LEAST signifigant
 	private int bytestart, byteend; // Bytes to read to get value
 	private int shift; // Amount to shift to align value (bitstart % 8)
+	private int base; // Display base
 
 	public TokenField(Location location) {
 		super(location);
@@ -59,13 +60,14 @@ public class TokenField extends PatternValue {
 		return res;
 	}
 
-	public TokenField(Location location, Token tk, boolean s, int bstart, int bend) {
+	public TokenField(Location location, Token tk, boolean s, int bstart, int bend, int tbase) {
 		super(location);
 		tok = tk;
 		bigendian = tok.isBigEndian();
 		signbit = s;
 		bitstart = bstart;
 		bitend = bend;
+		base = tbase;
 		if (tk.isBigEndian()) {
 			byteend = (tk.getSize() * 8 - bitstart - 1) / 8;
 			bytestart = (tk.getSize() * 8 - bitend - 1) / 8;
@@ -124,6 +126,8 @@ public class TokenField extends PatternValue {
 		s.append(" byteend=\"").print(byteend);
 		s.append("\"");
 		s.append(" shift=\"").print(shift);
+		s.append("\"");
+		s.append(" base=\"").print(base);
 		s.append("\"/>\n");
 	}
 
@@ -137,6 +141,7 @@ public class TokenField extends PatternValue {
 		bytestart = XmlUtils.decodeUnknownInt(el.getAttributeValue("bytestart"));
 		byteend = XmlUtils.decodeUnknownInt(el.getAttributeValue("byteend"));
 		shift = XmlUtils.decodeUnknownInt(el.getAttributeValue("shift"));
+		base = XmlUtils.decodeUnknownInt(el.getAttributeValue("base"));
 	}
 
 }

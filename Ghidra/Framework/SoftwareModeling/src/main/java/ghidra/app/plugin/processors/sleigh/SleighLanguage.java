@@ -52,7 +52,7 @@ import utilities.util.FileUtilities;
 
 public class SleighLanguage implements Language {
 
-	public static final int SLA_FORMAT_VERSION = 2;	// What format of the .sla file this expects
+	public static final int SLA_FORMAT_VERSION = 3;	// What format of the .sla file this expects
 													// This value should always match SleighBase.SLA_FORMAT_VERSION
 	private Map<CompilerSpecID, SleighCompilerSpecDescription> compilerSpecDescriptions;
 	private HashMap<CompilerSpecID, BasicCompilerSpec> compilerSpecs;

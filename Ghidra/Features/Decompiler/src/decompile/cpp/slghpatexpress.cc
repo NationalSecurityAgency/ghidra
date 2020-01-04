@@ -556,7 +556,7 @@ static intb getContextBytes(ParserWalker &walker,int4 bytestart,int4 byteend)
   return res;
 }
 
-TokenField::TokenField(Token *tk,bool s,int4 bstart,int4 bend)
+TokenField::TokenField(Token *tk,bool s,int4 bstart,int4 bend,uint4 tbase)
 
 {
   tok = tk;
@@ -573,6 +573,7 @@ TokenField::TokenField(Token *tk,bool s,int4 bstart,int4 bend)
     byteend = bitend/8;
   }
   shift = bitstart % 8;
+  base = tbase;
 }
 
 intb TokenField::getValue(ParserWalker &walker) const
@@ -613,7 +614,8 @@ void TokenField::saveXml(ostream &s) const
   s << " bitend=\"" << bitend << "\"";
   s << " bytestart=\"" << bytestart << "\"";
   s << " byteend=\"" << byteend << "\"";
-  s << " shift=\"" << shift << "\"/>\n";
+  s << " shift=\"" << shift << "\"";
+  s << " base=\"" << base << "\"/>\n";
 }
 
 void TokenField::restoreXml(const Element *el,Translate *trans)
@@ -647,9 +649,14 @@ void TokenField::restoreXml(const Element *el,Translate *trans)
     s.unsetf(ios::dec | ios::hex | ios::oct);
     s >> shift;
   }
+  {
+    istringstream s(el->getAttributeValue("base"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> base;
+  }
 }
 
-ContextField::ContextField(bool s,int4 sbit,int4 ebit)
+ContextField::ContextField(bool s,int4 sbit,int4 ebit,uint4 fbase)
 
 {
   signbit = s;
@@ -658,6 +665,7 @@ ContextField::ContextField(bool s,int4 sbit,int4 ebit)
   startbyte = startbit/8;
   endbyte = endbit/8;
   shift = 7 - (endbit%8);
+  base = fbase;
 }
 
 intb ContextField::getValue(ParserWalker &walker) const
@@ -691,7 +699,8 @@ void ContextField::saveXml(ostream &s) const
   s << " endbit=\"" << endbit << "\"";
   s << " startbyte=\"" << startbyte << "\"";
   s << " endbyte=\"" << endbyte << "\"";
-  s << " shift=\"" << shift << "\"/>\n";
+  s << " shift=\"" << shift << "\"";
+  s << " base=\"" << base << "\"/>\n";
 }
 
 void ContextField::restoreXml(const Element *el,Translate *trans)
@@ -722,6 +731,11 @@ void ContextField::restoreXml(const Element *el,Translate *trans)
     istringstream s(el->getAttributeValue("shift"));
     s.unsetf(ios::dec | ios::hex | ios::oct);
     s >> shift;
+  }
+  {
+    istringstream s(el->getAttributeValue("base"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> base;
   }
 }
 

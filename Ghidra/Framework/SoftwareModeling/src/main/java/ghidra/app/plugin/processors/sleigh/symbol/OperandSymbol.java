@@ -26,6 +26,7 @@ import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.expression.OperandValue;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
+import ghidra.app.plugin.processors.sleigh.expression.TokenField;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
@@ -115,10 +116,14 @@ public class OperandSymbol extends SpecificSymbol {
 		}
 		else {		// Must be expression resulting in a constant
 			long val = defexp.getValue(walker);
-			if (val >= 0)
-				res = "0x" + Long.toHexString(val);
-			else
-				res = "-0x" + Long.toHexString(-val);
+			if (defexp instanceof TokenField && ((TokenField) defexp).getBase() == 10) {
+				res = String.valueOf(val);
+			} else {
+				if (val >= 0)
+					res = "0x" + Long.toHexString(val);
+				else
+					res = "-0x" + Long.toHexString(-val);
+			}
 		}
 		walker.popOperand();
 		return res;

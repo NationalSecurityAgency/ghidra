@@ -15,7 +15,7 @@
  */
 #include "sleighbase.hh"
 
-const int4 SleighBase::SLA_FORMAT_VERSION = 2;
+const int4 SleighBase::SLA_FORMAT_VERSION = 3;
 
 SleighBase::SleighBase(void)
 

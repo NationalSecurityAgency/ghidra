@@ -93,9 +93,10 @@ class TokenField : public PatternValue {
   int4 bitstart,bitend;		// Bits within the token, 0 bit is LEAST significant
   int4 bytestart,byteend;	// Bytes to read to get value
   int4 shift;			// Amount to shift to align value  (bitstart % 8)
+  uint4 base;			// The display base
 public:
   TokenField(void) {}		// For use with restoreXml
-  TokenField(Token *tk,bool s,int4 bstart,int4 bend);
+  TokenField(Token *tk,bool s,int4 bstart,int4 bend,uint4 tbase);
   virtual intb getValue(ParserWalker &walker) const;
   virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(tok); }
   virtual TokenPattern genPattern(intb val) const;
@@ -110,12 +111,14 @@ class ContextField : public PatternValue {
   int4 startbyte,endbyte;
   int4 shift;
   bool signbit;
+  uint4 base;
 public:
   ContextField(void) {}		// For use with restoreXml
-  ContextField(bool s,int4 sbit,int4 ebit);
+  ContextField(bool s,int4 sbit,int4 ebit,uint4 fbase);
   int4 getStartBit(void) const { return startbit; }
   int4 getEndBit(void) const { return endbit; }
   bool getSignBit(void) const { return signbit; }
+  uint4 getBase(void) const { return base; }
   virtual intb getValue(ParserWalker &walker) const;
   virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(); }
   virtual TokenPattern genPattern(intb val) const;

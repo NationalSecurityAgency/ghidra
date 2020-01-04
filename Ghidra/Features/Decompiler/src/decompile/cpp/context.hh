@@ -24,6 +24,7 @@ class Token {			// A multiple-byte sized chunk of pattern in a bitstream
   int4 size;			// Number of bytes in token;
   int4 index;			// Index of this token, for resolving offsets
   bool bigendian;
+  uint4 base;			// The display base for the token, if used.
 public:
   Token(const string &nm,int4 sz,bool be,int4 ind) : name(nm) { size = sz; bigendian=be; index = ind; }
   int4 getSize(void) const { return size; }

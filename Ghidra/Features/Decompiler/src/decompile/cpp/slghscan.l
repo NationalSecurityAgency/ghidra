@@ -529,6 +529,8 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 <defblock>noflow    { return NOFLOW_KEY; }
 <defblock>hex       { return HEX_KEY; }
 <defblock>dec       { return DEC_KEY; }
+<defblock>oct       { return OCT_KEY; }
+<defblock>bin       { return BIN_KEY; }
 <defblock>endian    { return ENDIAN_KEY; }
 <defblock>alignment { return ALIGN_KEY; }
 <defblock>big       { return BIG_KEY; }

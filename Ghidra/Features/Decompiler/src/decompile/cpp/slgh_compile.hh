@@ -61,7 +61,7 @@ struct FieldQuality {
   uint4 low,high;
   bool signext;
   bool flow;
-  bool hex;
+  uint4 base;
   FieldQuality(string *nm,uintb *l,uintb *h);
 };
 
