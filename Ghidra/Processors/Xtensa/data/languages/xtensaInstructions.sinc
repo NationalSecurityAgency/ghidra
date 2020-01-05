@@ -1085,7 +1085,7 @@ macro extract_bit(val, bit, result) {
 
 # SLL - Shift Left Logical, pg. 524.
 :sll ar, as is op2 = 0b1010 & op1 = 0b0001 & ar & as & at = 0 & op0 = 0 {
-    local sa:1 = 32 - (sar & 0xf);
+    local sa:1 = 32 - sar;
     ar = as << sa;
 }
 
@@ -1156,12 +1156,12 @@ macro extract_bit(val, bit, result) {
 
 # SSL - Set Shift Amount for Left Shift, pg. 538.
 :ssl as is op2 = 0b0100 & op1 = 0 & ar = 0b0001 & as & at = 0 & op0 = 0 {
-    sar = 32 - (as:1 & 0xf);
+    sar = 32 - (as:1 & 0x1f);
 }
 
 # SSR - Set Shift Amount for Right Shift, pg. 539.
 :ssr as is op2 = 0b0100 & op1 = 0 & ar = 0 & as & at = 0 & op0 = 0 {
-    sar = (as:1 & 0xf);
+    sar = (as:1 & 0x1f);
 }
 
 # SSX - Store Singe Indexed, pg. 540.
