@@ -831,7 +831,21 @@ macro extract_bit(val, bit, result) {
 
 # NSAU - Normalization Shift Amount Unsigned, pg. 462. (Count leading zeros)
 :nsau at, as is op2 = 0b0100 & op1 = 0 & ar = 0b1111 & as & at & op0 = 0 {
-    at = nsau(as);
+    local z4 = as[16,16] == 0;
+
+    local t3 = zext(z4)*as[0,16] + zext(!z4)*as[16,16];
+    local z3 = t3[8,8] == 0;
+
+    local t2 = (z3)*t3[0,8] + (!z3)*t3[8,8];
+    local z2 = t2[4,4] == 0;
+
+    local t1 = (z2)*t2[0,4] + (!z2)*t2[4,4];
+    local z1 = t1[2,2] == 0;
+
+    local z0 = (z1)*(t1[1,1] == 0) + (!z1)*(t1[3,1] == 0);
+    local all0 = as == 0;
+
+    at = zext((all0)*32 + (!all0)*(z4<<4 | z3<<3 | z2<<2 | z1<<1 | z0));
 }
 
 # OEQ.S - Compare Single Equal, pg. 463.
