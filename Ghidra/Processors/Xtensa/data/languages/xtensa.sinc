@@ -239,7 +239,6 @@ define pcodeop lict;
 define pcodeop licw;
 define pcodeop memw;
 define pcodeop nsa;
-define pcodeop nsau;
 define pcodeop pdtlb;
 define pcodeop pitlb;
 define pcodeop rdtlb0;
