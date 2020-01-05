@@ -1295,6 +1295,6 @@ macro extract_bit(val, bit, result) {
 }
 
 # XSR - Exchange Special Register, pg. 566.
-:xsr at, u8_8.15 is op2 = 0b1110 & op1 = 0b0001 & u8_8.15 & at & op0 = 0 {
+:xsr at, u8_8.15 is op2 = 0b0110 & op1 = 0b0001 & u8_8.15 & at & op0 = 0 {
     at = xsr(u8_8.15:1, at);
 }
