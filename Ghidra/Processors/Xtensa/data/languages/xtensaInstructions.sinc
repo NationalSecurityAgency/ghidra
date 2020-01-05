@@ -1243,10 +1243,14 @@ macro extract_bit(val, bit, result) {
     br = nan(fs) || nan(ft);
 }
 
-# UTRUNC.S - Truncate Single to Fixed Unsigned, pg. 555. FIXME: difference to trunc.s?
+# UTRUNC.S - Truncate Single to Fixed Unsigned, pg. 555.
 :utrunc.s ar, fs, u4_4.7 is op2 = 0b1110 & op1 = 0b1010 & ar & fs & u4_4.7 & op0 = 0 {
     local scale:4 = int2float(1:2 << u4_4.7:2);
-    ar = trunc(fs f* scale);
+    local tmp:8 = trunc(fs f* scale);
+    local posof = nan(fs) || (tmp >> 16) != 0;
+    local negof = tmp s< 0;
+    local noof  = !posof && !negof;
+    ar = zext(posof)*0xffffffff + zext(negof)*0x80000000 + zext(noof)*tmp:4;
 }
 
 # WAITI - Wait Interrupt, pg. 556.
