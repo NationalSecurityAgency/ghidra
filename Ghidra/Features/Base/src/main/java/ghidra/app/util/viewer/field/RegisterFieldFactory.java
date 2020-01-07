@@ -63,7 +63,8 @@ public class RegisterFieldFactory extends FieldFactory {
 
 		fieldOptions.registerOption(DISPLAY_HIDDEN_REGISTERS_OPTION_NAME, false, null,
 			"Shows/hides context registers");
-		fieldOptions.registerOption(DISPLAY_DEFAULT_REGISTER_VALUES_OPTION_NAME, false, null, null);
+		fieldOptions.registerOption(DISPLAY_DEFAULT_REGISTER_VALUES_OPTION_NAME, false, null,
+			"Shows/hides default register values");
 		regColor =
 			displayOptions.getColor(OptionsGui.REGISTERS.getColorOptionName(), getDefaultColor());
 
@@ -74,10 +75,9 @@ public class RegisterFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions displayOptions,
+			HighlightProvider highlightProvider, ToolOptions toolOptions,
 			ToolOptions fieldOptions) {
-		return new RegisterFieldFactory(formatModel, highlightProvider, displayOptions,
-			fieldOptions);
+		return new RegisterFieldFactory(formatModel, highlightProvider, toolOptions, fieldOptions);
 	}
 
 	@Override

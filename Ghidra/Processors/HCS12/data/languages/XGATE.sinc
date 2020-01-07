@@ -592,7 +592,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 # Load Immediate 8-bit constant (high byte)
 :LDH rd, ximm8 is opcode=0x1f & rd & ximm8 & rd_hi
 {
-	rd_hi = ximm8 << 8;
+	rd_hi = ximm8;
 }
 
 

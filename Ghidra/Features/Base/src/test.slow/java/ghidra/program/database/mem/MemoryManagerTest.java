@@ -15,20 +15,51 @@
  */
 package ghidra.program.database.mem;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import ghidra.app.plugin.core.memory.UninitializedBlockCmd;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.ProgramFragment;
+import ghidra.program.model.listing.ProgramModule;
+import ghidra.program.model.mem.LiveMemoryHandler;
+import ghidra.program.model.mem.LiveMemoryListener;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.MemoryBlockException;
+import ghidra.program.model.mem.MemoryBlockSourceInfo;
+import ghidra.program.model.mem.MemoryBlockStub;
+import ghidra.program.model.mem.MemoryBlockType;
+import ghidra.program.model.mem.MemoryConflictException;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.util.task.TaskMonitor;
@@ -265,7 +296,6 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		block2.setSourceName("Test");
 		assertEquals("Test", block2.getSourceName());
-
 	}
 
 	@Test
@@ -315,7 +345,142 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		MemoryBlock block = mem.getBlock(addr(95));
 		assertEquals(newBlock, block);
 	}
+	
+	@Test
+	public void testGetBlockByName() throws Exception {
+		
+		MemoryBlock block1 = createBlock("Test1", addr(100), 100);
+		MemoryBlock block2 = createBlock("Test2", addr(300), 100);
+		
+		MemoryBlock block = mem.getBlock("Test1");
+		assertEquals("Test1", block.getName());
+		assertEquals("get same block", block, block1);
 
+		mem.split(block, addr(150));
+		block = mem.getBlock("Test1");
+		assertEquals("Test1",  block.getName());
+		assertEquals(50, block.getSize());
+		
+		// non-existent block
+		block = mem.getBlock("NoExist");
+		assertNull(block);
+		
+		program.endTransaction(transactionID, true);
+		transactionID = program.startTransaction("Test");	
+		
+		// now exists
+		mem.getBlock("Test1").setName("NoExist");
+		// Test1 no longer exists
+		assertNull("block deleted", mem.getBlock("Test1"));
+		block = mem.getBlock("NoExist");
+		assertEquals("NoExist", block.getName());
+
+		mem.removeBlock(block, new TaskMonitorAdapter());
+		block = mem.getBlock("NoExist");
+		assertNull("block should be deleted", block);
+		
+		// Test1 still doesn't exist
+		block = mem.getBlock("Test1");
+		assertNull("block deleted", block);
+		
+		block = mem.getBlock("Test2");
+		assertEquals("Test2", block.getName());
+		
+		program.endTransaction(transactionID, true);
+		
+		program.undo();
+		
+		// Test1 still doesn't exist
+		block = mem.getBlock("Test1");
+		assertNotNull("Undo, Test1 exists again", block);
+		
+		transactionID = program.startTransaction("Test");
+	}
+
+	@Test
+	public void testMemoryMapExecuteSet() throws Exception {
+		
+		AddressSetView executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+		MemoryBlock block1 = createBlock("Test1", addr(100), 100);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+		MemoryBlock block2 = createBlock("Test2", addr(300), 100);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+
+		MemoryBlock block = mem.getBlock("Test1");
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+		
+		block.setExecute(false);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty());
+
+		block.setExecute(true);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty() != true);
+		Address start = block.getStart();
+		Address end = block.getEnd();
+		assertTrue(executeSet.contains(start,end));
+
+		// non-existent block
+		block = mem.getBlock("NoExist");
+		assertNull(block);
+		
+		program.endTransaction(transactionID, true);
+		transactionID = program.startTransaction("Test");	
+		
+		// now exists
+		mem.getBlock("Test1").setName("NoExist");
+		// Test1 no longer exists
+		block = mem.getBlock("NoExist");
+		executeSet = mem.getExecuteSet();
+		start = block.getStart();
+		end = block.getEnd();
+		// should be same block
+		assertTrue(executeSet.contains(start,end));
+		block.setExecute(false);
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.contains(start,end) == false);
+		
+		block2.setExecute(true);
+		Address start2 = block2.getStart();
+		Address end2 = block2.getEnd();
+		mem.removeBlock(block2, new TaskMonitorAdapter());
+		
+		program.endTransaction(transactionID, true);
+		
+		program.undo();
+		
+		transactionID = program.startTransaction("Test");
+
+		// should be execute set on block2, deleted, then undone
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.contains(start2,end2) == false);
+	
+		// undid set execute block should now be contained
+		block = mem.getBlock("Test1");
+		start = block.getStart();
+		end = block.getEnd();
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.contains(start,end));
+		
+		mem.split(block, addr(150));
+		block = mem.getBlock("Test1");
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty() != true);
+		assertTrue(executeSet.contains(block.getStart(), block.getEnd()));
+		
+		// remove block that was split, should still be executable memory
+		start = block.getStart();
+		end = block.getEnd();
+		mem.removeBlock(block, new TaskMonitorAdapter());
+		executeSet = mem.getExecuteSet();
+		assertTrue(executeSet.isEmpty() != true);
+		assertTrue(executeSet.contains(start, end) == false);
+	}
+	
 	@Test
 	public void testSave() throws Exception {
 		MemoryBlock block1 = createBlock("Test1", addr(0), 100);

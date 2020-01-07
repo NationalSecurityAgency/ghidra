@@ -36,10 +36,9 @@ class VarIndexTable extends IndexTable {
 	/**
 	 * Construct a new secondary index which is based upon a field within the
 	 * primary table specified by name.
-	 * @param db database handle
 	 * @param primaryTable primary table.
 	 * @param colIndex identifies the indexed column within the primary table.
-	 * @throws IOException
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	VarIndexTable(Table primaryTable, int colIndex) throws IOException {
 		this(primaryTable,
@@ -52,11 +51,11 @@ class VarIndexTable extends IndexTable {
 	/**
 	 * Construct a new or existing secondary index. An existing index must have
 	 * its' root ID specified within the tableRecord.
-	 * @param db database handle
-	 * @param bufferMgr database buffer manager
+	 * @param primaryTable primary table.
 	 * @param indexTableRecord specifies the index parameters.
+	 * @throws IOException thrown if an IO error occurs 
 	 */
-	VarIndexTable(Table primaryTable, TableRecord indexTableRecord) {
+	VarIndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
 		super(primaryTable, indexTableRecord);
 		this.indexSchema = indexTable.getSchema();
 	}
@@ -64,8 +63,9 @@ class VarIndexTable extends IndexTable {
 	/**
 	 * Find all primary keys which correspond to the specified indexed field
 	 * value.
-	 * @param field the field value to search for.
+	 * @param indexValue the field value to search for.
 	 * @return list of primary keys
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	@Override
 	long[] findPrimaryKeys(Field indexValue) throws IOException {
@@ -81,8 +81,9 @@ class VarIndexTable extends IndexTable {
 	/**
 	 * Get the number of primary keys which correspond to the specified indexed field
 	 * value.
-	 * @param field the field value to search for.
+	 * @param indexValue the field value to search for.
 	 * @return key count
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	@Override
 	int getKeyCount(Field indexValue) throws IOException {

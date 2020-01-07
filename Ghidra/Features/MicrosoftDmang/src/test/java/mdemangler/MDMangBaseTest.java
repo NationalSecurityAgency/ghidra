@@ -44,7 +44,7 @@ import ghidra.util.Msg;
  *  though many have been "genericized" with name components such as name0, name1,...  These
  *  tests are then run with different test configurations, though maybe not all of the time.
  *  For instance, only one configuration is currently envisioned for being run during nightly
- *  or continuous testing.  The other tests are intended to be exercized while the code is
+ *  or continuous testing.  The other tests are intended to be exercised while the code is
  *  being modified.
  * As the developer of this demangler, I wanted to be able to have a demangler that could
  *  provide demangled interpretations based upon what Microsoft said was truth (which is wrong
@@ -59,7 +59,7 @@ import ghidra.util.Msg;
  *  white spaces correct (including dangling white spaces)--as this provides insights into
  *  the Microsoft model and helps ups to "believe" that we are on the right track; moreover,
  *  it provides us with the ability to create large sets of data (millions of samples are
- *  available from Windows 7 and Windows 10 symbols) against which we can run our demangleder
+ *  available from Windows 7 and Windows 10 symbols) against which we can run our demangler
  *  and discover if we are doing better or worse with any given change.  As an example, I
  *  was able to make a change to this code base and run against the core set of tests below
  *  and found that I broke no tests, but when I ran against the Windows 10 symbols, I failed
@@ -72,7 +72,7 @@ import ghidra.util.Msg;
  *  suites for any of these configurations are in class names of the form MDMangFooTest (all
  *  derived from this class--MDMangBaseTest).  If someone needs to run just a single test
  *  method in this MDMangBaseTest with a different derived class from within Eclipse, then
- *  they can do so by making two line changes below in the contructor of this class--effectively
+ *  they can do so by making two line changes below in the constructor of this class--effectively
  *  transforming the class to look like one of its derived classes; at that point the developer
  *  can right-click on the specific test and run or debug that single test method (of course
  *  the constructor below should be changed back to its original form).
@@ -13699,6 +13699,17 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	//Has "$$V" sequence (supposed MS2015 version of "$$$V" and comes from github issue #1220
+	@Test
+	public void testDollarDollarV_Issue1220() throws Exception {
+		mangled =
+			"??$Make@VProjectorViewFormats@Output@Host@DataModel@Debugger@@$$V@Details@WRL@Microsoft@@YA?AV?$ComPtr@VProjectorViewFormats@Output@Host@DataModel@Debugger@@@12@XZ";
+		msTruth =
+			"class Microsoft::WRL::ComPtr<class Debugger::DataModel::Host::Output::ProjectorViewFormats> __cdecl Microsoft::WRL::Details::Make<class Debugger::DataModel::Host::Output::ProjectorViewFormats>(void)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
 	//TODO: Need to do dispatcher for VS2017? vs. VS2015?  We do not have VS2017 yet to see what it does.  
 	//TODO (20170331): Need to do some testing/fuzzing with something more up-to-date than VS2015.
 	//Problem is at location 29-31 where we have a '?' followed by a 'C', which is trying to determine the encoded number, but the 'C'
@@ -14444,6 +14455,20 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		msTruth =
 			"bool __cdecl operator<<class myContainer<int> >(class myContainer<int> const &,class myContainer<int> const &)";
 		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//TODO: considering for Issue 1162
+	@Ignore
+	public void testThreadSafeStaticGuard_1() throws Exception {
+		mangled =
+			"?$TSS0@?1??GetCategoryMap@CDynamicRegistrationInfoSource@XPerfAddIn@@SAPEBU_ATL_CATMAP_ENTRY@ATL@@XZ@4HA";
+//		mangled =
+//			"?xTSS0@?1??GetCategoryMap@CDynamicRegistrationInfoSource@XPerfAddIn@@SAPEBU_ATL_CATMAP_ENTRY@ATL@@XZ@4HA";
+		//TODO: investigate and consider what we should have as outputs.
+		msTruth = "";
+		mdTruth =
+			"int `public: static struct ATL::_ATL_CATMAP_ENTRY const * __ptr64 __cdecl XPerfAddIn::CDynamicRegistrationInfoSource::GetCategoryMap(void)'::`2'::`thread safe local static guard'";
 		demangleAndTest();
 	}
 

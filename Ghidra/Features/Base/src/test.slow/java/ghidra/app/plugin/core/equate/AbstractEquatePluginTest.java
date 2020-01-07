@@ -433,22 +433,20 @@ public abstract class AbstractEquatePluginTest extends AbstractProgramBasedTest 
 	}
 
 	protected void createSignedData(Address addr) throws Exception {
-		int id = program.startTransaction("Test - Create Signed Data");
-
-		SignedWordDataType dt = new SignedWordDataType(program.getDataTypeManager());
-		int length = dt.getLength();
-		listing.clearCodeUnits(addr, addr.add(length), true);
-		listing.createData(addr, dt);
-
-		program.endTransaction(id, true);
+		createData(addr, SignedWordDataType.dataType);
 	}
 
 	protected void createUnsignedData(Address addr) throws Exception {
-		int id = program.startTransaction("Test - Create Unsigned Data");
+		createData(addr, WordDataType.dataType);
+	}
 
-		WordDataType dt = new WordDataType(program.getDataTypeManager());
+	protected void createData(Address addr, DataType dt) throws Exception {
+		int id = program.startTransaction("Test - Create Data");
+
+		dt = dt.clone(program.getDataTypeManager());
 		int length = dt.getLength();
-		listing.clearCodeUnits(addr, addr.add(length), true);
+		assertTrue("", length > 0);
+		listing.clearCodeUnits(addr, addr.add(length - 1), true);
 		program.getListing().createData(addr, dt);
 
 		program.endTransaction(id, true);

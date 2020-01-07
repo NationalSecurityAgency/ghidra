@@ -27,7 +27,6 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
  */
-@SuppressWarnings("unused")
 public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 
 	private int toc_offset;
@@ -35,6 +34,26 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 	private int entries_offset;
 	private int entries_count;
 	private int entries_size;
+
+	public int getTocOffset() {
+		return toc_offset;
+	}
+
+	public int getTocCount() {
+		return toc_count;
+	}
+
+	public int getEntriesOffset() {
+		return entries_offset;
+	}
+
+	public int getEntriesCount() {
+		return entries_count;
+	}
+
+	public int getEntriesSize() {
+		return entries_size;
+	}
 
 	/**
 	 * Create a new {@link DyldCacheSlideInfo1}.

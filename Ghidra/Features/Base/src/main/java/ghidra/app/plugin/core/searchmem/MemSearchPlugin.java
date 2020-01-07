@@ -401,9 +401,10 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			"Toggles highlight search results");
 
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, null, null);
+			PluginConstants.SEARCH_HIGHLIGHT_COLOR, null, "The search result highlight color");
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR, null, null);
+			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR, null,
+			"The search result highlight color for the currently selected match");
 
 		opt.addOptionsChangeListener(this);
 

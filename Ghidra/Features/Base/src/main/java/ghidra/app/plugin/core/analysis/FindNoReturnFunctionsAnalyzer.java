@@ -364,7 +364,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 						continue;
 					}
 					Instruction oinst = cp.getListing().getInstructionAt(fromAddress);
-					if (!checkNonReturningIndicators(oinst, noReturnSet, blockModel)) {
+					if ( oinst == null || !checkNonReturningIndicators(oinst, noReturnSet, blockModel)) {
 						continue;
 					}
 

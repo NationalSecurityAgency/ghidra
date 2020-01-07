@@ -30,6 +30,7 @@ import generic.test.category.NightlyCategory;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
+import ghidra.base.widgets.table.constraint.provider.ScalarToLongColumnTypeMapper;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
@@ -42,7 +43,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.RollbackException;
-import softwaremodeling.widgets.table.constraint.provider.ScalarToLongColumnTypeMapper;
 
 @Category(NightlyCategory.class)
 public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {

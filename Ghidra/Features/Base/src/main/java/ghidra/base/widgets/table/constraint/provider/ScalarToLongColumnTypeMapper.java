@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package softwaremodeling.widgets.table.constraint.provider;
+package ghidra.base.widgets.table.constraint.provider;
 
 import docking.widgets.table.constraint.ColumnTypeMapper;
 import ghidra.program.model.scalar.Scalar;

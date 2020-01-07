@@ -63,7 +63,7 @@ public class AboutDomainObjectUtils {
 		if (helpLocation != null) {
 			dialog.setHelpLocation(helpLocation);
 		}
-		tool.showDialog(dialog, (Component) null);
+		tool.showDialog(dialog);
 	}
 
 	private static void addInfo(JPanel panel, String name, String value) {

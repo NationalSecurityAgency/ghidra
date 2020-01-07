@@ -107,7 +107,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * Returns changes made to versioned file by others since checkout was performed.
 	 * @return change set or null
 	 * @throws VersionException latest version was created with a newer version of software
-	 * @throws IOException
+	 * @throws IOException if a folder item access error occurs or change set was 
+	 * produced by newer version of software and can not be read
 	 */
 	public ChangeSet getChangesByOthersSinceCheckout() throws VersionException, IOException;
 
@@ -352,8 +353,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @throws IOException thrown if an IO or access error occurs.
 	 * @throws CancelledException if task monitor cancelled operation.
 	 */
-	public boolean checkout(boolean exclusive, TaskMonitor monitor) throws IOException,
-			CancelledException;
+	public boolean checkout(boolean exclusive, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Performs check in to associated repository.  File must be checked-out 
@@ -379,8 +380,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * If okToUpgrade was false, check exception to see if it can be upgraded
 	 * @throws CancelledException if task monitor cancelled operation
 	 */
-	public void merge(boolean okToUpgrade, TaskMonitor monitor) throws IOException,
-			VersionException, CancelledException;
+	public void merge(boolean okToUpgrade, TaskMonitor monitor)
+			throws IOException, VersionException, CancelledException;
 
 	/**
 	 * Undo "checked-out" file.  The original repository file is restored.
@@ -456,8 +457,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @throws IOException thrown if an IO or access error occurs.
 	 * @throws CancelledException if task monitor cancelled operation.
 	 */
-	DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor) throws IOException,
-			CancelledException;
+	DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Copy a specific version of this file to the specified destFolder.

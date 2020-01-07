@@ -193,11 +193,12 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 			try {
 				String symname = "_gp_" + index++;
 				// check if it already exists
-				Symbol existingSymbol = SymbolUtilities.getLabelOrFunctionSymbol(program, symname,
-					err -> { /* ignore multiple symbols, if even one exists we need to skip if it has a different address */ } );
+				Symbol existingSymbol =
+					SymbolUtilities.getLabelOrFunctionSymbol(program, symname, err -> {
+						/* ignore multiple symbols, if even one exists we need to skip if it has a different address */ });
 				if (existingSymbol != null) {
 					if (existingSymbol.getAddress().equals(toAddr)) {
-					    return existingSymbol;
+						return existingSymbol;
 					}
 					continue;  // can't use this one, look for the next free gp_<x> symbol
 				}
@@ -223,14 +224,16 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		final AddressSet coveredSet = new AddressSet();
 
+		Address currentGPAssumptionValue = gp_assumption_value;
+
 		if (func != null) {
 			flowStart = func.getEntryPoint();
-			if (gp_assumption_value != null) {
+			if (currentGPAssumptionValue != null) {
 				ProgramContext programContext = program.getProgramContext();
 				RegisterValue gpVal = programContext.getRegisterValue(gp, flowStart);
 				if (gpVal == null || !gpVal.hasValue()) {
-					gpVal =
-						new RegisterValue(gp, BigInteger.valueOf(gp_assumption_value.getOffset()));
+					gpVal = new RegisterValue(gp,
+						BigInteger.valueOf(currentGPAssumptionValue.getOffset()));
 					try {
 						program.getProgramContext().setRegisterValue(func.getEntryPoint(),
 							func.getEntryPoint(), gpVal);
@@ -245,6 +248,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 		// follow all flows building up context
 		// use context to fill out addresses on certain instructions
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
+			private Address localGPAssumptionValue = currentGPAssumptionValue;
 
 			private boolean mustStopNow = false; // if something discovered in processing, mustStop flag
 
@@ -297,8 +301,8 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 					if (registerValue != null) {
 						BigInteger value = registerValue.getUnsignedValue();
 						long unsignedValue = value.longValue();
-						if (gp_assumption_value == null ||
-							!(unsignedValue == gp_assumption_value.getOffset())) {
+						if (localGPAssumptionValue == null ||
+							!(unsignedValue == localGPAssumptionValue.getOffset())) {
 							synchronized (gp) {
 								Address gpRefAddr =
 									instr.getMinAddress().getNewAddress(unsignedValue);
@@ -317,18 +321,18 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 									instr.getMinAddress().getAddressSpace().getBaseSpaceID(),
 									unsignedValue, 1, RefType.DATA, PcodeOp.UNIMPLEMENTED, true,
 									monitor);
-								if (gp_assumption_value == null) {
+								if (localGPAssumptionValue == null) {
 									program.getBookmarkManager().setBookmark(
 										lastSetInstr.getMinAddress(), BookmarkType.WARNING,
 										"GP Global Register Set",
 										"Global GP Register is set here.");
 								}
-								if (gp_assumption_value != null &&
-									!gp_assumption_value.equals(gpRefAddr)) {
-									gp_assumption_value = null;
+								if (localGPAssumptionValue != null &&
+									!localGPAssumptionValue.equals(gpRefAddr)) {
+									localGPAssumptionValue = gp_assumption_value = null;
 								}
 								else {
-									gp_assumption_value = gpRefAddr;
+									localGPAssumptionValue = gp_assumption_value = gpRefAddr;
 								}
 							}
 						}
@@ -400,10 +404,11 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 									//  if it is assumed to be set to the same value, it can lead
 									//   to incorrect re-use of the value (non-returning functions)
 									context.clearRegister(reg);
-									
+
 									// need to add the reference here, register operand will no longer have a value
-									instr.addOperandReference(0,  addr, refType, SourceType.ANALYSIS);
-									
+									instr.addOperandReference(0, addr, refType,
+										SourceType.ANALYSIS);
+
 									// set the register value on the target address
 									ProgramContext progContext = program.getProgramContext();
 									if (progContext.getValue(reg, addr, false) == null) {

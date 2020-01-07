@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <processor_spec>
-  <programcounter register="PC"/
+  <programcounter register="PC"/>
   <default_symbols>
       <symbol name="VECTOR_Reset"      address="0x2080" entry="true"/>
   </default_symbols>

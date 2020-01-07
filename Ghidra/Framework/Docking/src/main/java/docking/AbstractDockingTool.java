@@ -152,7 +152,7 @@ public abstract class AbstractDockingTool implements DockingTool {
 
 	@Override
 	public void showDialog(DialogComponentProvider dialogComponent) {
-		DockingWindowManager.showDialog(getToolFrame(), dialogComponent);
+		DockingWindowManager.showDialog(null, dialogComponent);
 	}
 
 	public JFrame getToolFrame() {

@@ -274,6 +274,29 @@ public class DyldCacheHeader implements StructConverter {
 	public DyldCacheLocalSymbolsInfo getLocalSymbolsInfo() {
 		return localSymbolsInfo;
 	}
+	
+	/**
+	 * Gets the {@link DyldCacheSlideInfoCommon}.
+	 * 
+	 * @return the {@link DyldCacheSlideInfoCommon}.  Common, or particular version
+	 */
+	public DyldCacheSlideInfoCommon getSlideInfo() {
+		return slideInfo;
+	}	
+
+	/**
+	 * @return slideInfoOffset
+	 */
+	public long getSlideInfoOffset() {
+		return slideInfoOffset;
+	}
+
+	/**
+	 * @return slideInfoSize
+	 */
+	public long getSlideInfoSize() {
+		return slideInfoSize;
+	}
 
 	/**
 	 * Gets the {@link List} of branch pool address.  Requires header to have been parsed.

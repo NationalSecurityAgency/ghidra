@@ -843,7 +843,6 @@ src/main/java/ghidra/app/util/bin/format/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/util/bin/format/pe/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/util/bin/format/pe/resource/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/util/bin/package.html||GHIDRA||||END|
-src/main/java/ghidra/app/util/cparser/build.xml||GHIDRA||||END|
 src/main/java/ghidra/app/util/exporter/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/util/importer/package.html||GHIDRA||||END|
 src/main/java/ghidra/app/util/opinion/package.html||GHIDRA||||END|

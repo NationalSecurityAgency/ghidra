@@ -71,7 +71,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 		OldStyleExecutable ose = new OldStyleExecutable(RethrowContinuesFactory.INSTANCE, provider);
 		DOSHeader dos = ose.getDOSHeader();
-		if (dos.isDosSignature() && !dos.hasNewExeHeader()) {
+		if (dos.isDosSignature() && !dos.hasNewExeHeader() && !dos.hasPeHeader()) {
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), "" + dos.e_magic(), null);
 			for (QueryResult result : results) {

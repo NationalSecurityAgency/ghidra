@@ -735,13 +735,14 @@ public class UserManager {
 			getDNLog().println(username + "; " + principal);
 		}
 		catch (IOException e) {
+			// ignore
 		}
 	}
 
 	/*
 	 * Regex: matches if the entire string is alpha, digit, ".", "-", "_", fwd or back slash.
 	 */
-	private static final Pattern VALID_USERNAME_REGEX = Pattern.compile("[a-zA-Z0-9.-_/\\\\]+");
+	private static final Pattern VALID_USERNAME_REGEX = Pattern.compile("[a-zA-Z0-9.\\-_/\\\\]+");
 
 	/**
 	 * Ensures a name only contains valid characters and meets length limitations.

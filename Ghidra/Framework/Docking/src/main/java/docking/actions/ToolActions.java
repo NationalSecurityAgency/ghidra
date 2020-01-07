@@ -142,8 +142,9 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		}
 
 		KeyStroke ks = action.getKeyBinding();
+		String description = "Keybinding for " + action.getFullName();
 		keyBindingOptions.registerOption(action.getFullName(), OptionType.KEYSTROKE_TYPE, ks, null,
-			null);
+			description);
 		KeyStroke newKs = keyBindingOptions.getKeyStroke(action.getFullName(), ks);
 		if (!Objects.equals(ks, newKs)) {
 			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
@@ -175,8 +176,9 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 	private void registerStub(SharedStubKeyBindingAction stub, KeyStroke defaultKeyStroke) {
 		stub.addPropertyChangeListener(this);
+		String description = "Keybinding for Stub action: " + stub.getFullName();
 		keyBindingOptions.registerOption(stub.getFullName(), OptionType.KEYSTROKE_TYPE,
-			defaultKeyStroke, null, null);
+			defaultKeyStroke, null, description);
 		keyBindingsManager.addAction(null, stub);
 	}
 

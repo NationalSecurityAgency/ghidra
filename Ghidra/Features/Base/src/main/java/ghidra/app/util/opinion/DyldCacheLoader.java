@@ -20,6 +20,7 @@ import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
+import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.dyld.DyldArchitecture;
@@ -47,8 +48,14 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	static final String CREATE_DYLIB_SECTIONS_OPTION_NAME = "Create DYLIB section memory blocks";
 
 	/** Default value for loader option to create memory blocks for DYLIB sections */
-	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = true;
+	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = false;
 
+	/** Loader option to add relocation entries for each fixed chain pointer */
+	static final String ADD_RELOCATION_ENTRIES_OPTION_NAME = "Add relocation entries for fixed chain pointers";
+
+	/** Default value for loader option add relocation entries */
+	static final boolean ADD_RELOCATION_ENTRIES_OPTION_DEFAULT = false;
+	
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
@@ -84,7 +91,8 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 		try {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
 				MemoryBlockUtils.createFileBytes(program, provider, monitor),
-				shouldProcessSymbols(options), shouldCreateDylibSections(options), log, monitor);
+				shouldProcessSymbols(options), shouldCreateDylibSections(options),
+				shouldAddRelocationEntries(options), log, monitor);
 		}
 		catch (CancelledException e) {
 			return;
@@ -105,34 +113,25 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 			list.add(
 				new Option(CREATE_DYLIB_SECTIONS_OPTION_NAME, CREATE_DYLIB_SECTIONS_OPTION_DEFAULT,
 					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createDylibSections"));
+			list.add(
+					new Option(ADD_RELOCATION_ENTRIES_OPTION_NAME, ADD_RELOCATION_ENTRIES_OPTION_DEFAULT,
+						Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-addRelocationEntries"));
 		}
 		return list;
 	}
 
 	private boolean shouldProcessSymbols(List<Option> options) {
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(PROCESS_SYMBOLS_OPTION_NAME)) {
-					return (Boolean) option.getValue();
-				}
-			}
-		}
-		return PROCESS_SYMBOLS_OPTION_DEFAULT;
+		return OptionUtils.getOption(PROCESS_SYMBOLS_OPTION_NAME, options, PROCESS_SYMBOLS_OPTION_DEFAULT);
 	}
 
 	private boolean shouldCreateDylibSections(List<Option> options) {
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(CREATE_DYLIB_SECTIONS_OPTION_NAME)) {
-					return (Boolean) option.getValue();
-				}
-			}
-		}
-		return CREATE_DYLIB_SECTIONS_OPTION_DEFAULT;
+		return OptionUtils.getOption(CREATE_DYLIB_SECTIONS_OPTION_NAME, options, CREATE_DYLIB_SECTIONS_OPTION_DEFAULT);
 	}
 
+	private boolean shouldAddRelocationEntries(List<Option> options) {
+		return OptionUtils.getOption(ADD_RELOCATION_ENTRIES_OPTION_NAME, options, ADD_RELOCATION_ENTRIES_OPTION_DEFAULT);
+	}
+	
 	@Override
 	public String getName() {
 		return DYLD_CACHE_NAME;

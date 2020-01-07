@@ -27,13 +27,28 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
  */
-@SuppressWarnings("unused")
 public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 	private int page_size;
 	private int page_starts_count;
 	private long auth_value_add;
 	private short page_starts[];
+
+	public int getPageSize() {
+		return page_size;
+	}
+
+	public int getPageStartsCount() {
+		return page_starts_count;
+	}
+
+	public long getAuthValueAdd() {
+		return auth_value_add;
+	}
+
+	public short[] getPageStarts() {
+		return page_starts;
+	}
 
 	/**
 	 * Create a new {@link DyldCacheSlideInfo3}.

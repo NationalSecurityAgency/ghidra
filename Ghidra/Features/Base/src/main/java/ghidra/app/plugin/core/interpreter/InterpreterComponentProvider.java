@@ -171,12 +171,15 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 
 	@Override
 	public void componentActivated() {
-		// Call the callbacks
-		firstActivationCallbacks.forEach(l -> l.call());
 
-		// Since we only care about the first activation, clear the list
-		// of callbacks so future activations don't trigger anything.
+		// Since we only care about the first activation, clear the list of callbacks so future 
+		// activations don't trigger anything.  First save them off to a local list so when we
+		// process them we aren't affected by concurrent modification due to reentrance.
+		List<Callback> callbacks = new ArrayList<>(firstActivationCallbacks);
 		firstActivationCallbacks.clear();
+
+		// Call the callbacks
+		callbacks.forEach(l -> l.call());
 	}
 
 	@Override

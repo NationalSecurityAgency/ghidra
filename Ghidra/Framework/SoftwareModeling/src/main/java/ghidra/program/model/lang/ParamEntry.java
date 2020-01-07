@@ -113,13 +113,23 @@ public class ParamEntry {
 	}
 	
 	public boolean contains(ParamEntry op2) {
-		if ((type != TYPE_UNKNOWN)&&(op2.type != type)) return false;
-		if (spaceid != op2.spaceid) return false;
-		if (unsignedCompare(op2.addressbase,addressbase)) return false;
+		if ((type != TYPE_UNKNOWN)&&(op2.type != type)) {
+			return false;
+		}
+		if (spaceid != op2.spaceid) {
+			return false;
+		}
+		if (unsignedCompare(op2.addressbase,addressbase)) {
+			return false;
+		}
 		long op2end = op2.addressbase + op2.size -1;
 		long end = addressbase+size-1;
-		if (unsignedCompare(end,op2end)) return false;
-		if (alignment != op2.alignment) return false; 
+		if (unsignedCompare(end,op2end)) {
+			return false;
+		}
+		if (alignment != op2.alignment) {
+			return false;
+		} 
 		return true;
 	}
 	
@@ -130,10 +140,12 @@ public class ParamEntry {
 				Varnode vdata = joinrec[i];
 				int cur = justifiedContainAddress(vdata.getAddress().getAddressSpace(),vdata.getOffset(),vdata.getSize(),
 									addr.getAddressSpace(),addr.getOffset(),sz,false,((flags & IS_BIG_ENDIAN)!=0));
-				if (cur<0)
+				if (cur<0) {
 					res += vdata.getSize();			// We skipped this many less significant bytes
-				else
+				}
+				else {
 					return res + cur;
+				}
 			}
 			return -1;		// Not contained at all
 		}
@@ -142,17 +154,30 @@ public class ParamEntry {
 					                       addr.getAddressSpace(),addr.getOffset(),sz,
 					                       ((flags & FORCE_LEFT_JUSTIFY)!=0),((flags & IS_BIG_ENDIAN)!=0));
 		}
-		if (spaceid != addr.getAddressSpace()) return -1;
-		if (unsignedCompare(addr.getOffset(), addressbase)) return -1;
-		long endaddr = addr.getOffset() + sz -1;
-		if (unsignedCompare(endaddr,addr.getOffset())) return -1;		// Don't allow wrap around
-		if (unsignedCompare(addressbase + size-1,endaddr)) return -1;
+		if (spaceid != addr.getAddressSpace()) {
+			return -1;
+		}
+		long startaddr = addr.getOffset();
+		if (unsignedCompare(startaddr, addressbase)) {
+			return -1;
+		}
+		long endaddr = startaddr + sz - 1;
+		if (unsignedCompare(endaddr, startaddr)) {
+			return -1;		// Don't allow wrap around
+		}
+		if (unsignedCompare(addressbase + size-1,endaddr)) {
+			return -1;
+		}
+		startaddr -= addressbase;
+		endaddr -= addressbase;
 		if (!isLeftJustified()) {		// For right justified (big endian), endaddr must be aligned
 			int res = (int)((endaddr+1) % alignment);
-			if (res==0) return 0;
+			if (res==0) {
+				return 0;
+			}
 			return (alignment-res);
 		}
-		return (int)(addr.getOffset() % alignment);
+		return (int) (startaddr % alignment);
 	}
 	
 	/**
@@ -165,12 +190,14 @@ public class ParamEntry {
 	public int getSlot(Address addr,int skip) {
 		int res = group;
 		if (alignment != 0) {
-			long diff = addr.getOffset() + skip - addressbase;	// Assume addressbase % alignment == 0
+			long diff = addr.getOffset() + skip - addressbase;
 			int baseslot = (int)diff / alignment;
-			if (isReverseStack())
+			if (isReverseStack()) {
 				res += (numslots-1) - baseslot;
-			else
+			}
+			else {
 				res += baseslot;
+			}
 		}
 		else if (skip != 0) {
 			res += (groupsize -1);
@@ -190,22 +217,31 @@ public class ParamEntry {
 	public int getAddrBySlot(int slotnum,int sz,VarnodeData res) {
 		res.space = null;		// Start with an invalid result
 		int spaceused;
-		if (sz < minsize) return slotnum;
+		if (sz < minsize) {
+			return slotnum;
+		}
 		if (alignment == 0) {		// If not an aligned entry (allowing multiple slots)
-			if (slotnum != 0) return slotnum;	// Can only allocate slot 0
-			if (sz > size) return slotnum;		// Check on maximum size
+			if (slotnum != 0) {
+				return slotnum;	// Can only allocate slot 0
+			}
+			if (sz > size) {
+				return slotnum;		// Check on maximum size
+			}
 			res.space = spaceid;
 			res.offset = addressbase;			// Get base address of the slot
 			spaceused = size;
-			if ((flags & SMALLSIZE_FLOAT)!=0)		// If the datatype is smaller than container, still return whole container
+			if ((flags & SMALLSIZE_FLOAT)!=0) {
 				return slotnum;
+			}
 		}
 		else {
 			int slotsused = sz / alignment;	// How many slots does a -sz- byte object need
-			if ( (sz %alignment) != 0)
+			if ( (sz %alignment) != 0) {
 				slotsused += 1;
-			if (slotnum + slotsused > numslots)	// Check if there are enough slots left
+			}
+			if (slotnum + slotsused > numslots) {
 				return slotnum;
+			}
 			spaceused = slotsused * alignment;
 			int index;
 			if (isReverseStack()) {
@@ -213,14 +249,16 @@ public class ParamEntry {
 				index -= slotnum;
 				index -= slotsused;
 			}
-			else
+			else {
 				index = slotnum;
+			}
 			res.space = spaceid;
 			res.offset = addressbase + index * alignment;
 			slotnum += slotsused;		// Inform caller of number of slots used
 		}
-		if (!isLeftJustified())		// Adjust for right justified (big endian)
+		if (!isLeftJustified()) {
 			res.offset += (spaceused - sz);
+		}
 		return slotnum;
 	}
 
@@ -236,7 +274,9 @@ public class ParamEntry {
 		for(;;) {
 			String attrName = "piece" + Integer.toString(pos+1);
 			String attrVal = el.getAttribute(attrName);
-			if (attrVal == null) break;
+			if (attrVal == null) {
+				break;
+			}
 			int offpos = attrVal.indexOf(':');
 			Varnode newvn;
 			if (offpos == -1) {
@@ -248,8 +288,9 @@ public class ParamEntry {
 			}
 			else {
 				int szpos = attrVal.indexOf(':', offpos+1);
-				if (szpos == -1)
+				if (szpos == -1) {
 					throw new XmlParseException("join address piece attribute is malformed");
+				}
 				String spcname = attrVal.substring(0, offpos);
 				AddressSpace spc = cspec.getAddressSpace(spcname);
 				long offset = SpecXmlUtils.decodeLong(attrVal.substring(offpos+1,szpos));
@@ -312,15 +353,18 @@ public class ParamEntry {
 		while(iter.hasNext()) {
 			Entry<String, String> entry = iter.next();
 			String name = entry.getKey();
-			if (name.equals("minsize"))
+			if (name.equals("minsize")) {
 				minsize = SpecXmlUtils.decodeInt(entry.getValue());
+			}
 			else if (name.equals("size")) {	// old style
 				alignment = SpecXmlUtils.decodeInt(entry.getValue());
 			}
-			else if (name.equals("align"))	// New style
+			else if (name.equals("align")) {
 				alignment = SpecXmlUtils.decodeInt(entry.getValue());
-			else if (name.equals("maxsize"))
+			}
+			else if (name.equals("maxsize")) {
 				size = SpecXmlUtils.decodeInt(entry.getValue());
+			}
 			else if (name.equals("metatype")) {		// Not implemented at the moment
 				String meta = entry.getValue();
 				// TODO:  Currently only supporting "float", "ptr", and "unknown" metatypes
@@ -333,41 +377,52 @@ public class ParamEntry {
 					}
 				}
 			}
-			else if (name.equals("group"))		// Override the group
+			else if (name.equals("group")) {
 				group = SpecXmlUtils.decodeInt(entry.getValue());
-			else if (name.equals("groupsize"))
+			}
+			else if (name.equals("groupsize")) {
 				groupsize = SpecXmlUtils.decodeInt(entry.getValue());
+			}
 			else if (name.equals("extension")) {
 				flags &= ~(SMALLSIZE_ZEXT | SMALLSIZE_SEXT | SMALLSIZE_INTTYPE);
 				String value = entry.getValue();
-				if (value.equals("sign"))
+				if (value.equals("sign")) {
 					flags |= SMALLSIZE_SEXT;
-				else if (value.equals("zero"))
+				}
+				else if (value.equals("zero")) {
 					flags |= SMALLSIZE_ZEXT;
-				else if (value.equals("inttype"))
+				}
+				else if (value.equals("inttype")) {
 					flags |= SMALLSIZE_INTTYPE;
-				else if (value.equals("float"))
+				}
+				else if (value.equals("float")) {
 					flags |= SMALLSIZE_FLOAT;
-				else if (!value.equals("none"))
+				}
+				else if (!value.equals("none")) {
 					throw new XmlParseException("Bad extension attribute: "+value);
+				}
 			}
-			else
+			else {
 				throw new XmlParseException("Unknown paramentry attribute: "+name);
+			}
 		}
-		if (minsize < 1 || size < minsize)
+		if (minsize < 1 || size < minsize) {
 			throw new XmlParseException(
 				"paramentry size not specified properly: minsize=" + minsize + " maxsize=" + size);
-		if (alignment == size)
+		}
+		if (alignment == size) {
 			alignment = 0;
+		}
 		
 		readXMLAddress(parser, cspec, size);
 		
 		boolean isbigendian = cspec.getLanguage().isBigEndian();
-		if (isbigendian)
+		if (isbigendian) {
 			flags |= IS_BIG_ENDIAN;
+		}
 		if (alignment != 0) {
-			if ((addressbase % alignment) != 0)
-				throw new XmlParseException("Stack <pentry> address must match alignment");
+//			if ((addressbase % alignment) != 0)
+//				throw new XmlParseException("Stack <pentry> address must match alignment");
 			numslots = size / alignment;
 		}
 		if (spaceid.isStackSpace() && (!cspec.isStackRightJustified()) && isbigendian) {
@@ -376,8 +431,9 @@ public class ParamEntry {
 		if (!normalstack) {
 			flags |= REVERSE_STACK;
 			if (alignment != 0) {
-				if ((size % alignment) != 0)
+				if ((size % alignment) != 0) {
 					throw new XmlParseException("For positive stack growth, <pentry> size must match alignment");
+				}
 			}
 		}
 		// resolveJoin
@@ -407,24 +463,34 @@ public class ParamEntry {
 	 * @return the endian aware offset or -1
 	 */
 	public static int justifiedContainAddress(AddressSpace spc1,long offset1,int sz1,AddressSpace spc2,long offset2,int sz2,boolean forceleft,boolean isBigEndian) {
-		if (spc1 != spc2) return -1;
-		if (unsignedCompare(offset2,offset1)) return -1;
+		if (spc1 != spc2) {
+			return -1;
+		}
+		if (unsignedCompare(offset2,offset1)) {
+			return -1;
+		}
 		long off1 = offset1 + (sz1 - 1);
 		long off2 = offset2 + (sz2 - 1);
-		if (unsignedCompare(off1,off2)) return -1;
-		if (isBigEndian && (!forceleft))
+		if (unsignedCompare(off1,off2)) {
+			return -1;
+		}
+		if (isBigEndian && (!forceleft)) {
 			return (int)(off1 - off2);
+		}
 		return (int)(offset2 - offset1);
 	}
 	
 	public static int getMetatype(DataType tp) {
 		// TODO: A complete metatype implementation
-		if (tp instanceof TypeDef)
+		if (tp instanceof TypeDef) {
 			tp = ((TypeDef)tp).getBaseDataType();
-		if (tp instanceof AbstractFloatDataType)
+		}
+		if (tp instanceof AbstractFloatDataType) {
 			return TYPE_FLOAT;
-		if (tp instanceof Pointer)
+		}
+		if (tp instanceof Pointer) {
 			return TYPE_PTR;
+		}
 		return TYPE_UNKNOWN;
 	}
 }

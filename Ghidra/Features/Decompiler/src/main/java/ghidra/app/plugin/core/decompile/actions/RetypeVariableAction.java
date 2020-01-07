@@ -303,7 +303,8 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 				return true;
 			}
 			VariableStorage storage = param.getStorage();
-			if (!storage.equals(parameters[i].getVariableStorage())) {
+			// Don't compare using the equals method so that DynamicVariableStorage can match
+			if (0 != storage.compareTo(parameters[i].getVariableStorage())) {
 				return true;
 			}
 		}

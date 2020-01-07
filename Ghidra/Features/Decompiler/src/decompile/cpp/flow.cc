@@ -1177,6 +1177,8 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
       data.opMarkStartBasic(*iter); // as start of basic block
   }
 
+  if (payload->isIncidentalCopy())
+    obank.markIncidentalCopy(firstop, lastop);
   obank.moveSequenceDead(firstop,lastop,op); // Move the injection to right after the call
 
   map<Address,VisitStat>::iterator viter = visited.find(op->getAddr());

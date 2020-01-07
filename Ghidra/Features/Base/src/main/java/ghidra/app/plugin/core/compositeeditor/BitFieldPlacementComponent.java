@@ -30,7 +30,7 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 import resources.icons.ColorIcon;
 
-public class BitFieldPlacementComponent extends JPanel {
+public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 
 	private static final int CELL_HEIGHT = 25;
 	private static final int ZERO_BIT_WIDTH = 3;
@@ -143,6 +143,33 @@ public class BitFieldPlacementComponent extends JPanel {
 		allocationByteOffset = 0;
 		allocationByteSize = 1;
 		init(null);
+	}
+
+	@Override
+	public Dimension getPreferredScrollableViewportSize() {
+		return getPreferredSize();
+	}
+
+	@Override
+	public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+		// NOTE: consider forcing visibleRect edge alignment to byte boundary based upon direction
+		return byteWidth;
+	}
+
+	@Override
+	public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+		// NOTE: consider forcing visibleRect edge alignment to byte boundary based upon direction
+		return visibleRect.width;
+	}
+
+	@Override
+	public boolean getScrollableTracksViewportWidth() {
+		return false;
+	}
+
+	@Override
+	public boolean getScrollableTracksViewportHeight() {
+		return true;
 	}
 
 	private class MyMouseWheelListener implements MouseWheelListener {

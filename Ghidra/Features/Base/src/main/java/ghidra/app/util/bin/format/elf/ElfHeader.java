@@ -159,8 +159,14 @@ public class ElfHeader implements StructConverter, Writeable {
 			e_ehsize = reader.readNextShort();
 			e_phentsize = reader.readNextShort();
 			e_phnum = reader.readNextShort();
+			if (e_phnum < 0) {
+				e_phnum = 0; // protect against stripped program headers
+			}
 			e_shentsize = reader.readNextShort();
 			e_shnum = reader.readNextShort();
+			if (e_shnum < 0) {
+				e_shnum = 0; // protect against stripped section headers (have seen -1)
+			}
 			e_shstrndx = reader.readNextShort();
 		}
 		catch (IOException e) {
@@ -1547,13 +1553,24 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Returns the relocation table associated to the specified section header.
-	 * Or, null if one does not exist.
+	 * Returns the relocation table associated to the specified section header,
+	 * or null if one does not exist.
+	 * @param relocSection section header corresponding to relocation table
 	 * @return the relocation table associated to the specified section header
 	 */
 	public ElfRelocationTable getRelocationTable(ElfSectionHeader relocSection) {
+		return getRelocationTableAtOffset(relocSection.getOffset());
+	}
+
+	/**
+	 * Returns the relocation table located at the specified fileOffset,
+	 * or null if one does not exist.
+	 * @param fileOffset file offset corresponding to start of relocation table
+	 * @return the relocation table located at the specified fileOffset or null
+	 */
+	public ElfRelocationTable getRelocationTableAtOffset(long fileOffset) {
 		for (int i = 0; i < relocationTables.length; i++) {
-			if (relocationTables[i].getFileOffset() == relocSection.getOffset()) {
+			if (relocationTables[i].getFileOffset() == fileOffset) {
 				return relocationTables[i];
 			}
 		}

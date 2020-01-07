@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,11 @@
  */
 package db;
 
-import ghidra.util.exception.AssertException;
-
 import java.util.ArrayList;
 import java.util.StringTokenizer;
+
+import db.Field.UnsupportedFieldException;
+import ghidra.util.exception.AssertException;
 
 /**
  * Class for definining the columns in a Ghidra Database table.
@@ -93,8 +93,10 @@ public class Schema {
 	 * @param fieldTypes
 	 * @param packedFieldNames packed list of field names separated by ';'.
 	 * The first field name corresponds to the key name.
+	 * @throws UnsupportedFieldException if unsupported fieldType specified
 	 */
-	Schema(int version, byte keyFieldType, byte[] fieldTypes, String packedFieldNames) {
+	Schema(int version, byte keyFieldType, byte[] fieldTypes, String packedFieldNames)
+			throws UnsupportedFieldException {
 		this.version = version;
 		this.keyType = Field.getField(keyFieldType);
 		parseNames(packedFieldNames);
@@ -257,8 +259,8 @@ public class Schema {
 	 */
 	public Record createRecord(Field key) {
 		if (!getKeyFieldClass().equals(key.getClass())) {
-			throw new IllegalArgumentException("expected key field type of " +
-				keyType.getClass().getSimpleName());
+			throw new IllegalArgumentException(
+				"expected key field type of " + keyType.getClass().getSimpleName());
 		}
 		Field[] fieldValues = new Field[fieldClasses.length];
 		for (int i = 0; i < fieldClasses.length; i++) {

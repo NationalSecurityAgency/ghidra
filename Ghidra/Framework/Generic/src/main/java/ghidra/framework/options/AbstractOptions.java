@@ -26,8 +26,10 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class AbstractOptions implements Options {
 	public static final Set<Class<?>> SUPPORTED_CLASSES = buildSupportedClassSet();
@@ -135,6 +137,10 @@ public abstract class AbstractOptions implements Options {
 		if (type == OptionType.CUSTOM_TYPE && editor == null) {
 			throw new IllegalStateException(
 				"Can't register a custom option without a property editor");
+		}
+		if (description == null) {
+			Msg.error(this, "Registered an option without a description: " + optionName,
+				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 
 		Option currentOption = valueMap.get(optionName);

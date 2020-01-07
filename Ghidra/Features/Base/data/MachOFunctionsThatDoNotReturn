@@ -16,6 +16,8 @@ Unwind_SjLj_Resume
 assert_rtn
 pthread_exit
 errx
+abort_message
+clang_call_terminate
 ZL11unreachablePKc
 ZN5swift10fatalErrorEjPKcz
 ZN5swift24swift_abortRetainUnownedEPKv
@@ -31,3 +33,5 @@ ZNKSt3__120__vector_base_commonILb1EE20__throw_length_errorEv
 ZNKSt3__121__basic_string_commonILb1EE20__throw_length_errorEv
 T0s9_abstracts5NeverOs12StaticStringV4file_Su4linetF
 ZN5swift24swift_dynamicCastFailureEPKvPKcS1_S3_S3_
+ZSt11__terminatePFvvE
+ZSt12__unexpectedPFvvE

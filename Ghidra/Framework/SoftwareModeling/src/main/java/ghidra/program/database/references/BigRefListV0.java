@@ -390,7 +390,7 @@ class BigRefListV0 extends RefList {
 			if (maxLevel < level) {
 				maxLevel = level;
 			}
-			if (level > currentRefLevel) {
+			if (level >= currentRefLevel) {
 				return level;
 			}
 		}

@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <compiler_spec>
+  <data_organization>
+     <absolute_max_alignment value="0" />
+     <machine_alignment value="2" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="4" />
+     <pointer_size value="8" />
+     <wchar_size value="4" />
+     <short_size value="2" />
+     <integer_size value="4" />
+     <long_size value="4" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="8" />
+     <long_double_size value="12" />
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="4" />
+          <entry size="8" alignment="4" />
+          <entry size="16" alignment="4" />
+     </size_alignment_map>
+  </data_organization>
   <global>
     <range space="ram"/>
   </global>
@@ -8,6 +30,30 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
+        <pentry minsize="16" maxsize="16" metatype="float">
+          <register name="fq0"/>
+        </pentry>
+        <pentry minsize="16" maxsize="16" metatype="float">
+          <register name="fq4"/>
+        </pentry>
+        <pentry minsize="16" maxsize="16" metatype="float">
+          <register name="fq8"/>
+        </pentry>
+        <pentry minsize="16" maxsize="16" metatype="float">
+          <register name="fq12"/>
+        </pentry>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="fd0"/>
+        </pentry>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="fd2"/>
+        </pentry>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="fd4"/>
+        </pentry>
+        <pentry minsize="4" maxsize="8" metatype="float">
+          <register name="fd6"/>
+        </pentry>
         <pentry minsize="1" maxsize="8">
           <register name="o0"/>
         </pentry>
@@ -27,10 +73,19 @@
           <register name="o5"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="8">
-          <addr offset="8" space="stack"/>
+          <addr offset="0x8af" space="stack"/>   <!-- Big offset is due to SPARC 64-bit "stack bias" -->
         </pentry>
       </input>
       <output>
+        <pentry minsize="16" maxsize="16" metatype="float">
+          <register name="fq0"/>
+        </pentry>
+        <pentry minsize="8" maxsize="8" metatype="float">
+          <register name="fd0"/>
+        </pentry>
+        <pentry minsize="4" maxsize="4" metatype="float">
+          <register name="fs0"/>
+        </pentry>
         <pentry minsize="1" maxsize="8">
           <register name="o0"/>
         </pentry>
@@ -63,6 +118,10 @@
         <register name="sp"/>
         <register name="didrestore"/>
       </unaffected>
+      <localrange>
+        <range space="stack" first="0xfff0bdc1" last="0xffffffff"/>
+        <range space="stack" first="0x0" last="0x8ae"/>   <!-- Stack bias of 7FF + 0xb0 window size -->
+      </localrange>
     </prototype>
   </default_proto>
   
@@ -87,7 +146,7 @@
           <register name="g6"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="8">
-          <addr offset="8" space="stack"/>
+           <addr offset="0x8af" space="stack"/>   <!-- Big offset is due to SPARC 64-bit "stack bias" -->
         </pentry>
       </input>
       <output>
@@ -123,5 +182,9 @@
         <register name="sp"/>
         <register name="didrestore"/>
       </unaffected>
+      <localrange>
+        <range space="stack" first="0xfff0bdc1" last="0xffffffff"/>
+        <range space="stack" first="0x0" last="0x8ae"/>   <!-- Stack bias of 7FF + 0xb0 window size -->
+      </localrange>
     </prototype>
 </compiler_spec>

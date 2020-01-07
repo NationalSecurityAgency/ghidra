@@ -23,6 +23,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
+import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -34,16 +35,14 @@ import ghidra.program.util.FieldNameFieldLocation;
 import ghidra.program.util.ProgramLocation;
 
 /**
-  *  Generates Data Field name Fields.
+  *  Generates Data Field (structure field names and array indexes) name Fields.
   */
 public class FieldNameFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Field Name";
 
-	private final static String GROUP_TITLE = FIELD_NAME;
-
-	public final static String ARRAY_INDEX_FORMAT_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Array Index Format";
+	public final static String ARRAY_INDEX_FORMAT_NAME =
+		FormatManager.ARRAY_OPTIONS_GROUP + Options.DELIMITER + "Array Index Format";
 
 	public static enum IndexFormat {
 
@@ -62,9 +61,6 @@ public class FieldNameFieldFactory extends FieldFactory {
 
 	private IndexFormat format;
 
-	/**
-	 * Default constructor
-	 */
 	public FieldNameFieldFactory() {
 		super(FIELD_NAME);
 	}
@@ -72,16 +68,16 @@ public class FieldNameFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	private FieldNameFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-		fieldOptions.registerOption(ARRAY_INDEX_FORMAT_MSG, IndexFormat.decimal, null,
-			"Hex or Decimal field offsets");
-		format = fieldOptions.getEnum(ARRAY_INDEX_FORMAT_MSG, IndexFormat.decimal);
+		fieldOptions.registerOption(ARRAY_INDEX_FORMAT_NAME, IndexFormat.decimal, null,
+			"Hex or Decimal field offsets for arrays");
+		format = fieldOptions.getEnum(ARRAY_INDEX_FORMAT_NAME, IndexFormat.decimal);
 	}
 
 	private String getFieldName(Data data) {
@@ -94,25 +90,19 @@ public class FieldNameFieldFactory extends FieldFactory {
 		return data.getFieldName();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#fieldOptionsChanged(ghidra.framework.options.ToolOptions, java.lang.String, java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		super.fieldOptionsChanged(options, optionName, oldValue, newValue);
 
 		if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
-			if (optionName.equals(ARRAY_INDEX_FORMAT_MSG)) {
+			if (optionName.equals(ARRAY_INDEX_FORMAT_NAME)) {
 				format = (IndexFormat) newValue;
 				model.update();
 			}
 		}
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getField(ProxyObj, int)
-	 */
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
 		Object obj = proxy.getObject();
@@ -132,9 +122,6 @@ public class FieldNameFieldFactory extends FieldFactory {
 			width, hlProvider);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
@@ -146,9 +133,6 @@ public class FieldNameFieldFactory extends FieldFactory {
 			data.getComponentPath(), getFieldName(data), col);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
-	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation programLoc) {
@@ -163,9 +147,6 @@ public class FieldNameFieldFactory extends FieldFactory {
 
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#acceptsType(int, java.lang.Class)
-	 */
 	@Override
 	public boolean acceptsType(int category, Class<?> proxyObjectClass) {
 		if (!CodeUnit.class.isAssignableFrom(proxyObjectClass)) {
@@ -176,13 +157,10 @@ public class FieldNameFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FieldNameFieldFactory(formatModel, provider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FieldNameFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
 	@Override
 	public Color getDefaultColor() {
 		return OptionsGui.FIELD_NAME.getDefaultColor();

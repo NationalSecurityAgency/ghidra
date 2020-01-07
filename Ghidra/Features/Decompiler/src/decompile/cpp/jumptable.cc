@@ -419,12 +419,13 @@ int4 JumpBasic::getStride(Varnode *vn)
 
 {
   uintb mask = vn->getNZMask();
+  if ((mask & 0x3f)==0)		// Limit the maximum stride we can return
+    return 32;
   int4 stride = 1;
   while((mask&1)==0) {
     mask >>= 1;
     stride <<= 1;
   }
-  if (stride > 32) return 1;
   return stride;
 }
 

@@ -182,7 +182,7 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				value = symbolValue + dotgot + addend - offset;
 				memory.setInt(relocationAddress, (int) value);
 				break;
-				
+
 			case X86_64_ElfRelocationConstants.R_X86_64_RELATIVE:
 				// word64 for LP64 and specifies word32 for ILP32,
 				// we assume LP64 only.  We probably need a hybrid
@@ -191,14 +191,13 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				// dl_machine.h
 				// value = (Elf64_64Addr) map->l_addr + reloc->r_addend
 				appliedSymbol = false; // symbol not used, symbolIndex of 0 expected
-				long base = program.getImageBase().getAddressableWordOffset();
+				long imageBaseAdjustment = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 				if (elf.isPreLinked()) {
 					// adjust prelinked value that is already in memory
-					value = memory.getLong(relocationAddress) +
-						elfRelocationContext.getImageBaseWordAdjustmentOffset();
+					value = memory.getLong(relocationAddress) + imageBaseAdjustment;
 				}
 				else {
-					value = base + addend;
+					value = addend + imageBaseAdjustment;
 				}
 				memory.setLong(relocationAddress, value);
 				break;

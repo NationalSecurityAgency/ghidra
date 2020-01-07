@@ -55,8 +55,9 @@ class VarKeyRecordNode extends VarKeyNode {
 	 * Construct an existing variable-length-key record leaf node.
 	 * @param nodeMgr table node manager instance
 	 * @param buf node buffer
+	 * @throws IOException thrown if IO error occurs
 	 */
-	VarKeyRecordNode(NodeMgr nodeMgr, DataBuffer buf) {
+	VarKeyRecordNode(NodeMgr nodeMgr, DataBuffer buf) throws IOException {
 		super(nodeMgr, buf);
 	}
 

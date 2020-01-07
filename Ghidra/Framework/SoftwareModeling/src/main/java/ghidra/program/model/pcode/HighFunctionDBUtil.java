@@ -300,12 +300,9 @@ public class HighFunctionDBUtil {
 	 * database which conflict with this variable and return
 	 * one of them for re-use.  The returned variable still
 	 * exists within the function at the same first-use-offset.
-	 * @throws InvalidInputException
-	 * @returns variable with conflicting storage or null, all
-	 * aspects of variable returned should be reset (i.e., name, datatype and storage)
+	 * @returns existing variable with identical storage and first-use offset or null
 	 */
-	private static Variable clearConflictingLocalVariables(HighLocal local)
-			throws InvalidInputException {
+	private static Variable clearConflictingLocalVariables(HighLocal local) {
 
 		if (local instanceof HighParam) {
 			throw new IllegalArgumentException();
@@ -344,10 +341,7 @@ public class HighFunctionDBUtil {
 			VariableStorage otherStorage = otherVar.getVariableStorage();
 
 			if (otherStorage.intersects(storage)) {
-				if (matchingVariable == null || otherStorage.equals(storage)) {
-					if (matchingVariable != null) {
-						func.removeVariable(matchingVariable);
-					}
+				if (matchingVariable == null && otherStorage.equals(storage)) {
 					matchingVariable = otherVar;
 					continue;
 				}
@@ -359,12 +353,13 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
-	 * Get database parameter which corresponds to HighParam committing all parameters to
-	 * database if necessary
-	 * @param param
-	 * @return matching parameter or null if not found
-	 * @throws DuplicateNameException
-	 * @throws InvalidInputException
+	 * Get database parameter which corresponds to HighParam, where we anticipate that
+	 * the parameter will be modified to match the HighParam. The entire prototype is
+	 * committed to the database if necessary. An exception is thrown if a modifiable parameter
+	 * can't be found/created.
+	 * @param param is the HighParam describing the desired function parameter
+	 * @return the matching parameter that can be modified
+	 * @throws InvalidInputException if the desired parameter cannot be modified
 	 */
 	private static Parameter getDatabaseParameter(HighParam param) throws InvalidInputException {
 
@@ -373,6 +368,12 @@ public class HighFunctionDBUtil {
 
 		int slot = param.getSlot();
 		Parameter[] parameters = function.getParameters();
+		if (slot < parameters.length) {
+			if (parameters[slot].isAutoParameter()) {
+				throw new InvalidInputException(
+					"Cannot modify auto-parameter: " + parameters[slot].getName());
+			}
+		}
 		if (slot >= parameters.length ||
 			!parameters[slot].getVariableStorage().equals(param.getStorage())) {
 			try {
@@ -453,7 +454,7 @@ public class HighFunctionDBUtil {
 			Variable var = clearConflictingLocalVariables(local);
 			if (dataType == null) {
 				if (var != null) {
-					dataType = var.getDataType();	// Use preexisting datatype
+					dataType = var.getDataType();	// Use preexisting datatype if it fits in desired storage
 				}
 				else {
 					dataType = Undefined.getUndefinedDataType(variable.getSize());

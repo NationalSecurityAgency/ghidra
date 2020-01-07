@@ -41,26 +41,32 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public byte getByte(long offset) throws IOException {
-		return buf.getByte((int) (offset - startingOffset));
+	public byte getByte(long offsetInMemBlock) throws IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		return buf.getByte((int) offsetInSubBlock);
 	}
 
 	@Override
-	public int getBytes(long offset, byte[] b, int off, int len) throws IOException {
-		len = Math.min(len, (int) (length - (offset - startingOffset)));
-		buf.get((int) (offset - startingOffset), b, off, len);
+	public int getBytes(long offsetInMemBlock, byte[] b, int off, int len) throws IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		long available = subBlockLength - offsetInSubBlock;
+		len = (int) Math.min(len, available);
+		buf.get((int) offsetInSubBlock, b, off, len);
 		return len;
 	}
 
 	@Override
-	public void putByte(long offset, byte b) throws IOException {
-		buf.putByte((int) (offset - startingOffset), b);
+	public void putByte(long offsetInMemBlock, byte b) throws IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		buf.putByte((int) offsetInSubBlock, b);
 	}
 
 	@Override
-	public int putBytes(long offset, byte[] b, int off, int len) throws IOException {
-		len = Math.min(len, (int) (length - offset - startingOffset));
-		buf.put((int) (offset - startingOffset), b, off, len);
+	public int putBytes(long offsetInMemBlock, byte[] b, int off, int len) throws IOException {
+		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
+		long available = subBlockLength - offsetInSubBlock;
+		len = (int) Math.min(len, available);
+		buf.put((int) offsetInSubBlock, b, off, len);
 		return len;
 	}
 
@@ -76,11 +82,11 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 			return false;
 		}
 		BufferSubMemoryBlock other = (BufferSubMemoryBlock) block;
-		if (other.length + length > Memory.GBYTE) {
+		if (other.subBlockLength + subBlockLength > Memory.GBYTE) {
 			return false;
 		}
 		buf.append(other.buf);
-		setLength(length + other.length);
+		setLength(subBlockLength + other.subBlockLength);
 		adapter.deleteSubBlock(other.record.getKey());
 		return true;
 	}
@@ -97,10 +103,10 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 	@Override
 	protected SubMemoryBlock split(long memBlockOffset) throws IOException {
 		// convert from offset in block to offset in this sub block
-		int offset = (int) (memBlockOffset - startingOffset);
-		long newLength = length - offset;
-		length = offset;
-		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, length);
+		int offset = (int) (memBlockOffset - subBlockOffset);
+		long newLength = subBlockLength - offset;
+		subBlockLength = offset;
+		record.setLongValue(MemoryMapDBAdapter.SUB_LENGTH_COL, subBlockLength);
 		adapter.updateSubBlockRecord(record);
 
 		DBBuffer split = buf.split(offset);
@@ -122,8 +128,7 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 			long size) {
 		long sourceId = -buf.getId(); 	// buffers use negative id values; FileBytes use positive id values.
 		ByteSourceRange bsRange =
-			new ByteSourceRange(block, start, size, sourceId, memBlockOffset - startingOffset);
+			new ByteSourceRange(block, start, size, sourceId, memBlockOffset - subBlockOffset);
 		return new ByteSourceRangeList(bsRange);
 	}
 }
-

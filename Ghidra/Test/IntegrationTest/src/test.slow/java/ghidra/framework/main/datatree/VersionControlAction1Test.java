@@ -27,6 +27,7 @@ import javax.swing.*;
 import org.junit.Assert;
 import org.junit.Test;
 
+import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import docking.widgets.table.*;
@@ -559,25 +560,17 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		FindCheckoutsTableModel model = (FindCheckoutsTableModel) table.getModel();
 
 		assertEquals(2, model.getRowCount());
-
 		assertEquals(4, model.getColumnCount());
 
-		JButton checkInButton =
-			findButtonByIcon(dialog, ResourceManager.loadImage("images/vcCheckIn.png"));
-
-		assertNotNull(checkInButton);
-
-		JButton undoCheckoutButton =
-			findButtonByIcon(dialog, ResourceManager.loadImage("images/vcUndoCheckOut.png"));
-		assertNotNull(undoCheckoutButton);
-
-		assertTrue(!checkInButton.isEnabled());
-		assertTrue(!undoCheckoutButton.isEnabled());
+		DockingActionIf undoCheckoutAction = getAction("UndoCheckOut");
+		DockingActionIf checkInAction = getAction("CheckIn");
+		assertFalse(checkInAction.isEnabledForContext(dialog.getActionContext(null)));
+		assertFalse(undoCheckoutAction.isEnabledForContext(dialog.getActionContext(null)));
 
 		// make a selection in the table
 		selectInTable(table, node);
-		assertTrue(checkInButton.isEnabled());
-		assertTrue(undoCheckoutButton.isEnabled());
+		assertFalse(checkInAction.isEnabledForContext(dialog.getActionContext(null)));
+		assertTrue(undoCheckoutAction.isEnabledForContext(dialog.getActionContext(null)));
 
 		CheckoutInfo checkoutInfo = model.getRowObject(0);
 		DomainFile file = checkoutInfo.getFile();
@@ -611,11 +604,10 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 
 		selectInTable(table, node);
 
-		JButton undoCheckoutButton =
-			findButtonByIcon(dialog, ResourceManager.loadImage("images/vcUndoCheckOut.png"));
-		assertNotNull(undoCheckoutButton);
-		assertTrue(undoCheckoutButton.isEnabled());
-		pressButton(undoCheckoutButton);
+		DockingActionIf undoCheckoutAction = getAction("UndoCheckOut");
+		ActionContext actionContext = dialog.getActionContext(null);
+		assertTrue(undoCheckoutAction.isEnabledForContext(actionContext));
+		performAction(undoCheckoutAction, actionContext, true);
 
 		waitForBusyTable(table);
 		assertEquals(1, model.getRowCount());
@@ -651,11 +643,10 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 			selectionModel.setSelectionInterval(0, 1); // both rows
 		});
 
-		JButton undoCheckoutButton =
-			findButtonByIcon(dialog, ResourceManager.loadImage("images/vcUndoCheckOut.png"));
-		assertNotNull(undoCheckoutButton);
-		assertTrue(undoCheckoutButton.isEnabled());
-		pressButton(undoCheckoutButton);
+		DockingActionIf undoCheckoutAction = getAction("UndoCheckOut");
+		ActionContext context = dialog.getActionContext(null);
+		assertTrue(undoCheckoutAction.isEnabledForContext(context));
+		performAction(undoCheckoutAction, context, true);
 
 		waitForBusyTable(table);
 		assertEquals(0, model.getRowCount());
