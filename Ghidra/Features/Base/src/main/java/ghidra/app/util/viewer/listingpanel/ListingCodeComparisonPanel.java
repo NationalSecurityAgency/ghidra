@@ -195,6 +195,11 @@ public class ListingCodeComparisonPanel
 
 		repaint(); // Refresh the highlights. (byte, mnemonic, & operand)
 
+		if (programs[LEFT] == null) {
+			// not data is showing; no widgets to update
+			return;
+		}
+
 		// Refresh the area markers for Diff Code Units and Unmatched Code Units.
 		Color unmatchedCodeUnitsBackgroundColor =
 			comparisonOptions.getUnmatchedCodeUnitsBackgroundColor();
@@ -1518,8 +1523,9 @@ public class ListingCodeComparisonPanel
 			comparisonOptions.getUnmatchedCodeUnitsBackgroundColor();
 		if (programs[LEFT] != null) {
 			AddressIndexMap indexMap = listingPanels[LEFT].getAddressIndexMap();
-			listingPanels[LEFT].getFieldPanel().setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMap));
+			listingPanels[LEFT].getFieldPanel()
+					.setBackgroundColorModel(
+						new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMap));
 			markerManagers[LEFT].setProgram(programs[LEFT]);
 			unmatchedCodeMarkers[LEFT] =
 				markerManagers[LEFT].createAreaMarker("Listing1 Unmatched Code",
@@ -1532,8 +1538,10 @@ public class ListingCodeComparisonPanel
 		}
 		if (programs[RIGHT] != null) {
 			AddressIndexMap rightIndexMap = listingPanels[RIGHT].getAddressIndexMap();
-			listingPanels[RIGHT].getFieldPanel().setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerManagers[RIGHT], rightIndexMap));
+			listingPanels[RIGHT].getFieldPanel()
+					.setBackgroundColorModel(
+						new MarkerServiceBackgroundColorModel(markerManagers[RIGHT],
+							rightIndexMap));
 			markerManagers[RIGHT].setProgram(programs[RIGHT]);
 			unmatchedCodeMarkers[RIGHT] =
 				markerManagers[RIGHT].createAreaMarker("Listing2 Unmatched Code",
@@ -1633,8 +1641,9 @@ public class ListingCodeComparisonPanel
 
 		indexMaps[LEFT] = new AddressIndexMap(addressSets[LEFT]);
 		markerManagers[LEFT].getOverviewProvider().setAddressIndexMap(indexMaps[LEFT]);
-		listingPanels[LEFT].getFieldPanel().setBackgroundColorModel(
-			new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMaps[LEFT]));
+		listingPanels[LEFT].getFieldPanel()
+				.setBackgroundColorModel(
+					new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMaps[LEFT]));
 	}
 
 	private void updateRightAddressSet(Function rightFunction) {
@@ -1649,8 +1658,9 @@ public class ListingCodeComparisonPanel
 
 		indexMaps[RIGHT] = new AddressIndexMap(addressSets[RIGHT]);
 		markerManagers[RIGHT].getOverviewProvider().setAddressIndexMap(indexMaps[RIGHT]);
-		listingPanels[RIGHT].getFieldPanel().setBackgroundColorModel(
-			new MarkerServiceBackgroundColorModel(markerManagers[RIGHT], indexMaps[RIGHT]));
+		listingPanels[RIGHT].getFieldPanel()
+				.setBackgroundColorModel(
+					new MarkerServiceBackgroundColorModel(markerManagers[RIGHT], indexMaps[RIGHT]));
 	}
 
 	@Override
