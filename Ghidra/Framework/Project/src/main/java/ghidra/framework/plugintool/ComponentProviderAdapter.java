@@ -46,7 +46,8 @@ public abstract class ComponentProviderAdapter extends ComponentProvider {
 	 * @param tool the plugin tool.
 	 * @param name The providers name.  This is used to group similar providers into a tab within
 	 *        the same window.
-	 * @param owner The owner of this provider, usually a plugin name.
+	 * @param owner The owner of this provider, usually a plugin name
+	 * @param contextType the type of context supported by this provider; may be null
 	 */
 	public ComponentProviderAdapter(PluginTool tool, String name, String owner,
 			Class<?> contextType) {

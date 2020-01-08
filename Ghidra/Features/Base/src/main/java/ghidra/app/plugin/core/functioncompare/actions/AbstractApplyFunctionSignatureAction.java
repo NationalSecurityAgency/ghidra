@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.functioncompare;
+package ghidra.app.plugin.core.functioncompare.actions;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -30,10 +30,11 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Action that applies the signature of the function in the currently active side of a 
- * code comparison panel to the function in the other side of the panel.
- * <br>Each CodeComparisonPanel can extend this class in order to provide this action
- * using its context.
+ * Applies the signature of the function in the currently active side of a 
+ * code comparison panel to the function in the other side of the panel
+ * <p>
+ * Each CodeComparisonPanel can extend this class in order to provide this action
+ * using its context
  */
 public abstract class AbstractApplyFunctionSignatureAction extends DockingAction {
 
@@ -42,9 +43,9 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 	private static final String ACTION_NAME = "Apply Function Signature To Other Side";
 
 	/**
-	 * Constructor for the action that applies a function signature from one side of a code
-	 * comparison panel to the other.
-	 * @param owner the owner of this action.
+	 * Constructor
+	 * 
+	 * @param owner the owner of this action
 	 */
 	public AbstractApplyFunctionSignatureAction(String owner) {
 		super(ACTION_NAME, owner);
@@ -97,13 +98,25 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 		}
 	}
 
+	/**
+	 * Returns true if the comparison panel opposite the one with focus,
+	 * is read-only
+	 * <p>
+	 * eg: if the right-side panel has focus, and the left-side panel is 
+	 * read-only, this will return true
+	 *  
+	 * @param codeComparisonPanel the comparison panel
+	 * @return true if the non-focused panel is read-only
+	 */
 	protected boolean hasReadOnlyNonFocusedSide(
 			CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel) {
 		Function leftFunction = codeComparisonPanel.getLeftFunction();
 		Function rightFunction = codeComparisonPanel.getRightFunction();
+
 		if (leftFunction == null || rightFunction == null) {
 			return false; // Doesn't have a function on both sides.
 		}
+
 		boolean leftHasFocus = codeComparisonPanel.leftPanelHasFocus();
 		Program leftProgram = leftFunction.getProgram();
 		Program rightProgram = rightFunction.getProgram();
@@ -111,11 +124,22 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 			(leftHasFocus && rightProgram.getDomainFile().isReadOnly());
 	}
 
+	/**
+	 * Attempts to change the signature of a function to that of another
+	 * function
+	 * 
+	 * @param provider the parent component provider 
+	 * @param destinationFunction the function to change
+	 * @param sourceFunction the function to copy
+	 * @return true if the operation was successful
+	 */
 	protected boolean updateFunction(ComponentProvider provider, Function destinationFunction,
 			Function sourceFunction) {
+
 		Program program = destinationFunction.getProgram();
 		int txID = program.startTransaction(ACTION_NAME);
 		boolean commit = false;
+
 		try {
 			FunctionUtility.updateFunction(destinationFunction, sourceFunction);
 			commit = true;
@@ -129,6 +153,7 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 		finally {
 			program.endTransaction(txID, commit);
 		}
+
 		return commit;
 	}
 }

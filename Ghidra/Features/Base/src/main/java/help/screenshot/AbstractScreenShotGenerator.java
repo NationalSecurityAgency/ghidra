@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -35,6 +35,7 @@ import org.junit.*;
 
 import docking.*;
 import docking.action.DockingActionIf;
+import docking.action.ToolBarData;
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.options.editor.OptionsDialog;
 import docking.tool.ToolConstants;
@@ -77,6 +78,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.AssertException;
+import resources.ResourceManager;
 
 public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIntegrationTest {
 
@@ -588,6 +590,21 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 			componentProvider.setVisible(false);
 		}
 		waitForPostedSwingRunnables();
+	}
+
+	public void captureActionIcon(String actionName) {
+		waitForSwing();
+		DockingActionIf action = getAction(tool, actionName);
+		ToolBarData tbData = action.getToolBarData();
+		Icon icon = tbData.getIcon();
+		captureIcon(icon);
+	}
+
+	public void captureIcon(Icon icon) {
+		runSwing(() -> {
+			ImageIcon imageIcon = ResourceManager.getImageIcon(icon);
+			image = imageIcon.getImage();
+		});
 	}
 
 	public void captureDialog() {

@@ -29,15 +29,15 @@ public class FunctionWindowPluginScreenShots extends GhidraScreenShotGenerator {
 		super();
 	}
 
-@Test
-    public void testFunctionWindow() {
+	@Test
+	public void testFunctionWindow() {
 		showProvider(FunctionWindowProvider.class);
 		setColumnSizes();
 		captureIsolatedProvider(FunctionWindowProvider.class, 700, 300);
 	}
 
 	private void setColumnSizes() {
-		// note: these values are rough values found my trial-and-error
+		// note: these values are rough values found by trial-and-error
 		FunctionWindowProvider provider = getProvider(FunctionWindowProvider.class);
 		final GTable table = (GTable) getInstanceField("functionTable", provider);
 		runSwing(new Runnable() {
@@ -48,14 +48,17 @@ public class FunctionWindowPluginScreenShots extends GhidraScreenShotGenerator {
 				for (int i = 0; i < columnCount; i++) {
 					TableColumn column = columnModel.getColumn(i);
 					Object headerValue = column.getHeaderValue();
-					if ("Label".equals(headerValue)) {
-						column.setPreferredWidth(50);
+					if ("Name".equals(headerValue)) {
+						column.setPreferredWidth(85);
 					}
 					else if ("Location".equals(headerValue)) {
-						column.setPreferredWidth(30);
+						column.setPreferredWidth(70);
 					}
 					else if ("Function Signature".equals(headerValue)) {
 						column.setPreferredWidth(400);
+					}
+					else if ("Function Size".equals(headerValue)) {
+						column.setPreferredWidth(25);
 					}
 				}
 			}
