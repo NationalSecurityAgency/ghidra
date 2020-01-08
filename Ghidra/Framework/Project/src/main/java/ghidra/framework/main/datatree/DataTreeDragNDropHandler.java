@@ -33,8 +33,8 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 	private static Map<DataFlavor, DataTreeFlavorHandler> activeProjectDropFlavorHandlerMap =
 		new HashMap<>();
 	public static DataFlavor localDomainFileTreeFlavor = createLocalTreeNodeFlavor();
-	public static DataFlavor localDomainFileFlavor = createLocalTreeFlavor();
 
+	public static DataFlavor localDomainFileFlavor = createLocalTreeFlavor();
 	public static DataFlavor[] allSupportedFlavors =
 		{ localDomainFileTreeFlavor, localDomainFileFlavor, DataFlavor.stringFlavor };
 
@@ -152,7 +152,7 @@ public class DataTreeDragNDropHandler implements GTreeDragNDropHandler {
 					.map(node -> ((DomainFileNode) node).getDomainFile())
 					.collect(Collectors.toList());
 		}
-		else if (flavor == DataFlavor.stringFlavor) {
+		else if (flavor.equals(DataFlavor.stringFlavor)) {
 			// allow users to copy the names of nodes
 			return transferNodes.stream()
 					.map(node -> node.getName())
