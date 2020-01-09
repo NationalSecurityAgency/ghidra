@@ -152,7 +152,7 @@ public class CommentUtils {
 			AttributedString prototype, int row) {
 
 		// tabs are converted here instead of the GUI dialogs now
-		text = StringUtilities.convertTabsToSpaces(text, 8);
+		text = StringUtilities.convertTabsToSpaces(text);
 
 		int column = 0;
 		List<Object> parts =

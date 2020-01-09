@@ -58,7 +58,9 @@ public class CommentFieldMouseHandler implements FieldMouseHandlerExtension {
 		}
 
 		String clickedWord =
-			StringUtilities.findWord(comments[commentRow], column, GoToService.VALID_GOTO_CHARS);
+			StringUtilities.findWord(StringUtilities.convertTabsToSpaces(comments[commentRow]),
+				column, GoToService.VALID_GOTO_CHARS);
+
 		return checkWord(clickedWord, serviceProvider, sourceNavigatable);
 	}
 

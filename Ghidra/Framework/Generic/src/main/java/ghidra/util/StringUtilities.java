@@ -83,6 +83,9 @@ public class StringUtilities {
 	public static final int UNICODE_LE16_BYTE_ORDER_MARK = 0x0____FFFE;
 	public static final int UNICODE_LE32_BYTE_ORDER_MARK = 0xFFFE_0000;
 
+	// This is Java's default rendered size of a tab (in spaces) 
+	public static final int DEFAULT_TAB_SIZE = 8;
+
 	private StringUtilities() {
 		// utility class; can't create
 	}
@@ -439,6 +442,19 @@ public class StringUtilities {
 		return true;
 	}
 
+
+	/**
+	 * Convert tabs in the given string to spaces using
+	 * a default tab width of 8 spaces.
+	 *
+	 * @param str
+	 *            string containing tabs
+	 * @return string that has spaces for tabs
+	 */
+	public static String convertTabsToSpaces(String str) {
+		return convertTabsToSpaces(str, DEFAULT_TAB_SIZE);
+	}
+
 	/**
 	 * Convert tabs in the given string to spaces.
 	 *
@@ -631,7 +647,9 @@ public class StringUtilities {
 		return location.getWord();
 	}
 
+
 	public static WordLocation findWordLocation(String s, int index, char[] charsToAllow) {
+
 		int len = s.length();
 		if (index < 0 || index >= len) {
 			return WordLocation.empty(s);
