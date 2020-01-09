@@ -766,5 +766,10 @@ public class KeyBindingsPanel extends JPanel {
 		public int getRowCount() {
 			return tableActions.size();
 		}
+
+		@Override
+		public Class<?> getColumnClass(int columnIndex) {
+			return String.class;
+		}
 	}
 }
