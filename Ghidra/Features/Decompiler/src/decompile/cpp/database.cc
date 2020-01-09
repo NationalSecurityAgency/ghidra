@@ -1641,6 +1641,45 @@ Symbol *Scope::addDynamicSymbol(const string &nm,Datatype *ct,const Address &cad
   return sym;
 }
 
+/// Create default name given information in the Symbol and possibly a representative Varnode.
+/// This method extracts the crucial properties and then uses the buildVariableName method to
+/// construct the actual name.
+/// \param sym is the given Symbol to name
+/// \param base is an index (which may get updated) used to uniquify the name
+/// \param vn is an optional (may be null) Varnode representative of the Symbol
+/// \return the default name
+string Scope::buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const
+
+{
+  if (vn != (Varnode *)0 && !vn->isConstant()) {
+    Address usepoint;
+    if (!vn->isAddrTied() && fd != (Funcdata *)0)
+      usepoint = vn->getUsePoint(*fd);
+    HighVariable *high = vn->getHigh();
+    if (sym->getCategory() == 0 || high->isInput()) {
+      int4 index = -1;
+      if (sym->getCategory()==0)
+	index = sym->getCategoryIndex()+1;
+      return buildVariableName(vn->getAddr(),usepoint,sym->getType(),index,vn->getFlags() | Varnode::input);
+    }
+    return buildVariableName(vn->getAddr(),usepoint,sym->getType(),base,vn->getFlags());
+  }
+  if (sym->numEntries() != 0) {
+    SymbolEntry *entry = sym->getMapEntry(0);
+    Address addr = entry->getAddr();
+    Address usepoint = entry->getFirstUseAddress();
+    uint4 flags = usepoint.isInvalid() ? Varnode::addrtied : 0;
+    if (sym->getCategory() == 0) {	// If this is a parameter
+	flags |= Varnode::input;
+	int4 index = sym->getCategoryIndex() + 1;
+	return buildVariableName(addr, usepoint, sym->getType(), index, flags);
+    }
+    return buildVariableName(addr, usepoint, sym->getType(), base, flags);
+  }
+  // Should never reach here
+  return buildVariableName(Address(), Address(), sym->getType(), base, 0);
+}
+
 /// \brief Is the given memory range marked as \e read-only
 ///
 /// Check for Symbols relative to \b this Scope that are marked as \e read-only,
@@ -1943,17 +1982,10 @@ void ScopeInternal::clearUnlockedCategory(int4 cat)
   }
 }
 
-void ScopeInternal::removeSymbol(Symbol *symbol)
+void ScopeInternal::removeSymbolMappings(Symbol *symbol)
 
 {
   vector<list<SymbolEntry>::iterator>::iterator iter;
-
-  if (symbol->category >= 0) {
-    vector<Symbol *> &list(category[symbol->category]);
-    list[symbol->catindex] = (Symbol *)0;
-    while((!list.empty())&&(list.back() == (Symbol *)0))
-      list.pop_back();
-  }
 
   if (symbol->wholeCount > 1)
     multiEntrySet.erase(symbol);
@@ -1967,6 +1999,20 @@ void ScopeInternal::removeSymbol(Symbol *symbol)
       rangemap->erase( *iter );
     }
   }
+  symbol->wholeCount = 0;
+  symbol->mapentry.clear();
+}
+
+void ScopeInternal::removeSymbol(Symbol *symbol)
+
+{
+  if (symbol->category >= 0) {
+    vector<Symbol *> &list(category[symbol->category]);
+    list[symbol->catindex] = (Symbol *)0;
+    while((!list.empty())&&(list.back() == (Symbol *)0))
+      list.pop_back();
+  }
+  removeSymbolMappings(symbol);
   nametree.erase(symbol);
   delete symbol;
 }
@@ -2652,6 +2698,26 @@ void ScopeInternal::setCategory(Symbol *sym,int4 cat,int4 ind)
   while(list.size() <= sym->catindex)
     list.push_back((Symbol *)0);
   list[sym->catindex] = sym;
+}
+
+/// Run through all the symbols whose name is undefined. Build a variable name, uniquify it, and
+/// rename the variable.
+/// \param base is the base index to start at for generating generic names
+void ScopeInternal::assignDefaultNames(int4 &base)
+
+{
+  SymbolNameTree::const_iterator iter;
+
+  Symbol testsym((Scope *)0,"$$undef",(Datatype *)0);
+
+  iter = nametree.upper_bound(&testsym);
+  while(iter != nametree.end()) {
+    Symbol *sym = *iter;
+    if (!sym->isNameUndefined()) break;
+    ++iter;		// Advance before renaming
+    string nm = buildDefaultName(sym, base, (Varnode *)0);
+    renameSymbol(sym, nm);
+  }
 }
 
 /// Check to make sure the Scope is a \e namespace then remove all

@@ -64,28 +64,24 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 		return storageAddress;
 	}
 
-	public static HighVariable forgeHighVariable(Address addr, DecompilerController controller) {
-		HighVariable res = null;
+	/**
+	 * Find the HighSymbol the decompiler associates with a specific address.
+	 * @param addr is the specific address
+	 * @param controller is the decompiler being queried
+	 * @return the matching symbol or null if no symbol exists
+	 */
+	public static HighSymbol findHighSymbol(Address addr, DecompilerController controller) {
+		HighSymbol highSymbol = null;
 		HighFunction hfunc = controller.getDecompileData().getHighFunction();
 		if (addr.isStackAddress()) {
 			LocalSymbolMap lsym = hfunc.getLocalSymbolMap();
-			HighSymbol hsym = lsym.findLocal(addr, null);
-			if (hsym != null) {
-				res = hsym.getHighVariable();
-			}
+			highSymbol = lsym.findLocal(addr, null);
 		}
 		else {
 			GlobalSymbolMap gsym = hfunc.getGlobalSymbolMap();
-			HighSymbol hsym = gsym.getSymbol(addr);
-			if (hsym != null) {
-				res = hsym.getHighVariable();
-				if (res == null) {
-					Varnode vnrep = new Varnode(addr, hsym.getSize());
-					res = new HighGlobal(hsym, vnrep, null);
-				}
-			}
+			highSymbol = gsym.getSymbol(addr);
 		}
-		return res;
+		return highSymbol;
 	}
 
 	/**
@@ -140,29 +136,28 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 			return true;
 		}
 		HighVariable variable = tokenAtCursor.getHighVariable();
+		HighSymbol highSymbol = null;
 		if (variable == null) {
-			// not sure why variables with an & in front of them have no highVariable
+			// Token may be from a variable reference, in which case we have to dig to find the actual symbol
 			Address storageAddress = getStorageAddress(tokenAtCursor, controller);
 			if (storageAddress == null) {
 				return false;
 			}
-			variable = forgeHighVariable(storageAddress, controller);
-			if (variable == null) {
-				return false;
-			}
+			highSymbol = findHighSymbol(storageAddress, controller);
 		}
-		if (variable.getSymbol() == null) {
+		else {
+			highSymbol = variable.getSymbol();
+		}
+		if (highSymbol == null) {
 			return false;
 		}
-		if (variable instanceof HighLocal) {
-			getPopupMenuData().setMenuItemName("Rename Variable");
-			return true;
-		}
-		else if (variable instanceof HighGlobal) {
+		if (highSymbol.isGlobal()) {
 			getPopupMenuData().setMenuItemName("Rename Global");
-			return true;
 		}
-		return false;
+		else {
+			getPopupMenuData().setMenuItemName("Rename Variable");
+		}
+		return true;
 	}
 
 	@Override
@@ -170,32 +165,35 @@ public class RenameVariableAction extends AbstractDecompilerAction {
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		final ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		HighVariable variable = tokenAtCursor.getHighVariable();
+		HighSymbol highSymbol = null;
 
 		if (variable == null) {
 			if (tokenAtCursor instanceof ClangVariableToken) {
 				Address addr = getStorageAddress(tokenAtCursor, controller);
-				variable = forgeHighVariable(addr, controller);
+				highSymbol = findHighSymbol(addr, controller);
 			}
 		}
-		if (variable instanceof HighLocal) {
-			nameTask =
-				new RenameVariableTask(tool, variable.getSymbol().getName(),
-					controller.getHighFunction(), variable, tokenAtCursor.getVarnode(),
+		else {
+			highSymbol = variable.getSymbol();
+		}
+		if (highSymbol != null) {
+			if (highSymbol.isGlobal()) {
+				Address addr = null;
+				if (highSymbol instanceof HighCodeSymbol) {
+					addr = ((HighCodeSymbol) highSymbol).getStorage().getMinAddress();
+				}
+				if (addr == null || !addr.isMemoryAddress()) {
+					Msg.showError(this, tool.getToolFrame(), "Rename Failed",
+						"Memory storage not found for global variable");
+					return;
+				}
+				nameTask = new RenameGlobalVariableTask(tool, tokenAtCursor.getText(), addr,
+					controller.getProgram());
+			}
+			else {
+				nameTask = new RenameVariableTask(tool, highSymbol, tokenAtCursor.getVarnode(),
 					SourceType.USER_DEFINED);
-		}
-		else if (variable instanceof HighGlobal) {
-			Address addr = null;
-			HighSymbol sym = variable.getSymbol();
-			if (sym instanceof HighCodeSymbol) {
-				addr = ((HighCodeSymbol) sym).getStorage().getMinAddress();
 			}
-			if (addr == null || !addr.isMemoryAddress()) {
-				Msg.showError(this, tool.getToolFrame(), "Rename Failed",
-					"Memory storage not found for global variable");
-				return;
-			}
-			nameTask = new RenameGlobalVariableTask(tool, tokenAtCursor.getText(), addr,
-				controller.getProgram());
 		}
 		else if (tokenAtCursor instanceof ClangFieldToken) {
 			Structure dt = getStructDataType(tokenAtCursor);

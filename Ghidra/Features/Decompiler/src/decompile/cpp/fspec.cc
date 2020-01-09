@@ -2478,14 +2478,7 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
   if (res->sym == (Symbol *)0) {
     if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) != scope)
       usepoint = restricted_usepoint; 
-    string name;
-    if (nm.size()==0) {
-      int4 index = i+1;
-      name = scope->buildVariableName(pieces.addr,usepoint,pieces.type,index,Varnode::input);
-    }
-    else
-      name = nm;
-    res->sym = scope->addSymbol(name,pieces.type,pieces.addr,usepoint)->getSymbol();
+    res->sym = scope->addSymbol(nm,pieces.type,pieces.addr,usepoint)->getSymbol();
     scope->setCategory(res->sym,0,i);
     if ((pieces.flags & (Varnode::indirectstorage|Varnode::hiddenretparm)) != 0)
       scope->setAttribute(res->sym,pieces.flags & (Varnode::indirectstorage|Varnode::hiddenretparm));

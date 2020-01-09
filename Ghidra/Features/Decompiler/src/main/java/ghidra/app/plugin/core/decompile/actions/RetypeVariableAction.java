@@ -124,17 +124,18 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 		return chooserDialog.getUserChosenDataType();
 	}
 
-	private void retypeVariable(HighVariable var, Varnode exactSpot, DataType dt) {
-		HighFunction hfunction = var.getHighFunction();
+	private void retypeSymbol(HighSymbol highSymbol, Varnode exactSpot, DataType dt) {
+		HighFunction hfunction = highSymbol.getHighFunction();
 
-		boolean commitRequired = checkFullCommit(var, hfunction);
+		boolean commitRequired = checkFullCommit(highSymbol, hfunction);
 		if (commitRequired) {
 			exactSpot = null;		// Don't try to split out if commit is required
 		}
 
 		if (exactSpot != null) { // The user pointed at a particular usage, not just the vardecl
 			try {
-				var = hfunction.splitOutMergeGroup(var, exactSpot);
+				HighVariable var = hfunction.splitOutMergeGroup(exactSpot.getHigh(), exactSpot);
+				highSymbol = var.getSymbol();
 			}
 			catch (PcodeException e) {
 				Msg.showError(this, tool.getToolFrame(), "Retype Failed", e.getMessage());
@@ -169,7 +170,7 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 					Msg.showError(this, null, "Parameter Commit Failed", e.getMessage());
 				}
 			}
-			HighFunctionDBUtil.updateDBVariable(var.getSymbol(), null, dt, SourceType.USER_DEFINED);
+			HighFunctionDBUtil.updateDBVariable(highSymbol, null, dt, SourceType.USER_DEFINED);
 			successfulMod = true;
 		}
 		catch (DuplicateNameException e) {
@@ -177,7 +178,7 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 		}
 		catch (InvalidInputException e) {
 			Msg.showError(this, tool.getToolFrame(), "Retype Failed",
-				"Failed to re-type variable '" + var.getName() + "': " + e.getMessage());
+				"Failed to re-type variable '" + highSymbol.getName() + "': " + e.getMessage());
 		}
 		finally {
 			program.endTransaction(transaction, successfulMod);
@@ -272,14 +273,14 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 
 	/**
 	 * Compare the given HighFunction's idea of the prototype with the Function's idea.
-	 * Return true if there is a difference. If a specific parameter is being changed,
-	 * it can be passed in indicating that slot can be skipped during the comparison.
-	 * @param var (if not null) is a specific parameter to skip the check for
+	 * Return true if there is a difference. If a specific symbol is being changed,
+	 * it can be passed in to check whether or not the prototype is being affected.
+	 * @param highSymbol (if not null) is the symbol being modified
 	 * @param hfunction is the given HighFunction
 	 * @return true if there is a difference (and a full commit is required)
 	 */
-	public static boolean checkFullCommit(HighVariable var, HighFunction hfunction) {
-		if ((var != null) && (!(var instanceof HighParam))) {
+	public static boolean checkFullCommit(HighSymbol highSymbol, HighFunction hfunction) {
+		if (highSymbol != null && !highSymbol.isParameter()) {
 			return false;
 		}
 		Function function = hfunction.getFunction();
@@ -333,35 +334,34 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 			return false;
 		}
 		HighVariable variable = tokenAtCursor.getHighVariable();
+		HighSymbol highSymbol = null;
 		if (variable == null) {
 			Address addr = RenameVariableAction.getStorageAddress(tokenAtCursor, controller);
 			if (addr == null) {
 				return false;
 			}
-			variable = RenameVariableAction.forgeHighVariable(addr, controller);
-			if (variable == null) {
-				return false;
-			}
+			highSymbol = RenameVariableAction.findHighSymbol(addr, controller);
 		}
-		if (variable.getSymbol() == null) {
+		else {
+			highSymbol = variable.getSymbol();
+		}
+		if (highSymbol == null) {
 			return false;
 		}
-		if (variable instanceof HighLocal) {
-			getPopupMenuData().setMenuItemName("Retype Variable");
-			return true;
-		}
-		else if (variable instanceof HighGlobal) {
+		if (highSymbol.isGlobal()) {
 			getPopupMenuData().setMenuItemName("Retype Global");
-			return true;
 		}
-		return false;
+		else {
+			getPopupMenuData().setMenuItemName("Retype Variable");
+		}
+		return true;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-		HighVariable variable = null;
+		HighSymbol highSymbol = null;
 		Structure struct = null;
 		DataTypeComponent comp = null;
 
@@ -397,18 +397,21 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 			return;
 		}
 		else {
-			variable = tokenAtCursor.getHighVariable();
+			HighVariable variable = tokenAtCursor.getHighVariable();
 			if (variable == null) {
 				Address addr = RenameVariableAction.getStorageAddress(tokenAtCursor, controller);
 				if (addr == null) {
 					return;
 				}
-				variable = RenameVariableAction.forgeHighVariable(addr, controller);
-				if (variable == null || variable.getSymbol() == null || variable.getOffset() >= 0) {
-					return;
-				}
+				highSymbol = RenameVariableAction.findHighSymbol(addr, controller);
 			}
-			dataType = chooseDataType(variable.getDataType());
+			else {
+				highSymbol = variable.getSymbol();
+			}
+			if (highSymbol == null) {
+				return;
+			}
+			dataType = chooseDataType(highSymbol.getDataType());
 		}
 
 		if (dataType == null) {
@@ -418,7 +421,7 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 			retypeStructVariable(struct, comp, dataType);
 		}
 		else {
-			retypeVariable(variable, tokenAtCursor.getVarnode(), dataType);
+			retypeSymbol(highSymbol, tokenAtCursor.getVarnode(), dataType);
 		}
 	}
 }

@@ -382,7 +382,10 @@ void Varnode::setSymbolEntry(SymbolEntry *entry)
 
 {
   mapentry = entry;
-  setFlags(Varnode::mapped);	// Flags are generally not changed, but we do mark this as mapped
+  uint4 fl = Varnode::mapped;	// Flags are generally not changed, but we do mark this as mapped
+  if (entry->getSymbol()->isNameLocked())
+    fl |= Varnode::namelock;
+  setFlags(fl);
   if (high != (HighVariable *)0)
     high->setSymbol(this);
 }

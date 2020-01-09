@@ -26,7 +26,7 @@ import ghidra.util.exception.InvalidInputException;
 
 public class RenameVariableTask extends RenameTask {
 
-	private HighVariable var;
+	private HighSymbol highSymbol;
 	private Varnode exactSpot;
 	private HighFunction hfunction;
 	private Program program;
@@ -35,13 +35,12 @@ public class RenameVariableTask extends RenameTask {
 	private SourceType srctype;		// Desired source type for the variable being renamed
 	private SourceType signatureSrcType;	// Signature source type of the function (which will be preserved)
 
-	public RenameVariableTask(PluginTool tool, String old, HighFunction hfunc, HighVariable v,
-			Varnode ex, SourceType st) {
-		super(tool, old);
-		var = v;
+	public RenameVariableTask(PluginTool tool, HighSymbol sym, Varnode ex, SourceType st) {
+		super(tool, sym.getName());
+		highSymbol = sym;
 		exactSpot = ex;
-		hfunction = hfunc;
-		function = hfunc.getFunction();
+		hfunction = sym.getHighFunction();
+		function = hfunction.getFunction();
 		program = function.getProgram();
 		srctype = st;
 		signatureSrcType = function.getSignatureSource();
@@ -55,7 +54,7 @@ public class RenameVariableTask extends RenameTask {
 				HighFunctionDBUtil.commitReturnToDatabase(hfunction, signatureSrcType);
 			}
 		}
-		HighFunctionDBUtil.updateDBVariable(var.getSymbol(), newName, null, srctype);
+		HighFunctionDBUtil.updateDBVariable(highSymbol, newName, null, srctype);
 	}
 
 	@Override
@@ -66,21 +65,22 @@ public class RenameVariableTask extends RenameTask {
 			errorMsg = "Duplicate name";
 			return false;
 		}
-		commitRequired = RetypeVariableAction.checkFullCommit(var, hfunction);
+		commitRequired = RetypeVariableAction.checkFullCommit(highSymbol, hfunction);
 		if (commitRequired) {
 			exactSpot = null; // Don't try to split out if we need to commit
 		}
 
-		if (exactSpot != null) { // The user pointed at a particular usage, not just the vardecl
+		if (exactSpot != null && !highSymbol.isNameLocked()) { // The user pointed at a particular usage, not just the vardecl
 			try {
-				var = hfunction.splitOutMergeGroup(var, exactSpot);
+				HighVariable var = hfunction.splitOutMergeGroup(exactSpot.getHigh(), exactSpot);
+				highSymbol = var.getSymbol();
 			}
 			catch (PcodeException e) {
 				errorMsg = "Rename Failed: " + e.getMessage();
 				return false;
 			}
 		}
-		if (var.getSymbol() == null) {
+		if (highSymbol == null) {
 			errorMsg = "Rename Failed: No symbol";
 			return false;
 		}

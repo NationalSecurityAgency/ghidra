@@ -28,10 +28,13 @@ import ghidra.app.decompiler.ClangVariableToken;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.actions.RenameGlobalVariableTask;
+import ghidra.app.plugin.core.decompile.actions.RenameVariableTask;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
 
 public class HighSymbolTest extends AbstractDecompilerTest {
 	@Override
@@ -52,16 +55,64 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		return null;
 	}
 
-	private void renameGlobalVariable(HighSymbol highSymbol, HighVariable highVar, Varnode exact,
-			String newName) {
+	protected ClangTextField getLineContaining(String val) {
+		DecompilerPanel panel = provider.getDecompilerPanel();
+		List<Field> fields = panel.getFields();
+		for (Field field : fields) {
+			ClangTextField textField = (ClangTextField) field;
+			String text = textField.getText();
+			if (text.contains(val)) {
+				return textField;
+			}
+		}
+		return null;
+	}
+
+	protected HighFunction getHighFunction() {
+		return provider.getController().getHighFunction();
+	}
+
+	private void renameGlobalVariable(HighSymbol highSymbol, Varnode exact, String newName) {
 		Address addr = highSymbol.getStorage().getMinAddress();
 		RenameGlobalVariableTask rename = new RenameGlobalVariableTask(provider.getTool(),
 			highSymbol.getName(), addr, highSymbol.getProgram());
 
-		assertTrue(rename.isValid("newGlobal"));
+		assertTrue(rename.isValid(newName));
 		modifyProgram(p -> {
 			rename.commit();
 		});
+		waitForDecompiler();
+	}
+
+	private void renameVariable(HighSymbol highSymbol, Varnode exact, String newName) {
+		RenameVariableTask rename = new RenameVariableTask(provider.getTool(), highSymbol, exact,
+			SourceType.USER_DEFINED);
+		assertTrue(rename.isValid(newName));
+		modifyProgram(p -> {
+			rename.commit();
+		});
+		waitForDecompiler();
+	}
+
+	private void renameExisting(HighSymbol highSymbol, Varnode exact, String newName) {
+		SymbolEntry oldEntry = highSymbol.getFirstWholeMap();
+		long oldId = highSymbol.getId();
+		if (highSymbol.isGlobal()) {
+			renameGlobalVariable(highSymbol, exact, newName);
+		}
+		else {
+			renameVariable(highSymbol, exact, newName);
+		}
+		Symbol symbol = program.getSymbolTable().getSymbol(oldId);
+		assertEquals(symbol.getName(), newName);
+		HighFunction highFunction = getHighFunction();
+		HighSymbol newHighSymbol = highFunction.getLocalSymbolMap().getSymbol(oldId);
+		if (newHighSymbol == null) {
+			newHighSymbol = highFunction.getGlobalSymbolMap().getSymbol(oldId);
+		}
+		assertNotNull(newHighSymbol);
+		SymbolEntry newEntry = newHighSymbol.getFirstWholeMap();
+		assertEquals(oldEntry.getStorage(), newEntry.getStorage());
 	}
 
 	@Test
@@ -85,7 +136,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		assertEquals(data.getAddress().getOffset(), 0x10056a0L);
 		assertEquals(data.getBaseDataType().getLength(), 2);
 
-		renameGlobalVariable(highSymbol, variable, null, "newGlobal");
+		renameGlobalVariable(highSymbol, null, "newGlobal");
 		waitForDecompiler();
 		line = getLineStarting("newGlobal");
 		loc = loc(line.getLineNumber(), 5);
@@ -102,5 +153,150 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		codeSymbol = highCode.getCodeSymbol();
 		assertNotNull(codeSymbol);
 		assertEquals(codeSymbol.getID(), highCode.getId());
+		renameExisting(highSymbol, null, "nameAgain");
+	}
+
+	@Test
+	public void testHighSymbol_localStackDynamic() {
+		decompile("10015a6");
+		ClangTextField line = getLineContaining(" = 0xc;");
+		FieldLocation loc = loc(line.getLineNumber(), 5);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		HighVariable variable = token.getHighVariable();
+		assertTrue(variable instanceof HighLocal);
+		HighSymbol highSymbol = variable.getSymbol();
+		SymbolEntry entry = highSymbol.getFirstWholeMap();
+		assertTrue(entry instanceof MappedEntry);		// Comes back initially as untied stack location
+		int stackCount = 0;
+		int regCount = 0;
+		int numInst = variable.getInstances().length;
+		for (Varnode var : variable.getInstances()) {
+			if (var.isRegister() || var.isAddrTied()) {
+				regCount += 1;
+			}
+			else if (var.getAddress().isStackAddress()) {
+				stackCount += 1;
+			}
+		}
+		assertTrue(stackCount > 0);		// Verify speculative merge
+		assertTrue(regCount > 0);
+		renameVariable(highSymbol, token.getVarnode(), "newLocal");
+		line = getLineStarting("newLocal");
+		loc = loc(line.getLineNumber(), 5);
+		token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		variable = token.getHighVariable();
+		assertTrue(variable instanceof HighLocal);
+		highSymbol = variable.getSymbol();
+		entry = highSymbol.getFirstWholeMap();
+		assertTrue(entry instanceof DynamicEntry);	// After rename comes back as HASH
+		assertTrue(entry.getPCAdress().getOffset() == 0x10016a3);
+		assertTrue(highSymbol.isNameLocked());
+		assertFalse(highSymbol.isTypeLocked());
+		assertEquals(numInst, variable.getInstances().length);
+		assertEquals(variable.getRepresentative().getAddress().getOffset(), 0xfffffffffffffff0L);
+		renameExisting(highSymbol, null, "nameAgain");
+	}
+
+	@Test
+	public void testHighSymbol_localArray() {
+		decompile("10016ba");
+		ClangTextField line = getLineStarting("wsprintfW");
+		FieldLocation loc = loc(line.getLineNumber(), 14);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		assertNull(token.getHighVariable());		// No HighVariable associated with the token
+		PcodeOp op = ((ClangVariableToken) token).getPcodeOp();
+		Address addr = HighFunctionDBUtil.getSpacebaseReferenceAddress(provider.getProgram(), op);
+		HighFunction highFunction = getHighFunction();
+		LocalSymbolMap lsym = highFunction.getLocalSymbolMap();
+		HighSymbol highSymbol = lsym.findLocal(addr, null);
+		assertEquals(highSymbol.getName(), "local_44");
+		renameVariable(highSymbol, token.getVarnode(), "newArray");
+		line = getLineStarting("wsprintfW");
+		token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		assertEquals(token.getText(), "newArray");		// Name has changed
+		highFunction = getHighFunction();
+		lsym = highFunction.getLocalSymbolMap();
+		highSymbol = lsym.findLocal(addr, null);
+		assertEquals(highSymbol.getName(), "newArray");
+		assertTrue(highSymbol.isNameLocked());
+		assertFalse(highSymbol.isTypeLocked());
+		SymbolEntry entry = highSymbol.getFirstWholeMap();
+		assertTrue(entry instanceof MappedEntry);
+		assertEquals(entry.getStorage().getMinAddress(), addr);
+		assertEquals(entry.getSize(), 64);
+		renameExisting(highSymbol, null, "nameAgain");
+	}
+
+	@Test
+	public void testHighSymbol_localRegister() {
+		decompile("1002607");
+		ClangTextField line = getLineStarting("iVar");
+		FieldLocation loc = loc(line.getLineNumber(), 1);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		HighVariable variable = token.getHighVariable();
+		assertTrue(variable instanceof HighLocal);
+		HighSymbol highSymbol = variable.getSymbol();
+		SymbolEntry entry = highSymbol.getFirstWholeMap();
+		Address addr = entry.getStorage().getMinAddress();
+		assertTrue(entry instanceof MappedEntry);		// Comes back initially as untied stack location
+		assertEquals(addr.getAddressSpace().getName(), "register");
+		renameVariable(highSymbol, token.getVarnode(), "newReg");
+		line = getLineContaining("newReg < 0x40");
+		assertNotNull(line);
+		HighFunction highFunction = getHighFunction();
+		highSymbol = highFunction.getLocalSymbolMap().findLocal(addr, entry.getPCAdress());
+		assertNotNull(highSymbol);
+		assertEquals(highSymbol.getName(), "newReg");
+		assertTrue(highSymbol.isNameLocked());
+		assertFalse(highSymbol.isTypeLocked());
+		renameExisting(highSymbol, null, "nameAgain");
+	}
+
+	@Test
+	public void testHighSymbol_parameter() {
+		decompile("1002d7a");
+		ClangTextField line = getLineContaining("strlen");
+		FieldLocation loc = loc(line.getLineNumber(), 20);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		HighVariable variable = token.getHighVariable();
+		assertTrue(variable instanceof HighParam);
+		HighSymbol highSymbol = variable.getSymbol();
+		assertEquals(highSymbol.getName(), "param_2");
+		assertTrue(highSymbol.isParameter());
+		assertEquals(highSymbol.getCategoryIndex(), 1);
+		SymbolEntry entry = highSymbol.getFirstWholeMap();
+		Address addr = entry.getStorage().getMinAddress();
+		assertEquals(addr.getOffset(), 8L);
+		renameExisting(highSymbol, null, "paramAgain");
+	}
+
+	@Test
+	public void testHighSymbol_multipleUsePoints() {
+		decompile("1001915");
+		ClangTextField line = getLineContaining("0x4e");
+		FieldLocation loc = loc(line.getLineNumber(), 4);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		HighVariable variable = token.getHighVariable();
+		assertTrue(variable instanceof HighLocal);
+		HighSymbol highSymbol = variable.getSymbol();
+		SymbolEntry entry = highSymbol.getFirstWholeMap();
+		assertTrue(entry instanceof MappedEntry);
+		Address usepoint = token.getVarnode().getPCAddress();
+		renameVariable(highSymbol, token.getVarnode(), "newLocal");
+		line = getLineContaining("0x4e");
+		token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		assertEquals(token.getText(), "newLocal");		// Name has changed
+		variable = token.getHighVariable();
+		highSymbol = variable.getSymbol();
+		entry = highSymbol.getFirstWholeMap();
+		assertEquals(usepoint, entry.getPCAdress());		// Make sure the same usepoint comes back
 	}
 }

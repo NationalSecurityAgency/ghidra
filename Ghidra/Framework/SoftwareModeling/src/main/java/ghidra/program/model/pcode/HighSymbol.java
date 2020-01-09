@@ -19,6 +19,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -116,6 +117,17 @@ public class HighSymbol {
 	 */
 	public long getId() {
 		return id;
+	}
+
+	/**
+	 * Fetch the corresponding database Symbol if it exists.
+	 * @return the matching Symbol object or null
+	 */
+	public Symbol getSymbol() {
+		if (id != 0) {
+			return function.getFunction().getProgram().getSymbolTable().getSymbol(id);
+		}
+		return null;
 	}
 
 	/**

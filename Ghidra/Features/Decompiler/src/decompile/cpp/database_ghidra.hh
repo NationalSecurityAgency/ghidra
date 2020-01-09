@@ -101,6 +101,7 @@ public:
   virtual void clearUnlockedCategory(int4 cat) { throw LowlevelError("clearUnlockedCategory unimplemented"); }
   virtual void clearUnlocked(void) { throw LowlevelError("clearUnlocked unimplemented"); }
   virtual void restrictScope(Funcdata *f) { throw LowlevelError("restrictScope unimplemented"); }
+  virtual void removeSymbolMappings(Symbol *symbol) { throw LowlevelError("removeSymbolMappings unimplemented"); }
   virtual void removeSymbol(Symbol *symbol) { throw LowlevelError("removeSymbol unimplemented"); }
   virtual void renameSymbol(Symbol *sym,const string &newname) { throw LowlevelError("renameSymbol unimplemented"); }
   virtual void retypeSymbol(Symbol *sym,Datatype *ct) { throw LowlevelError("retypeSymbol unimplemented"); }

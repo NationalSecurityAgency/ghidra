@@ -83,24 +83,27 @@ public class LocalSymbolMap {
 		Function dbFunction = func.getFunction();
 		Variable locals[] = dbFunction.getLocalVariables();
 		for (Variable local : locals) {
-			Variable var = local;
-			if (!var.isValid()) {
+			if (!local.isValid()) {
 				// exclude locals which don't have valid storage
 				continue;
 			}
-			DataType dt = var.getDataType();
+			DataType dt = local.getDataType();
 			boolean istypelock = true;
 			boolean isnamelock = true;
 			if (Undefined.isUndefined(dt)) {
 				istypelock = false;
 			}
-			String name = var.getName();
+			String name = local.getName();
 
-			VariableStorage storage = var.getVariableStorage();
-			long id = getNextId();
+			VariableStorage storage = local.getVariableStorage();
+			long id = 0;
+			Symbol symbol = local.getSymbol();
+			if (symbol != null) {
+				id = symbol.getID();
+			}
 			Address defAddr = null;
 			if (!storage.isStackStorage()) {
-				defAddr = dbFunction.getEntryPoint().addWrap(var.getFirstUseOffset());
+				defAddr = dbFunction.getEntryPoint().addWrap(local.getFirstUseOffset());
 			}
 			HighSymbol sym;
 			if (storage.isHashStorage()) {
@@ -131,7 +134,11 @@ public class LocalSymbolMap {
 			String name = var.getName();
 			VariableStorage storage = var.getVariableStorage();
 			Address resAddr = storage.isStackStorage() ? null : pcaddr;
-			long id = getNextId();
+			long id = 0;
+			Symbol symbol = var.getSymbol();
+			if (symbol != null) {
+				id = symbol.getID();
+			}
 			HighSymbol paramSymbol = newMappedSymbol(id, name, dt, storage, resAddr, i);
 			paramList.add(paramSymbol);
 			boolean namelock = true;

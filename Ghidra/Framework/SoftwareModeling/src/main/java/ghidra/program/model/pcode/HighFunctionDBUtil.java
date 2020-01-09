@@ -403,7 +403,7 @@ public class HighFunctionDBUtil {
 	/**
 	 * Rename and/or retype the specified variable in the database.  All parameters may be flushed
 	 * to the database if typed parameter inconsistency detected.
-	 * @param variable is the symbol being updated
+	 * @param highSymbol is the symbol being updated
 	 * @param name new variable name or null to use retain current variable name
 	 * @param dataType newly assigned data type or null to retain current variable datatype.
 	 * Only a fixed-length data type may be specified.  If size varies from the current size,
@@ -415,10 +415,10 @@ public class HighFunctionDBUtil {
 	 * variable/label within the function's namespace
 	 * @throws UnsupportedOperationException if unsupported variable type is specified
 	 */
-	public static void updateDBVariable(HighSymbol variable, String name, DataType dataType,
+	public static void updateDBVariable(HighSymbol highSymbol, String name, DataType dataType,
 			SourceType source) throws InvalidInputException, DuplicateNameException {
 
-		HighFunction highFunction = variable.getHighFunction();
+		HighFunction highFunction = highSymbol.getHighFunction();
 		Function function = highFunction.getFunction();
 		Program program = function.getProgram();
 
@@ -430,14 +430,14 @@ public class HighFunctionDBUtil {
 					"Data type is not fixed-length: " + dataType.getName());
 			}
 
-			resized = (dataType.getLength() != variable.getSize());
+			resized = (dataType.getLength() != highSymbol.getSize());
 		}
 
 		boolean isRename = name != null;
 
-		if (variable.isParameter()) {
-			Parameter dbParam = getDatabaseParameter(variable);
-			VariableStorage storage = variable.getStorage();
+		if (highSymbol.isParameter()) {
+			Parameter dbParam = getDatabaseParameter(highSymbol);
+			VariableStorage storage = highSymbol.getStorage();
 			if (dataType != null) {
 				if (resized && function.hasCustomVariableStorage()) {
 					VariableStorage newStorage =
@@ -452,18 +452,18 @@ public class HighFunctionDBUtil {
 				dbParam.setName(name, source);
 			}
 		}
-		else if (!variable.isGlobal()) {
+		else if (!highSymbol.isGlobal()) {
 			Variable var;
-			VariableStorage storage;
-			HighVariable tmpHigh = variable.getHighVariable();
-			if (tmpHigh != null && tmpHigh.requiresDynamicStorage()) {
+			VariableStorage storage = highSymbol.getStorage();
+			HighVariable tmpHigh = highSymbol.getHighVariable();
+			if (!storage.isHashStorage() && tmpHigh != null &&
+				tmpHigh.requiresDynamicStorage()) {
 				storage =
 					DynamicEntry.buildDynamicStorage(tmpHigh.getRepresentative(), highFunction);
 				var = null;
 			}
 			else {
-				storage = variable.getStorage();
-				var = clearConflictingLocalVariables(variable);
+				var = clearConflictingLocalVariables(highSymbol);
 			}
 			boolean usesHashStorage = storage.isHashStorage();
 			if (dataType == null) {
@@ -471,28 +471,28 @@ public class HighFunctionDBUtil {
 					dataType = var.getDataType();	// Use preexisting datatype if it fits in desired storage
 				}
 				else {
-					dataType = Undefined.getUndefinedDataType(variable.getSize());
+					dataType = Undefined.getUndefinedDataType(highSymbol.getSize());
 					dataType = dataType.clone(program.getDataTypeManager());
 				}
 			}
 			if (resized) {
 				if (usesHashStorage) {
 					throw new InvalidInputException(
-						"Variable size (" + variable.getSize() + ") may not be changed: type '" +
+						"Variable size (" + highSymbol.getSize() + ") may not be changed: type '" +
 							dataType.getName() + "' length is " + dataType.getLength());
 				}
 				storage = VariableUtilities.resizeStorage(storage, dataType, true, function);
 			}
 
 			if (var == null) {
-				var = createLocalVariable(variable, dataType, storage, source);
+				var = createLocalVariable(highSymbol, dataType, storage, source);
 			}
 			else {
 				// fixup reused variable
 				var.setDataType(dataType, storage, true, source);
 			}
 			if (name == null) {
-				name = variable.getName(); // must update name if not specified
+				name = highSymbol.getName(); // must update name if not specified
 			}
 			try {
 				// must set/correct name
@@ -516,26 +516,26 @@ public class HighFunctionDBUtil {
 		}
 		else {	// A global symbol
 
-			VariableStorage storage = variable.getStorage();
+			VariableStorage storage = highSymbol.getStorage();
 			if (!storage.isMemoryStorage()) {
 				throw new UnsupportedOperationException(
 					"Database supports global memory variables only");
 			}
 
 			if (name == null) {
-				name = variable.getName();
+				name = highSymbol.getName();
 				if (name != null && SymbolUtilities.isDynamicSymbolPattern(name, true)) {
 					name = null;
 				}
 			}
 
 			if (dataType != null) {
-				setGlobalDataType(variable, dataType);
+				setGlobalDataType(highSymbol, dataType);
 			}
 
 			if (name != null) {
 				try {
-					setGlobalName(variable, variable.getName(), source);
+					setGlobalName(highSymbol, highSymbol.getName(), source);
 				}
 				catch (DuplicateNameException e) {
 					if (isRename) {

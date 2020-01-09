@@ -2332,23 +2332,6 @@ void ActionNameVars::lookForBadJumpTables(Funcdata &data)
   }
 }
 
-/// From among the \e name \e recommendations (symbol information that wasn't locked)
-/// find current symbols for which the name can still apply and apply it.
-/// \param data is the function being analyzed
-void ActionNameVars::lookForRecommendedNames(Funcdata &data)
-
-{
-  ScopeLocal *localmap = data.getScopeLocal();
-  vector<string> names;
-  vector<Symbol *> symbols;
-
-  localmap->makeNameRecommendationsForSymbols(names,symbols);
-  for(uint4 i=0;i<names.size();++i) {
-    Symbol *sym = symbols[i];
-    sym->getScope()->renameSymbol(sym,localmap->makeNameUnique(names[i]));
-  }
-}
-
 /// \brief Add a recommendation to the database based on a particular sub-function parameter.
 ///
 /// We know \b vn holds data-flow for parameter \b param,  try to attach its name to \b vn's symbol.
@@ -2375,6 +2358,7 @@ void ActionNameVars::makeRec(ProtoParameter *param,Varnode *vn,map<HighVariable 
   }
   HighVariable *high = vn->getHigh();
   if (!high->isMark()) return;	// Not one of the variables needing a name
+  if (high->isAddrTied()) return;	// Don't propagate parameter name to address tied variable
 
   map<HighVariable *,OpRecommend>::iterator iter = recmap.find(high);
   if (iter != recmap.end()) {	// We have seen this varnode before
@@ -2466,9 +2450,10 @@ void ActionNameVars::linkSpacebaseSymbol(Varnode *vn,Funcdata &data,vector<Varno
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
     PcodeOp *op = *iter;
     if (op->code() != CPUI_PTRSUB) continue;
-    Symbol *sym = data.linkSymbolReference(op->getIn(1));
+    Varnode *offVn = op->getIn(1);
+    Symbol *sym = data.linkSymbolReference(offVn);
     if ((sym != (Symbol *)0) && sym->isNameUndefined())
-      namerec.push_back(vn);
+      namerec.push_back(offVn);
   }
 }
 
@@ -2506,8 +2491,8 @@ void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
       if (!high->hasName()) continue;
       Symbol *sym = data.linkSymbol(vn);
       if (sym != (Symbol *)0) {	// Can we associate high with a nameable symbol
-	if (sym->isNameUndefined())
-	  namerec.push_back(vn);
+	if (sym->isNameUndefined() && high->getSymbolOffset() < 0)
+	  namerec.push_back(vn);	// Add if no name, and we have a high representing the whole
 	if (sym->isSizeTypeLocked()) {
 	  if (vn->getSize() == sym->getType()->getSize())
 	    sym->getScope()->overrideSizeLockType(sym,high->getType());
@@ -2523,33 +2508,21 @@ int4 ActionNameVars::apply(Funcdata &data)
   vector<Varnode *> namerec;
 
   linkSymbols(data, namerec);
-  lookForRecommendedNames(data); // Make sure recommended names hit before subfunc
+  data.getScopeLocal()->recoverNameRecommendationsForSymbols(); // Make sure recommended names hit before subfunc
   lookForBadJumpTables(data);
   lookForFuncParamNames(data,namerec);
 
-  ScopeLocal *localmap = data.getScopeLocal();
   int4 base = 1;
   for(uint4 i=0;i<namerec.size();++i) {
     Varnode *vn = namerec[i];
-    HighVariable *high = vn->getHigh();
-    Symbol *sym = high->getSymbol();
+    Symbol *sym = vn->getHigh()->getSymbol();
     if (sym->isNameUndefined()) {
-      string newname;
-      Address usepoint;
-      if (!vn->isAddrTied())
-	usepoint = vn->getUsePoint(data);
-      if (high->isInput()) {
-	int4 index = -1;
-	if (sym->getCategory()==0)
-	  index = sym->getCategory()+1;
-	newname = localmap->buildVariableName(vn->getAddr(),usepoint,high->getType(),index,vn->getFlags());
-      }
-      else
-	newname = localmap->buildVariableName(vn->getAddr(),usepoint,high->getType(),base,vn->getFlags());
-
-      sym->getScope()->renameSymbol(sym,newname);
+      Scope *scope = sym->getScope();
+      string newname = scope->buildDefaultName(sym, base, vn);
+      scope->renameSymbol(sym,newname);
     }
   }
+  data.getScopeLocal()->assignDefaultNames(base);
   return 0;
 }
 

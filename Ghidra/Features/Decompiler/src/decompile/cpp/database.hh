@@ -170,7 +170,6 @@ protected:
   uint4 wholeCount;		///< Number of SymbolEntries that map to the whole Symbol
   virtual ~Symbol(void) {}	///< Destructor
   void setDisplayFormat(uint4 val);	///< Set the display format for \b this Symbol
-  void setSymbolId(uint8 val) { symbolId = val; }	///< Assign a unique id to the symbol
   void checkSizeTypeLock(void);	///< Calculate if \b size_typelock property is on
 public:
   /// \brief Possible display (dispflag) properties for a Symbol
@@ -495,6 +494,7 @@ protected:
   virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
 					     const RangeList &uselim)=0;
   SymbolEntry *addMap(const SymbolEntry &entry);	///< Integrate a SymbolEntry into the range maps
+  void setSymbolId(Symbol *sym,uint8 id) const { sym->symbolId = id; }	///< Adjust the id associated with a symbol
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
@@ -531,6 +531,7 @@ public:
   virtual bool inScope(const Address &addr,int4 size, const Address &usepoint) const {
     return rangetree.inRange(addr,size); }
 
+  virtual void removeSymbolMappings(Symbol *symbol)=0;	///< Remove all SymbolEntrys from the given Symbol
   virtual void removeSymbol(Symbol *symbol)=0;		///< Remove the given Symbol from \b this Scope
   virtual void renameSymbol(Symbol *sym,const string &newname)=0;	///< Rename a Symbol within \b this Scope
 
@@ -706,6 +707,7 @@ public:
   ExternRefSymbol *addExternalRef(const Address &addr,const Address &refaddr,const string &nm);
   LabSymbol *addCodeLabel(const Address &addr,const string &nm);
   Symbol *addDynamicSymbol(const string &nm,Datatype *ct,const Address &caddr,uint8 hash);
+  string buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const;	///< Create a default name for the given Symbol
   bool isReadOnly(const Address &addr,int4 size,const Address &usepoint) const;
   void printBounds(ostream &s) const { rangetree.printBounds(s); }	///< Print a description of \b this Scope's \e owned memory ranges
 };
@@ -745,6 +747,7 @@ public:
   virtual list<SymbolEntry>::const_iterator endDynamic(void) const;
   virtual list<SymbolEntry>::iterator beginDynamic(void);
   virtual list<SymbolEntry>::iterator endDynamic(void);
+  virtual void removeSymbolMappings(Symbol *symbol);
   virtual void removeSymbol(Symbol *symbol);
   virtual void renameSymbol(Symbol *sym,const string &newname);
   virtual void retypeSymbol(Symbol *sym,Datatype *ct);
@@ -777,6 +780,7 @@ public:
   virtual int4 getCategorySize(int4 cat) const;
   virtual Symbol *getCategorySymbol(int4 cat,int4 ind) const;
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind);
+  void assignDefaultNames(int4 &base);		///< Assign a default name (via buildVariableName) to any unnamed symbol
   set<Symbol *>::const_iterator beginMultiEntry(void) const { return multiEntrySet.begin(); }	///< Start of symbols with more than one entry
   set<Symbol *>::const_iterator endMultiEntry(void) const { return multiEntrySet.end(); }	///< End of symbols with more than one entry
   static void savePathXml(ostream &s,const vector<string> &vec);	///< Save a path with \<val> tags

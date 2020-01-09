@@ -307,26 +307,10 @@ HighVariable *Funcdata::findHigh(const string &name) const
   localmap->queryByName(name,symList);
   if (symList.empty()) return (HighVariable *)0;
   Symbol *sym = symList[0];
-  SymbolEntry *entry = sym->getFirstWholeMap();
-
-  if (entry->isDynamic()) {
-    DynamicHash dhash;
-    Varnode *vn = dhash.findVarnode(this, entry->getFirstUseAddress(), entry->getHash());
-    if (vn == (Varnode *)0 || vn->isAnnotation())
-      return (HighVariable *)0;
+  Varnode *vn = findLinkedVarnode(sym->getFirstWholeMap());
+  if (vn != (Varnode *)0)
     return vn->getHigh();
-  }
 
-  VarnodeLocSet::const_iterator iter,enditer;
-  HighVariable *high;
-
-  iter = vbank.beginLoc(entry->getSize(),entry->getAddr());
-  enditer = vbank.endLoc(entry->getSize(),entry->getAddr());
-  for(;iter!=enditer;++iter) {
-    high = (*iter)->getHigh();
-    if (high->getSymbol() == sym)
-      return high;
-  }
   return (HighVariable *)0;
 }
 
@@ -929,6 +913,49 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
   return updateoccurred;
 }
 
+/// For each instance Varnode, remove any SymbolEntry reference and associated properties.
+/// \param high is the given HighVariable to clear
+void Funcdata::clearSymbolLinks(HighVariable *high)
+
+{
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    vn->mapentry = (SymbolEntry *)0;
+    vn->clearFlags(Varnode::namelock | Varnode::typelock | Varnode::mapped);
+  }
+}
+
+/// \brief Remap a Symbol to a given Varnode using a static mapping
+///
+/// Any previous links between the Symbol, the Varnode, and the associate HighVariable are
+/// removed.  Then a new link is created.
+/// \param vn is the given Varnode
+/// \param sym is the Symbol the Varnode maps to
+/// \param usepoint is the desired usepoint for the mapping
+void Funcdata::remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint)
+
+{
+  clearSymbolLinks(vn->getHigh());
+  SymbolEntry *entry = localmap->remapSymbol(sym, vn->getAddr(), usepoint);
+  vn->setSymbolEntry(entry);
+}
+
+/// \brief Remap a Symbol to a given Varnode using a new dynamic mapping
+///
+/// Any previous links between the Symbol, the Varnode, and the associate HighVariable are
+/// removed.  Then a new dynamic link is created.
+/// \param vn is the given Varnode
+/// \param sym is the Symbol the Varnode maps to
+/// \param usepoint is the code Address where the Varnode is defined
+/// \param hash is the hash for the new dynamic mapping
+void Funcdata::remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash)
+
+{
+  clearSymbolLinks(vn->getHigh());
+  SymbolEntry *entry = localmap->remapSymbolDynamic(sym, hash, usepoint);
+  vn->setSymbolEntry(entry);
+}
+
 /// The Symbol is really attached to the Varnode's HighVariable (which must exist).
 /// The only reason a Symbol doesn't get set is if, the HighVariable
 /// is global and there is no pre-existing Symbol.  (see mapGlobals())
@@ -988,6 +1015,44 @@ Symbol *Funcdata::linkSymbolReference(Varnode *vn)
   int4 off = (int4)(addr.getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
   vn->setSymbolReference(entry, off);
   return entry->getSymbol();
+}
+
+/// Return the (first) Varnode that matches the given SymbolEntry
+/// \param entry is the given SymbolEntry
+/// \return a matching Varnode or null
+Varnode *Funcdata::findLinkedVarnode(SymbolEntry *entry) const
+
+{
+  if (entry->isDynamic()) {
+    DynamicHash dhash;
+    Varnode *vn = dhash.findVarnode(this, entry->getFirstUseAddress(), entry->getHash());
+    if (vn == (Varnode *)0 || vn->isAnnotation())
+      return (Varnode *)0;
+    return vn;
+  }
+
+  VarnodeLocSet::const_iterator iter,enditer;
+  Address usestart = entry->getFirstUseAddress();
+  enditer = vbank.endLoc(entry->getSize(),entry->getAddr());
+
+  if (usestart.isInvalid()) {
+    iter = vbank.beginLoc(entry->getSize(),entry->getAddr());
+    if (iter == enditer)
+      return (Varnode *)0;
+    Varnode *vn = *iter;
+    if (!vn->isAddrTied())
+      return (Varnode *)0;	// Varnode(s) must be address tied in order to match this symbol
+    return vn;
+  }
+  iter = vbank.beginLoc(entry->getSize(),entry->getAddr(),usestart,~((uintm)0));
+  // TODO: Use a better end iterator
+  for(;iter!=enditer;++iter) {
+    Varnode *vn = *iter;
+    Address usepoint = vn->getUsePoint(*this);
+    if (entry->inUse(usepoint))
+      return vn;
+  }
+  return (Varnode *)0;
 }
 
 /// Look for Varnodes that are (should be) mapped to the given SymbolEntry and
