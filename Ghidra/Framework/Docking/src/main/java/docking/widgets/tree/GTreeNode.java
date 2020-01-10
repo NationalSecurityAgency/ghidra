@@ -441,6 +441,42 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		Swing.runNow(() -> doFireNodeChanged());
 	}
 
+	/**
+	 * Convenience method for expanding (opening) this node in the tree.  If this node is not
+	 * currently attached to a visible tree, then this call does nothing
+	 */
+	public void expand() {
+		GTree tree = getTree();
+		if (tree != null) {
+			tree.expandPath(this);
+		}
+	}
+
+	/**
+	 * Convenience method for collapsing (closing) this node in the tree.  If this node is not
+	 * currently attached to a visible tree, then this call does nothing
+	 */
+	public void collapse() {
+		GTree tree = getTree();
+		if (tree != null) {
+			tree.collapseAll(this);
+		}
+	}
+
+	/**
+	 * Convenience method determining if this node is expanded in a tree.  If the node is not
+	 * currently attached to a visible tree, then this call returns false
+	 *
+	 * @return true if the node is expanded in a currently visible tree.
+	 */
+	public boolean isExpanded() {
+		GTree tree = getTree();
+		if (tree != null) {
+			return tree.isExpanded(this.getTreePath());
+		}
+		return false;
+	}
+
 	private GTreeNode[] getPathToRoot(GTreeNode node, int depth) {
 		GTreeNode[] returnNodes;
 
