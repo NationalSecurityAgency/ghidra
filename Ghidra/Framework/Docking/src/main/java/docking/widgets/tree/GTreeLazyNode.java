@@ -22,7 +22,9 @@ import java.util.List;
  * Also, children of this node can be unloaded by calling {@link #unloadChildren()}.  This
  * can be used by nodes in large trees to save memory by unloading children that are no longer
  * in the current tree view (collapsed).  Of course, that decision would need to be balanced
- * against the extra time to reload the nodes in the event that a filter is applied.
+ * against the extra time to reload the nodes in the event that a filter is applied. Also, if
+ * some external event occurs that changes the set of children for a GTreeLazyNode, you can call
+ * {@link #reload()} to refresh the node's children.
  */
 public abstract class GTreeLazyNode extends GTreeNode {
 
@@ -36,10 +38,26 @@ public abstract class GTreeLazyNode extends GTreeNode {
 	/**
 	 * Sets this lazy node back to the "unloaded" state such that if
 	 * its children are accessed, it will reload its children as needed.
+	 * NOTE: This method does not trigger a call to {@link #fireNodeChanged(GTreeNode, GTreeNode)}
+	 * because doing will often trigger a call from the JTree will will immediately cause the node
+	 * to reload its children. If that is the effect you want, call {@link #reload()}.
 	 */
 	public void unloadChildren() {
 		if (isLoaded()) {
 			doSetChildren(null);
+		}
+	}
+
+	/**
+	 * Tells this node that its children are stale and that it needs to regenerate them.  This will
+	 * unload any existing children and call {@link #fireNodeStructureChanged(GTreeNode)} which will
+	 * inform the JTree that this node has changed and when the JTree queries this node for its children,
+	 * the {@link #generateChildren()}  will get called to populate the node.
+	 */
+	public void reload() {
+		if (isLoaded()) {
+			unloadChildren();
+			fireNodeStructureChanged(this);
 		}
 	}
 
@@ -66,9 +84,7 @@ public abstract class GTreeLazyNode extends GTreeNode {
 
 	@Override
 	public void removeAll() {
-		if (isLoaded()) {
-			unloadChildren();
-		}
+		reload();
 	}
 
 	@Override
