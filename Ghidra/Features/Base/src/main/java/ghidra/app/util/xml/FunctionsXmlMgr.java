@@ -167,7 +167,8 @@ class FunctionsXmlMgr {
 
 					String regularComment = getElementText(parser, "REGULAR_CMT");
 					func.setComment(regularComment);
-					getElementText(parser, "REPEATABLE_CMT");
+					String repeatableComment = getElementText(parser, "REPEATABLE_CMT");
+					func.setRepeatableComment(repeatableComment);
 					String typeInfoComment = getElementText(parser, "TYPEINFO_CMT");
 					List<Variable> stackParams = new ArrayList<>();
 					List<Variable> stackVariables = new ArrayList<>();
