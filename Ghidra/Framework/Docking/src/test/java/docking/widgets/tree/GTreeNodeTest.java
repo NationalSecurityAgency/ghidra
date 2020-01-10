@@ -366,10 +366,10 @@ public class GTreeNodeTest {
 	@Test
 	public void testDispose() {
 		root.dispose();
-		assertTrue(!root.isLoaded());
+		assertFalse(root.isLoaded());
 		assertNull(node1.getParent());
 		assertNull(node1_0.getParent());
-		assertTrue(!node1.isLoaded());
+		assertFalse(node1.isLoaded());
 	}
 
 	@Test
@@ -411,7 +411,7 @@ public class GTreeNodeTest {
 
 		events.clear();
 		node.unloadChildren();
-		assertTrue(!node.isLoaded());
+		assertFalse(node.isLoaded());
 		assertTrue(events.isEmpty());
 	}
 
@@ -423,8 +423,8 @@ public class GTreeNodeTest {
 
 		events.clear();
 		node.reload();
-		assertTrue(!node.isLoaded());
-		assertTrue(!events.isEmpty());
+		assertFalse(node.isLoaded());
+		assertFalse(events.isEmpty());
 	}
 
 	@Test
