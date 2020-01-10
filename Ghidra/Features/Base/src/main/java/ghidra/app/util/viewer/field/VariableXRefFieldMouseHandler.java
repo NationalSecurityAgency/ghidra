@@ -16,7 +16,6 @@
 package ghidra.app.util.viewer.field;
 
 import java.util.Set;
-import java.util.function.Supplier;
 
 import ghidra.app.nav.Navigatable;
 import ghidra.app.util.XReferenceUtil;
@@ -80,7 +79,7 @@ public class VariableXRefFieldMouseHandler extends XRefFieldMouseHandler {
 		VariableLocation variableLocation = (VariableLocation) location;
 		Variable variable = variableLocation.getVariable();
 
-		Supplier<Set<Reference>> refs = () -> XReferenceUtil.getVariableRefs(variable);
+		Set<Reference> refs = XReferenceUtil.getVariableRefs(variable);
 		XReferenceUtil.showAllXrefs(navigatable, serviceProvider, service, location, refs);
 	}
 }

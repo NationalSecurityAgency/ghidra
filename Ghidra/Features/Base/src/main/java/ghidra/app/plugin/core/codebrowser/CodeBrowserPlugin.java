@@ -21,7 +21,6 @@ import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -970,7 +969,7 @@ public class CodeBrowserPlugin extends Plugin
 			return; // not sure if this can happen
 		}
 
-		Supplier<Set<Reference>> refs = () -> XReferenceUtil.getAllXrefs(location);
+		Set<Reference> refs = XReferenceUtil.getAllXrefs(location);
 		XReferenceUtil.showAllXrefs(connectedProvider, tool, service, location, refs);
 	}
 

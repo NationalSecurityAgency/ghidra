@@ -17,7 +17,6 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.event.MouseEvent;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.field.TextField;
@@ -106,7 +105,7 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 			return;
 		}
 
-		Supplier<Set<Reference>> refs = () -> XReferenceUtil.getAllXrefs(location);
+		Set<Reference> refs = XReferenceUtil.getAllXrefs(location);
 		XReferenceUtil.showAllXrefs(navigatable, serviceProvider, service, location, refs);
 	}
 

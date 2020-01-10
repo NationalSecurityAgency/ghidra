@@ -16,7 +16,6 @@
 package ghidra.app.util;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -25,6 +24,7 @@ import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
@@ -307,15 +307,13 @@ public class XReferenceUtil {
 	 * @param serviceProvider the service provider needed to wire navigation
 	 * @param service the service needed to show the table
 	 * @param location the location for which to find references
-	 * @param xrefs the supplier of xrefs to show
+	 * @param xrefs the xrefs to show
 	 */
 	public static void showAllXrefs(Navigatable navigatable, ServiceProvider serviceProvider,
-			TableService service, ProgramLocation location, Supplier<Set<Reference>> xrefs) {
-
-		Set<Reference> refs = xrefs.get();
+			TableService service, ProgramLocation location, Set<Reference> xrefs) {
 
 		ReferencesFromTableModel model =
-			new ReferencesFromTableModel(new ArrayList<>(refs), serviceProvider,
+			new ReferencesFromTableModel(new ArrayList<>(xrefs), serviceProvider,
 				location.getProgram());
 		TableComponentProvider<ReferenceEndpoint> provider = service.showTable(
 			"XRefs to " + location.getAddress().toString(), "XRefs", model, "XRefs", navigatable);
@@ -332,7 +330,7 @@ public class XReferenceUtil {
 	 */
 	public static Set<Reference> getAllXrefs(ProgramLocation location) {
 
-		CodeUnit cu = getImmediateDataContaining(location);
+		CodeUnit cu = DataUtilities.getDataAtLocation(location);
 		if (cu == null) {
 			Address toAddress = location.getAddress();
 			Listing listing = location.getProgram().getListing();
@@ -347,23 +345,5 @@ public class XReferenceUtil {
 		CollectionUtils.addAll(set, xrefs);
 		CollectionUtils.addAll(set, offcuts);
 		return set;
-	}
-
-	/**
-	 * Returns the nearest {@link Data} object containing a given address.
-	 * 
-	 * @param location the program location within the data object
-	 * @return the Data object
-	 */
-	private static Data getImmediateDataContaining(ProgramLocation location) {
-		Address addr = location.getAddress();
-		Listing listing = location.getProgram().getListing();
-		Data dataContaining = listing.getDataContaining(addr);
-		if (dataContaining == null) {
-			return null;
-		}
-
-		Data dataAtAddr = dataContaining.getComponent(location.getComponentPath());
-		return dataAtAddr;
 	}
 }
