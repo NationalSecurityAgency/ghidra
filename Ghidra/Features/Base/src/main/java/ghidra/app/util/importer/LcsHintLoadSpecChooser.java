@@ -45,16 +45,16 @@ public class LcsHintLoadSpecChooser implements LoadSpecChooser {
 	}
 
 	@Override
-	public LoadSpec choose(LoadMap loadMap) {
+	public LoadSpec choose(LoaderMap loaderMap) {
 		
 		// Use the highest priority loader (it will be the first one)
-		Loader loader = loadMap.keySet().stream().findFirst().orElse(null);
+		Loader loader = loaderMap.keySet().stream().findFirst().orElse(null);
 		if (loader == null) {
 			return null;
 		}
 
 		// Try to use a known LoadSpec that matches the desired language/compiler spec
-		Collection<LoadSpec> loadSpecs = loadMap.get(loader);
+		Collection<LoadSpec> loadSpecs = loaderMap.get(loader);
 		for (LoadSpec loadSpec : loadSpecs) {
 			LanguageCompilerSpecPair lcsPair = loadSpec.getLanguageCompilerSpec();
 			if (lcsPair.languageID.equals(languageID) &&

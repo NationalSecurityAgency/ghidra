@@ -68,7 +68,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	private ProgramManager programManager;
 	protected FSRL fsrl;
 	protected List<Option> options;
-	private LoadMap loadMap;
+	private LoaderMap loaderMap;
 	protected LanguageCompilerSpecPair selectedLanguage;
 	private DomainFolder destinationFolder;
 	private boolean languageNeeded;
@@ -88,7 +88,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	 * Construct a new dialog for importing a file as a new program into Ghidra.
 	 * @param tool the active tool that spawned this dialog.
 	 * @param programManager program manager to open imported file with or null
-	 * @param loadMap the loaders and their corresponding load specifications
+	 * @param loaderMap the loaders and their corresponding load specifications
 	 * @param byteProvider the ByteProvider for getting the bytes from the file to be imported.
 	 * @param suggestedDestinationPath optional string path that will be pre-pended to the destination
 	 * filename.  Any path specified in the destination filename field will be created when
@@ -96,20 +96,20 @@ public class ImporterDialog extends DialogComponentProvider {
 	 * option which requires the DomainFolder to already exist). The two destination paths work together
 	 * to specify the final Ghidra project folder where the imported binary is placed.
 	 */
-	public ImporterDialog(PluginTool tool, ProgramManager programManager, LoadMap loadMap,
+	public ImporterDialog(PluginTool tool, ProgramManager programManager, LoaderMap loaderMap,
 			ByteProvider byteProvider, String suggestedDestinationPath) {
-		this("Import " + byteProvider.getFSRL().getPath(), tool, loadMap, byteProvider,
+		this("Import " + byteProvider.getFSRL().getPath(), tool, loaderMap, byteProvider,
 			suggestedDestinationPath);
 		this.programManager = programManager;
 	}
 
-	protected ImporterDialog(String title, PluginTool tool, LoadMap loadMap,
+	protected ImporterDialog(String title, PluginTool tool, LoaderMap loaderMap,
 			ByteProvider byteProvider, String suggestedDestinationPath) {
 		super(title);
 		this.tool = tool;
 		this.programManager = tool.getService(ProgramManager.class);
 		this.fsrl = byteProvider.getFSRL();
-		this.loadMap = loadMap;
+		this.loaderMap = loaderMap;
 		this.byteProvider = byteProvider;
 		this.suggestedDestinationPath = suggestedDestinationPath;
 
@@ -229,7 +229,7 @@ public class ImporterDialog extends DialogComponentProvider {
 			if (selectedItem instanceof Loader) {
 				Loader loader = (Loader) selectedItem;
 				ImporterLanguageDialog dialog =
-					new ImporterLanguageDialog(loadMap.get(loader), tool, selectedLanguage);
+					new ImporterLanguageDialog(loaderMap.get(loader), tool, selectedLanguage);
 				dialog.show(getComponent());
 				LanguageCompilerSpecPair dialogResult = dialog.getSelectedLanguage();
 				if (dialogResult != null) {
@@ -252,7 +252,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 
 		Set<Loader> set = new LinkedHashSet<>(); // maintain order
-		for (Loader loader : loadMap.keySet()) {
+		for (Loader loader : loaderMap.keySet()) {
 			if (isSupported(loader)) {
 				set.add(loader);
 			}
@@ -319,7 +319,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	private boolean isLanguageNeeded(Loader loader) {
-		return loadMap.get(loader).stream().anyMatch(spec -> spec.requiresLanguageCompilerSpec());
+		return loaderMap.get(loader).stream().anyMatch(spec -> spec.requiresLanguageCompilerSpec());
 	}
 
 	private Component buildButtonPanel() {
@@ -432,7 +432,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	protected LoadSpec getSelectedLoadSpec(Loader loader) {
-		Collection<LoadSpec> loadSpecs = loadMap.get(loader);
+		Collection<LoadSpec> loadSpecs = loaderMap.get(loader);
 		long imageBase = 0;
 		if (loadSpecs != null && !loadSpecs.isEmpty()) {
 			imageBase = loadSpecs.iterator().next().getDesiredImageBase();
@@ -563,7 +563,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	private LanguageCompilerSpecPair getPreferredLanguage(Loader loader) {
-		for (LoadSpec loadSpec : loadMap.get(loader)) {
+		for (LoadSpec loadSpec : loaderMap.get(loader)) {
 			if (loadSpec.isPreferred()) {
 				return loadSpec.getLanguageCompilerSpec();
 			}

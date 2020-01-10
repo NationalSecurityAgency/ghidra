@@ -36,17 +36,17 @@ public class LoaderService {
 	 * 
 	 * @param provider The {@link ByteProvider} to load.
 	 * @param loaderFilter A {@link Predicate} that will filter out undesired {@link Loader}s.
-	 * @return All supported {@link LoadSpec}s in the form of a {@link LoadMap}.
+	 * @return All supported {@link LoadSpec}s in the form of a {@link LoaderMap}.
 	 */
-	public static LoadMap getSupportedLoadSpecs(ByteProvider provider,
+	public static LoaderMap getSupportedLoadSpecs(ByteProvider provider,
 			Predicate<Loader> loaderFilter) {
-		LoadMap loadMap = new LoadMap();
+		LoaderMap loaderMap = new LoaderMap();
 		for (Loader loader : getAllLoaders()) {
 			if (loaderFilter.test(loader)) {
 				try {
 					Collection<LoadSpec> loadSpecs = loader.findSupportedLoadSpecs(provider);
 					if (loadSpecs != null && !loadSpecs.isEmpty()) { // shouldn't be null, but protect against rogue loaders
-						loadMap.put(loader, loadSpecs);
+						loaderMap.put(loader, loadSpecs);
 					}
 				}
 				catch (IOException e) {
@@ -58,16 +58,16 @@ public class LoaderService {
 				}
 			}
 		}
-		return loadMap;
+		return loaderMap;
 	}
 
 	/**
 	 * Gets all supported {@link LoadSpec}s for loading the given {@link ByteProvider}.
 	 * 
 	 * @param provider The {@link ByteProvider} to load.
-	 * @return All supported {@link LoadSpec}s in the form of a {@link LoadMap}.
+	 * @return All supported {@link LoadSpec}s in the form of a {@link LoaderMap}.
 	 */
-	public static LoadMap getAllSupportedLoadSpecs(ByteProvider provider) {
+	public static LoaderMap getAllSupportedLoadSpecs(ByteProvider provider) {
 		return getSupportedLoadSpecs(provider, ACCEPT_ALL);
 	}
 

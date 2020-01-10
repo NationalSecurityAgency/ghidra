@@ -23,14 +23,7 @@ import java.util.*;
  * The {@link Loader} keys are sorted according to their {@link Loader#compareTo(Loader) natural 
  * ordering}.
  */
-public class LoadMap extends TreeMap<Loader, Collection<LoadSpec>> {
-
-	/**
-	 * Creates a new, empty {@link LoadMap}
-	 */
-	public LoadMap() {
-		super((loader1, loader2) -> loader1.compareTo(loader2));
-	}
+public class LoaderMap extends TreeMap<Loader, Collection<LoadSpec>> {
 
 	@Override
 	public String toString() {

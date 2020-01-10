@@ -271,12 +271,12 @@ public class ImporterUtilities {
 				return;
 			}
 
-			LoadMap loadMap = LoaderService.getSupportedLoadSpecs(provider,
+			LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider,
 				loader -> loader.supportsLoadIntoProgram());
 
 			SystemUtilities.runSwingLater(() -> {
 				AddToProgramDialog dialog =
-					new AddToProgramDialog(tool, fsrl, loadMap, provider, program);
+					new AddToProgramDialog(tool, fsrl, loaderMap, provider, program);
 				tool.showDialog(dialog);
 			});
 		}
@@ -309,11 +309,11 @@ public class ImporterUtilities {
 		try {
 
 			ByteProvider provider = FileSystemService.getInstance().getByteProvider(fsrl, monitor);
-			LoadMap loadMap = LoaderService.getAllSupportedLoadSpecs(provider);
+			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(provider);
 
 			SystemUtilities.runSwingLater(() -> {
 				ImporterDialog importerDialog =
-					new ImporterDialog(tool, programManager, loadMap, provider, suggestedPath);
+					new ImporterDialog(tool, programManager, loaderMap, provider, suggestedPath);
 				if (destinationFolder != null) {
 					importerDialog.setDestinationFolder(destinationFolder);
 				}

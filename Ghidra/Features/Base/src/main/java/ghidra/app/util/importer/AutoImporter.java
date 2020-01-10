@@ -203,9 +203,9 @@ public final class AutoImporter {
 
 	private static LoadSpec getLoadSpec(Predicate<Loader> loaderFilter,
 			LoadSpecChooser loadSpecChooser, ByteProvider provider) {
-		LoadMap loadMap = LoaderService.getSupportedLoadSpecs(provider, loaderFilter);
+		LoaderMap loaderMap = LoaderService.getSupportedLoadSpecs(provider, loaderFilter);
 
-		LoadSpec loadSpec = loadSpecChooser.choose(loadMap);
+		LoadSpec loadSpec = loadSpecChooser.choose(loaderMap);
 		if (loadSpec != null) {
 			return loadSpec;
 		}

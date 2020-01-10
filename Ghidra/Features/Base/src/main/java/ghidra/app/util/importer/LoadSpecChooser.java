@@ -26,18 +26,18 @@ public interface LoadSpecChooser {
 	/**
 	 * Chooses a {@link LoadSpec} for a {@link Loader} to use based on some criteria
 	 * 
-	 * @param loadMap A {@link LoadMap}
+	 * @param loaderMap A {@link LoaderMap}
 	 * @return The chosen {@link LoadSpec}, or null if one could not be found
 	 */
-	public LoadSpec choose(LoadMap loadMap);
+	public LoadSpec choose(LoaderMap loaderMap);
 
 	/**
 	 * Chooses the first "preferred" {@link LoadSpec}
 	 * 
 	 * @see LoadSpec#isPreferred()
 	 */
-	public static final LoadSpecChooser CHOOSE_THE_FIRST_PREFERRED = loadMap -> {
-		return loadMap.values()
+	public static final LoadSpecChooser CHOOSE_THE_FIRST_PREFERRED = loaderMap -> {
+		return loaderMap.values()
 				.stream()
 				.flatMap(loadSpecs -> loadSpecs.stream())
 				.filter(loadSpec -> loadSpec != null && loadSpec.isPreferred())

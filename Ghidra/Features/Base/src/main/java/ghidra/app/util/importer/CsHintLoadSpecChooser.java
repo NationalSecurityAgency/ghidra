@@ -44,9 +44,9 @@ public class CsHintLoadSpecChooser implements LoadSpecChooser {
 	}
 
 	@Override
-	public LoadSpec choose(LoadMap loadMap) {
+	public LoadSpec choose(LoaderMap loaderMap) {
 
-		return loadMap.values()
+		return loaderMap.values()
 				.stream()
 				.flatMap(loadSpec -> loadSpec.stream())
 				.filter(loadSpec -> loadSpec.getLanguageCompilerSpec().compilerSpecID
