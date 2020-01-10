@@ -15,33 +15,33 @@
  */
 package ghidra.app.util.importer;
 
-import java.util.List;
+import ghidra.app.util.opinion.*;
 
-import ghidra.app.util.opinion.LoadSpec;
-import ghidra.util.Msg;
-
+/**
+ * Chooses a {@link LoadSpec} for a {@link Loader} to use based on some criteria
+ */
+@FunctionalInterface
 public interface LoadSpecChooser {
-	public static final LoadSpecChooser CHOOSE_THE_FIRST_PREFERRED = new LoadSpecChooser() {
-		@Override
-		public LoadSpec choose(List<LoadSpec> loadSpecs) {
-			for (LoadSpec loadSpec : loadSpecs) {
-				if (loadSpec == null) {
-					Msg.warn(this, "found null load spec whilst trying to choose");
-				}
-				else if (loadSpec.isPreferred()) {
-					return loadSpec;
-				}
-			}
-			return null;
-		}
 
-		@Override
-		public boolean usePreferred() {
-			return true;
-		}
+	/**
+	 * Chooses a {@link LoadSpec} for a {@link Loader} to use based on some criteria
+	 * 
+	 * @param loaderMap A {@link LoaderMap}
+	 * @return The chosen {@link LoadSpec}, or null if one could not be found
+	 */
+	public LoadSpec choose(LoaderMap loaderMap);
+
+	/**
+	 * Chooses the first "preferred" {@link LoadSpec}
+	 * 
+	 * @see LoadSpec#isPreferred()
+	 */
+	public static final LoadSpecChooser CHOOSE_THE_FIRST_PREFERRED = loaderMap -> {
+		return loaderMap.values()
+				.stream()
+				.flatMap(loadSpecs -> loadSpecs.stream())
+				.filter(loadSpec -> loadSpec != null && loadSpec.isPreferred())
+				.findFirst()
+				.orElse(null);
 	};
-
-	public LoadSpec choose(List<LoadSpec> loadSpecs);
-
-	public boolean usePreferred();
 }
