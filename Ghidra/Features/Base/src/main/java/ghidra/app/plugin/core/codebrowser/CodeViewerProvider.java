@@ -449,6 +449,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 		action = new GotoNextFunctionAction(tool, plugin.getName());
 		tool.addAction(action);
+
 	}
 
 	void fieldOptionChanged(String fieldName, Object newValue) {
