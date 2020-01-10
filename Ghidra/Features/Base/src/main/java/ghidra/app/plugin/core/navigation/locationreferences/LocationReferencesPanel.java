@@ -22,7 +22,6 @@ import java.util.Collection;
 
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.TableModelListener;
 
 import ghidra.app.services.GoToService;
@@ -57,7 +56,6 @@ public class LocationReferencesPanel extends JPanel {
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		setLayout(new BorderLayout(10, 10));
-		setBorder(new TitledBorder("Reference(s)"));
 
 		PluginTool tool = locationReferencesProvider.getTool();
 		GoToService goToService = tool.getService(GoToService.class);

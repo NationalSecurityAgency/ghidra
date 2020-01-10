@@ -16,7 +16,8 @@
 package ghidra.app.util.viewer.field;
 
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Set;
+import java.util.function.Supplier;
 
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.field.TextField;
@@ -26,14 +27,12 @@ import ghidra.app.util.XReferenceUtil;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.*;
-import ghidra.util.table.ReferencesFromTableModel;
-import util.CollectionUtils;
 
 /**
- * A handler to process {@link XRefFieldMouseHandler} clicks.
+ * A handler to process {@link XRefFieldMouseHandler} clicks
  */
 public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 
@@ -100,61 +99,15 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 		return ((XRefFieldLocation) programLocation).getIndex();
 	}
 
-	protected void showXRefDialog(Navigatable navigatable, ProgramLocation location,
+	private void showXRefDialog(Navigatable navigatable, ProgramLocation location,
 			ServiceProvider serviceProvider) {
 		TableService service = serviceProvider.getService(TableService.class);
 		if (service == null) {
 			return;
 		}
 
-		Address toAddress = location.getAddress();
-		Program program = navigatable.getProgram();
-
-		CodeUnit cu = getImmediateDataContaining(location, program);
-		if (cu == null) {
-			Listing listing = program.getListing();
-			cu = listing.getCodeUnitContaining(toAddress);
-		}
-
-		List<Reference> refs = getReferences(cu);
-		showReferenceTable(navigatable, serviceProvider, service, toAddress, program, refs);
-	}
-
-	protected void showReferenceTable(Navigatable navigatable, ServiceProvider serviceProvider,
-			TableService service, Address toAddress, Program program, List<Reference> refs) {
-		ReferencesFromTableModel model =
-			new ReferencesFromTableModel(refs, serviceProvider, program);
-		service.showTable("XRefs to " + toAddress.toString(), "XRefs", model, "XRefs", navigatable);
-	}
-
-	private List<Reference> getReferences(CodeUnit cu) {
-		Reference[] xrefs = XReferenceUtil.getXReferences(cu, XReferenceUtil.ALL_REFS);
-		Reference[] offcuts = XReferenceUtil.getOffcutXReferences(cu, XReferenceUtil.ALL_REFS);
-
-		// Convert to a set before combining lists, to remove duplicates.
-		Set<Reference> set = CollectionUtils.asSet(xrefs);
-		set.addAll(Arrays.asList(offcuts));
-
-		return new ArrayList<>(set);
-	}
-
-	/**
-	 * Returns the nearest {@link Data} object containing a given address.
-	 * 
-	 * @param location the program location within the data object
-	 * @param program the current program
-	 * @return the Data object
-	 */
-	private Data getImmediateDataContaining(ProgramLocation location, Program program) {
-		Address addr = location.getAddress();
-		Listing listing = program.getListing();
-		Data dataContaining = listing.getDataContaining(addr);
-		if (dataContaining == null) {
-			return null;
-		}
-
-		Data dataAtAddr = dataContaining.getComponent(location.getComponentPath());
-		return dataAtAddr;
+		Supplier<Set<Reference>> refs = () -> XReferenceUtil.getAllXrefs(location);
+		XReferenceUtil.showAllXrefs(navigatable, serviceProvider, service, location, refs);
 	}
 
 	protected ProgramLocation getReferredToLocation(Navigatable sourceNavigatable,
