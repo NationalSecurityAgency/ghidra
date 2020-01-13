@@ -96,7 +96,7 @@ public class CppExporter extends Exporter {
 		ParallelDecompilerCallback callback = new ParallelDecompilerCallback(decompilerPool);
 		ChunkingTaskMonitor chunkingMonitor = new ChunkingTaskMonitor(monitor);
 		ChunkingParallelDecompiler<CPPResult> parallelDecompiler =
-			ParallelDecompiler.createChunkingParallelDecopmiler(callback, chunkingMonitor);
+			ParallelDecompiler.createChunkingParallelDecompiler(callback, chunkingMonitor);
 
 		try {
 			writeProgramDataTypes(program, header, headerWriter, cFileWriter, chunkingMonitor);
