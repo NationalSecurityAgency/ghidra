@@ -1,0 +1,19 @@
+<patternlist>
+  <patternpairs totalbits="16" postbits="16">
+    <prepatterns>
+      <!--  ATTN  these patterns are above the insructions in sinc -->
+      <!--  76543210 54321098 32109876 10987654 -->
+      <data>10000010 10000000</data> <!-- ret -->
+      <data>01101111 ....0000 ........ ........</data> <!-- j imm -->
+      <data>......01 101.....</data> <!-- c.j imm -->
+    </prepatterns>
+    <postpatterns>
+      <!--  76543210 54321098 32109876 10987654 -->
+      <data>0.....01 01110001</data> <!-- c.addi16sp sp,-imm -->
+      <data>0.....01 00010001</data> <!-- c.addi sp,-imm -->
+      <data>00010011 00000001 ....0001 1.......</data> <!--  addi sp,sp,-imm -->
+      <data>.0010111 ........ ........ ........</data> <!--  auipc rd,imm-->
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+</patternlist>
