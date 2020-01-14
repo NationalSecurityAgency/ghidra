@@ -65,6 +65,12 @@ public class StringDataInstance {
 		return false;
 	}
 
+	/**
+	 * Returns true if the {@link Data} instance is one of the many 'char' data types.
+	 * 
+	 * @param data {@link Data} instance to test, null ok
+	 * @return boolean true if char data 
+	 */
 	public static boolean isChar(Data data) {
 		if (data == null) {
 			return false;
@@ -112,7 +118,7 @@ public class StringDataInstance {
 			ArrayStringable arrayStringable =
 				ArrayStringable.getArrayStringable(((Array) dt).getDataType());
 			if (arrayStringable != null && arrayStringable.hasStringValue(data)) {
-				return new StringDataInstance(arrayStringable, data, data, data.getLength());
+				return new StringDataInstance(arrayStringable, data, data, data.getLength(), true);
 			}
 		}
 		return NULL_INSTANCE;
@@ -133,13 +139,15 @@ public class StringDataInstance {
 		if (dataType instanceof AbstractStringDataType) {
 			return ((AbstractStringDataType) dataType).getStringDataInstance(buf, settings, length);
 		}
-		if (dataType instanceof Array) {
+		boolean isArray = dataType instanceof Array;
+		if (isArray) {
 			dataType = ArrayStringable.getArrayStringable(((Array) dataType).getDataType());
 		}
 		if (dataType instanceof ArrayStringable &&
 			((ArrayStringable) dataType).hasStringValue(settings) && buf.isInitializedMemory()) {
 
-			return new StringDataInstance(dataType, settings, buf, length);
+			// this could be either a charsequence or an array of char elements
+			return new StringDataInstance(dataType, settings, buf, length, isArray);
 		}
 		return NULL_INSTANCE;
 	}
@@ -207,6 +215,26 @@ public class StringDataInstance {
 	 * of the containing field of the data instance.
 	 */
 	public StringDataInstance(DataType dataType, Settings settings, MemBuffer buf, int length) {
+		this(dataType, settings, buf, length, false);
+	}
+
+	/**
+	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
+	 * pulled from the {@link AbstractStringDataType string data type}.
+	 * 
+	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType} derived type
+	 * or an {@link ArrayStringable} element-of-char-array type. 
+	 * @param settings {@link Settings} attached to the data location.
+	 * @param buf {@link MemBuffer} containing the data.
+	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
+	 * trying to detect the length of an unknown string, otherwise it will be the length
+	 * of the containing field of the data instance.
+	 * @param isArrayElement boolean flag, true indicates that the specified dataType is an
+	 * element in an array (ie. char[] vs. just a plain char), causing the string layout
+	 * to be forced to {@link StringLayoutEnum#NULL_TERMINATED_BOUNDED}
+	 */
+	public StringDataInstance(DataType dataType, Settings settings, MemBuffer buf, int length,
+			boolean isArrayElement) {
 		settings = (settings == null) ? SettingsImpl.NO_SETTINGS : settings;
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
@@ -215,7 +243,9 @@ public class StringDataInstance {
 		this.paddedCharSize = (dataType instanceof ArrayStringable) && (charSize == 1) //
 				? getDataOrganization(dataType).getCharSize()
 				: charSize;
-		this.stringLayout = getLayoutFromDataType(dataType);
+		this.stringLayout = isArrayElement //
+				? StringLayoutEnum.NULL_TERMINATED_BOUNDED
+				: getLayoutFromDataType(dataType);
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = TRANSLATION.getTranslatedValue(settings);
 		this.renderSetting = RENDER.getEnumValue(settings);
@@ -298,11 +328,6 @@ public class StringDataInstance {
 
 	private boolean isAlreadyDeterminedFixedLen() {
 		return length >= 0 && stringLayout.isFixedLen();
-	}
-
-	public boolean isPascal() {
-		return stringLayout == StringLayoutEnum.PASCAL_255 ||
-			stringLayout == StringLayoutEnum.PASCAL_64k;
 	}
 
 	/**
@@ -593,11 +618,6 @@ public class StringDataInstance {
 			result.endian = getMemoryEndianness();
 		}
 		return result;
-	}
-
-	private byte[] convertStringToBytes(String s, AdjustedCharsetInfo aci) {
-		Charset cs = Charset.isSupported(aci.charsetName) ? Charset.forName(aci.charsetName) : null;
-		return (cs != null) ? s.getBytes(cs) : null;
 	}
 
 	private static DataConverter getDataConverter(Endian endian) {

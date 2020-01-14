@@ -47,7 +47,7 @@ public interface ArrayStringable extends DataType {
 	 */
 	public default String getArrayString(MemBuffer buf, Settings settings, int length) {
 		if (hasStringValue(settings) && buf.isInitializedMemory()) {
-			return new StringDataInstance(this, settings, buf, length).getStringValue();
+			return new StringDataInstance(this, settings, buf, length, true).getStringValue();
 		}
 		return null;
 	}

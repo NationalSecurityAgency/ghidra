@@ -297,7 +297,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	public String getArrayDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options) {
 		if (hasStringValue(settings) && buf.isInitializedMemory()) {
-			return new StringDataInstance(this, settings, buf, len).getLabel(
+			return new StringDataInstance(this, settings, buf, len, true).getLabel(
 				AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
 				AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
 				options);
@@ -309,7 +309,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options, int offcutOffset) {
 		if (hasStringValue(settings) && buf.isInitializedMemory()) {
-			return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
+			return new StringDataInstance(this, settings, buf, len, true).getOffcutLabelString(
 				AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
 				AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
 				options, offcutOffset);
