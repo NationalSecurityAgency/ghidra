@@ -127,6 +127,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * @param program the program to be disassembled.
 	 * @param monitor progress monitor
 	 * @param listener object to notify of disassembly messages.
+	 * @return a disassembler ready to disassemble
 	 */
 	public static Disassembler getDisassembler(Program program, TaskMonitor monitor,
 			DisassemblerMessageListener listener) {
@@ -157,6 +158,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * @param addrFactory address factory 
 	 * @param monitor progress monitor
 	 * @param listener object to notify of disassembly messages.
+	 * @return a disassembler ready to disassemble
 	 */
 	public static Disassembler getDisassembler(Language language, AddressFactory addrFactory,
 			TaskMonitor monitor, DisassemblerMessageListener listener) {
@@ -186,6 +188,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * @param restrictToExecuteMemory if true disassembly will only be permitted with executable memory blocks
 	 * @param monitor progress monitor
 	 * @param listener object to notify of disassembly messages.
+	 * @return a disassembler ready to disassemble
 	 */
 	public static Disassembler getDisassembler(Program program, boolean markBadInstructions,
 			boolean markUnimplementedPcode, boolean restrictToExecuteMemory, TaskMonitor monitor,
@@ -297,7 +300,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * Set seed context which will be used to establish initial context at starting points
 	 * which are not arrived at via a natural disassembly flow.  A null value will disable
 	 * use of any previously set seed context
-	 * @param seedContext
+	 * @param seedContext initial context for disassembly
 	 */
 	public void setSeedContext(DisassemblerContextImpl seedContext) {
 		if (seedContext != null && seedContext.getBaseContextRegister() != baseContextRegister) {
@@ -341,7 +344,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	}
 
 	/**
-	 * @param program
+	 * @param program the program to check
 	 * @return true if program MARK_BAD_INSTRUCTION_PROPERTY has been enabled
 	 */
 	public static boolean isMarkBadDisassemblyOptionEnabled(Program program) {
@@ -350,7 +353,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	}
 
 	/**
-	 * @param program
+	 * @param program the program to check
 	 * @return true if program MARK_UNIMPL_PCODE_PROPERTY has been enabled
 	 */
 	public static boolean isMarkUnimplementedPcodeOptionEnabled(Program program) {
@@ -359,7 +362,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	}
 
 	/**
-	 * @param program
+	 * @param program the program to check
 	 * @return true if program RESTRICT_DISASSEMBLY_TO_EXECUTE_MEMORY_PROPERTY has been enabled
 	 */
 	public static boolean isRestrictToExecuteMemory(Program program) {
@@ -436,49 +439,62 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 		disassembledAddrs = new AddressSet();
 
-		AddressSet todo = new AddressSet(startSet);
-
 		int alignment = language.getInstructionAlignment();
-		while (!todo.isEmpty() && !monitor.isCancelled()) {
-			Address addr = todo.getMinAddress();
-			// must be aligned
-			if (addr.getOffset() % alignment != 0) {
-				todo.deleteRange(addr, addr);
-				continue;
-			}
-			Data data = listing.getUndefinedDataAt(addr);
-			if (data == null) {
-				Address endAddr = addr;
-				CodeUnitIterator it = listing.getCodeUnits(todo, true);
-				while (it.hasNext() && !monitor.isCancelled()) {
-					CodeUnit cu = it.next();
-					if (cu instanceof Data &&
-						((Data) cu).getDataType() instanceof DefaultDataType) {
-						data = (Data) cu;
-						break;
-					}
-					endAddr = cu.getMaxAddress();
-				}
-				if (data == null) {
-					todo.clear();
-				}
-				else {
-					todo.deleteRange(addr, endAddr);
-				}
-			}
-			else {
-				AddressSet currentSet =
-					disassemble(addr, restrictedSet, initialContextValue, doFollowFlow);
-				if (currentSet.isEmpty()) {
-					todo.deleteRange(addr, addr);
-				}
-				else {
-					todo.delete(currentSet);
-					disassembledAddrs.add(currentSet);
-				}
-			}
+
+		AddressRangeIterator addressRanges = startSet.getAddressRanges();
+		for (AddressRange addressRange : addressRanges) {
 			if (monitor.isCancelled()) {
 				break;
+			}
+
+			if (disassembledAddrs.contains(addressRange.getMinAddress(),
+				addressRange.getMaxAddress())) {
+				continue;
+			}
+
+			AddressSet todoSubset = new AddressSet(addressRange);
+
+			while (!todoSubset.isEmpty() && !monitor.isCancelled()) {
+				Address nextAddr = todoSubset.getMinAddress();
+				// must be aligned
+				if (nextAddr.getOffset() % alignment != 0) {
+					todoSubset.delete(nextAddr, nextAddr);
+					continue;
+				}
+
+				Data data = listing.getUndefinedDataAt(nextAddr);
+				if (data == null) {
+					// no undefined here, skip to next undefined
+					todoSubset.delete(nextAddr, nextAddr);
+					CodeUnitIterator codeUnits = listing.getCodeUnits(todoSubset, true);
+
+					// TODO: investigate, if getUndefinedAfter(), or getUndefinedRanges() is faster
+					for (CodeUnit cu : codeUnits) {
+						if (cu instanceof Data &&
+							((Data) cu).getDataType() instanceof DefaultDataType) {
+							break;
+						}
+						nextAddr = cu.getMinAddress();
+					}
+					if (!todoSubset.isEmpty()) {
+						todoSubset.delete(todoSubset.getMinAddress(), nextAddr);
+					}
+				}
+				else {
+					AddressSet currentSet =
+						disassemble(nextAddr, restrictedSet, initialContextValue, doFollowFlow);
+
+					if (currentSet.isEmpty()) {  // nothing disassembled
+						todoSubset.delete(nextAddr, nextAddr);
+					}
+					else {
+						todoSubset.delete(currentSet);
+						disassembledAddrs.add(currentSet);
+					}
+				}
+				if (monitor.isCancelled()) {
+					break;
+				}
 			}
 		}
 		return disassembledAddrs;
@@ -1100,7 +1116,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 	/**
 	 * Adjust disassembler context prior to disassembly of a new instruction.
-	 * @param instrMemBuffer
+	 * @param instrMemBuffer buffer for bytes from memory
 	 * @throws UnknownInstructionException if instruction is invalid
 	 */
 	protected void adjustPreParseContext(MemBuffer instrMemBuffer)
@@ -1134,16 +1150,16 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * Process a new instruction which has just been parsed.  This method is responsible for
 	 * adding the instruction to the current block as well as any delay-slotted instructions.
 	 * This method may be overridden and the instruction re-parsed if necessary. 
-	 * @param inst
-	 * @param blockMemBuffer
-	 * @param block
-	 * @param instructionSet
+	 * @param inst instruction to process
+	 * @param blockMemBuffer buffer to get bytes
+	 * @param block current block of instructions
+	 * @param instructionSet address set of current instructions in block
 	 * @return instruction fallthrough address or null if no fallthrough
 	 * @throws InsufficientBytesException if a memory error occurs during instruction processing 
 	 * @throws UnknownInstructionException if an error occurs during a modified re-parse of
 	 * the instruction.
-	 * @throws AddressOverflowException 
-	 * @throws NestedDelaySlotException
+	 * @throws AddressOverflowException if address goes out of address space
+	 * @throws NestedDelaySlotException if delay slot found in a delay slot
 	 */
 	protected Address processInstruction(PseudoInstruction inst, MemBuffer blockMemBuffer,
 			InstructionBlock block, InstructionSet instructionSet)
@@ -1341,8 +1357,9 @@ public class Disassembler implements DisassemblerConflictHandler {
 		PcodeInjectLibrary pcodeInjectLibrary = program.getCompilerSpec().getPcodeInjectLibrary();
 		InjectPayload callFixup = pcodeInjectLibrary.getPayload(InjectPayload.CALLFIXUP_TYPE,
 			callFixupStr, program, null);
-		if (callFixup == null)
+		if (callFixup == null) {
 			return false;
+		}
 		return !callFixup.isFallThru();
 	}
 
@@ -1415,10 +1432,10 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 	/**
 	 * Mark all instructions with unimplemented pcode over the specified address set
-	 * @param program
+	 * @param program to mark unimplemented in
 	 * @param addressSet restricted address set or null for entire program
-	 * @param monitor
-	 * @throws CancelledException
+	 * @param monitor allow canceling
+	 * @throws CancelledException if monitor canceled
 	 */
 	public static void markUnimplementedPcode(Program program, AddressSetView addressSet,
 			TaskMonitor monitor) throws CancelledException {
@@ -1437,10 +1454,10 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 	/**
 	 * Clear all bookmarks which indicate unimplemented pcode within the specified address set.
-	 * @param program
+	 * @param program program to clear bookmarks
 	 * @param addressSet restricted address set or null for entire program
-	 * @param monitor
-	 * @throws CancelledException
+	 * @param monitor allow canceling
+	 * @throws CancelledException if monitor canceled
 	 */
 	public static void clearUnimplementedPcodeWarnings(Program program, AddressSetView addressSet,
 			TaskMonitor monitor) throws CancelledException {
@@ -1492,10 +1509,10 @@ public class Disassembler implements DisassemblerConflictHandler {
 		 * for minting a new instruction.  If value is not null, the temporary context is expanded 
 		 * to include the context-register value.  The temporary context should be cleared after in-memory
 		 * instructions (i.e., InstructionSet) have been written to the program.
-		 * @param value
-		 * @param instrAddr
-		 * @param instrLength
-		 * @return
+		 * @param value to add to instruction context if different
+		 * @param instrAddr address of instruction that should have context
+		 * @param instrLength length of instruction to set context
+		 * @return instruction context with possible added value
 		 */
 		ProcessorContext getInstructionContext(RegisterValue value, Address instrAddr,
 				int instrLength) {
