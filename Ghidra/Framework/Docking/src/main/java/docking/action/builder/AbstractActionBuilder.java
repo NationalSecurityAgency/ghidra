@@ -100,7 +100,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	/**
 	 * The mnemonic for the menu action (optional)
 	 */
-	private int menuMnemonic;
+	private int menuMnemonic = MenuData.NO_MNEMONIC;
 
 	/**
 	 * The icon for the  menu item (optional)
@@ -304,7 +304,8 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * @see #menuGroup(String)
 	 */
 	public B menuGroup(String group, String subGroup) {
-		menuSubGroup = group;
+		menuGroup = group;
+		menuSubGroup = subGroup;
 		return self();
 	}
 
