@@ -41,19 +41,19 @@ public class MenuData {
 	private String menuSubGroup;
 
 	public MenuData(String[] menuPath) {
-		this(menuPath, null, null);
+		this(menuPath, null, null, NO_MNEMONIC, null);
 	}
 
 	public MenuData(String[] menuPath, String group) {
-		this(menuPath, null, group);
+		this(menuPath, null, group, NO_MNEMONIC, null);
 	}
 
 	public MenuData(String[] menuPath, Icon icon) {
-		this(menuPath, icon, null);
+		this(menuPath, icon, null, NO_MNEMONIC, null);
 	}
 
 	public MenuData(String[] menuPath, Icon icon, String menuGroup) {
-		this(processMenuPath(menuPath), icon, menuGroup, getMnemonic(menuPath), null);
+		this(menuPath, icon, menuGroup, NO_MNEMONIC, null);
 	}
 
 	public MenuData(String[] menuPath, Icon icon, String menuGroup, int mnemonic,
@@ -62,10 +62,10 @@ public class MenuData {
 		if (menuPath == null || menuPath.length == 0) {
 			throw new IllegalArgumentException("Menu path cannot be null or empty");
 		}
-		this.menuPath = menuPath;
+		this.menuPath = processMenuPath(menuPath);
 		this.menuGroup = menuGroup;
 		this.menuSubGroup = menuSubGroup == null ? NO_SUBGROUP : menuSubGroup;
-		this.mnemonic = mnemonic;
+		this.mnemonic = mnemonic == NO_MNEMONIC ? getMnemonic(menuPath) : mnemonic;
 		this.icon = DockingUtils.scaleIconAsNeeded(icon);
 	}
 
