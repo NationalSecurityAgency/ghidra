@@ -421,7 +421,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * 
 	 * @param group for this action
 	 * @return this builder (for chaining)
-	 * @see #toolBarGroup(String)
+	 * @see #toolBarGroup(String, String)
 	 */
 	public B toolBarGroup(String group) {
 		toolBarGroup = group;
