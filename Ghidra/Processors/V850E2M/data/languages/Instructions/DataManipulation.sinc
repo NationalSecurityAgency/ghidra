@@ -1,0 +1,150 @@
+##################################################
+#####			DataManipulation			 #####
+##################################################
+
+
+# BSH reg2, reg3 - rrrrr11111100000|wwwww01101000010
+:bsh R1115, R2731 is op0010=0x7E0 & R1115; op1626=0x342 & R2731
+{
+	local x1 = R1115[0,8];
+	local x2 = R1115[8,8];
+	local x3 = R1115[16,8];
+	local x4 = R1115[24,8];
+	R2731 = zext(x3 << 24) | zext(x4 << 16) | zext(x1 << 8) | zext(x2);
+	set_OV0_S_Z(R2731);
+	$(CY) = (x1 == 0) || (x2 == 0);
+}
+
+# BSW reg2, reg3 - rrrrr11111100000|wwwww01101000000
+:bsw R1115, R2731 is op0010=0x7E0 & R1115; op1626=0x340 & R2731
+{
+	local x1 = R1115[0,8];
+	local x2 = R1115[8,8];
+	local x3 = R1115[16,8];
+	local x4 = R1115[24,8];
+	R2731 = zext(x1 << 24) | zext(x2 << 16) | zext(x3 << 8) | zext(x4);
+	set_OV0_S_Z(R2731);
+	$(CY) = (x1 == 0) || (x2 == 0) || (x3 == 0) || (x4 == 0);
+}
+
+# CMOV cccc, reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww011001cccc0
+:cmov^c1720 R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op2126=0x19 & op1616=0 & c1720 & R2731
+{
+    local result:4 = zext(c1720);
+    R2731 = R0004 * zext(result != 0) + R1115 * zext(result == 0);
+}
+
+# CMOV cccc, imm5, reg2, reg3 - rrrrr111111iiiii|wwwww011000cccc0
+:cmov^c1720 s0004, R1115, R2731 is op0510=0x3F & s0004 & R1115; op2126=0x18 & op1616=0 & c1720 & R2731
+{
+    local result:4 = zext(c1720);
+    R2731 = s0004 * zext(result != 0) + R1115 * zext(result == 0);
+}
+
+# HSH reg2, reg3 - rrrrr11111100000|wwwww01101000110
+:hsh R1115, R2731 is op0010=0x7E0 & R1115; op1626=0x346 & R2731
+{
+	R2731 = R1115;
+	set_OV0_S_Z(R2731);
+	$(CY) = (R2731[0,16] == 0);
+}
+
+# HSW reg2, reg3 - rrrrr11111100000|wwwww01101000100
+:hsw R1115, R2731 is op0010=0x7E0 & R1115; op1626=0x344 & R2731
+{
+	local x1 = R1115[0,16];
+	local x2 = R1115[16,16];
+	R2731 = zext(x1 << 16) | zext(x2);
+	set_OV0_S_Z(R2731);
+	$(CY) = (x1 == 0) || (x2 == 0);
+}
+
+# SAR reg1, reg2 - rrrrr111111RRRRR|0000000010100000
+:sar R0004, R1115 is op0510=0x3F & R0004 & R1115; op1631=0xA0
+{
+	shift_right_arith(R1115, R1115, R0004);
+}
+
+# SAR imm5, reg2 - rrrrr010101iiiii
+:sar op0004, R1115 is op0510=0x15 & op0004 & R1115
+{
+	shift_right_arith(R1115, R1115, op0004:5);
+}
+
+# SAR reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww00010100010
+:sar R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0xA2 & R2731
+{
+	shift_right_arith(R2731, R1115, R0004);
+}
+
+# SASF cccc, reg2 - rrrrr1111110cccc|0000001000000000
+:sasf^c0003 R1115 is op0410=0x7E & c0003 & R1115; op1631=0x0200
+{
+	R1115 = (R1115 << 1) | zext(c0003);
+}
+
+# SETF cond, reg2 - rrrrr1111110cccc|0000000000000000
+:setf^c0003 R1115 is op0410=0x7E & c0003 & R1115; op1631=0x0
+{
+	R1115 = zext(c0003);
+}
+
+# SHL reg1, reg2 - rrrrr111111RRRRR|0000000011000000
+:shl R0004, R1115 is op0510=0x3F & R0004 & R1115; op1631=0xC0
+{
+	shift_left_logic(R1115, R1115, R0004);
+}
+
+# SHL imm5, reg2 - rrrrr010110iiiii
+:shl op0004, R1115 is op0510=0x16 & op0004 & R1115
+{
+	shift_left_logic(R1115, R1115, op0004:5);
+}
+
+# SHL reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww00011000010
+:shl R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0xC2 & R2731
+{
+	shift_left_logic(R2731, R1115, R0004);
+}
+
+# SHR reg1, reg2 - rrrrr111111RRRRR|0000000010000000
+:shr R0004, R1115 is op0510=0x3F & R0004 & R1115; op1631=0x80
+{
+	shift_right_logic(R1115, R1115, R0004);
+}
+
+# SHR imm5, reg2 - rrrrr010100iiiii
+:shr op0004, R1115 is op0510=0x14 & op0004 & R1115
+{
+	shift_right_logic(R1115, R1115, op0004:5);
+}
+
+# SHR reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww00010000010
+:shr R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x82 & R2731
+{
+	shift_right_logic(R2731, R1115, R0004);
+}
+
+# SXB reg1 - 00000000101RRRRR
+:sxb R0004 is op0515=0x05 & R0004
+{
+	R0004 = sext(R0004[0,8]);
+}
+
+# SXH reg1 - 00000000111RRRRR
+:sxh R0004 is op0515=0x07 & R0004
+{
+	R0004 = sext(R0004[0,16]);
+}
+
+# ZXB reg1 - 00000000100RRRRR
+:zxb R0004 is op0515=0x004 & R0004
+{
+	R0004 = zext(R0004[0,8]);
+}
+
+# ZXH reg1 - 00000000110RRRRR
+:zxh R0004 is op0515=0x006 & R0004
+{
+	R0004 = zext(R0004[0,16]);
+}

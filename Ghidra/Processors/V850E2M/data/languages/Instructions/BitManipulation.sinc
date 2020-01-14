@@ -1,0 +1,70 @@
+##################################################
+#####			  BitManipulation			 #####
+##################################################
+
+
+# CLR1 bit#3, disp16[reg1] - 10bbb111110RRRRR|dddddddddddddddd
+:clr1 op1113, s1631[R0004] is op0510=0x3E & op1415=2 & op1113 & R0004; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local token = *:1 adr;
+	*:1 adr = token & ~(1 << op1113);
+	set_Z(token & (1 << op1113));
+}
+
+# CLR1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100100
+:clr1 R1115, [R0004] is op0510=0x3F & R0004 & R1115; op1631=0xE4
+{
+	local token = *:1 R0004;
+	*:1 R0004 = token & ~(1 << R1115);
+	set_Z(token & (1 << R1115));
+}
+
+# NOT1 bit#3, disp16[reg1] - 01bbb111110RRRRR|dddddddddddddddd
+:not1 op1113, s1631[R0004] is op0510=0x3E & op1415=1 & op1113 & R0004; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local token = *:1 adr;
+	*:1 adr = token ^ (1 << op1113);
+	set_Z(token & (1 << op1113));
+}
+
+# NOT1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100010
+:not1 R1115, [R0004] is op0510=0x3F & R0004 & R1115; op1631=0xE2
+{
+	local token = *:1 R0004;
+	*:1 R0004 = token ^ (1 << R1115);
+	set_Z(token & (1 << R1115));
+}
+
+# SET1 bit#3, disp16[reg1] - 00bbb111110RRRRR|dddddddddddddddd
+:set1 op1113, s1631[R0004] is op0510=0x3E & op1415=0 & op1113 & R0004; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local token = *:1 adr;
+	*:1 adr = token | (1 << op1113);
+	set_Z(token & (1 << op1113));
+}
+
+# SET1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100000
+:set1 R1115, [R0004] is op0510=0x3F & R0004 & R1115; op1631=0xE0
+{
+	local token = *:1 R0004;
+	*:1 R0004 = token | (1 << R1115);
+	set_Z(token & (1 << R1115));
+}
+
+# TST1 bit#3, disp16[reg1] - 11bbb111110RRRRR|dddddddddddddddd
+:tst1 op1113, s1631[R0004] is op0510=0x3E & op1415=3 & op1113 & R0004; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local token = *:1 adr;
+	set_Z(token & (1 << op1113));
+}
+
+# TST1 reg2, [reg1] - rrrrr111111RRRRR|0000000011100110
+:tst1 R0004, [R1115] is op0510=0x3F & R0004 & R1115; op1631=0xE6
+{
+	local token = *:1 R0004;
+	set_Z(token & (1 << R1115));
+}

@@ -1,0 +1,16 @@
+##################################################
+#####			MultiplyAccumulate			 #####
+##################################################
+
+
+# MAC reg1, reg2, reg3, reg4 - rrrrr111111RRRRR wwww0011110mmmm0
+:mac R0004, R1115, R2731x2, R1620x2 is op0510=0x3F & R0004 & R1115; op2126=0x1E & op1616=0 & R1620x2 & R2731x2 
+{
+	R1620x2 = sext(R1115) * sext(R0004) + R2731x2;
+}
+
+# MACU reg1, reg2, reg3, reg4 - rrrrr111111RRRRR|wwww0011111mmmm0
+:macu R0004, R1115, R2731x2, R1620x2 is op0510=0x3F & R0004 & R1115; op2126=0x1F & op1616=0 & R1620x2 & R2731x2
+{
+	R1620x2 = zext(R1115) * zext(R0004) + R2731x2;
+}

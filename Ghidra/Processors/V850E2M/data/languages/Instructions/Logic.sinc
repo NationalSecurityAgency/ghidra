@@ -1,0 +1,59 @@
+##################################################
+#####				 Logic   				 #####
+##################################################
+
+
+# AND reg1, reg2 - rrrrr001010RRRRR
+:or R0004, R1115 is op0510=0x0A & R0004 & R1115
+{
+	R1115 = R1115 & R0004;
+	set_OV0_S_Z(R1115);
+}
+
+# ANDI imm16, reg1, reg2 - rrrrr110110RRRRR|iiiiiiiiiiiiiiii
+:andi op1631, R0004, R1115 is op0510=0x36 & R1115 & R0004; op1631
+{
+	R1115 = R0004 & op1631;
+	set_OV0_S_Z(R1115);
+}
+
+# NOT reg1, reg2 - rrrrr000001RRRRR
+:not R0004, R1115 is op0510=0x01 & R0004 & R1115
+{
+	R1115 = ~R0004;
+	set_OV0_S_Z(R1115);
+}
+
+# OR reg1, reg2 - rrrrr001000RRRRR
+:or R0004, R1115 is op0510=0x08 & R0004 & R1115
+{
+	R1115 = R1115 | R0004;
+	set_OV0_S_Z(R1115);
+}
+
+# ORI imm16, reg1, reg2 - rrrrr110100RRRRR|iiiiiiiiiiiiiiii
+:ori op1631, R0004, R1115 is op0510=0x34 & R1115 & R0004; op1631
+{
+	R1115 = R0004 | op1631;
+	set_OV0_S_Z(R1115);
+}
+
+# TST reg1, reg2 - rrrrr001011RRRRR
+:tst R0004, R1115 is op0510=0x0B & R0004 & R1115
+{
+	set_OV0_S_Z(R1115 & R0004);
+}
+
+# XOR reg1, reg2 - rrrrr001001RRRRR
+:xor R0004, R1115 is op0510=0x09 & R0004 & R1115
+{
+	R1115 = R1115 ^ R0004;
+	set_OV0_S_Z(R1115);
+}
+
+# XORI imm16, reg1, reg2 - rrrrr110101RRRRR|iiiiiiiiiiiiiiii
+:xori op1631, R0004, R1115 is op0510=0x35 & R1115 & R0004; op1631
+{
+	R1115 = R0004 ^ op1631;
+	set_OV0_S_Z(R1115);
+}

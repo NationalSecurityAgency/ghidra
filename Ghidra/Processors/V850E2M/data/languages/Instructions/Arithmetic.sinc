@@ -1,0 +1,82 @@
+##################################################
+#####				Arithmetic				 #####
+##################################################
+
+
+# ADD reg1, reg2 - rrrrr001110RRRRR
+:add R0004, R1115 is op0510=0x0E & R0004 & R1115 
+{
+	set_general_flags_pos(R0004, R1115);
+	R1115 = R1115 + R0004;
+}
+
+# ADD imm5, reg2 - rrrrr010010iiiii
+:add s0004, R1115 is op0510=0x12 & s0004 & R1115 
+{
+	set_general_flags_pos(s0004, R1115);
+	R1115 = R1115 + s0004;
+}
+
+# ADDI imm16, reg1, reg2 - rrrrr110000RRRRR|iiiiiiiiiiiiiiii
+:addi s1631, R0004, R1115 is op0510=0x30 & R1115 & R0004; s1631
+{
+	set_general_flags_pos(R0004, s1631);
+	R1115 = R0004 + s1631;
+}
+
+# CMP reg1, reg2 - rrrrr001111RRRRR
+:cmp R0004, R1115 is op0510=0x0F & R0004 & R1115
+{
+	set_general_flags_neg(R1115, R0004);
+}
+
+# CMP imm5, reg2 - rrrrr010011iiiii
+:cmp s0004, R1115 is op0510=0x13 & s0004 & R1115
+{
+	set_general_flags_neg(R1115, s0004);
+}
+
+# MOV reg1, reg2 - rrrrr000000RRRRR
+:mov R0004, r1115 is op0510=0x00 & R0004 & r1115
+{
+	r1115 = R0004;
+}
+
+# MOV imm5, reg2 - rrrrr010000iiiii
+:mov s0004, r1115 is op0510=0x10 & s0004 & r1115 & op1115!=0
+{
+	r1115 = s0004;
+}
+
+# MOV imm32, reg1 - 00000110001RRRRR|iiiiiiiiiiiiiiii|IIIIIIIIIIIIIIII
+:mov imm32, R0004 is op0515=0x031 & R0004; op1631; op3247
+[ imm32 = (op3247 << 16) | op1631; ] 
+{
+	R0004 = imm32;
+}
+
+# MOVEA imm16, reg1, reg2 - rrrrr110001RRRRR|iiiiiiiiiiiiiiii
+:movea s1631, R0004, r1115 is op0510=0x31 & op1115!=0 & R0004 & r1115; s1631
+{
+	r1115 = R0004 + s1631;
+}
+
+# MOVHI imm16, reg1, reg2 - rrrrr110010RRRRR|iiiiiiiiiiiiiiii
+:movhi s1631, R0004, r1115 is op0510=0x32 & op1115!=0 & R0004 & r1115; s1631
+{
+	r1115 = R0004 + (s1631 << 16);
+}
+
+# SUB reg1, reg2 - rrrrr001101RRRRR
+:sub R0004, R1115 is op0510=0x0D & R0004 & R1115 
+{
+	set_general_flags_neg(R1115, R0004);
+	R1115 = R1115 - R0004;
+}
+
+# SUBR reg1, reg2 - rrrrr001100RRRRR
+:subr R0004, R1115 is op0510=0x0C & R0004 & R1115
+{
+	set_general_flags_neg(R0004, R1115);
+	R1115 = R0004 - R1115;
+}
