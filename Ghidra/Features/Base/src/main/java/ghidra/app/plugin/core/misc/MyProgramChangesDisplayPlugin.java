@@ -28,7 +28,7 @@ import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
-import docking.action.ToolBarData;
+import docking.action.MenuData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -46,13 +46,14 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
+import ghidra.util.task.SwingUpdateManager;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.Job;
 import ghidra.util.worker.Worker;
 import resources.ResourceManager;
 
 /**
- * Manages the markers to display areas where changes have occured.. 
+ * Manages the markers to display areas where changes have occurred 
  */
 @PluginInfo( //@formatter:off
 	status = PluginStatus.RELEASED,
@@ -86,7 +87,6 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 	private DockingAction checkInAction;
 	private DockingAction mergeAction;
-	private TaskListener taskListener;
 
 	private AddressSetView otherChangeSet;
 	private int serverVersion = -1;
@@ -104,33 +104,26 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		folderListener = new ProgramFolderListener();
 		transactionListener = new ProgramTransactionListener();
 		tool.getProject().getProjectData().addDomainFolderChangeListener(folderListener);
-
-		taskListener = new TaskListener() {
-			@Override
-			public void taskCancelled(Task task) {
-				setActionsEnabled();
-			}
-
-			@Override
-			public void taskCompleted(Task task) {
-				setActionsEnabled();
-			}
-		};
-
-		createActions();
 	}
 
 	private void createActions() {
 
+		String menuGroup = "DomainObjectVersionControl";
 		ImageIcon icon = ResourceManager.loadImage("images/vcMerge.png");
 		mergeAction = new DockingAction("Update", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				AppInfo.getFrontEndTool().merge(tool, currentProgram.getDomainFile(), taskListener);
+				AppInfo.getFrontEndTool().merge(tool, currentProgram.getDomainFile(), null);
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return currentProgram != null && currentProgram.getDomainFile().canMerge();
 			}
 		};
-		mergeAction.setEnabled(false);
-		mergeAction.setToolBarData(new ToolBarData(icon, "Repository"));
+
+		mergeAction.setMenuBarData(
+			new MenuData(new String[] { "File", "Update..." }, icon, menuGroup));
 		mergeAction.setDescription("Update checked out file with latest version");
 		mergeAction.setHelpLocation(new HelpLocation("VersionControl", mergeAction.getName()));
 
@@ -138,12 +131,18 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		checkInAction = new DockingAction("CheckIn", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				AppInfo.getFrontEndTool().checkIn(tool, currentProgram.getDomainFile(),
-					taskListener);
+				AppInfo.getFrontEndTool()
+						.checkIn(tool, currentProgram.getDomainFile());
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return currentProgram != null && currentProgram.getDomainFile().canCheckin();
 			}
 		};
-		checkInAction.setEnabled(false);
-		checkInAction.setToolBarData(new ToolBarData(icon, "Repository"));
+
+		checkInAction.setMenuBarData(
+			new MenuData(new String[] { "File", "Check In..." }, icon, menuGroup));
 		checkInAction.setDescription("Check in file");
 		checkInAction.setHelpLocation(new HelpLocation("VersionControl", checkInAction.getName()));
 
@@ -151,9 +150,32 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		tool.addAction(checkInAction);
 	}
 
-	private void setActionsEnabled() {
-		mergeAction.setEnabled(currentProgram.getDomainFile().canMerge());
-		checkInAction.setEnabled(currentProgram.getDomainFile().canCheckin());
+	private void updateActions() {
+
+		if (currentProgram == null || currentProgram.getDomainFile() == null) {
+			removeVcActions();
+			return;
+		}
+
+		if (currentProgram.getDomainFile().isVersioned()) {
+			maybeAddVcActions();
+		}
+	}
+
+	private void maybeAddVcActions() {
+
+		if (mergeAction == null) {
+			createActions();
+		}
+	}
+
+	private void removeVcActions() {
+		if (mergeAction != null) {
+			tool.removeAction(mergeAction);
+			tool.removeAction(checkInAction);
+			mergeAction = null;
+			checkInAction = null;
+		}
 	}
 
 	@Override
@@ -165,13 +187,10 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	@Override
 	protected void programActivated(Program program) {
 
-		mergeAction.setEnabled(false);
-		checkInAction.setEnabled(false);
-
 		program.addListener(this);
 		program.addTransactionListener(transactionListener);
 		updateForDomainFileChanged();
-		setActionsEnabled();
+		updateActions();
 
 		createMarkerSets(program);
 		intializeChangeMarkers();
@@ -180,6 +199,8 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	@Override
 	protected void programDeactivated(Program program) {
 
+		updateActions();
+
 		serverVersion = -1;
 		localVersion = -1;
 		programChangedLocally = false;
@@ -187,8 +208,6 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		programSaved = false;
 		program.removeTransactionListener(transactionListener);
 		program.removeListener(this);
-		mergeAction.setEnabled(false);
-		checkInAction.setEnabled(false);
 		disposeMarkerSets(program);
 	}
 
@@ -268,7 +287,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	 */
 	private void updateChangeMarkers() {
 
-		SystemUtilities.assertThisIsTheSwingThread(
+		Swing.assertThisIsTheSwingThread(
 			"Change markers must be manipulated on the Swing thread");
 
 		if (currentProgram == null) {
@@ -296,8 +315,10 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 			// only update conflict markers when server changeSet changes or we end a transaction
 			if (programChangedRemotely || updateConflicts) {
 				AddressSet intersect =
-					changeSet.getAddressSetCollectionSinceCheckout().getCombinedAddressSet().intersect(
-						otherChangeSet);
+					changeSet.getAddressSetCollectionSinceCheckout()
+							.getCombinedAddressSet()
+							.intersect(
+								otherChangeSet);
 				currentConflictChangeMarks.setAddressSetCollection(
 					new SingleAddressSetCollection(intersect));
 			}
@@ -360,6 +381,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		}
 
 		updateManager.update();
+		updateActions();
 	}
 
 	Worker getWorker() {
@@ -400,7 +422,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		@Override
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 
-			SystemUtilities.runSwingLater(() -> {
+			Swing.runLater(() -> {
 				if (currentProgram == null) {
 					return;
 				}
@@ -416,7 +438,6 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 					}
 					updateForDomainFileChanged();
 				}
-				setActionsEnabled();
 			});
 		}
 	}
@@ -451,7 +472,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 			AddressSetView remoteChanges =
 				changes != null ? changes.getAddressSet() : new AddressSet();
-			SystemUtilities.runSwingNow(() -> applyChanges(remoteChanges));
+			Swing.runNow(() -> applyChanges(remoteChanges));
 		}
 
 		private void applyChanges(AddressSetView remoteChanges) {

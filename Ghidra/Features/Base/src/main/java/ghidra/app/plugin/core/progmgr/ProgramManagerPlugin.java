@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.progmgr;
 
 import java.awt.Component;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyEditor;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.Icon;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import docking.options.editor.*;
 import docking.tool.ToolConstants;
@@ -535,7 +537,8 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			new MenuData(new String[] { ToolConstants.MENU_FILE, "&Open..." }, "DomainObjectOpen");
 		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
 		openAction.setMenuBarData(menuData);
-		openAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+		openAction.setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_O, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 
 		closeAction = new ProgramContextAction("Close File", getName()) {
 			@Override
@@ -626,14 +629,15 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		};
 		String[] saveMenuPath = { ToolConstants.MENU_FILE, "&Save" };
 		Icon saveIcon = ResourceManager.loadImage("images/disk.png");
-		String saveGroup = "DomainObjectSave";
+		String saveGroup = ToolConstants.TOOLBAR_GROUP_NAV_ONE;
 		subMenuGroupOrder = 0;
 
 		menuData = new MenuData(saveMenuPath, saveIcon, saveGroup);
 		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
 		saveAction.setMenuBarData(menuData);
 		saveAction.setToolBarData(new ToolBarData(saveIcon, saveGroup));
-		saveAction.setKeyBindingData(new KeyBindingData('S', InputEvent.CTRL_MASK));
+		saveAction
+				.setKeyBindingData(new KeyBindingData('S', DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 		saveAction.setDescription("Save Program");
 
 		saveAsAction = new ProgramContextAction("Save As File", getName()) {

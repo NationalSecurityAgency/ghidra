@@ -15,6 +15,11 @@
  */
 package ghidra.app.plugin.core.navigation;
 
+import java.awt.event.KeyEvent;
+
+import docking.DockingUtils;
+import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.nav.PreviousRangeAction;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -22,13 +27,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
-
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-
 import resources.ResourceManager;
-import docking.action.*;
-import docking.tool.ToolConstants;
 
 public class PreviousHighlightedRangeAction extends PreviousRangeAction {
 
@@ -43,8 +42,9 @@ public class PreviousHighlightedRangeAction extends PreviousRangeAction {
 
 		setToolBarData(new ToolBarData(
 			ResourceManager.loadImage("images/PreviousHighlightBlock16.gif"),
-			PluginCategoryNames.NAVIGATION, NextPrevHighlightRangePlugin.ACTION_SUB_GROUP));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_9, InputEvent.CTRL_DOWN_MASK));
+			ToolConstants.TOOLBAR_GROUP_NAV_THREE, NextPrevHighlightRangePlugin.ACTION_SUB_GROUP));
+		setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_9, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 
 		setDescription("Go to previous highlighted range");
 		setHelpLocation(new HelpLocation(HelpTopics.HIGHLIGHT, getName()));

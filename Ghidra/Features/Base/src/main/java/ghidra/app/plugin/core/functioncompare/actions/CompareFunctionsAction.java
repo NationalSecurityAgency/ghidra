@@ -39,7 +39,7 @@ import resources.icons.TranslateIcon;
  * This class is abstract to force implementors to supply the source of the 
  * functions (may be the listing, a table, etc...) 
  * 
- * @see {@link #getSelectedFunctions(ActionContext) getSelectedFunctions}
+ * @see #getSelectedFunctions(ActionContext)
  */
 public abstract class CompareFunctionsAction extends DockingAction {
 
@@ -78,6 +78,10 @@ public abstract class CompareFunctionsAction extends DockingAction {
 		return !functions.isEmpty();
 	}
 
+	protected boolean isToolBarAction() {
+		return true;
+	}
+
 	/**
 	 * Returns the icon to use for the action
 	 * 
@@ -99,9 +103,13 @@ public abstract class CompareFunctionsAction extends DockingAction {
 		setDescription("Create Function Comparison");
 		setPopupMenuData(new MenuData(new String[] { "Compare Selected Functions" },
 			getToolBarIcon(), CREATE_COMPARISON_GROUP));
-		ToolBarData newToolBarData =
-			new ToolBarData(getToolBarIcon(), CREATE_COMPARISON_GROUP);
-		setToolBarData(newToolBarData);
+
+		if (isToolBarAction()) {
+			ToolBarData newToolBarData =
+				new ToolBarData(getToolBarIcon(), CREATE_COMPARISON_GROUP);
+			setToolBarData(newToolBarData);
+		}
+
 		setHelpLocation(new HelpLocation("FunctionComparison", "Function_Comparison"));
 
 		KeyBindingData data = new KeyBindingData('C', InputEvent.SHIFT_DOWN_MASK);

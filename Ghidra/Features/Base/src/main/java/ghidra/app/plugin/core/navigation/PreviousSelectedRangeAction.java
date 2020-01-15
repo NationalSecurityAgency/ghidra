@@ -15,6 +15,13 @@
  */
 package ghidra.app.plugin.core.navigation;
 
+import java.awt.event.KeyEvent;
+
+import javax.swing.ImageIcon;
+
+import docking.DockingUtils;
+import docking.action.*;
+import docking.tool.ToolConstants;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.nav.PreviousRangeAction;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -22,15 +29,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
-
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-
-import javax.swing.ImageIcon;
-
 import resources.ResourceManager;
-import docking.action.*;
-import docking.tool.ToolConstants;
 
 public class PreviousSelectedRangeAction extends PreviousRangeAction {
 
@@ -43,9 +42,10 @@ public class PreviousSelectedRangeAction extends PreviousRangeAction {
 			"Previous Selected Range" }, icon, PluginCategoryNames.NAVIGATION,
 			MenuData.NO_MNEMONIC, NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
 
-		setToolBarData(new ToolBarData(icon, PluginCategoryNames.NAVIGATION,
+		setToolBarData(new ToolBarData(icon, ToolConstants.TOOLBAR_GROUP_NAV_THREE,
 			NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
-		setKeyBindingData(new KeyBindingData(KeyEvent.VK_BRACELEFT, InputEvent.CTRL_DOWN_MASK));
+		setKeyBindingData(
+			new KeyBindingData(KeyEvent.VK_BRACELEFT, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 
 		setDescription("Go to previous selected range");
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, getName()));

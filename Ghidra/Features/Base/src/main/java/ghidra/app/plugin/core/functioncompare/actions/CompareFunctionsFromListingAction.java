@@ -41,6 +41,12 @@ public class CompareFunctionsFromListingAction extends CompareFunctionsAction {
 	}
 
 	@Override
+	protected boolean isToolBarAction() {
+		// this action is used as a global action--do not add it to the toolbar
+		return false;
+	}
+
+	@Override
 	public boolean isAddToPopup(ActionContext actionContext) {
 		return actionContext instanceof ListingActionContext;
 	}
