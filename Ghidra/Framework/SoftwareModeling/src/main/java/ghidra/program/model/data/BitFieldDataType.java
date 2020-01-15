@@ -17,11 +17,12 @@ package ghidra.program.model.data;
 
 import java.math.BigInteger;
 
-import ghidra.docking.settings.Settings;
-import ghidra.docking.settings.SettingsDefinition;
+import ghidra.docking.settings.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
+import ghidra.util.DataConverter;
 import ghidra.util.exception.AssertException;
+import utilities.util.ArrayUtilities;
 
 /**
  * <code>BitFieldDataType</code> provides a means of defining a minimally sized bit-field
@@ -406,7 +407,23 @@ public class BitFieldDataType extends AbstractDataType {
 		if (dt instanceof Enum) {
 			return ((Enum) dt).getRepresentation(big, settings, effectiveBitSize);
 		}
-		return ((AbstractIntegerDataType) dt).getRepresentation(big, settings, effectiveBitSize);
+		AbstractIntegerDataType intDT = (AbstractIntegerDataType) dt;
+		if (intDT.getFormatSettingsDefinition().getFormat(
+			settings) == FormatSettingsDefinition.CHAR) {
+			if (big.signum() < 0) {
+				big = big.add(BigInteger.valueOf(2).pow(bitSize));
+			}
+			int bytesLen = BitFieldDataType.getMinimumStorageSize(bitSize);
+			byte[] bytes = DataConverter.getInstance(buf.isBigEndian()).getBytes(big, bytesLen);
+			if (!EndianSettingsDefinition.ENDIAN.isBigEndian(settings, buf)) {
+				bytes = ArrayUtilities.reverse(bytes);
+			}
+
+			return StringDataInstance.getCharRepresentation(this, bytes, settings,
+				buf.isBigEndian());
+		}
+
+		return intDT.getRepresentation(big, settings, effectiveBitSize);
 	}
 
 	@Override

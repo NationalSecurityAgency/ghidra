@@ -105,9 +105,9 @@ public interface Array extends DataType {
 		ArrayStringable stringableElementType = ArrayStringable.getArrayStringable(getDataType());
 		String value =
 			(stringableElementType != null && stringableElementType.hasStringValue(settings))
-				? new StringDataInstance(stringableElementType, settings, buf,
-					length).getStringRepresentation()
-				: null;
+					? new StringDataInstance(stringableElementType, settings, buf, length,
+						true).getStringRepresentation()
+					: null;
 		return (value != null) ? value : "";
 	}
 

@@ -157,33 +157,33 @@ public class CharDataTypesRenderTest extends AbstractGTest {
 
 		// wchar32
 		String result = wchar32DT.getRepresentation(buf32, normset, wchar32DT.getLength());
-		assertEquals("U'\ufffd'", result);
+		assertEquals("AAh,AAh,AAh,AAh", result);
 
 		result = wchar32DT.getRepresentation(buf32, escseq, wchar32DT.getLength());
-		assertEquals("U'\ufffd'", result);
+		assertEquals("AAh,AAh,AAh,AAh", result);
 
 		result = wchar32DT.getRepresentation(buf32, byteseq, wchar32DT.getLength());
-		assertEquals("AA,AA,AA,AA", result);
+		assertEquals("AAh,AAh,AAh,AAh", result);
 
 		// wchar16
 		result = wchar16DT.getRepresentation(buf16_be, normset, wchar16DT.getLength());
-		assertEquals("u'\ufffd'", result);
+		assertEquals("D8h,00h", result);
 
 		result = wchar16DT.getRepresentation(buf16_be, escseq, wchar16DT.getLength());
-		assertEquals("u'\ufffd'", result);
+		assertEquals("D8h,00h", result);
 
 		result = wchar16DT.getRepresentation(buf16_be, byteseq, wchar16DT.getLength());
-		assertEquals("D8,00", result);
+		assertEquals("D8h,00h", result);
 
 		// charDT
 		result = charDT.getRepresentation(buf8, normset, charDT.getLength());
-		assertEquals("'\ufffd'", result);
+		assertEquals("85h", result);
 
 		result = charDT.getRepresentation(buf8, escseq, charDT.getLength());
-		assertEquals("'\ufffd'", result);
+		assertEquals("85h", result);
 
 		result = charDT.getRepresentation(buf8, byteseq, charDT.getLength());
-		assertEquals("85", result);
+		assertEquals("85h", result);
 	}
 
 	@Test
@@ -196,10 +196,10 @@ public class CharDataTypesRenderTest extends AbstractGTest {
 
 		result = wchar16DT.getRepresentation(mb(false, 0xfd, 0xff),
 			newset().set(RENDER_ENUM.ESC_SEQ), wchar16DT.getLength());
-		assertEquals("u'\uFFFD'", result);
+		assertEquals("u'\\uFFFD'", result);
 
 		result = wchar16DT.getRepresentation(mb(false, 0xfd, 0xff),
 			newset().set(RENDER_ENUM.BYTE_SEQ), wchar16DT.getLength());
-		assertEquals("FD,FF", result);
+		assertEquals("FDh,FFh", result);
 	}
 }

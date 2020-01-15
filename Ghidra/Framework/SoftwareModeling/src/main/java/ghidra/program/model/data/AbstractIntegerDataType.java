@@ -18,10 +18,10 @@ package ghidra.program.model.data;
 import java.math.BigInteger;
 
 import ghidra.docking.settings.*;
-import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.StringFormat;
+import utilities.util.ArrayUtilities;
 
 /**
  * Base type for integer data types such as {@link CharDataType chars}, {@link IntegerDataType ints},
@@ -225,14 +225,13 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			return "??";
 		}
 
-		boolean isBigEndian = ENDIAN.isBigEndian(settings, buf);
+		boolean isLE = !ENDIAN.isBigEndian(settings, buf);
+		if (isLE) {
+			bytes = ArrayUtilities.reverse(bytes);
+		}
 
-		if (!isBigEndian) {
-			byte[] flipped = new byte[size];
-			for (int i = 0; i < size; i++) {
-				flipped[i] = bytes[size - i - 1];
-			}
-			bytes = flipped;
+		if (getFormatSettingsDefinition().getFormat(settings) == FormatSettingsDefinition.CHAR) {
+			return StringDataInstance.getCharRepresentation(this, bytes, settings, !isLE);
 		}
 
 		return getRepresentation(new BigInteger(bytes), settings, 8 * length);
@@ -240,12 +239,15 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 
 	/**
 	 * Get integer representation of the big-endian value.
+	 * <p>
+	 * Does not handle CHAR format, use {@link StringDataInstance#getCharRepresentation(DataType, byte[], Settings)}
+	 * 
 	 * @param bigInt BigInteger value with the appropriate sign
 	 * @param settings integer format settings (PADDING, FORMAT, etc.)
 	 * @param bitLength number of value bits to be used from bigInt
 	 * @return formatted integer string
 	 */
-	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
+	/*package*/ String getRepresentation(BigInteger bigInt, Settings settings, int bitLength) {
 
 		int format = getFormatSettingsDefinition().getFormat(settings);
 		boolean padded = PADDING.isPadded(settings);
@@ -257,29 +259,8 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			bigInt = bigInt.add(BigInteger.valueOf(2).pow(bitLength));
 		}
 
-		int nominalLen;
-
-		if (format == FormatSettingsDefinition.CHAR) {
-			int charSize = Math.min(getDataOrganization().getCharSize(), getLength());
-			nominalLen = (bitLength + 7) / 8;
-			byte[] bytes = bigInt.toByteArray();
-			if (bytes.length > nominalLen) {
-				// BigInteger supplied too many bytes
-				byte[] chars = new byte[nominalLen];
-				System.arraycopy(bytes, bytes.length - nominalLen, chars, 0, nominalLen);
-				bytes = chars;
-			}
-			else if (bytes.length < nominalLen) {
-				// BigInteger supplied too few bytes
-				byte[] chars = new byte[nominalLen];
-				System.arraycopy(bytes, 0, chars, nominalLen - bytes.length, bytes.length);
-				bytes = chars;
-			}
-			MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
-			return new StringDataInstance(this, settings, memBuf, charSize).getCharRepresentation();
-		}
-
 		String valStr;
+		int nominalLen;
 
 		switch (format) {
 			default:
@@ -316,7 +297,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	public String getArrayDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options) {
 		if (hasStringValue(settings) && buf.isInitializedMemory()) {
-			return new StringDataInstance(this, settings, buf, len).getLabel(
+			return new StringDataInstance(this, settings, buf, len, true).getLabel(
 				AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
 				AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
 				options);
@@ -328,7 +309,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options, int offcutOffset) {
 		if (hasStringValue(settings) && buf.isInitializedMemory()) {
-			return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
+			return new StringDataInstance(this, settings, buf, len, true).getOffcutLabelString(
 				AbstractStringDataType.DEFAULT_ABBREV_PREFIX + "_",
 				AbstractStringDataType.DEFAULT_LABEL_PREFIX, AbstractStringDataType.DEFAULT_LABEL,
 				options, offcutOffset);
