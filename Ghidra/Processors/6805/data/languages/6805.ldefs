@@ -24,6 +24,7 @@
             version="1.0"
             slafile="6809.sla"
             processorspec="6809.pspec"
+            manualindexfile="../manuals/6809.idx"
             id="6809:BE:16:default">
     <description>6809 Microprocessor</description>
     <compiler name="default" spec="6809.cspec" id="default"/>
