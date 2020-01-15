@@ -1379,7 +1379,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			Command command = new CreateNamespacesCmd(namespaceName, SourceType.USER_DEFINED);
 			if (tool.execute(command, program)) {
 				List<Namespace> namespaces =
-					NamespaceUtils.getNamespaces(namespaceName, null, program);
+					NamespaceUtils.getNamespaceByPath(program, null, namespaceName);
 
 				if (namespaces.size() != 1) {
 					Assert.fail("Unable to find the newly created parent namespace.");

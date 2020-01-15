@@ -436,7 +436,7 @@ public class PdbParser {
 			monitor.checkCanceled();
 			boolean isClass = namespaceMap.get(path);
 			Namespace parentNamespace =
-				NamespaceUtils.getNamespace(program, path.getParent(), null);
+				NamespaceUtils.getNonFunctionNamespace(program, path.getParent());
 			if (parentNamespace == null) {
 				String type = isClass ? "class" : "namespace";
 				log.appendMsg("Error: failed to define " + type + ": " + path);

@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
-import ghidra.util.SystemUtilities;
 
 /**
  * A convenience object for parsing a namespace path to a symbol.
@@ -190,6 +189,16 @@ public class SymbolPath implements Comparable<SymbolPath> {
 		return new SymbolPath(list);
 	}
 
+	/**
+	 * Returns true if this path contains any path entry matching the given text
+	 * 
+	 * @param text the text for which to search
+	 * @return true if any path entry matches the given text
+	 */
+	public boolean containsPathEntry(String text) {
+		return asList().contains(text);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -211,13 +220,23 @@ public class SymbolPath implements Comparable<SymbolPath> {
 			return false;
 		}
 		SymbolPath other = (SymbolPath) obj;
-		if (!SystemUtilities.isEqual(parentPath, other.parentPath)) {
+		if (!Objects.equals(parentPath, other.parentPath)) {
 			return false;
 		}
-		if (!SystemUtilities.isEqual(symbolName, other.symbolName)) {
+		if (!Objects.equals(symbolName, other.symbolName)) {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * A convenience method to check if the given symbol's symbol path matches this path
+	 * 
+	 * @param s the symbol to check
+	 * @return true if the symbol paths match
+	 */
+	public boolean matchesPathOf(Symbol s) {
+		return equals(new SymbolPath(s));
 	}
 
 	/**
