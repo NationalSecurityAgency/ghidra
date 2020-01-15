@@ -155,10 +155,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 		editorManager = new DataTypeEditorManager(this);
 
-		CodeViewerService codeViewerService = tool.getService(CodeViewerService.class);
-		if (codeViewerService != null) {
-			codeViewerService.addProgramDropProvider(new DataDropOnBrowserHandler(this));
-		}
 		tool.addPopupActionProvider(this);
 		tool.setMenuGroup(new String[] { SyncRefreshAction.MENU_NAME }, "SYNC");
 		tool.setMenuGroup(new String[] { UpdateAction.MENU_NAME }, "SYNC");
