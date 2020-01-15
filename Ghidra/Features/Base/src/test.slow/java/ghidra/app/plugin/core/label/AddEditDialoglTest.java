@@ -615,7 +615,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		Address inBodyAddress = entry.getAddress().add(1);
 		addLabel(inBodyAddress);
 		String newName = "label_1";
-		setText("entry" + Namespace.NAMESPACE_DELIMITER + newName);
+		setText("entry" + Namespace.DELIMITER + newName);
 		pressOk();
 		assertFalse("Encountered a problem adding a label to the Global namespace",
 			dialog.isVisible());
@@ -639,7 +639,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		Address inBodyAddress = entry.getAddress().add(1);
 		addLabel(inBodyAddress);
 		String newName = "label_1";
-		setText(namespaceName + Namespace.NAMESPACE_DELIMITER + newName);
+		setText(namespaceName + Namespace.DELIMITER + newName);
 		pressOk();
 		assertFalse("Encountered a problem adding a label to the Global namespace",
 			dialog.isVisible());
@@ -659,7 +659,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		Address inBodyAddress = entry.getAddress().add(1);
 		addLabel(inBodyAddress);
 		String newName = "label_1";
-		setText(namespaceName + Namespace.NAMESPACE_DELIMITER + newName);
+		setText(namespaceName + Namespace.DELIMITER + newName);
 		pressOk();
 		assertFalse("Encountered a problem adding a label to the Global namespace",
 			dialog.isVisible());
@@ -680,7 +680,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 		Address inBodyAddress = otherEntryAddress.add(1);
 		addLabel(inBodyAddress);
 		String newName = "label_1";
-		setText("entry" + Namespace.NAMESPACE_DELIMITER + newName);
+		setText("entry" + Namespace.DELIMITER + newName);
 		pressOk();
 		assertFalse("Encountered a problem adding a label to the Global namespace",
 			dialog.isVisible());
@@ -707,7 +707,7 @@ public class AddEditDialoglTest extends AbstractGhidraHeadedIntegrationTest {
 
 		editLabel(function);
 		String nsName = functionName;
-		setText(nsName + Namespace.NAMESPACE_DELIMITER + functionName);
+		setText(nsName + Namespace.DELIMITER + functionName);
 		pressOk();
 		assertFalse("Rename unsuccesful", dialog.isShowing());
 

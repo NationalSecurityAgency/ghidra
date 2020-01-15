@@ -45,7 +45,7 @@ public class SymbolPathParser {
 			throw new IllegalArgumentException(
 				"Symbol list must contain at least one symbol name!");
 		}
-		if (name.indexOf(Namespace.NAMESPACE_DELIMITER) == -1) {
+		if (name.indexOf(Namespace.DELIMITER) == -1) {
 			List<String> list = new ArrayList<>();
 			list.add(name);
 			return list;

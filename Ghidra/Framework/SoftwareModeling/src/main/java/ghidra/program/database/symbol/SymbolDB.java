@@ -213,7 +213,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 				Namespace ns = getParentNamespace();
 				if (!(ns instanceof GlobalNamespace)) {
 					String nsPath = ns.getName(true);
-					symName = nsPath + Namespace.NAMESPACE_DELIMITER + symName;
+					symName = nsPath + Namespace.DELIMITER + symName;
 				}
 			}
 			return symName;

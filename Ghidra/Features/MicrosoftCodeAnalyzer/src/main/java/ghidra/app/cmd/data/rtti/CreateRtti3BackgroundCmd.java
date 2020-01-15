@@ -104,7 +104,7 @@ public class CreateRtti3BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 
 			// Plate Comment
 			EHDataTypeUtilities.createPlateCommentIfNeeded(program,
-				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.NAMESPACE_DELIMITER,
+				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
 				RTTI_3_NAME, null, address, applyOptions);
 
 			monitor.checkCanceled();

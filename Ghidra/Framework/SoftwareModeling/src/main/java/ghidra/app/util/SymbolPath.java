@@ -172,7 +172,7 @@ public class SymbolPath implements Comparable<SymbolPath> {
 	 */
 	public String getPath() {
 		if (parentPath != null) {
-			return parentPath.getPath() + Namespace.NAMESPACE_DELIMITER + symbolName;
+			return parentPath.getPath() + Namespace.DELIMITER + symbolName;
 		}
 		return symbolName;
 	}

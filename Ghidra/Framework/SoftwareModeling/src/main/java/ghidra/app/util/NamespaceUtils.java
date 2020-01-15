@@ -29,7 +29,7 @@ import ghidra.util.exception.*;
  * <a id="examples"></a>
  * Example string format:
  * <ul>
- *     <li>global{@link Namespace#NAMESPACE_DELIMITER ::}child1{@link Namespace#NAMESPACE_DELIMITER ::}child2
+ *     <li>global{@link Namespace#DELIMITER ::}child1{@link Namespace#DELIMITER ::}child2
  *     <li>child1
  * </ul>
  * <a id="assumptions"></a>
@@ -69,7 +69,7 @@ public class NamespaceUtils {
 		String str = new String();
 		while (namespace != null && !(namespace instanceof GlobalNamespace) &&
 			!(namespace instanceof Library)) {
-			str = namespace.getName() + Namespace.NAMESPACE_DELIMITER + str;
+			str = namespace.getName() + Namespace.DELIMITER + str;
 			namespace = namespace.getParentNamespace();
 		}
 		return str;
@@ -90,7 +90,7 @@ public class NamespaceUtils {
 			str = getNamespacePathWithoutLibrary(namespace);
 		}
 		else if (namespace != null && !(namespace instanceof GlobalNamespace)) {
-			str = namespace.getName(true) + Namespace.NAMESPACE_DELIMITER;
+			str = namespace.getName(true) + Namespace.DELIMITER;
 		}
 		str += symbolName;
 		return str;
@@ -107,7 +107,7 @@ public class NamespaceUtils {
 	 */
 	@Deprecated
 	public static List<String> splitNamespacePath(String path) {
-		return Arrays.asList(path.trim().split(Namespace.NAMESPACE_DELIMITER));
+		return Arrays.asList(path.trim().split(Namespace.DELIMITER));
 	}
 
 	/**
