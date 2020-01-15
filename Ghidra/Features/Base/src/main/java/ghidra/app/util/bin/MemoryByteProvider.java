@@ -51,6 +51,20 @@ public class MemoryByteProvider implements ByteProvider {
 		this.baseAddress = baseAddress;
 	}
 
+	/**
+	 * Converts an index into this ByteProvider into an {@link Address}.
+	 * <p>
+	 * 
+	 * @param index absolute index in this ByteProvider to convert into an Address
+	 * @return {@link Address}
+	 * @throws AddressOutOfBoundsException if wrapping is not supported by the 
+	 * corresponding address space and the addition causes an out-of-bounds
+	 * error
+	 */
+	public Address getAddress(long index) {
+		return baseAddress.add(index);
+	}
+
 	@Override
 	public InputStream getInputStream(long index) throws IOException {
 		return new MemoryByteProviderInputStream(memory, baseAddress.add(index));
