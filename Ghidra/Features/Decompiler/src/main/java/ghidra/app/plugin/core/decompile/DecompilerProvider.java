@@ -70,6 +70,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private DockingAction lockLocalAction;
 	private DockingAction renameVarAction;
 	private DockingAction retypeVarAction;
+	private DockingAction isolateVarAction;
 	private DockingAction specifyCProtoAction;
 	private DockingAction overrideSigAction;
 	private DockingAction deleteSigAction;
@@ -778,6 +779,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		retypeVarAction = new RetypeVariableAction(tool, controller);
 		setGroupInfo(retypeVarAction, variableGroup, subGroupPosition++);
 
+		isolateVarAction = new IsolateVariableAction(tool, controller);
+		setGroupInfo(isolateVarAction, variableGroup, subGroupPosition++);
+
 		decompilerCreateStructureAction =
 			new DecompilerStructureVariableAction(owner, tool, controller);
 		setGroupInfo(decompilerCreateStructureAction, variableGroup, subGroupPosition++);
@@ -907,6 +911,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(removeSecondaryHighlightAction);
 		addLocalAction(removeAllSecondadryHighlightsAction);
 		addLocalAction(retypeVarAction);
+		addLocalAction(isolateVarAction);
 		addLocalAction(decompilerCreateStructureAction);
 		tool.addAction(listingCreateStructureAction);
 		addLocalAction(editDataTypeAction);

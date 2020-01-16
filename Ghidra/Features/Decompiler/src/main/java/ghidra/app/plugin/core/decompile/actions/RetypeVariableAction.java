@@ -38,8 +38,14 @@ import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.*;
 
 public class RetypeVariableAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
+	protected final DecompilerController controller;
 	private final PluginTool tool;
+
+	protected RetypeVariableAction(String name, PluginTool tool, DecompilerController controller) {
+		super(name);
+		this.tool = tool;
+		this.controller = controller;
+	}
 
 	public RetypeVariableAction(PluginTool tool, DecompilerController controller) {
 		super("Retype Variable");
@@ -124,7 +130,7 @@ public class RetypeVariableAction extends AbstractDecompilerAction {
 		return chooserDialog.getUserChosenDataType();
 	}
 
-	private void retypeSymbol(HighSymbol highSymbol, Varnode exactSpot, DataType dt) {
+	protected void retypeSymbol(HighSymbol highSymbol, Varnode exactSpot, DataType dt) {
 		HighFunction hfunction = highSymbol.getHighFunction();
 
 		boolean commitRequired = checkFullCommit(highSymbol, hfunction);

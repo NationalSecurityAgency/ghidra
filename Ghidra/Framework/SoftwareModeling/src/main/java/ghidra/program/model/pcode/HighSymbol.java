@@ -261,7 +261,17 @@ public class HighSymbol {
 	public boolean isNameLocked() {
 		return namelock;
 	}
-	
+
+	/**
+	 * If this returns true, the decompiler will not speculatively merge this with
+	 * other variables.
+	 * Currently, being isolated is equivalent to being typelocked.
+	 * @return true if this will not be merged with other variables
+	 */
+	public boolean isIsolated() {
+		return typelock;
+	}
+
 	/**
 	 * @return true if the symbol's value is considered read-only (by the decompiler)
 	 */
@@ -323,6 +333,9 @@ public class HighSymbol {
 		if (isVolatile) {
 			SpecXmlUtils.encodeBooleanAttribute(buf, "volatile", true);
 		}
+		if (isIsolated()) {
+			SpecXmlUtils.encodeBooleanAttribute(buf, "merge", false);
+		}
 		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "cat", category);
 		if (categoryIndex >= 0) {
 			SpecXmlUtils.encodeSignedIntegerAttribute(buf, "index", categoryIndex);
@@ -356,6 +369,12 @@ public class HighSymbol {
 		if ((namelockstr != null) && (SpecXmlUtils.decodeBoolean(namelockstr))) {
 			namelock = true;
 		}
+//		isolate = false;
+//		String isolatestr = symel.getAttribute("merge");
+//		if ((isolatestr != null) && !SpecXmlUtils.decodeBoolean(isolatestr)) {
+//			isolate = true;
+//		}
+
 		name = symel.getAttribute("name");
 		categoryIndex = -1;
 		category = -1;
