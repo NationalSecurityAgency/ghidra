@@ -1,6 +1,6 @@
-##################################################
-#####				Macros					 #####
-##################################################
+#####################################################
+#####		 	Macros			#####
+#####################################################
 
 
 ##### CARRY-Flag #####
@@ -130,6 +130,16 @@ macro either_or1(res, cond, true, false)
 	res = (true * zext(cond == 1)) + (false * zext(cond != 1));
 }
 
+macro either_or_float(res, cond, true, false) 
+{
+	res = (true f* zext(cond != 0)) f+ (false f* zext(cond == 0));
+}
+
+macro either_or1_float(res, cond, true, false) 
+{
+	res = (true f* zext(cond == 1)) f+ (false f* zext(cond != 1));
+}
+
 macro shift_right_logic(res, var, shift)
 {
 	res = var >> shift;
@@ -217,22 +227,22 @@ macro SearchLeft(res, var, char)
 macro saturate(var) 
 {
 	if (var s> 0x7FFFFFFF) 
-        goto <pos_sat>;
+        	goto <pos_sat>;
     
 	if (var s< -0x80000000) 
-        goto <neg_sat>;
+        	goto <neg_sat>;
 
 	goto <end>;
 
 	<pos_sat> 
-    var =  0x7FFFFFFF; 
-    goto <end>;
+    	var =  0x7FFFFFFF; 
+    	goto <end>;
 
 	<neg_sat> 
-    var = -0x80000000; 
-    goto <end>;
+    	var = -0x80000000; 
+    	goto <end>;
 	
-    <end>
+    	<end>
 }
 
 
@@ -243,7 +253,7 @@ macro compare_float(res, fcond, reg1, reg2)
 	local un = ((fcond & 1) == 1)	&    (nan(reg2) || nan(reg1));
 	local eq = ((fcond & 2) == 2)   &  (!(nan(reg2) || nan(reg1)))  &  (reg2 f== reg1);
 	local le = ((fcond & 4) == 4)	&  (!(nan(reg2) || nan(reg1)))  &  (reg2 f<  reg1);
-	#local ex = (fcond & 8)		    &   ((nan(reg2) || nan(reg1)));
+	#local ex = (fcond & 8)		&   ((nan(reg2) || nan(reg1)));
 	
 	res = zext(un|eq|le);
 }

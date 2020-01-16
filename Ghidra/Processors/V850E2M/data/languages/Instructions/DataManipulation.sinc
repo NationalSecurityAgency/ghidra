@@ -1,6 +1,6 @@
-##################################################
-#####			DataManipulation			 #####
-##################################################
+#####################################################
+#####		   DataManipulation		#####
+#####################################################
 
 
 # BSH reg2, reg3 - rrrrr11111100000|wwwww01101000010
@@ -30,15 +30,15 @@
 # CMOV cccc, reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww011001cccc0
 :cmov^c1720 R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op2126=0x19 & op1616=0 & c1720 & R2731
 {
-    local result:4 = zext(c1720);
-    R2731 = R0004 * zext(result != 0) + R1115 * zext(result == 0);
+	local result:4 = zext(c1720);
+	R2731 = R0004 * zext(result != 0) + R1115 * zext(result == 0);
 }
 
 # CMOV cccc, imm5, reg2, reg3 - rrrrr111111iiiii|wwwww011000cccc0
 :cmov^c1720 s0004, R1115, R2731 is op0510=0x3F & s0004 & R1115; op2126=0x18 & op1616=0 & c1720 & R2731
 {
-    local result:4 = zext(c1720);
-    R2731 = s0004 * zext(result != 0) + R1115 * zext(result == 0);
+	local result:4 = zext(c1720);
+	R2731 = s0004 * zext(result != 0) + R1115 * zext(result == 0);
 }
 
 # HSH reg2, reg3 - rrrrr11111100000|wwwww01101000110

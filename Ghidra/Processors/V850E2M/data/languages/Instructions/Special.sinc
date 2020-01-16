@@ -1,6 +1,6 @@
-##################################################
-#####				Special 				 #####
-##################################################
+#####################################################
+#####		       Special			#####
+#####################################################
 
 
 # CALLT imm6 - 0000001000iiiiii
@@ -80,8 +80,8 @@
 {
 	FEPC = inst_next;
 	FEPSW = PSW;
-    $(FECC) = op1114 + 0x31;    # exception code 0x31..0x3F
-	FEIC = op1114 + 0x31;	    # exception code 0x31..0x3F
+	$(FECC) = op1114 + 0x31;	# exception code 0x31..0x3F
+	FEIC = op1114 + 0x31;		# exception code 0x31..0x3F
 	$(EP) = 1;
 	$(ID) = 1;
 	$(NP) = 1;
@@ -92,7 +92,7 @@
 # HALT - 0000011111100000|0000000100100000
 :halt is op0015=0x7E0; op1631=0x120
 {
-	#I have no clue
+	
 }
 
 # LDSR reg2, regID - rrrrr111111RRRRR|0000000000100000
@@ -150,36 +150,36 @@
 # RETI - 0000011111100000|0000000101000000
 :reti is op0515=0x3F; op1631=0x140
 {
-    if($(EP)!=1)
-        goto <false>;
+	if($(EP)!=1)
+		goto <false>;
 
-    PC = EIPC;
-    PSW = EIPSW;
-    goto <end>;
+	PC = EIPC;
+	PSW = EIPSW;
+	goto <end>;
 
-    <false>
-    if($(NP)!=1)
-        goto <false2>;
+	<false>
+	if($(NP)!=1)
+		goto <false2>;
 
-    PC = FEPC;
-    PSW = FEPSW;
-    goto <end>;
+	PC = FEPC;
+	PSW = FEPSW;
+	goto <end>;
 
-    <false2>
-    PC = EIPC;
-    PSW = EIPSW;
+	<false2>
+	PC = EIPC;
+	PSW = EIPSW;
 
-    <end>
-    return[PC];
+	<end>
+	return[PC];
 }
 
 # RIE - 0000000001000000
 :rie is op0015=0x40 
 {
-    FEPC = PC;
+	FEPC = PC;
 	FEPSW = PSW;
 	$(NP) = 1;
-    $(EP) = 1;
+	$(EP) = 1;
 	$(ID) = 1;
 	PC = 0x30;
 	goto [PC];
@@ -188,10 +188,10 @@
 # RIE imm5, imm4 - iiiii1111111IIII|0000000000000000
 :rie op1115, op0003 is op0410=0x7F & op1115 & op0003; op1631=0x0
 {
-    FEPC = PC;
+	FEPC = PC;
 	FEPSW = PSW;
 	$(NP) = 1;
-    $(EP) = 1;
+	$(EP) = 1;
 	$(ID) = 1;
 	PC = 0x30;
 	goto [PC];
@@ -214,29 +214,29 @@
 # SYNCE - 0000000000011101
 :synce is op0015=0x1D 
 {
-	#I don't know that either
+	synce();
 }
 
 # SYNCM - 0000000000011110
 :syncm is op0015=0x1E
 {
-	#same here
+
 }
 
 # SYNCP - 0000000000011111
 :syncp is op0015=0x1F
 {
-	#and here
+
 }
 
 # SYSCALL vector8 - 11010111111vvvvv|00VVV00101100000
 :syscall vector8 is op0515=0x6BF & op0004; op3031=0 & op2729 & op1626=0x160 
 [ vector8 = (op2729 << 5) | op0004; ]
 {
-    EIPC = inst_next;
+	EIPC = inst_next;
 	EIPSW = PSW;
-	EIIC = vector8 + 0x8000;	    # exception code 0x8000..0x80FF
-	$(EICC) = vector8 + 0x8000;     # exception code 0x8000..0x80FF
+	EIIC = vector8 + 0x8000;		# exception code 0x8000..0x80FF
+	$(EICC) = vector8 + 0x8000;		# exception code 0x8000..0x80FF
 	$(EP) = 1;
 	$(ID) = 1;
 	local adr:4;
@@ -251,8 +251,8 @@
 	local vector5:4 = op0004;
 	EIPC = inst_next;
 	EIPSW = PSW;
-	EIIC = vector5 + 0x40;	        # exception code 0x40..0x5F
-	$(EICC) = vector5:2 + 0x40;     # exception code 0x40..0x5F
+	EIIC = vector5 + 0x40;			# exception code 0x40..0x5F
+	$(EICC) = vector5:2 + 0x40;		# exception code 0x40..0x5F
 	$(EP) = 1;
 	$(ID) = 1;
 	either_or(PC, (vector5 <= 15), 0x40, 0x50);

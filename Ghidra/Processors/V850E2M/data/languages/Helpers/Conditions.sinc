@@ -1,38 +1,38 @@
-##################################################
-#####				Conditions 				 #####
-##################################################
+#####################################################
+#####		     Conditions			#####
+#####################################################
 
 
-c0003: "V"		is op0003=0x0	{ tmp:1 = ($(OV)) == 1; 				export tmp; }
-c0003: "NV"		is op0003=0x8	{ tmp:1 = ($(OV)) == 0; 				export tmp; }
-c0003: "C_L"	is op0003=0x1	{ tmp:1 = ($(CY)) == 1; 				export tmp; }
-c0003: "NC_L"	is op0003=0x9	{ tmp:1 = ($(CY)) == 0; 				export tmp; }
-c0003: "Z"		is op0003=0x2	{ tmp:1 = ($(Z)) == 1; 					export tmp; }
-c0003: "NZ"		is op0003=0xA	{ tmp:1 = ($(Z)) == 0; 					export tmp; }
-c0003: "NH"		is op0003=0x3	{ tmp:1 = ($(CY) || $(Z)) == 1; 		export tmp; }
-c0003: "H"		is op0003=0xB	{ tmp:1 = ($(CY) || $(Z)) == 0; 		export tmp; }
-c0003: "S_N"	is op0003=0x4	{ tmp:1 = ($(S)) == 1; 					export tmp; }
-c0003: "NS_P"	is op0003=0xC	{ tmp:1 = ($(S)) == 0; 					export tmp; }
-c0003: "T"		is op0003=0x5	{ tmp:1 = 1; 							export tmp; }
-c0003: "SA"		is op0003=0xD	{ tmp:1 = ($(SAT)) == 1; 				export tmp; }
-c0003: "LT"		is op0003=0x6	{ tmp:1 = ($(S) ^^ $(OV)) == 1; 		export tmp; }
-c0003: "GE"		is op0003=0xE	{ tmp:1 = ($(S) ^^ $(OV)) == 0; 		export tmp; }
-c0003: "LE"		is op0003=0x7	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 1; export tmp; }
-c0003: "GT"		is op0003=0xF	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 0; export tmp; }
+c0003: "V"	is op0003=0x0	{ tmp:1 = ($(OV)) == 1; 		export tmp; }
+c0003: "NV"	is op0003=0x8	{ tmp:1 = ($(OV)) == 0; 		export tmp; }
+c0003: "C_L"	is op0003=0x1	{ tmp:1 = ($(CY)) == 1; 		export tmp; }
+c0003: "NC_L"	is op0003=0x9	{ tmp:1 = ($(CY)) == 0; 		export tmp; }
+c0003: "Z"	is op0003=0x2	{ tmp:1 = ($(Z)) == 1; 			export tmp; }
+c0003: "NZ"	is op0003=0xA	{ tmp:1 = ($(Z)) == 0; 			export tmp; }
+c0003: "NH"	is op0003=0x3	{ tmp:1 = ($(CY) || $(Z)) == 1; 	export tmp; }
+c0003: "H"	is op0003=0xB	{ tmp:1 = ($(CY) || $(Z)) == 0; 	export tmp; }
+c0003: "S_N"	is op0003=0x4	{ tmp:1 = ($(S)) == 1; 			export tmp; }
+c0003: "NS_P"	is op0003=0xC	{ tmp:1 = ($(S)) == 0; 			export tmp; }
+c0003: "T"	is op0003=0x5	{ tmp:1 = 1; 				export tmp; }
+c0003: "SA"	is op0003=0xD	{ tmp:1 = ($(SAT)) == 1; 		export tmp; }
+c0003: "LT"	is op0003=0x6	{ tmp:1 = ($(S) ^^ $(OV)) == 1; 	export tmp; }
+c0003: "GE"	is op0003=0xE	{ tmp:1 = ($(S) ^^ $(OV)) == 0; 	export tmp; }
+c0003: "LE"	is op0003=0x7	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 1; export tmp; }
+c0003: "GT"	is op0003=0xF	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 0; export tmp; }
 
-c1720: "V"		is op1720=0x0	{ tmp:1 = ($(OV)) == 1; 				export tmp; }
-c1720: "NV"		is op1720=0x8	{ tmp:1 = ($(OV)) == 0; 				export tmp; }
-c1720: "C_L"	is op1720=0x1	{ tmp:1 = ($(CY)) == 1; 				export tmp; }
-c1720: "NC_NL"	is op1720=0x9	{ tmp:1 = ($(CY)) == 0; 				export tmp; }
-c1720: "Z"		is op1720=0x2	{ tmp:1 = ($(Z)) == 1; 					export tmp; }
-c1720: "NZ"		is op1720=0xA	{ tmp:1 = ($(Z)) == 0; 					export tmp; }
-c1720: "NH"		is op1720=0x3	{ tmp:1 = ($(CY) || $(Z)) == 1; 		export tmp; }
-c1720: "H"		is op1720=0xB	{ tmp:1 = ($(CY) || $(Z)) == 0; 		export tmp; }
-c1720: "S_N"	is op1720=0x4	{ tmp:1 = ($(S)) == 1; 					export tmp; }
-c1720: "NS_P"	is op1720=0xC	{ tmp:1 = ($(S)) == 0; 					export tmp; }
-c1720: "T"		is op1720=0x5	{ tmp:1 = 1; 							export tmp; }
-c1720: "SA"		is op1720=0xD	{ tmp:1 = ($(SAT)) == 1; 				export tmp; }
-c1720: "LT"		is op1720=0x6	{ tmp:1 = ($(S) ^^ $(OV)) == 1; 		export tmp; }
-c1720: "GE"		is op1720=0xE	{ tmp:1 = ($(S) ^^ $(OV)) == 0; 		export tmp; }
-c1720: "LE"		is op1720=0x7	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 1; export tmp; }
-c1720: "GT"		is op1720=0xF	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 0; export tmp; }
+c1720: "V"	is op1720=0x0	{ tmp:1 = ($(OV)) == 1; 		export tmp; }
+c1720: "NV"	is op1720=0x8	{ tmp:1 = ($(OV)) == 0; 		export tmp; }
+c1720: "C_L"	is op1720=0x1	{ tmp:1 = ($(CY)) == 1; 		export tmp; }
+c1720: "NC_NL"	is op1720=0x9	{ tmp:1 = ($(CY)) == 0; 		export tmp; }
+c1720: "Z"	is op1720=0x2	{ tmp:1 = ($(Z)) == 1; 			export tmp; }
+c1720: "NZ"	is op1720=0xA	{ tmp:1 = ($(Z)) == 0; 			export tmp; }
+c1720: "NH"	is op1720=0x3	{ tmp:1 = ($(CY) || $(Z)) == 1; 	export tmp; }
+c1720: "H"	is op1720=0xB	{ tmp:1 = ($(CY) || $(Z)) == 0; 	export tmp; }
+c1720: "S_N"	is op1720=0x4	{ tmp:1 = ($(S)) == 1; 			export tmp; }
+c1720: "NS_P"	is op1720=0xC	{ tmp:1 = ($(S)) == 0; 			export tmp; }
+c1720: "T"	is op1720=0x5	{ tmp:1 = 1; 				export tmp; }
+c1720: "SA"	is op1720=0xD	{ tmp:1 = ($(SAT)) == 1; 		export tmp; }
+c1720: "LT"	is op1720=0x6	{ tmp:1 = ($(S) ^^ $(OV)) == 1; 	export tmp; }
+c1720: "GE"	is op1720=0xE	{ tmp:1 = ($(S) ^^ $(OV)) == 0; 	export tmp; }
+c1720: "LE"	is op1720=0x7	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 1; export tmp; }
+c1720: "GT"	is op1720=0xF	{ tmp:1 = ($(S) ^^ $(OV) || $(Z)) == 0; export tmp; }

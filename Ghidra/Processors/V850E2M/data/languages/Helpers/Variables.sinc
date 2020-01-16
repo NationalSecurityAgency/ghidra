@@ -1,6 +1,6 @@
-##################################################
-#####				Variables  				 #####
-##################################################
+#####################################################
+#####	     		Variables		#####
+#####################################################
 
 
 attach variables [ _R0004 _R1115 _R2731 ]
@@ -32,6 +32,10 @@ attach variables [op0_1720] [r0 r2 gp r6 r8 r10 r12 r14 r16 r18 r20 r22 r24 r26 
 attach variables [op1_1720] [r1 sp tp r7 r9 r11 r13 r15 r17 r19 r21 r23 r25 r27 r29 lp];
 
 
+attach names [fcond2730]
+["F" "UN" "EQ" "UEQ" "OLT" "ULT" "OLE" "ULE" "SF" "NGLE" "SEQ" "NGL" "LT" "NGE" "LE" "NGT"];
+
+
 @define NP  	"PSW[7,1]"
 @define EP  	"PSW[6,1]"
 @define ID  	"PSW[5,1]"
@@ -41,5 +45,8 @@ attach variables [op1_1720] [r1 sp tp r7 r9 r11 r13 r15 r17 r19 r21 r23 r25 r27 
 @define S   	"PSW[1,1]"
 @define Z   	"PSW[0,1]"
 
-@define EICC  "ECR[0,16]"
-@define FECC  "ECR[16,16]"
+@define EICC  	"ECR[0,16]"
+@define FECC  	"ECR[16,16]"
+
+
+define pcodeop synce;
