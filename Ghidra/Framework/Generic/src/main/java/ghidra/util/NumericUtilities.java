@@ -250,7 +250,7 @@ public final class NumericUtilities {
 	 * @return aligned value
 	 */
 	public static long getUnsignedAlignedValue(long unsignedValue, long alignment) {
-		if (unsignedValue % alignment == 0) {
+		if (alignment == 0 || unsignedValue % alignment == 0) {
 			return unsignedValue;
 		}
 		boolean negative = unsignedValue < 0;
