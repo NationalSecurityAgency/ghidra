@@ -72,7 +72,7 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 		this.tool = tool;
 
 		ToolBarData toolBarData =
-			new ToolBarData(markerIcon, ToolConstants.TOOLBAR_GROUP_NAV_FOUR);
+			new ToolBarData(markerIcon, ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 

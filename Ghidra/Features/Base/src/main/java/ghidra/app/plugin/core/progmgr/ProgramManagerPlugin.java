@@ -629,7 +629,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		};
 		String[] saveMenuPath = { ToolConstants.MENU_FILE, "&Save" };
 		Icon saveIcon = ResourceManager.loadImage("images/disk.png");
-		String saveGroup = ToolConstants.TOOLBAR_GROUP_NAV_ONE;
+		String saveGroup = ToolConstants.TOOLBAR_GROUP_ONE;
 		subMenuGroupOrder = 0;
 
 		menuData = new MenuData(saveMenuPath, saveIcon, saveGroup);

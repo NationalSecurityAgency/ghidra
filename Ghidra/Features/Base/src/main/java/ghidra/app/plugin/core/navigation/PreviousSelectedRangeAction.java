@@ -42,7 +42,7 @@ public class PreviousSelectedRangeAction extends PreviousRangeAction {
 			"Previous Selected Range" }, icon, PluginCategoryNames.NAVIGATION,
 			MenuData.NO_MNEMONIC, NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
 
-		setToolBarData(new ToolBarData(icon, ToolConstants.TOOLBAR_GROUP_NAV_THREE,
+		setToolBarData(new ToolBarData(icon, ToolConstants.TOOLBAR_GROUP_THREE,
 			NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
 		setKeyBindingData(
 			new KeyBindingData(KeyEvent.VK_BRACELEFT, DockingUtils.CONTROL_KEY_MODIFIER_MASK));

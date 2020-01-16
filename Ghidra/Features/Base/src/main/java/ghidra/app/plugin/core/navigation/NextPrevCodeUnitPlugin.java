@@ -132,7 +132,7 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 			menuData.setMenuSubGroup(subGroup);
 			setMenuBarData(menuData);
 			setToolBarData(new ToolBarData(forwardIcon,
-				ToolConstants.TOOLBAR_GROUP_NAV_FOUR, subGroup));
+				ToolConstants.TOOLBAR_GROUP_FOUR, subGroup));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK |
 				InputEvent.ALT_DOWN_MASK));
 

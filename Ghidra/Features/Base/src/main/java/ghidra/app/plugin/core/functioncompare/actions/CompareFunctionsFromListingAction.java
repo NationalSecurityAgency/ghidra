@@ -38,12 +38,9 @@ public class CompareFunctionsFromListingAction extends CompareFunctionsAction {
 	 */
 	public CompareFunctionsFromListingAction(PluginTool tool, String owner) {
 		super(tool, owner);
-	}
 
-	@Override
-	protected boolean isToolBarAction() {
 		// this action is used as a global action--do not add it to the toolbar
-		return false;
+		setToolBarData(null);
 	}
 
 	@Override

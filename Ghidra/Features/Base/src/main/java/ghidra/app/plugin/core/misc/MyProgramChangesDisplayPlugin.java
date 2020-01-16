@@ -28,7 +28,7 @@ import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.ToolBarData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -104,11 +104,12 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		folderListener = new ProgramFolderListener();
 		transactionListener = new ProgramTransactionListener();
 		tool.getProject().getProjectData().addDomainFolderChangeListener(folderListener);
+
+		createActions();
 	}
 
 	private void createActions() {
 
-		String menuGroup = "DomainObjectVersionControl";
 		ImageIcon icon = ResourceManager.loadImage("images/vcMerge.png");
 		mergeAction = new DockingAction("Update", getName()) {
 			@Override
@@ -122,8 +123,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 			}
 		};
 
-		mergeAction.setMenuBarData(
-			new MenuData(new String[] { "File", "Update..." }, icon, menuGroup));
+		mergeAction.setToolBarData(new ToolBarData(icon, "Repository"));
 		mergeAction.setDescription("Update checked out file with latest version");
 		mergeAction.setHelpLocation(new HelpLocation("VersionControl", mergeAction.getName()));
 
@@ -141,41 +141,12 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 			}
 		};
 
-		checkInAction.setMenuBarData(
-			new MenuData(new String[] { "File", "Check In..." }, icon, menuGroup));
+		checkInAction.setToolBarData(new ToolBarData(icon, "Repository"));
 		checkInAction.setDescription("Check in file");
 		checkInAction.setHelpLocation(new HelpLocation("VersionControl", checkInAction.getName()));
 
 		tool.addAction(mergeAction);
 		tool.addAction(checkInAction);
-	}
-
-	private void updateActions() {
-
-		if (currentProgram == null || currentProgram.getDomainFile() == null) {
-			removeVcActions();
-			return;
-		}
-
-		if (currentProgram.getDomainFile().isVersioned()) {
-			maybeAddVcActions();
-		}
-	}
-
-	private void maybeAddVcActions() {
-
-		if (mergeAction == null) {
-			createActions();
-		}
-	}
-
-	private void removeVcActions() {
-		if (mergeAction != null) {
-			tool.removeAction(mergeAction);
-			tool.removeAction(checkInAction);
-			mergeAction = null;
-			checkInAction = null;
-		}
 	}
 
 	@Override
@@ -190,7 +161,6 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		program.addListener(this);
 		program.addTransactionListener(transactionListener);
 		updateForDomainFileChanged();
-		updateActions();
 
 		createMarkerSets(program);
 		intializeChangeMarkers();
@@ -198,8 +168,6 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 	@Override
 	protected void programDeactivated(Program program) {
-
-		updateActions();
 
 		serverVersion = -1;
 		localVersion = -1;
@@ -381,7 +349,6 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		}
 
 		updateManager.update();
-		updateActions();
 	}
 
 	Worker getWorker() {

@@ -42,7 +42,7 @@ public class PreviousHighlightedRangeAction extends PreviousRangeAction {
 
 		setToolBarData(new ToolBarData(
 			ResourceManager.loadImage("images/PreviousHighlightBlock16.gif"),
-			ToolConstants.TOOLBAR_GROUP_NAV_THREE, NextPrevHighlightRangePlugin.ACTION_SUB_GROUP));
+			ToolConstants.TOOLBAR_GROUP_THREE, NextPrevHighlightRangePlugin.ACTION_SUB_GROUP));
 		setKeyBindingData(
 			new KeyBindingData(KeyEvent.VK_9, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 

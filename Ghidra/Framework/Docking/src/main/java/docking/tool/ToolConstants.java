@@ -122,10 +122,22 @@ public interface ToolConstants extends DockingToolConstants {
 	public static final String MENU_GROUP_NEXT_CODE_UNIT_NAV = "NextPrevCodeUnit";
 
 	/**
-	 * 
+	 * Primary toolbar group number 1, starting from the left
 	 */
-	public static final String TOOLBAR_GROUP_NAV_ONE = "1_Toolbar_Navigation_Group";
-	public static final String TOOLBAR_GROUP_NAV_TWO = "2_Toolbar_Navigation_Group";
-	public static final String TOOLBAR_GROUP_NAV_THREE = "3_Toolbar_Navigation_Group";
-	public static final String TOOLBAR_GROUP_NAV_FOUR = "4_Toolbar_Navigation_Group";
+	public static final String TOOLBAR_GROUP_ONE = "1_Toolbar_Navigation_Group";
+
+	/**
+	 * Primary toolbar group number 2, starting from the left
+	 */
+	public static final String TOOLBAR_GROUP_TWO = "2_Toolbar_Navigation_Group";
+
+	/**
+	 * Primary toolbar group number 3, starting from the left
+	 */
+	public static final String TOOLBAR_GROUP_THREE = "3_Toolbar_Navigation_Group";
+
+	/**
+	 * Primary toolbar group number 4, starting from the left
+	 */
+	public static final String TOOLBAR_GROUP_FOUR = "4_Toolbar_Navigation_Group";
 }

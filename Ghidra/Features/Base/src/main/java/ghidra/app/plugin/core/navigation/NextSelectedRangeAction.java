@@ -42,7 +42,7 @@ public class NextSelectedRangeAction extends NextRangeAction {
 
 		setToolBarData(new ToolBarData(
 			ResourceManager.loadImage("images/NextSelectionBlock16.gif"),
-			ToolConstants.TOOLBAR_GROUP_NAV_THREE, NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
+			ToolConstants.TOOLBAR_GROUP_THREE, NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
 		setKeyBindingData(
 			new KeyBindingData(KeyEvent.VK_BRACERIGHT, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
 

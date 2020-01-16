@@ -78,10 +78,6 @@ public abstract class CompareFunctionsAction extends DockingAction {
 		return !functions.isEmpty();
 	}
 
-	protected boolean isToolBarAction() {
-		return true;
-	}
-
 	/**
 	 * Returns the icon to use for the action
 	 * 
@@ -104,11 +100,9 @@ public abstract class CompareFunctionsAction extends DockingAction {
 		setPopupMenuData(new MenuData(new String[] { "Compare Selected Functions" },
 			getToolBarIcon(), CREATE_COMPARISON_GROUP));
 
-		if (isToolBarAction()) {
-			ToolBarData newToolBarData =
-				new ToolBarData(getToolBarIcon(), CREATE_COMPARISON_GROUP);
-			setToolBarData(newToolBarData);
-		}
+		ToolBarData newToolBarData =
+			new ToolBarData(getToolBarIcon(), CREATE_COMPARISON_GROUP);
+		setToolBarData(newToolBarData);
 
 		setHelpLocation(new HelpLocation("FunctionComparison", "Function_Comparison"));
 

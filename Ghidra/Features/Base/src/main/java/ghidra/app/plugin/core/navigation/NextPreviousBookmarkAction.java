@@ -58,7 +58,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 		this.tool = tool;
 
 		ToolBarData toolBarData =
-			new ToolBarData(bookmarkIcon, ToolConstants.TOOLBAR_GROUP_NAV_FOUR);
+			new ToolBarData(bookmarkIcon, ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 

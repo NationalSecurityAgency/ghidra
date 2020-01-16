@@ -43,7 +43,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 		this.tool = tool;
 
 		ToolBarData toolBarData =
-			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_NAV_FOUR);
+			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 		MenuData menuData =

@@ -309,7 +309,7 @@ public class NextPrevAddressPlugin extends Plugin {
 			this.isNext = isNext;
 
 			setToolBarData(new ToolBarData(isNext ? nextIcon : previousIcon,
-				ToolConstants.TOOLBAR_GROUP_NAV_TWO));
+				ToolConstants.TOOLBAR_GROUP_TWO));
 			setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, name));
 			int keycode = isNext ? KeyEvent.VK_RIGHT : KeyEvent.VK_LEFT;
 			setKeyBindingData(new KeyBindingData(keycode, InputEvent.ALT_DOWN_MASK));
