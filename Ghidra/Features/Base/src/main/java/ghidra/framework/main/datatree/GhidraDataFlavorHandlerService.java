@@ -21,22 +21,25 @@ public class GhidraDataFlavorHandlerService {
 
 	public GhidraDataFlavorHandlerService() {
 
-		try {
-			DataFlavor linuxFileUrlFlavor =
-				new DataFlavor("application/x-java-serialized-object;class=java.lang.String");
-			DataTreeDragNDropHandler.addActiveDataFlavorHandler(linuxFileUrlFlavor,
-				new LinuxFileUrlHandler());
-		}
-		catch (ClassNotFoundException cnfe) {
-			// should never happen as it is using java.lang.String
-		}
+		//
+		// Note: the order of the file drop flavors/handlers is intentional.  We wish to process
+		//       objects first which we know to be transfered from within the current JVM.  After
+		//       that, then process objects given to us from the OS or another JVM.
+		//
 
 		LocalTreeNodeHandler localNodeHandler = new LocalTreeNodeHandler();
 		DataTreeDragNDropHandler.addActiveDataFlavorHandler(
 			DataTreeDragNDropHandler.localDomainFileTreeFlavor, localNodeHandler);
-		DataTreeDragNDropHandler.addActiveDataFlavorHandler(DataFlavor.javaFileListFlavor,
-			new JavaFileListHandler());
+
 		DataTreeDragNDropHandler.addActiveDataFlavorHandler(
 			VersionInfoTransferable.localVersionInfoFlavor, new LocalVersionInfoHandler());
+		DataTreeDragNDropHandler.addActiveDataFlavorHandler(DataFlavor.javaFileListFlavor,
+			new JavaFileListHandler());
+
+		DataFlavor linuxFileUrlFlavor =
+			new DataFlavor("application/x-java-serialized-object;class=java.lang.String",
+				"String file URL");
+		DataTreeDragNDropHandler.addActiveDataFlavorHandler(linuxFileUrlFlavor,
+			new LinuxFileUrlHandler());
 	}
 }
