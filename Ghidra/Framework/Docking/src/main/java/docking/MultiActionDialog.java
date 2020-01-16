@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.action.DockingActionIf;
+import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
 
@@ -29,7 +30,7 @@ import docking.widgets.label.GLabel;
  * Dialog to show multiple actions that are mapped to the same keystroke;
  * allows the user to select which action to do.
  */
-public class ActionDialog extends DialogComponentProvider {
+public class MultiActionDialog extends DialogComponentProvider {
 
 	private String keystrokeName;
 	private List<ExecutableKeyActionAdapter> list;
@@ -41,7 +42,7 @@ public class ActionDialog extends DialogComponentProvider {
 	 * @param keystrokeName keystroke name
 	 * @param list list of actions
 	 */
-	public ActionDialog(String keystrokeName, List<ExecutableKeyActionAdapter> list) {
+	public MultiActionDialog(String keystrokeName, List<ExecutableKeyActionAdapter> list) {
 		super("Select Action", true);
 		this.keystrokeName = keystrokeName;
 		init();
@@ -53,6 +54,10 @@ public class ActionDialog extends DialogComponentProvider {
 	 */
 	@Override
 	protected void okCallback() {
+		maybeDoAction();
+	}
+
+	private void maybeDoAction() {
 		int index = actionList.getSelectedIndex();
 		if (index < 0) {
 			return;
@@ -120,6 +125,13 @@ public class ActionDialog extends DialogComponentProvider {
 					evt.consume();
 					close();
 				}
+			}
+		});
+
+		actionList.addMouseListener(new GMouseListenerAdapter() {
+			@Override
+			public void doubleClickTriggered(MouseEvent e) {
+				maybeDoAction();
 			}
 		});
 
