@@ -167,10 +167,6 @@ task sleighCompile (type: JavaExec) {
 	jvmArgs '-Xmx2048M'	
 }
 
-// The task that copies the common files to the distribution folder must depend on
-// the sleigh tasks before executing.
-rootProject.assembleDistribution.dependsOn sleighCompile
-
 // Add in this projects sleighCompile to the allSleighCompile task
 rootProject.allSleighCompile.dependsOn sleighCompile
 
