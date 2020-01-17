@@ -1083,6 +1083,12 @@ macro push44(x) {
   *:4 $(STACKPTR) = mysave;
 }
 
+macro pushseg44(x) {
+  mysave:2 = x;
+  $(STACKPTR) = $(STACKPTR) - 4;
+  *:2 $(STACKPTR) = mysave;
+}
+
 macro push48(x) {
   mysave:8 = x;
   $(STACKPTR) = $(STACKPTR) - 8;
@@ -1106,6 +1112,12 @@ macro push88(x) {
   mysave:8 = x;
   $(STACKPTR) = $(STACKPTR) - 8;
   *:8 $(STACKPTR) = mysave;
+}
+
+macro pushseg88(x) {
+  mysave:2 = x;
+  $(STACKPTR) = $(STACKPTR) - 8;
+  *:2 $(STACKPTR) = mysave;
 }
 @endif
 
@@ -1137,6 +1149,11 @@ macro pop44(x) {
   ESP = ESP + 4;
 }
 
+macro popseg44(x) {
+  x = *:2 $(STACKPTR);
+  ESP = ESP + 4;
+}
+
 macro pop48(x) {
   x = *:8 $(STACKPTR);
   ESP = ESP + 8;
@@ -1155,6 +1172,11 @@ macro pop84(x) {
 
 macro pop88(x) {
   x = *:8 $(STACKPTR);
+  RSP = RSP + 8;
+}
+
+macro popseg88(x) {
+  x = *:2 $(STACKPTR);
   RSP = RSP + 8;
 }
 @endif
@@ -3183,15 +3205,21 @@ define pcodeop swap_bytes;
 @endif
 
 :POP DS         is vexMode=0 & addrsize=0 & byte=0x1f & DS              { pop22(DS); }
-:POP DS         is vexMode=0 & addrsize=1 & byte=0x1f & DS              { pop42(DS); }
+:POP DS         is vexMode=0 & addrsize=1 & byte=0x1f & DS              { popseg44(DS); }
 :POP ES         is vexMode=0 & addrsize=0 & byte=0x7 & ES               { pop22(ES); }
-:POP ES         is vexMode=0 & addrsize=1 & byte=0x7 & ES               { pop42(ES); }
+:POP ES         is vexMode=0 & addrsize=1 & byte=0x7 & ES               { popseg44(ES); }
 :POP SS         is vexMode=0 & addrsize=0 & byte=0x17 & SS              { pop22(SS); }
-:POP SS         is vexMode=0 & addrsize=1 & byte=0x17 & SS              { pop42(SS); }
+:POP SS         is vexMode=0 & addrsize=1 & byte=0x17 & SS              { popseg44(SS); }
 :POP FS         is vexMode=0 & addrsize=0 & byte=0xf; byte=0xa1 & FS    { pop22(FS); }
-:POP FS         is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa1 & FS    { pop42(FS); }
+:POP FS         is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa1 & FS    { popseg44(FS); }
+@ifdef IA64
+:POP FS         is vexMode=0 & addrsize=2 & byte=0xf; byte=0xa1 & FS    { popseg88(FS); }
+@endif
 :POP GS         is vexMode=0 & addrsize=0 & byte=0xf; byte=0xa9 & GS    { pop22(GS); }
-:POP GS         is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa9 & GS    { pop42(GS); }
+:POP GS         is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa9 & GS    { popseg44(GS); }
+@ifdef IA64
+:POP GS         is vexMode=0 & addrsize=2 & byte=0xf; byte=0xa9 & GS    { popseg88(GS); }
+@endif
 
 :POPA           is vexMode=0 & addrsize=0 & opsize=0 & byte=0x61            { pop22(DI); pop22(SI); pop22(BP); tmp:2=0; pop22(tmp); pop22(BX); pop22(DX); pop22(CX); pop22(AX); }
 :POPA           is vexMode=0 & addrsize=1 & opsize=0 & byte=0x61            { pop42(DI); pop42(SI); pop42(BP); tmp:2=0; pop42(tmp); pop42(BX); pop42(DX); pop42(CX); pop42(AX); }
@@ -3261,17 +3289,23 @@ define pcodeop ptwrite;
 @endif
 
 :PUSH CS        is vexMode=0 & addrsize=0 & byte=0xe & CS               { push22(CS); }
-:PUSH CS        is vexMode=0 & addrsize=1 & byte=0xe & CS               { push42(CS); }
+:PUSH CS        is vexMode=0 & addrsize=1 & byte=0xe & CS               { pushseg44(CS); }
 :PUSH SS        is vexMode=0 & addrsize=0 & byte=0x16 & SS              { push22(SS); }
-:PUSH SS        is vexMode=0 & addrsize=1 & byte=0x16 & SS              { push42(SS); }
+:PUSH SS        is vexMode=0 & addrsize=1 & byte=0x16 & SS              { pushseg44(SS); }
 :PUSH DS        is vexMode=0 & addrsize=0 & byte=0x1e & DS              { push22(DS); }
-:PUSH DS        is vexMode=0 & addrsize=1 & byte=0x1e & DS              { push42(DS); }
+:PUSH DS        is vexMode=0 & addrsize=1 & byte=0x1e & DS              { pushseg44(DS); }
 :PUSH ES        is vexMode=0 & addrsize=0 & byte=0x6 & ES               { push22(ES); }
-:PUSH ES        is vexMode=0 & addrsize=1 & byte=0x6 & ES               { push42(ES); }
+:PUSH ES        is vexMode=0 & addrsize=1 & byte=0x6 & ES               { pushseg44(ES); }
 :PUSH FS        is vexMode=0 & addrsize=0 & byte=0xf; byte=0xa0 & FS        { push22(FS); }
-:PUSH FS        is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa0 & FS        { push42(FS); }
+:PUSH FS        is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa0 & FS        { pushseg44(FS); }
+@ifdef IA64
+:PUSH FS        is vexMode=0 & addrsize=2 & byte=0xf; byte=0xa0 & FS        { pushseg88(FS); }
+@endif
 :PUSH GS        is vexMode=0 & addrsize=0 & byte=0xf; byte=0xa8 & GS        { push22(GS); }
-:PUSH GS        is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa8 & GS        { push42(GS); }
+:PUSH GS        is vexMode=0 & addrsize=1 & byte=0xf; byte=0xa8 & GS        { pushseg44(GS); }
+@ifdef IA64
+:PUSH GS        is vexMode=0 & addrsize=2 & byte=0xf; byte=0xa8 & GS        { pushseg88(GS); }
+@endif
 
 :PUSHA          is vexMode=0 & addrsize=0 & opsize=0 & byte=0x60            { local tmp=SP; push22(AX); push22(CX); push22(DX); push22(BX); push22(tmp); push22(BP); push22(SI); push22(DI); }
 :PUSHA          is vexMode=0 & addrsize=1 & opsize=0 & byte=0x60            { local tmp=SP; push42(AX); push42(CX); push42(DX); push42(BX); push42(tmp); push42(BP); push42(SI); push42(DI); }
