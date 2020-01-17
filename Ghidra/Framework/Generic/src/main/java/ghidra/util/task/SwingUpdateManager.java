@@ -15,8 +15,6 @@
  */
 package ghidra.util.task;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.swing.Timer;
 
 import ghidra.util.Msg;
@@ -50,13 +48,8 @@ import utilities.util.reflection.ReflectionUtilities;
  *
  * <P> This class is safe to use in a multi-threaded environment.   State variables are guarded
  * via synchronization on this object.   The Swing thread is used to perform updates, which
- * guarantees that only one update will happen at a time.  There is one state variable,
- * the {@link #workCount}, that is changed both in the synchronized blocks and the Swing thread
- * which is an atomic variable.  This variable must be updated/incremented when the
- * synchronized variables are cleared to prevent {@link #isBusy()} from returning false when
- * there is a gap between 'work posted' and 'work execution'.
+ * guarantees that only one update will happen at a time.  
  */
-
 public class SwingUpdateManager {
 	private static final long NONE = 0;
 	public static final int DEFAULT_MAX_DELAY = 30000;
@@ -78,11 +71,13 @@ public class SwingUpdateManager {
 	private long bufferingStartTime;
 	private boolean disposed = false;
 
-	// this is the number of times we will be calling work
-	private AtomicInteger workCount = new AtomicInteger();
+	// This is true when work has begun and is not finished.  This is only mutated on the 
+	// Swing thread, but is read by other threads.
+	private boolean isWorking;
 
 	/**
-	 * Constructs a new SwingUpdateManager.
+	 * Constructs a new SwingUpdateManager with default values for min and max delay.  See
+	 * {@link #DEFAULT_MIN_DELAY} and {@value #DEFAULT_MAX_DELAY}.
 	 *
 	 * @param r the runnable that performs the client work.
 	 */
@@ -171,7 +166,7 @@ public class SwingUpdateManager {
 		}
 
 		requestTime = System.currentTimeMillis();
-		bufferingStartTime = bufferingStartTime == 0 ? requestTime : bufferingStartTime;
+		bufferingStartTime = bufferingStartTime == NONE ? requestTime : bufferingStartTime;
 		scheduleCheckForWork();
 	}
 
@@ -219,15 +214,15 @@ public class SwingUpdateManager {
 	}
 
 	/**
-	 * Returns true if any work is being performed or if there is buffered work.
-	 * @return true if any work is being performed or if there is buffered work.
+	 * Returns true if any work is being performed or if there is buffered work
+	 * @return true if any work is being performed or if there is buffered work
 	 */
 	public synchronized boolean isBusy() {
 		if (disposed) {
 			return false;
 		}
 
-		return requestTime != NONE || workCount.get() != 0;
+		return requestTime != NONE || isWorking;
 	}
 
 	public synchronized void dispose() {
@@ -253,21 +248,25 @@ public class SwingUpdateManager {
 			"\tname: " + name + "\n" +
 			"\tcreator: " + inceptionInformation + " ("+System.identityHashCode(this)+")\n" +
 			"\trequest time: "+requestTime + "\n" +
-			"\twork count: " + workCount.get() + "\n" +
+			"\twork count: " + isWorking + "\n" +
 		"}";
 		//@formatter:on
 	}
 
+	// note: this is called on the Swing thread
 	private void checkForWork() {
+
 		if (shouldDoWork()) {
 			doWork();
 		}
 	}
 
+	// note: this is called on the Swing thread
 	private synchronized boolean shouldDoWork() {
 
-		// If no pending request, exit without restarting timer.
+		// If no pending request, exit without restarting timer
 		if (requestTime == NONE) {
+			bufferingStartTime = NONE; // The timer has fired and there is no pending work
 			return false;
 		}
 
@@ -275,7 +274,7 @@ public class SwingUpdateManager {
 		if (isTimeToWork(now)) {
 			bufferingStartTime = now;
 			requestTime = NONE;
-			workCount.incrementAndGet();
+			isWorking = true;
 			return true;
 		}
 
@@ -304,6 +303,7 @@ public class SwingUpdateManager {
 		return false;
 	}
 
+	// note: this is called on the Swing thread
 	private void doWork() {
 		try {
 			clientRunnable.run();
@@ -313,9 +313,11 @@ public class SwingUpdateManager {
 			Msg.showError(this, null, "Unexpected Exception",
 				"Unexpected exception in Swing Update Manager", t);
 		}
-		finally {
-			workCount.decrementAndGet();
-		}
+
+		isWorking = false;
+
+		// we need to clear the buffering flag after the minDelay has passed, so start the timer
+		scheduleCheckForWork();
 	}
 
 //==================================================================================================
