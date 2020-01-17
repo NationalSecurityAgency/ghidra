@@ -688,12 +688,12 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 	}
 
 	@Override
-	protected FieldPanel getLeftFieldPanel() {
+	public FieldPanel getLeftFieldPanel() {
 		return getLeftDecompilerPanel().getFieldPanel();
 	}
 
 	@Override
-	protected FieldPanel getRightFieldPanel() {
+	public FieldPanel getRightFieldPanel() {
 		return getRightDecompilerPanel().getFieldPanel();
 	}
 

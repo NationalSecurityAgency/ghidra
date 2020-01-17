@@ -117,6 +117,24 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	}
 
 	/**
+	 * Returns the source combo box
+	 * 
+	 * @return the source combo box
+	 */
+	public JComboBox<Function> getSourceComponent() {
+		return sourceFunctionsCB;
+	}
+
+	/**
+	 * Returns the target combo box
+	 * 
+	 * @return the target combo box
+	 */
+	public JComboBox<Function> getTargetComponent() {
+		return targetFunctionsCB;
+	}
+
+	/**
 	 * Clears out and reloads the source function list. Any selection currently
 	 * made on the list will be reestablished.
 	 */

@@ -2713,12 +2713,12 @@ public class ListingCodeComparisonPanel
 	}
 
 	@Override
-	protected FieldPanel getLeftFieldPanel() {
+	public FieldPanel getLeftFieldPanel() {
 		return getLeftPanel().getFieldPanel();
 	}
 
 	@Override
-	protected FieldPanel getRightFieldPanel() {
+	public FieldPanel getRightFieldPanel() {
 		return getRightPanel().getFieldPanel();
 	}
 

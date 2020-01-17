@@ -326,13 +326,13 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 	 * Gets the left field panel for this CodeComparisonPanel.
 	 * @return the left FieldPanel.
 	 */
-	protected abstract FieldPanel getLeftFieldPanel();
+	public abstract FieldPanel getLeftFieldPanel();
 
 	/**
 	 * Gets the right field panel for this CodeComparisonPanel.
 	 * @return the right FieldPanel.
 	 */
-	protected abstract FieldPanel getRightFieldPanel();
+	public abstract FieldPanel getRightFieldPanel();
 
 	/**
 	 * Determines if the layouts of the views are synchronized with respect to scrolling and

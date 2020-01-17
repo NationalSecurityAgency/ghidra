@@ -377,6 +377,7 @@ src/main/help/help/topics/FunctionComparison/images/ListingCodeComparisonOptions
 src/main/help/help/topics/FunctionComparison/images/MultiFunctionComparisonWindow.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/NavNextIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/NavPreviousIcon.png||GHIDRA||||END|
+src/main/help/help/topics/FunctionComparison/images/NavSelectedIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/RemoveFromComparisonIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/binaryData.gif||GHIDRA||||END|
 src/main/help/help/topics/FunctionComparison/images/class.png||GHIDRA||||END|
