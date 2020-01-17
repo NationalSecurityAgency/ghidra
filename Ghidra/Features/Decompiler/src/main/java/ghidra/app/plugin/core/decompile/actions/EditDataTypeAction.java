@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import docking.ActionContext;
 import docking.action.MenuData;
-import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
@@ -29,13 +28,9 @@ import ghidra.program.model.listing.Function;
 import ghidra.util.UndefinedFunction;
 
 public class EditDataTypeAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
-	private final PluginTool tool;
 
-	public EditDataTypeAction(PluginTool tool, DecompilerController controller) {
+	public EditDataTypeAction() {
 		super("Edit Data Type");
-		this.tool = tool;
-		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Edit Data Type" }, "Decompile"));
 	}
 
@@ -44,7 +39,7 @@ public class EditDataTypeAction extends AbstractDecompilerAction {
 		return (context instanceof DecompilerActionContext);
 	}
 
-	private boolean hasCustomEditorForBaseDataType(DataType dataType) {
+	private boolean hasCustomEditorForBaseDataType(PluginTool tool, DataType dataType) {
 		DataType baseDataType = DataTypeUtils.getBaseDataType(dataType);
 		final DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
 		return baseDataType != null && service.isEditable(baseDataType);
@@ -53,7 +48,7 @@ public class EditDataTypeAction extends AbstractDecompilerAction {
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
 
-		Function function = controller.getFunction();
+		Function function = context.getFunction();
 		if (function instanceof UndefinedFunction) {
 			return false;
 		}
@@ -63,7 +58,7 @@ public class EditDataTypeAction extends AbstractDecompilerAction {
 			return false;
 		}
 
-		return hasCustomEditorForBaseDataType(dataType);
+		return hasCustomEditorForBaseDataType(context.getTool(), dataType);
 	}
 
 	@Override
@@ -76,7 +71,8 @@ public class EditDataTypeAction extends AbstractDecompilerAction {
 		if (baseDtDTM != dataTypeManager) {
 			baseDataType = baseDataType.clone(dataTypeManager);
 		}
-		final DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
+		final DataTypeManagerService service =
+			context.getTool().getService(DataTypeManagerService.class);
 		service.edit(baseDataType);
 	}
 

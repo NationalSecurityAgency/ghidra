@@ -19,32 +19,29 @@ import java.util.Set;
 
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 public class ForwardSliceAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
 
-	public ForwardSliceAction(DecompilerController controller) {
+	public ForwardSliceAction() {
 		super("Highlight Forward Slice");
-		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Highlight", "Forward Slice" }, "Decompile"));
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
 		return varnode != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
 		if (varnode == null) {
 			return;
@@ -52,6 +49,7 @@ public class ForwardSliceAction extends AbstractDecompilerAction {
 
 		PcodeOp op = tokenAtCursor.getPcodeOp();
 		Set<Varnode> forwardSlice = DecompilerUtils.getForwardSlice(varnode);
+		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
 		decompilerPanel.clearPrimaryHighlights();
 
 		SliceHighlightColorProvider colorProvider =

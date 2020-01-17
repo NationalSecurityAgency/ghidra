@@ -15,12 +15,13 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -29,19 +30,18 @@ public class RenameVariableTask extends RenameTask {
 	private HighSymbol highSymbol;
 	private Varnode exactSpot;
 	private HighFunction hfunction;
-	private Program program;
 	private Function function;
 	private boolean commitRequired; // Set to true if all parameters are committed before renaming
 	private SourceType srctype;		// Desired source type for the variable being renamed
 	private SourceType signatureSrcType;	// Signature source type of the function (which will be preserved)
 
-	public RenameVariableTask(PluginTool tool, HighSymbol sym, Varnode ex, SourceType st) {
-		super(tool, sym.getName());
+	public RenameVariableTask(PluginTool tool, Program program, DecompilerPanel panel,
+			ClangToken token, HighSymbol sym, SourceType st) {
+		super(tool, program, panel, token, sym.getName());
 		highSymbol = sym;
-		exactSpot = ex;
+		exactSpot = token.getVarnode();
 		hfunction = sym.getHighFunction();
 		function = hfunction.getFunction();
-		program = function.getProgram();
 		srctype = st;
 		signatureSrcType = function.getSignatureSource();
 	}
@@ -61,11 +61,12 @@ public class RenameVariableTask extends RenameTask {
 	public boolean isValid(String newNm) {
 		newName = newNm;
 		LocalSymbolMap localSymbolMap = hfunction.getLocalSymbolMap();
-		if (localSymbolMap.containsVariableWithName(newName) || isSymbolInFunction(newName)) {
+		if (localSymbolMap.containsVariableWithName(newName) ||
+			isSymbolInFunction(function, newName)) {
 			errorMsg = "Duplicate name";
 			return false;
 		}
-		commitRequired = RetypeVariableAction.checkFullCommit(highSymbol, hfunction);
+		commitRequired = AbstractDecompilerAction.checkFullCommit(highSymbol, hfunction);
 		if (commitRequired) {
 			exactSpot = null; // Don't try to split out if we need to commit
 		}
@@ -85,11 +86,6 @@ public class RenameVariableTask extends RenameTask {
 			return false;
 		}
 		return true;
-	}
-
-	private boolean isSymbolInFunction(String name) {
-		SymbolTable symbolTable = program.getSymbolTable();
-		return !symbolTable.getSymbols(name, function).isEmpty();
 	}
 
 	@Override

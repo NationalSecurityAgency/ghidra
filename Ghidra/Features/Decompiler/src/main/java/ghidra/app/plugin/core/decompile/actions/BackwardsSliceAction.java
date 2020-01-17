@@ -36,8 +36,7 @@ public class BackwardsSliceAction extends AbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
 		return varnode != null;
 	}
@@ -45,13 +44,13 @@ public class BackwardsSliceAction extends AbstractDecompilerAction {
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 
-		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		Varnode varnode = DecompilerUtils.getVarnodeRef(tokenAtCursor);
 		if (varnode == null) {
 			return;
 		}
 
+		DecompilerPanel decompilerPanel = context.getDecompilerPanel();
 		decompilerPanel.clearPrimaryHighlights();
 
 		PcodeOp op = tokenAtCursor.getPcodeOp();

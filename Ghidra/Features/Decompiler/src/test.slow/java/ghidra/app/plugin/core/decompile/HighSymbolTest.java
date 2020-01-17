@@ -72,10 +72,11 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		return provider.getController().getHighFunction();
 	}
 
-	private void renameGlobalVariable(HighSymbol highSymbol, Varnode exact, String newName) {
+	private void renameGlobalVariable(HighSymbol highSymbol, ClangToken tokenAtCursor,
+			String newName) {
 		Address addr = highSymbol.getStorage().getMinAddress();
 		RenameGlobalVariableTask rename = new RenameGlobalVariableTask(provider.getTool(),
-			highSymbol.getName(), addr, highSymbol.getProgram());
+			highSymbol.getProgram(), provider.getDecompilerPanel(), tokenAtCursor, addr);
 
 		assertTrue(rename.isValid(newName));
 		modifyProgram(p -> {
@@ -84,9 +85,10 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		waitForDecompiler();
 	}
 
-	private void renameVariable(HighSymbol highSymbol, Varnode exact, String newName) {
-		RenameVariableTask rename = new RenameVariableTask(provider.getTool(), highSymbol, exact,
-			SourceType.USER_DEFINED);
+	private void renameVariable(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
+		RenameVariableTask rename =
+			new RenameVariableTask(provider.getTool(), highSymbol.getProgram(),
+				provider.getDecompilerPanel(), tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
 		assertTrue(rename.isValid(newName));
 		modifyProgram(p -> {
 			rename.commit();
@@ -94,14 +96,14 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		waitForDecompiler();
 	}
 
-	private void renameExisting(HighSymbol highSymbol, Varnode exact, String newName) {
+	private void renameExisting(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
 		SymbolEntry oldEntry = highSymbol.getFirstWholeMap();
 		long oldId = highSymbol.getId();
 		if (highSymbol.isGlobal()) {
-			renameGlobalVariable(highSymbol, exact, newName);
+			renameGlobalVariable(highSymbol, tokenAtCursor, newName);
 		}
 		else {
-			renameVariable(highSymbol, exact, newName);
+			renameVariable(highSymbol, tokenAtCursor, newName);
 		}
 		Symbol symbol = program.getSymbolTable().getSymbol(oldId);
 		assertEquals(symbol.getName(), newName);
@@ -136,7 +138,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		assertEquals(data.getAddress().getOffset(), 0x10056a0L);
 		assertEquals(data.getBaseDataType().getLength(), 2);
 
-		renameGlobalVariable(highSymbol, null, "newGlobal");
+		renameGlobalVariable(highSymbol, token, "newGlobal");
 		waitForDecompiler();
 		line = getLineStarting("newGlobal");
 		loc = loc(line.getLineNumber(), 5);
@@ -153,7 +155,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		codeSymbol = highCode.getCodeSymbol();
 		assertNotNull(codeSymbol);
 		assertEquals(codeSymbol.getID(), highCode.getId());
-		renameExisting(highSymbol, null, "nameAgain");
+		renameExisting(highSymbol, token, "nameAgain");
 	}
 
 	@Test
@@ -181,7 +183,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		}
 		assertTrue(stackCount > 0);		// Verify speculative merge
 		assertTrue(regCount > 0);
-		renameVariable(highSymbol, token.getVarnode(), "newLocal");
+		renameVariable(highSymbol, token, "newLocal");
 		line = getLineStarting("newLocal");
 		loc = loc(line.getLineNumber(), 5);
 		token = line.getToken(loc);
@@ -196,7 +198,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		assertFalse(highSymbol.isTypeLocked());
 		assertEquals(numInst, variable.getInstances().length);
 		assertEquals(variable.getRepresentative().getAddress().getOffset(), 0xfffffffffffffff0L);
-		renameExisting(highSymbol, null, "nameAgain");
+		renameExisting(highSymbol, token, "nameAgain");
 	}
 
 	@Test
@@ -213,7 +215,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		LocalSymbolMap lsym = highFunction.getLocalSymbolMap();
 		HighSymbol highSymbol = lsym.findLocal(addr, null);
 		assertEquals(highSymbol.getName(), "local_44");
-		renameVariable(highSymbol, token.getVarnode(), "newArray");
+		renameVariable(highSymbol, token, "newArray");
 		line = getLineStarting("wsprintfW");
 		token = line.getToken(loc);
 		assertTrue(token instanceof ClangVariableToken);
@@ -228,7 +230,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		assertTrue(entry instanceof MappedEntry);
 		assertEquals(entry.getStorage().getMinAddress(), addr);
 		assertEquals(entry.getSize(), 64);
-		renameExisting(highSymbol, null, "nameAgain");
+		renameExisting(highSymbol, token, "nameAgain");
 	}
 
 	@Test
@@ -245,16 +247,18 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		Address addr = entry.getStorage().getMinAddress();
 		assertTrue(entry instanceof MappedEntry);		// Comes back initially as untied stack location
 		assertEquals(addr.getAddressSpace().getName(), "register");
-		renameVariable(highSymbol, token.getVarnode(), "newReg");
+		renameVariable(highSymbol, token, "newReg");
 		line = getLineContaining("newReg < 0x40");
 		assertNotNull(line);
+		loc = loc(line.getLineNumber(), 11);
+		token = line.getToken(loc);
 		HighFunction highFunction = getHighFunction();
 		highSymbol = highFunction.getLocalSymbolMap().findLocal(addr, entry.getPCAdress());
 		assertNotNull(highSymbol);
 		assertEquals(highSymbol.getName(), "newReg");
 		assertTrue(highSymbol.isNameLocked());
 		assertFalse(highSymbol.isTypeLocked());
-		renameExisting(highSymbol, null, "nameAgain");
+		renameExisting(highSymbol, token, "nameAgain");
 	}
 
 	@Test
@@ -273,7 +277,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		SymbolEntry entry = highSymbol.getFirstWholeMap();
 		Address addr = entry.getStorage().getMinAddress();
 		assertEquals(addr.getOffset(), 8L);
-		renameExisting(highSymbol, null, "paramAgain");
+		renameExisting(highSymbol, token, "paramAgain");
 	}
 
 	@Test
@@ -289,7 +293,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		SymbolEntry entry = highSymbol.getFirstWholeMap();
 		assertTrue(entry instanceof MappedEntry);
 		Address usepoint = token.getVarnode().getPCAddress();
-		renameVariable(highSymbol, token.getVarnode(), "newLocal");
+		renameVariable(highSymbol, token, "newLocal");
 		line = getLineContaining("0x4e");
 		token = line.getToken(loc);
 		assertTrue(token instanceof ClangVariableToken);

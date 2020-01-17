@@ -20,7 +20,7 @@ import java.util.List;
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFuncNameToken;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.function.editor.*;
 import ghidra.app.services.DataTypeManagerService;
@@ -33,13 +33,9 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.util.UndefinedFunction;
 
 public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
-	private final PluginTool tool;
 
-	public SpecifyCPrototypeAction(PluginTool tool, DecompilerController controller) {
+	public SpecifyCPrototypeAction() {
 		super("Edit Function Signature");
-		this.tool = tool;
-		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Edit Function Signature" }, "Decompile"));
 	}
 
@@ -132,17 +128,16 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 	}
 
 	/**
+	 * @param function is the current function
+	 * @param tokenAtCursor is the user selected token
 	 * @return the currently highlighted function or the currently decompiled
 	 *         function if there isn't one.
 	 */
-	synchronized Function getFunction() {
+	synchronized Function getFunction(Function function, ClangToken tokenAtCursor) {
 		// try to look up the function that is at the current cursor location
 		//   If there isn't one, just use the function we are in.
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-		Function function = controller.getFunction();
 		if (tokenAtCursor instanceof ClangFuncNameToken) {
-			Function tokenFunction = DecompilerUtils.getFunction(controller.getProgram(),
+			Function tokenFunction = DecompilerUtils.getFunction(function.getProgram(),
 				(ClangFuncNameToken) tokenAtCursor);
 			if (tokenFunction != null) {
 				function = tokenFunction;
@@ -153,22 +148,24 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		Function function = controller.getFunction();
+		Function function = context.getFunction();
 		if (function instanceof UndefinedFunction) {
 			return false;
 		}
 
-		return getFunction() != null;
+		return getFunction(function, context.getTokenAtCursor()) != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		Function function = getFunction();
+		Function function =
+			getFunction(context.getFunction(), context.getTokenAtCursor());
+		PluginTool tool = context.getTool();
 		DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
 
 		FunctionEditorModel model = new FunctionEditorModel(service, function);
 
-		HighFunction hf = controller.getHighFunction();
+		HighFunction hf = context.getHighFunction();
 		FunctionPrototype functionPrototype = hf.getFunctionPrototype();
 
 		// If editing the decompiled function (i.e., not a subfunction) and function

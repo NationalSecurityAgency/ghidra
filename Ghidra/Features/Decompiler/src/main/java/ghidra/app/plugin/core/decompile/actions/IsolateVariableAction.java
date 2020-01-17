@@ -17,31 +17,28 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.DecompilerController;
-import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.util.UndefinedFunction;
 
-public class IsolateVariableAction extends RetypeVariableAction {
+public class IsolateVariableAction extends AbstractDecompilerAction {
 
-	public IsolateVariableAction(PluginTool tool, DecompilerController controller) {
-		super("New Isolated Variable", tool, controller);
-		setPopupMenuData(new MenuData(new String[] { "New Isolated Variable" }, "Decompile"));
+	public IsolateVariableAction() {
+		super("Split out as New Variable");
+		setPopupMenuData(new MenuData(new String[] { "Split out as New Variable" }, "Decompile"));
 //		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		Function function = controller.getFunction();
-		if (function instanceof UndefinedFunction) {
+		Function function = context.getFunction();
+		if (function == null || function instanceof UndefinedFunction) {
 			return false;
 		}
 
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		if (tokenAtCursor == null) {
 			return false;
 		}
@@ -77,12 +74,13 @@ public class IsolateVariableAction extends RetypeVariableAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		final ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
-		HighVariable variable = tokenAtCursor.getHighVariable();
-		HighSymbol highSymbol = variable.getSymbol();
-		highSymbol.setTypeLock(true);
-		retypeSymbol(highSymbol, tokenAtCursor.getVarnode(), highSymbol.getDataType());
+		final ClangToken tokenAtCursor = context.getTokenAtCursor();
+		HighSymbol highSymbol = tokenAtCursor.getHighVariable().getSymbol();
+		IsolateVariableTask newVariableTask =
+			new IsolateVariableTask(context.getTool(), context.getProgram(),
+				context.getDecompilerPanel(), tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
+
+		newVariableTask.runTask();
 	}
 
 }

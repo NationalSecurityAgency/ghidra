@@ -27,7 +27,8 @@ import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.util.filechooser.ExtensionFileFilter;
 
 public class DebugDecompilerAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
+
+	private DecompilerController controller;
 
 	public DebugDecompilerAction(DecompilerController controller) {
 		super("Debug Function Decompilation");
@@ -37,12 +38,12 @@ public class DebugDecompilerAction extends AbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		return controller.getFunction() != null;
+		return context.getFunction() != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		JComponent parentComponent = controller.getDecompilerPanel();
+		JComponent parentComponent = context.getDecompilerPanel();
 		GhidraFileChooser fileChooser = new GhidraFileChooser(parentComponent);
 		fileChooser.setTitle("Please Choose Output File");
 		fileChooser.setFileFilter(new ExtensionFileFilter(new String[] { "xml" }, "XML Files"));

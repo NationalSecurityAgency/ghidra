@@ -44,20 +44,20 @@ public class RemoveSecondaryHighlightAction extends AbstractDecompilerAction {
 			return false;
 		}
 
-		DecompilerPanel panel = context.getDecompilerPanel();
-		ClangToken token = panel.getTokenAtCursor();
+		ClangToken token = context.getTokenAtCursor();
 		if (token == null) {
 			return false;
 		}
 
+		DecompilerPanel panel = context.getDecompilerPanel();
 		TokenHighlights highlightedTokens = panel.getSecondaryHighlightedTokens();
 		return highlightedTokens.contains(token);
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
+		ClangToken token = context.getTokenAtCursor();
 		DecompilerPanel panel = context.getDecompilerPanel();
-		ClangToken token = panel.getTokenAtCursor();
 		panel.removeSecondaryHighlight(token);
 	}
 }
