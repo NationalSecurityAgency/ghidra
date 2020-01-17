@@ -76,9 +76,6 @@ public interface ToolConstants extends DockingToolConstants {
 	/** A group for actions that link directly to help content */
 	public static final String HELP_CONTENTS_MENU_GROUP = "AAAHelpContents";
 
-	/** Used for navigation-based action */
-	public static final String NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP = "NextPrevCodeUnit";
-
 	/**
 	 * Constant for the options menu group for the Tool Options menu item
 	 */
@@ -121,19 +118,26 @@ public interface ToolConstants extends DockingToolConstants {
 	 */
 	public static final String TOOL_HELP_TOPIC = "Tool";
 
-	/**
-	 * The large icon size (height and width)
-	 */
-	public static final int LARGE_ICON_SIZE = 24;
+	/** Used for navigation-based action */
+	public static final String MENU_GROUP_NEXT_CODE_UNIT_NAV = "NextPrevCodeUnit";
 
 	/**
-	 * The medium icon size (height and width)
+	 * Primary toolbar group number 1, starting from the left
 	 */
-	public static final int MEDIUM_ICON_SIZE = 22;
+	public static final String TOOLBAR_GROUP_ONE = "1_Toolbar_Navigation_Group";
 
 	/**
-	 * The small icon size (height and width)
+	 * Primary toolbar group number 2, starting from the left
 	 */
-	public static final int SMALL_ICON_SIZE = 16;
+	public static final String TOOLBAR_GROUP_TWO = "2_Toolbar_Navigation_Group";
 
+	/**
+	 * Primary toolbar group number 3, starting from the left
+	 */
+	public static final String TOOLBAR_GROUP_THREE = "3_Toolbar_Navigation_Group";
+
+	/**
+	 * Primary toolbar group number 4, starting from the left
+	 */
+	public static final String TOOLBAR_GROUP_FOUR = "4_Toolbar_Navigation_Group";
 }

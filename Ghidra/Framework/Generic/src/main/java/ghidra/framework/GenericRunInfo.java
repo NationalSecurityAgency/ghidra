@@ -19,12 +19,18 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.*;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import ghidra.framework.preferences.Preferences;
+import util.CollectionUtils;
 
 public class GenericRunInfo {
 
 	/** The name appended to application directories during testing */
 	public static final String TEST_DIRECTORY_SUFFIX = "-Test";
+
+	private static final Logger LOG = LogManager.getLogger(GenericRunInfo.class);
 
 	/**
 	 * Get all of the applications's settings directories 
@@ -39,9 +45,9 @@ public class GenericRunInfo {
 		File userDataDirectory = Application.getUserSettingsDirectory();
 		File userDataDirParentFile = userDataDirectory.getParentFile();
 
-		List<File> applicationDirectories = collectAllApplicationDirectories(userDataDirParentFile);
+		List<File> appDirs = collectAllApplicationDirectories(userDataDirParentFile);
 
-		Comparator<File> userDirModifyComparator = (f1, f2) -> {
+		Comparator<File> modifyTimeComparator = (f1, f2) -> {
 
 			//
 			// We want to use a real file to tell the last time Ghidra was run, as we cannot
@@ -52,74 +58,40 @@ public class GenericRunInfo {
 			if (!prefs1.exists() || !prefs2.exists()) {
 				if (!prefs1.exists()) {
 					if (!prefs2.exists()) {
-						// neither file exists (user deleted?)
-						return 0;
+						return 0; // neither file exists (user deleted?)
 					}
-
-					// prefs1 doesn't exist, but prefs2 does--prefer prefs2
-					return 1;
+					return 1; // prefs1 doesn't exist, but prefs2 does--prefer prefs2
 				}
-
-				// prefs1 exists--prefer prefs1
-				return -1;
+				return -1; // prefs1 exists--prefer prefs1
 			}
 
 			long modify1 = prefs1.lastModified();
 			long modify2 = prefs2.lastModified();
 			if (modify1 == modify2) {
-				// If same time then compare names of the parent dirs, which have versions
-				// in the name
+				// If same time, compare parent dir names, which contain their version
 				return f1.getName().compareTo(f2.getName());
 			}
 			return (modify1 < modify2) ? 1 : -1;
 		};
 
-		Collections.sort(applicationDirectories, userDirModifyComparator);
-		return applicationDirectories;
+		Collections.sort(appDirs, modifyTimeComparator);
+		return appDirs;
 	}
 
 	private static List<File> collectAllApplicationDirectories(File dataDirectoryParentDir) {
 
+		String settingsDirPrefix =
+			"." + Application.getName().replaceAll("\\s", "").toLowerCase();
 		FileFilter userDirFilter = f -> {
 			String name = f.getName();
-			Application.getName();
-			String userSettingsDirPrefix =
-				"." + Application.getName().replaceAll("\\s", "").toLowerCase();
-
-			return f.isDirectory() && name.startsWith(userSettingsDirPrefix) &&
+			return f.isDirectory() && name.startsWith(settingsDirPrefix) &&
 				!name.endsWith(TEST_DIRECTORY_SUFFIX);
 		};
 
 		// The current directory structure--rooted under '.<application name>'.   For example,
-		// /some/path/<user home>/.applicationname/.application-version
-		File[] currentStyleUserDirs = dataDirectoryParentDir.listFiles(userDirFilter);
-
-		// Old structure (applications used to be rooted under <user home>).  For example,
-		// /some/path/<user home>/.application-version
-		File userHomeDir = dataDirectoryParentDir.getParentFile();
-		if (userHomeDir == null) {
-			throw new IllegalArgumentException(
-				"Must specify an absolute path; found instead: " + dataDirectoryParentDir);
-		}
-
-		File[] oldStyleUserDirs = userHomeDir.listFiles(userDirFilter);
-
-		List<File> allDirs = new ArrayList<>();
-		if (currentStyleUserDirs != null) {
-			// should never be null, since the installation running this code will have a dir
-			for (File file : currentStyleUserDirs) {
-				allDirs.add(file);
-			}
-		}
-
-		if (oldStyleUserDirs != null) {
-			// should never be null--it's the user's home dir!
-			for (File file : oldStyleUserDirs) {
-				allDirs.add(file);
-			}
-		}
-
-		return allDirs;
+		// /some/path/<user home>/.application_name/..application_name_application-version
+		File[] userDirs = dataDirectoryParentDir.listFiles(userDirFilter);
+		return CollectionUtils.asList(userDirs);
 	}
 
 	/**
@@ -167,6 +139,8 @@ public class GenericRunInfo {
 		String myRelease = myIdentifier.getApplicationReleaseName();
 		String myDirName = Application.getUserSettingsDirectory().getName();
 
+		LOG.trace("Finding previous application settings directories for " + myIdentifier);
+
 		for (File dir : getUserSettingsDirsByTime()) {
 
 			// Ignore the currently active user settings directory.
@@ -175,6 +149,8 @@ public class GenericRunInfo {
 			if (dirName.equals(myDirName)) {
 				continue;
 			}
+
+			LOG.trace("\tchecking " + dirName);
 
 			if (dirName.startsWith(".")) {
 				dirName = dirName.substring(1);
@@ -185,11 +161,16 @@ public class GenericRunInfo {
 				ApplicationIdentifier identifier = new ApplicationIdentifier(dirName);
 				String release = identifier.getApplicationReleaseName();
 				if (release.equals(myRelease)) {
+					LOG.trace("\t\tkeeping");
 					settingsDirs.add(dir);
+				}
+				else {
+					LOG.trace("\t\tskipping");
 				}
 			}
 			catch (IllegalArgumentException e) {
 				// The directory name didn't contain a valid application identifier...skip it
+				LOG.trace("\tdir does not have an application identifier - skipping");
 			}
 		}
 		return settingsDirs;

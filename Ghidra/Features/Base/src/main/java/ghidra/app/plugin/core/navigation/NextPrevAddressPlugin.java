@@ -25,6 +25,7 @@ import javax.swing.ImageIcon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiActionDockingAction;
+import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
 import ghidra.app.nav.LocationMemento;
@@ -60,7 +61,8 @@ import resources.ResourceManager;
 )
 //@formatter:on
 public class NextPrevAddressPlugin extends Plugin {
-	private static final String HISTORY_GROUP = "1_History";
+
+	private static final String HISTORY_MENU_GROUP = "1_Menu_History_Group";
 	private static ImageIcon previousIcon = ResourceManager.loadImage("images/left.png");
 	private static ImageIcon nextIcon = ResourceManager.loadImage("images/right.png");
 
@@ -203,7 +205,7 @@ public class NextPrevAddressPlugin extends Plugin {
 			}
 		};
 		clearAction.setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, clearAction.getName()));
-		MenuData menuData = new MenuData(CLEAR_MENUPATH, HISTORY_GROUP);
+		MenuData menuData = new MenuData(CLEAR_MENUPATH, HISTORY_MENU_GROUP);
 		menuData.setMenuSubGroup("1"); // first in menu!
 		clearAction.setMenuBarData(menuData);
 
@@ -306,7 +308,8 @@ public class NextPrevAddressPlugin extends Plugin {
 			super(name, owner);
 			this.isNext = isNext;
 
-			setToolBarData(new ToolBarData(isNext ? nextIcon : previousIcon, HISTORY_GROUP));
+			setToolBarData(new ToolBarData(isNext ? nextIcon : previousIcon,
+				ToolConstants.TOOLBAR_GROUP_TWO));
 			setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, name));
 			int keycode = isNext ? KeyEvent.VK_RIGHT : KeyEvent.VK_LEFT;
 			setKeyBindingData(new KeyBindingData(keycode, InputEvent.ALT_DOWN_MASK));
@@ -418,7 +421,7 @@ public class NextPrevAddressPlugin extends Plugin {
 
 			String menuItemName = isNext ? "Next History Function" : "Previous History Function";
 			MenuData menuData =
-				new MenuData(new String[] { "Navigation", menuItemName }, HISTORY_GROUP);
+				new MenuData(new String[] { "Navigation", menuItemName }, HISTORY_MENU_GROUP);
 			menuData.setMenuSubGroup("2"); // after clear
 			setMenuBarData(menuData);
 		}

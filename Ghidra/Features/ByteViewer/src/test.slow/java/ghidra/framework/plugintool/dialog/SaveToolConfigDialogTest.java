@@ -163,7 +163,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 
 		ImageIcon icon = ResourceManager.getScaledIcon(
 			ResourceManager.loadImage("defaultTools/images/Caution.png"),
-			ToolConstants.LARGE_ICON_SIZE, ToolConstants.LARGE_ICON_SIZE);
+			ToolIconURL.LARGE_ICON_SIZE, ToolIconURL.LARGE_ICON_SIZE);
 
 		assertEquals(icon.getDescription(), template.getIcon().getDescription());
 	}
