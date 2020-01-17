@@ -28,6 +28,7 @@ import ghidra.program.model.data.DataType;
 public class WrappedDataType {
 
 	private final boolean isZeroLengthArray;
+	private final boolean isNoType;
 	private final DataType dataType;
 
 	/**
@@ -36,10 +37,13 @@ public class WrappedDataType {
 	 * @param isZeroLengthArray true if datatype corresponds to a zero-length 
 	 * array which can not directly be represented as an Array datatype, 
 	 * else false for all other cases.
+	 * @param isNoType if true wrapped type corresponds to NoType as
+	 * used by PDB forced to have a size of 1-byte.
 	 */
-	protected WrappedDataType(DataType dataType, boolean isZeroLengthArray) {
+	protected WrappedDataType(DataType dataType, boolean isZeroLengthArray, boolean isNoType) {
 		this.dataType = dataType;
 		this.isZeroLengthArray = isZeroLengthArray;
+		this.isNoType = isNoType;
 	}
 
 	/**
@@ -56,5 +60,13 @@ public class WrappedDataType {
 	 */
 	public boolean isZeroLengthArray() {
 		return isZeroLengthArray;
+	}
+
+	/**
+	 * @return true if wrapped type corresponds to NoType as
+	 * used by PDB forced to have a size of 1-byte.
+	 */
+	public boolean isNoType() {
+		return isNoType;
 	}
 }

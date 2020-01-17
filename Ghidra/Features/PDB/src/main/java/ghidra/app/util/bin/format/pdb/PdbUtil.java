@@ -125,7 +125,7 @@ final class PdbUtil {
 //			}
 //		}
 //		else if (actualLength > expectedLength) {
-//			log.appendMsg("Warning: Composite data type generated from PDB has size mismatch. " +
+//			log.appendMsg("PDB", "Composite data type generated from PDB has size mismatch. " +
 //				composite.getName() + ": expected 0x" + Integer.toHexString(expectedLength) +
 //				", but was 0x" + Integer.toHexString(actualLength));
 //		}
