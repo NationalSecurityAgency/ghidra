@@ -118,7 +118,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 				monitor.checkCanceled();
 				String demangledTypeDescriptor = rtti0Model.getDemangledTypeDescriptor();
 				String prefixString = ((demangledTypeDescriptor != null)
-						? (demangledTypeDescriptor + Namespace.NAMESPACE_DELIMITER)
+						? (demangledTypeDescriptor + Namespace.DELIMITER)
 						: "");
 				data.setComment(CodeUnit.EOL_COMMENT,
 					"terminator for " + prefixString + VF_TABLE_LABEL);
@@ -174,7 +174,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 			// Plate Comment
 			EHDataTypeUtilities.createPlateCommentIfNeeded(program,
 				RttiUtil.CONST_PREFIX + RttiUtil.getDescriptorTypeNamespace(rtti0Model) +
-					Namespace.NAMESPACE_DELIMITER,
+					Namespace.DELIMITER,
 				VF_TABLE_LABEL, null, vfTableAddress, applyOptions);
 
 			monitor.checkCanceled();
@@ -215,7 +215,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 			// Plate Comment
 			EHDataTypeUtilities.createPlateCommentIfNeeded(
 				program, META_LABEL + " pointer for " +
-					RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.NAMESPACE_DELIMITER,
+					RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
 				VF_TABLE_LABEL, null, metaAddress, applyOptions);
 
 			monitor.checkCanceled();

@@ -436,7 +436,7 @@ public class PdbParser {
 			monitor.checkCanceled();
 			boolean isClass = namespaceMap.get(path);
 			Namespace parentNamespace =
-				NamespaceUtils.getNamespace(program, path.getParent(), null);
+				NamespaceUtils.getNonFunctionNamespace(program, path.getParent());
 			if (parentNamespace == null) {
 				String type = isClass ? "class" : "namespace";
 				log.appendMsg("Error: failed to define " + type + ": " + path);
@@ -479,7 +479,7 @@ public class PdbParser {
 		}
 		catch (Exception e) {
 			log.appendMsg("Unable to create class namespace: " + parentNamespace.getName(true) +
-				Namespace.NAMESPACE_DELIMITER + name);
+				Namespace.DELIMITER + name);
 		}
 	}
 
@@ -983,11 +983,11 @@ public class PdbParser {
 	 * @return name without namespace prefix
 	 */
 	String stripNamespace(String name) {
-		int index = name.lastIndexOf(Namespace.NAMESPACE_DELIMITER);
+		int index = name.lastIndexOf(Namespace.DELIMITER);
 		if (index <= 0) {
 			return name;
 		}
-		return name.substring(index + Namespace.NAMESPACE_DELIMITER.length());
+		return name.substring(index + Namespace.DELIMITER.length());
 	}
 
 	/**
@@ -997,7 +997,7 @@ public class PdbParser {
 	 * @return the category path
 	 */
 	CategoryPath getCategory(String namespaceQualifiedDataTypeName, boolean addPdbRoot) {
-		String[] names = namespaceQualifiedDataTypeName.split(Namespace.NAMESPACE_DELIMITER);
+		String[] names = namespaceQualifiedDataTypeName.split(Namespace.DELIMITER);
 		CategoryPath category = addPdbRoot ? pdbCategory : CategoryPath.ROOT;
 		if (names.length > 1) {
 			String[] categoryNames = new String[names.length - 1];

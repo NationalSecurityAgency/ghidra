@@ -1065,7 +1065,7 @@ public class ProgramBuilder {
 			ExternalManager extMgr = program.getExternalManager();
 			Namespace namespace = extMgr.addExternalLibraryName(libraryName, sourceType);
 
-			if (externalLabel != null && externalLabel.indexOf(Namespace.NAMESPACE_DELIMITER) > 0) {
+			if (externalLabel != null && externalLabel.indexOf(Namespace.DELIMITER) > 0) {
 				// External manager API does not yet support creation of namespaces within
 				// library so we handle that here
 				SymbolPath symPath = new SymbolPath(externalLabel);

@@ -172,24 +172,39 @@ public class AddEditDialog extends DialogComponentProvider {
 		if (parentPath == null) {
 			return rootNamespace;
 		}
-		String relativeParentPath = parentPath.getPath();
 
-		SymbolPath absoluteParentPath =
-			new SymbolPath(rootNamespace.getSymbol()).append(parentPath);
-		Namespace parentNamespace = NamespaceUtils.getNamespace(program, absoluteParentPath, addr);
-		if (parentNamespace != null) {
-			return parentNamespace;
+		//
+		// Prefer a non-function namespace.  This allows us to put a function inside of a namespace
+		// sharing the same name.
+		//
+		SymbolPath fullPath = new SymbolPath(rootNamespace.getSymbol()).append(parentPath);
+		Namespace nonFunctionNs = NamespaceUtils.getNonFunctionNamespace(program, fullPath);
+		if (nonFunctionNs != null) {
+			return nonFunctionNs;
 		}
 
-		// run the create namespaces command
-		CreateNamespacesCmd command =
-			new CreateNamespacesCmd(relativeParentPath, rootNamespace, SourceType.USER_DEFINED);
-
-		if (tool.execute(command, program)) {
-			return command.getNamespace();
+		//
+		// At this point we can either reuse an existing function namespace or we have to create
+		// a new non-function namespaces, depending upon the names being used.  Only use an 
+		// existing function as a namespace if none of namespace path entries match the function
+		// name.
+		//
+		String name = symbolPath.getName();
+		if (!parentPath.containsPathEntry(name)) {
+			Namespace functionNamespace =
+				NamespaceUtils.getFunctionNamespaceContaining(program, parentPath, addr);
+			if (functionNamespace != null) {
+				return functionNamespace;
+			}
 		}
 
-		setStatusText(command.getStatusMsg());
+		CreateNamespacesCmd cmd =
+			new CreateNamespacesCmd(parentPath.getPath(), rootNamespace, SourceType.USER_DEFINED);
+		if (tool.execute(cmd, program)) {
+			return cmd.getNamespace();
+		}
+
+		setStatusText(cmd.getStatusMsg());
 		return null;
 	}
 

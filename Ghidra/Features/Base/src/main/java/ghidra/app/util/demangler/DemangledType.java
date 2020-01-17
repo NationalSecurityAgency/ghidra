@@ -193,7 +193,7 @@ public class DemangledType {
 			return "";
 		}
 
-		buffer.append(Namespace.NAMESPACE_DELIMITER);
+		buffer.append(Namespace.DELIMITER);
 		return buffer.toString();
 	}
 

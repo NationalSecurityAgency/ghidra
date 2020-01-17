@@ -31,7 +31,7 @@ import ghidra.util.exception.InvalidInputException;
  * <a id="examples"></a>
  * Example strings:
  * <ul>
- *     <li>global{@link Namespace#NAMESPACE_DELIMITER ::}child1{@link Namespace#NAMESPACE_DELIMITER ::}child2
+ *     <li>global{@link Namespace#DELIMITER ::}child1{@link Namespace#DELIMITER ::}child2
  *     <li>child1
  * </ul>
  * <p>

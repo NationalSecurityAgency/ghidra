@@ -308,7 +308,7 @@ public class CreateNamespacesCmdTest extends AbstractGenericTest {
 		for (int i = 0; i < namespaceNames.length; i++) {
 			buffer.append(namespaceNames[i]);
 			if (i + 1 < namespaceNames.length) {
-				buffer.append(Namespace.NAMESPACE_DELIMITER);
+				buffer.append(Namespace.DELIMITER);
 			}
 		}
 
