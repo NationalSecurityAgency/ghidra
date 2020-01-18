@@ -53,6 +53,8 @@ public class ElfHeader implements StructConverter, Writeable {
 	private byte e_ident_class; //file class
 	private byte e_ident_data; //data encoding
 	private byte e_ident_version; //file version
+	private byte e_ident_osabi; //operating system and abi
+	private byte e_ident_abiversion; //abi version
 	private byte[] e_ident_pad; //padding
 	private short e_type; //object file type
 	private short e_machine; //target architecture
@@ -137,7 +139,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			e_ident_class = reader.readNextByte();
 			e_ident_data = reader.readNextByte();
 			e_ident_version = reader.readNextByte();
-			e_ident_pad = reader.readNextByteArray(9);
+			e_ident_osabi = reader.readNextByte();
+			e_ident_abiversion = reader.readNextByte();
+			e_ident_pad = reader.readNextByteArray(7);
 			e_type = reader.readNextShort();
 			e_machine = reader.readNextShort();
 			e_version = reader.readNextInt();
@@ -934,6 +938,22 @@ public class ElfHeader implements StructConverter, Writeable {
 	public boolean is64Bit() {
 		return e_ident_class == ElfConstants.ELF_CLASS_64;
 	}
+	
+	/**
+	 * This member identifies the target operating system and ABI.
+	 * @return the target operating system and ABI
+	 */
+	public byte e_ident_osabi() {
+		return e_ident_osabi;
+	}
+	
+	/**
+	 * This member identifies the target ABI version.
+	 * @return the target ABI version
+	 */
+	public byte e_ident_abiversion() {
+		return e_ident_abiversion;
+	}
 
 	/**
 	 * Inspect the Elf image and determine the default image base prior 
@@ -1651,6 +1671,8 @@ public class ElfHeader implements StructConverter, Writeable {
 		headerStructure.add(BYTE, "e_ident_class", null);
 		headerStructure.add(BYTE, "e_ident_data", null);
 		headerStructure.add(BYTE, "e_ident_version", null);
+		headerStructure.add(BYTE, "e_ident_osabi", null);
+		headerStructure.add(BYTE, "e_ident_abiversion", null);
 		headerStructure.add(new ArrayDataType(BYTE, e_ident_pad.length, 1), "e_ident_pad", null);
 		headerStructure.add(WORD, "e_type", null);
 		headerStructure.add(WORD, "e_machine", null);
@@ -1814,6 +1836,8 @@ public class ElfHeader implements StructConverter, Writeable {
 		raf.writeByte(e_ident_class);
 		raf.writeByte(e_ident_data);
 		raf.writeByte(e_ident_version);
+		raf.writeByte(e_ident_osabi);
+		raf.writeByte(e_ident_abiversion);
 		raf.write(e_ident_pad);
 		raf.write(dc.getBytes(e_type));
 		raf.write(dc.getBytes(e_machine));
