@@ -27,6 +27,14 @@ attach variables [ R0004x2 R1115x2 R1620x2 R2731x2 ]
   _ 	 _ 
 ];
 
+attach variables [ SR0004 SR1115 ]
+[
+  EIPC   EIPSW  FEPC   FEPSW  ECR    PSW    FPSR   FPEPC  FPST  FPCC   
+  FPCFG  SCCFG  SCBP   EIIC   FEIC   DBIC   CTPC   CTPSW  DBPC  DBPSW  
+  CTBP   DIR    DBG22  DBG23  DBG24  DBG25  DBG26  DBG27  EIWR  FEWR  
+  DBWR   BSEL
+];
+
 
 attach variables [op0_1720] [r0 r2 gp r6 r8 r10 r12 r14 r16 r18 r20 r22 r24 r26 r28 ep];
 attach variables [op1_1720] [r1 sp tp r7 r9 r11 r13 r15 r17 r19 r21 r23 r25 r27 r29 lp];
@@ -47,6 +55,3 @@ attach names [fcond2730]
 
 @define EICC  	"ECR[0,16]"
 @define FECC  	"ECR[16,16]"
-
-
-define pcodeop synce;

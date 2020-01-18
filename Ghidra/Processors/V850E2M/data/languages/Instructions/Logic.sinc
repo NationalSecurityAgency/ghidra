@@ -4,7 +4,7 @@
 
 
 # AND reg1, reg2 - rrrrr001010RRRRR
-:or R0004, R1115 is op0510=0x0A & R0004 & R1115
+:and R0004, R1115 is op0510=0x0A & R0004 & R1115
 {
 	R1115 = R1115 & R0004;
 	set_OV0_S_Z(R1115);

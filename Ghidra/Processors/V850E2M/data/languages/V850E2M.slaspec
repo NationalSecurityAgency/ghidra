@@ -5,6 +5,7 @@
 #####################################################
 
 define endian = little;
+define alignment = 2;
 
 # Size & default are required
 define space  ram       type=ram_space      size=4  default;

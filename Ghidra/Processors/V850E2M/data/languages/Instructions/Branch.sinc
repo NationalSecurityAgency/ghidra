@@ -3,7 +3,7 @@
 #####################################################
 
 
-#Bcond addr9 - ddddd1011dddcccc
+#Bcond adr9 - ddddd1011dddcccc
 :b^c0003 adr9 is op0710=0xB & c0003 & adr9
 {
 	if (c0003) 
@@ -15,20 +15,18 @@
 }
 
 # JARL disp22, reg2 - rrrrr11110dddddd|ddddddddddddddd0
-:jarl disp22, r1115 is op0610=0x1E & s0005 & r1115; op1631 & op1616=0
-[ disp22 = ((s0005 << 16) | op1631) + inst_start; ]
+:jarl adr22, r1115 is (op0610=0x1E & r1115) ... & adr22
 {
 	r1115 = inst_next;
-	local adr:4 = disp22;
-	PC = adr;
-	call [adr];
+	PC = & adr22;
+	call adr22;
 }
 
 # JARL disp32, reg1 - 00000010111RRRRR|ddddddddddddddd0|DDDDDDDDDDDDDDDD
 :jarl adr32, r0004 is op0515=0x017 & r0004; adr32
 {
 	r0004 = inst_next;
-	PC = adr32;
+	PC = & adr32;
 	call adr32;
 }
 
@@ -39,12 +37,6 @@
 	return [R0004];
 }
 
-:jmp [R0004] is op0515=0x003 & R0004 & op0004!=0x1F
-{
-	PC = R0004;
-	call [R0004];
-}
-
 # JMP disp32[reg1] - 00000110111RRRRR|ddddddddddddddd0|DDDDDDDDDDDDDDDD
 :jmp adr32[R0004] is op0515=0x037 & R0004; adr32
 {
@@ -53,17 +45,15 @@
 }
 
 # JR disp22 - 00000111110ddddd|ddddddddddddddd0
-:jr disp22 is op0615=0x1E & s0005; op1631 & op1616=0 
-[ disp22 = ((s0005 << 16) | op1631) + inst_start; ]
+:jr adr22 is op0615=0x1E ... & adr22
 {
-	local adr:4 = disp22;
-	PC = adr;
-	goto [adr];
+	PC = & adr22;
+	goto adr22;
 }
 
-# JR disp32
+# JR disp32 - 0000001011100000|ddddddddddddddd0|DDDDDDDDDDDDDDDD
 :jr adr32 is op0015=0x2E0; adr32
 {
-	PC = adr32;
+	PC = & adr32;
 	goto adr32;
 }

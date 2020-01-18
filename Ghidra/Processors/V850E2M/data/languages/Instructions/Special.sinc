@@ -32,9 +32,11 @@
 }
 
 # DI - 0000011111100000|0000000101100000
+define pcodeop __disable_irq;
 :di is op0015=0x7E0; op1631=0x160
 {
 	$(ID) = 1;
+	__disable_irq();
 }
 
 # DISPOSE imm5, list12 - 0000011001iiiiiL|LLLLLLLLLLL00000
@@ -54,9 +56,11 @@
 }
 
 # EI - 1000011111100000|0000000101100000
+define pcodeop __enable_irq;
 :ei is op0015=0x87E0; op1631=0x160
 {
 	$(ID) = 0;
+	__enable_irq();
 }
 
 # EIRET - 0000011111100000|0000000101001000
@@ -90,9 +94,10 @@
 }
 
 # HALT - 0000011111100000|0000000100100000
+define pcodeop __halt;
 :halt is op0015=0x7E0; op1631=0x120
 {
-	
+	__halt();
 }
 
 # LDSR reg2, regID - rrrrr111111RRRRR|0000000000100000
@@ -102,9 +107,10 @@
 }
 
 # NOP - 0000000000000000
+define pcodeop __nop;
 :nop is op0015=0x0
 {
-	PC = inst_next;
+	__nop();
 }
 
 # PREPARE list12, imm5 - 0000011110iiiiiL|LLLLLLLLLLL00001
@@ -212,21 +218,22 @@
 }
 
 # SYNCE - 0000000000011101
+define pcodeop __synchronize;
 :synce is op0015=0x1D 
 {
-	synce();
+	__synchronize();
 }
 
 # SYNCM - 0000000000011110
 :syncm is op0015=0x1E
 {
-
+	__synchronize();
 }
 
 # SYNCP - 0000000000011111
 :syncp is op0015=0x1F
 {
-
+	__synchronize();
 }
 
 # SYSCALL vector8 - 11010111111vvvvv|00VVV00101100000

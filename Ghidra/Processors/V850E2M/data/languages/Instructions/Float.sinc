@@ -56,7 +56,8 @@
 # CEILF.SL reg2, reg3 - rrrrr11111100010|wwww010001000100
 :ceilf.sl R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b00010; R2731x2 & op2126=0b100010 & op1620=0b00100
 {
-	R2731x2 = ceil(sext(R1115));
+	local var:8 = ceil(float2float(R1115));
+	R2731x2 = trunc(var);
 }
 
 # CEILF.SUL reg2, reg3 - rrrrr11111110010|wwwww10001000100
@@ -83,14 +84,14 @@
 {
 	#CC0 = Bit 24
 	local bit = (FPSR >> (fcbit1719 + 24:1)) & 0x1;
-	either_or1_float(R2731x2, bit, R0004x2, R1115x2);
+	either_or1(R2731x2, bit, R0004x2, R1115x2);
 }
 
 # CMOVF.S fcbit, reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww1000000fff0
 :cmovf.s fcbit1719, R1115, R0004, R2731 is R1115 & op0510=0x3F & R0004; R2731 & op2126=0b100000 & op2020=0 & fcbit1719 & op1616=0
 {
 	local bit = (FPSR >> (fcbit1719 + 24:1)) & 0x1;
-	either_or1_float(R2731, bit, R0004, R1115);
+	either_or1(R2731, bit, R0004, R1115);
 }
 
 # CMPF.D fcond, reg2, reg1, fcbit - rrrr0111111RRRRR|0FFFF1000011fff0
@@ -270,7 +271,8 @@
 # FLOORF.SL reg2, reg3 - rrrrr11111100011|wwww010001000100
 :floorf.sl R1115, R2731x2 is R1115 & op0510=0x3F & op0004=0b00011; R2731x2 & op2126=0b100010 & op1620=0b00100
 {
-	R2731x2 = floor(sext(R1115));
+	local var:8 = floor(float2float(R1115));
+	R2731x2 = trunc(var);
 }
 
 # FLOORF.SUL reg2, reg3 - rrrrr11111110011|wwwww10001000100
@@ -302,28 +304,28 @@
 :maxf.d R0004x2, R1115x2, R2731x2 is R0004x2 & op0510=0x3F & R1115x2; R2731x2 & op2126=0b100011 & op1620=0b11000
 {
 	local bigger:1 = R1115x2 f> R0004x2;
-	either_or_float(R2731x2, bigger, R1115x2, R0004x2);
+	either_or(R2731x2, bigger, R1115x2, R0004x2);
 }
 
 # MAXF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10001101000
 :maxf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100011 & op1620=0b01000
 {
 	local bigger:1 = R1115 f> R0004;
-	either_or_float(R2731, bigger, R1115, R0004);
+	either_or(R2731, bigger, R1115, R0004);
 }
 
 # MINF.D reg1, reg2, reg3 - rrrr0111111RRRR0|wwww010001111010
 :minf.d R0004x2, R1115x2, R2731x2 is R0004x2 & op0510=0x3F & R1115x2; R2731x2 & op2126=0b100011 & op1620=0b11010
 {
 	local bigger:1 = R1115x2 f< R0004x2;
-	either_or_float(R2731x2, bigger, R1115x2, R0004x2);
+	either_or(R2731x2, bigger, R1115x2, R0004x2);
 }
 
 # MINF.S reg1, reg2, reg3 - rrrr0111111RRRRR|wwwww10001101010
 :minf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op2126=0b100011 & op1620=0b01010
 {
 	local bigger:1 = R1115 f< R0004;
-	either_or_float(R2731, bigger, R1115, R0004);
+	either_or(R2731, bigger, R1115, R0004);
 }
 
 # MSUBF.S reg1, reg2, reg3, reg4 - rrrrr111111RRRRR|wwwww101W01WWWW0

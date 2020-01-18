@@ -8,6 +8,7 @@
             version="1.0"
             slafile="V850E2M.sla"
             processorspec="V850E2M.pspec"
+            manualindexfile="../manuals/v850.idx"
             id="V850:LE:32:default">
     <description>Renesas V850E2M</description>
     <compiler name="default" spec="V850E2M.cspec" id="default"/>

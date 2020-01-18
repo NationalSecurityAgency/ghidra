@@ -120,24 +120,32 @@ macro set_OV0_S_Z(var)
 
 ##### General-Macros #####
 
-macro either_or(res, cond, true, false) 
+macro either_or(res, cond, var_true, var_false)		# if condition is != 0
 {
-	res = (true * zext(cond != 0)) + (false * zext(cond == 0));
+	if (cond != 0)
+		goto <true>;
+	
+	res = var_false;
+	goto <end>;
+	
+	<true>
+	res = var_true;
+
+	<end>
 }
 
-macro either_or1(res, cond, true, false) 
+macro either_or1(res, cond, var_true, var_false)	# if condition is == 1
 {
-	res = (true * zext(cond == 1)) + (false * zext(cond != 1));
-}
+	if (cond == 1)
+		goto <true>;
+	
+	res = var_false;
+	goto <end>;
+	
+	<true>
+	res = var_true;
 
-macro either_or_float(res, cond, true, false) 
-{
-	res = (true f* zext(cond != 0)) f+ (false f* zext(cond == 0));
-}
-
-macro either_or1_float(res, cond, true, false) 
-{
-	res = (true f* zext(cond == 1)) f+ (false f* zext(cond != 1));
+	<end>
 }
 
 macro shift_right_logic(res, var, shift)
@@ -235,14 +243,14 @@ macro saturate(var)
 	goto <end>;
 
 	<pos_sat> 
-    	var =  0x7FFFFFFF; 
-    	goto <end>;
+    var =  0x7FFFFFFF; 
+    goto <end>;
 
 	<neg_sat> 
-    	var = -0x80000000; 
-    	goto <end>;
+    var = -0x80000000; 
+    goto <end>;
 	
-    	<end>
+    <end>
 }
 
 
