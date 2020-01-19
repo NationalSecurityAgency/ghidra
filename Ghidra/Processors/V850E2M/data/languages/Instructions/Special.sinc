@@ -107,10 +107,9 @@ define pcodeop __halt;
 }
 
 # NOP - 0000000000000000
-define pcodeop __nop;
 :nop is op0015=0x0
 {
-	__nop();
+	PC = inst_next;
 }
 
 # PREPARE list12, imm5 - 0000011110iiiiiL|LLLLLLLLLLL00001
