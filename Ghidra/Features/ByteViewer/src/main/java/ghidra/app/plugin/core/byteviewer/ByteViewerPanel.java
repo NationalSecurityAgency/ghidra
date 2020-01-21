@@ -73,6 +73,8 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	private Color currentCursorColor;
 	private Color cursorColor;
 	private Color currentCursorLineColor;
+	private Color highlightColor;
+	private int highlightButton;
 	private List<LayoutModelListener> layoutListeners = new ArrayList<>(1);
 	private int indexPanelWidth;
 	private boolean addingView; // don't respond to cursor location
@@ -195,6 +197,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	void setHighlightButton(int highlightButton) {
+		this.highlightButton = highlightButton;
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent comp = viewList.get(i);
 			comp.setHighlightButton(highlightButton);
@@ -202,6 +205,7 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 
 	void setMouseButtonHighlightColor(Color color) {
+	    this.highlightColor = color;
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent comp = viewList.get(i);
 			comp.setMouseButtonHighlightColor(color);
@@ -404,6 +408,8 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 		c.setCurrentCursorLineColor(currentCursorLineColor);
 		c.setEditMode(editMode);
 		c.setIndexMap(indexMap);
+		c.setMouseButtonHighlightColor(highlightColor);
+		c.setHighlightButton(highlightButton);
 		viewList.add(c);
 		c.setSize(c.getPreferredSize());
 		compPanel.addByteViewerComponent(c);
