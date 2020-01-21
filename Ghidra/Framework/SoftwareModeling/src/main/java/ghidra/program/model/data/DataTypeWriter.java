@@ -240,7 +240,7 @@ public class DataTypeWriter {
 			if (throwExceptionOnInvalidType) {
 				throw iae;
 			}
-			Msg.error(this, "Factory data types may not be written - type: " + dt, iae);
+			Msg.error(this, "Factory data types may not be written - type: " + dt);
 		}
 		if (dt instanceof Pointer || dt instanceof Array || dt instanceof BitFieldDataType) {
 			write(getBaseDataType(dt), monitor);

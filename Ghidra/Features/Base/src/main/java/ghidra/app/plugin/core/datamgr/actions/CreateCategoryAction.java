@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.archive.Archive;
-import ghidra.app.plugin.core.datamgr.tree.*;
-import ghidra.program.model.data.Category;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.util.InvalidNameException;
-
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -31,6 +22,13 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.archive.Archive;
+import ghidra.app.plugin.core.datamgr.tree.*;
+import ghidra.program.model.data.Category;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.util.InvalidNameException;
 
 public class CreateCategoryAction extends DockingAction {
 
@@ -47,10 +45,12 @@ public class CreateCategoryAction extends DockingAction {
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		CategoryNode categoryNode = getSelectedCategoryNode(context);
-		if ((categoryNode == null) || !categoryNode.isEnabled()) {
+		if (categoryNode == null || !categoryNode.isEnabled()) {
 			return false;
 		}
-
+		if (categoryNode instanceof BuiltInArchiveNode) {
+			return false;
+		}
 		return true;
 	}
 
