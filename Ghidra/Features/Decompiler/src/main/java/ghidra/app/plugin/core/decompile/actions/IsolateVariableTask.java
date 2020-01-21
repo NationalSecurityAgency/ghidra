@@ -33,6 +33,9 @@ public class IsolateVariableTask extends RenameTask {
 	private HighFunction highFunction;
 	private Function function;
 	private SourceType srcType;
+	private String originalName;
+	private boolean nameIsReserved;
+	private boolean instanceIsMapped;
 
 	public IsolateVariableTask(PluginTool tool, Program program, DecompilerPanel panel,
 			ClangToken token, HighSymbol sym, SourceType st) {
@@ -41,6 +44,21 @@ public class IsolateVariableTask extends RenameTask {
 		highFunction = highSymbol.getHighFunction();
 		function = highFunction.getFunction();
 		srcType = st;
+		originalName = highSymbol.getName();
+		nameIsReserved = highSymbol.isNameLocked();
+		instanceIsMapped = false;
+		if (nameIsReserved) {
+			Varnode vn = token.getVarnode();
+			if (vn != null) {
+				instanceIsMapped =
+					(vn.getMergeGroup() == vn.getHigh().getRepresentative().getMergeGroup());
+			}
+		}
+		if (!nameIsReserved || instanceIsMapped) {
+			// We can keep the current name if
+			// either no locked symbol is using it, or if this instance is directly mapped to it
+			oldName = originalName;
+		}
 	}
 
 	@Override
@@ -51,6 +69,13 @@ public class IsolateVariableTask extends RenameTask {
 	@Override
 	public boolean isValid(String newNm) {
 		newName = newNm;
+		if (newName.equals(originalName)) {
+			if (nameIsReserved && !instanceIsMapped) {
+				errorMsg = "The name \"" + originalName + "\" is attached to another instance";
+				return false;
+			}
+			return true;
+		}
 		LocalSymbolMap localSymbolMap = highFunction.getLocalSymbolMap();
 		if (localSymbolMap.containsVariableWithName(newName) ||
 			isSymbolInFunction(function, newName)) {

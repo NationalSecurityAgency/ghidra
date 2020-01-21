@@ -115,7 +115,6 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcRename(),"rename");
   status->registerCom(new IfcRetype(),"retype");
   status->registerCom(new IfcRemove(),"remove");
-  status->registerCom(new IfcIsolate(),"isolate");
   status->registerCom(new IfcLockPrototype(),"prototype","lock");
   status->registerCom(new IfcUnlockPrototype(),"prototype","unlock");
   status->registerCom(new IfcCommentInstr(),"comment","instruction");
@@ -1058,32 +1057,6 @@ void IfcRetype::execute(istream &s)
   }
 }
   
-void IfcIsolate::execute(istream &s)
-
-{
-  string name;
-
-  s >> ws >> name;
-  if (name.size()==0)
-    throw IfaceParseError("Must specify name of symbol");
-
-  Symbol *sym;
-  vector<Symbol *> symList;
-  if (dcp->fd != (Funcdata *)0)
-    dcp->fd->getScopeLocal()->queryByName(name,symList);
-  else
-    dcp->conf->symboltab->getGlobalScope()->queryByName(name,symList);
-
-  if (symList.empty())
-    throw IfaceExecutionError("No symbol named: "+name);
-  if (symList.size() > 1)
-    throw IfaceExecutionError("More than one symbol named : "+name);
-  else
-    sym = symList[0];
-
-  sym->setIsolated(true);
-}
-
 static Varnode *iface_read_varnode(IfaceDecompData *dcp,istream &s)
 
 {				// Return varnode identified by input stream
@@ -1297,6 +1270,7 @@ void IfcTypeVarnode::execute(istream &s)
     scope = dcp->fd->getScopeLocal();	// force it to be in function scope
   Symbol *sym = scope->addSymbol(name,ct,loc,pc)->getSymbol();
   scope->setAttribute(sym,Varnode::typelock);
+  sym->setIsolated(true);
   if (name.size() > 0)
     scope->setAttribute(sym,Varnode::namelock);
   

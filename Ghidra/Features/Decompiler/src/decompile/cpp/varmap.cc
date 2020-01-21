@@ -1252,9 +1252,10 @@ void ScopeLocal::recoverNameRecommendationsForSymbols(void)
       if (vn == (Varnode *)0) continue;
       sym = vn->getHigh()->getSymbol();
       if (sym == (Symbol *)0) continue;
+      if ((sym->getFlags() & Varnode::addrtied)!=0)
+	continue;				// Cannot use untied varnode as primary map for address tied symbol
       SymbolEntry *entry = sym->getFirstWholeMap();
-      if (entry->getAddr() != addr)
-	continue;
+      // entry->getAddr() does not need to match address of the recommendation
       if (entry->getSize() != size) continue;
     }
     if (!sym->isNameUndefined()) continue;
