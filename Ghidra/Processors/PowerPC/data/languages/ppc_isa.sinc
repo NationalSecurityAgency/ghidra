@@ -834,7 +834,6 @@ define pcodeop DetermineLeftmostZeroByte;
 @endif
 
    tmpX:8 = 0;
-   tmpY:8 = 0;
 
    <unmatched>
 
@@ -842,9 +841,6 @@ define pcodeop DetermineLeftmostZeroByte;
       tmpX = tmpX + 1;
 
    if ( ( ( tmpD << ( (tmpX - 1) * 8 ) ) & 0xFF00000000000000 ) != 0 ) goto <unmatched>;
-
-      # matched
-      tmpY = 1;
 
    <done_searching>
 

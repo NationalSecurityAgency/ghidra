@@ -18,7 +18,7 @@ puls5: puls4" "Y    is Y & imm85=1 & puls4  { Pull2(S, Y); }
 puls5: puls4        is imm85=0 & puls4      { }
 puls6: puls5" "U    is U & imm86=1 & puls5  { Pull2(S, U); }
 puls6: puls5        is imm86=0 & puls5      { }
-puls7: puls6" "PC   is PC & imm87=1 & puls6 { local t:2 = inst_next; Pull2(S, t); }
+puls7: puls6" "PC   is PC & imm87=1 & puls6 { local t:2 = 0; Pull2(S, t); goto [t]; }
 puls7: puls6        is imm87=0 & puls6      { }
 
 :PULS puls7    is op=0x35; puls7 { }                                                                                           
@@ -41,7 +41,7 @@ pulu5: pulu4" "Y    is Y & imm85=1 & pulu4  { Pull2(U, Y); }
 pulu5: pulu4        is imm85=0 & pulu4      { }
 pulu6: pulu5" "S    is S & imm86=1 & pulu5  { Pull2(U, S); }
 pulu6: pulu5        is imm86=0 & pulu5      { }
-pulu7: pulu6" "PC   is PC & imm87=1 & pulu6 { local t:2 = inst_next; Pull2(U, t); }
+pulu7: pulu6" "PC   is PC & imm87=1 & pulu6 { local t:2 = 0; Pull2(U, t); goto [t]; }
 pulu7: pulu6        is imm87=0 & pulu6      { }
 
 :PULU pulu7    is op=0x37; pulu7 { }

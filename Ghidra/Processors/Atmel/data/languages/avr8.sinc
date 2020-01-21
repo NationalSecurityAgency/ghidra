@@ -682,10 +682,12 @@ define pcodeop break;
 :cpc RdFull,RrFull               is phase=1 & ophi6=0x1 & RdFull & RrFull {
 	local res = 0;
 	doSubtractWithCarry(RdFull,RrFull,res);
+	res = res; # avoid warning
 }
 :cpi RdHi,K8                     is phase=1 & ophi4=0x3 & RdHi & K8 {
 	local res = 0;
 	doSubtract(RdHi,K8,res);
+	res = res; # avoid warning
 }
 
 @ifdef FUSION

@@ -423,20 +423,20 @@ simdExpImmDT: "i64"	is TMode=1 & thv_c0811=14 & thv_c0505=1 { }
 simdExpImmDT: "f32"	is TMode=1 & thv_c0811=15 & thv_c0505=0 { }
 
 macro replicate1to8(bytes, dest) {
-	val:8 = zext(bytes);
+	local val:8 = zext(bytes);
 	val = val | (val << 8);
 	val = val | (val << 16);
 	dest = val | (val << 32);
 }
 
 macro replicate2to8(bytes, dest) {
-	val:8 = zext(bytes);
+	local val:8 = zext(bytes);
 	val = val | (val << 16);
 	dest = val | (val << 32);
 }
 
 macro replicate4to8(bytes, dest) {
-	val:8 = zext(bytes);
+	local val:8 = zext(bytes);
 	dest = val | (val << 32);
 }
 
@@ -3745,24 +3745,30 @@ define pcodeop VectorShiftNarrowRight;
 vst1Dd: Dreg		is Dreg & c0607=0
 {
 	local tmpDreg = Dreg;
-	val:1 = tmpDreg:1;
-	replicate1to8(val, *:8 mult_addr);
+	local val:1 = tmpDreg:1;
+	local tmp8:8 = 0;
+	replicate1to8(val, tmp8);
+	*:8 mult_addr = tmp8;
 }
 vst1Dd: Dreg		is Dreg & c0607=1
 {
 	local tmpDreg = Dreg;
-	val:2 = tmpDreg:2;
-	replicate2to8(val, *:8  mult_addr);
+	local val:2 = tmpDreg:2;
+	local tmp8:8 = 0;
+	replicate2to8(val, tmp8);
+	*:8 mult_addr = tmp8;
 }
 vst1Dd: Dreg		is Dreg & c0607=2
 {
 	local tmpDreg = Dreg;
-	val:4 = tmpDreg:4;
-	replicate4to8(val, *:8  mult_addr);
+	local val:4 = tmpDreg:4;
+	local tmp8:8 = 0;
+	replicate4to8(val, tmp8);
+	*:8 mult_addr = tmp8;
 }
 vst1Dd: Dreg		is Dreg & c0607=3
 {
-	*:8  mult_addr = Dreg;
+	*:8 mult_addr = Dreg;
 }
 
 buildVst1DdList:						is counter=0							{ }
@@ -3804,20 +3810,26 @@ vst1DdList: "{"^buildVst1DdList^"}"	is c0811=2 & D22 & c1215 & buildVst1DdList [
 thv_vst1Dd: Dreg		is Dreg & thv_c0607=0
 {
 	local tmpDreg = Dreg;
-	val:1 = tmpDreg:1;
-	replicate1to8(val, *:8 mult_addr);
+	local val:1 = tmpDreg:1;
+	local tmp8:8 = 0;
+	replicate1to8(val, tmp8);
+	*:8 mult_addr = tmp8;
 }
 thv_vst1Dd: Dreg		is Dreg & thv_c0607=1
 {
 	local tmpDreg = Dreg;
-	val:2 = tmpDreg:2;
-	replicate2to8(val, *:8  mult_addr);
+	local val:2 = tmpDreg:2;
+	local tmp8:8 = 0;
+	replicate2to8(val, tmp8);
+	*:8 mult_addr = tmp8;
 }
 thv_vst1Dd: Dreg		is Dreg & thv_c0607=2
 {
 	local tmpDreg = Dreg;
-	val:4 = tmpDreg:4;
-	replicate4to8(val, *:8  mult_addr);
+	local val:4 = tmpDreg:4;
+	local tmp8:8 = 0;
+	replicate4to8(val, tmp8);
+	*:8 mult_addr = tmp8;
 }
 thv_vst1Dd: Dreg		is Dreg & thv_c0607=3
 {
