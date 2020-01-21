@@ -1128,8 +1128,8 @@ bool Funcdata::attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash)
     }
   }
   else if (entry->getSize() == vn->getSize()) {
-    vn->setSymbolProperties(entry);
-    return true;
+    if (vn->setSymbolProperties(entry))
+      return true;
   }
   return false;
 }

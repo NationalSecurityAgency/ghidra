@@ -363,16 +363,21 @@ void Varnode::setDef(PcodeOp *op)
 /// The given Symbol's data-type and flags are inherited by \b this Varnode.
 /// If the Symbol is \e type-locked, a reference to the Symbol is set on \b this Varnode.
 /// \param entry is a mapping to the given Symbol
-void Varnode::setSymbolProperties(SymbolEntry *entry)
+/// \return \b true if any properties have changed
+bool Varnode::setSymbolProperties(SymbolEntry *entry)
 
 {
-  entry->updateType(this);
+  bool res = entry->updateType(this);
   if (entry->getSymbol()->isTypeLocked()) {
-    mapentry = entry;
-    if (high != (HighVariable *)0)
-      high->setSymbol(this);
+    if (mapentry != entry) {
+      mapentry = entry;
+      if (high != (HighVariable *)0)
+	high->setSymbol(this);
+      res = true;
+    }
   }
   setFlags(entry->getAllFlags() & ~Varnode::typelock);
+  return res;
 }
 
 /// A reference to the given Symbol is set on \b this Varnode.

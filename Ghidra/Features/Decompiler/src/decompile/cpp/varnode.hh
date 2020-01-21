@@ -154,7 +154,7 @@ private:
   // These functions should be only private things used by VarnodeBank
   void setInput(void) { setFlags(Varnode::input|Varnode::coverdirty); }	///< Mark Varnode as \e input
   void setDef(PcodeOp *op);	///< Set the defining PcodeOp of this Varnode
-  void setSymbolProperties(SymbolEntry *entry);	///< Set properties from the given Symbol to \b this Varnode
+  bool setSymbolProperties(SymbolEntry *entry);	///< Set properties from the given Symbol to \b this Varnode
   void setSymbolEntry(SymbolEntry *entry);	///< Attach a Symbol to \b this Varnode
   void setSymbolReference(SymbolEntry *entry,int4 off);	///< Attach a Symbol reference to \b this
   void addDescend(PcodeOp *op);	///< Add a descendant (reading) PcodeOp to this Varnode's list
