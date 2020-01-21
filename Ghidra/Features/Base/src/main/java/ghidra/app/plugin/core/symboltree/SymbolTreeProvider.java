@@ -339,11 +339,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 					sb.append("Parent namespace " + namespace.getName() +
 						" contains namespace named " + symbol.getName() + "\n");
 				}
-				catch (InvalidInputException e) {
-					sb.append("Could not change parent namespace for " + symbol.getName() + ": " +
-						e.getMessage() + "\n");
-				}
-				catch (CircularDependencyException e) {
+				catch (InvalidInputException | CircularDependencyException e) {
 					sb.append("Could not change parent namespace for " + symbol.getName() + ": " +
 						e.getMessage() + "\n");
 				}
@@ -408,7 +404,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	private void addTask(GTreeTask task) {
 		// Note: if we want to call this method from off the Swing thread, then we have to
 		//       synchronize on the list that we are adding to here.
-		SystemUtilities.assertThisIsTheSwingThread(
+		Swing.assertThisIsTheSwingThread(
 			"Adding tasks must be done on the Swing thread," +
 				"since they are put into a list that is processed on the Swing thread. ");
 
@@ -631,6 +627,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	private class SymbolTreeProviderDomainObjectListener implements DomainObjectListener {
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent event) {
+
 			if (!tool.isVisible(SymbolTreeProvider.this)) {
 				return;
 			}

@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -44,6 +45,7 @@ import docking.widgets.tree.internal.*;
 import docking.widgets.tree.support.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.*;
+import generic.timer.ExpiringSwingTimer;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -978,23 +980,45 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	public void addGTModelListener(TreeModelListener listener) {
-		tree.getModel().addTreeModelListener(listener);
+		model.addTreeModelListener(listener);
 	}
 
 	public void removeGTModelListener(TreeModelListener listener) {
-		tree.getModel().removeTreeModelListener(listener);
+		model.removeTreeModelListener(listener);
 	}
 
 	public void setEditable(boolean editable) {
 		tree.setEditable(editable);
 	}
 
-	public void startEditing(final GTreeNode parent, final String childName) {
+	/**
+	 * Requests that the node with the given name, in the given parent, be edited.  <b>This 
+	 * operation (as with many others on this tree) is asynchronous.</b>  This request will be
+	 * buffered as needed to wait for the given node to be added to the parent, up to a timeout
+	 * period.  
+	 * 
+	 * @param parent the parent node
+	 * @param childName the child node name
+	 */
+	public void startEditing(GTreeNode parent, final String childName) {
+
 		// we call this here, even though the JTree will do this for us, so that we will trigger
 		// a load call before this task is run, in case lazy nodes are involved in this tree,
 		// which must be loaded before we can edit
 		expandPath(parent);
-		runTask(new GTreeStartEditingTask(GTree.this, tree, parent, childName));
+
+		//
+		// The request to edit the node may be for a node that has not yet been added to this
+		// tree.  Further, some clients will buffer events, which means that the node the client 
+		// wishes to edit may not yet be in the parent node even if we run this request later on
+		// the Swing thread.  To deal with this, we use a construct that will run our request
+		// once the given node has been added to the parent.
+		//
+		BooleanSupplier isReady = () -> parent.getChild(childName) != null;
+		int expireMs = 3000;
+		ExpiringSwingTimer.runWhen(isReady, expireMs, () -> {
+			runTask(new GTreeStartEditingTask(GTree.this, tree, parent, childName));
+		});
 	}
 
 	@Override

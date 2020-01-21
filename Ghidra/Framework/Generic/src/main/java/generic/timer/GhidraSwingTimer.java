@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,67 +21,78 @@ import java.awt.event.ActionListener;
 import javax.swing.Timer;
 
 public class GhidraSwingTimer implements GhidraTimer, ActionListener {
-	private Timer timer;
+
+	Timer timer;
 	private TimerCallback callback;
-	
+
 	public GhidraSwingTimer() {
 		this(100, null);
 	}
-	
+
 	public GhidraSwingTimer(int delay, TimerCallback callback) {
-		this(delay,delay,callback);
+		this(delay, delay, callback);
 	}
-	
+
 	public GhidraSwingTimer(int initialDelay, int delay, TimerCallback callback) {
 		this.callback = callback;
 		timer = new Timer(delay, this);
-		timer.setInitialDelay(delay);
+		timer.setInitialDelay(initialDelay);
 	}
-	
+
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (callback != null) {
 			callback.timerFired();
 		}
 	}
-	
+
+	@Override
 	public int getDelay() {
 		return timer.getDelay();
 	}
 
+	@Override
 	public int getInitialDelay() {
 		return timer.getInitialDelay();
 	}
 
+	@Override
 	public boolean isRepeats() {
 		return timer.isRepeats();
 	}
 
+	@Override
 	public void setDelay(int delay) {
 		timer.setDelay(delay);
 	}
 
+	@Override
 	public void setInitialDelay(int initialDelay) {
 		timer.setInitialDelay(initialDelay);
 	}
 
+	@Override
 	public void setRepeats(boolean repeats) {
 		timer.setRepeats(repeats);
 	}
 
+	@Override
 	public void setTimerCallback(TimerCallback callback) {
 		this.callback = callback;
 	}
 
+	@Override
 	public void start() {
 		timer.start();
 	}
 
+	@Override
 	public void stop() {
 		timer.stop();
 	}
 
+	@Override
 	public boolean isRunning() {
 		return timer.isRunning();
 	}
-
 }

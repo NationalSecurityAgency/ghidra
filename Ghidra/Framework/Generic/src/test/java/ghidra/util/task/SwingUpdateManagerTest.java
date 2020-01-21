@@ -37,6 +37,11 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 		manager = createUpdateManager(MIN_DELAY, MAX_DELAY);
+
+		// must turn this on to get the expected results, as in headless mode the update manager
+		// will run it's Swing work immediately on the test thread, which is not true to the
+		// default behavior
+		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, Boolean.FALSE.toString());
 	}
 
 	@Test
@@ -160,20 +165,16 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		// before the update runnable is called.
 		//
 
-		// must turn this on to get the expected results, as in headless mode the update manager
-		// will run it's Swing work immediately
-		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, Boolean.FALSE.toString());
-
-		final CountDownLatch startGate = new CountDownLatch(1);
-		final CountDownLatch endGate = new CountDownLatch(1);
-		final AtomicBoolean exception = new AtomicBoolean();
+		CountDownLatch startLatch = new CountDownLatch(1);
+		CountDownLatch endLatch = new CountDownLatch(1);
+		AtomicBoolean exception = new AtomicBoolean();
 
 		runSwing(new Runnable() {
 			@Override
 			public void run() {
-				startGate.countDown();
+				startLatch.countDown();
 				try {
-					endGate.await(10, TimeUnit.SECONDS);
+					endLatch.await(10, TimeUnit.SECONDS);
 				}
 				catch (InterruptedException e) {
 					exception.set(true);
@@ -181,13 +182,13 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 			}
 		}, false);
 
-		// This will cause the swing thread to block until will countdown the endGate latch
-		startGate.await(10, TimeUnit.SECONDS);
+		// This will cause the swing thread to block until we countdown the end latch
+		startLatch.await(10, TimeUnit.SECONDS);
 
 		manager.update();
 		assertTrue("Manager not busy after requesting an update", manager.isBusy());
 
-		endGate.countDown();
+		endLatch.countDown();
 
 		waitForManager();
 		assertTrue("Manager still busy after waiting for update", !manager.isBusy());
@@ -195,9 +196,61 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		assertFalse("Interrupted waiting for CountDowLatch", exception.get());
 	}
 
+	@Test
+	public void testCallToUpdateWhileAnUpdateIsWorking() throws Exception {
+
+		//
+		// Test that an update call from a non-swing thread will still get processed if the
+		// manager is actively processing an update on the swing thread.
+		//
+
+		CountDownLatch startLatch = new CountDownLatch(1);
+		CountDownLatch endLatch = new CountDownLatch(1);
+		AtomicBoolean exception = new AtomicBoolean();
+
+		Runnable r = () -> {
+			runnableCalled++;
+
+			startLatch.countDown();
+			try {
+				endLatch.await(10, TimeUnit.SECONDS);
+			}
+			catch (InterruptedException e) {
+				exception.set(true);
+			}
+		};
+
+		// start the update manager and have it wait for us
+		manager = new SwingUpdateManager(MIN_DELAY, MAX_DELAY, r);
+		manager.update();
+
+		// have the swing thread block until we countdown the end latch
+		startLatch.await(10, TimeUnit.SECONDS);
+
+		// post the second update request now that the manager is actively processing
+		manager.update();
+
+		// let the update manager finish; verify 2 work items total
+		endLatch.countDown();
+		waitForManager();
+		assertEquals("Expected exactly 2 callbacks", 2, runnableCalled);
+	}
+
 //==============================================================================================
 // Private Methods
 //==============================================================================================
+	private void waitForManager() {
+
+		// let all swing updates finish, which may trigger the update manager
+		waitForSwing();
+
+		while (manager.isBusy()) {
+			sleep(DEFAULT_WAIT_DELAY);
+		}
+
+		// let any resulting swing events finish
+		waitForSwing();
+	}
 
 	private SwingUpdateManager createUpdateManager(int min, int max) {
 		return new SwingUpdateManager(min, max, new Runnable() {
@@ -209,19 +262,4 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 			}
 		});
 	}
-
-	private void waitForManager() {
-
-		// let all swing updates finish, which may trigger the update manager
-		waitForPostedSwingRunnables();
-
-		while (manager.isBusy()) {
-			sleep(DEFAULT_WAIT_DELAY);
-		}
-
-		// let any resulting swing events finish
-		waitForPostedSwingRunnables();
-
-	}
-
 }
