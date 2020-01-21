@@ -38,7 +38,11 @@ public class ExpiringSwingTimer extends GhidraSwingTimer {
 	private AtomicBoolean didRun = new AtomicBoolean();
 
 	/**
-	 * Runs the given client runnable when the given condition returns true
+	 * Runs the given client runnable when the given condition returns true.  The returned timer 
+	 * will be running.
+	 * 
+	 * <p>Once the timer has performed the work, any calls to start the returned timer will 
+	 * not perform any work.  You can check {@link #didRun()} to see if the work has been completed.
 	 * 
 	 * @param isReady true if the code should be run
 	 * @param expireMs the amount of time past which the code will not be run
@@ -54,13 +58,15 @@ public class ExpiringSwingTimer extends GhidraSwingTimer {
 		int delay = 250;
 		ExpiringSwingTimer timer =
 			new ExpiringSwingTimer(delay, expireMs, isReady, runnable);
-		timer.setRepeats(true);
 		timer.start();
 		return timer;
 	}
 
 	/**
 	 * Constructor
+	 * 
+	 * <p>Note: this class sets the parent's initial delay to 0.  This is to allow the client 
+	 * code to be executed without delay when the ready condition is true.
 	 * 
 	 * @param delay the delay between calls to check <code>isReady</code>
 	 * @param isReady true if the code should be run
@@ -69,19 +75,39 @@ public class ExpiringSwingTimer extends GhidraSwingTimer {
 	 */
 	public ExpiringSwingTimer(int delay, int expireMs, BooleanSupplier isReady,
 			Runnable runnable) {
-		super(delay, null);
+		super(0, delay, null);
 		this.expireMs = expireMs;
 		this.isReady = isReady;
 		this.clientCallback = () -> runnable.run();
 		super.setTimerCallback(expiringTimerCallback);
+		setRepeats(true);
 	}
 
 	/**
-	 * Returns true if the client runnable was run
+	 * Returns true if the client runnable was run 
 	 * @return true if the client runnable was run
 	 */
 	public boolean didRun() {
 		return didRun.get();
+	}
+
+	@Override
+	public void start() {
+		if (didRun() || isExpired()) {
+			return;
+		}
+
+		super.start();
+	}
+
+	/**
+	 * Returns true the initial expiration period has passed
+	 * @return true if expired
+	 */
+	public boolean isExpired() {
+		long now = System.currentTimeMillis();
+		int elapsed = (int) (now - startMs);
+		return elapsed > expireMs;
 	}
 
 	@Override
@@ -95,20 +121,15 @@ public class ExpiringSwingTimer extends GhidraSwingTimer {
 		@Override
 		public void timerFired() {
 
-			long now = System.currentTimeMillis();
-			int passed = (int) (now - startMs);
-			if (passed > expireMs) {
-				timer.stop();
+			if (isReady.getAsBoolean()) {
+				clientCallback.timerFired();
+				didRun.set(true);
+				stop();
 				return;
 			}
-
-			if (!isReady.getAsBoolean()) {
-				return;
+			else if (isExpired()) {
+				stop();
 			}
-
-			clientCallback.timerFired();
-			stop();
-			didRun.set(true);
 		}
 	}
 }

@@ -62,4 +62,25 @@ public class ExpiringSwingTimerTest extends AbstractGenericTest {
 
 		assertFalse(didRun.get());
 	}
+
+	@Test
+	public void testWorkOnlyHappensOnce() {
+
+		BooleanSupplier isReady = () -> {
+			return true;
+		};
+
+		AtomicInteger runCount = new AtomicInteger();
+		Runnable r = () -> {
+			runCount.incrementAndGet();
+		};
+
+		ExpiringSwingTimer timer = ExpiringSwingTimer.runWhen(isReady, 10000, r);
+		waitFor(() -> !timer.isRunning());
+		assertEquals(1, runCount.get());
+
+		timer.start();
+		waitFor(() -> !timer.isRunning());
+		assertEquals(1, runCount.get());
+	}
 }

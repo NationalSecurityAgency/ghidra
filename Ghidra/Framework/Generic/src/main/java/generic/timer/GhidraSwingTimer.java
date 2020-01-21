@@ -36,7 +36,7 @@ public class GhidraSwingTimer implements GhidraTimer, ActionListener {
 	public GhidraSwingTimer(int initialDelay, int delay, TimerCallback callback) {
 		this.callback = callback;
 		timer = new Timer(delay, this);
-		timer.setInitialDelay(delay);
+		timer.setInitialDelay(initialDelay);
 	}
 
 	@Override
