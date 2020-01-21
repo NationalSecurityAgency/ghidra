@@ -31,10 +31,15 @@
 }
 
 # JMP [reg1] - 00000000011RRRRR
-:jmp [R0004] is op0515=0x003 & R0004 & op0004=0x1F
+:jmp [R0004] is op0515=0x03 & R0004 & op0004=0x1F
 {
 	PC = R0004;
 	return [R0004];
+}
+:jmp [R0004] is op0515=0x03 & R0004 & op0004!=0x1F
+{
+	PC = R0004;
+	call [R0004];
 }
 
 # JMP disp32[reg1] - 00000110111RRRRR|ddddddddddddddd0|DDDDDDDDDDDDDDDD

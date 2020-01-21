@@ -41,7 +41,7 @@ attach variables [op1_1720] [r1 sp tp r7 r9 r11 r13 r15 r17 r19 r21 r23 r25 r27 
 
 
 attach names [fcond2730]
-["F" "UN" "EQ" "UEQ" "OLT" "ULT" "OLE" "ULE" "SF" "NGLE" "SEQ" "NGL" "LT" "NGE" "LE" "NGT"];
+["f" "un" "eq" "ueq" "olt" "ult" "ole" "ule" "sd" "ngle" "seq" "ngl" "lt" "nge" "le" "ngt"];
 
 
 @define NP  	"PSW[7,1]"
