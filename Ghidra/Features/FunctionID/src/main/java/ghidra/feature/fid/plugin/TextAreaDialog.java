@@ -38,15 +38,8 @@ public class TextAreaDialog extends DialogComponentProvider {
 		return sp;
 	}
 
-	public void setOuterDialog(JDialog outerDialog) {
-		this.outerDialog = outerDialog;
-	}
-
 	@Override
 	protected void okCallback() {
-		if (outerDialog != null) {
-			outerDialog.setVisible(false);
-			outerDialog = null;
-		}
+		close();
 	}
 }

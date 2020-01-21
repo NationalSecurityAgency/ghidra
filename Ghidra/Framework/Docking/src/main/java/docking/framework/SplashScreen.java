@@ -344,8 +344,9 @@ public class SplashScreen extends JWindow {
 	}
 
 	public static void main(String[] args) throws Exception {
-		ApplicationLayout layout = new DockingApplicationLayout("SplashScreen");
+		ApplicationLayout layout = new DockingApplicationLayout("Splash Screen Main", "1.0");
 		DockingApplicationConfiguration config = new DockingApplicationConfiguration();
+
 		config.setShowSplashScreen(false);
 		Application.initializeApplication(layout, config);
 		showSplashScreen();
