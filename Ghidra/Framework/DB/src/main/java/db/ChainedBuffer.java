@@ -338,14 +338,16 @@ public class ChainedBuffer implements Buffer {
 	 * @throws UnsupportedOperationException if read-only or uninitialized data source is used
 	 */
 	public synchronized void setSize(int size, boolean preserveData) throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
+		}
 		if (uninitializedDataSource != null) {
 			throw new UnsupportedOperationException(
 				"Buffer size may not be changed when using unintialized data source");
 		}
-		if (dataBufferIdTable == null)
+		if (dataBufferIdTable == null) {
 			throw new AssertException("Invalid Buffer");
+		}
 		if (size > this.size) {
 			grow(size, preserveData);
 		}
@@ -381,6 +383,16 @@ public class ChainedBuffer implements Buffer {
 						newFirstDataBuf = bufferMgr.createBuffer();
 						newFirstDataBuf.copy(DATA_BASE_OFFSET_INDEXED, firstBuffer,
 							DATA_BASE_OFFSET_NONINDEXED, oldSize);
+
+						int indexedDataSpace = newFirstDataBuf.length() - DATA_BASE_OFFSET_INDEXED;
+						byte[] zeroBytes = new byte[indexedDataSpace - oldSize];
+						if (useXORMask) {
+							int offset = oldSize;
+							for (int i = 0; i < zeroBytes.length; i++, offset++) {
+								zeroBytes[i] = xorMaskByte(offset, zeroBytes[i]);
+							}
+						}
+						newFirstDataBuf.put(DATA_BASE_OFFSET_INDEXED + oldSize, zeroBytes);
 					}
 
 					// Establish index for DBBuffer
@@ -403,6 +415,7 @@ public class ChainedBuffer implements Buffer {
 
 				return;
 			}
+
 			// Adjust stored buffer size
 			DataBuffer buffer = bufferMgr.getBuffer(firstBufferId);
 			buffer.putInt(DATA_LENGTH_OFFSET, getObfuscationDataLengthFieldValue());
@@ -465,8 +478,9 @@ public class ChainedBuffer implements Buffer {
 	private boolean shrinkToSingleBuffer(boolean preserveData) throws IOException {
 
 		int singleDataSpace = bufferMgr.getBufferSize() - DATA_BASE_OFFSET_NONINDEXED;
-		if (size > singleDataSpace)
+		if (size > singleDataSpace) {
 			return false;
+		}
 
 		// Convert first index buffer to a data buffer
 		DataBuffer firstBuffer = bufferMgr.getBuffer(firstBufferId);
@@ -582,12 +596,15 @@ public class ChainedBuffer implements Buffer {
 	 * @throws IOException thrown if an IO error occurs
 	 */
 	public synchronized ChainedBuffer split(int offset) throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
-		if (firstBufferId < 0)
+		}
+		if (firstBufferId < 0) {
 			throw new AssertException("Invalid Buffer");
-		if (offset < 0 || offset >= size)
+		}
+		if (offset < 0 || offset >= size) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 
 		// Create new DBBuffer
 		int cnt = size - offset;
@@ -647,16 +664,19 @@ public class ChainedBuffer implements Buffer {
 	 * or both buffers do not have the same obfuscation enablement
 	 */
 	public synchronized void append(ChainedBuffer dbBuf) throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
+		}
 		if (uninitializedDataSource != null) {
 			throw new UnsupportedOperationException(
 				"Buffer size may not be changed when using unintialized data source");
 		}
-		if (firstBufferId < 0)
+		if (firstBufferId < 0) {
 			throw new AssertException("Invalid Buffer");
-		if (dbBuf.firstBufferId < 0 || firstBufferId == dbBuf.firstBufferId)
+		}
+		if (dbBuf.firstBufferId < 0 || firstBufferId == dbBuf.firstBufferId) {
 			throw new IllegalArgumentException("Illegal DBBuffer argument");
+		}
 
 		// Grow this buffer - preserve data	
 		int offset = size;
@@ -802,8 +822,9 @@ public class ChainedBuffer implements Buffer {
 				// Advance to next index buffer if needed
 				if (ix == indexesPerBuffer) {
 					int nextId = indexBuffer.getInt(NEXT_INDEX_ID_OFFSET);
-					if (nextId < 0)
+					if (nextId < 0) {
 						throw new AssertException();
+					}
 					bufferMgr.releaseBuffer(indexBuffer);
 					indexBuffer = bufferMgr.getBuffer(nextId);
 					indexBufferIdTable[++index] = indexBuffer.getId();
@@ -837,10 +858,12 @@ public class ChainedBuffer implements Buffer {
 	 * Delete and release all underlying DataBuffers. 
 	 */
 	public synchronized void delete() throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
-		if (firstBufferId < 0)
+		}
+		if (firstBufferId < 0) {
 			throw new AssertException("Invalid Buffer");
+		}
 
 		// Remove all data buffers
 		for (int element : dataBufferIdTable) {
@@ -908,10 +931,12 @@ public class ChainedBuffer implements Buffer {
 	@Override
 	public synchronized void get(int offset, byte[] data, int dataOffset, int length)
 			throws IOException {
-		if (dataBufferIdTable == null)
+		if (dataBufferIdTable == null) {
 			throw new AssertException("Invalid Buffer");
-		if (offset < 0 || (offset + length - 1) >= size)
+		}
+		if (offset < 0 || (offset + length - 1) >= size) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 		if (data.length < dataOffset + length) {
 			throw new ArrayIndexOutOfBoundsException();
 		}
@@ -950,10 +975,12 @@ public class ChainedBuffer implements Buffer {
 	 */
 	@Override
 	public synchronized byte getByte(int offset) throws IOException {
-		if (dataBufferIdTable == null)
+		if (dataBufferIdTable == null) {
 			throw new AssertException("Invalid Buffer");
-		if (offset < 0 || offset >= size)
+		}
+		if (offset < 0 || offset >= size) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 		int index = offset / dataSpace;
 		int bufferDataOffset = offset % dataSpace;
 		int id = dataBufferIdTable[index];
@@ -979,10 +1006,12 @@ public class ChainedBuffer implements Buffer {
 	public synchronized int getInt(int offset) throws IOException {
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 3 <= dataSpace) {
-			if (dataBufferIdTable == null)
+			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
-			if (offset < 0 || (offset + 3) >= size)
+			}
+			if (offset < 0 || (offset + 3) >= size) {
 				throw new ArrayIndexOutOfBoundsException();
+			}
 			int index = offset / dataSpace;
 			int id = dataBufferIdTable[index];
 			if (id < 0) {
@@ -1011,10 +1040,12 @@ public class ChainedBuffer implements Buffer {
 	public synchronized long getLong(int offset) throws IOException {
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 7 <= dataSpace) {
-			if (dataBufferIdTable == null)
+			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
-			if (offset < 0 || (offset + 7) >= size)
+			}
+			if (offset < 0 || (offset + 7) >= size) {
 				throw new ArrayIndexOutOfBoundsException();
+			}
 			int index = offset / dataSpace;
 			int id = dataBufferIdTable[index];
 			if (id < 0) {
@@ -1045,10 +1076,12 @@ public class ChainedBuffer implements Buffer {
 	public synchronized short getShort(int offset) throws IOException {
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 1 <= dataSpace) {
-			if (dataBufferIdTable == null)
+			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
-			if (offset < 0 || (offset + 1) >= size)
+			}
+			if (offset < 0 || (offset + 1) >= size) {
 				throw new ArrayIndexOutOfBoundsException();
+			}
 			int index = offset / dataSpace;
 			int id = dataBufferIdTable[index];
 			if (id < 0) {
@@ -1085,12 +1118,15 @@ public class ChainedBuffer implements Buffer {
 	 */
 	public synchronized void fill(int startOffset, int endOffset, byte fillByte)
 			throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
-		if (endOffset <= startOffset)
+		}
+		if (endOffset <= startOffset) {
 			throw new IllegalArgumentException();
-		if (startOffset < 0 || endOffset > size)
+		}
+		if (startOffset < 0 || endOffset > size) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 		byte[] fillData = new byte[dataSpace];
 		Arrays.fill(fillData, fillByte);
 		int index = startOffset / dataSpace;
@@ -1153,8 +1189,9 @@ public class ChainedBuffer implements Buffer {
 	 * @throws IOException thrown if IO error occurs.
 	 */
 	public synchronized void fill(InputStream in) throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
+		}
 		byte[] data = new byte[dataSpace];
 		int index = 0;
 		int offset = 0;
@@ -1199,12 +1236,15 @@ public class ChainedBuffer implements Buffer {
 	public synchronized int put(int offset, byte[] data, int dataOffset, int length)
 			throws IOException {
 
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
-		if (dataBufferIdTable == null)
+		}
+		if (dataBufferIdTable == null) {
 			throw new AssertException("Invalid Buffer");
-		if (offset < 0 || (offset + length - 1) >= size)
+		}
+		if (offset < 0 || (offset + length - 1) >= size) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 		int index = offset / dataSpace;
 		int bufferDataOffset = offset % dataSpace;
 		int len = length;
@@ -1239,12 +1279,15 @@ public class ChainedBuffer implements Buffer {
 	 */
 	@Override
 	public synchronized int putByte(int offset, byte b) throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
-		if (dataBufferIdTable == null)
+		}
+		if (dataBufferIdTable == null) {
 			throw new AssertException("Invalid Buffer");
-		if (offset < 0 || offset >= size)
+		}
+		if (offset < 0 || offset >= size) {
 			throw new ArrayIndexOutOfBoundsException();
+		}
 		DataBuffer buffer = getBuffer(offset / dataSpace);
 		int bufferDataOffset = offset % dataSpace;
 		if (useXORMask) {
@@ -1260,14 +1303,17 @@ public class ChainedBuffer implements Buffer {
 	 */
 	@Override
 	public synchronized int putInt(int offset, int v) throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
+		}
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 3 <= dataSpace) {
-			if (dataBufferIdTable == null)
+			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
-			if (offset < 0 || (offset + 3) >= size)
+			}
+			if (offset < 0 || (offset + 3) >= size) {
 				throw new ArrayIndexOutOfBoundsException();
+			}
 			if (useXORMask) {
 				v = v ^ (int) getXorMask(offset % dataSpace, 4);
 			}
@@ -1291,14 +1337,17 @@ public class ChainedBuffer implements Buffer {
 	 */
 	@Override
 	public synchronized int putLong(int offset, long v) throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
+		}
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 7 <= dataSpace) {
-			if (dataBufferIdTable == null)
+			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
-			if (offset < 0 || (offset + 7) >= size)
+			}
+			if (offset < 0 || (offset + 7) >= size) {
 				throw new ArrayIndexOutOfBoundsException();
+			}
 			if (useXORMask) {
 				v = v ^ getXorMask(offset % dataSpace, 8);
 			}
@@ -1326,14 +1375,17 @@ public class ChainedBuffer implements Buffer {
 	 */
 	@Override
 	public synchronized int putShort(int offset, short v) throws IOException {
-		if (readOnly)
+		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
+		}
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 1 <= dataSpace) {
-			if (dataBufferIdTable == null)
+			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
-			if (offset < 0 || (offset + 1) >= size)
+			}
+			if (offset < 0 || (offset + 1) >= size) {
 				throw new ArrayIndexOutOfBoundsException();
+			}
 			if (useXORMask) {
 				v = (short) (v ^ (short) getXorMask(offset % dataSpace, 2));
 			}
