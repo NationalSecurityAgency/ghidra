@@ -56,11 +56,13 @@ public class MultiFunctionComparisonProvider extends FunctionComparisonProvider 
 		DockingAction previousFunctionAction = new PreviousFunctionAction(this);
 		DockingAction removeFunctionsAction = new RemoveFunctionsAction(this);
 		DockingAction openFunctionTableAction = getOpenFunctionTableAction();
+		DockingAction navigateToAction = new NavigateToFunctionAction(this);
 
 		addLocalAction(nextFunctionAction);
 		addLocalAction(previousFunctionAction);
 		addLocalAction(removeFunctionsAction);
 		addLocalAction(openFunctionTableAction);
+		addLocalAction(navigateToAction);
 	}
 
 	/**

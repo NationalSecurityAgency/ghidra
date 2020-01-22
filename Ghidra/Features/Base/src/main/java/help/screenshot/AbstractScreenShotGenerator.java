@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
@@ -604,6 +604,12 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		runSwing(() -> {
 			ImageIcon imageIcon = ResourceManager.getImageIcon(icon);
 			image = imageIcon.getImage();
+
+			// The image returned here must be a BufferedImage, so create one
+			// if not. It may be a ToolkitImage (eg: if the icon in question
+			// is retrieved from Icons.java), which would fail on a cast to 
+			// BufferedImage during the save operation.
+			image = ImageUtils.getBufferedImage(image);
 		});
 	}
 
