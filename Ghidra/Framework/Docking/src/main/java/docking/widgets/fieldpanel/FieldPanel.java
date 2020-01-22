@@ -43,6 +43,8 @@ import ghidra.util.SystemUtilities;
 
 public class FieldPanel extends JPanel
 		implements IndexedScrollable, LayoutModelListener, ChangeListener {
+	public static final int MOUSEWHEEL_LINES_TO_SCROLL = 3;
+
 	private LayoutModel model;
 
 	private boolean repaintPosted;
@@ -1504,7 +1506,12 @@ public class FieldPanel extends JPanel
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
 			double wheelRotation = e.getPreciseWheelRotation();
-			int scrollAmount = (int) (wheelRotation * 40);
+
+			Layout firstLayout = model.getLayout(BigInteger.ZERO);
+			int layoutScrollHt = firstLayout != null //
+					? firstLayout.getScrollableUnitIncrement(0, 1)
+					: 0;
+			int scrollAmount = (int) (wheelRotation * layoutScrollHt * MOUSEWHEEL_LINES_TO_SCROLL);
 			if (scrollAmount == 0) {
 				return;
 			}

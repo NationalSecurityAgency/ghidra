@@ -16,8 +16,6 @@
 package ghidra.app.plugin.core.byteviewer;
 
 import java.awt.*;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -807,10 +805,6 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 		indexPanel.setCursorOn(false);
 		indexPanel.setFocusable(false);
 
-		// this lets us scroll the byte viewer when the user is not over any panel, but still
-		// over the view
-		addMouseWheelListener(new DeadSpaceScrollListener(indexPanel));
-
 		compPanel = new CompositePanel(indexPanel);
 
 		scrollp = new IndexedScrollPane(compPanel);
@@ -1054,22 +1048,6 @@ public class ByteViewerPanel extends JPanel implements TableColumnModelListener,
 	}
 }
 
-class DeadSpaceScrollListener implements MouseWheelListener {
-
-	private final FieldPanel fieldPanel;
-
-	DeadSpaceScrollListener(FieldPanel fieldPanel) {
-		this.fieldPanel = fieldPanel;
-	}
-
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent e) {
-		int scrollAmount = e.getWheelRotation() * 40; // magic value pulled from FieldPanel
-		fieldPanel.scrollView(scrollAmount);
-		e.consume();
-	}
-}
-
 class CompositePanel extends JPanel implements IndexedScrollable, IndexScrollListener {
 	FieldPanel indexPanel;
 	BoundedRangeModel verticalScrollBarModel;
@@ -1082,6 +1060,21 @@ class CompositePanel extends JPanel implements IndexedScrollable, IndexScrollLis
 		super(new HorizontalLayout(0));
 		this.indexPanel = indexPanel;
 		indexPanel.addIndexScrollListener(this);
+		addMouseWheelListener(e -> {
+			// this lets us scroll the byte viewer when the user is not over any panel, but still over the view
+			Layout firstLayout = indexPanel.getLayoutModel().getLayout(BigInteger.ZERO);
+			int layoutScrollHt = firstLayout != null //
+					? firstLayout.getScrollableUnitIncrement(0, 1)
+					: 0;
+
+			double wheelRotation = e.getPreciseWheelRotation();
+			int scrollAmount =
+				(int) (wheelRotation * layoutScrollHt * FieldPanel.MOUSEWHEEL_LINES_TO_SCROLL);
+
+			indexPanel.scrollView(scrollAmount);
+			e.consume();
+		});
+
 		allPanels.add(indexPanel);
 		rebuildPanels();
 	}
