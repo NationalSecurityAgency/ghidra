@@ -45,10 +45,12 @@ public class CreateCategoryAction extends DockingAction {
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		CategoryNode categoryNode = getSelectedCategoryNode(context);
-		if ((categoryNode == null) || !categoryNode.isEnabled()) {
+		if (categoryNode == null || !categoryNode.isEnabled()) {
 			return false;
 		}
-
+		if (categoryNode instanceof BuiltInArchiveNode) {
+			return false;
+		}
 		return true;
 	}
 

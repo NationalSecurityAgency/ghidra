@@ -68,7 +68,7 @@ public class MakeProgramSelectionAction extends DockingAction {
 		setPopupMenuData(
 			new MenuData(new String[] { "Make Selection" }, Icons.MAKE_SELECTION_ICON));
 		setToolBarData(new ToolBarData(Icons.MAKE_SELECTION_ICON));
-		setDescription("Make a program selection from the seleted rows");
+		setDescription("Make a program selection from the selected rows");
 
 		// this help location provides generic help; clients can override to point to their help
 		setHelpLocation(new HelpLocation("Search", "Make_Selection"));

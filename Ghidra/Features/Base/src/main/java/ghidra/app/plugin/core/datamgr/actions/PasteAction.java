@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +14,6 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.datamgr.actions;
-
-import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.tree.*;
-import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask;
-import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask.ActionType;
-import ghidra.framework.plugintool.PluginTool;
 
 import java.awt.datatransfer.*;
 import java.awt.dnd.DnDConstants;
@@ -38,6 +31,11 @@ import docking.action.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeNodeTransferable;
+import ghidra.app.plugin.core.datamgr.*;
+import ghidra.app.plugin.core.datamgr.tree.*;
+import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask;
+import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask.ActionType;
+import ghidra.framework.plugintool.PluginTool;
 
 public class PasteAction extends DockingAction {
 	private PluginTool tool;
@@ -58,6 +56,9 @@ public class PasteAction extends DockingAction {
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
 		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
+		if (node instanceof BuiltInArchiveNode) {
+			return false;
+		}
 		return (node != null);
 	}
 
@@ -108,7 +109,7 @@ public class PasteAction extends DockingAction {
 		}
 
 		DataFlavor[] flavors = handler.getSupportedDataFlavors(transferNodeList);
-		return handler.isDropSiteOk((GTreeNode) destinationNode, flavors, DnDConstants.ACTION_COPY);
+		return handler.isDropSiteOk(destinationNode, flavors, DnDConstants.ACTION_COPY);
 	}
 
 	private boolean invalidCutNodes(DataTypeTreeNode destinationNode, List<GTreeNode> nodeList) {
