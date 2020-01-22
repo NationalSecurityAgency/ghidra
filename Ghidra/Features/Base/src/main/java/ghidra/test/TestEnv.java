@@ -67,7 +67,7 @@ public class TestEnv {
 
 	/**
 	 * Used to perform emergency cleanup.  Tests are expected to call {@link #dispose()} in
-	 * their <tt>tearDown</tt> method.  This is here to catch the case where the is some fatal
+	 * their <code>tearDown</code> method.  This is here to catch the case where the is some fatal
 	 * error that prevents that from taking place.
 	 */
 	private static Set<TestEnv> instances = new HashSet<>();
@@ -362,7 +362,7 @@ public class TestEnv {
 	 * @param ghidraClass The class of the dialog the user desires
 	 * @param maxTimeMS The max amount of time in milliseconds to wait for the requested dialog
 	 *        to appear.
-	 * @return The first occurrence of a dialog that extends the given <tt>ghirdraClass</tt>
+	 * @return The first occurrence of a dialog that extends the given <code>ghirdraClass</code>
 	 * @deprecated use instead {@link AbstractDockingTest#waitForDialogComponent(Class)}
 	 */
 	@Deprecated
@@ -480,7 +480,7 @@ public class TestEnv {
 
 	/**
 	 * This method differs from {@link #launchDefaultTool()} in that this method does not set the
-	 * <tt>tool</tt> variable in of this <tt>TestEnv</tt> instance.
+	 * <code>tool</code> variable in of this <code>TestEnv</code> instance.
 	 * @return the tool
 	 */
 	public PluginTool createDefaultTool() {

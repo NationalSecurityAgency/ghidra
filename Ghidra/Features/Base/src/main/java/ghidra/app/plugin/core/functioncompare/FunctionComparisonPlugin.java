@@ -15,20 +15,32 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
+import java.util.Set;
+
+import docking.ComponentProviderActivationListener;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.events.ProgramClosedPluginEvent;
+import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsAction;
+import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromListingAction;
+import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramChangeRecord;
 
 /**
- * Plugin that provides the actions that allow the user to compare functions using a 
- * FunctionComparisonPanel.
+ * Allows users to create function comparisons that are displayed
+ * side-by-side in a provider. Comparisons can be initiated via the listing 
+ * or function table and are displayed in a {@link FunctionComparisonProvider}.
+ * <p>
+ * The underlying data backing the comparison provider is managed by the
+ * {@link FunctionComparisonService}. 
  */
 //@formatter:off
 @PluginInfo(
@@ -36,36 +48,37 @@ import ghidra.program.model.listing.Program;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.DIFF,
 	shortDescription = "Compare Functions",
-	description = "This plugin provides actions that allow you to compare two or more functions with each other.",
-	eventsConsumed = { ProgramClosedPluginEvent.class }
+	description = "Allows users to compare two or more functions",
+	servicesProvided = { FunctionComparisonService.class },
+	eventsConsumed = { ProgramSelectionPluginEvent.class, ProgramActivatedPluginEvent.class,
+		ProgramClosedPluginEvent.class }
 )
 //@formatter:on
-public class FunctionComparisonPlugin extends ProgramPlugin implements DomainObjectListener {
+public class FunctionComparisonPlugin extends ProgramPlugin
+		implements DomainObjectListener, FunctionComparisonService {
 
 	public final static String FUNCTION_MENU_SUBGROUP = "Function";
 	static final String MENU_PULLRIGHT = "CompareFunctions";
 	static final String POPUP_MENU_GROUP = "CompareFunction";
+
 	private FunctionComparisonProviderManager functionComparisonManager;
 
 	/**
-	 * Creates a plugin that provides actions for comparing functions.
-	 * @param tool the tool that owns this plugin.
+	 * Constructor
+	 * 
+	 * @param tool the tool that owns this plugin
 	 */
 	public FunctionComparisonPlugin(PluginTool tool) {
 		super(tool, true, true);
-
 		functionComparisonManager = new FunctionComparisonProviderManager(this);
-
 		tool.setMenuGroup(new String[] { MENU_PULLRIGHT }, POPUP_MENU_GROUP);
 	}
 
 	@Override
 	protected void init() {
-		createActions();
-	}
-
-	private void createActions() {
-		tool.addAction(new CompareFunctionsAction(this));
+		CompareFunctionsAction compareFunctionsAction =
+			new CompareFunctionsFromListingAction(tool, getName());
+		tool.addAction(compareFunctionsAction);
 	}
 
 	@Override
@@ -85,18 +98,75 @@ public class FunctionComparisonPlugin extends ProgramPlugin implements DomainObj
 	}
 
 	/**
-	 * Displays a panel for comparing the specified functions.
-	 * @param functions the functions that are used to populate both the left and right side
-	 * of the function comparison panel.
+	 * Overridden to listen for two event types:
+	 * <li>Object Restored: In the event of a redo/undo that affects a function
+	 * being shown in the comparison provider, this will allow tell the provider
+	 * to reload</li>
+	 * <li>Object Removed: If a function is deleted, this will tell the provider
+	 * to purge it from the view</li>
 	 */
-	void showFunctionComparisonProvider(Function[] functions) {
-		functionComparisonManager.showFunctionComparisonProvider(functions);
+	@Override
+	public void domainObjectChanged(DomainObjectChangedEvent ev) {
+		for (int i = 0; i < ev.numRecords(); ++i) {
+			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
+
+			int eventType = doRecord.getEventType();
+
+			switch (eventType) {
+				case DomainObject.DO_OBJECT_RESTORED:
+					functionComparisonManager.domainObjectRestored(ev);
+					break;
+				case ChangeManager.DOCR_FUNCTION_REMOVED:
+					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
+					Function function = (Function) rec.getObject();
+					if (function != null) {
+						removeFunction(function);
+					}
+					break;
+			}
+		}
 	}
 
 	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
-			functionComparisonManager.domainObjectRestored(ev);
-		}
+	public void addFunctionComparisonProviderListener(
+			ComponentProviderActivationListener listener) {
+		functionComparisonManager.addProviderListener(listener);
+	}
+
+	@Override
+	public void removeFunctionComparisonProviderListener(
+			ComponentProviderActivationListener listener) {
+		functionComparisonManager.removeProviderListener(listener);
+	}
+
+	@Override
+	public void removeFunction(Function function) {
+		functionComparisonManager.removeFunction(function);
+	}
+
+	@Override
+	public void removeFunction(Function function, FunctionComparisonProvider provider) {
+		functionComparisonManager.removeFunction(function, provider);
+	}
+
+	@Override
+	public FunctionComparisonProvider compareFunctions(Function source, Function target) {
+		return functionComparisonManager.compareFunctions(source, target);
+	}
+
+	@Override
+	public void compareFunctions(Set<Function> functions, FunctionComparisonProvider provider) {
+		functionComparisonManager.compareFunctions(functions, provider);
+	}
+
+	@Override
+	public FunctionComparisonProvider compareFunctions(Set<Function> functions) {
+		return functionComparisonManager.compareFunctions(functions);
+	}
+
+	@Override
+	public void compareFunctions(Function source, Function target,
+			FunctionComparisonProvider provider) {
+		functionComparisonManager.compareFunctions(source, target, provider);
 	}
 }

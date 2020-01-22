@@ -14472,6 +14472,26 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	//Issue 1344: Long symbols get MD5-hashed.
+	// We have made up the output format.  Nothing is sacrosanct about this output.
+	@Test
+	public void testHashedSymbolComponentsLongerThan5096_1() throws Exception {
+		mangled = "??@f4873c94f485cd6716c2319fc51ac714@";
+		msTruth = "";
+		mdTruth = "`f4873c94f485cd6716c2319fc51ac714'";
+		demangleAndTest();
+	}
+
+	//Issue 1344: Long symbols get MD5-hashed.
+	// We have made up the output format.  Nothing is sacrosanct about this output.
+	@Test
+	public void testHashedSymbolComponentsLongerThan5096_2() throws Exception {
+		mangled = "?catch$0@?0???@f4873c94f485cd6716c2319fc51ac714@@4HA";
+		msTruth = "";
+		mdTruth = "int ``f4873c94f485cd6716c2319fc51ac714''::`1'::catch$0";
+		demangleAndTest();
+	}
+
 	//TODO: ignore for now.
 	@Ignore
 	public void testFuzzyFit() throws Exception {

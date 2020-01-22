@@ -46,7 +46,7 @@ import ghidra.util.task.TaskMonitor;
  * are no add/removes in the list, then that step does nothing.
  * <p>
  * Before the job completes, new calls to sort and filter can be called.  If the job is past the
- * stage of the new call, the <tt>monitor</tt> is cancelled, causing the current stage to abort.  
+ * stage of the new call, the <code>monitor</code> is cancelled, causing the current stage to abort.  
  * The next state of this job is set to the appropriate state for the call, the monitor is 
  * reset, and the job begins executing the next stage, based upon the new call.
  *

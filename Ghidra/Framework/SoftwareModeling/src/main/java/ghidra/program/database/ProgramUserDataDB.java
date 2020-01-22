@@ -604,7 +604,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	}
 
 	@Override
-	public synchronized StringPropertyMap getStringPropery(String owner, String propertyName,
+	public synchronized StringPropertyMap getStringProperty(String owner, String propertyName,
 			boolean create) throws PropertyTypeMismatchException {
 		return (StringPropertyMap) getPropertyMap(owner, propertyName, PROPERTY_TYPE_STRING, null,
 			create);

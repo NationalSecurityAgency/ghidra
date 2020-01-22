@@ -60,6 +60,9 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 		options.addBooleanOption("-no-module-directories", true)
 	}
 
+	// generate documentation using html5
+	options.addBooleanOption("html5", true)
+
 	// Some internal packages are not public and need to be exported.
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED", 
     															"java.desktop/sun.awt=ALL-UNNAMED", 

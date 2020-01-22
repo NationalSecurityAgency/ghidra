@@ -36,17 +36,17 @@ import resources.ResourceManager;
  */
 public class DuplicateMultipleAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon duplicateMultipleIcon =
+	private final static ImageIcon ICON =
 		ResourceManager.loadImage("images/MultiDuplicateData.png");
-	private final static String ACTION_NAME = "Duplicate Multiple of Component";
+	public final static String ACTION_NAME = "Duplicate Multiple of Component";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Duplicate multiple of the selected component";
+	private final static String[] POPUP_PATH = new String[] { ACTION_NAME };
+
 	private KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK);
-	private static String[] popupPath = new String[] { ACTION_NAME };
 
 	public DuplicateMultipleAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null,
-			duplicateMultipleIcon);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, ICON);
 		setDescription(DESCRIPTION);
 		setKeyBindingData(new KeyBindingData(keyStroke));
 		adjustEnablement();

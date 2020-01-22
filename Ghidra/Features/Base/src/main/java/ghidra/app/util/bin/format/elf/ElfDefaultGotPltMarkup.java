@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.elf;
 
 import ghidra.app.cmd.refs.RemoveReferenceCmd;
+import ghidra.framework.store.LockException;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.*;
@@ -25,7 +26,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -54,21 +55,24 @@ public class ElfDefaultGotPltMarkup {
 		elfLoadHelper.log(msg);
 	}
 
-	private void log(Throwable t) {
-		elfLoadHelper.log(t);
-	}
-
 	public void process(TaskMonitor monitor) throws CancelledException {
-		processGOT(monitor);
+		if (elf.e_shnum() == 0) {
+			processDynamicPLTGOT(monitor);
+		}
+		else {
+			processGOTSections(monitor);
+		}
 		processPLT(monitor);
 	}
 
-	private void processGOT(TaskMonitor monitor) throws CancelledException {
-
+	/**
+	 * Process all GOT sections based upon blocks whose names begin with .got
+	 * @param monitor task monitor
+	 * @throws CancelledException thrown if task cancelled
+	 */
+	private void processGOTSections(TaskMonitor monitor) throws CancelledException {
+		// look for .got section blocks
 		MemoryBlock[] blocks = memory.getBlocks();
-
-		boolean imageBaseAlreadySet = elf.isPreLinked();
-
 		for (int i = 0; i < blocks.length; i++) {
 			monitor.checkCanceled();
 
@@ -76,41 +80,121 @@ public class ElfDefaultGotPltMarkup {
 			if (!gotBlock.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
 				continue;
 			}
-
 			// Assume the .got section is read_only.  This is not true, but it helps with analysis
-			//  This should be relocation setup.
 			gotBlock.setWrite(false);
+
+			processGOT(gotBlock.getStart(), gotBlock.getEnd(), monitor);
+		}
+	}
+
+	/**
+	 * Process GOT table specified by Dynamic Program Header (DT_PLTGOT).
+	 * Entry count determined by corresponding relocation table identified by
+	 * the dynamic table entry DT_JMPREL.
+	 * @param monitor task monitor
+	 * @throws CancelledException thrown if task cancelled
+	 */
+	private void processDynamicPLTGOT(TaskMonitor monitor) throws CancelledException {
+
+		ElfDynamicTable dynamicTable = elf.getDynamicTable();
+		if (dynamicTable == null || !dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTGOT) ||
+			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_JMPREL)) {
+			return;
+		}
+
+		// NOTE: there may be other relocation table affecting the GOT 
+		// corresponding to DT_PLTGOT
+
+		AddressSpace defaultSpace = program.getAddressFactory().getDefaultAddressSpace();
+		long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
+
+		try {
+			long relocTableAddr =
+				elf.adjustAddressForPrelink(dynamicTable.getDynamicValue(ElfDynamicType.DT_JMPREL));
+
+			ElfProgramHeader relocTableLoadHeader =
+				elf.getProgramLoadHeaderContaining(relocTableAddr);
+			if (relocTableLoadHeader == null || relocTableLoadHeader.getOffset() < 0) {
+				return;
+			}
+			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
+			ElfRelocationTable relocationTable = elf.getRelocationTableAtOffset(relocTableOffset);
+			if (relocationTable == null) {
+				return;
+			}
+			ElfRelocation[] relocations = relocationTable.getRelocations();
+			int count = relocations.length;
+
+			// First few entries of GOT do not correspond to dynamic symbols.
+			// First relocation address must be used to calculate GOT end address
+			// based upon the total number of relocation entries.
+			long firstGotEntryOffset = relocations[0].getOffset() + imageBaseAdj;
+
+			long pltgot = elf.adjustAddressForPrelink(
+				dynamicTable.getDynamicValue(ElfDynamicType.DT_PLTGOT)) + imageBaseAdj;
+
+			Address gotStart = defaultSpace.getAddress(pltgot);
+			Address gotEnd = defaultSpace.getAddress(
+				firstGotEntryOffset + (count * defaultSpace.getPointerSize()) - 1);
+			processGOT(gotStart, gotEnd, monitor);
+		}
+		catch (NotFoundException e) {
+			throw new AssertException(e);
+		}
+		catch (AddressOutOfBoundsException e) {
+			log("Failed to process GOT: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Mark-up all GOT entries as pointers within the memory range gotStart to
+	 * gotEnd.
+	 * @param gotStart address for start of GOT
+	 * @param gotEnd address for end of GOT
+	 * @param monitor task monitor
+	 * @throws CancelledException thrown if task cancelled
+	 */
+	private void processGOT(Address gotStart, Address gotEnd, TaskMonitor monitor)
+			throws CancelledException {
+
+		boolean imageBaseAlreadySet = elf.isPreLinked();
+
+		try {
 			Address newImageBase = null;
-			Address addr = gotBlock.getStart();
-			try {
-				while (addr.compareTo(gotBlock.getEnd()) < 0) {
+			while (gotStart.compareTo(gotEnd) < 0) {
+				monitor.checkCanceled();
 
-					Data data = createPointer(addr, true);
+				Data data = createPointer(gotStart, true);
 
-					try {
-						addr = data.getMaxAddress().add(1);
-					}
-					catch (AddressOutOfBoundsException e) {
-						break; // no more room
-					}
-					newImageBase = UglyImageBaseCheck(data, newImageBase);
+				try {
+					gotStart = data.getMaxAddress().add(1);
 				}
-				if (newImageBase != null) {
-					log("Invalid Address found in .got table.  Suspect Prelinked shared object file");
-					if (imageBaseAlreadySet) {
-						log("ERROR: Unable to adjust image base for pre-link - retaining existing image base of " +
-							program.getImageBase());
-					}
-					else {
-						program.setImageBase(newImageBase, true);
-						log("Setting Image base to: " + newImageBase);
-						imageBaseAlreadySet = true;
-					}
+				catch (AddressOutOfBoundsException e) {
+					break; // no more room
+				}
+				newImageBase = UglyImageBaseCheck(data, newImageBase);
+			}
+			if (newImageBase != null) {
+				log("Invalid Address found in .got table.  Suspect Prelinked shared object file");
+				if (imageBaseAlreadySet) {
+					log("ERROR: Unable to adjust image base for pre-link - retaining existing image base of " +
+						program.getImageBase());
+				}
+				else {
+					program.setImageBase(newImageBase, true);
+					log("Setting Image base to: " + newImageBase);
+					imageBaseAlreadySet = true;
 				}
 			}
-			catch (Exception e) {
-				log(e);
-			}
+		}
+		catch (CodeUnitInsertionException e) {
+			log("Failed to process GOT: " + e.getMessage());
+		}
+		catch (AddressOverflowException e) {
+			log("Failed to adjust image base: " + e.getMessage());
+		}
+		catch (LockException e) {
+			throw new AssertException(e);
 		}
 	}
 
@@ -226,7 +310,7 @@ public class ElfDefaultGotPltMarkup {
 	}
 
 	private Data createPointer(Address addr, boolean keepRefWhenValid)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 
 		MemoryBlock block = memory.getBlock(addr);
 		if (block == null || !block.isInitialized()) {

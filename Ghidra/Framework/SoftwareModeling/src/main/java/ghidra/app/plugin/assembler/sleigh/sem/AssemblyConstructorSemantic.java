@@ -17,9 +17,6 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 
 import java.util.*;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyProduction;
@@ -42,10 +39,10 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	protected final Set<AssemblyResolvedConstructor> patterns = new HashSet<>();
 	protected final Constructor cons;
-	protected final ImmutableList<Integer> indices;
+	protected final List<Integer> indices;
 
 	// A set initialized on first access with forbidden patterns added
-	protected ImmutableSet<AssemblyResolvedConstructor> upatterns;
+	protected Set<AssemblyResolvedConstructor> upatterns;
 
 	/**
 	 * Build a new SLEIGH constructor semantic
@@ -55,7 +52,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 */
 	public AssemblyConstructorSemantic(Constructor cons, List<Integer> indices) {
 		this.cons = cons;
-		this.indices = ImmutableList.copyOf(indices);
+		this.indices = Collections.unmodifiableList(indices);
 	}
 
 	public void addPattern(DisjointPattern pat) {
@@ -106,7 +103,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * Get the list of operand indices in print piece order
 	 * @return the list
 	 */
-	public ImmutableList<Integer> getOperandIndices() {
+	public List<Integer> getOperandIndices() {
 		return indices;
 	}
 
@@ -135,7 +132,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 			AssemblyResolvedConstructor fpat = withComputedForbids(pat);
 			result.add(fpat);
 		}
-		upatterns = ImmutableSet.copyOf(result);
+		upatterns = Collections.unmodifiableSet(result);
 	}
 
 	/**
@@ -239,7 +236,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * reverse, the context is solved immediately before applying the selected constructor
 	 * patterns.
 	 * 
-	 * @see AssemblyTreeResolver#resolveSelectedChildren(AssemblyProduction, List, ImmutableList, Collection)
+	 * @see AssemblyTreeResolver#resolveSelectedChildren(AssemblyProduction, List, List, Collection)
 	 */
 	public AssemblyResolution solveContextChanges(AssemblyResolvedConstructor res,
 			Map<String, Long> vals, Map<Integer, Object> opvals) {

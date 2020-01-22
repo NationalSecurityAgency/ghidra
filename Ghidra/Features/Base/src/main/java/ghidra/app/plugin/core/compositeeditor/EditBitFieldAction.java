@@ -33,13 +33,13 @@ import ghidra.util.exception.AssertException;
  */
 public class EditBitFieldAction extends CompositeEditorTableAction {
 
-	private final static String ACTION_NAME = "Edit Bitfield";
+	public final static String ACTION_NAME = "Edit Bitfield";
 	private final static String GROUP_NAME = BITFIELD_ACTION_GROUP;
 	private final static String DESCRIPTION = "Edit an existing bitfield";
-	private static String[] popupPath = new String[] { ACTION_NAME };
+	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
 	public EditBitFieldAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null, null);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, null);
 		setDescription(DESCRIPTION);
 		if (!(model instanceof CompEditorModel)) {
 			throw new AssertException("unsupported use");

@@ -220,11 +220,11 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 			return null;
 		}
 
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		for (int i = 0; i < path.length; i++) {
 			buffy.append(path[i].replaceAll("\\&", ""));  // strip off the mnemonic identifier '&'
 			if (i != path.length - 1) {
-				buffy.append("-&gt;");
+				buffy.append("->");
 			}
 		}
 		return buffy.toString();

@@ -25,9 +25,9 @@ import javax.swing.ListSelectionModel;
  * 
  * <P><b>Usage note:</b> Typically this text field will not be used directly, but will 
  * instead be used indirectly by way of an editor.
- * If this field is used directly, then the user should use {@link #setSelectedValue(Object)} and
- * {@link #getSelectedValue()} to get and set data on this field, rather than calling 
- * <strike>{@link #setText(String)}</strike> and <strike>{@link #getText()}</strike>.
+ * If this field is used directly, then the user should use <ins>{@link #setSelectedValue(Object)}</ins> and
+ * <ins>{@link #getSelectedValue()}</ins> to get and set data on this field, rather than calling 
+ * <del>{@link #setText(String)}</del> and <del>{@link #getText()}</del>.
  * 
  * <P>Usage notes:
  * 	<UL>

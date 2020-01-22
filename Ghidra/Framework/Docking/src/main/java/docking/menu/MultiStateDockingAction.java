@@ -99,9 +99,9 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	public abstract void actionStateChanged(ActionState<T> newActionState, EventTrigger trigger);
 
 	/**
-	 * If <tt>doPerformAction</tt> is <tt>true</tt>, then, when the user clicks the
+	 * If <code>doPerformAction</code> is <code>true</code>, then, when the user clicks the
 	 * button and not the drop-down arrow, the {@link #doActionPerformed(ActionContext)}
-	 * method will be called.  If <tt>doPerformAction</tt> is <tt>false</tt>, then, when
+	 * method will be called.  If <code>doPerformAction</code> is <code>false</code>, then, when
 	 * the user clicks the button and not the drop-down arrow, the popup menu will be shown, just
 	 * as if the user had clicked the drop-down arrow.
 	 * <p>

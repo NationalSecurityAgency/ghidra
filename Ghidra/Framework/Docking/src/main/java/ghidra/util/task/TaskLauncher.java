@@ -28,7 +28,7 @@ import ghidra.util.Swing;
  * {@link #TaskLauncher(Task, Component, int, int)}.  Alternatively, for simpler uses,
  * see one of the many static convenience methods.
  * 
- * <p><b><a name="modal_usage">Modal Usage</a></b><br>
+ * <p><b><a id="modal_usage">Modal Usage</a></b><br>
  * Most clients of this class should not be concerned with where 
  * the dialog used by this class will appear.  By default, it will be shown over 
  * the active window, which is the desired

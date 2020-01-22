@@ -149,6 +149,9 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	public void flowToAddress(Address fromAddr, Address toAddr) {
+		// make sure address in same space as from, might be in an overlay
+		toAddr = fromAddr.getAddressSpace().getOverlayAddress(toAddr);
+		
 		currentAddress = toAddr;
 		offsetContext.flowToAddress(fromAddr, toAddr);
 		spaceContext.flowToAddress(fromAddr, toAddr);
@@ -160,6 +163,9 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	public void flowStart(Address fromAddr, Address toAddr) {
+		// make sure address in same space as from, might be in an overlay
+		toAddr = fromAddr.getAddressSpace().getOverlayAddress(toAddr);
+		
 		currentAddress = toAddr;
 
 		this.lastSet = new HashMap<Varnode, Address>();  // clear out any interim last sets...  rely on allLastSet now
@@ -169,6 +175,9 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	public void copyToFutureFlowState(Address fromAddr, Address toAddr) {
+		// make sure address in same space as from, might be in an overlay
+		toAddr = fromAddr.getAddressSpace().getOverlayAddress(toAddr);
+		
 		offsetContext.copyToFutureFlowState(fromAddr, toAddr);
 		spaceContext.copyToFutureFlowState(fromAddr, toAddr);
 	}
@@ -177,6 +186,10 @@ public class VarnodeContext implements ProcessorContext {
 		if (toAddr == null) {
 			return false;
 		}
+		
+		// make sure address in same space as from, might be in an overlay
+		toAddr = fromAddr.getAddressSpace().getOverlayAddress(toAddr);
+		
 		ArrayList<RegisterValue> conflicts = offsetContext.mergeToFutureFlowState(fromAddr, toAddr);
 		ArrayList<RegisterValue> spaceConflicts =
 			spaceContext.mergeToFutureFlowState(fromAddr, toAddr);

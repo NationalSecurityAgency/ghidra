@@ -186,9 +186,6 @@ public class SymbolTablePluginScreenShots extends GhidraScreenShotGenerator {
 				else if ("Location".equals(headerValue)) {
 					column.setPreferredWidth(170);
 				}
-				else if ("Namespace".equals(headerValue)) {
-					column.setPreferredWidth(170);
-				}
 				else if ("Source".equals(headerValue)) {
 					column.setPreferredWidth(170);
 				}

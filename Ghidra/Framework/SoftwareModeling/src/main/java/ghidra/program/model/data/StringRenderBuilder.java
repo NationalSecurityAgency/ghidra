@@ -30,6 +30,7 @@ import ghidra.util.StringUtilities;
 public class StringRenderBuilder {
 	public static final char DOUBLE_QUOTE = '"';
 	public static final char SINGLE_QUOTE = '\'';
+	private static final int MAX_ASCII = 0x80;
 
 	private StringBuilder sb = new StringBuilder();
 	private boolean byteMode = true;
@@ -43,6 +44,18 @@ public class StringRenderBuilder {
 	public StringRenderBuilder(int charSize, char quoteChar) {
 		this.charSize = charSize;
 		this.quoteChar = quoteChar;
+	}
+
+	/**
+	 * Returns true if the current formatted string starts with a quoted text section,
+	 * instead of a byte value section.  Useful to indicate if
+	 * the string could have a prefix applied to it (ie. u8"text")
+	 * <p>
+	 * 
+	 * @return boolean true if this string will start with a quoted text section
+	 */
+	public boolean startsWithQuotedText() {
+		return sb.length() > 0 && sb.charAt(0) == quoteChar;
 	}
 
 	/**
@@ -99,16 +112,21 @@ public class StringRenderBuilder {
 	 * <p>
 	 * {@literal { 0, 1, 2 } -> 00,01,02}
 	 *
-	 * @param bytes
+	 * @param bytes to convert to hex and append.  If null, append "???"
 	 */
 	public void addByteSeq(byte[] bytes) {
+		if (bytes == null) {
+			ensureByteMode();
+			sb.append("???");
+			return;
+		}
 		for (int i = 0; i < bytes.length; i++) {
 			ensureByteMode();
 			String valStr = Integer.toHexString(bytes[i] & 0xff).toUpperCase();
 			if (valStr.length() < 2) {
 				sb.append("0");
 			}
-			sb.append(valStr);
+			sb.append(valStr).append("h");
 		}
 	}
 
@@ -124,10 +142,9 @@ public class StringRenderBuilder {
 	 */
 	public void addEscapedCodePoint(int codePoint) {
 		ensureTextMode();
-		char escapeChar = StringUtilities.isAsciiChar(codePoint) ? 'x'
-				: Character.isBmpCodePoint(codePoint) ? 'u' : 'U';
-		int cpDigits = StringUtilities.isAsciiChar(codePoint) ? 2
-				: Character.isBmpCodePoint(codePoint) ? 4 : 8;
+		char escapeChar =
+			(codePoint < MAX_ASCII) ? 'x' : Character.isBmpCodePoint(codePoint) ? 'u' : 'U';
+		int cpDigits = (codePoint < MAX_ASCII) ? 2 : Character.isBmpCodePoint(codePoint) ? 4 : 8;
 		String s = Integer.toHexString(codePoint).toUpperCase();
 		sb.append("\\").append(escapeChar);
 		sb.append(StringUtilities.pad(s, '0', cpDigits));

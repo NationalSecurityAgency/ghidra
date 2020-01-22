@@ -29,6 +29,9 @@ import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A 0x28 byte COFF section header
+ */
 public class CoffSectionHeader implements StructConverter {
 
 	protected String s_name;       // section name

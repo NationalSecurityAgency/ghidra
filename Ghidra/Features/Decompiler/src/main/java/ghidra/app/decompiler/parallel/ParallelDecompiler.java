@@ -110,7 +110,7 @@ public class ParallelDecompiler {
 	 * @param monitor the monitor used to report progress and to cancel
 	 * @return the parallel decompiler used for decompiling.
 	 */
-	public static <R> ChunkingParallelDecompiler<R> createChunkingParallelDecopmiler(
+	public static <R> ChunkingParallelDecompiler<R> createChunkingParallelDecompiler(
 			QCallback<Function, R> callback, TaskMonitor monitor) {
 		return new ChunkingParallelDecompiler<>(callback, monitor);
 	}

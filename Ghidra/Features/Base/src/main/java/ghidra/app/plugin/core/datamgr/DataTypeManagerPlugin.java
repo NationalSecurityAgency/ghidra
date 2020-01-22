@@ -155,10 +155,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 		editorManager = new DataTypeEditorManager(this);
 
-		CodeViewerService codeViewerService = tool.getService(CodeViewerService.class);
-		if (codeViewerService != null) {
-			codeViewerService.addProgramDropProvider(new DataDropOnBrowserHandler(this));
-		}
 		tool.addPopupActionProvider(this);
 		tool.setMenuGroup(new String[] { SyncRefreshAction.MENU_NAME }, "SYNC");
 		tool.setMenuGroup(new String[] { UpdateAction.MENU_NAME }, "SYNC");
@@ -167,12 +163,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		tool.setMenuGroup(new String[] { DisassociateAction.MENU_NAME }, "SYNC");
 		tool.setMenuGroup(new String[] { RECENTLY_OPENED_MENU }, "Recent");
 		tool.setMenuGroup(new String[] { STANDARD_ARCHIVE_MENU }, "Recent");
-
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#serviceAdded(java.lang.Class, java.lang.Object)
-	 */
 	@Override
 	public void serviceAdded(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == CodeViewerService.class) {
@@ -616,10 +608,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return new Class[] { DataTypeArchive.class };
 	}
 
-	/**
-	 * Method called if the plugin supports this domain file.
-	 * @param data the data to be used by the running tool
-	 */
 	@Override
 	public boolean acceptData(DomainFile[] data) {
 		if (data == null || data.length == 0) {
@@ -780,6 +768,14 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return true;
 	}
 
+	public DataTypeConflictHandler getConflictHandler() {
+		return provider.getConflictHandler();
+	}
+
+	void setStatus(String message) {
+		tool.setStatusInfo(message);
+	}
+
 	public static boolean isValidTypeDefBaseType(Component parent, DataType dataType) {
 		if (dataType instanceof FactoryDataType) {
 			Msg.showError(DataTypeManagerPlugin.class, parent, "TypeDef not allowed",
@@ -797,13 +793,5 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			return false;
 		}
 		return true;
-	}
-
-	public DataTypeConflictHandler getConflictHandler() {
-		return provider.getConflictHandler();
-	}
-
-	void setStatus(String message) {
-		tool.setStatusInfo(message);
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,12 @@
  */
 package ghidra.app.util.bin.format.coff;
 
-import ghidra.app.util.bin.BinaryReader;
-
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
+
 /**
- * 
- * COFF2 Section Header
- *
+ * A 0x30 byte COFF section header
  */
 class CoffSectionHeader2 extends CoffSectionHeader {
 

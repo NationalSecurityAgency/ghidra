@@ -34,6 +34,7 @@ import javax.swing.event.TableModelEvent;
 import org.junit.*;
 
 import docking.DockingUtils;
+import docking.widgets.AutoLookup;
 import docking.widgets.filter.*;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
@@ -455,7 +456,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 		triggerText(table, "si");
 		assertEquals(6, table.getSelectedRow());
 
-		sleep(GTable.KEY_TIMEOUT);
+		sleep(AutoLookup.KEY_TYPING_TIMEOUT);
 
 		// try again with the sort in the other direction
 		selectFirstRow();

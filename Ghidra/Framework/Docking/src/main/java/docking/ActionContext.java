@@ -28,7 +28,7 @@ import docking.action.DockingActionIf;
  * <b>toolbar buttons and menu items will enable and disable as the user interacts with the system.
  * Further, popup menu items will not be added to popup menus when they report false for 
  * {@link DockingActionIf#isAddToPopup(ActionContext)}; they will appear in the popup, but be 
- * disabled if they report <tt>true</tt> for the above call, but <tt>false</tt> for 
+ * disabled if they report <code>true</code> for the above call, but <code>false</code> for 
  * {@link DockingActionIf#isEnabledForContext(ActionContext)}.</b>
  * When the user executes an action, the current context will be passed to the backing 
  * {@link DockingActionIf}.   Ultimately, context serves to control action enablement and to 

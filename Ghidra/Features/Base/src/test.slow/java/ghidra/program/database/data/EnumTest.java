@@ -44,22 +44,22 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		super();
 	}
 
-    @Before
-    public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 
 		dataMgr = program.getDataTypeManager();
 		transactionID = program.startTransaction("Test");
 	}
 
-    @After
-    public void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 		program.endTransaction(transactionID, false);
 		program.release(this);
 	}
 
-@Test
-    public void testCreateEnum() throws Exception {
+	@Test
+	public void testCreateEnum() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);
@@ -88,29 +88,48 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(c.getDataType("Color"));
 	}
 
-@Test
-    public void testRemoveValue() throws Exception {
+	@Test
+	public void testRemoveValue() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);
 		enumm.add("Blue", 2);
+		enumm.add("blue", 2);
 
 		Category root = dataMgr.getRootCategory();
 		Category c = root.createCategory("enumms");
 		enumm.setCategoryPath(c.getCategoryPath());
 		Enum enummDT = (Enum) dataMgr.resolve(enumm, null);
-		assertEquals(3, enummDT.getCount());
-		enummDT.remove("Green");
-		assertEquals(2, enummDT.getCount());
 
+		assertArrayEquals(new long[] { 0, 1, 2 }, enumm.getValues());
+		assertEquals(4, enumm.getCount());
+
+		enummDT.remove("Green");
+		enummDT.remove("blue");
+
+		assertEquals(2, enummDT.getCount());
+		assertArrayEquals(new long[] { 0, 2 }, enummDT.getValues());
+
+		assertEquals(2, enummDT.getValue("Blue"));
+		try {
+			enummDT.getValue("blue");
+			fail("expected NoSuchElementException");
+		}
+		catch (NoSuchElementException e) {
+			// expected
+		}
 	}
 
-@Test
-    public void testAddValue() throws Exception {
+	@Test
+	public void testAddValue() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);
 		enumm.add("Blue", 2);
+		enumm.add("blue", 2);
+
+		assertArrayEquals(new long[] { 0, 1, 2 }, enumm.getValues());
+		assertEquals(4, enumm.getCount());
 
 		Category root = dataMgr.getRootCategory();
 		Category c = root.createCategory("enumms");
@@ -119,12 +138,15 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		Enum enummDT = (Enum) dataMgr.resolve(enumm, null);
 
 		enummDT.add("Purple", 7);
-		assertEquals(4, enummDT.getCount());
+		assertEquals(5, enummDT.getCount());
 		assertEquals(7, enummDT.getValue("Purple"));
+		assertEquals(2, enummDT.getValue("Blue"));
+		assertEquals(2, enummDT.getValue("blue"));
+		assertArrayEquals(new long[] { 0, 1, 2, 7 }, enummDT.getValues());
 	}
 
-@Test
-    public void testEditValue() throws Exception {
+	@Test
+	public void testEditValue() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 10);
 		enumm.add("Green", 15);
@@ -148,8 +170,8 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(2, listener.getCount());
 	}
 
-@Test
-    public void testCloneRetainIdentity() throws Exception {
+	@Test
+	public void testCloneRetainIdentity() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 10);
 		enumm.add("Green", 15);
@@ -168,8 +190,8 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(copyDT.isEquivalent(c2));
 	}
 
-@Test
-    public void testCopyNoRetainIdentity() throws Exception {
+	@Test
+	public void testCopyNoRetainIdentity() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 10);
 		enumm.add("Green", 15);
@@ -188,8 +210,8 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(copyDT.isEquivalent(c2));
 	}
 
-@Test
-    public void testRemoveEnum() throws Exception {
+	@Test
+	public void testRemoveEnum() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 10);
 		enumm.add("Green", 15);
@@ -208,8 +230,8 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-@Test
-    public void testMoveEnum() throws Exception {
+	@Test
+	public void testMoveEnum() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 10);
 		enumm.add("Green", 15);
@@ -224,8 +246,8 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNull(c.getDataType(enumm.getName()));
 	}
 
-@Test
-    public void testResolve() throws Exception {
+	@Test
+	public void testResolve() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 10);
 		enumm.add("Green", 15);
@@ -239,8 +261,8 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(enummDT, dataMgr.getDataType(id));
 	}
 
-@Test
-    public void testReplace() throws Exception {
+	@Test
+	public void testReplace() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 10);
 		enumm.add("Green", 15);
@@ -275,8 +297,8 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-@Test
-    public void testIsEquivalent() throws Exception {
+	@Test
+	public void testIsEquivalent() throws Exception {
 		Enum enumm = new EnumDataType("Color", 1);
 		enumm.add("Red", 10);
 		enumm.add("Green", 15);

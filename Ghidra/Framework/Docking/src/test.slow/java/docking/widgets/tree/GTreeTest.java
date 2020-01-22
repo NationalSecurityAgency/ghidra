@@ -188,6 +188,25 @@ public class GTreeTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testExpandCollapseNode() {
+		GTreeNode node = findNodeInTree(NonLeafWithOneLevelOfChildrenNodeB.class.getSimpleName());
+		assertTrue(!node.isExpanded());
+
+		node.expand();
+		waitForTree();
+		assertTrue(node.isExpanded());
+
+		node.collapse();
+		waitForTree();
+		assertTrue(!node.isExpanded());
+
+		GTreeNode root = node.getRoot();
+		root.collapse();
+		assertTrue(!root.isExpanded());
+		assertTrue(gTree.getExpandedPaths().isEmpty());
+	}
+
+	@Test
 	public void testChangeFilterSettingsWithFilterTextInPlace() {
 
 		GTreeNode node = findNodeInTree("Leaf Child - Many B1");

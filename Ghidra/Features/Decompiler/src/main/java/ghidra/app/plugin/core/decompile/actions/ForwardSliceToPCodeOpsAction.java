@@ -31,7 +31,7 @@ public class ForwardSliceToPCodeOpsAction extends AbstractDecompilerAction {
 		super("Highlight Forward Inst Slice");
 		this.controller = controller;
 		setPopupMenuData(
-			new MenuData(new String[] { "Highlight Forward Inst Slice" }, "Decompile"));
+			new MenuData(new String[] { "Highlight", "Forward Inst Slice" }, "Decompile"));
 	}
 
 	@Override
@@ -51,10 +51,9 @@ public class ForwardSliceToPCodeOpsAction extends AbstractDecompilerAction {
 			PcodeOp op = tokenAtCursor.getPcodeOp();
 			Set<PcodeOp> forwardSlice = DecompilerUtils.getForwardSliceToPCodeOps(varnode);
 			forwardSlice.add(op);
-			decompilerPanel.clearHighlights();
+			decompilerPanel.clearPrimaryHighlights();
 			decompilerPanel.addPcodeOpHighlights(forwardSlice,
-				decompilerPanel.getDefaultHighlightColor());
-			decompilerPanel.repaint();
+				decompilerPanel.getCurrentVariableHighlightColor());
 		}
 
 	}

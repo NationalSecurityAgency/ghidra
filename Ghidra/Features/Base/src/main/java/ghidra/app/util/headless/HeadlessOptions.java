@@ -28,7 +28,8 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * <code>HeadlessOptions</code>.  Options for headless analyzer.
+ * Options for headless analyzer.
+ * <p>
  * Option state may be adjusted to reflect assumed options
  * during processing.  If multiple invocations of either
  * {@link HeadlessAnalyzer#processLocal(String, String, String, List)} or
@@ -115,7 +116,7 @@ public class HeadlessOptions {
 	/**
 	 * Resets the options to its default settings.
 	 */
-	public synchronized void reset() {
+	public void reset() {
 		domainFileNameToProcess = null;
 		runScriptsNoImport = false;
 		preScripts = new LinkedList<>();
@@ -160,7 +161,7 @@ public class HeadlessOptions {
 	 * @throws IllegalArgumentException if the specified filename is invalid and contains the
 	 * path separator character '/'. 
 	 */
-	public synchronized void setRunScriptsNoImport(boolean runScriptsOnly, String filename) {
+	public void setRunScriptsNoImport(boolean runScriptsOnly, String filename) {
 		if (filename != null) {
 			filename = filename.trim();
 			if (filename.indexOf("/") >= 0) {
@@ -178,7 +179,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param preScripts list of script names
 	 */
-	public synchronized void setPreScripts(List<String> preScripts) {
+	public void setPreScripts(List<String> preScripts) {
 		List<Pair<String, String[]>> preScriptsEmptyArgs = new LinkedList<>();
 		for (String preScript : preScripts) {
 			preScriptsEmptyArgs.add(new Pair<>(preScript, new String[0]));
@@ -193,7 +194,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param preScripts list of script names/script argument pairs
 	 */
-	public synchronized void setPreScriptsWithArgs(List<Pair<String, String[]>> preScripts) {
+	public void setPreScriptsWithArgs(List<Pair<String, String[]>> preScripts) {
 		this.preScripts = preScripts;
 		this.preScriptFileMap = null;
 	}
@@ -205,7 +206,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param postScripts list of script names
 	 */
-	public synchronized void setPostScripts(List<String> postScripts) {
+	public void setPostScripts(List<String> postScripts) {
 		List<Pair<String, String[]>> postScriptsEmptyArgs = new LinkedList<>();
 		for (String postScript : postScripts) {
 			postScriptsEmptyArgs.add(new Pair<>(postScript, new String[0]));
@@ -220,7 +221,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param postScripts list of script names/script argument pairs
 	 */
-	public synchronized void setPostScriptsWithArgs(List<Pair<String, String[]>> postScripts) {
+	public void setPostScriptsWithArgs(List<Pair<String, String[]>> postScripts) {
 		this.postScripts = postScripts;
 		this.postScriptFileMap = null;
 	}
@@ -239,7 +240,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param newPaths list of directories to be searched.
 	 */
-	public synchronized void setScriptDirectories(List<String> newPaths) {
+	public void setScriptDirectories(List<String> newPaths) {
 		scriptPaths = newPaths;
 	}
 
@@ -256,7 +257,7 @@ public class HeadlessOptions {
 	 * </pre>
 	 * @param paths semicolon (';') separated list of directory paths
 	 */
-	public synchronized void setScriptDirectories(String paths) {
+	public void setScriptDirectories(String paths) {
 		String[] pathArray = paths.split(";");
 		setScriptDirectories(Arrays.asList(pathArray));
 	}
@@ -270,7 +271,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param path  location of .properties file(s)
 	 */
-	public synchronized void setPropertiesFileDirectory(String path) {
+	public void setPropertiesFileDirectory(String path) {
 		propertiesFileStrPaths = new ArrayList<>();
 		propertiesFileStrPaths.add(path);
 	}
@@ -284,7 +285,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param newPaths  potential locations of .properties file(s)
 	 */
-	public synchronized void setPropertiesFileDirectories(List<String> newPaths) {
+	public void setPropertiesFileDirectories(List<String> newPaths) {
 		propertiesFileStrPaths = newPaths;
 	}
 
@@ -297,7 +298,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param paths  String representation of directories (each separated by ';')
 	 */
-	public synchronized void setPropertiesFileDirectories(String paths) {
+	public void setPropertiesFileDirectories(String paths) {
 		String[] pathArray = paths.split(";");
 		setPropertiesFileDirectories(Arrays.asList(pathArray));
 	}
@@ -312,19 +313,19 @@ public class HeadlessOptions {
 	 * @param enabled if true conflicting domain files will be removed from the 
 	 * project prior to importing the new file.
 	 */
-	public synchronized void enableOverwriteOnConflict(boolean enabled) {
+	public void enableOverwriteOnConflict(boolean enabled) {
 		this.overwrite = enabled;
 	}
 
 	/**
 	 * This method can be used to enable recursive processing of files during
-	 * <tt>-import</tt> or <tt>-process</tt> modes.  In order for recursive processing of files to
+	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of files to
 	 * occur, the user must have specified a directory (and not a specific file)
 	 * for the Headless Analyzer to import or process.
 	 * 
 	 * @param enabled  if true, enables recursive processing
 	 */
-	public synchronized void enableRecursiveProcessing(boolean enabled) {
+	public void enableRecursiveProcessing(boolean enabled) {
 		this.recursive = enabled;
 	}
 
@@ -335,7 +336,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param enabled  if true, enables readOnly processing or import
 	 */
-	public synchronized void enableReadOnlyProcessing(boolean enabled) {
+	public void enableReadOnlyProcessing(boolean enabled) {
 		this.readOnly = enabled;
 	}
 
@@ -348,7 +349,7 @@ public class HeadlessOptions {
 	 * @param enabled if true a created project will be deleted when 
 	 * processing is complete.
 	 */
-	public synchronized void setDeleteCreatedProjectOnClose(boolean enabled) {
+	public void setDeleteCreatedProjectOnClose(boolean enabled) {
 		this.deleteProject = enabled;
 	}
 
@@ -358,7 +359,7 @@ public class HeadlessOptions {
 	 * 
 	 * @param enabled True if auto-analysis should be enabled; otherwise, false.
 	 */
-	public synchronized void enableAnalysis(boolean enabled) {
+	public void enableAnalysis(boolean enabled) {
 		this.analyze = enabled;
 	}
 
@@ -370,7 +371,7 @@ public class HeadlessOptions {
 	 * @param compilerSpecId The compiler spec to set.
 	 * @throws InvalidInputException if the language and compiler spec combination is not valid.
 	 */
-	public synchronized void setLanguageAndCompiler(String languageId, String compilerSpecId)
+	public void setLanguageAndCompiler(String languageId, String compilerSpecId)
 			throws InvalidInputException {
 		if (languageId == null && compilerSpecId == null) {
 			return;
@@ -407,8 +408,7 @@ public class HeadlessOptions {
 	 * @param stringInSecs  timeout value in seconds (as a String)
 	 * @throws InvalidInputException if the timeout value was not a valid value
 	 */
-	public synchronized void setPerFileAnalysisTimeout(String stringInSecs)
-			throws InvalidInputException {
+	public void setPerFileAnalysisTimeout(String stringInSecs) throws InvalidInputException {
 		try {
 			perFileTimeout = Integer.parseInt(stringInSecs);
 		}
@@ -418,10 +418,10 @@ public class HeadlessOptions {
 		}
 	}
 
-	public synchronized void setPerFileAnalysisTimeout(int secs) {
+	public void setPerFileAnalysisTimeout(int secs) {
 		perFileTimeout = secs;
 	}
-	
+
 	/**
 	 * Set Ghidra Server client credentials to be used with "shared" projects.
 	 * 
@@ -434,7 +434,7 @@ public class HeadlessOptions {
 	 * the password entry to the terminal which may be undesirable.
 	 * @throws IOException if an error occurs while opening the specified keystorePath.
 	 */
-	public synchronized void setClientCredentials(String userID, String keystorePath,
+	public void setClientCredentials(String userID, String keystorePath,
 			boolean allowPasswordPrompt) throws IOException {
 		this.connectUserID = userID;
 		this.keystore = keystorePath;
@@ -450,12 +450,12 @@ public class HeadlessOptions {
 	 * @param commit if true imported files will be committed
 	 * @param comment optional comment to use when committing
 	 */
-	public synchronized void setCommitFiles(boolean commit, String comment) {
+	public void setCommitFiles(boolean commit, String comment) {
 		this.commit = commit;
 		this.commitComment = comment;
 	}
 
-	public synchronized void setOkToDelete(boolean deleteOk) {
+	public void setOkToDelete(boolean deleteOk) {
 		okToDelete = deleteOk;
 	}
 
@@ -465,7 +465,7 @@ public class HeadlessOptions {
 	 * @param cpu The maximum number of cpu cores to use during headless processing.
 	 *     Setting it to 0 or a negative integer is equivalent to setting it to 1.
 	 */
-	public synchronized void setMaxCpu(int cpu) {
+	public void setMaxCpu(int cpu) {
 		this.maxcpu = cpu;
 		System.setProperty("cpu.core.limit", Integer.toString(cpu));
 
@@ -481,7 +481,7 @@ public class HeadlessOptions {
 	 * @throws InvalidInputException if an invalid loader name was specified, or if loader arguments
 	 *   were specified but a loader was not.
 	 */
-	public synchronized void setLoader(String loaderName, List<Pair<String, String>> loaderArgs)
+	public void setLoader(String loaderName, List<Pair<String, String>> loaderArgs)
 			throws InvalidInputException {
 		if (loaderName != null) {
 			this.loaderClass = LoaderService.getLoaderClassByName(loaderName);

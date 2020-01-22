@@ -30,7 +30,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * <p>
  * This interface is an ExtensionPoint so that once created, they will be ingested automatically
  * by Ghidra.  Once discovered, these mappers will be used to provide dynamic columns to to 
- * tables with row types that match <tt>ROW_TYPE</tt>.
+ * tables with row types that match <code>ROW_TYPE</code>.
  *
  * @param <ROW_TYPE> The row type of a given table model
  * @param <EXPECTED_ROW_TYPE> The row type expected by dynamic columns.

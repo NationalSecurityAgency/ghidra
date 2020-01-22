@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.beans.PropertyEditor;
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 import javax.swing.KeyStroke;
@@ -98,9 +99,9 @@ public class ToolOptions extends AbstractOptions {
 			try {
 				Element elem = (Element) iter.next();
 				String optionName = elem.getAttributeValue("NAME");
-
 				Class<?> c = Class.forName(elem.getAttributeValue("CLASS"));
-				WrappedOption wo = (WrappedOption) c.newInstance();
+				Constructor<?> constructor = c.getDeclaredConstructor();
+				WrappedOption wo = (WrappedOption) constructor.newInstance();
 				wo.readState(new SaveState(elem));
 				Option option = createUnregisteredOption(optionName, wo.getOptionType(), null);
 				option.doSetCurrentValue(wo.getObject());// use doSet versus set so that it is not registered

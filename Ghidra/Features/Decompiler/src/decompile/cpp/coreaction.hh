@@ -97,6 +97,24 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
+/// \brief Find Varnodes with a vectorized lane scheme and attempt to split the lanes
+///
+/// The Architecture lists (vector) registers that may be used to perform parallelized operations
+/// on \b lanes within the register. This action looks for these registers as Varnodes, determines
+/// if a particular lane scheme makes sense in terms of the function's data-flow, and then
+/// rewrites the data-flow so that the lanes become explicit Varnodes.
+class ActionLaneDivide : public Action {
+  void collectLaneSizes(Varnode *vn,const LanedRegister &allowedLanes,LanedRegister &checkLanes);
+  bool processVarnode(Funcdata &data,Varnode *vn,const LanedRegister &lanedRegister,int4 mode);
+public:
+  ActionLaneDivide(const string &g) : Action(rule_onceperfunc,"lanedivide",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionLaneDivide(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+};
+
 /// \brief Make sure pointers into segmented spaces have the correct form.
 ///
 /// Convert user-defined ops defined as segment p-code ops by a cspec tag into the internal CPUI_SEGMENTOP
@@ -185,8 +203,15 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
-/// \brief Transform read-only variables to constants
+/// \brief Transform based on Varnode properties, such as \e read-only and \e volatile
+///
+/// This performs various transforms that are based on Varnode properties.
+///   - Read-only Varnodes are converted to the underlying constant
+///   - Volatile Varnodes are converted read/write functions
+///   - Varnodes whose values are not consumed are replaced with constant 0 Varnodes
+///   - Large Varnodes are flagged for lane analysis
 class ActionVarnodeProps : public Action {
+  void markLanedVarnode(Funcdata &data,Varnode *vn);	///< Mark possible laned register storage
 public:
   ActionVarnodeProps(const string &g) : Action(0,"varnodeprops",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {

@@ -15,13 +15,13 @@
  */
 package generic.test;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -358,6 +358,17 @@ public abstract class AbstractGTest {
 		catch (InterruptedException e) {
 			fail("Interrupted waiting for CountDownLatch");
 		}
+	}
+
+	/**
+	 * Waits for the given AtomicBoolean to return true.  This is a convenience method for 
+	 * {@link #waitFor(BooleanSupplier)}.
+	 *
+	 * @param ab the atomic boolean
+	 * @throws AssertionFailedError if the condition is not met within the timeout period
+	 */
+	public static void waitFor(AtomicBoolean ab) throws AssertionFailedError {
+		waitForCondition(() -> ab.get());
 	}
 
 	/**

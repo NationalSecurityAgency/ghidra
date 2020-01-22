@@ -18,14 +18,21 @@ package ghidra.app.util.bin;
 import java.io.*;
 
 /**
- * Creates a byte provider constrained to a sub-section
- * of an existing byte provider.
+ * Creates a {@link ByteProvider} constrained to a sub-section of an existing {@link ByteProvider}.
  */
 public class ByteProviderWrapper implements ByteProvider {
 	private ByteProvider provider;
 	private long subOffset;
 	private long subLength;
 
+	/**
+	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider}
+	 * 
+	 * @param provider the {@link ByteProvider} to wrap
+	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
+	 *   {@link ByteProviderWrapper} 
+	 * @param subLength the length of the new {@link ByteProviderWrapper} 
+	 */
 	public ByteProviderWrapper(ByteProvider provider, long subOffset, long subLength) {
 		this.provider = provider;
 		this.subOffset = subOffset;

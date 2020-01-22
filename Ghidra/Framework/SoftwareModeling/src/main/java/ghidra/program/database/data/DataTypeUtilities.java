@@ -383,7 +383,7 @@ public class DataTypeUtilities {
 	public static DataType findNamespaceQualifiedDataType(DataTypeManager dataTypeManager,
 			String dtNameWithNamespace, Class<? extends DataType> classConstraint) {
 
-		String[] splitName = dtNameWithNamespace.split(Namespace.NAMESPACE_DELIMITER);
+		String[] splitName = dtNameWithNamespace.split(Namespace.DELIMITER);
 		String dtName = splitName[splitName.length - 1];
 
 		return findDataType(dataTypeManager, dtName, classConstraint,

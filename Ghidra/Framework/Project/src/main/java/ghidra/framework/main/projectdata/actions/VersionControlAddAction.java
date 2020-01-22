@@ -24,7 +24,7 @@ import javax.swing.ImageIcon;
 import docking.action.MenuData;
 import docking.action.ToolBarData;
 import ghidra.framework.client.ClientUtil;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
@@ -52,7 +52,7 @@ public class VersionControlAddAction extends VersionControlAction {
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		addToVersionControl(context.getSelectedFiles());
 	}
 
@@ -60,7 +60,7 @@ public class VersionControlAddAction extends VersionControlAction {
 	 * Returns true if at least one of the provided domain files can be added to the repository.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.canAddToRepository()) {

@@ -193,7 +193,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		String symName = symbol.getName();
 		symName = SymbolUtilities.getCleanSymbolName(symName, ref.getToAddress());
-		symName = symName.replace(Namespace.NAMESPACE_DELIMITER, "_");
+		symName = symName.replace(Namespace.DELIMITER, "_");
 		return POINTER_LABEL_PREFIX + "_" + symName;
 	}
 

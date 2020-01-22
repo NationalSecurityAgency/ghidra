@@ -213,18 +213,16 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		// make some changes to check in
-		Program program = (Program) ((DomainFileNode) node).getDomainFile()
-				.getDomainObject(this,
-					true, false, TaskMonitor.DUMMY);
+		Program program = (Program) ((DomainFileNode) node).getDomainFile().getDomainObject(this,
+			true, false, TaskMonitor.DUMMY);
 		editProgram(program, (p) -> {
 			SymbolTable symTable = p.getSymbolTable();
 			symTable.createLabel(p.getMinAddress().getNewAddress(0x010001000), "fred",
 				SourceType.USER_DEFINED);
 		});
 
-		program = (Program) ((DomainFileNode) xnode).getDomainFile()
-				.getDomainObject(this, true,
-					false, TaskMonitor.DUMMY);
+		program = (Program) ((DomainFileNode) xnode).getDomainFile().getDomainObject(this, true,
+			false, TaskMonitor.DUMMY);
 		editProgram(program, (p) -> {
 			SymbolTable symTable = p.getSymbolTable();
 			symTable.createLabel(p.getMinAddress(), "bob", SourceType.USER_DEFINED);
@@ -253,9 +251,8 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		checkout(programNode);
 
 		Program program =
-			(Program) ((DomainFileNode) programNode).getDomainFile()
-					.getDomainObject(this, true,
-						false, TaskMonitor.DUMMY);
+			(Program) ((DomainFileNode) programNode).getDomainFile().getDomainObject(this, true,
+				false, TaskMonitor.DUMMY);
 
 		createHistoryEntry(program, "Symbol1");
 		frontEnd.checkIn(programNode, "This is checkin 1");
@@ -608,8 +605,9 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		selectInTable(table, node);
 
 		DockingActionIf undoCheckoutAction = getAction("UndoCheckOut");
-		assertTrue(undoCheckoutAction.isEnabledForContext(dialog.getActionContext(null)));
-		performAction(undoCheckoutAction);
+		ActionContext actionContext = dialog.getActionContext(null);
+		assertTrue(undoCheckoutAction.isEnabledForContext(actionContext));
+		performAction(undoCheckoutAction, actionContext, true);
 
 		waitForBusyTable(table);
 		assertEquals(1, model.getRowCount());

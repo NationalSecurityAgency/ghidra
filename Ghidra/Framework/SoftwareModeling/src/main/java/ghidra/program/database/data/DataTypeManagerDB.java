@@ -2626,20 +2626,19 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * Notifys the category path changed
 	 * @param dt the datatype whose path changed.
 	 * @param oldPath the old category.
+	 * @param oldCatId the old category's record id
 	 */
-	void dataTypeCategoryPathChanged(DataTypeDB dt, CategoryPath oldPath) {
+	void dataTypeCategoryPathChanged(DataTypeDB dt, CategoryPath oldPath, long oldCatId) {
 		if (!(dt instanceof Array) && !(dt instanceof Pointer)) {
 			try {
-				RecordIterator it = arrayAdapter.getRecords();
-				while (it.hasNext()) {
-					Record rec = it.next();
-					ArrayDB array = (ArrayDB) getDataType(rec.getKey(), rec);
+				for (long arrayId : arrayAdapter.getRecordIdsInCategory(oldCatId)) {
+					Record rec = arrayAdapter.getRecord(arrayId);
+					ArrayDB array = (ArrayDB) getDataType(arrayId, rec);
 					array.updatePath(dt);
 				}
-				it = pointerAdapter.getRecords();
-				while (it.hasNext()) {
-					Record rec = it.next();
-					PointerDB ptr = (PointerDB) getDataType(rec.getKey(), rec);
+				for (long ptrId : pointerAdapter.getRecordIdsInCategory(oldCatId)) {
+					Record rec = pointerAdapter.getRecord(ptrId);
+					PointerDB ptr = (PointerDB) getDataType(ptrId, rec);
 					ptr.updatePath(dt);
 				}
 			}

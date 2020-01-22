@@ -220,6 +220,42 @@ AddrSpace *Architecture::getSpaceBySpacebase(const Address &loc,int4 size) const
   return (AddrSpace *)0;
 }
 
+/// Look-up the laned register record associated with a specific storage location. Currently, the
+/// record is only associated with the \e size of the storage, not its address. If there is no
+/// associated record, null is returned.
+/// \param loc is the starting address of the storage location
+/// \param size is the size of the storage in bytes
+/// \return the matching LanedRegister record or null
+const LanedRegister *Architecture::getLanedRegister(const Address &loc,int4 size) const
+
+{
+  int4 min = 0;
+  int4 max = lanerecords.size() - 1;
+  while(min <= max) {
+    int4 mid = (min + max) / 2;
+    int4 sz = lanerecords[mid].getWholeSize();
+    if (sz < size)
+      min = mid + 1;
+    else if (size < sz)
+      max = mid - 1;
+    else
+      return &lanerecords[mid];
+  }
+  return (const LanedRegister *)0;
+}
+
+/// Return a size intended for comparison with a Varnode size to immediately determine if
+/// the Varnode is a potential laned register. If there are no laned registers for the architecture,
+/// -1 is returned.
+/// \return the size in bytes of the smallest laned register or -1.
+int4 Architecture::getMinimumLanedRegisterSize(void) const
+
+{
+  if (lanerecords.empty())
+    return -1;
+  return lanerecords[0].getWholeSize();
+}
+
 /// The default model is used whenever an explicit model is not known
 /// or can't be determined.
 /// \param nm is the name of the model to set
@@ -811,6 +847,32 @@ void Architecture::parseIncidentalCopy(const Element *el)
   }
 }
 
+/// Look for \<register> tags that have a \e vector_lane_size attribute.
+/// Record these so that the decompiler can split large registers into appropriate lane size pieces.
+/// \param el is the XML element
+void Architecture::parseLaneSizes(const Element *el)
+
+{
+  vector<uint4> maskList;
+  const List &childList(el->getChildren());
+  List::const_iterator iter;
+
+  LanedRegister lanedRegister;		// Only allocate once
+  for(iter=childList.begin();iter!=childList.end();++iter) {
+    if (lanedRegister.restoreXml(*iter, this)) {
+      int4 sizeIndex = lanedRegister.getWholeSize();
+      while (maskList.size() <= sizeIndex)
+	maskList.push_back(0);
+      maskList[sizeIndex] |= lanedRegister.getSizeBitMask();
+    }
+  }
+  lanerecords.clear();
+  for(int4 i=0;i<maskList.size();++i) {
+    if (maskList[i] == 0) continue;
+    lanerecords.push_back(LanedRegister(i,maskList[i]));
+  }
+}
+
 /// Create a stack space and a stack-pointer register from this \<stackpointer> element
 /// \param el is the XML element
 void Architecture::parseStackPointer(const Element *el)
@@ -976,6 +1038,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     else if (elname == "segmentop")
       userops.parseSegmentOp(*iter,this);
     else if (elname == "register_data") {
+      parseLaneSizes(*iter);
     }
     else if (elname == "segmented_address") {
     }

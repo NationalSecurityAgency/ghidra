@@ -15,15 +15,13 @@
  */
 package docking.util.image;
 
-import generic.Images;
-
 import java.awt.image.*;
 import java.io.File;
 import java.util.Hashtable;
 
 import javax.swing.ImageIcon;
 
-import docking.tool.ToolConstants;
+import generic.Images;
 import resources.ResourceManager;
 
 /**
@@ -31,6 +29,22 @@ import resources.ResourceManager;
  * not valid, then a default "bomb" icon is used as the icon.
  */
 public class ToolIconURL implements Comparable<ToolIconURL> {
+
+	/**
+	 * The large icon size (height and width)
+	 */
+	public static final int LARGE_ICON_SIZE = 24;
+
+	/**
+	 * The medium icon size (height and width)
+	 */
+	public static final int MEDIUM_ICON_SIZE = 22;
+
+	/**
+	 * The small icon size (height and width)
+	 */
+	public static final int SMALL_ICON_SIZE = 16;
+
 	private static final int MAX_IMAGE_LOAD_TIME = 5000;
 
 	private String location;
@@ -91,19 +105,24 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		ToolIconURL other = (ToolIconURL) obj;
 		if (location == null) {
-			if (other.location != null)
+			if (other.location != null) {
 				return false;
+			}
 		}
-		else if (!location.equals(other.location))
+		else if (!location.equals(other.location)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -113,35 +132,35 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	}
 
 	private ImageIcon getSmallIcon(ImageIcon unscaledIcon) {
-		if (unscaledIcon.getIconHeight() == ToolConstants.SMALL_ICON_SIZE &&
-			unscaledIcon.getIconHeight() == ToolConstants.SMALL_ICON_SIZE) {
+		if (unscaledIcon.getIconHeight() == SMALL_ICON_SIZE &&
+			unscaledIcon.getIconHeight() == SMALL_ICON_SIZE) {
 			return unscaledIcon;
 		}
 
 		// can we find this icon in the desired size on disk?
-		ImageIcon image = findCompatibleImageForSize(location, ToolConstants.SMALL_ICON_SIZE);
+		ImageIcon image = findCompatibleImageForSize(location, SMALL_ICON_SIZE);
 		if (image != null) {
 			return image;
 		}
 
-		return ResourceManager.getScaledIcon(unscaledIcon, ToolConstants.SMALL_ICON_SIZE,
-			ToolConstants.SMALL_ICON_SIZE);
+		return ResourceManager.getScaledIcon(unscaledIcon, SMALL_ICON_SIZE,
+			SMALL_ICON_SIZE);
 	}
 
 	private ImageIcon getLargeIcon(ImageIcon unscaledIcon) {
-		if (unscaledIcon.getIconHeight() == ToolConstants.LARGE_ICON_SIZE &&
-			unscaledIcon.getIconHeight() == ToolConstants.LARGE_ICON_SIZE) {
+		if (unscaledIcon.getIconHeight() == LARGE_ICON_SIZE &&
+			unscaledIcon.getIconHeight() == LARGE_ICON_SIZE) {
 			return unscaledIcon;
 		}
 
 		// can we find this icon in the desired size on disk?
-		ImageIcon image = findCompatibleImageForSize(location, ToolConstants.LARGE_ICON_SIZE);
+		ImageIcon image = findCompatibleImageForSize(location, LARGE_ICON_SIZE);
 		if (image != null) {
 			return image;
 		}
 
 		// ...try the medium size
-		image = findCompatibleImageForSize(location, ToolConstants.MEDIUM_ICON_SIZE);
+		image = findCompatibleImageForSize(location, MEDIUM_ICON_SIZE);
 		if (image != null) {
 			return image;
 		}
@@ -152,8 +171,8 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 			return ResourceManager.loadImage(Images.BIG_BOMB);
 		}
 
-		return ResourceManager.getScaledIcon(unscaledIcon, ToolConstants.LARGE_ICON_SIZE,
-			ToolConstants.LARGE_ICON_SIZE);
+		return ResourceManager.getScaledIcon(unscaledIcon, LARGE_ICON_SIZE,
+			LARGE_ICON_SIZE);
 	}
 
 	private ImageIcon findCompatibleImageForSize(String imagePath, int desiredSize) {
@@ -214,6 +233,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	 * <p>
 	 * <b>WARNING: </b> This call may block the Swing thread for up to {@link #MAX_IMAGE_LOAD_TIME}
 	 * milliseconds the first time it is called!
+	 * @return true if animated
 	 */
 	public boolean isAnimated() {
 		if (!hasCheckedForAnimatedStatus) {
@@ -225,14 +245,16 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	}
 
 	/**
-	 * Return the location of this icon.
+	 * Return the location of this icon
+	 * @return the location of this icon
 	 */
 	public String getLocation() {
 		return location;
 	}
 
 	/**
-	 * Return the icon as {@link ToolConstants#SMALL_ICON_SIZE} pixel size.
+	 * Return the icon as {@link #SMALL_ICON_SIZE} pixel size.
+	 * @return the icon
 	 */
 	public ImageIcon getSmallIcon() {
 		if (smallIcon == null) {
@@ -243,7 +265,8 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	}
 
 	/**
-	 * Return the icon as {@link ToolConstants#LARGE_ICON_SIZE} pixel size.
+	 * Return the icon as {@link #LARGE_ICON_SIZE} pixel size.
+	 * @return the icon
 	 */
 	public ImageIcon getIcon() {
 		if (largeIcon == null) {
@@ -254,7 +277,8 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	}
 
 	/**
-	 * Returns the icon bytes.
+	 * Returns the icon bytes
+	 * @return the bytes
 	 */
 	public byte[] getIconBytes() {
 		return iconBytes;

@@ -39,7 +39,7 @@ public abstract class DemangledObject {
 	protected static final String SPACE = " ";
 	protected static final Pattern SPACE_PATTERN = Pattern.compile(SPACE);
 
-	protected static final String NAMESPACE_SEPARATOR = Namespace.NAMESPACE_DELIMITER;
+	protected static final String NAMESPACE_SEPARATOR = Namespace.DELIMITER;
 	protected static final String EMPTY_STRING = "";
 
 	protected String originalMangled;

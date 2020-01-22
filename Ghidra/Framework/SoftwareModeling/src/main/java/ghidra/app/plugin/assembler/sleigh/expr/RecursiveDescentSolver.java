@@ -17,8 +17,6 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 
 import java.util.*;
 
-import com.google.common.collect.ImmutableSet;
-
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedConstructor;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
@@ -157,7 +155,7 @@ public class RecursiveDescentSolver {
 	public AssemblyResolution solve(PatternExpression exp, MaskedLong goal, Map<String, Long> vals,
 			Map<Integer, Object> res, AssemblyResolvedConstructor cur, String description)
 			throws NeedsBackfillException {
-		return solve(exp, goal, vals, res, cur, ImmutableSet.of(), description);
+		return solve(exp, goal, vals, res, cur, Set.of(), description);
 	}
 
 	/**

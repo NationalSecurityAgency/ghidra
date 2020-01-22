@@ -6,6 +6,38 @@
   </HEAD>
 
 <BODY>
+<H1 align="center">Ghidra 9.1.1 Change History (December 2019)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Importer:MachO</I>. Improved import/load time of DYLD shared cache files. (GT-3261)</li>
+    <li><I>Program API</I>. Cached the addresses that correspond to executable memory to improve analysis performance. (GT-3260)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed a symbol name error that occurred in the Objective-C analyzer. (GT-3321, Issue #1200)</li>
+    <li><I>Analysis</I>. Constant references are now computed correctly within functions in overlay spaces. (GT-3373)</li>
+    <li><I>Build</I>. Corrected build of <B>DMG.jar</B> which was improperly built within Ghidra 9.1 release. (GT-3364)</li>
+    <li><I>Decompiler</I>. Fixed bug causing <code>Pcode: XML comms: Badly formed address</code> errors when decompiling HCS12 <code>XGATE</code> code. (GT-3297)</li>
+    <li><I>Decompiler</I>. Fixed <code>Array DataType must be Fixed length</code> exceptions related to function pointer data types. (GT-3309)</li>
+    <li><I>Decompiler</I>. Fixed bug causing decompiler to drop statements, assigning string constants to global variables. (GT-3315)</li>
+    <li><I>Decompiler</I>. Fixed issue with enum name strings causing <code>Low-level Error: XML error: syntax error</code> in the decompiler. (GT-3387, Issue #1329)</li>
+    <li><I>GUI</I>. Fixed a potential ConcurrentModificationException in the interactive python interpreter. (GT-3280)</li>
+    <li><I>Importer:PE</I>. Fixed an exception in the PeLoader that occurred when the size of the memory block for the headers is larger than the file size. (GT-3344, Issue #1266)</li>
+    <li><I>Languages</I>. Corrected Sparc floating point instruction pcode implementation. (GT-3202)</li>
+    <li><I>Languages</I>. Corrected the semantics of the PowerPC <code>e_cmpi</code> instruction. (GT-3228, Issue #1127)</li>
+    <li><I>Languages</I>. Corrected bit generation for PowerPC instructions <code>se_bclri</code>, <code>se_bgeni</code>, <code>se_bseti</code>, and <code>se_btsti</code>. (GT-3232, Issue #967)</li>
+    <li><I>Languages</I>. Corrected register definitions for x86 <code>RDRAND</code> instruction. (GT-3253, Issue #1169)</li>
+    <li><I>Languages</I>. Corrected signed immediate calculation for some powerPC VLE offsets being incorrect. (GT-3254, Issue #1160)</li>
+    <li><I>Languages</I>. Resolved issue with x86 escape opcodes preventing certain instruction patterns from decoding. (GT-3256)</li>
+    <li><I>Languages</I>. Corrected bug in <code>XGATE</code> <code>LDH</code> instruction shifting out high bits. (GT-3268)</li>
+    <li><I>Languages</I>. Corrected processing of <code>R_MIPS_REL32</code>, <code>R_X86_64_RELATIVE</code>, and <code>R_X86_64_RELATIVE64</code> ELF relocations affecting relocatable binaries which have non-zero section/segment load addresses. (GT-3349)</li>
+    <li><I>Listing</I>. Fixed missing scroll bar in listing. (GT-3290)</li>
+    <li><I>Listing</I>. Fixed issue that was causing a stack trace to be generated when contiguous addresses were cleared for a range greater than <code>Integer.MAX</code>. (GT-3357)</li>
+    <li><I>Listing:References</I>. Corrected <B>Create Default Reference</B> action bug which did not handle composite/array data components properly. (GT-3371)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.1 Change History (October 2019)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>
@@ -107,7 +139,7 @@
 <blockquote><p><u>Bugs</u></p>
 <ul>
     <li><I>Analysis</I>. Fixed an exception in the EmbeddedMediaAnalyzer that occurred when media was discovered at the very end of the address space. (GT-2890)</li>
-    <li><I>Analysis</I>. Recognition and disassembly of the FMA, F16C, and several missing AVX instructions have been added to the base x86 processor specification.  The pcode for these instructions is pseudo-op and not a full pcode implementation. (GT-3168)</li>
+    <li><I>Analysis</I>. Recognition and disassembly of the <code>FMA</code>, <code>F16C</code>, and several missing <code>AVX</code> instructions have been added to the base x86 processor specification.  The pcode for these instructions is pseudo-op and not a full pcode implementation. (GT-3168)</li>
     <li><I>Basic Infrastructure</I>. Updated the apache-commons-lang3 library to version 3.9 which supports Java 11. (GT-2879)</li>
     <li><I>Basic Infrastructure</I>. Prevented Ghidra from launching with 32-bit Java installations. (GT-3146, Issue #882)</li>
     <li><I>Data Types</I>. Corrected string data default label generation when defined within uninitialized memory, which will now render as <code>STRING_<I>address</I></code>. (GT-2715, Issue #272)</li>
@@ -204,7 +236,7 @@
     <li><I>Project Manager</I>. Fixed a path traversal vulnerability that could occur when restoring a malicious project archive. (GT-3001, Issue #789)</li>
     <li><I>Scripting</I>. <code>GhidraScript.askDomainFile()</code> now correctly throws a CancelledException when the cancel button is clicked. (GT-2841)</li>
     <li><I>Scripting</I>. Removed deprecated scripting methods older than 5 releases. (GT-2949)</li>
-    <li><I>Security</I>. Removed use of insecure XMLEncoder/XMLDecoder from Ghidra code base. (GT-3198, Issue #1090)</li>
+    <li><I>Security</I>. Removed use of nonsecure XMLEncoder/XMLDecoder from Ghidra code base. (GT-3198, Issue #1090)</li>
     <li><I>Sleigh</I>. Corrected Sleigh compiler bug which performed improper bounds checking for named register offset specification when space wordsize is not one (1). (GT-3034, Issue #831)</li>
     <li><I>Testing:CUnits</I>. Fixed error logging in pcodetest for reporting an error when running a compile command. (GT-3199, Issue #1089)</li>
     <li><I>Version Tracking</I>. Fixed NullPointerException in Version Tracking hashing algorithm. (GT-2976)</li>

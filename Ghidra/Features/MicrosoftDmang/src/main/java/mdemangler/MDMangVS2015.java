@@ -111,6 +111,12 @@ public class MDMangVS2015 extends MDMang {
 	public MDObjectCPP getEmbeddedObject(MDObjectCPP obj) {
 		return obj.getEmbeddedObject();
 	}
+
+	@Override
+	public void processHashedObject(MDObjectCPP obj) throws MDException {
+		obj.processHashedObjectMSVC();
+	}
+
 }
 
 /******************************************************************************/

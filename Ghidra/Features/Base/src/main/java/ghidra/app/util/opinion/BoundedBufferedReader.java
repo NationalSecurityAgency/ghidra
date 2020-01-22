@@ -125,7 +125,7 @@ public class BoundedBufferedReader extends Reader {
 	 * Reads a single character.
 	 * 
 	 * @return The character read, as an integer in the range 0 to 65535 (
-	 *         <tt>0x00-0xffff</tt>), or -1 if the end of the stream has been
+	 *         <code>0x00-0xffff</code>), or -1 if the end of the stream has been
 	 *         reached
 	 * @exception IOException
 	 *                If an I/O error occurs

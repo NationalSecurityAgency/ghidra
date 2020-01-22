@@ -26,15 +26,15 @@ import ghidra.program.model.data.Enum;
  */
 public class EditComponentAction extends CompositeEditorTableAction {
 
-	private final static String ACTION_NAME = "Edit Component";
+	public final static String ACTION_NAME = "Edit Component";
 	private final static String GROUP_NAME = BASIC_ACTION_GROUP;
 	private final static String DESCRIPTION = "Edit the selected component";
-	private static String[] popupPath = new String[] { ACTION_NAME };
-	private static String[] menuPath = new String[] { ACTION_NAME };
+	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
+	private static String[] MENU_PATH = new String[] { ACTION_NAME };
 	private DataTypeManagerService dtmService;
 
 	public EditComponentAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, menuPath, null);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
 		this.dtmService = provider.dtmService;
 		setDescription(DESCRIPTION);
 		adjustEnablement();

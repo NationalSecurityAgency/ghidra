@@ -835,6 +835,8 @@ void MapState::reconcileDatatypes(void)
 	startDatatype = curDatatype;
       if (curHint->compare(*newList.back()) != 0)
 	newList.push_back(curHint);		// Keep the current hint if it is otherwise different
+      else
+	delete curHint;		// RangeHint is on the heap, so delete if we are not keeping it
     }
     else {
       while(startPos < newList.size()) {

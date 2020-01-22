@@ -83,12 +83,21 @@ import ghidra.util.timer.GTimer;
 public class FileSystemService {
 	private static int FSRL_INTERN_SIZE = 1000;
 
-	private static class Singleton {
-		private static final FileSystemService instance = new FileSystemService();
+	private static FileSystemService instance;
+
+	public static synchronized FileSystemService getInstance() {
+		if (instance == null) {
+			instance = new FileSystemService();
+		}
+		return instance;
 	}
 
-	public static FileSystemService getInstance() {
-		return Singleton.instance;
+	/**
+	 * Returns true if this service has been loaded
+	 * @return true if this service has been loaded
+	 */
+	public static synchronized boolean isInitialized() {
+		return instance != null;
 	}
 
 	private final LocalFileSystem localFS = LocalFileSystem.makeGlobalRootFS();
@@ -296,8 +305,9 @@ public class FileSystemService {
 				if (containerFSRL.getMD5() == null) {
 					containerFSRL = containerFSRL.withMD5(cfi.md5);
 				}
-				GFileSystem fs = FileSystemFactoryMgr.getInstance().mountFileSystem(
-					fsFSRL.getProtocol(), containerFSRL, cfi.file, this, monitor);
+				GFileSystem fs = FileSystemFactoryMgr.getInstance()
+						.mountFileSystem(
+							fsFSRL.getProtocol(), containerFSRL, cfi.file, this, monitor);
 				ref = fs.getRefManager().create();
 				filesystemCache.add(fs);
 			}
@@ -394,8 +404,9 @@ public class FileSystemService {
 	 * @return {@link FSRL} pointing to the same file, never null
 	 */
 	public FSRL getLocalFSRL(File f) {
-		return localFS.getFSRL().withPath(
-			FSUtilities.appendPath("/", FilenameUtils.separatorsToUnix(f.getPath())));
+		return localFS.getFSRL()
+				.withPath(
+					FSUtilities.appendPath("/", FilenameUtils.separatorsToUnix(f.getPath())));
 	}
 
 	/**

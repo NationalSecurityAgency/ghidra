@@ -22,7 +22,7 @@ import java.awt.Component;
  * more detailed message (e.g., stacktrace).
  * 
  * <P>The 'message' parameter for these calls is typically a String.  However, it can also 
- * be a log4j <tt>Message</tt> object as well.   (See log4j2 for details.) 
+ * be a log4j <code>Message</code> object as well.   (See log4j2 for details.) 
  */
 public class Msg {
 	private static ErrorLogger errorLogger = new DefaultErrorLogger();

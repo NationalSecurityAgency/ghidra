@@ -356,12 +356,11 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	 * 
 	 * @param tool tool that has the domain file opened
 	 * @param domainFile domain file to check in
-	 * @param taskListener listener that is notified when task completes
 	 */
-	public void checkIn(PluginTool tool, DomainFile domainFile, TaskListener taskListener) {
+	public void checkIn(PluginTool tool, DomainFile domainFile) {
 		ArrayList<DomainFile> list = new ArrayList<>();
 		list.add(domainFile);
-		checkIn(tool, list, taskListener, tool.getToolFrame());
+		checkIn(tool, list, tool.getToolFrame());
 	}
 
 	/**
@@ -369,11 +368,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	 * 
 	 * @param tool tool that has the domain files opened
 	 * @param fileList list of DomainFile objects
-	 * @param taskListener listener that is notified when task completes
 	 * @param parent parent of dialog if an error occurs during checkin
 	 */
-	public void checkIn(PluginTool tool, List<DomainFile> fileList, TaskListener taskListener,
-			Component parent) {
+	public void checkIn(PluginTool tool, List<DomainFile> fileList, Component parent) {
 
 		if (!checkRepositoryConnected(tool)) {
 			return;
@@ -913,7 +910,11 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		private void notifyTaskListener() {
 
-			SystemUtilities.runSwingNow(() -> {
+			if (taskListener == null) {
+				return;
+			}
+
+			Swing.runNow(() -> {
 				if (wasCanceled) {
 					taskListener.taskCancelled(MergeTask.this);
 				}

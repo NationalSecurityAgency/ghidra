@@ -1293,8 +1293,8 @@ public class CodeUnitFormat {
 				namespaceName = parentNamespace.getName(true);
 			}
 		}
-		if (namespaceName.length() != 0 && !namespaceName.endsWith(Namespace.NAMESPACE_DELIMITER)) {
-			namespaceName += Namespace.NAMESPACE_DELIMITER;
+		if (namespaceName.length() != 0 && !namespaceName.endsWith(Namespace.DELIMITER)) {
+			namespaceName += Namespace.DELIMITER;
 		}
 		return namespaceName + name;
 	}

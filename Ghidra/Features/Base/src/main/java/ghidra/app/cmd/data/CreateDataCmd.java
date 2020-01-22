@@ -45,6 +45,7 @@ public class CreateDataCmd implements Command {
 	/**
 	 * Constructs a command for creating data at an address.
 	 * Simple pointer conversion will NOT be performed.
+	 * Existing Undefined data will always be cleared even when force is false.
 	 * @param addr the address at which to apply the datatype.  Offcut data
 	 * address allowed, provided force==true.
 	 * @param force if true any existing conflicting data will be cleared
@@ -75,7 +76,8 @@ public class CreateDataCmd implements Command {
 	/**
 	 * Constructs a command for creating data at an address.
 	 * Simple pointer conversion will NOT be performed and existing 
-	 * data will not be cleared.
+	 * defined data will not be cleared, however existing Undefined data will
+	 * be cleared.
 	 * @param addr the address at which to apply the datatype.
 	 * @param dataType the datatype to be applied at the given address.
 	 */
@@ -86,7 +88,7 @@ public class CreateDataCmd implements Command {
 	/**
 	 * This is the same as {@link #CreateDataCmd(Address, DataType)} except that
 	 * it allows the caller to control whether or not pointer conversion should be handled.
-	 *  
+	 * Existing Undefined data will always be cleared.
 	 * @param addr the address at which to apply the datatype.
 	 * @param dataType the datatype to be applied at the given address.
 	 * @param isCycle true indicates this is from a cycle group action.

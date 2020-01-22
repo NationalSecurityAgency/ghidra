@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,10 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
+import java.io.PrintStream;
+
+import org.jdom.Element;
+
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.*;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
@@ -24,10 +27,6 @@ import ghidra.pcodeCPort.translate.Translate;
 import ghidra.pcodeCPort.utils.MutableInt;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class OperandValue extends PatternValue {
 
@@ -50,6 +49,9 @@ public class OperandValue extends PatternValue {
 
 	@Override
 	public TokenPattern genMinPattern(VectorSTL<TokenPattern> ops) {
+		if (index >= ops.size()) {
+			return null;
+		}
 		return ops.get(index);
 	}
 

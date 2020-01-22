@@ -32,19 +32,19 @@ import resources.ResourceManager;
  */
 public class DuplicateAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon duplicateDataIcon =
-		ResourceManager.loadImage("images/DuplicateData.png");
-	private final static String ACTION_NAME = "Duplicate Component";
+	private final static ImageIcon ICON = ResourceManager.loadImage("images/DuplicateData.png");
+	public final static String ACTION_NAME = "Duplicate Component";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Duplicate the selected component";
-	private KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK);
-	private static String[] popupPath = new String[] { ACTION_NAME };
+	private final static String[] POPUP_PATH = new String[] { ACTION_NAME };
+	private final static KeyStroke KEY_STROKE =
+		KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.ALT_DOWN_MASK);
 
 	public DuplicateAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null,
-			duplicateDataIcon);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null,
+			ICON);
 		setDescription(DESCRIPTION);
-		setKeyBindingData(new KeyBindingData(keyStroke));
+		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		adjustEnablement();
 	}
 

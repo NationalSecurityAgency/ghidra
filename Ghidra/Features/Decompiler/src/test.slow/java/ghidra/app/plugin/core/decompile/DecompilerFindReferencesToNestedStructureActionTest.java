@@ -48,10 +48,10 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 			7|   _printf("call_structure_A: %s\n",(a->b).c.name);
 			8|   _printf("call_structure_A: %s\n",(a->b).c.d.name);
 			9|   _printf("call_structure_A: %s\n",(a->b).c.d.e.name);
-			10|  _call_structure_B(&a->b);
-			11|  return;
-			12| }
-			13| 
+		   10|  _call_structure_B(&a->b);
+		   11|  return;
+		   12| }
+		   13| 
 		
 		 */
 		decompile(CALL_STRUCTURE_A_ADDRESS);

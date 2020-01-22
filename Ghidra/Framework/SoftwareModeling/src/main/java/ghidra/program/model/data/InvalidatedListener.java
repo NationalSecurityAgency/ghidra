@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +21,7 @@ package ghidra.program.model.data;
 public interface InvalidatedListener {
 
 	/**
-	 * Called when the given <tt>dataTypeManager</tt>'s cache has been invalidated.
+	 * Called when the given <code>dataTypeManager</code>'s cache has been invalidated.
 	 * @param dataTypeManager The manager whose cache has been invalidated.
 	 */
 	public void dataTypeManagerInvalidated(DataTypeManager dataTypeManager);

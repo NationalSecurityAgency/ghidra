@@ -432,7 +432,9 @@ public class NavigationHistoryPlugin extends Plugin
 			locationMemento = LocationMemento.getLocationMemento(mementoState, programs);
 		}
 		catch (IllegalArgumentException iae) {
-			Msg.debug(this, "Unable to restore LocationMemento: " + iae.getMessage(), iae);
+			// this can happen if a program is renamed or deleted but the tool config state
+			// has not been saved since the delete
+			Msg.trace(this, "Unable to restore LocationMemento: " + iae.getMessage(), iae);
 		}
 		return locationMemento;
 	}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="pc"/>
+  <context_data>
+    <context_set space="ram">
+      <set name="RV32" val="1"/>
+      <set name="RVI" val="1"/>
+    </context_set>
+  </context_data>
+</processor_spec>

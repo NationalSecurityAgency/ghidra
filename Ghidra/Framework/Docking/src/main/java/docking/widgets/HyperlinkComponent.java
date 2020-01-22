@@ -89,8 +89,8 @@ public class HyperlinkComponent extends JPanel {
 	/**
 	 * Add a listener that will be called whenever hyperlink updates happen (hover, activate, etc).
 	 * 
-	 * @param anchorName The value in the <tt>href</tt> attribute of the anchor tag.
-	 * @param listener The listener to be called when the anchor(s) with a matching <tt>href</tt> is
+	 * @param anchorName The value in the <code>href</code> attribute of the anchor tag.
+	 * @param listener The listener to be called when the anchor(s) with a matching <code>href</code> is
 	 *        manipulated by the user.
 	 */
 	public void addHyperlinkListener(String anchorName, HyperlinkListener listener) {

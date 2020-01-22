@@ -35,28 +35,28 @@ public abstract class HeadlessScript extends GhidraScript {
 	 */
 	public enum HeadlessContinuationOption {
 		/**
-		 * Continue running scripts and/or analysis; <tt>-import</tt> and <tt>-process</tt> 
+		 * Continue running scripts and/or analysis; <code>-import</code> and <code>-process</code> 
 		 * modes complete normally.
 		 */
 		CONTINUE,
 
 		/**
 		 *  Continue running scripts and/or analysis; 
-		 *  <tt>-import</tt> mode does not save program, 
-		 *  <tt>-process</tt> mode deletes program.
+		 *  <code>-import</code> mode does not save program, 
+		 *  <code>-process</code> mode deletes program.
 		 */
 		CONTINUE_THEN_DELETE,
 
 		/**
 		 *  Abort any scripts or analysis that come after this script;
-		 *  <tt>-import</tt> mode does not save program, <tt>-process</tt> mode deletes program.
+		 *  <code>-import</code> mode does not save program, <code>-process</code> mode deletes program.
 		 */
 		ABORT_AND_DELETE,
 
 		/**
-		 * Abort any scripts or analysis that come after this script; <tt>-import</tt> mode does 
+		 * Abort any scripts or analysis that come after this script; <code>-import</code> mode does 
 		 * save program (but it may not be processed completely),
-		 * <tt>-process</tt> mode completes normally, minus scripts or analysis that 
+		 * <code>-process</code> mode completes normally, minus scripts or analysis that 
 		 * runs after the ABORT request.
 		 */
 		ABORT
@@ -285,7 +285,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * </pre>
 	 * 
 	 * Then the following usage would ensure that any files imported after this call would
-	 * be saved in the <tt>MyGhidraProject:/dir1/innerDir2</tt> folder.
+	 * be saved in the <code>MyGhidraProject:/dir1/innerDir2</code> folder.
 	 * <pre>
 	 * 		setHeadlessImportDirectory("dir1/innerDir2");
 	 * </pre>
@@ -330,8 +330,8 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * If a file with the same name already exists in the desired location, it will only be 
 	 * overwritten if "-overwrite" is true.
 	 * <p>
-	 * This method is only applicable when using the HeadlessAnalyzer <tt>-import</tt> mode and 
-	 * is ineffective in <tt>-process</tt> mode.
+	 * This method is only applicable when using the HeadlessAnalyzer <code>-import</code> mode and 
+	 * is ineffective in <code>-process</code> mode.
 	 * 
 	 * @param importDir  the absolute path (relative to root) where inputs will be saved
 	 * @throws ImproperUseException if not in headless mode or headless instance not set	 
@@ -372,7 +372,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <p>
 	 * Analysis will time out only in the case where:
 	 * <ol>
-	 * 		<li>the users has set an analysis timeout period using the <tt>-analysisTimeoutPerFile</tt>
+	 * 		<li>the users has set an analysis timeout period using the <code>-analysisTimeoutPerFile</code>
 	 * 	parameter</li>
 	 * 		<li>analysis is enabled and has completed</li>
 	 * 		<li>the current script is being run as a postScript (since postScripts run after

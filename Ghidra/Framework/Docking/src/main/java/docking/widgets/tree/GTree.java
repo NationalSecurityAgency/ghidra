@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -36,6 +37,7 @@ import javax.swing.tree.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DockingWindowManager;
+import docking.actions.KeyBindingUtils;
 import docking.widgets.JTreeMouseListenerDelegate;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.table.AutoscrollAdapter;
@@ -43,6 +45,7 @@ import docking.widgets.tree.internal.*;
 import docking.widgets.tree.support.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.*;
+import generic.timer.ExpiringSwingTimer;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -228,10 +231,6 @@ public class GTree extends JPanel implements BusyListener {
 		});
 
 		tree = new AutoScrollTree(model);
-		tree.setRowHeight(-1);// variable size rows
-		tree.setSelectionModel(new GTreeSelectionModel());
-		tree.setInvokesStopCellEditing(true);// clicking outside the cell editor will trigger a save, not a cancel
-		ToolTipManager.sharedInstance().registerComponent(tree);
 
 		setLayout(new BorderLayout());
 
@@ -319,7 +318,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * state.
 	 * <p>
 	 * <b>Note: </b>See the usage note at the header of this class concerning how tree state
-	 * is used relative to the <tt>equals()</tt> method.
+	 * is used relative to the <code>equals()</code> method.
 	 * @return the saved state
 	 */
 	public GTreeState getTreeState() {
@@ -335,7 +334,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * state object.
 	 * <p>
 	 * <b>Note: </b>See the usage note at the header of this class concerning how tree state
-	 * is used relative to the <tt>equals()</tt> method.
+	 * is used relative to the <code>equals()</code> method.
 	 * 
 	 * @param state the state to restore
 	 *
@@ -981,23 +980,45 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	public void addGTModelListener(TreeModelListener listener) {
-		tree.getModel().addTreeModelListener(listener);
+		model.addTreeModelListener(listener);
 	}
 
 	public void removeGTModelListener(TreeModelListener listener) {
-		tree.getModel().removeTreeModelListener(listener);
+		model.removeTreeModelListener(listener);
 	}
 
 	public void setEditable(boolean editable) {
 		tree.setEditable(editable);
 	}
 
-	public void startEditing(final GTreeNode parent, final String childName) {
+	/**
+	 * Requests that the node with the given name, in the given parent, be edited.  <b>This 
+	 * operation (as with many others on this tree) is asynchronous.</b>  This request will be
+	 * buffered as needed to wait for the given node to be added to the parent, up to a timeout
+	 * period.  
+	 * 
+	 * @param parent the parent node
+	 * @param childName the child node name
+	 */
+	public void startEditing(GTreeNode parent, final String childName) {
+
 		// we call this here, even though the JTree will do this for us, so that we will trigger
 		// a load call before this task is run, in case lazy nodes are involved in this tree,
 		// which must be loaded before we can edit
 		expandPath(parent);
-		runTask(new GTreeStartEditingTask(GTree.this, tree, parent, childName));
+
+		//
+		// The request to edit the node may be for a node that has not yet been added to this
+		// tree.  Further, some clients will buffer events, which means that the node the client 
+		// wishes to edit may not yet be in the parent node even if we run this request later on
+		// the Swing thread.  To deal with this, we use a construct that will run our request
+		// once the given node has been added to the parent.
+		//
+		BooleanSupplier isReady = () -> parent.getChild(childName) != null;
+		int expireMs = 3000;
+		ExpiringSwingTimer.runWhen(isReady, expireMs, () -> {
+			runTask(new GTreeStartEditingTask(GTree.this, tree, parent, childName));
+		});
 	}
 
 	@Override
@@ -1025,7 +1046,7 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * Passing a value of <tt>false</tt> signals to disable the {@link JTree}'s default behavior
+	 * Passing a value of <code>false</code> signals to disable the {@link JTree}'s default behavior
 	 * of showing handles for leaf nodes until they are opened.
 	 *
 	 * @param enable False to disable the default JTree behavior
@@ -1233,6 +1254,22 @@ public class GTree extends JPanel implements BusyListener {
 		public AutoScrollTree(TreeModel model) {
 			super(model);
 			scroller = new AutoscrollAdapter(this, 5);
+
+			setRowHeight(-1);// variable size rows
+			setSelectionModel(new GTreeSelectionModel());
+			setInvokesStopCellEditing(true);// clicking outside the cell editor will trigger a save, not a cancel
+
+			updateDefaultKeyBindings();
+
+			ToolTipManager.sharedInstance().registerComponent(this);
+		}
+
+		private void updateDefaultKeyBindings() {
+
+			// Remove the edit keybinding, as the GTree triggers editing via a task, since it
+			// is multi-threaded.  Doing this allows users to assign their own key bindings to 
+			// the edit task.
+			KeyBindingUtils.clearKeyBinding(this, "startEditing");
 		}
 
 		@Override

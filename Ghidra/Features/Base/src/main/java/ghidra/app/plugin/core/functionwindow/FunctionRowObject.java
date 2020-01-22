@@ -17,15 +17,15 @@ package ghidra.app.plugin.core.functionwindow;
 
 import ghidra.program.model.listing.Function;
 
-class FunctionRowObject implements Comparable<FunctionRowObject> {
+public class FunctionRowObject implements Comparable<FunctionRowObject> {
 
 	private final Function function;
 
-	FunctionRowObject(Function function) {
+	public FunctionRowObject(Function function) {
 		this.function = function;
 	}
 
-	Function getFunction() {
+	public Function getFunction() {
 		return function;
 	}
 
@@ -54,7 +54,7 @@ class FunctionRowObject implements Comparable<FunctionRowObject> {
 		return true;
 	}
 
-	long getKey() {
+	public long getKey() {
 		return function.getID();
 	}
 

@@ -41,7 +41,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.HTMLUtilities;
 
 /**
- * Panel that displays two decompilers for comparison.
+ * Panel that displays two decompilers for comparison
  */
 public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFieldPanelCoordinator>
 		extends CodeComparisonPanel<DualDecompilerFieldPanelCoordinator> {
@@ -68,7 +68,8 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 	private ProgramLocationListener rightDecompilerLocationListener;
 
 	/**
-	 * Creates a comparison panel with two decompilers.
+	 * Creates a comparison panel with two decompilers
+	 * 
 	 * @param owner the owner of this panel
 	 * @param tool the tool displaying this panel
 	 */
@@ -189,7 +190,13 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 
 		loadLeftFunction(leftFunction);
 		loadRightFunction(rightFunction);
-		setTitles(leftFunction, rightFunction);
+
+		if (getShowTitles()) {
+			setTitles(leftFunction, rightFunction);
+		}
+		else {
+			setTitles("", "");
+		}
 		if (dualDecompilerCoordinator != null) {
 			dualDecompilerCoordinator.leftLocationChanged((ProgramLocation) null);
 		}
@@ -429,6 +436,9 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 				setDualPanelFocus(i);
 			}
 		}
+
+		// Kick the tool so action buttons will be updated
+		tool.getActiveComponentProvider().contextChanged();
 	}
 
 	private void setDualPanelFocus(int leftOrRight) {

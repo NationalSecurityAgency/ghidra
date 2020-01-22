@@ -96,7 +96,7 @@ public class WideChar32DataType extends BuiltIn implements ArrayStringable, Data
 	public String getDefaultLabelPrefix(MemBuffer buf, Settings settings, int length,
 			DataTypeDisplayOptions options) {
 
-		StringBuffer strBuf = new StringBuffer();
+		StringBuilder strBuf = new StringBuilder();
 		strBuf.append("WCHAR32_");
 		try {
 			int val = buf.getInt(0);
@@ -127,7 +127,7 @@ public class WideChar32DataType extends BuiltIn implements ArrayStringable, Data
 	@Override
 	public String getArrayDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options) {
-		return new StringDataInstance(this, settings, buf, len).getLabel(
+		return new StringDataInstance(this, settings, buf, len, true).getLabel(
 			AbstractStringDataType.DEFAULT_UNICODE_ABBREV_PREFIX + "_",
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL_PREFIX,
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL, options);
@@ -136,7 +136,7 @@ public class WideChar32DataType extends BuiltIn implements ArrayStringable, Data
 	@Override
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options, int offcutOffset) {
-		return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
+		return new StringDataInstance(this, settings, buf, len, true).getOffcutLabelString(
 			AbstractStringDataType.DEFAULT_UNICODE_ABBREV_PREFIX + "_",
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL_PREFIX,
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL, options, offcutOffset);

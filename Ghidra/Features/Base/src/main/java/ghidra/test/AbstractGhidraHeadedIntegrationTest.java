@@ -215,10 +215,14 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	}
 
 	protected void click(FieldPanel fp, int clickCount, boolean wait) {
-
 		Point cursor = fp.getCursorPoint();
-		int x = cursor.x;
-		int y = cursor.y;
+		click(fp, cursor, clickCount, wait);
+	}
+
+	protected void click(FieldPanel fp, Point p, int clickCount, boolean wait) {
+
+		int x = p.x;
+		int y = p.y;
 		MouseEvent ev = new MouseEvent(fp, 0, System.currentTimeMillis(), 0, x, y, clickCount,
 			false, MouseEvent.BUTTON1);
 

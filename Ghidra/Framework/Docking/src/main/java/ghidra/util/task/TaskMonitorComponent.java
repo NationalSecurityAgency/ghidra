@@ -267,10 +267,10 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	}
 
 	/**
-	 * Returns true if {@link #setIndeterminate(boolean)} with a value of <tt>true</tt> has
+	 * Returns true if {@link #setIndeterminate(boolean)} with a value of <code>true</code> has
 	 * been called.
 	 * 
-	 * @return true if {@link #setIndeterminate(boolean)} with a value of <tt>true</tt> has
+	 * @return true if {@link #setIndeterminate(boolean)} with a value of <code>true</code> has
 	 * been called.
 	 */
 	public boolean isIndeterminate() {

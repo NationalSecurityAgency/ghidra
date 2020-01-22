@@ -36,7 +36,7 @@ import ghidra.program.model.listing.Program;
  * the marker/bar will be displayed on the top. Areas will always be lower than
  * marker priorities.
  * </p>
- * <a name="usage"></a>
+ * <a id="usage"></a>
  * <u>Recommended Usage</u><br>
  * The service used to work independent of {@link Program}s.  In order to work effectively this
  * service has been changed to associate created markers with individual programs.  Thus, it is

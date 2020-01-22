@@ -72,13 +72,13 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 		this.tool = tool;
 
 		ToolBarData toolBarData =
-			new ToolBarData(markerIcon, ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP);
+			new ToolBarData(markerIcon, ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 
 		MenuData menuData =
 			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getMenuName() }, markerIcon,
-				ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP);
+				ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
 		menuData.setMenuSubGroup(subGroup);
 		setMenuBarData(menuData);
 
@@ -166,12 +166,12 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 		MarkerManager markerManager = program.getMarkerManager();
 		Iterator<Marker> markerIterator = markerManager.getMarkersIterator(address, false);
 		if (isMarkerAddressEqualToCurrent(markerIterator.next(), address)) {
-
+	
 		}
 		MarkerSet nextMarker = getNextMarker(program, address, false, markerType);
 		return nextMarker == null ? null : nextMarker.getAddressSet().getMinAddress();
 	}
-
+	
 	private MarkerSet getNextMarker(Program program, Address address, boolean forward,
 			String markerType) {
 		MarkerManager markerManager = program.getMarkerManager();
@@ -182,7 +182,7 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 			if (nextAddress.isExternalAddress()) {
 				continue;
 			}
-
+	
 			if (markerType.equals(MarkerType.ALL_TYPES) && !nextAddress.equals(address)) {
 				return nextMarker;
 			}
@@ -195,13 +195,13 @@ public class NextPreviousMarkerAction extends MultiStateDockingAction<String> {
 					!nextAddress.equals(address)) {
 					return nextMarker;
 				}
-
+	
 			}
 			else if (nextMarker.getTypeString().equals(markerType) && !nextAddress.equals(address)) {
 				return nextMarker;
 			}
 		}
-
+	
 		if (!markerIterator.hasNext()) {
 			return null;
 		}

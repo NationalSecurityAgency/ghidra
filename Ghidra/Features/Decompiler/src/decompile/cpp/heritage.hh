@@ -92,7 +92,7 @@ class HeritageInfo {
   bool warningissued;		///< \b true if warning issued previously
   void set(AddrSpace *spc,int4 dl,int4 dcdl) {
     space=spc; delay=dl; deadcodedelay=dcdl; deadremoved=0; warningissued=false; loadGuardSearch = false; } ///< Set all fields
-  bool isHeritaged(void) const { return (space != (AddrSpace *)0); }
+  bool isHeritaged(void) const { return (space != (AddrSpace *)0); }	///< Return \b true if heritage is performed on this space
   void reset(void) {
     deadremoved = 0; deadcodedelay = delay; warningissued = false; loadGuardSearch = false; }	///< Reset
 };

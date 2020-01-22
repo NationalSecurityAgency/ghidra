@@ -16,6 +16,8 @@
 package ghidra.file.formats.ext4;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -28,6 +30,8 @@ import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "ext4", description = "EXT4", factory = Ext4FileSystemFactory.class)
 public class Ext4FileSystem implements GFileSystem {
+
+	public static final Charset EXT4_DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
 	private FileSystemIndexHelper<Ext4File> fsih;
 	private FileSystemRefManager refManager = new FileSystemRefManager(this);
@@ -57,6 +61,9 @@ public class Ext4FileSystem implements GFileSystem {
 		blockSize = (int) Math.pow(2, (10 + s_log_block_size));
 
 		int groupSize = blockSize * superBlock.getS_blocks_per_group();
+		if (groupSize <= 0) {
+			throw new IOException("Invalid groupSize: " + groupSize);
+		}
 		int numGroups = (int) (provider.length() / groupSize);
 		if (provider.length() % groupSize != 0) {
 			numGroups++;

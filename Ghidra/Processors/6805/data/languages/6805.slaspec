@@ -1,5 +1,4 @@
 # sleigh specification file for Motorola 6805
-@define SWI_VECTOR "0x3FFC"
 define endian=big;
 define alignment=1;
 
@@ -10,6 +9,7 @@ define register offset=0x00  size=1 [ A X ];
 define register offset=0x20 size=2  [ PC SP];
 define register offset=0x30 size=1 [H I N Z C];	# status bits
 
+define RAM offset=0x3ffc size=2 [ SWI_VECTOR ];
 #TOKENS
 
 define token opbyte (8)
@@ -234,16 +234,19 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	local result = DIRECT & mask;
 	if (result == 0) goto REL;
 }
+
 :BRSET n,DIRECT,REL		is op4_7=0 & bit_0=0 & n; DIRECT; REL
 {
 	local mask = (1 << n);
 	local result = DIRECT & mask;
 	if (result != 0) goto REL;
 }
+
 :BSET n,DIRECT	is op4_7=1 & bit_0=0 & n; DIRECT {
-	local mask = ~(1 << n);
-	DIRECT = DIRECT & mask;
+	local mask = (1 << n);
+	DIRECT = DIRECT | mask;
 }
+
 :BSR REL		is op=0xAD; REL 
 {
 	SP=SP-1;
@@ -316,7 +319,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	local tmp = X - op1;
 	Z = tmp == 0;
 	N = tmp s< 0;
-	C = (A < op1);
+	C = (X < op1);
 }
 :DECA		is op=0x4A 
 {
@@ -627,8 +630,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	*:1 SP = A;
 	tmp:1 = (H << 4) | (I << 3) | (N << 2) | ( Z << 1) | C;
 	I = 1;
-	addr:2 = $(SWI_VECTOR);
-	call [addr];
+	call [SWI_VECTOR];
 }
 
 :TAX	is op=0x97 

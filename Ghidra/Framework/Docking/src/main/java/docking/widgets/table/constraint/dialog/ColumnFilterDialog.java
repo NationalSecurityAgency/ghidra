@@ -33,6 +33,7 @@ import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.RowObjectFilterModel;
 import docking.widgets.table.columnfilter.*;
 import docking.widgets.table.constrainteditor.ColumnConstraintEditor;
+import generic.util.WindowUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
@@ -69,7 +70,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 	 */
 	public ColumnFilterDialog(GTableFilterPanel<R> gTableFilterPanel, JTable table,
 			RowObjectFilterModel<R> tableModel) {
-		super("Table Column Filters", false);
+		super("Table Column Filters", WindowUtilities.areModalDialogsVisible());
 		this.gTableFilterPanel = gTableFilterPanel;
 		this.table = table;
 		this.tableModel = tableModel;
@@ -92,6 +93,12 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 
 		setPreferredSize(1000, 500);
 		updateStatus();
+	}
+
+	public static <R> boolean hasFilterableColumns(JTable table,
+			RowObjectFilterModel<R> model) {
+		return !ColumnFilterDialogModel.getAllColumnFilterData(model, table.getColumnModel())
+				.isEmpty();
 	}
 
 	private void addClearFilterButton() {
@@ -467,5 +474,6 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		gTableFilterPanel.updateSavedFilters(filter, false);
 
 	}
+
 
 }

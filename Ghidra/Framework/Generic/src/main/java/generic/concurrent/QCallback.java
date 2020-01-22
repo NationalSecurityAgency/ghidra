@@ -24,7 +24,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  * @param <I> The type of the items to be processed.
  * @param <R> The type of objects resulting from processing an item; if you don't care about the
- *            return value, then make this value whatever you want, like <tt>Object</tt> or the 
+ *            return value, then make this value whatever you want, like <code>Object</code> or the 
  *            same value as {@link I} and return null from {@link #process(Object, TaskMonitor) process(I, TaskMonitor)}.
  */
 public interface QCallback<I, R> {

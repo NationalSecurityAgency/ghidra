@@ -502,6 +502,9 @@ public class GnuDemanglerParser implements DemanglerParser {
 		if (pos == -1) {
 			throw new RuntimeException();
 		}
+		if (str.endsWith(")")) {
+			throw new RuntimeException();
+		}
 
 		DemangledObject dobj = parse(null, str.substring(0, pos));
 		if (dobj == null) {

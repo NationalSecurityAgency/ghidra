@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,20 +83,26 @@ public class DebugFrameSection extends AbstractFrameSection {
 	}
 
 	private List<RegionDescriptor> analyzeSection(MemoryBlock curMemBlock)
-			throws MemoryAccessException, AddressOutOfBoundsException, ExceptionHandlerFrameException {
-
+			throws MemoryAccessException, AddressOutOfBoundsException,
+			ExceptionHandlerFrameException {
 
 		monitor.setMessage("Analyzing " + curMemBlock.getName() + " section");
 		monitor.setShowProgressValue(true);
-		monitor.setIndeterminate(true);
+		monitor.setIndeterminate(false);
 
 		ProgramLocation loc = new ProgramLocation(program, curMemBlock.getStart());
 		Address curAddress = loc.getAddress();
 
 		List<RegionDescriptor> regions = new ArrayList<>();
 
+		if (curAddress != null) {
+			monitor.setMaximum(curMemBlock.getEnd().subtract(curAddress));
+		}
 
 		while (curAddress != null && curAddress.compareTo(curMemBlock.getEnd()) < 0) {
+			if (monitor.isCancelled()) {
+				return regions;
+			}
 
 			/* Get the Common Information Entry */
 			Cie cie = getCie(curAddress);
@@ -112,7 +117,11 @@ public class DebugFrameSection extends AbstractFrameSection {
 			/* 
 			 * Add each Frame Description Entry (FDE) for the current CIE.
 			 */
+			List<RegionDescriptor> newRegions = new ArrayList<>();
+
 			while (curAddress != null && (curAddress.compareTo(curMemBlock.getEnd()) < 0)) {
+
+				monitor.setProgress(curAddress.subtract(loc.getAddress()));
 
 				Address currFdeAddr = curAddress;
 
@@ -126,23 +135,24 @@ public class DebugFrameSection extends AbstractFrameSection {
 					}
 
 					if (region != null) {
-						regions.add(region);
+						newRegions.add(region);
 						createFdeComment(curAddress);
-						monitor.incrementProgress(1);
 					}
 
 					curAddress = fde.getNextAddress(); // This can be null.
 
-				} catch (ExceptionHandlerFrameException efe) {
+				}
+				catch (ExceptionHandlerFrameException efe) {
 					// May have run into another CIE.
 					curAddress = currFdeAddr;
 					break;
 				}
 			}
 
-			createAugmentationData(regions, cie);
+			createAugmentationData(newRegions, cie);
+
+			regions.addAll(newRegions);
 		}
 		return regions;
-
 	}
 }

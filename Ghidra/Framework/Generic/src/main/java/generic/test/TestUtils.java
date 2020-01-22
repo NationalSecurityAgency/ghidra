@@ -51,7 +51,7 @@ public class TestUtils {
 	 * Sets the instance field by the given name on the given object 
 	 * instance.  
 	 * <p>
-	 * Note: if the field is static, then the <tt>ownerInstance</tt> field 
+	 * Note: if the field is static, then the <code>ownerInstance</code> field 
 	 * can be the class of the object that contains the variable.
 	 * 
 	 * @param  fieldName The name of the field to retrieve.
@@ -92,7 +92,7 @@ public class TestUtils {
 	 * Gets the instance field by the given name on the given object 
 	 * instance.  The value is a primitive wrapper if it is a primitive type.
 	 * <p>
-	 * Note: if the field is static, then the <tt>ownerInstance</tt> field 
+	 * Note: if the field is static, then the <code>ownerInstance</code> field 
 	 * can be the class of the object that contains the variable.
 	 * 
 	 * @param  fieldName The name of the field to retrieve.
@@ -168,9 +168,9 @@ public class TestUtils {
 	/**
 	 * Uses reflection to execute the method denoted by the given method
 	 * name.  If any value is returned from the method execution, then it 
-	 * will be returned from this method.  Otherwise, <tt>null</tt> is returned.
+	 * will be returned from this method.  Otherwise, <code>null</code> is returned.
 	 * <p>
-	 * Note: if the method is static, then the <tt>ownerInstance</tt> field 
+	 * Note: if the method is static, then the <code>ownerInstance</code> field 
 	 * can be the class of the object that contains the method.
 	 * 
 	 * @param methodName The name of the method to execute.
@@ -226,9 +226,9 @@ public class TestUtils {
 	/**
 	 * Uses reflection to execute the method denoted by the given method
 	 * name.  If any value is returned from the method execution, then it 
-	 * will be returned from this method.  Otherwise, <tt>null</tt> is returned.
+	 * will be returned from this method.  Otherwise, <code>null</code> is returned.
 	 * <p>
-	 * Note: if the method is static, then the <tt>ownerInstance</tt> field 
+	 * Note: if the method is static, then the <code>ownerInstance</code> field 
 	 * can be the class of the object that contains the method.
 	 * 
 	 * <P>This method is just a convenience for calling 
@@ -264,9 +264,9 @@ public class TestUtils {
 	/**
 	 * Uses reflection to execute the method denoted by the given method
 	 * name.  If any value is returned from the method execution, then it 
-	 * will be returned from this method.  Otherwise, <tt>null</tt> is returned.
+	 * will be returned from this method.  Otherwise, <code>null</code> is returned.
 	 * <p>
-	 * Note: if the method is static, then the <tt>ownerInstance</tt> field 
+	 * Note: if the method is static, then the <code>ownerInstance</code> field 
 	 * can be the class of the object that contains the method.
 	 * 
 	 * <P>If the method you are calling takes no parameters, then call 
@@ -305,9 +305,9 @@ public class TestUtils {
 	/**
 	 * Uses reflection to execute the method denoted by the given method
 	 * name.  If any value is returned from the method execution, then it 
-	 * will be returned from this method.  Otherwise, <tt>null</tt> is returned.
+	 * will be returned from this method.  Otherwise, <code>null</code> is returned.
 	 * <p>
-	 * Note: if the method is static, then the <tt>ownerInstance</tt> field 
+	 * Note: if the method is static, then the <code>ownerInstance</code> field 
 	 * can be the class of the object that contains the method.
 	 * 
 	 * <P><B>Warning: The exact class of each <CODE>arg</CODE> will be used as the class type
@@ -458,9 +458,9 @@ public class TestUtils {
 	}
 
 	/**
-	 * Locates the method of the name <tt>methodName</tt> on the given 
+	 * Locates the method of the name <code>methodName</code> on the given 
 	 * class.  If the given class does not contain the method, then this 
-	 * method will recursively call up <tt>containingClass</tt>'s 
+	 * method will recursively call up <code>containingClass</code>'s 
 	 * implementation tree looking for a parent implementation of the 
 	 * requested method.
 	 * 

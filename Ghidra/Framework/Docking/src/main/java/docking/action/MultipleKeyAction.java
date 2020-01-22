@@ -30,7 +30,7 @@ import ghidra.util.Swing;
 public class MultipleKeyAction extends DockingKeyBindingAction {
 	private List<ActionData> actions = new ArrayList<>();
 
-	private ActionDialog dialog;
+	private MultiActionDialog dialog;
 
 	/**
 	 * Creates new MultipleKeyAction
@@ -133,7 +133,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		if (list.size() > 1) {
 			// popup dialog to show multiple actions
 			if (dialog == null) {
-				dialog = new ActionDialog(KeyBindingUtils.parseKeyStroke(keyStroke), list);
+				dialog = new MultiActionDialog(KeyBindingUtils.parseKeyStroke(keyStroke), list);
 			}
 			else {
 				dialog.setActionList(list);

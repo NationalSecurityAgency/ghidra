@@ -230,7 +230,7 @@ public interface DataType {
 	/**
 	 * Returns the appropriate string to use as the default label prefix, taking into account 
 	 * the fact that there exists a reference to the data that references
-	 * <tt>offcutLength</tt> bytes into this type 
+	 * <code>offcutLength</code> bytes into this type 
 	 * 
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object

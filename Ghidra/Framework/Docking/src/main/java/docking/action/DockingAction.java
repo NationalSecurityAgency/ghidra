@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.swing.*;
 
@@ -71,6 +72,11 @@ public abstract class DockingAction implements DockingActionIf {
 	private MenuBarData menuBarData;
 	private PopupMenuData popupMenuData;
 	private ToolBarData toolBarData;
+
+	private Predicate<ActionContext> enabledPredicate;
+	private Predicate<ActionContext> popupPredicate;
+	private Predicate<ActionContext> validContextPredicate;
+	private Predicate<ActionContext> validGlobalContextPredicate;
 
 	public DockingAction(String name, String owner) {
 		this.name = name;
@@ -156,21 +162,33 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
+		if (popupPredicate != null) {
+			return popupPredicate.test(context);
+		}
 		return isEnabledForContext(context);
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
+		if (enabledPredicate != null) {
+			return enabledPredicate.test(context);
+		}
 		return isEnabled();
 	}
 
 	@Override
 	public boolean isValidContext(ActionContext context) {
+		if (validContextPredicate != null) {
+			return validContextPredicate.test(context);
+		}
 		return true;
 	}
 
 	@Override
 	public boolean isValidGlobalContext(ActionContext globalContext) {
+		if (validGlobalContextPredicate != null) {
+			return validGlobalContextPredicate.test(globalContext);
+		}
 		return isValidContext(globalContext);
 	}
 
@@ -515,6 +533,54 @@ public abstract class DockingAction implements DockingActionIf {
 	@Override
 	public Object getHelpObject() {
 		return this;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining the action's enabled state.  If this
+	 * predicate is not set, the action's enable state must be controlled directly using the
+	 * {@link DockingAction#setEnabled(boolean)} method. See 
+	 * {@link DockingActionIf#isEnabledForContext(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * enabled state.
+	 */
+	public void enabledWhen(Predicate<ActionContext> predicate) {
+		enabledPredicate = predicate;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining if this action should be included in
+	 * an impending pop-up menu.  If this predicate is not set, the action's will be included
+	 * in an impending pop-up, if it is enabled. See 
+	 * {@link DockingActionIf#isAddToPopup(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * enabled state.
+	 */
+	public void popupWhen(Predicate<ActionContext> predicate) {
+		popupPredicate = predicate;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining if this action is valid for the current 
+	 * {@link ActionContext}.  See {@link DockingActionIf#isValidContext(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * validity for a given {@link ActionContext}
+	 */
+	public void validContextWhen(Predicate<ActionContext> predicate) {
+		validContextPredicate = predicate;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining if this action is valid for the current global 
+	 * {@link ActionContext}.  See {@link DockingActionIf#isValidGlobalContext(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * validity for a given global {@link ActionContext}
+	 */
+	public void validGlobalContextWhen(Predicate<ActionContext> predicate) {
+		validGlobalContextPredicate = predicate;
 	}
 
 //==================================================================================================

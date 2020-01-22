@@ -221,15 +221,15 @@ public class GhidraLauncher {
 
 			// Now handle modules that are internal to the Ghidra installation.
 			// We will primarily order them by "type" and secondarily by name.
-			Map<String, Integer> typePriorityMap = Map.of(
-				"Framework", 0,
-				"Configurations", 1,
-				"Features", 2,
-				"Processors", 3,
-				"GPL", 4,
-				"Extensions", 5,
-				"Test", 6
-			);
+			Map<String, Integer> typePriorityMap = new HashMap<>();
+			typePriorityMap.put("Framework", 0);
+			typePriorityMap.put("Configurations", 1);
+			typePriorityMap.put("Features", 2);
+			typePriorityMap.put("Processors", 3);
+			typePriorityMap.put("GPL", 4);
+			typePriorityMap.put("Extensions", 5);
+			typePriorityMap.put("Test", 6);
+
 			String type1 = module1.getModuleRoot().getParentFile().getName();
 			String type2 = module2.getModuleRoot().getParentFile().getName();
 			int priority1 = typePriorityMap.getOrDefault(type1, typePriorityMap.size());

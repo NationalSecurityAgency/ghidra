@@ -75,12 +75,12 @@ class FunctionsXmlMgr {
 	 * &lt;!ELEMENT FUNCTION (RETURN_TYPE?, ADDRESS_RANGE*, REGULAR_CMT?, REPEATABLE_CMT?, TYPEINFO_CMT?, STACK_FRAME?, REGISTER_VAR*)&gt;
 	 * </code></pre>
 	 * <p>
-	 * @param parser
-	 * @param overwriteConflicts
-	 * @param ignoreStackFrames
-	 * @param monitor
-	 * @throws AddressFormatException
-	 * @throws CancelledException
+	 * @param parser the parser
+	 * @param overwriteConflicts true to overwrite any conflicts
+	 * @param ignoreStackFrames true to ignore stack frames
+	 * @param monitor the task monitor
+	 * @throws AddressFormatException if any address is not parsable 
+	 * @throws CancelledException if the operation is cancelled through the monitor
 	 */
 	void read(XmlPullParser parser, boolean overwriteConflicts, boolean ignoreStackFrames,
 			TaskMonitor monitor) throws AddressFormatException, CancelledException {
@@ -94,9 +94,7 @@ class FunctionsXmlMgr {
 			dtParser = new DtParser(dataManager);
 
 			while (parser.peek().isStart()) {
-				if (monitor.isCancelled()) {
-					throw new CancelledException();
-				}
+				monitor.checkCanceled();
 
 				final XmlElement functionElement = parser.start("FUNCTION");
 
@@ -155,7 +153,8 @@ class FunctionsXmlMgr {
 						try {
 							Symbol symbol = func.getSymbol();
 							Namespace namespace =
-								NamespaceUtils.getNamespace(program, namespacePath, entryPoint);
+								NamespaceUtils.getFunctionNamespaceAt(program, namespacePath,
+									entryPoint);
 							if (namespace == null) {
 								namespace = program.getGlobalNamespace();
 							}
@@ -258,13 +257,6 @@ class FunctionsXmlMgr {
 		}
 	}
 
-	/**
-	 * Add local vars to a function.
-	 *
-	 * @param function
-	 * @param variables
-	 * @throws InvalidInputException
-	 */
 	private void addLocalVars(Function function, List<Variable> variables,
 			boolean overwriteConflicts) throws InvalidInputException {
 		for (Variable v : variables) {
@@ -275,8 +267,9 @@ class FunctionsXmlMgr {
 			try {
 				String name = v.getName();
 				boolean isDefaultVariableName = (name == null) ||
-					SymbolUtilities.getDefaultLocalName(program, v.getStackOffset(), 0).equals(
-						name);
+					SymbolUtilities.getDefaultLocalName(program, v.getStackOffset(), 0)
+							.equals(
+								name);
 
 				SourceType sourceType =
 					isDefaultVariableName ? SourceType.DEFAULT : SourceType.USER_DEFINED;
@@ -305,13 +298,9 @@ class FunctionsXmlMgr {
 		return dtParser.parseDataType(dtName, cp, size);
 	}
 
-	/**
+	/*
 	 * Returns the text embedded in an optional xml element.  If the next element in the stream is not
-	 * the "expectedElementName", the xml parser stream is unchanged.
-	 * <p>
-	 * @param parser
-	 * @param expectedElementName
-	 * @return
+	 * the "expectedElementName", the xml parser stream is unchanged
 	 */
 	private String getElementText(XmlPullParser parser, String expectedElementName) {
 		String result = null;

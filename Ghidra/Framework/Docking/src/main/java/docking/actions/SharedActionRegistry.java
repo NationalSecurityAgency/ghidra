@@ -34,6 +34,6 @@ public class SharedActionRegistry {
 	 * @param toolActions the tool action manager
 	 */
 	public static void installSharedActions(DockingTool tool, ToolActions toolActions) {
-		GTable.createSharedActions(tool, toolActions, ToolConstants.TOOL_OWNER);
+		GTable.createSharedActions(tool, toolActions, ToolConstants.SHARED_OWNER);
 	}
 }

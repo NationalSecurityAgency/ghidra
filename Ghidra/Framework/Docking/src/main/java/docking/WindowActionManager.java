@@ -97,6 +97,11 @@ public class WindowActionManager {
 	}
 
 	synchronized void contextChanged(ComponentPlaceholder placeHolder) {
+
+		if (!node.isVisible()) {
+			return;
+		}
+
 		placeHolderForScheduledActionUpdate = placeHolder;
 
 		// Buffer the events, as they tend to come in 3s.  That might not sound like alot, but 

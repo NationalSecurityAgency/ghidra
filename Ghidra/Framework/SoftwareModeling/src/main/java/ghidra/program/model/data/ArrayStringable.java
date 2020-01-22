@@ -47,7 +47,7 @@ public interface ArrayStringable extends DataType {
 	 */
 	public default String getArrayString(MemBuffer buf, Settings settings, int length) {
 		if (hasStringValue(settings) && buf.isInitializedMemory()) {
-			return new StringDataInstance(this, settings, buf, length).getStringValue();
+			return new StringDataInstance(this, settings, buf, length, true).getStringValue();
 		}
 		return null;
 	}
@@ -67,7 +67,7 @@ public interface ArrayStringable extends DataType {
 	/**
 	 * For cases where an array of this type exists, get the appropriate string to use as the
 	 * default label prefix, taking into account the fact that there exists a reference to the
-	 * data that references <tt>offcutLength</tt> bytes into this type
+	 * data that references <code>offcutLength</code> bytes into this type
 	 *
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object.

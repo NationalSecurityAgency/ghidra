@@ -18,140 +18,75 @@ package ghidra.app.plugin.core.functioncompare;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-import javax.swing.Icon;
-
 import docking.ActionContext;
 import docking.DockingTool;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import ghidra.app.services.FunctionComparisonModel;
+import ghidra.app.services.FunctionComparisonService;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 /**
- * This is the dockable provider that displays a FunctionComparisonPanel.
+ * Dockable provider that displays function comparisons  Clients create/modify
+ * these comparisons using the {@link FunctionComparisonService}, which in turn 
+ * creates instances of this provider as-needed. 
  */
-public class FunctionComparisonProvider extends ComponentProviderAdapter implements PopupActionProvider {
+public class FunctionComparisonProvider extends ComponentProviderAdapter
+		implements PopupActionProvider, FunctionComparisonModelListener {
 
-	private static final String HELP_TOPIC = "FunctionComparison";
-	private static final Icon ICON = ResourceManager.loadImage("images/page_white_c.png");
-	private FunctionComparisonPanel functionComparisonPanel;
-	private FunctionComparisonProviderListener listener;
+	protected static final String HELP_TOPIC = "FunctionComparison";
+	protected FunctionComparisonPanel functionComparisonPanel;
+	protected Plugin plugin;
+
+	/** Contains all the comparison data to be displayed by this provider */
+	protected FunctionComparisonModel model;
 
 	/**
-	 * Creates a provider for displaying a FunctionComparisonPanel that allows two or more
-	 * functions to be compared. This constructor will load the functions so they are available
-	 * for display in both the left side and right side of the panel. By default the first function 
-	 * will be loaded into the left side and the second function will be loaded in the right side.
-	 * @param plugin the plugin that owns this provider.
-	 * @param functions the functions that are used to populate both the left and right side
-	 * of the function comparison panel.
-	 * @param listener the listener to notify when the provider is closing.
+	 * Constructor
+	 * 
+	 * @param plugin the active plugin
+	 * @param name the providers name; used to group similar providers into a tab within
+	 *        the same window
+	 * @param owner the provider owner, usually a plugin name
 	 */
-	public FunctionComparisonProvider(Plugin plugin, Function[] functions,
-			FunctionComparisonProviderListener listener) {
-		super(plugin.getTool(), "Function Comparison", plugin.getName());
-		this.listener = listener;
-		if (ICON != null) {
-			setIcon(ICON);
-		}
-		functionComparisonPanel = new MultiFunctionComparisonPanel(this, tool, functions);
+	public FunctionComparisonProvider(Plugin plugin, String name, String owner) {
+		this(plugin, name, owner, null);
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * @param plugin the active plugin
+	 * @param name the providers name; used to group similar providers into a tab within
+	 *        the same window
+	 * @param owner the provider owner, usually a plugin name
+	 * @param contextType the type of context supported by this provider; may be null
+	 */
+	public FunctionComparisonProvider(Plugin plugin, String name, String owner,
+			Class<?> contextType) {
+		super(plugin.getTool(), name, owner, contextType);
+		this.plugin = plugin;
+		model = new FunctionComparisonModel();
+		model.addFunctionComparisonModelListener(this);
+		functionComparisonPanel = getComponent();
 		initFunctionComparisonPanel();
-	}
-
-	/**
-	 * Creates a provider for displaying two or more functions to be compared. This will load the 
-	 * functions so the leftFunctions are available for display in the left side and the 
-	 * rightFunctions are available for display in the right side of the function comparison panel. 
-	 * By default the first function from each array will be the one initially displayed in its
-	 * associated side.
-	 * @param plugin the plugin that owns this provider.
-	 * @param leftFunctions the functions that are used to populate the left side
-	 * @param rightFunctions the functions that are used to populate the right side
-	 * @param listener the listener to notify when the provider is closing.
-	 */
-	public FunctionComparisonProvider(Plugin plugin, Function[] leftFunctions,
-			Function[] rightFunctions, FunctionComparisonProviderListener listener) {
-		super(plugin.getTool(), "FunctionComparison", plugin.getName());
-		this.listener = listener;
-		if (ICON != null) {
-			setIcon(ICON);
-		}
-		functionComparisonPanel =
-			new MultiFunctionComparisonPanel(this, tool, leftFunctions, rightFunctions);
-		initFunctionComparisonPanel();
-	}
-
-	/**
-	 * Creates a provider for displaying two or more functions to be compared. This will load 
-	 * the functions so the leftFunctions are available for display in the left side. For 
-	 * each left side function there is a list of right side functions for comparison. 
-	 * rightFunctions are available for display in the right side of the function comparison panel. 
-	 * By default the first function from each array will be the one initially displayed in its
-	 * associated side.
-	 * @param plugin the plugin that owns this provider.
-	 * @param functionMap maps each left function to its own set of right functions for comparison.
-	 * @param listener the listener to notify when the provider is closing.
-	 */
-	public FunctionComparisonProvider(Plugin plugin,
-			HashMap<Function, HashSet<Function>> functionMap,
-			FunctionComparisonProviderListener listener) {
-
-		super(plugin.getTool(), "FunctionComparison", plugin.getName());
-		this.listener = listener;
-		if (ICON != null) {
-			setIcon(ICON);
-		}
-		functionComparisonPanel = new MappedFunctionComparisonPanel(this, tool, functionMap);
-		initFunctionComparisonPanel();
-	}
-
-	/**
-	 * Perform initialization for this provider and its panel. This includes setting the
-	 * tab text, getting actions, establishing the popup listener, and specifying help.
-	 */
-	private void initFunctionComparisonPanel() {
-		setTransient();
-		setTabText(functionComparisonPanel);
-		addSpecificCodeComparisonActions();
-		tool.addPopupActionProvider(this);
-		setHelpLocation(new HelpLocation(HELP_TOPIC, "Function Comparison"));
-	}
-
-	/**
-	 * Creates the text that is displayed on the tab for this provider.
-	 * @param functionCompPanel the function comparison panel for this provider.
-	 */
-	private void setTabText(FunctionComparisonPanel functionCompPanel) {
-		Function leftFunction = functionCompPanel.getLeftFunction();
-		Function rightFunction = functionCompPanel.getRightFunction();
-		String tabText = (leftFunction == null && rightFunction == null) ? "No Functions Yet"
-				: getTabText(leftFunction, rightFunction);
-		setTabText(tabText);
-	}
-
-	private String getTabText(Function function1, Function function2) {
-		return ((function1 != null) ? function1.getName() : "none") + " & " +
-			((function2 != null) ? function2.getName() : "none");
-	}
-
-	private void addSpecificCodeComparisonActions() {
-		DockingAction[] actions = functionComparisonPanel.getCodeComparisonActions();
-		for (DockingAction dockingAction : actions) {
-			addLocalAction(dockingAction);
-		}
 	}
 
 	@Override
 	public FunctionComparisonPanel getComponent() {
+		if (functionComparisonPanel == null) {
+			functionComparisonPanel = new FunctionComparisonPanel(this, tool, null, null);
+		}
 		return functionComparisonPanel;
 	}
 
@@ -161,6 +96,8 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter impleme
 		buff.append("FunctionComparisonProvider\n");
 		buff.append("Name: ");
 		buff.append(getName() + "\n");
+		buff.append("Tab Text: ");
+		buff.append(getTabText() + "\n");
 		Function leftFunction = functionComparisonPanel.getLeftFunction();
 		String leftName = (leftFunction != null) ? leftFunction.getName() : "No Function";
 		buff.append("Function 1: " + leftName + "\n");
@@ -181,44 +118,15 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter impleme
 	@Override
 	public void removeFromTool() {
 		tool.removePopupActionProvider(this);
-
 		super.removeFromTool();
 	}
 
 	@Override
-	public void closeComponent() {
-		super.closeComponent();
-
-		if (listener != null) {
-			listener.providerClosed(this);
-		}
-	}
-
-	/**
-	 * Indicates that the specified program has been closed, so this provider can close its 
-	 * component, if any of its functions were from that program.
-	 * @param program the program that was closed.
-	 */
-	public void programClosed(Program program) {
-		// For now close the panel if it has any functions with this program.
-		Function[] functions = functionComparisonPanel.getFunctions();
-		for (Function function : functions) {
-			if ((function != null) && function.getProgram() == program) {
-				closeComponent();
-				return;
-			}
-		}
-	}
-
-	/**
-	 * Indicates that the specified program has been restored, so this can refresh the code 
-	 * comparison panel.
-	 * @param program the program that was restored (undo/redo).
-	 */
-	public void programRestored(Program program) {
-		CodeComparisonPanel<? extends FieldPanelCoordinator> comparePanel =
-			functionComparisonPanel.getCurrentComponent();
-		comparePanel.programRestored(program);
+	public void modelChanged(List<FunctionComparison> model) {
+		this.model.setComparisons(model);
+		functionComparisonPanel.reload();
+		setTabText(functionComparisonPanel.getDescription());
+		closeIfEmpty();
 	}
 
 	@Override
@@ -235,7 +143,72 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter impleme
 	}
 
 	/**
-	 * Restores the function comparison provider's components to the indicated saved configuration state.
+	 * Returns the comparison model
+	 * 
+	 * @return the comparison model
+	 */
+	public FunctionComparisonModel getModel() {
+		return model;
+	}
+
+	/**
+	 * Replaces the comparison model with the one provided
+	 * 
+	 * @param model the comparison model
+	 */
+	public void setModel(FunctionComparisonModel model) {
+		this.model = model;
+	}
+
+	/**
+	 * Removes any functions being displayed by this provider that are from
+	 * the given program. If there are no functions left to display, the
+	 * provider is closed.
+	 * 
+	 * @param program the program being closed
+	 */
+	public void programClosed(Program program) {
+		model.removeFunctions(program);
+		closeIfEmpty();
+	}
+
+	/**
+	 * Removes all functions for the specified program from the comparison
+	 * model
+	 * 
+	 * @param program the program whose functions require removal
+	 */
+	public void removeFunctions(Program program) {
+		model.removeFunctions(program);
+		closeIfEmpty();
+	}
+
+	/**
+	 * Removes the set of functions from the comparison model
+	 * 
+	 * @param functions the functions to remove
+	 */
+	public void removeFunctions(Set<Function> functions) {
+		functions.stream().forEach(f -> model.removeFunction(f));
+		closeIfEmpty();
+	}
+
+	/**
+	 * Indicates that the specified program has been restored, so the 
+	 * comparison panel should be refreshed
+	 * 
+	 * @param program the program that was restored (undo/redo)
+	 */
+	public void programRestored(Program program) {
+		CodeComparisonPanel<? extends FieldPanelCoordinator> comparePanel =
+			functionComparisonPanel.getCurrentComponent();
+		comparePanel.programRestored(program);
+	}
+
+	/**
+	 * Restores the function comparison providers components to the indicated 
+	 * saved configuration state
+	 * 
 	 * @param saveState the configuration state to restore
 	 */
 	public void readConfigState(SaveState saveState) {
@@ -243,10 +216,52 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter impleme
 	}
 
 	/**
-	 * Saves the current configuration state of the components that compose the function comparison provider.
+	 * Saves the current configuration state of the components that compose 
+	 * the function comparison provider
+	 * 
 	 * @param saveState the new configuration state
 	 */
 	public void writeConfigState(SaveState saveState) {
 		functionComparisonPanel.writeConfigState(getName(), saveState);
+	}
+
+	/**
+	 * Perform initialization for this provider and its panel
+	 */
+	protected void initFunctionComparisonPanel() {
+		setTransient();
+		setTabText(functionComparisonPanel.getDescription());
+		addSpecificCodeComparisonActions();
+		tool.addPopupActionProvider(this);
+		setHelpLocation(new HelpLocation(HELP_TOPIC, "Function Comparison"));
+	}
+
+	/**
+	 * Returns true if the comparison panel is empty
+	 * 
+	 * @return true if the panel is empty
+	 */
+	boolean isEmpty() {
+		return functionComparisonPanel.isEmpty();
+	}
+
+	/**
+	 * Closes this provider if there are no comparisons to view
+	 */
+	void closeIfEmpty() {
+		if (isEmpty()) {
+			closeComponent();
+		}
+	}
+
+	/**
+	 * Gets actions specific to the code comparison panel and adds them to this
+	 * provider
+	 */
+	private void addSpecificCodeComparisonActions() {
+		DockingAction[] actions = functionComparisonPanel.getCodeComparisonActions();
+		for (DockingAction dockingAction : actions) {
+			addLocalAction(dockingAction);
+		}
 	}
 }

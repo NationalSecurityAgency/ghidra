@@ -23,8 +23,6 @@ import javax.swing.table.*;
  */
 public class TableUtils {
 
-	public static final int MAX_SEARCH_ROWS = 50000;
-
 	/**
 	 * Attempts to sort the given table based upon the given column index.  If the {@link TableModel}
 	 * of the given table is not a {@link SortedTableModel}, then this method will do nothing.

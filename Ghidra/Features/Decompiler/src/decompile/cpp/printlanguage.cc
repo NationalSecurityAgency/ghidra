@@ -263,7 +263,6 @@ void PrintLanguage::pushVnLHS(const Varnode *vn,const PcodeOp *op)
 /// ending with the given operator token, needs to be surrounded by parentheses to convey
 /// the proper meaning.
 /// \param op2 is the input token to \b this operator
-/// \param stage is the stage of \b this operator currently being printed
 /// \return \b true if \b op2 (as input to \b this) should be parenthesized
 bool PrintLanguage::parentheses(const OpToken *op2)
 

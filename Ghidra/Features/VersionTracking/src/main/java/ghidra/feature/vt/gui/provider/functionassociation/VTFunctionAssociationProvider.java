@@ -15,8 +15,12 @@
  */
 package ghidra.feature.vt.gui.provider.functionassociation;
 
-import static ghidra.feature.vt.api.impl.VTChangeManager.*;
-import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.*;
+import static ghidra.feature.vt.api.impl.VTChangeManager.DOCR_VT_ASSOCIATION_STATUS_CHANGED;
+import static ghidra.feature.vt.api.impl.VTChangeManager.DOCR_VT_MATCH_ADDED;
+import static ghidra.feature.vt.api.impl.VTChangeManager.DOCR_VT_MATCH_DELETED;
+import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.SHOW_ALL;
+import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.SHOW_UNACCEPTED;
+import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.SHOW_UNMATCHED;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -473,9 +477,11 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 		sourceFunctionsModel.addTableModelListener(new TitleUpdateListener());
 
-		sourceFunctionsTable.getColumnModel().getColumn(
-			VTFunctionAssociationTableModel.ADDRESS_COL).setPreferredWidth(
-				VTFunctionAssociationTableModel.ADDRESS_COL_WIDTH);
+		sourceFunctionsTable.getColumnModel()
+				.getColumn(
+					VTFunctionAssociationTableModel.ADDRESS_COL)
+				.setPreferredWidth(
+					VTFunctionAssociationTableModel.ADDRESS_COL_WIDTH);
 
 		sourceTableFilterPanel =
 			new GhidraTableFilterPanel<>(sourceFunctionsTable, sourceFunctionsModel);
@@ -530,9 +536,11 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		JTableHeader functionHeader = destinationFunctionsTable.getTableHeader();
 		functionHeader.setUpdateTableInRealTime(true);
 
-		destinationFunctionsTable.getColumnModel().getColumn(
-			VTFunctionAssociationTableModel.ADDRESS_COL).setPreferredWidth(
-				VTFunctionAssociationTableModel.ADDRESS_COL_WIDTH);
+		destinationFunctionsTable.getColumnModel()
+				.getColumn(
+					VTFunctionAssociationTableModel.ADDRESS_COL)
+				.setPreferredWidth(
+					VTFunctionAssociationTableModel.ADDRESS_COL_WIDTH);
 
 		destinationTableFilterPanel =
 			new GhidraTableFilterPanel<>(destinationFunctionsTable, destinationFunctionsModel);

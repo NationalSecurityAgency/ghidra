@@ -101,7 +101,7 @@ class ApplySymbols {
 			}
 
 			// Place compiler generated symbols (e.g., $LN9) within containing function when possible
-			if (name.startsWith("$") && !name.contains(Namespace.NAMESPACE_DELIMITER)) {
+			if (name.startsWith("$") && !name.contains(Namespace.DELIMITER)) {
 				Function f = functionManager.getFunctionContaining(address);
 				if (f != null && !f.getName().equals(name)) {
 					name = NamespaceUtils.getNamespaceQualifiedName(f, name, true);

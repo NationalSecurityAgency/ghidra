@@ -64,16 +64,7 @@ public class ColumnFilterDialogModel<R> {
 		this.columnModel = columnModel;
 		this.currentFilter = currentColumnTableFilter;
 		columnModel.addColumnModelListener(columnModelListener);
-		int columnCount = columnModel.getColumnCount();
-		for (int viewIndex = 0; viewIndex < columnCount; viewIndex++) {
-			int modelIndex = columnModel.getColumn(viewIndex).getModelIndex();
-			Class<?> columnClass = model.getColumnClass(modelIndex);
-			ColumnFilterData<?> columnData =
-				createColumnFilterData(modelIndex, viewIndex, columnClass);
-			if (columnData.isFilterable()) {
-				allFilters.add(columnData);
-			}
-		}
+		allFilters = getAllColumnFilterData(model, columnModel);
 
 		addEntriesFromCurrentTableFilter(currentColumnTableFilter);
 
@@ -84,6 +75,23 @@ public class ColumnFilterDialogModel<R> {
 			// something the user configured.
 			defaultFilter = getTableColumnFilter();
 		}
+	}
+
+	public static <R> List<ColumnFilterData<?>> getAllColumnFilterData(
+			RowObjectFilterModel<R> model,
+			TableColumnModel columnModel) {
+		List<ColumnFilterData<?>> filters = new ArrayList<>();
+		int columnCount = columnModel.getColumnCount();
+		for (int viewIndex = 0; viewIndex < columnCount; viewIndex++) {
+			int modelIndex = columnModel.getColumn(viewIndex).getModelIndex();
+			Class<?> columnClass = model.getColumnClass(modelIndex);
+			ColumnFilterData<?> columnData =
+				createColumnFilterData(model, modelIndex, viewIndex, columnClass);
+			if (columnData.isFilterable()) {
+				filters.add(columnData);
+			}
+		}
+		return filters;
 	}
 
 	/**
@@ -274,7 +282,8 @@ public class ColumnFilterDialogModel<R> {
 		return tableModel;
 	}
 
-	private ColumnFilterData<?> createColumnFilterData(int modelIndex, int viewIndex,
+	private static <R> ColumnFilterData<?> createColumnFilterData(
+			RowObjectFilterModel<R> tableModel, int modelIndex, int viewIndex,
 			Class<?> columnClass) {
 		return new ColumnFilterData<>(tableModel, modelIndex, viewIndex, columnClass);
 	}
@@ -366,7 +375,7 @@ public class ColumnFilterDialogModel<R> {
 			int modelIndex = column.getModelIndex();
 			Class<?> columnClass = tableModel.getColumnClass(modelIndex);
 			ColumnFilterData<?> columnFilterData =
-				createColumnFilterData(modelIndex, viewIndex, columnClass);
+				createColumnFilterData(tableModel, modelIndex, viewIndex, columnClass);
 			if (columnFilterData.isFilterable()) {
 				allFilters.add(columnFilterData);
 			}
