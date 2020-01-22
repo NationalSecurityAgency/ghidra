@@ -373,9 +373,9 @@ public class GnuDemanglerParser implements DemanglerParser {
 		}
 
 		// this will yield:
-		// fullName: 		NS1::Foo::operator
+		// fullNamespace: 	NS1::Foo::operator
 		// fullReturnType:  std::string
-		String fullName = matcher.group(1);// group 0 is the entire match string
+		String fullNamespace = matcher.group(1);// group 0 is the entire match string
 		String fullReturnType = matcher.group(2);
 
 		boolean isConst = false;
@@ -394,8 +394,8 @@ public class GnuDemanglerParser implements DemanglerParser {
 
 		// 'conversion operator' syntax is operator <name, which is the type>()
 
-		String templatelessName = stripOffTemplates(fullName);
-		setNameAndNamespace(method, templatelessName);
+		String templatelessNamespace = stripOffTemplates(fullNamespace);
+		setNamespace(method, templatelessNamespace);
 
 		// shortReturnType: string
 		String templatelessReturnType = stripOffTemplates(fullReturnType);
@@ -410,7 +410,7 @@ public class GnuDemanglerParser implements DemanglerParser {
 		//
 		method.setName("operator.cast.to." + shortReturnTypeName);
 
-		method.setSignature(fullName + " " + fullReturnType);
+		method.setSignature(fullNamespace + " " + fullReturnType);
 		method.setOverloadedOperator(true);
 
 		return method;
@@ -449,7 +449,7 @@ public class GnuDemanglerParser implements DemanglerParser {
 		method.setReturnType(returnType);
 
 		// 'conversion operator' syntax is operator <name, which is the type>(), where the
-		// operator itself cold be in a class namespace
+		// operator itself could be in a class namespace
 		setNameAndNamespace(method, operatorText);
 
 		List<DemangledDataType> parameters = parseParameters(parametersText);

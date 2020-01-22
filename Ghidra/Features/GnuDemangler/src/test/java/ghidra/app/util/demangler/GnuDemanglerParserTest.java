@@ -363,6 +363,27 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testOperatorCastTo() throws Exception {
+		//
+		// Mangled: _ZNKSt17integral_constantIbLb0EEcvbEv
+		// 
+		// Demangled: std::integral_constant<bool, false>::operator bool() const
+
+		String mangled = "_ZNKSt17integral_constantIbLb0EEcvbEv";
+
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertTrue(object instanceof DemangledFunction);
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"bool std::integral_constant::operator.cast.to.bool(void)",
+			signature);
+	}
+
+	@Test
 	public void testFunctions() throws Exception {
 		String mangled = "_Z7toFloatidcls";
 
