@@ -324,9 +324,15 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 			}
 
 			Function f = (Function) value;
-			String text = f.getName() + " (" + f.getProgram().getName() + ")";
+
+			String functionName = f.getName();
+			String functionPathToProgram = f.getProgram().getDomainFile().getPathname();
+			String functionAddress = f.getBody().getMinAddress().toString();
+			String text = functionName + "@" + functionAddress + " (" + functionPathToProgram + ")";
+
 			return super.getListCellRendererComponent(list, text, index, isSelected,
 				cellHasFocus);
 		}
 	}
+
 }

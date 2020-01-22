@@ -101,31 +101,63 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 	/**
 	 * Ensures that FunctionComparison objects are always ordered according
-	 * to the source function name
+	 * to the source program path, name and address
 	 */
 	@Override
 	public int compareTo(FunctionComparison o) {
 		if (o == null) {
 			return 1;
 		}
-		return getSource().getName().compareTo(o.getSource().getName());
+
+		String sourcePath = getSource().getProgram().getDomainFile().getPathname();
+		String otherPath = o.getSource().getProgram().getDomainFile().getPathname();
+
+		String sourceName = getSource().getName();
+		String otherName = o.getSource().getName();
+
+		if (sourcePath.equals(otherPath)) {
+			if (sourceName.contentEquals(otherName)) {
+				return getSource().getBody()
+						.getMinAddress()
+						.compareTo(o.getSource().getBody().getMinAddress());
+			}
+			else {
+				return sourceName.compareTo(otherName);
+			}
+		}
+
+		return sourcePath.compareTo(otherPath);
 	}
 
 	/**
-	 * Forces an ordering on {@link Function} objects by name. This is 
-	 * to ensure that the list of targets is kept in sorted order at all times.
+	 * Forces an ordering on {@link Function} objects by program path, name and 
+	 * address. This is to ensure that the list of targets is kept in sorted 
+	 * order at all times.
 	 */
 	class FunctionComparator implements Comparator<Function> {
 
 		@Override
 		public int compare(Function o1, Function o2) {
-			if (o1 == o2) {
-				return 0;
-			}
 			if (o2 == null) {
 				return 1;
 			}
-			return o1.getName().compareTo(o2.getName());
+
+			String o1Path = o1.getProgram().getDomainFile().getPathname();
+			String o2Path = o2.getProgram().getDomainFile().getPathname();
+
+			String o1Name = o1.getName();
+			String o2Name = o2.getName();
+
+			if (o1Path.equals(o2Path)) {
+				if (o1Name.equals(o2Name)) {
+					return o1.getBody().getMinAddress().compareTo(o2.getBody().getMinAddress());
+				}
+				else {
+					return o1Name.compareTo(o2Name);
+				}
+			}
+
+			return o1Path.compareTo(o2Path);
 		}
 	}
 }
