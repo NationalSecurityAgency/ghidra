@@ -199,7 +199,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	private void togglePrimaryHighlight(FieldLocation location, Field field, Color highlightColor) {
-
 		ClangToken token = ((ClangTextField) field).getToken(location);
 		Supplier<List<ClangToken>> lazyTokens = () -> findTokensByName(token.getText());
 		highlightController.togglePrimaryHighlights(middleMouseHighlightColor, lazyTokens);
@@ -1151,15 +1150,24 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		private FieldLocation location;
 		private Field field;
 		private EventTrigger trigger;
+		private long updateId;
 
 		PendingHighlightUpdate(FieldLocation location, Field field, EventTrigger trigger) {
 			this.location = location;
 			this.field = field;
 			this.trigger = trigger;
+			this.updateId = highlightController.getUpdateId();
 		}
 
 		void doUpdate() {
-			highlightController.fieldLocationChanged(location, field, trigger);
+
+			// Note: don't send this buffered cursor change highlight if some other highlight
+			//       has been applied.  Otherwise, this highlight would overwrite the last 
+			//       applied highlight.
+			long lastUpdateId = highlightController.getUpdateId();
+			if (updateId == lastUpdateId) {
+				highlightController.fieldLocationChanged(location, field, trigger);
+			}
 		}
 	}
 }

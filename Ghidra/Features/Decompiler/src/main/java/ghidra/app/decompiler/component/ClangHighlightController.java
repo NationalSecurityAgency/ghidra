@@ -66,6 +66,11 @@ public abstract class ClangHighlightController {
 	private TokenHighlights secondaryHighlightTokens = new TokenHighlights();
 	private TokenHighlightColors secondaryHighlightColors = new TokenHighlightColors();
 
+	/**
+	 * A counter to track updates so that clients know when a buffered highlight request is invalid
+	 */
+	private long updateId;
+
 	private List<ClangHighlightListener> listeners = new ArrayList<>();
 
 	public abstract void fieldLocationChanged(FieldLocation location, Field field,
@@ -81,6 +86,10 @@ public abstract class ClangHighlightController {
 			return highlightedToken.getText();
 		}
 		return null;
+	}
+
+	public long getUpdateId() {
+		return updateId;
 	}
 
 	public TokenHighlightColors getSecondaryHighlightColors() {
@@ -133,7 +142,6 @@ public abstract class ClangHighlightController {
 	}
 
 	private void doClearHighlights(TokenHighlights tokenHighlights) {
-
 		Iterator<HighlightToken> it = tokenHighlights.iterator();
 		while (it.hasNext()) {
 			HighlightToken highlight = it.next();
@@ -243,6 +251,9 @@ public abstract class ClangHighlightController {
 
 	private void addTokensToHighlights(Collection<ClangToken> tokens,
 			Function<ClangToken, Color> colorProvider, TokenHighlights currentHighlights) {
+
+		updateId++;
+
 		for (ClangToken clangToken : tokens) {
 			Color color = colorProvider.apply(clangToken);
 			doAddHighlight(clangToken, color, currentHighlights);
