@@ -160,7 +160,7 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 				}
 			});
 
-			panel.getRightFieldPanel().addFocusListener(new FocusAdapter() {
+			panel.getLeftFieldPanel().addFocusListener(new FocusAdapter() {
 
 				@Override
 				public void focusGained(FocusEvent e) {
