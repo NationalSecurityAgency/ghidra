@@ -299,7 +299,7 @@ const struct demangler_engine libiberty_demanglers[] =
   {
     GNU_V3_DEMANGLING_STYLE_STRING,
     gnu_v3_demangling,
-    "GNU (g++) V3 ABI-style demangling"
+    "GNU (g++) V3 (Itanium C++ ABI) style demangling"
   }
   ,
   {
@@ -312,6 +312,18 @@ const struct demangler_engine libiberty_demanglers[] =
     GNAT_DEMANGLING_STYLE_STRING,
     gnat_demangling,
     "GNAT style demangling"
+  }
+  ,
+  {
+    DLANG_DEMANGLING_STYLE_STRING,
+    dlang_demangling,
+    "DLANG style demangling"
+  }
+  ,
+  {
+    RUST_DEMANGLING_STYLE_STRING,
+    rust_demangling,
+    "Rust style demangling"
   }
   ,
   {
@@ -858,14 +870,31 @@ cplus_demangle (const char *mangled, int options)
 
   memset ((char *) work, 0, sizeof (work));
   work->options = options;
-  if ((work->options & DMGL_STYLE_MASK) == 0)
+
+  if ((options & DMGL_STYLE_MASK) == 0)
     work->options |= (int) current_demangling_style & DMGL_STYLE_MASK;
 
   /* The V3 ABI demangling is implemented elsewhere.  */
-  if (GNU_V3_DEMANGLING || AUTO_DEMANGLING)
+  if (GNU_V3_DEMANGLING || RUST_DEMANGLING || AUTO_DEMANGLING)
     {
       ret = cplus_demangle_v3 (mangled, work->options);
-      if (ret || GNU_V3_DEMANGLING)
+      if (GNU_V3_DEMANGLING)
+	return ret;
+
+      if (ret)
+	{
+	  /* Rust symbols are GNU_V3 mangled plus some extra subtitutions.
+	     The subtitutions are always smaller, so do in place changes.  */
+	  if (rust_is_mangled (ret))
+	    rust_demangle_sym (ret);
+	  else if (RUST_DEMANGLING)
+	    {
+	      free (ret);
+	      ret = NULL;
+	    }
+	}
+
+      if (ret || RUST_DEMANGLING)
 	return ret;
     }
 
@@ -878,6 +907,13 @@ cplus_demangle (const char *mangled, int options)
 
   if (GNAT_DEMANGLING)
     return ada_demangle (mangled, options);
+
+  if (DLANG_DEMANGLING)
+    {
+      ret = dlang_demangle (mangled, options);
+      if (ret)
+	return ret;
+    }
 
   ret = internal_cplus_demangle (work, mangled);
   squangle_mop_up (work);
@@ -892,7 +928,7 @@ ada_demangle (const char *mangled, int option ATTRIBUTE_UNUSED)
   int len0;
   const char* p;
   char *d;
-  char *demangled;
+  char *demangled = NULL;
   
   /* Discard leading _ada_, which is used for library level subprograms.  */
   if (strncmp (mangled, "_ada_", 5) == 0)
@@ -1137,6 +1173,7 @@ ada_demangle (const char *mangled, int option ATTRIBUTE_UNUSED)
   return demangled;
 
  unknown:
+  XDELETEVEC (demangled);
   len0 = strlen (mangled);
   demangled = XNEWVEC (char, len0 + 3);
 
