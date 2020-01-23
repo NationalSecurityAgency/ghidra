@@ -176,16 +176,24 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 					Object obj = evt.getSource();
 					if (obj instanceof GhidraTable) {
 						GhidraTable table = (GhidraTable) obj;
-						int row = table.rowAtPoint(evt.getPoint());
-						int column = table.columnAtPoint(evt.getPoint());
-						if (column != EquateTableModel.NAME_COL) {
+						int viewRow = table.rowAtPoint(evt.getPoint());
+						int viewColumn = table.columnAtPoint(evt.getPoint());
+
+						int modelRow = table.convertRowIndexToModel(viewRow);
+						int modelColumn = table.convertColumnIndexToModel(viewColumn);
+
+						TableModel model = table.getModel();
+
+						if (!model.isCellEditable(modelRow, modelColumn)) {
 							return;
 						}
+
 						DataTypeManagerService dtms = tool.getService(DataTypeManagerService.class);
 						if (dtms == null) {
 							return;
 						}
-						Equate equate = (Equate) table.getValueAt(row, column);
+						Equate equate = (Equate) model.getValueAt(modelRow, 0);
+
 						UniversalID id =
 							new UniversalID(Long.parseLong(equate.getName().split(":")[1]));
 						Enum enoom = (Enum) dtm.findDataTypeForID(id);
@@ -216,8 +224,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 		JScrollPane equatesTablePane = new JScrollPane(equatesTable);
 
-		setEquateTableRenderer();
-
 		JPanel equatesPanel = new JPanel(new BorderLayout());
 		equatesPanel.add(new GLabel("Equates", SwingConstants.CENTER), BorderLayout.NORTH);
 		equatesPanel.add(equatesTablePane, BorderLayout.CENTER);
@@ -243,7 +249,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 		JTableHeader referencesHeader = referencesTable.getTableHeader();
 		referencesHeader.setUpdateTableInRealTime(true);
-		setReferenceTableRenderer();
 
 		JPanel referencesPanel = new JPanel(new BorderLayout());
 		referencesPanel.add(new GLabel("References", SwingConstants.CENTER), "North");
@@ -264,20 +269,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		Equate equate = equatesFilterPanel.getSelectedItem();
 		referencesTable.clearSelection();
 		referencesModel.setEquate(equate);
-	}
-
-	private void setEquateTableRenderer() {
-		for (int i = 0; i < equatesModel.getColumnCount(); ++i) {
-			TableColumn column = equatesTable.getColumnModel().getColumn(i);
-			column.setCellRenderer(new EquateRenderer(this));
-		}
-	}
-
-	private void setReferenceTableRenderer() {
-		for (int i = 0; i < referencesModel.getColumnCount(); ++i) {
-			TableColumn column = referencesTable.getColumnModel().getColumn(i);
-			column.setCellRenderer(new EquateReferenceRenderer());
-		}
 	}
 
 	private void createAction() {
