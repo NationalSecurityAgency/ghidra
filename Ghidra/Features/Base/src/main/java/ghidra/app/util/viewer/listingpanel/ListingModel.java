@@ -63,8 +63,9 @@ public interface ListingModel {
 	 * Opens the given data, but not any sub-components.
 	 * 
 	 * @param data the data to open
+	 * @return true if the data was opened (will return false if the data is already open or has no children)
 	 */
-	public void openData(Data data);
+	public boolean openData(Data data);
 
 	/**
 	 * Recursively open the given data and its sub-components.

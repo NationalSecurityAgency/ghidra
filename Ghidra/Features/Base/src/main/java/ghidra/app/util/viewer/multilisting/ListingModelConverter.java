@@ -133,8 +133,8 @@ public class ListingModelConverter implements ListingModel {
 	}
 
 	@Override
-	public void openData(Data data) {
-		model.openData(data);
+	public boolean openData(Data data) {
+		return model.openData(data);
 	}
 
 	@Override

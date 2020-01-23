@@ -581,8 +581,8 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 		}
 
 		@Override
-		public void openData(Data data) {
-			// stub
+		public boolean openData(Data data) {
+			return false;
 		}
 
 		@Override

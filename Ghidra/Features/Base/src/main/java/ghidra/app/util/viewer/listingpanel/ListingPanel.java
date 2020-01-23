@@ -684,8 +684,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		boolean didOpen = false;
 		while (data != null) {
 			if (!listingModel.isOpen(data)) {
-				listingModel.openData(data);
-				didOpen = true;
+				didOpen |= listingModel.openData(data);
 			}
 			data = data.getParent();
 		}
