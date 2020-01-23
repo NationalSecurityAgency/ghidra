@@ -628,7 +628,9 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	*:1 SP = X;
 	SP=SP-1;
 	*:1 SP = A;
-	tmp:1 = (H << 4) | (I << 3) | (N << 2) | ( Z << 1) | C;
+	tmp:1 = 0b11100000 | (H << 4) | (I << 3) | (N << 2) | ( Z << 1) | C;
+	SP=SP-1;
+	*:1 SP = tmp;
 	I = 1;
 	call [SWI_VECTOR];
 }

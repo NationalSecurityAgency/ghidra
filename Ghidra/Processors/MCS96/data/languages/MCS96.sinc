@@ -1218,6 +1218,7 @@ cc: "E"    is cond=15 { tmp:1 = ($(Z) == 1); export tmp; }
 
 :SKIP                               is op8=0x00 {
 	local tmp:1 = 0;
+	tmp = tmp; # avoid warning
 } #2-byte NOP
 
 :ST wreg, oper16                    is op6=0x30 ... & oper16; wreg {

@@ -373,7 +373,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	val:1 = *:1 HL;
 	setSubtractFlags(A,val);
 	cmp:1 = A - val;
-	setResultFlags(val);
+	setResultFlags(cmp);
 }
 
 :INR reg3_3  is op6_2=0x0 & reg3_3 & bits0_3=0x4 {
