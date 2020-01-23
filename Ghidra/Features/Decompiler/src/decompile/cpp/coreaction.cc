@@ -3627,7 +3627,7 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
   else
     data.initActiveOutput(); // Initiate gathering potential return values
 
-  AddrSpace *spc = data.getArch()->getDefaultSpace();
+  AddrSpace *spc = data.getArch()->getDefaultCodeSpace();
   if (spc->isTruncated()) {
     // For truncated spaces we need a zext op, from the truncated stack pointer
     // into the full stack pointer
@@ -4244,7 +4244,7 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
   case CPUI_INT_OR:
   case CPUI_INT_XOR:
     if (invn->isSpacebase()) {
-      AddrSpace *spc = typegrp->getArch()->getDefaultSpace();
+      AddrSpace *spc = typegrp->getArch()->getDefaultDataSpace();
       newtype = typegrp->getTypePointer(alttype->getSize(),typegrp->getBase(1,TYPE_UNKNOWN),spc->getWordSize());
     }
     else
@@ -4260,7 +4260,7 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
     break;
   case CPUI_SEGMENTOP:
     {
-      AddrSpace *spc = typegrp->getArch()->getDefaultSpace();
+      AddrSpace *spc = typegrp->getArch()->getDefaultDataSpace();
       Datatype *btype = ((TypePointer *)alttype)->getPtrTo();
       newtype = typegrp->getTypePointer(outvn->getSize(),btype,spc->getWordSize());
     }

@@ -7348,7 +7348,7 @@ RulePtrFlow::RulePtrFlow(const string &g,Architecture *conf)
   : Rule( g, 0, "ptrflow")
 {
   glb = conf;
-  hasTruncations = glb->getDefaultSpace()->isTruncated();
+  hasTruncations = glb->getDefaultDataSpace()->isTruncated();
 }
 
 void RulePtrFlow::getOpList(vector<uint4> &oplist) const
@@ -7486,7 +7486,7 @@ int4 RulePtrFlow::applyOp(PcodeOp *op,Funcdata &data)
   case CPUI_CALLIND:
   case CPUI_BRANCHIND:
     vn = op->getIn(0);
-    spc = data.getArch()->getDefaultSpace();
+    spc = data.getArch()->getDefaultCodeSpace();
     if (vn->getSize() > spc->getAddrSize()) {
       vn = truncatePointer(spc,op,vn,0,data);
       madeChange = 1;

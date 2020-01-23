@@ -112,7 +112,7 @@ void BfdArchitecture::postSpecFile(void)
 
 { // Attach default space to loader
   Architecture::postSpecFile();
-  ((LoadImageBfd *)loader)->attachToSpace(getDefaultSpace());
+  ((LoadImageBfd *)loader)->attachToSpace(getDefaultCodeSpace());
 }
 
 /// This just wraps the base class constructor

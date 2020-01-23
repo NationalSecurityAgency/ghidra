@@ -34,7 +34,7 @@ void VarnodeData::restoreXml(const Element *el,const AddrSpaceManager *manage)
       return;
     }
     else if (el->getAttributeName(i)=="name") {
-      const Translate *trans = manage->getDefaultSpace()->getTrans();
+      const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
       const VarnodeData &point(trans->getRegister(el->getAttributeValue(i)));
       *this = point;
       return;

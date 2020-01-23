@@ -289,7 +289,7 @@ void Range::restoreXml(const Element *el,const AddrSpaceManager *manage)
       s >> last;
     }
     else if (el->getAttributeName(i) == "name") {
-      const Translate *trans = manage->getDefaultSpace()->getTrans();
+      const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
       const VarnodeData &point(trans->getRegister(el->getAttributeValue(i)));
       spc = point.space;
       first = point.offset;

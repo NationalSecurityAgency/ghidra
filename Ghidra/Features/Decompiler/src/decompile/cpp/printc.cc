@@ -1414,7 +1414,7 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
 
 {
   if (val==0) return false;
-  AddrSpace *spc = glb->getDefaultSpace();
+  AddrSpace *spc = glb->getDefaultDataSpace();
   uintb fullEncoding;
   Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),op->getAddr(),fullEncoding);
   if (stringaddr.isInvalid()) return false;
@@ -1443,7 +1443,7 @@ bool PrintC::pushPtrCodeConstant(uintb val,const TypePointer *ct,
 				    const Varnode *vn,
 				    const PcodeOp *op)
 {
-  AddrSpace *spc = glb->getDefaultSpace();
+  AddrSpace *spc = glb->getDefaultCodeSpace();
   Funcdata *fd = (Funcdata *)0;
   val = AddrSpace::addressToByte(val,spc->getWordSize());
   fd = glb->symboltab->getGlobalScope()->queryFunction( Address(spc,val));

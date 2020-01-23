@@ -652,7 +652,8 @@ void Architecture::cacheAddrSpaceProperties(void)
 
 {
   vector<AddrSpace *> copyList = inferPtrSpaces;
-  copyList.push_back(getDefaultSpace());	// Make sure the default space is their
+  copyList.push_back(getDefaultCodeSpace());	// Make sure the default code space is present
+  copyList.push_back(getDefaultDataSpace());	// Make sure the default data space is present
   inferPtrSpaces.clear();
   sort(copyList.begin(),copyList.end(),AddrSpace::compareByIndex);
   AddrSpace *lastSpace = (AddrSpace *)0;
@@ -670,7 +671,7 @@ void Architecture::cacheAddrSpaceProperties(void)
   int4 defPos = -1;
   for(int4 i=0;i<inferPtrSpaces.size();++i) {
     AddrSpace *spc = inferPtrSpaces[i];
-    if (spc == getDefaultSpace())
+    if (spc == getDefaultDataSpace())		// Make the default for inferring pointers the data space
       defPos = i;
     SegmentOp *segOp = getSegmentOp(spc);
     if (segOp != (SegmentOp *)0) {
@@ -1085,6 +1086,12 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     else if (elname == "register_data") {
       parseLaneSizes(*iter);
     }
+    else if (elname == "data_space") {
+      AddrSpace *spc = getSpaceByName(el->getAttributeValue("space"));
+      if (spc == (AddrSpace *)0)
+        throw LowlevelError("Undefined space: "+el->getAttributeValue("space"));
+      setDefaultDataSpace(spc->getIndex());
+    }
     else if (elname == "segmented_address") {
     }
     else if (elname == "default_symbols") {
@@ -1094,8 +1101,6 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     else if (elname == "address_shift_amount") {
     }
     else if (elname == "properties") {
-    }
-    else if (elname == "data_space") {
     }
     else
       throw LowlevelError("Unknown element in <processor_spec>: "+elname);

@@ -652,9 +652,9 @@ void GrammarLexer::getNextToken(GrammarToken &token)
 Datatype *PointerModifier::modType(Datatype *base,const TypeDeclarator *decl,Architecture *glb) const
 
 {
-  int4 addrsize = glb->getDefaultSize();
+  int4 addrsize = glb->getDefaultDataSpace()->getAddrSize();
   Datatype *restype;
-  restype = glb->types->getTypePointerAbsolute(addrsize,base,glb->getDefaultSpace()->getWordSize());
+  restype = glb->types->getTypePointerAbsolute(addrsize,base,glb->getDefaultDataSpace()->getWordSize());
   return restype;
 }
 
@@ -1495,7 +1495,7 @@ Address parse_machaddr(istream &s,int4 &defaultsize,const TypeFactory &typegrp,b
   }
   else {
     if (tok == '0') {
-      b = manage->getDefaultSpace();
+      b = manage->getDefaultCodeSpace();
     }
     else {
       b = manage->getSpaceByShortcut(tok);
