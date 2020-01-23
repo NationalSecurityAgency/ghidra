@@ -934,13 +934,14 @@ int4 ActionShadowVar::apply(Funcdata &data)
   return 0;
 }
 
-/// \brief Make a limited search for a LOAD or STORE so we can see the AddrSpace being accessed
+/// \brief Make a limited search from a constant for a LOAD or STORE so we can see the AddrSpace being accessed
 ///
-/// We traverse forward through the given PcodeOp, through INT_ADD, INDIRECT, COPY, and MULTIEQUAL
+/// We traverse forward through the op reading the constant, through INT_ADD, INDIRECT, COPY, and MULTIEQUAL
 /// until we hit a LOAD or STORE.
-/// \param op is the given PcodeOp to start the search from
+/// \param vn is the constant we are searching from
+/// \param op is the PcodeOp reading the constant
 /// \return the discovered AddrSpace or null
-AddrSpace *ActionConstantPtr::searchForLoadStore(PcodeOp *op)
+AddrSpace *ActionConstantPtr::searchForLoadStore(Varnode *vn,PcodeOp *op)
 
 {
   for(int4 i=0;i<3;++i) {
@@ -949,11 +950,15 @@ AddrSpace *ActionConstantPtr::searchForLoadStore(PcodeOp *op)
       case CPUI_COPY:
       case CPUI_INDIRECT:
       case CPUI_MULTIEQUAL:
-	op = op->getOut()->loneDescend();
+	vn = op->getOut();
+	op = vn->loneDescend();
 	break;
       case CPUI_LOAD:
-      case CPUI_STORE:
 	return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+      case CPUI_STORE:
+	if (op->getIn(1) == vn)
+	  return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+	return (AddrSpace *)0;
       default:
 	return (AddrSpace *)0;
     }
@@ -984,7 +989,7 @@ AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vec
     else if (vn->getSize() < minSize)
       continue;
     if (resSpace != (AddrSpace *)0) {
-      AddrSpace *searchSpc = searchForLoadStore(op);
+      AddrSpace *searchSpc = searchForLoadStore(vn,op);
       if (searchSpc != (AddrSpace *)0)
 	resSpace = searchSpc;
       break;
