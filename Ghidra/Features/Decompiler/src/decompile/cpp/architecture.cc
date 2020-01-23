@@ -1087,9 +1087,10 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
       parseLaneSizes(*iter);
     }
     else if (elname == "data_space") {
-      AddrSpace *spc = getSpaceByName(el->getAttributeValue("space"));
+      const string &spaceName( (*iter)->getAttributeValue("space"));
+      AddrSpace *spc = getSpaceByName(spaceName);
       if (spc == (AddrSpace *)0)
-        throw LowlevelError("Undefined space: "+el->getAttributeValue("space"));
+        throw LowlevelError("Undefined space: "+spaceName);
       setDefaultDataSpace(spc->getIndex());
     }
     else if (elname == "segmented_address") {

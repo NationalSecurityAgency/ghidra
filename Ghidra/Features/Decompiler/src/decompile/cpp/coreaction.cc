@@ -964,6 +964,14 @@ AddrSpace *ActionConstantPtr::searchForLoadStore(Varnode *vn,PcodeOp *op)
     }
     if (op == (PcodeOp *)0) break;
   }
+  for(list<PcodeOp *>::const_iterator iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    op = *iter;
+    OpCode opc = op->code();
+    if (opc == CPUI_LOAD)
+      return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+    else if (opc == CPUI_STORE && op->getIn(1) == vn)
+      return Address::getSpaceFromConst(op->getIn(0)->getAddr());
+  }
   return (AddrSpace *)0;
 }
 
