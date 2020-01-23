@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,9 +83,9 @@ import java.util.*;
 public class CParser {
 
     // Map for storing typedef types
-    private Map<String, DataType> types = new HashMap<String, DataType>();    
+    private Map<String, DataType> types = new HashMap<String, DataType>();
     private Map<String, DataType> structs = new HashMap<String, DataType>();
-    private Map<String, DataType> functions = new HashMap<String, DataType>();    
+    private Map<String, DataType> functions = new HashMap<String, DataType>();
     private Map<String, DataType> enums = new HashMap<String, DataType>();
 
     private Map<String, DataType> declarations = new HashMap<String, DataType>();
@@ -107,13 +107,13 @@ public class CParser {
     private final static String ANONYMOUS_STRUCT_PREFIX = "_struct_";
     private final static String ANONYMOUS_UNION_PREFIX = "_union_";
     private final static String ANONYMOUS_FUNC_PREFIX = "_func_";
-        
+
     // Stack for determining when the parser is parsing a typdef definition.
     private Stack<Boolean> typedefParsingStack = new Stack<Boolean>();
 
     // Stack for putting defined data types on
     private Stack<DataType> dataTypeStack = new Stack<DataType>();
-    
+
     // packing size for structures
     private int packSize = 0;
     Stack<Integer> packStack = new Stack<Integer>();
@@ -128,7 +128,7 @@ public class CParser {
         if (catName == null || catName.length() == 0) {
             return rootCat;
         }
-        
+
         CategoryPath cat= new CategoryPath(rootCat, catName);
         return cat;
     }
@@ -200,7 +200,7 @@ public class CParser {
         if (obj instanceof DataType) {
             return (DataType) obj;
         }
-        
+
         // only return a function as a type IF we are defining a typedef
         if (typedefParsingStack.size() > 0) {
             obj = functions.get(type);
@@ -209,23 +209,23 @@ public class CParser {
             }
         }
         if (!storeNewDT) {
-            
+
             DataType dt = findDataType(type);
             if (dt != null) {
                 return dt;
             }
         }
-        
+
         // check the BuiltinTypeManager
         BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
         DataType dt = findDataType(builtInMgr, type);
         if (dt != null) {
             return dt;
         }
-        
+
         return null;
     }
-    
+
     private DataType findDataType(String dataTypeString) {
 
         DataType dt = findDataType(dtMgr, dataTypeString);
@@ -253,7 +253,7 @@ public class CParser {
 
         return null;
     }
-    
+
     private List<DataType> findAllDataTypes(String dataTypeString) {
         List<DataType> list = new ArrayList<DataType>();
         dtMgr.findDataTypes(dataTypeString, list);
@@ -279,7 +279,7 @@ public class CParser {
 
         dt = resolveDataType(table, name, dt);
         lastDataType = dt;
-        
+
         return dt;
     }
 
@@ -289,7 +289,7 @@ public class CParser {
             //Msg.info(this, "TYPE " + name + " ALREADY IN THERE");
             return existingDT;
         }
-            
+
         ArrayList<DataType> list = new ArrayList<DataType>();
         for (int i = 0; i < subDTMgrs.length; i++) {
             // look for the data type by name
@@ -297,7 +297,7 @@ public class CParser {
             // look for the data type by category
             //    equivalent, return it
             subDTMgrs[i].findDataTypes(name, list);
-            
+
             Iterator<DataType> iter = list.iterator();
             while (iter.hasNext()) {
                 DataType dataType = iter.next();
@@ -307,7 +307,7 @@ public class CParser {
                 }
             }
         }
-        
+
         if (storeNewDT) {
             try {
                 dt = dtMgr.addDataType(dt, DataTypeConflictHandler.REPLACE_HANDLER);
@@ -316,7 +316,7 @@ public class CParser {
                 System.err.println("    " + e.getMessage());
             }
         }
-        
+
         table.put(name, dt);
         return dt;
     }
@@ -349,7 +349,7 @@ public class CParser {
 
         dt = resolveDataType(table, name, dt);
         lastDataType = dt;
-        
+
         return dt;
     }
 
@@ -358,9 +358,9 @@ public class CParser {
         if (dt != null) {
             return dt;
         }
-        
+
         if (!storeNewDT) {
-        
+
             List<DataType> list = findAllDataTypes(name);
             for (int i = 0; i < list.size(); i++) {
                 dt = list.get(i);
@@ -369,7 +369,7 @@ public class CParser {
                 }
             }
         }
-        
+
         // check the BuiltinTypeManager
         BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
         ArrayList<DataType> list = new ArrayList<DataType>();
@@ -380,16 +380,16 @@ public class CParser {
                 return dt;
             }
         }
-        
+
         return null;
     }
-    
+
     private DataType getEnumDef(String name) {
         DataType dt = getDef(enums, name);
         if (dt != null) {
             return dt;
         }
-        
+
         if (!storeNewDT) {
             List<DataType> list = findAllDataTypes(name);
             for (int i = 0; i < list.size(); i++) {
@@ -399,7 +399,7 @@ public class CParser {
                 }
             }
         }
-        
+
         // check the BuiltinTypeManager
         BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
         ArrayList<DataType> list = new ArrayList<DataType>();
@@ -442,7 +442,7 @@ public class CParser {
       }
       return new FunctionDefinitionDataType(ANONYMOUS_FUNC_PREFIX+func_cnt++);
     }
-    
+
     private void checkReturnDataType(DataType retDT) throws ParseException {
         if (retDT == null) {
             return; // treat as void type
@@ -456,14 +456,14 @@ public class CParser {
             throw new ParseException("'"+retDT.getName()+"'" + " is not fixed length.  Function return must be fixed length data type or void.");
         }
     }
-    
+
     private int getConstantValue (Object obj, int defaultValue) {
     	int value = defaultValue;
-    	
+
     	if (obj == null) {
     	    return defaultValue;
     	}
-    	
+
 		if (obj instanceof Integer) {
 			value = ((Integer)obj).intValue();
 		}
@@ -475,7 +475,7 @@ public class CParser {
         }
 		return value;
     }
-    
+
     	private void pushPack(Token iD, int packingSize) {
 		packStack.push(packingSize);
 		String name = "";
@@ -493,7 +493,7 @@ public class CParser {
 		if (iD != null) {
 			name = iD.image;
 		}
-		
+
 		// keep poping looking for ID, stop when find it
 		int popVal = packSize;
 		do {
@@ -522,7 +522,7 @@ public class CParser {
 
     /**
      * Get the data type manager
-     * 
+     *
      * @return
      */
     public DataTypeManager getDataTypeManager() {
@@ -538,7 +538,7 @@ public class CParser {
 
     /**
      * Get Global variable declarations
-     * 
+     *
      * @return
      */
     public Map<String, DataType> getDeclarations() {
@@ -547,7 +547,7 @@ public class CParser {
 
     /**
      * Get Defined Enumerations
-     * 
+     *
      * @return Defined enumeration names
      */
     public Map<String, DataType> getEnums() {
@@ -556,7 +556,7 @@ public class CParser {
 
     /**
      * Get Function signatures
-     * 
+     *
      * @return Function signatures
      */
     public Map<String, DataType> getFunctions() {
@@ -565,7 +565,7 @@ public class CParser {
 
     /**
      * Get structure definitions
-     * 
+     *
      * @return Structure definitions
      */
     public Map<String, DataType> getStructs() {
@@ -574,7 +574,7 @@ public class CParser {
 
     /**
      * Get Type definitions
-     * 
+     *
      * @return Type definitions
      */
     public Map<String, DataType> getTypes() {
@@ -586,7 +586,7 @@ public class CParser {
 
         parse(is);
         if (lastDataType != null && dtMgr != null) {
-            // ensure that data-type sizing is relative to dtMgr's data organization 
+            // ensure that data-type sizing is relative to dtMgr's data organization
             return lastDataType.clone(dtMgr);
         }
         return lastDataType;
@@ -603,7 +603,7 @@ public class CParser {
             if (headerFileName == null) {
                 throw e;
             }
-            
+
             long endLine = (e.currentToken != null ? e.currentToken.endLine : 0);
             long subLinenum = ((endLine - headerFileLineOffset) + headerFileLine);
 
@@ -623,7 +623,7 @@ public class CParser {
             if (headerFileName == null) {
                 throw e;
             }
-            
+
             parseMessage = "C Parser:  Problem Parsing.\n";
             if (headerFileName != null) {
                 parseMessage += "          in " + headerFileName + " near line " + headerFileLine + "\n";
@@ -702,7 +702,7 @@ public class CParser {
             System.out.println("C Parser:  Encountered errors during parse.");
         }
     }
-    
+
     private static class EnumMember {
         final String name;
         final long value;
@@ -711,7 +711,7 @@ public class CParser {
             this.value = value;
         }
     }
-    
+
 }
 
 PARSER_END(CParser)
@@ -723,25 +723,25 @@ TOKEN_MGR_DECLS :
 
 SKIP :
 {
-	" " 
+	" "
 	|
-	"\f" 
+	"\f"
 	|
-	"\t" 
+	"\t"
 	|
-	"\n" 
+	"\n"
 	|
 	"\r"
 	|
 	"\\"
 	|
-	< 
+	<
 		"//"
 		( ~[ "\n", "\r" ] )*
 		( "\n" | "\r" | "\r\n" )
 	>
 	|
-	< 
+	<
 		"/*"
 		( ~[ "*" ] )*
 		"*"
@@ -756,7 +756,7 @@ SKIP :
 
 TOKEN :
 {
-	<INTEGER_LITERAL : 
+	<INTEGER_LITERAL :
 		<DECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
 		|
 		<HEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
@@ -764,13 +764,13 @@ TOKEN :
 		<OCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
 	>
 	|
-	<#DECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
+	<#DECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*>
 	|
-	<#HEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+> 
+	<#HEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+>
 	|
-	<#OCTAL_LITERAL : "0" ( [ "0"-"7" ] )*> 
+	<#OCTAL_LITERAL : "0" ( [ "0"-"7" ] )*>
 	|
-	<FLOATING_POINT_LITERAL : 
+	<FLOATING_POINT_LITERAL :
 		( [ "0"-"9" ] )+ "." ( [ "0"-"9" ] )* ( <EXPONENT> )? ( [ "f", "F", "d", "D" ] )?
 		|
 		"." ( [ "0"-"9" ] )+ ( <EXPONENT> )? ( [ "f", "F", "d", "D" ] )?
@@ -780,9 +780,9 @@ TOKEN :
 		( [ "0"-"9" ] )+ ( <EXPONENT> )? [ "f", "F", "d", "D" ]
 	>
 	|
-	<#EXPONENT : [ "e", "E" ] ( [ "+", "-" ] )? ( [ "0"-"9" ] )+> 
+	<#EXPONENT : [ "e", "E" ] ( [ "+", "-" ] )? ( [ "0"-"9" ] )+>
 	|
-	<CHARACTER_LITERAL : 
+	<CHARACTER_LITERAL :
 		("L")?
 		"\'"
 		(
@@ -800,7 +800,7 @@ TOKEN :
 		"\'"
 	>
 	|
-	<STRING_LITERAL : 
+	<STRING_LITERAL :
 		("L")?
 		"\""
 		(
@@ -821,55 +821,55 @@ TOKEN :
 
 TOKEN :
 {
-	<CONTINUE : "continue"> 
+	<CONTINUE : "continue">
 	|
-	<VOLATILE : ( [ "_" ] )* "volatile" ( [ "_" ] )* > 
+	<VOLATILE : ( [ "_" ] )* "volatile" ( [ "_" ] )* >
 	|
-	<REGISTER : "register"> 
+	<REGISTER : "register">
 	|
-	<UNSIGNED : "unsigned"> 
+	<UNSIGNED : "unsigned">
 	|
-	<TYPEDEF : "typedef"> 
+	<TYPEDEF : "typedef">
 	|
-	<DFLT : "default"> 
+	<DFLT : "default">
 	|
-	<DOUBLE : "double"> 
+	<DOUBLE : "double">
 	|
-	<SIZEOF : "sizeof"> 
+	<SIZEOF : "sizeof">
 	|
-	<SWITCH : "switch"> 
+	<SWITCH : "switch">
 	|
-	<RETURN : "return"> 
+	<RETURN : "return">
 	|
-	<EXTERN : "extern"> 
+	<EXTERN : "extern">
 	|
 	<QUOTE_C : "\"C\"">
 	|
-	<STRUCT : "struct"> 
+	<STRUCT : "struct">
 	|
-	<STATIC : "static"> 
+	<STATIC : "static">
 	|
-	<SIGNED : ( [ "_" ] )* "signed"> 
+	<SIGNED : ( [ "_" ] )* "signed">
 	|
-	<WHILE : "while"> 
+	<WHILE : "while">
 	|
-	<BREAK : "break"> 
+	<BREAK : "break">
 	|
-	<UNION : "union"> 
+	<UNION : "union">
 	|
 	<CONST : ( [ "_" ] )* "const">
 	|
-	<CDECL : ( [ "_" ] )+ "cdecl"> 
+	<CDECL : ( [ "_" ] )+ "cdecl">
 	|
 	<DECLSPEC : "__declspec">
 	|
 	<PRAGMA : (("_")+ | "#") "pragma"> : PRAGMALINE
-	| 
+	|
 	<READABLETO : "__readableTo">
 	|
-	<STDCALL : ( [ "_" ] )+ "stdcall"> 
+	<STDCALL : ( [ "_" ] )+ "stdcall">
 	|
-	<FASTCALL : ( [ "_" ] )+ "fastcall"> 
+	<FASTCALL : ( [ "_" ] )+ "fastcall">
 	|
 	<ATTRIBUTE : "__attribute" (["_"])* >
 	|
@@ -879,15 +879,15 @@ TOKEN :
 	|
 	<ASM : ( [ "_" ] )* "asm" ( [ "_" ] )*  >
 	|
-	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*> 
+	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*>
 	|
-	<FLOAT : "float"> 
+	<FLOAT : "float">
 	|
-	<SHORT : "short"> 
+	<SHORT : "short">
 	|
-	<ELSE : "else"> 
+	<ELSE : "else">
 	|
-	<CASE : "case"> 
+	<CASE : "case">
 	|
 	<LONG : "long">
 	|
@@ -907,25 +907,25 @@ TOKEN :
 	|
 	<WCHAR : "wchar_t">
 	|
-	<ENUM : "enum"> 
+	<ENUM : "enum">
 	|
-	<AUTO : "auto"> 
+	<AUTO : "auto">
 	|
-	<VOID : "void"> 
+	<VOID : "void">
 	|
-	<CHAR : "char"> 
+	<CHAR : "char">
 	|
-	<GOTO : "goto"> 
+	<GOTO : "goto">
 	|
-	<NEAR : "near"> 
+	<NEAR : "near">
 	|
-	<FAR : "far"> 
+	<FAR : "far">
 	|
-	<FOR : "for"> 
+	<FOR : "for">
 	|
-	<INT : "int"> 
+	<INT : "int">
 	|
-	<IF : "if"> 
+	<IF : "if">
 	|
 	<DO : "do">
 	|
@@ -940,29 +940,29 @@ TOKEN :
 
 TOKEN :
 {
-	<IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> )*> 
+	<IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> )*>
 	|
-	<#LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
+	<#LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]>
 	|
-	<#DIGIT : [ "0"-"9" ]> 
+	<#DIGIT : [ "0"-"9" ]>
 }
 
 <ASMBLOCK> SKIP:
 {
-	" " 
+	" "
 	|
 	"\t"
 }
 
 <ASMBLOCK> TOKEN :
 {
-	<ASMBLOCKB : 
+	<ASMBLOCKB :
 		(
 		    ( ~[ "{" , "}", ";" ] )+ ( ["\r","\n"] )+
 		)
 	> : ASMBLOCK
 	|
-	<ASMBLOCKP : 
+	<ASMBLOCKP :
 		(
 		    ( ~[ "(", ")", ";" ] )+ ( ["\r","\n"] )+
 		)
@@ -975,16 +975,16 @@ TOKEN :
 {
 	" "
 	|
-	"\f" 
+	"\f"
 	|
-	"\t" 
+	"\t"
 	|
 	":"
 }
 
 <LINEBLOCK> TOKEN:
 {
-	<PATH_LITERAL : 
+	<PATH_LITERAL :
 		"\""
 		(
 			~[ "\"", "\n", "\r" ]
@@ -999,7 +999,7 @@ TOKEN :
 {
 	" "
 	|
-	"\f" 
+	"\f"
 	|
 	"\t"
 	|
@@ -1009,12 +1009,12 @@ TOKEN :
 	|
 	";" : DEFAULT
 	|
-	< 
+	<
 		"//"
 		( ~[ "\n", "\r" ] )*
 	>
 	|
-	< 
+	<
 		"/*"
 		( ~[ "*" ] )*
 		"*"
@@ -1029,9 +1029,9 @@ TOKEN :
 
 <PRAGMALINE> TOKEN:
 {
-	<PIDENTIFIER : <PLETTER> ( <PLETTER> | <PDIGIT> )*> 
+	<PIDENTIFIER : <PLETTER> ( <PLETTER> | <PDIGIT> )*>
 	|
-	<#PLETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
+	<#PLETTER : [ "$", "A"-"Z", "_", "a"-"z" ]>
 	|
 	<#PDIGIT : [ "0"-"9" ]>
 	|
@@ -1045,7 +1045,7 @@ TOKEN :
 	|
 	<PCOMMA : ",">
 	|
-	<PINTEGER_LITERAL : 
+	<PINTEGER_LITERAL :
 		<PDECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
 		|
 		<PHEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
@@ -1053,13 +1053,13 @@ TOKEN :
 		<POCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
 	>
 	|
-	<#PDECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
+	<#PDECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*>
 	|
-	<#PHEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+> 
+	<#PHEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+>
 	|
-	<#POCTAL_LITERAL : "0" ( [ "0"-"7" ] )*> 
+	<#POCTAL_LITERAL : "0" ( [ "0"-"7" ] )*>
 	|
-	<PSTRING_LITERAL : 
+	<PSTRING_LITERAL :
 		("L")?
 		"\""
 		(
@@ -1082,7 +1082,7 @@ TOKEN :
 {
 	" "
 	|
-	"\f" 
+	"\f"
 	|
 	"\t"
 	|
@@ -1109,7 +1109,7 @@ TOKEN :
 {
 	" "
 	|
-	"\f" 
+	"\f"
 	|
 	"\t"
 	|
@@ -1139,7 +1139,7 @@ TOKEN :
 //jjt SimpleNode TranslationUnit() #TranslationUnit : {}
 void TranslationUnit() : {}
 {
-	( ExternalDeclaration() )+ 
+	( ExternalDeclaration() )+
 	{
 		//jjt         return jjtThis;
 	}
@@ -1149,9 +1149,9 @@ void ExternalDeclaration() : {}
 {
 	(
 		LOOKAHEAD(FunctionDefinition() )
-		FunctionDefinition() 
+		FunctionDefinition()
 		|
-//		<INLINE> FunctionDefinition() 
+//		<INLINE> FunctionDefinition()
 //		|
 		Declaration()
 		|
@@ -1196,10 +1196,10 @@ void FunctionDefinition() : {
 {
 	[
 		LOOKAHEAD(DeclarationSpecifiers(retDT))
-		retDT = DeclarationSpecifiers(retDT) 
+		retDT = DeclarationSpecifiers(retDT)
 	]
 	{typedefParsingStack.push(Boolean.FALSE);}
-	dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();} CompoundStatement() 
+	dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();} CompoundStatement()
 	{
 	    if (dec.getDataType() instanceof FunctionDefinition) {
 		    addDef("functions", functions, dec.getName(), dec.getDataType());
@@ -1228,7 +1228,7 @@ void DeclarationList() : {}
 {
 	(
 		LOOKAHEAD(Declaration())
-		Declaration() 
+		Declaration()
 	)+
 }
 
@@ -1236,17 +1236,17 @@ Declaration DeclarationSpecifiers(Declaration specDT) : {
 	Declaration typeDT= null;
 }
 {
-	(	
-		specDT = StorageClassSpecifier(specDT) 
+	(
+		specDT = StorageClassSpecifier(specDT)
 		[
 //			LOOKAHEAD(DeclarationSpecifiers(specDT))
-			specDT= DeclarationSpecifiers(specDT) 
+			specDT= DeclarationSpecifiers(specDT)
 		]
 		|
 		specDT = BuiltInDeclarationSpecifier(specDT)
 		[
 			LOOKAHEAD(TypeQualifierList(specDT))
-			specDT = TypeQualifierList(specDT) 
+			specDT = TypeQualifierList(specDT)
 		]
 		|
 		specDT = TypeSpecifier(specDT)
@@ -1260,10 +1260,10 @@ Declaration DeclarationSpecifiers(Declaration specDT) : {
 			specDT = DeclarationSpecifiers(specDT)
 		]
 		|
-		specDT = TypeQualifier(specDT) 
+		specDT = TypeQualifier(specDT)
 		[
 			LOOKAHEAD(DeclarationSpecifiers(specDT))
-			specDT = DeclarationSpecifiers(specDT) 
+			specDT = DeclarationSpecifiers(specDT)
 		]
 	)
 	[ specDT = TypeQualifier(specDT) ]
@@ -1279,15 +1279,15 @@ Declaration StorageClassSpecifier(Declaration specDT) : {}
 {
    // TODO: might want to set a storage classifier on DECL
 	(
-		<AUTO> 
+		<AUTO>
 		|
-		<REGISTER> 
+		<REGISTER>
 		|
-		<STATIC> 
+		<STATIC>
 		|
 		<EXTERN> [ <STRING_LITERAL> ]
 		|
-		<TYPEDEF> 
+		<TYPEDEF>
 		{
 			//	        System.out.println("TYPEDEF! " + typedefParsingStack.size());
 			typedefParsingStack.push(Boolean.TRUE);
@@ -1338,11 +1338,11 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 		                 }
 			[
 				LOOKAHEAD(BuiltInDeclarationSpecifier(dec))
-				dec = BuiltInDeclarationSpecifier(dec) 
+				dec = BuiltInDeclarationSpecifier(dec)
 			]
 		|
 		<INT> 				{ dt = dec.getDataType();
-		                       if (dt == null ) { 
+		                       if (dt == null ) {
 		                         dec.setDataType(IntegerDataType.dataType);
 		                       }
 		                     }
@@ -1365,8 +1365,8 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 		                    }
 			[
 				LOOKAHEAD(BuiltInDeclarationSpecifier(dec))
-				dec = BuiltInDeclarationSpecifier(dec) 
-			]				
+				dec = BuiltInDeclarationSpecifier(dec)
+			]
 		|
 		<FLOAT> 			{ dt = dec.getDataType();
 		                  if ( dt == null) {
@@ -1390,10 +1390,10 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 		                  }
 		                  dec.setDataType(dt);
 		                 }
-		                   
+
 			[
 				LOOKAHEAD(BuiltInDeclarationSpecifier())
-				dec = BuiltInDeclarationSpecifier(dec) 
+				dec = BuiltInDeclarationSpecifier(dec)
 			]
 		|
 		<UNSIGNED>		{     dt = dec.getDataType();
@@ -1412,7 +1412,7 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
 		                 }
 			[
 				LOOKAHEAD(BuiltInDeclarationSpecifier())
-				dec = BuiltInDeclarationSpecifier(dec) 
+				dec = BuiltInDeclarationSpecifier(dec)
 			]
 		|
 		<INT8>              { dec.setDataType(SignedByteDataType.dataType); }
@@ -1442,12 +1442,12 @@ Declaration BuiltInDeclarationSpecifier(Declaration dec) : {
 Declaration TypeSpecifier(Declaration dec) : { DataType dt = null; }
 {
 	(
-		dt= StructOrUnionSpecifier() 
+		dt= StructOrUnionSpecifier()
 		|
-		dt= EnumSpecifier() 
+		dt= EnumSpecifier()
 		|
 		LOOKAHEAD( { isType(getToken(1).image) } )
-		dt= TypedefName() 
+		dt= TypedefName()
 	)
 	{
 	    dec.setDataType(dt);
@@ -1493,14 +1493,14 @@ void AttributeSpecList() : {}
 void SubIdent() : { Declaration dt = new Declaration(); }
 {
     ( ( "(" [SubIdent()] ")" ) |
-      (<IDENTIFIER> | TypeQualifier(dt)) [ "(" 
-                        [SubIdent()]   
+      (<IDENTIFIER> | TypeQualifier(dt)) [ "("
+                        [SubIdent()]
                       ")" ]
-                   [ "," 
-                        SubIdent()   
-                       ] |            
-      Constant() [ "," 
-                        SubIdent()   
+                   [ ","
+                        SubIdent()
+                       ] |
+      Constant() [ ","
+                        SubIdent()
                        ]
     )
 }
@@ -1516,8 +1516,8 @@ void DeclSpecifier() : {
 }
 {
   "(" DeclSpecifier() ")" |
-      <IDENTIFIER> [ "(" 
-                        DeclConstant()   
+      <IDENTIFIER> [ "("
+                        DeclConstant()
                      ")" ]
 }
 
@@ -1534,7 +1534,7 @@ void PragmaSpec() : {
   ( ( <PRAGMA> ) PragmaSpecifier() )
 }
 
- 
+
 
 void PragmaSpecifier() : {
    Token id;
@@ -1587,7 +1587,7 @@ void PragmaSpecifier() : {
 	   packSize = 0;
 	}
   }
-  // ignore to EOL now.         
+  // ignore to EOL now.
 }
 
 Token PragmaConstant() : {
@@ -1619,12 +1619,12 @@ DataType StructOrUnionSpecifier() : {
 		typedefParsingStack.push(Boolean.FALSE);
 		t= sname= null;
 	}
-	comp= StructOrUnion() 
+	comp= StructOrUnion()
 	(
 		LOOKAHEAD(3)
 		[ t= <IDENTIFIER> ] "{" [StructDeclarationList(comp)] "}" [ AttributeSpecList() ]
 		|
-		sname= <IDENTIFIER> 
+		sname= <IDENTIFIER>
 	)
 	{
 		try {
@@ -1653,7 +1653,7 @@ DataType StructOrUnionSpecifier() : {
 			//System.out.println("   " + comp.getName());
 			//for (int i = 0; i < comp.getNumComponents(); i++) {
 			//	DataTypeComponent c = comp.getComponent(i);
-			//	if (c == null) { 
+			//	if (c == null) {
 			//		System.out.println("  no comp " + i);
 			//	}
 			//	System.out.println("       " + c.getFieldName() + "  off " + c.getOffset() + "   len " + c.getLength());
@@ -1678,11 +1678,11 @@ Composite StructOrUnion() : {Composite comp;}
 		                          // Always set the packing, because by default structures should be aligned
 		                          //     setting 0 turns off packing, but sets structures to be aligned
 		                          comp.setPackingValue(this.packSize);
-		                           
+
 								}
 		|
-		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(ANONYMOUS_UNION_PREFIX  + cnt++); 
-		
+		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(ANONYMOUS_UNION_PREFIX  + cnt++);
+
 								  // Always set the packing, because by default structures should be aligned
 		                          //     setting 0 turns off packing, but sets structures to be aligned.
 		                          comp.setPackingValue(this.packSize);
@@ -1707,8 +1707,8 @@ void InitDeclaratorList(Declaration dt) : {
 	Declaration initialDT = new Declaration(dt);
 }
 {
-	InitDeclarator(dt) 
-	( "," { dt = new Declaration(initialDT); } InitDeclarator(dt) )* 
+	InitDeclarator(dt)
+	( "," { dt = new Declaration(initialDT); } InitDeclarator(dt) )*
 	{
 		// Finished with a typedefDeclaration??
 		if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
@@ -1719,7 +1719,7 @@ void InitDeclaratorList(Declaration dt) : {
 
 void InitDeclarator(Declaration dt) : { Declaration dec; }
 {
-	dec = Declarator(dt, null) [ "=" Initializer() ] 
+	dec = Declarator(dt, null) [ "=" Initializer() ]
 	{
 		if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
 			addTypedef(dec.getName(), dec.getDataType());
@@ -1735,13 +1735,13 @@ void StructDeclaration(Composite comp, CompositeHandler compositeHandler) : {
 	Declaration dt = null;
 }
 {
-	(   
+	(
 		[ dt = SpecifierQualifierList() ]
 		[
 			StructDeclaratorList(dt, comp, compositeHandler) 	{ dt= null; }
 		]
 		[ AttributeSpecList() ]
-		";" 
+		";"
 	)
 	{
 		if (dt != null) { // dt was not used up
@@ -1761,15 +1761,15 @@ Declaration SpecifierQualifierList() : {
 {
 	(
 	    (
-			dt = BuiltInDeclarationSpecifier(dt) 
+			dt = BuiltInDeclarationSpecifier(dt)
 			[
 				LOOKAHEAD(TypeQualifierList(dt))
-				dt = TypeQualifierList(dt) 
+				dt = TypeQualifierList(dt)
 			]
 		)
 		|
 		(
-			dt = TypeSpecifier(dt) 
+			dt = TypeSpecifier(dt)
 			[
 				LOOKAHEAD(SpecifierQualifierList() , { dt == null } )
 				sdt = SpecifierQualifierList()
@@ -1777,10 +1777,10 @@ Declaration SpecifierQualifierList() : {
 		)
 		|
 		(
-			dt = TypeQualifier(dt) 
+			dt = TypeQualifier(dt)
 			[
 				LOOKAHEAD(SpecifierQualifierList())
-				sdt = SpecifierQualifierList() 
+				sdt = SpecifierQualifierList()
 			]
 		)
 	)
@@ -1810,17 +1810,24 @@ void StructDeclarator(Declaration dt, Composite comp, CompositeHandler composite
 		LOOKAHEAD(3)
 		dec= Declarator(dt, comp) [ ":" bitSizeObj = ConstantExpression() {
 			   Integer bitSize = getConstantValue(bitSizeObj,-1);
-		       dec.setBitFieldSize(bitSize);
-		   }] 
+			   dec.setBitFieldSize(bitSize);
+
+			   // ensure the datatype's dynamic length is properly set
+			   dec.setDataType(dec.getDataType().clone(dtMgr));
+		   }]
 		|
 		":" bitSizeObj = ConstantExpression() {
 		       Integer bitSize = getConstantValue(bitSizeObj,-1);
-			   dec = new Declaration(dt);
+			   dec = new Declaration(dt.getDataType().clone(dtMgr));
 			   dec.setBitFieldSize(bitSize);
 		}
 	)
 	{
         try {
+			if (dec.getDataType() instanceof FunctionDefinition) {
+				// Cannot add a function to a structure. We are really adding a pointer to it.
+				dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+			}
             compositeHandler.add(dec);
     	} catch (IllegalArgumentException e) {
     		System.err.println("Bad structure size " + dec.getName() + "  length=" + dec.getDataType().getLength());
@@ -1836,10 +1843,10 @@ DataType EnumSpecifier() : {
 	ArrayList<EnumMember> list;
 }
 {
-	<ENUM> 
+	<ENUM>
 	(
 		LOOKAHEAD(3)
-		[ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
+		[ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}"
 		{
 			String enumName= (t != null ? t.image : ("enum_" + cnt++));
 			EnumDataType enuum= new EnumDataType(enumName, 4);
@@ -1883,7 +1890,7 @@ int Enumerator(ArrayList<EnumMember> list, int value) : {
 	Integer evalue;
 }
 {
-	t = <IDENTIFIER> [ "=" obj = ConstantExpression() ] 
+	t = <IDENTIFIER> [ "=" obj = ConstantExpression() ]
 	{
 		evalue = getConstantValue(obj,value);
         if (evalue != null) {
@@ -1908,7 +1915,7 @@ Declaration Declarator(Declaration dt, DataType container) : {
 }
 {
 	(
-		[ dt = TypeQualifierList(dt) ]  [ dt = Pointer(dt) ] dec= DirectDeclarator(dt, container) [ AttributeSpecList() ] 
+		[ dt = TypeQualifierList(dt) ]  [ dt = Pointer(dt) ] dec= DirectDeclarator(dt, container) [ AttributeSpecList() ]
 	)
 	{
 		return dec;
@@ -1933,7 +1940,7 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
 			//       The function pointer should be returned.
 			//       Also, the pointer data type should probably have the TypeQualifier before the "*"?????
 			|
-			"(" dec= Declarator(new Declaration(funcDT=newAnonymousFunction(funcDT)), null) ")" 
+			"(" dec= Declarator(new Declaration(funcDT=newAnonymousFunction(funcDT)), null) ")"
 			{
 				// System.out.println(" ( func dec ) " + dec.getName() + "   " + dec.getDataType());
 			}
@@ -1947,7 +1954,7 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
 		)
 		{ lastDataType = dec.getDataType(); }
 		(
-			"[" [ obj = ConditionalExpression() ] "]" 
+			"[" [ obj = ConditionalExpression() ] "]"
 			{
 				// make a new array given value on constant expression
                 Integer size = getConstantValue(obj, 0);
@@ -1972,16 +1979,16 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
                 //System.out.println("Array expr: for " + dec.getName() + " make an array " + dt.getName() + "["+size+"]");
 			}
 		)*
-		
+
 		(
 			LOOKAHEAD(3)
-			"(" funcDec= ParameterTypeList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ")" 
+			"(" funcDec= ParameterTypeList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ")"
 			{
 				//System.out.println(
 				//	"Param list: for " + dec.getName() + " make a function " + dt.getName());
 			}
 			|
-			"(" [ IdentifierList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ] ")" 
+			"(" [ IdentifierList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ] ")"
 			{
 				//System.out.println(
 				//	"ID List: for " + dec.getName() + " make a function " + dt.getName());
@@ -1993,7 +2000,7 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
 		if (funcDec != null) {
 			try {
 			  // functions in containers stay anonymous
-			  if (container == null) { 
+			  if (container == null) {
 				funcDT.setName(dec.getName());
 		      }
 				funcDec.setName(dec.getName());
@@ -2043,7 +2050,7 @@ Declaration DirectDeclarator(Declaration dt, DataType container) : {
 
 Declaration Pointer(Declaration dec) : {}
 {
-	("*" | "&") [ dec = TypeQualifierList(dec) ] [ dec = Pointer(dec) ] 
+	("*" | "&") [ dec = TypeQualifierList(dec) ] [ dec = Pointer(dec) ]
 	{
 	    // TODO: is this right?
 		dec.setDataType(dtMgr.getPointer(dec.getDataType()));
@@ -2064,7 +2071,7 @@ Declaration ParameterTypeList(FunctionDefinitionDataType funcDT, DataType retDT)
 	Token varargs= null;
 }
 {
-	list= ParameterList() [ "," varargs = "..." ] 
+	list= ParameterList() [ "," varargs = "..." ]
 	{
 		checkReturnDataType(retDT);
 		if (funcDT == null) {
@@ -2094,10 +2101,10 @@ ArrayList<Declaration> ParameterList() : {
 	ArrayList<Declaration> list= new ArrayList<Declaration>();
 }
 {
-	ParameterDeclaration(list) 
+	ParameterDeclaration(list)
 	(
 		LOOKAHEAD(2)
-		 "," ParameterDeclaration(list) 
+		 "," ParameterDeclaration(list)
 	)*
 	{
 		return list;
@@ -2109,12 +2116,12 @@ void ParameterDeclaration(ArrayList<Declaration> list) : {
 	Declaration dec= new Declaration();
 }
 {
-	dt = DeclarationSpecifiers(dec) 
+	dt = DeclarationSpecifiers(dec)
 	(
 		LOOKAHEAD(Declarator(dt))
-		dec= Declarator(dt, null) 
+		dec= Declarator(dt, null)
 		|
-		[ dec = AbstractDeclarator(dt) ] 
+		[ dec = AbstractDeclarator(dt) ]
 	)  [ "=" <INTEGER_LITERAL > ]
 	{
 		if (dec == null) {
@@ -2162,10 +2169,10 @@ void Initializer() : {}
 
 void InitializerList() : {}
 {
-	Initializer() 
+	Initializer()
 	(
 		LOOKAHEAD(2)
-		"," Initializer() 
+		"," Initializer()
 	)*
 }
 
@@ -2197,13 +2204,13 @@ Declaration DirectAbstractDeclarator(Declaration dt) : {
 {
 	(
 		LOOKAHEAD(2)
-		"(" [TypeQualifier(dt)] dec= AbstractDeclarator(dt) ")" 
+		"(" [TypeQualifier(dt)] dec= AbstractDeclarator(dt) ")"
 		|
-		"[" [ ConstantExpression() ] "]" 
+		"[" [ ConstantExpression() ] "]"
 		|
-		"(" [ dec= ParameterTypeList(null, dt.getDataType()) ] ")" 
+		"(" [ dec= ParameterTypeList(null, dt.getDataType()) ] ")"
 	)
-	
+
 
 
 
@@ -2220,7 +2227,7 @@ DataType TypedefName() : {
 	Token t;
 }
 {
-	t= <IDENTIFIER> 
+	t= <IDENTIFIER>
 	{
 		return getType(t.image);
 	}
@@ -2236,17 +2243,17 @@ void Statement() : {}
 		DeclarationList()
 		|
 		LOOKAHEAD(2)
-		LabeledStatement() 
+		LabeledStatement()
 		|
-		ExpressionStatement() 
+		ExpressionStatement()
 		|
-		CompoundStatement() 
+		CompoundStatement()
 		|
-		SelectionStatement() 
+		SelectionStatement()
 		|
-		IterationStatement() 
+		IterationStatement()
 		|
-		JumpStatement() 
+		JumpStatement()
 		|
 		AsmStatement()
 		|
@@ -2266,12 +2273,12 @@ void ExpressionStatement() : {}
 
 void CompoundStatement() : {}
 {
-	"{" 
+	"{"
 //	[
 //		LOOKAHEAD(DeclarationList())
-//		DeclarationList() 
+//		DeclarationList()
 //	]
-	[ StatementList() ] "}" 
+	[ StatementList() ] "}"
 }
 
 void StatementList() : {}
@@ -2322,7 +2329,7 @@ void AsmLine() :
 //{
 //    ( "(" SubAsm() ")" ) |
 //    ( <IDENTIFIER> | "," | "[" | "]" | "%" | <INTEGER_LITERAL> | <CHARACTER_LITERAL> )+
-//         ( [ "(" SubAsm() ")" ] [ SubAsm() ] ) 
+//         ( [ "(" SubAsm() ")" ] [ SubAsm() ] )
 //    )
 //}
 
@@ -2330,24 +2337,24 @@ void AsmLine() :
 void SelectionStatement() : {}
 {
 	(
-		<IF> "(" Expression() ")" Statement() 
+		<IF> "(" Expression() ")" Statement()
 		[
 			LOOKAHEAD(2)
-			<ELSE> Statement() 
+			<ELSE> Statement()
 		]
 		|
-		<SWITCH> "(" Expression() ")" Statement() 
+		<SWITCH> "(" Expression() ")" Statement()
 	)
 }
 
 void IterationStatement() : {}
 {
 	(
-		<WHILE> "(" Expression() ")" Statement() 
+		<WHILE> "(" Expression() ")" Statement()
 		|
-		<DO> Statement() <WHILE> "(" Expression() ")" ";" 
+		<DO> Statement() <WHILE> "(" Expression() ")" ";"
 		|
-		<FOR> "(" [ Expression() ] ";" [ Expression() ] ";" [ Expression() ] ")" Statement() 
+		<FOR> "(" [ Expression() ] ";" [ Expression() ] ";" [ Expression() ] ")" Statement()
 	)
 }
 
@@ -2371,7 +2378,7 @@ Object AssignmentExpression() : {
 }
 {
 	( LOOKAHEAD(UnaryExpression() AssignmentOperator())
-	   UnaryExpression() AssignmentOperator() obj=AssignmentExpression() 
+	   UnaryExpression() AssignmentOperator() obj=AssignmentExpression()
 	  |
 	  LOOKAHEAD(3)
 	  obj = ConditionalExpression()
@@ -2511,13 +2518,13 @@ Object MultiplicativeExpression() : {
     Object obj1 = null, obj2 = null;
 }
 {
-	obj1 = CastExpression() [ 
+	obj1 = CastExpression() [
 	  "*" obj2 = ConstantExpression()
 	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) * ((Long) obj2); } }
 	  | "/" obj2 = ConstantExpression()
 	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) / ((Long) obj2); } }
 	  | "%" obj2 = ConstantExpression()
-	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) % ((Long) obj2); } }	
+	  { if (obj1 instanceof Long && obj2 instanceof Long) { return ((Long) obj1) % ((Long) obj2); } }
     ]
 	{
 		return obj1;
@@ -2530,9 +2537,9 @@ Object CastExpression() : {
 {
 	(
 		LOOKAHEAD("(" TypeName() ")" CastExpression() )
-		"(" TypeName() ")" CastExpression() 
+		"(" TypeName() ")" CastExpression()
 		|
-		obj = UnaryExpression() 
+		obj = UnaryExpression()
 	)
 	{
 		return obj;
@@ -2546,18 +2553,18 @@ Object UnaryExpression() : {
 {
 	(
 		LOOKAHEAD(3)
-		obj = PostfixExpression() 
+		obj = PostfixExpression()
 		|
-		"++" UnaryExpression() 
+		"++" UnaryExpression()
 		|
-		"--" UnaryExpression() 
+		"--" UnaryExpression()
 		|
-		UnaryOperator() CastExpression() 
+		UnaryOperator() CastExpression()
 		|
-		<SIZEOF> 
+		<SIZEOF>
 		(
 			LOOKAHEAD(UnaryExpression() )
-			UnaryExpression() 
+			UnaryExpression()
 			|
 			"(" dt = TypeName() ")"
 			{
@@ -2581,24 +2588,24 @@ Object PostfixExpression() : {
      Object obj = null;
 }
 {
-	obj = PrimaryExpression() 
+	obj = PrimaryExpression()
 	(
-		"[" Expression() "]" 
+		"[" Expression() "]"
 		|
-		"(" 
+		"("
 		[
 			LOOKAHEAD(ArgumentExpressionList() )
-			ArgumentExpressionList() 
+			ArgumentExpressionList()
 		]
-		")" 
+		")"
 		|
-		"." <IDENTIFIER> 
+		"." <IDENTIFIER>
 		|
-		"->" <IDENTIFIER> 
+		"->" <IDENTIFIER>
 		|
-		"++" 
+		"++"
 		|
-		"--" 
+		"--"
 	)*
 	{
 		return obj;
@@ -2647,11 +2654,11 @@ Object Constant() : {
                 sval = sval.substring(0,sval.length()-1);
             }
             if (sval.startsWith("0x") || sval.startsWith("0X")) {
-            	BigInteger bigConst = new BigInteger(sval.substring(2), 16);       	
+            	BigInteger bigConst = new BigInteger(sval.substring(2), 16);
                 obj = new Long(bigConst.longValue());
             }
             else {
-            	BigInteger bigConst = new BigInteger(sval);       	
+            	BigInteger bigConst = new BigInteger(sval);
                 obj = new Long(bigConst.longValue());
             }
 		}
