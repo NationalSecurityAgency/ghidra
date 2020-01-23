@@ -17,9 +17,11 @@ package ghidra.app.context;
 
 import java.util.Set;
 
-import docking.ActionContext;
+import docking.*;
 import docking.action.DockingAction;
 import docking.action.KeyBindingType;
+import ghidra.app.nav.Navigatable;
+import ghidra.app.services.GoToService;
 
 public abstract class NavigatableContextAction extends DockingAction {
 
@@ -33,23 +35,61 @@ public abstract class NavigatableContextAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof NavigatableActionContext)) {
+		NavigatableActionContext appropriateContext = getAppropriateContext(context);
+		if (appropriateContext == null) {
 			return false;
 		}
-		return isEnabledForContext((NavigatableActionContext) context);
+		return isEnabledForContext(appropriateContext);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		actionPerformed((NavigatableActionContext) context);
+		actionPerformed(getAppropriateContext(context));
+	}
+
+	private NavigatableActionContext getAppropriateContext(ActionContext context) {
+		if (context instanceof NavigatableActionContext &&
+			isValidNavigationContext((NavigatableActionContext) context)) {
+			return (NavigatableActionContext) context;
+		}
+		return getGlobalNavigationContext(context);
 	}
 
 	@Override
-	public boolean isValidContext(ActionContext context) {
-		if (!(context instanceof NavigatableActionContext)) {
-			return false;
+	public final boolean isValidContext(ActionContext context) {
+		return true;
+	}
+
+	protected boolean isValidNavigationContext(NavigatableActionContext context) {
+		return true;
+	}
+
+	private NavigatableActionContext getGlobalNavigationContext(ActionContext context) {
+		DockingTool tool = getTool(context.getComponentProvider());
+
+		if (tool == null) {
+			return null;
 		}
-		return isValidContext((NavigatableActionContext) context);
+		GoToService service = tool.getService(GoToService.class);
+		if (service == null) {
+			return null;
+		}
+		Navigatable defaultNavigatable = service.getDefaultNavigatable();
+		if (defaultNavigatable.getProgram() == null) {
+			return null;
+		}
+		return new NavigatableActionContext(null, defaultNavigatable);
+	}
+
+	private DockingTool getTool(ComponentProvider provider) {
+		if (provider != null) {
+			return provider.getTool();
+		}
+		DockingWindowManager manager = DockingWindowManager.getActiveInstance();
+		if (manager != null) {
+			return manager.getTool();
+		}
+		return null;
 	}
 
 	@Override
@@ -58,10 +98,6 @@ public abstract class NavigatableContextAction extends DockingAction {
 			return false;
 		}
 		return isAddToPopup((NavigatableActionContext) context);
-	}
-
-	protected boolean isValidContext(NavigatableActionContext context) {
-		return true;
 	}
 
 	protected boolean isEnabledForContext(NavigatableActionContext context) {

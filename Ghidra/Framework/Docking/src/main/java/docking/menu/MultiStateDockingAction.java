@@ -150,8 +150,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		DockingWindowManager manager = DockingWindowManager.getActiveInstance();
 		ComponentProvider provider = manager.getActiveComponentProvider();
 		ActionContext localContext = provider == null ? null : provider.getActionContext(null);
-		final ActionContext actionContext =
-			localContext == null ? manager.getGlobalContext() : localContext;
+		ActionContext actionContext = localContext == null ? new ActionContext() : localContext;
 		return actionContext;
 	}
 

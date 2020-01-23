@@ -354,23 +354,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Returns this tool's notion of the current action context, which is based upon the active
-	 * {@link ComponentProvider}.  If there is not active provider, then a generic context will
-	 * be returned.
-	 * 
-	 * @return the context
-	 */
-	public ActionContext getGlobalContext() {
-		if (defaultProvider != null) {
-			ActionContext actionContext = defaultProvider.getActionContext(null);
-			if (actionContext != null) {
-				return actionContext;
-			}
-		}
-		return new ActionContext();
-	}
-
-	/**
 	 * Get the window which contains the specified Provider's component.
 	 * @param provider component provider
 	 * @return window or null if component is not visible or not found.

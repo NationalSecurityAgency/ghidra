@@ -24,12 +24,13 @@ import docking.action.DockingActionIf;
 import docking.actions.DockingToolActions;
 import docking.actions.PopupActionProvider;
 import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.ServiceProvider;
 
 /**
  * Generic tool interface for managing {@link ComponentProvider}s and 
  * {@link DockingActionIf actions}
  */
-public interface DockingTool {
+public interface DockingTool extends ServiceProvider {
 
 	/**
 	 * Returns a combination of the tool name and the instance name of the form
@@ -246,15 +247,6 @@ public interface DockingTool {
 	 * @param provider the provider whose context changed; null to signal the tool's context
 	 */
 	public void contextChanged(ComponentProvider provider);
-
-	/**
-	 * Returns this tool's notion of the current action context, which is based upon the active
-	 * {@link ComponentProvider}.  If there is not active provider, then a generic context will
-	 * be returned.
-	 * 
-	 * @return the context
-	 */
-	public ActionContext getGlobalContext();
 
 	/**
 	 * Adds the given context listener to this tool

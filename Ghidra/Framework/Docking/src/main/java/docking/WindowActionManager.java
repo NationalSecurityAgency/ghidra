@@ -121,7 +121,6 @@ public class WindowActionManager {
 		ComponentProvider provider = placeHolderForScheduledActionUpdate == null ? null
 				: placeHolderForScheduledActionUpdate.getProvider();
 		ActionContext localContext = provider == null ? null : provider.getActionContext(null);
-		ActionContext globalContext = winMgr.getGlobalContext();
 		if (localContext == null) {
 			localContext = new ActionContext();
 		}
@@ -131,9 +130,6 @@ public class WindowActionManager {
 		for (DockingActionIf action : list) {
 			if (action.isValidContext(localContext)) {
 				action.setEnabled(action.isEnabledForContext(localContext));
-			}
-			else if (action.isValidGlobalContext(globalContext)) {
-				action.setEnabled(action.isEnabledForContext(globalContext));
 			}
 			else {
 				action.setEnabled(false);

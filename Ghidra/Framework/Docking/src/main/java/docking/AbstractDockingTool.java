@@ -210,11 +210,6 @@ public abstract class AbstractDockingTool implements DockingTool {
 	}
 
 	@Override
-	public ActionContext getGlobalContext() {
-		return winMgr.getGlobalContext();
-	}
-
-	@Override
 	public void addContextListener(DockingContextListener listener) {
 		winMgr.addContextListener(listener);
 	}
