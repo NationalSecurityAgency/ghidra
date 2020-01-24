@@ -160,12 +160,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	private Predicate<ActionContext> validContextPredicate;
 
 	/**
-	 * Predicate for determining if an action is applicable for a given global context
-	 */
-	private Predicate<ActionContext> validGlobalContextPredicate;
-
-
-	/**
 	 * Builder constructor
 	 * @param name the name of the action to be built
 	 * @param owner the owner of the action to be built
@@ -551,22 +545,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		return self();
 	}
 
-	/**
-	 * Sets a predicate for dynamically determining if this action is valid for the current global 
-	 * {@link ActionContext}.  See {@link DockingActionIf#isValidGlobalContext(ActionContext)}.
-	 * 
-	 * <p>Note: most actions will not use this method, but rely instead on 
-	 * {@link #enabledWhen(Predicate)}. 
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine an action's 
-	 * validity for a given global {@link ActionContext}
-	 * @return this builder (for chaining)
-	 */
-	public B validGlobalContextWhen(Predicate<ActionContext> predicate) {
-		validGlobalContextPredicate = predicate;
-		return self();
-	}
-
 	protected void validate() {
 		if (actionCallback == null) {
 			throw new IllegalStateException(
@@ -592,9 +570,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		}
 		if (validContextPredicate != null) {
 			action.validContextWhen(validContextPredicate);
-		}
-		if (validGlobalContextPredicate != null) {
-			action.validGlobalContextWhen(validGlobalContextPredicate);
 		}
 		if (popupPredicate != null) {
 			action.popupWhen(enabledPredicate);

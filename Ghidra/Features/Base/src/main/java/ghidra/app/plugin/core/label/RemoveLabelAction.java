@@ -19,7 +19,6 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
-import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
@@ -64,11 +63,6 @@ class RemoveLabelAction extends ListingContextAction {
 	@Override
 	public boolean isEnabledForContext(ListingActionContext context) {
 		return !plugin.isOnExternalReference(context) && isOnSymbol(context);
-	}
-
-	@Override
-	public boolean isValidGlobalContext(ActionContext globalContext) {
-		return false; // only work on active provider context.
 	}
 
 	boolean isOnSymbol(ListingActionContext context) {

@@ -34,6 +34,7 @@ import docking.util.image.ToolIconURL;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginEvent;
+import ghidra.framework.plugintool.util.ServiceListener;
 import ghidra.program.model.listing.Program;
 
 public class DummyTool implements Tool {
@@ -370,11 +371,6 @@ public class DummyTool implements Tool {
 	}
 
 	@Override
-	public ActionContext getGlobalContext() {
-		return null;
-	}
-
-	@Override
 	public void setStatusInfo(String text) {
 		//do nothing
 	}
@@ -422,5 +418,20 @@ public class DummyTool implements Tool {
 	@Override
 	public DockingToolActions getToolActions() {
 		return toolActions;
+	}
+
+	@Override
+	public <T> T getService(Class<T> serviceClass) {
+		return null;
+	}
+
+	@Override
+	public void addServiceListener(ServiceListener listener) {
+		//do nothing		
+	}
+
+	@Override
+	public void removeServiceListener(ServiceListener listener) {
+		//do nothing		
 	}
 }

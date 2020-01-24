@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 import docking.actions.ToolActions;
 import docking.framework.ApplicationInformationDisplayFactory;
 import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.util.ServiceListener;
 
 /**
  * A Test Double of the {@link DockingTool} that provides minimal tool functionality, such
@@ -60,6 +61,21 @@ public class FakeDockingTool extends AbstractDockingTool {
 
 	@Override
 	public void close() {
+		// stub
+	}
+
+	@Override
+	public <T> T getService(Class<T> serviceClass) {
+		return null;
+	}
+
+	@Override
+	public void addServiceListener(ServiceListener listener) {
+		// stub
+	}
+
+	@Override
+	public void removeServiceListener(ServiceListener listener) {
 		// stub
 	}
 }

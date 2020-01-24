@@ -73,7 +73,7 @@ import ghidra.util.task.*;
  * <p>The PluginTool also manages tasks that run in the background, and options used by the plugins.
  *
  */
-public abstract class PluginTool extends AbstractDockingTool implements Tool, ServiceProvider {
+public abstract class PluginTool extends AbstractDockingTool implements Tool {
 
 	private static final String DOCKING_WINDOWS_ON_TOP = "Docking Windows On Top";
 

@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.function;
 
 import java.awt.event.KeyEvent;
 
-import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.cmd.function.DeleteVariableCmd;
@@ -104,10 +103,5 @@ class VariableDeleteAction extends ListingContextAction {
 			return ((VariableLocation) currentLocation).getVariable();
 		}
 		return null;
-	}
-
-	@Override
-	public boolean isValidGlobalContext(ActionContext globalContext) {
-		return false;  // only work on active provider context.
 	}
 }

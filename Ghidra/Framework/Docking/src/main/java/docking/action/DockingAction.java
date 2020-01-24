@@ -76,7 +76,6 @@ public abstract class DockingAction implements DockingActionIf {
 	private Predicate<ActionContext> enabledPredicate;
 	private Predicate<ActionContext> popupPredicate;
 	private Predicate<ActionContext> validContextPredicate;
-	private Predicate<ActionContext> validGlobalContextPredicate;
 
 	public DockingAction(String name, String owner) {
 		this.name = name;
@@ -182,14 +181,6 @@ public abstract class DockingAction implements DockingActionIf {
 			return validContextPredicate.test(context);
 		}
 		return true;
-	}
-
-	@Override
-	public boolean isValidGlobalContext(ActionContext globalContext) {
-		if (validGlobalContextPredicate != null) {
-			return validGlobalContextPredicate.test(globalContext);
-		}
-		return isValidContext(globalContext);
 	}
 
 	/**
@@ -570,17 +561,6 @@ public abstract class DockingAction implements DockingActionIf {
 	 */
 	public void validContextWhen(Predicate<ActionContext> predicate) {
 		validContextPredicate = predicate;
-	}
-
-	/**
-	 * Sets a predicate for dynamically determining if this action is valid for the current global 
-	 * {@link ActionContext}.  See {@link DockingActionIf#isValidGlobalContext(ActionContext)}
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine an action's 
-	 * validity for a given global {@link ActionContext}
-	 */
-	public void validGlobalContextWhen(Predicate<ActionContext> predicate) {
-		validGlobalContextPredicate = predicate;
 	}
 
 //==================================================================================================
