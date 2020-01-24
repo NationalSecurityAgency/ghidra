@@ -610,7 +610,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	private void performLaunchKeyStrokeDialogAction() {
-		ToolActions toolActions = ((AbstractDockingTool) tool).getToolActions();
+		ToolActions toolActions = (ToolActions) ((AbstractDockingTool) tool).getToolActions();
 		Action action = toolActions.getAction(KeyStroke.getKeyStroke("F4"));
 		assertNotNull(action);
 		runSwing(() -> action.actionPerformed(new ActionEvent(this, 0, "")), false);
@@ -624,7 +624,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 		private JComponent component = new JTextField("Hey!");
 
-		TestActionsComponentProvider(DockingTool tool) {
+		TestActionsComponentProvider(Tool tool) {
 			super(tool, PROVIDER_NAME, "Fooberry Plugin");
 		}
 
@@ -637,7 +637,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	private class HasDefaultKeyBindingComponentProvider extends ComponentProvider {
 		private JComponent component = new JTextField("Hey!");
 
-		HasDefaultKeyBindingComponentProvider(DockingTool tool) {
+		HasDefaultKeyBindingComponentProvider(Tool tool) {
 			super(tool, HasDefaultKeyBindingComponentProvider.class.getSimpleName(),
 				"Fooberry Plugin");
 

@@ -32,7 +32,9 @@ import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import docking.widgets.table.*;
 import docking.widgets.tree.GTreeNode;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainFolder;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.framework.store.Version;
 import ghidra.program.model.listing.Program;
@@ -213,16 +215,18 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		// make some changes to check in
-		Program program = (Program) ((DomainFileNode) node).getDomainFile().getDomainObject(this,
-			true, false, TaskMonitor.DUMMY);
+		Program program = (Program) ((DomainFileNode) node).getDomainFile()
+				.getDomainObject(this,
+					true, false, TaskMonitor.DUMMY);
 		editProgram(program, (p) -> {
 			SymbolTable symTable = p.getSymbolTable();
 			symTable.createLabel(p.getMinAddress().getNewAddress(0x010001000), "fred",
 				SourceType.USER_DEFINED);
 		});
 
-		program = (Program) ((DomainFileNode) xnode).getDomainFile().getDomainObject(this, true,
-			false, TaskMonitor.DUMMY);
+		program = (Program) ((DomainFileNode) xnode).getDomainFile()
+				.getDomainObject(this, true,
+					false, TaskMonitor.DUMMY);
 		editProgram(program, (p) -> {
 			SymbolTable symTable = p.getSymbolTable();
 			symTable.createLabel(p.getMinAddress(), "bob", SourceType.USER_DEFINED);
@@ -251,8 +255,9 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		checkout(programNode);
 
 		Program program =
-			(Program) ((DomainFileNode) programNode).getDomainFile().getDomainObject(this, true,
-				false, TaskMonitor.DUMMY);
+			(Program) ((DomainFileNode) programNode).getDomainFile()
+					.getDomainObject(this, true,
+						false, TaskMonitor.DUMMY);
 
 		createHistoryEntry(program, "Symbol1");
 		frontEnd.checkIn(programNode, "This is checkin 1");
@@ -334,7 +339,7 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 
 		waitForSwing();
 
-		List<Tool> tools = frontEnd.getTools();
+		List<PluginTool> tools = frontEnd.getTools();
 		assertEquals(1, tools.size());
 
 		DomainFile[] dfs = tools.get(0).getDomainFiles();
@@ -405,7 +410,7 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 
 		waitForSwing();
 
-		List<Tool> tools = frontEnd.getTools();
+		List<PluginTool> tools = frontEnd.getTools();
 		assertEquals(1, tools.size());
 
 		DomainFile[] dfs = tools.get(0).getDomainFiles();
@@ -482,7 +487,7 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 
 		waitForSwing();
 
-		List<Tool> tools = frontEnd.getTools();
+		List<PluginTool> tools = frontEnd.getTools();
 		assertEquals(1, tools.size());
 
 		DomainFile[] dfs = tools.get(0).getDomainFiles();

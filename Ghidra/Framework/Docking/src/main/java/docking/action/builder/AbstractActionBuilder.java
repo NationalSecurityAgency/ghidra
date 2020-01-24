@@ -177,7 +177,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 
 	/**
 	 * Builds the action.  To build and install the action in one step, use 
-	 * {@link #buildAndInstall(DockingTool)} or {@link #buildAndInstallLocal(ComponentProvider)}.
+	 * {@link #buildAndInstall(Tool)} or {@link #buildAndInstallLocal(ComponentProvider)}.
 	 * 
 	 * @return the newly build action 
 	 */
@@ -191,7 +191,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * @see #build()
 	 * @see #buildAndInstallLocal(ComponentProvider)
 	 */
-	public T buildAndInstall(DockingTool tool) {
+	public T buildAndInstall(Tool tool) {
 		T action = build();
 		tool.addAction(action);
 		return action;
@@ -203,7 +203,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * @param provider the provider to add the action to
 	 * @return the newly created action
 	 * @see #build()
-	 * @see #buildAndInstall(DockingTool)
+	 * @see #buildAndInstall(Tool)
 	 */
 	public T buildAndInstallLocal(ComponentProvider provider) {
 		T action = build();

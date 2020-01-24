@@ -15,12 +15,13 @@
  */
 package ghidra.framework.project.tool;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ProjectTestUtils;
 
@@ -29,19 +30,11 @@ import ghidra.test.ProjectTestUtils;
  */
 public class SaveToolTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private final static String DIRECTORY_NAME = AbstractGenericTest.getTestDirectoryPath();
+	private final static String DIRECTORY_NAME = AbstractGTest.getTestDirectoryPath();
 	private final static String TOOL_NAME = "TestTool";
 
-	private Tool runningTool;
+	private PluginTool runningTool;
 	private Project project;
-
-	/**
-	 * Constructor
-	 * @param name The name of the test to run.
-	 */
-	public SaveToolTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -55,7 +48,7 @@ public class SaveToolTest extends AbstractGhidraHeadedIntegrationTest {
 		ProjectTestUtils.deleteProject(DIRECTORY_NAME, PROJECT_NAME);
 	}
 
-	/**
+	/*
 	 * This tests the following requirements:
 	 * (1) create an empty tool in the active workspace, and
 	 * (2) that duplicate project names do not throw exceptions.

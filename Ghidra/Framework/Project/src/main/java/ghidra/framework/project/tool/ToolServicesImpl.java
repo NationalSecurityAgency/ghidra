@@ -60,7 +60,7 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public void closeTool(Tool tool) {
+	public void closeTool(PluginTool tool) {
 		toolManager.closeTool(tool);
 	}
 
@@ -150,7 +150,7 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public void saveTool(Tool tool) {
+	public void saveTool(PluginTool tool) {
 		boolean toolChanged = tool.hasConfigChanged();
 		ToolTemplate template = tool.saveToolToToolTemplate();
 		toolManager.toolSaved(tool, toolChanged);
@@ -164,10 +164,10 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public void displaySimilarTool(Tool tool, DomainFile domainFile, PluginEvent event) {
+	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event) {
 
-		Tool[] similarTools = getSameNamedRunningTools(tool);
-		Tool matchingTool = findToolUsingFile(similarTools, domainFile);
+		PluginTool[] similarTools = getSameNamedRunningTools(tool);
+		PluginTool matchingTool = findToolUsingFile(similarTools, domainFile);
 		if (matchingTool != null) {
 			// Bring the matching tool forward.
 			matchingTool.toFront();
@@ -185,11 +185,11 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public Tool launchDefaultTool(DomainFile domainFile) {
+	public PluginTool launchDefaultTool(DomainFile domainFile) {
 		ToolTemplate template = getDefaultToolTemplate(domainFile);
 		if (template != null) {
 			Workspace workspace = toolManager.getActiveWorkspace();
-			Tool tool = workspace.runTool(template);
+			PluginTool tool = workspace.runTool(template);
 			tool.setVisible(true);
 			if (domainFile != null) {
 				tool.acceptDomainFiles(new DomainFile[] { domainFile });
@@ -200,11 +200,11 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public Tool launchTool(String toolName, DomainFile domainFile) {
+	public PluginTool launchTool(String toolName, DomainFile domainFile) {
 		ToolTemplate template = findToolChestToolTemplate(toolName);
 		if (template != null) {
 			Workspace workspace = toolManager.getActiveWorkspace();
-			Tool tool = workspace.runTool(template);
+			PluginTool tool = workspace.runTool(template);
 			tool.setVisible(true);
 			if (domainFile != null) {
 				tool.acceptDomainFiles(new DomainFile[] { domainFile });
@@ -451,20 +451,20 @@ class ToolServicesImpl implements ToolServices {
 	 * 
 	 * @return array of tools that are running and named the same as this one.
 	 */
-	private Tool[] getSameNamedRunningTools(Tool tool) {
+	private PluginTool[] getSameNamedRunningTools(PluginTool tool) {
 		String toolName = tool.getToolName();
-		Tool[] tools = toolManager.getRunningTools();
-		List<Tool> toolList = new ArrayList<>(tools.length);
-		for (Tool element : tools) {
+		PluginTool[] tools = toolManager.getRunningTools();
+		List<PluginTool> toolList = new ArrayList<>(tools.length);
+		for (PluginTool element : tools) {
 			if (toolName.equals(element.getToolName())) {
 				toolList.add(element);
 			}
 		}
-		return toolList.toArray(new Tool[toolList.size()]);
+		return toolList.toArray(new PluginTool[toolList.size()]);
 	}
 
 	@Override
-	public Tool[] getRunningTools() {
+	public PluginTool[] getRunningTools() {
 		return toolManager.getRunningTools();
 	}
 
@@ -476,8 +476,8 @@ class ToolServicesImpl implements ToolServices {
 	 * 
 	 * @return first tool found to be using the domainFile
 	 */
-	private Tool findToolUsingFile(Tool[] tools, DomainFile domainFile) {
-		Tool matchingTool = null;
+	private PluginTool findToolUsingFile(PluginTool[] tools, DomainFile domainFile) {
+		PluginTool matchingTool = null;
 		for (int toolNum = 0; (toolNum < tools.length) && (matchingTool == null); toolNum++) {
 			PluginTool pTool = (PluginTool) tools[toolNum];
 			// Is this tool the same as the type we are in.
@@ -493,7 +493,7 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public boolean canAutoSave(Tool tool) {
+	public boolean canAutoSave(PluginTool tool) {
 		return toolManager.canAutoSave(tool);
 	}
 }

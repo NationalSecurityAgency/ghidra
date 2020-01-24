@@ -200,9 +200,9 @@ public abstract class AbstractToolSavingTest extends AbstractGhidraHeadedIntegra
 	protected List<PluginTool> findOpenTools() {
 		ToolManager tm = testEnv.getProject().getToolManager();
 		Workspace activeWorkspace = tm.getActiveWorkspace();
-		Tool[] tools = activeWorkspace.getTools();
+		PluginTool[] tools = activeWorkspace.getTools();
 		List<PluginTool> pluginToolList = new ArrayList<>(tools.length);
-		for (Tool tool : tools) {
+		for (PluginTool tool : tools) {
 			pluginToolList.add((PluginTool) tool);
 		}
 		return pluginToolList;

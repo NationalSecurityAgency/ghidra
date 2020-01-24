@@ -60,7 +60,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 	private ToggleDockingAction toggleSatelliteAction;
 	private ToggleDockingAction dockSatelliteAction;
 
-	private DockingTool tool;
+	private Tool tool;
 	private VisualGraphView<?, ?, ?> view;
 	private String owner;
 	private String providerName;
@@ -229,7 +229,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 
 		private JComponent satelliteComponent;
 
-		public VgUndockedSatelliteProvider(DockingTool tool, JComponent component, String name,
+		public VgUndockedSatelliteProvider(Tool tool, JComponent component, String name,
 				String owner, String windowGroup) {
 			super(tool, name, owner);
 

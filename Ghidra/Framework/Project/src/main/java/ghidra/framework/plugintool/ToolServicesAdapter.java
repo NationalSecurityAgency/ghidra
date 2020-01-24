@@ -27,17 +27,17 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
-	public boolean canAutoSave(Tool tool) {
+	public boolean canAutoSave(PluginTool tool) {
 		return true;
 	}
 
 	@Override
-	public void closeTool(Tool tool) {
+	public void closeTool(PluginTool tool) {
 		// override
 	}
 
 	@Override
-	public void displaySimilarTool(Tool tool, DomainFile domainFile, PluginEvent event) {
+	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event) {
 		// override
 	}
 
@@ -62,7 +62,7 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
-	public Tool[] getRunningTools() {
+	public PluginTool[] getRunningTools() {
 		return null;
 	}
 
@@ -72,12 +72,12 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
-	public Tool launchDefaultTool(DomainFile domainFile) {
+	public PluginTool launchDefaultTool(DomainFile domainFile) {
 		return null;
 	}
 
 	@Override
-	public Tool launchTool(String toolName, DomainFile domainFile) {
+	public PluginTool launchTool(String toolName, DomainFile domainFile) {
 		return null;
 	}
 
@@ -87,7 +87,7 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
-	public void saveTool(Tool tool) {
+	public void saveTool(PluginTool tool) {
 		// override
 	}
 

@@ -20,13 +20,15 @@ import javax.swing.ImageIcon;
 import org.jdom.Element;
 
 import docking.util.image.ToolIconURL;
-import ghidra.framework.model.*;
+import ghidra.framework.model.Project;
+import ghidra.framework.model.ToolTemplate;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 
 public class DummyToolTemplate implements ToolTemplate {
 
 	@Override
-	public Tool createTool(Project project) {
+	public PluginTool createTool(Project project) {
 		return new DummyTool(project);
 	}
 

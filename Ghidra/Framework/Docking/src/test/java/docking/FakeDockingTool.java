@@ -26,7 +26,7 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.util.ServiceListener;
 
 /**
- * A Test Double of the {@link DockingTool} that provides minimal tool functionality, such
+ * A Test Double of the {@link Tool} that provides minimal tool functionality, such
  * as the {@link DockingWindowManager}
  */
 public class FakeDockingTool extends AbstractDockingTool {

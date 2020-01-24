@@ -335,8 +335,8 @@ public class FrontEndTestEnv {
 		return env.showTool();
 	}
 
-	public List<Tool> getTools() {
-		Tool[] tools = frontEndTool.getProject().getToolManager().getActiveWorkspace().getTools();
+	public List<PluginTool> getTools() {
+		PluginTool[] tools = frontEndTool.getProject().getToolManager().getActiveWorkspace().getTools();
 		return new ArrayList<>(Arrays.asList(tools));
 	}
 

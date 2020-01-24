@@ -40,7 +40,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	 * @param action action that will be added to the list of actions bound to a keystroke
 	 * @param keyStroke the keystroke, if any, associated with the action
 	 */
-	public MultipleKeyAction(DockingTool tool, ComponentProvider provider, DockingActionIf action,
+	public MultipleKeyAction(Tool tool, ComponentProvider provider, DockingActionIf action,
 			KeyStroke keyStroke) {
 		super(tool, action, keyStroke);
 		addAction(provider, action);

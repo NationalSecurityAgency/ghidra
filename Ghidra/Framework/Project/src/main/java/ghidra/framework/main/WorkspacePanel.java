@@ -28,6 +28,7 @@ import docking.help.HelpService;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.dialogs.InputDialog;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -87,7 +88,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 	 * Tool was removed from the given workspace.
 	 */
 	@Override
-	public void toolRemoved(Workspace ws, Tool tool) {
+	public void toolRemoved(Workspace ws, PluginTool tool) {
 		removeTool(ws.getName(), tool);
 		plugin.getToolActionManager().enableConnectTools();
 	}
@@ -96,7 +97,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 	 * Tool was added to the given workspace.
 	 */
 	@Override
-	public void toolAdded(Workspace ws, Tool tool) {
+	public void toolAdded(Workspace ws, PluginTool tool) {
 		addTool(ws.getName(), tool);
 		plugin.getToolActionManager().enableConnectTools();
 	}
@@ -192,13 +193,13 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 		// if this is a change in a tool, update the running tools panel
 		// containing the tool
 		Object eventSource = event.getSource();
-		if (eventSource instanceof Tool) {
-			Tool tool = (Tool) eventSource;
+		if (eventSource instanceof PluginTool) {
+			PluginTool tool = (PluginTool) eventSource;
 			ToolTemplate template = tool.getToolTemplate(true);
 			Icon icon = tool.getIconURL().getIcon();
 			String workspaceName = activeWorkspace.getName();
 			RunningToolsPanel rtp = runningToolsMap.get(workspaceName);
-			if (eventPropertyName.equals(Tool.TOOL_NAME_PROPERTY)) {
+			if (eventPropertyName.equals(PluginTool.TOOL_NAME_PROPERTY)) {
 				rtp.toolNameChanged(tool);
 			}
 			else {
@@ -210,6 +211,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 	/**
 	 * called whenever the active project changes or is being set for
 	 * the first time
+	 * @param project the project
 	 */
 	void setActiveProject(Project project) {
 		// clear state from previous project
@@ -233,8 +235,8 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 		ToolManager toolManager = project.getToolManager();
 		toolManager.addWorkspaceChangeListener(this);
 
-		Tool[] tools = toolManager.getRunningTools();
-		for (Tool tool : tools) {
+		PluginTool[] tools = toolManager.getRunningTools();
+		for (PluginTool tool : tools) {
 			tool.addPropertyChangeListener(this);
 		}
 
@@ -247,10 +249,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 		initProjectState(activeProject);
 	}
 
-	/**
-	 * add a running tool to the panel
-	 */
-	void addTool(String workspaceName, Tool runningTool) {
+	void addTool(String workspaceName, PluginTool runningTool) {
 		RunningToolsPanel rtp = runningToolsMap.get(workspaceName);
 		if (rtp != null) {
 			rtp.addTool(runningTool);
@@ -418,8 +417,9 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 	}
 
 	/**
-	 * cause the specified workspace to be the active one
+	 * Cause the specified workspace to be the active one
 	 * NOTE: this workspace must already be known to the ToolManager
+	 * @param ws the workspace
 	 */
 	void setActiveWorkspace(Workspace ws) {
 		chooseWorkspace(ws.getName());
@@ -452,7 +452,7 @@ class WorkspacePanel extends JPanel implements WorkspaceChangeListener {
 		setBorder(INACTIVE_BORDER);
 	}
 
-	private void removeTool(String workspaceName, Tool tool) {
+	private void removeTool(String workspaceName, PluginTool tool) {
 		RunningToolsPanel rtp = runningToolsMap.get(workspaceName);
 		if (rtp != null) {
 			rtp.removeTool(tool);

@@ -65,7 +65,7 @@ public abstract class NavigatableContextAction extends DockingAction {
 	}
 
 	private NavigatableActionContext getGlobalNavigationContext(ActionContext context) {
-		DockingTool tool = getTool(context.getComponentProvider());
+		Tool tool = getTool(context.getComponentProvider());
 
 		if (tool == null) {
 			return null;
@@ -81,7 +81,7 @@ public abstract class NavigatableContextAction extends DockingAction {
 		return new NavigatableActionContext(null, defaultNavigatable);
 	}
 
-	private DockingTool getTool(ComponentProvider provider) {
+	private Tool getTool(ComponentProvider provider) {
 		if (provider != null) {
 			return provider.getTool();
 		}

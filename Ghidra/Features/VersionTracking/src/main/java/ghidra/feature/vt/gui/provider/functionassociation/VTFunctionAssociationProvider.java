@@ -219,7 +219,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
 		if (context.getComponentProvider() == this) {
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();

@@ -23,12 +23,14 @@ import java.util.Map;
 import javax.swing.*;
 
 import docking.DockingUtils;
-import ghidra.framework.model.*;
+import ghidra.framework.model.ToolTemplate;
+import ghidra.framework.model.Workspace;
+import ghidra.framework.plugintool.PluginTool;
 
 class RunningToolsPanel extends JPanel {
 	private JToolBar runningToolbar;
 	private FrontEndPlugin plugin;
-	private Map<Tool, ToolButton> runningTools;
+	private Map<PluginTool, ToolButton> runningTools;
 
 	RunningToolsPanel(FrontEndPlugin plugin, Workspace ws) {
 		super(new BorderLayout(0, 0));
@@ -55,12 +57,13 @@ class RunningToolsPanel extends JPanel {
 		// remove the default etched border
 		add(runningToolbar, BorderLayout.CENTER);
 
-		runningTools = new HashMap<Tool, ToolButton>(WorkspacePanel.TYPICAL_NUM_RUNNING_TOOLS);
+		runningTools =
+			new HashMap<PluginTool, ToolButton>(WorkspacePanel.TYPICAL_NUM_RUNNING_TOOLS);
 
 		// populate the toolbar if the workspace has running tools
 		if (ws != null) {
-			Tool[] tools = ws.getTools();
-			for (Tool element : tools) {
+			PluginTool[] tools = ws.getTools();
+			for (PluginTool element : tools) {
 				addTool(element);
 			}
 		}
@@ -73,7 +76,7 @@ class RunningToolsPanel extends JPanel {
 		return runningToolbar.getPreferredSize();
 	}
 
-	void addTool(Tool runningTool) {
+	void addTool(PluginTool runningTool) {
 		ToolButton toolButton =
 			new ToolButton(plugin, runningTool, runningTool.getToolTemplate(true));
 		runningToolbar.add(toolButton);
@@ -83,7 +86,7 @@ class RunningToolsPanel extends JPanel {
 		repaint();
 	}
 
-	void removeTool(Tool tool) {
+	void removeTool(PluginTool tool) {
 		ToolButton button = runningTools.get(tool);
 		if (button == null) {
 			return;
@@ -97,13 +100,13 @@ class RunningToolsPanel extends JPanel {
 	}
 
 	// parameter not used
-	void toolNameChanged(Tool changedTool) {
+	void toolNameChanged(PluginTool changedTool) {
 	}
 
 	/**
 	 * Update the tool template for the tool button.
 	 */
-	void updateToolButton(Tool tool, ToolTemplate template, Icon icon) {
+	void updateToolButton(PluginTool tool, ToolTemplate template, Icon icon) {
 		ToolButton button = runningTools.get(tool);
 
 		if (button != null) {

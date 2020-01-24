@@ -85,7 +85,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	// maps for mapping old provider names and owner to new names and/or owner
 	private static Map<String, String> oldOwnerMap = new HashMap<>();
 	private static Map<String, String> oldNameMap = new HashMap<>();
-	protected DockingTool dockingTool;
+	protected Tool dockingTool;
 	private String name;
 	private final String owner;
 	private String title;
@@ -121,7 +121,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 *        the same window.
 	 * @param owner The owner of this provider, usually a plugin name.
 	 */
-	public ComponentProvider(DockingTool tool, String name, String owner) {
+	public ComponentProvider(Tool tool, String name, String owner) {
 		this(tool, name, owner, null);
 	}
 
@@ -134,7 +134,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @param contextType the type of context supported by this provider; may be null (see
 	 *        {@link #getContextType()}
 	 */
-	public ComponentProvider(DockingTool tool, String name, String owner, Class<?> contextType) {
+	public ComponentProvider(Tool tool, String name, String owner, Class<?> contextType) {
 		this.dockingTool = tool;
 		this.name = name;
 		this.owner = owner;
@@ -744,7 +744,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return this;
 	}
 
-	public DockingTool getTool() {
+	public Tool getTool() {
 		return dockingTool;
 	}
 

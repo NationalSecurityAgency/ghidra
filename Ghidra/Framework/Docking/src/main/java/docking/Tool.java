@@ -30,7 +30,7 @@ import ghidra.framework.plugintool.ServiceProvider;
  * Generic tool interface for managing {@link ComponentProvider}s and 
  * {@link DockingActionIf actions}
  */
-public interface DockingTool extends ServiceProvider {
+public interface Tool extends ServiceProvider {
 
 	/**
 	 * Returns a combination of the tool name and the instance name of the form
