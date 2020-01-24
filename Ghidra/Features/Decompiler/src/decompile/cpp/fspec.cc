@@ -550,7 +550,7 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,bool isinput,T
 	// Assume datatype is stored elsewhere and only the pointer is passed
 	AddrSpace *spc = spacebase;
 	if (spc == (AddrSpace *)0)
-	  spc = typefactory.getArch()->getDefaultSpace();
+	  spc = typefactory.getArch()->getDefaultDataSpace();
 	int4 pointersize = spc->getAddrSize();
 	int4 wordsize = spc->getWordSize();
 	Datatype *pointertp = typefactory.getTypePointerAbsolute(pointersize,proto[i],wordsize);
@@ -1096,7 +1096,7 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,bool isinpu
   if (res.back().addr.isInvalid()) { // Could not assign an address (too big)
     AddrSpace *spc = spacebase;
     if (spc == (AddrSpace *)0)
-      spc = typefactory.getArch()->getDefaultSpace();
+      spc = typefactory.getArch()->getDefaultDataSpace();
     int4 pointersize = spc->getAddrSize();
     int4 wordsize = spc->getWordSize();
     Datatype *pointertp = typefactory.getTypePointerAbsolute(pointersize, proto[0], wordsize);

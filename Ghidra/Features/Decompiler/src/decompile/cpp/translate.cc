@@ -143,7 +143,8 @@ bool JoinRecord::operator<(const JoinRecord &op2) const
 AddrSpaceManager::AddrSpaceManager(void)
 
 {
-  defaultspace = (AddrSpace *)0;
+  defaultcodespace = (AddrSpace *)0;
+  defaultdataspace = (AddrSpace *)0;
   constantspace = (AddrSpace *)0;
   iopspace = (AddrSpace *)0;
   fspecspace = (AddrSpace *)0;
@@ -207,23 +208,36 @@ void AddrSpaceManager::restoreXmlSpaces(const Element *el,const Translate *trans
   AddrSpace *spc = getSpaceByName(defname);
   if (spc == (AddrSpace *)0)
     throw LowlevelError("Bad 'defaultspace' attribute: "+defname);
-  setDefaultSpace(spc->getIndex());
+  setDefaultCodeSpace(spc->getIndex());
 }
 
 /// Once all the address spaces have been initialized, this routine
 /// should be called once to establish the official \e default
 /// space for the processor, via its index. Should only be
 /// called during initialization.
-/// \todo This really shouldn't be public
 /// \param index is the index of the desired default space
-void AddrSpaceManager::setDefaultSpace(int4 index)
+void AddrSpaceManager::setDefaultCodeSpace(int4 index)
 
 {
-  if (defaultspace != (AddrSpace *)0)
+  if (defaultcodespace != (AddrSpace *)0)
     throw LowlevelError("Default space set multiple times");
   if (baselist.size()<=index || baselist[index] == (AddrSpace *)0)
     throw LowlevelError("Bad index for default space");
-  defaultspace = baselist[index];
+  defaultcodespace = baselist[index];
+  defaultdataspace = defaultcodespace;		// By default the default data space is the same
+}
+
+/// If the architecture has different code and data spaces, this routine can be called
+/// to set the \e data space after the \e code space has been set.
+/// \param index is the index of the desired default space
+void AddrSpaceManager::setDefaultDataSpace(int4 index)
+
+{
+  if (defaultcodespace == (AddrSpace *)0)
+    throw LowlevelError("Default data space must be set after the code space");
+  if (baselist.size()<=index || baselist[index] == (AddrSpace *)0)
+    throw LowlevelError("Bad index for default data space");
+  defaultdataspace = baselist[index];
 }
 
 /// For spaces with alignment restrictions, the address of a small variable must be justified
@@ -343,7 +357,8 @@ void AddrSpaceManager::copySpaces(const AddrSpaceManager *op2)
     if (spc != (AddrSpace *)0)
       insertSpace(spc);
   }
-  setDefaultSpace(op2->getDefaultSpace()->getIndex());
+  setDefaultCodeSpace(op2->getDefaultCodeSpace()->getIndex());
+  setDefaultDataSpace(op2->getDefaultDataSpace()->getIndex());
 }
 
 /// Perform the \e privileged act of associating a base register with an existing \e virtual space
@@ -454,6 +469,16 @@ void AddrSpaceManager::assignShortcut(AddrSpace *spc)
       shortcut = 'a';
   }
   spc->shortcut = (char)shortcut;
+}
+
+/// \param spc is the AddrSpace to mark
+/// \param size is the (minimum) size of a near pointer in bytes
+void AddrSpaceManager::markNearPointers(AddrSpace *spc,int4 size)
+
+{
+  spc->setFlags(AddrSpace::has_nearpointers);
+  if (spc->minimumPointerSize == 0 && spc->addressSize != size)
+    spc->minimumPointerSize = size;
 }
 
 /// All address spaces have a unique name associated with them.
@@ -674,8 +699,8 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
       ((lotp != IPTR_SPACEBASE)&&(lotp != IPTR_PROCESSOR)))
     throw LowlevelError("Trying to join in appropriate locations");
   if ((hitp == IPTR_SPACEBASE)||(lotp == IPTR_SPACEBASE)||
-      (hiaddr.getSpace() == getDefaultSpace())||
-      (loaddr.getSpace() == getDefaultSpace()))
+      (hiaddr.getSpace() == getDefaultCodeSpace())||
+      (loaddr.getSpace() == getDefaultCodeSpace()))
     usejoinspace = false;
   if (hiaddr.isContiguous(hisz,loaddr,losz)) { // If we are contiguous
     if (!usejoinspace) { // and in a mappable space, just return the earliest address

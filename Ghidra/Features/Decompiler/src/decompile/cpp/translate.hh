@@ -220,7 +220,8 @@ class AddrSpaceManager {
   map<string,AddrSpace *> name2Space;	///< Map from name -> space
   map<int4,AddrSpace *> shortcut2Space;	///< Map from shortcut -> space
   AddrSpace *constantspace;	///< Quick reference to constant space
-  AddrSpace *defaultspace;	///< Generally primary RAM, where assembly pointers point to
+  AddrSpace *defaultcodespace;	///< Default space where code lives, generally main RAM
+  AddrSpace *defaultdataspace;	///< Default space where data lives
   AddrSpace *iopspace;		///< Space for internal pcode op pointers
   AddrSpace *fspecspace;	///< Space for internal callspec pointers
   AddrSpace *joinspace;		///< Space for unifying split variables
@@ -232,9 +233,11 @@ class AddrSpaceManager {
 protected:
   AddrSpace *restoreXmlSpace(const Element *el,const Translate *trans); ///< Add a space to the model based an on XML tag
   void restoreXmlSpaces(const Element *el,const Translate *trans); ///< Restore address spaces in the model from an XML tag
-  void setDefaultSpace(int4 index); ///< Set the default address space
+  void setDefaultCodeSpace(int4 index); ///< Set the default address space (for code)
+  void setDefaultDataSpace(int4 index);	///< Set the default address space for data
   void setReverseJustified(AddrSpace *spc); ///< Set reverse justified property on this space
   void assignShortcut(AddrSpace *spc);	///< Select a shortcut character for a new space
+  void markNearPointers(AddrSpace *spc,int4 size);	///< Mark that given space can be accessed with near pointers
   void insertSpace(AddrSpace *spc); ///< Add a new address space to the model
   void copySpaces(const AddrSpaceManager *op2);	///< Copy spaces from another manager
   void addSpacebasePointer(SpacebaseSpace *basespace,const VarnodeData &ptrdata,int4 truncSize,bool stackGrowth); ///< Set the base register of a spacebase space
@@ -250,7 +253,8 @@ public:
   AddrSpace *getJoinSpace(void) const; ///< Get the joining space
   AddrSpace *getStackSpace(void) const; ///< Get the stack space for this processor
   AddrSpace *getUniqueSpace(void) const; ///< Get the temporary register space for this processor
-  AddrSpace *getDefaultSpace(void) const; ///< Get the default address space of this processor
+  AddrSpace *getDefaultCodeSpace(void) const; ///< Get the default address space of this processor
+  AddrSpace *getDefaultDataSpace(void) const; ///< Get the default address space where data is stored
   AddrSpace *getConstantSpace(void) const; ///< Get the constant space
   Address getConstant(uintb val) const; ///< Get a constant encoded as an Address
   Address createConstFromSpace(AddrSpace *spc) const; ///< Create a constant address encoding an address space
@@ -422,7 +426,7 @@ public:
 /// default space. This space is usually the main RAM databus.
 /// \return the size of an address in bytes
 inline int4 AddrSpaceManager::getDefaultSize(void) const {
-  return defaultspace->getAddrSize();
+  return defaultcodespace->getAddrSize();
 }
 
 /// There is a special address space reserved for encoding pointers
@@ -474,12 +478,21 @@ inline AddrSpace *AddrSpaceManager::getUniqueSpace(void) const {
 }
 
 /// Most processors have a main address bus, on which the bulk
-/// of the processor's RAM is mapped.  Everything referenced
-/// with this address bus should be modeled in pcode with a
-/// single address space, referred to as the \e default space.
-/// \return a pointer to the \e default space
-inline AddrSpace *AddrSpaceManager::getDefaultSpace(void) const {
-  return defaultspace;
+/// of the processor's RAM is mapped. This matches SLEIGH's notion
+/// of the \e default space. For Harvard architectures, this is the
+/// space where code exists (as opposed to data).
+/// \return a pointer to the \e default code space
+inline AddrSpace *AddrSpaceManager::getDefaultCodeSpace(void) const {
+  return defaultcodespace;
+}
+
+/// Return the default address space for holding data. For most processors, this
+/// is just the main RAM space and is the same as the default \e code space.
+/// For Harvard architectures, this is the space where data is stored
+/// (as opposed to code).
+/// \return a pointer to the \e default data space
+inline AddrSpace *AddrSpaceManager::getDefaultDataSpace(void) const {
+  return defaultdataspace;
 }
 
 /// Pcode represents constant values within an operation as

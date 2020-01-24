@@ -432,7 +432,7 @@ void CodeDataAnalysis::addTargetHit(const Address &codeaddr,uintb targethit)
   targethits.push_back(TargetHit());
   targethits.back().funcstart = findFunctionStart( codeaddr );
   targethits.back().codeaddr = codeaddr;
-  targethits.back().thunkaddr = Address(glb->translate->getDefaultSpace(),targethit);
+  targethits.back().thunkaddr = Address(glb->translate->getDefaultCodeSpace(),targethit);
   map<Address,TargetFeature>::const_iterator titer;
   titer = targets.find( targethits.back().thunkaddr );
   if (titer != targets.end())

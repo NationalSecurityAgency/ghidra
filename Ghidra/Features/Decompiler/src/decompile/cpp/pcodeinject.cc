@@ -117,7 +117,7 @@ void ExecutablePcode::build(void)
   icontext.clear();
   uintb uniqReserve = 0x10;			// Temporary register space reserved for inputs and output
   Architecture *glb = emulator.getArch();
-  AddrSpace *codeSpace = glb->getDefaultSpace();
+  AddrSpace *codeSpace = glb->getDefaultCodeSpace();
   AddrSpace *uniqSpace = glb->getUniqueSpace();
   icontext.baseaddr = Address(codeSpace,0x1000);	// Fake address
   icontext.nextaddr = icontext.baseaddr;

@@ -686,7 +686,7 @@ PcodeSnippet::PcodeSnippet(const SleighBase *slgh)
   tempbase = 0;
   errorcount = 0;
   result = (ConstructTpl *)0;
-  setDefaultSpace(slgh->getDefaultSpace());
+  setDefaultSpace(slgh->getDefaultCodeSpace());
   setConstantSpace(slgh->getConstantSpace());
   setUniqueSpace(slgh->getUniqueSpace());
   int4 num = slgh->numSpaces();

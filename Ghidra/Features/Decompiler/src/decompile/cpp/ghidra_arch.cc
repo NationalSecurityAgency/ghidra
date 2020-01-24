@@ -273,6 +273,7 @@ void ArchitectureGhidra::buildSpecFile(DocumentStorage &store)
 void ArchitectureGhidra::postSpecFile(void)
 
 {
+  Architecture::postSpecFile();
   ScopeGhidra *scopeGhidra = (ScopeGhidra *)symboltab->getGlobalScope();
   scopeGhidra->lockDefaultProperties();
 }
