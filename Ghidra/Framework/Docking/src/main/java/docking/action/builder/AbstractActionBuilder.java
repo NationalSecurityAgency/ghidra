@@ -19,10 +19,12 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import javax.swing.Icon;
+import javax.swing.KeyStroke;
 
 import docking.*;
 import docking.action.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import resources.ResourceManager;
 
 /**
@@ -138,6 +140,11 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	private String toolBarSubGroup;
 
 	/**
+	 * The key binding to assign to the action
+	 */
+	private KeyStroke keyBinding;
+
+	/**
 	 * Predicate for determining if an action is enabled for a given context
 	 */
 	private Predicate<ActionContext> enabledPredicate;
@@ -156,6 +163,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * Predicate for determining if an action is applicable for a given global context
 	 */
 	private Predicate<ActionContext> validGlobalContextPredicate;
+
 
 	/**
 	 * Builder constructor
@@ -449,6 +457,32 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	}
 
 	/**
+	 * Sets the key binding for this action
+	 * 
+	 * @param keyStroke the KeyStroke to bind to this action
+	 * @return this builder (for chaining)
+	 */
+	public B keyBinding(KeyStroke keyStroke) {
+		this.keyBinding = keyStroke;
+		return self();
+	}
+
+	/**
+	 * Sets the key binding for this action
+	 * 
+	 * @param keyStrokeString the string to parse as a KeyStroke. See
+	 *  {@link KeyStroke#getKeyStroke(String)} for the format of the string.
+	 * @return this builder (for chaining)
+	 */
+	public B keyBinding(String keyStrokeString) {
+		this.keyBinding = KeyStroke.getKeyStroke(keyStrokeString);
+		if (keyBinding == null && keyStrokeString != null) {
+			Msg.warn(this, "Can't parse KeyStroke: " + keyStrokeString);
+		}
+		return self();
+	}
+
+	/**
 	 * Sets the primary callback to be executed when this action is invoked.  This builder will
 	 * throw an {@link IllegalStateException} if one of the build methods is called without
 	 * providing this callback.
@@ -547,6 +581,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		setMenuData(action);
 		setToolbarData(action);
 		setPopupMenuData(action);
+		setKeyBindingData(action);
 
 		if (helpLocation != null) {
 			action.setHelpLocation(helpLocation);
@@ -578,6 +613,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		return menuPath != null;
 	}
 
+	protected boolean isKeyBindingAction() {
+		return keyBinding != null;
+	}
+
 	private void setPopupMenuData(DockingAction action) {
 		if (isPopupAction()) {
 			action.setPopupMenuData(new MenuData(popupPath, popupIcon, popupGroup,
@@ -598,4 +637,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		}
 	}
 
+	private void setKeyBindingData(DockingAction action) {
+		if (isKeyBindingAction()) {
+			action.setKeyBindingData(new KeyBindingData(keyBinding));
+		}
+	}
 }
