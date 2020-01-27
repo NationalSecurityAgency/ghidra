@@ -227,7 +227,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * Configure whether this {@code DockingAction} is enabled.
 	 * 
 	 * <p><b>Note: most clients do not need to use this method.  Enablement is controlled by 
-	 * {@link #validContextWhen(Predicate)} or {@link #validGlobalContextWhen(Predicate)}.
+	 * {@link #validContextWhen(Predicate)}.
 	 * </b>
 	 * 
 	 * @param b {@code true} if enabled
