@@ -357,7 +357,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 	/**
 	 * Update the child key associated with the specified key index.
-	 * Other entries are shifted as necessary to accomodate the new key length for 
+	 * Other entries are shifted as necessary to accommodate the new key length for 
 	 * the updated entry.
 	 * @param index child key index
 	 * @param updateKey updated child node key
