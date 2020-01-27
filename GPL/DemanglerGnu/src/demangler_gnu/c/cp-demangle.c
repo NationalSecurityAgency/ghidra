@@ -93,7 +93,7 @@ This file was changed on July 4th, 2019.
 
    IN_GLIBCPP_V3
       If defined, this file defines only __cxa_demangle() and
-      __gcclibcxx_demangle_callback(), and no other publicly visible
+      __gcclibcxx_demangle_callback(), and no other publically visible
       functions or variables.
 
    STANDALONE_DEMANGLER
