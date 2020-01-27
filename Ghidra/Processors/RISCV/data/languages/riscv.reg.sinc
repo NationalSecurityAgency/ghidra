@@ -5,44 +5,6 @@ define space ram type=ram_space size=$(XLEN) default;
 define space register type=register_space size=4;
 
 
-# A - Atomic instructions
-# B - Bit manipulation instructions
-# C - Compressed instructions
-# D - Double-precision floating-point instructions
-# E - Embedded applications, resource-constrained subset
-# F - Single-precision floating-point instructions
-# G - General (I + M + A + F + D)
-# I - Integer base instructions
-# J - Dynamically translated languages
-# L - Decimal floating point instructions
-# M - Integer multiplication and division instructions
-# N - User-level interrupt instructions
-# P - Packed-SIMD instructions
-# Q - Quad-precision floating-point instructions
-# T - Transactional Memory instructions
-# V - Vector operations instructions
-# RV [32, 64, 128] I, M, A, F, D, G, Q, L, C, B, J, T, P, V, N
-define register offset=0x1020 size=8 extensions;
-define context extensions
-  RVI=(0,0)
-  RVM=(1,1)
-  RVA=(2,2)
-  RVF=(3,3)
-  RVD=(4,4)
-  RVG=(0,4)
-  RVQ=(5,5)
-  RVL=(6,6)
-  RVC=(7,7)
-  RVB=(8,8)
-  RVJ=(9,9)
-  RVT=(10,10)
-  RVP=(11,11)
-  RVV=(12,12)
-  RVN=(13,13)
-  RV128=(61,61)
-  RV64=(62,62)
-  RV32=(63,63)
-;
 
 define register offset=0x1000 size=$(XLEN) [ pc ];
 
@@ -87,163 +49,6 @@ define register offset=0x3000 size=$(FLEN) [ ft0 ft1 ft2  ft3  ft4 ft5 ft6  ft7
        			      	       	     fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
 				       	     fa6 fa7 fs2  fs3  fs4 fs5 fs6  fs7
 				       	     fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
-@endif
-
-define token instr (32)
-  op0001=(0,1)
-  op0204=(2,4)
-  op0506=(5,6)
-  op0707=(7,7)
-  op0711=(7,11)
-  r0711=(7,11)
-  fr0711=(7,11)
-  op0811=(8,11)
-  op1214=(12,14)
-  funct3=(12,14)
-  op1219=(12,19)
-  op1231=(12,31)
-  sop1231=(12,31) signed
-  op1519=(15,19)
-  r1519=(15,19)
-  fr1519=(15,19)
-  op1527=(15,27)
-  op1531=(15,31)
-  op2020=(20,20)
-  succ=(20,23)
-  op2024=(20,24)
-  r2024=(20,24)
-  fr2024=(20,24)
-  csr_0=(20,27)
-  csr_1=(20,27)
-  csr_2=(20,27)
-  csr_3=(20,27)
-  csr_4=(20,27)
-  csr_50=(20,26)
-  csr_58=(20,25)
-  csr_5C=(20,25)
-  csr_60=(20,26)
-  csr_68=(20,25)
-  csr_6C=(20,25)
-  csr_70=(20,26)
-  csr_78=(20,24)
-  csr_7A=(20,23)
-  csr_7B=(20,23)
-  csr_7C=(20,25)
-  csr_8=(20,27)
-  csr_90=(20,26)
-  csr_98=(20,25)
-  csr_9C=(20,25)
-  csr_A0=(20,26)
-  csr_A8=(20,25)
-  csr_AC=(20,25)
-  csr_B0=(20,26)
-  csr_B8=(20,25)
-  csr_BC=(20,25)
-  csr_C0=(20,26)
-  csr_C8=(20,25)
-  csr_CC=(20,25)
-  csr_D0=(20,26)
-  csr_D8=(20,25)
-  csr_DC=(20,25)
-  csr_E0=(20,26)
-  csr_E8=(20,25)
-  csr_EC=(20,25)
-  csr_F0=(20,26)
-  csr_F8=(20,25)
-  csr_FC=(20,25)
-  op2031=(20,31)
-  sop2031=(20,31) signed
-  op2130=(21,30)
-  op2427=(24,27)
-  pred=(24,27)
-  op2525=(25,25)
-  op2526=(25,26)
-  op2527=(25,27)
-  op2530=(25,30)
-  op2531=(25,31)
-  sop2531=(25,31) signed
-  funct7=(25,31)
-  op2627=(26,27)
-  op2631=(26,31)
-  op2731=(27,31)
-  funct5=(27,31)
-  op2727=(27,27)
-  r2731=(27,31)
-  fr2731=(27,31)
-  op2829=(28,29)
-  fm=(28,31)
-  op3031=(30,31)
-  sop3131=(31,31) signed
-;
-
-define token cinstr (16)
-  cop0001=(0,1)
-  cop0202=(2,2)
-  cop0203=(2,3)
-  cop0204=(2,4)
-  cr0204s=(2,4)
-  cfr0204s=(2,4)
-  cop0205=(2,5)
-  cop0206=(2,6)
-  cr0206=(2,6)
-  cfr0206=(2,6)
-  cop0212=(2,12)
-  cop0304=(3,4)
-  cop0305=(3,5)
-  cop0406=(4,6)
-  cop0505=(5,5)
-  cop0506=(5,6)
-  cop0512=(5,12)
-  cop0606=(6,6)
-  cop0707=(7,7)
-  cop0708=(7,8)
-  cop0709=(7,9)
-  cr0709s=(7,9)
-  cd0709s=(7,9)
-  cfr0709s=(7,9)
-  cop0710=(7,10)
-  cop0711=(7,11)
-  cr0711=(7,11)
-  cd0711=(7,11)  
-  cfr0711=(7,11)
-  cop0712=(7,12)
-  cop0808=(8,8)
-  cop0910=(9,10)
-  cop0912=(9,12)
-  cop1010=(10,10)
-  cop1011=(10,11)
-  cop1012=(10,12)
-  cop1111=(11,11)
-  cop1112=(11,12)
-  cop1212=(12,12)
-  scop1212=(12,12) signed
-  cop1315=(13,15)
-;
-
-
-attach variables [ r0711 r1519 r2024 r2731 ]
-       		 [ zero ra sp gp tp t0 t1 t2 s0 s1 a0  a1  a2 a3 a4 a5
-		   a6   a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ];
-
-attach variables [ cr0206 cr0711 cd0711 ]
-       		 [ zero ra sp gp tp t0 t1 t2 s0 s1 a0  a1  a2 a3 a4 a5
-		   a6   a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ];
-
-attach variables [ cr0204s cr0709s cd0709s ]
-       		 [ s0 s1 a0 a1 a2 a3 a4 a5 ];
-
-
-@if FPSIZE != ""
-attach variables [ fr0711 fr1519 fr2024 fr2731 ]
-       		 [ ft0 ft1 ft2 ft3 ft4 ft5 ft6 ft7 fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
-		   fa6 fa7 fs2 fs3 fs4 fs5 fs6 fs7 fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
-
-attach variables [ cfr0206 cfr0711 ]
-       		 [ ft0 ft1 ft2 ft3 ft4 ft5 ft6 ft7 fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
-		   fa6 fa7 fs2 fs3 fs4 fs5 fs6 fs7 fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
-
-attach variables [ cfr0204s cfr0709s ]
-       		 [ fs0 fs1 fa0 fa1 fa2 fa3 fa4 fa5 ];
 @endif
 
 
@@ -761,6 +566,241 @@ define register offset=0x90000000 size=$(XLEN) [
  csrff0 csrff1 csrff2 csrff3 csrff4 csrff5 csrff6 csrff7
  csrff8 csrff9 csrffa csrffb csrffc csrffd csrffe csrfff
 ];
+
+
+
+# A - Atomic instructions
+# B - Bit manipulation instructions
+# C - Compressed instructions
+# D - Double-precision floating-point instructions
+# E - Embedded applications, resource-constrained subset
+# F - Single-precision floating-point instructions
+# G - General (I + M + A + F + D)
+# I - Integer base instructions
+# J - Dynamically translated languages
+# L - Decimal floating point instructions
+# M - Integer multiplication and division instructions
+# N - User-level interrupt instructions
+# P - Packed-SIMD instructions
+# Q - Quad-precision floating-point instructions
+# T - Transactional Memory instructions
+# V - Vector operations instructions
+# RV [32, 64, 128] I, M, A, F, D, G, Q, L, C, B, J, T, P, V, N
+define register offset=0x1020 size=8 extensions;
+define context extensions
+  RVI=(0,0)
+  RVM=(1,1)
+  RVA=(2,2)
+  RVF=(3,3)
+  RVD=(4,4)
+  RVG=(0,4)
+  RVQ=(5,5)
+  RVL=(6,6)
+  RVC=(7,7)
+  RVB=(8,8)
+  RVJ=(9,9)
+  RVT=(10,10)
+  RVP=(11,11)
+  RVV=(12,12)
+  RVN=(13,13)
+  RV128=(61,61)
+  RV64=(62,62)
+  RV32=(63,63)
+;
+#TODO  the above is incorrect, but seems to work right now at least
+#      the misa CSR is actually this context
+# SEE 3.1.1  Machine ISA Register  misa
+# (MXLEN-1, MXLEN-2) MXL - Machine XLEN  {1: 32, 2: 64, 3: 128}
+# Bit Character Description
+# 0   A         Atomic extension
+# 1   B         Tentatively reserved for Bit-Manipulation extension
+# 2   C         Compressed extension
+# 3   D         Double-precision floating-point extension
+# 4   E         RV32E base ISA
+# 5   F         Single-precision floating-point extension
+# 6   G         Additional standard extensions present
+# 7   H         Hypervisor extension
+# 8   I         RV32I/64I/128I base ISA
+# 9   J         Tentatively reserved for Dynamically Translated Languages extension
+# 10  K         Reserved
+# 11  L         Tentatively reserved for Decimal Floating-Point extension
+# 12  M         Integer Multiply/Divide extension
+# 13  N         User-level interrupts supported
+# 14  O         Reserved
+# 15  P         Tentatively reserved for Packed-SIMD extension
+# 16  Q         Quad-precision floating-point extension
+# 17  R         Reserved
+# 18  S         Supervisor mode implemented
+# 19  T         Tentatively reserved for Transactional Memory extension
+# 20  U         User mode implemented
+# 21  V         Tentatively reserved for Vector extension
+# 22  W         Reserved
+# 23  X         Non-standard extensions present
+# 24  Y         Reserved
+# 25  Z         Reserved
+
+
+
+
+define token instr (32)
+  op0001=(0,1)
+  op0204=(2,4)
+  op0506=(5,6)
+  op0707=(7,7)
+  op0711=(7,11)
+  r0711=(7,11)
+  fr0711=(7,11)
+  op0811=(8,11)
+  op1214=(12,14)
+  funct3=(12,14)
+  op1219=(12,19)
+  op1231=(12,31)
+  sop1231=(12,31) signed
+  op1519=(15,19)
+  r1519=(15,19)
+  fr1519=(15,19)
+  op1527=(15,27)
+  op1531=(15,31)
+  op2020=(20,20)
+  succ=(20,23)
+  op2024=(20,24)
+  r2024=(20,24)
+  fr2024=(20,24)
+  csr_0=(20,27)
+  csr_1=(20,27)
+  csr_2=(20,27)
+  csr_3=(20,27)
+  csr_4=(20,27)
+  csr_50=(20,26)
+  csr_58=(20,25)
+  csr_5C=(20,25)
+  csr_60=(20,26)
+  csr_68=(20,25)
+  csr_6C=(20,25)
+  csr_70=(20,26)
+  csr_78=(20,24)
+  csr_7A=(20,23)
+  csr_7B=(20,23)
+  csr_7C=(20,25)
+  csr_8=(20,27)
+  csr_90=(20,26)
+  csr_98=(20,25)
+  csr_9C=(20,25)
+  csr_A0=(20,26)
+  csr_A8=(20,25)
+  csr_AC=(20,25)
+  csr_B0=(20,26)
+  csr_B8=(20,25)
+  csr_BC=(20,25)
+  csr_C0=(20,26)
+  csr_C8=(20,25)
+  csr_CC=(20,25)
+  csr_D0=(20,26)
+  csr_D8=(20,25)
+  csr_DC=(20,25)
+  csr_E0=(20,26)
+  csr_E8=(20,25)
+  csr_EC=(20,25)
+  csr_F0=(20,26)
+  csr_F8=(20,25)
+  csr_FC=(20,25)
+  op2031=(20,31)
+  sop2031=(20,31) signed
+  op2130=(21,30)
+  op2427=(24,27)
+  pred=(24,27)
+  op2525=(25,25)
+  op2526=(25,26)
+  op2527=(25,27)
+  op2530=(25,30)
+  op2531=(25,31)
+  sop2531=(25,31) signed
+  funct7=(25,31)
+  op2627=(26,27)
+  op2631=(26,31)
+  op2731=(27,31)
+  funct5=(27,31)
+  op2727=(27,27)
+  r2731=(27,31)
+  fr2731=(27,31)
+  op2829=(28,29)
+  fm=(28,31)
+  op3031=(30,31)
+  sop3131=(31,31) signed
+;
+
+define token cinstr (16)
+  cop0001=(0,1)
+  cop0202=(2,2)
+  cop0203=(2,3)
+  cop0204=(2,4)
+  cr0204s=(2,4)
+  cfr0204s=(2,4)
+  cop0205=(2,5)
+  cop0206=(2,6)
+  cr0206=(2,6)
+  cfr0206=(2,6)
+  cop0212=(2,12)
+  cop0304=(3,4)
+  cop0305=(3,5)
+  cop0406=(4,6)
+  cop0505=(5,5)
+  cop0506=(5,6)
+  cop0512=(5,12)
+  cop0606=(6,6)
+  cop0707=(7,7)
+  cop0708=(7,8)
+  cop0709=(7,9)
+  cr0709s=(7,9)
+  cd0709s=(7,9)
+  cfr0709s=(7,9)
+  cop0710=(7,10)
+  cop0711=(7,11)
+  cr0711=(7,11)
+  cd0711=(7,11)  
+  cfr0711=(7,11)
+  cop0712=(7,12)
+  cop0808=(8,8)
+  cop0910=(9,10)
+  cop0912=(9,12)
+  cop1010=(10,10)
+  cop1011=(10,11)
+  cop1012=(10,12)
+  cop1111=(11,11)
+  cop1112=(11,12)
+  cop1212=(12,12)
+  scop1212=(12,12) signed
+  cop1315=(13,15)
+;
+
+
+attach variables [ r0711 r1519 r2024 r2731 ]
+       		 [ zero ra sp gp tp t0 t1 t2 s0 s1 a0  a1  a2 a3 a4 a5
+		   a6   a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ];
+
+attach variables [ cr0206 cr0711 cd0711 ]
+       		 [ zero ra sp gp tp t0 t1 t2 s0 s1 a0  a1  a2 a3 a4 a5
+		   a6   a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ];
+
+attach variables [ cr0204s cr0709s cd0709s ]
+       		 [ s0 s1 a0 a1 a2 a3 a4 a5 ];
+
+
+@if FPSIZE != ""
+attach variables [ fr0711 fr1519 fr2024 fr2731 ]
+       		 [ ft0 ft1 ft2 ft3 ft4 ft5 ft6 ft7 fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
+		   fa6 fa7 fs2 fs3 fs4 fs5 fs6 fs7 fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
+
+attach variables [ cfr0206 cfr0711 ]
+       		 [ ft0 ft1 ft2 ft3 ft4 ft5 ft6 ft7 fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
+		   fa6 fa7 fs2 fs3 fs4 fs5 fs6 fs7 fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
+
+attach variables [ cfr0204s cfr0709s ]
+       		 [ fs0 fs1 fa0 fa1 fa2 fa3 fa4 fa5 ];
+@endif
+
+
+
 
 attach variables [ csr_0 ]
                  [ ustatus fflags frm fcsr uie utvec csr006 csr007
