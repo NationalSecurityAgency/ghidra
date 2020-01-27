@@ -1,9 +1,9 @@
 /* ###
  * IP: LGPL 2.1
- * NOTE: See binutils/libiberty/COPYING.LIB
+ * REVIEWED: YES
  */
 /* xexit.c -- Run any exit handlers, then exit.
-   Copyright (C) 1994-2019 Free Software Foundation, Inc.
+   Copyright (C) 1994, 95, 1997 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or

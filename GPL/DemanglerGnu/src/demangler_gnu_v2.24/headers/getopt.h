@@ -1,9 +1,10 @@
 /* ###
  * IP: GPL 3
- * NOTE: See binutils/include/COPYING3
+ * REVIEWED: YES
  */
 /* Declarations for getopt.
-   Copyright (C) 1989-2019 Free Software Foundation, Inc.
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1996, 1997, 1998, 2000,
+   2002 Free Software Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with the GNU C Library.
    Bugs can be reported to bug-glibc@gnu.org.

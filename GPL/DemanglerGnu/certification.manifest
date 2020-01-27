@@ -8,3 +8,4 @@ Module.manifest||Public Domain||||END|
 build.gradle||Public Domain||||END|
 settings.gradle||Public Domain||||END|
 src/demangler_gnu/README.txt||Public Domain||||END|
+src/demangler_gnu_v2.24/README.txt||GHIDRA||||END|

@@ -1,9 +1,9 @@
 /* ###
  * IP: GPL 3 Linking Permitted
- * NOTE: See binutils/include/COPYING3
+ * REVIEWED: YES
  */
 /* An abstract string datatype.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2002, 2004 Free Software Foundation, Inc.
    Contributed by Mark Mitchell (mark@markmitchell.com).
 
 This file is part of GNU CC.

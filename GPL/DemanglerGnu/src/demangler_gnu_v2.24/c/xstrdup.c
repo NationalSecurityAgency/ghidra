@@ -1,5 +1,7 @@
 /* ###
- * IP: Public Domain
+ * IP: LGPL 2.1
+ * REVIEWED: YES
+ * NOTE: license is not in file, but in the directory from whence it came: binutils-2.24/libiberty/COPYING.LIB
  */
 /* xstrdup.c -- Duplicate a string in memory, using xmalloc.
    This trivial function is in the public domain.

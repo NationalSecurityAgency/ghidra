@@ -1,5 +1,6 @@
 /* ###
  * IP: LGPL 2.1
+ * REVIEWED: YES
  * NOTE: license is not in file, but in the directory from whence it came: binutils-2.24/libiberty/COPYING.LIB
  */
 /* alloca.c -- allocate automatically reclaimed memory

@@ -91,7 +91,8 @@ model {
 	binaries {
 		all{ b ->
 			if (toolChain in Gcc) {
-				cCompiler.args "-DMAIN_CPLUS_DEM"
+			
+				cCompiler.args "-DSTANDALONE_DEMANGLER"
 				cCompiler.args "-DHAVE_STDLIB_H"
 				cCompiler.args "-DHAVE_STRING_H"
 				if (targetPlatform.operatingSystem.linux) {
@@ -100,12 +101,12 @@ model {
 			}
 			else if (toolChain in VisualCpp) {
 				cCompiler.args "/D_CONSOLE"
-				cCompiler.args "/DMAIN_CPLUS_DEM"
+				cCompiler.args "-DSTANDALONE_DEMANGLER"
 				cCompiler.args "-DHAVE_STDLIB_H"
 				cCompiler.args "-DHAVE_STRING_H"
 			}
 			else if (toolChain in Clang) {
-				cCompiler.args "-DMAIN_CPLUS_DEM"
+				cCompiler.args "-DSTANDALONE_DEMANGLER"
 				cCompiler.args "-DHAVE_STDLIB_H"
 				cCompiler.args "-DHAVE_STRING_H"
 				if (targetPlatform.operatingSystem.linux) {
