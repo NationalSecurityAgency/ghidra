@@ -70,6 +70,45 @@ public class DataTypeParserTest extends AbstractEditorTest {
 	}
 
 	@Test
+	public void testParse_NameWithTemplate() throws Exception {
+
+		String typeName = "templated_name<int, void*, custom_type>";
+		StructureDataType structure = new StructureDataType(typeName, 0);
+
+		tx(program, () -> {
+			programDTM.resolve(structure, null);
+		});
+
+		DataTypeParser parser = new DataTypeParser(dtmService, AllowedDataTypes.ALL);
+		DataType dt = parser.parse(typeName);
+		assertNotNull(dt);
+		assertTrue(dt.isEquivalent(structure));
+	}
+
+	@Test
+	public void testParse_PointerToNameWithTemplate() throws Exception {
+
+		//
+		// Attempt to resolve a pointer to an existing type when that pointer does not already
+		// exist.
+		//
+
+		String typeName = "templated_name<int, void*, custom_type>";
+		StructureDataType structure = new StructureDataType(typeName, 0);
+		PointerDataType pointer = new PointerDataType(structure);
+		String pointerName = pointer.getName();
+
+		tx(program, () -> {
+			programDTM.resolve(structure, null);
+		});
+
+		DataTypeParser parser = new DataTypeParser(dtmService, AllowedDataTypes.ALL);
+		DataType dt = parser.parse(pointerName);
+		assertNotNull(dt);
+		assertTrue(dt.isEquivalent(pointer));
+	}
+
+	@Test
 	public void testValidDataTypeSyntax() {
 		checkValidDt("byte");
 		checkValidDt("pointer");
