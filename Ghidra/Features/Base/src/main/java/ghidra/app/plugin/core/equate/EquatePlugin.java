@@ -19,7 +19,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
@@ -374,8 +373,8 @@ public class EquatePlugin extends Plugin {
 			Program program = context.getProgram();
 			List<Integer> opIndices = getInstructionMatches(program, inst, equate);
 			Address addr = inst.getAddress();
-			for (int i = 0; i < opIndices.size(); i++) {
-				bgCmd.add(createRenameCmd(oldName, newName, addr, opIndices.get(i)));
+			for (Integer opIndice : opIndices) {
+				bgCmd.add(createRenameCmd(oldName, newName, addr, opIndice));
 			}
 		}
 		else if (cu instanceof Data) {
@@ -429,9 +428,9 @@ public class EquatePlugin extends Plugin {
 
 			Program program = context.getProgram();
 			List<Integer> opIndexes = getInstructionMatches(program, instr, equate);
-			for (int i = 0; i < opIndexes.size(); i++) {
+			for (Integer opIndexe : opIndexes) {
 				bckCmd.add(
-					new ClearEquateCmd(equate.getName(), instr.getAddress(), opIndexes.get(i)));
+					new ClearEquateCmd(equate.getName(), instr.getAddress(), opIndexe));
 			}
 		}
 		else if (cu instanceof Data) {
@@ -728,12 +727,6 @@ public class EquatePlugin extends Plugin {
 			protected boolean isEnabledForContext(ListingActionContext context) {
 				return getEquate(context) != null;
 			}
-
-			@Override
-			public boolean isValidGlobalContext(ActionContext globalContext) {
-				return false; // only work on active provider context.
-			}
-
 		};
 		removeAction.setPopupMenuData(new MenuData(REMOVE_MENUPATH, null, GROUP_NAME));
 		removeAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));

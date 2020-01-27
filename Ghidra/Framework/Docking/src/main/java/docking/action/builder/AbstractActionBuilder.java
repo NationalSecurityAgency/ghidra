@@ -19,10 +19,12 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import javax.swing.Icon;
+import javax.swing.KeyStroke;
 
 import docking.*;
 import docking.action.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import resources.ResourceManager;
 
 /**
@@ -138,6 +140,11 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	private String toolBarSubGroup;
 
 	/**
+	 * The key binding to assign to the action
+	 */
+	private KeyStroke keyBinding;
+
+	/**
 	 * Predicate for determining if an action is enabled for a given context
 	 */
 	private Predicate<ActionContext> enabledPredicate;
@@ -151,11 +158,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * Predicate for determining if an action is applicable for a given context
 	 */
 	private Predicate<ActionContext> validContextPredicate;
-
-	/**
-	 * Predicate for determining if an action is applicable for a given global context
-	 */
-	private Predicate<ActionContext> validGlobalContextPredicate;
 
 	/**
 	 * Builder constructor
@@ -175,7 +177,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 
 	/**
 	 * Builds the action.  To build and install the action in one step, use 
-	 * {@link #buildAndInstall(DockingTool)} or {@link #buildAndInstallLocal(ComponentProvider)}.
+	 * {@link #buildAndInstall(Tool)} or {@link #buildAndInstallLocal(ComponentProvider)}.
 	 * 
 	 * @return the newly build action 
 	 */
@@ -189,7 +191,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * @see #build()
 	 * @see #buildAndInstallLocal(ComponentProvider)
 	 */
-	public T buildAndInstall(DockingTool tool) {
+	public T buildAndInstall(Tool tool) {
 		T action = build();
 		tool.addAction(action);
 		return action;
@@ -201,7 +203,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	 * @param provider the provider to add the action to
 	 * @return the newly created action
 	 * @see #build()
-	 * @see #buildAndInstall(DockingTool)
+	 * @see #buildAndInstall(Tool)
 	 */
 	public T buildAndInstallLocal(ComponentProvider provider) {
 		T action = build();
@@ -449,6 +451,32 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 	}
 
 	/**
+	 * Sets the key binding for this action
+	 * 
+	 * @param keyStroke the KeyStroke to bind to this action
+	 * @return this builder (for chaining)
+	 */
+	public B keyBinding(KeyStroke keyStroke) {
+		this.keyBinding = keyStroke;
+		return self();
+	}
+
+	/**
+	 * Sets the key binding for this action
+	 * 
+	 * @param keyStrokeString the string to parse as a KeyStroke. See
+	 *  {@link KeyStroke#getKeyStroke(String)} for the format of the string.
+	 * @return this builder (for chaining)
+	 */
+	public B keyBinding(String keyStrokeString) {
+		this.keyBinding = KeyStroke.getKeyStroke(keyStrokeString);
+		if (keyBinding == null && keyStrokeString != null) {
+			Msg.warn(this, "Can't parse KeyStroke: " + keyStrokeString);
+		}
+		return self();
+	}
+
+	/**
 	 * Sets the primary callback to be executed when this action is invoked.  This builder will
 	 * throw an {@link IllegalStateException} if one of the build methods is called without
 	 * providing this callback.
@@ -517,22 +545,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		return self();
 	}
 
-	/**
-	 * Sets a predicate for dynamically determining if this action is valid for the current global 
-	 * {@link ActionContext}.  See {@link DockingActionIf#isValidGlobalContext(ActionContext)}.
-	 * 
-	 * <p>Note: most actions will not use this method, but rely instead on 
-	 * {@link #enabledWhen(Predicate)}. 
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine an action's 
-	 * validity for a given global {@link ActionContext}
-	 * @return this builder (for chaining)
-	 */
-	public B validGlobalContextWhen(Predicate<ActionContext> predicate) {
-		validGlobalContextPredicate = predicate;
-		return self();
-	}
-
 	protected void validate() {
 		if (actionCallback == null) {
 			throw new IllegalStateException(
@@ -547,6 +559,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		setMenuData(action);
 		setToolbarData(action);
 		setPopupMenuData(action);
+		setKeyBindingData(action);
 
 		if (helpLocation != null) {
 			action.setHelpLocation(helpLocation);
@@ -557,9 +570,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		}
 		if (validContextPredicate != null) {
 			action.validContextWhen(validContextPredicate);
-		}
-		if (validGlobalContextPredicate != null) {
-			action.validGlobalContextWhen(validGlobalContextPredicate);
 		}
 		if (popupPredicate != null) {
 			action.popupWhen(enabledPredicate);
@@ -576,6 +586,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 
 	protected boolean isMenuAction() {
 		return menuPath != null;
+	}
+
+	protected boolean isKeyBindingAction() {
+		return keyBinding != null;
 	}
 
 	private void setPopupMenuData(DockingAction action) {
@@ -598,4 +612,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, B extends
 		}
 	}
 
+	private void setKeyBindingData(DockingAction action) {
+		if (isKeyBindingAction()) {
+			action.setKeyBindingData(new KeyBindingData(keyBinding));
+		}
+	}
 }

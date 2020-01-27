@@ -27,7 +27,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
-import docking.DockingTool;
+import docking.Tool;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
 import docking.widgets.tree.GTreeNode;
@@ -678,7 +678,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(DockingTool dockingTool, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(Tool dockingTool, ActionContext context) {
 		if (!(context instanceof DataTypesActionContext)) {
 			return null;
 		}

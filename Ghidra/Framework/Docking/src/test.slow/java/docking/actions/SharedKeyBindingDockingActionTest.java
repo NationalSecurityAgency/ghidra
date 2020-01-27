@@ -54,7 +54,7 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 
 	private SpyErrorLogger spyLogger = new SpyErrorLogger();
 
-	private DockingTool tool;
+	private Tool tool;
 
 	@Before
 	public void setUp() {

@@ -22,8 +22,8 @@ import javax.swing.ComboBoxModel;
 import javax.swing.JPanel;
 
 import docking.ComponentProvider;
+import docking.actions.DockingToolActions;
 import docking.actions.SharedDockingActionPlaceholder;
-import docking.actions.ToolActions;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
@@ -163,7 +163,7 @@ public class DataTypeEditorManager
 	}
 
 	private void registerAction(String name) {
-		ToolActions toolActions = plugin.getTool().getToolActions();
+		DockingToolActions toolActions = plugin.getTool().getToolActions();
 		toolActions.registerSharedActionPlaceholder(new DtSharedActionPlaceholder(name));
 	}
 

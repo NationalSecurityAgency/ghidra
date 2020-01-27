@@ -17,7 +17,6 @@ package ghidra.test;
 
 import java.awt.Window;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyVetoException;
 import java.util.Collections;
 import java.util.Set;
 
@@ -34,17 +33,20 @@ import docking.util.image.ToolIconURL;
 import ghidra.framework.model.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginEvent;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.util.PluginClassManager;
+import ghidra.framework.plugintool.util.ServiceListener;
 import ghidra.program.model.listing.Program;
 
-public class DummyTool implements Tool {
+public class DummyTool extends PluginTool {
 	private final static String DEFAULT_NAME = "untitled";
 	private String name = DEFAULT_NAME;
 	private String instanceName;
 	private String description;
-	private ToolIconURL iconURL;
+	private ToolIconURL dummyIconUrl;
 	private Project project;
 
-	private DockingToolActions toolActions = new DummyToolActions();
+	private DockingToolActions dummyToolActions = new DummyToolActions();
 
 	public DummyTool() {
 		this(DEFAULT_NAME);
@@ -60,7 +62,7 @@ public class DummyTool implements Tool {
 	}
 
 	@Override
-	public void setToolName(String typeName) throws PropertyVetoException {
+	public void setToolName(String typeName) {
 		name = typeName;
 	}
 
@@ -193,10 +195,6 @@ public class DummyTool implements Tool {
 		return null;
 	}
 
-	public void restoreFromXml(Element root) {
-		//do nothing
-	}
-
 	@Override
 	public void restoreDataStateFromXml(Element root) {
 		//do nothing
@@ -226,18 +224,18 @@ public class DummyTool implements Tool {
 	}
 
 	@Override
-	public void setIconURL(ToolIconURL iconURL) {
-		this.iconURL = iconURL;
+	public void setIconURL(ToolIconURL iconUrl) {
+		this.dummyIconUrl = iconUrl;
 	}
 
 	@Override
 	public ToolIconURL getIconURL() {
-		return iconURL;
+		return dummyIconUrl;
 	}
 
 	@Override
 	public ImageIcon getIcon() {
-		return iconURL.getIcon();
+		return dummyIconUrl.getIcon();
 	}
 
 	@Override
@@ -370,11 +368,6 @@ public class DummyTool implements Tool {
 	}
 
 	@Override
-	public ActionContext getGlobalContext() {
-		return null;
-	}
-
-	@Override
 	public void setStatusInfo(String text) {
 		//do nothing
 	}
@@ -421,6 +414,26 @@ public class DummyTool implements Tool {
 
 	@Override
 	public DockingToolActions getToolActions() {
-		return toolActions;
+		return dummyToolActions;
+	}
+
+	@Override
+	public <T> T getService(Class<T> serviceClass) {
+		return null;
+	}
+
+	@Override
+	public void addServiceListener(ServiceListener listener) {
+		//do nothing		
+	}
+
+	@Override
+	public void removeServiceListener(ServiceListener listener) {
+		//do nothing		
+	}
+
+	@Override
+	public PluginClassManager getPluginClassManager() {
+		return null;
 	}
 }

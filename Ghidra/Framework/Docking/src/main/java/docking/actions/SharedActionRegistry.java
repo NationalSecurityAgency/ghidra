@@ -15,7 +15,7 @@
  */
 package docking.actions;
 
-import docking.DockingTool;
+import docking.Tool;
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
@@ -33,7 +33,7 @@ public class SharedActionRegistry {
 	 * @param tool the tool
 	 * @param toolActions the tool action manager
 	 */
-	public static void installSharedActions(DockingTool tool, ToolActions toolActions) {
+	public static void installSharedActions(Tool tool, ToolActions toolActions) {
 		GTable.createSharedActions(tool, toolActions, ToolConstants.SHARED_OWNER);
 	}
 }

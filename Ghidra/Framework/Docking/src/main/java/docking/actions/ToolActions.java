@@ -55,7 +55,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	private Map<String, SharedStubKeyBindingAction> sharedActionMap = new HashMap<>();
 
 	private ToolOptions keyBindingOptions;
-	private DockingTool dockingTool;
+	private Tool dockingTool;
 	private KeyBindingsManager keyBindingsManager;
 
 	/**
@@ -64,7 +64,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	 * @param tool tool using this ActionManager
 	 * @param actionToGuiHelper the class that takes actions and maps them to GUI widgets
 	 */
-	public ToolActions(DockingTool tool, ActionToGuiHelper actionToGuiHelper) {
+	public ToolActions(Tool tool, ActionToGuiHelper actionToGuiHelper) {
 		this.dockingTool = tool;
 		this.actionGuiHelper = actionToGuiHelper;
 		this.keyBindingsManager = new KeyBindingsManager(tool);

@@ -1,6 +1,6 @@
 # sleigh specification file for Motorola 6809
 
-@define M6809
+@define M6809 ""
 
 @include "6x09.sinc"
 @include "6x09_push.sinc"

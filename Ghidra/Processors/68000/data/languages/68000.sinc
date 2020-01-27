@@ -1076,9 +1076,9 @@ macro shiftCXFlags(cntreg) {
 :lsr.l cntreg,regdn                is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,cntreg-1); shiftCXFlags(cntreg); regdn=regdn >>cntreg; resflags(regdn); }
 :lsr eaw                           is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw	{ getbit(CF,eaw,0); shiftCXFlags(eaw); eaw=eaw >>1; resflags(eaw); }
 
-:move.b eab,e2b			is (op=1 & $(DAT_ALTER_ADDR_MODES2))... & eab ; e2b	{ build eab; build e2b; e2b = eab; resflags(eab); logflags(); }
-:move.w eaw,e2w			is (op=3 & $(DAT_ALTER_ADDR_MODES2))... & eaw ; e2w	{ build eaw; build e2w; e2w = eaw; resflags(eaw); logflags(); }
-:move.l eal,e2l			is (op=2 & $(DAT_ALTER_ADDR_MODES2))... & eal ; e2l	{ build eal; build e2l; e2l = eal; resflags(eal); logflags(); }
+:move.b eab,e2b			is (op=1 & $(DAT_ALTER_ADDR_MODES2))... & eab ; e2b	{ build eab; local tmp = eab; build e2b; e2b = tmp; resflags(tmp); logflags(); }
+:move.w eaw,e2w			is (op=3 & $(DAT_ALTER_ADDR_MODES2))... & eaw ; e2w	{ build eaw; local tmp = eaw; build e2w; e2w = tmp; resflags(tmp); logflags(); }
+:move.l eal,e2l			is (op=2 & $(DAT_ALTER_ADDR_MODES2))... & eal ; e2l	{ build eal; local tmp = eal; build e2l; e2l = tmp; resflags(tmp); logflags(); }
 
 :move "CCR",eaw			is (opbig=0x42 & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ packflags(SR); eaw = SR; }
 :move eaw,"CCR"			is (opbig=0x44 & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ unpackflags(eaw); }

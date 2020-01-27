@@ -33,7 +33,7 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
-import docking.DockingTool;
+import docking.Tool;
 import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -465,7 +465,7 @@ public class KeyBindingUtils {
 	 * @param tool the tool containing the actions
 	 * @return the actions mapped by their full name (e.g., 'Name (OwnerName)')
 	 */
-	public static Map<String, List<DockingActionIf>> getAllActionsByFullName(DockingTool tool) {
+	public static Map<String, List<DockingActionIf>> getAllActionsByFullName(Tool tool) {
 
 		Map<String, List<DockingActionIf>> result =
 			LazyMap.lazyMap(new HashMap<>(), s -> new LinkedList<>());
@@ -493,7 +493,7 @@ public class KeyBindingUtils {
 	 * @param owner the action owner name
 	 * @return the actions
 	 */
-	public static Set<DockingActionIf> getKeyBindingActionsForOwner(DockingTool tool,
+	public static Set<DockingActionIf> getKeyBindingActionsForOwner(Tool tool,
 			String owner) {
 
 		Map<String, DockingActionIf> deduper = new HashMap<>();

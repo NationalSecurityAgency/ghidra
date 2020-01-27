@@ -745,8 +745,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	@Override
 	public boolean canCloseDomainFile(DomainFile df) {
-		Tool[] tools = getProject().getToolManager().getRunningTools();
-		for (Tool tool : tools) {
+		PluginTool[] tools = getProject().getToolManager().getRunningTools();
+		for (PluginTool tool : tools) {
 			DomainFile[] files = tool.getDomainFiles();
 			for (DomainFile domainFile : files) {
 				if (df == domainFile) {

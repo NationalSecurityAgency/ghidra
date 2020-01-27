@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import docking.DialogComponentProvider;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 
 /**
@@ -39,9 +40,6 @@ class ToolConnectionDialog extends DialogComponentProvider implements WorkspaceC
 	private JButton connectAllButton;
 	private JButton disconnectAllButton;
 
-	/**
-	 *  Constructor
-	 */
 	ToolConnectionDialog(FrontEndTool tool, ToolManager toolManager) {
 		super("Connect Tools", false);
 		this.frontEndTool = tool;
@@ -59,9 +57,6 @@ class ToolConnectionDialog extends DialogComponentProvider implements WorkspaceC
 		toolManager.addWorkspaceChangeListener(this);
 	}
 
-	/**
-	 * Set the dialog to be visible according to the v param.
-	 */
 	void setVisible(boolean v) {
 
 		if (v) {
@@ -79,27 +74,16 @@ class ToolConnectionDialog extends DialogComponentProvider implements WorkspaceC
 		}
 	}
 
-	// WorkspaceChangedListener
-	/**
-	 * Tool was added to the given workspace.
-	 */
 	@Override
-	public void toolAdded(Workspace ws, Tool tool) {
+	public void toolAdded(Workspace ws, PluginTool tool) {
 		panel.toolAdded(tool);
 	}
 
-	/**
-	 * Tool was removed from the given workspace.
-	 */
 	@Override
-	public void toolRemoved(Workspace ws, Tool tool) {
+	public void toolRemoved(Workspace ws, PluginTool tool) {
 		panel.toolRemoved(tool);
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
 	protected void okCallback() {
 		setVisible(false);
@@ -117,23 +101,15 @@ class ToolConnectionDialog extends DialogComponentProvider implements WorkspaceC
 	public void workspaceSetActive(Workspace ws) {
 	}
 
-	/**
-	 * Property change on the workspace.
-	 */
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
 		Object eventSource = event.getSource();
-		if (eventSource instanceof Tool) {
+		if (eventSource instanceof PluginTool) {
 			// tool name might have changed
 			updateDisplay();
 		}
 	}
 
-	///////////////////////////////////////////////////////////////////
-
-	/**
-	 * Update the tool manager object.
-	 */
 	void setToolManager(ToolManager tm) {
 		toolManager.removeWorkspaceChangeListener(this);
 		toolManager = tm;

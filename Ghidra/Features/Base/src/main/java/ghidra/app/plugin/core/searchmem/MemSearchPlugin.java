@@ -350,7 +350,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			}
 
 			@Override
-			protected boolean isValidContext(NavigatableActionContext context) {
+			protected boolean isValidNavigationContext(NavigatableActionContext context) {
 				return !(context instanceof RestrictedAddressSetContext);
 			}
 		};
@@ -374,7 +374,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			}
 
 			@Override
-			protected boolean isValidContext(NavigatableActionContext context) {
+			protected boolean isValidNavigationContext(NavigatableActionContext context) {
 				return !(context instanceof RestrictedAddressSetContext);
 			}
 		};

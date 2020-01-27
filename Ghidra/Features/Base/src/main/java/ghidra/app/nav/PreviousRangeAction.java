@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,14 @@
  */
 package ghidra.app.nav;
 
+import java.util.Set;
+
 import ghidra.app.context.*;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.util.ProgramSelection;
-
-import java.util.Set;
 
 public abstract class PreviousRangeAction extends NavigatableContextAction {
 
@@ -39,7 +38,7 @@ public abstract class PreviousRangeAction extends NavigatableContextAction {
 	}
 
 	@Override
-	protected boolean isValidContext(NavigatableActionContext context) {
+	protected boolean isValidNavigationContext(NavigatableActionContext context) {
 		//
 		// We want the nav actions to work in the current view that supports this, which right 
 		// now is the ListingActionContext.  If the current context does not support that, then 
@@ -58,9 +57,8 @@ public abstract class PreviousRangeAction extends NavigatableContextAction {
 	}
 
 	private Address getGoToAddress(NavigatableActionContext context) {
-		ListingActionContext listingContext = (ListingActionContext) context;
-		ProgramSelection selection = getSelection(listingContext);
-		Address currentAddress = listingContext.getAddress();
+		ProgramSelection selection = getSelection(context);
+		Address currentAddress = context.getAddress();
 
 		AddressRangeIterator it = selection.getAddressRanges(currentAddress, false);
 		if (!it.hasNext()) {
@@ -94,8 +92,7 @@ public abstract class PreviousRangeAction extends NavigatableContextAction {
 	@Override
 	public boolean isEnabledForContext(NavigatableActionContext context) {
 		Address currentAddress = context.getAddress();
-		ListingActionContext listingContext = (ListingActionContext) context;
-		ProgramSelection selection = getSelection(listingContext);
+		ProgramSelection selection = getSelection(context);
 		if (selection == null || selection.isEmpty() || currentAddress == null) {
 			return false;
 		}

@@ -118,11 +118,6 @@ public class DockingActionProxy
 	}
 
 	@Override
-	public boolean isValidGlobalContext(ActionContext context) {
-		return dockingAction.isValidGlobalContext(context);
-	}
-
-	@Override
 	public void removePropertyChangeListener(PropertyChangeListener listener) {
 		propertyListeners.remove(listener);
 	}

@@ -317,16 +317,6 @@ public class NextPrevAddressPlugin extends Plugin {
 		}
 
 		@Override
-		public boolean isValidContext(ActionContext context) {
-			return false;
-		}
-
-		@Override
-		public boolean isValidGlobalContext(ActionContext globalContext) {
-			return (globalContext instanceof NavigatableActionContext);
-		}
-
-		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			Navigatable navigatable = getNavigatable(context);
 			if (navigatable == null) {
@@ -424,16 +414,6 @@ public class NextPrevAddressPlugin extends Plugin {
 				new MenuData(new String[] { "Navigation", menuItemName }, HISTORY_MENU_GROUP);
 			menuData.setMenuSubGroup("2"); // after clear
 			setMenuBarData(menuData);
-		}
-
-		@Override
-		public boolean isValidContext(ActionContext context) {
-			return false;
-		}
-
-		@Override
-		public boolean isValidGlobalContext(ActionContext globalContext) {
-			return (globalContext instanceof NavigatableActionContext);
 		}
 
 		@Override

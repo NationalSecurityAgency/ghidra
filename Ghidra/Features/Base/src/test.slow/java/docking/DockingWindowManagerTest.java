@@ -36,7 +36,7 @@ import ghidra.test.DummyTool;
 
 public class DockingWindowManagerTest extends AbstractDockingTest {
 
-	private DockingTool tool = new DummyTool();
+	private Tool tool = new DummyTool();
 
 	@Test
 	public void testDefaultGroupWindowPosition() {

@@ -660,9 +660,9 @@ public class FrontEndPlugin extends Plugin
 	private ToolTemplate getUpToDateTemplate(ToolTemplate template) {
 
 		ToolManager toolManager = activeProject.getToolManager();
-		Tool[] runningTools = toolManager.getRunningTools();
+		PluginTool[] runningTools = toolManager.getRunningTools();
 		String templateName = template.getName();
-		for (Tool runningTool : runningTools) {
+		for (PluginTool runningTool : runningTools) {
 			if (runningTool.getName().equals(templateName)) {
 				return runningTool.getToolTemplate(true);
 			}
@@ -960,8 +960,8 @@ public class FrontEndPlugin extends Plugin
 
 			private boolean isToolRunning(ToolTemplate template) {
 				ToolManager toolManager = activeProject.getToolManager();
-				Tool[] runningTools = toolManager.getRunningTools();
-				for (Tool runningTool : runningTools) {
+				PluginTool[] runningTools = toolManager.getRunningTools();
+				for (PluginTool runningTool : runningTools) {
 					if (runningTool.getToolName().equals(template.getName())) {
 						return true;
 					}

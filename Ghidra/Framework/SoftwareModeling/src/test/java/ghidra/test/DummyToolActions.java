@@ -20,6 +20,7 @@ import java.util.Set;
 import docking.ComponentProvider;
 import docking.action.DockingActionIf;
 import docking.actions.DockingToolActions;
+import docking.actions.SharedDockingActionPlaceholder;
 
 public class DummyToolActions implements DockingToolActions {
 
@@ -65,6 +66,11 @@ public class DummyToolActions implements DockingToolActions {
 
 	@Override
 	public void removeActions(ComponentProvider provider) {
+		// stub
+	}
+
+	@Override
+	public void registerSharedActionPlaceholder(SharedDockingActionPlaceholder placeholder) {
 		// stub
 	}
 }

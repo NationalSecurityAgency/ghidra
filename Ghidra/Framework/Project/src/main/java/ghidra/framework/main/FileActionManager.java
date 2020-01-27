@@ -33,6 +33,7 @@ import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
@@ -274,6 +275,8 @@ class FileActionManager {
 	/**
 	 * Opens the given project in a task that will show a dialog to block input while opening
 	 * the project in the swing thread.
+	 * @param projectLocator the project locator
+	 * @return true if the project was opened 
 	 */
 	final boolean openProject(ProjectLocator projectLocator) {
 		OpenTaskRunnable openRunnable = new OpenTaskRunnable(projectLocator);
@@ -285,6 +288,8 @@ class FileActionManager {
 	/**
 	 * Open an existing project, using a file chooser to specify where the
 	 * existing project folder is stored.
+	 * @param projectLocator the project locator
+	 * @return true if the project was opened
 	 */
 	final boolean doOpenProject(ProjectLocator projectLocator) {
 		String status = "Opened project: " + projectLocator.getName();
@@ -346,7 +351,7 @@ class FileActionManager {
 	/**
 	 * Obtain domain objects from files and lock.  If unable to lock 
 	 * one or more of the files, none are locked and null is returned.
-	 * @param files
+	 * @param files the files
 	 * @return locked domain objects, or null if unable to lock
 	 * all domain objects.
 	 */
@@ -414,8 +419,6 @@ class FileActionManager {
 	 * This method will always save the FrontEndTool and project, but not the data unless 
 	 * <tt>confirmClose</tt> is called.
 	 * 
-	 * @param confirmClose true if the confirmation dialog should be
-	 * displayed
 	 * @param isExiting true if we are closing the project because 
 	 * Ghidra is exiting
 	 * @return false if user cancels the close operation
@@ -428,9 +431,9 @@ class FileActionManager {
 		}
 
 		// check for any changes since last saved
-		Tool[] runningTools = activeProject.getToolManager().getRunningTools();
-		for (int i = 0; i < runningTools.length; i++) {
-			if (!runningTools[i].canClose(isExiting)) {
+		PluginTool[] runningTools = activeProject.getToolManager().getRunningTools();
+		for (PluginTool runningTool : runningTools) {
+			if (!runningTool.canClose(isExiting)) {
 				return false;
 			}
 		}
@@ -655,7 +658,7 @@ class FileActionManager {
 	/**
 	 * Checks the list for read-only files; if any are found, pops up
 	 * a dialog for whether to save now or lose changes.
-	 * @param files list of files which correspond to modified 
+	 * @param objs list of files which correspond to modified 
 	 * domain objects.
 	 * @return true if there are no read only files OR if the user
 	 * wants to lose his changes; false if the user wants to save the

@@ -28,8 +28,7 @@ import org.junit.Test;
 
 import docking.DockingUtils;
 import docking.action.DockingActionIf;
-import docking.actions.KeyBindingUtils;
-import docking.actions.ToolActions;
+import docking.actions.*;
 
 public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTest {
 
@@ -147,7 +146,7 @@ public class GhidraScriptMgrPlugin1Test extends AbstractGhidraScriptMgrPluginTes
 		KeyStroke actionKs = toolAction.getKeyBinding();
 		assertEquals(newKs, actionKs);
 
-		ToolActions toolActions = plugin.getTool().getToolActions();
+		ToolActions toolActions = (ToolActions) plugin.getTool().getToolActions();
 		Action toolActionByKeyStroke = toolActions.getAction(newKs);
 		assertNotNull(toolActionByKeyStroke);
 	}

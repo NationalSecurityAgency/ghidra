@@ -17,8 +17,10 @@ package ghidra.framework.project.tool;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
-import ghidra.framework.model.*;
+import generic.test.AbstractGTest;
+import ghidra.framework.model.Project;
+import ghidra.framework.model.ToolManager;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ProjectTestUtils;
 
@@ -29,20 +31,10 @@ import ghidra.test.ProjectTestUtils;
  */
 public class CreateToolTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private final static String DIRECTORY_NAME = AbstractGenericTest.getTestDirectoryPath();
+	private final static String DIRECTORY_NAME = AbstractGTest.getTestDirectoryPath();
 
 	private Project project;
-//	private Workspace activeWorkspace;
-
-	private Tool tool;
-
-	/**
-	 * Constructor
-	 * @param arg0
-	 */
-	public CreateToolTest() {
-		super();
-	}
+	private PluginTool tool;
 
 	@Before
 	public void setUp() throws Exception {
@@ -56,7 +48,7 @@ public class CreateToolTest extends AbstractGhidraHeadedIntegrationTest {
 		ProjectTestUtils.deleteProject(DIRECTORY_NAME, PROJECT_NAME);
 	}
 
-	private void closeTool(final Tool theTool) {
+	private void closeTool(final PluginTool theTool) {
 		executeOnSwingWithoutBlocking(new Runnable() {
 			@Override
 			public void run() {
@@ -65,10 +57,10 @@ public class CreateToolTest extends AbstractGhidraHeadedIntegrationTest {
 		});
 
 		// this handles the save changes dialog and potential analysis dialogs
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
-	/**
+	/*
 	 * Do the test.
 	 * This doTest() routine tests the following requirements:
 	 * (1) create (launch) an empty tool in the active workspace
@@ -92,7 +84,7 @@ public class CreateToolTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			// verify the tool is actually running before declaring success
 			ToolManager tm = project.getToolManager();
-			Tool[] runningTools = tm.getRunningTools();
+			PluginTool[] runningTools = tm.getRunningTools();
 			for (int t = 0; !verified && t < runningTools.length; t++) {
 				if (runningTools[t].equals(tool)) {
 					verified = true;

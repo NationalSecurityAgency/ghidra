@@ -27,18 +27,18 @@ import docking.DialogComponentProvider;
 import docking.widgets.OptionDialog;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GHtmlLabel;
-import ghidra.framework.model.Tool;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.layout.VerticalLayout;
 
 public class SelectChangedToolDialog extends DialogComponentProvider {
 
-	private final List<Tool> toolList;
+	private final List<PluginTool> toolList;
 	private boolean wasCancelled;
 
-	private Tool selectedTool;
+	private PluginTool selectedTool;
 
-	public SelectChangedToolDialog(List<Tool> toolList) {
+	public SelectChangedToolDialog(List<PluginTool> toolList) {
 		super("Save Tool Changes?", true, false, true, false);
 		this.toolList = toolList;
 
@@ -87,7 +87,7 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 		buttonGroup.add(noneButton);
 		panel.add(noneButton);
 
-		for (final Tool tool : toolList) {
+		for (final PluginTool tool : toolList) {
 			GRadioButton radioButton = new GRadioButton(tool.getName());
 			radioButton.addItemListener(new ItemListener() {
 				@Override
@@ -119,7 +119,7 @@ public class SelectChangedToolDialog extends DialogComponentProvider {
 		return wasCancelled;
 	}
 
-	Tool getSelectedTool() {
+	PluginTool getSelectedTool() {
 		return selectedTool;
 	}
 }

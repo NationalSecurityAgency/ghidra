@@ -19,7 +19,9 @@ import java.util.*;
 
 import org.jdom.Element;
 
-import ghidra.framework.model.*;
+import ghidra.framework.model.ToolTemplate;
+import ghidra.framework.model.Workspace;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -33,7 +35,7 @@ class WorkspaceImpl implements Workspace {
 
 	private String name;
 	private ToolManagerImpl toolManager;
-	private Set<Tool> runningTools = new HashSet<Tool>(TYPICAL_NUM_RUNNING_TOOLS);
+	private Set<PluginTool> runningTools = new HashSet<PluginTool>(TYPICAL_NUM_RUNNING_TOOLS);
 	private boolean isActive;
 
 	WorkspaceImpl(String name, ToolManagerImpl toolManager) {
@@ -47,16 +49,16 @@ class WorkspaceImpl implements Workspace {
 	}
 
 	@Override
-	public Tool[] getTools() {
-		Tool[] tools = new Tool[runningTools.size()];
+	public PluginTool[] getTools() {
+		PluginTool[] tools = new PluginTool[runningTools.size()];
 		runningTools.toArray(tools);
 		return tools;
 	}
 
 	@Override
-	public Tool createTool() {
+	public PluginTool createTool() {
 		// launch the empty tool
-		Tool emptyTool = toolManager.createEmptyTool();
+		PluginTool emptyTool = toolManager.createEmptyTool();
 
 		// add the new  tool to our list of running tools
 		runningTools.add(emptyTool);
@@ -70,9 +72,9 @@ class WorkspaceImpl implements Workspace {
 	}
 
 	@Override
-	public Tool runTool(ToolTemplate template) {
+	public PluginTool runTool(ToolTemplate template) {
 
-		Tool tool = toolManager.getTool(this, template);
+		PluginTool tool = toolManager.getTool(this, template);
 		if (tool != null) {
 			tool.setVisible(true);
 
@@ -129,7 +131,7 @@ class WorkspaceImpl implements Workspace {
 		root.setAttribute("NAME", name);
 		root.setAttribute("ACTIVE", "" + isActive);
 
-		for (Tool tool : runningTools) {
+		for (PluginTool tool : runningTools) {
 			Element elem = new Element("RUNNING_TOOL");
 			elem.setAttribute("TOOL_NAME", tool.getToolName());
 			elem.addContent(tool.saveWindowingDataToXml());
@@ -156,12 +158,12 @@ class WorkspaceImpl implements Workspace {
 
 		String defaultTool = System.getProperty("ghidra.defaulttool");
 		if (defaultTool != null && !defaultTool.equals("")) {
-			Tool tool = toolManager.getTool(defaultTool);
+			PluginTool tool = toolManager.getTool(defaultTool);
 			runningTools.add(tool);
 			toolManager.fireToolAddedEvent(this, tool);
 			return;
 		}
-		
+
 		Iterator<?> iter = root.getChildren("RUNNING_TOOL").iterator();
 		while (iter.hasNext()) {
 			Element elememnt = (Element) iter.next();
@@ -170,7 +172,7 @@ class WorkspaceImpl implements Workspace {
 				continue;
 			}
 
-			Tool tool = toolManager.getTool(toolName);
+			PluginTool tool = toolManager.getTool(toolName);
 			if (tool != null) {
 				tool.setVisible(isActive);
 
@@ -198,26 +200,19 @@ class WorkspaceImpl implements Workspace {
 		}
 	}
 
-	/*********************************************************************
-	 * package level methods
-	 ********************************************************************/
+//==================================================================================================
+// Package Methods
+//==================================================================================================	
 
-	/**
-	 * sets the workspace inactive so it can hide its tools
-	 */
 	void setVisible(boolean state) {
 		isActive = state;
-		Tool[] tools = getTools();
-		for (int t = 0; t < tools.length; t++) {
-			tools[t].setVisible(state);
+		PluginTool[] tools = getTools();
+		for (PluginTool tool : tools) {
+			tool.setVisible(state);
 		}
 	}
 
-	/**
-	 * Called by the ToolManagerImpl when ToolServices calls
-	 * the closeTool() method.
-	 */
-	void closeRunningTool(Tool tool) {
+	void closeRunningTool(PluginTool tool) {
 		// tool is already closed via the call that got us here, so just clean up
 		runningTools.remove(tool);
 
@@ -232,7 +227,7 @@ class WorkspaceImpl implements Workspace {
 	 * ToolManagerImpl which is called from the Project's close()
 	 */
 	void close() {
-		for (Tool tool : runningTools) {
+		for (PluginTool tool : runningTools) {
 			try {
 				tool.exit();
 			}
