@@ -53,10 +53,8 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		executeOnSwingWithoutBlocking(() -> env.dispose());
-
+		env.dispose();
 		closeAllWindows();
-
 	}
 
 	@Test

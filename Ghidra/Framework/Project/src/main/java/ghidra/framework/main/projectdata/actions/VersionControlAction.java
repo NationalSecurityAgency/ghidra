@@ -122,8 +122,8 @@ public abstract class VersionControlAction extends DomainFileProviderContextActi
 	 */
 	boolean canCloseDomainFile(DomainFile df) {
 		Project project = tool.getProject();
-		Tool[] tools = project.getToolManager().getRunningTools();
-		for (Tool t : tools) {
+		PluginTool[] tools = project.getToolManager().getRunningTools();
+		for (PluginTool t : tools) {
 			DomainFile[] files = t.getDomainFiles();
 			for (DomainFile domainFile : files) {
 				if (df == domainFile) {

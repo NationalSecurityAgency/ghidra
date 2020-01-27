@@ -167,11 +167,6 @@ public class RegisterPlugin extends ProgramPlugin {
 					}
 					return false;
 				}
-
-				@Override
-				public boolean isValidGlobalContext(ActionContext globalContext) {
-					return false;  // only work on active provider context.
-				}
 			};
 		deleteRegisterRangeAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 

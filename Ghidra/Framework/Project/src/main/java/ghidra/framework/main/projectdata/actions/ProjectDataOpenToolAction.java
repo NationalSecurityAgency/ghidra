@@ -24,6 +24,7 @@ import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.datatable.ProjectDataActionContext;
 import ghidra.framework.main.datatable.ProjectDataContextAction;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 
@@ -58,7 +59,7 @@ public class ProjectDataOpenToolAction extends ProjectDataContextAction {
 		Workspace activeWorkspace = toolManager.getActiveWorkspace();
 
 		ToolTemplate template = toolChest.getToolTemplate(toolName);
-		Tool newTool = activeWorkspace.runTool(template);
+		PluginTool newTool = activeWorkspace.runTool(template);
 
 		DomainFile[] files = fileList.toArray(new DomainFile[fileList.size()]);
 		newTool.acceptDomainFiles(files);

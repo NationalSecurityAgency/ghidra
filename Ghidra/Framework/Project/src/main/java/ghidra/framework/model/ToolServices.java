@@ -19,6 +19,7 @@ import java.io.*;
 import java.util.Set;
 
 import ghidra.framework.plugintool.PluginEvent;
+import ghidra.framework.plugintool.PluginTool;
 
 /**
  * Services that the Tool uses.
@@ -33,7 +34,7 @@ public interface ToolServices {
 	 * 
 	 * @param tool tool that is closing
 	 */
-	public void closeTool(Tool tool);
+	public void closeTool(PluginTool tool);
 
 	/**
 	 * Saves the tool's configuration in the standard
@@ -41,7 +42,7 @@ public interface ToolServices {
 	 * 
 	 * @param tool tool to save.
 	 */
-	public void saveTool(Tool tool);
+	public void saveTool(PluginTool tool);
 
 	/**
 	 * Save the tool to the given location on the local file system.
@@ -54,7 +55,8 @@ public interface ToolServices {
 	public File exportTool(ToolTemplate tool) throws FileNotFoundException, IOException;
 
 	/**
-	 * Get the tool chest for the project.
+	 * Get the tool chest for the project
+	 * @return the tool chest
 	 */
 	public ToolChest getToolChest();
 
@@ -68,7 +70,7 @@ public interface ToolServices {
 	 * @param domainFile open this file in the found/created tool.
 	 * @param event invoke this event on the found/created tool
 	 */
-	public void displaySimilarTool(Tool tool, DomainFile domainFile, PluginEvent event);
+	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event);
 
 	/**
 	 * Returns the default tool template used to open the tool.  Here <b>default</b> means the 
@@ -83,6 +85,7 @@ public interface ToolServices {
 	/**
 	 * Returns a set of tools that can open the given domain file class.
 	 * @param domainClass The domain file class type for which to get tools
+	 * @return the tools
 	 */
 	public Set<ToolTemplate> getCompatibleTools(Class<? extends DomainObject> domainClass);
 
@@ -90,6 +93,7 @@ public interface ToolServices {
 	 * Returns the {@link ToolAssociationInfo associations}, which describe content 
 	 * types and the tools used to open them, for all content types known to the system.
 	 * 
+	 * @return the associations
 	 * @see #setContentTypeToolAssociations(Set)
 	 */
 	public Set<ToolAssociationInfo> getContentTypeToolAssociations();
@@ -107,24 +111,27 @@ public interface ToolServices {
 	 * Launch the default tool; if domainFile is not null, this file will
 	 * be opened in the tool.
 	 * @param domainFile the file to open; may be null
+	 * @return the tool
 	 */
-	public Tool launchDefaultTool(DomainFile domainFile);
+	public PluginTool launchDefaultTool(DomainFile domainFile);
 
 	/**
 	 * Launch the tool with the given name
 	 * @param toolName name of the tool to launch
 	 * @param domainFile the file to open; may be null
+	 * @return the tool
 	 */
-	public Tool launchTool(String toolName, DomainFile domainFile);
+	public PluginTool launchTool(String toolName, DomainFile domainFile);
 
 	/**
-	 * Add a listener that will be notified when the default tool
-	 * specification changes. 
+	 * Add a listener that will be notified when the default tool specification changes 
+	 * @param listener the listener
 	 */
 	public void addDefaultToolChangeListener(DefaultToolChangeListener listener);
 
 	/**
-	 * Remove the listener.
+	 * Remove the listener
+	 * @param listener the listener
 	 */
 	public void removeDefaultToolChangeListener(DefaultToolChangeListener listener);
 
@@ -132,13 +139,13 @@ public interface ToolServices {
 	 * Return array of running tools
 	 * @return array of Tools
 	 */
-	public Tool[] getRunningTools();
+	public PluginTool[] getRunningTools();
 
 	/**
-	 * Returns true if this tool should be saved base on the state of other runnings instances of
+	 * Returns true if this tool should be saved base on the state of other running instances of
 	 * the same tool
 	 * @param tool the tool to check for saving
 	 * @return true if the tool should be saved
 	 */
-	public boolean canAutoSave(Tool tool);
+	public boolean canAutoSave(PluginTool tool);
 }

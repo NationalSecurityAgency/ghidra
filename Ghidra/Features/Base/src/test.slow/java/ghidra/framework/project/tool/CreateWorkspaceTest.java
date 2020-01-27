@@ -15,7 +15,7 @@
  */
 package ghidra.framework.project.tool;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 
@@ -23,6 +23,7 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ProjectTestUtils;
@@ -138,7 +139,7 @@ public class CreateWorkspaceTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 		});
 
-		Tool[] runningTools = wspaces[0].getTools();
+		PluginTool[] runningTools = wspaces[0].getTools();
 		assertEquals(1, runningTools.length);
 
 		setWorkspaceActive(wspaces[1]);

@@ -640,7 +640,7 @@ public class TestEnv {
 	 * NOTE: This array will not contain any of the TestTools!
 	 * @return an array of tools spawned by the Ghidra environment
 	 */
-	public Tool[] getGhidraCreatedTools() {
+	public PluginTool[] getGhidraCreatedTools() {
 		return gp.getProject().getToolManager().getRunningTools();
 	}
 

@@ -248,22 +248,22 @@ CheckInIT_ZN:        is TMode=1			{ ZR = tmpZR; NG = tmpNG;  }   							# in old
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
 #  conditionals for instruction following IT Block
-thfcc: "eq"	is cond_full=0	{ local tmp = (ZR!=0); export tmp; }
-thfcc: "ne"	is cond_full=1	{ local tmp = (ZR==0); export tmp; }
-thfcc: "cs"	is cond_full=2	{ local tmp = (CY!=0); export tmp; }
-thfcc: "cc"	is cond_full=3	{ local tmp = (CY==0); export tmp; }
-thfcc: "mi"	is cond_full=4	{ local tmp = (NG!=0); export tmp; }
-thfcc: "pl"	is cond_full=5	{ local tmp = (NG==0); export tmp; }
-thfcc: "vs"	is cond_full=6	{ local tmp = (OV!=0); export tmp; }
-thfcc: "vc"	is cond_full=7	{ local tmp = (OV==0); export tmp; }
-thfcc: "hi"	is cond_full=8	{ local tmp = CY && !ZR; export tmp; }
-thfcc: "ls"	is cond_full=9	{ local tmp = !CY || ZR; export tmp; }
-thfcc: "ge"	is cond_full=10	{ local tmp = (NG == OV); export tmp; }
-thfcc: "lt"	is cond_full=11	{ local tmp = (NG != OV); export tmp; }
-thfcc: "gt"	is cond_full=12	{ local tmp = !ZR && (NG == OV); export tmp; }
-thfcc: "le"	is cond_full=13	{ local tmp = ZR || (NG != OV); export tmp; }
-# thfcc: "AL" is cond_full=14 { local tmp = 1; export tmp; }
-# thfcc: "NV" is cond_full=15 { local tmp = 0; export tmp; }
+thfcc: "eq"	is cond_full=0	{ local tmp:1 = (ZR!=0); export tmp; }
+thfcc: "ne"	is cond_full=1	{ local tmp:1 = (ZR==0); export tmp; }
+thfcc: "cs"	is cond_full=2	{ local tmp:1 = (CY!=0); export tmp; }
+thfcc: "cc"	is cond_full=3	{ local tmp:1 = (CY==0); export tmp; }
+thfcc: "mi"	is cond_full=4	{ local tmp:1 = (NG!=0); export tmp; }
+thfcc: "pl"	is cond_full=5	{ local tmp:1 = (NG==0); export tmp; }
+thfcc: "vs"	is cond_full=6	{ local tmp:1 = (OV!=0); export tmp; }
+thfcc: "vc"	is cond_full=7	{ local tmp:1 = (OV==0); export tmp; }
+thfcc: "hi"	is cond_full=8	{ local tmp:1 = CY && !ZR; export tmp; }
+thfcc: "ls"	is cond_full=9	{ local tmp:1 = !CY || ZR; export tmp; }
+thfcc: "ge"	is cond_full=10	{ local tmp:1 = (NG == OV); export tmp; }
+thfcc: "lt"	is cond_full=11	{ local tmp:1 = (NG != OV); export tmp; }
+thfcc: "gt"	is cond_full=12	{ local tmp:1 = !ZR && (NG == OV); export tmp; }
+thfcc: "le"	is cond_full=13	{ local tmp:1 = ZR || (NG != OV); export tmp; }
+thfcc: "al" is cond_full=14 { local tmp:1 = 1; export tmp; } #can happen
+#thfcc: "nv" is cond_full=15 { local tmp:1 = 0; export tmp; } #unpredictable, shouldn't happen
 
 
 # no ITcondition

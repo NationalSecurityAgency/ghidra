@@ -1098,7 +1098,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param name the name to match
 	 * @return the matching actions; empty list if no matches
 	 */
-	public static Set<DockingActionIf> getActionsByName(DockingTool tool, String name) {
+	public static Set<DockingActionIf> getActionsByName(Tool tool, String name) {
 
 		Set<DockingActionIf> result = new HashSet<>();
 
@@ -1119,7 +1119,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param name the owner's name to match
 	 * @return the matching actions; empty list if no matches
 	 */
-	public static Set<DockingActionIf> getActionsByOwner(DockingTool tool, String name) {
+	public static Set<DockingActionIf> getActionsByOwner(Tool tool, String name) {
 		return tool.getDockingActionsByOwnerName(name);
 	}
 
@@ -1132,7 +1132,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param name the owner's name to match
 	 * @return the matching actions; empty list if no matches
 	 */
-	public static Set<DockingActionIf> getActionsByOwnerAndName(DockingTool tool, String owner,
+	public static Set<DockingActionIf> getActionsByOwnerAndName(Tool tool, String owner,
 			String name) {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
 		return ownerActions.stream()
@@ -1143,7 +1143,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * Finds the singular tool action by the given name.  If more than one action exists with
 	 * that name, then an exception is thrown.  If you want more than one matching action,
-	 * the call {@link #getActionsByName(DockingTool, String)} instead.
+	 * the call {@link #getActionsByName(Tool, String)} instead.
 	 *
 	 * <P>Note: more specific test case subclasses provide other methods for finding actions
 	 * when you have an owner name (which is usually the plugin name).
@@ -1152,7 +1152,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param name the name to match
 	 * @return the matching action; null if no matching action can be found
 	 */
-	public static DockingActionIf getAction(DockingTool tool, String name) {
+	public static DockingActionIf getAction(Tool tool, String name) {
 
 		Set<DockingActionIf> actions = getActionsByName(tool, name);
 		if (actions.isEmpty()) {
@@ -1169,7 +1169,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * Finds the action by the given owner name and action name.  
 	 * If you do not know the owner name, then use  
-	 * the call {@link #getActionsByName(DockingTool, String)} instead  (this will not include
+	 * the call {@link #getActionsByName(Tool, String)} instead  (this will not include
 	 * reserved system actions).
 	 * 
 	 * <P>Note: more specific test case subclasses provide other methods for finding actions 
@@ -1180,7 +1180,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param name the name to match
 	 * @return the matching action; null if no matching action can be found
 	 */
-	public static DockingActionIf getAction(DockingTool tool, String owner, String name) {
+	public static DockingActionIf getAction(Tool tool, String owner, String name) {
 		Set<DockingActionIf> actions = getActionsByOwnerAndName(tool, owner, name);
 		if (actions.isEmpty()) {
 			return null;
@@ -1203,7 +1203,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @return the action
 	 */
 	public static DockingActionIf getLocalAction(ComponentProvider provider, String actionName) {
-		DockingTool tool = provider.getTool();
+		Tool tool = provider.getTool();
 		DockingToolActions toolActions = tool.getToolActions();
 		DockingActionIf action = toolActions.getLocalAction(provider, actionName);
 		return action;
@@ -1862,7 +1862,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * @param name the name of the provider to show
 	 * @return the newly shown provider
 	 */
-	public ComponentProvider showProvider(DockingTool tool, String name) {
+	public ComponentProvider showProvider(Tool tool, String name) {
 		ComponentProvider provider = tool.getComponentProvider(name);
 		tool.showComponentProvider(provider, true);
 		return provider;
@@ -1870,7 +1870,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Closes the given provider.  You could just call
-	 * {@link DockingTool#removeComponentProvider(ComponentProvider)}, but some providers have extra
+	 * {@link Tool#removeComponentProvider(ComponentProvider)}, but some providers have extra
 	 * logic that happens when {@link ComponentProvider#closeComponent()} is called.   This will
 	 * likely change in the future.
 	 *

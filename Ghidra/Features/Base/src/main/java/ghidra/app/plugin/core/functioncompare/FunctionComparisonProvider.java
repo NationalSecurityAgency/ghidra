@@ -19,7 +19,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 import docking.ActionContext;
-import docking.DockingTool;
+import docking.Tool;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
@@ -130,7 +130,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(DockingTool tool, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
 		if (context.getComponentProvider() == this) {
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();

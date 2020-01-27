@@ -79,7 +79,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	// we use a list to maintain order
 	private static List<DockingWindowManager> instances = new ArrayList<>();
 
-	private DockingTool tool;
+	private Tool tool;
 	private RootNode root;
 
 	private PlaceholderManager placeholderManager;
@@ -116,7 +116,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param tool the tool
 	 * @param images the images to use for windows in this window manager
 	 */
-	public DockingWindowManager(DockingTool tool, List<Image> images) {
+	public DockingWindowManager(Tool tool, List<Image> images) {
 		this(tool, images, false, true, true, null);
 	}
 
@@ -131,7 +131,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param hasStatusBar if true a status bar will be created for the main window
 	 * @param factory the drop target factory
 	 */
-	public DockingWindowManager(DockingTool tool, List<Image> images, boolean modal,
+	public DockingWindowManager(Tool tool, List<Image> images, boolean modal,
 			boolean isDocking, boolean hasStatusBar, DropTargetFactory factory) {
 
 		KeyBindingOverrideKeyEventDispatcher.install();
@@ -330,7 +330,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * Returns the tool that owns this manager
 	 * @return the tool
 	 */
-	public DockingTool getTool() {
+	public Tool getTool() {
 		return tool;
 	}
 
@@ -351,23 +351,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 */
 	public void setDefaultComponent(ComponentProvider provider) {
 		defaultProvider = provider;
-	}
-
-	/**
-	 * Returns this tool's notion of the current action context, which is based upon the active
-	 * {@link ComponentProvider}.  If there is not active provider, then a generic context will
-	 * be returned.
-	 * 
-	 * @return the context
-	 */
-	public ActionContext getGlobalContext() {
-		if (defaultProvider != null) {
-			ActionContext actionContext = defaultProvider.getActionContext(null);
-			if (actionContext != null) {
-				return actionContext;
-			}
-		}
-		return new ActionContext();
 	}
 
 	/**

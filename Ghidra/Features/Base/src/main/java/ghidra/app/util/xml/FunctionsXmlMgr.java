@@ -166,7 +166,8 @@ class FunctionsXmlMgr {
 
 					String regularComment = getElementText(parser, "REGULAR_CMT");
 					func.setComment(regularComment);
-					getElementText(parser, "REPEATABLE_CMT");
+					String repeatableComment = getElementText(parser, "REPEATABLE_CMT");
+					func.setRepeatableComment(repeatableComment);
 					String typeInfoComment = getElementText(parser, "TYPEINFO_CMT");
 					List<Variable> stackParams = new ArrayList<>();
 					List<Variable> stackVariables = new ArrayList<>();
@@ -533,6 +534,7 @@ class FunctionsXmlMgr {
 		writeReturnType(writer, func);
 		writeAddressRange(writer, func);
 		writeRegularComment(writer, func.getComment());
+		writeRepeatableComment(writer, func.getRepeatableComment());
 		if (func.getSignatureSource() != SourceType.DEFAULT) {
 			writeTypeInfoComment(writer, func);
 		}
@@ -599,6 +601,12 @@ class FunctionsXmlMgr {
 	private void writeRegularComment(XmlWriter writer, String comment) {
 		if (comment != null && comment.length() > 0) {
 			writer.writeElement("REGULAR_CMT", null, comment);
+		}
+	}
+
+	private void writeRepeatableComment(XmlWriter writer, String comment) {
+		if (comment != null && comment.length() > 0) {
+			writer.writeElement("REPEATABLE_CMT", null, comment);
 		}
 	}
 

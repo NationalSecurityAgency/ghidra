@@ -20,7 +20,6 @@ import java.util.List;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeQueryService;
-import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
@@ -440,8 +439,21 @@ public class DataTypeParser {
 
 	private static String getBaseString(String dataTypeString) {
 		int nextIndex = 0;
+		int templateCount = 0;
 		while (nextIndex < dataTypeString.length()) {
 			char c = dataTypeString.charAt(nextIndex);
+			if (c == '<') {
+				templateCount++;
+			}
+			else if (c == '>') {
+				templateCount--;
+			}
+
+			if (templateCount != 0) {
+				++nextIndex;
+				continue;
+			}
+
 			if (c == '*' || c == '[' || c == ':' || c == '{') {
 				return dataTypeString.substring(0, nextIndex).trim();
 			}

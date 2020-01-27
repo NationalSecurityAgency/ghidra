@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 package ghidra.app.nav;
 
+import java.util.Set;
+
 import ghidra.app.context.*;
 import ghidra.app.plugin.core.navigation.NavigationOptions;
 import ghidra.app.services.GoToService;
@@ -23,8 +24,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.util.ProgramSelection;
-
-import java.util.Set;
 
 public abstract class NextRangeAction extends NavigatableContextAction {
 
@@ -39,7 +38,7 @@ public abstract class NextRangeAction extends NavigatableContextAction {
 	}
 
 	@Override
-	protected boolean isValidContext(NavigatableActionContext context) {
+	protected boolean isValidNavigationContext(NavigatableActionContext context) {
 		//
 		// We want the nav actions to work in the current view that supports this, which right 
 		// now is the ListingActionContext.  If the current context does not support that, then 
@@ -51,13 +50,12 @@ public abstract class NextRangeAction extends NavigatableContextAction {
 	@Override
 	public boolean isEnabledForContext(NavigatableActionContext context) {
 		Address currentAddress = context.getAddress();
-		ListingActionContext listingContext = (ListingActionContext) context;
-		ProgramSelection selection = getSelection(listingContext);
+		ProgramSelection selection = getSelection(context);
 		if (selection == null || selection.isEmpty() || currentAddress == null) {
 			return false;
 		}
 
-		CodeUnit cu = listingContext.getProgram().getListing().getCodeUnitAt(currentAddress);
+		CodeUnit cu = context.getProgram().getListing().getCodeUnitAt(currentAddress);
 		if (cu != null) {
 			currentAddress = cu.getMaxAddress();
 		}
@@ -71,13 +69,10 @@ public abstract class NextRangeAction extends NavigatableContextAction {
 
 	@Override
 	public void actionPerformed(NavigatableActionContext context) {
-		// Note: we verified above that the context we are grabbing here is the correct type
-		ListingActionContext listingContext = (ListingActionContext) context;
-
-		Address goToAddress = getGoToAddress(listingContext);
+		Address goToAddress = getGoToAddress(context);
 		GoToService service = tool.getService(GoToService.class);
 		if (service != null) {
-			service.goTo(listingContext.getNavigatable(), goToAddress);
+			service.goTo(context.getNavigatable(), goToAddress);
 		}
 	}
 

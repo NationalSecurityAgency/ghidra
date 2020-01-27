@@ -60,7 +60,7 @@ public final class GoToServicePlugin extends ProgramPlugin {
 	 * Creates a new instance of the <CODE>GoToServicePlugin</CODE>
 	 */
 	public GoToServicePlugin(PluginTool plugintool) {
-		super(plugintool, true, false);
+		super(plugintool, true, true);
 
 		gotoService = new GoToServiceImpl(this, new DefaultNavigatable());
 

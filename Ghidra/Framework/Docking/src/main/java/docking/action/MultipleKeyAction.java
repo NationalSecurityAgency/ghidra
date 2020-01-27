@@ -40,7 +40,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	 * @param action action that will be added to the list of actions bound to a keystroke
 	 * @param keyStroke the keystroke, if any, associated with the action
 	 */
-	public MultipleKeyAction(DockingTool tool, ComponentProvider provider, DockingActionIf action,
+	public MultipleKeyAction(Tool tool, ComponentProvider provider, DockingActionIf action,
 			KeyStroke keyStroke) {
 		super(tool, action, keyStroke);
 		addAction(provider, action);
@@ -121,8 +121,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		ActionContext localContext = getLocalContext(localProvider);
 		localContext.setSourceObject(event.getSource());
 
-		ActionContext globalContext = tool.getGlobalContext();
-		List<ExecutableKeyActionAdapter> list = getValidContextActions(localContext, globalContext);
+		List<ExecutableKeyActionAdapter> list = getValidContextActions(localContext);
 
 		// If menu active, disable all key bindings
 		if (ignoreActionWhileMenuShowing()) {
@@ -164,8 +163,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		return menuManager.getSelectedPath().length != 0;
 	}
 
-	private List<ExecutableKeyActionAdapter> getValidContextActions(ActionContext localContext,
-			ActionContext globalContext) {
+	private List<ExecutableKeyActionAdapter> getValidContextActions(ActionContext localContext) {
 		List<ExecutableKeyActionAdapter> list = new ArrayList<>();
 		boolean hasLocalActionsForKeyBinding = false;
 
@@ -222,9 +220,6 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 				if (isValidAndEnabled(actionData, localContext)) {
 					list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
 				}
-				else if (isValidAndEnabledGlobally(actionData, globalContext)) {
-					list.add(new ExecutableKeyActionAdapter(actionData.action, globalContext));
-				}
 			}
 		}
 		return list;
@@ -233,11 +228,6 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	private boolean isValidAndEnabled(ActionData actionData, ActionContext localContext) {
 		DockingActionIf a = actionData.action;
 		return a.isValidContext(localContext) && a.isEnabledForContext(localContext);
-	}
-
-	private boolean isValidAndEnabledGlobally(ActionData actionData, ActionContext globalContext) {
-		DockingActionIf a = actionData.action;
-		return a.isValidGlobalContext(globalContext) && a.isEnabledForContext(globalContext);
 	}
 
 	@Override
@@ -249,9 +239,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	public KeyBindingPrecedence getKeyBindingPrecedence() {
 		ComponentProvider localProvider = tool.getActiveComponentProvider();
 		ActionContext localContext = getLocalContext(localProvider);
-		ActionContext globalContext = tool.getGlobalContext();
-		List<ExecutableKeyActionAdapter> validActions =
-			getValidContextActions(localContext, globalContext);
+		List<ExecutableKeyActionAdapter> validActions = getValidContextActions(localContext);
 
 		if (validActions.isEmpty()) {
 			return null; // a signal that no actions are valid for the current context

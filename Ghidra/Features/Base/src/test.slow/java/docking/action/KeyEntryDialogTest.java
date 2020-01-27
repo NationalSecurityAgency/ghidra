@@ -25,8 +25,8 @@ import javax.swing.*;
 import org.junit.*;
 
 import docking.*;
+import docking.actions.DockingToolActions;
 import docking.actions.KeyEntryDialog;
-import docking.actions.ToolActions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.framework.plugintool.PluginTool;
@@ -197,7 +197,7 @@ public class KeyEntryDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	public DockingAction getKeyBindingAction() {
 
-		ToolActions toolActions = tool.getToolActions();
+		DockingToolActions toolActions = tool.getToolActions();
 		KeyBindingsManager kbm =
 			(KeyBindingsManager) getInstanceField("keyBindingsManager", toolActions);
 		@SuppressWarnings("unchecked")

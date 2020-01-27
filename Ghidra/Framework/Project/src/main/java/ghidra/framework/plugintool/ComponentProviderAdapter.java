@@ -16,11 +16,11 @@
 package ghidra.framework.plugintool;
 
 import docking.ComponentProvider;
-import docking.DockingTool;
+import docking.Tool;
 
 /**
  * Extends the {@link ComponentProvider} to fit into the Plugin architecture by taking in a 
- * {@link PluginTool} which extends {@link DockingTool}.  Most implementers will want to extend
+ * {@link PluginTool} which extends {@link Tool}.  Most implementers will want to extend
  * this class instead of the ComponentProvider class because they will want to access the extra
  * methods provided by PluginTool over DockingTool without having to cast the dockingTool variable.
  */
