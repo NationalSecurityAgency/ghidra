@@ -21,7 +21,7 @@ import ghidra.framework.Application;
 import ghidra.framework.Platform;
 
 public class GnuDemanglerNativeProcess {
-	private static final String DEMANGLER_GNU = "demangler_gnu";
+	public static final String DEMANGLER_GNU = "demangler_gnu_v2.33.1";
 
 	private static GnuDemanglerNativeProcess demanglerNativeProcess;
 

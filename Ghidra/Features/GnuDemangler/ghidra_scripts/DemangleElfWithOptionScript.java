@@ -24,6 +24,7 @@ import java.io.*;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerOptions;
+import ghidra.app.util.demangler.gnu.GnuDemanglerNativeProcess;
 import ghidra.app.util.demangler.gnu.GnuDemanglerParser;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.app.util.opinion.MachoLoader;
@@ -42,7 +43,7 @@ public class DemangleElfWithOptionScript extends GhidraScript {
 				executableFormat);
 			return;
 		}
-		
+
 		Symbol symbol = null;
 		if (currentAddress != null && (currentSelection == null || currentSelection.isEmpty())) {
 			symbol = getSymbolAt(currentAddress);
@@ -95,7 +96,10 @@ public class DemangleElfWithOptionScript extends GhidraScript {
 		}
 
 		CompilerSpec compilerSpec = currentProgram.getCompilerSpec();
-		if (compilerSpec.getCompilerSpecID().getIdAsString().toLowerCase().indexOf("windows") == -1) {
+		if (compilerSpec.getCompilerSpecID()
+				.getIdAsString()
+				.toLowerCase()
+				.indexOf("windows") == -1) {
 			return true;
 		}
 		return false;
@@ -111,9 +115,10 @@ public class DemangleElfWithOptionScript extends GhidraScript {
 
 	private Process createProcess(String executableName) throws Exception {
 
+		String demanglerName = GnuDemanglerNativeProcess.DEMANGLER_GNU;
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
 		String demanglerExe =
-			(OS == OperatingSystem.WINDOWS) ? "demangler_gnu.exe" : "demangler_gnu";
+			(OS == OperatingSystem.WINDOWS) ? demanglerName + ".exe" : demanglerName;
 		File commandPath = Application.getOSFile("GnuDemangler", demanglerExe);
 
 		//
