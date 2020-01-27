@@ -116,7 +116,7 @@ public class Scalar implements Comparable<Scalar> {
 	public BigInteger getBigInteger() {
 		int signum = (signed && testBit(bitLength - 1)) ? -1 : 1;
 
-		// Get magnitide
+		// Get magnitude
 		int numBytes = ((bitLength - 1) / 8) + 1;
 		long tmpVal = getValue();
 		if (signed && tmpVal < 0) {

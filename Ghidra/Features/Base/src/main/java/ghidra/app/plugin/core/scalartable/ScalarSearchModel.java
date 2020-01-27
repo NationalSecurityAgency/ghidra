@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.scalartable;
 
 import java.awt.Component;
 import java.math.BigInteger;
+import java.util.Comparator;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -26,7 +27,6 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Resource;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Reference;
@@ -77,12 +77,13 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 			DiscoverableTableUtils.adaptColumForModel(this, new AddressTableColumn()), 1, true);
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new PreviewTableColumn()));
-		descriptor.addVisibleColumn(new ScalarHexValueTableColumn());
+		descriptor.addVisibleColumn(new ScalarHexUnsignedValueTableColumn());
 		descriptor.addVisibleColumn(new ScalarSignedDecimalValueTableColumn());
 		descriptor.addHiddenColumn(new ScalarUnsignedDecimalValueTableColumn());
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new ScalarFunctionNameTableColumn()));
-
+		descriptor.addVisibleColumn(new ScalarBitCountTableColumn());
+		descriptor.addVisibleColumn(new ScalarSignednessTableColumn());
 		return descriptor;
 	}
 
@@ -169,7 +170,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 				Reference[] operandReferences = instruction.getOperandReferences(opIndex);
 
 				if (operandReferences.length == 0) {
-					getScalarFromInstruction(instruction, opObjs, monitor);
+					getScalarsFromInstruction(instruction, opObjs, monitor);
 				}
 			}
 		}
@@ -200,12 +201,16 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		}
 	}
 
-	private void getScalarFromInstruction(Instruction instruction, Object[] opObjs,
+	private void getScalarsFromInstruction(Instruction instruction, Object[] opObjs,
 			TaskMonitor monitor) throws CancelledException {
 
-		Scalar scalar = getScalarFromOperand(opObjs, monitor);
-		if (scalar != null) {
-			addMatch(new ScalarRowObject(instruction, scalar));
+		for (Object opObj : opObjs) {
+			monitor.checkCanceled();
+
+			Scalar scalar = getScalarFromOperand(opObj, monitor);
+			if (scalar != null) {
+				addMatch(new ScalarRowObject(instruction, scalar));
+			}
 		}
 	}
 
@@ -300,25 +305,8 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		return rowObject.getAddress();
 	}
 
-	private Scalar getScalarFromOperand(Object[] opObjs, TaskMonitor monitor)
-			throws CancelledException {
-
-		if (opObjs == null) {
-			return null;
-		}
-
-		Object obj = null;
-		for (Object opObj : opObjs) {
-			monitor.checkCanceled();
-			if (opObj instanceof Register) {
-				return null;
-			}
-
-			if (opObj instanceof Scalar) {
-				obj = opObj;
-			}
-		}
-		return (Scalar) obj;
+	private Scalar getScalarFromOperand(Object opObj, TaskMonitor monitor) {
+		return opObj instanceof Scalar ? (Scalar) opObj : null;
 	}
 
 	private Scalar getScalarFromData(Data data) {
@@ -340,49 +328,107 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	}
 
 //==================================================================================================
-// Columns
+// Columns & Column helpers
 //==================================================================================================	
 
-	private class ScalarHexValueTableColumn
+	private class ScalarComparator implements Comparator<Scalar> {
+
+		@Override
+		public int compare(Scalar o1, Scalar o2) {
+
+			// @formatter:off
+			if (o1 == o2)   { return 0;}
+			if (o1 == null) { return 1; }
+			if (o2 == null) { return -1; }
+			// @formatter:on
+
+			// sort unsigned before signed
+			if (o1.isSigned() != o2.isSigned()) {
+				return (o1.isSigned() ? 1 : -1);
+			}
+
+			return o1.compareTo(o2);
+		}
+
+	}
+
+	private abstract class AbstractScalarValueRenderer extends AbstractGColumnRenderer<Scalar> {
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+
+			Scalar value = (Scalar) data.getValue();
+			String text = formatScalar(value);
+			label.setText(text);
+			label.setOpaque(true);
+			setHorizontalAlignment(SwingConstants.RIGHT);
+			return label;
+		}
+
+		protected abstract String formatScalar(Scalar scalar);
+
+		@Override
+		public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
+			return ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY;
+		}
+
+		@Override
+		public String getFilterString(Scalar t, Settings settings) {
+			return formatScalar(t);
+		}
+	}
+
+	private abstract class AbstractScalarValueTableColumn
 			extends AbstractDynamicTableColumn<ScalarRowObject, Scalar, Program>
 			implements ProgramLocationTableColumn<ScalarRowObject, Scalar> {
 
-		private GColumnRenderer<Scalar> renderer = new AbstractGColumnRenderer<Scalar>() {
-			@Override
-			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+		@Override
+		public Comparator<Scalar> getComparator() {
+			return new ScalarComparator();
+		}
 
-				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+		@Override
+		public ProgramLocation getProgramLocation(ScalarRowObject rowObject, Settings settings,
+				Program p, ServiceProvider provider) {
+			return new ProgramLocation(p, rowObject.getAddress());
+		}
+	}
 
-				Scalar value = (Scalar) data.getValue();
-				String text = asString(value);
-				label.setText(text);
-				label.setOpaque(true);
-				setHorizontalAlignment(SwingConstants.RIGHT);
-				return label;
-			}
+	private class ScalarHexUnsignedValueTableColumn extends AbstractScalarValueTableColumn {
 
-			private String asString(Scalar s) {
-				if (s == null) {
-					return "";
-				}
-				return s.toString(16, false, false, "", "");
-			}
+		AbstractScalarValueRenderer renderer = new AbstractScalarValueRenderer() {
 
 			@Override
 			protected void configureFont(JTable table, TableModel model, int column) {
-				setFont(getFixedWidthFont());
+				setFont(fixedWidthFont);
 			}
 
 			@Override
-			public String getFilterString(Scalar t, Settings settings) {
-				return asString(t);
+			protected String formatScalar(Scalar scalar) {
+
+				if (scalar == null) {
+					return "";
+				}
+				int radix = 16;
+				boolean zeroPadded = false;
+				boolean showSign = false;
+				String pre = "0x";
+				String post = "";
+
+				return scalar.toString(radix, zeroPadded, showSign, pre, post);
+			}
+
+			@Override
+			public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
+				return ColumnConstraintFilterMode.DEFAULT;
 			}
 
 		};
 
 		@Override
 		public String getColumnName() {
-			return "Hex";
+			return "Hex (Unsigned)";
 		}
 
 		@Override
@@ -391,26 +437,40 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		}
 
 		@Override
-		public Scalar getValue(ScalarRowObject rowObject, Settings settings, Program p,
-				ServiceProvider provider) throws IllegalArgumentException {
-			return rowObject.getScalar();
-		}
-
-		@Override
-		public ProgramLocation getProgramLocation(ScalarRowObject rowObject, Settings settings,
-				Program p, ServiceProvider provider) {
-			return new ProgramLocation(program, rowObject.getAddress());
-		}
-
-		@Override
 		public GColumnRenderer<Scalar> getColumnRenderer() {
 			return renderer;
 		}
+
+		@Override
+		public Scalar getValue(ScalarRowObject rowObject, Settings settings, Program p,
+				ServiceProvider provider) throws IllegalArgumentException {
+			Scalar scalar = rowObject.getScalar();
+
+			Scalar unsigned = new Scalar(scalar.bitLength(), scalar.getUnsignedValue(), false);
+			return unsigned;
+
+		}
 	}
 
-	private class ScalarSignedDecimalValueTableColumn
-			extends AbstractDynamicTableColumn<ScalarRowObject, Long, Program>
-			implements ProgramLocationTableColumn<ScalarRowObject, Long> {
+	private class ScalarSignedDecimalValueTableColumn extends AbstractScalarValueTableColumn {
+
+		AbstractScalarValueRenderer renderer = new AbstractScalarValueRenderer() {
+
+			@Override
+			protected String formatScalar(Scalar scalar) {
+				if (scalar == null) {
+					return "";
+				}
+
+				int radix = 10;
+				boolean zeroPadded = false;
+				boolean showSign = true;
+				String pre = "";
+				String post = "";
+
+				return scalar.toString(radix, zeroPadded, showSign, pre, post);
+			}
+		};
 
 		@Override
 		public String getColumnName() {
@@ -423,22 +483,42 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		}
 
 		@Override
-		public Long getValue(ScalarRowObject rowObject, Settings settings, Program p,
-				ServiceProvider provider) throws IllegalArgumentException {
-
-			return rowObject.getScalar().getSignedValue();
+		public GColumnRenderer<Scalar> getColumnRenderer() {
+			return renderer;
 		}
 
 		@Override
-		public ProgramLocation getProgramLocation(ScalarRowObject rowObject, Settings settings,
-				Program p, ServiceProvider provider) {
-			return new ProgramLocation(program, rowObject.getAddress());
+		public Scalar getValue(ScalarRowObject rowObject, Settings settings, Program p,
+				ServiceProvider provider) throws IllegalArgumentException {
+			Scalar scalar = rowObject.getScalar();
+
+			Scalar signed = new Scalar(scalar.bitLength(), scalar.getUnsignedValue(), true);
+			return signed;
+
 		}
+
 	}
 
-	private class ScalarUnsignedDecimalValueTableColumn
-			extends AbstractDynamicTableColumn<ScalarRowObject, Long, Program>
-			implements ProgramLocationTableColumn<ScalarRowObject, Long> {
+	private class ScalarUnsignedDecimalValueTableColumn extends AbstractScalarValueTableColumn {
+
+		AbstractScalarValueRenderer renderer = new AbstractScalarValueRenderer() {
+
+			@Override
+			protected String formatScalar(Scalar scalar) {
+				if (scalar == null) {
+					return "";
+				}
+
+				int radix = 10;
+				boolean zeroPadded = false;
+				boolean showSign = false;
+				String pre = "";
+				String post = "";
+
+				return scalar.toString(radix, zeroPadded, showSign, pre, post);
+			}
+
+		};
 
 		@Override
 		public String getColumnName() {
@@ -451,10 +531,35 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		}
 
 		@Override
-		public Long getValue(ScalarRowObject rowObject, Settings settings, Program p,
-				ServiceProvider provider) throws IllegalArgumentException {
+		public GColumnRenderer<Scalar> getColumnRenderer() {
+			return renderer;
+		}
 
-			return rowObject.getScalar().getUnsignedValue();
+		@Override
+		public Scalar getValue(ScalarRowObject rowObject, Settings settings, Program p,
+				ServiceProvider provider) throws IllegalArgumentException {
+			Scalar scalar = rowObject.getScalar();
+
+			Scalar unsigned = new Scalar(scalar.bitLength(), scalar.getUnsignedValue(), false);
+			return unsigned;
+
+		}
+
+	}
+
+	private class ScalarBitCountTableColumn
+			extends AbstractDynamicTableColumn<ScalarRowObject, Integer, Program>
+			implements ProgramLocationTableColumn<ScalarRowObject, Integer> {
+
+		@Override
+		public String getColumnName() {
+			return "Bits";
+		}
+
+		@Override
+		public Integer getValue(ScalarRowObject rowObject, Settings settings, Program p,
+				ServiceProvider provider) throws IllegalArgumentException {
+			return rowObject.getScalar().bitLength();
 		}
 
 		@Override
@@ -462,6 +567,45 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 				Program p, ServiceProvider provider) {
 			return new ProgramLocation(program, rowObject.getAddress());
 		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 80;
+		}
+
+	}
+
+	public static enum Signedness {
+		Signed, Unsigned
+
+	}
+
+	private class ScalarSignednessTableColumn
+			extends AbstractDynamicTableColumn<ScalarRowObject, Signedness, Program>
+			implements ProgramLocationTableColumn<ScalarRowObject, Signedness> {
+
+		@Override
+		public String getColumnName() {
+			return "Signedness";
+		}
+
+		@Override
+		public Signedness getValue(ScalarRowObject rowObject, Settings settings, Program p,
+				ServiceProvider provider) throws IllegalArgumentException {
+			return rowObject.getScalar().isSigned() ? Signedness.Signed : Signedness.Unsigned;
+		}
+
+		@Override
+		public ProgramLocation getProgramLocation(ScalarRowObject rowObject, Settings settings,
+				Program p, ServiceProvider provider) {
+			return new ProgramLocation(program, rowObject.getAddress());
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 100;
+		}
+
 	}
 
 	private class ScalarFunctionNameTableColumn extends FunctionNameTableColumn {
