@@ -3516,7 +3516,7 @@ macro BitReverse(val) {
 @endif # defined(VERSION_6T2) || defined(VERSION_7)
 
 
-:rsb^thSBIT_CZNO^ItCond    Rd0811,Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=14 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
+:rsb^thSBIT_CZNO^ItCond^".w"    Rd0811,Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=14 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
   th_subflags(ThumbExpandImm12,Rn0003);
@@ -3525,7 +3525,7 @@ macro BitReverse(val) {
   build thSBIT_CZNO;
 }
 
-:rsb^thSBIT_CZNO^ItCond^".w"  Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=14 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811 & thshift2
+:rsb^thSBIT_CZNO^ItCond  Rd0811,Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=14 & thSBIT_CZNO & Rn0003; thc1515=0 & Rd0811 & thshift2
 {
   build ItCond;
   th_subflags(thshift2,Rn0003);
