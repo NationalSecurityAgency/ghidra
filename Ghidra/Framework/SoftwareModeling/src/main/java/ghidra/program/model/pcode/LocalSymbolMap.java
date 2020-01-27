@@ -76,10 +76,84 @@ public class LocalSymbolMap {
 	}
 
 	/**
+	 * Construct and return a map from a HighSymbol's name to the HighSymbol object
+	 * @return the new name to symbol map
+	 */
+	public Map<String, HighSymbol> getNameToSymbolMap() {
+		Map<String, HighSymbol> newMap = new TreeMap<String, HighSymbol>();
+		for (HighSymbol highSymbol : symbolMap.values()) {
+			newMap.put(highSymbol.getName(), highSymbol);
+		}
+		return newMap;
+	}
+
+	/**
+	 * Remove the given HighSymbol from this container.
+	 * The key is removed from the main symbolMap.  It is also removed from the MappedEntry map
+	 * and from the list of parameter symbols if applicable.
+	 * @param highSymbol is the given symbol
+	 */
+	private void removeSymbol(HighSymbol highSymbol) {
+		SymbolEntry mapEntry = highSymbol.getFirstWholeMap();
+		if (mapEntry instanceof MappedEntry) {
+			MappedVarKey key = new MappedVarKey(mapEntry.getStorage(), mapEntry.getPCAdress());
+			addrMappedSymbols.remove(key);
+		}
+		symbolMap.remove(highSymbol.getId());
+		if (highSymbol.isParameter()) {
+			int index = highSymbol.getCategoryIndex();
+			HighSymbol[] newArray = new HighSymbol[paramSymbols.length - 1];
+			for (int i = 0; i < index; ++i) {
+				newArray[i] = paramSymbols[i];
+			}
+			for (int i = index + 1; i < paramSymbols.length; ++i) {
+				HighSymbol paramSym = paramSymbols[i];
+				newArray[i - 1] = paramSym;
+				paramSym.categoryIndex -= 1;
+			}
+		}
+	}
+
+	/**
+	 * Given names of the form:  "baseName", "baseName$1", "baseName@2", ...
+	 * find the corresponding HighSymbols in this container and merge them into a single HighSymbol.
+	 * The name passed into this method must be of the form "baseName$1", the base name is extracted from it.
+	 * @param name is a string with the base name concatenated with "$1"
+	 * @param nameMap is a map from all symbols names in this container to the corresponding HighSymbol
+	 */
+	private void mergeNamedSymbols(String name, Map<String, HighSymbol> nameMap) {
+		String baseName = name.substring(0, name.length() - 2);
+		HighSymbol baseSymbol = nameMap.get(baseName);
+		if (baseSymbol == null || !baseSymbol.isTypeLocked() ||
+			(baseSymbol instanceof EquateSymbol)) {
+			return;
+		}
+		DataType baseDataType = baseSymbol.getDataType();
+		for (int index = 1;; ++index) {
+			String nextName = baseName + '$' + Integer.toString(index);
+			HighSymbol nextSymbol = nameMap.get(nextName);
+			if (nextSymbol == null || !nextSymbol.isTypeLocked() || nextSymbol.isParameter() ||
+				(baseSymbol instanceof EquateSymbol)) {
+				break;
+			}
+			if (!nextSymbol.getDataType().equals(baseDataType)) {	// Data-types of symbols being merged must match
+				break;
+			}
+			SymbolEntry mapEntry = nextSymbol.getFirstWholeMap();
+			if (mapEntry.getPCAdress() == null) {					// Don't merge from an address tied symbol
+				break;
+			}
+			baseSymbol.addMapEntry(mapEntry);
+			removeSymbol(nextSymbol);
+		}
+	}
+
+	/**
 	 * Populate the local variable map from information attached to the Program DB's function.
 	 * @param includeDefaultNames is true if default symbol names should be considered locked
 	 */
 	public void grabFromFunction(boolean includeDefaultNames) {
+		ArrayList<String> mergeNames = null;
 		Function dbFunction = func.getFunction();
 		Variable locals[] = dbFunction.getLocalVariables();
 		for (Variable local : locals) {
@@ -94,6 +168,15 @@ public class LocalSymbolMap {
 				istypelock = false;
 			}
 			String name = local.getName();
+			if (name.length() > 2 && name.charAt(name.length() - 2) == '$') {
+				// An indication of names like "name", "name@1", "name@2"
+				if (name.charAt(name.length() - 1) == '1') {
+					if (mergeNames == null) {
+						mergeNames = new ArrayList<String>();
+					}
+					mergeNames.add(name);
+				}
+			}
 
 			VariableStorage storage = local.getVariableStorage();
 			long id = 0;
@@ -132,6 +215,15 @@ public class LocalSymbolMap {
 			}
 			DataType dt = var.getDataType();
 			String name = var.getName();
+			if (name.length() > 2 && name.charAt(name.length() - 2) == '$') {
+				// An indication of names like "name", "name@1", "name@2"
+				if (name.charAt(name.length() - 1) == '1') {
+					if (mergeNames == null) {
+						mergeNames = new ArrayList<String>();
+					}
+					mergeNames.add(name);
+				}
+			}
 			VariableStorage storage = var.getVariableStorage();
 			Address resAddr = storage.isStackStorage() ? null : pcaddr;
 			long id = 0;
@@ -154,6 +246,7 @@ public class LocalSymbolMap {
 		Arrays.sort(paramSymbols, PARAM_SYMBOL_SLOT_COMPARATOR);
 
 		grabEquates(dbFunction);
+		grabMerges(mergeNames);
 	}
 
 	private boolean isUserDefinedName(String name) {
@@ -450,10 +543,18 @@ public class LocalSymbolMap {
 		}
 	}
 
+	private void grabMerges(ArrayList<String> mergeNames) {
+		if (mergeNames == null) {
+			return;
+		}
+		Map<String, HighSymbol> nameToSymbolMap = getNameToSymbolMap();
+		for (String name : mergeNames) {
+			mergeNamedSymbols(name, nameToSymbolMap);
+		}
+	}
+
 	/**
 	 * Hashing keys for Local variables
-	 * 
-	 *
 	 */
 	class MappedVarKey {
 		private Address addr;

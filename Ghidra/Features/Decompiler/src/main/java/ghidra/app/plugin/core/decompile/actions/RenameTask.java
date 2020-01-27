@@ -59,9 +59,10 @@ public abstract class RenameTask {
 	
 	/**
 	 * Bring up a dialog that is initialized with the old name, and allows the user to select a new name
+	 * @param oldNameIsCancel is true if the user keeping/entering the old name is considered a cancel
 	 * @return true unless the user canceled
 	 */
-	private boolean runDialog() {
+	private boolean runDialog(boolean oldNameIsCancel) {
 		InputDialogListener listener = new InputDialogListener() {
 			@Override
 			public boolean inputIsValid(InputDialog dialog) {
@@ -91,15 +92,19 @@ public abstract class RenameTask {
         if (renameVarDialog.isCanceled()) {
         	return false;
         }
-        if (newName.equals(oldName)) {
+		if (oldNameIsCancel && newName.equals(oldName)) {
 			return false;
 		}
         return true;		
 		
 	}
 
-	public void runTask() {
-		boolean dialogres = runDialog();
+	/**
+	 * Perform the task of selecting a new name and committing it to the database
+	 * @param oldNameIsCancel is true if the user entering/keeping the old name is considered a cancel
+	 */
+	public void runTask(boolean oldNameIsCancel) {
+		boolean dialogres = runDialog(oldNameIsCancel);
 		if (dialogres) {
 			int transaction = program.startTransaction(getTransactionName());
 			boolean commit = false;

@@ -216,9 +216,11 @@ public class HighFunctionDBUtil {
 			}
 			String name = sym.getName();
 			try {
-				Variable var = clearConflictingLocalVariables(sym);
+				Variable var =
+					clearConflictingLocalVariables(function, sym.getStorage(), sym.getPCAddress());
 				if (var == null) {
-					var = createLocalVariable(sym, null, null, source);
+					var = createLocalVariable(function, sym.getDataType(), sym.getStorage(),
+						sym.getPCAddress(), source);
 					if (name != null) {
 						var.setName(name, source);
 					}
@@ -237,26 +239,24 @@ public class HighFunctionDBUtil {
 
 	/**
 	 * Create a local DB variable with a default name. Storage and data-type for the variable
-	 * can be provided explicitly, or they can be taken from a decompiler symbol.
-	 * @param symbol is the decompiler symbol
-	 * @param dt is the given data-type or null (to use the symbol's data-type)
-	 * @param storage is the given storage or null (to use the symbol's storage)
-	 * @param source is the desired SourceType of the new variable
+	 * are provided explicitly.
+	 * @param function is the function owning the new variable
+	 * @param dt is the given data-type
+	 * @param storage is the given storage
+	 * @param pcAddr is point where the variable is instantiated or null
+	 * @param source is the source type of the new variable
 	 * @return the new local variable
 	 * @throws InvalidInputException is a valid variable can't be created
 	 */
-	private static Variable createLocalVariable(HighSymbol symbol, DataType dt,
-			VariableStorage storage, SourceType source) throws InvalidInputException {
-		Function function = symbol.getHighFunction().getFunction();
+	private static Variable createLocalVariable(Function function, DataType dt,
+			VariableStorage storage, Address pcAddr, SourceType source)
+			throws InvalidInputException {
 		Program program = function.getProgram();
-		if (storage == null || storage.isUniqueStorage()) {
-			storage = symbol.getStorage();
+		int firstUseOffset = 0;
+		if (pcAddr != null) {
+			firstUseOffset = (int) pcAddr.subtract(function.getEntryPoint());
 		}
-		if (dt == null) {
-			dt = symbol.getDataType();
-		}
-		Variable var =
-			new LocalVariableImpl(null, symbol.getFirstUseOffset(), dt, storage, program);
+		Variable var = new LocalVariableImpl(null, firstUseOffset, dt, storage, program);
 		try {
 			var = function.addLocalVariable(var, source);
 		}
@@ -266,8 +266,8 @@ public class HighFunctionDBUtil {
 
 		Register reg = var.getRegister();
 		if (reg != null) {
-			program.getReferenceManager().addRegisterReference(symbol.getPCAddress(), -1, reg,
-				RefType.WRITE, source);
+			program.getReferenceManager().addRegisterReference(pcAddr, -1, reg, RefType.WRITE,
+				source);
 		}
 
 		return var;
@@ -306,32 +306,83 @@ public class HighFunctionDBUtil {
 	}
 
 	/**
+	 * Given a particular seed Variable, find the set of local Variables that are intended to be
+	 * merged containing that seed. The result will be an array with at least the seed variable in it.
+	 * @param function is the function containing the local variables
+	 * @param seed is the seed local variable
+	 * @return an array of all Variables intended to be merged.
+	 */
+	private static Variable[] gatherMergeSet(Function function, Variable seed) {
+		TreeMap<String, Variable> nameMap = new TreeMap<String, Variable>();
+		for (Variable var : function.getAllVariables()) {
+			nameMap.put(var.getName(), var);
+		}
+		String baseName = seed.getName();
+		int pos = baseName.lastIndexOf('$');
+		if (pos >= 0) {
+			baseName = baseName.substring(0, pos);
+		}
+		DataType dataType = seed.getDataType();
+		Variable currentVar = nameMap.get(baseName);
+		int index = 0;
+		boolean sawSeed = false;
+		ArrayList<Variable> mergeArray = new ArrayList<Variable>();
+		for (;;) {
+			if (currentVar == null) {
+				break;
+			}
+			if (!currentVar.getDataType().equals(dataType)) {
+				break;
+			}
+			if (index != 0 && currentVar instanceof Parameter) {
+				break;
+			}
+			if (index != 0 && currentVar.hasStackStorage()) {
+				break;
+			}
+			if (currentVar == seed) {
+				sawSeed = true;
+			}
+			mergeArray.add(currentVar);
+			index += 1;
+			String newName = baseName + '$' + Integer.toString(index);
+			currentVar = nameMap.get(newName);
+		}
+		Variable[] res;
+		if (!sawSeed) {
+			res = new Variable[1];
+			res[0] = seed;
+		}
+		else {
+			res = new Variable[mergeArray.size()];
+			mergeArray.toArray(res);
+		}
+		return res;
+	}
+
+	/**
 	 * Low-level routine for clearing any variables in the
 	 * database which conflict with this variable and return
 	 * one of them for re-use.  The returned variable still
 	 * exists within the function at the same first-use-offset.
+	 * @param function is the function containing the local variables
+	 * @param storage is the storage area to clear
+	 * @param pcAddr is the point of use
 	 * @return existing variable with identical storage and first-use offset or null
 	 */
-	private static Variable clearConflictingLocalVariables(HighSymbol local) {
+	private static Variable clearConflictingLocalVariables(Function function,
+			VariableStorage storage, Address pcAddr) {
 
-		SymbolEntry entry = local.getFirstWholeMap();
-		if (entry instanceof MappedEntry) {
-			if (local.isParameter()) {	// Don't clear parameters
-				throw new IllegalArgumentException();
-			}
+		int firstUseOffset = 0;
+		if (pcAddr != null) {
+			firstUseOffset = (int) pcAddr.subtract(function.getEntryPoint());
 		}
+		if (storage.isHashStorage()) {
 
-		HighFunction highFunction = local.getHighFunction();
-		Function func = highFunction.getFunction();
-
-		VariableStorage storage = local.getStorage();
-		int firstUseOffset = local.getFirstUseOffset();
-		if (entry instanceof DynamicEntry) {
-
-			DynamicEntry dynamicEntry = (DynamicEntry) entry;
-			for (Variable ul : func.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER)) {
+			long hashVal = storage.getFirstVarnode().getOffset();
+			for (Variable ul : function.getLocalVariables(VariableFilter.UNIQUE_VARIABLE_FILTER)) {
 				// Note: assumes there is only one hash method used for unique locals
-				if (ul.getFirstStorageVarnode().getOffset() == dynamicEntry.getHash()) {
+				if (ul.getFirstStorageVarnode().getOffset() == hashVal) {
 					return ul;
 				}
 			}
@@ -339,7 +390,7 @@ public class HighFunctionDBUtil {
 		}
 
 		Variable matchingVariable = null;
-		for (Variable otherVar : func.getLocalVariables()) {
+		for (Variable otherVar : function.getLocalVariables()) {
 			if (otherVar.getFirstUseOffset() != firstUseOffset) {
 				// other than parameters we will have a hard time identifying
 				// local variable conflicts due to differences in scope (i.e., first-use)
@@ -353,7 +404,7 @@ public class HighFunctionDBUtil {
 					matchingVariable = otherVar;
 					continue;
 				}
-				func.removeVariable(otherVar);
+				function.removeVariable(otherVar);
 			}
 		}
 
@@ -453,22 +504,31 @@ public class HighFunctionDBUtil {
 			}
 		}
 		else if (!highSymbol.isGlobal()) {
-			Variable var;
+			Variable[] varList = null;
 			VariableStorage storage = highSymbol.getStorage();
+			Address pcAddr = highSymbol.getPCAddress();
 			HighVariable tmpHigh = highSymbol.getHighVariable();
 			if (!storage.isHashStorage() && tmpHigh != null &&
 				tmpHigh.requiresDynamicStorage()) {
 				storage =
 					DynamicEntry.buildDynamicStorage(tmpHigh.getRepresentative(), highFunction);
-				var = null;
 			}
 			else {
-				var = clearConflictingLocalVariables(highSymbol);
+				Variable var = clearConflictingLocalVariables(function, storage, pcAddr);
+				if (var != null) {
+					if (!resized) {
+						varList = gatherMergeSet(function, var);	// Cannot resize a whole multi-merge
+					}
+					else {
+						varList = new Variable[1];
+						varList[0] = var;
+					}
+				}
 			}
 			boolean usesHashStorage = storage.isHashStorage();
 			if (dataType == null) {
-				if (var != null) {
-					dataType = var.getDataType();	// Use preexisting datatype if it fits in desired storage
+				if (varList != null) {
+					dataType = varList[0].getDataType();	// Use preexisting datatype if it fits in desired storage
 				}
 				else {
 					dataType = Undefined.getUndefinedDataType(highSymbol.getSize());
@@ -484,19 +544,34 @@ public class HighFunctionDBUtil {
 				storage = VariableUtilities.resizeStorage(storage, dataType, true, function);
 			}
 
-			if (var == null) {
-				var = createLocalVariable(highSymbol, dataType, storage, source);
+			if (varList == null) {
+				Variable var = createLocalVariable(function, dataType, storage, pcAddr, source);
+				varList = new Variable[1];
+				varList[0] = var;
+			}
+			else if (resized) {
+				// Set resized data-type on existing Variable
+				varList[0].setDataType(dataType, storage, true, source);
 			}
 			else {
-				// fixup reused variable
-				var.setDataType(dataType, storage, true, source);
+				// Set data-type on existing merge set
+				for (Variable var : varList) {
+					var.setDataType(dataType, source);
+				}
 			}
 			if (name == null) {
 				name = highSymbol.getName(); // must update name if not specified
 			}
+			Variable renameVar = null;
 			try {
-				// must set/correct name
-				var.setName(name, source);
+				int index = 0;
+				String curName = name;
+				for (Variable var : varList) {
+					renameVar = var;
+					var.setName(curName, source);
+					index += 1;
+					curName = name + '$' + Integer.toString(index);
+				}
 			}
 			catch (DuplicateNameException e) {
 				if (isRename) {
@@ -507,7 +582,7 @@ public class HighFunctionDBUtil {
 					Msg.error(HighFunctionDBUtil.class,
 						"Name conflict while naming local variable: " + function.getName() + ":" +
 							name);
-					var.setName(null, SourceType.DEFAULT);
+					renameVar.setName(null, SourceType.DEFAULT);
 				}
 				catch (DuplicateNameException e1) {
 					throw new AssertException("Unexpected exception with default name", e);

@@ -74,6 +74,6 @@ public class RenameFieldAction extends AbstractDecompilerAction {
 		RenameStructureFieldTask nameTask =
 			new RenameStructureFieldTask(tool, context.getProgram(), context.getDecompilerPanel(),
 				tokenAtCursor, dt, offset);
-		nameTask.runTask();
+		nameTask.runTask(true);
 	}
 }

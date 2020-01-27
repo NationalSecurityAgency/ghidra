@@ -899,7 +899,16 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
     vn = *iter++;
     if (vn->isFree()) continue;
     vnflags = vn->getFlags();
-    if ((vnflags & mask) != flags) { // We have a change
+    if (vn->mapentry != (SymbolEntry *)0) {		// If there is already an attached SymbolEntry (dynamic)
+      uint4 localMask = mask & ~Varnode::mapped;	// Make sure 'mapped' bit is unchanged
+      uint4 localFlags = flags & localMask;
+      if ((vnflags & localMask) != localFlags) {
+	updateoccurred = true;
+	vn->setFlags(localFlags);
+	vn->clearFlags((~localFlags)&localMask);
+      }
+    }
+    else if ((vnflags & mask) != flags) { // We have a change
       updateoccurred = true;
       vn->setFlags(flags);
       vn->clearFlags((~flags)&mask);

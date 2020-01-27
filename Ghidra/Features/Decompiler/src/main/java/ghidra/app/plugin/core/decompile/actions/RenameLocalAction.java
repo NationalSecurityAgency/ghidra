@@ -82,7 +82,7 @@ public class RenameLocalAction extends AbstractDecompilerAction {
 			context.getDecompilerPanel(),
 			tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
 
-		nameTask.runTask();
+		nameTask.runTask(true);
 	}
 
 }

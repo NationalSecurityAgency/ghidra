@@ -2214,7 +2214,8 @@ bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
   list<SymbolEntry>::const_iterator iter_d = scope->beginDynamic();
   list<SymbolEntry>::const_iterator enditer_d = scope->endDynamic();
   for(;iter_d!=enditer_d;++iter_d) {
-    if ((*iter_d).isPiece()) continue; // Don't do a partial entry
+    const SymbolEntry *entry = &(*iter_d);
+    if (entry->isPiece()) continue; // Don't do a partial entry
     Symbol *sym = (*iter_d).getSymbol();
     if (sym->getCategory() != cat) continue;
     if (sym->getName().size() == 0) continue;
@@ -2222,6 +2223,10 @@ bool PrintC::emitScopeVarDecls(const Scope *scope,int4 cat)
       continue;
     if (dynamic_cast<LabSymbol *>(sym) != (LabSymbol *)0)
       continue;
+    if (sym->isMultiEntry()) {
+      if (sym->getFirstWholeMap() != entry)
+	continue;
+    }
     notempty = true;
     emitVarDeclStatement(sym);
   }

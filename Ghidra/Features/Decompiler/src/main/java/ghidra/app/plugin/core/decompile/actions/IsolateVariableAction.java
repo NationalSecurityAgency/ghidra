@@ -80,7 +80,7 @@ public class IsolateVariableAction extends AbstractDecompilerAction {
 			new IsolateVariableTask(context.getTool(), context.getProgram(),
 				context.getDecompilerPanel(), tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
 
-		newVariableTask.runTask();
+		newVariableTask.runTask(false);
 	}
 
 }

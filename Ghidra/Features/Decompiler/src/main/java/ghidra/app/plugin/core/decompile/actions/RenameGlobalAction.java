@@ -81,6 +81,6 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 		RenameGlobalVariableTask nameTask =
 			new RenameGlobalVariableTask(tool, context.getProgram(), context.getDecompilerPanel(),
 				tokenAtCursor, addr);
-		nameTask.runTask();
+		nameTask.runTask(true);
 	}
 }
