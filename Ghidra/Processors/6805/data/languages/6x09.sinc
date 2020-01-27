@@ -87,8 +87,8 @@ attach variables [ idxReg ] [ X Y U S ];
 
 EA: simm5,idxReg    is simm5 & idxReg & noOffset5=0
 {
-     local offset:1 = simm5;
-     local addr:2 = idxReg + sext(offset);
+     local offs:1 = simm5;
+     local addr:2 = idxReg + sext(offs);
      export addr; 
 }
 EA: ","idxReg    is idxReg & noOffset5=1 & idxMode=4 # no offset
@@ -160,8 +160,8 @@ EA: "[,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=20
 }
 EA: "["simm8,idxReg"]"    is idxReg & noOffset5=1 & idxMode=24; simm8
 {
-     local offset:1 = simm8;
-     local addr:2 = idxReg + sext(offset);
+     local offs:1 = simm8;
+     local addr:2 = idxReg + sext(offs);
      addr = *:2 addr;
      export addr; 
 }
