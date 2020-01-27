@@ -57,8 +57,12 @@ public class GTableAutoLookup extends AutoLookup {
 
 	@Override
 	public boolean isSorted(int column) {
-		SortedTableModel sortedModel = (SortedTableModel) table.getModel();
-		return column == sortedModel.getPrimarySortColumnIndex();
+
+		if (table.getModel() instanceof SortedTableModel) {
+			SortedTableModel sortedModel = (SortedTableModel) table.getModel();
+			return column == sortedModel.getPrimarySortColumnIndex();
+		}
+		return false;
 	}
 
 	@Override
