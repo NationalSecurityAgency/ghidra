@@ -156,7 +156,7 @@ public interface ElfLoadHelper {
 	 * Get the program image base offset adjustment.  The value returned reflects the
 	 * actual program image base minus the default image base (see {@link ElfHeader#getImageBase()}.
 	 * This will generally be zero (0), unless the program image base differs from the
-	 * default.  It may be neccessary to add this value to any pre-linked address values
+	 * default.  It may be necessary to add this value to any pre-linked address values
 	 * such as those contained with the dynamic table. (Applies to default address space only)
 	 * @return image base adjustment value
 	 */

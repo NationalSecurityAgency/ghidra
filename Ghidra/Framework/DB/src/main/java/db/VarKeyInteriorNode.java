@@ -357,7 +357,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 	/**
 	 * Update the child key associated with the specified key index.
-	 * Other entries are shifted as necessary to accomodate the new key length for 
+	 * Other entries are shifted as necessary to accommodate the new key length for 
 	 * the updated entry.
 	 * @param index child key index
 	 * @param updateKey updated child node key
@@ -741,7 +741,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * @param leftNode
 	 * @param rightNode
 	 * @param count
-	 * @return true if movement occured, else false
+	 * @return true if movement occurred, else false
 	 */
 	private static boolean moveKeysRight(VarKeyInteriorNode leftNode, VarKeyInteriorNode rightNode,
 			int count) {

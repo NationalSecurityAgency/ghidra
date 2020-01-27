@@ -346,7 +346,7 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 			catch (InvocationTargetException e) {
 				Throwable t = e.getCause();
 				Msg.showError(this, tool.getToolFrame(), "Tool Launch Failed",
-					"An error occured while attempting to launch your default tool!", t);
+					"An error occurred while attempting to launch your default tool!", t);
 			}
 		}
 	}

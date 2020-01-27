@@ -21,7 +21,7 @@ import ghidra.util.exception.NoValueException;
  *     Class that implements a hashtable with int keys and int values.
  *     Because this class uses array of primitives
  *     to store the information, it serializes very fast.  This implementation uses
- *     seperate chaining to resolve collisions.
+ *     separate chaining to resolve collisions.
  *
  */
 public class IntIntHashtable {

@@ -39,7 +39,7 @@ public class FileSystemListenerList implements FileSystemListener {
 
 	/**
 	 * Construct FileSystemListenerList
-	 * @param enableAsynchronousDispatching if true a seperate dispatch thread will be used
+	 * @param enableAsynchronousDispatching if true a separate dispatch thread will be used
 	 * to notify listeners.  If false, blocking notification will be performed.
 	 */
 	public FileSystemListenerList(boolean enableAsynchronousDispatching) {

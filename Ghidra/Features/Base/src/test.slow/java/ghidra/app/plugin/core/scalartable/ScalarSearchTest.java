@@ -417,7 +417,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 			Address codeUnitAddress = rowObject.getAddress();
 			if (codeUnitAddress.toString().equals(DATA_STRING_ADDRESS)) {
 				Data stringData = program.getListing().getDataAt(codeUnitAddress);
-				fail("Table not created correctly: found the occurence of data string " +
+				fail("Table not created correctly: found the occurrence of data string " +
 					stringData.getValue().toString() + " at address: " + codeUnitAddress);
 			}
 		}

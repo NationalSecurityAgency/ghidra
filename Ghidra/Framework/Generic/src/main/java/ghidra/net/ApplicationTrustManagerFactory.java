@@ -156,7 +156,7 @@ public class ApplicationTrustManagerFactory {
 	}
 
 	/**
-	 * Get trust managers after performing any neccessary initialization.
+	 * Get trust managers after performing any necessary initialization.
 	 * @return trust managers
 	 */
 	static synchronized TrustManager[] getTrustManagers() {

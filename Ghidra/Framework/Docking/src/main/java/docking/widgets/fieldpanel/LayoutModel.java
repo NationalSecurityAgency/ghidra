@@ -76,7 +76,7 @@ public interface LayoutModel {
 	 * Returns an iterator that walks all the Layout items in this model, starting at the
 	 * specified index.
 	 * 
-	 * @param startIndex start index in the model to begining iterating
+	 * @param startIndex start index in the model to beginning iterating
 	 * @return new iterator
 	 */
 	public default LayoutModelIterator iterator(BigInteger startIndex) {

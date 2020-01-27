@@ -97,7 +97,7 @@ public class CallAnotherScriptForAllPrograms extends GhidraScript {
 			runScript(SUBSCRIPT_NAME, newState);
 		}
 		catch (Exception e) {
-			printerr("ERROR! Exception occured while processing file: " +
+			printerr("ERROR! Exception occurred while processing file: " +
 				program.getDomainFile().getPathname());
 			printerr("       " + e.getMessage());
 			e.printStackTrace();

@@ -26,7 +26,7 @@ import db.buffers.DataBuffer;
 
 /**
  * The <code>NodeMgr</code> manages all database nodes associated with 
- * a table.  Each table should use a seperate instance of a NodeMgr.
+ * a table.  Each table should use a separate instance of a NodeMgr.
  * The NodeMgr is resposible for interacting with the BufferMgr performing 
  * buffer allocations, retrievals and releases as required.   The NodeMgr
  * also performs hard caching of all buffers until the releaseNodes

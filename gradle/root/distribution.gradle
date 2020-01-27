@@ -157,7 +157,7 @@ task zipJavadocs(type: Zip) {
 
 /**********************************************************************************************
  *
- * Copies platform independant files to the distribution staging area in preparation
+ * Copies platform independent files to the distribution staging area in preparation
  * for the distribution zip
  *
  **********************************************************************************************/

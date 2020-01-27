@@ -46,7 +46,7 @@ public interface ProgramDropProvider {
 	
 	/**
 	 * Adds the dropped data to this drop service.
-	 * @param contextObj The object where the drop occured
+	 * @param contextObj The object where the drop occurred
 	 * @param data The actual data dropped
 	 * @param flavor The selected data flavor
 	 */

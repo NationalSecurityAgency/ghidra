@@ -70,7 +70,7 @@ public class VarnodeData {
 	
 	// Build this VarnodeData from an \b \<addr\> tag
 	// \param el is the parsed tag
-	// \param trans is the relevent processor translator
+	// \param trans is the relevant processor translator
 	public void restoreXml( Element el, Translate trans ) {
 		String name = el.getAttributeValue( "name" );
 		if (name != null) {

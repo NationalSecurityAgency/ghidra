@@ -124,7 +124,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * out of date.
 	 * @param okToRecover if true, allows the system to recover unsaved file changes which 
 	 * resulted from a crash.  If false, any existing recovery data will be deleted.
-	 * This flag is only relevent if project is open for update (isInProject) and the file can be
+	 * This flag is only relevant if project is open for update (isInProject) and the file can be
 	 * opened for update.
 	 * @param monitor permits monitoring of open progress.
 	 * @return an open domain object can be modified and saved. (Not read-only)
@@ -393,7 +393,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Forcefully terminate a checkout for the associated versioned file.
-	 * The user must be the owner of the checkout or have admin priviledge
+	 * The user must be the owner of the checkout or have admin privilege
 	 * on the versioned filesystem (i.e., repository).
 	 * @param checkoutId checkout ID
 	 * @throws IOException if an IO or access error occurs

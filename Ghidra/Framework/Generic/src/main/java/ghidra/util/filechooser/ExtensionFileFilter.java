@@ -204,7 +204,7 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 	 * Determines whether the extension list (.jpg, .gif, etc) should
 	 * show up in the human readable description.
 	 *
-	 * Only relevent if a description was provided in the constructor
+	 * Only relevant if a description was provided in the constructor
 	 * or using setDescription();
 	 *
 	 * @see #getDescription
@@ -220,7 +220,7 @@ public class ExtensionFileFilter implements GhidraFileFilter {
 	 * Returns whether the extension list (.jpg, .gif, etc) should
 	 * show up in the human readable description.
 	 *
-	 * Only relevent if a description was provided in the constructor
+	 * Only relevant if a description was provided in the constructor
 	 * or using setDescription();
 	 *
 	 * @see #getDescription

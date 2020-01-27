@@ -99,7 +99,7 @@ public class CreateStructureInStructureCmd extends AbstractCreateStructureCmd{
         }        
         Structure originalStructure = (Structure) parentDataType;        
         
-        // clear and initialize the orignal structure and then get the new
+        // clear and initialize the original structure and then get the new
         // data
         clearStruct(originalStructure, comp1.getParentOffset(), dataLength );
         originalStructure.replace(comp1.getComponentIndex(), 

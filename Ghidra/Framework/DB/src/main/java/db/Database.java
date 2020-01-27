@@ -261,7 +261,7 @@ public abstract class Database {
 	protected void scanFiles(boolean repair) throws FileNotFoundException {
 		synchronized (syncObject) {
 
-// TODO: May need to make repair an option (may not have write priviledge)
+// TODO: May need to make repair an option (may not have write privilege)
 
 			ArrayList<String> bufFiles = new ArrayList<>();
 			ArrayList<String> verFiles = new ArrayList<>();

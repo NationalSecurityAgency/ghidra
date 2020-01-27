@@ -695,7 +695,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 
 		@Override
 		public String getColumnDescription() {
-			return "The orignal (pre-demangled) import name (External Symbols Only)";
+			return "The original (pre-demangled) import name (External Symbols Only)";
 		}
 
 		@Override

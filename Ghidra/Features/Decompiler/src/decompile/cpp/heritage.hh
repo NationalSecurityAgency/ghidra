@@ -35,7 +35,7 @@ struct SizePass {
 /// \brief Map object for keeping track of which address ranges have been heritaged
 ///
 /// We keep track of a fairly fine grained description of when each address range
-/// was entered in SSA form, refered to as \b heritaged or, for Varnode objects,
+/// was entered in SSA form, referred to as \b heritaged or, for Varnode objects,
 /// no longer \b free.  An address range is added using the add() method, which includes
 /// the particular pass when it was entered.  The map can be queried using findPass()
 /// that informs the caller whether the address has been heritaged and if so in which pass.

@@ -1313,7 +1313,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 				disassemblerContext.getRegisterValue(disassemblerContext.getBaseContextRegister()),
 				instAddr, e.getMessage());
 		}
-		return null; // error occured
+		return null; // error occurred
 	}
 
 	/**

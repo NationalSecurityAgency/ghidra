@@ -2651,7 +2651,7 @@ iterate_demangle_function (struct work_stuff *work, const char **mangled,
   /* Iterate over occurrences of __, allowing names and types to have a
      "__" sequence in them.  We must start with the first (not the last)
      occurrence, since "__" most often occur between independent mangled
-     parts, hence starting at the last occurence inside a signature
+     parts, hence starting at the last occurrence inside a signature
      might get us a "successful" demangling of the signature.  */
 
   while (scan[2])

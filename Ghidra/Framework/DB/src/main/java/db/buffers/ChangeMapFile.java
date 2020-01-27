@@ -28,7 +28,7 @@ import db.ChainedBuffer;
 /**
  * <code>ChangeMapFile</code> tracks which buffers within a LocalBufferFile 
  * have been modified between an older and newer version.  The older
- * file is also refered to as the target file.
+ * file is also referred to as the target file.
  */
 public class ChangeMapFile {
 

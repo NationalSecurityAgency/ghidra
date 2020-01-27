@@ -307,7 +307,7 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 		if (space.isOverlaySpace()) {
 			address = ((OverlayAddressSpace) space).translateAddress(address, true);
 		}
-		// there is a wierd deleted overlay case that the following code handles - sortof
+		// there is a weird deleted overlay case that the following code handles - sortof
 		else if (space.getType() == AddressSpace.TYPE_UNKNOWN) {
 			return new RegisterValue(register);
 		}

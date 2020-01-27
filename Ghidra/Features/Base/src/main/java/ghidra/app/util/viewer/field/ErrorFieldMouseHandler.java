@@ -39,7 +39,7 @@ public class ErrorFieldMouseHandler implements FieldMouseHandlerExtension {
 		}
 		ErrorListingField errorField = (ErrorListingField) clickedObject;
 		String fieldName = errorField.getFieldFactory().getFieldName();
-		Msg.showError(this, null, "Listing Field Exception", "Exception occured while rendering '" +
+		Msg.showError(this, null, "Listing Field Exception", "Exception occurred while rendering '" +
 			fieldName + "' field", errorField.getThrowable());
 		return true;
 	}

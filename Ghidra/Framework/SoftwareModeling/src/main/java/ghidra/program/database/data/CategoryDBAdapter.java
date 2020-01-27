@@ -36,7 +36,7 @@ abstract class CategoryDBAdapter {
 
 	/**
 	 * Gets the category record for the given ID.
-	 * @param categoryID the key into the catagory table
+	 * @param categoryID the key into the category table
 	 * @return the record for the given ID or null if no record with that id exists.
 	 */
 	abstract Record getRecord(long categoryID) throws IOException;
@@ -53,7 +53,7 @@ abstract class CategoryDBAdapter {
 
 	/**
 	 * Returns a list of categoryIDs that have the given parent ID.
-	 * @param categoryID the key into the catagory table
+	 * @param categoryID the key into the category table
 	 * @return an array of categoryIDs that have the specified parent
 	 */
 	abstract long[] getRecordIdsWithParent(long categoryID) throws IOException;
@@ -61,7 +61,7 @@ abstract class CategoryDBAdapter {
 	/**
 	 * Creates a new category with the given name and parent ID.
 	 * @param name the name of the new category.
-	 * @param categoryID the key into the catagory table
+	 * @param categoryID the key into the category table
 	 * @return a new record for the new category.
 	 */
 	abstract Record createCategory(String name, long parentID) throws IOException;

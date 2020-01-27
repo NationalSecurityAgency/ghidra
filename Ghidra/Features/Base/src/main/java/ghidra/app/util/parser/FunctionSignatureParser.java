@@ -273,7 +273,7 @@ public class FunctionSignatureParser {
 	}
 
 	// The following regex pattern attempts to isolate the parameter name from
-	// the begining of a parameter specification. Since the name is optional,
+	// the beginning of a parameter specification. Since the name is optional,
 	// additional steps must be taken in code to ensure that the trailing word of
 	// a multi-word type-specified is not treated as a name (e.g., unsigned long).
 	//

@@ -130,7 +130,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	 * <code>saveChangeFile</code> is a buffer file which contains application
 	 * specific change-data associated with a new version of this file.
 	 * <code>saveChangeFile</code> is instantiated when the getSaveFile method
-	 * is successfully invoked.  This file is commited when the saveCompleted
+	 * is successfully invoked.  This file is committed when the saveCompleted
 	 * method is invoked.
 	 */
 	private LocalBufferFile saveChangeFile;

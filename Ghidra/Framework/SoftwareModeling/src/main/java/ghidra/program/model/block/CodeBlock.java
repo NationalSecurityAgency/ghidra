@@ -109,7 +109,7 @@ public interface CodeBlock extends AddressSetView {
      * Get an Iterator over the CodeBlocks that are flowed to from this
      * CodeBlock.
      * @param monitor task monitor which allows user to cancel operation.
-     * @return An iterator over CodeBlocks refered to by this Block.
+     * @return An iterator over CodeBlocks referred to by this Block.
      * @throws CancelledException if the monitor cancels the operation.
      */
     public CodeBlockReferenceIterator getDestinations(TaskMonitor monitor) throws CancelledException;
