@@ -17,6 +17,7 @@ package ghidra.program.model.address;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.Iterator;
 
 /**
  * Implementation of an AddressRange.  An AddressRange is a contiguous
@@ -228,6 +229,35 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 			result = maxAddress.compareTo(o.getMaxAddress());
 		}
 		return result;
+	}
+
+	@Override
+	public Iterator<Address> iterator() {
+		return new MyAddressIterator(minAddress, maxAddress);
+	}
+
+	private class MyAddressIterator implements Iterator<Address> {
+
+		private Address curr;
+		private Address limit;
+
+		public MyAddressIterator(Address start, Address end) {
+			this.curr = start;
+			this.limit = end;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return curr.add(1).compareTo(limit) <= 0;
+		}
+
+		@Override
+		public Address next() {
+			Address next = curr;
+			curr = curr.add(1);
+			return next;
+		}
+
 	}
 
 }
