@@ -6800,7 +6800,7 @@ main (int argc, char *argv[])
 	    putchar (c);
 	   }
 	    
-	   // CHANGE NOTICE - flush buffer for waiting program
+	   // Changed Jan 22, 2020 - flush buffer for waiting program
 	   fflush(stdout);
 	}
 

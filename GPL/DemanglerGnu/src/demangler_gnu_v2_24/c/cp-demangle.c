@@ -31,12 +31,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 
- 
-   					CHANGE NOTICE:
-This file was changed on July 1st, 2014.			
 
    					CHANGE NOTICE:
-This file was changed on July 4th, 2019.
+		This file was changed on July 22nd, 2020.
 */
 
 /* This code implements a demangler for the g++ V3 ABI.  The ABI is

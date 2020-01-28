@@ -146,19 +146,15 @@ model {
 		
 			if (version.equals(v33_1)) {
 				if (toolChain in Gcc) {
-				
-					cCompiler.args "-DSTANDALONE_DEMANGLER"
 					cCompiler.args "-DHAVE_STDLIB_H"
 					cCompiler.args "-DHAVE_STRING_H"
 				}
 				else if (toolChain in VisualCpp) {
 					cCompiler.args "/D_CONSOLE"
-					cCompiler.args "-DSTANDALONE_DEMANGLER"
 					cCompiler.args "-DHAVE_STDLIB_H"
 					cCompiler.args "-DHAVE_STRING_H"
 				}
 				else if (toolChain in Clang) {
-					cCompiler.args "-DSTANDALONE_DEMANGLER"
 					cCompiler.args "-DHAVE_STDLIB_H"
 					cCompiler.args "-DHAVE_STRING_H"
 				}
