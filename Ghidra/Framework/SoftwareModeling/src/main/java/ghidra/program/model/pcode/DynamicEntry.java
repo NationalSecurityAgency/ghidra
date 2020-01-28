@@ -89,24 +89,20 @@ public class DynamicEntry extends SymbolEntry {
 	}
 
 	/**
-	 * Build the dynamic storage object for a new DynamicEntry, given the underlying temporary
-	 * Varnode and its function model.  The hash is created from local information in the
+	 * Build a new DynamicEntry, given the underlying temporary
+	 * Varnode attached to a symbol.  The hash is created from local information in the
 	 * syntax tree near the Varnode.
 	 * @param vn is the underlying Varnode
-	 * @param high is the function model
-	 * @return the dynamic storage object
+	 * @return the new DynamicEntry
 	 */
-	public static VariableStorage buildDynamicStorage(Varnode vn, HighFunction high) {
-		DynamicHash dynamicHash = new DynamicHash(vn, high);
-		Program program = high.getFunction().getProgram();
-		long ourHash = dynamicHash.getHash();
-		try {
-			return new VariableStorage(program, AddressSpace.HASH_SPACE.getAddress(ourHash),
-				vn.getSize());
-		}
-		catch (InvalidInputException e) {
-			throw new AssertException("Unexpected exception", e);
-		}
+	public static DynamicEntry build(Varnode vn) {
+		HighVariable highVariable = vn.getHigh();
+		HighSymbol highSymbol = highVariable.getSymbol();
+		HighFunction highFunction = highSymbol.getHighFunction();
+		DynamicHash dynamicHash = new DynamicHash(vn, highFunction);
+		DynamicEntry entry =
+			new DynamicEntry(highSymbol, dynamicHash.getAddress(), dynamicHash.getHash());
+		return entry;
 	}
 
 	@Override

@@ -362,7 +362,6 @@ public:
   bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial) const;
   bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
   void transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset);
-  void splitVarnode(Varnode *vn,int4 lowsize,Varnode *&vnlo,Varnode *& vnhi);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image
   bool replaceVolatile(Varnode *vn);		///< Replace accesses of the given Varnode with \e volatile operations
   void markIndirectOnly(void);			///< Mark \e illegal \e input Varnodes used only in INDIRECTs

@@ -282,7 +282,7 @@ void Merge::mergeOpcode(OpCode opc)
 	vn2 = op->getIn(j);
 	if (!mergeTestBasic(vn2)) continue;
 	if (mergeTestRequired(vn1->getHigh(),vn2->getHigh()))
-	  merge(vn1->getHigh(),vn2->getHigh(),true);	// Treat as speculative
+	  merge(vn1->getHigh(),vn2->getHigh(),false);	// This is a required merge
       }
     }
   }

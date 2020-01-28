@@ -21,6 +21,11 @@
 
 #include "database.hh"
 
+/// \brief A symbol name recommendation with its associated storage location
+///
+/// The name is associated with a static Address and use point in the code. Symbols
+/// present at the end of function decompilation without a name can acquire \b this name
+/// if their storage matches.
 class NameRecommend {
   Address addr;			///< The starting address of the storage location
   Address useaddr;		///< The code address at the point of use
@@ -37,7 +42,7 @@ public:
   uint8 getSymbolId(void) const { return symbolId; }		///< Get the original Symbol id
 };
 
-/// \brief A name recommendation for a particular dynamic location
+/// \brief A name recommendation for a particular dynamic storage location
 ///
 /// A recommendation for a symbol name whose storage is dynamic. The storage
 /// is identified using the DynamicHash mechanism and may or may not exist.

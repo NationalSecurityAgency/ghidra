@@ -2457,6 +2457,14 @@ void ActionNameVars::linkSpacebaseSymbol(Varnode *vn,Funcdata &data,vector<Varno
   }
 }
 
+/// \brief Link formal Symbols to their HighVariable representative in the given Function
+///
+/// Run through all HighVariables for the given function and set up the explicit mapping with
+/// existing Symbol objects.  If there is no matching Symbol for a given HighVariable, a new
+/// Symbol is created. Any Symbol that does not have a name is added to a list for further
+/// name resolution.
+/// \param data is the given function
+/// \param namerec is the container for collecting Symbols with a name
 void ActionNameVars::linkSymbols(Funcdata &data,vector<Varnode *> &namerec)
 
 {
@@ -3870,8 +3878,6 @@ int4 ActionDynamicSymbols::apply(Funcdata &data)
   while(iter != enditer) {
     SymbolEntry *entry = &(*iter);
     ++iter;
-    // FIXME: Setting the symbol here (for the first time) gives the type no time to propagate properly
-    // Currently the casts aren't set properly
     if (data.attemptDynamicMappingLate(entry, dhash))
       count += 1;
   }
@@ -4857,6 +4863,7 @@ void universal_action(Architecture *conf)
   act->addAction( new ActionMergeMultiEntry("merge") );
   act->addAction( new ActionMergeCopy("merge") );
   act->addAction( new ActionDominantCopy("merge") );
+  act->addAction( new ActionDynamicSymbols("dynamic") );
   act->addAction( new ActionMarkIndirectOnly("merge") ); // Must come after required merges but before speculative
   act->addAction( new ActionMergeAdjacent("merge") );
   act->addAction( new ActionMergeType("merge") );

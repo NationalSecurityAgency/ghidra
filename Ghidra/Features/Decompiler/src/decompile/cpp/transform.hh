@@ -97,12 +97,12 @@ public:
     LanedIterator(const LanedRegister *lanedR) { size = 0; mask = lanedR->sizeBitMask; normalize(); }	///< Constructor
     LanedIterator(void) { size = -1; mask = 0; }	///< Constructor for ending iterator
     LanedIterator &operator++(void) { size += 1; normalize(); return *this; }	///< Preincrement operator
-    int4 operator*(void) const { return size; }		/// Dereference operator
+    int4 operator*(void) const { return size; }		///< Dereference operator
     LanedIterator &operator=(const LanedIterator &op2) { size = op2.size; mask = op2.mask; return *this; }	///< Assignment
     bool operator==(const LanedIterator &op2) const { return (size == op2.size); }	///< Equal operator
     bool operator!=(const LanedIterator &op2) const { return (size != op2.size); }	///< Not-equal operator
   };
-  typedef LanedIterator const_iterator;
+  typedef LanedIterator const_iterator;		///< Iterator over possible lane sizes for this register
 private:
   int4 wholeSize;		///< Size of the whole register
   uint4 sizeBitMask;		///< A 1-bit for every permissible lane size

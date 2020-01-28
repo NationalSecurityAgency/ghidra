@@ -23,15 +23,19 @@ import org.junit.Test;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.cmd.function.CreateFunctionCmd;
+import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.ClangVariableToken;
 import ghidra.app.decompiler.component.ClangTextField;
 import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.app.plugin.core.decompile.actions.RenameGlobalVariableTask;
-import ghidra.app.plugin.core.decompile.actions.RenameVariableTask;
+import ghidra.app.plugin.core.decompile.actions.*;
+import ghidra.framework.options.Options;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Data;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Undefined;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
@@ -85,6 +89,29 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		waitForDecompiler();
 	}
 
+	private void deleteFunction(String address) {
+		modifyProgram(p -> {
+			Address addr = p.getAddressFactory().getAddress(address);
+			DeleteFunctionCmd deleteCmd = new DeleteFunctionCmd(addr);
+			deleteCmd.applyTo(p);
+		});
+	}
+
+	private void createFunction(String address) {
+		modifyProgram(p -> {
+			Address addr = p.getAddressFactory().getAddress(address);
+			CreateFunctionCmd createCmd = new CreateFunctionCmd(addr);
+			createCmd.applyTo(p);
+		});
+	}
+
+	private void turnOffAnalysis() {
+		modifyProgram(p -> {
+			Options options = p.getOptions(Program.ANALYSIS_PROPERTIES);
+			options.setBoolean("Decompiler Parameter ID", false);
+			options.setBoolean("Stack", false);
+		});
+	}
 	private void renameVariable(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
 		RenameVariableTask rename =
 			new RenameVariableTask(provider.getTool(), highSymbol.getProgram(),
@@ -92,6 +119,16 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		assertTrue(rename.isValid(newName));
 		modifyProgram(p -> {
 			rename.commit();
+		});
+		waitForDecompiler();
+	}
+
+	private void isolateVariable(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
+		IsolateVariableTask isolate = new IsolateVariableTask(provider.getTool(), program,
+			provider.getDecompilerPanel(), tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
+		assertTrue(isolate.isValid(newName));
+		modifyProgram(p -> {
+			isolate.commit();
 		});
 		waitForDecompiler();
 	}
@@ -302,5 +339,65 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		highSymbol = variable.getSymbol();
 		entry = highSymbol.getFirstWholeMap();
 		assertEquals(usepoint, entry.getPCAdress());		// Make sure the same usepoint comes back
+	}
+
+	@Test
+	public void testHighSymbol_freeParameter() {
+		deleteFunction("10015a6");
+		turnOffAnalysis();
+		createFunction("10015a6");
+		decompile("10015a6");
+		ClangTextField line = getLineContaining("param_4 +");
+		FieldLocation loc = loc(line.getLineNumber(), 23);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		HighSymbol highSymbol = token.getHighVariable().getSymbol();
+		renameVariable(highSymbol, token, "newParam");
+		line = getLineContaining("newParam +");
+		token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		HighVariable variable = token.getHighVariable();
+		assertTrue(variable instanceof HighParam);
+		assertEquals(((HighParam) variable).getSlot(), 3);
+		highSymbol = variable.getSymbol();
+		assertTrue(highSymbol.isNameLocked());
+		assertFalse(highSymbol.isTypeLocked());
+		Function function = highSymbol.getHighFunction().getFunction();
+		Parameter[] parameters = function.getParameters();
+		assertEquals(parameters.length, 4);
+		for (int i = 0; i < 4; ++i) {
+			DataType dt = parameters[i].getDataType();
+			assertTrue(Undefined.isUndefined(dt));
+			assertEquals(dt.getLength(), 4);
+		}
+		assertEquals(parameters[3].getName(), "newParam");
+	}
+
+	@Test
+	public void testHighSymbol_isolate() {
+		decompile("1002a22");
+		ClangTextField line = getLineContaining(" >> 1");
+		FieldLocation loc = loc(line.getLineNumber(), 2);
+		ClangToken token = line.getToken(loc);
+		assertTrue(token instanceof ClangVariableToken);
+		HighVariable variable = token.getHighVariable();
+		Varnode[] instances = variable.getInstances();
+		short maxMerge = 0;
+		for (Varnode vn : instances) {
+			if (vn.getMergeGroup() > maxMerge) {
+				maxMerge = vn.getMergeGroup();
+			}
+		}
+		assertEquals(maxMerge, 1);		// Make sure there are 2 merge groups
+		String name = token.getText();
+		isolateVariable(variable.getSymbol(), token, name);
+		line = getLineContaining(" >> 1");
+		token = line.getToken(loc);
+		variable = token.getHighVariable();
+		assertEquals(variable.getInstances().length, 1);
+		HighSymbol highSymbol = variable.getSymbol();
+		assertEquals(highSymbol.getName(), name);
+		assertTrue(highSymbol.isNameLocked());
+		assertTrue(highSymbol.isTypeLocked());
 	}
 }

@@ -510,8 +510,9 @@ public class HighFunctionDBUtil {
 			HighVariable tmpHigh = highSymbol.getHighVariable();
 			if (!storage.isHashStorage() && tmpHigh != null &&
 				tmpHigh.requiresDynamicStorage()) {
-				storage =
-					DynamicEntry.buildDynamicStorage(tmpHigh.getRepresentative(), highFunction);
+				DynamicEntry entry = DynamicEntry.build(tmpHigh.getRepresentative());
+				storage = entry.getStorage();
+				pcAddr = entry.getPCAdress();	// The address may change from original Varnode
 			}
 			else {
 				Variable var = clearConflictingLocalVariables(function, storage, pcAddr);

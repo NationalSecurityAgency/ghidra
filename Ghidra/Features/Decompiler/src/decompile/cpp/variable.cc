@@ -23,10 +23,11 @@ HighVariable::HighVariable(Varnode *vn)
 
 {
   numMergeClasses = 1;
-  highflags = flagsdirty | typedirty | coverdirty;
+  highflags = flagsdirty | namerepdirty | typedirty | coverdirty;
   flags = 0;
   type = (Datatype *)0;
   symbol = (Symbol *)0;
+  nameRepresentative = (Varnode *)0;
   symboloffset = -1;
   inst.push_back(vn);
   vn->setHigh( this, numMergeClasses-1 );
@@ -66,7 +67,7 @@ void HighVariable::setSymbol(Varnode *vn) const
 /// is a constant address reference to the Symbol and the Varnode holds the reference, not
 /// the actual value of the Symbol.
 /// \param sym is the given Symbol to attach
-/// \off is the byte offset into the Symbol of the reference
+/// \param off is the byte offset into the Symbol of the reference
 void HighVariable::setSymbolReference(Symbol *sym,int4 off)
 
 {
@@ -229,18 +230,22 @@ bool HighVariable::compareName(Varnode *vn1,Varnode *vn2)
 Varnode *HighVariable::getNameRepresentative(void) const
 
 {
+  if ((highflags & namerepdirty)==0)
+    return nameRepresentative;		// Name representative is up to date
+  highflags &= ~namerepdirty;
+
   vector<Varnode *>::const_iterator iter;
-  Varnode *rep,*vn;
+  Varnode *vn;
 
   iter = inst.begin();
-  rep = *iter;
+  nameRepresentative = *iter;
   ++iter;
   for(;iter!=inst.end();++iter) {
     vn = *iter;
-    if (compareName(rep,vn))
-      rep = vn;
+    if (compareName(nameRepresentative,vn))
+      nameRepresentative = vn;
   }
-  return rep;
+  return nameRepresentative;
 }
 
 /// Search for the given Varnode and cut it out of the list, marking all properties as \e dirty.
@@ -254,7 +259,7 @@ void HighVariable::remove(Varnode *vn)
   for(;iter!=inst.end();++iter) {
     if (*iter == vn) {
       inst.erase(iter);
-      highflags |= (flagsdirty|coverdirty|typedirty);
+      highflags |= (flagsdirty|namerepdirty|coverdirty|typedirty);
       if (vn->getSymbolEntry() != (SymbolEntry *)0)
 	highflags |= symboldirty;
       return;
@@ -296,7 +301,7 @@ void HighVariable::merge(HighVariable *tv2,bool isspeculative)
 
   if (tv2 == this) return;
 
-  highflags |= (flagsdirty|typedirty);
+  highflags |= (flagsdirty|namerepdirty|typedirty);
   if (tv2->symbol != (Symbol *)0) {		// Check if we inherit a Symbol
     if ((tv2->highflags & symboldirty)==0) {
       symbol = tv2->symbol;			// Overwrite our Symbol (assume it is the same)
