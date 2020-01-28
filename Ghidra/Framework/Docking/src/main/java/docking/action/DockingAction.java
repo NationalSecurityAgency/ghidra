@@ -425,8 +425,9 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// menu path
 		if (menuBarData != null) {
-			buffer.append("        MENU PATH:           ").append(
-				menuBarData.getMenuPathAsString());
+			buffer.append("        MENU PATH:           ")
+					.append(
+						menuBarData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
@@ -448,8 +449,9 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// popup menu path
 		if (popupMenuData != null) {
-			buffer.append("        POPUP PATH:         ").append(
-				popupMenuData.getMenuPathAsString());
+			buffer.append("        POPUP PATH:         ")
+					.append(
+						popupMenuData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
@@ -581,12 +583,13 @@ public abstract class DockingAction implements DockingActionIf {
 			return;
 		}
 
-		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUs();
+		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUsOrABuilder();
 	}
 
-	protected String getInceptionFromTheFirstClassThatIsNotUs() {
+	protected String getInceptionFromTheFirstClassThatIsNotUsOrABuilder() {
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(getClass());
-		StackTraceElement[] trace = t.getStackTrace();
+		StackTraceElement[] trace =
+			ReflectionUtilities.filterStackTrace(t.getStackTrace(), "ActionBuilder");
 		String classInfo = trace[0].toString();
 		return classInfo;
 	}

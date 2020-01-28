@@ -853,8 +853,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		@Override
-		protected String getInceptionFromTheFirstClassThatIsNotUs() {
-			// overridden to show who created the provider, as that is what this action represents
+		protected String getInceptionFromTheFirstClassThatIsNotUsOrABuilder() {
 			return inceptionInformation;
 		}
 	}
