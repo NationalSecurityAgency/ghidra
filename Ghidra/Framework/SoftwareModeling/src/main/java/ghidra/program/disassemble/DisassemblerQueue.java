@@ -79,8 +79,8 @@ class DisassemblerQueue {
 		currentBranchQueue = new TreeSet<InstructionBlockFlow>(ORDERED_FLOW_COMPARATOR);
 		processedBranchFlows = new HashSet<InstructionBlockFlow>(48);
 
-		orderedSeedQueue.add(new InstructionBlockFlow(startAddr, null,
-			InstructionBlockFlow.Type.PRIORITY));
+		orderedSeedQueue.add(
+			new InstructionBlockFlow(startAddr, null, InstructionBlockFlow.Type.PRIORITY));
 	}
 
 	/**
@@ -174,6 +174,9 @@ class DisassemblerQueue {
 				branchFlow = currentBranchQueue.first();
 				currentBranchQueue.remove(branchFlow);
 			}
+			if (processedBranchFlows.contains(branchFlow)) {
+				continue;
+			}
 			processedBranchFlows.add(branchFlow);
 
 			Address blockAddr = branchFlow.getDestinationAddress();
@@ -202,7 +205,7 @@ class DisassemblerQueue {
 			DisassemblerConflictHandler conflictHandler) {
 
 		int disassembleCount = 0;
-		
+
 		AddressSet conflictAddrs = new AddressSet();
 
 		// check for disassembly errors and deferred call queuing
@@ -232,8 +235,8 @@ class DisassemblerQueue {
 					if (flowType != Type.CALL && processedBranchFlows.contains(blockFlow)) {
 						continue;
 					}
-					if (conflict == null ||
-						conflict.getInstructionAddress().compareTo(blockFlow.getFlowFromAddress()) > 0) {
+					if (conflict == null || conflict.getInstructionAddress().compareTo(
+						blockFlow.getFlowFromAddress()) > 0) {
 						// Add good flows to priorityBranchSet to ensure that future context is
 						// properly consumed with a guaranteed block start.  We don't
 						// want block to be dependent upon a parent block
