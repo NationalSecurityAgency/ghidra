@@ -48,8 +48,8 @@ class ApplyTypeDefs {
 	 * @throws CancelledException if monitor is cancelled
 	 * @throws SAXParseException PDB XML parse failure
 	 */
-	ApplyTypeDefs(PdbParser pdbParser, XmlPullParser xmlParser, TaskMonitor monitor,
-			MessageLog log) throws CancelledException, SAXParseException {
+	ApplyTypeDefs(PdbParser pdbParser, XmlPullParser xmlParser, TaskMonitor monitor, MessageLog log)
+			throws CancelledException, SAXParseException {
 		this.pdbParser = pdbParser;
 		this.log = log;
 
@@ -99,13 +99,13 @@ class ApplyTypeDefs {
 
 			WrappedDataType baseDataType = pdbParser.findDataType(baseDatatypeName);
 			if (baseDataType == null) {
-				log.appendMsg("Error: failed to resolve typedef: " + datatypeName + " -> " +
-					baseDatatypeName);
+				log.appendMsg("PDB",
+					"Failed to resolve typedef: " + datatypeName + " -> " + baseDatatypeName);
 				continue;
 			}
 			if (baseDataType.isZeroLengthArray()) {
-				log.appendMsg(
-					"Error: zero length array not supported for typedef: " + datatypeName);
+				log.appendMsg("PDB",
+					"Zero length array not supported for typedef: " + datatypeName);
 				continue;
 			}
 
