@@ -37,13 +37,13 @@ def accept_file(li, filename):
     # read 16K bytes to allow for the DTD
     data = li.read(0x4000)
     # look for start of <PROGRAM> element
-    start = data.find("<PROGRAM")
+    start = data.find(b"<PROGRAM")
     if start >= 0:
-        s = data.find("<PROCESSOR ")
+        s = data.find(b"<PROCESSOR ")
         p = data[s+11:]
-        e = p.find("/>")
+        e = p.find(b"/>")
         proc = p[:e]
-        ida_kernwin.info("Processor specified in the XML file is:\n" + proc +
+        ida_kernwin.info("Processor specified in the XML file is:\n" + proc.decode() +
                          "\n\nYou must select and set the compatible " +
                          "IDA processor type.")
         return { 'format': "XML PROGRAM file", 'options': 0x8001 }
@@ -78,8 +78,9 @@ def load_file(li, neflags, format):
         idc.warning(msg)
     except:
         print("\nHouston, we have a problem!")
+        exc_type, exc_value, exc_traceback = sys.exc_info() 
         msg = "***** Exception occurred: XML loader failed! *****"
-        print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+        print("\n" + msg + "\n", exc_type, exc_value)
         print(event, element.tag, element.attrib)
         idc.warning(msg)
     finally:
