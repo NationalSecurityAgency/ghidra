@@ -109,6 +109,14 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 		return (ClangTextField) line;
 	}
 
+	protected ClangTextField getFieldForLine(DecompilerProvider theProvider, int lineNumber) {
+
+		DecompilerPanel panel = theProvider.getDecompilerPanel();
+		List<Field> fields = panel.getFields();
+		Field line = fields.get(lineNumber - 1); // -1 for 1-based line number
+		return (ClangTextField) line;
+	}
+
 	// note: the index is 0-based; use getFieldForLine() when using 1-based line numbers
 	protected ClangTextField getFieldForIndex(int lineIndex) {
 
@@ -119,15 +127,16 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 	}
 
 	protected ClangToken getToken(int line, int col) {
-		FieldLocation loc = loc(line, col);
-		ClangTextField field = getFieldForLine(line);
-		ClangToken token = field.getToken(loc);
-		return token;
+		return getToken(loc(line, col));
 	}
 
 	protected ClangToken getToken(FieldLocation loc) {
+		return getToken(provider, loc);
+	}
+
+	protected ClangToken getToken(DecompilerProvider theProvider, FieldLocation loc) {
 		int lineNumber = loc.getIndex().intValue() + 1; // 0-based
-		ClangTextField field = getFieldForLine(lineNumber);
+		ClangTextField field = getFieldForLine(theProvider, lineNumber);
 		ClangToken token = field.getToken(loc);
 		return token;
 	}
@@ -141,9 +150,13 @@ public abstract class AbstractDecompilerTest extends AbstractProgramBasedTest {
 	 * @return the token under the cursor
 	 */
 	protected ClangToken getToken() {
-		DecompilerPanel panel = getDecompilerPanel();
+		return getToken(provider);
+	}
+
+	protected ClangToken getToken(DecompilerProvider theProvider) {
+		DecompilerPanel panel = theProvider.getDecompilerPanel();
 		FieldLocation loc = panel.getCursorPosition();
-		return getToken(loc);
+		return getToken(theProvider, loc);
 	}
 
 	protected String getTokenText(FieldLocation loc) {
