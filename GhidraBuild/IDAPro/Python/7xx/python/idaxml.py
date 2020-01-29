@@ -1716,7 +1716,6 @@ class XmlExporter(IdaXml):
         Args:
             addr: Integer representing a program address.
         """
-        print(type(addr))
         temp = "0x%X" % (addr - ida_segment.get_segm_base(ida_segment.getseg(addr)))
         space = self.get_space_name(addr)
         if space != None:
