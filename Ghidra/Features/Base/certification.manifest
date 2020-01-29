@@ -724,7 +724,7 @@ src/main/help/help/topics/ShowInstructionInfoPlugin/images/ProcessorManualOption
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/RawInstructionDisplay.png||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/ShowInstructionInfo.png||GHIDRA||||END|
 src/main/help/help/topics/ShowInstructionInfoPlugin/images/UnableToLaunch.png||GHIDRA||||END|
-src/main/help/help/topics/Snapshots/Snapshots.html||GHIDRA||reviewed||END|
+src/main/help/help/topics/Snapshots/Snapshots.html||GHIDRA||||END|
 src/main/help/help/topics/Snapshots/images/camera-photo.png||Tango Icons - Public Domain|||tango|END|
 src/main/help/help/topics/StackEditor/StackEditor.html||GHIDRA||||END|
 src/main/help/help/topics/StackEditor/images/Array.png||GHIDRA||||END|
