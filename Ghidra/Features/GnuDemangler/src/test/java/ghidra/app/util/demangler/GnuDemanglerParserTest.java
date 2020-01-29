@@ -37,10 +37,6 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		parser = new GnuDemanglerParser(process);
 	}
 
-	/**
-	 * This method just tries to demangled a bunch o'
-	 * mangled names just checking for stack traces.
-	 */
 	@Test
 	public void test() throws Exception {
 		long start = System.currentTimeMillis();
@@ -339,48 +335,6 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		List<DemangledDataType> parameters = method.getParameters();
 		assertEquals(1, parameters.size());
 		assertEquals("float", parameters.get(0).toSignature());
-	}
-
-	@Test
-	public void testOperator() throws Exception {
-		String mangled = "_ZN6MagickltERKNS_10CoordinateES2_";
-
-		String demangled = process.demangle(mangled);
-
-		DemangledObject object = parser.parse(mangled, demangled);
-		assertTrue(object instanceof DemangledMethod);
-		assertName(object, "operator<", "Magick");
-
-		DemangledMethod method = (DemangledMethod) object;
-		assertEquals(
-			"undefined Magick::operator<(Magick::Coordinate const &,Magick::Coordinate const &)",
-			method.getSignature(false));
-
-		List<DemangledDataType> parameters = method.getParameters();
-		assertEquals(2, parameters.size());
-		assertEquals("Magick::Coordinate const &", parameters.get(0).toSignature());
-		assertEquals("Magick::Coordinate const &", parameters.get(1).toSignature());
-	}
-
-	@Test
-	public void testOperatorCastTo() throws Exception {
-		//
-		// Mangled: _ZNKSt17integral_constantIbLb0EEcvbEv
-		// 
-		// Demangled: std::integral_constant<bool, false>::operator bool() const
-
-		String mangled = "_ZNKSt17integral_constantIbLb0EEcvbEv";
-
-		String demangled = process.demangle(mangled);
-
-		DemangledObject object = parser.parse(mangled, demangled);
-		assertNotNull(object);
-		assertTrue(object instanceof DemangledFunction);
-
-		String signature = object.getSignature(false);
-		assertEquals(
-			"bool std::integral_constant::operator.cast.to.bool(void)",
-			signature);
 	}
 
 	@Test
@@ -714,6 +668,48 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testOperator() throws Exception {
+		String mangled = "_ZN6MagickltERKNS_10CoordinateES2_";
+
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertTrue(object instanceof DemangledMethod);
+		assertName(object, "operator<", "Magick");
+
+		DemangledMethod method = (DemangledMethod) object;
+		assertEquals(
+			"undefined Magick::operator<(Magick::Coordinate const &,Magick::Coordinate const &)",
+			method.getSignature(false));
+
+		List<DemangledDataType> parameters = method.getParameters();
+		assertEquals(2, parameters.size());
+		assertEquals("Magick::Coordinate const &", parameters.get(0).toSignature());
+		assertEquals("Magick::Coordinate const &", parameters.get(1).toSignature());
+	}
+
+	@Test
+	public void testOperatorCastTo() throws Exception {
+		//
+		// Mangled: _ZNKSt17integral_constantIbLb0EEcvbEv
+		// 
+		// Demangled: std::integral_constant<bool, false>::operator bool() const
+
+		String mangled = "_ZNKSt17integral_constantIbLb0EEcvbEv";
+
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertTrue(object instanceof DemangledFunction);
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"bool std::integral_constant::operator.cast.to.bool(void)",
+			signature);
+	}
+
+	@Test
 	public void testConversionOperator() throws Exception {
 
 		//
@@ -737,6 +733,13 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 	@Test
 	public void testConversionOperatorWithConst() throws Exception {
+
+		// 
+		//
+		// Mangled: _ZN12_GLOBAL__N_120decode_charset_iconvEPKc
+		//
+		// Demangled: GCC_IndicationPDU::operator GCC_ApplicationInvokeIndication const&() const
+		//
 
 		//
 		// Converts the object upon which it is overridden to the given value.
