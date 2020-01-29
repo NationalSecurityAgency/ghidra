@@ -89,8 +89,10 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		// look for the info panel
 		MultiLineLabel label = findComponent(panel, MultiLineLabel.class);
 		String str = "To add or change a key binding, select an action\n" +
-			" and type any key combination.\n" + "To remove a key binding, select an action and\n" +
-			"press <Enter> or <Backspace>.";
+			"and type any key combination\n" +
+			" \n" +
+			"To remove a key binding, select an action and\n" +
+			"press <Enter> or <Backspace>";
 
 		assertEquals(str, label.getLabel());
 
