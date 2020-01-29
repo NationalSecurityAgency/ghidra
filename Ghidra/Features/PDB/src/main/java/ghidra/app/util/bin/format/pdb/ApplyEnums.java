@@ -77,7 +77,7 @@ class ApplyEnums {
 			enumdt.add(name, memberValue);
 		}
 		catch (Exception e) {
-			log.appendMsg(e.getMessage());
+			log.appendMsg("PDB", "Enum " + enumdt.getName() + ": " + e.getMessage());
 		}
 	}
 }

@@ -26,7 +26,10 @@ import ghidra.util.task.TaskMonitor;
 
 class PdbDataTypeParser {
 
-	private final static String NO_TYPE = "NoType";
+	private final static String NO_TYPE = "<NoType>";
+
+	private final static WrappedDataType NO_TYPE_DATATYPE =
+		new WrappedDataType(new TypedefDataType(NO_TYPE, Undefined1DataType.dataType), false, true);
 
 	private DataTypeManager programDataTypeMgr;
 	private DataTypeManagerService service;
@@ -76,12 +79,12 @@ class PdbDataTypeParser {
 		return programDataTypeMgr;
 	}
 
-	void flushDataTypeCache() {
+	void flushDataTypeCache(TaskMonitor monitor) throws CancelledException {
 		for (DataType dt : dataTypeCache.values()) {
+			monitor.checkCanceled();
 			programDataTypeMgr.resolve(dt,
 				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
 		}
-		dataTypeCache.clear();
 	}
 
 	/**
@@ -111,7 +114,7 @@ class PdbDataTypeParser {
 	}
 
 	void clear() {
-		dataTypeCache.clear();
+		dataTypeCache = new HashMap<>();
 	}
 
 	DataType getCachedDataType(String key) {
@@ -204,7 +207,7 @@ class PdbDataTypeParser {
 		}
 
 		if (NO_TYPE.equals(datatype)) {
-			return new WrappedDataType(VoidDataType.dataType, false); //TODO make it void?
+			return NO_TYPE_DATATYPE;
 		}
 
 		String dataTypeName = datatype;
@@ -265,7 +268,7 @@ class PdbDataTypeParser {
 			dt = createPointer(dt);
 		}
 
-		return new WrappedDataType(dt, isZeroLengthArray);
+		return new WrappedDataType(dt, isZeroLengthArray, false);
 	}
 
 	private String parseArrayDimensions(String datatype, List<Integer> arrayDimensions) {

@@ -272,6 +272,12 @@ class DefaultCompositeMember extends CompositeMember {
 		}
 		Structure struct = (Structure) getDataType();
 
+		if (struct.isNotYetDefined() && preferredSize > 0) {
+			// handle special case of empty structure
+			struct.growStructure(preferredSize);
+			return;
+		}
+
 		if (struct.getLength() < preferredSize) {
 			struct.growStructure(preferredSize - struct.getLength());
 			return;
@@ -302,7 +308,18 @@ class DefaultCompositeMember extends CompositeMember {
 	 */
 	private void alignComposite(int preferredSize) {
 
-		Composite copy = (Composite) memberDataType.copy(dataTypeManager);
+		// don't attempt to align empty composite - don't complain
+		if (isStructureContainer()) {
+			if (structureMemberOffsetMap.isEmpty()) {
+				return;
+			}
+		}
+		else if (unionMemberList.isEmpty()) {
+			return;
+		}
+
+		Composite composite = (Composite) memberDataType;
+		Composite copy = (Composite) composite.copy(dataTypeManager);
 
 		int pack = 0;
 		copy.setPackingValue(pack);
@@ -314,12 +331,12 @@ class DefaultCompositeMember extends CompositeMember {
 			alignOK = isGoodAlignment(copy, preferredSize);
 		}
 		if (alignOK) {
-			((Composite) memberDataType).setPackingValue(pack);
+			composite.setPackingValue(pack);
 		}
 		else if (errorConsumer != null && !isClass) { // don't complain about Class structs which always fail
 			String anonymousStr = parent != null ? " anonymous " : "";
 			errorConsumer.accept("PDB " + anonymousStr + memberType +
-				" reconstruction failed to align " + memberDataType.getPathName());
+				" reconstruction failed to align " + composite.getPathName());
 		}
 	}
 
@@ -467,35 +484,6 @@ class DefaultCompositeMember extends CompositeMember {
 			type = memberDataTypeName;
 		}
 		return "[CompositeMember: " + memberOffset + " " + memberName + " " + type + "]";
-	}
-
-	/**
-	 * <code>DataTypeResolver</code> provides the ability to resolve a member's data-type 
-	 * at the time of construction.
-	 */
-	interface DataTypeResolver {
-		/**
-		 * Find the specified member's data type
-		 * @param member composite member to be resolved
-		 * @return data-type which corresponds to the specified member's data-type name or null
-		 * if unable to resolve.
-		 * @throws CancelledException if operation cancelled
-		 */
-		WrappedDataType findDataType(DefaultCompositeMember member) throws CancelledException;
-
-		/**
-		 * Callback to resolve and finalize composite definition.  The caller may return immediately 
-		 * if composite as previously been resolved as reflected by the composite datatype. 
-		 * This callback is necessary to ensure that the composite alignment has been 
-		 * established prior to finalizing the compsoite currently being resolved.
-		 * @param memberDefinition member definition object
-		 * @param composite composite member datatype which corresponds to the specified
-		 * memberDefinition.
-		 * @param monitor task monitor
-		 * @throws CancelledException
-		 */
-		void resolveComposite(PdbMember compositeDefinition, Composite composite,
-				TaskMonitor monitor) throws CancelledException;
 	}
 
 	/**
@@ -1048,7 +1036,8 @@ class DefaultCompositeMember extends CompositeMember {
 	boolean addMember(DefaultCompositeMember member) {
 
 		if (member.memberDataType == null || member.memberDataType.getLength() <= 0) {
-			Msg.debug(this, "Failed to resolve datatype " + member.getDataTypeName());
+			Msg.debug(this, "Failed to resolve member datatype for '" + getDataTypeName() + "': " +
+				member.getDataTypeName());
 			return false;
 		}
 
