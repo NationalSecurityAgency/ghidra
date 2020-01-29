@@ -1214,7 +1214,7 @@ public class HeadlessAnalyzer {
 			if (!readOnlyFile) { // can't change anything if read-only file
 
 				// Undo checkout of it is still checked-out and either the file is to be 
-				// deleted, or we just checked it out and file changes have been comitted
+				// deleted, or we just checked it out and file changes have been committed
 				if (domFile.isCheckedOut()) {
 					if (!keepFile ||
 						(terminateCheckoutWhenDone && !domFile.modifiedSinceCheckout())) {

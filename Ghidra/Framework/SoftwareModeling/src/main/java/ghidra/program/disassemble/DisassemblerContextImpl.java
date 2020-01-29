@@ -879,7 +879,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	}
 	
 	/**
-	 * Returns the future register value at the specified address that occured because of a flow
+	 * Returns the future register value at the specified address that occurred because of a flow
 	 * from the fromAddr.  If no future value is stored, it will return the value stored in the program.
 	 *
 	 * @param register the register to get a value for.
@@ -914,7 +914,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	}
 	
 	/**
-	 * Returns the future RegisterValue at the specified address that occured because of a flow from
+	 * Returns the future RegisterValue at the specified address that occurred because of a flow from
 	 * the fromAddr.  If no future value is stored, it will return the value stored in the program.
 	 * The value returned may not have a complete value for the requested register.
 	 * 

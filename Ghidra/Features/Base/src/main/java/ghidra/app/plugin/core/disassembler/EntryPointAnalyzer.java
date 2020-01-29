@@ -138,7 +138,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Process the items on the do later set.  If doing block analysis, then this is the initial
-	 * analysis of the program, so schedule the do later set after some analysis has occured.
+	 * analysis of the program, so schedule the do later set after some analysis has occurred.
 	 * 
 	 * @param program - this program
 	 * @param monitor - monitor
@@ -313,7 +313,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			}
 
 			//  It isn't smart enough to pick up
-			//    valid wierd code.  Need to look at things that are marked as an entry point
+			//    valid weird code.  Need to look at things that are marked as an entry point
 			//    to see if we should disassemble...
 			//  Save the bad ones to do last.
 			Symbol symbol = symbolTable.getPrimarySymbol(entry);

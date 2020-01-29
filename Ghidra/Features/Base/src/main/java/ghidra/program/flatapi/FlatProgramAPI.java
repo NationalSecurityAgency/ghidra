@@ -1034,7 +1034,7 @@ public class FlatProgramAPI {
 	public final Function getFunctionBefore(Address address) {
 		FunctionIterator iterator = currentProgram.getListing().getFunctions(address, false);
 		// skip over this function.
-		// This is wierd, but if you have multiple overlay spaces or address spaces,
+		// This is weird, but if you have multiple overlay spaces or address spaces,
 		// you WILL miss functions by not using the iterator and doing address math yourself.
 		if (!iterator.hasNext()) {
 			return null;
@@ -1074,7 +1074,7 @@ public class FlatProgramAPI {
 	public final Function getFunctionAfter(Address address) {
 		FunctionIterator iterator = currentProgram.getListing().getFunctions(address, true);
 		// skip over this function.
-		// This is wierd, but if you have multiple overlay spaces or address spaces,
+		// This is weird, but if you have multiple overlay spaces or address spaces,
 		// you WILL miss functions by not using the iterator and doing address math yourself.
 		if (!iterator.hasNext()) {
 			return null;

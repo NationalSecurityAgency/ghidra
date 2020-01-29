@@ -294,7 +294,7 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 
 			// TODO: should unaff_ be checked?
 
-			// TODO: should wierd stack references be checked?
+			// TODO: should weird stack references be checked?
 		}
 
 		return false;

@@ -66,7 +66,7 @@ class Varnode {
 public:
   /// There are a large number of boolean attributes that can be placed on a Varnode.
   /// Some are calculated and maintained by the friend classes Funcdata and VarnodeBank, 
-  /// and others can be set and cleared publically by separate subsystems.
+  /// and others can be set and cleared publicly by separate subsystems.
   enum varnode_flags {
     mark = 0x01,	///< Prevents infinite loops
     constant = 0x02,	///< The varnode is constant

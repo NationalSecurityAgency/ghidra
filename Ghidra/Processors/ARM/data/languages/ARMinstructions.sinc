@@ -1426,7 +1426,7 @@ with : ARMcondCk=1 {
 # other ARM instructions to avoid incorrect
 # constructor matching for those that use the
 # COND subconstructor.  This also ensures
-# that the various VFP instructions supercede the 
+# that the various VFP instructions supersede the 
 # CDP/MCR/MRC general coprocessor instructions
 #
 #################################################

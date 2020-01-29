@@ -203,7 +203,7 @@ public interface FileSystem {
 	 * @param folderPath path of folder to be deleted
 	 * @throws FolderNotEmptyException Thrown if the folder is not empty.
 	 * @throws FileNotFoundException if there is no folder with the given path name.
-	 * @throws IOException if error occured during delete.
+	 * @throws IOException if error occurred during delete.
 	 */
 	public void deleteFolder(String folderPath) throws IOException;
 

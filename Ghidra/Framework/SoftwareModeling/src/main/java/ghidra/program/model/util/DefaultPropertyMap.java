@@ -35,7 +35,7 @@ import ghidra.util.prop.PropertyVisitor;
  *   For any long the property
  *   manager can be used to tell if the property exists there and
  *   what its value is. It also maintains information that allows it
- *   to efficiently search for the next and previous occurence of the
+ *   to efficiently search for the next and previous occurrence of the
  *   property relative to a given address.
  *   The subclass provides the createPage() method that dictates
   *  the type of PropertyPage that will be managed.

@@ -27,7 +27,7 @@ define register offset=0x140 size=4  [ SFC DFC TC ITT0 ITT1 DTT0 DTT1 MMUSR URP 
 define register offset=0x180 size=4  [ BUSCR MBB RAMBAR0 RAMBAR1 ];
 define register offset=0x200 size=2  [ SR ACUSR ];
 # NOTE that SR overlaps XF, ZF, VF, CF
-# NOTE that A7 refers to USP, ISP, or MSP depending on privelege level
+# NOTE that A7 refers to USP, ISP, or MSP depending on privilege level
 
 
 define register offset=0x300 size=4  [ glbdenom movemptr ];

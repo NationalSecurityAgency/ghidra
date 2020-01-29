@@ -1055,7 +1055,7 @@ public class GnuDemanglerParser implements DemanglerParser {
 	}
 
 	private DemangledObject parseVariable(String demangled) {
-		// Are all of these neccessary? Many appear to be duplicated within doParse method
+		// Are all of these necessary? Many appear to be duplicated within doParse method
 		if (demangled.startsWith(TYPEINFO_NAME_FOR)) {
 			return parseTypeInfoName(demangled);
 		}

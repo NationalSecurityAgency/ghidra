@@ -153,7 +153,7 @@ def generateRandomDebugPort() {
 
 /*********************************************************************************
  * Loads application specific property file that contains info we need.
- * Properties will be imediately added to the global System.properties file so we
+ * Properties will be immediately added to the global System.properties file so we
  * can readily access them from just one place.
  *********************************************************************************/
 def loadApplicationProperties() {

@@ -575,7 +575,7 @@ public class PdbParser {
 				}
 				throw new PdbException("PDB Execution failure of " + PDB_EXE + ".\n" +
 					"This was likely caused by severe execution failure which can occur if executed\n" +
-					"on an unsupported platform. It may be neccessary to rebuild the PDB executable\n" +
+					"on an unsupported platform. It may be necessary to rebuild the PDB executable\n" +
 					"for your platform (see Ghidra/Features/PDB/src).");
 			}
 			throw new PdbException("PDB parsing problem: " + e.getMessage());

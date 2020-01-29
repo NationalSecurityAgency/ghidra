@@ -741,7 +741,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * @param leftNode
 	 * @param rightNode
 	 * @param count
-	 * @return true if movement occured, else false
+	 * @return true if movement occurred, else false
 	 */
 	private static boolean moveKeysRight(VarKeyInteriorNode leftNode, VarKeyInteriorNode rightNode,
 			int count) {

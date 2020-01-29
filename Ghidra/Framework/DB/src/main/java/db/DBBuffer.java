@@ -37,7 +37,7 @@ public class DBBuffer {
 	}
 
 	/**
-	 * Split this DBBuffer object into two seperate DBBuffers.  This DBBuffer remains
+	 * Split this DBBuffer object into two separate DBBuffers.  This DBBuffer remains
 	 * valid but its new size is equal offset.  The newly created DBBuffer is 
 	 * returned.
 	 * @param offset the split point.  The byte at this offset becomes the first

@@ -104,7 +104,7 @@ public class WindowActionManager {
 
 		placeHolderForScheduledActionUpdate = placeHolder;
 
-		// Buffer the events, as they tend to come in 3s.  That might not sound like alot, but 
+		// Buffer the events, as they tend to come in 3s.  That might not sound like a lot, but 
 		// when you have hundreds of actions, it adds up.
 		updateManager.updateLater();
 	}

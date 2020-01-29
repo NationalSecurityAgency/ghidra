@@ -182,7 +182,7 @@ public class RepositoryServerAdapter {
 				cause = t;
 			}
 			Msg.showError(this, null, "Server Error",
-				"An error occured on the server (" + serverInfoStr + ").\n" + msg, e);
+				"An error occurred on the server (" + serverInfoStr + ").\n" + msg, e);
 		}
 		catch (IOException e) {
 			String err = e.getMessage();
@@ -191,7 +191,7 @@ public class RepositoryServerAdapter {
 			}
 			String msg = err != null ? err : e.toString();
 			Msg.showError(this, null, "Server Error",
-				"An error occured while connecting to the server (" + serverInfoStr + ").\n" + msg,
+				"An error occurred while connecting to the server (" + serverInfoStr + ").\n" + msg,
 				e);
 		}
 		throw new NotConnectedException("Not connected to repository server", cause);
@@ -283,7 +283,7 @@ public class RepositoryServerAdapter {
 //		serverHandle = null;
 //		fireStateChanged();
 //		if (error != null) {
-//			Err.show(null, "Server Error", "A server communications error occured!", error);
+//			Err.show(null, "Server Error", "A server communications error occurred!", error);
 //			error = null;
 //			throw new NotConnectedException("Not connected to repository server");
 //		}

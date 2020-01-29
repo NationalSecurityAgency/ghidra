@@ -493,7 +493,7 @@ public abstract class LocalFolderItem implements FolderItem {
 //	 * If in-use files prevent renaming a FileInUseException will be thrown.
 //	 * @param name new name for this item
 //	 * @throws InvalidNameException invalid name was specified
-//	 * @throws IOException an error occured
+//	 * @throws IOException an error occurred
 //	 */
 //	void doSetName(String name) throws InvalidNameException, IOException {
 //		synchronized (fileSystem) {
