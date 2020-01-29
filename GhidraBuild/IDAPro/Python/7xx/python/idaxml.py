@@ -37,7 +37,6 @@ import sys
 import time
 from xml.etree import cElementTree
 
-
 DEBUG = False  # print debug statements
 
 IDAXML_VERSION = "5.0.1"
@@ -2440,7 +2439,7 @@ class XmlImporter(IdaXml):
             Integer representing the number of 8-bit bytes in an
             addressable codebyte.
         """
-        return (ida_idp.ph_get_cnbits()+7)/8
+        return int(ida_idp.ph_get_cnbits()+7/8)
     
 
     def get_datatype_flags(self, datatype, size):
@@ -2676,7 +2675,7 @@ class XmlImporter(IdaXml):
         addr = start
         while (addr <= end):
             length = ida_ua.create_insn(int(addr))
-            addr += ida_bytes.get_item_size(int(addr)) * self.get_cbsize()
+            addr += ida_bytes.get_item_size(int(addr))
         self.update_counter(CODE_BLOCK)
     
 
