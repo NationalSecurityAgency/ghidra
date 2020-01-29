@@ -755,12 +755,13 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		Color color = highlight();
 
 		DecompilerProvider clone = cloneDecompiler();
-		assertAllFieldsHighlighted(clone, secondaryHighlightText, color);
+		ClangToken cloneToken = getToken(clone);
+		assertAllFieldsSecondaryHighlighted(clone, cloneToken, color);
 
 		// ensure one field provider does not affect the other
 		removeSecondaryHighlight();
 		assertNoFieldsSecondaryHighlighted(secondaryHighlightText);
-		assertAllFieldsHighlighted(clone, secondaryHighlightText, color);
+		assertAllFieldsSecondaryHighlighted(clone, cloneToken, color);
 	}
 
 	@Test
@@ -989,8 +990,11 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	}
 
 	private Color getCombinedHighlightColor(ClangToken token) {
-		DecompilerController controller = provider.getController();
-		DecompilerPanel panel = controller.getDecompilerPanel();
+		return getCombinedHighlightColor(provider, token);
+	}
+
+	private Color getCombinedHighlightColor(DecompilerProvider theProvider, ClangToken token) {
+		DecompilerPanel panel = theProvider.getDecompilerPanel();
 		ClangHighlightController highlightController = panel.getHighlightController();
 		return highlightController.getCombinedColor(token);
 	}
@@ -1168,12 +1172,19 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertAllFieldsHighlighted(provider, name, colorMatcher, ignore);
 	}
 
-	private void assertAllFieldsHighlighted(DecompilerProvider theProvider, String name,
-			Color color) {
+	private void assertAllFieldsSecondaryHighlighted(DecompilerProvider theProvider,
+			ClangToken token, Color color) {
 
-		ColorMatcher cm = new ColorMatcher(color);
-		Predicate<ClangToken> noIgnores = t -> false;
-		assertAllFieldsHighlighted(theProvider, name, cm, noIgnores);
+		Predicate<ClangToken> ignores = t -> t == token;
+		String name = token.getText();
+		Color combinedColor = getCombinedHighlightColor(theProvider, token);
+		ColorMatcher cm = new ColorMatcher(color, combinedColor);
+		assertAllFieldsHighlighted(theProvider, name, cm, ignores);
+
+		// test the token under the cursor directly, as that may have a combined highlight applied		
+		Color actual = token.getHighlight();
+		assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
+			"; found: " + toString(actual), cm.matches(actual));
 	}
 
 	private void assertAllFieldsHighlighted(DecompilerProvider theProvider, String name,

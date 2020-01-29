@@ -60,17 +60,21 @@ public class ConcurrentTestExceptionStatement extends Statement {
 	}
 
 	private long getTestTimeout() {
-		String timeoutString =
-			System.getProperty(TEST_TIMEOUT_MILLIS_PROPERTY, Long.toString(TIMEOUT_MILLIS));
+		String timeoutOverrideString =
+			System.getProperty(TEST_TIMEOUT_MILLIS_PROPERTY, null);
+		if (timeoutOverrideString == null) {
+			return TIMEOUT_MILLIS;
+		}
+
 		try {
-			long timeout = Long.parseLong(timeoutString);
+			long timeout = Long.parseLong(timeoutOverrideString);
 			Msg.info(this, "Using test timeout override value " + timeout + "ms");
 			return timeout;
 		}
 		catch (NumberFormatException e) {
 			Msg.error(this,
 				"Unable to parse " + TEST_TIMEOUT_MILLIS_PROPERTY + " Long value '" +
-					timeoutString + "'");
+					timeoutOverrideString + "'");
 		}
 		return TIMEOUT_MILLIS;
 	}

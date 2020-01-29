@@ -488,6 +488,10 @@ public class ComponentPlaceholder {
 
 	/** Updates local actions for providers */
 	void contextChanged() {
+		if (componentProvider == null) {
+			return; // disposed
+		}
+
 		ActionContext actionContext = componentProvider.getActionContext(null);
 		if (actionContext == null) {
 			actionContext = new ActionContext(componentProvider, null);

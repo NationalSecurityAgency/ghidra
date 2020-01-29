@@ -155,8 +155,7 @@ public class FunctionComparisonModel {
 		Iterator<FunctionComparison> iter = comparisons.iterator();
 		while (iter.hasNext()) {
 
-			// First remove any comparisons that have the function as its
-			// source
+			// First remove any comparisons that have the function as its source
 			FunctionComparison fc = iter.next();
 			if (fc.getSource().equals(function)) {
 				comparisonsToRemove.add(fc);

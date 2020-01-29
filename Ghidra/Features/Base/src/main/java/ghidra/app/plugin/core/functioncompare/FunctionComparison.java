@@ -114,19 +114,19 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 		String sourceName = getSource().getName();
 		String otherName = o.getSource().getName();
-
-		if (sourcePath.equals(otherPath)) {
-			if (sourceName.contentEquals(otherName)) {
-				return getSource().getBody()
-						.getMinAddress()
-						.compareTo(o.getSource().getBody().getMinAddress());
-			}
-			else {
-				return sourceName.compareTo(otherName);
-			}
+		int result = sourcePath.compareTo(otherPath);
+		if (result != 0) {
+			return result;
 		}
 
-		return sourcePath.compareTo(otherPath);
+		// equal paths
+		result = sourceName.compareTo(otherName);
+		if (result != 0) {
+			return result;
+		}
+
+		// equal names
+		return getSource().getEntryPoint().compareTo(o.getSource().getEntryPoint());
 	}
 
 	/**
@@ -144,20 +144,21 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 			String o1Path = o1.getProgram().getDomainFile().getPathname();
 			String o2Path = o2.getProgram().getDomainFile().getPathname();
-
-			String o1Name = o1.getName();
-			String o2Name = o2.getName();
-
-			if (o1Path.equals(o2Path)) {
-				if (o1Name.equals(o2Name)) {
-					return o1.getBody().getMinAddress().compareTo(o2.getBody().getMinAddress());
-				}
-				else {
-					return o1Name.compareTo(o2Name);
-				}
+			int result = o1Path.compareTo(o2Path);
+			if (result != 0) {
+				return result;
 			}
 
-			return o1Path.compareTo(o2Path);
+			// equal paths
+			String o1Name = o1.getName();
+			String o2Name = o2.getName();
+			result = o1Name.compareTo(o2Name);
+			if (result != 0) {
+				return result;
+			}
+
+			// equal names
+			return o1.getEntryPoint().compareTo(o2.getEntryPoint());
 		}
 	}
 }

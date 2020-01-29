@@ -22,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.demangler.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.util.StringUtilities;
@@ -373,9 +374,9 @@ public class GnuDemanglerParser implements DemanglerParser {
 		}
 
 		// this will yield:
-		// fullNamespace: 	NS1::Foo::operator
+		// fullName: 		NS1::Foo::operator
 		// fullReturnType:  std::string
-		String fullNamespace = matcher.group(1);// group 0 is the entire match string
+		String fullName = matcher.group(1);// group 0 is the entire match string
 		String fullReturnType = matcher.group(2);
 
 		boolean isConst = false;
@@ -393,14 +394,17 @@ public class GnuDemanglerParser implements DemanglerParser {
 		method.setReturnType(returnType);
 
 		// 'conversion operator' syntax is operator <name, which is the type>()
+		// assume fullName endsWith '::operator'
+		int operatorIndex = fullName.lastIndexOf("::operator");
+		String namespace = fullName.substring(0, operatorIndex);
 
-		String templatelessNamespace = stripOffTemplates(fullNamespace);
+		String templatelessNamespace = stripOffTemplates(namespace);
 		setNamespace(method, templatelessNamespace);
 
 		// shortReturnType: string
 		String templatelessReturnType = stripOffTemplates(fullReturnType);
-		List<String> names = NamespaceUtils.splitNamespacePath(templatelessReturnType);
-		String shortReturnTypeName = names.get(names.size() - 1);
+		SymbolPath path = new SymbolPath(templatelessReturnType);
+		String shortReturnTypeName = path.getName();
 
 		//
 		// The preferred name: 'operator basic_string()'
@@ -410,7 +414,7 @@ public class GnuDemanglerParser implements DemanglerParser {
 		//
 		method.setName("operator.cast.to." + shortReturnTypeName);
 
-		method.setSignature(fullNamespace + " " + fullReturnType);
+		method.setSignature(fullName + " " + fullReturnType);
 		method.setOverloadedOperator(true);
 
 		return method;
@@ -481,17 +485,24 @@ public class GnuDemanglerParser implements DemanglerParser {
 	}
 
 	private String stripOffTemplates(String string) {
-		int templateStart = string.indexOf("<");
-		if (templateStart == -1) {
-			return string;
-		}
+		StringBuilder buffy = new StringBuilder();
+		int templateCount = 0;
+		for (int i = 0; i < string.length(); i++) {
+			char c = string.charAt(i);
+			if (c == '<') {
+				templateCount++;
+				continue;
+			}
+			else if (c == '>') {
+				templateCount--;
+				continue;
+			}
 
-		int templateEnd = string.lastIndexOf(">");
-		if (templateEnd == -1) {
-			return string;// shouldn't happen
+			if (templateCount == 0) {
+				buffy.append(c);
+			}
 		}
-
-		return string.substring(0, templateStart);
+		return buffy.toString();
 	}
 
 	private DemangledObject parseGuardVariableOrReferenceTemporary(String demangled,

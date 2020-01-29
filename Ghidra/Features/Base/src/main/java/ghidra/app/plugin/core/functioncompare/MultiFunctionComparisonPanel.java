@@ -89,19 +89,17 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 */
 	@Override
 	public void reload() {
-		SwingUtilities.invokeLater(() -> {
-			reloadSourceList();
-			Function selectedSource = (Function) sourceFunctionsCBModel.getSelectedItem();
-			reloadTargetList(selectedSource);
-			loadFunctions(selectedSource, (Function) targetFunctionsCBModel.getSelectedItem());
+		reloadSourceList();
+		Function selectedSource = (Function) sourceFunctionsCBModel.getSelectedItem();
+		reloadTargetList(selectedSource);
+		loadFunctions(selectedSource, (Function) targetFunctionsCBModel.getSelectedItem());
 
-			updateTabText();
+		updateTabText();
 
-			// Fire a notification to update the UI state; without this the 
-			// actions would not be properly enabled/disabled
-			tool.contextChanged(provider);
-			tool.setStatusInfo("function comparisons updated");
-		});
+		// Fire a notification to update the UI state; without this the 
+		// actions would not be properly enabled/disabled
+		tool.contextChanged(provider);
+		tool.setStatusInfo("function comparisons updated");
 	}
 
 	/**
