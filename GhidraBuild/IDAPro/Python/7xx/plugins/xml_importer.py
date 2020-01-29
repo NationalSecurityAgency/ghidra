@@ -64,7 +64,8 @@ class XmlImporterPlugin(ida_idaapi.plugin_t):
                 idc.warning(msg)
             except:
                 msg = "***** Exception occurred: XML Importer failed! *****"
-                print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                print("\n" + msg + "\n", exc_type, exc_value)
                 idc.warning(msg)
         finally:
             xml.cleanup()

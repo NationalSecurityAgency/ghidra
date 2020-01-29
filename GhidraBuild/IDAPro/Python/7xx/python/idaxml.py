@@ -2635,8 +2635,9 @@ class XmlImporter(IdaXml):
                     idc.put_bookmark(addr, 0, 0, 0, slot, description)
                     break
         except:
+            exc_type, exc_value, exc_traceback = sys.exc_info() 
             msg = "** Exception occurred in import_bookmark **"
-            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+            print("\n" + msg + "\n", exc_type, exc_value)
     
 
     def import_cmts(self, element, sid, typ):
@@ -2969,8 +2970,9 @@ class XmlImporter(IdaXml):
             for register_var in register_vars:
                 self.import_register_var(register_var, func)
         except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
             msg = "** Exception occurred in import_function **"
-            print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+            print("\n" + msg + "\n", exc_type, exc_value)
 
 
     def import_function_def(self, function_def):
@@ -3100,11 +3102,11 @@ class XmlImporter(IdaXml):
         """
         regcmt = member.find(REGULAR_CMT)
         if regcmt != None:
-            idc.set_member_cmt(mbr, regcmt.text, False)
+            ida_struct.set_member_cmt(mbr, regcmt.text, False)
             self.update_counter(MEMBER + ':' + REGULAR_CMT)
         rptcmt = member.find(REPEATABLE_CMT)
         if rptcmt != None:
-            idc.set_member_cmt(mbr, rptcmt.text, True)
+            ida_struct.set_member_cmt(mbr, rptcmt.text, True)
             self.update_counter(MEMBER + ':' + REPEATABLE_CMT)
         
 
