@@ -22,11 +22,11 @@ import ghidra.util.SystemUtilities;
 /**
  * Class that maps one type of column constraint into another.  Typically, these are created
  * automatically based on {@link ColumnTypeMapper} that are discovered by the system.  For example,
- *{@literal if you have a column type of "Foo", and you create a ColumnTypeMapper<Foo, String>, then all the}
- * string constraints would now be available that column.
+ * {@literal if you have a column type of "Foo", and you create a ColumnTypeMapper<Foo, String>, 
+ * then all the} string constraints would now be available that column.
  *
- * @param <T> The column type.
- * @param <M> the converted (mapped) type.
+ * @param <T> The column type
+ * @param <M> the converted (mapped) type
  */
 public class MappedColumnConstraint<T, M> implements ColumnConstraint<T> {
 

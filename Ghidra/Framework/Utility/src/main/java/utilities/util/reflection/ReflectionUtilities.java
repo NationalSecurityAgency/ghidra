@@ -560,15 +560,46 @@ public class ReflectionUtilities {
 		}
 	}
 
+	/**
+	 * Returns the type arguments for the given base class and extension.
+	 * 
+	 * <p>Caveat: this lookup will only work if the given child class is a concrete class that
+	 * has its type arguments specified.  For example, these cases will work:
+	 * <pre>
+	 * 		// anonymous class definition
+	 * 		List&lt;String&gt; myList = new ArrayList&lt;String&gt;() {
+	 *			...
+	 *		};
+	 *
+	 *		// class definition
+	 *		public class MyList implements List&lt;String&gt; {
+	 * </pre> 
+	 * 
+	 * Whereas this case will not work:
+	 * <pre>
+	 * 		// local variable with the type specified
+	 * 		List&lt;String&gt; myList = new ArrayList&lt;String&gt;();
+	 * </pre>
+	 * 
+	 * <p>Note: a null entry in the result list will exist for any type that was unrecoverable
+	 * 
+	 * 
+	 * @param <T> the type of the base and child class
+	 * @param baseClass the base class
+	 * @param childClass the child class
+	 * @return the type arguments
+	 */
 	public static <T> List<Class<?>> getTypeArguments(Class<T> baseClass,
 			Class<? extends T> childClass) {
-		Map<Type, Type> resolvedTypesDictionary = new HashMap<>();
 
+		Objects.requireNonNull(baseClass);
+		Objects.requireNonNull(childClass);
+
+		Map<Type, Type> resolvedTypesDictionary = new HashMap<>();
 		Type baseClassAsType =
 			walkClassHierarchyAndResolveTypes(baseClass, resolvedTypesDictionary, childClass);
 
-		// now see if we can resolve the type arguments defined by 'baseClass' to the raw runtime
-		// class that is in use
+		// try to resolve type arguments defined by 'baseClass' to the raw runtime class 
 		Type[] baseClassDeclaredTypeArguments = getDeclaredTypeArguments(baseClassAsType);
 		return resolveBaseClassTypeArguments(resolvedTypesDictionary,
 			baseClassDeclaredTypeArguments);
@@ -577,29 +608,69 @@ public class ReflectionUtilities {
 	private static <T> Type walkClassHierarchyAndResolveTypes(Class<T> baseClass,
 			Map<Type, Type> resolvedTypes, Type type) {
 
-		while (!getClass(type).equals(baseClass)) {
-			if (type instanceof Class) {
-				type = ((Class<?>) type).getGenericSuperclass();
-			}
-			else {
-				ParameterizedType parameterizedType = (ParameterizedType) type;
-				Class<?> rawType = (Class<?>) parameterizedType.getRawType();
-				Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-				TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
-				for (int i = 0; i < actualTypeArguments.length; i++) {
-					resolvedTypes.put(typeParameters[i], actualTypeArguments[i]);
-				}
+		if (type == null) {
+			return null;
+		}
 
-				if (!rawType.equals(baseClass)) {
-					type = rawType.getGenericSuperclass();
+		if (equals(type, baseClass)) {
+			return type;
+		}
+
+		if (type instanceof Class) {
+
+			Class<?> clazz = (Class<?>) type;
+			Type[] interfaceTypes = clazz.getGenericInterfaces();
+			Set<Type> toCheck = new HashSet<>();
+			toCheck.addAll(Arrays.asList(interfaceTypes));
+
+			Type parentType = clazz.getGenericSuperclass();
+			toCheck.add(parentType);
+
+			for (Type t : toCheck) {
+				Type result = walkClassHierarchyAndResolveTypes(baseClass, resolvedTypes, t);
+				if (equals(result, baseClass)) {
+					return result;
 				}
 			}
 
-			if (type == null) {
-				return type;
+			return parentType;
+		}
+
+		ParameterizedType parameterizedType = (ParameterizedType) type;
+		Class<?> rawType = (Class<?>) parameterizedType.getRawType();
+		Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+		TypeVariable<?>[] typeParameters = rawType.getTypeParameters();
+		for (int i = 0; i < actualTypeArguments.length; i++) {
+			resolvedTypes.put(typeParameters[i], actualTypeArguments[i]);
+		}
+
+		if (rawType.equals(baseClass)) {
+			return rawType;
+		}
+
+		Type[] interfaceTypes = rawType.getGenericInterfaces();
+		Set<Type> toCheck = new HashSet<>();
+		toCheck.addAll(Arrays.asList(interfaceTypes));
+
+		Type parentType = rawType.getGenericSuperclass();
+		toCheck.add(parentType);
+
+		for (Type t : toCheck) {
+			Type result = walkClassHierarchyAndResolveTypes(baseClass, resolvedTypes, t);
+			if (equals(result, baseClass)) {
+				return result;
 			}
 		}
-		return type;
+
+		return parentType;
+	}
+
+	private static boolean equals(Type type, Class<?> c) {
+		Class<?> typeClass = getClass(type);
+		if (typeClass == null) {
+			return false;
+		}
+		return typeClass.equals(c);
 	}
 
 	private static Class<?> getClass(Type type) {
@@ -637,7 +708,6 @@ public class ReflectionUtilities {
 		return typeArgumentsAsClasses;
 	}
 
-	// we checked
 	private static Type[] getDeclaredTypeArguments(Type type) {
 		if (type instanceof Class) {
 			return ((Class<?>) type).getTypeParameters();

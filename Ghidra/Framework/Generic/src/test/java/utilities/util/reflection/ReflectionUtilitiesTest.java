@@ -18,6 +18,7 @@ package utilities.util.reflection;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
@@ -153,6 +154,84 @@ public class ReflectionUtilitiesTest {
 			babyTypeArguments.get(1));
 	}
 
+	@Test(expected = NullPointerException.class)
+	public void testRuntimeTypeDiscovery_Null() {
+		ReflectionUtilities.getTypeArguments(List.class, null);
+	}
+
+	@Test
+	public void testRumtimeTypeDiscovery_AnonymousClass() {
+
+		List<String> myList = new ArrayList<String>() {
+			// stub
+		};
+		List<Class<?>> types = ReflectionUtilities.getTypeArguments(List.class, myList.getClass());
+		assertEquals(1, types.size());
+		assertEquals(String.class, types.get(0));
+	}
+
+	@Test
+	public void testRumtimeTypeDiscovery_LocalVariable() {
+
+		List<String> myList = new ArrayList<String>();
+		List<Class<?>> types = ReflectionUtilities.getTypeArguments(List.class, myList.getClass());
+		assertEquals(1, types.size());
+		assertNull(types.get(0));
+	}
+
+	@Test
+	public void testRuntimeTypeDiscovery_MixedHierarchy_AbstractClassAndInterfaceBothDefineValues() {
+
+		//
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// as well, where we pursue interfaces that may have defined some types.
+		//
+
+		List<Class<?>> types = ReflectionUtilities.getTypeArguments(RuntimeBaseInterface.class,
+			ChildExtendingPartiallyDefinedTypes.class);
+		assertEquals(2, types.size());
+		assertEquals(String.class, types.get(0));
+		assertEquals(Double.class, types.get(1));
+	}
+
+	@Test
+	public void testRuntimeTypeDiscovery_SubInterfaceDefinesValues() {
+
+		//
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// as well, where we pursue interfaces that may have defined some types.
+		//
+
+		List<Class<?>> types = ReflectionUtilities.getTypeArguments(RuntimeBaseInterface.class,
+			ChildExtendingWhollyDefinedTypes.class);
+		assertEquals(2, types.size());
+		assertEquals(String.class, types.get(0));
+		assertEquals(Double.class, types.get(1));
+	}
+
+	@Test
+	public void testRuntimeTypeDiscovery_MixedHierarchy_UnrelatedParents() {
+
+		//
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// as well, where we pursue interfaces that may have defined some types.
+		//
+		// This test also verifies that in a mixed type hierarchy, we can correctly locate types
+		// depending upon the parent type we pass in.
+		//
+
+		List<Class<?>> types = ReflectionUtilities.getTypeArguments(RuntimeBaseInterface.class,
+			ChildWithMixedParentTypes.class);
+		assertEquals(2, types.size());
+		assertEquals(String.class, types.get(0));
+		assertEquals(Double.class, types.get(1));
+
+		types = ReflectionUtilities.getTypeArguments(List.class,
+			ChildWithMixedParentTypes.class);
+		assertEquals(1, types.size());
+		assertEquals(Integer.class, types.get(0));
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================	
@@ -177,6 +256,39 @@ public class ReflectionUtilitiesTest {
 			String name = ReflectionUtilities.getClassNameOlderThan(NestedTestClass.class);
 			return name;
 		}
+	}
+
+	private interface RuntimeBaseInterface<T, J> {
+		// stub
+	}
+
+	private interface PartiallyDefinedInterface<J> extends RuntimeBaseInterface<String, J> {
+		// stub
+	}
+
+	private interface WhollyDefinedInterface extends RuntimeBaseInterface<String, Double> {
+		// stub
+	}
+
+	private class AbstractPartiallyDefinedClass<I> implements RuntimeBaseInterface<I, Double> {
+		// stub
+	}
+
+	private class ChildExtendingPartiallyDefinedTypes
+			extends AbstractPartiallyDefinedClass<String>
+			implements PartiallyDefinedInterface<Double> {
+		// stub
+	}
+
+	private class ChildExtendingWhollyDefinedTypes
+			implements WhollyDefinedInterface {
+		// stub
+	}
+
+	private class ChildWithMixedParentTypes
+			extends ArrayList<Integer>
+			implements WhollyDefinedInterface {
+		// stub
 	}
 
 	private class RuntimeBaseType<T, J> {

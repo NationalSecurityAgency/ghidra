@@ -36,12 +36,12 @@ import ghidra.util.exception.AssertException;
  *      columns.  The specifics of how the text filter works are defined by the 
  *      {@link RowFilterTransformer}, which is controlled by the user via the button at the right
  *      of the filter field.  (In the absence of this button, filters are typically a 'contains'
- *      filter.
+ *      filter.)
  *      
  *      <P>The default transformer turns items to strings by, in order,:
  *      <OL>
- *      	<LI>checking the the renderer's {@link #getFilterString(Object, Settings)}, 
- *      		if a renderer is installed
+ *      	<LI>checking the the <b>column</b> renderer's 
+ *      		{@link #getFilterString(Object, Settings)},if a column renderer is installed
  *      	</LI>
  *      	<LI>checking to see if the column value is an instance of {@link DisplayStringProvider}
  *      	</LI>
@@ -67,6 +67,10 @@ import ghidra.util.exception.AssertException;
  *  	default filtering system)
  *  </LI>
  * </OL>
+ * 
+ * <P><B>Note: The default filtering behavior of this class is to only filter on the aforementioned
+ *       filter text field.  That is, column constraints will not be enabled by default. To
+ *       change this, change the value returned by {@link #getColumnConstraintFilterMode()}.</B>
  * 
  * @param <T> the column type
  */
