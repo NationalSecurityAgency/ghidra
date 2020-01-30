@@ -456,6 +456,14 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 			while (!todoSubset.isEmpty() && !monitor.isCancelled()) {
 				Address nextAddr = todoSubset.getMinAddress();
+
+				// Check if location is already on disassembly list
+				if (disassembledAddrs.contains(nextAddr)) {
+					AddressRange doneRange = disassembledAddrs.getRangeContaining(nextAddr);
+					todoSubset.delete(doneRange);
+					continue;
+				}
+
 				// must be aligned
 				if (nextAddr.getOffset() % alignment != 0) {
 					todoSubset.delete(nextAddr, nextAddr);
@@ -921,8 +929,9 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 				disassemblerContext.flowToAddress(addr);
 
-				MemBuffer instrMemBuffer = new WrappedMemBuffer(blockMemBuffer,
-					(int) addr.subtract(blockMemBuffer.getAddress()));
+				// TODO: An overall better caching of bytes for this block could be done instead
+				//       the previous buffering done here was not doing any buffering
+				MemBuffer instrMemBuffer = new DumbMemBufferImpl(blockMemBuffer.getMemory(), addr);
 
 				adjustPreParseContext(instrMemBuffer);
 
