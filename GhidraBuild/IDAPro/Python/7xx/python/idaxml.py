@@ -1008,7 +1008,7 @@ class XmlExporter(IdaXml):
             demangled = ida_name.get_demangled_name(addr,
                                             DEMANGLED_TYPEINFO,
                                             self.inf.demnames, True)
-            if demangled != None and demangled == "'string'":
+            if demangled != None and (demangled == "'string'" or '(' not in demangled):
                 demangled = None
             outbuf = ''
             outbuf = idaapi.print_type(addr, False)
