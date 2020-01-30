@@ -45,6 +45,7 @@ import ida_struct
 import ida_typeinf
 import ida_ua
 import ida_xref
+import idaapi
 import idautils
 import idc
 import datetime
@@ -1010,14 +1011,13 @@ class XmlExporter(IdaXml):
             if demangled != None and demangled == "'string'":
                 demangled = None
             outbuf = ''
-            # TODO: How to handle print_type for function typeinfo cmts
-            #outbuf = idaapi.print_type(addr, False)
+            outbuf = idaapi.print_type(addr, False)
             has_typeinfo = (demangled != None or (outbuf != None and
                             len(outbuf) > 0))
             if demangled != None:
                 self.export_typeinfo_cmt(demangled)
-            elif has_typeinfo == True:
-                self.export_typeinfo_cmt(outbuf[:-1])
+            elif has_typeinfo:
+                self.export_prototype(function)
             self.export_stack_frame(function)
             self.end_element(FUNCTION)
         self.end_element(FUNCTIONS)
@@ -2299,6 +2299,26 @@ class XmlExporter(IdaXml):
         self.write_attribute(NAME, "__ptr64")
         self.write_attribute(DATATYPE, "pointer64")
         self.close_tag()
+
+    def export_prototype(self, function):
+        # TODO: Add info about `spoils`, `usercall` and others
+        tinfo_t = idaapi.tinfo_t()
+        idaapi.get_tinfo(function.startEA, tinfo_t)
+        func_type_data_t = idaapi.func_type_data_t()
+        tinfo_t.get_func_details(func_type_data_t)
+        rettype = func_type_data_t.rettype.dstr()
+        name = self.get_symbol_name(function.startEA)
+        parameters = '()'
+        if len(func_type_data_t) > 0:
+            parameters = '('
+            for parameter in func_type_data_t:
+                parameters += parameter.type.dstr()
+                parameters += ' '
+                parameters += parameter.name
+                parameters += ', '
+            parameters = parameters[:-2] + ')'
+        self.export_typeinfo_cmt(rettype + ' ' + name + parameters)
+
 
 class XmlImporter(IdaXml):
     """
