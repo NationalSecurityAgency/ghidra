@@ -1471,6 +1471,11 @@ public abstract class PluginTool extends AbstractDockingTool {
 		winMgr.removePreferenceState(name);
 	}
 
+	@Override
+	public ActionContext getGlobalActionContext() {
+		return winMgr.getGlobalActionContext();
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
