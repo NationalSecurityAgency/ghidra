@@ -250,7 +250,7 @@ public class EditBytesScriptTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertData(dsAddr, 6, "6d 6f 72 65 11 00", "ds");
 
-		assertOperands(dsAddr, "\"more\",11");
+		assertOperands(dsAddr, "\"more\",11h");
 	}
 
 	//Change bytes in string to make different string of longer length by overwriting null
