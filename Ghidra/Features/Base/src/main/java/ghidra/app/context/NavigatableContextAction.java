@@ -17,11 +17,9 @@ package ghidra.app.context;
 
 import java.util.Set;
 
-import docking.*;
+import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.KeyBindingType;
-import ghidra.app.nav.Navigatable;
-import ghidra.app.services.GoToService;
 
 public abstract class NavigatableContextAction extends DockingAction {
 
@@ -52,7 +50,11 @@ public abstract class NavigatableContextAction extends DockingAction {
 			isValidNavigationContext((NavigatableActionContext) context)) {
 			return (NavigatableActionContext) context;
 		}
-		return getGlobalNavigationContext(context);
+		ActionContext globalContext = context.getGlobalContext();
+		if (globalContext instanceof NavigatableActionContext) {
+			return (NavigatableActionContext) globalContext;
+		}
+		return null;
 	}
 
 	@Override
@@ -62,34 +64,6 @@ public abstract class NavigatableContextAction extends DockingAction {
 
 	protected boolean isValidNavigationContext(NavigatableActionContext context) {
 		return true;
-	}
-
-	private NavigatableActionContext getGlobalNavigationContext(ActionContext context) {
-		Tool tool = getTool(context.getComponentProvider());
-
-		if (tool == null) {
-			return null;
-		}
-		GoToService service = tool.getService(GoToService.class);
-		if (service == null) {
-			return null;
-		}
-		Navigatable defaultNavigatable = service.getDefaultNavigatable();
-		if (defaultNavigatable.getProgram() == null) {
-			return null;
-		}
-		return new NavigatableActionContext(null, defaultNavigatable);
-	}
-
-	private Tool getTool(ComponentProvider provider) {
-		if (provider != null) {
-			return provider.getTool();
-		}
-		DockingWindowManager manager = DockingWindowManager.getActiveInstance();
-		if (manager != null) {
-			return manager.getTool();
-		}
-		return null;
 	}
 
 	@Override

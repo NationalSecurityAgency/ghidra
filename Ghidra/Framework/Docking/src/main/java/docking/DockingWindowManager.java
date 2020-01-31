@@ -2140,6 +2140,15 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		contextListeners.remove(listener);
 	}
 
+	/**
+	 * Returns the global action context for the tool
+	 * @return  the global action context for the tool
+	 */
+	public ActionContext getGlobalActionContext() {
+		return defaultProvider == null ? new ActionContext()
+				: defaultProvider.getActionContext(null);
+	}
+
 	void notifyContextListeners(ComponentPlaceholder placeHolder, ActionContext actionContext) {
 
 		if (placeHolder == focusedPlaceholder) {

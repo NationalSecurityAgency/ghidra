@@ -304,4 +304,12 @@ public interface Tool extends ServiceProvider {
 	 */
 	public void close();
 
+	/**
+	 * Returns the global action context for the tool.  The global context is the context of
+	 * the default focused component, instead of the normal action context which is the current
+	 * focused component.
+	 * @return  the global action context for the tool
+	 */
+	public ActionContext getGlobalActionContext();
+
 }
