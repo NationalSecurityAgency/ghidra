@@ -120,16 +120,22 @@ public class VariableOffset {
 	}
 
 	/**
-	 * Get list of markup objects
-	 * @return list of markup objects
+	 * Returns the data type access portion of this variable offset as a string
+	 * @return the text
 	 */
-	public List<Object> getObjects() {
+	public String getDataTypeDisplayText() {
+		List<Object> objects = getObjects(false);
+		LabelString labelString = (LabelString) objects.get(0);
+		return labelString.toString();
+	}
+
+	private List<Object> getObjects(boolean showScalarAdjustment) {
 
 		DataType dt = variable.getDataType();
 		StringBuffer name = new StringBuffer(variable.getName());
 
 		long scalarAdjustment = 0;
-		if (includeScalarAdjustment && (replacedElement instanceof Scalar)) {
+		if (showScalarAdjustment && (replacedElement instanceof Scalar)) {
 			Scalar s = (Scalar) replacedElement;
 			scalarAdjustment = variable.isStackVariable() ? s.getSignedValue() : s.getValue();
 			scalarAdjustment -= offset;
@@ -212,6 +218,14 @@ public class VariableOffset {
 			list.add(new Scalar(32, adjustedOffset));
 		}
 		return list;
+	}
+
+	/**
+	 * Get list of markup objects
+	 * @return list of markup objects
+	 */
+	public List<Object> getObjects() {
+		return getObjects(includeScalarAdjustment);
 	}
 
 	public Variable getVariable() {
