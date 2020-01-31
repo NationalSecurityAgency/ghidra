@@ -85,7 +85,7 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_T_iteq() {
-		assertOneCompatRestExact("itETT eq", "09:BF", THUMB, 0x00400000, "itETT eq");
+		assertOneCompatRestExact("itETT eq", "09:BF", THUMB, 0x00400000, "itett eq");
 	}
 
 	@Test
