@@ -1385,8 +1385,7 @@ public class MachoProgramBuilder {
 	}
 
 	private DataConverter getDataConverter() {
-		DataConverter dc = program.getLanguage().isBigEndian() ? new BigEndianDataConverter()
-				: new LittleEndianDataConverter();
+		DataConverter dc = DataConverter.getInstance(program.getLanguage().isBigEndian());
 		return dc;
 	}
 

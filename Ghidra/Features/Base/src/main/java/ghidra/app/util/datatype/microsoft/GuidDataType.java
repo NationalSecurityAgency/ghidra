@@ -110,9 +110,7 @@ public class GuidDataType extends BuiltIn {
 		long[] data = new long[4];
 
 		boolean isBigEndian = ENDIAN.isBigEndian(settings, buf);
-		DataConverter conv =
-			isBigEndian ? (DataConverter) new BigEndianDataConverter()
-					: (DataConverter) new LittleEndianDataConverter();
+		DataConverter conv = DataConverter.getInstance(isBigEndian);
 
 		if (buf.getBytes(bytes, 0) != bytes.length) {
 			if (guidName != null) {

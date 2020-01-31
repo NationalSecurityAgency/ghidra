@@ -167,10 +167,7 @@ public class GUID {
 	}
 
 	private DataConverter getDataConverter(MemBuffer buf) {
-		if (buf.isBigEndian()) {
-			return new BigEndianDataConverter();
-		}
-		return new LittleEndianDataConverter();
+		return DataConverter.getInstance(buf.isBigEndian());
 	}
 
 	@Override

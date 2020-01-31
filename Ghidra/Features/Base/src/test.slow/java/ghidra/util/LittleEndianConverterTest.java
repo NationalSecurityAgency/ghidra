@@ -36,7 +36,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
  */
 public class LittleEndianConverterTest extends AbstractGhidraHeadedIntegrationTest {
 	private byte[] b;
-	private DataConverter dc;
+	private DataConverter dc = LittleEndianDataConverter.INSTANCE;
 
 	/**
 	 * Constructor for BigEndianConverterTest.
@@ -52,7 +52,6 @@ public class LittleEndianConverterTest extends AbstractGhidraHeadedIntegrationTe
 		for (int i = 0; i < b.length; i++) {
 			b[i] = (byte) i;
 		}
-		dc = new LittleEndianDataConverter();
 	}
 
 	@Test

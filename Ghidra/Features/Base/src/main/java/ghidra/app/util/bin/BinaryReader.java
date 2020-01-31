@@ -93,12 +93,7 @@ public class BinaryReader {
 	 * @param isLittleEndian true for little-endian and false for big-endian
 	 */
 	public void setLittleEndian(boolean isLittleEndian) {
-		if (isLittleEndian) {
-			converter = new LittleEndianDataConverter();
-		}
-		else {
-			converter = new BigEndianDataConverter();
-		}
+		converter = DataConverter.getInstance(!isLittleEndian);
 	}
 
 	/**
@@ -664,7 +659,7 @@ public class BinaryReader {
 	}
 
 	/**
-	 * Returns the LONG at <code>index</code>.
+	 * Returns the signed LONG at <code>index</code>.
 	 * @param index the index where the LONG begins
 	 * @return the LONG
 	 * @exception IOException if an I/O error occurs
@@ -672,6 +667,34 @@ public class BinaryReader {
 	public long readLong(long index) throws IOException {
 		byte[] bytes = provider.readBytes(index, SIZEOF_LONG);
 		return converter.getLong(bytes);
+	}
+
+	/**
+	 * Returns the signed value of the integer (of the specified length) at the specified offset.
+	 * 
+	 * @param index offset the offset from the membuffers origin (the address that it is set at) 
+	 * @param len the number of bytes that the integer occupies.  Valid values are 1 (byte), 2 (short),
+	 * 4 (int), 8 (long)
+	 * @return value of requested length, with sign bit extended, in a long
+	 * @throws IOException 
+	 */
+	public long readValue(long index, int len) throws IOException {
+		byte[] bytes = provider.readBytes(index, len);
+		return converter.getSignedValue(bytes, len);
+	}
+
+	/**
+	 * Returns the unsigned value of the integer (of the specified length) at the specified offset.
+	 * 
+	 * @param index offset the offset from the membuffers origin (the address that it is set at) 
+	 * @param len the number of bytes that the integer occupies.  Valid values are 1 (byte), 2 (short),
+	 * 4 (int), 8 (long)
+	 * @return unsigned value of requested length, in a long
+	 * @throws IOException 
+	 */
+	public long readUnsignedValue(long index, int len) throws IOException {
+		byte[] bytes = provider.readBytes(index, len);
+		return converter.getValue(bytes, len);
 	}
 
 	/**

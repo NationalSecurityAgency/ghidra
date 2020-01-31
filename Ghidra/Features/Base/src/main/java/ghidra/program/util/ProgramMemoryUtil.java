@@ -498,15 +498,8 @@ public class ProgramMemoryUtil {
 
 		int addrSize = toAddress.getSize();
 
-		DataConverter dataConverter;
+		DataConverter dataConverter = DataConverter.getInstance(memory.isBigEndian());
 		byte[] addressBytes = new byte[addrSize / 8];
-
-		if (isBigEndian) {
-			dataConverter = new BigEndianDataConverter();
-		}
-		else {
-			dataConverter = new LittleEndianDataConverter();
-		}
 
 		if (toAddress instanceof SegmentedAddress) {
 			// Only search for offset (exclude segment)

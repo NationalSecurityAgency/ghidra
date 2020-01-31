@@ -31,7 +31,7 @@ abstract class RefList extends DatabaseObject {
 
 	static volatile int BIG_REFLIST_THRESHOLD = 1700;
 
-	protected static DataConverter converter = new BigEndianDataConverter();
+	protected static DataConverter converter = BigEndianDataConverter.INSTANCE;
 
 	protected Address address;
 	protected RecordAdapter adapter;
