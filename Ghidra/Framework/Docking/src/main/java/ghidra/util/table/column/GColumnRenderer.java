@@ -83,21 +83,14 @@ public interface GColumnRenderer<T> extends TableCellRenderer {
 	public enum ColumnConstraintFilterMode {
 		//@formatter:off
 		
-		/** 
-		 * Signals that the programmer didn't make a decision about how filtering for this
-		 * column should work.  This currently will treat all filtering as if 
-		 * {@link #USE_COLUMN_RENDERER_FITLER_STRING_ONLY} was chosen.
-		 */
-		DEFAULT,
-		
 		/** Use only {@link GColumnRenderer#getFilterString(Object, Settings)} value; no constraints */
-		USE_COLUMN_RENDERER_FITLER_STRING_ONLY,
+		ALLOW_RENDERER_STRING_FILTER_ONLY,
 		
 		/** Use only column constraints when filtering */
-		USE_COLUMN_CONSTRAINTS_ONLY,
+		ALLOW_CONSTRAINTS_FILTER_ONLY,
 		
 		/** Use both the rendered filter String and any found column constraints */
-		USE_BOTH_COLUMN_RENDERER_FITLER_STRING_AND_CONSTRAINTS,
+		ALLOW_ALL_FILTERS,
 		//@formatter:on
 	}
 
@@ -111,7 +104,7 @@ public interface GColumnRenderer<T> extends TableCellRenderer {
 	 * @return the mode
 	 */
 	public default ColumnConstraintFilterMode getColumnConstraintFilterMode() {
-		return ColumnConstraintFilterMode.DEFAULT;
+		return ColumnConstraintFilterMode.ALLOW_RENDERER_STRING_FILTER_ONLY;
 	}
 
 	/**

@@ -91,7 +91,7 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 		//         and does not support the traditional text based filtering.
 		//
 		ColumnConstraintFilterMode mode = columnRenderer.getColumnConstraintFilterMode();
-		if (mode == ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY) {
+		if (mode == ColumnConstraintFilterMode.ALLOW_CONSTRAINTS_FILTER_ONLY) {
 			return new ArrayList<>(defaultConstraints);
 		}
 
@@ -106,16 +106,16 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 		ColumnRendererMapper mapper = new ColumnRendererMapper(asT, columnBasedModel, modelIndex);
 		Collection<ColumnConstraint<T>> rendererStringConstraints =
 			DiscoverableTableUtils.getColumnConstraints(mapper);
+		if (mode == ColumnConstraintFilterMode.ALLOW_RENDERER_STRING_FILTER_ONLY) {
+			return new ArrayList<>(rendererStringConstraints);
+		}
 
 		// 
 		// Case 5: the renderer supports both text filtering and column constraint filtering.
 		//
+		// assume: mode == ColumnConstraintFilterMode.ALLOW_ALL_FILTERS
 		List<ColumnConstraint<T>> results = new ArrayList<>(rendererStringConstraints);
-		if (mode == ColumnConstraintFilterMode.USE_BOTH_COLUMN_RENDERER_FITLER_STRING_AND_CONSTRAINTS) {
-			// also use the normal constraints with the renderer constraints
-			results.addAll(defaultConstraints);
-		}
-
+		results.addAll(defaultConstraints);
 		return results;
 	}
 

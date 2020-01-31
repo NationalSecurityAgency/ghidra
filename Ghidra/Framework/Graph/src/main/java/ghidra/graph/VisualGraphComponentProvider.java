@@ -165,7 +165,7 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 		Undo/redo for graph operations (delete; group/ungroup; move)
 			-rapid pressing will shortcut items
 			-undo/redo allows us to prune nodes 
-				--how to maintain old nodes/edges?  (FitleringVisualGraph)	
+				--how to maintain old nodes/edges?  (FilteringVisualGraph)	
 	
 	*/
 

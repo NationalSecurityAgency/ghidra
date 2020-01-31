@@ -102,7 +102,7 @@ public class ColumnFilterDialogModel<R> {
 	}
 
 	/**
-	 * Creates a new filter for (a new major row in the dialog filter panel)
+	 * Creates a new filter row (a new major row in the dialog filter panel)
 	 * @param logicOperation the logical operation for how this row interacts with preceding rows 
 	 * @return the new filter row that represents a major row in the dialog filter panel
 	 */

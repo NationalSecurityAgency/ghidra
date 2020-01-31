@@ -15,12 +15,13 @@
  */
 package docking.widgets.table.sort;
 
+import static ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode.*;
+
 import java.util.Comparator;
 
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.GColumnRenderer;
-import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
 
 /**
  * A special version of the backup comparator that uses the column's rendered value for 
@@ -47,7 +48,7 @@ public class ColumnRenderedValueBackupComparator<T> implements Comparator<Object
 		@SuppressWarnings("unchecked")
 		GColumnRenderer<Object> renderer = (GColumnRenderer<Object>) column.getColumnRenderer();
 		if (renderer != null) {
-			if (renderer.getColumnConstraintFilterMode() == ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY) {
+			if (renderer.getColumnConstraintFilterMode() == ALLOW_CONSTRAINTS_FILTER_ONLY) {
 				// this implies that the column has signaled that it does not support 
 				// filtering/sorting using its rendered value
 				supportsColumnSorting = false;
