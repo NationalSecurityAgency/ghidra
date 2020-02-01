@@ -21,6 +21,7 @@ public enum Architecture {
 	X86_64("x86_64", "amd64"),
 	POWERPC("ppc"),
 	POWERPC_64("ppc64"),
+	AARCH64("aarch64"),
 	UNKNOWN("Unknown Architecture");
 
 	/**
