@@ -171,8 +171,8 @@ public:
   void printVarnodeTree(ostream &s) const;		///< Print a description of all Varnodes to a stream
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
-  void saveXml(ostream &s,bool savetree) const;		///< Emit an XML description of \b this function to stream
-  void restoreXml(const Element *el);			///< Restore the state of \b this function from an XML description
+  void saveXml(ostream &s,uint8 id,bool savetree) const;	///< Emit an XML description of \b this function to stream
+  uint8 restoreXml(const Element *el);			///< Restore the state of \b this function from an XML description
   void saveXmlJumpTable(ostream &s) const;		///< Emit an XML description of jump-tables to stream
   void restoreXmlJumpTable(const Element *el);		///< Restore jump-tables from an XML description
   void saveXmlTree(ostream &s) const;			///< Save an XML description of the p-code tree to stream
@@ -382,9 +382,16 @@ public:
   void clearDeadVarnodes(void);					///< Delete any dead Varnodes
   void calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
+  void clearSymbolLinks(HighVariable *high);			///< Clear Symbols attached to Varnodes in the given HighVariable
+  void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
+  void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
+  Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
+  Varnode *findLinkedVarnode(SymbolEntry *entry) const;	///< Find a Varnode matching the given Symbol mapping
+  void findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) const;	///< Find Varnodes that map to the given SymbolEntry
   void buildDynamicSymbol(Varnode *vn);				///< Build a \e dynamic Symbol associated with the given Varnode
   bool attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash);
+  bool attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash);
   Merge &getMerge(void) { return covermerge; }			///< Get the Merge object for \b this function
 
   // op routines

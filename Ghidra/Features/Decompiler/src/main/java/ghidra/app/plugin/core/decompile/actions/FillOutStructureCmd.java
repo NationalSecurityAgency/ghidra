@@ -130,7 +130,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				}
 			}
 
-			if (var == null) {
+			if (var == null || var.getSymbol() == null || var.getOffset() >= 0) {
 				return false;
 			}
 
@@ -232,7 +232,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	private void commitVariable(HighVariable var, DataType newDt, boolean isThisParam) {
 		if (!isThisParam) {
 			try {
-				HighFunctionDBUtil.updateDBVariable(var, null, newDt, SourceType.USER_DEFINED);
+				HighFunctionDBUtil.updateDBVariable(var.getSymbol(), null, newDt,
+					SourceType.USER_DEFINED);
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertException("Unexpected exception", e);

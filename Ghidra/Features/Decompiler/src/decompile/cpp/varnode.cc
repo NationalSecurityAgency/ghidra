@@ -360,6 +360,54 @@ void Varnode::setDef(PcodeOp *op)
     setFlags(Varnode::coverdirty|Varnode::written);
 }
 
+/// The given Symbol's data-type and flags are inherited by \b this Varnode.
+/// If the Symbol is \e type-locked, a reference to the Symbol is set on \b this Varnode.
+/// \param entry is a mapping to the given Symbol
+/// \return \b true if any properties have changed
+bool Varnode::setSymbolProperties(SymbolEntry *entry)
+
+{
+  bool res = entry->updateType(this);
+  if (entry->getSymbol()->isTypeLocked()) {
+    if (mapentry != entry) {
+      mapentry = entry;
+      if (high != (HighVariable *)0)
+	high->setSymbol(this);
+      res = true;
+    }
+  }
+  setFlags(entry->getAllFlags() & ~Varnode::typelock);
+  return res;
+}
+
+/// A reference to the given Symbol is set on \b this Varnode.
+/// The data-type on \b this Varnode is not changed.
+/// \param entry is a mapping to the given Symbol
+void Varnode::setSymbolEntry(SymbolEntry *entry)
+
+{
+  mapentry = entry;
+  uint4 fl = Varnode::mapped;	// Flags are generally not changed, but we do mark this as mapped
+  if (entry->getSymbol()->isNameLocked())
+    fl |= Varnode::namelock;
+  setFlags(fl);
+  if (high != (HighVariable *)0)
+    high->setSymbol(this);
+}
+
+/// Link Symbol information to \b this as a \b reference. This only works for a constant Varnode.
+/// This used when there is a constant address reference to the Symbol and the Varnode holds the
+/// reference, not the actual value of the Symbol.
+/// \param entry is a mapping to the given Symbol
+/// \off is the byte offset into the Symbol of the reference
+void Varnode::setSymbolReference(SymbolEntry *entry,int4 off)
+
+{
+  if (high != (HighVariable *)0) {
+    high->setSymbolReference(entry->getSymbol(), off);
+  }
+}
+
 /// Change the Datatype and lock state associated with this Varnode if various conditions are met
 ///    - Don't change a previously locked Datatype (unless \b override flag is \b true)
 ///    - Don't consider an \b undefined type to be locked
@@ -394,8 +442,11 @@ void Varnode::copySymbol(const Varnode *vn)
   mapentry = vn->mapentry;	// Copy any symbol
   flags &= ~(Varnode::typelock | Varnode::namelock);
   flags |= (Varnode::typelock | Varnode::namelock) & vn->flags;
-  if (high != (HighVariable *)0)
+  if (high != (HighVariable *)0) {
     high->typeDirty();
+    if (mapentry != (SymbolEntry *)0)
+      high->setSymbol(this);
+  }
 }
 
 /// Symbol information (if present) is copied from the given constant Varnode into \b this,

@@ -157,15 +157,17 @@ class Symbol {
 protected:
   Scope *scope;			///< The scope that owns this symbol
   string name;			///< The local name of the symbol
-  uint4 nameDedup;		///< id to distinguish symbols with the same name
   Datatype *type;		///< The symbol's data-type
+  uint4 nameDedup;		///< id to distinguish symbols with the same name
   uint4 flags;			///< Varnode-like properties of the symbol
 				// only typelock,namelock,readonly,externref
 				// addrtied, persist inherited from scope
   uint4 dispflags;		///< Flags affecting the display of this symbol
   int2 category;		///< Special category (-1==none 0=parameter 1=equate)
   uint2 catindex;		///< Index within category
+  uint8 symbolId;		///< Unique id, 0=unassigned
   vector<list<SymbolEntry>::iterator> mapentry;	///< List of storage locations labeled with \b this Symbol
+  uint4 wholeCount;		///< Number of SymbolEntries that map to the whole Symbol
   virtual ~Symbol(void) {}	///< Destructor
   void setDisplayFormat(uint4 val);	///< Set the display format for \b this Symbol
   void checkSizeTypeLock(void);	///< Calculate if \b size_typelock property is on
@@ -177,18 +179,20 @@ public:
     force_oct = 3,		///< Force octal printing of constant symbol
     force_bin = 4,		///< Force binary printing of constant symbol
     force_char = 5,		///< Force integer to be printed as a character constant
-    size_typelock = 8	        ///< Only the size of the symbol is typelocked
+    size_typelock = 8,	        ///< Only the size of the symbol is typelocked
+    isolate = 16,		///< Symbol should not speculatively merge automatically
+    merge_problems = 32		///< Set if some SymbolEntrys did not get merged
   };
   /// \brief Construct given a name and data-type
   Symbol(Scope *sc,const string &nm,Datatype *ct)
-  { scope=sc; name=nm; nameDedup=0; type=ct; flags=0; dispflags=0; category=-1; }
+  { scope=sc; name=nm; nameDedup=0; type=ct; flags=0; dispflags=0; category=-1; symbolId=0; wholeCount=0; }
 
   /// \brief Construct for use with restoreXml()
-  Symbol(Scope *sc) { scope=sc; nameDedup=0; flags=0; dispflags=0; category=-1; }
+  Symbol(Scope *sc) { scope=sc; nameDedup=0; flags=0; dispflags=0; category=-1; symbolId = 0; wholeCount=0; }
 
   const string &getName(void) const { return name; }		///< Get the local name of the symbol
   Datatype *getType(void) const { return type; }		///< Get the data-type
-  uint4 getId(void) const { return (uint4)(uintp)this; }	///< Get a unique id for the symbol
+  uint8 getId(void) const { return symbolId; }			///< Get a unique id for the symbol
   uint4 getFlags(void) const { return flags; }			///< Get the boolean properties of the Symbol
   uint4 getDisplayFormat(void) const { return (dispflags & 7); }	///< Get the format to display the Symbol in
   int2 getCategory(void) const { return category; }		///< Get the Symbol category
@@ -199,9 +203,18 @@ public:
   bool isIndirectStorage(void) const { return ((flags&Varnode::indirectstorage)!=0); }	///< Is storage really a pointer to the true Symbol
   bool isHiddenReturn(void) const { return ((flags&Varnode::hiddenretparm)!=0); }	///< Is this a reference to the function return value
   bool isNameUndefined(void) const;				///< Does \b this have an undefined name
+  bool isMultiEntry(void) const { return (wholeCount > 1); }	///< Does \b this have more than one \e entire mapping
+  bool hasMergeProblems(void) const { return ((dispflags & merge_problems)!=0); } ///< Were some SymbolEntrys not merged
+  void setMergeProblems(void) { dispflags |= merge_problems; }	///< Mark that some SymbolEntrys could not be merged
+  bool isIsolated(void) const { return ((dispflags & isolate)!=0); }	///< Return \b true if \b this is isolated from speculative merging
+  void setIsolated(bool val);					///< Set whether \b this Symbol should be speculatively merged
   Scope *getScope(void) const { return scope; }			///< Get the scope owning \b this Symbol
   SymbolEntry *getFirstWholeMap(void) const;	 		///< Get the first entire mapping of the symbol
   SymbolEntry *getMapEntry(const Address &addr) const;	 	///< Get first mapping of the symbol that contains the given Address
+  int4 numEntries(void) const { return mapentry.size(); }	///< Return the number of SymbolEntrys
+  SymbolEntry *getMapEntry(int4 i) const { return &(*mapentry[i]); }	///< Return the i-th SymbolEntry for \b this Symbol
+  int4 getMapEntryPosition(const SymbolEntry *entry) const;	///< Position of given SymbolEntry within \b this multi-entry Symbol
+  int4 getResolutionDepth(const Scope *useScope) const;		///< Get the number of scope names to print to resolve symbol in given context
   void saveXmlHeader(ostream &s) const;				///< Save basic Symbol properties as XML attributes
   void restoreXmlHeader(const Element *el);			///< Restore basic Symbol properties from XML
   void saveXmlBody(ostream &s) const;				///< Save details of the Symbol to XML
@@ -209,6 +222,7 @@ public:
   virtual void saveXml(ostream &s) const;			///< Save \b this Symbol to an XML stream
   virtual void restoreXml(const Element *el);			///< Restore \b this Symbol from an XML stream
   virtual int4 getBytesConsumed(void) const;			///< Get number of bytes consumed within the address->symbol map
+  static uint8 ID_BASE;						///< Base of internal ID's
 };
 
 /// Force a specific display format for constant symbols
@@ -404,12 +418,13 @@ class Scope {
   ScopeMap children;				///< Sorted list of child scopes
   void attachScope(Scope *child);		///< Attach a new child Scope to \b this
   void detachScope(ScopeMap::iterator iter);	///< Detach a child Scope from \b this
+  void assignId(uint4 val) { uniqueId = val; }	///< Let the database assign a unique id to \b this scope
 
 protected:
   Architecture *glb;				///< Architecture of \b this scope
   string name;					///< Name of \b this scope
   Funcdata *fd;					///< (If non-null) the function which \b this is the local Scope for
-  uint4 dedupId;				///< Id to dedup scopes with same name (when allowed)
+  uint4 uniqueId;				///< Unique id for the scope, for deduping scope names, assigning symbol ids
   static const Scope *stackAddr(const Scope *scope1,
 				     const Scope *scope2,
 				     const Address &addr,
@@ -479,6 +494,7 @@ protected:
   virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
 					     const RangeList &uselim)=0;
   SymbolEntry *addMap(const SymbolEntry &entry);	///< Integrate a SymbolEntry into the range maps
+  void setSymbolId(Symbol *sym,uint8 id) const { sym->symbolId = id; }	///< Adjust the id associated with a symbol
 public:
 #ifdef OPACTION_DEBUG
   mutable bool debugon;
@@ -487,7 +503,7 @@ public:
 #endif
   /// \brief Construct an empty scope, given a name and Architecture
   Scope(const string &nm,Architecture *g) {
-    name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; dedupId = 0;
+    name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; uniqueId = 0;
 #ifdef OPACTION_DEBUG
     debugon = false;
 #endif
@@ -515,6 +531,7 @@ public:
   virtual bool inScope(const Address &addr,int4 size, const Address &usepoint) const {
     return rangetree.inRange(addr,size); }
 
+  virtual void removeSymbolMappings(Symbol *symbol)=0;	///< Remove all SymbolEntrys from the given Symbol
   virtual void removeSymbol(Symbol *symbol)=0;		///< Remove the given Symbol from \b this Scope
   virtual void renameSymbol(Symbol *sym,const string &newname)=0;	///< Rename a Symbol within \b this Scope
 
@@ -586,6 +603,14 @@ public:
   /// \param name is the name to search for
   /// \param res will contain any matching Symbols
   virtual void findByName(const string &name,vector<Symbol *> &res) const=0;
+
+  /// \brief Check if the given name is used within \b this scope.
+  ///
+  /// Only \b this scope is checked. If one or more symbols exist with the given name,
+  /// \b true is returned.
+  /// \param name is the given name to check for
+  /// \return \b true if the name is used within \b this scope
+  virtual bool isNameUsed(const string &name) const=0;
 
   /// \brief Convert an \e external \e reference to the referenced function
   ///
@@ -669,6 +694,9 @@ public:
   bool isSubScope(const Scope *scp) const;			///< Is this a sub-scope of the given Scope
   string getFullName(void) const;				///< Get the full name of \b this Scope
   void getNameSegments(vector<string> &vec) const;		///< Get the fullname of \b this in segments
+  void getScopePath(vector<Scope *> &vec) const;		///< Get the ordered list of parent scopes to \b this
+  bool isNameUsed(const string &nm,const Scope *op2) const;	///< Is the given name in use within given scope path
+  const Scope *findDistinguishingScope(const Scope *op2) const;	///< Find first ancestor of \b this not shared by given scope
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associated with \b this
   Scope *getParent(void) const { return parent; }		///< Get the parent Scope (or NULL if \b this is the global Scope)
   Symbol *addSymbol(const string &name,Datatype *ct);		///< Add a new Symbol \e without mapping it to an address
@@ -679,6 +707,7 @@ public:
   ExternRefSymbol *addExternalRef(const Address &addr,const Address &refaddr,const string &nm);
   LabSymbol *addCodeLabel(const Address &addr,const string &nm);
   Symbol *addDynamicSymbol(const string &nm,Datatype *ct,const Address &caddr,uint8 hash);
+  string buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const;	///< Create a default name for the given Symbol
   bool isReadOnly(const Address &addr,int4 size,const Address &usepoint) const;
   void printBounds(ostream &s) const { rangetree.printBounds(s); }	///< Print a description of \b this Scope's \e owned memory ranges
 };
@@ -702,6 +731,8 @@ protected:
   vector<EntryMap *> maptable;			///< Rangemaps of SymbolEntry, one map for each address space
   vector<vector<Symbol *> > category;		///< References to Symbol objects organized by category
   list<SymbolEntry> dynamicentry;		///< Dynamic symbol entries
+  SymbolNameTree multiEntrySet;			///< Set of symbols with multiple entries
+  uint8 nextUniqueId;				///< Next available symbol id
 public:
   ScopeInternal(const string &nm,Architecture *g);	///< Construct the Scope
   virtual void clear(void);
@@ -716,6 +747,7 @@ public:
   virtual list<SymbolEntry>::const_iterator endDynamic(void) const;
   virtual list<SymbolEntry>::iterator beginDynamic(void);
   virtual list<SymbolEntry>::iterator endDynamic(void);
+  virtual void removeSymbolMappings(Symbol *symbol);
   virtual void removeSymbol(Symbol *symbol);
   virtual void renameSymbol(Symbol *sym,const string &newname);
   virtual void retypeSymbol(Symbol *sym,Datatype *ct);
@@ -734,6 +766,7 @@ public:
   virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const;
 
   virtual void findByName(const string &name,vector<Symbol *> &res) const;
+  virtual bool isNameUsed(const string &name) const;
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
   virtual string buildVariableName(const Address &addr,
@@ -747,6 +780,9 @@ public:
   virtual int4 getCategorySize(int4 cat) const;
   virtual Symbol *getCategorySymbol(int4 cat,int4 ind) const;
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind);
+  void assignDefaultNames(int4 &base);		///< Assign a default name (via buildVariableName) to any unnamed symbol
+  set<Symbol *>::const_iterator beginMultiEntry(void) const { return multiEntrySet.begin(); }	///< Start of symbols with more than one entry
+  set<Symbol *>::const_iterator endMultiEntry(void) const { return multiEntrySet.end(); }	///< End of symbols with more than one entry
   static void savePathXml(ostream &s,const vector<string> &vec);	///< Save a path with \<val> tags
   static void restorePathXml(vector<string> &vec,const Element *el);	///< Restore path from \<val> tags
 };
@@ -804,12 +840,13 @@ class Database {
   Scope *globalscope;			///< A quick reference to the \e global Scope
   ScopeResolve resolvemap;		///< The Address to \e namespace map
   partmap<Address,uint4> flagbase;	///< Map of global properties
+  uint4 nextScopeId;			///< Id for next attached scope (0 reserved for global scope)
   void clearResolve(Scope *scope);	///< Clear the \e ownership ranges associated with the given Scope
   void clearResolveRecursive(Scope *scope);	///< Clear the \e ownership ranges of a given Scope and its children
   void fillResolve(Scope *scope);	///< Add the \e ownership ranges of the given Scope to the map
   static void parseParentTag(const Element *el,string &name,vector<string> &parnames);
 public:
-  Database(Architecture *g) { glb=g; globalscope=(Scope *)0; flagbase.defaultValue() = 0; }	///< Constructor
+  Database(Architecture *g) { glb=g; globalscope=(Scope *)0; flagbase.defaultValue()=0; nextScopeId=1; }	///< Constructor
   ~Database(void);						///< Destructor
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associate with \b this
   void attachScope(Scope *newscope,Scope *parent);		///< Register a new Scope

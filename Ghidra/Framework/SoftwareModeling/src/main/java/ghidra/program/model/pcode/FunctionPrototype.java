@@ -210,9 +210,9 @@ public class FunctionPrototype {
 	 * @return the i'th HighParam to this function prototype or null
 	 * if this prototype is not backed by a LocalSymbolMap
 	 */
-	public HighParam getParam(int i) {
+	public HighSymbol getParam(int i) {
 		if (localsyms != null) {
-			return localsyms.getParam(i);
+			return localsyms.getParamSymbol(i);
 		}
 		return null;
 	}

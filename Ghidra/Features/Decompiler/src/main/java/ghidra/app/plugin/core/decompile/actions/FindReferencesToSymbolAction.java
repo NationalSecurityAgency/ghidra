@@ -22,7 +22,6 @@ import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -40,11 +39,9 @@ public class FindReferencesToSymbolAction extends AbstractDecompilerAction {
 
 	private static final String MENU_ITEM_TEXT = "Find References to";
 	public static final String NAME = "Find References to Symbol";
-	private PluginTool tool;
 
-	public FindReferencesToSymbolAction(PluginTool tool) {
+	public FindReferencesToSymbolAction() {
 		super(NAME);
-		this.tool = tool;
 
 		setPopupMenuData(
 			new MenuData(new String[] { LocationReferencesService.MENU_GROUP, MENU_ITEM_TEXT }));
@@ -116,7 +113,8 @@ public class FindReferencesToSymbolAction extends AbstractDecompilerAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		LocationReferencesService service = tool.getService(LocationReferencesService.class);
+		LocationReferencesService service =
+			context.getTool().getService(LocationReferencesService.class);
 		if (service == null) {
 			Msg.showError(this, null, "Missing Plugin",
 				"The " + LocationReferencesService.class.getSimpleName() + " is not installed.\n" +

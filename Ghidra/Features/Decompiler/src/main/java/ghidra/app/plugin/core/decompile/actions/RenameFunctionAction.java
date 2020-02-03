@@ -21,49 +21,43 @@ import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFuncNameToken;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.AddEditDialog;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.util.UndefinedFunction;
 
 public class RenameFunctionAction extends AbstractDecompilerAction {
 
-	private final DecompilerController controller;
-	private final PluginTool tool;
-
-	public RenameFunctionAction(PluginTool tool, DecompilerController controller) {
+	public RenameFunctionAction() {
 		super("Rename Function");
-		this.tool = tool;
-		this.controller = controller;
 
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 		setPopupMenuData(new MenuData(new String[] { "Rename Function" }, "Decompile"));
 	}
 
-	private Function getFunction() {
+	private Function getFunction(Program program, ClangToken tokenAtCursor) {
 		// try to look up the function that is at the current cursor location
 		//   If there isn't one, just use the function we are in.
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		if (tokenAtCursor instanceof ClangFuncNameToken) {
-			return DecompilerUtils.getFunction(controller.getProgram(),
-				(ClangFuncNameToken) tokenAtCursor);
+			return DecompilerUtils.getFunction(program, (ClangFuncNameToken) tokenAtCursor);
 		}
 		return null;
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		Function func = getFunction();
+		Function func =
+			getFunction(context.getProgram(), context.getTokenAtCursor());
 		return func != null && !(func instanceof UndefinedFunction);
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		Function function = getFunction();
-		AddEditDialog dialog = new AddEditDialog("Edit Function Name", tool);
-		dialog.editLabel(function.getSymbol(), controller.getProgram());
+		Program program = context.getProgram();
+		Function function = getFunction(program, context.getTokenAtCursor());
+		AddEditDialog dialog = new AddEditDialog("Edit Function Name", context.getTool());
+		dialog.editLabel(function.getSymbol(), program);
 	}
 }

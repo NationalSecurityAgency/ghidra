@@ -525,6 +525,7 @@ Varnode *Funcdata::opStackLoad(AddrSpace *spc,uintb off,uint4 sz,PcodeOp *op,Var
 /// CPUI_INT_MULT PcodeOp. If finalization is requested and a new PcodeOp is needed, the output
 /// Varnode is marked as \e implicit and has its data-type set
 /// \param op is the given PTRADD
+/// \param finalize is \b true if finalization is needed for any new PcodeOp
 void Funcdata::opUndoPtradd(PcodeOp *op,bool finalize)
 
 {

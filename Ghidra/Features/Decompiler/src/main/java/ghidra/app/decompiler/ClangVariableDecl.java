@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +56,7 @@ public class ClangVariableDecl extends ClangTokenGroup {
     public void restoreFromXML(XmlPullParser parser,PcodeFactory pfactory) {
 	    XmlElement node = parser.peek();
 		super.restoreFromXML(parser,pfactory);
-		int symref = SpecXmlUtils.decodeInt(node.getAttribute(ClangXML.SYMREF));
+		long symref = SpecXmlUtils.decodeLong(node.getAttribute(ClangXML.SYMREF));
 		HighSymbol sym = pfactory.getSymbol(symref);
 		if (sym == null) {
 			Msg.error(this, "Invalid symbol reference: " + symref);
@@ -65,9 +64,5 @@ public class ClangVariableDecl extends ClangTokenGroup {
 		}
 		typevar = sym.getHighVariable();
 		datatype = sym.getDataType();
-		if (typevar == null) {
-			Msg.error(this, "High variable not found: " + sym.getName());
-			return;
-		}
 	}
 }

@@ -39,8 +39,8 @@ public class SetSecondaryHighlightColorChooserAction extends AbstractSetSecondar
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 
+		ClangToken token = context.getTokenAtCursor();
 		DecompilerPanel panel = context.getDecompilerPanel();
-		ClangToken token = panel.getTokenAtCursor();
 		TokenHighlightColors colors = panel.getSecondaryHighlightColors();
 		List<Color> recentColors = colors.getRecentColors();
 

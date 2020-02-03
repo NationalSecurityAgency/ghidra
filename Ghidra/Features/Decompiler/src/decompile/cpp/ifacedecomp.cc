@@ -1270,6 +1270,7 @@ void IfcTypeVarnode::execute(istream &s)
     scope = dcp->fd->getScopeLocal();	// force it to be in function scope
   Symbol *sym = scope->addSymbol(name,ct,loc,pc)->getSymbol();
   scope->setAttribute(sym,Varnode::typelock);
+  sym->setIsolated(true);
   if (name.size() > 0)
     scope->setAttribute(sym,Varnode::namelock);
   

@@ -208,8 +208,9 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 					boolean commitReturn = true;
 					if (!commitVoidReturn) {
 						DataType returnType = hfunc.getFunctionPrototype().getReturnType();
-						if (returnType instanceof VoidDataType)
+						if (returnType instanceof VoidDataType) {
 							commitReturn = false;
+						}
 					}
 					if (commitReturn) {
 						HighFunctionDBUtil.commitReturnToDatabase(hfunc, SourceType.ANALYSIS);
@@ -274,7 +275,7 @@ public class DecompilerParameterIdCmd extends BackgroundCommand {
 			if (sym.getName().equals("in_FS_OFFSET")) {
 				continue;
 			}
-			if (!sym.getHighVariable().getStorage().isRegisterStorage()) {
+			if (!sym.getStorage().isRegisterStorage()) {
 				continue;
 			}
 

@@ -125,6 +125,7 @@ public:
   void mergeAddrTied(void);
   void mergeMarker(void);
   void mergeAdjacent(void);
+  void mergeMultiEntry(void);
   bool hideShadows(HighVariable *high);
   void processCopyTrims(void);
   void markInternalCopies(void);

@@ -57,7 +57,8 @@ public interface PcodeFactory {
 	public VariableStorage buildStorage(Varnode vn) throws InvalidInputException;
 	public Varnode getRef(int refid);
 	public PcodeOp getOpRef(int refid);
-	public HighSymbol getSymbol(int symbolId);
+
+	public HighSymbol getSymbol(long symbolId);
 	public Varnode setInput(Varnode vn,boolean val);
 	public void setAddrTied(Varnode vn,boolean val);
 	public void setPersistant(Varnode vn,boolean val);
