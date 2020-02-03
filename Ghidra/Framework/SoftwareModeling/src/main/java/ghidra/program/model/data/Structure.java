@@ -196,9 +196,8 @@ public interface Structure extends Composite {
 	public void deleteAtOffset(int offset);
 
 	/**
-	 * Remove all components from this structure, effectively setting the
-	 * length to zero.
-	 *
+	 * Remove all components from this structure (including flex-array), 
+	 * effectively setting the length to zero.
 	 */
 	public void deleteAll();
 
