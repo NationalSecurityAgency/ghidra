@@ -727,7 +727,7 @@ public class HighFunctionDBUtil {
 
 	/**
 	 * Get the Address referred to by a spacebase reference. Address-of references are encoded in
-	 * the p-code syntax tree as: vn = PTRSUB(<spacebase>, #const).  This decodes the reference and
+	 * the p-code syntax tree as: {@code vn = PTRSUB(<spacebase>, #const)}.  This decodes the reference and
 	 * returns the Address
 	 * @param program is the program containing the Address
 	 * @param op is the PTRSUB op encoding the reference
