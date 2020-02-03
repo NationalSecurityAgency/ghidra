@@ -55,14 +55,26 @@ public class GTableAutoLookup extends AutoLookup {
 		return obj == null ? null : obj.toString();
 	}
 
+	private boolean isSortableTableModel() {
+		return table.getModel() instanceof SortedTableModel;
+	}
+
 	@Override
 	public boolean isSorted(int column) {
+		if (!isSortableTableModel()) {
+			return false;
+		}
+
 		SortedTableModel sortedModel = (SortedTableModel) table.getModel();
 		return column == sortedModel.getPrimarySortColumnIndex();
 	}
 
 	@Override
 	public boolean isSortedAscending() {
+		if (!isSortableTableModel()) {
+			return false;
+		}
+
 		SortedTableModel model = (SortedTableModel) table.getModel();
 		int primarySortColumnIndex = model.getPrimarySortColumnIndex();
 		TableSortState columnSortState = model.getTableSortState();
