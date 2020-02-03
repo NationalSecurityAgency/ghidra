@@ -15,8 +15,7 @@
  */
 package ghidra.app.merge.datatypes;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import javax.swing.JLabel;
 
@@ -37,7 +36,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 
 	@Test
-    public void testConflictFixUpForNonFittingStruct() throws Exception {
+	public void testConflictFixUpForNonFittingStruct() throws Exception {
 
 		final CategoryPath miscPath = new CategoryPath("/MISC");
 		final CategoryPath rootPath = new CategoryPath("/");
@@ -163,7 +162,7 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 		JLabel label = (JLabel) TestUtils.getInstanceField("label", logPanel);
 		String statusText = label.getText();
 		String expectedText =
-			"Merging Data Types: Not enough undefined bytes to fit /XYZ in structure " +
+			"Structure Merge: Not enough undefined bytes to fit /XYZ in structure " +
 				"/MISC/ABC at offset 0x4.\nIt needs 3 more byte(s) to be able to fit.";
 		assertTrue(statusText.contains(expectedText));
 	}
