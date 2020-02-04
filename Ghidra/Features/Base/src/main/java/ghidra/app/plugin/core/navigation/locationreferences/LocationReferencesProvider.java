@@ -398,12 +398,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		if (event != null) {
-			if (referencesPanel.selectRow(event)) {
-				return new ActionContext(this, referencesPanel.getTable());
-			}
-		}
-		return null;
+		return new ActionContext(this, referencesPanel.getTable());
 	}
 
 //==================================================================================================
