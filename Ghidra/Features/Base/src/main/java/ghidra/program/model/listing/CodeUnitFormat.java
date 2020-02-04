@@ -802,7 +802,7 @@ public class CodeUnitFormat {
 		long originalValue = (addr.isStackAddress() &&
 			originalScalar.bitLength() == addr.getAddressSpace().getSize())
 					? originalScalar.getSignedValue()
-					: originalScalar.getValue();
+					: originalScalar.getUnsignedValue();
 		long addrOffset;
 		if (addr instanceof SegmentedAddress) {
 			addrOffset = ((SegmentedAddress) addr).getSegmentOffset();
