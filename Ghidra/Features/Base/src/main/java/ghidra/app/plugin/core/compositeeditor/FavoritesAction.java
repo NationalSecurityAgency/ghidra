@@ -60,7 +60,8 @@ public class FavoritesAction extends CompositeEditorTableAction {
 
 	@Override
 	public void adjustEnablement() {
-		// Do nothing since we always want it enabled so the user gets a "doesn't fit" message.
+		// we always want it enabled so the user gets a "doesn't fit" message.
+		setEnabled(true);
 	}
 
 	@Override
@@ -75,6 +76,6 @@ public class FavoritesAction extends CompositeEditorTableAction {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		return super.isEnabledForContext(context);
+		return isEnabledForContext(context);
 	}
 }

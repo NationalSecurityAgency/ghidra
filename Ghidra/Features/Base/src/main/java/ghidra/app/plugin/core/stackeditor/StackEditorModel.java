@@ -633,17 +633,18 @@ class StackEditorModel extends CompositeEditorModel {
 			newLength = compDt.getLength();
 		}
 		int offset = comp.getOffset();
-		if (((StackFrameDataType) viewComposite).growsNegative()) {
-			if (offset >= 0 && offset < getParameterOffset()) {
-				return false;
-			}
-		}
-		else {
-			if (offset < 0 && offset > getParameterOffset()) {
-				return false;
-			}
-
-		}
+// TODO: not sure we need to prevent creating local variables in 'save' area,
+//       since doing so just leads to confusion when using stack frame editor
+//		if (((StackFrameDataType) viewComposite).growsNegative()) {
+//			if (offset >= 0 && offset < getParameterOffset()) {
+//				return false;
+//			}
+//		}
+//		else {
+//			if (offset < 0 && offset > getParameterOffset()) {
+//				return false;
+//			}
+//		}
 		int maxBytes = ((StackFrameDataType) viewComposite).getMaxLength(offset);
 		if (newLength > maxBytes) {
 			return false;
