@@ -228,6 +228,18 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 			"The Listing is not at the expected address");
 	}
 
+	@Override
+	public void assertCurrentAddress(Address expected) {
+		codeBrowser.updateNow();
+		waitForSwing();
+
+		waitForCondition(() -> {
+			ProgramLocation loc = codeBrowser.getCurrentLocation();
+			Address actual = loc.getAddress();
+			return expected.equals(actual);
+		}, "Listing is not at the expected address");
+	}
+
 	private void assertExternalNavigationPerformed() {
 		// going to the 'external linkage' means we went to the thunk function and not the
 		// external program
