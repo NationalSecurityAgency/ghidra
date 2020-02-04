@@ -1752,9 +1752,11 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		pressUp();
 		selectFile(getListView(), 1);
+		assertSelectedIndex(getListView(), 1);
 
 		pressUp();
 		selectFile(getListView(), 2);
+		assertSelectedIndex(getListView(), 2);
 
 		pressBack();
 		assertSelectedIndex(getListView(), 1);
@@ -1914,7 +1916,12 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 	private void assertSelectedIndex(DirectoryList list, int expected) {
 		int actual = runSwing(() -> list.getSelectedIndex());
-		assertEquals("Wrong list index selected", expected, actual);
+
+		// debug code
+		if (expected != actual) {
+			waitForCondition(() -> expected == actual,
+				"Wrong list index selected ");
+		}
 	}
 
 	private void assertSelectedIndex(GTable table, int expected) {
