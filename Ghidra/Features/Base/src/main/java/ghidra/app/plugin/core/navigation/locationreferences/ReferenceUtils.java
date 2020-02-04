@@ -711,16 +711,9 @@ public final class ReferenceUtils {
 			return null;
 		}
 
-		List<Object> objects = variableOffset.getObjects();
-		Object object = objects.get((int) variableOffset.getOffset());
-		if (!(object instanceof LabelString)) {
-			return null;
-		}
-
 		Variable variable = variableOffset.getVariable();
 		DataType type = variable.getDataType();
-		LabelString label = (LabelString) object;
-		String string = label.toString();
+		String string = variableOffset.getDataTypeDisplayText();
 		GenericDataTypeLocationDescriptor descriptor =
 			createGenericDataTypeLocationDescriptor(program, type, string);
 		return descriptor;
