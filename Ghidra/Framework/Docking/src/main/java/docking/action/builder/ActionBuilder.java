@@ -21,7 +21,7 @@ import docking.action.DockingAction;
  * Builder for {@link DockingAction}s
  */
 public class ActionBuilder
-		extends AbstractActionBuilder<DockingAction, ActionBuilder> {
+		extends AbstractActionBuilder<DockingAction, ActionContext, ActionBuilder> {
 
 	/**
 	 * Builder constructor

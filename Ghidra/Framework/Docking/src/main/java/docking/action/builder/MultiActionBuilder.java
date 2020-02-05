@@ -26,7 +26,7 @@ import docking.menu.MultiActionDockingAction;
  * Builder for {@link MultiActionDockingAction}
  */
 public class MultiActionBuilder
-		extends AbstractActionBuilder<MultiActionDockingAction, MultiActionBuilder> {
+		extends AbstractActionBuilder<MultiActionDockingAction, ActionContext, MultiActionBuilder> {
 	/**
 	 * List of actions for the the MultActionDockingAction
 	 */
