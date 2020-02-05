@@ -405,7 +405,7 @@ void Funcdata::clearCallSpecs(void)
 
 FuncCallSpecs *Funcdata::getCallSpecs(const PcodeOp *op) const
 
-{				// Get FuncCallSpecs from CALL op
+{
   int4 i;
   const Varnode *vn;
 

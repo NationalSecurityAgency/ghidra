@@ -238,6 +238,10 @@ bool SubvariableFlow::tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 
 {
   if (slot == 0) return false;
+  if (!aggressive) {
+    if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
+      return false;				// Don't truncate
+  }
   FuncCallSpecs *fc = fd->getCallSpecs(op);
   if (fc == (FuncCallSpecs *)0) return false;
   if (fc->isInputActive()) return false; // Don't trim while in the middle of figuring out params
@@ -549,7 +553,6 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       break;
     case CPUI_CALL:
     case CPUI_CALLIND:
-      if (!aggressive) return false;
       if (!tryCallPull(op,rvn,slot)) return false;
       hcount += 1;		// Dealt with this descendant
       break;
@@ -828,7 +831,6 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
       break;
     case CPUI_CALL:
     case CPUI_CALLIND:
-      if (!aggressive) return false;
       if (!tryCallPull(op,rvn,slot)) return false;
       hcount += 1;		// Dealt with this descendant
       break;

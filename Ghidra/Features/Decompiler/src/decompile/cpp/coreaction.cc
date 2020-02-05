@@ -3307,6 +3307,9 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
     b = (a == 0) ? 0 : ~((uintb)0);		// if any consumed, treat all input bits as consumed
     pushConsumed(b,op->getIn(0), worklist);
     break;
+  case CPUI_CALL:
+  case CPUI_CALLIND:
+    break;		// Call output doesn't indicate consumption of inputs
   default:
     a = (outc==0) ? 0 : ~((uintb)0); // all or nothing
     for(int4 i=0;i<op->numInput();++i)
@@ -3348,6 +3351,37 @@ bool ActionDeadCode::neverConsumed(Varnode *vn,Funcdata &data)
   return true;
 }
 
+/// \brief Determine how the given sub-function parameters are consumed
+///
+/// Set the consume property for each input Varnode of a CPUI_CALL or CPUI_CALLIND.
+/// If the prototype is locked, assume parameters are entirely consumed.
+/// \param fc is the call specification for the given sub-function
+/// \param worklist will hold input Varnodes that can propagate their consume property
+void ActionDeadCode::markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist)
+
+{
+  PcodeOp *callOp = fc->getOp();
+  pushConsumed(~((uintb)0),callOp->getIn(0),worklist);		// In all cases the first operand is fully consumed
+  if (fc->isInputLocked() || fc->isInputActive()) {		// If the prototype is locked in, or in active recovery
+    for(int4 i=1;i<callOp->numInput();++i)
+      pushConsumed(~((uintb)0),callOp->getIn(i),worklist);	// Treat all parameters as fully consumed
+    return;
+  }
+  for(int4 i=1;i<callOp->numInput();++i) {
+    Varnode *vn = callOp->getIn(i);
+    uintb consumeVal = vn->getNZMask();
+    if (vn->isAutoLive() || consumeVal > 0xffffffff)
+      consumeVal = ~((uintb)0);
+    else if (consumeVal > 0xffff)
+      consumeVal = 0xffffffff;
+    else if (consumeVal > 0xff)
+      consumeVal = 0xffff;
+    else
+      consumeVal = 0xff;
+    pushConsumed(consumeVal,vn,worklist);
+  }
+}
+
 int4 ActionDeadCode::apply(Funcdata &data)
 
 {
@@ -3387,7 +3421,14 @@ int4 ActionDeadCode::apply(Funcdata &data)
     op = *iter;
 
     op->clearIndirectSource();
-    if (op->isCall() || (!op->isAssignment())) {
+    if (op->isCall()) {
+      if (op->code() == CPUI_CALLOTHER) {
+	for(i=0;i<op->numInput();++i)
+	  pushConsumed(~((uintb)0),op->getIn(i),worklist);
+      }
+      // Postpone setting consumption on CALL and CALLIND inputs
+    }
+    else if (!op->isAssignment()) {
       for(i=0;i<op->numInput();++i)
 	pushConsumed(~((uintb)0),op->getIn(i),worklist);
     }
@@ -3402,18 +3443,14 @@ int4 ActionDeadCode::apply(Funcdata &data)
     if ((vn!=(Varnode *)0)&&(vn->isAutoLive()))
       pushConsumed(~((uintb)0),vn,worklist);
   }
+
+				// Mark consumption of call parameters
+  for(i=0;i<data.numCalls();++i)
+    markConsumedParameters(data.getCallSpecs(i),worklist);
+
 				// Propagate the consume flags
   while(!worklist.empty())
     propagateConsumed(worklist);
-//   while(!worklist.empty()) {
-//     vn = worklist.back();
-//     worklist.pop_back();
-//     op = vn->Def();
-//     for(i=0;i<op->numInput();++i) {
-//       vn = op->Input(i);
-//       push_consumed(0x3fffffff,vn,worklist);
-//     } 
-//   }
 
   for(i=0;i<manage->numSpaces();++i) {
     spc = manage->getSpace(i);

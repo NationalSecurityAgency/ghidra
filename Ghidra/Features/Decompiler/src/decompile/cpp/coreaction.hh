@@ -541,6 +541,7 @@ class ActionDeadCode : public Action {
   static void pushConsumed(uintb val,Varnode *vn,vector<Varnode *> &worklist);
   static void propagateConsumed(vector<Varnode *> &worklist);
   static bool neverConsumed(Varnode *vn,Funcdata &data);
+  static void markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist);
 public:
   ActionDeadCode(const string &g) : Action(0,"deadcode",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
