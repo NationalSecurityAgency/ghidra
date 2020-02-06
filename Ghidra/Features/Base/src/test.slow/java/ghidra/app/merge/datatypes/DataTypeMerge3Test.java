@@ -77,10 +77,6 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
-
-		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-		Union union = (Union) c.getDataType("CoolUnion");
 
 		// choose MY
 		chooseOption(DataTypeMergeManager.OPTION_MY);// DLL_Table from MY
@@ -89,6 +85,11 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// LATEST CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
+		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
+		Union union = (Union) c.getDataType("CoolUnion");
 
 		// DLL_Table should have a Word data type as the last component
 		Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
@@ -154,7 +155,6 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// choose DLL_Table from LATEST which means delete it
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);
@@ -163,6 +163,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		chooseOption(DataTypeMergeManager.OPTION_MY);
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
@@ -226,13 +228,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// choose DLL_Table from ORIGINAL
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 		Union union = (Union) c.getDataType("CoolUnion");
@@ -297,6 +300,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		setErrorsExpected(true);
 
 		executeMerge(true);
+
+		setErrorsExpected(false);
 
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
@@ -371,12 +376,16 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 
+		executeMerge();
+
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);// LATEST CoolUnion
+
 		setErrorsExpected(true);
 
-		executeMerge();
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// LATEST CoolUnion
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY Foo
 		waitForCompletion();
+
+		setErrorsExpected(false);
 
 		checkConflictCount(0);
 
@@ -451,16 +460,15 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 
-		setErrorsExpected(true);
-
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// LATEST Foo
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		Union union =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
@@ -522,10 +530,12 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 
+		executeMerge();
+
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);// Latest CoolUnion
+
 		setErrorsExpected(true);
 
-		executeMerge();
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// Latest CoolUnion
 		chooseOption(DataTypeMergeManager.OPTION_MY);// My Bar
 
 		//
@@ -533,6 +543,9 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		//
 		OptionDialog errorDialog =
 			waitForDialogComponent(null, OptionDialog.class, DEFAULT_WINDOW_TIMEOUT);
+
+		setErrorsExpected(false);
+
 		assertNotNull(errorDialog);
 		errorDialog.close();
 		window.setVisible(false);
@@ -602,17 +615,20 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 
-		setErrorsExpected(true);
-
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		//
+
 		chooseOption(DataTypeMergeManager.OPTION_MY);// choose My Bar
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);
-		// choose Structure_1 from ORIGINAL
+		setErrorsExpected(true);
+
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL); // choose Structure_1 from ORIGINAL
+
+		setErrorsExpected(false);
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
 		// Bar should contain original Structure_1
 		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 		DataTypeComponent[] dtcs = bar.getDefinedComponents();
@@ -676,14 +692,15 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		//
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// choose original Bar
 
-		chooseOption(DataTypeMergeManager.OPTION_MY);
-		// choose Structure_1 from MY
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL); // choose original Bar
+
+		chooseOption(DataTypeMergeManager.OPTION_MY); // choose Structure_1 from MY
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
 		// Bar should contain original Structure_1
 		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 		assertEquals(6, bar.getLength());
@@ -750,14 +767,15 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		//
+
 		chooseOption(DataTypeMergeManager.OPTION_MY);// choose my Bar
 
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delele Structure_1 
-		// choose Structure_1 from MY
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delele Structure_1 (choose Structure_1 from MY)
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
+
 		// Bar should contain undefined to replace Structure_1
 		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 		assertEquals(7, bar.getLength());
@@ -848,7 +866,6 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// conflict on ArrayStruct (6)
 		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// use ORIGINAL ArrayStruct
@@ -858,6 +875,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		// conflict on FloatStruct (2)
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delete FloatStruct
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		assertNull(
 			dtm.getDataType(new CategoryPath("/Category1/Category2/Category5"), "FloatStruct"));
@@ -940,7 +959,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		// bitfield silently transitions to int since typedef BF was removed
 
-		executeMerge();
+		executeMerge(true);
+
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		Structure s1 =
@@ -1028,7 +1048,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
 		// bitfield silently transitions to BF.conflict since two different BF types were added
 
-		executeMerge();
+		executeMerge(true);
+
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		Structure s1 =
@@ -1129,13 +1150,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// choose DLL_Table from ORIGINAL
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// DLL_Table should exist
 
@@ -1218,13 +1240,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delete DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// DLL_Table should not exist
 
@@ -1308,13 +1331,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// CoolUnion should not be null
 		Union union =
@@ -1395,13 +1419,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delete DLL_Table 
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// CoolUnion should not be null
 		Union union =
@@ -1483,13 +1508,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my DLL_Table 
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delete CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// CoolUnion should be null
 		Union union =
@@ -1572,13 +1598,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// CoolUnion should not be null
 		Union union =
@@ -1668,13 +1695,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// CoolUnion should not be null
 		Union union =
@@ -1773,13 +1801,14 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// CoolUnion should not be null
 		Union union =
@@ -1893,11 +1922,12 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY bitfields w/ enum
 
 		waitForCompletion();
+
+		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
 		// primitive type of byte used in absence of enum
 		Union union =

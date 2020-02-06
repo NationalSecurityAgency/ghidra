@@ -997,10 +997,7 @@ class StructureDB extends CompositeDB implements Structure {
 			if (ordinal < 0 || ordinal >= numComponents) {
 				throw new ArrayIndexOutOfBoundsException(ordinal);
 			}
-			if (dataType instanceof BitFieldDataType) {
-				throw new IllegalArgumentException(
-					"Components may not be replaced with a bit-field");
-			}
+
 			validateDataType(dataType);
 
 			DataTypeComponent origDtc = getComponent(ordinal);
@@ -1044,9 +1041,7 @@ class StructureDB extends CompositeDB implements Structure {
 			throw new IllegalArgumentException(
 				"Offset " + offset + " is beyond end of structure (" + structLength + ").");
 		}
-		if (dataType instanceof BitFieldDataType) {
-			throw new IllegalArgumentException("Components may not be replaced with a bit-field");
-		}
+
 		lock.acquire();
 		try {
 			checkDeleted();
