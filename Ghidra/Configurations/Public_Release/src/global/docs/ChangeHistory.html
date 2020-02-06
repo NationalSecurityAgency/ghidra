@@ -6,6 +6,24 @@
   </HEAD>
 
 <BODY>
+<H1 align="center">Ghidra 9.1.2 Change History (February 2020)</H1>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Data Types</I>. Improved PDB composite reconstruction to attempt <code>pack(1)</code> alignment if default alignment fails. (GT-3401)</li>
+    <li><I>Data Types</I>. Added missing support for multi-user merge of unions and structures containing bitfields or a trailing flexible array member. (GT-3479)</li>
+    <li><I>Data Types</I>. Corrected structure editor save button enablement issue when editing bitfields within an unaligned structure. (GT-3519, Issue #1297)</li>
+    <li><I>Disassembly</I>. Corrected potential infinite loop with disassembler caused by branch to self with invalid delay slot instruction. (GT-3511, Issue #1486)</li>
+    <li><I>GUI</I>. Corrected processor manual display for Microsoft Windows users, which was not displaying processor manual and was, instead, rendering a blank page in web browser. (GT-3444)</li>
+    <li><I>GUI:Bitfield Editor</I>. Added field comment support to composite bitfield editor. (GT-3410)</li>
+    <li><I>Importer:MachO</I>. A MachO loader regression, in Ghidra 9.1.1, when laying down symbols at the correct location, has been fixed. (GT-3487, Issue #1446)</li>
+    <li><I>Languages</I>. Corrected mnemonic for ARM thumb <code>RSB.w</code> instruction. (GT-3420, Issue #1365)</li>
+    <li><I>Languages</I>. Corrected issue in M68000 with some move instructions not creating correct array assignments. (GT-3429, Issue #1394)</li>
+    <li><I>Languages</I>. Updated x86 processor manual index file with latest Intel and AMD manuals. (GT-3489, Issue #1078)</li>
+    <li><I>Multi-User:Ghidra Server</I>. Corrected Ghidra Server remote interface errors that occur when running with Java 11.0.6 (and later) release, which would throw RemoteException <code>Method is not Remote</code> errors. (GT-3521, Issue #1440)</li>
+    <li><I>PDB</I>. Corrected PDB XML generation for zero-length classes and structures and resolved various datatype dependency issues encountered during PDB Analysis. Changed line numbers from hex to decimal. (GT-3462, Issue #1410)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 9.1.1 Change History (December 2019)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>
