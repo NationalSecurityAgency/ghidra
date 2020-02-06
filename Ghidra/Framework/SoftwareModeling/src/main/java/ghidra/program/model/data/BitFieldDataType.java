@@ -421,9 +421,9 @@ public class BitFieldDataType extends AbstractDataType {
 		if (intDT.getFormatSettingsDefinition().getFormat(
 			settings) == FormatSettingsDefinition.CHAR) {
 			if (big.signum() < 0) {
-				big = big.add(BigInteger.valueOf(2).pow(bitSize));
+				big = big.add(BigInteger.valueOf(2).pow(effectiveBitSize));
 			}
-			int bytesLen = BitFieldDataType.getMinimumStorageSize(bitSize);
+			int bytesLen = BitFieldDataType.getMinimumStorageSize(effectiveBitSize);
 			byte[] bytes = DataConverter.getInstance(buf.isBigEndian()).getBytes(big, bytesLen);
 
 			return StringDataInstance.getCharRepresentation(this, bytes, settings);
