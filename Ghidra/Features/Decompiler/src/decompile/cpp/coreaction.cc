@@ -3388,6 +3388,8 @@ void ActionDeadCode::markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> 
 uintb ActionDeadCode::gatherConsumedReturn(Funcdata &data)
 
 {
+  if (data.getFuncProto().isOutputLocked() || data.getActiveOutput() != (ParamActive *)0)
+    return ~((uintb)0);
   list<PcodeOp *>::const_iterator iter,enditer;
   enditer = data.endOp(CPUI_RETURN);
   uintb consumeVal = 0;
@@ -3455,8 +3457,8 @@ int4 ActionDeadCode::apply(Funcdata &data)
     else if (!op->isAssignment()) {
       if (op->code() == CPUI_RETURN) {
 	pushConsumed(~((uintb)0),op->getIn(0),worklist);
-	if (op->numInput() > 1)
-	  pushConsumed(returnConsume,op->getIn(1),worklist);
+	for(i=1;i<op->numInput();++i)
+	  pushConsumed(returnConsume,op->getIn(i),worklist);
       }
       else {
 	for(i=0;i<op->numInput();++i)
