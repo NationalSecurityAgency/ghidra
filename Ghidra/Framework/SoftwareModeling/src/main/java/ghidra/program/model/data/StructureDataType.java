@@ -1154,9 +1154,6 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		if (index < 0 || index >= numComponents) {
 			throw new ArrayIndexOutOfBoundsException(index);
 		}
-		if (dataType instanceof BitFieldDataType) {
-			throw new IllegalArgumentException("Components may not be replaced with a bit-field");
-		}
 
 		validateDataType(dataType);
 
@@ -1195,9 +1192,6 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		if (offset >= structLength) {
 			throw new IllegalArgumentException(
 				"Offset " + offset + " is beyond end of structure (" + structLength + ").");
-		}
-		if (dataType instanceof BitFieldDataType) {
-			throw new IllegalArgumentException("Components may not be replaced with a bit-field");
 		}
 
 		validateDataType(dataType);
