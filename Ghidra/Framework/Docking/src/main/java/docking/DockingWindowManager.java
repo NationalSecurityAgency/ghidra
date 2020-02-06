@@ -1854,20 +1854,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		// as message dialogs will too be closed
 		DockingDialog d = (DockingDialog) activeWindow;
 		Window ancestor = SwingUtilities.getWindowAncestor(d);
-		if (!d.isShowing()) {
-			if (!ancestor.isShowing()) {
-				return null;
-			}
+		if (d.isShowing() && isNonTransientWindow(d)) {
+			return d;
+		}
 
+		// The active window is not a suitable parent; try its parent
+		if (ancestor.isShowing() && isNonTransientWindow(ancestor)) {
 			return ancestor;
 		}
 
-		DialogComponentProvider provider = d.getComponent();
-		if (provider.isTransient()) {
-			return ancestor;
-		}
-
-		return d;
+		return null;
 	}
 
 	public ComponentProvider getActiveComponentProvider() {
