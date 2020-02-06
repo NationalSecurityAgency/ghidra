@@ -269,6 +269,10 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 {
   if (slot == 0) return false;	// Don't deal with actual return address container
   if (fd->getFuncProto().isOutputLocked()) return false;
+  if (!aggressive) {
+    if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
+      return false;				// Don't truncate
+  }
 
   if (!returnsTraversed) {
     // If we plan to truncate the size of a return variable, we need to propagate the logical size to any other
@@ -557,7 +561,6 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       hcount += 1;		// Dealt with this descendant
       break;
     case CPUI_RETURN:
-      if (!aggressive) return false;
       if (!tryReturnPull(op,rvn,slot)) return false;
       hcount += 1;
       break;
@@ -835,7 +838,6 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
       hcount += 1;		// Dealt with this descendant
       break;
     case CPUI_RETURN:
-      if (!aggressive) return false;
       if (!tryReturnPull(op,rvn,slot)) return false;
       hcount += 1;
       break;

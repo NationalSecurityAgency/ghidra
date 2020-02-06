@@ -3369,17 +3369,37 @@ void ActionDeadCode::markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> 
   }
   for(int4 i=1;i<callOp->numInput();++i) {
     Varnode *vn = callOp->getIn(i);
-    uintb consumeVal = vn->getNZMask();
-    if (vn->isAutoLive() || consumeVal > 0xffffffff)
+    uintb consumeVal;
+    if (vn->isAutoLive())
       consumeVal = ~((uintb)0);
-    else if (consumeVal > 0xffff)
-      consumeVal = 0xffffffff;
-    else if (consumeVal > 0xff)
-      consumeVal = 0xffff;
     else
-      consumeVal = 0xff;
+      consumeVal = minimalMask(vn->getNZMask());
     pushConsumed(consumeVal,vn,worklist);
   }
+}
+
+/// \brief Determine how the \e return \e values for the given function are consumed
+///
+/// Examine each CPUI_RETURN to see how the Varnode input is consumed.
+/// If the function's prototype is locked, assume the Varnode is entirely consumed.
+/// If there are no CPUI_RETURN ops, return 0
+/// \param data is the given function
+/// \return the bit mask of what is consumed
+uintb ActionDeadCode::gatherConsumedReturn(Funcdata &data)
+
+{
+  list<PcodeOp *>::const_iterator iter,enditer;
+  enditer = data.endOp(CPUI_RETURN);
+  uintb consumeVal = 0;
+  for(iter=data.beginOp(CPUI_RETURN);iter!=enditer;++iter) {
+    PcodeOp *returnOp = *iter;
+    if (returnOp->isDead()) continue;
+    if (returnOp->numInput() > 1) {
+      Varnode *vn = returnOp->getIn(1);
+      consumeVal |= minimalMask(vn->getNZMask());
+    }
+  }
+  return consumeVal;
 }
 
 int4 ActionDeadCode::apply(Funcdata &data)
@@ -3389,6 +3409,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
   list<PcodeOp *>::const_iterator iter;
   PcodeOp *op;
   Varnode *vn;
+  uintb returnConsume;
   vector<Varnode *> worklist;
   VarnodeLocSet::const_iterator viter,endviter;
   const AddrSpaceManager *manage = data.getArch();
@@ -3417,6 +3438,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
     }
   }
 
+  returnConsume = gatherConsumedReturn(data);
   for(iter=data.beginOpAlive();iter!=data.endOpAlive();++iter) {
     op = *iter;
 
@@ -3427,10 +3449,21 @@ int4 ActionDeadCode::apply(Funcdata &data)
 	  pushConsumed(~((uintb)0),op->getIn(i),worklist);
       }
       // Postpone setting consumption on CALL and CALLIND inputs
+      if (!op->isAssignment())
+	continue;
     }
     else if (!op->isAssignment()) {
-      for(i=0;i<op->numInput();++i)
-	pushConsumed(~((uintb)0),op->getIn(i),worklist);
+      if (op->code() == CPUI_RETURN) {
+	pushConsumed(~((uintb)0),op->getIn(0),worklist);
+	if (op->numInput() > 1)
+	  pushConsumed(returnConsume,op->getIn(1),worklist);
+      }
+      else {
+	for(i=0;i<op->numInput();++i)
+	  pushConsumed(~((uintb)0),op->getIn(i),worklist);
+      }
+      // Postpone setting consumption on RETURN input
+      continue;
     }
     else {
       for(i=0;i<op->numInput();++i) {
@@ -3440,7 +3473,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
       }
     }
     vn = op->getOut();
-    if ((vn!=(Varnode *)0)&&(vn->isAutoLive()))
+    if (vn->isAutoLive())
       pushConsumed(~((uintb)0),vn,worklist);
   }
 
