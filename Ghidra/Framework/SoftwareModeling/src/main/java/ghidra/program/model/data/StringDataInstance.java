@@ -44,6 +44,9 @@ import ghidra.util.*;
  * <p>
  */
 public class StringDataInstance {
+
+	private static final int ASCII_MAX = 0x7f;
+
 	/**
 	 * Returns true if the {@link Data} instance is a 'string'.
 	 *
@@ -83,7 +86,7 @@ public class StringDataInstance {
 		return dt instanceof AbstractStringDataType || (dt instanceof Array &&
 			ArrayStringable.getArrayStringable(((Array) dt).getDataType()) != null);
 	}
-	
+
 	/**
 	 * Returns true if the {@link Data} instance is one of the many 'char' data types.
 	 * 
@@ -105,16 +108,31 @@ public class StringDataInstance {
 	 * <p>
 	 * 
 	 * @param dataType the {@link DataType} of the element containing the bytes (most likely a ByteDataType)
-	 * @param bytes the bytes to convert
+	 * @param bytes the big-endian ordered bytes to convert to a char representation
 	 * @param settings the {@link Settings} object for the location where the bytes came from, or null
-	 * @param isBigEndian boolean flag indicating data is big endian
 	 * @return formatted string (typically with quotes around the contents): single character: 'a', multiple characters: "a\x12bc"
 	 */
-	public static String getCharRepresentation(DataType dataType, byte[] bytes, Settings settings,
-			boolean isBigEndian) {
-		MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, isBigEndian);
-		StringDataInstance sdi =
-			new StringDataInstance(dataType, settings, memBuf, bytes.length);
+	public static String getCharRepresentation(DataType dataType, byte[] bytes, Settings settings) {
+		if (bytes == null || bytes.length == 0) {
+			return UNKNOWN;
+		}
+
+		// ignore leading 0 bytes
+		int lsbIndex = bytes.length - 1;
+		if (bytes[lsbIndex] >= 0 && bytes[lsbIndex] <= 0x7f) {
+			boolean isAsciiChar = true;
+			for (int i = 0; i < lsbIndex; i++) {
+				if (bytes[i] != 0) {
+					isAsciiChar = false;
+				}
+			}
+			if (isAsciiChar) {
+				bytes = new byte[] { bytes[lsbIndex] };
+			}
+		}
+
+		MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
+		StringDataInstance sdi = new StringDataInstance(dataType, settings, memBuf, bytes.length);
 		return sdi.getCharRepresentation();
 	}
 

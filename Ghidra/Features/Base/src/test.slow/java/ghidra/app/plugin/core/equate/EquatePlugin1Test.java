@@ -1175,7 +1175,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		performAction("Convert To Char");
 
 		ListingTextField tf = (ListingTextField) cb.getCurrentField();
-		assertEquals("'\\x02'", tf.getFieldElement(0, 11).getText());
+		assertEquals("02h", tf.getFieldElement(0, 11).getText());
 
 		undo(program);
 		tf = (ListingTextField) cb.getCurrentField();
@@ -1184,7 +1184,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		redo(program);
 		tf = (ListingTextField) cb.getCurrentField();
-		assertEquals("'\\x02'", tf.getFieldElement(0, 11).getText());
+		assertEquals("02h", tf.getFieldElement(0, 11).getText());
 	}
 
 	@Test

@@ -48,8 +48,6 @@ public class ConvertToCharAction extends AbstractConvertAction {
 	@Override
 	protected String convertToString(Program program, Scalar scalar, boolean isData) {
 		byte[] bytes = scalar.byteArrayValue();
-
-		return StringDataInstance.getCharRepresentation(ByteDataType.dataType, bytes, null,
-			program.getMemory().isBigEndian());
+		return StringDataInstance.getCharRepresentation(ByteDataType.dataType, bytes, null);
 	}
 }

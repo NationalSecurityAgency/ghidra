@@ -173,14 +173,8 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			return null;
 		}
 
-		boolean isBigEndian = ENDIAN.isBigEndian(settings, buf);
-
-		if (!isBigEndian) {
-			byte[] flipped = new byte[size];
-			for (int i = 0; i < size; i++) {
-				flipped[i] = bytes[size - i - 1];
-			}
-			bytes = flipped;
+		if (!ENDIAN.isBigEndian(settings, buf)) {
+			bytes = ArrayUtilities.reverse(bytes);
 		}
 
 		if (size > 8) {
@@ -225,16 +219,17 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 			return "??";
 		}
 
-		boolean isLE = !ENDIAN.isBigEndian(settings, buf);
-		if (isLE) {
+		if (!ENDIAN.isBigEndian(settings, buf)) {
 			bytes = ArrayUtilities.reverse(bytes);
 		}
 
+		BigInteger value = new BigInteger(bytes);
+
 		if (getFormatSettingsDefinition().getFormat(settings) == FormatSettingsDefinition.CHAR) {
-			return StringDataInstance.getCharRepresentation(this, bytes, settings, !isLE);
+			return StringDataInstance.getCharRepresentation(this, bytes, settings);
 		}
 
-		return getRepresentation(new BigInteger(bytes), settings, 8 * length);
+		return getRepresentation(value, settings, 8 * length);
 	}
 
 	/**
