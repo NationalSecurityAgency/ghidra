@@ -1747,8 +1747,15 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	public void testHistoryRestoresSelectedFiles() throws Exception {
 
 		File startDir = createTempDir();
-		setDir(startDir);
-		createFileSubFile(startDir, 3);
+		File subDir = createFileSubFile(startDir, 3);
+		setDir(subDir);
+
+//		// debug
+//		DirectoryList list = getListView();
+//		ListSelectionModel sm = list.getSelectionModel();
+//		sm.addListSelectionListener(e -> {
+//			Msg.debug(this, "selection changed: " + e);
+//		});
 
 		pressUp();
 		selectFile(getListView(), 1);
@@ -1930,6 +1937,11 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	private File selectFile(DirectoryList list, int index) {
+
+		// TODO debug - remove when all tests passing on server
+		int size = list.getModel().getSize();
+		Msg.debug(this, "selectFile() - new index: " + index + "; list size: " + size);
+
 		runSwing(() -> list.setSelectedIndex(index));
 		return runSwing(() -> list.getSelectedFile());
 	}

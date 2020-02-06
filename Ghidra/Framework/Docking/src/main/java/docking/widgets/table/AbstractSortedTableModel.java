@@ -190,10 +190,23 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		return pendingSortState;
 	}
 
+	/**
+	 * Returns true if there is a pending change to the current sort state 
+	 * (this includes a sort state that signals no sort will be applied)
+	 * 
+	 * @return true if there is a pending change to the current sort state
+	 */
 	public boolean isSortPending() {
 		return isSortPending;
 	}
 
+	/**
+	 * Returns true if this model has been sorted and does not have a new pending sort that will
+	 * be applied
+	 * 
+	 * @return true if sorted
+	 * @see #isSortPending()
+	 */
 	public boolean isSorted() {
 		return !isSortPending && !sortState.isUnsorted();
 	}
