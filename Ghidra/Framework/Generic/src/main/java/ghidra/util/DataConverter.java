@@ -19,14 +19,19 @@ import java.io.Serializable;
 import java.math.BigInteger;
 
 /**
- * 
- * Defines methods to convert Java numeric types to and from their
- * raw form in a byte array.
+ * Stateless helper classes with static singleton instances that contain methods to convert
+ * Java numeric types to and from their raw form in a byte array.
  * <p>
  * 
  */
 public interface DataConverter extends Serializable {
 
+	/**
+	 * Returns the correct DataConverter static instance for the requested endian-ness.
+	 * 
+	 * @param isBigEndian boolean flag, true means big endian
+	 * @return static DataConverter instance
+	 */
 	public static DataConverter getInstance(boolean isBigEndian) {
 		return isBigEndian ? BigEndianDataConverter.INSTANCE : LittleEndianDataConverter.INSTANCE;
 	}
@@ -183,7 +188,6 @@ public interface DataConverter extends Serializable {
 		val = val << shiftBits;
 		val = val >> shiftBits;
 		return val;
-
 	}
 
 	/**
@@ -271,6 +275,7 @@ public interface DataConverter extends Serializable {
 	 * 
 	 * @param b array to contain the bytes
 	 * @param value the short value
+	 * @throws IndexOutOfBoundsException if byte array is too small to hold the value
 	 */
 	default void putShort(byte[] b, short value) {
 		putShort(b, 0, value);
@@ -282,10 +287,10 @@ public interface DataConverter extends Serializable {
 	 * @param b array to contain the bytes
 	 * @param offset the offset into the byte array to store the value
 	 * @param value the short value
+	 * @throws IndexOutOfBoundsException if offset is too large or byte array
+	 * is too small to hold the value
 	 */
-	default void putShort(byte[] b, int offset, short value) {
-		getBytes(value, b, offset);
-	}
+	void putShort(byte[] b, int offset, short value);
 
 	/**
 	 * Writes a int value into a byte array.
@@ -294,6 +299,7 @@ public interface DataConverter extends Serializable {
 	 * 
 	 * @param b array to contain the bytes
 	 * @param value the int value
+	 * @throws IndexOutOfBoundsException if byte array is too small to hold the value
 	 */
 	default void putInt(byte[] b, int value) {
 		putInt(b, 0, value);
@@ -307,6 +313,8 @@ public interface DataConverter extends Serializable {
 	 * @param b array to contain the bytes
 	 * @param offset the offset into the byte array to store the value
 	 * @param value the int value
+	 * @throws IndexOutOfBoundsException if offset is too large or byte array
+	 * is too small to hold the value
 	 */
 	void putInt(byte[] b, int offset, int value);
 
@@ -317,6 +325,7 @@ public interface DataConverter extends Serializable {
 	 * 
 	 * @param b array to contain the bytes
 	 * @param value the long value
+	 * @throws IndexOutOfBoundsException if byte array is too small to hold the value
 	 */
 	default void putLong(byte[] b, long value) {
 		putLong(b, 0, value);
@@ -330,6 +339,8 @@ public interface DataConverter extends Serializable {
 	 * @param b array to contain the bytes
 	 * @param offset the offset into the byte array to store the value
 	 * @param value the long value
+	 * @throws IndexOutOfBoundsException if offset is too large or byte array
+	 * is too small to hold the value
 	 */
 	default void putLong(byte[] b, int offset, long value) {
 		putValue(value, Long.BYTES, b, offset);
@@ -356,6 +367,7 @@ public interface DataConverter extends Serializable {
 	 * @param b array to contain the bytes at offset 0
 	 * @param size number of bytes to be written
 	 * @param value BigInteger value to convert 
+	 * @throws IndexOutOfBoundsException if byte array is less than specified size
 	 */
 	default void putBigInteger(byte[] b, int size, BigInteger value) {
 		putBigInteger(b, 0, size, value);
@@ -370,6 +382,7 @@ public interface DataConverter extends Serializable {
 	 * @param offset the offset into the byte array to store the value
 	 * @param size number of bytes to be written
 	 * @param value BigInteger value to convert
+	 * @throws IndexOutOfBoundsException if (offset+size)&gt;b.length
 	 */
 	public void putBigInteger(byte[] b, int offset, int size, BigInteger value);
 

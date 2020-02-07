@@ -22,6 +22,12 @@ import ghidra.program.model.mem.MemoryAccessException;
 
 public interface GhidraDataConverter extends DataConverter {
 
+	/**
+	 * Returns the correct GhidraDataConverter static instance for the requested endian-ness.
+	 * 
+	 * @param isBigEndian boolean flag, true means big endian
+	 * @return static GhidraDataConverter instance
+	 */
 	public static GhidraDataConverter getInstance(boolean isBigEndian) {
 		return isBigEndian ? GhidraBigEndianDataConverter.INSTANCE
 				: GhidraLittleEndianDataConverter.INSTANCE;

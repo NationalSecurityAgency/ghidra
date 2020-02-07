@@ -45,22 +45,6 @@ public class ByteMemBufferImpl implements MemBuffer {
 	}
 
 	/**
-	 * Convenience constructor using varargs for specifying byte values.
-	 * @param addr the address to associate with the bytes
-	 * @param isBigEndian true for BigEndian, false for LittleEndian.
-	 * @param byteValues varargs for specifying the individual byte values.  The int argument
-	 * will be truncated to a byte value.
-	 */
-	public ByteMemBufferImpl(Address addr, boolean isBigEndian, int... byteValues) {
-		this.addr = addr;
-		this.converter = GhidraDataConverter.getInstance(isBigEndian);
-		bytes = new byte[byteValues.length];
-		for (int i = 0; i < bytes.length; i++) {
-			bytes[i] = (byte) byteValues[i];
-		}
-	}
-
-	/**
 	 * Get number of bytes contained within buffer
 	 * @return byte count
 	 */
