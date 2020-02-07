@@ -70,7 +70,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	@Override
 	protected VfTableModel createModel(Program program) {
 		if (model == null || program != model.getProgram()) {
-			model = new VfTableModel(program, address, validationOptions);
+			model = new VfTableModel(program, getDataAddress(), validationOptions);
 		}
 		return model;
 	}
@@ -105,7 +105,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 			return false;
 		}
 		long displacement = dataType.getLength();
-		Address terminatorAddress = address.add(displacement);
+		Address terminatorAddress = getDataAddress().add(displacement);
 		try {
 			Address referencedAddress = getAbsoluteAddress(program, terminatorAddress);
 			if (referencedAddress == null || referencedAddress.getOffset() != 0) {
@@ -136,7 +136,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	private boolean createMetaPointer() {
 
 		Program program = model.getProgram();
-		Address metaAddress = address.subtract(program.getDefaultPointerSize());
+		Address metaAddress = getDataAddress().subtract(program.getDefaultPointerSize());
 
 		// Create a pointer to the RTTI4 associated with the vf table.
 		DataType metaPointer = new PointerDataType(program.getDataTypeManager());
@@ -162,7 +162,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 
 	private boolean createVfTableMarkup() throws CancelledException, InvalidDataTypeException {
 
-		Address vfTableAddress = address;
+		Address vfTableAddress = getDataAddress();
 		Program program = model.getProgram();
 
 		monitor.checkCanceled();
@@ -238,7 +238,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	 * the vftable.
 	 */
 	private Address getMetaAddress(Program program) {
-		return address.subtract(program.getDefaultPointerSize());
+		return getDataAddress().subtract(program.getDefaultPointerSize());
 	}
 
 }

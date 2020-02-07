@@ -141,7 +141,8 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * @return true if the data type creation completes successfully.
 	 * @throws CancelledException if the user cancels this task.
 	 */
-	private boolean doApplyTo(Program program, TaskMonitor taskMonitor) throws CancelledException {
+	protected boolean doApplyTo(Program program, TaskMonitor taskMonitor)
+			throws CancelledException {
 
 		try {
 			monitor = taskMonitor;
@@ -177,7 +178,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			catch (InvalidInputException e) {
 				// Catch the exception and output the error, but still should create 
 				// associated data if possible, even though markup failed.
-				handleErrorMessage(program, name, address, address, e);
+				handleErrorMessage(program, name, getDataAddress(), getDataAddress(), e);
 				success = false;
 			}
 
@@ -190,7 +191,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 		}
 		catch (AddressOutOfBoundsException | CodeUnitInsertionException | DataTypeConflictException
 				| InvalidDataTypeException e) {
-			handleErrorMessage(program, name, address, address, e);
+			handleErrorMessage(program, name, getDataAddress(), getDataAddress(), e);
 			return false;
 		}
 	}
@@ -211,8 +212,8 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			throw new CodeUnitInsertionException(
 				"Unable to get data type from model, " + model.getName() + ".");
 		}
-		if (!memory.getLoadedAndInitializedAddressSet().contains(address)) {
-			String message = "Can't create an " + dt.getName() + " @ " + address +
+		if (!memory.getLoadedAndInitializedAddressSet().contains(getDataAddress())) {
+			String message = "Can't create an " + dt.getName() + " @ " + getDataAddress() +
 				" which isn't in loaded and initialized memory for " + program.getName();
 			throw new CodeUnitInsertionException(message);
 		}
@@ -228,14 +229,15 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 		monitor.checkCanceled();
 
 		// Is the data type already applied at the address?
-		if (matchingDataExists(dt, program, address)) {
+		if (matchingDataExists(dt, program, getDataAddress())) {
 			return;
 		}
 
 		monitor.checkCanceled();
 
 		// Create data at the address using the datatype.
-		DataUtilities.createData(program, address, dt, dt.getLength(), false, getClearDataMode());
+		DataUtilities.createData(program, getDataAddress(), dt, dt.getLength(), false,
+			getClearDataMode());
 	}
 
 	/**
@@ -352,5 +354,15 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	protected ClearDataMode getClearDataMode() {
 		return (applyOptions.shouldClearDefinedData()) ? ClearDataMode.CLEAR_ALL_CONFLICT_DATA
 				: ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA;
+	}
+
+	/**
+	 * Get the address for the data item to be processed by the base implementation.
+	 * In general this is the initial model address set when the command was created.
+	 * 
+	 * @return the address of the data item being created.
+	 */
+	protected Address getDataAddress() {
+		return address;
 	}
 }

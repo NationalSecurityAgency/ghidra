@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,11 @@
  */
 package ghidra.util.bytesearch;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
-import ghidra.xml.XmlPullParser;
-
 /**
- * Action that should be applied to a Program at the Address a pattern matches
- *
+ * Interface for factories that create Match Pattern classes
  */
-public interface MatchAction {
-	public void apply(Program program,Address addr,Match match);
-	
-	public void restoreXml(XmlPullParser parser);
+public interface PatternFactory {
+	public MatchAction getMatchActionByName(String nm);
+
+	public PostRule getPostRuleByName(String nm);
 }

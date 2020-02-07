@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +19,11 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.xml.XmlPullParser;
 
-public class DummyMatchAction implements MatchAction {
+/**
+ * Interface for a match action to be taken for the Program@Address for a ditted bit seqence pattern
+ */
+public interface MatchAction {
+	public void apply(Program program, Address addr, Match match);
 
-	@Override
-	public void apply(Program program, Address addr, Match match) {
-	}
-
-	@Override
-	public void restoreXml(XmlPullParser parser) {
-		parser.discardSubTree();
-	}
-	
+	public void restoreXml(XmlPullParser parser);
 }
-

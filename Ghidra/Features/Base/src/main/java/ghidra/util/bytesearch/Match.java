@@ -15,13 +15,21 @@
  */
 package ghidra.util.bytesearch;
 
+/**
+ * Represents a match of a DittedBitSequence at a given offset in a byte sequence.
+ * 
+ * There is a hidden assumption that the sequence is actually a Pattern
+ * that might have a ditted-bit-sequence, a set of match actions,
+ * and post match rules/checks
+ * 
+ */
 public class Match {
 	private DittedBitSequence sequence;	// Pattern that matches
 	private long offset;			// starting offset within bytestream of match
 
-	public Match(DittedBitSequence seq, long off) {
-		sequence = seq;
-		offset = off;
+	public Match(DittedBitSequence sequence, long offset) {
+		this.sequence = sequence;
+		this.offset = offset;
 	}
 
 	/**
@@ -39,42 +47,70 @@ public class Match {
 		return sequence.getNumFixedBits() - sequence.getNumInitialFixedBits(marked);
 	}
 
+	/**
+	 * @return actions associated with this match
+	 */
 	public MatchAction[] getMatchActions() {
 		return ((Pattern) sequence).getMatchActions();
 	}
 
+	/**
+	 * @return size in bytes of sequence
+	 */
 	public int getSequenceSize() {
 		return sequence.getSize();
 	}
 
+	/**
+	 * @return index of sequence in a possibly longer set of sequences
+	 */
 	public int getSequenceIndex() {
 		return sequence.getIndex();
 	}
 
+	/**
+	 * @return the offset of the match within a longer byte sequence
+	 */
 	public long getMarkOffset() {
 		return offset + ((Pattern) sequence).getMarkOffset();
 	}
 
+	/** 
+	 * @return offset of match in sequence of bytes
+	 */
 	public long getMatchStart() {
 		return offset;
 	}
 
+	/**
+	 * Check that the possible post rules are satisfied
+	 * 
+	 * @param streamoffset offset within from match location to check postrules.
+	 * 
+	 * @return true if post rules are satisfied
+	 */
 	public boolean checkPostRules(long streamoffset) {
 		long curoffset = streamoffset + offset;
 		Pattern pattern = (Pattern) sequence;
 		PostRule[] postRules = pattern.getPostRules();
-		for (int i = 0; i < postRules.length; ++i) {
-			if (!postRules[i].apply(pattern, curoffset)) {
+		for (PostRule postRule : postRules) {
+			if (!postRule.apply(pattern, curoffset)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
+	/**
+	 * @return ditted bit sequence as a string
+	 */
 	public String getHexString() {
 		return sequence.getHexString();
 	}
 
+	/**
+	 * @return the sequence that was matched
+	 */
 	public DittedBitSequence getSequence() {
 		return sequence;
 	}

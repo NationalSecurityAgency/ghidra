@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,22 @@
  */
 package ghidra.util.bytesearch;
 
-public interface PatternFactory {
-	public MatchAction getMatchActionByName(String nm);
-	
-	public PostRule getPostRuleByName(String nm);
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
+import ghidra.xml.XmlPullParser;
+
+/**
+ * Dummy action attached to a match sequence.  Action is not restored from XML
+ */
+public class DummyMatchAction implements MatchAction {
+
+	@Override
+	public void apply(Program program, Address addr, Match match) {
+	}
+
+	@Override
+	public void restoreXml(XmlPullParser parser) {
+		parser.discardSubTree();
+	}
+
 }

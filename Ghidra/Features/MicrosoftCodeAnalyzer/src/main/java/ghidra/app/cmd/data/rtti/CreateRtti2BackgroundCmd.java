@@ -68,7 +68,7 @@ public class CreateRtti2BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	@Override
 	protected Rtti2Model createModel(Program program) {
 		if (model == null || program != model.getProgram()) {
-			model = new Rtti2Model(program, rtti1Count, address, validationOptions);
+			model = new Rtti2Model(program, rtti1Count, getDataAddress(), validationOptions);
 		}
 		return model;
 	}
@@ -118,13 +118,13 @@ public class CreateRtti2BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		// Plate Comment
 		EHDataTypeUtilities.createPlateCommentIfNeeded(program,
 			RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
-			RTTI_2_NAME, null, address, applyOptions);
+			RTTI_2_NAME, null, getDataAddress(), applyOptions);
 
 		monitor.checkCanceled();
 
 		// Label
 		if (applyOptions.shouldCreateLabel()) {
-			RttiUtil.createSymbolFromDemangledType(program, address, rtti0Model, RTTI_2_NAME);
+			RttiUtil.createSymbolFromDemangledType(program, getDataAddress(), rtti0Model, RTTI_2_NAME);
 		}
 		return true;
 	}

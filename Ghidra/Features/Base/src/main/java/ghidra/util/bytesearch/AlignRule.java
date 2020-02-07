@@ -19,24 +19,43 @@ import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
+/**
+ * ByteSearch post search rule when a pattern is found, The pattern must have a certain
+ * alignment at an offset from the location the pattern matches.  The alignment is
+ * specified by the mask bits that must be zero.
+ * 
+ *   mark is the offset in bytes from the start of the matching pattern.
+ *   
+ *   align 2 = 0x1 - lower bit must be zero
+ *   align 4 = 0x3 - lower two bits must be zero
+ *   align 8 = 0x7 - lower three bits must be zero
+ *   align 16 = 0xF - lower four bits must be zero
+ *   ....
+ * Other strange alignments could be specified, but most likely the above suffice.
+ * 
+ * The pattern can be constructed or restored from XML of the form:
+ * 
+ *     <align mark="0" bits="1"/>
+ *   
+ */
+
 public class AlignRule implements PostRule {
 
 	private int mark;		// Position, relative to start of pattern, to check alignment at
 	private int alignmask;  // Mask of bits that must be zero
-	
-	
-	public AlignRule(){
+
+	public AlignRule() {
 	}
-	
-	public AlignRule(int mark, int alignmask){
+
+	public AlignRule(int mark, int alignmask) {
 		this.mark = mark;
 		this.alignmask = alignmask;
 	}
-	
+
 	@Override
 	public boolean apply(Pattern pat, long matchoffset) {
-		int off = (int)matchoffset;
-		return (((off + mark) & alignmask)==0);
+		int off = (int) matchoffset;
+		return (((off + mark) & alignmask) == 0);
 	}
 
 	@Override
@@ -44,7 +63,7 @@ public class AlignRule implements PostRule {
 		XmlElement el = parser.start("align");
 		mark = SpecXmlUtils.decodeInt(el.getAttribute("mark"));
 		int bits = SpecXmlUtils.decodeInt(el.getAttribute("bits"));
-		alignmask = (1<<bits) - 1;
+		alignmask = (1 << bits) - 1;
 		parser.end();
 	}
 

@@ -24,6 +24,13 @@ import generic.jar.ResourceFile;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
+/**
+ * Pattern is an association of a DittedBitSequence to match,
+ * a set of post rules after a match is found that must be satisfied,
+ * and a set of actions to be taken if the pattern matches.
+ * 
+ * These patterns can be restored from an XML file.
+ */
 public class Pattern extends DittedBitSequence {
 
 	private int markOffset;	// Within pattern what is the 'marked' byte
@@ -37,7 +44,8 @@ public class Pattern extends DittedBitSequence {
 
 	}
 
-	public Pattern(DittedBitSequence seq, int offset, PostRule[] postArray, MatchAction[] matchArray) {
+	public Pattern(DittedBitSequence seq, int offset, PostRule[] postArray,
+			MatchAction[] matchArray) {
 		super(seq);
 		markOffset = offset;
 		postrule = postArray;
@@ -51,8 +59,8 @@ public class Pattern extends DittedBitSequence {
 	public MatchAction[] getMatchActions() {
 		return actions;
 	}
-	
-	public void setMatchActions(MatchAction[] actions){
+
+	public void setMatchActions(MatchAction[] actions) {
 		this.actions = actions;
 	}
 

@@ -23,66 +23,91 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * Two collections of patterns that are paired together to create larger patterns
- * The final large patterns all must first match a pattern from the "pre" pattern collection
- * followed immediately by a pattern from the "post" pattern collection
+ * A set of "pre" DittedBitSequences and a set of "post" Patterns are paired to form a larger pattern.
+ * To match, a sequence from the "pre" sequence set must first match, then one of the "post" patterns
+ * is matched relative to the matching "pre" pattern.  This class is really a storage object for the
+ * patterns and provides a mechanism to read the pre/post patterns from an XML file.
  *
+ * The larger pattern has the idea of bits of check, which means the number of bits that are fixed to
+ * a value when matching (not don't care).  There is a pre pattern bits of check and post pattern bits
+ * of check.  The bits of check are used to statistically gauge the accuracy of the pattern.
+ * 
+ * An example of the XML format follows:
+ *   <patternpairs totalbits="32" postbits="16">
+ *    <prepatterns>
+ *      <data>0xe12fff1.                  </data>
+ *      <data>0xe12fff1e 0x46c0           </data>
+ *      <data>0xe12fff1e 0xe1a00000       </data>
+ *    </prepatterns>
+ *    
+ *  <postpatterns>
+ *      <data> 0xe24dd...                              11101001 00101101 .1...... ....0000  </data>
+ *      <data> 11101001 00101101 .1...... ....0000     0xe24dd...                           </data>
+ *      <data> 11101001 00101101 .1...... ....0000     0x........ 0xe24dd...                </data>
+ *      <align mark="0" bits="3"/>
+ *      <setcontext name="TMode" value="0"/>
+ *      <funcstart/>
+ *    </postpatterns>
+ *  </patternpairs>
+ *  
+ *  Note: The post Patterns can also have a set of rules that must be satisfied along with one of the
+ *  Pattern DittedBitSequence matches.
  */
 public class PatternPairSet {
 	private int totalBitsOfCheck;				// Minimum number of bits of check in final patterns
 	private int postBitsOfCheck;				// Minimum bits of check in "post" part of pattern
 	private ArrayList<DittedBitSequence> preSequences;
 	private ArrayList<Pattern> postPatterns;
-	
+
 	public PatternPairSet() {
 		preSequences = new ArrayList<DittedBitSequence>();
 		postPatterns = new ArrayList<Pattern>();
 	}
-	
+
 	public void createFinalPatterns(ArrayList<Pattern> finalpats) {
-		for(int i=0;i<postPatterns.size();++i) {
+		for (int i = 0; i < postPatterns.size(); ++i) {
 			Pattern postpattern = postPatterns.get(i);
 			int postcheck = postpattern.getNumFixedBits();
 			if (postcheck < postBitsOfCheck) {
 				continue;
 			}
-			for(int j=0;j<preSequences.size();++j) {
-				DittedBitSequence prepattern = preSequences.get(j);
+			for (DittedBitSequence prepattern : preSequences) {
 				int precheck = prepattern.getNumFixedBits();
 				if (precheck + postcheck < totalBitsOfCheck) {
 					continue;
 				}
 				DittedBitSequence concat = prepattern.concatenate(postpattern);
-				Pattern finalpattern = new Pattern(concat,prepattern.getSize(),postpattern.getPostRules(),postpattern.getMatchActions());
+				Pattern finalpattern = new Pattern(concat, prepattern.getSize(),
+					postpattern.getPostRules(), postpattern.getMatchActions());
 				finalpats.add(finalpattern);
 			}
 		}
 	}
-	
+
 	public void extractPostPatterns(ArrayList<Pattern> postpats) {
-		for(int i=0;i<postPatterns.size();++i) {
+		for (int i = 0; i < postPatterns.size(); ++i) {
 			postpats.add(postPatterns.get(i));
 		}
 	}
-	
-	public void restoreXml(XmlPullParser parser,PatternFactory pfactory) throws IOException {
+
+	public void restoreXml(XmlPullParser parser, PatternFactory pfactory) throws IOException {
 		XmlElement el = parser.start("patternpairs");
 		totalBitsOfCheck = SpecXmlUtils.decodeInt(el.getAttribute("totalbits"));
 		postBitsOfCheck = SpecXmlUtils.decodeInt(el.getAttribute("postbits"));
 		parser.start("prepatterns");
-		el= parser.peek();
-		while(el.isStart()) {
+		el = parser.peek();
+		while (el.isStart()) {
 			DittedBitSequence preseq = new DittedBitSequence();
 			preseq.restoreXmlData(parser);
 			preSequences.add(preseq);
 			el = parser.peek();
 		}
 		parser.end();
-		while(parser.peek().isStart()) {
+		while (parser.peek().isStart()) {
 			parser.start("postpatterns");
 			el = parser.peek();
 			ArrayList<DittedBitSequence> postdit = new ArrayList<DittedBitSequence>();
-			while(el.isStart() && el.getName().equals("data")) {
+			while (el.isStart() && el.getName().equals("data")) {
 				DittedBitSequence postseq = new DittedBitSequence();
 				postseq.restoreXmlData(parser);
 				if (postseq.getNumFixedBits() >= postBitsOfCheck) {
@@ -99,8 +124,8 @@ public class PatternPairSet {
 			postRuleArray.toArray(postRules);
 			MatchAction[] matchActions = new MatchAction[matchActionArray.size()];
 			matchActionArray.toArray(matchActions);
-			for(int i=0;i<postdit.size();++i) {
-				Pattern postpat = new Pattern(postdit.get(i),0,postRules,matchActions);
+			for (DittedBitSequence element : postdit) {
+				Pattern postpat = new Pattern(element, 0, postRules, matchActions);
 				postPatterns.add(postpat);
 			}
 			parser.end();	// End postpatterns

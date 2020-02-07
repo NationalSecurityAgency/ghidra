@@ -73,7 +73,7 @@ public class CreateTypeDescriptorBackgroundCmd
 
 	private void loadModel(Program program) {
 		if (model == null || program != model.getProgram()) {
-			model = new TypeDescriptorModel(program, address, validationOptions);
+			model = new TypeDescriptorModel(program, getDataAddress(), validationOptions);
 		}
 	}
 
@@ -138,13 +138,13 @@ public class CreateTypeDescriptorBackgroundCmd
 		String prefix = demangledName + " ";
 
 		// Plate Comment
-		EHDataTypeUtilities.createPlateCommentIfNeeded(program, prefix, RTTI_0_NAME, null, address,
+		EHDataTypeUtilities.createPlateCommentIfNeeded(program, prefix, RTTI_0_NAME, null, getDataAddress(),
 			applyOptions);
 
 		monitor.checkCanceled();
 
 		// Label
-		EHDataTypeUtilities.createSymbolIfNeeded(program, prefix, RTTI_0_NAME, null, address,
+		EHDataTypeUtilities.createSymbolIfNeeded(program, prefix, RTTI_0_NAME, null, getDataAddress(),
 			applyOptions);
 
 		return true;
