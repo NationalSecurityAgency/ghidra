@@ -80,6 +80,7 @@ public:
   int4 overlap(int4 skip,const Address &op,int4 size) const; ///< Determine how two address ranges overlap
   bool isContiguous(int4 sz,const Address &loaddr,int4 losz) const; ///< Does \e this form a contigous range with \e loaddr
   bool isConstant(void) const; ///< Is this a \e constant \e value
+  void renormalize(int4 size);	///< Make sure there is a backing JoinRecord if \b this is in the \e join space
   bool isJoin(void) const;	///< Is this a \e join \e value
   void saveXml(ostream &s) const; ///< Save this to a stream as an XML tag
   void saveXml(ostream &s,int4 size) const; ///< Save this and a size to a stream as an XML tag

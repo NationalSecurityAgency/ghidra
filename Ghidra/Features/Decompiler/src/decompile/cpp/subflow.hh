@@ -69,7 +69,7 @@ class SubvariableFlow {
     int4 slot;			///< slot being affected or other parameter
   };
 
-  int4 flowsize;		///< Size of the lgoical data-flow in bytes
+  int4 flowsize;		///< Size of the logical data-flow in bytes
   int4 bitsize;			///< Number of bits in logical variable
   bool returnsTraversed;	///< Have we tried to flow logical value across CPUI_RETURNs
   bool aggressive;		///< Do we "know" initial seed point must be a sub variable

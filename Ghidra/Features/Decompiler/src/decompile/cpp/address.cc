@@ -179,6 +179,14 @@ bool Address::isContiguous(int4 sz,const Address &loaddr,int4 losz) const
   return false;
 }
 
+/// If \b this is (originally) a \e join address, reevaluate it in terms of its new
+/// \e offset and \e siz, changing the space and offset if necessary.
+/// \param size is the new size in bytes of the underlying object
+void Address::renormalize(int4 size) {
+  if (base->getType() == IPTR_JOIN)
+    base->getManager()->renormalizeJoinAddress(*this,size);
+}
+
 /// This is usually used to build an address from an \b \<addr\>
 /// tag, but it can be used to create an address from any tag
 /// with the appropriate attributes

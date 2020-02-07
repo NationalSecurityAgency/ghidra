@@ -1156,6 +1156,7 @@ Address SubvariableFlow::getReplacementAddress(ReplaceVarnode *rvn) const
     addr = addr + (rvn->vn->getSize() - flowsize - sa);
   else
     addr = addr + sa;
+  addr.renormalize(flowsize);
   return addr;
 }
 

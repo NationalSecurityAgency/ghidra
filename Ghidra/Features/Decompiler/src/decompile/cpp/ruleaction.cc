@@ -873,8 +873,10 @@ Varnode *RulePullsubMulti::buildSubpiece(Varnode *basevn,uint4 outsize,uint4 shi
   data.opSetOpcode(new_op,CPUI_SUBPIECE);
   if (usetmp)
     outvn = data.newUniqueOut(outsize,new_op);
-  else
+  else {
+    smalladdr1.renormalize(outsize);
     outvn = data.newVarnodeOut(outsize,smalladdr1,new_op);
+  }
   data.opSetInput(new_op,basevn,0);
   data.opSetInput(new_op,data.newConstant(4,shift),1);
 
@@ -964,6 +966,7 @@ int4 RulePullsubMulti::applyOp(PcodeOp *op,Funcdata &data)
   }
 				// Build new multiequal near original multiequal
   PcodeOp *new_multi = data.newOp(params.size(),mult->getAddr());
+  smalladdr2.renormalize(newSize);
   Varnode *new_vn = data.newVarnodeOut(newSize,smalladdr2,new_multi);
   data.opSetOpcode(new_multi,CPUI_MULTIEQUAL);
   data.opSetAllInput(new_multi,params);
@@ -2005,6 +2008,7 @@ int4 RuleLeftRight::applyOp(PcodeOp *op,Funcdata &data)
     addr = addr + isa;
   data.opUnsetInput(op,0);
   data.opUnsetOutput(leftshift);
+  addr.renormalize(tsz);
   Varnode *newvn = data.newVarnodeOut(tsz,addr,leftshift);
   data.opSetOpcode(leftshift,CPUI_SUBPIECE);
   data.opSetInput(leftshift, data.newConstant( leftshift->getIn(1)->getSize(), 0), 1);
@@ -7456,6 +7460,7 @@ Varnode *RulePtrFlow::truncatePointer(AddrSpace *spc,PcodeOp *op,Varnode *vn,int
     Address addr = vn->getAddr();
     if (addr.isBigEndian())
       addr = addr + (vn->getSize() - spc->getAddrSize());
+    addr.renormalize(spc->getAddrSize());
     newvn = data.newVarnodeOut(spc->getAddrSize(),addr,truncop);
   }
   data.opSetInput(op,newvn,slot);
