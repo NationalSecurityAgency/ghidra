@@ -485,9 +485,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 				try {
 					Listing listing = program.getListing();
 					Address startAddr = addr(program, "0x1002d20");
-					program.getMemory()
-							.setBytes(startAddr, new byte[] { (byte) 0x8d, (byte) 0x04, (byte) 0x8d,
-								(byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0 }); //LEA EAX,[0x0 + ECX*0x4]
+					program.getMemory().setBytes(startAddr, new byte[] { (byte) 0x8d, (byte) 0x04,
+						(byte) 0x8d, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0 }); //LEA EAX,[0x0 + ECX*0x4]
 					createInstruction(program, startAddr);
 					Instruction instruction = listing.getInstructionAt(startAddr);
 					Assert.assertTrue(instruction != null);
@@ -579,8 +578,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		setupAddNameDiffOnSubOperand();
 
 		executeMerge(ASK_USER);
-		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x4   Order seems to have been switched
 		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x0
+		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x4
 		waitForMergeCompletion();
 
 		EquateTable equateTab = resultProgram.getEquateTable();
@@ -603,31 +602,6 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		setupAddNameDiffOnSubOperand();
 
 		executeMerge(ASK_USER);
-		chooseEquate("0x1002d20", 1, KEEP_LATEST); // 0x4
-		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x0
-		waitForMergeCompletion();
-
-		EquateTable equateTab = resultProgram.getEquateTable();
-		List<Equate> equates = equateTab.getEquates(addr("0x1002d20"), 1);
-		assertEquals(2, equates.size());
-		Equate eq;
-		eq = equates.get(0);
-		assertEquals("FOUR", eq.getName());
-		assertEquals(4L, eq.getValue());
-		eq = equates.get(1);
-		assertEquals("ZERO", eq.getName());
-		assertEquals(0L, eq.getValue());
-	}
-
-	@Test
-	public void testAddNameDiffOnSubOperandPickMyLatest() throws Exception {
-		// 0x1002d20   LEA EAX,[0x0 + ECX*0x4]
-		//
-		// LATEST   0x0=NADA  0x4=FOUR
-		// MY       0x0=ZERO  0x4=QUAD
-		setupAddNameDiffOnSubOperand();
-
-		executeMerge(ASK_USER);
 		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x4
 		chooseEquate("0x1002d20", 1, KEEP_LATEST); // 0x0
 		waitForMergeCompletion();
@@ -642,6 +616,31 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		eq = equates.get(1);
 		assertEquals("QUAD", eq.getName());
 		assertEquals(4L, eq.getValue());
+	}
+
+	@Test
+	public void testAddNameDiffOnSubOperandPickMyLatest() throws Exception {
+		// 0x1002d20   LEA EAX,[0x0 + ECX*0x4]
+		//
+		// LATEST   0x0=NADA  0x4=FOUR
+		// MY       0x0=ZERO  0x4=QUAD
+		setupAddNameDiffOnSubOperand();
+
+		executeMerge(ASK_USER);
+		chooseEquate("0x1002d20", 1, KEEP_LATEST); // 0x4
+		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x0
+		waitForMergeCompletion();
+
+		EquateTable equateTab = resultProgram.getEquateTable();
+		List<Equate> equates = equateTab.getEquates(addr("0x1002d20"), 1);
+		assertEquals(2, equates.size());
+		Equate eq;
+		eq = equates.get(0);
+		assertEquals("FOUR", eq.getName());
+		assertEquals(4L, eq.getValue());
+		eq = equates.get(1);
+		assertEquals("ZERO", eq.getName());
+		assertEquals(0L, eq.getValue());
 	}
 
 	@Test
