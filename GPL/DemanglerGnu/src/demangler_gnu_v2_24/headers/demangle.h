@@ -1,6 +1,5 @@
 /* ###
  * IP: LGPL 3.0
- * REVIEWED: YES
  */
 /* Defs for interface to demanglers.
    Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002,
@@ -70,6 +69,9 @@ extern "C" {
 
 /* If none of these are set, use 'current_demangling_style' as the default. */
 #define DMGL_STYLE_MASK (DMGL_AUTO|DMGL_GNU|DMGL_LUCID|DMGL_ARM|DMGL_HP|DMGL_EDG|DMGL_GNU_V3|DMGL_JAVA|DMGL_GNAT)
+
+// Changed Jan 22, 2020 - Added constant to allow us to limit degenerate recursive calls
+#define DEMANGLE_RECURSION_LIMIT 10000
 
 /* Enumeration of possible demangling styles.
 

@@ -145,7 +145,8 @@ model {
 			println "have binary: " + b 
 		
 			if (version.equals(v33_1)) {
-				if (toolChain in Gcc) {
+				if (toolChain in Gcc) {							
+					//cCompiler.args "-DCP_DEMANGLE_DEBUG"
 					cCompiler.args "-DHAVE_STDLIB_H"
 					cCompiler.args "-DHAVE_STRING_H"
 				}
