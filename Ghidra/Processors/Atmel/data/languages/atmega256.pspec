@@ -135,8 +135,8 @@
 
 	<symbol name="RAMPZ" address="mem:0x5b"/>
     <symbol name="EIND" address="mem:0x5c"/>
-    <symbol name="SPL" address="mem:0x5d"/>
-    <symbol name="SPH" address="mem:0x5e"/>
+    <symbol name="_SPL" address="mem:0x5d"/>
+    <symbol name="_SPH" address="mem:0x5e"/>
     <symbol name="SREG" address="mem:0x5f"/>
     <symbol name="WDTCSR" address="mem:0x60"/>
     <symbol name="CLKPR" address="mem:0x61"/>
