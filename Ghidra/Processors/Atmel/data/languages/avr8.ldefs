@@ -47,5 +47,18 @@
     <compiler name="gcc"        spec="avr8egcc.cspec"        id="gcc"/>
     <external_name tool="IDA-PRO" name="avr"/>
   </language>
+ 
+  <language processor="AVR8"
+            endian="little"
+            size="16"
+            variant="Xmega"
+            version="1.3"
+            slafile="avr8xmega.sla"
+            processorspec="avr8xmega.pspec"
+            id="avr8:LE:24:xmega">
+    <description>AVR8 for an Xmega</description>
+    <compiler name="gcc"        spec="avr8egcc.cspec"        id="gcc"/>
+    <external_name tool="IDA-PRO" name="avr"/>
+  </language>
   
 </language_definitions>

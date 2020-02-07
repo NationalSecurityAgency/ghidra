@@ -14,6 +14,18 @@ define alignment=2;
 
 # Force fusion of two byte operations in a row by decoding as words
 #@define FUSION ""
+#define where the IO space is mapped if not specified
+@ifndef IO_START
+@define IO_START "0x20"
+@define RAMP_START "0x58"
+@define EIND "0x5c"
+@endif
+
+#define where the registers are located if not specified
+@ifndef REGISTER_SPACE
+@define REGISTER_SPACE "mem"
+@endif
+
 # mem space should really be the default, but the loading scripts will
 # prefer the code space as the default.  By being explicit for every
 # instruction, we can eliminate the ambiguity for at least the
@@ -27,7 +39,7 @@ define space mem type=ram_space size=2 wordsize=1;
 # Using decimal rather than hex to match specs
 # TODO: These general purpose registers should reside with the 'mem' space from 0x00-0x1f
 #define register offset=0 size=1 [
-define mem offset=0 size=1 [
+define $(REGISTER_SPACE) offset=0 size=1 [
 	R0  R1  R2  R3  R4  R5  R6  R7  R8  R9
 	R10 R11 R12 R13 R14 R15 R16 R17 R18 R19
 	R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
@@ -35,7 +47,7 @@ define mem offset=0 size=1 [
 ];
 
 #define register offset=0 size=2 [
-define mem offset=0 size=2 [
+define $(REGISTER_SPACE) offset=0 size=2 [
 	R1R0   R3R2   R5R4   R7R6   R9R8
 	R11R10 R13R12 R15R14 R17R16 R19R18
 	R21R20 R23R22 W # Technically, manual has R25R24 instead of W.
@@ -43,7 +55,7 @@ define mem offset=0 size=2 [
 ];
 
 #define register offset=0x10 size=4 [
-define mem offset=0x10 size=4 [
+define $(REGISTER_SPACE) offset=0x10 size=4 [
 	R19R18R17R16 R23R22R21R20
 ];
 
@@ -66,14 +78,14 @@ define register offset=0x80 size=1 [
 # to act as the high bits where the X, Y, or Z registers are used, or in direct
 # addressing instructions.
 # TODO: Incorporate the RAMPD register in the LDS instruction.
-define mem offset=0x58 size=1 [ RAMPD RAMPX RAMPY RAMPZ ];
-define mem offset=0x5F size=1 [ SREG ];
+
+define mem offset=$(RAMP_START) size=1 [ RAMPD RAMPX RAMPY RAMPZ ];
 
 
 # If the AVR processor has more than 128 KiB of ROM, the processor will support the EIND
 # register along with the EIJMP and EICALL extended instructions.
 @if HASEIND == "1"
-define mem offset=0x5C size=1 [ EIND ];
+define mem offset=$(EIND) size=1 [ EIND ];
 
 @endif
 
@@ -460,8 +472,8 @@ K7addr: val  is oplow4 & op9to10 & opbit8 [ val = ((1 ^ opbit8) << 7) | (opbit8 
 # #####################################################################################
 # COMMENTING OUT BECAUSE "Subtable symbol K7Ioaddr is not allowed in context block"
 #A7Ioaddr: val is K7Ioaddr [ val = (K7Ioaddr | 0x00) + 0x20 ; ] { export *[mem]:1 val; }
-Aio6: val  is oplow4 & op9to10 [ val = ((op9to10 << 4) | oplow4) + 0x20; ] { export *[mem]:1 val; }
-Aio5: val  is op3to7 [ val = (op3to7 | 0x00) + 0x20; ]                     { export *[mem]:1 val; }
+Aio6: val is oplow4 & op9to10 [ val = ((op9to10 << 4) | oplow4) + $(IO_START); ] { export *[mem]:1 val; }
+Aio5: val is op3to7 [ val = (op3to7 | 0x00) + $(IO_START); ] { export *[mem]:1 val; }
 
 q6: val  is oplow3 & op10to11 & opbit13 [ val = (opbit13 << 5) | (op10to11 << 3) | oplow3; ] { tmp:1 = val; export tmp; }
 
@@ -684,7 +696,18 @@ define pcodeop break;
 	RdFull = RdFull - 1;
 	setResultFlags(RdFull);
 }
-:des op4to7                      is phase=1 & ophi8=0x94 & oplow4=0xb & op4to7 { todo(); }
+
+define pcodeop encrypt;
+define pcodeop decrypt;
+
+:des op4to7                      is phase=1 & ophi8=0x94 & oplow4=0xb & op4to7 {
+	val:1  = op4to7;
+	if (Hflg) goto <enc>;
+	decrypt(val);
+	goto inst_next;
+  <enc>
+	encrypt(val);
+}
 
 @if HASEIND == "1"
 :eicall                          is phase=1 & ophi16=0x9519 {
