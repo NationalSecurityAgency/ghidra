@@ -52,7 +52,7 @@ public final class StabsFunctionSymbolDescriptor extends AbstractStabsSymbolDesc
 	StabsFunctionSymbolDescriptor(List<String> stabs, StabsFile file) throws StabsParseException {
 		super(stabs.get(0), file);
 		this.type = getType(descriptor);
-		final String typeString = stab.substring(name.length()+2);
+		String typeString = stab.substring(name.length()+2);
 		this.returnType = StabsTypeDescriptorFactory.getTypeDescriptor(this, typeString);
 		this.demangled = doGetDemangled();
 		this.parameters = parseParameters(stabs.subList(1, stabs.size()));
@@ -62,7 +62,7 @@ public final class StabsFunctionSymbolDescriptor extends AbstractStabsSymbolDesc
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof StabsFunctionSymbolDescriptor) {
-			final StabsFunctionSymbolDescriptor other = (StabsFunctionSymbolDescriptor) o;
+			StabsFunctionSymbolDescriptor other = (StabsFunctionSymbolDescriptor) o;
 			if (other.returnType.getDataType() == null) {
 				return false;
 			}
@@ -102,7 +102,7 @@ public final class StabsFunctionSymbolDescriptor extends AbstractStabsSymbolDesc
 	}
 
 	private DataType buildDataType() {
-		final CategoryPath funPath = new CategoryPath(path, CHILD_PATH);
+		CategoryPath funPath = new CategoryPath(path, CHILD_PATH);
 		FunctionDefinitionDataType funDt = new FunctionDefinitionDataType(funPath, name, dtm);
 		funDt.setReturnType(returnType.getDataType());
 		ParameterDefinition[] params = new ParameterDefinition[parameters.size()];
@@ -136,17 +136,27 @@ public final class StabsFunctionSymbolDescriptor extends AbstractStabsSymbolDesc
 	}
 
 	private List<StabsParameterSymbolDescriptor> parseParameters(List<String> stabs) throws StabsParseException {
-		final List<StabsParameterSymbolDescriptor> params = new LinkedList<>();
+		List<StabsParameterSymbolDescriptor> params = new LinkedList<>();
 		for (String stab : stabs) {
 			try {
-				final StabsParameterSymbolDescriptor param =
-					new StabsParameterSymbolDescriptor(stab, file);
-				if (param.name.equals(THIS_PARAM)) {
-					// set the calling convention to __thiscall and continue
-					cc = GenericCallingConvention.thiscall;
-					continue;
+				StabsSymbolDescriptorType type =
+					StabsSymbolDescriptorType.getSymbolType(stab);
+				if (type == StabsSymbolDescriptorType.PARAMETER) {
+					StabsParameterSymbolDescriptor param =
+						new StabsParameterSymbolDescriptor(stab, file);
+					if (param.name.equals(THIS_PARAM)) {
+						// set the calling convention to __thiscall and continue
+						cc = GenericCallingConvention.thiscall;
+						continue;
+					}
+					params.add(param);
+				} else if (type == StabsSymbolDescriptorType.VARIABLE) {
+					new StabsVariableSymbolDescriptor(stab, file);
+				} else {
+					break;
 				}
-				params.add(param);
+			} catch (IllegalStateException e) {
+				// no stab
 			} catch (StabsParseException e) {
 				// reached end of parameters
 				break;

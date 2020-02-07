@@ -55,8 +55,8 @@ public final class StabsCompositeTypeDescriptor extends AbstractStabsTypeDescrip
 	private StabsCompositeTypeDescriptor(StabsCompositeSymbolDescriptor token, String stab)
 			throws StabsParseException {
 		super(token, token.getStab());
-		final String subStab = token.getStab().substring(token.getName().length());
-		final StabsTypeNumber typeNumber = new StabsTypeNumber(subStab);
+		String subStab = token.getStab().substring(token.getName().length());
+		StabsTypeNumber typeNumber = new StabsTypeNumber(subStab);
 		// incase we have a reference to ourselves
 		file.addType(this, typeNumber);
 		this.typeStab = stab;
@@ -75,8 +75,8 @@ public final class StabsCompositeTypeDescriptor extends AbstractStabsTypeDescrip
 
 	private DataType createAnonymousDt() throws StabsParseException {
 		DataType initDt = null;
-		final CategoryPath path = symbol.getFile().getCategoryPath();
-		final String typeName;
+		CategoryPath path = symbol.getFile().getCategoryPath();
+		String typeName;
 		switch (typeStab.charAt(0)) {
 			case 'e':
 				typeName = String.format(
@@ -108,7 +108,7 @@ public final class StabsCompositeTypeDescriptor extends AbstractStabsTypeDescrip
 			if (name.equals("")) {
 				name = String.format("anon_enum_%s", path.getName());
 			}
-			final Enum mune = new EnumDataType(path, name, getEnumSize(typeStab), dtm);
+			Enum mune = new EnumDataType(path, name, getEnumSize(typeStab), dtm);
 			// skip past the 'e'
 			try (Scanner scanner = new Scanner(typeStab.substring(1))) {
 				scanner.findAll(ENUM_SPLITTER).forEach(
@@ -131,7 +131,7 @@ public final class StabsCompositeTypeDescriptor extends AbstractStabsTypeDescrip
 	}
 
 	private String getCompositeStart() {
-		final Matcher matcher = COMPOSITE_START.matcher(typeStab);
+		Matcher matcher = COMPOSITE_START.matcher(typeStab);
 		if (matcher.lookingAt()) {
 			return typeStab.substring(matcher.end());
 		}
@@ -157,7 +157,7 @@ public final class StabsCompositeTypeDescriptor extends AbstractStabsTypeDescrip
 
 	@Override
 	public int getLength() {
-		final int index = stab.indexOf(typeStab);
+		int index = stab.indexOf(typeStab);
 		return index + members.stream()
 							  .mapToInt(StabsMemberSymbolDescriptor::getLength)
 							  .sum();

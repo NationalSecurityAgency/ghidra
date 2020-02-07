@@ -45,7 +45,7 @@ public class StabsTypeDescriptorFactory {
 				// Pointers
 				case '@': // Pointer to Class Member (GNU)
 					// peek at next char. If not a number it's an attribute
-					final char nextChar = stab.charAt(1);
+					char nextChar = stab.charAt(1);
 					if (nextChar > '9' || nextChar < '0') {
 						return null;
 					}

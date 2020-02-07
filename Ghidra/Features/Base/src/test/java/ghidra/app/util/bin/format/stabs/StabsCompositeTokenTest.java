@@ -40,19 +40,19 @@ public class StabsCompositeTokenTest extends AbstractStabsTest {
 
 	@Test
 	public void parseStructureTest() throws Exception {
-		final StabsTypeDescriptor type = getType(STRUCTURE_STAB);
+		StabsTypeDescriptor type = getType(STRUCTURE_STAB);
 		assert getStructureType(dtm).isEquivalent(type.getDataType());
 	}
 
 	@Test
 	public void parseUnionTest() throws Exception {
-		final StabsTypeDescriptor type = getType(UNION_STAB);
+		StabsTypeDescriptor type = getType(UNION_STAB);
 		assert getUnionType(dtm).isEquivalent(type.getDataType());
 	}
 
 	@Test
 	public void parseEnumTest() throws Exception {
-		final StabsTypeDescriptor type = getType(ENUM_STAB);
+		StabsTypeDescriptor type = getType(ENUM_STAB);
 		assert getEnumType().isEquivalent(type.getDataType());
 	}
 

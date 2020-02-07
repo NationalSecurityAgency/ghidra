@@ -54,7 +54,7 @@ public final class StabsMemberSymbolDescriptor {
 	 */
 	public static List<StabsMemberSymbolDescriptor> getMembers(StabsSymbolDescriptor symbol,
 		String stab) throws StabsParseException {
-			final List<StabsToken<Groups>> tokens = TOKENIZER.getTokens(stab);
+			List<StabsToken<Groups>> tokens = TOKENIZER.getTokens(stab);
 			if (!tokens.isEmpty()) {
 				List<StabsMemberSymbolDescriptor> members = new ArrayList<>(tokens.size());
 				for (StabsToken<Groups> token : tokens) {

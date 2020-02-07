@@ -43,8 +43,8 @@ public final class StabsFunctionTypeDescriptor extends AbstractStabsFunctionType
 			super(symbol, stab);
 			this.returnType = getTypeDescriptor(symbol, stab.substring(1));
 			length += returnType.getLength();
-			final String subStab = stab.substring(length);
-			final FunctionDefinition def;
+			String subStab = stab.substring(length);
+			FunctionDefinition def;
 			if (symbol.getSymbolDescriptorType() == StabsSymbolDescriptorType.FUNCTION) {
 				def = new FunctionDefinitionDataType(path, symbol.getName(), dtm);
 			} else {
@@ -56,13 +56,13 @@ public final class StabsFunctionTypeDescriptor extends AbstractStabsFunctionType
 
 	private List<StabsTypeDescriptor> getParameters(String subStab, FunctionDefinition def)
 		throws StabsParseException {
-			final Matcher matcher = PATTERN.matcher(subStab);
-			final List<StabsTypeDescriptor> descriptors;
+			Matcher matcher = PATTERN.matcher(subStab);
+			List<StabsTypeDescriptor> descriptors;
 			if (matcher.lookingAt()) {
 				length = matcher.group().length();
 				descriptors = new ArrayList<>(Integer.parseInt(matcher.group(1)));
 				for (int i = 0; i < descriptors.size(); i++) {
-					final StabsTypeDescriptor type = new StabsParameterTypeDescriptor(this, subStab);
+					StabsTypeDescriptor type = new StabsParameterTypeDescriptor(this, subStab);
 					descriptors.add(type);
 					length += type.getLength();
 				}

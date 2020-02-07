@@ -41,7 +41,7 @@ public final class StabsVariableSymbolDescriptor extends AbstractStabsSymbolDesc
 	StabsVariableSymbolDescriptor(String stab, StabsFile file) throws StabsParseException {
 		super(stab, file);
 		this.vType = doGetVariableType();
-		final String typeStab;
+		String typeStab;
 		if (vType == VariableType.STACK) {
 			typeStab = stab.substring(stab.indexOf(':')+1);
 		} else {

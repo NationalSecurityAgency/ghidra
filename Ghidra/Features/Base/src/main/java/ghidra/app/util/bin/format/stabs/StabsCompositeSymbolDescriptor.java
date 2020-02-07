@@ -44,8 +44,8 @@ public class StabsCompositeSymbolDescriptor extends AbstractStabsSymbolDescripto
 	}	
 
 	private DataType initDataType() throws StabsParseException {
-		final String typeString = getTypeSubStab();
-		final DataType initDt = doGetDataType(typeString);
+		String typeString = getTypeSubStab();
+		DataType initDt = doGetDataType(typeString);
 		if (initDt != null) {
 			return dtm.resolve(initDt, REPLACE_HANDLER);
 		}

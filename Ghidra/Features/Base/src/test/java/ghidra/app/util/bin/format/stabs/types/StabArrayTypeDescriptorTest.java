@@ -24,7 +24,7 @@ public class StabArrayTypeDescriptorTest extends AbstractStabsTest {
 
 	@Test
 	public void parseTest() throws Exception {
-		final StabsTypeDescriptor type = parser.getType(1,1);
+		StabsTypeDescriptor type = parser.getType(1,1);
 		assert getDataType().isEquivalent(type.getDataType());
 	}
 

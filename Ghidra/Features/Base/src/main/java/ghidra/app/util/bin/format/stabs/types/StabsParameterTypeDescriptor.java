@@ -37,7 +37,7 @@ final class StabsParameterTypeDescriptor extends AbstractStabsTypeDescriptor {
 		throws StabsParseException {
 			super(function.getSymbolDescriptor(), stab);
 			this.token = TOKENIZER.getToken(stab);
-			final int index = stab.indexOf(token.get(Groups.TYPE));
+			int index = stab.indexOf(token.get(Groups.TYPE));
 			this.type = getTypeDescriptor(symbol, stab.substring(index));
 	}
 
@@ -53,7 +53,7 @@ final class StabsParameterTypeDescriptor extends AbstractStabsTypeDescriptor {
 
 	@Override
 	public int getLength() {
-		final String name = getName();
+		String name = getName();
 		return name != null ? name.length()+type.getLength() : type.getLength();
 	}
 

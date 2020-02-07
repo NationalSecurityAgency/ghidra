@@ -27,6 +27,7 @@ public class StabsFile {
 		Pattern.compile("(?<=(?:(?:include/)|(?:sys\\-include/)))(.*)");
 	private static final String BUILTIN_NAME = "__builtin__";
 	private static final int BUILTIN_FILE_NUMBER = 0;
+	private static final CategoryPath STABS_ROOT = new CategoryPath(CategoryPath.ROOT, "stabs");
 
 	private final long fileNumber;
 	private final String fileName;
@@ -47,10 +48,10 @@ public class StabsFile {
 
 	StabsFile(String fileName, StabsParser parser, int fileNumber) {
 		this.fullPath = fileName;
-		final Path path = Paths.get(fileName);
+		Path path = Paths.get(fileName);
 		path.normalize();
 		String strPath = path.toString().replaceAll("\\\\", "/").replaceAll("../", "");
-		final Matcher matcher = INCLUDE_PATTERN.matcher(fileName);
+		Matcher matcher = INCLUDE_PATTERN.matcher(fileName);
 		matcher.reset(strPath);
 		if (matcher.find()) {
 			strPath = matcher.group(1);
@@ -58,20 +59,20 @@ public class StabsFile {
 		this.fileName = strPath;
 		this.parser = parser;
 		this.fileNumber = fileNumber;
-		this.path = new CategoryPath("/stabs/"+strPath);
+		this.path = new CategoryPath(STABS_ROOT, strPath);
 	}
 
 	// this shouldn't be public. Not sure how to protect this though.
 	public void addType(StabsTypeDescriptor type, StabsTypeNumber typeNumber) {
 		if (isThisFile(typeNumber)) {
 			if (!typeNumber.hasFileNumber()) {
-				final StabsFile file = parser.getFile(BUILTIN_FILE_NUMBER);
+				StabsFile file = parser.getFile(BUILTIN_FILE_NUMBER);
 				file.types.put(typeNumber.typeNumber, type);
 			}
 			// add to ourselves too so we know where it was defined
 			types.put(typeNumber.typeNumber, type);
 		} else {
-			final StabsFile file = parser.getFile(typeNumber.fileNumber);
+			StabsFile file = parser.getFile(typeNumber.fileNumber);
 			file.types.put(typeNumber.typeNumber, type);
 		}
 	}
@@ -101,7 +102,7 @@ public class StabsFile {
 	public StabsTypeDescriptor getType(StabsTypeNumber typeNumber) {
 		if (isThisFile(typeNumber)) {
 			if (!typeNumber.hasFileNumber()) {
-				final StabsFile file = parser.getFile(BUILTIN_FILE_NUMBER);
+				StabsFile file = parser.getFile(BUILTIN_FILE_NUMBER);
 				return file.types.getOrCreateEntry(typeNumber.typeNumber).getValue();
 			}
 			return types.getOrCreateEntry(typeNumber.typeNumber).getValue();
@@ -139,7 +140,7 @@ public class StabsFile {
 	 * @return the type descriptor
 	 */
 	public StabsTypeDescriptor getType(long typeNumber) {
-		final RedBlackEntry<Long, StabsTypeDescriptor> entry = types.getOrCreateEntry(typeNumber);
+		RedBlackEntry<Long, StabsTypeDescriptor> entry = types.getOrCreateEntry(typeNumber);
 		return entry.getValue();
 	}
 

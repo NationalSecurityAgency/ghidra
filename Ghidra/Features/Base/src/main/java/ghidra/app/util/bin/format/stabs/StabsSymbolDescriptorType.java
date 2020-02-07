@@ -40,14 +40,14 @@ public enum StabsSymbolDescriptorType {
 	 * @return the appropriate StabSymbolDescriptorType
 	 */
 	public static StabsSymbolDescriptorType getSymbolType(String stab) {
-		final StabsToken<Groups> token = TOKENIZER.getToken(stab);
-		final StabsSymbolDescriptorType result = getSymbolType(token.getChar(Groups.CODE));
+		StabsToken<Groups> token = TOKENIZER.getToken(stab);
+		StabsSymbolDescriptorType result = getSymbolType(token.getChar(Groups.CODE));
 		if (result == COMPOSITE) {
 			if (StabsClassSymbolDescriptor.isClass(stab.toString())) {
 				return CLASS;
 			}
 			if (stab.charAt(token.getLength()) == 't') {
-				final char c = stab.charAt(token.getLength()+1);
+				char c = stab.charAt(token.getLength()+1);
 				if (c >= '0' && c <= '9') {
 					// gcc2 does this
 					return TYPEDEF;

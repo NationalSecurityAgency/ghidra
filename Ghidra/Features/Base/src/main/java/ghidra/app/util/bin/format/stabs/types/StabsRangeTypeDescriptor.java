@@ -54,7 +54,7 @@ public final class StabsRangeTypeDescriptor extends AbstractStabsTypeDescriptor 
 	}
 
 	private DataType doGetDataType() {
-		final int size = StabsUtils.getIntegerSize(getEnd());
+		int size = StabsUtils.getIntegerSize(getEnd());
 		if (start.compareTo(BigInteger.ZERO) < 0) {
 			// signed
 			return AbstractIntegerDataType.getSignedDataType(size, dtm);

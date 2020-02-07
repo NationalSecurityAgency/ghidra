@@ -104,8 +104,8 @@ public class StabsParser {
 				// stab all the stabs!
 				// but stop stabbing when requested
 				monitor.checkCanceled();
-				final String stab = stabs.get(parsed);
-				final Matcher matcher = FILE_PATTERN.matcher(stab);
+				String stab = stabs.get(parsed);
+				Matcher matcher = FILE_PATTERN.matcher(stab);
 				if (matcher.lookingAt()) {
 					// they are conviently in order
 					if (!currentFile.getFilePath().equals(stab)) {
@@ -117,12 +117,12 @@ public class StabsParser {
 				}
 				matcher.usePattern(STAB_PATTERN);
 				if (matcher.matches()) {
-					final long fileIndex = StabsTypeNumber.getFileNumber(matcher.group(2));
-					final StabsFile file = fileIndex != -1 ?
+					long fileIndex = StabsTypeNumber.getFileNumber(matcher.group(2));
+					StabsFile file = fileIndex != -1 ?
 					files.get((int) fileIndex) : currentFile;
-					final StabsSymbolDescriptorType type =
+					StabsSymbolDescriptorType type =
 						StabsSymbolDescriptorType.getSymbolType(stab);
-					/* 
+					/*
 					 * all StabTypeDescriptor constructors have the side effect of
 					 * adding themselves to the file. It was the only way I could
 					 * think of to ensure the type was declared before ever being
@@ -134,7 +134,7 @@ public class StabsParser {
 							 * must pass current file for a function because
 							 * the type number is the return type
 							 */
-							final List<String> subStabs = stabs.subList(parsed, stabs.size());
+							List<String> subStabs = stabs.subList(parsed, stabs.size());
 							int count = parseFunction(subStabs, currentFile);
 							parsed += count;
 							break;
@@ -186,23 +186,23 @@ public class StabsParser {
 
 	/**
 	 * Gets the stab token for a stab string which has previously been parsed.
-	 * 
+	 *
 	 * @param stab the parsed stab string
 	 * @return the stab token or null if not parsed/invalid.
 	 * @see #parse(List, TaskMonitor)
 	 */
 	public StabsTypeDescriptor getType(String stab) {
-		final StabsTypeNumber type = new StabsTypeNumber(stab);
+		StabsTypeNumber type = new StabsTypeNumber(stab);
 		return getType(type);
 	}
 
 	public StabsTypeDescriptor getType(long fileNum, long typeNum) {
-		final StabsTypeNumber type = new StabsTypeNumber(fileNum, typeNum);
+		StabsTypeNumber type = new StabsTypeNumber(fileNum, typeNum);
 		return getType(type);
 	}
 
 	StabsTypeDescriptor getType(StabsTypeNumber type) {
-		final StabsFile file = files.get(type.fileNumber.intValue());
+		StabsFile file = files.get(type.fileNumber.intValue());
 		return file.getType(type);
 	}
 
@@ -247,11 +247,11 @@ public class StabsParser {
 		if (defaultFunctions.containsKey(returnType)) {
 			return defaultFunctions.get(returnType);
 		}
-		final DataTypeManager dtm = program.getDataTypeManager();
+		DataTypeManager dtm = program.getDataTypeManager();
 		FunctionDefinition def = new FunctionDefinitionDataType(
 			FUN_PATH, String.format("FunDef_%d", defaultFunctions.size()), dtm);
 		def.setReturnType(returnType);
-		final DataType result = dtm.resolve(def, DataTypeConflictHandler.KEEP_HANDLER);
+		DataType result = dtm.resolve(def, DataTypeConflictHandler.KEEP_HANDLER);
 		defaultFunctions.put(returnType, result);
 		return result;
 	}

@@ -49,7 +49,7 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 	 */
 	StabsClassSymbolDescriptor(String stab, StabsFile file) throws StabsParseException {
 		super(stab, file);
-		final StabsTypeNumber typeNum = new StabsTypeNumber(stab);
+		StabsTypeNumber typeNum = new StabsTypeNumber(stab);
 		file.addType(this, typeNum);
 		this.program = file.getProgram();
 		this.gc = doGetGhidraClass();
@@ -89,7 +89,7 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 	}
 
 	private StabsTypeDescriptor doGetFirstBase() throws StabsParseException {
-		final Matcher matcher = FIRST_BASE_PATTERN.matcher(stab);
+		Matcher matcher = FIRST_BASE_PATTERN.matcher(stab);
 		if (matcher.find()) {
 			return StabsTypeDescriptorFactory.getTypeDescriptor(this, matcher.group(1));
 		}
@@ -123,7 +123,7 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 	}
 
 	private String getCompositeStart() {
-		final Matcher matcher = COMPOSITE_START.matcher(stab);
+		Matcher matcher = COMPOSITE_START.matcher(stab);
 		if (matcher.find()) {
 			return stab.substring(matcher.end(1));
 		}
@@ -134,7 +134,7 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 		if (bases.isEmpty()) {
 			return getCompositeStart();
 		}
-		final int index = StabsBaseClassDescriptor.getBaseStartIndex(stab)+getBasesLength();
+		int index = StabsBaseClassDescriptor.getBaseStartIndex(stab)+getBasesLength();
 		return stab.substring(index);
 	}
 
@@ -145,12 +145,11 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 	}
 
 	private DemangledFunction getCtor() throws StabsParseException {
-		final int index = stab.indexOf(CONSTRUCTOR_NAME);
+		 int index = stab.indexOf(CONSTRUCTOR_NAME);
 		if (index != -1) {
 			return StabsMethodSymbolDescriptor.getDemangledFunction(this);
 		}
-		// yolo
-		final DemangledFunction result =
+		DemangledFunction result =
 			StabsMethodSymbolDescriptor.getDemangledFunction(this);
 		if (result != null) {
 			return result;
@@ -159,11 +158,7 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 	}
 
 	private String toNamespace(DemangledFunction fun) {
-		String ns = fun.getNamespace().toNamespace();
-		if (ns.endsWith(Namespace.DELIMITER)) {
-			ns = ns.substring(0, ns.lastIndexOf(Namespace.DELIMITER));
-		}
-		return ns;
+		return fun.getNamespace().getNamespaceString();
 	}
 
 	private GhidraClass getNextAvailableGc() throws StabsParseException {
@@ -194,8 +189,8 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 	private GhidraClass doGetGhidraClass() throws StabsParseException {
 		String nsPath;
 		try {
-			final DemangledFunction fun = getCtor();
-			if (fun == null) {
+			DemangledFunction fun = getCtor();
+			if (fun == null || fun.getNamespace() == null) {
 				return getNextAvailableGc();
 			}
 			nsPath = toNamespace(fun);
@@ -222,11 +217,11 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 		for (StabsBaseClassDescriptor base : bases) {
 			if (!base.isVirtual()) {
 				// TODO add virtual bases once supported
-				final int offset = base.getOffset();
-				final DataType typeDt = base.getDataType();
-				final int length = typeDt.getLength();
-				final String name = String.format(SUPER_CLASS, typeDt.getName());
-				final String modifier = base.getModifier().getDeclaration();
+				int offset = base.getOffset();
+				DataType typeDt = base.getDataType();
+				int length = typeDt.getLength();
+				String name = String.format(SUPER_CLASS, typeDt.getName());
+				String modifier = base.getModifier().getDeclaration();
 				struct.insertAtOffset(offset, typeDt, length,name, modifier);
 			}
 		}
@@ -293,7 +288,7 @@ public final class StabsClassSymbolDescriptor extends AbstractStabsSymbolDescrip
 		 */
 		public static Visibility getVisibility(CharSequence stab) {
 			if (stab != null) {
-				final int index = stab.charAt(0) == '/' ? 1 : 0;
+				int index = stab.charAt(0) == '/' ? 1 : 0;
 				return getVisibility(stab.charAt(index));
 			}
 			return NONE;

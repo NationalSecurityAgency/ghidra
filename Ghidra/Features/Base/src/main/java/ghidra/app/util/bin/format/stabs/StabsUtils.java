@@ -140,17 +140,17 @@ public class StabsUtils {
 			if (!(dt instanceof Composite)) {
 				return;
 			}
-			// c++ unions are classes. Must case to Composite
-			final Composite comp = (Composite) dt;
+			// c++ unions are classes. Must cast to Composite
+			Composite comp = (Composite) dt;
 			for (StabsMemberSymbolDescriptor member : members) {
-				final String name = member.getName();
+				String name = member.getName();
 				String modifier = member.getModifier().getDeclaration();
 				if (modifier.isEmpty()) {
 					modifier = null;
 				}
-				final DataType compDt = member.getDataType();
-				final int bitOffset = member.getBitPosition();
-				final int bitSize = member.getBitSize();
+				DataType compDt = member.getDataType();
+				int bitOffset = member.getBitPosition();
+				int bitSize = member.getBitSize();
 				if (isBitfield(bitOffset, bitSize)) {
 					if (BitFieldDataType.isValidBaseDataType(compDt)) {
 						comp.addBitField(compDt, bitSize, name, modifier);

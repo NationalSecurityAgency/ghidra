@@ -29,11 +29,11 @@ public final class StabsMethodTypeDescriptor extends AbstractStabsFunctionTypeDe
 	}
 
 	protected List<StabsTypeDescriptor> setupParameters() throws StabsParseException {
-		final List<StabsTypeDescriptor> typeParams = new LinkedList<>();
+		List<StabsTypeDescriptor> typeParams = new LinkedList<>();
 		String currentStab = stab;
 		do {
 			currentStab = currentStab.substring(1);
-			final StabsTypeDescriptor type = getTypeDescriptor(symbol, currentStab);
+			StabsTypeDescriptor type = getTypeDescriptor(symbol, currentStab);
 			typeParams.add(type);
 			currentStab = currentStab.substring(type.getLength());
 		} while (!currentStab.isBlank() && currentStab.charAt(0) == ',');

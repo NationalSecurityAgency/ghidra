@@ -48,7 +48,7 @@ public final class StabsReferenceTypeDescriptor extends AbstractStabsTypeDescrip
 	}
 
 	private StabsTypeDescriptor doGetSubType(String stab) throws StabsParseException {
-		final String def = stab.substring(1);
+		String def = stab.substring(1);
 		// this is recursive
 		return StabsTypeDescriptorFactory.getTypeDescriptor(symbol, def);
 	}

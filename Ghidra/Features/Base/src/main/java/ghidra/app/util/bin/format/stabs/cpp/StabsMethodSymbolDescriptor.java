@@ -12,12 +12,13 @@ import ghidra.app.util.bin.format.stabs.StabsToken;
 import ghidra.app.util.bin.format.stabs.StabsTokenizer;
 import ghidra.app.util.bin.format.stabs.StabsClassSymbolDescriptor.Visibility;
 import ghidra.app.util.bin.format.stabs.types.StabsTypeDescriptor;
+import ghidra.app.util.demangler.Demangled;
 import ghidra.app.util.demangler.DemangledDataType;
 import ghidra.app.util.demangler.DemangledFunction;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemangledType;
-import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.FunctionDefinition;
 import ghidra.program.model.listing.Program;
@@ -55,7 +56,7 @@ public final class StabsMethodSymbolDescriptor {
 		"(?<%s>((\\d+)|(\\((\\d+),(\\d+)\\))).*?)"
 		+"(?<=:)(?<%s>\\w+?);(?<%s>[0129])(?<%s>[A-D\\*\\.\\?])(?<%s>[\\.\\*\\?])"
 		+"(?<%s>\\-\\d+;)?(?:(?<%s>\\d+);)?";
-	
+
 	private static final StabsTokenizer<NestedGroups> NESTED_TOKENIZER =
 		new StabsTokenizer<>(NESTED_PATTERN, NestedGroups.class);
 
@@ -75,7 +76,7 @@ public final class StabsMethodSymbolDescriptor {
 	 */
 	public static List<StabsMethodSymbolDescriptor> getMethods(StabsClassSymbolDescriptor symbol)
 		throws StabsParseException {
-			final List<StabsToken<NestedGroups>> tokens =
+			List<StabsToken<NestedGroups>> tokens =
 				NESTED_TOKENIZER.getTokens(symbol.getStab());
 			if (!tokens.isEmpty()) {
 				List<StabsMethodSymbolDescriptor> methods = new LinkedList<>();
@@ -94,7 +95,7 @@ public final class StabsMethodSymbolDescriptor {
 	 * @return true if a method descriptor is found
 	 */
 	public static boolean containsMethods(String stab) {
-		final Pattern pattern = NESTED_TOKENIZER.getPattern();
+		Pattern pattern = NESTED_TOKENIZER.getPattern();
 		return pattern.matcher(stab).find();
 	}
 
@@ -139,13 +140,24 @@ public final class StabsMethodSymbolDescriptor {
 		demangled.setVirtual(isVirtual());
 		demangled.setStatic(isStatic());
 		if (getDataType() instanceof FunctionDefinition) {
-			final DataType retType = ((FunctionDefinition) getDataType()).getReturnType();
-			final DemangledType ns =
-				DemanglerUtil.convertToNamespaces(retType.getCategoryPath().asList());
-			final DemangledDataType ddt = new DemangledDataType(retType.getName());
+			DataType retType = ((FunctionDefinition) getDataType()).getReturnType();
+			Demangled ns = convertToNamespaces(retType.getCategoryPath());
+			DemangledDataType ddt = new DemangledDataType(null, null, retType.getName());
 			ddt.setNamespace(ns);
 			demangled.setReturnType(ddt);
 		}
+	}
+
+	private static Demangled convertToNamespaces(CategoryPath path) {
+		Demangled prev = null;
+		for (String s : path.asList()) {
+			Demangled current = new DemangledType(null, null, s);
+			if (prev != null) {
+				current.setNamespace(prev);
+			}
+			prev = current;
+		}
+		return prev;
 	}
 
 	/**
@@ -157,11 +169,11 @@ public final class StabsMethodSymbolDescriptor {
 	 */
 	public static DemangledFunction getDemangledFunction(StabsClassSymbolDescriptor symbol)
 		throws StabsParseException {
-			final Program program = symbol.getFile().getProgram();
+			Program program = symbol.getFile().getProgram();
 			List<StabsToken<Groups>> tokens = TOKENIZER.getTokens(symbol.getStab());
 			if (!tokens.isEmpty()) {
 				for (StabsToken<Groups> token : tokens) {
-					final DemangledFunction fun = doGetDemangledFunction(program, token);
+					DemangledFunction fun = doGetDemangledFunction(program, token);
 					if (fun != null) {
 						return fun;
 					}
@@ -173,7 +185,7 @@ public final class StabsMethodSymbolDescriptor {
 	private static DemangledFunction doGetDemangledFunction(Program program,
 		StabsToken<Groups> token) throws StabsParseException {
 			try {
-				final DemangledObject result = demangle(program, token.get(Groups.MANGLED));
+				DemangledObject result = demangle(program, token.get(Groups.MANGLED));
 				if (result instanceof DemangledFunction) {
 					return (DemangledFunction) result;
 				}
@@ -205,7 +217,7 @@ public final class StabsMethodSymbolDescriptor {
 	 * @return the address of the method if found else {@link Address#NO_ADDRESS}
 	 */
 	public Address locateMethod() {
-		final SymbolTable table = program.getSymbolTable();
+		SymbolTable table = program.getSymbolTable();
 		List <Symbol> symbols = table.getGlobalSymbols(token.get(Groups.MANGLED));
 		if (symbols.size() == 1) {
 			return symbols.get(0).getAddress();

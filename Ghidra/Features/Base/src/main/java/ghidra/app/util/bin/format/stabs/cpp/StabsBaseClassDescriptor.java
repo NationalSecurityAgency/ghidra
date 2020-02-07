@@ -51,11 +51,11 @@ public final class StabsBaseClassDescriptor {
 	 */
 	public static List<StabsBaseClassDescriptor> getBases(StabsClassSymbolDescriptor symbol,
 		String stab) throws StabsParseException {
-			final int index = getBaseStartIndex(stab);
+			int index = getBaseStartIndex(stab);
 			if (index != -1) {
-				final List<StabsToken<Groups>> tokens =
+				List<StabsToken<Groups>> tokens =
 					TOKENIZER.getTokens(stab.substring(index));
-				final List<StabsBaseClassDescriptor> bases = new ArrayList<>(tokens.size());
+				List<StabsBaseClassDescriptor> bases = new ArrayList<>(tokens.size());
 				for (StabsToken<Groups> token : tokens) {
 					bases.add(new StabsBaseClassDescriptor(symbol, token));
 				}
@@ -70,7 +70,7 @@ public final class StabsBaseClassDescriptor {
 	 * @return the index in the stab string or -1 if none are found
 	 */
 	public static int getBaseStartIndex(String stab) {
-		final Matcher matcher = BASE_PATTERN.matcher(stab);
+		Matcher matcher = BASE_PATTERN.matcher(stab);
 		if (matcher.find()) {
 			return matcher.end();
 		}
@@ -80,7 +80,7 @@ public final class StabsBaseClassDescriptor {
 	private StabsBaseClassDescriptor(StabsSymbolDescriptor symbol, StabsToken<Groups> token)
 		throws StabsParseException {
 			this.token = token;
-			final String subStab = token.toString().substring(token.start(Groups.TYPE));
+			String subStab = token.toString().substring(token.start(Groups.TYPE));
 			this.type = getTypeDescriptor(symbol, subStab);
 	}
 

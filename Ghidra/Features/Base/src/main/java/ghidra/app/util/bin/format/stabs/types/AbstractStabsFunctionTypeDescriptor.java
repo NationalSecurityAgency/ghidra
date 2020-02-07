@@ -46,9 +46,9 @@ abstract class AbstractStabsFunctionTypeDescriptor extends AbstractStabsTypeDesc
 	public abstract List<StabsTypeDescriptor> getParameters() throws StabsParseException;
 
 	protected final StabsTypeDescriptor doGetReturnType() throws StabsParseException {
-		final Matcher matcher = PATTERN.matcher(stab);
+		Matcher matcher = PATTERN.matcher(stab);
 		if (matcher.lookingAt()) {
-			return getTypeDescriptor(symbol, matcher.group(1));
+			return getTypeDescriptor(symbol, stab.substring(matcher.start(1)));
 		}
 		return null;
 	}
@@ -66,7 +66,7 @@ abstract class AbstractStabsFunctionTypeDescriptor extends AbstractStabsTypeDesc
 	private boolean fixupVarargs(List<StabsTypeDescriptor> parameters) {
 		if (StabsUtils.isGnu(program)) {
 			if (!parameters.isEmpty()) {
-				final StabsTypeDescriptor type = parameters.get(parameters.size()-1);
+				StabsTypeDescriptor type = parameters.get(parameters.size()-1);
 				if (!type.getDataType().isEquivalent(DataType.VOID)) {
 					return true;
 				}

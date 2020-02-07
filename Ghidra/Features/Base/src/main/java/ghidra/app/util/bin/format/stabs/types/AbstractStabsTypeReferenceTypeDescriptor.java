@@ -29,8 +29,8 @@ abstract class AbstractStabsTypeReferenceTypeDescriptor extends AbstractStabsTyp
 	public abstract StabsTypeDescriptor getSubType();
 
 	protected boolean isDeclaration() {
-		final int index = stab.indexOf(typeNumber.toString());
-		final int length = typeNumber.toString().length();
+		int index = stab.indexOf(typeNumber.toString());
+		int length = typeNumber.toString().length();
 		if (stab.length() > index+length) {
 			return stab.charAt(index+length) == '=';
 		}
@@ -38,10 +38,10 @@ abstract class AbstractStabsTypeReferenceTypeDescriptor extends AbstractStabsTyp
 	}
 
 	protected StabsTypeDescriptor doGetSubType() throws StabsParseException {
-		final int index = stab.indexOf(typeNumber.toString());
-		final int length = typeNumber.toString().length();
+		int index = stab.indexOf(typeNumber.toString());
+		int length = typeNumber.toString().length();
 		if (isDeclaration()) {
-			final String subStab = stab.substring(index+length+1);
+			String subStab = stab.substring(index+length+1);
 			file.addType(this, typeNumber);
 			return StabsTypeDescriptorFactory.getTypeDescriptor(symbol, subStab);
 		}
@@ -50,7 +50,7 @@ abstract class AbstractStabsTypeReferenceTypeDescriptor extends AbstractStabsTyp
 
 	@Override
 	public int getLength() {
-		final int length = typeNumber.toString().length();
+		int length = typeNumber.toString().length();
 		if (isDeclaration()) {
 			return getSubType().getLength()+length+1;
 		}

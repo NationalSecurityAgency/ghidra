@@ -31,7 +31,7 @@ public final class StabsParameterSymbolDescriptor extends AbstractStabsSymbolDes
 	StabsParameterSymbolDescriptor(String stab, StabsFile file) throws StabsParseException {
 		super(stab, file);
 		this.paramType = getParameterType(descriptor);
-		final String typeString = stab.substring(name.length()+2);
+		String typeString = stab.substring(name.length()+2);
 		this.type = StabsTypeDescriptorFactory.getTypeDescriptor(this, typeString);
 	}
 

@@ -56,7 +56,7 @@ public final class StabsBuiltinTypeDescriptor extends AbstractStabsTypeDescripto
 	}
 
 	private DataType getNegativeDataType() throws StabsParseException {
-		final Matcher matcher = NEGATIVE_PATTERN.matcher(stab);
+		Matcher matcher = NEGATIVE_PATTERN.matcher(stab);
 		if (matcher.matches()) {
 			switch (Integer.valueOf(matcher.group(1))) {
 				case -1:
@@ -128,12 +128,12 @@ public final class StabsBuiltinTypeDescriptor extends AbstractStabsTypeDescripto
 	}
 
 	private DataType getIntegerDataType() throws StabsParseException {
-		final Matcher matcher = INTEGER_PATTERN.matcher(stab);
+		Matcher matcher = INTEGER_PATTERN.matcher(stab);
 		if (matcher.matches()) {
 			if (matcher.group(2) != null) {
 				return CharDataType.dataType.clone(dtm);
 			}
-			final int size = Integer.valueOf(matcher.group(4));
+			int size = Integer.valueOf(matcher.group(4));
 			if (size == 0) {
 				return DataType.VOID;
 			}
@@ -146,14 +146,14 @@ public final class StabsBuiltinTypeDescriptor extends AbstractStabsTypeDescripto
 	}
 
 	private DataType getAixFloatDataType() {
-		final int index = stab.indexOf(';');
-		final String def = stab.substring(index+1);
+		int index = stab.indexOf(';');
+		String def = stab.substring(index+1);
 		return AbstractFloatDataType.getFloatDataType(Integer.valueOf(def), dtm);
 	}
 
 	private DataType getAixComplexDataType() throws StabsParseException {
-		final int index = stab.indexOf(';');
-		final String def = stab.substring(index+1);
+		int index = stab.indexOf(';');
+		String def = stab.substring(index+1);
 		switch (Integer.valueOf(def)) {
 			case 8:
 				return Complex8DataType.dataType.clone(dtm);
@@ -246,7 +246,7 @@ public final class StabsBuiltinTypeDescriptor extends AbstractStabsTypeDescripto
 		}
 
 		private int getLength(StabsSymbolDescriptor symbol, String stab) throws StabsParseException {
-			final Matcher matcher = pattern.matcher(stab);
+			Matcher matcher = pattern.matcher(stab);
 			if (matcher.lookingAt()) {
 				return matcher.group().length();
 			}

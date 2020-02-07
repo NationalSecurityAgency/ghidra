@@ -42,7 +42,7 @@ public final class StabsCrossReferenceTypeDescriptor extends AbstractStabsTypeDe
 	}
 
 	private DataType doGetDataType() throws StabsParseException {
-		final DataType dt;
+		 DataType dt;
 		switch (stab.charAt(1)) {
 			case 'e':
 				// the size will doesn't matter as it will get replaced later

@@ -86,7 +86,7 @@ public class StabsConstantSymbolDescriptor extends AbstractStabsSymbolDescriptor
 	}
 
 	private char getTypeCharacter() {
-		final Matcher matcher = PATTERN.matcher(stab);
+		Matcher matcher = PATTERN.matcher(stab);
 		if (matcher.find()) {
 			return matcher.group(1).charAt(0);
 		}
@@ -113,8 +113,8 @@ public class StabsConstantSymbolDescriptor extends AbstractStabsSymbolDescriptor
 	}
 
 	private DataType getTypeDataType() {
-		final StabsTypeNumber num = new StabsTypeNumber(stab);
-		final StabsTypeDescriptor type = file.getType(num);
+		StabsTypeNumber num = new StabsTypeNumber(stab);
+		StabsTypeDescriptor type = file.getType(num);
 		return type != null ? type.getDataType() : DataType.VOID;
 	}
 

@@ -32,7 +32,7 @@ public class StabsTypeDefSymbolDescriptor extends AbstractStabsSymbolDescriptor
 		 */
 		StabsTypeDefSymbolDescriptor(String stab, StabsFile file) throws StabsParseException {
 			super(stab, file);
-			final String subStab = stab.substring(name.length()+1);
+			String subStab = stab.substring(name.length()+1);
 			this.typeNumber = new StabsTypeNumber(subStab);
 			if (StabsUtils.isBuiltin(name)) {
 				this.type = null;
@@ -41,7 +41,7 @@ public class StabsTypeDefSymbolDescriptor extends AbstractStabsSymbolDescriptor
 				this.type = null;
 				this.dt = dtm.getPointer(DataType.VOID);
 			} else {
-				final String typeStab;
+				String typeStab;
 				if (getTypeSubStab().charAt(0) == 't') {
 					typeStab = getTypeSubStab().substring(1);
 				} else {

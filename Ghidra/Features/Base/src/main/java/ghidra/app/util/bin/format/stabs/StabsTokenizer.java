@@ -25,9 +25,9 @@ public class StabsTokenizer<E extends Enum<E>> {
 	 * @see java.util.Formatter Formatter
 	 */
 	public StabsTokenizer(String regex, Class<E> groups) {
-		final Object[] groupNames = Arrays.stream(groups.getEnumConstants())
-										  .map(E::name)
-										  .toArray();
+		Object[] groupNames = Arrays.stream(groups.getEnumConstants())
+									.map(E::name)
+									.toArray();
 		this.pattern = Pattern.compile(String.format(regex, groupNames));
 	}
 

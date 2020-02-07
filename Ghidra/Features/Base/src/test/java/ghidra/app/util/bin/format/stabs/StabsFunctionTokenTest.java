@@ -44,7 +44,7 @@ public class StabsFunctionTokenTest extends AbstractStabsTest {
 	private static DataType getDataType() {
 		FunctionDefinition def =
 			new FunctionDefinitionDataType(PATH, TYPE_NAME);
-		final ParameterDefinition[] params = new ParameterDefinition[]{
+		ParameterDefinition[] params = new ParameterDefinition[]{
 			new ParameterDefinitionImpl(CHAR_PARAM, CharDataType.dataType, null),
 			new ParameterDefinitionImpl(SHORT_PARAM, ShortDataType.dataType, null),
 			new ParameterDefinitionImpl(INT_PARAM, IntegerDataType.dataType, null),
