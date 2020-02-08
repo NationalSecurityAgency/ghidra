@@ -4,7 +4,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.data.Pointer;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.mem.DumbMemBufferImpl;
@@ -19,136 +18,143 @@ import static ghidra.app.cmd.data.rtti.gcc.factory.TypeInfoFactory.getTypeInfo;
 import static ghidra.program.model.data.DataTypeConflictHandler.KEEP_HANDLER;
 import static ghidra.program.model.data.DataTypeConflictHandler.REPLACE_HANDLER;
 
+import ghidra.app.cmd.data.rtti.ClassTypeInfo;
 import ghidra.app.cmd.data.rtti.gcc.TypeInfoUtils;
 
 /**
- * Model for the __base_type_info helper class.
+ * Model for the {@value #STRUCTURE_NAME} helper class.
  */
-final class BaseClassTypeInfoModel {
+public final class BaseClassTypeInfoModel {
 
-	private static final String DESCRIPTION =
-		"Model for the __base_type_info helper class";
-	private static final String STRUCTURE_NAME = "__base_class_type_info";
-	private static final String SUPER_CLASS_TYPE_INFO =
-		AbstractTypeInfoModel.SUPER+ClassTypeInfoModel.STRUCTURE_NAME;
-	private static final String OFFSET_FLAGS = "__offset_flags";
+    private static final String DESCRIPTION =
+        "Helper data type for the __base_class_type_info array";
+    public static final String STRUCTURE_NAME = "__base_class_type_info";
+    static final int FLAGS_ORDINAL = 1;
 
-	static final int FLAGS_ORDINAL = 1;
+    private Program program;
+    private MemoryBufferImpl buf;
+    private DataTypeManager dtm;
 
-	private Program program;
-	private MemoryBufferImpl buf;
-	private DataTypeManager dtm;
+    BaseClassTypeInfoModel(Program program, Address address) {
+        this.program = program;
+        this.buf = new MemoryBufferImpl(program.getMemory(), address);
+        this.dtm = program.getDataTypeManager();
+    }
 
-	/**
-	 * Constructs a new BaseClassTypeInfoModel.
-	 * 
-	 * @param program the program containing the __base_class_type_info.
-	 * @param address the address of the __base_class_type_info.
-	 */
-	BaseClassTypeInfoModel(Program program, Address address) {
-		this.program = program;
-		this.buf = new MemoryBufferImpl(program.getMemory(), address);
-		this.dtm = program.getDataTypeManager();
-	}
+    /**
+     * Checks if this base class is inherited virtually
+     * @return true if this base class is inherited virtually
+     */
+    public boolean isVirtual() {
+        Structure struct = (Structure) getDataType();
+        int offset = struct.getComponent(1).getOffset();
+        MemBuffer tmpBuf = new DumbMemBufferImpl(buf.getMemory(), buf.getAddress().add(offset));
+        return VmiOffsetFlagsModel.isVirtual(tmpBuf, dtm);
+    }
 
-	/**
-	 * Returns true if this base class is inherited virtually.
-	 * 
-	 * @return true if this base class is inherited virtually.
-	 */
-	public boolean isVirtual() {
-		Structure struct = (Structure) getDataType();
-		int offset = struct.getComponent(1).getOffset();
-		MemBuffer tmpBuf = new DumbMemBufferImpl(buf.getMemory(), buf.getAddress().add(offset));
-		return VmiOffsetFlagsModel.isVirtual(tmpBuf, dtm);
-	}
+    /**
+     * Checks if this base class is inherited publically
+     * @return true if this base class is inherited publically
+     */
+    public boolean isPublic() {
+        Structure struct = (Structure) getDataType();
+        int offset = struct.getComponent(1).getOffset();
+        MemBuffer tmpBuf = new DumbMemBufferImpl(buf.getMemory(), buf.getAddress().add(offset));
+        return VmiOffsetFlagsModel.isPublic(tmpBuf, dtm);
+    }
 
-	/**
-	 * Returns true if this base class is inherited publically.
-	 * 
-	 * @return true if this base class is inherited publically.
-	 */
-	public boolean isPublic() {
-		Structure struct = (Structure) getDataType();
-		int offset = struct.getComponent(1).getOffset();
-		MemBuffer tmpBuf = new DumbMemBufferImpl(buf.getMemory(), buf.getAddress().add(offset));
-		return VmiOffsetFlagsModel.isPublic(tmpBuf, dtm);
-	}
+    /**
+     * Gets the value of this base class's offset
+     * @return the value of this base class's offset
+     */
+    public int getOffset() {
+        return (int) getFlags().getOffset();
+    }
 
 	/**
-	 * Gets the value of this base class's offset.
-	 * 
-	 * @return the value of this base class's offset.
+	 * Gets the {@value #STRUCTURE_NAME} datatype
+	 * @return the {@value #STRUCTURE_NAME} datatype
 	 */
-	public int getOffset() {
-		return (int) getFlags().getOffset();
-	}
-
-	public DataType getDataType() {
-		return getDataType(dtm);
-	}
-
-	Address getAddress() {
-		return buf.getAddress();
-	}
-
-	VmiOffsetFlagsModel getFlags() {
-		Structure struct = (Structure) getDataType();
-		int offset = struct.getComponent(1).getOffset();
-		return new VmiOffsetFlagsModel(program, buf.getAddress().add(offset));
-	}
+    public DataType getDataType() {
+        return getDataType(dtm);
+    }
 
 	/**
-	 * Gets the __base_class_type_info datatype.
-	 * 
-	 * @param dtm
-	 * @return the __base_class_type_info datatype.
+	 * Gets the address of this {@value #STRUCTURE_NAME}
+	 * @return the address of this {@value #STRUCTURE_NAME}
 	 */
-	public static DataType getDataType(DataTypeManager dtm) {
-		DataType superDt = ClassTypeInfoModel.getPointer(dtm);
-		DataType existingDt =
-			dtm.getDataType(superDt.getCategoryPath(), STRUCTURE_NAME);
-		if (existingDt != null && existingDt.getDescription().equals(DESCRIPTION)) {
-			return existingDt;
-		}
-		DataType flags = VmiOffsetFlagsModel.getDataType(dtm);
-		StructureDataType struct =
-			new StructureDataType(superDt.getCategoryPath(), STRUCTURE_NAME, 0, dtm);
-		struct.add(superDt, superDt.getLength(), SUPER_CLASS_TYPE_INFO, null);
-		struct.add(flags, flags.getLength(), OFFSET_FLAGS, null);
-		struct.setInternallyAligned(true);
-		struct.adjustInternalAlignment();
-		struct.setDescription(DESCRIPTION);
-		DataType result = dtm.resolve(struct, KEEP_HANDLER);
-		return result.getLength() <= 1 ? dtm.resolve(struct, REPLACE_HANDLER) : result;
-	}
+    public Address getAddress() {
+        return buf.getAddress();
+    }
 
-	Address getClassAddress() {
-		Pointer pointer = ClassTypeInfoModel.getPointer(dtm);
-		return (Address) pointer.getValue(buf, pointer.getDefaultSettings(), -1);
-	}
+    VmiOffsetFlagsModel getFlags() {
+        Structure struct = (Structure) getDataType();
+        int offset = struct.getComponent(1).getOffset();
+        return new VmiOffsetFlagsModel(program, buf.getAddress().add(offset));
+    }
 
-	AbstractClassTypeInfoModel getClassModel() throws InvalidDataTypeException {
-		Address classAddress = getClassAddress();
-		if (program.getMemory().getBlock(classAddress).isInitialized()) {
-			return (AbstractClassTypeInfoModel) getTypeInfo(program, classAddress);
-		}
-		Relocation reloc = program.getRelocationTable().getRelocation(getAddress());
-		if (reloc != null && reloc.getSymbolName() != null) {
-			return (AbstractClassTypeInfoModel) TypeInfoUtils.getExternalTypeInfo(program, reloc);
-		}
-		return null;
-	}
+    /**
+     * Gets the {@value #STRUCTURE_NAME} datatype
+     * @param dtm the DataTypeManager
+     * @return the {@value #STRUCTURE_NAME} datatype
+     */
+    public static DataType getDataType(DataTypeManager dtm) {
+        DataType superDt = ClassTypeInfoModel.getPointer(dtm);
+        DataType existingDt = dtm.getDataType(superDt.getCategoryPath(), STRUCTURE_NAME);
+        if (existingDt != null && existingDt.getDescription().equals(DESCRIPTION)) {
+            return existingDt;
+        }
+        DataType flags = VmiOffsetFlagsModel.getDataType(dtm);
+        StructureDataType struct = new StructureDataType(superDt.getCategoryPath(), STRUCTURE_NAME, 0, dtm);
+        struct.add(superDt, superDt.getLength(), "super___class_type_info", null);
+        struct.add(flags, flags.getLength(), "__offset_flags", null);
+        struct.setInternallyAligned(true);
+        struct.adjustInternalAlignment();
+        struct.setDescription(DESCRIPTION);
+        DataType result = dtm.resolve(struct, KEEP_HANDLER);
+        return result.getLength() <= 1 ? dtm.resolve(struct, REPLACE_HANDLER) : result;
+    }
 
-	String getName() throws InvalidDataTypeException {
-		return getClassModel().getName();
-	}
+	/**
+	 * Gets the ClassTypeInfo model for this base class
+	 * @return the ClassTypeInfo
+	 */
+    public ClassTypeInfo getClassModel() {
+        Address classAddress = getClassAddress();
+        if (program.getMemory().getBlock(classAddress).isInitialized()) {
+            return (ClassTypeInfo) getTypeInfo(program, classAddress);
+        }
+        Relocation reloc = program.getRelocationTable().getRelocation(getAddress());
+        if (reloc != null && reloc.getSymbolName() != null) {
+            return (ClassTypeInfo) TypeInfoUtils.getExternalTypeInfo(program, reloc);
+        }
+        return null;
+    }
 
-	void advance() {
-		try {
-			this.buf.advance(getDataType().getLength());
-		} catch (AddressOverflowException e) {
-			Msg.error(this, e);
-		}
+	/**
+	 * Gets the base ClassTypeInfo's name
+	 * @return the base ClassTypeInfo's name
+	 * @see ClassTypeInfo#getName()
+	 */
+    public String getName() {
+        return getClassModel().getName();
 	}
+	
+	/**
+	 * Gets the base ClassTypeInfo's address
+	 * @return the base ClassTypeInfo's address
+	 * @see ClassTypeInfo#getAddress()
+	 */
+	public Address getClassAddress() {
+        Pointer pointer = ClassTypeInfoModel.getPointer(dtm);
+        return (Address) pointer.getValue(buf, pointer.getDefaultSettings(), -1);
+    }
+
+    void advance() {
+        try {
+            this.buf.advance(getDataType().getLength());
+        } catch (AddressOverflowException e) {
+            Msg.error(this, e);
+        }
+    }
 }

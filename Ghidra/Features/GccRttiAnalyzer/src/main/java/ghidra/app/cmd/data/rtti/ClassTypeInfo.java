@@ -1,15 +1,13 @@
 package ghidra.app.cmd.data.rtti;
 
-import ghidra.util.task.TaskMonitor;
-
 import java.util.Set;
 
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.GhidraClass;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.DummyCancellableTaskMonitor;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Interface for modeling std::type_info and its derivatives.
@@ -18,7 +16,7 @@ import ghidra.util.task.DummyCancellableTaskMonitor;
  */
 public interface ClassTypeInfo extends TypeInfo {
 	
-	default DataType getRepresentedDataType() throws InvalidDataTypeException {
+	default DataType getRepresentedDataType() {
 		return getClassDataType();
 	}
 
@@ -27,9 +25,8 @@ public interface ClassTypeInfo extends TypeInfo {
 	 * creates it if none exists.
 	 * 
 	 * @return The class representation of this TypeInfo instance.
-	 * @throws InvalidDataTypeException
 	 */
-	GhidraClass getGhidraClass() throws InvalidDataTypeException;
+	GhidraClass getGhidraClass();
 
 	/**
 	 * Checks if this ClassTypeInfo is a subclass of another type.
@@ -42,25 +39,22 @@ public interface ClassTypeInfo extends TypeInfo {
 	 * Retrieves the Models of this ClassTypeInfo classes base classes.
 	 * 
 	 * @return the parent models.
-	 * @throws InvalidDataTypeException
 	 */ 
-	ClassTypeInfo[] getParentModels() throws InvalidDataTypeException;
+	ClassTypeInfo[] getParentModels();
 
 	/**
 	 * Retrieves an ordered set of all virtually inherited base classes.
 	 * 
 	 * @return the set of virtual bases.
-	 * @throws InvalidDataTypeException
 	 */
-	public Set<ClassTypeInfo> getVirtualParents() throws InvalidDataTypeException;
+	public Set<ClassTypeInfo> getVirtualParents();
 
 	/**
 	 * Determines if the represented class is an abstract base.
 	 * 
 	 * @return true if abstract.
-	 * @throws InvalidDataTypeException
 	 */
-	boolean isAbstract() throws InvalidDataTypeException;
+	boolean isAbstract();
 
 	/**
 	 * Gets the TypeInfo's Vtable Model.
@@ -69,17 +63,15 @@ public interface ClassTypeInfo extends TypeInfo {
 	 * 
 	 * @return The TypeInfo's Vtable Model or null if none exists.
 	 * @throws CancelledException 
-	 * @throws InvalidDataTypeException
 	 */
-	Vtable getVtable(TaskMonitor monitor) throws CancelledException, InvalidDataTypeException;
+	Vtable getVtable(TaskMonitor monitor) throws CancelledException;
 
 	/**
 	 * Gets the TypeInfo's Vtable Model.
 	 * 
 	 * @return The TypeInfo's Vtable Model or null if none exists.
-	 * @throws InvalidDataTypeException
 	 */
-	default Vtable getVtable() throws InvalidDataTypeException {
+	default Vtable getVtable() {
 		try {
 			return getVtable(new DummyCancellableTaskMonitor());
 		}
@@ -93,7 +85,7 @@ public interface ClassTypeInfo extends TypeInfo {
 	 * 
 	 * @return the structure datatype for this class.
 	 */
-	Structure getClassDataType() throws InvalidDataTypeException;
+	Structure getClassDataType();
 	/* The information required to rebuild the class with it's inherited models
 	   is already known if we've gotten this far. However, this has been stripped
 	   out due to the lack of proper virtual inheritance support. While it can
@@ -108,6 +100,6 @@ public interface ClassTypeInfo extends TypeInfo {
 	 * 
 	 * @return a unique typename string.
 	 */
-	String getUniqueTypeName() throws InvalidDataTypeException;
+	String getUniqueTypeName();
 	
 }

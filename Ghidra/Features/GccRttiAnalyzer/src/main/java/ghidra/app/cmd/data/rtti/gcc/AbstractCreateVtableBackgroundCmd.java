@@ -25,72 +25,72 @@ import ghidra.program.model.data.DataUtilities.ClearDataMode;
 
 public abstract class AbstractCreateVtableBackgroundCmd extends BackgroundCommand {
 
-	private VtableModel vtable;
-	private TaskMonitor monitor;
-	private Program program;
+    private VtableModel vtable;
+    private TaskMonitor monitor;
+    private Program program;
 
-	private static final String ERROR_MESSAGE = "Can only apply a vtable data type to a program.";
-	private static final DemanglerOptions OPTIONS = new DemanglerOptions();
+    private static final DemanglerOptions OPTIONS = new DemanglerOptions();
 
-	protected AbstractCreateVtableBackgroundCmd(VtableModel vtable, String name) {
-		super(name, true, true, false);
-		this.vtable = vtable;
-	}
+    protected AbstractCreateVtableBackgroundCmd(VtableModel vtable, String name) {
+        super(name, true, true, false);
+        this.vtable = vtable;
+    }
 
-	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor taskMonitor) {
-		try {
-			if (!(obj instanceof Program)) {
-				Msg.error(this, ERROR_MESSAGE);
-				return false;
-			}
-			program = (Program) obj;
-			monitor = taskMonitor;
-			return doApplyTo();
-		} catch (CancelledException e) {
-			setStatusMsg("User cancelled " + getName() + ".");
-			return false;
-		}
-	}
+    @Override
+    public boolean applyTo(DomainObject obj, TaskMonitor taskMonitor) {
+        try {
+            if (!(obj instanceof Program)) {
+                String message = "Can only apply a vtable data type to a program.";
+                Msg.error(this, message);
+                return false;
+            }
+            program = (Program) obj;
+            monitor = taskMonitor;
+            return doApplyTo();
+        } catch (CancelledException e) {
+            setStatusMsg("User cancelled " + getName() + ".");
+            return false;
+        }
+    }
 
-	private boolean doApplyTo() throws CancelledException {
-		try {
-			monitor.checkCanceled();
-			createData(vtable.getDataTypes());
-			return createAssociatedData();
-		} catch (CodeUnitInsertionException e) {
-			Msg.error(this, e);
-			return false;
-		}
-	}
+    private boolean doApplyTo() throws CancelledException {
+        try {
+            monitor.checkCanceled();
+            createData(vtable.getDataTypes());
+            return createAssociatedData();
+        } catch (CodeUnitInsertionException e) {
+            Msg.error(this, e);
+            return false;
+        }
+    }
 
-	private void createData(List<DataType> dataTypes) throws CodeUnitInsertionException {
-		Listing listing = program.getListing();
-		DataTypeManager dtm = program.getDataTypeManager();
-		Address currentAddress = vtable.getAddress();
-		for (DataType dt : dataTypes) {
-			dt = dtm.resolve(dt, DataTypeConflictHandler.KEEP_HANDLER);
-			Data data = listing.getDataContaining(currentAddress);
-			if (data != null && data.getDataType().equals(dt)) {
-				currentAddress = currentAddress.add(data.getLength());
-				continue;
-			}
-			DataUtilities.createData(
-				program, currentAddress, dt, 0,
-				false, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-			currentAddress = currentAddress.add(dt.getLength());
-		}
-	}
+    private void createData(List<DataType> dataTypes) throws CodeUnitInsertionException {
+        Listing listing = program.getListing();
+        DataTypeManager dtm = program.getDataTypeManager();
+        Address currentAddress = vtable.getAddress();
+        for (DataType dt : dataTypes) {
+            dt = dtm.resolve(dt, DataTypeConflictHandler.KEEP_HANDLER);
+            Data data = listing.getDataContaining(currentAddress);
+            if (data != null && data.getDataType().equals(dt)) {
+                currentAddress = currentAddress.add(data.getLength());
+                continue;
+            }
+            DataUtilities.createData(
+                program, currentAddress, dt, 0,
+                false, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+            currentAddress = currentAddress.add(dt.getLength());
+        }
+    }
 
-	protected abstract String getMangledString() throws InvalidDataTypeException;
-	protected abstract String getSymbolName();
+    protected abstract String getMangledString() throws InvalidDataTypeException;
+    protected abstract String getSymbolName();
 
-	private boolean createAssociatedData() {
-		try {
-			DemangledObject demangled = DemanglerUtil.demangle(program, getMangledString());
-			return demangled.applyTo(program, vtable.getAddress(), OPTIONS, monitor);
-		} catch (Exception e) {
-			return false;
-		}
-	}
+    private boolean createAssociatedData() {
+        try {
+            DemangledObject demangled = DemanglerUtil.demangle(program, getMangledString());
+            return demangled.applyTo(program, vtable.getAddress(), OPTIONS, monitor);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

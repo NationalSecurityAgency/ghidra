@@ -14,7 +14,6 @@ public class TypeInfoTest extends GenericGccRttiTest {
 		for (TypeInfo type : builder.getTypeInfoList()) {
 			if (!(type instanceof FundamentalTypeInfoModel)) {
 				// Invalid dynamic relocations prevent fundamentals from being valid
-				type.validate();
 				assert type.getDataType() != null;
 			}
 		}
