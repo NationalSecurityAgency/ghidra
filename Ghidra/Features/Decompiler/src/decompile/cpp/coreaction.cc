@@ -4185,14 +4185,6 @@ bool ActionInferTypes::propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Va
     break;
   case CPUI_COPY:
     if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
-    if (metain == TYPE_BOOL) {
-      if (inslot != -1) return false;
-      Varnode *othervn = op->getIn(outslot);
-      if (!othervn->isConstant()) return false;
-      uintb val = othervn->getOffset();
-      if (val > 1)
-	return false;
-    }
     break;
   case CPUI_MULTIEQUAL:
     if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
@@ -4200,24 +4192,15 @@ bool ActionInferTypes::propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Va
   case CPUI_INT_LESS:
   case CPUI_INT_LESSEQUAL:
     if ((inslot==-1)||(outslot==-1)) return false; // Must propagate input <-> input
-    if (metain == TYPE_BOOL) return false;
     break;
   case CPUI_INT_EQUAL:
   case CPUI_INT_NOTEQUAL:
     if ((inslot==-1)||(outslot==-1)) return false; // Must propagate input <-> input
-    if (metain == TYPE_BOOL) { // Only propagate bool to 0 or 1 const
-      Varnode *othervn = op->getIn(outslot);
-      if (!othervn->isConstant()) return false;
-      uintb val = othervn->getOffset();
-      if (val > 1)
-	return false;
-    }
     break;
   case CPUI_LOAD:
   case CPUI_STORE:
     if ((inslot==0)||(outslot==0)) return false; // Don't propagate along this edge
     if (invn->isSpacebase()) return false;
-    if (metain == TYPE_BOOL) return false;
     break;
   case CPUI_PTRADD:
     if ((inslot==2)||(outslot==2)) return false; // Don't propagate along this edge
@@ -4275,10 +4258,14 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
   if (outvn->isAnnotation()) return false;
   if (outvn->isTypeLock()) return false; // Can't propagate through typelock
   invn = (inslot==-1) ? op->getOut() : op->getIn(inslot);
-  Datatype *alttype = invn->getTempType();
   if (!propagateGoodEdge(op,inslot,outslot,invn))
     return false;
 
+  Datatype *alttype = invn->getTempType();
+  if (alttype->getMetatype() == TYPE_BOOL) {	// Only propagate boolean
+    if (outvn->getNZMask() > 1)			// If we know output can only take boolean values
+      return false;
+  }
   switch(op->code()) {
   case CPUI_INDIRECT:
   case CPUI_COPY:
