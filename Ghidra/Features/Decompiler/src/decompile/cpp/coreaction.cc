@@ -3840,7 +3840,7 @@ int4 ActionOutputPrototype::apply(Funcdata &data)
 {
   ProtoParameter *outparam = data.getFuncProto().getOutput();
   if ((!outparam->isTypeLocked())||outparam->isSizeTypeLocked()) {
-    PcodeOp *op = data.canonicalReturnOp();
+    PcodeOp *op = data.getFirstReturnOp();
     vector<Varnode *> vnlist;
     if (op != (PcodeOp *)0) {
       for(int4 i=1;i<op->numInput();++i)
@@ -4548,6 +4548,72 @@ void ActionInferTypes::propagateSpacebaseRef(Funcdata &data,Varnode *spcvn)
   }
 }
 
+/// Return the CPUI_RETURN op with the most specialized data-type, which is not
+/// dead and is not a special halt.
+/// \param data is the function
+/// \return the representative CPUI_RETURN op or NULL
+PcodeOp *ActionInferTypes::canonicalReturnOp(Funcdata &data)
+
+{
+  PcodeOp *res = (PcodeOp *)0;
+  Datatype *bestdt = (Datatype *)0;
+  list<PcodeOp *>::const_iterator iter,iterend;
+  iterend = data.endOp(CPUI_RETURN);
+  for(iter=data.beginOp(CPUI_RETURN);iter!=iterend;++iter) {
+    PcodeOp *retop = *iter;
+    if (retop->isDead()) continue;
+    if (retop->getHaltType()!=0) continue;
+    if (retop->numInput() > 1) {
+      Varnode *vn = retop->getIn(1);
+      Datatype *ct = vn->getTempType();
+      if (bestdt == (Datatype *)0) {
+	res = retop;
+	bestdt = ct;
+      }
+      else if (ct->typeOrder(*bestdt) < 0) {
+	res = retop;
+	bestdt = ct;
+      }
+    }
+  }
+  return res;
+}
+
+/// \brief Give data-types a chance to propagate between CPUI_RETURN operations.
+///
+/// Since a function is intended to return a single data-type, data-types effectively
+/// propagate between the input Varnodes to CPUI_RETURN ops, if there are more than one.
+void ActionInferTypes::propagateAcrossReturns(Funcdata &data)
+
+{
+  PcodeOp *op = canonicalReturnOp(data);
+  if (op == (PcodeOp *)0) return;
+  TypeFactory *typegrp = data.getArch()->types;
+  Varnode *baseVn = op->getIn(1);
+  Datatype *ct = baseVn->getTempType();
+  int4 baseSize = baseVn->getSize();
+  bool isBool = ct->getMetatype() == TYPE_BOOL;
+  list<PcodeOp *>::const_iterator iter,iterend;
+  iterend = data.endOp(CPUI_RETURN);
+  for(iter=data.beginOp(CPUI_RETURN);iter!=iterend;++iter) {
+    PcodeOp *retop = *iter;
+    if (retop == op) continue;
+    if (retop->isDead()) continue;
+    if (retop->getHaltType()!=0) continue;
+    if (retop->numInput() > 1) {
+      Varnode *vn = retop->getIn(1);
+      if (vn->getSize() != baseSize) continue;
+      if (isBool && vn->getNZMask() > 1) continue;	// Don't propagate bool if value is not necessarily 0 or 1
+      if (vn->getTempType() == ct) continue;		// Already propagated
+      vn->setTempType(ct);
+#ifdef TYPEPROP_DEBUG
+      propagationDebug(typegrp->getArch(),vn,ct,retop,1,(Varnode *)0);
+#endif
+      propagateOneType(typegrp, vn);
+    }
+  }
+}
+
 int4 ActionInferTypes::apply(Funcdata &data)
 
 {
@@ -4576,6 +4642,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
     if ((!vn->isWritten())&&(vn->hasNoDescend())) continue;
     propagateOneType(typegrp,vn);
   }
+  propagateAcrossReturns(data);
   AddrSpace *spcid = data.getScopeLocal()->getSpaceId();
   Varnode *spcvn = data.findSpacebaseInput(spcid);
   if (spcvn != (Varnode *)0)

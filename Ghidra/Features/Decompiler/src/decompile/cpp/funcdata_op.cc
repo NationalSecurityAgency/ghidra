@@ -577,37 +577,20 @@ PcodeOp *Funcdata::cloneOp(const PcodeOp *op,const SeqNum &seq)
   return newop;
 }
 
-/// Return the CPUI_RETURN op with the most specialized data-type, which is not
-/// dead and is not a special halt. If HighVariables are not available, just
-/// return the first CPUI_RETURN op.
-/// \return the representative CPUI_RETURN op or NULL
-PcodeOp *Funcdata::canonicalReturnOp(void) const
+/// Return the first CPUI_RETURN operation that is not dead or an artificial halt
+/// \return a representative CPUI_RETURN op or NULL if there are none
+PcodeOp *Funcdata::getFirstReturnOp(void) const
 
 {
-  bool hasnohigh = !isHighOn();
-  PcodeOp *res = (PcodeOp *)0;
-  Datatype *bestdt = (Datatype *)0;
   list<PcodeOp *>::const_iterator iter,iterend;
   iterend = endOp(CPUI_RETURN);
   for(iter=beginOp(CPUI_RETURN);iter!=iterend;++iter) {
     PcodeOp *retop = *iter;
     if (retop->isDead()) continue;
     if (retop->getHaltType()!=0) continue;
-    if (retop->numInput() > 1) {
-      if (hasnohigh) return retop;
-      Varnode *vn = retop->getIn(1);
-      Datatype *ct = vn->getHigh()->getType();
-      if (bestdt == (Datatype *)0) {
-	res = retop;
-	bestdt = ct;
-      }
-      else if (ct->typeOrder(*bestdt) < 0) {
-	res = retop;
-	bestdt = ct;
-      }
-    }
+    return retop;
   }
-  return res;
+  return (PcodeOp *)0;
 }
 
 /// \brief Create new PcodeOp with 2 or 3 given operands

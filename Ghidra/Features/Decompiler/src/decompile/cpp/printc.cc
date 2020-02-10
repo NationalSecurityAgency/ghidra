@@ -1864,8 +1864,11 @@ void PrintC::emitPrototypeOutput(const FuncProto *proto,
   PcodeOp *op;
   Varnode *vn;
 
-  if (fd != (const Funcdata *)0)
-    op = fd->canonicalReturnOp();
+  if (fd != (const Funcdata *)0) {
+    op = fd->getFirstReturnOp();
+    if (op != (PcodeOp *)0 && op->numInput() < 2)
+      op = (PcodeOp *)0;
+  }
   else
     op = (PcodeOp *)0;
 

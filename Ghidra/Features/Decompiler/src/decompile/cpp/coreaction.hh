@@ -932,6 +932,8 @@ class ActionInferTypes : public Action {
   static void propagateOneType(TypeFactory *typegrp,Varnode *vn);
   static void propagateRef(Funcdata &data,Varnode *vn,const Address &addr);
   static void propagateSpacebaseRef(Funcdata &data,Varnode *spcvn);
+  static PcodeOp *canonicalReturnOp(Funcdata &data);
+  static void propagateAcrossReturns(Funcdata &data);
 public:
   ActionInferTypes(const string &g) : Action(0,"infertypes",g) {}	///< Constructor
   virtual void reset(Funcdata &data) { localcount = 0; }
