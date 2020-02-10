@@ -16,6 +16,9 @@
 package ghidra.app.script;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,12 +26,28 @@ import javax.tools.*;
 import javax.tools.JavaCompiler.CompilationTask;
 import javax.tools.JavaFileObject.Kind;
 
+import org.apache.felix.fileinstall.internal.JarDirUrlHandler;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleException;
+
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
+import ghidra.app.script.osgi.BundleCompiler;
+import ghidra.app.script.osgi.BundleHost;
 import ghidra.app.util.headless.HeadlessScript;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
+
+	private BundleHost bundle_host = new BundleHost();
+	{
+		try {
+			bundle_host.start_felix();
+		}
+		catch (BundleException | IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	private JavaScriptClassLoader loader = new JavaScriptClassLoader();
 
@@ -58,30 +77,78 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			writer = new NullPrintWriter();
 		}
 
-		// Assuming script is in default java package, so using script's base name as class name.
-		File clazzFile = getClassFile(sourceFile, GhidraScriptUtil.getBaseName(sourceFile));
-		if (needsCompile(sourceFile, clazzFile)) {
-			compile(sourceFile, writer); // may throw an exception
-		}
-		else if (scriptCompiledExternally(clazzFile)) {
-			forceClassReload();
+		ScriptBundleInfo bi = getBundleInfoForScript(sourceFile);
+		// look for new source files
+
+		List<ResourceFile> newSource = new ArrayList<>();
+		List<Path> oldBin = new ArrayList<>();
+		BundleHost.visitUpdatedClassFiles(bi.sourceDir, bi.binDir, (sf, bf) -> {
+			if (sf != null) {
+				newSource.add(sf);
+			}
+			if (bf != null) {
+				oldBin.add(bf);
+			}
+		});
+
+		// there's new source, so uninstall any existing bundle, delete old class files, and recompile
+		if (!newSource.isEmpty()) {
+			Bundle b = bi.getBundle();
+			if (b != null) {
+				try {
+					bundle_host.synchronousUninstall(b);
+				}
+				catch (BundleException | InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			bundle_host.stopBundleWatcher();
+			try {
+				for (Path bf : oldBin) {
+					Files.delete(bf);
+				}
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+
+			BundleCompiler bc = new BundleCompiler(bundle_host);
+			Msg.trace(this, "Compiling script " + sourceFile + " to dir " + bi.binDir);
+
+			try {
+				bc.compileToExplodedBundle(bi.sourceDir, bi.binDir, writer);
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+
+			bundle_host.startBundleWatcher();
 		}
 
-		String clazzName = GhidraScriptUtil.getBaseName(sourceFile);
-
-		Class<?> clazz = null;
+		// wait for bundle to be started
 		try {
-			clazz = Class.forName(clazzName, true, loader);
+			if (!bundle_host.waitForBundleStart(bi.bundleLoc)) {
+				return null;
+			}
 		}
-		catch (GhidraScriptUnsupportedClassVersionError e) {
-			// Unusual Code Alert!: This implies the script was compiled in a newer
-			// version of Java.  So, just delete the class file and try again.
-			ResourceFile classFile = e.getClassFile();
-			classFile.delete();
-			return getScriptInstance(sourceFile, writer);
+		catch (InterruptedException | BundleException e1) {
+			e1.printStackTrace();
+			return null;
 		}
 
-		Object object = clazz.newInstance();
+		Bundle b = bi.getBundle();
+		Class<?> clazz = b.loadClass(bi.classNameForScript(sourceFile));
+		Object object;
+		try {
+			object = clazz.getDeclaredConstructor().newInstance();
+		}
+		catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+				| SecurityException e) {
+			e.printStackTrace();
+			return null;
+		}
 		if (object instanceof GhidraScript) {
 			GhidraScript script = (GhidraScript) object;
 			script.setSourceFile(sourceFile);
@@ -99,13 +166,12 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	/**
-	 * Gets the class file corresponding to the given source file and class name.  
-	 * If the class is in a package, the class name should include the full 
-	 * package name.
+	 * Gets the class file corresponding to the given source file and class name. If the class is in a package, the
+	 * class name should include the full package name.
 	 * 
 	 * @param sourceFile The class's source file.
-	 * @param className The class's name (including package if applicable).
-	 * @return The class file corresponding to the given source file and class name. 
+	 * @param className  The class's name (including package if applicable).
+	 * @return The class file corresponding to the given source file and class name.
 	 */
 	protected File getClassFile(ResourceFile sourceFile, String className) {
 		ResourceFile resourceFile =
@@ -122,7 +188,8 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			return true;
 		}
 
-		// Need to compile if the script's source file is newer than its corresponding class file.
+		// Need to compile if the script's source file is newer than its corresponding
+		// class file.
 		if (sourceFile.lastModified() > classFile.lastModified()) {
 			return true;
 		}
@@ -175,6 +242,61 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 
 		return true;
+	}
+
+	private class ScriptBundleInfo {
+		final ResourceFile sourceDir;
+		final String symbolicName;
+		final Path binDir;
+		final String bundleLoc;
+
+		public ScriptBundleInfo(ResourceFile sourceDir) {
+			this.sourceDir = sourceDir;
+			this.symbolicName = getSymbolicNameFromSourceDir(sourceDir);
+			this.binDir = bundle_host.getCompiledBundlesDir().resolve(symbolicName);
+
+			this.bundleLoc =
+				JarDirUrlHandler.PROTOCOL + ":" + binDir.toAbsolutePath().normalize().toString();
+		}
+
+		public String classNameForScript(ResourceFile sourceFile) {
+			String p;
+			try {
+				p = sourceFile.getCanonicalPath();
+				p = p.substring(1 + sourceDir.getCanonicalPath().length(), p.length() - 5);// relative path less ".java"
+				return p.replace(File.separatorChar, '.');
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		Bundle getBundle() {
+			return bundle_host.getBundle(bundleLoc);
+		}
+	}
+
+	private ScriptBundleInfo getBundleInfoForScript(ResourceFile sourceFile) {
+		ResourceFile bundleDir = getSourceDirectoryForScript(sourceFile);
+		if (bundleDir == null) {
+			return null;
+		}
+		return new ScriptBundleInfo(bundleDir);
+	}
+
+	static public String getSymbolicNameFromSourceDir(ResourceFile sourceDir) {
+		return Integer.toHexString(sourceDir.getAbsolutePath().hashCode());
+	}
+
+	public static ResourceFile getSourceDirectoryForScript(ResourceFile sourceFile) {
+		String sourcePath = sourceFile.getAbsolutePath();
+		for (ResourceFile sourceDir : GhidraScriptUtil.getScriptSourceDirectories()) {
+			if (sourcePath.startsWith(sourceDir.getAbsolutePath())) {
+				return sourceDir;
+			}
+		}
+		return null;
 	}
 
 	protected boolean compile(ResourceFile sourceFile, final PrintWriter writer)
@@ -267,7 +389,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 		catch (GhidraScriptUnsupportedClassVersionError e) {
 			// Unusual Code Alert!: This implies the script was compiled in a newer
-			// version of Java.  So, just delete the class file and try again.
+			// version of Java. So, just delete the class file and try again.
 			ResourceFile classFile = e.getClassFile();
 			classFile.delete();
 			return null; // trigger re-compile
@@ -336,17 +458,13 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	private String getSourcePath() {
-		return GhidraScriptUtil.getScriptSourceDirectories()
-				.stream()
-				.map(f -> f.getAbsolutePath())
-				.collect(Collectors.joining(File.pathSeparator));
+		return GhidraScriptUtil.getScriptSourceDirectories().stream().map(
+			f -> f.getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
 	}
 
 	private String getClassPath() {
-		String scriptBinDirs = GhidraScriptUtil.getScriptBinDirectories()
-				.stream()
-				.map(f -> f.getAbsolutePath())
-				.collect(Collectors.joining(File.pathSeparator));
+		String scriptBinDirs = GhidraScriptUtil.getScriptBinDirectories().stream().map(
+			f -> f.getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
 		return System.getProperty("java.class.path") + File.pathSeparator + scriptBinDirs;
 	}
 
@@ -389,4 +507,5 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	public String getCommentCharacter() {
 		return "//";
 	}
+
 }

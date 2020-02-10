@@ -1,1 +1,7 @@
-
+MODULE FILE LICENSE: lib/biz.aQute.bnd-4.3.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/org.apache.felix.main-6.0.3.jar Apache License 2.0
+MODULE FILE LICENSE: lib/org.apache.felix.fileinstall-3.6.4.jar Apache License 2.0
+MODULE FILE LICENSE: lib/org.apache.felix.framework-6.0.3.jar Apache License 2.0
+MODULE FILE LICENSE: lib/animal-sniffer-annotations-1.9.jar MIT
+MODULE FILE LICENSE: lib/org.osgi.core-5.0.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/phidias-0.3.7.jar Apache License 2.0

@@ -73,7 +73,7 @@ class GhidraScriptActionManager {
 	}
 
 	void dispose() {
-		actionMap.values().forEach(a -> a.dispose());
+		actionMap.values().forEach(ScriptAction::dispose);
 		actionMap.clear();
 	}
 

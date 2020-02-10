@@ -25,6 +25,12 @@ dependencies {
 	compile project(':SoftwareModeling')
 	compile project(':DB')
 	compile project(':Help')
+
+	compile 'org.apache.felix:org.apache.felix.framework:6.0.3'
+	compile 'org.apache.felix:org.apache.felix.main:6.0.3'
+	compile 'org.apache.felix:org.apache.felix.fileinstall:3.6.4'
+	compile 'com.github.rotty3000:phidias:0.3.7'
+	compile 'biz.aQute.bnd:biz.aQute.bnd:4.3.0'
 	
    	compileOnly "junit:junit:4.12"
 	

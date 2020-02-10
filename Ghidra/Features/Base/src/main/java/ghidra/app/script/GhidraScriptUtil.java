@@ -51,11 +51,10 @@ public class GhidraScriptUtil {
 	 */
 	//@formatter:off
 	public static String USER_SCRIPTS_BIN_DIR = 
-		StringUtils.joinWith(File.separator,
-							 Application.getUserSettingsDirectory(), 
-							 "dev", 
-							 SCRIPTS_SUBDIR_NAME, 
-							 BIN_DIR_NAME);
+							 Application.getUserSettingsDirectory() + File.separator +
+							 "dev" + File.separator + 
+							 SCRIPTS_SUBDIR_NAME + File.separator +  
+							 BIN_DIR_NAME;
 	//@formatter:on
 
 	private static void createUserScriptsDirs() {
@@ -95,7 +94,7 @@ public class GhidraScriptUtil {
 			root = override;
 		}
 
-		String sourcePath = StringUtils.joinWith(File.separator, root, SCRIPTS_SUBDIR_NAME);
+		String sourcePath = root + File.separator + SCRIPTS_SUBDIR_NAME;
 		return sourcePath;
 	}
 
