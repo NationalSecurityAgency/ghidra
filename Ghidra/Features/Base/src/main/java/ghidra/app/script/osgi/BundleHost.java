@@ -16,20 +16,12 @@
 
 package ghidra.app.script.osgi;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import static java.util.stream.Collectors.*;
+
+import java.io.*;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.Map;
-import java.util.Properties;
-import java.util.function.Function;
+import java.nio.file.*;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -38,21 +30,9 @@ import org.apache.felix.fileinstall.internal.FileInstall;
 import org.apache.felix.framework.FrameworkFactory;
 import org.apache.felix.framework.util.FelixConstants;
 import org.apache.felix.main.AutoProcessor;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleEvent;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.BundleListener;
-import org.osgi.framework.Constants;
-import org.osgi.framework.FrameworkEvent;
-import org.osgi.framework.FrameworkListener;
-import org.osgi.framework.ServiceEvent;
-import org.osgi.framework.ServiceListener;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.*;
 import org.osgi.framework.launch.Framework;
-import org.osgi.service.log.LogEntry;
-import org.osgi.service.log.LogListener;
-import org.osgi.service.log.LogReaderService;
+import org.osgi.service.log.*;
 
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
@@ -60,27 +40,34 @@ import com.google.common.reflect.ClassPath.ClassInfo;
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.*;
 
 public class BundleHost {
 
 	void dispose() {
-		if (felix != null)
+		if (felix != null) {
 			stop_felix();
+		}
+	}
+
+	String buildExtraPackages0() {
+		Arrays.stream(Package.getPackages()).map(x -> x.getName()).sorted().distinct().forEach(
+			s -> System.err.printf("%s\n", s));
+		return Arrays.stream(Package.getPackages()).map(
+			x -> x.getName()).sorted().distinct().collect(Collectors.joining(","));
 	}
 
 	String buildExtraPackages() {
 		try {
-			
-			//ClassPath.from(BundleHost.class.getClassLoader()).getTopLevelClasses().stream()
-			// .map(ClassInfo::getPackageName).sorted().distinct().forEach(x->{
-			// System.err.printf("%s\n", x);
-			// });
-			return ClassPath.from(BundleHost.class.getClassLoader()).getTopLevelClasses().stream()
-					.map(ClassInfo::getPackageName).sorted().distinct().collect(Collectors.joining(","));
-		} catch (IOException e1) {
+			// return Arrays.stream(BundleHost.class.getClassLoader().getDefinedPackages()).map(x -> x.getName()).sorted().distinct().collect(Collectors.joining(","));
+			ClassPath.from(BundleHost.class.getClassLoader()).getTopLevelClasses().stream().map(
+				ClassInfo::getPackageName).sorted().distinct().forEach(
+					s -> System.err.printf("%s\n", s));
+			return ClassPath.from(
+				BundleHost.class.getClassLoader()).getTopLevelClasses().stream().map(
+					ClassInfo::getPackageName).sorted().distinct().collect(Collectors.joining(","));
+		}
+		catch (IOException e1) {
 			e1.printStackTrace();
 		}
 		return null;
@@ -104,8 +91,8 @@ public class BundleHost {
 	void dumpLoadedBundles() {
 		System.err.printf("=== Bundles ===\n");
 		for (Bundle bundle : bc.getBundles()) {
-			System.err.printf("%s: %s: %s: %s\n", bundle.getBundleId(), bundle.getSymbolicName(), bundle.getState(),
-					bundle.getVersion());
+			System.err.printf("%s: %s: %s: %s\n", bundle.getBundleId(), bundle.getSymbolicName(),
+				bundle.getState(), bundle.getVersion());
 		}
 	}
 
@@ -122,8 +109,8 @@ public class BundleHost {
 
 		@SuppressWarnings("rawtypes")
 		@Override
-		protected void doLog(final Bundle bundle, final ServiceReference sr, final int level, final String msg,
-				final Throwable throwable) {
+		protected void doLog(final Bundle bundle, final ServiceReference sr, final int level,
+				final String msg, final Throwable throwable) {
 			// plugin.printf("felixlogger: %s %s %s\n", bundle, msg, throwable);
 		}
 
@@ -134,14 +121,16 @@ public class BundleHost {
 		Properties config = new Properties();
 
 		config.setProperty(Constants.FRAMEWORK_BSNVERSION, Constants.FRAMEWORK_BSNVERSION_MULTIPLE);
-		config.setProperty(Constants.FRAMEWORK_SYSTEMCAPABILITIES, "osgi.ee; osgi.ee=\"JavaSE\";version:List=\"11\"");
+		config.setProperty(Constants.FRAMEWORK_SYSTEMCAPABILITIES,
+			"osgi.ee; osgi.ee=\"JavaSE\";version:List=\"11\"");
 		config.setProperty(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, buildExtraPackages());
 		// extra packages have lower precedence than imports, so a Bundle-Import will
 		// prevent "living off the land"
 
 		config.setProperty("org.osgi.service.http.port", "8080");
 
-		config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+		config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN,
+			Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
 		config.setProperty(Constants.FRAMEWORK_STORAGE, makeCacheDir());
 
 		// more properties available at:
@@ -173,7 +162,8 @@ public class BundleHost {
 					// plugin.printf("%s: %s\n", entry.getBundle(), entry.getMessage());
 				}
 			});
-		} else {
+		}
+		else {
 			// plugin.printf("no logreaderservice in felix!\n");
 		}
 
@@ -192,12 +182,13 @@ public class BundleHost {
 				String type = "?";
 				if (event.getType() == ServiceEvent.REGISTERED) {
 					type = "registered";
-				} else if (event.getType() == ServiceEvent.UNREGISTERING) {
+				}
+				else if (event.getType() == ServiceEvent.UNREGISTERING) {
 					type = "unregistering";
 				}
 
 				System.err.printf("%s %s from %s\n", event.getSource(), type,
-						event.getServiceReference().getBundle().getLocation());
+					event.getServiceReference().getBundle().getLocation());
 
 			}
 		});
@@ -207,18 +198,18 @@ public class BundleHost {
 			public void bundleChanged(BundleEvent event) {
 				// System.err.printf("%s %s\n", event.getBundle(), event);
 				switch (event.getType()) {
-				case BundleEvent.INSTALLED:
-					System.err.printf("INSTALLED %s\n", event.getBundle().getSymbolicName());
-					break;
-				case BundleEvent.UNINSTALLED:
-					System.err.printf("UNINSTALLED %s\n", event.getBundle().getSymbolicName());
-					break;
-				case BundleEvent.STARTED:
-					System.err.printf("STARTED %s\n", event.getBundle().getSymbolicName());
-					break;
-				case BundleEvent.STOPPED:
-					System.err.printf("STOPPED %s\n", event.getBundle().getSymbolicName());
-					break;
+					case BundleEvent.INSTALLED:
+						System.err.printf("INSTALLED %s\n", event.getBundle().getSymbolicName());
+						break;
+					case BundleEvent.UNINSTALLED:
+						System.err.printf("UNINSTALLED %s\n", event.getBundle().getSymbolicName());
+						break;
+					case BundleEvent.STARTED:
+						System.err.printf("STARTED %s\n", event.getBundle().getSymbolicName());
+						break;
+					case BundleEvent.STOPPED:
+						System.err.printf("STOPPED %s\n", event.getBundle().getSymbolicName());
+						break;
 				}
 			}
 		});
@@ -261,56 +252,60 @@ public class BundleHost {
 	public boolean synchronousStop(Bundle b) throws InterruptedException, BundleException {
 		if (b != null) {
 			switch (b.getState()) {
-			case Bundle.STARTING:
-			case Bundle.ACTIVE:
-				b.stop();
-			case Bundle.STOPPING:
-				while (true) {
-					switch (b.getState()) {
-					case Bundle.ACTIVE:
-					case Bundle.STOPPING:
-						Thread.sleep(500);
-					default:
-						return true;
+				case Bundle.STARTING:
+				case Bundle.ACTIVE:
+					b.stop();
+				case Bundle.STOPPING:
+					while (true) {
+						switch (b.getState()) {
+							case Bundle.ACTIVE:
+							case Bundle.STOPPING:
+								Thread.sleep(500);
+							default:
+								return true;
+						}
 					}
-				}
-			case Bundle.INSTALLED:
-			case Bundle.RESOLVED:
-			case Bundle.UNINSTALLED:
+				case Bundle.INSTALLED:
+				case Bundle.RESOLVED:
+				case Bundle.UNINSTALLED:
 			}
 		}
 		return false;
 	}
 
 	public boolean synchronousUninstall(Bundle b) throws InterruptedException, BundleException {
-		if (b != null)
+		if (b != null) {
 			if (b.getState() != Bundle.UNINSTALLED) {
 				b.uninstall();
 				while (true) {
-					if (b.getState() == Bundle.UNINSTALLED)
+					if (b.getState() == Bundle.UNINSTALLED) {
 						return true;
+					}
 					Thread.sleep(500);
 				}
 			}
+		}
 		return false;
 	}
 
-	public boolean waitForBundleStart(String location) throws InterruptedException, BundleException {
+	public boolean waitForBundleStart(String location)
+			throws InterruptedException, BundleException {
 		while (true) {
 			Bundle b = bc.getBundle(location);
-			if (b != null)
+			if (b != null) {
 				switch (b.getState()) {
-				case Bundle.ACTIVE:
-					return true;
-				case Bundle.UNINSTALLED:
-				case Bundle.STOPPING:
-					return false;
-				case Bundle.INSTALLED:
-				case Bundle.RESOLVED:
-					b.start();
-					continue;
-				case Bundle.STARTING:
+					case Bundle.ACTIVE:
+						return true;
+					case Bundle.UNINSTALLED:
+					case Bundle.STOPPING:
+						return false;
+					case Bundle.INSTALLED:
+					case Bundle.RESOLVED:
+						b.start();
+						continue;
+					case Bundle.STARTING:
 				}
+			}
 			Thread.sleep(500);
 		}
 	}
@@ -325,7 +320,8 @@ public class BundleHost {
 					FrameworkEvent x = felix.waitForStop(5000);
 					System.err.printf("killed felix with %s", x.toString());
 					felix = null;
-				} catch (BundleException | InterruptedException e) {
+				}
+				catch (BundleException | InterruptedException e) {
 					System.err.printf("failed to kill felix: %s", e);
 				}
 			}
@@ -343,7 +339,8 @@ public class BundleHost {
 			try {
 				fileinstall_bundle.stop();
 				return true;
-			} catch (BundleException e) {
+			}
+			catch (BundleException e) {
 				e.printStackTrace();
 			}
 		}
@@ -355,7 +352,8 @@ public class BundleHost {
 			try {
 				fileinstall_bundle.start();
 				return true;
-			} catch (BundleException e) {
+			}
+			catch (BundleException e) {
 				e.printStackTrace();
 			}
 		}
@@ -363,10 +361,11 @@ public class BundleHost {
 	}
 
 	public interface NewSourceCallback {
-		void found(ResourceFile source_file, Path class_file) throws Throwable;
+		void found(ResourceFile source_file, Collection<Path> class_files) throws Throwable;
 	}
 
-	public static void visitUpdatedClassFiles(ResourceFile srcdir, Path bindir, NewSourceCallback new_source_cb) {
+	public static void visitUpdatedClassFiles(ResourceFile srcdir, Path bindir,
+			NewSourceCallback new_source_cb) {
 		try {
 			// delete class files for which java is either newer, or no longer exists
 			Deque<ResourceFile> stack = new ArrayDeque<>();
@@ -377,36 +376,42 @@ public class BundleHost {
 				Path bd = bindir.resolve(relpath);
 
 				// index the class files in the corresponding directory by basename
-				Map<String, Path> binfiles = Files.exists(bd) ? Files.list(bd)
-						.filter(x -> Files.isRegularFile(x) && x.getFileName().toString().endsWith(".class"))
-						.collect(Collectors.toMap(x -> {
+				Map<String, List<Path>> binfiles =
+					Files.exists(bd) ? Files.list(bd).filter(x -> Files.isRegularFile(x) &&
+						x.getFileName().toString().endsWith(".class")).collect(groupingBy(x -> {
 							String s = x.getFileName().toString();
-							return s.substring(0, s.length() - 6);// drop ".class"
-						}, Function.identity())) : Collections.emptyMap();
+							int money = s.indexOf('$');
+							if (money >= 0) {
+								return s.substring(0, money);
+							}
+							return s.substring(0, s.length() - 6);
+						})) : Collections.emptyMap();
 
 				for (ResourceFile sf : sd.listFiles()) {
-					if (sf.isDirectory())
+					if (sf.isDirectory()) {
 						stack.push(sf);
+					}
 					else {
 						String n = sf.getName();
 						if (n.endsWith(".java")) {
-							Path bf = binfiles.remove(n.substring(0, n.length() - 5)); // drop ".java"
-							long bfl = -1;
 							long sfl = sf.lastModified();
-							if (bf != null)
-								bfl = bf.toFile().lastModified();
+							List<Path> bfs = binfiles.remove(n.substring(0, n.length() - 5));
+							long bfl = (bfs == null || bfs.isEmpty()) ? -1
+									: bfs.stream().mapToLong(
+										bf -> bf.toFile().lastModified()).min().getAsLong();
 							if (sfl > bfl) {
-								new_source_cb.found(sf, bf);
+								new_source_cb.found(sf, bfs);
 							}
 						}
 					}
 				}
 				// any remaining .class files are missing .java files
-				for (Path bf : binfiles.values()) {
-					new_source_cb.found(null, bf);
-				}
+				new_source_cb.found(null,
+					binfiles.values().stream().flatMap(l -> l.stream()).collect(
+						Collectors.toList()));
 			}
-		} catch (Throwable t) {
+		}
+		catch (Throwable t) {
 			t.printStackTrace();
 		}
 	}
@@ -418,18 +423,23 @@ public class BundleHost {
 		final ClassLoader loader = c.getClassLoader();
 		if (loader == null) {
 			location = ClassLoader.getSystemResource(classLocation);
-		} else {
+		}
+		else {
 			location = loader.getResource(classLocation);
 		}
 		if (location != null) {
 			Pattern p = Pattern.compile("^.*:(.*)!.*$");
 			Matcher m = p.matcher(location.toString());
-			if (m.find())
+			if (m.find()) {
 				return m.group(1);
-			else
+			}
+			else {
 				return null; // not loaded from jar?
-		} else
+			}
+		}
+		else {
 			return null;
+		}
 	}
 
 }

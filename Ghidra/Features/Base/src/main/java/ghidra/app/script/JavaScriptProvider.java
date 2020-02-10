@@ -82,12 +82,12 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		List<ResourceFile> newSource = new ArrayList<>();
 		List<Path> oldBin = new ArrayList<>();
-		BundleHost.visitUpdatedClassFiles(bi.sourceDir, bi.binDir, (sf, bf) -> {
+		BundleHost.visitUpdatedClassFiles(bi.sourceDir, bi.binDir, (sf, bfs) -> {
 			if (sf != null) {
 				newSource.add(sf);
 			}
-			if (bf != null) {
-				oldBin.add(bf);
+			if (bfs != null) {
+				oldBin.addAll(bfs);
 			}
 		});
 
@@ -299,6 +299,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return null;
 	}
 
+	@Deprecated
 	protected boolean compile(ResourceFile sourceFile, final PrintWriter writer)
 			throws ClassNotFoundException {
 
@@ -320,6 +321,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return true;
 	}
 
+	@Deprecated
 	private boolean doCompile(ResourceFile sourceFile, final PrintWriter writer) {
 
 		JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
@@ -357,6 +359,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return task.call();
 	}
 
+	@Deprecated
 	private List<Class<?>> getParentClasses(ResourceFile scriptSourceFile) {
 
 		Class<?> scriptClass = getScriptClass(scriptSourceFile);
@@ -379,6 +382,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return parentClasses;
 	}
 
+	@Deprecated
 	private Class<?> getScriptClass(ResourceFile scriptSourceFile) {
 		String clazzName = GhidraScriptUtil.getBaseName(scriptSourceFile);
 		try {
@@ -397,6 +401,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return null;
 	}
 
+	@Deprecated
 	private void compileParentClasses(ResourceFile sourceFile, PrintWriter writer) {
 
 		List<Class<?>> parentClasses = getParentClasses(sourceFile);
@@ -441,6 +446,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 	}
 
+	@Deprecated
 	private ResourceFile getSourceFile(Class<?> c) {
 		// check all script paths for a dir named
 		String classname = c.getName();
@@ -457,11 +463,13 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return null;
 	}
 
+	@Deprecated
 	private String getSourcePath() {
 		return GhidraScriptUtil.getScriptSourceDirectories().stream().map(
 			f -> f.getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
 	}
 
+	@Deprecated
 	private String getClassPath() {
 		String scriptBinDirs = GhidraScriptUtil.getScriptBinDirectories().stream().map(
 			f -> f.getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
