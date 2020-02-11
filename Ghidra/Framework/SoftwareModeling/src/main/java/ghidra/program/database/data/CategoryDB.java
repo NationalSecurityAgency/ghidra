@@ -657,7 +657,8 @@ class CategoryDB extends DatabaseObject implements Category {
 
 		/**
 		 * Creates a map of all data types whose name has a .conflict suffix where the key
-		 * is the base name and {@link LazyLoadingCachingMap} the value is a map of actual name to data type. This mapping is
+		 * is the base name and {@link LazyLoadingCachingMap} the value is a map of actual name 
+		 * to data type. This mapping is
 		 * maintained as a lazy cache map. This is only called by the super class when the
 		 * cached needs to be populated and we are depending on it to acquire the necessary
 		 * database lock. (See {@link LazyLoadingCachingMap#loadMap()}
@@ -671,8 +672,8 @@ class CategoryDB extends DatabaseObject implements Category {
 				String dataTypeName = dataType.getName();
 				if (isConflictName(dataTypeName)) {
 					String baseName = getBaseName(dataTypeName);
-					Map<String, DataType> innerMap = map.get(baseName);
-					map.computeIfAbsent(baseName, b -> new HashMap<>());
+					Map<String, DataType> innerMap =
+						map.computeIfAbsent(baseName, b -> new HashMap<>());
 					innerMap.put(dataTypeName, dataType);
 				}
 			}
