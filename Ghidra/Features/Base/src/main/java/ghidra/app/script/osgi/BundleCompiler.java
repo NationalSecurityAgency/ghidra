@@ -44,7 +44,7 @@ public class BundleCompiler {
 		this.bh = bh;
 	}
 
-	/** compile a source directory to an exploded bundle */
+	// compile a source directory to an exploded bundle
 	public void compileToExplodedBundle(ResourceFile srcdir, Path bindir, Writer output)
 			throws IOException {
 		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

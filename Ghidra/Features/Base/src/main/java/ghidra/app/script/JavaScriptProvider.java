@@ -49,8 +49,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 	}
 
-	private JavaScriptClassLoader loader = new JavaScriptClassLoader();
-
 	@Override
 	public String getDescription() {
 		return "Java";
@@ -93,6 +91,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		// there's new source, so uninstall any existing bundle, delete old class files, and recompile
 		if (!newSource.isEmpty()) {
+			writer.printf("%s has changed: %d new\n", bi.sourceDir.toString(), newSource.size());
 			Bundle b = bi.getBundle();
 			if (b != null) {
 				try {
@@ -100,6 +99,8 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 				}
 				catch (BundleException | InterruptedException e) {
 					e.printStackTrace();
+					Msg.error(this, "uninstalling bundle", e);
+					return null;
 				}
 			}
 			bundle_host.stopBundleWatcher();
@@ -110,6 +111,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			}
 			catch (IOException e) {
 				e.printStackTrace();
+				Msg.error(this, "deleting old binary files", e);
 				return null;
 			}
 
@@ -121,6 +123,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			}
 			catch (IOException e) {
 				e.printStackTrace();
+				Msg.error(this, "compiling bundle", e);
 				return null;
 			}
 
@@ -130,11 +133,13 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		// wait for bundle to be started
 		try {
 			if (!bundle_host.waitForBundleStart(bi.bundleLoc)) {
+				Msg.error(this, "starting bundle");
 				return null;
 			}
 		}
-		catch (InterruptedException | BundleException e1) {
-			e1.printStackTrace();
+		catch (InterruptedException | BundleException e) {
+			e.printStackTrace();
+			Msg.error(this, "starting bundle", e);
 			return null;
 		}
 
@@ -147,6 +152,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException
 				| SecurityException e) {
 			e.printStackTrace();
+			Msg.error(this, "instantiatiating script", e);
 			return null;
 		}
 		if (object instanceof GhidraScript) {
@@ -159,10 +165,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		writer.println(message);
 		Msg.error(this, message); // the writer may not be the same as Msg, so log it too
 		return null; // class is not a script
-	}
-
-	private void forceClassReload() {
-		loader = new JavaScriptClassLoader(); // this forces the script class to be reloaded
 	}
 
 	/**
@@ -179,69 +181,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		File file = resourceFile.getFile(false);
 		return file;
-	}
-
-	protected boolean needsCompile(ResourceFile sourceFile, File classFile) {
-
-		// Need to compile if there is no class file.
-		if (!classFile.exists()) {
-			return true;
-		}
-
-		// Need to compile if the script's source file is newer than its corresponding
-		// class file.
-		if (sourceFile.lastModified() > classFile.lastModified()) {
-			return true;
-		}
-
-		// Need to compile if parent classes are not up to date.
-		return !areAllParentClassesUpToDate(sourceFile);
-	}
-
-	protected boolean scriptCompiledExternally(File classFile) {
-
-		Long modifiedTimeWhenLoaded = loader.lastModified(classFile);
-		if (modifiedTimeWhenLoaded == null) {
-			// never been loaded, so doesn't matter
-			return false;
-		}
-
-		if (classFile.lastModified() > modifiedTimeWhenLoaded) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean areAllParentClassesUpToDate(ResourceFile sourceFile) {
-
-		List<Class<?>> parentClasses = getParentClasses(sourceFile);
-		if (parentClasses == null) {
-			// some class is missing!
-			return false;
-		}
-
-		if (parentClasses.isEmpty()) {
-			// nothing to do--no parent class to re-compile
-			return true;
-		}
-
-		// check each parent for modification
-		for (Class<?> clazz : parentClasses) {
-			ResourceFile parentFile = getSourceFile(clazz);
-			if (parentFile == null) {
-				continue; // not sure if this can happen (inner-class, maybe?)
-			}
-
-			// Parent class might have a non-default java package, so use class's full name.
-			File clazzFile = getClassFile(parentFile, clazz.getName());
-
-			if (parentFile.lastModified() > clazzFile.lastModified()) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	private class ScriptBundleInfo {
@@ -297,6 +236,104 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public void createNewScript(ResourceFile newScript, String category) throws IOException {
+		String scriptName = newScript.getName();
+		String className = scriptName;
+		int dotpos = scriptName.lastIndexOf('.');
+		if (dotpos >= 0) {
+			className = scriptName.substring(0, dotpos);
+		}
+		PrintWriter writer = new PrintWriter(new FileWriter(newScript.getFile(false)));
+
+		writeHeader(writer, category);
+
+		writer.println("import ghidra.app.script.GhidraScript;");
+
+		for (Package pkg : Package.getPackages()) {
+			if (pkg.getName().startsWith("ghidra.program.model.")) {
+				writer.println("import " + pkg.getName() + ".*;");
+			}
+		}
+
+		writer.println("");
+
+		writer.println("public class " + className + " extends GhidraScript {");
+		writer.println("");
+
+		writer.println("    public void run() throws Exception {");
+
+		writeBody(writer);
+
+		writer.println("    }");
+		writer.println("");
+		writer.println("}");
+		writer.close();
+	}
+
+	@Override
+	public String getCommentCharacter() {
+		return "//";
+	}
+
+	@Deprecated
+	private JavaScriptClassLoader loader = new JavaScriptClassLoader();
+
+	@Deprecated
+	private void forceClassReload() {
+		loader = new JavaScriptClassLoader(); // this forces the script class to be reloaded
+	}
+
+	@Deprecated
+	protected boolean needsCompile(ResourceFile sourceFile, File classFile) {
+
+		// Need to compile if there is no class file.
+		if (!classFile.exists()) {
+			return true;
+		}
+
+		// Need to compile if the script's source file is newer than its corresponding
+		// class file.
+		if (sourceFile.lastModified() > classFile.lastModified()) {
+			return true;
+		}
+
+		// Need to compile if parent classes are not up to date.
+		return !areAllParentClassesUpToDate(sourceFile);
+	}
+
+	@Deprecated
+	private boolean areAllParentClassesUpToDate(ResourceFile sourceFile) {
+
+		List<Class<?>> parentClasses = getParentClasses(sourceFile);
+		if (parentClasses == null) {
+			// some class is missing!
+			return false;
+		}
+
+		if (parentClasses.isEmpty()) {
+			// nothing to do--no parent class to re-compile
+			return true;
+		}
+
+		// check each parent for modification
+		for (Class<?> clazz : parentClasses) {
+			ResourceFile parentFile = getSourceFile(clazz);
+			if (parentFile == null) {
+				continue; // not sure if this can happen (inner-class, maybe?)
+			}
+
+			// Parent class might have a non-default java package, so use class's full name.
+			File clazzFile = getClassFile(parentFile, clazz.getName());
+
+			if (parentFile.lastModified() > clazzFile.lastModified()) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	@Deprecated
@@ -474,46 +511,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		String scriptBinDirs = GhidraScriptUtil.getScriptBinDirectories().stream().map(
 			f -> f.getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
 		return System.getProperty("java.class.path") + File.pathSeparator + scriptBinDirs;
-	}
-
-	@Override
-	public void createNewScript(ResourceFile newScript, String category) throws IOException {
-		String scriptName = newScript.getName();
-		String className = scriptName;
-		int dotpos = scriptName.lastIndexOf('.');
-		if (dotpos >= 0) {
-			className = scriptName.substring(0, dotpos);
-		}
-		PrintWriter writer = new PrintWriter(new FileWriter(newScript.getFile(false)));
-
-		writeHeader(writer, category);
-
-		writer.println("import ghidra.app.script.GhidraScript;");
-
-		for (Package pkg : Package.getPackages()) {
-			if (pkg.getName().startsWith("ghidra.program.model.")) {
-				writer.println("import " + pkg.getName() + ".*;");
-			}
-		}
-
-		writer.println("");
-
-		writer.println("public class " + className + " extends GhidraScript {");
-		writer.println("");
-
-		writer.println("    public void run() throws Exception {");
-
-		writeBody(writer);
-
-		writer.println("    }");
-		writer.println("");
-		writer.println("}");
-		writer.close();
-	}
-
-	@Override
-	public String getCommentCharacter() {
-		return "//";
 	}
 
 }

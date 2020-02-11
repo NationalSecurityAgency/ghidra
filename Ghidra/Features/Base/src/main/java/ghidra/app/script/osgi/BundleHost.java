@@ -22,9 +22,11 @@ import java.io.*;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.felix.fileinstall.internal.FileInstall;
 import org.apache.felix.framework.FrameworkFactory;
@@ -34,50 +36,28 @@ import org.osgi.framework.*;
 import org.osgi.framework.launch.Framework;
 import org.osgi.service.log.*;
 
-import com.google.common.reflect.ClassPath;
-import com.google.common.reflect.ClassPath.ClassInfo;
-
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
 public class BundleHost {
-
 	void dispose() {
 		if (felix != null) {
 			stop_felix();
 		}
 	}
 
-	String buildExtraPackages0() {
-		Arrays.stream(Package.getPackages()).map(x -> x.getName()).sorted().distinct().forEach(
-			s -> System.err.printf("%s\n", s));
-		return Arrays.stream(Package.getPackages()).map(
-			x -> x.getName()).sorted().distinct().collect(Collectors.joining(","));
-	}
-
 	String buildExtraPackages() {
-		try {
-			// return Arrays.stream(BundleHost.class.getClassLoader().getDefinedPackages()).map(x -> x.getName()).sorted().distinct().collect(Collectors.joining(","));
-			ClassPath.from(BundleHost.class.getClassLoader()).getTopLevelClasses().stream().map(
-				ClassInfo::getPackageName).sorted().distinct().forEach(
-					s -> System.err.printf("%s\n", s));
-			return ClassPath.from(
-				BundleHost.class.getClassLoader()).getTopLevelClasses().stream().map(
-					ClassInfo::getPackageName).sorted().distinct().collect(Collectors.joining(","));
-		}
-		catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		return null;
+		Set<String> packages = new HashSet<>();
+		getPackagesFromClasspath(packages);
+		return packages.stream().collect(Collectors.joining(","));
 	}
 
 	BundleContext bc;
 	Framework felix;
 	Bundle fileinstall_bundle;
 
-	/** install a bundle from disk */
 	Bundle installFromPath(String path_to_jar) throws BundleException {
 		Path p = Paths.get(path_to_jar);
 		return bc.installBundle("file://" + p.toAbsolutePath().normalize().toString());
@@ -108,6 +88,7 @@ public class BundleHost {
 		}
 
 		@SuppressWarnings("rawtypes")
+
 		@Override
 		protected void doLog(final Bundle bundle, final ServiceReference sr, final int level,
 				final String msg, final Throwable throwable) {
@@ -243,12 +224,7 @@ public class BundleHost {
 		return bc.getBundle(bundleLoc);
 	}
 
-	/**
-	 * return true if it was running in the first place
-	 * 
-	 * @throws InterruptedException
-	 * @throws BundleException
-	 */
+	// return true if it was running in the first place
 	public boolean synchronousStop(Bundle b) throws InterruptedException, BundleException {
 		if (b != null) {
 			switch (b.getState()) {
@@ -417,7 +393,7 @@ public class BundleHost {
 	}
 
 	// from https://dzone.com/articles/locate-jar-classpath-given
-	public static String findJarForClass(Class<?> c) {
+	static String findJarForClass(Class<?> c) {
 		final URL location;
 		final String classLocation = c.getName().replace('.', '/') + ".class";
 		final ClassLoader loader = c.getClassLoader();
@@ -433,12 +409,54 @@ public class BundleHost {
 			if (m.find()) {
 				return m.group(1);
 			}
-			else {
-				return null; // not loaded from jar?
+			return null; // not loaded from jar?
+		}
+		return null;
+	}
+
+	static void getPackagesFromClasspath(Set<String> s) {
+		getClasspathElements().forEach(p -> {
+			if (Files.isDirectory(p)) {
+				collectPackagesFromDirectory(p, s);
+			}
+			else if (p.toString().endsWith(".jar")) {
+				collectPackagesFromJar(p, s);
+			}
+		});
+	}
+
+	static Stream<Path> getClasspathElements() {
+		String classpathStr = System.getProperty("java.class.path");
+		return Collections.list(new StringTokenizer(classpathStr, File.pathSeparator)).stream().map(
+			String.class::cast).map(Paths::get).map(Path::normalize);
+	}
+
+	static void collectPackagesFromDirectory(Path dirPath, Set<String> s) {
+		try {
+			Files.walk(dirPath).filter(p -> p.toString().endsWith(".class")).forEach(p -> {
+				String n = dirPath.relativize(p).toString();
+				int lastSlash = n.lastIndexOf('/');
+				s.add(lastSlash > 0 ? n.substring(0, lastSlash).replace('/', '.') : "");
+			});
+
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	static void collectPackagesFromJar(Path jarPath, Set<String> s) {
+		try {
+			try (JarFile j = new JarFile(jarPath.toFile())) {
+				j.stream().filter(je -> je.getName().endsWith(".class")).forEach(je -> {
+					String n = je.getName();
+					int lastSlash = n.lastIndexOf('/');
+					s.add(lastSlash > 0 ? n.substring(0, lastSlash).replace('/', '.') : "");
+				});
 			}
 		}
-		else {
-			return null;
+		catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
