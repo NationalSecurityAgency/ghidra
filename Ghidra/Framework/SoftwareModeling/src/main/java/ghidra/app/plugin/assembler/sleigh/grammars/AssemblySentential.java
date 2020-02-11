@@ -149,7 +149,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 					return Collections.singleton(new WhiteSpaceParseToken(grammar, this, ""));
 				}
 				if (Character.isLetterOrDigit(buffer.charAt(b)) &&
-					Character.isLetterOrDigit(buffer.charAt(b - 1))) {
+					(b == 0 || Character.isLetterOrDigit(buffer.charAt(b - 1)))) {
 					return Collections.emptySet();
 				}
 			}
