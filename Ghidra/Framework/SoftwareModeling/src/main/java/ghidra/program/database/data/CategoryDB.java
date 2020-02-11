@@ -16,8 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import db.Record;
@@ -26,6 +25,7 @@ import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Lock;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -41,6 +41,7 @@ class CategoryDB extends DatabaseObject implements Category {
 
 	private LazyLoadingCachingMap<String, CategoryDB> subcategoryMap;
 	private LazyLoadingCachingMap<String, DataType> dataTypeMap;
+	private ConflictMap conflictMap;
 
 	/**
 	 * Category Constructor
@@ -57,19 +58,19 @@ class CategoryDB extends DatabaseObject implements Category {
 		this.name = name;
 		this.parent = parent;
 
-		subcategoryMap = new LazyLoadingCachingMap<>(mgr.lock, CategoryDB.class) {
+		subcategoryMap = new LazyLoadingCachingMap<>(mgr.lock) {
 			@Override
 			public Map<String, CategoryDB> loadMap() {
 				return buildSubcategoryMap();
 			}
 		};
-		dataTypeMap = new LazyLoadingCachingMap<>(mgr.lock, DataType.class) {
+		dataTypeMap = new LazyLoadingCachingMap<>(mgr.lock) {
 			@Override
 			public Map<String, DataType> loadMap() {
 				return createDataTypeMap();
 			}
 		};
-
+		conflictMap = new ConflictMap(mgr.lock);
 	}
 
 	/**
@@ -102,6 +103,7 @@ class CategoryDB extends DatabaseObject implements Category {
 	protected boolean refresh(Record rec) {
 		subcategoryMap.clear();
 		dataTypeMap.clear();
+		conflictMap.clear();
 
 		if (isRoot()) {
 			return true;
@@ -210,13 +212,26 @@ class CategoryDB extends DatabaseObject implements Category {
 		return map;
 	}
 
+	private String getBaseName(String dataTypeName) {
+		int indexOf = dataTypeName.indexOf(DataType.CONFLICT_SUFFIX);
+		if (indexOf <= 0) {
+			return dataTypeName;
+		}
+		return dataTypeName.substring(0, indexOf);
+	}
+
+	private boolean isConflictName(String dataTypeName) {
+		return dataTypeName.contains(DataType.CONFLICT_SUFFIX);
+	}
+
 	/**
 	 * @see ghidra.program.model.data.Category#getCategories()
 	 */
 	@Override
 	public Category[] getCategories() {
 		validate(mgr.lock);
-		return subcategoryMap.valuesToArray();
+		Collection<CategoryDB> categories = subcategoryMap.values();
+		return categories.toArray(new Category[categories.size()]);
 	}
 
 	/**
@@ -225,7 +240,8 @@ class CategoryDB extends DatabaseObject implements Category {
 	@Override
 	public DataType[] getDataTypes() {
 		validate(mgr.lock);
-		return dataTypeMap.valuesToArray();
+		Collection<DataType> dataTypes = dataTypeMap.values();
+		return dataTypes.toArray(new DataType[dataTypes.size()]);
 	}
 
 	/**
@@ -587,19 +603,137 @@ class CategoryDB extends DatabaseObject implements Category {
 	}
 
 	void dataTypeRenamed(DataType childDataType, String oldName) {
-		dataTypeMap.remove(oldName);
-		dataTypeMap.put(childDataType.getName(), childDataType);
+		dataTypeRemoved(oldName);
+		dataTypeAdded(childDataType);
 	}
 
-	void dataTypeAdded(DataType childDataType) {
-		dataTypeMap.put(childDataType.getName(), childDataType);
+	void dataTypeAdded(DataType dataType) {
+		String dtName = dataType.getName();
+		dataTypeMap.put(dtName, dataType);
+		if (isConflictName(dtName)) {
+			conflictMap.addDataType(dataType);
+		}
 	}
 
 	void dataTypeRemoved(String dataTypeName) {
 		dataTypeMap.remove(dataTypeName);
+		if (isConflictName(dataTypeName)) {
+			conflictMap.removeDataTypeName(dataTypeName);
+		}
 	}
 
 	void categoryAdded(CategoryDB cat) {
 		subcategoryMap.put(cat.getName(), cat);
+	}
+
+	@Override
+	public List<DataType> getDataTypesByBaseName(String dataTypeName) {
+		List<DataType> list = new ArrayList<>();
+		String baseName = getBaseName(dataTypeName);
+
+		DataType baseType = dataTypeMap.get(baseName);
+		if (baseType != null) {
+			list.add(baseType);
+		}
+
+		List<DataType> relatedNameDataTypes = conflictMap.getDataTypesForBaseName(baseName);
+		list.addAll(relatedNameDataTypes);
+		return list;
+	}
+
+	/**
+	 * Class to handle complexities of having a map as the value in a LazyLoadingCachingMap
+	 * This map uses data type's base name as the key (i.e. all .conflict suffixex stripped off.)
+	 * The value is another map that maps the actual data type's name to the datatype. This map
+	 * effectively provides an efficient way to get all data types in a category that have the
+	 * same name, but possibly have had their name modified (by appending .conflict) to get around
+	 * the requirement that names have to be unique in the same category.
+	 */
+	class ConflictMap extends LazyLoadingCachingMap<String, Map<String, DataType>> {
+
+		ConflictMap(Lock lock) {
+			super(lock);
+		}
+
+		/**
+		 * Creates a map of all data types whose name has a .conflict suffix where the key
+		 * is the base name and the value is a map of actual name to data type. This mapping is
+		 * maintained as a lazy cache map.
+		 * @return the loaded map
+		 */
+		@Override
+		protected Map<String, Map<String, DataType>> loadMap() {
+			Map<String, Map<String, DataType>> map = new HashMap<>();
+			Collection<DataType> values = dataTypeMap.values();
+			for (DataType dataType : values) {
+				String dataTypeName = dataType.getName();
+				if (isConflictName(dataTypeName)) {
+					String baseName = getBaseName(dataTypeName);
+					Map<String, DataType> innerMap = map.get(baseName);
+					if (innerMap == null) {
+						innerMap = new HashMap<>();
+						map.put(baseName, innerMap);
+					}
+					innerMap.put(dataTypeName, dataType);
+				}
+			}
+			return map;
+		}
+
+		/**
+		 * Adds the data type to the conflict mapping structure. If the mapping is currently not
+		 * loaded then this method can safely do nothing.
+		 * @param dataType the data type to add to the mapping if the mapping is already loaded
+		 */
+		synchronized void addDataType(DataType dataType) {
+			Map<String, Map<String, DataType>> map = getMap();
+			if (map == null) {
+				return;
+			}
+
+			String dataTypeName = dataType.getName();
+			String baseName = getBaseName(dataTypeName);
+			Map<String, DataType> innerMap = map.get(baseName);
+			if (innerMap == null) {
+				innerMap = new HashMap<>();
+				put(baseName, innerMap);
+			}
+			innerMap.put(dataTypeName, dataType);
+		}
+
+		/**
+		 * Removes the data type with the given name from the conflict mapping structure. If the 
+		 * mapping is currently not loaded then this method can safely do nothing.
+		 * @param dataTypeName the name of the data type  to remove from this mapping
+		 */
+		synchronized void removeDataTypeName(String dataTypeName) {
+			Map<String, Map<String, DataType>> map = getMap();
+			if (map == null) {
+				return;
+			}
+			String baseName = getBaseName(dataTypeName);
+			Map<String, DataType> innerMap = map.get(baseName);
+			if (innerMap == null) {
+				return;
+			}
+			innerMap.remove(dataTypeName);
+		}
+
+		/**
+		 * Returns a list of all data types that have conflict names for the given base name
+		 * @param baseName the data type base name to search for (i.e. the .conflict suffix removed)
+		 * @return a list of all conflict named data types that would have the given base name if
+		 * no conflicts existed
+		 */
+		List<DataType> getDataTypesForBaseName(String baseName) {
+			Map<String, DataType> map = get(baseName);
+			if (map == null) {
+				return Collections.emptyList();
+			}
+			synchronized (this) {
+				return new ArrayList<>(map.values());
+			}
+		}
+
 	}
 }

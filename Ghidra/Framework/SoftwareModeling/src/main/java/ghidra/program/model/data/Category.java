@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.data;
 
+import java.util.List;
+
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -47,6 +49,17 @@ public interface Category extends Comparable<Category> {
 	 * @return zero-length array if there are no data types
 	 */
 	public abstract DataType[] getDataTypes();
+
+	/**
+	 * Get all data types in this category whose base name matches the base name of the given name.
+	 * The base name of a name if the first part of the string up to where the first ".conflict"
+	 * occurs. In other words find all data types whose name matches the given name once
+	 * any conflict suffixes have been removed from both both the given name and the data types
+	 * that are being scanned. 
+	 * @param name the name for which to get conflict related data types in this category
+	 * @return a list of data types that have the same base name as the base name of the given name
+	 */
+	public abstract List<DataType> getDataTypesByBaseName(String name);
 
 	/**
 	 * Adds the given datatype to this category.
