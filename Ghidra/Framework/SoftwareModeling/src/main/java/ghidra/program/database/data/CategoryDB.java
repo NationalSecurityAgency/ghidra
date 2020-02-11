@@ -636,20 +636,20 @@ class CategoryDB extends DatabaseObject implements Category {
 			list.add(baseType);
 		}
 
-		List<DataType> relatedNameDataTypes = conflictMap.getDataTypesForBaseName(baseName);
+		List<DataType> relatedNameDataTypes = conflictMap.getDataTypesByBaseName(baseName);
 		list.addAll(relatedNameDataTypes);
 		return list;
 	}
 
 	/**
-	 * Class to handle complexities of having a map as the value in a LazyLoadingCachingMap
-	 * This map uses data type's base name as the key (i.e. all .conflict suffixex stripped off.)
-	 * The value is another map that maps the actual data type's name to the datatype. This map
+	 * Class to handle the complexities of having a map as the value in a LazyLoadingCachingMap
+	 * This map uses the data type's base name as the key (i.e. all .conflict suffixes stripped off.)
+	 * The value is another map that maps the actual data type's name to the data type. This map
 	 * effectively provides an efficient way to get all data types in a category that have the
 	 * same name, but possibly have had their name modified (by appending .conflict) to get around
 	 * the requirement that names have to be unique in the same category.
 	 */
-	class ConflictMap extends LazyLoadingCachingMap<String, Map<String, DataType>> {
+	private class ConflictMap extends LazyLoadingCachingMap<String, Map<String, DataType>> {
 
 		ConflictMap(Lock lock) {
 			super(lock);
@@ -657,8 +657,10 @@ class CategoryDB extends DatabaseObject implements Category {
 
 		/**
 		 * Creates a map of all data types whose name has a .conflict suffix where the key
-		 * is the base name and the value is a map of actual name to data type. This mapping is
-		 * maintained as a lazy cache map.
+		 * is the base name and {@link LazyLoadingCachingMap} the value is a map of actual name to data type. This mapping is
+		 * maintained as a lazy cache map. This is only called by the super class when the
+		 * cached needs to be populated and we are depending on it to acquire the necessary
+		 * database lock. (See {@link LazyLoadingCachingMap#loadMap()}
 		 * @return the loaded map
 		 */
 		@Override
@@ -670,10 +672,7 @@ class CategoryDB extends DatabaseObject implements Category {
 				if (isConflictName(dataTypeName)) {
 					String baseName = getBaseName(dataTypeName);
 					Map<String, DataType> innerMap = map.get(baseName);
-					if (innerMap == null) {
-						innerMap = new HashMap<>();
-						map.put(baseName, innerMap);
-					}
+					map.computeIfAbsent(baseName, b -> new HashMap<>());
 					innerMap.put(dataTypeName, dataType);
 				}
 			}
@@ -682,10 +681,12 @@ class CategoryDB extends DatabaseObject implements Category {
 
 		/**
 		 * Adds the data type to the conflict mapping structure. If the mapping is currently not
-		 * loaded then this method can safely do nothing.
+		 * loaded then this method can safely do nothing. This method is synchronized to provide
+		 * thread safe access/manipulation of the map.
 		 * @param dataType the data type to add to the mapping if the mapping is already loaded
 		 */
 		synchronized void addDataType(DataType dataType) {
+			// if the cache is not currently populated, don't need to do anything
 			Map<String, Map<String, DataType>> map = getMap();
 			if (map == null) {
 				return;
@@ -693,17 +694,14 @@ class CategoryDB extends DatabaseObject implements Category {
 
 			String dataTypeName = dataType.getName();
 			String baseName = getBaseName(dataTypeName);
-			Map<String, DataType> innerMap = map.get(baseName);
-			if (innerMap == null) {
-				innerMap = new HashMap<>();
-				put(baseName, innerMap);
-			}
+			Map<String, DataType> innerMap = map.computeIfAbsent(baseName, b -> new HashMap<>());
 			innerMap.put(dataTypeName, dataType);
 		}
 
 		/**
 		 * Removes the data type with the given name from the conflict mapping structure. If the 
-		 * mapping is currently not loaded then this method can safely do nothing.
+		 * mapping is currently not loaded then this method can safely do nothing. This method is
+		 * synchronized to provide thread safe access/manipulate of the map.
 		 * @param dataTypeName the name of the data type  to remove from this mapping
 		 */
 		synchronized void removeDataTypeName(String dataTypeName) {
@@ -725,11 +723,19 @@ class CategoryDB extends DatabaseObject implements Category {
 		 * @return a list of all conflict named data types that would have the given base name if
 		 * no conflicts existed
 		 */
-		List<DataType> getDataTypesForBaseName(String baseName) {
+		List<DataType> getDataTypesByBaseName(String baseName) {
+
+			// Note that the following call to get MUST NOT be in a synchronized block because
+			// it may trigger a loading of the cache which requires a database lock and you
+			// can't be synchronized on this class when acquiring a database lock or else a
+			// deadlock will occur.
 			Map<String, DataType> map = get(baseName);
 			if (map == null) {
 				return Collections.emptyList();
 			}
+
+			// the following must be synchronized so that the implied iterator can complete without
+			// another thread changing the map's values.
 			synchronized (this) {
 				return new ArrayList<>(map.values());
 			}

@@ -3206,7 +3206,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		lock.acquire();
 		try {
 			long[] ids = parentChildAdapter.getParentIds(childID);
-			// TODO: consider deduping ids using Set
 			List<DataType> dts = new ArrayList<>();
 			for (long id : ids) {
 				DataType dt = getDataType(id);

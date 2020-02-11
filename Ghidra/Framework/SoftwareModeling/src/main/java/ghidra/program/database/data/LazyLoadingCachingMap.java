@@ -44,7 +44,8 @@ public abstract class LazyLoadingCachingMap<K, V> {
 	}
 
 	/**
-	 * This method will reload the map data from scratch.
+	 * This method will reload the map data from scratch. Subclass may assume that the database
+	 * lock has been acquired.
 	 * @return a map containing all current key, value pairs.
 	 */
 	protected abstract Map<K, V> loadMap();
@@ -113,7 +114,8 @@ public abstract class LazyLoadingCachingMap<K, V> {
 
 		// We must get the database lock before calling loadMap().  Also, we can't get the
 		// database lock while having the synchronization lock for this class or a deadlock can
-		// occur.  Note: all other places where the map is being used or manipulated, it must be done
+		// occur, since the other methods may be called while the client has the db lock.
+		// Note: all other places where the map is being used or manipulated, it must be done
 		// while having the class's synchronization lock since the map itself is not thread safe.
 		// It should be safe here since it creates a new map and then in one operation it sets it
 		// as the map to be used elsewhere.
