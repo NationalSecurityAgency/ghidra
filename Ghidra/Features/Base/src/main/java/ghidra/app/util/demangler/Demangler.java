@@ -23,8 +23,19 @@ import ghidra.util.classfinder.ExtensionPoint;
  * the ClassSearcher will not find them.
  */
 public interface Demangler extends ExtensionPoint {
+
 	public boolean canDemangle(Program program);
 
+	// TODO deprecate
+	@Deprecated
 	public DemangledObject demangle(String mangled, boolean demangleOnlyKnownPatterns)
 			throws DemangledException;
+
+	// TODO docme
+	public DemangledObject demangle(String mangled, DemanglerOptions options)
+			throws DemangledException;
+
+	public default DemanglerOptions createDefaultOptions() {
+		return new DemanglerOptions();
+	}
 }

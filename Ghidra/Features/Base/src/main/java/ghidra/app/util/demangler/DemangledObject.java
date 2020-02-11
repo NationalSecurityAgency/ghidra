@@ -115,6 +115,14 @@ public abstract class DemangledObject {
 		return demangledName;
 	}
 
+	/**
+	 * Returns the original mangled name
+	 * @return the name
+	 */
+	public String getMangledName() {
+		return originalMangled;
+	}
+
 	/** 
 	 * Returns the demangled name of this object.
 	 * NOTE: unsupported symbol characters, like whitespace, will be
@@ -495,8 +503,11 @@ public abstract class DemangledObject {
 
 			List<Symbol> symbols = symbolTable.getSymbols(namespaceName, namespace);
 			Symbol namespaceSymbol =
-				symbols.stream().filter(s -> (s.getSymbolType() == SymbolType.NAMESPACE ||
-					s.getSymbolType() == SymbolType.CLASS)).findFirst().orElse(null);
+				symbols.stream()
+						.filter(s -> (s.getSymbolType() == SymbolType.NAMESPACE ||
+							s.getSymbolType() == SymbolType.CLASS))
+						.findFirst()
+						.orElse(null);
 			if (namespaceSymbol == null) {
 				try {
 					namespace =

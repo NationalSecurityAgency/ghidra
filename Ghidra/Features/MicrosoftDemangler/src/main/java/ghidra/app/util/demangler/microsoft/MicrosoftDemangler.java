@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.demangler.microsoft;
 
-import java.util.regex.Pattern;
-
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.opinion.MSCoffLoader;
 import ghidra.app.util.opinion.PeLoader;
@@ -29,15 +27,6 @@ import util.demangler.GenericDemangledException;
  * A class for demangling debug symbols created using Microsoft Visual Studio.
  */
 public class MicrosoftDemangler implements Demangler {
-
-	/** 
-	 * This represents an odd symbol that looks mangled, but we don't know what to do with.  It
-	 * is of the form:
-	 * 		?BobsStuffIO@344text__@@U_text@@?W
-	 * 
-	 * where the last character is preceded by a special character, such as ?, *, -, etc
-	 */
-	private static Pattern INVALID_TRAILING_CHARS_PATTERN = Pattern.compile(".*@@[?*`%~+/-][A-Z]");
 
 	public MicrosoftDemangler() {
 	}
@@ -61,6 +50,19 @@ public class MicrosoftDemangler implements Demangler {
 		}
 	}
 
+	@Override
+	public DemangledObject demangle(String mangled, DemanglerOptions options)
+			throws DemangledException {
+
+		try {
+			DemangledObject demangled = demangleMS(mangled, options.demangleOnlyKnownPatterns());
+			return demangled;
+		}
+		catch (GenericDemangledException e) {
+			throw new DemangledException(true);
+		}
+	}
+
 	private DemangledObject demangleMS(String mangled, boolean demangleOnlyKnownPatterns)
 			throws GenericDemangledException {
 		if (mangled == null || mangled.length() == 0) {
@@ -69,7 +71,7 @@ public class MicrosoftDemangler implements Demangler {
 
 		MDMangGhidra demangler = new MDMangGhidra();
 		try {
-			demangler.demangle(mangled, demangleOnlyKnownPatterns); //not using return type here.
+			demangler.demangle(mangled, demangleOnlyKnownPatterns);
 			DemangledObject object = demangler.getObject();
 			return object;
 		}
@@ -80,6 +82,15 @@ public class MicrosoftDemangler implements Demangler {
 			throw gde;
 		}
 	}
+
+//	/** 
+//	 * This represents an odd symbol that looks mangled, but we don't know what to do with.  It
+//	 * is of the form:
+//	 * 		?BobsStuffIO@344text__@@U_text@@?W
+//	 * 
+//	 * where the last character is preceded by a special character, such as ?, *, -, etc
+//	 */
+//	private static Pattern INVALID_TRAILING_CHARS_PATTERN = Pattern.compile(".*@@[?*`%~+/-][A-Z]");
 
 //	private boolean isMangled(String mangled) {
 //		int atpos = mangled.indexOf("@");

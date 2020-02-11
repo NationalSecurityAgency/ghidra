@@ -75,6 +75,7 @@ public class DemangleElfWithOptionScript extends GhidraScript {
 			return;
 		}
 
+		// TODO change to GnuDemanglerOptions
 		DemanglerOptions options = new DemanglerOptions();
 		options.setDoDisassembly(false);
 		options.setApplySignature(true);
@@ -113,6 +114,7 @@ public class DemangleElfWithOptionScript extends GhidraScript {
 		return executableFormat != null && executableFormat.indexOf(MachoLoader.MACH_O_NAME) != -1;
 	}
 
+	/// TODO this is here because we did not support program arguments.  replace this code
 	private Process createProcess(String executableName) throws Exception {
 
 		String demanglerName = GnuDemanglerNativeProcess.DEMANGLER_GNU;

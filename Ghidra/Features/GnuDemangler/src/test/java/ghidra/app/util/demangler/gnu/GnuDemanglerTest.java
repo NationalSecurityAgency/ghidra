@@ -17,11 +17,12 @@ package ghidra.app.util.demangler.gnu;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.util.demangler.*;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -30,6 +31,7 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.symbol.*;
 import ghidra.test.ToyProgramBuilder;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class GnuDemanglerTest extends AbstractGenericTest {
@@ -161,7 +163,10 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		DemangledObject result = demangler.demangle(mangled, false);
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(false);
+		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined MyFunction::~MyFunction(void)", result.getSignature(false));
 	}
@@ -184,8 +189,61 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		DemangledObject result = demangler.demangle(mangled, true);
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(true); // do not try
+		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		DemangledObject result = demangler.demangle(mangled, options);
 		assertNull(result);
+	}
+
+	@Test
+	public void testDemangler_Format_CodeWarrior_MacOS8or9() throws DemangledException {
+
+		// .scroll__10TTextPanelFUcsi
+
+		String mangled = ".scroll__10TTextPanelFUcsi";
+
+		GnuDemangler demangler = new GnuDemangler();
+		demangler.canDemangle(program);// this perform initialization
+
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(false);
+		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		DemangledObject result = demangler.demangle(mangled, options);
+		assertNotNull(result);
+		assertEquals("undefined TTextPanel::scroll(unsigned char,short,int)",
+			result.getSignature(false));
+	}
+
+	@Test
+	public void testGnuNativeProcessWithValidArguments() {
+
+		String demanglerName = GnuDemanglerOptions.GNU_DEMANGLER_DEFAULT;
+		String applicationArguments = "-s auto";
+		try {
+			GnuDemanglerNativeProcess.getDemanglerNativeProcess(demanglerName,
+				applicationArguments);
+		}
+		catch (IOException e) {
+			fail("Expected an exception when passing unknown arguments to the native demangler");
+		}
+	}
+
+	@Test
+	public void testGnuNativeProcessWithUnknownArguments() {
+
+		String demanglerName = GnuDemanglerOptions.GNU_DEMANGLER_DEFAULT;
+		String applicationArguments = "-s MrBob";
+		try {
+			GnuDemanglerNativeProcess.getDemanglerNativeProcess(demanglerName,
+				applicationArguments);
+			fail("Expected an exception when passing unknown arguments to the native demangler");
+		}
+		catch (IOException e) {
+			// expected
+			Msg.error(this, "Test error", e);
+		}
+
 	}
 
 	private Address addr(String address) {
