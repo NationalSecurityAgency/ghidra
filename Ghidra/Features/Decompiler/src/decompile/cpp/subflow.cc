@@ -291,6 +291,15 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 	return false;
       if (inworklist)
 	worklist.push_back(rep);
+      else if (retvn->isConstant() && retop != op) {
+	// Trace won't revisit this RETURN, so we need to generate patch now
+	patchlist.push_back(PatchRecord());
+	patchlist.back().type = 2;
+	patchlist.back().pullop = retop;
+	patchlist.back().in1 = rep;
+	patchlist.back().slot = slot;
+	pullcount += 1;
+      }
     }
     returnsTraversed = true;
   }

@@ -4393,7 +4393,7 @@ void PropagationState::step(void)
     inslot = op->getSlot(vn);
     return;
   }
-  if (op == vn->getDef())
+  if (inslot == -1)
     op = (PcodeOp *)0;
   else
     op = vn->getDef();
