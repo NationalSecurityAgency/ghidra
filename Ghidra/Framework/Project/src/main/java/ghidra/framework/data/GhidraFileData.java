@@ -580,7 +580,7 @@ public class GhidraFileData {
 	boolean isVersioned() {
 		synchronized (fileSystem) {
 			if (versionedFolderItem == null) {
-				return false;
+				return isCheckedOut();
 			}
 			return !isHijacked();
 		}
