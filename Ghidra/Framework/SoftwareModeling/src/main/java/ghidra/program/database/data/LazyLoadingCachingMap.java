@@ -16,8 +16,7 @@
 package ghidra.program.database.data;
 
 import java.lang.ref.SoftReference;
-import java.lang.reflect.Array;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.util.Lock;
 
@@ -39,15 +38,14 @@ public abstract class LazyLoadingCachingMap<K, V> {
 
 	private Lock lock;
 	private SoftReference<Map<K, V>> softRef;
-	private Class<V> valueClass;
 
-	protected LazyLoadingCachingMap(Lock lock, Class<V> valueClass) {
+	protected LazyLoadingCachingMap(Lock lock) {
 		this.lock = lock;
-		this.valueClass = valueClass;
 	}
 
 	/**
-	 * This method will reload the map data from scratch.
+	 * This method will reload the map data from scratch. Subclass may assume that the database
+	 * lock has been acquired.
 	 * @return a map containing all current key, value pairs.
 	 */
 	protected abstract Map<K, V> loadMap();
@@ -96,13 +94,13 @@ public abstract class LazyLoadingCachingMap<K, V> {
 		}
 	}
 
-	public V[] valuesToArray() {
+	/**
+	 * Returns an unmodifiable view of the values in this map.
+	 * @return an unmodifiable view of the values in this map.
+	 */
+	public Collection<V> values() {
 		Map<K, V> map = getOrLoadMap();
-		synchronized (this) {
-			@SuppressWarnings("unchecked")
-			V[] array = (V[]) Array.newInstance(valueClass, map.size());
-			return map.values().toArray(array);
-		}
+		return Collections.unmodifiableCollection(map.values());
 	}
 
 	private Map<K, V> getOrLoadMap() {
@@ -113,6 +111,15 @@ public abstract class LazyLoadingCachingMap<K, V> {
 				return map;
 			}
 		}
+
+		// We must get the database lock before calling loadMap().  Also, we can't get the
+		// database lock while having the synchronization lock for this class or a deadlock can
+		// occur, since the other methods may be called while the client has the db lock.
+		// Note: all other places where the map is being used or manipulated, it must be done
+		// while having the class's synchronization lock since the map itself is not thread safe.
+		// It should be safe here since it creates a new map and then in one operation it sets it
+		// as the map to be used elsewhere.
+
 		lock.acquire();
 		try {
 			map = getMap();
@@ -132,11 +139,12 @@ public abstract class LazyLoadingCachingMap<K, V> {
 	 * "lock".
 	 * @return the underlying map of key,value pairs or null if it is currently not loaded.
 	 */
-	private Map<K, V> getMap() {
+	protected Map<K, V> getMap() {
 		if (softRef == null) {
 			return null;
 		}
 		return softRef.get();
 	}
+
 
 }

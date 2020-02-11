@@ -934,14 +934,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (category == null) {
 			return null;
 		}
-		String namePrefix = dtName + DataType.CONFLICT_SUFFIX;
-		DataType[] dataTypes = category.getDataTypes();
-		for (DataType candidate : dataTypes) {
+		List<DataType> relatedByName = category.getDataTypesByBaseName(dtName);
+
+		for (DataType candidate : relatedByName) {
 			String candidateName = candidate.getName();
-			if (candidateName.startsWith(namePrefix)) {
-				if (!candidateName.equals(excludedName) && candidate.isEquivalent(dataType)) {
-					return candidate;
-				}
+			if (!candidateName.equals(excludedName) && candidate.isEquivalent(dataType)) {
+				return candidate;
 			}
 		}
 		return null;
@@ -3208,13 +3206,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		lock.acquire();
 		try {
 			long[] ids = parentChildAdapter.getParentIds(childID);
-			// TODO: consider deduping ids using Set
 			List<DataType> dts = new ArrayList<>();
-			for (int i = 0; i < ids.length; i++) {
-				DataType dt = getDataType(ids[i]);
+			for (long id : ids) {
+				DataType dt = getDataType(id);
 				if (dt == null) {
 					// cleanup invalid records for missing parent
-					attemptRecordRemovalForParent(ids[i]);
+					attemptRecordRemovalForParent(id);
 				}
 				else {
 					dts.add(dt);
