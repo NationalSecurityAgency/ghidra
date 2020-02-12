@@ -289,12 +289,12 @@ public class PdbParser {
 		}
 
 		if (applyTypeDefs != null) {
-			applyTypeDefs.buildTypeDefs(monitor); // TODO: no dependencies exit on TypeDefs (use single pass)
+			applyTypeDefs.buildTypeDefs(monitor); // TODO: no dependencies exist on TypeDefs (use single pass)
 		}
 
 		// Ensure that all data types are resolved
 		if (dataTypeParser != null) {
-			dataTypeParser.flushDataTypeCache();
+			dataTypeParser.flushDataTypeCache(monitor);
 		}
 	}
 
@@ -326,9 +326,7 @@ public class PdbParser {
 				if (hasErrors()) {
 					throw new IOException(getErrorAndWarningMessages());
 				}
-				if (monitor.isCancelled()) {
-					return;
-				}
+				monitor.checkCanceled();
 				XmlElement element = parser.next();
 				if (!element.isStart()) {
 					continue;
@@ -392,7 +390,7 @@ public class PdbParser {
 			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 
 			if (dataTypeParser != null && dataTypeParser.hasMissingBitOffsetError()) {
-				log.error("PDB Parser",
+				log.error("PDB",
 					"One or more bitfields were specified without bit-offset data.\nThe use of old pdb.xml data could be the cause.");
 			}
 		}
@@ -431,6 +429,7 @@ public class PdbParser {
 
 	private void defineClasses(MessageLog log) throws CancelledException {
 		// create namespace and classes in an ordered fashion use tree map
+		monitor.setMessage("Define classes...");
 		monitor.initialize(namespaceMap.size());
 		for (SymbolPath path : namespaceMap.keySet()) {
 			monitor.checkCanceled();
@@ -439,7 +438,7 @@ public class PdbParser {
 				NamespaceUtils.getNamespace(program, path.getParent(), null);
 			if (parentNamespace == null) {
 				String type = isClass ? "class" : "namespace";
-				log.appendMsg("Error: failed to define " + type + ": " + path);
+				log.appendMsg("PDB", "Failed to define " + type + ": " + path);
 				continue;
 			}
 			defineNamespace(parentNamespace, path.getName(), isClass, log);
@@ -467,8 +466,9 @@ public class PdbParser {
 				else if (namespace.getSymbol().getSymbolType() == SymbolType.NAMESPACE) {
 					return;
 				}
-				log.appendMsg("Unable to create class namespace due to conflicting symbol: " +
-					namespace.getName(true));
+				log.appendMsg("PDB",
+					"Unable to create class namespace due to conflicting symbol: " +
+						namespace.getName(true));
 			}
 			else if (isClass) {
 				symbolTable.createClass(parentNamespace, name, SourceType.IMPORTED);
@@ -478,8 +478,8 @@ public class PdbParser {
 			}
 		}
 		catch (Exception e) {
-			log.appendMsg("Unable to create class namespace: " + parentNamespace.getName(true) +
-				Namespace.NAMESPACE_DELIMITER + name);
+			log.appendMsg("PDB", "Unable to create class namespace: " +
+				parentNamespace.getName(true) + Namespace.NAMESPACE_DELIMITER + name);
 		}
 	}
 
@@ -739,6 +739,7 @@ public class PdbParser {
 
 	EnumDataType createEnum(String name, int length) {
 		SymbolPath path = new SymbolPath(name);
+		length = Integer.max(length, 1);
 		return new EnumDataType(getCategory(path.getParent(), true), path.getName(), length,
 			dataMgr);
 	}
@@ -751,7 +752,7 @@ public class PdbParser {
 	void createData(Address address, String datatype, MessageLog log) throws CancelledException {
 		WrappedDataType wrappedDt = getDataTypeParser().findDataType(datatype);
 		if (wrappedDt == null) {
-			log.appendMsg("Error: Failed to resolve datatype " + datatype + " at " + address);
+			log.appendMsg("PDB", "Failed to resolve datatype " + datatype + " at " + address);
 		}
 		else if (wrappedDt.isZeroLengthArray()) {
 			Msg.debug(this, "Did not apply zero length array data " + datatype + " at " + address);
@@ -765,8 +766,8 @@ public class PdbParser {
 		DumbMemBufferImpl memBuffer = new DumbMemBufferImpl(program.getMemory(), address);
 		DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dataType, memBuffer);
 		if (dti == null) {
-			log.appendMsg(
-				"Error: Failed to apply datatype " + dataType.getName() + " at " + address);
+			log.appendMsg("PDB",
+				"Failed to apply datatype " + dataType.getName() + " at " + address);
 		}
 		else {
 			createData(address, dti.getDataType(), dti.getLength(), log);
@@ -781,7 +782,7 @@ public class PdbParser {
 		CodeUnit cu = program.getListing().getCodeUnitContaining(address);
 		if (cu != null) {
 			if ((cu instanceof Instruction) || !address.equals(cu.getAddress())) {
-				log.appendMsg("Warning: Did not create data type \"" + dataType.getDisplayName() +
+				log.appendMsg("PDB", "Did not create data type \"" + dataType.getDisplayName() +
 					"\" at address " + address + " due to conflict");
 				return;
 			}
@@ -795,8 +796,8 @@ public class PdbParser {
 			return;
 		}
 		if (dataType.getLength() <= 0 && dataTypeLength <= 0) {
-			log.appendMsg("Unknown dataTypeLength specified at address " + address + " for " +
-				dataType.getName());
+			log.appendMsg("PDB", "Unknown dataTypeLength specified at address " + address +
+				" for " + dataType.getName());
 			return;
 		}
 
@@ -828,8 +829,8 @@ public class PdbParser {
 				}
 			}
 			catch (Exception e) {
-				log.appendMsg("Unable to create " + dataType.getDisplayName() + " at 0x" + address +
-					": " + e.getMessage());
+				log.appendMsg("PDB", "Unable to create " + dataType.getDisplayName() + " at 0x" +
+					address + ": " + e.getMessage());
 			}
 		}
 		else if (isDataReplaceable(existingData)) {
@@ -838,7 +839,7 @@ public class PdbParser {
 				listing.createData(address, dataType, dataTypeLength);
 			}
 			catch (Exception e) {
-				log.appendMsg("Unable to replace " + dataType.getDisplayName() + " at 0x" +
+				log.appendMsg("PDB", "Unable to replace " + dataType.getDisplayName() + " at 0x" +
 					address + ": " + e.getMessage());
 			}
 		}
@@ -846,9 +847,9 @@ public class PdbParser {
 			DataType existingDataType = existingData.getDataType();
 			String existingDataTypeString =
 				existingDataType == null ? "null" : existingDataType.getDisplayName();
-			log.appendMsg("Warning: Did not create data type \"" + dataType.getDisplayName() +
-				"\" at address " + address + ".  Preferring existing datatype \"" +
-				existingDataTypeString + "\"");
+			log.appendMsg("PDB",
+				"Did not create data type \"" + dataType.getDisplayName() + "\" at address " +
+					address + ".  Preferring existing datatype \"" + existingDataTypeString + "\"");
 		}
 	}
 
@@ -952,7 +953,7 @@ public class PdbParser {
 			return true;
 		}
 		catch (InvalidInputException e) {
-			log.appendMsg("Unable to create symbol: " + e.getMessage());
+			log.appendMsg("PDB", "Unable to create symbol at " + address + ": " + e.getMessage());
 		}
 		return false;
 	}
@@ -1374,7 +1375,7 @@ public class PdbParser {
 
 		PdbXmlMember(XmlElement element) {
 			super(SymbolUtilities.replaceInvalidChars(element.getAttribute("name"), false),
-				element.getAttribute("datatype"),
+				SymbolUtilities.replaceInvalidChars(element.getAttribute("datatype"), false),
 				XmlUtilities.parseInt(element.getAttribute("offset")),
 				PdbKind.parse(element.getAttribute("kind")), getDataTypeParser());
 		}

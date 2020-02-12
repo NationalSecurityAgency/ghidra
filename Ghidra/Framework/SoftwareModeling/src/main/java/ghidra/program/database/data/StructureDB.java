@@ -25,6 +25,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.AlignedStructurePacker.StructurePackResult;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -640,6 +641,13 @@ class StructureDB extends CompositeDB implements Structure {
 		}
 	}
 
+	/**
+	 * Create copy of structure for target dtm (source archive information is discarded).
+	 * WARNING! copying unaligned structures which contain bitfields can produce
+	 * invalid results when switching endianess due to the differences in packing order.
+	 * @param dtm target data type manager
+	 * @return cloned structure
+	 */
 	@Override
 	public DataType copy(DataTypeManager dtm) {
 		StructureDataType struct =
@@ -649,6 +657,13 @@ class StructureDB extends CompositeDB implements Structure {
 		return struct;
 	}
 
+	/**
+	 * Create cloned structure for target dtm preserving source archive information.
+	 * WARNING! cloning unaligned structures which contain bitfields can produce
+	 * invalid results when switching endianess due to the differences in packing order.
+	 * @param dtm target data type manager
+	 * @return cloned structure
+	 */
 	@Override
 	public DataType clone(DataTypeManager dtm) {
 		StructureDataType struct =
@@ -891,12 +906,28 @@ class StructureDB extends CompositeDB implements Structure {
 	@Override
 	public DataTypeComponent insertAtOffset(int offset, DataType dataType, int length, String name,
 			String comment) {
+
+		if (offset < 0) {
+			throw new IllegalArgumentException("Offset cannot be negative.");
+		}
+
+		if (dataType instanceof BitFieldDataType) {
+			BitFieldDataType bfDt = (BitFieldDataType) dataType;
+			if (length <= 0) {
+				length = dataType.getLength();
+			}
+			try {
+				return insertBitFieldAt(offset, length, bfDt.getBitOffset(), bfDt.getBaseDataType(),
+					bfDt.getDeclaredBitSize(), name, comment);
+			}
+			catch (InvalidDataTypeException e) {
+				throw new AssertException(e);
+			}
+		}
+
 		lock.acquire();
 		try {
 			checkDeleted();
-			if (offset < 0) {
-				throw new IllegalArgumentException("Offset cannot be negative.");
-			}
 			validateDataType(dataType);
 
 			dataType = resolve(dataType);
@@ -966,6 +997,7 @@ class StructureDB extends CompositeDB implements Structure {
 			if (ordinal < 0 || ordinal >= numComponents) {
 				throw new ArrayIndexOutOfBoundsException(ordinal);
 			}
+
 			validateDataType(dataType);
 
 			DataTypeComponent origDtc = getComponent(ordinal);
@@ -1009,9 +1041,7 @@ class StructureDB extends CompositeDB implements Structure {
 			throw new IllegalArgumentException(
 				"Offset " + offset + " is beyond end of structure (" + structLength + ").");
 		}
-		if (dataType instanceof BitFieldDataType) {
-			throw new IllegalArgumentException("Components may not be replaced with a bit-field");
-		}
+
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -1085,18 +1115,13 @@ class StructureDB extends CompositeDB implements Structure {
 				componentAdapter.removeRecord(dtc.getKey());
 			}
 			components.clear();
+			numComponents = 0;
+			structLength = 0;
+
 			if (flexibleArrayComponent != null) {
 				flexibleArrayComponent.getDataType().removeParent(this);
 				componentAdapter.removeRecord(flexibleArrayComponent.getKey());
 				flexibleArrayComponent = null;
-			}
-			if (struct.isNotYetDefined()) {
-				numComponents = 0;
-				structLength = 0;
-			}
-			else {
-				structLength = struct.getLength();
-				numComponents = isInternallyAligned() ? 0 : structLength;
 			}
 
 			setAlignment(struct, false);
@@ -1154,14 +1179,17 @@ class StructureDB extends CompositeDB implements Structure {
 
 	private void doReplaceWithUnaligned(Structure struct) throws IOException {
 		// assumes components is clear and that alignment characteristics have been set.
+		if (struct.isNotYetDefined()) {
+			return;
+		}
 
-		// NOTE: unaligned bitfields should remain unchanged when
-		// transitioning endianess even though it makes little sense.
-		// Unaligned structures are not intended to be portable! 
+		structLength = struct.getLength();
+		numComponents = structLength;
 
 		DataTypeComponent[] otherComponents = struct.getDefinedComponents();
 		for (int i = 0; i < otherComponents.length; i++) {
 			DataTypeComponent dtc = otherComponents[i];
+
 			DataType dt = resolve(dtc.getDataType());
 			checkAncestry(dt);
 

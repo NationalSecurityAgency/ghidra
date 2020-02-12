@@ -15,11 +15,54 @@
  */
 package ghidra.framework.remote;
 
+import java.io.IOException;
 import java.rmi.Remote;
+import java.rmi.server.RemoteObjectInvocationHandler;
 
 /**
  * <code>RepositoryServerHandle</code> provides access to a remote repository server via RMI.
+ * <p>
+ * Methods from {@link RepositoryServerHandle} <b>must</b> be re-declared here 
+ * so they may be properly marshalled for remote invocation via RMI.  
+ * This became neccessary with an OpenJDK 11.0.6 change made to 
+ * {@link RemoteObjectInvocationHandler}.
  */
 public interface RemoteRepositoryServerHandle extends RepositoryServerHandle, Remote {
+
+	@Override
+	boolean anonymousAccessAllowed() throws IOException;
+
+	@Override
+	boolean isReadOnly() throws IOException;
+
+	@Override
+	RepositoryHandle createRepository(String name) throws IOException;
+
+	@Override
+	RepositoryHandle getRepository(String name) throws IOException;
+
+	@Override
+	void deleteRepository(String name) throws IOException;
+
+	@Override
+	String[] getRepositoryNames() throws IOException;
+
+	@Override
+	String getUser() throws IOException;
+
+	@Override
+	String[] getAllUsers() throws IOException;
+
+	@Override
+	boolean canSetPassword() throws IOException;
+
+	@Override
+	long getPasswordExpiration() throws IOException;
+
+	@Override
+	boolean setPassword(char[] saltedSHA256PasswordHash) throws IOException;
+
+	@Override
+	void connected() throws IOException;
 
 }

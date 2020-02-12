@@ -193,10 +193,14 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 		}
 		manualWrapperFiles.add(f);
 		try (PrintWriter pw = new PrintWriter(f)) {
-			pw.println("<HTML><BODY>");
+			pw.println("<!DOCTYPE html>");
+			pw.println("<html lang=\"en\">");
+			pw.println("<head><meta charset=\"utf-8\"></head>");
+			pw.println("<body style=\"height:100vh;\">");
 			String path = fileURL.getPath() + "#" + fileURL.getRef();
-			pw.println("<EMBED SRC=\"" + path + "\" width=\"100%\" height=\"100%\">");
-			pw.println("</BODY></HTML>");
+			pw.println("<embed src=\"" + path + "\" width=\"100%\" height=\"100%\">");
+			pw.println("</body>");
+			pw.println("</html>");
 		}
 		return f;
 	}
@@ -218,6 +222,10 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 
 		String pageNumber = entry.getPageNumber();
 		String fixedFilename = filename.replace(File.separatorChar, '/');
+		if (!fixedFilename.startsWith("/")) {
+			// fix absolute windows paths which start with drive letter
+			fixedFilename = "/" + fixedFilename;
+		}
 		return new URL(
 			"file://" + fixedFilename + (pageNumber == null ? "" : "#page=" + pageNumber));
 	}
@@ -355,8 +363,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 
 		String representation = instr.toString();
 		instructionLabel.setText(" " + representation + " ");
-		instructionLabel.setToolTipText(
-			CURRENT_INSTRUCTION_PREPEND_STRING + representation);
+		instructionLabel.setToolTipText(CURRENT_INSTRUCTION_PREPEND_STRING + representation);
 
 		// end code added ///
 	}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package ghidra.app.util.bin.format.pdb;
 
-import ghidra.app.util.importer.MessageLog;
-
 import org.xml.sax.*;
+
+import ghidra.app.util.importer.MessageLog;
 
 class PdbErrorHandler implements ErrorHandler {
 	private MessageLog log;
@@ -30,24 +29,20 @@ class PdbErrorHandler implements ErrorHandler {
 		this.log = log;
 	}
 
-	/**
-	 * @see org.xml.sax.ErrorHandler#error(org.xml.sax.SAXParseException)
-	 */
+	@Override
 	public void error(SAXParseException exception) throws SAXException {
-		if (log != null) log.appendMsg(exception.getMessage());
+		if (log != null)
+			log.appendMsg("PDB XML Error: " + exception.getMessage());
 	}
 
-	/**
-	 * @see org.xml.sax.ErrorHandler#fatalError(org.xml.sax.SAXParseException)
-	 */
+	@Override
 	public void fatalError(SAXParseException exception) throws SAXException {
-		if (log != null) log.appendMsg(exception.getMessage());
+		if (log != null)
+			log.appendMsg("PDB XML Error: " + exception.getMessage());
 	}
 
-	/**
-	 * @see org.xml.sax.ErrorHandler#warning(org.xml.sax.SAXParseException)
-	 */
+	@Override
 	public void warning(SAXParseException exception) throws SAXException {
-		log.appendMsg(exception.getMessage());
+		log.appendMsg("PDB XML Warning: " + exception.getMessage());
 	}
-} 
+}

@@ -162,8 +162,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
 					provider.dtmService, editingRow, ordinal -> {
-						model.fireTableDataChanged();
-						model.compositeInfoChanged();
+						model.notifyCompositeChanged();
 					});
 				Component c = provider.getComponent();
 				Window w = SwingUtilities.windowForComponent(c);

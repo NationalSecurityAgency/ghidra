@@ -72,12 +72,12 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		}
 
 		if (openMode == DBConstants.UPGRADE && oldContextDataExists) {
-// TODO: Make sure upgrade is working correctly before uncommenting
-//			try {
-//				OldProgramContextDB.removeOldContextData(dbHandle);
-//			} catch (IOException e) {
-//				errorHandler.dbError(e);
-//			}
+			try {
+				OldProgramContextDB.removeOldContextData(dbHandle);
+			}
+			catch (IOException e) {
+				errorHandler.dbError(e);
+			}
 		}
 	}
 
@@ -161,6 +161,12 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		}
 	}
 
+	/**
+	 * Intialize context with default values defined by pspec and cspec.
+	 * NOTE: cspec values take precedence
+	 * @param lang processor language
+	 * @param compilerSpec compiler specification
+	 */
 	public void initializeDefaultValues(Language lang, CompilerSpec compilerSpec) {
 		defaultRegisterValueMap.clear();
 		lang.applyContextSettings(this);
@@ -288,8 +294,30 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		}
 	}
 
+	/**
+	 * Perform context upgrade due to a language change
+	 * @param translator language translator required by major upgrades (may be null)
+	 * @param newCompilerSpec new compiler specification
+	 * @param programMemory program memory
+	 * @param monitor task monitor
+	 * @throws CancelledException thrown if monitor cancelled
+	 */
 	public void setLanguage(LanguageTranslator translator, CompilerSpec newCompilerSpec,
 			AddressSetView programMemory, TaskMonitor monitor) throws CancelledException {
+
+		if (translator == null) {
+			Language lang = program.getLanguage();
+			boolean clearContext = Boolean.valueOf(
+				lang.getProperty(GhidraLanguagePropertyKeys.RESET_CONTEXT_ON_UPGRADE));
+			if (clearContext) {
+				RegisterValueStore store = registerValueMap.get(baseContextRegister);
+				if (store != null) {
+					store.clearAll();
+				}
+			}
+			initializeDefaultValues(lang, newCompilerSpec);
+			return;
+		}
 
 		Language newLanguage = translator.getNewLanguage();
 
@@ -309,8 +337,11 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 				continue;
 			}
 
+			boolean clearContext = register.isProcessorContext() && Boolean.valueOf(
+				newLanguage.getProperty(GhidraLanguagePropertyKeys.RESET_CONTEXT_ON_UPGRADE));
+
 			// Update storage range map
-			if (!store.setLanguage(translator, monitor)) {
+			if (clearContext || !store.setLanguage(translator, monitor)) {
 				// Clear and remove old register value store
 				Msg.warn(this,
 					"WARNING! Discarding all context for register " + register.getName());
