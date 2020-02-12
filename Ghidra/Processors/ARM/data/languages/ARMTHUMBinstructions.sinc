@@ -592,9 +592,9 @@ Rn_exclaim_WB: 	is Rn0810 & thc0810=7 & thc0707=1			{ }
 Rn_exclaim_WB: 	is Rn0810 & thc0810							{ Rn0810 = mult_addr; }
 
 # ldlist  is the list of registers to be loaded or popped
-LdRtype0: "{ "^r0			is            thc0000=1 & r0 & thc0107=0	{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype0: "{ "^r0^","		is            thc0000=1 & r0 			{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype0: "{"			is            thc0000=0				{ }
+LdRtype0: " "^r0			is            thc0000=1 & r0 & thc0107=0	{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype0: " "^r0^","		is            thc0000=1 & r0 			{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype0: 					is            thc0000=0				{ }
 LdRtype1: LdRtype0 r1		is LdRtype0 & thc0101=1 & r1 & thc0207=0	{ r1 = *mult_addr; mult_addr = mult_addr + 4; }
 LdRtype1: LdRtype0 r1^","	is LdRtype0 & thc0101=1 & r1			{ r1 = *mult_addr; mult_addr = mult_addr + 4; }
 LdRtype1: LdRtype0		is LdRtype0 & thc0101=0				{ }
@@ -869,7 +869,7 @@ thstrlist_dec: { r0 thsdec1 } 	is thc0000=1 & thsdec1 & r0 & thc0115=0		{ * mult
 thstrlist_dec: { r0^"," thsdec1 } is thc0000=1 & thsdec1 & r0                	{ * mult_addr=r0; mult_addr = mult_addr - 4; }
 thstrlist_dec: { thsdec1 }  	is thc0000=0 & thsdec1				{ }
 
-ldbrace: ldlist }	is ldlist			{ }
+ldbrace: {ldlist }	is ldlist			{ }
 stbrace: {strlist }	is strlist			{ }
 psbrace: { pshlist }	is pshlist			{ }
 
