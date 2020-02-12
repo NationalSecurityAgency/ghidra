@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ghidra.app.script.osgi;
 
 import static java.util.stream.Collectors.*;
@@ -28,7 +27,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.felix.fileinstall.internal.FileInstall;
 import org.apache.felix.framework.FrameworkFactory;
 import org.apache.felix.framework.util.FelixConstants;
 import org.apache.felix.main.AutoProcessor;
@@ -66,6 +64,11 @@ public class BundleHost {
 	Bundle installFromPathAs(String path_to_jar, String location)
 			throws FileNotFoundException, IOException, BundleException {
 		return bc.installBundle(location, new FileInputStream(new File(path_to_jar)));
+	}
+
+	public Bundle installExplodedPath(Path p) throws BundleException {
+		return bc.installBundle("reference:file://" + p.toAbsolutePath().normalize().toString());
+
 	}
 
 	void dumpLoadedBundles() {
@@ -196,8 +199,9 @@ public class BundleHost {
 		});
 
 		felix.start();
-		fileinstall_bundle = installFromPath(findJarForClass(FileInstall.class));
-		fileinstall_bundle.start();
+		// fileinstall_bundle = installFromPath(findJarForClass(FileInstall.class));
+		// fileinstall_bundle.start();
+
 	}
 
 	private Path getOsgiDir() {

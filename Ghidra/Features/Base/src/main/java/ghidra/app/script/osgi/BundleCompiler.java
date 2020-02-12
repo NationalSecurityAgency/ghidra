@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package ghidra.app.script.osgi;
 
 import java.io.*;
@@ -35,6 +34,7 @@ import aQute.bnd.osgi.*;
 import aQute.bnd.osgi.Clazz.QUERY;
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
+import ghidra.util.Msg;
 
 public class BundleCompiler {
 
@@ -44,10 +44,11 @@ public class BundleCompiler {
 		this.bh = bh;
 	}
 
+	JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+
 	// compile a source directory to an exploded bundle
-	public void compileToExplodedBundle(ResourceFile srcdir, Path bindir, Writer output)
+	public void compileToExplodedBundle(ResourceFile srcdir, Path bindir, Writer writer)
 			throws IOException {
-		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 		List<String> options = new ArrayList<>();
 		options.add("-g");
 		options.add("-d");
@@ -60,7 +61,6 @@ public class BundleCompiler {
 		final JavaFileManager fm0 =
 			new ResourceFileJavaFileManager(GhidraScriptUtil.getScriptSourceDirectories());
 		BundleJavaManager fm = new BundleJavaManager(bh.getHostFramework(), fm0, options);
-		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 
 		final List<ResourceFileJavaFileObject> compilationUnits = new ArrayList<>();
 
@@ -76,29 +76,54 @@ public class BundleCompiler {
 			Files.delete(dmf);
 		}
 
-		JavaCompiler.CompilationTask task =
-			compiler.getTask(output, fm, diagnostics, options, null, compilationUnits);
-		// task.setProcessors // for annotation processing / code generation
+		// try to compile, if we fail remove offenders and try again
+		while (!compilationUnits.isEmpty()) {
+			DiagnosticCollector<JavaFileObject> diagnostics =
+				new DiagnosticCollector<JavaFileObject>();
+			JavaCompiler.CompilationTask task =
+				compiler.getTask(writer, fm, diagnostics, options, null, compilationUnits);
+			// task.setProcessors // for annotation processing / code generation
 
-		Boolean successfulCompilation = task.call();
-		output.flush();
-		System.err.printf("%s: %s\n", successfulCompilation ? "Success" : "Fail", output);
-
-		if (successfulCompilation) {
-			ResourceFile smf =
-				new ResourceFile(srcdir, "META-INF" + File.separator + "MANIFEST.MF");
-			if (smf.exists()) {
-				System.err.printf("Found manifest, not generating one\n");
-				Files.createFile(dmf);
-				Files.copy(smf.getInputStream(), dmf, StandardCopyOption.REPLACE_EXISTING);
-				return;
+			Boolean successfulCompilation = task.call();
+			if (successfulCompilation) {
+				break;
 			}
+			for (Diagnostic<? extends JavaFileObject> d : diagnostics.getDiagnostics()) {
+				writer.write(d.getSource().toString() + ": " + d.getMessage(null) + "\n");
+				ResourceFileJavaFileObject sf = (ResourceFileJavaFileObject) d.getSource();
+				if (compilationUnits.remove(sf)) {
+					writer.write(String.format("skipping %s\n", sf.toString()));
+					ResourceFile rf = sf.getFile();
+					if (GhidraScriptUtil.contains(rf)) {
+						ScriptInfo info = GhidraScriptUtil.getScriptInfo(rf);
+						info.setCompileErrors(true);
+					}
+				}
+			}
+		}
+		// make sure the succeses are marked
+		for (ResourceFileJavaFileObject sf : compilationUnits) {
+			ResourceFile rf = sf.getFile();
+			if (GhidraScriptUtil.contains(rf)) {
+				ScriptInfo info = GhidraScriptUtil.getScriptInfo(rf);
+				info.setCompileErrors(false);
+			}
+		}
 
-			// no manifest, so create one with bndtools
-			Analyzer analyzer = new Analyzer();
-			analyzer.setJar(new Jar(bindir.toFile())); // give bnd the contents
-			Stream<Object> bjars = Files.list(bh.getCompiledBundlesDir()).filter(
-				f -> f.toString().endsWith(".jar")).map(f -> {
+		ResourceFile smf = new ResourceFile(srcdir, "META-INF" + File.separator + "MANIFEST.MF");
+		if (smf.exists()) {
+			System.err.printf("Found manifest, not generating one\n");
+			Files.createFile(dmf);
+			Files.copy(smf.getInputStream(), dmf, StandardCopyOption.REPLACE_EXISTING);
+			return;
+		}
+
+		// no manifest, so create one with bndtools
+		Analyzer analyzer = new Analyzer();
+		analyzer.setJar(new Jar(bindir.toFile())); // give bnd the contents
+		Stream<Object> bjars =
+			Files.list(bh.getCompiledBundlesDir()).filter(f -> f.toString().endsWith(".jar")).map(
+				f -> {
 					try {
 						return new Jar(f.toFile());
 					}
@@ -108,91 +133,99 @@ public class BundleCompiler {
 					}
 				});
 
-			analyzer.addClasspath(bjars.collect(Collectors.toUnmodifiableList()));
-			analyzer.setProperty("Bundle-SymbolicName",
-				JavaScriptProvider.getSymbolicNameFromSourceDir(srcdir));
-			analyzer.setProperty("Bundle-Version", "1.0");
-			analyzer.setProperty("Import-Package", "*");
-			// analyzer.setBundleActivator(s);
+		analyzer.addClasspath(bjars.collect(Collectors.toUnmodifiableList()));
+		analyzer.setProperty("Bundle-SymbolicName",
+			JavaScriptProvider.getSymbolicNameFromSourceDir(srcdir));
+		analyzer.setProperty("Bundle-Version", "1.0");
+		analyzer.setProperty("Import-Package", "*");
+		// analyzer.setBundleActivator(s);
 
-			try {
-				Manifest manifest = analyzer.calcManifest();
-				Attributes ma = manifest.getMainAttributes();
+		try {
+			Manifest manifest = analyzer.calcManifest();
+			Attributes ma = manifest.getMainAttributes();
 
-				String activator_classname = null;
-				for (Clazz clazz : analyzer.getClassspace().values()) {
-					if (clazz.is(QUERY.IMPLEMENTS,
-						new Instruction("org.osgi.framework.BundleActivator"), analyzer)) {
-						System.err.printf("found BundleActivator class %s\n", clazz);
-						activator_classname = clazz.toString();
-					}
-				}
-				if (activator_classname == null) {
-					Path activator_dest = bindir.resolve("GeneratedActivator.java");
-					try (PrintWriter writer = new PrintWriter(
-						Files.newBufferedWriter(activator_dest, Charset.forName("UTF-8")))) {
-						writer.println("import ghidra.app.script.osgi.GhidraBundleActivator;");
-						writer.println("import org.osgi.framework.BundleActivator;");
-						writer.println("import org.osgi.framework.BundleContext;");
-						writer.println(
-							"public class GeneratedActivator extends GhidraBundleActivator {");
-						writer.println("  protected void start(BundleContext bc, Object api) {");
-						writer.println("    // TODO: stuff to do on bundle start");
-						writer.println("  }");
-						writer.println("  protected void stop(BundleContext bc, Object api) {");
-						writer.println("    // TODO: stuff to do on bundle stop");
-						writer.println("  }");
-						writer.println();
-						writer.println("}");
-					}
-					catch (IOException ex) {
-						ex.printStackTrace();
-						return;
-					}
-					activator_classname = "GeneratedActivator";
-
-					options.clear();
-					options.add("-g");
-					options.add("-d");
-					options.add(bindir.toString());
-					options.add("-sourcepath");
-					options.add(bindir.toString());
-					options.add("-classpath");
-					options.add(System.getProperty("java.class.path"));
-					options.add("-proc:none");
-
-					StandardJavaFileManager fm02 =
-						compiler.getStandardFileManager(null, null, null);
-					fm = new BundleJavaManager(bh.getHostFramework(), fm02, options);
-					Iterable<? extends JavaFileObject> compilationUnits2 =
-						fm02.getJavaFileObjectsFromPaths(List.of(activator_dest));
-
-					JavaCompiler.CompilationTask task2 =
-						compiler.getTask(output, fm, diagnostics, options, null, compilationUnits2);
-					if (!task2.call()) {
-						return;
-					}
-					// since we add the activator after bndtools built the imports, we should add its imports too
-					String imps = ma.getValue(Constants.IMPORT_PACKAGE);
-					ma.putValue(Constants.IMPORT_PACKAGE, imps + ",ghidra.app.script.osgi");
-				}
-				ma.putValue(Constants.BUNDLE_ACTIVATOR, activator_classname);
-
-				Files.createDirectories(dmf.getParent());
-				try (OutputStream out = Files.newOutputStream(dmf)) {
-					manifest.write(out);
+			String activator_classname = null;
+			for (Clazz clazz : analyzer.getClassspace().values()) {
+				if (clazz.is(QUERY.IMPLEMENTS,
+					new Instruction("org.osgi.framework.BundleActivator"), analyzer)) {
+					System.err.printf("found BundleActivator class %s\n", clazz);
+					activator_classname = clazz.toString();
 				}
 			}
-			catch (Exception e) {
-				e.printStackTrace();
+			if (activator_classname == null) {
+				activator_classname = "GeneratedActivator";
+				if (!createActivator(bindir, activator_classname, writer)) {
+					Msg.error(this, "failed to create activator");
+					return;
+				}
+				// since we add the activator after bndtools built the imports, we should add its imports too
+				String imps = ma.getValue(Constants.IMPORT_PACKAGE);
+				ma.putValue(Constants.IMPORT_PACKAGE, imps + ",ghidra.app.script.osgi");
 			}
+			ma.putValue(Constants.BUNDLE_ACTIVATOR, activator_classname);
+
+			// write the manifest
+			Files.createDirectories(dmf.getParent());
+			try (OutputStream out = Files.newOutputStream(dmf)) {
+				manifest.write(out);
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
 			analyzer.close();
 		}
-		else {
-			for (Diagnostic<? extends JavaFileObject> dm : diagnostics.getDiagnostics()) {
-				System.err.printf("COMPILE ERROR: %s\n", dm);
-			}
+	}
+
+	private boolean createActivator(Path bindir, String activator_classname, Writer output)
+			throws IOException {
+		Path activator_dest = bindir.resolve(activator_classname + ".java");
+
+		try (PrintWriter writer =
+			new PrintWriter(Files.newBufferedWriter(activator_dest, Charset.forName("UTF-8")))) {
+			writer.println("import ghidra.app.script.osgi.GhidraBundleActivator;");
+			writer.println("import org.osgi.framework.BundleActivator;");
+			writer.println("import org.osgi.framework.BundleContext;");
+			writer.println("public class GeneratedActivator extends GhidraBundleActivator {");
+			writer.println("  protected void start(BundleContext bc, Object api) {");
+			writer.println("    // TODO: stuff to do on bundle start");
+			writer.println("  }");
+			writer.println("  protected void stop(BundleContext bc, Object api) {");
+			writer.println("    // TODO: stuff to do on bundle stop");
+			writer.println("  }");
+			writer.println();
+			writer.println("}");
 		}
+		catch (IOException ex) {
+			ex.printStackTrace();
+			return false;
+		}
+
+		List<String> options = new ArrayList<>();
+		options.add("-g");
+		options.add("-d");
+		options.add(bindir.toString());
+		options.add("-sourcepath");
+		options.add(bindir.toString());
+		options.add("-classpath");
+		options.add(System.getProperty("java.class.path"));
+		options.add("-proc:none");
+
+		StandardJavaFileManager fm0 = compiler.getStandardFileManager(null, null, null);
+		BundleJavaManager fm = new BundleJavaManager(bh.getHostFramework(), fm0, options);
+		Iterable<? extends JavaFileObject> compilationUnits2 =
+			fm0.getJavaFileObjectsFromPaths(List.of(activator_dest));
+		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+		JavaCompiler.CompilationTask task2 =
+			compiler.getTask(output, fm, diagnostics, options, null, compilationUnits2);
+		if (!task2.call()) {
+			for (Diagnostic<? extends JavaFileObject> d : diagnostics.getDiagnostics()) {
+				output.write(d.getSource().toString() + ": " + d.getMessage(null) + "\n");
+			}
+			return false;
+		}
+		return true;
 	}
 
 }

@@ -130,8 +130,11 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			bundle_host.startBundleWatcher();
 		}
 
-		// wait for bundle to be started
 		try {
+			Bundle b = bundle_host.installExplodedPath(bi.binDir);
+			bi.bundleLoc = b.getLocation();
+			System.err.printf("new bundle loc is %s\n", bi.bundleLoc);
+			b.start();
 			if (!bundle_host.waitForBundleStart(bi.bundleLoc)) {
 				Msg.error(this, "starting bundle");
 				return null;
@@ -187,7 +190,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		final ResourceFile sourceDir;
 		final String symbolicName;
 		final Path binDir;
-		final String bundleLoc;
+		String bundleLoc;
 
 		public ScriptBundleInfo(ResourceFile sourceDir) {
 			this.sourceDir = sourceDir;

@@ -43,6 +43,10 @@ public class ResourceFileJavaFileObject implements JavaFileObject {
 		pathName = file.getAbsolutePath().substring(sourceRootPath.length() + 1);
 	}
 
+	public ResourceFile getFile() {
+		return file;
+	}
+
 	@Override
 	public URI toUri() {
 		return file.toURI();
