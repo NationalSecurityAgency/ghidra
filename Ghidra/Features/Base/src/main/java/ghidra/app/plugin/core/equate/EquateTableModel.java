@@ -40,11 +40,6 @@ import util.CollectionUtils;
 
 class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
-	static final int NAME_COL = 0;
-	static final int VALUE_COL = 1;
-	static final int REFS_COL = 2;
-	static final int ENUM_BASED_COL = 3;
-
 	private EquateTablePlugin plugin;
 	private List<Equate> equateList = new ArrayList<>();
 
@@ -66,10 +61,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 		EquateTable equateTable = program.getEquateTable();
 
-		// @formatter:off		
-		CollectionUtils.asIterable(equateTable.getEquates())
-			.forEach(e -> equateList.add(e));
-		// @formatter:on		
+		equateList = CollectionUtils.asList(equateTable.getEquates());
 
 		fireTableDataChanged();
 	}
@@ -92,13 +84,9 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 	protected TableColumnDescriptor<Equate> createTableColumnDescriptor() {
 
 		TableColumnDescriptor<Equate> descriptor = new TableColumnDescriptor<>();
-		// NAME_COL
 		descriptor.addVisibleColumn(new EquateNameColumn());
-		// VALUE_COL
 		descriptor.addVisibleColumn(new EquateValueColumn());
-		// REFS_COL
 		descriptor.addVisibleColumn(new EquateReferenceCountColumn());
-		// ENUM_BASED_COL
 		descriptor.addHiddenColumn(new IsEnumBasedEquateColumn());
 		return descriptor;
 	}
@@ -111,7 +99,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 	@Override
 	public boolean isCellEditable(int row, int column) {
 
-		if (column != NAME_COL) {
+		if (!getColumnName(column).equals(EquateNameColumn.NAME)) {
 			// only the name
 			return false;
 		}
@@ -121,7 +109,12 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-		if (columnIndex != NAME_COL || !(aValue instanceof String)) {
+
+		if (!getColumnName(columnIndex).equals(EquateNameColumn.NAME)) {
+			return;
+		}
+
+		if (!(aValue instanceof String)) {
 			return;
 		}
 		plugin.renameEquate(equateList.get(rowIndex), (String) aValue);
@@ -132,6 +125,8 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 	}
 
 	private class EquateNameColumn extends AbstractDynamicTableColumn<Equate, String, Object> {
+
+		public static final String NAME = "Name";
 
 		private GColumnRenderer<String> renderer = new AbstractGColumnRenderer<>() {
 
@@ -151,8 +146,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 				if (!eq.isValidUUID()) { // Error equate
 					label.setForeground((isSelected) ? Color.WHITE : Color.RED);
-				}
-				else if (!eq.isEnumBased()) { // User label
+				} else if (!eq.isEnumBased()) { // User label
 					label.setForeground((isSelected) ? Color.WHITE : Color.BLUE.brighter());
 				}
 
@@ -185,9 +179,10 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 			}
 
 		};
+
 		@Override
 		public String getColumnName() {
-			return "Name";
+			return NAME;
 		}
 
 		@Override
@@ -204,6 +199,8 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 	}
 
 	private class EquateValueColumn extends AbstractDynamicTableColumn<Equate, Long, Object> {
+
+		public static final String NAME = "Value";
 
 		private GColumnRenderer<Long> renderer = new AbstractGColumnRenderer<>() {
 
@@ -227,8 +224,8 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 				StringBuilder sb = new StringBuilder();
 				// @formatter:off
 				sb.append(Long.toHexString(t))
-					.append(" ")
-					.append(Long.toString(t));
+				.append(" ")
+				.append(Long.toString(t));
 				// @formatter:on
 				return sb.toString();
 			}
@@ -236,7 +233,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 		@Override
 		public String getColumnName() {
-			return "Value";
+			return NAME;
 		}
 
 		@Override
@@ -261,11 +258,13 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 	}
 
 	private class EquateReferenceCountColumn
-			extends AbstractDynamicTableColumn<Equate, Integer, Object> {
+	extends AbstractDynamicTableColumn<Equate, Integer, Object> {
+
+		public static final String NAME = "# Refs";
 
 		@Override
 		public String getColumnName() {
-			return "# Refs";
+			return NAME;
 		}
 
 		@Override
@@ -277,11 +276,13 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 	}
 
 	private class IsEnumBasedEquateColumn
-			extends AbstractDynamicTableColumn<Equate, Boolean, Object> {
+	extends AbstractDynamicTableColumn<Equate, Boolean, Object> {
+
+		public static final String NAME = "Is Enum-Based";
 
 		@Override
 		public String getColumnName() {
-			return "Is Enum-Based";
+			return NAME;
 		}
 
 		@Override
@@ -290,156 +291,4 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 			return rowObject.isEnumBased();
 		}
 	}
-
-
-//	static final String NAME_COL_NAME = "Name";
-//	static final String VALUE_COL_NAME = "Value";
-//	static final String REFS_COL_NAME = "# Refs";
-//
-//	static final int NAME_COL = 0;
-//	static final int VALUE_COL = 1;
-//	static final int REFS_COL = 2;
-//
-//	private EquateTablePlugin plugin;
-//	private List<Equate> equateList = new ArrayList<>();
-//
-//	private Comparator<Equate> NAME_COMPARATOR = new Comparator<Equate>() {
-//		@Override
-//		public int compare(Equate eq1, Equate eq2) {
-//			return eq1.getName().compareTo(eq2.getName());
-//		}
-//	};
-//	private Comparator<Equate> VALUE_COMPARATOR = new Comparator<Equate>() {
-//		@Override
-//		public int compare(Equate eq1, Equate eq2) {
-//			Long long1 = new Long(eq1.getValue());
-//			Long long2 = new Long(eq2.getValue());
-//			return long1.compareTo(long2);
-//		}
-//	};
-//	private Comparator<Equate> REFS_COMPARATOR = new Comparator<Equate>() {
-//		@Override
-//		public int compare(Equate eq1, Equate eq2) {
-//			Integer int1 = new Integer(eq1.getReferenceCount());
-//			Integer int2 = new Integer(eq2.getReferenceCount());
-//			return int1.compareTo(int2);
-//		}
-//	};
-//
-//	EquateTableModel(EquateTablePlugin plugin) {
-//		this.plugin = plugin;
-//	}
-//
-//	private void populateEquates() {
-//
-//		// 1st clean up any existing symbols
-//		//
-//		equateList.clear();
-//
-//		Program program = plugin.getProgram();
-//		if (program == null) {
-//			fireTableDataChanged();
-//			return;
-//		}
-//
-//		EquateTable equateTable = program.getEquateTable();
-//
-//		for (Equate equate : CollectionUtils.asIterable(equateTable.getEquates())) {
-//			equateList.add(equate);
-//		}
-//
-//		fireTableDataChanged();
-//	}
-//
-//	@Override
-//	protected Comparator<Equate> createSortComparator(int columnIndex) {
-//		switch (columnIndex) {
-//			case NAME_COL:
-//				return NAME_COMPARATOR;
-//			case VALUE_COL:
-//				return VALUE_COMPARATOR;
-//			case REFS_COL:
-//				return REFS_COMPARATOR;
-//			default:
-//				return super.createSortComparator(columnIndex);
-//		}
-//	}
-//
-//	void update() {
-//		populateEquates();
-//	}
-//
-//	@Override
-//	public String getName() {
-//		return "Equates";
-//	}
-//
-//	@Override
-//	public int getColumnCount() {
-//		return 3;
-//	}
-//
-//	@Override
-//	public String getColumnName(int column) {
-//		String names[] = { NAME_COL_NAME, VALUE_COL_NAME, REFS_COL_NAME };
-//
-//		if (column < 0 || column > 2) {
-//			return "UNKNOWN";
-//		}
-//
-//		return names[column];
-//	}
-//
-//	/**
-//	 *  Returns Object.class by default
-//	 */
-//	@Override
-//	public Class<?> getColumnClass(int columnIndex) {
-//		if (columnIndex == 0) {
-//			return String.class;
-//		}
-//		return Equate.class;
-//	}
-//
-//	@Override
-//	public boolean isCellEditable(int rowIndex, int columnIndex) {
-//		if (columnIndex != 0) {
-//			return false;
-//		}
-//		return !getEquate(rowIndex).getName().startsWith(EquateManager.DATATYPE_TAG);
-//	}
-//
-//	@Override
-//	public int getRowCount() {
-//		return equateList.size();
-//	}
-//
-//	public Equate getEquate(int rowIndex) {
-//		return equateList.get(rowIndex);
-//	}
-//
-//	@Override
-//	public boolean isSortable(int columnIndex) {
-//		return true;
-//	}
-//
-//	@Override
-//	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-//		if (columnIndex != NAME_COL) {
-//			return;
-//		}
-//		plugin.renameEquate(equateList.get(rowIndex), (String) aValue);
-//
-//	}
-//
-//	@Override
-//	public Object getColumnValueForRow(Equate eq, int columnIndex) {
-//		return (columnIndex >= 0 && columnIndex <= 2) ? eq : "UNKNOWN";
-//	}
-//
-//	@Override
-//	public List<Equate> getModelData() {
-//		return equateList;
-//	}
-
 }

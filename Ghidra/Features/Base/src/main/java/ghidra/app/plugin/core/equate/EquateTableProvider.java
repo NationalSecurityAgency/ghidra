@@ -21,7 +21,8 @@ import java.awt.event.*;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -159,8 +160,8 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN ||
-					e.getKeyCode() == KeyEvent.VK_PAGE_UP ||
-					e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+						e.getKeyCode() == KeyEvent.VK_PAGE_UP ||
+						e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
 					handleEquateTableSelection();
 				}
 			}
@@ -176,15 +177,10 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 					Object obj = evt.getSource();
 					if (obj instanceof GhidraTable) {
 						GhidraTable table = (GhidraTable) obj;
-						int viewRow = table.rowAtPoint(evt.getPoint());
-						int viewColumn = table.columnAtPoint(evt.getPoint());
+						int row = table.rowAtPoint(evt.getPoint());
+						int column = table.columnAtPoint(evt.getPoint());
 
-						int modelRow = table.convertRowIndexToModel(viewRow);
-						int modelColumn = table.convertColumnIndexToModel(viewColumn);
-
-						TableModel model = table.getModel();
-
-						if (!model.isCellEditable(modelRow, modelColumn)) {
+						if (!table.isCellEditable(row, column)) {
 							return;
 						}
 
@@ -192,10 +188,10 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 						if (dtms == null) {
 							return;
 						}
-						Equate equate = (Equate) model.getValueAt(modelRow, 0);
+						Equate equate = (Equate) table.getValueAt(row, column);
 
 						UniversalID id =
-							new UniversalID(Long.parseLong(equate.getName().split(":")[1]));
+								new UniversalID(Long.parseLong(equate.getName().split(":")[1]));
 						Enum enoom = (Enum) dtm.findDataTypeForID(id);
 						if (enoom != null) {
 							dtms.edit(enoom);
@@ -258,7 +254,7 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 		JPanel workPanel = new JPanel(new BorderLayout());
 		JSplitPane splitPane =
-			new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, equatesPanel, referencesPanel);
+				new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, equatesPanel, referencesPanel);
 		splitPane.setResizeWeight(0.5);
 		workPanel.add(splitPane, BorderLayout.CENTER);
 
@@ -295,7 +291,7 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		deleteAction.setHelpLocation(new HelpLocation("EquatePlugin", "Delete Equate"));
 
 		SelectionNavigationAction selectionNavigationAction =
-			new SelectionNavigationAction(plugin, referencesTable);
+				new SelectionNavigationAction(plugin, referencesTable);
 		selectionNavigationAction.setHelpLocation(
 			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
