@@ -21,7 +21,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.cmd.label.DemanglerCmd;
-import ghidra.app.util.demangler.*;
+import ghidra.app.util.demangler.DemangledException;
+import ghidra.app.util.demangler.DemangledObject;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -58,13 +59,13 @@ public class GnuDemanglerIntegrationTest extends AbstractGhidraHeadlessIntegrati
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		DemangledObject result = demangler.demangle(mangled, false);
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(false);
+		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined MyNamespace::MyFunction($ParamNamespace::paramName *)",
 			result.getSignature(false));
 
-		DemanglerOptions options = new DemanglerOptions();
-		options.setDemangleOnlyKnownPatterns(false);
 		DemanglerCmd cmd = new DemanglerCmd(addr("01001000"), mangled, options);
 
 		// this used to trigger an exception

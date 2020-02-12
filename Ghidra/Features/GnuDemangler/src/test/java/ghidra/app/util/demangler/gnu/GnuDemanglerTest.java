@@ -23,7 +23,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.app.util.demangler.*;
+import ghidra.app.util.demangler.DemangledException;
+import ghidra.app.util.demangler.DemangledObject;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.TerminatedStringDataType;
@@ -54,7 +55,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		demangler.canDemangle(program);// this perform initialization
 
 		// this throws an exception with the bug in place
-		demangler.demangle(mangled, true);
+		demangler.demangle(mangled);
 	}
 
 	@Test
@@ -65,8 +66,10 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
+		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		options.setDemangleOnlyKnownPatterns(false);
 		try {
-			demangler.demangle(mangled, false);
+			demangler.demangle(mangled, options);
 			fail("Demangle should have failed attempting to demangle a non-mangled string");
 		}
 		catch (DemangledException e) {
@@ -82,7 +85,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		DemangledObject result = demangler.demangle(mangled, true);
+		DemangledObject result = demangler.demangle(mangled);
 		assertNull("Demangle did not skip a name that does not match a known mangled pattern",
 			result);
 	}
@@ -99,13 +102,13 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		symbolTable.createLabel(addr("01001000"), mangled, SourceType.IMPORTED);
 
 		GnuDemangler demangler = new GnuDemangler();
-		DemangledObject obj = demangler.demangle(mangled, true);
+		DemangledObject obj = demangler.demangle(mangled);
 		assertNotNull(obj);
 
 		//assertEquals("typeinfo for AP_HAL::HAL::Callbacks", obj.getSignature(false));
 
 		assertTrue(
-			obj.applyTo(program, addr("01001000"), new DemanglerOptions(), TaskMonitor.DUMMY));
+			obj.applyTo(program, addr("01001000"), new GnuDemanglerOptions(), TaskMonitor.DUMMY));
 
 		Symbol s = symbolTable.getPrimarySymbol(addr("01001000"));
 		assertNotNull(s);
@@ -132,13 +135,13 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		symbolTable.createLabel(addr("01001000"), mangled, SourceType.IMPORTED);
 
 		GnuDemangler demangler = new GnuDemangler();
-		DemangledObject obj = demangler.demangle(mangled, true);
+		DemangledObject obj = demangler.demangle(mangled);
 		assertNotNull(obj);
 
 		assertEquals("typeinfo name for AP_HAL::HAL::Callbacks", obj.getSignature(false));
 
 		assertTrue(
-			obj.applyTo(program, addr("01001000"), new DemanglerOptions(), TaskMonitor.DUMMY));
+			obj.applyTo(program, addr("01001000"), new GnuDemanglerOptions(), TaskMonitor.DUMMY));
 
 		Symbol s = symbolTable.getPrimarySymbol(addr("01001000"));
 		assertNotNull(s);

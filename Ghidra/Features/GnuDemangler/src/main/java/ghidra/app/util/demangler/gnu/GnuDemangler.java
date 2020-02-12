@@ -60,6 +60,7 @@ public class GnuDemangler implements Demangler {
 	}
 
 	@Override
+	@Deprecated(since = "9.2", forRemoval = true)
 	public DemangledObject demangle(String mangled, boolean demangleOnlyKnownPatterns)
 			throws DemangledException {
 		GnuDemanglerOptions options = new GnuDemanglerOptions();

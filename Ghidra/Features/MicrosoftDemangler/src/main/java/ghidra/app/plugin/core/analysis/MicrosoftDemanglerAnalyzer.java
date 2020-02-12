@@ -21,6 +21,9 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 
+/**
+ * A version of the demangler analyzer to handle microsoft symbols
+ */
 public class MicrosoftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	private static final String NAME = "Demangler Microsoft";

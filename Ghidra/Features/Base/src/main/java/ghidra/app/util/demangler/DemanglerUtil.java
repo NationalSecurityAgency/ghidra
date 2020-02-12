@@ -47,9 +47,7 @@ public class DemanglerUtil {
 		List<Demangler> demanglers = getDemanglers();
 		for (Demangler demangler : demanglers) {
 			try {
-				// not sure if we should be doing all symbols, but this is what it used to do
-				boolean onlyKnownTypes = false;
-				DemangledObject demangledObject = demangler.demangle(mangled, onlyKnownTypes);
+				DemangledObject demangledObject = demangler.demangle(mangled);
 				if (demangledObject != null) {
 					return demangledObject;
 				}
@@ -82,9 +80,7 @@ public class DemanglerUtil {
 					continue;
 				}
 
-				// not sure if we should be doing all symbols, but this is what it used to do
-				boolean onlyKnownTypes = false;
-				DemangledObject demangledObject = demangler.demangle(mangled, onlyKnownTypes);
+				DemangledObject demangledObject = demangler.demangle(mangled);
 				if (demangledObject != null) {
 					return demangledObject;
 				}

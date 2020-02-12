@@ -72,7 +72,7 @@ public class DemanglerCmd extends BackgroundCommand {
 	private boolean doDemangle(Demangler demangler, Program program, TaskMonitor monitor) {
 
 		try {
-			demangledObject = demangler.demangle(mangled, options.demangleOnlyKnownPatterns());
+			demangledObject = demangler.demangle(mangled, options);
 		}
 		catch (DemangledException e) {
 			if (e.isInvalidMangledName()) {

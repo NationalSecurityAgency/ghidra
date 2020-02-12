@@ -138,7 +138,7 @@ public class VxWorksSymTab_6_1 extends GhidraScript {
 				String symDemangledName = null;
 				try {
 					// if successful, symDemangledName will be non-NULL
-					symDemangledName = demangler.demangle(symName, true).getSignature(false);
+					symDemangledName = demangler.demangle(symName).getSignature(false);
 				}
 				catch (DemangledException e) {
 					// if symName wasn't a mangled name, silently continue

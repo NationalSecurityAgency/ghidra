@@ -25,7 +25,20 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-// TODO docme
+/**
+ * The base demangler analyzer.  Implementations of this analyzer will attempt to demangle 
+ * symbols in the binary being analyzed.
+ * 
+ * <P>Default implementations of this class exist for Microsoft and GNU.   These two analyzers will
+ * only be enabled when the program being analyzed has an architecture that fits each respective
+ * analyzer.  Users can subclass this analyzer to easily control the demangling behavior from 
+ * the analyzer UI.
+ * 
+ * <P>This analyzer will call each implementation's 
+ * {@link #doDemangle(String, DemanglerOptions, MessageLog)} method for each symbol.   
+ * See the various protected methods of this class for points at which behavior can be overridden.
+ * 
+ */
 public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 	public AbstractDemanglerAnalyzer(String name, String description) {
@@ -35,7 +48,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		// override this to be enable for a binary containing symbols you wisht to process
+		// override this to control program-specific enablement 
 		return true;
 	}
 
@@ -78,13 +91,38 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		return true;
 	}
 
-	// TODO callback before demangling begins...
+	/**
+	 * The implementation-specific demangling callback
+	 * 
+	 * @param mangled the mangled string
+	 * @param options the demangler options 
+	 * @param log the error log
+	 * @return the demangled object; null if demangling was unsuccessful
+	 * @throws DemangledException if there is a problem demangling or building the result
+	 */
+	protected abstract DemangledObject doDemangle(String mangled, DemanglerOptions options,
+			MessageLog log) throws DemangledException;
+
+	/**
+	 * Called before each analysis request to ensure that the current options (which may have
+	 * user-defined input) will work with the current demangler
+	 * 
+	 * @param options the current options in use
+	 * @param log the error log into which error message can be written
+	 * @return true if valid
+	 */
 	protected boolean validateOptions(DemanglerOptions options, MessageLog log) {
 		// override to validate custom options for a particular demangler
 		return true;
 	}
 
-	private boolean skipSymbol(Symbol symbol) {
+	/**
+	 * True if this analyzer should <b>not</b> attempt to demangle the given symbol
+	 * 
+	 * @param symbol the symbol
+	 * @return true to skip the symbol
+	 */
+	protected boolean skipSymbol(Symbol symbol) {
 		if (symbol.getSource() == SourceType.DEFAULT) {
 			return true;
 		}
@@ -111,9 +149,13 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		return false;
 	}
 
-	protected abstract DemangledObject doDemangle(String mangled, DemanglerOptions options,
-			MessageLog log) throws DemangledException;
-
+	/**
+	 * Creates the options for the demangler used by implementations of this analyzer.  This will 
+	 * be called before each {@link #added(Program, AddressSetView, TaskMonitor, MessageLog)}
+	 * call processes symbols.
+	 * 
+	 * @return the options 
+	 */
 	protected DemanglerOptions getOptions() {
 		// note: these can be stored in the analyzer subclass and updated when the
 		//       analysis options change		
@@ -124,6 +166,15 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		return options;
 	}
 
+	/**
+	 * This calss's default demangle method.  This may be overridden to change how errors are
+	 * handled.
+	 *  
+	 * @param mangled the mangled string
+	 * @param options the demangler options
+	 * @param log the error log
+	 * @return the demangled object; null if unsuccessful
+	 */
 	protected DemangledObject demangle(String mangled, DemanglerOptions options,
 			MessageLog log) {
 
@@ -148,6 +199,16 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		return demangled;
 	}
 
+	/**
+	 * Applies the given demangled object to the program
+	 * 
+	 * @param program the program
+	 * @param address the apply address 
+	 * @param demangled the demangled object
+	 * @param options the options used during the apply
+	 * @param log the error log
+	 * @param monitor the task monitor
+	 */
 	protected void apply(Program program, Address address, DemangledObject demangled,
 			DemanglerOptions options, MessageLog log, TaskMonitor monitor) {
 

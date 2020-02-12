@@ -15,11 +15,18 @@
  */
 package ghidra.app.util.demangler.gnu;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.app.util.demangler.DemanglerOptions;
 
+/**
+ * GNU demangler options
+ */
 public class GnuDemanglerOptions extends DemanglerOptions {
+
+	/*
+	 						Note!
+		If you update the demangler versions, then you also must update the help (search the
+		html files for the old version strings).
+	 */
 
 	/**
 	 * Version 2.24 of the GNU demangler.  This version supports older formats and older bugs.
@@ -38,7 +45,6 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 
 	private String demanglerName = GNU_DEMANGLER_DEFAULT;
 	private String demanglerApplicationArguments;
-	private boolean useDeprecatedDemangler;
 
 	public GnuDemanglerOptions() {
 		// use default values
@@ -51,48 +57,47 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 			GnuDemanglerOptions gCopy = (GnuDemanglerOptions) copy;
 			demanglerName = gCopy.demanglerName;
 			demanglerApplicationArguments = gCopy.demanglerApplicationArguments;
-			useDeprecatedDemangler = gCopy.useDeprecatedDemangler;
 		}
 	}
 
-	// TODO docme
+	/**
+	 * Returns the external demangler executable name to be used for demangling.  The 
+	 * default value is {@link #GNU_DEMANGLER_DEFAULT}.
+	 * @return the name
+	 */
 	public String getDemanglerName() {
 		return demanglerName;
 	}
 
-	// TODO docme
-	// TODO should we validate and or log a message it the name is unknown?
+	/**
+	 * Sets the external demangler executable name to be used for demangling
+	 * @param name the name
+	 */
 	public void setDemanglerName(String name) {
 		this.demanglerName = name;
 	}
 
-	// TODO docme
+	/**
+	 * Returns the current arguments to be passed to the external demangler executable
+	 * @return the arguments
+	 */
 	public String getDemanglerApplicationArguments() {
 		return demanglerApplicationArguments;
 	}
 
-	// TODO docme
+	/**
+	 * Sets the arguments to be passed to the external demangler executable
+	 * @param args the arguments
+	 */
 	public void setDemanglerApplicationArguments(String args) {
 		this.demanglerApplicationArguments = args;
 	}
 
-	// TODO docme
-	// TODO mabye rename to hasNativeApplicationOptions()
-	public boolean hasDemanglerApplicationArguments() {
-		return !StringUtils.isBlank(demanglerApplicationArguments);
-	}
-
-	// TODO docme
-	public void setUseDeprecatedDemangler(boolean doUse) {
-		this.useDeprecatedDemangler = doUse;
-	}
-
-	// TODO docme
-	public boolean useDeprecatedDemangler() {
-		return useDeprecatedDemangler;
-	}
-
-	// TODO docme
+	/**
+	 * A convenience method to copy the state of this options object, changing the 
+	 * demangler executable name to the deprecated demangler
+	 * @return the new options
+	 */
 	public GnuDemanglerOptions withDeprecatedDemangler() {
 		GnuDemanglerOptions newOptions = new GnuDemanglerOptions(this);
 		newOptions.setDemanglerName(GNU_DEMANGLER_V2_24);
@@ -107,7 +112,6 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 			"\tapplySignature: " + applySignature() + ",\n" +
 			"\tdemangleOnlyKnownPatterns: " + demangleOnlyKnownPatterns() + ",\n" +
 			"\tdemanglerName: " + demanglerName + ",\n" +
-			"\tuseDeprecatedDemangler: " + useDeprecatedDemangler + ",\n" +
 			"\tdemanglerApplicationArguments: " + demanglerApplicationArguments + ",\n" +
 		"}";
 		//@formatter:on

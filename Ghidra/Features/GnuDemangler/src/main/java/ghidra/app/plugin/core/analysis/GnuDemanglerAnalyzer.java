@@ -22,11 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.gnu.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.options.*;
+import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
 
+/**
+ * A version of the demangler analyzer to handle GNU GCC symbols 
+ */
 public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	private static final String NAME = "Demangler GNU";
@@ -35,7 +37,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			"the name and apply datatypes to parameters.";
 
 	private static final String OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS =
-		"Only Demangle Known Mangled Symbols";
+		"Demangle Only Known Mangled Symbols";
 	private static final String OPTION_DESCRIPTION_USE_KNOWN_PATTERNS =
 		"Only demangle symbols that follow known compiler mangling patterns. " +
 			"Leaving this option off may cause non-mangled symbols to get demangled.";
@@ -44,14 +46,20 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	private static final String OPTION_DESCRIPTION_APPLY_SIGNATURE =
 		"Apply any recovered function signature, in addition to the function name";
 
-	// note: we use 'Z' as a trick to be below the other options
-	private static final String OPTION_NAME_GNU_DEMANGLER = "Z GNU Demangler";
+	static final String OPTION_NAME_USE_DEPRECATED_DEMANGLER = "Use Deprecated Demangler";
+	private static final String OPTION_DESCRIPTION_DEPRECATED_DEMANGLER =
+		"Signals to use the deprecated demangler when the modern demangler cannot demangle a " +
+			"given string";
+
+	private static final String OPTION_NAME_DEMANGLER_PARAMETERS =
+		"Use External Demangler Options";
+	private static final String OPTION_DESCRIPTION_DEMANGLER_PARAMETERS =
+		"Signals to use pass the given parameters to the demangler program";
 
 	private boolean doSignatureEnabled = true;
 	private boolean demangleOnlyKnownPatterns = false;
-	private GnuDemanglerOptionsPropertyEditor gnuOptionsEditor =
-		new GnuDemanglerOptionsPropertyEditor();
-	private GnuDemanglerWrappedOption gnuWrappedOptions;
+	private boolean useDeprecatedDemangler = false;
+	private String demanglerParameters = "";
 
 	private GnuDemangler demangler = new GnuDemangler();
 
@@ -67,28 +75,20 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
-		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled, null,
-			OPTION_DESCRIPTION_APPLY_SIGNATURE);
-
-		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, false, null,
-			OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
-
-		options.registerOptionsEditor(null);
 
 		HelpLocation help = new HelpLocation("AutoAnalysisPlugin", "Demangler_Analyzer");
-		options.registerOption(OPTION_NAME_GNU_DEMANGLER, OptionType.CUSTOM_TYPE,
-			new GnuDemanglerWrappedOption(), help, "Advanced GNU demangler options",
-			gnuOptionsEditor);
+		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled, help,
+			OPTION_DESCRIPTION_APPLY_SIGNATURE);
 
-		CustomOption customOption = options.getCustomOption(OPTION_NAME_GNU_DEMANGLER,
-			new GnuDemanglerWrappedOption());
-		if (!(customOption instanceof GnuDemanglerWrappedOption)) {
-			customOption = new GnuDemanglerWrappedOption();
-			Msg.debug(this, "Unexpected custom option type for GNU Demangler: " +
-				customOption.getClass());
-		}
-		gnuWrappedOptions = (GnuDemanglerWrappedOption) customOption;
+		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
+			help,
+			OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
 
+		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler, help,
+			OPTION_DESCRIPTION_DEPRECATED_DEMANGLER);
+
+		options.registerOption(OPTION_NAME_DEMANGLER_PARAMETERS, demanglerParameters, help,
+			OPTION_DESCRIPTION_DEMANGLER_PARAMETERS);
 	}
 
 	@Override
@@ -97,9 +97,11 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		demangleOnlyKnownPatterns =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
 
-		gnuWrappedOptions =
-			(GnuDemanglerWrappedOption) options.getCustomOption(OPTION_NAME_GNU_DEMANGLER,
-				new GnuDemanglerWrappedOption());
+		useDeprecatedDemangler =
+			options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
+
+		demanglerParameters =
+			options.getString(OPTION_NAME_DEMANGLER_PARAMETERS, demanglerParameters);
 	}
 
 	@Override
@@ -109,15 +111,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		options.setDoDisassembly(true);
 		options.setApplySignature(doSignatureEnabled);
 		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
-
-		options.setUseDeprecatedDemangler(gnuWrappedOptions.useDeprecatedDemangler());
-
-		String text = null;
-		if (gnuWrappedOptions.useDemanglerParameters()) {
-			text = gnuWrappedOptions.getDemanglerParametersText();
-		}
-		options.setDemanglerApplicationArguments(text);
-
+		options.setDemanglerApplicationArguments(demanglerParameters);
 		return options;
 	}
 
@@ -144,7 +138,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			log.appendException(e);
 		}
 
-		if (options.useDeprecatedDemangler()) {
+		if (useDeprecatedDemangler) {
 			// see if the options work in the deprecated demangler
 			GnuDemanglerOptions deprecatedOptions = options.withDeprecatedDemangler();
 			String deprecatedName = deprecatedOptions.getDemanglerName();
@@ -176,7 +170,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			demangled = demangler.demangle(mangled, options);
 		}
 		catch (DemangledException e) {
-			if (!options.useDeprecatedDemangler()) {
+			if (!useDeprecatedDemangler) {
 				throw e; // let our parent handle this
 			}
 		}
@@ -185,7 +179,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			return demangled;
 		}
 
-		if (options.useDeprecatedDemangler()) {
+		if (useDeprecatedDemangler) {
 			GnuDemanglerOptions newOptions = options.withDeprecatedDemangler();
 			demangled = demangler.demangle(mangled, newOptions);
 		}

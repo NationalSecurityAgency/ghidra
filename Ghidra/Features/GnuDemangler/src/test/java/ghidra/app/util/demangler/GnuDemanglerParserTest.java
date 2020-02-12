@@ -1130,7 +1130,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String mangled = "uv__dup";
 
 		GnuDemangler demangler = new GnuDemangler();
-		DemangledObject res = demangler.demangle(mangled, true);
+		DemangledObject res = demangler.demangle(mangled);
 		assertNull(res);
 	}
 

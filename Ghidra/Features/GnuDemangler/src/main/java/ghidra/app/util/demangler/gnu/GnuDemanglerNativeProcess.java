@@ -27,6 +27,11 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.framework.Application;
 import ghidra.framework.Platform;
 
+/**
+ * A class that allows for the reuse of native demangler executable processes.  This class will
+ * cache the process by name and by any arguments passed to the process when started.  Once
+ * successfully started, the process will persist
+ */
 public class GnuDemanglerNativeProcess {
 	public static final String DEMANGLER_GNU = GnuDemanglerOptions.GNU_DEMANGLER_DEFAULT;
 
@@ -42,21 +47,35 @@ public class GnuDemanglerNativeProcess {
 	private BufferedReader reader;
 	private PrintWriter writer;
 
-	// TODO docme 
+	/**
+	 * Gets the default GNU demangler native process
+	 * @return the process
+	 * @throws IOException if the process cannot be started
+	 */
 	public static synchronized GnuDemanglerNativeProcess getDemanglerNativeProcess()
 			throws IOException {
 		return getDemanglerNativeProcess(DEMANGLER_GNU);
 	}
 
-	// TODO docme
+	/**
+	 * Gets the default GNU demangler native process
+	 * @param name the specific executable name to launch
+	 * @return the process
+	 * @throws IOException if the process cannot be started
+	 */
 	public static synchronized GnuDemanglerNativeProcess getDemanglerNativeProcess(String name)
 			throws IOException {
 
 		return getDemanglerNativeProcess(name, DEFAULT_NATIVE_OPTIONS);
 	}
 
-	// TODO docme
-	// TODO we should probably age-off all demanglers by access time
+	/**
+	 * Gets the default GNU demangler native process
+	 * @param name the specific executable name to launch
+	 * @param nativeOptions the arguments string to pass to the native demangler
+	 * @return the process
+	 * @throws IOException if the process cannot be started
+	 */
 	public static synchronized GnuDemanglerNativeProcess getDemanglerNativeProcess(String name,
 			String nativeOptions)
 			throws IOException {
@@ -66,13 +85,16 @@ public class GnuDemanglerNativeProcess {
 			options = DEFAULT_NATIVE_OPTIONS;
 		}
 
-		String key = name + nativeOptions;
+		String key = getKey(name, options);
 		GnuDemanglerNativeProcess nativeProcess = processesByName.get(key);
 		if (nativeProcess == null) {
 			nativeProcess = new GnuDemanglerNativeProcess(name, options);
-			processesByName.put(key, nativeProcess);
 		}
 		return nativeProcess;
+	}
+
+	private static String getKey(String name, String options) {
+		return name + ' ' + options;
 	}
 
 	private GnuDemanglerNativeProcess(String applicationName, String options) throws IOException {
@@ -95,7 +117,6 @@ public class GnuDemanglerNativeProcess {
 		catch (IOException e) {
 			dispose();
 			if (!restart) {
-				processesByName.remove(applicationName);
 				throw new IOException("Demangler process is not running.", e);
 			}
 			createProcess();
@@ -109,7 +130,11 @@ public class GnuDemanglerNativeProcess {
 		return reader.readLine();
 	}
 
-	private void dispose() {
+	public void dispose() {
+
+		String key = getKey(applicationName, options);
+		processesByName.remove(key);
+
 		try {
 			if (process != null) {
 				process.destroy();
@@ -139,6 +164,8 @@ public class GnuDemanglerNativeProcess {
 		checkForError(command);
 
 		isDisposed = false;
+		String key = getKey(applicationName, options);
+		processesByName.put(key, this);
 	}
 
 	private String[] buildCommand() throws FileNotFoundException {
