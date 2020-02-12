@@ -30,8 +30,8 @@ import java.util.Iterator;
 public class AddressRangeImpl implements AddressRange, Serializable {
 	private static final long serialVersionUID = 1;
 
-	private Address minAddress; // mimimum address in this range.
-	private Address maxAddress; // maximum address in this range.
+	private final Address minAddress; // minimum address in this range.
+	private final Address maxAddress; // maximum address in this range.
 
 	/**
 	 * Construct a new AddressRangeImpl from the given range.
@@ -57,11 +57,11 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 			throw new IllegalArgumentException("Start and end addresses are not in the same space.");
 		}
 
-		minAddress = start;
-		maxAddress = end;
-
-		// swap them if out of order
-		if (minAddress.compareTo(maxAddress) > 0) {
+		if (start.compareTo(end) < 0) {
+			minAddress = start;
+			maxAddress = end;
+		} else {
+			// swap them if out of order
 			minAddress = end;
 			maxAddress = start;
 		}
@@ -233,28 +233,28 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 
 	@Override
 	public Iterator<Address> iterator() {
-		return new MyAddressIterator(minAddress, maxAddress);
+		return new MyAddressIterator();
 	}
 
 	private class MyAddressIterator implements Iterator<Address> {
 
 		private Address curr;
-		private Address limit;
 
-		public MyAddressIterator(Address start, Address end) {
-			this.curr = start;
-			this.limit = end;
+		public MyAddressIterator() {
+			this.curr = minAddress;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return curr.add(1).compareTo(limit) <= 0;
+			return curr != null;
 		}
 
 		@Override
 		public Address next() {
 			Address next = curr;
-			curr = curr.add(1);
+			if (curr != null) {
+				curr = curr.equals(maxAddress) ? null : curr.next();
+			}
 			return next;
 		}
 
