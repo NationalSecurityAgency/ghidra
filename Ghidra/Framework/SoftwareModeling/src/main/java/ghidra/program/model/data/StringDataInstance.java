@@ -117,23 +117,34 @@ public class StringDataInstance {
 			return UNKNOWN;
 		}
 
-		// ignore leading 0 bytes
-		int lsbIndex = bytes.length - 1;
-		if (bytes[lsbIndex] >= 0 && bytes[lsbIndex] <= 0x7f) {
-			boolean isAsciiChar = true;
-			for (int i = 0; i < lsbIndex; i++) {
-				if (bytes[i] != 0) {
-					isAsciiChar = false;
-				}
-			}
-			if (isAsciiChar) {
-				bytes = new byte[] { bytes[lsbIndex] };
-			}
+		if (bytes.length != 1 && isSingleAsciiValue(bytes)) {
+			bytes = new byte[] { bytes[bytes.length - 1] };
 		}
 
 		MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
 		StringDataInstance sdi = new StringDataInstance(dataType, settings, memBuf, bytes.length);
 		return sdi.getCharRepresentation();
+	}
+
+	/**
+	 * Determine if bytes contain only a single ASCII value within 
+	 * least-significant-byte of big-endian byte array
+	 * @param bytes value byte array in big-endian order
+	 * @return true if bytes contain a single ASCII value within 
+	 * least-significant-byte
+	 */
+	private static boolean isSingleAsciiValue(byte[] bytes) {
+
+		int lsbIndex = bytes.length - 1;
+		if (bytes[lsbIndex] < 0) {
+			return false;
+		}
+		for (int i = 0; i < lsbIndex; i++) {
+			if (bytes[i] != 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -782,7 +793,7 @@ public class StringDataInstance {
 				// render settings.  ISO control chars are forced to be
 				// escaped regardless of the render setting.
 				if (currentCharRenderSetting == RENDER_ENUM.ALL) {
-					if (codePoint <= 0x7f) {
+					if (codePoint <= ASCII_MAX) {
 						// render non-displayable, non-control-char ascii-ish bytes as bytes instead
 						// of as escape sequences
 						currentCharRenderSetting = RENDER_ENUM.BYTE_SEQ;
