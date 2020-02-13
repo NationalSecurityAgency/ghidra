@@ -212,6 +212,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	protected void apply(Program program, Address address, DemangledObject demangled,
 			DemanglerOptions options, MessageLog log, TaskMonitor monitor) {
 
+		String errorMessage = null;
 		try {
 			if (demangled.applyTo(program, address, options, monitor)) {
 				return;
@@ -219,16 +220,20 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		}
 		catch (Exception e) {
 			String message = e.getMessage();
-			message = message == null ? "" : ".  Message: " + message;
-			log.appendMsg(getName(),
-				"Unable to demangle symbol at " + address + "; name: " +
-					demangled.getMangledName() + message);
+			if (message == null) {
+				message = "";
+			}
+			errorMessage = "\n" + e.getClass().getSimpleName() + ' ' + message;
+		}
+
+		String failMessage = " (" + getName() + "/" + demangled.getClass().getName() + ")";
+		if (errorMessage != null) {
+			failMessage += errorMessage;
 		}
 
 		log.appendMsg(getName(),
 			"Failed to apply mangled symbol at " + address + "; name:  " +
-				demangled.getMangledName() + " (" +
-				getName() + "/" + demangled.getClass().getName() + ")");
+				demangled.getMangledName() + failMessage);
 	}
 
 	protected String cleanSymbol(Address address, String name) {

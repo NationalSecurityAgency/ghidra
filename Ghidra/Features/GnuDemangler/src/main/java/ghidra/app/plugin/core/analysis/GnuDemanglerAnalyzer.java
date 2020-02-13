@@ -51,7 +51,7 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		"Signals to use the deprecated demangler when the modern demangler cannot demangle a " +
 			"given string";
 
-	private static final String OPTION_NAME_DEMANGLER_PARAMETERS =
+	static final String OPTION_NAME_DEMANGLER_PARAMETERS =
 		"Use External Demangler Options";
 	private static final String OPTION_DESCRIPTION_DEMANGLER_PARAMETERS =
 		"Signals to use pass the given parameters to the demangler program";
