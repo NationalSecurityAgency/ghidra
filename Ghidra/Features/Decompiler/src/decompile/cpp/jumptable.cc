@@ -1219,23 +1219,18 @@ void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<ui
   }
 }
 
-void JumpBasic::foldInNormalization(Funcdata *fd,PcodeOp *indop)
+Varnode *JumpBasic::foldInNormalization(Funcdata *fd,PcodeOp *indop)
 
-{				// Assume normalized and unnormalized values are found
-				// Fold normalization pcode into indirect branch
-				// Treat unnormalized value as input CPUI_BRANCHIND
-				// so it becomes literally the C switch statement
+{
+  // Set the BRANCHIND input to be the unnormalized switch variable, so
+  // all the intervening code to calculate the final address is eliminated as dead.
   fd->opSetInput(indop,switchvn,0);
+  return switchvn;
 }
 
 bool JumpBasic::foldInGuards(Funcdata *fd,JumpTable *jump)
 
-{ // We now think of the BRANCHIND as encompassing
-  // the guard function, so we "disarm" the guard
-  // instructions by making the guard condition
-  // always false.  If the simplification removes
-  // the unusable branches, we are left with only
-  // one path through the switch
+{
   bool change = false;
   for(int4 i=0;i<selectguards.size();++i) {
     PcodeOp *cbranch = selectguards[i].getBranch();
@@ -1825,7 +1820,7 @@ void JumpAssisted::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector
   label.push_back(0xBAD1ABE1);		// Add fake label to match the defaultAddress
 }
 
-void JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
+Varnode *JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
 
 {
   // Replace all outputs of jumpassist op with switchvn (including BRANCHIND)
@@ -1837,6 +1832,7 @@ void JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
     fd->opSetInput(op,switchvn,0);
   }
   fd->opDestroy(assistOp);		// Get rid of the assist op (it has served its purpose)
+  return switchvn;
 }
 
 bool JumpAssisted::foldInGuards(Funcdata *fd,JumpTable *jump)
@@ -1972,6 +1968,7 @@ JumpTable::JumpTable(Architecture *g,Address ad)
   jmodel = (JumpModel *)0;
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
+  switchVarConsume = ~((uintb)0);
   mostcommon = ~((uint4)0);
   maxtablesize = 1024;
   maxaddsub = 1;
@@ -1988,6 +1985,7 @@ JumpTable::JumpTable(const JumpTable *op2)
   jmodel = (JumpModel *)0;
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
+  switchVarConsume = ~((uintb)0);
   mostcommon = ~((uint4)0);
   maxtablesize = op2->maxtablesize;
   maxaddsub = op2->maxaddsub;
@@ -2081,7 +2079,7 @@ void JumpTable::addBlockToSwitch(BlockBasic *bl,uintb lab)
 
 void JumpTable::switchOver(const FlowInfo &flow)
 
-{				// Convert absolute addresses to block indices
+{
   FlowBlock *parent,*tmpbl;
   uint4 pos;
   int4 i,j,count,maxcount;
@@ -2112,6 +2110,28 @@ void JumpTable::switchOver(const FlowInfo &flow)
     if (count>maxcount) {
       maxcount = count;
       mostcommon = pos;
+    }
+  }
+}
+
+/// Eliminate any code involved in actually computing the destination address so
+/// it looks like the CPUI_BRANCHIND operation does it all internally.
+/// \param fd is the function containing \b this switch
+void JumpTable::foldInNormalization(Funcdata *fd)
+
+{
+  Varnode *switchvn = jmodel->foldInNormalization(fd,indirect);
+  if (switchvn != (Varnode *)0) {
+    // If possible, mark up the switch variable as not fully consumed so that
+    // subvariable flow can truncate it.
+    switchVarConsume = minimalmask(switchvn->getNZMask());
+    if (switchVarConsume >= calc_mask(switchvn->getSize())) {	// If mask covers everything
+      if (switchvn->isWritten()) {
+	PcodeOp *op = switchvn->getDef();
+	if (op->code() == CPUI_INT_SEXT) {			// Check for a signed extension
+	  switchVarConsume = calc_mask(op->getIn(0)->getSize());	// Assume the extension is not consumed
+	}
+      }
     }
   }
 }
@@ -2259,6 +2279,7 @@ void JumpTable::clear(void)
   label.clear();
   loadpoints.clear();
   indirect = (PcodeOp *)0;
+  switchVarConsume = ~((uintb)0);
   recoverystage = 0;
   // -opaddress- -maxtablesize- -maxaddsub- -maxleftright- -maxext- -collectloads- are permanent
 }

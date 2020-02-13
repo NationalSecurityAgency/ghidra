@@ -543,7 +543,6 @@ class ActionDeadCode : public Action {
   static bool neverConsumed(Varnode *vn,Funcdata &data);
   static void markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist);
   static uintb gatherConsumedReturn(Funcdata &data);
-  static uintb minimalMask(uintb val);		///< Calculate smallest mask that covers the given value
 public:
   ActionDeadCode(const string &g) : Action(0,"deadcode",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
@@ -1076,21 +1075,5 @@ public:
 /// \return \b true if the first term is less than the second
 inline bool TermOrder::additiveCompare(const PcodeOpEdge *op1,const PcodeOpEdge *op2) {
     return (-1 == op1->getVarnode()->termOrder(op2->getVarnode())); }
-
-/// Calculcate a mask that covers either the least significant byte, uint2, uint4, or uint8,
-/// whatever is smallest.
-/// \param val is the given value
-/// \return the minimal mask
-inline uintb ActionDeadCode::minimalMask(uintb val)
-
-{
-  if (val > 0xffffffff)
-    return ~((uintb)0);
-  if (val > 0xffff)
-    return 0xffffffff;
-  if (val > 0xff)
-    return 0xffff;
-  return 0xff;
-}
 
 #endif

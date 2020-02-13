@@ -62,7 +62,7 @@ class SubvariableFlow {
   /// \brief Operation with a new logical value as (part of) input, but output Varnode is unchanged
   class PatchRecord {
     friend class SubvariableFlow;
-    int4 type;			///< 0=COPY 1=compare 2=call 3=AND/SHIFT
+    int4 type;			///< 0=COPY 1=compare 2=call/return/branchind 3=AND/SHIFT
     PcodeOp *pullop;		///< Op being affected
     ReplaceVarnode *in1;	///< The logical variable input
     ReplaceVarnode *in2;	///< (optional second parameter)
@@ -91,6 +91,7 @@ class SubvariableFlow {
   bool tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
   bool tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
   bool tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn);
+  bool trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn);
   bool traceForward(ReplaceVarnode *rvn);	///< Trace the logical data-flow forward for the given subgraph variable
   bool traceBackward(ReplaceVarnode *rvn);	///< Trace the logical data-flow backward for the given subgraph variable
   bool traceForwardSext(ReplaceVarnode *rvn);	///< Trace logical data-flow forward assuming sign-extensions

@@ -192,7 +192,22 @@ public:
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const=0;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext)=0;
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const=0;
-  virtual void foldInNormalization(Funcdata *fd,PcodeOp *indop)=0;
+
+  /// \brief Do normalization of the given switch specific to \b this model.
+  ///
+  /// The PcodeOp machinery is removed so it looks like the CPUI_BRANCHIND simply takes the
+  /// switch variable as an input Varnode and automatically interprets its values to reach
+  /// the correct destination.
+  /// \param fd is the function containing the switch
+  /// \param indop is the given switch as a CPUI_BRANCHIND
+  /// \return the Varnode holding the final unnormalized switch variable
+  virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop)=0;
+
+  /// \brief Eliminate any \e guard code involved in computing the switch destination
+  ///
+  /// We now think of the BRANCHIND as encompassing any guard function.
+  /// \param fd is the function containing the switch
+  /// \param jump is the JumpTable owning \b this model.
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump)=0;
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)=0;
   virtual JumpModel *clone(JumpTable *jt) const=0;
@@ -213,7 +228,7 @@ public:
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
-  virtual void foldInNormalization(Funcdata *fd,PcodeOp *indop) {}
+  virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop) { return (Varnode *)0; }
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump) { return false; }
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
@@ -241,6 +256,16 @@ protected:
   void findSmallestNormal(uint4 matchsize);
   void findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,uint4 matchsize,uint4 maxtablesize);
   void markFoldableGuards();
+
+  /// \brief Eliminate the given guard to \b this switch
+  ///
+  /// We \e disarm the guard instructions by making the guard condition
+  /// always \b false.  If the simplification removes the unusable branches,
+  /// we are left with only one path through the switch.
+  /// \param fd is the function containing the switch
+  /// \param guard is a description of the particular guard mechanism
+  /// \param jump is the JumpTable owning \b this model
+  /// \return \b true if a change was made to data-flow
   virtual bool foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump);
 public:
   JumpBasic(JumpTable *jt) : JumpModel(jt) { jrange = (JumpValuesRange *)0; }
@@ -253,7 +278,7 @@ public:
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext);
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
-  virtual void foldInNormalization(Funcdata *fd,PcodeOp *indop);
+  virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump);
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable);
   virtual JumpModel *clone(JumpTable *jt) const;
@@ -341,45 +366,54 @@ public:
   virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
-  virtual void foldInNormalization(Funcdata *fd,PcodeOp *indop);
+  virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump);
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void) { assistOp = (PcodeOp *)0; switchvn = (Varnode *)0; }
 };
 
+/// \brief A map from values to control-flow targets within a function
+///
+/// A JumpTable is attached to a specific CPUI_BRANCHIND and encapsulates all
+/// the information necessary to model the indirect jump as a \e switch statement.
+/// It knows how to map from specific switch variable values to the destination
+/// \e case block and how to label the value.
 class JumpTable {
-  Architecture *glb;	// Architecture under which this jumptable operates
-  JumpModel *jmodel,*origmodel;
-  vector<Address> addresstable; // Raw addresses in the jumptable
-  vector<uint4> blocktable;	// Addresses converted to basic blocks
-  vector<uintb> label;
-  vector<LoadTable> loadpoints;
-  Address opaddress;		// Absolute address of op
-  PcodeOp *indirect;		// INDIRECT op referring to this jump table
-  uint4 mostcommon;		// Most common position in table
-  uint4 maxtablesize;		// Maximum table size we allow to be built (sanity check)
-  uint4 maxaddsub;		// Maximum ADDs or SUBs to normalize
-  uint4 maxleftright;		// Maximum shifts to normalize
-  uint4 maxext;			// Maximum extensions to normalize
-  int4 recoverystage;		// 0=no stages, 1=needs additional stage, 2=complete
-  bool collectloads;
-  void recoverModel(Funcdata *fd);
+  Architecture *glb;		///< Architecture under which this jump-table operates
+  JumpModel *jmodel;		///< Current model of how the jump table is implemented in code
+  JumpModel *origmodel;		///< Initial jump table model, which may be incomplete
+  vector<Address> addresstable; ///< Raw addresses in the jump-table
+  vector<uint4> blocktable;	///< Addresses converted to basic blocks
+  vector<uintb> label;		///< The case label for each explicit target
+  vector<LoadTable> loadpoints;	///< Any recovered in-memory data for the jump-table
+  Address opaddress;		///< Absolute address of the INDIRECT jump
+  PcodeOp *indirect;		///< CPUI_INDIRECT op referring linked to \b this jump-table
+  uintb switchVarConsume;	///< Bits of the switch variable being consumed
+  uint4 mostcommon;		///< Index of the most common position in table, prior to deduping
+  uint4 maxtablesize;		///< Maximum table size we allow to be built (sanity check)
+  uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
+  uint4 maxleftright;		///< Maximum shifts to normalize
+  uint4 maxext;			///< Maximum extensions to normalize
+  int4 recoverystage;		///< 0=no stages, 1=needs additional stage, 2=complete
+  bool collectloads;		///< Set to \b true if information about in-memory model data is/should be collected
+  void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);
-  void sanityCheck(Funcdata *fd);
+  void sanityCheck(Funcdata *fd);	///< Perform sanity check on recovered address targets
   uint4 block2Position(const FlowBlock *bl) const;
   static bool isReachable(PcodeOp *op);
 public:
-  JumpTable(Architecture *g,Address ad=Address());
-  JumpTable(const JumpTable *op2);
-  ~JumpTable(void);
-  bool isSwitchedOver(void) const { return !blocktable.empty(); }
-  bool isRecovered(void) const { return !addresstable.empty(); }
-  bool isLabelled(void) const { return !label.empty(); }
-  bool isOverride(void) const;
+  JumpTable(Architecture *g,Address ad=Address());	///< Constructor
+  JumpTable(const JumpTable *op2);			///< Copy constructor
+  ~JumpTable(void);					///< Destructor
+  bool isSwitchedOver(void) const { return !blocktable.empty(); }	///< Return \b true if addresses converted to basic-blocks
+  bool isRecovered(void) const { return !addresstable.empty(); }	///< Return \b true if a model has been recovered
+  bool isLabelled(void) const { return !label.empty(); }		///< Return \b true if \e case labels are computed
+  bool isOverride(void) const;				///< Return \b true if \b this table was manually overridden
   bool isPossibleMultistage(void) const { return (addresstable.size()==1); }
   int4 getStage(void) const { return recoverystage; }
   int4 numEntries(void) const { return addresstable.size(); }
+  uintb getSwitchVarConsume(void) const { return switchVarConsume; }	///< Get bits of switch variable consumed by \b this table
   int4 getMostCommon(void) const { return mostcommon; }
   const Address &getOpAddress(void) const { return opaddress; }
   PcodeOp *getIndirectOp(void) const { return indirect; }
@@ -395,10 +429,10 @@ public:
   void setMostCommonBlock(uint4 bl) { mostcommon = bl; }
   void setLoadCollect(bool val) { collectloads = val; }
   void addBlockToSwitch(BlockBasic *bl,uintb lab);
-  void switchOver(const FlowInfo &flow);
-  uintb getLabelByIndex(int4 index) const { return label[index]; }
-  void foldInNormalization(Funcdata *fd) { jmodel->foldInNormalization(fd,indirect); }
-  bool foldInGuards(Funcdata *fd) { return jmodel->foldInGuards(fd,this); }
+  void switchOver(const FlowInfo &flow);				///< Convert absolute addresses to block indices
+  uintb getLabelByIndex(int4 index) const { return label[index]; }	///< Given a \e case index, get its label
+  void foldInNormalization(Funcdata *fd);		///< Hide the normalization code for the switch
+  bool foldInGuards(Funcdata *fd) { return jmodel->foldInGuards(fd,this); }	///< Hide any guard code for \b this switch
   void recoverAddresses(Funcdata *fd);
   void recoverMultistage(Funcdata *fd);
   bool recoverLabels(Funcdata *fd);

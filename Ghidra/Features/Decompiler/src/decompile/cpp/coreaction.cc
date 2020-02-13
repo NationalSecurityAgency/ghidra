@@ -3373,7 +3373,7 @@ void ActionDeadCode::markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> 
     if (vn->isAutoLive())
       consumeVal = ~((uintb)0);
     else
-      consumeVal = minimalMask(vn->getNZMask());
+      consumeVal = minimalmask(vn->getNZMask());
     pushConsumed(consumeVal,vn,worklist);
   }
 }
@@ -3398,7 +3398,7 @@ uintb ActionDeadCode::gatherConsumedReturn(Funcdata &data)
     if (returnOp->isDead()) continue;
     if (returnOp->numInput() > 1) {
       Varnode *vn = returnOp->getIn(1);
-      consumeVal |= minimalMask(vn->getNZMask());
+      consumeVal |= minimalmask(vn->getNZMask());
     }
   }
   return consumeVal;
@@ -3455,10 +3455,20 @@ int4 ActionDeadCode::apply(Funcdata &data)
 	continue;
     }
     else if (!op->isAssignment()) {
-      if (op->code() == CPUI_RETURN) {
+      OpCode opc = op->code();
+      if (opc == CPUI_RETURN) {
 	pushConsumed(~((uintb)0),op->getIn(0),worklist);
 	for(i=1;i<op->numInput();++i)
 	  pushConsumed(returnConsume,op->getIn(i),worklist);
+      }
+      else if (opc == CPUI_BRANCHIND) {
+	JumpTable *jt = data.findJumpTable(op);
+	uintb mask;
+	if (jt != (JumpTable *)0)
+	  mask = jt->getSwitchVarConsume();
+	else
+	  mask = ~((uintb)0);
+	pushConsumed(mask,op->getIn(0),worklist);
       }
       else {
 	for(i=0;i<op->numInput();++i)

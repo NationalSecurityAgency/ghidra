@@ -484,6 +484,24 @@ inline uintb pcode_left(uintb val,int4 sa) {
   return val << sa;
 }
 
+/// \brief Calculate smallest mask that covers the given value
+///
+/// Calculcate a mask that covers either the least significant byte, uint2, uint4, or uint8,
+/// whatever is smallest.
+/// \param val is the given value
+/// \return the minimal mask
+inline uintb minimalmask(uintb val)
+
+{
+  if (val > 0xffffffff)
+    return ~((uintb)0);
+  if (val > 0xffff)
+    return 0xffffffff;
+  if (val > 0xff)
+    return 0xffff;
+  return 0xff;
+}
+
 extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-bit is set
 extern uintb calc_mask(int4 size);			///< Calculate a mask for a given byte size
 extern uintb uintb_negate(uintb in,int4 size);		///< Negate the \e sized value

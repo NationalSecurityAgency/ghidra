@@ -340,6 +340,28 @@ bool SubvariableFlow::tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn)
   return true;
 }
 
+/// \brief Determine if the subgraph variable can act as a switch variable for the given BRANCHIND
+///
+/// We query the JumpTable associated with the BRANCHIND to see if its switch variable
+/// can be trimmed as indicated by the logical flow.
+/// \param op is the given BRANCHIND op
+/// \param rvn is the subgraph variable flowing to the BRANCHIND
+/// \return \b true if the switch variable can be successfully trimmed to its logical size
+bool SubvariableFlow::trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn)
+
+{
+  if ((rvn->mask & 1) == 0) return false;	// Logical value must be justified
+  if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
+    return false;				//  we can't trim
+  patchlist.push_back(PatchRecord());
+  patchlist.back().type = 2;
+  patchlist.back().pullop = op;
+  patchlist.back().in1 = rvn;
+  patchlist.back().slot = 0;
+  pullcount += 1;		// A true terminal modification
+  return true;
+}
+
 /// Try to trace the logical variable through descendant Varnodes
 /// creating new nodes in the logical subgraph and updating the worklist.
 /// \param rvn is the given subgraph variable to trace
@@ -571,6 +593,10 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       break;
     case CPUI_RETURN:
       if (!tryReturnPull(op,rvn,slot)) return false;
+      hcount += 1;
+      break;
+    case CPUI_BRANCHIND:
+      if (!trySwitchPull(op, rvn)) return false;
       hcount += 1;
       break;
     case CPUI_BOOL_NEGATE:
@@ -848,6 +874,10 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
       break;
     case CPUI_RETURN:
       if (!tryReturnPull(op,rvn,slot)) return false;
+      hcount += 1;
+      break;
+    case CPUI_BRANCHIND:
+      if (!trySwitchPull(op,rvn)) return false;
       hcount += 1;
       break;
     default:
@@ -1331,7 +1361,7 @@ void SubvariableFlow::doReplacement(void)
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in1),0);
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in2),1);
     }
-    else if (type == 2) {	// A call parameter or return value
+    else if (type == 2) {	// A call parameter, return value, or switch variable
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in1),(*piter).slot);
     }
     else if (type == 3) {
