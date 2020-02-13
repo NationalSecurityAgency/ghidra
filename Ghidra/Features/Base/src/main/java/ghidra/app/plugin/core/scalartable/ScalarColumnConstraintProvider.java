@@ -33,7 +33,8 @@ public class ScalarColumnConstraintProvider implements ColumnConstraintProvider 
 		List<ColumnConstraint<?>> list = new ArrayList<>();
 
 		/*
-		 *  Since we're converting Scalar to Long, we'lll also get the extant Long constraints.
+		 *  Since we're converting Scalar to Long, we'll also get the extant Long constraints; 
+		 *  they'll operate on the scalars value, independent of signedness.
 		 */
 
 		// @formatter:off
@@ -42,10 +43,10 @@ public class ScalarColumnConstraintProvider implements ColumnConstraintProvider 
 		list.add(makeSignedConstraint(new InRangeColumnConstraint<>("In Range (signed)", 0l, 0l, new LongRangeEditorProvider(), "scalar")));
 		list.add(makeSignedConstraint(new NotInRangeColumnConstraint<>("Not In Range (signed)", 0l, 0l, new LongRangeEditorProvider(), "scalar")));
 
-		list.add(makeUnsignedConstraint(new AtLeastColumnConstraint<>("At Least (unsigned)", 0l, new LongEditorProvider(), "scalar")));
-		list.add(makeUnsignedConstraint(new AtMostColumnConstraint<>("At Most (unsigned)", 0l, new LongEditorProvider(), "scalar")));
-		list.add(makeUnsignedConstraint(new InRangeColumnConstraint<>("In Range (unsigned)", 0l, 0l, new LongRangeEditorProvider(), "scalar")));
-		list.add(makeUnsignedConstraint(new NotInRangeColumnConstraint<>("Not In Range (unsigned)", 0l, 0l, new LongRangeEditorProvider(), "scalar")));
+		list.add(makeUnsignedConstraint(new AtLeastColumnConstraint<>("At Least (unsigned)", 0l, new LongEditorProvider(), "scalar-unsigned")));
+		list.add(makeUnsignedConstraint(new AtMostColumnConstraint<>("At Most (unsigned)", 0l, new LongEditorProvider(), "scalar-unsigned")));
+		list.add(makeUnsignedConstraint(new InRangeColumnConstraint<>("In Range (unsigned)", 0l, 0l, new LongRangeEditorProvider(), "scalar-unsigned")));
+		list.add(makeUnsignedConstraint(new NotInRangeColumnConstraint<>("Not In Range (unsigned)", 0l, 0l, new LongRangeEditorProvider(), "scalar-unsigned")));
 		// @formatter:on
 
 		return list;

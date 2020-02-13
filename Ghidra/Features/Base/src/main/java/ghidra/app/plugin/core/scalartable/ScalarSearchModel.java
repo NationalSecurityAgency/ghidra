@@ -51,10 +51,6 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 	static final int TEMP_MAX_RESULTS = 1_000_000;
 
-	private static final int FUNCTION_COL_WIDTH = 150;
-	private static final int HEXADECIMAL_COL_WIDTH = 100;
-	private static final int DECIMAL_COL_WIDTH = 100;
-
 	private Listing listing;
 
 	private ProgramSelection currentSelection;
@@ -82,8 +78,8 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		descriptor.addHiddenColumn(new ScalarUnsignedDecimalValueTableColumn());
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new ScalarFunctionNameTableColumn()));
-		descriptor.addVisibleColumn(new ScalarBitCountTableColumn());
-		descriptor.addVisibleColumn(new ScalarSignednessTableColumn());
+		descriptor.addHiddenColumn(new ScalarBitCountTableColumn());
+		descriptor.addHiddenColumn(new ScalarSignednessTableColumn());
 		return descriptor;
 	}
 
@@ -380,8 +376,8 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	}
 
 	private abstract class AbstractScalarValueTableColumn
-			extends AbstractDynamicTableColumn<ScalarRowObject, Scalar, Program>
-			implements ProgramLocationTableColumn<ScalarRowObject, Scalar> {
+	extends AbstractDynamicTableColumn<ScalarRowObject, Scalar, Program>
+	implements ProgramLocationTableColumn<ScalarRowObject, Scalar> {
 
 		@Override
 		public Comparator<Scalar> getComparator() {
@@ -397,31 +393,34 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 	private class ScalarHexUnsignedValueTableColumn extends AbstractScalarValueTableColumn {
 
+		private static final int HEXADECIMAL_COL_WIDTH = 100;
+
 		AbstractScalarValueRenderer renderer = new AbstractScalarValueRenderer() {
+
+			private static final int RADIX = 16;
+			private static final boolean ZERO_PADDED = false;
+			private static final boolean SHOW_SIGN = false;
+			private static final String PREFIX = "0x";
+			private static final String SUFFIX = "";
+
+			@Override
+			protected String formatScalar(Scalar scalar) {
+				if (scalar == null) {
+					return "";
+				}
+
+				return scalar.toString(RADIX, ZERO_PADDED, SHOW_SIGN, PREFIX, SUFFIX);
+			}
 
 			@Override
 			protected void configureFont(JTable table, TableModel model, int column) {
 				setFont(fixedWidthFont);
 			}
 
-			@Override
-			protected String formatScalar(Scalar scalar) {
-
-				if (scalar == null) {
-					return "";
-				}
-				int radix = 16;
-				boolean zeroPadded = false;
-				boolean showSign = false;
-				String pre = "0x";
-				String post = "";
-
-				return scalar.toString(radix, zeroPadded, showSign, pre, post);
-			}
 
 			@Override
 			public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
-				return ColumnConstraintFilterMode.DEFAULT;
+				return ColumnConstraintFilterMode.USE_BOTH_COLUMN_RENDERER_FITLER_STRING_AND_CONSTRAINTS;
 			}
 
 		};
@@ -454,7 +453,15 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 	private class ScalarSignedDecimalValueTableColumn extends AbstractScalarValueTableColumn {
 
+		private static final int DECIMAL_COL_WIDTH = 100;
+
 		AbstractScalarValueRenderer renderer = new AbstractScalarValueRenderer() {
+
+			private static final int RADIX = 10;
+			private static final boolean ZERO_PADDED = false;
+			private static final boolean SHOW_SIGN = true;
+			private static final String PREFIX = "";
+			private static final String SUFFIX = "";
 
 			@Override
 			protected String formatScalar(Scalar scalar) {
@@ -462,14 +469,9 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 					return "";
 				}
 
-				int radix = 10;
-				boolean zeroPadded = false;
-				boolean showSign = true;
-				String pre = "";
-				String post = "";
-
-				return scalar.toString(radix, zeroPadded, showSign, pre, post);
+				return scalar.toString(RADIX, ZERO_PADDED, SHOW_SIGN, PREFIX, SUFFIX);
 			}
+
 		};
 
 		@Override
@@ -501,7 +503,15 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 	private class ScalarUnsignedDecimalValueTableColumn extends AbstractScalarValueTableColumn {
 
+		private static final int DECIMAL_COL_WIDTH = 100;
+
 		AbstractScalarValueRenderer renderer = new AbstractScalarValueRenderer() {
+
+			private static final int RADIX = 10;
+			private static final boolean ZERO_PADDED = false;
+			private static final boolean SHOW_SIGN = false;
+			private static final String PREFIX = "";
+			private static final String SUFFIX = "";
 
 			@Override
 			protected String formatScalar(Scalar scalar) {
@@ -509,14 +519,9 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 					return "";
 				}
 
-				int radix = 10;
-				boolean zeroPadded = false;
-				boolean showSign = false;
-				String pre = "";
-				String post = "";
-
-				return scalar.toString(radix, zeroPadded, showSign, pre, post);
+				return scalar.toString(RADIX, ZERO_PADDED, SHOW_SIGN, PREFIX, SUFFIX);
 			}
+
 
 		};
 
@@ -548,8 +553,10 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	}
 
 	private class ScalarBitCountTableColumn
-			extends AbstractDynamicTableColumn<ScalarRowObject, Integer, Program>
-			implements ProgramLocationTableColumn<ScalarRowObject, Integer> {
+	extends AbstractDynamicTableColumn<ScalarRowObject, Integer, Program>
+	implements ProgramLocationTableColumn<ScalarRowObject, Integer> {
+
+		private static final int BIT_COUNT_COL_WIDTH = 80;
 
 		@Override
 		public String getColumnName() {
@@ -570,7 +577,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		@Override
 		public int getColumnPreferredWidth() {
-			return 80;
+			return BIT_COUNT_COL_WIDTH;
 		}
 
 	}
@@ -581,8 +588,10 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	}
 
 	private class ScalarSignednessTableColumn
-			extends AbstractDynamicTableColumn<ScalarRowObject, Signedness, Program>
-			implements ProgramLocationTableColumn<ScalarRowObject, Signedness> {
+	extends AbstractDynamicTableColumn<ScalarRowObject, Signedness, Program>
+	implements ProgramLocationTableColumn<ScalarRowObject, Signedness> {
+
+		private static final int SIGNEDNESS_COL_WIDTH = 100;
 
 		@Override
 		public String getColumnName() {
@@ -603,12 +612,14 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		@Override
 		public int getColumnPreferredWidth() {
-			return 100;
+			return SIGNEDNESS_COL_WIDTH;
 		}
 
 	}
 
 	private class ScalarFunctionNameTableColumn extends FunctionNameTableColumn {
+
+		private static final int FUNCTION_COL_WIDTH = 150;
 
 		@Override
 		public int getColumnPreferredWidth() {
