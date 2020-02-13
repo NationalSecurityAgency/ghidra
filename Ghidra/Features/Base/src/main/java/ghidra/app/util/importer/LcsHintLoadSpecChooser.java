@@ -37,16 +37,18 @@ public class LcsHintLoadSpecChooser implements LoadSpecChooser {
 	 * {@link CompilerSpec}.
 	 * 
 	 * @param language The {@link Language} to use (should not be null)
-	 * @param compilerSpec The {@link CompilerSpec} to use (should not be null)
+	 * @param compilerSpec The {@link CompilerSpec} to use (f null default compiler spec will be used)
 	 */
 	public LcsHintLoadSpecChooser(Language language, CompilerSpec compilerSpec) {
 		this.languageID = language.getLanguageID();
-		this.compilerSpecID = compilerSpec.getCompilerSpecID();
+		this.compilerSpecID =
+			(compilerSpec == null) ? language.getDefaultCompilerSpec().getCompilerSpecID()
+					: compilerSpec.getCompilerSpecID();
 	}
 
 	@Override
 	public LoadSpec choose(LoaderMap loaderMap) {
-		
+
 		// Use the highest priority loader (it will be the first one)
 		Loader loader = loaderMap.keySet().stream().findFirst().orElse(null);
 		if (loader == null) {

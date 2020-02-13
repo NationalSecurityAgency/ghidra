@@ -174,9 +174,6 @@ class DisassemblerQueue {
 				branchFlow = currentBranchQueue.first();
 				currentBranchQueue.remove(branchFlow);
 			}
-			if (processedBranchFlows.contains(branchFlow)) {
-				continue;
-			}
 			processedBranchFlows.add(branchFlow);
 
 			Address blockAddr = branchFlow.getDestinationAddress();

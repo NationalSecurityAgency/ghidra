@@ -477,12 +477,8 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTable();
 
 		selectAllTableRows();
-
 		runSwing(() -> provider.delete());
-
-		waitForTable();
-
-		assertEquals(0, table.getRowCount());
+		waitForCondition(() -> table.getRowCount() == 0, "Bookmarks not deleted");
 	}
 
 	@Test

@@ -17,6 +17,8 @@ package ghidra.app.merge.datatypes;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,38 +37,48 @@ import ghidra.util.task.TaskMonitorAdapter;
 public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 
 	@Test
-    public void testCategoryAddRemoveDTAdd() throws Exception {
+	public void testCategoryAddRemoveDTAdd() throws Exception {
+
+		TypeDef td = new TypedefDataType("BF", IntegerDataType.dataType);
+
+		AtomicReference<Structure> structRef = new AtomicReference<>();
+
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Make no changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
+
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
 				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					c.removeCategory("Category5", TaskMonitorAdapter.DUMMY_MONITOR);
-					Category c5 = c.createCategory("Category5");
-					Structure dt = new StructureDataType("Test", 0);
-					dt.add(new ByteDataType());
-					dt.add(new WordDataType());
 
-					dt = (Structure) c5.addDataType(dt, DataTypeConflictHandler.DEFAULT_HANDLER);
-					dt.add(new QWordDataType());
+					Structure struct =
+						new StructureDataType("Test", 0, program.getDataTypeManager());
+					struct.add(new ByteDataType());
+					struct.add(new WordDataType());
+					struct.insertBitFieldAt(3, 2, 6, td, 2, "bf1", null);
+					struct.insertBitFieldAt(3, 2, 4, td, 2, "bf2", null);
+					struct.add(new QWordDataType());
+
+					struct.setFlexibleArrayComponent(td, "flex", "my flex");
+
+					structRef.set(struct);
+
+					c.removeCategory("Category5", TaskMonitorAdapter.DUMMY);
+					Category c5 = c.createCategory("Category5");
+					c5.addDataType(struct, DataTypeConflictHandler.DEFAULT_HANDLER);
 					commit = true;
 				}
-				catch (InvalidNameException e) {
-					Assert.fail("got InvalidNameException!");
+				catch (Exception e) {
+					e.printStackTrace();
+					Assert.fail(e.toString());
 				}
 				finally {
 					program.endTransaction(transactionID, commit);
@@ -79,19 +91,19 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category5"));
 		assertNotNull(c);
-		assertNotNull(c.getDataType("Test"));
+		DataType dt = c.getDataType("Test");
+		assertNotNull(dt);
+		assertTrue(structRef.get().isEquivalent(dt));
 
 	}
 
 	@Test
-    public void testDataTypeAddedInMy() throws Exception {
+	public void testDataTypeAddedInMy() throws Exception {
 
 		// A category was added to Category5 in the latest; 
 		// in My program, rename Category5 to "My Category5" and add a new data type
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -111,9 +123,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -157,20 +166,19 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeAddedInMy2() throws Exception {
+	public void testDataTypeAddedInMy2() throws Exception {
+
+		TypeDef td = new TypedefDataType("BF", IntegerDataType.dataType);
+
+		AtomicReference<Structure> structRef = new AtomicReference<>();
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Make no changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -179,14 +187,23 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					Structure s = (Structure) c.getDataType("IntStruct");
-					c.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
-					s = new StructureDataType(c.getCategoryPath(), "IntStruct", 0);
-					s.add(new QWordDataType());
+					c.remove(s, TaskMonitorAdapter.DUMMY);
+					s = new StructureDataType(c.getCategoryPath(), "IntStruct", 0, dtm);
+					s.add(new QWordDataType(), "f1", "my f1");
 					s.add(new FloatDataType());
 					s.add(new ByteDataType());
+					s.insertBitFieldAt(16, 2, 6, td, 2, "bf1", "my bf1");
+					s.insertBitFieldAt(16, 2, 4, td, 2, "bf2", "my bf2");
 					s.add(new WordDataType());
+
+					structRef.set(s);
+
 					c.addDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
 					commit = true;
+				}
+				catch (Exception e) {
+					e.printStackTrace();
+					Assert.fail(e.toString());
 				}
 				finally {
 					program.endTransaction(transactionID, commit);
@@ -199,30 +216,25 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 		Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 		DataType dt = c.getDataType("IntStruct");
 		assertNotNull(dt);
-		assertTrue(dt instanceof Structure);
-		Structure s = (Structure) dt;
-		assertTrue(new QWordDataType().isEquivalent(s.getComponent(0).getDataType()));
-		assertTrue(new FloatDataType().isEquivalent(s.getComponent(1).getDataType()));
-		assertTrue(new ByteDataType().isEquivalent(s.getComponent(2).getDataType()));
-		assertTrue(new WordDataType().isEquivalent(s.getComponent(3).getDataType()));
+		assertTrue(structRef.get().isEquivalent(dt));
 
+		Structure s = (Structure) dt;
+		assertEquals("my f1", s.getComponent(0).getComment());
+		DataTypeComponent dtc = s.getComponentAt(17);
+		assertEquals(7, dtc.getOrdinal());
+		assertEquals("my bf1", dtc.getComment());
 	}
 
 	@Test
-    public void testDataTypeAddedInMy3() throws Exception {
+	public void testDataTypeAddedInMy3() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Make no changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -231,7 +243,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				Category c = dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					Structure s = (Structure) c.getDataType("IntStruct");
-					c.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					c.remove(s, TaskMonitorAdapter.DUMMY);
 					s = new StructureDataType(c.getCategoryPath(), "IntStruct", 0);
 					s.add(new QWordDataType());
 					s.add(new FloatDataType());
@@ -270,15 +282,13 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeAddedInLatest() throws Exception {
+	public void testDataTypeAddedInLatest() throws Exception {
 
 		// Add A category to Category5 in the latest, add 
 		// add a new data type; 
 		// in My program, rename Category5 to "My Category5" 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -303,9 +313,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -341,14 +348,12 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeAddedInLatest2() throws Exception {
+	public void testDataTypeAddedInLatest2() throws Exception {
 
 		// A category was added to Category5 in the latest; 
 		// in My program, rename Category5 to "My Category5" and add a new data type
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -372,9 +377,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -418,20 +420,15 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedInMy() throws Exception {
+	public void testDataTypeDeletedInMy() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Make no changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -443,7 +440,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -461,20 +458,15 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeAddedDeletedInMy() throws Exception {
+	public void testDataTypeAddedDeletedInMy() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Make no changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -487,7 +479,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 
 				try {
 					DataType dt = dtm.addDataType(s, DataTypeConflictHandler.DEFAULT_HANDLER);
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -505,12 +497,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedChanged() throws Exception {
+	public void testDataTypeDeletedChanged() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -529,9 +519,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -543,7 +530,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -561,12 +548,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedChanged2() throws Exception {
+	public void testDataTypeDeletedChanged2() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -585,9 +570,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -599,7 +581,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"FloatStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -616,12 +598,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedChanged3() throws Exception {
+	public void testDataTypeDeletedChanged3() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -631,7 +611,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -639,9 +619,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -669,12 +646,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedInLatest() throws Exception {
+	public void testDataTypeDeletedInLatest() throws Exception {
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -684,7 +659,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -692,9 +667,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -728,12 +700,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeDeletedInBoth() throws Exception {
+	public void testDataTypeDeletedInBoth() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -745,7 +715,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -753,9 +723,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -767,7 +734,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -785,20 +752,15 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDataTypeRenamedInMy() throws Exception {
+	public void testDataTypeRenamedInMy() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				// Make no changes to Latest.
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -834,12 +796,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testRenamedBoth() throws Exception {
+	public void testRenamedBoth() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -865,9 +825,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -902,12 +859,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testRenamedBoth2() throws Exception {
+	public void testRenamedBoth2() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -933,9 +888,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -971,12 +923,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDeletedInMyRenamedInLatest() throws Exception {
+	public void testDeletedInMyRenamedInLatest() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1002,9 +952,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1016,7 +963,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1032,12 +979,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDeletedInLatestRenamedInMy() throws Exception {
+	public void testDeletedInLatestRenamedInMy() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1047,7 +992,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					"IntStruct");
 
 				try {
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1055,9 +1000,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1090,12 +1032,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDeletedInLatestChangedInMy() throws Exception {
+	public void testDeletedInLatestChangedInMy() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1110,7 +1050,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					Category parent = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-					parent.removeCategory("Category3", TaskMonitorAdapter.DUMMY_MONITOR);
+					parent.removeCategory("Category3", TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1118,9 +1058,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1161,12 +1098,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testDeletedInLatestAddedInMy() throws Exception {
+	public void testDeletedInLatestAddedInMy() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1181,7 +1116,7 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 					Structure s = (Structure) dt;
 					s.add(new ByteDataType());
 					Category parent = dtm.getCategory(new CategoryPath("/Category1/Category2"));
-					parent.removeCategory("Category3", TaskMonitorAdapter.DUMMY_MONITOR);
+					parent.removeCategory("Category3", TaskMonitorAdapter.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -1189,9 +1124,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
@@ -1230,12 +1162,10 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 	}
 
 	@Test
-    public void testCompositeCommentChanged() throws Exception {
+	public void testCompositeCommentChanged() throws Exception {
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
@@ -1258,9 +1188,6 @@ public class DataTypeMerge1Test extends AbstractDataTypeMergeTest {
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;

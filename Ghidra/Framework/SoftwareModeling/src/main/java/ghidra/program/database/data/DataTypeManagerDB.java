@@ -774,7 +774,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private DataType resolveBitFieldDataType(BitFieldDataType bitFieldDataType,
 			DataTypeConflictHandler handler) {
 
-		// NOTE: When a bit-field is getting adding added it will get resolved more than once.
+		// NOTE: When a bit-field is getting added it will get resolved more than once.
 		// The first time we will ensure that the base data type, which may be a TypeDef, gets
 		// resolved.  If the bit-offset is too large it will be set to 0
 		// with the expectation that it will get corrected during subsequent packing.
@@ -788,7 +788,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		int storageSizeBits = 8 * storageSize;
 		if ((bitOffset + bitSize) > storageSizeBits) {
 			// should get recomputed during packing when used within aligned structure
-			bitOffset = getDataOrganization().isBigEndian() ? baseLengthBits - bitSize : 0;
+			int effectiveBitSize = Math.min(bitSize, baseLengthBits);
+			bitOffset = getDataOrganization().isBigEndian() ? baseLengthBits - effectiveBitSize : 0;
 			storageSize = baseLength;
 		}
 		try {
@@ -933,14 +934,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (category == null) {
 			return null;
 		}
-		String namePrefix = dtName + DataType.CONFLICT_SUFFIX;
-		DataType[] dataTypes = category.getDataTypes();
-		for (DataType candidate : dataTypes) {
+		List<DataType> relatedByName = category.getDataTypesByBaseName(dtName);
+
+		for (DataType candidate : relatedByName) {
 			String candidateName = candidate.getName();
-			if (candidateName.startsWith(namePrefix)) {
-				if (!candidateName.equals(excludedName) && candidate.isEquivalent(dataType)) {
-					return candidate;
-				}
+			if (!candidateName.equals(excludedName) && candidate.isEquivalent(dataType)) {
+				return candidate;
 			}
 		}
 		return null;
@@ -3207,13 +3206,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		lock.acquire();
 		try {
 			long[] ids = parentChildAdapter.getParentIds(childID);
-			// TODO: consider deduping ids using Set
 			List<DataType> dts = new ArrayList<>();
-			for (int i = 0; i < ids.length; i++) {
-				DataType dt = getDataType(ids[i]);
+			for (long id : ids) {
+				DataType dt = getDataType(id);
 				if (dt == null) {
 					// cleanup invalid records for missing parent
-					attemptRecordRemovalForParent(ids[i]);
+					attemptRecordRemovalForParent(id);
 				}
 				else {
 					dts.add(dt);

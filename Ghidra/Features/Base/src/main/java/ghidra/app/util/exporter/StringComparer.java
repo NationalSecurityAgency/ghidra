@@ -16,16 +16,16 @@
 package ghidra.app.util.exporter;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Assert;
 
 import ghidra.util.Msg;
 
-public class Compare {
-	public static void compare(ArrayList<String> expectedList, File actualFile) throws Exception {
+public class StringComparer {
+	public static void compareLines(List<String> expectedList, File actualFile) throws Exception {
 		int index = 0;
-		
+
 		boolean hasFailure = false;
 
 		try (BufferedReader reader = new BufferedReader(new FileReader(actualFile))) {
@@ -35,7 +35,7 @@ public class Compare {
 				if (actualLine == null) {
 					break;
 				}
-								
+
 				if (index >= expectedList.size()) {
 					++excess;
 					continue;
@@ -46,26 +46,26 @@ public class Compare {
 				expectedLine = expectedLine.trim();
 
 				boolean match =
-						expectedLine.equals(actualLine) || actualLine.startsWith(expectedLine);
+					expectedLine.equals(actualLine) || actualLine.startsWith(expectedLine);
 
 				hasFailure |= !match;
 
 				if (!match) {
-					Msg.debug(Compare.class, "Expected line does not match actual line (" + index +
+					Msg.debug(StringComparer.class, "Expected line does not match actual line (" + index +
 						"): \nExpected: " + expectedLine + "\nActual: " + actualLine);
 				}
 			}
 
 			if (excess > 0) {
 				String message = "Actual file contains " + excess + " more lines than expected";
-				Msg.debug(Compare.class, message);
+				Msg.debug(StringComparer.class, message);
 				Assert.fail(message);
 			}
 			else if (!hasFailure && index < expectedList.size()) {
 				int fewer = expectedList.size() - index;
 				String message = "Actual file contains " + fewer +
-						" fewer lines than expected";
-				Msg.debug(Compare.class, message);
+					" fewer lines than expected";
+				Msg.debug(StringComparer.class, message);
 				Assert.fail(message);
 			}
 

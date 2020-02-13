@@ -125,7 +125,8 @@ public class LocationReferencesPlugin extends Plugin
 	private void displayProviderForLocation(ProgramLocation location, Navigatable navigatable) {
 		LocationDescriptor locationDescriptor = getLocationDescriptor(location);
 		if (locationDescriptor == null) {
-			throw new IllegalArgumentException("Unable to display provider - unknown location");
+			throw new IllegalArgumentException(
+				"Unable to display provider - unknown location: " + location);
 		}
 
 		LocationReferencesProvider provider = findProvider(locationDescriptor, navigatable);

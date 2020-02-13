@@ -27,7 +27,7 @@ import docking.widgets.EventTrigger;
  * @param <T> The action state type
  */
 public class MultiStateActionBuilder<T> extends
-		AbstractActionBuilder<MultiStateDockingAction<T>, MultiStateActionBuilder<T>> {
+		AbstractActionBuilder<MultiStateDockingAction<T>, ActionContext, MultiStateActionBuilder<T>> {
 
 	private BiConsumer<ActionState<T>, EventTrigger> actionStateChangedCallback;
 	private boolean performActionOnButtonClick;
@@ -77,7 +77,7 @@ public class MultiStateActionBuilder<T> extends
 	public MultiStateDockingAction<T> build() {
 		validate();
 		MultiStateDockingAction<T> action =
-			new MultiStateDockingAction<T>(name, owner, isToolbarAction()) {
+			new MultiStateDockingAction<>(name, owner, isToolbarAction()) {
 
 				@Override
 				public void actionStateChanged(ActionState<T> newActionState,

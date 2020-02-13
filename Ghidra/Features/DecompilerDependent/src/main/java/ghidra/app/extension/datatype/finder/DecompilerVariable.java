@@ -63,6 +63,16 @@ public abstract class DecompilerVariable {
 			return dataType;
 		}
 
+		// The parent variable declaration node has the type
+		ClangNode parent = variable.Parent();
+		if (parent instanceof ClangVariableDecl) {
+			ClangVariableDecl decl = (ClangVariableDecl) parent;
+			dataType = decl.getDataType();
+			if (dataType != null) {
+				return dataType;
+			}
+		}
+
 		// Prefer the type of the first input varnode, unless that type is a 'void *'.  
 		// Usually, in that special case, the output varnode has the correct type information. 		
 		PcodeOp op = variable.getPcodeOp();

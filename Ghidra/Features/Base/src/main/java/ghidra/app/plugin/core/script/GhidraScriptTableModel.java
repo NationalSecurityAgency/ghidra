@@ -537,7 +537,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
 			// not sure about this: it could be USE_COLUMN_CONSTRAINTS_ONLY, but then the text
 			// filter would not match the formatted date.  This allows for both.
-			return ColumnConstraintFilterMode.USE_BOTH_COLUMN_RENDERER_FITLER_STRING_AND_CONSTRAINTS;
+			return ColumnConstraintFilterMode.ALLOW_ALL_FILTERS;
 		}
 
 		@Override

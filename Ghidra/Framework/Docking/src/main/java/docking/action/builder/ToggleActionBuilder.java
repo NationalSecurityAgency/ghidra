@@ -21,7 +21,7 @@ import docking.action.ToggleDockingAction;
  * Builder for {@link ToggleDockingAction}s
  */
 public class ToggleActionBuilder extends
-		AbstractActionBuilder<ToggleDockingAction, ToggleActionBuilder> {
+		AbstractActionBuilder<ToggleDockingAction, ActionContext, ToggleActionBuilder> {
 
 	/**
 	 * The initial toggle state for the action

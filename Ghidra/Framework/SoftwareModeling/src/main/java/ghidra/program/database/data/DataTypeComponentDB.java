@@ -141,7 +141,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	}
 
 	@Override
-	public DataType getParent() {
+	public Composite getParent() {
 		return parent;
 	}
 
