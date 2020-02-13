@@ -63,23 +63,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			symbolName = sym.getNameAsString();
 		}
 
-		//TODO  remove debug
-		switch(type) {
-		case 2:
-		case 3:
-		case 5:
-			break;
-		default:
-			System.out.println("DEBUG RISCV: " +
-					type + " " + relocationAddress + " " +
-					String.format("%x", symbolValue) + " " +
-					String.format("%x", addend) + " " +
-					String.format("%x", offset) + " " +
-					String.format("%x", base));// + " " +
-					//String.format("%x", memory.getInt(relocationAddress)));
-			break;
-		}
-
 		long value64 = 0;
 		int value32 = 0;
 		short value16 = 0;
