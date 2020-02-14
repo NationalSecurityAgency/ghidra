@@ -189,7 +189,7 @@
     <symbol name="USARTF1_DRE" address="code:0x00F6" entry="true"/>
     <symbol name="USARTF1_TXC" address="code:0x00F8" entry="true"/>
 
-    <!-- See /usr/lib/avr/include/avr/iox256a1.h -->
+    <!-- See /usr/lib/avr/include/avr/iox128a1.h -->
 
    <symbol name="VPORT0" address="mem:0x0010"/>
    <symbol name="VPORT1" address="mem:0x0014"/>
