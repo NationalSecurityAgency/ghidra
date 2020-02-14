@@ -169,7 +169,11 @@ abstract class CoreGTreeNode implements Cloneable {
 
 		if (oldChildren != null) {
 			for (GTreeNode node : oldChildren) {
-				node.dispose();
+				// only dispose old nodes that aren't included in the new child list - if any
+				// old nodes don't have a parent, then they were not include in the new list
+				if (node.getParent() == null) {
+					node.dispose();
+				}
 			}
 		}
 	}
