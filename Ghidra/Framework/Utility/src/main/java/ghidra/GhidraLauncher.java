@@ -50,6 +50,7 @@ public class GhidraLauncher {
 
 		// Get application layout
 		GhidraApplicationLayout layout = new GhidraApplicationLayout();
+		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
 
 		// Build the classpath
 		List<String> classpathList = new ArrayList<String>();
@@ -60,13 +61,12 @@ public class GhidraLauncher {
 			addExternalJarPaths(classpathList, layout.getApplicationRootDirs());
 		}
 		else {
-			addPatchPaths(classpathList, layout.getApplicationInstallationDir());
+			addPatchJarPaths(loader, layout.getApplicationInstallationDir());
 			addModuleJarPaths(classpathList, modules);
 		}
 		classpathList = orderClasspath(classpathList, modules);
 
 		// Add the classpath to the class loader
-		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
 		classpathList.forEach(entry -> loader.addPath(entry));
 
 		// Make sure the thing to launch is a GhidraLaunchable
@@ -83,17 +83,28 @@ public class GhidraLauncher {
 	}
 
 	/**
-	 * Add patch jars to the given path list.  This should be done first so they take precedence in 
-	 * the classpath.
+	 * Add patch dir and jars to the given path list.  This should be done first so they take 
+	 * precedence in the classpath.
 	 * 
-	 * @param pathList The list of paths to add to.
+	 * @param loader The loader to which paths will be added.
 	 * @param installDir The application installation directory.
 	 */
-	private static void addPatchPaths(List<String> pathList, ResourceFile installDir) {
+	private static void addPatchJarPaths(GhidraClassLoader loader, ResourceFile installDir) {
 		ResourceFile patchDir = new ResourceFile(installDir, "Ghidra/patch");
-		if (patchDir.exists()) {
-			pathList.addAll(findJarsInDir(patchDir));
+		if (!patchDir.exists()) {
+			return;
 		}
+
+		List<String> patchJars = findJarsInDir(patchDir);
+		Collections.sort(patchJars);
+
+		// add in reverse order, since we are prepending
+		for (int i = patchJars.size() - 1; i >= 0; i--) {
+			loader.prependPath(patchJars.get(i));
+		}
+
+		// put last; paths are prepended in list order
+		loader.prependPath(patchDir.getAbsolutePath());
 	}
 
 	/**
@@ -103,8 +114,8 @@ public class GhidraLauncher {
 	 * @param modules The modules to get the bin directories of.
 	 */
 	private static void addModuleBinPaths(List<String> pathList, Map<String, GModule> modules) {
-		ModuleUtilities.getModuleBinDirectories(modules).forEach(
-			d -> pathList.add(d.getAbsolutePath()));
+		Collection<ResourceFile> dirs = ModuleUtilities.getModuleBinDirectories(modules);
+		dirs.forEach(d -> pathList.add(d.getAbsolutePath()));
 	}
 
 	/**
@@ -114,8 +125,8 @@ public class GhidraLauncher {
 	 * @param modules The modules to get the jars of.
 	 */
 	private static void addModuleJarPaths(List<String> pathList, Map<String, GModule> modules) {
-		ModuleUtilities.getModuleLibDirectories(modules).forEach(
-			d -> pathList.addAll(findJarsInDir(d)));
+		Collection<ResourceFile> dirs = ModuleUtilities.getModuleLibDirectories(modules);
+		dirs.forEach(d -> pathList.addAll(findJarsInDir(d)));
 	}
 
 	/**
@@ -260,10 +271,10 @@ public class GhidraLauncher {
 			Map<String, GModule> modules) {
 
 		Set<String> fatJars = modules
-			.values()
-			.stream()
-			.flatMap(m -> m.getFatJars().stream())
-			.collect(Collectors.toSet());
+				.values()
+				.stream()
+				.flatMap(m -> m.getFatJars().stream())
+				.collect(Collectors.toSet());
 
 		List<String> orderedList = new ArrayList<String>(pathList);
 

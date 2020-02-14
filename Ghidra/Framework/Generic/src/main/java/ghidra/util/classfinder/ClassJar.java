@@ -17,17 +17,23 @@ package ghidra.util.classfinder;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
+
+import generic.jar.ResourceFile;
+import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utility.application.ApplicationLayout;
 
-class ClassJar {
+class ClassJar extends ClassLocation {
 
 	/** 
 	 * Pattern for matching jar files in a module lib dir
@@ -36,24 +42,35 @@ class ClassJar {
 	 * <tt>build/libs</tt>, ending in <tt>.jar</tt> (non-capturing) and then 
 	 * grab that dir's parent and the name of the jar file.
 	 */
-	private static Pattern ANY_MODULE_LIB_JAR_FILE_PATTERN =
+	private static final Pattern ANY_MODULE_LIB_JAR_FILE_PATTERN =
 		Pattern.compile(".*/(.*)/(?:lib|build/libs)/(.+).jar");
 
+	private static final String PATCH_DIR_PATH_FORWARD_SLASHED = getPatchDirPath();
+
+	private static String getPatchDirPath() {
+		ApplicationLayout layout = Application.getApplicationLayout();
+		ResourceFile installDir = layout.getApplicationInstallationDir();
+		ResourceFile patchDir = new ResourceFile(installDir, "Ghidra/patch");
+		String patchPath = patchDir.getAbsolutePath();
+		String forwardSlashed = patchPath.replaceAll("\\\\", "/");
+		return forwardSlashed;
+	}
+
 	private String path;
-	private Set<String> classNameList = new HashSet<>();
-	private Set<Class<?>> classes = new HashSet<>();
 
 	ClassJar(String path, TaskMonitor monitor) throws CancelledException {
 		this.path = path;
 
-		scan(monitor);
+		scanJar(monitor);
 	}
 
+	@Override
 	void getClasses(Set<Class<?>> set, TaskMonitor monitor) {
+		checkForDuplicates(set);
 		set.addAll(classes);
 	}
 
-	private void scan(TaskMonitor monitor) throws CancelledException {
+	private void scanJar(TaskMonitor monitor) throws CancelledException {
 
 		File file = new File(path);
 
@@ -88,25 +105,39 @@ class ClassJar {
 		if (pathName.contains("ExternalLibraries")) {
 			return true;
 		}
+		// 
+		// Production Mode - allow users to enter code in the 'patch' directory
+		//		
+		String forwardSlashedPathName = pathName.replaceAll("\\\\", "/");
+		if (isPatchJar(forwardSlashedPathName)) {
+			return false;
+		}
 
 		//
 		// Production Mode - In production, only module lib jar files are scanned.
 		//
-		if (isModuleDependencyJar(pathName)) {
+		if (isModuleDependencyJar(forwardSlashedPathName)) {
 			return false;
 		}
 
 		return true;
 	}
 
-	static boolean isModuleDependencyJar(String pathName) {
+	// Note: the path is expected to be using forward slashes
+	private static boolean isPatchJar(String pathName) {
+		String jarDirectory = FilenameUtils.getFullPathNoEndSeparator(pathName);
+		return jarDirectory.equalsIgnoreCase(PATCH_DIR_PATH_FORWARD_SLASHED);
+	}
+
+	// Note: the path is expected to be using forward slashes
+	private static boolean isModuleDependencyJar(String pathName) {
 
 		if (ClassSearcher.SEARCH_ALL_JARS) {
 			return true; // this will search all jar files
 		}
 
-		String forwardSlashed = pathName.replaceAll("\\\\", "/");
-		Matcher matcher = ANY_MODULE_LIB_JAR_FILE_PATTERN.matcher(forwardSlashed);
+		// Note: the path is expected to be using forward slashes
+		Matcher matcher = ANY_MODULE_LIB_JAR_FILE_PATTERN.matcher(pathName);
 		if (!matcher.matches()) {
 			return false;
 		}
@@ -121,15 +152,14 @@ class ClassJar {
 	private void processClassFiles(JarEntry entry) {
 
 		String name = entry.getName();
-		if (!name.endsWith(".class")) {
+		if (!name.endsWith(CLASS_EXT)) {
 			return;
 		}
-		name = name.substring(0, name.indexOf(".class"));
+		name = name.substring(0, name.indexOf(CLASS_EXT));
 		name = name.replace('/', '.');
 
 		Class<?> c = ClassFinder.loadExtensionPoint(path, name);
 		if (c != null) {
-			classNameList.add(name);
 			classes.add(c);
 		}
 	}

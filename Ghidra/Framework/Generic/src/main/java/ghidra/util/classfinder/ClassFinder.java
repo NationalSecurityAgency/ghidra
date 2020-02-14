@@ -58,15 +58,15 @@ public class ClassFinder {
 			if ((lcPath.endsWith(".jar") || lcPath.endsWith(".zip")) && file.exists()) {
 
 				if (ClassJar.ignoreJar(lcPath)) {
-					log.trace("Ignoring jar file: " + path);
+					log.trace("Ignoring jar file: {}", path);
 					continue;
 				}
 
-				log.trace("Searching jar file: " + path);
+				log.trace("Searching jar file: {}", path);
 				classJars.add(new ClassJar(path, monitor));
 			}
 			else if (file.isDirectory()) {
-				log.trace("Searching classpath directory: " + path);
+				log.trace("Searching classpath directory: {}", path);
 				classDirs.add(new ClassDir(path, monitor));
 			}
 		}
@@ -106,7 +106,6 @@ public class ClassFinder {
 			}
 			return n1.compareTo(n2);
 		});
-
 
 		return classList;
 	}

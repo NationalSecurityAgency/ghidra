@@ -23,12 +23,11 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-class ClassPackage {
+class ClassPackage extends ClassLocation {
 
 	private static final FileFilter CLASS_FILTER =
-		pathname -> pathname.getName().endsWith(".class");
+		pathname -> pathname.getName().endsWith(CLASS_EXT);
 
-	private Set<Class<?>> classes = new HashSet<>();
 	private Set<ClassPackage> children = new HashSet<>();
 	private File rootDir;
 	private File packageDir;
@@ -88,7 +87,11 @@ class ClassPackage {
 		return new File(lRootDir, lPackageName.replace('.', File.separatorChar));
 	}
 
+	@Override
 	void getClasses(Set<Class<?>> set, TaskMonitor monitor) throws CancelledException {
+
+		checkForDuplicates(set);
+
 		set.addAll(classes);
 
 		Iterator<ClassPackage> it = children.iterator();
