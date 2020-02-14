@@ -144,7 +144,7 @@ public abstract class HighVariable {
 	 * Restore the data-type and the Varnode instances of this HighVariable.
 	 * The "representative" Varnode is also populated.
 	 * @param parser is the XML stream
-	 * @param el is the root <high> tag
+	 * @param el is the root {@code <high>} tag
 	 * @throws PcodeXMLException if the XML is not valid
 	 */
 	protected void restoreInstances(XmlPullParser parser, XmlElement el)
@@ -193,7 +193,7 @@ public abstract class HighVariable {
 	}
 
 	/**
-	 * Restore this HighVariable from a <high> XML tag
+	 * Restore this HighVariable from a {@code <high>} XML tag
 	 * @param parser is the XML stream
 	 * @throws PcodeXMLException if the XML is not valid
 	 */

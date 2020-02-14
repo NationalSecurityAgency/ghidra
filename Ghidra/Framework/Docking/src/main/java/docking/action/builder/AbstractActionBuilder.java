@@ -578,7 +578,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * FooActionContext.  If you don't call this method to set the ActionContext type,  you would have
 	 * to write your predicate something like this:
 	 * <pre>
-	 * builder.enabledWhen(context -> {
+	 * {@literal builder.enabledWhen(context -> }{
 	 *     if (!(context instanceof FooContext)) {
 	 *         return false;
 	 *     }
@@ -589,7 +589,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * simply write:
 	 *
 	 * <pre>
-	 * builder.enabledWhen(context -> return context.isAwesome() }
+	 * {@literal builder.enabledWhen(context -> return context.isAwesome() }}
 	 * </pre>
 	 *
 	 * @param newActionContextClass the more specific ActionContext type.
