@@ -29,6 +29,13 @@ import ghidra.program.model.data.DataType;
 
 public class GenericByteSequencePattern<T> extends Pattern {
 
+	/**
+	 * Construct a sequence of bytes with no mask, and associated action
+	 * to be called if this pattern matches.
+	 * 
+	 * @param bytesSequence sequence of bytes to match
+	 * @param action action to apply if the match succeeds
+	 */
 	public GenericByteSequencePattern(byte[] bytesSequence, GenericMatchAction<T> action) {
 		super(new DittedBitSequence(bytesSequence), 0, new PostRule[0], new MatchAction[1]);
 
@@ -36,6 +43,14 @@ public class GenericByteSequencePattern<T> extends Pattern {
 		matchActions[0] = action;
 	}
 
+	/**
+	 * Construct a sequence of bytes with a mask, and associated action
+	 * to be called if this pattern matches.
+	 * 
+	 * @param bytesSequence sequence of bytes to match
+	 * @param mask mask, bits that are 1 must match the byteSequence bits
+	 * @param action to apply if the match succeeds
+	 */
 	public GenericByteSequencePattern(byte[] bytesSequence, byte[] mask,
 			GenericMatchAction<DataType> action) {
 		super(new DittedBitSequence(bytesSequence, mask), 0, new PostRule[0], new MatchAction[1]);

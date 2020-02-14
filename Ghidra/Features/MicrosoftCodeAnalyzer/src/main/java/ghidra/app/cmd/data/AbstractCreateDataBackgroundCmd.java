@@ -38,7 +38,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 		extends BackgroundCommand {
 
 	protected final String name;
-	protected final Address address;
+	private Address address;
 	protected final int count;
 	protected final DataValidationOptions validationOptions;
 	protected final DataApplyOptions applyOptions;
@@ -178,7 +178,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			catch (InvalidInputException e) {
 				// Catch the exception and output the error, but still should create 
 				// associated data if possible, even though markup failed.
-				handleErrorMessage(program, name, getDataAddress(), getDataAddress(), e);
+				handleErrorMessage(program, name, address, address, e);
 				success = false;
 			}
 
@@ -191,7 +191,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 		}
 		catch (AddressOutOfBoundsException | CodeUnitInsertionException | DataTypeConflictException
 				| InvalidDataTypeException e) {
-			handleErrorMessage(program, name, getDataAddress(), getDataAddress(), e);
+			handleErrorMessage(program, name, address, address, e);
 			return false;
 		}
 	}
@@ -212,8 +212,8 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			throw new CodeUnitInsertionException(
 				"Unable to get data type from model, " + model.getName() + ".");
 		}
-		if (!memory.getLoadedAndInitializedAddressSet().contains(getDataAddress())) {
-			String message = "Can't create an " + dt.getName() + " @ " + getDataAddress() +
+		if (!memory.getLoadedAndInitializedAddressSet().contains(address)) {
+			String message = "Can't create an " + dt.getName() + " @ " + address +
 				" which isn't in loaded and initialized memory for " + program.getName();
 			throw new CodeUnitInsertionException(message);
 		}
@@ -229,15 +229,14 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 		monitor.checkCanceled();
 
 		// Is the data type already applied at the address?
-		if (matchingDataExists(dt, program, getDataAddress())) {
+		if (matchingDataExists(dt, program, address)) {
 			return;
 		}
 
 		monitor.checkCanceled();
 
 		// Create data at the address using the datatype.
-		DataUtilities.createData(program, getDataAddress(), dt, dt.getLength(), false,
-			getClearDataMode());
+		DataUtilities.createData(program, address, dt, dt.getLength(), false, getClearDataMode());
 	}
 
 	/**
@@ -362,7 +361,17 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * 
 	 * @return the address of the data item being created.
 	 */
-	protected Address getDataAddress() {
+	final protected Address getDataAddress() {
 		return address;
+	}
+
+	/**
+	 * Set the address of the data item to be applied.
+	 * Can be used for sub classes that need to apply multiple data items.
+	 * 
+	 * @param addr set the current data address
+	 */
+	final protected void setDataAddress(Address addr) {
+		address = addr;
 	}
 }

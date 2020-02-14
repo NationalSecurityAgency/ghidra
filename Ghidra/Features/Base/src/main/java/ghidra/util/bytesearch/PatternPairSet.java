@@ -59,6 +59,9 @@ public class PatternPairSet {
 	private ArrayList<DittedBitSequence> preSequences;
 	private ArrayList<Pattern> postPatterns;
 
+	/**
+	 * Construct an empty PatternPairSet.  Use XML to initialize the pattern sets.
+	 */
 	public PatternPairSet() {
 		preSequences = new ArrayList<DittedBitSequence>();
 		postPatterns = new ArrayList<Pattern>();
@@ -84,12 +87,22 @@ public class PatternPairSet {
 		}
 	}
 
+	/**
+	 * Add this PatternPairSets post patterns to an existing arraylist of patterns.
+	 * @param postpats array to add this PatternPairSets post patterns into
+	 */
 	public void extractPostPatterns(ArrayList<Pattern> postpats) {
 		for (int i = 0; i < postPatterns.size(); ++i) {
 			postpats.add(postPatterns.get(i));
 		}
 	}
 
+	/**
+	 * Restore PatternPairSet from XML pull parser
+	 * @param parser XML pull parser
+	 * @param pfactory pattern factory user to construct patterns
+	 * @throws IOException if pull parsing fails
+	 */
 	public void restoreXml(XmlPullParser parser, PatternFactory pfactory) throws IOException {
 		XmlElement el = parser.start("patternpairs");
 		totalBitsOfCheck = SpecXmlUtils.decodeInt(el.getAttribute("totalbits"));

@@ -21,7 +21,18 @@ import ghidra.xml.XmlPullParser;
  * Inteface for post match rules that are checked after a match is idenfied
  */
 public interface PostRule {
+	/**
+	 * Apply a post rule given the matching pattern and offset into the byte stream.
+	 * @param pat pattern that matched
+	 * @param matchoffset offset of the match
+	 * @return true if the PostRule is satisfied
+	 */
 	public boolean apply(Pattern pat, long matchoffset);
 
+	/**
+	 * Can restore state of instance PostRule from XML
+	 * 
+	 * @param parser XML pull parser
+	 */
 	public void restoreXml(XmlPullParser parser);
 }

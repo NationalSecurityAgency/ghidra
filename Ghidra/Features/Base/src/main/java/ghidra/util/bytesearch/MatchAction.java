@@ -23,7 +23,19 @@ import ghidra.xml.XmlPullParser;
  * Interface for a match action to be taken for the Program@Address for a ditted bit seqence pattern
  */
 public interface MatchAction {
+	/**
+	 * Apply the match action to the program at the address.
+	 * 
+	 * @param program program in which the match occurred
+	 * @param addr where the match occured
+	 * @param match information about the match that occurred
+	 */
 	public void apply(Program program, Address addr, Match match);
 
+	/**
+	 * Action can be constructed from XML
+	 * 
+	 * @param parser XML pull parser to restore action from XML
+	 */
 	public void restoreXml(XmlPullParser parser);
 }

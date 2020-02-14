@@ -242,12 +242,6 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 				addByteSearchPattern(searcher, validationOptions, addresses, rtti0PointerOffset,
 					rtti0Address, bytes);
-
-				// or referenced by a shifted pointer based on program data organization shift amount
-				bytes = ProgramMemoryUtil.getShiftedDirectAddressBytes(program, rtti0Address);
-
-				addByteSearchPattern(searcher, validationOptions, addresses, rtti0PointerOffset,
-					rtti0Address, bytes);
 			}
 		}
 

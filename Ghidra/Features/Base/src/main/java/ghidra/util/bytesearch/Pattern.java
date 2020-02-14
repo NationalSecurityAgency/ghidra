@@ -37,6 +37,9 @@ public class Pattern extends DittedBitSequence {
 	private PostRule[] postrule;
 	private MatchAction[] actions;
 
+	/**
+	 * Construct an empty pattern.  Use XML to initialize
+	 */
 	public Pattern() {
 		markOffset = 0;
 		postrule = null;
@@ -44,6 +47,15 @@ public class Pattern extends DittedBitSequence {
 
 	}
 
+	/**
+	 * Construct the pattern based on a DittedByteSequence a match offset, post matching rules,
+	 * and a set of actions to take when the match occurs.
+	 * 
+	 * @param seq DittedByteSequence
+	 * @param offset offset from the actual match location to report a match
+	 * @param postArray post set of rules to check for the match
+	 * @param matchArray MatchActions to apply when a match occurs
+	 */
 	public Pattern(DittedBitSequence seq, int offset, PostRule[] postArray,
 			MatchAction[] matchArray) {
 		super(seq);

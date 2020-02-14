@@ -28,6 +28,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Multi pattern/mask/action memory searcher
+ * Patterns must be supplied/added, or a pre-initialized searchState supplied
  * 
  * Preload search patterns and actions, then call search method.
  */
@@ -35,13 +36,20 @@ import ghidra.util.task.TaskMonitor;
 public class MemoryBytePatternSearcher {
 	private static final long RESTRICTED_PATTERN_BYTE_RANGE = 32;
 
+	SequenceSearchState root = null;
+
 	ArrayList<Pattern> patternList;
 
 	private String searchName = "";
 
+	private boolean doExecutableBlocksOnly = false;  // only search executable blocks
+
+	private long numToSearch = 0;
+	private long numSearched = 0;
+
 	/**
 	 * Create with pre-created patternList
-	 * 
+	 * @param searchName name of search
 	 * @param patternList - list of patterns(bytes/mask/action)
 	 */
 	public MemoryBytePatternSearcher(String searchName, ArrayList<Pattern> patternList) {
@@ -50,7 +58,18 @@ public class MemoryBytePatternSearcher {
 	}
 
 	/**
+	 * Create with an initialized SequenceSearchState
+	 * @param searchName name of search
+	 * @param root search state pre-initialized
+	 */
+	public MemoryBytePatternSearcher(String searchName, SequenceSearchState root) {
+		this.searchName = searchName;
+		this.root = root;
+	}
+
+	/**
 	 * Create with no patternList, must add patterns before searching
+	 * @param searchName name of search
 	 * 
 	 */
 	public MemoryBytePatternSearcher(String searchName) {
@@ -66,6 +85,10 @@ public class MemoryBytePatternSearcher {
 		patternList.add(pattern);
 	}
 
+	public void setSearchExecutableOnly(boolean doExecutableBlocksOnly) {
+		this.doExecutableBlocksOnly = doExecutableBlocksOnly;
+	}
+
 	/**
 	 * Search initialized memory blocks for all patterns(bytes/mask/action).
 	 * Call associated action for each pattern matched.
@@ -78,21 +101,57 @@ public class MemoryBytePatternSearcher {
 	 */
 	public void search(Program program, AddressSetView searchSet, TaskMonitor monitor)
 			throws CancelledException {
-		SequenceSearchState root = SequenceSearchState.buildStateMachine(patternList);
+		if (root == null) {
+			root = SequenceSearchState.buildStateMachine(patternList);
+		}
+
+		numToSearch = getNumToSearch(program, searchSet);
+		monitor.setMessage(searchName + " Search");
+		monitor.initialize(numToSearch);
 
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
-		for (MemoryBlock block2 : blocks) {
-			MemoryBlock block = block2;
-			if (!searchSet.intersects(block.getStart(), block.getEnd())) {
+		for (MemoryBlock block : blocks) {
+			monitor.setProgress(numSearched);
+			// check if entire block has anything that is searchable
+			if (!block.isInitialized()) {
 				continue;
 			}
+			if (doExecutableBlocksOnly && !block.isExecute()) {
+				continue;
+			}
+			if (searchSet != null && !searchSet.isEmpty() &&
+				!searchSet.intersects(block.getStart(), block.getEnd())) {
+				continue;
+			}
+
 			try {
 				searchBlock(root, program, block, searchSet, monitor);
 			}
 			catch (IOException e) {
-				Msg.error(this, "Unable to scan block " + block.getName() + " for patterns");
+				Msg.error(this, "Unable to scan block " + block.getName() + " for " + searchName);
 			}
+			numSearched += block.getSize();
 		}
+	}
+
+	private long getNumToSearch(Program program, AddressSetView searchSet) {
+		long numAddresses = 0;
+		MemoryBlock[] blocks = program.getMemory().getBlocks();
+		for (MemoryBlock block : blocks) {
+			// check if entire block has anything that is searchable
+			if (!block.isInitialized()) {
+				continue;
+			}
+			if (doExecutableBlocksOnly && !block.isExecute()) {
+				continue;
+			}
+			if (searchSet != null && !searchSet.isEmpty() &&
+				!searchSet.intersects(block.getStart(), block.getEnd())) {
+				continue;
+			}
+			numAddresses += block.getSize();
+		}
+		return numAddresses;
 	}
 
 	/**
@@ -110,23 +169,29 @@ public class MemoryBytePatternSearcher {
 			throws IOException, CancelledException {
 
 		// if no restricted set, make restrict set the full block
-		AddressSet doneSet = new AddressSet(restrictSet);
-		if (doneSet.isEmpty()) {
-			doneSet.addRange(block.getStart(), block.getEnd());
+		AddressSet doneSet;
+		if (restrictSet == null || restrictSet.isEmpty()) {
+			doneSet = new AddressSet(block.getStart(), block.getEnd());
 		}
-		doneSet = doneSet.intersectRange(block.getStart(), block.getEnd());
+		else {
+			doneSet = restrictSet.intersectRange(block.getStart(), block.getEnd());
+		}
+
+		long numInDoneSet = doneSet.getNumAddresses();
+		long numInBlock = block.getSize();
 
 		Address blockStartAddr = block.getStart();
 
 		// pull each range off the restricted set
+		long progress = monitor.getProgress();
 		AddressRangeIterator addressRanges = doneSet.getAddressRanges();
+		long numDone = 0;
 		while (addressRanges.hasNext()) {
 			monitor.checkCanceled();
-			AddressRange addressRange = addressRanges.next();
-
 			monitor.setMessage(searchName + " Search");
-			monitor.initialize(doneSet.getNumAddresses());
-			monitor.setProgress(0);
+			monitor.setProgress(progress + (long) (numInBlock * ((float) numDone / numInDoneSet)));
+			AddressRange addressRange = addressRanges.next();
+			long numAddressesInRange = addressRange.getLength();
 
 			ArrayList<Match> mymatches = new ArrayList<>();
 
@@ -155,25 +220,49 @@ public class MemoryBytePatternSearcher {
 			monitor.checkCanceled();
 
 			monitor.setMessage(searchName + " (Examine Matches)");
-			monitor.initialize(mymatches.size());
-			monitor.setProgress(0);
 
 			// TODO: DANGER there is much offset<-->address calculation here
 			//       should be OK, since they are all relative to the block.
+			long matchProgress = progress + (long) (numInBlock * ((float) numDone / numInDoneSet));
 			for (int i = 0; i < mymatches.size(); ++i) {
 				monitor.checkCanceled();
-				monitor.setProgress(i);
+				monitor.setProgress(
+					matchProgress + (long) (numAddressesInRange * ((float) i / mymatches.size())));
 				Match match = mymatches.get(i);
 				Address addr = blockStartAddr.add(match.getMarkOffset() + blockOffset);
 				if (!match.checkPostRules(streamoffset + blockOffset)) {
 					continue;
 				}
-				MatchAction[] matchactions = match.getMatchActions();
 
+				MatchAction[] matchactions = match.getMatchActions();
+				preMatchApply(matchactions, addr);
 				for (MatchAction matchaction : matchactions) {
 					matchaction.apply(program, addr, match);
 				}
+
+				postMatchApply(matchactions, addr);
 			}
+
+			numDone += numAddressesInRange;
 		}
+	}
+
+	/**
+	 * Called before any match rules are applied
+	 * @param matchactions actions that matched
+	 * @param addr address of match
+	 */
+	public void preMatchApply(MatchAction[] matchactions, Address addr) {
+		// override if any initialization needs to be done before rule application
+	}
+
+	/**
+	 * Called after any match rules are applied
+	 * Can use for cross post rule matching state application and cleanup.
+	 * @param matchactions actions that matched
+	 * @param addr adress of match
+	 */
+	public void postMatchApply(MatchAction[] matchactions, Address addr) {
+		// override if any cleanup from rule match application is needed
 	}
 }

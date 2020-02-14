@@ -26,8 +26,9 @@ package ghidra.util.bytesearch;
 public class GenericMatchAction<T> extends DummyMatchAction {
 	T matchValue;
 
-	/*
-	 * construct with an appropriate object that can be used when the action is applied
+	/**
+	 * Construct a match action used when a match occurs for some GenericByteSequece
+	 * @param matchValue specialized object used when match occurs
 	 */
 	public GenericMatchAction(T matchValue) {
 		this.matchValue = matchValue;

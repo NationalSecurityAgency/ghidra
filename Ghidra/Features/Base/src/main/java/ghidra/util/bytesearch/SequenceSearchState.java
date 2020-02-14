@@ -27,19 +27,27 @@ import ghidra.util.task.TaskMonitor;
  */
 public class SequenceSearchState implements Comparable<SequenceSearchState> {
 
-	private static final int PATERN_ENDED = 10000000;
+	private static final int PATTERN_ENDED = Integer.MAX_VALUE;
 	private SequenceSearchState parent;
 	private ArrayList<DittedBitSequence> possible;		// Patterns that could still match in this state
 	private ArrayList<DittedBitSequence> success;		// Patterns that have matched successfully if we reached this state
 	private SequenceSearchState[] trans;				// State transitions based on next byte
 
-	public SequenceSearchState(SequenceSearchState par) {
-		parent = par;
+	/**
+	 * Construct a sub sequence state with a parent sequence
+	 * 
+	 * @param parent parent SequenceSearchState
+	 */
+	public SequenceSearchState(SequenceSearchState parent) {
+		this.parent = parent;
 		possible = new ArrayList<DittedBitSequence>();
 		success = null;
 		trans = null;
 	}
 
+	/**
+	 * @return maximum number of bytes that could be matched by this sequence
+	 */
 	public int getMaxSequenceSize() {
 		int max = 0;
 		for (DittedBitSequence element : possible) {
@@ -51,6 +59,12 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		return max;
 	}
 
+	/**
+	 * Add a pattern to this search sequence.  The last pattern added is the successful
+	 * match pattern.
+	 * @param pat pattern to add
+	 * @param pos position within the current set of patterns to add this pattern
+	 */
 	public void addSequence(DittedBitSequence pat, int pos) {
 		possible.add(pat);
 		if (pos == pat.getSize()) {
@@ -61,6 +75,9 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		}
 	}
 
+	/**
+	 * Sort the sequences that have been added 
+	 */
 	public void sortSequences() {
 		Comparator<DittedBitSequence> comp = new Comparator<DittedBitSequence>() {
 			@Override
@@ -150,9 +167,9 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 						}
 						i += 1;
 						j += 1;
-						thispat = (i == success.size()) ? PATERN_ENDED : success.get(i).getIndex();
+						thispat = (i == success.size()) ? PATTERN_ENDED : success.get(i).getIndex();
 						oppat =
-							(j == op.success.size()) ? PATERN_ENDED : op.success.get(j).getIndex();
+							(j == op.success.size()) ? PATTERN_ENDED : op.success.get(j).getIndex();
 					}
 					else if (thispat < oppat) {
 						if (curpat != thispat) {
@@ -160,7 +177,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 							curpat = thispat;
 						}
 						i += 1;
-						thispat = (i == success.size()) ? PATERN_ENDED : success.get(i).getIndex();
+						thispat = (i == success.size()) ? PATTERN_ENDED : success.get(i).getIndex();
 					}
 					else {
 						if (curpat != oppat) {
@@ -169,7 +186,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 						}
 						j += 1;
 						oppat =
-							(j == op.success.size()) ? PATERN_ENDED : op.success.get(j).getIndex();
+							(j == op.success.size()) ? PATTERN_ENDED : op.success.get(j).getIndex();
 					}
 				}
 				success = tmp;
@@ -177,6 +194,12 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		}
 	}
 
+	/**
+	 * Try to match this Sequence to the byteArray, and add any matches to the match list
+	 * @param bytearray array of bytes to match
+	 * @param numbytes retrict number of bytes to allow to match
+	 * @param match list of matches, the result
+	 */
 	public void sequenceMatch(byte[] bytearray, int numbytes, ArrayList<Match> match) {
 		int subindex = 0;
 		SequenceSearchState curstate = this;
@@ -242,6 +265,8 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	 */
 	public void apply(InputStream in, long maxBytes, ArrayList<Match> match, TaskMonitor monitor)
 			throws IOException {
+		long progress = monitor.getProgress();
+
 		int maxSize = getMaxSequenceSize() + 1;
 		if (maxSize < 4096) {
 			maxSize = 4096;
@@ -317,7 +342,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 					if (monitor.isCancelled()) {
 						return;
 					}
-					monitor.setProgress(offset);
+					monitor.setProgress(progress + offset);
 				}
 				if (ra != secondBuf.length) {
 					fullBuffers = 1;
@@ -373,8 +398,15 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		}
 	}
 
-	static public ArrayList<SequenceSearchState> buildTransitionLevel(
-			ArrayList<SequenceSearchState> prev, int pos) {
+	/**
+	 * Build a new transition level for the state machine
+	 * 
+	 * @param prev previous search sequences
+	 * @param pos position within the search sequence state for this level
+	 * @return list of possible new search states to be added to the state machine
+	 */
+	static ArrayList<SequenceSearchState> buildTransitionLevel(ArrayList<SequenceSearchState> prev,
+			int pos) {
 		ArrayList<SequenceSearchState> res = new ArrayList<SequenceSearchState>();
 		Iterator<SequenceSearchState> iterator = prev.iterator();
 		while (iterator.hasNext()) {			// For each current state
@@ -407,6 +439,11 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 		return finalres;
 	}
 
+	/**
+	 * Build a search state machine from a list of DittedBitSequences
+	 * @param patterns bit sequence patterns
+	 * @return search state the will match the given sequences
+	 */
 	static public SequenceSearchState buildStateMachine(
 			ArrayList<? extends DittedBitSequence> patterns) {
 		SequenceSearchState root = new SequenceSearchState(null);

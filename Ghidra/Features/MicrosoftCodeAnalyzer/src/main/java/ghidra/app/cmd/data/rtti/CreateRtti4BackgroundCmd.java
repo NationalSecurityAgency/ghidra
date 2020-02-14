@@ -42,8 +42,6 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	private List<MemoryBlock> vfTableBlocks;
 	private List<Address> rtti4Locations;
 
-	private Address currentProcessingAddress;
-
 	/**
 	 * Constructs a command for applying an RTTI4 dataType at an address.
 	 * @param address the address where the data should be created using the data type.
@@ -79,14 +77,14 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		List<Address> goodRtti4Locations = new ArrayList<Address>();
 		boolean succeeded = false;
 		for (Address addr : rtti4Locations) {
-			currentProcessingAddress = addr;
+			setDataAddress(addr);
 			succeeded |= super.doApplyTo(program, taskMonitor);
 			goodRtti4Locations.add(addr);
 		}
 
 		// if any succeeded and should create associated data, make the vftables all at one time
 		if (succeeded && applyOptions.shouldFollowData()) {
-			createaAssociatedVfTables(program, goodRtti4Locations, taskMonitor);
+			createAssociatedVfTables(program, goodRtti4Locations, taskMonitor);
 		}
 
 		return succeeded;
@@ -147,7 +145,7 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		return cmd.applyTo(model.getProgram(), monitor);
 	}
 
-	private boolean createaAssociatedVfTables(Program program, List<Address> goodRtti4Locations,
+	private boolean createAssociatedVfTables(Program program, List<Address> goodRtti4Locations,
 			TaskMonitor taskMonitor) throws CancelledException {
 
 		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("RTTI4 Vftables");
@@ -157,10 +155,6 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		for (Address rtti4Address : goodRtti4Locations) {
 
 			byte[] bytes = ProgramMemoryUtil.getDirectAddressBytes(program, rtti4Address);
-
-			addByteSearchPattern(searcher, foundVFtables, rtti4Address, bytes);
-
-			bytes = ProgramMemoryUtil.getShiftedDirectAddressBytes(program, rtti4Address);
 
 			addByteSearchPattern(searcher, foundVFtables, rtti4Address, bytes);
 		}
@@ -256,10 +250,9 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 
 			// Plate Comment
 			// Plate Comment
-			EHDataTypeUtilities.createPlateCommentIfNeeded(program,
-				RttiUtil.CONST_PREFIX + RttiUtil.getDescriptorTypeNamespace(rtti0Model) +
-					Namespace.DELIMITER,
-				RTTI_4_NAME, null, getDataAddress(), applyOptions);
+			EHDataTypeUtilities.createPlateCommentIfNeeded(program, RttiUtil.CONST_PREFIX +
+				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER, RTTI_4_NAME,
+				null, getDataAddress(), applyOptions);
 			monitor.checkCanceled();
 
 			// Label
@@ -270,16 +263,5 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		}
 
 		return true;
-	}
-
-	/**
-	 * Creating RTTI4 tables handles creating multiple tables at once.
-	 * The generic base class that handles getting the address will get the RTTI4 tabl address.
-	 * 
-	 * @return the current address to process
-	 */
-	@Override
-	protected Address getDataAddress() {
-		return currentProcessingAddress;
 	}
 }
