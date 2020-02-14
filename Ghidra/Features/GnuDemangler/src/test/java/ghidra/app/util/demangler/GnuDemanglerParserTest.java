@@ -1035,7 +1035,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBob() throws Exception {
+	public void testTemplatesThatContainFunctionSignatures() throws Exception {
 		//
 		// Mangled: _ZNSt6vectorIN5boost8functionIFvvEEESaIS3_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS3_S5_EERKS3_
 		// 
@@ -1134,7 +1134,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertNull(res);
 	}
 
-	@Test
+	// @Test TODO upcoming fix for GT-3545
 	public void testFunctionWithLambda_WrappingAnotherFunctionCall() throws Exception {
 
 		//
