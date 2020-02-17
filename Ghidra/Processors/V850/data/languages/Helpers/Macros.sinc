@@ -120,55 +120,61 @@ macro set_OV0_S_Z(var)
 
 ##### General-Macros #####
 
-macro either_or(res, cond, var_true, var_false)		# if condition is != 0
+macro either_or(res, cond, true, false)		# if condition is != 0
 {
-	if (cond != 0)
-		goto <true>;
-	
-	res = var_false;
-	goto <end>;
-	
-	<true>
-	res = var_true;
-
-	<end>
+	res = (true * zext(cond != 0)) + (false * zext(cond == 0));
 }
 
-macro either_or1(res, cond, var_true, var_false)	# if condition is == 1
+macro either_or1(res, cond, true, false)	# if condition is == 1
 {
-	if (cond == 1)
-		goto <true>;
-	
-	res = var_false;
-	goto <end>;
-	
-	<true>
-	res = var_true;
-
-	<end>
+	res = (true * zext(cond == 1)) + (false * zext(cond != 1));
 }
 
-macro shift_right_logic(res, var, shift)
+macro shift_right_logic(res, var, shift_)
 {
+	local shift = (shift_ & 0x1f);
+	local mask = 0;
+
+	if(shift == 0)
+		goto <false>;
+
+	mask = var & (1 << (shift - 1));
 	res = var >> shift;
+
+	<false>
 	set_OV0_S_Z(res);
-	local mask = var & (1 << (shift - 1));
 	$(CY) = ((mask != 0) && (shift != 0));
 }
 
-macro shift_right_arith(res, var, shift)
+macro shift_right_arith(res, var, shift_)
 {
+	local shift = (shift_ & 0x1f);
+	local mask = 0;
+
+	if(shift == 0)
+		goto <false>;
+
+	mask = var & (1 << (shift - 1));
 	res = var s>> shift;
+
+	<false>
 	set_OV0_S_Z(res);
-	local mask = var & (1 << (shift - 1));
 	$(CY) = ((mask != 0) && (shift != 0));
 }
 
-macro shift_left_logic(res, var, shift) 
+macro shift_left_logic(res, var, shift_) 
 {
+	local shift = (shift_ & 0x1f);
+	local mask = 0;
+
+	if(shift == 0)
+		goto <false>;
+
 	res = var << shift;
+	mask = var & (1 << (32 - shift));
+
+	<false>
 	set_OV0_S_Z(res);
-	local mask = var & (1 << (32 - shift));
 	$(CY) = ((mask != 0) && (shift != 0));
 }
 
@@ -232,26 +238,26 @@ macro SearchLeft(res, var, char)
 	<end>
 }
 
-macro saturate(var) 
-{
-	if (var s> 0x7FFFFFFF) 
-        	goto <pos_sat>;
+# macro saturate(var) 
+# {
+# 	if (var s> 0x7FFFFFFF) 
+#         	goto <pos_sat>;
     
-	if (var s< -0x80000000) 
-        	goto <neg_sat>;
+# 	if (var s< -0x80000000) 
+#         	goto <neg_sat>;
 
-	goto <end>;
+# 	goto <end>;
 
-	<pos_sat> 
-    var =  0x7FFFFFFF; 
-    goto <end>;
+# 	<pos_sat> 
+#     var =  0x7FFFFFFF; 
+#     goto <end>;
 
-	<neg_sat> 
-    var = -0x80000000; 
-    goto <end>;
+# 	<neg_sat> 
+#     var = -0x80000000; 
+#     goto <end>;
 	
-    <end>
-}
+#     <end>
+# }
 
 
 ##### Float-Macros #####

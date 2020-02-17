@@ -30,19 +30,8 @@ define space  register  type=register_space size=4;
 #####	     	    Instructions		#####
 #####################################################
 
-@include "Instructions/Load.sinc"
-@include "Instructions/Store.sinc"
-@include "Instructions/Multiply.sinc"
-@include "Instructions/MultiplyAccumulate.sinc"
 @include "Instructions/Arithmetic.sinc"
-@include "Instructions/Conditional.sinc"
-@include "Instructions/Saturated.sinc"
-@include "Instructions/Logic.sinc"
-@include "Instructions/DataManipulation.sinc"
-@include "Instructions/BitSearch.sinc"
-@include "Instructions/Divide.sinc"
-@include "Instructions/HighSpeedDivide.sinc"
-@include "Instructions/Branch.sinc"
-@include "Instructions/BitManipulation.sinc"
-@include "Instructions/Special.sinc"
 @include "Instructions/Float.sinc"
+@include "Instructions/Load_Store.sinc"
+@include "Instructions/Logic.sinc"
+@include "Instructions/Special.sinc"

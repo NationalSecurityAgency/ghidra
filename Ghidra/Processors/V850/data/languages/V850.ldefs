@@ -4,13 +4,13 @@
   <language processor="V850"
             endian="little"
             size="32"
-            variant="V850E2M"
+            variant="E1, E2, E2M"
             version="1.0"
-            slafile="V850E2M.sla"
-            processorspec="V850E2M.pspec"
+            slafile="V850.sla"
+            processorspec="V850.pspec"
             manualindexfile="../manuals/v850.idx"
             id="V850:LE:32:default">
     <description>Renesas V850E2M</description>
-    <compiler name="default" spec="V850E2M.cspec" id="default"/>
+    <compiler name="default" spec="V850.cspec" id="default"/>
   </language>
 </language_definitions>

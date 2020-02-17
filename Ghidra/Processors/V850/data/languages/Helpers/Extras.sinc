@@ -84,7 +84,7 @@ PrepList30: PrepList29		is prep00=0 & PrepList29		 		{ }
 
 PrepList:   { lp }		is prep21=1 & prep2431=0 & prep2223=0 & prep00=0 & lp	{ push(lp); }
 PrepList:   { PrepList30,lp }	is prep21=1 & PrepList30 & lp				{ push(lp); }
-PrepList:   { PrepList30 }	is prep21=0 & PrepList30				{ push(lp); }
+PrepList:   { PrepList30 }	is prep21=0 & PrepList30				{ }
 
 
 
@@ -122,4 +122,4 @@ DispList21: r21,DispList22	is DispList22 & prep26=1 & r21				{ pop(r21); }
 DispList21: DispList22		is DispList22 & prep26=0				{ }
 
 DispList: { r20,DispList21 }	is DispList21 & prep27=1 & r20				{ pop(r20); }
-DispList: { DispList21 }	is DispList21 & prep27=0				{ pop(r20); }
+DispList: { DispList21 }	is DispList21 & prep27=0				{ }

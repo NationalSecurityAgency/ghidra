@@ -1,10 +1,10 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-data/languages/V850E2M.cspec||GHIDRA||||END|
-data/languages/V850E2M.ldefs||GHIDRA||||END|
-data/languages/V850E2M.pspec||GHIDRA||||END|
-data/languages/V850E2M.slaspec||GHIDRA||||END|
+data/languages/V850.cspec||GHIDRA||||END|
+data/languages/V850.ldefs||GHIDRA||||END|
+data/languages/V850.pspec||GHIDRA||||END|
+data/languages/V850.slaspec||GHIDRA||||END|
 data/languages/Helpers/Conditions.sinc||GHIDRA||||END|
 data/languages/Helpers/Extras.sinc||GHIDRA||||END|
 data/languages/Helpers/Macros.sinc||GHIDRA||||END|

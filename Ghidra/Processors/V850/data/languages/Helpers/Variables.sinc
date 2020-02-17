@@ -3,7 +3,7 @@
 #####################################################
 
 
-attach variables [ _R0004 _R1115 _R2731 ]
+attach variables [ _R0004 _R1115 _R2731 R1620 prep1620]
 [ 
   r0  r1  r2  sp  gp  tp  r6  r7  r8  r9 
   r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 
@@ -11,17 +11,9 @@ attach variables [ _R0004 _R1115 _R2731 ]
   ep  lp 
 ];
 
-attach variables [ r0004 r1115 r1620 prep1620r ]
-[ 
-  _   r1  r2  sp  gp  tp  r6  r7  r8  r9 
-  r10 r11 r12 r13 r14 r15 r16 r17 r18 r19 
-  r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 
-  ep  lp 
-];
-
 attach variables [ R0004x2 R1115x2 R1620x2 R2731x2 ]
 [ 
-  r0r1 	 _  r2sp    _  _      _ r6r7   _  r8r9    _ 
+  r0r1 	 _  r2sp    _  r4r5   _ r6r7   _  r8r9    _ 
   r10r11 _  r12r13  _  r14r15 _ r16r17 _  r18r19  _ 
   r20r21 _  r22r23  _  r24r25 _ r26r27 _  r28r29  _ 
   _ 	 _ 

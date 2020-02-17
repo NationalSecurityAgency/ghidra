@@ -27,7 +27,7 @@ define register offset=0x80 size=0x4            # offset = 0x80(128) = PreOffset
 
 define register offset=0x0 size=0x8 
 [ 
-  r0r1    r2sp    _       r6r7    r8r9    
+  r0r1    r2sp    r4r5    r6r7    r8r9    
   r10r11  r12r13  r14r15  r16r17  r18r19
   r20r21  r22r23  r24r25  r26r27  r28r29  
   _
