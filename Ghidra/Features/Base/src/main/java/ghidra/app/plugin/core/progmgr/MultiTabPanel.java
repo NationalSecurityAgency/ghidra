@@ -89,7 +89,12 @@ public class MultiTabPanel extends JPanel {
 		hiddenTabList = new ArrayList<>();
 		visibleTabList = new ArrayList<>();
 
-		updateBorder();
+		// Create a border that is designed to draw a rectangle along the bottom of the
+		// panel that will accent the selected tab. This line is intended to appear as
+		// it is part of the selected tab.
+		Border outerBorder = new MatteBorder(0, 0, 3, 0, SELECTED_TAB_COLOR);
+		Border innerBorder = new BottomOnlyBevelBorder();
+		setBorder(BorderFactory.createCompoundBorder(outerBorder, innerBorder));
 
 		showHiddenListLabel = createLabel();
 
@@ -101,29 +106,6 @@ public class MultiTabPanel extends JPanel {
 			}
 		});
 		setMinimumSize(new Dimension(30, 20));
-	}
-
-	private void updateBorder() {
-
-		// init borders
-		if (tabbedBorder == null) {
-			// Create a border that is designed to draw a rectangle along the bottom of the panel
-			// that will accent the selected tab.  This line is intended to appear as though it is
-			// part of the selected tab.
-			Border outerBorder = new MatteBorder(0, 0, 3, 0, SELECTED_TAB_COLOR);
-			Border innerBorder = new BottomOnlyBevelBorder();
-			Border compoundBorder = BorderFactory.createCompoundBorder(outerBorder, innerBorder);
-
-			tabbedBorder = compoundBorder;
-			noTabsBorder = getBorder();
-		}
-
-		if (linkedProgramMap.isEmpty()) {
-			setBorder(noTabsBorder);
-		}
-		else {
-			setBorder(tabbedBorder);
-		}
 	}
 
 	void addProgram(Program program) {
@@ -542,12 +524,13 @@ public class MultiTabPanel extends JPanel {
 
 		super.removeAll(); // careful not to call our removeAll() here
 
-		for (JPanel panel : newVisibleTabList) {
-			add(panel);
+		setVisible(allTabPanels.size() > 1);
+		if (isVisible()) {
+			for (JPanel panel : newVisibleTabList) {
+				add(panel);
+			}
+			updateListLabel();
 		}
-
-		updateListLabel();
-		updateBorder();
 
 		revalidate();
 		repaint();
