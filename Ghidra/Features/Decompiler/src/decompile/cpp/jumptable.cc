@@ -1193,7 +1193,7 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
     indpath = 1 - indpath;	// get actual path to indirect block
   BlockBasic *guardtarget = (BlockBasic *)cbranchblock->getOut(1-indpath);
   bool change = false;
-  uint4 pos;
+  int4 pos;
 
   // Its possible the guard branch has been converted between the switch recovery and now
   if (cbranchblock->sizeOut() != 2) return false; // In which case, we can't fold it in
@@ -1218,7 +1218,7 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
     // is a good indicator that there are none
     uintb val = ((indpath==0)!=(cbranch->isBooleanFlip())) ? 0 : 1;
     fd->opSetInput(cbranch,fd->newConstant(cbranch->getIn(0)->getSize(),val),1);
-    jump->setMostCommonBlock(pos);	// A guard branch must be most common
+    jump->setDefaultBlock(pos);	// A guard branch generally targets the default case
     guard.clear();
     change = true;
   }
@@ -2003,9 +2003,9 @@ Varnode *JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
 bool JumpAssisted::foldInGuards(Funcdata *fd,JumpTable *jump)
 
 {
-  int4 origVal = jump->getMostCommon();
+  int4 origVal = jump->getDefaultBlock();
   jump->setLastAsMostCommon();			// Default case is always the last block
-  return (origVal != jump->getMostCommon());
+  return (origVal != jump->getDefaultBlock());
 }
 
 JumpModel *JumpAssisted::clone(JumpTable *jt) const
@@ -2148,7 +2148,7 @@ JumpTable::JumpTable(Architecture *g,Address ad)
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
-  mostcommon = -1;
+  defaultBlock = -1;
   lastBlock = -1;
   maxtablesize = 1024;
   maxaddsub = 1;
@@ -2169,7 +2169,7 @@ JumpTable::JumpTable(const JumpTable *op2)
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
-  mostcommon = -1;
+  defaultBlock = -1;
   lastBlock = op2->lastBlock;
   maxtablesize = op2->maxtablesize;
   maxaddsub = op2->maxaddsub;
@@ -2265,7 +2265,7 @@ int4 JumpTable::getIndexByBlock(const FlowBlock *bl,int4 i) const
 void JumpTable::setLastAsMostCommon(void)
 
 {
-  mostcommon = lastBlock;
+  defaultBlock = lastBlock;
 }
 
 /// This is used to add address targets from guard branches if they are
@@ -2312,7 +2312,7 @@ void JumpTable::switchOver(const FlowInfo &flow)
   lastBlock = block2addr.back().blockPosition;	// Out-edge of last address in table
   sort(block2addr.begin(),block2addr.end());
 
-  mostcommon = -1;			// There is no "mostcommon"
+  defaultBlock = -1;			// There is no default case initially
   int4 maxcount = 1;			// If the maxcount is less than 2
   vector<IndexPair>::const_iterator iter = block2addr.begin();
   while(iter != block2addr.end()) {
@@ -2326,7 +2326,7 @@ void JumpTable::switchOver(const FlowInfo &flow)
     iter = nextiter;
     if (count > maxcount) {
       maxcount = count;
-      mostcommon = curPos;
+      defaultBlock = curPos;
     }
   }
 }
@@ -2368,7 +2368,7 @@ void JumpTable::trivialSwitchOver(void)
   for(uint4 i=0;i<parent->sizeOut();++i)
     block2addr.push_back(IndexPair(i,i));	// Addresses corresponds exactly to out-edges of switch block
   lastBlock = parent->sizeOut()-1;
-  mostcommon = -1;		// There is no "mostcommon"
+  defaultBlock = -1;		// Trivial case does not have default case
 }
 
 /// The addresses that the raw BRANCHIND op might branch to itself are recovered,

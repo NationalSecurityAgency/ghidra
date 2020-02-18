@@ -510,7 +510,7 @@ class JumpTable {
   Address opaddress;		///< Absolute address of the BRANCHIND jump
   PcodeOp *indirect;		///< CPUI_BRANCHIND linked to \b this jump-table
   uintb switchVarConsume;	///< Bits of the switch variable being consumed
-  int4 mostcommon;		///< The out-edge corresponding to the most common address in the address table
+  int4 defaultBlock;		///< The out-edge corresponding to the \e default switch destination (-1 = undefined)
   int4 lastBlock;		///< Block out-edge corresponding to last entry in the address table
   uint4 maxtablesize;		///< Maximum table size we allow to be built (sanity check)
   uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
@@ -534,7 +534,7 @@ public:
   int4 getStage(void) const { return recoverystage; }	///< Return what stage of recovery this jump-table is in.
   int4 numEntries(void) const { return addresstable.size(); }	///< Return the size of the address table for \b this jump-table
   uintb getSwitchVarConsume(void) const { return switchVarConsume; }	///< Get bits of switch variable consumed by \b this table
-  int4 getMostCommon(void) const { return mostcommon; }	///< Get the out-edge corresponding to the most common address table entry
+  int4 getDefaultBlock(void) const { return defaultBlock; }	///< Get the out-edge corresponding to the \e default switch destination
   const Address &getOpAddress(void) const { return opaddress; }	///< Get the address of the BRANCHIND for the switch
   PcodeOp *getIndirectOp(void) const { return indirect; }	///< Get the BRANCHIND PcodeOp
   void setIndirectOp(PcodeOp *ind) { opaddress = ind->getAddr(); indirect = ind; }	///< Set the BRANCHIND PcodeOp
@@ -546,7 +546,7 @@ public:
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
   Address getAddressByIndex(int4 i) const { return addresstable[i]; }	///< Get the i-th address table entry
   void setLastAsMostCommon(void);		///< Set the most common jump-table target to be the last address in the table
-  void setMostCommonBlock(uint4 bl) { mostcommon = bl; }	///< Set the most common jump-table target by out-edge
+  void setDefaultBlock(int4 bl) { defaultBlock = bl; }		///< Set out-edge of the switch destination considered to be \e default
   void setLoadCollect(bool val) { collectloads = val; }		///< Set whether LOAD records should be collected
   void addBlockToSwitch(BlockBasic *bl,uintb lab);		///< Force a given basic-block to be a switch destination
   void switchOver(const FlowInfo &flow);				///< Convert absolute addresses to block indices

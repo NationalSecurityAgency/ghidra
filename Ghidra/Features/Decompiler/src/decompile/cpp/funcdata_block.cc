@@ -610,8 +610,8 @@ void Funcdata::installSwitchDefaults(void)
     PcodeOp *indop = jt->getIndirectOp();
     BlockBasic *ind = indop->getParent();
 			 // Mark any switch blocks default edge
-    if (jt->getMostCommon() != -1) // If a mostcommon was found
-      ind->setDefaultSwitch(jt->getMostCommon());
+    if (jt->getDefaultBlock() != -1) // If a default case is present
+      ind->setDefaultSwitch(jt->getDefaultBlock());
   }
 }
 
