@@ -562,18 +562,20 @@ static bool matching_constants(Varnode *vn1,Varnode *vn2)
   return true;
 }
 
-/// \param op is the CBRANCH \e guarding the switch
+/// \param bOp is the CBRANCH \e guarding the switch
+/// \param rOp is the PcodeOp immediately reading the Varnode
 /// \param path is the specific branch to take from the CBRANCH to reach the switch
 /// \param rng is the range of values causing the switch path to be taken
 /// \param v is the Varnode holding the value controlling the CBRANCH
-GuardRecord::GuardRecord(PcodeOp *op,int4 path,const CircleRange &rng,Varnode *v)
+GuardRecord::GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &rng,Varnode *v)
 
 {
-  cbranch = op;
+  cbranch = bOp;
+  readOp = rOp;
   indpath = path;
   range = rng;
   vn = v;
-  baseVn = quasiCopy(v,bitsPreserved,false);		// Look for varnode whose bits are copied
+  baseVn = quasiCopy(v,bitsPreserved);		// Look for varnode whose bits are copied
 }
 
 /// \brief Determine if \b this guard applies to the given Varnode
@@ -670,10 +672,9 @@ int4 GuardRecord::oneOffMatch(PcodeOp *op1,PcodeOp *op2)
 /// \param vn is the given Varnode
 /// \param bitsPreserved will hold the number of least significant bits preserved by the sequence
 /// \return the earliest source of the quasi-copy, which may just be the given Varnode
-Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved,bool noWholeValue)
+Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved)
 
 {
-  Varnode *origVn = vn;
   bitsPreserved = mostsigbit_set(vn->getNZMask()) + 1;
   if (bitsPreserved == 0) return vn;
   uintb mask = 1;
@@ -682,11 +683,6 @@ Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved,bool noWholeValu
   PcodeOp *op = vn->getDef();
   Varnode *constVn;
   while(op != (PcodeOp *)0) {
-    if (noWholeValue && (vn != origVn)) {
-      uintb inputMask = vn->getNZMask() | mask;
-      if (mask == inputMask)
-	return origVn;		// vn contains whole value, -noWholeValue- indicates we should abort
-    }
     switch(op->code()) {
     case CPUI_COPY:
       vn = op->getIn(0);
@@ -955,6 +951,29 @@ void PathMeld::meld(vector<PcodeOp *> &path,vector<int4> &slot)
   slot.resize(cutOff);
 }
 
+/// The starting Varnode, common to all paths, is provided as an index.
+/// All PcodeOps up to the final BRANCHIND are (un)marked.
+/// \param val is \b true for marking, \b false for unmarking
+/// \param startVarnode is the index of the starting PcodeOp
+void PathMeld::markPaths(bool val,int4 startVarnode)
+
+{
+  int4 startOp;
+  for(startOp=opMeld.size()-1;startOp>=0;--startOp) {
+    if (opMeld[startOp].rootVn == startVarnode)
+      break;
+  }
+  if (startOp < 0) return;
+  if (val) {
+    for(int4 i=0;i<=startOp;++i)
+      opMeld[i].op->setMark();
+  }
+  else {
+    for(int4 i=0;i<=startOp;++i)
+      opMeld[i].op->clearMark();
+  }
+}
+
 /// The Varnode is specified by an index into sequence of Varnodes common to all paths in \b this PathMeld.
 /// We find the earliest (as in executed first) PcodeOp, within \b this PathMeld that uses the Varnode as input.
 /// \param pos is the index of the Varnode
@@ -1023,14 +1042,15 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
     
     // The boolean variable could conceivably be the switch variable
     int4 indpathstore = prevbl->getFlipPath() ? 1-indpath : indpath;
-    selectguards.push_back(GuardRecord(cbranch,indpathstore,rng,vn));
+    selectguards.push_back(GuardRecord(cbranch,cbranch,indpathstore,rng,vn));
     for(j=0;j<maxpullback;++j) {
       Varnode *markup;		// Throw away markup information
       if (!vn->isWritten()) break;
-      vn = rng.pullBack(vn->getDef(),&markup,usenzmask);
+      PcodeOp *readOp = vn->getDef();
+      vn = rng.pullBack(readOp,&markup,usenzmask);
       if (vn == (Varnode *)0) break;
       if (rng.isEmpty()) break;
-      selectguards.push_back(GuardRecord(cbranch,indpathstore,rng,vn));
+      selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,vn));
     }
   }
 }
@@ -1068,7 +1088,7 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
 
   // Intersect any guard ranges which apply to -vn-
   int4 bitsPreserved;
-  Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved, true);
+  Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved);
   vector<GuardRecord>::const_iterator iter;
   for(iter=selectguards.begin();iter!=selectguards.end();++iter) {
     const GuardRecord &guard( *iter );
@@ -1175,12 +1195,46 @@ void JumpBasic::markFoldableGuards(void)
 {
   Varnode *vn = pathMeld.getVarnode(varnodeIndex);
   int4 bitsPreserved;
-  Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved, true);
+  Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved);
   for(int4 i=0;i<selectguards.size();++i) {
     if (selectguards[i].valueMatch(vn,baseVn,bitsPreserved)==0) {
       selectguards[i].clear();		// Indicate this is not a true guard
     }
   }
+}
+
+/// \param val is \b true to set marks, \b false to clear marks
+void JumpBasic::markModel(bool val)
+
+{
+  pathMeld.markPaths(val, varnodeIndex);
+  for(int4 i=0;i<selectguards.size();++i) {
+    PcodeOp *op = selectguards[i].getBranch();
+    if (op == (PcodeOp *)0) continue;
+    PcodeOp *readOp = selectguards[i].getReadOp();
+    if (val)
+      readOp->setMark();
+    else
+      readOp->clearMark();
+  }
+}
+
+/// The PcodeOps in \b this model must have been previously marked with markModel().
+/// Run through the descendants of the given Varnode and look for this mark.
+/// \param vn is the given Varnode
+/// \param trailOp is an optional known PcodeOp that leads to the model
+/// \return \b true if the only flow is into \b this model
+bool JumpBasic::flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp)
+
+{
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op == trailOp) continue;
+    if (!op->isMark())
+      return false;
+  }
+  return true;
 }
 
 bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
@@ -1275,19 +1329,18 @@ void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext
 
 {
   int4 i,j;
-  Varnode *testvn;
-  PcodeOp *normop;
 
   i = varnodeIndex;
   normalvn = pathMeld.getVarnode(i++);
   switchvn = normalvn;
+  markModel(true);
 
   int4 countaddsub=0;
   int4 countext=0;
+  PcodeOp *normop = (PcodeOp *)0;
   while(i<pathMeld.numCommonVarnode()) {
-				// Between switchvn and normalvn, should be singleuse
-    if ((switchvn != normalvn)&&(switchvn->loneDescend() == (PcodeOp *)0)) break;
-    testvn = pathMeld.getVarnode(i);
+    if (!flowsOnlyToModel(switchvn, normop)) break;	// Switch variable should only flow into model
+    Varnode *testvn = pathMeld.getVarnode(i);
     if (!switchvn->isWritten()) break;
     normop = switchvn->getDef();
     for(j=0;j<normop->numInput();++j)
@@ -1313,6 +1366,7 @@ void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext
     if (switchvn != testvn) break;
     i += 1;
   }
+  markModel(false);
 }
 
 void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const

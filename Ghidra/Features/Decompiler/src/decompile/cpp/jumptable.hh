@@ -82,6 +82,7 @@ public:
   void append(const PathMeld &op2);	///< Append a new set of paths to \b this set of paths
   void clear(void);			///< Clear \b this to be an empty container
   void meld(vector<PcodeOp *> &path,vector<int4> &slot);	///< Meld a new path into \b this container
+  void markPaths(bool val,int4 startVarnode);			///< Mark PcodeOps paths from the given start
   int4 numCommonVarnode(void) const { return commonVn.size(); }	///< Return the number of Varnodes common to all paths
   int4 numOps(void) const { return opMeld.size(); }		///< Return the number of PcodeOps across all paths
   Varnode *getVarnode(int4 i) const { return commonVn[i]; }	///< Get the i-th common Varnode
@@ -128,20 +129,22 @@ class JumpTable;
 /// description of the possible values the Varnode can hold.
 class GuardRecord {
   PcodeOp *cbranch;		///< PcodeOp CBRANCH the branches around the switch
+  PcodeOp *readOp;		///< The immediate PcodeOp causing the restriction
   int4 indpath;			///< Specific CBRANCH path going to the switch
   CircleRange range;		///< Range of values causing the CBRANCH to take the path to the switch
   Varnode *vn;			///< The Varnode being restricted
   Varnode *baseVn;		///< Value being (quasi)copied to the Varnode
   int4 bitsPreserved;		///< Number of bits copied (all other bits are zero)
 public:
-  GuardRecord(PcodeOp *op,int4 path,const CircleRange &rng,Varnode *v);	///< Constructor
+  GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &rng,Varnode *v);	///< Constructor
   PcodeOp *getBranch(void) const { return cbranch; }	///< Get the CBRANCH associated with \b this guard
+  PcodeOp *getReadOp(void) const { return readOp; }	///< Get the PcodeOp immediately causing the restriction
   int4 getPath(void) const { return indpath; }		///< Get the specific path index going towards the switch
   const CircleRange &getRange(void) const { return range; }	///< Get the range of values causing the switch path to be taken
   void clear(void) { cbranch = (PcodeOp *)0; }		///< Mark \b this guard as unused
   int4 valueMatch(Varnode *vn2,Varnode *baseVn2,int4 bitsPreserved2) const;
   static int4 oneOffMatch(PcodeOp *op1,PcodeOp *op2);
-  static Varnode *quasiCopy(Varnode *vn,int4 &bitsPreserved,bool noWholeValue);
+  static Varnode *quasiCopy(Varnode *vn,int4 &bitsPreserved);
 };
 
 /// \brief An iterator over values a switch variable can take
@@ -356,6 +359,8 @@ protected:
   void findSmallestNormal(uint4 matchsize);
   void findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,uint4 matchsize,uint4 maxtablesize);
   void markFoldableGuards();
+  void markModel(bool val);		///< Mark (or unmark) all PcodeOps involved in the model
+  bool flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp);	///< Check if the given Varnode flows to anything other than \b this model
 
   /// \brief Eliminate the given guard to \b this switch
   ///
