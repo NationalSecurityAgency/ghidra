@@ -716,43 +716,13 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 	 */
 	private boolean checkForExecuteBlock(Program program) {
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
-		boolean hasExecutable = false;
 
 		for (MemoryBlock block : blocks) {
 			if (block.isExecute()) {
-				hasExecutable = true;
+				return true;
 			}
 		}
-		return hasExecutable;
-	}
-
-	/**
-	 * Get rid of any blocks from the address set that shouldn't be searched.
-	 *  Non-executable and non-initialized.
-	 *
-	 * @param program program
-	 * @param bset current set of restricted address ranges
-	 * @return return new set with blocks not to be searched removed
-	 */
-	private AddressSet removeNotSearchedAddresses(Program program, AddressSetView bset) {
-		AddressSet restrictedSet = new AddressSet(bset);
-		MemoryBlock[] blocks = program.getMemory().getBlocks();
-		boolean hasExecutable = checkForExecuteBlock(program);
-
-		for (MemoryBlock block : blocks) {
-			if (!block.isInitialized()) {
-				restrictedSet.deleteRange(block.getStart(), block.getEnd());
-				continue;
-			}
-			// if 
-			if (executableBlocksOnly && hasExecutable) {
-				if (!block.isExecute()) {
-					restrictedSet.deleteRange(block.getStart(), block.getEnd());
-					continue;
-				}
-			}
-		}
-		return restrictedSet;
+		return false;
 	}
 
 	@Override

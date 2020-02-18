@@ -94,7 +94,7 @@ public class MemoryBytePatternSearcher {
 	 * Call associated action for each pattern matched.
 	 * 
 	 * @param program to be searched
-	 * @param searchSet set of bytes to restrict search to
+	 * @param searchSet set of bytes to restrict search, if null or empty then search all memory blocks
 	 * @param monitor allow canceling and reporting of progress
 	 * 
 	 * @throws CancelledException if canceled

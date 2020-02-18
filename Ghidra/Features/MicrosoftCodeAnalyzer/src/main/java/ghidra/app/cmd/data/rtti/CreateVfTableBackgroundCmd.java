@@ -15,7 +15,7 @@
  */
 package ghidra.app.cmd.data.rtti;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAbsoluteAddress;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
 import ghidra.app.cmd.data.*;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
@@ -172,9 +172,8 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		if (rtti0Model != null) {
 
 			// Plate Comment
-			EHDataTypeUtilities.createPlateCommentIfNeeded(program,
-				RttiUtil.CONST_PREFIX + RttiUtil.getDescriptorTypeNamespace(rtti0Model) +
-					Namespace.DELIMITER,
+			EHDataTypeUtilities.createPlateCommentIfNeeded(program, RttiUtil.CONST_PREFIX +
+				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
 				VF_TABLE_LABEL, null, vfTableAddress, applyOptions);
 
 			monitor.checkCanceled();
@@ -188,7 +187,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 
 		// Create functions that are referred to by the vf table.
 		if (applyOptions.shouldCreateFunction()) {
-			int elementCount = model.getElementCount();
+			int elementCount = model.getCount();
 			for (int tableElementIndex = 0; tableElementIndex < elementCount; tableElementIndex++) {
 				monitor.checkCanceled();
 				Address vfPointer = model.getVirtualFunctionPointer(tableElementIndex);

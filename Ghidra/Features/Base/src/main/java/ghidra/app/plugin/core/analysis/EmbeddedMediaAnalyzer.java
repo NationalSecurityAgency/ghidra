@@ -22,7 +22,8 @@ import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.BookmarkType;
 import ghidra.program.model.listing.Program;
@@ -56,7 +57,10 @@ public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 
 		Memory memory = program.getMemory();
 		AddressSetView validMemorySet = memory.getLoadedAndInitializedAddressSet();
-		AddressSet searchSet = set.intersect(validMemorySet);
+		if (validMemorySet.isEmpty()) {
+			return false;  // valid addresses to search
+		}
+		AddressSetView searchSet = set.intersect(validMemorySet);
 
 		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Embedded Media");
 

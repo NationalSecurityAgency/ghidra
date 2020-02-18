@@ -40,7 +40,6 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 
 	private DataType dataType;
 	private Rtti4Model rtti4Model;
-	private int elementCount = -1;
 
 	private Program lastProgram;
 	private DataType lastDataType;
@@ -57,8 +56,6 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 			DataValidationOptions validationOptions) {
 		super(program, RttiUtil.getVfTableCount(program, vfTableAddress), vfTableAddress,
 			validationOptions);
-		// super's count will hold the number of valid address elements from getVfTableCount()
-		elementCount = getCount();
 	}
 
 	@Override
@@ -82,7 +79,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 		long entrySize = individualEntryDataType.getLength();
 
 		// Each entry is a pointer to where a function can possibly be created.
-		long numEntries = getElementCount();
+		long numEntries = getCount();
 		if (numEntries == 0) {
 			throw new InvalidDataTypeException(
 				getName() + " data type at " + getAddress() + " doesn't have a valid vf table.");
@@ -125,7 +122,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 			lastDataType = null;
 			lastElementCount = -1;
 
-			lastElementCount = getElementCount();
+			lastElementCount = getCount();
 			if (lastElementCount > 0) {
 				DataTypeManager dataTypeManager = program.getDataTypeManager();
 				PointerDataType pointerDt = new PointerDataType(dataTypeManager);
@@ -168,17 +165,6 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 		int defaultPointerSize = getDefaultPointerSize();
 		Address address = tableAddress.add(defaultPointerSize * tableElementIndex);
 		return getAbsoluteAddress(getProgram(), address);
-	}
-
-	/**
-	 * Gets the number of elements in the vf table. Returns 0 if this model isn't for a valid vf table.
-	 * @return the number of vf table elements or 0.
-	 */
-	public int getElementCount() {
-		if (elementCount == -1) {
-			elementCount = RttiUtil.getVfTableCount(getProgram(), getAddress());
-		}
-		return elementCount;
 	}
 
 	/**
