@@ -100,7 +100,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(action1);
 
-		String actualText = statusPane.getText();
+		String actualText = getText(statusPane);
 		assertTrue(
 			"Description is not updated for action '" + action1.getName() + "'; instead the " +
 				"description is '" + actualText + "'",
@@ -376,6 +376,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 				return;
 			}
 		}
+		waitForSwing();
 	}
 
 	private KeyStroke getKeyStroke(DockingActionIf action) {

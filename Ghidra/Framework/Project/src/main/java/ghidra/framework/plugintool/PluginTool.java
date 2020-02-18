@@ -1476,6 +1476,14 @@ public abstract class PluginTool extends AbstractDockingTool {
 		return winMgr.getGlobalActionContext();
 	}
 
+	@Override
+	public void contextChanged(ComponentProvider provider) {
+		if (isDisposed) {
+			return;
+		}
+		super.contextChanged(provider);
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
