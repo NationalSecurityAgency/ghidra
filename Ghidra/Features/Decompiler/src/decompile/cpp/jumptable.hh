@@ -492,17 +492,26 @@ public:
 /// It knows how to map from specific switch variable values to the destination
 /// \e case block and how to label the value.
 class JumpTable {
+  /// \brief An address table index and its corresponding out-edge
+  struct IndexPair {
+    int4 blockPosition;				///< Out-edge index for the basic-block
+    int4 addressIndex;				/// Index of address targetting the basic-block
+    IndexPair(int4 pos,int4 index) { blockPosition = pos; addressIndex = index; }	///< Constructor
+    bool operator<(const IndexPair &op2) const;	///< Compare by position then by index
+    static bool compareByPosition(const IndexPair &op1,const IndexPair &op2);	///< Compare just by position
+  };
   Architecture *glb;		///< Architecture under which this jump-table operates
   JumpModel *jmodel;		///< Current model of how the jump table is implemented in code
   JumpModel *origmodel;		///< Initial jump table model, which may be incomplete
   vector<Address> addresstable; ///< Raw addresses in the jump-table
-  vector<uint4> blocktable;	///< Addresses converted to basic blocks
+  vector<IndexPair> block2addr;	///< Map from basic-blocks to address table index
   vector<uintb> label;		///< The case label for each explicit target
   vector<LoadTable> loadpoints;	///< Any recovered in-memory data for the jump-table
   Address opaddress;		///< Absolute address of the BRANCHIND jump
   PcodeOp *indirect;		///< CPUI_BRANCHIND linked to \b this jump-table
   uintb switchVarConsume;	///< Bits of the switch variable being consumed
-  uint4 mostcommon;		///< The out-edge corresponding to the most common address in the address table
+  int4 mostcommon;		///< The out-edge corresponding to the most common address in the address table
+  int4 lastBlock;		///< Block out-edge corresponding to last entry in the address table
   uint4 maxtablesize;		///< Maximum table size we allow to be built (sanity check)
   uint4 maxaddsub;		///< Maximum ADDs or SUBs to normalize
   uint4 maxleftright;		///< Maximum shifts to normalize
@@ -512,13 +521,12 @@ class JumpTable {
   void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);	///< Switch \b this table over to a trivial model
   void sanityCheck(Funcdata *fd);	///< Perform sanity check on recovered address targets
-  uint4 block2Position(const FlowBlock *bl) const;	///< Convert a basic-block to an out-edge index from the switch.
+  int4 block2Position(const FlowBlock *bl) const;	///< Convert a basic-block to an out-edge index from the switch.
   static bool isReachable(PcodeOp *op);	///< Check if the given PcodeOp still seems reachable in its function
 public:
   JumpTable(Architecture *g,Address ad=Address());	///< Constructor
   JumpTable(const JumpTable *op2);			///< Copy constructor
   ~JumpTable(void);					///< Destructor
-  bool isSwitchedOver(void) const { return !blocktable.empty(); }	///< Return \b true if addresses converted to basic-blocks
   bool isRecovered(void) const { return !addresstable.empty(); }	///< Return \b true if a model has been recovered
   bool isLabelled(void) const { return !label.empty(); }		///< Return \b true if \e case labels are computed
   bool isOverride(void) const;				///< Return \b true if \b this table was manually overridden
@@ -537,7 +545,7 @@ public:
   int4 numIndicesByBlock(const FlowBlock *bl) const;
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
   Address getAddressByIndex(int4 i) const { return addresstable[i]; }	///< Get the i-th address table entry
-  void setMostCommonIndex(uint4 tableind);			///< Set the most common jump-table target by index
+  void setLastAsMostCommon(void);		///< Set the most common jump-table target to be the last address in the table
   void setMostCommonBlock(uint4 bl) { mostcommon = bl; }	///< Set the most common jump-table target by out-edge
   void setLoadCollect(bool val) { collectloads = val; }		///< Set whether LOAD records should be collected
   void addBlockToSwitch(BlockBasic *bl,uintb lab);		///< Force a given basic-block to be a switch destination
@@ -553,5 +561,23 @@ public:
   void saveXml(ostream &s) const;		///< Save \b this jump-table as a \<jumptable> XML tag
   void restoreXml(const Element *el);		///< Recover \b this jump-table from a \<jumptable> XML tag
 };  
+
+/// \param op2 is the other IndexPair to compare with \b this
+/// \return \b true if \b this is ordered before the other IndexPair
+inline bool JumpTable::IndexPair::operator<(const IndexPair &op2) const
+
+{
+  if (blockPosition != op2.blockPosition) return (blockPosition < op2.blockPosition);
+  return (addressIndex < op2.addressIndex);
+}
+
+/// \param op1 is the first IndexPair to compare
+/// \param op2 is the second IndexPair to compare
+/// \return \b true if op1 is ordered before op2
+inline bool JumpTable::IndexPair::compareByPosition(const IndexPair &op1,const IndexPair &op2)
+
+{
+  return (op1.blockPosition < op2.blockPosition);
+}
 
 #endif

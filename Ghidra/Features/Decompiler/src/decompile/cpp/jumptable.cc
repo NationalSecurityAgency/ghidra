@@ -1205,7 +1205,7 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
       // Adjust tables and control flow graph
       // for new jumptable destination
       jump->addBlockToSwitch(guardtarget,0xBAD1ABE1);
-      jump->setMostCommonIndex(jump->numEntries()-1);
+      jump->setLastAsMostCommon();
       fd->pushBranch(cbranchblock,1-indpath,switchbl);
       guard.clear();
       change = true;
@@ -1452,8 +1452,8 @@ bool JumpBasic2::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
   // So we don't make any special mods, in case there are extra statements in these blocks
 
   // The final block in the table is the single value produced by the model2 guard
-  jump->setMostCommonIndex(jump->numEntries()-1);	// It should be the default block
-  guard.clear();	// Mark that we are folded
+  jump->setLastAsMostCommon();	// It should be the default block
+  guard.clear();		// Mark that we are folded
   return true;
 }
 
@@ -2004,7 +2004,7 @@ bool JumpAssisted::foldInGuards(Funcdata *fd,JumpTable *jump)
 
 {
   int4 origVal = jump->getMostCommon();
-  jump->setMostCommonIndex(jump->numEntries()-1);	// Default case is always the last block
+  jump->setLastAsMostCommon();			// Default case is always the last block
   return (origVal != jump->getMostCommon());
 }
 
@@ -2097,21 +2097,18 @@ void JumpTable::sanityCheck(Funcdata *fd)
 /// If no edge hits it, throw an exception.
 /// \param bl is the specific basic-block
 /// \return the position of the basic-block
-uint4 JumpTable::block2Position(const FlowBlock *bl) const
+int4 JumpTable::block2Position(const FlowBlock *bl) const
 
 {
   FlowBlock *parent;
-  uint4 position;
+  int4 position;
 
-  if (!isSwitchedOver())
-    throw LowlevelError("Jumptable switchover has not happened yet");
-  
   parent = indirect->getParent();
-  for(position=0;position<parent->sizeOut();++position)
-    if (parent->getOut(position) == bl) break;
-  if (position==parent->sizeOut())
+  for(position=0;position<bl->sizeIn();++position)
+    if (bl->getIn(position) == parent) break;
+  if (position==bl->sizeIn())
     throw LowlevelError("Requested block, not in jumptable");
-  return position;
+  return bl->getInRevIndex(position);
 }
 
 /// We are not doing a complete check, we are looking for a guard that has collapsed to "if (false)"
@@ -2151,7 +2148,8 @@ JumpTable::JumpTable(Architecture *g,Address ad)
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
-  mostcommon = ~((uint4)0);
+  mostcommon = -1;
+  lastBlock = -1;
   maxtablesize = 1024;
   maxaddsub = 1;
   maxleftright = 1;
@@ -2171,7 +2169,8 @@ JumpTable::JumpTable(const JumpTable *op2)
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
   switchVarConsume = ~((uintb)0);
-  mostcommon = ~((uint4)0);
+  mostcommon = -1;
+  lastBlock = op2->lastBlock;
   maxtablesize = op2->maxtablesize;
   maxaddsub = op2->maxaddsub;
   maxleftright = op2->maxleftright;
@@ -2202,15 +2201,10 @@ JumpTable::~JumpTable(void)
 int4 JumpTable::numIndicesByBlock(const FlowBlock *bl) const
 
 {
-  uint4 position,count;
-  int4 i;
-
-  position = block2Position(bl);
-  count = 0;
-  for(i=0;i<blocktable.size();++i)
-    if (blocktable[i] == position)
-      count += 1;
-  return count;
+  IndexPair val(block2Position(bl),0);
+  pair<vector<IndexPair>::const_iterator,vector<IndexPair>::const_iterator> range;
+  range = equal_range(block2addr.begin(),block2addr.end(),val,IndexPair::compareByPosition);
+  return range.second - range.first;
 }
 
 bool JumpTable::isOverride(void) const
@@ -2254,26 +2248,24 @@ void JumpTable::setOverride(const vector<Address> &addrtable,const Address &nadd
 int4 JumpTable::getIndexByBlock(const FlowBlock *bl,int4 i) const
 
 {
-  uint4 position,count;
-  int4 j;
-
-  position = block2Position(bl);
-  count = 0;
-  for(j=0;j<blocktable.size();++j) {
-    if (blocktable[j] == position) {
-      if (i==count) return j;
+  IndexPair val(block2Position(bl),0);
+  int4 count = 0;
+  vector<IndexPair>::const_iterator iter = lower_bound(block2addr.begin(),block2addr.end(),val,IndexPair::compareByPosition);
+  while(iter != block2addr.end()) {
+    if ((*iter).blockPosition == val.blockPosition) {
+      if (count == i)
+	return (*iter).addressIndex;
       count += 1;
     }
+    ++iter;
   }
   throw LowlevelError("Could not get jumptable index for block");
 }
 
-/// Set the most common address destination by supplying an index into the address table
-/// \param tableind is the supplied address table index
-void JumpTable::setMostCommonIndex(uint4 tableind)
+void JumpTable::setLastAsMostCommon(void)
 
 {
-  mostcommon = blocktable[tableind]; // Translate addresstable index to switch block out index
+  mostcommon = lastBlock;
 }
 
 /// This is used to add address targets from guard branches if they are
@@ -2285,50 +2277,56 @@ void JumpTable::addBlockToSwitch(BlockBasic *bl,uintb lab)
 
 {
   addresstable.push_back(bl->getStart());
-  uint4 pos = indirect->getParent()->sizeOut();
-  blocktable.push_back(pos);
+  lastBlock = indirect->getParent()->sizeOut();		// The block WILL be added to the end of the out-edges
+  block2addr.push_back(IndexPair(lastBlock,addresstable.size()-1));
   label.push_back(lab);
 }
 
 /// Convert addresses in \b this table to actual targeted basic-blocks.
 ///
-/// This constructs a map from each address table entry to the corresponding
-/// out-edge from the the basic-block containing the BRANCHIND. The most common
+/// This constructs a map from each out-edge from the basic-block containing the BRANCHIND
+/// to addresses in the table targetting that out-block. The most common
 /// address table entry is also calculated here.
 /// \param flow is used to resolve address targets
 void JumpTable::switchOver(const FlowInfo &flow)
 
 {
   FlowBlock *parent,*tmpbl;
-  uint4 pos;
-  int4 i,j,count,maxcount;
+  int4 pos;
   PcodeOp *op;
 
-  blocktable.clear();
-  blocktable.resize(addresstable.size(),~((uint4)0));
-  mostcommon = ~((uint4)0);	// There is no "mostcommon"
-  maxcount = 1;			// If the maxcount is less than 2
+  block2addr.clear();
+  block2addr.reserve(addresstable.size());
   parent = indirect->getParent();
 
-  for(i=0;i<addresstable.size();++i) {
+  for(int4 i=0;i<addresstable.size();++i) {
     Address addr = addresstable[i];
-    if (blocktable[i] != ~((uint4)0)) continue;
     op = flow.target(addr);
     tmpbl = op->getParent();
     for(pos=0;pos<parent->sizeOut();++pos)
       if (parent->getOut(pos) == tmpbl) break;
     if (pos==parent->sizeOut())
       throw LowlevelError("Jumptable destination not linked");
-    count = 0;
-    for(j=i;j<addresstable.size();++j) {
-      if (addr == addresstable[j]) {
-	count += 1;
-	blocktable[j] = pos;
-      }
+    block2addr.push_back(IndexPair(pos,i));
+  }
+  lastBlock = block2addr.back().blockPosition;	// Out-edge of last address in table
+  sort(block2addr.begin(),block2addr.end());
+
+  mostcommon = -1;			// There is no "mostcommon"
+  int4 maxcount = 1;			// If the maxcount is less than 2
+  vector<IndexPair>::const_iterator iter = block2addr.begin();
+  while(iter != block2addr.end()) {
+    int4 curPos = (*iter).blockPosition;
+    vector<IndexPair>::const_iterator nextiter = iter;
+    int4 count = 0;
+    while(nextiter != block2addr.end() && (*nextiter).blockPosition == curPos) {
+      count += 1;
+      ++nextiter;
     }
-    if (count>maxcount) {
+    iter = nextiter;
+    if (count > maxcount) {
       maxcount = count;
-      mostcommon = pos;
+      mostcommon = curPos;
     }
   }
 }
@@ -2361,15 +2359,16 @@ void JumpTable::trivialSwitchOver(void)
 {
   FlowBlock *parent;
 
-  blocktable.clear();
-  blocktable.resize(addresstable.size(),~((uint4)0));
+  block2addr.clear();
+  block2addr.reserve(addresstable.size());
   parent = indirect->getParent();
 
   if (parent->sizeOut() != addresstable.size())
     throw LowlevelError("Trivial addresstable and switch block size do not match");
   for(uint4 i=0;i<parent->sizeOut();++i)
-    blocktable[i] = i;		// blocktable corresponds exactly to outlist of switch block
-  mostcommon = ~((uint4)0);	// There is no "mostcommon"
+    block2addr.push_back(IndexPair(i,i));	// Addresses corresponds exactly to out-edges of switch block
+  lastBlock = parent->sizeOut()-1;
+  mostcommon = -1;		// There is no "mostcommon"
 }
 
 /// The addresses that the raw BRANCHIND op might branch to itself are recovered,
@@ -2518,7 +2517,8 @@ void JumpTable::clear(void)
     delete jmodel;
     jmodel = (JumpModel *)0;
   }
-  blocktable.clear();
+  block2addr.clear();
+  lastBlock = -1;
   label.clear();
   loadpoints.clear();
   indirect = (PcodeOp *)0;
