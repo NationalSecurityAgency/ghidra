@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.TreePath;
+import javax.swing.undo.UndoableEdit;
 
 import org.junit.*;
 
@@ -55,6 +56,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.test.*;
 import ghidra.util.*;
+import ghidra.util.datastruct.FixedSizeStack;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
@@ -349,6 +351,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		openInEditor(newScriptFile);
 
+		testScriptFile = newScriptFile;
 		return newScriptFile;
 	}
 
@@ -515,6 +518,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 			editorTextArea.setText(buffer.toString());
 		});
 
+		waitForSwing();
 		return buffer.toString();
 	}
 
@@ -1072,7 +1076,43 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected void assertSaveButtonEnabled() {
 		waitForSwing();
 		DockingActionIf saveAction = getAction(plugin, "Save Script");
-		assertTrue(saveAction.isEnabledForContext(editor.getActionContext(null)));
+
+		boolean isEnabled = saveAction.isEnabledForContext(editor.getActionContext(null));
+		if (!isEnabled) {
+			// the action is enabled when the provider detects changes; it is disabled for read-only
+
+			if (isReadOnly(testScriptFile)) {
+				fail("Cannot edit a read-only script");
+			}
+
+			//
+			// inside knowledge; brittle code
+			// 
+			@SuppressWarnings("unchecked")
+			FixedSizeStack<UndoableEdit> undoStack =
+				(FixedSizeStack<UndoableEdit>) getInstanceField("undoStack", editor);
+			if (undoStack.isEmpty()) {
+
+				JTextComponent editTextComponent = grabScriptEditorTextArea();
+				String text = getText(editTextComponent);
+				fail("No undo items for the script editor--did edit take place?  Editor text: " +
+					text);
+			}
+
+			Boolean isMissing = (Boolean) invokeInstanceMethod("isFileOnDiskMissing", editor);
+			if (!isMissing) {
+
+				JTextComponent editTextComponent = grabScriptEditorTextArea();
+				String text = getText(editTextComponent);
+				fail("Expected a deleted file to trigger save button enablement.  Editor text: " +
+					text);
+			}
+		}
+	}
+
+	private boolean isReadOnly(ResourceFile script) {
+		assertNotNull(script);
+		return GhidraScriptUtil.isSystemScriptPath(script);
 	}
 
 	protected void assertSaveButtonDisabled() {
