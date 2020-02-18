@@ -57,10 +57,10 @@ public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 
 		Memory memory = program.getMemory();
 		AddressSetView validMemorySet = memory.getLoadedAndInitializedAddressSet();
-		if (validMemorySet.isEmpty()) {
-			return false;  // valid addresses to search
-		}
 		AddressSetView searchSet = set.intersect(validMemorySet);
+		if (searchSet.isEmpty()) {
+			return false;  // no valid addresses to search
+		}
 
 		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("Embedded Media");
 
