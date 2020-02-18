@@ -12,6 +12,12 @@ apply plugin: 'eclipse'
 
 eclipse.project.name = 'GPL DemanglerGnu'
 
+
+def v33_1 = "demangler_gnu_v2_33_1"
+def v24 = "demangler_gnu_v2_24"
+def srcVersion33_1 = "src/demangler_gnu_v2_33_1"
+def srcVersion24 = "src/demangler_gnu_v2_24"
+
 /****************************************************************************
  * Defines the platforms we have to support in Ghidra.  This model is used 
  * for all native builds and should be extended by each module as-needed.
@@ -53,65 +59,127 @@ task zipBuildableSource(type:Zip) {
 	description "Collects the source files needed to build this module."
 	baseName project.name + "-src-for-build"
 	extension 'zip'
-			
-	from (project.projectDir.toString() + "/src/demangler_gnu/c") {
-		into "/src/demangler_gnu"
+				
+	//
+	// Version 2.33.1
+	// 
+	from (project.projectDir.toString() + "/" + srcVersion33_1 + "c") {
+		into "/" + srcVersion33_1
 	}
-	from (project.projectDir.toString() + "/src/demangler_gnu/headers") {
-		into "/src/demangler_gnu"
+	from (project.projectDir.toString() + "/" + srcVersion33_1 + "/headers") {
+		into "/" + srcVersion33_1
 	}
-	from (project.projectDir.toString() + "/src/demangler_gnu/build") {
-		into "/src/demangler_gnu"
+	from (project.projectDir.toString() + "/" + srcVersion33_1 + "/build") {
+		into "/" + srcVersion33_1
 	}
-	from (project.projectDir.toString() + "/src/demangler_gnu/README.txt")
+	from (project.projectDir.toString() + "/" + srcVersion33_1 + "/README.txt")
+	
+	
+	//
+	// Version 2.24
+	// 
+	from (project.projectDir.toString() + "/" + srcVersion24 + "c") {
+		into "/" + srcVersion24
+	}
+	from (project.projectDir.toString() + "/" + srcVersion24 + "/headers") {
+		into "/" + srcVersion24
+	}
+	from (project.projectDir.toString() + "/" + srcVersion24 + "/build") {
+		into "/" + srcVersion24
+	}
+	from (project.projectDir.toString() + "/" + srcVersion24 + "/README.txt")
 }
 
 model {
+				
+	//
+	// Version 2.33.1
+	//
 	components {
-		demangler_gnu(NativeExecutableSpec) {
+		demangler_gnu_v2_33_1(NativeExecutableSpec) {
 			targetPlatform "win64"
 			targetPlatform "linux64"
 			targetPlatform "osx64"
 			sources {
 				c {
 					source {
-						srcDir "src/demangler_gnu/c"
+						srcDir srcVersion33_1 + "/c"
 					}
 					exportedHeaders {
-						srcDir "src/demangler_gnu/headers"
+						srcDir srcVersion33_1 + "/headers"
 					}
 				}
-			}
-			
+			}			
 		}
+		
+		//
+		// Version 2.24
+		//
+		demangler_gnu_v2_24(NativeExecutableSpec) {
+			targetPlatform "win64"
+			targetPlatform "linux64"
+			targetPlatform "osx64"
+			sources {
+				c {
+					source {
+						srcDir srcVersion24 + "/c"
+					}
+					exportedHeaders {
+						srcDir srcVersion24 + "/headers"
+					}
+				}
+			}			
+		}	
 	}
 }
 
 model {
 	binaries {
+	
+		/*
+			Note: 'all' will pass all binary output, which is each platform for each version
+		*/
 		all{ b ->
-			if (toolChain in Gcc) {
-				cCompiler.args "-DMAIN_CPLUS_DEM"
-				cCompiler.args "-DHAVE_STDLIB_H"
-				cCompiler.args "-DHAVE_STRING_H"
-				if (targetPlatform.operatingSystem.linux) {
-//					linker.args "-static"
+		
+			def version = b.getApplication().getName()
+			println "have binary: " + b 
+		
+			if (version.equals(v33_1)) {
+				if (toolChain in Gcc) {							
+					//cCompiler.args "-DCP_DEMANGLE_DEBUG"
+					cCompiler.args "-DHAVE_STDLIB_H"
+					cCompiler.args "-DHAVE_STRING_H"
+				}
+				else if (toolChain in VisualCpp) {
+					cCompiler.args "/D_CONSOLE"
+					cCompiler.args "-DHAVE_STDLIB_H"
+					cCompiler.args "-DHAVE_STRING_H"
+				}
+				else if (toolChain in Clang) {
+					cCompiler.args "-DHAVE_STDLIB_H"
+					cCompiler.args "-DHAVE_STRING_H"
 				}
 			}
-			else if (toolChain in VisualCpp) {
-				cCompiler.args "/D_CONSOLE"
-				cCompiler.args "/DMAIN_CPLUS_DEM"
-				cCompiler.args "-DHAVE_STDLIB_H"
-				cCompiler.args "-DHAVE_STRING_H"
-			}
-			else if (toolChain in Clang) {
-				cCompiler.args "-DMAIN_CPLUS_DEM"
-				cCompiler.args "-DHAVE_STDLIB_H"
-				cCompiler.args "-DHAVE_STRING_H"
-				if (targetPlatform.operatingSystem.linux) {
-//					linker.args "-static"
+			else if (version.equals(v24)) {
+				if (toolChain in Gcc) {
+					cCompiler.args "-DMAIN_CPLUS_DEM"
+					cCompiler.args "-DHAVE_STDLIB_H"
+					cCompiler.args "-DHAVE_STRING_H"
+				}
+				else if (toolChain in VisualCpp) {
+					cCompiler.args "/D_CONSOLE"
+					cCompiler.args "/DMAIN_CPLUS_DEM"
+					cCompiler.args "-DHAVE_STDLIB_H"
+					cCompiler.args "-DHAVE_STRING_H"
+				}
+				else if (toolChain in Clang) {
+					cCompiler.args "-DMAIN_CPLUS_DEM"
+					cCompiler.args "-DHAVE_STDLIB_H"
+					cCompiler.args "-DHAVE_STRING_H"
 				}
 			}
+		
+			
 		}
 	}
 }

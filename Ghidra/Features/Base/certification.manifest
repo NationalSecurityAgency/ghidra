@@ -82,7 +82,6 @@ ghidra_scripts/world.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/shared/arrow.gif||GHIDRA||||END|
 src/main/help/help/shared/close16.gif||GHIDRA||||END|
-src/main/help/help/shared/helpWarning.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/help/help/shared/menu16.gif||GHIDRA||||END|
 src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0|||renamed from flag-red.png|END|
 src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||renamed from flag-green.png|END|

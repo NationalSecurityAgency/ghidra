@@ -49,7 +49,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			"analyzer was disabled or not present.";
 
 	private final static String OPTION_FUNCTION_NONRETURN_THRESHOLD =
-		"Function non-return threshold";
+		"Function Non-return Threshold";
 
 	private static final String OPTION_DESCRIPTION_FUNCTION_NONRETURN_THRESHOLD =
 		"Enter the number of indications for a given function before it is considered non-returning.";
@@ -60,14 +60,14 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	private static final String OPTION_NAME_REPAIR_DAMAGE = "Repair Flow Damage";
 	private static final String OPTION_DESCRIPTION_REPAIR_DAMAGE =
-		"If checked, repair any flow after a call to found non-returning functions.";
+		"Signals to repair any flow after a call to found non-returning functions.";
 	private static final boolean OPTION_DEFAULT_REPAIR_DAMAGE_ENABLED = true;
-	
+
 	private static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
 	private static final String OPTION_DESCRIPTION_CREATE_BOOKMARKS =
-		"If checked, an analysis bookmark will created on each function marked as non-returning.";
+		"Signals to create an analysis bookmark on each function marked as non-returning.";
 	private static final boolean OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED = true;
-	
+
 	private boolean repairDamageEnabled = OPTION_DEFAULT_REPAIR_DAMAGE_ENABLED;
 
 	private boolean createBookmarksEnabled = OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED;
@@ -105,16 +105,16 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			this.reasonList = new ArrayList<>();
 
 			monitor.setMessage("NoReturn - Finding non-returning functions");
-			
+
 			AddressSet noReturnSet = new AddressSet();
-			
+
 			boolean hadOtherSuspiciousFunctions = detectNoReturn(program, noReturnSet, set);
-			
+
 			// run again with the new known noReturnSet
 			if (hadOtherSuspiciousFunctions) {
 				detectNoReturn(program, noReturnSet, set);
 			}
-			
+
 			// mark all detected non-returning functions
 			AddressIterator noreturns = noReturnSet.getAddresses(true);
 			for (Address address : noreturns) {
@@ -130,12 +130,12 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 
 			// repair the damage for all non-returning functions
-			if (repairDamageEnabled) { 
+			if (repairDamageEnabled) {
 				AddressSet clearInstSet = new AddressSet();
 				noreturns = noReturnSet.getAddresses(true);
 				for (Address address : noreturns) {
 					clearInstSet.add(findPotentialDamagedLocations(program, address));
-				}	
+				}
 				repairDamagedLocations(monitor, clearInstSet);
 			}
 		}
@@ -164,7 +164,8 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 		// entries including data flow referenced from instructions will be repaired
 
-		ClearFlowAndRepairCmd cmd = new ClearFlowAndRepairCmd(clearInstSet, protectedSet, true, false, true);
+		ClearFlowAndRepairCmd cmd =
+			new ClearFlowAndRepairCmd(clearInstSet, protectedSet, true, false, true);
 		cmd.applyTo(program, monitor);
 	}
 
@@ -213,7 +214,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			}
 		}
 	}
-	
+
 	/**
 	 * find locations of potential damage from calls to non-returning functions
 	 * 
@@ -278,7 +279,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			if (fallthruAddr == null) {
 				continue;
 			}
-			
+
 			// if location right below is an entry point, don't clear it
 			Address checkAddr = skipNOPS(fallthruAddr);
 			if (program.getSymbolTable().isExternalEntryPoint(checkAddr) ||
@@ -301,7 +302,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			// entries that are data should not be cleared, only possible bookmarks
 			ClearFlowAndRepairCmd.clearBadBookmarks(program, clearDataSet, monitor);
 		}
-		
+
 		return clearInstSet;
 	}
 
@@ -313,9 +314,9 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		AddressSet checkedSet = new AddressSet();
 
 		boolean hadSuspiciousFunctions = false;
-		
+
 		AddressIterator refIter =
-				cp.getReferenceManager().getReferenceSourceIterator(checkSet, true);
+			cp.getReferenceManager().getReferenceSourceIterator(checkSet, true);
 		for (Address address : refIter) {
 			monitor.checkCanceled();
 
@@ -344,7 +345,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			// detected a calling issue, check other instructions calling the same place
 			Address[] flows = inst.getFlows();
 			for (Address target : flows) {
-				
+
 				int count = 1;
 				ReferenceIterator refsTo = cp.getReferenceManager().getReferencesTo(target);
 				for (Reference reference : refsTo) {
@@ -364,7 +365,8 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 						continue;
 					}
 					Instruction oinst = cp.getListing().getInstructionAt(fromAddress);
-					if ( oinst == null || !checkNonReturningIndicators(oinst, noReturnSet, blockModel)) {
+					if (oinst == null ||
+						!checkNonReturningIndicators(oinst, noReturnSet, blockModel)) {
 						continue;
 					}
 
@@ -375,7 +377,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 						break;
 					}
 				}
-				
+
 				// was suspicious, but evidence didn't pass threshold
 				if (count < evidenceThresholdFunctions) {
 					// if function only calls non-returning functions
@@ -393,41 +395,42 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		return hadSuspiciousFunctions;
 	}
 
-	private boolean targetOnlyCallsNoReturn(Program cp, Address target, AddressSet noReturnSet) throws CancelledException {
-		
+	private boolean targetOnlyCallsNoReturn(Program cp, Address target, AddressSet noReturnSet)
+			throws CancelledException {
+
 		SimpleBlockModel model = new SimpleBlockModel(cp);
-		
+
 		// follow the flow of the instructions
 		// if hit return, then no good
 		// if hit call, check noReturn, if is stop following
 		// if hit place that is called, then stop, and return no-good
-		
-		Stack<Address> todo = new Stack<Address>();
+
+		Stack<Address> todo = new Stack<>();
 		todo.push(target);
 		AddressSet visited = new AddressSet();
 		boolean hitNoReturn = false;
-		
+
 		while (!todo.isEmpty()) {
 			Address blockAddr = todo.pop();
 			CodeBlock block = model.getCodeBlockAt(blockAddr, monitor);
-			
+
 			if (block == null) {
 				return false;
-			}		
+			}
 			if (visited.contains(blockAddr)) {
 				continue;
 			}
 			visited.add(blockAddr);
-			
+
 			FlowType flowType = block.getFlowType();
 			if (flowType.isTerminal()) {
 				return false;
 			}
-			
+
 			// if target has a call to it, then can't tell, but suspect...
 			// add all destinations to todo
 			CodeBlockReferenceIterator destinations = block.getDestinations(monitor);
-			
+
 			// no destinations
 			if (!destinations.hasNext()) {
 				return false;
@@ -457,7 +460,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				todo.push(destAddr);
 			}
 		}
-		
+
 		return hitNoReturn;
 	}
 
@@ -487,11 +490,11 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 		if (flows != null && flows.length > 0) {
 			target = flows[0];
 		}
-		
+
 		// get the address of the next function after this instruction
 		Address nextFuncAddr = null;
 		if (fallThru != null) {
-			FunctionIterator functions = program.getFunctionManager().getFunctions(fallThru,true);
+			FunctionIterator functions = program.getFunctionManager().getFunctions(fallThru, true);
 			if (functions.hasNext()) {
 				nextFuncAddr = functions.next().getEntryPoint();
 			}
@@ -514,11 +517,12 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 				reasonList.add(location);
 				return true;
 			}
-			
+
 			/* check for codeblock containing a function */
 			if (nextFuncAddr != null && block.contains(nextFuncAddr)) {
 				NoReturnLocations location =
-					new NoReturnLocations(target, fallThru, "Function defined in instruction after call");
+					new NoReturnLocations(target, fallThru,
+						"Function defined in instruction after call");
 				reasonList.add(location);
 				return true;
 			}
@@ -598,8 +602,9 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	protected void fixCallingFunctionBody(Program cp, Address entry) throws CancelledException {
 		if (createBookmarksEnabled) {
-			cp.getBookmarkManager().setBookmark(entry, BookmarkType.ANALYSIS,
-				"Non-Returning Function", "Non-Returning Function Found");
+			cp.getBookmarkManager()
+					.setBookmark(entry, BookmarkType.ANALYSIS,
+						"Non-Returning Function", "Non-Returning Function Found");
 		}
 		AddressSet fixedSet = new AddressSet();
 
@@ -666,19 +671,19 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			if (!instructionAt.getFlowType().isFallthrough()) {
 				return addr;
 			}
-			
+
 			// instruction has PCODE, might not be a NOP
 			PcodeOp[] pcode = instructionAt.getPcode();
 			if (pcode != null && pcode.length != 0) {
 				// must do an operation, or assign to non-unique
 				for (PcodeOp pCode : pcode) {
 					int opcode = pCode.getOpcode();
-					switch(opcode) {
-					case PcodeOp.LOAD:
-					case PcodeOp.STORE:
-					case PcodeOp.CALLOTHER:
-					case PcodeOp.SEGMENTOP:
-						return addr;
+					switch (opcode) {
+						case PcodeOp.LOAD:
+						case PcodeOp.STORE:
+						case PcodeOp.CALLOTHER:
+						case PcodeOp.SEGMENTOP:
+							return addr;
 					}
 					Varnode output = pCode.getOutput();
 					if (output != null && !output.isUnique()) {
@@ -686,7 +691,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 					}
 				}
 			}
-			
+
 			addr = instructionAt.getFallThrough();
 			// this shouldn't happen, to have no fallthru, you should have flow, but could be override
 			if (addr == null) {
@@ -710,15 +715,15 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void registerOptions(Options options, Program prog) {
 		HelpLocation helpLocation = new HelpLocation("AutoAnalysisPlugin",
-			"Auto_Analysis_Option_Instruction" + getAnalysisType());
+			"Auto_Analysis_Option_Instructions");
 
 		options.registerOption(OPTION_FUNCTION_NONRETURN_THRESHOLD,
 			OPTION_DEFAULT_EVIDENCE_THRESHOLD, helpLocation,
 			OPTION_DESCRIPTION_FUNCTION_NONRETURN_THRESHOLD);
 
 		options.registerOption(OPTION_NAME_REPAIR_DAMAGE, repairDamageEnabled, null,
-				OPTION_DESCRIPTION_REPAIR_DAMAGE);
-		
+			OPTION_DESCRIPTION_REPAIR_DAMAGE);
+
 		options.registerOption(OPTION_NAME_CREATE_BOOKMARKS, createBookmarksEnabled, null,
 			OPTION_DESCRIPTION_CREATE_BOOKMARKS);
 
@@ -731,8 +736,8 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			options.getInt(OPTION_FUNCTION_NONRETURN_THRESHOLD, OPTION_DEFAULT_EVIDENCE_THRESHOLD);
 
 		repairDamageEnabled =
-				options.getBoolean(OPTION_NAME_REPAIR_DAMAGE, repairDamageEnabled);
-		
+			options.getBoolean(OPTION_NAME_REPAIR_DAMAGE, repairDamageEnabled);
+
 		createBookmarksEnabled =
 			options.getBoolean(OPTION_NAME_CREATE_BOOKMARKS, createBookmarksEnabled);
 

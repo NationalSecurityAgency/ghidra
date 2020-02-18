@@ -92,4 +92,14 @@ public class DemanglerOptions {
 		this.demangleOnlyKnownPatterns = demangleOnlyKnownPatterns;
 	}
 
+	@Override
+	public String toString() {
+		//@formatter:off
+		return "{\n" +
+			"\tdoDisassembly: " + doDisassembly + ",\n" +
+			"\tapplySignature: " + applySignature + ",\n" +
+			"\tdemangleOnlyKnownPatterns: " + demangleOnlyKnownPatterns + ",\n" +
+		"}";
+		//@formatter:on
+	}
 }

@@ -32,7 +32,13 @@ public class DemanglerUtil {
 	private static final Pattern TRAILING_PARAMETER_SPACE_PATTERN = Pattern.compile("([\\(\\,]) ");
 
 	/**
-	 * Locates all available demanglers, then it attempts to demangle.
+	 * Locates all available demanglers, then it attempts to demangle.  This method will
+	 * query all demanglers regardless of architecture.  
+	 * 
+	 * <p>This method will use only the default options for demangling.  If you need to 
+	 * specify options, then you will have to call each specific demangler directly, creating
+	 * the options specifically needed for each demangler.   See 
+	 * {@link Demangler#createDefaultOptions()}.
 	 * 
 	 * @param mangled the mangled name
 	 * @return the demangled object or null
@@ -41,9 +47,7 @@ public class DemanglerUtil {
 		List<Demangler> demanglers = getDemanglers();
 		for (Demangler demangler : demanglers) {
 			try {
-				// not sure if we should be doing all symbols, but this is what it used to do
-				boolean onlyKnownTypes = false;
-				DemangledObject demangledObject = demangler.demangle(mangled, onlyKnownTypes);
+				DemangledObject demangledObject = demangler.demangle(mangled);
 				if (demangledObject != null) {
 					return demangledObject;
 				}
@@ -59,6 +63,11 @@ public class DemanglerUtil {
 	 * Locates all available demanglers and checks to see if the supplied program is 
 	 * supported, then it attempts to demangle.
 	 * 
+	 * <p>This method will use only the default options for demangling.  If you need to 
+	 * specify options, then you will have to call each specific demangler directly, creating
+	 * the options specifically needed for each demangler.   See 
+	 * {@link Demangler#createDefaultOptions()}.
+	 * 
 	 * @param program the program containing the mangled name
 	 * @param mangled the mangled name
 	 * @return the demangled object or null
@@ -71,9 +80,7 @@ public class DemanglerUtil {
 					continue;
 				}
 
-				// not sure if we should be doing all symbols, but this is what it used to do
-				boolean onlyKnownTypes = false;
-				DemangledObject demangledObject = demangler.demangle(mangled, onlyKnownTypes);
+				DemangledObject demangledObject = demangler.demangle(mangled);
 				if (demangledObject != null) {
 					return demangledObject;
 				}
@@ -95,12 +102,14 @@ public class DemanglerUtil {
 	}
 
 	/**
-	 * Converts the list of names into a namespace linked list.
+	 * Converts the list of names into a namespace demangled type.
 	 * Given names = { "A", "B", "C" }, which represents "A::B::C".
 	 * The following will be created {@literal "Namespace{A}->Namespace{B}->Namespace{C}"}
 	 * and Namespace{C} will be returned.
 	 * 
 	 * NOTE: the list will be empty after the call.
+	 * @param names the names to convert
+	 * @return the newly created type
 	 */
 	public static DemangledType convertToNamespaces(List<String> names) {
 		if (names.size() == 0) {
@@ -129,13 +138,13 @@ public class DemanglerUtil {
 
 	private static String replace(String str, Pattern spaceCleanerPattern) {
 		Matcher matcher = spaceCleanerPattern.matcher(str);
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		while (matcher.find()) {
 			String captureGroup = matcher.group(1);
-			matcher.appendReplacement(buf, captureGroup);
+			matcher.appendReplacement(buffy, captureGroup);
 		}
-		matcher.appendTail(buf);
-		return buf.toString();
+		matcher.appendTail(buffy);
+		return buffy.toString();
 	}
 
 	public static void setNamespace(DemangledType dt, DemangledType namespace) {

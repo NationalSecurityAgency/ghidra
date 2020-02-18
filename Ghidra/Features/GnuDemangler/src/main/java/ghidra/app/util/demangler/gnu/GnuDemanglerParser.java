@@ -27,7 +27,7 @@ import ghidra.app.util.demangler.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.util.StringUtilities;
 
-public class GnuDemanglerParser implements DemanglerParser {
+public class GnuDemanglerParser {
 
 	private static final String CONSTRUCTION_VTABLE_FOR = "construction vtable for ";
 	private static final String VTT_FOR = "VTT for ";
@@ -154,7 +154,6 @@ public class GnuDemanglerParser implements DemanglerParser {
 		this.process = process;
 	}
 
-	@Override
 	public DemangledObject parse(String mangled, String demangled) {
 		try {
 			return doParse(mangled, demangled);

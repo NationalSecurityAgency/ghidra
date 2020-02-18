@@ -1,5 +1,5 @@
 /* ###
- * IP: GPL 3 Linking Permitted
+ * IP: LGPL 2.1
  */
 /* Demangler for g++ V3 ABI.
    Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
@@ -31,12 +31,11 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 
- 
-   					CHANGE NOTICE:
-This file was changed on July 1st, 2014.			
 
    					CHANGE NOTICE:
-This file was changed on July 4th, 2019.
+		This file was changed on July 22nd, 2020
+		This file was changed on Jan 22, 2020
+			- Added a method to wrap calls to d_print_comp() in order to track too much recursion
 */
 
 /* This code implements a demangler for the g++ V3 ABI.  The ABI is
@@ -312,6 +311,11 @@ struct d_print_info
   int pack_index;
   /* Number of d_print_flush calls so far.  */
   unsigned long int flush_count;
+  
+	// Changed Jan 22, 2020 - Added a method to wrap calls to d_print_comp() in
+	//                        order to track too much recursion
+  int recursion_level;
+  
 };
 
 #ifdef CP_DEMANGLE_DEBUG
@@ -469,6 +473,12 @@ static inline char d_last_char (struct d_print_info *);
 
 static void
 d_print_comp (struct d_print_info *, int, const struct demangle_component *);
+
+// Changed Jan 22, 2020 - Added a method to wrap calls to d_print_comp() in
+//                        order to track too much recursion
+static void
+d_print_comp_delegate (struct d_print_info *, int, const struct demangle_component *);
+
 
 static void
 d_print_java_identifier (struct d_print_info *, const char *, int);
@@ -3670,6 +3680,7 @@ static void
 d_print_init (struct d_print_info *dpi, demangle_callbackref callback,
 	      void *opaque)
 {
+
   dpi->len = 0;
   dpi->last_char = '\0';
   dpi->templates = NULL;
@@ -3681,6 +3692,10 @@ d_print_init (struct d_print_info *dpi, demangle_callbackref callback,
   dpi->opaque = opaque;
 
   dpi->demangle_failure = 0;
+  
+	// Changed Jan 22, 2020 - Added a method to wrap calls to d_print_comp() in
+	//                        order to track too much recursion
+  dpi->recursion_level = 0;
 }
 
 /* Indicate that an error occurred during printing, and test for error.  */
@@ -3931,8 +3946,26 @@ d_print_subexpr (struct d_print_info *dpi, int options,
 
 /* Subroutine to handle components.  */
 
+	// Changed Jan 22, 2020 - Added a method to wrap calls to d_print_comp() in
+	//                        order to track too much recursion
 static void
 d_print_comp (struct d_print_info *dpi, int options,
+              const struct demangle_component *dc)
+{
+
+	if (dpi->recursion_level > DEMANGLE_RECURSION_LIMIT) {
+		d_print_error (dpi);
+		return;
+	}
+
+	dpi->recursion_level++;
+	d_print_comp_delegate(dpi, options, dc);	
+	dpi->recursion_level--;
+	
+}
+
+static void
+d_print_comp_delegate (struct d_print_info *dpi, int options,
               const struct demangle_component *dc)
 {
   /* Magic variable to let reference smashing skip over the next modifier

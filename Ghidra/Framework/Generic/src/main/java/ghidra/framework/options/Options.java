@@ -15,8 +15,6 @@
  */
 package ghidra.framework.options;
 
-import ghidra.util.HelpLocation;
-
 import java.awt.Color;
 import java.awt.Font;
 import java.beans.PropertyEditor;
@@ -25,6 +23,8 @@ import java.util.Date;
 import java.util.List;
 
 import javax.swing.KeyStroke;
+
+import ghidra.util.HelpLocation;
 
 public interface Options {
 	public static final char DELIMITER = '.';
