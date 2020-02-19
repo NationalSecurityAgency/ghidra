@@ -70,9 +70,6 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 
 	public FileFormatsPlugin(PluginTool tool) {
 		super(tool);
-
-		chooserEclipse = new GhidraFileChooser(null);
-		chooserJarFolder = new GhidraFileChooser(null);
 	}
 
 	@Override
@@ -107,6 +104,9 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 						return;
 					}
 
+					if (chooserEclipse == null) {
+						chooserEclipse = new GhidraFileChooser(null);
+					}
 					chooserEclipse.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 					chooserEclipse.setTitle("Select Eclipe Project Directory");
 					chooserEclipse.setApproveButtonText("SELECT");
@@ -171,35 +171,40 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 				if (context instanceof FSBActionContext) {
 					FSBActionContext fsbContext = (FSBActionContext) context;
 					FSRL jarFSRL = FSBUtils.getFileFSRLFromContext(context);
-					if (jarFSRL != null) {
-						chooserJarFolder.setFileSelectionMode(
-							GhidraFileChooserMode.DIRECTORIES_ONLY);
-						chooserJarFolder.setTitle("Select JAR Output Directory");
-						chooserJarFolder.setApproveButtonText("SELECT");
-						chooserJarFolder.setSelectedFile(null);
-						File outputDirectory = chooserJarFolder.getSelectedFile();
-						if (outputDirectory == null) {
-							return;
-						}
-						GTree gTree = fsbContext.getTree();
-						gTree.runTask(monitor -> {
-							try {
-								JarDecompiler decompiler =
-									new JarDecompiler(jarFSRL, outputDirectory);
-								decompiler.decompile(monitor);
-
-								if (decompiler.getLog().getMsgCount() > 0) {
-									Msg.showInfo(this, gTree,
-										"Decompiling Jar " + jarFSRL.getName(),
-										decompiler.getLog().toString());
-								}
-							}
-							catch (Exception e) {
-								FSUtilities.displayException(this, gTree, "Error Decompiling Jar",
-									e.getMessage(), e);
-							}
-						});
+					if (jarFSRL == null) {
+						return;
 					}
+
+					if (chooserJarFolder == null) {
+						chooserJarFolder = new GhidraFileChooser(null);
+					}
+					chooserJarFolder.setFileSelectionMode(
+						GhidraFileChooserMode.DIRECTORIES_ONLY);
+					chooserJarFolder.setTitle("Select JAR Output Directory");
+					chooserJarFolder.setApproveButtonText("SELECT");
+					chooserJarFolder.setSelectedFile(null);
+					File outputDirectory = chooserJarFolder.getSelectedFile();
+					if (outputDirectory == null) {
+						return;
+					}
+					GTree gTree = fsbContext.getTree();
+					gTree.runTask(monitor -> {
+						try {
+							JarDecompiler decompiler =
+								new JarDecompiler(jarFSRL, outputDirectory);
+							decompiler.decompile(monitor);
+
+							if (decompiler.getLog().getMsgCount() > 0) {
+								Msg.showInfo(this, gTree,
+									"Decompiling Jar " + jarFSRL.getName(),
+									decompiler.getLog().toString());
+							}
+						}
+						catch (Exception e) {
+							FSUtilities.displayException(this, gTree, "Error Decompiling Jar",
+								e.getMessage(), e);
+						}
+					});
 				}
 			}
 
@@ -218,6 +223,7 @@ public class FileFormatsPlugin extends Plugin implements FrontEndable {
 			public boolean isAddToPopup(ActionContext context) {
 				return context instanceof FSBActionContext;
 			}
+
 		};
 		action.setPopupMenuData(
 			new MenuData(new String[] { action.getMenuText() }, ImageManager.JAR, "J"));
