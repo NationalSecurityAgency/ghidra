@@ -73,7 +73,7 @@ public class CreateEHUnwindMapBackgroundCmd extends AbstractCreateDataBackground
 	@Override
 	protected EHUnwindModel createModel(Program program) {
 		if (model == null) {
-			model = new EHUnwindModel(program, count, address, validationOptions);
+			model = new EHUnwindModel(program, count, getDataAddress(), validationOptions);
 		}
 		return model;
 	}

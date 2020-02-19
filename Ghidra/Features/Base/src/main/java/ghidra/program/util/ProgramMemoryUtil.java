@@ -177,8 +177,7 @@ public class ProgramMemoryUtil {
 		MemoryBlock[] tmpBlocks = new MemoryBlock[blocks.length];
 		int j = 0;
 		for (MemoryBlock block : blocks) {
-			if ((block.isInitialized() && withBytes) ||
-				(!block.isInitialized() && !withBytes)) {
+			if ((block.isInitialized() && withBytes) || (!block.isInitialized() && !withBytes)) {
 				tmpBlocks[j++] = block;
 			}
 		}
@@ -493,6 +492,30 @@ public class ProgramMemoryUtil {
 			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
 		}
 
+		byte[] addressBytes = getDirectAddressBytes(program, toAddress);
+
+		byte[] shiftedAddressBytes = getShiftedDirectAddressBytes(program, toAddress);
+
+		Memory memory = program.getMemory();
+		Set<Address> dirRefsAddrs = new TreeSet<>();
+		findBytePattern(memory, blocks, addressBytes, alignment, dirRefsAddrs, monitor);
+
+		if (shiftedAddressBytes != null) { // assume shifted address not supported with segmented memory
+			findBytePattern(memory, blocks, shiftedAddressBytes, alignment, dirRefsAddrs, monitor);
+		}
+
+		return dirRefsAddrs;
+	}
+
+	/**
+	 * Get a representation of an address as it would appear in bytes in memory.
+	 * 
+	 * @param program program
+	 * @param toAddress target address
+	 * @return byte representation of toAddress
+	 */
+	public static byte[] getDirectAddressBytes(Program program, Address toAddress) {
+
 		Memory memory = program.getMemory();
 		boolean isBigEndian = memory.isBigEndian();
 
@@ -536,6 +559,31 @@ public class ProgramMemoryUtil {
 				addressBytes, 0, addressBytes.length);
 		}
 
+		return addressBytes;
+	}
+
+	/**
+	 * returns shifted address bytes if they are different than un-shifted
+	 * 
+	 * @param program program
+	 * @param toAddress target address
+	 * @return shifted bytes, null if same as un-shifted
+	 */
+	public static byte[] getShiftedDirectAddressBytes(Program program, Address toAddress) {
+
+		byte[] addressBytes = getDirectAddressBytes(program, toAddress);
+
+		Memory memory = program.getMemory();
+		boolean isBigEndian = memory.isBigEndian();
+
+		DataConverter dataConverter;
+		if (isBigEndian) {
+			dataConverter = new BigEndianDataConverter();
+		}
+		else {
+			dataConverter = new LittleEndianDataConverter();
+		}
+
 		byte[] shiftedAddressBytes = null;
 		DataTypeManager dataTypeManager = program.getDataTypeManager();
 		DataOrganization dataOrganization = dataTypeManager.getDataOrganization();
@@ -554,24 +602,23 @@ public class ProgramMemoryUtil {
 			}
 		}
 
-		// don't need this anymore - finding all 16 bit addrs in whole prog
-//				AddressRange segmentRange = null;
-//				if (toAddress instanceof SegmentedAddress) {
-//					// Restrict search to currentSegment range
-//					SegmentedAddressSpace segSpace = (SegmentedAddressSpace) toAddress.getAddressSpace();
-//					segmentRange =
-//						new AddressRangeImpl(segSpace.getAddress(currentSegment, 0), segSpace.getAddress(
-//							currentSegment, 0xffff));
-//				}
+		return shiftedAddressBytes;
+	}
 
-		Set<Address> dirRefsAddrs = new TreeSet<>();
-		findBytePattern(memory, blocks, addressBytes, alignment, dirRefsAddrs, monitor);
+	public static byte[] getImageBaseOffsets32Bytes(Program program, int alignment,
+			Address toAddress) {
 
-		if (shiftedAddressBytes != null) { // assume shifted address not supported with segmented memory
-			findBytePattern(memory, blocks, shiftedAddressBytes, alignment, dirRefsAddrs, monitor);
+		Address imageBase = program.getImageBase();
+
+		long offsetValue = toAddress.subtract(imageBase);
+		int offsetSize = 4; // 32 bit offset
+		byte[] bytes = new byte[offsetSize];
+		for (int i = 0; i < offsetSize; i++) {
+			bytes[i] = (byte) offsetValue;
+			offsetValue >>= 8; // Shift by a single byte.
 		}
 
-		return dirRefsAddrs;
+		return bytes;
 	}
 
 	/**
@@ -627,8 +674,7 @@ public class ProgramMemoryUtil {
 			if (!block.isInitialized()) {
 				continue;
 			}
-			if (memoryRange != null &&
-				!memoryRange.intersects(block.getStart(), block.getEnd())) {
+			if (memoryRange != null && !memoryRange.intersects(block.getStart(), block.getEnd())) {
 				// skip blocks which do not correspond to currentSeg
 				continue;
 			}

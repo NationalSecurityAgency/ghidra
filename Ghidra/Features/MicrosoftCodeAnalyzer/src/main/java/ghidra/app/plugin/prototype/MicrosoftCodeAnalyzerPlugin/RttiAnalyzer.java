@@ -30,6 +30,7 @@ import ghidra.program.model.lang.UndefinedValueException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramMemoryUtil;
+import ghidra.util.bytesearch.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -41,7 +42,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 	private static final String NAME = "Windows x86 PE RTTI Analyzer";
 	private static final String DESCRIPTION =
-		"This analyzer finds and creates all of the RTTI metadata structures and their associated vf tables.";
+		"Finds and creates RTTI metadata structures and associated vf tables.";
 
 	// TODO If we want the RTTI analyzer to find all type descriptors regardless of whether
 	//      they are used for RTTI, then change the CLASS_PREFIX_CHARS to ".". Need to be
@@ -133,6 +134,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		monitor.setMaximum(possibleRtti0Addresses.size());
 		monitor.setMessage("Creating RTTI Data...");
 
+		ArrayList<Address> rtti0Locations = new ArrayList<Address>();
 		int count = 0;
 		for (Address rtti0Address : possibleRtti0Addresses) {
 			monitor.checkCanceled();
@@ -157,29 +159,29 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 				rtti0Address, validationOptions, applyOptions);
 			typeDescCmd.applyTo(program, monitor);
 
-			// Create any valid RTTI4s for this TypeDescriptor
-			processRtti4sForRtti0(program, rtti0Address, monitor);
+			rtti0Locations.add(rtti0Address);
 		}
+
+		// Create any valid RTTI4s for this TypeDescriptor
+		processRtti4sForRtti0(program, rtti0Locations, monitor);
 	}
 
-	private void processRtti4sForRtti0(Program program, Address rtti0Address, TaskMonitor monitor)
-			throws CancelledException {
+	private void processRtti4sForRtti0(Program program, List<Address> rtti0Locations,
+			TaskMonitor monitor) throws CancelledException {
 
-		List<MemoryBlock> rDataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(program,
+		List<MemoryBlock> dataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(program,
 			program.getMemory(), ".rdata", monitor);
 
+		dataBlocks.addAll(ProgramMemoryUtil.getMemoryBlocksStartingWithName(program,
+			program.getMemory(), ".data", monitor));
+
 		List<Address> rtti4Addresses =
-			getRtti4Addresses(program, rDataBlocks, rtti0Address, validationOptions, monitor);
+			getRtti4Addresses(program, dataBlocks, rtti0Locations, validationOptions, monitor);
 
-		for (Address rtti4Address : rtti4Addresses) {
-
-			monitor.checkCanceled();
-
-			CreateRtti4BackgroundCmd cmd =
-				new CreateRtti4BackgroundCmd(rtti4Address, rDataBlocks, validationOptions,
-					applyOptions);
-			cmd.applyTo(program, monitor);
-		}
+		// create all found RTTI4 tables at once
+		CreateRtti4BackgroundCmd cmd = new CreateRtti4BackgroundCmd(rtti4Addresses, dataBlocks,
+			validationOptions, applyOptions);
+		cmd.applyTo(program, monitor);
 	}
 
 	/**
@@ -187,67 +189,128 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 	 * the RTTI 0 at the indicated base address.
 	 * @param program the program containing the RTTI 0 data structure.
 	 * @param rtti4Blocks the memory blocks to be searched for RTTI4 structures.
-	 * @param rtti0Address the base address of the RTTI 0 structure in the program
+	 * @param rtti0Locations the base addresses of the RTTI 0 structure in the program
 	 * @param validationOptions options indicating how validation is performed for data structures
-	 * @param monitor the task monitor for cancelling a task
+	 * @param monitor the task monitor for canceling a task
 	 * @return the RTTI 4 base addresses associated with the RTTI 0
 	 * @throws CancelledException if the user cancels this task.
 	 */
 	private static List<Address> getRtti4Addresses(Program program, List<MemoryBlock> rtti4Blocks,
-			Address rtti0Address, DataValidationOptions validationOptions, TaskMonitor monitor)
-			throws CancelledException {
+			List<Address> rtti0Locations, DataValidationOptions validationOptions,
+			TaskMonitor monitor) throws CancelledException {
 
 		monitor.checkCanceled();
 
-		List<Address> addresses = new ArrayList<>(); // the RTTI 4 addresses
-		int rtti0PointerOffset = Rtti4Model.getRtti0PointerComponentOffset();
-		Set<Address> refsToRtti0 = getRefsToRtti0(program, rtti4Blocks, rtti0Address);
+		List<Address> addresses =
+			getRefsToRtti0(program, rtti4Blocks, rtti0Locations, validationOptions, monitor);
 
-		// for each RTTI 0 now see if we can get RTTI4s that refer to it.
-		for (Address refAddress : refsToRtti0) {
-
-			monitor.checkCanceled();
-
-			Address possibleRtti4Address;
-			try {
-				possibleRtti4Address = refAddress.subtractNoWrap(rtti0PointerOffset);
-			}
-			catch (AddressOverflowException e) {
-				continue; // Couldn't get an Rtti4 address.
-			}
-
-			Rtti4Model rtti4Model =
-				new Rtti4Model(program, possibleRtti4Address, validationOptions);
-			try {
-				rtti4Model.validate();
-			}
-			catch (InvalidDataTypeException e) {
-				continue; // Only process valid RTTI 4 data.
-			}
-
-			// Check that the RTTI 0 is referred to both directly from the RTTI 4 and indirectly 
-			// through the RTTI 3.
-			boolean refersToRtti0 = rtti4Model.refersToRtti0(rtti0Address);
-			if (!refersToRtti0) {
-				continue; // Only process valid RTTI 4 data.
-			}
-
-			addresses.add(possibleRtti4Address);
-		}
 		return addresses;
 	}
 
-	private static Set<Address> getRefsToRtti0(Program program, List<MemoryBlock> dataBlocks,
-			Address rtti0Address) throws CancelledException {
-		Set<Address> refsToRtti0;
-		if (MSDataTypeUtils.is64Bit(program)) {
-			refsToRtti0 = ProgramMemoryUtil.findImageBaseOffsets32(program, 4, rtti0Address,
-				TaskMonitor.DUMMY);
+	/** For each of the RTTI0 locations found locate the associated RTTI4 structure referring to it.
+	 * 
+	 * @param program program to be searched
+	 * @param dataBlocks dataBlocks to search
+	 * @param rtti0Locations list of known rtti0 locations
+	 * @param validationOptions options for validation of found RTTI4 entries
+	 * @param monitor to cancel
+	 * @return list of found RTTI4 references to known RTTI0 locations
+	 * @throws CancelledException if canceled
+	 */
+	private static List<Address> getRefsToRtti0(Program program, List<MemoryBlock> dataBlocks,
+			List<Address> rtti0Locations, DataValidationOptions validationOptions,
+			TaskMonitor monitor) throws CancelledException {
+
+		List<Address> addresses = new ArrayList<>(); // the RTTI 4 addresses
+
+		int rtti0PointerOffset = Rtti4Model.getRtti0PointerComponentOffset();
+
+		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("RTTI0 refernces");
+
+		for (Address rtti0Address : rtti0Locations) {
+			byte[] bytes;
+			if (MSDataTypeUtils.is64Bit(program)) {
+				// 64-bit programs will have the addresses as offsets from the image base (BOS)
+				bytes = ProgramMemoryUtil.getImageBaseOffsets32Bytes(program, 4, rtti0Address);
+
+				addByteSearchPattern(searcher, validationOptions, addresses, rtti0PointerOffset,
+					rtti0Address, bytes);
+			}
+			else {
+				// 32-bit could have direct address in memory
+				bytes = ProgramMemoryUtil.getDirectAddressBytes(program, rtti0Address);
+
+				addByteSearchPattern(searcher, validationOptions, addresses, rtti0PointerOffset,
+					rtti0Address, bytes);
+			}
 		}
-		else {
-			refsToRtti0 = ProgramMemoryUtil.findDirectReferences(program, dataBlocks,
-				program.getDefaultPointerSize(), rtti0Address, TaskMonitor.DUMMY);
+
+		AddressSet searchSet = new AddressSet();
+		for (MemoryBlock block : dataBlocks) {
+			searchSet.add(block.getStart(), block.getEnd());
 		}
-		return refsToRtti0;
+
+		searcher.search(program, searchSet, monitor);
+
+		return addresses;
+	}
+
+	/**
+	 * Add a search pattern, to the searcher, for the set of bytes representing an address
+	 * 
+	 * @param searcher pattern searcher
+	 * @param validationOptions RTTI4 validation options
+	 * @param addresses list of found valid RTTI4 locations accumulated during actual search
+	 * @param rtti0PointerOffset offset of pointer in RTTI4 entry to RTTI0
+	 * @param rtti0Address RTTI0 address corresponding to pattern of bytes
+	 * @param bytes pattern of bytes in memory corresponding to address
+	 */
+	private static void addByteSearchPattern(MemoryBytePatternSearcher searcher,
+			DataValidationOptions validationOptions, List<Address> addresses,
+			int rtti0PointerOffset, Address rtti0Address, byte[] bytes) {
+
+		// no pattern bytes.
+		if (bytes == null) {
+			return;
+		}
+
+		// Each time a match for this byte pattern validate as an RTTI4 and add to list
+		GenericMatchAction<Address> action = new GenericMatchAction<Address>(rtti0Address) {
+			@Override
+			public void apply(Program prog, Address addr, Match match) {
+				Address possibleRtti4Address;
+				try {
+					possibleRtti4Address = addr.subtractNoWrap(rtti0PointerOffset);
+				}
+				catch (AddressOverflowException e) {
+					return; // Couldn't get an Rtti4 address.
+				}
+
+				Rtti4Model rtti4Model =
+					new Rtti4Model(prog, possibleRtti4Address, validationOptions);
+				try {
+					rtti4Model.validate();
+				}
+				catch (InvalidDataTypeException e) {
+					return; // Only process valid RTTI 4 data.
+				}
+
+				// Check that the RTTI 0 is referred to both directly from the RTTI 4 and indirectly 
+				// through the RTTI 3.
+				boolean refersToRtti0 = rtti4Model.refersToRtti0(getMatchValue());
+				if (!refersToRtti0) {
+					return; // Only process valid RTTI 4 data.
+				}
+
+				// add to list of RTTI4 locations to be processed later
+				addresses.add(possibleRtti4Address);
+			}
+		};
+
+		// create a Pattern of the bytes and the MatchAction to perform upon a match
+		GenericByteSequencePattern<Address> genericByteMatchPattern =
+			new GenericByteSequencePattern<Address>(bytes, action);
+
+		searcher.addPattern(genericByteMatchPattern);
 	}
 }

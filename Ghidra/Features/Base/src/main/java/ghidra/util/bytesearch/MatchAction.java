@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,27 @@
  */
 package ghidra.util.bytesearch;
 
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.xml.XmlPullParser;
 
-public interface PostRule {
-	public boolean apply(Pattern pat,long matchoffset);
-	
+/**
+ * Interface for a match action to be taken for the Program@Address for a ditted bit seqence pattern
+ */
+public interface MatchAction {
+	/**
+	 * Apply the match action to the program at the address.
+	 * 
+	 * @param program program in which the match occurred
+	 * @param addr where the match occured
+	 * @param match information about the match that occurred
+	 */
+	public void apply(Program program, Address addr, Match match);
+
+	/**
+	 * Action can be constructed from XML
+	 * 
+	 * @param parser XML pull parser to restore action from XML
+	 */
 	public void restoreXml(XmlPullParser parser);
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,24 @@
  */
 package ghidra.util.bytesearch;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
 import ghidra.xml.XmlPullParser;
 
 /**
- * Action that should be applied to a Program at the Address a pattern matches
- *
+ * Inteface for post match rules that are checked after a match is idenfied
  */
-public interface MatchAction {
-	public void apply(Program program,Address addr,Match match);
-	
+public interface PostRule {
+	/**
+	 * Apply a post rule given the matching pattern and offset into the byte stream.
+	 * @param pat pattern that matched
+	 * @param matchoffset offset of the match
+	 * @return true if the PostRule is satisfied
+	 */
+	public boolean apply(Pattern pat, long matchoffset);
+
+	/**
+	 * Can restore state of instance PostRule from XML
+	 * 
+	 * @param parser XML pull parser
+	 */
 	public void restoreXml(XmlPullParser parser);
 }

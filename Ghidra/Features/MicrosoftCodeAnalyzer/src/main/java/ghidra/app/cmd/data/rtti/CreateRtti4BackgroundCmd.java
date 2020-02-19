@@ -15,29 +15,32 @@
  */
 package ghidra.app.cmd.data.rtti;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.app.cmd.data.*;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.util.ProgramMemoryUtil;
+import ghidra.util.bytesearch.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * This command will create an RTTI4 data type. 
- * If there are any existing instructions in the area to be made into data, the command will fail.
+ * This command will create multiple RTTI4 data types all at one time. 
+ * If there are any existing instructions in the areas to be made into data, the command will fail only on that RTTI4 entry.
  * Any data in the area will be replaced with the new dataType.
  */
 public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rtti4Model> {
 
 	private static final String RTTI_4_NAME = "RTTI Complete Object Locator";
 	private List<MemoryBlock> vfTableBlocks;
+	private List<Address> rtti4Locations;
 
 	/**
 	 * Constructs a command for applying an RTTI4 dataType at an address.
@@ -54,12 +57,44 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 
 		super(Rtti4Model.DATA_TYPE_NAME, address, 1, validationOptions, applyOptions);
 		this.vfTableBlocks = vfTableBlocks;
+		rtti4Locations = new ArrayList<Address>();
+		rtti4Locations.add(address);
+	}
+
+	public CreateRtti4BackgroundCmd(List<Address> addresses, List<MemoryBlock> vfTableBlocks,
+			DataValidationOptions validationOptions, DataApplyOptions applyOptions) {
+
+		super(Rtti4Model.DATA_TYPE_NAME, addresses.get(0), 1, validationOptions, applyOptions);
+		this.rtti4Locations = addresses;
+		this.vfTableBlocks = vfTableBlocks;
+	}
+
+	@Override
+	protected boolean doApplyTo(Program program, TaskMonitor taskMonitor)
+			throws CancelledException {
+
+		// process each potential RTTI4 entry, keeping track of good RTTI4 tables
+		List<Address> goodRtti4Locations = new ArrayList<Address>();
+		boolean succeeded = false;
+		for (Address addr : rtti4Locations) {
+			setDataAddress(addr);
+			succeeded |= super.doApplyTo(program, taskMonitor);
+			goodRtti4Locations.add(addr);
+		}
+
+		// if any succeeded and should create associated data, make the vftables all at one time
+		if (succeeded && applyOptions.shouldFollowData()) {
+			createAssociatedVfTables(program, goodRtti4Locations, taskMonitor);
+		}
+
+		return succeeded;
 	}
 
 	@Override
 	protected Rtti4Model createModel(Program program) {
-		if (model == null || program != model.getProgram()) {
-			model = new Rtti4Model(program, address, validationOptions);
+		if (model == null || program != model.getProgram() ||
+			!getDataAddress().equals(model.getAddress())) {
+			model = new Rtti4Model(program, getDataAddress(), validationOptions);
 		}
 		return model;
 	}
@@ -75,7 +110,7 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		}
 		catch (InvalidDataTypeException e) {
 			createRtti0Success = false;
-			// log message and continue with other markup.
+			// log message and continue with other mark-up.
 			handleErrorMessage(model.getProgram(), model.getAddress(), e.getMessage());
 		}
 
@@ -89,9 +124,7 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 			handleErrorMessage(model.getProgram(), model.getAddress(), e.getMessage());
 		}
 
-		boolean createVfTableSuccess = createVfTable();
-
-		return createRtti0Success && createRtti3Success && createVfTableSuccess;
+		return createRtti0Success && createRtti3Success;
 	}
 
 	private boolean createRtti0() throws CancelledException, InvalidDataTypeException {
@@ -112,57 +145,95 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		return cmd.applyTo(model.getProgram(), monitor);
 	}
 
-	private boolean createVfTable() throws CancelledException {
+	private boolean createAssociatedVfTables(Program program, List<Address> goodRtti4Locations,
+			TaskMonitor taskMonitor) throws CancelledException {
 
-		monitor.checkCanceled();
+		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("RTTI4 Vftables");
 
-		Program program = model.getProgram();
+		HashMap<Address, VfTableModel> foundVFtables = new HashMap<>();
 
-		Address rtti4Address = address;
-		int defaultPointerSize = program.getDefaultPointerSize();
-		int alignment = defaultPointerSize; // Align the vf table based on the size of the pointers in it.
-		Set<Address> directRtti4Refs =
-			ProgramMemoryUtil.findDirectReferences(program, vfTableBlocks, alignment, rtti4Address,
-				monitor);
+		for (Address rtti4Address : goodRtti4Locations) {
 
-		VfTableModel validVfTableModel = null;
-		for (Address possibleVfMetaAddr : directRtti4Refs) {
+			byte[] bytes = ProgramMemoryUtil.getDirectAddressBytes(program, rtti4Address);
 
+			addByteSearchPattern(searcher, foundVFtables, rtti4Address, bytes);
+		}
+
+		AddressSet searchSet = new AddressSet();
+		for (MemoryBlock block : vfTableBlocks) {
+			searchSet.add(block.getStart(), block.getEnd());
+		}
+
+		searcher.search(program, searchSet, monitor);
+
+		// did the search, now process the results
+		boolean didSome = false;
+		for (Address rtti4Address : goodRtti4Locations) {
 			monitor.checkCanceled();
 
-			Address possibleVfTableAddr = possibleVfMetaAddr.add(defaultPointerSize);
+			VfTableModel vfTableModel = foundVFtables.get(rtti4Address);
+			if (vfTableModel == null) {
+				String message =
+					"No vfTable found for " + Rtti4Model.DATA_TYPE_NAME + " @ " + rtti4Address;
+				handleErrorMessage(program, rtti4Address, message);
+				continue;
+			}
 
-			// Validate the model. Don't apply the command if invalid.
-			try {
-				VfTableModel vfTableModel =
-					new VfTableModel(program, possibleVfTableAddr, validationOptions);
-				vfTableModel.validate();
+			CreateVfTableBackgroundCmd cmd =
+				new CreateVfTableBackgroundCmd(vfTableModel, applyOptions);
+			didSome |= cmd.applyTo(program, monitor);
+		}
 
-				if (validVfTableModel != null) {
-					String message = "More than one possible vfTable found for " +
-						Rtti4Model.DATA_TYPE_NAME + " @ " + rtti4Address;
-					handleErrorMessage(program, rtti4Address, message);
-					return false;
+		return didSome;
+	}
+
+	/**
+	 * Add a search pattern, to the searcher, for the set of bytes representing an rtti4 location.
+	 * Only one VFTable for is allowed for an RTT4 location, last one in wins and gets created.
+	 * 
+	 * @param searcher byte pattern searcher
+	 * @param foundVFtables list of addresses accumulated when actual search is performed
+	 * @param rtti4Address location of rttiAddress to find vfTable for
+	 * @param bytes bytes representing rtti4Addres to be found in memory
+	 */
+	private void addByteSearchPattern(MemoryBytePatternSearcher searcher,
+			HashMap<Address, VfTableModel> foundVFtables, Address rtti4Address, byte[] bytes) {
+
+		if (bytes == null) {
+			return;
+		}
+
+		GenericMatchAction<Address> action = new GenericMatchAction<Address>(rtti4Address) {
+			@Override
+			public void apply(Program prog, Address addr, Match match) {
+
+				Address possibleVfTableAddr = addr.add(prog.getDefaultPointerSize());
+
+				// See if VfTable is valid, and add to rtti4 to vfTable map
+				try {
+					VfTableModel vfTableModel =
+						new VfTableModel(prog, possibleVfTableAddr, validationOptions);
+					vfTableModel.validate();
+
+					VfTableModel existing = foundVFtables.put(rtti4Address, vfTableModel);
+
+					if (existing != null) {
+						// potential table already found, is an error, don't know which is right
+						String message = "More than one possible vfTable found for " +
+							Rtti4Model.DATA_TYPE_NAME + " @ " + rtti4Address;
+						handleErrorMessage(prog, rtti4Address, message);
+					}
 				}
-				validVfTableModel = vfTableModel;
+				catch (InvalidDataTypeException e) {
+					// This isn't a valid model.
+				}
 			}
-			catch (InvalidDataTypeException e) {
-				continue; // This isn't a valid model.
-			}
-		}
+		};
 
-		if (validVfTableModel == null) {
-			String message =
-				"No vfTable found for " + Rtti4Model.DATA_TYPE_NAME + " @ " + rtti4Address;
-			handleErrorMessage(program, rtti4Address, message);
-			return false;
-		}
+		GenericByteSequencePattern<Address> genericByteMatchPattern =
+			new GenericByteSequencePattern<Address>(bytes, action);
 
-		monitor.checkCanceled();
-
-		CreateVfTableBackgroundCmd cmd =
-			new CreateVfTableBackgroundCmd(validVfTableModel, applyOptions);
-		return cmd.applyTo(program, monitor);
+		searcher.addPattern(genericByteMatchPattern);
 	}
 
 	@Override
@@ -178,19 +249,19 @@ public class CreateRtti4BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 		if (rtti0Model != null) {
 
 			// Plate Comment
+			// Plate Comment
 			EHDataTypeUtilities.createPlateCommentIfNeeded(program, RttiUtil.CONST_PREFIX +
-				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
-				RTTI_4_NAME, null, address, applyOptions);
-
+				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER, RTTI_4_NAME,
+				null, getDataAddress(), applyOptions);
 			monitor.checkCanceled();
 
 			// Label
 			if (applyOptions.shouldCreateLabel()) {
-				RttiUtil.createSymbolFromDemangledType(program, address, rtti0Model, RTTI_4_NAME);
+				RttiUtil.createSymbolFromDemangledType(program, getDataAddress(), rtti0Model,
+					RTTI_4_NAME);
 			}
 		}
 
 		return true;
 	}
-
 }

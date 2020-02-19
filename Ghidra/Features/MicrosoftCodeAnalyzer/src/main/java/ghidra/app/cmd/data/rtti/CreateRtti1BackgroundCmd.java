@@ -63,7 +63,7 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	@Override
 	protected Rtti1Model createModel(Program program) {
 		if (model == null || program != model.getProgram()) {
-			model = new Rtti1Model(program, address, validationOptions);
+			model = new Rtti1Model(program, getDataAddress(), validationOptions);
 		}
 		return model;
 	}
@@ -101,14 +101,14 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 			}
 			catch (InvalidDataTypeException e) {
 				// Couldn't get pmd and attributes so leave it off and simply log the error.
-				String message = "Unable to get PMD and attributes for RTTI1 at " + address + ".";
+				String message = "Unable to get PMD and attributes for RTTI1 at " + getDataAddress() + ".";
 				handleError(message);
 			}
 
 			// Plate Comment
 			EHDataTypeUtilities.createPlateCommentIfNeeded(program,
 				RttiUtil.getDescriptorTypeNamespace(rtti0Model) + Namespace.DELIMITER,
-				RTTI_1_NAME, suffix, address, applyOptions);
+				RTTI_1_NAME, suffix, getDataAddress(), applyOptions);
 
 			monitor.checkCanceled();
 
@@ -116,7 +116,7 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 			if (applyOptions.shouldCreateLabel()) {
 				String rtti1Suffix = RTTI_1_NAME + suffix;
 				rtti1Suffix = SymbolUtilities.replaceInvalidChars(rtti1Suffix, true);
-				RttiUtil.createSymbolFromDemangledType(program, address, rtti0Model, rtti1Suffix);
+				RttiUtil.createSymbolFromDemangledType(program, getDataAddress(), rtti0Model, rtti1Suffix);
 			}
 
 		}
