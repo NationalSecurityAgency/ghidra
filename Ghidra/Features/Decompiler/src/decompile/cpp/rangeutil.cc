@@ -1066,8 +1066,9 @@ Varnode *CircleRange::pullBack(PcodeOp *op,Varnode **constMarkup,bool usenzmask)
     CircleRange nzrange;
     if (!nzrange.setNZMask(res->getNZMask(),res->getSize()))
       return res;
-    if (0!=intersect(nzrange))
-      return (Varnode *)0;
+    intersect(nzrange);
+    // If the intersect does not succeed (i.e. produces 2 pieces) the original range is
+    // preserved and we still consider this pullback successful.
   }
   return res;
 }

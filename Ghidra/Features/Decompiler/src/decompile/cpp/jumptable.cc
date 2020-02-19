@@ -1033,6 +1033,15 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
     PcodeOp *cbranch = prevbl->lastOp();
     if ((cbranch==(PcodeOp *)0)||(cbranch->code() != CPUI_CBRANCH))
       break;
+    if (i != 0) {
+      // Check that this CBRANCH isn't protecting some other switch
+      BlockBasic *otherbl = (BlockBasic *)prevbl->getOut(1-indpath);
+      PcodeOp *otherop = otherbl->lastOp();
+      if (otherop != (PcodeOp *)0 && otherop->code() == CPUI_BRANCHIND) {
+	if (otherop != jumptable->getIndirectOp())
+	  break;
+      }
+    }
     bool toswitchval = (indpath == 1);
     if (cbranch->isBooleanFlip())
       toswitchval = !toswitchval;

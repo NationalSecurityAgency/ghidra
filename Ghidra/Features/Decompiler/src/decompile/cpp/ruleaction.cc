@@ -2487,6 +2487,7 @@ int4 RuleZextEliminate::applyOp(PcodeOp *op,Funcdata &data)
   if (!vn2->isConstant()) return 0;
   zext = vn1->getDef();
   if (!zext->getIn(0)->isHeritageKnown()) return 0;
+  if (vn1->loneDescend() != op) return 0;	// Make sure extension is not used for anything else
   smallsize = zext->getIn(0)->getSize();
   val = vn2->getOffset();
   if ((val>>(8*smallsize))==0) { // Is zero extension unnecessary
