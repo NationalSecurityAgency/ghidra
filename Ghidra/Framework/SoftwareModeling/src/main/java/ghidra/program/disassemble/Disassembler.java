@@ -474,18 +474,15 @@ public class Disassembler implements DisassemblerConflictHandler {
 				if (data == null) {
 					// no undefined here, skip to next undefined
 					todoSubset.delete(nextAddr, nextAddr);
-					CodeUnitIterator codeUnits = listing.getCodeUnits(todoSubset, true);
 
-					// TODO: investigate, if getUndefinedAfter(), or getUndefinedRanges() is faster
-					for (CodeUnit cu : codeUnits) {
-						if (cu instanceof Data &&
-							((Data) cu).getDataType() instanceof DefaultDataType) {
-							break;
-						}
-						nextAddr = cu.getMinAddress();
+					AddressSetView undefinedRanges = null;
+					try {
+						undefinedRanges =
+							program.getListing().getUndefinedRanges(todoSubset, true, monitor);
+						todoSubset = new AddressSet(undefinedRanges);
 					}
-					if (!todoSubset.isEmpty()) {
-						todoSubset.delete(todoSubset.getMinAddress(), nextAddr);
+					catch (CancelledException e) {
+						break;
 					}
 				}
 				else {

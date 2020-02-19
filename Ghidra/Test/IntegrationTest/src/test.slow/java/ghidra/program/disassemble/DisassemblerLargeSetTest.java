@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
+import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
@@ -44,6 +45,8 @@ public class DisassemblerLargeSetTest extends AbstractGhidraHeadlessIntegrationT
 
 	private int txId;
 
+	private long startTime = 0;
+
 	@Before
 	public void setUp() throws Exception {
 		programBuilder = new ToyProgramBuilder("Test", true, true, null);
@@ -59,6 +62,8 @@ public class DisassemblerLargeSetTest extends AbstractGhidraHeadlessIntegrationT
 		}
 
 		disassembler = new Disassembler(program, TaskMonitorAdapter.DUMMY_MONITOR, null);
+
+		startTime = System.currentTimeMillis();
 	}
 
 	@After
@@ -69,6 +74,9 @@ public class DisassemblerLargeSetTest extends AbstractGhidraHeadlessIntegrationT
 		if (programBuilder != null) {
 			programBuilder.dispose();
 		}
+
+		long endTime = System.currentTimeMillis();
+		System.out.println("Time: " + ((double) endTime - (double) startTime) / 1000.0);
 	}
 
 	private Address addr(long offset) {
@@ -215,5 +223,172 @@ public class DisassemblerLargeSetTest extends AbstractGhidraHeadlessIntegrationT
 			disLocs.add(addr(i * CASESIZE));
 		}
 		assertTrue(!disassemble2.contains(disLocs));
+	}
+
+	@Test
+	public void testLargeDisjointPointsNoPredisassembledPointsCmd() throws Exception {
+
+		// disassemble the threaded flow
+		//AddressSet disassemble1 = disassembler.disassemble(addr(0x0), null, true);
+		DisassembleCommand disassembleCommand = new DisassembleCommand(addr(0x0), null, true);
+		disassembleCommand.applyTo(program);
+
+		AddressSet disLocs = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs.add(addr(i * CASESIZE));
+		}
+		assertTrue(disassembleCommand.getDisassembledAddressSet().contains(disLocs));
+
+		AddressSet disLocs2 = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs2.add(addr(i * CASESIZE + 6));
+		}
+
+		//AddressSet disassemble2 = disassembler.disassemble(disLocs2, null, true);
+		disassembleCommand = new DisassembleCommand(disLocs2, null, true);
+		disassembleCommand.applyTo(program);
+
+		assertTrue(disassembleCommand.getDisassembledAddressSet().contains(disLocs2));
+
+		verifyBookmarks(1);
+	}
+
+	@Test
+	public void testLargeDisjointPointsWithAlreadyDiassembledPointsCmd() throws Exception {
+		// disassemble the threaded flow
+		//AddressSet disassemble1 = disassembler.disassemble(addr(0x0), null, true);
+		DisassembleCommand disassembleCommand = new DisassembleCommand(addr(0x0), null, true);
+		disassembleCommand.applyTo(program);
+
+		AddressSet disLocs = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs.add(addr(i * CASESIZE));
+		}
+		assertTrue(disassembleCommand.getDisassembledAddressSet().contains(disLocs));
+
+		AddressSet disLocs2 = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs2.add(addr(i * CASESIZE));
+			disLocs2.add(addr(i * CASESIZE + 6));
+		}
+
+		//AddressSet disassemble2 = disassembler.disassemble(disLocs2, null, true);
+		disassembleCommand = new DisassembleCommand(disLocs2, null, true);
+		disassembleCommand.applyTo(program);
+
+		assertTrue(
+			disassembleCommand.getDisassembledAddressSet().contains(disLocs2.subtract(disLocs)));
+	}
+
+	@Test
+	public void testLargeDisjointRangeCmd() throws Exception {
+		// disassemble the threaded flow
+		// AddressSet disassemble1 = disassembler.disassemble(addr(0x0), null, true);
+		DisassembleCommand disassembleCommand = new DisassembleCommand(addr(0x0), null, true);
+		disassembleCommand.applyTo(program);
+
+		AddressSet disLocs = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs.add(addr(i * CASESIZE));
+		}
+		assertTrue(disassembleCommand.getDisassembledAddressSet().contains(disLocs));
+
+		AddressSet disLocs2 = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs2.add(addr(i * CASESIZE));
+			disLocs2.add(addr(i * CASESIZE + 6), addr(i * CASESIZE + 10));
+		}
+
+		//AddressSet disassemble2 = disassembler.disassemble(disLocs2, null, true);
+		disassembleCommand = new DisassembleCommand(disLocs2, null, true);
+		disassembleCommand.applyTo(program);
+
+		assertTrue(
+			disassembleCommand.getDisassembledAddressSet().contains(disLocs2.subtract(disLocs)));
+	}
+
+	@Test
+	public void testLargeDisjointRangePartialOverlapCmd() throws Exception {
+		// disassemble the threaded flow
+		//AddressSet disassemble1 = disassembler.disassemble(addr(0x0), null, true);
+		DisassembleCommand disassembleCommand = new DisassembleCommand(addr(0x0), null, true);
+		disassembleCommand.applyTo(program);
+
+		AddressSet disLocs = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs.add(addr(i * CASESIZE));
+		}
+		assertTrue(disassembleCommand.getDisassembledAddressSet().contains(disLocs));
+
+		AddressSet disLocs2 = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs2.add(addr(i * CASESIZE));
+			disLocs2.add(addr(i * CASESIZE + 6), addr(i * CASESIZE + 11));
+		}
+
+		//AddressSet disassemble2 = disassembler.disassemble(disLocs2, null, true);
+		disassembleCommand = new DisassembleCommand(disLocs2, null, true);
+		disassembleCommand.applyTo(program);
+
+		assertTrue(
+			disassembleCommand.getDisassembledAddressSet().contains(disLocs2.subtract(disLocs)));
+	}
+
+	@Test
+	public void testLargeDisjointRangeFullOverlapCmd() throws Exception {
+		// disassemble the threaded flow
+		//AddressSet disassemble1 = disassembler.disassemble(addr(0x0), null, true);
+		DisassembleCommand disassembleCommand = new DisassembleCommand(addr(0x0), null, true);
+		disassembleCommand.applyTo(program);
+
+		AddressSet disLocs = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs.add(addr(i * CASESIZE), addr(i * CASESIZE + 3));
+		}
+		assertTrue(disassembleCommand.getDisassembledAddressSet().contains(disLocs));
+
+		AddressSet disLocs2 = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs2.add(addr(i * CASESIZE), addr(i * CASESIZE + 3));
+			disLocs2.add(addr(i * CASESIZE + 6), addr(i * CASESIZE + 11));
+		}
+
+		//AddressSet disassemble2 = disassembler.disassemble(disLocs2, null, true);
+		disassembleCommand = new DisassembleCommand(disLocs2, null, true);
+		disassembleCommand.applyTo(program);
+
+		assertTrue(
+			disassembleCommand.getDisassembledAddressSet().contains(disLocs2.subtract(disLocs)));
+	}
+
+	@Test
+	public void testSingleRangeCmd() throws Exception {
+		AddressSet disLocs2 = new AddressSet(addr(0x0), addr(CASESIZE * (NUMCASES)));
+
+		//AddressSet disassemble2 = disassembler.disassemble(disLocs2, null, true);
+		DisassembleCommand disassembleCommand = new DisassembleCommand(disLocs2, null, true);
+		disassembleCommand.applyTo(program);
+
+		assertTrue(disassembleCommand.getDisassembledAddressSet().contains(disLocs2));
+	}
+
+	@Test
+	public void testSingleRangeDisjointCmd() throws Exception {
+		// disassemble the threaded flow
+		//AddressSet disassemble1 = disassembler.disassemble(addr(0x0), null, true);
+		DisassembleCommand disassembleCommand = new DisassembleCommand(addr(0x0), null, true);
+		disassembleCommand.applyTo(program);
+
+		AddressSet disLocs2 = new AddressSet(addr(0x0), addr(CASESIZE * (NUMCASES)));
+
+		//AddressSet disassemble2 = disassembler.disassemble(disLocs2, null, true);
+		disassembleCommand = new DisassembleCommand(disLocs2, null, true);
+		disassembleCommand.applyTo(program);
+
+		AddressSet disLocs = new AddressSet();
+		for (long i = 0; i < NUMCASES; i++) {
+			disLocs.add(addr(i * CASESIZE));
+		}
+		assertTrue(!disassembleCommand.getDisassembledAddressSet().contains(disLocs));
 	}
 }
