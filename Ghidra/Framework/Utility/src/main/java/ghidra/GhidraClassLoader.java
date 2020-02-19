@@ -31,7 +31,7 @@ import ghidra.util.Msg;
  * 
  */
 public class GhidraClassLoader extends URLClassLoader {
-
+	
 	private static final String CP = "java.class.path";
 
 	/**
@@ -45,7 +45,7 @@ public class GhidraClassLoader extends URLClassLoader {
 	}
 
 	@Override
-	public void addURL(URL url) {
+    public void addURL(URL url) {
 		super.addURL(url);
 		try {
 			System.setProperty(CP,
@@ -53,23 +53,6 @@ public class GhidraClassLoader extends URLClassLoader {
 		}
 		catch (URISyntaxException e) {
 			Msg.debug(this, "URL is not a valid path: " + url);
-		}
-	}
-
-	/**
-	 * Places the given path first in the classpath
-	 * @param path the path
-	 */
-	void prependPath(String path) {
-
-		try {
-			URL url = new File(path).toURI().toURL();
-			super.addURL(url);
-			File file = new File(url.toURI());
-			System.setProperty(CP, file + File.pathSeparator + System.getProperty(CP));
-		}
-		catch (MalformedURLException | URISyntaxException e) {
-			Msg.debug(this, "Invalid path: " + path, e);
 		}
 	}
 

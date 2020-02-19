@@ -42,6 +42,7 @@ public abstract class ApplicationLayout {
 	protected File userTempDir;
 	protected File userCacheDir;
 	protected File userSettingsDir;
+	protected ResourceFile patchDir;
 	protected ResourceFile extensionArchiveDir;
 	protected ResourceFile extensionInstallationDir;
 
@@ -109,10 +110,10 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns the directory where archived Ghidra Extensions are stored.
+	 * Returns the directory where archived application Extensions are stored.
 	 * 
-	 * @return The Ghidra Extensions archive directory.  Could be null if the 
-	 *   {@link ApplicationLayout} does not support Ghidra Extensions.
+	 * @return the application Extensions archive directory.  Could be null if the 
+	 *   {@link ApplicationLayout} does not support application Extensions.
 	 * 
 	 */
 	public final ResourceFile getExtensionArchiveDir() {
@@ -120,13 +121,22 @@ public abstract class ApplicationLayout {
 	}
 
 	/**
-	 * Returns the Ghidra Extensions installation folder.
+	 * Returns the application Extensions installation folder.
 	 * 
-	 * @return The Ghidra Extensions installation directory.  Could be null if the 
-	 *   {@link ApplicationLayout} does not support Ghidra Extensions.
+	 * @return the application Extensions installation directory.  Could be null if the 
+	 *   {@link ApplicationLayout} does not support application Extensions.
 	 */
 	public final ResourceFile getExtensionInstallationDir() {
 		return extensionInstallationDir;
+	}
+
+	/**
+	 * Returns the location of the application patch directory.  The patch directory can be
+	 * used to modify existing code within a distribution.
+	 * @return the patch directory; may be null
+	 */
+	public final ResourceFile getPatchDir() {
+		return patchDir;
 	}
 
 	/**

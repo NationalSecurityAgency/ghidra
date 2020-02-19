@@ -1,6 +1,7 @@
-Into this directory may be added compiled Java class files, either inside of a jar file or 
-in a directory structure.   This directory and the contained jar files will be prepended to
-the classpath, allowing them to override any existing classes in any module.
+Compiled Java class files, either inside of a jar file or in a directory structure may be inserted
+into this directory.   This directory and the contained jar files will be prepended to
+the classpath, allowing them to override any existing classes in any module (except those from
+the Utility module).
 
 The jar files will be sorted by name before being added to the classpath in order to present
 predictable class loading between Ghidra runs.  This directory will be prepended on the classpath

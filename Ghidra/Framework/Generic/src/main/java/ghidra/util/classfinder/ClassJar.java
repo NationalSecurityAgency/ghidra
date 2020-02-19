@@ -17,8 +17,7 @@ package ghidra.util.classfinder;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.Set;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
@@ -28,7 +27,9 @@ import org.apache.commons.io.FilenameUtils;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
+import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
@@ -46,20 +47,13 @@ class ClassJar extends ClassLocation {
 		Pattern.compile(".*/(.*)/(?:lib|build/libs)/(.+).jar");
 
 	private static final String PATCH_DIR_PATH_FORWARD_SLASHED = getPatchDirPath();
-
-	private static String getPatchDirPath() {
-		ApplicationLayout layout = Application.getApplicationLayout();
-		ResourceFile installDir = layout.getApplicationInstallationDir();
-		ResourceFile patchDir = new ResourceFile(installDir, "Ghidra/patch");
-		String patchPath = patchDir.getAbsolutePath();
-		String forwardSlashed = patchPath.replaceAll("\\\\", "/");
-		return forwardSlashed;
-	}
+	private static final Set<String> USER_PLUGIN_PATHS = loadUserPluginPaths();
 
 	private String path;
 
 	ClassJar(String path, TaskMonitor monitor) throws CancelledException {
 		this.path = path;
+		loadUserPluginPaths();
 
 		scanJar(monitor);
 	}
@@ -105,10 +99,22 @@ class ClassJar extends ClassLocation {
 		if (pathName.contains("ExternalLibraries")) {
 			return true;
 		}
+
+		//
+		// Dev and Production Mode
+		//
+		String forwardSlashedPathName = pathName.replaceAll("\\\\", "/");
+		if (isUserPluginJar(forwardSlashedPathName)) {
+			return false;
+		}
+
+		if (SystemUtilities.isInDevelopmentMode()) {
+			return false;
+		}
+
 		// 
 		// Production Mode - allow users to enter code in the 'patch' directory
 		//		
-		String forwardSlashedPathName = pathName.replaceAll("\\\\", "/");
 		if (isPatchJar(forwardSlashedPathName)) {
 			return false;
 		}
@@ -121,6 +127,10 @@ class ClassJar extends ClassLocation {
 		}
 
 		return true;
+	}
+
+	private static boolean isUserPluginJar(String pathName) {
+		return USER_PLUGIN_PATHS.contains(pathName);
 	}
 
 	// Note: the path is expected to be using forward slashes
@@ -168,4 +178,27 @@ class ClassJar extends ClassLocation {
 	public String toString() {
 		return path;
 	}
+
+	private static String getPatchDirPath() {
+		ApplicationLayout layout = Application.getApplicationLayout();
+		ResourceFile patchDir = layout.getPatchDir();
+		if (patchDir == null) {
+			return "<no patch dir>"; // not in a distribution
+		}
+		String patchPath = patchDir.getAbsolutePath();
+		String forwardSlashed = patchPath.replaceAll("\\\\", "/");
+		return forwardSlashed;
+	}
+
+	private static Set<String> loadUserPluginPaths() {
+		Set<String> result = new HashSet<>();
+		String[] paths = Preferences.getPluginPaths();
+		for (String pathName : paths) {
+			// note: lower case because our client uses lower case for paths
+			String forwardSlashed = pathName.replaceAll("\\\\", "/").toLowerCase();
+			result.add(forwardSlashed);
+		}
+		return Collections.unmodifiableSet(result);
+	}
+
 }

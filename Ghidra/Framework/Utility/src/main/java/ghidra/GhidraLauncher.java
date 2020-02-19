@@ -53,7 +53,7 @@ public class GhidraLauncher {
 		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
 
 		// Build the classpath
-		List<String> classpathList = new ArrayList<String>();
+		List<String> classpathList = new ArrayList<>();
 		Map<String, GModule> modules = getOrderedModules(layout);
 
 		if (SystemUtilities.isInDevelopmentMode()) {
@@ -61,7 +61,7 @@ public class GhidraLauncher {
 			addExternalJarPaths(classpathList, layout.getApplicationRootDirs());
 		}
 		else {
-			addPatchJarPaths(loader, layout.getApplicationInstallationDir());
+			addPatchPaths(classpathList, layout.getPatchDir());
 			addModuleJarPaths(classpathList, modules);
 		}
 		classpathList = orderClasspath(classpathList, modules);
@@ -83,28 +83,24 @@ public class GhidraLauncher {
 	}
 
 	/**
-	 * Add patch dir and jars to the given path list.  This should be done first so they take 
-	 * precedence in the classpath.
+	 * Add patch jars to the given path list.  This should be done first so they take precedence in 
+	 * the classpath.
 	 * 
-	 * @param loader The loader to which paths will be added.
-	 * @param installDir The application installation directory.
+	 * @param pathList The list of paths to add to
+	 * @param patchDir The application installation directory
 	 */
-	private static void addPatchJarPaths(GhidraClassLoader loader, ResourceFile installDir) {
-		ResourceFile patchDir = new ResourceFile(installDir, "Ghidra/patch");
+	private static void addPatchPaths(List<String> pathList, ResourceFile patchDir) {
 		if (!patchDir.exists()) {
 			return;
 		}
 
-		List<String> patchJars = findJarsInDir(patchDir);
-		Collections.sort(patchJars);
+		// this will allow for unbundled class files
+		pathList.add(patchDir.getAbsolutePath());
 
-		// add in reverse order, since we are prepending
-		for (int i = patchJars.size() - 1; i >= 0; i--) {
-			loader.prependPath(patchJars.get(i));
-		}
-
-		// put last; paths are prepended in list order
-		loader.prependPath(patchDir.getAbsolutePath());
+		// this is each jar file, sorted for loading consistency
+		List<String> jars = findJarsInDir(patchDir);
+		Collections.sort(jars);
+		pathList.addAll(jars);
 	}
 
 	/**
@@ -276,7 +272,7 @@ public class GhidraLauncher {
 				.flatMap(m -> m.getFatJars().stream())
 				.collect(Collectors.toSet());
 
-		List<String> orderedList = new ArrayList<String>(pathList);
+		List<String> orderedList = new ArrayList<>(pathList);
 
 		for (String path : pathList) {
 			if (fatJars.contains(new File(path).getName())) {
