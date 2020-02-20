@@ -18,12 +18,21 @@ package ghidra.app.plugin.core.analysis;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.swing.JComponent;
 import javax.swing.table.TableModel;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import docking.widgets.OptionDialog;
 import ghidra.GhidraOptions;
@@ -79,7 +88,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 			openPrograms.toArray(new Program[openPrograms.size()]), spy);
 		runTask(task);
 
-		String optionName = "Demangler";
+		String optionName = "Stack";
 		enableOption(optionName, false);
 
 		waitForTasks();
@@ -107,7 +116,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 			openPrograms.toArray(new Program[openPrograms.size()]), spy);
 		runTask(task);
 
-		String optionName = "Demangler";
+		String optionName = "Stack";
 		enableOption(optionName, true);
 
 		waitForTasks();
@@ -192,7 +201,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 			openPrograms.toArray(new Program[openPrograms.size()]), spy);
 		runTask(task);
 
-		String optionName = "Demangler";
+		String optionName = "Stack";
 		enableOption(optionName, true);
 
 		waitForTasks();
@@ -235,7 +244,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 		Collection<Program> expectedIgnored = Arrays.asList(notepad, winhello, p6502);
 		assertProgramsIgnored(spy, expectedIgnored);
 	}
-	
+
 	/**
 	 * Verifies that changing the analyzers to be run affects the task list for 
 	 * all open programs.
@@ -247,7 +256,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 	 */
 	@Test
 	public void testMultiplePrograms_OptionsChange() throws Exception {
-		
+
 		// show the dialog, or the options get ignored by the task
 		tool.setShowAnalysisOptions(true);
 
@@ -256,19 +265,19 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 
 		openPrograms.add(notepad);
 		openPrograms.add(winhello);
-		
-		// Verify that "Demangler" is in the list of analyzers to run (it should be turned on
+
+		// Verify that "Stack" is in the list of analyzers to run (it should be turned on
 		// by default)
-		assertTrue(isAnalyzerEnabled("Demangler", notepad));
-		assertTrue(isAnalyzerEnabled("Demangler", winhello));
-		
+		assertTrue(isAnalyzerEnabled("Stack", notepad));
+		assertTrue(isAnalyzerEnabled("Stack", winhello));
+
 		// Remove all analyzers
 		disableAllAnalyzers();
-		
-		// Verify that "Demangler" is not in the list of analyzers to run (we could check any
+
+		// Verify that "Stack" is not in the list of analyzers to run (we could check any
 		// analyzer since all were removed)
-		assertFalse(isAnalyzerEnabled("Demangler", notepad));
-		assertFalse(isAnalyzerEnabled("Demangler", winhello));
+		assertFalse(isAnalyzerEnabled("Stack", notepad));
+		assertFalse(isAnalyzerEnabled("Stack", winhello));
 	}
 
 //==================================================================================================
@@ -286,19 +295,20 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
 		return options.getBoolean(name, true);
 	}
-	
+
 	private void disableAllAnalyzers() {
 		AnalyzeProgramStrategySpy spy = new AnalyzeProgramStrategySpy();
 		AnalyzeAllOpenProgramsTask task = new AnalyzeAllOpenProgramsTask(tool, openPrograms.get(0),
 			openPrograms.toArray(new Program[openPrograms.size()]), spy);
 		runTask(task);
-		
+
 		AnalysisOptionsDialog optionsDialog = waitForDialogComponent(AnalysisOptionsDialog.class);
-		AnalysisPanel panel = findComponent(optionsDialog.getComponent(), AnalysisPanel.class, false);
+		AnalysisPanel panel =
+			findComponent(optionsDialog.getComponent(), AnalysisPanel.class, false);
 		invokeInstanceMethod("deselectAll", panel);
 		waitForSwing();
 	}
-	
+
 	private void enableOption(String optionName, boolean expectWarning) {
 
 		if (expectWarning) {
