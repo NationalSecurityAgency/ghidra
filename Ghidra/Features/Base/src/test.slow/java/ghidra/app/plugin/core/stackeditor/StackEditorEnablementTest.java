@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -67,9 +66,9 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 	public void testNoVarNegStackEditorState() throws Exception {
 		init(NO_VAR_STACK);
 
-		assertEquals(4, stackModel.getNumComponents());// no components
-		assertEquals(4, stackModel.getRowCount());// blank row
-		assertEquals(4, stackModel.getLength());// size is 0
+		assertEquals(4, stackModel.getNumComponents());// 4 undefined components
+		assertEquals(4, stackModel.getRowCount());// undefined row
+		assertEquals(4, stackModel.getLength());// size is 4
 		assertEquals(4, stackModel.getEditorStack().getNegativeLength());
 		assertEquals(0, stackModel.getEditorStack().getPositiveLength());
 		assertTrue(!stackModel.hasChanges());// no Changes yet
@@ -103,11 +102,6 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 				DataType favDt = fav.getDataType();
 				int len = favDt.getLength();
 				boolean enabled = ((len <= numBytes) && ((favDt instanceof Pointer) || (len > 0)));
-				int offset = model.getComponent(0).getOffset();
-				int paramOffset = getModel().getEditorStack().getParameterOffset();
-				if (offset >= 0 && offset < paramOffset) {
-					enabled = false;
-				}
 				checkEnablement(actions[i], enabled);
 			}
 			else if ((actions[i] instanceof CycleGroupAction) ||
