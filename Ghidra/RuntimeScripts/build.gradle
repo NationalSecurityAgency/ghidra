@@ -25,6 +25,7 @@ rootProject.OS_NAMES.each { platform ->
 				into "server"
 			}
 			t.from (p.file("Linux/ghidraRun")) 
+			t.from (p.file("Linux/ghidra.desktop"))
 		}
 
 		if (isWindows(platform)) {

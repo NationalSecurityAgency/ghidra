@@ -10,6 +10,7 @@ Common/support/buildGhidraJarREADME.txt||GHIDRA||||END|
 Common/support/debug.log4j.xml||GHIDRA||||END|
 Common/support/launch.properties||GHIDRA||||END|
 Linux/ghidraRun||GHIDRA||||END|
+Linux/ghidra.desktop||GHIDRA||||END|
 Linux/server/ghidraSvr||GHIDRA||||END|
 Linux/server/svrAdmin||GHIDRA||||END|
 Linux/server/svrInstall||GHIDRA||||END|
