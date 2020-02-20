@@ -48,7 +48,8 @@ import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.threaded.ThreadedTableModel;
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGenericTest;
 import generic.test.ConcurrentTestExceptionHandler;
 import generic.util.image.ImageUtils;
@@ -56,9 +57,7 @@ import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.task.SwingUpdateManager;
-import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.Worker;
 import junit.framework.AssertionFailedError;
 import sun.awt.AppContext;
@@ -223,9 +222,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Deprecated
-	 * @param parentWindow 
-	 * @param text 
-	 * @param timeoutMS 
+	 * @param parentWindow the window; unused 
+	 * @param text the window title text part
+	 * @param timeoutMS the timeout; unused
 	 * @return window
 	 * @deprecated Instead call one of the methods that does not take a timeout
 	 *             (we are standardizing timeouts).  The timeouts passed to this method will
@@ -1754,7 +1753,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 			char updatedKeyChar = (keyChar == KeyEvent.CHAR_UNDEFINED) ? (char) keyCode : keyChar;
 			KeyEvent typedKE = new KeyEvent(c, KeyEvent.KEY_TYPED, System.currentTimeMillis(),
 				modifiers, KeyEvent.VK_UNDEFINED, updatedKeyChar);
-
 			consumer.accept(c, typedKE);
 		}
 
@@ -1766,7 +1764,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	private static void processEvent(Component c, KeyEvent e) {
 
 		runSwing(() -> {
-
 			if (TestKeyEventDispatcher.dispatchKeyEvent(e)) {
 				return; // already handled
 			}
@@ -2122,9 +2119,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	private static void doWaitForTree(GTree gTree) {
 
-		// TODO this wait algorithm shouldn't need this call
-		// submitTaskToGTreeQueue(gTree);
-
 		waitForSwing();
 		boolean didWait = false;
 		int waitTime = 0;
@@ -2147,25 +2141,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 			// again' approach is an effort to catch update calls that can be schedule by actions
 			// from the Swing thread, which the test thread does not handle flawlessly.
 			waitForTree(gTree);
-		}
-	}
-
-	/**
-	 * Create a task to be put onto the GTree queue.  This ensures that once the task is processed
-	 * that any previously schedule tasks will have been run.
-	 */
-	@SuppressWarnings("unused") // TODO leaving this for a bit, in case we need to put it back
-	private static void submitTaskToGTreeQueue(GTree gTree) {
-		GTreeFlagTask flagTask = new GTreeFlagTask(gTree);
-		gTree.runTask(flagTask);
-
-		while (!flagTask.hasRun()) {
-			try {
-				Thread.sleep(DEFAULT_WAIT_DELAY);
-			}
-			catch (Exception e) {
-				// who cares?
-			}
 		}
 	}
 
@@ -2309,27 +2284,5 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	public static void writeImage(Image image, File imageFile) throws IOException {
 		ImageUtils.writeFile(image, imageFile);
 		Msg.info(AbstractDockingTest.class, "Wrote image to " + imageFile.getCanonicalPath());
-	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	private static class GTreeFlagTask extends GTreeTask {
-
-		protected GTreeFlagTask(GTree tree) {
-			super(tree);
-		}
-
-		private volatile boolean hasRun;
-
-		@Override
-		public void run(TaskMonitor monitor) throws CancelledException {
-			hasRun = true;
-		}
-
-		boolean hasRun() {
-			return hasRun;
-		}
 	}
 }

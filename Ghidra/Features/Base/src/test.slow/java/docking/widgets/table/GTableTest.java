@@ -19,10 +19,12 @@ import static org.junit.Assert.*;
 
 import java.awt.BorderLayout;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 
 import org.junit.*;
 
+import docking.widgets.AutoLookup;
 import docking.widgets.table.model.TestDataModel;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Msg;
@@ -32,13 +34,16 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestDataModel model;
 	private GhidraTable table;
 	private JFrame frame;
+
 	private long testKeyTimeout = 100;
+	private boolean timeoutTriggered;
 
 	@Before
 	public void setUp() throws Exception {
 		model = new TestDataModel();
 		table = new GhidraTable(model);
-		table.setAutoLookupTimeout(testKeyTimeout);
+
+		installTestAutoLookupTimeout();
 
 		frame = new JFrame("Ghidra Table Test");
 		frame.getContentPane().setLayout(new BorderLayout());
@@ -48,6 +53,16 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// showing the table will trigger a call to sort; wait for sorting to finish
 		waitForSort();
+	}
+
+	private void installTestAutoLookupTimeout() {
+		// note: this call will not work due to the unpredictable timing of event 
+		//       processing in the various test environments
+		// table.setAutoLookupTimeout(testKeyTimeout);
+
+		AutoLookup al = table.getAutoLookup();
+		al.setTimeoutPredicate(elapsed -> timeoutTriggered);
+		timeout(); // start fresh with an active timeout
 	}
 
 	@After
@@ -62,31 +77,32 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setSelectedRow(table, 0);
 
-		triggerText(table, "a");
+		type("a");
 		assertSelectedRow(11, "a");
+		pauseTimeout();
 
-		triggerText(table, "c");
-		assertSelectedRow(12, "c");
+		type("c");
+		assertSelectedRow(12, "c"); // matches 'access'
 		timeout();
 
-		triggerText(table, "ad");
+		type("ad");
 		assertSelectedRow(24, "ad");
 		timeout();
 
-		triggerText(table, "av");
+		type("av");
 		assertSelectedRow(70, "av");
 		timeout();
 
-		triggerText(table, "x");
+		type("x");
 		assertSelectedRow(1920, "x");
 		timeout();
 
-		triggerText(table, "a");
+		type("a");
 		assertSelectedRow(11, "a");
 
 		// test the case where no match is found
-		table.setAutoLookupTimeout(1000); // longer timeout needed for multiple keys
-		triggerText(table, "zed");
+		pauseTimeout();
+		type("zed");
 		assertSelectedRow(11, "zed"); // no change
 	}
 
@@ -100,31 +116,32 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setSelectedRow(table, 0);
 
-		triggerText(table, "a");
+		type("a");
 		assertSelectedRow(1846, "a");
+		pauseTimeout();
 
-		triggerText(table, "c");
-		assertSelectedRow(1902, "c");
+		type("c");
+		assertSelectedRow(1902, "c");  // matches 'access'
 
 		timeout();
-		triggerText(table, "ad");
+		type("ad");
 		assertSelectedRow(1885, "ad");
 
 		timeout();
-		triggerText(table, "av");
+		type("av");
 		assertSelectedRow(1848, "av");
 
 		timeout();
-		triggerText(table, "x");
+		type("x");
 		assertSelectedRow(0, "x");
 
 		timeout();
-		triggerText(table, "a");
+		type("a");
 		assertSelectedRow(1846, "a");
 
 		// test the case where no match is found
 		table.setAutoLookupTimeout(1000); // longer timeout needed for multiple keys
-		triggerText(table, "zed");
+		type("zed");
 		assertSelectedRow(1846, "zed"); // no change
 	}
 
@@ -140,31 +157,32 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// note: the order checked here is the same as the sorted order, since we did not move
 		//       any rows after disabling the sort
-		triggerText(table, "a");
+		type("a");
 		assertSelectedRow(11, "a");
+		pauseTimeout();
 
-		triggerText(table, "c");
-		assertSelectedRow(12, "c");
+		type("c");
+		assertSelectedRow(12, "c"); // matches 'access'
 		timeout();
 
-		triggerText(table, "ad");
+		type("ad");
 		assertSelectedRow(24, "ad");
 		timeout();
 
-		triggerText(table, "av");
+		type("av");
 		assertSelectedRow(70, "av");
 		timeout();
 
-		triggerText(table, "x");
+		type("x");
 		assertSelectedRow(1920, "x");
 		timeout();
 
-		triggerText(table, "a");
+		type("a");
 		assertSelectedRow(11, "a");
 
 		// test the case where no match is found
 		table.setAutoLookupTimeout(1000); // longer timeout needed for multiple keys
-		triggerText(table, "zed");
+		type("zed");
 		assertSelectedRow(11, "zed"); // no change
 	}
 
@@ -175,35 +193,68 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 		assertFalse(table.areActionsEnabled());
 		setSelectedRow(table, 0);
 
-		triggerText(table, "a");
-		assertEquals("Auto-lookup failed to change the table row", 11, table.getSelectedRow());
+		type("a");
+		assertSelectedRow(11);
+		timeout();
 
-		// this will disable 'auto lookup'
-		table.setActionsEnabled(true);
-		setSelectedRow(table, 0);
+		enableKeyBindingsActions(); // this will disable 'auto lookup'
 
-		triggerText(table, "a");
-		assertEquals("Auto-lookup should be disabled when actions are enabled", 0,
-			table.getSelectedRow());
+		select(0);
+		type("a");
+		assertSelectedRow(0);
+		timeout();
 
+		disableKeyBindingsActions();
+
+		select(0);
+		type("a");
+		assertSelectedRow(11);
+		timeout();
+
+		enableKeyBindingsActions(); // this will disable 'auto lookup'
+
+		select(0);
+		type("a");
+		assertSelectedRow(0);
+		timeout();
+
+		table.setAutoLookupColumn(4); // this disables the key binding actions too
+		select(0);
+
+		type("a");
+		assertSelectedRow(11);
+	}
+
+	private void disableKeyBindingsActions() {
 		table.setActionsEnabled(false);
-		setSelectedRow(table, 0);
+	}
 
-		triggerText(table, "a");
-		assertEquals("Auto-lookup failed to change the table row", 11, table.getSelectedRow());
-
+	private void enableKeyBindingsActions() {
 		table.setActionsEnabled(true);
-		setSelectedRow(table, 0);
+	}
 
-		triggerText(table, "a");
-		assertEquals("Auto-lookup should be disabled when actions are enabled", 0,
-			table.getSelectedRow());
+	private void select(int row) throws Exception {
+		setSelectedRow(table, row);
+	}
 
-		table.setAutoLookupColumn(4);
-		setSelectedRow(table, 0);
+	private void type(String chars) {
 
-		triggerText(table, "a");
-		assertEquals("Auto-lookup failed to change the table row", 11, table.getSelectedRow());
+		if (chars.length() == 1) {
+			triggerText(table, chars);
+			waitForSwing();
+			return;
+		}
+
+		// multiple characters is a signal to type rapidly, meaning the timeout will not pass
+		chars.chars().forEach(c -> {
+			triggerText(table, Character.toString(c));
+			pauseTimeout();
+			waitForSwing();
+		});
+	}
+
+	private void assertSelectedRow(int row) {
+		assertEquals(row, table.getSelectedRow());
 	}
 
 	private void assertSelectedRow(int row, String lookupText) {
@@ -216,7 +267,7 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 			String actualString = (String) table.getValueAt(actual, col);
 			String message = "Auto-lookup row not selected for '" + lookupText + "'.\n\t" +
 				"Expected text: '" + expectedString + "'; Actual text: '" + actualString + "'";
-			Msg.out(message);
+			Msg.error(this, message);
 			assertEquals(message, row, actual);
 		}
 	}
@@ -241,13 +292,17 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSort();
 	}
 
+	private void pauseTimeout() {
+		runSwing(() -> timeoutTriggered = false);
+	}
+
 	private void timeout() {
-		sleep(testKeyTimeout * 2);
+		runSwing(() -> timeoutTriggered = true);
 	}
 
 	private void setSelectedRow(final GhidraTable table, final int i) throws Exception {
-		SwingUtilities.invokeAndWait(() -> table.setRowSelectionInterval(i, i));
-		waitForPostedSwingRunnables();
+		runSwing(() -> table.setRowSelectionInterval(i, i));
+		waitForSwing();
 	}
 
 }
