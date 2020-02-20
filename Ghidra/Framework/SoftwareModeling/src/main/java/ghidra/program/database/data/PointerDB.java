@@ -40,6 +40,13 @@ class PointerDB extends DataTypeDB implements Pointer {
 	private String displayName;
 
 	/**
+	 * <code>isEquivalentActive</code> is used to break cyclical recursion
+	 * when performing an {@link #isEquivalent(DataType)} checks on pointers
+	 * which must also check the base datatype equivelency.
+	 */
+	private ThreadLocal<Boolean> isEquivalentActive = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+	/**
 	 * Constructor
 	 * @param dataMgr
 	 * @param cache
@@ -296,8 +303,22 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return true;
 		}
 
-		return DataTypeUtilities.equalsIgnoreConflict(getDataType().getPathName(),
-			otherDataType.getPathName());
+		if (!DataTypeUtilities.equalsIgnoreConflict(getDataType().getPathName(),
+			otherDataType.getPathName())) {
+			return false;
+		}
+
+		if (isEquivalentActive.get()) {
+			return true;
+		}
+
+		isEquivalentActive.set(true);
+		try {
+			return getDataType().isEquivalent(otherDataType);
+		}
+		finally {
+			isEquivalentActive.set(false);
+		}
 	}
 
 	@Override

@@ -47,6 +47,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	private String displayName;
 
 	/**
+	 * <code>isEquivalentActive</code> is used to break cyclical recursion
+	 * when performing an {@link #isEquivalent(DataType)} checks on pointers
+	 * which must also check the base datatype equivelency.
+	 */
+	private ThreadLocal<Boolean> isEquivalentActive = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+	/**
 	 * Creates a dynamically-sized default pointer data type.
 	 * A dynamic pointer size of 4-bytes will be in used, but will adapt to a data type manager's 
 	 * data organization when resolved.
@@ -465,8 +472,22 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return true;
 		}
 
-		return DataTypeUtilities.equalsIgnoreConflict(referencedDataType.getPathName(),
-			otherDataType.getPathName());
+		if (!DataTypeUtilities.equalsIgnoreConflict(referencedDataType.getPathName(),
+			otherDataType.getPathName())) {
+			return false;
+		}
+
+		if (isEquivalentActive.get()) {
+			return true;
+		}
+
+		isEquivalentActive.set(true);
+		try {
+			return getDataType().isEquivalent(otherDataType);
+		}
+		finally {
+			isEquivalentActive.set(false);
+		}
 	}
 
 	@Override
