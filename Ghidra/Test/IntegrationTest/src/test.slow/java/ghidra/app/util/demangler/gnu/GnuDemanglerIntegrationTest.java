@@ -61,6 +61,7 @@ public class GnuDemanglerIntegrationTest extends AbstractGhidraHeadlessIntegrati
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setDemangleOnlyKnownPatterns(false);
+		options = options.withDeprecatedDemangler();
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined MyNamespace::MyFunction($ParamNamespace::paramName *)",

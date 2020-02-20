@@ -17,6 +17,7 @@ package docking.widgets;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -28,7 +29,9 @@ public abstract class AutoLookup {
 
 	public static final long KEY_TYPING_TIMEOUT = 800;
 	private static final int MAX_SEARCH_ROWS = 50000;
+
 	private long keyTimeout = KEY_TYPING_TIMEOUT;
+	private Predicate<Long> keyTimeoutPredicate = elapsedTime -> elapsedTime > keyTimeout;
 
 	private AutoLookupItem lastLookup;
 
@@ -111,12 +114,25 @@ public abstract class AutoLookup {
 	}
 
 	/**
+	 * Sets the logic for deciding whether the elapsed time between keystrokes is enough to
+	 * trigger a new auto lookup or to continue with the previous match.
+	 * 
+	 * <p>This method is intended for tests that need precise control over the timeout mechanism.
+	 * 
+	 * 
+	 * @param p the predicate that takes the amount of elapsed time
+	 * @see #setTimeout(long)
+	 */
+	public void setTimeoutPredicate(Predicate<Long> p) {
+		this.keyTimeoutPredicate = p;
+	}
+
+	/**
 	 * Clients call this method when the user types keys
 	 * 
 	 * @param e the key event
 	 */
 	public void keyTyped(KeyEvent e) {
-
 		if (getRowCount() == 0) {
 			return;
 		}
@@ -295,7 +311,9 @@ public abstract class AutoLookup {
 
 			String eventChar = Character.toString(e.getKeyChar());
 			long when = e.getWhen();
-			if (when - lastTime > keyTimeout) {
+			long elapsed = when - lastTime;
+			boolean didTimeout = keyTimeoutPredicate.test(elapsed);
+			if (didTimeout) {
 				text = eventChar;
 			}
 			else {
