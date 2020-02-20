@@ -57,6 +57,11 @@ public class WrappedDataType {
 	 * @return true if datatype corresponds to a zero-length array 
 	 * which can not directly be represented as an Array datatype, 
 	 * else false for all other cases.
+	 * 
+	 * NOTE: zero-length arrays are only supported as a trailing flex-array
+	 * within a structure.  If such zer-length arrays exist within unions or
+	 * within the body of a structure the composite reconstruction will produce
+	 * unpredictable results or fail.
 	 */
 	public boolean isZeroLengthArray() {
 		return isZeroLengthArray;
