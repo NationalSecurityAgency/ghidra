@@ -218,7 +218,6 @@ public:
   PcodeOp *target(void) const;	///< Return starting op for instruction associated with this op
   uintb getNZMaskLocal(bool cliploop) const; ///< Calculate known zero bits for output to this op
   int4 compareOrder(const PcodeOp *bop) const; ///< Compare the control-flow order of this and \e bop
-  void push(PrintLanguage *lng) const { opcode->push(lng,this); } ///< Push this op as a display token
   void printRaw(ostream &s) const { opcode->printRaw(s,this); }	///< Print raw info about this op to stream
   const string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
   void printDebug(ostream &s) const; ///< Print debug description of this op to stream

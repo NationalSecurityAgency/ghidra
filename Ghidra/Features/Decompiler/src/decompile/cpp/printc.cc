@@ -591,11 +591,11 @@ void PrintC::opReturn(const PcodeOp *op)
   pushAtom(Atom("",blanktoken,EmitXml::no_color));
 }
 
-void PrintC::opIntZext(const PcodeOp *op)
+void PrintC::opIntZext(const PcodeOp *op,const PcodeOp *readOp)
 
 {
   if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
-    if (isExtensionCastImplied(op))
+    if (isExtensionCastImplied(op,readOp))
       opHiddenFunc(op);
     else
       opTypeCast(op);
@@ -604,11 +604,11 @@ void PrintC::opIntZext(const PcodeOp *op)
     opFunc(op);
 }
 
-void PrintC::opIntSext(const PcodeOp *op)
+void PrintC::opIntSext(const PcodeOp *op,const PcodeOp *readOp)
 
 {
   if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
-    if (isExtensionCastImplied(op))
+    if (isExtensionCastImplied(op,readOp))
       opHiddenFunc(op);
     else
       opTypeCast(op);
@@ -1288,8 +1288,9 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize
 /// Sometimes such a cast is implied by the expression its in, and the cast itself
 /// doesn't need to be printed.
 /// \param op is the given ZEXT or SEXT PcodeOp
+/// \param readOp is the PcodeOp consuming the output of the extensions (or null)
 /// \return \b true if the op as a cast does not need to be printed
-bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
+bool PrintC::isExtensionCastImplied(const PcodeOp *op,const PcodeOp *readOp) const
 
 {
   if (!option_hide_exts)
@@ -1299,37 +1300,37 @@ bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
 
   }
   else {
+    if (readOp == (PcodeOp *) 0)
+      return false;
     type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
-    list<PcodeOp *>::const_iterator iter;
-    for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
-      PcodeOp *expOp = *iter;
-      Varnode *otherVn;
-      int4 slot;
-      switch(expOp->code()) {
-	case CPUI_PTRADD:
-	  break;
-	case CPUI_INT_ADD:
-	case CPUI_INT_SUB:
-	case CPUI_INT_MULT:
-	case CPUI_INT_DIV:
-	case CPUI_INT_AND:
-	case CPUI_INT_OR:
-	case CPUI_INT_XOR:
-	case CPUI_INT_LESS:
-	case CPUI_INT_LESSEQUAL:
-	case CPUI_INT_SLESS:
-	case CPUI_INT_SLESSEQUAL:
-	  slot = expOp->getSlot(outVn);
-	  otherVn = expOp->getIn(1-slot);
-	  // Check if the expression involves an explicit variable of the right integer type
-	  if (!otherVn->isExplicit())
-	    return false;
-	  if (otherVn->getHigh()->getType()->getMetatype() != metatype)
-	    return false;
-	  break;
-	default:
+    const Varnode *otherVn;
+    int4 slot;
+    switch (readOp->code()) {
+      case CPUI_PTRADD:
+	break;
+      case CPUI_INT_ADD:
+      case CPUI_INT_SUB:
+      case CPUI_INT_MULT:
+      case CPUI_INT_DIV:
+      case CPUI_INT_AND:
+      case CPUI_INT_OR:
+      case CPUI_INT_XOR:
+      case CPUI_INT_EQUAL:
+      case CPUI_INT_NOTEQUAL:
+      case CPUI_INT_LESS:
+      case CPUI_INT_LESSEQUAL:
+      case CPUI_INT_SLESS:
+      case CPUI_INT_SLESSEQUAL:
+	slot = readOp->getSlot(outVn);
+	otherVn = readOp->getIn(1 - slot);
+	// Check if the expression involves an explicit variable of the right integer type
+	if (!otherVn->isExplicit() && !otherVn->isConstant())
 	  return false;
-      }
+	if (otherVn->getHigh()->getType()->getMetatype() != metatype)
+	  return false;
+	break;
+      default:
+	return false;
     }
     return true;	// Everything is integer promotion
   }
@@ -2153,7 +2154,7 @@ void PrintC::emitExpression(const PcodeOp *op)
     // If BRANCHIND, print switch( )
     // If CALL, CALLIND, CALLOTHER  print  call
     // If RETURN,   print return ( )
-  op->push(this);
+  op->getOpcode()->push(this,op,(PcodeOp *)0);
   recurse();
 }
 

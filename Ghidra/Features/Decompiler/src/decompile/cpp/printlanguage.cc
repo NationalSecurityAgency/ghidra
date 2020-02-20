@@ -648,8 +648,10 @@ void PrintLanguage::recurse(void)
     mods = nodepend.back().vnmod;
     nodepend.pop_back();
     pending -= 1;
-    if (vn->isImplied())
-      vn->getDef()->push(this);
+    if (vn->isImplied()) {
+      const PcodeOp *defOp = vn->getDef();
+      defOp->getOpcode()->push(this,defOp,op);
+    }
     else
       pushVnExplicit(vn,op);
     pending = nodepend.size();
