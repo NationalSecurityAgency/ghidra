@@ -276,15 +276,15 @@ public class DisassembleCommand extends BackgroundCommand {
 					continue;
 				}
 
-			    // process the big range by disassembling flow through the range
+				// process the big range by disassembling flow through the range
 				//   causing the analyzer to kick off between disassembly flows
 				// disassemble the seedSet first
-				doDisassemblySeeds(disassembler, seedSet);
+				doDisassemblySeeds(disassembler, seedSet, mgr);
 				seedSet = new AddressSet();
 
 				// do the current start of the subRangeSet
 				AddressSet localDisAddrs =
-					doDisassemblySeeds(disassembler, new AddressSet(nextAddr));
+					doDisassemblySeeds(disassembler, new AddressSet(nextAddr), mgr);
 
 				// if anything disassembled, analyze the result set
 				analyzeIfNeeded(mgr, subRangeSet, localDisAddrs, monitor);
@@ -301,7 +301,7 @@ public class DisassembleCommand extends BackgroundCommand {
 		// If there are any small seedSet ranges left, disassemble them
 		//   Don't kick off analysis, that will be done later
 		if (!seedSet.isEmpty()) {
-			doDisassemblySeeds(disassembler, seedSet);
+			doDisassemblySeeds(disassembler, seedSet, mgr);
 		}
 
 		return disassemblyPerformed || (!nonExecutableStart & !unalignedStart);
@@ -312,17 +312,25 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * 
 	 * @param disassembler disassembler to use
 	 * @param seedSet set of addresses to be disassembled
+	 * @param mgr 
 	 * 
 	 * @return addresses actually disassembled
 	 */
-	protected AddressSet doDisassemblySeeds(Disassembler disassembler, AddressSet seedSet) {
+	protected AddressSet doDisassemblySeeds(Disassembler disassembler, AddressSet seedSet,
+			AutoAnalysisManager mgr) {
 		AddressSet newDisassembledAddrs =
 			disassembler.disassemble(seedSet, restrictedSet, initialContextValue, followFlow);
 
 		if (!newDisassembledAddrs.isEmpty()) {
 			disassemblyPerformed = true;
 			disassembledAddrs.add(newDisassembledAddrs);
+
+			// notify analysis manager of new code
+			if (mgr != null) {
+				mgr.codeDefined(newDisassembledAddrs);
+			}
 		}
+
 		return newDisassembledAddrs;
 	}
 
@@ -347,9 +355,6 @@ public class DisassembleCommand extends BackgroundCommand {
 		if (mgr == null || monitor.isCancelled()) {
 			return;
 		}
-
-		// notify analysis manager of new code
-		mgr.codeDefined(disassembledSet);
 
 		AddressRange firstRange = disassembledSet.getFirstRange();
 		Address rangeEnd = firstRange.getMaxAddress();

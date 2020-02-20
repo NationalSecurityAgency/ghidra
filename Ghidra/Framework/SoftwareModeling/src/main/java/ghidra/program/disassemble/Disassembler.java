@@ -25,7 +25,6 @@ import ghidra.app.util.RepeatInstructionByteTracker;
 import ghidra.framework.options.Options;
 import ghidra.program.database.register.AddressRangeObjectMap;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DefaultDataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.InstructionError.InstructionErrorType;
 import ghidra.program.model.listing.*;
@@ -464,17 +463,15 @@ public class Disassembler implements DisassemblerConflictHandler {
 					continue;
 				}
 
+				todoSubset.delete(nextAddr, nextAddr);
+
 				// must be aligned
 				if (nextAddr.getOffset() % alignment != 0) {
-					todoSubset.delete(nextAddr, nextAddr);
 					continue;
 				}
 
 				Data data = listing.getUndefinedDataAt(nextAddr);
 				if (data == null) {
-					// no undefined here, skip to next undefined
-					todoSubset.delete(nextAddr, nextAddr);
-
 					AddressSetView undefinedRanges = null;
 					try {
 						undefinedRanges =
@@ -489,10 +486,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 					AddressSet currentSet =
 						disassemble(nextAddr, restrictedSet, initialContextValue, doFollowFlow);
 
-					if (currentSet.isEmpty()) {  // nothing disassembled
-						todoSubset.delete(nextAddr, nextAddr);
-					}
-					else {
+					if (!currentSet.isEmpty()) {  // nothing disassembled
 						todoSubset.delete(currentSet);
 						disassembledAddrs.add(currentSet);
 					}
