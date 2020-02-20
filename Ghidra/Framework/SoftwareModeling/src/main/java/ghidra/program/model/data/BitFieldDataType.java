@@ -366,11 +366,21 @@ public class BitFieldDataType extends AbstractDataType {
 		return big;
 	}
 
-	public BigInteger getBigIntegerValue(MemBuffer buf, Settings settings) {
+	private BigInteger getBigIntegerValue(MemBuffer buf, Settings settings) {
 		if (effectiveBitSize == 0) {
 			return BigInteger.ZERO;
 		}
 		try {
+
+			byte[] bytes = new byte[storageSize];
+			if (buf.getBytes(bytes, 0) != storageSize) {
+				return null;
+			}
+
+			if (!EndianSettingsDefinition.ENDIAN.isBigEndian(settings, buf)) {
+				bytes = ArrayUtilities.reverse(bytes);
+			}
+
 			BigInteger big = buf.getBigInteger(0, storageSize, false);
 			BigInteger pow = BigInteger.valueOf(2).pow(effectiveBitSize);
 			BigInteger mask = pow.subtract(BigInteger.ONE);
@@ -411,16 +421,12 @@ public class BitFieldDataType extends AbstractDataType {
 		if (intDT.getFormatSettingsDefinition().getFormat(
 			settings) == FormatSettingsDefinition.CHAR) {
 			if (big.signum() < 0) {
-				big = big.add(BigInteger.valueOf(2).pow(bitSize));
+				big = big.add(BigInteger.valueOf(2).pow(effectiveBitSize));
 			}
-			int bytesLen = BitFieldDataType.getMinimumStorageSize(bitSize);
+			int bytesLen = BitFieldDataType.getMinimumStorageSize(effectiveBitSize);
 			byte[] bytes = DataConverter.getInstance(buf.isBigEndian()).getBytes(big, bytesLen);
-			if (!EndianSettingsDefinition.ENDIAN.isBigEndian(settings, buf)) {
-				bytes = ArrayUtilities.reverse(bytes);
-			}
 
-			return StringDataInstance.getCharRepresentation(this, bytes, settings,
-				buf.isBigEndian());
+			return StringDataInstance.getCharRepresentation(this, bytes, settings);
 		}
 
 		return intDT.getRepresentation(big, settings, effectiveBitSize);

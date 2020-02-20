@@ -21,7 +21,6 @@ import ghidra.docking.settings.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.ByteMemBufferImpl;
@@ -30,7 +29,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.StringUtilities;
-import utilities.util.ArrayUtilities;
 
 /**
  * A hover service to show tool tip text for hovering over scalar values.
@@ -70,7 +68,7 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 
 	private void formatIntegerTypes(Program program, Address addr, Scalar scalar,
 			StringBuilder htmlText) {
-		ByteMemBufferImpl memBuffer = getScalarOperandAsMemBuffer(addr, scalar, 1, Endian.BIG);
+		ByteMemBufferImpl memBuffer = getScalarOperandAsMemBuffer(addr, scalar, 1);
 
 		StringBuilder sb = new StringBuilder();
 
@@ -120,12 +118,12 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 		String prevCharVal = "";
 		StringBuilder localHTMLText = new StringBuilder();
 
-		Endian progEndian = program.getMemory().isBigEndian() ? Endian.BIG : Endian.LITTLE;
+//		Endian progEndian = program.getMemory().isBigEndian() ? Endian.BIG : Endian.LITTLE;
 		for (DataType charDt : charDataTypes) {
 			// for each char data type, append its representation to the buffer, if it is
 			// a new way to display the scalar
 			ByteMemBufferImpl charMemBuffer =
-				getScalarOperandAsMemBuffer(addr, scalar, charDt.getLength(), progEndian);
+				getScalarOperandAsMemBuffer(addr, scalar, charDt.getLength());
 			prevCharVal =
 				appendCharDataTypeFormattedHTML(prevCharVal, charDt, charMemBuffer, localHTMLText);
 		}
@@ -159,11 +157,6 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 				htmlText.append("<tr><td>") // 
 					.append(charDt.getName()) //
 					.append(isArray ? "[]" : "");
-				if (charMemBuffer.getLength() > 1) {
-					htmlText.append(" <b>" +
-						(charMemBuffer.isBigEndian() ? Endian.BIG : Endian.LITTLE).toShortString() +
-						"</b>");
-				}
 				htmlText.append("</td><td>") //
 					.append(HTMLUtilities.friendlyEncodeHTML(charRep)) //
 					.append("</td></tr>");
@@ -225,15 +218,12 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 	}
 
 	private ByteMemBufferImpl getScalarOperandAsMemBuffer(Address addr, Scalar scalar,
-			int minTrimLen, Endian endian) {
+			int minTrimLen) {
 		byte[] operandBytes = scalar.byteArrayValue();
 		if (minTrimLen > 0) {
 			operandBytes = trimLeadingZeros(operandBytes, minTrimLen);
 		}
-		if (endian == Endian.LITTLE) {
-			operandBytes = ArrayUtilities.reverse(operandBytes);
-		}
-		return new ByteMemBufferImpl(addr, operandBytes, endian == Endian.BIG);
+		return new ByteMemBufferImpl(addr, operandBytes, true);
 	}
 
 	private static byte[] trimLeadingZeros(byte[] bytes, int minTrimLen) {

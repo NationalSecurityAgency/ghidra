@@ -44,6 +44,9 @@ import ghidra.util.*;
  * <p>
  */
 public class StringDataInstance {
+
+	private static final int ASCII_MAX = 0x7f;
+
 	/**
 	 * Returns true if the {@link Data} instance is a 'string'.
 	 *
@@ -83,7 +86,7 @@ public class StringDataInstance {
 		return dt instanceof AbstractStringDataType || (dt instanceof Array &&
 			ArrayStringable.getArrayStringable(((Array) dt).getDataType()) != null);
 	}
-	
+
 	/**
 	 * Returns true if the {@link Data} instance is one of the many 'char' data types.
 	 * 
@@ -105,17 +108,43 @@ public class StringDataInstance {
 	 * <p>
 	 * 
 	 * @param dataType the {@link DataType} of the element containing the bytes (most likely a ByteDataType)
-	 * @param bytes the bytes to convert
+	 * @param bytes the big-endian ordered bytes to convert to a char representation
 	 * @param settings the {@link Settings} object for the location where the bytes came from, or null
-	 * @param isBigEndian boolean flag indicating data is big endian
 	 * @return formatted string (typically with quotes around the contents): single character: 'a', multiple characters: "a\x12bc"
 	 */
-	public static String getCharRepresentation(DataType dataType, byte[] bytes, Settings settings,
-			boolean isBigEndian) {
-		MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, isBigEndian);
-		StringDataInstance sdi =
-			new StringDataInstance(dataType, settings, memBuf, bytes.length);
+	public static String getCharRepresentation(DataType dataType, byte[] bytes, Settings settings) {
+		if (bytes == null || bytes.length == 0) {
+			return UNKNOWN;
+		}
+
+		if (bytes.length != 1 && isSingleAsciiValue(bytes)) {
+			bytes = new byte[] { bytes[bytes.length - 1] };
+		}
+
+		MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
+		StringDataInstance sdi = new StringDataInstance(dataType, settings, memBuf, bytes.length);
 		return sdi.getCharRepresentation();
+	}
+
+	/**
+	 * Determine if bytes contain only a single ASCII value within 
+	 * least-significant-byte of big-endian byte array
+	 * @param bytes value byte array in big-endian order
+	 * @return true if bytes contain a single ASCII value within 
+	 * least-significant-byte
+	 */
+	private static boolean isSingleAsciiValue(byte[] bytes) {
+
+		int lsbIndex = bytes.length - 1;
+		if (bytes[lsbIndex] < 0) {
+			return false;
+		}
+		for (int i = 0; i < lsbIndex; i++) {
+			if (bytes[i] != 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -764,7 +793,7 @@ public class StringDataInstance {
 				// render settings.  ISO control chars are forced to be
 				// escaped regardless of the render setting.
 				if (currentCharRenderSetting == RENDER_ENUM.ALL) {
-					if (codePoint <= 0x7f) {
+					if (codePoint <= ASCII_MAX) {
 						// render non-displayable, non-control-char ascii-ish bytes as bytes instead
 						// of as escape sequences
 						currentCharRenderSetting = RENDER_ENUM.BYTE_SEQ;
