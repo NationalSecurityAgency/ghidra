@@ -595,7 +595,7 @@ void PrintC::opIntZext(const PcodeOp *op,const PcodeOp *readOp)
 
 {
   if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
-    if (isExtensionCastImplied(op,readOp))
+    if (option_hide_exts && castStrategy->isExtensionCastImplied(op,readOp))
       opHiddenFunc(op);
     else
       opTypeCast(op);
@@ -608,7 +608,7 @@ void PrintC::opIntSext(const PcodeOp *op,const PcodeOp *readOp)
 
 {
   if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
-    if (isExtensionCastImplied(op,readOp))
+    if (option_hide_exts && castStrategy->isExtensionCastImplied(op,readOp))
       opHiddenFunc(op);
     else
       opTypeCast(op);
@@ -1280,61 +1280,6 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize
   else
     res = false;
   return res;
-}
-
-/// \brief Is the given ZEXT/SEXT cast implied by the expression its in
-///
-/// We know that the given ZEXT or SEXT op can be viewed as a natural \e cast operation.
-/// Sometimes such a cast is implied by the expression its in, and the cast itself
-/// doesn't need to be printed.
-/// \param op is the given ZEXT or SEXT PcodeOp
-/// \param readOp is the PcodeOp consuming the output of the extensions (or null)
-/// \return \b true if the op as a cast does not need to be printed
-bool PrintC::isExtensionCastImplied(const PcodeOp *op,const PcodeOp *readOp) const
-
-{
-  if (!option_hide_exts)
-    return false;		// If hiding extensions is not on, we must always print extension
-  const Varnode *outVn = op->getOut();
-  if (outVn->isExplicit()) {
-
-  }
-  else {
-    if (readOp == (PcodeOp *) 0)
-      return false;
-    type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
-    const Varnode *otherVn;
-    int4 slot;
-    switch (readOp->code()) {
-      case CPUI_PTRADD:
-	break;
-      case CPUI_INT_ADD:
-      case CPUI_INT_SUB:
-      case CPUI_INT_MULT:
-      case CPUI_INT_DIV:
-      case CPUI_INT_AND:
-      case CPUI_INT_OR:
-      case CPUI_INT_XOR:
-      case CPUI_INT_EQUAL:
-      case CPUI_INT_NOTEQUAL:
-      case CPUI_INT_LESS:
-      case CPUI_INT_LESSEQUAL:
-      case CPUI_INT_SLESS:
-      case CPUI_INT_SLESSEQUAL:
-	slot = readOp->getSlot(outVn);
-	otherVn = readOp->getIn(1 - slot);
-	// Check if the expression involves an explicit variable of the right integer type
-	if (!otherVn->isExplicit() && !otherVn->isConstant())
-	  return false;
-	if (otherVn->getHigh()->getType()->getMetatype() != metatype)
-	  return false;
-	break;
-      default:
-	return false;
-    }
-    return true;	// Everything is integer promotion
-  }
-  return false;
 }
 
 /// \brief Push a single character constant to the RPN stack
