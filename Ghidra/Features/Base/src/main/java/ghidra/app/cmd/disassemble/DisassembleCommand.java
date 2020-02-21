@@ -22,10 +22,10 @@ import ghidra.program.disassemble.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -165,12 +165,17 @@ public class DisassembleCommand extends BackgroundCommand {
 			int instructionAlignment) {
 
 		exectuableSet = Disassembler.isRestrictToExecuteMemory(program)
-				? exectuableSet = getExecutableSet(program) : null;
+				? exectuableSet = getExecutableSet(program)
+				: null;
 
 		this.alignment = instructionAlignment;
 		disassemblyPerformed = false;
 		unalignedStart = false;
 		nonExecutableStart = false;
+
+		disassembledAddrs = new AddressSet();
+
+		Listing listing = program.getListing();
 
 		Disassembler disassembler =
 			Disassembler.getDisassembler(program, monitor, new MyListener(monitor));
@@ -199,35 +204,134 @@ public class DisassembleCommand extends BackgroundCommand {
 		if (startNumAddr > 1) {
 			monitor.initialize(startNumAddr);
 		}
+		long doneNumAddr = 0;
 
-		AddressSet allLocalDisAddrs = new AddressSet();
+		AddressSet seedSet = new AddressSet();
 
-		while (!set.isEmpty() && !monitor.isCancelled()) {
-			AddressSet seedSet = getNextSeedSet(program, set, monitor);
-			if (seedSet.isEmpty()) {
-				continue;
+		// For each range in the address set to disassemble
+		// small ranges get added to the seedSet
+		// If a large range is found, then disassemble the seedSet so far, and
+		//   process the big range by disassembling flow through the range
+		//   causing the analyzer to kick off between disassembly flows
+		AddressRangeIterator addressRanges = startSet.getAddressRanges();
+		for (AddressRange addressRange : addressRanges) {
+			if (monitor.isCancelled()) {
+				break;
 			}
+			// bigger address set
+			AddressSet subRangeSet = new AddressSet(addressRange);
 
 			if (startNumAddr > 1) {
-				monitor.setProgress(set.getNumAddresses() - startNumAddr);
+				// report on done - number left in this subRange
+				monitor.setProgress(doneNumAddr);
 			}
+			doneNumAddr += subRangeSet.getNumAddresses();  // addresses are only done when disassembled
 
-			AddressSet localDisAddrs =
-				disassembler.disassemble(seedSet, restrictedSet, initialContextValue, followFlow);
+			while (!subRangeSet.isEmpty() && !monitor.isCancelled()) {
+				Address nextAddr = subRangeSet.getMinAddress();
 
-			allLocalDisAddrs.add(localDisAddrs);
+				// Check if location is already on disassembly list
+				if (disassembledAddrs.contains(nextAddr)) {
+					AddressRange doneRange = disassembledAddrs.getRangeContaining(nextAddr);
+					subRangeSet.delete(doneRange);
+					continue;
+				}
 
-			if (localDisAddrs != null && !localDisAddrs.isEmpty()) {
-				disassemblyPerformed = true;
-				analizeIfNeeded(mgr, set, localDisAddrs, monitor);
+				subRangeSet.delete(nextAddr, nextAddr);
+
+				// detect disassembly started in non-executable initialized block
+				if (exectuableSet != null && !exectuableSet.contains(nextAddr) &&
+					!program.getMemory().getLoadedAndInitializedAddressSet().contains(nextAddr)) {
+					nonExecutableStart = true;
+				}
+
+				// only try disassembly on 2 byte boundaries
+				if ((nextAddr.getOffset() % alignment) != 0) {
+					// Align to the instruction alignment
+					//  don't error on align problem here anymore
+					// unalignedStart = true;
+					nextAddr = nextAddr.subtract(nextAddr.getOffset() % alignment);
+				}
+
+				// if range is small, just add it to the seedSet
+				long addrsLeft = subRangeSet.getNumAddresses();
+				if (addrsLeft <= 4) {
+					seedSet.add(nextAddr);
+					continue;
+				}
+
+				// location to disassemble is not undefined
+				Data data = listing.getUndefinedDataAt(nextAddr);
+				if (data == null) {
+					// set the subRangeSet to undefined data in the subRangeSet
+					try {
+						AddressSetView undefRanges;
+						undefRanges =
+							program.getListing().getUndefinedRanges(subRangeSet, true, monitor);
+						subRangeSet = new AddressSet(undefRanges);
+					}
+					catch (CancelledException e) {
+						// will get handled below
+					}
+					continue;
+				}
+
+				// process the big range by disassembling flow through the range
+				//   causing the analyzer to kick off between disassembly flows
+				// disassemble the seedSet first
+				doDisassemblySeeds(disassembler, seedSet, mgr);
+				seedSet = new AddressSet();
+
+				// do the current start of the subRangeSet
+				AddressSet localDisAddrs =
+					doDisassemblySeeds(disassembler, new AddressSet(nextAddr), mgr);
+
+				// if anything disassembled, analyze the result set
+				analyzeIfNeeded(mgr, subRangeSet, localDisAddrs, monitor);
+				subRangeSet.delete(localDisAddrs);
+
+				if (startNumAddr > 1) {
+					monitor.setMaximum(startNumAddr);
+					// report on done - number left in this subRange, in case large range
+					monitor.setProgress(doneNumAddr - subRangeSet.getNumAddresses());
+				}
 			}
-
-			set = set.subtract(localDisAddrs);
 		}
 
-		disassembledAddrs = allLocalDisAddrs;
+		// If there are any small seedSet ranges left, disassemble them
+		//   Don't kick off analysis, that will be done later
+		if (!seedSet.isEmpty()) {
+			doDisassemblySeeds(disassembler, seedSet, mgr);
+		}
 
 		return disassemblyPerformed || (!nonExecutableStart & !unalignedStart);
+	}
+
+	/**
+	 * Do disassembly of a seedSet of address locations
+	 * 
+	 * @param disassembler disassembler to use
+	 * @param seedSet set of addresses to be disassembled
+	 * @param mgr 
+	 * 
+	 * @return addresses actually disassembled
+	 */
+	protected AddressSet doDisassemblySeeds(Disassembler disassembler, AddressSet seedSet,
+			AutoAnalysisManager mgr) {
+		AddressSet newDisassembledAddrs =
+			disassembler.disassemble(seedSet, restrictedSet, initialContextValue, followFlow);
+
+		if (!newDisassembledAddrs.isEmpty()) {
+			disassemblyPerformed = true;
+			disassembledAddrs.add(newDisassembledAddrs);
+
+			// notify analysis manager of new code
+			if (mgr != null) {
+				mgr.codeDefined(newDisassembledAddrs);
+			}
+		}
+
+		return newDisassembledAddrs;
 	}
 
 	/**
@@ -242,14 +346,15 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * @param startSet disassembly seed points (prior to removing disassembledSet)
 	 * @param disassembledSet last set of disassembled addresses using startSet min-address as seed point
 	 */
-	private static void analizeIfNeeded(AutoAnalysisManager mgr, AddressSetView startSet,
+	private static void analyzeIfNeeded(AutoAnalysisManager mgr, AddressSetView startSet,
 			AddressSetView disassembledSet, TaskMonitor monitor) {
-		if (mgr == null || monitor.isCancelled()) {
+		if (disassembledSet == null || disassembledSet.isEmpty()) {
 			return;
 		}
 
-		// notify analysis manager of new code
-		mgr.codeDefined(disassembledSet);
+		if (mgr == null || monitor.isCancelled()) {
+			return;
+		}
 
 		AddressRange firstRange = disassembledSet.getFirstRange();
 		Address rangeEnd = firstRange.getMaxAddress();
@@ -257,77 +362,6 @@ public class DisassembleCommand extends BackgroundCommand {
 		if (nextAddr != null && startSet.contains(rangeEnd) && startSet.contains(nextAddr)) {
 			mgr.startAnalysis(monitor, false);
 		}
-	}
-
-	private AddressSet getNextSeedSet(Program program, AddressSet set, TaskMonitor monitor) {
-		AddressSet seedSet = new AddressSet();
-
-		boolean bigRangeFound = false;
-
-		while (!monitor.isCancelled() && !set.isEmpty() && !bigRangeFound) {
-			Address firstaddr = set.getMinAddress();
-
-			// if the range is only 4 byte, assume these are seed disassembly points
-			//   and don't cause analysis to happen until the end
-			//   unless a range of addresses is found.
-
-			AddressRange addressRange = set.iterator().next();
-			if (addressRange.getLength() > 4) {
-				bigRangeFound = true;
-			}
-			set.deleteRange(firstaddr, firstaddr);
-
-			if (!program.getListing().isUndefined(firstaddr, firstaddr)) {
-				Address end = firstaddr;
-
-				// if nothing left, don't try to find the next undefined location
-				if (set.isEmpty()) {
-					return seedSet;
-				}
-				// if the address right after this one isn't in the set, just jump to the
-				//   start of the next range in the set.  start has already been deleted.
-				Address nextAddr = firstaddr.next();
-				if (nextAddr == null || !set.contains(nextAddr)) {
-					continue;
-				}
-
-				// find the next undefined after this, but restrict it to this set
-				Data next = program.getListing().getFirstUndefinedData(set, monitor);
-
-				if (next != null) {
-					end = next.getMinAddress();
-					set.deleteRange(firstaddr, end);
-					firstaddr = end;
-				}
-				else {
-					set.clear(); // no more undefined here
-					return seedSet;
-				}
-			}
-
-			// detect case where disassembly was started in non-executable initialized block
-			if (exectuableSet != null && !exectuableSet.contains(firstaddr) &&
-				!program.getMemory().getLoadedAndInitializedAddressSet().contains(firstaddr)) {
-				nonExecutableStart = true;
-			}
-
-			// only try disassembly on 2 byte boundaries
-			if ((firstaddr.getOffset() % alignment) != 0) {
-				// Align to the instruction alignment
-				//  don't error on align problem here anymore
-				// unalignedStart = true;
-				firstaddr = firstaddr.subtract(firstaddr.getOffset() % alignment);
-			}
-
-			// if there is already stuff there, don't put any context
-			if (!program.getListing().isUndefined(firstaddr, firstaddr)) {
-				continue;
-			}
-
-			seedSet.add(firstaddr);
-		}
-
-		return seedSet;
 	}
 
 	/**
