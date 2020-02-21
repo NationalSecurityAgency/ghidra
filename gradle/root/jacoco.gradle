@@ -16,6 +16,49 @@ delete new File(jacocoRootExecPath) // If the merged exec file (output from jaco
 				                    // to skip a task is made.
 
 /*********************************************************************************
+  * Generate the Jacoco excludes list from file (this will strip out comments and
+  * whitespace).
+  *
+  * This uses 'gradle/support/jacoco.excludes.src.txt' to generate list of 
+  * class exclusions for the 'jacocoReport' task.
+  * 
+  * Task to generate an aggregate jacoco report from subprojects with 
+  * Java sourceSets
+  *********************************************************************************/
+def String[] generateExcludesList() {
+
+	File inputFile = new File(rootProject.projectDir, "gradle/support/jacoco.excludes.src.txt")
+
+	def lines = inputFile.readLines()
+					 .findAll({ line -> 
+					 	!shouldIgnoreLine(line)
+					 })
+					 .collect()
+
+	println "Returning ${lines.size()} exclusion line(s) for jacocoReport."
+	return lines
+}
+
+/* An ignorable line is one that is only whitespace or that starts with a comment marker */
+def shouldIgnoreLine(line) {
+	if (line.startsWith('#')){
+		return true
+	}
+	
+	if (line.startsWith("//")) {
+		return true
+	}
+	
+	if (line.trim().isEmpty()) {
+		return true
+	}
+	
+	return false
+}
+
+List excludesList = generateExcludesList()
+
+/*********************************************************************************
  * Task to merge multiple jacoco execution data files into one
  *********************************************************************************/
 task jacocoMerge(type: JacocoMerge) {
@@ -41,9 +84,11 @@ task jacocoReport(type: JacocoReport, group: 'Coverage reports') {
    // to do it in a doFirst block but that was deprecated in later gradle builds). However,
    // we have to delay evaluation of the subprojects (using the '{ }' notation) to wait for
    // some project attributes (eg: 'sourceSets') to be made available.
-   additionalSourceDirs files({ subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.sourceSets.main.java.srcDirs })
-   additionalClassDirs files({ subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.sourceSets.main.output })
-   
+   additionalSourceDirs files({ subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.sourceSets.main.java.srcDirs })  
+   additionalClassDirs files({ subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.sourceSets.main.output }).asFileTree.matching {
+      exclude excludesList
+   }
+  
    reports {
       html {
          enabled true
