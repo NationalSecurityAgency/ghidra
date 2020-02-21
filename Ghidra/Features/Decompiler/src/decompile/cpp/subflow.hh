@@ -62,8 +62,16 @@ class SubvariableFlow {
   /// \brief Operation with a new logical value as (part of) input, but output Varnode is unchanged
   class PatchRecord {
     friend class SubvariableFlow;
-    int4 type;			///< 0=COPY 1=compare 2=call/return/branchind 3=AND/SHIFT
-    PcodeOp *pullop;		///< Op being affected
+    /// The possible types of patches on ops being performed
+    enum patchtype {
+      copy_patch,		///< Turn op into a COPY of the logical value
+      compare_patch,		///< Turn compare op inputs into logical values
+      parameter_patch,		///< Convert a CALL/CALLIND/RETURN/BRANCHIND parameter into logical value
+      extension_patch,		///< Convert op into something that copies/extends logical value, adding zero bits
+      returnpush_patch		///< Convert a sub-function return to the logical value
+    };
+    patchtype type;		///< The type of \b this patch
+    PcodeOp *patchOp;		///< Op being affected
     ReplaceVarnode *in1;	///< The logical variable input
     ReplaceVarnode *in2;	///< (optional second parameter)
     int4 slot;			///< slot being affected or other parameter
@@ -87,10 +95,9 @@ class SubvariableFlow {
   ReplaceVarnode *setReplacement(Varnode *vn,uintb mask,bool &inworklist);
   ReplaceOp *createOp(OpCode opc,int4 numparam,ReplaceVarnode *outrvn);
   ReplaceOp *createOpDown(OpCode opc,int4 numparam,PcodeOp *op,ReplaceVarnode *inrvn,int4 slot);
-  void patchIndirect(PcodeOp *newop,PcodeOp *oldop,ReplaceVarnode *out);
   bool tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
   bool tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
-  bool tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn);
+  bool tryCallReturnPush(PcodeOp *op,ReplaceVarnode *rvn);
   bool trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn);
   bool traceForward(ReplaceVarnode *rvn);	///< Trace the logical data-flow forward for the given subgraph variable
   bool traceBackward(ReplaceVarnode *rvn);	///< Trace the logical data-flow backward for the given subgraph variable

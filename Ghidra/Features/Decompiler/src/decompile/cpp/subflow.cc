@@ -193,38 +193,6 @@ SubvariableFlow::ReplaceOp *SubvariableFlow::createOpDown(OpCode opc,int4 numpar
   return rop;
 }
 
-/// \brief Convert a new INDIRECT op into the logically trimmed variant of the given original PcodeOp
-///
-/// This method assumes the original op was an \e indirect \e creation. The input and output
-/// Varnode for the new INDIRECT are not provided by this method. It only provides the
-/// \e indirect \e effect input and patches up any active parameter recovery process.
-/// \param newop is the new INDIRECT op to convert
-/// \param oldop is the original INDIRECT op
-/// \param out is the subgraph output variable node of the new INDIRECT
-void SubvariableFlow::patchIndirect(PcodeOp *newop,PcodeOp *oldop, ReplaceVarnode *out)
-
-{
-  PcodeOp *indop = PcodeOp::getOpFromConst(oldop->getIn(1)->getAddr());
-  bool possibleout = !oldop->getIn(0)->isIndirectZero();
-  Varnode *outvn = getReplaceVarnode(out);
-  fd->opSetOutput(newop,outvn);
-  fd->opSetOpcode(newop, CPUI_INDIRECT);
-  fd->opSetInput(newop,fd->newConstant(outvn->getSize(),0),0);
-  fd->opSetInput(newop,fd->newVarnodeIop(indop),1);
-  fd->markIndirectCreation(newop,possibleout);
-  fd->opInsertBefore(newop, indop);
-  FuncCallSpecs *fc = fd->getCallSpecs(indop);
-  if (fc == (FuncCallSpecs *)0) return;
-  if (fc->isOutputActive()) {
-    ParamActive *active = fc->getActiveOutput();
-    int4 trial = active->whichTrial( out->vn->getAddr(), out->vn->getSize() );
-    if (trial < 0)
-      throw LowlevelError("Cannot trim output trial to subflow");
-    Address addr = getReplacementAddress(out);
-    active->shrink(trial,addr,flowsize);
-  }
-}
-
 /// \brief Determine if the given subgraph variable can act as a parameter to the given CALL op
 ///
 /// We assume the variable flows as a parameter to the CALL. If the CALL doesn't lock the parameter
@@ -248,8 +216,8 @@ bool SubvariableFlow::tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
   if (fc->isInputLocked() && (!fc->isDotdotdot())) return false;
 
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;
-  patchlist.back().pullop = op;
+  patchlist.back().type = PatchRecord::parameter_patch;
+  patchlist.back().patchOp = op;
   patchlist.back().in1 = rvn;
   patchlist.back().slot = slot;
   pullcount += 1;		// A true terminal modification
@@ -294,8 +262,8 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
       else if (retvn->isConstant() && retop != op) {
 	// Trace won't revisit this RETURN, so we need to generate patch now
 	patchlist.push_back(PatchRecord());
-	patchlist.back().type = 2;
-	patchlist.back().pullop = retop;
+	patchlist.back().type = PatchRecord::parameter_patch;
+	patchlist.back().patchOp = retop;
 	patchlist.back().in1 = rep;
 	patchlist.back().slot = slot;
 	pullcount += 1;
@@ -304,8 +272,8 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
     returnsTraversed = true;
   }
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;
-  patchlist.back().pullop = op;
+  patchlist.back().type = PatchRecord::parameter_patch;
+  patchlist.back().patchOp = op;
   patchlist.back().in1 = rvn;
   patchlist.back().slot = slot;
   pullcount += 1;		// A true terminal modification
@@ -319,24 +287,25 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 /// \param op is the given INDIRECT
 /// \param rvn is the given subgraph variable acting as the output of the INDIRECT
 /// \return \b true if we can successfully trim the value to its logical size
-bool SubvariableFlow::tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn)
+bool SubvariableFlow::tryCallReturnPush(PcodeOp *op,ReplaceVarnode *rvn)
 
 {
-  if (!op->isIndirectCreation()) return false;
-  PcodeOp *indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-  FuncCallSpecs *fc = fd->getCallSpecs(indop);
+  if (!aggressive) {
+    if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
+      return false;				// Don't truncate
+  }
+  if ((rvn->mask & 1) == 0) return false;	// Verify the logical value is the least significant part
+  if (bitsize < 8) return false;		// Make sure logical value is at least a byte
+  FuncCallSpecs *fc = fd->getCallSpecs(op);
   if (fc == (FuncCallSpecs *)0) return false;
   if (fc->isOutputLocked()) return false;
-  
-  if (fc->isOutputActive()) {
-    ParamActive *active = fc->getActiveOutput();
-    int4 trial = active->whichTrial( rvn->vn->getAddr(), rvn->vn->getSize() );
-    if (trial < 0) return false;
-    Address newaddr = getReplacementAddress(rvn);
-    if (!active->testShrink(trial,newaddr, flowsize ))
-      return false;
-  }
-  createOp(CPUI_INDIRECT,2,rvn);
+  if (fc->isOutputActive()) return false;	// Don't trim while in the middle of figuring out return value
+
+  patchlist.push_front(PatchRecord());		// Push to the front of the patch list
+  patchlist.front().type = PatchRecord::returnpush_patch;
+  patchlist.front().patchOp = op;
+  patchlist.front().in1 = rvn;
+  // pullcount += 1;		// This is a push NOT a pull
   return true;
 }
 
@@ -354,8 +323,8 @@ bool SubvariableFlow::trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn)
   if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
     return false;				//  we can't trim
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;
-  patchlist.back().pullop = op;
+  patchlist.back().type = PatchRecord::parameter_patch;
+  patchlist.back().patchOp = op;
   patchlist.back().in1 = rvn;
   patchlist.back().slot = 0;
   pullcount += 1;		// A true terminal modification
@@ -764,12 +733,10 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
       return true;
     }
     break;
-  case CPUI_INDIRECT:
-    // TODO: This assumes that the INDIRECT is CALL-based.  Add STORE-based logic.
-    if (aggressive) {
-      if (tryCallReturnPull(op,rvn))
-	return true;
-    }
+  case CPUI_CALL:
+  case CPUI_CALLIND:
+    if (tryCallReturnPush(op,rvn))
+      return true;
     break;
   case CPUI_INT_EQUAL:
   case CPUI_INT_NOTEQUAL:
@@ -928,11 +895,10 @@ bool SubvariableFlow::traceBackwardSext(ReplaceVarnode *rvn)
     if (rop->input.size()==1)
       addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)->getOffset()); // Preserve the shift amount
     return true;
-  case CPUI_INDIRECT:
-    if (aggressive) {
-      if (tryCallReturnPull(op,rvn))
-	return true;
-    }
+  case CPUI_CALL:
+  case CPUI_CALLIND:
+    if (tryCallReturnPush(op,rvn))
+      return true;
     break;
   default:
     break;
@@ -1060,8 +1026,8 @@ void SubvariableFlow::addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn)
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 0;	// Ultimately gets converted to a COPY
-  patchlist.back().pullop = pullop;	// Operation pulling the variable out
+  patchlist.back().type = PatchRecord::copy_patch;	// Ultimately gets converted to a COPY
+  patchlist.back().patchOp = pullop;	// Operation pulling the variable out
   patchlist.back().in1 = rvn;	// Point in container flow for pull
   pullcount += 1;		// a true terminal modification
 }
@@ -1078,8 +1044,8 @@ void SubvariableFlow::addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;	// Keep the original op, just change input
-  patchlist.back().pullop = pullop;	// Operation pulling the variable out
+  patchlist.back().type = PatchRecord::parameter_patch;	// Keep the original op, just change input
+  patchlist.back().patchOp = pullop;	// Operation pulling the variable out
   patchlist.back().in1 = rvn;	// Point in container flow for pull
   patchlist.back().slot = slot;
   pullcount += 1;		// a true terminal modification
@@ -1096,8 +1062,8 @@ void SubvariableFlow::addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 s
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;	// Make no change to the operator, just put in the new input
-  patchlist.back().pullop = pullop;	// Operation pulling the variable out
+  patchlist.back().type = PatchRecord::parameter_patch;	// Make no change to the operator, just put in the new input
+  patchlist.back().patchOp = pullop;	// Operation pulling the variable out
   patchlist.back().in1 = rvn;	// Point in container flow for pull
   patchlist.back().slot = slot;
   // this is not a true modification
@@ -1114,9 +1080,9 @@ void SubvariableFlow::addSuggestedPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 3;
+  patchlist.back().type = PatchRecord::extension_patch;
   patchlist.back().in1 = rvn;
-  patchlist.back().pullop = pushop;
+  patchlist.back().patchOp = pushop;
   if (sa == -1)
     sa = leastsigbit_set(rvn->mask);
   patchlist.back().slot = sa;
@@ -1134,8 +1100,8 @@ void SubvariableFlow::addComparePatch(ReplaceVarnode *in1,ReplaceVarnode *in2,Pc
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 1;
-  patchlist.back().pullop = op;
+  patchlist.back().type = PatchRecord::compare_patch;
+  patchlist.back().patchOp = op;
   patchlist.back().in1 = in1;
   patchlist.back().in2 = in2;
   pullcount += 1;
@@ -1315,27 +1281,39 @@ bool SubvariableFlow::doTrace(void)
 void SubvariableFlow::doReplacement(void)
 
 {
+  list<PatchRecord>::iterator piter;
   list<ReplaceOp>::iterator iter;
+
+  // Do up front processing of the call return patches, which will be at the front of the list
+  for(piter=patchlist.begin();piter!=patchlist.end();++piter) {
+    if ((*piter).type != PatchRecord::returnpush_patch) break;
+    PcodeOp *pushOp = (*piter).patchOp;
+    Varnode *newVn = getReplaceVarnode((*piter).in1);
+    Varnode *oldVn = pushOp->getOut();
+    fd->opSetOutput(pushOp, newVn);
+
+    // Create placeholder defining op for old Varnode, until dead code cleans it up
+    PcodeOp *newZext = fd->newOp(1, pushOp->getAddr());
+    fd->opSetOpcode(newZext, CPUI_INT_ZEXT);
+    fd->opSetInput(newZext,newVn,0);
+    fd->opSetOutput(newZext,oldVn);
+    fd->opInsertAfter(newZext, pushOp);
+  }
 
   // Define all the outputs first
   for(iter=oplist.begin();iter!=oplist.end();++iter) {
     PcodeOp *newop = fd->newOp((*iter).numparams,(*iter).op->getAddr());
     (*iter).replacement = newop;
-    if ((*iter).opc == CPUI_INDIRECT) {
-      patchIndirect( newop, (*iter).op, (*iter).output );
-    }
-    else {
-      fd->opSetOpcode(newop,(*iter).opc);
-      ReplaceVarnode *rout = (*iter).output;
-      //      if (rout != (ReplaceVarnode *)0) {
-      //	if (rout->replacement == (Varnode *)0)
-      //	  rout->replacement = fd->newUniqueOut(flowsize,newop);
-      //	else
-      //	  fd->opSetOutput(newop,rout->replacement);
-      //      }
-      fd->opSetOutput(newop,getReplaceVarnode(rout));
-      fd->opInsertAfter(newop,(*iter).op);
-    }
+    fd->opSetOpcode(newop,(*iter).opc);
+    ReplaceVarnode *rout = (*iter).output;
+    //      if (rout != (ReplaceVarnode *)0) {
+    //	if (rout->replacement == (Varnode *)0)
+    //	  rout->replacement = fd->newUniqueOut(flowsize,newop);
+    //	else
+    //	  fd->opSetOutput(newop,rout->replacement);
+    //      }
+    fd->opSetOutput(newop,getReplaceVarnode(rout));
+    fd->opInsertAfter(newop,(*iter).op);
   }
 
   // Set all the inputs
@@ -1347,51 +1325,55 @@ void SubvariableFlow::doReplacement(void)
 
   // These are operations that carry flow from the small variable into an existing
   // variable of the correct size
-  list<PatchRecord>::iterator piter;
-  for(piter=patchlist.begin();piter!=patchlist.end();++piter) {
-    PcodeOp *pullop = (*piter).pullop;
-    int4 type = (*piter).type;
-    if (type == 0) {
+  for(;piter!=patchlist.end();++piter) {
+    PcodeOp *pullop = (*piter).patchOp;
+    switch((*piter).type) {
+    case PatchRecord::copy_patch:
       while(pullop->numInput() > 1)
 	fd->opRemoveInput(pullop,pullop->numInput()-1);
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in1),0);
       fd->opSetOpcode(pullop,CPUI_COPY);
-    }
-    else if (type == 1) {	// A comparison
+      break;
+    case PatchRecord::compare_patch:
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in1),0);
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in2),1);
-    }
-    else if (type == 2) {	// A call parameter, return value, or switch variable
+      break;
+    case PatchRecord::parameter_patch:
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in1),(*piter).slot);
-    }
-    else if (type == 3) {
-      // These are operations that flow the small variable into a bigger variable but
-      // where all the remaining bits are zero
-      int4 sa = (*piter).slot;
-      vector<Varnode *> invec;
-      Varnode *inVn = getReplaceVarnode((*piter).in1);
-      int4 outSize = pullop->getOut()->getSize();
-      if (sa == 0) {
-	invec.push_back( inVn );
-	OpCode opc = (inVn->getSize() == outSize) ? CPUI_COPY : CPUI_INT_ZEXT;
-	fd->opSetOpcode( pullop, opc );
-	fd->opSetAllInput(pullop,invec);
-      }
-      else {
-	if (inVn->getSize() != outSize) {
-	  PcodeOp *zextop = fd->newOp(1,pullop->getAddr());
-	  fd->opSetOpcode( zextop, CPUI_INT_ZEXT );
-	  Varnode *zextout = fd->newUniqueOut(outSize,zextop);
-	  fd->opSetInput(zextop,inVn,0);
-	  fd->opInsertBefore(zextop,pullop);
-	  invec.push_back(zextout);
-	}
-	else
+      break;
+    case PatchRecord::extension_patch:
+      {
+	// These are operations that flow the small variable into a bigger variable but
+	// where all the remaining bits are zero
+	int4 sa = (*piter).slot;
+	vector<Varnode *> invec;
+	Varnode *inVn = getReplaceVarnode((*piter).in1);
+	int4 outSize = pullop->getOut()->getSize();
+	if (sa == 0) {
 	  invec.push_back(inVn);
-	invec.push_back(fd->newConstant(4,sa));
-	fd->opSetAllInput(pullop,invec);
-	fd->opSetOpcode( pullop, CPUI_INT_LEFT);
+	  OpCode opc = (inVn->getSize() == outSize) ? CPUI_COPY : CPUI_INT_ZEXT;
+	  fd->opSetOpcode(pullop, opc);
+	  fd->opSetAllInput(pullop, invec);
+	}
+	else {
+	  if (inVn->getSize() != outSize) {
+	    PcodeOp *zextop = fd->newOp(1, pullop->getAddr());
+	    fd->opSetOpcode(zextop, CPUI_INT_ZEXT);
+	    Varnode *zextout = fd->newUniqueOut(outSize, zextop);
+	    fd->opSetInput(zextop, inVn, 0);
+	    fd->opInsertBefore(zextop, pullop);
+	    invec.push_back(zextout);
+	  }
+	  else
+	    invec.push_back(inVn);
+	  invec.push_back(fd->newConstant(4, sa));
+	  fd->opSetAllInput(pullop, invec);
+	  fd->opSetOpcode(pullop, CPUI_INT_LEFT);
+	}
+	break;
       }
+    case PatchRecord::returnpush_patch:
+      break;	// Shouldn't see these here, handled earlier
     }
   }
 }
