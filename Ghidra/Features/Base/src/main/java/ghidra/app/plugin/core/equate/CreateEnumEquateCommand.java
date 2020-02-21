@@ -63,6 +63,9 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 	@Override
 	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 
+		monitor.setIndeterminate(true);
+		monitor.setMessage("Installing Equate");
+
 		equateTable = program.getEquateTable();
 		try {
 			applyEnum(monitor);
