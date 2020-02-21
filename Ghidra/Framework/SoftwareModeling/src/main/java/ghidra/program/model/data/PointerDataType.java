@@ -24,6 +24,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
+import ghidra.util.DataConverter;
 
 /**
  * Basic implementation for a pointer dataType 
@@ -287,7 +288,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	@Override
 	public String getDescription() {
-		StringBuffer sbuf = new StringBuffer();
+		StringBuilder sbuf = new StringBuilder();
 		if (length > 0) {
 			sbuf.append(Integer.toString(8 * length));
 			sbuf.append("-bit ");
@@ -342,6 +343,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		if (buf.getAddress() instanceof SegmentedAddress) {
 			try {
+				// NOTE: conversion assumes a little-endian space
 				return getSegmentedAddressValue(buf, size);
 			}
 			catch (AddressOutOfBoundsException e) {
@@ -362,21 +364,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return null;
 		}
 
-		boolean isBigEndian = buf.isBigEndian(); // ENDIAN.isBigEndian(settings, buf);
-
-		if (!isBigEndian) {
-			byte[] flipped = new byte[size];
-			for (int i = 0; i < size; i++) {
-				flipped[i] = bytes[size - i - 1];
-			}
-			bytes = flipped;
-		}
-
-		// Use long when possible
-		long val = 0;
-		for (byte b : bytes) {
-			val = (val << 8) + (b & 0x0ffL);
-		}
+		long val = DataConverter.getInstance(buf.isBigEndian()).getValue(bytes, size);
 
 		try {
 			return targetSpace.getAddress(val, true);
@@ -387,22 +375,27 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		return null;
 	}
 
+	/**
+	 * Read segmented address from memory.
+	 * NOTE: little-endian memory assumed.
+	 * @param buf memory buffer associated with a segmented-address space 
+	 * positioned at start of address value to be read
+	 * @param dataLen pointer-length (2 and 4-byte pointers supported)
+	 * @return address value returned as segmented Address object or null
+	 * for unsupported pointer length or meory access error occurs.
+	 */
 	private static Address getSegmentedAddressValue(MemBuffer buf, int dataLen) {
 		SegmentedAddress a = (SegmentedAddress) buf.getAddress();
 		int segment = a.getSegment();
 		int offset = 0;
 		try {
 			switch (dataLen) {
-				case 1:
-					offset = buf.getByte(0) & 0xff;
+				case 2: // near pointer
+					offset = (int) buf.getVarLengthUnsignedInt(0, dataLen);
 					break;
-				case 2:
-					offset = buf.getShort(0) & 0xffff;
-					break;
-				case 4:
-				case 8:
-					segment = buf.getShort(0) & 0xffff;
-					offset = buf.getShort(2) & 0xffff;
+				case 4: // far pointer
+					segment = buf.getUnsignedShort(0);
+					offset = buf.getUnsignedShort(2);
 					break;
 				default:
 					return null;

@@ -20,6 +20,7 @@ import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.ProcessorContext;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.util.DataConverter;
 import ghidra.util.classfinder.ClassTranslator;
 
 /**
@@ -105,21 +106,7 @@ public class ShiftedAddressDataType extends BuiltIn {
 			return null;
 		}
 
-		boolean isBigEndian = buf.isBigEndian(); // ENDIAN.isBigEndian(settings, buf);
-
-		if (!isBigEndian) {
-			byte[] flipped = new byte[size];
-			for (int i = 0; i < size; i++) {
-				flipped[i] = bytes[size - i - 1];
-			}
-			bytes = flipped;
-		}
-
-		// Use long when possible
-		long val = 0;
-		for (byte b : bytes) {
-			val = (val << 8) + (b & 0x0ffL);
-		}
+		long val = DataConverter.getInstance(buf.isBigEndian()).getValue(bytes, size);
 
 		val = val << shift;
 

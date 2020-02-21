@@ -167,7 +167,7 @@ public class ItemSerializer {
 		inputStream.skip(MAGIC_NUMBER_POS);
 		byte[] magicBytes = new byte[MAGIC_NUMBER_SIZE];
 		inputStream.read(magicBytes);
-		BigEndianDataConverter dc = new BigEndianDataConverter();
+		BigEndianDataConverter dc = BigEndianDataConverter.INSTANCE;
 		long magic = dc.getLong(magicBytes);
 		return (magic == MAGIC_NUMBER);
 	}

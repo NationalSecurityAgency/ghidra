@@ -53,7 +53,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 		// Efficient check to fail fast
 		byte[] magicBytes = provider.readBytes(0, 4);
-		if (!MachConstants.isMagic(new LittleEndianDataConverter().getInt(magicBytes))) {
+		if (!MachConstants.isMagic(LittleEndianDataConverter.INSTANCE.getInt(magicBytes))) {
 			return loadSpecs;
 		}
 

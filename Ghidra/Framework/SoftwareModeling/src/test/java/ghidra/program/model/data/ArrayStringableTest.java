@@ -26,12 +26,8 @@ import ghidra.program.model.mem.ByteMemBufferImpl;
 
 public class ArrayStringableTest extends AbstractGTest {
 	private ByteMemBufferImpl mb(boolean isBE, int... values) {
-		byte[] bytes = new byte[values.length];
-		for (int i = 0; i < values.length; i++) {
-			bytes[i] = (byte) values[i];
-		}
 		GenericAddressSpace gas = new GenericAddressSpace("test", 32, AddressSpace.TYPE_RAM, 1);
-		return new ByteMemBufferImpl(gas.getAddress(0), bytes, isBE);
+		return new ByteMemBufferImpl(gas.getAddress(0), bytes(values), isBE);
 	}
 
 	private SettingsBuilder newset() {

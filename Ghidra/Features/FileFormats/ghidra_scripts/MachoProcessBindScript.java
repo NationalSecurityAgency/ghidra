@@ -395,9 +395,7 @@ public class MachoProcessBindScript extends GhidraScript {
 
 			long offset = symbol.getAddress().getOffset();
 
-			DataConverter converter = currentProgram.getLanguage().isBigEndian() ? 
-										new BigEndianDataConverter() : 
-										new LittleEndianDataConverter();
+			DataConverter converter = DataConverter.getInstance(currentProgram.getLanguage().isBigEndian());
 
 			if ( currentProgram.getDefaultPointerSize() == 8 ) {
 				setBytes( getAddress(), converter.getBytes( offset ) );

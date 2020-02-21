@@ -32,7 +32,7 @@ public abstract class NSObject implements StructConverter {
 	/**
 	 * All data is stored BIG ENDIAN in a binary plist.
 	 */
-	protected DataConverter converter = new BigEndianDataConverter( );
+	protected DataConverter converter = BigEndianDataConverter.INSTANCE;
 
 	public abstract String getType();
 

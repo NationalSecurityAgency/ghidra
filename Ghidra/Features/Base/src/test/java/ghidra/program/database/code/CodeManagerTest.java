@@ -638,14 +638,6 @@ public class CodeManagerTest extends AbstractGenericTest {
 		assertEquals(addr(0x0101), referencesFrom[0].getToAddress());
 	}
 
-	private byte[] bytes(int... v) {
-		byte[] byteArray = new byte[v.length];
-		for (int i = 0; i < v.length; i++) {
-			byteArray[i] = (byte) v[i];
-		}
-		return byteArray;
-	}
-
 	@Test
 	public void testGetDataAt() throws Exception {
 		listing.createData(addr(0x1740), DefaultDataType.dataType, 1);

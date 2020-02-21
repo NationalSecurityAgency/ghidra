@@ -80,14 +80,6 @@ public class ViewStringsPluginScreenShots extends GhidraScreenShotGenerator {
 
 	}
 
-	private static byte[] bytes(int... intValues) {
-		byte[] result = new byte[intValues.length];
-		for (int i = 0; i < intValues.length; i++) {
-			result[i] = (byte) (intValues[i]);
-		}
-		return result;
-	}
-
 	@Test
 	public void testDefined_String_Table() {
 		ViewStringsProvider provider = showProvider(ViewStringsProvider.class);

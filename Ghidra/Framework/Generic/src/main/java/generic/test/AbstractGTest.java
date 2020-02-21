@@ -325,6 +325,21 @@ public abstract class AbstractGTest {
 		return testName.getMethodName();
 	}
 
+	/**
+	 * Friendly way to create an array of bytes with static values.
+	 * 
+	 * @param unsignedBytes var-args list of unsigned byte values (ie. 0..255)
+	 * @return array of bytes
+	 */
+	public static byte[] bytes(int... unsignedBytes) {
+		byte[] result = new byte[unsignedBytes.length];
+		for (int i = 0; i < unsignedBytes.length; i++) {
+			result[i] = (byte) unsignedBytes[i];
+		}
+		return result;
+	}
+
+
 //==================================================================================================
 // Wait Methods
 //==================================================================================================

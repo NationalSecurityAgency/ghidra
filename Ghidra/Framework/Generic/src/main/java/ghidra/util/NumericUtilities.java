@@ -29,6 +29,7 @@ import util.CollectionUtils;
 public final class NumericUtilities {
 	public static final BigInteger MAX_UNSIGNED_LONG = new BigInteger("ffffffffffffffff", 16);
 	public static final BigInteger MAX_SIGNED_LONG = new BigInteger("7fffffffffffffff", 16);
+	public static final long MAX_UNSIGNED_INT32_AS_LONG = 0xffffffffL;
 
 	private final static String HEX_PREFIX_X = "0X";
 	private final static String HEX_PREFIX_x = "0x";
@@ -228,14 +229,26 @@ public final class NumericUtilities {
 		return buf.toString();
 	}
 
-	public final static BigInteger unsignedLongToBigInteger(long value) {
+	/**
+	 * Converts a <strong>unsigned</strong> long value, which is currently stored in a 
+	 * java <strong>signed</strong> long, into a {@link BigInteger}.
+	 * <p>
+	 * In other words, the full 64 bits of the primitive java <strong>signed</strong> 
+	 * long is being used to store an <strong>unsigned</strong> value.  This 
+	 * method converts this into a positive BigInteger value.
+	 *  
+	 * @param value java <strong>unsigned</strong> long value stuffed into a 
+	 * java <strong>signed</strong> long
+	 * @return new {@link BigInteger} with the positive value of the unsigned long value
+	 */
+	public static BigInteger unsignedLongToBigInteger(long value) {
 		if (value >= 0) {
 			return BigInteger.valueOf(value);
 		}
 		return MAX_UNSIGNED_LONG.add(BigInteger.valueOf(value + 1));
 	}
 
-	public final static long bigIntegerToUnsignedLong(BigInteger value) {
+	public static long bigIntegerToUnsignedLong(BigInteger value) {
 		if (value.compareTo(MAX_SIGNED_LONG) <= 0) {
 			return value.longValue();
 		}
