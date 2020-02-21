@@ -10,7 +10,7 @@
             processorspec="V850.pspec"
             manualindexfile="../manuals/v850.idx"
             id="V850:LE:32:default">
-    <description>Renesas V850E2M</description>
+    <description>Renesas V850 family</description>
     <compiler name="default" spec="V850.cspec" id="default"/>
   </language>
 </language_definitions>

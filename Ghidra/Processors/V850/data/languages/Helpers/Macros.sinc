@@ -132,48 +132,27 @@ macro either_or1(res, cond, true, false)	# if condition is == 1
 
 macro shift_right_logic(res, var, shift_)
 {
-	local shift = (shift_ & 0x1f);
-	local mask = 0;
-
-	if(shift == 0)
-		goto <false>;
-
-	mask = var & (1 << (shift - 1));
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * (var & (1 << (shift - 1)))) + (zext(shift == 0) * 0);
 	res = var >> shift;
-
-	<false>
 	set_OV0_S_Z(res);
 	$(CY) = ((mask != 0) && (shift != 0));
 }
 
 macro shift_right_arith(res, var, shift_)
 {
-	local shift = (shift_ & 0x1f);
-	local mask = 0;
-
-	if(shift == 0)
-		goto <false>;
-
-	mask = var & (1 << (shift - 1));
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * (var & (1 << (shift - 1)))) + (zext(shift == 0) * 0);
 	res = var s>> shift;
-
-	<false>
 	set_OV0_S_Z(res);
 	$(CY) = ((mask != 0) && (shift != 0));
 }
 
 macro shift_left_logic(res, var, shift_) 
 {
-	local shift = (shift_ & 0x1f);
-	local mask = 0;
-
-	if(shift == 0)
-		goto <false>;
-
+	local shift = shift_ & 0x1f;
+	local mask = (zext(shift != 0) * (var & (1 << (32 - shift)))) + (zext(shift == 0) * 0);
 	res = var << shift;
-	mask = var & (1 << (32 - shift));
-
-	<false>
 	set_OV0_S_Z(res);
 	$(CY) = ((mask != 0) && (shift != 0));
 }

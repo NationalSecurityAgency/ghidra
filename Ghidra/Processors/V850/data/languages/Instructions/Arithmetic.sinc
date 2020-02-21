@@ -255,8 +255,8 @@ define pcodeop __saturate;
 	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
 	set_Z(R1115);
 	set_S(R1115);
-	either_or(R1115, (R1115 == R2731), mod, quot);	#if reg2 == reg3 the remainder is stored, if not the quotient is stored
-	R2731 = mod;
+	R1115 = quot;
+ 	R2731 = mod;
 }
 
 # DIVH reg1, reg2 - rrrrr000010RRRRR
@@ -271,24 +271,24 @@ define pcodeop __saturate;
 # DIVH reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01010000000
 :divh R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x280 & R2731
 {
-	local quot:4 = sext(R1115:2 s/ R0004:2);
-	local mod:4 = sext(R1115:2 s% R0004:2);
+	local quot:4 = R1115 s/ sext(R0004:2);
+	local mod:4 = R1115 s% sext(R0004:2);
 	$(OV) = ((R1115 == 0x80000000 && R0004 == 0xFFFFFFFF) || R0004 == 0x0);
 	set_Z(R1115);
 	set_S(R1115);
-	either_or(R1115, (R1115 == R2731), mod, quot);
+	R1115 = quot;
 	R2731 = mod;
 }
 
 # DIVHU reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww01010000010
 :divhu R0004, R1115, R2731 is op0510=0x3F & R0004 & R1115; op1626=0x282 & R2731
 {
-	local quot:4 = sext(R1115:2 / R0004:2);
-	local mod:4 = sext(R1115:2 % R0004:2);
+	local quot:4 = R1115 / sext(R0004:2);
+	local mod:4 = R1115 % sext(R0004:2);
 	$(OV) = (R0004 == 0);
 	set_Z(R1115);
 	set_S(R1115);
-	either_or(R1115, (R1115 == R2731), mod, quot);
+	R1115 = quot;
 	R2731 = mod;
 }
 
@@ -300,7 +300,7 @@ define pcodeop __saturate;
 	$(OV) = (R0004 == 0);
 	set_Z(R1115);
 	set_S(R1115);
-	either_or(R1115, (R1115 == R2731), mod, quot);
+	R1115 = quot;
 	R2731 = mod;
 }
 

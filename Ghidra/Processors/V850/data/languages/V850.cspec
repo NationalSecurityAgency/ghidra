@@ -40,9 +40,16 @@
       </output>
       
       <unaffected>
-        <register name="sp"/>
-        <register name="gp"/>
-        <register name="tp"/>
+        <register name="r20"/>
+        <register name="r21"/>
+        <register name="r22"/>
+        <register name="r23"/>
+        <register name="r24"/>
+        <register name="r25"/>
+        <register name="r26"/>
+        <register name="r27"/>
+        <register name="r28"/>
+        <register name="r29"/>
       </unaffected>
     
     </prototype>
