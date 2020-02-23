@@ -15,11 +15,18 @@
  */
 package ghidra.app.util.bin.format.pe;
 
+import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.util.bin.format.pe.LoadConfigDirectory.GuardFlags;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.Category;
+import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.ImageBaseOffset32DataType;
+import ghidra.program.model.data.StructureDataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -37,6 +44,10 @@ import ghidra.util.exception.InvalidInputException;
  * Creator's update. 
  */
 public class ControlFlowGuard {
+	public static String GuardCFFunctionTableName = "GuardCFFunctionTable";
+	public static String GuardCFAddressTakenIatTableName = "GuardCFAddressTakenIatTable";
+	public static String GuardCfgTableEntryName = "GuardCfgTableEntry";
+	public static StructureDataType GuardCfgTableEntryType = null;
 
 	/**
 	 * Perform markup on the supported ControlFlowGuard and ReturnFlowGuard functions and 
@@ -59,6 +70,7 @@ public class ControlFlowGuard {
 		markupCfgCheckFunction(lcd, is64bit, space, mem, symbolTable);
 		markupCfgDispatchFunction(lcd, is64bit, space, mem, symbolTable);
 		markupCfgFunctionTable(lcd, program, log);
+		markupCfgAddressTakenIatEntryTable(lcd, program, log);
 		
 		// ReturnFlowGuard
 		markupRfgFailureRoutine(lcd, space, symbolTable);
@@ -144,20 +156,69 @@ public class ControlFlowGuard {
 
 		try {
 			Address tableAddr =
-				program.getAddressFactory().getDefaultAddressSpace().getAddress(tablePointer);
+					program.getAddressFactory().getDefaultAddressSpace().getAddress(tablePointer);
 
 			// Label the start of the table
-			program.getSymbolTable().createLabel(tableAddr, "GuardCFFunctionTable",
-				SourceType.IMPORTED);
-
+			program.getSymbolTable().createLabel(tableAddr, GuardCFFunctionTableName,
+					SourceType.IMPORTED);
 			// Each table entry is an RVA (32-bit image base offset), followed by 'n' extra bytes
 			GuardFlags guardFlags = lcd.getCfgGuardFlags();
 			int n = (guardFlags.getFlags() &
-				IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK) >> IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT;
+					IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_MASK) >> IMAGE_GUARD_CF_FUNCTION_TABLE_SIZE_SHIFT;
+
+			// Pre-define base data types used to define table entry data type
+			DataType ibo32 = new ImageBaseOffset32DataType();
+			DataType byteType = new ByteDataType();
+			
+			if (GuardCfgTableEntryType == null) {
+				GuardCfgTableEntryType = new StructureDataType(GuardCfgTableEntryName, 0);
+				GuardCfgTableEntryType.setInternallyAligned(false);
+				GuardCfgTableEntryType.add(ibo32, "Offset", "");
+				if (n > 0) {
+					ArrayDataType padType = new ArrayDataType(byteType, n/byteType.getLength(), byteType.getLength());
+					GuardCfgTableEntryType.add(padType, "Pad", "");
+				}
+				Category cfgCat = program.getDataTypeManager().createCategory(new CategoryPath(CategoryPath.ROOT, "CFG"));
+				cfgCat.addDataType(GuardCfgTableEntryType, DataTypeConflictHandler.REPLACE_HANDLER);
+			}
+			
+			CreateArrayCmd cmd = new CreateArrayCmd(tableAddr, (int)functionCount, GuardCfgTableEntryType, GuardCfgTableEntryType.getLength());
+			cmd.applyTo(program);
+		}
+		catch (AddressOutOfBoundsException | InvalidInputException e) {
+			Msg.warn(ControlFlowGuard.class, "Unable to label ControlFlowGuard function table.", e);
+		}
+	}
+	
+	/**
+	 * Performs markup on the ControlFlowGuard address taken IAT table, if it exists.
+	 * 
+	 * @param lcd The PE LoadConfigDirectory.
+	 * @param program The program.
+	 * @param log The log.
+	 */
+	private static void markupCfgAddressTakenIatEntryTable(LoadConfigDirectory lcd, Program program,
+			MessageLog log) {
+
+		long tablePointer = lcd.getGuardAdressIatTableTablePointer();
+		long functionCount = lcd.getGuardAdressIatTableCount();
+
+		if (tablePointer == 0 || functionCount <= 0) {
+			return;
+		}
+
+		try {
+			Address tableAddr =
+					program.getAddressFactory().getDefaultAddressSpace().getAddress(tablePointer);
+
+			// Label the start of the table
+			program.getSymbolTable().createLabel(tableAddr, GuardCFAddressTakenIatTableName,
+					SourceType.IMPORTED);
+			// Each table entry is an RVA (32-bit image base offset)
 			DataType ibo32 = new ImageBaseOffset32DataType();
 			for (long i = 0; i < functionCount; i++) {
-				Data d = PeUtils.createData(program, tableAddr.add(i * (ibo32.getLength() + n)),
-					ibo32, log);
+				Data d = PeUtils.createData(program, tableAddr.add(i * ibo32.getLength()),
+						ibo32, log);
 				if (d == null) {
 					// If we failed to create data on a table entry, just assume the rest will fail
 					break;
@@ -165,7 +226,7 @@ public class ControlFlowGuard {
 			}
 		}
 		catch (AddressOutOfBoundsException | InvalidInputException e) {
-			Msg.warn(ControlFlowGuard.class, "Unable to label ControlFlowGuard function table.", e);
+			Msg.warn(ControlFlowGuard.class, "Unable to label ControlFlowGuard IAT table.", e);
 		}
 	}
 
