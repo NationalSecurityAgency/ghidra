@@ -14,6 +14,7 @@ import ghidra.framework.cmd.Command;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.FunctionManager;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -65,8 +66,13 @@ public class CfgAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
+		FunctionManager funcMgr = program.getFunctionManager();
 		Command cmd = null;
 		for (Address target : getFunctionAddressesFromTable(program, tableData)) {
+			if (funcMgr.getFunctionAt(target) != null) {
+				// if there already is a function, just bail...
+				continue;
+			}
 			cmd = new DisassembleCommand(target, null, true);
 			cmd.applyTo(program);
 
