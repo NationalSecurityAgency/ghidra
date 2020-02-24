@@ -39,10 +39,10 @@ import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
 public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTChangeManager {
-	private final static Class<?>[] COL_CLASS = new Class[] { StringField.class };
+	private final static Field[] COL_FIELDS = new Field[] { StringField.INSTANCE };
 	private final static String[] COL_TYPES = new String[] { "Value" };
 	private final static Schema SCHEMA =
-		new Schema(0, StringField.class, "Key", COL_CLASS, COL_TYPES);
+		new Schema(0, StringField.INSTANCE, "Key", COL_FIELDS, COL_TYPES);
 
 	private static final String PROGRAM_ID_PROPERTYLIST_NAME = "ProgramIDs";
 	private static final String SOURCE_PROGRAM_ID_PROPERTY_KEY = "SourceProgramID";
@@ -55,7 +55,24 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 	private static final long IMPLIED_MATCH_SET_ID = -1;
 	private static final String PROPERTY_TABLE_NAME = "PropertyTable";
 	private static final String DB_VERSION_PROPERTY_NAME = "DB_VERSION";
-	private static final int DB_VERSION = 1;
+
+	/**
+	 * DB_VERSION should be incremented any time a change is made to the overall
+	 * database schema associated with any of the adapters.
+	 * 14-Nov-2019 - version 2 - Corrected fixed length indexing implementation causing
+	 *                           change in index table low-level storage for newly
+	 *                           created tables. 
+	 */
+	private static final int DB_VERSION = 2;
+
+	/**
+	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION any time the
+	 * latest version requires a forced upgrade (i.e., Read-only mode not supported
+	 * until upgrade is performed).  It is assumed that read-only mode is supported
+	 * if the data's version is >= UPGRADE_REQUIRED_BEFORE_VERSION and <= DB_VERSION.
+	 */
+	// NOTE: Schema upgrades are not currently supported
+	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 1;
 
 	private VTMatchSetTableDBAdapter matchSetTableAdapter;
 	private AssociationDatabaseManager associationManager;
@@ -78,12 +95,11 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 
 		int ID = session.startTransaction("Constructing New Version Tracking Match Set");
 		try {
-			session.propertyTable = createPropertyTable(session.getDBHandle());
-			session.matchSetTableAdapter =
-				VTMatchSetTableDBAdapter.createAdapter(session.getDBHandle());
+			session.propertyTable = session.dbh.createTable(PROPERTY_TABLE_NAME, SCHEMA);
+			session.matchSetTableAdapter = VTMatchSetTableDBAdapter.createAdapter(session.dbh);
 			session.associationManager =
-				AssociationDatabaseManager.createAssociationManager(session.getDBHandle(), session);
-			session.matchTagAdapter = VTMatchTagDBAdapter.createAdapter(session.getDBHandle());
+				AssociationDatabaseManager.createAssociationManager(session.dbh, session);
+			session.matchTagAdapter = VTMatchTagDBAdapter.createAdapter(session.dbh);
 			session.initializePrograms(sourceProgram, destinationProgram);
 			session.createMatchSet(
 				new ManualMatchProgramCorrelator(sourceProgram, destinationProgram),
@@ -91,6 +107,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 			session.createMatchSet(
 				new ImpliedMatchProgramCorrelator(sourceProgram, destinationProgram),
 				IMPLIED_MATCH_SET_ID);
+			session.updateVersion();
 		}
 		finally {
 			session.endTransaction(ID, true);
@@ -105,21 +122,29 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 		return session;
 	}
 
-	private static Table createPropertyTable(DBHandle dbh) throws IOException {
-		Table table = dbh.createTable(PROPERTY_TABLE_NAME, SCHEMA);
+	private void updateVersion() throws IOException {
 		Record record = SCHEMA.createRecord(new StringField(DB_VERSION_PROPERTY_NAME));
 		record.setString(0, Integer.toString(DB_VERSION));
-		table.putRecord(record);
-		return table;
+		propertyTable.putRecord(record);
 	}
 
 	public static VTSessionDB getVTSession(DBHandle dbHandle, OpenMode openMode, Object consumer,
 			TaskMonitor monitor) throws VersionException, IOException {
 
 		VTSessionDB session = new VTSessionDB(dbHandle, consumer);
-		if (session.getVersion() < DB_VERSION) {
-			throw new VersionException("Version Tracking Sessions do not support upgrades.");
+		int storedVersion = session.getVersion();
+
+		if (storedVersion > DB_VERSION) {
+			throw new VersionException(VersionException.NEWER_VERSION, false);
 		}
+		// The following version logic holds true for DB_VERSION=2 which assumes no additional
+		// DB index tables will be added when open for update/upgrade.  This will not hold
+		// true for future revisions associated with table schema changes in which case the
+		// UPGRADE_REQUIRED_BEFORE_VERSION value should equal DB_VERSION.
+		if (storedVersion < UPGRADE_REQUIRED_BEFORE_VERSION) {
+			throw new VersionException("Version Tracking Sessions do not support schema upgrades.");
+		}
+
 		session.matchSetTableAdapter =
 			VTMatchSetTableDBAdapter.getAdapter(session.getDBHandle(), openMode, monitor);
 		session.associationManager =

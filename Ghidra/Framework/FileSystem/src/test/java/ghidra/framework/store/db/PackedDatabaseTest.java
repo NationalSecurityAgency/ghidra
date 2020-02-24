@@ -33,7 +33,7 @@ import utilities.util.FileUtilities;
 public class PackedDatabaseTest extends AbstractGenericTest {
 
 	private static final Schema TEST_SCHEMA =
-		new Schema(1, "Key", new Class[] { StringField.class }, new String[] { "Col1" });
+		new Schema(1, "Key", new Field[] { StringField.INSTANCE }, new String[] { "Col1" });
 
 	private File packedDbFile;
 	private PackedDatabase db;

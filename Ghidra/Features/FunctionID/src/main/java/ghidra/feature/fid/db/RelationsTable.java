@@ -27,8 +27,8 @@ public class RelationsTable {
 //	static final int CACHE_SIZE = 10000;
 
 	// @formatter:off
-	static final Schema SCHEMA = new Schema(LibrariesTable.VERSION, "Relation Smash", new Class[] {
-		}, new String[] {
+	static final Schema SCHEMA = new Schema(LibrariesTable.VERSION, "Relation Smash", 
+			new Field[] { }, new String[] {
 		});
 	// @formatter:on
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.bookmark;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 abstract class BookmarkTypeDBAdapter {
 
@@ -28,8 +26,8 @@ abstract class BookmarkTypeDBAdapter {
 
 	static final int TYPE_NAME_COL = 0;
 
-	static final Schema SCHEMA = new Schema(0, "ID", new Class[] { StringField.class },
-		new String[] { "Name" });
+	static final Schema SCHEMA =
+		new Schema(0, "ID", new Field[] { StringField.INSTANCE }, new String[] { "Name" });
 
 	static BookmarkTypeDBAdapter getAdapter(DBHandle dbHandle, int openMode)
 			throws VersionException, IOException {
@@ -58,8 +56,8 @@ abstract class BookmarkTypeDBAdapter {
 		return new BookmarkTypeDBAdapterNoTable(dbHandle);
 	}
 
-	private static BookmarkTypeDBAdapter upgrade(DBHandle dbHandle, BookmarkTypeDBAdapter oldAdapter)
-			throws VersionException, IOException {
+	private static BookmarkTypeDBAdapter upgrade(DBHandle dbHandle,
+			BookmarkTypeDBAdapter oldAdapter) throws VersionException, IOException {
 		return new BookmarkTypeDBAdapterV0(dbHandle, true);
 	}
 

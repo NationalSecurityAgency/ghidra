@@ -29,9 +29,9 @@ import ghidra.util.task.TaskMonitor;
  * has the following layout within a single DataBuffer (field size in bytes):
  * 
  *   | NodeType(1) | KeyType(1) | KeyCount(4) | KeyOffset0(4) | ID0(4) | ... | KeyOffsetN(4) | IDN(4) | 
- *     ...<FreeSpace>... | KeyN | ... | Key0 |  
+ *     ...&lt;FreeSpace&gt;... | KeyN | ... | Key0 |  
  */
-class VarKeyInteriorNode extends VarKeyNode {
+class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 
 	private static final int BASE = VARKEY_NODE_HEADER_SIZE;
 
@@ -83,7 +83,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 	void logConsistencyError(String tableName, String msg, Throwable t) throws IOException {
 		Msg.debug(this, "Consistency Error (" + tableName + "): " + msg);
-		Msg.debug(this, "  parent.key[0]=" + getKey(0) + " bufferID=" + getBufferId());
+		Msg.debug(this, "  parent.key[0]=" + getKeyField(0) + " bufferID=" + getBufferId());
 		if (t != null) {
 			Msg.error(this, "Consistency Error (" + tableName + ")", t);
 		}
@@ -98,26 +98,24 @@ class VarKeyInteriorNode extends VarKeyNode {
 		for (int i = 0; i < keyCount; i++) {
 
 			// Compare each key entry with the previous entries key-range
-			Field key = getKey(i);
-			if (i != 0) {
-				if (key.compareTo(lastMinKey) <= 0) {
-					consistent = false;
-					logConsistencyError(tableName,
-						"child[" + i + "].minKey <= child[" + (i - 1) + "].minKey", null);
-					Msg.debug(this,
-						"  child[" + i + "].minKey = " + key + " bufferID=" + getBufferId(i));
-					Msg.debug(this, "  child[" + (i - 1) + "].minKey = " + lastMinKey +
-						" bufferID=" + getBufferId(i - 1));
-				}
-				else if (key.compareTo(lastMaxKey) <= 0) {
-					consistent = false;
-					logConsistencyError(tableName,
-						"child[" + i + "].minKey <= child[" + (i - 1) + "].maxKey", null);
-					Msg.debug(this,
-						"  child[" + i + "].minKey = " + key + " bufferID=" + getBufferId(i));
-					Msg.debug(this, "  child[" + (i - 1) + "].maxKey = " + lastMaxKey +
-						" bufferID=" + getBufferId(i - 1));
-				}
+			Field key = getKeyField(i);
+			if (lastMinKey != null && key.compareTo(lastMinKey) <= 0) {
+				consistent = false;
+				logConsistencyError(tableName,
+					"child[" + i + "].minKey <= child[" + (i - 1) + "].minKey", null);
+				Msg.debug(this,
+					"  child[" + i + "].minKey = " + key + " bufferID=" + getBufferId(i));
+				Msg.debug(this, "  child[" + (i - 1) + "].minKey = " + lastMinKey + " bufferID=" +
+					getBufferId(i - 1));
+			}
+			else if (lastMaxKey != null && key.compareTo(lastMaxKey) <= 0) {
+				consistent = false;
+				logConsistencyError(tableName,
+					"child[" + i + "].minKey <= child[" + (i - 1) + "].maxKey", null);
+				Msg.debug(this,
+					"  child[" + i + "].minKey = " + key + " bufferID=" + getBufferId(i));
+				Msg.debug(this, "  child[" + (i - 1) + "].maxKey = " + lastMaxKey + " bufferID=" +
+					getBufferId(i - 1));
 			}
 
 			lastMinKey = key;
@@ -143,10 +141,10 @@ class VarKeyInteriorNode extends VarKeyNode {
 					continue; // skip child
 				}
 
-				lastMaxKey = node.getKey(node.getKeyCount() - 1);
+				lastMaxKey = node.getKeyField(node.getKeyCount() - 1);
 
 				// Verify key match-up between parent and child
-				Field childKey0 = node.getKey(0);
+				Field childKey0 = node.getKeyField(0);
 				if (!key.equals(childKey0)) {
 					consistent = false;
 					logConsistencyError(tableName,
@@ -182,10 +180,16 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 	/**
 	 * Perform a binary search to locate the specified key and derive an index
-	 * into the Buffer ID storage.  This method is used to identify the child
-	 * node which contains the specified record key.
-	 * @param key
-	 * @return int buffer ID index.
+	 * into the Buffer ID storage.  This method is intended to locate the child
+	 * node which contains the specified key.  The returned index corresponds 
+	 * to a child's stored buffer/node ID and may correspond to another interior
+	 * node or a leaf record node.  Each stored key within this interior node
+	 * effectively identifies the maximum key contained within the corresponding
+	 * child node.
+	 * @param key key to search for
+	 * @return int buffer ID index of child node.  An existing positive index
+	 * value will always be returned.
+	 * @throws IOException if IO error occurs
 	 */
 	int getIdIndex(Field key) throws IOException {
 
@@ -194,12 +198,11 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 		while (min <= max) {
 			int i = (min + max) / 2;
-			Field k = getKey(i);
-			int rc = k.compareTo(key);
+			int rc = compareKeyField(key, i);
 			if (rc == 0) {
 				return i;
 			}
-			else if (rc < 0) {
+			else if (rc > 0) {
 				min = i + 1;
 			}
 			else {
@@ -209,26 +212,19 @@ class VarKeyInteriorNode extends VarKeyNode {
 		return max;
 	}
 
-	/**
-	 * Perform a binary search to locate the specified key and derive an index
-	 * into the Buffer ID storage.  This method is intended to find the insertion 
-	 * index or exact match for a child key.
-	 * @param key
-	 * @return int buffer ID index.
-	 */
-	private int getKeyIndex(Field key) throws IOException {
+	@Override
+	public int getKeyIndex(Field key) throws IOException {
 
 		int min = 0;
 		int max = keyCount - 1;
 
 		while (min <= max) {
 			int i = (min + max) / 2;
-			Field k = getKey(i);
-			int rc = k.compareTo(key);
+			int rc = compareKeyField(key, i);
 			if (rc == 0) {
 				return i;
 			}
-			else if (rc < 0) {
+			else if (rc > 0) {
 				min = i + 1;
 			}
 			else {
@@ -271,7 +267,8 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * @param index key index
 	 * @return record key offset
 	 */
-	private int getKeyOffset(int index) {
+	@Override
+	public int getKeyOffset(int index) {
 		return buffer.getInt(BASE + (index * ENTRY_SIZE));
 	}
 
@@ -284,11 +281,8 @@ class VarKeyInteriorNode extends VarKeyNode {
 		buffer.putInt(BASE + (index * ENTRY_SIZE), offset);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.VarKeyNode#getKey(int)
-	 */
 	@Override
-	Field getKey(int index) throws IOException {
+	public Field getKeyField(int index) throws IOException {
 		Field key = keyType.newField();
 		key.read(buffer, buffer.getInt(BASE + (index * ENTRY_SIZE)));
 		return key;
@@ -312,15 +306,6 @@ class VarKeyInteriorNode extends VarKeyNode {
 	private int getBufferId(int index) {
 		return buffer.getInt(BASE + (index * ENTRY_SIZE) + KEY_OFFSET_SIZE);
 	}
-
-//	/**
-//	 * Store the child node buffer ID associated with the specified key index
-//	 * @param index child key index
-//	 * @param id child node buffer ID
-//	 */
-//	private void putBufferId(int index, int id) {
-//		buffer.putInt(BASE + (index * ENTRY_SIZE) + KEY_OFFSET_SIZE, id);
-//	}
 
 	/**
 	 * @return unused free space within node
@@ -432,8 +417,11 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * Callback method for when a child node's leftmost key changes.
 	 * @param oldKey previous leftmost key.
 	 * @param newKey new leftmost key.
+	 * @param node child node containing oldKey
+	 * @throws IOException if IO error occurs
 	 */
-	void keyChanged(Field oldKey, Field newKey, VarKeyNode node) throws IOException {
+	@Override
+	public void keyChanged(Field oldKey, Field newKey, FieldKeyNode node) throws IOException {
 
 		int index = getKeyIndex(oldKey);
 		if (index < 0) {
@@ -443,7 +431,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 		int lenChange = newKey.length() - oldKey.length();
 		if (lenChange > 0 && lenChange > getFreeSpace()) {
 			// Split node if updated key won't fit
-			split(index, oldKey, newKey, node);
+			split(index, oldKey, newKey, (VarKeyNode) node);
 		}
 
 		else {
@@ -461,7 +449,8 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * @param oldIndex index of key to be updated
 	 * @param oldKey old key value stored at oldIndex
 	 * @param newKey new key value
-	 * @throws IOException thrown if IO error occurs
+	 * @param node child node containing oldKey
+	 * @throws IOException if IO error occurs
 	 */
 	private void split(int oldIndex, Field oldKey, Field newKey, VarKeyNode node)
 			throws IOException {
@@ -497,7 +486,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 			parent.insert(newNode);
 			if (newNode.parent != parent) {
 				// Fix my parent
-				if (parent.getKeyIndex(getKey(0)) < 0) {
+				if (parent.getKeyIndex(getKeyField(0)) < 0) {
 					parent = newNode.parent;
 				}
 			}
@@ -505,8 +494,8 @@ class VarKeyInteriorNode extends VarKeyNode {
 		}
 
 		// New parent node becomes root
-		parent = new VarKeyInteriorNode(nodeMgr, getKey(0), buffer.getId(), newNode.getKey(0),
-			newNode.getBufferId());
+		parent = new VarKeyInteriorNode(nodeMgr, getKeyField(0), buffer.getId(),
+			newNode.getKeyField(0), newNode.getBufferId());
 		newNode.parent = parent;
 	}
 
@@ -518,7 +507,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 */
 	VarKeyNode insert(VarKeyNode node) throws IOException {
 
-		Field key = node.getKey(0);
+		Field key = node.getKeyField(0);
 		int id = node.getBufferId();
 
 		// Split this node if full
@@ -536,6 +525,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * @param key leftmost key associated with new node.
 	 * @param node child node which corresponds to the id and key.
 	 * @return root node.
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	VarKeyNode insert(int id, Field key, VarKeyNode node) throws IOException {
 
@@ -549,7 +539,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 		node.parent = this;
 
 		if (index == 0 && parent != null) {
-			parent.keyChanged(getKey(1), key, this);
+			parent.keyChanged(getKeyField(1), key, this);
 		}
 
 		return getRoot();
@@ -568,7 +558,6 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 		// Create new interior node
 		VarKeyInteriorNode newNode = new VarKeyInteriorNode(nodeMgr, keyType);
-//		DataBuffer newBuf = newNode.buffer;
 
 		int halfway =
 			((keyCount == 0 ? buffer.length() : getKeyOffset(keyCount - 1)) + buffer.length()) / 2;
@@ -576,7 +565,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 		moveKeysRight(this, newNode, keyCount - getOffsetIndex(halfway));
 
 		// Insert new key/id
-		Field rightKey = newNode.getKey(0);
+		Field rightKey = newNode.getKeyField(0);
 		if (newKey.compareTo(rightKey) < 0) {
 			insert(newId, newKey, node);
 		}
@@ -588,7 +577,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 			VarKeyNode rootNode = parent.insert(newNode);
 			if (newNode.parent != parent) {
 				// Fix my parent
-				if (parent.getKeyIndex(getKey(0)) < 0) {
+				if (parent.getKeyIndex(getKeyField(0)) < 0) {
 					parent = newNode.parent;
 				}
 			}
@@ -596,33 +585,27 @@ class VarKeyInteriorNode extends VarKeyNode {
 		}
 
 		// New parent node becomes root
-		parent = new VarKeyInteriorNode(nodeMgr, getKey(0), buffer.getId(), rightKey,
+		parent = new VarKeyInteriorNode(nodeMgr, getKeyField(0), buffer.getId(), rightKey,
 			newNode.getBufferId());
 		newNode.parent = parent;
 		return parent;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.VarKeyNode#getLeafNode(long)
-	 */
 	@Override
-	VarKeyRecordNode getLeafNode(Field key) throws IOException {
+	public VarKeyRecordNode getLeafNode(Field key) throws IOException {
 		VarKeyNode node = nodeMgr.getVarKeyNode(getBufferId(getIdIndex(key)));
 		node.parent = this;
 		return node.getLeafNode(key);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.VarKeyNode#getLeftmostLeafNode()
-	 */
 	@Override
-	VarKeyRecordNode getLeftmostLeafNode() throws IOException {
+	public VarKeyRecordNode getLeftmostLeafNode() throws IOException {
 		VarKeyNode node = nodeMgr.getVarKeyNode(getBufferId(0));
 		return node.getLeftmostLeafNode();
 	}
 
 	@Override
-	VarKeyRecordNode getRightmostLeafNode() throws IOException {
+	public VarKeyRecordNode getRightmostLeafNode() throws IOException {
 		VarKeyNode node = nodeMgr.getVarKeyNode(getBufferId(keyCount - 1));
 		return node.getRightmostLeafNode();
 	}
@@ -654,7 +637,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 		// Delete child entry
 		deleteEntry(index);
 		if (index == 0 && parent != null) {
-			parent.keyChanged(key, getKey(0), this);
+			parent.keyChanged(key, getKeyField(0), this);
 		}
 
 		return (parent != null) ? parent.balanceChild(this) : this;
@@ -676,7 +659,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 		// balance with right sibling except if node corresponds to the right-most 
 		// key within this interior node - in that case balance with left sibling.
-		int index = getIdIndex(node.getKey(0));
+		int index = getIdIndex(node.getKeyField(0));
 		if (index == (keyCount - 1)) {
 			return balanceChild((VarKeyInteriorNode) nodeMgr.getVarKeyNode(getBufferId(index - 1)),
 				node);
@@ -700,14 +683,11 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 		int leftKeyCount = leftNode.keyCount;
 		int rightKeyCount = rightNode.keyCount;
-//		if (leftKeyCount == rightKeyCount) {
-//			return getRoot();
-//		}
 
 		int len = buffer.length();
 		int leftKeySpace = len - leftNode.getKeyOffset(leftKeyCount - 1);
 		int rightKeySpace = len - rightNode.getKeyOffset(rightKeyCount - 1);
-		Field rightKey = rightNode.getKey(0);
+		Field rightKey = rightNode.getKeyField(0);
 
 		// Can right keys fit within left node
 		if ((rightKeySpace + (rightKeyCount * ENTRY_SIZE)) <= (len - BASE - leftKeySpace -
@@ -731,7 +711,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 			balanced = moveKeysLeft(leftNode, rightNode, rightKeyCount - index - 1);
 		}
 		if (balanced) {
-			this.keyChanged(rightKey, rightNode.getKey(0), rightNode);
+			this.keyChanged(rightKey, rightNode.getKeyField(0), rightNode);
 		}
 		return getRoot();
 	}
@@ -775,16 +755,6 @@ class VarKeyInteriorNode extends VarKeyNode {
 		return true;
 	}
 
-//private static void checkKeyOffsets(VarKeyInteriorNode node) {
-//	for (int i = 0; i < node.keyCount; i++) {
-//		int length = node.buffer.getInt(node.getKeyOffset(i));
-//		
-//		if (length < -1 || length > 40) {
-//			throw new ArrayIndexOutOfBoundsException();
-//		}
-//	}
-//}
-
 	/**
 	 * Move some or all of the keys from the right node into the left node.
 	 * If all keys are moved, the caller is responsible for deleting the right
@@ -802,9 +772,6 @@ class VarKeyInteriorNode extends VarKeyNode {
 		int rightOffset = rightNode.getKeyOffset(count - 1);
 		int len = rightNode.buffer.length() - rightOffset;
 		int leftOffset = leftNode.getKeyOffset(leftKeyCount - 1) - len;
-//if ((len + (ENTRY_SIZE * count)) > leftNode.getFreeSpace()) {
-//	throw new ArrayIndexOutOfBoundsException();
-//}
 
 		// Move key data to left node
 		leftNode.buffer.copy(leftOffset, rightNode.buffer, rightOffset, len);
@@ -831,9 +798,6 @@ class VarKeyInteriorNode extends VarKeyNode {
 		return true;
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.VarKeyNode#delete()
-	 */
 	@Override
 	public void delete() throws IOException {
 
@@ -846,9 +810,6 @@ class VarKeyInteriorNode extends VarKeyNode {
 		nodeMgr.deleteNode(this);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getBufferReferences()
-	 */
 	@Override
 	public int[] getBufferReferences() {
 		int[] ids = new int[keyCount];
@@ -871,7 +832,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	public boolean isRightmostKey(Field key) throws IOException {
 		if (getIdIndex(key) == (keyCount - 1)) {
 			if (parent != null) {
-				return parent.isRightmostKey(getKey(0));
+				return parent.isRightmostKey(getKeyField(0));
 			}
 			return true;
 		}

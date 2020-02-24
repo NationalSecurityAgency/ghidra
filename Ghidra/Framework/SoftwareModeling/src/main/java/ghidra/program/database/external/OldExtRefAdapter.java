@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +15,22 @@
  */
 package ghidra.program.database.external;
 
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 class OldExtRefAdapter {
 
 	static final String EXT_REF_TABLE_NAME = "External References";
 
-	static final Schema EXT_REF_SCHEMA = new Schema(0, "Key", new Class[] { LongField.class,
-		ShortField.class, BooleanField.class, LongField.class, StringField.class, LongField.class,
-		BooleanField.class }, new String[] { "From Address", "Op Index", "User Defined",
-		"External Name ID", "Label", "External To", "External To Exists" });
+	static final Schema EXT_REF_SCHEMA = new Schema(0, "Key",
+		new Field[] { LongField.INSTANCE, ShortField.INSTANCE, BooleanField.INSTANCE,
+			LongField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE, BooleanField.INSTANCE },
+		new String[] { "From Address", "Op Index", "User Defined", "External Name ID", "Label",
+			"External To", "External To Exists" });
 
 	static final int FROM_ADDR_COL = 0;
 	static final int OP_INDEX_COL = 1;
@@ -73,8 +72,8 @@ class OldExtRefAdapter {
 		return refTable.getRecordCount();
 	}
 
-	private void moveTable(DBHandle handle, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	private void moveTable(DBHandle handle, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		DBHandle tmpHandle = handle.getScratchPad();
 		Table newRefTable = tmpHandle.createTable(EXT_REF_TABLE_NAME, EXT_REF_SCHEMA);

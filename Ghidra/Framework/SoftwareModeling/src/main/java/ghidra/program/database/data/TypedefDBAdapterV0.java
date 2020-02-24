@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.data;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.UniversalID;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.exception.VersionException;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Version 0 implementation for accessing the Typedef database table. 
@@ -55,9 +53,8 @@ class TypedefDBAdapterV0 extends TypedefDBAdapter implements RecordTranslator {
 		}
 		int version = table.getSchema().getVersion();
 		if (version != VERSION) {
-			String msg =
-				"Expected version " + VERSION + " for table " + TYPEDEF_TABLE_NAME + " but got " +
-					table.getSchema().getVersion();
+			String msg = "Expected version " + VERSION + " for table " + TYPEDEF_TABLE_NAME +
+				" but got " + table.getSchema().getVersion();
 			if (version < VERSION) {
 				throw new VersionException(msg, VersionException.OLDER_VERSION, true);
 			}
@@ -98,18 +95,16 @@ class TypedefDBAdapterV0 extends TypedefDBAdapter implements RecordTranslator {
 	}
 
 	@Override
-	public long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), V0_TYPEDEF_CAT_COL);
 	}
 
 	@Override
-	long[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
-		return new long[0];
+	Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException {
+		return Field.EMPTY_ARRAY;
 	}
 
-	/* (non-Javadoc)
-	 * @see db.RecordTranslator#translateRecord(db.Record)
-	 */
+	@Override
 	public Record translateRecord(Record oldRec) {
 		if (oldRec == null) {
 			return null;

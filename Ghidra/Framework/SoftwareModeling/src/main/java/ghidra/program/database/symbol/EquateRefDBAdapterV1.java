@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,9 @@
  */
 package ghidra.program.database.symbol;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressIndexKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.DatabaseTableUtils;
@@ -24,10 +26,6 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Implementation for Version 0 of the equate references table.
@@ -43,13 +41,12 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * Constructor
 	 * 
 	 */
-	EquateRefDBAdapterV1(DBHandle handle, AddressMap addrMap, boolean create) throws IOException,
-			VersionException {
+	EquateRefDBAdapterV1(DBHandle handle, AddressMap addrMap, boolean create)
+			throws IOException, VersionException {
 		this.addrMap = addrMap;
 		if (create) {
-			refTable =
-				handle.createTable(EQUATE_REFS_TABLE_NAME, REFS_SCHEMA, new int[] { EQUATE_ID_COL,
-					ADDR_COL });
+			refTable = handle.createTable(EQUATE_REFS_TABLE_NAME, REFS_SCHEMA,
+				new int[] { EQUATE_ID_COL, ADDR_COL });
 		}
 		else {
 			refTable = handle.getTable(EQUATE_REFS_TABLE_NAME);
@@ -93,7 +90,7 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecordKeysFrom(long)
 	 */
 	@Override
-	long[] getRecordKeysForAddr(long addr) throws IOException {
+	Field[] getRecordKeysForAddr(long addr) throws IOException {
 		return refTable.findRecords(new LongField(addr), ADDR_COL);
 	}
 
@@ -109,7 +106,7 @@ class EquateRefDBAdapterV1 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecordsForEquateID(long)
 	 */
 	@Override
-	long[] getRecordKeysForEquateID(long equateID) throws IOException {
+	Field[] getRecordKeysForEquateID(long equateID) throws IOException {
 		return refTable.findRecords(new LongField(equateID), EQUATE_ID_COL);
 	}
 

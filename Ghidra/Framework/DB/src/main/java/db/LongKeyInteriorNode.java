@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package db;
 
+import java.io.IOException;
+
+import db.buffers.DataBuffer;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.buffers.DataBuffer;
 
 /**
  * <code>LongKeyInteriorNode</code> stores a BTree node for use as an interior
@@ -33,7 +31,7 @@ import db.buffers.DataBuffer;
  *   | NodeType(1) | KeyCount(4) | Key0(8) | ID0(4) | ... | KeyN(8) | IDN(4) |
  * </pre>  
  */
-class LongKeyInteriorNode extends LongKeyNode {
+class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 
 	private static final int BASE = LONGKEY_NODE_HEADER_SIZE;
 
@@ -63,7 +61,8 @@ class LongKeyInteriorNode extends LongKeyNode {
 	 * @param id2 right child node buffer ID
 	 * @throws IOException thrown if IO error occurs
 	 */
-	LongKeyInteriorNode(NodeMgr nodeMgr, long key1, int id1, long key2, int id2) throws IOException {
+	LongKeyInteriorNode(NodeMgr nodeMgr, long key1, int id1, long key2, int id2)
+			throws IOException {
 		super(nodeMgr, NodeMgr.LONGKEY_INTERIOR_NODE);
 		maxKeyCount = (buffer.length() - BASE) / ENTRY_SIZE;
 		setKeyCount(2);
@@ -71,6 +70,11 @@ class LongKeyInteriorNode extends LongKeyNode {
 		// Store key and node ids
 		putEntry(0, key1, id1);
 		putEntry(1, key2, id2);
+	}
+
+	@Override
+	public LongKeyInteriorNode getParent() {
+		return parent;
 	}
 
 	/**
@@ -86,16 +90,16 @@ class LongKeyInteriorNode extends LongKeyNode {
 
 	void logConsistencyError(String tableName, String msg, Throwable t) {
 		Msg.debug(this, "Consistency Error (" + tableName + "): " + msg);
-		Msg.debug(this, "  parent.key[0]=" + Long.toHexString(getKey(0)) + " bufferID=" +
-			getBufferId());
+		Msg.debug(this,
+			"  parent.key[0]=" + Long.toHexString(getKey(0)) + " bufferID=" + getBufferId());
 		if (t != null) {
 			Msg.error(this, "Consistency Error (" + tableName + ")", t);
 		}
 	}
 
 	@Override
-	public boolean isConsistent(String tableName, TaskMonitor monitor) throws IOException,
-			CancelledException {
+	public boolean isConsistent(String tableName, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		boolean consistent = true;
 		long lastMinKey = 0;
 		long lastMaxKey = 0;
@@ -106,23 +110,21 @@ class LongKeyInteriorNode extends LongKeyNode {
 			if (i != 0) {
 				if (key <= lastMinKey) {
 					consistent = false;
-					logConsistencyError(tableName, "child[" + i + "].minKey <= child[" + (i - 1) +
-						"].minKey", null);
+					logConsistencyError(tableName,
+						"child[" + i + "].minKey <= child[" + (i - 1) + "].minKey", null);
 					Msg.debug(this, "  child[" + i + "].minKey = 0x" + Long.toHexString(key) +
 						" bufferID=" + getBufferId(i));
-					Msg.debug(this,
-						"  child[" + (i - 1) + "].minKey = 0x" + Long.toHexString(lastMinKey) +
-							" bufferID=" + getBufferId(i - 1));
+					Msg.debug(this, "  child[" + (i - 1) + "].minKey = 0x" +
+						Long.toHexString(lastMinKey) + " bufferID=" + getBufferId(i - 1));
 				}
 				else if (key <= lastMaxKey) {
 					consistent = false;
-					logConsistencyError(tableName, "child[" + i + "].minKey <= child[" + (i - 1) +
-						"].maxKey", null);
+					logConsistencyError(tableName,
+						"child[" + i + "].minKey <= child[" + (i - 1) + "].maxKey", null);
 					Msg.debug(this, "  child[" + i + "].minKey = 0x" + Long.toHexString(key) +
 						" bufferID=" + getBufferId(i));
-					Msg.debug(this,
-						"  child[" + (i - 1) + "].maxKey = 0x" + Long.toHexString(lastMaxKey) +
-							" bufferID=" + getBufferId(i - 1));
+					Msg.debug(this, "  child[" + (i - 1) + "].maxKey = 0x" +
+						Long.toHexString(lastMaxKey) + " bufferID=" + getBufferId(i - 1));
 				}
 			}
 
@@ -155,8 +157,8 @@ class LongKeyInteriorNode extends LongKeyNode {
 				long childKey0 = node.getKey(0);
 				if (key != childKey0) {
 					consistent = false;
-					logConsistencyError(tableName, "parent key entry mismatch with child[" + i +
-						"].minKey", null);
+					logConsistencyError(tableName,
+						"parent key entry mismatch with child[" + i + "].minKey", null);
 					Msg.debug(this, "  child[" + i + "].minKey = 0x" + Long.toHexString(childKey0) +
 						" bufferID=" + getBufferId(i - 1));
 					Msg.debug(this, "  parent key entry = 0x" + Long.toHexString(key));
@@ -178,9 +180,15 @@ class LongKeyInteriorNode extends LongKeyNode {
 
 	/**
 	 * Perform a binary search to locate the specified key and derive an index
-	 * into the Buffer ID storage.
-	 * @param key
-	 * @return int buffer ID index.
+	 * into the Buffer ID storage.  This method is intended to locate the child
+	 * node which contains the specified key.  The returned index corresponds 
+	 * to a child's stored buffer/node ID and may correspond to another interior
+	 * node or a leaf record node.  Each stored key within this interior node
+	 * effectively identifies the maximum key contained within the corresponding
+	 * child node.
+	 * @param key key to search for
+	 * @return int buffer ID index of child node.  An existing positive index
+	 * value will always be returned.
 	 */
 	int getIdIndex(long key) {
 
@@ -203,10 +211,18 @@ class LongKeyInteriorNode extends LongKeyNode {
 		return max;
 	}
 
+	@Override
+	public int getKeyIndex(Field key) throws IOException {
+		return getKeyIndex(key.getLongValue());
+	}
+
 	/**
 	 * Perform a binary search to locate the specified key and derive an index
-	 * into the Buffer ID storage.
-	 * @param key
+	 * into the Buffer ID storage.  This method is intended to find the insertion 
+	 * index or exact match for a child key.  A negative value will be returned
+	 * when an exact match is not found and may be transformed into an 
+	 * insertion index (insetIndex = -returnedIndex-1).
+	 * @param key key to search for
 	 * @return int buffer ID index.
 	 */
 	private int getKeyIndex(long key) {
@@ -230,9 +246,6 @@ class LongKeyInteriorNode extends LongKeyNode {
 		return -(min + 1);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.LongKeyNode#getKey(int)
-	 */
 	@Override
 	long getKey(int index) {
 		return buffer.getLong(BASE + (index * ENTRY_SIZE));
@@ -329,10 +342,11 @@ class LongKeyInteriorNode extends LongKeyNode {
 		if (index < 0) {
 			throw new AssertException();
 		}
+		// Update key
+		putKey(index, newKey);
 		if (index == 0 && parent != null) {
 			parent.keyChanged(oldKey, newKey);
 		}
-		putKey(index, newKey);
 	}
 
 	/**
@@ -395,9 +409,6 @@ class LongKeyInteriorNode extends LongKeyNode {
 			newNode.getBufferId());
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.LongKeyNode#getLeafNode(long)
-	 */
 	@Override
 	LongKeyRecordNode getLeafNode(long key) throws IOException {
 		LongKeyNode node = nodeMgr.getLongKeyNode(getBufferId(getIdIndex(key)));
@@ -544,9 +555,6 @@ class LongKeyInteriorNode extends LongKeyNode {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.LongKeyNode#delete()
-	 */
 	@Override
 	public void delete() throws IOException {
 
@@ -559,9 +567,7 @@ class LongKeyInteriorNode extends LongKeyNode {
 		nodeMgr.deleteNode(this);
 	}
 
-	/*
-	 * @see ghidra.framework.store.db.BTreeNode#getBufferReferences()
-	 */
+	@Override
 	public int[] getBufferReferences() {
 		int[] ids = new int[keyCount];
 		for (int i = 0; i < keyCount; i++) {

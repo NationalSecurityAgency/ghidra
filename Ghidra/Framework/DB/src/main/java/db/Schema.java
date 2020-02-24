@@ -33,42 +33,42 @@ public class Schema {
 	private Field keyType;
 	private String keyName;
 
-	private Class<?>[] fieldClasses;
+	private Field[] fields;
 	private String[] fieldNames;
 
 	private boolean isVariableLength;
 	private int fixedLength;
 
+	private boolean forceUseVariableLengthKeyNodes;
+
 	/**
 	 * Construct a new Schema.
-	 * @param version
-	 * @param keyFieldClass Field class associated with primary key.  If the 
-	 * class is LongField, the long key methods on Table must be used.  Specifying any 
-	 * other Field class requires the use of the Field key methods on Table.
-	 * @param keyName
-	 * @param fieldClasses
-	 * @param fieldNames
+	 * @param version schema version
+	 * @param keyField field associated with primary key (representative instance)
+	 * @param keyName primary key name
+	 * @param fields array of column fields (representative instances)
+	 * @param fieldNames array of column field names
+	 * @throws IllegalArgumentException invalid parameters
 	 */
-	public Schema(int version, Class<? extends Field> keyFieldClass, String keyName,
-			Class<?>[] fieldClasses, String[] fieldNames) {
+	public Schema(int version, Field keyField, String keyName, Field[] fields,
+			String[] fieldNames) {
 		this.version = version;
-		this.keyType = getField(keyFieldClass);
+		this.keyType = keyField;
 		this.keyName = keyName;
-		this.fieldClasses = new Class<?>[fieldClasses.length];
+		this.fields = fields;
 		this.fieldNames = fieldNames;
-		if (fieldClasses.length != fieldNames.length)
-			throw new IllegalArgumentException();
+		if (fields.length != fieldNames.length)
+			throw new IllegalArgumentException("fieldNames and fields lengths differ");
 		isVariableLength = false;
 		fixedLength = 0;
-		for (int i = 0; i < fieldClasses.length; i++) {
-			this.fieldClasses[i] = fieldClasses[i];
-			Field field = getField(fieldClasses[i]);
+		for (int colIndex = 0; colIndex < fields.length; colIndex++) {
+			Field field = fields[colIndex];
 			if (field.isVariableLength()) {
 				isVariableLength = true;
 			}
 			fixedLength += field.length();
-			if (fieldNames[i].indexOf(NAME_SEPARATOR) >= 0)
-				throw new IllegalArgumentException();
+			if (fieldNames[colIndex].indexOf(NAME_SEPARATOR) >= 0)
+				throw new IllegalArgumentException("field names may not contain ';'");
 		}
 		if (isVariableLength) {
 			fixedLength = 0;
@@ -76,46 +76,96 @@ public class Schema {
 	}
 
 	/**
-	 * Construct a new Schema which uses a long key.  The Field key methods on Table
-	 * should not be used.
-	 * @param version
-	 * @param keyName
-	 * @param fieldClasses
-	 * @param fieldNames
+	 * Construct a new Schema which uses a long key.
+	 * @param version schema version
+	 * @param keyName primary key name
+	 * @param fields array of column fields (representative instances)
+	 * @param fieldNames array of column field names
+	 * @throws IllegalArgumentException invalid parameters
+	 */
+	public Schema(int version, String keyName, Field[] fields, String[] fieldNames) {
+		this(version, LongField.INSTANCE, keyName, fields, fieldNames);
+	}
+
+	/**
+	 * Construct a new Schema.
+	 * @param version schema version
+	 * @param keyClass field class associated with primary key
+	 * @param keyName primary key name
+	 * @param fieldClasses array of column field classes
+	 * @param fieldNames array of column field names
+	 * @throws IllegalArgumentException invalid parameters
+	 */
+	public Schema(int version, Class<?> keyClass, String keyName, Class<?>[] fieldClasses,
+			String[] fieldNames) {
+		this(version, getField(keyClass), keyName, getFields(fieldClasses), fieldNames);
+	}
+
+	/**
+	 * Construct a new Schema which uses a long key.
+	 * @param version schema version
+	 * @param keyName primary key name
+	 * @param fieldClasses array of column field classes
+	 * @param fieldNames array of column field names
+	 * @throws IllegalArgumentException invalid parameters
 	 */
 	public Schema(int version, String keyName, Class<?>[] fieldClasses, String[] fieldNames) {
-		this(version, LongField.class, keyName, fieldClasses, fieldNames);
+		this(version, LongField.INSTANCE, keyName, getFields(fieldClasses), fieldNames);
 	}
 
 	/**
 	 * Construct a new Schema with the given number of columns
-	 * @param version
-	 * @param fieldTypes
+	 * @param version schema version
+	 * @param encodedKeyFieldType key field type
+	 * @param encodedFieldTypes encoded field types array.
 	 * @param packedFieldNames packed list of field names separated by ';'.
 	 * The first field name corresponds to the key name.
 	 * @throws UnsupportedFieldException if unsupported fieldType specified
 	 */
-	Schema(int version, byte keyFieldType, byte[] fieldTypes, String packedFieldNames)
+	Schema(int version, byte encodedKeyFieldType, byte[] encodedFieldTypes, String packedFieldNames)
 			throws UnsupportedFieldException {
 		this.version = version;
-		this.keyType = Field.getField(keyFieldType);
+		this.keyType = Field.getField(encodedKeyFieldType);
 		parseNames(packedFieldNames);
-		if (fieldTypes.length != fieldNames.length)
-			throw new IllegalArgumentException();
-		this.fieldClasses = new Class[fieldTypes.length];
 		isVariableLength = false;
 		fixedLength = 0;
-		for (int i = 0; i < fieldTypes.length; i++) {
-			Field field = Field.getField(fieldTypes[i]);
-			fieldClasses[i] = field.getClass();
-			if (field.isVariableLength()) {
+		fields = new Field[encodedFieldTypes.length];
+		for (int i = 0; i < encodedFieldTypes.length; i++) {
+			byte b = encodedFieldTypes[i];
+			Field f = Field.getField(b);
+			fields[i] = f;
+			if (f.isVariableLength()) {
 				isVariableLength = true;
 			}
-			fixedLength += field.length();
+			fixedLength += f.length();
 		}
 		if (isVariableLength) {
 			fixedLength = 0;
 		}
+		if (fieldNames.length != encodedFieldTypes.length) {
+			throw new IllegalArgumentException("fieldNames and column types differ in length");
+		}
+	}
+
+	private static Field getField(Class<?> fieldClass) {
+		if (!Field.class.isAssignableFrom(fieldClass) || fieldClass == Field.class ||
+			IndexField.class.isAssignableFrom(fieldClass)) {
+			throw new IllegalArgumentException("Invalid Field class: " + fieldClass.getName());
+		}
+		try {
+			return (Field) fieldClass.getConstructor().newInstance();
+		}
+		catch (Exception e) {
+			throw new RuntimeException("Failed to construct: " + fieldClass.getName(), e);
+		}
+	}
+
+	private static Field[] getFields(Class<?>[] fieldClasses) {
+		Field[] fields = new Field[fieldClasses.length];
+		for (int i = 0; i < fieldClasses.length; i++) {
+			fields[i] = getField(fieldClasses[i]);
+		}
+		return fields;
 	}
 
 	/**
@@ -123,22 +173,43 @@ public class Schema {
 	 * @return true if LongKeyNode's can be used to store records produced with this schema.
 	 */
 	boolean useLongKeyNodes() {
-		return keyType instanceof LongField;
+		return !forceUseVariableLengthKeyNodes && keyType instanceof LongField;
 	}
 
 	/**
-	 * Get the key Field class
-	 * @return key Field classes
+	 * Determine if this schema uses VarKeyNode's within a table.
+	 * @return true if VarKeyNode's are be used to store records produced with this schema.
 	 */
-	public Class<? extends Field> getKeyFieldClass() {
-		return keyType.getClass();
+	boolean useVariableKeyNodes() {
+		return forceUseVariableLengthKeyNodes || keyType.isVariableLength();
+	}
+
+	/**
+	 * Determine if this schema can use FixedKeyNode's within a table.
+	 * @return true if FixedKeyNode's can be used to store records produced with this schema.
+	 */
+	boolean useFixedKeyNodes() {
+		return !useVariableKeyNodes() && !useLongKeyNodes();
+	}
+
+	/**
+	 * Force use of variable-length key nodes.
+	 * <br>
+	 * This method provides a work-around for legacy schemas which
+	 * employ primitive fixed-length keys other than LongField
+	 * and improperly employ a variable-length-key storage schema.
+	 * Although rare, this may be neccessary to ensure backward compatibility 
+	 * with legacy DB storage (example ByteField key employed by old table).
+	 */
+	void forceUseOfVariableLengthKeyNodes() {
+		forceUseVariableLengthKeyNodes = true;
 	}
 
 	/**
 	 * Get the Field type for the key.
 	 * @return key Field type
 	 */
-	Field getKeyFieldType() {
+	public Field getKeyFieldType() {
 		return keyType;
 	}
 
@@ -155,8 +226,8 @@ public class Schema {
 	 * The returned list is ordered consistent with the schema definition.
 	 * @return data Field classes
 	 */
-	public Class<?>[] getFieldClasses() {
-		return fieldClasses;
+	public Field[] getFields() {
+		return fields;
 	}
 
 	/**
@@ -173,7 +244,7 @@ public class Schema {
 	 * @return data Field count
 	 */
 	public int getFieldCount() {
-		return fieldClasses.length;
+		return fields.length;
 	}
 
 	/**
@@ -207,16 +278,21 @@ public class Schema {
 		return buf.toString();
 	}
 
+	byte getEncodedKeyFieldType() {
+		return keyType.getFieldType();
+	}
+
 	/**
-	 * Get the schema field types as a byte array.
-	 * @return byte[] field type list
+	 * Get the schema field types as an encoded byte array.
+	 * @return byte[] field type list as an encoded byte array.
 	 */
-	byte[] getFieldTypes() {
-		byte[] fieldTypes = new byte[fieldClasses.length];
-		for (int i = 0; i < fieldClasses.length; i++) {
-			fieldTypes[i] = getField(fieldClasses[i]).getFieldType();
+	byte[] getEncodedFieldTypes() {
+
+		byte[] encodedFieldTypes = new byte[fields.length];
+		for (int colIndex = 0; colIndex < fields.length; colIndex++) {
+			encodedFieldTypes[colIndex] = fields[colIndex].getFieldType();
 		}
-		return fieldTypes;
+		return encodedFieldTypes;
 	}
 
 	/**
@@ -245,8 +321,8 @@ public class Schema {
 
 	/**
 	 * Create an empty record for the specified key.
-	 * @param key
-	 * @return Record
+	 * @param key long key
+	 * @return new record
 	 */
 	public Record createRecord(long key) {
 		return createRecord(new LongField(key));
@@ -254,21 +330,20 @@ public class Schema {
 
 	/**
 	 * Create an empty record for the specified key.
-	 * @param key
+	 * @param key record key field
 	 * @return new record
 	 */
 	public Record createRecord(Field key) {
-		if (!getKeyFieldClass().equals(key.getClass())) {
-			throw new IllegalArgumentException(
-				"expected key field type of " + keyType.getClass().getSimpleName());
+		if (!keyType.isSameType(key)) {
+			throw new IllegalArgumentException("key differs from schema key type");
 		}
-		Field[] fieldValues = new Field[fieldClasses.length];
-		for (int i = 0; i < fieldClasses.length; i++) {
+		Field[] fieldValues = new Field[fields.length];
+		for (int colIndex = 0; colIndex < fields.length; colIndex++) {
 			try {
-				fieldValues[i] = (Field) fieldClasses[i].newInstance();
+				fieldValues[colIndex] = fields[colIndex].newField();
 			}
 			catch (Exception e) {
-				throw new AssertException();
+				throw new AssertException(e);
 			}
 		}
 		return new Record(key, fieldValues);
@@ -281,46 +356,11 @@ public class Schema {
 	 */
 	Field getField(int colIndex) {
 		try {
-			return (Field) fieldClasses[colIndex].newInstance();
+			return fields[colIndex].newField();
 		}
 		catch (Exception e) {
 			throw new AssertException(e.getMessage());
 		}
-	}
-
-	/**
-	 * Get a new instance of a data Field object for the specified Field class.
-	 * @param fieldClass Field implementation class
-	 * @return new Field object suitable for data reading/writing.
-	 */
-	private Field getField(Class<?> fieldClass) {
-		try {
-			return (Field) fieldClass.newInstance();
-		}
-		catch (Exception e) {
-			throw new AssertException(e.getMessage());
-		}
-	}
-
-	/**
-	 * Compare two schemas for equality.
-	 * Field names are ignored in this comparison.
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof Schema))
-			return false;
-		Schema otherSchema = (Schema) obj;
-		if (version != otherSchema.version ||
-			!keyType.getClass().equals(otherSchema.keyType.getClass()) ||
-			fieldClasses.length != otherSchema.fieldClasses.length)
-			return false;
-		for (int i = 0; i < fieldClasses.length; i++) {
-			if (!fieldClasses[i].getClass().equals(otherSchema.fieldClasses[i].getClass()))
-				return false;
-		}
-		return true;
 	}
 
 	@Override
@@ -334,7 +374,7 @@ public class Schema {
 			buf.append("\n");
 			buf.append(fieldNames[i]);
 			buf.append("(");
-			buf.append(fieldClasses[i].getSimpleName());
+			buf.append(fields[i].getClass().getSimpleName());
 			buf.append(")");
 		}
 		return buf.toString();

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.program.database.module;
 
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 
+import db.Field;
 import db.Record;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Adapter to access the module, fragment, and parent/child database tables.
@@ -46,8 +45,8 @@ interface GroupDBAdapter {
 	 * @throws DuplicateNameException if a module or fragment already exists
 	 * having the given name
 	 */
-	Record createModule(long parentModuleID, String name) throws IOException,
-			DuplicateNameException;
+	Record createModule(long parentModuleID, String name)
+			throws IOException, DuplicateNameException;
 
 	/**
 	 * Get the record for the module with the given key.
@@ -80,8 +79,8 @@ interface GroupDBAdapter {
 	 * @throws DuplicateNameException if a module or fragment already exists
 	 * having the given name
 	 */
-	Record createFragment(long parentModuleID, String name) throws IOException,
-			DuplicateNameException;
+	Record createFragment(long parentModuleID, String name)
+			throws IOException, DuplicateNameException;
 
 	/**
 	 * Get the record for the fragment with the given key.
@@ -123,7 +122,7 @@ interface GroupDBAdapter {
 	 * @return zero-length array if no records were found
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	long[] getParentChildKeys(long ID, int indexedCol) throws IOException;
+	Field[] getParentChildKeys(long ID, int indexedCol) throws IOException;
 
 	/**
 	 * Get the Parent/Child record with the given key.

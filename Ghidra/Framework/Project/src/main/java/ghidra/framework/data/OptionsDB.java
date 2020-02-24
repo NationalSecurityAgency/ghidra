@@ -32,8 +32,9 @@ class OptionsDB extends AbstractOptions {
 
 	private static final String PROPERTY_TABLE_NAME = "Property Table";
 
-	private final static Schema PROPERTY_SCHEMA = new Schema(0, StringField.class, "Property Name",
-		new Class[] { StringField.class, ByteField.class }, new String[] { "Value", "Type" });
+	private final static Schema PROPERTY_SCHEMA = new Schema(0, StringField.INSTANCE,
+		"Property Name", new Field[] { StringField.INSTANCE, ByteField.INSTANCE },
+		new String[] { "Value", "Type" });
 
 	private static final int VALUE_COL = 0;
 	private static final int TYPE_COL = 1;
@@ -81,8 +82,8 @@ class OptionsDB extends AbstractOptions {
 			throw new IllegalArgumentException("property alteration old-path may not be null");
 		}
 		if (path != null && path.endsWith(DELIMITER_STRING)) {
-			throw new IllegalArgumentException("property alteration paths must not end with '" +
-				DELIMITER + "': " + path);
+			throw new IllegalArgumentException(
+				"property alteration paths must not end with '" + DELIMITER + "': " + path);
 		}
 	}
 
@@ -118,8 +119,8 @@ class OptionsDB extends AbstractOptions {
 			String keyName = ((StringField) rec.getKeyField()).getString();
 			if (keyName.startsWith(oldSubListPath)) {
 				iterator.delete();
-				rec.setKey(new StringField(newSubListPath +
-					keyName.substring(oldSubListPath.length())));
+				rec.setKey(
+					new StringField(newSubListPath + keyName.substring(oldSubListPath.length())));
 				list.add(rec);
 			}
 			else {

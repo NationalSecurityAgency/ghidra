@@ -66,7 +66,7 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 
 		// Create table with indexed address column
 		Schema schema =
-			new Schema(0, "id", new Class[] { LongField.class }, new String[] { "addr" });
+			new Schema(0, "id", new Field[] { LongField.INSTANCE }, new String[] { "addr" });
 		DBHandle handle = program.getDBHandle();
 		myTable = handle.createTable("MyTable", schema, new int[] { 0 });
 

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import db.Field;
 import db.Record;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
@@ -181,10 +182,10 @@ class CategoryDB extends DatabaseObject implements Category {
 
 	private CategoryDB[] getCategories(long parentId) {
 		try {
-			long[] ids = mgr.getCategoryDBAdapter().getRecordIdsWithParent(parentId);
+			Field[] ids = mgr.getCategoryDBAdapter().getRecordIdsWithParent(parentId);
 			CategoryDB[] cats = new CategoryDB[ids.length];
 			for (int i = 0; i < cats.length; i++) {
-				cats[i] = mgr.getCategoryDB(ids[i]);
+				cats[i] = mgr.getCategoryDB(ids[i].getLongValue());
 			}
 			return cats;
 		}

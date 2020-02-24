@@ -103,6 +103,8 @@ class DataDB extends CodeUnitDB implements Data {
 		DataType dt;
 		if (rec != null) {
 			// ensure that record provided corresponds to a DataDB record
+			// since following an undo/redo the record could correspond to
+			// a different type of code unit (hopefully with a different record schema)
 			if (!rec.hasSameSchema(DataDBAdapter.DATA_SCHEMA)) {
 				return true;
 			}

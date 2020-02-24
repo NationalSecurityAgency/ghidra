@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,10 @@
  */
 package ghidra.program.database;
 
+import java.util.ConcurrentModificationException;
+
+import db.*;
+import db.util.ErrorHandler;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.AddressRangeMapDB;
 import ghidra.program.model.address.*;
@@ -24,11 +27,6 @@ import ghidra.util.Lock;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.ConcurrentModificationException;
-
-import db.*;
-import db.util.ErrorHandler;
 
 public class IntRangeMapDB implements IntRangeMap {
 
@@ -65,8 +63,8 @@ public class IntRangeMapDB implements IntRangeMap {
 			DBHandle dbh = program.getDBHandle();
 			String tableName = TABLE_PREFIX + mapName;
 			if (dbh.getTable(tableName) != null) {
-				throw new DuplicateNameException("Address Set Property Map named " + mapName +
-					" already exists.");
+				throw new DuplicateNameException(
+					"Address Set Property Map named " + mapName + " already exists.");
 			}
 
 			return new IntRangeMapDB(program, mapName, program, addrMap, lock);
@@ -82,9 +80,8 @@ public class IntRangeMapDB implements IntRangeMap {
 		this.mapName = mapName;
 		this.lock = lock;
 
-		propertyMap =
-			new AddressRangeMapDB(program.getDBHandle(), program.getAddressMap(),
-				program.getLock(), MY_PREFIX + mapName, errHandler, IntField.class, true);
+		propertyMap = new AddressRangeMapDB(program.getDBHandle(), program.getAddressMap(),
+			program.getLock(), MY_PREFIX + mapName, errHandler, IntField.INSTANCE, true);
 
 	}
 

@@ -44,11 +44,11 @@ public class FunctionsTable {
 	static final int CACHE_SIZE = 10000;
 
 	// @formatter:off
-	static final Schema SCHEMA = new Schema(LibrariesTable.VERSION, "Function ID", new Class[] {
-			ShortField.class, LongField.class,
-			ByteField.class, LongField.class, LongField.class,
-			LongField.class, LongField.class, LongField.class,
-			ByteField.class
+	static final Schema SCHEMA = new Schema(LibrariesTable.VERSION, "Function ID", new Field[] {
+			ShortField.INSTANCE, LongField.INSTANCE,
+			ByteField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
+			ByteField.INSTANCE
 		}, new String[] {
 			"Code Unit Size", "Full Hash",
 			"Specific Hash Additional Size", "Specific Hash", "Library ID",
@@ -133,14 +133,15 @@ public class FunctionsTable {
 	 */
 	public List<FunctionRecord> getFunctionRecordsByFullHash(long hash) throws IOException {
 		LongField hashField = new LongField(hash);
-		DBLongIterator iterator = table.indexKeyIterator(FULL_HASH_COL, hashField, hashField, true);
+		DBFieldIterator iterator =
+			table.indexKeyIterator(FULL_HASH_COL, hashField, hashField, true);
 		if (!iterator.hasNext()) {
 			return Collections.emptyList();
 		}
 		List<FunctionRecord> list = new ArrayList<>();
 		while (iterator.hasNext()) {
-			long key = iterator.next();
-			FunctionRecord functionRecord = functionCache.get(key);
+			Field key = iterator.next();
+			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
 			if (functionRecord == null) {
 				Record record = table.getRecord(key);
 				functionRecord = new FunctionRecord(fidDb, functionCache, record);
@@ -216,15 +217,15 @@ public class FunctionsTable {
 	 */
 	public List<FunctionRecord> getFunctionRecordsByNameSubstring(String nameSearch)
 			throws IOException {
-		DBLongIterator iterator = table.indexKeyIterator(NAME_ID_COL);
+		DBFieldIterator iterator = table.indexKeyIterator(NAME_ID_COL);
 
 		if (!iterator.hasNext()) {
 			return Collections.emptyList();
 		}
 		List<FunctionRecord> list = new ArrayList<>();
 		while (iterator.hasNext()) {
-			long key = iterator.next();
-			FunctionRecord functionRecord = functionCache.get(key);
+			Field key = iterator.next();
+			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
 			if (functionRecord == null) {
 				Record record = table.getRecord(key);
 				long nameID = record.getLongValue(NAME_ID_COL);
@@ -255,15 +256,15 @@ public class FunctionsTable {
 	 */
 	public List<FunctionRecord> getFunctionRecordsByNameRegex(String regex) throws IOException {
 		Matcher matcher = Pattern.compile(regex).matcher("");
-		DBLongIterator iterator = table.indexKeyIterator(NAME_ID_COL);
+		DBFieldIterator iterator = table.indexKeyIterator(NAME_ID_COL);
 
 		if (!iterator.hasNext()) {
 			return Collections.emptyList();
 		}
 		List<FunctionRecord> list = new ArrayList<>();
 		while (iterator.hasNext()) {
-			long key = iterator.next();
-			FunctionRecord functionRecord = functionCache.get(key);
+			Field key = iterator.next();
+			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
 			if (functionRecord == null) {
 				Record record = table.getRecord(key);
 				long nameID = record.getLongValue(NAME_ID_COL);
@@ -347,15 +348,15 @@ public class FunctionsTable {
 			return Collections.emptyList();
 		}
 		LongField field = new LongField(stringID);
-		DBLongIterator iterator = table.indexKeyIterator(NAME_ID_COL, field, field, true);
+		DBFieldIterator iterator = table.indexKeyIterator(NAME_ID_COL, field, field, true);
 		if (!iterator.hasNext()) {
 			return Collections.emptyList();
 		}
 		final long libraryKey = library.getLibraryID();
 		List<FunctionRecord> list = new ArrayList<>();
 		while (iterator.hasNext()) {
-			long key = iterator.next();
-			FunctionRecord functionRecord = functionCache.get(key);
+			Field key = iterator.next();
+			FunctionRecord functionRecord = functionCache.get(key.getLongValue());
 			if (functionRecord == null) {
 				Record record = table.getRecord(key);
 				if (record.getLongValue(LIBRARY_ID_COL) == libraryKey) {

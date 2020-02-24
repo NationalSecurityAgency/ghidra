@@ -31,7 +31,7 @@ abstract class ThunkFunctionAdapter {
 	static final int LINKED_FUNCTION_ID_COL = 0;
 
 	final static Schema THUNK_FUNCTION_SCHEMA = new Schema(CURRENT_VERSION, "ID",
-		new Class[] { LongField.class }, new String[] { "Linked Function ID" });
+		new Field[] { LongField.INSTANCE }, new String[] { "Linked Function ID" });
 
 	protected AddressMap addrMap;
 

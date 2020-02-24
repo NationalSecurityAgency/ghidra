@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.bookmark;
 
-import ghidra.program.database.map.AddressMap;
-import ghidra.program.database.util.EmptyRecordIterator;
-import ghidra.program.model.address.*;
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 import java.util.HashSet;
 
 import db.*;
+import ghidra.program.database.map.AddressMap;
+import ghidra.program.database.util.EmptyRecordIterator;
+import ghidra.program.model.address.*;
+import ghidra.util.exception.VersionException;
 
 public class BookmarkDBAdapterV3 extends BookmarkDBAdapter {
 
@@ -35,8 +33,9 @@ public class BookmarkDBAdapterV3 extends BookmarkDBAdapter {
 	static final int V3_COMMENT_COL = 2;
 
 	static final int VERSION = 3;
-	static final Schema V3_SCHEMA = new Schema(VERSION, "ID", new Class[] { LongField.class,
-		StringField.class, StringField.class }, new String[] { "Address", "Category", "Comment" });
+	static final Schema V3_SCHEMA = new Schema(VERSION, "ID",
+		new Field[] { LongField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE },
+		new String[] { "Address", "Category", "Comment" });
 
 	static int[] INDEXED_COLUMNS = new int[] { V3_ADDRESS_COL, V3_CATEGORY_COL };
 

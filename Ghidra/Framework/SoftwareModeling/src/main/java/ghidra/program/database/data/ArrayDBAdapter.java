@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -90,29 +88,16 @@ abstract class ArrayDBAdapter {
 	abstract Record createRecord(long dataTypeID, int numberOfElements, int length, long catID)
 			throws IOException;
 
-	/**
-	 * @param arrayID
-	 * @return
-	 */
 	abstract Record getRecord(long arrayID) throws IOException;
 
-	/**
-	 * @return
-	 */
 	abstract RecordIterator getRecords() throws IOException;
 
-	/**
-	 * @param dataID
-	 */
 	abstract boolean removeRecord(long dataID) throws IOException;
 
 	abstract void updateRecord(Record record) throws IOException;
 
-	/**
-	 * 
-	 */
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 }

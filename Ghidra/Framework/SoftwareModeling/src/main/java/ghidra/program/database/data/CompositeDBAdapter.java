@@ -95,7 +95,7 @@ abstract class CompositeDBAdapter {
 	 * @param handle handle to prior version of the database.
 	 * @return the read only Composite data type table adapter
 	 * @throws VersionException if a read only adapter can't be obtained for the database handle's version.
-	 * @throws IOException 
+	 * @throws IOException if IO error occurs
 	 */
 	static CompositeDBAdapter findReadOnlyAdapter(DBHandle handle)
 			throws VersionException, IOException {
@@ -194,7 +194,7 @@ abstract class CompositeDBAdapter {
 	/**
 	 * Updates the composite data type table with the provided record.
 	 * @param record the new record
-	 * @param setLastChangedTime true means change the last change time in the record to the 
+	 * @param setLastChangeTime true means change the last change time in the record to the 
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
@@ -218,10 +218,11 @@ abstract class CompositeDBAdapter {
 	/**
 	 * Gets all the composite data types that are contained in the category that has the indicated ID.
 	 * @param categoryID the category whose composite data types are wanted.
-	 * @return an array of IDs for the composite data types in the category.
+	 * @return an array of IDs as LongField values within Field array for the 
+	 * composite data types in the category.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 	/**
 	 * Gets an array with the IDs of all data types in the composite table that were derived
@@ -230,8 +231,15 @@ abstract class CompositeDBAdapter {
 	 * @return the array data type IDs.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
+	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
+	/**
+	 * Get composite record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * @param sourceID universal source archive ID
+	 * @param datatypeID universal datatype ID
+	 * @return composite record found or null
+	 * @throws IOException if IO error occurs
+	 */
 	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 

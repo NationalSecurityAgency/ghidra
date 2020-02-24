@@ -36,7 +36,6 @@ public class Table {
 	private TableRecord tableRecord;
 
 	private Schema schema;
-	private boolean useLongKeyNodes;
 
 	private NodeMgr nodeMgr;
 
@@ -63,19 +62,18 @@ public class Table {
 		this.db = db;
 		this.tableRecord = tableRecord;
 
+		schema = tableRecord.getSchema();
 		tableRecord.setTable(this);
 
-		schema = tableRecord.getSchema();
-		useLongKeyNodes = schema.useLongKeyNodes();
 		rootBufferId = tableRecord.getRootBufferId();
 		recordCount = tableRecord.getRecordCount();
 		maximumKey = tableRecord.getMaxKey();
 
-		nodeMgr = new NodeMgr(db.getBufferMgr(), schema);
+		nodeMgr = new NodeMgr(this, db.getBufferMgr());
 	}
 
 	/**
-	 * Return the database handle used by this table.
+	 * @return the database handle used by this table.
 	 */
 	DBHandle getDBHandle() {
 		return db;
@@ -83,11 +81,18 @@ public class Table {
 
 	/**
 	 * Determine if this table uses long keys.
-	 * @return true if this table utilizes long keys.  If false, the table uses 
-	 * a Field type key.
+	 * @return true if this table utilizes long keys. 
 	 */
 	public boolean useLongKeys() {
-		return useLongKeyNodes;
+		return schema.useLongKeyNodes();
+	}
+
+	/**
+	 * Determine if this table uses FixedField keys.
+	 * @return true if this table utilizes FixedField keys. 
+	 */
+	public boolean useFixedKeys() {
+		return schema.useFixedKeyNodes();
 	}
 
 	/**
@@ -129,6 +134,7 @@ public class Table {
 	/**
 	 * Get table statistics.
 	 * @return list of diagnostic statistics data for this table and related index tables.
+	 * @throws IOException database IO error
 	 */
 	public TableStatistics[] getAllStatistics() throws IOException {
 
@@ -143,6 +149,23 @@ public class Table {
 		return statList;
 	}
 
+	private BTreeNode getBTreeNode(int bufferId) throws IOException {
+		if (schema.useLongKeyNodes()) {
+			return nodeMgr.getLongKeyNode(bufferId);
+		}
+		if (schema.useFixedKeyNodes()) {
+			return nodeMgr.getFixedKeyNode(bufferId);
+		}
+		return nodeMgr.getVarKeyNode(bufferId);
+	}
+
+	private FieldKeyNode getFieldKeyNode(int bufferId) throws IOException {
+		if (schema.useFixedKeyNodes()) {
+			return nodeMgr.getFixedKeyNode(bufferId);
+		}
+		return nodeMgr.getVarKeyNode(bufferId);
+	}
+
 	/**
 	 * Accumulate node statistics
 	 * @param stats statistics collection object
@@ -152,19 +175,12 @@ public class Table {
 	private void accumulateNodeStatistics(TableStatistics stats, int bufferId) throws IOException {
 		if (bufferId < 0)
 			return;
-		BTreeNode node;
-		if (useLongKeyNodes) {
-			node = nodeMgr.getLongKeyNode(bufferId);
-		}
-		else {
-			node = nodeMgr.getVarKeyNode(bufferId);
-		}
-
+		BTreeNode node = getBTreeNode(bufferId);
 		++stats.bufferCount;
 
 		int[] ids = node.getBufferReferences();
 
-		if (node instanceof LongKeyInteriorNode || node instanceof VarKeyInteriorNode) {
+		if (node instanceof InteriorNode) {
 			++stats.interiorNodeCnt;
 			for (int id : ids) {
 				accumulateNodeStatistics(stats, id);
@@ -219,8 +235,8 @@ public class Table {
 	 * Callback method for when a new record is added.
 	 * Used for maintaining indexes only.  May be called before 
 	 * the old record is actually inserted.
-	 * @param record
-	 * @throws IOException
+	 * @param record new record which has been added
+	 * @throws IOException thrown if IO error occurs
 	 */
 	void insertedRecord(Record record) throws IOException {
 		// Add secondary index entries for new record
@@ -234,9 +250,9 @@ public class Table {
 	 * Callback method for when an existing record is modified.
 	 * Used for maintaining indexes only.  May be called before 
 	 * the old record is actually updated.
-	 * @param oldRecord
-	 * @param newRecord
-	 * @throws IOException
+	 * @param oldRecord old record
+	 * @param newRecord new record
+	 * @throws IOException thrown if IO error occurs
 	 */
 	void updatedRecord(Record oldRecord, Record newRecord) throws IOException {
 		// Update secondary indexes which have been affected
@@ -255,8 +271,8 @@ public class Table {
 	 * Callback method for when existing records are deleted.
 	 * Used for maintaining indexes only.  May be called before 
 	 * the old record is actually deleted.
-	 * @param oldRecord
-	 * @throws IOException
+	 * @param oldRecord record which has been deleted
+	 * @throws IOException thrown if IO error occurs
 	 */
 	void deletedRecord(Record oldRecord) throws IOException {
 		// Delete secondary index entries
@@ -268,9 +284,9 @@ public class Table {
 
 	/**
 	 * Rebuild table and associated indexes to ensure consistent state.
-	 * @param monitor
+	 * @param monitor task monitor
 	 * @throws IOException if unable to rebuild
-	 * @throws CancelledException
+	 * @throws CancelledException if task was cancelled
 	 */
 	public void rebuild(TaskMonitor monitor) throws IOException, CancelledException {
 		synchronized (db) {
@@ -281,28 +297,21 @@ public class Table {
 				return;
 
 			try {
-				BTreeNode rootNode = null;
-				try {
-					if (useLongKeyNodes) {
-						rootNode = nodeMgr.getLongKeyNode(rootBufferId);
-					}
-					else {
-						rootNode = nodeMgr.getVarKeyNode(rootBufferId);
-					}
-				}
-				catch (IOException t) {
-					throw new IOException("Low level tree consistency error (" + getName() +
-						"): failed to fetch root buffer: " + t.getMessage());
-				}
+				BTreeNode rootNode = getBTreeNode(rootBufferId);
 				if (!rootNode.isConsistent(getName(), monitor)) {
 					throw new IOException("Low level tree consistency error (" + getName() +
 						"): Unable to rebuild database");
 				}
 			}
+			catch (IOException t) {
+				throw new IOException("Low level tree consistency error (" + getName() +
+					"): failed to fetch root buffer: " + t.getMessage());
+			}
 			finally {
 				nodeMgr.releaseNodes();
 			}
 
+			// Rebuild table indexes
 			try {
 				// Remove all index records
 				for (int indexedColumn : indexedColumns) {
@@ -351,9 +360,10 @@ public class Table {
 
 	/**
 	 * Check the consistency of this table and its associated index tables.
+	 * @param monitor task monitor
 	 * @return true if consistency check passed, else false
-	 * @throws IOException 
-	 * @throws CancelledException
+	 * @throws IOException thrown if IO error occurs 
+	 * @throws CancelledException is task was cancelled
 	 */
 	public boolean isConsistent(TaskMonitor monitor) throws IOException, CancelledException {
 		return isConsistent(null, monitor);
@@ -370,21 +380,13 @@ public class Table {
 
 			boolean consistent;
 			try {
-				BTreeNode rootNode = null;
-				try {
-					if (useLongKeyNodes) {
-						rootNode = nodeMgr.getLongKeyNode(rootBufferId);
-					}
-					else {
-						rootNode = nodeMgr.getVarKeyNode(rootBufferId);
-					}
-				}
-				catch (IOException t) {
-					Msg.debug(this, "Consistency Error (" + getName() +
-						"): failed to fetch root buffer: " + t.getMessage());
-					return false;
-				}
+				BTreeNode rootNode = getBTreeNode(rootBufferId);
 				consistent = rootNode.isConsistent(getName(), monitor);
+			}
+			catch (IOException t) {
+				Msg.debug(this, "Consistency Error (" + getName() +
+					"): failed to fetch root buffer: " + t.getMessage());
+				return false;
 			}
 			finally {
 				nodeMgr.releaseNodes();
@@ -409,9 +411,10 @@ public class Table {
 				for (int indexedColumn : indexedColumns) {
 					IndexTable indexTable = secondaryIndexes.get(indexedColumn);
 					boolean found = false;
-					for (long key : indexTable.findPrimaryKeys(
-						rec.getField(indexTable.getColumnIndex()))) {
-						if (key == rec.getKey()) {
+					Field[] keys =
+						indexTable.findPrimaryKeys(rec.getField(indexTable.getColumnIndex()));
+					for (Field key : keys) {
+						if (key.equals(rec.getKeyField())) {
 							found = true;
 							break;
 						}
@@ -427,7 +430,8 @@ public class Table {
 						}
 						logIndexConsistencyError(
 							schema.getFieldNames()[indexTable.getColumnIndex()],
-							"Index table does not reference record key: " + rec.getKey());
+							"Index table does not reference record key: " +
+								rec.getKeyField().getValueAsString());
 					}
 				}
 
@@ -451,18 +455,18 @@ public class Table {
 				monitor.setMessage("Check Index " + getName() + "." +
 					schema.getFieldNames()[indexTable.getColumnIndex()]);
 
-				HashSet<Long> keySet = new HashSet<>();
+				HashSet<Field> keySet = new HashSet<>();
 				int extra = 0;
-				DBLongIterator keyIterator = indexTable.keyIterator();
+				DBFieldIterator keyIterator = indexTable.keyIterator();
 				while (keyIterator.hasNext()) {
-					long key = keyIterator.next();
+					Field key = keyIterator.next();
 					if (getRecord(key) == null) {
 						++extra;
 					}
 					if (!keySet.add(key)) {
 						logIndexConsistencyError(
 							schema.getFieldNames()[indexTable.getColumnIndex()],
-							"Index table references duplicate key: " + key);
+							"Index table references duplicate key: " + key.getValueAsString());
 					}
 				}
 				if (extra != 0) {
@@ -483,6 +487,7 @@ public class Table {
 
 	/**
 	 * Delete all records within this table.
+	 * @throws IOException if IO error occurs
 	 */
 	public void deleteAll() throws IOException {
 		synchronized (db) {
@@ -490,15 +495,10 @@ public class Table {
 			if (rootBufferId < 0)
 				return;
 			try {
-
+				BTreeNode rootNode = getBTreeNode(rootBufferId);
 				try {
 					// Delete all records
-					if (useLongKeyNodes) {
-						nodeMgr.getLongKeyNode(rootBufferId).delete();
-					}
-					else {
-						nodeMgr.getVarKeyNode(rootBufferId).delete();
-					}
+					rootNode.delete();
 
 					// Delete all index entries
 					for (int indexedColumn : indexedColumns) {
@@ -529,8 +529,9 @@ public class Table {
 
 	/**
 	 * Remove the index associated with the specified column.
-	 * @param columnIndex
-	 * @throws IOException
+	 * @param columnIndex column corresponding to the column index which 
+	 * should be deleted.
+	 * @throws IOException thrown if IO error occurs
 	 */
 	void removeIndex(int columnIndex) throws IOException {
 		IndexTable indexTable = secondaryIndexes.get(columnIndex);
@@ -560,8 +561,9 @@ public class Table {
 
 	/**
 	 * Change the name of this table
-	 * @param name
-	 * @throws DuplicateNameException
+	 * @param name new table name
+	 * @return true if rename successful
+	 * @throws DuplicateNameException if new table name already exists
 	 */
 	public boolean setName(String name) throws DuplicateNameException {
 		return db.setTableName(getName(), name);
@@ -629,7 +631,7 @@ public class Table {
 	 * Determine if this table contains a record with the specified key.
 	 * @param key record key.
 	 * @return true if record exists with key, else false.
-	 * @throws IOException
+	 * @throws IOException thrown if IO error occurs
 	 */
 	public boolean hasRecord(long key) throws IOException {
 		synchronized (db) {
@@ -655,14 +657,14 @@ public class Table {
 	 */
 	public boolean hasRecord(Field key) throws IOException {
 		synchronized (db) {
-			if (useLongKeyNodes) {
+			if (schema.useLongKeyNodes()) {
 				return hasRecord(key.getLongValue());
 			}
 			if (rootBufferId < 0)
 				return false;
 			boolean result = false;
 			try {
-				VarKeyRecordNode leaf = nodeMgr.getVarKeyNode(rootBufferId).getLeafNode(key);
+				FieldKeyRecordNode leaf = getFieldKeyNode(rootBufferId).getLeafNode(key);
 				result = leaf.getKeyIndex(key) >= 0;
 			}
 			finally {
@@ -704,10 +706,16 @@ public class Table {
 		synchronized (db) {
 			if (rootBufferId < 0)
 				return null;
-			if (key instanceof LongField)
+			if (key instanceof LongField) {
 				return getRecord(key.getLongValue());
+			}
+			FieldKeyRecordNode leaf;
 			try {
-				VarKeyRecordNode leaf = nodeMgr.getVarKeyNode(rootBufferId).getLeafNode(key);
+				if (key instanceof FixedField) {
+					leaf = nodeMgr.getFixedKeyNode(rootBufferId).getLeafNode(key);
+					return leaf.getRecord(key, schema);
+				}
+				leaf = getFieldKeyNode(rootBufferId).getLeafNode(key);
 				return leaf.getRecord(key, schema);
 			}
 			finally {
@@ -717,8 +725,8 @@ public class Table {
 	}
 
 	/**
-	 * Get the first record which has a key value less than the 
-	 * specified key.
+	 * Get the record with the maximum key value which is less than  
+	 * the specified key.
 	 * @param key unique key which may or may not exist within the table.
 	 * @return the first record which has a key value less than the 
 	 * specified key, or null if no record was found.
@@ -739,8 +747,8 @@ public class Table {
 	}
 
 	/**
-	 * Get the first record which has a key value less than the 
-	 * specified key.
+	 * Get the record with the maximum key value which is less than  
+	 * the specified key.
 	 * @param key unique key which may or may not exist within the table.
 	 * @return the first record which has a key value less than the 
 	 * specified key, or null if no record was found.
@@ -753,7 +761,7 @@ public class Table {
 			if (key instanceof LongField)
 				return getRecordBefore(key.getLongValue());
 			try {
-				VarKeyRecordNode leaf = nodeMgr.getVarKeyNode(rootBufferId).getLeafNode(key);
+				FieldKeyRecordNode leaf = getFieldKeyNode(rootBufferId).getLeafNode(key);
 				return leaf.getRecordBefore(key, schema);
 			}
 			finally {
@@ -763,8 +771,8 @@ public class Table {
 	}
 
 	/**
-	 * Get the first record which has a key value greater than the 
-	 * specified key.
+	 * Get the record with the minimum key value which is greater than 
+	 * the specified key.
 	 * @param key unique key which may or may not exist within the table.
 	 * @return the first record which has a key value greater than the 
 	 * specified key, or null if no record was found.
@@ -785,8 +793,8 @@ public class Table {
 	}
 
 	/**
-	 * Get the first record which has a key value greater than the 
-	 * specified key.
+	 * Get the record with the minimum key value which is greater than 
+	 * the specified key.
 	 * @param key unique key which may or may not exist within the table.
 	 * @return the first record which has a key value greater than the 
 	 * specified key, or null if no record was found.
@@ -799,7 +807,7 @@ public class Table {
 			if (key instanceof LongField)
 				return getRecordAfter(key.getLongValue());
 			try {
-				VarKeyRecordNode leaf = nodeMgr.getVarKeyNode(rootBufferId).getLeafNode(key);
+				FieldKeyRecordNode leaf = getFieldKeyNode(rootBufferId).getLeafNode(key);
 				return leaf.getRecordAfter(key, schema);
 			}
 			finally {
@@ -809,8 +817,8 @@ public class Table {
 	}
 
 	/**
-	 * Get the first record which has a key value less than or equal to the 
-	 * specified key.
+	 * Get the record with the maximum key value which is less than or equal 
+	 * to the specified key.
 	 * @param key unique key which may or may not exist within the table.
 	 * @return the first record which has a key value less than or equal to the 
 	 * specified key, or null if no record was found.
@@ -831,8 +839,8 @@ public class Table {
 	}
 
 	/**
-	 * Get the first record which has a key value less than or equal to the 
-	 * specified key.
+	 * Get the record with the maximum key value which is less than or equal 
+	 * to the specified key.
 	 * @param key unique key which may or may not exist within the table.
 	 * @return the first record which has a key value less than or equal to the 
 	 * specified key, or null if no record was found.
@@ -845,7 +853,7 @@ public class Table {
 			if (key instanceof LongField)
 				return getRecordAtOrBefore(key.getLongValue());
 			try {
-				VarKeyRecordNode leaf = nodeMgr.getVarKeyNode(rootBufferId).getLeafNode(key);
+				FieldKeyRecordNode leaf = getFieldKeyNode(rootBufferId).getLeafNode(key);
 				return leaf.getRecordAtOrBefore(key, schema);
 			}
 			finally {
@@ -855,8 +863,8 @@ public class Table {
 	}
 
 	/**
-	 * Get the first record which has a key value greater than or equal to the 
-	 * specified key.
+	 * Get the record with the minimum key value which is greater than or equal 
+	 * to the specified key.
 	 * @param key unique key which may or may not exist within the table.
 	 * @return the first record which has a key value greater than or equal to the 
 	 * specified key, or null if no record was found.
@@ -877,8 +885,8 @@ public class Table {
 	}
 
 	/**
-	 * Get the first record which has a key value greater than or equal to the 
-	 * specified key.
+	 * Get the record with the minimum key value which is greater than or equal 
+	 * to the specified key.
 	 * @param key unique key which may or may not exist within the table.
 	 * @return the first record which has a key value greater than or equal to the 
 	 * specified key, or null if no record was found.
@@ -891,7 +899,7 @@ public class Table {
 			if (key instanceof LongField)
 				return getRecordAtOrAfter(key.getLongValue());
 			try {
-				VarKeyRecordNode leaf = nodeMgr.getVarKeyNode(rootBufferId).getLeafNode(key);
+				FieldKeyRecordNode leaf = getFieldKeyNode(rootBufferId).getLeafNode(key);
 				return leaf.getRecordAtOrAfter(key, schema);
 			}
 			finally {
@@ -908,11 +916,11 @@ public class Table {
 	public void putRecord(Record record) throws IOException {
 		synchronized (db) {
 			db.checkTransaction();
-			if (useLongKeyNodes) {
+			if (schema.useLongKeyNodes()) {
 				putLongKeyRecord(record);
 			}
 			else {
-				putVarKeyRecord(record);
+				putFieldKeyRecord(record);
 			}
 
 		}
@@ -920,7 +928,7 @@ public class Table {
 
 	/**
 	 * Store a record which uses a long key
-	 * @param record
+	 * @param record recore to be inserted or updated
 	 * @throws IOException throw if an IO Error occurs
 	 */
 	private void putLongKeyRecord(Record record) throws IOException {
@@ -969,10 +977,10 @@ public class Table {
 
 	/**
 	 * Store a record which uses a Field key
-	 * @param record
+	 * @param record record to be inserted or updated
 	 * @throws IOException throw if an IO Error occurs
 	 */
-	private void putVarKeyRecord(Record record) throws IOException {
+	private void putFieldKeyRecord(Record record) throws IOException {
 
 //		boolean inserted = false;
 		try {
@@ -981,17 +989,18 @@ public class Table {
 
 			// Establish root node
 			++modCount;
-			VarKeyNode rootNode = null;
+			FieldKeyNode rootNode = null;
 			if (rootBufferId < 0) {
-				rootNode = new VarKeyRecordNode(nodeMgr, schema.getKeyFieldType());
+				rootNode = schema.useFixedKeyNodes() ? FixedKeyRecordNode.createRecordNode(nodeMgr)
+						: new VarKeyRecordNode(nodeMgr, schema.getKeyFieldType());
 			}
 			else {
-				rootNode = nodeMgr.getVarKeyNode(rootBufferId);
+				rootNode = getFieldKeyNode(rootBufferId);
 			}
 
 			// Put record and update root buffer ID
 			Field recKey = record.getKeyField();
-			VarKeyRecordNode leaf = rootNode.getLeafNode(recKey);
+			FieldKeyRecordNode leaf = rootNode.getLeafNode(recKey);
 			rootNode = leaf.putRecord(record, isIndexed ? this : null);
 			int id = rootNode.getBufferId();
 			if (rootBufferId != id) {
@@ -1026,7 +1035,7 @@ public class Table {
 
 			if (rootBufferId < 0)
 				return false;
-			if (!useLongKeyNodes)
+			if (!schema.useLongKeyNodes())
 				throw new IllegalArgumentException("Field key required");
 			try {
 				++modCount;
@@ -1073,12 +1082,13 @@ public class Table {
 
 			if (rootBufferId < 0)
 				return false;
-			if (useLongKeyNodes)
-				throw new IllegalArgumentException("long key required");
+			if (key instanceof LongField) {
+				return deleteRecord(key.getLongValue());
+			}
 			try {
 				++modCount;
-				VarKeyNode rootNode = nodeMgr.getVarKeyNode(rootBufferId);
-				VarKeyRecordNode leaf = rootNode.getLeafNode(key);
+				FieldKeyNode rootNode = getFieldKeyNode(rootBufferId);
+				FieldKeyRecordNode leaf = rootNode.getLeafNode(key);
 				rootNode = leaf.deleteRecord(key, isIndexed ? this : null);
 
 				if (rootNode != null) {
@@ -1119,7 +1129,7 @@ public class Table {
 			db.checkTransaction();
 			if (startKey > endKey)
 				throw new IllegalArgumentException();
-			if (!useLongKeyNodes)
+			if (!schema.useLongKeyNodes())
 				throw new IllegalArgumentException("Long key required");
 
 			boolean result = false;
@@ -1243,7 +1253,7 @@ public class Table {
 			db.checkTransaction();
 			if (startKey.compareTo(endKey) > 0)
 				throw new IllegalArgumentException();
-			if (useLongKeyNodes)
+			if (schema.useLongKeyNodes())
 				throw new IllegalArgumentException("Field key required");
 
 			boolean result = false;
@@ -1252,8 +1262,8 @@ public class Table {
 
 			try {
 				++modCount;
-				VarKeyNode rootNode = nodeMgr.getVarKeyNode(rootBufferId);
-				VarKeyRecordNode leaf = rootNode.getLeafNode(startKey);
+				FieldKeyNode rootNode = getFieldKeyNode(rootBufferId);
+				FieldKeyRecordNode leaf = rootNode.getLeafNode(startKey);
 
 				try {
 					// Handle partial first leaf where leftmost key is not deleted
@@ -1275,35 +1285,36 @@ public class Table {
 							leaf.remove(index);
 						}
 						result = true;
-						if (index < leaf.keyCount) {
+						if (index < leaf.getKeyCount()) {
 							return result;
 						}
-						VarKeyRecordNode nextLeaf = leaf.getNextLeaf();
+						RecordNode nextLeaf = leaf.getNextLeaf();
 						if (nextLeaf == null) {
 							return result;
 						}
-						lastKey = nextLeaf.getKey(nextLeaf.keyCount - 1);
+						lastKey = nextLeaf.getKeyField(nextLeaf.getKeyCount() - 1);
 						leaf = rootNode.getLeafNode(lastKey);
 						index = 0;
 					}
 					else {
-						lastKey = leaf.getKey(leaf.keyCount - 1);
+						lastKey = leaf.getKeyField(leaf.getKeyCount() - 1);
 					}
 
 					// Handle additional whole leaves
 					while (lastKey.compareTo(endKey) <= 0) {
 						if (isIndexed) {
-							for (int n = 0; n < leaf.keyCount; n++) {
+							int count = leaf.getKeyCount();
+							for (int n = 0; n < count; n++) {
 								deletedRecord(leaf.getRecord(schema, n));
 							}
 						}
-						VarKeyRecordNode nextLeaf = leaf.getNextLeaf();
+						RecordNode nextLeaf = leaf.getNextLeaf();
 						rootNode = leaf.removeLeaf();
 						result = true;
 						if (nextLeaf == null) {
 							return result;
 						}
-						lastKey = nextLeaf.getKey(nextLeaf.keyCount - 1);
+						lastKey = nextLeaf.getKeyField(nextLeaf.getKeyCount() - 1);
 						leaf = rootNode.getLeafNode(lastKey);
 					}
 
@@ -1313,7 +1324,7 @@ public class Table {
 					if (lastIndex < 0) {
 						lastIndex = -lastIndex - 2;
 					}
-					Field key = leaf.getKey(0);
+					Field key = leaf.getKeyField(0);
 					while (index <= lastIndex--) {
 						if (isIndexed) {
 							deletedRecord(leaf.getRecord(schema, index));
@@ -1321,8 +1332,8 @@ public class Table {
 						leaf.remove(index);
 						result = true;
 					}
-					if (index == 0 && leaf.parent != null) {
-						leaf.parent.keyChanged(key, leaf.getKey(0), leaf);
+					if (index == 0 && leaf.getParent() != null) {
+						leaf.getParent().keyChanged(key, leaf.getKeyField(0), leaf);
 					}
 				}
 				finally {
@@ -1358,14 +1369,15 @@ public class Table {
 	/**
 	 * Find the primary keys corresponding to those records which contain the
 	 * specified field value in the specified record column.  The table must
-	 * have been created with a secondary index on the specified column index.
+	 * have been created with long keys and a secondary index on the specified 
+	 * column index.
 	 * @param field the field value
 	 * @param columnIndex the record schema column which should be searched.
 	 * @return list of primary keys
 	 * @throws IOException if a secondary index does not exist for the specified
 	 * column, or the wrong field type was specified, or an I/O error occurs.
 	 */
-	public long[] findRecords(Field field, int columnIndex) throws IOException {
+	public Field[] findRecords(Field field, int columnIndex) throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
 			if (indexTable == null)
@@ -1400,7 +1412,7 @@ public class Table {
 	 * @param field the field value
 	 * @param columnIndex the record schema column which should be searched.
 	 * @return true if one or more records exis with the specified value.
-	 * @throws IOException
+	 * @throws IOException thrown if IO error occurs
 	 */
 	public boolean hasRecord(Field field, int columnIndex) throws IOException {
 		synchronized (db) {
@@ -1417,7 +1429,7 @@ public class Table {
 	 * set to the minimum index value.
 	 * @param columnIndex identifies an indexed column.
 	 * @return index field iterator.
-	 * @throws IOException
+	 * @throws IOException thrown if IO error occurs
 	 */
 	public DBFieldIterator indexFieldIterator(int columnIndex) throws IOException {
 		synchronized (db) {
@@ -1437,7 +1449,7 @@ public class Table {
 	 * is after maxField
 	 * @param columnIndex identifies an indexed column.
 	 * @return index field iterator.
-	 * @throws IOException
+	 * @throws IOException thrown if IO error occurs
 	 */
 	public DBFieldIterator indexFieldIterator(Field minField, Field maxField, boolean before,
 			int columnIndex) throws IOException {
@@ -1460,7 +1472,8 @@ public class Table {
 	 * is after startField value
 	 * @param columnIndex identifies an indexed column.
 	 * @return index field iterator.
-	 * @throws IOException
+	 * @throws IOException if a secondary index does not exist for the specified
+	 * column or an I/O error occurs.
 	 */
 	public DBFieldIterator indexFieldIterator(Field minField, Field maxField, Field startField,
 			boolean before, int columnIndex) throws IOException {
@@ -1573,7 +1586,7 @@ public class Table {
 	 * @throws IOException if a secondary index does not exist for the specified
 	 * column, or the wrong field type was specified, or an I/O error occurs.
 	 */
-	public RecordIterator indexIteratorAfter(int columnIndex, Field startValue, long primaryKey)
+	public RecordIterator indexIteratorAfter(int columnIndex, Field startValue, Field primaryKey)
 			throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
@@ -1599,7 +1612,7 @@ public class Table {
 	 * @throws IOException if a secondary index does not exist for the specified
 	 * column, or the wrong field type was specified, or an I/O error occurs.
 	 */
-	public RecordIterator indexIteratorBefore(int columnIndex, Field startValue, long primaryKey)
+	public RecordIterator indexIteratorBefore(int columnIndex, Field startValue, Field primaryKey)
 			throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
@@ -1616,7 +1629,7 @@ public class Table {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	public DBLongIterator indexKeyIterator(int columnIndex) throws IOException {
+	public DBFieldIterator indexKeyIterator(int columnIndex) throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
 			if (indexTable == null)
@@ -1634,7 +1647,7 @@ public class Table {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	public DBLongIterator indexKeyIteratorBefore(int columnIndex, Field startField)
+	public DBFieldIterator indexKeyIteratorBefore(int columnIndex, Field startField)
 			throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
@@ -1654,7 +1667,7 @@ public class Table {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	public DBLongIterator indexKeyIteratorAfter(int columnIndex, Field startField)
+	public DBFieldIterator indexKeyIteratorAfter(int columnIndex, Field startField)
 			throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
@@ -1675,8 +1688,8 @@ public class Table {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	public DBLongIterator indexKeyIteratorBefore(int columnIndex, Field startField, long primaryKey)
-			throws IOException {
+	public DBFieldIterator indexKeyIteratorBefore(int columnIndex, Field startField,
+			Field primaryKey) throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
 			if (indexTable == null)
@@ -1696,8 +1709,8 @@ public class Table {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	public DBLongIterator indexKeyIteratorAfter(int columnIndex, Field startField, long primaryKey)
-			throws IOException {
+	public DBFieldIterator indexKeyIteratorAfter(int columnIndex, Field startField,
+			Field primaryKey) throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
 			if (indexTable == null)
@@ -1721,7 +1734,7 @@ public class Table {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	public DBLongIterator indexKeyIterator(int columnIndex, Field minField, Field maxField,
+	public DBFieldIterator indexKeyIterator(int columnIndex, Field minField, Field maxField,
 			boolean atMin) throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
@@ -1743,8 +1756,8 @@ public class Table {
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
 	 */
-	public DBLongIterator indexKeyIterator(int columnIndex, LongField minField, LongField maxField,
-			LongField startField, boolean before) throws IOException {
+	public DBFieldIterator indexKeyIterator(int columnIndex, Field minField, Field maxField,
+			Field startField, boolean before) throws IOException {
 		synchronized (db) {
 			IndexTable indexTable = secondaryIndexes.get(columnIndex);
 			if (indexTable == null)
@@ -1760,10 +1773,10 @@ public class Table {
 	 */
 	public RecordIterator iterator() throws IOException {
 		synchronized (db) {
-			if (useLongKeyNodes) {
+			if (schema.useLongKeyNodes()) {
 				return new LongKeyRecordIterator();
 			}
-			return new VarKeyRecordIterator(null, null, null);
+			return new FieldKeyRecordIterator(null, null, null);
 		}
 	}
 
@@ -1776,7 +1789,7 @@ public class Table {
 	 */
 	public RecordIterator iterator(long startKey) throws IOException {
 		synchronized (db) {
-			if (!useLongKeyNodes)
+			if (!schema.useLongKeyNodes())
 				throw new IllegalArgumentException("Field key required");
 			return new LongKeyRecordIterator(Long.MIN_VALUE, Long.MAX_VALUE, startKey);
 		}
@@ -1795,7 +1808,7 @@ public class Table {
 	 */
 	public RecordIterator iterator(long minKey, long maxKey, long startKey) throws IOException {
 		synchronized (db) {
-			if (!useLongKeyNodes)
+			if (!schema.useLongKeyNodes())
 				throw new IllegalArgumentException("Field key required");
 			return new LongKeyRecordIterator(minKey, maxKey, startKey);
 		}
@@ -1810,11 +1823,11 @@ public class Table {
 	 */
 	public RecordIterator iterator(Field startKey) throws IOException {
 		synchronized (db) {
-			if (useLongKeyNodes) {
+			if (schema.useLongKeyNodes()) {
 				return new LongKeyRecordIterator(Long.MIN_VALUE, Long.MAX_VALUE,
 					startKey.getLongValue());
 			}
-			return new VarKeyRecordIterator(null, null, startKey);
+			return new FieldKeyRecordIterator(null, null, startKey);
 		}
 	}
 
@@ -1829,13 +1842,13 @@ public class Table {
 	 */
 	public RecordIterator iterator(Field minKey, Field maxKey, Field startKey) throws IOException {
 		synchronized (db) {
-			if (useLongKeyNodes) {
+			if (schema.useLongKeyNodes()) {
 				long min = minKey != null ? minKey.getLongValue() : Long.MIN_VALUE;
 				long max = maxKey != null ? maxKey.getLongValue() : Long.MAX_VALUE;
 				long start = startKey != null ? startKey.getLongValue() : min;
 				return new LongKeyRecordIterator(min, max, start);
 			}
-			return new VarKeyRecordIterator(minKey, maxKey, startKey);
+			return new FieldKeyRecordIterator(minKey, maxKey, startKey);
 		}
 	}
 
@@ -1846,7 +1859,7 @@ public class Table {
 	 */
 	public DBLongIterator longKeyIterator() throws IOException {
 		synchronized (db) {
-			if (!useLongKeyNodes)
+			if (!schema.useLongKeyNodes())
 				throw new AssertException();
 			return new LongKeyIterator();
 		}
@@ -1861,7 +1874,7 @@ public class Table {
 	 */
 	public DBLongIterator longKeyIterator(long startKey) throws IOException {
 		synchronized (db) {
-			if (!useLongKeyNodes)
+			if (!schema.useLongKeyNodes())
 				throw new AssertException();
 			return new LongKeyIterator(Long.MIN_VALUE, Long.MAX_VALUE, startKey);
 		}
@@ -1879,7 +1892,7 @@ public class Table {
 	public DBLongIterator longKeyIterator(long minKey, long maxKey, long startKey)
 			throws IOException {
 		synchronized (db) {
-			if (!useLongKeyNodes)
+			if (!schema.useLongKeyNodes())
 				throw new AssertException();
 			return new LongKeyIterator(minKey, maxKey, startKey);
 		}
@@ -1892,9 +1905,9 @@ public class Table {
 	 */
 	public DBFieldIterator fieldKeyIterator() throws IOException {
 		synchronized (db) {
-			if (useLongKeyNodes)
+			if (schema.useLongKeyNodes())
 				throw new AssertException();
-			return new VarKeyIterator(null, null, null);
+			return new FieldKeyIterator(null, null, null);
 		}
 	}
 
@@ -1907,9 +1920,9 @@ public class Table {
 	 */
 	public DBFieldIterator fieldKeyIterator(Field startKey) throws IOException {
 		synchronized (db) {
-			if (useLongKeyNodes)
+			if (schema.useLongKeyNodes())
 				throw new AssertException();
-			return new VarKeyIterator(null, null, startKey);
+			return new FieldKeyIterator(null, null, startKey);
 		}
 	}
 
@@ -1926,9 +1939,9 @@ public class Table {
 	public DBFieldIterator fieldKeyIterator(Field minKey, Field maxKey, Field startKey)
 			throws IOException {
 		synchronized (db) {
-			if (useLongKeyNodes)
+			if (schema.useLongKeyNodes())
 				throw new AssertException();
-			return new VarKeyIterator(minKey, maxKey, startKey);
+			return new FieldKeyIterator(minKey, maxKey, startKey);
 		}
 	}
 
@@ -1945,9 +1958,9 @@ public class Table {
 	public DBFieldIterator fieldKeyIterator(Field minKey, Field maxKey, boolean before)
 			throws IOException {
 		synchronized (db) {
-			if (useLongKeyNodes)
+			if (schema.useLongKeyNodes())
 				throw new AssertException();
-			return new VarKeyIterator(minKey, maxKey, before);
+			return new FieldKeyIterator(minKey, maxKey, before);
 		}
 	}
 
@@ -1974,9 +1987,8 @@ public class Table {
 		private int expectedModCount;
 
 		/**
-		 * Construct a record iterator. 
-		 * @param startKey the first primary key value.
-		 * @throws IOException
+		 * Construct a record iterator over all records. 
+		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyRecordIterator() throws IOException {
 			this(Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE);
@@ -1988,7 +2000,7 @@ public class Table {
 		 * @param minKey minimum allowed primary key.
 		 * @param maxKey maximum allowed primary key.
 		 * @param startKey the first primary key value.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyRecordIterator(long minKey, long maxKey, long startKey) throws IOException {
 
@@ -2065,11 +2077,11 @@ public class Table {
 		 * the current position will be set to the previous record and isPrev set to true; 
 		 * else if false and the current record no longer exists, the current position
 		 * will be set to the next record and isNext set to true.
-		 * @return VarKeyRecordNode the leaf node containing the current record position
+		 * @return LongKeyRecordNode the leaf node containing the current record position
 		 * identified by bufferId and recordIndex.  If null, the current record was not found
 		 * or the position could not be set to a next/previous record position based upon the
 		 * recoverPrev value specified.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		private LongKeyRecordNode getRecordLeaf(boolean recoverPrev) throws IOException {
 
@@ -2121,9 +2133,6 @@ public class Table {
 			return leaf;
 		}
 
-		/**
-		 * @see db.RecordIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
@@ -2169,9 +2178,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see db.RecordIterator#hasPrevious()
-		 */
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
@@ -2217,9 +2223,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see db.RecordIterator#next()
-		 */
 		@Override
 		public Record next() throws IOException {
 			if (hasNext || hasNext()) {
@@ -2231,9 +2234,6 @@ public class Table {
 			return null;
 		}
 
-		/**
-		 * @see db.RecordIterator#previous()
-		 */
 		@Override
 		public Record previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
@@ -2245,9 +2245,6 @@ public class Table {
 			return null;
 		}
 
-		/**
-		 * @see db.RecordIterator#delete()
-		 */
 		@Override
 		public boolean delete() throws IOException {
 			if (lastRecord == null)
@@ -2262,7 +2259,7 @@ public class Table {
 	/**
 	 * A RecordIterator class for use with table data contained within LeafNode's.
 	 */
-	private class VarKeyRecordIterator implements RecordIterator {
+	private class FieldKeyRecordIterator implements RecordIterator {
 
 		private int bufferId = -1; // current record buffer ID
 		private int recordIndex; // current record index
@@ -2286,9 +2283,9 @@ public class Table {
 		 * @param minKey minimum allowed primary key.
 		 * @param maxKey maximum allowed primary key.
 		 * @param startKey the first primary key value. If null, minKey will be used.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
-		VarKeyRecordIterator(Field minKey, Field maxKey, Field startKey) throws IOException {
+		FieldKeyRecordIterator(Field minKey, Field maxKey, Field startKey) throws IOException {
 
 			expectedModCount = modCount;
 
@@ -2312,11 +2309,11 @@ public class Table {
 			}
 
 			try {
-				VarKeyNode rootNode = nodeMgr.getVarKeyNode(rootBufferId);
+				FieldKeyNode rootNode = getFieldKeyNode(rootBufferId);
 
 				// If startKey not specified, start with leftmost record
 				if (startKey == null) {
-					VarKeyRecordNode leaf = rootNode.getLeftmostLeafNode();
+					FieldKeyRecordNode leaf = rootNode.getLeftmostLeafNode();
 					bufferId = leaf.getBufferId();
 					recordIndex = 0;
 					record = leaf.getRecord(schema, 0);
@@ -2327,7 +2324,7 @@ public class Table {
 				// else, start with specified startKey
 				else {
 
-					VarKeyRecordNode leaf = rootNode.getLeafNode(startKey);
+					FieldKeyRecordNode leaf = rootNode.getLeafNode(startKey);
 					recordIndex = leaf.getKeyIndex(startKey);
 
 					// Start key was found
@@ -2339,35 +2336,35 @@ public class Table {
 					// Start key was not found
 					else {
 						recordIndex = -(recordIndex + 1);
-						if (recordIndex == leaf.keyCount) {
+						if (recordIndex == leaf.getKeyCount()) {
 							--recordIndex;
 							hasPrev = minKey == null ? true
-									: (leaf.getKey(recordIndex).compareTo(minKey) >= 0);
+									: (leaf.getKeyField(recordIndex).compareTo(minKey) >= 0);
 							if (!hasPrev) {
 								leaf = leaf.getNextLeaf();
 								if (leaf == null)
 									return;
 								recordIndex = 0;
 								hasNext = maxKey == null ? true
-										: (leaf.getKey(recordIndex).compareTo(maxKey) <= 0);
+										: (leaf.getKeyField(recordIndex).compareTo(maxKey) <= 0);
 							}
 						}
 						else {
 							hasNext = maxKey == null ? true
-									: (leaf.getKey(recordIndex).compareTo(maxKey) <= 0);
+									: (leaf.getKeyField(recordIndex).compareTo(maxKey) <= 0);
 							if (!hasNext) {
 								// position to previous record
 								if (recordIndex == 0) {
 									leaf = leaf.getPreviousLeaf();
 									if (leaf == null)
 										return;
-									recordIndex = leaf.keyCount - 1;
+									recordIndex = leaf.getKeyCount() - 1;
 								}
 								else {
 									--recordIndex;
 								}
 								hasPrev = minKey == null ? true
-										: (leaf.getKey(recordIndex).compareTo(minKey) >= 0);
+										: (leaf.getKeyField(recordIndex).compareTo(minKey) >= 0);
 							}
 						}
 					}
@@ -2393,25 +2390,26 @@ public class Table {
 		 * the current position will be set to the previous record and isPrev set to true; 
 		 * else if false and the current record no longer exists, the current position
 		 * will be set to the next record and isNext set to true.
-		 * @return VarKeyRecordNode the leaf node containing the current record position
+		 * @return FieldKeyRecordNode the leaf node containing the current record position
 		 * identified by bufferId and recordIndex.  If null, the current record was not found
 		 * or the position could not be set to a next/previous record position based upon the
 		 * recoverPrev value specified.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
-		private VarKeyRecordNode getRecordLeaf(boolean recoverPrev) throws IOException {
+		private FieldKeyRecordNode getRecordLeaf(boolean recoverPrev) throws IOException {
 
 			if (rootBufferId < 0 || record == null)
 				return null;
 
 			Field key = record.getKeyField();
-			VarKeyRecordNode leaf = null;
+			FieldKeyRecordNode leaf = null;
 			isNext = false;
 			isPrev = false;
 
 			if (expectedModCount == modCount) {
-				leaf = (VarKeyRecordNode) nodeMgr.getVarKeyNode(bufferId);
-				if (recordIndex >= leaf.keyCount || !leaf.getKey(recordIndex).equals(key)) {
+				leaf = (FieldKeyRecordNode) getFieldKeyNode(bufferId);
+				if (recordIndex >= leaf.getKeyCount() ||
+					!leaf.getKeyField(recordIndex).equals(key)) {
 					leaf = null; // something changed - key search required
 				}
 			}
@@ -2419,7 +2417,7 @@ public class Table {
 			if (leaf == null) {
 
 				// Something changed - try to relocate record using key
-				VarKeyNode rootNode = nodeMgr.getVarKeyNode(rootBufferId);
+				FieldKeyNode rootNode = getFieldKeyNode(rootBufferId);
 				leaf = rootNode.getLeafNode(key);
 				int index = leaf.getKeyIndex(key);
 				if (index < 0) {
@@ -2429,12 +2427,12 @@ public class Table {
 						--index;
 						if (index < 0) {
 							leaf = leaf.getPreviousLeaf();
-							index = leaf != null ? (leaf.keyCount - 1) : 0;
+							index = leaf != null ? (leaf.getKeyCount() - 1) : 0;
 						}
 						isPrev = true;
 					}
 					else {
-						if (index == leaf.keyCount) {
+						if (index == leaf.getKeyCount()) {
 							leaf = leaf.getNextLeaf();
 							index = 0;
 						}
@@ -2450,9 +2448,6 @@ public class Table {
 			return leaf;
 		}
 
-		/**
-		 * @see db.RecordIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
@@ -2461,7 +2456,7 @@ public class Table {
 
 					try {
 						// Check for modification to storage of previous record
-						VarKeyRecordNode leaf = getRecordLeaf(false);
+						FieldKeyRecordNode leaf = getRecordLeaf(false);
 						if (leaf == null)
 							return false;
 
@@ -2471,7 +2466,7 @@ public class Table {
 							++nextIndex;
 						}
 						int nextBufferId = bufferId;
-						if (nextIndex == leaf.keyCount) {
+						if (nextIndex == leaf.getKeyCount()) {
 							leaf = leaf.getNextLeaf();
 							if (leaf == null)
 								return false;
@@ -2499,9 +2494,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see db.RecordIterator#hasPrevious()
-		 */
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
@@ -2510,7 +2502,7 @@ public class Table {
 
 					try {
 						// Check for modification to storage of next record
-						VarKeyRecordNode leaf = getRecordLeaf(true);
+						FieldKeyRecordNode leaf = getRecordLeaf(true);
 						if (leaf == null)
 							return false;
 
@@ -2525,7 +2517,7 @@ public class Table {
 							if (leaf == null)
 								return false;
 							prevBufferId = leaf.getBufferId();
-							prevIndex = leaf.keyCount - 1;
+							prevIndex = leaf.getKeyCount() - 1;
 						}
 
 						// Load previous record
@@ -2548,9 +2540,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see db.RecordIterator#next()
-		 */
 		@Override
 		public Record next() throws IOException {
 			if (hasNext || hasNext()) {
@@ -2562,9 +2551,6 @@ public class Table {
 			return null;
 		}
 
-		/**
-		 * @see db.RecordIterator#previous()
-		 */
 		@Override
 		public Record previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
@@ -2576,9 +2562,6 @@ public class Table {
 			return null;
 		}
 
-		/**
-		 * @see db.RecordIterator#delete()
-		 */
 		@Override
 		public boolean delete() throws IOException {
 			if (lastRecord == null)
@@ -2604,9 +2587,8 @@ public class Table {
 		private int iterCnt = 0;
 
 		/**
-		 * Construct a record iterator. 
-		 * @param startKey the first primary key value.
-		 * @throws IOException
+		 * Construct a record iterator over all records. 
+		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator() throws IOException {
 			keyIter = new LongKeyIterator2();
@@ -2617,15 +2599,12 @@ public class Table {
 		 * @param minKey minimum allowed primary key.
 		 * @param maxKey maximum allowed primary key.
 		 * @param startKey the first primary key value.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator(long minKey, long maxKey, long startKey) throws IOException {
 			keyIter = new LongKeyIterator1(minKey, maxKey, startKey);
 		}
 
-		/*
-		 * @see ghidra.framework.store.db.DBLongIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
@@ -2639,9 +2618,6 @@ public class Table {
 			}
 		}
 
-		/*
-		 * @see ghidra.framework.store.db.DBLongIterator#hasPrevious()
-		 */
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
@@ -2655,25 +2631,16 @@ public class Table {
 			}
 		}
 
-		/*
-		 * @see ghidra.framework.store.db.DBLongIterator#next()
-		 */
 		@Override
 		public long next() throws IOException {
 			return keyIter.next();
 		}
 
-		/*
-		 * @see ghidra.framework.store.db.DBLongIterator#previous()
-		 */
 		@Override
 		public long previous() throws IOException {
 			return keyIter.previous();
 		}
 
-		/*
-		 * @see ghidra.framework.store.db.DBLongIterator#delete()
-		 */
 		@Override
 		public boolean delete() throws IOException {
 			return keyIter.delete();
@@ -2733,7 +2700,7 @@ public class Table {
 		 * @param minKey minimum allowed primary key.
 		 * @param maxKey maximum allowed primary key.
 		 * @param startKey the first primary key value.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator1(long minKey, long maxKey, long startKey) throws IOException {
 
@@ -2754,7 +2721,7 @@ public class Table {
 		 * following a delete.
 		 * @param targetKey the initial key.  For construction this is the startKey, 
 		 * following a delete this is the deleted key.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		private void initialize(long targetKey) throws IOException {
 
@@ -2871,9 +2838,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.LongIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
@@ -2920,9 +2884,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.LongIterator#hasPrevious()
-		 */
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
@@ -2971,9 +2932,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.LongIterator#next()
-		 */
 		@Override
 		public long next() throws IOException {
 			if (hasNext || hasNext()) {
@@ -2986,9 +2944,6 @@ public class Table {
 			throw new NoSuchElementException();
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.LongIterator#previous()
-		 */
 		@Override
 		public long previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
@@ -3001,9 +2956,6 @@ public class Table {
 			throw new NoSuchElementException();
 		}
 
-		/**
-		 * @see db.DBLongIterator#delete()
-		 */
 		@Override
 		public boolean delete() throws IOException {
 			if (hasLastKey) {
@@ -3052,9 +3004,8 @@ public class Table {
 		private long maxKey;
 
 		/**
-		 * Construct a record iterator. 
-		 * @param startKey the first primary key value.
-		 * @throws IOException
+		 * Construct a record iterator over all records. 
+		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator2() throws IOException {
 			this(Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE);
@@ -3066,7 +3017,7 @@ public class Table {
 		 * @param minKey minimum allowed primary key.
 		 * @param maxKey maximum allowed primary key.
 		 * @param startKey the first primary key value.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator2(long minKey, long maxKey, long startKey) throws IOException {
 
@@ -3087,7 +3038,7 @@ public class Table {
 		 * following a delete.
 		 * @param targetKey the initial key.  For construction this is the startKey, 
 		 * following a delete this is the deleted key.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		private void initialize(long targetKey) throws IOException {
 
@@ -3152,9 +3103,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.LongIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
@@ -3207,9 +3155,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.LongIterator#hasPrevious()
-		 */
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
@@ -3262,9 +3207,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.LongIterator#next()
-		 */
 		@Override
 		public long next() throws IOException {
 			if (hasNext || hasNext()) {
@@ -3277,9 +3219,6 @@ public class Table {
 			throw new NoSuchElementException();
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.LongIterator#previous()
-		 */
 		@Override
 		public long previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
@@ -3292,9 +3231,6 @@ public class Table {
 			throw new NoSuchElementException();
 		}
 
-		/**
-		 * @see db.DBLongIterator#delete()
-		 */
 		@Override
 		public boolean delete() throws IOException {
 			if (hasLastKey) {
@@ -3312,7 +3248,7 @@ public class Table {
 	 * for a large number of iterations, the underlying iterator is switched
 	 * to one optimized for longer iterations.
 	 */
-	private class VarKeyIterator implements DBFieldIterator {
+	private class FieldKeyIterator implements DBFieldIterator {
 
 		private static final int SHORT_ITER_THRESHOLD = 10;
 
@@ -3325,35 +3261,35 @@ public class Table {
 		 * @param maxKey maximum key value.  Null corresponds to maximum key value.
 		 * @param startKey the first primary key value.  If null minKey will be assumed,
 		 * if still null the minimum indexed value will be assumed.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
-		VarKeyIterator(Field minKey, Field maxKey, Field startKey) throws IOException {
-			keyIter = new VarKeyIterator2(minKey, maxKey, startKey);
+		FieldKeyIterator(Field minKey, Field maxKey, Field startKey) throws IOException {
+			keyIter = new FieldKeyIterator2(minKey, maxKey, startKey);
 		}
 
 		/**
 		 * Construct a record iterator.
 		 * @param minKey minimum key value.  Null corresponds to minimum key value.
 		 * @param maxKey maximum key value.  Null corresponds to maximum key value.
-		 * @param before
-		 * @throws IOException
+		 * @param before true if initial position is before range, else after range
+		 * @throws IOException thrown if IO error occurs
 		 */
-		VarKeyIterator(Field minKey, Field maxKey, boolean before) throws IOException {
+		FieldKeyIterator(Field minKey, Field maxKey, boolean before) throws IOException {
 
 			Field startKey = before ? minKey : maxKey;
 
 			if (startKey == null && !before && rootBufferId != -1) {
 				try {
-					VarKeyNode rightmostLeaf =
-						nodeMgr.getVarKeyNode(rootBufferId).getRightmostLeafNode();
-					startKey = rightmostLeaf.getKey(rightmostLeaf.keyCount - 1);
+					FieldKeyNode rightmostLeaf =
+						getFieldKeyNode(rootBufferId).getRightmostLeafNode();
+					startKey = rightmostLeaf.getKeyField(rightmostLeaf.getKeyCount() - 1);
 				}
 				finally {
 					nodeMgr.releaseNodes();
 				}
 			}
 
-			keyIter = new VarKeyIterator2(minKey, maxKey, startKey);
+			keyIter = new FieldKeyIterator2(minKey, maxKey, startKey);
 		}
 
 		@Override
@@ -3362,7 +3298,7 @@ public class Table {
 				if (iterCnt < SHORT_ITER_THRESHOLD) {
 					if (++iterCnt > SHORT_ITER_THRESHOLD) {
 						// Long iterations should use LongKeyIterator1
-						keyIter = new VarKeyIterator1((VarKeyIterator2) keyIter);
+						keyIter = new FieldKeyIterator1((FieldKeyIterator2) keyIter);
 					}
 				}
 				return keyIter.hasNext();
@@ -3375,7 +3311,7 @@ public class Table {
 				if (iterCnt < SHORT_ITER_THRESHOLD) {
 					if (++iterCnt > SHORT_ITER_THRESHOLD) {
 						// Long iterations should use LongKeyIterator1
-						keyIter = new VarKeyIterator1((VarKeyIterator2) keyIter);
+						keyIter = new FieldKeyIterator1((FieldKeyIterator2) keyIter);
 					}
 				}
 				return keyIter.hasPrevious();
@@ -3402,7 +3338,7 @@ public class Table {
 	 * A Field key iterator class - optimized for long iterations since
 	 * all keys are read for each record node.
 	 */
-	private class VarKeyIterator1 implements DBFieldIterator {
+	private class FieldKeyIterator1 implements DBFieldIterator {
 
 		private int bufferId;
 		private int keyIndex;
@@ -3418,7 +3354,7 @@ public class Table {
 		private Field minKey;
 		private Field maxKey;
 
-		VarKeyIterator1(VarKeyIterator2 keyIter) throws IOException {
+		FieldKeyIterator1(FieldKeyIterator2 keyIter) throws IOException {
 
 			this.bufferId = keyIter.bufferId;
 			this.keyIndex = keyIter.keyIndex;
@@ -3436,7 +3372,7 @@ public class Table {
 					reset();
 				}
 				else {
-					VarKeyRecordNode leaf = (VarKeyRecordNode) nodeMgr.getVarKeyNode(bufferId);
+					FieldKeyRecordNode leaf = (FieldKeyRecordNode) getFieldKeyNode(bufferId);
 					getKeys(leaf);
 				}
 
@@ -3450,7 +3386,7 @@ public class Table {
 		 * following a delete.
 		 * @param targetKey the initial key.  For construction this is the startKey, 
 		 * following a delete this is the deleted key.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		private void initialize(Field targetKey) throws IOException {
 
@@ -3459,17 +3395,17 @@ public class Table {
 			hasPrev = false;
 
 			if (rootBufferId < 0) {
-				keys = new Field[0];
+				keys = Field.EMPTY_ARRAY;
 				bufferId = -1;
 				return;
 			}
 
 			try {
 
-				VarKeyRecordNode leaf = null;
+				FieldKeyRecordNode leaf = null;
 				if (keys == null || keys.length == 0) {
 
-					VarKeyNode rootNode = nodeMgr.getVarKeyNode(rootBufferId);
+					FieldKeyNode rootNode = getFieldKeyNode(rootBufferId);
 
 					if (targetKey == null) {
 						targetKey = minKey;
@@ -3514,7 +3450,7 @@ public class Table {
 							}
 							leaf = leaf.getNextLeaf();
 							if (leaf == null) {
-								keys = new Field[0];
+								keys = Field.EMPTY_ARRAY;
 								bufferId = -1;
 								return;
 							}
@@ -3536,11 +3472,11 @@ public class Table {
 								}
 								leaf = leaf.getPreviousLeaf();
 								if (leaf == null) {
-									keys = new Field[0];
+									keys = Field.EMPTY_ARRAY;
 									bufferId = -1;
 									return;
 								}
-								keyIndex = leaf.keyCount - 1;
+								keyIndex = leaf.getKeyCount() - 1;
 								getKeys(leaf);
 							}
 							else {
@@ -3572,19 +3508,17 @@ public class Table {
 			}
 		}
 
-		private void getKeys(VarKeyRecordNode node) throws IOException {
+		private void getKeys(FieldKeyRecordNode node) throws IOException {
 			bufferId = node.getBufferId();
-			if (keys == null || keys.length != node.keyCount) {
-				keys = new Field[node.keyCount];
+			int keyCount = node.getKeyCount();
+			if (keys == null || keys.length != keyCount) {
+				keys = new Field[keyCount];
 			}
-			for (int i = 0; i < node.keyCount; i++) {
-				keys[i] = node.getKey(i);
+			for (int i = 0; i < keyCount; i++) {
+				keys[i] = node.getKeyField(i);
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.FieldIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
@@ -3602,10 +3536,10 @@ public class Table {
 					// Process next leaf if needed
 					if (nextIndex >= keys.length) {
 						try {
-							VarKeyRecordNode leaf =
-								((VarKeyRecordNode) nodeMgr.getVarKeyNode(bufferId)).getNextLeaf();
+							FieldKeyRecordNode leaf =
+								((FieldKeyRecordNode) getFieldKeyNode(bufferId)).getNextLeaf();
 							if (leaf == null ||
-								(maxKey != null && leaf.getKey(0).compareTo(maxKey) > 0))
+								(maxKey != null && leaf.getKeyField(0).compareTo(maxKey) > 0))
 								return false;
 							getKeys(leaf);
 							key = keys[0];
@@ -3633,9 +3567,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.FieldIterator#hasPrevious()
-		 */
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
@@ -3653,12 +3584,12 @@ public class Table {
 					// Process previous leaf if needed
 					if (prevIndex < 0) {
 						try {
-							VarKeyRecordNode leaf = ((VarKeyRecordNode) nodeMgr.getVarKeyNode(
-								bufferId)).getPreviousLeaf();
+							FieldKeyRecordNode leaf =
+								((FieldKeyRecordNode) getFieldKeyNode(bufferId)).getPreviousLeaf();
 							if (leaf == null)
 								return false;
-							prevIndex = leaf.keyCount - 1;
-							if (minKey != null && leaf.getKey(prevIndex).compareTo(minKey) < 0)
+							prevIndex = leaf.getKeyCount() - 1;
+							if (minKey != null && leaf.getKeyField(prevIndex).compareTo(minKey) < 0)
 								return false;
 							getKeys(leaf);
 							key = keys[prevIndex];
@@ -3685,9 +3616,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.FieldIterator#next()
-		 */
 		@Override
 		public Field next() throws IOException {
 			if (hasNext || hasNext()) {
@@ -3699,9 +3627,6 @@ public class Table {
 			return null;
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.FieldIterator#previous()
-		 */
 		@Override
 		public Field previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
@@ -3713,9 +3638,6 @@ public class Table {
 			return null;
 		}
 
-		/**
-		 * @see db.DBFieldIterator#delete()
-		 */
 		@Override
 		public boolean delete() throws IOException {
 			if (lastKey != null) {
@@ -3747,7 +3669,7 @@ public class Table {
 	 * A Field key iterator class - optimized for short iterations since
 	 * the number of keys read from each record node is minimized.
 	 */
-	private class VarKeyIterator2 implements DBFieldIterator {
+	private class FieldKeyIterator2 implements DBFieldIterator {
 
 		private int bufferId;
 		private int keyIndex;
@@ -3770,7 +3692,7 @@ public class Table {
 		 * if still null the minimum indexed value will be assumed.
 		 * @throws IOException
 		 */
-		VarKeyIterator2(Field minKey, Field maxKey, Field startKey) throws IOException {
+		FieldKeyIterator2(Field minKey, Field maxKey, Field startKey) throws IOException {
 
 			this.minKey = minKey;
 			this.maxKey = maxKey;
@@ -3786,7 +3708,7 @@ public class Table {
 		 * following a delete.
 		 * @param targetKey the initial key.  For construction this is the startKey, 
 		 * following a delete this is the deleted key.
-		 * @throws IOException
+		 * @throws IOException thrown if IO error occurs
 		 */
 		private void initialize(Field targetKey) throws IOException {
 
@@ -3801,8 +3723,8 @@ public class Table {
 
 			try {
 
-				VarKeyRecordNode leaf;
-				VarKeyNode rootNode = nodeMgr.getVarKeyNode(rootBufferId);
+				FieldKeyRecordNode leaf;
+				FieldKeyNode rootNode = getFieldKeyNode(rootBufferId);
 
 				if (targetKey == null) {
 					targetKey = minKey;
@@ -3812,7 +3734,7 @@ public class Table {
 				if (targetKey == null) {
 					leaf = rootNode.getLeftmostLeafNode();
 					bufferId = leaf.getBufferId();
-					key = leaf.getKey(0);
+					key = leaf.getKeyField(0);
 					keyIndex = 0;
 					hasNext = true;
 					return;
@@ -3821,7 +3743,7 @@ public class Table {
 				bufferId = leaf.getBufferId();
 
 				// Empty leaf node - special case
-				if (leaf.keyCount == 0) {
+				if (leaf.getKeyCount() == 0) {
 					keyIndex = -1;
 					return;
 				}
@@ -3830,7 +3752,7 @@ public class Table {
 
 				// Start key was found
 				if (keyIndex >= 0) {
-					key = leaf.getKey(keyIndex);
+					key = leaf.getKeyField(keyIndex);
 					hasPrev = true;
 					hasNext = true;
 				}
@@ -3838,13 +3760,13 @@ public class Table {
 				// Start key was not found
 				else {
 					keyIndex = -(keyIndex + 1);
-					if (keyIndex == leaf.keyCount) {
+					if (keyIndex == leaf.getKeyCount()) {
 						--keyIndex;
-						key = leaf.getKey(keyIndex);
+						key = leaf.getKeyField(keyIndex);
 						hasPrev = minKey == null ? true : (key.compareTo(minKey) >= 0);
 					}
 					else {
-						key = leaf.getKey(keyIndex);
+						key = leaf.getKeyField(keyIndex);
 						hasNext = maxKey == null ? true : (key.compareTo(maxKey) <= 0);
 					}
 
@@ -3859,16 +3781,13 @@ public class Table {
 		private void reset() throws IOException {
 			boolean hadNext = hasNext;
 			boolean hadPrev = hasPrev;
-			initialize(key); // TODO is this right?
+			initialize(key);
 			if (hasNext && hasPrev) {
 				hasNext = hadNext;
 				hasPrev = hadPrev;
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.FieldIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
@@ -3885,12 +3804,12 @@ public class Table {
 
 					try {
 						// Process next leaf if needed
-						VarKeyRecordNode leaf = (VarKeyRecordNode) nodeMgr.getVarKeyNode(bufferId);
-						if (nextIndex >= leaf.keyCount) {
+						FieldKeyRecordNode leaf = (FieldKeyRecordNode) getFieldKeyNode(bufferId);
+						if (nextIndex >= leaf.getKeyCount()) {
 							leaf = leaf.getNextLeaf();
 							if (leaf == null)
 								return false;
-							Field nextKey = leaf.getKey(0);
+							Field nextKey = leaf.getKeyField(0);
 							if (maxKey != null && nextKey.compareTo(maxKey) > 0)
 								return false;
 							bufferId = leaf.getBufferId();
@@ -3902,7 +3821,7 @@ public class Table {
 
 						// else, use keys cache
 						else {
-							Field nextKey = leaf.getKey(nextIndex);
+							Field nextKey = leaf.getKeyField(nextIndex);
 							hasNext = maxKey == null ? true : (nextKey.compareTo(maxKey) <= 0);
 							if (hasNext) {
 								key = nextKey;
@@ -3919,9 +3838,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.FieldIterator#hasPrevious()
-		 */
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
@@ -3938,13 +3854,13 @@ public class Table {
 
 					try {
 						// Process previous leaf if needed
-						VarKeyRecordNode leaf = (VarKeyRecordNode) nodeMgr.getVarKeyNode(bufferId);
+						FieldKeyRecordNode leaf = (FieldKeyRecordNode) getFieldKeyNode(bufferId);
 						if (prevIndex < 0) {
 							leaf = leaf.getPreviousLeaf();
 							if (leaf == null)
 								return false;
-							prevIndex = leaf.keyCount - 1;
-							Field prevKey = leaf.getKey(prevIndex);
+							prevIndex = leaf.getKeyCount() - 1;
+							Field prevKey = leaf.getKeyField(prevIndex);
 							if (minKey != null && prevKey.compareTo(minKey) < 0)
 								return false;
 							bufferId = leaf.getBufferId();
@@ -3956,7 +3872,7 @@ public class Table {
 
 						// else, use keys cache
 						else {
-							Field prevKey = leaf.getKey(prevIndex);
+							Field prevKey = leaf.getKeyField(prevIndex);
 							hasPrev = minKey == null ? true : (prevKey.compareTo(minKey) >= 0);
 							if (hasPrev) {
 								key = prevKey;
@@ -3973,9 +3889,6 @@ public class Table {
 			}
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.FieldIterator#next()
-		 */
 		@Override
 		public Field next() throws IOException {
 			if (hasNext || hasNext()) {
@@ -3987,9 +3900,6 @@ public class Table {
 			return null;
 		}
 
-		/**
-		 * @see ghidra.framework.store.db.FieldIterator#previous()
-		 */
 		@Override
 		public Field previous() throws IOException {
 			if (hasPrev || hasPrevious()) {
@@ -4001,9 +3911,6 @@ public class Table {
 			return null;
 		}
 
-		/**
-		 * @see db.DBFieldIterator#delete()
-		 */
 		@Override
 		public boolean delete() throws IOException {
 			if (lastKey != null) {
@@ -4017,7 +3924,7 @@ public class Table {
 	}
 
 	/**
-	 * @return
+	 * @return true if table is valid and has not been invalidated
 	 */
 	public boolean isInvalid() {
 		return nodeMgr == null;

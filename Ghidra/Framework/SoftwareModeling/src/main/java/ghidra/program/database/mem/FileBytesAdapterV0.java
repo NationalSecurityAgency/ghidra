@@ -37,8 +37,8 @@ class FileBytesAdapterV0 extends FileBytesAdapter {
 	public static final int V0_LAYERED_BUF_IDS_COL = 4;
 
 	static final Schema SCHEMA = new Schema(VERSION, "Key",
-		new Class[] { StringField.class, LongField.class, LongField.class, BinaryField.class,
-			BinaryField.class },
+		new Field[] { StringField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE,
+			BinaryField.INSTANCE, BinaryField.INSTANCE },
 		new String[] { "Filename", "Offset", "Size", "Chain Buffer IDs",
 			"Layered Chain Buffer IDs" });
 

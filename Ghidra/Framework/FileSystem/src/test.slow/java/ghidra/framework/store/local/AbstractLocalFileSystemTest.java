@@ -600,7 +600,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		DBHandle dbh = new DBHandle();
 		long id = dbh.startTransaction();
 		dbh.createTable("test",
-			new Schema(0, "key", new Class[] { IntField.class }, new String[] { "dummy" }));
+			new Schema(0, "key", new Field[] { IntField.INSTANCE }, new String[] { "dummy" }));
 		dbh.endTransaction(id, true);
 		BufferFile bf =
 			fs.createDatabase("/abc", "fred", null, "Database", dbh.getBufferSize(), "bob", null);
@@ -741,7 +741,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		DBHandle dbh = new DBHandle();
 		long id = dbh.startTransaction();
 		dbh.createTable("test",
-			new Schema(0, "key", new Class[] { IntField.class }, new String[] { "dummy" }));
+			new Schema(0, "key", new Field[] { IntField.INSTANCE }, new String[] { "dummy" }));
 		dbh.endTransaction(id, true);
 		BufferFile bf =
 			fs.createDatabase("/abc", "greg", "123", "Database", dbh.getBufferSize(), "test", null);
@@ -789,7 +789,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		DBHandle dbh = new DBHandle();
 		long id = dbh.startTransaction();
 		dbh.createTable("test",
-			new Schema(0, "key", new Class[] { IntField.class }, new String[] { "dummy" }));
+			new Schema(0, "key", new Field[] { IntField.INSTANCE }, new String[] { "dummy" }));
 		dbh.endTransaction(id, true);
 		BufferFile bf =
 			fs.createDatabase("/abc", "greg", "123", "Database", dbh.getBufferSize(), "test", null);
@@ -933,7 +933,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 		DBHandle dbh = new DBHandle();
 		long id = dbh.startTransaction();
 		dbh.createTable("test",
-			new Schema(0, "key", new Class[] { IntField.class }, new String[] { "dummy" }));
+			new Schema(0, "key", new Field[] { IntField.INSTANCE }, new String[] { "dummy" }));
 		dbh.endTransaction(id, true);
 		BufferFile bf = fs.createDatabase(folderPath, itemName, fileId, "Database",
 			dbh.getBufferSize(), "test", null);

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.exception.VersionException;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.VersionException;
 
 class PointerDBAdapterV2 extends PointerDBAdapter {
 	final static int VERSION = 2;
@@ -47,9 +45,6 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#createRecord(long, int)
-	 */
 	@Override
 	Record createRecord(long dataTypeID, long categoryID, int length) throws IOException {
 		long tableKey = table.getKey();
@@ -63,49 +58,31 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 		return record;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#getRecord(long)
-	 */
 	@Override
 	Record getRecord(long pointerID) throws IOException {
 		return table.getRecord(pointerID);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#getRecords()
-	 */
 	@Override
 	RecordIterator getRecords() throws IOException {
 		return table.iterator();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#removeRecord(long)
-	 */
 	@Override
 	boolean removeRecord(long pointerID) throws IOException {
 		return table.deleteRecord(pointerID);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#updateRecord(ghidra.framework.store.db.Record)
-	 */
 	@Override
 	void updateRecord(Record record) throws IOException {
 		table.putRecord(record);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#getRecordIdsInCategory(long)
-	 */
 	@Override
-	long[] getRecordIdsInCategory(long categoryID) throws IOException {
+	Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), PTR_CATEGORY_COL);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.PointerDBAdapter#deleteTable()
-	 */
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(POINTER_TABLE_NAME);

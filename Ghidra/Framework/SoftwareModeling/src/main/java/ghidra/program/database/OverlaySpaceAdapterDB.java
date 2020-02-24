@@ -30,7 +30,8 @@ import ghidra.util.exception.DuplicateNameException;
 class OverlaySpaceAdapterDB {
 	private static String TABLE_NAME = "Overlay Spaces";
 	static final Schema SCHEMA = new Schema(0, "ID",
-		new Class[] { StringField.class, StringField.class, LongField.class, LongField.class },
+		new Field[] { StringField.INSTANCE, StringField.INSTANCE, LongField.INSTANCE,
+			LongField.INSTANCE },
 		new String[] { "Overlay Space", "Template Space", "Minimum Offset", "Maximum Offset" });
 
 	private static final int OV_SPACE_NAME_COL = 0;

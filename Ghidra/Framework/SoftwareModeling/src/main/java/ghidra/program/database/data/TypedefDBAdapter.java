@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.program.database.data;
 
-import ghidra.util.UniversalID;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.UniversalID;
+import ghidra.util.exception.VersionException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the database table for typedef data types.
@@ -177,7 +175,7 @@ abstract class TypedefDBAdapter {
 	 * @return an array of IDs for the type definition data types in the category.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsInCategory(long categoryID) throws IOException;
+	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
 
 	/**
 	 * Gets an array with the IDs of all data types in the type definition table that were derived
@@ -186,8 +184,15 @@ abstract class TypedefDBAdapter {
 	 * @return the array data type IDs.
 	 * @throws IOException if the database can't be accessed.
 	 */
-	abstract long[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
+	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
+	/**
+	 * Get typedef record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * @param sourceID universal source archive ID
+	 * @param datatypeID universal datatype ID
+	 * @return typedef record found or null
+	 * @throws IOException if IO error occurs
+	 */
 	abstract Record getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
 

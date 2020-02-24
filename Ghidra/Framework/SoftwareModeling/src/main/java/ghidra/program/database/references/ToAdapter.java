@@ -38,17 +38,17 @@ abstract class ToAdapter implements RecordAdapter {
 
 	static final String TO_REFS_TABLE_NAME = "TO REFS";
 	static final int CURRENT_VERSION = 1;
-	static final Schema TO_REFS_SCHEMA = new Schema(CURRENT_VERSION, "To Address", new Class[] {
-		IntField.class, BinaryField.class, ByteField.class }, new String[] { "Number of Refs",
-		"Ref Data", "Ref Level" });
+	static final Schema TO_REFS_SCHEMA = new Schema(CURRENT_VERSION, "To Address",
+		new Field[] { IntField.INSTANCE, BinaryField.INSTANCE, ByteField.INSTANCE },
+		new String[] { "Number of Refs", "Ref Data", "Ref Level" });
 
 	static final int REF_COUNT_COL = 0;
 	static final int REF_DATA_COL = 1;
 	static final int REF_LEVEL_COL = 2;
 
 	static ToAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
-			ErrorHandler errHandler, TaskMonitor monitor) throws VersionException,
-			CancelledException, IOException {
+			ErrorHandler errHandler, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException {
 
 		if (openMode == DBConstants.CREATE) {
 			return new ToAdapterV1(dbHandle, true, addrMap, errHandler);
@@ -91,8 +91,8 @@ abstract class ToAdapter implements RecordAdapter {
 	}
 
 	private static ToAdapter upgrade(DBHandle dbHandle, ToAdapter oldAdapter, AddressMap addrMap,
-			ErrorHandler errHandler, TaskMonitor monitor) throws VersionException, IOException,
-			CancelledException {
+			ErrorHandler errHandler, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 		DBHandle tmpHandle = new DBHandle();

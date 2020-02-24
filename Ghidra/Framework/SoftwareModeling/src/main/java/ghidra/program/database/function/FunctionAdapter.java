@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.program.database.function;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-
-import db.*;
 
 /**
  * Database adapter for functions.
@@ -51,11 +49,11 @@ abstract class FunctionAdapter {
 
 	static final int FUNCTION_SIGNATURE_SOURCE_SHIFT = 4; // bit shift for flag storage of "signature SourceType"
 
-	final static Schema FUNCTION_SCHEMA =
-		new Schema(CURRENT_VERSION, "ID", new Class[] { LongField.class, IntField.class,
-			IntField.class, IntField.class, ByteField.class, ByteField.class, StringField.class },
-			new String[] { "Return DataType ID", "StackPurge", "StackReturnOffset",
-				"StackLocalSize", "Flags", "Calling Convention ID", "Return Storage" });
+	final static Schema FUNCTION_SCHEMA = new Schema(CURRENT_VERSION, "ID",
+		new Field[] { LongField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE, IntField.INSTANCE,
+			ByteField.INSTANCE, ByteField.INSTANCE, StringField.INSTANCE },
+		new String[] { "Return DataType ID", "StackPurge", "StackReturnOffset", "StackLocalSize",
+			"Flags", "Calling Convention ID", "Return Storage" });
 
 	protected AddressMap addrMap;
 

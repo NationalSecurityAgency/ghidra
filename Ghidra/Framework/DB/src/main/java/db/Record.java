@@ -29,15 +29,15 @@ import ghidra.util.exception.AssertException;
  * 
  */
 public class Record implements Comparable<Record> {
-	
+
 	private Field key;
 
 	private Field[] fieldValues;
 	private boolean dirty = false;
-	
+
 	private int length = -1;
 	private boolean isVariableLength;
-	
+
 	/**
 	 * Construct a new record.
 	 * The schema is derived from the field values supplied.
@@ -48,7 +48,7 @@ public class Record implements Comparable<Record> {
 		this.key = key;
 		this.fieldValues = fieldValues;
 	}
-	
+
 	/**
 	 * Set the primary key associated with this record.
 	 * @param key primary key
@@ -56,9 +56,9 @@ public class Record implements Comparable<Record> {
 	public void setKey(long key) {
 		if (!(this.key instanceof LongField))
 			throw new AssertException();
-		this.key = new LongField(key);	
+		this.key = new LongField(key);
 	}
-	
+
 	/**
 	 * Set the primary key associated with this record.
 	 * @param key primary key
@@ -66,9 +66,9 @@ public class Record implements Comparable<Record> {
 	public void setKey(Field key) {
 		if (!this.key.getClass().equals(key.getClass()))
 			throw new AssertException();
-		this.key = key;	
+		this.key = key;
 	}
-	
+
 	/**
 	 * Get the record primary key.
 	 * @return primary key as long value.
@@ -76,7 +76,7 @@ public class Record implements Comparable<Record> {
 	public long getKey() {
 		return key.getLongValue();
 	}
-	
+
 	/**
 	 * Get the record primary key as a Field object.
 	 * @return primary key as a field object.
@@ -84,7 +84,7 @@ public class Record implements Comparable<Record> {
 	public Field getKeyField() {
 		return key;
 	}
-	
+
 	/**
 	 * Determine if this record's schema is the same as another record's
 	 * schema.  This check factors column count and column field types only.
@@ -107,17 +107,19 @@ public class Record implements Comparable<Record> {
 	/**
 	 * Determine if this record's schema is compatible with the specified schema.  
 	 * This check factors column count and column field types only.
-	 * @param schema
+	 * @param schema other schema
 	 * @return true if records schemas are the same
 	 */
 	public boolean hasSameSchema(Schema schema) {
-
 		if (fieldValues.length != schema.getFieldCount()) {
 			return false;
 		}
-		Class<?>[] schemaFieldClasses = schema.getFieldClasses();
+		if (!key.isSameType(schema.getKeyFieldType())) {
+			return false;
+		}
+		Field[] otherFields = schema.getFields();
 		for (int i = 0; i < fieldValues.length; i++) {
-			if (!fieldValues[i].getClass().equals(schemaFieldClasses[i])) {
+			if (!fieldValues[i].isSameType(otherFields[i])) {
 				return false;
 			}
 		}
@@ -131,7 +133,7 @@ public class Record implements Comparable<Record> {
 	public int getColumnCount() {
 		return fieldValues.length;
 	}
-	
+
 	/**
 	 * Get a copy of the specified field value.
 	 * @param columnIndex
@@ -139,9 +141,9 @@ public class Record implements Comparable<Record> {
 	 */
 	public Field getFieldValue(int columnIndex) {
 		Field f = fieldValues[columnIndex];
-		return f.newField(f);
+		return f.copyField();
 	}
-	
+
 	/**
 	 * Set the field value for the specified field.
 	 * @param colIndex field index
@@ -153,7 +155,7 @@ public class Record implements Comparable<Record> {
 		}
 		fieldValues[colIndex] = value;
 	}
-	
+
 	/**
 	 * Get the specified field.  The object returned must not be
 	 * modified.
@@ -163,7 +165,7 @@ public class Record implements Comparable<Record> {
 	Field getField(int columnIndex) {
 		return fieldValues[columnIndex];
 	}
-	
+
 	/**
 	 * Get all fields. The objects returned must not be
 	 * modified.
@@ -172,7 +174,7 @@ public class Record implements Comparable<Record> {
 	Field[] getFields() {
 		return fieldValues;
 	}
-	
+
 	/**
 	 * Determine if the specified field equals the field associated with the
 	 * specified columnIndex.
@@ -183,7 +185,7 @@ public class Record implements Comparable<Record> {
 	public boolean fieldEquals(int columnIndex, Field field) {
 		return fieldValues[columnIndex].equals(field);
 	}
-	
+
 	/**
 	 * Compare two field values.
 	 * @param columnIndex the field index within this record
@@ -195,22 +197,22 @@ public class Record implements Comparable<Record> {
 	public int compareFieldTo(int columnIndex, Field value) {
 		return fieldValues[columnIndex].compareTo(value);
 	}
-	
+
 	/**
 	 * Obtain a copy of this record object.
 	 * @return Record
 	 */
 	public Record copy() {
-		
-		Field newKey = key.newField(key);
+
+		Field newKey = key.copyField();
 		Field[] fields = new Field[fieldValues.length];
 		for (int i = 0; i < fields.length; i++) {
 			Field f = fieldValues[i];
-			fields[i] = f.newField(f);
+			fields[i] = f.copyField();
 		}
 		return new Record(newKey, fields);
 	}
-	
+
 	/**
 	 * Get the stored record length.
 	 * This method is used to determine the space required to store the data 
@@ -228,7 +230,7 @@ public class Record implements Comparable<Record> {
 		}
 		return length;
 	}
-	
+
 	/**
 	 * Get the long value for the specified field.
 	 * @param colIndex field index
@@ -238,7 +240,7 @@ public class Record implements Comparable<Record> {
 	public long getLongValue(int colIndex) {
 		return fieldValues[colIndex].getLongValue();
 	}
-	
+
 	/**
 	 * Set the long value for the specified field.
 	 * @param colIndex field index
@@ -249,7 +251,7 @@ public class Record implements Comparable<Record> {
 		dirty = true;
 		fieldValues[colIndex].setLongValue(value);
 	}
-	
+
 	/**
 	 * Get the integer value for the specified field.
 	 * @param colIndex field index
@@ -270,7 +272,7 @@ public class Record implements Comparable<Record> {
 		dirty = true;
 		fieldValues[colIndex].setIntValue(value);
 	}
-	
+
 	/**
 	 * Get the short value for the specified field.
 	 * @param colIndex field index
@@ -280,7 +282,7 @@ public class Record implements Comparable<Record> {
 	public short getShortValue(int colIndex) {
 		return fieldValues[colIndex].getShortValue();
 	}
-	
+
 	/**
 	 * Set the short value for the specified field.
 	 * @param colIndex field index
@@ -291,7 +293,7 @@ public class Record implements Comparable<Record> {
 		dirty = true;
 		fieldValues[colIndex].setShortValue(value);
 	}
-	
+
 	/**
 	 * Get the byte value for the specified field.
 	 * @param colIndex field index
@@ -301,7 +303,7 @@ public class Record implements Comparable<Record> {
 	public byte getByteValue(int colIndex) {
 		return fieldValues[colIndex].getByteValue();
 	}
-	
+
 	/**
 	 * Set the byte value for the specified field.
 	 * @param colIndex field index
@@ -322,7 +324,7 @@ public class Record implements Comparable<Record> {
 	public boolean getBooleanValue(int colIndex) {
 		return fieldValues[colIndex].getBooleanValue();
 	}
-	
+
 	/**
 	 * Set the boolean value for the specified field.
 	 * @param colIndex field index
@@ -333,7 +335,7 @@ public class Record implements Comparable<Record> {
 		dirty = true;
 		fieldValues[colIndex].setBooleanValue(value);
 	}
-	
+
 	/**
 	 * Get the binary data array for the specified field.
 	 * @param colIndex field index
@@ -343,19 +345,20 @@ public class Record implements Comparable<Record> {
 	public byte[] getBinaryData(int colIndex) {
 		return fieldValues[colIndex].getBinaryData();
 	}
-	
+
 	/**
 	 * Set the binary data array for the specified field.
 	 * @param colIndex field index
 	 * @param bytes field value
 	 * @throws IllegalFieldAccessException if field does support binary data access
+	 * or incorrect number of bytes provided
 	 */
 	public void setBinaryData(int colIndex, byte[] bytes) {
 		dirty = true;
 		length = -1;
 		fieldValues[colIndex].setBinaryData(bytes);
 	}
-	
+
 	/**
 	 * Get the string value for the specified field.
 	 * @param colIndex field index
@@ -365,7 +368,7 @@ public class Record implements Comparable<Record> {
 	public String getString(int colIndex) {
 		return fieldValues[colIndex].getString();
 	}
-	
+
 	/**
 	 * Set the string value for the specified field.
 	 * @param colIndex field index
@@ -390,7 +393,7 @@ public class Record implements Comparable<Record> {
 		}
 		dirty = false;
 	}
-	
+
 	/**
 	 * Read the record field data from the specified buffer and offset
 	 * @param buf data buffer
@@ -403,7 +406,7 @@ public class Record implements Comparable<Record> {
 		}
 		dirty = false;
 	}
-	
+
 	/**
 	 * Determine if data fields have been modified since the last write
 	 * occurred.
@@ -412,23 +415,24 @@ public class Record implements Comparable<Record> {
 	public boolean isDirty() {
 		return dirty;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return key.hashCode();
 	}
+
 	/**
 	 * Compare the content of two Records for equality.
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
-    public boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		if (!(obj instanceof Record))
 			return false;
 		Record rec = (Record) obj;
 		return key.equals(rec.key) && Arrays.equals(fieldValues, rec.fieldValues);
 	}
-	
+
 	/**
 	 * Compares the key associated with this record with the 
 	 * key of another record (obj).
@@ -438,5 +442,10 @@ public class Record implements Comparable<Record> {
 	public int compareTo(Record otherRec) {
 		return key.compareTo(otherRec.key);
 	}
-	
+
+	@Override
+	public String toString() {
+		return "{key:" + key + "}";
+	}
+
 }

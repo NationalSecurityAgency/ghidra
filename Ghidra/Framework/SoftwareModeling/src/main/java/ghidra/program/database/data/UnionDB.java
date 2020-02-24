@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 import java.util.*;
 
+import db.Field;
 import db.Record;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.DBObjectCache;
@@ -55,9 +56,9 @@ class UnionDB extends CompositeDB implements Union {
 		components = new ArrayList<>();
 
 		try {
-			long[] ids = componentAdapter.getComponentIdsInComposite(key);
-			for (long id : ids) {
-				Record rec = componentAdapter.getRecord(id);
+			Field[] ids = componentAdapter.getComponentIdsInComposite(key);
+			for (Field id : ids) {
+				Record rec = componentAdapter.getRecord(id.getLongValue());
 				components.add(new DataTypeComponentDB(dataMgr, componentAdapter, this, rec));
 			}
 		}

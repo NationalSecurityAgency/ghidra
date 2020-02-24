@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,10 @@
  */
 package ghidra.program.database.symbol;
 
-import ghidra.util.exception.*;
-
 import java.io.IOException;
 
 import db.*;
+import ghidra.util.exception.*;
 
 /**
  * Implementation for Version 0 of the adapter that accesses the 
@@ -74,20 +72,20 @@ class EquateDBAdapterV0 extends EquateDBAdapter {
 	 */
 	@Override
 	long getRecordKey(String name) throws IOException, NotFoundException {
-		long[] keys = equateTable.findRecords(new StringField(name), NAME_COL);
+		Field[] keys = equateTable.findRecords(new StringField(name), NAME_COL);
 		if (keys.length == 0) {
 			throw new NotFoundException("Equate named " + name + " was not found");
 		}
 		if (keys.length > 1) {
-			throw new AssertException("Expected one record for " + name + " but found " +
-				keys.length);
+			throw new AssertException(
+				"Expected one record for " + name + " but found " + keys.length);
 		}
-		return keys[0];
+		return keys[0].getLongValue();
 	}
 
 	@Override
 	boolean hasRecord(String name) throws IOException {
-		long[] keys = equateTable.findRecords(new StringField(name), NAME_COL);
+		Field[] keys = equateTable.findRecords(new StringField(name), NAME_COL);
 		return keys.length > 0;
 	}
 

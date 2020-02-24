@@ -35,9 +35,10 @@ public class RecoveryDBTest extends AbstractGenericTest {
 	private static int RECORD_COUNT = 1000;
 
 	private static Schema SCHEMA =
-		new Schema(1, "key", new Class[] { StringField.class }, new String[] { "field1" });
+		new Schema(1, "key", new Field[] { StringField.INSTANCE }, new String[] { "field1" });
 
-	private static final File testDir = new File(AbstractGenericTest.getTestDirectoryPath(), "test");
+	private static final File testDir =
+		new File(AbstractGenericTest.getTestDirectoryPath(), "test");
 
 	private LocalFileSystem fileSystem;
 

@@ -296,9 +296,8 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 				bm.setComment(comment);
 			}
 			else {
-				Record rec =
-					bookmarkAdapter.createBookmark(typeId, category, addrMap.getKey(addr, true),
-						comment);
+				Record rec = bookmarkAdapter.createBookmark(typeId, category,
+					addrMap.getKey(addr, true), comment);
 				bm = new BookmarkDB(this, cache, rec);
 
 				// fire event
@@ -606,9 +605,8 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		RecordIterator it;
 		try {
 			if (bmt != null && bmt.hasBookmarks()) {
-				it =
-					bookmarkAdapter.getRecordsByTypeStartingAtAddress(bmt.getTypeId(),
-						addrMap.getKey(startAddress, false), forward);
+				it = bookmarkAdapter.getRecordsByTypeStartingAtAddress(bmt.getTypeId(),
+					addrMap.getKey(startAddress, false), forward);
 			}
 			else {
 				it = new EmptyRecordIterator();
@@ -761,11 +759,10 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		try {
 			Table table = bookmarkAdapter.getTable(typeId);
 			if (table != null) {
-				DBLongIterator it =
-					new AddressIndexPrimaryKeyIterator(table, BookmarkDBAdapter.ADDRESS_COL,
-						addrMap, set, true);
+				DBFieldIterator it = new AddressIndexPrimaryKeyIterator(table,
+					BookmarkDBAdapter.ADDRESS_COL, addrMap, set, true);
 				while (it.hasNext()) {
-					BookmarkDB bm = (BookmarkDB) getBookmark(it.next());
+					BookmarkDB bm = (BookmarkDB) getBookmark(it.next().getLongValue());
 					if (category == null || category.equals(bm.getCategory())) {
 						doRemoveBookmark(bm);
 					}

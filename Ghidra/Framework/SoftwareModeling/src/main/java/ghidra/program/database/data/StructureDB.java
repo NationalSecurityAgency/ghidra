@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 import java.util.*;
 
+import db.Field;
 import db.Record;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.DBObjectCache;
@@ -65,9 +66,9 @@ class StructureDB extends CompositeDB implements Structure {
 		components = new ArrayList<>();
 
 		try {
-			long[] ids = componentAdapter.getComponentIdsInComposite(key);
-			for (long id : ids) {
-				Record rec = componentAdapter.getRecord(id);
+			Field[] ids = componentAdapter.getComponentIdsInComposite(key);
+			for (Field id : ids) {
+				Record rec = componentAdapter.getRecord(id.getLongValue());
 				DataTypeComponentDB component =
 					new DataTypeComponentDB(dataMgr, componentAdapter, this, rec);
 				if (component.isFlexibleArrayComponent()) {
@@ -83,6 +84,7 @@ class StructureDB extends CompositeDB implements Structure {
 		}
 
 		Collections.sort(components, componentComparator);
+
 		structLength = record.getIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL);
 		numComponents = record.getIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL);
 	}

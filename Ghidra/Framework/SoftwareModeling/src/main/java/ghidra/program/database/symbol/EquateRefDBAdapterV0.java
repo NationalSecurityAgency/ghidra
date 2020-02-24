@@ -75,7 +75,7 @@ class EquateRefDBAdapterV0 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecordKeysFrom(long)
 	 */
 	@Override
-	long[] getRecordKeysForAddr(long addr) throws IOException {
+	Field[] getRecordKeysForAddr(long addr) throws IOException {
 		return refTable.findRecords(new LongField(addr), ADDR_COL);
 	}
 
@@ -91,7 +91,7 @@ class EquateRefDBAdapterV0 extends EquateRefDBAdapter {
 	 * @see ghidra.program.database.symbol.EquateRefDBAdapter#getRecordsForEquateID(long)
 	 */
 	@Override
-	long[] getRecordKeysForEquateID(long equateID) throws IOException {
+	Field[] getRecordKeysForEquateID(long equateID) throws IOException {
 		return refTable.findRecords(new LongField(equateID), EQUATE_ID_COL);
 	}
 

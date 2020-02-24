@@ -265,8 +265,7 @@ public class DBTest extends AbstractGenericTest {
 		for (TableRecord tableRecord : tableRecords) {
 			if (tableRecord.getIndexedColumn() < 0) {
 				if (tableCnt > 0) {
-					Schema schema = lastTable.getSchema();
-					assertEquals(schema.getFieldClasses().length, indexCnt);
+					assertEquals(DBTestUtils.getIndexedColumnCount(tableCnt - 1), indexCnt);
 				}
 				String name = "TABLE" + tableCnt;
 				lastTable = dbh.getTable(name);
@@ -281,7 +280,9 @@ public class DBTest extends AbstractGenericTest {
 				if (lastTable == null) {
 					Assert.fail();
 				}
-				assertEquals(indexCnt, tableRecord.getIndexedColumn());
+				int[] indexedColumns = DBTestUtils.getIndexedColumns(tableCnt - 1);
+				assertTrue(indexCnt < indexedColumns.length);
+				assertEquals(indexedColumns[indexCnt], tableRecord.getIndexedColumn());
 				assertEquals(lastTable.getName(), tableRecord.getName());
 				assertEquals(Long.MIN_VALUE, tableRecord.getMaxKey());
 				assertEquals(0, tableRecord.getRecordCount());
@@ -290,8 +291,7 @@ public class DBTest extends AbstractGenericTest {
 			}
 
 		}
-		Schema schema = lastTable.getSchema();
-		assertEquals(schema.getFieldClasses().length, indexCnt);
+		assertEquals(DBTestUtils.getIndexedColumnCount(tableCnt - 1), indexCnt);
 		assertEquals(DBTestUtils.MAX_SCHEMA_TYPE + 1, tableCnt);
 
 	}
@@ -387,8 +387,7 @@ public class DBTest extends AbstractGenericTest {
 		for (TableRecord tableRecord : tableRecords) {
 			if (tableRecord.getIndexedColumn() < 0) {
 				if (tableCnt > 0) {
-					Schema schema = lastTable.getSchema();
-					assertEquals(schema.getFieldClasses().length, indexCnt);
+					assertEquals(DBTestUtils.getIndexedColumnCount(2 * (tableCnt - 1)), indexCnt);
 				}
 				String name = "TABLE" + (2 * tableCnt);
 				lastTable = dbh.getTable(name);
@@ -403,7 +402,9 @@ public class DBTest extends AbstractGenericTest {
 				if (lastTable == null) {
 					Assert.fail();
 				}
-				assertEquals(indexCnt, tableRecord.getIndexedColumn());
+				int[] indexedColumns = DBTestUtils.getIndexedColumns(2 * (tableCnt - 1));
+				assertTrue(indexCnt < indexedColumns.length);
+				assertEquals(indexedColumns[indexCnt], tableRecord.getIndexedColumn());
 				assertEquals(lastTable.getName(), tableRecord.getName());
 				assertEquals(Long.MIN_VALUE, tableRecord.getMaxKey());
 				assertEquals(0, tableRecord.getRecordCount());
@@ -413,7 +414,7 @@ public class DBTest extends AbstractGenericTest {
 
 		}
 		Schema schema = lastTable.getSchema();
-		assertEquals(schema.getFieldClasses().length, indexCnt);
+		assertEquals(schema.getFields().length, indexCnt);
 		assertEquals(totalTableCnt, tableCnt);
 
 	}
