@@ -19,15 +19,29 @@ import java.awt.Component;
 import java.math.BigInteger;
 import java.util.Comparator;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.TableModel;
 
-import docking.widgets.table.*;
+import docking.widgets.table.AbstractDynamicTableColumn;
+import docking.widgets.table.DiscoverableTableUtils;
+import docking.widgets.table.GTableCellRenderingData;
+import docking.widgets.table.TableColumnDescriptor;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeIterator;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.Resource;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.DataIterator;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
@@ -38,7 +52,10 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
-import ghidra.util.table.field.*;
+import ghidra.util.table.field.AddressTableColumn;
+import ghidra.util.table.field.FunctionNameTableColumn;
+import ghidra.util.table.field.PreviewTableColumn;
+import ghidra.util.table.field.ProgramLocationTableColumn;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -366,7 +383,7 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 
 		@Override
 		public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
-			return ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY;
+			return ColumnConstraintFilterMode.ALLOW_CONSTRAINTS_FILTER_ONLY;
 		}
 
 		@Override
@@ -376,8 +393,8 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	}
 
 	private abstract class AbstractScalarValueTableColumn
-	extends AbstractDynamicTableColumn<ScalarRowObject, Scalar, Program>
-	implements ProgramLocationTableColumn<ScalarRowObject, Scalar> {
+			extends AbstractDynamicTableColumn<ScalarRowObject, Scalar, Program>
+			implements ProgramLocationTableColumn<ScalarRowObject, Scalar> {
 
 		@Override
 		public Comparator<Scalar> getComparator() {
@@ -417,10 +434,9 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 				setFont(fixedWidthFont);
 			}
 
-
 			@Override
 			public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
-				return ColumnConstraintFilterMode.USE_BOTH_COLUMN_RENDERER_FITLER_STRING_AND_CONSTRAINTS;
+				return ColumnConstraintFilterMode.ALLOW_ALL_FILTERS;
 			}
 
 		};
@@ -522,7 +538,6 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 				return scalar.toString(RADIX, ZERO_PADDED, SHOW_SIGN, PREFIX, SUFFIX);
 			}
 
-
 		};
 
 		@Override
@@ -553,8 +568,8 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	}
 
 	private class ScalarBitCountTableColumn
-	extends AbstractDynamicTableColumn<ScalarRowObject, Integer, Program>
-	implements ProgramLocationTableColumn<ScalarRowObject, Integer> {
+			extends AbstractDynamicTableColumn<ScalarRowObject, Integer, Program>
+			implements ProgramLocationTableColumn<ScalarRowObject, Integer> {
 
 		private static final int BIT_COUNT_COL_WIDTH = 80;
 
@@ -588,8 +603,8 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 	}
 
 	private class ScalarSignednessTableColumn
-	extends AbstractDynamicTableColumn<ScalarRowObject, Signedness, Program>
-	implements ProgramLocationTableColumn<ScalarRowObject, Signedness> {
+			extends AbstractDynamicTableColumn<ScalarRowObject, Signedness, Program>
+			implements ProgramLocationTableColumn<ScalarRowObject, Signedness> {
 
 		private static final int SIGNEDNESS_COL_WIDTH = 100;
 
