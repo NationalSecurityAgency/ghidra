@@ -258,4 +258,10 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+class OptionAliasBlock : public ArchOption {
+public:
+  OptionAliasBlock(void) { name = "aliasblock"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
 #endif

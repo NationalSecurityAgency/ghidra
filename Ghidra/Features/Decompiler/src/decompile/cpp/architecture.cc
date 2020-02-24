@@ -96,6 +96,7 @@ Architecture::Architecture(void)
   infer_pointers = true;
   funcptr_align = 0;
   flowoptions = 0;
+  alias_block_level = 2;	// Block structs and arrays by default
   defaultfp = (ProtoModel *)0;
   defaultReturnAddr.space = (AddrSpace *)0;
   evalfp_current = (ProtoModel *)0;
