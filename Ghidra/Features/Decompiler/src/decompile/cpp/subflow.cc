@@ -347,14 +347,14 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
   bool booldir;
   int4 dcount = 0;
   int4 hcount = 0;
+  int4 callcount = 0;
 
   list<PcodeOp *>::const_iterator iter,enditer;
-  iter = rvn->vn->beginDescend();
   enditer = rvn->vn->endDescend();
-  while(iter != enditer) {
-    op = *iter++;
+  for(iter = rvn->vn->beginDescend();iter != enditer;++iter) {
+    op = *iter;
     outvn = op->getOut();
-    if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
+    if ((outvn!=(Varnode *)0)&&outvn->isMark()&&!op->isCall())
       continue;
     dcount += 1;		// Count this descendant
     slot = op->getSlot(rvn->vn);
@@ -557,6 +557,9 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       break;
     case CPUI_CALL:
     case CPUI_CALLIND:
+      callcount += 1;
+      if (callcount > 1)
+	slot = op->getRepeatSlot(rvn->vn, slot, iter);
       if (!tryCallPull(op,rvn,slot)) return false;
       hcount += 1;		// Dealt with this descendant
       break;
@@ -781,14 +784,14 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
   int4 slot;
   int4 dcount = 0;
   int4 hcount = 0;
+  int4 callcount = 0;
 
   list<PcodeOp *>::const_iterator iter,enditer;
-  iter = rvn->vn->beginDescend();
   enditer = rvn->vn->endDescend();
-  while(iter != enditer) {
-    op = *iter++;
+  for(iter=rvn->vn->beginDescend();iter != enditer;++iter) {
+    op = *iter;
     outvn = op->getOut();
-    if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
+    if ((outvn!=(Varnode *)0)&&outvn->isMark()&&!op->isCall())
       continue;
     dcount += 1;		// Count this descendant
     slot = op->getSlot(rvn->vn);
@@ -836,6 +839,9 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
       break;
     case CPUI_CALL:
     case CPUI_CALLIND:
+      callcount += 1;
+      if (callcount > 1)
+	slot = op->getRepeatSlot(rvn->vn, slot, iter);
       if (!tryCallPull(op,rvn,slot)) return false;
       hcount += 1;		// Dealt with this descendant
       break;
