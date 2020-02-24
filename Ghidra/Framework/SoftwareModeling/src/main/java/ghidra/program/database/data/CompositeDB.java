@@ -672,7 +672,7 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		for (DataTypeComponent dtc : getComponents()) {
 			DataType dataType = dtc.getDataType();
 			buffer.append(pad + dtc.getOffset());
-			buffer.append(pad + dataType.getDisplayName());
+			buffer.append(pad + dataType.getName());
 			if (dataType instanceof BitFieldDataType) {
 				BitFieldDataType bfDt = (BitFieldDataType) dataType;
 				buffer.append("(");

@@ -701,7 +701,6 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		// Clone the data types we want to hold onto for comparison later, since reload can close the viewDTM.
 		DataType dt15 = getDataType(15).clone(programDTM);
 		DataType dt16 = getDataType(16).clone(programDTM);
-		DataType dt17 = getDataType(17).clone(programDTM);
 		DataType dt18 = getDataType(18).clone(programDTM);
 		DataType dt19 = getDataType(19).clone(programDTM);
 		DataType dt20 = getDataType(20).clone(programDTM);
@@ -731,6 +730,9 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 			new StructureDataType(new CategoryPath("/aa/bb"), "simpleStructure", 10);
 		newSimpleStructure.add(new PointerDataType(), 8);
 		newSimpleStructure.replace(2, new CharDataType(), 1);
+
+		DataType dt17 = new ArrayDataType(new PointerDataType(newSimpleStructure, 8, model.viewDTM),
+			7, -1, model.viewDTM);
 
 		// Change the struct.  simpleStructure was 29 bytes, but now 18.
 		runSwing(() -> {

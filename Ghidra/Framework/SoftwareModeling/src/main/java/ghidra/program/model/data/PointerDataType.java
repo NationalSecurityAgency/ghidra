@@ -253,6 +253,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	@Override
 	public String getDisplayName() {
+		// NOTE: Pointer display name only specifies length if null base type
 		if (displayName == null) {
 			DataType dt = getDataType();
 			if (dt == null) {
@@ -581,5 +582,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			name = constructUniqueName(referencedDataType, length);
 		}
 		return super.getName();
+	}
+
+	@Override
+	public String toString() {
+		return getName(); // always include pointer length
 	}
 }

@@ -1942,7 +1942,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			"   0   word   2   null   \"\"\n" + 
 			"   0   undefined * * * * *   4   null   \"\"\n" + 
 			"   0   DLL_Table   96   null   \"\"\n" + 
-			"   0   DLL_Table *   4   null   \"\"\n" + 
+			"   0   DLL_Table *32   4   null   \"\"\n" + 
 			"}\n" + 
 			"Size = 96   Actual Alignment = 1\n", union.toString());
 		//@formatter:on

@@ -17,13 +17,13 @@ package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
+import org.junit.*;
+
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-
-import org.junit.*;
 
 /**
  * Tests for the {@link DataTypeConflictHandler conflict handler} stuff.
@@ -494,8 +494,16 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		struct.replace(0, dtm.resolve(new PointerDataType(resolvedStruct, 4, dtm),
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER), 4);
 
+		// NOTE: placing a DB dataType in an Impl datatype results in an invalid
+		// Impl type if one of its children refer to a deleted datatype.  The
+		// 'struct' instance is such a case.
+
 		DataType resolvedStructA = dtm.resolve(struct,
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		// Update struct with the expected result (old empty struct was replaced)
+		struct.replace(0, new PointerDataType(resolvedStructA, 4, dtm), 4);
+
 		assertTrue(struct.isEquivalent(resolvedStructA));
 		assertEquals("/subc/struct1", resolvedStructA.getPathName());
 

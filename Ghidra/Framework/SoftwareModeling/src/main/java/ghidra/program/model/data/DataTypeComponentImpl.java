@@ -357,7 +357,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("  " + ordinal);
 		buffer.append("  " + offset);
-		buffer.append("  " + dataType.getDisplayName());
+		buffer.append("  " + dataType.getName());
 		if (isFlexibleArrayComponent) {
 			buffer.append("[ ]");
 		}
