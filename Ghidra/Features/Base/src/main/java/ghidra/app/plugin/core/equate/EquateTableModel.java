@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,6 +42,11 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 	private EquateTablePlugin plugin;
 	private List<Equate> equateList = new ArrayList<>();
+
+	// For testing
+	static final int NAME_COL = 0;
+	static final int VALUE_COL = 1;
+	static final int REFS_COL = 2;
 
 	EquateTableModel(EquateTablePlugin plugin) {
 		super(plugin.getTool());
