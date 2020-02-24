@@ -50,6 +50,8 @@
         <register name="r27"/>
         <register name="r28"/>
         <register name="r29"/>
+        <register name="ep"/>
+        <register name="lp"/>
       </unaffected>
     
     </prototype>
