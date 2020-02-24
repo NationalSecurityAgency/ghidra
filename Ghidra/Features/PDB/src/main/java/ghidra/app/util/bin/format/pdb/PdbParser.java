@@ -1351,10 +1351,6 @@ public class PdbParser {
 		return getDataTypeParser().getCachedDataType(name);
 	}
 
-	void addDataType(DataType dataType) {
-		getDataTypeParser().addDataType(dataType);
-	}
-
 	WrappedDataType findDataType(String dataTypeName) throws CancelledException {
 		return getDataTypeParser().findDataType(dataTypeName);
 	}
