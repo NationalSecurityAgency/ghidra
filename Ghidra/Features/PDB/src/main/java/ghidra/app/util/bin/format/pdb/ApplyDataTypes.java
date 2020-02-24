@@ -64,7 +64,7 @@ public class ApplyDataTypes {
 		compositeQueue.clear();
 	}
 
-	private List<CompositeDefinition> getCompositeDefinitionsInpostDependencyOrder(
+	private List<CompositeDefinition> getCompositeDefinitionsInPostDependencyOrder(
 			TaskMonitor monitor) {
 
 		JungDirectedGraph<CompositeDefinition, GEdge<CompositeDefinition>> graph =
@@ -102,7 +102,7 @@ public class ApplyDataTypes {
 		monitor.setMessage("Order PDB datatypes... ");
 
 		List<CompositeDefinition> verticesInPostOrder =
-			getCompositeDefinitionsInpostDependencyOrder(monitor);
+			getCompositeDefinitionsInPostDependencyOrder(monitor);
 
 		monitor.setMessage("Building PDB datatypes... ");
 
@@ -116,7 +116,7 @@ public class ApplyDataTypes {
 				!cachedDataType.getCategoryPath().equals(
 					pdbParser.getCategory(symbolPath.getParent(), true)) ||
 				!pdbParser.isCorrectKind(cachedDataType, compositeDefinition.kind)) {
-				log.appendMsg("Error: Conflicting data type name: " + compositeDefinition.name);
+				log.appendMsg("PDB", "Conflicting data type name: " + compositeDefinition.name);
 				continue;
 			}
 			Composite composite = (Composite) cachedDataType;
@@ -169,7 +169,7 @@ public class ApplyDataTypes {
 				compositeQueue.put(compositeDefinition.name, compositeDefinition);
 
 				if (pdbParser.getCachedDataType(compositeDefinition.name) != null) {
-					log.appendMsg("Error: Data type name collision - unable to define " +
+					log.appendMsg("PDB", "Data type name collision - unable to define " +
 						compositeDefinition.kind.getCamelName() + ": " + compositeDefinition.name);
 					continue;
 				}
@@ -181,8 +181,8 @@ public class ApplyDataTypes {
 				Composite composite =
 					pdbParser.createComposite(compositeDefinition.kind, compositeDefinition.name);
 				if (composite == null) {
-					log.appendMsg("Unsupported datatype kind (" + compositeDefinition.kind + "): " +
-						compositeDefinition.name);
+					log.appendMsg("PDB", "Unsupported datatype kind (" + compositeDefinition.kind +
+						"): " + compositeDefinition.name);
 					continue;
 				}
 //								if (!isClasses) {

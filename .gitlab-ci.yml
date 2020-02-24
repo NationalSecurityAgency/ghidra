@@ -12,3 +12,4 @@ test-parallel:
   image: ghidra/ubuntu
   only:
     - master
+    - web

@@ -124,9 +124,9 @@ void iterateDataTypes(PDBApiContext& ctx) {
 		}
 
 		const ULONGLONG len = getLength(*pSymbol);
-		if (len == 0) {
-			continue;
-		}
+//		if (len == 0) {
+//			continue;
+//		}
 
 		printf("%S<datatype name=\"%S\" kind=\"%S\" length=\"0x%I64x\" >\n", indent(8).c_str(), getName(*pSymbol).c_str(), getKindAsString(*pSymbol).c_str(), len);
 
@@ -192,9 +192,9 @@ void iterateClasses(PDBApiContext& ctx) {
 		}
 
 		const ULONGLONG len  = getLength(*pSymbol);
-		if ( len == 0 ) {
-			continue;
-		}
+//		if ( len == 0 ) {
+//			continue;
+//		}
 
 		printf("%S<class name=\"%S\" length=\"0x%I64x\" >\n", indent(8).c_str(), getName(*pSymbol).c_str(), len);
 
@@ -323,7 +323,7 @@ void dumpFunctionLines( IDiaSymbol& symbol, IDiaSession& session )
 		DWORD end = 0;
 		pLine->get_lineNumberEnd( &end );
 
-		printf("%S<line_number source_file=\"%ws\" start=\"0x%x\" end=\"0x%x\" addr=\"0x%x\" /> \n",
+		printf("%S<line_number source_file=\"%ws\" start=\"%d\" end=\"%d\" addr=\"0x%x\" /> \n",
 					indent(12).c_str(), sourceFileName.GetBSTR(), start, end, addr);
 	}
 }

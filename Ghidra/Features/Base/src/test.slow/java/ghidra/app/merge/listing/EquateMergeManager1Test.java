@@ -15,7 +15,7 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -59,8 +59,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		super();
 	}
 
-@Test
-    public void testRemoveEquate() throws Exception {
+	@Test
+	public void testRemoveEquate() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
 			/* (non-Javadoc)
@@ -139,8 +139,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		assertEquals(0, equates.size());
 	}
 
-@Test
-    public void testChangeEquate() throws Exception {
+	@Test
+	public void testChangeEquate() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
 			/* (non-Javadoc)
@@ -211,7 +211,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		Address addr = addr(program, address);
 		Equate oldEquate = equateTab.getEquate(addr, opIndex, value);
 		if (oldEquate.getName().equals(newName)) {
-			Assert.fail("Equate '" + oldEquate.getName() + "' already exists with value=" + value + ".");
+			Assert.fail(
+				"Equate '" + oldEquate.getName() + "' already exists with value=" + value + ".");
 		}
 		oldEquate.removeReference(addr, opIndex);
 		try {
@@ -220,8 +221,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 				newEquate = equateTab.createEquate(newName, value);
 			}
 			if (newEquate.getValue() != value) {
-				Assert.fail("Can't create equate '" + newEquate.getName() + "' with value=" + value +
-					". It already exists with value=" + newEquate.getValue() + ".");
+				Assert.fail("Can't create equate '" + newEquate.getName() + "' with value=" +
+					value + ". It already exists with value=" + newEquate.getValue() + ".");
 			}
 			newEquate.addReference(addr, opIndex);
 		}
@@ -230,8 +231,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		}
 	}
 
-@Test
-    public void testRemoveVsChangeEquate() throws Exception {
+	@Test
+	public void testRemoveVsChangeEquate() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
 			/* (non-Javadoc)
@@ -285,7 +286,7 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		assertEquals(1L, eq.getValue());
 	}
 
-@Test
+	@Test
 	public void testAddNameDiffPickMy() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
@@ -344,53 +345,56 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testAddNameDiffOnWordDataUpperBit0PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new WordDataType(), new byte[] { (byte) 0x5f,
-			(byte) 0x5f }, 0x5f5f, true);
+		runTestAddNameDiffPickIndicated("0x1002d24", new WordDataType(),
+			new byte[] { (byte) 0x5f, (byte) 0x5f }, 0x5f5f, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnWordDataUpperBit1PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new WordDataType(), new byte[] { (byte) 0xad,
-			(byte) 0xad }, 0xadad, true);
+		runTestAddNameDiffPickIndicated("0x1002d24", new WordDataType(),
+			new byte[] { (byte) 0xad, (byte) 0xad }, 0xadad, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedWordDataUpperBit0PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new SignedWordDataType(), new byte[] {
-			(byte) 0x5f, (byte) 0x5f }, 0x5f5fL, true);
+		runTestAddNameDiffPickIndicated("0x1002d24", new SignedWordDataType(),
+			new byte[] { (byte) 0x5f, (byte) 0x5f }, 0x5f5fL, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedWordDataUpperBit1PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new SignedWordDataType(), new byte[] {
-			(byte) 0xad, (byte) 0xad }, 0xffffffffffffadadL, true);
+		runTestAddNameDiffPickIndicated("0x1002d24", new SignedWordDataType(),
+			new byte[] { (byte) 0xad, (byte) 0xad }, 0xffffffffffffadadL, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedQWordDataUpperBit0PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new SignedQWordDataType(), new byte[] {
-			(byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f,
-			(byte) 0x5f, (byte) 0x5f }, 0x5f5f5f5f5f5f5f5fL, true);
+		runTestAddNameDiffPickIndicated(
+			"0x1002d24", new SignedQWordDataType(), new byte[] { (byte) 0x5f, (byte) 0x5f,
+				(byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f },
+			0x5f5f5f5f5f5f5f5fL, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedQWordDataUpperBit1PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new SignedQWordDataType(), new byte[] {
-			(byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad,
-			(byte) 0xad, (byte) 0xad }, 0xadadadadadadadadL, true);
+		runTestAddNameDiffPickIndicated(
+			"0x1002d24", new SignedQWordDataType(), new byte[] { (byte) 0xad, (byte) 0xad,
+				(byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad },
+			0xadadadadadadadadL, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedInt5DataUpperBit0PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new Integer5DataType(), new byte[] {
-			(byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f }, 0x5f5f5f5f5fL, true);
+		runTestAddNameDiffPickIndicated("0x1002d24", new Integer5DataType(),
+			new byte[] { (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f },
+			0x5f5f5f5f5fL, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedInt5DataUpperBit1PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new Integer5DataType(), new byte[] {
-			(byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad }, 0xffffffadadadadadL,
-			true);
+		runTestAddNameDiffPickIndicated("0x1002d24", new Integer5DataType(),
+			new byte[] { (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad },
+			0xffffffadadadadadL, true);
 	}
 
 	@Test
@@ -409,43 +413,48 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 
 	@Test
 	public void testAddNameDiffOnSignedInt7DataUpperBit0PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new Integer7DataType(), new byte[] {
-			(byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f,
-			(byte) 0x5f }, 0x5f5f5f5f5f5f5fL, true);
+		runTestAddNameDiffPickIndicated("0x1002d24", new Integer7DataType(),
+			new byte[] { (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f,
+				(byte) 0x5f, (byte) 0x5f },
+			0x5f5f5f5f5f5f5fL, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedInt7DataUpperBit1PickMy() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new Integer7DataType(), new byte[] {
-			(byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad,
-			(byte) 0xad }, 0xffadadadadadadadL, true);
+		runTestAddNameDiffPickIndicated("0x1002d24", new Integer7DataType(),
+			new byte[] { (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad,
+				(byte) 0xad, (byte) 0xad },
+			0xffadadadadadadadL, true);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedWordDataUpperBit0PickLatest() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new SignedWordDataType(), new byte[] {
-			(byte) 0x5f, (byte) 0x5f }, 0x5f5fL, false);
+		runTestAddNameDiffPickIndicated("0x1002d24", new SignedWordDataType(),
+			new byte[] { (byte) 0x5f, (byte) 0x5f }, 0x5f5fL, false);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedQWordDataUpperBit0PickLatest() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new SignedQWordDataType(), new byte[] {
-			(byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f,
-			(byte) 0x5f, (byte) 0x5f }, 0x5f5f5f5f5f5f5f5fL, false);
+		runTestAddNameDiffPickIndicated(
+			"0x1002d24", new SignedQWordDataType(), new byte[] { (byte) 0x5f, (byte) 0x5f,
+				(byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f, (byte) 0x5f },
+			0x5f5f5f5f5f5f5f5fL, false);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedQWordDataUpperBit1PickLatest() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new SignedQWordDataType(), new byte[] {
-			(byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad,
-			(byte) 0xad, (byte) 0xad }, 0xadadadadadadadadL, false);
+		runTestAddNameDiffPickIndicated(
+			"0x1002d24", new SignedQWordDataType(), new byte[] { (byte) 0xad, (byte) 0xad,
+				(byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad },
+			0xadadadadadadadadL, false);
 	}
 
 	@Test
 	public void testAddNameDiffOnSignedInt5DataUpperBit1PickLatest() throws Exception {
-		runTestAddNameDiffPickIndicated("0x1002d24", new Integer5DataType(), new byte[] {
-			(byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad,
-			(byte) 0xad, (byte) 0xad }, 0xffffffadadadadadL, false);
+		runTestAddNameDiffPickIndicated(
+			"0x1002d24", new Integer5DataType(), new byte[] { (byte) 0xad, (byte) 0xad, (byte) 0xad,
+				(byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad, (byte) 0xad },
+			0xffffffadadadadadL, false);
 	}
 
 	@Test
@@ -476,10 +485,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 				try {
 					Listing listing = program.getListing();
 					Address startAddr = addr(program, "0x1002d20");
-					program.getMemory().setBytes(
-						startAddr,
-						new byte[] { (byte) 0x8d, (byte) 0x04, (byte) 0x8d, (byte) 0x0, (byte) 0x0,
-							(byte) 0x0, (byte) 0x0 }); //LEA EAX,[0x0 + ECX*0x4]
+					program.getMemory().setBytes(startAddr, new byte[] { (byte) 0x8d, (byte) 0x04,
+						(byte) 0x8d, (byte) 0x0, (byte) 0x0, (byte) 0x0, (byte) 0x0 }); //LEA EAX,[0x0 + ECX*0x4]
 					createInstruction(program, startAddr);
 					Instruction instruction = listing.getInstructionAt(startAddr);
 					Assert.assertTrue(instruction != null);
@@ -491,7 +498,7 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 				}
 				finally {
 					program.endTransaction(txId, commit);
-			}
+				}
 			}
 
 			@Override
@@ -533,7 +540,7 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 				}
 				finally {
 					program.endTransaction(txId, commit);
-			}
+				}
 			}
 		});
 	}
@@ -579,11 +586,11 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		List<Equate> equates = equateTab.getEquates(addr("0x1002d20"), 1);
 		assertEquals(2, equates.size());
 		Equate eq = equates.get(0);
-		assertEquals("ZERO", eq.getName());
-		assertEquals(0L, eq.getValue());
-		eq = equates.get(1);
 		assertEquals("QUAD", eq.getName());
 		assertEquals(4L, eq.getValue());
+		eq = equates.get(1);
+		assertEquals("ZERO", eq.getName());
+		assertEquals(0L, eq.getValue());
 	}
 
 	@Test
@@ -595,8 +602,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		setupAddNameDiffOnSubOperand();
 
 		executeMerge(ASK_USER);
-		chooseEquate("0x1002d20", 1, KEEP_LATEST); // 0x0
 		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x4
+		chooseEquate("0x1002d20", 1, KEEP_LATEST); // 0x0
 		waitForMergeCompletion();
 
 		EquateTable equateTab = resultProgram.getEquateTable();
@@ -620,8 +627,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		setupAddNameDiffOnSubOperand();
 
 		executeMerge(ASK_USER);
-		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x0
 		chooseEquate("0x1002d20", 1, KEEP_LATEST); // 0x4
+		chooseEquate("0x1002d20", 1, KEEP_MY); // 0x0
 		waitForMergeCompletion();
 
 		EquateTable equateTab = resultProgram.getEquateTable();
@@ -637,7 +644,7 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 	}
 
 	@Test
-    public void testAddSameNameDiffValue() throws Exception {
+	public void testAddSameNameDiffValue() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
 			/* (non-Javadoc)
@@ -703,8 +710,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		assertEquals(1L, eq.getValue());
 	}
 
-@Test
-    public void testAddSameNameDiffValueWithResolve() throws Exception {
+	@Test
+	public void testAddSameNameDiffValueWithResolve() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
 
 			/* (non-Javadoc)
@@ -808,8 +815,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		});
 	}
 
-@Test
-    public void testChangeEquateUseForAllPickLatest() throws Exception {
+	@Test
+	public void testChangeEquateUseForAllPickLatest() throws Exception {
 		setupUseForAll();
 
 		executeMerge(ASK_USER);
@@ -832,8 +839,8 @@ public class EquateMergeManager1Test extends AbstractListingMergeManagerTest {
 		assertEquals(1L, eq.getValue());
 	}
 
-@Test
-    public void testChangeEquateUseForAllPickMy() throws Exception {
+	@Test
+	public void testChangeEquateUseForAllPickMy() throws Exception {
 		setupUseForAll();
 
 		executeMerge(ASK_USER);

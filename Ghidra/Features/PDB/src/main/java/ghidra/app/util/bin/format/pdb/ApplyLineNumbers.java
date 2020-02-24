@@ -62,9 +62,9 @@ class ApplyLineNumbers {
 			// "REP" (f3) portion (beginning) of the instruction.
 			CodeUnit cu = program.getListing().getCodeUnitContaining(address);
 			if (cu == null) {
-				log.appendMsg(
-					"Could not apply source code line number found in PDB (no code unit found at " +
-						address + ")");
+				log.appendMsg("PDB",
+					"Could not apply source code line number (no code unit found at " + address +
+						")");
 			}
 			else {
 				cu.setProperty("Source Path", sourcefileName);

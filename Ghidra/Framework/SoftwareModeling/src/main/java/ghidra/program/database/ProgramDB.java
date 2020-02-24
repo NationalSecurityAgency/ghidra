@@ -284,7 +284,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		if (monitor == null) {
 			monitor = TaskMonitorAdapter.DUMMY;
 		}
-		
+
 		boolean success = false;
 		try {
 			int id = startTransaction("create program");
@@ -2284,8 +2284,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * Translate language
 	 * @param translator language translator, if null only re-disassembly will occur.
 	 * @param newCompilerSpecID new compiler specification which corresponds to new language, may be null.
-	 * @param monitor
-	 * @throws LockException 
+	 * @param forceRedisassembly if true a redisassembly will be forced even if not required
+	 * @param monitor task monitor
+	 * @throws LockException if exclusive access is missing 
 	 */
 	public void setLanguage(LanguageTranslator translator, CompilerSpecID newCompilerSpecID,
 			boolean forceRedisassembly, TaskMonitor monitor) throws LockException {
@@ -2296,7 +2297,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		try {
 			setEventsEnabled(false);
 			try {
-				boolean notifyCodeManager = true;
+				boolean redisassemblyRequired = true;
 				int oldLanguageVersion = languageVersion;
 				int oldLanguageMinorVersion = languageMinorVersion;
 				if (translator != null) {
@@ -2311,7 +2312,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				}
 				else if (!forceRedisassembly && language.getVersion() == languageVersion &&
 					language.getMinorVersion() == languageMinorVersion) {
-					notifyCodeManager = false; // compiler spec change only
+					redisassemblyRequired = false; // compiler spec change only
 					Msg.info(this, "Setting compiler spec for Program " + getName() + ": " +
 						compilerSpecID + " -> " + newCompilerSpecID);
 				}
@@ -2350,15 +2351,14 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				monitor.setProgress(0);
 				ProgramRegisterContextDB contextMgr =
 					(ProgramRegisterContextDB) getProgramContext();
-				if (translator != null) {
+				if (redisassemblyRequired) {
 					contextMgr.setLanguage(translator, compilerSpec, memoryManager, monitor);
 				}
 				else {
-					// force re-initialization
 					contextMgr.initializeDefaultValues(language, compilerSpec);
 				}
 
-				if (notifyCodeManager) {
+				if (redisassemblyRequired) {
 					Disassembler.clearUnimplementedPcodeWarnings(this, null, monitor);
 					repairContext(oldLanguageVersion, oldLanguageMinorVersion, translator, monitor);
 					monitor.setMessage("Updating instructions...");

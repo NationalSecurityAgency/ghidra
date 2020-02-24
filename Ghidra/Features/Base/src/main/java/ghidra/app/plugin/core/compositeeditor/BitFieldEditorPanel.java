@@ -60,6 +60,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 	private DataTypeSelectionEditor dtChoiceEditor;
 	private JTextField fieldNameTextField;
+	private JTextField fieldCommentTextField;
 	private SpinnerNumberModel allocSizeModel;
 	private JSpinnerWithMouseWheel allocSizeInput;
 	private SpinnerNumberModel bitOffsetModel;
@@ -156,6 +157,9 @@ public class BitFieldEditorPanel extends JPanel {
 		fieldNameTextField = new JTextField(20);
 		fieldNameTextField.setFocusable(true);
 
+		fieldCommentTextField = new JTextField(20);
+		fieldCommentTextField.setFocusable(true);
+
 		allocSizeModel = new SpinnerNumberModel(Long.valueOf(4), Long.valueOf(1), Long.valueOf(16),
 			Long.valueOf(1));
 		allocSizeInput = new JSpinnerWithMouseWheel(allocSizeModel);
@@ -189,8 +193,8 @@ public class BitFieldEditorPanel extends JPanel {
 		entryPanel.add(new JLabel("Bit Size:"));
 		entryPanel.add(bitSizeInput);
 
-		entryPanel.add(new JPanel());
-		entryPanel.add(new JPanel());
+		entryPanel.add(new JLabel("Comment:"));
+		entryPanel.add(fieldCommentTextField);
 
 		entryPanel.add(new JLabel("Bit Offset:"));
 		entryPanel.add(bitOffsetInput);
@@ -389,7 +393,7 @@ public class BitFieldEditorPanel extends JPanel {
 				: initialBaseDataType.getLength();
 		placementComponent.updateAllocation((int) allocationSize, allocationOffset);
 		placementComponent.initAdd(1, bitOffset);
-		initControls(null, initialBaseDataType, 1);
+		initControls(null, null, initialBaseDataType, 1);
 		enableControls(true);
 	}
 
@@ -403,6 +407,7 @@ public class BitFieldEditorPanel extends JPanel {
 	void initEdit(DataTypeComponent bitfieldDtc, int allocationOffset,
 			boolean useExistingAllocationSize) {
 		String initialFieldName = null;
+		String initialComment = null;
 		DataType initialBaseDataType = null;
 		int allocationSize = -1;
 		if (useExistingAllocationSize) {
@@ -413,6 +418,7 @@ public class BitFieldEditorPanel extends JPanel {
 				throw new IllegalArgumentException("unsupport data type component");
 			}
 			initialFieldName = bitfieldDtc.getFieldName();
+			initialComment = bitfieldDtc.getComment();
 			BitFieldDataType bitfieldDt = (BitFieldDataType) bitfieldDtc.getDataType();
 			initialBaseDataType = bitfieldDt.getBaseDataType();
 			if (allocationSize < 1) {
@@ -429,7 +435,8 @@ public class BitFieldEditorPanel extends JPanel {
 		placementComponent.updateAllocation(allocationSize, allocationOffset);
 		placementComponent.init(bitfieldDtc);
 		BitFieldAllocation bitFieldAllocation = placementComponent.getBitFieldAllocation(); // get updated instance
-		initControls(initialFieldName, initialBaseDataType, bitFieldAllocation.getBitSize());
+		initControls(initialFieldName, initialComment, initialBaseDataType,
+			bitFieldAllocation.getBitSize());
 		enableControls(bitfieldDtc != null);
 	}
 
@@ -437,13 +444,14 @@ public class BitFieldEditorPanel extends JPanel {
 		placementComponent.componentDeleted(ordinal);
 	}
 
-	private void initControls(String initialFieldName, DataType initialBaseDataType,
-			int initialBitSize) {
+	private void initControls(String initialFieldName, String initialComment,
+			DataType initialBaseDataType, int initialBitSize) {
 		updating = true;
 		try {
 			baseDataType = initialBaseDataType;
 			dtChoiceEditor.setCellEditorValue(initialBaseDataType);
 			fieldNameTextField.setText(initialFieldName);
+			fieldCommentTextField.setText(initialComment);
 
 			// Use current placementComponent to obtain initial values
 			allocSizeModel.setValue((long) placementComponent.getAllocationByteSize());
@@ -513,7 +521,7 @@ public class BitFieldEditorPanel extends JPanel {
 			deleteConflicts = (option == OptionDialog.OPTION_ONE);
 		}
 		placementComponent.applyBitField(baseDataType, fieldNameTextField.getText().trim(),
-			deleteConflicts, listener);
+			fieldCommentTextField.getText().trim(), deleteConflicts, listener);
 		enableControls(false);
 		return true;
 	}
@@ -522,6 +530,7 @@ public class BitFieldEditorPanel extends JPanel {
 		dtChoiceEditor.getBrowseButton().setEnabled(enable);
 		dtChoiceEditor.getDropDownTextField().setEnabled(enable);
 		fieldNameTextField.setEnabled(enable);
+		fieldCommentTextField.setEnabled(enable);
 		allocSizeInput.setEnabled(enable);
 		bitSizeInput.setEnabled(enable);
 		bitOffsetInput.setEnabled(enable);
@@ -529,6 +538,8 @@ public class BitFieldEditorPanel extends JPanel {
 			// TODO: set placementComponent mode to NONE
 			dtChoiceEditor.getDropDownTextField().setText("");
 			fieldNameTextField.setText(null);
+			fieldCommentTextField.setText(null);
+			;
 			bitOffsetModel.setValue(0L);
 			bitSizeModel.setValue(1L);
 		}
