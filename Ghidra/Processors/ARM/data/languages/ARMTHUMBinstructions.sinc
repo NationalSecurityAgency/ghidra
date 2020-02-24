@@ -142,9 +142,12 @@ define token instrThumb (16)
   sysm02=(0,2)
   
 
+  thc0001=(0,1)
   thc0002=(0,2)
   thc0003=(0,3)
   thc0004=(0,4)
+  thc0005=(0,5)
+  thc0006=(0,6)
   thc0007=(0,7)
   thc0011=(0,11)
   thc0107=(1,7)
@@ -590,9 +593,9 @@ Rn_exclaim_WB: 	is Rn0810 & thc0810=7 & thc0707=1			{ }
 Rn_exclaim_WB: 	is Rn0810 & thc0810							{ Rn0810 = mult_addr; }
 
 # ldlist  is the list of registers to be loaded or popped
-LdRtype0: "{ "^r0			is            thc0000=1 & r0 & thc0107=0	{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype0: "{ "^r0^","		is            thc0000=1 & r0 			{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
-LdRtype0: "{"			is            thc0000=0				{ }
+LdRtype0: " "^r0			is            thc0000=1 & r0 & thc0107=0	{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype0: " "^r0^","		is            thc0000=1 & r0 			{ r0 = *mult_addr; mult_addr = mult_addr + 4; }
+LdRtype0: 					is            thc0000=0				{ }
 LdRtype1: LdRtype0 r1		is LdRtype0 & thc0101=1 & r1 & thc0207=0	{ r1 = *mult_addr; mult_addr = mult_addr + 4; }
 LdRtype1: LdRtype0 r1^","	is LdRtype0 & thc0101=1 & r1			{ r1 = *mult_addr; mult_addr = mult_addr + 4; }
 LdRtype1: LdRtype0		is LdRtype0 & thc0101=0				{ }
@@ -615,8 +618,8 @@ ldlist:   LdRtype6 r7		is LdRtype6 & thc0707=1 & r7			{ r7 = *mult_addr; mult_ad
 ldlist:   LdRtype6		is LdRtype6 & thc0707=0				{ }
 
 #strlist is the list of registers to be stored
-StrType0: r0			is thc0000=1 & r0 & thc0107=0			{ *mult_addr = r0; mult_addr = mult_addr + 4; }
-StrType0: r0^","		is thc0000=1 & r0				{ *mult_addr = r0; mult_addr = mult_addr + 4; }
+StrType0: " "^r0			is thc0000=1 & r0 & thc0107=0			{ *mult_addr = r0; mult_addr = mult_addr + 4; }
+StrType0: " "^r0^","		is thc0000=1 & r0				{ *mult_addr = r0; mult_addr = mult_addr + 4; }
 StrType0:			is thc0000=0					{ }
 StrType1: StrType0 r1		is StrType0 & thc0101=1 & r1 & thc0207=0	{ *mult_addr = r1; mult_addr = mult_addr + 4; }
 StrType1: StrType0 r1^","	is StrType0 & thc0101=1 & r1			{ *mult_addr = r1; mult_addr = mult_addr + 4; }
@@ -636,8 +639,9 @@ StrType5: StrType4		is StrType4 & thc0505=0				{ }
 StrType6: StrType5 r6		is StrType5 & thc0606=1 & r6 & thc0707=0	{ *mult_addr = r6; mult_addr = mult_addr + 4; }
 StrType6: StrType5 r6^","	is StrType5 & thc0606=1 & r6			{ *mult_addr = r6; mult_addr = mult_addr + 4; }
 StrType6: StrType5		is StrType5 & thc0606=0				{ }
-strlist:  StrType6 r7	is StrType6 & thc0707=1 & r7	{ *mult_addr = r7; mult_addr = mult_addr + 4; }
-strlist:  StrType6	is StrType6 & thc0707=0		{ }
+StrType7: StrType6 r7		is StrType6 & thc0707=1 & r7	{ *mult_addr = r7; mult_addr = mult_addr + 4; }
+StrType7: StrType6      is StrType6 & thc0707=0		{ }
+strlist:  StrType7	is StrType7 { }
 
 # pshlist is the list registers to be pushed to memory
 # SCR 10921, fix the order in which the regs appear in the disassembled insn, to be in line with objdump
@@ -866,8 +870,8 @@ thstrlist_dec: { r0 thsdec1 } 	is thc0000=1 & thsdec1 & r0 & thc0115=0		{ * mult
 thstrlist_dec: { r0^"," thsdec1 } is thc0000=1 & thsdec1 & r0                	{ * mult_addr=r0; mult_addr = mult_addr - 4; }
 thstrlist_dec: { thsdec1 }  	is thc0000=0 & thsdec1				{ }
 
-ldbrace: ldlist }	is ldlist			{ }
-stbrace: { strlist }	is strlist			{ }
+ldbrace: {ldlist }	is ldlist			{ }
+stbrace: {strlist }	is strlist			{ }
 psbrace: { pshlist }	is pshlist			{ }
 
 # Some extra subconstructors for the push and pop instructions
