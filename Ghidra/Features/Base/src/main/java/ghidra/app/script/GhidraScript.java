@@ -924,7 +924,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	public void println(String message) {
 		String decoratedMessage = getScriptName() + "> " + message;
 
-		// note: use a Message object to facilite script message log filtering
+		// note: use a Message object to facilitate script message log filtering
 		Msg.info(GhidraScript.class, new ScriptMessage(decoratedMessage));
 
 		if (isRunningHeadless()) {
@@ -3700,7 +3700,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @see #getRepeatableComment(Address)
 	 */
 	public String getRepeatableCommentAsRendered(Address address) {
-		String comment = currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		String comment =
+			currentProgram.getListing().getComment(CodeUnit.REPEATABLE_COMMENT, address);
 		PluginTool tool = state.getTool();
 		if (tool != null) {
 			comment = CommentUtils.getDisplayString(comment, currentProgram);

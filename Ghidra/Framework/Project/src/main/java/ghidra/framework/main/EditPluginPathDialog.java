@@ -18,8 +18,6 @@
 package ghidra.framework.main;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,6 +32,7 @@ import javax.swing.event.ListSelectionListener;
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.framework.plugintool.PluginTool;
@@ -45,20 +44,18 @@ import ghidra.util.filechooser.GhidraFileFilter;
 
 /**
  * Dialog for editing the Plugin path and Jar directory path preferences.
+ * 
  * <p>The Plugin Path and Jar directory path are locations where Ghidra searches
  * for plugins to load. The Plugin Path is specified exactly as a Java Classpath
- * is specified. The Jar directory is searched only for Jar files containing
- * Plugins. When changes are made to these fields in the dialog, the 
+ * is specified.  When changes are made to these fields in the dialog, the 
  * preferences file is updated and written to disk. The preferences file is
  * located in the .ghidra directory in the user's home directory.
- * </P>
- * <p> The preferences file also contains the last project that was opened,
- * and the positions of the Ghidra Project Window and other tools that were
- * running when the user last exited Ghidra. 
- * </P>
+ * 
  */
 class EditPluginPathDialog extends DialogComponentProvider {
 
+	static final String ADD_DIR_BUTTON_TEXT = "Add Dir ...";
+	static final String ADD_JAR_BUTTON_TEXT = "Add Jar ...";
 	private final static int SIDE_MARGIN = 5;
 	private final static Color INVALID_PATH_COLOR = Color.red.brighter();
 	private final static Color INVALID_SELECTED_PATH_COLOR = Color.pink;
@@ -80,7 +77,6 @@ class EditPluginPathDialog extends DialogComponentProvider {
 	// gui members needed for dis/enabling and other state-dependent actions
 	private JScrollPane scrollPane; // need for preferred size when resizing
 	private JList<String> pluginPathsList;
-	private BrowsePathPanel jarPathPanel;
 	private GhidraFileChooser fileChooser;
 	private JButton upButton;
 	private JButton downButton;
@@ -94,7 +90,6 @@ class EditPluginPathDialog extends DialogComponentProvider {
 	 * Creates a non-modal dialog with OK, Apply, Cancel buttons.
 	 * The OK and Apply buttons will be enabled when user makes unapplied
 	 * changes to the UserPluginPath or UserPluginJarDirectory property values.
-	 * @param parent parent to this dialog
 	 */
 	EditPluginPathDialog() {
 		super("Edit Plugin Path", true, false, true, false);
@@ -134,8 +129,6 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		// subsequent panels
 		mainPanel.add(buildPluginPathsPanel());
 		mainPanel.add(Box.createVerticalStrut(10));
-		mainPanel.add(buildJarDirectoryPanel());
-		mainPanel.add(Box.createVerticalStrut(10));
 		mainPanel.add(Box.createVerticalGlue());
 		mainPanel.add(statusMessagePanel);
 		mainPanel.invalidate();
@@ -147,49 +140,20 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		return mainPanel;
 	}
 
-	/**
-	 * Gets called when the user selects Apply
-	 */
 	@Override
 	protected void applyCallback() {
-		// validate the jar path before applying changes, since the user
-		// is pressing the Apply button to save this setting
-		String jarPathname = jarPathPanel.getPath();
-		if (jarPathname.length() > 0) {
-			File jarPath = new File(jarPathname);
-			if (!jarPath.isDirectory() || !jarPath.canRead()) {
-				setStatusMessage("Bad Jar Directory: " + jarPathname);
-				jarPathPanel.requestFocus();
-				return;
-			}
-		}
-
-		// do the things we need to do to handle the applied changes
 		handleApply();
 	}
 
-	/**
-	 * Gets called when the user selects Cancel
-	 */
 	@Override
 	protected void cancelCallback() {
 		close();
+
 		// reset original state of dialog for next display of dialog
 		enableButtons(false);
 		setStatusMessage(EMPTY_STATUS);
 		setApplyEnabled(false);
 		errorMsg = null;
-	}
-
-	/**
-	 * if the jar directory field has focus, don't let the base dialog
-	 * handle it.
-	 */
-	@Override
-	protected void escapeCallback() {
-		if (!jarPathPanel.hasFocus()) {
-			super.escapeCallback();
-		}
 	}
 
 	/**
@@ -206,30 +170,21 @@ class EditPluginPathDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * re-set the list of paths each time the dialog is shown
+	 * Reset the list of paths each time the dialog is shown
+	 * @param tool the tool
 	 */
 	public void show(PluginTool tool) {
 		setPluginPathsListData(Preferences.getPluginPaths());
-		initJarDirectory();
+		setApplyEnabled(pluginPathsChanged);
+		setStatusMessage(EMPTY_STATUS);
+
 		// setting the path enables the apply, but we know we haven't
 		// made any changes yet, so disable
 		setApplyEnabled(false);
 		tool.showDialog(this);
 	}
 
-	/**
-	 * Method enableApply.
-	 */
-	void enableApply() {
-		setApplyEnabled(pluginPathsChanged || jarPathPanel.isChanged());
-	}
-
-	void initJarDirectory() {
-		setApplyEnabled(pluginPathsChanged);
-		setStatusMessage(EMPTY_STATUS);
-	}
-
-	void setStatusMessage(String msg) {
+	private void setStatusMessage(String msg) {
 		if (msg == null || msg.length() == 0) {
 			msg = EMPTY_STATUS;
 		}
@@ -237,15 +192,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		statusMessage.invalidate();
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#setApplyEnabled(boolean)
-	 */
-	@Override
-	protected void setApplyEnabled(boolean state) {
-		super.setApplyEnabled(state);
-	}
-
-	void addJarCallback() {
+	private void addJarCallback() {
 
 		setStatusMessage(EditPluginPathDialog.EMPTY_STATUS);
 
@@ -253,7 +200,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 			fileChooser = new GhidraFileChooser(getComponent());
 			fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 		}
-		fileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 		fileChooser.setFileFilter(JAR_FILTER);
 		fileChooser.setApproveButtonToolTipText("Choose Plugin Jar File");
 		fileChooser.setApproveButtonText("Add Jar File");
@@ -277,7 +224,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		}
 	}
 
-	void addDirCallback() {
+	private void addDirCallback() {
 
 		setStatusMessage(EditPluginPathDialog.EMPTY_STATUS);
 
@@ -285,7 +232,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 			fileChooser = new GhidraFileChooser(getComponent());
 			fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 		}
-		fileChooser.setFileSelectionMode(GhidraFileChooser.DIRECTORIES_ONLY);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 		fileChooser.setFileFilter(GhidraFileFilter.ALL);
 		fileChooser.setApproveButtonToolTipText("Choose Directory with Plugin class Files");
 		fileChooser.setApproveButtonText("Add Directory");
@@ -310,63 +257,31 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		}
 	}
 
-	/**
-	 * Returns an array of pathnames where plugins can be found; used by custom
-	 * class loader when searching for plugins.
-	 */
 	private String[] getUserPluginPaths() {
 		String[] pluginsArray = new String[listModel.size()];
 		listModel.copyInto(pluginsArray);
 		return pluginsArray;
 	}
 
-	/**
-	 * construct the plugin paths button panel
-	 */
 	private JPanel buildPluginPathsPanel() {
 		// create the UP and DOWN arrows panel
 		upButton = ButtonPanelFactory.createButton(ButtonPanelFactory.ARROW_UP_TYPE);
 		upButton.setName("UpArrow");
-		upButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				handleSelection(UP);
-			}
-		});
+		upButton.addActionListener(e -> handleSelection(UP));
 		downButton = ButtonPanelFactory.createButton(ButtonPanelFactory.ARROW_DOWN_TYPE);
 		downButton.setName("DownArrow");
-		downButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				handleSelection(DOWN);
-			}
-		});
+		downButton.addActionListener(e -> handleSelection(DOWN));
 		JPanel arrowButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
 		arrowButtonsPanel.add(upButton);
 		arrowButtonsPanel.add(downButton);
 
 		// create the Add and Remove panel
-		JButton addJarButton = ButtonPanelFactory.createButton("Add Jar...");
-		addJarButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				addJarCallback();
-			}
-		});
-		JButton addDirButton = ButtonPanelFactory.createButton("Add Dir...");
-		addDirButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				addDirCallback();
-			}
-		});
+		JButton addJarButton = ButtonPanelFactory.createButton(ADD_JAR_BUTTON_TEXT);
+		addJarButton.addActionListener(e -> addJarCallback());
+		JButton addDirButton = ButtonPanelFactory.createButton(ADD_DIR_BUTTON_TEXT);
+		addDirButton.addActionListener(e -> addDirCallback());
 		removeButton = ButtonPanelFactory.createButton("Remove");
-		removeButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				handleSelection(REMOVE);
-			}
-		});
+		removeButton.addActionListener(e -> handleSelection(REMOVE));
 		Dimension d = addJarButton.getPreferredSize();
 		addDirButton.setPreferredSize(d);
 		removeButton.setPreferredSize(d);
@@ -415,26 +330,6 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		return pluginPathListPanel;
 	}
 
-	/**
-	 * construct the jar directory panel
-	 */
-	private JPanel buildJarDirectoryPanel() {
-
-		ActionListener listener = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				jarPathPanel.showFileChooser();
-				enableApply();
-			}
-		};
-
-		jarPathPanel = new BrowsePathPanel(this, listener, "UserPluginJarDirectory");
-		jarPathPanel.setText(Preferences.getProperty(Preferences.USER_PLUGIN_JAR_DIRECTORY));
-		jarPathPanel.setBorder(new TitledBorder("User Plugin Jar Directory"));
-
-		return jarPathPanel;
-	}
-
 	private void enableButtons(boolean enabled) {
 		upButton.setEnabled(enabled);
 		downButton.setEnabled(enabled);
@@ -452,22 +347,12 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		// update Ghidra Preferences with new paths
 		Preferences.setPluginPaths(userPluginPaths);
 
-		// Get user Jar directory
-		String jarDirectoryName = jarPathPanel.getPath();
-		if (jarDirectoryName.trim().length() == 0) {
-			jarDirectoryName = null;
-		}
-
-		// update Ghidra Preferences with new Jar path           
-		Preferences.setProperty(Preferences.USER_PLUGIN_JAR_DIRECTORY, jarDirectoryName);
-
 		errorMsg = null;
 		// save the new values
 		if (Preferences.store()) {
 			setStatusMessage("Saved plugin paths successfully!");
 			// indicate to user all changes have been applied
 			setApplyEnabled(false);
-			jarPathPanel.setChanged(false);
 
 			Msg.showInfo(getClass(), rootPanel, "Restart Ghidra",
 				"You must restart Ghidra in order\n" + "for path changes to take effect.");
@@ -479,10 +364,6 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		}
 	}
 
-	/**
-	 * dispatched method for handling button actions on the
-	 * dialog
-	 */
 	private void handleSelection(byte whichAction) {
 		// if nothing selected, nothing to do
 		if (selectedInList == null) {
@@ -574,8 +455,8 @@ class EditPluginPathDialog extends DialogComponentProvider {
 
 	private void setPluginPathsListData(String[] pluginPathNames) {
 		listModel.clear();
-		for (int p = 0; p < pluginPathNames.length; p++) {
-			listModel.addElement(pluginPathNames[p]);
+		for (String pluginPathName : pluginPathNames) {
+			listModel.addElement(pluginPathName);
 		}
 	}
 

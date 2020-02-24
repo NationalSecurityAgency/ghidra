@@ -50,9 +50,10 @@ public class GhidraLauncher {
 
 		// Get application layout
 		GhidraApplicationLayout layout = new GhidraApplicationLayout();
+		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
 
 		// Build the classpath
-		List<String> classpathList = new ArrayList<String>();
+		List<String> classpathList = new ArrayList<>();
 		Map<String, GModule> modules = getOrderedModules(layout);
 
 		if (SystemUtilities.isInDevelopmentMode()) {
@@ -60,13 +61,12 @@ public class GhidraLauncher {
 			addExternalJarPaths(classpathList, layout.getApplicationRootDirs());
 		}
 		else {
-			addPatchPaths(classpathList, layout.getApplicationInstallationDir());
+			addPatchPaths(classpathList, layout.getPatchDir());
 			addModuleJarPaths(classpathList, modules);
 		}
 		classpathList = orderClasspath(classpathList, modules);
 
 		// Add the classpath to the class loader
-		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
 		classpathList.forEach(entry -> loader.addPath(entry));
 
 		// Make sure the thing to launch is a GhidraLaunchable
@@ -86,14 +86,21 @@ public class GhidraLauncher {
 	 * Add patch jars to the given path list.  This should be done first so they take precedence in 
 	 * the classpath.
 	 * 
-	 * @param pathList The list of paths to add to.
-	 * @param installDir The application installation directory.
+	 * @param pathList The list of paths to add to
+	 * @param patchDir The application installation directory; may be null
 	 */
-	private static void addPatchPaths(List<String> pathList, ResourceFile installDir) {
-		ResourceFile patchDir = new ResourceFile(installDir, "Ghidra/patch");
-		if (patchDir.exists()) {
-			pathList.addAll(findJarsInDir(patchDir));
+	private static void addPatchPaths(List<String> pathList, ResourceFile patchDir) {
+		if (patchDir == null || !patchDir.exists()) {
+			return;
 		}
+
+		// this will allow for unbundled class files
+		pathList.add(patchDir.getAbsolutePath());
+
+		// this is each jar file, sorted for loading consistency
+		List<String> jars = findJarsInDir(patchDir);
+		Collections.sort(jars);
+		pathList.addAll(jars);
 	}
 
 	/**
@@ -103,8 +110,8 @@ public class GhidraLauncher {
 	 * @param modules The modules to get the bin directories of.
 	 */
 	private static void addModuleBinPaths(List<String> pathList, Map<String, GModule> modules) {
-		ModuleUtilities.getModuleBinDirectories(modules).forEach(
-			d -> pathList.add(d.getAbsolutePath()));
+		Collection<ResourceFile> dirs = ModuleUtilities.getModuleBinDirectories(modules);
+		dirs.forEach(d -> pathList.add(d.getAbsolutePath()));
 	}
 
 	/**
@@ -114,8 +121,8 @@ public class GhidraLauncher {
 	 * @param modules The modules to get the jars of.
 	 */
 	private static void addModuleJarPaths(List<String> pathList, Map<String, GModule> modules) {
-		ModuleUtilities.getModuleLibDirectories(modules).forEach(
-			d -> pathList.addAll(findJarsInDir(d)));
+		Collection<ResourceFile> dirs = ModuleUtilities.getModuleLibDirectories(modules);
+		dirs.forEach(d -> pathList.addAll(findJarsInDir(d)));
 	}
 
 	/**
@@ -260,12 +267,12 @@ public class GhidraLauncher {
 			Map<String, GModule> modules) {
 
 		Set<String> fatJars = modules
-			.values()
-			.stream()
-			.flatMap(m -> m.getFatJars().stream())
-			.collect(Collectors.toSet());
+				.values()
+				.stream()
+				.flatMap(m -> m.getFatJars().stream())
+				.collect(Collectors.toSet());
 
-		List<String> orderedList = new ArrayList<String>(pathList);
+		List<String> orderedList = new ArrayList<>(pathList);
 
 		for (String path : pathList) {
 			if (fatJars.contains(new File(path).getName())) {

@@ -64,6 +64,9 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		// Extensions
 		extensionInstallationDir = findExtensionInstallationDirectory();
 		extensionArchiveDir = findExtensionArchiveDirectory();
+
+		// Patch directory
+		patchDir = findPatchDirectory();
 	}
 
 	/**
@@ -142,7 +145,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		// Find standard module root directories from within the application root directories
 		Collection<ResourceFile> moduleRootDirectories =
 			ModuleUtilities.findModuleRootDirectories(applicationRootDirs, new ArrayList<>());
-		
+
 		// Examine the classpath to look for modules outside of the application root directories.
 		// These might exist if Ghidra was launched from an Eclipse project that resides
 		// external to the Ghidra installation.
@@ -156,8 +159,9 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 
 			// Skip classpath entries that live in an application root directory...we've already
 			// found those.
-			if (applicationRootDirs.stream().anyMatch(dir -> FileUtilities.isPathContainedWithin(
-				dir.getFile(false), classpathEntry.getFile(false)))) {
+			if (applicationRootDirs.stream()
+					.anyMatch(dir -> FileUtilities.isPathContainedWithin(
+						dir.getFile(false), classpathEntry.getFile(false)))) {
 				continue;
 			}
 
@@ -171,6 +175,24 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		}
 
 		return ModuleUtilities.findModules(applicationRootDirs, moduleRootDirectories);
+	}
+
+	/**
+	 * Returns the directory that allows users to add jar and class files to override existing
+	 * distribution files
+	 * @return the patch dir; null if not in a distribution
+	 */
+	protected ResourceFile findPatchDirectory() {
+
+		if (SystemUtilities.isInDevelopmentMode()) {
+			return null;
+		}
+
+		if (applicationInstallationDir == null) {
+			return null;
+		}
+
+		return new ResourceFile(applicationInstallationDir, "Ghidra/patch");
 	}
 
 	/**

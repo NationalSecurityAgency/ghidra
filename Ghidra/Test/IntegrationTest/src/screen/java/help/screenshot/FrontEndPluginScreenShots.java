@@ -255,7 +255,6 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 	@Test
 	public void testEditPluginPath() {
-		Preferences.setProperty(Preferences.USER_PLUGIN_JAR_DIRECTORY, "/MyPlugins");
 		Preferences.setPluginPaths(new String[] { "/myJar.jar", "/MyPlugins/classes" });
 		performAction("Edit Plugin Path", "FrontEndPlugin", false);
 		DialogComponentProvider dialog = getDialog();

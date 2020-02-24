@@ -248,7 +248,7 @@ public class ClassSearcher {
 
 		monitor.setMessage("Loading classes...");
 		extensionPoints = searcher.getClasses(monitor);
-		log.trace("Found extension classes: " + extensionPoints);
+		log.trace("Found extension classes {}", extensionPoints);
 		if (extensionPoints.isEmpty()) {
 			throw new AssertException("Unable to location extension points!");
 		}
@@ -307,7 +307,6 @@ public class ClassSearcher {
 	}
 
 	private static void loadExtensionClassesFromJar() {
-		// there will only be one root in jar file mode!
 		ResourceFile appRoot = Application.getApplicationRootDirectory();
 		ResourceFile extensionClassesFile = new ResourceFile(appRoot, "EXTENSION_POINT_CLASSES");
 		try {
@@ -326,7 +325,8 @@ public class ClassSearcher {
 
 		}
 		catch (IOException e) {
-			throw new AssertException("Got unexpected IOException ", e);
+			throw new AssertException("Unexpected IOException reading extension class file " +
+				extensionClassesFile, e);
 		}
 	}
 
@@ -338,7 +338,7 @@ public class ClassSearcher {
 			throw new AssertException("Could not find modules for Class Searcher!");
 		}
 
-		log.trace("Scanning module root directories: " + moduleRootDirectories);
+		log.trace("Scanning module root directories: {}", moduleRootDirectories);
 
 		for (ResourceFile moduleRoot : moduleRootDirectories) {
 			ResourceFile file = new ResourceFile(moduleRoot, "data/ExtensionPoint.manifest");
@@ -361,7 +361,7 @@ public class ClassSearcher {
 		}
 		buffy.append(')');
 		extensionPointSuffixPattern = Pattern.compile(buffy.toString());
-		log.trace("Using extension point pattern: " + extensionPointSuffixPattern);
+		log.trace("Using extension point pattern: {}", extensionPointSuffixPattern);
 	}
 
 	static boolean isExtensionPointName(String name) {
