@@ -87,10 +87,10 @@ public class GhidraLauncher {
 	 * the classpath.
 	 * 
 	 * @param pathList The list of paths to add to
-	 * @param patchDir The application installation directory
+	 * @param patchDir The application installation directory; may be null
 	 */
 	private static void addPatchPaths(List<String> pathList, ResourceFile patchDir) {
-		if (!patchDir.exists()) {
+		if (patchDir == null || !patchDir.exists()) {
 			return;
 		}
 

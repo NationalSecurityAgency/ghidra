@@ -94,21 +94,24 @@ class ClassJar extends ClassLocation {
 		//
 
 		//
-		// Dev Mode
+		// Dev Mode - don't scan 3rd-party jar files
 		// 
 		if (pathName.contains("ExternalLibraries")) {
 			return true;
 		}
 
 		//
-		// Dev and Production Mode
-		//
-		String forwardSlashedPathName = pathName.replaceAll("\\\\", "/");
-		if (isUserPluginJar(forwardSlashedPathName)) {
+		// Dev Mode - let everything else through
+		// 
+		if (SystemUtilities.isInDevelopmentMode()) {
 			return false;
 		}
 
-		if (SystemUtilities.isInDevelopmentMode()) {
+		//
+		// Production Mode - old style (before Extensions) of user contributions
+		//
+		String forwardSlashedPathName = pathName.replaceAll("\\\\", "/");
+		if (isUserPluginJar(forwardSlashedPathName)) {
 			return false;
 		}
 
@@ -120,12 +123,13 @@ class ClassJar extends ClassLocation {
 		}
 
 		//
-		// Production Mode - In production, only module lib jar files are scanned.
+		// Production Mode - In production, only module lib jar files are scanned
 		//
 		if (isModuleDependencyJar(forwardSlashedPathName)) {
 			return false;
 		}
 
+		// this is typically a 3rd-party jar file
 		return true;
 	}
 

@@ -1,13 +1,12 @@
-Compiled Java class files, either inside of a jar file or in a directory structure may be inserted
-into this directory.   This directory and the contained jar files will be prepended to
-the classpath, allowing them to override any existing classes in any module (except those from
-the Utility module).
+This directory exits so that Ghidra releases can be patched, or overridden. 
+Classes or jar files placed in this directory will found and loaded 
+*before* the classes that exist in the release jar files. One exception 
+is that classes in the Utility module can not be patched in this way.
 
-The jar files will be sorted by name before being added to the classpath in order to present
-predictable class loading between Ghidra runs.  This directory will be prepended on the classpath
-before any jar files, given the classes in this directory precedence over the jar files.
+The jar files will be sorted by name before being prepended to the classpath 
+in order to have predictable class loading between Ghidra runs.  This patch 
+directory will be the very first patch entry on the classpath such that any 
+individual classes will be found before classes in any of the patch jar files.
 
-The class files in this directory must be in a directory structure that matches their respective
-packages.
-
-
+The class files in this directory must be in the standard java package 
+directory structure.
