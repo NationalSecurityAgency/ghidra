@@ -68,7 +68,7 @@ class SubvariableFlow {
       compare_patch,		///< Turn compare op inputs into logical values
       parameter_patch,		///< Convert a CALL/CALLIND/RETURN/BRANCHIND parameter into logical value
       extension_patch,		///< Convert op into something that copies/extends logical value, adding zero bits
-      returnpush_patch		///< Convert a sub-function return to the logical value
+      push_patch		///< Convert an operator output to the logical value
     };
     patchtype type;		///< The type of \b this patch
     PcodeOp *patchOp;		///< Op being affected

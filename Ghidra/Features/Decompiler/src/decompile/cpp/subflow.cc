@@ -302,7 +302,7 @@ bool SubvariableFlow::tryCallReturnPush(PcodeOp *op,ReplaceVarnode *rvn)
   if (fc->isOutputActive()) return false;	// Don't trim while in the middle of figuring out return value
 
   patchlist.push_front(PatchRecord());		// Push to the front of the patch list
-  patchlist.front().type = PatchRecord::returnpush_patch;
+  patchlist.front().type = PatchRecord::push_patch;
   patchlist.front().patchOp = op;
   patchlist.front().in1 = rvn;
   // pullcount += 1;		// This is a push NOT a pull
@@ -480,7 +480,15 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       sa = (int4)op->getIn(1)->getOffset() * 8;
       newmask = (rvn->mask >> sa) & calc_mask(outvn->getSize());
       if (newmask == 0) break;	// subvar is set to zero, truncate flow
-      if (rvn->mask != (newmask << sa)) return false;
+      if (rvn->mask != (newmask << sa)) {	// Some kind of truncation of the logical value
+	if (flowsize > (sa + outvn->getSize()) && (rvn->mask & 1) != 0) {
+	  // Only a piece of the logical value remains
+	  addTerminalPatchSameOp(op, rvn, 0);
+	  hcount += 1;
+	  break;
+	}
+	return false;
+      }
       if (((newmask & 1)!=0)&&(outvn->getSize()==flowsize)) {
 	addTerminalPatch(op,rvn);
 	hcount += 1;		// Dealt with this descendant
@@ -645,8 +653,16 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
     return true;
   case CPUI_INT_ZEXT:
   case CPUI_INT_SEXT:
-    if ((rvn->mask & calc_mask(op->getIn(0)->getSize())) != rvn->mask)
+    if ((rvn->mask & calc_mask(op->getIn(0)->getSize())) != rvn->mask) {
+      if ((rvn->mask & 1)!=0 && flowsize > op->getIn(0)->getSize()) {
+	patchlist.push_front(PatchRecord());		// Push to the front of the patch list
+	patchlist.front().type = PatchRecord::push_patch;
+	patchlist.front().patchOp = op;
+	patchlist.front().in1 = rvn;
+	return true;
+      }
       break;	       // Check if subvariable comes through extension
+    }
     rop = createOp(CPUI_COPY,1,rvn);
     if (!createLink(rop,rvn->mask,0,op->getIn(0))) return false;
     return true;
@@ -1292,7 +1308,7 @@ void SubvariableFlow::doReplacement(void)
 
   // Do up front processing of the call return patches, which will be at the front of the list
   for(piter=patchlist.begin();piter!=patchlist.end();++piter) {
-    if ((*piter).type != PatchRecord::returnpush_patch) break;
+    if ((*piter).type != PatchRecord::push_patch) break;
     PcodeOp *pushOp = (*piter).patchOp;
     Varnode *newVn = getReplaceVarnode((*piter).in1);
     Varnode *oldVn = pushOp->getOut();
@@ -1378,7 +1394,7 @@ void SubvariableFlow::doReplacement(void)
 	}
 	break;
       }
-    case PatchRecord::returnpush_patch:
+    case PatchRecord::push_patch:
       break;	// Shouldn't see these here, handled earlier
     }
   }
