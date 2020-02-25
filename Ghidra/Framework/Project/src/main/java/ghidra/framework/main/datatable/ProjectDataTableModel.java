@@ -128,7 +128,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		if (editingOn) {
-			DynamicTableColumn<DomainFileInfo, ?, ?> column = tableColumns.get(columnIndex);
+			DynamicTableColumn<DomainFileInfo, ?, ?> column = getColumn(columnIndex);
 			return column instanceof DomainFileNameColumn;
 		}
 		return false;
@@ -162,7 +162,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 //==================================================================================================
 
 	private class DomainFileTypeColumn
-			extends AbstractDynamicTableColumn<DomainFileInfo, DomainFileType, ProjectData> {
+	extends AbstractDynamicTableColumn<DomainFileInfo, DomainFileType, ProjectData> {
 
 		@Override
 		public String getColumnName() {
@@ -182,7 +182,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	}
 
 	private class DomainFileNameColumn
-			extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
+	extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
 
 		@Override
 		public String getColumnName() {
@@ -203,7 +203,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	}
 
 	private class ModificationDateColumn
-			extends AbstractDynamicTableColumn<DomainFileInfo, Date, ProjectData> {
+	extends AbstractDynamicTableColumn<DomainFileInfo, Date, ProjectData> {
 
 		@Override
 		public String getColumnName() {
@@ -224,7 +224,7 @@ public class ProjectDataTableModel extends ThreadedTableModel<DomainFileInfo, Pr
 	}
 
 	private class DomainFilePathColumn
-			extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
+	extends AbstractDynamicTableColumn<DomainFileInfo, String, ProjectData> {
 
 		@Override
 		public String getColumnName() {
