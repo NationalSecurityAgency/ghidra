@@ -22,11 +22,12 @@ import ghidra.program.model.symbol.Namespace;
 import util.demangler.GenericDemangledTemplate;
 import util.demangler.GenericDemangledType;
 
-public class DemangledType {
+// TODO maybe rename this to DemangledNamespace
+public class DemangledType implements Demangled {
 	private String demangledName;
 	private String name;
-	protected String originalMangled;
-	protected DemangledType namespace;
+	protected String mangled; // the original mangled string
+	protected Demangled namespace;
 	protected DemangledTemplate template;
 	private boolean isConst;
 	private boolean isVolatile;
@@ -41,7 +42,7 @@ public class DemangledType {
 	 *         that contains a child, that contains a child and so on, representing the
 	 *         split-up of the original namespace string.
 	 */
-	public static DemangledType convertToNamespace(GenericDemangledType otherNamespace) {
+	public static Demangled convertToNamespace(GenericDemangledType otherNamespace) {
 		if (otherNamespace == null) {
 			return null;
 		}
@@ -103,6 +104,7 @@ public class DemangledType {
 	 * converted to an underscore.
 	 * @return name of this DemangledType suitable for namespace creation.
 	 */
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -120,20 +122,14 @@ public class DemangledType {
 		}
 	}
 
-	/**
-	 * Sets the original mangled name
-	 * @param mangled the original mangled name
-	 */
-	public void setOriginalMangled(String mangled) {
-		this.originalMangled = mangled;
+	@Override
+	public void setMangledString(String mangled) {
+		this.mangled = mangled;
 	}
 
-	/**
-	 * Gets the original mangled name
-	 * @return the original mangled name
-	 */
-	public String getOriginalMangled() {
-		return originalMangled;
+	@Override
+	public String getMangledString() {
+		return mangled;
 	}
 
 	public boolean isConst() {
@@ -144,10 +140,6 @@ public class DemangledType {
 		isConst = true;
 	}
 
-	public boolean isFunction() {
-		return false;
-	}
-
 	public boolean isVolatile() {
 		return isVolatile;
 	}
@@ -156,11 +148,13 @@ public class DemangledType {
 		isVolatile = true;
 	}
 
-	public DemangledType getNamespace() {
+	@Override
+	public Demangled getNamespace() {
 		return namespace;
 	}
 
-	public void setNamespace(DemangledType namespace) {
+	@Override
+	public void setNamespace(Demangled namespace) {
 		if (this == namespace) {
 			throw new IllegalArgumentException("Attempt to set this.namespace == this!");
 		}
@@ -176,14 +170,21 @@ public class DemangledType {
 	}
 
 	public String toSignature() {
-		return toNamespace();
+		return toNamespaceString();
 	}
 
-	public String toNamespace() {
-		StringBuffer buffer = new StringBuffer();
-		if (namespace != null) {
-			buffer.append(namespace.toNamespace());
+	@Override
+	public String toNamespaceString() {
+		return getName(true);
+	}
+
+	private String getName(boolean includeNamespace) {
+		StringBuilder buffer = new StringBuilder();
+		if (includeNamespace && namespace != null) {
+			buffer.append(namespace.toNamespaceString());
+			buffer.append(Namespace.DELIMITER);
 		}
+
 		buffer.append(demangledName);
 		if (template != null) {
 			buffer.append(template.toTemplate());
@@ -193,12 +194,16 @@ public class DemangledType {
 			return "";
 		}
 
-		buffer.append(Namespace.DELIMITER);
 		return buffer.toString();
 	}
 
 	@Override
+	public String toNamespaceName() {
+		return getName(false);
+	}
+
+	@Override
 	public String toString() {
-		return toNamespace();
+		return toNamespaceString();
 	}
 }

@@ -106,7 +106,7 @@ public class DemangledThunk extends DemangledObject {
 			function = function.getThunkedFunction(false);
 		}
 
-		if (thunkedFunction != null && originalMangled.equals(function.getName()) &&
+		if (thunkedFunction != null && mangled.equals(function.getName()) &&
 			!function.isThunk()) {
 			function.setThunkedFunction(thunkedFunction);
 		}
@@ -147,8 +147,9 @@ public class DemangledThunk extends DemangledObject {
 		while (instr != null) {
 			// This is done in a way to handle potential delay slots
 			InstructionContext instructionContext = instr.getInstructionContext();
-			Address fallThru = instructionContext.getAddress().add(
-				instr.getPrototype().getFallThroughOffset(instructionContext));
+			Address fallThru = instructionContext.getAddress()
+					.add(
+						instr.getPrototype().getFallThroughOffset(instructionContext));
 			Address maxAddr = fallThru.previous();
 			if (maxAddr.compareTo(instr.getMinAddress()) < 0) {
 				// just in case we wrapped
@@ -181,7 +182,7 @@ public class DemangledThunk extends DemangledObject {
 		}
 
 		Symbol s = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			thunkedFunctionObject.originalMangled, err -> Msg.warn(this, err));
+			thunkedFunctionObject.mangled, err -> Msg.warn(this, err));
 
 		if (s == null) {
 			Address thunkedAddr =

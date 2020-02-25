@@ -72,14 +72,6 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		System.out.println("Elapsed Time: " + (System.currentTimeMillis() - start));
 	}
 
-	private void demangle(String mangled) throws IOException {
-		String demangled = process.demangle(mangled);
-		assertNotNull(demangled);
-		assertNotEquals(mangled, demangled);
-		//System.out.println(parser.parse(mangled, demangled));
-		assertNotNull(parser.parse(mangled, demangled));
-	}
-
 	@Test
 	public void testOverloadedShiftOperatorParsingBug() {
 		parser = new GnuDemanglerParser(null);
@@ -101,7 +93,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		parse = parser.parse(null, "typeinfo name for Magick::Blob");
 		assertTrue(parse instanceof DemangledString);
 		assertEquals("Magick::Blob", ((DemangledString) parse).getString());
-		assertName(parse, "typeinfo_name", "Magick", "Blob");
+		assertName(parse, "typeinfo-name", "Magick", "Blob");
 
 		parse = parser.parse(null, "Bob::operator_new[](float, double, Bob::Fred &)");
 		assertTrue(parse instanceof DemangledMethod);
@@ -161,33 +153,6 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"covariant return thunk [nv:0] [nv:16] to KHotKeys::WindowTrigger::copy(KHotKeys::ActionData*) const");
 		assertTrue(parse instanceof DemangledThunk);
 		assertName(parse, "copy", "KHotKeys", "WindowTrigger");
-
-		try {
-			parse = parser.parse(
-				"_ZZN12GrGLFunctionIFPKhjEEC1IZN13skia_bindings28CreateGLES2InterfaceBindingsEPN3gpu5gles214GLES2InterfaceEPNS6_14ContextSupportEE3$_0EET_ENUlPKvjE_8__invokeESF_j",
-				"GrGLFunction<unsigned char const* (unsigned int)>::GrGLFunction<skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0>(skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0)::{lambda(void const*, unsigned int)#1}::__invoke(void const*, unsigned int)");
-			assertNull("Shouldn't have parsed", parser);
-		}
-		catch (Exception exc) {
-			// should get an exception
-		}
-	}
-
-	private void assertName(DemangledObject demangledObj, String name, String... namespaces) {
-//		String label = demangledObj.getName();
-//		if (demangledObj instanceof DemangledString) {
-//			label = ((DemangledString) demangledObj).getString();
-//		}
-
-		assertEquals("Unexpected demangled name", name, demangledObj.getName());
-		DemangledType namespace = demangledObj.getNamespace();
-		for (int i = namespaces.length - 1; i >= 0; i--) {
-			String n = namespaces[i];
-			assertNotNull("Namespace mismatch", namespace);
-			assertEquals(n, namespace.getName());
-			namespace = namespace.getNamespace();
-		}
-		assertNull("Namespace mismatch", namespace);
 	}
 
 	@Test
@@ -420,7 +385,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledVariable variable = (DemangledVariable) object;
 		assertEquals("__gthread_active_ptr", variable.getName());
-		assertEquals("__gthread_active_p()", variable.getNamespace().getName());
+		assertEquals("__gthread_active_p()", variable.getNamespace().toNamespaceName());
 		assertNull(variable.getDataType()); // no type information provided
 	}
 
@@ -473,15 +438,13 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		// The below demangles to DDDSaveOptionsCB(_WidgetRec*, void*, void*)::dialog [#1]
 		//
-		// from program ddd
-		//
 		String mangled = "_ZZ16DDDSaveOptionsCBP10_WidgetRecPvS1_E6dialog_0";
 
 		String demangled = process.demangle(mangled);
 
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertTrue(object instanceof DemangledVariable);
-		assertName(object, "dialog", "DDDSaveOptionsCB(_WidgetRec*,void*,void*)");
+		assertName(object, "dialog", "DDDSaveOptionsCB(_WidgetRec *,void *,void *)");
 
 		assertEquals("DDDSaveOptionsCB(_WidgetRec *,void *,void *)::dialog",
 			object.getSignature(false));
@@ -737,6 +700,12 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		// Format: operator std::string() const { return "bob"; }
 		//
 		//
+		// 
+		//
+		// Mangled: _ZNK6Magick5ColorcvSsEv
+		//
+		// Demangled: Magick::Color::operator std::basic_string<char, std::char_traits<char>, std::allocator<char> >() const
+		//
 
 		String mangled = "_ZNK6Magick5ColorcvSsEv";
 
@@ -955,7 +924,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		List<DemangledDataType> parameters = df.getParameters();
 		assertEquals("Number of parameters", 1, parameters.size());
 		assertEquals("Name of type parsed", "F", parameters.get(0).getName());
-		assertEquals("Param Type Name parsed", "WTF::",
+		assertEquals("Param Type Name parsed", "WTF",
 			parameters.get(0).getNamespace().toString());
 		assertEquals("Param Template was parsed",
 			"<WTF::F<void (Core::FileClient &)> (Core::File &)>",
@@ -991,7 +960,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledDataType demangParamDT = parameters.get(0);
 
 		assertEquals("Name of type parsed", "function", demangParamDT.getName());
-		assertEquals("Param Type Name parsed", "boost::", demangParamDT.getNamespace().toString());
+		assertEquals("Param Type Name parsed", "boost", demangParamDT.getNamespace().toString());
 		assertEquals("Param Template parsed", "<void ()>", demangParamDT.getTemplate().toString());
 		assertTrue("Is referent", demangParamDT.isReference());
 
@@ -1023,7 +992,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledDataType demangParamDT = parameters.get(0);
 
 		assertEquals("Name of type parsed", "function", demangParamDT.getName());
-		assertEquals("Param Type Name parsed", "boost::", demangParamDT.getNamespace().toString());
+		assertEquals("Param Type Name parsed", "boost", demangParamDT.getNamespace().toString());
 		assertEquals("Param Template parsed", "<void (ares_options *,int *)>",
 			demangParamDT.getTemplate().toString());
 		assertTrue("Is referent", demangParamDT.isReference());
@@ -1061,7 +1030,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		// Mangled: _ZTCN6Crypto10HmacSha256E0_NS_3MacE
 		// 
-		// Demangled: 
+		// Demangled: construction vtable for Crypto::Mac-in-Crypto::HmacSha256
+		//
 
 		String mangled = "_ZTCN6Crypto10HmacSha256E0_NS_3MacE";
 
@@ -1081,6 +1051,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		// Mangled: _Z11testVarArgsiz
 		// 
 		// Demangled: testVarArgs(int, ...)
+		//
 
 		String mangled = "_Z11testVarArgsiz";
 
@@ -1134,13 +1105,110 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertNull(res);
 	}
 
-	// @Test TODO upcoming fix for GT-3545
+	@Test
+	public void testStructureConstructorWithinTemplatedFunction() throws Exception {
+
+		//
+		// Mangled: _ZZN9__gnu_cxx6__stoaIlicJiEEET0_PFT_PKT1_PPS3_DpT2_EPKcS5_PmS9_EN11_Save_errnoC2Ev
+		// 
+		// Demangled: __gnu_cxx
+		//            ::
+		//            __stoa<long, int, char, int>(long (*)(char const*, char**, int), char const*, char const*, unsigned long*, int)
+		//            ::
+		//            _Save_errno
+		//            ::
+		//            _Save_errno()
+		//
+		// This is _Save_errno struct's constructor inside of the stoa templated function, in the
+		// __gnu_cxx namespace.
+		// 
+
+		String mangled =
+			"_ZZN9__gnu_cxx6__stoaIlicJiEEET0_PFT_PKT1_PPS3_DpT2_EPKcS5_PmS9_EN11_Save_errnoC2Ev";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertTrue("Expected a Demangled Function: " + object, object instanceof DemangledFunction);
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"undefined __gnu_cxx" +
+				"::" +
+				"__stoa<long,int,char,int>(long(*)(char_const*,char**,int),char_const*,char_const*,unsigned_long*,int)" +
+				"::" +
+				"_Save_errno::_Save_errno(void)",
+			signature);
+	}
+
+	@Test
+	public void testOperatorTODO() throws Exception {
+
+		//
+		// Mangled: _ZNK2cc14ScrollSnapTypeneERKS0_
+		// 
+		// Demangled: cc::ScrollSnapType::operator!=(cc::ScrollSnapType const&) const
+		//
+
+		String mangled = "_ZNK2cc14ScrollSnapTypeneERKS0_";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertTrue(object instanceof DemangledFunction);
+
+		String signature = object.getSignature(false);
+		assertEquals("undefined cc::ScrollSnapType::operator!=(cc::ScrollSnapType const &)",
+			signature);
+	}
+
+	@Test
+	public void testFunctionInLambdaNamespace() throws Exception {
+
+		//
+		// Mangled: _ZZN12GrGLFunctionIFPKhjEEC1IZN13skia_bindings28CreateGLES2InterfaceBindingsEPN3gpu5gles214GLES2InterfaceEPNS6_14ContextSupportEE3$_0EET_ENUlPKvjE_8__invokeESF_j 
+		//
+		// Demangled: GrGLFunction<unsigned char const* (unsigned int)>
+		//            ::
+		//			  GrGLFunction<skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0>(skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0)
+		//	          ::
+		//	          {lambda(void const*, unsigned int)#1}
+		//	          ::
+		//	          __invoke(void const*, unsigned int)
+		//
+
+		DemangledObject object = parser.parse(
+			"_ZZN12GrGLFunctionIFPKhjEEC1IZN13skia_bindings28CreateGLES2InterfaceBindingsEPN3gpu5gles214GLES2InterfaceEPNS6_14ContextSupportEE3$_0EET_ENUlPKvjE_8__invokeESF_j",
+			"GrGLFunction<unsigned char const* (unsigned int)>::GrGLFunction<skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0>(skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0)::{lambda(void const*, unsigned int)#1}::__invoke(void const*, unsigned int)");
+		assertNotNull(object);
+		assertTrue(object instanceof DemangledFunction);
+
+		assertName(object, "__invoke",
+			"GrGLFunction<unsigned_char_const*(unsigned_int)>",
+			"GrGLFunction<skia_bindings--CreateGLES2InterfaceBindings(gpu--gles2--GLES2Interface*,gpu--ContextSupport*)--$_0>(skia_bindings--CreateGLES2InterfaceBindings(gpu--gles2--GLES2Interface*,gpu--ContextSupport*)--$_0)",
+			"{lambda(void_const*,unsigned_int)#1}");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"undefined GrGLFunction<unsigned_char_const*(unsigned_int)>::GrGLFunction<skia_bindings--CreateGLES2InterfaceBindings(gpu--gles2--GLES2Interface*,gpu--ContextSupport*)--$_0>(skia_bindings--CreateGLES2InterfaceBindings(gpu--gles2--GLES2Interface*,gpu--ContextSupport*)--$_0)::{lambda(void_const*,unsigned_int)#1}::__invoke(void const *,unsigned int)",
+			signature);
+	}
+
+	@Test
 	public void testFunctionWithLambda_WrappingAnotherFunctionCall() throws Exception {
 
 		//
 		// Mangled: _Z11wrap_360_cdIiEDTcl8wrap_360fp_Lf42c80000EEET_
 		// 
-		// Demangled: (wrap_360({parm#1}, (float)[42c80000])) wrap_360_cd<int>(int)
+		// Demangled: decltype (wrap_360({parm#1}, (float)[42c80000])) wrap_360_cd<int>(int)
+		//
+		// 'wrap_360_cd<int>(int)' is a function that takes an int and then passes that int along
+		// with a constant value to 'wrap_360<int>' by using a lambda function.  It looks like
+		// this:
+		//     auto wrap_360_cd<int>(int a) -> decltype(wrap_360(angle, 100.f))
+		//
+		// where the function is declared with this syntax:
+		// 	   auto identifier ( argument-declarations... ) -> return_type
 		//
 
 		String mangled = "_Z11wrap_360_cdIiEDTcl8wrap_360fp_Lf42c80000EEET_";
@@ -1150,8 +1218,30 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertNotNull(object);
 		assertTrue(object instanceof DemangledFunction);
 
+		// TODO
 		// TODO maybe put full output in setUtilDemangled()
 		String signature = object.getSignature(false);
 		assertEquals("undefined wrap_360_cd<int>(int)", signature);
 	}
+
+	private void assertName(DemangledObject demangledObj, String name, String... namespaces) {
+
+		assertEquals("Unexpected demangled name", name, demangledObj.getName());
+		Demangled namespace = demangledObj.getNamespace();
+		for (int i = namespaces.length - 1; i >= 0; i--) {
+			String n = namespaces[i];
+			assertNotNull("Namespace mismatch", namespace);
+			assertEquals(n, namespace.toNamespaceName());
+			namespace = namespace.getNamespace();
+		}
+		assertNull("Namespace mismatch", namespace);
+	}
+
+	private void demangle(String mangled) throws IOException {
+		String demangled = process.demangle(mangled);
+		assertNotNull(demangled);
+		assertNotEquals(mangled, demangled);
+		assertNotNull(parser.parse(mangled, demangled));
+	}
+
 }

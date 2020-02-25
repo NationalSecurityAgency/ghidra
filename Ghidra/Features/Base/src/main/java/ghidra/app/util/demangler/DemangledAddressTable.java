@@ -27,11 +27,11 @@ import util.demangler.GenericDemangledAddressTable;
 
 public class DemangledAddressTable extends DemangledObject {
 
+	private boolean calculateLength;
 	private int length;
 
-	public DemangledAddressTable(String name, int length) {
+	public DemangledAddressTable(String name, boolean calculateLength) {
 		setName(name);
-		this.length = length;
 	}
 
 	DemangledAddressTable(GenericDemangledAddressTable generic) {
@@ -57,7 +57,7 @@ public class DemangledAddressTable extends DemangledObject {
 			buffer.append(specialPrefix);
 			buffer.append(' ');
 		}
-		String namespaceStr = namespace.toSignature();
+		String namespaceStr = namespace.toNamespaceString();
 		buffer.append(namespaceStr);
 		if (!namespaceStr.endsWith(NAMESPACE_SEPARATOR)) {
 			buffer.append(NAMESPACE_SEPARATOR);
@@ -83,15 +83,16 @@ public class DemangledAddressTable extends DemangledObject {
 			return false;
 		}
 
+		Listing listing = program.getListing();
 		if (MemoryBlock.isExternalBlockAddress(address, program)) {
-			program.getListing().setComment(address, CodeUnit.EOL_COMMENT,
+			listing.setComment(address, CodeUnit.EOL_COMMENT,
 				"WARNING: Unable to apply demangled Address Table");
 			return true; // don't complain
 		}
 
-		if (length == -1) {
+		if (calculateLength) {
 			// determine length of address table
-			Data d = program.getListing().getDefinedDataAt(address);
+			Data d = listing.getDefinedDataAt(address);
 			if (d != null && Undefined.isUndefinedArray(d.getDataType())) {
 				// use length of Undefined array at start of table to indicate length
 				length = d.getLength();
@@ -102,6 +103,7 @@ public class DemangledAddressTable extends DemangledObject {
 					return false;
 				}
 			}
+			calculateLength = false;
 		}
 
 		if (isUndefinedInRange(program, address, address.add(length - 1))) {

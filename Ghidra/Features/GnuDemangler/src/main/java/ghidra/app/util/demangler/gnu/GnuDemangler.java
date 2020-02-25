@@ -123,14 +123,14 @@ public class GnuDemangler implements Demangler {
 				demangledObject.setSignature(demangled);
 			}
 
-			demangledObject.setOriginalMangled(originalMangled);
+			demangledObject.setMangledString(originalMangled);
 
 			if (isDwarf) {
-				DemangledAddressTable dat = new DemangledAddressTable((String) null, 1);
+				DemangledAddressTable dat = new DemangledAddressTable((String) null, false);
 				dat.setSpecialPrefix("DWARF Debug ");
 				dat.setName(demangledObject.getName());
 				dat.setNamespace(demangledObject.getNamespace());
-				dat.setOriginalMangled(originalMangled);
+				dat.setMangledString(originalMangled);
 				return dat;
 			}
 

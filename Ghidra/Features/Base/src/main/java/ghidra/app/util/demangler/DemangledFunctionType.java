@@ -28,11 +28,6 @@ public class DemangledFunctionType extends DemangledType {
 		this.signature = signature;
 	}
 
-	@Override
-	public boolean isFunction() {
-		return true;
-	}
-
 	public String getSignature() {
 		return signature;
 	}

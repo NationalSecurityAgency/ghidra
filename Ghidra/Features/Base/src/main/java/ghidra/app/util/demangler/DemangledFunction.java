@@ -159,7 +159,10 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		return callingConvention;
 	}
 
-	/** Special constructor where it has a templated type before the parameter list */
+	/** 
+	 * Special constructor where it has a templated type before the parameter list 
+	 * @param type the type 
+	 */
 	public void setTemplatedConstructorType(String type) {
 		this.templatedConstructorType = type;
 	}
@@ -227,7 +230,6 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 			}
 			buffer.append(
 				visibility == null || "global".equals(visibility) ? "" : visibility + " ");
-//			if (virtual) {
 			if (isVirtual) {
 				buffer.append("virtual ");
 			}
@@ -242,7 +244,8 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 
 		buffer.append(callingConvention == null ? "" : callingConvention + " ");
 		if (namespace != null) {
-			buffer.append(namespace.toNamespace());
+			buffer.append(namespace.toNamespaceString());
+			buffer.append(NAMESPACE_SEPARATOR);
 		}
 
 		buffer.append(getDemangledName());
@@ -349,6 +352,11 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		}
 
 		return buffer.toString();
+	}
+
+	@Override
+	public String toNamespaceName() {
+		return getName() + getParameterString();
 	}
 
 	public String getParameterString() {
@@ -530,9 +538,11 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 					// warn that calling convention not found.  Datatypes are still good,
 					// the real calling convention can be figured out later
 					//   For example X64 can have __cdecl, __fastcall, __stdcall, that are accepted but ignored
-					program.getBookmarkManager().setBookmark(func.getEntryPoint(),
-						BookmarkType.ANALYSIS, "Demangler", "Warning calling convention \"" +
-							callingConvention + "\" not defined in Compiler Spec (.cspec)");
+					program.getBookmarkManager()
+							.setBookmark(func.getEntryPoint(),
+								BookmarkType.ANALYSIS, "Demangler",
+								"Warning calling convention \"" +
+									callingConvention + "\" not defined in Compiler Spec (.cspec)");
 				}
 				else {
 					func.setCallingConvention(callingConvention);
@@ -714,7 +724,7 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 	 * @return true if it is in the std namespace
 	 */
 	private boolean isInStdNameSpace() {
-		DemangledType ns = namespace;
+		Demangled ns = namespace;
 
 		// if my immediate namespace is "std", then I am just a function in the std namespace.
 		if (ns == null) {

@@ -34,7 +34,7 @@ import util.demangler.GenericDemangledType;
 /**
  * A class to represent a demangled object.
  */
-public abstract class DemangledObject {
+public abstract class DemangledObject implements Demangled {
 
 	protected static final String SPACE = " ";
 	protected static final Pattern SPACE_PATTERN = Pattern.compile(SPACE);
@@ -42,12 +42,12 @@ public abstract class DemangledObject {
 	protected static final String NAMESPACE_SEPARATOR = Namespace.DELIMITER;
 	protected static final String EMPTY_STRING = "";
 
-	protected String originalMangled;
+	protected String mangled; // original mangled string
 	protected String utilDemangled;
 	protected String specialPrefix;
 	protected String specialMidfix;
 	protected String specialSuffix;
-	protected DemangledType namespace;
+	protected Demangled namespace;
 	protected String visibility;//public, protected, etc.
 
 	//TODO: storageClass refers to things such as "static" but const and volatile are 
@@ -78,7 +78,7 @@ public abstract class DemangledObject {
 	}
 
 	DemangledObject(GenericDemangledObject other) {
-		originalMangled = other.getOriginalMangled();
+		mangled = other.getOriginalMangled();
 		specialPrefix = other.getSpecialPrefix();
 		specialMidfix = other.getSpecialMidfix();
 		specialSuffix = other.getSpecialSuffix();
@@ -115,20 +115,13 @@ public abstract class DemangledObject {
 		return demangledName;
 	}
 
-	/**
-	 * Returns the original mangled name
-	 * @return the name
-	 */
-	public String getMangledName() {
-		return originalMangled;
-	}
-
 	/** 
 	 * Returns the demangled name of this object.
 	 * NOTE: unsupported symbol characters, like whitespace, will be
 	 * converted to an underscore.
 	 * @return name of this DemangledObject with unsupported characters converted to underscore
 	 */
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -228,12 +221,14 @@ public abstract class DemangledObject {
 		}
 	}
 
-	/**
-	 * Sets the original mangled name
-	 * @param mangled the original mangled name
-	 */
-	public void setOriginalMangled(String mangled) {
-		this.originalMangled = mangled;
+	@Override
+	public void setMangledString(String mangled) {
+		this.mangled = mangled;
+	}
+
+	@Override
+	public String getMangledString() {
+		return mangled;
 	}
 
 	/**
@@ -252,15 +247,13 @@ public abstract class DemangledObject {
 		return utilDemangled;
 	}
 
-	/**
-	 * Returns the namespace containing this demangled object.
-	 * @return the namespace containing this demangled object
-	 */
-	public DemangledType getNamespace() {
+	@Override
+	public Demangled getNamespace() {
 		return namespace;
 	}
 
-	public void setNamespace(DemangledType namespace) {
+	@Override
+	public void setNamespace(Demangled namespace) {
 		this.namespace = namespace;
 	}
 
@@ -318,6 +311,15 @@ public abstract class DemangledObject {
 	public abstract String getSignature(boolean format);
 
 	/**
+	 * Returns a signature that contains only the name (and parameter list for functions)
+	 * @return the signature
+	 */
+	@Override
+	public String toNamespaceName() {
+		return getSignature(false);
+	}
+
+	/**
 	 * Sets the signature. Calling this method will
 	 * override the auto-generated signature.
 	 * @param signature the signature
@@ -329,6 +331,17 @@ public abstract class DemangledObject {
 	@Override
 	public String toString() {
 		return getSignature(false);
+	}
+
+	@Override
+	public String toNamespaceString() {
+		StringBuilder buffer = new StringBuilder();
+		if (namespace != null) {
+			buffer.append(namespace.toNamespaceString());
+			buffer.append(Namespace.DELIMITER);
+		}
+		buffer.append(toNamespaceName());
+		return buffer.toString();
 	}
 
 	/**
@@ -364,7 +377,7 @@ public abstract class DemangledObject {
 
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
-		if (originalMangled.equals(name)) {
+		if (mangled.equals(name)) {
 			return false;
 		}
 		String comment = program.getListing().getComment(CodeUnit.PLATE_COMMENT, address);
@@ -432,7 +445,7 @@ public abstract class DemangledObject {
 	}
 
 	private Symbol updateExternalSymbol(Program program, Address externalAddr, String symbolName,
-			DemangledType demangledNamespace) {
+			Demangled demangledNamespace) {
 
 		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol s = symbolTable.getPrimarySymbol(externalAddr);
@@ -461,9 +474,9 @@ public abstract class DemangledObject {
 	 * @param typeNamespace demangled namespace object
 	 * @return list of namespace names
 	 */
-	private static List<String> getNamespaceList(DemangledType typeNamespace) {
+	private static List<String> getNamespaceList(Demangled typeNamespace) {
 		ArrayList<String> list = new ArrayList<>();
-		DemangledType ns = typeNamespace;
+		Demangled ns = typeNamespace;
 		while (ns != null) {
 			list.add(0, ns.getName());
 			ns = ns.getNamespace();
@@ -478,13 +491,13 @@ public abstract class DemangledObject {
 	 * any symbol creation accordingly.  Caller should use 
 	 * <code>getResidualNamespacePath(DemangledType, Namespace)</code> to handle the case where
 	 * only a partial namespace has been returned.
-	 * @param program
+	 * @param program the program
 	 * @param typeNamespace demangled namespace
 	 * @param parentNamespace root namespace to be used (e.g., library, global, etc.)
 	 * @param functionPermitted if true an existing function may be used as a namespace
 	 * @return namespace or partial namespace if error occurs
 	 */
-	public static Namespace createNamespace(Program program, DemangledType typeNamespace,
+	public static Namespace createNamespace(Program program, Demangled typeNamespace,
 			Namespace parentNamespace, boolean functionPermitted) {
 
 		Namespace namespace = parentNamespace;
@@ -592,7 +605,7 @@ public abstract class DemangledObject {
 		}
 
 		// Store class structure in parent namespace
-		DemangledType classStructureNamespace = namespace.getNamespace();
+		Demangled classStructureNamespace = namespace.getNamespace();
 
 		Structure classStructure = (Structure) DemangledDataType.findDataType(dataTypeManager,
 			classStructureNamespace, structureName);

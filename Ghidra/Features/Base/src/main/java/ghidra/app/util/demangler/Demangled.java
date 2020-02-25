@@ -15,17 +15,29 @@
  */
 package ghidra.app.util.demangler;
 
-import util.demangler.GenericDemangledMethod;
+// TODO better name
+public interface Demangled {
 
-// TODO delete this
-public class DemangledMethod extends DemangledFunction {
+	public String getName();
 
-	public DemangledMethod(String name) {
-		super(name);
-	}
+	/**
+	 * Returns the namespace containing this demangled object
+	 * @return the namespace containing this demangled object
+	 */
+	public Demangled getNamespace();
 
-	DemangledMethod(GenericDemangledMethod generic) {
-		super(generic);
-	}
+	public void setNamespace(Demangled ns);
 
+	public String toNamespaceString();
+
+	// TODO doc difference
+	public String toNamespaceName();
+
+	/**
+	 * Returns the original mangled string
+	 * @return the string
+	 */
+	public String getMangledString();
+
+	public void setMangledString(String mangled);
 }

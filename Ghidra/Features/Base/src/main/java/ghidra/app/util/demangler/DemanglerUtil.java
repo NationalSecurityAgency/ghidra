@@ -146,13 +146,4 @@ public class DemanglerUtil {
 		matcher.appendTail(buffy);
 		return buffy.toString();
 	}
-
-	public static void setNamespace(DemangledType dt, DemangledType namespace) {
-		if (dt.getNamespace() == null) {
-			dt.setNamespace(namespace);
-		}
-		else {
-			setNamespace(dt.getNamespace(), namespace);
-		}
-	}
 }

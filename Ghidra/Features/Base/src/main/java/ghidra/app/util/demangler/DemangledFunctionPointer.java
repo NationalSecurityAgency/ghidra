@@ -198,8 +198,8 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 	}
 
 	public String toSignature(String name) {
-		StringBuffer buffer = new StringBuffer();
-		StringBuffer buffer1 = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
+		StringBuilder buffer1 = new StringBuilder();
 		String s = getConventionPointerNameString(name);
 		if (s.contains(" ") || s.isEmpty()) {
 			// spaces--add parens
@@ -220,18 +220,21 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 
 		if (returnType instanceof DemangledFunctionPointer) {
 			buffer.append(
-				((DemangledFunctionPointer) returnType).toSignature(buffer1.toString())).append(
-					SPACE);
+				((DemangledFunctionPointer) returnType).toSignature(buffer1.toString()))
+					.append(
+						SPACE);
 		}
 		else if (returnType instanceof DemangledFunctionReference) {
 			buffer.append(
-				((DemangledFunctionReference) returnType).toSignature(buffer1.toString())).append(
-					SPACE);
+				((DemangledFunctionReference) returnType).toSignature(buffer1.toString()))
+					.append(
+						SPACE);
 		}
 		else if (returnType instanceof DemangledFunctionIndirect) {
 			buffer.append(
-				((DemangledFunctionIndirect) returnType).toSignature(buffer1.toString())).append(
-					SPACE);
+				((DemangledFunctionIndirect) returnType).toSignature(buffer1.toString()))
+					.append(
+						SPACE);
 		}
 		else {
 			buffer.append(returnType.toSignature()).append(SPACE);
@@ -276,7 +279,7 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 		return buffer.toString();
 	}
 
-	private void addFunctionPointerParens(StringBuffer buffer, String s) {
+	private void addFunctionPointerParens(StringBuilder buffer, String s) {
 		if (!displayFunctionPointerParens) {
 			return;
 		}

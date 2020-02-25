@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.demangler;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.model.address.Address;
@@ -70,7 +72,7 @@ public class DemangledVariable extends DemangledObject {
 
 	@Override
 	public String getSignature(boolean format) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append(specialPrefix == null ? EMPTY_STRING : specialPrefix + SPACE);
 		buffer.append(
 			visibility == null || "global".equals(visibility) ? EMPTY_STRING : visibility + SPACE);
@@ -80,7 +82,7 @@ public class DemangledVariable extends DemangledObject {
 		buffer.append(isVirtual ? "virtual" + SPACE : EMPTY_STRING);
 
 		String n = getDemangledName();
-		boolean hasName = (n != null) && !n.isEmpty();
+		boolean hasName = !StringUtils.isBlank(n);
 
 		StringBuffer datatypeBuffer = new StringBuffer();
 		String spacer = EMPTY_STRING;
@@ -139,11 +141,10 @@ public class DemangledVariable extends DemangledObject {
 			datatypeBuffer.append(spacer);
 			spacer = EMPTY_STRING;
 
-			datatypeBuffer.append(namespace.toNamespace());
+			datatypeBuffer.append(namespace.toNamespaceString());
 
-			if (!hasName) {
-				int end = buffer.length();
-				datatypeBuffer.delete(end - 2, end); // strip off the last namespace characters
+			if (hasName) {
+				datatypeBuffer.append(NAMESPACE_SEPARATOR);
 			}
 		}
 
@@ -158,23 +159,34 @@ public class DemangledVariable extends DemangledObject {
 
 		if (datatype instanceof DemangledFunctionPointer) {
 			DemangledFunctionPointer funcPtr = (DemangledFunctionPointer) datatype;
-			//return funcPtr.toSignature(buffer.toString());
 			return buffer.append(funcPtr.toSignature(datatypeBuffer.toString())).toString();
 		}
 		else if (datatype instanceof DemangledFunctionReference) {
 			DemangledFunctionReference funcRef = (DemangledFunctionReference) datatype;
-			//return funcRef.toSignature(buffer.toString());
 			return buffer.append(funcRef.toSignature(datatypeBuffer.toString())).toString();
 		}
 		else if (datatype instanceof DemangledFunctionIndirect) {
 			DemangledFunctionIndirect funcDef = (DemangledFunctionIndirect) datatype;
-			//return funcDef.toSignature(buffer.toString());
 			return buffer.append(funcDef.toSignature(datatypeBuffer.toString())).toString();
 		}
 
 		buffer.append(datatypeBuffer);
 
 		return buffer.toString();
+	}
+
+	@Override
+	public String toNamespaceName() {
+
+		String n = getDemangledName();
+		if (!StringUtils.isBlank(n)) {
+			return n;
+		}
+
+		if (datatype != null) {
+			return datatype.toSignature();
+		}
+		return "<no name>"; // shouldn't happen
 	}
 
 	@Override

@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.symbol.Namespace;
 import util.demangler.*;
 
 /**
@@ -84,14 +85,13 @@ public class DemangledDataType extends DemangledType {
 	private boolean isEnum;
 	private boolean isPointer64;
 	private boolean isReference;
-	private boolean isSigned;//explicitly signed!
+	private boolean isSigned;
 	private boolean isStruct;
 	private boolean isTemplate;
 	private boolean isUnaligned;
 	private boolean isUnion;
 	private boolean isUnsigned;
 	private boolean isVarArgs;
-//	private boolean isVolatile;
 	private int pointerLevels = 0;
 	private String enumType;
 	private boolean isRestrict;
@@ -408,12 +408,12 @@ public class DemangledDataType extends DemangledType {
 	 * @param dataTypeManager data type manager to be searched
 	 * @param dtName name of data type
 	 * @param namespace namespace associated with dtName or null if not applicable.  If specified, 
-	 * a namespace-base category path will be given precendence.
+	 * a namespace-base category path will be given precedence.
 	 * @return data type if found, otherwise null.
 	 * @see DataTypeUtilities#findDataType(DataTypeManager, ghidra.program.model.symbol.Namespace, String, Class) for similar namespace
 	 * based search.
 	 */
-	static DataType findDataType(DataTypeManager dataTypeManager, DemangledType namespace,
+	static DataType findDataType(DataTypeManager dataTypeManager, Demangled namespace,
 			String dtName) {
 		// TODO: Should be able to search archives somehow
 		ArrayList<DataType> list = new ArrayList<>();
@@ -446,11 +446,11 @@ public class DemangledDataType extends DemangledType {
 		return null;
 	}
 
-	private static boolean isNamespaceCategoryMatch(DataType dt, DemangledType namespace) {
+	private static boolean isNamespaceCategoryMatch(DataType dt, Demangled namespace) {
 		if (namespace == null) {
 			return true;
 		}
-		DemangledType ns = namespace;
+		Demangled ns = namespace;
 		CategoryPath categoryPath = dt.getCategoryPath();
 		while (ns != null) {
 			if (categoryPath.equals(CategoryPath.ROOT) ||
@@ -463,8 +463,8 @@ public class DemangledDataType extends DemangledType {
 		return true;
 	}
 
-	private static String getNamespacePath(String dtName, DemangledType namespace) {
-		DemangledType ns = namespace;
+	private static String getNamespacePath(String dtName, Demangled namespace) {
+		Demangled ns = namespace;
 		String namespacePath = "";
 		while (ns != null) {
 			namespacePath = "/" + ns.getName() + namespacePath;
@@ -473,11 +473,11 @@ public class DemangledDataType extends DemangledType {
 		return namespacePath;
 	}
 
-	private static CategoryPath getDemanglerCategoryPath(String dtName, DemangledType namespace) {
+	private static CategoryPath getDemanglerCategoryPath(String dtName, Demangled namespace) {
 		return new CategoryPath("/Demangler" + getNamespacePath(dtName, namespace));
 	}
 
-	static Structure createPlaceHolderStructure(String dtName, DemangledType namespace) {
+	static Structure createPlaceHolderStructure(String dtName, Demangled namespace) {
 		StructureDataType structDT = new StructureDataType(dtName, 0);
 		structDT.setDescription("PlaceHolder Structure");
 		structDT.setCategoryPath(getDemanglerCategoryPath(dtName, namespace));
@@ -561,10 +561,6 @@ public class DemangledDataType extends DemangledType {
 		isVarArgs = true;
 	}
 
-//	public void setVolatile() {
-//		isVolatile = true;
-//	}
-//
 	public void setEnumType(String enumType) {
 		this.enumType = enumType;
 	}
@@ -685,7 +681,7 @@ public class DemangledDataType extends DemangledType {
 
 	@Override
 	public String toSignature() {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 
 		if (isUnion) {
 			buffer.append(UNION + SPACE);
@@ -722,7 +718,8 @@ public class DemangledDataType extends DemangledType {
 		}
 
 		if (getNamespace() != null) {
-			buffer.append(getNamespace().toNamespace());
+			buffer.append(getNamespace().toNamespaceString());
+			buffer.append(Namespace.DELIMITER);
 		}
 
 		buffer.append(getDemangledName());

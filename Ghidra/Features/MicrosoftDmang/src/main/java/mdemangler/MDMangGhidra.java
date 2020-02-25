@@ -63,7 +63,7 @@ public class MDMangGhidra extends MDMang {
 			qual = it.next();
 			DemangledType newType = new DemangledType(qual.toString());
 			if (qual.isNested()) {
-				newType.setOriginalMangled(qual.getNested().getMangled());
+				newType.setMangledString(qual.getNested().getMangled());
 			}
 			parentType.setNamespace(newType);
 			parentType = newType;
@@ -86,7 +86,7 @@ public class MDMangGhidra extends MDMang {
 		MDParsableItem returnedItem = super.demangle(mangledArg, true);
 		objectResult = processItem();
 		if (objectResult != null) {
-			objectResult.setOriginalMangled(mangledArg);
+			objectResult.setMangledString(mangledArg);
 			// Make our version of the demangled string available (could be large).
 			objectResult.setUtilDemangled(item.toString());
 		}
@@ -805,4 +805,3 @@ public class MDMangGhidra extends MDMang {
 
 /******************************************************************************/
 /******************************************************************************/
-
