@@ -145,7 +145,9 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		updateManager.dispose();
 		updateManager = null;
 		table.dispose();
-
+		if (dataTypeManager != null) {
+			dataTypeManager.close();
+		}
 		super.dispose();
 	}
 
