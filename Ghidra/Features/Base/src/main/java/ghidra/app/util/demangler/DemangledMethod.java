@@ -15,17 +15,10 @@
  */
 package ghidra.app.util.demangler;
 
-import util.demangler.GenericDemangledMethod;
-
 // TODO delete this
 public class DemangledMethod extends DemangledFunction {
 
 	public DemangledMethod(String name) {
 		super(name);
 	}
-
-	DemangledMethod(GenericDemangledMethod generic) {
-		super(generic);
-	}
-
 }

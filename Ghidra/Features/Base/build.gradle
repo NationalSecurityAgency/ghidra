@@ -24,7 +24,6 @@ dependencies {
 	compile project(':Graph')
 	compile project(':SoftwareModeling')
 	compile project(':DB')
-	compile project(':Demangler')
 	compile project(':Help')
 	
    	compileOnly "junit:junit:4.12"

@@ -28,8 +28,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.GenericDemangledObject;
-import util.demangler.GenericDemangledType;
 
 /**
  * A class to represent a demangled object.
@@ -75,33 +73,6 @@ public abstract class DemangledObject implements Demangled {
 
 	DemangledObject() {
 		// default
-	}
-
-	DemangledObject(GenericDemangledObject other) {
-		mangled = other.getOriginalMangled();
-		specialPrefix = other.getSpecialPrefix();
-		specialMidfix = other.getSpecialMidfix();
-		specialSuffix = other.getSpecialSuffix();
-
-		GenericDemangledType otherNamespace = other.getNamespace();
-		if (otherNamespace != null) {
-			namespace = DemangledType.convertToNamespace(otherNamespace);
-		}
-
-		visibility = other.getVisibility();
-		storageClass = other.getStorageClass();
-		setName(other.getName());
-		isConst = other.isConst();
-		isVolatile = other.isVolatile();
-		isPointer64 = other.isPointer64();
-		isStatic = other.isStatic();
-		isVirtual = other.isVirtual();
-		isThunk = other.isThunk();
-
-		isUnaligned = other.isUnaligned();
-		isRestrict = other.isRestrict();
-		basedName = other.getBasedName();
-		memberScope = other.getMemberScope();
 	}
 
 	/** 

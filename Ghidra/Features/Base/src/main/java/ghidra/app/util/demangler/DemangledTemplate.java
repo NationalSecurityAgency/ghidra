@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +15,14 @@
  */
 package ghidra.app.util.demangler;
 
-import ghidra.program.model.data.DataType;
-import ghidra.util.Msg;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import util.demangler.GenericDemangledDataType;
-import util.demangler.GenericDemangledTemplate;
+import ghidra.program.model.data.DataType;
+import ghidra.util.Msg;
 
 public class DemangledTemplate implements ParameterReceiver {
 	private List<DemangledDataType> parameters = new ArrayList<DemangledDataType>();
-
-	public DemangledTemplate() {
-	}
-
-	DemangledTemplate(GenericDemangledTemplate template) {
-		List<GenericDemangledDataType> genericParameters = template.getParameters();
-		for (GenericDemangledDataType parameter : genericParameters) {
-			parameters.add((DemangledDataType) DemangledObjectFactory.convert(parameter));
-		}
-	}
 
 	@Override
 	public void addParameter(DemangledDataType parameter) {

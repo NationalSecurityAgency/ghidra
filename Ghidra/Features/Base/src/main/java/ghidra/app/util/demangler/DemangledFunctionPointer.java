@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.program.model.data.*;
-import util.demangler.GenericDemangledDataType;
-import util.demangler.GenericDemangledFunctionPointer;
 
 /**
  * A class to represent a demangled function pointer.
@@ -54,23 +52,6 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 
 	private synchronized static int nextID() {
 		return ID++;
-	}
-
-	DemangledFunctionPointer(GenericDemangledFunctionPointer generic) {
-		super(generic);
-
-		ID = generic.getID();
-		returnType = (DemangledDataType) DemangledObjectFactory.convert(generic.getReturnType());
-		callingConvention = generic.getCallingConvention();
-		isConstPointer = generic.isConstPointer();
-
-		parentName = generic.getParentName();
-		isTrailingPointer64 = generic.isTrailingPointer64();
-
-		List<GenericDemangledDataType> genericParameters = generic.getParameters();
-		for (GenericDemangledDataType parameter : genericParameters) {
-			parameters.add((DemangledDataType) DemangledObjectFactory.convert(parameter));
-		}
 	}
 
 	/**

@@ -15,12 +15,7 @@
  */
 package ghidra.app.util.demangler;
 
-import java.util.List;
-
-import ghidra.app.util.SymbolPath;
 import ghidra.program.model.symbol.Namespace;
-import util.demangler.GenericDemangledTemplate;
-import util.demangler.GenericDemangledType;
 
 // TODO maybe rename this to DemangledNamespace
 public class DemangledType implements Demangled {
@@ -32,59 +27,8 @@ public class DemangledType implements Demangled {
 	private boolean isConst;
 	private boolean isVolatile;
 
-	/**
-	 * Takes a {@link DemangledType} with a name that contains namespace elements
-	 * (such as Foo::Bar) and breaks it into a hierarchy of types where each type
-	 * represents one item in the list of namespace elements.
-	 *
-	 * @param otherNamespace the type to convert
-	 * @return the original type if the name does not represent a namespace; a new type
-	 *         that contains a child, that contains a child and so on, representing the
-	 *         split-up of the original namespace string.
-	 */
-	public static Demangled convertToNamespace(GenericDemangledType otherNamespace) {
-		if (otherNamespace == null) {
-			return null;
-		}
-
-		DemangledType newNamespace = new DemangledType(otherNamespace);
-		String demangledName = newNamespace.getName();
-
-		SymbolPath symbolPath = new SymbolPath(demangledName);
-		if (symbolPath.getParent() == null) {
-			return newNamespace;
-		}
-
-		List<String> names = symbolPath.asList();
-
-		DemangledType lastParent = new DemangledType(names.get(0));
-		for (int i = 1; i < names.size(); i++) {
-			DemangledType child = new DemangledType(names.get(i));
-			child.setNamespace(lastParent);
-			lastParent = child;
-		}
-
-		return lastParent;
-	}
-
 	public DemangledType(String name) {
 		setName(name);
-	}
-
-	DemangledType(GenericDemangledType toCopy) {
-		GenericDemangledType otherNamespace = toCopy.getNamespace();
-
-		if (otherNamespace != null) {
-			namespace = convertToNamespace(otherNamespace);
-		}
-
-		setName(toCopy.getName());
-		GenericDemangledTemplate otherTemplate = toCopy.getTemplate();
-		if (otherTemplate != null) {
-			template = new DemangledTemplate(otherTemplate);
-		}
-		isConst = toCopy.isConst();
-		isVolatile = toCopy.isVolatile();
 	}
 
 	/** 

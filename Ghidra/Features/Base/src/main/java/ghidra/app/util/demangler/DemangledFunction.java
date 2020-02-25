@@ -31,7 +31,6 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.*;
 
 /**
  * A class to represent a demangled function.
@@ -70,28 +69,6 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 	 */
 	public DemangledFunction(String name) {
 		setName(name);
-	}
-
-	DemangledFunction(GenericDemangledFunction other) {
-		super(other);
-
-		GenericDemangledDataType otherReturnType = other.getReturnType();
-		if (otherReturnType != null) {
-			returnType = (DemangledDataType) DemangledObjectFactory.convert(otherReturnType);
-		}
-		callingConvention = other.getCallingConvention();
-		thisPassedOnStack = other.isPassedOnStack();
-
-		GenericDemangledTemplate otherTemplate = other.getTemplate();
-		if (otherTemplate != null) {
-			template = new DemangledTemplate(otherTemplate);
-		}
-		isOverloadedOperator = other.isOverloadedOperator();
-
-		List<GenericDemangledDataType> otherParams = other.getParameters();
-		for (GenericDemangledDataType parameter : otherParams) {
-			parameters.add((DemangledDataType) DemangledObjectFactory.convert(parameter));
-		}
 	}
 
 	/**

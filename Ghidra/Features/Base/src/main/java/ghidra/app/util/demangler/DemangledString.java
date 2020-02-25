@@ -22,7 +22,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.GenericDemangledString;
 
 public class DemangledString extends DemangledObject {
 	private String string;
@@ -43,17 +42,6 @@ public class DemangledString extends DemangledObject {
 		this.string = string;
 		this.length = length;
 		this.unicode = unicode;
-	}
-
-	/**
-	 * Construct demangled string from a GenericDemangledString 
-	 * @param generic generic demangled string
-	 */
-	DemangledString(GenericDemangledString generic) {
-		super(generic);
-		string = generic.getString();
-		length = generic.getLength();
-		unicode = generic.isUnicode();
 	}
 
 	@Override

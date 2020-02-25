@@ -29,8 +29,6 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.GenericDemangledDataType;
-import util.demangler.GenericDemangledVariable;
 
 /**
  * An interface to represent a demangled global variable.
@@ -40,15 +38,6 @@ public class DemangledVariable extends DemangledObject {
 
 	public DemangledVariable(String name) {
 		setName(name);
-	}
-
-	DemangledVariable(GenericDemangledVariable other) {
-		super(other);
-
-		GenericDemangledDataType otherDatatype = other.getDataType();
-		if (otherDatatype != null) {
-			datatype = (DemangledDataType) DemangledObjectFactory.convert(otherDatatype);
-		}
 	}
 
 	public void setDatatype(DemangledDataType datatype) {

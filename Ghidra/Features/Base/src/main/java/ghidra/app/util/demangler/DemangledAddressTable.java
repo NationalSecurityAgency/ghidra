@@ -23,7 +23,6 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
-import util.demangler.GenericDemangledAddressTable;
 
 public class DemangledAddressTable extends DemangledObject {
 
@@ -32,12 +31,6 @@ public class DemangledAddressTable extends DemangledObject {
 
 	public DemangledAddressTable(String name, boolean calculateLength) {
 		setName(name);
-	}
-
-	DemangledAddressTable(GenericDemangledAddressTable generic) {
-		super(generic);
-
-		length = generic.getLength();
 	}
 
 	/**

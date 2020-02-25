@@ -23,7 +23,6 @@ import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.symbol.Namespace;
-import util.demangler.*;
 
 /**
  * A class to represent a demangled data type.
@@ -108,51 +107,6 @@ public class DemangledDataType extends DemangledType {
 		super(name);
 	}
 
-	DemangledDataType(GenericDemangledDataType source) {
-		super(source);
-
-		if (source.isArray()) {
-			// TODO GenericDemangledDataType should go away; if so, we don't need to worry
-			//      about array dimension impedance
-			arrayDimensions = 1;
-		}
-
-		isClass = source.isClass();
-		isComplex = source.isComplex();
-		isEnum = source.isEnum();
-		isPointer64 = source.isPointer64();
-		isReference = source.isReference();
-		isSigned = source.isSigned();
-		isStruct = source.isStruct();
-		isTemplate = source.isTemplate();
-		isUnaligned = source.isUnaligned();
-		isUnion = source.isUnion();
-		isUnsigned = source.isUnsigned();
-		isVarArgs = source.isVarArgs();
-//		isVolatile = source.isVolatile();
-		pointerLevels = source.getPointerLevels();
-		//enumType = source.getEnumType();
-		isRestrict = source.isRestrict();
-		basedName = source.getBasedName();
-		memberScope = source.getMemberScope();
-		isCoclass = source.isCoclass();
-		isCointerface = source.isCointerface();
-
-		GenericDemangledType otherNamespace = source.getNamespace();
-		if (otherNamespace != null) {
-			namespace = DemangledType.convertToNamespace(source.getNamespace());
-		}
-
-		GenericDemangledTemplate otherTemplate = source.getTemplate();
-		if (otherTemplate != null) {
-			template = new DemangledTemplate(otherTemplate);
-		}
-
-		if (source.isConst()) {
-			setConst();
-		}
-	}
-
 	public DemangledDataType copy() {
 		DemangledDataType copy = new DemangledDataType(getName());
 		copy(this, copy);
@@ -172,9 +126,7 @@ public class DemangledDataType extends DemangledType {
 		destination.isUnion = source.isUnion;
 		destination.isUnsigned = source.isUnsigned;
 		destination.isVarArgs = source.isVarArgs;
-//		destination.isVolatile = source.isVolatile;
 		destination.pointerLevels = source.pointerLevels;
-		//destination.enumType = source.enumType;
 
 		destination.isUnaligned = source.isUnaligned();
 		destination.isRestrict = source.isRestrict();
