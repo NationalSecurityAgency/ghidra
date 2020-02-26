@@ -130,7 +130,7 @@ public class ISO9660VolumeDescriptor extends ISO9660BaseVolume {
 			struc = new StructureDataType("ISO9600SupplementaryVolumeDescriptor", 0);
 		}
 		else {
-			struc = null;
+			throw new IOException(String.format("Unknown volume type code: 0x%02X", super.getTypeCode()));
 		}
 
 		struc.add(BYTE, "Type Code", "Type of volume descriptor");

@@ -330,6 +330,10 @@ public class ISO9660Analyzer extends AbstractAnalyzer {
 				}
 			}
 
+			if (childDir == null) {
+				throw new IOException("Directory list corrupted, 0 found at an unexpected place.");
+			}
+
 			dirIndex += childDir.getDirectoryRecordLength();
 		}
 
