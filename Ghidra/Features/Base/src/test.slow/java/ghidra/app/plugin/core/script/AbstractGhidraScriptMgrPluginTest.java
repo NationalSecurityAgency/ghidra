@@ -50,6 +50,7 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -1073,7 +1074,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		return box[0];
 	}
 
-	protected void assertSaveButtonEnabled() {
+	protected void assertSaveButtonEnabled() throws Exception {
 		waitForSwing();
 		DockingActionIf saveAction = getAction(plugin, "Save Script");
 
@@ -1082,7 +1083,15 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 			// the action is enabled when the provider detects changes; it is disabled for read-only
 
 			if (isReadOnly(testScriptFile)) {
-				fail("Cannot edit a read-only script");
+				Msg.error(this,
+					"Cannot edit a read-only script: " + testScriptFile.getAbsolutePath());
+				Msg.error(this, "Script cannot be in a 'system root'; those are: ");
+				Collection<ResourceFile> roots = Application.getApplicationRootDirectories();
+				for (ResourceFile resourceFile : roots) {
+					String root = resourceFile.getCanonicalPath().replace('\\', '/');
+					Msg.error(this, "\troot: " + root);
+				}
+				fail("Unexpected read-only script (see log)");
 			}
 
 			//

@@ -422,7 +422,7 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 	}
 
 	@Test
-	public void testSaveButtonEnablement() throws IOException {
+	public void testSaveButtonEnablement() throws Exception {
 		loadTempScriptIntoEditor();
 		assertSaveButtonDisabled();
 
