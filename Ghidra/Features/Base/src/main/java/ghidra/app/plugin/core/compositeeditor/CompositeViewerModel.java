@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -26,11 +27,11 @@ import docking.widgets.fieldpanel.support.FieldSelection;
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.data.*;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
+import utility.function.Callback;
 
 class CompositeViewerModel extends AbstractTableModel implements DataTypeManagerChangeListener {
 
@@ -48,11 +49,11 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	protected Composite viewComposite;
 	protected DataTypeManager viewDTM;
 
-	protected List<CompositeViewerModelListener> modelListeners = new ArrayList<>();
+	private List<CompositeViewerModelListener> modelListeners = new ArrayList<>();
 	/** OriginalCompositeListeners */
-	protected List<OriginalCompositeListener> originalListeners = new ArrayList<>();
+	private List<OriginalCompositeListener> originalListeners = new ArrayList<>();
 	/** the current status */
-	protected String status = "";
+	private String status = "";
 	/** The selection associated with the components. */
 	protected FieldSelection selection;
 
@@ -660,11 +661,9 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		if (status == null) {
 			status = "";
 		}
+
 		this.status = status;
-		for (int i = 0; i < modelListeners.size(); i++) {
-			CompositeViewerModelListener listener = modelListeners.get(i);
-			listener.statusChanged(status, beep);
-		}
+		notify(modelListeners, listener -> listener.statusChanged(this.status, beep));
 	}
 
 	/**
@@ -735,56 +734,45 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * For example, the name, or description change.
 	 */
 	protected void compositeInfoChanged() {
-		for (int i = 0; i < modelListeners.size(); i++) {
-			CompositeViewerModelListener listener = modelListeners.get(i);
-			listener.compositeInfoChanged();
-		}
+		notify(modelListeners, CompositeViewerModelListener::componentDataChanged);
 	}
 
 	/**
 	 * Called whenever the composite's component data changes.
 	 */
 	protected void componentDataChanged() {
-		for (int i = 0; i < modelListeners.size(); i++) {
-			CompositeViewerModelListener listener = modelListeners.get(i);
-			listener.componentDataChanged();
-		}
+		notify(modelListeners, CompositeViewerModelListener::componentDataChanged);
 	}
 
 	/**
 	 * Called when the original composite we are editing has been changed.
 	 */
 	public void originalNameChanged() {
-		String originalDtName = getOriginalDataTypeName();
-		int len = originalListeners.size();
-		for (int i = 0; i < len; i++) {
-			OriginalCompositeListener listener = originalListeners.get(i);
+
+		notify(originalListeners, listener -> {
+			String originalDtName = getOriginalDataTypeName();
 			listener.originalNameChanged(originalDtName);
-		}
-		provider.updateTitle();
+			provider.updateTitle();
+		});
 	}
 
 	/**
 	 * Called when the original composite we are editing has been changed.
 	 */
 	public void originalCategoryChanged() {
-		CategoryPath originalCatPath = getOriginalCategoryPath();
-		int len = originalListeners.size();
-		for (int i = 0; i < len; i++) {
-			OriginalCompositeListener listener = originalListeners.get(i);
+
+		notify(originalListeners, listener -> {
+			CategoryPath originalCatPath = getOriginalCategoryPath();
 			listener.originalCategoryChanged(originalCatPath);
-		}
+		});
 	}
 
 	/**
 	 * Called when the original composite we are editing has been changed.
 	 */
 	public void originalComponentsChanged() {
-		int len = originalListeners.size();
-		for (int i = 0; i < len; i++) {
-			OriginalCompositeListener listener = originalListeners.get(i);
-			listener.originalComponentsChanged();
-		}
+
+		notify(originalListeners, OriginalCompositeListener::originalComponentsChanged);
 	}
 
 	/**
@@ -1245,7 +1233,9 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		for (int i = 0; i < numRanges; i++) {
 			FieldRange range = selection.getFieldRange(i);
 			for (int tempRow =
-				range.getStart().getIndex().intValue(); tempRow < range.getEnd().getIndex().intValue(); tempRow++) {
+				range.getStart().getIndex().intValue(); tempRow < range.getEnd()
+						.getIndex()
+						.intValue(); tempRow++) {
 				selectedRows[newIndex++] = tempRow;
 			}
 		}
@@ -1264,7 +1254,9 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		for (int i = 0; i < numRanges; i++) {
 			FieldRange range = selection.getFieldRange(i);
 			for (int tempRow =
-				range.getStart().getIndex().intValue(); tempRow < range.getEnd().getIndex().intValue() &&
+				range.getStart().getIndex().intValue(); tempRow < range.getEnd()
+						.getIndex()
+						.intValue() &&
 					tempRow < numComponents; tempRow++) {
 				selectedRows[newIndex++] = tempRow;
 			}
@@ -1314,6 +1306,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @param rows the indices for the selected rows.
 	 */
 	public void setSelection(int[] rows) {
+
 		if (updatingSelection) {
 			return;
 		}
@@ -1377,18 +1370,53 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 		selection = newSelection;
 	}
 
+	protected void updatingSelection(Callback c) {
+
+		swing(() -> {
+			boolean tmpUpdatingSelection = updatingSelection;
+			try {
+				updatingSelection = true;
+				c.call();
+			}
+			finally {
+				updatingSelection = tmpUpdatingSelection;
+			}
+		});
+	}
+
 	protected void selectionChanged() {
-		boolean tmpUpdatingSelection = updatingSelection;
-		try {
-			updatingSelection = true;
+
+		updatingSelection(() -> {
 			for (int i = 0; i < modelListeners.size(); i++) {
 				CompositeViewerModelListener listener = modelListeners.get(i);
 				listener.selectionChanged();
 			}
-		}
-		finally {
-			updatingSelection = tmpUpdatingSelection;
-		}
+		});
+	}
+
+	/**
+	 * Convenience method to run the given task on the swing thread now if swing or later if not
+	 * @param r the runnable
+	 */
+	protected void swing(Runnable r) {
+		Swing.runIfSwingOrRunLater(r);
+	}
+
+	/**
+	 * A notify method to take the listens to notify, along with the method that should be 
+	 * called on each listener
+	 * 
+	 * @param <T> the type of the listener
+	 * @param listeners the listeners
+	 * @param method the method to call
+	 */
+	protected <T> void notify(List<T> listeners, Consumer<T> method) {
+		swing(() -> {
+			for (int i = 0; i < listeners.size(); i++) {
+				T listener = listeners.get(i);
+				method.accept(listener);
+			}
+		});
 	}
 
 	/**

@@ -633,6 +633,11 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		componentDataChanged();
 	}
 
+	@Override
+	public void fireTableDataChanged() {
+		swing(super::fireTableDataChanged);
+	}
+
 //==================================================================================================
 // METHODS FOR THE FIELD EDITING
 //==================================================================================================	
