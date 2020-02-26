@@ -139,7 +139,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	@Override
 	public boolean isCellEditable(int row, int col) {
 
-		DynamicTableColumn<ResourceFile, ?, ?> column = tableColumns.get(col);
+		DynamicTableColumn<ResourceFile, ?, ?> column = getColumn(col);
 		String columnName = column.getColumnName();
 		if (SCRIPT_ACTION_COLUMN_NAME.equals(columnName)) {
 			return true;
@@ -149,7 +149,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 	@Override
 	public void setValueAt(Object value, int row, int col) {
-		DynamicTableColumn<ResourceFile, ?, ?> column = tableColumns.get(col);
+		DynamicTableColumn<ResourceFile, ?, ?> column = getColumn(col);
 		String columnName = column.getColumnName();
 		if (SCRIPT_ACTION_COLUMN_NAME.equals(columnName)) {
 			ResourceFile script = getScriptAt(row);
@@ -190,7 +190,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	}
 
 	private class ScriptActionColumn
-			extends AbstractDynamicTableColumn<ResourceFile, Boolean, Object> {
+	extends AbstractDynamicTableColumn<ResourceFile, Boolean, Object> {
 
 		@Override
 		public String getColumnDescription() {
@@ -231,7 +231,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 			return SystemUtilities.compareTo(d1, d2);
 		};
 
-		private GColumnRenderer<ImageIcon> renderer = new AbstractGColumnRenderer<ImageIcon>() {
+		private GColumnRenderer<ImageIcon> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
@@ -318,7 +318,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	}
 
 	private class DescriptionColumn
-			extends AbstractDynamicTableColumn<ResourceFile, String, Object> {
+	extends AbstractDynamicTableColumn<ResourceFile, String, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -339,55 +339,55 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	}
 
 	private class KeyBindingColumn
-			extends AbstractDynamicTableColumn<ResourceFile, KeyBindingsInfo, Object> {
+	extends AbstractDynamicTableColumn<ResourceFile, KeyBindingsInfo, Object> {
 
 		private GColumnRenderer<KeyBindingsInfo> renderer =
-			new AbstractGColumnRenderer<KeyBindingsInfo>() {
+				new AbstractGColumnRenderer<>() {
 
-				@Override
-				public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-					JComponent component = (JComponent) super.getTableCellRendererComponent(data);
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+				JComponent component = (JComponent) super.getTableCellRendererComponent(data);
 
-					Object value = data.getValue();
-					boolean isSelected = data.isSelected();
+				Object value = data.getValue();
+				boolean isSelected = data.isSelected();
 
-					KeyBindingsInfo info = (KeyBindingsInfo) value;
+				KeyBindingsInfo info = (KeyBindingsInfo) value;
 
-					if (info.errorMessage != null) {
-						component.setForeground(Color.RED);
-						component.setToolTipText(info.errorMessage);
+				if (info.errorMessage != null) {
+					component.setForeground(Color.RED);
+					component.setToolTipText(info.errorMessage);
+				}
+				else {
+					String keybindingText = "";
+					if (!info.keystroke.isEmpty()) {
+						keybindingText = ": " + info.toString();
+					}
+
+					if (info.hasAction) {
+						component.setForeground(Color.BLACK);
+						component.setToolTipText(
+							"Keybinding for action in tool" + keybindingText);
 					}
 					else {
-						String keybindingText = "";
-						if (!info.keystroke.isEmpty()) {
-							keybindingText = ": " + info.toString();
-						}
-
-						if (info.hasAction) {
-							component.setForeground(Color.BLACK);
-							component.setToolTipText(
-								"Keybinding for action in tool" + keybindingText);
-						}
-						else {
-							component.setForeground(Color.LIGHT_GRAY);
-							component.setToolTipText("Keybinding for script" + keybindingText);
-						}
+						component.setForeground(Color.LIGHT_GRAY);
+						component.setToolTipText("Keybinding for script" + keybindingText);
 					}
+				}
 
-					if (isSelected) {
-						Color selectedForegroundColor =
+				if (isSelected) {
+					Color selectedForegroundColor =
 							(info.errorMessage != null) ? Color.PINK : Color.WHITE;
-						component.setForeground(selectedForegroundColor);
-					}
-					return component;
-
+					component.setForeground(selectedForegroundColor);
 				}
+				return component;
 
-				@Override
-				public String getFilterString(KeyBindingsInfo t, Settings settings) {
-					return t.toString();
-				}
-			};
+			}
+
+			@Override
+			public String getFilterString(KeyBindingsInfo t, Settings settings) {
+				return t.toString();
+			}
+		};
 
 		@Override
 		public GColumnRenderer<KeyBindingsInfo> getColumnRenderer() {

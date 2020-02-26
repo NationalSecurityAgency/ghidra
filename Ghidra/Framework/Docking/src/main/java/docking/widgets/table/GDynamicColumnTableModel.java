@@ -64,9 +64,9 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	protected ServiceProvider serviceProvider;
 
 	private TableColumnDescriptor<ROW_TYPE> columnDescriptor;
-	protected List<DynamicTableColumn<ROW_TYPE, ?, ?>> tableColumns;
-	private List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultTableColumns;
-	protected Map<DynamicTableColumn<ROW_TYPE, ?, ?>, Settings> columnSettings;
+	protected List<DynamicTableColumn<ROW_TYPE, ?, ?>> tableColumns = new ArrayList<>();
+	private List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultTableColumns = new ArrayList<>();
+	protected Map<DynamicTableColumn<ROW_TYPE, ?, ?>, Settings> columnSettings = new HashMap<>();
 
 	private boolean ignoreSettingChanges = false;
 
@@ -75,16 +75,8 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		SystemUtilities.assertTrue((serviceProvider != null), "ServiceProvider cannot be null");
 
 		this.serviceProvider = serviceProvider;
-		this.tableColumns = new ArrayList<>();
-		this.defaultTableColumns = new ArrayList<>();
-		loadDefaultTableColumns();
-		loadDiscoveredTableColumns();
 
-		this.columnSettings = new HashMap<>();
-		for (DynamicTableColumn<ROW_TYPE, ?, ?> column : tableColumns) {
-			columnSettings.put(column, new SettingsImpl(this, column));
-		}
-
+		reloadColumns();
 	}
 
 	protected abstract TableColumnDescriptor<ROW_TYPE> createTableColumnDescriptor();
@@ -127,6 +119,29 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 			sortState = TableSortState.createDefaultSortState(0);
 		}
 		setDefaultTableSortState(sortState);
+	}
+
+	/**
+	 * Allows clients to defer column creation until after this parent class's constructor has
+	 * been called.   This method will not restore any column settings that have been changed
+	 * after construction.  Thus, this method is intended only to be called during the 
+	 * construction process.
+	 */
+	protected void reloadColumns() {
+
+		// note: since we should only be called during construction, there is no need to
+		//       fire an event to signal the table structure has changed
+
+		columnDescriptor = null;
+		tableColumns.clear();
+		defaultTableColumns.clear();
+		loadDefaultTableColumns();
+		loadDiscoveredTableColumns();
+
+		columnSettings.clear();
+		for (DynamicTableColumn<ROW_TYPE, ?, ?> column : tableColumns) {
+			columnSettings.put(column, new SettingsImpl(this, column));
+		}
 	}
 
 	private TableColumnDescriptor<ROW_TYPE> getTableColumnDescriptor() {
@@ -487,14 +502,6 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	public Settings getColumnSettings(int index) {
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = tableColumns.get(index);
 		return columnSettings.get(column);
-	}
-
-	@Override
-	public synchronized void setColumnSettings(int index, Settings newSettings) {
-		ignoreSettingChanges = true;
-		applySettings(index, newSettings);
-		ignoreSettingChanges = false;
-		stateChanged(new ChangeEvent(tableColumns.get(index)));
 	}
 
 	private void applySettings(int index, Settings newSettings) {
