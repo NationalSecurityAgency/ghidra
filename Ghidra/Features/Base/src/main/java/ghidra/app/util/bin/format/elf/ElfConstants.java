@@ -45,8 +45,6 @@ public interface ElfConstants {
 	/**Start of padding*/
 	public static final int EI_PAD = 9;
 
-	//ABI - application binary interface
-
 	// ELF Identification - File identification values
 
 	/**The ELF magic number*/
@@ -62,9 +60,9 @@ public interface ElfConstants {
 
 	/**Invalid class*/
 	public static final byte ELF_CLASS_NONE = 0;
-	/**{@code 32-bit objects}*/
+	/** 32-bit objects */
 	public static final byte ELF_CLASS_32 = 1;
-	/**{@code 64-bit objects}*/
+	/** 64-bit objects */
 	public static final byte ELF_CLASS_64 = 2;
 	/**?*/
 	public static final byte ELF_CLASS_NUM = 3;
@@ -107,7 +105,7 @@ public interface ElfConstants {
 	public static final byte ELFOSABI_IRIX = 8;
 	/**free bsd*/
 	public static final byte ELFOSABI_FREEBSD = 9;
-	/**{@code compaq tru64 unix}*/
+	/** compaq tru64 unix */
 	public static final byte ELFOSABI_TRUE64 = 10;
 	/**novell modesto*/
 	public static final byte ELFOSABI_MODESTO = 11;
@@ -121,9 +119,11 @@ public interface ElfConstants {
 	public static final byte ELFOSABI_AROS = 15;
 	/** FenixOS */
 	public static final byte ELFOSABI_FENIXOS = 16;
-	/**{@code Bare-metal TMS320C6000}*/
+	/** Nuxi CloudABI */
+	public static final byte ELFOSABI_CLOUDABI = 17;
+	/** Bare-metal TMS320C6000 */
 	public static final byte ELFOSABI_C6000_ELFABI = 64;
-	/**{@code Linux TMS320C6000}*/
+	/** Linux TMS320C6000 */
 	public static final byte ELFOSABI_C6000_LINUX = 65;
 	/** ARM */
 	public static final byte ELFOSABI_ARM = 97;
@@ -157,47 +157,49 @@ public interface ElfConstants {
 
 	/**No machine*/
 	public static final short EM_NONE = 0;
-	/**{@code AT&T WE 32100}*/
+	/** AT&T WE 32100 */
 	public static final short EM_M32 = 1;
 	/**SUN SPARC */
 	public static final short EM_SPARC = 2;
-	/**{@code Intel 80386}*/
+	/** Intel 80386 */
 	public static final short EM_386 = 3;
-	/**{@code Motorola m68k family}*/
+	/** Motorola m68k family */
 	public static final short EM_68K = 4;
-	/**{@code Motorola m88k family}*/
+	/** Motorola m88k family */
 	public static final short EM_88K = 5;
-	/**{@code Intel 486 (deprecated)}*/
+	/** Intel 486 (deprecated) */
 	public static final short EM_486 = 6;
-	/**{@code Intel 80860}*/
+	/** Intel 80860 */
 	public static final short EM_860 = 7;
-	/**{@code MIPS R3000 big-endian}*/
+	/** MIPS R3000 big-endian */
 	public static final short EM_MIPS = 8;
-	/**{@code IBM System/370}*/
+	/** IBM System/370 */
 	public static final short EM_S370 = 9;
-	/**{@code MIPS R3000 little-endian}*/
+	/** MIPS R3000 little-endian */
 	public static final short EM_MIPS_RS3_LE = 10;
 	// 11 - 14 reserved
 	/**HPPA */
 	public static final short EM_PARISC = 15;
-	/**{@code Fujitsu VPP500}*/
+	/** Fujitsu VPP500 */
 	public static final short EM_VPP500 = 17;
-	/**{@code Sun's "v8plus"}*/
+	/** Sun's "v8plus" */
 	public static final short EM_SPARC32PLUS = 18;
-	/**{@code Intel 80960}*/
+	/** Intel 80960 */
 	public static final short EM_960 = 19;
 	/**PowerPC */
 	public static final short EM_PPC = 20;
-	/**{@code PowerPC 64-bit}*/
+	/** PowerPC 64-bit */
 	public static final short EM_PPC64 = 21;
-	/**{@code IBM S390}*/
+	/** IBM S390 */
 	public static final short EM_S390 = 22;
-	//23 - 35  reserved
-	/**{@code NEC V800 series}*/
+	/** IBM SPU/SPC */
+	public static final short EM_SPU = 23;
+	// 24 - 35 reserved
+	/** NEC V800 series */
 	public static final short EM_V800 = 36;
-	/**{@code Fujitsu FR20}*/
+	/** Fujitsu FR20 */
 	public static final short EM_FR20 = 37;
-	/**{@code TRW RH-32}*/
+	/** TRW RH-32 */
 	public static final short EM_RH32 = 38;
 	/**Motorola RCE */
 	public static final short EM_RCE = 39;
@@ -207,19 +209,19 @@ public interface ElfConstants {
 	public static final short EM_FAKE_ALPHA = 41;
 	/**Hitachi SH */
 	public static final short EM_SH = 42;
-	/**{@code SPARC v9 64-bit}*/
+	/** SPARC v9 64-bit */
 	public static final short EM_SPARCV9 = 43;
 	/**Siemens Tricore */
 	public static final short EM_TRICORE = 44;
 	/**Argonaut RISC Core */
 	public static final short EM_ARC = 45;
-	/**{@code Hitachi H8/300}*/
+	/** Hitachi H8/300 */
 	public static final short EM_H8_300 = 46;
-	/**{@code Hitachi H8/300H}*/
+	/** Hitachi H8/300H */
 	public static final short EM_H8_300H = 47;
-	/**{@code Hitachi H8S}*/
+	/** Hitachi H8S */
 	public static final short EM_H8S = 48;
-	/**{@code Hitachi H8/500}*/
+	/** Hitachi H8/500 */
 	public static final short EM_H8_500 = 49;
 	/** Intel Merced */
 	public static final short EM_IA_64 = 50;
@@ -227,7 +229,7 @@ public interface ElfConstants {
 	public static final short EM_MIPS_X = 51;
 	/** Motorola Coldfire */
 	public static final short EM_COLDFIRE = 52;
-	/**{@code Motorola M68HC12}*/
+	/** Motorola M68HC12 */
 	public static final short EM_68HC12 = 53;
 	/** Fujitsu MMA Multimedia Accelerator*/
 	public static final short EM_MMA = 54;
@@ -235,77 +237,79 @@ public interface ElfConstants {
 	public static final short EM_PCP = 55;
 	/** Sony nCPU embedded RISC */
 	public static final short EM_NCPU = 56;
-	/**{@code Denso NDR1 microprocessor}*/
+	/** Denso NDR1 microprocessor */
 	public static final short EM_NDR1 = 57;
 	/** Motorola Start*Core processor */
 	public static final short EM_STARCORE = 58;
-	/**{@code  Toyota ME16 processor}*/
+	/** Toyota ME16 processor */
 	public static final short EM_ME16 = 59;
-	/**{@code STMicroelectronic ST100 processor}*/
+	/** STMicroelectronic ST100 processor */
 	public static final short EM_ST100 = 60;
-	/** Advanced Logic Corp. Tinyj emb.fam*/
+	/** Advanced Logic Corp. Tinyj emb.fam */
 	public static final short EM_TINYJ = 61;
-	/**{@code AMD x86-64 architecture}*/
+	/** AMD x86-64 architecture */
 	public static final short EM_X86_64 = 62;
 	/** Sony DSP Processor */
 	public static final short EM_PDSP = 63;
-	// 64 reserved
-	// 65 reserved
-	/**{@code  Siemens FX66 microcontroller}*/
+	/** Digital Equipment Corp. PDP-10 */
+	public static final short EM_PDP10 = 64;
+	/** Digital Equipment Corp. PDP-11 */
+	public static final short EM_PDP11 = 65;
+	/** Siemens FX66 microcontroller */
 	public static final short EM_FX66 = 66;
-	/**{@code STMicroelectronics ST9+ 8/16 mc}*/
+	/** STMicroelectronics ST9+ 8/16 mc */
 	public static final short EM_ST9PLUS = 67;
-	/**{@code STmicroelectronics ST7 8 bit mc}*/
+	/** STmicroelectronics ST7 8 bit mc */
 	public static final short EM_ST7 = 68;
-	/**{@code  Motorola MC68HC16 microcontroller}*/
+	/** Motorola MC68HC16 microcontroller */
 	public static final short EM_68HC16 = 69;
-	/**{@code  Motorola MC68HC11 microcontroller}*/
+	/** Motorola MC68HC11 microcontroller */
 	public static final short EM_68HC11 = 70;
-	/**{@code  Motorola MC68HC08 microcontroller}*/
+	/** Motorola MC68HC08 microcontroller */
 	public static final short EM_68HC08 = 71;
-	/**{@code  Motorola MC68HC05 microcontroller}*/
+	/** Motorola MC68HC05 microcontroller */
 	public static final short EM_68HC05 = 72;
 	/** Silicon Graphics SVx */
 	public static final short EM_SVX = 73;
-	/**{@code STMicroelectronics ST19 8 bit mc}*/
+	/** STMicroelectronics ST19 8 bit mc */
 	public static final short EM_ST19 = 74;
 	/** Digital VAX */
 	public static final short EM_VAX = 75;
-	/**{@code Axis Communications 32-bit embedded processor}*/
+	/** Axis Communications 32-bit embedded processor */
 	public static final short EM_CRIS = 76;
-	/**{@code Infineon Technologies 32-bit embedded processor}*/
+	/** Infineon Technologies 32-bit embedded processor */
 	public static final short EM_JAVELIN = 77;
-	/**{@code Element 14 64-bit DSP Processor}*/
+	/** Element 14 64-bit DSP Processor */
 	public static final short EM_FIREPATH = 78;
-	/**{@code LSI Logic 16-bit DSP Processor}*/
+	/** LSI Logic 16-bit DSP Processor */
 	public static final short EM_ZSP = 79;
-	/**{@code Donald Knuth's educational 64-bit processor}*/
+	/** Donald Knuth's educational 64-bit processor */
 	public static final short EM_MMIX = 80;
 	/** Harvard University machine-independent object files */
 	public static final short EM_HUANY = 81;
 	/** SiTera Prism */
 	public static final short EM_PRISM = 82;
-	/**{@code Atmel AVR 8-bit microcontroller}*/
+	/** Atmel AVR 8-bit microcontroller */
 	public static final short EM_AVR = 83;
-	/**{@code Fujitsu FR30}*/
+	/** Fujitsu FR30 */
 	public static final short EM_FR30 = 84;
-	/**{@code Mitsubishi D10V}*/
+	/** Mitsubishi D10V */
 	public static final short EM_D10V = 85;
-	/**{@code Mitsubishi D30V}*/
+	/** Mitsubishi D30V */
 	public static final short EM_D30V = 86;
-	/**{@code NEC v850}*/
+	/** NEC v850 */
 	public static final short EM_V850 = 87;
-	/**{@code Mitsubishi M32R}*/
+	/** Mitsubishi M32R */
 	public static final short EM_M32R = 88;
-	/**{@code Matsushita MN10300}*/
+	/** Matsushita MN10300 */
 	public static final short EM_MN10300 = 89;
-	/**{@code Matsushita MN10200}*/
+	/** Matsushita MN10200 */
 	public static final short EM_MN10200 = 90;
 	/** picoJava */
 	public static final short EM_PJ = 91;
-	/**{@code  OpenRISC 32-bit embedded processor}*/
+	/** OpenRISC 32-bit embedded processor */
 	public static final short EM_OPENRISC = 92;
-	/**{@code  ARC Cores Tangent-A5}*/
+	/** ARC Cores Tangent-A5 */
 	public static final short EM_ARC_A5 = 93;
 	/** Tensilica Xtensa Architecture */
 	public static final short EM_XTENSA = 94;
@@ -313,27 +317,27 @@ public interface ElfConstants {
 	public static final short EM_VIDEOCORE = 95;
 	/** Thompson Multimedia General Purpose Processor*/
 	public static final short EM_TMM_GPP = 96;
-	/**{@code  National Semiconductor 32000 series}*/
+	/** National Semiconductor 32000 series */
 	public static final short EM_NS32K = 97;
 	/** Tenor Network TPC processor */
 	public static final short EM_TPC = 98;
-	/**{@code  Trebia SNP 1000 processor}*/
+	/** Trebia SNP 1000 processor */
 	public static final short EM_SNP1K = 99;
-	/**{@code  STMicroelectronics (www.st.com) ST200}*/
+	/** STMicroelectronics (www.st.com) ST200 */
 	public static final short EM_ST200 = 100;
-	/**{@code  Ubicom IP2xxx microcontroller family}*/
+	/** Ubicom IP2xxx microcontroller family */
 	public static final short EM_IP2K = 101;
 	/** MAX Processor */
 	public static final short EM_MAX = 102;
 	/** National Semiconductor CompactRISC microprocessor */
 	public static final short EM_CR = 103;
-	/**{@code  Fujitsu F2MC16}*/
+	/** Fujitsu F2MC16 */
 	public static final short EM_F2MC16 = 104;
-	/**{@code  Texas Instruments embedded microcontroller msp430}*/
+	/** Texas Instruments embedded microcontroller msp430 */
 	public static final short EM_MSP430 = 105;
 	/** Analog Devices Blackfin (DSP) processor */
 	public static final short EM_BLACKFIN = 106;
-	/**{@code  S1C33 Family of Seiko Epson processors}*/
+	/** S1C33 Family of Seiko Epson processors */
 	public static final short EM_SE_C33 = 107;
 	/** Sharp embedded microprocessor */
 	public static final short EM_SEP = 108;
@@ -341,7 +345,7 @@ public interface ElfConstants {
 	public static final short EM_ARCA = 109;
 	/** Microprocessor series from PKU-Unity Ltd. and MPRC of Peking University */
 	public static final short EM_UNICORE = 110;
-	/**{@code  eXcess: 16/32/64-bit configurable embedded CPU}*/
+	/** eXcess: 16/32/64-bit configurable embedded CPU */
 	public static final short EM_EXCESS = 111;
 	/** Icera Semiconductor Inc. Deep Execution Processor */
 	public static final short EM_DXP = 112;
@@ -351,67 +355,69 @@ public interface ElfConstants {
 	public static final short EM_CRX = 114;
 	/** Motorola XGATE embedded processor */
 	public static final short EM_XGATE = 115;
-	/**{@code  Infineon C16x/XC16x processor}*/
+	/** Infineon C16x/XC16x processor */
 	public static final short EM_C166 = 116;
-	/**{@code  Renesas M16C series microprocessors}*/
+	/** Renesas M16C series microprocessors */
 	public static final short EM_M16C = 117;
-	/**{@code  Microchip Technology dsPIC30F Digital Signal Controller}*/
+	/** Microchip Technology dsPIC30F Digital Signal Controller */
 	public static final short EM_DSPIC30F = 118;
 	/** Freescale Communication Engine RISC core */
 	public static final short EM_CE = 119;
-	/**{@code  Renesas M32C series microprocessors*}*/
+	/** Renesas M32C series microprocessors* */
 	public static final short EM_M32C = 120;
-	/**{@code  Altium TSK3000 core}*/
+	// 121 - 130 reserved
+	/** Altium TSK3000 core */
 	public static final short EM_TSK3000 = 131;
-	/**{@code  Freescale RS08 embedded processor}*/
+	/** Freescale RS08 embedded processor */
 	public static final short EM_RS08 = 132;
-	/**{@code  Analog Devices SHARC family of 32-bit DSP processors}*/
+	/** Analog Devices SHARC family of 32-bit DSP processors */
 	public static final short EM_SHARC = 133;
-	/**{@code  Cyan Technology eCOG2 microprocessor}*/
+	/** Cyan Technology eCOG2 microprocessor */
 	public static final short EM_ECOG2 = 134;
-	/**{@code  Sunplus S+core7 RISC processor}*/
+	/** Sunplus S+core7 RISC processor */
 	public static final short EM_SCORE7 = 135;
-	/**{@code  New Japan Radio (NJR) 24-bit DSP Processor}*/
+	/** New Japan Radio (NJR) 24-bit DSP Processor */
 	public static final short EM_DSP24 = 136;
 	/** Broadcom VideoCore III processor */
 	public static final short EM_VIDEOCORE3 = 137;
 	/** RISC processor for Lattice FPGA architecture */
 	public static final short EM_LATTICEMICO32 = 138;
-	/**{@code  Seiko Epson C17 family}*/
+	/** Seiko Epson C17 family */
 	public static final short EM_SE_C17 = 139;
-	/**{@code  The Texas Instruments TMS320C6000 DSP family}*/
+	/** The Texas Instruments TMS320C6000 DSP family */
 	public static final short EM_TI_C6000 = 140;
-	/**{@code  The Texas Instruments TMS320C2000 DSP family}*/
+	/** The Texas Instruments TMS320C2000 DSP family */
 	public static final short EM_TI_C2000 = 141;
-	/**{@code  The Texas Instruments TMS320C55x DSP family}*/
+	/** The Texas Instruments TMS320C55x DSP family */
 	public static final short EM_TI_C5500 = 142;
-	/**{@code  STMicroelectronics 64bit VLIW Data Signal Processor}*/
+	// 143 - 159 reserved
+	/** STMicroelectronics 64bit VLIW Data Signal Processor */
 	public static final short EM_MMDSP_PLUS = 160;
-	/**{@code  Cypress M8C microprocessor}*/
+	/** Cypress M8C microprocessor */
 	public static final short EM_CYPRESS_M8C = 161;
-	/**{@code  Renesas R32C series microprocessors}*/
+	/** Renesas R32C series microprocessors */
 	public static final short EM_R32C = 162;
 	/** NXP Semiconductors TriMedia architecture family */
 	public static final short EM_TRIMEDIA = 163;
 	/** Qualcomm Hexagon processor */
 	public static final short EM_HEXAGON = 164;
-	/**{@code  Intel 8051 and variants}*/
+	/** Intel 8051 and variants */
 	public static final short EM_8051 = 165;
-	/**{@code  STMicroelectronics STxP7x family of RISC processors}*/
+	/** STMicroelectronics STxP7x family of RISC processors */
 	public static final short EM_STXP7X = 166;
 	/** Andes Technology compact code size embedded RISC processor family */
 	public static final short EM_NDS32 = 167;
-	/**{@code  Cyan Technology eCOG1X family}*/
+	/** Cyan Technology eCOG1X family */
 	public static final short EM_ECOG1 = 168;
-	/**{@code  Cyan Technology eCOG1X family}*/
+	/** Cyan Technology eCOG1X family */
 	public static final short EM_ECOG1X = 168;
-	/**{@code  Dallas Semiconductor MAXQ30 Core Micro-controllers}*/
+	/** Dallas Semiconductor MAXQ30 Core Micro-controllers */
 	public static final short EM_MAXQ30 = 169;
-	/**{@code  New Japan Radio (NJR) 16-bit DSP Processor}*/
+	/** New Japan Radio (NJR) 16-bit DSP Processor */
 	public static final short EM_XIMO16 = 170;
-	/**{@code  M2000 Reconfigurable RISC Microprocessor}*/
+	/** M2000 Reconfigurable RISC Microprocessor */
 	public static final short EM_MANIK = 171;
-	/**{@code  Cray Inc. NV2 vector architecture}*/
+	/** Cray Inc. NV2 vector architecture */
 	public static final short EM_CRAYNV2 = 172;
 	/** Renesas RX family */
 	public static final short EM_RX = 173;
@@ -419,26 +425,26 @@ public interface ElfConstants {
 	public static final short EM_METAG = 174;
 	/** MCST Elbrus general purpose hardware architecture */
 	public static final short EM_MCST_ELBRUS = 175;
-	/**{@code  Cyan Technology eCOG16 family}*/
+	/** Cyan Technology eCOG16 family */
 	public static final short EM_ECOG16 = 176;
-	/**{@code  National Semiconductor CompactRISC CR16 16-bitmicroprocessor}*/
+	/** National Semiconductor CompactRISC CR16 16-bitmicroprocessor */
 	public static final short EM_CR16 = 177;
 	/** Freescale Extended Time Processing Unit */
 	public static final short EM_ETPU = 178;
-	/**{@code  Infineon Technologies SLE9X core}*/
+	/** Infineon Technologies SLE9X core */
 	public static final short EM_SLE9X = 179;
-	/**{@code  Intel L10M}*/
+	/** Intel L10M */
 	public static final short EM_L10M = 180;
-	/**{@code  Intel K10M}*/
+	/** Intel K10M */
 	public static final short EM_K10M = 181;
 	// 182 reserved
-	/**{@code  AARCH64 Architecture}*/
+	/** AARCH64 Architecture */
 	public static final short EM_AARCH64 = 183;
-	/**{@code  Atmel Corporation 32-bit microprocessor family}*/
+	/** Atmel Corporation 32-bit microprocessor family */
 	public static final short EM_AVR32 = 185;
-	/**{@code  STMicroeletronics STM8 8-bit microcontroller}*/
+	/** STMicroeletronics STM8 8-bit microcontroller */
 	public static final short EM_STM8 = 186;
-	/**{@code  Tilera TILE64 multicore architecture family}*/
+	/** Tilera TILE64 multicore architecture family */
 	public static final short EM_TILE64 = 187;
 	/** Tilera TILEPro multicore architecture family */
 	public static final short EM_TILEPRO = 188;
@@ -448,37 +454,40 @@ public interface ElfConstants {
 	public static final short EM_TILEGX = 191;
 	/** CloudShield architecture family */
 	public static final short EM_CLOUDSHIELD = 192;
-	/**{@code  KIPO-KAIST Core-A 1st generation processor family}*/
+	/** KIPO-KAIST Core-A 1st generation processor family */
 	public static final short EM_COREA_1ST = 193;
-	/**{@code  KIPO-KAIST Core-A 2nd generation processor family}*/
+	/** KIPO-KAIST Core-A 2nd generation processor family */
 	public static final short EM_COREA_2ND = 194;
-	/**{@code  Synopsys ARCompact V2}*/
+	/** Synopsys ARCompact V2 */
 	public static final short EM_ARC_COMPACT2 = 195;
-	/**{@code  Open8 8-bit RISC soft processor core}*/
+	/** Open8 8-bit RISC soft processor core */
 	public static final short EM_OPEN8 = 196;
-	/**{@code  Renesas RL78 family}*/
+	/** Renesas RL78 family */
 	public static final short EM_RL78 = 197;
 	/** Broadcom VideoCore V processor */
 	public static final short EM_VIDEOCORE5 = 198;
-	/**{@code  Renesas 78KOR family}*/
+	/** Renesas 78KOR family */
 	public static final short EM_78KOR = 199;
-	/**{@code  Freescale 56800EX Digital Signal Controller (DSC)}*/
+	/** Freescale 56800EX Digital Signal Controller (DSC) */
 	public static final short EM_56800EX = 200;
-	/**{@code  Beyond BA1 CPU}*/
+	/** Beyond BA1 CPU */
 	public static final short EM_BA1 = 201;
-	/**{@code  Beyond BA2 CPU}*/
+	/** Beyond BA2 CPU */
 	public static final short EM_BA2 = 202;
 	/** XMOS xCORE processor family */
 	public static final short EM_XCORE = 203;
-	/**{@code  KM211 KM32 32-bit processor}*/
+	/** Microchip 8-bit PIC(r) family */
+	public static final short EM_MCHP_PIC = 204;
+	// 205 - 209 reserved by Intel
+	/** KM211 KM32 32-bit processor */
 	public static final short EM_KM32 = 210;
-	/**{@code  KM211 KMX32 32-bit processor}*/
+	/** KM211 KMX32 32-bit processor */
 	public static final short EM_KMX32 = 211;
-	/**{@code  KM211 KMX16 16-bit processor}*/
+	/** KM211 KMX16 16-bit processor */
 	public static final short EM_KMX16 = 212;
-	/**{@code  KM211 KMX8 8-bit processor}*/
+	/** KM211 KMX8 8-bit processor */
 	public static final short EM_KMX8 = 213;
-	/**{@code  KM211 KVARC processor}*/
+	/** KM211 KVARC processor */
 	public static final short EM_KVARC = 214;
 	/** Paneve CDP architecture family */
 	public static final short EM_CDP = 215;
@@ -490,16 +499,17 @@ public interface ElfConstants {
 	public static final short EM_NORC = 218;
 	/** CSR Kalimba architecture family */
 	public static final short EM_CSR_KALIMBA = 219;
+	// 220 - 223 reserved
 	/** AMD GPU architecture */
 	public static final short EM_AMDGPU = 224;
 	/** RISC-V */
 	public static final short EM_RISCV = 243;
-	/**{@code  Lanai 32-bit processor}*/
+	/** Lanai 32-bit processor */
 	public static final short EM_LANAI = 244;
 	/** Linux kernel bpf virtual machine */
 	public static final short EM_BPF = 247;
 
-	/**{@code  used by NetBSD/avr32 - AVR 32-bit}*/
+	/** used by NetBSD/avr32 - AVR 32-bit */
 	public static final short EM_AVR32_unofficial = 0x18ad;
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
