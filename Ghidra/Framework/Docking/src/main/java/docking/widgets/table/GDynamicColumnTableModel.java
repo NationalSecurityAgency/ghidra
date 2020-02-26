@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,15 +58,15 @@ import utilities.util.reflection.ReflectionUtilities;
  *                    is called.
  */
 public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
-extends AbstractSortedTableModel<ROW_TYPE>
-implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW_TYPE> {
+		extends AbstractSortedTableModel<ROW_TYPE>
+		implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW_TYPE> {
 
 	protected ServiceProvider serviceProvider;
 
 	private TableColumnDescriptor<ROW_TYPE> columnDescriptor;
-	private List<DynamicTableColumn<ROW_TYPE, ?, ?>> tableColumns;
-	private List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultTableColumns;
-	private Map<DynamicTableColumn<ROW_TYPE, ?, ?>, Settings> columnSettings;
+	protected List<DynamicTableColumn<ROW_TYPE, ?, ?>> tableColumns = new ArrayList<>();
+	private List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultTableColumns = new ArrayList<>();
+	protected Map<DynamicTableColumn<ROW_TYPE, ?, ?>, Settings> columnSettings = new HashMap<>();
 
 	private boolean ignoreSettingChanges = false;
 
@@ -75,25 +75,8 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 		SystemUtilities.assertTrue((serviceProvider != null), "ServiceProvider cannot be null");
 
 		this.serviceProvider = serviceProvider;
-		this.tableColumns = new ArrayList<>();
-		this.defaultTableColumns = new ArrayList<>();
 
-	}
-
-	private void initializeColumnsFromDescriptor() {
-
-		if (!defaultTableColumns.isEmpty()) {
-			return;
-		}
-
-		loadDefaultTableColumns();
-		loadDiscoveredTableColumns();
-
-		this.columnSettings = new HashMap<>();
-		for (DynamicTableColumn<ROW_TYPE, ?, ?> column : tableColumns) {
-			columnSettings.put(column, new SettingsImpl(this, column));
-		}
-
+		reloadColumns();
 	}
 
 	protected abstract TableColumnDescriptor<ROW_TYPE> createTableColumnDescriptor();
@@ -113,7 +96,7 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 		Class<ROW_TYPE> runtimeRowObject = (Class<ROW_TYPE>) templateClasses.get(0);
 
 		Collection<DynamicTableColumn<ROW_TYPE, ?, ?>> columns =
-				DiscoverableTableUtils.getDynamicTableColumns(runtimeRowObject);
+			DiscoverableTableUtils.getDynamicTableColumns(runtimeRowObject);
 		for (DynamicTableColumn<ROW_TYPE, ?, ?> column : columns) {
 			if (!tableColumns.contains(column)) {
 				tableColumns.add(column);
@@ -124,7 +107,7 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 	private void loadDefaultTableColumns() {
 		TableColumnDescriptor<ROW_TYPE> descriptor = getTableColumnDescriptor();
 		List<DynamicTableColumn<ROW_TYPE, ?, ?>> defaultColumns =
-				descriptor.getDefaultVisibleColumns();
+			descriptor.getDefaultVisibleColumns();
 
 		defaultTableColumns.addAll(defaultColumns);
 
@@ -138,6 +121,29 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 		setDefaultTableSortState(sortState);
 	}
 
+	/**
+	 * Allows clients to defer column creation until after this parent class's constructor has
+	 * been called.   This method will not restore any column settings that have been changed
+	 * after construction.  Thus, this method is intended only to be called during the 
+	 * construction process.
+	 */
+	protected void reloadColumns() {
+
+		// note: since we should only be called during construction, there is no need to
+		//       fire an event to signal the table structure has changed
+
+		columnDescriptor = null;
+		tableColumns.clear();
+		defaultTableColumns.clear();
+		loadDefaultTableColumns();
+		loadDiscoveredTableColumns();
+
+		columnSettings.clear();
+		for (DynamicTableColumn<ROW_TYPE, ?, ?> column : tableColumns) {
+			columnSettings.put(column, new SettingsImpl(this, column));
+		}
+	}
+
 	private TableColumnDescriptor<ROW_TYPE> getTableColumnDescriptor() {
 		if (columnDescriptor == null) {
 			columnDescriptor = createTableColumnDescriptor();
@@ -147,15 +153,15 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	private DynamicTableColumn<ROW_TYPE, ?, ?> getColumnForDefaultColumnIdentifier(Class<?> clazz) {
 
-		// note: we may have multiple columns with the same class.  It is not the normal case,
+		// note: we may have multiple columns with the same class.  It is not the normal case, 
 		//       but it can happen for re-usable column classes.
 
 		//@formatter:off
 		List<DynamicTableColumn<ROW_TYPE, ?, ?>> matching =
-				tableColumns.stream()
-				.filter(c -> isColumnClassMatch(c, clazz))
-				.collect(Collectors.toList())
-				;
+			tableColumns.stream()
+						.filter(c -> isColumnClassMatch(c, clazz))
+						.collect(Collectors.toList())
+						;
 		//@formatter:on
 
 		if (matching.size() > 1) {
@@ -184,8 +190,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	@Override
 	protected Comparator<ROW_TYPE> createSortComparator(int columnIndex) {
-		initializeColumnsFromDescriptor();
-
 		Comparator<Object> columnComparator = createSortComparatorForColumn(columnIndex);
 		if (columnComparator != null) {
 			// the given column has its own comparator; wrap and us that
@@ -193,7 +197,7 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 		}
 
 		return new RowBasedColumnComparator<>(this, columnIndex, new DefaultColumnComparator(),
-				new ColumnRenderedValueBackupComparator<>(this, columnIndex));
+			new ColumnRenderedValueBackupComparator<>(this, columnIndex));
 	}
 
 	/**
@@ -206,8 +210,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 	 */
 	@SuppressWarnings("unchecked") // the column provides the values itself; safe cast
 	protected Comparator<Object> createSortComparatorForColumn(int columnIndex) {
-		initializeColumnsFromDescriptor();
-
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = getColumn(columnIndex);
 		Comparator<Object> comparator = (Comparator<Object>) column.getComparator();
 		return comparator;
@@ -253,7 +255,7 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 	 * Adds the given column at the end of the list of columns.  This method is intended for
 	 * implementations to add custom column objects, rather than relying on generic, discovered
 	 * DynamicTableColumn implementations.
-	 *
+	 * 
 	 * <p><b>Note: this method assumes that the columns have already been sorted</b>
 	 * @param column The field to add
 	 */
@@ -265,9 +267,9 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 	 * Adds the given columns to the end of the list of columns.  This method is intended for
 	 * implementations to add custom column objects, rather than relying on generic, discovered
 	 * DynamicTableColumn implementations.
-	 *
+	 * 
 	 * <p><b>Note: this method assumes that the columns have already been sorted.</b>
-	 *
+	 * 
 	 * @param columns The columns to add
 	 */
 	protected void addTableColumns(Set<DynamicTableColumn<ROW_TYPE, ?, ?>> columns) {
@@ -299,8 +301,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 	// Note: performs the work of adding the table column, but does NOT fire a changed event
 	private void doAddTableColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column, int index,
 			boolean isDefault) {
-
-		initializeColumnsFromDescriptor();
 
 		if (index < 0 || index > tableColumns.size()) {
 			index = getDefaultTableColumns().size();
@@ -342,8 +342,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	@Override
 	public int getDefaultColumnCount() {
-		initializeColumnsFromDescriptor();
-
 		return getDefaultTableColumns().size();
 	}
 
@@ -353,8 +351,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	@Override
 	public boolean isVisibleByDefault(int modelIndex) {
-		initializeColumnsFromDescriptor();
-
 		if (modelIndex < 0 || modelIndex >= tableColumns.size()) {
 			return false;
 		}
@@ -372,8 +368,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 	 */
 	@Override
 	public boolean isDefaultColumn(int modelIndex) {
-		initializeColumnsFromDescriptor();
-
 		if (modelIndex < 0 || modelIndex >= tableColumns.size()) {
 			return false;
 		}
@@ -394,15 +388,11 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	@Override
 	public final int getColumnCount() {
-		initializeColumnsFromDescriptor();
-
 		return tableColumns.size();
 	}
 
 	@Override
 	public final Class<?> getColumnClass(int column) {
-		initializeColumnsFromDescriptor();
-
 		if (column < 0 || column >= tableColumns.size()) {
 			// hacky: this can happen when we are in the process of rebuilding our column structure,
 			//        where the client calling us has an old index value (such as when we are
@@ -414,15 +404,11 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	@Override
 	public final String getColumnName(int column) {
-		initializeColumnsFromDescriptor();
-
 		return tableColumns.get(column).getColumnName();
 	}
 
 	@Override
 	public int getPreferredColumnWidth(int column) {
-		initializeColumnsFromDescriptor();
-
 		if (column < 0 || column >= tableColumns.size()) {
 
 			// hacky: this can happen when we are in the process of rebuilding our column structure,
@@ -435,30 +421,22 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	@Override
 	public String getColumnDisplayName(int columnIndex) {
-		initializeColumnsFromDescriptor();
-
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = tableColumns.get(columnIndex);
 		return column.getColumnDisplayName(columnSettings.get(column));
 	}
 
 	@Override
 	public String getColumnDescription(int column) {
-		initializeColumnsFromDescriptor();
-
 		return tableColumns.get(column).getColumnDescription();
 	}
 
 	@Override
 	public String getUniqueIdentifier(int column) {
-		initializeColumnsFromDescriptor();
-
 		return tableColumns.get(column).getUniqueIdentifier();
 	}
 
 	@Override
 	public final Object getColumnValueForRow(ROW_TYPE t, int columnIndex) {
-		initializeColumnsFromDescriptor();
-
 		if (columnIndex < 0 || columnIndex >= tableColumns.size()) {
 			return null;
 		}
@@ -470,7 +448,7 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 		//       the declared type.  We want to remove entirely the 'dataSource' value and then
 		//       the templating will be simpler.
 		DynamicTableColumn<ROW_TYPE, ?, DATA_SOURCE> column =
-		(DynamicTableColumn<ROW_TYPE, ?, DATA_SOURCE>) tableColumns.get(columnIndex);
+			(DynamicTableColumn<ROW_TYPE, ?, DATA_SOURCE>) tableColumns.get(columnIndex);
 
 		if (t == null) {
 			// sometimes happen if we are painting while being disposed
@@ -488,22 +466,18 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	/**
 	 * Returns the column index of the given column class
-	 *
+	 * 
 	 * @param columnClass the class for the type of DynamicTableColumn you want to find.
 	 * @return the column index for the specified DynamicTableColumn. -1 if not found.
 	 */
 	public int getColumnIndex(Class<?> columnClass) {
-		initializeColumnsFromDescriptor();
-
 		DynamicTableColumn<ROW_TYPE, ?, ?> column =
-				getColumnForDefaultColumnIdentifier(columnClass);
+			getColumnForDefaultColumnIdentifier(columnClass);
 		return tableColumns.indexOf(column);
 	}
 
 	@Override
 	public int getColumnIndex(DynamicTableColumn<ROW_TYPE, ?, ?> identifier) {
-		initializeColumnsFromDescriptor();
-
 		int count = tableColumns.size();
 		for (int listIndex = 0; listIndex < count; listIndex++) {
 			DynamicTableColumn<?, ?, ?> tableField = tableColumns.get(listIndex);
@@ -516,39 +490,21 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	@Override
 	public DynamicTableColumn<ROW_TYPE, ?, ?> getColumn(int index) {
-		initializeColumnsFromDescriptor();
-
 		return tableColumns.get(index);
 	}
 
 	@Override
 	public SettingsDefinition[] getColumnSettingsDefinitions(int index) {
-		initializeColumnsFromDescriptor();
-
 		return tableColumns.get(index).getSettingsDefinitions();
 	}
 
 	@Override
 	public Settings getColumnSettings(int index) {
-		initializeColumnsFromDescriptor();
-
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = tableColumns.get(index);
 		return columnSettings.get(column);
 	}
 
-	@Override
-	public synchronized void setColumnSettings(int index, Settings newSettings) {
-		initializeColumnsFromDescriptor();
-
-		ignoreSettingChanges = true;
-		applySettings(index, newSettings);
-		ignoreSettingChanges = false;
-		stateChanged(new ChangeEvent(tableColumns.get(index)));
-	}
-
 	private void applySettings(int index, Settings newSettings) {
-		initializeColumnsFromDescriptor();
-
 		DynamicTableColumn<ROW_TYPE, ?, ?> column = tableColumns.get(index);
 		Settings settings = columnSettings.get(column);
 		settings.clearAllSettings();
@@ -559,8 +515,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 
 	@Override
 	public synchronized void setAllColumnSettings(Settings[] newSettings) {
-		initializeColumnsFromDescriptor();
-
 		ignoreSettingChanges = true;
 		for (int modelIndex = 0; modelIndex < newSettings.length; modelIndex++) {
 			applySettings(modelIndex, newSettings[modelIndex]);
@@ -579,8 +533,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 	 */
 	@Override
 	public TableCellRenderer getRenderer(int index) {
-		initializeColumnsFromDescriptor();
-
 		return tableColumns.get(index).getColumnRenderer();
 	}
 
@@ -592,8 +544,6 @@ implements ChangeListener, VariableColumnTableModel, DynamicColumnTableModel<ROW
 	 */
 	@Override
 	public int getMaxLines(int index) {
-		initializeColumnsFromDescriptor();
-
 		if (index < 0 || index >= tableColumns.size()) {
 
 			// hacky: this can happen when we are in the process of rebuilding our column structure,
