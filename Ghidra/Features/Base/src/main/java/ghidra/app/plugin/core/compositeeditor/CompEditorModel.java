@@ -1500,15 +1500,11 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	@Override
 	public void fireTableDataChanged() {
-		boolean tmpUpdatingSelection = updatingSelection;
-		try {
-			updatingSelection = true;
+
+		updatingSelection(() -> {
 			super.fireTableDataChanged(); // This causes the table selection to go away.
 			selectionChanged(); // This sets the selection back.
-		}
-		finally {
-			updatingSelection = tmpUpdatingSelection;
-		}
+		});
 	}
 
 	/**
