@@ -104,12 +104,8 @@ define context contextreg
 
 	# Transient context bits
 	counter		= (14,18)	# 0 to 7 counter (for building variable length register lists)
-#	dreg		= (17,21)	# D register (attached, for building register lists)
-#	sreg		= (17,21)	# S register (attached, for building register lists)
 	regNum		= (19,23)	# D register number (see dreg)
 	counter2	= (24,26)	# 0 to 7 counter (for building variable length register lists)
-#	dreg2		= (25,29)	# 2nd D register (attached, for building register lists)
-#	sreg2		= (25,29)	# 2nd S register (attached, for building register lists)
 	reg2Num		= (27,31)	# 2nd D register number (see dreg2)
 # --- do not allow any field to span 32-bit boundary ---
 	regInc		= (32,33)	# Pair register increment
