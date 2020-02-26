@@ -157,6 +157,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 			return false; // more columns than we have
 		}
 
+		// verify the requested columns are sortable
 		for (int i = 0; i < columnCount; i++) {
 			ColumnSortState state = tableSortState.getColumnSortState(i);
 			if (state == null) {
@@ -169,6 +170,34 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		}
 
 		return true;
+	}
+
+	/**
+	 * A convenience method that will take a given sort state and remove from it any columns
+	 * that cannot be sorted.  This is useful if the client is restoring a sort state that 
+	 * contains columns that have been removed or are no longer sortable (such as during major 
+	 * table model rewrites).
+	 * 
+	 * @param state the state
+	 * @return the updated state
+	 */
+	protected TableSortState cleanupTableSortState(TableSortState state) {
+
+		int columnCount = getColumnCount();
+		TableSortStateEditor editor = new TableSortStateEditor(state);
+		int n = editor.getSortedColumnCount();
+		for (int i = 0; i < n; i++) {
+			ColumnSortState ss = editor.getColumnSortState(i);
+			int columnIndex = ss.getColumnModelIndex();
+			if (columnIndex >= columnCount) {
+				editor.removeSortedColumn(columnIndex);
+			}
+			if (!isSortable(columnIndex)) {
+				editor.removeSortedColumn(columnIndex);
+			}
+		}
+
+		return editor.createTableSortState();
 	}
 
 	private void doSetTableSortState(final TableSortState newSortState) {
