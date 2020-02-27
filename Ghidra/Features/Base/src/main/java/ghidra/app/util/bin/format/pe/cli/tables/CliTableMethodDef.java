@@ -196,7 +196,7 @@ public class CliTableMethodDef extends CliAbstractTable {
 					BinaryReader strReader =
 						new BinaryReader(new MemoryByteProvider(program.getMemory(), nameAddr),
 							!program.getMemory().isBigEndian());
-					funcName = strReader.readNextAsciiString();
+					funcName = strReader.readNextUtf8String();
 					funcName += "-" + method.sigIndex + "-" + method.RVA; // TODO: MethodDefs are guaranteed unique on the triple (Owning TypeDef row index, Name, Signature contents)
 					if (program.getFunctionManager().getFunctionAt(startAddr) == null) {
 						// TODO: Why can a function exist here already?  Different methodRow's can have the same RVA...why?
