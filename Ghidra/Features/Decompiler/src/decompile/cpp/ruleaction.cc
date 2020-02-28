@@ -945,6 +945,13 @@ int4 RulePullsubMulti::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *outvn = op->getOut();
   if (outvn->isPrecisLo()||outvn->isPrecisHi()) return 0; // Don't pull apart a double precision object
 
+  int4 branches = mult->numInput();
+  uintb consume = calc_mask(newSize) << 8*minByte;
+  consume = ~consume;
+  for(int4 i=0;i<branches;++i) {
+    if ((consume & mult->getIn(i)->getConsume()) != 0) return 0;
+  }
+
   Address smalladdr2;
   if (!vn->getSpace()->isBigEndian())
     smalladdr2 = vn->getAddr()+minByte;
@@ -952,7 +959,6 @@ int4 RulePullsubMulti::applyOp(PcodeOp *op,Funcdata &data)
     smalladdr2 = vn->getAddr()+(vn->getSize()-maxByte-1);
 
   vector<Varnode *> params;
-  int4 branches = mult->numInput();
 
   for(int4 i=0;i<branches;++i) {
     Varnode *vn_piece = mult->getIn(i);
