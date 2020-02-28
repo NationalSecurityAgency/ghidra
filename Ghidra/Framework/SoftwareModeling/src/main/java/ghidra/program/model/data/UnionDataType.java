@@ -18,7 +18,6 @@ package ghidra.program.model.data;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.Msg;
@@ -32,21 +31,34 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 	private int unionLength;
 
 	/**
-	 * Construct a new UnionDataType
+	 * Construct a new empty union with the given name within the
+	 * specified categry path.  An empty union will report its length as 1 and 
+	 * {@link #isNotYetDefined()} will return true.
 	 * @param path the category path indicating where this data type is located.
-	 * @param name the name of this dataType
+	 * @param name the name of the new union
 	 */
 	public UnionDataType(CategoryPath path, String name) {
 		this(path, name, null);
 	}
 
+	/**
+	 * Construct a new empty union with the given name and datatype manager
+	 * within the specified categry path.  An empty union will report its 
+	 * length as 1 and {@link #isNotYetDefined()} will return true.
+	 * @param path the category path indicating where this data type is located.
+	 * @param name the name of the new union
+	 * @param dtm the data type manager associated with this data type. This can be null. 
+	 * Also, the data type manager may not yet contain this actual data type.
+	 */
 	public UnionDataType(CategoryPath path, String name, DataTypeManager dtm) {
 		super(path, name, dtm);
 		components = new ArrayList<>();
 	}
 
 	/**
-	 * Construct a new UnionDataType
+	 * Construct a new empty union with the given name within the specified categry path.
+	 * An empty union will report its length as 1 and {@link #isNotYetDefined()} 
+	 * will return true.
 	 * @param path the category path indicating where this data type is located.
 	 * @param name the name of the new structure
 	 * @param universalID the id for the data type
@@ -98,13 +110,23 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 	}
 
 	@Override
+	public DataTypeComponent[] getDefinedComponents() {
+		return getComponents();
+	}
+
+	@Override
 	public int getNumComponents() {
 		return components.size();
 	}
 
 	@Override
+	public int getNumDefinedComponents() {
+		return components.size();
+	}
+
+	@Override
 	public DataTypeComponent add(DataType dataType, int length, String componentName,
-			String comment) {
+			String comment) throws IllegalArgumentException {
 		DataTypeComponent dtc = doAdd(dataType, length, componentName, comment);
 		adjustLength(true);
 		return dtc;
@@ -130,7 +152,8 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		return length;
 	}
 
-	DataTypeComponent doAdd(DataType dataType, int length, String componentName, String comment) {
+	DataTypeComponent doAdd(DataType dataType, int length, String componentName, String comment)
+			throws IllegalArgumentException {
 
 		validateDataType(dataType);
 
@@ -151,8 +174,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 
 	@Override
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length,
-			String componentName, String comment) {
-
+			String componentName, String comment) throws IllegalArgumentException {
 		validateDataType(dataType);
 
 		dataType = adjustBitField(dataType);
@@ -365,7 +387,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 	}
 
 	@Override
-	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
+	public void dataTypeReplaced(DataType oldDt, DataType newDt) throws IllegalArgumentException {
 		DataType replacementDt = newDt;
 		try {
 			validateDataType(replacementDt);
@@ -450,18 +472,8 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		}
 	}
 
-	/**
-	 * Replaces the internal components of this union with components of the
-	 * given union. 
-	 * @param dataType the union to get the component information from.
-	 * @throws IllegalArgumentException if any of the component data types 
-	 * are not allowed to replace a component in this composite data type.
-	 * For example, suppose dt1 contains dt2. Therefore it is not valid
-	 * to replace a dt2 component with dt1 since this would cause a cyclic 
-	 * dependency.
-	 */
 	@Override
-	public void replaceWith(DataType dataType) {
+	public void replaceWith(DataType dataType) throws IllegalArgumentException {
 		if (!(dataType instanceof Union)) {
 			throw new IllegalArgumentException();
 		}
@@ -478,8 +490,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 		setAlignment(union);
 
 		DataTypeComponent[] compArray = union.getComponents();
-		for (int i = 0; i < compArray.length; i++) {
-			DataTypeComponent dtc = compArray[i];
+		for (DataTypeComponent dtc : compArray) {
 			DataType dt = dtc.getDataType();
 			doAdd(dt, dtc.getLength(), dtc.getFieldName(), dtc.getComment());
 		}

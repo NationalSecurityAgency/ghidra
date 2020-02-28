@@ -48,7 +48,7 @@ class FixedIndexTable extends IndexTable {
 
 	/**
 	 * Construct a new or existing secondary index. An existing index must have
-	 * its' root ID specified within the tableRecord.
+	 * its root ID specified within the tableRecord.
 	 * @param primaryTable primary table.
 	 * @param indexTableRecord specifies the index parameters.
 	 * @throws IOException thrown if an IO error occurs 
@@ -66,11 +66,13 @@ class FixedIndexTable extends IndexTable {
 	 */
 	@Override
 	long[] findPrimaryKeys(Field indexValue) throws IOException {
-		if (!indexValue.getClass().equals(fieldType.getClass()))
+		if (!indexValue.getClass().equals(fieldType.getClass())) {
 			throw new IllegalArgumentException("Incorrect indexed field type");
+		}
 		Record indexRecord = indexTable.getRecord(indexValue.getLongValue());
-		if (indexRecord == null)
+		if (indexRecord == null) {
 			return emptyKeyArray;
+		}
 		IndexBuffer indexBuffer = new IndexBuffer(indexValue, indexRecord.getBinaryData(0));
 		return indexBuffer.getPrimaryKeys();
 	}
@@ -83,11 +85,13 @@ class FixedIndexTable extends IndexTable {
 	 */
 	@Override
 	int getKeyCount(Field indexValue) throws IOException {
-		if (!indexValue.getClass().equals(fieldType.getClass()))
+		if (!indexValue.getClass().equals(fieldType.getClass())) {
 			throw new IllegalArgumentException("Incorrect indexed field type");
+		}
 		Record indexRecord = indexTable.getRecord(indexValue.getLongValue());
-		if (indexRecord == null)
+		if (indexRecord == null) {
 			return 0;
+		}
 		IndexBuffer indexBuffer = new IndexBuffer(indexValue, indexRecord.getBinaryData(0));
 		return indexBuffer.keyCount;
 	}
@@ -236,8 +240,9 @@ class FixedIndexTable extends IndexTable {
 
 		@Override
 		public boolean hasNext() throws IOException {
-			if (hasNext)
+			if (hasNext) {
 				return true;
+			}
 			try {
 				long key = indexIterator.next();
 				keyField = fieldType.newField();
@@ -253,8 +258,9 @@ class FixedIndexTable extends IndexTable {
 
 		@Override
 		public boolean hasPrevious() throws IOException {
-			if (hasPrev)
+			if (hasPrev) {
 				return true;
+			}
 			try {
 				long key = indexIterator.previous();
 				keyField = fieldType.newField();
@@ -297,14 +303,15 @@ class FixedIndexTable extends IndexTable {
 		 */
 		@Override
 		public boolean delete() throws IOException {
-			if (lastKey == null)
+			if (lastKey == null) {
 				return false;
+			}
 			synchronized (db) {
 				IndexBuffer indexBuf = getIndexBuffer(lastKey);
 				if (indexBuf != null) {
 					long[] keys = indexBuf.getPrimaryKeys();
-					for (int i = 0; i < keys.length; i++) {
-						primaryTable.deleteRecord(keys[i]);
+					for (long key : keys) {
+						primaryTable.deleteRecord(key);
 					}
 					// The following does not actually delete the index record since it 
 					// should already have been removed with the removal of all associated 

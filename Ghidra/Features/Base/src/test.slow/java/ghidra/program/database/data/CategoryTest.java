@@ -21,7 +21,6 @@ import java.util.*;
 
 import org.junit.*;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;

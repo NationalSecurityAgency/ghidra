@@ -141,7 +141,7 @@ class DefaultCompositeMember extends CompositeMember {
 	 * @param baseDataType bitfield base datatype
 	 * @param bitSize bitfield size in bits
 	 * @param bitOffsetWithinBaseType offset of bitfield within base type 
-	 * @throws InvalidDataTypeException
+	 * @throws InvalidDataTypeException invalid baseDataType for bitfield
 	 */
 	private DefaultCompositeMember(int componentOffset, DataType baseDataType, int bitSize,
 			int bitOffsetWithinBaseType) throws InvalidDataTypeException {
@@ -340,10 +340,10 @@ class DefaultCompositeMember extends CompositeMember {
 		}
 	}
 
-	private boolean isGoodAlignment(Composite testCompsosite, int preferredSize) {
+	private boolean isGoodAlignment(Composite testComposite, int preferredSize) {
 		boolean alignOK = true;
-		if (preferredSize > 0 && testCompsosite.getNumComponents() != 0) {
-			alignOK = (testCompsosite.getLength() == preferredSize);
+		if (preferredSize > 0 && testComposite.getNumComponents() != 0) {
+			alignOK = (testComposite.getLength() == preferredSize);
 		}
 
 		if (alignOK && isStructureContainer()) {
@@ -351,7 +351,7 @@ class DefaultCompositeMember extends CompositeMember {
 			Structure struct = (Structure) memberDataType;
 			DataTypeComponent[] unalignedComponents = struct.getDefinedComponents();
 			int index = 0;
-			for (DataTypeComponent dtc : testCompsosite.getComponents()) {
+			for (DataTypeComponent dtc : testComposite.getComponents()) {
 				DataTypeComponent unalignedDtc = unalignedComponents[index++];
 				if (!isComponentUnchanged(dtc, unalignedDtc)) {
 					alignOK = false;

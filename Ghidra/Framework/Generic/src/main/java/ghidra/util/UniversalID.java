@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,28 +17,33 @@ package ghidra.util;
 
 public class UniversalID {
 	private long id;
+
 	public UniversalID(long id) {
 		this.id = id;
 	}
+
 	public long getValue() {
 		return id;
 	}
+
 	@Override
-	public boolean equals( Object obj ) {
+	public boolean equals(Object obj) {
 		if (obj == this) {
 			return true;
 		}
 		if (obj == null || !(obj instanceof UniversalID)) {
 			return false;
 		}
-		return ((UniversalID)obj).id == id;
+		return ((UniversalID) obj).id == id;
 	}
+
 	@Override
 	public int hashCode() {
-		return (int)id;
+		return (int) (id ^ (id >>> 32));
 	}
+
 	@Override
-    public String toString() {
+	public String toString() {
 		return Long.toString(id);
 	}
 }

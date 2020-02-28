@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.mem.MemBuffer;
@@ -25,26 +24,35 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NotYetImplementedException;
 
 /**
- *  Common implementation methods for structure and union
+ * Common implementation methods for structure and union
  */
 public abstract class CompositeDataTypeImpl extends GenericDataType implements Composite {
 	private final static long serialVersionUID = 1;
 	private String description;
 
-	protected boolean aligned = false;  //WARNING, changing the initial value for this will cause
+	protected boolean aligned = false; // WARNING, changing the initial value for this will cause
 										// subtle errors - One I know of is in the StructureDataType
-										// copyComponent method.  It has built in assumptions about this.
+										// copyComponent method. It has built in assumptions about this.
 
 	protected AlignmentType alignmentType = AlignmentType.DEFAULT_ALIGNED;
 	protected int packingValue = NOT_PACKING;
 	protected int externalAlignment = DEFAULT_ALIGNMENT_VALUE;
 
 	/**
-	 * Creates an empty CompositeDataType with the specified name.
-	 * @param path the category path indicating where this data type is located.
-	 * @param name the data type's name
-	 * @param dataTypeManager the data type manager associated with this data type. This can be null. 
-	 * Also, the data type manager may not contain this actual data type.
+	 * Construct a new composite with the given name
+	 * 
+	 * @param path                          the category path indicating where this
+	 *                                      data type is located.
+	 * @param name                          the name of the new structure
+	 * @param universalID                   the id for the data type
+	 * @param sourceArchive                 the source archive for this data type
+	 * @param lastChangeTime                the last time this data type was changed
+	 * @param lastChangeTimeInSourceArchive the last time this data type was changed
+	 *                                      in its source archive.
+	 * @param dtm                           the data type manager associated with
+	 *                                      this data type. This can be null. Also,
+	 *                                      the data type manager may not yet
+	 *                                      contain this actual data type.
 	 */
 	CompositeDataTypeImpl(CategoryPath path, String name, UniversalID universalID,
 			SourceArchive sourceArchive, long lastChangeTime, long lastChangeTimeInSourceArchive,
@@ -60,13 +68,15 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * Get the preferred length for a new component.  For Unions and internally aligned
-	 * structures the preferred component length for a fixed-length dataType will be the 
-	 * length of that dataType.  Otherwise the length returned will be no larger than the
-	 * specified length.
+	 * Get the preferred length for a new component. For Unions and internally
+	 * aligned structures the preferred component length for a fixed-length dataType
+	 * will be the length of that dataType. Otherwise the length returned will be no
+	 * larger than the specified length.
+	 * 
 	 * @param dataType new component datatype
-	 * @param length constrained length or -1 to force use of dataType size.  Dynamic types
-	 * such as string must have a positive length specified.
+	 * @param length   constrained length or -1 to force use of dataType size.
+	 *                 Dynamic types such as string must have a positive length
+	 *                 specified.
 	 * @return preferred component length
 	 */
 	protected int getPreferredComponentLength(DataType dataType, int length) {
@@ -98,15 +108,15 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * This method throws an exception if the indicated data type is an ancestor
-	 * of this data type. In other words, the specified data type has a component
-	 * or sub-component containing this data type.
+	 * This method throws an exception if the indicated data type is an ancestor of
+	 * this data type. In other words, the specified data type has a component or
+	 * sub-component containing this data type.
+	 * 
 	 * @param dataType the data type
-	 * @throws IllegalArgumentException if the data type is an ancestor of this 
-	 * data type.
+	 * @throws IllegalArgumentException if the data type is an ancestor of this data
+	 *                                  type.
 	 */
-	protected void checkAncestry(DataType dataType) {
-		// TODO: cyclic checks are easily bypassed by renaming multiple composite instances 
+	protected void checkAncestry(DataType dataType) throws IllegalArgumentException {
 		if (this.equals(dataType)) {
 			throw new IllegalArgumentException(
 				"Data type " + getDisplayName() + " can't contain itself.");
@@ -118,8 +128,9 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * This method throws an exception if the indicated data type is not
-	 * a valid data type for a component of this composite data type.
+	 * This method throws an exception if the indicated data type is not a valid
+	 * data type for a component of this composite data type.
+	 * 
 	 * @param dataType the data type to be checked.
 	 * @throws IllegalArgumentException if the data type is invalid.
 	 */
@@ -143,11 +154,12 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	/**
 	 * Handle replacement of datatype which may impact bitfield datatype.
+	 * 
 	 * @param bitfieldComponent bitfield component
-	 * @param oldDt affected datatype which has been removed or replaced
-	 * @param newDt replacement datatype
+	 * @param oldDt             affected datatype which has been removed or replaced
+	 * @param newDt             replacement datatype
 	 * @return true if bitfield component was modified
-	 * @throws InvalidDataTypeException if new datatype is not 
+	 * @throws InvalidDataTypeException if new datatype is not
 	 */
 	protected boolean updateBitFieldDataType(DataTypeComponentImpl bitfieldComponent,
 			DataType oldDt, DataType newDt) throws InvalidDataTypeException {
@@ -323,7 +335,8 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * Notify any parent data types that this composite data type's alignment has changed.
+	 * Notify any parent data types that this composite data type's alignment has
+	 * changed.
 	 */
 	protected void notifyAlignmentChanged() {
 		DataType[] parents = getParents();
@@ -336,10 +349,11 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * Adjusts the internal alignment of components within this composite based on the current
-	 * settings of the internal alignment, packing, alignment type and minimum alignment value.
-	 * This method should be called whenever any of the above settings are changed or whenever
-	 * a components data type is changed or a component is added or removed.
+	 * Adjusts the internal alignment of components within this composite based on
+	 * the current settings of the internal alignment, packing, alignment type and
+	 * minimum alignment value. This method should be called whenever any of the
+	 * above settings are changed or whenever a components data type is changed or a
+	 * component is added or removed.
 	 */
 	protected abstract void adjustInternalAlignment();
 
@@ -373,11 +387,14 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	/**
 	 * Dump all components for use in {@link #toString()} representation.
+	 * 
 	 * @param buffer string buffer
-	 * @param pad padding to be used with each component output line
+	 * @param pad    padding to be used with each component output line
 	 */
 	protected void dumpComponents(StringBuilder buffer, String pad) {
-		for (DataTypeComponent dtc : getComponents()) {
+		// limit output of filler components for unaligned structures
+		DataTypeComponent[] components = getDefinedComponents();
+		for (DataTypeComponent dtc : components) {
 			DataType dataType = dtc.getDataType();
 			buffer.append(pad + dtc.getOffset());
 			buffer.append(pad + dataType.getName());

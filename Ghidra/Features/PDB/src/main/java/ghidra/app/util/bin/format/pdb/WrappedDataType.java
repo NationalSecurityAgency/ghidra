@@ -20,7 +20,7 @@ import ghidra.program.model.data.DataType;
 /**
  * <code>WrappedDataType</code> provide the ability to wrap 
  * a {@link DataType} with additional information not conveyed
- * by the datatype on its' own. 
+ * by the datatype on its own. 
  * <P>
  * Note that a BitFieldDataType instance may be specified as the datatype
  * in order to convey bitfield related information.

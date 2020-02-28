@@ -63,14 +63,15 @@ abstract class IndexTable {
 
 	/**
 	 * Construct a new or existing secondary index. An existing index must have
-	 * its' root ID specified within the tableRecord.
+	 * its root ID specified within the tableRecord.
 	 * @param primaryTable primary table.
 	 * @param indexTableRecord specifies the index parameters.
 	 * @throws IOException thrown if IO error occurs
 	 */
 	IndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
-		if (!primaryTable.useLongKeys())
+		if (!primaryTable.useLongKeys()) {
 			throw new AssertException("Only long-key tables may be indexed");
+		}
 		this.db = primaryTable.getDBHandle();
 		this.primaryTable = primaryTable;
 		this.indexTableRecord = indexTableRecord;
@@ -90,8 +91,9 @@ abstract class IndexTable {
 	static IndexTable getIndexTable(DBHandle db, TableRecord indexTableRecord) throws IOException {
 		String name = indexTableRecord.getName();
 		Table primaryTable = db.getTable(name);
-		if (primaryTable == null)
+		if (primaryTable == null) {
 			throw new AssertException("Table not found: " + name);
+		}
 
 		if (indexTableRecord.getSchema().getKeyFieldType() instanceof IndexField) {
 			return new FieldIndexTable(primaryTable, indexTableRecord);
@@ -111,8 +113,9 @@ abstract class IndexTable {
 	 * @throws IOException thrown if IO error occurs
 	 */
 	static IndexTable createIndexTable(Table primaryTable, int indexColumn) throws IOException {
-		if (primaryTable.getRecordCount() != 0)
+		if (primaryTable.getRecordCount() != 0) {
 			throw new AssertException();
+		}
 		return new FieldIndexTable(primaryTable, indexColumn);
 	}
 
@@ -613,8 +616,9 @@ abstract class IndexTable {
 		 */
 		@Override
 		public boolean delete() throws IOException {
-			if (lastKey == null)
+			if (lastKey == null) {
 				return false;
+			}
 			synchronized (db) {
 				long key = lastKey.getLongValue();
 				primaryTable.deleteRecord(key);

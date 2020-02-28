@@ -27,24 +27,24 @@ public class RenameStructureFieldTask extends RenameTask {
 
 	private Structure structure;
 	public int offset;
-	
+
 	public RenameStructureFieldTask(PluginTool tool, Program program, DecompilerPanel panel,
 			ClangToken token, Structure structure, int offset) {
 		super(tool, program, panel, token, token.getText());
 		this.structure = structure;
 		this.offset = offset;
 	}
-	
+
 	@Override
 	public void commit() throws DuplicateNameException, InvalidInputException {
 		if (structure.isNotYetDefined()) {
 			DataType newtype = new Undefined1DataType();
-			structure.insert(0,newtype);
+			structure.insert(0, newtype);
 		}
 		DataTypeComponent comp = structure.getComponentAt(offset);
 		if (comp.getDataType() == DataType.DEFAULT) {		// Is this just a placeholder
 			DataType newtype = new Undefined1DataType();
-			structure.replaceAtOffset(offset, newtype,1, newName, "Created by retype action");
+			structure.replaceAtOffset(offset, newtype, 1, newName, "Created by retype action");
 		}
 		else {
 			comp.setFieldName(newName);
@@ -59,9 +59,8 @@ public class RenameStructureFieldTask extends RenameTask {
 	@Override
 	public boolean isValid(String newNm) {
 		newName = newNm;
-		DataTypeComponent[] comp = structure.getComponents();
+		DataTypeComponent[] comp = structure.getDefinedComponents();
 		for (DataTypeComponent element : comp) {
-//			if (comp[i].getDataType() == DataType.DEFAULT) continue;		// Placeholder, don't compare name
 			String fieldname = element.getFieldName();
 			if (fieldname == null) {
 				continue;
