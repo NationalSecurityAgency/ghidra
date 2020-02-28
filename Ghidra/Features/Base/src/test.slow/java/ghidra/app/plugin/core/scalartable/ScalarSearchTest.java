@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.scalartable;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -248,6 +250,32 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		createCompositeStructure(p);
 		searchProgramAndDisplayResults(p, null, minScalarVal, maxScalarVal);
 		assertNestedScalarsInTable(p);
+	}
+
+	/**
+	 * Tests that if a scalar value is entered it will be correctly
+	 * interpreted as a signed value and displayed in the results.
+	 * <p>
+	 * eg: 0xcc and -52 will both result in matches, 204 will not
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testSearchSpecificSignedScalar() throws Exception {
+
+	}
+
+	/**
+	 * Tests that if a hex scalar value is entered it will be correctly
+	 * interpreted as an unsigned value and displayed in the results.
+	 * <p>
+	 * eg: 0xcc and 204 will result in match, -52 will not
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testSearchSpecificUnsignedScalar() throws Exception {
+
 	}
 
 	private void assertAllRowsEqualTo(int value) {
