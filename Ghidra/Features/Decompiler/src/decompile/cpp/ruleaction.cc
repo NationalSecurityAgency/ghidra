@@ -1012,6 +1012,10 @@ int4 RulePullsubIndirect::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *outvn = op->getOut();
   if (outvn->isPrecisLo()||outvn->isPrecisHi()) return 0; // Don't pull apart double precision object
 
+  uintb consume = calc_mask(newSize) << 8 * minByte;
+  consume = ~consume;
+  if ((consume & indir->getIn(0)->getConsume())!=0) return 0;
+
   Varnode *small2;
   Address smalladdr2;
   PcodeOp *new_ind;
