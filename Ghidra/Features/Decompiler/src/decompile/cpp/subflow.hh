@@ -105,6 +105,7 @@ class SubvariableFlow {
   bool traceBackwardSext(ReplaceVarnode *rvn);	///< Trace logical data-flow backward assuming sign-extensions
   bool createLink(ReplaceOp *rop,uintb mask,int4 slot,Varnode *vn);
   bool createCompareBridge(PcodeOp *op,ReplaceVarnode *inrvn,int4 slot,Varnode *othervn);
+  void addPush(PcodeOp *pushOp,ReplaceVarnode *rvn);
   void addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn);
   void addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);
   void addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);

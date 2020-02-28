@@ -301,10 +301,7 @@ bool SubvariableFlow::tryCallReturnPush(PcodeOp *op,ReplaceVarnode *rvn)
   if (fc->isOutputLocked()) return false;
   if (fc->isOutputActive()) return false;	// Don't trim while in the middle of figuring out return value
 
-  patchlist.push_front(PatchRecord());		// Push to the front of the patch list
-  patchlist.front().type = PatchRecord::push_patch;
-  patchlist.front().patchOp = op;
-  patchlist.front().in1 = rvn;
+  addPush(op,rvn);
   // pullcount += 1;		// This is a push NOT a pull
   return true;
 }
@@ -655,10 +652,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   case CPUI_INT_SEXT:
     if ((rvn->mask & calc_mask(op->getIn(0)->getSize())) != rvn->mask) {
       if ((rvn->mask & 1)!=0 && flowsize > op->getIn(0)->getSize()) {
-	patchlist.push_front(PatchRecord());		// Push to the front of the patch list
-	patchlist.front().type = PatchRecord::push_patch;
-	patchlist.front().patchOp = op;
-	patchlist.front().in1 = rvn;
+	addPush(op,rvn);
 	return true;
       }
       break;	       // Check if subvariable comes through extension
@@ -903,6 +897,13 @@ bool SubvariableFlow::traceBackwardSext(ReplaceVarnode *rvn)
       if (!createLink(rop,rvn->mask,i,op->getIn(i))) // Same inputs and mask
 	return false;
     return true;
+  case CPUI_INT_ZEXT:
+    if (op->getIn(0)->getSize() < flowsize) {
+      // zero extension from a smaller size still acts as a signed extension
+      addPush(op,rvn);
+      return true;
+    }
+    break;
   case CPUI_INT_SEXT:
     if (flowsize != op->getIn(0)->getSize()) return false;
     rop = createOp(CPUI_COPY,1,rvn);
@@ -1035,6 +1036,21 @@ void SubvariableFlow::createNewOut(ReplaceOp *rop,uintb mask)
 
   rop->output = res;
   res->def = rop;
+}
+
+/// \brief Mark an operation where original data-flow is being pushed into a subgraph variable
+///
+/// The operation is not manipulating the logical value, but it produces a variable containing
+/// the logical value. The original op will not change but will just produce a smaller value.
+/// \param pushOp is the operation to mark
+/// \param rvn is the output variable holding the logical value
+void SubvariableFlow::addPush(PcodeOp *pushOp,ReplaceVarnode *rvn)
+
+{
+  patchlist.push_front(PatchRecord());		// Push to the front of the patch list
+  patchlist.front().type = PatchRecord::push_patch;
+  patchlist.front().patchOp = pushOp;
+  patchlist.front().in1 = rvn;
 }
 
 /// \brief Mark an operation where a subgraph variable is naturally copied into the original data-flow
