@@ -15,13 +15,20 @@
  */
 package ghidra.app.plugin.assembler.sleigh.parse;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
+
+import org.apache.commons.collections4.IterableUtils;
 
 /**
  * An unsuccessful result from parsing
  */
 public class AssemblyParseErrorResult extends AssemblyParseResult {
+	/**
+	 * The maximum number of suggestions to print when describing this error, e.g., when reported in
+	 * exception messages.
+	 */
+	private static final int SUGGESTIONS_THRESHOLD = 10;
+
 	private final String buffer;
 	private final Set<String> suggestions;
 
@@ -40,15 +47,28 @@ public class AssemblyParseErrorResult extends AssemblyParseResult {
 
 	/**
 	 * Get a description of the error
+	 * 
 	 * @return a description
 	 */
 	public String describeError() {
-		return "Syntax Error: Expected " + suggestions + ". Got " + buffer;
+		Collection<String> truncSuggestions;
+		if (suggestions.size() <= SUGGESTIONS_THRESHOLD) {
+			truncSuggestions = suggestions;
+		}
+		else {
+			truncSuggestions = new ArrayList<>();
+			for (String s : IterableUtils.boundedIterable(suggestions, SUGGESTIONS_THRESHOLD)) {
+				truncSuggestions.add(s);
+			}
+			truncSuggestions.add("...");
+		}
+		return "Syntax Error: Expected " + truncSuggestions + ". Got " + buffer;
 	}
 
 	/**
 	 * Get a set of suggested tokens that would have allowed parsing to continue
-	 * @return the set
+	 * 
+	 * @return the token set
 	 */
 	public Set<String> getSuggestions() {
 		return Collections.unmodifiableSet(suggestions);
@@ -56,7 +76,8 @@ public class AssemblyParseErrorResult extends AssemblyParseResult {
 
 	/**
 	 * Get the leftover contents of the input buffer when the error occurred
-	 * @return
+	 * 
+	 * @return the remaining buffer contents
 	 */
 	public String getBuffer() {
 		return buffer;

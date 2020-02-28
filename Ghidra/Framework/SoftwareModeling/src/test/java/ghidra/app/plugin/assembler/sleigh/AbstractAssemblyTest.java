@@ -202,7 +202,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 			long addr, String ctxstr) {
 		final AssemblyPatternBlock ctx =
 			(ctxstr == null ? context.getDefault() : AssemblyPatternBlock.fromString(ctxstr))
-				.fillMask();
+					.fillMask();
 		dbg.println("Checking each: " + disassembly + " ctx:" + ctx);
 		boolean gotOne = false;
 		boolean failedOne = false;
@@ -303,7 +303,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	/**
 	 * Run a test with the given checks
 	 *
-	 * @param assembly the text to assembly
+	 * @param assembly the text to assemble
 	 * @param instr an instruction pattern that must appear in the results
 	 * @param disassembly a set of acceptable disassembly texts
 	 * @param addr the address for assembly and disassembly
@@ -326,7 +326,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 			}
 			final AssemblyPatternBlock ctx =
 				(ctxstr == null ? context.getDefault() : AssemblyPatternBlock.fromString(ctxstr))
-					.fillMask();
+						.fillMask();
 			try {
 				String disstr;
 				PseudoInstruction psins = disassemble(addr, ins.getVals(), ctx.getVals());
@@ -398,7 +398,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	/**
 	 * Run a test where one result must match a given instruction pattern, and all others must
 	 * disassemble exactly to the input
-	 *
+	 * 
 	 * @param assembly the input assembly
 	 * @param instr the instruction pattern
 	 * @see AssemblyPatternBlock#fromString(String)
