@@ -4,76 +4,70 @@
 # csrrc d,E,s 00003073 0000707f SIMPLE (0, 0) 
 :csrrc rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x3 & op1519
 {
-	#TODO  Size restriction error
-	# local tmprs1:$(XLEN) = rs1;
-	# local oldcsr:$(XLEN) = csr:$(XLEN);
-	# rd = oldcsr;
-	# local tmp:$(XLEN) = op1519;
-	# if (tmp == 0) goto inst_next;
-	# local newcsr:$(XLEN) = oldcsr & ~tmprs1;
-	# csr = zext(newcsr);
+	local tmprs1:$(XLEN) = rs1;
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	rd = oldcsr;
+	local tmp:$(XLEN) = op1519;
+	if (tmp == 0) goto inst_next;
+	local newcsr:$(XLEN) = oldcsr & ~tmprs1;
+	csr = newcsr;
 }
 
 
 # csrrci d,E,Z 00007073 0000707f SIMPLE (0, 0) 
 :csrrci rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7
 {
-	#TODO  Size restriction error
-	# local oldcsr:$(XLEN) = csr:$(XLEN);
-	# rd = oldcsr;
-	# local tmp:$(XLEN) = op1519;
-	# if (tmp == 0) goto inst_next;
-	# csr = csr & ~tmp;
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	rd = oldcsr;
+	local tmp:$(XLEN) = op1519;
+	if (tmp == 0) goto inst_next;
+	csr = csr & ~tmp;
 }
 
 
 # csrrs d,E,s 00002073 0000707f SIMPLE (0, 0) 
 :csrrs rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519
 {
-	#TODO  Size restriction error
-	# local tmprs1 = rs1;
-	# local oldcsr:$(XLEN) = csr:$(XLEN);
-	# rd = oldcsr;
-	# local tmp:$(XLEN) = op1519;
-	# if (tmp == 0) goto inst_next;
-	# csr = csr | tmprs1;
+	local tmprs1 = rs1;
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	rd = oldcsr;
+	local tmp:$(XLEN) = op1519;
+	if (tmp == 0) goto inst_next;
+	csr = csr | tmprs1;
 }
 
 
 # csrrsi d,E,Z 00006073 0000707f SIMPLE (0, 0) 
 :csrrsi rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6
 {
-	#TODO  Size restriction error
-	# local oldcsr:$(XLEN) = csr:$(XLEN);
-	# rd = oldcsr;
-	# local tmp:$(XLEN) = op1519;
-	# if (tmp == 0) goto inst_next;
-	# csr = csr | tmp;
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	rd = oldcsr;
+	local tmp:$(XLEN) = op1519;
+	if (tmp == 0) goto inst_next;
+	csr = csr | tmp;
 }
 
 
 # csrrw d,E,s 00001073 0000707f SIMPLE (0, 0) 
 :csrrw rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op1519
 {
-	#TODO  Size restriction error
-	# local tmprs1:$(XLEN) = rs1;
-	# local oldcsr:$(XLEN) = csr:$(XLEN);
-	# local tmp:$(XLEN) = op1519;
-	# csr = tmprs1;
-	# if (tmp == 0) goto inst_next;
-	# rd = oldcsr;
+	local tmprs1:$(XLEN) = rs1;
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	local tmp:$(XLEN) = op1519;
+	csr = tmprs1;
+	if (tmp == 0) goto inst_next;
+	rd = oldcsr;
 }
 
 
 # csrrwi d,E,Z 00005073 0000707f SIMPLE (0, 0) 
 :csrrwi rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5
 {
-	#TODO  Size restriction error
-	# local oldcsr:$(XLEN) = csr:$(XLEN);
-	# local tmp:$(XLEN) = op1519;
-	# csr = tmp;
-	# if (tmp == 0) goto inst_next;
-	# rd = oldcsr;
+	local oldcsr:$(XLEN) = csr:$(XLEN);
+	local tmp:$(XLEN) = op1519;
+	csr = tmp;
+	if (tmp == 0) goto inst_next;
+	rd = oldcsr;
 }
 
 

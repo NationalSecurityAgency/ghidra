@@ -255,102 +255,102 @@ cswspimm: uimm is cop0708 & cop0912 [ uimm = (cop0708 << 6) | (cop0912 << 2); ] 
 
 # 0x000-0x0ff
 with csr: op3031=0 & op2829=0 {
-	: csr_0 is csr_0 {} # user, standard read/write
+	: csr_0 is csr_0 { export csr_0; } # user, standard read/write
 }
 
 # 0x100-0x1ff
 with csr: op3031=0 & op2829=1 {
-	: csr_1 is csr_1 {} # supervisor, standard read/write
+	: csr_1 is csr_1 { export csr_1; } # supervisor, standard read/write
 }
 
 # 0x200-0x2ff
 with csr: op3031=0 & op2829=2 {
-	: csr_2 is csr_2 {} # hypervisor, standard read/write
+	: csr_2 is csr_2 { export csr_2; } # hypervisor, standard read/write
 }
 
 # 0x300-0x3ff
 with csr: op3031=0 & op2829=3 {
-	: csr_3 is csr_3 {} # machine, standard read/write
+	: csr_3 is csr_3 { export csr_3; } # machine, standard read/write
 }
 
 # 0x400-0x4ff
 with csr: op3031=1 & op2829=0 {
-	: csr_4 is csr_4 {} # user, standard read/write
+	: csr_4 is csr_4 { export csr_4; } # user, standard read/write
 }
 
 # 0x500-0x5ff
 with csr: op3031=1 & op2829=1 {
-	: csr_50 is csr_50 & op2727=0 {} # supervisor, standard read/write
-	: csr_58 is csr_58 & op2627=2 {} # supervisor, standard read/write
-	: csr_5C is csr_5C & op2627=3 {} # supervisor, custom read/write
+	: csr_50 is csr_50 & op2727=0 { export csr_50; } # supervisor, standard read/write
+	: csr_58 is csr_58 & op2627=2 { export csr_58; } # supervisor, standard read/write
+	: csr_5C is csr_5C & op2627=3 { export csr_5C; } # supervisor, custom read/write
 }
 
 # 0x600-0x6ff
 with csr: op3031=1 & op2829=2 {
-	: csr_60 is csr_60 & op2727=0 {} # hypervisor, standard read/write
-	: csr_68 is csr_68 & op2627=2 {} # hypervisor, standard read/write
-	: csr_6C is csr_6C & op2627=3 {} # hypervisor, custom read/write
+	: csr_60 is csr_60 & op2727=0 { export csr_60; } # hypervisor, standard read/write
+	: csr_68 is csr_68 & op2627=2 { export csr_68; } # hypervisor, standard read/write
+	: csr_6C is csr_6C & op2627=3 { export csr_6C; } # hypervisor, custom read/write
 }
 
 # 0x700-0x7ff
 with csr: op3031=1 & op2829=3 {
-	: csr_70 is csr_70 & op2727=0   {} # machine, standard read/write
-	: csr_78 is csr_78 & op2527=4   {} # machine, standard read/write
-	: csr_7A is csr_7A & op2427=0xa {} # machine, standard read/write debug
-	: csr_7B is csr_7B & op2427=0xb {} # machine, debug-mode-only
-	: csr_7C is csr_7C & op2627=3   {} # machine, custom read/write
+	: csr_70 is csr_70 & op2727=0   { export csr_70; } # machine, standard read/write
+	: csr_78 is csr_78 & op2527=4   { export csr_78; } # machine, standard read/write
+	: csr_7A is csr_7A & op2427=0xa { export csr_7A; } # machine, standard read/write debug
+	: csr_7B is csr_7B & op2427=0xb { export csr_7B; } # machine, debug-mode-only
+	: csr_7C is csr_7C & op2627=3   { export csr_7C; } # machine, custom read/write
 }
 
 # 0x800-0x8ff
 with csr: op3031=2 & op2829=0 {
-	: csr_8 is csr_8 {} # user, custom read/write
+	: csr_8 is csr_8 { export csr_8; } # user, custom read/write
 }
 
 # 0x900-0x9ff
 with csr: op3031=2 & op2829=1 {
-	: csr_90 is csr_90 & op2727=0 {} # supervisor, standard read/write
-	: csr_98 is csr_98 & op2627=2 {} # supervisor, standard read/write
-	: csr_9C is csr_9C & op2627=3 {} # supervisor, custom read/write
+	: csr_90 is csr_90 & op2727=0 { export csr_90; } # supervisor, standard read/write
+	: csr_98 is csr_98 & op2627=2 { export csr_98; } # supervisor, standard read/write
+	: csr_9C is csr_9C & op2627=3 { export csr_9C; } # supervisor, custom read/write
 }
 
 # 0xa00-0xaff
 with csr: op3031=2 & op2829=2 {
-	: csr_A0 is csr_A0 & op2727=0 {} # hypervisor, standard read/write
-	: csr_A8 is csr_A8 & op2627=2 {} # hypervisor, standard read/write
-	: csr_AC is csr_AC & op2627=3 {} # hypervisor, custom read/write
+	: csr_A0 is csr_A0 & op2727=0 { export csr_A0; } # hypervisor, standard read/write
+	: csr_A8 is csr_A8 & op2627=2 { export csr_A8; } # hypervisor, standard read/write
+	: csr_AC is csr_AC & op2627=3 { export csr_AC; } # hypervisor, custom read/write
 }
 
 # 0xb00-0xbff
 with csr: op3031=2 & op2829=3 {
-	: csr_B0 is csr_B0 & op2727=0 {} # machine, standard read/write
-	: csr_B8 is csr_B8 & op2627=2 {} # machine, standard read/write
-	: csr_BC is csr_BC & op2627=3 {} # machine, custom read/write
+	: csr_B0 is csr_B0 & op2727=0 { export csr_B0; } # machine, standard read/write
+	: csr_B8 is csr_B8 & op2627=2 { export csr_B8; } # machine, standard read/write
+	: csr_BC is csr_BC & op2627=3 { export csr_BC; } # machine, custom read/write
 }
 
 # 0xc00-0xcff
 with csr: op3031=3 & op2829=0 {
-	: csr_C0 is csr_C0 & op2727=0 {} # user, standard read-only
-	: csr_C8 is csr_C8 & op2627=2 {} # user, standard read-only
-	: csr_CC is csr_CC & op2627=3 {} # user, custom read-only
+	: csr_C0 is csr_C0 & op2727=0 { export csr_C0; } # user, standard read-only
+	: csr_C8 is csr_C8 & op2627=2 { export csr_C8; } # user, standard read-only
+	: csr_CC is csr_CC & op2627=3 { export csr_CC; } # user, custom read-only
 }
 
 # 0xd00-0xdff
 with csr: op3031=3 & op2829=1 {
-	: csr_D0 is csr_D0 & op2727=0 {} # supervisor, standard read-only
-	: csr_D8 is csr_D8 & op2627=2 {} # supervisor, standard read-only
-	: csr_DC is csr_DC & op2627=3 {} # supervisor, custom read-only
+	: csr_D0 is csr_D0 & op2727=0 { export csr_D0; } # supervisor, standard read-only
+	: csr_D8 is csr_D8 & op2627=2 { export csr_D8; } # supervisor, standard read-only
+	: csr_DC is csr_DC & op2627=3 { export csr_DC; } # supervisor, custom read-only
 }
 
 # 0xe00-0xeff
 with csr: op3031=3 & op2829=2 {
-	: csr_E0 is csr_E0 & op2727=0 {} # hypervisor, standard read-only
-	: csr_E8 is csr_E8 & op2627=2 {} # hypervisor, standard read-only
-	: csr_EC is csr_EC & op2627=3 {} # hypervisor, custom read-only
+	: csr_E0 is csr_E0 & op2727=0 { export csr_E0; } # hypervisor, standard read-only
+	: csr_E8 is csr_E8 & op2627=2 { export csr_E8; } # hypervisor, standard read-only
+	: csr_EC is csr_EC & op2627=3 { export csr_EC; } # hypervisor, custom read-only
 }
 
 # 0xf00-0xfff
 with csr: op3031=3 & op2829=3 {
-	: csr_F0 is csr_F0 & op2727=0 {} # machine, standard read-only
-	: csr_F8 is csr_F8 & op2627=2 {} # machine, standard read-only
-	: csr_FC is csr_FC & op2627=3 {} # machine, custom read-only
+	: csr_F0 is csr_F0 & op2727=0 { export csr_F0; } # machine, standard read-only
+	: csr_F8 is csr_F8 & op2627=2 { export csr_F8; } # machine, standard read-only
+	: csr_FC is csr_FC & op2627=3 { export csr_FC; } # machine, custom read-only
 }
