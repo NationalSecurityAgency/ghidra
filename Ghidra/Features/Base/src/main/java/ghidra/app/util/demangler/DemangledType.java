@@ -17,7 +17,12 @@ package ghidra.app.util.demangler;
 
 import ghidra.program.model.symbol.Namespace;
 
-// TODO maybe rename this to DemangledNamespace
+/**
+ * Represents a demangled string.  This class is really just a placeholder for demangled 
+ * information.  See {@link DemangledObject} for a class that represents software concepts that
+ * can be applied to a program.   The {@link DemangledObject} may use instances of this class
+ * to compose its internal state for namespace information, return types and parameters.
+ */
 public class DemangledType implements Demangled {
 	private String demangledName;
 	private String name;
@@ -26,37 +31,23 @@ public class DemangledType implements Demangled {
 	protected DemangledTemplate template;
 	private boolean isConst;
 	private boolean isVolatile;
+	private String originalDemangled;
 
 	public DemangledType(String name) {
 		setName(name);
 	}
 
-	/** 
-	 * Returns the unmodified demangled name of this object.
-	 * This name may contain whitespace and other characters not
-	 * supported for symbol or data type creation.  See {@link #getName()} 
-	 * for the same name modified for use within Ghidra.
-	 * @return name of this DemangledObject
-	 */
+	@Override
 	public String getDemangledName() {
 		return demangledName;
 	}
 
-	/**
-	 * Get the name of this type.
-	 * NOTE: unsupported symbol characters, like whitespace, will be
-	 * converted to an underscore.
-	 * @return name of this DemangledType suitable for namespace creation.
-	 */
 	@Override
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * Sets the name of the demangled type object.
-	 * @param name the new name
-	 */
+	@Override
 	public void setName(String name) {
 		demangledName = name;
 		this.name = name;
@@ -64,6 +55,16 @@ public class DemangledType implements Demangled {
 			// use safe name and omit common spaces where they are unwanted in names
 			this.name = DemanglerUtil.stripSuperfluousSignatureSpaces(name).replace(' ', '_');
 		}
+	}
+
+	@Override
+	public void setOriginalDemangled(String originalDemangled) {
+		this.originalDemangled = originalDemangled;
+	}
+
+	@Override
+	public String getOriginalDemangled() {
+		return originalDemangled;
 	}
 
 	@Override
@@ -113,19 +114,20 @@ public class DemangledType implements Demangled {
 		this.template = template;
 	}
 
-	public String toSignature() {
-		return toNamespaceString();
+	@Override
+	public String getSignature() {
+		return getNamespaceName();
 	}
 
 	@Override
-	public String toNamespaceString() {
+	public String getNamespaceString() {
 		return getName(true);
 	}
 
 	private String getName(boolean includeNamespace) {
 		StringBuilder buffer = new StringBuilder();
 		if (includeNamespace && namespace != null) {
-			buffer.append(namespace.toNamespaceString());
+			buffer.append(namespace.getNamespaceString());
 			buffer.append(Namespace.DELIMITER);
 		}
 
@@ -142,12 +144,12 @@ public class DemangledType implements Demangled {
 	}
 
 	@Override
-	public String toNamespaceName() {
+	public String getNamespaceName() {
 		return getName(false);
 	}
 
 	@Override
 	public String toString() {
-		return toNamespaceString();
+		return getNamespaceString();
 	}
 }

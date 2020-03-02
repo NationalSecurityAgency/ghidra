@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.demangler;
 
+/**
+ * Represents a demangled lambda function
+ */
 public class DemangledLambda extends DemangledFunction {
 
 	public DemangledLambda(String name) {
@@ -22,7 +25,7 @@ public class DemangledLambda extends DemangledFunction {
 	}
 
 	@Override
-	public String toNamespaceName() {
+	public String getNamespaceName() {
 		return getName();
 	}
 

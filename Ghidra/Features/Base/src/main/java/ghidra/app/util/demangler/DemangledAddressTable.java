@@ -50,7 +50,7 @@ public class DemangledAddressTable extends DemangledObject {
 			buffer.append(specialPrefix);
 			buffer.append(' ');
 		}
-		String namespaceStr = namespace.toNamespaceString();
+		String namespaceStr = namespace.getNamespaceString();
 		buffer.append(namespaceStr);
 		if (!namespaceStr.endsWith(NAMESPACE_SEPARATOR)) {
 			buffer.append(NAMESPACE_SEPARATOR);

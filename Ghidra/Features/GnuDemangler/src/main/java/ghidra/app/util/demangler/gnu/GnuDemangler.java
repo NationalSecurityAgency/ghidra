@@ -209,7 +209,7 @@ public class GnuDemangler implements Demangler {
 			return null;
 		}
 
-		GnuDemanglerParser parser = new GnuDemanglerParser(process);
+		GnuDemanglerParser parser = new GnuDemanglerParser();
 		DemangledObject demangledObject = parser.parse(mangled, demangled);
 		return demangledObject;
 	}

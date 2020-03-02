@@ -27,7 +27,7 @@ import ghidra.program.model.data.*;
  * is still an indirect definition (not a regular function definition).  The
  * function indirect is prevalent in the Microsoft model, if not other models.
  */
-public class DemangledFunctionIndirect extends DemangledDataType implements ParameterReceiver {
+public class DemangledFunctionIndirect extends DemangledDataType {
 
 	private static final String DEFAULT_NAME_PREFIX = "FuncDef";
 	private static final String NAMESPACE_DELIMITER = "::";
@@ -57,23 +57,6 @@ public class DemangledFunctionIndirect extends DemangledDataType implements Para
 	private synchronized static int nextID() {
 		return ID++;
 	}
-
-//	DemangledFunctionDefinition(GenericDemangledFunctionDefinition generic) {
-//		super(generic);
-//
-//		ID = generic.getID();
-//		returnType = (DemangledDataType) DemangledObjectFactory.convert(generic.getReturnType());
-//		callingConvention = generic.getCallingConvention();
-//		isConstPointer = generic.isConstPointer();
-//
-//		parentName = generic.getParentName();
-//		isTrailingPointer64 = generic.isTrailingPointer64();
-//
-//		List<GenericDemangledDataType> genericParameters = generic.getParameters();
-//		for (GenericDemangledDataType parameter : genericParameters) {
-//			parameters.add((DemangledDataType) DemangledObjectFactory.convert(parameter));
-//		}
-//	}
 
 	/**
 	 * Returns the return type.
@@ -152,20 +135,17 @@ public class DemangledFunctionIndirect extends DemangledDataType implements Para
 	}
 
 	/**
-	 * Adds a parameters to the end of the parameter list for 
-	 * this demangled function.
+	 * Adds a parameters to the end of the parameter list for this demangled function
 	 * @param parameter the new parameter to add
 	 */
-	@Override
 	public void addParameter(DemangledDataType parameter) {
 		parameters.add(parameter);
 	}
 
 	/**
-	 * Returns a list of the parameters for this demangled functions.
+	 * Returns a list of the parameters for this demangled functions
 	 * @return a list of the parameters for this demangled functions
 	 */
-	@Override
 	public List<DemangledDataType> getParameters() {
 		return new ArrayList<>(parameters);
 	}
@@ -195,13 +175,13 @@ public class DemangledFunctionIndirect extends DemangledDataType implements Para
 	}
 
 	@Override
-	public String toSignature() {
+	public String getSignature() {
 		return toSignature(null);
 	}
 
 	public String toSignature(String name) {
-		StringBuffer buffer = new StringBuffer();
-		StringBuffer buffer1 = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
+		StringBuilder buffer1 = new StringBuilder();
 		String s = getConventionPointerNameString(name);
 		if (s.contains(" ") || s.isEmpty()) {
 			// spaces--add parens
@@ -213,7 +193,7 @@ public class DemangledFunctionIndirect extends DemangledDataType implements Para
 
 		buffer1.append('(');
 		for (int i = 0; i < parameters.size(); ++i) {
-			buffer1.append(parameters.get(i).toSignature());
+			buffer1.append(parameters.get(i).getSignature());
 			if (i < parameters.size() - 1) {
 				buffer1.append(',');
 			}
@@ -222,21 +202,24 @@ public class DemangledFunctionIndirect extends DemangledDataType implements Para
 
 		if (returnType instanceof DemangledFunctionPointer) {
 			buffer.append(
-				((DemangledFunctionPointer) returnType).toSignature(buffer1.toString())).append(
-					SPACE);
+				((DemangledFunctionPointer) returnType).toSignature(buffer1.toString()))
+					.append(
+						SPACE);
 		}
 		else if (returnType instanceof DemangledFunctionReference) {
 			buffer.append(
-				((DemangledFunctionReference) returnType).toSignature(buffer1.toString())).append(
-					SPACE);
+				((DemangledFunctionReference) returnType).toSignature(buffer1.toString()))
+					.append(
+						SPACE);
 		}
 		else if (returnType instanceof DemangledFunctionIndirect) {
 			buffer.append(
-				((DemangledFunctionIndirect) returnType).toSignature(buffer1.toString())).append(
-					SPACE);
+				((DemangledFunctionIndirect) returnType).toSignature(buffer1.toString()))
+					.append(
+						SPACE);
 		}
 		else {
-			buffer.append(returnType.toSignature()).append(SPACE);
+			buffer.append(returnType.getSignature()).append(SPACE);
 			buffer.append(buffer1);
 		}
 
@@ -278,7 +261,7 @@ public class DemangledFunctionIndirect extends DemangledDataType implements Para
 		return buffer.toString();
 	}
 
-	private void addFunctionPointerParens(StringBuffer buffer, String s) {
+	private void addFunctionPointerParens(StringBuilder buffer, String s) {
 		if (!displayFunctionPointerParens) {
 			return;
 		}
@@ -322,9 +305,6 @@ public class DemangledFunctionIndirect extends DemangledDataType implements Para
 		}
 
 		if (name != null) {
-//			if (buffer.length() > 2) {
-//				buffer.append(SPACE);
-//			}
 			if ((buffer.length() > 2) && (buffer.charAt(buffer.length() - 1) != SPACE)) {
 				buffer.append(SPACE);
 			}

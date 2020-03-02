@@ -79,7 +79,7 @@ public class DemangledVariable extends DemangledObject {
 			!(datatype instanceof DemangledFunctionReference) &&
 			!(datatype instanceof DemangledFunctionIndirect)) {
 			if (datatype != null) {
-				datatypeBuffer.append(datatype.toSignature());
+				datatypeBuffer.append(datatype.getSignature());
 				spacer = SPACE;
 			}
 		}
@@ -130,7 +130,7 @@ public class DemangledVariable extends DemangledObject {
 			datatypeBuffer.append(spacer);
 			spacer = EMPTY_STRING;
 
-			datatypeBuffer.append(namespace.toNamespaceString());
+			datatypeBuffer.append(namespace.getNamespaceString());
 
 			if (hasName) {
 				datatypeBuffer.append(NAMESPACE_SEPARATOR);
@@ -142,9 +142,6 @@ public class DemangledVariable extends DemangledObject {
 			spacer = EMPTY_STRING;
 			datatypeBuffer.append(getName());
 		}
-
-		datatypeBuffer.append(specialMidfix == null ? EMPTY_STRING : specialMidfix + SPACE);
-		datatypeBuffer.append(specialSuffix == null ? EMPTY_STRING : SPACE + specialSuffix);
 
 		if (datatype instanceof DemangledFunctionPointer) {
 			DemangledFunctionPointer funcPtr = (DemangledFunctionPointer) datatype;
@@ -165,7 +162,7 @@ public class DemangledVariable extends DemangledObject {
 	}
 
 	@Override
-	public String toNamespaceName() {
+	public String getNamespaceName() {
 
 		String n = getDemangledName();
 		if (!StringUtils.isBlank(n)) {
@@ -173,7 +170,7 @@ public class DemangledVariable extends DemangledObject {
 		}
 
 		if (datatype != null) {
-			return datatype.toSignature();
+			return datatype.getSignature();
 		}
 		return "<no name>"; // shouldn't happen
 	}
@@ -200,9 +197,6 @@ public class DemangledVariable extends DemangledObject {
 		}
 
 		Symbol demangledSymbol = applyDemangledName(address, true, true, program);
-
-		//TODO replace existing datatype?
-
 		DataType demangledDT = getProgramDataType(program);
 
 		if (address.isExternalAddress()) {

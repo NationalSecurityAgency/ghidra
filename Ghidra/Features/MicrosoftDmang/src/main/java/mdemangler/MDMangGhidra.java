@@ -88,7 +88,7 @@ public class MDMangGhidra extends MDMang {
 		if (objectResult != null) {
 			objectResult.setMangledString(mangledArg);
 			// Make our version of the demangled string available (could be large).
-			objectResult.setUtilDemangled(item.toString());
+			objectResult.setOriginalDemangled(item.toString());
 		}
 		return returnedItem;
 	}

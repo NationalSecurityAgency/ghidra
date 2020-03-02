@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.demangler;
+package ghidra.app.util.demangler.gnu;
 
-// TODO delete this
-public class DemangledMethod extends DemangledFunction {
+/**
+ * Exception to signal a problem parsing a demangled string
+ */
+public class DemanglerParseException extends RuntimeException {
 
-	public DemangledMethod(String name) {
-		super(name);
+	public DemanglerParseException(String message) {
+		super(message);
 	}
 }

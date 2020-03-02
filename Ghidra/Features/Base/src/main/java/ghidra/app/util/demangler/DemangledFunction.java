@@ -21,21 +21,23 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.*;
+import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * A class to represent a demangled function.
  */
-public class DemangledFunction extends DemangledObject implements ParameterReceiver {
+public class DemangledFunction extends DemangledObject {
 
 	public static final String VOLATILE = "volatile";
 	public static final String CONST = "const";
@@ -104,18 +106,10 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		this.isOverloadedOperator = isOverloadedOperator;
 	}
 
-	/**
-	 * @see ghidra.app.util.demangler.ParameterReceiver
-	 */
-	@Override
 	public void addParameter(DemangledDataType parameter) {
 		parameters.add(parameter);
 	}
 
-	/**
-	 * @see ghidra.app.util.demangler.ParameterReceiver
-	 */
-	@Override
 	public List<DemangledDataType> getParameters() {
 		return new ArrayList<>(parameters);
 	}
@@ -198,7 +192,7 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 
 	@Override
 	public String getSignature(boolean format) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 
 		if (!(returnType instanceof DemangledFunctionPointer)) {
 			buffer.append(specialPrefix == null ? "" : specialPrefix + " ");
@@ -214,38 +208,26 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 				buffer.append("static ");
 			}
 			if (!isTypeCast()) {
-				buffer.append(returnType == null ? "" : returnType.toSignature() + " ");
+				buffer.append(returnType == null ? "" : returnType.getSignature() + " ");
 			}
 //			buffer.append(returnType == null ? "" : returnType.toSignature() + " ");
 		}
 
 		buffer.append(callingConvention == null ? "" : callingConvention + " ");
 		if (namespace != null) {
-			buffer.append(namespace.toNamespaceString());
+			buffer.append(namespace.getNamespaceString());
 			buffer.append(NAMESPACE_SEPARATOR);
 		}
 
 		buffer.append(getDemangledName());
 		if (isTypeCast()) {
-			buffer.append(returnType == null ? "" : " " + returnType.toSignature() + " ");
+			buffer.append(returnType == null ? "" : " " + returnType.getSignature() + " ");
 		}
 
 		if (template != null) {
 			buffer.append(template.toTemplate());
 		}
 
-		if (specialMidfix != null) {
-			buffer.append('[').append(specialMidfix).append(']');
-		}
-
-		// check for special case of 'conversion operator' where we only want to display '()' and
-		// not (void)
-//		if (name.endsWith("()")) {
-//			if (name.equals("operator")) {
-//				buffer.append("()");
-//			}
-//		}
-//		else {
 		if (templatedConstructorType != null) {
 			buffer.append('<').append(templatedConstructorType).append('>');
 		}
@@ -258,7 +240,7 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		}
 
 		while (paramIterator.hasNext()) {
-			buffer.append(paramIterator.next().toSignature());
+			buffer.append(paramIterator.next().getSignature());
 			if (paramIterator.hasNext()) {
 				buffer.append(',');
 				if (format) {
@@ -270,25 +252,18 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 
 		buffer.append(')');
 		buffer.append(storageClass == null ? "" : " " + storageClass);
-//		}
 
 		if (returnType instanceof DemangledFunctionPointer) {
 			DemangledFunctionPointer funcPtr = (DemangledFunctionPointer) returnType;
 			String partialSig = funcPtr.toSignature(buffer.toString());
-			buffer = new StringBuffer();
+			buffer = new StringBuilder();
 			buffer.append(specialPrefix == null ? "" : specialPrefix + " ");
 			buffer.append(
 				visibility == null || "global".equals(visibility) ? "" : visibility + " ");
-			//if (virtual || super.isVirtual) {
 			if (isVirtual) {
 				buffer.append("virtual ");
 			}
 			buffer.append(partialSig);
-		}
-		else {
-			if (specialSuffix != null) {
-				buffer.append(specialSuffix);
-			}
 		}
 
 		if (isTrailingConst()) {
@@ -332,7 +307,7 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 	}
 
 	@Override
-	public String toNamespaceName() {
+	public String getNamespaceName() {
 		return getName() + getParameterString();
 	}
 
@@ -341,7 +316,7 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		buffer.append('(');
 		Iterator<DemangledDataType> dditer = parameters.iterator();
 		while (dditer.hasNext()) {
-			buffer.append(dditer.next().toSignature());
+			buffer.append(dditer.next().getSignature());
 			if (dditer.hasNext()) {
 				buffer.append(',');
 			}
@@ -452,13 +427,13 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		for (int i = 0; i < args.size(); i++) {
 			if (args.get(i).getLength() > pointerSize) {
 				bookmarkManager.setBookmark(address, BookmarkType.ANALYSIS, "Demangler",
-					"Couldn't Apply demangled signature - probably due to datatype that is too " +
+					"Couldn't apply demangled signature - probably due to datatype that is too " +
 						"large to fit in a parameter");
 			}
 		}
 
 		bookmarkManager.setBookmark(address, BookmarkType.ANALYSIS, "Demangler",
-			"Couldn't Apply demangled signature - bad parameter number match (" + args.size() +
+			"Couldn't apply demangled signature - bad parameter number match (" + args.size() +
 				") in a function in a namespace");
 	}
 
@@ -488,7 +463,8 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		}
 	}
 
-	private DataType resolveReturnType(Program program, Function func, Structure classDataType) {
+	private DataType resolveReturnType(Program program, Function function,
+			Structure classDataType) {
 		// If something is returned as a Union, Structure, or Class return.
 		//       It appears that is passed as an additional parameter.  Essentially, it accesses
 		//       the stack assuming there is reserved space.
@@ -497,7 +473,7 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		}
 
 		// If returnType is null check for constructor or destructor names
-		if (THIS_CALL.equals(func.getCallingConventionName())) {
+		if (THIS_CALL.equals(function.getCallingConventionName())) {
 			String n = getName();
 			if (n.equals("~" + namespace.getName()) || n.equals(namespace.getName())) {
 				// constructor && destructor
@@ -507,45 +483,48 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		return null;
 	}
 
-	private Structure maybeUpdateCallingConventionAndCreateClass(Program program, Function func) {
-		try {
-			// If the calling convention is known, should use it!
-			if (callingConvention != null) {
-				if (program.getCompilerSpec().getCallingConvention(callingConvention) == null) {
-					// warn that calling convention not found.  Datatypes are still good,
-					// the real calling convention can be figured out later
-					//   For example X64 can have __cdecl, __fastcall, __stdcall, that are accepted but ignored
-					program.getBookmarkManager()
-							.setBookmark(func.getEntryPoint(),
-								BookmarkType.ANALYSIS, "Demangler",
-								"Warning calling convention \"" +
-									callingConvention + "\" not defined in Compiler Spec (.cspec)");
-				}
-				else {
-					func.setCallingConvention(callingConvention);
-					if (THIS_CALL.equals(callingConvention)) {
-						return createClassStructure(program, func);
-					}
-					return null;
-				}
-			}
+	private Structure maybeUpdateCallingConventionAndCreateClass(Program program,
+			Function function) {
 
-			if (isThisCall(func)) {
-				func.setCallingConvention(THIS_CALL);
-				return createClassStructure(program, func);
+		String convention = validateCallingConvention(program, function);
+		if (convention == null) {
+			if (!isThisCall(function)) {
+				return null;
 			}
-//          Leave the calling convention to someone else to figure out
-//			else {
-//				String defaultConvention = getDefaultCallingConvention(program);
-//				if (defaultConvention != null) {
-//					func.setCallingConvention(defaultConvention);
-//				}
-//			}
+			convention = THIS_CALL;
+		}
+
+		try {
+			function.setCallingConvention(convention);
+			return maybeCreateClassStructure(program, function, convention);
 		}
 		catch (InvalidInputException e) {
-			e.printStackTrace();
+			Msg.error(this, "Unexpected exception setting calling convention", e);
 		}
+
 		return null;
+	}
+
+	private String validateCallingConvention(Program program, Function function) {
+
+		if (callingConvention == null) {
+			return null;
+		}
+
+		if (program.getCompilerSpec().getCallingConvention(callingConvention) == null) {
+			// warn that calling convention not found.  Datatypes are still good,
+			// the real calling convention can be figured out later
+			//   For example X64 can have __cdecl, __fastcall, __stdcall, that 
+			//   are accepted but ignored
+			BookmarkManager bm = program.getBookmarkManager();
+			Address entry = function.getEntryPoint();
+			bm.setBookmark(entry, BookmarkType.ANALYSIS, "Demangler",
+				"Could not apply calling convention \"" + callingConvention +
+					"\" not defined in Compiler Spec (.cspec)");
+			return null;
+		}
+
+		return callingConvention;
 	}
 
 	private List<ParameterDefinitionImpl> convertMangledToParamDef(Program program) {
@@ -661,7 +640,7 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		}
 
 		// if the function name is the same name as it's namespace
-// TODO: this seems too flexible - why not use equals?
+		// TODO: this seems too flexible - why not use equals?
 		if (n.startsWith(namespace.getName())) {
 			return true;
 		}
@@ -686,7 +665,7 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 			return true;
 		}
 
-		// TODO: It STILL COULD be a this call, we just don't know!
+		//       It STILL COULD be a this call, we just don't know!
 		//       But is also could be a static member function!
 		//       The only way to really tell is compare the number of detected parameters
 		//       to the number of parameters we have, OR, to detect the calling convention
@@ -707,13 +686,58 @@ public class DemangledFunction extends DemangledObject implements ParameterRecei
 		if (ns == null) {
 			return false;
 		}
-		if (ns.getName().toLowerCase().equals(STD_NAMESPACE)) {
+		if (ns.getName().equalsIgnoreCase(STD_NAMESPACE)) {
 			return true;
 		}
 		return false;
 	}
 
-	static Function createFunction(Program prog, Address addr, boolean doDisassembly,
+	protected Structure maybeCreateClassStructure(Program program, Function function,
+			String convention) {
+
+		if (!THIS_CALL.equals(convention)) {
+			return null;
+		}
+
+		if (namespace == null) {
+			return null;
+		}
+
+		String className = namespace.getName();
+		Symbol parentSymbol = function.getSymbol().getParentSymbol();
+		if (parentSymbol.getSymbolType() == SymbolType.NAMESPACE) {
+			try {
+				NamespaceUtils.convertNamespaceToClass((Namespace) parentSymbol.getObject());
+			}
+			catch (InvalidInputException e) {
+				throw new AssertException(e); // unexpected condition
+			}
+		}
+
+		// Store class structure in parent namespace
+		Demangled classNamespace = namespace.getNamespace();
+		DataTypeManager dataTypeManager = program.getDataTypeManager();
+		DataType existingType =
+			DemangledDataType.findDataType(dataTypeManager, classNamespace, className);
+		if (existingType != null && !(existingType instanceof Structure)) {
+			BookmarkManager bm = program.getBookmarkManager();
+			Address entry = function.getEntryPoint();
+			bm.setBookmark(entry, BookmarkType.ANALYSIS, "Demangler",
+				"Could not create class structure, data type already exists: " + existingType);
+			return null;
+		}
+
+		Structure structure = (Structure) existingType;
+		if (structure == null) {
+			structure = DemangledDataType.createPlaceHolderStructure(className,
+				classNamespace);
+		}
+		structure = (Structure) dataTypeManager.resolve(structure,
+			DataTypeConflictHandler.DEFAULT_HANDLER);
+		return structure;
+	}
+
+	protected Function createFunction(Program prog, Address addr, boolean doDisassembly,
 			TaskMonitor monitor) {
 		Listing listing = prog.getListing();
 		Function func = listing.getFunctionAt(addr);

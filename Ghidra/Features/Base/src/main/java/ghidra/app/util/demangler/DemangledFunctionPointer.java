@@ -23,7 +23,7 @@ import ghidra.program.model.data.*;
 /**
  * A class to represent a demangled function pointer.
  */
-public class DemangledFunctionPointer extends DemangledDataType implements ParameterReceiver {
+public class DemangledFunctionPointer extends DemangledDataType {
 
 	private static final String DEFAULT_NAME_PREFIX = "FuncDef";
 	private static final Object NAMESPACE_DELIMITER = "::";
@@ -131,11 +131,9 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 	}
 
 	/**
-	 * Adds a parameters to the end of the parameter list for 
-	 * this demangled function.
+	 * Adds a parameters to the end of the parameter list for this demangled function
 	 * @param parameter the new parameter to add
 	 */
-	@Override
 	public void addParameter(DemangledDataType parameter) {
 		parameters.add(parameter);
 	}
@@ -144,7 +142,6 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 	 * Returns a list of the parameters for this demangled functions.
 	 * @return a list of the parameters for this demangled functions
 	 */
-	@Override
 	public List<DemangledDataType> getParameters() {
 		return new ArrayList<>(parameters);
 	}
@@ -174,7 +171,7 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 	}
 
 	@Override
-	public String toSignature() {
+	public String getSignature() {
 		return toSignature(null);
 	}
 
@@ -192,7 +189,7 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 
 		buffer1.append('(');
 		for (int i = 0; i < parameters.size(); ++i) {
-			buffer1.append(parameters.get(i).toSignature());
+			buffer1.append(parameters.get(i).getSignature());
 			if (i < parameters.size() - 1) {
 				buffer1.append(',');
 			}
@@ -200,25 +197,19 @@ public class DemangledFunctionPointer extends DemangledDataType implements Param
 		buffer1.append(')');
 
 		if (returnType instanceof DemangledFunctionPointer) {
-			buffer.append(
-				((DemangledFunctionPointer) returnType).toSignature(buffer1.toString()))
-					.append(
-						SPACE);
+			DemangledFunctionPointer dfp = (DemangledFunctionPointer) returnType;
+			buffer.append(dfp.toSignature(buffer1.toString())).append(SPACE);
 		}
 		else if (returnType instanceof DemangledFunctionReference) {
-			buffer.append(
-				((DemangledFunctionReference) returnType).toSignature(buffer1.toString()))
-					.append(
-						SPACE);
+			DemangledFunctionReference dfr = (DemangledFunctionReference) returnType;
+			buffer.append(dfr.toSignature(buffer1.toString())).append(SPACE);
 		}
 		else if (returnType instanceof DemangledFunctionIndirect) {
-			buffer.append(
-				((DemangledFunctionIndirect) returnType).toSignature(buffer1.toString()))
-					.append(
-						SPACE);
+			DemangledFunctionIndirect dfi = (DemangledFunctionIndirect) returnType;
+			buffer.append(dfi.toSignature(buffer1.toString())).append(SPACE);
 		}
 		else {
-			buffer.append(returnType.toSignature()).append(SPACE);
+			buffer.append(returnType.getSignature()).append(SPACE);
 			buffer.append(buffer1);
 		}
 

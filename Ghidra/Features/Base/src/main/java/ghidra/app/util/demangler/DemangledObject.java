@@ -22,11 +22,12 @@ import java.util.regex.Pattern;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -41,10 +42,8 @@ public abstract class DemangledObject implements Demangled {
 	protected static final String EMPTY_STRING = "";
 
 	protected String mangled; // original mangled string
-	protected String utilDemangled;
+	protected String originalDemangled;
 	protected String specialPrefix;
-	protected String specialMidfix;
-	protected String specialSuffix;
 	protected Demangled namespace;
 	protected String visibility;//public, protected, etc.
 
@@ -75,23 +74,11 @@ public abstract class DemangledObject implements Demangled {
 		// default
 	}
 
-	/** 
-	 * Returns the unmodified demangled name of this object.
-	 * This name may contain whitespace and other characters not
-	 * supported for symbol or data type creation.  See {@link #getName()} 
-	 * for the same name modified for use within Ghidra.
-	 * @return name of this DemangledObject
-	 */
+	@Override
 	public String getDemangledName() {
 		return demangledName;
 	}
 
-	/** 
-	 * Returns the demangled name of this object.
-	 * NOTE: unsupported symbol characters, like whitespace, will be
-	 * converted to an underscore.
-	 * @return name of this DemangledObject with unsupported characters converted to underscore
-	 */
 	@Override
 	public String getName() {
 		return name;
@@ -181,6 +168,7 @@ public abstract class DemangledObject implements Demangled {
 	 * Sets the name of the demangled object
 	 * @param name the new name
 	 */
+	@Override
 	public void setName(String name) {
 		this.demangledName = name;
 		this.name = name;
@@ -202,20 +190,14 @@ public abstract class DemangledObject implements Demangled {
 		return mangled;
 	}
 
-	/**
-	 * Sets the demangled output from a supplemental utility.
-	 * @param utilDemangled the demangled string
-	 */
-	public void setUtilDemangled(String utilDemangled) {
-		this.utilDemangled = utilDemangled;
+	@Override
+	public void setOriginalDemangled(String originalDemangled) {
+		this.originalDemangled = originalDemangled;
 	}
 
-	/**
-	 * Gets the demangled output from a supplemental utility.
-	 * @return the demangled String created for this object.
-	 */
-	public String getUtilDemangled() {
-		return utilDemangled;
+	@Override
+	public String getOriginalDemangled() {
+		return originalDemangled;
 	}
 
 	@Override
@@ -252,22 +234,6 @@ public abstract class DemangledObject implements Demangled {
 		this.specialPrefix = special;
 	}
 
-	public String getSpecialMidfix() {
-		return specialMidfix;
-	}
-
-	public void setSpecialMidfix(String chargeType) {
-		this.specialMidfix = chargeType;
-	}
-
-	public String getSpecialSuffix() {
-		return specialSuffix;
-	}
-
-	public void setSpecialSuffix(String specialSuffix) {
-		this.specialSuffix = specialSuffix;
-	}
-
 	/**
 	 * Returns a complete signature for the demangled symbol.
 	 * <br>For example:
@@ -281,12 +247,17 @@ public abstract class DemangledObject implements Demangled {
 	 */
 	public abstract String getSignature(boolean format);
 
+	@Override
+	public String getSignature() {
+		return getSignature(false);
+	}
+
 	/**
 	 * Returns a signature that contains only the name (and parameter list for functions)
 	 * @return the signature
 	 */
 	@Override
-	public String toNamespaceName() {
+	public String getNamespaceName() {
 		return getSignature(false);
 	}
 
@@ -305,13 +276,13 @@ public abstract class DemangledObject implements Demangled {
 	}
 
 	@Override
-	public String toNamespaceString() {
+	public String getNamespaceString() {
 		StringBuilder buffer = new StringBuilder();
 		if (namespace != null) {
-			buffer.append(namespace.toNamespaceString());
+			buffer.append(namespace.getNamespaceString());
 			buffer.append(Namespace.DELIMITER);
 		}
-		buffer.append(toNamespaceName());
+		buffer.append(getNamespaceName());
 		return buffer.toString();
 	}
 
@@ -366,8 +337,8 @@ public abstract class DemangledObject implements Demangled {
 	}
 
 	protected String generatePlateComment() {
-		if (utilDemangled != null) {
-			return utilDemangled;
+		if (originalDemangled != null) {
+			return originalDemangled;
 		}
 		return (signature == null) ? getSignature(true) : signature;
 	}
@@ -446,22 +417,20 @@ public abstract class DemangledObject implements Demangled {
 	 * @return list of namespace names
 	 */
 	private static List<String> getNamespaceList(Demangled typeNamespace) {
-		ArrayList<String> list = new ArrayList<>();
+		List<String> list = new ArrayList<>();
 		Demangled ns = typeNamespace;
 		while (ns != null) {
-			list.add(0, ns.getName());
+			list.add(0, ns.getNamespaceName());
 			ns = ns.getNamespace();
 		}
 		return list;
 	}
 
-	// TODO needs updating. Couldn't determine what getResigualNamespacePath was changed to.
 	/**
 	 * Get or create the specified typeNamespace.  The returned namespace may only be a partial 
 	 * namespace if errors occurred.  The caller should check the returned namespace and adjust
-	 * any symbol creation accordingly.  Caller should use 
-	 * <code>getResidualNamespacePath(DemangledType, Namespace)</code> to handle the case where
-	 * only a partial namespace has been returned.
+	 * any symbol creation accordingly.  
+	 * 
 	 * @param program the program
 	 * @param typeNamespace demangled namespace
 	 * @param parentNamespace root namespace to be used (e.g., library, global, etc.)
@@ -554,39 +523,6 @@ public abstract class DemangledObject implements Demangled {
 		buffy.append("...");
 		buffy.append(name.substring(length - 100)); // trailing data
 		return buffy.toString();
-	}
-
-	protected Structure createClassStructure(Program prog, Function func) {
-		DataTypeManager dataTypeManager = prog.getDataTypeManager();
-
-		if (namespace == null) {
-			// unexpected
-			return null;
-		}
-		String structureName = namespace.getName();
-
-		Symbol parentSymbol = func.getSymbol().getParentSymbol();
-		if (parentSymbol.getSymbolType() == SymbolType.NAMESPACE) {
-			try {
-				NamespaceUtils.convertNamespaceToClass((Namespace) parentSymbol.getObject());
-			}
-			catch (InvalidInputException e) {
-				throw new AssertException(e); // unexpected condition
-			}
-		}
-
-		// Store class structure in parent namespace
-		Demangled classStructureNamespace = namespace.getNamespace();
-
-		Structure classStructure = (Structure) DemangledDataType.findDataType(dataTypeManager,
-			classStructureNamespace, structureName);
-		if (classStructure == null) {
-			classStructure = DemangledDataType.createPlaceHolderStructure(structureName,
-				classStructureNamespace);
-		}
-		classStructure = (Structure) dataTypeManager.resolve(classStructure,
-			DataTypeConflictHandler.DEFAULT_HANDLER);
-		return classStructure;
 	}
 
 }

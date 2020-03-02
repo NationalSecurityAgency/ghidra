@@ -19,31 +19,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.program.model.data.DataType;
-import ghidra.util.Msg;
 
-public class DemangledTemplate implements ParameterReceiver {
+public class DemangledTemplate {
 	private List<DemangledDataType> parameters = new ArrayList<DemangledDataType>();
 
-	@Override
 	public void addParameter(DemangledDataType parameter) {
 		parameters.add(parameter);
 	}
 
-	@Override
 	public List<DemangledDataType> getParameters() {
 		return new ArrayList<DemangledDataType>(parameters);
 	}
 
 	public String toTemplate() {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append('<');
 		for (int i = 0; i < parameters.size(); ++i) {
-			try {
-				buffer.append(parameters.get(i).toSignature());
-			}
-			catch (Error e) {
-				Msg.error(this, "Unexpected Error: " + e.getMessage(), e);
-			}
+			buffer.append(parameters.get(i).getSignature());
 			if (i < parameters.size() - 1) {
 				buffer.append(',');
 			}

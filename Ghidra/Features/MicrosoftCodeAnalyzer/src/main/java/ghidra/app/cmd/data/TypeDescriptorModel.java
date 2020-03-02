@@ -614,8 +614,8 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		return namespace;
 	}
 
-	private boolean isNamespaceDeleted(Namespace namespace2) {
-		Symbol nsSymbol = namespace2.getSymbol();
+	private boolean isNamespaceDeleted(Namespace other) {
+		Symbol nsSymbol = other.getSymbol();
 		if (nsSymbol == null) {
 			return false; // global namespace.
 		}

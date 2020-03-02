@@ -218,25 +218,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	public static Window waitForWindowByTitleContaining(String text) {
-		return waitForWindowByTitleContaining(null, text, DEFAULT_WAIT_TIMEOUT);
-	}
-
-	/**
-	 * Deprecated
-	 * @param parentWindow 
-	 * @param text 
-	 * @param timeoutMS 
-	 * @return window
-	 * @deprecated Instead call one of the methods that does not take a timeout
-	 *             (we are standardizing timeouts).  The timeouts passed to this method will
-	 *             be ignored in favor of the standard value.
-	 */
-	@Deprecated
-	public static Window waitForWindowByTitleContaining(Window parentWindow, String text,
-			int timeoutMS) {
 
 		// try at least one time
-		Window window = getWindowByTitleContaining(parentWindow, text);
+		Window window = getWindowByTitleContaining(null, text);
 		if (window != null) {
 			return window;// we found it...no waiting required
 		}
@@ -245,7 +229,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		int timeout = DEFAULT_WAIT_TIMEOUT;
 		while (totalTime <= timeout) {
 
-			window = getWindowByTitleContaining(parentWindow, text);
+			window = getWindowByTitleContaining(null, text);
 			if (window != null) {
 				return window;
 			}
@@ -255,43 +239,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 		throw new AssertionFailedError(
 			"Timed-out waiting for window containg title '" + text + "'");
-	}
-
-	/**
-	 * Waits for a window with the given name.  If <code>parentWindow</code> is not null, then it
-	 * will be used to find subordinate windows.  If <code>parentWindow</code> is null, then all
-	 * existing frames will be searched.
-	 *
-	 * @param parentWindow The parent of the window for which to search, or null to search all
-	 *        open frames
-	 * @param title The title of the window for which to search
-	 * @param timeoutMS The timeout after which this method will wait no more
-	 * @return The window, if found, null otherwise.
-	 *
-	 * @deprecated Instead call one of the methods that does not take a timeout
-	 *             (we are standardizing timeouts).  The timeouts passed to this method will
-	 *             be ignored in favor of the standard value.
-	 */
-	@Deprecated
-	public static Window waitForWindow(Window parentWindow, String title, int timeoutMS) {
-
-		Window window = getWindowByTitle(parentWindow, title);
-		if (window != null) {
-			return window;// we found it...no waiting required
-		}
-
-		int totalTime = 0;
-		int timeout = DEFAULT_WAIT_TIMEOUT;
-		while (totalTime <= timeout) {
-
-			window = getWindowByTitle(parentWindow, title);
-			if (window != null) {
-				return window;
-			}
-
-			totalTime += sleep(DEFAULT_WAIT_DELAY);
-		}
-		throw new AssertionFailedError("Timed-out waiting for window with title '" + title + "'");
 	}
 
 	/**
@@ -1826,25 +1773,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		ERROR_DISPLAY_WRAPPER.setErrorDisplayDelegate(display);
 		Msg.setErrorDisplay(ERROR_DISPLAY_WRAPPER);
 		useErrorGUI = enable;
-	}
-
-	/**
-	 * Signals that the client expected the System Under Test (SUT) to report errors.  Use this
-	 * when you wish to verify that errors are reported and you do not want those errors to
-	 * fail the test.  The default value for this setting is false, which means that any
-	 * errors reported will fail the running test.
-	 *
-	 * @param expected true if errors are expected.
-	 */
-	public static void setErrorsExpected(boolean expected) {
-		if (expected) {
-			Msg.error(AbstractDockingTest.class, ">>>>>>>>>>>>>>>> Expected Exception");
-			ConcurrentTestExceptionHandler.disable();
-		}
-		else {
-			Msg.error(AbstractDockingTest.class, "<<<<<<<<<<<<<<<< End Expected Exception");
-			ConcurrentTestExceptionHandler.enable();
-		}
 	}
 
 	/**

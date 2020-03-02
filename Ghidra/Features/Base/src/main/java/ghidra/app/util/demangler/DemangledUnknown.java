@@ -33,31 +33,11 @@ public class DemangledUnknown extends DemangledObject {
 		setName(name);
 	}
 
-//	DemangledUnknown(GenericDemangledVariable other) {
-//		super(other);
-//	}
-//
 	@Override
 	public String getSignature(boolean format) {
-		return utilDemangled;
+		return originalDemangled;
 	}
 
-//	@Override
-//	protected boolean isAlreadyDemangled(Program program, Address address) {
-//		return !utilDemangled.isEmpty();
-//	}
-//
-//	@Override
-//	public boolean applyTo(Program program, Address address, DemanglerOptions options,
-//			TaskMonitor monitor) throws Exception {
-//
-//		if (isAlreadyDemangled(program, address)) {
-//			return true;
-//		}
-//
-//		return super.applyTo(program, address, options, monitor);
-//	}
-//
 	@Override
 	public String getName() {
 		//These items likely do not have names or data types, so return the signature.

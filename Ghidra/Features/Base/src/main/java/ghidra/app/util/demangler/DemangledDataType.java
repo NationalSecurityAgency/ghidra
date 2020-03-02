@@ -16,6 +16,7 @@
 package ghidra.app.util.demangler;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -221,7 +222,7 @@ public class DemangledDataType extends DemangledType {
 					dt = createPlaceHolderStructure(name, getNamespace());
 				}
 			}
-			else if (dt == null) { // TODO: Is using whatever was found OK ??
+			else if (dt == null) {
 
 				// I don't know what this is
 				// If it isn't pointed to, or isn't a referent, then assume typedef.
@@ -367,41 +368,43 @@ public class DemangledDataType extends DemangledType {
 	 */
 	static DataType findDataType(DataTypeManager dataTypeManager, Demangled namespace,
 			String dtName) {
-		// TODO: Should be able to search archives somehow
-		ArrayList<DataType> list = new ArrayList<>();
+
+		List<DataType> list = new ArrayList<>();
 		dataTypeManager.findDataTypes(dtName, list);
-		if (!list.isEmpty()) {
-			//use the datatype that exists in the root category,
-			//otherwise just pick the first one...
-			DataType anyDt = null;
-			DataType preferredDataType = null;
-			for (DataType existingDT : list) {
-				if (existingDT instanceof BuiltIn) {
-					continue; // TODO: not sure if this is good - built-ins handled explicitly 
-					// by DemangledDataType.getDataType method
-				}
-				if (namespace == null) {
-					if (existingDT.getCategoryPath().equals(CategoryPath.ROOT)) {
-						return existingDT;
-					}
-					anyDt = existingDT;
-				}
-				if (isNamespaceCategoryMatch(existingDT, namespace)) {
-					preferredDataType = existingDT;
-				}
-			}
-			if (preferredDataType != null) {
-				return preferredDataType;
-			}
-			return anyDt;
+		if (list.isEmpty()) {
+			return null;
 		}
-		return null;
+
+		//use the datatype that exists in the root category,
+		//otherwise just pick the first one...
+		DataType anyDt = null;
+		DataType preferredDataType = null;
+		for (DataType existingDT : list) {
+			if (existingDT instanceof BuiltIn) {
+				// not sure if this is good - built-ins handled explicitly by getDataType()
+				continue;
+			}
+			if (namespace == null) {
+				if (existingDT.getCategoryPath().equals(CategoryPath.ROOT)) {
+					return existingDT;
+				}
+				anyDt = existingDT;
+			}
+			if (isNamespaceCategoryMatch(existingDT, namespace)) {
+				preferredDataType = existingDT;
+			}
+		}
+		if (preferredDataType != null) {
+			return preferredDataType;
+		}
+		return anyDt;
 	}
 
 	private static boolean isNamespaceCategoryMatch(DataType dt, Demangled namespace) {
 		if (namespace == null) {
 			return true;
 		}
+
 		Demangled ns = namespace;
 		CategoryPath categoryPath = dt.getCategoryPath();
 		while (ns != null) {
@@ -433,7 +436,6 @@ public class DemangledDataType extends DemangledType {
 		StructureDataType structDT = new StructureDataType(dtName, 0);
 		structDT.setDescription("PlaceHolder Structure");
 		structDT.setCategoryPath(getDemanglerCategoryPath(dtName, namespace));
-
 		return structDT;
 	}
 
@@ -617,10 +619,6 @@ public class DemangledDataType extends DemangledType {
 		boolean isPrimitiveDT =
 			!isArray() && !isClass && !isComplex && !isEnum && !isPointer() && !isPointer64 &&
 				!isSigned && !isTemplate && !isUnion && !isCoclass && !isCointerface && !isVarArgs;
-//		boolean isPrimitiveDT = !isArray && !isClass && !isComplex && !isEnum && !isPointer() &&
-//			!isPointer64 && !isSigned && !isTemplate && !isUnion && !isVarArgs;
-//		boolean isPrimitiveDT = !isArray && !isClass && !isComplex && !isEnum && !isPointer() &&
-//			!isPointer64 && !isSigned && !isTemplate && !isUnion && !isVarArgs && !isVolatile;
 		if (isPrimitiveDT) {
 			for (String primitiveNames : PRIMITIVES) {
 				if (getName().equals(primitiveNames)) {
@@ -631,8 +629,7 @@ public class DemangledDataType extends DemangledType {
 		return false;
 	}
 
-	@Override
-	public String toSignature() {
+	public String getSignature() {
 		StringBuilder buffer = new StringBuilder();
 
 		if (isUnion) {
@@ -659,9 +656,6 @@ public class DemangledDataType extends DemangledType {
 		if (isComplex) {
 			buffer.append(COMPLEX + SPACE);
 		}
-//		if (isVolatile) {
-//			buffer.append(VOLATILE + SPACE);
-//		}
 		if (isSigned) {
 			buffer.append(SIGNED + SPACE);
 		}
@@ -670,7 +664,7 @@ public class DemangledDataType extends DemangledType {
 		}
 
 		if (getNamespace() != null) {
-			buffer.append(getNamespace().toNamespaceString());
+			buffer.append(getNamespace().getNamespaceString());
 			buffer.append(Namespace.DELIMITER);
 		}
 
@@ -684,7 +678,6 @@ public class DemangledDataType extends DemangledType {
 			buffer.append(SPACE + CONST);
 		}
 
-		// TODO: The output of volatile belongs here, not above, so I put the commented code here for now.
 		if (isVolatile()) {
 			buffer.append(SPACE + VOLATILE);
 		}
@@ -709,7 +702,8 @@ public class DemangledDataType extends DemangledType {
 			buffer.append(SPACE + REF_NOTATION);
 		}
 
-		//Order of __ptr64 and __restrict can vary--with fuzzing... but what is the natural "real symbol" order?
+		// the order of __ptr64 and __restrict can vary--with fuzzing... 
+		// but what is the natural "real symbol" order?
 		if (isPointer64) {
 			buffer.append(SPACE + PTR64);
 		}
@@ -736,7 +730,7 @@ public class DemangledDataType extends DemangledType {
 
 	@Override
 	public String toString() {
-		return toSignature();
+		return getSignature();
 	}
 
 }

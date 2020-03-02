@@ -51,7 +51,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 		program.endTransaction(txID, false);
 	}
 
-	/**
+	/*
 	 * Test that the DemangledFunction will properly create a cascade of namespaces for
 	 * functions that live inside of a class that lives inside of a namespace.
 	 * This test applies a demangled name where the mangled name does NOT exist.
@@ -83,7 +83,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 		assertEquals("ATL", ns.getName(false));
 	}
 
-	/**
+	/*
 	 * Test that the DemangledFunction will properly update a thunk function
 	 * with its namespace, and ripple through to the underlying default thunked
 	 * function.  The thunk 'this' parameter should utilize the Class 
@@ -132,7 +132,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 
 	}
 
-	/**
+	/*
 	 * Test that the DemangledFunction will properly create a cascade of namespaces for
 	 * functions that live inside of a class that lives inside of a namespace.
 	 * This test applies a demangled name where the mangled name exists.
@@ -168,7 +168,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 		assertEquals("ATL", ns.getName(false));
 	}
 
-	/**
+	/*
 	 * Test that the DemangledFunction will properly create a cascade of namespaces for
 	 * functions that live inside of a class that lives inside of a namespace.
 	 * This test applies a demangled name where the mangled name exists with address suffix.
@@ -205,7 +205,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 		assertEquals("ATL", ns.getName(false));
 	}
 
-	/**
+	/*
 	 * Test that the DemangledFunction will properly create a cascade of namespaces for
 	 * functions that live inside of a class that lives inside of a namespace.
 	 * This test applies a demangled name where both the mangled name exists and
@@ -243,7 +243,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 		assertEquals("ATL", ns.getName(false));
 	}
 
-	/**
+	/*
 	 * Test that the DemangledFunction will properly create a cascade of namespaces for
 	 * functions that live inside of a class that lives inside of a namespace.
 	 * This test applies a demangled name where the mangled name exists on an external
@@ -339,7 +339,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 	private void assertSimpleNamespaceExists(String name) {
 		SymbolTable symbolTable = program.getSymbolTable();
 		Namespace ns = symbolTable.getNamespace(name, program.getGlobalNamespace());
-		assertNotNull(ns);
+		assertNotNull("Namespace not created: " + name, ns);
 		assertEquals(SymbolType.NAMESPACE, ns.getSymbol().getSymbolType());
 	}
 
