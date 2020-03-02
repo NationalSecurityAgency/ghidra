@@ -1909,7 +1909,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     pc = _pc;
     sr = _sr;
     
-    goto [pc];
+    return [pc];
 }
 
 :sett  is opcode_00_15=0b0000000000011000 
