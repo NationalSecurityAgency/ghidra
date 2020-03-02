@@ -108,7 +108,8 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		if (instr == null) {
 			return null;
 		}
-		if (!instr.getFlowType().isCall()) {
+		if (!instr.getFlowType().isCall() &&
+			!instr.getFlowType().isJump()) {
 			return null;
 		}
 		ClangFunction cfunc = tokenAtCursor.getClangFunction();
