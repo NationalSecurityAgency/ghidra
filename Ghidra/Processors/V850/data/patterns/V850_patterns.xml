@@ -1,0 +1,65 @@
+<patternlist>
+  <patternpairs totalbits="48" postbits="32">
+    <prepatterns>
+      <data>01111111 00000000</data> <!-- jmp [lp] -->
+    </prepatterns>
+    <postpatterns>
+      <data>10...... 00000111 ...00001 ........</data> <!-- PREPARE list12, imm5 -->
+      <data>10...... 00000111 ...00011 ........</data> <!-- PREPARE list12, imm5, sp -->
+      <data>00000011 00011110 ........ ........</data> <!-- ADDI imm16, sp, sp -->
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="64" postbits="48">
+    <prepatterns>
+      <data>01111111 00000000</data> <!-- jmp [lp] -->
+    </prepatterns>
+    <postpatterns>
+      <data>10...... 00000111 ...01011 ........ ........ .........</data> <!-- PREPARE list12, imm5, simm16 -->
+      <data>10...... 00000111 ...10011 ........ ........ .........</data> <!-- PREPARE list12, imm5, imm16 -->
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="80" postbits="64">
+    <prepatterns>
+      <data>01111111 00000000</data> <!-- jmp [lp] -->
+    </prepatterns>
+    <postpatterns>
+      <data>10...... 00000111 ...11011 ........ ........ ......... ........ .........</data> <!-- PREPARE list12, imm5, imm32 -->
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="64" postbits="32">
+    <prepatterns>
+      <data>01...... 00000110 ........ ........</data> <!-- DISPOSE imm5, list12, [reg1] -->
+      <data>11100000 00000111 01001010 00000001</data> <!-- FERET -->
+      <data>11100000 00000111 01001000 00000001</data> <!-- EIRET -->
+      <data>11100000 00000111 01000100 00000001</data> <!-- CTRET -->
+    </prepatterns>
+    <postpatterns>
+      <data>10...... 00000111 ...00001 ........</data> <!-- PREPARE list12, imm5 -->
+      <data>10...... 00000111 ...00011 ........</data> <!-- PREPARE list12, imm5, sp -->
+      <data>00000011 00011110 ........ ........</data> <!-- ADDI imm16, sp, sp -->
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="80" postbits="48">
+    <prepatterns>
+      <data>01...... 00000110 ........ ........</data> <!-- DISPOSE imm5, list12, [reg1] -->
+      <data>11100000 00000111 01001010 00000001</data> <!-- FERET -->
+      <data>11100000 00000111 01001000 00000001</data> <!-- EIRET -->
+      <data>11100000 00000111 01000100 00000001</data> <!-- CTRET -->
+    </prepatterns>
+    <postpatterns>
+      <data>10...... 00000111 ...01011 ........ ........ .........</data> <!-- PREPARE list12, imm5, simm16 -->
+      <data>10...... 00000111 ...10011 ........ ........ .........</data> <!-- PREPARE list12, imm5, imm16 -->
+    </postpatterns>
+  </patternpairs>
+  <patternpairs totalbits="96" postbits="64">
+    <prepatterns>
+      <data>01...... 00000110 ........ ........</data> <!-- DISPOSE imm5, list12, [reg1] -->
+      <data>11100000 00000111 01001010 00000001</data> <!-- FERET -->
+      <data>11100000 00000111 01001000 00000001</data> <!-- EIRET -->
+      <data>11100000 00000111 01000100 00000001</data> <!-- CTRET -->
+    </prepatterns>
+    <postpatterns>
+      <data>10...... 00000111 ...11011 ........ ........ ......... ........ .........</data> <!-- PREPARE list12, imm5, imm32 -->
+    </postpatterns>
+  </patternpairs>  
+</patternlist>
