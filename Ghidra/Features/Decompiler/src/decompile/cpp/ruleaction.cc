@@ -945,11 +945,24 @@ int4 RulePullsubMulti::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *outvn = op->getOut();
   if (outvn->isPrecisLo()||outvn->isPrecisHi()) return 0; // Don't pull apart a double precision object
 
+  // Make sure we don't new add SUBPIECE ops that aren't going to cancel in some way
   int4 branches = mult->numInput();
   uintb consume = calc_mask(newSize) << 8*minByte;
-  consume = ~consume;
+  consume = ~consume;			// Check for use of bits outside of what gets truncated later
   for(int4 i=0;i<branches;++i) {
-    if ((consume & mult->getIn(i)->getConsume()) != 0) return 0;
+    Varnode *inVn = mult->getIn(i);
+    if ((consume & inVn->getConsume()) != 0) {	// Check if bits not truncated are still used
+      // Check if there's an extension that matches the truncation
+      if (minByte == 0 && inVn->isWritten()) {
+	PcodeOp *defOp = inVn->getDef();
+	OpCode opc = defOp->code();
+	if (opc == CPUI_INT_ZEXT || opc == CPUI_INT_SEXT) {
+	  if (newSize == defOp->getIn(0)->getSize())
+	    continue;		// We have matching extension, so new SUBPIECE will cancel anyway
+	}
+      }
+      return 0;
+    }
   }
 
   Address smalladdr2;
