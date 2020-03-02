@@ -734,7 +734,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * For example, the name, or description change.
 	 */
 	protected void compositeInfoChanged() {
-		notify(modelListeners, CompositeViewerModelListener::componentDataChanged);
+		notify(modelListeners, CompositeViewerModelListener::compositeInfoChanged);
 	}
 
 	/**
