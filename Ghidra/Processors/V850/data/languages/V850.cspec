@@ -37,6 +37,10 @@
         <pentry minsize="1" maxsize="4">
           <register name="r10"/>
         </pentry>
+
+         <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="r10" piece2="r11"/>
+        </pentry>
       </output>
       
       <unaffected>
