@@ -112,7 +112,12 @@ void HighVariable::updateFlags(void) const
   highflags &= ~flagsdirty; // Clear the dirty flag
 }
 
-/// Using Datatype::typeOrder, find the member Varnode with the most specific data-type.
+/// Find the member Varnode with the most \e specialized data-type, handling \e bool specially.
+/// Boolean data-types are \e specialized in the data-type lattice, but not all byte values are boolean values.
+/// Within the Varnode/PcodeOp tree, the \e bool data-type can only propagate to a Varnode if it is verified to
+/// only take the boolean values 0 and 1. Since the data-type representative represents the type of all
+/// instances, if any instance is not boolean, then the HighVariable cannot be boolean, even though \e bool
+/// is more specialized. This method uses Datatype::typeOrderBool() to implement the special handling.
 /// \return the representative member
 Varnode *HighVariable::getTypeRepresentative(void) const
 
@@ -129,7 +134,7 @@ Varnode *HighVariable::getTypeRepresentative(void) const
       if (vn->isTypeLock())
 	rep = vn;
     }
-    else if (0>vn->getType()->typeOrder(*rep->getType()))
+    else if (0>vn->getType()->typeOrderBool(*rep->getType()))
       rep = vn;
   }
   return rep;

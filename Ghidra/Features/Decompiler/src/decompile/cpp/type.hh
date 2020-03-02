@@ -115,6 +115,7 @@ public:
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
   virtual void saveXml(ostream &s) const;	///< Serialize the data-type to XML
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
+  int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
   void saveXmlBasic(ostream &s) const;	///< Save basic data-type properties
   void saveXmlRef(ostream &s) const;	///< Write an XML reference of \b this to stream
 };
@@ -446,5 +447,20 @@ public:
   void setCoreType(const string &name,int4 size,type_metatype meta,bool chartp);	///< Create a core data-type
   void cacheCoreTypes(void);				///< Cache common types
 };
+
+/// Order data-types, with special handling of the \e bool data-type. Data-types are compared
+/// using the normal ordering, but \e bool is ordered after all other data-types. A return value
+/// of 0 indicates the data-types are the same, -1 indicates that \b this is prefered (ordered earlier),
+/// and 1 indicates \b this is ordered later.
+/// \param op is the other data-type to compare with \b this
+/// \return -1, 0, or 1
+inline int4 Datatype::typeOrderBool(const Datatype &op) const
+
+{
+  if (this == &op) return 0;
+  if (metatype == TYPE_BOOL) return 1;		// Never prefer bool over other data-types
+  if (op.metatype == TYPE_BOOL) return -1;
+  return compare(op,10);
+}
 
 #endif

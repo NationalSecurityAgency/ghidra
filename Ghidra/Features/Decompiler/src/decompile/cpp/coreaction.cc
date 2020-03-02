@@ -3307,6 +3307,9 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
     b = (a == 0) ? 0 : ~((uintb)0);		// if any consumed, treat all input bits as consumed
     pushConsumed(b,op->getIn(0), worklist);
     break;
+  case CPUI_CALL:
+  case CPUI_CALLIND:
+    break;		// Call output doesn't indicate consumption of inputs
   default:
     a = (outc==0) ? 0 : ~((uintb)0); // all or nothing
     for(int4 i=0;i<op->numInput();++i)
@@ -3348,6 +3351,59 @@ bool ActionDeadCode::neverConsumed(Varnode *vn,Funcdata &data)
   return true;
 }
 
+/// \brief Determine how the given sub-function parameters are consumed
+///
+/// Set the consume property for each input Varnode of a CPUI_CALL or CPUI_CALLIND.
+/// If the prototype is locked, assume parameters are entirely consumed.
+/// \param fc is the call specification for the given sub-function
+/// \param worklist will hold input Varnodes that can propagate their consume property
+void ActionDeadCode::markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist)
+
+{
+  PcodeOp *callOp = fc->getOp();
+  pushConsumed(~((uintb)0),callOp->getIn(0),worklist);		// In all cases the first operand is fully consumed
+  if (fc->isInputLocked() || fc->isInputActive()) {		// If the prototype is locked in, or in active recovery
+    for(int4 i=1;i<callOp->numInput();++i)
+      pushConsumed(~((uintb)0),callOp->getIn(i),worklist);	// Treat all parameters as fully consumed
+    return;
+  }
+  for(int4 i=1;i<callOp->numInput();++i) {
+    Varnode *vn = callOp->getIn(i);
+    uintb consumeVal;
+    if (vn->isAutoLive())
+      consumeVal = ~((uintb)0);
+    else
+      consumeVal = minimalmask(vn->getNZMask());
+    pushConsumed(consumeVal,vn,worklist);
+  }
+}
+
+/// \brief Determine how the \e return \e values for the given function are consumed
+///
+/// Examine each CPUI_RETURN to see how the Varnode input is consumed.
+/// If the function's prototype is locked, assume the Varnode is entirely consumed.
+/// If there are no CPUI_RETURN ops, return 0
+/// \param data is the given function
+/// \return the bit mask of what is consumed
+uintb ActionDeadCode::gatherConsumedReturn(Funcdata &data)
+
+{
+  if (data.getFuncProto().isOutputLocked() || data.getActiveOutput() != (ParamActive *)0)
+    return ~((uintb)0);
+  list<PcodeOp *>::const_iterator iter,enditer;
+  enditer = data.endOp(CPUI_RETURN);
+  uintb consumeVal = 0;
+  for(iter=data.beginOp(CPUI_RETURN);iter!=enditer;++iter) {
+    PcodeOp *returnOp = *iter;
+    if (returnOp->isDead()) continue;
+    if (returnOp->numInput() > 1) {
+      Varnode *vn = returnOp->getIn(1);
+      consumeVal |= minimalmask(vn->getNZMask());
+    }
+  }
+  return consumeVal;
+}
+
 int4 ActionDeadCode::apply(Funcdata &data)
 
 {
@@ -3355,6 +3411,7 @@ int4 ActionDeadCode::apply(Funcdata &data)
   list<PcodeOp *>::const_iterator iter;
   PcodeOp *op;
   Varnode *vn;
+  uintb returnConsume;
   vector<Varnode *> worklist;
   VarnodeLocSet::const_iterator viter,endviter;
   const AddrSpaceManager *manage = data.getArch();
@@ -3383,13 +3440,42 @@ int4 ActionDeadCode::apply(Funcdata &data)
     }
   }
 
+  returnConsume = gatherConsumedReturn(data);
   for(iter=data.beginOpAlive();iter!=data.endOpAlive();++iter) {
     op = *iter;
 
     op->clearIndirectSource();
-    if (op->isCall() || (!op->isAssignment())) {
-      for(i=0;i<op->numInput();++i)
-	pushConsumed(~((uintb)0),op->getIn(i),worklist);
+    if (op->isCall()) {
+      if (op->code() == CPUI_CALLOTHER) {
+	for(i=0;i<op->numInput();++i)
+	  pushConsumed(~((uintb)0),op->getIn(i),worklist);
+      }
+      // Postpone setting consumption on CALL and CALLIND inputs
+      if (!op->isAssignment())
+	continue;
+    }
+    else if (!op->isAssignment()) {
+      OpCode opc = op->code();
+      if (opc == CPUI_RETURN) {
+	pushConsumed(~((uintb)0),op->getIn(0),worklist);
+	for(i=1;i<op->numInput();++i)
+	  pushConsumed(returnConsume,op->getIn(i),worklist);
+      }
+      else if (opc == CPUI_BRANCHIND) {
+	JumpTable *jt = data.findJumpTable(op);
+	uintb mask;
+	if (jt != (JumpTable *)0)
+	  mask = jt->getSwitchVarConsume();
+	else
+	  mask = ~((uintb)0);
+	pushConsumed(mask,op->getIn(0),worklist);
+      }
+      else {
+	for(i=0;i<op->numInput();++i)
+	  pushConsumed(~((uintb)0),op->getIn(i),worklist);
+      }
+      // Postpone setting consumption on RETURN input
+      continue;
     }
     else {
       for(i=0;i<op->numInput();++i) {
@@ -3399,21 +3485,17 @@ int4 ActionDeadCode::apply(Funcdata &data)
       }
     }
     vn = op->getOut();
-    if ((vn!=(Varnode *)0)&&(vn->isAutoLive()))
+    if (vn->isAutoLive())
       pushConsumed(~((uintb)0),vn,worklist);
   }
+
+				// Mark consumption of call parameters
+  for(i=0;i<data.numCalls();++i)
+    markConsumedParameters(data.getCallSpecs(i),worklist);
+
 				// Propagate the consume flags
   while(!worklist.empty())
     propagateConsumed(worklist);
-//   while(!worklist.empty()) {
-//     vn = worklist.back();
-//     worklist.pop_back();
-//     op = vn->Def();
-//     for(i=0;i<op->numInput();++i) {
-//       vn = op->Input(i);
-//       push_consumed(0x3fffffff,vn,worklist);
-//     } 
-//   }
 
   for(i=0;i<manage->numSpaces();++i) {
     spc = manage->getSpace(i);
@@ -3768,7 +3850,7 @@ int4 ActionOutputPrototype::apply(Funcdata &data)
 {
   ProtoParameter *outparam = data.getFuncProto().getOutput();
   if ((!outparam->isTypeLocked())||outparam->isSizeTypeLocked()) {
-    PcodeOp *op = data.canonicalReturnOp();
+    PcodeOp *op = data.getFirstReturnOp();
     vector<Varnode *> vnlist;
     if (op != (PcodeOp *)0) {
       for(int4 i=1;i<op->numInput();++i)
@@ -4113,14 +4195,6 @@ bool ActionInferTypes::propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Va
     break;
   case CPUI_COPY:
     if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
-    if (metain == TYPE_BOOL) {
-      if (inslot != -1) return false;
-      Varnode *othervn = op->getIn(outslot);
-      if (!othervn->isConstant()) return false;
-      uintb val = othervn->getOffset();
-      if (val > 1)
-	return false;
-    }
     break;
   case CPUI_MULTIEQUAL:
     if ((inslot!=-1)&&(outslot!=-1)) return false; // Must propagate input <-> output
@@ -4128,24 +4202,15 @@ bool ActionInferTypes::propagateGoodEdge(PcodeOp *op,int4 inslot,int4 outslot,Va
   case CPUI_INT_LESS:
   case CPUI_INT_LESSEQUAL:
     if ((inslot==-1)||(outslot==-1)) return false; // Must propagate input <-> input
-    if (metain == TYPE_BOOL) return false;
     break;
   case CPUI_INT_EQUAL:
   case CPUI_INT_NOTEQUAL:
     if ((inslot==-1)||(outslot==-1)) return false; // Must propagate input <-> input
-    if (metain == TYPE_BOOL) { // Only propagate bool to 0 or 1 const
-      Varnode *othervn = op->getIn(outslot);
-      if (!othervn->isConstant()) return false;
-      uintb val = othervn->getOffset();
-      if (val > 1)
-	return false;
-    }
     break;
   case CPUI_LOAD:
   case CPUI_STORE:
     if ((inslot==0)||(outslot==0)) return false; // Don't propagate along this edge
     if (invn->isSpacebase()) return false;
-    if (metain == TYPE_BOOL) return false;
     break;
   case CPUI_PTRADD:
     if ((inslot==2)||(outslot==2)) return false; // Don't propagate along this edge
@@ -4203,10 +4268,14 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
   if (outvn->isAnnotation()) return false;
   if (outvn->isTypeLock()) return false; // Can't propagate through typelock
   invn = (inslot==-1) ? op->getOut() : op->getIn(inslot);
-  Datatype *alttype = invn->getTempType();
   if (!propagateGoodEdge(op,inslot,outslot,invn))
     return false;
 
+  Datatype *alttype = invn->getTempType();
+  if (alttype->getMetatype() == TYPE_BOOL) {	// Only propagate boolean
+    if (outvn->getNZMask() > 1)			// If we know output can only take boolean values
+      return false;
+  }
   switch(op->code()) {
   case CPUI_INDIRECT:
   case CPUI_COPY:
@@ -4334,7 +4403,7 @@ void PropagationState::step(void)
     inslot = op->getSlot(vn);
     return;
   }
-  if (op == vn->getDef())
+  if (inslot == -1)
     op = (PcodeOp *)0;
   else
     op = vn->getDef();
@@ -4489,6 +4558,72 @@ void ActionInferTypes::propagateSpacebaseRef(Funcdata &data,Varnode *spcvn)
   }
 }
 
+/// Return the CPUI_RETURN op with the most specialized data-type, which is not
+/// dead and is not a special halt.
+/// \param data is the function
+/// \return the representative CPUI_RETURN op or NULL
+PcodeOp *ActionInferTypes::canonicalReturnOp(Funcdata &data)
+
+{
+  PcodeOp *res = (PcodeOp *)0;
+  Datatype *bestdt = (Datatype *)0;
+  list<PcodeOp *>::const_iterator iter,iterend;
+  iterend = data.endOp(CPUI_RETURN);
+  for(iter=data.beginOp(CPUI_RETURN);iter!=iterend;++iter) {
+    PcodeOp *retop = *iter;
+    if (retop->isDead()) continue;
+    if (retop->getHaltType()!=0) continue;
+    if (retop->numInput() > 1) {
+      Varnode *vn = retop->getIn(1);
+      Datatype *ct = vn->getTempType();
+      if (bestdt == (Datatype *)0) {
+	res = retop;
+	bestdt = ct;
+      }
+      else if (ct->typeOrder(*bestdt) < 0) {
+	res = retop;
+	bestdt = ct;
+      }
+    }
+  }
+  return res;
+}
+
+/// \brief Give data-types a chance to propagate between CPUI_RETURN operations.
+///
+/// Since a function is intended to return a single data-type, data-types effectively
+/// propagate between the input Varnodes to CPUI_RETURN ops, if there are more than one.
+void ActionInferTypes::propagateAcrossReturns(Funcdata &data)
+
+{
+  PcodeOp *op = canonicalReturnOp(data);
+  if (op == (PcodeOp *)0) return;
+  TypeFactory *typegrp = data.getArch()->types;
+  Varnode *baseVn = op->getIn(1);
+  Datatype *ct = baseVn->getTempType();
+  int4 baseSize = baseVn->getSize();
+  bool isBool = ct->getMetatype() == TYPE_BOOL;
+  list<PcodeOp *>::const_iterator iter,iterend;
+  iterend = data.endOp(CPUI_RETURN);
+  for(iter=data.beginOp(CPUI_RETURN);iter!=iterend;++iter) {
+    PcodeOp *retop = *iter;
+    if (retop == op) continue;
+    if (retop->isDead()) continue;
+    if (retop->getHaltType()!=0) continue;
+    if (retop->numInput() > 1) {
+      Varnode *vn = retop->getIn(1);
+      if (vn->getSize() != baseSize) continue;
+      if (isBool && vn->getNZMask() > 1) continue;	// Don't propagate bool if value is not necessarily 0 or 1
+      if (vn->getTempType() == ct) continue;		// Already propagated
+      vn->setTempType(ct);
+#ifdef TYPEPROP_DEBUG
+      propagationDebug(typegrp->getArch(),vn,ct,retop,1,(Varnode *)0);
+#endif
+      propagateOneType(typegrp, vn);
+    }
+  }
+}
+
 int4 ActionInferTypes::apply(Funcdata &data)
 
 {
@@ -4517,6 +4652,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
     if ((!vn->isWritten())&&(vn->hasNoDescend())) continue;
     propagateOneType(typegrp,vn);
   }
+  propagateAcrossReturns(data);
   AddrSpace *spcid = data.getScopeLocal()->getSpaceId();
   Varnode *spcvn = data.findSpacebaseInput(spcid);
   if (spcvn != (Varnode *)0)

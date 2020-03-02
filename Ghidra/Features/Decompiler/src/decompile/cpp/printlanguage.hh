@@ -486,8 +486,8 @@ public:
   virtual void opIntSlessEqual(const PcodeOp *op)=0;			///< Emit a INT_SLESSEQUAL operator
   virtual void opIntLess(const PcodeOp *op)=0;				///< Emit a INT_LESS operator
   virtual void opIntLessEqual(const PcodeOp *op)=0;			///< Emit a INT_LESSEQUAL operator
-  virtual void opIntZext(const PcodeOp *op)=0;				///< Emit a INT_ZEXT operator
-  virtual void opIntSext(const PcodeOp *op)=0;				///< Emit a INT_SEXT operator
+  virtual void opIntZext(const PcodeOp *op,const PcodeOp *readOp)=0;	///< Emit a INT_ZEXT operator
+  virtual void opIntSext(const PcodeOp *op,const PcodeOp *readOp)=0;	///< Emit a INT_SEXT operator
   virtual void opIntAdd(const PcodeOp *op)=0;				///< Emit a INT_ADD operator
   virtual void opIntSub(const PcodeOp *op)=0;				///< Emit a INT_SUB operator
   virtual void opIntCarry(const PcodeOp *op)=0;				///< Emit a INT_CARRY operator

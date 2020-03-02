@@ -196,6 +196,7 @@ void TransformVar::createReplacement(Funcdata *fd)
       if (vn->getSpace()->isBigEndian())
 	bytePos = vn->getSize() - bytePos - byteSize;
       Address addr = vn->getAddr() + bytePos;
+      addr.renormalize(byteSize);
       if (def == (TransformOp *)0)
 	replacement = fd->newVarnode(byteSize,addr);
       else

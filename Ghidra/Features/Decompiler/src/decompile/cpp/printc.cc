@@ -591,11 +591,11 @@ void PrintC::opReturn(const PcodeOp *op)
   pushAtom(Atom("",blanktoken,EmitXml::no_color));
 }
 
-void PrintC::opIntZext(const PcodeOp *op)
+void PrintC::opIntZext(const PcodeOp *op,const PcodeOp *readOp)
 
 {
   if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
-    if (isExtensionCastImplied(op))
+    if (option_hide_exts && castStrategy->isExtensionCastImplied(op,readOp))
       opHiddenFunc(op);
     else
       opTypeCast(op);
@@ -604,11 +604,11 @@ void PrintC::opIntZext(const PcodeOp *op)
     opFunc(op);
 }
 
-void PrintC::opIntSext(const PcodeOp *op)
+void PrintC::opIntSext(const PcodeOp *op,const PcodeOp *readOp)
 
 {
   if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
-    if (isExtensionCastImplied(op))
+    if (option_hide_exts && castStrategy->isExtensionCastImplied(op,readOp))
       opHiddenFunc(op);
     else
       opTypeCast(op);
@@ -1282,60 +1282,6 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize
   return res;
 }
 
-/// \brief Is the given ZEXT/SEXT cast implied by the expression its in
-///
-/// We know that the given ZEXT or SEXT op can be viewed as a natural \e cast operation.
-/// Sometimes such a cast is implied by the expression its in, and the cast itself
-/// doesn't need to be printed.
-/// \param op is the given ZEXT or SEXT PcodeOp
-/// \return \b true if the op as a cast does not need to be printed
-bool PrintC::isExtensionCastImplied(const PcodeOp *op) const
-
-{
-  if (!option_hide_exts)
-    return false;		// If hiding extensions is not on, we must always print extension
-  const Varnode *outVn = op->getOut();
-  if (outVn->isExplicit()) {
-
-  }
-  else {
-    type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
-    list<PcodeOp *>::const_iterator iter;
-    for(iter=outVn->beginDescend();iter!=outVn->endDescend();++iter) {
-      PcodeOp *expOp = *iter;
-      Varnode *otherVn;
-      int4 slot;
-      switch(expOp->code()) {
-	case CPUI_PTRADD:
-	  break;
-	case CPUI_INT_ADD:
-	case CPUI_INT_SUB:
-	case CPUI_INT_MULT:
-	case CPUI_INT_DIV:
-	case CPUI_INT_AND:
-	case CPUI_INT_OR:
-	case CPUI_INT_XOR:
-	case CPUI_INT_LESS:
-	case CPUI_INT_LESSEQUAL:
-	case CPUI_INT_SLESS:
-	case CPUI_INT_SLESSEQUAL:
-	  slot = expOp->getSlot(outVn);
-	  otherVn = expOp->getIn(1-slot);
-	  // Check if the expression involves an explicit variable of the right integer type
-	  if (!otherVn->isExplicit())
-	    return false;
-	  if (otherVn->getHigh()->getType()->getMetatype() != metatype)
-	    return false;
-	  break;
-	default:
-	  return false;
-      }
-    }
-    return true;	// Everything is integer promotion
-  }
-  return false;
-}
-
 /// \brief Push a single character constant to the RPN stack
 ///
 /// For C, a character constant is usually emitted as the character in single quotes.
@@ -1864,8 +1810,11 @@ void PrintC::emitPrototypeOutput(const FuncProto *proto,
   PcodeOp *op;
   Varnode *vn;
 
-  if (fd != (const Funcdata *)0)
-    op = fd->canonicalReturnOp();
+  if (fd != (const Funcdata *)0) {
+    op = fd->getFirstReturnOp();
+    if (op != (PcodeOp *)0 && op->numInput() < 2)
+      op = (PcodeOp *)0;
+  }
   else
     op = (PcodeOp *)0;
 
@@ -2150,7 +2099,7 @@ void PrintC::emitExpression(const PcodeOp *op)
     // If BRANCHIND, print switch( )
     // If CALL, CALLIND, CALLOTHER  print  call
     // If RETURN,   print return ( )
-  op->push(this);
+  op->getOpcode()->push(this,op,(PcodeOp *)0);
   recurse();
 }
 

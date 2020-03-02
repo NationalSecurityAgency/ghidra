@@ -25,8 +25,8 @@
 
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
-const uint4 ArchitectureCapability::majorversion = 3;
-const uint4 ArchitectureCapability::minorversion = 5;
+const uint4 ArchitectureCapability::majorversion = 4;
+const uint4 ArchitectureCapability::minorversion = 0;
 
 /// This builds a list of just the ArchitectureCapability extensions
 void ArchitectureCapability::initialize(void)

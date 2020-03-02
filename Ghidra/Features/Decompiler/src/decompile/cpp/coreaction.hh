@@ -541,6 +541,8 @@ class ActionDeadCode : public Action {
   static void pushConsumed(uintb val,Varnode *vn,vector<Varnode *> &worklist);
   static void propagateConsumed(vector<Varnode *> &worklist);
   static bool neverConsumed(Varnode *vn,Funcdata &data);
+  static void markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist);
+  static uintb gatherConsumedReturn(Funcdata &data);
 public:
   ActionDeadCode(const string &g) : Action(0,"deadcode",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
@@ -929,6 +931,8 @@ class ActionInferTypes : public Action {
   static void propagateOneType(TypeFactory *typegrp,Varnode *vn);
   static void propagateRef(Funcdata &data,Varnode *vn,const Address &addr);
   static void propagateSpacebaseRef(Funcdata &data,Varnode *spcvn);
+  static PcodeOp *canonicalReturnOp(Funcdata &data);
+  static void propagateAcrossReturns(Funcdata &data);
 public:
   ActionInferTypes(const string &g) : Action(0,"infertypes",g) {}	///< Constructor
   virtual void reset(Funcdata &data) { localcount = 0; }
