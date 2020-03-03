@@ -83,8 +83,8 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	private ScalarSearchProvider provider;
 	private DataTypeManager dataTypeManager;
 
-	private int maxScalarVal;
-	private int minScalarVal;
+	private long maxScalarVal;
+	private long minScalarVal;
 
 	@Before
 	public void setUp() throws Exception {
@@ -93,7 +93,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		program = buildProgram();
 
 		int defaultPointerSize = program.getDefaultPointerSize();
-		maxScalarVal = (int) Math.pow(2, (defaultPointerSize * 8));
+		maxScalarVal = (long) Math.pow(2, (defaultPointerSize * 8) + 1);
 		minScalarVal = -maxScalarVal;
 
 		dataTypeManager = program.getDataTypeManager();
@@ -538,12 +538,8 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ProgramBuilder builder =
 			new ProgramBuilder("Test_Program", (new LanguageID("x86:LE:32:default")).toString());
-		builder.createMemory("test_program", "00400000", 8000);
+		builder.createMemory("test_program", "00400000", 7000);
 
-		createFunction(builder, "00401090", "48 83 ec cc",
-			"C_virt2@40190", 4);
-		createFunction(builder, "004010a0", "55 8b ec 51 89 4d fc b8 cc 00 00 00 8b e5 5d c3",
-			"C_virt2@401a0", 16);
 		createFunction(builder, "004010b0", "55 8b ec 51 89 4d fc b8 01 00 00 00 8b e5 5d c3",
 			"A_virt1@4010b0", 16);
 		createFunction(builder, "004010c0", "55 8b ec 51 89 4d fc b8 02 00 00 00 8b e5 5d c3",
@@ -561,6 +557,10 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 			"A_virt2@401120", 16);
 		createFunction(builder, "00401130", "55 8b ec 51 89 4d fc b8 08 00 00 00 8b e5 5d c3",
 			"B_virt2@401130", 16);
+		createFunction(builder, "00401140", "48 83 ec cc",
+			"C_virt2@401140", 4);
+		createFunction(builder, "00401150", "55 8b ec 51 89 4d fc b8 cc 00 00 00 8b e5 5d c3",
+			"C_virt2@401150", 16);
 
 		createBytes(builder, COMPOSITE_DATA_ADDRESS,
 			"0e 1f ba 0e 00 b4 09 cd 21 b8 01 4c cd 21 54 68 69 73 20 70 " +
@@ -656,7 +656,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	 * @throws Exception
 	 */
 	private void searchProgramAndDisplayResults(Program customProgram, AddressSet selection,
-			int min, int max) throws Exception {
+			long min, long max) throws Exception {
 
 		ScalarSearchDialog dialog = launchScalarSearchDialog(customProgram, selection);
 

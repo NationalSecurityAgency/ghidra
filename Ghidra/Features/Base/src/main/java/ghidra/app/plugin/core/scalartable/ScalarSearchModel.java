@@ -217,7 +217,6 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		}
 
 		Scalar scalar = rowObject.getScalar();
-
 		long value = scalar.isSigned() ? scalar.getSignedValue() : scalar.getUnsignedValue();
 		if ((value < minValue) || (value > maxValue)) {
 			return;
