@@ -100,6 +100,38 @@ public class DecompileOptions {
 	private final static boolean INPLACEOP_OPTIONDEFAULT = false;
 	private boolean inplaceTokens;
 
+	private final static String ALIASBLOCK_OPTIONSTRING = "Analysis.Alias Blocking";
+	private final static String ALIASBLOCK_OPTIONDESCRIPTION =
+		"Specify which data-types prevent a pointer alias from reaching across them on the stack.";
+
+	public enum AliasBlockEnum {
+
+		None("none", "None"),
+		Struct("struct", "Structures"),
+		Array("array", "Arrays and Structures"),
+		All("all", "All Data-types");
+
+		private String label;
+		private String optionString;
+
+		private AliasBlockEnum(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	private final static AliasBlockEnum ALIASBLOCK_OPTIONDEFAULT = AliasBlockEnum.Array;
+	private AliasBlockEnum aliasBlock;
+
 	private final static String CONVENTION_OPTIONSTRING = "Display.Print calling convention name";
 	private final static String CONVENTION_OPTIONDESCRIPTION =
 		"If set, the names of callling conventions (which differ " +
@@ -204,12 +236,20 @@ public class DecompileOptions {
 
 	public enum IntegerFormatEnum {
 
-		Hexadecimal("Force Hexadecimal"), Decimal("Force Decimal"), BestFit("Best Fit");
+		Hexadecimal("hex", "Force Hexadecimal"),
+		Decimal("dec", "Force Decimal"),
+		BestFit("best", "Best Fit");
 
 		private String label;
+		private String optionString;
 
-		private IntegerFormatEnum(String label) {
+		private IntegerFormatEnum(String optString, String label) {
 			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
 		}
 
 		@Override
@@ -301,6 +341,7 @@ public class DecompileOptions {
 		inferconstptr = INFERCONSTPTR_OPTIONDEFAULT;
 		nullToken = NULLTOKEN_OPTIONDEFAULT;
 		inplaceTokens = INPLACEOP_OPTIONDEFAULT;
+		aliasBlock = ALIASBLOCK_OPTIONDEFAULT;
 		conventionPrint = CONVENTION_OPTIONDEFAULT;
 		noCastPrint = NOCAST_OPTIONDEFAULT;
 		maxwidth = MAXWIDTH_OPTIONDEFAULT;
@@ -360,6 +401,7 @@ public class DecompileOptions {
 		inferconstptr = opt.getBoolean(INFERCONSTPTR_OPTIONSTRING, INFERCONSTPTR_OPTIONDEFAULT);
 		nullToken = opt.getBoolean(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT);
 		inplaceTokens = opt.getBoolean(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT);
+		aliasBlock = opt.getEnum(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT);
 		conventionPrint = opt.getBoolean(CONVENTION_OPTIONSTRING, CONVENTION_OPTIONDEFAULT);
 		noCastPrint = opt.getBoolean(NOCAST_OPTIONSTRING, NOCAST_OPTIONDEFAULT);
 		maxwidth = opt.getInt(MAXWIDTH_OPTIONSTRING, MAXWIDTH_OPTIONDEFAULT);
@@ -473,6 +515,8 @@ public class DecompileOptions {
 			NULLTOKEN_OPTIONDESCRIPTION);
 		opt.registerOption(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT, help,
 			INPLACEOP_OPTIONDESCRIPTION);
+		opt.registerOption(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT, help,
+			ALIASBLOCK_OPTIONDESCRIPTION);
 		opt.registerOption(CONVENTION_OPTIONSTRING, CONVENTION_OPTIONDEFAULT, help,
 			CONVENTION_OPTIONDESCRIPTION);
 		opt.registerOption(NOCAST_OPTIONSTRING, NOCAST_OPTIONDEFAULT, help,
@@ -589,6 +633,7 @@ public class DecompileOptions {
 		appendOption(buf, "inferconstptr", inferconstptr ? "on" : "off", "", "");
 		appendOption(buf, "nullprinting", nullToken ? "on" : "off", "", "");
 		appendOption(buf, "inplaceops", inplaceTokens ? "on" : "off", "", "");
+		appendOption(buf, "aliasblock", aliasBlock.getOptionString(), "", "");
 		appendOption(buf, "conventionprinting", conventionPrint ? "on" : "off", "", "");
 		appendOption(buf, "nocastprinting", noCastPrint ? "on" : "off", "", "");
 		appendOption(buf, "maxlinewidth", Integer.toString(maxwidth), "", "");
@@ -605,14 +650,7 @@ public class DecompileOptions {
 		appendOption(buf, "commentheader", "header", commentHeadInclude ? "on" : "off", "");
 		appendOption(buf, "commentheader", "warningheader", commentWARNInclude ? "on" : "off", "");
 
-		String curformat = "best";
-		if (IntegerFormatEnum.Hexadecimal.equals(integerFormat)) {
-			curformat = "hex";
-		}
-		else if (IntegerFormatEnum.Decimal.equals(integerFormat)) {
-			curformat = "dec";
-		}
-		appendOption(buf, "integerformat", curformat, "", "");
+		appendOption(buf, "integerformat", integerFormat.getOptionString(), "", "");
 
 		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
 

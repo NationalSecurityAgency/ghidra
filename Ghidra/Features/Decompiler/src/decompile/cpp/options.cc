@@ -79,6 +79,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionSetLanguage());
   registerOption(new OptionJumpLoad());
   registerOption(new OptionToggleRule());
+  registerOption(new OptionAliasBlock());
 }
 
 OptionDatabase::~OptionDatabase(void)
