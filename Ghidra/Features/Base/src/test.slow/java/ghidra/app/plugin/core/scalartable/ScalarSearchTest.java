@@ -15,22 +15,22 @@
  */
 package ghidra.app.plugin.core.scalartable;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
 import docking.action.DockingActionIf;
-import docking.widgets.table.constraint.*;
-import docking.widgets.table.constraint.provider.LongEditorProvider;
 import generic.test.category.NightlyCategory;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
-import ghidra.base.widgets.table.constraint.provider.ScalarToLongColumnTypeMapper;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
@@ -39,7 +39,6 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.scalar.Scalar;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.RollbackException;
@@ -74,8 +73,6 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private static final String NESTED_STRUCTURE_DATA_ADDRESS = "00400000";
 
-	private static final int HEX_COLUMN = ScalarSearchModel.HEX_COLUMN;
-
 	private int nestedStructureLength;
 
 	private Program program;
@@ -86,8 +83,8 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	private ScalarSearchProvider provider;
 	private DataTypeManager dataTypeManager;
 
-	private int maxScalarVal;
-	private int minScalarVal;
+	private long maxScalarVal;
+	private long minScalarVal;
 
 	@Before
 	public void setUp() throws Exception {
@@ -96,7 +93,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		program = buildProgram();
 
 		int defaultPointerSize = program.getDefaultPointerSize();
-		maxScalarVal = (int) Math.pow(2, (defaultPointerSize * 8));
+		maxScalarVal = (long) Math.pow(2, (defaultPointerSize * 8) + 1);
 		minScalarVal = -maxScalarVal;
 
 		dataTypeManager = program.getDataTypeManager();
@@ -250,6 +247,74 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNestedScalarsInTable(p);
 	}
 
+	/**
+	 * Tests that a signed scalar can be found using its decimal
+	 * value. 
+	 * <p>
+	 * The instruction being targeted is at <b>00401090</b>:
+	 *    <code>SUB ESP,-0x34</code>
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testSearchSpecificSignedScalarDecimal() throws Exception {
+		searchProgramAndDisplayResults(program, null, -52, -52);
+		List<ScalarRowObject> results = getTableData();
+		assertTrue(results.size() == 1);
+		assertAllRowsEqualTo(-52);
+	}
+
+	/**
+	 * Tests that a signed scalar can be found using its hex
+	 * value. 
+	 * <p>
+	 * The instruction being targeted is at <b>00401090</b>:
+	 *    <code>SUB ESP,-0x34</code>
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testSearchSpecificSignedScalarHex() throws Exception {
+		searchProgramAndDisplayResults(program, null, -0x34, -0x34);
+		List<ScalarRowObject> results = getTableData();
+		assertTrue(results.size() == 1);
+		assertAllRowsEqualTo(-0x34);
+	}
+
+	/**
+	 * Tests that an unsigned scalar can be found using its decimal
+	 * value. 
+	 * <p>
+	 * The instruction being targeted is at <b>004010a0</b>:
+	 *    <code>MOV EAX,0xcc</code>
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testSearchSpecificUnsignedScalarDecimal() throws Exception {
+		searchProgramAndDisplayResults(program, null, 204, 204);
+		List<ScalarRowObject> results = getTableData();
+		assertTrue(results.size() == 1);
+		assertAllRowsEqualTo(204);
+	}
+
+	/**
+	 * Tests that an unsigned scalar can be found using its hex
+	 * value. 
+	 * <p>
+	 * The instruction being targeted is at <b>004010a0</b>:
+	 *    <code>MOV EAX,0xcc</code>
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testSearchSpecificUnsignedScalarHex() throws Exception {
+		searchProgramAndDisplayResults(program, null, 0xcc, 0xcc);
+		List<ScalarRowObject> results = getTableData();
+		assertTrue(results.size() == 1);
+		assertAllRowsEqualTo(0xcc);
+	}
+
 	private void assertAllRowsEqualTo(int value) {
 
 		ScalarSearchModel model = provider.getScalarModel();
@@ -294,7 +359,6 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void assertAllRowsLessThan(int value) {
-
 		ScalarSearchModel model = provider.getScalarModel();
 		waitForTableModel(model);
 
@@ -465,43 +529,6 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/*
-	
-	This is for when we move to the column-based filtering mechanism, removing the filter fields
-	private void setFilterValues_Future(int min, int max) {
-	
-		GTableFilterPanel<ScalarRowObject> panel = provider.getFilterPanel();
-		ColumnBasedTableFilter<ScalarRowObject> filter =
-			new ColumnBasedTableFilter<>(panel.getTableFilterModel());
-	
-		filter.addConstraintSet(LogicOperation.AND, HEX_COLUMN, atLeast(min));
-		filter.addConstraintSet(LogicOperation.AND, HEX_COLUMN, atMost(max));
-	
-		runSwing(() -> panel.setColumnTableFilter(filter));
-		waitForTableModel(provider.getScalarModel());
-	}
-	*/
-
-	private List<ColumnConstraint<Scalar>> atLeast(long value) {
-
-		ScalarToLongColumnTypeMapper mapper = new ScalarToLongColumnTypeMapper();
-		AtLeastColumnConstraint<Long> delegate =
-			new AtLeastColumnConstraint<>(value, new LongEditorProvider());
-		MappedColumnConstraint<Scalar, Long> constraint =
-			new MappedColumnConstraint<>(mapper, delegate);
-		return Arrays.asList(constraint);
-	}
-
-	private List<ColumnConstraint<Scalar>> atMost(long value) {
-
-		ScalarToLongColumnTypeMapper mapper = new ScalarToLongColumnTypeMapper();
-		AtMostColumnConstraint<Long> delegate =
-			new AtMostColumnConstraint<>(value, new LongEditorProvider());
-		MappedColumnConstraint<Scalar, Long> constraint =
-			new MappedColumnConstraint<>(mapper, delegate);
-		return Arrays.asList(constraint);
-	}
-
-	/*
 	 * Function that will build a testing program given a test file
 	 * The function will initialize the program builder and then call
 	 * {@link #createFunction(ProgramBuilder, String, String, String, int)}, {@link #createBytes(ProgramBuilder, String, String)}, and {@link #createDataStringVectorVbase()}
@@ -530,6 +557,10 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 			"A_virt2@401120", 16);
 		createFunction(builder, "00401130", "55 8b ec 51 89 4d fc b8 08 00 00 00 8b e5 5d c3",
 			"B_virt2@401130", 16);
+		createFunction(builder, "00401140", "48 83 ec cc",
+			"C_virt2@401140", 4);
+		createFunction(builder, "00401150", "55 8b ec 51 89 4d fc b8 cc 00 00 00 8b e5 5d c3",
+			"C_virt2@401150", 16);
 
 		createBytes(builder, COMPOSITE_DATA_ADDRESS,
 			"0e 1f ba 0e 00 b4 09 cd 21 b8 01 4c cd 21 54 68 69 73 20 70 " +
@@ -625,7 +656,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	 * @throws Exception
 	 */
 	private void searchProgramAndDisplayResults(Program customProgram, AddressSet selection,
-			int min, int max) throws Exception {
+			long min, long max) throws Exception {
 
 		ScalarSearchDialog dialog = launchScalarSearchDialog(customProgram, selection);
 

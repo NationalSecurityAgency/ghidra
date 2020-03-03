@@ -99,7 +99,10 @@ public class Scalar implements Comparable<Scalar> {
 	 * Get the value as unsigned.
 	 */
 	public long getUnsignedValue() {
-		return value;
+		if (value == 0) {  // just in case the bitLength is 0
+			return 0;
+		}
+		return (value & BITMASKS[bitLength]);
 	}
 
 	/**
