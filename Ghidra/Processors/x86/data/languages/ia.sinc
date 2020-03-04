@@ -1229,12 +1229,11 @@ macro addCarryFlags ( op1, op2 ) {
 	local CFcopy = zext(CF);
 	CF = carry( op1, op2 );
 	OF = scarry( op1, op2 );
-	local AFmask = -1 >> 4;
-	AF = (((op1 & AFmask) + (op2 & AFmask) + CFcopy) & (AFmask + 1)) != 0;
 	local result = op1 + op2;
 	CF = CF || carry( result, CFcopy );
 	OF = OF ^^ scarry( result, CFcopy );
 	op1 = result + CFcopy;
+	# AF not implemented
 }
 
 
@@ -1242,12 +1241,11 @@ macro subCarryFlags ( op1, op2 ) {
 	local CFcopy = zext(CF);
 	CF = op1 < op2;
 	OF = sborrow( op1, op2 );
-	local AFmask = -1 >> 4;
-	AF = (((op1 & AFmask) - (op2 & AFmask) - CFcopy) & (AFmask + 1)) != 0;
 	local result = op1 - op2;
 	CF = CF || (result < CFcopy);
 	OF = OF ^^ sborrow( result, CFcopy );
 	op1 = result - CFcopy;
+	# AF not implemented
 }
 
 macro resultflags(result) {
