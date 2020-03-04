@@ -73,4 +73,16 @@
     <description>dsPIC33E</description>
     <compiler name="default" spec="PIC24.cspec" id="default"/>
   </language>
+  <language processor="dsPIC33C"
+            endian="little"
+            size="24"
+            variant="default"
+            version="1.4"
+            slafile="dsPIC33C.sla"
+            processorspec="PIC24.pspec"
+            manualindexfile="../manuals/PIC24.idx"
+            id="dsPIC33C:LE:24:default">
+    <description>dsPIC33C</description>
+    <compiler name="default" spec="PIC24.cspec" id="default"/>
+  </language>
 </language_definitions>
