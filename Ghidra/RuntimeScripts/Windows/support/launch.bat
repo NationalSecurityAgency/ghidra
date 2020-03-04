@@ -170,7 +170,7 @@ if "%BACKGROUND%"=="y" (
 	REM without the PID of the thing we launched, it's the best we can do (maybe use WMI?).  
 	REM Worst case, they just won't see the error message.
 	timeout /NOBREAK 1 > NUL
-	tasklist | find "javaw" > NUL
+	tasklist | findstr "javaw" > NUL
 	if not "!ERRORLEVEL!"=="0" (
 		echo Exited with error.  Run in foreground ^(fg^) mode for more details.
 	)
