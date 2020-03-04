@@ -104,6 +104,7 @@ public:
   Varnode *getInputVarnode(void) const;		///< Find (the) input member Varnode
   Varnode *getTypeRepresentative(void) const;	///< Get a member Varnode with the strongest data-type
   Varnode *getNameRepresentative(void) const;	///< Get a member Varnode that dictates the naming of \b this HighVariable
+  int4 getNumMergeClasses(void) const { return numMergeClasses; }	///< Get the number of speculative merges for \b this
   bool isMapped(void) const { updateFlags(); return ((flags&Varnode::mapped)!=0); }	///< Return \b true if \b this is mapped
   bool isPersist(void) const { updateFlags(); return ((flags&Varnode::persist)!=0); }	///< Return \b true if \b this is a global variable
   bool isAddrTied(void) const { updateFlags(); return ((flags&Varnode::addrtied)!=0); }	///< Return \b true if \b this is \e address \e ties
