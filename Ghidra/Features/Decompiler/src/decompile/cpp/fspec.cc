@@ -2924,6 +2924,7 @@ FuncProto::FuncProto(void)
   store = (ProtoStore *)0;
   flags = 0;
   injectid = -1;
+  returnBytesConsumed = 0;
 }
 
 /// \param op2 is the other function prototype to copy into \b this
@@ -3095,6 +3096,19 @@ void FuncProto::setOutputLock(bool val)
   store->getOutput()->setTypeLock(val);
 }
 
+/// This value can be used as a hint as to how much of the return value is important and
+/// is used to inform the dead code \e consume algorithm.
+/// \param val is the estimated number of bytes or 0
+/// \return \b true if the value was changed
+bool FuncProto::setReturnBytesConsumed(int4 val)
+
+{
+  int4 oldVal = returnBytesConsumed;
+  if (oldVal == 0 || val < oldVal)
+    returnBytesConsumed = val;
+  return (oldVal != val);
+}
+
 /// \brief Assuming \b this prototype is locked, calculate the \e extrapop
 ///
 /// If \e extrapop is unknown and \b this prototype is locked, try to directly
@@ -3142,6 +3156,7 @@ void FuncProto::clearUnlockedOutput(void)
   }
   else
     store->clearOutput();
+  returnBytesConsumed = 0;
 }
 
 void FuncProto::clearInput(void)
@@ -4857,6 +4872,42 @@ void FuncCallSpecs::buildOutputFromTrials(Funcdata &data,vector<Varnode *> &tria
     if (in1 != (Varnode *)0)
       data.deleteVarnode(in1);
   }
+}
+
+/// \brief Get the estimated number of bytes within the given parameter that are consumed
+///
+/// As a function is decompiled, there may hints about how many of the bytes, within the
+/// storage location used to pass the parameter, are used by \b this sub-function. A non-zero
+/// value means that that many least significant bytes of the storage location are used. A value
+/// of zero means all bytes are presumed used.
+/// \param slot is the slot of the given input parameter
+/// \return the number of bytes used (or 0)
+int4 FuncCallSpecs::getInputBytesConsumed(int4 slot) const
+
+{
+  if (slot >= inputConsume.size())
+    return 0;
+  return inputConsume[slot];
+}
+
+/// \brief Set the estimated number of bytes within the given parameter that are consumed
+///
+/// This provides a hint to the dead code \e consume algorithm, while examining the calling
+/// function, about how the given parameter within the subfunction is used.
+/// A non-zero value means that that many least significant bytes of the storage location
+/// are used. A value of zero means all bytes are presumed used.
+/// \param slot is the slot of the given input parameter
+/// \param val is the number of bytes consumed (or 0)
+/// \return \b true if there was a change in the estimate
+bool FuncCallSpecs::setInputBytesConsumed(int4 slot,int4 val) const
+
+{
+  while(inputConsume.size() <= slot)
+    inputConsume.push_back(0);
+  int4 oldVal = inputConsume[slot];
+  if (oldVal == 0 || val < oldVal)
+    inputConsume[slot] = val;
+  return (oldVal != val);
 }
 
 /// \brief Prepend any extra parameters if a paramshift is required
