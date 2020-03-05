@@ -351,6 +351,7 @@ void StructureGraph::rawAction(void)
   sout.write("\000\000\001\016",4);
   resultgraph.saveXml(sout);
   sout.write("\000\000\001\017",4);
+  ingraph.clear();
 }
 
 void SetAction::loadParameters(void)
