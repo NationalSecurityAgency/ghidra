@@ -127,7 +127,8 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		}
 
 		// some known special cases that we don't wish to process
-		if (!isValidContextForKeyStroke(KeyStroke.getKeyStrokeForEvent(event))) {
+		KeyStroke ks = KeyStroke.getKeyStrokeForEvent(event);
+		if (!isValidContextForKeyStroke(ks)) {
 			return false;
 		}
 
@@ -218,7 +219,13 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	private boolean isValidContextForKeyStroke(KeyStroke keyStroke) {
 		Window activeWindow = focusProvider.getActiveWindow();
 		if (activeWindow instanceof DockingDialog) {
-			return false; // we don't want to process our key bindings when in DockingDialogs
+
+			// This is legacy code, for which the reasons it exists cannot be recalled.  We 
+			// speculate that odd things can happen when keybindings are processed with model 
+			// dialogs open.  For now, do not let key bindings get processed for modal dialogs.
+			// This can be changed in the future if needed.   
+			DockingDialog dialog = (DockingDialog) activeWindow;
+			return !dialog.isModal();
 		}
 		return true; // default case; allow it through
 	}

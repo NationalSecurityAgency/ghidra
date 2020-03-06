@@ -1717,6 +1717,21 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
+	 * Fires a {@link KeyListener#keyPressed(KeyEvent)}, 
+	 * {@link KeyListener#keyTyped(KeyEvent)}
+	 * and {@link KeyListener#keyReleased(KeyEvent)} for the given key stroke
+	 * 
+	 * @param c the destination component
+	 * @param ks the key stroke
+	 */
+	public static void triggerKey(Component c, KeyStroke ks) {
+		int modifiers = ks.getModifiers();
+		char keyChar = ks.getKeyChar();
+		int keyCode = ks.getKeyCode();
+		triggerKey(c, modifiers, keyCode, keyChar);
+	}
+
+	/**
 	 * Fires a {@link KeyListener#keyPressed(KeyEvent)}, {@link KeyListener#keyTyped(KeyEvent)}
 	 * and {@link KeyListener#keyReleased(KeyEvent)} for the given key code and char.
 	 *

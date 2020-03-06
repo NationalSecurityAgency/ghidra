@@ -136,7 +136,7 @@ import ghidra.util.task.TaskMonitor;
  * @param <I> The type of the items to be processed.
  * @param <R> The type of objects resulting from processing an item; if you don't care about the
  *            return value, then make this value whatever you want, like <code>Object</code> or the 
- *            same value as {@link I} and return null from {@link QCallback#process(Object, TaskMonitor)}.
+ *            same value as {@code I} and return null from {@link QCallback#process(Object, TaskMonitor)}.
  */
 public class ConcurrentQ<I, R> {
 
@@ -452,6 +452,8 @@ public class ConcurrentQ<I, R> {
 	 * You can still call this method to wait for items to be processed, even if you did not
 	 * specify to collect results.  In that case, the list returned will be empty.
 	 * 
+	 * @param timeout the timeout  
+	 * @param unit the timeout unit
 	 * @return the list of QResult objects that have all the results of the completed jobs.
 	 * @throws InterruptedException if this call was interrupted.
 	 */
@@ -596,7 +598,7 @@ public class ConcurrentQ<I, R> {
 			if (collectResults) {
 				resultList.add(result);
 			}
-			tracker.InProgressitemCompletedOrCancelled();
+			tracker.inProgressItemCompletedOrCancelled();
 			fillOpenProcessingSlots();
 
 			if (result.hasError() && unhandledException == null) {
@@ -729,11 +731,8 @@ public class ConcurrentQ<I, R> {
 	 * Simple connector for traditional TaskMonitor and a task from the ConcurrentQ.  This adapter
 	 * adds a cancel listener to the TaskMonitor and when cancelled is called on the monitor,
 	 * it cancels the currently running (scheduled on the thread pool) and leaves the waiting
-	 * tasks alone.  It also implements a QProgressListener and adds itselve to the concurrentQ so
+	 * tasks alone.  It also implements a QProgressListener and adds itself to the concurrentQ so
 	 * that it gets progress events and messages and sets them on the task monitor.
-	 *
-	 * @param <I>
-	 * @param <R>
 	 */
 	private class QMonitorAdapter implements QProgressListener<I>, CancelledListener {
 

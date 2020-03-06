@@ -62,7 +62,7 @@ public class DecompilerValidator extends PostAnalysisValidator {
 
 		try {
 			List<String> results =
-				ParallelDecompiler.decompileFunctions(callback, program, functions, monitor);
+				ParallelDecompiler.decompileFunctions(callback, functions, monitor);
 			return processResults(results);
 		}
 		catch (Exception e) {

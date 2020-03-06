@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
@@ -150,6 +151,33 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		debug("a");
 
 		debug.close();
+	}
+
+	@Test
+	public void testParseKeyStroke() {
+
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_V, 0);
+		String parsed = KeyBindingUtils.parseKeyStroke(ks);
+		assertEquals("V", parsed);
+
+		ks = KeyStroke.getKeyStroke('v');
+		parsed = KeyBindingUtils.parseKeyStroke(ks);
+		assertEquals("v", parsed);
+
+		int modifiers = InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK;
+		ks = KeyStroke.getKeyStroke(KeyEvent.VK_V, modifiers);
+		parsed = KeyBindingUtils.parseKeyStroke(ks);
+		assertEquals("Ctrl-Shift-V", parsed);
+
+		ks = KeyStroke.getKeyStroke(KeyEvent.VK_V, modifiers, true);
+		parsed = KeyBindingUtils.parseKeyStroke(ks);
+		assertEquals("Ctrl-Shift-V", parsed);
+
+		JButton b = new JButton();
+		KeyEvent event = new KeyEvent(b, KeyEvent.KEY_PRESSED, 1, modifiers, KeyEvent.VK_V, 'v');
+		ks = KeyStroke.getKeyStrokeForEvent(event);
+		parsed = KeyBindingUtils.parseKeyStroke(ks);
+		assertEquals("Ctrl-Shift-V", parsed);
 	}
 
 	/*
@@ -364,7 +392,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	private void reopenTool(PluginTool tool2) {
 		runSwing(() -> {
 			ToolServices services = tool.getProject().getToolServices();
-			tool = (PluginTool) services.launchTool(tool.getName(), null);
+			tool = services.launchTool(tool.getName(), null);
 		});
 		assertNotNull(tool);
 	}
