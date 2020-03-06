@@ -2357,8 +2357,8 @@ void ActionNameVars::makeRec(ProtoParameter *param,Varnode *vn,map<HighVariable 
     }
   }
   HighVariable *high = vn->getHigh();
-  if (!high->isMark()) return;	// Not one of the variables needing a name
   if (high->isAddrTied()) return;	// Don't propagate parameter name to address tied variable
+  if (param->getName().compare(0,6,"param_")==0) return;
 
   map<HighVariable *,OpRecommend>::iterator iter = recmap.find(high);
   if (iter != recmap.end()) {	// We have seen this varnode before
@@ -2391,18 +2391,6 @@ void ActionNameVars::lookForFuncParamNames(Funcdata &data,const vector<Varnode *
   int4 numfunc = data.numCalls();
   if (numfunc == 0) return;
 
-  int4 markcount = 0;
-  for(uint4 i=0;i<varlist.size();++i) {	// Mark all the varnodes that can accept a name from a parameter
-    Varnode *vn = varlist[i];
-    if (vn->isFree()) continue;
-    if (vn->isInput()) continue;	// Don't override unaffected or input naming strategy
-    Symbol *sym = vn->getHigh()->getSymbol();
-    if (sym == (Symbol *)0) continue;
-    if (!sym->isNameUndefined()) continue;
-    markcount += 1;
-    vn->getHigh()->setMark();
-  }
-  if (markcount == 0) return;
   map<HighVariable *,OpRecommend> recmap;
 
   ScopeLocal *localmap = data.getScopeLocal();
@@ -2419,13 +2407,18 @@ void ActionNameVars::lookForFuncParamNames(Funcdata &data,const vector<Varnode *
       makeRec(param,vn,recmap);
     }
   }
+  if (recmap.empty()) return;
 
   map<HighVariable *,OpRecommend>::iterator iter;
   for(uint4 i=0;i<varlist.size();++i) {	// Do the actual naming in the original (address based) order
     Varnode *vn = varlist[i];
+    if (vn->isFree()) continue;
+    if (vn->isInput()) continue;	// Don't override unaffected or input naming strategy
     HighVariable *high = vn->getHigh();
-    if (!high->isMark()) continue;
-    high->clearMark();
+    if (high->getNumMergeClasses() > 1) continue;	// Don't inherit a name if speculatively merged
+    Symbol *sym = high->getSymbol();
+    if (sym == (Symbol *)0) continue;
+    if (!sym->isNameUndefined()) continue;
     iter = recmap.find(high);
     if (iter != recmap.end()) {
       Symbol *sym = high->getSymbol();
