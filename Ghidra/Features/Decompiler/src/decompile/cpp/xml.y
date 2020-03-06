@@ -25,11 +25,20 @@
 #include <iostream>
 #include <string>
 
+string Attributes::bogus_uri("http://unused.uri");
+
+/// \brief The XML character scanner
+///
+/// Tokenize a byte stream suitably for the main XML parser.  The scanner expects an ASCII or UTF-8
+/// encoding.  Characters is XML tag and attribute names are restricted to ASCII "letters", but
+/// extended UTF-8 characters can be used in any other character data: attribute values, content, comments. 
 class XmlScan {
 public:
+  /// \brief Modes of the scanner
   enum mode { CharDataMode, CDataMode, AttValueSingleMode,
 	      AttValueDoubleMode, CommentMode, CharRefMode,
 	      NameMode, SNameMode, SingleMode };
+  /// \brief Additional tokens returned by the scanner, in addition to byte values 00-ff
   enum token { CharDataToken = 258,
 	       CDataToken = 259,
 	       AttValueToken = 260,
@@ -40,13 +49,19 @@ public:
 	       ElementBraceToken = 265,
 	       CommandBraceToken = 266 };
 private:
-  mode curmode;
-  istream &s;
-  string *lvalue;		// Current string being built
-  int4 lookahead[4];
-  int4 pos;
-  bool endofstream;		// Has end of stream been reached
-  void clearlvalue(void);
+  mode curmode;			///< The current scanning mode
+  istream &s;			///< The stream being scanned
+  string *lvalue;		///< Current string being built
+  int4 lookahead[4];	///< Lookahead into the byte stream
+  int4 pos;				///< Current position in the lookahead buffer
+  bool endofstream;		///< Has end of stream been reached
+  void clearlvalue(void);	///< Clear the current token string
+
+  /// \brief Get the next byte in the stream
+  ///
+  /// Maintain a lookahead of 4 bytes at all times so that we can check for special
+  /// XML character sequences without consuming.
+  /// \return the next byte value as an integer
   int4 getxmlchar(void) {
     char c;	    
     int4 ret=lookahead[pos];
@@ -64,40 +79,41 @@ private:
     pos = (pos+1)&3;
     return ret;
   }
-  int4 next(int4 i) { return lookahead[(pos+i)&3]; }
-  bool isLetter(int4 val) { return (((val>=0x41)&&(val<=0x5a))||((val>=0x61)&&(val<=0x7a))); }
-  bool isInitialNameChar(int4 val);			  
-  bool isNameChar(int4 val);
-  bool isChar(int4 val);
-  int4 scanSingle(void);
-  int4 scanCharData(void);
-  int4 scanCData(void);
-  int4 scanAttValue(int4 quote);
-  int4 scanCharRef(void);
-  int4 scanComment(void);
-  int4 scanName(void);
-  int4 scanSName(void);
+  int4 next(int4 i) { return lookahead[(pos+i)&3]; }	///< Peek at the next (i-th) byte without consuming
+  bool isLetter(int4 val) { return (((val>=0x41)&&(val<=0x5a))||((val>=0x61)&&(val<=0x7a))); }	///< Is the given byte a \e letter
+  bool isInitialNameChar(int4 val);		///< Is the given byte/character the valid start of an XML name
+  bool isNameChar(int4 val);			///< Is the given byte/character valid for an XML name	
+  bool isChar(int4 val);				///< Is the given byte/character valid as an XML character
+  int4 scanSingle(void);				///< Scan for the next token in Single Character mode
+  int4 scanCharData(void);				///< Scan for the next token is Character Data mode
+  int4 scanCData(void);					///< Scan for the next token in CDATA mode
+  int4 scanAttValue(int4 quote);		///< Scan for the next token in Attribute Value mode
+  int4 scanCharRef(void);				///< Scan for the next token in Character Reference mode
+  int4 scanComment(void);				///< Scan for the next token in Comment mode
+  int4 scanName(void);					///< Scan a Name or return single non-name character
+  int4 scanSName(void);					///< Scan Name, allow white space before
 public:
-  XmlScan(istream &t);
-  ~XmlScan(void);
-  void setmode(mode m) { curmode = m; }
-  int4 nexttoken(void);		// Interface for bison
-  string *lval(void) { string *ret = lvalue; lvalue = (string *)0; return ret; }
+  XmlScan(istream &t);					///< Construct scanner given a stream
+  ~XmlScan(void);						///< Destructor
+  void setmode(mode m) { curmode = m; }	///< Set the scanning mode
+  int4 nexttoken(void);					///< Get the next token
+  string *lval(void) { string *ret = lvalue; lvalue = (string *)0; return ret; }	///< Return the last \e lvalue string
 };
 
+/// \brief A parsed name/value pair
 struct NameValue {
-  string *name;
-  string *value;
+  string *name;		///< The name
+  string *value;	///< The value
 };
 
-extern int yylex(void);
-extern int yyerror(const char *str);
-extern void print_content(const string &str);
-extern int4 convertEntityRef(const string &ref);
-extern int4 convertCharRef(const string &ref);
-static XmlScan *global_scan;
-static ContentHandler *handler;
-extern int yydebug;
+extern int yylex(void);							///< Interface to the scanner
+extern int yyerror(const char *str);			///< Interface for registering an error in parsing
+extern void print_content(const string &str);	///< Send character data to the ContentHandler
+extern int4 convertEntityRef(const string &ref);	///< Convert an XML entity to its equivalent character
+extern int4 convertCharRef(const string &ref);	///< Convert an XML character reference to its equivalent character
+static XmlScan *global_scan;					///< Global reference to the scanner
+static ContentHandler *handler;					///< Global reference to the content handler
+extern int yydebug;								///< Debug mode
 %}
 
 %union {
@@ -233,11 +249,11 @@ int4 XmlScan::scanSingle(void)
 
 int4 XmlScan::scanCharData(void)
 
-{				// look for '<' '&' or ']]>'
+{
   clearlvalue();
   lvalue = new string();
   
-  while(next(0) != -1) {
+  while(next(0) != -1) {		// look for '<' '&' or ']]>'
     if (next(0) == '<') break;
     if (next(0) == '&') break;
     if (next(0) == ']')
@@ -253,11 +269,11 @@ int4 XmlScan::scanCharData(void)
 
 int4 XmlScan::scanCData(void)
 
-{				// Look for "]]>" and non-Char
+{
   clearlvalue();
   lvalue = new string();
 
-  while(next(0) != -1) {
+  while(next(0) != -1) {	// Look for "]]>" and non-Char
     if (next(0)==']')
       if (next(1)==']')
 	if (next(2)=='>')
@@ -334,7 +350,7 @@ int4 XmlScan::scanComment(void)
 
 int4 XmlScan::scanName(void)
 
-{				// Scan a Name or return single non-name character
+{
   clearlvalue();
   lvalue = new string();
 
@@ -350,7 +366,7 @@ int4 XmlScan::scanName(void)
 
 int4 XmlScan::scanSName(void)
 
-{				// Scan Name, allow white space before
+{
   int4 whitecount = 0;
   while((next(0)==' ')||(next(0)=='\n')||(next(0)=='\r')||(next(0)=='\t')) {
     whitecount += 1;
@@ -571,7 +587,7 @@ Document *DocumentStorage::parseDocument(istream &s)
 
 Document *DocumentStorage::openDocument(const string &filename)
 
-{ // Open and parse an XML file, return Document object
+{
   ifstream s(filename.c_str());
   if (!s)
     throw XmlError("Unable to open xml document "+filename);
@@ -582,13 +598,13 @@ Document *DocumentStorage::openDocument(const string &filename)
 
 void DocumentStorage::registerTag(const Element *el)
 
-{ // Register a tag under its name
+{
   tagmap[el->getName()] = el;
 }
 
 const Element *DocumentStorage::getTag(const string &nm) const
 
-{ // Retrieve a registered tag by name
+{
   map<string,const Element *>::const_iterator iter;
 
   iter = tagmap.find(nm);
@@ -611,7 +627,7 @@ Document *xml_tree(istream &i)
 
 void xml_escape(ostream &s,const char *str)
 
-{				// Escape xml tag indicators
+{
   while(*str!='\0') {
     if (*str < '?') {
       if (*str=='<') s << "&lt;";
