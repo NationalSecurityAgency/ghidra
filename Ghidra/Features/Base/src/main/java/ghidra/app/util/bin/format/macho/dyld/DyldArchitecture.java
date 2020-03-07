@@ -33,6 +33,7 @@ public final class DyldArchitecture {
 	// @formatter:off
 	public final static DyldArchitecture X86     = new DyldArchitecture( CpuTypes.CPU_TYPE_X86,     CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1    i386", "i386",    Endian.LITTLE );
 	public final static DyldArchitecture X86_64  = new DyldArchitecture( CpuTypes.CPU_TYPE_X86_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1  x86_64", "x86_64",  Endian.LITTLE );
+	public final static DyldArchitecture X86_64h = new DyldArchitecture( CpuTypes.CPU_TYPE_X86_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1 x86_64h", "x86_64",  Endian.LITTLE );
 	public final static DyldArchitecture POWERPC = new DyldArchitecture( CpuTypes.CPU_TYPE_POWERPC, CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1     ppc", "rosetta", Endian.BIG );
 	public final static DyldArchitecture ARMV6   = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V6,   "dyld_v1   armv6", "armv6",   Endian.LITTLE );
 	public final static DyldArchitecture ARMV7   = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM,     CpuSubTypes.CPU_SUBTYPE_ARM_V7,   "dyld_v1   armv7", "arm7",    Endian.LITTLE );
@@ -43,7 +44,7 @@ public final class DyldArchitecture {
 	public final static DyldArchitecture ARMV8Ae = new DyldArchitecture(CpuTypes.CPU_TYPE_ARM_64,   CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1  arm64e", "AARCH64", Endian.LITTLE);
 
 	
-	public final static DyldArchitecture [] ARCHITECTURES = new DyldArchitecture [] { X86, X86_64, POWERPC, ARMV6, ARMV7, ARMV7F, ARMV7S, ARMV7K, ARMV8A, ARMV8Ae };
+	public final static DyldArchitecture [] ARCHITECTURES = new DyldArchitecture [] { X86, X86_64, X86_64h, POWERPC, ARMV6, ARMV7, ARMV7F, ARMV7S, ARMV7K, ARMV8A, ARMV8Ae };
 	// @formatter:on
 	
 	/**
@@ -114,7 +115,7 @@ public final class DyldArchitecture {
 		if ( this == X86 ) {
             return new LanguageCompilerSpecPair( new LanguageID("x86:LE:32:default"), new CompilerSpecID("gcc") );
 		}
-		else if ( this == X86_64 ) {
+		else if (this == X86_64 || this == X86_64h) {
 			return new LanguageCompilerSpecPair( new LanguageID("x86:LE:64:default"), new CompilerSpecID("gcc") );
 		}
 		else if ( this == POWERPC ) {
