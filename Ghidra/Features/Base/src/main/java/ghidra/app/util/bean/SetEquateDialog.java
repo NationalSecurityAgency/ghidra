@@ -212,8 +212,15 @@ public class SetEquateDialog extends DialogComponentProvider {
 			.map(Enum.class::cast)
 			.filter(enoom -> enoom.getName(scalar.getValue()) != null)
 			.forEach(enoom -> {
-				String name = enoom.getName(scalar.getValue());
-				entries.add(new EquateRowObject(name, enoom));
+				String name;
+				name = enoom.getName(scalar.getUnsignedValue());
+				if (name != null) {
+					entries.add(new EquateRowObject(name, enoom));
+				}
+				name = enoom.getName(scalar.getSignedValue());
+				if (name != null) {
+					entries.add(new EquateRowObject(name, enoom));
+				}
 			});
 		//@formatter:on
 
