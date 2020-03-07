@@ -91,13 +91,13 @@ public class IncomingCallNode extends CallNode {
 		for (Address fromAddress : addresses) {
 			monitor.checkCanceled();
 			Function callerFunction = functionManager.getFunctionContaining(fromAddress);
-			if (callerFunction != null) {
-				IncomingCallNode node = new IncomingCallNode(program, callerFunction, fromAddress,
-					filterDuplicates, filterDepth);
-				if (!nodes.contains(node)) {
-					nodes.add(node);
-				}
+			if (callerFunction == null) {
+				continue;
 			}
+
+			IncomingCallNode node = new IncomingCallNode(program, callerFunction, fromAddress,
+				filterDuplicates, filterDepth);
+			addNode(nodes, node);
 		}
 
 		Collections.sort(nodes, new CallNodeComparator());

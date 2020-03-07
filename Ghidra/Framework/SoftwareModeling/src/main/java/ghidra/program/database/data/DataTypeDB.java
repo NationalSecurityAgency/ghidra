@@ -362,11 +362,12 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 			return;
 		}
 
+		long oldCatId = doGetCategoryID();
 		Category cat = dataMgr.createCategory(path);
 		try {
 			doSetCategoryPathRecord(cat.getID());
 			category = cat;
-			dataMgr.dataTypeCategoryPathChanged(this, myPath);
+			dataMgr.dataTypeCategoryPathChanged(this, myPath, oldCatId);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);

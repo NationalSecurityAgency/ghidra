@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,60 +15,55 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import ghidra.util.Msg;
-import ghidra.util.exception.UsrException;
-
 import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
-import resources.ResourceManager;
 import docking.ActionContext;
-import docking.action.*;
-
+import docking.action.KeyBindingData;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.UsrException;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
+import resources.ResourceManager;
 
 public class DeleteAction extends CompositeEditorTableAction {
 
+	public final static String ACTION_NAME = "Delete Components";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
-	private final static ImageIcon DELETE_ICON =
-		ResourceManager.loadImage("images/edit-delete.png");
-    private final static String[] popupPath = new String[] { "Delete" };
-	private KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
+	private final static ImageIcon ICON = ResourceManager.loadImage("images/edit-delete.png");
+	private final static String[] popupPath = new String[] { "Delete" };
+	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
 
-	/**
-	 * 
-	 * @param owner
-	 */
 	public DeleteAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + "Delete Components", GROUP_NAME, 
-				popupPath, null, DELETE_ICON);
-		
-		setKeyBindingData( new KeyBindingData( keyStroke ) );
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, null, ICON);
+
+		setKeyBindingData(new KeyBindingData(KEY_STROKE));
 		setDescription("Delete the selected components");
 		adjustEnablement();
 	}
-	
-	/* (non-Javadoc)
-	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-	 */
-	 @Override
-    public void actionPerformed(ActionContext context) {
-		try {
-			model.deleteSelectedComponents();
-		} catch (OutOfMemoryError memExc) {
-			Msg.showError(this, null, "Out of Memory", "Couldn't delete components. Out of memory.", memExc);
-		} catch (UsrException ue) {
-			model.setStatus(ue.getMessage());
-		}
+
+	@Override
+	public void actionPerformed(ActionContext context) {
+		TaskLauncher.launchModal(getName(), this::doDelete);
 		requestTableFocus();
-	 }
-    
-	 /* (non-Javadoc)
-	  * @see ghidra.app.plugin.datamanager.editor.CompositeEditorAction#adjustEnablement()
-	  */
-	 @Override
-    public void adjustEnablement() {
-		 setEnabled(model.isDeleteAllowed());
-	 }
+	}
+
+	private void doDelete(TaskMonitor monitor) {
+		try {
+			model.deleteSelectedComponents(monitor);
+		}
+		catch (CancelledException e) {
+			// user cancelled
+		}
+		catch (UsrException e) {
+			model.setStatus(e.getMessage(), true);
+		}
+	}
+
+	@Override
+	public void adjustEnablement() {
+		setEnabled(model.isDeleteAllowed());
+	}
 }

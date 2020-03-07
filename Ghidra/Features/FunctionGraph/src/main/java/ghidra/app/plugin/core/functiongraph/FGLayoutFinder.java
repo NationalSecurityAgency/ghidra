@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import java.util.Set;
+import java.util.List;
 
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
@@ -24,5 +24,5 @@ import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
  * An interface that provides {@link FGLayout}s
  */
 public interface FGLayoutFinder {
-	public Set<FGLayoutProvider> findLayouts();
+	public List<FGLayoutProvider> findLayouts();
 }

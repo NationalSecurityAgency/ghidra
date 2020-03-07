@@ -28,7 +28,7 @@ public class ManagedBufferFileAdapter extends BufferFileAdapter implements Manag
 
 	/**
 	 * Constructor.
-	 * @param remoteBufferFile remote buffer file handle
+	 * @param remoteManagedBufferFile remote buffer file handle
 	 */
 	public ManagedBufferFileAdapter(ManagedBufferFileHandle remoteManagedBufferFile) {
 		super(remoteManagedBufferFile);

@@ -18,7 +18,7 @@
  */
 package ghidra.app.plugin.core.datapreview;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -86,7 +86,7 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(
 			"u\"The Margin values are not correct. Either they are not numeric characters " +
 				"or they don't fit the dimensions of the page. Try either entering a number " +
-				"or decreasing the margins.\",02,00,\"&f\\aPage &p\"",
+				"or decreasing the margins.\",02h,00h,\"&f\\aPage &p\"",
 			model.getValueAt(7, DTPPTableModel.PREVIEW_COL));
 
 		gotoService.goTo(addr(program, 0x100e08c));
@@ -118,7 +118,7 @@ public class DataTypePreviewPluginTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("6.119088925166103E-308", model.getValueAt(9, DTPPTableModel.PREVIEW_COL));
 		assertEquals("2600h", model.getValueAt(10, DTPPTableModel.PREVIEW_COL));
 		assertEquals("7000h", model.getValueAt(11, DTPPTableModel.PREVIEW_COL));
-		assertEquals("\"\\0\\0\\0\\0\\0\\0\\0\",0E,\"\\0f\"",
+		assertEquals("\"\\0\\0\\0\\0\\0\\0\\0\",0Eh,\"\\0f\"",
 			model.getValueAt(12, DTPPTableModel.PREVIEW_COL));
 
 		assertEquals(14, model.getRowCount());

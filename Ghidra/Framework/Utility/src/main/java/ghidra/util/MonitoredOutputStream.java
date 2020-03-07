@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +51,9 @@ public class MonitoredOutputStream extends OutputStream {
 	 * <p>
 	 * The <code>write</code> method of <code>FilterOutputStream</code> 
 	 * calls the <code>write</code> method of its underlying output stream, 
-	 * that is, it performs <tt>out.write(b)</tt>.
+	 * that is, it performs <code>out.write(b)</code>.
 	 * <p>
-	 * Implements the abstract <tt>write</tt> method of <tt>OutputStream</tt>. 
+	 * Implements the abstract <code>write</code> method of <code>OutputStream</code>. 
 	 *
 	 * @param      b   the <code>byte</code>.
 	 * @exception  IOException  if an I/O error occurs.

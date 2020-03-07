@@ -166,6 +166,57 @@ int4 CastStrategyC::intPromotionType(const Varnode *vn) const
   return UNKNOWN_PROMOTION;
 }
 
+bool CastStrategyC::isExtensionCastImplied(const PcodeOp *op,const PcodeOp *readOp) const
+
+{
+  const Varnode *outVn = op->getOut();
+  if (outVn->isExplicit()) {
+
+  }
+  else {
+    if (readOp == (PcodeOp *) 0)
+      return false;
+    type_metatype metatype = outVn->getHigh()->getType()->getMetatype();
+    const Varnode *otherVn;
+    int4 slot;
+    switch (readOp->code()) {
+      case CPUI_PTRADD:
+	break;
+      case CPUI_INT_ADD:
+      case CPUI_INT_SUB:
+      case CPUI_INT_MULT:
+      case CPUI_INT_DIV:
+      case CPUI_INT_AND:
+      case CPUI_INT_OR:
+      case CPUI_INT_XOR:
+      case CPUI_INT_EQUAL:
+      case CPUI_INT_NOTEQUAL:
+      case CPUI_INT_LESS:
+      case CPUI_INT_LESSEQUAL:
+      case CPUI_INT_SLESS:
+      case CPUI_INT_SLESSEQUAL:
+	slot = readOp->getSlot(outVn);
+	otherVn = readOp->getIn(1 - slot);
+	// Check if the expression involves an explicit variable of the right integer type
+	if (otherVn->isConstant()) {
+	  // Integer tokens do not naturally indicate their size, and
+	  // integers that are bigger than the promotion size are NOT naturally extended.
+	  if (otherVn->getSize() > promoteSize)	// So if the integer is bigger than the promotion size
+	    return false;			// The extension cast on the other side must be explicit
+	}
+	else if (!otherVn->isExplicit())
+	  return false;
+	if (otherVn->getHigh()->getType()->getMetatype() != metatype)
+	  return false;
+	break;
+      default:
+	return false;
+    }
+    return true;	// Everything is integer promotion
+  }
+  return false;
+}
+
 Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
 				      bool care_uint_int,bool care_ptr_uint) const
 

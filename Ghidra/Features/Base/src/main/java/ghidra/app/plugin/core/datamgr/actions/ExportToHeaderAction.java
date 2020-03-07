@@ -112,7 +112,7 @@ public class ExportToHeaderAction extends DockingAction {
 	 */
 	private void exportToC(GTree gTree, DataTypeManager programDataTypeMgr) {
 
-		Set<Class<? extends AnnotationHandler>> classes =
+		List<Class<? extends AnnotationHandler>> classes =
 			ClassSearcher.getClasses(AnnotationHandler.class);
 
 		List<AnnotationHandler> list = new ArrayList<>();

@@ -15,14 +15,14 @@
  */
 package ghidra.file.crypto;
 
+import java.io.IOException;
+import java.util.List;
+
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.Set;
 
 /**
  * Not used by any known code, not tested.
@@ -34,7 +34,7 @@ public final class DecryptorFactory {
 			ByteProvider provider, TaskMonitor monitor) throws IOException, CryptoException,
 	CancelledException {
 
-		Set<Decryptor> instances = ClassSearcher.getInstances(Decryptor.class);
+		List<Decryptor> instances = ClassSearcher.getInstances(Decryptor.class);
 		for (Decryptor decryptor : instances) {
 			if (monitor.isCancelled()) {
 				throw new CancelledException();

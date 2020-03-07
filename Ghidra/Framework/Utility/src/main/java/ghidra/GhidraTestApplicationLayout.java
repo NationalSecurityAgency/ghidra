@@ -55,4 +55,10 @@ public class GhidraTestApplicationLayout extends GhidraApplicationLayout {
 		File installDir = new File(getUserTempDir(), "ExtensionInstallDir");
 		return new ResourceFile(installDir);
 	}
+
+	@Override
+	protected ResourceFile findPatchDirectory() {
+		File dir = new File(getUserTempDir(), "patch");
+		return new ResourceFile(dir);
+	}
 }

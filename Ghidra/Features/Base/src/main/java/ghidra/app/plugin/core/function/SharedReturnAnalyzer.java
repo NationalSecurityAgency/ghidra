@@ -41,17 +41,17 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 			"analyzer was disabled or not present.";
 
 	private final static String OPTION_NAME_ASSUME_CONTIGUOUS_FUNCTIONS =
-		"Assume contiguous functions only";
+		"Assume Contiguous Functions oOnly";
 
 	private final static String OPTION_NAME_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS =
-		"Allow conditional Jumps";
+		"Allow Conditional Jumps";
 
 	private static final String OPTION_DESCRIPTION_ASSUME_CONTIGUOUS_FUNCTIONS =
-		"Select this check box to assume all function bodies are contiguous " +
+		"Signals to assume all function bodies are contiguous " +
 			"and all jumps across other functions should be treated as a call-return.";
 
 	private static final String OPTION_DESCRIPTION_CONSIDER_CONDITIONAL_BRANCHES_FUNCTIONS =
-		"Select this check box to allow conditional jumps to be consider for " +
+		"Signals to allow conditional jumps to be consider for " +
 			"shared return jumps to other functions.";
 
 	private final static boolean OPTION_DEFAULT_ASSUME_CONTIGUOUS_FUNCTIONS_ENABLED = false;
@@ -71,11 +71,7 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 		setSupportsOneTimeAnalysis();
 	}
 
-	/**
-	 * Called when a function has been added. Looks at address for call
-	 * reference
-	 * @throws CancelledException 
-	 */
+	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
@@ -86,6 +82,7 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 		return true;
 	}
 
+	@Override
 	public boolean getDefaultEnablement(Program program) {
 		Language language = program.getLanguage();
 
@@ -98,7 +95,7 @@ public class SharedReturnAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void registerOptions(Options options, Program program) {
 		HelpLocation helpLocation = new HelpLocation("AutoAnalysisPlugin",
-			"Auto_Analysis_Option_Instruction" + getAnalysisType());
+			"Auto_Analysis_Option_Instructions");
 
 		options.registerOption(OPTION_NAME_ASSUME_CONTIGUOUS_FUNCTIONS,
 			OPTION_DEFAULT_ASSUME_CONTIGUOUS_FUNCTIONS_ENABLED, helpLocation,

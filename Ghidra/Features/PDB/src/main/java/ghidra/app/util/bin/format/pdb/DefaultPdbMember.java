@@ -113,7 +113,7 @@ public class DefaultPdbMember extends PdbMember {
 				Msg.error(this, "PDB parse error: " + e.getMessage());
 				return null;
 			}
-			wrappedDt = new WrappedDataType(bitFieldDt, false);
+			wrappedDt = new WrappedDataType(bitFieldDt, false, false);
 		}
 		return wrappedDt;
 	}

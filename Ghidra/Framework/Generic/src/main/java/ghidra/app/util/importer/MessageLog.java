@@ -19,15 +19,13 @@ import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
 /**
- * A simple class to handle logging messages and exceptions.
- * A maximum message count size constraint can be set to clip
- * messages after a certain number, but still keep incrementing
+ * A simple class to handle logging messages and exceptions.  A maximum message count size 
+ * constraint can be set to clip messages after a certain number, but still keep incrementing
  * a running total.
- *
  */
 public class MessageLog {
 	/**
-	 * The default number of messages to store before clipping.
+	 * The default number of messages to store before clipping
 	 */
 	public final static int MAX_COUNT = 500;
 
@@ -38,14 +36,14 @@ public class MessageLog {
 	private String statusMsg;
 
 	/**
-	 * Constructs a new message log using the default message count.
+	 * Constructs a new message log using the default message count
 	 */
 	public MessageLog() {
 		this(MAX_COUNT);
 	}
 
 	/**
-	 * Constructs a new message log using the sepcified message count.
+	 * Constructs a new message log using the specified message count
 	 * @param maxSize the maximum number of messages
 	 */
 	public MessageLog(int maxSize) {
@@ -54,7 +52,7 @@ public class MessageLog {
 	}
 
 	/**
-	 * Copies the contents of one message log into this one.
+	 * Copies the contents of one message log into this one
 	 * @param log the log to copy from
 	 */
 	public void copyFrom(MessageLog log) {
@@ -65,34 +63,40 @@ public class MessageLog {
 	}
 
 	/**
-	 * Appends the message to the log.
-	 * @param msg the message
+	 * Appends the message to the log
+	 * @param message the message
 	 */
-	public void appendMsg(String msg) {
-		msg(msg);
+	public void appendMsg(String message) {
+		msg(message);
 	}
 
-	public void appendMsg(String originator, String msg) {
+	/**
+	 * Appends the message to the log
+	 *
+	 * @param originator the originator of the message 
+	 * @param message the message
+	 */
+	public void appendMsg(String originator, String message) {
 		if (originator == null) {
-			msg(msg);
+			msg(message);
 		}
 		else {
-			msg(originator + "> " + msg);
+			msg(originator + "> " + message);
 		}
 	}
 
 	/**
-	 * Appends the message and line number to the log.
+	 * Appends the message and line number to the log
 	 * @param lineNum the line number that generated the message
-	 * @param msg     the message
+	 * @param message the message
 	 */
-	public void appendMsg(int lineNum, String msg) {
-		msg("Line #" + lineNum + " - " + msg);
+	public void appendMsg(int lineNum, String message) {
+		msg("Line #" + lineNum + " - " + message);
 	}
 
 	/**
-	 * Appends the exception to the log.
-	 * @param t the exeception to append to the log
+	 * Appends the exception to the log
+	 * @param t the exception to append to the log
 	 */
 	public void appendException(Throwable t) {
 		if (t instanceof NullPointerException || t instanceof AssertException) {
@@ -106,7 +110,7 @@ public class MessageLog {
 	}
 
 	/**
-	 * Returns the message count.
+	 * Returns the message count
 	 * @return the message count
 	 */
 	public int getMsgCount() {
@@ -114,8 +118,7 @@ public class MessageLog {
 	}
 
 	/**
-	 * Clears all messages from this log
-	 * and resets the count.
+	 * Clears all messages from this log and resets the count
 	 */
 	public void clear() {
 		buffer = new StringBuffer();
@@ -125,7 +128,7 @@ public class MessageLog {
 
 	/**
 	 * Stores a status message that can be used elsewhere (i.e., populate warning dialogs)
-	 * @param status
+	 * @param status the status message
 	 */
 	public void setStatus(String status) {
 		statusMsg = status;
@@ -146,9 +149,6 @@ public class MessageLog {
 		return statusMsg;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		if (count > maxSize) {
@@ -177,12 +177,11 @@ public class MessageLog {
 	/**
 	 * Readable method for appending error messages to the log.
 	 *
-	 * Currently does nothing different that {@link #appendMsg(String, String)}
+	 * <p>Currently does nothing different than {@link #appendMsg(String, String)}.
 	 *
 	 *
-	 * @param originator
-	 * @param message
-	 *
+	 * @param originator the originator of the message 
+	 * @param message the message
 	 */
 	public void error(String originator, String message) {
 		appendMsg(originator, message);

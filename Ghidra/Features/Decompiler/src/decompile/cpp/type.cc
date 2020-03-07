@@ -1125,15 +1125,15 @@ Datatype *TypeSpacebase::getSubType(uintb off,uintb *newoff) const
 {
   Scope *scope = getMap();
   off = AddrSpace::byteToAddress(off, spaceid->getWordSize());	// Convert from byte offset to address unit
-  // It should always be the case that given offset represents a full encoding of the
-  // pointer, so the point of context is unused
+  // It should always be the case that the given offset represents a full encoding of the
+  // pointer, so the point of context is unused and the size is given as -1
   Address nullPoint;
   uintb fullEncoding;
-  Address addr = glb->resolveConstant(spaceid, off, spaceid->getAddrSize(), nullPoint, fullEncoding);
+  Address addr = glb->resolveConstant(spaceid, off, -1, nullPoint, fullEncoding);
   SymbolEntry *smallest;
 
-  // Assume symbol being referenced is address tied,
-  // so we use empty usepoint
+  // Assume symbol being referenced is address tied so we use a null point of context
+  // FIXME: A valid point of context may be necessary in the future
   smallest = scope->queryContainer(addr,1,nullPoint);
   
   if (smallest == (SymbolEntry *)0) {
@@ -1172,6 +1172,9 @@ Address TypeSpacebase::getAddress(uintb off,int4 sz,const Address &point) const
 
 {
   uintb fullEncoding;
+  // Currently a constant off of a global spacebase must be a full pointer encoding
+  if (localframe.isInvalid())
+    sz = -1;	// Set size to -1 to guarantee that full encoding recovery isn't launched
   return glb->resolveConstant(spaceid,off,sz,point,fullEncoding);
 }
 

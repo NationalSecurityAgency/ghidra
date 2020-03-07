@@ -802,7 +802,7 @@ public class CodeUnitFormat {
 		long originalValue = (addr.isStackAddress() &&
 			originalScalar.bitLength() == addr.getAddressSpace().getSize())
 					? originalScalar.getSignedValue()
-					: originalScalar.getValue();
+					: originalScalar.getUnsignedValue();
 		long addrOffset;
 		if (addr instanceof SegmentedAddress) {
 			addrOffset = ((SegmentedAddress) addr).getSegmentOffset();
@@ -1293,8 +1293,8 @@ public class CodeUnitFormat {
 				namespaceName = parentNamespace.getName(true);
 			}
 		}
-		if (namespaceName.length() != 0 && !namespaceName.endsWith(Namespace.NAMESPACE_DELIMITER)) {
-			namespaceName += Namespace.NAMESPACE_DELIMITER;
+		if (namespaceName.length() != 0 && !namespaceName.endsWith(Namespace.DELIMITER)) {
+			namespaceName += Namespace.DELIMITER;
 		}
 		return namespaceName + name;
 	}

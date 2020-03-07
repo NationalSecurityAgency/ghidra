@@ -55,7 +55,7 @@ public class CliSigLocalVar extends CliAbstractSig {
 	/**
 	 * Checks whether this could *possibly* be a LocalVarSig. Only looks at the identifier byte. Useful for signature index
 	 * that could be to different kinds of signatures.
-	 * @param reader
+	 * @param blob
 	 * @return
 	 * @throws IOException
 	 */

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +33,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * <P>
  * Examples:
  * <p>
- * <pre>
+ * <pre>{@literal
  * QCallback<I, R> callback = new AbstractQCallback<I, R>() {
  *     public R process(I item, TaskMonitor monitor) {
  *         // do work here...
@@ -53,7 +52,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 				setMaxInProgress(1).
  * 				build(callback);
  * 
- * </pre>
+ * }</pre>
  * <p>
  *  
  * Note: if you wish to take advantage of blocking when adding items to the {@link ConcurrentQ}, 
@@ -180,9 +179,9 @@ public class ConcurrentQBuilder<I, R> {
 	}
 
 	/**
-	 * @see {@link ConcurrentQ#setMonitor(TaskMonitor, boolean)}
+	 * @see ConcurrentQ#setMonitor(TaskMonitor, boolean)
 	 * <p>
-	 * The default value is <tt>true</tt>. 
+	 * The default value is <code>true</code>. 
 	 */
 	public ConcurrentQBuilder<I, R> setCancelClearsAllJobs(boolean clearAllJobs) {
 		this.cancelClearsAllJobs = clearAllJobs;

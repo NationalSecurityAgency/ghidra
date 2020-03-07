@@ -326,7 +326,7 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 				SwingUtilities.invokeAndWait(() -> {
 					ToolServices toolServices = tool.getToolServices();
 					String defaultToolName = toolServices.getDefaultToolTemplate(file).getName();
-					for (Tool t : toolServices.getRunningTools()) {
+					for (PluginTool t : toolServices.getRunningTools()) {
 						if (t.getName().equals(defaultToolName)) {
 							openTool = (PluginTool) t;
 							break;
@@ -346,7 +346,7 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 			catch (InvocationTargetException e) {
 				Throwable t = e.getCause();
 				Msg.showError(this, tool.getToolFrame(), "Tool Launch Failed",
-					"An error occured while attempting to launch your default tool!", t);
+					"An error occurred while attempting to launch your default tool!", t);
 			}
 		}
 	}

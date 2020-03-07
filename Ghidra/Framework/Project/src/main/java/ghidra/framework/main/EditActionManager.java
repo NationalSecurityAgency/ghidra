@@ -127,7 +127,7 @@ class EditActionManager {
 		}
 		catch (IOException e) {
 			Msg.error(this,
-				"Error occured while clearing PKI certificate setting: " + e.getMessage());
+				"Error occurred while clearing PKI certificate setting: " + e.getMessage());
 		}
 	}
 

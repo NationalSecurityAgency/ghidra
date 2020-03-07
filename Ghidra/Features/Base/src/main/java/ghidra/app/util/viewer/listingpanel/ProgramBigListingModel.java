@@ -190,8 +190,7 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 		}
 
 		if (dataList != null) {
-			for (int i = 0; i < dataList.size(); i++) {
-				Data d = dataList.get(i);
+			for (Data d : dataList) {
 				format = formatMgr.getOpenDataFormat(d);
 				if (format != null) {
 					format.addLayouts(list, 0, new DataProxy(this, program, d));
@@ -493,8 +492,8 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 	}
 
 	@Override
-	public void openData(Data data) {
-		openCloseMgr.openData(data);
+	public boolean openData(Data data) {
+		return openCloseMgr.openData(data);
 
 	}
 

@@ -138,9 +138,9 @@ public class Swing {
 	 * <p>Use this method when you are not on the Swing thread and you need to get a value 
 	 * that is managed/synchronized by the Swing thread.
 	 *
-	 * <pre>
+	 * <pre>{@literal
 	 * 		String value = runNow(() -> label.getText());
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @param s the supplier that will be called on the Swing thread
 	 * @return the result of the supplier

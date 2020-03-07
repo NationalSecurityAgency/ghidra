@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +20,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.util.ProgramLocation;
 
 /**
  * Organizational class to record vital data used by a DwarfEHDecoder.
@@ -33,11 +31,9 @@ public class DwarfDecodeContext {
 	private final MemoryBlock ehBlock;
 	private final Address functionEntryPoint;
 
-	private final ProgramLocation loc;
 	private Object decodedValue;
 	private int encodedLength;
 	private MemBuffer buffer;
-
 
 	/**
 	 * Constructs a Dwarf decode context.
@@ -85,7 +81,8 @@ public class DwarfDecodeContext {
 	 * @param ehBlock the exception handling memory block
 	 * @param entryPoint the associated function's entry point
 	 */
-	public DwarfDecodeContext(Program program, Address readAddr, MemoryBlock ehBlock, Address entryPoint) {
+	public DwarfDecodeContext(Program program, Address readAddr, MemoryBlock ehBlock,
+			Address entryPoint) {
 
 		if (program == null) {
 			throw new NullPointerException("DwarfDecodeContext requires a program");
@@ -99,7 +96,6 @@ public class DwarfDecodeContext {
 		this.ehBlock = ehBlock;
 		this.functionEntryPoint = entryPoint;
 
-		this.loc = new ProgramLocation(program, addr);
 	}
 
 	/**
@@ -124,16 +120,6 @@ public class DwarfDecodeContext {
 		this.addr = buffer.getAddress();
 		this.ehBlock = ehBlock;
 		this.functionEntryPoint = entryPoint;
-
-		this.loc = new ProgramLocation(program, addr);
-	}
-
-	/**
-	 * Gets the location of the encoded data.
-	 * @return the program location
-	 */
-	public ProgramLocation getProgramLocation() {
-		return loc;
 	}
 
 	/**

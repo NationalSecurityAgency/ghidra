@@ -20,17 +20,20 @@ import java.util.*;
 
 import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.UniversalID;
-import ghidra.util.datastruct.LongObjectHashtable;
-import ghidra.util.datastruct.ObjectLongHashtable;
-import ghidra.util.exception.NoValueException;
 
 public class EnumDataType extends GenericDataType implements Enum {
-	private ObjectLongHashtable<String> defs;
+
+	private static final SettingsDefinition[] ENUM_SETTINGS_DEFINITIONS =
+		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
+
+	private Map<String, Long> nameMap; // name to value
+	private Map<Long, List<String>> valueMap; // value to names
 	private int length;
 	private String description;
 	private List<BitGroup> bitGroups;
@@ -45,7 +48,11 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	public EnumDataType(CategoryPath path, String name, int length, DataTypeManager dtm) {
 		super(path, name, dtm);
-		defs = new ObjectLongHashtable<>();
+		if (length < 1 || length > 8) {
+			throw new IllegalArgumentException("unsupported enum length: " + length);
+		}
+		nameMap = new HashMap<>();
+		valueMap = new HashMap<>();
 		this.length = length;
 	}
 
@@ -54,13 +61,19 @@ public class EnumDataType extends GenericDataType implements Enum {
 			DataTypeManager dtm) {
 		super(path, name, universalID, sourceArchive, lastChangeTime, lastChangeTimeInSourceArchive,
 			dtm);
-		defs = new ObjectLongHashtable<>();
+		if (length < 1 || length > 8) {
+			throw new IllegalArgumentException("unsupported enum length: " + length);
+		}
+		nameMap = new HashMap<>();
+		valueMap = new HashMap<>();
 		this.length = length;
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#isDynamicallySized()
-	 */
+	@Override
+	public SettingsDefinition[] getSettingsDefinitions() {
+		return ENUM_SETTINGS_DEFINITIONS;
+	}
+
 	@Override
 	public boolean isDynamicallySized() {
 		return false;
@@ -68,91 +81,96 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	@Override
 	public long getValue(String valueName) throws NoSuchElementException {
-		try {
-			return defs.get(valueName);
-		}
-		catch (NoValueException e) {
+		Long value = nameMap.get(valueName);
+		if (value == null) {
 			throw new NoSuchElementException("No value for " + valueName);
 		}
+		return value;
 	}
 
 	@Override
 	public String getName(long value) {
-		String[] names = defs.getKeys(new String[defs.size()]);
-		for (String name1 : names) {
-			try {
-				long nameValue = defs.get(name1);
-				if (nameValue == value) {
-					return name1;
-				}
-			}
-			catch (NoValueException e) {
-				// can't happen
-			}
+		List<String> list = valueMap.get(value);
+		if (list == null || list.isEmpty()) {
+			return null;
 		}
-		return null;
+		return list.get(0);
 	}
 
 	@Override
 	public long[] getValues() {
-		String[] names = defs.getKeys(new String[defs.size()]);
-		LongObjectHashtable<String> keyTable = new LongObjectHashtable<>();
-		for (String name1 : names) {
-			try {
-				long value = defs.get(name1);
-				keyTable.put(value, name1);
-			}
-			catch (NoValueException e) {
-				// can't happen
-			}
-		}
-		long[] values = keyTable.getKeys();
+		long[] values = valueMap.keySet().stream().mapToLong(Long::longValue).toArray();
 		Arrays.sort(values);
 		return values;
 	}
 
 	@Override
 	public String[] getNames() {
-		String[] names = defs.getKeys(new String[defs.size()]);
-		Arrays.sort(names);
-		return names;
+		return nameMap.keySet().toArray(new String[nameMap.size()]);
 	}
 
 	@Override
 	public int getCount() {
-		return defs.size();
+		return nameMap.size();
 	}
 
 	@Override
 	public void add(String valueName, long value) {
 		bitGroups = null;
 		checkValue(value);
-		if (defs.contains(valueName)) {
-			try {
-				if (defs.get(valueName) == value) {
-					return;
-				}
-			}
-			catch (NoValueException e) {
-			}
-			throw new IllegalArgumentException(name + " enum value " + value + " already assigned");
+		if (nameMap.containsKey(valueName)) {
+			throw new IllegalArgumentException(name + " already exists in this enum");
 		}
-		defs.put(valueName, value);
+		nameMap.put(valueName, value);
+		List<String> list = valueMap.get(value);
+		if (list == null) {
+			list = new ArrayList<>();
+			valueMap.put(value, list);
+		}
+		list.add(valueName);
 	}
 
 	private void checkValue(long value) {
-		long max = (1L << (length * 8)) - 1;
-		if (max > 0 && value > max) {
-			throw new IllegalArgumentException(name + " enum value 0x" + Long.toHexString(value) +
-				" is outside the range of 0x0 to 0x" + Long.toHexString(max));
+		if (length == 8) {
+			return; // all long values permitted
+		}
+		// compute maximum enum value as a positive value: (2^length)-1
+		long max = (1L << (getLength() * 8)) - 1;
+		if (value > max) {
+			throw new IllegalArgumentException(
+				getName() + " enum value 0x" + Long.toHexString(value) +
+					" is outside the range of 0x0 to 0x" + Long.toHexString(max));
 
 		}
+	}
+
+	private boolean isTooBig(int testLength, long value) {
+		if (length == 8) {
+			return false; // all long values permitted
+		}
+		// compute maximum enum value as a positive value: (2^length)-1
+		long max = (1L << (testLength * 8)) - 1;
+		return value > max;
 	}
 
 	@Override
 	public void remove(String valueName) {
 		bitGroups = null;
-		defs.remove(valueName);
+		Long value = nameMap.get(valueName);
+		if (value != null) {
+			nameMap.remove(valueName);
+			List<String> list = valueMap.get(value);
+			Iterator<String> iter = list.iterator();
+			while (iter.hasNext()) {
+				if (valueName.equals(iter.next())) {
+					iter.remove();
+					break;
+				}
+			}
+			if (list.isEmpty()) {
+				valueMap.remove(value);
+			}
+		}
 	}
 
 	@Override
@@ -198,14 +216,6 @@ public class EnumDataType extends GenericDataType implements Enum {
 			}
 		}
 		this.length = length;
-	}
-
-	private boolean isTooBig(int testLength, long value) {
-		long max = (1L << (testLength * 8)) - 1;
-		if (max > 0 && value > max) {
-			return true;
-		}
-		return false;
 	}
 
 	@Override
@@ -368,46 +378,36 @@ public class EnumDataType extends GenericDataType implements Enum {
 			throw new IllegalArgumentException();
 		}
 		Enum enumm = (Enum) dataType;
-		defs.removeAll();
+		nameMap = new HashMap<>();
+		valueMap = new HashMap<>();
 		setLength(enumm.getLength());
 		String[] names = enumm.getNames();
 		for (int i = 0; i < names.length; i++) {
-			defs.put(names[i], enumm.getValue(names[i]));
+			add(names[i], enumm.getValue(names[i]));
 		}
 		stateChanged(null);
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeSizeChanged(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		// not applicable
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeDeleted(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeDeleted(DataType dt) {
+		// not applicable
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeNameChanged(ghidra.program.model.data.DataType, java.lang.String)
-	 */
 	@Override
 	public void dataTypeNameChanged(DataType dt, String oldName) {
+		// not applicable
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dataTypeReplaced(ghidra.program.model.data.DataType, ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public void dataTypeReplaced(DataType oldDt, DataType newDt) {
+		// not applicable
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataType#dependsOn(ghidra.program.model.data.DataType)
-	 */
 	@Override
 	public boolean dependsOn(DataType dt) {
 		return false;

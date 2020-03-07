@@ -133,7 +133,7 @@ public class NumberInputDialog extends DialogComponentProvider {
 	/**
 	 * Define the Main panel for the dialog here.
 	 * @param showAsHex
-	 * @return JPanel the completed <CODE>Main Panel<\CODE>
+	 * @return JPanel the completed <CODE>Main Panel</CODE>
 	 */
 	protected JPanel buildMainPanel(String prompt, boolean showAsHex) {
 		JPanel panel = createPanel(prompt);

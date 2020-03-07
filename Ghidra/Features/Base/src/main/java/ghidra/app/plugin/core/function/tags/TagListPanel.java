@@ -18,14 +18,9 @@ package ghidra.app.plugin.core.function.tags;
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.*;
 
 import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
@@ -34,9 +29,7 @@ import ghidra.app.cmd.function.ChangeFunctionTagCmd;
 import ghidra.app.cmd.function.DeleteFunctionTagCmd;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionTag;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 
 /**
@@ -64,11 +57,11 @@ public abstract class TagListPanel extends JPanel {
 		this.tool = tool;
 
 		setLayout(new BorderLayout());
-		
-		model = new FunctionTagTableModel("", provider.getTool()) ;
+
+		model = new FunctionTagTableModel("", provider.getTool());
 		filteredModel = new FunctionTagTableModel("", provider.getTool());
-		
-		table = new FunctionTagTable(filteredModel);				
+
+		table = new FunctionTagTable(filteredModel);
 		table.addMouseListener(new MouseAdapter() {
 
 			@Override
@@ -83,9 +76,9 @@ public abstract class TagListPanel extends JPanel {
 			// a dialog for editing the tag name and/or comment.
 			@Override
 			public void mouseClicked(MouseEvent evt) {
-				
-				FunctionTagTable table = (FunctionTagTable)evt.getSource();
-				
+
+				FunctionTagTable table = (FunctionTagTable) evt.getSource();
+
 				if (evt.getClickCount() == 2) {
 					int row = table.getSelectedRow();
 					int nameCol = table.getColumnModel().getColumnIndex("Name");
@@ -98,9 +91,9 @@ public abstract class TagListPanel extends JPanel {
 
 					// If the tag is a temporary one, it's not editable. Show a message to the user.
 					if (tag instanceof FunctionTagTemp) {
-						Msg.showWarn(this, table, "Tag Not Editable", "Tag " + "\"" + tag.getName() +
-							"\"" +
-							" must be added to the program before it can be modified/deleted");
+						Msg.showWarn(this, table, "Tag Not Editable",
+							"Tag " + "\"" + tag.getName() + "\"" +
+								" must be added to the program before it can be modified/deleted");
 						return;
 					}
 
@@ -121,7 +114,8 @@ public abstract class TagListPanel extends JPanel {
 						// If the name is empty, show a warning and don't allow it. A user should 
 						// never want to do this.
 						if (newName.isEmpty()) {
-							Msg.showWarn(this, table, "Empty Tag Name?", "Tag name cannot be empty");
+							Msg.showWarn(this, table, "Empty Tag Name?",
+								"Tag name cannot be empty");
 							return false;
 						}
 
@@ -149,13 +143,13 @@ public abstract class TagListPanel extends JPanel {
 				}
 			}
 		});
-		
+
 		titleLabel = new JLabel(title);
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 0));
 		add(titleLabel, BorderLayout.NORTH);
 		add(new JScrollPane(table), BorderLayout.CENTER);
 	}
-	
+
 	/******************************************************************************
 	 * PUBLIC METHODS
 	 ******************************************************************************/
@@ -219,14 +213,14 @@ public abstract class TagListPanel extends JPanel {
 	protected boolean isSelectionImmutable() {
 		int[] selectedRows = table.getSelectedRows();
 		int nameCol = table.getColumnModel().getColumnIndex("Name");
-		for (int i=0; i<selectedRows.length; i++) {
-			String tagName = (String) table.getValueAt(i, nameCol);
+		for (int selectedRow : selectedRows) {
+			String tagName = (String) table.getValueAt(selectedRow, nameCol);
 			FunctionTag tag = filteredModel.getTag(tagName);
 			if (tag instanceof FunctionTagTemp) {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -265,7 +259,7 @@ public abstract class TagListPanel extends JPanel {
 	 */
 	protected void applyFilter() {
 		filteredModel.clear();
-		
+
 		for (FunctionTag tag : model.getTags()) {
 			if (filterString.isEmpty()) {
 				filteredModel.addTag(tag);
@@ -274,8 +268,8 @@ public abstract class TagListPanel extends JPanel {
 				filteredModel.addTag(tag);
 			}
 		}
-			
-		filteredModel.reload();	
+
+		filteredModel.reload();
 	}
 
 	/**
@@ -302,7 +296,8 @@ public abstract class TagListPanel extends JPanel {
 		int[] selectedIndices = table.getSelectedRows();
 		for (int i : selectedIndices) {
 			String tagName = (String) filteredModel.getValueAt(i, 0);
-			Optional<FunctionTag> tag = filteredModel.getTags().stream().filter(t -> t.getName().equals(tagName)).findAny();
+			Optional<FunctionTag> tag =
+				filteredModel.getTags().stream().filter(t -> t.getName().equals(tagName)).findAny();
 			if (tag.isPresent()) {
 				tags.add(tag.get());
 			}

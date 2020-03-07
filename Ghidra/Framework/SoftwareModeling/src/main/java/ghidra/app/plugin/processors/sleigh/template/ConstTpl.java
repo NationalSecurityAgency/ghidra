@@ -209,9 +209,8 @@ public class ConstTpl {
 	/**
 	 * Fill in the space portion of a FixedHandle, based
 	 * on this const.
-	 * @param hand  = handle to fillin
-	 * @param pos   = current context
-	 * @param treeLoc
+	 * @param hand handle to fillin
+	 * @param walker current parser walker
 	 */
 	public void fillinSpace(FixedHandle hand, ParserWalker walker) {
 		switch (type) {
@@ -243,9 +242,8 @@ public class ConstTpl {
 	 * appropriately.  We don't just fill in the temporary
 	 * variable offset, like "fix". Assume that hand.space is
 	 * already filled in
-	 * @param hand = the handle to fillin
-	 * @param pos = current context
-	 * @param treeLoc
+	 * @param hand handle to fillin
+	 * @param walker current parser walker
 	 */
 	public void fillinOffset(FixedHandle hand, ParserWalker walker) {
 		if (type == HANDLE) {

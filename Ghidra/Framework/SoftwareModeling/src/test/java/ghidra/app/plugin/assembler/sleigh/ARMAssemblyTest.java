@@ -46,7 +46,7 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	@Test
 	public void testAssemble_stmcsda_r2_lr0r1r2r4r6r7r8lc() {
 		assertOneCompatRestExact("stmcsda r2, {r0 r1 r2 r4 r6 r7 r8}^", "d7:01:42:28",
-			"stmcsda r2,{ r0 r1 r2 r4 r6 r7 r8 }^");
+			"stmcsda r2,{r0 r1 r2 r4 r6 r7 r8}^");
 	}
 
 	@Test
@@ -85,7 +85,7 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_T_iteq() {
-		assertOneCompatRestExact("itETT eq", "09:BF", THUMB, 0x00400000, "itETT eq");
+		assertOneCompatRestExact("itett eq", "09:BF", THUMB, 0x00400000, "itett eq");
 	}
 
 	@Test

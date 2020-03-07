@@ -224,11 +224,11 @@ public abstract class GenericDemangledObject {
 
 	/**
 	 * Returns a complete signature for the demangled symbol.
-	 * For example:
-	 *            "unsigned long foo" 
+	 * <br>For example:
+	 *           {@code "unsigned long foo" 
 	 *            "unsigned char * ClassA::getFoo(float, short *)"
-	 *            "void * getBar(int **, MyStruct &)"
-	 * <b>Note: based on the underlying mangling scheme, the 
+	 *            "void * getBar(int **, MyStruct &)"}
+	 * <br><b>Note: based on the underlying mangling scheme, the 
 	 * return type may or may not be specified in the signature.</b>
 	 * @param format true if signature should be pretty printed
 	 * @return a complete signature for the demangled symbol

@@ -115,7 +115,7 @@ public class OldLanguageFactory {
 	/**
 	 * Validate all old language definitions contained within the old language map.  
 	 * This is intended to be used by a unit test.
-	 * @returns number of validation errors
+	 * @return number of validation errors
 	 */
 	int validateAllOldLanguages() {
 		int errorCnt = 0;

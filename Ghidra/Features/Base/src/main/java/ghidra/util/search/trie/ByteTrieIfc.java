@@ -79,7 +79,7 @@ public interface ByteTrieIfc<T> {
 	 * trie search algorithm.
 	 * @param text the bytes to search
 	 * @return a list of results (tuple of offset position, text found)
-	 * @throws CancelledException 
+	 * @throws CancelledException if the search is cancelled
 	 */
 	public abstract List<SearchResult<Integer, T>> search(byte[] text, TaskMonitor monitor)
 			throws CancelledException;
@@ -87,11 +87,12 @@ public interface ByteTrieIfc<T> {
 	/**
 	 * Search an array of bytes using the Aho-Corasick multiple string
 	 * trie search algorithm.
-	 * @param monitor 
-	 * @param text the bytes to search
+	 * @param memory the memory to search in
+	 * @param view the AddressSetView to restrict the memory search to.
+	 * @param monitor the task monitor
 	 * @return a list of results (tuple of offset position, text found)
-	 * @throws MemoryAccessException 
-	 * @throws CancelledException 
+	 * @throws MemoryAccessException if an error occurs reading the memory
+	 * @throws CancelledException if the search is cancelled
 	 */
 	public abstract List<SearchResult<Address, T>> search(Memory memory, AddressSetView view,
 			TaskMonitor monitor) throws MemoryAccessException, CancelledException;

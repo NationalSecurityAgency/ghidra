@@ -24,7 +24,7 @@ import docking.action.MenuData;
 import docking.action.ToolBarData;
 import docking.widgets.OptionDialog;
 import ghidra.framework.client.ClientUtil;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.CheckoutDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
@@ -60,7 +60,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		checkOut(context.getSelectedFiles());
 	}
 
@@ -69,7 +69,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 	 * checked out of the repository.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> providedList = context.getSelectedFiles();
 		for (DomainFile domainFile : providedList) {
 			if (domainFile.canCheckout()) {
@@ -92,29 +92,13 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 		return null;
 	}
 
-	protected void checkOut(Collection<DomainFile> providedList) {
+	protected void checkOut(Collection<DomainFile> files) {
 
 		if (!checkRepositoryConnected()) {
 			return;
 		}
 
-		doCheckOut(providedList);
-	}
-
-	/*package*/ void doCheckOut(Collection<DomainFile> providedList) {
-
-		// note: a 'null' user means that we are using a local repository
-		User user = getUser();
-		boolean exclusive = true;
-		if (user != null && user.hasWritePermission()) {
-			CheckoutDialog checkout = new CheckoutDialog();
-			if (checkout.showDialog(tool) != CheckoutDialog.OK) {
-				return;
-			}
-			exclusive = checkout.exclusiveCheckout();
-		}
-
-		tool.execute(new CheckOutTask(providedList, exclusive));
+		tool.execute(new CheckOutTask(files));
 	}
 
 	/**
@@ -122,12 +106,11 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 	 */
 	private class CheckOutTask extends Task {
 		private Collection<DomainFile> files;
-		private boolean exclusive;
+		private boolean exclusive = true;
 
-		CheckOutTask(Collection<DomainFile> files, boolean exclusive) {
+		CheckOutTask(Collection<DomainFile> files) {
 			super("Check Out", true, true, true);
 			this.files = files;
-			this.exclusive = exclusive;
 		}
 
 		private boolean gatherVersionedFiles(TaskMonitor monitor, List<DomainFile> results)
@@ -148,8 +131,25 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 			int n = results.size();
 			if (n == 0) {
 				Msg.showError(this, tool.getToolFrame(), "Checkout Failed",
-					"No versioned files have been specified which can be checked-out");
+					"The specified files do not contain any versioned files available for " +
+						"checkeout");
 				return false;
+			}
+
+			//
+			// Confirm checkout - prompt for exclusive checkout, if possible.  Otherwise, only
+			//                    confirm a bulk checkout.
+			//
+
+			// note: a 'null' user means that we are using a local repository
+			User user = getUser();
+			if (user != null && user.hasWritePermission()) {
+				CheckoutDialog checkout = new CheckoutDialog();
+				if (checkout.showDialog(tool) != CheckoutDialog.OK) {
+					return false;
+				}
+				exclusive = checkout.exclusiveCheckout();
+				return true;
 			}
 
 			if (n == 1) {
@@ -165,6 +165,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 
 		@Override
 		public void run(TaskMonitor monitor) {
+
 			try {
 
 				List<DomainFile> versionedFiles = new ArrayList<>();
@@ -190,6 +191,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 				List<DomainFile> failedCheckouts = new ArrayList<>();
 				int progress = 0;
 				for (DomainFile df : versionedFiles) {
+
 					monitor.checkCanceled();
 					monitor.setMessage("Checkout " + progress + " of " + versionedFiles.size() +
 						": " + df.getName());

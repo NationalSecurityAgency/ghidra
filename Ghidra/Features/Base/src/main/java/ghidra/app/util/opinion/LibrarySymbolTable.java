@@ -33,6 +33,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
@@ -62,6 +63,11 @@ class LibrarySymbolTable {
 	private HashMap<Integer, LibraryExportedSymbol> ordMap = new HashMap<>();
 	private Set<String> forwards = new HashSet<>();
 
+	/**
+	 * Construct an empty library symbol table
+	 * @param tableName symbol table name (generally same as associated library name)
+	 * @param size the architecture size of the DLL (e.g., 32 or 64).
+	 */
 	LibrarySymbolTable(String tableName, int size) {
 		this.tableName = tableName.toLowerCase();
 		this.size = size;
@@ -69,11 +75,24 @@ class LibrarySymbolTable {
 		tempPurge = size <= 32 ? -1 : 0; // assume 0 purge for 64-bit
 	}
 
+	/**
+	 * Construct library symbol table from an existing symbol exports file in XML format
+	 * @param libraryFile existing symbol exports file
+	 * @param size the architecture size of the DLL (e.g., 32 or 64).
+	 * @throws IOException thrown if file IO error occurs
+	 */
 	LibrarySymbolTable(ResourceFile libraryFile, int size) throws IOException {
 		read(libraryFile, size);
 	}
 
-	LibrarySymbolTable(Program library, TaskMonitor monitor) {
+	/**
+	 * Construct a library symbol table based upon a specified library in the 
+	 * form of a {@link Program} object.
+	 * @param library library program
+	 * @param monitor task monitor
+	 * @throws CancelledException thrown if task cancelled
+	 */
+	LibrarySymbolTable(Program library, TaskMonitor monitor) throws CancelledException {
 
 		tableName = new File(library.getExecutablePath()).getName().toLowerCase();
 		size = library.getLanguage().getLanguageDescription().getSize();
@@ -85,7 +104,8 @@ class LibrarySymbolTable {
 		// go through all the symbols looking for Ordinal_#
 		//    get the number and name for the symbol
 		SymbolIterator iter = symTab.getSymbolIterator(SymbolUtilities.ORDINAL_PREFIX + "*", true);
-		while (iter.hasNext() && !monitor.isCancelled()) {
+		while (iter.hasNext()) {
+			monitor.checkCanceled();
 			Symbol sym = iter.next();
 			int ordinal = SymbolUtilities.getOrdinalValue(sym.getName());
 			if (ordinal == -1) {
@@ -219,68 +239,99 @@ class LibrarySymbolTable {
 		});
 	}
 
+	/**
+	 * Parse a ordinal exports file produced by Microsoft DUMPBIN /EXPORTS &lt;DLL&gt;
+	 * It is expected to start parsing lines following the table header containing the 'ordinal' header.
+	 * Each ordinal mapping line is expected to have the format, starting with ordinal number and
+	 * ending with symbol name:
+	 *   &lt;ordinal&gt; &lt;other-column-data&gt; &lt;name&gt;
+	 * The name column contains the symbol name followed by an optional demangled form.  If the name starts with 
+	 * [NONAME] this will be stripped.
+	 * @param ordinalExportsFile file path to ordinal mapping file produced by DUMPBIN /EXPORTS
+	 * @param addMissingOrdinals if true new entries will be created for ordinal mappings
+	 * not already existing within this symbol table, otherwise only those which already
+	 * exist will be updated with a name if specified by mapping file.
+	 */
 	public void applyOrdinalFile(ResourceFile ordinalExportsFile, boolean addMissingOrdinals) {
-		try {
-			InputStreamReader ir = new InputStreamReader(ordinalExportsFile.getInputStream());
-			BufferedReader in = new BufferedReader(ir);
+		try (BufferedReader in =
+			new BufferedReader(new InputStreamReader(ordinalExportsFile.getInputStream()))) {
+
+			int ordinalColumnEndIndex = -1;
+			int nameColumnStartIndex = -1;
 
 			int mode = NONE;
 			String inString;
 			while ((inString = in.readLine()) != null) {
-				StringTokenizer tok = new StringTokenizer(inString);
-				if (!tok.hasMoreElements()) {
-					continue;
-				}
-				String str = tok.nextToken();
 
-				if (str.startsWith(";")) {
-					continue; // comment - skip line
-				}
+				if (mode == NONE && inString.trim().startsWith("ordinal")) {
+					// rely on column header labels to establish ordinal and name column start/end 
+					int ordinalColumnStartIndex = inString.indexOf("ordinal");
+					if (ordinalColumnStartIndex < 0) {
+						continue;
+					}
+					ordinalColumnEndIndex = ordinalColumnStartIndex + 7;
 
-				if (str.equals("ordinal")) {
+					nameColumnStartIndex = inString.indexOf("name");
+					if (nameColumnStartIndex < 1) {
+						Msg.error(this,
+							"Failed to parse ordinal symbol file: " + ordinalExportsFile);
+						break;
+					}
 					mode = ORDINAL;
 					continue;
 				}
+
 				if (mode != ORDINAL) {
 					continue;
 				}
 
-				// must be a definition line
-				//      ordinal Name DemangledName
+				inString = stripComment(inString);
+				if (inString.length() < nameColumnStartIndex) {
+					continue;
+				}
 
-				String ordStr = str;
-
-				// parse ordinal, if bad parse, then done
+				// parse ordinal from first token on line, if bad parse, then done
+				String ordinalStr = inString.substring(0, ordinalColumnEndIndex).trim();
 				int ordinal;
 				try {
-					ordinal = Integer.parseInt(ordStr);
+					ordinal = Integer.parseInt(ordinalStr);
 				}
 				catch (NumberFormatException exc) {
 					// done parsing
 					break;
 				}
 
-				if (!tok.hasMoreElements()) {
-					break;
+				String nameStr = inString.substring(nameColumnStartIndex).trim();
+				if (nameStr.length() == 0) {
+					break; // unexpected
 				}
 
-				String entryName = tok.nextToken();
+				// if [NONAME] present strip-off and use next field as name (i.e., mangled name)
+				if (nameStr.startsWith("[NONAME]")) {
+					nameStr = nameStr.substring(8).trim();
+				}
 
-				LibraryExportedSymbol sym = ordMap.get(new Integer(ordinal));
+				int index = nameStr.indexOf(' ');
+				if (index > 0) {
+					nameStr = nameStr.substring(0, index);
+				}
+
+				if (nameStr.length() == 0) {
+					continue; // skip if no name
+				}
+
+				LibraryExportedSymbol sym = ordMap.get(Integer.valueOf(ordinal));
 				if (sym != null) {
 					symMap.remove(sym.getName());
-					sym.setName(entryName);
+					sym.setName(nameStr);
 				}
 				else if (addMissingOrdinals) {
-					sym = new LibraryExportedSymbol(tableName, size, ordinal, entryName, null, null,
+					sym = new LibraryExportedSymbol(tableName, size, ordinal, nameStr, null, null,
 						tempPurge, false, null);
-					symMap.put(entryName, sym);
+					symMap.put(nameStr, sym);
 					ordMap.put(ordinal, sym);
 				}
 			}
-
-			in.close();
-			ir.close();
 		}
 		catch (FileNotFoundException e) {
 			return;
@@ -290,92 +341,9 @@ class LibrarySymbolTable {
 		}
 	}
 
-	public void applyDefdFile(ResourceFile defFile) {
-		try {
-			InputStreamReader ir = new InputStreamReader(defFile.getInputStream());
-			BufferedReader in = new BufferedReader(ir);
-
-			int mode = NONE;
-			String inString;
-			while ((inString = in.readLine()) != null) {
-				StringTokenizer tok = new StringTokenizer(inString);
-				if (!tok.hasMoreElements()) {
-					continue;
-				}
-				String cmd = tok.nextToken();
-
-				if (cmd.startsWith(";")) {
-					continue;
-				}
-				if (cmd.equals("LIBRARY")) {
-					mode = LIBRARY;
-					continue;
-				}
-				if (cmd.equals("EXPORTS")) {
-					mode = EXPORTS;
-					continue;
-				}
-				if (mode != EXPORTS) {
-					continue;
-				}
-
-				// must be a definition line
-				//      entryname[=internalName] [@Ordinal [NONAME]] [PRIVATE] [DATA]
-
-				String entryName = cmd;
-				// search for '='
-				//   none, then no internalName
-				int eqPos = entryName.indexOf('=');
-				if (eqPos > 0) {
-					entryName = entryName.substring(0, eqPos - 1);
-				}
-
-				// search for '@'
-				//   none, then no ordinalName and no NONAME
-				//   @, might be NONAME
-				// optional PRIVATE  and DATA
-				String nxtStr = tok.nextToken();
-				String ordStr = null;
-				if (nxtStr.startsWith("@")) {
-					if (nxtStr.length() > 1) {
-						ordStr = nxtStr.substring(1);
-					}
-					else {
-						if (!tok.hasMoreElements()) {
-							continue;
-						}
-						ordStr = tok.nextToken();
-					}
-					if (!tok.hasMoreElements()) {
-						continue;
-					}
-					nxtStr = tok.nextToken();
-//					if (nxtStr.equals("NONAME")) {
-//					}
-				}
-
-				int ordinal = Integer.parseInt(ordStr);
-
-				LibraryExportedSymbol sym = ordMap.get(new Integer(ordinal));
-				if (sym != null) {
-					symMap.remove(sym.getName());
-					sym.setName(entryName);
-					symMap.put(entryName, sym);
-				}
-				else {
-					Msg.info(this, "*   " + ordinal + " : " + entryName);
-				}
-			}
-
-			in.close();
-			ir.close();
-		}
-		catch (FileNotFoundException e) {
-			return;
-		}
-		catch (IOException e) {
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-		}
+	private String stripComment(String str) {
+		int index = str.indexOf(';');
+		return index < 0 ? str : str.substring(0, index);
 	}
 
 	List<String> getForwards() {
@@ -390,14 +358,14 @@ class LibrarySymbolTable {
 	 *         exist.
 	 */
 	LibraryExportedSymbol getSymbol(int ordinal) {
-		return ordMap.get(new Integer(ordinal));
+		return ordMap.get(ordinal);
 	}
 
 	/**
 	 * Returns the symbol for the specified name
 	 * 
 	 * @param symbol the name of the desired symbol
-	 * @return
+	 * @return symbol map entry or null if not found
 	 */
 	LibraryExportedSymbol getSymbol(String symbol) {
 		return symMap.get(symbol);

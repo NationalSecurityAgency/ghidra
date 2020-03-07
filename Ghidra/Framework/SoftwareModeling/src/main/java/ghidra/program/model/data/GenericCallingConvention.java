@@ -95,7 +95,7 @@ public enum GenericCallingConvention {
 	/**
 	 * Returns the GenericCallingConvention which is likely to correspond with the
 	 * specified prototype name.
-	 * @param name compiler specific calling convention name
+	 * @param callingConvention compiler specific calling convention name
 	 * @return GenericCallingConvention
 	 */
 	public static GenericCallingConvention guessFromName(String callingConvention) {

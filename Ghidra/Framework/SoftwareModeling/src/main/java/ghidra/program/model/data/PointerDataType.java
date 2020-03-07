@@ -24,6 +24,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
+import ghidra.util.DataConverter;
 
 /**
  * Basic implementation for a pointer dataType 
@@ -45,6 +46,13 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	private boolean deleted = false;
 	private String displayName;
+
+	/**
+	 * <code>isEquivalentActive</code> is used to break cyclical recursion
+	 * when performing an {@link #isEquivalent(DataType)} checks on pointers
+	 * which must also check the base datatype equivelency.
+	 */
+	private ThreadLocal<Boolean> isEquivalentActive = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
 	/**
 	 * Creates a dynamically-sized default pointer data type.
@@ -82,7 +90,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * see {@link #PointerDataType(DataType)}) instead of explicitly specifying 
 	 * the pointer length value.
 	 * @param referencedDataType data type this pointer points to
-	 * @param length pointer length (values <= 0 will result in dynamically-sized pointer)
+	 * @param length pointer length (values &lt;= 0 will result in dynamically-sized pointer)
 	 */
 	public PointerDataType(DataType referencedDataType, int length) {
 		this(referencedDataType, length, null);
@@ -93,7 +101,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * The pointer size is established dynamically based upon the data organization 
 	 * associated with the specified dtm but can adapt to another data type manager's 
 	 * data organization when resolved.
-	 * @param dt data type this pointer points to
+	 * @param referencedDataType data type this pointer points to
 	 * @param dtm data-type manager whose data organization should be used
 	 */
 	public PointerDataType(DataType referencedDataType, DataTypeManager dtm) {
@@ -193,7 +201,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		String symName = symbol.getName();
 		symName = SymbolUtilities.getCleanSymbolName(symName, ref.getToAddress());
-		symName = symName.replace(Namespace.NAMESPACE_DELIMITER, "_");
+		symName = symName.replace(Namespace.DELIMITER, "_");
 		return POINTER_LABEL_PREFIX + "_" + symName;
 	}
 
@@ -245,6 +253,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	@Override
 	public String getDisplayName() {
+		// NOTE: Pointer display name only specifies length if null base type
 		if (displayName == null) {
 			DataType dt = getDataType();
 			if (dt == null) {
@@ -280,7 +289,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	@Override
 	public String getDescription() {
-		StringBuffer sbuf = new StringBuffer();
+		StringBuilder sbuf = new StringBuilder();
 		if (length > 0) {
 			sbuf.append(Integer.toString(8 * length));
 			sbuf.append("-bit ");
@@ -335,6 +344,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		if (buf.getAddress() instanceof SegmentedAddress) {
 			try {
+				// NOTE: conversion assumes a little-endian space
 				return getSegmentedAddressValue(buf, size);
 			}
 			catch (AddressOutOfBoundsException e) {
@@ -355,21 +365,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return null;
 		}
 
-		boolean isBigEndian = buf.isBigEndian(); // ENDIAN.isBigEndian(settings, buf);
-
-		if (!isBigEndian) {
-			byte[] flipped = new byte[size];
-			for (int i = 0; i < size; i++) {
-				flipped[i] = bytes[size - i - 1];
-			}
-			bytes = flipped;
-		}
-
-		// Use long when possible
-		long val = 0;
-		for (byte b : bytes) {
-			val = (val << 8) + (b & 0x0ffL);
-		}
+		long val = DataConverter.getInstance(buf.isBigEndian()).getValue(bytes, size);
 
 		try {
 			return targetSpace.getAddress(val, true);
@@ -380,22 +376,27 @@ public class PointerDataType extends BuiltIn implements Pointer {
 		return null;
 	}
 
+	/**
+	 * Read segmented address from memory.
+	 * NOTE: little-endian memory assumed.
+	 * @param buf memory buffer associated with a segmented-address space 
+	 * positioned at start of address value to be read
+	 * @param dataLen pointer-length (2 and 4-byte pointers supported)
+	 * @return address value returned as segmented Address object or null
+	 * for unsupported pointer length or meory access error occurs.
+	 */
 	private static Address getSegmentedAddressValue(MemBuffer buf, int dataLen) {
 		SegmentedAddress a = (SegmentedAddress) buf.getAddress();
 		int segment = a.getSegment();
 		int offset = 0;
 		try {
 			switch (dataLen) {
-				case 1:
-					offset = buf.getByte(0) & 0xff;
+				case 2: // near pointer
+					offset = (int) buf.getVarLengthUnsignedInt(0, dataLen);
 					break;
-				case 2:
-					offset = buf.getShort(0) & 0xffff;
-					break;
-				case 4:
-				case 8:
-					segment = buf.getShort(0) & 0xffff;
-					offset = buf.getShort(2) & 0xffff;
+				case 4: // far pointer
+					segment = buf.getUnsignedShort(0);
+					offset = buf.getUnsignedShort(2);
 					break;
 				default:
 					return null;
@@ -465,8 +466,22 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return true;
 		}
 
-		return DataTypeUtilities.equalsIgnoreConflict(referencedDataType.getPathName(),
-			otherDataType.getPathName());
+		if (!DataTypeUtilities.equalsIgnoreConflict(referencedDataType.getPathName(),
+			otherDataType.getPathName())) {
+			return false;
+		}
+
+		if (isEquivalentActive.get()) {
+			return true;
+		}
+
+		isEquivalentActive.set(true);
+		try {
+			return getDataType().isEquivalent(otherDataType);
+		}
+		finally {
+			isEquivalentActive.set(false);
+		}
 	}
 
 	@Override
@@ -567,5 +582,10 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			name = constructUniqueName(referencedDataType, length);
 		}
 		return super.getName();
+	}
+
+	@Override
+	public String toString() {
+		return getName(); // always include pointer length
 	}
 }

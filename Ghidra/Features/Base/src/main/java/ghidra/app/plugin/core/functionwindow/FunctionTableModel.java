@@ -29,7 +29,7 @@ import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.field.*;
 import ghidra.util.task.TaskMonitor;
 
-class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
+public class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 
 	static final int LOCATION_COL_WIDTH = 50;
 
@@ -39,7 +39,7 @@ class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 
 	private FunctionManager functionMgr;
 
-	FunctionTableModel(PluginTool tool, Program program) {
+	public FunctionTableModel(PluginTool tool, Program program) {
 		super("Functions", tool, program, null);
 	}
 
@@ -66,7 +66,7 @@ class FunctionTableModel extends AddressBasedTableModel<FunctionRowObject> {
 		return descriptor;
 	}
 
-	void reload(Program newProgram) {
+	public void reload(Program newProgram) {
 		this.setProgram(newProgram);
 		if (newProgram != null) {
 			functionMgr = newProgram.getFunctionManager();

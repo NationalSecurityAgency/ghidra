@@ -20,6 +20,7 @@ import javax.swing.ImageIcon;
 import org.jdom.Element;
 
 import docking.util.image.ToolIconURL;
+import ghidra.framework.plugintool.PluginTool;
 
 /**
  * Configuration of a tool that knows how to create tools.
@@ -51,13 +52,14 @@ public interface ToolTemplate {
 	void setName(String name);
 
 	/**
-	 * Get the iconURL for this tool template.
+	 * Get the iconURL for this tool template
+	 * @return the iconURL for this tool template
 	 */
 	ToolIconURL getIconURL();
 
 	/**
 	 * Get the icon for this tool template.  This is equivalent to calling
-	 * <tt>getIconURL().getIcon()</tt>
+	 * <code>getIconURL().getIcon()</code>
 	 * @return the icon for this tool template.
 	 */
 	ImageIcon getIcon();
@@ -88,7 +90,7 @@ public interface ToolTemplate {
 	 * @param project the project in which the tool will be living.
 	 * @return a new tool for this template implementation.
 	 */
-	public Tool createTool(Project project);
+	public PluginTool createTool(Project project);
 
 	/**
 	 * This returns the XML element that represents the tool part of the overall XML hierarchy.

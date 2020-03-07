@@ -472,7 +472,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	}
 
 	/**
-	 * Returns a Map of property->string_substitution pairs.
+	 * Returns a Map of property-&gt;string_substitution pairs.
 	 *
 	 * @param cmd current command
 	 * @param includeBuiltins True if we should include python built-ins; otherwise, false.

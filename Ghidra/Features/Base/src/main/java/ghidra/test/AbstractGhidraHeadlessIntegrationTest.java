@@ -130,7 +130,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Creates an in-memory program with the given language
 	 * @param name the program name
-	 * @param languageString a language string of the format <tt>x86:LE:32:default</tt>
+	 * @param languageString a language string of the format <code>x86:LE:32:default</code>
 	 * @param consumer a consumer for the program
 	 * @return a new program
 	 * @throws Exception if there is any issue creating the language
@@ -148,7 +148,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Creates an in-memory program with the given language
 	 * @param name the program name
-	 * @param languageString a language string of the format <tt>x86:LE:32:default</tt>
+	 * @param languageString a language string of the format <code>x86:LE:32:default</code>
 	 * @param compilerSpecID the ID
 	 * @param consumer a consumer for the program
 	 * @return a new program
@@ -542,8 +542,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 		ServiceManager serviceManager = (ServiceManager) getInstanceField("serviceMgr", tool);
 
-		Set<Class<?>> extentions =
-			(Set<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
+		List<Class<?>> extentions =
+			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
 		Set<Class<?>> set = new HashSet<>(extentions);
 		Iterator<Class<?>> iterator = set.iterator();
 		while (iterator.hasNext()) {
@@ -558,7 +558,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		set.add(replacement.getClass());
 		serviceManager.addService(service, replacement);
 
-		Set<Class<?>> newExtensionPoints = new HashSet<>(set);
+		List<Class<?>> newExtensionPoints = new ArrayList<>(set);
 		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
 	}
 

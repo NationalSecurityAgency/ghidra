@@ -128,11 +128,11 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 			super("Toggle Search Direction", NextPrevCodeUnitPlugin.this.getName());
 			MenuData menuData =
 				new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getName() },
-					forwardIcon, ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP);
+					forwardIcon, ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
 			menuData.setMenuSubGroup(subGroup);
 			setMenuBarData(menuData);
 			setToolBarData(new ToolBarData(forwardIcon,
-				ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP, subGroup));
+				ToolConstants.TOOLBAR_GROUP_FOUR, subGroup));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK |
 				InputEvent.ALT_DOWN_MASK));
 

@@ -136,7 +136,7 @@ public class DataApplyOptions {
 	/**
 	 * Sets whether or not to disassemble and create a function that is referred to 
 	 * by the current new structure.
-	 * @param createLabel true indicates a function should be created.
+	 * @param createFunction true indicates a function should be created.
 	 */
 	public void setCreateFunction(boolean createFunction) {
 		this.createFunction = createFunction;

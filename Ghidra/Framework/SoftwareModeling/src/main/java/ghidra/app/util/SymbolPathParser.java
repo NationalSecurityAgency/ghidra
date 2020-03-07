@@ -38,14 +38,14 @@ public class SymbolPathParser {
 	 * has each more deeply nested namespace contained in order in the list, followed
 	 * by the trailing name.
 	 * @param name The input String to be parsed.
-	 * @return List<String> containing the sequence of namespaces and trailing name.
+	 * @return {@literal List<String>} containing the sequence of namespaces and trailing name.
 	 */
 	public static List<String> parse(String name) {
 		if (StringUtils.isBlank(name)) {
 			throw new IllegalArgumentException(
 				"Symbol list must contain at least one symbol name!");
 		}
-		if (name.indexOf(Namespace.NAMESPACE_DELIMITER) == -1) {
+		if (name.indexOf(Namespace.DELIMITER) == -1) {
 			List<String> list = new ArrayList<>();
 			list.add(name);
 			return list;

@@ -16,7 +16,7 @@
 package ghidra.program.model.data;
 
 import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
 
 import javax.swing.event.ChangeListener;
 
@@ -134,7 +134,7 @@ public class BuiltInDataTypeManager extends StandAloneDataTypeManager {
 		try {
 			ArrayList<DataType> list = new ArrayList<>();
 			ClassFilter filter = new BuiltInDataTypeClassExclusionFilter();
-			Set<BuiltInDataType> datatypes =
+			List<BuiltInDataType> datatypes =
 				ClassSearcher.getInstances(BuiltInDataType.class, filter);
 			for (BuiltInDataType datatype : datatypes) {
 				list.clear();

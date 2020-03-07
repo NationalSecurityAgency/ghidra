@@ -56,7 +56,7 @@ public class GTreeRestoreTreeStateTask extends GTreeTask {
 			monitor.setMessage("Restoring tree selection state");
 			selectPathsInThisTask(state, monitor, true);
 
-			// this allows some tress to perform cleanup
+			// this allows some trees to perform cleanup
 			tree.expandedStateRestored(monitor);
 			tree.clearFilterRestoreState();
 		}

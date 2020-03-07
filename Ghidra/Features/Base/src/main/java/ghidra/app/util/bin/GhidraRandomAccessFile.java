@@ -15,9 +15,9 @@
  */
 package ghidra.app.util.bin;
 
-import ghidra.util.Msg;
-
 import java.io.*;
+
+import ghidra.util.Msg;
 
 /**
  * Instances of this class support both reading and writing to a
@@ -57,25 +57,25 @@ public class GhidraRandomAccessFile {
 	 * but adds buffering to limit the amount.
 	 * <p>
 	 *
-	 * <a name="mode"><p> The <tt>mode</tt> argument specifies the access mode
+	 * <a id="mode"></a><p> The <code>mode</code> argument specifies the access mode
 	 * in which the file is to be opened.  The permitted values and their
 	 * meanings are:
 	 *
-	 * <blockquote><table summary="Access mode permitted values and meanings">
-	 * <tr><th><p align="left">Value</p></th><th><p align="left">Meaning</p></th></tr>
-	 * <tr><td valign="top"><tt>"r"</tt></td>
-	 *     <td> Open for reading only.  Invoking any of the <tt>write</tt>
+	 * <blockquote><table><caption style="visibility:hidden;font-size:0px">Access mode permitted values and meanings</caption>
+	 * <tr><th><p style="text-align:left">Value</p></th><th><p style="text-align:left">Meaning</p></th></tr>
+	 * <tr><td style="vertical-align:top"><code>"r"</code></td>
+	 *     <td> Open for reading only.  Invoking any of the <code>write</code>
 	 *     methods of the resulting object will cause an {@link
 	 *     java.io.IOException} to be thrown. </td></tr>
-	 * <tr><td valign="top"><tt>"rw"</tt></td>
+	 * <tr><td style="vertical-align:top"><code>"rw"</code></td>
 	 *     <td> Open for reading and writing.  If the file does not already
 	 *     exist then an attempt will be made to create it. </td></tr>
-	 * <tr><td valign="top"><tt>"rws"</tt></td>
-	 *     <td> Open for reading and writing, as with <tt>"rw"</tt>, and also
+	 * <tr><td style="vertical-align:top"><code>"rws"</code></td>
+	 *     <td> Open for reading and writing, as with <code>"rw"</code>, and also
 	 *     require that every update to the file's content or metadata be
 	 *     written synchronously to the underlying storage device.  </td></tr>
-	 * <tr><td valign="top"><tt>"rwd"&nbsp;&nbsp;</tt></td>
-	 *     <td> Open for reading and writing, as with <tt>"rw"</tt>, and also
+	 * <tr><td style="vertical-align:top"><code>"rwd"&nbsp;&nbsp;</code></td>
+	 *     <td> Open for reading and writing, as with <code>"rw"</code>, and also
 	 *     require that every update to the file's content be written
 	 *     synchronously to the underlying storage device. </td></tr>
 	 * </table></blockquote>
@@ -84,13 +84,13 @@ public class GhidraRandomAccessFile {
 	 * @param      mode   the access mode, as described
 	 *                    <a href="#mode">above</a>
 	 * @exception  IllegalArgumentException  if the mode argument is not equal
-	 *               to one of <tt>"r"</tt>, <tt>"rw"</tt>, <tt>"rws"</tt>, or
-	 *               <tt>"rwd"</tt>
+	 *               to one of <code>"r"</code>, <code>"rw"</code>, <code>"rws"</code>, or
+	 *               <code>"rwd"</code>
 	 * @exception FileNotFoundException
 	 *					that name cannot be created, or if some other error occurs
 	 *            while opening or creating the file
 	 */
-	public GhidraRandomAccessFile(File file, String mode) throws IOException {
+	public GhidraRandomAccessFile(File file, String mode) throws FileNotFoundException {
 		this.file = file;
 		randomAccessFile = new RandomAccessFile(file, mode);
 		this.open = true;
@@ -140,8 +140,7 @@ public class GhidraRandomAccessFile {
 	 * @param      pos   the offset position, measured in bytes from the
 	 *                   beginning of the file, at which to set the file
 	 *                   pointer.
-	 * @throws IOException
-	 * @exception  IOException  if <code>pos</code> is less than
+	 * @throws  IOException  if <code>pos</code> is less than
 	 *                          <code>0</code> or if an I/O error occurs.
 	 */
 	public void seek(long pos) throws IOException {
@@ -198,13 +197,13 @@ public class GhidraRandomAccessFile {
 	}
 
 	/**
-	 * Reads up to <code>len</code> bytes of data from this file into an
+	 * Reads up to <code>length</code> bytes of data from this file into an
 	 * array of bytes. This method blocks until at least one byte of input
 	 * is available.
 	 *
-	 * @param      b     the buffer into which the data is read.
-	 * @param      off   the start offset of the data.
-	 * @param      len   the maximum number of bytes read.
+	 * @param      b the buffer into which the data is read.
+	 * @param      offset the start offset of the data.
+	 * @param      length the maximum number of bytes read.
 	 * @return     the total number of bytes read into the buffer, or
 	 *             <code>-1</code> if there is no more data because the end of
 	 *             the file has been reached.

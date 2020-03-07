@@ -70,7 +70,7 @@ public class DWARFDataTypeImporter {
 	 * This identity mapping doesn't always work because datatype instances are often clone()'d
 	 * which will break this mapping.
 	 * <p>
-	 * Places where we know clone()ing happens the mapping is
+	 * Places where we know cloning happens the mapping is
 	 * {@link #updateMapping(DataType, DataType) updated}.
 	 */
 	private IdentityHashMap<DataType, DWARFDataType> dataTypeInstanceToDDTMap =
@@ -371,7 +371,7 @@ public class DWARFDataTypeImporter {
 	 * If an existing Enum with the same name is found in the DTM, and it doesn't have
 	 * any conflicting enum values, merge this enum into the existing enum.
 	 * <p>
-	 * This method takes liberties with the normal DWARF->Ghidra Impl DataType->Ghidra DB DataType
+	 * This method takes liberties with the normal{@literal DWARF->Ghidra Impl DataType->Ghidra DB DataType}
 	 * workflow to be able to merge values into previous db enum datatypes.
 	 * <p>
 	 *
@@ -1101,14 +1101,13 @@ public class DWARFDataTypeImporter {
 	 * <p>
 	 * There is some hacky logic here to handle situations where a pointer refers back to
 	 * itself via a struct:
-	 * <pre>
-	 * PTRa
+	 * <pre>{@literal
 	 *   +-> STRUCT1 (creates empty struct)
 	 *         +-> Field1: PTRa
 	 *               +-> STRUCT1 (empty struct returned from cache)
 	 *               ( ptr instance created pointing to empty struct)
 	 *         ( struct fields populated )
-	 * </pre>
+	 * }</pre>
 	 * The struct creation code will stop the recursive loop after the second time
 	 * makeDataTypeForPointer() is hit because there will be an empty struct in the cache.
 	 *

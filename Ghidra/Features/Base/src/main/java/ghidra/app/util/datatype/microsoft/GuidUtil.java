@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,9 +210,7 @@ public class GuidUtil {
 		byte[] bytes = new byte[16];
 		long[] data = new long[4];
 		boolean isBigEndian = program.getMemory().isBigEndian();
-		DataConverter conv =
-			isBigEndian ? (DataConverter) new BigEndianDataConverter()
-					: (DataConverter) new LittleEndianDataConverter();
+		DataConverter conv = DataConverter.getInstance(isBigEndian);
 
 		try {
 			program.getMemory().getBytes(address, bytes);
@@ -254,9 +251,7 @@ public class GuidUtil {
 		long[] data = new long[4];
 		int[] versionData = new int[2];
 		boolean isBigEndian = program.getMemory().isBigEndian();
-		DataConverter conv =
-			isBigEndian ? (DataConverter) new BigEndianDataConverter()
-					: (DataConverter) new LittleEndianDataConverter();
+		DataConverter conv = DataConverter.getInstance(isBigEndian);
 
 		try {
 			program.getMemory().getBytes(address, bytes);

@@ -54,7 +54,7 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 
 	private SpyErrorLogger spyLogger = new SpyErrorLogger();
 
-	private DockingTool tool;
+	private Tool tool;
 
 	@Before
 	public void setUp() {
@@ -388,6 +388,36 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 
 		tool.removeAction(action1Copy);
 		assertActionNotInTool(action1Copy);
+	}
+
+	@Test
+	public void testNonKeyBindingAction_CannotSetKeyBinding() {
+
+		DockingAction action = new DockingAction("Test Action", "Test Action Owner", false) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				// stub
+			}
+		};
+
+		action.setKeyBindingData(new KeyBindingData(DEFAULT_KS_1));
+		assertNull(action.getKeyBindingData());
+		spyLogger.assertLogMessage("does", "not", "support", "bindings");
+	}
+
+	@Test
+	public void testNonKeyBindingAction_CannotSetKeyBinding_NullBinding() {
+
+		DockingAction action = new DockingAction("Test Action", "Test Action Owner", false) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				// stub
+			}
+		};
+
+		action.setKeyBindingData(null);
+		assertNull(action.getKeyBindingData());
+		spyLogger.assertLogMessage("does", "not", "support", "bindings");
 	}
 
 //==================================================================================================

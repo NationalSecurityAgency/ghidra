@@ -19,7 +19,7 @@ import ghidra.app.plugin.processors.sleigh.expression.TokenField;
 import ghidra.util.NumericUtilities;
 
 /**
- * A 64-bit value where each bit is {@code 0}, {@code 1}, or {@code x} (undefined)
+ * A {@code 64}-bit value where each bit is {@code 0}, {@code 1}, or {@code x} (undefined)
  */
 public class MaskedLong implements Comparable<MaskedLong> {
 	public static final MaskedLong ZERO = new MaskedLong(-1, 0);
@@ -129,7 +129,7 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * Any {@code 0} bit in {@code msk} will result in an undefined bit in the result. {@code 1}
 	 * bits result in a copy of the corresponding bit in the result.
 	 * 
-	 * @param msk the mask to apply
+	 * @param mask the mask to apply
 	 * @return the result.
 	 */
 	public MaskedLong mask(long mask) {
@@ -519,14 +519,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * 
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>
+	 * <pre>{@literal
 	 *   0 x 1 <= A (this)
 	 * 0 0 0 0
 	 * x 0 x x
 	 * 1 0 x 1
 	 * ^
 	 * B (that)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -546,19 +546,19 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	}
 
 	/**
-	 * Solves the expression A & B = C, for B, given C and A
-	 * 
+	 * Solves the expression {@code A & B = C, for B, given C and A}
+	 * <p>
 	 * To handle unknown bits, the solution is derived from the following truth table, where
 	 * {@code *} indicates no solution:
 	 * 
-	 * <pre>
+	 * <pre>{@literal
 	 *   0 x 1 <= A (that)
 	 * 0 x x 0
 	 * x x x x
 	 * 1 * 1 1
 	 * ^
 	 * B (this)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -589,14 +589,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * 
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>
+	 * <pre>{@literal
 	 *   0 x 1 <= A (this)
 	 * 0 0 x 1
 	 * x x x 1
 	 * 1 1 1 1
 	 * ^
 	 * B (that)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -623,14 +623,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * To handle unknown bits, the solution is derived from the following truth table, where
 	 * {@code *} indicates no solution:
 	 * 
-	 * <pre>
+	 * <pre>{@literal
 	 *   0 x 1 <= A (that)
 	 * 0 0 0 *
 	 * x x x x
 	 * 1 1 x x
 	 * ^
 	 * B (this)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -660,14 +660,14 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * 
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>
+	 * <pre>{@literal
 	 *   0 x 1 <= A (this)
 	 * 0 0 x 1
 	 * x x x x
 	 * 1 1 x 0
 	 * ^
 	 * B (that)
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @param that the other masked long ({@code B}).
 	 * @return the result.
@@ -698,10 +698,10 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * 
 	 * To handle unknown bits, the result is derived from the following truth table:
 	 * 
-	 * <pre>
+	 * <pre>{@literal
 	 * 0 x 1 <= A (this)
 	 * 1 x 0
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * @return the result.
 	 */
@@ -959,7 +959,8 @@ public class MaskedLong implements Comparable<MaskedLong> {
 	 * Check if this and another object agree
 	 * 
 	 * @param that a {@link MaskedLong} or {@link Long} to check.
-	 * @see {@link #agrees(MaskedLong)} and {@link #agrees(long)}.
+	 * @see #agrees(MaskedLong)
+	 * @see #agrees(long)
 	 * @return true if this and that agree.
 	 */
 	public boolean agrees(Object that) {

@@ -204,7 +204,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * This gets called after the given list of {@Program}s is finished loading.  It provides
+	 * This gets called after the given list of {@link Program}s is finished loading.  It provides
 	 * subclasses an opportunity to do follow-on actions to the load.
 	 * 
 	 * @param loadedPrograms The {@link Program}s that got loaded.

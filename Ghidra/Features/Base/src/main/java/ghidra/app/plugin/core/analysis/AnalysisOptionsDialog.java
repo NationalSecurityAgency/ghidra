@@ -43,7 +43,7 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 	AnalysisOptionsDialog(Program program) {
 		this(List.of(program));
 	}
-	
+
 	/**
 	 * Constructor 
 	 * 
@@ -53,20 +53,20 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 		super("Analysis Options");
 		setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "AnalysisOptions"));
 		panel = buildComponent(programs);
-				
+
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();
 		setOkButtonText("Analyze");
 		okButton.setMnemonic('A');
 		setOkEnabled(true);
-		setPreferredSize(800, 400);
-		setRememberSize(true);		
+		setPreferredSize(1000, 600);
+		setRememberSize(true);
 	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		
+
 		// On any analyzer status change, update the options for all programs
 		// being analyzed. This is necessary to keep options consistent across all
 		// programs being analyzed.
@@ -75,9 +75,9 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 		//       analysis panel has finished being constructed, so protect against
 		//       that before calling the update method.
 		if (panel != null) {
-			panel.updateOptionForAllPrograms(evt.getPropertyName(), (Boolean)evt.getNewValue());
+			panel.updateOptionForAllPrograms(evt.getPropertyName(), (Boolean) evt.getNewValue());
 		}
-	}	
+	}
 
 	@Override
 	public void okCallback() {
@@ -94,7 +94,7 @@ public class AnalysisOptionsDialog extends DialogComponentProvider implements
 	boolean wasAnalyzeButtonSelected() {
 		return doAnalysis;
 	}
-	
+
 	/**
 	 * Constructs a new {@link AnalysisPanel}
 	 * 

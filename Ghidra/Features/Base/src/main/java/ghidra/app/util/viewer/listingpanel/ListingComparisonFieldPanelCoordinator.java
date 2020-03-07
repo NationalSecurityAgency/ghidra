@@ -127,10 +127,12 @@ public class ListingComparisonFieldPanelCoordinator extends LayoutLockedFieldPan
 		ListingPanel rightListingPanel = dualListingPanel.getRightPanel();
 		AddressIndexMap leftAddressIndexMap = leftListingPanel.getAddressIndexMap();
 		AddressIndexMap rightAddressIndexMap = rightListingPanel.getAddressIndexMap();
+
 		BigInteger leftIndex =
 			(leftAddress != null) ? leftAddressIndexMap.getIndex(leftAddress) : null;
 		BigInteger rightIndex =
 			(rightAddress != null) ? rightAddressIndexMap.getIndex(rightAddress) : null;
+
 		BigInteger[] lineNumbers =
 			new BigInteger[] { (leftIndex != null) ? leftIndex : BigInteger.ZERO,
 				(rightIndex != null) ? rightIndex : BigInteger.ZERO };

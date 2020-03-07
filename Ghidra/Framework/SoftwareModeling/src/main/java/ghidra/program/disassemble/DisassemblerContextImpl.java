@@ -259,7 +259,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * 
 	 * @param destAddr
 	 * @param isFallThrough
-	 * @return 
+	 * @return the flowed context value
 	 */
 	public RegisterValue getFlowContextValue(Address destAddr, boolean isFallThrough) {
 		return getFlowContextValue(Address.NO_ADDRESS, destAddr, isFallThrough);
@@ -269,7 +269,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * Get flowed context value at a destination address, that has been flowed from the fromAddr, without affecting state.
 	 *
 	 * @param fromAddr address that this flow is flowing from.
-	 * @param toAddr the starting address of a new instruction flow.
+	 * @param destAddr the starting address of a new instruction flow.
 	 * @throws IllegalStateException if a previous flow was not ended.
 	 */
 	public RegisterValue getFlowContextValue(Address fromAddr, Address destAddr, boolean isFallThrough) {
@@ -337,7 +337,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * The future flow state values are then loaded into the current context.
 	 *
 	 * @param fromAddr address that this flow is flowing from.
-	 * @param toAddr the starting address of a new instruction flow.
+	 * @param destAddr the starting address of a new instruction flow.
 	 * @throws IllegalStateException if a previous flow was not ended.
 	 */
 	public void flowToAddress(Address fromAddr, Address destAddr) {
@@ -565,25 +565,16 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		currentAddress = null;
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.ProcessorContext#getRegisters()
-	 */
 	@Override
 	public Register[] getRegisters() {
 		return programContext.getRegisters();
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.ProcessorContext#getRegister(java.lang.String)
-	 */
 	@Override
 	public Register getRegister(String name) {
 		return programContext.getRegister(name);
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.ProcessorContext#getRegisterValue(ghidra.program.model.lang.Register)
-	 */
 	@Override
 	public RegisterValue getRegisterValue(Register register) {
 		if (register == null) {
@@ -618,9 +609,6 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		return programValue.combineValues(value);
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.ProcessorContext#getValue(ghidra.program.model.lang.Register, boolean)
-	 */
 	@Override
 	public BigInteger getValue(Register register, boolean signed) {
 		RegisterValue value = getRegisterValue(register);
@@ -659,17 +647,11 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		setRegisterValue(fromAddr, toAddr, new RegisterValue(register, newValue), true);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.disassemble.DisassemblerConextIfc#setFutureRegisterValue(ghidra.program.model.address.Address, ghidra.program.model.lang.RegisterValue)
-	 */
 	@Override
 	public void setFutureRegisterValue(Address address, RegisterValue value) {
 		setFutureRegisterValue(Address.NO_ADDRESS, address, value);
 	}
 	
-	/* (non-Javadoc)
-	 * @see ghidra.program.disassemble.DisassemblerConextIfc#setFutureRegisterValue(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.program.model.lang.RegisterValue)
-	 */
 	@Override
 	public void setFutureRegisterValue(Address fromAddr, Address toAddr, RegisterValue value) {
 		setRegisterValue(fromAddr, toAddr, value, true);
@@ -771,26 +753,17 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.ProcessorContext#hasValue(ghidra.program.model.lang.Register)
-	 */
 	@Override
 	public boolean hasValue(Register register) {
 		BigInteger value = getValue(register, true);
 		return value != null;
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.ProcessorContext#setValue(ghidra.program.model.lang.Register, java.math.BigInteger)
-	 */
 	@Override
 	public void setValue(Register register, BigInteger value) {
 		setRegisterValue(new RegisterValue(register, value));
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.ProcessorContext#clearRegister(ghidra.program.model.lang.Register)
-	 */
 	@Override
 	public void clearRegister(Register register) {
 		if (!isFlowActive()) {
@@ -841,7 +814,6 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * affect the current context state at the current address in a non-delayed fashion.
 	 * 
 	 * @param value register value
-	 * @param address disassembly address
 	 * @param fromAddr the address from which this flow originated
 	 * @param toAddr the future flow address to save the value.
 	 */
@@ -860,9 +832,6 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		setRegisterValue(fromAddr, toAddr, value, true);
 	}
 
-	/**
-	 * @see ghidra.program.model.lang.ProcessorContext#setRegisterValue(ghidra.program.model.lang.RegisterValue)
-	 */
 	@Override
 	public void setRegisterValue(RegisterValue value) {
 		if (value == null) {
@@ -910,11 +879,11 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	}
 	
 	/**
-	 * Returns the future register value at the specified address that occured because of a flow
+	 * Returns the future register value at the specified address that occurred because of a flow
 	 * from the fromAddr.  If no future value is stored, it will return the value stored in the program.
 	 *
-	 * @param value register value
-	 * @param fromAddr the address from which this flow originated
+	 * @param register the register to get a value for.
+	 * @param fromAddr the address from which this flow originated.
 	 * @param toAddr the future flow address to save the value.
 	 * @param signed if true, interpret the value as signed.
 	 * @return the value of the register at the location, or null if a full value is not established.
@@ -936,7 +905,6 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * 
 	 * @param register the register to get a value for.
 	 * @param address the address at which to get a value.
-	 * @param signed if true, interpret the value as signed.
 	 * @return a RegisterValue object if one has been stored in the future flow or the program.
 	 * The RegisterValue object may have a "no value" state for the bits specified by the given register.
 	 * Also, null may be returned if no value have been stored.
@@ -946,14 +914,13 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	}
 	
 	/**
-	 * Returns the future RegisterValue at the specified address that occured because of a flow from
+	 * Returns the future RegisterValue at the specified address that occurred because of a flow from
 	 * the fromAddr.  If no future value is stored, it will return the value stored in the program.
 	 * The value returned may not have a complete value for the requested register.
 	 * 
 	 * @param register the register to get a value for.
 	 * @param fromAddr the address from which the flow originated
 	 * @param destAddr the address at which to get a value.
-	 * @param signed if true, interpret the value as signed.
 	 * 
 	 * @return a RegisterValue object if one has been stored in the future flow or the program.
 	 * The RegisterValue object may have a "no value" state for the bits specified by the given register.

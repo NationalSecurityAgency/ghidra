@@ -34,7 +34,6 @@ import ghidra.util.task.TaskMonitor;
  *
  * @param <V> the vertex type
  * @param <E> the edge type
- * @param <G> the graph type
  */
 //@formatter:off
 public interface VisualGraphLayout<V extends VisualVertex, 
@@ -64,10 +63,9 @@ public interface VisualGraphLayout<V extends VisualVertex,
 	 * need not loop over all edges to determine if they have articulations.  (Looping over
 	 * large graphs is time intensive.)
 	 * 
-	 * <P>{@link VisualEdge#articulations What are articulations?}</A>
+	 * <P><A HREF="../VisualEdge.html#articulations">What are articulations?</A>
 	 * 
 	 * @return true if this layout uses articulated edges.
-	 * @see ArticulatedEdge
 	 */
 	public boolean usesEdgeArticulations();
 

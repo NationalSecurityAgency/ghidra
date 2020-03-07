@@ -326,20 +326,13 @@ public final class DataUtilities {
 
 		Address addr = loc.getAddress();
 		Listing listing = loc.getProgram().getListing();
-		CodeUnit cu = listing.getCodeUnitAt(addr);
-		if (cu == null) {
-			cu = listing.getCodeUnitContaining(addr);
+		Data dataContaining = listing.getDataContaining(addr);
+		if (dataContaining == null) {
+			return null;
 		}
 
-		if (cu instanceof Data) {
-			Data d = (Data) cu;
-			int[] compPath = loc.getComponentPath();
-			if (compPath != null) {
-				d = d.getComponent(compPath);
-			}
-			return d;
-		}
-		return null;
+		Data dataAtAddr = dataContaining.getComponent(loc.getComponentPath());
+		return dataAtAddr;
 	}
 
 	/**

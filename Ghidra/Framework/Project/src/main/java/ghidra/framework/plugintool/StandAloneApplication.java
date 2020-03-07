@@ -29,7 +29,6 @@ import org.jdom.output.XMLOutputter;
 
 import docking.framework.*;
 import ghidra.framework.*;
-import ghidra.framework.model.Tool;
 import ghidra.framework.model.ToolServices;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -58,7 +57,7 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 	 * <b>The given properties file is expected to have the
 	 * {@link ApplicationProperties#APPLICATION_NAME_PROPERTY} and
 	 * {@link ApplicationProperties#APPLICATION_VERSION_PROPERTY} properties
-	 * set.
+	 * set.</b>
 	 * 
 	 * @param propertiesFilename the name of the properties file.
 	 */
@@ -249,12 +248,12 @@ public abstract class StandAloneApplication implements GenericStandAloneApplicat
 		return new ToolServicesAdapter() {
 
 			@Override
-			public void closeTool(Tool t) {
+			public void closeTool(PluginTool t) {
 				System.exit(0);
 			}
 
 			@Override
-			public void saveTool(Tool saveTool) {
+			public void saveTool(PluginTool saveTool) {
 				Element toolElement = saveTool.saveToXml(true);
 				Element dataStateElement = saveTool.saveDataStateToXml(false);
 				Element rootElement = new Element("Root");

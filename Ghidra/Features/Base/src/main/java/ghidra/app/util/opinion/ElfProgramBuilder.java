@@ -158,9 +158,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			elf.getLoadAdapter().processElf(this, monitor);
 
+			processRelocations(monitor);
 			processEntryPoints(monitor);
 			processImports(monitor);
-			processRelocations(monitor);
 
 			monitor.setMessage("Processing PLT/GOT ...");
 			elf.getLoadAdapter().processGotPlt(this, monitor);
@@ -469,17 +469,19 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		// process dynamic entry points
-		createDynamicEntryPoints(ElfDynamicType.DT_INIT, null, monitor);
+		createDynamicEntryPoints(ElfDynamicType.DT_INIT, null, "_INIT_", monitor);
 		createDynamicEntryPoints(ElfDynamicType.DT_INIT_ARRAY, ElfDynamicType.DT_INIT_ARRAYSZ,
-			monitor);
-		createDynamicEntryPoints(ElfDynamicType.DT_FINI, null, monitor);
+			"_INIT_", monitor);
+		createDynamicEntryPoints(ElfDynamicType.DT_PREINIT_ARRAY, ElfDynamicType.DT_PREINIT_ARRAYSZ,
+			"_PREINIT_", monitor);
+		createDynamicEntryPoints(ElfDynamicType.DT_FINI, null, "_FINI_", monitor);
 		createDynamicEntryPoints(ElfDynamicType.DT_FINI_ARRAY, ElfDynamicType.DT_FINI_ARRAYSZ,
-			monitor);
+			"_FINI_", monitor);
 
 	}
 
 	private void createDynamicEntryPoints(ElfDynamicType dynamicEntryType,
-			ElfDynamicType entryArraySizeType, TaskMonitor monitor) {
+			ElfDynamicType entryArraySizeType, String baseName, TaskMonitor monitor) {
 
 		ElfDynamicTable dynamicTable = elf.getDynamicTable();
 		if (dynamicTable == null) {
@@ -502,8 +504,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			long arraySize = dynamicTable.getDynamicValue(entryArraySizeType);
 			long elementCount = arraySize / dt.getLength();
 
-			String baseName = dynamicEntryType.name.startsWith("DT_INIT") ? "_INIT_" : "_FINI_";
-
 			for (int i = 0; i < elementCount; i++) {
 				Address addr = entryArrayAddr.add(i * dt.getLength());
 				Data data = createData(addr, dt);
@@ -512,6 +512,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				}
 				Scalar value = (Scalar) data.getValue();
 				if (value != null) {
+					if (i != 0 && value.getValue() == 0) {
+						continue;
+					}
 					long funcAddrOffset = elf.adjustAddressForPrelink(value.getValue());
 					Address funcAddr = createEntryFunction(baseName + i, funcAddrOffset, monitor);
 					if (funcAddr != null) {

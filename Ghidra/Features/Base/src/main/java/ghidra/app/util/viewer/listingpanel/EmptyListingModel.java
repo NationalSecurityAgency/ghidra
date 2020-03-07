@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.app.util.viewer.listingpanel;
 
+import docking.widgets.fieldpanel.Layout;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
-import docking.widgets.fieldpanel.Layout;
 
 public class EmptyListingModel implements ListingModel {
 	@Override
@@ -90,8 +89,8 @@ public class EmptyListingModel implements ListingModel {
 	}
 
 	@Override
-	public void openData(Data data) {
-		// stub
+	public boolean openData(Data data) {
+		return false;
 	}
 
 	@Override

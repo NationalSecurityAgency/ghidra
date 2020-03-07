@@ -110,7 +110,7 @@ public class DecompilerFunctionAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void registerOptions(Options options, Program program) {
 		HelpLocation helpLocation = new HelpLocation("AutoAnalysisPlugin",
-			"Auto_Analysis_Option_Instruction" + getAnalysisType());
+			"Decompiler_Parameter_ID_Analyzer");
 
 		options.registerOption(OPTION_NAME_CLEAR_LEVEL, SourceType.ANALYSIS, helpLocation,
 			OPTION_DESCRIPTION_CLEAR_LEVEL);

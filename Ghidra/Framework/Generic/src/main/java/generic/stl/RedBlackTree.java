@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +36,19 @@ public class RedBlackTree<K,V> {
 	private final boolean allowDuplicateKeys;
 
     /**
-     * Creates a new RedBlackKeySet that can store keys between 0 and n.
-     * @param n the maximum key for this set.
+     * Creates a new RedBlackTree
+     * @param comparator the comparator for this tree
+     * @param allowDuplicateKeys true to allow duplicate keys
      */
     public RedBlackTree(Comparator<K> comparator, boolean allowDuplicateKeys) {
 		this.comparator = comparator;
 		this.allowDuplicateKeys = allowDuplicateKeys;
     }
 
+    /**
+     * Creates a copy of an existing RedBlackTree
+     * @param tree the existing tree to copy
+     */
     public RedBlackTree(RedBlackTree<K, V> tree) {
     	this.comparator = tree.comparator;
     	this.allowDuplicateKeys = tree.allowDuplicateKeys;
@@ -129,10 +133,10 @@ public class RedBlackTree<K,V> {
     }
 
     /**
-     * Finds the node with the lowest key that is >= to the given key.  Returns null if all nodes
+     * Finds the node with the lowest key that is &gt;= to the given key.  Returns null if all nodes
      * in the tree have keys less than the given key.
      * @param key the key to search for.
-     * @return the node with the lowest key that is >= to the given key or null if no such key exists.
+     * @return the node with the lowest key that is &gt;= to the given key or null if no such key exists.
      */
     public RedBlackNode<K,V> lowerBound(K key) {
         RedBlackNode<K,V> bestNode = null;
@@ -154,10 +158,10 @@ public class RedBlackTree<K,V> {
     
 
     /**
-     * Finds the node with the lowest key that is > the given key.  Returns null if all nodes
+     * Finds the node with the lowest key that is &gt; the given key.  Returns null if all nodes
      * in the tree have keys less than or equal to the given key.
      * @param key the key to search for.
-     * @return the node with the lowest key that is > to the given key or null if no such key exists.
+     * @return the node with the lowest key that is &gt; to the given key or null if no such key exists.
      */
     public RedBlackNode<K,V> upperBound(K key){
         RedBlackNode<K,V> bestNode = null;
@@ -183,6 +187,7 @@ public class RedBlackTree<K,V> {
      * already exists, the old value will be replaced by the new value and the old value will be
      * returned. 
      * @param key the key to add to the set.
+     * @param value the key's value.
      * @return the old value associated with the key, or null if the key was not previously in the map.
      */
     public Pair<RedBlackNode<K, V>, Boolean> put(K key, V value) {

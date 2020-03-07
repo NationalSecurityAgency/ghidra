@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,8 +78,8 @@ public interface GraphDisplay {
      * @param alignment ALIGN_LEFT, ALIGN_CENTER or ALIGN_RIGHT
      * @param size font size (8, 10, 12, etc.)
      * @param monospace if true a monospace font will be used.
-     * @param maxLines indicate the maximum number of lines to be displayed for the label.  A value <= 1 will
-     * result in a single line display and the preferred geometric shapes.  A value >1 will force the use of
+     * @param maxLines indicate the maximum number of lines to be displayed for the label.  A value &lt;= 1 will
+     * result in a single line display and the preferred geometric shapes.  A value &gt;1 will force the use of
      * rectangualr nodes.
      * @throws GraphException thrown if an error occurs while communicating with the graph service.
      */
@@ -89,7 +88,6 @@ public interface GraphDisplay {
      * Set the handler that will map addresses strings on vertices and edges
      * to/from objects that make sense to the generator of the graph.
      * @param handler the GraphSelectionHandler to set on this GraphDisplay.
-     * @throws GraphException thrown if an error occurs while communicating with the graph service.
      */ 
     void setSelectionHandler(GraphSelectionHandler handler);
     /**
@@ -99,7 +97,6 @@ public interface GraphDisplay {
      *
      * @param selectionObject opaque object to be passed to the selection handler.
      * @param global true if the selection is to be set on all known graph windows.
-     * @throws GraphException thrown if an error occurs while communicating with the graph service.
      */
     void select(Object selectionObject, boolean global);
     /**
@@ -109,7 +106,6 @@ public interface GraphDisplay {
      *
      * @param locationObject opaque object to be passed to the selection handler.
      * @param global true if the selection is to be set on all known graph windows.
-     * @throws GraphException thrown if an error occurs while communicating with the graph service.
      */
     void locate(Object locationObject, boolean global);
 }

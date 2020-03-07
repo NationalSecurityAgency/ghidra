@@ -87,15 +87,17 @@ protected:
   string name;			///< Formal name of the payload
   int4 type;			///< Type of this payload: CALLFIXUP_TYPE, CALLOTHERFIXUP_TYPE, etc.
   bool dynamic;			///< True if the injection is generated dynamically
+  bool incidentalCopy;		///< True if injected COPYs are considered \e incidental
   int4 paramshift;		///< Number of parameters shifted in the original call
   vector<InjectParameter> inputlist;		///< List of input parameters to this payload
   vector<InjectParameter> output;		///< List of output parameters
   static void readParameter(const Element *el,string &name,uint4 &size);
   void orderParameters(void);			///< Assign an index to parameters
 public:
-  InjectPayload(const string &nm,int4 tp) { name=nm; type=tp; paramshift=0; dynamic = false; }	///< Construct for use with restoreXml
+  InjectPayload(const string &nm,int4 tp) { name=nm; type=tp; paramshift=0; dynamic = false; incidentalCopy = false; }	///< Construct for use with restoreXml
   int4 getParamShift(void) const { return paramshift; }	///< Get the number of parameters shifted
   bool isDynamic(void) const { return dynamic; }	///< Return \b true if p-code in the injection is generated dynamically
+  bool isIncidentalCopy(void) const { return incidentalCopy; }	///< Return \b true if any injected COPY is considered \e incidental
   int4 sizeInput(void) const { return inputlist.size(); }	///< Return the number of input parameters
   int4 sizeOutput(void) const { return output.size(); }		///< Return the number of output parameters
   InjectParameter &getInput(int4 i) { return inputlist[i]; }	///< Get the i-th input parameter

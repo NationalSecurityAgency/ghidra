@@ -15,10 +15,10 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
+import static ghidra.program.model.data.EndianSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -44,6 +44,9 @@ import ghidra.util.*;
  * <p>
  */
 public class StringDataInstance {
+
+	private static final int ASCII_MAX = 0x7f;
+
 	/**
 	 * Returns true if the {@link Data} instance is a 'string'.
 	 *
@@ -65,6 +68,31 @@ public class StringDataInstance {
 		return false;
 	}
 
+	/**
+	 * Returns true if the specified {@link DataType} is (or could be) a
+	 * string.
+	 * <p>
+	 * Arrays of char-like elements (see {@link ArrayStringable}) are treated
+	 * as string data types.  The actual data instance needs to be inspected
+	 * to determine if the array is an actual string.
+	 * <p>
+	 * @param dt DataType to test
+	 * @return boolean true if data type is or could be a string
+	 */
+	public static boolean isStringDataType(DataType dt) {
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
+		return dt instanceof AbstractStringDataType || (dt instanceof Array &&
+			ArrayStringable.getArrayStringable(((Array) dt).getDataType()) != null);
+	}
+
+	/**
+	 * Returns true if the {@link Data} instance is one of the many 'char' data types.
+	 * 
+	 * @param data {@link Data} instance to test, null ok
+	 * @return boolean true if char data 
+	 */
 	public static boolean isChar(Data data) {
 		if (data == null) {
 			return false;
@@ -72,6 +100,51 @@ public class StringDataInstance {
 		DataType dt = data.getBaseDataType();
 		return (dt instanceof CharDataType) || (dt instanceof WideCharDataType) ||
 			(dt instanceof WideChar16DataType) || (dt instanceof WideChar32DataType);
+	}
+
+	/**
+	 * Returns a string representation of the character(s) contained in the byte array, suitable
+	 * for display as a single character, or as a sequence of characters.
+	 * <p>
+	 * 
+	 * @param dataType the {@link DataType} of the element containing the bytes (most likely a ByteDataType)
+	 * @param bytes the big-endian ordered bytes to convert to a char representation
+	 * @param settings the {@link Settings} object for the location where the bytes came from, or null
+	 * @return formatted string (typically with quotes around the contents): single character: 'a', multiple characters: "a\x12bc"
+	 */
+	public static String getCharRepresentation(DataType dataType, byte[] bytes, Settings settings) {
+		if (bytes == null || bytes.length == 0) {
+			return UNKNOWN;
+		}
+
+		if (bytes.length != 1 && isSingleAsciiValue(bytes)) {
+			bytes = new byte[] { bytes[bytes.length - 1] };
+		}
+
+		MemBuffer memBuf = new ByteMemBufferImpl(null, bytes, true);
+		StringDataInstance sdi = new StringDataInstance(dataType, settings, memBuf, bytes.length);
+		return sdi.getCharRepresentation();
+	}
+
+	/**
+	 * Determine if bytes contain only a single ASCII value within 
+	 * least-significant-byte of big-endian byte array
+	 * @param bytes value byte array in big-endian order
+	 * @return true if bytes contain a single ASCII value within 
+	 * least-significant-byte
+	 */
+	private static boolean isSingleAsciiValue(byte[] bytes) {
+
+		int lsbIndex = bytes.length - 1;
+		if (bytes[lsbIndex] < 0) {
+			return false;
+		}
+		for (int i = 0; i < lsbIndex; i++) {
+			if (bytes[i] != 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -93,7 +166,7 @@ public class StringDataInstance {
 			ArrayStringable arrayStringable =
 				ArrayStringable.getArrayStringable(((Array) dt).getDataType());
 			if (arrayStringable != null && arrayStringable.hasStringValue(data)) {
-				return new StringDataInstance(arrayStringable, data, data, data.getLength());
+				return new StringDataInstance(arrayStringable, data, data, data.getLength(), true);
 			}
 		}
 		return NULL_INSTANCE;
@@ -114,13 +187,15 @@ public class StringDataInstance {
 		if (dataType instanceof AbstractStringDataType) {
 			return ((AbstractStringDataType) dataType).getStringDataInstance(buf, settings, length);
 		}
-		if (dataType instanceof Array) {
+		boolean isArray = dataType instanceof Array;
+		if (isArray) {
 			dataType = ArrayStringable.getArrayStringable(((Array) dataType).getDataType());
 		}
 		if (dataType instanceof ArrayStringable &&
 			((ArrayStringable) dataType).hasStringValue(settings) && buf.isInitializedMemory()) {
 
-			return new StringDataInstance(dataType, settings, buf, length);
+			// this could be either a charsequence or an array of char elements
+			return new StringDataInstance(dataType, settings, buf, length, isArray);
 		}
 		return NULL_INSTANCE;
 	}
@@ -155,10 +230,10 @@ public class StringDataInstance {
 	private final String translatedValue;
 	private final Endian endianSetting;
 
-	private boolean showTranslation;
-	private RENDER_ENUM renderSetting;
+	private final boolean showTranslation;
+	private final RENDER_ENUM renderSetting;
 
-	private int length;
+	private final int length;
 	private final MemBuffer buf;
 
 	protected StringDataInstance() {
@@ -171,13 +246,16 @@ public class StringDataInstance {
 		stringLayout = StringLayoutEnum.FIXED_LEN;
 		endianSetting = null;
 		renderSetting = RENDER_ENUM.ALL;
+		length = 0;
+		showTranslation = false;
 	}
 
 	/**
 	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
 	 * pulled from the {@link AbstractStringDataType string data type}.
-	 *
-	 * @param stringDataType {@link AbstractStringDataType} common string base data type.
+	 * 
+	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType} derived type
+	 * or an {@link ArrayStringable} element-of-char-array type. 
 	 * @param settings {@link Settings} attached to the data location.
 	 * @param buf {@link MemBuffer} containing the data.
 	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
@@ -185,14 +263,37 @@ public class StringDataInstance {
 	 * of the containing field of the data instance.
 	 */
 	public StringDataInstance(DataType dataType, Settings settings, MemBuffer buf, int length) {
+		this(dataType, settings, buf, length, false);
+	}
+
+	/**
+	 * Creates a string instance using the data in the {@link MemBuffer} and the settings
+	 * pulled from the {@link AbstractStringDataType string data type}.
+	 * 
+	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType} derived type
+	 * or an {@link ArrayStringable} element-of-char-array type. 
+	 * @param settings {@link Settings} attached to the data location.
+	 * @param buf {@link MemBuffer} containing the data.
+	 * @param length Length passed from the caller to the datatype.  -1 indicates a 'probe'
+	 * trying to detect the length of an unknown string, otherwise it will be the length
+	 * of the containing field of the data instance.
+	 * @param isArrayElement boolean flag, true indicates that the specified dataType is an
+	 * element in an array (ie. char[] vs. just a plain char), causing the string layout
+	 * to be forced to {@link StringLayoutEnum#NULL_TERMINATED_BOUNDED}
+	 */
+	public StringDataInstance(DataType dataType, Settings settings, MemBuffer buf, int length,
+			boolean isArrayElement) {
 		settings = (settings == null) ? SettingsImpl.NO_SETTINGS : settings;
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
 		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
-		// NOTE: for now only handle padding for charSize == 1 
-		this.paddedCharSize =
-			charSize == 1 ? getDataOrganization(dataType).getCharSize() : charSize;
-		this.stringLayout = getLayoutFromDataType(dataType);
+		// NOTE: for now only handle padding for charSize == 1 and the data type is an array of elements, not a "string" 
+		this.paddedCharSize = (dataType instanceof ArrayStringable) && (charSize == 1) //
+				? getDataOrganization(dataType).getCharSize()
+				: charSize;
+		this.stringLayout = isArrayElement //
+				? StringLayoutEnum.NULL_TERMINATED_BOUNDED
+				: getLayoutFromDataType(dataType);
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = TRANSLATION.getTranslatedValue(settings);
 		this.renderSetting = RENDER.getEnumValue(settings);
@@ -202,11 +303,11 @@ public class StringDataInstance {
 	}
 
 	private StringDataInstance(StringDataInstance copyFrom, StringLayoutEnum newLayout,
-			MemBuffer newBuf, int newLen) {
+			MemBuffer newBuf, int newLen, String newCharsetName) {
 		this.charSize = copyFrom.charSize;
 		this.paddedCharSize = copyFrom.paddedCharSize;
 		this.translatedValue = null;
-		this.charsetName = copyFrom.charsetName;
+		this.charsetName = newCharsetName;
 		this.stringLayout = newLayout;
 		this.showTranslation = false;
 		this.renderSetting = copyFrom.renderSetting;
@@ -230,11 +331,17 @@ public class StringDataInstance {
 		if (dataType instanceof AbstractStringDataType) {
 			return ((AbstractStringDataType) dataType).getStringLayout();
 		}
+		if (dataType instanceof AbstractIntegerDataType || dataType instanceof BitFieldDataType) {
+			return StringLayoutEnum.CHAR_SEQ;
+		}
 		return StringLayoutEnum.NULL_TERMINATED_BOUNDED;
 	}
 
 	private static String getCharsetNameFromDataTypeOrSettings(DataType dataType,
 			Settings settings) {
+		if (dataType instanceof BitFieldDataType) {
+			dataType = ((BitFieldDataType) dataType).getBaseDataType();
+		}
 		return (dataType instanceof DataTypeWithCharset)
 				? ((DataTypeWithCharset) dataType).getCharsetName(settings)
 				: DEFAULT_CHARSET_NAME;
@@ -268,12 +375,7 @@ public class StringDataInstance {
 	}
 
 	private boolean isAlreadyDeterminedFixedLen() {
-		return length >= 0 && (stringLayout == StringLayoutEnum.FIXED_LEN);
-	}
-
-	public boolean isPascal() {
-		return stringLayout == StringLayoutEnum.PASCAL_255 ||
-			stringLayout == StringLayoutEnum.PASCAL_64k;
+		return length >= 0 && stringLayout.isFixedLen();
 	}
 
 	/**
@@ -353,16 +455,16 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Returns true if the string has a trailing NULL character within the data instance's
-	 * bounds.
+	 * Returns true if the string should have a trailing NULL character and doesn't.
 	 *
-	 * @return boolean true if there is a trailing NULL character.
+	 * @return boolean true if the trailing NULL character is missing, false if string type
+	 * doesn't need a trailing NULL character or if it is present.
 	 */
-	public boolean hasNullTerminator() {
+	public boolean isMissingNullTerminator() {
 
-		if (!isPascal()) {
+		if (stringLayout.shouldTrimTrailingNulls()) {
 			String str = getStringValueNoTrim();
-			return (str != null) && (str.length() > 0) && str.charAt(str.length() - 1) == 0;
+			return (str != null) && (str.length() > 0) && str.charAt(str.length() - 1) != 0;
 		}
 		return false;
 	}
@@ -418,7 +520,7 @@ public class StringDataInstance {
 	public String getStringValue() {
 		String str = getStringValueNoTrim();
 
-		return (str != null) && !isPascal() ? trimNulls(str) : str;
+		return (str != null) && stringLayout.shouldTrimTrailingNulls() ? trimNulls(str) : str;
 	}
 
 	private String getStringValueNoTrim() {
@@ -436,7 +538,7 @@ public class StringDataInstance {
 	}
 
 	private byte[] getStringBytes() {
-		return isPascal() ? getPascalCharBytes() : getNormalStringCharBytes();
+		return stringLayout.isPascal() ? getPascalCharBytes() : getNormalStringCharBytes();
 	}
 
 	private byte[] getNormalStringCharBytes() {
@@ -507,7 +609,7 @@ public class StringDataInstance {
 
 	private byte[] getBytesFromMemBuff(MemBuffer memBuffer, int copyLen) {
 		// round copyLen down to multiple of paddedCharSize
-		copyLen &= ~(paddedCharSize - 1);
+		copyLen = (copyLen / paddedCharSize) * paddedCharSize;
 
 		byte[] bytes = new byte[copyLen];
 		if (memBuffer.getBytes(bytes, 0) != bytes.length) {
@@ -566,11 +668,6 @@ public class StringDataInstance {
 		return result;
 	}
 
-	private byte[] convertStringToBytes(String s, AdjustedCharsetInfo aci) {
-		Charset cs = Charset.isSupported(aci.charsetName) ? Charset.forName(aci.charsetName) : null;
-		return (cs != null) ? s.getBytes(cs) : null;
-	}
-
 	private static DataConverter getDataConverter(Endian endian) {
 		return endian == Endian.BIG ? BigEndianDataConverter.INSTANCE
 				: LittleEndianDataConverter.INSTANCE;
@@ -624,6 +721,10 @@ public class StringDataInstance {
 	 * @return formatted String
 	 */
 	public String getStringRepresentation() {
+		return getStringRep(StringRenderBuilder.DOUBLE_QUOTE, StringRenderBuilder.DOUBLE_QUOTE);
+	}
+
+	private String getStringRep(char quoteChar, char quoteCharMulti) {
 
 		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return UNKNOWN;
@@ -643,15 +744,23 @@ public class StringDataInstance {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
 
+		if (stringValue.length() == 0 && aci.byteStartOffset != 0) {
+			// If the byteStartOffset isn't zero it means there was one char that was the unicode BOM.
+			// Asking the Charset to decode it returned nothing, so force it.
+			stringValue = BOM_RESULT_STR;
+		}
+
 		// if we get the same number of characters out that we put into the decoder,
 		// then its a good chance there is a one-to-one correspondence between original char
-		// and decoded char.
-		boolean canRecoverOriginalCharBytes =
-			(stringValue.length() - aci.byteStartOffset) == (stringBytes.length / charSize);
+		// offsets and decoded char offsets.
+		boolean isByteToStringCharEquiv =
+			stringValue.length() == ((stringBytes.length - aci.byteStartOffset) / charSize);
 
-		StringRenderBuilder strBuf = new StringRenderBuilder(charSize);
+		stringValue = stringLayout.shouldTrimTrailingNulls() ? trimNulls(stringValue) : stringValue;
 
-		stringValue = !isPascal() ? trimNulls(stringValue) : stringValue;
+		StringRenderBuilder strBuf = new StringRenderBuilder(charSize,
+			stringValue.length() == 1 ? quoteChar : quoteCharMulti);
+
 		if (stringValue.isEmpty() || (stringValue.length() == 1 && stringValue.charAt(0) == 0)) {
 			// force the string renderer into "string" mode so we get empty quotes when done.
 			strBuf.addString("");
@@ -660,16 +769,13 @@ public class StringDataInstance {
 		// For each 32bit character in the java string try to add it to the StringRenderBuilder
 		for (int i = 0, strLength = stringValue.length(); i < strLength;) {
 			int codePoint = stringValue.codePointAt(i);
-			byte[] originalCharBytes;
-			if (canRecoverOriginalCharBytes) {
-				originalCharBytes = new byte[charSize];
-				System.arraycopy(stringBytes, i * charSize, originalCharBytes, 0, charSize);
-			}
-			else {
-				// can't get original bytes, cheat and run the codePoint through the charset
-				// to get what should be the same as the original bytes.
-				String singleCharStr = new String(new int[] { codePoint }, 0, 1);
-				originalCharBytes = convertStringToBytes(singleCharStr, aci);
+
+			RENDER_ENUM currentCharRenderSetting = renderSetting;
+			if (codePoint == StringUtilities.UNICODE_REPLACEMENT && isByteToStringCharEquiv &&
+				!isReplacementCharAt(stringBytes, i * charSize + aci.byteStartOffset)) {
+				// if this is a true decode error and we can recover the original bytes,
+				// then force the render mode to byte seq.
+				currentCharRenderSetting = RENDER_ENUM.BYTE_SEQ;
 			}
 
 			if (StringUtilities.isControlCharacterOrBackslash(codePoint)) {
@@ -681,41 +787,30 @@ public class StringDataInstance {
 			else if (StringUtilities.isDisplayable(codePoint)) {
 				strBuf.addCodePointChar(codePoint);
 			}
-			else if (StringUtilities.isUnicodeReplacementCodePoint(codePoint)) {
-				// if this is a true decode error and we can recover the original bytes
-				// render as byte seq.
-				// Otherwise, display the <?> symbol.
-				if (canRecoverOriginalCharBytes &&
-					isMismatchedCharBytes(originalCharBytes, codePoint)) {
-					strBuf.addByteSeq(originalCharBytes);
-				}
-				else {
-					strBuf.addCodePointChar(codePoint);
-				}
-			}
 			else {
 				// not simple ascii, decide how to handle:
 				// add the character to the string in a format depending on the
 				// render settings.  ISO control chars are forced to be
 				// escaped regardless of the render setting.
-				RENDER_ENUM thisCharRenderSetting = renderSetting;
-				if (thisCharRenderSetting == RENDER_ENUM.ALL) {
-					if (codePoint <= 0x7f) {
+				if (currentCharRenderSetting == RENDER_ENUM.ALL) {
+					if (codePoint <= ASCII_MAX) {
 						// render non-displayable, non-control-char ascii-ish bytes as bytes instead
 						// of as escape sequences
-						thisCharRenderSetting = RENDER_ENUM.BYTE_SEQ;
+						currentCharRenderSetting = RENDER_ENUM.BYTE_SEQ;
 					}
-					else if (Character.isISOControl(codePoint) || !Character.isDefined(codePoint)) {
-						thisCharRenderSetting = RENDER_ENUM.ESC_SEQ;
+					else if (Character.isISOControl(codePoint) || !Character.isDefined(codePoint) ||
+						codePoint == StringUtilities.UNICODE_BE_BYTE_ORDER_MARK) {
+						currentCharRenderSetting = RENDER_ENUM.ESC_SEQ;
 					}
 				}
 
-				switch (thisCharRenderSetting) {
+				switch (currentCharRenderSetting) {
 					case ALL:
 						strBuf.addCodePointChar(codePoint);
 						break;
 					case BYTE_SEQ:
-						strBuf.addByteSeq(originalCharBytes);
+						strBuf.addByteSeq(getOriginalBytes(isByteToStringCharEquiv, i, codePoint,
+							stringBytes, aci));
 						break;
 					case ESC_SEQ:
 						strBuf.addEscapedCodePoint(codePoint);
@@ -724,9 +819,8 @@ public class StringDataInstance {
 			}
 			i += Character.charCount(codePoint);
 		}
-		String result = strBuf.toString();
 		String prefix = "";
-		if (charsetName.startsWith("UTF") && result.startsWith("\"")) {
+		if (charsetName.startsWith("UTF") && strBuf.startsWithQuotedText()) {
 			switch (charSize) {
 				case 1:
 					prefix = "u8";
@@ -739,7 +833,27 @@ public class StringDataInstance {
 					break;
 			}
 		}
-		return prefix + result;
+		return prefix + strBuf.toString();
+	}
+
+	private byte[] getOriginalBytes(boolean isByteToStringCharEquiv, int charOffset, int codePoint,
+			byte[] stringBytes, AdjustedCharsetInfo aci) {
+
+		if (isByteToStringCharEquiv) {
+			byte[] originalCharBytes = new byte[charSize];
+			System.arraycopy(stringBytes, charOffset * charSize + aci.byteStartOffset,
+				originalCharBytes, 0, charSize);
+			return originalCharBytes;
+		}
+
+		// can't get original bytes, cheat and run the codePoint through the charset
+		// to get what should be the same as the original bytes.
+		String singleCharStr = new String(new int[] { codePoint }, 0, 1);
+		Charset cs = Charset.isSupported(aci.charsetName) ? Charset.forName(aci.charsetName) : null;
+		if (cs == null || !cs.canEncode()) {
+			return null;
+		}
+		return singleCharStr.getBytes(cs);
 	}
 
 	/**
@@ -778,105 +892,35 @@ public class StringDataInstance {
 	}
 
 	/**
-	 * Convert a char value in memory into its canonical unicode representation, using
+	 * Convert a char value (or sequence of char values) in memory into its canonical unicode representation, using
 	 * attached charset and encoding information.
 	 * <p>
-	 * This implementation treats the char value as a 1 element long string and reuses the string
-	 * logic to read it from memory using charset info.
 	 *
-	 * @return String containing the representation of the single char.
+	 * @return String containing the representation of the char.
 	 */
 	public String getCharRepresentation() {
-		if (length < charSize) {
+		if (length < charSize /* also covers case of isProbe() */ ) {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
 
-		byte[] charBytes = convertPaddedToUnpadded(getStringBytes());
-		if (charBytes == null) {
-			return UNKNOWN_DOT_DOT_DOT;
-		}
+		// if the charset's charsize is bigger than the number of bytes we have,
+		// discard the charset and fall back to US-ASCII
+		String newCSName = (length < charSize) ? DEFAULT_CHARSET_NAME : charsetName;
 
-		AdjustedCharsetInfo aci = getAdjustedCharsetInfo(charBytes);
-		String stringValue = convertBytesToString(charBytes, aci);
-		if (stringValue == null) {
-			return UNKNOWN_DOT_DOT_DOT;
-		}
+		StringDataInstance charseqSDI =
+			new StringDataInstance(this, StringLayoutEnum.CHAR_SEQ, buf, length, newCSName);
 
-		if (stringValue.length() == 0) {
-			if (aci.byteStartOffset == 0) {
-				return UNKNOWN;
-			}
-
-			// If the byteStartOffset isn't zero it means the char was the unicode BOM.
-			// Asking the Charset to decode it returned nothing, so force it.
-			stringValue = BOM_RESULT_STR;
-		}
-
-		int codePoint = stringValue.codePointAt(0);
-		RENDER_ENUM tmpRenderSetting = renderSetting;
-
-		StringRenderBuilder strBuf =
-			new StringRenderBuilder(charSize, StringRenderBuilder.SINGLE_QUOTE);
-		if (StringUtilities.isControlCharacterOrBackslash(codePoint)) {
-			strBuf.addString(StringUtilities.convertCodePointToEscapeSequence(codePoint));
-		}
-		else if (codePoint == 0x0000 && renderSetting != RENDER_ENUM.BYTE_SEQ) {
-			strBuf.addEscapedChar('0');
-		}
-		else if (StringUtilities.isUnicodeReplacementCodePoint(codePoint) &&
-			renderSetting != RENDER_ENUM.BYTE_SEQ) {
-			strBuf.addCodePointChar(codePoint);
-		}
-		else if (StringUtilities.isDisplayable(codePoint)) {
-			strBuf.addCodePointChar(codePoint);
-		}
-		else {
-			// not simple ascii, decide how to handle:
-			// add the character to the string in a format depending on the
-			// render settings.  ISO control chars are forced to be
-			// escaped regardless of the render setting.
-			boolean alwaysNeedsEscaping = (renderSetting == RENDER_ENUM.ALL) &&
-				(Character.isISOControl(codePoint) || !Character.isDefined(codePoint) ||
-					codePoint == StringUtilities.UNICODE_BE_BYTE_ORDER_MARK);
-
-			tmpRenderSetting = alwaysNeedsEscaping ? RENDER_ENUM.ESC_SEQ : renderSetting;
-
-			switch (tmpRenderSetting) {
-				case ALL:
-					strBuf.addCodePointChar(codePoint);
-					break;
-				case ESC_SEQ:
-					strBuf.addEscapedCodePoint(codePoint);
-					break;
-				case BYTE_SEQ:
-					// BYTE_SEQ uses original bytes of char data, not the bytes produced by the charset
-					strBuf.addByteSeq(charBytes);
-					break;
-			}
-
-		}
-		String prefix = "";
-		if (charsetName.startsWith("UTF") && tmpRenderSetting != RENDER_ENUM.BYTE_SEQ) {
-			switch (charSize) {
-				case 1:
-					prefix = "u8";
-					break;
-				case 2:
-					prefix = "u";
-					break;
-				case 4:
-					prefix = "U";
-					break;
-			}
-		}
-
-		return prefix + strBuf.toString();
+		return charseqSDI.getStringRep(StringRenderBuilder.SINGLE_QUOTE,
+			StringRenderBuilder.DOUBLE_QUOTE);
 	}
 
-	private boolean isMismatchedCharBytes(byte[] originalCharBytes, int codePoint) {
-		long originalValue = DataConverter.getInstance(buf.isBigEndian()).getValue(
-			originalCharBytes, originalCharBytes.length);
-		return originalValue != codePoint;
+	private boolean isReplacementCharAt(byte[] stringBytes, int byteOffset) {
+		if (byteOffset + charSize > stringBytes.length) {
+			return false;
+		}
+		long origCodePointValue = DataConverter.getInstance(buf.isBigEndian()).getValue(stringBytes,
+			byteOffset, charSize);
+		return origCodePointValue == StringUtilities.UNICODE_REPLACEMENT;
 	}
 
 	private static String getTranslatedStringRepresentation(String translatedString) {
@@ -948,7 +992,7 @@ public class StringDataInstance {
 		}
 		int newLength = Math.max(0, length - byteOffset);
 		StringDataInstance sub = new StringDataInstance(this, getOffcutLayout(),
-			new WrappedMemBuffer(buf, byteOffset), newLength);
+			new WrappedMemBuffer(buf, byteOffset), newLength, charsetName);
 
 		return sub;
 	}

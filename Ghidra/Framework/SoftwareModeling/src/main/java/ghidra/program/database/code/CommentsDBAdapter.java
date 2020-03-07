@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,9 @@
  */
 package ghidra.program.database.code;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -25,14 +27,10 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.IOException;
-
-import db.*;
-
 /**
  * Adapter to access the comments table for code units. The primary key
  * for the table is the address. The record contains all of the comment
- * types: Pre, Post, EOL, Plate, & Repeatable.
+ * types: Pre, Post, EOL, Plate, and Repeatable.
  */
 abstract class CommentsDBAdapter {
 

@@ -27,7 +27,7 @@ public class FunctionThunkFieldLocation extends FunctionSignatureFieldLocation {
 	/**
 	 * Construct a new FunctionThunkFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
 	 * @param charOffset the position within the function thunk string for this location.

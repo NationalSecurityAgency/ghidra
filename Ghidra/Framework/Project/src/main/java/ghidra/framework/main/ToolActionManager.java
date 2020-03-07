@@ -307,7 +307,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		}
 		// only enable if project has more than 1 running tool
 		ToolManager tm = project.getToolManager();
-		Tool[] runningTools = tm.getRunningTools();
+		PluginTool[] runningTools = tm.getRunningTools();
 		connectToolsAction.setEnabled(runningTools.length > 1);
 	}
 

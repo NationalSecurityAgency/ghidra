@@ -31,15 +31,17 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
 /**
- * The CodeComparisonPanel class should be extended by any class that is to be discovered by
- * the {@link FunctionComparisonPanel} class and included as a form of comparing two sections 
- * of code within the same or different programs.
- * <br><br>
- * NOTE:  ALL CodeComparisonPanel CLASSES MUST END IN "CodeComparisonPanel".  
- * If not, the ClassSearcher will not find them.
+ * The CodeComparisonPanel class should be extended by any class that is to be 
+ * discovered by the {@link FunctionComparisonPanel} class and included as a 
+ * form of comparing two sections of code within the same or different programs
+ * <p>
+ * NOTE: ALL CodeComparisonPanel CLASSES MUST END IN
+ * <code>CodeComparisonPanel</code> so they are discoverable by the 
+ * {@link ClassSearcher} 
  */
 public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> extends JPanel
 		implements ExtensionPoint, FocusListener {
@@ -68,15 +70,18 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 	protected Function[] functions = new Function[2];
 	protected Data[] data = new Data[2];
 
+	/** If true, the title of each comparison panel will be shown */
+	private boolean showTitles = true;
+
 	private boolean syncScrolling = false;
 
 	private T fieldPanelCoordinator;
 
 	/**
-	 * Base constructor
-	 * @param owner the name of the owner of this component (typically the name of the plugin that 
-	 * owns this panel.)
-	 * @param tool the tool that contains the component.
+	 * Constructor
+	 * 
+	 * @param owner the name of the owner of this component 
+	 * @param tool the tool that contains the component
 	 */
 	protected CodeComparisonPanel(String owner, PluginTool tool) {
 		this.owner = owner;
@@ -84,34 +89,38 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 	}
 
 	/**
-	 * The GUI component for this CodeComparisonPanel. A CodeComparisonPanel provides a 
-	 * dual display with a left and right side for comparing some part of the code for two programs.
-	 * @return the component.
+	 * The GUI component for this CodeComparisonPanel
+	 * 
+	 * @return the component
 	 */
 	public abstract JComponent getComponent();
 
 	/**
-	 * The title for this code comparison component.
-	 * @return the title.
+	 * The title for this code comparison panel
+	 * 
+	 * @return the title
 	 */
 	public abstract String getTitle();
 
 	/**
-	 * Specifies the two programs to be compared by this panel.
-	 * @param leftProgram the program for the left side.
-	 * @param rightProgram the program for the right side.
+	 * Specifies the two programs to be compared by this panel
+	 * 
+	 * @param leftProgram the program for the left side
+	 * @param rightProgram the program for the right side
 	 */
 	protected abstract void setPrograms(Program leftProgram, Program rightProgram);
 
 	/**
-	 * Displays a comparison of two program's functions.
+	 * Displays a comparison of two program's functions
+	 * 
 	 * @param leftFunction the function to show in the left side of the code comparison view
 	 * @param rightFunction the function to show in the right side of the code comparison view
 	 */
 	public abstract void loadFunctions(Function leftFunction, Function rightFunction);
 
 	/**
-	 * Displays a comparison of two program's data items.
+	 * Displays a comparison of two program's data items
+	 * 
 	 * @param leftData the data item to show in the left side of the code comparison view
 	 * @param rightData the data item to show in the right side of the code comparison view
 	 */
@@ -119,7 +128,8 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 
 	/**
 	 * Displays program information for a particular set of addresses in the two programs 
-	 * being compared.
+	 * being compared
+	 * 
 	 * @param leftProgram the program in the left side of the code comparison view
 	 * @param rightProgram the program in the right side of the code comparison view
 	 * @param leftAddresses the addresses of the program info to show in the left side
@@ -129,19 +139,21 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 			AddressSetView leftAddresses, AddressSetView rightAddresses);
 
 	/**
-	 * Cleans up resources when this panel is no longer needed.
+	 * Cleans up resources when this panel is no longer needed
 	 */
 	public abstract void dispose();
 
 	/**
-	 * Enable/disable navigation in this panel using the mouse.
-	 * @param enabled false disables mouse navigation.
+	 * Enable/disable navigation in this panel using the mouse
+	 * 
+	 * @param enabled false disables mouse navigation
 	 */
 	public abstract void setMouseNavigationEnabled(boolean enabled);
 
 	/**
-	 * Get the actions for this CodeComparisonPanel.
-	 * @return an array containing the actions
+	 * Returns the actions for this panel
+	 * 
+	 * @return an array of docking actions
 	 */
 	public DockingAction[] getActions() {
 		// No actions currently that appear for each CodeComparisonPanel.
@@ -149,6 +161,14 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 		// specific to that CodeComparisonPanel.
 		DockingAction[] actions = new DockingAction[] {};
 		return actions;
+	}
+
+	public boolean getShowTitles() {
+		return showTitles;
+	}
+
+	public void setShowTitles(boolean showTitles) {
+		this.showTitles = showTitles;
 	}
 
 	/**
@@ -306,13 +326,13 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 	 * Gets the left field panel for this CodeComparisonPanel.
 	 * @return the left FieldPanel.
 	 */
-	protected abstract FieldPanel getLeftFieldPanel();
+	public abstract FieldPanel getLeftFieldPanel();
 
 	/**
 	 * Gets the right field panel for this CodeComparisonPanel.
 	 * @return the right FieldPanel.
 	 */
-	protected abstract FieldPanel getRightFieldPanel();
+	public abstract FieldPanel getRightFieldPanel();
 
 	/**
 	 * Determines if the layouts of the views are synchronized with respect to scrolling and

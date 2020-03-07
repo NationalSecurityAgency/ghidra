@@ -26,7 +26,7 @@ import ghidra.app.context.ListingContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.*;
+import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
@@ -262,12 +262,6 @@ public class ClearPlugin extends Plugin {
 					(loc instanceof CodeUnitLocation)) {
 					return true;
 				}
-				return false;
-			}
-
-			@Override
-			public boolean isValidGlobalContext(ActionContext context) {
-				// it's too dangerous to let the clear action work globally
 				return false;
 			}
 		};

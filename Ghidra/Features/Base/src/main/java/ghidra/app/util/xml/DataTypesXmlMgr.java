@@ -546,6 +546,7 @@ public class DataTypesXmlMgr {
 		writeRegularComment(writer, enuum.getDescription());
 
 		String[] names = enuum.getNames();
+		Arrays.sort(names);
 		for (String name : names) {
 			attrs = new XmlAttributes();
 			attrs.addAttribute("NAME", name);

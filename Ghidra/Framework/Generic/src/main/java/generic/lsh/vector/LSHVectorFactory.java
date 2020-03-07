@@ -36,7 +36,7 @@ public abstract class LSHVectorFactory {
 	/**
 	 * Generate an LSHVector from a feature set, individual features are integer hashes.
 	 * The integers MUST already be sorted.
-	 * The same integer can occur more than once in the array (term frequency (TF) > 1).
+	 * The same integer can occur more than once in the array (term frequency (TF) &gt; 1).
 	 * The factory decides internally how to create weights based on term frequency and any
 	 * knowledge of Inverse Document Frequency (IDF)
 	 * @param feature is the sorted array of integer features

@@ -77,7 +77,7 @@ public class WideChar16DataType extends BuiltIn implements ArrayStringable, Data
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		try {
-			return new Character((char) buf.getUnsignedShort(0));
+			return Character.valueOf((char) buf.getUnsignedShort(0));
 		}
 		catch (MemoryAccessException e) {
 			// ignore
@@ -94,7 +94,7 @@ public class WideChar16DataType extends BuiltIn implements ArrayStringable, Data
 	public String getDefaultLabelPrefix(MemBuffer buf, Settings settings, int length,
 			DataTypeDisplayOptions options) {
 
-		StringBuffer strBuf = new StringBuffer();
+		StringBuilder strBuf = new StringBuilder();
 		strBuf.append("WCHAR16_");
 		try {
 			int val = buf.getUnsignedShort(0);
@@ -125,7 +125,7 @@ public class WideChar16DataType extends BuiltIn implements ArrayStringable, Data
 	@Override
 	public String getArrayDefaultLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options) {
-		return new StringDataInstance(this, settings, buf, len).getLabel(
+		return new StringDataInstance(this, settings, buf, len, true).getLabel(
 			AbstractStringDataType.DEFAULT_UNICODE_ABBREV_PREFIX + "_",
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL_PREFIX,
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL, options);
@@ -134,7 +134,7 @@ public class WideChar16DataType extends BuiltIn implements ArrayStringable, Data
 	@Override
 	public String getArrayDefaultOffcutLabelPrefix(MemBuffer buf, Settings settings, int len,
 			DataTypeDisplayOptions options, int offcutOffset) {
-		return new StringDataInstance(this, settings, buf, len).getOffcutLabelString(
+		return new StringDataInstance(this, settings, buf, len, true).getOffcutLabelString(
 			AbstractStringDataType.DEFAULT_UNICODE_ABBREV_PREFIX + "_",
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL_PREFIX,
 			AbstractStringDataType.DEFAULT_UNICODE_LABEL, options, offcutOffset);

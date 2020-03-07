@@ -1,0 +1,172 @@
+# RV32/RV64  Zicsr Standard Extension
+
+
+# csrrc d,E,s 00003073 0000707f SIMPLE (0, 0) 
+:csrrc rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x3 & op1519
+{
+	#TODO  Size restriction error
+	# local tmprs1:$(XLEN) = rs1;
+	# local oldcsr:$(XLEN) = csr:$(XLEN);
+	# rd = oldcsr;
+	# local tmp:$(XLEN) = op1519;
+	# if (tmp == 0) goto inst_next;
+	# local newcsr:$(XLEN) = oldcsr & ~tmprs1;
+	# csr = zext(newcsr);
+}
+
+
+# csrrci d,E,Z 00007073 0000707f SIMPLE (0, 0) 
+:csrrci rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x7
+{
+	#TODO  Size restriction error
+	# local oldcsr:$(XLEN) = csr:$(XLEN);
+	# rd = oldcsr;
+	# local tmp:$(XLEN) = op1519;
+	# if (tmp == 0) goto inst_next;
+	# csr = csr & ~tmp;
+}
+
+
+# csrrs d,E,s 00002073 0000707f SIMPLE (0, 0) 
+:csrrs rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1519
+{
+	#TODO  Size restriction error
+	# local tmprs1 = rs1;
+	# local oldcsr:$(XLEN) = csr:$(XLEN);
+	# rd = oldcsr;
+	# local tmp:$(XLEN) = op1519;
+	# if (tmp == 0) goto inst_next;
+	# csr = csr | tmprs1;
+}
+
+
+# csrrsi d,E,Z 00006073 0000707f SIMPLE (0, 0) 
+:csrrsi rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x6
+{
+	#TODO  Size restriction error
+	# local oldcsr:$(XLEN) = csr:$(XLEN);
+	# rd = oldcsr;
+	# local tmp:$(XLEN) = op1519;
+	# if (tmp == 0) goto inst_next;
+	# csr = csr | tmp;
+}
+
+
+# csrrw d,E,s 00001073 0000707f SIMPLE (0, 0) 
+:csrrw rd,csr,rs1 is rs1 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op1519
+{
+	#TODO  Size restriction error
+	# local tmprs1:$(XLEN) = rs1;
+	# local oldcsr:$(XLEN) = csr:$(XLEN);
+	# local tmp:$(XLEN) = op1519;
+	# csr = tmprs1;
+	# if (tmp == 0) goto inst_next;
+	# rd = oldcsr;
+}
+
+
+# csrrwi d,E,Z 00005073 0000707f SIMPLE (0, 0) 
+:csrrwi rd,csr,op1519 is op1519 & csr & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5
+{
+	#TODO  Size restriction error
+	# local oldcsr:$(XLEN) = csr:$(XLEN);
+	# local tmp:$(XLEN) = op1519;
+	# csr = tmp;
+	# if (tmp == 0) goto inst_next;
+	# rd = oldcsr;
+}
+
+
+# frcsr d 00302073 fffff07f SIMPLE (0, 0) 
+:frcsr rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x60
+{
+	rd = fcsr;
+}
+
+# frflags d 00102073 fffff07f SIMPLE (0, 0) 
+:frflags rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x20
+{
+	rd = zext(fflags[0,5]);
+}
+
+# frrm d 00202073 fffff07f SIMPLE (0, 0) 
+:frrm rd is rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x2 & op1531=0x40
+{
+	rd = frm;
+}
+
+# fscsr s 00301073 fff07fff SIMPLE (0, 0) 
+:fscsr rs1 is rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op0711=0x0 & op2031=0x3
+{
+	zero = fcsr;
+	fcsr = rs1;
+}
+
+# fscsr d,s 00301073 fff0707f SIMPLE (0, 0) 
+:fscsr rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x3
+{
+	rd = fcsr;
+	fcsr = rs1;
+}
+
+
+# fsflags s 00101073 fff07fff SIMPLE (0, 0) 
+:fsflags rs1 is rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op0711=0x0 & op2031=0x1
+{
+	zero = zext(fflags[0,5]);
+	fflags[0,5] = rs1[0,5];
+}
+
+# fsflags d,s 00101073 fff0707f SIMPLE (0, 0) 
+:fsflags rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x1
+{
+	rd = zext(fflags[0,5]);
+	fflags[0,5] = rs1[0,5];
+}
+
+# fsflagsi d,Z 00105073 fff0707f SIMPLE (0, 0) 
+:fsflagsi rd,op1519 is op1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op2031=0x1
+{
+	rd = zext(fflags[0,5]);
+	local tmp:1 = op1519:1;
+	fflags[0,5] = tmp[0,5];
+}
+
+# fsflagsi Z 00105073 fff07fff SIMPLE (0, 0) 
+:fsflagsi op1519 is op1519 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op0711=0x0 & op2031=0x1
+{
+	zero = zext(fflags[0,5]);
+	local tmp:1 = op1519:1;
+	fflags[0,5] = tmp[0,5];
+}
+
+# fsrm s 00201073 fff07fff SIMPLE (0, 0) 
+:fsrm rs1 is rs1 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op0711=0x0 & op2031=0x2
+{
+	zero = zext(frm[0,3]);
+	frm[0,3] = rs1[0,3];
+}
+
+# fsrm d,s 00201073 fff0707f SIMPLE (0, 0) 
+:fsrm rd,rs1 is rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op2031=0x2
+{
+	rd = zext(frm[0,3]);
+	frm[0,3] = rs1[0,3];
+}
+
+# fsrmi d,Z 00205073 fff0707f SIMPLE (0, 0) 
+:fsrmi rd,op1519 is op1519 & rd & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op2031=0x2
+{
+	rd = zext(frm[0,3]);
+	local tmp:1 = op1519:1;
+	frm[0,3] = tmp[0,3];
+}
+
+# fsrmi Z 00205073 fff07fff SIMPLE (0, 0) 
+:fsrmi op1519 is op1519 & op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x5 & op0711=0x0 & op2031=0x2
+{
+	zero = zext(frm[0,3]);
+	local tmp:1 = op1519:1;
+	frm[0,3] = tmp[0,3];
+}
+

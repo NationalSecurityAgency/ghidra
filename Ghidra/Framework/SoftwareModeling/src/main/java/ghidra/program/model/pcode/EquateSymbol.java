@@ -21,7 +21,7 @@ import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
-public class EquateSymbol extends DynamicSymbol {
+public class EquateSymbol extends HighSymbol {
 
 	public static final int FORMAT_DEFAULT = 0;
 	public static final int FORMAT_HEX = 1;
@@ -33,29 +33,37 @@ public class EquateSymbol extends DynamicSymbol {
 	private long value;			// Value of the equate
 	private int convert;		// Non-zero if this is a conversion equate
 	
-	public EquateSymbol() {
+	public EquateSymbol(HighFunction func) {
+		super(func);
 	}
 
-	public EquateSymbol(String nm,long val,HighFunction func,Address addr,long hash,int format) {
-		super(nm, DataType.DEFAULT, 1, func, addr, hash, format);
+	public EquateSymbol(long uniqueId, String nm, long val, HighFunction func, Address addr,
+			long hash) {
+		super(uniqueId, nm, DataType.DEFAULT, func);
+		category = 1;
 		value = val;
 		convert = FORMAT_DEFAULT;
+		DynamicEntry entry = new DynamicEntry(this, addr, hash);
+		addMapEntry(entry);
 	}
 	
-	public EquateSymbol(int conv,long val,HighFunction func,Address addr,long hash,int format) {
-		super("", DataType.DEFAULT, 1, func, addr, hash, format);
+	public EquateSymbol(long uniqueId, int conv, long val, HighFunction func, Address addr,
+			long hash) {
+		super(uniqueId, "", DataType.DEFAULT, func);
+		category = 1;
 		value = val;
 		convert = conv;
+		DynamicEntry entry = new DynamicEntry(this, addr, hash);
+		addMapEntry(entry);
 	}
 
 	public long getValue() { return value; }
 
 	@Override
-	public int restoreXML(XmlPullParser parser, HighFunction func) throws PcodeXMLException {
+	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement symel = parser.start("equatesymbol");
-		int symbolId = restoreSymbolXML(symel, func);
+		restoreXMLHeader(symel);
 		type = DataType.DEFAULT;
-		size = 1;
 		convert = FORMAT_DEFAULT;
 		String formString = symel.getAttribute("format");
 		if (formString != null) {
@@ -78,47 +86,12 @@ public class EquateSymbol extends DynamicSymbol {
 		parser.start("value");
 		value = SpecXmlUtils.decodeLong(parser.end().getText());			// End <value> tag
 		parser.end(symel);
-
-		if (size == 0) {
-			throw new PcodeXMLException("Invalid symbol 0-sized data-type: " + type.getName());
-		}
-		while(parser.peek().isStart()) {
-			long hash = 0;
-			int format = 0;
-			XmlElement addrel = parser.start("hash");
-			hash = SpecXmlUtils.decodeLong(addrel.getAttribute("val"));
-			format = SpecXmlUtils.decodeInt(addrel.getAttribute("format"));
-			parser.end(addrel);
-			Address addr = parseRangeList(parser);
-			addReference(addr,hash,format);
-		}
-		return symbolId;
 	}
 
 	@Override
-	public String buildXML() {
-		String sym = buildSymbolXML(function.getDataTypeManager(), name, value, isNameLocked(), false, convert);
-		StringBuilder res = new StringBuilder();
-		res.append("<mapsym type=\"equate\">\n");
-		res.append(sym);
-		buildHashXML(res);
-		res.append("</mapsym>\n");
-		return res.toString();
-	}
-
-	public static String buildSymbolXML(PcodeDataTypeManager dtmanage, String nm,long value,
-			boolean nl, boolean isVolatile,int convert) {
-		StringBuilder res = new StringBuilder();
-		res.append("<equatesymbol");
-		if (nm != null) {
-			SpecXmlUtils.xmlEscapeAttribute(res, "name", nm);
-		}
-		SpecXmlUtils.encodeBooleanAttribute(res, "typelock", true);
-		SpecXmlUtils.encodeBooleanAttribute(res, "namelock", nl);
-		SpecXmlUtils.encodeSignedIntegerAttribute(res, "cat", 1);		// Specify category 1 for the equate
-		if (isVolatile) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "volatile", true);
-		}
+	public void saveXML(StringBuilder buf) {
+		buf.append("<equatesymbol");
+		saveXMLHeader(buf);
 		if (convert != 0) {
 			String formString = "hex";
 			if (convert == FORMAT_HEX) {
@@ -136,14 +109,13 @@ public class EquateSymbol extends DynamicSymbol {
 			else if (convert == FORMAT_CHAR) {
 				formString = "char";
 			}
-			SpecXmlUtils.encodeStringAttribute(res, "format", formString);
+			SpecXmlUtils.encodeStringAttribute(buf, "format", formString);
 		}
-		res.append(">\n");
-		res.append("  <value>0x");
-		res.append(Long.toHexString(value));
-		res.append("</value>\n");
-		res.append("</equatesymbol>\n");
-		return res.toString();
+		buf.append(">\n");
+		buf.append("  <value>0x");
+		buf.append(Long.toHexString(value));
+		buf.append("</value>\n");
+		buf.append("</equatesymbol>\n");
 	}
 	
 	public static int convertName(String nm,long val) {

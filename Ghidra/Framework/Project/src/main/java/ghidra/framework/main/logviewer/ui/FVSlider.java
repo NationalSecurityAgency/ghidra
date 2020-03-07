@@ -29,21 +29,22 @@ import ghidra.framework.main.logviewer.model.*;
 import ghidra.util.Msg;
 
 /**
- * Custom slider that acts as the scroll bar for the {@link FVTable}. This slider listens for
+ * <pre> Custom slider that acts as the scroll bar for the FVTable. This slider listens for
  * changes to the viewport and updates its position accordingly.
  * 
- * Q. Why not just use the standard {@link JScrollbar} that comes with the {@link JScrollPane}?  
+ * Q. Why not just use the standard {@link javax.swing.JScrollBar JScrollBar} that comes with the {@link JScrollPane}?
  * 
- * A. It's because we are viewing only a portion of the total file at any given time; if we used the
- *    standard scroll mechanism, it would size itself and its viewport according to that subset
- * 	  of the total file, while we want it to reflect the file in its entirety.
+ * A. It's because we are viewing only a portion of the total file at any given time.
+ *    If we used the standard scroll mechanism, it would size itself and its viewport
+ *    according to that subset of the total file, while we want it to reflect the file
+ *    in its entirety.
  * 
- * Q. Why extend a JSlider for this custom scroll bar instead of a JScrollBar?  
+ * Q. Why extend a {@link JSlider} for this custom scroll bar instead of a {@link JScrollBar}?
  * 
- * A. The JSlider is much easier to customize, specifically when trying to adjust the size of the
- *    slider thumb. Functionally they are both acceptable for our purposes, but the ease of using
- *    the slider wins out.
- * 
+ * A. The {@link JSlider} is much easier to customize, specifically when trying to adjust
+ *    the size of the slider thumb. Functionally they are both acceptable for our
+ *    purposes, but the ease of using the slider wins out.
+ * </pre>
  */
 public class FVSlider extends JSlider
 		implements ChangeListener, MouseMotionListener, MouseListener {

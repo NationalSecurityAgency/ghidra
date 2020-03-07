@@ -33,5 +33,11 @@ public interface IndexMapper {
 		}
 	};
 
+	/**
+	 * Maps an index from one address mapping to another. This method will return
+	 * {@link BigInteger#ZERO} if there no mapping. 
+	 * @param value the index value to map from an old index map to a new index map
+	 * @return the mapped index
+	 */
 	public BigInteger map(BigInteger value);
 }

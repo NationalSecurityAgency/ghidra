@@ -42,7 +42,7 @@ public class ListingMergePanelPlugin extends Plugin implements ProgramaticUseOnl
 	/**
 	 * Constructor
 	 * @param tool merge tool
-	 * @param mergeManager merge manager
+	 * @param mergePanel merge panel
 	 */
 	public ListingMergePanelPlugin(PluginTool tool, ListingMergePanel mergePanel) { 
 		super(tool); 

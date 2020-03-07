@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.TreePath;
+import javax.swing.undo.UndoableEdit;
 
 import org.junit.*;
 
@@ -49,12 +50,14 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.test.*;
 import ghidra.util.*;
+import ghidra.util.datastruct.FixedSizeStack;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
@@ -349,6 +352,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		openInEditor(newScriptFile);
 
+		testScriptFile = newScriptFile;
 		return newScriptFile;
 	}
 
@@ -515,6 +519,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 			editorTextArea.setText(buffer.toString());
 		});
 
+		waitForSwing();
 		return buffer.toString();
 	}
 
@@ -1069,16 +1074,60 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		return box[0];
 	}
 
-	protected void assertSaveButtonEnabled() {
+	protected void assertSaveButtonEnabled() throws Exception {
 		waitForSwing();
 		DockingActionIf saveAction = getAction(plugin, "Save Script");
-		assertTrue(saveAction.isEnabled());
+
+		boolean isEnabled = saveAction.isEnabledForContext(editor.getActionContext(null));
+		if (!isEnabled) {
+			// the action is enabled when the provider detects changes; it is disabled for read-only
+
+			if (isReadOnly(testScriptFile)) {
+				Msg.error(this,
+					"Cannot edit a read-only script: " + testScriptFile.getAbsolutePath());
+				Msg.error(this, "Script cannot be in a 'system root'; those are: ");
+				Collection<ResourceFile> roots = Application.getApplicationRootDirectories();
+				for (ResourceFile resourceFile : roots) {
+					String root = resourceFile.getCanonicalPath().replace('\\', '/');
+					Msg.error(this, "\troot: " + root);
+				}
+				fail("Unexpected read-only script (see log)");
+			}
+
+			//
+			// inside knowledge; brittle code
+			// 
+			@SuppressWarnings("unchecked")
+			FixedSizeStack<UndoableEdit> undoStack =
+				(FixedSizeStack<UndoableEdit>) getInstanceField("undoStack", editor);
+			if (undoStack.isEmpty()) {
+
+				JTextComponent editTextComponent = grabScriptEditorTextArea();
+				String text = getText(editTextComponent);
+				fail("No undo items for the script editor--did edit take place?  Editor text: " +
+					text);
+			}
+
+			Boolean isMissing = (Boolean) invokeInstanceMethod("isFileOnDiskMissing", editor);
+			if (!isMissing) {
+
+				JTextComponent editTextComponent = grabScriptEditorTextArea();
+				String text = getText(editTextComponent);
+				fail("Expected a deleted file to trigger save button enablement.  Editor text: " +
+					text);
+			}
+		}
+	}
+
+	private boolean isReadOnly(ResourceFile script) {
+		assertNotNull(script);
+		return GhidraScriptUtil.isSystemScriptPath(script);
 	}
 
 	protected void assertSaveButtonDisabled() {
 		waitForSwing();
 		DockingActionIf saveAction = getAction(plugin, "Save Script");
-		assertFalse(saveAction.isEnabled());
+		assertFalse(saveAction.isEnabledForContext(editor.getActionContext(null)));
 
 		assertEditorHasNoChanges();
 	}

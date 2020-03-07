@@ -83,11 +83,11 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 
 		showLibraryInNamespaceCheckBox = new GCheckBox(DISPLAY_LIBRARY_IN_NAMESPACE_LABEL);
 		showLibraryInNamespaceCheckBox.setSelected(true);
-		showLocalCheckBox.setToolTipText(SHOW_LIBRARY_IN_NAMESPACE_TOOLTIP);
+		showLibraryInNamespaceCheckBox.setToolTipText(SHOW_LIBRARY_IN_NAMESPACE_TOOLTIP);
 
 		panel.add(showNonLocalCheckBox);
-		panel.add(showLocalCheckBox);
 		panel.add(showLibraryInNamespaceCheckBox);
+		panel.add(showLocalCheckBox);
 
 		localPrefixField =
 			createLocalPrefixTextField(LOCAL_NAMESPACE_PREFIX_LABEL, LOCAL_PREFIX_TOOLTIP, panel);
@@ -169,7 +169,8 @@ public class NamespacePropertyEditor extends PropertyEditorSupport implements Cu
 		if (namespaceOption.isShowLocalNamespace() != showLocalCheckBox.isSelected()) {
 			showLocalCheckBox.setSelected(namespaceOption.isShowLocalNamespace());
 		}
-		if (namespaceOption.isShowLibraryInNamespace() != showLibraryInNamespaceCheckBox.isSelected()) {
+		if (namespaceOption.isShowLibraryInNamespace() != showLibraryInNamespaceCheckBox
+				.isSelected()) {
 			showLibraryInNamespaceCheckBox.setSelected(namespaceOption.isShowLibraryInNamespace());
 		}
 		if (namespaceOption.isUseLocalPrefixOverride() != useLocalPrefixCheckBox.isSelected()) {

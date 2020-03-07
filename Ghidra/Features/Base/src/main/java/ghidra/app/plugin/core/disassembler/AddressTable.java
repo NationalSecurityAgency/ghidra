@@ -231,7 +231,7 @@ public class AddressTable {
 		Address currentAddress = topAddress.addWrap(start * addrSize);
 
 		// make sure this pointer is in the data type manager
-		// since we are going to use it alot
+		// since we are going to use it a lot
 		DataType adt;
 
 		//TODO: Do I need to do something special for the 3 byte pointers or will it know

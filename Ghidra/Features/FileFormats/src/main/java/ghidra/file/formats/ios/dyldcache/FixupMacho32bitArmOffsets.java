@@ -28,7 +28,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class FixupMacho32bitArmOffsets {
-	private DataConverter converter = new LittleEndianDataConverter();
+	private DataConverter converter = LittleEndianDataConverter.INSTANCE;
 
 	public InputStream fix(GFile file, long offsetAdjustment, ByteProvider provider,
 			TaskMonitor monitor) throws IOException, MachException {

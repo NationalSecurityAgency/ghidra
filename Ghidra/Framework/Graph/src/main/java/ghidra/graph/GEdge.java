@@ -25,7 +25,7 @@ public interface GEdge<V> {
 	/**
 	 * Get the start, or tail, of the edge
 	 * 
-	 * <P>In the edge x -> y, x is the start
+	 * <P>In the edge x -&gt; y, x is the start
 	 * 
 	 * @return the start
 	 */
@@ -34,7 +34,7 @@ public interface GEdge<V> {
 	/**
 	 * Get the end, or head, of the edge
 	 * 
-	 * <P>In the edge x -> y, y is the end
+	 * <P>In the edge x -&gt; y, y is the end
 	 * 
 	 * @return the end
 	 */

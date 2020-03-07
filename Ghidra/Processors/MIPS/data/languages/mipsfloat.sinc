@@ -28,7 +28,6 @@ define pcodeop mipsFloatPS;
 
 # 0100 01ff ffft tttt ssss sddd dd00 0000
 :add.S fd, fs, ft           is $(AMODE) & prime=17 & fct=0 & fmt1 & format=0x10 & ft & fs & fd {
-    fd_tmp:4 = fs:4 f+ ft:4;
     fd[0,32] = fs:4 f+ ft:4;
 }
 :add.D fd, fs, ft           is $(AMODE) & prime=17 & fct=0 & fmt1 & format=0x11 & ft & fs & fd & ftD & fsD & fdD {
@@ -53,7 +52,7 @@ define pcodeop mipsFloatPS;
 # 0100 01ff fff0 0000 ssss sddd dd00 1110
 :ceil.w.S fd, fs            is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0E & fmt2 & fd & fs & format=0x10 {
     fs_ceil_tmp:4 = ceil(fs:4); # Note that ceil returns a float the same size as its argument
-    fd[0,32] = trunc( ceil(fs:4) );
+    fd[0,32] = trunc(fs_ceil_tmp);
 }
 :ceil.w.D fd, fs            is $(AMODE) & prime=0x11 & ft=0x0 & fct=0x0E & fmt2 & fd & fs & format=0x11 & fsD {
     fs_tmp:8 = ceil(fsD); # Note that ceil returns a float the same size as its argument

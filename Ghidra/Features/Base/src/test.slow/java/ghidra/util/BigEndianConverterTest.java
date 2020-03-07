@@ -15,18 +15,14 @@
  */
 package ghidra.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.BigEndianDataConverter;
-import ghidra.util.DataConverter;
 
 /**
  * 
@@ -38,7 +34,7 @@ import ghidra.util.DataConverter;
  */
 public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest {
 	private byte[] b;
-	private DataConverter dc;
+	private DataConverter dc = BigEndianDataConverter.INSTANCE;
 
 	/**
 	 * Constructor for BigEndianConverterTest.
@@ -54,7 +50,6 @@ public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest 
 		for (int i = 0; i < b.length; i++) {
 			b[i] = (byte) i;
 		}
-		dc = new BigEndianDataConverter();
 	}
 
 	@Test
@@ -75,6 +70,10 @@ public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(0x000102L, dc.getValue(b, 3));
 		assertEquals(0x0001020304050607L, dc.getValue(b, 8));
 
+		assertEquals(0x0001L, dc.getSignedValue(b, 2));
+		assertEquals(0x000102L, dc.getSignedValue(b, 3));
+		assertEquals(0x0001020304050607L, dc.getSignedValue(b, 8));
+
 		assertEquals(0x0203L, dc.getValue(b, 2, 2));
 		assertEquals(0x020304L, dc.getValue(b, 2, 3));
 		assertEquals(0x0203040506070809L, dc.getValue(b, 2, 8));
@@ -83,15 +82,21 @@ public class BigEndianConverterTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(0x04050607, dc.getBigInteger(b, 4, 4, true).intValue());
 		assertEquals(0x0405060708090a0bL, dc.getBigInteger(b, 4, 8, true).longValue());
 
-		BigInteger bint =
-			dc.getBigInteger(new byte[] { 0x01, 0x02, (byte) 0xff, 0x03 }, 2, 2, true);
+		BigInteger bint = dc.getBigInteger(bytes(0x01, 0x02, 0xff, 0x03), 2, 2, true);
 		assertEquals((short) 0xff03, bint.shortValue());// -253
 		assertEquals(0xffffff03, bint.intValue());
 
-		bint = dc.getBigInteger(new byte[] { 0x01, 0x02, (byte) 0xff, 0x03 }, 2, 2, false);
+		bint = dc.getBigInteger(bytes(0x01, 0x02, 0xff, 0x03), 2, 2, false);
 		assertEquals((short) 0xff03, bint.shortValue());
 		assertEquals(0x0000ff03, bint.intValue());
+	}
 
+	@Test
+	public void testGetSignedValues() {
+		assertEquals(Integer.MIN_VALUE, dc.getSignedValue(bytes(0x80, 00, 00, 00), 4));
+		assertEquals(-0x800000L, dc.getSignedValue(bytes(0x80, 00, 00, 00), 3));
+
+		assertEquals(-256, dc.getSignedValue(bytes(0xFF, 00, 00, 00), 2));
 	}
 
 	@Test

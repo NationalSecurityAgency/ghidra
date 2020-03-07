@@ -323,7 +323,7 @@ public interface ReferenceManager {
 
 	/**
 	 * Return true if a memory reference exists with the given "to" address.
-	 * @param toAddr address being refered to.
+	 * @param toAddr address being referred to.
 	 */
 	public boolean hasReferencesTo(Address toAddr);
 

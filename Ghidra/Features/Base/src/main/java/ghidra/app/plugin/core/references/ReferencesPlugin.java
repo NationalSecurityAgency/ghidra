@@ -530,8 +530,10 @@ public class ReferencesPlugin extends Plugin {
 		tool.executeBackgroundCommand(cmd, cu.getProgram());
 	}
 
-	boolean addDefaultReference(Program program, Address fromAddr, int opIndex, Address toAddr) {
-		Command cmd = new AddMemRefCmd(fromAddr, toAddr, SourceType.USER_DEFINED, opIndex, true);
+	boolean addDefaultReference(Program program, Address fromAddr, int opIndex, Address toAddr,
+			RefType refType) {
+		Command cmd =
+			new AddMemRefCmd(fromAddr, toAddr, refType, SourceType.USER_DEFINED, opIndex, true);
 		return tool.execute(cmd, program);
 	}
 

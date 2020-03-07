@@ -54,9 +54,7 @@ public class NamespaceManager implements ManagerDB {
 	 * @param openMode the open mode
 	 * @param lock the program synchronization lock
 	 * @param monitor the task monitor.
-	 * @throws IOException if a database error occurs.
 	 * @throws VersionException if the table version is different from this adapter.
-	 * @throws CancelledException if the user cancels the upgrade.
 	 */
 	public NamespaceManager(DBHandle handle, ErrorHandler errHandler, AddressMap addrMap,
 			int openMode, Lock lock, TaskMonitor monitor) throws VersionException {
@@ -74,9 +72,6 @@ public class NamespaceManager implements ManagerDB {
 
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#deleteAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
@@ -95,26 +90,17 @@ public class NamespaceManager implements ManagerDB {
 		lastBody = null;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#invalidateCache(boolean)
-	 */
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
 		clearCache();
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#setProgram(ghidra.program.database.ProgramDB)
-	 */
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.symbolMgr = (SymbolManager) program.getSymbolTable();
 		globalNamespace = program.getGlobalNamespace();
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -215,7 +201,7 @@ public class NamespaceManager implements ManagerDB {
 	/**
 	 * Checks if an existing namespace's address set intersects with
 	 * the given set. If so, then it throws an OverlappingNamespaceException.
-	 * @throws if the address set to test overlaps a namespace body.
+	 * @throws OverlappingNamespaceException if the address set to test overlaps a namespace body.
 	 */
 	public void overlapsNamespace(AddressSetView set) throws OverlappingNamespaceException {
 		AddressRangeIterator iter =
@@ -312,9 +298,6 @@ public class NamespaceManager implements ManagerDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#moveAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, long, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws AddressOverflowException, CancelledException {

@@ -23,6 +23,7 @@ import generic.continues.GenericFactory;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.Writeable;
+import ghidra.app.util.bin.format.elf.ElfRelocationTable.TableFormat;
 import ghidra.app.util.bin.format.elf.extend.ElfExtensionFactory;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.program.model.data.*;
@@ -40,6 +41,8 @@ public class ElfHeader implements StructConverter, Writeable {
 
 	private static final int MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE = 20;
 
+	private static final int PAD_LENGTH = 7;
+	
 	private HashMap<Integer, ElfProgramHeaderType> programHeaderTypeMap;
 	private HashMap<Integer, ElfSectionHeaderType> sectionHeaderTypeMap;
 	private HashMap<Integer, ElfDynamicType> dynamicTypeMap;
@@ -52,6 +55,8 @@ public class ElfHeader implements StructConverter, Writeable {
 	private byte e_ident_class; //file class
 	private byte e_ident_data; //data encoding
 	private byte e_ident_version; //file version
+	private byte e_ident_osabi; //operating system and abi
+	private byte e_ident_abiversion; //abi version
 	private byte[] e_ident_pad; //padding
 	private short e_type; //object file type
 	private short e_machine; //target architecture
@@ -136,7 +141,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			e_ident_class = reader.readNextByte();
 			e_ident_data = reader.readNextByte();
 			e_ident_version = reader.readNextByte();
-			e_ident_pad = reader.readNextByteArray(9);
+			e_ident_osabi = reader.readNextByte();
+			e_ident_abiversion = reader.readNextByte();
+			e_ident_pad = reader.readNextByteArray(PAD_LENGTH);
 			e_type = reader.readNextShort();
 			e_machine = reader.readNextShort();
 			e_version = reader.readNextInt();
@@ -346,6 +353,13 @@ public class ElfHeader implements StructConverter, Writeable {
 		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_RELA,
 			ElfDynamicType.DT_RELAENT, ElfDynamicType.DT_RELASZ, true);
 
+		// Android versions
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_REL, null,
+			ElfDynamicType.DT_ANDROID_RELSZ, false);
+
+		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELA, null,
+			ElfDynamicType.DT_ANDROID_RELASZ, true);
+
 		parseJMPRelocTable(relocationTableList);
 
 		// In general the above dynamic relocation tables should cover most cases, we will
@@ -363,7 +377,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		try {
 			int sectionHeaderType = section.getType();
 			if (sectionHeaderType == ElfSectionHeaderConstants.SHT_REL ||
-				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA) {
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
 
 				for (ElfRelocationTable relocTable : relocationTableList) {
 					if (relocTable.getFileOffset() == section.getOffset()) {
@@ -379,11 +395,24 @@ public class ElfHeader implements StructConverter, Writeable {
 					sectionToBeRelocated != null ? sectionToBeRelocated.getNameAsString()
 							: "PT_LOAD";
 
-				ElfSectionHeader symbolTableSection = getLinkedSection(link,
-					ElfSectionHeaderConstants.SHT_DYNSYM, ElfSectionHeaderConstants.SHT_SYMTAB);
-				ElfSymbolTable symbolTable = getSymbolTable(symbolTableSection);
+				ElfSectionHeader symbolTableSection;
+				if (link == 0) {
+					// dynamic symbol table assumed when link section value is 0
+					symbolTableSection = getSection(ElfSectionHeaderConstants.dot_dynsym);
+				}
+				else {
+					symbolTableSection = getLinkedSection(link,
+						ElfSectionHeaderConstants.SHT_DYNSYM, ElfSectionHeaderConstants.SHT_SYMTAB);
+				}
 
-				boolean addendTypeReloc = (sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA);
+				ElfSymbolTable symbolTable = getSymbolTable(symbolTableSection);
+				if (symbolTable == null) {
+					throw new NotFoundException("Referenced relocation symbol section not found.");
+				}
+
+				boolean addendTypeReloc =
+					(sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
+						sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA);
 
 				Msg.debug(this,
 					"Elf relocation table section " + section.getNameAsString() +
@@ -394,9 +423,18 @@ public class ElfHeader implements StructConverter, Writeable {
 					return;
 				}
 
-				relocationTableList.add(ElfRelocationTable.createElfRelocationTable(reader, this,
-					section, section.getOffset(), section.getAddress(), section.getSize(),
-					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated));
+				ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
+				if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+					sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
+					format = TableFormat.ANDROID;
+				}
+
+				ElfRelocationTable relocTable = ElfRelocationTable.createElfRelocationTable(reader,
+					this, section, section.getOffset(), section.getAddress(), section.getSize(),
+					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated,
+					format);
+
+				relocationTableList.add(relocTable);
 			}
 		}
 		catch (NotFoundException e) {
@@ -468,13 +506,20 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 
 			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
-			long tableEntrySize = dynamicTable.getDynamicValue(relocEntrySizeType);
+			long tableEntrySize =
+				relocEntrySizeType != null ? dynamicTable.getDynamicValue(relocEntrySizeType) : -1;
 			long tableSize = dynamicTable.getDynamicValue(relocTableSizeType);
 
-			relocationTableList.add(ElfRelocationTable.createElfRelocationTable(reader, this, null,
-				relocTableOffset, relocTableAddr, tableSize, tableEntrySize, addendTypeReloc,
-				dynamicSymbolTable, null));
+			ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
+			if (relocTableAddrType == ElfDynamicType.DT_ANDROID_REL ||
+				relocTableAddrType == ElfDynamicType.DT_ANDROID_RELA) {
+				format = TableFormat.ANDROID;
+			}
 
+			ElfRelocationTable relocTable = ElfRelocationTable.createElfRelocationTable(reader,
+				this, null, relocTableOffset, relocTableAddr, tableSize, tableEntrySize,
+				addendTypeReloc, dynamicSymbolTable, null, format);
+			relocationTableList.add(relocTable);
 		}
 		catch (NotFoundException e) {
 			// ignore - skip (required dynamic table value is missing)
@@ -1126,6 +1171,22 @@ public class ElfHeader implements StructConverter, Writeable {
 	public short e_machine() {
 		return e_machine;
 	}
+	
+	/**
+	 * This member identifies the target operating system and ABI.
+	 * @return the target operating system and ABI
+	 */
+	public byte e_ident_osabi() {
+		return e_ident_osabi;
+	}
+	
+	/**
+	 * This member identifies the target ABI version.
+	 * @return the target ABI version
+	 */
+	public byte e_ident_abiversion() {
+		return e_ident_abiversion;
+	}
 
 	/**
 	 * This member holds the size in bytes of one entry in the file's program header table;
@@ -1536,6 +1597,9 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the symbol table associated to the specified section header
 	 */
 	public ElfSymbolTable getSymbolTable(ElfSectionHeader symbolTableSection) {
+		if (symbolTableSection == null) {
+			return null;
+		}
 		for (int i = 0; i < symbolTables.length; i++) {
 			if (symbolTables[i].getFileOffset() == symbolTableSection.getOffset()) {
 				return symbolTables[i];
@@ -1553,13 +1617,24 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Returns the relocation table associated to the specified section header.
-	 * Or, null if one does not exist.
+	 * Returns the relocation table associated to the specified section header,
+	 * or null if one does not exist.
+	 * @param relocSection section header corresponding to relocation table
 	 * @return the relocation table associated to the specified section header
 	 */
 	public ElfRelocationTable getRelocationTable(ElfSectionHeader relocSection) {
+		return getRelocationTableAtOffset(relocSection.getOffset());
+	}
+
+	/**
+	 * Returns the relocation table located at the specified fileOffset,
+	 * or null if one does not exist.
+	 * @param fileOffset file offset corresponding to start of relocation table
+	 * @return the relocation table located at the specified fileOffset or null
+	 */
+	public ElfRelocationTable getRelocationTableAtOffset(long fileOffset) {
 		for (int i = 0; i < relocationTables.length; i++) {
-			if (relocationTables[i].getFileOffset() == relocSection.getOffset()) {
+			if (relocationTables[i].getFileOffset() == fileOffset) {
 				return relocationTables[i];
 			}
 		}
@@ -1598,7 +1673,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		headerStructure.add(BYTE, "e_ident_class", null);
 		headerStructure.add(BYTE, "e_ident_data", null);
 		headerStructure.add(BYTE, "e_ident_version", null);
-		headerStructure.add(new ArrayDataType(BYTE, e_ident_pad.length, 1), "e_ident_pad", null);
+		headerStructure.add(BYTE, "e_ident_osabi", null);
+		headerStructure.add(BYTE, "e_ident_abiversion", null);
+		headerStructure.add(new ArrayDataType(BYTE, PAD_LENGTH, 1), "e_ident_pad", null);
 		headerStructure.add(WORD, "e_type", null);
 		headerStructure.add(WORD, "e_machine", null);
 		headerStructure.add(DWORD, "e_version", null);
@@ -1761,6 +1838,8 @@ public class ElfHeader implements StructConverter, Writeable {
 		raf.writeByte(e_ident_class);
 		raf.writeByte(e_ident_data);
 		raf.writeByte(e_ident_version);
+		raf.writeByte(e_ident_osabi);
+		raf.writeByte(e_ident_abiversion);
 		raf.write(e_ident_pad);
 		raf.write(dc.getBytes(e_type));
 		raf.write(dc.getBytes(e_machine));

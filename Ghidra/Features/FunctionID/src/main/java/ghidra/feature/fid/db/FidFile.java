@@ -95,7 +95,6 @@ public class FidFile implements Comparable<FidFile> {
 	 * @throws IOException if a general I/O access error.
 	 */
 	public synchronized FidDB getFidDB(boolean openForUpdate) throws VersionException, IOException {
-// FIXME: This seems like a bad design .... how do we ensure that all fidDbs get closed
 		if (openForUpdate && openUpdateableFidDB != null) {
 			openUpdateableFidDB.incrementOpenCount();
 			return openUpdateableFidDB;
@@ -103,6 +102,9 @@ public class FidFile implements Comparable<FidFile> {
 		FidDB fidDB = new FidDB(this, openForUpdate);
 		if (openForUpdate) {
 			openUpdateableFidDB = fidDB;
+		}
+		if (supportedLanguages == null) {
+			supportedLanguages = getSupportedLanguages(fidDB);
 		}
 		return fidDB;
 	}
@@ -189,29 +191,35 @@ public class FidFile implements Comparable<FidFile> {
 		return supportedLanguages.contains(language.getLanguageDescription());
 	}
 
-	private Set<LanguageDescription> getSupportedLanguages() {
-		Set<LanguageDescription> languages =
-			new TreeSet<>(new ProcessorSizeComparator());
+	private Set<LanguageDescription> getSupportedLanguages(FidDB fidDB) {
+
+		Set<LanguageDescription> languages = new TreeSet<>(new ProcessorSizeComparator());
 		LanguageService languageService = DefaultLanguageService.getLanguageService();
-		try (FidDB fidDB = getFidDB(false)) {
-			List<LibraryRecord> allLibraries = fidDB.getAllLibraries();
-			for (LibraryRecord libraryRecord : allLibraries) {
-				LanguageID ghidraLanguageID = libraryRecord.getGhidraLanguageID();
+
+		List<LibraryRecord> allLibraries = fidDB.getAllLibraries();
+		for (LibraryRecord libraryRecord : allLibraries) {
+			LanguageID ghidraLanguageID = libraryRecord.getGhidraLanguageID();
+			try {
 				LanguageDescription languageDescription =
 					languageService.getLanguageDescription(ghidraLanguageID);
 				languages.add(languageDescription);
 			}
-		}
-		catch (VersionException e) {
-			// Version upgrades are not supported
-			Msg.error(this,
-				"Failed to open incompatible FidDb (may need to regenerate with this version of Ghidra): " +
-					file.getAbsolutePath());
-		}
-		catch (IOException e) {
-			Msg.error(this, "Failed to open FidDb: " + file.getAbsolutePath(), e);
+			catch (LanguageNotFoundException e) {
+				// ignore language
+			}
 		}
 		return languages;
+	}
+
+	private Set<LanguageDescription> getSupportedLanguages() {
+		if (supportedLanguages != null) {
+			return supportedLanguages;
+		}
+		if (isValidFile() && supportedLanguages != null) {
+			return supportedLanguages;
+		}
+		supportedLanguages = new TreeSet<>(new ProcessorSizeComparator());
+		return supportedLanguages;
 	}
 
 	void closingFidDB(FidDB fidDB) {

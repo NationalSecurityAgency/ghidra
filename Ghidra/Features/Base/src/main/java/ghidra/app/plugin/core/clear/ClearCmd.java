@@ -63,7 +63,6 @@ public class ClearCmd extends BackgroundCommand {
 	 * use {@link #ClearCmd(AddressSetView,ClearOptions)}.
 	 *
 	 * @param view the addresses over which to clear
-	 * @param options the options used while clearing
 	 */
 	public ClearCmd(AddressSetView view) {
 		this(view, null, view.getNumAddresses() < EVENT_LIMIT);

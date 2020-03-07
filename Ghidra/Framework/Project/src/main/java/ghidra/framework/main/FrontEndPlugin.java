@@ -660,9 +660,9 @@ public class FrontEndPlugin extends Plugin
 	private ToolTemplate getUpToDateTemplate(ToolTemplate template) {
 
 		ToolManager toolManager = activeProject.getToolManager();
-		Tool[] runningTools = toolManager.getRunningTools();
+		PluginTool[] runningTools = toolManager.getRunningTools();
 		String templateName = template.getName();
-		for (Tool runningTool : runningTools) {
+		for (PluginTool runningTool : runningTools) {
 			if (runningTool.getName().equals(templateName)) {
 				return runningTool.getToolTemplate(true);
 			}
@@ -960,8 +960,8 @@ public class FrontEndPlugin extends Plugin
 
 			private boolean isToolRunning(ToolTemplate template) {
 				ToolManager toolManager = activeProject.getToolManager();
-				Tool[] runningTools = toolManager.getRunningTools();
-				for (Tool runningTool : runningTools) {
+				PluginTool[] runningTools = toolManager.getRunningTools();
+				for (PluginTool runningTool : runningTools) {
 					if (runningTool.getToolName().equals(template.getName())) {
 						return true;
 					}
@@ -1009,9 +1009,6 @@ public class FrontEndPlugin extends Plugin
 		tool.addLocalAction(frontEndProvider, propertiesAction);
 	}
 
-	/**
-	 * Delete the tool template from the tool chest.
-	 */
 	private void delete(String toolName) {
 		if (!confirmDelete(toolName + " from your local tool chest?")) {
 			return;
@@ -1049,17 +1046,11 @@ public class FrontEndPlugin extends Plugin
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.main.FrontEndService#addProjectListener(ghidra.framework.model.ProjectListener)
-	 */
 	@Override
 	public void addProjectListener(ProjectListener l) {
 		((FrontEndTool) tool).addProjectListener(l);
 	}
 
-	/**
-	 * @see ghidra.framework.main.FrontEndService#removeProjectListener(ghidra.framework.model.ProjectListener)
-	 */
 	@Override
 	public void removeProjectListener(ProjectListener l) {
 		if (tool != null) { // tool is null when we've been disposed

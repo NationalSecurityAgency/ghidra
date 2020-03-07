@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,14 +69,14 @@ public interface FileSystemListener {
 	 * Notification that an item was renamed.
 	 * @param folderPath the path of the folder that contains the renamed item
 	 * @param oldItemName the old name of the item.
-	 * @param newITemName the new name of the item.
+	 * @param newItemName the new name of the item.
 	 */
 	void itemRenamed(String folderPath, String oldItemName, String newItemName);
 
 	/**
 	 * Notification that an item was moved.
 	 * @param parentPath the path of the folder that used to contain the item.
-	 * @param itemName the name of the item that was moved.
+	 * @param name the name of the item that was moved.
 	 * @param newParentPath the path of the folder that the item was moved to.
 	 * @param newName the new name of the item.
 	 */

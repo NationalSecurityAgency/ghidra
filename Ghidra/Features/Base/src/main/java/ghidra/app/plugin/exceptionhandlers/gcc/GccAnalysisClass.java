@@ -21,6 +21,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -80,9 +81,14 @@ public abstract class GccAnalysisClass {
 	 * @param dt the type for the data
 	 */
 	protected static void createData(Program program, Address addr, DataType dt) {
-
-		CreateDataCmd dataCmd = new CreateDataCmd(addr, dt);
-		dataCmd.applyTo(program);
+		try {
+			// try creating without clearing, the code units should be clear
+			program.getListing().createData(addr, dt);
+		}
+		catch (CodeUnitInsertionException | DataTypeConflictException e) {
+			CreateDataCmd dataCmd = new CreateDataCmd(addr, dt);
+			dataCmd.applyTo(program);
+		}
 	}
 
 	/**

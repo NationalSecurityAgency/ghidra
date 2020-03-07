@@ -449,8 +449,8 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	private void setOptionsKeyStroke(KeyStroke newKs) {
 		ToolOptions keyOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
-		// shared option name/format: "Provider Name (Tool)" - the shared action's owner is the Tool
-		runSwing(() -> keyOptions.setKeyStroke(provider.getName() + " (Tool)", newKs));
+		// shared option name/format: "Provider Name (Shared)" - the shared action's owner is the Tool
+		runSwing(() -> keyOptions.setKeyStroke(provider.getName() + " (Shared)", newKs));
 		waitForSwing();
 	}
 
@@ -496,8 +496,8 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 		ToolOptions options = getKeyBindingOptions();
 
-		// Option name: the action name with the 'Tool' as the owner
-		String fullName = provider.getName() + " (Tool)";
+		// Option name: the action name with the 'Shared' owner
+		String fullName = provider.getName() + " (Shared)";
 		KeyStroke optionsKs = runSwing(() -> options.getKeyStroke(fullName, null));
 		assertEquals("Key stroke in options does not match expected key stroke", expectedKs,
 			optionsKs);
@@ -610,7 +610,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	private void performLaunchKeyStrokeDialogAction() {
-		ToolActions toolActions = ((AbstractDockingTool) tool).getToolActions();
+		ToolActions toolActions = (ToolActions) ((AbstractDockingTool) tool).getToolActions();
 		Action action = toolActions.getAction(KeyStroke.getKeyStroke("F4"));
 		assertNotNull(action);
 		runSwing(() -> action.actionPerformed(new ActionEvent(this, 0, "")), false);
@@ -624,7 +624,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 		private JComponent component = new JTextField("Hey!");
 
-		TestActionsComponentProvider(DockingTool tool) {
+		TestActionsComponentProvider(Tool tool) {
 			super(tool, PROVIDER_NAME, "Fooberry Plugin");
 		}
 
@@ -637,7 +637,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 	private class HasDefaultKeyBindingComponentProvider extends ComponentProvider {
 		private JComponent component = new JTextField("Hey!");
 
-		HasDefaultKeyBindingComponentProvider(DockingTool tool) {
+		HasDefaultKeyBindingComponentProvider(Tool tool) {
 			super(tool, HasDefaultKeyBindingComponentProvider.class.getSimpleName(),
 				"Fooberry Plugin");
 

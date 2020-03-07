@@ -16,11 +16,9 @@
 package ghidra.app.plugin.core.decompile.actions;
 
 import docking.action.MenuData;
-import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.services.GraphService;
 import ghidra.framework.options.Options;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.HighFunction;
@@ -28,23 +26,20 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
 
 public class GraphASTControlFlowAction extends AbstractDecompilerAction {
-	private final DecompilerController controller;
-	private final PluginTool tool;
 
-	public GraphASTControlFlowAction(Plugin plugin, DecompilerController controller) {
+	public GraphASTControlFlowAction() {
 		super("Graph AST Control Flow");
-		this.tool = plugin.getTool();
-		this.controller = controller;
 		setMenuBarData(new MenuData(new String[] { "Graph AST Control Flow" }, "graph"));
 	}
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		return controller.getFunction() != null;
+		return context.getFunction() != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
+		PluginTool tool = context.getTool();
 		GraphService graphService = tool.getService(GraphService.class);
 		if (graphService == null) {
 			Msg.showError(this, tool.getToolFrame(), "AST Graph Failed",
@@ -56,8 +51,8 @@ public class GraphASTControlFlowAction extends AbstractDecompilerAction {
 		Options options = tool.getOptions("Graph");
 		boolean reuseGraph = options.getBoolean("Reuse Graph", false);
 		int codeLimitPerBlock = options.getInt("Max Code Lines Displayed", 10);
-		HighFunction highFunction = controller.getHighFunction();
-		Address locationAddr = controller.getLocation().getAddress();
+		HighFunction highFunction = context.getHighFunction();
+		Address locationAddr = context.getLocation().getAddress();
 		ASTGraphTask task = new ASTGraphTask(graphService, !reuseGraph, codeLimitPerBlock,
 			locationAddr, highFunction, ASTGraphTask.CONTROL_FLOW_GRAPH);
 		new TaskLauncher(task, tool.getToolFrame());

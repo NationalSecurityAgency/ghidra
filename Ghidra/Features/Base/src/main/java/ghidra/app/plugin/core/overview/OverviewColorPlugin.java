@@ -54,7 +54,7 @@ import resources.ResourceManager;
 public class OverviewColorPlugin extends ProgramPlugin {
 	public static final String HELP_TOPIC = "OverviewPlugin";
 	private static final String ACTIVE_SERVICES = "ActiveServices";
-	private Set<OverviewColorService> allServices;
+	private List<OverviewColorService> allServices;
 	private Map<OverviewColorService, OverviewColorComponent> activeServices =
 		new LinkedHashMap<>(); // maintain the left to right order of the active overview bars.
 	private CodeViewerService codeViewerService;

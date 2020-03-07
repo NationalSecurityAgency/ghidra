@@ -23,8 +23,52 @@ import ghidra.util.classfinder.ExtensionPoint;
  * the ClassSearcher will not find them.
  */
 public interface Demangler extends ExtensionPoint {
+
 	public boolean canDemangle(Program program);
 
+	/**
+	 * Deprecated.  Use {@link #demangle(String)} or
+	 *  {@link #demangle(String, DemanglerOptions)}.
+	 *
+	 * @param mangled the mangled string
+	 * @param demangleOnlyKnownPatterns true signals to avoid demangling strings that do
+	 *        not fit known demangled patterns for this demangler
+	 * @return the result
+	 * @throws DemangledException if the string cannot be demangled
+	 * @deprecated see above
+	 */
+	@Deprecated(since = "9.2", forRemoval = true)
 	public DemangledObject demangle(String mangled, boolean demangleOnlyKnownPatterns)
 			throws DemangledException;
+
+	/**
+	 * Attempts to demangle the given string using the default options 
+	 * ({@link #createDefaultOptions()}
+	 * 
+	 * @param mangled the mangled string
+	 * @return the result
+	 * @throws DemangledException if the string cannot be demangled
+	 */
+	public default DemangledObject demangle(String mangled) throws DemangledException {
+		return demangle(mangled, createDefaultOptions());
+	}
+
+	/**
+	 * Attempts to demangle the given string using the given options
+	 * 
+	 * @param mangled the mangled string
+	 * @param options the options
+	 * @return the result
+	 * @throws DemangledException if the string cannot be demangled
+	 */
+	public DemangledObject demangle(String mangled, DemanglerOptions options)
+			throws DemangledException;
+
+	/**
+	 * Creates default options for this particular demangler
+	 * @return the options
+	 */
+	public default DemanglerOptions createDefaultOptions() {
+		return new DemanglerOptions();
+	}
 }

@@ -164,7 +164,7 @@ public class ConflictUtility {
 	 * Creates a standard address set conflict count message. This indicates 
 	 * which address or address range with conflicts you are resolving of some 
 	 * total number of addresses or address ranges with conflicts.
-	 * @param caddressNum the current conflicting address number.
+	 * @param addressNum the current conflicting address number.
 	 * @param totalAddresses the total number of conflicting addresses.
 	 * @param isRange true if the current conflict is for an address range.
 	 * @return the message string containing HTML tags.

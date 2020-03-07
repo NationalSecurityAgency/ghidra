@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +98,7 @@ public class CreateStructureInStructureCmd extends AbstractCreateStructureCmd{
         }        
         Structure originalStructure = (Structure) parentDataType;        
         
-        // clear and initialize the orignal structure and then get the new
+        // clear and initialize the original structure and then get the new
         // data
         clearStruct(originalStructure, comp1.getParentOffset(), dataLength );
         originalStructure.replace(comp1.getComponentIndex(), 

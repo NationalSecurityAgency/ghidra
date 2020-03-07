@@ -86,26 +86,17 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return length;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#addValueReference(ghidra.program.model.address.Address, ghidra.program.model.symbol.RefType)
-	 */
 	@Override
 	public void addValueReference(Address refAddr, RefType type) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#removeValueReference(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void removeValueReference(Address refAddr) {
 		throw new UnsupportedOperationException();
 
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getComponent(int)
-	 */
 	@Override
 	public Data getComponent(int index) {
 		if (index < 0 || index >= getNumComponents()) {
@@ -142,9 +133,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return data;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getAddress(int)
-	 */
 	@Override
 	public Address getAddress(int opIndex) {
 		if (opIndex == 0) {
@@ -156,9 +144,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getByteCodeString()
-	 */
 	public String getByteCodeString() {
 		StringBuffer bytesStr = new StringBuffer();
 
@@ -186,10 +171,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return bytesStr.toString();
 	}
 
-	/**
-	 *
-	 * @see ghidra.program.model.listing.CodeUnit#toString()
-	 */
 	@Override
 	public String toString() {
 		String valueRepresentation = getDefaultValueRepresentation();
@@ -200,9 +181,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return mnemonicString + " " + valueRepresentation;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getDefaultValueRepresentation()
-	 */
 	@Override
 	public String getDefaultValueRepresentation() {
 		if (getLength() < dataType.getLength()) {
@@ -212,25 +190,16 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return dataType.getRepresentation(this, this, getLength());
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getMnemonicString()
-	 */
 	@Override
 	public String getMnemonicString() {
 		return dataType.getMnemonic(this);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getNumOperands()
-	 */
 	@Override
 	public int getNumOperands() {
 		return 1;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getScalar(int)
-	 */
 	@Override
 	public Scalar getScalar(int opIndex) {
 		if (opIndex == 0) {
@@ -247,58 +216,36 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getBaseDataType()
-	 */
 	@Override
 	public DataType getBaseDataType() {
 		return baseDataType;
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.program.model.data.Settings#clearSetting(java.lang.String)
-	 */
 	@Override
 	public void clearSetting(String name) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getByteArray(java.lang.String)
-	 */
 	@Override
 	public byte[] getByteArray(String name) {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getLong(java.lang.String)
-	 */
 	@Override
 	public Long getLong(String name) {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getNames()
-	 */
 	@Override
 	public String[] getNames() {
 		return new String[0];
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getString(java.lang.String)
-	 */
 	@Override
 	public String getString(String name) {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getValue(java.lang.String)
-	 */
 	@Override
 	public Object getValue(String name) {
 		if (baseDataType != null) {
@@ -307,41 +254,26 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setByteArray(java.lang.String, byte[])
-	 */
 	@Override
 	public void setByteArray(String name, byte[] value) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setLong(java.lang.String, long)
-	 */
 	@Override
 	public void setLong(String name, long value) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setString(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public void setString(String name, String value) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#setValue(java.lang.String, java.lang.Object)
-	 */
 	@Override
 	public void setValue(String name, Object value) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getComponent(int[])
-	 */
 	@Override
 	public Data getComponent(int[] componentPath) {
 		if (componentPath == null || componentPath.length <= level) {
@@ -351,9 +283,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return (component == null ? null : component.getComponent(componentPath));
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getComponentAt(int)
-	 */
 	@Override
 	public Data getComponentAt(int offset) {
 		if (offset < 0 || offset >= length) {
@@ -424,33 +353,21 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return list;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getComponentIndex()
-	 */
 	@Override
 	public int getComponentIndex() {
 		return -1;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getComponentLevel()
-	 */
 	@Override
 	public int getComponentLevel() {
 		return level;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getComponentPath()
-	 */
 	@Override
 	public int[] getComponentPath() {
 		return EMPTY_PATH;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getComponentPathName()
-	 */
 	@Override
 	public String getComponentPathName() {
 		return null;
@@ -491,25 +408,16 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 //		return retData;
 //	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getDataType()
-	 */
 	@Override
 	public DataType getDataType() {
 		return dataType;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getFieldName()
-	 */
 	@Override
 	public String getFieldName() {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getNumComponents()
-	 */
 	@Override
 	public int getNumComponents() {
 		if (length < dataType.getLength()) {
@@ -527,25 +435,16 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getParent()
-	 */
 	@Override
 	public Data getParent() {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getParentOffset()
-	 */
 	@Override
 	public int getParentOffset() {
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getPathName()
-	 */
 	@Override
 	public String getPathName() {
 		if (program != null) {
@@ -558,9 +457,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return "DAT" + address.toString();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getPrimitiveAt(int)
-	 */
 	@Override
 	public Data getPrimitiveAt(int offset) {
 		if (offset < 0 || offset >= length) {
@@ -573,25 +469,16 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return dc.getPrimitiveAt(offset - dc.getParentOffset());
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getRoot()
-	 */
 	@Override
 	public Data getRoot() {
 		return this;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getRootOffset()
-	 */
 	@Override
 	public int getRootOffset() {
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getValue()
-	 */
 	@Override
 	public Object getValue() {
 		return baseDataType.getValue(this, this, length);
@@ -611,9 +498,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return String.class.equals(getValueClass());
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#getValueReferences()
-	 */
 	@Override
 	public Reference[] getValueReferences() {
 		if (refMgr == null) {
@@ -622,65 +506,41 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return refMgr.getReferencesFrom(address, OP_INDEX);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#isArray()
-	 */
 	@Override
 	public boolean isArray() {
 		return baseDataType instanceof Array;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#isDefined()
-	 */
 	@Override
 	public boolean isDefined() {
 		return !(dataType instanceof DefaultDataType);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#isPointer()
-	 */
 	@Override
 	public boolean isPointer() {
 		return baseDataType instanceof Pointer;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#isStructure()
-	 */
 	@Override
 	public boolean isStructure() {
 		return baseDataType instanceof Structure;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#isDynamic()
-	 */
 	@Override
 	public boolean isDynamic() {
 		return baseDataType instanceof DynamicDataType;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Data#isUnion()
-	 */
 	@Override
 	public boolean isUnion() {
 		return baseDataType instanceof Union;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#clearAllSettings()
-	 */
 	@Override
 	public void clearAllSettings() {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#isEmpty()
-	 */
 	@Override
 	public boolean isEmpty() {
 		if (dataMgr == null) {
@@ -725,9 +585,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.docking.settings.Settings#getDefaultSettings()
-	 */
 	@Override
 	public Settings getDefaultSettings() {
 		return dataType.getDefaultSettings();

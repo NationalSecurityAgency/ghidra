@@ -42,6 +42,7 @@ import java.io.*;
  *     BYTE    StorageClass;
  *     BYTE    NumberOfAuxSymbols;
  * } IMAGE_SYMBOL;
+ * </pre>
  */
 public class DebugCOFFSymbol implements StructConverter {
 	private static final int NAME_LENGTH = 8;

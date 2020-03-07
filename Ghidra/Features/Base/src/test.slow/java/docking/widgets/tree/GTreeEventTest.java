@@ -28,13 +28,11 @@ import org.junit.Test;
 
 import docking.DockingWindowManager;
 import docking.test.AbstractDockingTest;
-import docking.widgets.filter.FilterTextField;
 import ghidra.test.DummyTool;
 
 public class GTreeEventTest extends AbstractDockingTest {
 
 	private GTree gTree;
-	private FilterTextField filterField;
 
 	private DockingWindowManager winMgr;
 
@@ -46,7 +44,7 @@ public class GTreeEventTest extends AbstractDockingTest {
 		root = new TestRootNode();
 		gTree = new GTree(root);
 		gTree.getModel().addTreeModelListener(new TestTreeModelListener());
-		filterField = (FilterTextField) gTree.getFilterField();
+//		filterField = (FilterTextField) gTree.getFilterField();
 
 		winMgr = new DockingWindowManager(new DummyTool(), null);
 		winMgr.addComponent(new TestTreeComponentProvider(gTree));
@@ -60,7 +58,7 @@ public class GTreeEventTest extends AbstractDockingTest {
 		root.addNode(new LeafNode("ABC"));
 		assertEquals(1, events.size());
 		TreeEvent treeEvent = events.get(0);
-		assertEquals(EventType.STRUCTURE_CHANGED, treeEvent.eventType);
+		assertEquals(EventType.INSERTED, treeEvent.eventType);
 	}
 
 	private void waitForTree() {

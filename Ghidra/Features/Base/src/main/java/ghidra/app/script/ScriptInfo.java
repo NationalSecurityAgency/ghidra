@@ -370,7 +370,7 @@ public class ScriptInfo {
 
 	/**
 	 * Returns the script menu path as a string.
-	 * For example, "Path1->Path2->Path3".
+	 * For example,{@literal "Path1->Path2->Path3"}.
 	 * @return the script menu path as a string
 	 */
 	public String getMenuPathAsString() {

@@ -173,6 +173,7 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		assertToken("FUN_01002c93", line, character);
 		setDecompilerLocation(line, character);
 
+		// this is the address within the function of the call to the function we clicked
 		assertListingAddress(addr("01002d32"));
 	}
 
@@ -223,9 +224,20 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 	}
 
 	private void assertListingAddress(Address expected) {
-		ProgramLocation cbLocation = codeBrowser.getCurrentLocation();
-		assertEquals("The Listing is not at the expected address", expected,
-			cbLocation.getAddress());
+		waitForCondition(() -> expected.equals(codeBrowser.getCurrentLocation().getAddress()),
+			"The Listing is not at the expected address");
+	}
+
+	@Override
+	public void assertCurrentAddress(Address expected) {
+		codeBrowser.updateNow();
+		waitForSwing();
+
+		waitForCondition(() -> {
+			ProgramLocation loc = codeBrowser.getCurrentLocation();
+			Address actual = loc.getAddress();
+			return expected.equals(actual);
+		}, "Listing is not at the expected address");
 	}
 
 	private void assertExternalNavigationPerformed() {

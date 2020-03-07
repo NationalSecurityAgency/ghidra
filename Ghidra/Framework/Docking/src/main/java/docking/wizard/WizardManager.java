@@ -155,7 +155,6 @@ public class WizardManager extends DialogComponentProvider implements WizardPane
 	/**
 	 * Notification that the wizard process is complete.
 	 * @param success status of the process
-	 * @param msg message to display in the dialog's status area
 	 */
 	public void completed(boolean success) {
 

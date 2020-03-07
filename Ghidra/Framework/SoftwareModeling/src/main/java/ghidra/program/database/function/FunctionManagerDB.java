@@ -275,7 +275,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 	 * @param name
 	 * @param nameSpace
 	 * @param extData3 internal symbol-data-3 string (see {@link ExternalLocationDB})
-	 * @param sourceType the source of this external.
+	 * @param source the source of this external.
 	 * @return external function
 	 * @throws InvalidInputException
 	 * @throws DuplicateNameException

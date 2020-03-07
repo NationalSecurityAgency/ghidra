@@ -17,6 +17,7 @@
 #include "emulate.hh"
 #include "flow.hh"
 
+/// \param s is the XML stream to write to
 void LoadTable::saveXml(ostream &s) const
 
 {
@@ -28,6 +29,8 @@ void LoadTable::saveXml(ostream &s) const
   s << "</loadtable>\n";
 }
 
+/// \param el is the root \<loadtable> tag
+/// \param glb is the architecture for resolving address space tags
 void LoadTable::restoreXml(const Element *el,Architecture *glb)
 
 {
@@ -42,9 +45,12 @@ void LoadTable::restoreXml(const Element *el,Architecture *glb)
   addr = Address::restoreXml( *iter, glb);
 }
 
+/// We assume the list of LoadTable entries is sorted and perform an in-place
+/// collapse of any sequences into a single LoadTable entry.
+/// \param table is the list of entries to collapse
 void LoadTable::collapseTable(vector<LoadTable> &table)
 
-{ // Assuming -table- is sorted, collapse sequential LoadTable entries into single LoadTable entries
+{
   if (table.empty()) return;
   vector<LoadTable>::iterator iter,lastiter;
   int4 count = 1;
@@ -114,6 +120,7 @@ void EmulateFunction::executeCallother(void)
   fallthruOp();
 }
 
+/// \param f is the function to emulate within
 EmulateFunction::EmulateFunction(Funcdata *f)
   : EmulatePcodeOp(f->getArch())
 {
@@ -161,6 +168,15 @@ void EmulateFunction::fallthruOp(void)
   // Otherwise do nothing: outer loop is controlling execution flow
 }
 
+/// \brief Execute from a given starting point and value to the common end-point of the path set
+///
+/// Flow the given value through all paths in the path container to produce the
+/// single output value.
+/// \param val is the starting value
+/// \param pathMeld is the set of paths to execute
+/// \param startop is the starting PcodeOp within the path set
+/// \param startvn is the Varnode holding the starting value
+/// \return the calculated value at the common end-point
 uintb EmulateFunction::emulatePath(uintb val,const PathMeld &pathMeld,
 				   PcodeOp *startop,Varnode *startvn)
 {
@@ -201,6 +217,9 @@ uintb EmulateFunction::emulatePath(uintb val,const PathMeld &pathMeld,
   return getVarnodeValue(invn);
 }
 
+/// Pass back any LOAD records collected during emulation.  The individual records
+/// are sorted and collapsed into concise \e table descriptions.
+/// \param res will hold any resulting table descriptions
 void EmulateFunction::collectLoadPoints(vector<LoadTable> &res) const
 
 {
@@ -392,6 +411,8 @@ JumpModel *JumpModelTrivial::clone(JumpTable *jt) const
   return res;
 }
 
+/// \param vn is the Varnode we are testing for pruning
+/// \return \b true if the search should be pruned here
 bool JumpBasic::isprune(Varnode *vn)
 
 {
@@ -402,9 +423,11 @@ bool JumpBasic::isprune(Varnode *vn)
   return false;
 }
 
+/// \param vn is the given Varnode to test
+/// \return \b false if it is impossible for the Varnode to be the switch variable
 bool JumpBasic::ispoint(Varnode *vn)
 
-{				// Is this a possible switch variable
+{
   if (vn->isConstant()) return false;
   if (vn->isAnnotation()) return false;
   if (vn->isReadOnly()) return false;
@@ -429,9 +452,18 @@ int4 JumpBasic::getStride(Varnode *vn)
   return stride;
 }
 
+/// \brief Back up the constant value in the output Varnode to the value in the input Varnode
+///
+/// This does the work of going from a normalized switch value to the unnormalized value.
+/// PcodeOps between the output and input Varnodes must be reversible or an exception is thrown.
+/// \param fd is the function containing the switch
+/// \param output is the constant value to back up
+/// \param outvn is the output Varnode of the data-flow
+/// \param invn is the input Varnode to back up to
+/// \return the recovered value associated with the input Varnode
 uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode *invn)
 
-{ // Back up constant normalized value -outvn- to unnormalized
+{
   Varnode *curvn = outvn;
   PcodeOp *op;
   TypeOp *top;
@@ -465,6 +497,12 @@ uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode 
   return output;
 }
 
+/// \brief Calculate the initial set of Varnodes that might be switch variables
+///
+/// Paths that terminate at the given PcodeOp are calculated and organized
+/// in a PathMeld object that determines Varnodes that are common to all the paths.
+/// \param op is the given PcodeOp
+/// \param slot is input slot to the PcodeOp all paths must terminate at
 void JumpBasic::findDeterminingVarnodes(PcodeOp *op,int4 slot)
 
 {
@@ -510,6 +548,11 @@ void JumpBasic::findDeterminingVarnodes(PcodeOp *op,int4 slot)
   }
 }
 
+/// \brief Check if the two given Varnodes are matching constants
+///
+/// \param vn1 is the first given Varnode
+/// \param vn2 is the second given Varnode
+/// \return \b true if the Varnodes are both constants with the same value
 static bool matching_constants(Varnode *vn1,Varnode *vn2)
 
 {
@@ -519,21 +562,37 @@ static bool matching_constants(Varnode *vn1,Varnode *vn2)
   return true;
 }
 
-GuardRecord::GuardRecord(PcodeOp *op,int4 path,const CircleRange &rng,Varnode *v)
+/// \param bOp is the CBRANCH \e guarding the switch
+/// \param rOp is the PcodeOp immediately reading the Varnode
+/// \param path is the specific branch to take from the CBRANCH to reach the switch
+/// \param rng is the range of values causing the switch path to be taken
+/// \param v is the Varnode holding the value controlling the CBRANCH
+GuardRecord::GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &rng,Varnode *v)
 
 {
-  cbranch = op;
+  cbranch = bOp;
+  readOp = rOp;
   indpath = path;
   range = rng;
   vn = v;
-  baseVn = quasiCopy(v,bitsPreserved,false);		// Look for varnode whose bits are copied
+  baseVn = quasiCopy(v,bitsPreserved);		// Look for varnode whose bits are copied
 }
 
+/// \brief Determine if \b this guard applies to the given Varnode
+///
+/// The guard applies if we know the given Varnode holds the same value as the Varnode
+/// attached to the guard. So we return:
+///   - 0, if the two Varnodes do not clearly hold the same value.
+///   - 1, if the two Varnodes clearly hold the same value.
+///   - 2, if the two Varnode clearly hold the same value, pending no writes between their defining op.
+///
+/// \param vn2 is the given Varnode being tested against \b this guard
+/// \param baseVn2 is the earliest Varnode from which the given Varnode is quasi-copied.
+/// \param bitsPreserved2 is the number of potentially non-zero bits in the given Varnode
+/// \return the matching code 0, 1, or 2
 int4 GuardRecord::valueMatch(Varnode *vn2,Varnode *baseVn2,int4 bitsPreserved2) const
 
-{ // Return 0, if -vn- and -vn2- are not clearly the same value
-  // Return 1, if -vn- and -vn2- are clearly the same value
-  // Return 2, if -vn- and -vn2- are clearly the same value, pending no writes beteen the def of -vn- and -vn2-
+{
   if (vn == vn2) return 1;		// Same varnode, same value
   PcodeOp *loadOp,*loadOp2;
   if (bitsPreserved == bitsPreserved2) {	// Are the same number of bits being copied
@@ -571,10 +630,16 @@ int4 GuardRecord::valueMatch(Varnode *vn2,Varnode *baseVn2,int4 bitsPreserved2) 
   return 2;
 }
 
+/// \brief Return 1 if the two given PcodeOps produce exactly the same value, 0 if otherwise
+///
+/// We up through only one level of PcodeOp calculation and only for certain binary ops
+/// where the second parameter is a constant.
+/// \param op1 is the first given PcodeOp to test
+/// \param op2 is the second given PcodeOp
+/// \return 1 if the same value is produced, 0 otherwise
 int4 GuardRecord::oneOffMatch(PcodeOp *op1,PcodeOp *op2)
 
-{ // Return 1 if -op1- and -op2- produce exactly the same value, 0 if otherwise
-  // (one value is allowed to be the zero extension of the other)
+{
   if (op1->code() != op2->code())
     return 0;
   switch(op1->code()) {
@@ -597,10 +662,19 @@ int4 GuardRecord::oneOffMatch(PcodeOp *op1,PcodeOp *op2)
   return 0;
 }
 
-Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved,bool noWholeValue)
+/// \brief Compute the source of a quasi-COPY chain for the given Varnode
+///
+/// A value is a \b quasi-copy if a sequence of PcodeOps producing it always hold
+/// the value as the least significant bits of their output Varnode, but the sequence
+/// may put other non-zero values in the upper bits.
+/// This method computes the earliest ancestor Varnode for which the given Varnode
+/// can be viewed as a quasi-copy.
+/// \param vn is the given Varnode
+/// \param bitsPreserved will hold the number of least significant bits preserved by the sequence
+/// \return the earliest source of the quasi-copy, which may just be the given Varnode
+Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved)
 
 {
-  Varnode *origVn = vn;
   bitsPreserved = mostsigbit_set(vn->getNZMask()) + 1;
   if (bitsPreserved == 0) return vn;
   uintb mask = 1;
@@ -609,11 +683,6 @@ Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved,bool noWholeValu
   PcodeOp *op = vn->getDef();
   Varnode *constVn;
   while(op != (PcodeOp *)0) {
-    if (noWholeValue && (vn != origVn)) {
-      uintb inputMask = vn->getNZMask() | mask;
-      if (mask == inputMask)
-	return origVn;		// vn contains whole value, -noWholeValue- indicates we should abort
-    }
     switch(op->code()) {
     case CPUI_COPY:
       vn = op->getIn(0);
@@ -671,11 +740,16 @@ Varnode *GuardRecord::quasiCopy(Varnode *vn,int4 &bitsPreserved,bool noWholeValu
   return vn;
 }
 
+/// \brief Calculate intersection of a new Varnode path with the old path
+///
+/// The new path of Varnodes must all be \e marked. The old path, commonVn,
+/// is replaced with the intersection.  A map is created from the index of each
+/// Varnode in the old path with its index in the new path.  If the Varnode is
+/// not in the intersection, its index is mapped to -1.
+/// \param parentMap will hold the new index map
 void PathMeld::internalIntersect(vector<int4> &parentMap)
 
-{ // Calculate intersection of new path (marked vn's) with old path (commonVn)
-  // Put intersection back into commonVn
-  // Calculate parentMap : from old commonVn index to new commonVn index
+{
   vector<Varnode *> newVn;
   int4 lastIntersect = -1;
   for(int4 i=0;i<commonVn.size();++i) {
@@ -700,14 +774,20 @@ void PathMeld::internalIntersect(vector<int4> &parentMap)
   }
 }
 
+/// \brief Meld in PcodeOps from a new path into \b this container
+///
+/// Execution order of the PcodeOps in the container is maintained.  Each PcodeOp, old or new,
+/// has its split point from the common path recalculated.
+/// PcodeOps that split (use a vn not in intersection) and do not rejoin
+/// (have a predecessor Varnode in the intersection) get removed.
+/// If splitting PcodeOps can't be ordered with the existing meld, we get a new cut point.
+/// \param path is the new path of PcodeOps in sequence
+/// \param cutOff is the number of PcodeOps with an input in the common path
+/// \param parentMap is the map from old common Varnodes to the new common Varnodes
+/// \return the index of the last (earliest) Varnode in the common path or -1
 int4 PathMeld::meldOps(const vector<PcodeOp *> &path,int4 cutOff,const vector<int4> &parentMap)
 
-{ // Meld old ops (opMeld) with new ops (path), updating rootVn with new commonVn order
-  // Ops should remain in (reverse) execution order
-  // Ops that split (use a vn not in intersection) and do not rejoin (have a predecessor vn in intersection)
-  //     get cut
-  // If splitting ops arent can't be ordered with the existing meld, we get a new cut point
-
+{
   // First update opMeld.rootVn with new intersection information
   for(int4 i=0;i<opMeld.size();++i) {
     int4 pos = parentMap[opMeld[i].rootVn];
@@ -769,10 +849,14 @@ int4 PathMeld::meldOps(const vector<PcodeOp *> &path,int4 cutOff,const vector<in
   return -1;
 }
 
+/// \brief Truncate all paths at the given new Varnode
+///
+/// The given Varnode is provided as an index into the current common Varnode list.
+/// All Varnodes and PcodeOps involved in execution before this new cut point are removed.
+/// \param cutPoint is the given new Varnode
 void PathMeld::truncatePaths(int4 cutPoint)
 
-{ // Make sure all paths in opMeld terminate at -cutPoint- varnode
-  // and cut varnodes beyond the cutPoint out of the intersection (commonVn)
+{
   while(opMeld.size() > 1) {
     if (opMeld.back().rootVn < cutPoint)	// If we see op using varnode earlier than cut point
       break;					// Keep that and all subsequent ops
@@ -781,6 +865,7 @@ void PathMeld::truncatePaths(int4 cutPoint)
   commonVn.resize(cutPoint);			// Since intersection is ordered, just resize to cutPoint
 }
 
+/// \param op2 is the path container to copy from
 void PathMeld::set(const PathMeld &op2)
 
 {
@@ -788,6 +873,9 @@ void PathMeld::set(const PathMeld &op2)
   opMeld = op2.opMeld;
 }
 
+/// This container is initialized to hold a single data-flow path.
+/// \param path is the list of PcodeOps in the path (in reverse execution order)
+/// \param slot is the list of each Varnode presented as an input slot in the corresponding PcodeOp
 void PathMeld::set(const vector<PcodeOp *> &path,const vector<int4> &slot)
 
 {
@@ -799,13 +887,20 @@ void PathMeld::set(const vector<PcodeOp *> &path,const vector<int4> &slot)
   }
 }
 
+/// \param op is the one PcodeOp in the path
+/// \param vn is the one Varnode (input to the PcodeOp) in the path
 void PathMeld::set(PcodeOp *op,Varnode *vn)
 
-{ // Set a single varnode and op as the path
+{
   commonVn.push_back(vn);
   opMeld.push_back(RootedOp(op,0));
 }
 
+/// The new paths must all start at the common end-point of the paths in
+/// \b this container.  The new set of melded paths start at the original common start
+/// point for \b this container, flow through this old common end-point, and end at
+/// the new common end-point.
+/// \param op2 is the set of paths to be appended
 void PathMeld::append(const PathMeld &op2)
 
 {
@@ -823,10 +918,14 @@ void PathMeld::clear(void)
   opMeld.clear();
 }
 
+/// Add the new path, recalculating the set of Varnodes common to all paths.
+/// Paths are trimmed to ensure that any path that splits from the common intersection
+/// must eventually rejoin.
+/// \param path is the new path of PcodeOps to meld, in reverse execution order
+/// \param slot is the set of Varnodes in the new path presented as input slots to the corresponding PcodeOp
 void PathMeld::meld(vector<PcodeOp *> &path,vector<int4> &slot)
 
-{ // Meld the new -path- into our collection of paths
-  // making sure all ops that split from the main path intersection eventually rejoin
+{
   vector<int4> parentMap;
 
   for(int4 i=0;i<path.size();++i) {
@@ -852,9 +951,36 @@ void PathMeld::meld(vector<PcodeOp *> &path,vector<int4> &slot)
   slot.resize(cutOff);
 }
 
+/// The starting Varnode, common to all paths, is provided as an index.
+/// All PcodeOps up to the final BRANCHIND are (un)marked.
+/// \param val is \b true for marking, \b false for unmarking
+/// \param startVarnode is the index of the starting PcodeOp
+void PathMeld::markPaths(bool val,int4 startVarnode)
+
+{
+  int4 startOp;
+  for(startOp=opMeld.size()-1;startOp>=0;--startOp) {
+    if (opMeld[startOp].rootVn == startVarnode)
+      break;
+  }
+  if (startOp < 0) return;
+  if (val) {
+    for(int4 i=0;i<=startOp;++i)
+      opMeld[i].op->setMark();
+  }
+  else {
+    for(int4 i=0;i<=startOp;++i)
+      opMeld[i].op->clearMark();
+  }
+}
+
+/// The Varnode is specified by an index into sequence of Varnodes common to all paths in \b this PathMeld.
+/// We find the earliest (as in executed first) PcodeOp, within \b this PathMeld that uses the Varnode as input.
+/// \param pos is the index of the Varnode
+/// \return the earliest PcodeOp using the Varnode
 PcodeOp *PathMeld::getEarliestOp(int4 pos) const
 
-{ // Find "earliest" op that has commonVn[i] as input
+{
   for(int4 i=opMeld.size()-1;i>=0;--i) {
     if (opMeld[i].rootVn == pos)
       return opMeld[i].op;
@@ -862,14 +988,22 @@ PcodeOp *PathMeld::getEarliestOp(int4 pos) const
   return (PcodeOp *)0;
 }
 
+/// \brief Analyze CBRANCHs leading up to the given basic-block as a potential switch \e guard.
+///
+/// In general there is only one path to the switch, and the given basic-block will
+/// hold the BRANCHIND.  In some models, there is more than one path to the switch block,
+/// and a path must be specified.  In this case, the given basic-block will be a block that
+/// flows into the switch block, and the \e pathout parameter describes which path leads
+/// to the switch block.
+///
+/// For each CBRANCH, range restrictions on the various variables which allow
+/// control flow to pass through the CBRANCH to the switch are analyzed.
+/// A GuardRecord is created for each of these restrictions.
+/// \param bl is the given basic-block
+/// \param pathout is an optional path from the basic-block to the switch or -1
 void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
 
-{ // Analyze each CBRANCH leading up to -bl- switch.
-  // (if pathout>=0, also analyze the CBRANCH in -bl- that chooses this path)
-  // Analyze the range restrictions on the various variables which allow
-  // control flow to pass through the CBRANCHs to the switch.
-  // Make note of all these restrictions in the guard list
-  // For later determination of the correct switch variable.
+{
   int4 i,j,indpath;
   int4 maxbranch = 2;		// Maximum number of CBRANCHs to consider
   int4 maxpullback = 2;
@@ -899,6 +1033,15 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
     PcodeOp *cbranch = prevbl->lastOp();
     if ((cbranch==(PcodeOp *)0)||(cbranch->code() != CPUI_CBRANCH))
       break;
+    if (i != 0) {
+      // Check that this CBRANCH isn't protecting some other switch
+      BlockBasic *otherbl = (BlockBasic *)prevbl->getOut(1-indpath);
+      PcodeOp *otherop = otherbl->lastOp();
+      if (otherop != (PcodeOp *)0 && otherop->code() == CPUI_BRANCHIND) {
+	if (otherop != jumptable->getIndirectOp())
+	  break;
+      }
+    }
     bool toswitchval = (indpath == 1);
     if (cbranch->isBooleanFlip())
       toswitchval = !toswitchval;
@@ -908,24 +1051,28 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
     
     // The boolean variable could conceivably be the switch variable
     int4 indpathstore = prevbl->getFlipPath() ? 1-indpath : indpath;
-    selectguards.push_back(GuardRecord(cbranch,indpathstore,rng,vn));
+    selectguards.push_back(GuardRecord(cbranch,cbranch,indpathstore,rng,vn));
     for(j=0;j<maxpullback;++j) {
       Varnode *markup;		// Throw away markup information
       if (!vn->isWritten()) break;
-      vn = rng.pullBack(vn->getDef(),&markup,usenzmask);
+      PcodeOp *readOp = vn->getDef();
+      vn = rng.pullBack(readOp,&markup,usenzmask);
       if (vn == (Varnode *)0) break;
       if (rng.isEmpty()) break;
-      selectguards.push_back(GuardRecord(cbranch,indpathstore,rng,vn));
+      selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,vn));
     }
   }
 }
 
+/// \brief Calculate the range of values in the given Varnode that direct control-flow to the switch
+///
+/// The Varnode is evaluated against each GuardRecord to determine if its range of values
+/// can be restricted. Multiple guards may provide different restrictions.
+/// \param vn is the given Varnode
+/// \param rng will hold resulting range of values the Varnode can hold at the switch
 void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
 
-{ // For a putative switch variable, calculate the range of
-  // possible values that variable can have AT the switch
-  // by using the precalculated guard ranges.
-
+{
   // Get an initial range, based on the size/type of -vn-
   int4 stride = 1;
   if (vn->isConstant())
@@ -950,7 +1097,7 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
 
   // Intersect any guard ranges which apply to -vn-
   int4 bitsPreserved;
-  Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved, true);
+  Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved);
   vector<GuardRecord>::const_iterator iter;
   for(iter=selectguards.begin();iter!=selectguards.end();++iter) {
     const GuardRecord &guard( *iter );
@@ -971,9 +1118,16 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
   }
 }
 
+/// \brief Find the putative switch variable with the smallest range of values reaching the switch
+///
+/// The Varnode with the smallest range and closest to the BRANCHIND is assumed to be the normalized
+/// switch variable. If an expected range size is provided, it is used to \e prefer a particular
+/// Varnode as the switch variable.  Whatever Varnode is selected,
+/// the JumpValue object is set up to iterator over its range.
+/// \param matchsize optionally gives an expected size of the range, or it can be 0
 void JumpBasic::findSmallestNormal(uint4 matchsize)
 
-{ // Find normalized switch variable with smallest range of values
+{
   CircleRange rng;
   uintb sz,maxsize;
 
@@ -1001,9 +1155,18 @@ void JumpBasic::findSmallestNormal(uint4 matchsize)
   }
 }
 
+/// \brief Do all the work necessary to recover the normalized switch variable
+///
+/// The switch can be specified as the basic-block containing the BRANCHIND, or
+/// as a block that flows to the BRANCHIND block by following the specified path out.
+/// \param fd is the function containing the switch
+/// \param rootbl is the basic-block
+/// \param pathout is the (optional) path to the BRANCHIND or -1
+/// \param matchsize is an (optional) size to expect for the normalized switch variable range
+/// \param maxtablesize is the maximum size expected for the normalized switch variable range
 void JumpBasic::findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,uint4 matchsize,uint4 maxtablesize)
 
-{				// Find the normalized switch variable
+{
   uintb sz;
 
   analyzeGuards(rootbl,pathout);
@@ -1032,17 +1195,55 @@ void JumpBasic::findNormalized(Funcdata *fd,BlockBasic *rootbl,int4 pathout,uint
   }
 }
 
+/// \brief Mark the guard CBRANCHs that are truly part of the model.
+///
+/// These CBRANCHs will be removed from the active control-flow graph, their
+/// function \e folded into the action of the model, as represented by BRANCHIND.
 void JumpBasic::markFoldableGuards(void)
 
-{ // Indicate which are the true guards (that need to be folded) by leaving their cbranch non-null
+{
   Varnode *vn = pathMeld.getVarnode(varnodeIndex);
   int4 bitsPreserved;
-  Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved, true);
+  Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved);
   for(int4 i=0;i<selectguards.size();++i) {
     if (selectguards[i].valueMatch(vn,baseVn,bitsPreserved)==0) {
       selectguards[i].clear();		// Indicate this is not a true guard
     }
   }
+}
+
+/// \param val is \b true to set marks, \b false to clear marks
+void JumpBasic::markModel(bool val)
+
+{
+  pathMeld.markPaths(val, varnodeIndex);
+  for(int4 i=0;i<selectguards.size();++i) {
+    PcodeOp *op = selectguards[i].getBranch();
+    if (op == (PcodeOp *)0) continue;
+    PcodeOp *readOp = selectguards[i].getReadOp();
+    if (val)
+      readOp->setMark();
+    else
+      readOp->clearMark();
+  }
+}
+
+/// The PcodeOps in \b this model must have been previously marked with markModel().
+/// Run through the descendants of the given Varnode and look for this mark.
+/// \param vn is the given Varnode
+/// \param trailOp is an optional known PcodeOp that leads to the model
+/// \return \b true if the only flow is into \b this model
+bool JumpBasic::flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp)
+
+{
+  list<PcodeOp *>::const_iterator iter;
+  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op == trailOp) continue;
+    if (!op->isMark())
+      return false;
+  }
+  return true;
 }
 
 bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
@@ -1055,7 +1256,7 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
     indpath = 1 - indpath;	// get actual path to indirect block
   BlockBasic *guardtarget = (BlockBasic *)cbranchblock->getOut(1-indpath);
   bool change = false;
-  uint4 pos;
+  int4 pos;
 
   // Its possible the guard branch has been converted between the switch recovery and now
   if (cbranchblock->sizeOut() != 2) return false; // In which case, we can't fold it in
@@ -1067,7 +1268,7 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
       // Adjust tables and control flow graph
       // for new jumptable destination
       jump->addBlockToSwitch(guardtarget,0xBAD1ABE1);
-      jump->setMostCommonIndex(jump->numEntries()-1);
+      jump->setLastAsMostCommon();
       fd->pushBranch(cbranchblock,1-indpath,switchbl);
       guard.clear();
       change = true;
@@ -1080,7 +1281,7 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
     // is a good indicator that there are none
     uintb val = ((indpath==0)!=(cbranch->isBooleanFlip())) ? 0 : 1;
     fd->opSetInput(cbranch,fd->newConstant(cbranch->getIn(0)->getSize(),val),1);
-    jump->setMostCommonBlock(pos);	// A guard branch must be most common
+    jump->setDefaultBlock(pos);	// A guard branch generally targets the default case
     guard.clear();
     change = true;
   }
@@ -1096,7 +1297,7 @@ JumpBasic::~JumpBasic(void)
 
 bool JumpBasic::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)
 
-{ // Try to recover a jumptable using the basic model
+{
   // Basically there needs to be a straight line calculation from a switch variable to the final
   // address used for the BRANCHIND.  The switch variable is restricted to a small range by one
   // or more "guard" instructions that, if the switch variable is not in range, branch to a default
@@ -1135,22 +1336,20 @@ void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addr
 
 void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext)
 
-{				// Assuming normalized is recovered, try to work
-				// back to the unnormalized varnode
+{
   int4 i,j;
-  Varnode *testvn;
-  PcodeOp *normop;
 
   i = varnodeIndex;
   normalvn = pathMeld.getVarnode(i++);
   switchvn = normalvn;
+  markModel(true);
 
   int4 countaddsub=0;
   int4 countext=0;
+  PcodeOp *normop = (PcodeOp *)0;
   while(i<pathMeld.numCommonVarnode()) {
-				// Between switchvn and normalvn, should be singleuse
-    if ((switchvn != normalvn)&&(switchvn->loneDescend() == (PcodeOp *)0)) break;
-    testvn = pathMeld.getVarnode(i);
+    if (!flowsOnlyToModel(switchvn, normop)) break;	// Switch variable should only flow into model
+    Varnode *testvn = pathMeld.getVarnode(i);
     if (!switchvn->isWritten()) break;
     normop = switchvn->getDef();
     for(j=0;j<normop->numInput();++j)
@@ -1176,12 +1375,12 @@ void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext
     if (switchvn != testvn) break;
     i += 1;
   }
+  markModel(false);
 }
 
 void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const
 
-{ // Trace back each normal value to
-  // the unnormalized value, this is the "case" label
+{
   uintb val,switchval;
   const JumpValuesRange *origrange = (( const JumpBasic *)orig)->getValueRange();
 
@@ -1219,23 +1418,18 @@ void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<ui
   }
 }
 
-void JumpBasic::foldInNormalization(Funcdata *fd,PcodeOp *indop)
+Varnode *JumpBasic::foldInNormalization(Funcdata *fd,PcodeOp *indop)
 
-{				// Assume normalized and unnormalized values are found
-				// Fold normalization pcode into indirect branch
-				// Treat unnormalized value as input CPUI_BRANCHIND
-				// so it becomes literally the C switch statement
+{
+  // Set the BRANCHIND input to be the unnormalized switch variable, so
+  // all the intervening code to calculate the final address is eliminated as dead.
   fd->opSetInput(indop,switchvn,0);
+  return switchvn;
 }
 
 bool JumpBasic::foldInGuards(Funcdata *fd,JumpTable *jump)
 
-{ // We now think of the BRANCHIND as encompassing
-  // the guard function, so we "disarm" the guard
-  // instructions by making the guard condition
-  // always false.  If the simplification removes
-  // the unusable branches, we are left with only
-  // one path through the switch
+{
   bool change = false;
   for(int4 i=0;i<selectguards.size();++i) {
     PcodeOp *cbranch = selectguards[i].getBranch();
@@ -1252,9 +1446,9 @@ bool JumpBasic::foldInGuards(Funcdata *fd,JumpTable *jump)
 
 bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)
 
-{				// Test all the addresses in the addresstable checking
-				// that they are reasonable. We cut off at first
-				// unreasonable
+{
+  // Test all the addresses in \b this address table checking
+  // that they are reasonable. We cut off at the first unreasonable address.
   int4 i;
   uintb diff;
   if (addresstable.empty()) return true;
@@ -1290,9 +1484,9 @@ bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &address
 
 JumpModel *JumpBasic::clone(JumpTable *jt) const
 
-{ // We only need to clone the JumpValues
+{
   JumpBasic *res = new JumpBasic(jt);
-  res->jrange = (JumpValuesRange *)jrange->clone();
+  res->jrange = (JumpValuesRange *)jrange->clone();	// We only need to clone the JumpValues
   return res;
 }
 
@@ -1321,18 +1515,19 @@ bool JumpBasic2::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
   // So we don't make any special mods, in case there are extra statements in these blocks
 
   // The final block in the table is the single value produced by the model2 guard
-  jump->setMostCommonIndex(jump->numEntries()-1);	// It should be the default block
-  guard.clear();	// Mark that we are folded
+  jump->setLastAsMostCommon();	// It should be the default block
+  guard.clear();		// Mark that we are folded
   return true;
 }
 
 void JumpBasic2::initializeStart(const PathMeld &pathMeld)
 
-{ // Initialize with the point at which model 1 failed
+{
   if (pathMeld.empty()) {
     extravn = (Varnode *)0;
     return;
   }
+  // Initialize at point where the JumpBasic model failed
   extravn = pathMeld.getVarnode(pathMeld.numCommonVarnode()-1);
   origPathMeld.set(pathMeld);
 }
@@ -1389,9 +1584,12 @@ bool JumpBasic2::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 
   return true;
 }
 
+/// \brief Check if the block that defines the normalized switch variable dominates the block containing the switch
+///
+/// \return \b true if the switch block is dominated
 bool JumpBasic2::checkNormalDominance(void) const
 
-{ // Check if the block that defines the normalized switch variable dominates the block containing the switch
+{
   if (normalvn->isInput())
     return true;
   FlowBlock *defblock = normalvn->getDef()->getParent();
@@ -1426,9 +1624,9 @@ void JumpBasic2::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxex
 
 JumpModel *JumpBasic2::clone(JumpTable *jt) const
 
-{ // We only need to clone the JumpValues
+{
   JumpBasic2 *res = new JumpBasic2(jt);
-  res->jrange = (JumpValuesRange *)jrange->clone();
+  res->jrange = (JumpValuesRange *)jrange->clone();	// We only need to clone the JumpValues
   return res;
 }
 
@@ -1440,6 +1638,7 @@ void JumpBasic2::clear(void)
   JumpBasic::clear();
 }
 
+/// \param jt is the parent JumpTable
 JumpBasicOverride::JumpBasicOverride(JumpTable *jt)
   : JumpBasic(jt)
 {
@@ -1448,6 +1647,7 @@ JumpBasicOverride::JumpBasicOverride(JumpTable *jt)
   istrivial = false;
 }
 
+/// \param adtable is the list of externally provided addresses, which will be deduped
 void JumpBasicOverride::setAddresses(const vector<Address> &adtable)
 
 {
@@ -1455,9 +1655,14 @@ void JumpBasicOverride::setAddresses(const vector<Address> &adtable)
     adset.insert(adtable[i]);
 }
 
+/// \brief Return the PcodeOp (within the PathMeld set) that takes the given Varnode as input
+///
+/// If there no PcodeOp in the set reading the Varnode, null is returned
+/// \param vn is the given Varnode
+/// \return the PcodeOp or null
 int4 JumpBasicOverride::findStartOp(Varnode *vn)
 
-{ // Return the op (within determop) that takes -vn- as input, otherwise return null
+{
   list<PcodeOp *>::const_iterator iter,enditer;
   iter = vn->beginDescend();
   enditer = vn->endDescend();
@@ -1475,12 +1680,21 @@ int4 JumpBasicOverride::findStartOp(Varnode *vn)
   return res;
 }
 
+/// \brief Test a given Varnode as a potential normalized switch variable
+///
+/// This method tries to figure out the set of values for the Varnode that
+/// produce the manually provided set of addresses.   Starting with \e startingvalue
+/// and simply incrementing by one to obtain new values, the path from the potential variable
+/// to the BRANCHIND is emulated to produce addresses in the manual set.  Duplicates and
+/// misses are allowed. Once we see all addresses in the manual set,
+/// the method returns the index of the starting op, otherwise -1 is returned.
+/// \param fd is the function containing the switch
+/// \param trialvn is the given trial normalized switch variable
+/// \param tolerance is the number of misses that will be tolerated
+/// \return the index of the starting PcodeOp within the PathMeld or -1
 int4 JumpBasicOverride::trialNorm(Funcdata *fd,Varnode *trialvn,uint4 tolerance)
 
-{ // Given a potential normalized switch variable, try to figure out the set of values that
-  // produce the addresses in the -adset-.   Basically we start with value -startingvalue-
-  // and increment from there, allowing for duplicates and misses.  Once we see all addresses
-  // in -adset- we returning the index of the starting op, otherwise return -1
+{
   int4 opi = findStartOp(trialvn);
   if (opi < 0) return -1;
   PcodeOp *startop = pathMeld.getOp(opi);
@@ -1533,10 +1747,13 @@ int4 JumpBasicOverride::trialNorm(Funcdata *fd,Varnode *trialvn,uint4 tolerance)
   return -1;
 }
 
+/// \brief Convert \b this to a trivial model
+///
+/// Since we have an absolute set of addresses, if all else fails we can use the indirect variable
+/// as the normalized switch and the addresses as the values, similar to JumpModelTrivial
 void JumpBasicOverride::setupTrivial(void)
 
-{ // Since we have an absolute set of addresses, if all else fails we can use the indirect variable
-  // as the normalized switch and the addresses as the values, similar to the trivial model
+{
   set<Address>::const_iterator iter;
   if (addrtable.empty()) {
     for(iter=adset.begin();iter!=adset.end();++iter) {
@@ -1552,10 +1769,15 @@ void JumpBasicOverride::setupTrivial(void)
   istrivial = true;
 }
 
+/// \brief Find a potential normalized switch variable
+///
+/// This method is called if the normalized switch variable is not explicitly provided.
+/// It looks for the normalized Varnode in the most common jump-table constructions,
+/// otherwise it returns null.
+/// \return the potential normalized switch variable or null
 Varnode *JumpBasicOverride::findLikelyNorm(void)
 
-{ // If the normalized switch variable is explicitly provided, look for the norm varnode in the
-  // most common jumptable constructions, otherwise return null
+{
   Varnode *res = (Varnode *)0;
   PcodeOp *op;
   uint4 i;
@@ -1589,9 +1811,10 @@ Varnode *JumpBasicOverride::findLikelyNorm(void)
   return res;
 }
 
+/// \brief Clear varnodes and ops that are specific to one instance of a function
 void JumpBasicOverride::clearCopySpecific(void)
 
-{ // Clear varnodes and ops that are specific to one instance of a Funcdata
+{
   selectguards.clear();
   pathMeld.clear();
   normalvn = (Varnode *)0;
@@ -1655,7 +1878,7 @@ void JumpBasicOverride::buildLabels(Funcdata *fd,vector<Address> &addresstable,v
 
 JumpModel *JumpBasicOverride::clone(JumpTable *jt) const
 
-{ // We only need to clone the values and addresses
+{
   JumpBasicOverride *res = new JumpBasicOverride(jt);
   res->adset = adset;
   res->values = values;
@@ -1733,7 +1956,7 @@ void JumpBasicOverride::restoreXml(const Element *el,Architecture *glb)
 
 bool JumpAssisted::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize)
 
-{ // Try to recover a jumptable using the assisted model model
+{
   // Look for the special "jumpassist" pseudo-op
   Varnode *addrVn = indop->getIn(0);
   if (!addrVn->isWritten()) return false;
@@ -1825,7 +2048,7 @@ void JumpAssisted::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector
   label.push_back(0xBAD1ABE1);		// Add fake label to match the defaultAddress
 }
 
-void JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
+Varnode *JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
 
 {
   // Replace all outputs of jumpassist op with switchvn (including BRANCHIND)
@@ -1837,14 +2060,15 @@ void JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
     fd->opSetInput(op,switchvn,0);
   }
   fd->opDestroy(assistOp);		// Get rid of the assist op (it has served its purpose)
+  return switchvn;
 }
 
 bool JumpAssisted::foldInGuards(Funcdata *fd,JumpTable *jump)
 
 {
-  int4 origVal = jump->getMostCommon();
-  jump->setMostCommonIndex(jump->numEntries()-1);	// Default case is always the last block
-  return (origVal != jump->getMostCommon());
+  int4 origVal = jump->getDefaultBlock();
+  jump->setLastAsMostCommon();			// Default case is always the last block
+  return (origVal != jump->getDefaultBlock());
 }
 
 JumpModel *JumpAssisted::clone(JumpTable *jt) const
@@ -1856,9 +2080,11 @@ JumpModel *JumpAssisted::clone(JumpTable *jt) const
   return clone;
 }
 
+/// Try to recover each model in turn, until we find one that matches the specific BRANCHIND.
+/// \param fd is the function containing the switch
 void JumpTable::recoverModel(Funcdata *fd)
 
-{ // Try to recover each model in turn, until we find one that matches
+{
   if (jmodel != (JumpModel *)0) {
     if (jmodel->isOverride()) {	// If preexisting model is override
       jmodel->recoverModel(fd,indirect,0,maxtablesize);
@@ -1889,6 +2115,11 @@ void JumpTable::recoverModel(Funcdata *fd)
   jmodel = (JumpModel *)0;
 }
 
+/// Check that the BRANCHIND is still reachable, if not throw JumptableNotReachableError.
+/// Check pathological cases when there is only one address in the table, if we find
+/// this, throw the JumptableThunkError. Let the model run its sanity check.
+/// Print a warning if the sanity check truncates the original address table.
+/// \param fd is the function containing the switch
 void JumpTable::sanityCheck(Funcdata *fd)
 
 {
@@ -1923,27 +2154,32 @@ void JumpTable::sanityCheck(Funcdata *fd)
     fd->warning("Sanity check requires truncation of jumptable",opaddress);
 }
 
-uint4 JumpTable::block2Position(const FlowBlock *bl) const
+/// Given a specific basic-block, figure out which edge out of the switch block
+/// hits it.  This \e position is different from the index into the address table,
+/// the out edges are deduped and may include additional guard destinations.
+/// If no edge hits it, throw an exception.
+/// \param bl is the specific basic-block
+/// \return the position of the basic-block
+int4 JumpTable::block2Position(const FlowBlock *bl) const
 
 {
   FlowBlock *parent;
-  uint4 position;
+  int4 position;
 
-  if (!isSwitchedOver())
-    throw LowlevelError("Jumptable switchover has not happened yet");
-  
   parent = indirect->getParent();
-  for(position=0;position<parent->sizeOut();++position)
-    if (parent->getOut(position) == bl) break;
-  if (position==parent->sizeOut())
+  for(position=0;position<bl->sizeIn();++position)
+    if (bl->getIn(position) == parent) break;
+  if (position==bl->sizeIn())
     throw LowlevelError("Requested block, not in jumptable");
-  return position;
+  return bl->getInRevIndex(position);
 }
 
+/// We are not doing a complete check, we are looking for a guard that has collapsed to "if (false)"
+/// \param op is the given PcodeOp to check
+/// \return \b true is the PcodeOp is reachable
 bool JumpTable::isReachable(PcodeOp *op)
 
-{ // Check if -op- seems reachable in current flow
-  // We are not doing a complete check, we are looking for a guard that has collapsed to "if (false)"
+{
   BlockBasic *parent = op->getParent();
 
   for(int4 i=0;i<2;++i) {	// Only check two levels
@@ -1965,6 +2201,8 @@ bool JumpTable::isReachable(PcodeOp *op)
   return true;
 }
 
+/// \param g is the Architecture the table exists within
+/// \param ad is the Address of the BRANCHIND \b this models
 JumpTable::JumpTable(Architecture *g,Address ad)
   : opaddress(ad)
 {
@@ -1972,7 +2210,9 @@ JumpTable::JumpTable(Architecture *g,Address ad)
   jmodel = (JumpModel *)0;
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
-  mostcommon = ~((uint4)0);
+  switchVarConsume = ~((uintb)0);
+  defaultBlock = -1;
+  lastBlock = -1;
   maxtablesize = 1024;
   maxaddsub = 1;
   maxleftright = 1;
@@ -1981,14 +2221,19 @@ JumpTable::JumpTable(Architecture *g,Address ad)
   collectloads = false;
 }
 
+/// This is a partial clone of another jump-table. Objects that are specific
+/// to the particular Funcdata instance must be recalculated.
+/// \param op2 is the jump-table to clone
 JumpTable::JumpTable(const JumpTable *op2)
 
-{				// Partial clone of the jumptable
+{
   glb = op2->glb;
   jmodel = (JumpModel *)0;
   origmodel = (JumpModel *)0;
   indirect = (PcodeOp *)0;
-  mostcommon = ~((uint4)0);
+  switchVarConsume = ~((uintb)0);
+  defaultBlock = -1;
+  lastBlock = op2->lastBlock;
   maxtablesize = op2->maxtablesize;
   maxaddsub = op2->maxaddsub;
   maxleftright = op2->maxleftright;
@@ -2012,18 +2257,17 @@ JumpTable::~JumpTable(void)
     delete origmodel;
 }
 
+/// \brief Return the number of address table entries that target the given basic-block
+///
+/// \param bl is the given basic-block
+/// \return the count of entries
 int4 JumpTable::numIndicesByBlock(const FlowBlock *bl) const
 
-{				// Number of jumptable entries for this block
-  uint4 position,count;
-  int4 i;
-
-  position = block2Position(bl);
-  count = 0;
-  for(i=0;i<blocktable.size();++i)
-    if (blocktable[i] == position)
-      count += 1;
-  return count;
+{
+  IndexPair val(block2Position(bl),0);
+  pair<vector<IndexPair>::const_iterator,vector<IndexPair>::const_iterator> range;
+  range = equal_range(block2addr.begin(),block2addr.end(),val,IndexPair::compareByPosition);
+  return range.second - range.first;
 }
 
 bool JumpTable::isOverride(void) const
@@ -2034,9 +2278,20 @@ bool JumpTable::isOverride(void) const
   return jmodel->isOverride();
 }
 
+/// \brief Force manual override information on \b this jump-table.
+///
+/// The model is switched over to JumpBasicOverride, which is initialized with an externally
+/// provided list of addresses.  The addresses are forced as the output addresses the BRANCHIND
+/// for \b this jump-table.  If a non-zero hash and an address is provided, this identifies a
+/// specific Varnode to use as the normalized switch variable. A potential starting value for
+/// normalized switch variable range is provided.
+/// \param addrtable is the manually provided list of addresses to put in the address table
+/// \param naddr is the address where the normalized switch variable is defined
+/// \param h is a hash identifying the normalized switch variable (or 0)
+/// \param sv is the starting value for the range of possible normalized switch variable values (usually 0)
 void JumpTable::setOverride(const vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv)
 
-{ // Force an override on a jumptable
+{
   if (jmodel != (JumpModel *)0)
     delete jmodel;
 
@@ -2047,95 +2302,153 @@ void JumpTable::setOverride(const vector<Address> &addrtable,const Address &nadd
   override->setStartingValue(sv);
 }
 
+/// \brief Get the index of the i-th address table entry that corresponds to the given basic-block
+///
+/// An exception is thrown if no address table entry targets the block.
+/// \param bl is the given basic-block
+/// \param i requests a specific position within the duplicate entries
+/// \return the address table index
 int4 JumpTable::getIndexByBlock(const FlowBlock *bl,int4 i) const
 
 {
-  uint4 position,count;
-  int4 j;
-
-  position = block2Position(bl);
-  count = 0;
-  for(j=0;j<blocktable.size();++j) {
-    if (blocktable[j] == position) {
-      if (i==count) return j;
+  IndexPair val(block2Position(bl),0);
+  int4 count = 0;
+  vector<IndexPair>::const_iterator iter = lower_bound(block2addr.begin(),block2addr.end(),val,IndexPair::compareByPosition);
+  while(iter != block2addr.end()) {
+    if ((*iter).blockPosition == val.blockPosition) {
+      if (count == i)
+	return (*iter).addressIndex;
       count += 1;
     }
+    ++iter;
   }
   throw LowlevelError("Could not get jumptable index for block");
 }
 
-void JumpTable::setMostCommonIndex(uint4 tableind)
+void JumpTable::setLastAsMostCommon(void)
 
-{  // Set the most common address jump destination by supplying the (an) index for its address
-  mostcommon = blocktable[tableind]; // Translate addresstable index to switch block out index
+{
+  defaultBlock = lastBlock;
 }
 
+/// This is used to add address targets from guard branches if they are
+/// not already in the address table. A specific case label for the block
+/// can also be provided. The new target is appended directly to the end of the table.
+/// \param bl is the given basic-block
+/// \param lab is the case label for the block
 void JumpTable::addBlockToSwitch(BlockBasic *bl,uintb lab)
 
-{  // Force a block to be possible switch destination
+{
   addresstable.push_back(bl->getStart());
-  uint4 pos = indirect->getParent()->sizeOut();
-  blocktable.push_back(pos);
+  lastBlock = indirect->getParent()->sizeOut();		// The block WILL be added to the end of the out-edges
+  block2addr.push_back(IndexPair(lastBlock,addresstable.size()-1));
   label.push_back(lab);
 }
 
+/// Convert addresses in \b this table to actual targeted basic-blocks.
+///
+/// This constructs a map from each out-edge from the basic-block containing the BRANCHIND
+/// to addresses in the table targetting that out-block. The most common
+/// address table entry is also calculated here.
+/// \param flow is used to resolve address targets
 void JumpTable::switchOver(const FlowInfo &flow)
 
-{				// Convert absolute addresses to block indices
+{
   FlowBlock *parent,*tmpbl;
-  uint4 pos;
-  int4 i,j,count,maxcount;
+  int4 pos;
   PcodeOp *op;
 
-  blocktable.clear();
-  blocktable.resize(addresstable.size(),~((uint4)0));
-  mostcommon = ~((uint4)0);	// There is no "mostcommon"
-  maxcount = 1;			// If the maxcount is less than 2
+  block2addr.clear();
+  block2addr.reserve(addresstable.size());
   parent = indirect->getParent();
 
-  for(i=0;i<addresstable.size();++i) {
+  for(int4 i=0;i<addresstable.size();++i) {
     Address addr = addresstable[i];
-    if (blocktable[i] != ~((uint4)0)) continue;
     op = flow.target(addr);
     tmpbl = op->getParent();
     for(pos=0;pos<parent->sizeOut();++pos)
       if (parent->getOut(pos) == tmpbl) break;
     if (pos==parent->sizeOut())
       throw LowlevelError("Jumptable destination not linked");
-    count = 0;
-    for(j=i;j<addresstable.size();++j) {
-      if (addr == addresstable[j]) {
-	count += 1;
-	blocktable[j] = pos;
-      }
+    block2addr.push_back(IndexPair(pos,i));
+  }
+  lastBlock = block2addr.back().blockPosition;	// Out-edge of last address in table
+  sort(block2addr.begin(),block2addr.end());
+
+  defaultBlock = -1;			// There is no default case initially
+  int4 maxcount = 1;			// If the maxcount is less than 2
+  vector<IndexPair>::const_iterator iter = block2addr.begin();
+  while(iter != block2addr.end()) {
+    int4 curPos = (*iter).blockPosition;
+    vector<IndexPair>::const_iterator nextiter = iter;
+    int4 count = 0;
+    while(nextiter != block2addr.end() && (*nextiter).blockPosition == curPos) {
+      count += 1;
+      ++nextiter;
     }
-    if (count>maxcount) {
+    iter = nextiter;
+    if (count > maxcount) {
       maxcount = count;
-      mostcommon = pos;
+      defaultBlock = curPos;
     }
   }
 }
 
+/// Eliminate any code involved in actually computing the destination address so
+/// it looks like the CPUI_BRANCHIND operation does it all internally.
+/// \param fd is the function containing \b this switch
+void JumpTable::foldInNormalization(Funcdata *fd)
+
+{
+  Varnode *switchvn = jmodel->foldInNormalization(fd,indirect);
+  if (switchvn != (Varnode *)0) {
+    // If possible, mark up the switch variable as not fully consumed so that
+    // subvariable flow can truncate it.
+    switchVarConsume = minimalmask(switchvn->getNZMask());
+    if (switchVarConsume >= calc_mask(switchvn->getSize())) {	// If mask covers everything
+      if (switchvn->isWritten()) {
+	PcodeOp *op = switchvn->getDef();
+	if (op->code() == CPUI_INT_SEXT) {			// Check for a signed extension
+	  switchVarConsume = calc_mask(op->getIn(0)->getSize());	// Assume the extension is not consumed
+	}
+      }
+    }
+  }
+}
+
+/// Make exactly one case for each output edge of the switch block.
 void JumpTable::trivialSwitchOver(void)
 
 {
   FlowBlock *parent;
 
-  blocktable.clear();
-  blocktable.resize(addresstable.size(),~((uint4)0));
+  block2addr.clear();
+  block2addr.reserve(addresstable.size());
   parent = indirect->getParent();
 
   if (parent->sizeOut() != addresstable.size())
     throw LowlevelError("Trivial addresstable and switch block size do not match");
   for(uint4 i=0;i<parent->sizeOut();++i)
-    blocktable[i] = i;		// blocktable corresponds exactly to outlist of switch block
-  mostcommon = ~((uint4)0);	// There is no "mostcommon"
+    block2addr.push_back(IndexPair(i,i));	// Addresses corresponds exactly to out-edges of switch block
+  lastBlock = parent->sizeOut()-1;
+  defaultBlock = -1;		// Trivial case does not have default case
 }
 
+/// The addresses that the raw BRANCHIND op might branch to itself are recovered,
+/// not including other targets of the final model, like guard addresses.  The normalized switch
+/// variable and the guards are identified in the process however.
+///
+/// Generally this method is run during flow analysis when we only have partial information about
+/// the function (and possibly the switch itself).  The Funcdata instance is a partial clone of the
+/// function and is different from the final instance that will hold the fully recovered jump-table.
+/// The final instance inherits the addresses recovered here, but recoverModel() will need to be
+/// run on it separately.
+///
+/// A sanity check is also run, which might truncate the original set of addresses.
+/// \param fd is the function containing the switch
 void JumpTable::recoverAddresses(Funcdata *fd)
 
-{				// Assuming we only have a partial function
-				// recover just the jumptable addresses
+{
   recoverModel(fd);
   if (jmodel == (JumpModel *)0) {
     ostringstream err;
@@ -2156,9 +2469,11 @@ void JumpTable::recoverAddresses(Funcdata *fd)
   sanityCheck(fd);
 }
 
+/// Do a normal recoverAddresses, but save off the old JumpModel, and if we fail recovery, put back the old model.
+/// \param fd is the function containing the switch
 void JumpTable::recoverMultistage(Funcdata *fd)
 
-{ // Do a normal recoverAddresses, but save off old model, and if we fail recovery, put back the old model
+{
   if (origmodel != (JumpModel *)0)
     delete origmodel;
   origmodel = jmodel;
@@ -2193,9 +2508,16 @@ void JumpTable::recoverMultistage(Funcdata *fd)
   }
 }
 
+/// This is run assuming the address table has already been recovered, via recoverAddresses() in another
+/// Funcdata instance. So recoverModel() needs to be rerun on the instance passed in here.
+///
+/// The unnormalized switch variable is recovered, and for each possible address table entry, the variable
+/// value that produces it is calculated and stored as the formal \e case label for the associated code block.
+/// \param fd is the (final instance of the) function containing the switch
+/// \return \b true if it looks like a multi-stage restart is needed.
 bool JumpTable::recoverLabels(Funcdata *fd)
 
-{ // Assuming we have entire function, recover labels.  Return -true- if it looks like a multistage restart is needed.
+{
   if (!isRecovered())
     throw LowlevelError("Trying to recover jumptable labels without addresses");
 
@@ -2242,9 +2564,12 @@ bool JumpTable::recoverLabels(Funcdata *fd)
   return multistagerestart;
 }
 
+/// Clear out any data that is specific to a Funcdata instance.  The address table is not cleared
+/// if it was recovered, and override information is left intact.
+/// Right now this is only getting called, when the jumptable is an override in order to clear out derived data.
 void JumpTable::clear(void)
 
-{ // Right now this is only getting called, when the jumptable is an override in order to clear out derived data
+{
   if (origmodel != (JumpModel *)0) {
     delete origmodel;
     origmodel = (JumpModel *)0;
@@ -2255,17 +2580,22 @@ void JumpTable::clear(void)
     delete jmodel;
     jmodel = (JumpModel *)0;
   }
-  blocktable.clear();
+  block2addr.clear();
+  lastBlock = -1;
   label.clear();
   loadpoints.clear();
   indirect = (PcodeOp *)0;
+  switchVarConsume = ~((uintb)0);
   recoverystage = 0;
   // -opaddress- -maxtablesize- -maxaddsub- -maxleftright- -maxext- -collectloads- are permanent
 }
 
+/// The recovered addresses and case labels are saved to the XML stream.
+/// If override information is present, this is also incorporated into the tag.
+/// \param s is the stream to write to
 void JumpTable::saveXml(ostream &s) const
 
-{				// Save addresses in a jump table in XML format
+{
   if (!isRecovered())
     throw LowlevelError("Trying to save unrecovered jumptable");
 
@@ -2293,6 +2623,9 @@ void JumpTable::saveXml(ostream &s) const
   s << "</jumptable>\n";
 }
 
+/// Restore the addresses, \e case labels, and any override information from the tag.
+/// Other parts of the model and jump-table will still need to be recovered.
+/// \param el is the root \<jumptable> tag to restore from
 void JumpTable::restoreXml(const Element *el)
 
 {
@@ -2341,9 +2674,13 @@ void JumpTable::restoreXml(const Element *el)
   }
 }
 
+/// Look for the override directive that indicates we need an additional recovery stage for
+/// \b this jump-table.
+/// \param fd is the function containing the switch
+/// \return \b true if an additional recovery stage is required.
 bool JumpTable::checkForMultistage(Funcdata *fd)
 
-{ // Look for a change in control that indicates we need an additional of jump recovery
+{
   if (addresstable.size()!=1) return false;
   if (recoverystage != 0) return false;
   if (indirect == (PcodeOp *)0) return false;

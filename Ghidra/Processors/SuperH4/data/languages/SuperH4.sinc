@@ -1623,7 +1623,7 @@ define pcodeop InvalidateCacheBlock;
 
 :icbi N_0t_at1              is OP_0=0x0 & N_0t_at1 & OP_4=0xe3 {
 	tmp:4 = N_0t_at1;
-	InvalidateCacheBlock(N_0t_at1);
+	InvalidateCacheBlock(tmp);
 }
 
 # Unconditional Branch
@@ -2374,7 +2374,7 @@ define pcodeop mac_wOp;
 
 	temp:4 = -M_0t;
 	N_0t = temp - zext($(T_FLAG));
-	$(T_FLAG) = ( 0 < temp );
+	$(T_FLAG) = ( 0 != temp );
 	if ( temp >= N_0t ) goto <skip>;
 	$(T_FLAG) = 1;
 	<skip>

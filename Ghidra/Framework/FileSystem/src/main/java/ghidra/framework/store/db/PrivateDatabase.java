@@ -154,11 +154,8 @@ public class PrivateDatabase extends Database {
 
 	/**
 	 * Open the current version of this database for update use.
-	 * @param recover if true an attempt will be made to recover unsaved changes
-	 * from a previous crash.
-	 * @param monitor task monitor
 	 * @return updateable buffer file
-	 * @throws IOException
+	 * @throws IOException if updating this database file is not allowed
 	 */
 	public LocalManagedBufferFile openBufferFileForUpdate() throws IOException {
 		if (!updateAllowed) {
@@ -181,7 +178,8 @@ public class PrivateDatabase extends Database {
 	 * Following a move of the database directory,
 	 * this method should be invoked if this instance will
 	 * continue to be used.
-	 * @param dirir new database directory
+	 * @param dir new database directory
+	 * @throws FileNotFoundException if the database directory cannot be found
 	 */
 	public void dbMoved(File dir) throws FileNotFoundException {
 		synchronized (syncObject) {
@@ -246,7 +244,7 @@ public class PrivateDatabase extends Database {
 	 * If already open for update, a save should not be done or the database
 	 * may become corrupted.  All existing handles should be closed and reopened
 	 * when this method is complete.
-	 * @param privateDb
+	 * @param otherDb the other database.
 	 * @throws IOException if an IO error occurs.  An attempt will be made to restore
 	 * this database to its original state, however the otherDb will not be repaired
 	 * and may become unusable.

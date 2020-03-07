@@ -41,9 +41,6 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 		+ "optionally followed by a display string";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "url", "hyperlink", "href", "link" };
 
-	/**
-	 * @see AnnotatedStringHandler#createAnnotatedString(AttributedString, String[], ServiceProvider)
-	 */
 	@Override
 	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
 			Program program) throws AnnotationException {
@@ -74,9 +71,6 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 			prototypeString.getFontMetrics(0), true, prototypeString.getColor(0));
 	}
 
-	/**
-	 * @see AnnotatedStringHandler#getSupportedAnnotations()
-	 */
 	@Override
 	public String[] getSupportedAnnotations() {
 		return SUPPORTED_ANNOTATIONS;
@@ -113,17 +107,11 @@ public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getDisplayString()
-	 */
 	@Override
 	public String getDisplayString() {
 		return "URL";
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.AnnotatedStringHandler#getPrototypeString()
-	 */
 	@Override
 	public String getPrototypeString() {
 		return "{@url http://www.example.com}";

@@ -319,7 +319,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 				space.getAddress(originalImageBase + brdd.getVirtualAddress() + brdd.getSize()));
 		AddressRange headerRange = new AddressRangeImpl(space.getAddress(originalImageBase),
 			space.getAddress(originalImageBase + optionalHeader.getSizeOfHeaders()));
-		DataConverter conv = new LittleEndianDataConverter();
+		DataConverter conv = LittleEndianDataConverter.INSTANCE;
 
 		for (BaseRelocation reloc : relocs) {
 			if (monitor.isCancelled()) {

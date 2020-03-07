@@ -29,8 +29,7 @@ public class TutorialScreenShotGenerator extends AbstractScreenShotGenerator {
 	}
 
 	/**
-	 * @deprecated use instead {@link #showImage(String)}, which will show a comparison of the old 
-	 * 				and new images
+	 * @deprecated
 	 * 
 	 * NOTE:  Please do not remove this until we have decided how to create a showImage() method
 	 *        that is compatible with screenshots NOT in Help (ahem, Tutorial!!!).

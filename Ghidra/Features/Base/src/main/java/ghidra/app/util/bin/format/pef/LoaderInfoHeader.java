@@ -25,7 +25,7 @@ import java.util.List;
 
 /**
  * See Apple's -- PEFBinaryFormat.h
- * <pre>
+ * <pre>{@literal
  * struct PEFLoaderInfoHeader {
  *     SInt32  mainSection;              // Section containing the main symbol, -1 => none.
  *     UInt32  mainOffset;               // Offset of main symbol.
@@ -42,7 +42,7 @@ import java.util.List;
  *     UInt32  exportHashTablePower;     // Export hash table size as log 2.  (Log2('h'))
  *     UInt32  exportedSymbolCount;      // Number of exported symbols.  ('e')
  * };
- * </pre>
+ * }</pre>
  */
 public class LoaderInfoHeader implements StructConverter {
 	public final static int SIZEOF = 56;
@@ -258,7 +258,6 @@ public class LoaderInfoHeader implements StructConverter {
 
 	/**
 	 * Finds the PEF library that contains the specified imported symbol index.
-	 * @param loader the PEF loader info header
 	 * @param symbolIndex the imported symbol index
 	 * @return PEF library that contains the specified imported symbol index
 	 */

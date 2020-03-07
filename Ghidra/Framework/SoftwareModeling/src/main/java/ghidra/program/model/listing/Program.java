@@ -206,7 +206,6 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * Returns the creation date of this program.
 	 * If the program was created before this property
 	 * existed, then Jan 1, 1970 is returned.
-	 * @param program the prorgam 
 	 * @return the creation date of this program
 	 */
 	public Date getCreationDate();
@@ -332,8 +331,7 @@ public interface Program extends DataTypeManagerDomainObject {
 
 	/**
 	 * Returns the register which corresponds to the specified varnode
-	 * @param addr register address
-	 * @param size the size of the register (in bytes);
+	 * @param varnode the varnode
 	 * @return register or null
 	 */
 	public Register getRegister(Varnode varnode);

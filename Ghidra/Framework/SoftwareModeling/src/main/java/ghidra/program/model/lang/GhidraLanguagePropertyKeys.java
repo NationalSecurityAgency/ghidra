@@ -92,9 +92,9 @@ public final class GhidraLanguagePropertyKeys {
 	/**
 	 * PCODE_INJECT_LIBRARY_CLASS indicates the classname of a PcodeInjectLibrary implementation
 	 * that is used to generate p-code injection payloads which can replace either CALLs or CALLOTHERs
-	 * during any form of p-code analysis.  The injections are primarily provided by <callfixup> and
-	 * <callotherfixup> tags in the compiler spec, but this provides a hook point for providing other means of
-	 * injection.
+	 * during any form of p-code analysis.  The injections are primarily provided by {@code <callfixup>}
+	 * and {@code <callotherfixup>} tags in the compiler spec, but this provides a hook point for
+	 * providing other means of injection.
 	 */
 	public static final String PCODE_INJECT_LIBRARY_CLASS = "pcodeInjectLibraryClass";
 
@@ -112,4 +112,11 @@ public final class GhidraLanguagePropertyKeys {
 	 * following the call.  Non-returning functions can be detected in many cases.
 	 */
 	public static final String ENABLE_NO_RETURN_ANALYSIS = "enableNoReturnAnalysis";
+
+	/**
+	 * Property to indicate that all stored instruction context should be cleared
+	 * during a language upgrade operation which requires redisassembly.
+	 * NOTE: This is an experimental concept which may be removed in the future
+	 */
+	public static final String RESET_CONTEXT_ON_UPGRADE = "resetContextOnUpgrade";
 }

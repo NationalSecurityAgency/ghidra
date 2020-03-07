@@ -22,11 +22,13 @@ import java.util.*;
 import org.junit.*;
 
 import generic.test.TestUtils;
+import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.WordDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -214,6 +216,124 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Symbol[] s = st.getSymbols(addr(256));
 		assertEquals(1, s.length);
 		assertTrue(s[0].getSource() == SourceType.DEFAULT);
+	}
+
+	@Test
+	public void testDynamicNameChangesWhenDataApplied() throws Exception {
+		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
+		Symbol[] s = st.getSymbols(addr(256));
+		assertEquals(1, s.length);
+		assertEquals("LAB_00000100", s[0].getName());
+		program.getListing().createData(addr(256), new ByteDataType());
+		assertEquals("BYTE_00000100", s[0].getName());
+	}
+
+	@Test
+	public void testDynamicNameChangesWhenDataCleared() throws Exception {
+		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
+		program.getListing().createData(addr(256), new ByteDataType());
+		Symbol[] s = st.getSymbols(addr(256));
+		assertEquals(1, s.length);
+		assertEquals("BYTE_00000100", s[0].getName());
+
+		program.getListing().clearCodeUnits(addr(256), addr(256), false);
+		assertEquals("LAB_00000100", s[0].getName());
+	}
+
+	@Test
+	public void testDynamicOffcutNameChangesWhenSymbolCreated() throws Exception {
+		refMgr.addMemoryReference(addr(512), addr(257), RefType.FLOW, SourceType.USER_DEFINED, -1);
+		program.getListing().createData(addr(256), new WordDataType());
+
+		Symbol[] s = st.getSymbols(addr(257));
+		assertEquals(1, s.length);
+		assertEquals("WORD_00000100+1", s[0].getName());
+		st.createLabel(addr(256), "bob", SourceType.USER_DEFINED);
+		assertEquals("bob+1", s[0].getName());
+	}
+
+	@Test
+	public void testDynamicOffcutNameChangesWhenSymbolRenamed() throws Exception {
+		refMgr.addMemoryReference(addr(512), addr(257), RefType.FLOW, SourceType.USER_DEFINED, -1);
+		program.getListing().createData(addr(256), new WordDataType());
+		Symbol label = st.createLabel(addr(256), "bob", SourceType.USER_DEFINED);
+
+		Symbol[] s = st.getSymbols(addr(257));
+		assertEquals(1, s.length);
+		assertEquals("bob+1", s[0].getName());
+		label.setName("fred", SourceType.USER_DEFINED);
+		assertEquals("fred+1", s[0].getName());
+	}
+
+	@Test
+	public void testDynamicOffcutNameChangesWhenSymbolRemoved() throws Exception {
+		refMgr.addMemoryReference(addr(512), addr(257), RefType.FLOW, SourceType.USER_DEFINED, -1);
+		program.getListing().createData(addr(256), new WordDataType());
+		Symbol label = st.createLabel(addr(256), "bob", SourceType.USER_DEFINED);
+
+		Symbol[] s = st.getSymbols(addr(257));
+		assertEquals(1, s.length);
+		assertEquals("bob+1", s[0].getName());
+		label.delete();
+		assertEquals("WORD_00000100+1", s[0].getName());
+	}
+	@Test
+	public void testDynamicNameChangesWhenOffcutByInstruction() throws Exception {
+		refMgr.addMemoryReference(addr(512), addr(257), RefType.FLOW, SourceType.USER_DEFINED, -1);
+
+		Symbol[] s = st.getSymbols(addr(257));
+		assertEquals(1, s.length);
+		assertEquals("LAB_00000101", s[0].getName());
+		createInstruction(addr(256));
+		CodeUnit codeUnitAt = program.getListing().getCodeUnitAt(addr(256));
+		assertTrue(codeUnitAt instanceof Instruction);
+		assertEquals(2, codeUnitAt.getLength());
+
+		assertEquals("LAB_00000100+1", s[0].getName());
+	}
+
+	@Test
+	public void testDynamicNameChangesWhenCallRefAdded() throws Exception {
+		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
+
+		Symbol[] s = st.getSymbols(addr(256));
+		assertEquals(1, s.length);
+		assertEquals("LAB_00000100", s[0].getName());
+
+		refMgr.addMemoryReference(addr(512), addr(256), RefType.UNCONDITIONAL_CALL,
+			SourceType.USER_DEFINED, -1);
+
+		assertEquals("SUB_00000100", s[0].getName());
+	}
+
+	@Test
+	public void testDynamicNameChangesWhenCallRefRemoved() throws Exception {
+		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
+		Reference ref = refMgr.addMemoryReference(addr(516), addr(256), RefType.UNCONDITIONAL_CALL,
+			SourceType.USER_DEFINED, -1);
+
+		Symbol[] s = st.getSymbols(addr(256));
+		assertEquals(1, s.length);
+		assertEquals("SUB_00000100", s[0].getName());
+
+		refMgr.delete(ref);
+		assertEquals("LAB_00000100", s[0].getName());
+	}
+
+
+	private void createInstruction(Address addr) throws Exception {
+		int tx = program.startTransaction("test");
+		try {
+			Memory memory = program.getMemory();
+			memory.setByte(addr, (byte) 0xd9);
+			memory.setByte(addr, (byte) 0x32);
+			AddressSet set = new AddressSet(addr, addr.add(1));
+			DisassembleCommand cmd = new DisassembleCommand(set, set);
+			cmd.applyTo(program);
+		}
+		finally {
+			program.endTransaction(tx, true);
+		}
 	}
 
 	@Test

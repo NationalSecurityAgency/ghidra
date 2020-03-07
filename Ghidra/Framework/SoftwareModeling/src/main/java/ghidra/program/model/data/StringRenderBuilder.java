@@ -30,6 +30,7 @@ import ghidra.util.StringUtilities;
 public class StringRenderBuilder {
 	public static final char DOUBLE_QUOTE = '"';
 	public static final char SINGLE_QUOTE = '\'';
+	private static final int MAX_ASCII = 0x80;
 
 	private StringBuilder sb = new StringBuilder();
 	private boolean byteMode = true;
@@ -46,6 +47,18 @@ public class StringRenderBuilder {
 	}
 
 	/**
+	 * Returns true if the current formatted string starts with a quoted text section,
+	 * instead of a byte value section.  Useful to indicate if
+	 * the string could have a prefix applied to it (ie. u8"text")
+	 * <p>
+	 * 
+	 * @return boolean true if this string will start with a quoted text section
+	 */
+	public boolean startsWithQuotedText() {
+		return sb.length() > 0 && sb.charAt(0) == quoteChar;
+	}
+
+	/**
 	 * Append the characters in the specified string. The added characters will
 	 * be shown in a quoted text region.
 	 *
@@ -58,7 +71,7 @@ public class StringRenderBuilder {
 
 	/**
 	 * Append the specified char after an escaping backslash "\", ie
-	 * "x" -> "\x";
+	 * {@literal "x" -> "\x";}
 	 *
 	 * @param ch
 	 */
@@ -97,18 +110,23 @@ public class StringRenderBuilder {
 	/**
 	 * Add byte values, shown as numeric hex values.
 	 * <p>
-	 * { 0, 1, 2 } -> 00,01,02
+	 * {@literal { 0, 1, 2 } -> 00,01,02}
 	 *
-	 * @param bytes
+	 * @param bytes to convert to hex and append.  If null, append "???"
 	 */
 	public void addByteSeq(byte[] bytes) {
+		if (bytes == null) {
+			ensureByteMode();
+			sb.append("???");
+			return;
+		}
 		for (int i = 0; i < bytes.length; i++) {
 			ensureByteMode();
 			String valStr = Integer.toHexString(bytes[i] & 0xff).toUpperCase();
 			if (valStr.length() < 2) {
 				sb.append("0");
 			}
-			sb.append(valStr);
+			sb.append(valStr).append("h");
 		}
 	}
 
@@ -116,18 +134,17 @@ public class StringRenderBuilder {
 	 * Add an unicode codepoint as its escaped hex value, with a escape character
 	 * prefix of 'x', 'u' or 'U' depending on the magnitude of the codePoint value.
 	 * <p>
-	 * codePoint 15 -> '\' 'x' "0F"<br>
-	 * codePoint 65535 -> '\' 'u' "FFFF"<br>
-	 * codePoint 65536 -> '\' 'U' "10000"<br>
+	 * {@literal codePoint 15 -> '\' 'x' "0F"}<br>
+	 * {@literal codePoint 65535 -> '\' 'u' "FFFF"}<br>
+	 * {@literal codePoint 65536 -> '\' 'U' "10000"}<br>
 	 *
 	 * @param codePoint int value
 	 */
 	public void addEscapedCodePoint(int codePoint) {
 		ensureTextMode();
-		char escapeChar = StringUtilities.isAsciiChar(codePoint) ? 'x'
-				: Character.isBmpCodePoint(codePoint) ? 'u' : 'U';
-		int cpDigits = StringUtilities.isAsciiChar(codePoint) ? 2
-				: Character.isBmpCodePoint(codePoint) ? 4 : 8;
+		char escapeChar =
+			(codePoint < MAX_ASCII) ? 'x' : Character.isBmpCodePoint(codePoint) ? 'u' : 'U';
+		int cpDigits = (codePoint < MAX_ASCII) ? 2 : Character.isBmpCodePoint(codePoint) ? 4 : 8;
 		String s = Integer.toHexString(codePoint).toUpperCase();
 		sb.append("\\").append(escapeChar);
 		sb.append(StringUtilities.pad(s, '0', cpDigits));

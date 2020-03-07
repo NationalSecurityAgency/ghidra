@@ -46,7 +46,7 @@ public class CliSigField extends CliAbstractSig {
 	/**
 	 * Checks whether this could *possibly* be a FieldSig. Only looks at the identifier byte. Useful for signature index
 	 * that could be to different kinds of signatures.
-	 * @param reader
+	 * @param blob
 	 * @return
 	 * @throws IOException
 	 */

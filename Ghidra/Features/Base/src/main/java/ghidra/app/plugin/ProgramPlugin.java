@@ -34,20 +34,24 @@ import ghidra.program.util.ProgramSelection;
  * <p>
  * Subclasses should override the following methods if they are interested
  * in the corresponding events:
+ * <ul>
  * <LI> <code>programOpened(Program)</code> 
  * <LI> <code>programClosed(Program)</code> 
  * <LI> <code>locationChanged(ProgramLocation)</code>
  * <LI> <code>selectionChanged(ProgramSelection) </code>
  * <LI> <code>highlightChanged(ProgramSelection) </code>
  * </LI>
+ * </ul>
  * <br>
  * This class will handle the enablement and add to popup state for
  * plugin actions when subclasses call any of the following methods:
+ * <ul>
  * <LI><code>enableOnHighlight(PluginAction)</code>
  * <LI><code>enableOnLocation(PluginAction)</code>
  * <LI><code>enableOnProgram(PluginAction)</code>
  * <LI><code>enableOnSelection(PluginAction)</code>
  * </LI>
+ * </ul>
  *
  */
 public abstract class ProgramPlugin extends Plugin {
@@ -63,7 +67,6 @@ public abstract class ProgramPlugin extends Plugin {
 
 	/**
 	 * Constructs a new program plugin
-	 * @param name plugin name       the name of this plugin
 	 * @param plugintool tool        the parent tool for this plugin
 	 * @param consumeLocationChange  true if this plugin should consume ProgramLocation events
 	 * @param consumeSelectionChange true if this plugin should consume ProgramSelection events

@@ -36,7 +36,7 @@ public class DemangledType {
 	 * (such as Foo::Bar) and breaks it into a hierarchy of types where each type
 	 * represents one item in the list of namespace elements.
 	 *
-	 * @param demangledType the type to split
+	 * @param otherNamespace the type to convert
 	 * @return the original type if the name does not represent a namespace; a new type
 	 *         that contains a child, that contains a child and so on, representing the
 	 *         split-up of the original namespace string.
@@ -129,8 +129,8 @@ public class DemangledType {
 	}
 
 	/**
-	 * Sets the original mangled name
-	 * @param mangled the original mangled name
+	 * Gets the original mangled name
+	 * @return the original mangled name
 	 */
 	public String getOriginalMangled() {
 		return originalMangled;
@@ -193,7 +193,7 @@ public class DemangledType {
 			return "";
 		}
 
-		buffer.append(Namespace.NAMESPACE_DELIMITER);
+		buffer.append(Namespace.DELIMITER);
 		return buffer.toString();
 	}
 

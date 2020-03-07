@@ -15,9 +15,9 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.CharsetSettingsDefinition.CHARSET;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+import static ghidra.program.model.data.CharsetSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import ghidra.docking.settings.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -28,7 +28,7 @@ import ghidra.program.model.mem.MemBuffer;
  * See {@link StringDataType} for information about string variations and configuration details.
  * <p>
  * Sub-classes generally only need to implement a constructor that calls the mega-constructor
- * {@link #StringDataTypeBase(String, String, String, String, String, String, String, DataType, StringLayoutEnum, DataTypeManager) StringDataTypeBase.StringDataTypeBase(lots,of,params)}
+ * {@link #AbstractStringDataType(String, String, String, String, String, String, String, DataType, StringLayoutEnum, DataTypeManager) AbstractStringDataType.AbstractStringDataType(lots,of,params)}
  * and the {@link DataType#clone(DataTypeManager) } method.
  * <p>
  *

@@ -148,9 +148,6 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		return isValid;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getAddressString(boolean, boolean)
-	 */
 	@Override
 	public String getAddressString(boolean showBlockName, boolean pad) {
 		Address cuAddress = address;
@@ -400,9 +397,6 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#propertyNames()
-	 */
 	@Override
 	public Iterator<String> propertyNames() {
 		throw new UnsupportedOperationException();
@@ -539,9 +533,6 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		return this.getMaxAddress().isSuccessor(min);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getComment(int)
-	 */
 	@Override
 	public String getComment(int commentType) {
 		return comments.get(commentType);
@@ -763,7 +754,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Add a user defined reference to the operand at the given index.
-	 * @see ghidra.program.model.listing.CodeUnit#addOperandReference(int, ghidra.program.model.address.Address, ghidra.program.model.symbol.RefType, SourceType)
+	 * @see CodeUnit#addOperandReference(int, Address, RefType, SourceType)
 	 */
 	@Override
 	public void addOperandReference(int opIndex, Address refAddr, RefType type,
@@ -853,11 +844,6 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		return refMgr.getPrimaryReferenceFrom(address, index);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see ghidra.program.model.listing.CodeUnit#setPrimaryMemoryReference(ghidra.program.model.symbol.Reference)
-	 */
 	@Override
 	public void setPrimaryMemoryReference(Reference ref) {
 		if (refMgr == null)
@@ -865,23 +851,14 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		refMgr.setPrimary(ref, true);
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getStackReference(int)
-	 */
 	public StackReference getStackReference(int opIndex) {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#removeStackReference(int)
-	 */
 	public void removeStackReference(int opIndex) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getExternalReference(int)
-	 */
 	@Override
 	public ExternalReference getExternalReference(int opIndex) {
 		if (refMgr == null)
@@ -895,17 +872,11 @@ abstract class PseudoCodeUnit implements CodeUnit {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#removeExternalReference(int)
-	 */
 	@Override
 	public void removeExternalReference(int opIndex) {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getReferenceIteratorTo()
-	 */
 	@Override
 	public ReferenceIterator getReferenceIteratorTo() {
 		if (refMgr == null)
@@ -915,17 +886,11 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	// ///////////////////////////////////////////////////////////////////
 
-	/**
-	 * @see ghidra.program.model.listing.CodeUnit#getProgram()
-	 */
 	@Override
 	public Program getProgram() {
 		return program;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public abstract boolean equals(Object obj);
 

@@ -480,6 +480,17 @@ public class MDMang {
 	public MDObjectCPP getEmbeddedObject(MDObjectCPP obj) {
 		return obj;
 	}
+
+	/**
+	 * This method is meant to be overridden as needed to process a hashed
+	 *  object.  In this default case (MDMang), we properly process the
+	 *  hashed object.  Overridden methods might just throw an exception,
+	 *  allowing a failed demangling.
+	 */
+	public void processHashedObject(MDObjectCPP obj) throws MDException {
+		obj.processHashedObject();
+	}
+
 }
 
 /******************************************************************************/

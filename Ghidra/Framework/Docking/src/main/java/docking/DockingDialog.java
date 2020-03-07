@@ -18,13 +18,16 @@ package docking;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
 import org.apache.commons.collections4.map.LazyMap;
 
+import docking.framework.ApplicationInformationDisplayFactory;
 import docking.help.HelpDescriptor;
 import generic.util.WindowUtilities;
+import ghidra.framework.Application;
 import ghidra.util.bean.GGlassPane;
 
 // NOTE: this class has a static focus component variable that is set whenever the dialog gets
@@ -51,18 +54,39 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 
 	private WindowAdapter modalFixWindowAdapter;
 
+	/**
+	 * Creates a default parent frame that will appear in the OS's task bar.  Having this frame
+	 * gives the user something to click when their dialog is lost.  We attempt to hide this 
+	 * frame offscreen.
+	 * 
+	 * Note: we expect to only get here when there is no parent window found.  This usually
+	 * only happens during tests and one-off main methods that are not part of a 
+	 * running tool.
+	 * 
+	 * @param componentProvider the dialog content for this dialog
+	 * @return the hidden frame
+	 */
 	private static JFrame createHiddenParentFrame(DialogComponentProvider componentProvider) {
-		HiddenDockingFrame frame = new HiddenDockingFrame(componentProvider.getTitle());
-		frame.setBounds(-500, -500, 10, 10);
 
-		// we currently don't support icons from DialogComponentProvider
-		// frame.setIconImage( ... )
+		//
+		// Note: we expect to only get here when there is no parent window found.  This usually
+		//       only happens during tests and one-off main methods that are not part of a 
+		//       running tool
+		//
+		HiddenDockingFrame hiddenFrame = new HiddenDockingFrame(Application.getName());
+		hiddenFrame.setShowingAllowed(true);
+		List<Image> list = ApplicationInformationDisplayFactory.getWindowIcons();
+		hiddenFrame.setIconImages(list);
+		hiddenFrame.setUndecorated(true);
+
+		hiddenFrame.setBounds(-500, -500, 10, 10);
 
 		// This prevents a window from showing in the taskbar; it is assumed that we the
 		// window to appear in the taskbar.  If clients need this in the future, then we would
 		// have to make it a value on the DialogComponentProvider
 		// frame.setHidden( true ); // make invisible
-		return frame;
+		hiddenFrame.setVisible(true);
+		return hiddenFrame;
 	}
 
 	public static DockingDialog createDialog(Window parent, DialogComponentProvider comp,
@@ -94,7 +118,7 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 		initializeLocationAndSize(centeredOnComponent);
 	}
 
-	public DockingDialog(DialogComponentProvider comp, Component centeredOnComponent) {
+	private DockingDialog(DialogComponentProvider comp, Component centeredOnComponent) {
 		super(createHiddenParentFrame(comp), comp.getTitle(), comp.isModal());
 		init(comp);
 		initializeLocationAndSize(centeredOnComponent);

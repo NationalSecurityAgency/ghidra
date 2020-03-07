@@ -125,7 +125,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		DockingActionIf closeAction = getAction("Close Tool");
 		performToolButtonAction(closeAction, "Untitled", true, true);
 
-		Tool[] tools = frontEndTool.getProject().getToolServices().getRunningTools();
+		PluginTool[] tools = frontEndTool.getProject().getToolServices().getRunningTools();
 		assertEquals(0, tools.length);
 	}
 
@@ -136,7 +136,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		DockingActionIf runAction = getAction("Untitled", "Run Tool");
 		performAction(runAction, "Untitled", true);
-		Tool[] tools = frontEndTool.getProject().getToolServices().getRunningTools();
+		PluginTool[] tools = frontEndTool.getProject().getToolServices().getRunningTools();
 		assertEquals(2, tools.length);
 	}
 
@@ -160,7 +160,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(window);
 
 		waitForCondition(() -> {
-			Tool[] tools = frontEndTool.getToolServices().getRunningTools();
+			PluginTool[] tools = frontEndTool.getToolServices().getRunningTools();
 			return tools.length == 2;
 		});
 
@@ -238,7 +238,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		clickMouse(jTree, MouseEvent.BUTTON1, bounds.x + 5, bounds.y + 5, 2, 0);
 		waitForSwing();
 
-		Tool tool = waitForTool("CodeBrowser", project);
+		PluginTool tool = waitForTool("CodeBrowser", project);
 
 		// close the CodeBrowser tool
 		close(tool);
@@ -609,7 +609,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		return builder.getProgram();
 	}
 
-	private void close(final Tool tool) {
+	private void close(final PluginTool tool) {
 		runSwing(() -> tool.close());
 	}
 
@@ -617,15 +617,15 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Preferences.clear();
 	}
 
-	private Tool waitForTool(String toolName, Project project) {
-		Tool tool = null;
+	private PluginTool waitForTool(String toolName, Project project) {
+		PluginTool tool = null;
 		int sleepTime = 100;
 		int waitCount = 0;
 		while (tool == null && waitCount < 300) {
 			waitForSwing();
 			sleep(sleepTime);
 			ToolManager toolManager = project.getToolManager();
-			Tool[] runningTools = toolManager.getRunningTools();
+			PluginTool[] runningTools = toolManager.getRunningTools();
 			if (runningTools != null && runningTools.length > 0) {
 				tool = runningTools[0];
 			}
@@ -689,7 +689,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	private PluginTool createTool() throws Exception {
 		DockingActionIf createAction = getAction("Create Tool");
 		performAction(createAction, true);
-		Tool[] tools = frontEndTool.getProject().getToolManager().getRunningTools();
+		PluginTool[] tools = frontEndTool.getProject().getToolManager().getRunningTools();
 		final PluginTool tool = (PluginTool) tools[0];
 		runSwing(() -> {
 			try {

@@ -47,8 +47,9 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * Construct an existing variable-length-key interior node.
 	 * @param nodeMgr table node manager instance
 	 * @param buf node buffer
+	 * @throws IOException if IO error occurs
 	 */
-	VarKeyInteriorNode(NodeMgr nodeMgr, DataBuffer buf) {
+	VarKeyInteriorNode(NodeMgr nodeMgr, DataBuffer buf) throws IOException {
 		super(nodeMgr, buf);
 	}
 
@@ -242,7 +243,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * key index which corresponds to the specified key offset.  This facilitates
 	 * finding the key which utilizes the buffer storage at the specified 
 	 * offset.
-	 * @returns key index.
+	 * @return key index.
 	 */
 	private int getOffsetIndex(int offset) {
 
@@ -356,7 +357,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 
 	/**
 	 * Update the child key associated with the specified key index.
-	 * Other entries are shifted as necessary to accomodate the new key length for 
+	 * Other entries are shifted as necessary to accommodate the new key length for 
 	 * the updated entry.
 	 * @param index child key index
 	 * @param updateKey updated child node key
@@ -740,7 +741,7 @@ class VarKeyInteriorNode extends VarKeyNode {
 	 * @param leftNode
 	 * @param rightNode
 	 * @param count
-	 * @return true if movement occured, else false
+	 * @return true if movement occurred, else false
 	 */
 	private static boolean moveKeysRight(VarKeyInteriorNode leftNode, VarKeyInteriorNode rightNode,
 			int count) {

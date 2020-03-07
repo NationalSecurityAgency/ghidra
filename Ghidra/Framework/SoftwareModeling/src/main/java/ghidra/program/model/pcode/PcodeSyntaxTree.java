@@ -106,7 +106,8 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	 * @param addr join address associated with pieces
 	 * 
 	 * @return the VariableStorage associated with xml
-	 * @throws PcodeXMLException, InvalidInputException
+	 * @throws PcodeXMLException
+	 * @throws InvalidInputException
 	 */
 	@Override
 	public VariableStorage readXMLVarnodePieces(XmlElement el, Address addr) throws PcodeXMLException, InvalidInputException {
@@ -141,8 +142,9 @@ public class PcodeSyntaxTree implements PcodeFactory {
 			// bad prototypes causing the decompiler to produce weird stuff
 			// TODO: We should emit some kind of warning
 			int sz = 0;
-			for (Varnode piece : pieces)
+			for (Varnode piece : pieces) {
 				sz += piece.getSize();
+			}
 			Address uniqaddr = addrFactory.getUniqueSpace().getAddress(0x20000000);
 			storage = new VariableStorage(datatypeManager.getProgram(),uniqaddr,sz);
 		}
@@ -155,26 +157,30 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		else {
 			offObject = new Integer((int)offset);
 			offset += roundsize;
-			if (offset > joinAllocate)
+			if (offset > joinAllocate) {
 				joinAllocate = (int)offset;
+			}
 		}
-		if (joinmap == null)
+		if (joinmap == null) {
 			joinmap = new HashMap<Integer,VariableStorage>();
+		}
 		joinmap.put(offObject, storage);
 		return storage;
 	}
 
 	private VariableStorage findJoinStorage(long offset) {
-		if (joinmap == null)
+		if (joinmap == null) {
 			return null;
+		}
 		return joinmap.get(new Integer((int)offset));
 	}
 
 	@Override
 	public VariableStorage buildStorage(Varnode vn) throws InvalidInputException {
 		Address addr = vn.getAddress();
-		if (addr.getAddressSpace().getType() == AddressSpace.TYPE_VARIABLE)
+		if (addr.getAddressSpace().getType() == AddressSpace.TYPE_VARIABLE) {
 			return findJoinStorage(addr.getOffset());
+		}
 		return new VariableStorage(datatypeManager.getProgram(),vn);
 	}
 
@@ -305,10 +311,12 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	@Override
 	public Varnode newVarnode(int sz, Address addr, int id) {
 		Varnode vn = vbank.create(sz, addr, id);
-		if (uniqId <= id)
+		if (uniqId <= id) {
 			uniqId = id + 1;
-		if (refmap != null)
+		}
+		if (refmap != null) {
 			refmap.put(id, vn);
+		}
 		return vn;
 	}
 
@@ -341,10 +349,12 @@ public class PcodeSyntaxTree implements PcodeFactory {
 
 	@Override
 	public Varnode setInput(Varnode vn, boolean val) {
-		if ((!vn.isInput()) && val)
+		if ((!vn.isInput()) && val) {
 			return vbank.setInput(vn);
-		if (vn.isInput() && (!val))
+		}
+		if (vn.isInput() && (!val)) {
 			vbank.makeFree(vn);
+		}
 		return vn;
 	}
 
@@ -359,13 +369,14 @@ public class PcodeSyntaxTree implements PcodeFactory {
 
 	@Override
 	public Varnode getRef(int id) {
-		if (refmap == null)
+		if (refmap == null) {
 			return null;
+		}
 		return refmap.get(id);
 	}
 
 	@Override
-	public HighSymbol getSymbol(int symbolId) {
+	public HighSymbol getSymbol(long symbolId) {
 		return null;
 	}
 
@@ -409,8 +420,9 @@ public class PcodeSyntaxTree implements PcodeFactory {
 
 	@Override
 	public PcodeOp getOpRef(int id) {
-		if (oprefmap == null)
+		if (oprefmap == null) {
 			buildOpRefs();
+		}
 		return oprefmap.get(id);
 	}
 
@@ -436,12 +448,16 @@ public class PcodeSyntaxTree implements PcodeFactory {
 
 	public void setOutput(PcodeOp op, Varnode vn) {
 		if (vn == op.getOutput())
+		 {
 			return;			// Output already set to this
-		if (op.getOutput() != null)
+		}
+		if (op.getOutput() != null) {
 			unSetOutput(op);
+		}
 
-		if (vn.getDef() != null)							// Varnode is already an output
+		if (vn.getDef() != null) {
 			unSetOutput(vn.getDef());
+		}
 		vn = vbank.setDef(vn, op);
 		op.setOutput(vn);
 	}
@@ -449,16 +465,21 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	public void unSetOutput(PcodeOp op) {
 		Varnode vn = op.getOutput();
 		if (vn == null)
+		 {
 			return;		// Nothing to do
+		}
 		op.setOutput(null);
 		vbank.makeFree(vn);
 	}
 
 	public void setInput(PcodeOp op, Varnode vn, int slot) {
 		if (slot >= op.getNumInputs())
+		 {
 			op.setInput(null, slot);					// Expand number of inputs as necessary
-		if (op.getInput(slot) != null)
+		}
+		if (op.getInput(slot) != null) {
 			unSetInput(op, slot);
+		}
 		if (vn != null) {
 			VarnodeAST vnast = (VarnodeAST) vn;
 			vnast.addDescendant(op);
@@ -483,29 +504,35 @@ public class PcodeSyntaxTree implements PcodeFactory {
 
 	public void unlink(PcodeOpAST op) {
 		unSetOutput(op);
-		for (int i = 0; i < op.getNumInputs(); ++i)
+		for (int i = 0; i < op.getNumInputs(); ++i) {
 			unSetInput(op, i);
-		if (op.getParent() != null)
+		}
+		if (op.getParent() != null) {
 			unInsert(op);
+		}
 	}
 
 	@Override
 	public PcodeOp newOp(SequenceNumber sq, int opc, ArrayList<Varnode> inputs, Varnode output)
 			throws UnknownInstructionException {
 		PcodeOp op = opbank.create(opc, inputs.size(), sq);
-		if (output != null)
+		if (output != null) {
 			setOutput(op, output);
-		for (int i = 0; i < inputs.size(); ++i)
+		}
+		for (int i = 0; i < inputs.size(); ++i) {
 			setInput(op, inputs.get(i), i);
-		if (oprefmap != null)
+		}
+		if (oprefmap != null) {
 			oprefmap.put(sq.getTime(), op);
+		}
 		return op;
 	}
 
 	private void readVarnodeXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement el = parser.start("varnodes");
-		while (parser.peek().isStart())
+		while (parser.peek().isStart()) {
 			Varnode.readXML(parser, this);
+		}
 		parser.end(el);
 	}
 
@@ -523,8 +550,9 @@ public class PcodeSyntaxTree implements PcodeFactory {
 			bl.insertEnd(op);
 		}
 		int index = bl.getIndex();
-		while (bblocks.size() <= index)
+		while (bblocks.size() <= index) {
 			bblocks.add(null);
+		}
 		bblocks.set(index, bl);
 		parser.end(el);
 	}
@@ -541,17 +569,20 @@ public class PcodeSyntaxTree implements PcodeFactory {
 
 	public void readXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement el = parser.start("ast");
-		if (!vbank.isEmpty())
+		if (!vbank.isEmpty()) {
 			clear();
+		}
 		readVarnodeXML(parser);
 		buildVarnodeRefs();										// Build the HashMap
 		BlockMap blockMap = new BlockMap(addrFactory);
 		while (parser.peek().isStart()) {
 			XmlElement subel = parser.peek();
-			if (subel.getName().equals("block"))
+			if (subel.getName().equals("block")) {
 				readBasicBlockXML(parser, blockMap);		// Read a basic block and all its PcodeOps				
-			else											// Read block edges
+			}
+			else {
 				readBlockEdgeXML(parser);
+			}
 		}
 		parser.end(el);
 	}

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +60,8 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 		return false;
 	}
 
-	/** Return the value associated to the specied KeyedObject.
-	 * @throws NoValueException if the value has not been set or 
-	 * the KeyedObject does not belong to the owningSet.
+	/**
+	 * Return the value associated to the specied KeyedObject.
 	 */
 	public String getValue(KeyedObject o) //throws NoValueException
 	{

@@ -1420,4 +1420,16 @@ public:
   static int4 testCompareEquivalence(PcodeOp *lessop,PcodeOp *lessequalop);
 };
 
+class RulePopcountBoolXor : public Rule {
+public:
+  RulePopcountBoolXor(const string &g) : Rule( g, 0, "popcountboolxor") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RulePopcountBoolXor(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+  static Varnode *getBooleanResult(Varnode *vn,int4 bitPos,int4 &constRes);
+};
+
 #endif

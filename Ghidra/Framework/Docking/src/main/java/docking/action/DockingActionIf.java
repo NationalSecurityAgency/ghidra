@@ -194,19 +194,6 @@ public interface DockingActionIf extends HelpDescriptor {
 	public boolean isValidContext(ActionContext context);
 
 	/**
-	 * Method that actions implement to indicate if this action is valid (knows how to work with, is
-	 * appropriate for) for the given global context.  This method is just like the isValidContext
-	 * and in fact calls that method by default.  Many actions will work with either the active
-	 * provider context or the global (the main listing) context if the local context is not valid.
-	 * If you want a global action to only work on the global context, then override this method
-	 * and return false.
-	 * 
-	 * @param globalContext the global {@link ActionContext} from the active provider.
-	 * @return true if this action is appropriate for the given context.
-	 */
-	public boolean isValidGlobalContext(ActionContext globalContext);
-
-	/**
 	 * Method used to determine if this action should be enabled for the given context.  
 	 * <p>
 	 * <b>This is the method implementors override to control when the action may be used.</b>

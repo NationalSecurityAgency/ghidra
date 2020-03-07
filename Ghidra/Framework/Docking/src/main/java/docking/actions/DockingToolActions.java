@@ -91,4 +91,16 @@ public interface DockingToolActions {
 	 * @return the actions
 	 */
 	public Set<DockingActionIf> getAllActions();
+
+	/**
+	 * Allows clients to register an action by using a placeholder.  This is useful when 
+	 * an API wishes to have a central object (like a plugin) register actions for transient
+	 * providers, that may not be loaded until needed.
+	 * 
+	 * <p>This method may be called multiple times with the same conceptual placeholder--the
+	 * placeholder will only be added once.
+	 * 
+	 * @param placeholder the placeholder containing information related to the action it represents
+	 */
+	public void registerSharedActionPlaceholder(SharedDockingActionPlaceholder placeholder);
 }

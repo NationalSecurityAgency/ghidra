@@ -61,8 +61,8 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @throws CancelledException if the user cancels
 	 */
 	long createFile(FileSystem fs, FileSystem userfs, String path, String name,
-			DomainObject domainObject, TaskMonitor monitor) throws IOException,
-			InvalidNameException, CancelledException;
+			DomainObject domainObject, TaskMonitor monitor)
+			throws IOException, InvalidNameException, CancelledException;
 
 	/**
 	 * Open a folder item for immutable use.  If any changes are attempted on the
@@ -83,8 +83,8 @@ public interface ContentHandler extends ExtensionPoint {
 	 * difference which could not be handled.
 	 */
 	DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
-			int minChangeVersion, TaskMonitor monitor) throws IOException, CancelledException,
-			VersionException;
+			int minChangeVersion, TaskMonitor monitor)
+			throws IOException, CancelledException, VersionException;
 
 	/**
 	 * Open a folder item for read-only use.  While changes are permitted on the
@@ -104,8 +104,8 @@ public interface ContentHandler extends ExtensionPoint {
 	 * difference which could not be handled.
 	 */
 	DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
-			Object consumer, TaskMonitor monitor) throws IOException, VersionException,
-			CancelledException;
+			Object consumer, TaskMonitor monitor)
+			throws IOException, VersionException, CancelledException;
 
 	/**
 	 * Open a folder item for update.  Changes made to the returned object may be
@@ -138,7 +138,8 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @param newerVersion the newer version number
 	 * @return the set of changes that were made 
 	 * @throws VersionException if a database version change prevents reading of data.
-	 * @throws IOException if a folder item access error occurs
+	 * @throws IOException if a folder item access error occurs or change set was 
+	 * produced by newer version of software and can not be read
 	 */
 	ChangeSet getChangeSet(FolderItem versionedFolderItem, int olderVersion, int newerVersion)
 			throws VersionException, IOException;

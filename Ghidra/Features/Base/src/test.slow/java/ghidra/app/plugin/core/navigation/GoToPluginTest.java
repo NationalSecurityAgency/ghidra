@@ -603,8 +603,8 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testNextPrevious() throws Exception {
 		tool.addPlugin(NextPrevAddressPlugin.class.getName());
 		NextPrevAddressPlugin np = env.getPlugin(NextPrevAddressPlugin.class);
-		DockingActionIf next = getAction(np, "Next in History Buffer");
-		DockingActionIf prev = getAction(np, "Previous in History Buffer");
+		DockingActionIf next = getAction(np, "Next Location in History");
+		DockingActionIf prev = getAction(np, "Previous Location in History");
 		DockingActionIf clear = getAction(np, "Clear History Buffer");
 		assertTrue(!clear.isEnabledForContext(provider.getActionContext(null)));
 		assertTrue(!next.isEnabledForContext(provider.getActionContext(null)));
@@ -765,14 +765,14 @@ public class GoToPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setOptionToAllowNavigationToOtherOpenPrograms();
 		performOkCallback();
 
-		assertTrue("Expected goto to succeed and dialog to be gone", !dialog.isShowing());
+		assertFalse("Expected goto to succeed and dialog to be gone", dialog.isShowing());
 
 	}
 
 	private void setOptionToAllowNavigationToOtherOpenPrograms() throws Exception {
 		runSwing(() -> {
 			ToolOptions options = tool.getOptions("Navigation");
-			options.setBoolean("'Go To' in current program only", false);
+			options.setBoolean("'Go To' in Current Program Only", false);
 		});
 	}
 

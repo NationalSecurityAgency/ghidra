@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.Undefined1DataType;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Program;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -28,8 +28,9 @@ public class RenameStructureFieldTask extends RenameTask {
 	private Structure structure;
 	public int offset;
 	
-	public RenameStructureFieldTask(PluginTool tool,String old,Structure structure,int offset) {
-		super(tool,old);
+	public RenameStructureFieldTask(PluginTool tool, Program program, DecompilerPanel panel,
+			ClangToken token, Structure structure, int offset) {
+		super(tool, program, panel, token, token.getText());
 		this.structure = structure;
 		this.offset = offset;
 	}
@@ -45,8 +46,9 @@ public class RenameStructureFieldTask extends RenameTask {
 			DataType newtype = new Undefined1DataType();
 			structure.replaceAtOffset(offset, newtype,1, newName, "Created by retype action");
 		}
-		else
+		else {
 			comp.setFieldName(newName);
+		}
 	}
 
 	@Override
@@ -58,10 +60,12 @@ public class RenameStructureFieldTask extends RenameTask {
 	public boolean isValid(String newNm) {
 		newName = newNm;
 		DataTypeComponent[] comp = structure.getComponents();
-		for(int i=0;i<comp.length;++i) {
+		for (DataTypeComponent element : comp) {
 //			if (comp[i].getDataType() == DataType.DEFAULT) continue;		// Placeholder, don't compare name
-			String fieldname = comp[i].getFieldName();
-			if (fieldname == null) continue;
+			String fieldname = element.getFieldName();
+			if (fieldname == null) {
+				continue;
+			}
 			if (fieldname.equals(newName)) {
 				errorMsg = "Duplicate Field Name";
 				return false;

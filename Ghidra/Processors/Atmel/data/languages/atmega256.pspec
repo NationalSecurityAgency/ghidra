@@ -76,7 +76,6 @@
     <symbol name="USART3_UDRE" address="code:0x006E" entry="true"/>
     <symbol name="USART3_TX" address="code:0x0070" entry="true"/>
 
-    <!-- See /usr/lib/avr/include/avr/iom64.h -->
     <symbol name="PINA" address="mem:0x20"/>
     <symbol name="DDRA" address="mem:0x21"/>
     <symbol name="PORTA" address="mem:0x22"/>
@@ -134,14 +133,19 @@
 
     <symbol name="SPMCSR" address="mem:0x57"/>
 
+	<symbol name="RAMPZ" address="mem:0x5b"/>
     <symbol name="EIND" address="mem:0x5c"/>
+    <symbol name="_SPL" address="mem:0x5d"/>
+    <symbol name="_SPH" address="mem:0x5e"/>
+    <symbol name="SREG" address="mem:0x5f"/>
     <symbol name="WDTCSR" address="mem:0x60"/>
     <symbol name="CLKPR" address="mem:0x61"/>
 
+	<symbol name="PRR2" address="mem:0x63"/>
     <symbol name="PRR0" address="mem:0x64"/>
     <symbol name="PRR1" address="mem:0x65"/>
     <symbol name="OSCCAL" address="mem:0x66"/>
-
+	<symbol name="BGCR" address="mem:0x67"/>
     <symbol name="PCICR" address="mem:0x68"/>
     <symbol name="EICRA" address="mem:0x69"/>
     <symbol name="EICRB" address="mem:0x6a"/>
@@ -154,9 +158,10 @@
     <symbol name="TIMSK3" address="mem:0x71"/>
     <symbol name="TIMSK4" address="mem:0x72"/>
     <symbol name="TIMSK5" address="mem:0x73"/>
-    <symbol name="XMCRA" address="mem:0x74"/>
-    <symbol name="XMCRB" address="mem:0x75"/>
 
+    <symbol name="NEMCR" address="mem:0x75"/>
+
+	<symbol name="ADCSRC" address="mem:0x77"/>
     <symbol name="ADCL" address="mem:0x78"/>
     <symbol name="ADCH" address="mem:0x79"/>
     <symbol name="ADCSRA" address="mem:0x7a"/>
@@ -224,7 +229,8 @@
     <symbol name="TWDR" address="mem:0xbb"/>
     <symbol name="TWCR" address="mem:0xbc"/>
     <symbol name="TWAMR" address="mem:0xbd"/>
-
+    <symbol name="IRQ_MASK1" address="mem:0xbe"/>
+    <symbol name="IRQ_STATUS1" address="mem:0xbf"/>
     <symbol name="UCSR0A" address="mem:0xc0"/>
     <symbol name="UCSR0B" address="mem:0xc1"/>
     <symbol name="UCSR0C" address="mem:0xc2"/>
@@ -245,22 +251,63 @@
     <symbol name="UCSR2B" address="mem:0xd1"/>
     <symbol name="UCSR2C" address="mem:0xd2"/>
 
-    <symbol name="UBRR2L" address="mem:0xd4"/>
-    <symbol name="UBRR2H" address="mem:0xd5"/>
-    <symbol name="UDR2" address="mem:0xd6"/>
+    <symbol name="SCRSTRLL" address="mem:0xd7"/>
+    <symbol name="SCRSTRLH " address="mem:0xd8"/>
+    <symbol name="SCRSTRHL" address="mem:0xd9"/>
+    <symbol name="SCRSTRHH" address="mem:0xda"/>
+    <symbol name="SCCSR" address="mem:0xdb"/>
+    <symbol name="SCCR0 " address="mem:0xdc"/>
+    <symbol name="SCCR1" address="mem:0xdd"/>
+    <symbol name="SCSR" address="mem:0xde"/>
+    <symbol name="SCIRQM" address="mem:0xdf"/>
+    <symbol name="SCIRQS" address="mem:0xe0"/>
+    <symbol name="SCCNTLL " address="mem:0xe1"/>
+    <symbol name="SCCNTLH" address="mem:0xe2"/>
+    <symbol name="SCCNTHL" address="mem:0xe3"/>
+    <symbol name="SCCNTHH" address="mem:0xe4"/>
+    <symbol name="SCBTSRLL " address="mem:0xe5"/>
+    <symbol name="SCBTSRLH" address="mem:0xe6"/>
+    <symbol name="SCBTSRHL" address="mem:0xe7"/>
+    <symbol name="SCBTSRHH" address="mem:0xe8"/>
+    <symbol name="SCTSRLL" address="mem:0xe9"/>
+    <symbol name="SCTSRLH" address="mem:0xea"/>
+    <symbol name="SCTSRHL" address="mem:0xeb"/>
+    <symbol name="SCTSRHH" address="mem:0xec"/>
+    <symbol name="SCOCR3LL" address="mem:0xed"/>
+    <symbol name="SCOCR3LH" address="mem:0xee"/>
+    <symbol name="SCOCR3HL" address="mem:0xef"/>
+    <symbol name="SCOCR3HH" address="mem:0xf0"/>
+    <symbol name="SCOCR2LL " address="mem:0xf1"/>
+    <symbol name="SCOCR2LH" address="mem:0xf2"/>
+    <symbol name="SCOCR2HL" address="mem:0xf3"/>
+    <symbol name="SCOCR2HH" address="mem:0xf4"/>
+    <symbol name="SCOCR1LL " address="mem:0xf5"/>
+    <symbol name="SCOCR1LH" address="mem:0xf6"/>
+    <symbol name="SCOCR1HL" address="mem:0xf7"/>
+    <symbol name="SCOCR1HH" address="mem:0xf8"/>
+    <symbol name="SCTSTRLL" address="mem:0xf9"/>
+    <symbol name="SCTSTRLH" address="mem:0xfa"/>
+    <symbol name="SCTSTRHL" address="mem:0xfb"/>
+    <symbol name="SCTSTRHH" address="mem:0xfc"/>
 
-    <symbol name="PINH" address="mem:0x100"/>
-    <symbol name="DDRH" address="mem:0x101"/>
-    <symbol name="PORTH" address="mem:0x102"/>
-    <symbol name="PINJ" address="mem:0x103"/>
-    <symbol name="DDRJ" address="mem:0x104"/>
-    <symbol name="PORTJ" address="mem:0x105"/>
-    <symbol name="PINK" address="mem:0x106"/>
-    <symbol name="DDRK" address="mem:0x107"/>
-    <symbol name="PORK" address="mem:0x108"/>
-    <symbol name="PINL" address="mem:0x109"/>
-    <symbol name="DDRL" address="mem:0x10a"/>
-    <symbol name="PORTL" address="mem:0x10b"/>
+    <symbol name="MAFCR0" address="mem:0x100c"/>
+    <symbol name="MAFCR1" address="mem:0x10d"/>
+    <symbol name="MAFSA0L" address="mem:0x10e"/>
+    <symbol name="MAFSA0H" address="mem:0x10f"/>
+    <symbol name="MAFPA0L" address="mem:0x110"/>
+    <symbol name="MAFPA0H" address="mem:0x111"/>
+    <symbol name="MAFSA1L" address="mem:0x112"/>
+    <symbol name="MAFSA1H" address="mem:0x113"/>
+    <symbol name="MAFPA1L" address="mem:0x114"/>
+    <symbol name="MAFPA1H" address="mem:0x115"/>
+    <symbol name="MAFSA2L" address="mem:0x116"/>
+    <symbol name="MAFSA2H" address="mem:0x117"/>
+    <symbol name="MAFPA2L" address="mem:0x1018"/>
+    <symbol name="MAFPA2H" address="mem:0x119"/>
+    <symbol name="MAFSA3L" address="mem:0x11a"/>
+    <symbol name="MAFSA3H" address="mem:0x11b"/>
+    <symbol name="MAFPA3L" address="mem:0x11c"/>
+    <symbol name="MAFPA3H" address="mem:0x11d"/>
 
     <symbol name="TCCR5A" address="mem:0x120"/>
     <symbol name="TCCR5B" address="mem:0x121"/>
@@ -277,21 +324,87 @@
     <symbol name="OCR5CL" address="mem:0x12c"/>
     <symbol name="OCR5CH" address="mem:0x12d"/>
 
-    <symbol name="UCSR3A" address="mem:0x130"/>
-    <symbol name="UCSR3B" address="mem:0x131"/>
-    <symbol name="UCSR3C" address="mem:0x132"/>
+    <symbol name="LLCR" address="mem:0x12f"/>
+    <symbol name="LLDRL" address="mem:0x130"/>
+    <symbol name="LLDRH" address="mem:0x131"/>
+    <symbol name="DRTRAM3" address="mem:0x132"/>
+    <symbol name="DRTRAM2" address="mem:0x133"/>
+    <symbol name="DRTRAM1" address="mem:0x134"/>
+    <symbol name="DRTRAM0" address="mem:0x135"/>
+    <symbol name="DPDS0" address="mem:0x136"/>
+    <symbol name="DPDS1" address="mem:0x137"/>
+    <symbol name="PARCR" address="mem:0x138"/>
+    <symbol name="TRXPR" address="mem:0x139"/>
+    
+    <symbol name="AES_CTRL" address="mem:0x13c"/>
+    <symbol name="AES_STATUS" address="mem:0x13d"/>
+    <symbol name="AES_STATE" address="mem:0x13e"/>
+    <symbol name="AES_KEY" address="mem:0x13f"/>
+    
+    <symbol name="TRX_STATUS" address="mem:0x141"/>
+    <symbol name="TRX_STATE" address="mem:0x142"/>
+    <symbol name="TRX_CTRL_0" address="mem:0x143"/>
+    <symbol name="TRX_CTRL_1" address="mem:0x144"/>
+    <symbol name="PHY_TX_PWR" address="mem:0x145"/>
+    <symbol name="PHY_RSSI" address="mem:0x146"/>
+    <symbol name="PHY_ED_LEVEL" address="mem:0x147"/>
+    <symbol name="PHY_CC_CCA" address="mem:0x148"/>
+    <symbol name="CCA_THRES" address="mem:0x149"/>
+    <symbol name="RX_CTRL" address="mem:0x14a"/>
+    <symbol name="SFD_VALUE" address="mem:0x14b"/>
+    <symbol name="TRX_CTRL_2" address="mem:0x14c"/>
+    <symbol name="ANT_DIV" address="mem:0x14d"/>
+    <symbol name="IRQ_MASK" address="mem:0x14e"/>
+    <symbol name="IRQ_STATUS" address="mem:0x14f"/>
+    <symbol name="VREG_CTRL" address="mem:0x150"/>
+    <symbol name="BATMON" address="mem:0x151"/>
+    <symbol name="XOSC_CTRL" address="mem:0x152"/>
+    <symbol name="CC_CTRL_0" address="mem:0x153"/>
+    <symbol name="CC_CTRL_1" address="mem:0x154"/>
+    <symbol name="RX_SYN" address="mem:0x155"/>
+    <symbol name="TRX_RPC" address="mem:0x156"/>
+    <symbol name="XAH_CTRL_1" address="mem:0x157"/>
+    <symbol name="FTN_CTRL" address="mem:0x158"/>
 
-    <symbol name="UBRR3L" address="mem:0x134"/>
-    <symbol name="UBRR3H" address="mem:0x135"/>
-    <symbol name="UDR3" address="mem:0x136"/>
+    <symbol name="PLL_CF" address="mem:0x15a"/>
+	<symbol name="PLL_DCU" address="mem:0x15b"/>
+    <symbol name="PART_NUM" address="mem:0x15c"/>
+    <symbol name="VERSION_NUM " address="mem:0x15d"/>
+    <symbol name="MAN_ID_0" address="mem:0x15e"/>
+    <symbol name="MAN_ID_1" address="mem:0x15f"/>
+    <symbol name="SHORT_ADDR_0" address="mem:0x160"/>
+    <symbol name="SHORT_ADDR_1" address="mem:0x161"/>
+	<symbol name="PAN_ID_0" address="mem:0x162"/>
+	<symbol name="PAN_ID_1" address="mem:0x163"/>
+    <symbol name="IEEE_ADDR_0" address="mem:0x164"/>
+    <symbol name="IEEE_ADDR_1" address="mem:0x165"/>
+    <symbol name="IEEE_ADDR_2" address="mem:0x166"/>
+	<symbol name="IEEE_ADDR_3" address="mem:0x167"/>
+    <symbol name="IEEE_ADDR_4" address="mem:0x168"/>
+    <symbol name="IEEE_ADDR_5" address="mem:0x169"/>
+    <symbol name="IEEE_ADDR_6" address="mem:0x16a"/>
+    <symbol name="IEEE_ADDR_7" address="mem:0x16b"/>
+    <symbol name="XAH_CTRL_0" address="mem:0x16c"/>
+    <symbol name="CSMA_SEED_0" address="mem:0x16d"/>
+    <symbol name="CSMA_SEED_1" address="mem:0x16e"/>
+    <symbol name="CSMA_BE" address="mem:0x16f"/>
 
-
+    <symbol name="TST_CTRL_DIGI" address="mem:0x176"/>
+    
+    <symbol name="TST_RX_LENGTH" address="mem:0x17b"/>
+    <symbol name="TST_AGC" address="mem:0x17c"/>
+    <symbol name="TST_SDM" address="mem:0x17d"/>
+    
+    <symbol name="TRXFBST" address="mem:0x180"/>
+    
+    <symbol name="TRXFBEND" address="mem:0x1ff"/>
+        
   </default_symbols>
 
   <default_memory_blocks>
     <memory_block name="regalias" start_address="mem:0x00" length="0x20" initialized="false"/>
-    <memory_block name="iospace" start_address="mem:0x20" length="0xd0" initialized="false"/>
-    <memory_block name="mem" start_address="mem:0x200" length="0xf00" initialized="false"/>
+    <memory_block name="iospace" start_address="mem:0x20" length="0x1e0" initialized="false"/>
+    <memory_block name="data" start_address="mem:0x200" length="0x2000" initialized="false"/>
   </default_memory_blocks>
 
 

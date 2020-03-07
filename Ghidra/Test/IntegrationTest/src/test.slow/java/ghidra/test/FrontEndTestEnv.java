@@ -335,8 +335,8 @@ public class FrontEndTestEnv {
 		return env.showTool();
 	}
 
-	public List<Tool> getTools() {
-		Tool[] tools = frontEndTool.getProject().getToolManager().getActiveWorkspace().getTools();
+	public List<PluginTool> getTools() {
+		PluginTool[] tools = frontEndTool.getProject().getToolManager().getActiveWorkspace().getTools();
 		return new ArrayList<>(Arrays.asList(tools));
 	}
 
@@ -379,7 +379,7 @@ public class FrontEndTestEnv {
 		if (exclusive) {
 			JCheckBox cb = AbstractDockingTest.findComponent(dialog, JCheckBox.class);
 			assertNotNull(cb);
-			assertEquals("Request exclusive check out", cb.getText());
+			assertEquals("Request exclusive checkout", cb.getText());
 			runSwing(() -> cb.setSelected(true));
 		}
 

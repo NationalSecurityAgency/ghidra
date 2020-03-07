@@ -36,7 +36,7 @@ import ghidra.program.model.listing.Program;
  * the marker/bar will be displayed on the top. Areas will always be lower than
  * marker priorities.
  * </p>
- * <a name="usage"></a>
+ * <a id="usage"></a>
  * <u>Recommended Usage</u><br>
  * The service used to work independent of {@link Program}s.  In order to work effectively this
  * service has been changed to associate created markers with individual programs.  Thus, it is
@@ -104,8 +104,8 @@ public interface MarkerService {
 
 	/**
 	 * A group name for highlights.  This is intended to be used with
-	 * {@link #setMarkerForGroup(String, MarkerSet)} and
-	 * {@link #removeMarkerForGroup(String, MarkerSet)}
+	 * {@link #setMarkerForGroup(String, MarkerSet, Program)} and
+	 * {@link #removeMarkerForGroup(String, MarkerSet, Program)}
 	 */
 	public final static String HIGHLIGHT_GROUP = "HIGHLIGHT_GROUP";
 
@@ -233,7 +233,6 @@ public interface MarkerService {
 	 *
 	 * @deprecated use {@link #removeMarker(MarkerSet,Program)}
 	 * @param markerManager marker manager to be removed from navigation bars.
-	 * @param program The program with which the markers are associated.
 	 */
 	@Deprecated
 	public void removeMarker(MarkerSet markerManager);
@@ -241,7 +240,7 @@ public interface MarkerService {
 	/**
 	 * Return the markerset with the given name;
 	 *
-	 * @param The name of the marker set for which to search
+	 * @param name The name of the marker set for which to search
 	 * @param program The program with which the created markers will be associated.
 	 * @return the markerset with the given name;
 	 */
@@ -252,8 +251,7 @@ public interface MarkerService {
 	 * see the <a href="#usage">recommended usage</a> for more information.
 	 *
 	 * @deprecated use {@link #getMarkerSet(String, Program)}
-	 * @param The name of the marker set for which to search
-	 * @param program The program with which the created markers will be associated.
+	 * @param name The name of the marker set for which to search
 	 * @return the markerset with the given name;
 	 */
 	@Deprecated
@@ -266,7 +264,7 @@ public interface MarkerService {
 	 * @param groupName The name to associate the marker set with.
 	 * @param markerSet The marker set to add to this service
 	 * @param program The program with which the markers are associated.
-	 * @see #removeMarkerForGroup(String, MarkerSet)
+	 * @see #removeMarkerForGroup(String, MarkerSet, Program)
 	 */
 	public void setMarkerForGroup(String groupName, MarkerSet markerSet, Program program);
 
@@ -277,7 +275,7 @@ public interface MarkerService {
 	 * @param markerSet The marker set to add to this service
 	 * @param program The program with which the markers are associated.  May be null if the
 	 *        marker is
-	 * @see #setMarkerForGroup(String, MarkerSet)
+	 * @see #setMarkerForGroup(String, MarkerSet, Program)
 	 */
 	public void removeMarkerForGroup(String groupName, MarkerSet markerSet, Program program);
 

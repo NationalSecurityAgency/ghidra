@@ -15,13 +15,13 @@
  */
 package ghidra.file.analyzers;
 
-import ghidra.util.classfinder.ClassSearcher;
+import java.util.List;
 
-import java.util.Set;
+import ghidra.util.classfinder.ClassSearcher;
 
 public final class FileFormatAnalyzerFactory {
 
-	public final static Set<FileFormatAnalyzer> getAnalyzers() {
+	public final static List<FileFormatAnalyzer> getAnalyzers() {
 		return ClassSearcher.getInstances(FileFormatAnalyzer.class);
 	}
 }

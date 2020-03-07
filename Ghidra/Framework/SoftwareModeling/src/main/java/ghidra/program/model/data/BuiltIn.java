@@ -32,7 +32,7 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public abstract class BuiltIn extends DataTypeImpl implements BuiltInDataType {
 
-	private static SettingsDefinition[] STANDARD_SETTINGS_DEFINITIONS =
+	private static final SettingsDefinition[] STANDARD_SETTINGS_DEFINITIONS =
 		new SettingsDefinition[] { MutabilitySettingsDefinition.DEF };
 
 	private SettingsDefinition[] settingDefs;

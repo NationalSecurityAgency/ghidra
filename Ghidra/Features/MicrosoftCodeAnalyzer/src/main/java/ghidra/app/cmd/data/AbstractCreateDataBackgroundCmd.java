@@ -38,7 +38,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 		extends BackgroundCommand {
 
 	protected final String name;
-	protected final Address address;
+	private Address address;
 	protected final int count;
 	protected final DataValidationOptions validationOptions;
 	protected final DataApplyOptions applyOptions;
@@ -141,7 +141,8 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * @return true if the data type creation completes successfully.
 	 * @throws CancelledException if the user cancels this task.
 	 */
-	private boolean doApplyTo(Program program, TaskMonitor taskMonitor) throws CancelledException {
+	protected boolean doApplyTo(Program program, TaskMonitor taskMonitor)
+			throws CancelledException {
 
 		try {
 			monitor = taskMonitor;
@@ -352,5 +353,25 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	protected ClearDataMode getClearDataMode() {
 		return (applyOptions.shouldClearDefinedData()) ? ClearDataMode.CLEAR_ALL_CONFLICT_DATA
 				: ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA;
+	}
+
+	/**
+	 * Get the address for the data item to be processed by the base implementation.
+	 * In general this is the initial model address set when the command was created.
+	 * 
+	 * @return the address of the data item being created.
+	 */
+	final protected Address getDataAddress() {
+		return address;
+	}
+
+	/**
+	 * Set the address of the data item to be applied.
+	 * Can be used for sub classes that need to apply multiple data items.
+	 * 
+	 * @param addr set the current data address
+	 */
+	final protected void setDataAddress(Address addr) {
+		address = addr;
 	}
 }

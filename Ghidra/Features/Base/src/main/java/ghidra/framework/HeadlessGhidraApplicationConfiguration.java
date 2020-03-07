@@ -16,11 +16,10 @@
 package ghidra.framework;
 
 import java.io.File;
-import java.util.Set;
+import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.GhidraClassLoader;
-import ghidra.GhidraLauncher;
 import ghidra.framework.preferences.Preferences;
 import ghidra.net.ApplicationTrustManagerFactory;
 import ghidra.util.Msg;
@@ -62,22 +61,8 @@ public class HeadlessGhidraApplicationConfiguration extends ApplicationConfigura
 		if (!(ClassLoader.getSystemClassLoader() instanceof GhidraClassLoader)) {
 			return;
 		}
+
 		GhidraClassLoader loader = (GhidraClassLoader) ClassLoader.getSystemClassLoader();
-
-		// Add user jars
-		String userJarDir = Preferences.getProperty(Preferences.USER_PLUGIN_JAR_DIRECTORY);
-		if (userJarDir != null) {
-			GhidraLauncher.findJarsInDir(new ResourceFile(userJarDir)).forEach(
-				p -> loader.addPath(p));
-		}
-
-		// Add plugins from user settings directory
-		String userSettingsPath = Application.getUserSettingsDirectory().getAbsolutePath();
-		String pluginPath = userSettingsPath + File.separatorChar + "plugins";
-		loader.addPath(pluginPath);
-		GhidraLauncher.findJarsInDir(new ResourceFile(pluginPath)).forEach(p -> loader.addPath(p));
-
-		// Add user plugins
 		for (String path : Preferences.getPluginPaths()) {
 			loader.addPath(path);
 		}
@@ -111,7 +96,7 @@ public class HeadlessGhidraApplicationConfiguration extends ApplicationConfigura
 	}
 
 	private void performModuleInitialization() {
-		Set<ModuleInitializer> instances = ClassSearcher.getInstances(ModuleInitializer.class);
+		List<ModuleInitializer> instances = ClassSearcher.getInstances(ModuleInitializer.class);
 		for (ModuleInitializer initializer : instances) {
 			monitor.setMessage("Initializing " + initializer.getName() + "...");
 			initializer.run();

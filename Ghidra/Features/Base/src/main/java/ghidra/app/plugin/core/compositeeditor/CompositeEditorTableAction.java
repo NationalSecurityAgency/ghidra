@@ -46,12 +46,7 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 
 	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
 			String[] popupPath, String[] menuPath, ImageIcon icon) {
-		this(provider, name, group, popupPath, menuPath, icon, KeyBindingType.INDIVIDUAL);
-	}
-
-	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
-			String[] popupPath, String[] menuPath, ImageIcon icon, KeyBindingType kbType) {
-		super(name, provider.plugin.getName(), kbType);
+		super(name, provider.plugin.getName(), KeyBindingType.SHARED);
 		this.provider = provider;
 		model = provider.getModel();
 		if (menuPath != null) {
@@ -81,6 +76,9 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 	}
 
 	protected void requestTableFocus() {
+		if (provider == null) {
+			return; // must have been disposed
+		}
 		JTable table = ((CompositeEditorPanel) provider.getComponent()).getTable();
 		if (table.isEditing()) {
 			table.getEditorComponent().requestFocus();

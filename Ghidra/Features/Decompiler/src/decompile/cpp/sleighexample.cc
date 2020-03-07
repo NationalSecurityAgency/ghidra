@@ -113,8 +113,8 @@ static void dumpAssembly(Translate &trans)
   AssemblyRaw assememit;	// Set up the disassembly dumper
   int4 length;			// Number of bytes of each machine instruction
 
-  Address addr(trans.getDefaultSpace(),0x80483b4); // First disassembly address
-  Address lastaddr(trans.getDefaultSpace(),0x804846c); // Last disassembly address
+  Address addr(trans.getDefaultCodeSpace(),0x80483b4); // First disassembly address
+  Address lastaddr(trans.getDefaultCodeSpace(),0x804846c); // Last disassembly address
 
   while(addr < lastaddr) {
     length = trans.printAssembly(assememit,addr);
@@ -164,8 +164,8 @@ static void dumpPcode(Translate &trans)
   AssemblyRaw assememit;	// Set up the disassembly dumper
   int4 length;			// Number of bytes of each machine instruction
 
-  Address addr(trans.getDefaultSpace(),0x80483b4); // First address to translate
-  Address lastaddr(trans.getDefaultSpace(),0x80483bf); // Last address
+  Address addr(trans.getDefaultCodeSpace(),0x80483b4); // First address to translate
+  Address lastaddr(trans.getDefaultCodeSpace(),0x80483bf); // Last address
 
   while(addr < lastaddr) {
     cout << "--- ";
@@ -251,8 +251,8 @@ static void doEmulation(Translate &trans,LoadImage &loader)
 
 {
   // Set up memory state object
-  MemoryImage loadmemory(trans.getDefaultSpace(),8,4096,&loader);
-  MemoryPageOverlay ramstate(trans.getDefaultSpace(),8,4096,&loadmemory);
+  MemoryImage loadmemory(trans.getDefaultCodeSpace(),8,4096,&loader);
+  MemoryPageOverlay ramstate(trans.getDefaultCodeSpace(),8,4096,&loadmemory);
   MemoryHashOverlay registerstate(trans.getSpaceByName("register"),8,4096,4096,(MemoryBank *)0);
   MemoryHashOverlay tmpstate(trans.getUniqueSpace(),8,4096,4096,(MemoryBank *)0);
 
@@ -266,15 +266,15 @@ static void doEmulation(Translate &trans,LoadImage &loader)
 
   // Set up the initial register state for execution
   memstate.setValue("ESP",0xbffffffc);
-  emulater.setExecuteAddress(Address(trans.getDefaultSpace(),0x80483b4));
+  emulater.setExecuteAddress(Address(trans.getDefaultCodeSpace(),0x80483b4));
 
   // Register callbacks
   PutsCallBack putscallback;
   PrintfCallBack printfcallback;
   TerminateCallBack terminatecallback;
-  breaktable.registerAddressCallback(Address(trans.getDefaultSpace(),0x80482c8),&putscallback);
-  breaktable.registerAddressCallback(Address(trans.getDefaultSpace(),0x80482b8),&printfcallback);
-  breaktable.registerAddressCallback(Address(trans.getDefaultSpace(),0x804846b),&terminatecallback);
+  breaktable.registerAddressCallback(Address(trans.getDefaultCodeSpace(),0x80482c8),&putscallback);
+  breaktable.registerAddressCallback(Address(trans.getDefaultCodeSpace(),0x80482b8),&printfcallback);
+  breaktable.registerAddressCallback(Address(trans.getDefaultCodeSpace(),0x804846b),&terminatecallback);
 
   emulater.setHalt(false);
 

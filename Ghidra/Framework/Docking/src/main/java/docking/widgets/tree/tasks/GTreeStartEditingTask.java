@@ -28,6 +28,7 @@ import docking.widgets.tree.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
@@ -43,7 +44,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 	}
 
 	@Override
-	public void run(final TaskMonitor monitor) {
+	public void run(final TaskMonitor monitor) throws CancelledException {
 		runOnSwingThread(() -> {
 			if (monitor.isCancelled()) {
 				return; // we can be cancelled while waiting for Swing to run us
@@ -58,18 +59,21 @@ public class GTreeStartEditingTask extends GTreeTask {
 	}
 
 	private void edit() {
-		final GTreeNode child = parent.getChild(childName);
-		if (child == null) {
+
+		GTreeNode editNode = parent.getChild(childName);
+		if (editNode == null) {
 			if (tree.isFiltered()) {
 				Msg.showWarn(getClass(), tree, "Cannot Edit Tree Node",
-					"Cannot edit tree node \"" + childName + "\" while tree is filtered.");
+					"Can't edit tree node \"" + childName + "\" while tree is filtered.");
 			}
-			Msg.debug(this,
-				"Can't find node for \"" + childName + "\". Perhaps it is filtered out?");
+			else {
+				Msg.debug(this,
+					"Can't find node \"" + childName + "\" to edit.");
+			}
 			return;
 		}
 
-		TreePath path = child.getTreePath();
+		TreePath path = editNode.getTreePath();
 		final Set<GTreeNode> childrenBeforeEdit = new HashSet<>(parent.getChildren());
 
 		final CellEditor cellEditor = tree.getCellEditor();
@@ -95,7 +99,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 			 *                       has finished and been applied.
 			 */
 			private void reselectNode() {
-				String newName = child.getName();
+				String newName = editNode.getName();
 				GTreeNode newChild = parent.getChild(newName);
 				if (newChild == null) {
 					throw new AssertException("Unable to find new node by name: " + newName);
@@ -140,7 +144,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 			}
 		});
 
-		tree.setNodeEditable(child);
+		tree.setNodeEditable(editNode);
 		jTree.startEditingAtPath(path);
 
 	}

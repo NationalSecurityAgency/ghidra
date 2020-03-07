@@ -25,32 +25,19 @@ import ghidra.program.model.data.DataTypeComponent;
  */
 public class ShowComponentPathAction extends CompositeEditorTableAction {
 
-	private final static String ACTION_NAME = "Show Component Path";
+	public final static String ACTION_NAME = "Show Component Path";
 	private final static String GROUP_NAME = BASIC_ACTION_GROUP;
 	private final static String DESCRIPTION =
 		"Show the category for the selected component's data type";
-	private static String[] popupPath = new String[] { ACTION_NAME };
-	private static String[] menuPath = new String[] { ACTION_NAME };
+	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
+	private static String[] MENU_PATH = new String[] { ACTION_NAME };
 
-	/**
-	 * @param name
-	 * @param group
-	 * @param owner
-	 * @param popupPath
-	 * @param menuPath
-	 * @param icon
-	 * @param useToolbar
-	 * @param checkBox
-	 */
 	public ShowComponentPathAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, popupPath, menuPath, null);
+		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, MENU_PATH, null);
 		setDescription(DESCRIPTION);
 		adjustEnablement();
 	}
 
-	/* (non-Javadoc)
-	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-	 */
 	@Override
 	public void actionPerformed(ActionContext context) {
 		String message = " ";
@@ -66,9 +53,6 @@ public class ShowComponentPathAction extends CompositeEditorTableAction {
 		requestTableFocus();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeEditorAction#adjustEnablement()
-	 */
 	@Override
 	public void adjustEnablement() {
 		setEnabled(model.isSingleComponentRowSelection());

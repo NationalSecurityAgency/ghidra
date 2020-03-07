@@ -46,6 +46,7 @@ import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.test.*;
@@ -1264,6 +1265,8 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 		assertNotNull("Expected data type: " + dtName, d);
 		assertTrue("Expected data type: " + dtName, expectedDataType.isInstance(d.getDataType()));
 
+		DataType dt = d.getDataType();
+
 		boolean onByteWordData = true;
 		boolean onFloatDoubleData = true;
 		boolean onCharData = true;
@@ -1280,7 +1283,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 //			|| expectedDataType.equals(StringDataType.class)
 //			|| expectedDataType.equals(UnicodeDataType.class));
 
-		boolean hasSettings = d.getDataType().getSettingsDefinitions().length != 0;
+		boolean hasSettings = dt.getSettingsDefinitions().length != 0;
 
 		String caseName = "On " + dtName + " at: " + getCurrentLocation();
 
@@ -1294,7 +1297,8 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 		checkAction(actions, CREATE_STRUCTURE, hasSelection, caseName);
 		checkAction(actions, EDIT_DATA_TYPE,
-			pdata != null && (pdata.isStructure() || pdata.isUnion()), caseName);
+			(pdata != null && (pdata.isStructure() || pdata.isUnion())) || (dt instanceof Enum),
+			caseName);
 		checkAction(actions, CREATE_ARRAY, true, caseName);
 		checkAction(actions, DEFAULT_DATA_SETTINGS,
 			(!hasSelection || isSelectionJustSingleDataInstance(sel, d)) && hasSettings, caseName);

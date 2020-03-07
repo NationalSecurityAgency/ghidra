@@ -50,7 +50,8 @@ public class AnalysisScheduler {
 	synchronized void schedule() {
 		// if not scheduled right now, schedule it
 		if (!scheduled && (!addSet.isEmpty() || !removeSet.isEmpty())) {
-			analysisMgr.schedule(new AnalysisTask(this, analysisMgr.getMessageLog()), getPriority());
+			analysisMgr.schedule(new AnalysisTask(this, analysisMgr.getMessageLog()),
+				getPriority());
 			scheduled = true;
 		}
 	}
@@ -112,7 +113,7 @@ public class AnalysisScheduler {
 	}
 
 	public void optionsChanged(Options options) {
-		
+
 		boolean defaultEnable = analyzer.getDefaultEnablement(analysisMgr.getProgram());
 		defaultEnable = getEnableOverride(defaultEnable);
 		enabled = options.getBoolean(analyzer.getName(), defaultEnable);
@@ -122,16 +123,19 @@ public class AnalysisScheduler {
 
 	public void registerOptions(Options options) {
 		Options analyzerOptions = options.getOptions(analyzer.getName());
-		
+
 		boolean defaultEnable = analyzer.getDefaultEnablement(analysisMgr.getProgram());
-		
+
 		boolean overrideEnable = getEnableOverride(defaultEnable);
-		
+
 		// only warn when option registered
 		if (defaultEnable != overrideEnable) {
-			Msg.warn(this,  "Analyzer \'" + analyzer.getName() + "\' for "+ analysisMgr.getProgram().getName() + " " + (overrideEnable ? "enabled" : "disabled") + " by PSPEC file override");
+			Msg.warn(this,
+				"Analyzer \'" + analyzer.getName() + "\' for " +
+					analysisMgr.getProgram().getName() + " " +
+					(overrideEnable ? "enabled" : "disabled") + " by PSPEC file override");
 		}
-		
+
 		options.registerOption(analyzer.getName(),
 			overrideEnable, null,
 			analyzer.getDescription());
@@ -152,10 +156,11 @@ public class AnalysisScheduler {
 		String propertyName = "Analyzers." + analyzer.getName();
 		if (language.hasProperty(propertyName)) {
 			overrideEnable = language.getPropertyAsBoolean(propertyName, defaultEnable);
-		} else if (allOverriden) {
+		}
+		else if (allOverriden) {
 			overrideEnable = false;
 		}
-		
+
 		return overrideEnable;
 	}
 
@@ -202,4 +207,8 @@ public class AnalysisScheduler {
 		scheduled = false;
 	}
 
+	@Override
+	public String toString() {
+		return analyzer.getName();
+	}
 }

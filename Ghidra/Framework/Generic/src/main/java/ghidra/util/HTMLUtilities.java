@@ -34,7 +34,7 @@ import utilities.util.reflection.ReflectionUtilities;
  *
  * <P>Many clients use this class to render content as HTML.  Below are a few use cases along
  * with the method that should be used for each.
- * <TABLE BORDER="1">
+ * <TABLE BORDER="1"><caption></caption>
  * 		<TR>
  * 			<TH>Use Case</TH><TH>Function</TH><TH>Description</TH>
  * 		</TR>
@@ -355,14 +355,14 @@ public class HTMLUtilities {
 
 	/**
 	 * Returns the given text wrapped in {@link #LINK_PLACEHOLDER_OPEN} and close tags.
-	 * If <tt>foo</tt> is passed for the HTML text, with a content value of <tt>123456</tt>, then
+	 * If <code>foo</code> is passed for the HTML text, with a content value of <code>123456</code>, then
 	 * the output will look like:
 	 * <pre>
 	 * 	&lt;!-- LINK CONTENT="123456" --&gt;foo&lt;!-- /LINK --&gt;
 	 * </pre>
 	 *
 	 * @param htmlText the HTML text to wrap
-	 * @param content the value that will be put into the <tt>CONTENT</tt> section of the
+	 * @param content the value that will be put into the <code>CONTENT</code> section of the
 	 * 		  generated HTML.  This can later be retrieved by clients transforming this text.
 	 * @return the wrapped text
 	 */
@@ -375,8 +375,8 @@ public class HTMLUtilities {
 
 	/**
 	 * Takes HTML text wrapped by {@link #wrapWithLinkPlaceholder(String, String)} and replaces
-	 * the custom link comment tags with HTML anchor (<tt>A</tt>) tags, where the <tt>HREF</tt>
-	 * value is the value that was in the <tt>CONTENT</tt> attribute.
+	 * the custom link comment tags with HTML anchor (<code>A</code>) tags, where the <code>HREF</code>
+	 * value is the value that was in the <code>CONTENT</code> attribute.
 	 *
 	 * @param text the text for which to replace the markup
 	 * @return the updated text
@@ -428,9 +428,9 @@ public class HTMLUtilities {
 	/**
 	 * Similar to {@link #toHTML(String)} in that it will wrap the given text in
 	 * HTML tags and split the content into multiple lines.  The difference is that this method
-	 * will split lines that pass the given maximum length <b>and</b> on <tt>'\n'</tt>
+	 * will split lines that pass the given maximum length <b>and</b> on <code>'\n'</code>
 	 * characters.  Alternatively, {@link #toHTML(String)} will only split the given
-	 * text on <tt>'\n'</tt> characters.
+	 * text on <code>'\n'</code> characters.
 	 *
 	 * @param text The text to convert
 	 * @param maxLineLength The maximum number of characters that should appear in a line;
@@ -487,7 +487,7 @@ public class HTMLUtilities {
 	 *
 	 * <P>For example, consider the following<br><br>
 	 *
-	 * <table border=1>
+	 * <table border=1><caption></caption>
 	 * 		<tr>
 	 * 			<th>Input</th><th>Output</th><th>Rendered as</th><th>(Without Friendly Encoding)</th>
 	 * 		</tr>
@@ -496,10 +496,10 @@ public class HTMLUtilities {
 	 * 				Hi &lt;b&gt;mom &lt;/b&gt;
 	 * 			</td>
 	 * 			<td>
-	 * 				Hi<font color="green">
-	 *  &#x26;nbsp;<b>&#x26;lt;</b></font>b<font color="green"><b>&#x26;gt;</b></font>mom
-	 *  <font color="green">&#x26;nbsp;<b>&#x26;lt;</b></font>/b<font color="green"><b>&#x26;gt;</b>
-	 *  </font>
+	 * 				Hi<span style="color:green">
+	 *  &#x26;nbsp;<b>&#x26;lt;</b></span>b<span style="color:green"><b>&#x26;gt;</b></span>mom
+	 *  <span style="color:green">&#x26;nbsp;<b>&#x26;lt;</b></span>/b<span style="color:green"><b>&#x26;gt;</b>
+	 *  </span>
 	 * 			</td>
 	 * 			<td>
 	 * 				Hi &lt;b&gt;mom &lt;/b&gt;

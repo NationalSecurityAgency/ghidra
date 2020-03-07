@@ -33,10 +33,10 @@ public class VariableTypeFieldLocation extends VariableLocation {
 
 	/**
 	 * Construct a new VariableTypeFieldLocation object.
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param var the variable associated with this type field location.
 	 * @param charOffset the position within the function name string for this location.
-	 * @param the program of the location
 	 */
 	public VariableTypeFieldLocation(Program program, Address locationAddr, Variable var,
 			int charOffset) {
@@ -49,9 +49,9 @@ public class VariableTypeFieldLocation extends VariableLocation {
 	 * Construct a new VariableTypeFieldLocation object.
 	 * Variable function entry point is the assumed listing location (i.e., referent code unit).
 	 * Care should be taken if variable corresponds to an EXTERNAL function.
+	 * @param program the program of the location
 	 * @param var the variable associated with this type field location.
 	 * @param charOffset the position within the function name string for this location.
-	 * @param the program of the location
 	 */
 	public VariableTypeFieldLocation(Program program, Variable var, int charOffset) {
 

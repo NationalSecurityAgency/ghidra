@@ -21,6 +21,8 @@ import java.util.*;
 
 import javax.swing.ImageIcon;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
 import db.util.ErrorHandler;
 import generic.util.*;
@@ -32,11 +34,10 @@ import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ChangeManager;
-import ghidra.util.*;
+import ghidra.util.Lock;
 import ghidra.util.datastruct.ObjectArray;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class BookmarkDBManager implements BookmarkManager, ErrorHandler, ManagerDB {
 
@@ -60,7 +61,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	 * @param openMode either READ_ONLY, UPDATE, or UPGRADE
 	 * @param lock the program synchronization lock
 	 * @param monitor the task monitor use while upgrading.
-	 * @throws VersionException if the database is incompatable with the current
+	 * @throws VersionException if the database is incompatible with the current
 	 * schema
 	 * @throws IOException if there is a problem accessing the database.
 	 */
@@ -75,11 +76,6 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		cache = new DBObjectCache<BookmarkDB>(100);
 	}
 
-	/**
-	 * Set associated program.  This must be invoked once prior to invoking any
-	 * other method.
-	 * @param program
-	 */
 	@Override
 	public void setProgram(ProgramDB program) {
 		if (this.program != null) {
@@ -97,19 +93,17 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 				OldBookmarkManager oldMgr = new OldBookmarkManager(program);
 				((BookmarkTypeDBAdapterNoTable) bookmarkTypeAdapter).setOldBookmarkManager(oldMgr);
 				((BookmarkDBAdapterV0) bookmarkAdapter).setOldBookmarkManager(oldMgr, addrMap,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 			}
 
 			Record[] typeRecords = bookmarkTypeAdapter.getRecords();
-			for (int i = 0; i < typeRecords.length; i++) {
-				Record rec = typeRecords[i];
+			for (Record rec : typeRecords) {
 				int typeId = (int) rec.getKey();
 				BookmarkTypeDB type =
 					new BookmarkTypeDB(typeId, rec.getString(BookmarkTypeDBAdapter.TYPE_NAME_COL));
 				type.setHasBookmarks(true);
 				typesByName.put(type.getTypeString(), type);
 				typesArray.put(typeId, type);
-//				bookmarkAdapter.addType((int)typeId);
 			}
 		}
 		catch (IOException e) {
@@ -179,10 +173,8 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		}
 	}
 
-	/**
+	/*
 	 * Upgrade old property-based bookmarks to the new storage schema.
-	 * @param programDB
-	 * @param monitor
 	 */
 	private void upgradeOldBookmarks(ProgramDB programDB) {
 
@@ -191,8 +183,8 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		if (oldTypes.length == 0) {
 			return;
 		}
-		for (int i = 0; i < oldTypes.length; i++) {
-			String type = oldTypes[i].getString(BookmarkTypeDBAdapter.TYPE_NAME_COL);
+		for (Record oldType : oldTypes) {
+			String type = oldType.getString(BookmarkTypeDBAdapter.TYPE_NAME_COL);
 			AddressIterator iter = oldMgr.getBookmarkAddresses(type);
 			while (iter.hasNext()) {
 				OldBookmark bm = oldMgr.getBookmark(iter.next(), type);
@@ -202,12 +194,8 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		}
 	}
 
-	/**
-	 * Get or create bookmark type.
-	 * @param type bookmark type
-	 * @param create if true and type does exist it will be created
-	 * @return bookmark type or null if it does not exist and was not created.
-	 * @throws IOException
+	/*
+	 * Get or create bookmark type
 	 */
 	private BookmarkTypeDB getBookmarkType(String type, boolean create) throws IOException {
 		BookmarkTypeDB bmt = (BookmarkTypeDB) typesByName.get(type);
@@ -239,38 +227,26 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		return n;
 	}
 
-	/**
-	 * Get existing bookmark type.
-	 * @param typeId bookmark type ID
-	 * @return bookmark type or null if it does not exist
+	/*
+	 * Get existing bookmark type
 	 */
 	BookmarkTypeDB getBookmarkType(int typeID) {
 		return (BookmarkTypeDB) typesArray.get(typeID);
 	}
 
-	/**
-	 * Define a bookmark type with its marker icon and color.  The icon and color
-	 * values are not permanently stored.  Therefor, this method must be re-invoked
-	 * by a plugin each time a program is opened if a custom icon and color 
-	 * are desired.
-	 * @param type bookmark type
-	 * @param icon marker icon which may get scaled
-	 * @param color marker color
-	 * @return bookmark type object
-	 * @throws IOException if a database error occurs while adding the new type.
-	 */
 	@Override
 	public BookmarkType defineType(String type, ImageIcon icon, Color color, int priority) {
 		lock.acquire();
 		try {
-			if (type == null || type.length() == 0 || !NamingUtilities.isValidName(type) ||
-				icon == null || color == null) {
+			String validatedType = StringUtils.trim(type);
+			if (StringUtils.isBlank(validatedType) || icon == null || color == null) {
 				throw new IllegalArgumentException(
 					"Invalid bookmark type parameters were specified");
 			}
+
 			BookmarkTypeDB bmt = null;
 			try {
-				bmt = getBookmarkType(type, false);
+				bmt = getBookmarkType(validatedType, false);
 				bmt.setIcon(icon);
 				bmt.setMarkerColor(color);
 				bmt.setMarkerPriority(priority);
@@ -285,9 +261,6 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		}
 	}
 
-	/**
-	 * Returns list of known bookmark types.
-	 */
 	@Override
 	public BookmarkType[] getBookmarkTypes() {
 		lock.acquire();
@@ -307,23 +280,11 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		return program;
 	}
 
-	/**
-	 * Get a bookmark type
-	 * @param type bookmark type name
-	 * @return bookmark type or null if type is unknown
-	 */
 	@Override
 	public BookmarkType getBookmarkType(String type) {
 		return typesByName.get(type);
 	}
 
-	/**
-	 * Set a bookmark.
-	 * @param addr
-	 * @param type
-	 * @param category
-	 * @param comment
-	 */
 	@Override
 	public Bookmark setBookmark(Address addr, String type, String category, String comment) {
 		lock.acquire();
@@ -355,11 +316,6 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		return null;
 	}
 
-	/**
-	 * Get the bookmark object corresponding to the specified bookmark record.
-	 * @param bookmarkRecord
-	 * @return bookmark object
-	 */
 	private BookmarkDB getBookmark(Record bookmarkRecord) {
 		BookmarkDB bm = cache.get(bookmarkRecord);
 		if (bm == null) {
@@ -368,13 +324,6 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		return bm;
 	}
 
-	/**
-	 * Get a specific bookmark
-	 * @param addr
-	 * @param type
-	 * @param category
-	 * @return
-	 */
 	@Override
 	public Bookmark getBookmark(Address addr, String type, String category) {
 		lock.acquire();
@@ -402,10 +351,6 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		return null;
 	}
 
-	/**
-	 * Remove bookmark
-	 * @param bookmark
-	 */
 	@Override
 	public void removeBookmark(Bookmark bookmark) {
 		lock.acquire();
@@ -439,39 +384,34 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 
 	}
 
-	/**
-	 * Remove bookmark(s)
-	 * @param type bookmark type or null for all bookmarks
-	 */
 	@Override
 	public void removeBookmarks(String type) {
 		lock.acquire();
 		try {
-			// Handle case where type/category are specified
-			if (type != null) {
-				try {
-					BookmarkTypeDB bmt = (BookmarkTypeDB) typesByName.get(type);
-					if (bmt.hasBookmarks()) {
-						int typeId = bmt.getTypeId();
-						bookmarkAdapter.deleteType(typeId);
-						bookmarkTypeAdapter.deleteRecord(typeId);
-						bmt.setHasBookmarks(false);
-						// fire event
-						program.setObjChanged(ChangeManager.DOCR_BOOKMARK_TYPE_REMOVED, bmt, null,
-							null);
-					}
-				}
-				catch (IOException e) {
-					dbError(e);
-				}
-			}
 
-			// Remove all bookmarks if type is null
-			else {
+			boolean isSpecificType = type != null && type != BookmarkType.ALL_TYPES;
+			if (!isSpecificType) {
+				// no type specified; remove all
 				Iterator<String> iter = typesByName.keySet().iterator();
 				while (iter.hasNext()) {
 					removeBookmarks(iter.next());
 				}
+				return;
+			}
+
+			try {
+				BookmarkTypeDB bmt = (BookmarkTypeDB) typesByName.get(type);
+				if (bmt.hasBookmarks()) {
+					int typeId = bmt.getTypeId();
+					bookmarkAdapter.deleteType(typeId);
+					bookmarkTypeAdapter.deleteRecord(typeId);
+					bmt.setHasBookmarks(false);
+					program.setObjChanged(ChangeManager.DOCR_BOOKMARK_TYPE_REMOVED, bmt, null,
+						null);
+				}
+			}
+			catch (IOException e) {
+				dbError(e);
 			}
 		}
 		finally {
@@ -568,9 +508,6 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		}
 	}
 
-	/*
-	 * @see ghidra.program.model.listing.BookmarkManager#getBookmarks(ghidra.program.model.address.Address, java.lang.String)
-	 */
 	@Override
 	public Bookmark[] getBookmarks(Address address, String type) {
 		lock.acquire();
@@ -590,9 +527,6 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		}
 	}
 
-	/*
-	 * @see ghidra.program.model.listing.BookmarkManager#hasBookmarks()
-	 */
 	@Override
 	public boolean hasBookmarks(String type) {
 		lock.acquire();
@@ -608,9 +542,6 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		}
 	}
 
-	/*
-	 * @see ghidra.program.model.listing.BookmarkManager#getCategories(java.lang.String)
-	 */
 	@Override
 	public String[] getCategories(String type) {
 		lock.acquire();
@@ -869,8 +800,9 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 				int typeId = bt.getTypeId();
 				if (bt.hasBookmarks()) {
 					Table table = bookmarkAdapter.getTable(typeId);
-					if (table == null)
+					if (table == null) {
 						continue;
+					}
 					int addrCol = BookmarkDBAdapter.ADDRESS_COL;
 					try {
 						DatabaseTableUtils.updateIndexedAddressField(table, addrCol, addrMap,

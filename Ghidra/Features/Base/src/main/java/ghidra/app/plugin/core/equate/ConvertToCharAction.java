@@ -16,9 +16,10 @@
 package ghidra.app.plugin.core.equate;
 
 import ghidra.docking.settings.FormatSettingsDefinition;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.util.StringUtilities;
 
 public class ConvertToCharAction extends AbstractConvertAction {
 	public static final String ACTION_NAME = "Convert To Char";
@@ -46,27 +47,7 @@ public class ConvertToCharAction extends AbstractConvertAction {
 
 	@Override
 	protected String convertToString(Program program, Scalar scalar, boolean isData) {
-		long value = scalar.getUnsignedValue();
-		if (value >= 0 && value <= 255) {
-			return StringUtilities.toQuotedString(new byte[] { (byte) value });
-		}
-
 		byte[] bytes = scalar.byteArrayValue();
-		if (!program.getMemory().isBigEndian()) {
-			// assume we want to see characters as they would appear
-			// if read from memory one byte at a time
-			reverseBytes(bytes);
-		}
-		return StringUtilities.toQuotedString(bytes);
-	}
-
-	private void reverseBytes(byte[] bytes) {
-		int n = bytes.length / 2;
-		int j = bytes.length - 1;
-		for (int i = 0; i < n; i++, j--) {
-			byte b = bytes[i];
-			bytes[i] = bytes[j];
-			bytes[j] = b;
-		}
+		return StringDataInstance.getCharRepresentation(ByteDataType.dataType, bytes, null);
 	}
 }

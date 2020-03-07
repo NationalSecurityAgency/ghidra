@@ -30,6 +30,7 @@
 #include "comment.hh"
 #include "userop.hh"
 #include "options.hh"
+#include "transform.hh"
 #include "prefersplit.hh"
 
 #ifdef CPUI_STATISTICS
@@ -126,7 +127,7 @@ public:
   bool aggressive_ext_trim;	///< Aggressively trim inputs that look like they are sign extended
   bool readonlypropagate;	///< true if readonly values should be treated as constants
   bool infer_pointers;		///< True if we should infer pointers from constants that are likely addresses
-  uintb pointer_lowerbound;	///< Zero or lowest value that can be inferred as an address
+  vector<AddrSpace *> inferPtrSpaces;	///< Set of address spaces in which a pointer constant is inferable
   int4 funcptr_align;		///< How many bits of alignment a function ptr has
   uint4 flowoptions;            ///< options passed to flow following engine
   vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
@@ -151,6 +152,7 @@ public:
   vector<TypeOp *> inst;	///< Registered p-code instructions
   UserOpManage userops;		///< Specifically registered user-defined p-code ops
   vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
+  vector<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
   ActionDatabase allacts;	///< Actions that can be applied in this architecture
   bool loadersymbols_parsed;	///< True if loader symbols have been read
 #ifdef CPUI_STATISTICS
@@ -165,11 +167,13 @@ public:
   bool hasModel(const string &nm) const;		///< Does this Architecture have a specific PrototypeModel
   bool highPtrPossible(const Address &loc,int4 size) const; ///< Are pointers possible to the given location?
   AddrSpace *getSpaceBySpacebase(const Address &loc,int4 size) const; ///< Get space associated with a \e spacebase register
+  const LanedRegister *getLanedRegister(const Address &loc,int4 size) const;	///< Get LanedRegister associated with storage
+  int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
   void setDefaultModel(const string &nm);		///< Set the default PrototypeModel
   void clearAnalysis(Funcdata *fd);			///< Clear analysis specific to a function
   void readLoaderSymbols(void);		 		///< Read any symbols from loader into database
   void collectBehaviors(vector<OpBehavior *> &behave) const;	///< Provide a list of OpBehavior objects
-  bool hasNearPointers(AddrSpace *spc) const;		///< Does the given address space support \e near pointers
+  SegmentOp *getSegmentOp(AddrSpace *spc) const;	///< Retrieve the \e segment op for the given space if any
   void setPrototype(const PrototypePieces &pieces);	///< Set the prototype for a particular function
   void setPrintLanguage(const string &nm);		///< Establish a particular output language
   void globalify(void);					///< Mark \e all spaces as global
@@ -237,14 +241,14 @@ protected:
   /// \param trans is the processor disassembly object
   virtual void modifySpaces(Translate *trans)=0;
 
-  virtual void postSpecFile(void) {}		///< Let components initialize after Translate is built
-
+  virtual void postSpecFile(void);		///< Let components initialize after Translate is built
 
   virtual void resolveArchitecture(void)=0;	///< Figure out the processor and compiler of the target executable
 
   void restoreFromSpec(DocumentStorage &store);		///< Fully initialize the Translate object
   void fillinReadOnlyFromLoader(void);			///< Load info about read-only sections
   void initializeSegments();				///< Set up segment resolvers
+  void cacheAddrSpaceProperties(void);			///< Calculate some frequently used space properties and cache them
 
   void parseProcessorConfig(DocumentStorage &store);	///< Apply processor specific configuration
   void parseCompilerConfig(DocumentStorage &store);	///< Apply compiler specific configuration
@@ -255,11 +259,12 @@ protected:
   void parseProtoEval(const Element *el);		///< Apply prototype evaluation configuration
   void parseDefaultProto(const Element *el);		///< Apply default prototype model configuration
   void parseGlobal(const Element *el);			///< Apply global space configuration
-  void addOtherSpace(void);                         ////add OTHER space and all of its overlays to the symboltab
+  void addOtherSpace(void);                         	///< Add OTHER space and all of its overlays to the symboltab
   void parseReadOnly(const Element *el);		///< Apply read-only region configuration
   void parseVolatile(const Element *el);		///< Apply volatile region configuration
   void parseReturnAddress(const Element *el);		///< Apply return address configuration
   void parseIncidentalCopy(const Element *el);		///< Apply incidental copy configuration
+  void parseLaneSizes(const Element *el);		///< Apply lane size configuration
   void parseStackPointer(const Element *el);		///< Apply stack pointer configuration
   void parseDeadcodeDelay(const Element *el);		///< Apply dead-code delay configuration
   void parseFuncPtrAlign(const Element *el);		///< Apply function pointer alignment configuration

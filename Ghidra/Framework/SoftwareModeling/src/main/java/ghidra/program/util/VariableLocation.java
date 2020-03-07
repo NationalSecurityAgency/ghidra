@@ -49,11 +49,11 @@ public class VariableLocation extends FunctionLocation {
 	/**
 	 * Create a new VariableLocation.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param var the variable associated with this location.
-	 * @index the index of the sub-piece on that variable (only the xrefs have subpieces
-	 * @charOffset the character position on the piece.
+	 * @param index the index of the sub-piece on that variable (only the xrefs have subpieces
+	 * @param charOffset the character position on the piece.
 	 */
 	public VariableLocation(Program program, Address locationAddr, Variable var, int index,
 			int charOffset) {
@@ -72,8 +72,10 @@ public class VariableLocation extends FunctionLocation {
 	/**
 	 * Create a new VariableLocation.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param var the variable associated with this location.
+	 * @param index the index of the sub-piece on that variable (only the xrefs have subpieces
+	 * @param charOffset the character position on the piece.
 	 */
 	public VariableLocation(Program program, Variable var, int index, int charOffset) {
 		this(program, var.getFunction().getEntryPoint(), var, index, charOffset);

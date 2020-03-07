@@ -27,57 +27,23 @@ import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.function.CreateThunkFunctionCmd;
 import ghidra.app.plugin.core.disassembler.AddressTable;
 import ghidra.app.plugin.core.function.FunctionAnalyzer;
-import ghidra.app.services.AbstractAnalyzer;
-import ghidra.app.services.AnalysisPriority;
-import ghidra.app.services.AnalyzerType;
+import ghidra.app.services.*;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
-import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.cmd.Command;
-import ghidra.framework.cmd.CompoundBackgroundCommand;
+import ghidra.framework.cmd.*;
 import ghidra.framework.options.Options;
 import ghidra.program.disassemble.Disassembler;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.address.SegmentedAddressSpace;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FunctionDefinition;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.StringDataType;
-import ghidra.program.model.data.Undefined;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.model.listing.BookmarkType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.CodeUnitIterator;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.FlowOverride;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.DumbMemBufferImpl;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.FlowType;
-import ghidra.program.model.symbol.OffsetReference;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceIterator;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -179,7 +145,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 			pointerEnabled = false;
 			addressTablesEnabled = false;
 		}
-		
+
 		// only analyze programs with address spaces > 16 bits
 		int bitSize = defaultAddressSpace.getSize();
 		return bitSize > 16;
@@ -328,7 +294,8 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 							//    New information from the thunked function (noreturn, callfixup, etc...)
 							//    may affect callers to the function, so tell analyzers about it.
 							// TODO: this should be done by the Auto Thunking mechanisms...
-							if ((!func.isThunk() && CreateThunkFunctionCmd.isThunk(program, func))) {
+							if ((!func.isThunk() &&
+								CreateThunkFunctionCmd.isThunk(program, func))) {
 								CreateFunctionCmd createFunctionCmd = new CreateFunctionCmd(null,
 									func.getEntryPoint(), null, SourceType.ANALYSIS, false, true);
 								if (createFunctionCmd.applyTo(program)) {
@@ -533,8 +500,9 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 			AddressIterator foundIter = foundCodeBookmarkLocations.getAddresses(true);
 			while (foundIter.hasNext()) {
 				Address target = foundIter.next();
-				program.getBookmarkManager().setBookmark(target, BookmarkType.ANALYSIS,
-					"Found Code", "Found code from operand reference");
+				program.getBookmarkManager()
+						.setBookmark(target, BookmarkType.ANALYSIS,
+							"Found Code", "Found code from operand reference");
 			}
 		}
 
@@ -622,8 +590,9 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 			instr.setFlowOverride(FlowOverride.CALL_RETURN);
 			// Get rid of any bad disassembly bookmark
 			AddressSet set = new AddressSet(toAddr);
-			program.getBookmarkManager().removeBookmarks(set, BookmarkType.ERROR,
-				Disassembler.ERROR_BOOKMARK_CATEGORY, monitor);
+			program.getBookmarkManager()
+					.removeBookmarks(set, BookmarkType.ERROR,
+						Disassembler.ERROR_BOOKMARK_CATEGORY, monitor);
 		}
 
 		// make sure function created at destination
@@ -808,9 +777,10 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 
 		if (lastGoodTable != null) {
 			instr.removeOperandReference(opIndex, target);
-			program.getReferenceManager().addOffsetMemReference(instr.getMinAddress(),
-				lastGoodTable.getTopAddress(), -((i + 3) * entryLen), RefType.DATA,
-				SourceType.ANALYSIS, opIndex);
+			program.getReferenceManager()
+					.addOffsetMemReference(instr.getMinAddress(),
+						lastGoodTable.getTopAddress(), -((i + 3) * entryLen), RefType.DATA,
+						SourceType.ANALYSIS, opIndex);
 		}
 
 		return lastGoodTable;
@@ -1266,7 +1236,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void registerOptions(Options options, Program program) {
 		HelpLocation helpLocation = new HelpLocation("AutoAnalysisPlugin",
-			"Auto_Analysis_Option_Instruction" + getAnalysisType());
+			"Auto_Analysis_Option_Instructions");
 
 		if (minimumAddressTableSize == -1) {
 			calculateMinimumAddressTableSize(program);

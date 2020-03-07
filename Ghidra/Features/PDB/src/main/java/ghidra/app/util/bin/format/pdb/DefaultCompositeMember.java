@@ -251,7 +251,7 @@ class DefaultCompositeMember extends CompositeMember {
 			transformLastMemberIntoFlexArray(lastMember);
 
 			// remove trailing fat caused by use of insert operations
-			trimReconstructionFat(preferredSize);
+			adjustSize(preferredSize);
 		}
 		else if (isUnionContainer()) {
 			updateContainerNameAndCategoryPath("u");
@@ -262,11 +262,26 @@ class DefaultCompositeMember extends CompositeMember {
 		alignComposite(preferredSize);
 	}
 
-	private void trimReconstructionFat(int preferredSize) {
+	/**
+	 * Adjust unaligned structure following member reconstruction.
+	 * @param preferredSize preferred size
+	 */
+	private void adjustSize(int preferredSize) {
 		if (!isStructureContainer()) {
 			return;
 		}
 		Structure struct = (Structure) getDataType();
+
+		if (struct.isNotYetDefined() && preferredSize > 0) {
+			// handle special case of empty structure
+			struct.growStructure(preferredSize);
+			return;
+		}
+
+		if (struct.getLength() < preferredSize) {
+			struct.growStructure(preferredSize - struct.getLength());
+			return;
+		}
 
 		DataTypeComponent dtc = struct.getComponentAt(preferredSize);
 		if (dtc == null) {
@@ -293,12 +308,42 @@ class DefaultCompositeMember extends CompositeMember {
 	 */
 	private void alignComposite(int preferredSize) {
 
-		Composite copy = (Composite) memberDataType.copy(dataTypeManager);
-		copy.setInternallyAligned(true);
+		// don't attempt to align empty composite - don't complain
+		if (isStructureContainer()) {
+			if (structureMemberOffsetMap.isEmpty()) {
+				return;
+			}
+		}
+		else if (unionMemberList.isEmpty()) {
+			return;
+		}
 
+		Composite composite = (Composite) memberDataType;
+		Composite copy = (Composite) composite.copy(dataTypeManager);
+
+		int pack = 0;
+		copy.setPackingValue(pack);
+
+		boolean alignOK = isGoodAlignment(copy, preferredSize);
+		if (!alignOK) {
+			pack = 1;
+			copy.setPackingValue(pack);
+			alignOK = isGoodAlignment(copy, preferredSize);
+		}
+		if (alignOK) {
+			composite.setPackingValue(pack);
+		}
+		else if (errorConsumer != null && !isClass) { // don't complain about Class structs which always fail
+			String anonymousStr = parent != null ? " anonymous " : "";
+			errorConsumer.accept("PDB " + anonymousStr + memberType +
+				" reconstruction failed to align " + composite.getPathName());
+		}
+	}
+
+	private boolean isGoodAlignment(Composite testCompsosite, int preferredSize) {
 		boolean alignOK = true;
-		if (preferredSize > 0 && copy.getNumComponents() != 0) {
-			alignOK = (copy.getLength() == preferredSize);
+		if (preferredSize > 0 && testCompsosite.getNumComponents() != 0) {
+			alignOK = (testCompsosite.getLength() == preferredSize);
 		}
 
 		if (alignOK && isStructureContainer()) {
@@ -306,7 +351,7 @@ class DefaultCompositeMember extends CompositeMember {
 			Structure struct = (Structure) memberDataType;
 			DataTypeComponent[] unalignedComponents = struct.getDefinedComponents();
 			int index = 0;
-			for (DataTypeComponent dtc : copy.getComponents()) {
+			for (DataTypeComponent dtc : testCompsosite.getComponents()) {
 				DataTypeComponent unalignedDtc = unalignedComponents[index++];
 				if (!isComponentUnchanged(dtc, unalignedDtc)) {
 					alignOK = false;
@@ -314,15 +359,7 @@ class DefaultCompositeMember extends CompositeMember {
 				}
 			}
 		}
-
-		if (alignOK) {
-			((Composite) memberDataType).setInternallyAligned(true);
-		}
-		else if (errorConsumer != null && !isClass) { // don't complain about Class structs which always fail
-			String anonymousStr = parent != null ? " anonymous " : "";
-			errorConsumer.accept("PDB " + anonymousStr + memberType +
-				" reconstruction failed to align " + memberDataType.getPathName());
-		}
+		return alignOK;
 	}
 
 	private boolean isComponentUnchanged(DataTypeComponent dtc, DataTypeComponent unalignedDtc) {
@@ -447,35 +484,6 @@ class DefaultCompositeMember extends CompositeMember {
 			type = memberDataTypeName;
 		}
 		return "[CompositeMember: " + memberOffset + " " + memberName + " " + type + "]";
-	}
-
-	/**
-	 * <code>DataTypeResolver</code> provides the ability to resolve a member's data-type 
-	 * at the time of construction.
-	 */
-	interface DataTypeResolver {
-		/**
-		 * Find the specified member's data type
-		 * @param member composite member to be resolved
-		 * @return data-type which corresponds to the specified member's data-type name or null
-		 * if unable to resolve.
-		 * @throws CancelledException if operation cancelled
-		 */
-		WrappedDataType findDataType(DefaultCompositeMember member) throws CancelledException;
-
-		/**
-		 * Callback to resolve and finalize composite definition.  The caller may return immediately 
-		 * if composite as previously been resolved as reflected by the composite datatype. 
-		 * This callback is necessary to ensure that the composite alignment has been 
-		 * established prior to finalizing the compsoite currently being resolved.
-		 * @param memberDefinition member definition object
-		 * @param composite composite member datatype which corresponds to the specified
-		 * memberDefinition.
-		 * @param monitor task monitor
-		 * @throws CancelledException
-		 */
-		void resolveComposite(PdbMember compositeDefinition, Composite composite,
-				TaskMonitor monitor) throws CancelledException;
 	}
 
 	/**
@@ -1028,7 +1036,8 @@ class DefaultCompositeMember extends CompositeMember {
 	boolean addMember(DefaultCompositeMember member) {
 
 		if (member.memberDataType == null || member.memberDataType.getLength() <= 0) {
-			Msg.debug(this, "Failed to resolve datatype " + member.getDataTypeName());
+			Msg.debug(this, "Failed to resolve member datatype for '" + getDataTypeName() + "': " +
+				member.getDataTypeName());
 			return false;
 		}
 

@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -157,8 +157,9 @@ public class BitFieldDataTypeTest extends AbstractGTest {
 		assertEquals("5", getDecimalRepresentation(unsignedBitField(4, 0), 0x55));
 	}
 
-	private String getRepresentation(BitFieldDataType bitField, int... bytes) throws Exception {
-		MemBuffer membuf = membuf(bytes);
+	private String getRepresentation(BitFieldDataType bitField, int... unsignedBytes)
+			throws Exception {
+		MemBuffer membuf = membuf(unsignedBytes);
 		return bitField.getRepresentation(membuf, null, 4);
 	}
 
@@ -184,8 +185,8 @@ public class BitFieldDataTypeTest extends AbstractGTest {
 		return new BitFieldDataType(UnsignedIntegerDataType.dataType, size, offset);
 	}
 
-	private MemBuffer membuf(int... bytes) throws Exception {
-		return new ByteMemBufferImpl(null, true, bytes);
+	private MemBuffer membuf(int... unsignedBytes) throws Exception {
+		return new ByteMemBufferImpl(null, bytes(unsignedBytes), true);
 	}
 
 }

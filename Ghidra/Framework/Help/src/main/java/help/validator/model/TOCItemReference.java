@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +20,7 @@ import help.validator.LinkDatabase;
 import java.nio.file.Path;
 
 /**
- * A representation of the <tocref> tag, which is a way to reference a TOC item entry in 
+ * A representation of the {@literal <tocref>} tag, which is a way to reference a TOC item entry in 
  * a TOC_Source.xml file other than the one in which the reference lives.
  */
 public class TOCItemReference extends TOCItem implements Comparable<TOCItemReference> {

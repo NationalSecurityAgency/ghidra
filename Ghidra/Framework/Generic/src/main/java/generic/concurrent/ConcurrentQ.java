@@ -35,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
  * <hr>
  * <p>
  * <u>Put and Forget:</u>
- * <pre>
+ * <pre>{@literal
  * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
  *         // do work here...
@@ -49,27 +49,27 @@ import ghidra.util.task.TaskMonitor;
  * ...
  * concurrentQ.add(item); // where item is one of the instances of ITEM
  * 
- * </pre>
+ * }</pre>
  * <hr>
  * <p>
  * <u>Put Items and Handle Results in Any Order as They Available:</u>
  * <pre>
- * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
+ * {@literal QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>()} {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
  *         // do work here...
  *     }
  * };
  * 
- * QItemListener<ITEM, RESULT> itemListener = new QItemListener<ITEM, RESULT>() {
- *     public void itemProcessed(QResult<ITEM, RESULT> result) {
+ * {@literal QItemListener<ITEM, RESULT> itemListener = new QItemListener<ITEM, RESULT>()} {
+ *     {@literal public void itemProcessed(QResult<ITEM, RESULT> result)} {
  *         RESULT result = result.getResult();
- *             <font color="blue"><b>// work on my result...</b></font>
+ *             <span style="color:blue"><b>// work on my result...</b></span>
  *         }
  * };
  * 
- * ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();
+ * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>()};
  * builder.setThreadPoolName("Thread Pool Name");
- * <font color="blue"><b>builder.setListener(itemListener);</b></font>
+ * <span style="color:blue"><b>builder.setListener(itemListener);</b></span>
  * concurrentQ = builder.build(callback);
  * ...
  * ...
@@ -82,16 +82,16 @@ import ghidra.util.task.TaskMonitor;
  * <hr>
  * <p>
  * <u>Put Items and Handle Results When All Items Have Been Processed:</u>
- * <pre>
+ * <pre>{@literal
  * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
  *         // do work here...
  *     }
- * };
+ * };}
  *
- * ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();
+ * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();}
  * builder.setThreadPoolName("Thread Pool Name");
- * <font color="blue"><b>builder.setCollectResults(true);</b></font>
+ * <span style="color:blue"><b>builder.setCollectResults(true);</b></span>
  * concurrentQ = builder.getQueue(callback);
  * ...
  * ...
@@ -99,15 +99,16 @@ import ghidra.util.task.TaskMonitor;
  * concurrentQ.add(item);
  * concurrentQ.add(item);
  * ...
- * <font color="blue"><b>List&lt;QResult&lt;I, R&gt;&gt; results = concurrentQ.waitForResults();</b></font>
+ * 
+ * <span style="color:blue"><b>{@literal List<QResult<I, R>> results = concurrentQ.waitForResults();}</b></span>{@literal
  * // process the results...
  * 
- * </pre>
+ * }</pre>
  * <hr>
  * <p>
  * <u>Put Items, <b>Blocking While Full</b>, and Handle Results in Any Order as They Available:</u>
  * <pre>
- * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
+ * {@literal QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>()} {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
  *         // do work here...
  *     }
@@ -120,21 +121,21 @@ import ghidra.util.task.TaskMonitor;
  *         }
  * };
  * 
- * ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();
- * 	builder.setThreadPoolName("Thread Pool Name");
- * <font color="blue"><b>builder.setQueue(new LinkedBlockingQueue(100));</b></font>
+ * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>()};
+ * builder.setThreadPoolName("Thread Pool Name");
+ * <span style="color:blue"><b>builder.setQueue(new LinkedBlockingQueue(100));</b></span>
  * concurrentQ = builder.getQueue(callback);
  * ...
  * ...
- * Iterator<ITEM> iterator = &lt;get an iterator for 1000s of items somewhere&gt;
- * <font color="blue"><b>concurrentQ.offer(iterator); // this call will block when the queue fills up (100 items or more)</b></font>
+ * {@literal Iterator<ITEM> iterator = <get an iterator for 1000s of items somewhere>}
+ * <span style="color:blue"><b>{@code concurrentQ.offer(iterator); // this call will block when the queue fills up (100 items or more)}</b></span>
  * 
  * </pre>
  * <hr>
  * 
  * @param <I> The type of the items to be processed.
  * @param <R> The type of objects resulting from processing an item; if you don't care about the
- *            return value, then make this value whatever you want, like <tt>Object</tt> or the 
+ *            return value, then make this value whatever you want, like <code>Object</code> or the 
  *            same value as {@link I} and return null from {@link QCallback#process(Object, TaskMonitor)}.
  */
 public class ConcurrentQ<I, R> {
@@ -291,12 +292,12 @@ public class ConcurrentQ<I, R> {
 
 	/**
 	 * Allows clients to use a bounded queue (such as a {@link LinkedBlockingQueue} to control
-	 * how many items get placed into this queue at one time.  Calling the <tt>add</tt> methods
+	 * how many items get placed into this queue at one time.  Calling the <code>add</code> methods
 	 * will place all items into the queue, which for a large number of items, can consume a 
 	 * large amount of memory.  This method will block once the queue at maximum capacity, 
 	 * continuing to add new items as existing items on the queue are processed.
 	 * <p>
-	 * To enable blocking on the queue when it is full, construct this <tt>ConcurrentQ</tt>
+	 * To enable blocking on the queue when it is full, construct this <code>ConcurrentQ</code>
 	 * with an instance of {@link BlockingQueue}.
 	 * 
 	 * @param iterator An iterator from which items will be taken.
@@ -378,7 +379,7 @@ public class ConcurrentQ<I, R> {
 	 * 
 	 * @return the first available result
 	 * @throws InterruptedException if interrupted while waiting for a result
-	 * @throws {@link IllegalStateException} if this queue has been set to not collect results 
+	 * @throws IllegalStateException if this queue has been set to not collect results 
 	 *         (see the constructor).
 	 */
 	public QResult<I, R> waitForNextResult() throws InterruptedException {
@@ -414,7 +415,7 @@ public class ConcurrentQ<I, R> {
 	 * exception, then you should instead use {@link #waitForResults()}.  That method will return
 	 * all results, both with and without exceptions, which you can then process, including 
 	 * checking for exceptions.  Note that to use {@link #waitForResults()} to examine exceptions,
-	 * you must have created this queue with <tt>collectResults</tt> as true.
+	 * you must have created this queue with <code>collectResults</code> as true.
 	 * 
 	 * @throws InterruptedException if interrupted while waiting for a result
 	 * @throws Exception any exception encountered while processing an item (this will cancel all

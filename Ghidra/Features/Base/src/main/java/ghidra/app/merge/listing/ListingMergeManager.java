@@ -42,7 +42,7 @@ import ghidra.util.task.TaskMonitor;
  * <li>functions</li>
  * <li>symbols</li>
  * <li>references [memory, stack, and external]</li>
- * <li>comments [plate, pre, end-of-line, repeatable, and post]/li>
+ * <li>comments [plate, pre, end-of-line, repeatable, and post]</li>
  * <li>properties</li>
  * <li>bookmarks</li>
  * </ul>

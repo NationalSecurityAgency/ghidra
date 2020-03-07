@@ -576,6 +576,37 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testDataTypeConflictHandling() throws Exception {
+		Category sub1 = root.createCategory("Cat1");
+		DataType dt1 = new StructureDataType("DT", 1);
+		DataType dt2 = new StructureDataType("DT", 2);
+		DataType added1 = sub1.addDataType(dt1, null);
+		DataType added2 = sub1.addDataType(dt2, null);
+		assertEquals("DT", added1.getName());
+		assertEquals("DT.conflict", added2.getName());
+
+		List<DataType> list = sub1.getDataTypesByBaseName("DT");
+		assertEquals(2, list.size());
+		assertEquals(added1, list.get(0));
+		assertEquals(added2, list.get(1));
+
+		list = sub1.getDataTypesByBaseName("DT.conflict");
+		assertEquals(2, list.size());
+		assertEquals(added1, list.get(0));
+		assertEquals(added2, list.get(1));
+
+		sub1.remove(added2, TaskMonitor.DUMMY);
+		list = sub1.getDataTypesByBaseName("DT");
+		assertEquals(1, list.size());
+		assertEquals(added1, list.get(0));
+
+		list = sub1.getDataTypesByBaseName("DT.conflict");
+		assertEquals(1, list.size());
+		assertEquals(added1, list.get(0));
+
+	}
+
+	@Test
 	public void testGetDataTypeManager() throws Exception {
 		Category sub1 = root.createCategory("SubCat-A");
 		Category s = sub1.createCategory("Sub-cat");
@@ -772,10 +803,7 @@ public class CategoryTest extends AbstractGhidraHeadedIntegrationTest {
 		clearEvents();
 
 		struct2 = (Structure) newDt.insert(3, struct2).getDataType();
-		int eventCount = getEventCount();
-		if (4 != eventCount) {
-			System.err.println("halt!");
-		}
+
 		assertEquals(5, getEventCount());
 		Event ev = getEvent(4);
 		assertEquals("DT Changed", ev.evName);

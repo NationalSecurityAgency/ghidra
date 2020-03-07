@@ -141,7 +141,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	}
 
 	@Override
-	public DataType getParent() {
+	public Composite getParent() {
 		return parent;
 	}
 
@@ -460,7 +460,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 		buffer.append("  " + getOrdinal());
 		buffer.append("  " + getOffset());
 		DataType dt = getDataType();
-		buffer.append("  " + dt.getDisplayName());
+		buffer.append("  " + dt.getName());
 		if (isFlexibleArrayComponent) {
 			buffer.append("[0]");
 		}

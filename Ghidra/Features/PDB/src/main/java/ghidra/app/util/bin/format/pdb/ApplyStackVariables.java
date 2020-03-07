@@ -41,8 +41,20 @@ class ApplyStackVariables {
 		this.function = function;
 	}
 
+	private boolean isParameterRecoverySupported() {
+		// NOTE: this is a temporary solution to the lack of proper register
+		// variable support
+		Program p = function.getProgram();
+		if (p.getDefaultPointerSize() != 32) {
+			return false;
+		}
+		return "x86".equals(p.getLanguage().getProcessor().toString());
+	}
+
 	void applyTo(TaskMonitor monitor, MessageLog log) throws CancelledException {
 		int frameBase = getFrameBaseOffset(monitor);
+
+		boolean skipParameters = !isParameterRecoverySupported();
 
 		while (xmlParser.hasNext()) {
 			monitor.checkCanceled();
@@ -70,13 +82,26 @@ class ApplyStackVariables {
 			}
 
 			if (PdbKind.OBJECT_POINTER == member.kind) {
+				if (skipParameters) {
+					xmlParser.next();
+					continue;
+				}
 				createRegisterParameter(member.memberName, dt, log);
 			}
 			else if (PdbKind.PARAMETER == member.kind) {
+				if (skipParameters) {
+					xmlParser.next();
+					continue;
+				}
 				createStackVariable(member.memberName, frameBase + member.memberOffset, dt, log);
 			}
 			else if (PdbKind.LOCAL == member.kind) {
-				createStackVariable(member.memberName, frameBase + member.memberOffset, dt, log);
+				int stackOffset = frameBase + member.memberOffset;
+				if (skipParameters && function.getStackFrame().isParameterOffset(stackOffset)) {
+					xmlParser.next();
+					continue;
+				}
+				createStackVariable(member.memberName, stackOffset, dt, log);
 			}
 
 			xmlParser.next();//stack variable number end tag
@@ -149,7 +174,7 @@ class ApplyStackVariables {
 			}
 		}
 		catch (Exception e) {
-			log.appendMsg(
+			log.appendMsg("PDB",
 				"Unable to create register variable " + name + " in " + function.getName());
 		}
 		return null;
@@ -183,8 +208,8 @@ class ApplyStackVariables {
 			}
 		}
 		catch (Exception e) {
-			log.appendMsg("Unable to create stack variable " + name + " at offset " + offset +
-				" in " + function.getName());
+			log.appendMsg("PDB", "Unable to create stack variable " + name + " at offset " +
+				offset + " in " + function.getName());
 		}
 		return variable;
 	}
@@ -192,12 +217,12 @@ class ApplyStackVariables {
 	private DataType getDataType(PdbXmlMember member, MessageLog log) throws CancelledException {
 		WrappedDataType wrappedDataType = pdbParser.findDataType(member.memberDataTypeName);
 		if (wrappedDataType == null) {
-			log.appendMsg("Error: failed to resolve data type for " + member.kind + ": " +
+			log.appendMsg("PDB", "Failed to resolve data type for " + member.kind + ": " +
 				member.memberDataTypeName);
 			return null;
 		}
 		if (wrappedDataType.isZeroLengthArray()) {
-			log.appendMsg("Error: zero length array not supported for for " + member.kind + ": " +
+			log.appendMsg("PDB", "Zero length array not supported for for " + member.kind + ": " +
 				member.memberDataTypeName);
 			return null;
 		}

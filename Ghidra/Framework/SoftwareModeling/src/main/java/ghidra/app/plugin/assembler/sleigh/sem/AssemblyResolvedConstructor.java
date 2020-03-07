@@ -24,22 +24,19 @@ import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.lang3.StringUtils;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-
 import ghidra.app.plugin.assembler.AssemblySelector;
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
 import ghidra.app.plugin.processors.sleigh.ConstructState;
 import ghidra.app.plugin.processors.sleigh.ContextOp;
-import ghidra.util.StringUtilities;
 
 /**
  * A {@link AssemblyResolution} indicating successful application of a constructor
  * 
- * This is almost analogous to {@link DisjointPattern}, in that is joins an instruction
- * {@link AssemblyPatternBlock} with a corresponding context {@link AssemblyPatternBlock}. However,
- * this object is mutable, and it collects backfill records, as well as forbidden patterns.
+ * This is almost analogous to {@link ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern
+ * DisjointPattern}, in that is joins an instruction {@link AssemblyPatternBlock} with a corresponding
+ * context {@link AssemblyPatternBlock}. However, this object is mutable, and it collects backfill records,
+ * as well as forbidden patterns.
  * 
  * When the applied constructor is from the "instruction" subtable, this represents a fully-
  * constructed instruction with required context. All backfill records ought to be resolved and
@@ -56,8 +53,8 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	protected final AssemblyPatternBlock ins;
 	protected final AssemblyPatternBlock ctx;
 
-	protected final ImmutableSet<AssemblyResolvedBackfill> backfills;
-	protected final ImmutableSet<AssemblyResolvedConstructor> forbids;
+	protected final Set<AssemblyResolvedBackfill> backfills;
+	protected final Set<AssemblyResolvedConstructor> forbids;
 
 	@Override
 	protected int computeHash() {
@@ -97,14 +94,14 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * @see AssemblyResolution#resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
 	 */
 	AssemblyResolvedConstructor(String description,
-			ImmutableList<? extends AssemblyResolution> children, AssemblyPatternBlock ins,
-			AssemblyPatternBlock ctx, ImmutableSet<AssemblyResolvedBackfill> backfills,
-			ImmutableSet<AssemblyResolvedConstructor> forbids) {
+			List<? extends AssemblyResolution> children, AssemblyPatternBlock ins,
+			AssemblyPatternBlock ctx, Set<AssemblyResolvedBackfill> backfills,
+			Set<AssemblyResolvedConstructor> forbids) {
 		super(description, children);
 		this.ins = ins;
 		this.ctx = ctx;
-		this.backfills = backfills == null ? ImmutableSet.of() : backfills;
-		this.forbids = forbids == null ? ImmutableSet.of() : forbids;
+		this.backfills = backfills == null ? Set.of() : backfills;
+		this.forbids = forbids == null ? Set.of() : forbids;
 	}
 
 	/**
@@ -112,13 +109,14 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * 
 	 * This was used primarily in testing, to specify expected results.
 	 * @param str the string representation: "{@code ins:[pattern],ctx:[pattern]}"
-	 * @see StringUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String) 
+	 * @see ghidra.util.NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
+	 * NumericUtilities.convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
 	 * @param description a description of the resolution
 	 * @param children any children involved in the resolution
 	 * @return the decoded resolution
 	 */
 	public static AssemblyResolvedConstructor fromString(String str, String description,
-			ImmutableList<AssemblyResolution> children) {
+			List<AssemblyResolution> children) {
 		AssemblyPatternBlock ins = null;
 		if (str.startsWith(INS)) {
 			int end = str.indexOf(SEP);
@@ -170,13 +168,13 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 			newForbids.add(f.shift(amt));
 		}
 		return new AssemblyResolvedConstructor(description, children, newIns, ctx,
-			ImmutableSet.copyOf(newBackfills), ImmutableSet.copyOf(newForbids));
+			Collections.unmodifiableSet(newBackfills), Collections.unmodifiableSet(newForbids));
 	}
 
 	/**
 	 * Truncate (unshift) the resolved instruction pattern from the left
 	 * 
-	 * @note This drops all backfill and forbidden pattern records, since this method is typically
+	 * NOTE: This drops all backfill and forbidden pattern records, since this method is typically
 	 *       used to read token fields rather than passed around for resolution.
 	 * @param amt the number of bytes to remove from the left
 	 * @return the result
@@ -212,7 +210,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 			}
 		}
 		return new AssemblyResolvedConstructor(description, children, ins, ctx, backfills,
-			ImmutableSet.copyOf(newForbids));
+			Collections.unmodifiableSet(newForbids));
 	}
 
 	/**
@@ -268,7 +266,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 		Set<AssemblyResolvedConstructor> newForbids = new HashSet<>(this.forbids);
 		newForbids.addAll(that.forbids);
 		return new AssemblyResolvedConstructor(description, children, newIns, newCtx,
-			ImmutableSet.copyOf(newBackfills), ImmutableSet.copyOf(newForbids));
+			Collections.unmodifiableSet(newBackfills), Collections.unmodifiableSet(newForbids));
 	}
 
 	/**
@@ -280,7 +278,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 		Set<AssemblyResolvedBackfill> newBackfills = new HashSet<>(this.backfills);
 		newBackfills.add(bf);
 		return new AssemblyResolvedConstructor(description, children, ins, ctx,
-			ImmutableSet.copyOf(newBackfills), forbids);
+			Collections.unmodifiableSet(newBackfills), forbids);
 	}
 
 	/**
@@ -292,7 +290,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 		Set<AssemblyResolvedConstructor> combForbids = new HashSet<>(this.forbids);
 		combForbids.addAll(more);
 		return new AssemblyResolvedConstructor(description, children, ins, ctx, backfills,
-			ImmutableSet.copyOf(more));
+			Collections.unmodifiableSet(more));
 	}
 
 	/**
@@ -338,7 +336,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * Duplicate this resolution, with additional description text appended
 	 * @param append the text to append
 	 * @return the duplicate
-	 * @note An additional separator {@code ": "} is inserted
+	 * NOTE: An additional separator {@code ": "} is inserted
 	 */
 	public AssemblyResolvedConstructor copyAppendDescription(String append) {
 		AssemblyResolvedConstructor cp = new AssemblyResolvedConstructor(
@@ -444,7 +442,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 			newForbids.add((AssemblyResolvedConstructor) t);
 		}
 		return new AssemblyResolvedConstructor(description, children, ins, ctx, backfills,
-			ImmutableSet.copyOf(newForbids));
+			Collections.unmodifiableSet(newForbids));
 	}
 
 	/**
@@ -453,8 +451,8 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * This is used to ensure each operand is encoded at the correct offset
 	 * @return the length of the instruction block
 	 * 
-	 * @note this DOES include the offset
-	 * @note this DOES include pending backfills
+	 * NOTE: this DOES include the offset
+	 * NOTE: this DOES include pending backfills
 	 */
 	public int getInstructionLength() {
 		int inslen = ins.length();
@@ -468,8 +466,8 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * Get the length of the instruction encoding, excluding trailing undefined bytes
 	 * @return the length of the defined bytes in the instruction block
 	 * 
-	 * @note this DOES include the offset
-	 * @note this DOES NOT include pending backfills
+	 * NOTE: this DOES include the offset
+	 * NOTE: this DOES NOT include pending backfills
 	 */
 	public int getDefinedInstructionLength() {
 		byte[] imsk = ins.getMask();
@@ -628,7 +626,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * the sequence mentioned above, since {@link AssemblyPatternBlock#possibleVals()} on its own
 	 * may yield bytes that do not produce the desired instruction. 
 	 * 
-	 * @note The implementation is based on {@link AssemblyPatternBlock#possibleVals()}, so be
+	 * NOTE: The implementation is based on {@link AssemblyPatternBlock#possibleVals()}, so be
 	 * aware that a single array is reused for each iterate. You should not retain a pointer to the
 	 * array, but rather make a copy.
 	 * 

@@ -21,26 +21,28 @@
 
 #include "database.hh"
 
-/// \brief An Address pair with a point of use
+/// \brief A symbol name recommendation with its associated storage location
 ///
-/// A storage location and a point in the code where the storage is referenced.
-/// This object sorts first based on the storage address then on the use point.
-class AddressUsePointPair {
+/// The name is associated with a static Address and use point in the code. Symbols
+/// present at the end of function decompilation without a name can acquire \b this name
+/// if their storage matches.
+class NameRecommend {
   Address addr;			///< The starting address of the storage location
   Address useaddr;		///< The code address at the point of use
   int4 size;			///< An optional/recommended size for the variable being stored
+  string name;			///< The local symbol name recommendation
+  uint8 symbolId;		///< Id associated with the original Symbol
 public:
-  AddressUsePointPair(const Address &ad,const Address &use,int4 sz);	///< Constructor
-  AddressUsePointPair(const AddressUsePointPair &op2) : addr(op2.addr), useaddr(op2.useaddr) {
-    size = op2.size; }	///< Copy constructor
+  NameRecommend(const Address &ad,const Address &use,int4 sz,const string &nm,uint8 id) :
+    addr(ad), useaddr(use), size(sz), name(nm), symbolId(id) {} ///< Constructor
   const Address &getAddr(void) const { return addr; }	///< Get the storage address
   const Address &getUseAddr(void) const { return useaddr; }	///< Get the use point address
   int4 getSize(void) const { return size; }			///< Get the optional size
-  bool operator<(const AddressUsePointPair &op2) const;		///< Compare operation
-  bool operator==(const AddressUsePointPair &op2) const;	///< Test for equality
+  string getName(void) const { return name; }			///< Get the recommended name
+  uint8 getSymbolId(void) const { return symbolId; }		///< Get the original Symbol id
 };
 
-/// \brief A name recommendation for a particular dynamic location
+/// \brief A name recommendation for a particular dynamic storage location
 ///
 /// A recommendation for a symbol name whose storage is dynamic. The storage
 /// is identified using the DynamicHash mechanism and may or may not exist.
@@ -48,15 +50,14 @@ class DynamicRecommend {
   Address usePoint;		///< Use point of the Symbol
   uint8 hash;			///< Hash encoding the Symbols environment
   string name;			///< The local symbol name recommendation
+  uint8 symbolId;		///< Id associated with the original Symbol
 public:
-  DynamicRecommend(const Address &addr,uint8 h,const string &nm) :
-    usePoint(addr) {
-    hash = h;
-    name = nm;
-  }	///< Constructor
+  DynamicRecommend(const Address &addr,uint8 h,const string &nm,uint8 id) :
+    usePoint(addr), hash(h), name(nm), symbolId(id) {}	///< Constructor
   const Address &getAddress(void) const { return usePoint; }	///< Get the use point address
   uint8 getHash(void) const { return hash; }			///< Get the dynamic hash
   string getName(void) const { return name; }			///< Get the recommended name
+  uint8 getSymbolId(void) const { return symbolId; }		///< Get the original Symbol id
 };
 
 /// \brief Partial data-type information mapped to a specific range of bytes
@@ -181,7 +182,7 @@ public:
 class ScopeLocal : public ScopeInternal {
   AddrSpace *space;		///< Address space containing the local stack
   RangeList localRange;		///< The set of addresses that might hold mapped locals (not parameters)
-  map<AddressUsePointPair,string> nameRecommend;	///< Symbol name recommendations for specific addresses
+  list<NameRecommend> nameRecommend;	///< Symbol name recommendations for specific addresses
   list<DynamicRecommend> dynRecommend;		///< Symbol name recommendations for dynamic locations
   bool stackGrowsNegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
   bool rangeLocked;		///< True if the subset of addresses \e mapped to \b this scope has been locked
@@ -190,8 +191,7 @@ class ScopeLocal : public ScopeInternal {
   bool restructure(MapState &state);	///< Merge hints into a formal Symbol layout of the address space
   void markUnaliased(const vector<uintb> &alias);	///< Mark all local symbols for which there are no aliases
   void fakeInputSymbols(void);		///< Make sure all stack inputs have an associated Symbol
-  void addRecommendName(const Address &addr,const Address &usepoint,const string &nm,int4 sz);
-  void addDynamicRecommend(const Address &usepoint,uint8 hash,const string &nm);
+  void addRecommendName(Symbol *sym);	///< Convert the given symbol to a name recommendation
   void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
 public:
   ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
@@ -217,7 +217,9 @@ public:
   void resetLocalWindow(void);	///< Reset the set of addresses that are considered mapped by the scope to the default
   void restructureVarnode(bool aliasyes);	///< Layout mapped symbols based on Varnode information
   void restructureHigh(void);			///< Layout mapped symbols based on HighVariable information
-  void makeNameRecommendationsForSymbols(vector<string> &resname,vector<Symbol *> &ressym) const;
+  SymbolEntry *remapSymbol(Symbol *sym,const Address &addr,const Address &usepoint);
+  SymbolEntry *remapSymbolDynamic(Symbol *sym,uint8 hash,const Address &usepoint);
+  void recoverNameRecommendationsForSymbols(void);
 };
 
 #endif

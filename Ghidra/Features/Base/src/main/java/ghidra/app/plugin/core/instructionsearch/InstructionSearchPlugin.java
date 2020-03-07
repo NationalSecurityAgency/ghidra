@@ -245,7 +245,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 			}
 
 			@Override
-			protected boolean isValidContext(NavigatableActionContext context) {
+			protected boolean isValidNavigationContext(NavigatableActionContext context) {
 				return !(context instanceof RestrictedAddressSetContext);
 			}
 		};

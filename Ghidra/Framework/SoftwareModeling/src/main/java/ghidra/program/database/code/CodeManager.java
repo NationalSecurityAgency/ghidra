@@ -397,8 +397,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * marked within the instructionSet causing dependent blocks to get pruned.
 	 * @param instructionSet the set of instructions to be added.  All code unit conflicts
 	 * will be marked within the instructionSet and associated blocks.
-	 * @throws CodeUnitInsertionException if the instruction set is incompatible
-	 * with the program memory
 	 */
 	public AddressSetView addInstructions(InstructionSet instructionSet, boolean overwrite) {
 		AddressSet set = new AddressSet();
@@ -695,7 +693,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param end the last address in the range.
 	 * @param monitor the TaskMonitor that tracks progress and is used to tell
 	 * if the user cancels the operation.
-	 * @throws CancelledExeption if the user cancels the operation.
+	 * @throws CancelledException if the user cancels the operation.
 	 */
 	@Override
 	public void deleteAddressRange(Address start, Address end, TaskMonitor monitor)
@@ -720,7 +718,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param keepComments if true comment and comment history will be retained
 	 * @param monitor the TaskMonitor that tracks progress and is used to tell
 	 * if the user cancels the operation.
-	 * @throws CancelledExeption if the user cancels the operation.
+	 * @throws CancelledException if the user cancels the operation.
 	 */
 	private void deleteAddressRange(Address start, Address end, boolean keepComments,
 			TaskMonitor monitor) throws CancelledException {
@@ -765,7 +763,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param length the number of addresses to move.
 	 * @param monitor the TaskMonitor that tracks progress and is used to tell
 	 * if the user cancels the operation.
-	 * @throws CancelledExeption if the user cancels the operation.
+	 * @throws CancelledException if the user cancels the operation.
 	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
@@ -996,9 +994,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Returns the code unit whose min address is less than
 	 * or equal to the specified address and whose max address
 	 * is greater than or equal to the specified address.
-	 * <pre>
+	 * <pre>{@literal
 	 * codeunit.minAddress() <= addr <= codeunit.maxAddress()
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @param address the address for which to find the code containing it.
 	 *
@@ -1249,8 +1247,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
-	 * Get a forward iterator over addresses that have comments of any type.
-	 * @param set address set
+	 * Get an iterator over addresses that have comments of any type.
+	 * @param addrSet address set containing the comment addresses to iterate over.
+	 * @param forward true to iterate in the direction of increasing addresses.
 	 */
 	public AddressIterator getCommentAddressIterator(AddressSetView addrSet, boolean forward) {
 		try {
@@ -1392,9 +1391,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Returns the instruction whose min address is less than
 	 * or equal to the specified address and whose max address
 	 * is greater than or equal to the specified address.
-	 * <pre>
+	 * <pre>{@literal
 	 * instruction.minAddress() <= addr <= instruction.maxAddress()
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @param address the address to be contained
 	 *
@@ -1520,9 +1519,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Returns the data whose min address is less than
 	 * or equal to the specified address and whose max address
 	 * is greater than or equal to the specified address.
-	 * <pre>
+	 * <pre>{@literal
 	 * data.minAddress() <= addr <= data.maxAddress()
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @param addr the address to be contained
 	 *
@@ -1591,9 +1590,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Returns the defined data whose min address is less than
 	 * or equal to the specified address and whose max address
 	 * is greater than or equal to the specified address.
-	 * <pre>
+	 * <pre>{@literal
 	 * data.minAddress() <= addr <= data.maxAddress()
-	 * </pre>
+	 * }</pre>
 	 *
 	 * @param addr the address to be contained
 	 *
@@ -1855,10 +1854,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 	/**
 	 * Returns the next undefined data whose min address falls within the address set
-	 * searching in the forward direction (e.g., 0 -> 0xfff).
+	 * searching in the forward direction {@code (e.g., 0 -> 0xfff).}
 	 *
-	 * @param addrSet the address Set to look within
-	 *
+	 * @param set the address set to look within.
+	 * @param monitor the current monitor.
 	 * @return Data the first undefined data within the address set, or null if there is none.
 	 */
 	public Data getFirstUndefinedData(AddressSetView set, TaskMonitor monitor) {
@@ -2561,7 +2560,6 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Check if any instruction intersects the specified address range
 	 * @param start start of range
 	 * @param end end of range
-	 * @return true if instruction intersected with range
 	 */
 	public void checkContextWrite(Address start, Address end) throws ContextChangeException {
 		lock.acquire();
@@ -3529,12 +3527,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * Instructions which fail to redisassemble will be marked - since only one byte will be skipped, such bad
 	 * instruction disassembly may cause subsequent errors due to possible instruction shift.
 	 * This method is only intended for use by the ProgramDB setLanguage method.
-	 * @param lang new language
 	 * @param bookmarkLimit maximum number of errors to bookmark
 	 * @param monitor task monitor
 	 * @throws IOException
-	 * @throws CancelledException
-	 * @throws LockException
+	 * @throws CancelledException if the operation is canceled.
 	 */
 	public void reDisassembleAllInstructions(int bookmarkLimit, TaskMonitor monitor)
 			throws IOException, CancelledException {

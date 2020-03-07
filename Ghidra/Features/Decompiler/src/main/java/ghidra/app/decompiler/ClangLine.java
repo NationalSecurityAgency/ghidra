@@ -67,6 +67,10 @@ public class ClangLine {
 		return tokens.get(i);
 	}
 
+	public int indexOfToken(ClangToken token) {
+		return tokens.indexOf(token);
+	}
+
 	public String toDebugString(List<ClangToken> calloutTokens) {
 
 		return toDebugString(calloutTokens, "[", "]");

@@ -30,6 +30,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.StringUtilities;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
@@ -111,8 +112,8 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		Listing listing = localProgram.getListing();
 
 		monitor.setCancelEnabled(true);
-		monitor.initialize((int) listing.getNumDefinedData());
-
+		monitor.initialize(listing.getNumDefinedData());
+		Swing.allowSwingToProcessEvents();
 		for (Data stringInstance : DefinedDataIterator.definedStrings(localProgram)) {
 			accumulator.add(createIndexedStringInstanceLocation(localProgram, stringInstance));
 			monitor.checkCanceled();
@@ -361,7 +362,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 			String s = StringDataInstance.getStringDataInstance(data).getStringValue();
 
 			return (s != null) && s.chars().anyMatch(
-				codePoint -> StringUtilities.isUnicodeReplacementCodePoint(codePoint));
+				codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
 		}
 
 		@Override

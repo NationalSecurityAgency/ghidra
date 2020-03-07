@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +45,7 @@ public interface ProgramDropProvider {
 	
 	/**
 	 * Adds the dropped data to this drop service.
-	 * @param contextObj The object where the drop occured
+	 * @param contextObj The object where the drop occurred
 	 * @param data The actual data dropped
 	 * @param flavor The selected data flavor
 	 */

@@ -22,6 +22,7 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 
@@ -32,9 +33,7 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
-import com.google.common.collect.Sets;
-
-import docking.DockingTool;
+import docking.Tool;
 import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -176,8 +175,14 @@ public class KeyBindingUtils {
 	/**
 	 * Changes the given key event to the new source component and then dispatches that event.
 	 * This method is intended for clients that wish to effectively take a key event given to 
-	 * one component and give it to another component.  This is seldom-used code; if you don't
-	 * know when to use this code, then don't.
+	 * one component and give it to another component.  
+	 * 
+	 * <p>This method exists to deal with the complicated nature of key event processing and 
+	 * how our (not Java's) framework processes key event bindings to trigger actions.  If not
+	 * for our special processing of action key bindings, then this method would not be 
+	 * necessary.
+	 * 
+	 * <p><b>This is seldom-used code; if you don't know when to use this code, then don't.</b>
 	 * 
 	 * @param newSource the new target of the event
 	 * @param e the existing event
@@ -190,9 +195,44 @@ public class KeyBindingUtils {
 
 		KeyEvent newEvent = new KeyEvent(newSource, e.getID(), e.getWhen(), e.getModifiersEx(),
 			e.getKeyCode(), e.getKeyChar(), e.getKeyLocation());
-		e.consume();
+
+		/*
+		 						Unusual Code Alert!
+		 						
+			The KeyboardFocusManager is a complicated beast.  Here we use knowledge of one such
+			complication to correctly route key events.  If the client of this method passes 
+			a component whose 'isShowing()' returns false, then the manager will not send the
+			event to that component.   Almost all clients will pass fully attached/realized 
+			components to the manager.   We, however, will sometimes pass components that are not
+			attached; for example, when we are using said components with a renderer to perform
+			our own painting.   In the case of non-attached components, we must call the 
+			redispatchEvent() method ourselves.
+			
+			Why don't we just always call redispatchEvent()?  Well, that 
+			method will not pass the new cloned event we just created back through the full 
+			key event pipeline.  This means that tool-level (our Tool API, not Java) 
+			actions will not work, as tool-level actions are handled at the beginning of the 
+			key event pipeline, not by the components themselves.
+			
+			Also, we have here guilty knowledge that the aforementioned tool-level key processing 
+			will check to see if the event was consumed.  If consumed, then no further processing 
+			will happen; if not consumed, then the framework will continue to process the event 
+			passed into this method.   Thus, after we send the new event, we will update the
+			original event to match the consumed state of our new event.  This means that the
+			component passed to this method must, somewhere in its processing, consume the key
+			event we dispatch here, if they do not wish for any further processing to take place.
+		 */
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		kfm.dispatchEvent(newEvent);
+		if (newSource.isShowing()) {
+			kfm.dispatchEvent(newEvent);
+		}
+		else {
+			kfm.redispatchEvent(newSource, newEvent);
+		}
+
+		if (newEvent.isConsumed()) {
+			e.consume();
+		}
 	}
 
 	/**
@@ -362,6 +402,36 @@ public class KeyBindingUtils {
 	}
 
 	/**
+	 * Clears the currently assigned Java key binding for the action by the given name.  This
+	 * method will find the currently assigned key binding, if any, and then remove it.
+	 * 
+	 * @param component the component for which to clear the key binding
+	 * @param actionName the name of the action that should not have a key binding
+	 * @see LookAndFeel
+	 */
+	public static void clearKeyBinding(JComponent component, String actionName) {
+
+		InputMap inputMap = component.getInputMap(JComponent.WHEN_FOCUSED);
+		if (inputMap == null) {
+			return;
+		}
+
+		KeyStroke keyStroke = null;
+		KeyStroke[] keys = inputMap.allKeys();
+		for (KeyStroke ks : keys) {
+			Object object = inputMap.get(ks);
+			if (actionName.equals(object)) {
+				keyStroke = ks;
+				break;
+			}
+		}
+
+		if (keyStroke != null) {
+			clearKeyBinding(component, keyStroke);
+		}
+	}
+
+	/**
 	 * Returns the registered action for the given keystroke, or null of no
 	 * action is bound to that keystroke.
 	 * 
@@ -395,7 +465,7 @@ public class KeyBindingUtils {
 	 * @param tool the tool containing the actions
 	 * @return the actions mapped by their full name (e.g., 'Name (OwnerName)')
 	 */
-	public static Map<String, List<DockingActionIf>> getAllActionsByFullName(DockingTool tool) {
+	public static Map<String, List<DockingActionIf>> getAllActionsByFullName(Tool tool) {
 
 		Map<String, List<DockingActionIf>> result =
 			LazyMap.lazyMap(new HashMap<>(), s -> new LinkedList<>());
@@ -423,7 +493,7 @@ public class KeyBindingUtils {
 	 * @param owner the action owner name
 	 * @return the actions
 	 */
-	public static Set<DockingActionIf> getKeyBindingActionsForOwner(DockingTool tool,
+	public static Set<DockingActionIf> getKeyBindingActionsForOwner(Tool tool,
 			String owner) {
 
 		Map<String, DockingActionIf> deduper = new HashMap<>();
@@ -452,10 +522,10 @@ public class KeyBindingUtils {
 	 */
 	public static Set<DockingActionIf> getActions(Set<DockingActionIf> allActions, String owner,
 			String name) {
-
-		Set<DockingActionIf> ownerMatch =
-			Sets.filter(allActions, action -> action.getOwner().equals(owner));
-		return Sets.filter(ownerMatch, action -> action.getName().equals(name));
+		return allActions.stream()
+				.filter(a -> a.getOwner().equals(owner))
+				.filter(a -> a.getName().equals(name))
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -533,7 +603,7 @@ public class KeyBindingUtils {
 
 	/**
 	 * Updates the given data with system-independent versions of key modifiers.  For example, 
-	 * the <tt>control</tt> key will be converted to the <tt>command</tt> key on the Mac.
+	 * the <code>control</code> key will be converted to the <code>command</code> key on the Mac.
 	 * 
 	 * @param keyStroke the keystroke to validate
 	 * @return the potentially changed keystroke
@@ -592,7 +662,7 @@ public class KeyBindingUtils {
 
 	/**
 	 * Convert the toString() form of the keyStroke.
-	 * <br>In Java 1.4.2 & earlier, Ctrl-M is returned as "keyCode CtrlM-P"
+	 * <br>In Java 1.4.2 and earlier, Ctrl-M is returned as "keyCode CtrlM-P"
 	 * and we want it to look like: "Ctrl-M".
 	 * <br>In Java 1.5.0, Ctrl-M is returned as "ctrl pressed M"
 	 * and we want it to look like: "Ctrl-M".
@@ -866,5 +936,4 @@ public class KeyBindingUtils {
 
 		return selectedFile;
 	}
-
 }

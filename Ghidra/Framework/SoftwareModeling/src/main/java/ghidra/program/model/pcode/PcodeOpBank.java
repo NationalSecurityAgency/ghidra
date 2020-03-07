@@ -111,14 +111,14 @@ public class PcodeOpBank {
 	}
 	
 	/**
-	 * Returns iterator containing both PcodeOpAST and Iterator<PcodeOp> objects.
+	 * Returns iterator containing both PcodeOpAST and {@literal Iterator<PcodeOp>} objects.
 	 */
 	public Iterator<Object> allAlive() {
 		return aliveList.iterator();
 	}
 	
 	/**
-	 * Returns iterator containing both PcodeOpAST and Iterator<PcodeOp> objects.
+	 * Returns iterator containing both PcodeOpAST and {@literal Iterator<PcodeOp>} objects.
 	 */
 	public Iterator<Object> allDead() {
 		return deadList.iterator();

@@ -29,7 +29,7 @@ import ghidra.graph.viewer.GraphViewerUtils;
  * of a grid.
  * 
  * <p>This class maintains a collection of vertices on this row, organized by column index.  You
- * can get the column of a vertex from {@link #getColumn(V)}.
+ * can get the column of a vertex from {@link #getColumn(Object) getColumn(V)}.
  */
 public class Row<V> {
 
@@ -131,7 +131,7 @@ public class Row<V> {
 	 * Returns all vertices in this row, sorted by column index (min to max).   
 	 * 
 	 * <p>Note: the index of a vertex in the list does not match the column index.  To get the
-	 * column index for a vertex, call {@link #getColumn(V)}.
+	 * column index for a vertex, call {@link #getColumn(Object) getColumn(V)}.
 	 * 
 	 * @return all vertices in this row
 	 */

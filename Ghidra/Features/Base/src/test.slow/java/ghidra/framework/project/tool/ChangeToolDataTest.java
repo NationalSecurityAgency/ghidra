@@ -17,8 +17,10 @@ package ghidra.framework.project.tool;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
-import ghidra.framework.model.*;
+import generic.test.AbstractGTest;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.Project;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.test.*;
 
@@ -30,19 +32,11 @@ import ghidra.test.*;
  */
 public class ChangeToolDataTest extends AbstractGhidraHeadedIntegrationTest {
 
-	private final static String DIRECTORY_NAME = AbstractGenericTest.getTestDirectoryPath();
+	private final static String DIRECTORY_NAME = AbstractGTest.getTestDirectoryPath();
 	private final static String DATA_NAME_1 = "TestData1";
 	private final static String DATA_NAME_2 = "TestData2";
 
 	private Project project;
-
-	/**
-	 * Constructor
-	 * @param arg0
-	 */
-	public ChangeToolDataTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -56,8 +50,8 @@ public class ChangeToolDataTest extends AbstractGhidraHeadedIntegrationTest {
 		ProjectTestUtils.deleteProject(DIRECTORY_NAME, PROJECT_NAME);
 	}
 
-	/**
-	 * This doTest() routine tests the following requirements:
+	/*
+	 * Tests the following requirements:
 	 * (1) connect two running tools by one or more specified events
 	 * (2) disconnect one or more specified events between two connected tools
 	 * @param args same as args to main()
@@ -72,7 +66,7 @@ public class ChangeToolDataTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// setup the running tool
 		//
-		Tool runningTool = new DummyTool();
+		PluginTool runningTool = new DummyTool();
 
 		//
 		// TEST 1: set the data for a tool running without data

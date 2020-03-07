@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,9 +175,6 @@ public class IndentField implements ListingField {
 		this.startY = startY;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#paint(java.awt.Graphics, docking.widgets.fieldpanel.internal.PaintContext, boolean, docking.widgets.fieldpanel.support.RowColLocation)
-	 */
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
 			FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
@@ -224,9 +220,6 @@ public class IndentField implements ListingField {
 		}
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#contains(int, int)
-	 */
 	@Override
 	public boolean contains(int x, int y) {
 		if ((x < startX) || (x >= startX + fieldWidth) || (y < startY) || (y >= startY + height)) {
@@ -235,65 +228,41 @@ public class IndentField implements ListingField {
 		return true;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumRows()
-	 */
 	@Override
 	public int getNumRows() {
 		return 1;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getNumCols(int)
-	 */
 	@Override
 	public int getNumCols(int row) {
 		return 0;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getX(int, int)
-	 */
 	@Override
 	public int getX(int row, int col) {
 		return startX;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getY(int)
-	 */
 	@Override
 	public int getY(int row) {
 		return startY;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getRow(int)
-	 */
 	@Override
 	public int getRow(int y) {
 		return 0;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getCol(int, int)
-	 */
 	@Override
 	public int getCol(int row, int x) {
 		return 0;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isValid(int, int)
-	 */
 	@Override
 	public boolean isValid(int row, int col) {
 		return ((row == 0) && (col == 0));
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getCursorBounds(int, int)
-	 */
 	@Override
 	public Rectangle getCursorBounds(int row, int col) {
 		if (!isValid(row, col)) {
@@ -303,9 +272,6 @@ public class IndentField implements ListingField {
 		return new Rectangle(startX, -heightAbove, 2, height);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getScrollableUnitIncrement(int, int, int)
-	 */
 	@Override
 	public int getScrollableUnitIncrement(int topOfScreen, int direction, int max) {
 		if ((topOfScreen < startY) || (topOfScreen > startY + height)) {
@@ -318,26 +284,17 @@ public class IndentField implements ListingField {
 		return startY - topOfScreen;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#isPrimary()
-	 */
 	@Override
 	public boolean isPrimary() {
 		return false;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#rowHeightChanged(int, int)
-	 */
 	@Override
 	public void rowHeightChanged(int newHeightAbove, int newHeightBelow) {
 		this.heightAbove = newHeightAbove;
 		this.height = newHeightAbove + newHeightBelow;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#getText()
-	 */
 	@Override
 	public String getText() {
 		return "";
@@ -348,25 +305,16 @@ public class IndentField implements ListingField {
 		return "";
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#textOffsetToScreenLocation(int)
-	 */
 	@Override
 	public RowColLocation textOffsetToScreenLocation(int textOffset) {
 		return new RowColLocation(0, 0);
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.field.Field#screenLocationToTextOffset(int, int)
-	 */
 	@Override
 	public int screenLocationToTextOffset(int row, int col) {
 		return 0;
 	}
 
-	/**
-	 * @see ListingField#getClickedObject(FieldLocation)
-	 */
 	@Override
 	public Object getClickedObject(FieldLocation fieldLocation) {
 		return this;

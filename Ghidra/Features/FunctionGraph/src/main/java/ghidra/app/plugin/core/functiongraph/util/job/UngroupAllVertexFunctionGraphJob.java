@@ -20,9 +20,8 @@ import ghidra.graph.job.GraphJob;
 import ghidra.graph.job.GraphJobListener;
 
 /**
- * A dummy job that is designed to simply call the 
- * {@link FunctionGraphUtils#ungroupAllVertices(FGController)}.  We use this job
- *  to know when the previous job is finished.
+ * A dummy job that is designed to simply call the {@link FGController#ungroupAllVertices()}.  
+ * We use this job to know when the previous job is finished.
  */
 public class UngroupAllVertexFunctionGraphJob implements GraphJob {
 

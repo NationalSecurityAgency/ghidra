@@ -33,48 +33,46 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() throws Exception {
-		process = GnuDemanglerNativeProcess.getDemanglerNativeProcess();
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_33_1);
 		parser = new GnuDemanglerParser(process);
 	}
 
-	/**
-	 * This method just tries to demangled a bunch o'
-	 * mangled names just checking for stack traces.
-	 */
 	@Test
 	public void test() throws Exception {
 		long start = System.currentTimeMillis();
 
-		demangle(process, parser, "_ZTVN6Magick21DrawableTextAntialiasE");
-		demangle(process, parser, "_ZGVZN10KDirLister11emitChangesEvE3dot");//guard variables
+		demangle("_ZTVN6Magick21DrawableTextAntialiasE");
+		demangle("_ZGVZN10KDirLister11emitChangesEvE3dot");//guard variables
 
-		demangle(process, parser, "_ZZ18__gthread_active_pvE20__gthread_active_ptr");
+		demangle("_ZZ18__gthread_active_pvE20__gthread_active_ptr");
 
-		demangle(process, parser, "_ZNSt10_List_baseIN6Magick5VPathESaIS1_EE5clearEv");
-		demangle(process, parser, "_ZTISt14unary_functionIPN9MagickLib12_DrawContextEvE");
-		demangle(process, parser, "_ZTSSt14unary_functionIPN9MagickLib12_DrawContextEvE");
-		demangle(process, parser, "_ZTCN4Arts17StdoutWriter_implE68_NS_11Object_skelE");
-		demangle(process, parser, "_ZN6Magick5ImageD1Ev");
-		demangle(process, parser,
+		demangle("_ZNSt10_List_baseIN6Magick5VPathESaIS1_EE5clearEv");
+		demangle("_ZTISt14unary_functionIPN9MagickLib12_DrawContextEvE");
+		demangle("_ZTSSt14unary_functionIPN9MagickLib12_DrawContextEvE");
+		demangle("_ZTCN4Arts17StdoutWriter_implE68_NS_11Object_skelE");
+		demangle("_ZN6Magick5ImageD1Ev");
+		demangle(
 			"_ZN6Magick19matteFloodfillImageC2ERKNS_5ColorEjiiN9MagickLib11PaintMethodE");
-		demangle(process, parser, "_ZThn8_N14nsPrintSession6AddRefEv");// non-virtual thunk
-		demangle(process, parser,
+		demangle("_ZThn8_N14nsPrintSession6AddRefEv");// non-virtual thunk
+		demangle(
 			"_ZTv0_n24_NSt19basic_ostringstreamIcSt11char_traitsIcE14pool_allocatorIcEED0Ev");// virtual thunk
-		demangle(process, parser, "_ZTch0_h16_NK8KHotKeys13WindowTrigger4copyEPNS_10ActionDataE");// covariant return thunk
+		demangle("_ZTch0_h16_NK8KHotKeys13WindowTrigger4copyEPNS_10ActionDataE");// covariant return thunk
+
+		demangle("_ZNK2cc14ScrollSnapTypeneERKS0_");
 
 		List<String> list = loadTextResource(GnuDemanglerParserTest.class, "libMagick.symbols.txt");
 		for (String mangled : list) {
 			if (mangled == null) {
 				break;
 			}
-			demangle(process, parser, mangled);
+			demangle(mangled);
 		}
 
 		System.out.println("Elapsed Time: " + (System.currentTimeMillis() - start));
 	}
 
-	private void demangle(GnuDemanglerNativeProcess process, GnuDemanglerParser parser, String mangled)
-			throws IOException {
+	private void demangle(String mangled) throws IOException {
 		String demangled = process.demangle(mangled);
 		assertNotNull(demangled);
 		assertNotEquals(mangled, demangled);
@@ -83,14 +81,12 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testParsingBug() {
-// std::basic_istream<char, std::char_traits<char> >& std::operator>><char, std::char_traits<char> >(std::basic_istream<char, std::char_traits<char> >&, char&)
-
-//		_ZStrsIcSt11char_traitsIcEERSt13basic_istreamIT_T0_ES6_RS3_
-//		_ZStrsIcSt11char_traitsIcESaIcEERSt13basic_istreamIT_T0_ES7_RSbIS4_S5_T1_E
-		GnuDemanglerParser parser = new GnuDemanglerParser(null);
+	public void testOverloadedShiftOperatorParsingBug() {
+		parser = new GnuDemanglerParser(null);
 		DemangledObject object = parser.parse(null,
-			"std::basic_istream<char, std::char_traits<char> >& std::operator>><char, std::char_traits<char> >(std::basic_istream<char, std::char_traits<char> >&, char&)");
+			"std::basic_istream<char, std::char_traits<char> >& " +
+				"std::operator>><char, std::char_traits<char> >" +
+				"(std::basic_istream<char, std::char_traits<char> >&, char&)");
 		String name = object.getName();
 		assertEquals("operator>><char,std--char_traits<char>>", name);
 	}
@@ -165,6 +161,16 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"covariant return thunk [nv:0] [nv:16] to KHotKeys::WindowTrigger::copy(KHotKeys::ActionData*) const");
 		assertTrue(parse instanceof DemangledThunk);
 		assertName(parse, "copy", "KHotKeys", "WindowTrigger");
+
+		try {
+			parse = parser.parse(
+				"_ZZN12GrGLFunctionIFPKhjEEC1IZN13skia_bindings28CreateGLES2InterfaceBindingsEPN3gpu5gles214GLES2InterfaceEPNS6_14ContextSupportEE3$_0EET_ENUlPKvjE_8__invokeESF_j",
+				"GrGLFunction<unsigned char const* (unsigned int)>::GrGLFunction<skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0>(skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*, gpu::ContextSupport*)::$_0)::{lambda(void const*, unsigned int)#1}::__invoke(void const*, unsigned int)");
+			assertNull("Shouldn't have parsed", parser);
+		}
+		catch (Exception exc) {
+			// should get an exception
+		}
 	}
 
 	private void assertName(DemangledObject demangledObj, String name, String... namespaces) {
@@ -193,15 +199,17 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertTrue(object instanceof DemangledFunction);
 
-		assertEquals(
-			"undefined glob_fn9(" +
-				"char,int,long,long long,unsigned int,unsigned long,float,double,long double,bool,void *,void * *)",
+		assertEquals("undefined glob_fn9(" +
+			"char,int,long,long long,unsigned int,unsigned long,float,double,long double,bool,void *,void * *)",
 			object.getSignature(false));
 	}
 
 	@Test
 	public void testFunctionPointers() throws Exception {
 		String mangled = "__t6XpsMap2ZlZP14CORBA_TypeCodePFRCl_UlUlUlf";
+
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
 		String demangled = process.demangle(mangled);
 
@@ -331,27 +339,6 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOperator() throws Exception {
-		String mangled = "_ZN6MagickltERKNS_10CoordinateES2_";
-
-		String demangled = process.demangle(mangled);
-
-		DemangledObject object = parser.parse(mangled, demangled);
-		assertTrue(object instanceof DemangledMethod);
-		assertName(object, "operator<", "Magick");
-
-		DemangledMethod method = (DemangledMethod) object;
-		assertEquals(
-			"undefined Magick::operator<(Magick::Coordinate const &,Magick::Coordinate const &)",
-			method.getSignature(false));
-
-		List<DemangledDataType> parameters = method.getParameters();
-		assertEquals(2, parameters.size());
-		assertEquals("Magick::Coordinate const &", parameters.get(0).toSignature());
-		assertEquals("Magick::Coordinate const &", parameters.get(1).toSignature());
-	}
-
-	@Test
 	public void testFunctions() throws Exception {
 		String mangled = "_Z7toFloatidcls";
 
@@ -445,6 +432,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "CalcPortExposedRect__13LScrollerViewCFR4Rectb";
 
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+
 		String demangled = process.demangle(mangled);
 
 		DemangledObject object = parser.parse(mangled, demangled);
@@ -465,6 +455,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		// from program Microsoft Entourage
 		//
 		String mangled = "__dt__Q26MsoDAL9VertFrameFv";
+
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
 		String demangled = process.demangle(mangled);
 
@@ -505,6 +498,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "GetColWidths__13CDataRendererCFRA7_s";
 
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+
 		String demangled = process.demangle(mangled);
 
 		DemangledObject object = parser.parse(mangled, demangled);
@@ -525,6 +521,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		// from program Microsoft Entourage
 		//
 		String mangled = "GetColWidths__13CDataRendererCFPA7_s";
+
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
 		String demangled = process.demangle(mangled);
 
@@ -581,6 +580,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "_gmStage2__FP12SECTION_INFOPiPA12_iiPCs";
 
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+
 		String demangled = process.demangle(mangled);
 
 		DemangledObject object = parser.parse(mangled, demangled);
@@ -611,6 +613,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		// from program Microsoft Entourage
 		//
 		String mangled = "__ct__Q24CStr6BufferFR4CStrUl";
+
+		process = GnuDemanglerNativeProcess
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
 		String demangled = process.demangle(mangled);
 
@@ -682,6 +687,48 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testOperator() throws Exception {
+		String mangled = "_ZN6MagickltERKNS_10CoordinateES2_";
+
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertTrue(object instanceof DemangledMethod);
+		assertName(object, "operator<", "Magick");
+
+		DemangledMethod method = (DemangledMethod) object;
+		assertEquals(
+			"undefined Magick::operator<(Magick::Coordinate const &,Magick::Coordinate const &)",
+			method.getSignature(false));
+
+		List<DemangledDataType> parameters = method.getParameters();
+		assertEquals(2, parameters.size());
+		assertEquals("Magick::Coordinate const &", parameters.get(0).toSignature());
+		assertEquals("Magick::Coordinate const &", parameters.get(1).toSignature());
+	}
+
+	@Test
+	public void testOperatorCastTo() throws Exception {
+		//
+		// Mangled: _ZNKSt17integral_constantIbLb0EEcvbEv
+		// 
+		// Demangled: std::integral_constant<bool, false>::operator bool() const
+
+		String mangled = "_ZNKSt17integral_constantIbLb0EEcvbEv";
+
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertTrue(object instanceof DemangledFunction);
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"bool std::integral_constant::operator.cast.to.bool(void)",
+			signature);
+	}
+
+	@Test
 	public void testConversionOperator() throws Exception {
 
 		//
@@ -705,6 +752,13 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 	@Test
 	public void testConversionOperatorWithConst() throws Exception {
+
+		// 
+		//
+		// Mangled: _ZN12_GLOBAL__N_120decode_charset_iconvEPKc
+		//
+		// Demangled: GCC_IndicationPDU::operator GCC_ApplicationInvokeIndication const&() const
+		//
 
 		//
 		// Converts the object upon which it is overridden to the given value.
@@ -981,7 +1035,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBob() throws Exception {
+	public void testTemplatesThatContainFunctionSignatures() throws Exception {
 		//
 		// Mangled: _ZNSt6vectorIN5boost8functionIFvvEEESaIS3_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS3_S5_EERKS3_
 		// 
@@ -1050,6 +1104,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		// Mangled: _ZN12uavcan_stm329CanDriverC1ILj64EEERA2_AT__NS_9CanRxItemE
 		// 
 		// Demangled: uavcan_stm32::CanDriver::CanDriver<64u>(uavcan_stm32::CanRxItem (&) [2][64u])
+		//
 
 		String mangled = "_ZN12uavcan_stm329CanDriverC1ILj64EEERA2_AT__NS_9CanRxItemE";
 
@@ -1075,7 +1130,28 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String mangled = "uv__dup";
 
 		GnuDemangler demangler = new GnuDemangler();
-		DemangledObject res = demangler.demangle(mangled, true);
+		DemangledObject res = demangler.demangle(mangled);
 		assertNull(res);
+	}
+
+	// @Test TODO upcoming fix for GT-3545
+	public void testFunctionWithLambda_WrappingAnotherFunctionCall() throws Exception {
+
+		//
+		// Mangled: _Z11wrap_360_cdIiEDTcl8wrap_360fp_Lf42c80000EEET_
+		// 
+		// Demangled: (wrap_360({parm#1}, (float)[42c80000])) wrap_360_cd<int>(int)
+		//
+
+		String mangled = "_Z11wrap_360_cdIiEDTcl8wrap_360fp_Lf42c80000EEET_";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertTrue(object instanceof DemangledFunction);
+
+		// TODO maybe put full output in setUtilDemangled()
+		String signature = object.getSignature(false);
+		assertEquals("undefined wrap_360_cd<int>(int)", signature);
 	}
 }

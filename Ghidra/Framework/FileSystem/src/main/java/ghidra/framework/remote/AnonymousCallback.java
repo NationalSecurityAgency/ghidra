@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +34,7 @@ public class AnonymousCallback implements Callback, Serializable {
 	}
 
 	/**
-	 * @returns true if anonymous access requested
+	 * @return true if anonymous access requested
 	 */
 	public boolean anonymousAccessRequested() {
 		return anonymousAccessRequested;

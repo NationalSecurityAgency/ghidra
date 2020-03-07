@@ -34,7 +34,7 @@ void VarnodeData::restoreXml(const Element *el,const AddrSpaceManager *manage)
       return;
     }
     else if (el->getAttributeName(i)=="name") {
-      const Translate *trans = manage->getDefaultSpace()->getTrans();
+      const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
       const VarnodeData &point(trans->getRegister(el->getAttributeValue(i)));
       *this = point;
       return;
@@ -42,3 +42,14 @@ void VarnodeData::restoreXml(const Element *el,const AddrSpaceManager *manage)
   }
 }
 
+/// Return \b true, if \b this, as an address range, contains the other address range
+/// \param op2 is the other VarnodeData to test for containment
+/// \return \b true if \b this contains the other
+bool VarnodeData::contains(const VarnodeData &op2) const
+
+{
+  if (space != op2.space) return false;
+  if (op2.offset < offset) return false;
+  if ((offset + (size-1)) < (op2.offset + (op2.size-1))) return false;
+  return true;
+}

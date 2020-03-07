@@ -157,7 +157,7 @@ void SleighBase::saveXml(ostream &s) const
   s << ">\n";
 
   s << "<spaces";
-  a_v(s,"defaultspace",getDefaultSpace()->getName());
+  a_v(s,"defaultspace",getDefaultCodeSpace()->getName());
   s << ">\n";
   for(int4 i=0;i<numSpaces();++i) {
     AddrSpace *spc = getSpace(i);

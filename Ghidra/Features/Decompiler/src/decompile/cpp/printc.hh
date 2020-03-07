@@ -159,7 +159,6 @@ protected:
   void opHiddenFunc(const PcodeOp *op);			///< Push the given p-code op as a hidden token
   static bool hasCharTerminator(uint1 *buffer,int4 size,int4 charsize);
   bool printCharacterConstant(ostream &s,const Address &addr,int4 charsize) const;
-  bool isExtensionCastImplied(const PcodeOp *op) const;
   virtual void pushConstant(uintb val,const Datatype *ct,
 			    const Varnode *vn,const PcodeOp *op);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
@@ -238,8 +237,8 @@ public:
   virtual void opIntSlessEqual(const PcodeOp *op) { opBinary(&less_equal,op); }
   virtual void opIntLess(const PcodeOp *op) { opBinary(&less_than,op); }
   virtual void opIntLessEqual(const PcodeOp *op) { opBinary(&less_equal,op); }
-  virtual void opIntZext(const PcodeOp *op);
-  virtual void opIntSext(const PcodeOp *op);
+  virtual void opIntZext(const PcodeOp *op,const PcodeOp *readOp);
+  virtual void opIntSext(const PcodeOp *op,const PcodeOp *readOp);
   virtual void opIntAdd(const PcodeOp *op) { opBinary(&binary_plus,op); }
   virtual void opIntSub(const PcodeOp *op) { opBinary(&binary_minus,op); }
   virtual void opIntCarry(const PcodeOp *op) { opFunc(op); }

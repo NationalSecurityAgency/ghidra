@@ -26,7 +26,10 @@ import ghidra.util.task.TaskMonitor;
 
 class PdbDataTypeParser {
 
-	private final static String NO_TYPE = "NoType";
+	private final static String NO_TYPE = "<NoType>";
+
+	private final static WrappedDataType NO_TYPE_DATATYPE =
+		new WrappedDataType(new TypedefDataType(NO_TYPE, Undefined1DataType.dataType), false, true);
 
 	private DataTypeManager programDataTypeMgr;
 	private DataTypeManagerService service;
@@ -45,26 +48,26 @@ class PdbDataTypeParser {
 
 	private void createMandatoryDataTypes() {
 
-		addDataType(new TypedefDataType("wchar", WideCharDataType.dataType));
+		cachePrimitiveDataType(new TypedefDataType("wchar", WideCharDataType.dataType));
 
-		addDataType(new TypedefDataType("__int8",
+		cachePrimitiveDataType(new TypedefDataType("__int8",
 			AbstractIntegerDataType.getSignedDataType(1, programDataTypeMgr)));
-		addDataType(new TypedefDataType("__uint8",
+		cachePrimitiveDataType(new TypedefDataType("__uint8",
 			AbstractIntegerDataType.getUnsignedDataType(1, programDataTypeMgr)));
 
-		addDataType(new TypedefDataType("__int16",
+		cachePrimitiveDataType(new TypedefDataType("__int16",
 			AbstractIntegerDataType.getSignedDataType(2, programDataTypeMgr)));
-		addDataType(new TypedefDataType("__uint16",
+		cachePrimitiveDataType(new TypedefDataType("__uint16",
 			AbstractIntegerDataType.getUnsignedDataType(2, programDataTypeMgr)));
 
-		addDataType(new TypedefDataType("__int32",
+		cachePrimitiveDataType(new TypedefDataType("__int32",
 			AbstractIntegerDataType.getSignedDataType(4, programDataTypeMgr)));
-		addDataType(new TypedefDataType("__uint32",
+		cachePrimitiveDataType(new TypedefDataType("__uint32",
 			AbstractIntegerDataType.getUnsignedDataType(2, programDataTypeMgr)));
 
-		addDataType(new TypedefDataType("__int64",
+		cachePrimitiveDataType(new TypedefDataType("__int64",
 			AbstractIntegerDataType.getSignedDataType(8, programDataTypeMgr)));
-		addDataType(new TypedefDataType("__uint64",
+		cachePrimitiveDataType(new TypedefDataType("__uint64",
 			AbstractIntegerDataType.getUnsignedDataType(8, programDataTypeMgr)));
 	}
 
@@ -76,12 +79,12 @@ class PdbDataTypeParser {
 		return programDataTypeMgr;
 	}
 
-	void flushDataTypeCache() {
+	void flushDataTypeCache(TaskMonitor monitor) throws CancelledException {
 		for (DataType dt : dataTypeCache.values()) {
+			monitor.checkCanceled();
 			programDataTypeMgr.resolve(dt,
 				DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
 		}
-		dataTypeCache.clear();
 	}
 
 	/**
@@ -111,7 +114,7 @@ class PdbDataTypeParser {
 	}
 
 	void clear() {
-		dataTypeCache.clear();
+		dataTypeCache = new HashMap<>();
 	}
 
 	DataType getCachedDataType(String key) {
@@ -122,33 +125,8 @@ class PdbDataTypeParser {
 		dataTypeCache.put(key, dataType);
 	}
 
-	void addDataType(DataType dataType) {
-
-		if (dataType instanceof Composite) {
-			DataTypeComponent[] components = ((Composite) dataType).getComponents();
-			for (DataTypeComponent component : components) {
-				addDataType(component.getDataType());
-			}
-		}
-
-		ArrayList<DataType> oldDataTypeList = new ArrayList<>();
-		programDataTypeMgr.findDataTypes(dataType.getName(), oldDataTypeList);
-		dataType = programDataTypeMgr.addDataType(dataType,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-
-		cacheDataType(dataType.getName(), dataType);
-
-		for (DataType oldDataType : oldDataTypeList) {
-			if (oldDataType.getLength() == 0 &&
-				oldDataType.getClass().equals(dataType.getClass())) {
-				try {
-					programDataTypeMgr.replaceDataType(oldDataType, dataType, false);
-				}
-				catch (DataTypeDependencyException e) {
-					// ignore
-				}
-			}
-		}
+	void cachePrimitiveDataType(DataType dataType) {
+		dataTypeCache.put(dataType.getName(), dataType);
 	}
 
 	private DataType findDataTypeInArchives(String datatype, TaskMonitor monitor)
@@ -204,7 +182,7 @@ class PdbDataTypeParser {
 		}
 
 		if (NO_TYPE.equals(datatype)) {
-			return new WrappedDataType(VoidDataType.dataType, false); //TODO make it void?
+			return NO_TYPE_DATATYPE;
 		}
 
 		String dataTypeName = datatype;
@@ -265,7 +243,7 @@ class PdbDataTypeParser {
 			dt = createPointer(dt);
 		}
 
-		return new WrappedDataType(dt, isZeroLengthArray);
+		return new WrappedDataType(dt, isZeroLengthArray, false);
 	}
 
 	private String parseArrayDimensions(String datatype, List<Integer> arrayDimensions) {

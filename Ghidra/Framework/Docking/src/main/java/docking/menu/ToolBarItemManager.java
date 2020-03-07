@@ -43,8 +43,7 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 	/**
 	 * Constructs a new ToolBarItemManager
 	 * @param action the action to be managed on the toolbar.
-	 * @param iconSize the iconSize to scale to.
-	 * @param buttonListener listener for button state changes.
+	 * @param windowManager the window manager.
 	 */
 	public ToolBarItemManager(DockingActionIf action, DockingWindowManager windowManager) {
 		this.toolBarAction = action;
@@ -190,33 +189,23 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		DockingWindowManager.clearMouseOverHelp();
-		ActionContext localContext = getActionContext();
-		ActionContext globalContext = null;
-		if (windowManager != null) {
-			globalContext = windowManager.getGlobalContext();
+		ActionContext context = getActionContext();
+
+		if (!toolBarAction.isValidContext(context)) {
+			return;
 		}
 
-		ActionContext tempContext = null;
-		if (toolBarAction.isValidContext(localContext)) {
-			tempContext = localContext; // we prefer the local over the global context if valid
-		}
-		else if (toolBarAction.isValidGlobalContext(globalContext)) {
-			tempContext = globalContext;
-		}
-		else {
-			return;  // context is not valid, nothing to do
-		}
-		tempContext.setSourceObject(event.getSource());
-		final ActionContext finalContext = tempContext;
+		context.setSourceObject(event.getSource());
 
 		// this gives the UI some time to repaint before executing the action
 		SwingUtilities.invokeLater(() -> {
-			if (toolBarAction.isEnabledForContext(finalContext)) {
+			if (toolBarAction.isValidContext(context) &&
+				toolBarAction.isEnabledForContext(context)) {
 				if (toolBarAction instanceof ToggleDockingActionIf) {
 					ToggleDockingActionIf toggleAction = (ToggleDockingActionIf) toolBarAction;
 					toggleAction.setSelected(!toggleAction.isSelected());
 				}
-				toolBarAction.actionPerformed(finalContext);
+				toolBarAction.actionPerformed(context);
 			}
 		});
 	}

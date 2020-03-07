@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  + Compile sleigh languages within this distribution language module.
-  + Sleigh compiler options are read from the sleighArgs.txt file.
+  + Compile sleigh languages within this distribution language module via Eclipse or
+  + a command shell.
+  + 
+  +   * Eclipse: right-click on this file and choose menu item "Run As->Ant Build"
   +
-  + Eclipse: right-click on this file and choose menu item "Run As->Ant Build"
-  + From command line (requires ant install)
-  +    - cd to data directory containing this file
-  +    - run ant
+  +   * From command line (requires ant install)
+  +        - cd to data directory containing this file
+  +        - run ant
+  +
+  + Sleigh compiler options are read from sleighArgs.txt.
   -->
                                      
 <project name="privateBuildDistribution" default="sleigh-compile">
@@ -39,6 +42,7 @@
 			fork="true"
 			failonerror="true">
 			<jvmarg value="-Xmx2048M"/>
+			<arg value="-DBaseDir=../../../../../" />  <!-- Ghidra install directory -->
 			<arg value="-i"/>
 			<arg value="sleighArgs.txt"/>
 			<arg value="-a"/>

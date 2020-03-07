@@ -421,7 +421,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// more incoming calls.
 		//
 
-		myWaitForTree(incomingTree, provider);
+		waitForTree(incomingTree);
 		GTreeNode rootNode = getRootNode(incomingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
@@ -430,7 +430,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		GTreeNode child0 = children.get(0);
 		incomingTree.expandPath(child0);
-		myWaitForTree(incomingTree, provider);
+		waitForTree(incomingTree);
 
 		List<GTreeNode> grandChildren = child0.getChildren();
 		assertTrue("Incoming tree child does not have callers as expected for child: " + child0,
@@ -441,7 +441,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testOutgoingCalls() {
 		setProviderFunction("0x5000");
 
-		myWaitForTree(outgoingTree, provider);
+		waitForTree(outgoingTree);
 		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
@@ -450,7 +450,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		GTreeNode child1 = children.get(1);
 		outgoingTree.expandPath(child1);
-		myWaitForTree(outgoingTree, provider);
+		waitForTree(outgoingTree);
 
 		List<GTreeNode> grandChildren = child1.getChildren();
 		assertTrue("Outgoing tree child does not have callers as expected for child: " + child1,
@@ -461,7 +461,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testGoToFromNode() {
 		setProviderFunction("0x5000");
 
-		myWaitForTree(outgoingTree, provider);
+		waitForTree(outgoingTree);
 		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
@@ -472,7 +472,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		GTreeNode child1 = children.get(1);// skip the first child--it is an external function
 		outgoingTree.setSelectedNode(child1);
-		myWaitForTree(outgoingTree, provider);
+		waitForTree(outgoingTree);
 
 		ActionContext actionContext = new ActionContext(provider, outgoingTree);
 		DockingActionIf goToAction = getAction("Go To Destination");
@@ -502,7 +502,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramSelection currentSelection = codeBrowserPlugin.getCurrentSelection();
 		assertTrue(currentSelection.isEmpty());
 
-		myWaitForTree(outgoingTree, provider);
+		waitForTree(outgoingTree);
 		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
@@ -587,7 +587,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			performAction(filterDuplicatesAction, true);
 		}
 
-		myWaitForTree(outgoingTree, provider);
+		waitForTree(outgoingTree);
 		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
@@ -598,6 +598,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// no duplicates
 		boolean shouldHaveDuplicates = false;
 		Map<String, Integer> nameCountMap = createNameCountMap(rootNode);
+		System.out.println("nameCountMap: before: = " + nameCountMap);
 		assertDuplicateChildStatus(nameCountMap, shouldHaveDuplicates);
 
 		performAction(filterDuplicatesAction, true);// deselect
@@ -607,6 +608,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		rootNode = getRootNode(outgoingTree);
 		nameCountMap = createNameCountMap(rootNode);
 		shouldHaveDuplicates = true;
+		System.out.println("nameCountMap: after: = " + nameCountMap);
 		assertDuplicateChildStatus(nameCountMap, shouldHaveDuplicates);
 	}
 
@@ -627,7 +629,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 			performAction(navigateAction, true);
 		}
 
-		myWaitForTree(outgoingTree, provider);
+		waitForTree(outgoingTree);
 		GTreeNode rootNode = getRootNode(outgoingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
@@ -697,7 +699,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setProviderFunction(addrString);
 
-		myWaitForTree(incomingTree, provider);
+		waitForTree(incomingTree);
 		GTreeNode rootNode = getRootNode(incomingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue("Incoming tree does not have callers as expected for function: " + addrString,
@@ -712,7 +714,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		setProviderFunction("0x5000");
 
-		myWaitForTree(incomingTree, provider);
+		waitForTree(incomingTree);
 		GTreeNode rootNode = getRootNode(incomingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
@@ -743,7 +745,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testRenamingIncomingRootFunction() {
 		setProviderFunction("0x5000");
 
-		myWaitForTree(incomingTree, provider);
+		waitForTree(incomingTree);
 		GTreeNode rootNode = getRootNode(incomingTree);
 		List<GTreeNode> children = rootNode.getChildren();
 		assertTrue(
@@ -804,7 +806,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private GTreeNode getRootNode(final GTree tree, boolean filtered) {
-		myWaitForTree(tree, provider);
+		waitForTree(tree);
 		final AtomicReference<GTreeNode> ref = new AtomicReference<>();
 		runSwing(() -> ref.set(filtered ? tree.getViewRoot() : tree.getModelRoot()));
 		return ref.get();
@@ -874,7 +876,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void setOutgoingFilter(final String text) {
 		runSwing(() -> provider.setOutgoingFilter(text));
-		myWaitForTree(outgoingTree, provider);
+		waitForTree(outgoingTree);
 	}
 
 	private void setProviderFunction(String address) {
@@ -1040,7 +1042,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void setIncomingFilter(final String text) {
 		runSwing(() -> provider.setIncomingFilter(text));
-		myWaitForTree(incomingTree, provider);
+		waitForTree(incomingTree);
 	}
 
 	private void setDepth(final int depth) {
@@ -1112,32 +1114,6 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private DockingActionIf getAction(String actionName) {
 		DockingActionIf action = getLocalAction(provider, actionName);
 		return action;
-	}
-
-	private void myWaitForTree(GTree gTree, CallTreeProvider treeProvider) {
-		waitForSwing();
-
-		boolean didWait = false;
-		while (gTree.isBusy()) {
-			didWait = true;
-			try {
-				Thread.sleep(50);
-			}
-			catch (Exception e) {
-				// who cares?
-			}
-		}
-
-		waitForSwing();
-		if (didWait) {
-			// The logic here is that if we ever had to wait for the tree, then some other events
-			// may have been buffered while we were allowing the work to happen.  Just to be sure
-			// that there are no buffered actions, lets try to wait again.  If things are really
-			// settled down, then the extra call to wait should not have any effect.  This 'try
-			// again' approach is an effort to catch update calls that can be schedule by actions
-			// from the Swing thread, which the test thread does not handle flawlessly.
-			myWaitForTree(gTree, treeProvider);
-		}
 	}
 
 	/**

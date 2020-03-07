@@ -157,6 +157,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 			return false; // more columns than we have
 		}
 
+		// verify the requested columns are sortable
 		for (int i = 0; i < columnCount; i++) {
 			ColumnSortState state = tableSortState.getColumnSortState(i);
 			if (state == null) {
@@ -169,6 +170,34 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		}
 
 		return true;
+	}
+
+	/**
+	 * A convenience method that will take a given sort state and remove from it any columns
+	 * that cannot be sorted.  This is useful if the client is restoring a sort state that 
+	 * contains columns that have been removed or are no longer sortable (such as during major 
+	 * table model rewrites).
+	 * 
+	 * @param state the state
+	 * @return the updated state
+	 */
+	protected TableSortState cleanupTableSortState(TableSortState state) {
+
+		int columnCount = getColumnCount();
+		TableSortStateEditor editor = new TableSortStateEditor(state);
+		int n = editor.getSortedColumnCount();
+		for (int i = 0; i < n; i++) {
+			ColumnSortState ss = editor.getColumnSortState(i);
+			int columnIndex = ss.getColumnModelIndex();
+			if (columnIndex >= columnCount) {
+				editor.removeSortedColumn(columnIndex);
+			}
+			if (!isSortable(columnIndex)) {
+				editor.removeSortedColumn(columnIndex);
+			}
+		}
+
+		return editor.createTableSortState();
 	}
 
 	private void doSetTableSortState(final TableSortState newSortState) {
@@ -190,10 +219,23 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 		return pendingSortState;
 	}
 
+	/**
+	 * Returns true if there is a pending change to the current sort state 
+	 * (this includes a sort state that signals no sort will be applied)
+	 * 
+	 * @return true if there is a pending change to the current sort state
+	 */
 	public boolean isSortPending() {
 		return isSortPending;
 	}
 
+	/**
+	 * Returns true if this model has been sorted and does not have a new pending sort that will
+	 * be applied
+	 * 
+	 * @return true if sorted
+	 * @see #isSortPending()
+	 */
 	public boolean isSorted() {
 		return !isSortPending && !sortState.isUnsorted();
 	}
@@ -270,7 +312,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	/**
 	 * A default sort method that uses the {@link Collections#sort(List, Comparator)} method for
 	 * sorting.  Implementors with reasonably sized data sets can rely on this method.  For data
-	 * sets that can become large, the <tt>ThreadedTableModel</tt> is the recommended base class, 
+	 * sets that can become large, the <code>ThreadedTableModel</code> is the recommended base class, 
 	 * as it handles loading/sorting/filtering in a threaded way.
 	 * 
 	 * @param data The data to be sorted
@@ -303,7 +345,7 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 
 	/**
 	 * Fires an event to let the listeners (like JTable) know that things have been changed. 
-	 * This method exists so that subclasses have a way to call the various <tt>tableChanged()</tt>
+	 * This method exists so that subclasses have a way to call the various <code>tableChanged()</code>
 	 * methods without triggering this class's overridden version.
 	 * @param dataChanged True signals that the actual data has changed; false signals that the
 	 *        data is the same, with exception that attributes of that data may be different.

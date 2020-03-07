@@ -217,7 +217,7 @@ public class AssembleDockingAction extends DockingAction {
 	}
 
 	/**
-	 * Retrieve the location in the code viewer's {@link FieldPane} for the field at the given
+	 * Retrieve the location in the code viewer's {@link FieldPanel} for the field at the given
 	 * address having the given header text
 	 * @param addr the address
 	 * @param fieldName the name of the field

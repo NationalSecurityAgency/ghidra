@@ -106,7 +106,8 @@ public:
     special_prop = 0x8,		///< Does some special form of datatype propagation
     special_print = 0x10,	///< Op is marked for special printing
     modified = 0x20,		///< This op has been modified by the current action
-    warning = 0x40		///< Warning has been generated for this op
+    warning = 0x40,		///< Warning has been generated for this op
+    incidental_copy = 0x80	///< Treat this as \e incidental for parameter recovery algorithms
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -154,6 +155,7 @@ public:
   list<PcodeOp *>::iterator getBasicIter(void) const { return basiciter; } ///< Get position within basic block
   /// \brief Get the slot number of the indicated input varnode
   int4 getSlot(const Varnode *vn) const { int4 i,n; n=inrefs.size(); for(i=0;i<n;++i) if (inrefs[i]==vn) break; return i; }
+  int4 getRepeatSlot(const Varnode *vn,int4 firstSlot,list<PcodeOp *>::const_iterator iter) const;
   /// \brief Get the evaluation type of this op
   uint4 getEvalType(void) const { return (flags&(PcodeOp::unary|PcodeOp::binary|PcodeOp::special)); }
   /// \brief Get type which indicates unusual halt in control-flow
@@ -197,6 +199,7 @@ public:
   bool hasThisPointer(void) const { return ((addlflags&PcodeOp::has_thisptr)!=0); } ///< Return \b true if this is a call taking 'this' parameter
   bool isConstructor(void) const { return ((addlflags&PcodeOp::is_constructor)!=0); } ///< Return \b true if this is call to a constructor
   bool isDestructor(void) const { return ((addlflags&PcodeOp::is_destructor)!=0); } ///< Return \b true if this is call to a destructor
+  bool isIncidentalCopy(void) const { return ((addlflags&PcodeOp::incidental_copy)!=0); } ///< Return \b true if \b this COPY is \e incidental
   /// \brief Return \b true if output is 1-bit boolean
   bool isCalculatedBool(void) const { return ((flags&(PcodeOp::calculated_bool|PcodeOp::booloutput))!=0); }
   /// \brief Return \b true if we have already examined this cpool
@@ -216,7 +219,6 @@ public:
   PcodeOp *target(void) const;	///< Return starting op for instruction associated with this op
   uintb getNZMaskLocal(bool cliploop) const; ///< Calculate known zero bits for output to this op
   int4 compareOrder(const PcodeOp *bop) const; ///< Compare the control-flow order of this and \e bop
-  void push(PrintLanguage *lng) const { opcode->push(lng,this); } ///< Push this op as a display token
   void printRaw(ostream &s) const { opcode->printRaw(s,this); }	///< Print raw info about this op to stream
   const string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
   void printDebug(ostream &s) const; ///< Print debug description of this op to stream
@@ -267,6 +269,7 @@ public:
   void markDead(PcodeOp *op);				///< Mark the given PcodeOp as \e dead
   void insertAfterDead(PcodeOp *op,PcodeOp *prev);	///< Insert the given PcodeOp after a point in the \e dead list
   void moveSequenceDead(PcodeOp *firstop,PcodeOp *lastop,PcodeOp *prev);
+  void markIncidentalCopy(PcodeOp *firstop,PcodeOp *lastop);	///< Mark any COPY ops in the given range as \e incidental
   bool empty(void) const { return optree.empty(); }	///< Return \b true if there are no PcodeOps in \b this container
   PcodeOp *target(const Address &addr) const;		///< Find the first executing PcodeOp for a target address
   PcodeOp *findOp(const SeqNum &num) const;		///< Find a PcodeOp by sequence number

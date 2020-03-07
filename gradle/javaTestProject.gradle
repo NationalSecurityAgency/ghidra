@@ -34,6 +34,9 @@ test { t ->
 	// base classes (eg: AbstractGhidraHeadlessIntegrationTest) in 'test'; they
 	// must go in 'test.slow'.
 	
+	// Do not include suite classes; they trigger the tests in the suite to get run twice
+	// (once by normal jUnit and again when the suite runs).
+	excludes = ['**/*Suite*']
 
 	doFirst {
 		startTestTimer(t)

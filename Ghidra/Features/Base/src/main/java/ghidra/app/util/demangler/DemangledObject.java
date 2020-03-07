@@ -39,7 +39,7 @@ public abstract class DemangledObject {
 	protected static final String SPACE = " ";
 	protected static final Pattern SPACE_PATTERN = Pattern.compile(SPACE);
 
-	protected static final String NAMESPACE_SEPARATOR = Namespace.NAMESPACE_DELIMITER;
+	protected static final String NAMESPACE_SEPARATOR = Namespace.DELIMITER;
 	protected static final String EMPTY_STRING = "";
 
 	protected String originalMangled;
@@ -113,6 +113,14 @@ public abstract class DemangledObject {
 	 */
 	public String getDemangledName() {
 		return demangledName;
+	}
+
+	/**
+	 * Returns the original mangled name
+	 * @return the name
+	 */
+	public String getMangledName() {
+		return originalMangled;
 	}
 
 	/** 
@@ -298,11 +306,11 @@ public abstract class DemangledObject {
 
 	/**
 	 * Returns a complete signature for the demangled symbol.
-	 * For example:
+	 * <br>For example:
 	 *            "unsigned long foo"
 	 *            "unsigned char * ClassA::getFoo(float, short *)"
-	 *            "void * getBar(int **, MyStruct &)"
-	 * <b>Note: based on the underlying mangling scheme, the
+	 *            "void * getBar(int **, MyStruct &amp;)"
+	 * <br><b>Note: based on the underlying mangling scheme, the
 	 * return type may or may not be specified in the signature.</b>
 	 * @param format true if signature should be pretty printed
 	 * @return a complete signature for the demangled symbol
@@ -463,11 +471,12 @@ public abstract class DemangledObject {
 		return list;
 	}
 
+	// TODO needs updating. Couldn't determine what getResigualNamespacePath was changed to.
 	/**
 	 * Get or create the specified typeNamespace.  The returned namespace may only be a partial 
 	 * namespace if errors occurred.  The caller should check the returned namespace and adjust
 	 * any symbol creation accordingly.  Caller should use 
-	 * {@link #getResidualNamespacePath(DemangledType, Namespace)} to handle the case where
+	 * <code>getResidualNamespacePath(DemangledType, Namespace)</code> to handle the case where
 	 * only a partial namespace has been returned.
 	 * @param program
 	 * @param typeNamespace demangled namespace
@@ -494,8 +503,11 @@ public abstract class DemangledObject {
 
 			List<Symbol> symbols = symbolTable.getSymbols(namespaceName, namespace);
 			Symbol namespaceSymbol =
-				symbols.stream().filter(s -> (s.getSymbolType() == SymbolType.NAMESPACE ||
-					s.getSymbolType() == SymbolType.CLASS)).findFirst().orElse(null);
+				symbols.stream()
+						.filter(s -> (s.getSymbolType() == SymbolType.NAMESPACE ||
+							s.getSymbolType() == SymbolType.CLASS))
+						.findFirst()
+						.orElse(null);
 			if (namespaceSymbol == null) {
 				try {
 					namespace =

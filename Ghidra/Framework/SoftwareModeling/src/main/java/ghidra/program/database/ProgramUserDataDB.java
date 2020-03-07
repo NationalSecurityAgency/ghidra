@@ -57,7 +57,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION any time the
 	 * latest version requires a forced upgrade (i.e., Read-only mode not supported
 	 * until upgrade is performed).  It is assumed that read-only mode is supported
-	 * if the data's version is >= UPGRADE_REQUIRED_BEFORE_VERSION and <= DB_VERSION.
+	 * if the data's version is &gt;= UPGRADE_REQUIRED_BEFORE_VERSION and &lt;= DB_VERSION.
 	 */
 	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 1;
 
@@ -231,7 +231,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	 * Language corresponding to languageId was found.  Check language version
 	 * for language upgrade situation.
 	 * @throws LanguageNotFoundException
-	 * @returns VersionException if language upgrade required
+	 * @return VersionException if language upgrade required
 	 */
 	private VersionException checkLanguageVersion() throws LanguageNotFoundException {
 
@@ -275,7 +275,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	 * 		READ_ONLY: the original database will not be modified
 	 * 		UPDATE: the database can be written to.
 	 * 		UPGRADE: the database is upgraded to the lastest schema as it is opened.
-	 * @returns true if language upgrade required
+	 * @return true if language upgrade required
 	 * @throws LanguageNotFoundException if a suitable replacement language not found
 	 */
 	private VersionException checkForLanguageChange(LanguageNotFoundException e)
@@ -604,7 +604,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	}
 
 	@Override
-	public synchronized StringPropertyMap getStringPropery(String owner, String propertyName,
+	public synchronized StringPropertyMap getStringProperty(String owner, String propertyName,
 			boolean create) throws PropertyTypeMismatchException {
 		return (StringPropertyMap) getPropertyMap(owner, propertyName, PROPERTY_TYPE_STRING, null,
 			create);

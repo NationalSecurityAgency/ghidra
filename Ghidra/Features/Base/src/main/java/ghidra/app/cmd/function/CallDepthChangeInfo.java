@@ -112,7 +112,8 @@ public class CallDepthChangeInfo {
 
 	/**
 	 * Construct a new CallDepthChangeInfo object.
-	 * @param func function to examine
+	 * @param function function to examine
+	 * @param restrictSet set of addresses to restrict flow flowing to.
 	 * @param frameReg register that is to have it's depth(value) change tracked
 	 * @param monitor monitor used to cancel the operation
 	 * 
@@ -132,8 +133,8 @@ public class CallDepthChangeInfo {
 	 * Construct a new CallDepthChangeInfo object.
 	 * 
 	 * @param program  program containing the function to examime
-	 * @param restrictedSet set of addresses to restrict flow flowing to.
 	 * @param addr     address within the function to examine
+	 * @param restrictSet set of addresses to restrict flow flowing to.
 	 * @param frameReg register that is to have it's depth(value) change tracked
 	 * @param monitor  monitor used to cancel the operation
 	 * @throws CancelledException
@@ -735,13 +736,13 @@ public class CallDepthChangeInfo {
 		return;
 	}
 
-	/**
-	 * Checks the indicated function in the program to determine if it is a jump thunk
-	 * through a function pointer.
-	 * @param func the function to check
-	 * @param monitor status monitor for indicating progress and allowing cancel.
-	 * @returntrue if check if this is a jump thunk through a function pointer
-	 */
+//	/**
+//	 * Checks the indicated function in the program to determine if it is a jump thunk
+//	 * through a function pointer.
+//	 * @param func the function to check
+//	 * @param monitor status monitor for indicating progress and allowing cancel.
+//	 * @return true if check if this is a jump thunk through a function pointer
+//	 */
 //	private boolean checkThunk(Function func, TaskMonitor monitor) {
 //		Instruction instr = program.getListing().getInstructionAt(func.getEntryPoint());
 //		if (instr == null) {
@@ -832,16 +833,17 @@ public class CallDepthChangeInfo {
 	}
 
 	/**
-	 * @param minAddress
-	 * @return
+	 * @param addr the address to get the stack pointer depth at.
+	 * @return the stack pointer depth at the address.
 	 */
 	public int getSPDepth(Address addr) {
 		return getRegDepth(addr, stackReg);
 	}
 
 	/**
-	 * @param minAddress
-	 * @return
+	 * @param addr the address to get the register depth at.
+	 * @param reg the register to get the depth of.
+	 * @return the depth of the register at the address.
 	 */
 	public int getRegDepth(Address addr, Register reg) {
 		// OK lets CHEAT...
@@ -874,8 +876,9 @@ public class CallDepthChangeInfo {
 	}
 
 	/**
-	 * @param minAddress
-	 * @return
+	 * @param addr the address of the register value to get the representation of.
+	 * @param reg the register to get the representation of.
+	 * @return the string representation of the register value.
 	 */
 	public String getRegValueRepresentation(Address addr, Register reg) {
 		return symEval.getRegisterValueRepresentation(addr, reg);

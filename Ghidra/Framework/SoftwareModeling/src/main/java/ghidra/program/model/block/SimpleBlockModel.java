@@ -599,7 +599,7 @@ public class SimpleBlockModel implements CodeBlockModel {
 //                return FlowType.INVALID;
 //            }
 //
-//            // look at all refs to symbol, if not refered to by fallthrough
+//            // look at all refs to symbol, if not referred to by fallthrough
 //            //  instruction, must be flow, so return true.
 //            Referent refs[] = sym.getReferences();
 //            if (refs == null) {

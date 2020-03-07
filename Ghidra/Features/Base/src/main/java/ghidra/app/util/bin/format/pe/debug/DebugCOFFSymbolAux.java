@@ -59,6 +59,7 @@ import ghidra.util.exception.DuplicateNameException;
  *         BYTE    Selection;                      // communal selection type
  *     } Section;
  * } IMAGE_AUX_SYMBOL;
+ * </pre>
  */
 public class DebugCOFFSymbolAux implements StructConverter {
     public final static byte IMAGE_SIZEOF_AUX_SYMBOL = 18;

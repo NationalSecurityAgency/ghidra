@@ -188,6 +188,25 @@ public class GTreeTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testExpandCollapseNode() {
+		GTreeNode node = findNodeInTree(NonLeafWithOneLevelOfChildrenNodeB.class.getSimpleName());
+		assertTrue(!node.isExpanded());
+
+		node.expand();
+		waitForTree();
+		assertTrue(node.isExpanded());
+
+		node.collapse();
+		waitForTree();
+		assertTrue(!node.isExpanded());
+
+		GTreeNode root = node.getRoot();
+		root.collapse();
+		assertTrue(!root.isExpanded());
+		assertTrue(gTree.getExpandedPaths().isEmpty());
+	}
+
+	@Test
 	public void testChangeFilterSettingsWithFilterTextInPlace() {
 
 		GTreeNode node = findNodeInTree("Leaf Child - Many B1");
@@ -543,22 +562,36 @@ public class GTreeTest extends AbstractDockingTest {
 
 		List<TreePath> expandedPaths = gTree.getExpandedPaths();
 		assertEquals(3, expandedPaths.size());
-		assertEquals(originalNode, expandedPaths.get(0).getLastPathComponent());
 
-		GTreeState treeState = gTree.getTreeState();
+		// make sure one of the expanded paths contains the originalNode
+		assertExpanded(originalNode);
 
+		GTreeState savedState = gTree.getTreeState();
+
+		// now collapse the tree and restore the state
 		gTree.collapseAll(gTree.getViewRoot());
 		waitForTree();
 
 		expandedPaths = gTree.getExpandedPaths();
 		assertTrue(expandedPaths.isEmpty());
 
-		gTree.restoreTreeState(treeState);
+		gTree.restoreTreeState(savedState);
 		waitForTree();
 
 		expandedPaths = gTree.getExpandedPaths();
 		assertEquals(3, expandedPaths.size());
-		assertEquals(originalNode, expandedPaths.get(0).getLastPathComponent());
+		assertExpanded(originalNode);
+	}
+
+	private void assertExpanded(GTreeNode node) {
+
+		List<TreePath> expandedPaths = gTree.getExpandedPaths();
+		TreePath path = expandedPaths
+				.stream()
+				.filter(p -> p.getLastPathComponent().equals(node))
+				.findAny()
+				.orElse(null);
+		assertNotNull(path);
 	}
 
 	@Test

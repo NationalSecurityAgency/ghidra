@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.viewer.format;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.jdom.Element;
@@ -139,7 +140,7 @@ public class FormatManager implements OptionsChangeListener {
 	private void getFactorys() {
 		ClassFilter filter = new ClassExclusionFilter(DummyFieldFactory.class,
 			SpacerFieldFactory.class, SubDataFieldFactory.class);
-		Set<FieldFactory> instances = ClassSearcher.getInstances(FieldFactory.class, filter);
+		List<FieldFactory> instances = ClassSearcher.getInstances(FieldFactory.class, filter);
 		List<FieldFactory> list = new ArrayList<>();
 		for (FieldFactory fieldFactory : instances) {
 			if (fieldFactory instanceof SpacerFieldFactory) {
@@ -180,7 +181,7 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Returns the format model for the given index.
 	 * 
-	 * @param inde the index of the format model to return.
+	 * @param index the index of the format model to return.
 	 */
 	public FieldFormatModel getModel(int index) {
 		return models[index];
@@ -216,14 +217,6 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the format model for a code unit.
-	 * 
-	 * @param cu
-	 *            the code unit for which to get a model. The cu is used in case
-	 *            there is a custom format for it.
-	 * @param useCustomFormats
-	 *            if true seaches for a custom format for the code unit,
-	 *            otherwise always returns the basic instruction/data format
-	 *            model.
 	 */
 	public FieldFormatModel getCodeUnitFormat() {
 		return models[FieldFormatModel.INSTRUCTION_OR_DATA];
@@ -234,9 +227,6 @@ public class FormatManager implements OptionsChangeListener {
 	 * 
 	 * @param data
 	 *            the data code unit to get the format model for.
-	 * @param useCustomFormats
-	 *            if true, tries to find a custom format model, otherwise always
-	 *            uses the default open data model.
 	 */
 	public FieldFormatModel getOpenDataFormat(Data data) {
 
@@ -288,7 +278,7 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Notifies listeners that the given model has changed.
 	 * 
-	 * @param mode the format model that changed.
+	 * @param model the format model that changed.
 	 */
 	public void modelChanged(FieldFormatModel model) {
 		if (!initialized) {

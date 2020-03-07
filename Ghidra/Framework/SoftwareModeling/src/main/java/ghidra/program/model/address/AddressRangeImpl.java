@@ -17,6 +17,7 @@ package ghidra.program.model.address;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.Iterator;
 
 /**
  * Implementation of an AddressRange.  An AddressRange is a contiguous
@@ -29,8 +30,8 @@ import java.math.BigInteger;
 public class AddressRangeImpl implements AddressRange, Serializable {
 	private static final long serialVersionUID = 1;
 
-	private Address minAddress; // mimimum address in this range.
-	private Address maxAddress; // maximum address in this range.
+	private final Address minAddress; // minimum address in this range.
+	private final Address maxAddress; // maximum address in this range.
 
 	/**
 	 * Construct a new AddressRangeImpl from the given range.
@@ -56,11 +57,11 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 			throw new IllegalArgumentException("Start and end addresses are not in the same space.");
 		}
 
-		minAddress = start;
-		maxAddress = end;
-
-		// swap them if out of order
-		if (minAddress.compareTo(maxAddress) > 0) {
+		if (start.compareTo(end) < 0) {
+			minAddress = start;
+			maxAddress = end;
+		} else {
+			// swap them if out of order
 			minAddress = end;
 			maxAddress = start;
 		}
@@ -228,6 +229,35 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 			result = maxAddress.compareTo(o.getMaxAddress());
 		}
 		return result;
+	}
+
+	@Override
+	public Iterator<Address> iterator() {
+		return new MyAddressIterator();
+	}
+
+	private class MyAddressIterator implements Iterator<Address> {
+
+		private Address curr;
+
+		public MyAddressIterator() {
+			this.curr = minAddress;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return curr != null;
+		}
+
+		@Override
+		public Address next() {
+			Address next = curr;
+			if (curr != null) {
+				curr = curr.equals(maxAddress) ? null : curr.next();
+			}
+			return next;
+		}
+
 	}
 
 }

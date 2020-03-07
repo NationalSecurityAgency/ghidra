@@ -67,8 +67,8 @@ public class CliStreamMetadata extends CliAbstractStream {
 	 * 
 	 * @param header The stream header associated with this stream.
 	 * @param guidStream The GUID stream.
-	 * @param userStringStream The user strings stream.
-	 * @param stringsStrings The strings stream.
+	 * @param userStringsStream The user strings stream.
+	 * @param stringsStream The strings stream.
 	 * @param blobStream The blob stream.
 	 * @param fileOffset The file offset where this stream starts. 
 	 * @param rva The relative virtual address where this stream starts.

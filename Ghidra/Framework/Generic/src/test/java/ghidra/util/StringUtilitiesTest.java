@@ -249,18 +249,6 @@ public class StringUtilitiesTest {
 	}
 
 	@Test
-	public void testReverse() {
-		String hello = "hello";
-		String reversed = StringUtilities.reverse(hello);
-		assertEquals("olleh", reversed);
-	}
-
-	@Test
-	public void testReverseNull() {
-		assertNull(StringUtilities.reverse(null));
-	}
-
-	@Test
 	public void testGetLastWord() {
 		assertEquals("word", StringUtilities.getLastWord("/This/is/my/last/word", "/"));
 		assertEquals("word", StringUtilities.getLastWord("This/is/my/last/word", "/"));

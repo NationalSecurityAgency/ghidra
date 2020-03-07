@@ -20,8 +20,6 @@ import java.util.Iterator;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import ghidra.app.decompiler.*;
-import ghidra.app.decompiler.component.DecompilerController;
-import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.function.EditFunctionSignatureDialog;
 import ghidra.framework.plugintool.PluginTool;
@@ -35,9 +33,6 @@ import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.CancelledException;
 
 public class OverridePrototypeAction extends AbstractDecompilerAction {
-
-	private final DecompilerController controller;
-	private final PluginTool tool;
 
 	public class ProtoOverrideDialog extends EditFunctionSignatureDialog {
 		private FunctionDefinition functionDefinition;
@@ -86,21 +81,18 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		}
 	}
 
-	public OverridePrototypeAction(PluginTool tool, DecompilerController controller) {
+	public OverridePrototypeAction() {
 		super("Override Signature");
-		this.tool = tool;
-		this.controller = controller;
 		setPopupMenuData(new MenuData(new String[] { "Override Signature" }, "Decompile"));
 	}
 
 	/**
 	 * Try to find the PcodeOp representing the call the user has selected
-	 * @param controller the decompiler controller
+	 * @param program is the Program
+	 * @param tokenAtCursor is the point in the window the user has selected
 	 * @return the PcodeOp or null
 	 */
-	public static PcodeOp getCallOp(DecompilerController controller) {
-		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
-		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
+	public static PcodeOp getCallOp(Program program, ClangToken tokenAtCursor) {
 		if (tokenAtCursor == null) {
 			return null;
 		}
@@ -112,7 +104,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		if (addr == null) {
 			return null;
 		}
-		Instruction instr = controller.getProgram().getListing().getInstructionAt(addr);
+		Instruction instr = program.getListing().getInstructionAt(addr);
 		if (instr == null) {
 			return null;
 		}
@@ -135,12 +127,11 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		return null;
 	}
 
-	private Function getCalledFunction(PcodeOp op) {
+	private Function getCalledFunction(Program program, PcodeOp op) {
 		if (op.getOpcode() != PcodeOp.CALL) {
 			return null;
 		}
 		Address addr = op.getInput(0).getAddress();
-		Program program = controller.getProgram();
 		FunctionManager functionManager = program.getFunctionManager();
 		Function function = functionManager.getFunctionAt(addr);
 		if (function != null) {
@@ -196,26 +187,26 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		Function function = controller.getFunction();
+		Function function = context.getFunction();
 		if (function == null || function instanceof UndefinedFunction) {
 			return false;
 		}
 
-		return getCallOp(controller) != null;
+		return getCallOp(context.getProgram(), context.getTokenAtCursor()) != null;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		Function func = controller.getFunction();
+		Function func = context.getFunction();
 		Program program = func.getProgram();
-		PcodeOp op = getCallOp(controller);
-		Function calledfunc = getCalledFunction(op);
+		PcodeOp op = getCallOp(program, context.getTokenAtCursor());
+		Function calledfunc = getCalledFunction(program, op);
 		boolean varargs = false;
 		if (calledfunc != null) {
 			varargs = calledfunc.hasVarArgs();
 		}
 		if ((op.getOpcode() == PcodeOp.CALL) && !varargs) {
-			if (OptionDialog.showOptionDialog(controller.getDecompilerPanel(),
+			if (OptionDialog.showOptionDialog(context.getDecompilerPanel(),
 				"Warning : Localized Override",
 				"Incorrect information entered here may hide other good information.\n" +
 					"For direct calls, it is usually better to alter the prototype on the function\n" +
@@ -233,6 +224,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		}
 
 		String signature = generateSignature(op, name);
+		PluginTool tool = context.getTool();
 		ProtoOverrideDialog dialog = new ProtoOverrideDialog(tool, func, signature, conv);
 		//     dialog.setHelpLocation( new HelpLocation( getOwner(), "Edit_Function_Signature" ) );
 		tool.showDialog(dialog);
@@ -247,7 +239,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 			commit = true;
 		}
 		catch (Exception e) {
-			Msg.showError(getClass(), controller.getDecompilerPanel(), "Override Signature Failed",
+			Msg.showError(getClass(), context.getDecompilerPanel(), "Override Signature Failed",
 				"Error overriding signature: " + e);
 		}
 		finally {

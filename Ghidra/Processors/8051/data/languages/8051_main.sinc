@@ -360,14 +360,16 @@ macro push8(val) {
   #tmp:3 = zext(SP) + $(STACKBASE);
   tmp:3 = SP;
   *[RAM]:1 tmp = val;
+@else
+  val = val;
 @endif
 }
 
 @ifdef OMIT_RETADDR
 @ifdef MCS80390
-macro push24(val) { }
+macro push24(val) { val = val; }
 @else
-macro push16(val) { }
+macro push16(val) { val = val; }
 @endif
 
 @else
@@ -404,6 +406,8 @@ macro push16(val) {
   *[RAM]:1 SP = al;
   SP = SP + 1; 
   *[RAM]:1 SP = ah;
+@else
+  val = val;
 @endif
 }
 @else
@@ -436,12 +440,14 @@ macro pop8(val) {
   ptr:3 = SP;
   val = *[RAM]:1 ptr;
   SP = SP - 1;
+@else
+  val = val;
 @endif
 }
 
 @if defined(MCS80390)
 @ifdef OMIT_RETADDR
-macro pop24(val) { }
+macro pop24(val) { val = val; }
 @else
 macro pop24(val) {
   ptr:1 = SP - 2;
@@ -460,7 +466,7 @@ macro pop24(val) {
 @endif
 @else
 @ifdef OMIT_RETADDR
-macro pop16(val) { }
+macro pop16(val) { val = val; }
 @else
 macro pop16(val) {
 @if defined(MCS251) 
@@ -489,6 +495,8 @@ macro pop16(val) {
   SP = SP - 1;
   
   val = (zext(ah) << 8) | zext(al);
+@else
+  val = val;
 @endif
 }
 @endif

@@ -182,12 +182,10 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		invalidateFunctions();
 	}
 
-	/**
+	/* (non-Javadoc)
 	 * TODO: Be a bit smarter about this - if the cache contains all the tags in
 	 *  	 the db we can just return the cache itself. If not, then go to the
 	 *  	 db to get the remainder.
-	 * @return
-	 * @throws IOException
 	 */
 	@Override
 	public List<? extends FunctionTag> getAllFunctionTags() {

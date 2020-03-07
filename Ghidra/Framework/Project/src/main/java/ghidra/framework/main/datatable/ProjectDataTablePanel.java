@@ -102,8 +102,9 @@ public class ProjectDataTablePanel extends JPanel {
 				checkOpen(e);
 			}
 		});
-		gTable.getSelectionModel().addListSelectionListener(
-			e -> plugin.getTool().contextChanged(null));
+		gTable.getSelectionModel()
+				.addListSelectionListener(
+					e -> plugin.getTool().contextChanged(null));
 		gTable.setDefaultRenderer(Date.class, new DateCellRenderer());
 		gTable.setDefaultRenderer(DomainFileType.class, new TypeCellRenderer());
 
@@ -280,6 +281,7 @@ public class ProjectDataTablePanel extends JPanel {
 			DomainFileInfo info = model.getRowObject(i);
 			list.add(info.getDomainFile());
 		}
+
 		return new ProjectDataActionContext(provider, projectData,
 			model.getRowObject(selectedRows[0]), null, list, gTable, true);
 	}

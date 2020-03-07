@@ -48,9 +48,8 @@ public class ArmDisassembleCommand extends DisassembleCommand {
 	}
 
 	/**
-	* Constructor for DisassembleCommand.
-	* @param startSet set of addresses to be the start of a disassembly.  The
-	* Command object will attempt to start a disassembly at each address in this set.
+	* Constructor for ArmDisassembleCommand.
+	* @param start address to be the start of a disassembly.
 	* @param restrictedSet addresses that can be disassembled.
 	* a null set implies no restrictions
 	* @param thumbMode pass true if the disassembling in Thumb Mode
@@ -70,10 +69,6 @@ public class ArmDisassembleCommand extends DisassembleCommand {
 		throw new UnsupportedOperationException();
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	synchronized public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		Program program = (Program) obj;

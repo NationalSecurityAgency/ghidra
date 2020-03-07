@@ -24,9 +24,10 @@ import java.lang.annotation.*;
  * Specifies the info needed of a {@link GFileSystem} implementation.
  * <p>
  * <ul>
- * <li>{@link #type()} is required.
- * <li>{@link #description()} is optional.
- * <li>{@link #factory()} is required.
+ * <li>{@link #type()} is required.</li>
+ * <li>{@link #description()} is optional.</li>
+ * <li>{@link #factory()} is required.</li>
+ * </ul>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

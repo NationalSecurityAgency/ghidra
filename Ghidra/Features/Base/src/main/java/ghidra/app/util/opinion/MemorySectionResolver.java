@@ -53,7 +53,7 @@ public abstract class MemorySectionResolver {
 	 * @param key the loadable section key which corresponds to this memory "section"
 	 * @param fileOffset data source file offset.  It is assumed that all initialized
 	 * "sections" draw from a single data source.
-	 * @param length number of bytes within "section" 
+	 * @param numberOfBytes number of bytes within "section" 
 	 * @param startAddress desired physical start address of "section"
 	 * @param sectionName name of "section" 
 	 * @param isReadable true if "section" has read privilege
@@ -90,7 +90,7 @@ public abstract class MemorySectionResolver {
 	 * Add uninitialized memory "section".
 	 * The last "section" defined will take precedence when resolving conflicts.  
 	 * @param key the loadable section key which corresponds to this memory "section"
-	 * @param length number of bytes within "section" 
+	 * @param numberOfBytes number of bytes within "section" 
 	 * @param startAddress desired physical start address of "section"
 	 * @param sectionName name of "section" 
 	 * @param isReadable true if "section" has read privilege

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,11 +129,7 @@ public class Operand implements Serializable {
 	}
 
 	/**
-	 * Return l
-	 * @param list
-	 * @param buf
-	 * @param i
-	 * @return
+	 * @see OperandValue#toList(ArrayList, Position, int)
 	 */
 	public void toList(ArrayList<Handle> list, Position position, int off) throws Exception {
 		op.toList(list, position, offset.getOffset(position.buffer(),off));

@@ -15,8 +15,7 @@
  */
 package ghidra.graph.viewer.edge;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -650,13 +649,16 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 		// First, find the exact instance of the vertex in the graph, as it may have state 
 		// applied to it that we need to verify for testing.
 		//
-		LabelTestVertex v = new LabelTestVertex(Integer.toString(id));
-		Collection<AbstractTestVertex> vertices = graph.getVertices();
-		for (AbstractTestVertex vertex : vertices) {
-			if (v.equals(vertex)) {
-				return vertex;
+		AbstractTestVertex v = runSwing(() -> {
+			LabelTestVertex labelVertex = new LabelTestVertex(Integer.toString(id));
+			Collection<AbstractTestVertex> vertices = graph.getVertices();
+			for (AbstractTestVertex vertex : vertices) {
+				if (labelVertex.equals(vertex)) {
+					return vertex;
+				}
 			}
-		}
+			return labelVertex;
+		});
 
 		graph.addVertex(v);
 		return v;

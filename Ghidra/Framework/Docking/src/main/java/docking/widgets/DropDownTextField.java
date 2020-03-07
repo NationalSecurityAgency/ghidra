@@ -346,7 +346,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 			updateWindowLocation();
 			showMatchingWindow();
 
-			previewLabel.setBackground(TOOLTIP_WINDOW_BGCOLOR);
+			getPreviewPaneComponent().setBackground(TOOLTIP_WINDOW_BGCOLOR);
 			toolTipWindow.setVisible(hasPreview());
 		}
 	}

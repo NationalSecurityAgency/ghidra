@@ -43,6 +43,9 @@ struct VarnodeData {
 
   /// Recover this object from an XML tag
   void restoreXml(const Element *el,const AddrSpaceManager *manage);
+
+  /// Does \b this container another given VarnodeData
+  bool contains(const VarnodeData &op2) const;
 };
 
 /// VarnodeData can be sorted in terms of the space its in

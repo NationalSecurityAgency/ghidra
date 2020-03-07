@@ -17,6 +17,7 @@ package ghidra.app.util.demangler;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
+import ghidra.app.cmd.function.CreateThunkFunctionCmd;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.InstructionContext;
 import ghidra.program.model.listing.*;
@@ -110,8 +111,7 @@ public class DemangledThunk extends DemangledObject {
 			function.setThunkedFunction(thunkedFunction);
 		}
 
-		Symbol s =
-			applyDemangledName(thunkAddress, function.isThunk(), false, program);
+		Symbol s = applyDemangledName(thunkAddress, function.isThunk(), false, program);
 		return s != null;
 	}
 
@@ -181,8 +181,15 @@ public class DemangledThunk extends DemangledObject {
 		}
 
 		Symbol s = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			thunkedFunctionObject.originalMangled, err -> Msg.error(this, err));
+			thunkedFunctionObject.originalMangled, err -> Msg.warn(this, err));
 
+		if (s == null) {
+			Address thunkedAddr =
+				CreateThunkFunctionCmd.getThunkedAddr(program, thunkAddress, false);
+			if (thunkedAddr != null) {
+				s = program.getSymbolTable().getPrimarySymbol(thunkedAddr);
+			}
+		}
 		if (s == null || !block.contains(s.getAddress())) {
 			return null;
 		}

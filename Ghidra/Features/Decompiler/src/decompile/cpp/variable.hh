@@ -44,19 +44,24 @@ public:
   /// So we keep track of when these inherited values are \e dirty
   enum {
     flagsdirty = 1,		///< Boolean properties for the HighVariable are dirty
-    typedirty = 2,		///< The data-type for the HighVariable is dirty
-    coverdirty = 4,		///< The cover for the HighVariable is dirty
-    copy_in1 = 8,		///< There exists at least 1 COPY into \b this HighVariable from other HighVariables
-    copy_in2 = 16,		///< There exists at least 2 COPYs into \b this HighVariable from other HighVariables
-    type_finalized = 32		///< Set if a final data-type is locked in and dirtying is disabled
+    namerepdirty = 2,		///< The name representative for the HighVariable is dirty
+    typedirty = 4,		///< The data-type for the HighVariable is dirty
+    coverdirty = 8,		///< The cover for the HighVariable is dirty
+    symboldirty = 0x10,		///< The symbol attachment is dirty
+    copy_in1 = 0x20,		///< There exists at least 1 COPY into \b this HighVariable from other HighVariables
+    copy_in2 = 0x40,		///< There exists at least 2 COPYs into \b this HighVariable from other HighVariables
+    type_finalized = 0x80,	///< Set if a final data-type is locked in and dirtying is disabled
+    unmerged = 0x100		///< Set if part of a multi-entry Symbol but did not get merged with other SymbolEntrys
   };
 private:
+  friend class Varnode;
   friend class Merge;
   vector<Varnode *> inst;		///< The member Varnode objects making up \b this HighVariable
   int4 numMergeClasses;			///< Number of different speculative merge classes in \b this
   mutable uint4 highflags;		///< Dirtiness flags
   mutable uint4 flags;			///< Boolean properties inherited from Varnode members
-  mutable Datatype *type;		///< The data-type for this
+  mutable Datatype *type;		///< The data-type for \b this
+  mutable Varnode *nameRepresentative;	///< The storage location used to generate a Symbol name
   mutable Cover wholecover;		///< The ranges of code addresses covered by this HighVariable
   mutable Symbol *symbol;		///< The Symbol \b this HighVariable is tied to
   mutable int4 symboloffset;		///< -1=perfect symbol match >=0, offset
@@ -64,34 +69,28 @@ private:
   void updateFlags(void) const;		///< (Re)derive boolean properties of \b this from the member Varnodes
   void updateCover(void) const;		///< (Re)derive the cover of \b this from the member Varnodes
   void updateType(void) const;		///< (Re)derive the data-type for \b this from the member Varnodes
+  void updateSymbol(void) const;	///< (Re)derive the Symbol and offset for \b this from member Varnodes
   void setCopyIn1(void) const { highflags |= copy_in1; }	///< Mark the existence of one COPY into \b this
   void setCopyIn2(void) const { highflags |= copy_in2; }	///< Mark the existence of two COPYs into \b this
   void clearCopyIns(void) const { highflags &= ~(copy_in1 | copy_in2); }	///< Clear marks indicating COPYs into \b this
   bool hasCopyIn1(void) const { return ((highflags&copy_in1)!=0); }	///< Is there at least one COPY into \b this
   bool hasCopyIn2(void) const { return ((highflags&copy_in2)!=0); }	///< Is there at least two COPYs into \b this
+  void remove(Varnode *vn);				///< Remove a member Varnode from \b this
   void merge(HighVariable *tv2,bool isspeculative);	///< Merge another HighVariable into \b this
+  void setSymbol(Varnode *vn) const;		///< Update Symbol information for \b this from the given member Varnode
+  void setSymbolReference(Symbol *sym,int4 off);	///< Attach a reference to a Symbol to \b this
+  void flagsDirty(void) const { highflags |= flagsdirty | namerepdirty; }	///< Mark the boolean properties as \e dirty
+  void coverDirty(void) const { highflags |= coverdirty; }	///< Mark the cover as \e dirty
+  void typeDirty(void) const { highflags |= typedirty; }	///< Mark the data-type as \e dirty
+  void setUnmerged(void) const { highflags |= unmerged; }	///< Mark \b this as having merge problems
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
   Datatype *getType(void) const { updateType(); return type; }	///< Get the data-type
-
-  /// \brief Set the Symbol associated with \b this HighVariable.
-  ///
-  /// This HighVariable does not need to be associated with the whole symbol. It can be associated with
-  /// a part, like a sub-field, if the size of the member Varnodes and the Symbol don't match. In this case
-  /// a non-zero offset may be passed in with the Symbol to indicate what part is represented by the \b this.
-  /// \param sym is the Symbol to associate with \b this
-  /// \param off is the offset in bytes, relative to the Symbol, where \b this HighVariable starts
-  void setSymbol(Symbol *sym,int4 off) const {
-    symbol = sym; symboloffset = off; }
-
-  Symbol *getSymbol(void) const { return symbol; }		///< Get the Symbol associated with \b this
+  Symbol *getSymbol(void) const { updateSymbol(); return symbol; }	///< Get the Symbol associated with \b this or null
+  SymbolEntry *getSymbolEntry(void) const;			/// Get the SymbolEntry mapping to \b this or null
   int4 getSymbolOffset(void) const { return symboloffset; }	///< Get the Symbol offset associated with \b this
   int4 numInstances(void) const { return inst.size(); }		///< Get the number of member Varnodes \b this has
   Varnode *getInstance(int4 i) const { return inst[i]; }	///< Get the i-th member Varnode
-  void flagsDirty(void) const { highflags |= HighVariable::flagsdirty; }	///< Mark the boolean properties as \e dirty
-  void coverDirty(void) const { highflags |= HighVariable::coverdirty; }	///< Mark the cover as \e dirty
-  void typeDirty(void) const { highflags |= HighVariable::typedirty; }		///< Mark the data-type as \e dirty
-  void remove(Varnode *vn);					///< Remove a member Varnode from \b this
   void finalizeDatatype(Datatype *tp);		///< Set a final datatype for \b this variable
 
   /// \brief Print details of the cover for \b this (for debug purposes)
@@ -105,6 +104,7 @@ public:
   Varnode *getInputVarnode(void) const;		///< Find (the) input member Varnode
   Varnode *getTypeRepresentative(void) const;	///< Get a member Varnode with the strongest data-type
   Varnode *getNameRepresentative(void) const;	///< Get a member Varnode that dictates the naming of \b this HighVariable
+  int4 getNumMergeClasses(void) const { return numMergeClasses; }	///< Get the number of speculative merges for \b this
   bool isMapped(void) const { updateFlags(); return ((flags&Varnode::mapped)!=0); }	///< Return \b true if \b this is mapped
   bool isPersist(void) const { updateFlags(); return ((flags&Varnode::persist)!=0); }	///< Return \b true if \b this is a global variable
   bool isAddrTied(void) const { updateFlags(); return ((flags&Varnode::addrtied)!=0); }	///< Return \b true if \b this is \e address \e ties
@@ -117,6 +117,7 @@ public:
   void setMark(void) const { flags |= Varnode::mark; }		///< Set the mark on this variable
   void clearMark(void) const { flags &= ~Varnode::mark; }	///< Clear the mark on this variable
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); }	///< Return \b true if \b this is marked
+  bool isUnmerged(void) const { return ((highflags&unmerged)!=0); }	///< Return \b true if \b this has merge problems
 
   /// \brief Determine if \b this HighVariable has an associated cover.
   ///
@@ -129,6 +130,7 @@ public:
   bool isUnattached(void) const { return inst.empty(); }	///< Return \b true if \b this has no member Varnode
   bool isTypeLock(void) const { updateType(); return ((flags & Varnode::typelock)!=0); }	///< Return \b true if \b this is \e typelocked
   bool isNameLock(void) const { updateFlags(); return ((flags & Varnode::namelock)!=0); }	///< Return \b true if \b this is \e namelocked
+  void saveXml(ostream &s) const;		///< Save the variable to stream as an XML \<high\> tag
 #ifdef MERGEMULTI_DEBUG
   void verifyCover(void) const;
 #endif

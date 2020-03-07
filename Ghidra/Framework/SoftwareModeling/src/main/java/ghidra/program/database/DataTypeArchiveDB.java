@@ -52,7 +52,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	 * UPGRADE_REQUIRED_BEFORE_VERSION should be changed to DB_VERSION any time the
 	 * latest version requires a forced upgrade (i.e., Read-only mode not supported
 	 * until upgrade is performed).  It is assumed that read-only mode is supported 
-	 * if the data's version is >= UPGRADE_REQUIRED_BEFORE_VERSION and <= DB_VERSION. 
+	 * if the data's version is &gt;= UPGRADE_REQUIRED_BEFORE_VERSION and &lt;= DB_VERSION. 
 	 */
 	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 1;
 
@@ -195,9 +195,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectAdapter#setDomainFile(ghidra.framework.model.DomainFile)
-	 */
 	@Override
 	protected void setDomainFile(DomainFile df) {
 		super.setDomainFile(df);
@@ -223,9 +220,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		changed = origChangeState;
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectAdapterDB#propertyChanged(java.lang.String, java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	protected boolean propertyChanged(String propertyName, Object oldValue, Object newValue) {
 		if (propertyName.endsWith(DEFAULT_POINTER_SIZE) && (newValue instanceof Integer)) {
@@ -258,7 +252,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	}
 
 	/**
-	 * @see ghidra.program.model.listing.Program#getDefaultStoredPointerSize()
+	 * @see ghidra.program.model.listing.Program#getDefaultPointerSize()
 	 */
 	@Override
 	public int getDefaultPointerSize() {
@@ -369,16 +363,10 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		fireEvent(new DataTypeArchiveChangeRecord(type, affectedObj, oldValue, newValue));
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String newName) {
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#getDescription()
-	 */
 	@Override
 	public String getDescription() {
 		return "Data Type Archive";
@@ -506,9 +494,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		dataTypeManager.archiveReady(openMode, monitor);
 	}
 
-	/**
-	 * @see ghidra.framework.data.DomainObjectAdapterDB#clearCache()
-	 */
 	@Override
 	protected void clearCache(boolean all) {
 		lock.acquire();
@@ -530,9 +515,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 		fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#isChangeable()
-	 */
 	@Override
 	public boolean isChangeable() {
 		return changeable;

@@ -15,7 +15,7 @@
  */
 package docking;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Window;
 import java.util.Collections;
@@ -27,11 +27,6 @@ import ghidra.util.DefaultErrorLogger;
 import ghidra.util.exception.MultipleCauses;
 
 public class DockingErrorDisplayTest extends AbstractDockingTest {
-
-	public DockingErrorDisplayTest() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
 
 	private static final String TEST_TITLE = "Test Title";
 

@@ -16,7 +16,6 @@
 package docking.framework;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -33,14 +32,16 @@ import utility.module.ModuleUtilities;
  */
 public class DockingApplicationLayout extends ApplicationLayout {
 
+	private static final String NO_RELEASE_NAME = "NO_RELEASE";
+
 	/**
 	 * Constructs a new docking application layout object with the given name.
 	 * 
 	 * @param name The name of the application.
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
 	 */
-	public DockingApplicationLayout(String name) throws FileNotFoundException, IOException {
-		this(name, null);
+	public DockingApplicationLayout(String name) throws FileNotFoundException {
+		this(name, "0.1");
 	}
 
 	/**
@@ -51,7 +52,7 @@ public class DockingApplicationLayout extends ApplicationLayout {
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
 	 */
 	public DockingApplicationLayout(String name, String version) throws FileNotFoundException {
-		this(new ApplicationProperties(name, version));
+		this(new ApplicationProperties(name, version, NO_RELEASE_NAME));
 	}
 
 	/**

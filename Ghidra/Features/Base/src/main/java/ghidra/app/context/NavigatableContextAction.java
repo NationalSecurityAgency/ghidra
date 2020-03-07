@@ -33,23 +33,37 @@ public abstract class NavigatableContextAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof NavigatableActionContext)) {
+		NavigatableActionContext appropriateContext = getAppropriateContext(context);
+		if (appropriateContext == null) {
 			return false;
 		}
-		return isEnabledForContext((NavigatableActionContext) context);
+		return isEnabledForContext(appropriateContext);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		actionPerformed((NavigatableActionContext) context);
+		actionPerformed(getAppropriateContext(context));
+	}
+
+	private NavigatableActionContext getAppropriateContext(ActionContext context) {
+		if (context instanceof NavigatableActionContext &&
+			isValidNavigationContext((NavigatableActionContext) context)) {
+			return (NavigatableActionContext) context;
+		}
+		ActionContext globalContext = context.getGlobalContext();
+		if (globalContext instanceof NavigatableActionContext) {
+			return (NavigatableActionContext) globalContext;
+		}
+		return null;
 	}
 
 	@Override
-	public boolean isValidContext(ActionContext context) {
-		if (!(context instanceof NavigatableActionContext)) {
-			return false;
-		}
-		return isValidContext((NavigatableActionContext) context);
+	public final boolean isValidContext(ActionContext context) {
+		return true;
+	}
+
+	protected boolean isValidNavigationContext(NavigatableActionContext context) {
+		return true;
 	}
 
 	@Override
@@ -58,10 +72,6 @@ public abstract class NavigatableContextAction extends DockingAction {
 			return false;
 		}
 		return isAddToPopup((NavigatableActionContext) context);
-	}
-
-	protected boolean isValidContext(NavigatableActionContext context) {
-		return true;
 	}
 
 	protected boolean isEnabledForContext(NavigatableActionContext context) {

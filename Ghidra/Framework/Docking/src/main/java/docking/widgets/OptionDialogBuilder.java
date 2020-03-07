@@ -50,7 +50,7 @@ import ghidra.util.Swing;
  * is different than adding an option named "Cancel" which would return a result greater than
  * <code>0</code>, depending on where in the order it was added.
  *
- * <P><a name="RememberOption"></a>A "Remember Option" can be added to OptionDialog to
+ * <P><a id="RememberOption"></a>A "Remember Option" can be added to OptionDialog to
  * present the user with a choice for remembering a dialog result and automatically
  * returning that result instead of showing the dialog or similar dialogs in the future.
  * Note that for simple OK dialogs, there really isn't a meaningful result to remember, other

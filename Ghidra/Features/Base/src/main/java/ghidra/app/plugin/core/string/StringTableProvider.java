@@ -52,7 +52,7 @@ import ghidra.util.task.TaskLauncher;
 import resources.ResourceManager;
 
 /**
- * Component provider for the Search -> For Strings... result dialog.
+ * Component provider for the Search -&gt; For Strings... result dialog.
  */
 public class StringTableProvider extends ComponentProviderAdapter implements DomainObjectListener {
 	private static final ImageIcon ICON = ResourceManager.loadImage("images/kmessedwords.png");
@@ -568,8 +568,9 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 			FoundString foundString = stringModel.getRowObject(table.getSelectedRow());
 			MemBuffer membuf =
 				new DumbMemBufferImpl(currentProgram.getMemory(), foundString.getAddress());
-			StringDataInstance stringInstance = new StringDataInstance(foundString.getDataType(),
-				SettingsImpl.NO_SETTINGS, membuf, foundString.getLength());
+			StringDataInstance stringInstance =
+				StringDataInstance.getStringDataInstance(foundString.getDataType(), membuf,
+					SettingsImpl.NO_SETTINGS, foundString.getLength());
 			if (charOffset != 0) {
 				stringInstance = stringInstance.getCharOffcut(charOffset);
 			}

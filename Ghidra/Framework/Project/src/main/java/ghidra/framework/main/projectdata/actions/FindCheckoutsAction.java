@@ -16,15 +16,19 @@
 package ghidra.framework.main.projectdata.actions;
 
 import java.awt.Component;
+import java.io.IOException;
 
 import javax.swing.Icon;
 
 import docking.action.MenuData;
 import docking.action.ToolBarData;
+import docking.widgets.OptionDialog;
+import ghidra.framework.client.*;
 import ghidra.framework.main.datatable.ProjectDataTreeContextAction;
 import ghidra.framework.main.datatree.FindCheckoutsDialog;
 import ghidra.framework.main.datatree.ProjectDataTreeActionContext;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.ProjectData;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.util.HelpLocation;
 import resources.MultiIcon;
@@ -52,6 +56,27 @@ public class FindCheckoutsAction extends ProjectDataTreeContextAction {
 	@Override
 	protected void actionPerformed(ProjectDataTreeActionContext context) {
 		DomainFolder domainFolder = context.getSelectedFolders().get(0);
+		ProjectData projectData = domainFolder.getProjectData();
+		RepositoryAdapter repository = projectData.getRepository();
+		if (repository != null && !repository.isConnected()) {
+			if (OptionDialog.OPTION_ONE != OptionDialog.showOptionDialogWithCancelAsDefaultButton(
+				null, "Find Checkouts...",
+				"Action requires connection to repository.\nWould you like to connect now?",
+				"Connect", OptionDialog.QUESTION_MESSAGE)) {
+				return;
+			}
+			try {
+				repository.connect();
+			}
+			catch (NotConnectedException e) {
+				// ignore - likely caused by cancellation
+				return;
+			}
+			catch (IOException e) {
+				ClientUtil.handleException(repository, e, "Find Checkouts", null);
+				return;
+			}
+		}
 		findCheckouts(domainFolder, context.getComponent());
 	}
 

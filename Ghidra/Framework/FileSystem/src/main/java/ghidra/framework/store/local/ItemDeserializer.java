@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +53,7 @@ public class ItemDeserializer {
 
 	/**
 	 * Constructor.
-	 * @param in input stream. The input stream must not be read again until
-	 * after the saveItem method has been invoked successfully.
+	 * @param packedFile item to deserialize.
 	 * @throws IOException
 	 */
 	public ItemDeserializer(File packedFile) throws IOException {

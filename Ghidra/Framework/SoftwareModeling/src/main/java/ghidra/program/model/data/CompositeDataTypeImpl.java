@@ -146,7 +146,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	 * @param bitfieldComponent bitfield component
 	 * @param oldDt affected datatype which has been removed or replaced
 	 * @param newDt replacement datatype
-	 * @param true if bitfield component was modified
+	 * @return true if bitfield component was modified
 	 * @throws InvalidDataTypeException if new datatype is not 
 	 */
 	protected boolean updateBitFieldDataType(DataTypeComponentImpl bitfieldComponent,
@@ -380,7 +380,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 		for (DataTypeComponent dtc : getComponents()) {
 			DataType dataType = dtc.getDataType();
 			buffer.append(pad + dtc.getOffset());
-			buffer.append(pad + dataType.getDisplayName());
+			buffer.append(pad + dataType.getName());
 			if (dataType instanceof BitFieldDataType) {
 				BitFieldDataType bfDt = (BitFieldDataType) dataType;
 				buffer.append("(");

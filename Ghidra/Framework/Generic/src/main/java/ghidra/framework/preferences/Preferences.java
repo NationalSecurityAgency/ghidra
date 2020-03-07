@@ -41,11 +41,6 @@ public class Preferences {
 	private final static String USER_PLUGIN_PATH = "UserPluginPath";
 
 	/**
-	 * Preference name of the user plugin jar directory.
-	 */
-	public final static String USER_PLUGIN_JAR_DIRECTORY = "UserPluginJarDirectory";
-
-	/**
 	 * Preference name for the last opened archive directory.
 	 */
 	public static final String LAST_OPENED_ARCHIVE_DIRECTORY = "LastOpenedArchiveDirectory";
@@ -192,8 +187,10 @@ public class Preferences {
 	/**
 	 * Get the property with the given name.
 	 * <p>
-	 * Note: all <tt>getProperty(...)</tt> methods will first check {@link System#getProperty(String)}
+	 * Note: all <code>getProperty(...)</code> methods will first check {@link System#getProperty(String)}
 	 * for a value first.  This allows users to override preferences from the command-line.
+	 * @param name the property name
+	 * @return the current property value; null if not set
 	 */
 	public static String getProperty(String name) {
 		// prefer system properties, which enables uses to override preferences from the command-line
@@ -208,8 +205,11 @@ public class Preferences {
 	/**
 	 * Get the property with the given name; if there is no property, return the defaultValue.
 	 * <p>
-	 * Note: all <tt>getProperty(...)</tt> methods will first check {@link System#getProperty(String)}
+	 * Note: all <code>getProperty(...)</code> methods will first check {@link System#getProperty(String)}
 	 * for a value first.  This allows users to override preferences from the command-line.
+	 * @param name the property name
+	 * @param defaultValue the default value
+	 * @return the property value; default value if not set
 	 * 
 	 * @see #getProperty(String, String, boolean)
 	 */
@@ -226,10 +226,10 @@ public class Preferences {
 	/**
 	 * Get the property with the given name; if there is no property, return the defaultValue.
 	 * <p>
-	 * This version of <tt>getProperty</tt> will, when <tt>useHistoricalValue</tt> is true, look
+	 * This version of <code>getProperty</code> will, when <code>useHistoricalValue</code> is true, look
 	 * for the given preference value in the last used installation of the application.
 	 * <p>
-	 * Note: all <tt>getProperty(...)</tt> methods will first check {@link System#getProperty(String)}
+	 * Note: all <code>getProperty(...)</code> methods will first check {@link System#getProperty(String)}
 	 * for a value first.  This allows users to override preferences from the command-line.
 	 * 
 	 * @param name The name of the property for which to get a value
@@ -289,6 +289,7 @@ public class Preferences {
 
 	/**
 	 * Get the filename that will be used in the store() method.
+	 * @return the filename
 	 */
 	public static String getFilename() {
 		return filename;
@@ -297,7 +298,7 @@ public class Preferences {
 	/**
 	 * Set the filename so that when the store() method is called, the
 	 * preferences are written to this file.
-	 * @param name
+	 * @param name the filename
 	 */
 	public static void setFilename(String name) {
 		filename = name;
@@ -305,6 +306,7 @@ public class Preferences {
 
 	/**
 	 * Store the preferences in a file for the current filename.
+	 * @return true if the file was written
 	 * @throws RuntimeException if the preferences filename was not set
 	 */
 	public static boolean store() {
@@ -346,6 +348,7 @@ public class Preferences {
 	/**
 	 * Return the paths in the UserPluginPath property.
 	 * Return zero length array if this property is not set.
+	 * @return the paths
 	 *
 	 */
 	public static String[] getPluginPaths() {
@@ -359,6 +362,7 @@ public class Preferences {
 
 	/**
 	 * Set the paths to be used as the UserPluginPath property.
+	 * @param paths the paths
 	 */
 	public static void setPluginPaths(String[] paths) {
 		if (paths == null || paths.length == 0) {
@@ -374,55 +378,6 @@ public class Preferences {
 			}
 		}
 		properties.setProperty(USER_PLUGIN_PATH, sb.toString());
-	}
-
-	/**
-	 * Set the plugin path property.
-	 * @param pathProperty A string of paths separated by {@link File#pathSeparator} characters
-	 */
-	public static void setPluginPathProperty(String pathProperty) {
-		properties.setProperty(USER_PLUGIN_PATH, pathProperty);
-	}
-
-	/**
-	 * Append path to the plugin path.
-	 * @param path the plugin path to add
-	 */
-	public static void addPluginPath(String path) {
-		List<String> list = getPluginPathList();
-		if (list == null) {
-			setPluginPaths(new String[] { path });
-			return;
-		}
-		if (!list.contains(path)) {
-			list.add(path);
-			String[] p = new String[list.size()];
-			setPluginPaths(list.toArray(p));
-		}
-	}
-
-	/**
-	 * Append paths to the plugin path.
-	 * @param paths the plugin paths to add
-	 */
-	public static void addPluginPaths(String[] paths) {
-		List<String> list = getPluginPathList();
-		if (list == null) {
-			setPluginPaths(paths);
-			return;
-		}
-		boolean listChanged = false;
-		for (String path : paths) {
-			if (!list.contains(path)) {
-				list.add(path);
-				listChanged = true;
-			}
-		}
-		// update plugin path property only if we added a path to the list
-		if (listChanged) {
-			String[] p = new String[list.size()];
-			setPluginPaths(list.toArray(p));
-		}
 	}
 
 	private static List<String> getPluginPathList() {

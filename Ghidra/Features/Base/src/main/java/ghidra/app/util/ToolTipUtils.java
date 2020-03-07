@@ -53,7 +53,7 @@ public class ToolTipUtils {
 	}
 
 	/**
-	 * Examines the give <tt>dataType</tt> and creates a tool tip for it, 
+	 * Examines the give <code>dataType</code> and creates a tool tip for it, 
 	 * depending upon its actual class type.
 	 * 
 	 * @param  dataType The data type from which a tool tip will be 
@@ -66,10 +66,7 @@ public class ToolTipUtils {
 
 	/**
 	 * Return dataType details as HTML.
-	 * @param dataType
-	 * @param htmlFragmentOnly if true only a fragment of HTML, suitable for combining 
-	 * with other fragments will be Returned.  If false, the fragment will be enclosed 
-	 * within an HTML tag element.
+	 * @param dataType the dataType to be represented
 	 * @return dataType details formatted as HTML
 	 */
 	public static HTMLDataTypeRepresentation getHTMLRepresentation(DataType dataType) {

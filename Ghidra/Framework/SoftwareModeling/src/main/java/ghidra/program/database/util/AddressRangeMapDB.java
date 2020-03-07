@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,8 +159,8 @@ public class AddressRangeMapDB implements DBListener {
 	}
 
 	/**
-	 * Returns the value associated with the given index.
-	 * @param index
+	 * Returns the value associated with the given address.
+	 * @param addr the address of the value
 	 * @return value or null no value exists
 	 */
 	public Field getValue(Address addr) {
@@ -202,10 +201,9 @@ public class AddressRangeMapDB implements DBListener {
 	/**
 	 * Associates the given value with every index from start to end (inclusive)
 	 * Any previous associates are overwritten.
-	 * @param start
-	 * @param end
+	 * @param startAddr the start address.
+	 * @param endAddr the end address.
 	 * @param value value to be painted, or null for value removal.
-	 * @throws IOException
 	 */
 	public void paintRange(Address startAddr, Address endAddr, Field value) {
 		lock.acquire();
@@ -235,7 +233,6 @@ public class AddressRangeMapDB implements DBListener {
 	 * @param length the number of addresses to move.
 	 * @param monitor the task monitor.
 	 * @throws CancelledException if the user canceled the operation via the task monitor.
-	 * @throws AddressOverflowException if the length is such that a address wrap occurs
 	 */
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
@@ -383,8 +380,8 @@ public class AddressRangeMapDB implements DBListener {
 
 	/**
 	 * Remove values from the given range.
-	 * @param start
-	 * @param end
+	 * @param startAddr the start address.
+	 * @param endAddr the end address.
 	 */
 	public void clearRange(Address startAddr, Address endAddr) {
 		lock.acquire();
@@ -510,8 +507,7 @@ public class AddressRangeMapDB implements DBListener {
 
 	/**
 	 * Returns the bounding address-range containing addr and the the same value throughout.
-	 * @param register
-	 * @param addr
+	 * @param addr the contained address
 	 * @return single value address-range containing addr
 	 */
 	public AddressRange getAddressRangeContaining(Address addr) {
@@ -911,9 +907,6 @@ public class AddressRangeMapDB implements DBListener {
 
 	}
 
-	/**
-	 * @see ghidra.framework.store.db.DBListener#dbRestored(db.DBHandle)
-	 */
 	@Override
 	public void dbRestored(DBHandle dbh) {
 		lastStart = null;
@@ -923,16 +916,10 @@ public class AddressRangeMapDB implements DBListener {
 		findTable();
 	}
 
-	/**
-	 * @see db.DBListener#dbClosed(db.DBHandle)
-	 */
 	@Override
 	public void dbClosed(DBHandle dbh) {
 	}
 
-	/**
-	 * @see ghidra.framework.store.db.DBListener#tableDeleted(db.DBHandle, ghidra.framework.store.db.Table)
-	 */
 	@Override
 	public void tableDeleted(DBHandle dbh, Table table) {
 		if (table == rangeMapTable) {
@@ -944,9 +931,6 @@ public class AddressRangeMapDB implements DBListener {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.store.db.DBListener#tableAdded(db.DBHandle, ghidra.framework.store.db.Table)
-	 */
 	@Override
 	public void tableAdded(DBHandle dbh, Table table) {
 		if (tableName.equals(table.getName())) {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,13 +161,13 @@ public class ItemSerializer {
 	 * @param inputStream a stream for accessing bytes of what may be a packed file
 	 * @return true if the bytes from the inputStream represent the bytes of a packed file
 	 * @throws IOException If there is a problem accessing the inputStream
-	 * @see {@link #isPackedFile(File)}
+	 * @see #isPackedFile(File)
 	 */
 	public static boolean isPackedFile(InputStream inputStream) throws IOException {
 		inputStream.skip(MAGIC_NUMBER_POS);
 		byte[] magicBytes = new byte[MAGIC_NUMBER_SIZE];
 		inputStream.read(magicBytes);
-		BigEndianDataConverter dc = new BigEndianDataConverter();
+		BigEndianDataConverter dc = BigEndianDataConverter.INSTANCE;
 		long magic = dc.getLong(magicBytes);
 		return (magic == MAGIC_NUMBER);
 	}

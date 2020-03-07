@@ -37,8 +37,9 @@ public class AddressBasedIndexMapper implements IndexMapper {
 	public BigInteger map(BigInteger value) {
 		Address address = from.getAddress(value);
 		if (address == null) {
-			return null;
+			return BigInteger.ZERO;
 		}
-		return to.getIndex(address);
+		BigInteger mapped = to.getIndex(address);
+		return mapped != null ? mapped : BigInteger.ZERO;
 	}
 }

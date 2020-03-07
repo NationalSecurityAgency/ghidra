@@ -654,7 +654,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		}
 
 		for (String addr : addrs) {
-			assertTrue("Table model does not contain address table adress: " + addr,
+			assertTrue("Table model does not contain address table address: " + addr,
 				modelAddresses.contains(addr));
 		}
 	}

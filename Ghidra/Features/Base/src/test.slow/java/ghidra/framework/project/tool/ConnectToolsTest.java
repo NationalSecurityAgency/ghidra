@@ -17,8 +17,9 @@ package ghidra.framework.project.tool;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.framework.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.*;
 
 /**
@@ -30,17 +31,9 @@ import ghidra.test.*;
 public class ConnectToolsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private final static String BAD_EVENT_NAME = "TEST_CONNECT_FOR_BAD_EVENT";
-	private final static String DIRECTORY_NAME = AbstractGenericTest.getTestDirectoryPath();
+	private final static String DIRECTORY_NAME = AbstractGTest.getTestDirectoryPath();
 
 	private Project project;
-
-	/**
-	 * Constructor
-	 * @param arg0
-	 */
-	public ConnectToolsTest() {
-		super();
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -56,16 +49,16 @@ public class ConnectToolsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-	/**
-	 * This doTest() routine tests the following requirements:
+	/*
+	 * Tests the following requirements:
 	 * (1) connect two running tools by one or more specified events
 	 * (2) disconnect one or more specified events between two connected tools
 	 */
 	@Test
 	public void testConnectTools() throws Exception {
 
-		Tool producer = new DummyTool("ProducerTool");
-		Tool consumer = new DummyTool("ConsumerTool");
+		PluginTool producer = new DummyTool("ProducerTool");
+		PluginTool consumer = new DummyTool("ConsumerTool");
 
 		ToolConnection tc;
 		String eventName = null;

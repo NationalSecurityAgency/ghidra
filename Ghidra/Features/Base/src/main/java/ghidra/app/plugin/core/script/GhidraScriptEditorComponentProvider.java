@@ -173,17 +173,14 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	}
 
 	private void updateChangedState() {
-		boolean hasChanges = !undoStack.isEmpty();
-		if (saveAction != null && !isReadOnly(scriptSourceFile)) {
-			saveAction.setEnabled(hasChanges);
-		}
-
+		boolean hasChanges = hasChanges();
 		if (hasChanges) {
 			setTitle("*" + title);
 		}
 		else {
 			setTitle(title);
 		}
+		contextChanged();
 	}
 
 	private void clearChanges() {
@@ -268,7 +265,15 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				Object contextObject = context.getContextObject();
-				return contextObject == GhidraScriptEditorComponentProvider.this;
+				if (contextObject != GhidraScriptEditorComponentProvider.this) {
+					return false;
+				}
+
+				if (isReadOnly(scriptSourceFile)) {
+					return false;
+				}
+
+				return hasChanges();
 			}
 		};
 		saveAction.setDescription("Save");
@@ -276,7 +281,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			new ToolBarData(ResourceManager.loadImage("images/disk.png"), "Save"));
 		saveAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_S, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
-		saveAction.setEnabled(false);
+
 		plugin.getTool().addLocalAction(this, saveAction);
 
 		DockingAction refreshAction = new DockingAction("Refresh Script", plugin.getName()) {
@@ -607,8 +612,6 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			writer.print(str);
 			writer.close();
 
-			saveAction.setEnabled(false);
-
 			provider.switchEditor(scriptSourceFile, saveAsFile);
 			scriptSourceFile = saveAsFile;
 
@@ -664,7 +667,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 //==================================================================================================
 	/**
 	 * Special JTextArea that knows how to properly handle it's key events.
-	 * @see {@link #processKeyBinding(KeyStroke, KeyEvent, int, boolean)}
+	 * See {@link #processKeyBinding(KeyStroke, KeyEvent, int, boolean)}
 	 */
 	private class KeyMasterTextArea extends JTextArea {
 
@@ -713,7 +716,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 						return true;
 					}
 
-					return SwingUtilities.notifyAction(action, ks, e, this, e.getModifiers());
+					return SwingUtilities.notifyAction(action, ks, e, this, e.getModifiersEx());
 				}
 			}
 			return false;

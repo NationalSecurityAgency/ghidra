@@ -151,7 +151,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 		catch (PdbException e) {
-			message = "PDB issue: " + e.getMessage();
+			message = e.getMessage();
 			log.appendMsg(getName(), message);
 			log.setStatus(message);
 			return false;

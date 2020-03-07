@@ -237,7 +237,7 @@ public interface CodeUnit extends MemBuffer {
 	public String[] getCommentAsArray(int commentType);
 
 	/**
-	 * Set the comment for the given comment type.  Passing <tt>null</tt> clears the comment
+	 * Set the comment for the given comment type.  Passing <code>null</code> clears the comment
 	 *
 	 * @param commentType either EOL_COMMENT, PRE_COMMENT, 
 	 * POST_COMMENT, or REPEATABLE_COMMENT

@@ -24,7 +24,7 @@ import javax.swing.ImageIcon;
 import docking.action.MenuData;
 import docking.action.ToolBarData;
 import ghidra.framework.client.ClientUtil;
-import ghidra.framework.main.datatable.DomainFileProvider;
+import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.UndoActionDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.Plugin;
@@ -57,7 +57,7 @@ public class VersionControlUndoCheckOutAction extends VersionControlAction {
 	}
 
 	@Override
-	public void actionPerformed(DomainFileProvider context) {
+	public void actionPerformed(DomainFileContext context) {
 		undoCheckOut(context.getSelectedFiles());
 	}
 
@@ -65,7 +65,7 @@ public class VersionControlUndoCheckOutAction extends VersionControlAction {
 	 * Returns true if at least one of the provided domain files is checked out from the repository.
 	 */
 	@Override
-	public boolean isEnabledForContext(DomainFileProvider context) {
+	public boolean isEnabledForContext(DomainFileContext context) {
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
 			if (domainFile.isCheckedOut()) {

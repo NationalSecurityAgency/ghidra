@@ -27,11 +27,11 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
-import ghidra.util.classfinder.ExtensionPoint;
+import ghidra.util.classfinder.ExtensionPointProperties;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@ExtensionPoint.Exclude(reason = "requires explicit instantiation to wrap a script")
+@ExtensionPointProperties(exclude = true) // exclude class from extension point discovery because it has to be directly instantiated in order to wrap the supplied script
 public class GhidraScriptAnalyzerAdapter extends AbstractAnalyzer {
 
 	private ResourceFile scriptFile;

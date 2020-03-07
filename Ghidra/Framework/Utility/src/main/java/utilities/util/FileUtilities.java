@@ -353,7 +353,7 @@ public final class FileUtilities {
 	 * <p>
 	 * Throws an {@link IOException} if there is any problem while creating the directory.
 	 * <p>
-	 * Does not create any missing parent directories.  See {@link #checkMkdirs(File)} instead.
+	 * Does not create any missing parent directories.  See {@link #checkedMkdirs(File)} instead.
 	 * <p>
 	 * Takes into account race conditions with external threads/processes
 	 * creating the same directory at the same time.
@@ -493,13 +493,16 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Copies the contents of <tt>originalDir</tt> to <tt>copyDir</tt>.  If the <tt>originalDir</tt>
-	 * does not exist, then this method will do nothing.  If <tt>copyDir</tt> does not exist, then
+	 * Copies the contents of <code>originalDir</code> to <code>copyDir</code>.  If the <code>originalDir</code>
+	 * does not exist, then this method will do nothing.  If <code>copyDir</code> does not exist, then
 	 * it will be created as necessary.
 	 *
 	 * @param originalDir The directory from which to extract contents
 	 * @param copyDir The directory in which the extracted contents will be placed
-	 * @param fileFilte a filter to apply against the directory's contents
+	 * @param filter a filter to apply against the directory's contents
+	 * @param monitor the task monitor
+	 * @throws IOException if there was a problem accessing the files
+	 * @throws CancelledException if the copy is cancelled
 	 */
 	public final static int copyDir(File originalDir, File copyDir, FileFilter filter,
 			TaskMonitor monitor) throws IOException, CancelledException {
@@ -608,7 +611,7 @@ public final class FileUtilities {
 	/**
 	 * Copy the contents of the specified fromFile to the out stream.
 	 * @param fromFile file data source
-	 * @param toFile destination stream
+	 * @param out destination stream
 	 * @param monitor if specified the progress will be reset and will advance to
 	 * 100% when the copy is complete.
 	  * @throws IOException thrown if there was a problem accessing the files
@@ -632,7 +635,7 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Copy the <tt>in</tt> stream to the <tt>out</tt> stream.  The output stream will
+	 * Copy the <code>in</code> stream to the <code>out</code> stream.  The output stream will
 	 * <b>not</b> be closed when the copy operation is finished.
 	 *
 	 * @param in source input stream
@@ -714,9 +717,9 @@ public final class FileUtilities {
 	 * <p>
 	 * The file is treated as UTF-8 encoded.
 	 * <p>
-	 * @param is the input stream from which to read
+	 * @param url the input stream from which to read
 	 * @return a list of file lines
-	 * @throws IOException
+	 * @throws IOException thrown if there was a problem accessing the files
 	 */
 	public static List<String> getLines(URL url) throws IOException {
 
@@ -840,7 +843,7 @@ public final class FileUtilities {
 	/**
 	 * Returns true if the given file:
 	 * <ol>
-	 *  <li> is <tt>null</tt>, or  </li>
+	 *  <li> is <code>null</code>, or  </li>
 	 * 	<li>{@link File#isFile()} is true, </li>
 	 *  <li>and {@link File#length()} is == 0.</li>
 	 *  </ol>
@@ -887,7 +890,7 @@ public final class FileUtilities {
 	 * the paths are the same or unrelated, then null is returned.
 	 *
 	 * <P>For example, given, in this order, two files with these paths
-	 *  <tt>/a/b</tt> and <tt>/a/b/c</tt>, this method will return 'c'.
+	 *  <code>/a/b</code> and <code>/a/b/c</code>, this method will return 'c'.
 	 *
 	 * @param f1 the parent file
 	 * @param f2 the child file
@@ -1039,8 +1042,8 @@ public final class FileUtilities {
 	 * no case sensitivity checks are done and the original specified File param is returned
 	 * unchanged.
 	 * <p>
-	 * (Put another way: symlink "FILE1" -> "../path/file2", no case sensitive enforcing can be done,
-	 * but symlink "FILE1" -> "../path/file1" will be enforced by this method.)
+	 * (Put another way: symlink "FILE1" -&gt; "../path/file2", no case sensitive enforcing can be done,
+	 * but symlink "FILE1" -&gt; "../path/file1" will be enforced by this method.)
 	 * <p>
 	 * Querying a filepath that does not exist will result in a 'success' and the caller will
 	 * receive the non-existent File instance back.

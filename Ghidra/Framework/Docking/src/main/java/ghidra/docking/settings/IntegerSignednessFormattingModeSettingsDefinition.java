@@ -19,9 +19,7 @@ import ghidra.util.SignednessFormatMode;
 
 /**
  * The settings definition for the numeric display format for handling signed values.
- * <b>
- *
- *
+ * <br>
  */
 public class IntegerSignednessFormattingModeSettingsDefinition implements EnumSettingsDefinition {
 
@@ -75,7 +73,7 @@ public class IntegerSignednessFormattingModeSettingsDefinition implements EnumSe
 	}
 
 	/**
-	 * Set, or clear if <tt>mode</tt> is null, the new mode in the provided settings
+	 * Set, or clear if <code>mode</code> is null, the new mode in the provided settings
 	 * @param settings settings object
 	 * @param mode new value to assign, or null to clear
 	 */

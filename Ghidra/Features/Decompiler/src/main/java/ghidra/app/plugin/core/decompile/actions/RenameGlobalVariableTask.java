@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -24,14 +26,13 @@ import ghidra.util.exception.InvalidInputException;
 
 public class RenameGlobalVariableTask extends RenameTask {
 	private Address address; // Address of global variable
-	private Program program;
 	private SymbolTable symboltable;
 	private Symbol symbol;
 
-	public RenameGlobalVariableTask(PluginTool tool, String old, Address addr, Program prog) {
-		super(tool, old);
+	public RenameGlobalVariableTask(PluginTool tool, Program program, DecompilerPanel panel,
+			ClangToken token, Address addr) {
+		super(tool, program, panel, token, token.getText());
 		address = addr;
-		program = prog;
 		symboltable = program.getSymbolTable();
 		symbol = null;
 	}

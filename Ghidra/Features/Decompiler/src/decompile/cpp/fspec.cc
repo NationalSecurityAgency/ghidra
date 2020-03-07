@@ -550,7 +550,7 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,bool isinput,T
 	// Assume datatype is stored elsewhere and only the pointer is passed
 	AddrSpace *spc = spacebase;
 	if (spc == (AddrSpace *)0)
-	  spc = typefactory.getArch()->getDefaultSpace();
+	  spc = typefactory.getArch()->getDefaultDataSpace();
 	int4 pointersize = spc->getAddrSize();
 	int4 wordsize = spc->getWordSize();
 	Datatype *pointertp = typefactory.getTypePointerAbsolute(pointersize,proto[i],wordsize);
@@ -1096,7 +1096,7 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,bool isinpu
   if (res.back().addr.isInvalid()) { // Could not assign an address (too big)
     AddrSpace *spc = spacebase;
     if (spc == (AddrSpace *)0)
-      spc = typefactory.getArch()->getDefaultSpace();
+      spc = typefactory.getArch()->getDefaultDataSpace();
     int4 pointersize = spc->getAddrSize();
     int4 wordsize = spc->getWordSize();
     Datatype *pointertp = typefactory.getTypePointerAbsolute(pointersize, proto[0], wordsize);
@@ -2478,14 +2478,7 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
   if (res->sym == (Symbol *)0) {
     if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) != scope)
       usepoint = restricted_usepoint; 
-    string name;
-    if (nm.size()==0) {
-      int4 index = i+1;
-      name = scope->buildVariableName(pieces.addr,usepoint,pieces.type,index,Varnode::input);
-    }
-    else
-      name = nm;
-    res->sym = scope->addSymbol(name,pieces.type,pieces.addr,usepoint)->getSymbol();
+    res->sym = scope->addSymbol(nm,pieces.type,pieces.addr,usepoint)->getSymbol();
     scope->setCategory(res->sym,0,i);
     if ((pieces.flags & (Varnode::indirectstorage|Varnode::hiddenretparm)) != 0)
       scope->setAttribute(res->sym,pieces.flags & (Varnode::indirectstorage|Varnode::hiddenretparm));
@@ -4106,6 +4099,7 @@ int4 FuncCallSpecs::transferLockedInputParam(ProtoParameter *param)
     if (startaddr < curtrial.getAddress()) continue;
     Address trialend = curtrial.getAddress() + (curtrial.getSize() - 1);
     if (trialend < lastaddr) continue;
+    if (curtrial.isDefinitelyNotUsed()) return 0;	// Trial has already been stripped
     return curtrial.getSlot();
   }
   if (startaddr.getSpace()->getType() == IPTR_SPACEBASE)

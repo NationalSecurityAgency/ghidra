@@ -114,7 +114,7 @@ class ApplyDiffCommand extends BackgroundCommand implements AnalysisWorker {
 					}
 				}
 				Msg.showError(this, plugin.getListingPanel(), "Error Applying Diff",
-					"An error occured while applying differences.\n"
+					"An error occurred while applying differences.\n"
 						+ "Only some of the differences may have been applied.",
 					(t != null) ? t : e);
 				applyMsg = message + diffControl.getApplyMessage();

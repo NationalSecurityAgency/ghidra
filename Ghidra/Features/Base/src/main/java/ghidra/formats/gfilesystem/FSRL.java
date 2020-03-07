@@ -39,10 +39,10 @@ import ghidra.util.SystemUtilities;
  * Examples (pipes shown in red since they are hard to see):
  * <ul>
  * <li><b>file://dir/subdir</b> -- simplest example, locates a file on local computer filesystem.
- * <li><b>file://dir/subdir/example.zip<font color="red">|</font>zip://readme.txt</b> -- points to a file named "readme.txt" in a zip file.
- * <li><b>file://dir/subdir/example.zip<font color="red">|</font>zip://dir/nested.tar<font color="red">|</font>tar://file.txt</b> -- points to
+ * <li><b>file://dir/subdir/example.zip<span style="color:red">|</span>zip://readme.txt</b> -- points to a file named "readme.txt" in a zip file.
+ * <li><b>file://dir/subdir/example.zip<span style="color:red">|</span>zip://dir/nested.tar<span style="color:red">|</span>tar://file.txt</b> -- points to
  * a file inside a TAR archive, which is inside a ZIP archive, which is on the local filesystem.
- * <li><b>file://dir/subdir/example.zip?MD5=1234567<font color="red">|</font>zip://readme.txt?MD5=987654</b> --
+ * <li><b>file://dir/subdir/example.zip?MD5=1234567<span style="color:red">|</span>zip://readme.txt?MD5=987654</b> --
  * points to a file named "readme.txt" (with a MD5 hash) in a zip file (that has another
  * MD5 hash).
  * </ul>

@@ -17,7 +17,9 @@ package ghidra.app.plugin.core.equate;
 
 import java.util.*;
 
-import docking.widgets.table.AbstractSortedTableModel;
+import docking.widgets.table.*;
+import ghidra.docking.settings.Settings;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
@@ -25,50 +27,16 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.table.ProgramTableModel;
 
-class EquateReferenceTableModel extends AbstractSortedTableModel<EquateReference>
+class EquateReferenceTableModel extends GDynamicColumnTableModel<EquateReference, Object>
 		implements ProgramTableModel {
-	private static final Comparator<EquateReference> ADDRESS_COMPARATOR = (er1, er2) -> {
-		Address addr1 = er1.getAddress();
-		Address addr2 = er2.getAddress();
-		return addr1.compareTo(addr2);
-	};
-
-	private static final Comparator<EquateReference> OPERAND_COMPARATOR = (er1, er2) -> {
-		short opIndex1 = er1.getOpIndex();
-		short opIndex2 = er2.getOpIndex();
-		if (opIndex1 < opIndex2) {
-			return -1;
-		}
-		if (opIndex1 > opIndex2) {
-			return 1;
-		}
-		return 0;
-	};
-
-	static final String ADDR_COL_NAME = "Ref Addr";
-	static final String OPINDEX_COL_NAME = "Op Index";
-
-	static final int ADDR_COL = 0;
-	static final int OPINDEX_COL = 1;
 
 	private EquateTablePlugin plugin;
 	private List<EquateReference> referenceList = new ArrayList<>();
-	private Equate equate;
+	private Equate currentEquate = null;
 
 	EquateReferenceTableModel(EquateTablePlugin plugin) {
+		super(plugin.getTool());
 		this.plugin = plugin;
-	}
-
-	Equate getEquate() {
-		return equate;
-	}
-
-	void setEquate(Equate equate) {
-		this.equate = equate;
-
-		populateReferences();
-
-		fireTableDataChanged();
 	}
 
 	@Override
@@ -77,74 +45,41 @@ class EquateReferenceTableModel extends AbstractSortedTableModel<EquateReference
 	}
 
 	@Override
-	public String getColumnName(int column) {
-		String names[] = { ADDR_COL_NAME, OPINDEX_COL_NAME };
-
-		if (column < 0 || column > 1) {
-			return "UNKNOWN";
-		}
-
-		return names[column];
-	}
-
-	@Override
-	public int findColumn(String columnName) {
-		if (columnName.equals(ADDR_COL_NAME)) {
-			return 0;
-		}
-		else if (columnName.equals(OPINDEX_COL_NAME)) {
-			return 1;
-		}
-		return 0;
-	}
-
-	@Override
-	public Class<?> getColumnClass(int columnIndex) {
-		return EquateReference.class;
-	}
-
-	@Override
-	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		return false;
-	}
-
-	@Override
-	public int getColumnCount() {
-		return 2;
-	}
-
-	@Override
-	public int getRowCount() {
-		return referenceList.size();
-	}
-
-	@Override
-	protected Comparator<EquateReference> createSortComparator(int columnIndex) {
-		switch (columnIndex) {
-			case ADDR_COL:
-				return ADDRESS_COMPARATOR;
-			case OPINDEX_COL:
-				return OPERAND_COMPARATOR;
-			default:
-				return super.createSortComparator(columnIndex);
-		}
-	}
-
-	@Override
-	public Object getColumnValueForRow(EquateReference eqref, int columnIndex) {
-		switch (columnIndex) {
-			case 0:
-			case 1:
-				return eqref;
-			default:
-				return "UNKNOWN";
-		}
-	}
-
-	@Override
 	public List<EquateReference> getModelData() {
 		return referenceList;
 	}
+
+	@Override
+	public Program getProgram() {
+		return plugin.getProgram();
+	}
+
+	@Override
+	protected TableColumnDescriptor<EquateReference> createTableColumnDescriptor() {
+
+		TableColumnDescriptor<EquateReference> descriptor = new TableColumnDescriptor<>();
+
+		descriptor.addVisibleColumn(new EquateReferenceAddressColumn());
+		descriptor.addVisibleColumn(new EquateOperandIndexColumn());
+
+		return descriptor;
+	}
+
+	@Override
+	public Object getDataSource() {
+		return null;
+	}
+
+	Equate getEquate() {
+		return currentEquate;
+	}
+
+	void setEquate(Equate equate) {
+		this.currentEquate = equate;
+
+		populateReferences();
+	}
+
 
 	private void populateReferences() {
 		referenceList.clear();
@@ -155,19 +90,16 @@ class EquateReferenceTableModel extends AbstractSortedTableModel<EquateReference
 		}
 
 		EquateTable equateTable = program.getEquateTable();
-		if (equateTable == null || equate == null) {
+		if (equateTable == null || currentEquate == null) {
 			return;
 		}
 
-		EquateReference[] refs = equate.getReferences();
-		for (EquateReference ref : refs) {
-			referenceList.add(ref);
-		}
-	}
+		// @formatter:off
+		Arrays.asList(currentEquate.getReferences())
+			.forEach(r -> referenceList.add(r));
+		// @formatter:on
 
-	@Override
-	public boolean isSortable(int columnIndex) {
-		return true;
+		fireTableDataChanged();
 	}
 
 	@Override
@@ -189,9 +121,35 @@ class EquateReferenceTableModel extends AbstractSortedTableModel<EquateReference
 		return new ProgramSelection(addressSet);
 	}
 
-	@Override
-	public Program getProgram() {
-		return plugin.getProgram();
+	private class EquateReferenceAddressColumn
+			extends AbstractDynamicTableColumn<EquateReference, Address, Object> {
+
+		@Override
+		public String getColumnName() {
+			return "Ref Addr";
+		}
+
+		@Override
+		public Address getValue(EquateReference rowObject, Settings settings, Object data,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			return rowObject.getAddress();
+		}
+
 	}
 
+	private class EquateOperandIndexColumn
+			extends AbstractDynamicTableColumn<EquateReference, Short, Object> {
+
+		@Override
+		public String getColumnName() {
+			return "Op Index";
+		}
+
+		@Override
+		public Short getValue(EquateReference rowObject, Settings settings, Object data,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			return rowObject.getOpIndex();
+		}
+
+	}
 }

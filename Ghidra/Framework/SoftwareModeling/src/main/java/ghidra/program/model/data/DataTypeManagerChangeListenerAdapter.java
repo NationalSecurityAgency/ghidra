@@ -22,80 +22,47 @@ import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
  */
 public class DataTypeManagerChangeListenerAdapter implements DataTypeManagerChangeListener {
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryAdded(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryAdded(DataTypeManager dtm, CategoryPath path) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryMoved(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryMoved(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryRemoved(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryRemoved(DataTypeManager dtm, CategoryPath path) {
 	}
 
-	/** 
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#categoryRenamed(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeAdded(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeAdded(DataTypeManager dtm, DataTypePath path) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeChanged(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeMoved(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeMoved(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeRemoved(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeRemoved(DataTypeManager dtm, DataTypePath path) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeRenamed(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#dataTypeReplaced(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, ghidra.program.model.data.CategoryPath)
-	 */
 	@Override
 	public void dataTypeReplaced(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath,
 			DataType newDataType) {
 	}
 
-	/**
-	 * @see ghidra.program.model.data.DataTypeManagerChangeListener#favoritesChanged(ghidra.program.model.data.DataTypeManager, ghidra.program.model.data.CategoryPath, boolean)
-	 */
 	@Override
 	public void favoritesChanged(DataTypeManager dtm, DataTypePath path, boolean isFavorite) {
 	}

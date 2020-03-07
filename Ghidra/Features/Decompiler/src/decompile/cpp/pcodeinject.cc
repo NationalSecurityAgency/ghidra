@@ -74,6 +74,8 @@ void InjectPayload::restoreXml(const Element *el)
     }
     else if (elname == "dynamic")
       dynamic = xml_readbool(el->getAttributeValue(i));
+    else if (elname == "incidentalcopy")
+      incidentalCopy = xml_readbool(el->getAttributeValue(i));
   }
   const List &list(el->getChildren());
   List::const_iterator iter;
@@ -115,7 +117,7 @@ void ExecutablePcode::build(void)
   icontext.clear();
   uintb uniqReserve = 0x10;			// Temporary register space reserved for inputs and output
   Architecture *glb = emulator.getArch();
-  AddrSpace *codeSpace = glb->getDefaultSpace();
+  AddrSpace *codeSpace = glb->getDefaultCodeSpace();
   AddrSpace *uniqSpace = glb->getUniqueSpace();
   icontext.baseaddr = Address(codeSpace,0x1000);	// Fake address
   icontext.nextaddr = icontext.baseaddr;

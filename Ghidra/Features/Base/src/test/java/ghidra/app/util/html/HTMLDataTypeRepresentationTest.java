@@ -997,7 +997,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 	}
 
 	private EnumDataType createEnumDataType() {
-		EnumDataType enumDataType = new EnumDataType("myEnum", 10);
+		EnumDataType enumDataType = new EnumDataType("myEnum", 1);
 
 		enumDataType.add("COMDLG32", 0x1);
 		enumDataType.add("SHELL32", 0x3);

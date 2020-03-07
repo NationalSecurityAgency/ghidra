@@ -149,6 +149,9 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	public void flowToAddress(Address fromAddr, Address toAddr) {
+		// make sure address in same space as from, might be in an overlay
+		toAddr = fromAddr.getAddressSpace().getOverlayAddress(toAddr);
+		
 		currentAddress = toAddr;
 		offsetContext.flowToAddress(fromAddr, toAddr);
 		spaceContext.flowToAddress(fromAddr, toAddr);
@@ -160,6 +163,9 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	public void flowStart(Address fromAddr, Address toAddr) {
+		// make sure address in same space as from, might be in an overlay
+		toAddr = fromAddr.getAddressSpace().getOverlayAddress(toAddr);
+		
 		currentAddress = toAddr;
 
 		this.lastSet = new HashMap<Varnode, Address>();  // clear out any interim last sets...  rely on allLastSet now
@@ -169,6 +175,9 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	public void copyToFutureFlowState(Address fromAddr, Address toAddr) {
+		// make sure address in same space as from, might be in an overlay
+		toAddr = fromAddr.getAddressSpace().getOverlayAddress(toAddr);
+		
 		offsetContext.copyToFutureFlowState(fromAddr, toAddr);
 		spaceContext.copyToFutureFlowState(fromAddr, toAddr);
 	}
@@ -177,6 +186,10 @@ public class VarnodeContext implements ProcessorContext {
 		if (toAddr == null) {
 			return false;
 		}
+		
+		// make sure address in same space as from, might be in an overlay
+		toAddr = fromAddr.getAddressSpace().getOverlayAddress(toAddr);
+		
 		ArrayList<RegisterValue> conflicts = offsetContext.mergeToFutureFlowState(fromAddr, toAddr);
 		ArrayList<RegisterValue> spaceConflicts =
 			spaceContext.mergeToFutureFlowState(fromAddr, toAddr);
@@ -565,9 +578,8 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	/**
-	 * Check if a symbol is read_only.
+	 * Check if the symbol at the address is read_only.
 	 * 
-	 * @param sym - symbol to check
 	 * @param addr - address of the symbol
 	 * 
 	 * @return true if the block is read_only, and there are no write references.
@@ -824,11 +836,13 @@ public class VarnodeContext implements ProcessorContext {
 		return lastSetAddr;
 	}
 
+	// TODO unused parameter bval
 	/**
 	 * return the location that this varnode was last set
 	 * This is a transient thing, so it should only be used as a particular flow is being processed...
 	 * 
-	 * @param reg
+	 * @param rvar the register varnode
+	 * @param bval this parameter is unused.
 	 * @return address that the register was set.
 	 */
 	public Address getLastSetLocation(Varnode rvar, BigInteger bval) {
@@ -908,9 +922,10 @@ public class VarnodeContext implements ProcessorContext {
 	 * get the value of a register as a varnode (value, space, size)
 	 * 
 	 * @param reg  register to get value for
-	 * @param address  location for value
+	 * @param fromAddr  from address
+	 * @param toAddr to address
 	 * @param signed  true if signed
-	 * @return  null if the register has no value
+	 * @return the register value or null
 	 */
 	public Varnode getRegisterVarnodeValue(Register reg, Address fromAddr, Address toAddr,
 			boolean signed) {

@@ -81,6 +81,35 @@ PcodeOp::PcodeOp(int4 s,const SeqNum &sq) : start(sq),inrefs(s)
     inrefs[i] = (Varnode *)0;
 }
 
+/// \brief Find the slot for a given Varnode, which may be take up multiple input slots
+///
+/// In the rare case that \b this PcodeOp takes the same Varnode as input multiple times,
+/// use the specific descendant iterator producing \b this PcodeOp to work out the corresponding slot.
+/// Every slot containing the given Varnode will be produced exactly once over the course of iteration.
+/// \param vn is the given Varnode
+/// \param firstSlot is the first instance of the Varnode in \b this input list
+/// \param iter is the specific descendant iterator producing \b this
+/// \return the slot corresponding to the iterator
+int4 PcodeOp::getRepeatSlot(const Varnode *vn,int4 firstSlot,list<PcodeOp *>::const_iterator iter) const
+
+{
+  int4 count = 1;
+  for(list<PcodeOp *>::const_iterator oiter=vn->beginDescend();oiter != iter;++oiter) {
+    if ((*oiter) == this)
+      count += 1;
+  }
+  if (count == 1) return firstSlot;
+  int4 recount = 1;
+  for(int4 i=firstSlot+1;i<inrefs.size();++i) {
+    if (inrefs[i] == vn) {
+      recount += 1;
+      if (recount == count)
+	return i;
+    }
+  }
+  return -1;
+}
+
 /// Can this be collapsed to a copy op, i.e. are all inputs constants
 /// \return \b true if this op can be callapsed
 bool PcodeOp::isCollapsible(void) const
@@ -768,6 +797,24 @@ void PcodeOpBank::moveSequenceDead(PcodeOp *firstop,PcodeOp *lastop,PcodeOp *pre
   ++previter;
   if (previter != firstop->insertiter) // Check for degenerate move
     deadlist.splice(previter,deadlist,firstop->insertiter,enditer);
+}
+
+/// Incidental COPYs are not considered active use of parameter passing Varnodes by
+/// parameter analysis algorithms.
+/// \param firstop is the start of the range of incidental COPY ops
+/// \param lastop is the end of the range of incidental COPY ops
+void PcodeOpBank::markIncidentalCopy(PcodeOp *firstop,PcodeOp *lastop)
+
+{
+  list<PcodeOp *>::iterator iter = firstop->insertiter;
+  list<PcodeOp *>::iterator enditer = lastop->insertiter;
+  ++enditer;
+  while(iter != enditer) {
+    PcodeOp *op = *iter;
+    ++iter;
+    if (op->code() == CPUI_COPY)
+      op->setAdditionalFlag(PcodeOp::incidental_copy);
+  }
 }
 
 /// Find the first PcodeOp at or after the given Address assuming they have not

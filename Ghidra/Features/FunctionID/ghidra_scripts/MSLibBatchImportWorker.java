@@ -64,11 +64,11 @@ import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveHeader;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveMemberHeader;
 import ghidra.app.util.importer.*;
-import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader;
+import ghidra.app.util.opinion.MSCoffLoader;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
@@ -77,41 +77,7 @@ import utilities.util.FileUtilities;
 
 public class MSLibBatchImportWorker extends GhidraScript {
 	final static Predicate<Loader> LOADER_FILTER = new SingleLoaderFilter(MSCoffLoader.class);
-	final static LoadSpecChooser LOADSPEC_CHOOSER = new LoadSpecChooser() {
-		@Override
-		public LoadSpec choose(List<LoadSpec> loadSpecs) {
-			for (LoadSpec loadSpec : loadSpecs) {
-				LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
-				if (lcsp.compilerSpecID.getIdAsString().equals("windows")) {
-					return loadSpec;
-				}
-			}
-			for (LoadSpec loadSpec : loadSpecs) {
-				LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
-				try {
-					if (lcsp.getLanguageDescription().getEndian() == Endian.LITTLE &&
-						lcsp.getLanguageDescription().getVariant().contains("v7")) {
-						return loadSpec;
-					}
-				}
-				catch (LanguageNotFoundException e) {
-					// ignore...not sure why this happened
-				}
-			}
-			for (LoadSpec loadSpec : loadSpecs) {
-				LanguageCompilerSpecPair lcsp = loadSpec.getLanguageCompilerSpec();
-				if (lcsp.compilerSpecID.getIdAsString().equals("gcc")) {
-					return loadSpec;
-				}
-			}
-			return null;
-		}
-
-		@Override
-		public boolean usePreferred() {
-			return true;
-		}
-	};
+	final static LoadSpecChooser LOADSPEC_CHOOSER = new CsHintLoadSpecChooser("windows");
 
 	private static String getProcessId(String fallback) {
 		// something like '<pid>@<hostname>', at least in SUN / Oracle JVMs

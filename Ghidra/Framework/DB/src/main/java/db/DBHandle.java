@@ -670,7 +670,6 @@ public class DBHandle {
 	 * @param newDatabaseId database ID to be forced for new database or null to generate 
 	 * new database ID
 	 * @param monitor progress monitor
-	 * @param associateWithNewFile if true this handle will be associated with the new file
 	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if monitor cancels operation
 	 */
@@ -807,7 +806,7 @@ public class DBHandle {
 	 * Load existing tables from database.
 	 * @throws IOException thrown if IO error occurs.
 	 */
-	private void loadTables() {
+	private void loadTables() throws IOException {
 
 		tables = new Hashtable<>();
 		TableRecord[] tableRecords = masterTable.getTableRecords();
@@ -915,10 +914,11 @@ public class DBHandle {
 	}
 
 	/**
-	 * 
-	 * @param table
-	 * @param id
-	 * @throws DuplicateNameException
+	 * Changes the name of an existing table.
+	 * @param oldName the old name of the table
+	 * @param newName the new name of the table
+	 * @throws DuplicateNameException if a table with the new name already exists
+	 * @return true if the name was changed successfully
 	 */
 	public synchronized boolean setTableName(String oldName, String newName)
 			throws DuplicateNameException {

@@ -53,7 +53,7 @@ public abstract class LocalFileSystem implements FileSystem {
 	/**
 	 * Hidden directory name prefix.
 	 * Should only be prepended to an escaped base-name.
-	 * @see #escapeHiddenPrefixChars(String)
+	 * @see #escapeHiddenDirPrefixChars(String)
 	 */
 	public static final char HIDDEN_DIR_PREFIX_CHAR = '~';
 	public static final String HIDDEN_DIR_PREFIX = Character.toString(HIDDEN_DIR_PREFIX_CHAR);
@@ -169,7 +169,7 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	/**
 	 * Constructor.
-	 * @param file path path for root directory.
+	 * @param rootPath root path directory.
 	 * @param isVersioned if true item versioning will be enabled.
 	 * @param readOnly if true modifications within this file-system will not be allowed
 	 * and result in an ReadOnlyException
@@ -273,14 +273,13 @@ public abstract class LocalFileSystem implements FileSystem {
 	 * significant performance impact.  This does not provide locking which may be
 	 * required for a shared environment (e.g., checkin locking is only managed by a
 	 * single instance).
-	 * @param validationRequired
 	 */
 	public static void setValidationRequired() {
 		refreshRequired = true;
 	}
 
 	/**
-	 * @returns true if folder item resources must be refreshed.
+	 * @return true if folder item resources must be refreshed.
 	 * @see #setValidationRequired()
 	 */
 	public static boolean isRefreshRequired() {
@@ -699,7 +698,7 @@ public abstract class LocalFileSystem implements FileSystem {
 	}
 
 	/**
-	 * @returns the maximum name length permitted for folders or items.
+	 * @return the maximum name length permitted for folders or items.
 	 */
 	public abstract int getMaxNameLength();
 

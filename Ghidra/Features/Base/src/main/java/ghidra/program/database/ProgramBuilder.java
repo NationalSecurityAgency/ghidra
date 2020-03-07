@@ -70,6 +70,7 @@ public class ProgramBuilder {
 	public static final String _MIPS_6432 = "MIPS:BE:64:64-32addr";
 	public static final String _PPC_32 = "PowerPC:BE:32:default";
 	public static final String _PPC_6432 = "PowerPC:BE:64:64-32addr";
+	public static final String _PPC_64 = "PowerPC:BE:64:default";
 
 	public static final String _TOY_BE = "Toy:BE:32:default";
 	public static final String _TOY_BE_POSITIVE = "Toy:BE:32:posStack";
@@ -80,6 +81,8 @@ public class ProgramBuilder {
 	public static final String _TOY64_LE = "Toy:LE:64:default";
 
 	public static final String _TOY = _TOY_BE;
+
+	private static final String LANGUAGE_DELIMITER = ":";
 
 	protected static final String _TOY_LANGUAGE_PREFIX = "Toy:";
 
@@ -116,7 +119,6 @@ public class ProgramBuilder {
 	 * Construct program builder using specified language and default compiler spec
 	 * @param name program name
 	 * @param languageName supported language ID (includes all Toy language IDs)
-	 * @param compilerSpecID compiler specification ID (if null default spec will be used)
 	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
 	 * @throws Exception
 	 */
@@ -250,37 +252,43 @@ public class ProgramBuilder {
 		}
 
 		ResourceFile ldefFile = null;
-		if (_X86.equals(languageName) || _X64.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("x86", "languages/x86.ldefs");
+		if (languageName.contains(LANGUAGE_DELIMITER)) {
+			switch (languageName.split(LANGUAGE_DELIMITER)[0]) {
+				case "x86":
+					ldefFile = Application.getModuleDataFile("x86", "languages/x86.ldefs");
+					break;
+				case "8051":
+					ldefFile = Application.getModuleDataFile("8051", "languages/8051.ldefs");
+					break;
+				case "sparc":
+					ldefFile = Application.getModuleDataFile("Sparc", "languages/SparcV9.ldefs");
+					break;
+				case "ARM":
+					ldefFile = Application.getModuleDataFile("ARM", "languages/ARM.ldefs");
+					break;
+				case "AARCH64":
+					ldefFile = Application.getModuleDataFile("AARCH64", "languages/AARCH64.ldefs");
+					break;
+				case "MIPS":
+					ldefFile = Application.getModuleDataFile("MIPS", "languages/mips.ldefs");
+					break;
+				case "Toy":
+					ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
+					break;
+				case "PowerPC":
+					ldefFile = Application.getModuleDataFile("PowerPC", "languages/ppc.ldefs");
+					break;
+				default:
+					break;
+			}
 		}
-		else if (_X86_16_REAL_MODE.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("x86", "languages/x86.ldefs");
-		}
-		else if (_8051.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("8051", "languages/8051.ldefs");
-		}
-		else if (_SPARC64.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("Sparc", "languages/SparcV9.ldefs");
-		}
-		else if (_ARM.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("ARM", "languages/ARM.ldefs");
-		}
-		else if (_AARCH64.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("AARCH64", "languages/AARCH64.ldefs");
-		}
-		else if (_MIPS.equals(languageName) || _MIPS_6432.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("MIPS", "languages/mips.ldefs");
-		}
-		else if (languageName.startsWith(_TOY_LANGUAGE_PREFIX)) {
-			ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
-		}
-		else if (_PPC_32.equals(languageName) || _PPC_6432.equals(languageName)) {
-			ldefFile = Application.getModuleDataFile("PowerPC", "languages/ppc.ldefs");
-		}
-
 		if (ldefFile != null) {
 			LanguageService languageService = DefaultLanguageService.getLanguageService(ldefFile);
-			language = languageService.getLanguage(new LanguageID(languageName));
+			try {
+				language = languageService.getLanguage(new LanguageID(languageName));
+			} catch (LanguageNotFoundException e) {
+				throw new LanguageNotFoundException("Unsupported test language: " + languageName);
+			}
 			LANGUAGE_CACHE.put(languageName, language);
 			return language;
 		}
@@ -368,7 +376,7 @@ public class ProgramBuilder {
 	 * <p>
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
-	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseBytes(String)}.
+	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
 	 * @throws Exception
 	 */
 	public void setBytes(String address, String byteString) throws Exception {
@@ -384,7 +392,7 @@ public class ProgramBuilder {
 	 * <p>
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
-	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseBytes(String)}.
+	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
 	 * @param disassemble boolean flag.
 	 * @throws Exception
 	 */
@@ -687,6 +695,14 @@ public class ProgramBuilder {
 		return c;
 	}
 
+	public void applyFixedLengthDataType(String addressString, DataType dt, int length)
+			throws CodeUnitInsertionException {
+		startTransaction();
+		DataUtilities.createData(program, addr(addressString), dt, length, false,
+			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+		endTransaction();
+	}
+
 	public void applyDataType(String addressString, DataType dt) {
 		applyDataType(addressString, dt, 1);
 	}
@@ -866,7 +882,7 @@ public class ProgramBuilder {
 	}
 
 	public Data createString(String address, String string, Charset charset, boolean nullTerminate,
-			AbstractStringDataType dataType) throws Exception {
+			DataType dataType) throws Exception {
 		if (nullTerminate) {
 			string = string + "\0";
 		}
@@ -875,7 +891,7 @@ public class ProgramBuilder {
 	}
 
 	public Data createString(String address, byte[] stringBytes, Charset charset,
-			AbstractStringDataType dataType) throws Exception {
+			DataType dataType) throws Exception {
 		Address addr = addr(address);
 		setBytes(address, stringBytes);
 		if (dataType != null) {
@@ -1049,7 +1065,7 @@ public class ProgramBuilder {
 			ExternalManager extMgr = program.getExternalManager();
 			Namespace namespace = extMgr.addExternalLibraryName(libraryName, sourceType);
 
-			if (externalLabel != null && externalLabel.indexOf(Namespace.NAMESPACE_DELIMITER) > 0) {
+			if (externalLabel != null && externalLabel.indexOf(Namespace.DELIMITER) > 0) {
 				// External manager API does not yet support creation of namespaces within
 				// library so we handle that here
 				SymbolPath symPath = new SymbolPath(externalLabel);

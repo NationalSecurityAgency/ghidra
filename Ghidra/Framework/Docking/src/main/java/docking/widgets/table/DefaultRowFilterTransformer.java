@@ -116,7 +116,7 @@ public class DefaultRowFilterTransformer<ROW_OBJECT> implements RowFilterTransfo
 		}
 
 		ColumnConstraintFilterMode mode = renderer.getColumnConstraintFilterMode();
-		return mode == ColumnConstraintFilterMode.USE_COLUMN_CONSTRAINTS_ONLY;
+		return mode == ColumnConstraintFilterMode.ALLOW_CONSTRAINTS_FILTER_ONLY;
 	}
 
 	private String getRenderedColumnValue(Object columnValue, int columnIndex) {

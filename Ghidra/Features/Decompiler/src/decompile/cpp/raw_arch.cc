@@ -71,7 +71,8 @@ void RawBinaryArchitecture::resolveArchitecture(void)
 void RawBinaryArchitecture::postSpecFile(void)
 
 {
-  ((RawLoadImage *)loader)->attachToSpace(getDefaultSpace());	 // Attach default space to loader
+  Architecture::postSpecFile();
+  ((RawLoadImage *)loader)->attachToSpace(getDefaultCodeSpace());	 // Attach default space to loader
 }
 
 RawBinaryArchitecture::RawBinaryArchitecture(const string &fname,const string &targ,ostream *estream)

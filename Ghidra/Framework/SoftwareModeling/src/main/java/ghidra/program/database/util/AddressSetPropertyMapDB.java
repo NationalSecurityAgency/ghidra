@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,10 @@
  */
 package ghidra.program.database.util;
 
+import java.util.ConcurrentModificationException;
+
+import db.*;
+import db.util.ErrorHandler;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
@@ -25,11 +28,6 @@ import ghidra.util.Lock;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.ConcurrentModificationException;
-
-import db.*;
-import db.util.ErrorHandler;
 
 /**
  * AddressSetPropertyMap that uses a RangeMapDB to maintain a set of addresses.
@@ -74,8 +72,8 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 			DBHandle dbh = program.getDBHandle();
 			String tableName = AddressSetPropertyMapDB.TABLE_PREFIX + mapName;
 			if (dbh.getTable(tableName) != null) {
-				throw new DuplicateNameException("Address Set Property Map named " + mapName +
-					" already exists.");
+				throw new DuplicateNameException(
+					"Address Set Property Map named " + mapName + " already exists.");
 			}
 
 			return new AddressSetPropertyMapDB(program, mapName, program, addrMap, lock);
@@ -91,9 +89,8 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 		this.mapName = mapName;
 		this.lock = lock;
 
-		propertyMap =
-			new AddressRangeMapDB(program.getDBHandle(), program.getAddressMap(),
-				program.getLock(), MY_PREFIX + mapName, errHandler, BooleanField.class, true);
+		propertyMap = new AddressRangeMapDB(program.getDBHandle(), program.getAddressMap(),
+			program.getLock(), MY_PREFIX + mapName, errHandler, BooleanField.class, true);
 	}
 
 	@Override
@@ -114,7 +111,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 	 * @see ghidra.program.model.util.AddressSetPropertyMap#add(ghidra.program.model.address.AddressSet)
 	 */
 	@Override
-	public void add(AddressSet addressSet) {
+	public void add(AddressSetView addressSet) {
 		checkDeleted();
 
 		lock.acquire();
@@ -135,7 +132,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 	 * @see ghidra.program.model.util.AddressSetPropertyMap#set(ghidra.program.model.address.AddressSet)
 	 */
 	@Override
-	public void set(AddressSet addressSet) {
+	public void set(AddressSetView addressSet) {
 		checkDeleted();
 		lock.acquire();
 		try {
@@ -169,7 +166,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 	 * @see ghidra.program.model.util.AddressSetPropertyMap#remove(ghidra.program.model.address.AddressSet)
 	 */
 	@Override
-	public void remove(AddressSet addressSet) {
+	public void remove(AddressSetView addressSet) {
 		checkDeleted();
 		lock.acquire();
 		try {

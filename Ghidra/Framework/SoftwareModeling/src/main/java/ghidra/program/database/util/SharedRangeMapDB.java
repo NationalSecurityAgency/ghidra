@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +30,7 @@ import db.util.ErrorHandler;
  * This map allows values to share a given range with other values.
  * @deprecated This map class should not be used except by the OldFunctionMapDB class
  */
+@Deprecated
 public class SharedRangeMapDB {
 
 	private DBHandle dbHandle;

@@ -34,7 +34,7 @@ public class FunctionSignatureSourceFieldLocation extends FunctionLocation {
 	/**
 	 * Construct a new FunctionSignatureFieldLocation object.
 	 * 
-	 * @param the program of the location
+	 * @param program the program of the location
 	 * @param locationAddr the address of this location.
 	 * @param functionAddr the function address
 	 * @param source the function signature SourceType at this location.

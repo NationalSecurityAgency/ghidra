@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.bin.format.pdb;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -314,6 +313,33 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 	@Test
 	public void testComplexStructureWithFlexArray() throws Exception {
 
+		StructureDataType struct = new StructureDataType(CategoryPath.ROOT, "struct", 0, dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(
+				new MyPdbMember("a", "char", 0),
+				new MyPdbMember("e", "char[0]", 1));
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 1, members, this,
+			TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/struct\n" + 
+			"Aligned\n" + 
+			"Structure struct {\n" + 
+			"   0   char   1   a   \"\"\n" + 
+			"   char[0]   0   e   \"\"\n" + 
+			"}\n" + 
+			"Size = 1   Actual Alignment = 1", struct, true);
+		//@formatter:on
+	}
+
+	@Test
+	public void testComplexStructureWithFlexArray1() throws Exception {
+
 		UnionDataType struct = new UnionDataType(CategoryPath.ROOT, "union", dataMgr);
 
 		//@formatter:off
@@ -400,6 +426,49 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   char[0]   0   f   \"\"\n" + 
 			"}\n" + 
 			"Size = 1   Actual Alignment = 1\n", struct, true);
+		//@formatter:on
+	}
+
+	@Test
+	public void testComplexStructureWithFlexArray3() throws Exception {
+
+		UnionDataType struct = new UnionDataType(CategoryPath.ROOT, "union", dataMgr);
+
+		//@formatter:off
+		List<MyPdbMember> members =
+			CollectionUtils.asList(
+				new MyPdbMember("a", "char", 0),
+				new MyPdbMember("flex", "char[0]", 1),
+				new MyPdbMember("b", "char", 0),
+				new MyPdbMember("c", "char", 1));
+		//@formatter:on
+
+		assertTrue(DefaultCompositeMember.applyDataTypeMembers(struct, false, 1, members, this,
+			TaskMonitor.DUMMY));
+
+		//@formatter:off
+		CompositeTestUtils.assertExpectedComposite(this,
+			"/union\n" + 
+			"Unaligned\n" + 
+			"Union union {\n" + 
+			"   0   union_s_0   1   _s_0   \"\"\n" + 
+			"   0   union_s_1   2   _s_1   \"\"\n" + 
+			"}\n" + 
+			"Size = 2   Actual Alignment = 1\n" + 
+			"/union/union_s_0\n" + 
+			"Aligned\n" + 
+			"Structure union_s_0 {\n" + 
+			"   0   char   1   a   \"\"\n" + 
+			"   char[0]   0   flex   \"\"\n" + 
+			"}\n" + 
+			"Size = 1   Actual Alignment = 1\n" + 
+			"/union/union_s_1\n" + 
+			"Aligned\n" + 
+			"Structure union_s_1 {\n" + 
+			"   0   char   1   b   \"\"\n" + 
+			"   1   char   1   c   \"\"\n" + 
+			"}\n" + 
+			"Size = 2   Actual Alignment = 1", struct, true);
 		//@formatter:on
 	}
 

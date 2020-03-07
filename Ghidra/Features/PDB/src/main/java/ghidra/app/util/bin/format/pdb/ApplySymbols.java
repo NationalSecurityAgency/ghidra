@@ -70,7 +70,8 @@ class ApplySymbols {
 			int length = XmlUtilities.parseInt(elem.getAttribute("length"));
 			String tag = elem.getAttribute("tag");
 //			String kind = elem.getAttribute("kind");
-			String datatype = elem.getAttribute("datatype");
+			String datatype =
+				SymbolUtilities.replaceInvalidChars(elem.getAttribute("datatype"), false);
 //			String undecorated  =  elem.getAttribute("undecorated");
 
 			tagSet.add(tag);
@@ -101,7 +102,7 @@ class ApplySymbols {
 			}
 
 			// Place compiler generated symbols (e.g., $LN9) within containing function when possible
-			if (name.startsWith("$") && !name.contains(Namespace.NAMESPACE_DELIMITER)) {
+			if (name.startsWith("$") && !name.contains(Namespace.DELIMITER)) {
 				Function f = functionManager.getFunctionContaining(address);
 				if (f != null && !f.getName().equals(name)) {
 					name = NamespaceUtils.getNamespaceQualifiedName(f, name, true);
@@ -116,9 +117,8 @@ class ApplySymbols {
 			}
 
 			// Don't create label for Data since a separate symbol should also exist with a better name
-			if (!"Data".equals(tag) &&
-				!pdbParser.createSymbol(address, name, forcePrimary, log)) {
-				log.appendMsg("Unable to create symbol " + name + " at " + address);
+			if (!"Data".equals(tag)) {
+				pdbParser.createSymbol(address, name, forcePrimary, log);
 			}
 
 			////////////

@@ -15,8 +15,6 @@
  */
 package ghidra.app.analyzers;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -51,7 +49,6 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 	private static final String DESCRIPTION =
 		"Search for architecture specific byte patterns: typically starts of functions";
 	private static final String PRE_FUNCTION_MATCH_PROPERTY_NAME = "PreFunctionMatch";
-	private static final int RESTRICTED_PATTERN_BYTE_RANGE = 32;
 	private final static String OPTION_NAME_DATABLOCKS = "Search Data Blocks";
 	private static final String OPTION_DESCRIPTION_DATABLOCKS =
 		"Search for byte patterns in blocks that are not executable";
@@ -214,7 +211,6 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			applyActionToSet(program, addr, funcResult, match);
 		}
 
-
 		protected boolean checkPreRequisites(Program program, Address addr) {
 			/**
 			 * If the match's mark point occurs in undefined data, schedule disassembly
@@ -254,10 +250,9 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 					return false;
 				}
 			}
-			
+
 			return true;
 		}
-		
 
 		protected void applyActionToSet(Program program, Address addr, AddressSet resultSet,
 				Match match) {
@@ -632,25 +627,34 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			return false;
 		}
 
-		AddressSet restrictedSet = removeNotSearchedAddresses(program, set);
+		boolean doExecutableBlocksOnly = checkForExecuteBlock(program) && executableBlocksOnly;
 
 		// clear out any previous potential matches, because we are re-looking at these places
 		//   this will keep cruft from accumulating in the property map.
-		getOrCreatePotentialMatchPropertyMap(program).remove(restrictedSet);
+		getOrCreatePotentialMatchPropertyMap(program).remove(set);
 
-		MemoryBlock[] blocks = program.getMemory().getBlocks();
-		for (MemoryBlock block2 : blocks) {
-			MemoryBlock block = block2;
-			if (!restrictedSet.intersects(block.getStart(), block.getEnd())) {
-				continue;
+		MemoryBytePatternSearcher patternSearcher;
+		patternSearcher = new MemoryBytePatternSearcher("Function Starts", root) {
+
+			@Override
+			public void preMatchApply(MatchAction[] actions, Address addr) {
+				contextValueList = null; // make sure, only context from these actions used
 			}
-			try {
-				searchBlock(root, program, block, restrictedSet, monitor);
+
+			@Override
+			public void postMatchApply(MatchAction[] actions, Address addr) {
+				// Actions might have set context, check if postcondition failed first
+				if (!postreqFailedResult.contains(addr)) {
+					setCurrentContext(program, addr);
+				}
+				// get rid of the context list.
+				contextValueList = null;
 			}
-			catch (IOException e) {
-				log.appendMsg("Unable to scan block " + block.getName() + " for function starts");
-			}
-		}
+		};
+		patternSearcher.setSearchExecutableOnly(doExecutableBlocksOnly);
+
+		patternSearcher.search(program, set, monitor);
+
 		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
 		if (!disassemResult.isEmpty()) {
 			analysisManager.disassemble(disassemResult);
@@ -708,34 +712,17 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 	}
 
 	/**
-	 * Get rid of any blocks from the address set that shouldn't be searched.
-	 *
-	 * @param program
-	 * @param bset
-	 * @return
+	 * @return true - if there are any blocks marked executable
 	 */
-	private AddressSet removeNotSearchedAddresses(Program program, AddressSetView bset) {
-		AddressSet restrictedSet = new AddressSet(bset);
+	private boolean checkForExecuteBlock(Program program) {
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
-		boolean hasExecutable = false;
+
 		for (MemoryBlock block : blocks) {
 			if (block.isExecute()) {
-				hasExecutable = true;
+				return true;
 			}
 		}
-		for (MemoryBlock block : blocks) {
-			if (!block.isInitialized()) {
-				restrictedSet.deleteRange(block.getStart(), block.getEnd());
-				continue;
-			}
-			if (executableBlocksOnly && hasExecutable) {
-				if (!block.isExecute()) {
-					restrictedSet.deleteRange(block.getStart(), block.getEnd());
-					continue;
-				}
-			}
-		}
-		return restrictedSet;
+		return false;
 	}
 
 	@Override
@@ -814,94 +801,6 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			return null;
 		}
 		return patlist;
-	}
-
-	/**
-	 * Search through bytes of a memory block using the finite state machine -root-
-	 * Apply any additional rules for matching patterns.
-	 * @param program is the Program being searched
-	 * @param block is the specific block of bytes being searched
-	 * @throws IOException
-	 * @throws CancelledException
-	 */
-	private void searchBlock(SequenceSearchState root, Program program, MemoryBlock block,
-			AddressSetView restrictSet, TaskMonitor monitor)
-			throws IOException, CancelledException {
-
-		// if no restricted set, make restrict set the full block
-		AddressSet doneSet = new AddressSet(restrictSet);
-		if (doneSet.isEmpty()) {
-			doneSet.addRange(block.getStart(), block.getEnd());
-		}
-		doneSet = doneSet.intersectRange(block.getStart(), block.getEnd());
-
-		Address blockStartAddr = block.getStart();
-
-		// pull each range off the restricted set
-		AddressRangeIterator addressRanges = doneSet.getAddressRanges();
-		while (addressRanges.hasNext()) {
-			monitor.checkCanceled();
-			AddressRange addressRange = addressRanges.next();
-
-			monitor.setMessage("Function Search");
-			monitor.initialize(doneSet.getNumAddresses());
-			monitor.setProgress(0);
-
-			ArrayList<Match> mymatches = new ArrayList<>();
-
-			long streamoffset = blockStartAddr.getOffset();
-
-			// Give block a starting/ending point before this address to search
-			//    patterns might start before, since they have a pre-pattern
-			// TODO: this is dangerous, since pattern might be very big, but the set should be restricted
-			//       normally only when we are searching for more matching patterns that had a postrule that didn't satisfy
-			//       normally the whole memory blocks will get searched.
-			long blockOffset = addressRange.getMinAddress().subtract(blockStartAddr);
-			blockOffset = blockOffset - RESTRICTED_PATTERN_BYTE_RANGE;
-			if (blockOffset <= 0) {
-				// don't go before the block start
-				blockOffset = 0;
-			}
-
-			// compute number of bytes in the range + 1, and don't search more than that.
-			long maxBlockSearchLength =
-				addressRange.getMaxAddress().subtract(blockStartAddr) - blockOffset + 1;
-
-			InputStream data = block.getData();
-			data.skip(blockOffset);
-
-			root.apply(data, maxBlockSearchLength, mymatches, monitor);
-			monitor.checkCanceled();
-
-			monitor.setMessage("Function Search (Examine Matches)");
-			monitor.initialize(mymatches.size());
-			monitor.setProgress(0);
-
-			// TODO: DANGER there is much offset<-->address calculation here
-			//       should be OK, since they are all relative to the block.
-			for (int i = 0; i < mymatches.size(); ++i) {
-				monitor.checkCanceled();
-				monitor.setProgress(i);
-				Match match = mymatches.get(i);
-				Address addr = blockStartAddr.add(match.getMarkOffset() + blockOffset);
-				if (!match.checkPostRules(streamoffset + blockOffset)) {
-					continue;
-				}
-				MatchAction[] matchactions = match.getMatchActions();
-				contextValueList = null; // make sure, only context from these actions used
-				for (MatchAction matchaction : matchactions) {
-					matchaction.apply(program, addr, match);
-				}
-				// Actions might have set context, check if postcondition failed first
-				if (!postreqFailedResult.contains(addr)) {
-					setCurrentContext(program, addr);
-				}
-				else {
-					// didn't apply it, get rid of the context list.
-					contextValueList = null;
-				}
-			}
-		}
 	}
 
 	@Override

@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.swing.*;
 
@@ -71,6 +72,10 @@ public abstract class DockingAction implements DockingActionIf {
 	private MenuBarData menuBarData;
 	private PopupMenuData popupMenuData;
 	private ToolBarData toolBarData;
+
+	private Predicate<ActionContext> enabledPredicate;
+	private Predicate<ActionContext> popupPredicate;
+	private Predicate<ActionContext> validContextPredicate;
 
 	public DockingAction(String name, String owner) {
 		this.name = name;
@@ -156,22 +161,26 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
+		if (popupPredicate != null) {
+			return popupPredicate.test(context);
+		}
 		return isEnabledForContext(context);
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
+		if (enabledPredicate != null) {
+			return enabledPredicate.test(context);
+		}
 		return isEnabled();
 	}
 
 	@Override
 	public boolean isValidContext(ActionContext context) {
+		if (validContextPredicate != null) {
+			return validContextPredicate.test(context);
+		}
 		return true;
-	}
-
-	@Override
-	public boolean isValidGlobalContext(ActionContext globalContext) {
-		return isValidContext(globalContext);
 	}
 
 	/**
@@ -286,6 +295,11 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public void setKeyBindingData(KeyBindingData newKeyBindingData) {
+
+		if (!supportsKeyBinding(newKeyBindingData)) {
+			return;
+		}
+
 		KeyBindingData oldData = keyBindingData;
 		keyBindingData = KeyBindingData.validateKeyBindingData(newKeyBindingData);
 
@@ -294,6 +308,27 @@ public abstract class DockingAction implements DockingActionIf {
 		}
 
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
+	}
+
+	private boolean supportsKeyBinding(KeyBindingData kbData) {
+
+		KeyBindingType type = getKeyBindingType();
+		if (type.supportsKeyBindings()) {
+			return true;
+		}
+
+		KeyBindingPrecedence precedence = null;
+		if (kbData != null) {
+			precedence = kbData.getKeyBindingPrecedence();
+		}
+
+		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
+			return true; // reserved actions are special
+		}
+
+		// log a trace message instead of throwing an exception, as to not break any legacy code
+		Msg.error(this, "Action does not support key bindings: " + getFullName(), new Throwable());
+		return false;
 	}
 
 	@Override
@@ -390,8 +425,9 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// menu path
 		if (menuBarData != null) {
-			buffer.append("        MENU PATH:           ").append(
-				menuBarData.getMenuPathAsString());
+			buffer.append("        MENU PATH:           ")
+					.append(
+						menuBarData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
@@ -413,8 +449,9 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// popup menu path
 		if (popupMenuData != null) {
-			buffer.append("        POPUP PATH:         ").append(
-				popupMenuData.getMenuPathAsString());
+			buffer.append("        POPUP PATH:         ")
+					.append(
+						popupMenuData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
@@ -491,6 +528,43 @@ public abstract class DockingAction implements DockingActionIf {
 		return this;
 	}
 
+	/**
+	 * Sets a predicate for dynamically determining the action's enabled state.  If this
+	 * predicate is not set, the action's enable state must be controlled directly using the
+	 * {@link DockingAction#setEnabled(boolean)} method. See 
+	 * {@link DockingActionIf#isEnabledForContext(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * enabled state.
+	 */
+	public void enabledWhen(Predicate<ActionContext> predicate) {
+		enabledPredicate = predicate;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining if this action should be included in
+	 * an impending pop-up menu.  If this predicate is not set, the action's will be included
+	 * in an impending pop-up, if it is enabled. See 
+	 * {@link DockingActionIf#isAddToPopup(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * enabled state.
+	 */
+	public void popupWhen(Predicate<ActionContext> predicate) {
+		popupPredicate = predicate;
+	}
+
+	/**
+	 * Sets a predicate for dynamically determining if this action is valid for the current 
+	 * {@link ActionContext}.  See {@link DockingActionIf#isValidContext(ActionContext)}
+	 *  
+	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 * validity for a given {@link ActionContext}
+	 */
+	public void validContextWhen(Predicate<ActionContext> predicate) {
+		validContextPredicate = predicate;
+	}
+
 //==================================================================================================
 // Non-public methods
 //==================================================================================================
@@ -509,12 +583,13 @@ public abstract class DockingAction implements DockingActionIf {
 			return;
 		}
 
-		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUs();
+		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUsOrABuilder();
 	}
 
-	protected String getInceptionFromTheFirstClassThatIsNotUs() {
+	protected String getInceptionFromTheFirstClassThatIsNotUsOrABuilder() {
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(getClass());
-		StackTraceElement[] trace = t.getStackTrace();
+		StackTraceElement[] trace =
+			ReflectionUtilities.filterStackTrace(t.getStackTrace(), "ActionBuilder");
 		String classInfo = trace[0].toString();
 		return classInfo;
 	}

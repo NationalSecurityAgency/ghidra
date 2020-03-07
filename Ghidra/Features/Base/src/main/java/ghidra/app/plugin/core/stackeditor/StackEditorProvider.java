@@ -89,10 +89,19 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 
 	@Override
 	protected CompositeEditorTableAction[] createActions() {
-		return new CompositeEditorTableAction[] { new ApplyAction(this), new ClearAction(this),
-			new DeleteAction(this), new PointerAction(this), new ArrayAction(this),
-			new ShowComponentPathAction(this), new EditComponentAction(this),
-			new EditFieldAction(this), new HexNumbersAction(this) };
+		//@formatter:off
+		return new CompositeEditorTableAction[] { 
+			new ApplyAction(this), 
+			new ClearAction(this),
+			new DeleteAction(this), 
+			new PointerAction(this), 
+			new ArrayAction(this),
+			new ShowComponentPathAction(this), 
+			new EditComponentAction(this),
+			new EditFieldAction(this), 
+			new HexNumbersAction(this) 
+		};
+		//@formatter:on
 	}
 
 	/**

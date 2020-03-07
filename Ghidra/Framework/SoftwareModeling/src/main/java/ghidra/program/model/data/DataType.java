@@ -40,7 +40,7 @@ public interface DataType {
 
 	/**
 	 * Indicates if this data-type is dynamically sized based upon DataOrganization.
-	 * @returns true if dynamically sized
+	 * @return true if dynamically sized
 	 */
 	public boolean isDynamicallySized();
 
@@ -220,7 +220,7 @@ public interface DataType {
 	 * Returns the appropriate string to use as the default label prefix.
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
-	 * @param length the length of the data.
+	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
 	 * @return the default label prefix or null if none specified.
 	 */
@@ -230,11 +230,11 @@ public interface DataType {
 	/**
 	 * Returns the appropriate string to use as the default label prefix, taking into account 
 	 * the fact that there exists a reference to the data that references
-	 * <tt>offcutLength</tt> bytes into this type 
+	 * <code>offcutLength</code> bytes into this type 
 	 * 
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
-	 * @param length the length of the data.
+	 * @param len the length of the data.
 	 * @param options options for how to format the default label prefix.
 	 * @param offcutOffset
 	 * @return the default label prefix.

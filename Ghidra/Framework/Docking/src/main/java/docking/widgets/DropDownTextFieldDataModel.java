@@ -28,7 +28,7 @@ import javax.swing.ListCellRenderer;
 public interface DropDownTextFieldDataModel<T> {
 
 	/**
-	 * Returns a list of data that matches the given <tt>searchText</tt>.  A match typically 
+	 * Returns a list of data that matches the given <code>searchText</code>.  A match typically 
 	 * means a "startsWith" match.  A list is returned to allow for multiple matches.
 	 * 
 	 * @param searchText The text used to find matches.

@@ -22,9 +22,9 @@ import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.util.*;
 
 /**
- * A class to represent the Elf32_Dyn data structure.
+ * A class to represent the Elf<code>32</code>_Dyn data structure.
  * 
- * <pre>
+ * <pre><code>
  * typedef  int32_t  Elf32_Sword;
  * typedef uint32_t  Elf32_Word;
  * typedef uint32_t  Elf32_Addr;
@@ -49,7 +49,7 @@ import ghidra.util.*;
  *     } d_un;
  * } Elf64_Dyn;
  * 
- * </pre>
+ * </code></pre>
  */
 public class ElfDynamic implements ByteArrayConverter {
 
@@ -89,7 +89,7 @@ FactoryBundledWithBinaryReader reader, ElfHeader elf)
      * Constructs a new ELF dynamic with the specified tag and value.
      * @param tag     the tag (or type) of this dynamic
      * @param value   the value (or pointer) of this dynamic
-     * @param is32bit true if this object is a 32-bit dynamic, false if 64-bit dynamic
+     * @param elf     the elf header
      */
 	public ElfDynamic(int tag, long value, ElfHeader elf) {
         this.d_tag = tag;
@@ -101,7 +101,7 @@ FactoryBundledWithBinaryReader reader, ElfHeader elf)
      * Constructs a new ELF dynamic with the specified (enum) tag and value.
      * @param tag     the (enum) tag (or type) of this dynamic
      * @param value   the value (or pointer) of this dynamic
-     * @param is32bit true if this object is a 32-bit dynamic, false if 64-bit dynamic
+     * @param elf     the elf header
      */
 	public ElfDynamic(ElfDynamicType tag, long value, ElfHeader elf) {
 		this(tag.value, value, elf);

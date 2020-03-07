@@ -1,0 +1,793 @@
+
+define alignment=2;
+
+define space ram type=ram_space size=$(XLEN) default;
+define space register type=register_space size=4;
+
+
+# A - Atomic instructions
+# B - Bit manipulation instructions
+# C - Compressed instructions
+# D - Double-precision floating-point instructions
+# E - Embedded applications, resource-constrained subset
+# F - Single-precision floating-point instructions
+# G - General (I + M + A + F + D)
+# I - Integer base instructions
+# J - Dynamically translated languages
+# L - Decimal floating point instructions
+# M - Integer multiplication and division instructions
+# N - User-level interrupt instructions
+# P - Packed-SIMD instructions
+# Q - Quad-precision floating-point instructions
+# T - Transactional Memory instructions
+# V - Vector operations instructions
+# RV [32, 64, 128] I, M, A, F, D, G, Q, L, C, B, J, T, P, V, N
+define register offset=0x1020 size=8 extensions;
+define context extensions
+  RVI=(0,0)
+  RVM=(1,1)
+  RVA=(2,2)
+  RVF=(3,3)
+  RVD=(4,4)
+  RVG=(0,4)
+  RVQ=(5,5)
+  RVL=(6,6)
+  RVC=(7,7)
+  RVB=(8,8)
+  RVJ=(9,9)
+  RVT=(10,10)
+  RVP=(11,11)
+  RVV=(12,12)
+  RVN=(13,13)
+  RV128=(61,61)
+  RV64=(62,62)
+  RV32=(63,63)
+;
+
+define register offset=0x1000 size=$(XLEN) [ pc ];
+
+
+#  08-31  reserved
+#  05-07  frm
+#         000 - RNE - round to nearest, ties to even
+#         001 - RTZ - round towards zero
+#         010 - RDN - round down (towards -inf)
+#         011 - RUP - round up (towards +inf)
+#         100 - RMM - round to nearest, ties to max magnitude
+#         101 - invalid
+#         110 - invalid
+#         111 - DYN - in rm field, selects dynamic rounding mode
+#                     in rounding mode register, invalid
+#  04     NV - invalid operation
+#  03     DZ - divide by zero
+#  02     OF - overflow
+#  01     UF - underflow
+#  00     NX - inexact
+#define register offset=0x1008 size=4 [ fcsr ];
+
+#TODO  FIXME
+#TODO  This is really broken
+#NOTE  This is stolen from ppc_common, so it has something similar
+define register offset=0x1010 size=$(XLEN) [ RESERVE_ADDRESS ];
+define register offset=0x1018 size=1 [ RESERVE ];
+define register offset=0x101C size=1 [ RESERVE_LENGTH ];
+#TODO  FIXME
+
+
+# x0  x1  x2  x3  x4  x5  x6  x7  x8  x9  x10 x11 x12 x13 x14 x15
+# z   ra  sp  gp  tp  t0  t1  t2  s0  s1  a0  a1  a2  a3  a4  a5
+# x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31
+# a6  a7  s2  s3  s4  s5  s6  s7  s8  s9  s10 s11 t3  t4  t5  t6
+define register offset=0x2000 size=$(XLEN) [ zero ra sp  gp  tp t0 t1 t2
+       			    	      	     s0   s1 a0  a1  a2 a3 a4 a5
+				       	     a6   a7 s2  s3  s4 s5 s6 s7
+				       	     s8   s9 s10 s11 t3 t4 t5 t6 ];
+@if FPSIZE != ""
+define register offset=0x3000 size=$(FLEN) [ ft0 ft1 ft2  ft3  ft4 ft5 ft6  ft7
+       			      	       	     fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
+				       	     fa6 fa7 fs2  fs3  fs4 fs5 fs6  fs7
+				       	     fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
+@endif
+
+define token instr (32)
+  op0001=(0,1)
+  op0204=(2,4)
+  op0506=(5,6)
+  op0707=(7,7)
+  op0711=(7,11)
+  r0711=(7,11)
+  fr0711=(7,11)
+  op0811=(8,11)
+  op1214=(12,14)
+  funct3=(12,14)
+  op1219=(12,19)
+  op1231=(12,31)
+  sop1231=(12,31) signed
+  op1519=(15,19)
+  r1519=(15,19)
+  fr1519=(15,19)
+  op1527=(15,27)
+  op1531=(15,31)
+  op2020=(20,20)
+  succ=(20,23)
+  op2024=(20,24)
+  r2024=(20,24)
+  fr2024=(20,24)
+  csr_0=(20,27)
+  csr_1=(20,27)
+  csr_2=(20,27)
+  csr_3=(20,27)
+  csr_4=(20,27)
+  csr_50=(20,26)
+  csr_58=(20,25)
+  csr_5C=(20,25)
+  csr_60=(20,26)
+  csr_68=(20,25)
+  csr_6C=(20,25)
+  csr_70=(20,26)
+  csr_78=(20,24)
+  csr_7A=(20,23)
+  csr_7B=(20,23)
+  csr_7C=(20,25)
+  csr_8=(20,27)
+  csr_90=(20,26)
+  csr_98=(20,25)
+  csr_9C=(20,25)
+  csr_A0=(20,26)
+  csr_A8=(20,25)
+  csr_AC=(20,25)
+  csr_B0=(20,26)
+  csr_B8=(20,25)
+  csr_BC=(20,25)
+  csr_C0=(20,26)
+  csr_C8=(20,25)
+  csr_CC=(20,25)
+  csr_D0=(20,26)
+  csr_D8=(20,25)
+  csr_DC=(20,25)
+  csr_E0=(20,26)
+  csr_E8=(20,25)
+  csr_EC=(20,25)
+  csr_F0=(20,26)
+  csr_F8=(20,25)
+  csr_FC=(20,25)
+  op2031=(20,31)
+  sop2031=(20,31) signed
+  op2130=(21,30)
+  op2427=(24,27)
+  pred=(24,27)
+  op2525=(25,25)
+  op2526=(25,26)
+  op2527=(25,27)
+  op2530=(25,30)
+  op2531=(25,31)
+  sop2531=(25,31) signed
+  funct7=(25,31)
+  op2627=(26,27)
+  op2631=(26,31)
+  op2731=(27,31)
+  funct5=(27,31)
+  op2727=(27,27)
+  r2731=(27,31)
+  fr2731=(27,31)
+  op2829=(28,29)
+  fm=(28,31)
+  op3031=(30,31)
+  sop3131=(31,31) signed
+;
+
+define token cinstr (16)
+  cop0001=(0,1)
+  cop0202=(2,2)
+  cop0203=(2,3)
+  cop0204=(2,4)
+  cr0204s=(2,4)
+  cfr0204s=(2,4)
+  cop0205=(2,5)
+  cop0206=(2,6)
+  cr0206=(2,6)
+  cfr0206=(2,6)
+  cop0212=(2,12)
+  cop0304=(3,4)
+  cop0305=(3,5)
+  cop0406=(4,6)
+  cop0505=(5,5)
+  cop0506=(5,6)
+  cop0512=(5,12)
+  cop0606=(6,6)
+  cop0707=(7,7)
+  cop0708=(7,8)
+  cop0709=(7,9)
+  cr0709s=(7,9)
+  cd0709s=(7,9)
+  cfr0709s=(7,9)
+  cop0710=(7,10)
+  cop0711=(7,11)
+  cr0711=(7,11)
+  cd0711=(7,11)  
+  cfr0711=(7,11)
+  cop0712=(7,12)
+  cop0808=(8,8)
+  cop0910=(9,10)
+  cop0912=(9,12)
+  cop1010=(10,10)
+  cop1011=(10,11)
+  cop1012=(10,12)
+  cop1111=(11,11)
+  cop1112=(11,12)
+  cop1212=(12,12)
+  scop1212=(12,12) signed
+  cop1315=(13,15)
+;
+
+
+attach variables [ r0711 r1519 r2024 r2731 ]
+       		 [ zero ra sp gp tp t0 t1 t2 s0 s1 a0  a1  a2 a3 a4 a5
+		   a6   a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ];
+
+attach variables [ cr0206 cr0711 cd0711 ]
+       		 [ zero ra sp gp tp t0 t1 t2 s0 s1 a0  a1  a2 a3 a4 a5
+		   a6   a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 ];
+
+attach variables [ cr0204s cr0709s cd0709s ]
+       		 [ s0 s1 a0 a1 a2 a3 a4 a5 ];
+
+
+@if FPSIZE != ""
+attach variables [ fr0711 fr1519 fr2024 fr2731 ]
+       		 [ ft0 ft1 ft2 ft3 ft4 ft5 ft6 ft7 fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
+		   fa6 fa7 fs2 fs3 fs4 fs5 fs6 fs7 fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
+
+attach variables [ cfr0206 cfr0711 ]
+       		 [ ft0 ft1 ft2 ft3 ft4 ft5 ft6 ft7 fs0 fs1 fa0  fa1  fa2 fa3 fa4  fa5
+		   fa6 fa7 fs2 fs3 fs4 fs5 fs6 fs7 fs8 fs9 fs10 fs11 ft8 ft9 ft10 ft11 ];
+
+attach variables [ cfr0204s cfr0709s ]
+       		 [ fs0 fs1 fa0 fa1 fa2 fa3 fa4 fa5 ];
+@endif
+
+
+#TODO  this approach is probably incorrect
+define register offset=0x90000000 size=$(XLEN) [ ustatus ];
+define register offset=0x90000010 size=$(XLEN) [ fflags ];
+define register offset=0x90000020 size=$(XLEN) [ frm ];
+define register offset=0x90000030 size=$(XLEN) [ fcsr ];
+define register offset=0x90000040 size=$(XLEN) [ uie ];
+define register offset=0x90000050 size=$(XLEN) [ utvec ];
+define register offset=0x90000400 size=$(XLEN) [ uscratch ];
+define register offset=0x90000410 size=$(XLEN) [ uepc ];
+define register offset=0x90000420 size=$(XLEN) [ ucause ];
+define register offset=0x90000430 size=$(XLEN) [ utval ];
+define register offset=0x90000440 size=$(XLEN) [ uip ];
+define register offset=0x90001000 size=$(XLEN) [ sstatus ];
+define register offset=0x90001020 size=$(XLEN) [ sedeleg ];
+define register offset=0x90001030 size=$(XLEN) [ sideleg ];
+define register offset=0x90001040 size=$(XLEN) [ sie ];
+define register offset=0x90001050 size=$(XLEN) [ stvec ];
+define register offset=0x90001060 size=$(XLEN) [ scounteren ];
+define register offset=0x90001400 size=$(XLEN) [ sscratch ];
+define register offset=0x90001410 size=$(XLEN) [ sepc ];
+define register offset=0x90001420 size=$(XLEN) [ scause ];
+define register offset=0x90001430 size=$(XLEN) [ stval ];
+define register offset=0x90001440 size=$(XLEN) [ sip ];
+define register offset=0x90001800 size=$(XLEN) [ satp ];
+define register offset=0x90002000 size=$(XLEN) [ vsstatus ];
+define register offset=0x90002040 size=$(XLEN) [ vsie ];
+define register offset=0x90002050 size=$(XLEN) [ vstvec ];
+define register offset=0x90002400 size=$(XLEN) [ vsscratch ];
+define register offset=0x90002410 size=$(XLEN) [ vsepc ];
+define register offset=0x90002420 size=$(XLEN) [ vscause ];
+define register offset=0x90002430 size=$(XLEN) [ vstval ];
+define register offset=0x90002440 size=$(XLEN) [ vsip ];
+define register offset=0x90002800 size=$(XLEN) [ vsatp ];
+define register offset=0x90003000 size=$(XLEN) [ mstatus ];
+define register offset=0x90003010 size=$(XLEN) [ misa ];
+define register offset=0x90003020 size=$(XLEN) [ medeleg ];
+define register offset=0x90003030 size=$(XLEN) [ mideleg ];
+define register offset=0x90003040 size=$(XLEN) [ mie ];
+define register offset=0x90003050 size=$(XLEN) [ mtvec ];
+define register offset=0x90003060 size=$(XLEN) [ mcounteren ];
+define register offset=0x90003100 size=$(XLEN) [ mstatush ];
+define register offset=0x90003200 size=$(XLEN) [ mucounteren ];
+define register offset=0x90003210 size=$(XLEN) [ mscounteren ];
+define register offset=0x90003220 size=$(XLEN) [ mhcounteren ];
+define register offset=0x90003400 size=$(XLEN) [ mscratch ];
+define register offset=0x90003410 size=$(XLEN) [ mepc ];
+define register offset=0x90003420 size=$(XLEN) [ mcause ];
+define register offset=0x90003430 size=$(XLEN) [ mtval ];
+define register offset=0x90003440 size=$(XLEN) [ mip ];
+define register offset=0x90003800 size=$(XLEN) [ mbase ];
+define register offset=0x90003810 size=$(XLEN) [ mbound ];
+define register offset=0x90003820 size=$(XLEN) [ mibase ];
+define register offset=0x90003830 size=$(XLEN) [ mibound ];
+define register offset=0x90003840 size=$(XLEN) [ mdbase ];
+define register offset=0x90003850 size=$(XLEN) [ mdbound ];
+define register offset=0x90003a00 size=$(XLEN) [ pmpcfg0 ];
+define register offset=0x90003a10 size=$(XLEN) [ pmpcfg1 ];
+define register offset=0x90003a20 size=$(XLEN) [ pmpcfg2 ];
+define register offset=0x90003a30 size=$(XLEN) [ pmpcfg3 ];
+define register offset=0x90003b00 size=$(XLEN) [ pmpaddr0 ];
+define register offset=0x90003b10 size=$(XLEN) [ pmpaddr1 ];
+define register offset=0x90003b20 size=$(XLEN) [ pmpaddr2 ];
+define register offset=0x90003b30 size=$(XLEN) [ pmpaddr3 ];
+define register offset=0x90003b40 size=$(XLEN) [ pmpaddr4 ];
+define register offset=0x90003b50 size=$(XLEN) [ pmpaddr5 ];
+define register offset=0x90003b60 size=$(XLEN) [ pmpaddr6 ];
+define register offset=0x90003b70 size=$(XLEN) [ pmpaddr7 ];
+define register offset=0x90003b80 size=$(XLEN) [ pmpaddr8 ];
+define register offset=0x90003b90 size=$(XLEN) [ pmpaddr9 ];
+define register offset=0x90003ba0 size=$(XLEN) [ pmpaddr10 ];
+define register offset=0x90003bb0 size=$(XLEN) [ pmpaddr11 ];
+define register offset=0x90003bc0 size=$(XLEN) [ pmpaddr12 ];
+define register offset=0x90003bd0 size=$(XLEN) [ pmpaddr13 ];
+define register offset=0x90003be0 size=$(XLEN) [ pmpaddr14 ];
+define register offset=0x90003bf0 size=$(XLEN) [ pmpaddr15 ];
+define register offset=0x90006000 size=$(XLEN) [ hstatus ];
+define register offset=0x90006020 size=$(XLEN) [ hedeleg ];
+define register offset=0x90006030 size=$(XLEN) [ hideleg ];
+define register offset=0x90006060 size=$(XLEN) [ hcounteren ];
+define register offset=0x90006800 size=$(XLEN) [ hgatp ];
+define register offset=0x90007a00 size=$(XLEN) [ tselect ];
+define register offset=0x90007a10 size=$(XLEN) [ tdata1 ];
+define register offset=0x90007a20 size=$(XLEN) [ tdata2 ];
+define register offset=0x90007a30 size=$(XLEN) [ tdata3 ];
+define register offset=0x90007b00 size=$(XLEN) [ dcsr ];
+define register offset=0x90007b10 size=$(XLEN) [ dpc ];
+define register offset=0x90007b20 size=$(XLEN) [ dscratch0 ];
+define register offset=0x90007b30 size=$(XLEN) [ dscratch1 ];
+define register offset=0x9000b000 size=$(XLEN) [ mcycle ];
+define register offset=0x9000b020 size=$(XLEN) [ minstret ];
+define register offset=0x9000b030 size=$(XLEN) [ mhpmcounter3 ];
+define register offset=0x9000b040 size=$(XLEN) [ mhpmcounter4 ];
+define register offset=0x9000b050 size=$(XLEN) [ mhpmcounter5 ];
+define register offset=0x9000b060 size=$(XLEN) [ mhpmcounter6 ];
+define register offset=0x9000b070 size=$(XLEN) [ mhpmcounter7 ];
+define register offset=0x9000b080 size=$(XLEN) [ mhpmcounter8 ];
+define register offset=0x9000b090 size=$(XLEN) [ mhpmcounter9 ];
+define register offset=0x9000b0a0 size=$(XLEN) [ mhpmcounter10 ];
+define register offset=0x9000b0b0 size=$(XLEN) [ mhpmcounter11 ];
+define register offset=0x9000b0c0 size=$(XLEN) [ mhpmcounter12 ];
+define register offset=0x9000b0d0 size=$(XLEN) [ mhpmcounter13 ];
+define register offset=0x9000b0e0 size=$(XLEN) [ mhpmcounter14 ];
+define register offset=0x9000b0f0 size=$(XLEN) [ mhpmcounter15 ];
+define register offset=0x9000b100 size=$(XLEN) [ mhpmcounter16 ];
+define register offset=0x9000b110 size=$(XLEN) [ mhpmcounter17 ];
+define register offset=0x9000b120 size=$(XLEN) [ mhpmcounter18 ];
+define register offset=0x9000b130 size=$(XLEN) [ mhpmcounter19 ];
+define register offset=0x9000b140 size=$(XLEN) [ mhpmcounter20 ];
+define register offset=0x9000b150 size=$(XLEN) [ mhpmcounter21 ];
+define register offset=0x9000b160 size=$(XLEN) [ mhpmcounter22 ];
+define register offset=0x9000b170 size=$(XLEN) [ mhpmcounter23 ];
+define register offset=0x9000b180 size=$(XLEN) [ mhpmcounter24 ];
+define register offset=0x9000b190 size=$(XLEN) [ mhpmcounter25 ];
+define register offset=0x9000b1a0 size=$(XLEN) [ mhpmcounter26 ];
+define register offset=0x9000b1b0 size=$(XLEN) [ mhpmcounter27 ];
+define register offset=0x9000b1c0 size=$(XLEN) [ mhpmcounter28 ];
+define register offset=0x9000b1d0 size=$(XLEN) [ mhpmcounter29 ];
+define register offset=0x9000b1e0 size=$(XLEN) [ mhpmcounter30 ];
+define register offset=0x9000b1f0 size=$(XLEN) [ mhpmcounter31 ];
+define register offset=0x9000b200 size=$(XLEN) [ mcountinhibit ];
+define register offset=0x9000b230 size=$(XLEN) [ mhpmevent3 ];
+define register offset=0x9000b240 size=$(XLEN) [ mhpmevent4 ];
+define register offset=0x9000b250 size=$(XLEN) [ mhpmevent5 ];
+define register offset=0x9000b260 size=$(XLEN) [ mhpmevent6 ];
+define register offset=0x9000b270 size=$(XLEN) [ mhpmevent7 ];
+define register offset=0x9000b280 size=$(XLEN) [ mhpmevent8 ];
+define register offset=0x9000b290 size=$(XLEN) [ mhpmevent9 ];
+define register offset=0x9000b2a0 size=$(XLEN) [ mhpmevent10 ];
+define register offset=0x9000b2b0 size=$(XLEN) [ mhpmevent11 ];
+define register offset=0x9000b2c0 size=$(XLEN) [ mhpmevent12 ];
+define register offset=0x9000b2d0 size=$(XLEN) [ mhpmevent13 ];
+define register offset=0x9000b2e0 size=$(XLEN) [ mhpmevent14 ];
+define register offset=0x9000b2f0 size=$(XLEN) [ mhpmevent15 ];
+define register offset=0x9000b300 size=$(XLEN) [ mhpmevent16 ];
+define register offset=0x9000b310 size=$(XLEN) [ mhpmevent17 ];
+define register offset=0x9000b320 size=$(XLEN) [ mhpmevent18 ];
+define register offset=0x9000b330 size=$(XLEN) [ mhpmevent19 ];
+define register offset=0x9000b340 size=$(XLEN) [ mhpmevent20 ];
+define register offset=0x9000b350 size=$(XLEN) [ mhpmevent21 ];
+define register offset=0x9000b360 size=$(XLEN) [ mhpmevent22 ];
+define register offset=0x9000b370 size=$(XLEN) [ mhpmevent23 ];
+define register offset=0x9000b380 size=$(XLEN) [ mhpmevent24 ];
+define register offset=0x9000b390 size=$(XLEN) [ mhpmevent25 ];
+define register offset=0x9000b3a0 size=$(XLEN) [ mhpmevent26 ];
+define register offset=0x9000b3b0 size=$(XLEN) [ mhpmevent27 ];
+define register offset=0x9000b3c0 size=$(XLEN) [ mhpmevent28 ];
+define register offset=0x9000b3d0 size=$(XLEN) [ mhpmevent29 ];
+define register offset=0x9000b3e0 size=$(XLEN) [ mhpmevent30 ];
+define register offset=0x9000b3f0 size=$(XLEN) [ mhpmevent31 ];
+define register offset=0x9000b800 size=$(XLEN) [ mcycleh ];
+define register offset=0x9000b820 size=$(XLEN) [ minstreth ];
+define register offset=0x9000b830 size=$(XLEN) [ mhpmcounter3h ];
+define register offset=0x9000b840 size=$(XLEN) [ mhpmcounter4h ];
+define register offset=0x9000b850 size=$(XLEN) [ mhpmcounter5h ];
+define register offset=0x9000b860 size=$(XLEN) [ mhpmcounter6h ];
+define register offset=0x9000b870 size=$(XLEN) [ mhpmcounter7h ];
+define register offset=0x9000b880 size=$(XLEN) [ mhpmcounter8h ];
+define register offset=0x9000b890 size=$(XLEN) [ mhpmcounter9h ];
+define register offset=0x9000b8a0 size=$(XLEN) [ mhpmcounter10h ];
+define register offset=0x9000b8b0 size=$(XLEN) [ mhpmcounter11h ];
+define register offset=0x9000b8c0 size=$(XLEN) [ mhpmcounter12h ];
+define register offset=0x9000b8d0 size=$(XLEN) [ mhpmcounter13h ];
+define register offset=0x9000b8e0 size=$(XLEN) [ mhpmcounter14h ];
+define register offset=0x9000b8f0 size=$(XLEN) [ mhpmcounter15h ];
+define register offset=0x9000b900 size=$(XLEN) [ mhpmcounter16h ];
+define register offset=0x9000b910 size=$(XLEN) [ mhpmcounter17h ];
+define register offset=0x9000b920 size=$(XLEN) [ mhpmcounter18h ];
+define register offset=0x9000b930 size=$(XLEN) [ mhpmcounter19h ];
+define register offset=0x9000b940 size=$(XLEN) [ mhpmcounter20h ];
+define register offset=0x9000b950 size=$(XLEN) [ mhpmcounter21h ];
+define register offset=0x9000b960 size=$(XLEN) [ mhpmcounter22h ];
+define register offset=0x9000b970 size=$(XLEN) [ mhpmcounter23h ];
+define register offset=0x9000b980 size=$(XLEN) [ mhpmcounter24h ];
+define register offset=0x9000b990 size=$(XLEN) [ mhpmcounter25h ];
+define register offset=0x9000b9a0 size=$(XLEN) [ mhpmcounter26h ];
+define register offset=0x9000b9b0 size=$(XLEN) [ mhpmcounter27h ];
+define register offset=0x9000b9c0 size=$(XLEN) [ mhpmcounter28h ];
+define register offset=0x9000b9d0 size=$(XLEN) [ mhpmcounter29h ];
+define register offset=0x9000b9e0 size=$(XLEN) [ mhpmcounter30h ];
+define register offset=0x9000b9f0 size=$(XLEN) [ mhpmcounter31h ];
+define register offset=0x9000c000 size=$(XLEN) [ cycle ];
+define register offset=0x9000c010 size=$(XLEN) [ time ];
+define register offset=0x9000c020 size=$(XLEN) [ instret ];
+define register offset=0x9000c030 size=$(XLEN) [ hpmcounter3 ];
+define register offset=0x9000c040 size=$(XLEN) [ hpmcounter4 ];
+define register offset=0x9000c050 size=$(XLEN) [ hpmcounter5 ];
+define register offset=0x9000c060 size=$(XLEN) [ hpmcounter6 ];
+define register offset=0x9000c070 size=$(XLEN) [ hpmcounter7 ];
+define register offset=0x9000c080 size=$(XLEN) [ hpmcounter8 ];
+define register offset=0x9000c090 size=$(XLEN) [ hpmcounter9 ];
+define register offset=0x9000c0a0 size=$(XLEN) [ hpmcounter10 ];
+define register offset=0x9000c0b0 size=$(XLEN) [ hpmcounter11 ];
+define register offset=0x9000c0c0 size=$(XLEN) [ hpmcounter12 ];
+define register offset=0x9000c0d0 size=$(XLEN) [ hpmcounter13 ];
+define register offset=0x9000c0e0 size=$(XLEN) [ hpmcounter14 ];
+define register offset=0x9000c0f0 size=$(XLEN) [ hpmcounter15 ];
+define register offset=0x9000c100 size=$(XLEN) [ hpmcounter16 ];
+define register offset=0x9000c110 size=$(XLEN) [ hpmcounter17 ];
+define register offset=0x9000c120 size=$(XLEN) [ hpmcounter18 ];
+define register offset=0x9000c130 size=$(XLEN) [ hpmcounter19 ];
+define register offset=0x9000c140 size=$(XLEN) [ hpmcounter20 ];
+define register offset=0x9000c150 size=$(XLEN) [ hpmcounter21 ];
+define register offset=0x9000c160 size=$(XLEN) [ hpmcounter22 ];
+define register offset=0x9000c170 size=$(XLEN) [ hpmcounter23 ];
+define register offset=0x9000c180 size=$(XLEN) [ hpmcounter24 ];
+define register offset=0x9000c190 size=$(XLEN) [ hpmcounter25 ];
+define register offset=0x9000c1a0 size=$(XLEN) [ hpmcounter26 ];
+define register offset=0x9000c1b0 size=$(XLEN) [ hpmcounter27 ];
+define register offset=0x9000c1c0 size=$(XLEN) [ hpmcounter28 ];
+define register offset=0x9000c1d0 size=$(XLEN) [ hpmcounter29 ];
+define register offset=0x9000c1e0 size=$(XLEN) [ hpmcounter30 ];
+define register offset=0x9000c1f0 size=$(XLEN) [ hpmcounter31 ];
+define register offset=0x9000c800 size=$(XLEN) [ cycleh ];
+define register offset=0x9000c810 size=$(XLEN) [ timeh ];
+define register offset=0x9000c820 size=$(XLEN) [ instreth ];
+define register offset=0x9000c830 size=$(XLEN) [ hpmcounter3h ];
+define register offset=0x9000c840 size=$(XLEN) [ hpmcounter4h ];
+define register offset=0x9000c850 size=$(XLEN) [ hpmcounter5h ];
+define register offset=0x9000c860 size=$(XLEN) [ hpmcounter6h ];
+define register offset=0x9000c870 size=$(XLEN) [ hpmcounter7h ];
+define register offset=0x9000c880 size=$(XLEN) [ hpmcounter8h ];
+define register offset=0x9000c890 size=$(XLEN) [ hpmcounter9h ];
+define register offset=0x9000c8a0 size=$(XLEN) [ hpmcounter10h ];
+define register offset=0x9000c8b0 size=$(XLEN) [ hpmcounter11h ];
+define register offset=0x9000c8c0 size=$(XLEN) [ hpmcounter12h ];
+define register offset=0x9000c8d0 size=$(XLEN) [ hpmcounter13h ];
+define register offset=0x9000c8e0 size=$(XLEN) [ hpmcounter14h ];
+define register offset=0x9000c8f0 size=$(XLEN) [ hpmcounter15h ];
+define register offset=0x9000c900 size=$(XLEN) [ hpmcounter16h ];
+define register offset=0x9000c910 size=$(XLEN) [ hpmcounter17h ];
+define register offset=0x9000c920 size=$(XLEN) [ hpmcounter18h ];
+define register offset=0x9000c930 size=$(XLEN) [ hpmcounter19h ];
+define register offset=0x9000c940 size=$(XLEN) [ hpmcounter20h ];
+define register offset=0x9000c950 size=$(XLEN) [ hpmcounter21h ];
+define register offset=0x9000c960 size=$(XLEN) [ hpmcounter22h ];
+define register offset=0x9000c970 size=$(XLEN) [ hpmcounter23h ];
+define register offset=0x9000c980 size=$(XLEN) [ hpmcounter24h ];
+define register offset=0x9000c990 size=$(XLEN) [ hpmcounter25h ];
+define register offset=0x9000c9a0 size=$(XLEN) [ hpmcounter26h ];
+define register offset=0x9000c9b0 size=$(XLEN) [ hpmcounter27h ];
+define register offset=0x9000c9c0 size=$(XLEN) [ hpmcounter28h ];
+define register offset=0x9000c9d0 size=$(XLEN) [ hpmcounter29h ];
+define register offset=0x9000c9e0 size=$(XLEN) [ hpmcounter30h ];
+define register offset=0x9000c9f0 size=$(XLEN) [ hpmcounter31h ];
+define register offset=0x9000f110 size=$(XLEN) [ mvendorid ];
+define register offset=0x9000f120 size=$(XLEN) [ marchid ];
+define register offset=0x9000f130 size=$(XLEN) [ mimpid ];
+define register offset=0x9000f140 size=$(XLEN) [ mhartid ];
+
+
+attach variables [ csr_0 ]
+       		 [ ustatus fflags frm fcsr uie utvec _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   uscratch uepc ucause utval uip _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ];
+attach variables [ csr_1 ]
+       		 [ sstatus _ sedeleg sideleg sie stvec scounteren _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   sscratch sepc scause stval sip _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   satp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ];
+attach variables [ csr_2 ]
+       		 [ vsstatus _ _ _ vsie vstvec _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   vsscratch vsepc vscause vstval vsip _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   vsatp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ];
+attach variables [ csr_3 ]
+       		 [ mstatus misa medeleg mideleg mie mtvec mcounteren _ _ _ _ _ _ _ _ _ 
+		   mstatush _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   mscratch mepc mcause mtval mip _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   pmpcfg0 pmpcfg1 pmpcfg2 pmpcfg3 _ _ _ _ _ _ _ _ _ _ _ _ 
+		   pmpaddr0 pmpaddr1 pmpaddr2 pmpaddr3 pmpaddr4 pmpaddr5 pmpaddr6 pmpaddr7 pmpaddr8 pmpaddr9 pmpaddr10 pmpaddr11 pmpaddr12 pmpaddr13 pmpaddr14 pmpaddr15 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ];
+attach variables [ csr_4 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ];
+attach variables [ csr_50 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_58 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_5C ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_60 ]
+       		 [ hstatus _ hedeleg hideleg _ _ hcounteren _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_68 ]
+       		 [ hgatp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_6C ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_70 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_78 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_7A ]
+       		 [ tselect tdata1 tdata2 tdata3 _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_7B ]
+       		 [ dcsr dpc dscratch0 dscratch1 _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_7C ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_8 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _  ];
+attach variables [ csr_90 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_98 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_9C ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_A0 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_A8 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_AC ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_B0 ]
+       		 [ mcycle _ minstret mhpmcounter3 mhpmcounter4 mhpmcounter5 mhpmcounter6 mhpmcounter7 mhpmcounter8 mhpmcounter9 mhpmcounter10 mhpmcounter11 mhpmcounter12 mhpmcounter13 mhpmcounter14 mhpmcounter15 
+		   mhpmcounter16 mhpmcounter17 mhpmcounter18 mhpmcounter19 mhpmcounter20 mhpmcounter21 mhpmcounter22 mhpmcounter23 mhpmcounter24 mhpmcounter25 mhpmcounter26 mhpmcounter27 mhpmcounter28 mhpmcounter29 mhpmcounter30 mhpmcounter31 
+		   mcountinhibit _ _ mhpmevent3 mhpmevent4 mhpmevent5 mhpmevent6 mhpmevent7 mhpmevent8 mhpmevent9 mhpmevent10 mhpmevent11 mhpmevent12 mhpmevent13 mhpmevent14 mhpmevent15 
+		   mhpmevent16 mhpmevent17 mhpmevent18 mhpmevent19 mhpmevent20 mhpmevent21 mhpmevent22 mhpmevent23 mhpmevent24 mhpmevent25 mhpmevent26 mhpmevent27 mhpmevent28 mhpmevent29 mhpmevent30 mhpmevent31 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_B8 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_BC ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_C0 ]
+       		 [ cycle time instret hpmcounter3 hpmcounter4 hpmcounter5 hpmcounter6 hpmcounter7 hpmcounter8 hpmcounter9 hpmcounter10 hpmcounter11 hpmcounter12 hpmcounter13 hpmcounter14 hpmcounter15 
+		   hpmcounter16 hpmcounter17 hpmcounter18 hpmcounter19 hpmcounter20 hpmcounter21 hpmcounter22 hpmcounter23 hpmcounter24 hpmcounter25 hpmcounter26 hpmcounter27 hpmcounter28 hpmcounter29 hpmcounter30 hpmcounter31 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_C8 ]
+       		 [ cycleh timeh instreth hpmcounter3h hpmcounter4h hpmcounter5h hpmcounter6h hpmcounter7h hpmcounter8h hpmcounter9h hpmcounter10h hpmcounter11h hpmcounter12h hpmcounter13h hpmcounter14h hpmcounter15h 
+		   hpmcounter16h hpmcounter17h hpmcounter18h hpmcounter19h hpmcounter20h hpmcounter21h hpmcounter22h hpmcounter23h hpmcounter24h hpmcounter25h hpmcounter26h hpmcounter27h hpmcounter28h hpmcounter29h hpmcounter30h hpmcounter31h 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_CC ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_D0 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_D8 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_DC ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_E0 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_E8 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_EC ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_F0 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ mvendorid marchid mimpid mhartid _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_F8 ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
+attach variables [ csr_FC ]
+       		 [ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+		   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];

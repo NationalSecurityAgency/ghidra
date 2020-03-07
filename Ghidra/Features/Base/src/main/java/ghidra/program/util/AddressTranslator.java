@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +58,7 @@ public interface AddressTranslator {
 	 * This interface is intended to translate an address range from the source program to an 
 	 * address range in the destination program.
 	 * <br>This method should be implemented if isOneForOneTranslator() returns true.
-	 * @param sourceAddressSet the source address set to be converted.
+	 * @param sourceAddressRange the source address range to be converted.
 	 * @return the destination address range that is equivalent in some way to the source address range.
 	 * How the address range is equivalent depends upon the particular translator.
 	 * throws AddressTranslationException if the address set can't be translated to an equivalent

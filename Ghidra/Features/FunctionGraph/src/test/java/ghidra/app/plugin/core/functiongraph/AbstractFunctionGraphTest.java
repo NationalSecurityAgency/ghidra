@@ -2291,7 +2291,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void navigateBack() {
-		String name = "Previous in History Buffer";
+		String name = "Previous Location in History";
 
 		DockingActionIf action = getAction(tool, "NextPrevAddressPlugin", name);
 		performAction(action, true);

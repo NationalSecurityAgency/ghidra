@@ -182,8 +182,12 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 		help.registerHelp(table, new HelpLocation(GenericHelpTopics.TOOL, "PluginDialog"));
 
 		table.getSelectionModel().addListSelectionListener(e -> {
-			int row = table.getSelectedRow();
 
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+
+			int row = table.getSelectedRow();
 			if (row < 0 || row > pluginDescriptions.size()) {
 				pluginDetailsPanel.setPluginDescription(null);
 				return;

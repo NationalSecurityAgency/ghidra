@@ -162,8 +162,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 				BitFieldEditorDialog dlg = new BitFieldEditorDialog(model.viewComposite,
 					provider.dtmService, editingRow, ordinal -> {
-						model.fireTableDataChanged();
-						model.compositeInfoChanged();
+						model.notifyCompositeChanged();
 					});
 				Component c = provider.getComponent();
 				Window w = SwingUtilities.windowForComponent(c);
@@ -839,11 +838,11 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	/**
 	 * Get the drag actions supported by this drag source:
-	 * <UL>
+	 * <ul>
 	 * <li>DnDConstants.ACTION_MOVE
 	 * <li>DnDConstants.ACTION_COPY
 	 * <li>DnDConstants.ACTION_COPY_OR_MOVE
-	 * </li>
+	 * </ul>
 	 *
 	 * @return the drag actions
 	 */

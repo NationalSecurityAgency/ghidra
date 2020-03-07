@@ -328,7 +328,7 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 	}
 
 	private boolean hasNoFilter() {
-		return filterSettings == FilterSettings.SHOW_ALL && !hasFitler();
+		return filterSettings == FilterSettings.SHOW_ALL && !hasFilter();
 	}
 
 	private boolean passesUnmatchedFunctionFilter(FunctionAssociationInfo info) {

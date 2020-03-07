@@ -181,7 +181,7 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	/**
 	 * Copy this folder into the newParent folder.
 	 * @param newParent new parent folder
-	 * @param new folder
+	 * @param monitor the task monitor
 	 * @throws DuplicateFileException if a folder or file by
 	 * this name already exists in the newParent folder
 	 * @throws IOException thrown if an IO or access error occurs.

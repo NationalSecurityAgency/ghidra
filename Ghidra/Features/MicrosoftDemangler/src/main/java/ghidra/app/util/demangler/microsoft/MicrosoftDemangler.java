@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.demangler.microsoft;
 
-import java.util.regex.Pattern;
-
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.opinion.MSCoffLoader;
 import ghidra.app.util.opinion.PeLoader;
@@ -30,15 +28,6 @@ import util.demangler.GenericDemangledException;
  */
 public class MicrosoftDemangler implements Demangler {
 
-	/** 
-	 * This represents an odd symbol that looks mangled, but we don't know what to do with.  It
-	 * is of the form:
-	 * 		?BobsStuffIO@344text__@@U_text@@?W
-	 * 
-	 * where the last character is preceded by a special character, such as ?, *, -, etc
-	 */
-	private static Pattern INVALID_TRAILING_CHARS_PATTERN = Pattern.compile(".*@@[?*`%~+/-][A-Z]");
-
 	public MicrosoftDemangler() {
 	}
 
@@ -50,10 +39,24 @@ public class MicrosoftDemangler implements Demangler {
 	}
 
 	@Override
+	@Deprecated(since = "9.2", forRemoval = true)
 	public DemangledObject demangle(String mangled, boolean demangleOnlyKnownPatterns)
 			throws DemangledException {
 		try {
 			DemangledObject demangled = demangleMS(mangled, demangleOnlyKnownPatterns);
+			return demangled;
+		}
+		catch (GenericDemangledException e) {
+			throw new DemangledException(true);
+		}
+	}
+
+	@Override
+	public DemangledObject demangle(String mangled, DemanglerOptions options)
+			throws DemangledException {
+
+		try {
+			DemangledObject demangled = demangleMS(mangled, options.demangleOnlyKnownPatterns());
 			return demangled;
 		}
 		catch (GenericDemangledException e) {
@@ -69,7 +72,7 @@ public class MicrosoftDemangler implements Demangler {
 
 		MDMangGhidra demangler = new MDMangGhidra();
 		try {
-			demangler.demangle(mangled, demangleOnlyKnownPatterns); //not using return type here.
+			demangler.demangle(mangled, demangleOnlyKnownPatterns);
 			DemangledObject object = demangler.getObject();
 			return object;
 		}
@@ -80,27 +83,4 @@ public class MicrosoftDemangler implements Demangler {
 			throw gde;
 		}
 	}
-
-//	private boolean isMangled(String mangled) {
-//		int atpos = mangled.indexOf("@");
-//		boolean isMangled = mangled.charAt(0) == '?' && atpos != -1;
-//
-//		if (!isMangled) {
-//			return false;
-//		}
-//
-//		if (mangled.endsWith("~")) {
-//			return false;
-//		}
-//
-//		//
-//		// Now check for some odd things that we've seen.
-//		//
-//		Matcher matcher = INVALID_TRAILING_CHARS_PATTERN.matcher(mangled);
-//		if (matcher.matches()) {
-//			return false;
-//		}
-//
-//		return true;
-//	}
 }

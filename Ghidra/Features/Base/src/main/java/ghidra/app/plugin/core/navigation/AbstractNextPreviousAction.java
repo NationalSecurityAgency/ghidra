@@ -43,12 +43,12 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 		this.tool = tool;
 
 		ToolBarData toolBarData =
-			new ToolBarData(getIcon(), ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP);
+			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 		MenuData menuData =
 			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getMenuName() }, getIcon(),
-				ToolConstants.NEXT_CODE_UNIT_NAVIGATION_MENU_GROUP);
+				ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
 		menuData.setMenuSubGroup(subGroup);
 		setMenuBarData(menuData);
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));

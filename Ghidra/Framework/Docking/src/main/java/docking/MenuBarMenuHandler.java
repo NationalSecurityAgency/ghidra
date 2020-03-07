@@ -47,36 +47,20 @@ public class MenuBarMenuHandler extends MenuHandler {
 		DockingWindowManager.clearMouseOverHelp();
 
 		ComponentProvider provider = windowManager.getActiveComponentProvider();
-		ActionContext context = provider == null ? null : provider.getActionContext(null);
-		ActionContext localContext = context == null ? new ActionContext() : context;
-		ActionContext globalContext = windowManager.getGlobalContext();
+		ActionContext providerContext = provider == null ? null : provider.getActionContext(null);
+		ActionContext context = providerContext == null ? new ActionContext() : providerContext;
 
-		ActionContext tempContext = null;
-		if (action.isValidContext(localContext)) {
-			tempContext = localContext; // we prefer the local over the global context if valid
-		}
-		else if (action.isValidGlobalContext(globalContext)) {
-			tempContext = globalContext;
-		}
-		else {
-			return;  // context is not valid, nothing to do
-		}
-
-		tempContext.setSourceObject(event.getSource());
-		final ActionContext finalContext = tempContext;
+		context.setSourceObject(event.getSource());
 
 		// this gives the UI some time to repaint before executing the action
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				windowManager.setStatusText("");
-				if (action.isEnabledForContext(finalContext)) {
-					if (action instanceof ToggleDockingActionIf) {
-						ToggleDockingActionIf toggleAction = ((ToggleDockingActionIf) action);
-						toggleAction.setSelected(!toggleAction.isSelected());
-					}
-					action.actionPerformed(finalContext);
+		SwingUtilities.invokeLater(() -> {
+			windowManager.setStatusText("");
+			if (action.isValidContext(context) && action.isEnabledForContext(context)) {
+				if (action instanceof ToggleDockingActionIf) {
+					ToggleDockingActionIf toggleAction = ((ToggleDockingActionIf) action);
+					toggleAction.setSelected(!toggleAction.isSelected());
 				}
+				action.actionPerformed(context);
 			}
 		});
 	}

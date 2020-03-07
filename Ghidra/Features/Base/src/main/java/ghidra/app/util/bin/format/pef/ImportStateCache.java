@@ -90,11 +90,10 @@ public class ImportStateCache {
 	}
 
 	/**
-	 * Returns the symbol object with the given name in the specified namespace.
-	 * @param program the program
-	 * @param id the desired symbol's name
-	 * @param namespace the desired symbols' namespace
-	 * @return the symbol object with the given name in the specified namespace
+	 * Returns the symbol object with the given name in the specified library.
+	 * @param symbolName the desired symbol's name
+	 * @param library the desired library
+	 * @return the symbol object with the given name in the specified library
 	 */
 	public Symbol getSymbol(String symbolName, ImportedLibrary library) {
 		Map<String, Symbol> map = librarySymbolsMap.get(library);
