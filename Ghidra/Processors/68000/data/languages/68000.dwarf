@@ -1,0 +1,10 @@
+<dwarf>
+	<register_mappings>
+		<register_mapping dwarf="0" ghidra="D0" auto_count="8"/> <!-- D0..D7 -->
+
+		<register_mapping dwarf="8" ghidra="A0" auto_count="7"/> <!-- A0..A6 -->
+		<register_mapping dwarf="15" ghidra="SP" stackpointer="true"/>
+
+		<register_mapping dwarf="16" ghidra="FP0" auto_count="8"/> <!-- FP0..FP7 -->
+	</register_mappings>
+</dwarf>
