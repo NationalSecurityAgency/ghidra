@@ -2482,11 +2482,68 @@ void PrintC::emitBlockCondition(const BlockCondition *bl)
   }
 }
 
+bool PrintC::isSafeForMerge(const BlockIf *bl)
+
+{
+  // note: This checks if there is anything printed before
+  // the "if" because merging such a BlockIf would break
+  // the syntax.
+
+  // The condition should be BlockCopy containing a BlockBasic
+  FlowBlock* condition = bl->getBlock(0);
+  if(condition->getType()!=FlowBlock::t_copy){
+    return false; //undefined behavior, don't merge.
+  }
+  FlowBlock* fb = ((BlockCopy*)condition)->subBlock(0);
+  if(fb->getType() != FlowBlock::t_basic){
+      return false; //undefined behavior, don't merge.
+  }
+  const BlockBasic *bb = (BlockBasic*)fb;
+
+  // Check if there is a label pointing to this BlockIf
+  // (see PrintC::emitAnyLabelStatement and PrintC::emitLabelStatement)
+  if(!condition->isLabelBumpUp()){
+      FlowBlock* blc = condition->getFrontLeaf();
+      if (blc != (FlowBlock *)0 && blc->isUnstructuredTarget()
+	  && blc->getType() == FlowBlock::t_copy){
+	  return false; // there is a label pointing to the if, don't merge
+      }
+  }
+
+  // Check if there is some C statements before this condition
+  // (see PrintC::emitBlockBasic)
+  list<PcodeOp *>::const_iterator iter;
+  const PcodeOp *inst;
+  for(iter=bb->beginOp();iter!=bb->endOp();++iter) {
+    inst = *iter;
+    if (inst->notPrinted()) continue;
+    if (inst->isBranch()) continue;
+    const Varnode *vn = inst->getOut();
+    if ((vn==(const Varnode *)0)||(!vn->isImplied())){
+      // there is some C code before the if, don't merge
+      return false;
+    }
+  }
+
+  // Check if there is any comment printed before this BlockIf
+  // (see PrintC::emitBlockBasic)
+  commsorter.setupBlockList(bb);
+  commsorter.setupOpList((const PcodeOp *)0);
+  while(commsorter.hasNext()) {
+    Comment *comm = commsorter.getNext();
+    if ((instr_comment_type & comm->getType())!=0)
+      return false;// there is comment before the if, don't merge
+  }
+
+  return true;
+}
+
 void PrintC::emitBlockIf(const BlockIf *bl)
 
 {
   const PcodeOp *op;
-
+  vector<int4> openblocks;
+  bool first=true;
 				// if block never prints final branch
 				// so no_branch and only_branch don't matter
 				// and shouldn't be passed automatically to
@@ -2494,47 +2551,68 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   pushMod();
   unsetMod(no_branch|only_branch);
 
-  pushMod();
-  setMod(no_branch);
-  bl->getBlock(0)->emit(this);
-  popMod();
-  emit->tagLine();
-  op = bl->getBlock(0)->lastOp();
-  emit->tagOp("if",EmitXml::keyword_color,op);
-  emit->spaces(1);
-  pushMod();
-  setMod(only_branch);
-  bl->getBlock(0)->emit(this);
-  popMod();
-  if (bl->getGotoTarget() != (FlowBlock *)0) {
-    emit->spaces(1);
-    emitGotoStatement(bl->getBlock(0),bl->getGotoTarget(),bl->getGotoType());
+  // Recursively process if blocks embedded in else blocks
+  while(true){
+    pushMod();
+    setMod(no_branch);
+    bl->getBlock(0)->emit(this);
     popMod();
-    return;
-  }
+    if(first){ // only emit new line for first element (not for "else if")
+      emit->tagLine();
+      first=false;
+    }
+    op = bl->getBlock(0)->lastOp();
+    emit->tagOp("if",EmitXml::keyword_color,op);
+    emit->spaces(1);
+    pushMod();
+    setMod(only_branch);
+    bl->getBlock(0)->emit(this);
+    popMod();
+    if (bl->getGotoTarget() != (FlowBlock *)0) {
+      emit->spaces(1);
+      emitGotoStatement(bl->getBlock(0),bl->getGotoTarget(),bl->getGotoType());
+      break;
+    }
   
-  setMod(no_branch);
-  emit->spaces(1);
-  int4 id = emit->startIndent();
-  emit->print("{");
-  int4 id1 = emit->beginBlock(bl->getBlock(1));
-  bl->getBlock(1)->emit(this);
-  emit->endBlock(id1);
-  emit->stopIndent(id);
-  emit->tagLine();
-  emit->print("}");
-  if (bl->getSize()==3) {
-    emit->tagLine();
-    emit->print("else",EmitXml::keyword_color);
+    setMod(no_branch);
     emit->spaces(1);
     int4 id = emit->startIndent();
     emit->print("{");
-    int4 id2 = emit->beginBlock(bl->getBlock(2));
-    bl->getBlock(2)->emit(this);
-    emit->endBlock(id2);
+    int4 id1 = emit->beginBlock(bl->getBlock(1));
+    bl->getBlock(1)->emit(this);
+    emit->endBlock(id1);
     emit->stopIndent(id);
     emit->tagLine();
     emit->print("}");
+    if (bl->getSize()!=3) {
+      break; // skip the loop if there is no else block
+    }
+    emit->tagLine();
+    emit->print("else",EmitXml::keyword_color);
+    emit->spaces(1);
+    // if the else block isn't an if print it normally and break form loop
+    if(bl->getBlock(2)->getType()!= FlowBlock::t_if || !isSafeForMerge((BlockIf *)bl->getBlock(2))){
+      int4 id = emit->startIndent();
+      emit->print("{");
+      int4 id2 = emit->beginBlock(bl->getBlock(2));
+      bl->getBlock(2)->emit(this);
+      emit->endBlock(id2);
+      emit->stopIndent(id);
+      emit->tagLine();
+      emit->print("}");
+      break;
+    }
+    // if the else block is an if, open the block, save block id and
+    // point bl to the else block so that it is processed in next cycle.
+    int4 id2 = emit->beginBlock(bl->getBlock(2));
+    openblocks.push_back(id2);
+    bl = (BlockIf *)bl->getBlock(2);
+  }
+
+  while(openblocks.size()!=0){ // close open blocks in fifo order
+    int4 id2 = openblocks.back();
+    openblocks.pop_back();
+    emit->endBlock(id2);
   }
   popMod();
 }

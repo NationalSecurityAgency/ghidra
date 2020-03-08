@@ -189,6 +189,7 @@ protected:
   virtual void emitFunctionDeclaration(const Funcdata *fd);
   virtual void emitTypeDefinition(const Datatype *ct);
   virtual bool checkPrintNegation(const Varnode *vn);
+  virtual bool isSafeForMerge(const BlockIf *bl) ;		/// Check if a BlockIf can be merge with a parent else block into an 'else if'
 public:
   PrintC(Architecture *g,const string &nm="c-language");	///< Constructor
   void setNULLPrinting(bool val) { option_NULL = val; }		///< Toggle the printing of a 'NULL' token
