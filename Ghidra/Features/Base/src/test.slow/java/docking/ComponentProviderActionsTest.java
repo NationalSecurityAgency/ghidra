@@ -169,7 +169,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		setKeyBindingViaF4Dialog_FromWindowsMenu(newKs);
 
 		hideProvider();
-		pressKey(CONTROL_T);
+		triggerKey(tool.getToolFrame(), CONTROL_T);
 		assertProviderIsActive();
 	}
 
@@ -337,7 +337,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 		// Note: there may be a test focus issue here.  If this test fails sporadically due to 
 		// how the action context is generated (it depends on focus).  It is only useful to fail
 		// here in development mode.
-		pressKey(controlEsc);
+		triggerKey(tool.getToolFrame(), controlEsc);
 		assertProviderIsHidden_InNonBatchMode();
 	}
 
@@ -396,14 +396,6 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 			provider.setIcon(icon);
 			provider.addToToolbar();
 		});
-	}
-
-	private void pressKey(KeyStroke ks) {
-		int modifiers = ks.getModifiers();
-		char keyChar = ks.getKeyChar();
-		int keyCode = ks.getKeyCode();
-		JFrame toolFrame = tool.getToolFrame();
-		triggerKey(toolFrame, modifiers, keyCode, keyChar);
 	}
 
 	private DockingActionIf getShowProviderAction() {

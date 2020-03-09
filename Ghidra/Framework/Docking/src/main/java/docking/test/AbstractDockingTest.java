@@ -43,7 +43,7 @@ import docking.action.ToggleDockingActionIf;
 import docking.actions.DockingToolActions;
 import docking.dnd.GClipboard;
 import docking.framework.DockingApplicationConfiguration;
-import docking.menu.DockingToolbarButton;
+import docking.menu.DialogToolbarButton;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -1430,9 +1430,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 			if (element instanceof JButton) {
 
 				JButton button = (JButton) element;
-				if (button instanceof DockingToolbarButton) {
+				if (button instanceof DialogToolbarButton) {
 					DockingActionIf dockingAction =
-						((DockingToolbarButton) button).getDockingAction();
+						((DialogToolbarButton) button).getDockingAction();
 					if (dockingAction.getName().equals(name)) {
 						return button;
 					}
@@ -1714,6 +1714,21 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 			triggerKey(destination, mods, keyCode, c, consumer);
 		}
+	}
+
+	/**
+	 * Fires a {@link KeyListener#keyPressed(KeyEvent)}, 
+	 * {@link KeyListener#keyTyped(KeyEvent)}
+	 * and {@link KeyListener#keyReleased(KeyEvent)} for the given key stroke
+	 * 
+	 * @param c the destination component
+	 * @param ks the key stroke
+	 */
+	public static void triggerKey(Component c, KeyStroke ks) {
+		int modifiers = ks.getModifiers();
+		char keyChar = ks.getKeyChar();
+		int keyCode = ks.getKeyCode();
+		triggerKey(c, modifiers, keyCode, keyChar);
 	}
 
 	/**

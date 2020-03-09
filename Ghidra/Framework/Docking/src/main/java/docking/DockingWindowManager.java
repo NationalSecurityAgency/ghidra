@@ -1245,7 +1245,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		root.update(); // do this before rebuilding the menu, as new windows may be opened
 		buildComponentMenu();
-		SystemUtilities.runSwingLater(() -> updateFocus());
+		Swing.runLater(() -> updateFocus());
 	}
 
 	private void updateFocus() {
@@ -1292,7 +1292,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 			Window activeWindow = kfm.getActiveWindow();
 			if (activeWindow == null) {
@@ -1480,7 +1480,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		// Note: do this later, since, during this callback, component providers can do 
 		//       things that break focus (e.g., launch a modal dialog).  By doing this later, 
 		//       it gives the java focus engine a chance to get in the correct state.
-		SystemUtilities.runSwingLater(() -> setFocusedComponent(placeholder));
+		Swing.runLater(() -> setFocusedComponent(placeholder));
 	}
 
 	private boolean ensureDockableComponentContainsFocusOwner(Component newFocusComponent,
@@ -1515,7 +1515,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		// else use last focus component in window
 		WindowNode node = root.getNodeForWindow(window);
 		if (node == null) {
-			throw new AssertException("Cant find node for window!!");
+			return null;
 		}
 
 		// NOTE: We only allow focus within a window on a component that belongs to within a
@@ -1610,17 +1610,23 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private boolean isMyWindow(Window win) {
-		if (root == null) {
+		if (root == null || win == null) {
 			return false;
 		}
-		if (root.getMainWindow() == win) {
+
+		Window rootFrame = root.getMainWindow();
+		if (rootFrame == win) {
 			return true;
 		}
-		Iterator<DetachedWindowNode> iter = root.getDetachedWindows().iterator();
-		while (iter.hasNext()) {
-			if (iter.next().getWindow() == win) {
-				return true;
-			}
+
+		WindowNode node = root.getNodeForWindow(win);
+		if (node != null) {
+			return true;
+		}
+
+		// see if the given window is a child of the root node's frame
+		if (SwingUtilities.isDescendingFrom(win, rootFrame)) {
+			return true;
 		}
 		return false;
 	}

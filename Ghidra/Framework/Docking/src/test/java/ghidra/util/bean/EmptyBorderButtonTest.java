@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import docking.ActionContext;
 import docking.action.*;
-import docking.menu.DockingToolbarButton;
+import docking.menu.DialogToolbarButton;
 import docking.test.AbstractDockingTest;
 import docking.widgets.EmptyBorderButton;
 import resources.ResourceManager;
@@ -146,13 +146,13 @@ public class EmptyBorderButtonTest extends AbstractDockingTest {
 		action.setToolBarData(new ToolBarData(ResourceManager.getDefaultIcon()));
 		action.setEnabled(false);
 
-		DockingToolbarButton button = new DockingToolbarButton(action, contextProvider);
+		DialogToolbarButton button = new DialogToolbarButton(action, contextProvider);
 		assertTrue(!button.isEnabled());
 
 		action.setEnabled(true);
 		assertTrue(button.isEnabled());
 
-		button = new DockingToolbarButton(action, contextProvider);
+		button = new DialogToolbarButton(action, contextProvider);
 		assertTrue(button.isEnabled());
 
 		action.setEnabled(false);

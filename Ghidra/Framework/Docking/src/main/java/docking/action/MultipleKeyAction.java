@@ -15,6 +15,7 @@
  */
 package docking.action;
 
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
@@ -87,19 +88,16 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	 */
 	@Override
 	public boolean isEnabled() {
-		// always return true so we can report the status message
-		// when none of the actions is enabled...
+		// always return true so we can report the status message when all actions are disabled
 		return true;
 	}
 
 	/**
-	 * Enables or disables the action.  This affects all uses
-	 * of the action.  Note that for popups, this affects whether or
-	 * not the option is "grayed out", not whether the action is added
+	 * Enables or disables the action.  This affects all uses of the action.  Note that for popups, 
+	 * this affects whether or not the option is "grayed out", not whether the action is added
 	 * to the popup.
 	 *
-	 * @param newValue  true to enable the action, false to
-	 *                  disable it
+	 * @param newValue  true to enable the action, false to disable it
 	 * @see Action#setEnabled
 	 */
 	@Override
@@ -111,17 +109,10 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		}
 	}
 
-	/**
-	 * Invoked when an action occurs.
-	 */
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		// Build list of actions which are valid in current context
-		ComponentProvider localProvider = tool.getActiveComponentProvider();
-		ActionContext localContext = getLocalContext(localProvider);
-		localContext.setSourceObject(event.getSource());
-
-		List<ExecutableKeyActionAdapter> list = getValidContextActions(localContext);
+		List<ExecutableKeyActionAdapter> list = getActionsForCurrentContext(event.getSource());
 
 		// If menu active, disable all key bindings
 		if (ignoreActionWhileMenuShowing()) {
@@ -237,10 +228,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 	@Override
 	public KeyBindingPrecedence getKeyBindingPrecedence() {
-		ComponentProvider localProvider = tool.getActiveComponentProvider();
-		ActionContext localContext = getLocalContext(localProvider);
-		List<ExecutableKeyActionAdapter> validActions = getValidContextActions(localContext);
-
+		List<ExecutableKeyActionAdapter> validActions = getActionsForCurrentContext(null);
 		if (validActions.isEmpty()) {
 			return null; // a signal that no actions are valid for the current context
 		}
@@ -252,6 +240,29 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		ExecutableKeyActionAdapter actionProxy = validActions.get(0);
 		DockingActionIf action = actionProxy.getAction();
 		return action.getKeyBindingData().getKeyBindingPrecedence();
+	}
+
+	private List<ExecutableKeyActionAdapter> getActionsForCurrentContext(Object eventSource) {
+
+		DockingWindowManager dwm = tool.getWindowManager();
+		Window window = dwm.getActiveWindow();
+		if (window instanceof DockingDialog) {
+			DockingDialog dockingDialog = (DockingDialog) window;
+			DialogComponentProvider provider = dockingDialog.getDialogComponent();
+			if (provider == null) {
+				// this can happen if the dialog is closed during key event processing
+				return Collections.emptyList();
+			}
+			ActionContext context = provider.getActionContext(null);
+			List<ExecutableKeyActionAdapter> validActions = getValidContextActions(context);
+			return validActions;
+		}
+
+		ComponentProvider localProvider = dwm.getActiveComponentProvider();
+		ActionContext localContext = getLocalContext(localProvider);
+		localContext.setSourceObject(eventSource);
+		List<ExecutableKeyActionAdapter> validActions = getValidContextActions(localContext);
+		return validActions;
 	}
 
 	public List<DockingActionIf> getActions() {

@@ -108,7 +108,7 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 		};
 
 		try {
-			ParallelDecompiler.decompileFunctions(callback, program, functions, monitor);
+			ParallelDecompiler.decompileFunctions(callback, functions, monitor);
 		}
 		finally {
 			callback.dispose();
