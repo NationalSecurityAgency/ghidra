@@ -23,14 +23,17 @@ import docking.EmptyBorderToggleButton;
 import docking.action.*;
 
 /**
- * Toolbar buttons for Dialogs.  This class handles the peculiarities of DockableAction (see
- * the override notes below).
+ * Toolbar buttons for Dialogs.   
+ * 
+ * <p>This class exists because dialog actions are not added to the regular tool's toolbars.  This
+ * means that we have to create the dialog's toolbars outside of the tool.  Thus, this class
+ * mimics how the tool's toolbar buttons are created.
  */
-public class DockingToolbarButton extends EmptyBorderToggleButton {
+public class DialogToolbarButton extends EmptyBorderToggleButton {
 	private DockingActionIf dockingAction;
 	private ActionContextProvider contextProvider;
 
-	public DockingToolbarButton(DockingActionIf action, ActionContextProvider contextProvider) {
+	public DialogToolbarButton(DockingActionIf action, ActionContextProvider contextProvider) {
 		super(action);
 		this.contextProvider = contextProvider;
 		setFocusable(false);

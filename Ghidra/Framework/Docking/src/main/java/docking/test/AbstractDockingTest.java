@@ -43,7 +43,7 @@ import docking.action.ToggleDockingActionIf;
 import docking.actions.DockingToolActions;
 import docking.dnd.GClipboard;
 import docking.framework.DockingApplicationConfiguration;
-import docking.menu.DockingToolbarButton;
+import docking.menu.DialogToolbarButton;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -1430,9 +1430,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 			if (element instanceof JButton) {
 
 				JButton button = (JButton) element;
-				if (button instanceof DockingToolbarButton) {
+				if (button instanceof DialogToolbarButton) {
 					DockingActionIf dockingAction =
-						((DockingToolbarButton) button).getDockingAction();
+						((DialogToolbarButton) button).getDockingAction();
 					if (dockingAction.getName().equals(name)) {
 						return button;
 					}

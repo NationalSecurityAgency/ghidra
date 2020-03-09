@@ -30,7 +30,7 @@ import docking.action.*;
 import docking.actions.KeyBindingUtils;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.help.HelpService;
-import docking.menu.DockingToolbarButton;
+import docking.menu.DialogToolbarButton;
 import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
 import ghidra.util.*;
@@ -81,7 +81,7 @@ public class DialogComponentProvider
 	private Component focusComponent;
 	private JPanel toolbar;
 
-	private final Map<DockingActionIf, DockingToolbarButton> actionMap = new HashMap<>();
+	private final Map<DockingActionIf, DialogToolbarButton> actionMap = new HashMap<>();
 	private final DialogComponentProviderPopupActionManager popupManager =
 		new DialogComponentProviderPopupActionManager(this);
 	private final PopupHandler popupHandler = new PopupHandler();
@@ -1184,7 +1184,7 @@ public class DialogComponentProvider
 			mainPanel.add(toolbar, BorderLayout.NORTH);
 		}
 
-		DockingToolbarButton button = new DockingToolbarButton(action, this);
+		DialogToolbarButton button = new DialogToolbarButton(action, this);
 		toolbar.add(button);
 		actionMap.put(action, button);
 	}

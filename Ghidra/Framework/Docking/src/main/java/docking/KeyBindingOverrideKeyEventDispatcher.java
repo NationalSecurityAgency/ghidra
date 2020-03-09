@@ -220,10 +220,10 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		Window activeWindow = focusProvider.getActiveWindow();
 		if (activeWindow instanceof DockingDialog) {
 
-			// This is legacy code, for which the reasons it exists cannot be recalled.  We 
-			// speculate that odd things can happen when keybindings are processed with model 
-			// dialogs open.  For now, do not let key bindings get processed for modal dialogs.
-			// This can be changed in the future if needed.   
+			// The choice to ignore modal dialogs was made long ago.  We cannot remember why the
+			// choice was made, but speculate that odd things can happen when keybindings are 
+			// processed with modal dialogs open.  For now, do not let key bindings get processed 
+			// for modal dialogs.  This can be changed in the future if needed.   
 			DockingDialog dialog = (DockingDialog) activeWindow;
 			return !dialog.isModal();
 		}
