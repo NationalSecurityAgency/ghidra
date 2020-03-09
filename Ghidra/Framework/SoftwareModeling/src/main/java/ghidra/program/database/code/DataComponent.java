@@ -95,10 +95,11 @@ class DataComponent extends DataDB {
 		}
 		DataType pdt = parent.getBaseDataType();
 		if (pdt instanceof Composite) {
-			DataTypeComponent c = ((Composite) pdt).getComponent(indexInParent);
-			if (c == null) {
+			Composite composite = (Composite) pdt;
+			if (indexInParent >= composite.getNumComponents()) {
 				return true;
 			}
+			DataTypeComponent c = composite.getComponent(indexInParent);
 			component = c;
 			dataType = c.getDataType();
 			offset = component.getOffset();

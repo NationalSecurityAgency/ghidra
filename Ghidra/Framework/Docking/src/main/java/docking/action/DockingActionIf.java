@@ -98,6 +98,23 @@ public interface DockingActionIf extends HelpDescriptor {
 	public boolean setEnabled(boolean newValue);
 
 	/**
+	 * Sets whether or not this action should be activated using the global tool context if the
+	 * current focussed provider's context is not valid for this action.
+	 * @param newValue if true, the action will be activated using the global context if the local
+	 * context is not valid for this action.  If false, the action will only ever be activated
+	 * using the local context.
+	 */
+	public void setFallbackToGlobalContext(boolean newValue);
+
+	/**
+	 * Returns true if this action can be activated using the global context if the local context
+	 * is invalid for this action.
+	 * @return true if this action can be activated using the global context if the local context
+	 * is invalid for this action.
+	 */
+	public boolean shouldFallbackToGlobalContext();
+
+	/**
 	 * Returns true if the action is enabled.
 	 *
 	 * @return true if the action is enabled, false otherwise

@@ -20,7 +20,6 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 
-import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.app.context.ProgramActionContext;
@@ -62,18 +61,31 @@ public class RedoAction extends ProgramContextAction {
 		}
 	}
 
-	@Override
-	protected boolean isEnabledForContext(ProgramActionContext context) {
-		Program program = context.getProgram();
-		if (program.canRedo()) {
+	public void update(Program program) {
+		if (program == null) {
+			getMenuBarData().setMenuItemName("Redo ");
+			setDescription("");
+			setEnabled(false);
+		}
+		else if (program.canRedo()) {
 			String programName = program.getDomainFile().getName();
 			getMenuBarData().setMenuItemName("Redo " + programName);
 			String tip = HTMLUtilities.toWrappedHTML(
 				"Redo " + HTMLUtilities.escapeHTML(program.getRedoName()));
 			setDescription(tip);
-			return true;
+			setEnabled(true);
 		}
-		return false;
+		else {
+			setDescription("Redo");
+			setEnabled(false);
+		}
+
+	}
+
+	@Override
+	protected boolean isEnabledForContext(ProgramActionContext context) {
+		Program program = context.getProgram();
+		return program.canRedo();
 	}
 
 	private void saveCurrentLocationToHistory() {
@@ -84,13 +96,4 @@ public class RedoAction extends ProgramContextAction {
 		}
 	}
 
-	@Override
-	public boolean isEnabledForContext(ActionContext actionContext) {
-		if (!super.isEnabledForContext(actionContext)) {
-			setDescription("Redo");
-			getMenuBarData().setMenuItemName("Redo");
-			return false;
-		}
-		return true;
-	}
 }

@@ -20,7 +20,6 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 
-import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.app.context.ProgramActionContext;
@@ -69,27 +68,29 @@ public class UndoAction extends ProgramContextAction {
 		}
 	}
 
-	@Override
-	protected boolean isEnabledForContext(ProgramActionContext context) {
-		Program program = context.getProgram();
-		if (program.canUndo()) {
+	public void update(Program program) {
+		if (program == null) {
+			getMenuBarData().setMenuItemName("Undo ");
+			setDescription("");
+			setEnabled(false);
+		}
+		if (program != null && program.canUndo()) {
 			String programName = program.getDomainFile().getName();
 			getMenuBarData().setMenuItemName("Undo " + programName);
 			String tip = HTMLUtilities.toWrappedHTML(
 				"Undo " + HTMLUtilities.escapeHTML(program.getUndoName()));
 			setDescription(tip);
-			return true;
+			setEnabled(true);
 		}
-		return false;
+		else {
+			setDescription("Undo");
+			setEnabled(false);
+		}
 	}
 
 	@Override
-	public boolean isEnabledForContext(ActionContext actionContext) {
-		if (!super.isEnabledForContext(actionContext)) {
-			setDescription("Undo");
-			getMenuBarData().setMenuItemName("Undo");
-			return false;
-		}
-		return true;
+	protected boolean isEnabledForContext(ProgramActionContext context) {
+		Program program = context.getProgram();
+		return program.canUndo();
 	}
 }

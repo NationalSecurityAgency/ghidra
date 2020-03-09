@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.codebrowser.actions;
+
+import docking.ActionContext;
+import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
-import docking.ActionContext;
-import docking.action.MenuData;
-import docking.tool.ToolConstants;
 
 /**
  * Action for changing the selection to the complement of all the currently 
@@ -29,29 +30,30 @@ import docking.tool.ToolConstants;
  */
 public class SelectComplementAction extends CodeViewerContextAction {
 
-    public SelectComplementAction(String owner) {
-        super("Select Complement", owner);
-        setMenuBarData( new MenuData( 
-        	new String[]{ToolConstants.MENU_SELECTION, "&Complement" }, 
-        	null, 
-        	"Select" ) );
+	public SelectComplementAction(String owner) {
+		super("Select Complement", owner);
+		setFallbackToGlobalContext(true);
+		setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_SELECTION, "&Complement" },
+			null,
+			"Select"));
 
-        setEnabled(false);
+		setEnabled(false);
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, getName()));
-    }
+	}
 
-    @Override
-    public void actionPerformed(ActionContext context) {
-    	CodeViewerProvider provider = (CodeViewerProvider) context.getComponentProvider();
-    	provider.selectComplement();
-    }
-    @Override
-    public boolean isEnabledForContext(CodeViewerActionContext context) {
-    	ProgramSelection selection = context.getSelection();
-    	if (selection != null && selection.getInteriorSelection() != null) {
-    		return false;
-    	}
-    	return true;
-    }
+	@Override
+	public void actionPerformed(ActionContext context) {
+		CodeViewerProvider provider = (CodeViewerProvider) context.getComponentProvider();
+		provider.selectComplement();
+	}
+
+	@Override
+	public boolean isEnabledForContext(CodeViewerActionContext context) {
+		ProgramSelection selection = context.getSelection();
+		if (selection != null && selection.getInteriorSelection() != null) {
+			return false;
+		}
+		return true;
+	}
 }
-

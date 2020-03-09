@@ -19,7 +19,7 @@ import javax.swing.*;
 
 import docking.action.*;
 import docking.tool.ToolConstants;
-import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.plugin.core.codebrowser.actions.CodeViewerContextAction;
@@ -41,6 +41,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 	public AbstractNextPreviousAction(PluginTool tool, String name, String owner, String subGroup) {
 		super(name, owner);
 		this.tool = tool;
+		setFallbackToGlobalContext(true);
 
 		ToolBarData toolBarData =
 			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_FOUR);
@@ -90,7 +91,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 		}
 	}
 
-	private void gotoAddress(ListingActionContext actionContext, Address address) {
+	private void gotoAddress(NavigatableActionContext actionContext, Address address) {
 		if (address == null) {
 			tool.setStatusInfo("Unable to locate another \"" + getNavigationTypeName() +
 				"\" past the current range, in the current direction.");

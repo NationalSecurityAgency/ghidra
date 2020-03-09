@@ -77,6 +77,8 @@ public abstract class DockingAction implements DockingActionIf {
 	private Predicate<ActionContext> popupPredicate;
 	private Predicate<ActionContext> validContextPredicate;
 
+	private boolean fallbackToGlobalContext;
+
 	public DockingAction(String name, String owner) {
 		this.name = name;
 		this.owner = owner;
@@ -222,6 +224,16 @@ public abstract class DockingAction implements DockingActionIf {
 		isEnabled = newValue;
 		firePropertyChanged(ENABLEMENT_PROPERTY, !isEnabled, isEnabled);
 		return !isEnabled;
+	}
+
+	@Override
+	public void setFallbackToGlobalContext(boolean newValue) {
+		fallbackToGlobalContext = newValue;
+	}
+
+	@Override
+	public boolean shouldFallbackToGlobalContext() {
+		return fallbackToGlobalContext;
 	}
 
 	@Override

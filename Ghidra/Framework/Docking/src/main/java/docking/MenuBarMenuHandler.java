@@ -46,9 +46,10 @@ public class MenuBarMenuHandler extends MenuHandler {
 
 		DockingWindowManager.clearMouseOverHelp();
 
-		ComponentProvider provider = windowManager.getActiveComponentProvider();
-		ActionContext providerContext = provider == null ? null : provider.getActionContext(null);
-		ActionContext context = providerContext == null ? new ActionContext() : providerContext;
+		ActionContext context = getActionContext(action);
+		if (context == null) {
+			return;  // nothing to do
+		}
 
 		context.setSourceObject(event.getSource());
 
@@ -63,5 +64,23 @@ public class MenuBarMenuHandler extends MenuHandler {
 				action.actionPerformed(context);
 			}
 		});
+	}
+
+	private ActionContext getActionContext(DockingActionIf action) {
+		ComponentProvider provider = windowManager.getActiveComponentProvider();
+		ActionContext localContext = provider == null ? null : provider.getActionContext(null);
+		if (localContext == null) {
+			localContext = new ActionContext();
+		}
+		if (action.isValidContext(localContext)) {
+			return localContext;
+		}
+		if (action.shouldFallbackToGlobalContext()) {
+			ActionContext globalContext = windowManager.getGlobalActionContext();
+			if (action.isValidContext(globalContext)) {
+				return globalContext;
+			}
+		}
+		return null;
 	}
 }

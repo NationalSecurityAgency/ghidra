@@ -23,9 +23,9 @@ import javax.swing.Icon;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.NavigatableActionContext;
+import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
-import ghidra.app.plugin.core.codebrowser.actions.CodeViewerContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.*;
@@ -119,7 +119,7 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 		bookmarkAction.setDirection(searchForward);
 	}
 
-	private class ToggleDirectionAction extends CodeViewerContextAction {
+	private class ToggleDirectionAction extends NavigatableContextAction {
 		Icon forwardIcon = ResourceManager.loadImage("images/down.png");
 		Icon backwardIcon = ResourceManager.loadImage("images/up.png");
 		private boolean isForward = true;
@@ -144,7 +144,7 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 		}
 
 		@Override
-		public void actionPerformed(CodeViewerActionContext context) {
+		public void actionPerformed(NavigatableActionContext context) {
 			isForward = !isForward;
 			getMenuBarData().setIcon(isForward ? forwardIcon : backwardIcon);
 			getToolBarData().setIcon(isForward ? forwardIcon : backwardIcon);

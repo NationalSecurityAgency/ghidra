@@ -118,12 +118,8 @@ public class WindowActionManager {
 			return;
 		}
 
-		ComponentProvider provider = placeHolderForScheduledActionUpdate == null ? null
-				: placeHolderForScheduledActionUpdate.getProvider();
-		ActionContext localContext = provider == null ? null : provider.getActionContext(null);
-		if (localContext == null) {
-			localContext = new ActionContext();
-		}
+		ActionContext localContext = getContext();
+		ActionContext globalContext = winMgr.getGlobalActionContext();
 
 		// Update actions - make a copy so that we don't get concurrent modification exceptions
 		List<DockingActionIf> list = new ArrayList<>(actionToProxyMap.values());
@@ -131,11 +127,31 @@ public class WindowActionManager {
 			if (action.isValidContext(localContext)) {
 				action.setEnabled(action.isEnabledForContext(localContext));
 			}
+			else if (isValidGlobalContext(action, globalContext)) {
+				action.setEnabled(action.isEnabledForContext(globalContext));
+			}
 			else {
 				action.setEnabled(false);
 			}
 		}
 		// Notify listeners if the context provider is the focused provider
 		winMgr.notifyContextListeners(placeHolderForScheduledActionUpdate, localContext);
+	}
+
+	private boolean isValidGlobalContext(DockingActionIf action, ActionContext globalContext) {
+		return action.shouldFallbackToGlobalContext() &&
+			action.isValidContext(globalContext);
+	}
+
+	private ActionContext getContext() {
+		ComponentProvider provider = placeHolderForScheduledActionUpdate == null ? null
+				: placeHolderForScheduledActionUpdate.getProvider();
+
+		ActionContext context = provider == null ? null : provider.getActionContext(null);
+
+		if (context == null) {
+			context = new ActionContext();
+		}
+		return context;
 	}
 }

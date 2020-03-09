@@ -50,7 +50,7 @@ import resources.ResourceManager;
  * the {@link #withContext(Class)} call.
  */
 public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends ActionContext, B extends AbstractActionBuilder<T, C, B>> {
-
+	private final Predicate<C> TRUE_PREDICATE = e -> true;
 	/**
 	 * Name for the {@code DockingAction}
 	 */
@@ -170,6 +170,11 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Predicate for determining if an action is applicable for a given context
 	 */
 	private Predicate<C> validContextPredicate;
+
+	/**
+	 * Set to true if the action supports using the global context if the local context is invalid
+	 */
+	private boolean fallbackToGlobalContext;
 
 	/**
 	 * Builder constructor
@@ -501,6 +506,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 */
 	public B onAction(Consumer<C> action) {
 		actionCallback = action;
+//		actionCallback = adaptActionConsumer(action);
 		return self();
 	}
 
@@ -560,6 +566,11 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 		return self();
 	}
 
+	public B fallbackToGlobalContext(boolean b) {
+		fallbackToGlobalContext = b;
+		return self();
+	}
+
 	/**
 	 * Sets the specific ActionContext type to use for the various predicate calls 
 	 * ({@link #validContextWhen(Predicate)}, {@link #enabledWhen(Predicate)}, and 
@@ -613,6 +624,11 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 		actionContextClass = newActionContextClass;
 
+		// reset the predicates when changing the action context type
+		validContextWhen(TRUE_PREDICATE);
+		enabledWhen(TRUE_PREDICATE);
+		popupWhen(TRUE_PREDICATE);
+
 		B2 newSelf = (B2) self();
 		return newSelf;
 	}
@@ -627,6 +643,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	protected void decorateAction(DockingAction action) {
 		action.setEnabled(isEnabled);
 		action.setDescription(description);
+		action.setFallbackToGlobalContext(fallbackToGlobalContext);
 
 		setMenuData(action);
 		setToolbarData(action);
@@ -666,6 +683,17 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 			return actionContextClass.isInstance(ac) && predicate.test((C) ac);
 		};
 		return predicateAdapter;
+	}
+
+	@SuppressWarnings("unchecked")
+	private Consumer<ActionContext> adaptActionConsumer(Consumer<C> consumer) {
+		if (actionContextClass == ActionContext.class) {
+			return (Consumer<ActionContext>) consumer;
+		}
+		Consumer<ActionContext> consumerAdapter = (ac) -> {
+			consumer.accept((C) ac);
+		};
+		return consumerAdapter;
 	}
 
 	protected boolean isPopupAction() {

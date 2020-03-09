@@ -29,6 +29,7 @@ import docking.menu.MultiStateDockingAction;
 import docking.tool.ToolConstants;
 import docking.widgets.EventTrigger;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.services.GoToService;
@@ -56,6 +57,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	public NextPreviousBookmarkAction(PluginTool tool, String owner, String subGroup) {
 		super("Next Bookmark", owner);
 		this.tool = tool;
+		setFallbackToGlobalContext(true);
 
 		ToolBarData toolBarData =
 			new ToolBarData(bookmarkIcon, ToolConstants.TOOLBAR_GROUP_FOUR);
@@ -119,8 +121,8 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 
 	@Override
 	protected void doActionPerformed(ActionContext context) {
-		if (context instanceof ListingActionContext) {
-			gotoNextPrevious((ListingActionContext) context, this.getCurrentUserData());
+		if (context instanceof NavigatableActionContext) {
+			gotoNextPrevious((NavigatableActionContext) context, this.getCurrentUserData());
 		}
 	}
 
@@ -212,7 +214,8 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 //==================================================================================================
 // AbstractNextPreviousAction Methods
 //==================================================================================================
-	private void gotoNextPrevious(final ListingActionContext context, final String bookmarkType) {
+	private void gotoNextPrevious(final NavigatableActionContext context,
+			final String bookmarkType) {
 		final Address address =
 			isForward ? getNextAddress(context.getProgram(), context.getAddress(), bookmarkType)
 					: getPreviousAddress(context.getProgram(), context.getAddress(), bookmarkType);
@@ -225,7 +228,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 		});
 	}
 
-	private void gotoAddress(ListingActionContext listingActionContext, Address address) {
+	private void gotoAddress(NavigatableActionContext listingActionContext, Address address) {
 		if (address == null) {
 			tool.setStatusInfo("Unable to locate another " + getNavigationTypeName() +
 				" past the current range, in the current direction.");
@@ -265,39 +268,13 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 // CodeViewerContextAction Methods
 //==================================================================================================
 	@Override
-	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof CodeViewerActionContext)) {
-			return false;
-		}
-		return isEnabledForContext((CodeViewerActionContext) context);
-	}
-
-	@Override
 	public boolean isValidContext(ActionContext context) {
-		if (!(context instanceof CodeViewerActionContext)) {
-			return false;
-		}
-		return isValidContext((CodeViewerActionContext) context);
+		return context instanceof ListingActionContext;
 	}
 
 	@Override
-	public boolean isAddToPopup(ActionContext context) {
-		if (!(context instanceof CodeViewerActionContext)) {
-			return false;
-		}
-		return isAddToPopup((CodeViewerActionContext) context);
-	}
-
-	protected boolean isValidContext(CodeViewerActionContext context) {
-		return true;
-	}
-
-	protected boolean isEnabledForContext(CodeViewerActionContext context) {
-		return true;
-	}
-
-	protected boolean isAddToPopup(CodeViewerActionContext context) {
-		return isEnabledForContext(context);
+	public boolean isEnabledForContext(ActionContext context) {
+		return context instanceof ListingActionContext;
 	}
 
 	@Override

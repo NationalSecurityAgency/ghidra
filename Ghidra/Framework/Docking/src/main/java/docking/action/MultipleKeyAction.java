@@ -112,7 +112,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	@Override
 	public void actionPerformed(final ActionEvent event) {
 		// Build list of actions which are valid in current context
-		List<ExecutableKeyActionAdapter> list = getActionsForCurrentContext(event.getSource());
+		List<ExecutableAction> list = getActionsForCurrentOrGlobalContext(event.getSource());
 
 		// If menu active, disable all key bindings
 		if (ignoreActionWhileMenuShowing()) {
@@ -135,7 +135,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			Swing.runLater(() -> DockingWindowManager.showDialog(dialog));
 		}
 		else if (list.size() == 1) {
-			final ExecutableKeyActionAdapter actionProxy = list.get(0);
+			final ExecutableAction actionProxy = list.get(0);
 			tool.setStatusInfo("");
 			actionProxy.execute();
 		}
@@ -154,8 +154,9 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		return menuManager.getSelectedPath().length != 0;
 	}
 
-	private List<ExecutableKeyActionAdapter> getValidContextActions(ActionContext localContext) {
-		List<ExecutableKeyActionAdapter> list = new ArrayList<>();
+	private List<ExecutableAction> getValidContextActions(ActionContext localContext,
+			ActionContext globalContext) {
+		List<ExecutableAction> list = new ArrayList<>();
 		boolean hasLocalActionsForKeyBinding = false;
 
 		// 
@@ -165,14 +166,15 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			if (actionData.isMyProvider(localContext)) {
 				hasLocalActionsForKeyBinding = true;
 				if (isValidAndEnabled(actionData, localContext)) {
-					list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
+					list.add(new ExecutableAction(actionData.action, localContext));
 				}
 			}
 		}
 
 		if (hasLocalActionsForKeyBinding) {
-			// We have locals, ignore the globals.  This prevents global actions from processing
-			// the given keybinding when a local action exits, regardless of enablement.
+			// We have locals, ignore the component specific.  This prevents component actions 
+			// from processing the given keybinding when a local action exits, regardless of 
+			// enablement.
 			return list;
 		}
 
@@ -189,7 +191,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			if (componentAction.isValidComponentContext(localContext)) {
 				hasLocalActionsForKeyBinding = true;
 				if (isValidAndEnabled(actionData, localContext)) {
-					list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
+					list.add(new ExecutableAction(actionData.action, localContext));
 				}
 			}
 		}
@@ -209,16 +211,28 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 				// is a 'global' action.  This allows more specific context to be used when
 				// available
 				if (isValidAndEnabled(actionData, localContext)) {
-					list.add(new ExecutableKeyActionAdapter(actionData.action, localContext));
+					list.add(new ExecutableAction(actionData.action, localContext));
+				}
+				else if (isValidAndEnabledGlobally(actionData, globalContext)) {
+					list.add(new ExecutableAction(actionData.action, globalContext));
 				}
 			}
 		}
 		return list;
 	}
 
-	private boolean isValidAndEnabled(ActionData actionData, ActionContext localContext) {
+	private boolean isValidAndEnabled(ActionData actionData, ActionContext context) {
 		DockingActionIf a = actionData.action;
-		return a.isValidContext(localContext) && a.isEnabledForContext(localContext);
+		return a.isValidContext(context) && a.isEnabledForContext(context);
+	}
+
+	private boolean isValidAndEnabledGlobally(ActionData actionData, ActionContext context) {
+		// the context may be null when we don't want global action such as when getting actions
+		// for a dialog
+		if (context == null) {
+			return false;
+		}
+		return actionData.supportsGlobalContext() && isValidAndEnabled(actionData, context);
 	}
 
 	@Override
@@ -228,7 +242,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 	@Override
 	public KeyBindingPrecedence getKeyBindingPrecedence() {
-		List<ExecutableKeyActionAdapter> validActions = getActionsForCurrentContext(null);
+		List<ExecutableAction> validActions = getActionsForCurrentOrGlobalContext(null);
 		if (validActions.isEmpty()) {
 			return null; // a signal that no actions are valid for the current context
 		}
@@ -237,31 +251,36 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			return KeyBindingPrecedence.DefaultLevel;
 		}
 
-		ExecutableKeyActionAdapter actionProxy = validActions.get(0);
+		ExecutableAction actionProxy = validActions.get(0);
 		DockingActionIf action = actionProxy.getAction();
 		return action.getKeyBindingData().getKeyBindingPrecedence();
 	}
 
-	private List<ExecutableKeyActionAdapter> getActionsForCurrentContext(Object eventSource) {
+	private List<ExecutableAction> getActionsForCurrentOrGlobalContext(Object eventSource) {
 
 		DockingWindowManager dwm = tool.getWindowManager();
 		Window window = dwm.getActiveWindow();
 		if (window instanceof DockingDialog) {
-			DockingDialog dockingDialog = (DockingDialog) window;
-			DialogComponentProvider provider = dockingDialog.getDialogComponent();
-			if (provider == null) {
-				// this can happen if the dialog is closed during key event processing
-				return Collections.emptyList();
-			}
-			ActionContext context = provider.getActionContext(null);
-			List<ExecutableKeyActionAdapter> validActions = getValidContextActions(context);
-			return validActions;
+			return getDialogActions(window);
 		}
 
 		ComponentProvider localProvider = dwm.getActiveComponentProvider();
 		ActionContext localContext = getLocalContext(localProvider);
 		localContext.setSourceObject(eventSource);
-		List<ExecutableKeyActionAdapter> validActions = getValidContextActions(localContext);
+		ActionContext globalContext = tool.getGlobalActionContext();
+		List<ExecutableAction> validActions = getValidContextActions(localContext, globalContext);
+		return validActions;
+	}
+
+	private List<ExecutableAction> getDialogActions(Window window) {
+		DockingDialog dockingDialog = (DockingDialog) window;
+		DialogComponentProvider provider = dockingDialog.getDialogComponent();
+		if (provider == null) {
+			// this can happen if the dialog is closed during key event processing
+			return Collections.emptyList();
+		}
+		ActionContext context = provider.getActionContext(null);
+		List<ExecutableAction> validActions = getValidContextActions(context, null);
 		return validActions;
 	}
 
@@ -309,10 +328,15 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			return provider == otherProvider;
 		}
 
+		boolean supportsGlobalContext() {
+			return action.shouldFallbackToGlobalContext();
+		}
+
 		@Override
 		public String toString() {
 			String providerString = provider == null ? "" : provider.toString() + " - ";
 			return providerString + action;
 		}
+
 	}
 }

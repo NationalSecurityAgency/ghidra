@@ -19,12 +19,12 @@ import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
 import generic.json.Json;
 
-public class ExecutableKeyActionAdapter {
+public class ExecutableAction {
 
 	DockingActionIf action;
 	ActionContext context;
 
-	public ExecutableKeyActionAdapter(DockingActionIf action, ActionContext context) {
+	public ExecutableAction(DockingActionIf action, ActionContext context) {
 		this.action = action;
 		this.context = context;
 	}

@@ -228,4 +228,14 @@ public class DockingActionProxy
 	public String toString() {
 		return dockingAction.toString();
 	}
+
+	@Override
+	public void setFallbackToGlobalContext(boolean newValue) {
+		dockingAction.setFallbackToGlobalContext(newValue);
+	}
+
+	@Override
+	public boolean shouldFallbackToGlobalContext() {
+		return dockingAction.shouldFallbackToGlobalContext();
+	}
 }
