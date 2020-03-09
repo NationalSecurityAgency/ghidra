@@ -279,8 +279,8 @@ Varnode *Heritage::normalizeWriteSize(Varnode *vn,const Address &addr,int4 size)
       pieceaddr = addr;
     else
       pieceaddr = addr + (overlap+vn->getSize());
-    if (op->isCall() && callOpIndirectEffect(pieceaddr,mostsigsize,op)) {	// Unless CALL definitely has no effect on piece
-      newop = fd->newIndirectCreation(op,pieceaddr,mostsigsize,false);		// Don't create a new big read if write is from a CALL
+    if (op->isCall() && callOpIndirectEffect(pieceaddr,mostsigsize,op)) {	// Does CALL have an effect on piece
+      newop = fd->newIndirectCreation(op,pieceaddr,mostsigsize,false);	// Don't create a new big read if write is from a CALL
       mostvn = newop->getOut();
     }
     else {

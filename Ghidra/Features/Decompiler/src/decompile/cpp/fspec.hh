@@ -1168,6 +1168,7 @@ class FuncProto {
   vector<EffectRecord> effectlist;	///< Side-effects associated with non-parameter storage locations
   vector<VarnodeData> likelytrash;	///< Locations that may contain \e trash values
   int4 injectid;		///< (If non-negative) id of p-code snippet that should replace this function
+  int4 returnBytesConsumed;	///< Number of bytes of return value that are consumed by callers (0 = all bytes)
 protected:
   void paramShift(int4 paramshift);	///< Add parameters to the front of the input parameter list
   bool isParamshiftApplied(void) const { return ((flags&paramshift_applied)!=0); }	///< Has a parameter shift been applied
@@ -1219,6 +1220,14 @@ public:
   /// A non-negative id indicates a \e call-fixup is used to in-line function's with \b this prototype.
   /// \return the id value corresponding to the specific call-fixup or -1 if there is no call-fixup
   int4 getInjectId(void) const { return injectid; }
+
+  /// \brief Get an estimate of the number of bytes consumed by callers of \b this prototype.
+  ///
+  /// A value of 0 means \e all possible bytes of the storage location are consumed.
+  /// \return the number of bytes or 0
+  int4 getReturnBytesConsumed(void) const { return returnBytesConsumed; }
+
+  bool setReturnBytesConsumed(int4 val);	///< Set the number of bytes consumed by callers of \b this
 
   /// \brief Does a function with \b this prototype never return
   bool isNoReturn(void) const { return ((flags & no_return)!=0); }
@@ -1436,6 +1445,7 @@ class FuncCallSpecs : public FuncProto {
   int4 matchCallCount;		///< Number of calls to this sub-function within the calling function
   ParamActive activeinput;	///< Info for recovering input parameters
   ParamActive activeoutput;	///< Info for recovering output parameters
+  mutable vector<int4> inputConsume;	///< Number of bytes consumed by sub-function, for each input parameter
   bool isinputactive; 		///< Are we actively trying to recover input parameters
   bool isoutputactive;		///< Are we actively trying to recover output parameters
   bool isbadjumptable;		///< Was the call originally a jump-table we couldn't recover
@@ -1496,6 +1506,8 @@ public:
   void checkOutputTrialUse(Funcdata &data,vector<Varnode *> &trialvn);
   void buildInputFromTrials(Funcdata &data);
   void buildOutputFromTrials(Funcdata &data,vector<Varnode *> &trialvn);
+  int4 getInputBytesConsumed(int4 slot) const;
+  bool setInputBytesConsumed(int4 slot,int4 val) const;
   void paramshiftModifyStart(void);
   bool paramshiftModifyStop(Funcdata &data);
   uint4 hasEffectTranslate(const Address &addr,int4 size) const;

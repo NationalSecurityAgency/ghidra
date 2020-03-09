@@ -3367,6 +3367,9 @@ void ActionDeadCode::markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> 
       consumeVal = ~((uintb)0);
     else
       consumeVal = minimalmask(vn->getNZMask());
+    int4 bytesConsumed = fc->getInputBytesConsumed(i);
+    if (bytesConsumed != 0)
+      consumeVal &= calc_mask(bytesConsumed);
     pushConsumed(consumeVal,vn,worklist);
   }
 }
@@ -3393,6 +3396,10 @@ uintb ActionDeadCode::gatherConsumedReturn(Funcdata &data)
       Varnode *vn = returnOp->getIn(1);
       consumeVal |= minimalmask(vn->getNZMask());
     }
+  }
+  int4 val = data.getFuncProto().getReturnBytesConsumed();
+  if (val != 0) {
+    consumeVal &= calc_mask(val);
   }
   return consumeVal;
 }
@@ -4924,6 +4931,7 @@ void universal_action(Architecture *conf)
 	actprop->addRule( new RulePtraddUndo("typerecovery") );
 	actprop->addRule( new RulePtrsubUndo("typerecovery") );
 	actprop->addRule( new RuleSegment("segment") );
+	actprop->addRule( new RulePiecePathology("protorecovery") );
 
 	actprop->addRule( new RuleDoubleLoad("doubleload") );
 	actprop->addRule( new RuleDoubleIn("doubleprecis") );

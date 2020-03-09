@@ -478,7 +478,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       newmask = (rvn->mask >> sa) & calc_mask(outvn->getSize());
       if (newmask == 0) break;	// subvar is set to zero, truncate flow
       if (rvn->mask != (newmask << sa)) {	// Some kind of truncation of the logical value
-	if (flowsize > (sa + outvn->getSize()) && (rvn->mask & 1) != 0) {
+	if (flowsize > ((sa/8) + outvn->getSize()) && (rvn->mask & 1) != 0) {
 	  // Only a piece of the logical value remains
 	  addTerminalPatchSameOp(op, rvn, 0);
 	  hcount += 1;
