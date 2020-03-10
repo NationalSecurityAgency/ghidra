@@ -658,8 +658,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		synchronized (fileSystem) {
 			User user = getUser(currentUser);
 			if (user == null) {
-				throw new UserAccessException(
-					"User " + currentUser + " was not found in the user access list.");
+				throw new UserAccessException("User " + currentUser + " was not found in the '" +
+					name + "' repository access list.");
 			}
 			if (!user.isAdmin()) {
 				throw new UserAccessException(
@@ -679,8 +679,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		synchronized (fileSystem) {
 			User user = getUser(currentUser);
 			if (user == null) {
-				throw new UserAccessException(
-					"User " + currentUser + " was not found in the user access list.");
+				throw new UserAccessException("User " + currentUser + " was not found in the '" +
+					name + "' repository access list.");
 			}
 			if (user.isReadOnly()) {
 				throw new UserAccessException(
@@ -700,8 +700,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 		synchronized (fileSystem) {
 			User user = getUser(currentUser);
 			if (user == null) {
-				throw new UserAccessException(
-					"User " + currentUser + " was not found in the user access list.");
+				throw new UserAccessException("User " + currentUser + " was not found in the '" +
+					name + "' repository access list.");
 			}
 			return user;
 		}
