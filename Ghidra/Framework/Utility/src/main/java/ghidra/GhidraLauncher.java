@@ -62,8 +62,9 @@ public class GhidraLauncher {
 		}
 		else {
 			addPatchPaths(classpathList, layout.getPatchDir());
-			addModuleJarPaths(classpathList, modules);
 		}
+		addModuleJarPaths(classpathList, modules);
+		
 		classpathList = orderClasspath(classpathList, modules);
 
 		// Add the classpath to the class loader
