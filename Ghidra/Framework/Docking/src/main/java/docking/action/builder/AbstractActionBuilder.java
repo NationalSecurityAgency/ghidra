@@ -506,7 +506,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 */
 	public B onAction(Consumer<C> action) {
 		actionCallback = action;
-//		actionCallback = adaptActionConsumer(action);
 		return self();
 	}
 
@@ -624,7 +623,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 		actionContextClass = newActionContextClass;
 
-		// reset the predicates when changing the action context type
+		// reset the predicates when changing the action context type - this will guarantee
+		// that the action will automatically be invalid when the context type does not match
+		// the type specified by this call
 		validContextWhen(TRUE_PREDICATE);
 		enabledWhen(TRUE_PREDICATE);
 		popupWhen(TRUE_PREDICATE);
@@ -683,17 +684,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 			return actionContextClass.isInstance(ac) && predicate.test((C) ac);
 		};
 		return predicateAdapter;
-	}
-
-	@SuppressWarnings("unchecked")
-	private Consumer<ActionContext> adaptActionConsumer(Consumer<C> consumer) {
-		if (actionContextClass == ActionContext.class) {
-			return (Consumer<ActionContext>) consumer;
-		}
-		Consumer<ActionContext> consumerAdapter = (ac) -> {
-			consumer.accept((C) ac);
-		};
-		return consumerAdapter;
 	}
 
 	protected boolean isPopupAction() {
