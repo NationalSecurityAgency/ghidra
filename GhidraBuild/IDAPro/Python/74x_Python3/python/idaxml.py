@@ -41,8 +41,8 @@ from xml.etree import cElementTree
 DEBUG = False  # print debug statements
 
 IDAXML_VERSION = "5.0.1"
-BASELINE_IDA_VERSION = 700
-BASELINE_STR = '7.00'
+BASELINE_IDA_VERSION = 740
+BASELINE_STR = '7.40'
 IDA_SDK_VERSION = ida_pro.IDA_SDK_VERSION
 BADADDR = idc.BADADDR
 BADNODE = ida_netnode.BADNODE
