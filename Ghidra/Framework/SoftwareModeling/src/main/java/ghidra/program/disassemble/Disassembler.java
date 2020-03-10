@@ -1471,6 +1471,24 @@ public class Disassembler implements DisassemblerConflictHandler {
 		}
 	}
 
+	/**
+	 * Clear all bookmarks which indicate Bad Instruction within the specified address set.
+	 * @param program program to clear bookmarks
+	 * @param addressSet restricted address set or null for entire program
+	 * @param monitor allow canceling
+	 * @throws CancelledException if monitor canceled
+	 */
+	public static void clearBadInstructionErrors(Program program, AddressSetView addressSet,
+			TaskMonitor monitor) throws CancelledException {
+		BookmarkManager bmMgr = program.getBookmarkManager();
+		if (addressSet == null) {
+			bmMgr.removeBookmarks(BookmarkType.ERROR, ERROR_BOOKMARK_CATEGORY, monitor);
+		}
+		else {
+			bmMgr.removeBookmarks(addressSet, BookmarkType.ERROR, ERROR_BOOKMARK_CATEGORY, monitor);
+		}
+	}
+
 	private void reportMessage(final String msg) {
 		if (listener != null) {
 			listener.disassembleMessageReported(msg);
