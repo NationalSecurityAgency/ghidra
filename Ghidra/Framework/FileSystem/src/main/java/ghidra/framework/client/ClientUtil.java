@@ -33,6 +33,7 @@ import ghidra.framework.remote.security.SSHKeyManager;
 import ghidra.net.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.UserAccessException;
 import ghidra.util.task.TaskLauncher;
 
 /**
@@ -204,6 +205,10 @@ public class ClientUtil {
 		if ((exc instanceof ConnectException) || (exc instanceof NotConnectedException)) {
 			Msg.debug(ClientUtil.class, "Server not connected (" + operation + ")");
 			promptForReconnect(repository, operation, mustRetry, parent);
+		}
+		else if (exc instanceof UserAccessException) {
+			Msg.showError(ClientUtil.class, parent, title,
+				"Access denied: " + repository + "\n" + exc.getMessage());
 		}
 		else if ((exc instanceof ServerException) || (exc instanceof ServerError)) {
 			Msg.showError(ClientUtil.class, parent, title,

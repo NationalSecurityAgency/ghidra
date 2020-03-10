@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.framework.main.datatable;
 
-import ghidra.framework.model.DomainFile;
-
 import java.util.*;
 
 import javax.swing.Icon;
+
+import ghidra.framework.model.DomainFile;
 
 public class DomainFileInfo {
 
@@ -56,7 +55,7 @@ public class DomainFileInfo {
 			if (domainFile.isCheckedOut()) {
 				int latestVersionNumber = domainFile.getLatestVersion();
 				String latestVersionStr = "" + latestVersionNumber;
-				if (latestVersionNumber < 0) {
+				if (latestVersionNumber <= 0) {
 					latestVersionStr = "?";
 				}
 				displayName += " (" + versionStr + " of " + latestVersionStr + ")";

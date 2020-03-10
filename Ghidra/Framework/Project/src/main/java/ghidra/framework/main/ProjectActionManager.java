@@ -375,43 +375,42 @@ class ProjectActionManager {
 		buildCloseViewsActions();
 
 		boolean hasActiveProject = activeProject != null;
-		enableActions(hasActiveProject);
-
-		if (hasActiveProject) {
-			RepositoryAdapter repository = activeProject.getRepository();
-			if (repository != null) {
-				if (isUserAdmin(repository)) {
-					tool.addAction(editAccessAction);
-					editAccessAction.setEnabled(true);
-				}
-				else if (!isAnonymousUserOrNotConnected(repository)) {
-					tool.addAction(viewAccessAction);
-					viewAccessAction.setEnabled(true);
-				}
-
-				if (repository.isConnected() && repository.getServer().canSetPassword()) {
-					tool.addAction(setPasswordAction);
-					setPasswordAction.setEnabled(true);
-				}
-			}
-		}
+		enableActions(activeProject != null);
 	}
 
 	/**
 	 * Notification that the connection state has changed;
-	 * enable or disable the edit Project access action.
+	 * @param repository shared project repository adapter
 	 */
 	void connectionStateChanged(RepositoryAdapter repository) {
+
+		// Action removal is done each time to avoid possibility
+		// of adding actions twice. Action manipulated here are
+		// not intended to appear in menu when not available.
+
+		setPasswordAction.setEnabled(false);
+		editAccessAction.setEnabled(false);
+		viewAccessAction.setEnabled(false);
+
+		tool.removeAction(setPasswordAction);
+		tool.removeAction(editAccessAction);
+		tool.removeAction(viewAccessAction);
+
 		if (repository.isConnected()) {
-			editAccessAction.setEnabled(isUserAdmin(repository));
 			if (repository.getServer().canSetPassword()) {
 				tool.addAction(setPasswordAction);
+				setPasswordAction.setEnabled(true);
+			}
+			if (isUserAdmin(repository)) {
+				tool.addAction(editAccessAction);
+				editAccessAction.setEnabled(true);
+			}
+			else if (!isAnonymousUserOrNotConnected(repository)) {
+				tool.addAction(viewAccessAction);
+				viewAccessAction.setEnabled(true);
 			}
 		}
-		else {
-			editAccessAction.setEnabled(false);
-			tool.removeAction(setPasswordAction);
-		}
+
 		if (infoDialog != null && infoDialog.isVisible()) {
 			infoDialog.updateConnectionStatus();
 		}

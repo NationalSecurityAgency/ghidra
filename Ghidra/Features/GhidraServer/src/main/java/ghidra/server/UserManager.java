@@ -59,9 +59,8 @@ public class UserManager {
 	private final File userFile;
 	private final File sshDir;
 
-	private boolean enableLocalPasswords = false;
+	private boolean enableLocalPasswords;
 	private long defaultPasswordExpirationMS;
-	private boolean requireExplicitPasswordReset = true;
 
 	private PrintWriter dnLogOut;
 
@@ -71,14 +70,17 @@ public class UserManager {
 	private boolean userListUpdateInProgress = false;
 
 	/**
-	 * Constructor.
-	 * @param repositoryRoot root server directory
+	 * Construct server user manager
+	 * @param repositoryMgr repository manager (used for queued command processing)
+	 * @param enableLocalPasswords if true user passwords will be maintained 
+	 * 			within local 'users' file
+	 * @param defaultPasswordExpirationDays password expiration in days when 
+	 * 			local passwords are enabled
 	 */
 	UserManager(RepositoryManager repositoryMgr, boolean enableLocalPasswords,
-			boolean requireExplicitPasswordReset, int defaultPasswordExpirationDays) {
+			int defaultPasswordExpirationDays) {
 		this.repositoryMgr = repositoryMgr;
 		this.enableLocalPasswords = enableLocalPasswords;
-		this.requireExplicitPasswordReset = requireExplicitPasswordReset;
 		if (defaultPasswordExpirationDays < 0) {
 			defaultPasswordExpirationDays = DEFAULT_PASSWORD_TIMEOUT_DAYS;
 		}
@@ -163,7 +165,7 @@ public class UserManager {
 	 * @param passwordHash MD5 hash of initial password or null if explicit password reset required
 	 * @param dn X500 distinguished name for user (may be null)
 	 * @throws DuplicateNameException if username already exists
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 */
 	private synchronized void addUser(String username, char[] passwordHash, X500Principal x500User)
 			throws DuplicateNameException, IOException {
@@ -190,11 +192,10 @@ public class UserManager {
 	 * Add a user.
 	 * @param username user name/SID
 	 * @throws DuplicateNameException if username already exists
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 */
 	public void addUser(String username) throws DuplicateNameException, IOException {
-		char[] passwordHash = requireExplicitPasswordReset ? null : getDefaultPasswordHash();
-		addUser(username, passwordHash, null);
+		addUser(username, null);
 	}
 
 	/**
@@ -202,11 +203,11 @@ public class UserManager {
 	 * @param username user name/SID
 	 * @param x500User X500 distinguished name for user (may be null)
 	 * @throws DuplicateNameException if username already exists
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 */
 	public void addUser(String username, X500Principal x500User)
 			throws DuplicateNameException, IOException {
-		char[] passwordHash = requireExplicitPasswordReset ? null : getDefaultPasswordHash();
+		char[] passwordHash = enableLocalPasswords ? getDefaultPasswordHash() : null;
 		addUser(username, passwordHash, x500User);
 	}
 
