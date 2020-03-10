@@ -1710,10 +1710,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		};
 
 		if (provider.isModal()) {
-			SystemUtilities.runSwingNow(r);
+			Swing.runNow(r);
 		}
 		else {
-			SystemUtilities.runIfSwingOrPostSwingLater(r);
+			Swing.runIfSwingOrRunLater(r);
 		}
 	}
 

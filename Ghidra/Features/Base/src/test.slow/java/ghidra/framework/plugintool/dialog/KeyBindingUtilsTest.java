@@ -206,14 +206,13 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		debug("d");
 
-		// now repeat the above test with changing some values before writing
-		// out
+		// now repeat the above test with changing some values before writing out
 		invokeInstanceMethod("putObject", defaultKeyBindings,
 			new Class[] { String.class, Object.class },
-			new Object[] { "test1", KeyStroke.getKeyStroke(65, 0) });
+			new Object[] { "TestAction1 (Owner1)", KeyStroke.getKeyStroke(65, 0) });
 		invokeInstanceMethod("putObject", defaultKeyBindings,
 			new Class[] { String.class, Object.class },
-			new Object[] { "test2", KeyStroke.getKeyStroke(66, 0) });
+			new Object[] { "TestAction2 (Owner 2)", KeyStroke.getKeyStroke(66, 0) });
 
 		debug("e");
 

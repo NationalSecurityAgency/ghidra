@@ -1188,7 +1188,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		if (actions.size() > 1) {
 			// This shouldn't happen
 			throw new AssertionFailedError(
-				"Found more than one action for name '" + name + " (" + owner + ")'");
+				"Found more than one action for name '" + name + " (" + owner + ")'\n\t" + actions);
 		}
 
 		return CollectionUtils.any(actions);
