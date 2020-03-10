@@ -358,16 +358,17 @@ class XmlExporter(IdaXml):
             String containing either the character or the entity
             substition string.
         """
-        if type(ch) == int:
-            if ((ch < 0x20) and (ch != 0x09 and
-                 ch != 0x0A and ch != 0x0D)): return ''
-            elif ch > 0x7F: return '&#x' + format(ch,"x") + ";"
+        if isinstance(ch, int):
+            ch = chr(ch)
+        if ((ord(ch) < 0x20) and (ord(ch) != 0x09 and
+                 ord(ch) != 0x0A and ord(ch) != 0x0D)): return ''
         elif ch == '&' :  return '&amp;'
         elif ch == '<' :  return "&lt;"
         elif ch == '>' :  return "&gt;"
         elif ch == '\'' : return "&apos;"
         elif ch == '"' :  return "&quot;"
         elif ch == '\x7F': return ''
+        elif ord(ch) > 0x7F: return '&#x' + format(ord(ch),"x") + ";"
         return ch
 
 
