@@ -31,9 +31,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.pathmanager.PathnameTablePanel;
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -59,11 +57,11 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	public void setUp() throws Exception {
 		env = new TestEnv();
 		tool = env.getTool();
-		tool.addPlugin(ProgramTreePlugin.class.getName());
-		tool.addPlugin(CodeBrowserPlugin.class.getName());
 		tool.addPlugin(DataTypeManagerPlugin.class.getName());
 		tool.addPlugin(CParserPlugin.class.getName());
 		plugin = getPlugin(tool, CParserPlugin.class);
+
+		env.showTool();
 
 		String tempPath = createTempFilePath(getClass().getSimpleName());
 		plugin.setUserProfileDir(tempPath);
@@ -71,7 +69,7 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		readDefaultParseProfileFile();
 		removeAllProfiles();
 
-		dialog = getDialog();
+		dialog = showDialog();
 		profilesComboBox = findComponent(dialog, JComboBox.class);
 		assertNotNull(profilesComboBox);
 		profilesComboBoxModel = (DefaultComboBoxModel<?>) profilesComboBox.getModel();
@@ -339,7 +337,7 @@ public class ParseDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> pathPanel.setPaths(new String[] { paths.get(0), path }));
 	}
 
-	private ParseDialog getDialog() {
+	private ParseDialog showDialog() {
 		performAction(parseAction, true);
 		return waitForDialogComponent(ParseDialog.class);
 	}

@@ -226,6 +226,6 @@ public class DockingActionProxy
 
 	@Override
 	public String toString() {
-		return dockingAction.getName();
+		return dockingAction.toString();
 	}
 }

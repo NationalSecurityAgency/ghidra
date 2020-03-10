@@ -1199,10 +1199,20 @@ public class DialogComponentProvider
 		dialogActions.add(action);
 		addToolbarAction(action);
 		popupManager.addAction(action);
+		addKeyBindingAction(action);
+	}
+
+	private void addKeyBindingAction(DockingActionIf action) {
 
 		// add the action to the tool in order get key event management (key bindings 
 		// options and key event processing)
 		DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
+		if (dwm == null) {
+			// This implies the client dialog has been shown outside of the plugin framework. In
+			// that case, the client will not get key event processing for dialog actions.
+			return;
+		}
+
 		Tool tool = dwm.getTool();
 		tool.addAction(new DialogActionProxy(action));
 	}
