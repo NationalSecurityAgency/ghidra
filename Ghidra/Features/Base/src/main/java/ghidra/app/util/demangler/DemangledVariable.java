@@ -36,7 +36,8 @@ import ghidra.util.task.TaskMonitor;
 public class DemangledVariable extends DemangledObject {
 	private DemangledDataType datatype;
 
-	public DemangledVariable(String name) {
+	public DemangledVariable(String mangled, String originalDemangled, String name) {
+		super(mangled, originalDemangled);
 		setName(name);
 	}
 

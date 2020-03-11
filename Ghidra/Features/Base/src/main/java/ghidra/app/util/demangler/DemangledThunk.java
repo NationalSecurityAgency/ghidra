@@ -34,7 +34,9 @@ public class DemangledThunk extends DemangledObject {
 
 	private boolean covariantReturnThunk = false;
 
-	public DemangledThunk(DemangledFunction thunkedFunctionObject) {
+	public DemangledThunk(String mangled, String originalDemangled,
+			DemangledFunction thunkedFunctionObject) {
+		super(mangled, originalDemangled);
 		this.thunkedFunctionObject = thunkedFunctionObject;
 		this.namespace = thunkedFunctionObject.getNamespace();
 		setName(thunkedFunctionObject.getName());
@@ -115,14 +117,6 @@ public class DemangledThunk extends DemangledObject {
 		return s != null;
 	}
 
-	/**
-	 * Create normal function where thunk resides
-	 * @param prog program
-	 * @param addr thunk function address
-	 * @param doDisassembly
-	 * @param monitor
-	 * @return function
-	 */
 	private Function createPreThunkFunction(Program prog, Address addr, boolean doDisassembly,
 			TaskMonitor monitor) {
 
@@ -182,7 +176,7 @@ public class DemangledThunk extends DemangledObject {
 		}
 
 		Symbol s = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			thunkedFunctionObject.mangled, err -> Msg.warn(this, err));
+			mangled, err -> Msg.warn(this, err));
 
 		if (s == null) {
 			Address thunkedAddr =

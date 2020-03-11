@@ -76,10 +76,10 @@ public class MicrosoftDemangler implements Demangler {
 			return object;
 		}
 		catch (MDException e) {
-			DemangledException gde =
+			DemangledException de =
 				new DemangledException("Unable to demangle symbol: " + mangled);
-			gde.initCause(e);
-			throw gde;
+			de.initCause(e);
+			throw de;
 		}
 	}
 }

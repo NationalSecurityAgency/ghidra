@@ -58,7 +58,7 @@ public class DemangledDataType extends DemangledType {
 	public final static String WCHAR_T = "wchar_t";
 	public final static String SHORT = "short";
 	public final static String INT = "int";
-	public final static String INT0_T = "int0_t";//TODO
+	public final static String INT0_T = "int0_t";
 	public final static String LONG = "long";
 	public final static String LONG_LONG = "long long";
 	public final static String FLOAT = "float";
@@ -67,14 +67,19 @@ public class DemangledDataType extends DemangledType {
 	public final static String INT16 = "__int16";
 	public final static String INT32 = "__int32";
 	public final static String INT64 = "__int64";
-	public final static String INT128 = "__int128";//TODO
-	public final static String FLOAT128 = "__float128";//TODO
+	public final static String INT128 = "__int128";
+	public final static String FLOAT128 = "__float128";
 	public final static String LONG_DOUBLE = "long double";
 	public final static String PTR64 = "__ptr64";
 	public final static String STRING = "string";
 	public final static String UNDEFINED = "undefined";
 	public static final String UNALIGNED = "__unaligned";
 	public static final String RESTRICT = "__restrict";
+
+	private static final String UNSIGNED_CHAR = "unsigned char";
+	private static final String UNSIGNED_SHORT = "unsigned short";
+	private static final String UNSIGNED_INT = "unsigned int";
+	private static final String UNSIGNED_LONG = "unsigned long";
 
 	public final static String[] PRIMITIVES = { VOID, BOOL, CHAR, WCHAR_T, SHORT, INT, INT0_T, LONG,
 		LONG_LONG, FLOAT, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
@@ -100,54 +105,13 @@ public class DemangledDataType extends DemangledType {
 	private boolean isCoclass;
 	private boolean isCointerface;
 
-	/**
-	 * Constructs a new demangled datatype.
-	 * @param name the name of the datatype
-	 */
-	public DemangledDataType(String name) {
-		super(name);
-	}
-
-	public DemangledDataType copy() {
-		DemangledDataType copy = new DemangledDataType(getName());
-		copy(this, copy);
-		return copy;
-	}
-
-	protected void copy(DemangledDataType source, DemangledDataType destination) {
-		destination.arrayDimensions = source.arrayDimensions;
-		destination.isClass = source.isClass;
-		destination.isComplex = source.isComplex;
-		destination.isEnum = source.isEnum;
-		destination.isPointer64 = source.isPointer64;
-		destination.isReference = source.isReference;
-		destination.isSigned = source.isSigned;
-		destination.isStruct = source.isStruct;
-		destination.isTemplate = source.isTemplate;
-		destination.isUnion = source.isUnion;
-		destination.isUnsigned = source.isUnsigned;
-		destination.isVarArgs = source.isVarArgs;
-		destination.pointerLevels = source.pointerLevels;
-
-		destination.isUnaligned = source.isUnaligned();
-		destination.isRestrict = source.isRestrict();
-		destination.basedName = source.getBasedName();
-		destination.memberScope = source.getMemberScope();
-
-		destination.setNamespace(source.getNamespace());
-		destination.setTemplate(source.getTemplate());
-		destination.isCoclass = source.isCoclass;
-		destination.isCointerface = source.isCointerface;
-
-		if (source.isConst()) {
-			destination.setConst();
-		}
+	public DemangledDataType(String mangled, String originaDemangled, String name) {
+		super(mangled, originaDemangled, name);
 	}
 
 	/**
-	 * Converts this demangled datatype into the corresponding Ghidra datatype.
-	 * @param dataTypeManager the data type manager to be searched and whose data organization
-	 * should be used
+	 * Converts this demangled datatype into the corresponding Ghidra datatype
+	 * @param dataTypeManager the manager to search and whose data organization should be used
 	 * @return the Ghidra datatype corresponding to the demangled datatype
 	 */
 	public DataType getDataType(DataTypeManager dataTypeManager) {
@@ -163,11 +127,6 @@ public class DemangledDataType extends DemangledType {
 		}
 
 		if (dt == null) {
-
-			// If custom type, look for it first
-			// TODO: this find method could be subject to name mismatch, although
-			// presence of namespace could help this if it existing and contained within
-			// an appropriate namespace category
 			dt = findDataType(dataTypeManager, namespace, name);
 
 			DataType baseType = dt;
@@ -188,25 +147,23 @@ public class DemangledDataType extends DemangledType {
 			}
 			else if (isEnum()) {
 				if (baseType == null || !(baseType instanceof Enum)) {
-					// TODO: Can't tell how big an enum is,
-					//   Just use the size of a pointer
-					// 20170522: Modified following code to allow "some" sizing from MSFT.
-					if ((enumType == null) || "int".equals(enumType) ||
-						"unsigned int".equals(enumType)) {
+
+					if (enumType == null || INT.equals(enumType) || UNSIGNED_INT.equals(enumType)) {
+						// Can't tell how big an enum is, just use the size of a pointer	
 						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
 							dataTypeManager.getDataOrganization().getIntegerSize());
 					}
-					else if ("char".equals(enumType) || "unsigned char".equals(enumType)) {
+					else if (CHAR.equals(enumType) || UNSIGNED_CHAR.equals(enumType)) {
 						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
 							dataTypeManager.getDataOrganization().getCharSize());
 
 					}
-					else if ("short".equals(enumType) || "unsigned short".equals(enumType)) {
+					else if (SHORT.equals(enumType) || UNSIGNED_SHORT.equals(enumType)) {
 						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
 							dataTypeManager.getDataOrganization().getShortSize());
 
 					}
-					else if ("long".equals(enumType) || "unsigned long".equals(enumType)) {
+					else if (LONG.equals(enumType) || UNSIGNED_LONG.equals(enumType)) {
 						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
 							dataTypeManager.getDataOrganization().getLongSize());
 					}
@@ -216,7 +173,7 @@ public class DemangledDataType extends DemangledType {
 					}
 				}
 			}
-			else if (isClass() || name.equals(STRING)) {//TODO - class datatypes??
+			else if (isClass() || name.equals(STRING)) {
 				if (baseType == null || !(baseType instanceof Structure)) {
 					// try creating empty structures for unknown types instead.
 					dt = createPlaceHolderStructure(name, getNamespace());
@@ -251,7 +208,7 @@ public class DemangledDataType extends DemangledType {
 
 	private DataType getBuiltInType(DataTypeManager dataTypeManager) {
 		DataType dt = null;
-		String name = getName();
+		String name = getDemangledName();
 		if (BOOL.equals(name)) {
 			dt = BooleanDataType.dataType;
 		}
@@ -304,6 +261,9 @@ public class DemangledDataType extends DemangledType {
 		else if (FLOAT.equals(name)) {
 			dt = FloatDataType.dataType;
 		}
+		else if (FLOAT128.equals(name)) {
+			dt = new TypedefDataType(FLOAT128, Float16DataType.dataType);
+		}
 		else if (DOUBLE.equals(name)) {
 			dt = DoubleDataType.dataType;
 		}
@@ -348,6 +308,16 @@ public class DemangledDataType extends DemangledType {
 			else {
 				dt = new TypedefDataType(INT64,
 					AbstractIntegerDataType.getSignedDataType(8, dataTypeManager));
+			}
+		}
+		else if (INT128.equals(name)) {
+			if (isUnsigned()) {
+				dt = new TypedefDataType("__uint128",
+					AbstractIntegerDataType.getUnsignedDataType(16, dataTypeManager));
+			}
+			else {
+				dt = new TypedefDataType(INT128,
+					AbstractIntegerDataType.getSignedDataType(16, dataTypeManager));
 			}
 		}
 		else if (UNDEFINED.equals(name)) {
@@ -629,6 +599,7 @@ public class DemangledDataType extends DemangledType {
 		return false;
 	}
 
+	@Override
 	public String getSignature() {
 		StringBuilder buffer = new StringBuilder();
 

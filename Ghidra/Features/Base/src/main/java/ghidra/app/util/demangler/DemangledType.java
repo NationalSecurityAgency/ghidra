@@ -24,16 +24,20 @@ import ghidra.program.model.symbol.Namespace;
  * to compose its internal state for namespace information, return types and parameters.
  */
 public class DemangledType implements Demangled {
-	private String demangledName;
-	private String name;
+
 	protected String mangled; // the original mangled string
+	private String originalDemangled;
+	private String demangledName;
+	private String name; // 'safe' name
+
 	protected Demangled namespace;
 	protected DemangledTemplate template;
 	private boolean isConst;
 	private boolean isVolatile;
-	private String originalDemangled;
 
-	public DemangledType(String name) {
+	public DemangledType(String mangled, String originaDemangled, String name) {
+		this.mangled = mangled;
+		this.originalDemangled = originaDemangled;
 		setName(name);
 	}
 
@@ -58,18 +62,8 @@ public class DemangledType implements Demangled {
 	}
 
 	@Override
-	public void setOriginalDemangled(String originalDemangled) {
-		this.originalDemangled = originalDemangled;
-	}
-
-	@Override
 	public String getOriginalDemangled() {
 		return originalDemangled;
-	}
-
-	@Override
-	public void setMangledString(String mangled) {
-		this.mangled = mangled;
 	}
 
 	@Override
@@ -145,7 +139,7 @@ public class DemangledType implements Demangled {
 
 	@Override
 	public String getNamespaceName() {
-		return getName(false);
+		return name;
 	}
 
 	@Override

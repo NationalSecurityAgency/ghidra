@@ -38,14 +38,22 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOverloadedShiftOperatorParsingBug() {
-		parser = new GnuDemanglerParser();
-		DemangledObject object = parser.parse(null,
-			"std::basic_istream<char, std::char_traits<char> >& " +
-				"std::operator>><char, std::char_traits<char> >" +
-				"(std::basic_istream<char, std::char_traits<char> >&, char&)");
-		String name = object.getName();
-		assertEquals("operator>><char,std--char_traits<char>>", name);
+	public void testParse_ArrayPointerReferencePattern_ConstArray() throws Exception {
+
+		// bob(int const[8] (*) [12])
+
+		String demangled =
+			"bob(int const[8] (*) [12])";
+		DemangledObject object = parser.parse("fake", demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "bob");
+
+		DemangledFunction function = (DemangledFunction) object;
+		List<DemangledDataType> parameters = function.getParameters();
+		assertEquals(1, parameters.size());
+		DemangledDataType p1 = parameters.get(0);
+		assertEquals("bob(int const[8] (*) [12])", p1.getOriginalDemangled());
+		assertEquals("undefined bob(int *[])", object.getSignature(false));
 	}
 
 	@Test
@@ -532,6 +540,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "CalcPortExposedRect__13LScrollerViewCFR4Rectb";
 
+		// use an older demangler; the current demangler cannot handle this string
 		process = GnuDemanglerNativeProcess
 				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
@@ -556,6 +565,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "__dt__Q26MsoDAL9VertFrameFv";
 
+		// use an older demangler; the current demangler cannot handle this string
 		process = GnuDemanglerNativeProcess
 				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
@@ -596,6 +606,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "GetColWidths__13CDataRendererCFRA7_s";
 
+		// use an older demangler; the current demangler cannot handle this string
 		process = GnuDemanglerNativeProcess
 				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
@@ -620,6 +631,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "GetColWidths__13CDataRendererCFPA7_s";
 
+		// use an older demangler; the current demangler cannot handle this string
 		process = GnuDemanglerNativeProcess
 				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
@@ -678,6 +690,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "_gmStage2__FP12SECTION_INFOPiPA12_iiPCs";
 
+		// use an older demangler; the current demangler cannot handle this string
 		process = GnuDemanglerNativeProcess
 				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
@@ -712,6 +725,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 		String mangled = "__ct__Q24CStr6BufferFR4CStrUl";
 
+		// use an older demangler; the current demangler cannot handle this string
 		process = GnuDemanglerNativeProcess
 				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
 
@@ -803,6 +817,22 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertEquals(2, parameters.size());
 		assertEquals("Magick::Coordinate const &", parameters.get(0).getSignature());
 		assertEquals("Magick::Coordinate const &", parameters.get(1).getSignature());
+	}
+
+	@Test
+	public void testOverloadedShiftOperatorParsingBug() {
+		parser = new GnuDemanglerParser();
+		DemangledObject object = parser.parse(null,
+			"std::basic_istream<char, std::char_traits<char> >& " +
+				"std::operator>><char, std::char_traits<char> >" +
+				"(std::basic_istream<char, std::char_traits<char> >&, char&)");
+		String name = object.getName();
+		assertEquals("operator>>", name);
+		assertEquals(
+			"std::basic_istream<char,std--char_traits<char>>& " +
+				"std::operator>><char,std::char_traits<char>>" +
+				"(std::basic_istream<char,std::char_traits<char>> &,char &)",
+			object.getSignature());
 	}
 
 	@Test
@@ -1397,6 +1427,12 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals("undefined wrap_360_cd<int>(int)", signature);
+	}
+
+	@Test
+	public void testGetDataType_LongLong() throws Exception {
+		assertNotNull(
+			new DemangledDataType("fake", "fake", DemangledDataType.LONG_LONG).getDataType(null));
 	}
 
 	private void assertType(Demangled o, Class<?> c) {

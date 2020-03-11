@@ -20,8 +20,8 @@ package ghidra.app.util.demangler;
  */
 public class DemangledLambda extends DemangledFunction {
 
-	public DemangledLambda(String name) {
-		super(name);
+	public DemangledLambda(String mangled, String originalDemangled, String name) {
+		super(mangled, originalDemangled, name);
 	}
 
 	@Override

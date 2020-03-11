@@ -29,8 +29,20 @@ public class DemangledAddressTable extends DemangledObject {
 	private boolean calculateLength;
 	private int length;
 
-	public DemangledAddressTable(String name, boolean calculateLength) {
+	/**
+	 * Constructor
+	 * 
+	 * @param mangled the source mangled string 
+	 * @param originalDemangled the original demangled string
+	 * @param name the name of the address table
+	 * @param calculateLength true if the length of this address table should be calculdated at 
+	 *        analysis time
+	 */
+	public DemangledAddressTable(String mangled, String originalDemangled, String name,
+			boolean calculateLength) {
+		super(mangled, originalDemangled);
 		setName(name);
+		this.calculateLength = calculateLength;
 	}
 
 	/**
@@ -110,7 +122,7 @@ public class DemangledAddressTable extends DemangledObject {
 	/**
 	 * Perform a best guess at the length of an address table assuming that 
 	 * another label (or end of block) can be used to identify the end.
-	 * @param program 
+	 * @param program the program
 	 * @param address start of address table
 	 * @return maximum length of table or -1 if address does not reside 
 	 * within an initialized memory block

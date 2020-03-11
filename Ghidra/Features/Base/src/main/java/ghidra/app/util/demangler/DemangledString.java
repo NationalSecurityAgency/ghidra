@@ -30,6 +30,8 @@ public class DemangledString extends DemangledObject {
 
 	/**
 	 * Construct demangled string.
+	 * @param mangled the source mangled string
+	 * @param originalDemangled the original demangled string
 	 * @param name name associated with this object
 	 * @param string string text associated with this object or null.  This is used to establish
 	 * label and plate comment if specified.  If null, name will be used as symbol name.
@@ -37,7 +39,9 @@ public class DemangledString extends DemangledObject {
 	 * assumes null terminated string.
 	 * @param unicode true if string is a Unicode string.
 	 */
-	public DemangledString(String name, String string, int length, boolean unicode) {
+	public DemangledString(String mangled, String originalDemangled, String name, String string,
+			int length, boolean unicode) {
+		super(mangled, originalDemangled);
 		setName(name);
 		this.string = string;
 		this.length = length;

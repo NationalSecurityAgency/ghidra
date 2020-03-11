@@ -602,7 +602,10 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 			if (descriptorName == null) {
 				return null;
 			}
-			DemangledType typeNamespace = new DemangledType(descriptorName);
+
+			String demangledSource = mdComplexType.toString();
+			DemangledType typeNamespace =
+				new DemangledType(originalTypeName, demangledSource, descriptorName);
 			DemangledType parentNamespace = getParentNamespace(); // Can be null;
 			if (parentNamespace != null) {
 				typeNamespace.setNamespace(parentNamespace);

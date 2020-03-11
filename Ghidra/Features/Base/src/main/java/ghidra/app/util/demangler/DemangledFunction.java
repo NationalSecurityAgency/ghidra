@@ -65,11 +65,8 @@ public class DemangledFunction extends DemangledObject {
 	private boolean isTypeCast;
 	private String throwAttribute;
 
-	/**
-	 * Constructs a new demangled function.
-	 * @param name the name of the function
-	 */
-	public DemangledFunction(String name) {
+	public DemangledFunction(String mangled, String originalDemangled, String name) {
+		super(mangled, originalDemangled);
 		setName(name);
 	}
 

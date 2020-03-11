@@ -19,7 +19,7 @@ package ghidra.app.util.demangler;
  * A unifying top-level interface for all {@link DemangledObject}s and {@link DemangledType}s
  * 
  * <p>This class and its children have many overlapping concepts that we wish to refine at a 
- * future date.  Below is a listing of know uses:
+ * future date.  Below is a listing of known uses:
  * <TABLE>
  * 		<TR>
  * 			<TH ALIGN="left">Method</TH><TH ALIGN="left">Description</TH>
@@ -38,7 +38,7 @@ package ghidra.app.util.demangler;
  * 			{@link #getDemangledName()}
  * 			</TD>
  * 			<TD>
- * 			The unmodified name that was set upon this object.
+ * 			The unmodified <b>name</b> that was set upon this object. 
  * 			</TD>
  * 		</TR>
  * 		<TR>
@@ -46,9 +46,12 @@ package ghidra.app.util.demangler;
  * 			{@link #getNamespaceName()}
  * 			</TD>
  * 			<TD>
- * 			The name of this object when it is used as a namespace name.   This usually has 
+ * 			The 'safe' name of this object when it is used as a namespace name.   This usually has 
  * 			parameter and template information.  Further, some characters within templates and
  * 			function signatures are replaced, such as spaces and namespace separators.
+ * 	 		<P>
+ * 			Given this full demangled string: {@code Foo::Bar::Baz<int>}, this method will return
+ * 			{@code Baz<int>}.
  * 			</TD>
  * 		</TR>
  * 		<TR>
@@ -56,7 +59,13 @@ package ghidra.app.util.demangler;
  * 			{@link #getNamespaceString()}
  * 			</TD>
  * 			<TD>
- * 			Similar to {@link #getNamespaceName()}, but contains all parent namespaces as well.
+ * 			This returns the unmodified name of this item, along with any unmodified parent 
+ * 			namespace names, all separated by a namespace delimiter.  Unlike 
+ * 			{@link #getNamespaceName()}, the spaces and internal namespace tokens will not be 
+ * 			replaced.
+ * 			<P>
+ * 			Given this full demangled string: {@code Foo::Bar::Baz<int>}, this method will return
+ * 			{@code Foo::Bar::Baz<int>}.
  * 			</TD>
  * 		</TR>
  * 		<TR>
@@ -73,7 +82,8 @@ package ghidra.app.util.demangler;
  * 			{@link #getOriginalDemangled()}
  * 			</TD>
  * 			<TD>
- * 			The original unmodified demangled string.
+ * 			The original unmodified demangled string.  This is the full demangled string returned
+ *          from the demangling service.
  * 			</TD>
  * 		</TR>
  * </TABLE>
@@ -87,22 +97,10 @@ public interface Demangled {
 	public String getMangledString();
 
 	/**
-	 * Sets the original mangled string
-	 * @param mangled the mangled string
-	 */
-	public void setMangledString(String mangled);
-
-	/**
 	 * Returns the original demangled string returned by the demangling service
 	 * @return the original demangled string
 	 */
 	public String getOriginalDemangled();
-
-	/**
-	 * Sets the original demangles string returned by the demangling service
-	 * @param originalDemangled the original demangled string
-	 */
-	public void setOriginalDemangled(String originalDemangled);
 
 	/** 
 	 * Returns the demangled name of this object.
@@ -147,7 +145,7 @@ public interface Demangled {
 	public String getNamespaceString();
 
 	/**
-	 * Returns a this object's namespace name without the full-qualified parent path. The 
+	 * Returns this object's namespace name without the fully-qualified parent path. The 
 	 * value returned here may have had some special characters replaced, such as ' ' replaced
 	 * with '_' and '::' replaced with '--'.
 	 * 

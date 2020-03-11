@@ -41,8 +41,8 @@ public abstract class DemangledObject implements Demangled {
 	protected static final String NAMESPACE_SEPARATOR = Namespace.DELIMITER;
 	protected static final String EMPTY_STRING = "";
 
-	protected String mangled; // original mangled string
-	protected String originalDemangled;
+	protected final String mangled; // original mangled string
+	protected final String originalDemangled;
 	protected String specialPrefix;
 	protected Demangled namespace;
 	protected String visibility;//public, protected, etc.
@@ -70,8 +70,9 @@ public abstract class DemangledObject implements Demangled {
 
 	private String signature;
 
-	DemangledObject() {
-		// default
+	DemangledObject(String mangled, String originalDemangled) {
+		this.mangled = mangled;
+		this.originalDemangled = originalDemangled;
 	}
 
 	@Override
@@ -181,18 +182,8 @@ public abstract class DemangledObject implements Demangled {
 	}
 
 	@Override
-	public void setMangledString(String mangled) {
-		this.mangled = mangled;
-	}
-
-	@Override
 	public String getMangledString() {
 		return mangled;
-	}
-
-	@Override
-	public void setOriginalDemangled(String originalDemangled) {
-		this.originalDemangled = originalDemangled;
 	}
 
 	@Override
@@ -248,7 +239,7 @@ public abstract class DemangledObject implements Demangled {
 	public abstract String getSignature(boolean format);
 
 	@Override
-	public String getSignature() {
+	public final String getSignature() {
 		return getSignature(false);
 	}
 

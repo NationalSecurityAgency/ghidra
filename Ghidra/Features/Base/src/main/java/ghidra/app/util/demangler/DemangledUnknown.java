@@ -26,10 +26,8 @@ import ghidra.program.model.symbol.SymbolUtilities;
  */
 public class DemangledUnknown extends DemangledObject {
 
-	public DemangledUnknown() {
-	}
-
-	public DemangledUnknown(String name) {
+	public DemangledUnknown(String mangled, String originalDemangled, String name) {
+		super(mangled, originalDemangled);
 		setName(name);
 	}
 
