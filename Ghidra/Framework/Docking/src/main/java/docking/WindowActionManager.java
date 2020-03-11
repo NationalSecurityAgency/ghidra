@@ -104,8 +104,10 @@ public class WindowActionManager {
 
 		placeHolderForScheduledActionUpdate = placeHolder;
 
-		// Buffer the events, as they tend to come in 3s.  That might not sound like a lot, but 
-		// when you have hundreds of actions, it adds up.
+		// Typically, when we get one contextChanged, we get a flurry of contextChanged calls.
+		// In order to make the action updating be as responsive as possible and still be complete,
+		// we have chosen a policy that will reduce a flurry of contextChanged call into two
+		// actual calls - one that occurs immediately and one when the flurry times out.
 		updateManager.updateLater();
 	}
 
