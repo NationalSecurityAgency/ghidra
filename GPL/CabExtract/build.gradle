@@ -22,14 +22,16 @@ project.ext.cabextract = "cabextract-1.6"
 def currentPlatform = getCurrentPlatformName()
 if (['linux64', 'osx64'].contains(currentPlatform)) {
 		
-	def makeName = "${currentPlatform}CabExtractMake" // native Make task found automatically
+	def makeName = "${currentPlatform}CabExtractMake"
 
 	task (makeName, type: Exec) {
 		group "private"
 		workingDir "build/unpack/${cabextract}"
 		executable "make"
-		inputs.file("data/${cabextract}.tar.gz")
+		
+		// Specify output so cabextract is only built if this is missing
 		outputs.file("build/os/${currentPlatform}/cabextract")
+		
 		// Extract archive and ./configure
 		doFirst {
 			copy {
@@ -45,10 +47,13 @@ if (['linux64', 'osx64'].contains(currentPlatform)) {
 				executable "./configure"
 			}
 		}
+		
 		// Move out the built cabextract and delete the extracted files
 		doLast {
-			ant.move file: "build/unpack/${cabextract}/cabextract",
-				todir: "build/os/${currentPlatform}"
+			copy {
+				from "build/unpack/${cabextract}/cabextract"
+				into "build/os/${currentPlatform}"
+			}
 			delete file("build/unpack/${cabextract}")
 		}
 	}
