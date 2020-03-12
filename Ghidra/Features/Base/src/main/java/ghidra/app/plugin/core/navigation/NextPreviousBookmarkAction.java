@@ -57,7 +57,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	public NextPreviousBookmarkAction(PluginTool tool, String owner, String subGroup) {
 		super("Next Bookmark", owner);
 		this.tool = tool;
-		setFallbackToGlobalContext(true);
+		setSupportsDefaultToolContext(true);
 
 		ToolBarData toolBarData =
 			new ToolBarData(bookmarkIcon, ToolConstants.TOOLBAR_GROUP_FOUR);

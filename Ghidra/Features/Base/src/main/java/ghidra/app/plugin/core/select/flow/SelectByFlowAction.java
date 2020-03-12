@@ -62,7 +62,9 @@ class SelectByFlowAction extends ListingContextAction {
 		super(name, plugin.getName());
 		this.selectByFlowPlugin = plugin;
 		this.selectionType = selectionType;
-		setFallbackToGlobalContext(true);
+
+		// this is in the main tool menu, so make it a tool action
+		setSupportsDefaultToolContext(true);
 
 		String[] menuPath = null;
 		if (selectionType == SelectByFlowPlugin.SELECT_FUNCTIONS) {
@@ -92,11 +94,6 @@ class SelectByFlowAction extends ListingContextAction {
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, getName()));
 	}
 
-	/**
-	 * Method called when the action is invoked.
-	 *
-	 * @param ActionEvent details regarding the invocation of this action
-	 */
 	@Override
 	public void actionPerformed(ListingActionContext context) {
 		// Either select by following all flows or all flows except calls

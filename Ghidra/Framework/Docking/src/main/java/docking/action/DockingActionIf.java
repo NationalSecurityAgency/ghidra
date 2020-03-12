@@ -33,6 +33,26 @@ import docking.help.HelpDescriptor;
  * client actions will use the default setting of {@link KeyBindingType#INDIVIDUAL}.   To control
  * the level of key binding support, you can pass the desired {@link KeyBindingType} to the
  * base implementation of this interface.
+ * 
+ * <p>ActionContext is a key concept for Ghidra actions so that they can be context sensitive if 
+ * appropriate. They provide a 
+ * consistent way for plugins and components to share tool state with actions. Actions can then
+ * use that context to make decisions such as if they should be enabled or added to a popup menu.
+ * The context information is also typically used when the action is invoked.  For example, an
+ * action context from a table element may provide the row in a table component that is selected and
+ * then a "delete table row" action can use that information to be enabled when a table selection 
+ * exists and then delete that row if the action is invoked.
+ * 
+ * <p> To make the overall action experience more convenient for the user, Ghidra action processing
+ * supports the concept of a "default tool context".  This allows actions to work on a more global
+ * level than just the component that is focused.  The idea is that if an action is not valid for
+ * the current focused context (and it has be declared to work this way using 
+ * the {@link #setSupportsDefaultToolContext(boolean)}) it can be validated against the default 
+ * tool context.  The "default tool context" is defined to be the action context of the tools 
+ * primary component.  This is primarily intended for "tool" actions which are the ones that appear
+ * in the tool's main menu bar or tool bar.  This allows the tool actions to mostly work on the
+ * tool's main component context regardless of what has focus, and yet still work on the  
+ * focused component if appropriate (such as a snapshot of the main component).  
  */
 public interface DockingActionIf extends HelpDescriptor {
 	public static final String ENABLEMENT_PROPERTY = "enabled";
@@ -98,21 +118,24 @@ public interface DockingActionIf extends HelpDescriptor {
 	public boolean setEnabled(boolean newValue);
 
 	/**
-	 * Sets whether or not this action should be activated using the global tool context if the
-	 * current focussed provider's context is not valid for this action.
-	 * @param newValue if true, the action will be activated using the global context if the local
-	 * context is not valid for this action.  If false, the action will only ever be activated
-	 * using the local context.
+	 * Sets whether or not this action should be activated using the default tool context if the
+	 * current focused provider's context is not valid for this action.  Typically, this should
+	 * be set on actions that are mostly independent of which component has focus such as those
+	 * on the tool's main toolbar.   
+	 * 
+	 * @param newValue if true, the action will be activated using the default tool context if the
+	 * local context is not valid for this action.  If false, the action will only ever be
+	 * activated using the focused context.
 	 */
-	public void setFallbackToGlobalContext(boolean newValue);
+	public void setSupportsDefaultToolContext(boolean newValue);
 
 	/**
-	 * Returns true if this action can be activated using the global context if the local context
-	 * is invalid for this action.
-	 * @return true if this action can be activated using the global context if the local context
-	 * is invalid for this action.
+	 * Returns true if this action can be activated using the default tool context if the focused
+	 * context is invalid for this action. See {@link #setSupportsDefaultToolContext(boolean)}
+	 * @return true if this action can be activated using the default tool context if the local
+	 * context is invalid for this action.
 	 */
-	public boolean shouldFallbackToGlobalContext();
+	public boolean supportsDefaultToolContext();
 
 	/**
 	 * Returns true if the action is enabled.

@@ -41,7 +41,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 	public AbstractNextPreviousAction(PluginTool tool, String name, String owner, String subGroup) {
 		super(name, owner);
 		this.tool = tool;
-		setFallbackToGlobalContext(true);
+		setSupportsDefaultToolContext(true);
 
 		ToolBarData toolBarData =
 			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_FOUR);

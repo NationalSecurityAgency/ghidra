@@ -100,17 +100,17 @@ public class FindPossibleReferencesPlugin extends Plugin {
 		action = new ActionBuilder(SEARCH_DIRECT_REFS_ACTION_NAME, getName())
 				.menuPath(ToolConstants.MENU_SEARCH, "For Direct References")
 				.menuGroup("search for")
-				.fallbackToGlobalContext(true)
+				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, SEARCH_DIRECT_REFS_ACTION_NAME))
 				.description(getPluginDescription().getDescription())
 				.withContext(ListingActionContext.class)
 				.onAction(this::findReferences)
-				.enabledWhen(this::checkSize)
+				.enabledWhen(this::hasCorrectAddressSize)
 				.buildAndInstall(tool);
 
 	}
 
-	private boolean checkSize(ListingActionContext context) {
+	private boolean hasCorrectAddressSize(ListingActionContext context) {
 		int size =
 			context.getProgram().getAddressFactory().getDefaultAddressSpace().getSize();
 		if ((size == 64) || (size == 32) || (size == 24) || (size == 16) || (size == 20) ||

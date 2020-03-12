@@ -2146,9 +2146,40 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * Returns the global action context for the tool
 	 * @return  the global action context for the tool
 	 */
-	public ActionContext getGlobalActionContext() {
+	public ActionContext getDefaultToolContext() {
 		return defaultProvider == null ? new ActionContext()
 				: defaultProvider.getActionContext(null);
+	}
+
+	/**
+	 * Gets the {@link ActionContext} appropriate for the given action.  This will normally
+	 * be the context from the currently focused {@link ComponentProvider}.  If that
+	 * context is not valid for the given action and the action supports using the default
+	 * tool context, then the default tool context will be returned.  Otherwise, returns null.
+	 * 
+	 * @param action the action for which to get an {@link ActionContext}
+	 * @return the {@link ActionContext} appropriate for the given action or null
+	 */
+	public ActionContext getActionContext(DockingActionIf action) {
+		ComponentProvider provider = getActiveComponentProvider();
+		ActionContext context = provider == null ? null : provider.getActionContext(null);
+
+		if (context == null) {
+			context = new ActionContext(provider, null);
+		}
+
+		if (action.isValidContext(context)) {
+			return context;
+		}
+
+		if (action.supportsDefaultToolContext()) {
+			ActionContext toolContext = getDefaultToolContext();
+			if (action.isValidContext(toolContext)) {
+				return toolContext;
+			}
+		}
+		return context;
+
 	}
 
 	void notifyContextListeners(ComponentPlaceholder placeHolder, ActionContext actionContext) {

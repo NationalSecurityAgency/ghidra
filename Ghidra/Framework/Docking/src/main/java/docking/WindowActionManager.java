@@ -119,7 +119,7 @@ public class WindowActionManager {
 		}
 
 		ActionContext localContext = getContext();
-		ActionContext globalContext = winMgr.getGlobalActionContext();
+		ActionContext globalContext = winMgr.getDefaultToolContext();
 
 		// Update actions - make a copy so that we don't get concurrent modification exceptions
 		List<DockingActionIf> list = new ArrayList<>(actionToProxyMap.values());
@@ -127,7 +127,7 @@ public class WindowActionManager {
 			if (action.isValidContext(localContext)) {
 				action.setEnabled(action.isEnabledForContext(localContext));
 			}
-			else if (isValidGlobalContext(action, globalContext)) {
+			else if (isValidDefaultToolContext(action, globalContext)) {
 				action.setEnabled(action.isEnabledForContext(globalContext));
 			}
 			else {
@@ -138,9 +138,9 @@ public class WindowActionManager {
 		winMgr.notifyContextListeners(placeHolderForScheduledActionUpdate, localContext);
 	}
 
-	private boolean isValidGlobalContext(DockingActionIf action, ActionContext globalContext) {
-		return action.shouldFallbackToGlobalContext() &&
-			action.isValidContext(globalContext);
+	private boolean isValidDefaultToolContext(DockingActionIf action, ActionContext toolContext) {
+		return action.supportsDefaultToolContext() &&
+			action.isValidContext(toolContext);
 	}
 
 	private ActionContext getContext() {

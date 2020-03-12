@@ -80,6 +80,8 @@ import ghidra.util.task.TaskLauncher;
 //@formatter:on
 public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
+	private static final String SAVE_GROUP = "DomainObjectSave";
+	private static final String OPEN_GROUP = "DomainObjectOpen";
 	private MultiProgramManager programMgr;
 	private ProgramSaveManager programSaveMgr;
 	private DockingAction openAction;
@@ -523,27 +525,27 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		openAction = new ActionBuilder("Open File", getName())
 				.onAction(c -> open())
 				.menuPath(ToolConstants.MENU_FILE, "&Open...")
-				.menuGroup("DomainObjectOpen", Integer.toString(subMenuGroupOrder++))
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
 				.keyBinding("ctrl O")
 				.buildAndInstall(tool);
 
 		closeAction = new ActionBuilder("Close File", getName())
 				.menuPath(ToolConstants.MENU_FILE, "&Close")
-				.menuGroup("DomainObjectOpen", Integer.toString(subMenuGroupOrder++))
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
 				.withContext(ProgramActionContext.class)
 				.onAction(c -> closeProgram(c.getProgram(), false))
 				.buildAndInstall(tool);
 
 		closeOthersAction = new ActionBuilder("Close Others", getName())
 				.menuPath(ToolConstants.MENU_FILE, "Close &Others")
-				.menuGroup("DomainObjectOpen", Integer.toString(subMenuGroupOrder++))
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
 				.enabled(false)
 				.onAction(c -> closeOtherPrograms(false))
 				.buildAndInstall(tool);
 
 		closeAllAction = new ActionBuilder("Close All", getName())
 				.menuPath(ToolConstants.MENU_FILE, "Close &All")
-				.menuGroup("DomainObjectOpen", Integer.toString(subMenuGroupOrder++))
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
 				.onAction(c -> closeAllPrograms(false))
 				.enabled(false)
 				.buildAndInstall(tool);
@@ -551,7 +553,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		saveAction = new ActionBuilder("Save File", "&Save")
 				.menuPath(ToolConstants.MENU_FILE, "Close &All")
 				.description("Save Program")
-				.menuGroup("DomainObjectSave", Integer.toString(subMenuGroupOrder++))
+				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
 				.menuIcon(null)
 				.toolBarIcon("images/disk.png")
 				.toolBarGroup(ToolConstants.TOOLBAR_GROUP_ONE)
@@ -563,7 +565,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 		saveAsAction = new ActionBuilder("Save As File", getName())
 				.menuPath(ToolConstants.MENU_FILE, "Save &As...")
-				.menuGroup("DomainObjectSave", Integer.toString(subMenuGroupOrder++))
+				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
 				.withContext(ProgramActionContext.class)
 				.onAction(c -> programSaveMgr.saveAs(c.getProgram()))
 				.buildAndInstall(tool);
@@ -571,7 +573,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		saveAllAction = new ActionBuilder("Save All Files", getName())
 				.menuPath(ToolConstants.MENU_FILE, "Save All")
 				.description("Save All Programs")
-				.menuGroup("DomainObjectSave", Integer.toString(subMenuGroupOrder++))
+				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
 				.onAction(c -> programSaveMgr.saveChangedPrograms())
 				.buildAndInstall(tool);
 

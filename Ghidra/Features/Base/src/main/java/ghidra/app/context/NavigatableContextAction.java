@@ -24,12 +24,13 @@ import docking.action.KeyBindingType;
 public abstract class NavigatableContextAction extends DockingAction {
 
 	public NavigatableContextAction(String name, String owner) {
-		this(name, owner, KeyBindingType.INDIVIDUAL);
+		super(name, owner);
+		setSupportsDefaultToolContext(true);
 	}
 
 	public NavigatableContextAction(String name, String owner, KeyBindingType type) {
 		super(name, owner, type);
-		setFallbackToGlobalContext(true);
+		setSupportsDefaultToolContext(true);
 	}
 
 	@Override

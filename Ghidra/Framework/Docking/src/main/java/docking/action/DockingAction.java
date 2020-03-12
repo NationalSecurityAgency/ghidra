@@ -77,7 +77,7 @@ public abstract class DockingAction implements DockingActionIf {
 	private Predicate<ActionContext> popupPredicate;
 	private Predicate<ActionContext> validContextPredicate;
 
-	private boolean fallbackToGlobalContext;
+	private boolean supportsDefaultToolContext;
 
 	public DockingAction(String name, String owner) {
 		this.name = name;
@@ -227,13 +227,13 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	@Override
-	public void setFallbackToGlobalContext(boolean newValue) {
-		fallbackToGlobalContext = newValue;
+	public void setSupportsDefaultToolContext(boolean newValue) {
+		supportsDefaultToolContext = newValue;
 	}
 
 	@Override
-	public boolean shouldFallbackToGlobalContext() {
-		return fallbackToGlobalContext;
+	public boolean supportsDefaultToolContext() {
+		return supportsDefaultToolContext;
 	}
 
 	@Override

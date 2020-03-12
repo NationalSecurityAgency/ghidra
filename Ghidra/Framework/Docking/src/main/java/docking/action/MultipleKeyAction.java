@@ -135,7 +135,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			Swing.runLater(() -> DockingWindowManager.showDialog(dialog));
 		}
 		else if (list.size() == 1) {
-			final ExecutableAction actionProxy = list.get(0);
+			ExecutableAction actionProxy = list.get(0);
 			tool.setStatusInfo("");
 			actionProxy.execute();
 		}
@@ -172,9 +172,9 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		}
 
 		if (hasLocalActionsForKeyBinding) {
-			// We have locals, ignore the component specific.  This prevents component actions 
-			// from processing the given keybinding when a local action exits, regardless of 
-			// enablement.
+			// At this point, we have local actions that may or may not be enabled. Return here
+			// so that any component specific actions found below will not interfere with the 
+			// provider's local actions
 			return list;
 		}
 
@@ -232,7 +232,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		if (context == null) {
 			return false;
 		}
-		return actionData.supportsGlobalContext() && isValidAndEnabled(actionData, context);
+		return actionData.supportsDefaultToolContext() && isValidAndEnabled(actionData, context);
 	}
 
 	@Override
@@ -267,7 +267,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		ComponentProvider localProvider = dwm.getActiveComponentProvider();
 		ActionContext localContext = getLocalContext(localProvider);
 		localContext.setSourceObject(eventSource);
-		ActionContext globalContext = tool.getGlobalActionContext();
+		ActionContext globalContext = tool.getDefaultToolContext();
 		List<ExecutableAction> validActions = getValidContextActions(localContext, globalContext);
 		return validActions;
 	}
@@ -328,8 +328,8 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			return provider == otherProvider;
 		}
 
-		boolean supportsGlobalContext() {
-			return action.shouldFallbackToGlobalContext();
+		boolean supportsDefaultToolContext() {
+			return action.supportsDefaultToolContext();
 		}
 
 		@Override

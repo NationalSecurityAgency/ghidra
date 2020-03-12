@@ -33,7 +33,8 @@ public class SelectAllAction extends CodeViewerContextAction {
 
 	public SelectAllAction(String owner) {
 		super("Select All", owner);
-		setFallbackToGlobalContext(true);
+		// this is in the main tool menu, so make it a tool action
+		setSupportsDefaultToolContext(true);
 		setMenuBarData(
 			new MenuData(
 				new String[] { ToolConstants.MENU_SELECTION, "&All in View" }, null, "Select"));

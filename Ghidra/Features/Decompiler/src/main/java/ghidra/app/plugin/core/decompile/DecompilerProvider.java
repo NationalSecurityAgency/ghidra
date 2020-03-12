@@ -29,7 +29,6 @@ import docking.action.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.GhidraOptions;
-import ghidra.app.context.ProgramActionContext;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.nav.*;
@@ -222,7 +221,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		}
 		Function function = controller.getFunction();
 		if (function == null) {
-			return new ProgramActionContext(this, program);
+			return null;
 		}
 		Address entryPoint = function.getEntryPoint();
 		boolean isDecompiling = controller.isDecompiling();

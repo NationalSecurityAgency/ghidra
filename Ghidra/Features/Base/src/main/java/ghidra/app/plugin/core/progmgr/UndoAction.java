@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
-import java.awt.event.InputEvent;
 import java.io.IOException;
 
 import javax.swing.Icon;
@@ -45,7 +44,7 @@ public class UndoAction extends ProgramContextAction {
 		setMenuBarData(menuData);
 		setToolBarData(new ToolBarData(icon, "Undo"));
 		setDescription("Undo");
-		setKeyBindingData(new KeyBindingData('Z', InputEvent.CTRL_MASK));
+		setKeyBindingData(new KeyBindingData("ctrl Z"));
 	}
 
 	@Override
@@ -68,7 +67,17 @@ public class UndoAction extends ProgramContextAction {
 		}
 	}
 
+	/**
+	 * updates the menu name of the action as the undo stack changes
+	 * <P>
+	 * NOTE: currently, we must manage the enablement explicitly
+	 * because contextChanged is not called for data changes. Ideally, the enablement
+	 * would be handled by the context, but for now it doesn't work
+	 *
+	 * @param program the program
+	 */
 	public void update(Program program) {
+
 		if (program == null) {
 			getMenuBarData().setMenuItemName("Undo ");
 			setDescription("");

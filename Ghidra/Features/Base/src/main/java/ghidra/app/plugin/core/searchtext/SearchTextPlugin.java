@@ -386,7 +386,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				.description(DESCRIPTION)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
 				.withContext(NavigatableActionContext.class)
-				.fallbackToGlobalContext(true)
+				.supportsDefaultToolContext(true)
 				.onAction(c -> {
 					setNavigatable(c.getNavigatable());
 					displayDialog(c);

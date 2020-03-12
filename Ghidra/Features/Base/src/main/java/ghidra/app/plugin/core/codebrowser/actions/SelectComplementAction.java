@@ -32,7 +32,10 @@ public class SelectComplementAction extends CodeViewerContextAction {
 
 	public SelectComplementAction(String owner) {
 		super("Select Complement", owner);
-		setFallbackToGlobalContext(true);
+
+		// this is in the main tool menu, so make it a tool action
+		setSupportsDefaultToolContext(true);
+
 		setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_SELECTION, "&Complement" },
 			null,

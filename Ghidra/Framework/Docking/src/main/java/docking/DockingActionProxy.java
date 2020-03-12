@@ -230,12 +230,12 @@ public class DockingActionProxy
 	}
 
 	@Override
-	public void setFallbackToGlobalContext(boolean newValue) {
-		dockingAction.setFallbackToGlobalContext(newValue);
+	public void setSupportsDefaultToolContext(boolean newValue) {
+		dockingAction.setSupportsDefaultToolContext(newValue);
 	}
 
 	@Override
-	public boolean shouldFallbackToGlobalContext() {
-		return dockingAction.shouldFallbackToGlobalContext();
+	public boolean supportsDefaultToolContext() {
+		return dockingAction.supportsDefaultToolContext();
 	}
 }
