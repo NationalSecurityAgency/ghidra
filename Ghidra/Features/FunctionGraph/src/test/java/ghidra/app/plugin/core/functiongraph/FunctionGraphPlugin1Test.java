@@ -590,7 +590,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		Collection<FGVertex> vertices = functionGraph.getVertices();
 
 		BlockModelService blockService = tool.getService(BlockModelService.class);
-		CodeBlockModel blockModel = blockService.getActiveBlockModel();
+		CodeBlockModel blockModel = blockService.getActiveBlockModel(program);
 		FunctionManager functionManager = program.getFunctionManager();
 		Function function = functionManager.getFunctionContaining(getAddress(startAddressString));
 		CodeBlockIterator iterator =
@@ -733,8 +733,6 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 		setNavigationHistoryOption(NavigationHistoryChoices.NAVIGATION_EVENTS);
 
-		FGVertex start = getFocusedVertex();
-
 		FGVertex v1 = vertex("01004178");
 		pickVertex(v1);
 
@@ -744,7 +742,6 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		FGVertex v3 = vertex("010041a4");
 		pickVertex(v3);
 
-		assertInHistory(start);
 		assertNotInHistory(v1, v2);
 
 		//
@@ -756,7 +753,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		Address foo = getAddress("0x01002339");
 		goTo(foo);
 
-		assertInHistory(start.getVertexAddress(), ghidra);
+		assertInHistory(v3.getVertexAddress(), ghidra);
 	}
 
 //==================================================================================================
@@ -774,12 +771,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 	private void assertNotInHistory(List<Address> addresses) {
 
-		GoToService goTo = tool.getService(GoToService.class);
-		Navigatable navigatable = goTo.getDefaultNavigatable();
-
-		NavigationHistoryService service = tool.getService(NavigationHistoryService.class);
-		List<LocationMemento> locations = service.getPreviousLocations(navigatable);
-
+		List<LocationMemento> locations = getNavigationHistory();
 		List<Address> actualAddresses =
 			locations.stream()
 					.map(memento -> memento.getProgramLocation().getAddress())
@@ -790,6 +782,16 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 				actualAddresses + "\nNavigated vertices: " + Arrays.asList(addresses),
 				actualAddresses.contains(a));
 		}
+	}
+
+	private List<LocationMemento> getNavigationHistory() {
+
+		GoToService goTo = tool.getService(GoToService.class);
+		Navigatable navigatable = goTo.getDefaultNavigatable();
+
+		NavigationHistoryService service = tool.getService(NavigationHistoryService.class);
+		List<LocationMemento> locations = service.getPreviousLocations(navigatable);
+		return locations;
 	}
 
 	private void assertInHistory(FGVertex... vertices) {
@@ -807,11 +809,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 	private void assertInHistory(List<Address> addresses) {
 
-		GoToService goTo = tool.getService(GoToService.class);
-		Navigatable navigatable = goTo.getDefaultNavigatable();
-
-		NavigationHistoryService service = tool.getService(NavigationHistoryService.class);
-		List<LocationMemento> locations = service.getPreviousLocations(navigatable);
+		List<LocationMemento> locations = getNavigationHistory();
 		assertTrue("Vertex locations not added to history", addresses.size() <= locations.size());
 
 		List<Address> actualAddresses =
@@ -831,6 +829,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		FGController controller = getFunctionGraphController();
 		FunctionGraphOptions options = controller.getFunctionGraphOptions();
 		setInstanceField("navigationHistoryChoice", options, choice);
+		waitForSwing();
 	}
 
 	private void doTestLabelChangeAtVertexEntryUpdatesTitle() {
