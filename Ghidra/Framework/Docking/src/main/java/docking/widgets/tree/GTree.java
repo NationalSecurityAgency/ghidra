@@ -716,12 +716,12 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * Sets the root node for the GTree. NOTE: if this method is called from thread other than
-	 * the swing thread, the work will be moved asynchronously to the swing thread - meaning it
-	 * may not be set when this method returns.  If you need it to be set, be sure to call it
-	 * on the swing thread.
+	 * Sets the root node for this tree. 
+	 * <P>
+	 * NOTE: if this method is not called from the Swing thread, then the root node will be set
+	 * later on the Swing thread.  That is, this method will return before the work has been done.
 	 * 
-	 * @param rootNode The node to set as the root.
+	 * @param rootNode The node to set as the new root.
 	 */
 	public void setRootNode(GTreeNode rootNode) {
 		Swing.runIfSwingOrRunLater(() -> {
