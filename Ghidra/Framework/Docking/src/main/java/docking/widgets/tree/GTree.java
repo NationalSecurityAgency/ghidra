@@ -26,7 +26,6 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
 import javax.swing.*;
@@ -94,7 +93,6 @@ public class GTree extends JPanel implements BusyListener {
 	private GTreeDragNDropHandler dragNDropHandler;
 	private boolean isFilteringEnabled = true;
 
-	private AtomicLong modificationID = new AtomicLong();
 	private ThreadLocal<TaskMonitor> threadLocalMonitor = new ThreadLocal<>();
 	private PriorityWorker worker;
 	private Timer showTimer;
@@ -208,28 +206,6 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	private void init() {
-		model.addTreeModelListener(new TreeModelListener() {
-			@Override
-			public void treeStructureChanged(TreeModelEvent e) {
-				modificationID.incrementAndGet();
-			}
-
-			@Override
-			public void treeNodesRemoved(TreeModelEvent e) {
-				modificationID.incrementAndGet();
-			}
-
-			@Override
-			public void treeNodesInserted(TreeModelEvent e) {
-				modificationID.incrementAndGet();
-			}
-
-			@Override
-			public void treeNodesChanged(TreeModelEvent e) {
-				// don't care
-			}
-		});
-
 		tree = new AutoScrollTree(model);
 
 		setLayout(new BorderLayout());
@@ -295,7 +271,6 @@ public class GTree extends JPanel implements BusyListener {
 
 	protected void updateModelFilter() {
 		filter = filterProvider.getFilter();
-		modificationID.incrementAndGet();
 
 		if (lastFilterTask != null) {
 			// it is safe to repeatedly call cancel
@@ -744,33 +719,30 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * Sets the root node for the GTree.
-	 * <p>
-	 * Note: If this call is made from the Swing thread, then it will install a temporary
-	 * "In Progress" node and then return immediately.  However, when called from any other thread,
-	 * this method will block while any pending work is cancelled.  In this scenario, when this
-	 * method returns, the given root node will be the actual root node.
-	 *
-	 * @param rootNode The node to set.
+	 * 
+	 * @param rootNode The node to set as the root.
 	 */
 	public void setRootNode(GTreeNode rootNode) {
-		worker.clearAllJobs();
-		rootNode.setParent(rootParent);
-		realModelRootNode = rootNode;
-		realViewRootNode = rootNode;
-		GTreeNode oldRoot;
-		try {
-			oldRoot = doSetModelRootNode(rootNode);
-			oldRoot.dispose();
-			if (filter != null) {
-				filterUpdateManager.update();
+		Swing.runIfSwingOrRunLater(() -> {
+			worker.clearAllJobs();
+			rootNode.setParent(rootParent);
+			realModelRootNode = rootNode;
+			realViewRootNode = rootNode;
+			GTreeNode oldRoot;
+			try {
+				oldRoot = doSetModelRootNode(rootNode);
+				oldRoot.dispose();
+				if (filter != null) {
+					filterUpdateManager.update();
+				}
 			}
-		}
-		catch (CancelledException e) {
-			throw new AssertException("Setting the root node should never be cancelled");
-		}
+			catch (CancelledException e) {
+				throw new AssertException("Setting the root node should never be cancelled");
+			}
+		});
 	}
 
-	void setFilteredRootNode(GTreeNode filteredRootNode) {
+	void swingSetFilteredRootNode(GTreeNode filteredRootNode) {
 		filteredRootNode.setParent(rootParent);
 		realViewRootNode = filteredRootNode;
 		try {
@@ -784,7 +756,7 @@ public class GTree extends JPanel implements BusyListener {
 		}
 	}
 
-	void restoreNonFilteredRootNode() {
+	void swingRestoreNonFilteredRootNode() {
 		realViewRootNode = realModelRootNode;
 		try {
 			GTreeNode currentRoot = doSetModelRootNode(realModelRootNode);
@@ -1061,10 +1033,6 @@ public class GTree extends JPanel implements BusyListener {
 
 	public void setRootNodeAllowedToCollapse(boolean allowed) {
 		tree.setRootNodeAllowedToCollapse(allowed);
-	}
-
-	public long getModificationID() {
-		return modificationID.get();
 	}
 
 	private void showProgressPanel(boolean show) {

@@ -46,7 +46,7 @@ public class GTreeModel implements TreeModel {
 
 	public void setRootNode(GTreeNode root) {
 		this.root = root;
-		fireRootChanged();
+		Swing.runIfSwingOrRunLater(() -> swingFireRootChanged());
 	}
 
 	@Override
@@ -139,16 +139,11 @@ public class GTreeModel implements TreeModel {
 		}
 	}
 
-	public void fireRootChanged() {
-		if (!eventsEnabled) {
-			return;
+	private void swingFireRootChanged() {
+		TreeModelEvent event = new TreeModelEvent(this, (TreePath) null);
+		for (TreeModelListener listener : listeners) {
+			listener.treeStructureChanged(event);
 		}
-		Swing.runIfSwingOrRunLater(() -> {
-			GTreeNode rootNode = root;
-			if (rootNode != null) {
-				fireNodeStructureChanged(rootNode);
-			}
-		});
 	}
 
 	public void fireNodeDataChanged(GTreeNode changedNode) {
@@ -158,7 +153,7 @@ public class GTreeModel implements TreeModel {
 		SystemUtilities.assertThisIsTheSwingThread(
 			"GTreeModel.fireNodeDataChanged() must be " + "called from the AWT thread");
 
-		TreeModelEvent event = getChangedNodeEvent(changedNode);
+		TreeModelEvent event = new TreeModelEvent(this, (TreePath) null);
 
 		for (TreeModelListener listener : listeners) {
 			listener.treeNodesChanged(event);
@@ -182,7 +177,6 @@ public class GTreeModel implements TreeModel {
 			// the index will be -1 if filtered out
 			return;
 		}
-
 		TreeModelEvent event = new TreeModelEvent(this, parent.getTreePath(), new int[] { index },
 			new Object[] { newNode });
 		for (TreeModelListener listener : listeners) {
