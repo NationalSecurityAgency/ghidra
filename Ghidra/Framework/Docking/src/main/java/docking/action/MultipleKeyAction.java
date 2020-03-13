@@ -15,6 +15,7 @@
  */
 package docking.action;
 
+import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.util.*;
@@ -23,10 +24,11 @@ import javax.swing.*;
 
 import docking.*;
 import docking.actions.KeyBindingUtils;
+import generic.util.WindowUtilities;
 import ghidra.util.Swing;
 
 /**
- * Action that manages multiple PluginActions mapped to this action's key binding.
+ * Action that manages multiple {@link DockingAction}s mapped to a given key binding
  */
 public class MultipleKeyAction extends DockingKeyBindingAction {
 	private List<ActionData> actions = new ArrayList<>();
@@ -228,7 +230,19 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 	@Override
 	public KeyBindingPrecedence getKeyBindingPrecedence() {
-		List<ExecutableKeyActionAdapter> validActions = getActionsForCurrentContext(null);
+		return geValidKeyBindingPrecedence(null);
+	}
+
+	/**
+	 * This is a special version of {@link #getKeyBindingPrecedence()} that allows the internal
+	 * key event processing to specify the source component when determining how precedence should
+	 * be established for the actions contained herein.
+	 * @param source the component; may be null
+	 * @return the precedence; may be null
+	 */
+	public KeyBindingPrecedence geValidKeyBindingPrecedence(Component source) {
+
+		List<ExecutableKeyActionAdapter> validActions = getActionsForCurrentContext(source);
 		if (validActions.isEmpty()) {
 			return null; // a signal that no actions are valid for the current context
 		}
@@ -245,7 +259,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	private List<ExecutableKeyActionAdapter> getActionsForCurrentContext(Object eventSource) {
 
 		DockingWindowManager dwm = tool.getWindowManager();
-		Window window = dwm.getActiveWindow();
+		Window window = getWindow(dwm, eventSource);
 		if (window instanceof DockingDialog) {
 			DockingDialog dockingDialog = (DockingDialog) window;
 			DialogComponentProvider provider = dockingDialog.getDialogComponent();
@@ -258,11 +272,25 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			return validActions;
 		}
 
-		ComponentProvider localProvider = dwm.getActiveComponentProvider();
+		ComponentProvider localProvider = getProvider(dwm, eventSource);
 		ActionContext localContext = getLocalContext(localProvider);
 		localContext.setSourceObject(eventSource);
 		List<ExecutableKeyActionAdapter> validActions = getValidContextActions(localContext);
 		return validActions;
+	}
+
+	private ComponentProvider getProvider(DockingWindowManager dwm, Object eventSource) {
+		if (eventSource instanceof Component) {
+			return dwm.getProvider((Component) eventSource);
+		}
+		return dwm.getActiveComponentProvider();
+	}
+
+	private Window getWindow(DockingWindowManager dwm, Object eventSource) {
+		if (eventSource instanceof Component) {
+			return WindowUtilities.windowForComponent((Component) eventSource);
+		}
+		return dwm.getActiveWindow();
 	}
 
 	public List<DockingActionIf> getActions() {

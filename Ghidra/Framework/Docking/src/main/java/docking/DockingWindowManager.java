@@ -354,14 +354,32 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Get the window which contains the specified Provider's component.
+	 * Get the window that contains the specified Provider's component
 	 * @param provider component provider
-	 * @return window or null if component is not visible or not found.
+	 * @return window or null if component is not visible or not found
 	 */
 	public Window getProviderWindow(ComponentProvider provider) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			return root.getWindow(placeholder);
+		}
+		return null;
+	}
+
+	/**
+	 * Get the provider that contains the specified component
+	 * @param c the component
+	 * @return the provider; null if now containing provider is found
+	 */
+	public ComponentProvider getProvider(Component c) {
+		if (c != null) {
+			DockableComponent dc = getDockableComponent(c);
+			if (dc != null) {
+				ComponentPlaceholder placeholder = dc.getComponentWindowingPlaceholder();
+				if (placeholder != null) {
+					return placeholder.getProvider();
+				}
+			}
 		}
 		return null;
 	}
