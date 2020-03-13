@@ -35,7 +35,6 @@ public class AllFunctionsPanel extends JPanel {
 	private FunctionTableModel model;
 	private JLabel titleLabel;
 	private GhidraTable tablePanel;
-	private TableColumnAdjuster tca;
 
 	/**
 	 * Constructor
@@ -49,10 +48,6 @@ public class AllFunctionsPanel extends JPanel {
 		model = new FunctionTableModel(title, provider.getTool(), program, null);
 		tablePanel = new GhidraTable(model);
 		setLayout(new BorderLayout());
-		tablePanel.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		tca = new TableColumnAdjuster(tablePanel);
-		tca.setDynamicAdjustment(true);
-		tca.adjustColumns();
 
 		titleLabel = new JLabel(title);
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 0));
@@ -70,7 +65,6 @@ public class AllFunctionsPanel extends JPanel {
 	 * Updates the table with whatever is in the {@link #model}
 	 */
 	public void refresh() {
-		System.out.println("p");
 		model.fireTableDataChanged();
 	}
 
