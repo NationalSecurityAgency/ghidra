@@ -34,7 +34,9 @@ public class DemangledThunk extends DemangledObject {
 
 	private boolean covariantReturnThunk = false;
 
-	public DemangledThunk(DemangledFunction thunkedFunctionObject) {
+	public DemangledThunk(String mangled, String originalDemangled,
+			DemangledFunction thunkedFunctionObject) {
+		super(mangled, originalDemangled);
 		this.thunkedFunctionObject = thunkedFunctionObject;
 		this.namespace = thunkedFunctionObject.getNamespace();
 		setName(thunkedFunctionObject.getName());
@@ -106,7 +108,7 @@ public class DemangledThunk extends DemangledObject {
 			function = function.getThunkedFunction(false);
 		}
 
-		if (thunkedFunction != null && originalMangled.equals(function.getName()) &&
+		if (thunkedFunction != null && mangled.equals(function.getName()) &&
 			!function.isThunk()) {
 			function.setThunkedFunction(thunkedFunction);
 		}
@@ -115,14 +117,6 @@ public class DemangledThunk extends DemangledObject {
 		return s != null;
 	}
 
-	/**
-	 * Create normal function where thunk resides
-	 * @param prog program
-	 * @param addr thunk function address
-	 * @param doDisassembly
-	 * @param monitor
-	 * @return function
-	 */
 	private Function createPreThunkFunction(Program prog, Address addr, boolean doDisassembly,
 			TaskMonitor monitor) {
 
@@ -147,8 +141,9 @@ public class DemangledThunk extends DemangledObject {
 		while (instr != null) {
 			// This is done in a way to handle potential delay slots
 			InstructionContext instructionContext = instr.getInstructionContext();
-			Address fallThru = instructionContext.getAddress().add(
-				instr.getPrototype().getFallThroughOffset(instructionContext));
+			Address fallThru = instructionContext.getAddress()
+					.add(
+						instr.getPrototype().getFallThroughOffset(instructionContext));
 			Address maxAddr = fallThru.previous();
 			if (maxAddr.compareTo(instr.getMinAddress()) < 0) {
 				// just in case we wrapped
@@ -181,7 +176,7 @@ public class DemangledThunk extends DemangledObject {
 		}
 
 		Symbol s = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			thunkedFunctionObject.originalMangled, err -> Msg.warn(this, err));
+			mangled, err -> Msg.warn(this, err));
 
 		if (s == null) {
 			Address thunkedAddr =

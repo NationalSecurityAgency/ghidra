@@ -145,7 +145,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 
 		Symbol s = symbolTable.getPrimarySymbol(addr("01001000"));
 		assertNotNull(s);
-		assertEquals("typeinfo_name", s.getName());
+		assertEquals("typeinfo-name", s.getName());
 		assertEquals("AP_HAL::HAL::Callbacks", s.getParentNamespace().getName(true));
 
 		assertEquals("typeinfo name for AP_HAL::HAL::Callbacks",
@@ -238,6 +238,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		String demanglerName = GnuDemanglerOptions.GNU_DEMANGLER_DEFAULT;
 		String applicationArguments = "-s MrBob";
 		try {
+			setErrorsExpected(true);
 			GnuDemanglerNativeProcess.getDemanglerNativeProcess(demanglerName,
 				applicationArguments);
 			fail("Expected an exception when passing unknown arguments to the native demangler");
@@ -246,7 +247,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 			// expected
 			Msg.error(this, "Test error", e);
 		}
-
+		setErrorsExpected(false);
 	}
 
 	private Address addr(String address) {

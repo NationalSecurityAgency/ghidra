@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package util.demangler;
-
-import java.util.List;
+package ghidra.app.util.demangler.gnu;
 
 /**
- * A generic interface to represent
- * object that support parameters.
+ * Exception to signal a problem parsing a demangled string
  */
-public interface ParameterReceiver {
-	/**
-	 * Adds the specified parameter to this object.
-	 * @param parameter the parameter to add
-	 */
-	public void addParameter(GenericDemangledDataType parameter);
+public class DemanglerParseException extends RuntimeException {
 
-	/**
-	 * Returns the parameters added to this object.
-	 * @return the parameters added to this object
-	 */
-	public List<GenericDemangledDataType> getParameters();
+	public DemanglerParseException(String message) {
+		super(message);
+	}
 }

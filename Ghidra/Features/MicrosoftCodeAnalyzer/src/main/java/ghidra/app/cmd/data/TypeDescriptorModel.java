@@ -602,7 +602,10 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 			if (descriptorName == null) {
 				return null;
 			}
-			DemangledType typeNamespace = new DemangledType(descriptorName);
+
+			String demangledSource = mdComplexType.toString();
+			DemangledType typeNamespace =
+				new DemangledType(originalTypeName, demangledSource, descriptorName);
 			DemangledType parentNamespace = getParentNamespace(); // Can be null;
 			if (parentNamespace != null) {
 				typeNamespace.setNamespace(parentNamespace);
@@ -614,8 +617,8 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		return namespace;
 	}
 
-	private boolean isNamespaceDeleted(Namespace namespace2) {
-		Symbol nsSymbol = namespace2.getSymbol();
+	private boolean isNamespaceDeleted(Namespace other) {
+		Symbol nsSymbol = other.getSymbol();
 		if (nsSymbol == null) {
 			return false; // global namespace.
 		}

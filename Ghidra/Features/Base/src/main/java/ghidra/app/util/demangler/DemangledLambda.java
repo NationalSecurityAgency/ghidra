@@ -13,11 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package util.demangler;
+package ghidra.app.util.demangler;
 
-public class GenericDemangledMethod extends GenericDemangledFunction {
+/**
+ * Represents a demangled lambda function
+ */
+public class DemangledLambda extends DemangledFunction {
 
-	public GenericDemangledMethod(String name) throws GenericDemangledException {
-		super(name);
+	public DemangledLambda(String mangled, String originalDemangled, String name) {
+		super(mangled, originalDemangled, name);
+	}
+
+	@Override
+	public String getNamespaceName() {
+		return getName();
+	}
+
+	@Override
+	public String toString() {
+		return getName();
 	}
 }

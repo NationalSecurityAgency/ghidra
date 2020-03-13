@@ -248,8 +248,9 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	public static Set<Window> getAllWindows() {
 		Set<Window> set = new HashSet<>();
-		Frame sharedOwnerFrame = (Frame) AppContext.getAppContext().get(
-			new StringBuffer("SwingUtilities.sharedOwnerFrame"));
+		Frame sharedOwnerFrame = (Frame) AppContext.getAppContext()
+				.get(
+					new StringBuffer("SwingUtilities.sharedOwnerFrame"));
 		if (sharedOwnerFrame != null) {
 			set.addAll(getAllWindows(sharedOwnerFrame));
 		}
@@ -1514,6 +1515,29 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		UIManager.put("PasswordField.font", f);
 		UIManager.put("TextArea.font", f);
 	}
+
+	/**
+	 * Signals that the client expected the System Under Test (SUT) to report errors.  Use this
+	 * when you wish to verify that errors are reported and you do not want those errors to
+	 * fail the test.  The default value for this setting is false, which means that any
+	 * errors reported will fail the running test.
+	 *
+	 * @param expected true if errors are expected.
+	 */
+	public static void setErrorsExpected(boolean expected) {
+		if (expected) {
+			Msg.error(AbstractGenericTest.class, ">>>>>>>>>>>>>>>> Expected Exception");
+			ConcurrentTestExceptionHandler.disable();
+		}
+		else {
+			Msg.error(AbstractGenericTest.class, "<<<<<<<<<<<<<<<< End Expected Exception");
+			ConcurrentTestExceptionHandler.enable();
+		}
+	}
+
+//==================================================================================================
+// Swing Methods
+//==================================================================================================	
 
 	/**
 	 * Waits for the Swing thread to process any pending events. This method
