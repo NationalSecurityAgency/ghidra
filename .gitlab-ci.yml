@@ -38,9 +38,9 @@ before_script:
     - rm -rf $CI_PROJECT_DIR/../ghidra.bin
     - git clone https://$GHIDRA_EXT_U_USERNAME:$GHIDRA_EXT_U_PASS@$GITLAB_URL/ghidra/ghidra.ext-u.git $CI_PROJECT_DIR/../ghidra.ext-u
     - git clone https://$GHIDRA_BIN_USERNAME:$GHIDRA_BIN_PASS@$GITLAB_URL/ghidra/ghidra.bin.git $CI_PROJECT_DIR/../ghidra.bin
-    BRANCH=$CI_COMMIT_REF_NAME 
-    INITIATOR=$GITLAB_USER_LOGIN
-    COMMIT=$CI_COMMIT_SHORT_SHA
+    - BRANCH=$CI_COMMIT_REF_NAME 
+    - INITIATOR=$GITLAB_USER_LOGIN
+    - COMMIT=$CI_COMMIT_SHORT_SHA
 
     # Check out the proper branch for each of the repositories
     - result=0
