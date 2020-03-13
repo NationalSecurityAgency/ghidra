@@ -25,7 +25,6 @@ import java.awt.event.MouseListener;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 import javax.swing.*;
@@ -46,7 +45,6 @@ import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.*;
 import generic.timer.ExpiringSwingTimer;
 import ghidra.util.*;
-import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import ghidra.util.worker.PriorityWorker;
@@ -718,7 +716,10 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * Sets the root node for the GTree.
+	 * Sets the root node for the GTree. NOTE: if this method is called from thread other than
+	 * the swing thread, the work will be moved asynchronously to the swing thread - meaning it
+	 * may not be set when this method returns.  If you need it to be set, be sure to call it
+	 * on the swing thread.
 	 * 
 	 * @param rootNode The node to set as the root.
 	 */
@@ -729,15 +730,10 @@ public class GTree extends JPanel implements BusyListener {
 			realModelRootNode = rootNode;
 			realViewRootNode = rootNode;
 			GTreeNode oldRoot;
-			try {
-				oldRoot = doSetModelRootNode(rootNode);
-				oldRoot.dispose();
-				if (filter != null) {
-					filterUpdateManager.update();
-				}
-			}
-			catch (CancelledException e) {
-				throw new AssertException("Setting the root node should never be cancelled");
+			oldRoot = swingSetModelRootNode(rootNode);
+			oldRoot.dispose();
+			if (filter != null) {
+				filterUpdateManager.update();
 			}
 		});
 	}
@@ -745,46 +741,24 @@ public class GTree extends JPanel implements BusyListener {
 	void swingSetFilteredRootNode(GTreeNode filteredRootNode) {
 		filteredRootNode.setParent(rootParent);
 		realViewRootNode = filteredRootNode;
-		try {
-			GTreeNode currentRoot = doSetModelRootNode(filteredRootNode);
-			if (currentRoot != realModelRootNode) {
-				currentRoot.disposeClones();
-			}
-		}
-		catch (CancelledException e) {
-			// the filter task was cancelled
+		GTreeNode currentRoot = swingSetModelRootNode(filteredRootNode);
+		if (currentRoot != realModelRootNode) {
+			currentRoot.disposeClones();
 		}
 	}
 
 	void swingRestoreNonFilteredRootNode() {
 		realViewRootNode = realModelRootNode;
-		try {
-			GTreeNode currentRoot = doSetModelRootNode(realModelRootNode);
-			if (currentRoot != realModelRootNode) {
-				currentRoot.disposeClones();
-			}
-		}
-		catch (CancelledException e) {
-			// the filter task was cancelled
+		GTreeNode currentRoot = swingSetModelRootNode(realModelRootNode);
+		if (currentRoot != realModelRootNode) {
+			currentRoot.disposeClones();
 		}
 	}
 
-	private GTreeNode doSetModelRootNode(GTreeNode rootNode) throws CancelledException {
-		// If this method is called from a background filter task, then it may be cancelled
-		// by other tree operations.  Not all tasks can be cancelled.
-		AtomicBoolean wasCancelled = new AtomicBoolean(true);
-		GTreeNode node = Swing.runNow(() -> {
-			GTreeNode old = model.getModelRoot();
-			model.setRootNode(rootNode);
-
-			wasCancelled.set(false);
-			return old;
-		});
-
-		if (wasCancelled.get()) {
-			throw new CancelledException();
-		}
-		return node;
+	private GTreeNode swingSetModelRootNode(GTreeNode rootNode) {
+		GTreeNode oldNode = model.getModelRoot();
+		model.privateSwingSetRootNode(rootNode);
+		return oldNode;
 	}
 
 	/**

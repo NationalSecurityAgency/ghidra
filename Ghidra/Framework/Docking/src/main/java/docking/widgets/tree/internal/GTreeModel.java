@@ -44,9 +44,14 @@ public class GTreeModel implements TreeModel {
 		this.root = root;
 	}
 
-	public void setRootNode(GTreeNode root) {
-		this.root = root;
-		Swing.runIfSwingOrRunLater(() -> swingFireRootChanged());
+	/**
+	 * Sets the models root node. NOTE: this is intended to only be called from the {@link GTree}
+	 * @param newRoot the new tree model root.  It will either be the actual root or a root
+	 * of a filtered sub-tree
+	 */
+	public void privateSwingSetRootNode(GTreeNode newRoot) {
+		this.root = newRoot;
+		swingFireRootChanged();
 	}
 
 	@Override
