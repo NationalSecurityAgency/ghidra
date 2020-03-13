@@ -210,10 +210,13 @@ public class SetEquateDialog extends DialogComponentProvider {
 			.stream()
 			.filter(dt -> dt instanceof Enum)
 			.map(Enum.class::cast)
-			.filter(enoom -> enoom.getName(scalar.getValue()) != null)
 			.forEach(enoom -> {
-				String name = enoom.getName(scalar.getValue());
-				entries.add(new EquateRowObject(name, enoom));
+				for (long value : new long[] { scalar.getUnsignedValue(), scalar.getSignedValue() }) {
+					String name = enoom.getName(value);
+					if (name != null) {
+						entries.add(new EquateRowObject(name, enoom));
+					}
+				}
 			});
 		//@formatter:on
 
@@ -550,19 +553,21 @@ public class SetEquateDialog extends DialogComponentProvider {
 		private Enum enoom;
 
 		EquateRowObject(String name, Enum enoom) {// Equate based off enum
-			long value = scalar.getValue();
 			if (enoom == null) {
 				return;
 			}
 
 			this.enoom = enoom;
-			this.entryName = enoom.getName(value);
+			this.entryName = name;
 			this.dataTypeUUID = enoom.getUniversalID();
 			this.path = getFullPath(enoom);
-			String formattedEquateName = EquateManager.formatNameForEquate(dataTypeUUID, value);
-			this.equate = equateTable.getEquate(formattedEquateName);
-			if (equate != null) {
-				this.refCount = equate.getReferenceCount();
+			this.refCount = 0;
+			for (long value : new long[] { scalar.getUnsignedValue(), scalar.getSignedValue() }) {
+				String formattedEquateName = EquateManager.formatNameForEquate(dataTypeUUID, value);
+				this.equate = equateTable.getEquate(formattedEquateName);
+				if (equate != null) {
+					this.refCount += equate.getReferenceCount();
+				}
 			}
 		}
 

@@ -125,7 +125,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 		for (short i = 0; i < numOperands; i++) {
 			for (Object obj : instr.getOpObjects(i)) {
 				if (obj instanceof Scalar) {
-					if (((Scalar) obj).getValue() != value) {
+					if (((Scalar) obj).getUnsignedValue() != value && ((Scalar) obj).getSignedValue() != value) {
 						continue;
 					}
 					if (opIndex >= 0) {

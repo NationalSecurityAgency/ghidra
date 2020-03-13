@@ -72,7 +72,13 @@ public class CreateEquateCmd extends BackgroundCommand {
 			boolean overwriteExisting, ListingActionContext context) {
 		super("Create New Equate", true /* has progress */, true /* can cancel */,
 			false /* is modal */);
-		this.targetScalarValue = scalar.getValue();
+		this.targetScalarValue = 0;
+		for (long value : new long[] { scalar.getUnsignedValue(), scalar.getSignedValue() }) {
+			if (enoom.getName(value) != null) {
+				this.targetScalarValue = value;
+				break;
+			}
+		}
 		this.iterator = iter;
 		this.overwriteExisting = overwriteExisting;
 		this.context = context;
@@ -126,7 +132,7 @@ public class CreateEquateCmd extends BackgroundCommand {
 				}
 
 				Scalar scalar = (Scalar) opObject;
-				if (scalar.getValue() != targetScalarValue) {
+				if (scalar.getUnsignedValue() != targetScalarValue && scalar.getSignedValue() != targetScalarValue) {
 					continue;
 				}
 
@@ -137,7 +143,6 @@ public class CreateEquateCmd extends BackgroundCommand {
 
 	private void createEquate(DomainObject domain, CodeUnit codeUnit, int opIndex,
 			Scalar scalar) {
-
 
 		EquateTable equateTable = codeUnit.getProgram().getEquateTable();
 		Address address = codeUnit.getAddress();

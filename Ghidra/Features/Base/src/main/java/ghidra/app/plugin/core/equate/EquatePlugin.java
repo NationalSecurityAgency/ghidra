@@ -336,7 +336,14 @@ public class EquatePlugin extends Plugin {
 		if (s == null) {
 			return null;
 		}
-		return equateTable.getEquate(context.getAddress(), getOperandIndex(context), s.getValue());
+		Equate equate = null;
+		for (long value : new long[] { s.getUnsignedValue(), s.getSignedValue() }) {
+			equate = equateTable.getEquate(context.getAddress(), getOperandIndex(context), value);
+			if (equate != null) {
+				break;
+			}
+		}
+		return equate;
 	}
 
 	private void renameEquate(ListingActionContext context, Equate oldEquate, String newEquateName,
