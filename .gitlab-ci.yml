@@ -7,7 +7,7 @@ stages:
   - build
   - test
 
-include:
+#include:
 #  - local: '.gitlab-ci.windows.yml'
 
 #
