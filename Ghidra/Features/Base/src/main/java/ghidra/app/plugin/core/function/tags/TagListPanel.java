@@ -144,6 +144,16 @@ public abstract class TagListPanel extends JPanel {
 			}
 		});
 
+//		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+//
+//			@Override
+//			public void valueChanged(ListSelectionEvent e) {
+//				if (!e.getValueIsAdjusting()) {
+//					provider.selectionChanged(TagListPanel.this);
+//				}
+//			}
+//		});
+
 		titleLabel = new JLabel(title);
 		titleLabel.setBorder(BorderFactory.createEmptyBorder(3, 5, 0, 0));
 		add(titleLabel, BorderLayout.NORTH);
