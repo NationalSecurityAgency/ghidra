@@ -1,11 +1,260 @@
+# All script blocks here are written for bash (the default shell used by gitlab
+# when running in a unix container). In the windows file the script blocks assume
+# powershell.
+#
+
 stages:
+  - build
   - test
 
-trigger-ext-u:
-  stage: test
+include:
+#  - local: '.gitlab-ci.windows.yml'
+
+#
+# Runs before every job. This sets up the ghidra repositories and ensures they
+# are all tracking the proper branch.
+#
+before_script:
+
+    # This deserves an explanation: when gitlab starts a pipeline it automatically checks 
+    # out the branch being tested. HOWEVER, it checks out a specific commit, so a call
+    # to "git branch' will return something like "* (HEAD detached at 1d4nde21)". This is 
+    # not acceptable to us - we need the checked out branch to be $CI_COMMIT_REF_NAME. 
+    - git checkout $CI_COMMIT_REF_NAME
+
+    # BUG WORKAROUND
+    # The clone of bin will often fail with the following error
+    #    error RPC failed; curl 56 GnuTLS recv error (-110) The TLS connection was non-properly terminated.
+    #    fatal The remote end hung up unexpectedly 
+    #    fatal early EOF
+    #    fatal index-pack failed
+    # To get around this, the following must be set
+    - git config --global http.postBuffer 500M
+    - git config --global http.maxRequestBuffer 100M
+    - git config --global core.compression 0
+
+    # Clone the ghidra and ghidra.bin repositories
+    - rm -rf $CI_PROJECT_DIR/../ghidra.ext-u
+    - rm -rf $CI_PROJECT_DIR/../ghidra.bin
+    - git clone https://$GHIDRA_EXT_U_USERNAME:$GHIDRA_EXT_U_PASS@$GITLAB_URL/ghidra/ghidra.ext-u.git $CI_PROJECT_DIR/../ghidra.ext-u
+    - git clone https://$GHIDRA_BIN_USERNAME:$GHIDRA_BIN_PASS@$GITLAB_URL/ghidra/ghidra.bin.git $CI_PROJECT_DIR/../ghidra.bin
+    BRANCH=$CI_COMMIT_REF_NAME 
+    INITIATOR=$GITLAB_USER_LOGIN
+    COMMIT=$CI_COMMIT_SHORT_SHA
+
+    # Check out the proper branch for each of the repositories
+    - result=0
+    - cd $CI_PROJECT_DIR/../ghidra.ext-u
+    - git ls-remote --exit-code origin "$BRANCH" || result=$?
+    - if [ "$result" -eq 0 ]; then git checkout "$BRANCH"; fi
+    - git branch
+    - cd $CI_PROJECT_DIR/../ghidra.bin
+    - git ls-remote --exit-code origin "$BRANCH" || result=$?
+    - if [ "$result" -eq 0 ]; then git checkout "$BRANCH"; fi
+    - git branch
+
+    # Write out the ghidra.repos.config file to the ghidra/ folder
+    - echo -e "ghidra.ext-u\nghidra.bin" >> $CI_PROJECT_DIR/../ghidra/ghidra.repos.config
+
+#
+# Compiles ghidra and reports any breakage to Mattermost. If the branch is one that is in
+# the $PUBLIC_BRANCHES env var, the breakage message will go to the main GhidraDev 
+# channel; if not it will be sent to the channel of the individual user.
+#
+# This produces one artifact: the ghidra log file, which is made available via the
+# ghidratest server. A link to the file will be provided in the mattermost error 
+# message. 
+#
+build-ghidra-unix:
+  stage: build
   script:
-    - "curl -X POST -F token=$REPO_TOKEN -F ref=master -F variables[JOB_TYPE]=$JOB_TYPE -F variables[INITIATOR]=$GITLAB_USER_LOGIN -F variables[COMMIT]=$CI_COMMIT_SHORT_SHA -F variables[BRANCH]=$CI_COMMIT_REF_NAME $REPO_URL"
+    - cd $CI_PROJECT_DIR/../ghidra/
+    - logfile="gradle_${INITIATOR}__${BRANCH}__${COMMIT}.log"
+    - return_code=0; $BUILD_COMMAND >> $CI_PROJECT_DIR/$logfile 2>&1 || return_code=$?;
+    - |
+      if [ "$return_code" -eq 0 ]; then
+        exit 0;
+      fi
+
+      # Copy the gradle log out to the server on ghidratest
+      scp $CI_PROJECT_DIR/$logfile ghidratest:$GHIDRATEST_RESULTS_DIR/broken_builds
+
+      # Send a message to mattermost, with a link to the logfile
+      logfile_link="$GHIDRATEST_URL/reports/broken_builds/$logfile"
+      msg=" **branch:**  $BRANCH \n **command issued:**  $BUILD_COMMAND \n [link to ghidra log]($logfile_link) \n [link to pipeline]($CI_JOB_URL)"
+      if [[ $PUBLIC_BRANCHES == *"$BRANCH"* ]]; then
+        curl -i -X POST -H 'Content-Type: application/json' -d '{"text": "'"${msg}"'"}' $MATTERMOST_WEBHOOK_BUILD;
+      else
+        CHANNEL="@${INITIATOR}"
+        curl -i -X POST -H 'Content-Type: application/json' -d '{"channel": "'"${CHANNEL}"'", "text": "'"${msg}"'"}' $MATTERMOST_WEBHOOK_BUILD;
+      fi
+
   tags:
     - docker
     - ghidratest
   image: ghidra/ubuntu
+  only:
+    variables:
+      - $JOB_TYPE == "build"
+
+
+#
+# Generates the jacoco code coverage report
+# 
+code-coverage:
+  stage: test
+  script:
+    - cd $CI_PROJECT_DIR/../ghidra
+    - $CI_PROJECT_DIR/../ghidra.ext-u/GhidraTest/runAllTests.sh -g $CI_PROJECT_DIR/../ghidra -quiet -jacoco
+    - mv $CI_PROJECT_DIR/../ghidra/jacocoReport $CI_PROJECT_DIR
+    - scp -r $CI_PROJECT_DIR/jacocoReport ghidratest:$GHIDRATEST_RESULTS_DIR/jacoco
+  tags:
+    - docker
+    - ghidratest
+  image: ghidra/ubuntu
+  only:
+    variables:
+      - $JOB_TYPE == "jacoco"
+  artifacts:
+    paths:
+      - junit-results
+    expire_in: 3 weeks
+
+#
+# Runs unit/integration tests in parallel. This job is intended to finish quickly so 
+# some long-running tests are ommitted. 
+#
+run-parallel-tests-unix:
+  stage: test
+  script:
+
+    - cd $CI_PROJECT_DIR/../ghidra
+    - $CI_PROJECT_DIR/../ghidra.ext-u/GhidraTest/runAllTests.sh -g $CI_PROJECT_DIR/../ghidra -results $CI_PROJECT_DIR/junit-results -quiet -parallel
+  
+    # Copy the test results to ghidratest, under a directory identified by date/time
+    - cd $CI_PROJECT_DIR
+    - mkdir $BRANCH
+    - cd $BRANCH
+    - curdate=$(date +"%m-%d-%y_%T")
+    - mkdir "$curdate"
+    - cd "$curdate"
+    - cp -r $CI_PROJECT_DIR/junit-results/$BRANCH/reports . 
+    - scp -r $CI_PROJECT_DIR/$BRANCH ghidratest:$GHIDRATEST_RESULTS_DIR/parallel
+
+    # Now scrape the test results to get a count of the failures and display a
+    # notification in Mattermost with a link to the results
+    - source $CI_PROJECT_DIR/../ghidra.ext-u/GhidraTest/parseTestResults.sh
+    - var=$(parse $CI_PROJECT_DIR/junit-results)
+    - results="$GHIDRATEST_URL/reports/parallel/$BRANCH/$curdate/reports"
+    - |
+      if [ "$var" -gt 0 ]; then
+        icon=":warning:"
+      else
+        icon=":white_check_mark:"
+      fi
+
+      msg="##### $icon  $var **_parallel_** test failures \n * [link to test results]($results) \n * [link to pipeline]($CI_JOB_URL)"
+
+      if [[ $PUBLIC_BRANCHES == *"$BRANCH"* ]]; then
+        curl -i -X POST -H 'Content-Type: application/json' -d '{"text": "'"${msg}"'"}' $MATTERMOST_WEBHOOK_TEST;
+      else
+        CHANNEL="@${INITIATOR}"
+        curl -i -X POST -H 'Content-Type: application/json' -d '{"channel": "'"${CHANNEL}"'", "text": "'"${msg}"'"}' $MATTERMOST_WEBHOOK_TEST;
+      fi
+  tags:
+    - docker
+    - ghidratest 
+  image: ghidra/ubuntu
+  only:
+     variables:
+       - $JOB_TYPE == "parallel"
+  artifacts:
+    paths:
+      - junit-results
+    expire_in: 3 weeks 
+    when: always
+
+#
+# Runs the full set of ghidra tests. This is a long-running task and may take several
+# hours
+#
+run-nightly-tests-unix:
+  stage: test
+  script:
+
+    - cd $CI_PROJECT_DIR/../ghidra
+    - $CI_PROJECT_DIR/../ghidra.ext-u/GhidraTest/runAllTests.sh -g $CI_PROJECT_DIR/../ghidra -results $CI_PROJECT_DIR/junit-results -quiet -nightly
+
+    # Copy the test results to ghidratest, under a directory identified by date/time
+    - cd $CI_PROJECT_DIR
+    - mkdir $BRANCH
+    - cd $BRANCH
+    - curdate=$(date +"%m-%d-%y_%T")
+    - mkdir "$curdate"
+    - cd "$curdate"
+    - cp -r $CI_PROJECT_DIR/junit-results/$BRANCH/reports .
+    - scp -r $CI_PROJECT_DIR/$BRANCH ghidratest:$GHIDRATEST_RESULTS_DIR/nightly
+
+    # Now scrape the test results to get a count of the failures and display a   
+    # notification in Mattermost with a link to the results
+    - source $CI_PROJECT_DIR/../ghidra.ext-u/GhidraTest/parseTestResults.sh
+    - var=$(parse $CI_PROJECT_DIR/junit-results)
+    - results="$GHIDRATEST_URL/reports/nightly/$BRANCH/$curdate/reports"
+    - |
+      if [ "$var" -gt 0 ]; then
+        icon=":warning:"
+      else
+        icon=":white_check_mark"
+      fi
+
+      msg="##### $icon  $var **_nightly_** test failures \n * [link to test results]($results) \n * [link to pipeline]($CI_JOB_URL)"
+
+      if [[ $PUBLIC_BRANCHES == *"$BRANCH"* ]]; then
+        curl -i -X POST -H 'Content-Type: application/json' -d '{"text": "'"${msg}"'"}' $MATTERMOST_WEBHOOK_TEST;
+      else
+        CHANNEL="@${INITIATOR}"
+        curl -i -X POST -H 'Content-Type: application/json' -d '{"channel": "'"${CHANNEL}"'", "text": "'"${msg}"'"}' $MATTERMOST_WEBHOOK_TEST;
+      fi
+
+  tags:
+    - docker
+    - ghidratest
+  image: ghidra/ubuntu
+  only:
+     variables:
+       - $JOB_TYPE == "nightly"
+  artifacts:
+    paths:
+      - junit-results
+    expire_in: 3 weeks
+    when: always
+
+#
+# Creates Ghidra installation zips for the current platform for following configurations:
+#   - Public_Release
+#   - U_Release 
+#
+build-ghidra-install-unix:
+   stage: build
+   script:
+     - cd $CI_PROJECT_DIR/../ghidra
+     - gradle buildLocal_Public_Release -x ip
+     - gradle buildLocal_U_Release -x ip
+
+     # Gather the installation zip(s) and copy to the ext-u directory to be exposed as artifacts
+     - cd $CI_PROJECT_DIR
+     - mkdir -p ghidra-builds 
+     - cd $CI_PROJECT_DIR/../extractTo
+     - find . -wholename "**/build/dist/ghidra*.zip" -exec cp {} $CI_PROJECT_DIR/ghidra-builds \;
+   tags:
+     - docker
+     - ghidratest
+   image: ghidra/ubuntu
+   only:
+     variables:
+       - $JOB_TYPE == "install"
+   artifacts:
+     paths:
+       - ghidra-builds
+     expire_in: 1 week 
+     when: always
