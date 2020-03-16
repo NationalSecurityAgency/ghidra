@@ -398,6 +398,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				.menuGroup("search", subGroup)
 				.keyBinding("ctrl shift F3")
 				.description(DESCRIPTION)
+				.supportsDefaultToolContext(true)
 				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
 				.withContext(NavigatableActionContext.class)
 				.enabledWhen(c -> searchedOnce)

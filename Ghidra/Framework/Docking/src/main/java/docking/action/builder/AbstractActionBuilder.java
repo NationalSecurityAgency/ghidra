@@ -24,6 +24,7 @@ import javax.swing.KeyStroke;
 
 import docking.*;
 import docking.action.*;
+import docking.actions.KeyBindingUtils;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import resources.ResourceManager;
@@ -490,7 +491,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * @return this builder (for chaining)
 	 */
 	public B keyBinding(String keyStrokeString) {
-		this.keyBinding = KeyStroke.getKeyStroke(keyStrokeString);
+		this.keyBinding = KeyBindingUtils.parseKeyStroke(keyStrokeString);
 		if (keyBinding == null && keyStrokeString != null) {
 			Msg.warn(this, "Can't parse KeyStroke: " + keyStrokeString);
 		}
@@ -568,11 +569,12 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Sets whether the action will support using the default tool context if the focused provider's
-	 * context is invalid
+	 * context is invalid.
 	 * <P>
 	 * By default, actions only work on the current focused provider's context.  Setting this
-	 * to true, will cause the action to be evaluated against the default tool context if the
+	 * to true will cause the action to be evaluated against the default tool context if the
 	 * focused context is not valid for this action.
+	 * 
 	 * @param b the new value
 	 * @return this builder (for chaining)
 	 */

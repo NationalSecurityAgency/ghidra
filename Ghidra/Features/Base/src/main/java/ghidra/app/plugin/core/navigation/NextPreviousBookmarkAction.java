@@ -64,12 +64,6 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 
-		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getMenuName() },
-				bookmarkIcon, ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
-		menuData.setMenuSubGroup(subGroup);
-		setMenuBarData(menuData);
-
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));
 
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, getName()));
@@ -94,19 +88,6 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 		addActionState(note);
 		addActionState(warning);
 		addActionState(custom);
-
-		/*BookmarkPlugin bookmarkPlugin = new BookmarkPlugin(tool);
-		Program program = bookmarkPlugin.getCurrentProgram();
-		BookmarkManager bookmarkManager = program.getBookmarkManager();
-		BookmarkType[] bookmarkTypes = bookmarkManager.getBookmarkTypes();
-		
-		for (BookmarkType bookmarkType : bookmarkTypes) {
-			ActionState<String> tempBookmarkType =
-				new ActionState<String>(bookmarkType.getTypeString(), bookmarkUnknownIcon,
-					bookmarkType.getTypeString());
-		
-			addActionState(tempBookmarkType);
-		}*/
 
 		setCurrentActionState(allBookmarks); // default
 	}

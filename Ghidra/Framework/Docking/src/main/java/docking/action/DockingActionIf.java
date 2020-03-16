@@ -34,23 +34,23 @@ import docking.help.HelpDescriptor;
  * the level of key binding support, you can pass the desired {@link KeyBindingType} to the
  * base implementation of this interface.
  * 
- * <p>ActionContext is a key concept for Ghidra actions so that they can be context sensitive if 
- * appropriate. They provide a 
+ * <p>ActionContext is a key concept for tool actions so that they can be context sensitive if 
+ * appropriate. The context provides a 
  * consistent way for plugins and components to share tool state with actions. Actions can then
- * use that context to make decisions such as if they should be enabled or added to a popup menu.
+ * use that context to make decisions, such as if they should be enabled or added to a popup menu.
  * The context information is also typically used when the action is invoked.  For example, an
  * action context from a table element may provide the row in a table component that is selected and
  * then a "delete table row" action can use that information to be enabled when a table selection 
  * exists and then delete that row if the action is invoked.
  * 
- * <p> To make the overall action experience more convenient for the user, Ghidra action processing
+ * <p> To make the overall action experience more convenient for the user, action processing
  * supports the concept of a "default tool context".  This allows actions to work on a more global
  * level than just the component that is focused.  The idea is that if an action is not valid for
  * the current focused context (and it has be declared to work this way using 
- * the {@link #setSupportsDefaultToolContext(boolean)}) it can be validated against the default 
- * tool context.  The "default tool context" is defined to be the action context of the tools 
- * primary component.  This is primarily intended for "tool" actions which are the ones that appear
- * in the tool's main menu bar or tool bar.  This allows the tool actions to mostly work on the
+ * the {@link #setSupportsDefaultToolContext(boolean)}), then it can be validated against the default 
+ * tool context.  The "default tool context" is defined to be the action context of the tool's 
+ * primary component.  This is primarily intended for tool-level actions which are the ones that appear
+ * in the tool's main menu bar or toolbar.  This allows the tool actions to mostly work on the
  * tool's main component context regardless of what has focus, and yet still work on the  
  * focused component if appropriate (such as a snapshot of the main component).  
  */
@@ -160,7 +160,7 @@ public interface DockingActionIf extends HelpDescriptor {
 
 	/**
 	 * Returns the {@link ToolBarData} to be used to put this action in a toolbar.  The ToolBarData will be
-	 * null if the action in not set to be in a tool bar.
+	 * null if the action in not set to be in a toolbar.
 	 * @return the {@link ToolBarData} for the popup menu or null if the action is not in a popup menu.
 	 */
 	public ToolBarData getToolBarData();

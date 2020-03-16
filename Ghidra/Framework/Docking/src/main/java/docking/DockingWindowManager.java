@@ -2143,8 +2143,8 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Returns the global action context for the tool
-	 * @return  the global action context for the tool
+	 * Returns the default action context for the tool
+	 * @return the default action context for the tool
 	 */
 	public ActionContext getDefaultToolContext() {
 		return defaultProvider == null ? new ActionContext()

@@ -41,7 +41,7 @@ public class KeyBindingData {
 	}
 
 	private static KeyStroke parseKeyStrokeString(String keyStrokeString) {
-		KeyStroke keyStroke = KeyStroke.getKeyStroke(keyStrokeString);
+		KeyStroke keyStroke = KeyBindingUtils.parseKeyStroke(keyStrokeString);
 		if (keyStroke == null) {
 			throw new IllegalArgumentException("Invalid keystroke string: " + keyStrokeString);
 		}

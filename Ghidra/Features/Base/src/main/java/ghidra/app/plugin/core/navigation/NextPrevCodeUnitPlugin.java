@@ -126,11 +126,6 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 
 		ToggleDirectionAction(String subGroup) {
 			super("Toggle Search Direction", NextPrevCodeUnitPlugin.this.getName());
-			MenuData menuData =
-				new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getName() },
-					forwardIcon, ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
-			menuData.setMenuSubGroup(subGroup);
-			setMenuBarData(menuData);
 			setToolBarData(new ToolBarData(forwardIcon,
 				ToolConstants.TOOLBAR_GROUP_FOUR, subGroup));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK |
