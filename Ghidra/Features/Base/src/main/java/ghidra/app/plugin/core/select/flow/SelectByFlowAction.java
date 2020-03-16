@@ -15,14 +15,14 @@
  */
 package ghidra.app.plugin.core.select.flow;
 
+import docking.action.MenuData;
+import docking.tool.ToolConstants;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.util.HelpLocation;
-import docking.action.MenuData;
-import docking.tool.ToolConstants;
 
 /**
  * <CODE>SelectByFlowAction</CODE> allows the user to Select Code By Flowing from
@@ -63,6 +63,9 @@ class SelectByFlowAction extends ListingContextAction {
 		this.selectByFlowPlugin = plugin;
 		this.selectionType = selectionType;
 
+		// this is in the main tool menu, so make it a tool action
+		setSupportsDefaultToolContext(true);
+
 		String[] menuPath = null;
 		if (selectionType == SelectByFlowPlugin.SELECT_FUNCTIONS) {
 			menuPath = new String[] { ToolConstants.MENU_SELECTION, "Function" };
@@ -91,11 +94,6 @@ class SelectByFlowAction extends ListingContextAction {
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, getName()));
 	}
 
-	/**
-	 * Method called when the action is invoked.
-	 *
-	 * @param ActionEvent details regarding the invocation of this action
-	 */
 	@Override
 	public void actionPerformed(ListingActionContext context) {
 		// Either select by following all flows or all flows except calls

@@ -22,6 +22,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
@@ -96,33 +97,28 @@ public class FindPossibleReferencesPlugin extends Plugin {
 	}
 
 	private void createActions() {
-		action = new ListingContextAction(SEARCH_DIRECT_REFS_ACTION_NAME, getName()) {
-			@Override
-			protected void actionPerformed(ListingActionContext context) {
-				findReferences(context);
-			}
+		action = new ActionBuilder(SEARCH_DIRECT_REFS_ACTION_NAME, getName())
+				.menuPath(ToolConstants.MENU_SEARCH, "For Direct References")
+				.menuGroup("search for")
+				.supportsDefaultToolContext(true)
+				.helpLocation(new HelpLocation(HelpTopics.SEARCH, SEARCH_DIRECT_REFS_ACTION_NAME))
+				.description(getPluginDescription().getDescription())
+				.withContext(ListingActionContext.class)
+				.onAction(this::findReferences)
+				.enabledWhen(this::hasCorrectAddressSize)
+				.buildAndInstall(tool);
 
-			@Override
-			protected boolean isEnabledForContext(ListingActionContext context) {
-				int size =
-					context.getProgram().getAddressFactory().getDefaultAddressSpace().getSize();
-				if ((size == 64) || (size == 32) || (size == 24) || (size == 16) || (size == 20) ||
-					(size == 21)) {
-					return true;
-				}
-				return false;
-			}
-		};
-		action.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, SEARCH_DIRECT_REFS_ACTION_NAME));
-		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Direct References" }, null,
-				"search for"));
+	}
 
-		action.setDescription(getPluginDescription().getDescription());
-		//enableOnLocation(action);
-		tool.addAction(action);
-
-	} // end of createActions()
+	private boolean hasCorrectAddressSize(ListingActionContext context) {
+		int size =
+			context.getProgram().getAddressFactory().getDefaultAddressSpace().getSize();
+		if ((size == 64) || (size == 32) || (size == 24) || (size == 16) || (size == 20) ||
+			(size == 21)) {
+			return true;
+		}
+		return false;
+	}
 
 	private void createLocalActions(ProgramLocationActionContext context, ComponentProvider p,
 			FindReferencesTableModel model) {
@@ -196,8 +192,10 @@ public class FindPossibleReferencesPlugin extends Plugin {
 					"Could not find memory associated with " + fromAddr);
 				return;
 			}
-			if (currentProgram.getMemory().getBlock(
-				fromAddr).getType() == MemoryBlockType.BIT_MAPPED) {
+			if (currentProgram.getMemory()
+					.getBlock(
+						fromAddr)
+					.getType() == MemoryBlockType.BIT_MAPPED) {
 				Msg.showWarn(getClass(), null, "Search For Direct References",
 					"Cannot search for direct references on bit memory!");
 				return;

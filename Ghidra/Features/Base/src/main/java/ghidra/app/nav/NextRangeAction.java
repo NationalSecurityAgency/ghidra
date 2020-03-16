@@ -30,21 +30,12 @@ public abstract class NextRangeAction extends NavigatableContextAction {
 	private PluginTool tool;
 	private NavigationOptions navOptions;
 
-	public NextRangeAction(PluginTool tool, String name, String owner, NavigationOptions navOptions) {
+	public NextRangeAction(PluginTool tool, String name, String owner,
+			NavigationOptions navOptions) {
 		super(name, owner);
 		this.tool = tool;
 		this.navOptions = navOptions;
 		setEnabled(false);
-	}
-
-	@Override
-	protected boolean isValidNavigationContext(NavigatableActionContext context) {
-		//
-		// We want the nav actions to work in the current view that supports this, which right 
-		// now is the ListingActionContext.  If the current context does not support that, then 
-		// we will be called later with the global context, which does support navigation.
-		//
-		return context instanceof ListingActionContext;
 	}
 
 	@Override

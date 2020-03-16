@@ -1472,8 +1472,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	@Override
-	public ActionContext getGlobalActionContext() {
-		return winMgr.getGlobalActionContext();
+	public ActionContext getDefaultToolContext() {
+		return winMgr.getDefaultToolContext();
 	}
 
 	@Override

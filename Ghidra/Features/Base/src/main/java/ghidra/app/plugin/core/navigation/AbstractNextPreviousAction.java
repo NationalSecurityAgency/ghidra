@@ -17,9 +17,10 @@ package ghidra.app.plugin.core.navigation;
 
 import javax.swing.*;
 
-import docking.action.*;
+import docking.action.KeyBindingData;
+import docking.action.ToolBarData;
 import docking.tool.ToolConstants;
-import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.plugin.core.codebrowser.actions.CodeViewerContextAction;
@@ -41,16 +42,12 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 	public AbstractNextPreviousAction(PluginTool tool, String name, String owner, String subGroup) {
 		super(name, owner);
 		this.tool = tool;
+		setSupportsDefaultToolContext(true);
 
 		ToolBarData toolBarData =
 			new ToolBarData(getIcon(), ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
-		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, getMenuName() }, getIcon(),
-				ToolConstants.MENU_GROUP_NEXT_CODE_UNIT_NAV);
-		menuData.setMenuSubGroup(subGroup);
-		setMenuBarData(menuData);
 		setKeyBindingData(new KeyBindingData(getKeyStroke()));
 		setHelpLocation(new HelpLocation(HelpTopics.NAVIGATION, name));
 		setDescription(getDescriptionString());
@@ -90,7 +87,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 		}
 	}
 
-	private void gotoAddress(ListingActionContext actionContext, Address address) {
+	private void gotoAddress(NavigatableActionContext actionContext, Address address) {
 		if (address == null) {
 			tool.setStatusInfo("Unable to locate another \"" + getNavigationTypeName() +
 				"\" past the current range, in the current direction.");

@@ -253,7 +253,7 @@ public class ActionContext {
 	public ActionContext getGlobalContext() {
 		if (globalContext == null) {
 			Tool tool = getTool();
-			globalContext = tool == null ? new ActionContext() : tool.getGlobalActionContext();
+			globalContext = tool == null ? new ActionContext() : tool.getDefaultToolContext();
 		}
 		return globalContext;
 	}

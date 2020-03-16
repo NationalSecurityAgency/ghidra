@@ -220,7 +220,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			return null;
 		}
 		Function function = controller.getFunction();
-		Address entryPoint = function != null ? function.getEntryPoint() : null;
+		if (function == null) {
+			return null;
+		}
+		Address entryPoint = function.getEntryPoint();
 		boolean isDecompiling = controller.isDecompiling();
 		return new DecompilerActionContext(this, entryPoint, isDecompiling);
 	}

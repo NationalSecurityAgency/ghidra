@@ -80,7 +80,7 @@ public class FakeDockingTool extends AbstractDockingTool {
 	}
 
 	@Override
-	public ActionContext getGlobalActionContext() {
+	public ActionContext getDefaultToolContext() {
 		return null;
 	}
 }
