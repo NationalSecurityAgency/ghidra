@@ -110,13 +110,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 
 	void setDirection(boolean isForward) {
 		this.isForward = isForward;
-		getMenuBarData().setMenuItemName(getMenuName());
 		setDescription(getDescription());
-	}
-
-	private String getMenuName() {
-		String prefix = isForward ? "Next " : "Previous ";
-		return prefix + getNavigationTypeName();
 	}
 
 	private String getDescriptionString() {

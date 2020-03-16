@@ -227,13 +227,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 
 	public void setDirection(boolean isForward) {
 		this.isForward = isForward;
-		getMenuBarData().setMenuItemName(getMenuName());
 		setDescription(getDescription());
-	}
-
-	private String getMenuName() {
-		String prefix = isForward ? "Next " : "Previous ";
-		return prefix + getNavigationTypeName();
 	}
 
 	private String getNavigationTypeName() {

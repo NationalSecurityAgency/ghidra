@@ -141,7 +141,6 @@ public class NextPrevCodeUnitPlugin extends Plugin {
 		@Override
 		public void actionPerformed(NavigatableActionContext context) {
 			isForward = !isForward;
-			getMenuBarData().setIcon(isForward ? forwardIcon : backwardIcon);
 			getToolBarData().setIcon(isForward ? forwardIcon : backwardIcon);
 			updateActions(isForward);
 		}
