@@ -1807,16 +1807,12 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     {
       TransformVar *rvn2 = setReplacement(op->getIn(1-slot));
       if (rvn2 == (TransformVar *)0) return false;
-      TransformOp *rop = newPreexistingOp(2, op->code(), op);
-      if (slot == 0) {
-	opSetInput(rop,rvn,0);
-	opSetInput(rop,rvn2,1);
+      if (preexistingGuard(slot, rvn2)) {
+	TransformOp *rop = newPreexistingOp(2, op->code(), op);
+	opSetInput(rop, rvn, 0);
+	opSetInput(rop, rvn2, 1);
+	terminatorCount += 1;
       }
-      else {
-	opSetInput(rop,rvn2,0);
-	opSetInput(rop,rvn,1);
-      }
-      terminatorCount += 1;
       break;
     }
     case CPUI_FLOAT_TRUNC:
