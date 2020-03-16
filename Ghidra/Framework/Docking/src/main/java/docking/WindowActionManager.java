@@ -108,7 +108,7 @@ public class WindowActionManager {
 		// In order to make the action updating be as responsive as possible and still be complete,
 		// we have chosen a policy that will reduce a flurry of contextChanged call into two
 		// actual calls - one that occurs immediately and one when the flurry times out.
-		updateManager.updateLater();
+		updateManager.update();
 	}
 
 	private synchronized void processContextChanged() {
