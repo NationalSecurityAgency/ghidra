@@ -133,7 +133,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		try {
 			Bundle b = bundle_host.installExplodedPath(bi.binDir);
 			bi.bundleLoc = b.getLocation();
-			System.err.printf("new bundle loc is %s\n", bi.bundleLoc);
+			Msg.out(String.format("new bundle loc is %s\n", bi.bundleLoc));
 			b.start();
 			if (!bundle_host.waitForBundleStart(bi.bundleLoc)) {
 				Msg.error(this, "starting bundle");
