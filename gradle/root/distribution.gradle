@@ -69,6 +69,13 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
     															"java.base/sun.security.x509=ALL-UNNAMED", 
     															"java.base/sun.security.provider=ALL-UNNAMED", 
     															"java.base/sun.security.util=ALL-UNNAMED"])
+
+	doLast {
+			// Replace the Georgia font with Arial in the stylesheet to prevent out of place number characters
+			ant.replaceregexp(match:'Georgia', replace:'Arial', flags:'g', byline:true) {
+			fileset(dir: destinationDir, includes: 'stylesheet.css')
+		}
+	}
 }
   
  /*********************************************************************************
