@@ -1260,7 +1260,8 @@ bool SubvariableFlow::processNextWork(void)
 /// \param mask is a mask where 1 bits indicate the position of the logical value within the \e root Varnode
 /// \param aggr is \b true if we should use aggressive (less restrictive) tests during the trace
 /// \param sext is \b true if we should assume sign extensions from the logical value into its container
-SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext)
+/// \param big is \b true if we look for subvariable flow for \e big (8-byte) logical values
+SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext,bool big)
 
 {
   fd = f;
@@ -1280,6 +1281,13 @@ SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,
     flowsize = 3;
   else if (bitsize <= 32)
     flowsize = 4;
+  else if (bitsize <= 64) {
+    if (!big) {
+      fd = (Funcdata *)0;
+      return;
+    }
+    flowsize = 8;
+  }
   else {
     fd = (Funcdata *)0;
     return;

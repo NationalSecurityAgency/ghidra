@@ -1649,6 +1649,12 @@ int4 AncestorRealistic::enterNode(State &state)
     multiDepth += 1;
     stateStack.push_back(State(op,0));
     return enter_node;				// Nothing to check, start traversing inputs of MULTIEQUAL
+  case CPUI_PIECE:
+    // If the trial is getting pieced together and then truncated in a register,
+    // this is evidence of artificial data-flow.
+    if (state.vn->getSize() > trial->getSize() && state.vn->getSpace()->getType() != IPTR_SPACEBASE)
+      return pop_fail;
+    return pop_solid;
   default:
     return pop_solid;				// Any other LOAD or arithmetic/logical operation is viewed as solid movement
   }
