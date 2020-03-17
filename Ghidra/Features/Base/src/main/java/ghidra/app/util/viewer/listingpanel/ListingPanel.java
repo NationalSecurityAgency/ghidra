@@ -513,7 +513,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			listingHoverHandler.initializeListingHoverHandler(handler);
 			listingHoverHandler.dispose();
 		}
+
 		listingHoverHandler = handler;
+		fieldPanel.setHoverProvider(listingHoverHandler);
 	}
 
 	public void dispose() {
