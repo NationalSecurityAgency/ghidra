@@ -1777,7 +1777,6 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     Varnode *outvn = op->getOut();
     if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
       continue;
-    int4 slot = op->getSlot(vn);
     switch(op->code()) {
     case CPUI_COPY:
     case CPUI_FLOAT_CEIL:
@@ -1795,7 +1794,7 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
       TransformOp *rop = newOpReplace(op->numInput(), op->code(), op);
       TransformVar *outrvn = setReplacement(outvn);
       if (outrvn == (TransformVar *)0) return false;
-      opSetInput(rop,rvn,slot);
+      opSetInput(rop,rvn,op->getSlot(vn));
       opSetOutput(rop,outrvn);
       break;
     }
@@ -1813,8 +1812,14 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     case CPUI_FLOAT_LESS:
     case CPUI_FLOAT_LESSEQUAL:
     {
+      int4 slot = op->getSlot(vn);
       TransformVar *rvn2 = setReplacement(op->getIn(1-slot));
       if (rvn2 == (TransformVar *)0) return false;
+      if (rvn == rvn2) {
+	list<PcodeOp *>::const_iterator ourIter = iter;
+	--ourIter;	// Back up one to our original iterator
+	slot = op->getRepeatSlot(vn, slot, ourIter);
+      }
       if (preexistingGuard(slot, rvn2)) {
 	TransformOp *rop = newPreexistingOp(2, op->code(), op);
 	opSetInput(rop, rvn, 0);
