@@ -559,7 +559,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.toolBarGroup(ToolConstants.TOOLBAR_GROUP_ONE)
 				.keyBinding("ctrl S")
 				.withContext(ProgramActionContext.class)
-				.enabledWhen(c -> c.getProgram().isChanged())
+				.enabledWhen(c -> c.getProgram() != null && c.getProgram().isChanged())
 				.onAction(c -> programSaveMgr.saveProgram(c.getProgram()))
 				.buildAndInstall(tool);
 
