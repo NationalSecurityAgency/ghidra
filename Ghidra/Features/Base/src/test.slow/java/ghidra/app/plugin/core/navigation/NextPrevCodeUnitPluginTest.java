@@ -118,36 +118,35 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		Icon downIcon = ResourceManager.loadImage("images/down.png");
 
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
-		assertEquals("Next Instruction", nextInst.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Data", nextData.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Undefined", nextUndef.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Label", nextLabel.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Function", nextFunc.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Instruction Not In a Function",
-			nextNonFunc.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Bookmark", nextBookmark.getMenuBarData().getMenuPath()[1]);
+		assertEquals("Go To Next Instruction", nextInst.getDescription());
+		assertEquals("Go To Next Data", nextData.getDescription());
+		assertEquals("Go To Next Undefined", nextUndef.getDescription());
+		assertEquals("Go To Next Label", nextLabel.getDescription());
+		assertEquals("Go To Next Function", nextFunc.getDescription());
+		assertEquals("Go To Next Instruction Not In a Function", nextNonFunc.getDescription());
+		assertEquals("Go To Next Bookmark: All Types", nextBookmark.getDescription());
 
 		performAction(direction, cb.getProvider(), true);
+
 		assertEquals(upIcon, direction.getToolBarData().getIcon());
-		assertEquals("Previous Instruction", nextInst.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Previous Data", nextData.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Previous Undefined", nextUndef.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Previous Label", nextLabel.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Previous Function", nextFunc.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Previous Instruction Not In a Function",
-			nextNonFunc.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Previous Bookmark", nextBookmark.getMenuBarData().getMenuPath()[1]);
+		assertEquals("Go To Previous Instruction", nextInst.getDescription());
+		assertEquals("Go To Previous Data", nextData.getDescription());
+		assertEquals("Go To Previous Undefined", nextUndef.getDescription());
+		assertEquals("Go To Previous Label", nextLabel.getDescription());
+		assertEquals("Go To Previous Function", nextFunc.getDescription());
+		assertEquals("Go To Previous Instruction Not In a Function", nextNonFunc.getDescription());
+		assertEquals("Go To Previous Bookmark: All Types", nextBookmark.getDescription());
 
 		performAction(direction, cb.getProvider(), true);
+
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
-		assertEquals("Next Instruction", nextInst.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Data", nextData.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Undefined", nextUndef.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Label", nextLabel.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Function", nextFunc.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Instruction Not In a Function",
-			nextNonFunc.getMenuBarData().getMenuPath()[1]);
-		assertEquals("Next Bookmark", nextBookmark.getMenuBarData().getMenuPath()[1]);
+		assertEquals("Go To Next Instruction", nextInst.getDescription());
+		assertEquals("Go To Next Data", nextData.getDescription());
+		assertEquals("Go To Next Undefined", nextUndef.getDescription());
+		assertEquals("Go To Next Label", nextLabel.getDescription());
+		assertEquals("Go To Next Function", nextFunc.getDescription());
+		assertEquals("Go To Next Instruction Not In a Function", nextNonFunc.getDescription());
+		assertEquals("Go To Next Bookmark: All Types", nextBookmark.getDescription());
 	}
 
 	@Test

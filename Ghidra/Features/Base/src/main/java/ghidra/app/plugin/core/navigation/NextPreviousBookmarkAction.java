@@ -227,7 +227,14 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 
 	public void setDirection(boolean isForward) {
 		this.isForward = isForward;
-		setDescription(getDescription());
+		setDescription(getToolTipText());
+	}
+
+	@Override
+	public String getToolTipText() {
+		String description = "Go To " + (isForward ? "Next" : "Previous");
+		description += " Bookmark: " + getCurrentState().getName();
+		return description;
 	}
 
 	private String getNavigationTypeName() {
