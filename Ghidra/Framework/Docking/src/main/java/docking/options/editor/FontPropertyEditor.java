@@ -171,7 +171,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			fontPanel.add(fonts);
 			fonts.setSelectedItem(fontWrapper);
 
-			sizes = new GComboBox<>(IntStream.rangeClosed(6, 32).boxed().toArray(Integer[]::new));
+			sizes = new GComboBox<>(IntStream.rangeClosed(1, 72).boxed().toArray(Integer[]::new));
 			sizes.setMaximumRowCount(9);
 			sizePanel.add(sizes);
 			sizeChoice = font.getSize();
