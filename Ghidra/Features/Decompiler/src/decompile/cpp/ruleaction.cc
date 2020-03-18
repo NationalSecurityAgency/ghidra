@@ -7279,7 +7279,7 @@ int4 RuleSubvarAnd::applyOp(PcodeOp *op,Funcdata &data)
   //  if ((vn->getConsume() & 0xff)==0xff) return 0;
   //  if (op->getIn(1)->getOffset() != (uintb)1) return 0;
   if (op->getOut()->hasNoDescend()) return 0;
-  SubvariableFlow subflow(&data,vn,cmask,false,false);
+  SubvariableFlow subflow(&data,vn,cmask,false,false,false);
   if (!subflow.doTrace()) return 0;
   subflow.doReplacement();
   return 1;
@@ -7298,14 +7298,24 @@ int4 RuleSubvarSubpiece::applyOp(PcodeOp *op,Funcdata &data)
 {
   Varnode *vn = op->getIn(0);
   Varnode *outvn = op->getOut();
-  uintb mask = calc_mask( outvn->getSize() );
+  int4 flowsize = outvn->getSize();
+  uintb mask = calc_mask( flowsize );
   mask <<= 8*((int4)op->getIn(1)->getOffset());
   bool aggressive = outvn->isPtrFlow();
   if (!aggressive) {
     if ((vn->getConsume() & mask) != vn->getConsume()) return 0;
     if (op->getOut()->hasNoDescend()) return 0;
   }
-  SubvariableFlow subflow(&data,vn,mask,aggressive,false);
+  bool big = false;
+  if (flowsize >= 8 && vn->isInput()) {
+    // Vector register inputs getting truncated to what actually gets used
+    // happens occasionally.  We let SubvariableFlow deal with this special case
+    // to avoid overlapping inputs
+    // TODO: ActionLaneDivide should be handling this
+    if (vn->loneDescend() == op)
+      big = true;
+  }
+  SubvariableFlow subflow(&data,vn,mask,aggressive,false,big);
   if (!subflow.doTrace()) return 0;
   subflow.doReplacement();
   return 1;
@@ -7624,7 +7634,7 @@ int4 RuleSubvarCompZero::applyOp(PcodeOp *op,Funcdata &data)
     }
   }
   
-  SubvariableFlow subflow(&data,vn,mask,false,false);
+  SubvariableFlow subflow(&data,vn,mask,false,false,false);
   if (!subflow.doTrace()) {
     return 0;
   }
@@ -7656,7 +7666,7 @@ int4 RuleSubvarShift::applyOp(PcodeOp *op,Funcdata &data)
   mask = (mask >> sa) << sa;
   if (op->getOut()->hasNoDescend()) return 0;
 
-  SubvariableFlow subflow(&data,vn,mask,false,false);
+  SubvariableFlow subflow(&data,vn,mask,false,false,false);
   if (!subflow.doTrace()) return 0;
   subflow.doReplacement();
   return 1;
@@ -7677,7 +7687,7 @@ int4 RuleSubvarZext::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *invn = op->getIn(0);
   uintb mask = calc_mask(invn->getSize());
 
-  SubvariableFlow subflow(&data,vn,mask,invn->isPtrFlow(),false);
+  SubvariableFlow subflow(&data,vn,mask,invn->isPtrFlow(),false,false);
   if (!subflow.doTrace()) return 0;
   subflow.doReplacement();
   return 1;
@@ -7698,7 +7708,7 @@ int4 RuleSubvarSext::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *invn = op->getIn(0);
   uintb mask = calc_mask(invn->getSize());
 
-  SubvariableFlow subflow(&data,vn,mask,isaggressive,true);
+  SubvariableFlow subflow(&data,vn,mask,isaggressive,true,false);
   if (!subflow.doTrace()) return 0;
   subflow.doReplacement();
   return 1;

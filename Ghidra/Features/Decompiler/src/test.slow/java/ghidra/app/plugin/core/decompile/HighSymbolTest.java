@@ -199,7 +199,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 	public void testHighSymbol_localStackDynamic() {
 		decompile("10015a6");
 		ClangTextField line = getLineContaining(" = 0xc;");
-		FieldLocation loc = loc(line.getLineNumber(), 5);
+		FieldLocation loc = loc(line.getLineNumber(), 2);
 		ClangToken token = line.getToken(loc);
 		assertTrue(token instanceof ClangVariableToken);
 		HighVariable variable = token.getHighVariable();
@@ -321,7 +321,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 	public void testHighSymbol_multipleUsePoints() {
 		decompile("1001915");
 		ClangTextField line = getLineContaining("0x4e");
-		FieldLocation loc = loc(line.getLineNumber(), 4);
+		FieldLocation loc = loc(line.getLineNumber(), 2);
 		ClangToken token = line.getToken(loc);
 		assertTrue(token instanceof ClangVariableToken);
 		HighVariable variable = token.getHighVariable();
