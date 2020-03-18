@@ -534,6 +534,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
 				.withContext(ProgramActionContext.class)
 				.onAction(c -> closeProgram(c.getProgram(), false))
+				.keyBinding("ctrl W")
 				.buildAndInstall(tool);
 
 		closeOthersAction = new ActionBuilder("Close Others", getName())
