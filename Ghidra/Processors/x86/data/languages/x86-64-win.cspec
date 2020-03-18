@@ -159,13 +159,13 @@
     </localrange>
   </prototype>
   <callfixup name="alloca_probe">
-    <target name="__alloca_probe"/>
-    <target name="__alloca_probe_8"/>
-    <target name="__alloca_probe_16"/>
+    <target name="_alloca_probe"/>
+    <target name="_alloca_probe2"/>
     <target name="__chkstk"/>
+    <target name="__chkstk2"/>
     <pcode>
      <body><![CDATA[
-       RSP = RSP + 8 - RAX;
+       RSP = RSP + 0;
      ]]></body>
     </pcode>
   </callfixup>
