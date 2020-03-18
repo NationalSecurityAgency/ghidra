@@ -26,7 +26,6 @@ import javax.tools.*;
 import javax.tools.JavaCompiler.CompilationTask;
 import javax.tools.JavaFileObject.Kind;
 
-import org.apache.felix.fileinstall.internal.JarDirUrlHandler;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 
@@ -34,19 +33,34 @@ import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.app.script.osgi.BundleCompiler;
 import ghidra.app.script.osgi.BundleHost;
+import ghidra.app.script.osgi.BundleHost.SourceBundleInfo;
 import ghidra.app.util.headless.HeadlessScript;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
+	// XXX bundle host should be managed by a plugin
+	BundleHost _bundle_host;
 
-	private BundleHost bundle_host = new BundleHost();
-	{
-		try {
-			bundle_host.start_felix();
+	private BundleHost getBundleHost() {
+		if (_bundle_host == null) {
+			_bundle_host = new BundleHost();
+			try {
+				_bundle_host.start_felix();
+			}
+			catch (BundleException | IOException e) {
+				e.printStackTrace();
+			}
+
 		}
-		catch (BundleException | IOException e) {
-			e.printStackTrace();
+		return _bundle_host;
+	}
+
+	private SourceBundleInfo getBundleInfoForScript(ResourceFile sourceFile) {
+		ResourceFile sourceDir = getSourceDirectoryForScript(sourceFile);
+		if (sourceDir == null) {
+			return null;
 		}
+		return getBundleHost().getSourceBundleInfo(sourceDir);
 	}
 
 	@Override
@@ -75,12 +89,12 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			writer = new NullPrintWriter();
 		}
 
-		ScriptBundleInfo bi = getBundleInfoForScript(sourceFile);
-		// look for new source files
+		SourceBundleInfo bi = getBundleInfoForScript(sourceFile);
 
+		// look for new source files
 		List<ResourceFile> newSource = new ArrayList<>();
 		List<Path> oldBin = new ArrayList<>();
-		BundleHost.visitUpdatedClassFiles(bi.sourceDir, bi.binDir, (sf, bfs) -> {
+		bi.visitUpdatedClassFiles((sf, bfs) -> {
 			if (sf != null) {
 				newSource.add(sf);
 			}
@@ -89,9 +103,27 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			}
 		});
 
+		BundleHost bundle_host = getBundleHost();
+		Iterator<ResourceFile> it = newSource.iterator();
+		int failing = 0;
+		while (it.hasNext()) {
+			ResourceFile sf = it.next();
+			if (!bi.updatedSinceLastBuild(sf)) {
+				it.remove();
+				++failing;
+			}
+		}
+		if (failing > 0 && newSource.isEmpty()) {
+			writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
+				bi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
+			writer.printf("%s\n", bi.getPreviousBuildErrors());
+		}
+		// XXX if there is a new or updated manifest file, uninstall bundle, copy manifest, and restart bundle
+
 		// there's new source, so uninstall any existing bundle, delete old class files, and recompile
 		if (!newSource.isEmpty()) {
-			writer.printf("%s has changed: %d new\n", bi.sourceDir.toString(), newSource.size());
+			writer.printf("%s has changed: %d new/updated\n", bi.getSourceDir().toString(),
+				newSource.size());
 			Bundle b = bi.getBundle();
 			if (b != null) {
 				try {
@@ -116,27 +148,36 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			}
 
 			BundleCompiler bc = new BundleCompiler(bundle_host);
-			Msg.trace(this, "Compiling script " + sourceFile + " to dir " + bi.binDir);
+			Msg.trace(this,
+				"Compiling bundle dir " + bi.getSourceDir() + " to dir " + bi.getBinDir());
 
+			long startTime = System.nanoTime();
 			try {
-				bc.compileToExplodedBundle(bi.sourceDir, bi.binDir, writer);
+				bc.compileToExplodedBundle(bi, newSource, writer);
 			}
 			catch (IOException e) {
 				e.printStackTrace();
 				Msg.error(this, "compiling bundle", e);
 				return null;
 			}
+			finally {
+				long endTime = System.nanoTime();
+				writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
+			}
 
 			bundle_host.startBundleWatcher();
 		}
-
+		// as much source as possible built, install bundle and start it if necessary
+		Bundle b = bi.getBundle();
 		try {
-			Bundle b = bundle_host.installExplodedPath(bi.binDir);
-			bi.bundleLoc = b.getLocation();
-			Msg.out(String.format("new bundle loc is %s\n", bi.bundleLoc));
-			b.start();
-			if (!bundle_host.waitForBundleStart(bi.bundleLoc)) {
-				Msg.error(this, "starting bundle");
+			if (b == null) {
+				b = bi.install();
+			}
+			if (b.getState() != Bundle.ACTIVE) {
+				b.start();
+			}
+			if (!bundle_host.waitForBundleStart(bi.getBundleLoc())) {
+				Msg.error(this, "unable to start bundle");
 				return null;
 			}
 		}
@@ -146,10 +187,10 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			return null;
 		}
 
-		Bundle b = bi.getBundle();
-		Class<?> clazz = b.loadClass(bi.classNameForScript(sourceFile));
+		String classname = bi.classNameForScript(sourceFile);
 		Object object;
 		try {
+			Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
 			object = clazz.getDeclaredConstructor().newInstance();
 		}
 		catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException
@@ -158,6 +199,12 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			Msg.error(this, "instantiatiating script", e);
 			return null;
 		}
+		catch (ClassNotFoundException e) {
+			throw new ClassNotFoundException(
+				String.format("%s not found in bundle %s", classname, bi.getBinDir().toString()),
+				e.getException());
+		}
+
 		if (object instanceof GhidraScript) {
 			GhidraScript script = (GhidraScript) object;
 			script.setSourceFile(sourceFile);
@@ -166,8 +213,8 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		String message = "Not a valid Ghidra script: " + sourceFile.getName();
 		writer.println(message);
-		Msg.error(this, message); // the writer may not be the same as Msg, so log it too
-		return null; // class is not a script
+		Msg.error(this, message);
+		return null; // class is not GhidraScript
 	}
 
 	/**
@@ -184,51 +231,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		File file = resourceFile.getFile(false);
 		return file;
-	}
-
-	private class ScriptBundleInfo {
-		final ResourceFile sourceDir;
-		final String symbolicName;
-		final Path binDir;
-		String bundleLoc;
-
-		public ScriptBundleInfo(ResourceFile sourceDir) {
-			this.sourceDir = sourceDir;
-			this.symbolicName = getSymbolicNameFromSourceDir(sourceDir);
-			this.binDir = bundle_host.getCompiledBundlesDir().resolve(symbolicName);
-
-			this.bundleLoc =
-				JarDirUrlHandler.PROTOCOL + ":" + binDir.toAbsolutePath().normalize().toString();
-		}
-
-		public String classNameForScript(ResourceFile sourceFile) {
-			String p;
-			try {
-				p = sourceFile.getCanonicalPath();
-				p = p.substring(1 + sourceDir.getCanonicalPath().length(), p.length() - 5);// relative path less ".java"
-				return p.replace(File.separatorChar, '.');
-			}
-			catch (IOException e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-
-		Bundle getBundle() {
-			return bundle_host.getBundle(bundleLoc);
-		}
-	}
-
-	private ScriptBundleInfo getBundleInfoForScript(ResourceFile sourceFile) {
-		ResourceFile bundleDir = getSourceDirectoryForScript(sourceFile);
-		if (bundleDir == null) {
-			return null;
-		}
-		return new ScriptBundleInfo(bundleDir);
-	}
-
-	static public String getSymbolicNameFromSourceDir(ResourceFile sourceDir) {
-		return Integer.toHexString(sourceDir.getAbsolutePath().hashCode());
 	}
 
 	public static ResourceFile getSourceDirectoryForScript(ResourceFile sourceFile) {
@@ -281,6 +283,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return "//";
 	}
 
+	// XXX everything from here down is deprecated but has dependents
 	@Deprecated
 	private JavaScriptClassLoader loader = new JavaScriptClassLoader();
 

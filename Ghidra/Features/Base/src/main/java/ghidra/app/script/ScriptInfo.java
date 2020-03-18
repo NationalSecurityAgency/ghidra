@@ -51,6 +51,9 @@ public class ScriptInfo {
 	public static final String AT_MENUPATH = "@menupath";
 	public static final String AT_TOOLBAR = "@toolbar";
 
+	// omit from METADATA to avoid pre-populating in new scripts
+	public static final String AT_IMPORTS = "@imports";
+
 	public static final String[] METADATA =
 		{ AT_AUTHOR, AT_CATEGORY, AT_KEYBINDING, AT_MENUPATH, AT_TOOLBAR, };
 
@@ -68,6 +71,7 @@ public class ScriptInfo {
 	private String[] menupath = new String[0];
 	private String toolbar;
 	private ImageIcon toolbarImage;
+	private String imports;
 
 	/**
 	 * Constructs a new script.
@@ -92,6 +96,7 @@ public class ScriptInfo {
 		menupath = new String[0];
 		toolbar = null;
 		toolbarImage = null;
+		imports = null;
 		keybindingErrorMessage = null;
 	}
 
@@ -124,6 +129,7 @@ public class ScriptInfo {
 	 * @return the script author information.
 	 */
 	public String getAuthor() {
+		parseHeader();
 		return author;
 	}
 
@@ -271,6 +277,9 @@ public class ScriptInfo {
 			else if (line.startsWith(AT_TOOLBAR)) {
 				toolbar = getTagValue(AT_TOOLBAR, line);
 			}
+			else if (line.startsWith(AT_IMPORTS)) {
+				imports = getTagValue(AT_IMPORTS, line);
+			}
 		}
 		catch (Exception e) {
 			Msg.debug(this, "Unexpected exception reading script metadata " + "line: " + line, e);
@@ -404,7 +413,6 @@ public class ScriptInfo {
 	 * @return the script tool bar icon
 	 */
 	public ImageIcon getToolBarImage(boolean scaled) {
-
 		parseHeader();
 		if (toolbar == null) {
 			return null;
@@ -429,10 +437,20 @@ public class ScriptInfo {
 	}
 
 	/**
+	 * Returns the script imports
+	 * @return the script imports
+	 */
+	public String getImports() {
+		parseHeader();
+		return imports;
+	}
+
+	/**
 	 * Returns a string designed to be used as a tool tip for describing this script
 	 * @return a string designed to be used as a tool tip
 	 */
 	public String getToolTipText() {
+		parseHeader();
 		String htmlDescription = "No Description";
 		if (description != null) {
 			htmlDescription = escapeHTML(description);

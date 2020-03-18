@@ -23,6 +23,7 @@ import generic.jar.ResourceFile;
 import ghidra.util.Msg;
 import utilities.util.FileUtilities;
 
+@Deprecated
 public class JavaScriptClassLoader extends ClassLoader {
 	private Map<File, Long> lastModifiedMap = new HashMap<>();
 

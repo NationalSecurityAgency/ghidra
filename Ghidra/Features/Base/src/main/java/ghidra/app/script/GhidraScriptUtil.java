@@ -19,7 +19,6 @@ import java.io.*;
 import java.util.*;
 
 import org.apache.commons.collections4.map.LazyMap;
-import org.apache.commons.lang3.StringUtils;
 
 import generic.jar.ResourceFile;
 import generic.util.Path;
@@ -67,9 +66,9 @@ public class GhidraScriptUtil {
 
 	private static List<Path> scriptDirectoryPaths = new ArrayList<>();
 
-	static Map<ResourceFile, ScriptInfo> scriptFileToInfoMap = new HashMap<>();
+	private static Map<ResourceFile, ScriptInfo> scriptFileToInfoMap = new HashMap<>();
 
-	static Map<String, List<ResourceFile>> scriptNameToFilesMap =
+	private static Map<String, List<ResourceFile>> scriptNameToFilesMap =
 		LazyMap.lazyMap(new HashMap<String, List<ResourceFile>>(), () -> new ArrayList<>());
 
 	static {
@@ -334,10 +333,8 @@ public class GhidraScriptUtil {
 			//
 			ResourceFile preferredFile = null;
 			for (ResourceFile file : matchingClassFiles) {
-				if (file.getParentFile()
-						.getAbsolutePath()
-						.equals(
-							GhidraScriptUtil.USER_SCRIPTS_BIN_DIR)) {
+				if (file.getParentFile().getAbsolutePath().equals(
+					GhidraScriptUtil.USER_SCRIPTS_BIN_DIR)) {
 					preferredFile = file;
 					break;
 				}

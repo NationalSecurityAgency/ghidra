@@ -39,11 +39,114 @@ import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
+// XXX this class should be part of a service/plugin
 public class BundleHost {
-	void dispose() {
+	static public String getSymbolicNameFromSourceDir(ResourceFile sourceDir) {
+		return Integer.toHexString(sourceDir.getAbsolutePath().hashCode());
+	}
+
+	public void dispose() {
 		if (felix != null) {
 			stop_felix();
 		}
+	}
+
+	// XXX this should be remembered in savestate
+	HashMap<ResourceFile, SourceBundleInfo> file2sbi = new HashMap<>();
+
+	public SourceBundleInfo getSourceBundleInfo(ResourceFile sourceDir) {
+		return file2sbi.computeIfAbsent(sourceDir, SourceBundleInfo::new);
+	}
+
+	// XXX consumers should clean up after themselves
+	public void removeSourceBundleInfo(ResourceFile sourceDir) {
+		file2sbi.remove(sourceDir);
+	}
+
+	/**
+	 * cache of data corresponding to a source directory that is bound to be an exploded bundle
+	 */
+	protected static class BuildFailure {
+		long when = -1;
+		StringBuilder message = new StringBuilder();
+	}
+
+	public class SourceBundleInfo {
+		final private ResourceFile sourceDir;
+		final String symbolicName;
+		final private Path binDir;
+		final private String bundleLoc;
+
+		final HashMap<ResourceFile, BuildFailure> buildErrors = new HashMap<>();
+
+		public SourceBundleInfo(ResourceFile sourceDir) {
+			this.sourceDir = sourceDir;
+			this.symbolicName = getSymbolicNameFromSourceDir(sourceDir);
+			this.binDir = BundleHost.this.getCompiledBundlesDir().resolve(symbolicName);
+
+			this.bundleLoc =
+				"reference:file://" + getBinDir().toAbsolutePath().normalize().toString();
+		}
+
+		public String classNameForScript(ResourceFile sourceFile) {
+			String p;
+			try {
+				p = sourceFile.getCanonicalPath();
+				p = p.substring(1 + getSourceDir().getCanonicalPath().length(), p.length() - 5);// relative path less ".java"
+				return p.replace(File.separatorChar, '.');
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		public Bundle getBundle() {
+			return BundleHost.this.getBundle(getBundleLoc());
+		}
+
+		public String getBundleLoc() {
+			return bundleLoc;
+		}
+
+		public ResourceFile getSourceDir() {
+			return sourceDir;
+		}
+
+		public Path getBinDir() {
+			return binDir;
+		}
+
+		public void visitUpdatedClassFiles(NewSourceCallback new_source_cb) {
+			BundleHost.visitUpdatedClassFiles(getSourceDir(), getBinDir(), new_source_cb);
+		}
+
+		public Bundle install() throws BundleException {
+			return BundleHost.this.bc.installBundle(getBundleLoc());
+		}
+
+		public void buildError(ResourceFile rf, String err) {
+			BuildFailure f = buildErrors.computeIfAbsent(rf, x -> new BuildFailure());
+			f.when = rf.lastModified();
+			f.message.append(err);
+		}
+
+		public String getPreviousBuildErrors() {
+			return buildErrors.values().stream().map(e -> e.message.toString()).collect(
+				Collectors.joining());
+		}
+
+		public boolean updatedSinceLastBuild(ResourceFile rf) {
+			BuildFailure f = buildErrors.get(rf);
+			if (f != null) {
+				if (f.when == rf.lastModified()) {
+					return false;
+				}
+				buildErrors.remove(rf);
+			}
+			return true;
+		}
+
 	}
 
 	String buildExtraPackages() {
@@ -64,11 +167,6 @@ public class BundleHost {
 	Bundle installFromPathAs(String path_to_jar, String location)
 			throws FileNotFoundException, IOException, BundleException {
 		return bc.installBundle(location, new FileInputStream(new File(path_to_jar)));
-	}
-
-	public Bundle installExplodedPath(Path p) throws BundleException {
-		return bc.installBundle("reference:file://" + p.toAbsolutePath().normalize().toString());
-
 	}
 
 	void dumpLoadedBundles() {
@@ -353,6 +451,9 @@ public class BundleHost {
 			while (!stack.isEmpty()) {
 				ResourceFile sd = stack.pop();
 				String relpath = sd.getAbsolutePath().substring(srcdir.getAbsolutePath().length());
+				if (relpath.startsWith(File.separator)) {
+					relpath=relpath.substring(1);
+				}
 				Path bd = bindir.resolve(relpath);
 
 				// index the class files in the corresponding directory by basename
@@ -386,9 +487,11 @@ public class BundleHost {
 					}
 				}
 				// any remaining .class files are missing .java files
-				new_source_cb.found(null,
-					binfiles.values().stream().flatMap(l -> l.stream()).collect(
-						Collectors.toList()));
+				if (!binfiles.isEmpty()) {
+					new_source_cb.found(null,
+						binfiles.values().stream().flatMap(l -> l.stream()).collect(
+							Collectors.toList()));
+				}
 			}
 		}
 		catch (Throwable t) {
