@@ -1043,17 +1043,20 @@ void Heritage::guard(const Address &addr,int4 size,vector<Varnode *> &read,vecto
 /// pulls out the potential parameter.
 /// \param fc is the call site potentially taking a parameter
 /// \param addr is the starting address of the range
+/// \param transAddr is the start of the same range from the callee's stack perspective
 /// \param size is the size of the range in bytes
-void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,int4 size)
+void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size)
 
 {
   VarnodeData vData;
 
-  if (fc->getBiggestContainedInputParam(addr, size, vData)) {
+  if (fc->getBiggestContainedInputParam(transAddr, size, vData)) {
     ParamActive *active = fc->getActiveInput();
-    Address taddr(vData.space,vData.offset);
-    if (active->whichTrial(taddr, size) < 0) { // If not already a trial
-      int4 truncateAmount = addr.justifiedContain(size, taddr, vData.size, false);
+    Address truncAddr(vData.space,vData.offset);
+    if (active->whichTrial(truncAddr, size) < 0) { // If not already a trial
+      int4 truncateAmount = transAddr.justifiedContain(size, truncAddr, vData.size, false);
+      int4 diff = (int4)(truncAddr.getOffset() - transAddr.getOffset());
+      truncAddr = addr + diff;		// Convert truncated Address to caller's perspective
       PcodeOp *op = fc->getOp();
       PcodeOp *subpieceOp = fd->newOp(2,op->getAddr());
       fd->opSetOpcode(subpieceOp, CPUI_SUBPIECE);
@@ -1061,9 +1064,9 @@ void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,i
       wholeVn->setActiveHeritage();
       fd->opSetInput(subpieceOp,wholeVn,0);
       fd->opSetInput(subpieceOp,fd->newConstant(4,truncateAmount),1);
-      Varnode *vn = fd->newVarnodeOut(vData.size, taddr, subpieceOp);
+      Varnode *vn = fd->newVarnodeOut(vData.size, truncAddr, subpieceOp);
       fd->opInsertBefore(subpieceOp,op);
-      active->registerTrial(taddr, vData.size);
+      active->registerTrial(truncAddr, vData.size);
       fd->opInsertInput(op, vn, op->numInput());
     }
   }
@@ -1121,21 +1124,21 @@ void Heritage::guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varno
 	  tryregister = false;
 	}
       }
-      Address taddr(spc,off);
+      Address transAddr(spc,off);	// Address relative to callee's stack
       if (tryregister) {
-	int4 inputCharacter = fc->characterizeAsInputParam(taddr,size);
+	int4 inputCharacter = fc->characterizeAsInputParam(transAddr,size);
 	if (inputCharacter == 1) {		// Call could be using this range as an input parameter
 	  ParamActive *active = fc->getActiveInput();
-	  if (active->whichTrial(taddr,size)<0) { // If not already a trial
+	  if (active->whichTrial(transAddr,size)<0) { // If not already a trial
 	    PcodeOp *op = fc->getOp();
-	    active->registerTrial(taddr,size);
+	    active->registerTrial(transAddr,size);
 	    Varnode *vn = fd->newVarnode(size,addr);
 	    vn->setActiveHeritage();
 	    fd->opInsertInput(op,vn,op->numInput());
 	  }
 	}
 	else if (inputCharacter == 2)		// Call may be using part of this range as an input parameter
-	  guardCallOverlappingInput(fc, addr, size);
+	  guardCallOverlappingInput(fc, addr, transAddr, size);
       }
     }
     // We do not guard the call if the effect is "unaffected" or "reload"
