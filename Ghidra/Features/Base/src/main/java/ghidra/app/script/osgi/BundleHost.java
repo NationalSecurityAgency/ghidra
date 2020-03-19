@@ -29,13 +29,18 @@ import java.util.stream.Stream;
 
 import org.apache.felix.framework.FrameworkFactory;
 import org.apache.felix.framework.util.FelixConstants;
+import org.apache.felix.framework.util.manifestparser.ManifestParser;
 import org.apache.felix.main.AutoProcessor;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.Framework;
+import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
 import generic.jar.ResourceFile;
+import ghidra.app.script.GhidraScriptUtil;
+import ghidra.app.script.ScriptInfo;
 import ghidra.framework.Application;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -64,6 +69,23 @@ public class BundleHost {
 	}
 
 	/**
+	 * parse Import-Package string from a bundle manifest
+	 * 
+	 * @param imports Import-Package value
+	 * @return deduced requirements or null if there was an error
+	 * @throws BundleException on failed parse
+	 */
+	static List<BundleRequirement> parseImports(String imports) throws BundleException {
+
+		// parse it with Felix's ManifestParser to a list of BundleRequirement objects
+		Map<String, Object> headerMap = new HashMap<>();
+		headerMap.put(Constants.IMPORT_PACKAGE, imports);
+		ManifestParser mp;
+		mp = new ManifestParser(null, null, null, headerMap);
+		return mp.getRequirements();
+	}
+
+	/**
 	 * cache of data corresponding to a source directory that is bound to be an exploded bundle
 	 */
 	protected static class BuildFailure {
@@ -77,7 +99,12 @@ public class BundleHost {
 		final private Path binDir;
 		final private String bundleLoc;
 
+		//// information indexed by source file
+
+		// XXX add separate missing requirements tracking
 		final HashMap<ResourceFile, BuildFailure> buildErrors = new HashMap<>();
+
+		// cached values parsed form @imports tags on default-package source files
 
 		public SourceBundleInfo(ResourceFile sourceDir) {
 			this.sourceDir = sourceDir;
@@ -86,6 +113,7 @@ public class BundleHost {
 
 			this.bundleLoc =
 				"reference:file://" + getBinDir().toAbsolutePath().normalize().toString();
+
 		}
 
 		public String classNameForScript(ResourceFile sourceFile) {
@@ -117,10 +145,6 @@ public class BundleHost {
 			return binDir;
 		}
 
-		public void visitUpdatedClassFiles(NewSourceCallback new_source_cb) {
-			BundleHost.visitUpdatedClassFiles(getSourceDir(), getBinDir(), new_source_cb);
-		}
-
 		public Bundle install() throws BundleException {
 			return BundleHost.this.bc.installBundle(getBundleLoc());
 		}
@@ -136,15 +160,118 @@ public class BundleHost {
 				Collectors.joining());
 		}
 
-		public boolean updatedSinceLastBuild(ResourceFile rf) {
+		/**
+		 * check for build errors from last time
+		 * @param rf file to test
+		 * @return true if this file had errors and hasn't changed
+		 */
+		private boolean syncBuildErrors(ResourceFile rf) {
 			BuildFailure f = buildErrors.get(rf);
 			if (f != null) {
 				if (f.when == rf.lastModified()) {
-					return false;
+					return true;
 				}
 				buildErrors.remove(rf);
 			}
-			return true;
+			return false;
+		}
+
+		public List<BundleRequirement> getRequirements() {
+			return foundRequirements;
+		}
+
+		final List<ResourceFile> newSources = new ArrayList<>();
+		List<Path> oldBin = new ArrayList<>();
+
+		boolean foundNewManifest;
+		private List<BundleRequirement> foundRequirements;
+
+		private void computeRequirements() throws BundleException {
+			foundRequirements = null;
+			Map<String, BundleRequirement> dedupedreqs = new HashMap<>();
+			// parse metadata from all Java source in sourceDir
+			for (ResourceFile rf : sourceDir.listFiles()) {
+				if (rf.getName().endsWith(".java")) {
+					// NB: ScriptInfo will update field values if lastModified has changed since last time they were computed
+					ScriptInfo si = GhidraScriptUtil.getScriptInfo(rf);
+					String imps = si.getImports();
+					if (imps != null && !imps.isEmpty()) {
+						for (BundleRequirement req : BundleHost.parseImports(imps)) {
+							dedupedreqs.put(req.toString(), req);
+						}
+					}
+				}
+			}
+			foundRequirements = new ArrayList<>(dedupedreqs.values());
+		}
+
+		/**
+		 * look for new sources, metadata, manifest file.
+		 * 
+		 * @param writer for reporting status to user
+		 * @throws IOException when there are unexpected issues w/ the filesystem
+		 */
+		public void udpateFromFilesystem(PrintWriter writer) throws IOException {
+
+			// look for new source files
+			newSources.clear();
+			oldBin.clear();
+			ResourceFile smf =
+				new ResourceFile(getSourceDir(), "META-INF" + File.separator + "MANIFEST.MF");
+			Path dmf = getBinDir().resolve("META-INF").resolve("MANIFEST.MF");
+
+			foundNewManifest = smf.exists() && (Files.notExists(dmf) ||
+				smf.lastModified() > Files.getLastModifiedTime(dmf).toMillis());
+
+			BundleHost.visitDiscrepencies(getSourceDir(), getBinDir(), (sf, bfs) -> {
+				if (sf != null) {
+					newSources.add(sf);
+				}
+				if (bfs != null) {
+					oldBin.addAll(bfs);
+				}
+			});
+
+			try {
+				computeRequirements();
+			}
+			catch (BundleException e) {
+				Msg.error(this, "computing requirements", e);
+				e.printStackTrace(writer);
+				return;
+			}
+
+			// remove source files that failed last time and haven't changed 
+			Iterator<ResourceFile> it = newSources.iterator();
+			while (it.hasNext()) {
+				ResourceFile sf = it.next();
+				if (syncBuildErrors(sf)) {
+					it.remove();
+				}
+			}
+		}
+
+		public void deleteOldBinaries() throws IOException {
+			for (Path bf : oldBin) {
+				Files.delete(bf);
+			}
+			// oldBin.clear();
+		}
+
+		public int getFailingSourcesCount() {
+			return buildErrors.size();
+		}
+
+		public int getNewSourcesCount() {
+			return newSources.size();
+		}
+
+		public List<ResourceFile> getNewSources() {
+			return newSources;
+		}
+
+		public boolean newManifestFile() {
+			return foundNewManifest;
 		}
 
 	}
@@ -175,6 +302,37 @@ public class BundleHost {
 			System.err.printf("%s: %s: %s: %s\n", bundle.getBundleId(), bundle.getSymbolicName(),
 				bundle.getState(), bundle.getVersion());
 		}
+	}
+
+	/**
+	 * Attempt to resolve a list of BundleRequirements with active Bundle capabilities.
+	 * 
+	 * @param reqs list of requirements -- satisfied requirements are removed as capabiliites are found
+	 * @return the list of BundeWiring objects correpsonding to matching capabilities
+	 */
+	public List<BundleWiring> resolve(List<BundleRequirement> reqs) {
+		// enumerate active bundles, looking for capabilities meeting our requirements
+		List<BundleWiring> bundleWirings = new ArrayList<>();
+		for (Bundle b : bc.getBundles()) {
+			if (b.getState() == Bundle.ACTIVE) {
+				BundleWiring bw = b.adapt(BundleWiring.class);
+				boolean keeper = false;
+				for (BundleCapability cap : bw.getCapabilities(null)) {
+					Iterator<BundleRequirement> it = reqs.iterator();
+					while (it.hasNext()) {
+						BundleRequirement req = it.next();
+						if (req.matches(cap)) {
+							it.remove();
+							keeper = true;
+						}
+					}
+				}
+				if (keeper) {
+					bundleWirings.add(bw);
+				}
+			}
+		}
+		return bundleWirings;
 	}
 
 	class FelixLogger extends org.apache.felix.framework.Logger {
@@ -442,7 +600,7 @@ public class BundleHost {
 		void found(ResourceFile source_file, Collection<Path> class_files) throws Throwable;
 	}
 
-	public static void visitUpdatedClassFiles(ResourceFile srcdir, Path bindir,
+	public static void visitDiscrepencies(ResourceFile srcdir, Path bindir,
 			NewSourceCallback new_source_cb) {
 		try {
 			// delete class files for which java is either newer, or no longer exists
@@ -452,7 +610,7 @@ public class BundleHost {
 				ResourceFile sd = stack.pop();
 				String relpath = sd.getAbsolutePath().substring(srcdir.getAbsolutePath().length());
 				if (relpath.startsWith(File.separator)) {
-					relpath=relpath.substring(1);
+					relpath = relpath.substring(1);
 				}
 				Path bd = bindir.resolve(relpath);
 

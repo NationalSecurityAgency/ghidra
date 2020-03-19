@@ -17,14 +17,6 @@ package ghidra.app.script;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.tools.*;
-import javax.tools.JavaCompiler.CompilationTask;
-import javax.tools.JavaFileObject.Kind;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -34,11 +26,10 @@ import generic.jar.ResourceFile;
 import ghidra.app.script.osgi.BundleCompiler;
 import ghidra.app.script.osgi.BundleHost;
 import ghidra.app.script.osgi.BundleHost.SourceBundleInfo;
-import ghidra.app.util.headless.HeadlessScript;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
-	// XXX bundle host should be managed by a plugin
+	// XXX embedded OSGi should be a service
 	BundleHost _bundle_host;
 
 	private BundleHost getBundleHost() {
@@ -91,39 +82,32 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		SourceBundleInfo bi = getBundleInfoForScript(sourceFile);
 
-		// look for new source files
-		List<ResourceFile> newSource = new ArrayList<>();
-		List<Path> oldBin = new ArrayList<>();
-		bi.visitUpdatedClassFiles((sf, bfs) -> {
-			if (sf != null) {
-				newSource.add(sf);
-			}
-			if (bfs != null) {
-				oldBin.addAll(bfs);
-			}
-		});
-
-		BundleHost bundle_host = getBundleHost();
-		Iterator<ResourceFile> it = newSource.iterator();
-		int failing = 0;
-		while (it.hasNext()) {
-			ResourceFile sf = it.next();
-			if (!bi.updatedSinceLastBuild(sf)) {
-				it.remove();
-				++failing;
-			}
+		try {
+			bi.udpateFromFilesystem(writer);
 		}
-		if (failing > 0 && newSource.isEmpty()) {
+		catch (IOException e) {
+			e.printStackTrace(writer);
+			return null;
+		}
+
+		int failing = bi.getFailingSourcesCount();
+		int newSourcecount = bi.getNewSourcesCount();
+		if (failing > 0 && newSourcecount == 0) {
 			writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
 				bi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
 			writer.printf("%s\n", bi.getPreviousBuildErrors());
 		}
-		// XXX if there is a new or updated manifest file, uninstall bundle, copy manifest, and restart bundle
+		if (bi.newManifestFile() && newSourcecount == 0) {
+			// XXX if there is a new or updated manifest file, uninstall bundle, copy manifest, and restart bundle
+		}
 
+		BundleHost bundle_host = getBundleHost();
 		// there's new source, so uninstall any existing bundle, delete old class files, and recompile
-		if (!newSource.isEmpty()) {
+		if (newSourcecount > 0) {
 			writer.printf("%s has changed: %d new/updated\n", bi.getSourceDir().toString(),
-				newSource.size());
+				newSourcecount);
+
+			// if there a bundle is currently active, uninstall it
 			Bundle b = bi.getBundle();
 			if (b != null) {
 				try {
@@ -135,15 +119,14 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 					return null;
 				}
 			}
-			bundle_host.stopBundleWatcher();
+
+			// once we've committed to recompile and regenerate generated classes, delete the old stuff
 			try {
-				for (Path bf : oldBin) {
-					Files.delete(bf);
-				}
+				bi.deleteOldBinaries();
 			}
 			catch (IOException e) {
-				e.printStackTrace();
-				Msg.error(this, "deleting old binary files", e);
+				e.printStackTrace(writer);
+				Msg.error(this, "deleting old binaries", e);
 				return null;
 			}
 
@@ -153,10 +136,10 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 			long startTime = System.nanoTime();
 			try {
-				bc.compileToExplodedBundle(bi, newSource, writer);
+				bc.compileToExplodedBundle(bi, writer);
 			}
 			catch (IOException e) {
-				e.printStackTrace();
+				e.printStackTrace(writer);
 				Msg.error(this, "compiling bundle", e);
 				return null;
 			}
@@ -164,8 +147,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 				long endTime = System.nanoTime();
 				writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
 			}
-
-			bundle_host.startBundleWatcher();
 		}
 		// as much source as possible built, install bundle and start it if necessary
 		Bundle b = bi.getBundle();
@@ -284,239 +265,17 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	// XXX everything from here down is deprecated but has dependents
-	@Deprecated
-	private JavaScriptClassLoader loader = new JavaScriptClassLoader();
-
-	@Deprecated
-	private void forceClassReload() {
-		loader = new JavaScriptClassLoader(); // this forces the script class to be reloaded
-	}
 
 	@Deprecated
 	protected boolean needsCompile(ResourceFile sourceFile, File classFile) {
-
-		// Need to compile if there is no class file.
-		if (!classFile.exists()) {
-			return true;
-		}
-
-		// Need to compile if the script's source file is newer than its corresponding
-		// class file.
-		if (sourceFile.lastModified() > classFile.lastModified()) {
-			return true;
-		}
-
-		// Need to compile if parent classes are not up to date.
-		return !areAllParentClassesUpToDate(sourceFile);
-	}
-
-	@Deprecated
-	private boolean areAllParentClassesUpToDate(ResourceFile sourceFile) {
-
-		List<Class<?>> parentClasses = getParentClasses(sourceFile);
-		if (parentClasses == null) {
-			// some class is missing!
-			return false;
-		}
-
-		if (parentClasses.isEmpty()) {
-			// nothing to do--no parent class to re-compile
-			return true;
-		}
-
-		// check each parent for modification
-		for (Class<?> clazz : parentClasses) {
-			ResourceFile parentFile = getSourceFile(clazz);
-			if (parentFile == null) {
-				continue; // not sure if this can happen (inner-class, maybe?)
-			}
-
-			// Parent class might have a non-default java package, so use class's full name.
-			File clazzFile = getClassFile(parentFile, clazz.getName());
-
-			if (parentFile.lastModified() > clazzFile.lastModified()) {
-				return false;
-			}
-		}
-
 		return true;
 	}
 
+	@SuppressWarnings("unused")
 	@Deprecated
 	protected boolean compile(ResourceFile sourceFile, final PrintWriter writer)
 			throws ClassNotFoundException {
-
-		ScriptInfo info = GhidraScriptUtil.getScriptInfo(sourceFile);
-		info.setCompileErrors(true);
-
-		if (!doCompile(sourceFile, writer)) {
-			writer.flush(); // force any error messages out
-			throw new ClassNotFoundException("Unable to compile class: " + sourceFile.getName());
-		}
-
-		compileParentClasses(sourceFile, writer);
-
-		forceClassReload();
-
-		info.setCompileErrors(false);
-		writer.println("Successfully compiled: " + sourceFile.getName());
-
-		return true;
-	}
-
-	@Deprecated
-	private boolean doCompile(ResourceFile sourceFile, final PrintWriter writer) {
-
-		JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
-		if (javaCompiler == null) {
-			String message =
-				"Compile failed: java compiler provider not found (you must be using a JDK " +
-					"to compile scripts)!";
-			writer.println(message);
-			Msg.error(this, message); // the writer may not be the same as Msg, so log it too
-			return false;
-		}
-
-		JavaFileManager fileManager =
-			new ResourceFileJavaFileManager(GhidraScriptUtil.getScriptSourceDirectories());
-
-		List<ResourceFileJavaFileObject> list = new ArrayList<>();
-		list.add(
-			new ResourceFileJavaFileObject(sourceFile.getParentFile(), sourceFile, Kind.SOURCE));
-
-		String outputDirectory =
-			GhidraScriptUtil.getScriptCompileOutputDirectory(sourceFile).getAbsolutePath();
-		Msg.trace(this, "Compiling script " + sourceFile + " to dir " + outputDirectory);
-
-		List<String> options = new ArrayList<>();
-		options.add("-g");
-		options.add("-d");
-		options.add(outputDirectory);
-		options.add("-sourcepath");
-		options.add(getSourcePath());
-		options.add("-classpath");
-		options.add(getClassPath());
-		options.add("-proc:none"); // Prevents warning when script imports something that will get compiled
-
-		CompilationTask task = javaCompiler.getTask(writer, fileManager, null, options, null, list);
-		return task.call();
-	}
-
-	@Deprecated
-	private List<Class<?>> getParentClasses(ResourceFile scriptSourceFile) {
-
-		Class<?> scriptClass = getScriptClass(scriptSourceFile);
-		if (scriptClass == null) {
-			return null; // special signal that there was a problem
-		}
-
-		List<Class<?>> parentClasses = new ArrayList<>();
-		Class<?> superClass = scriptClass.getSuperclass();
-		while (superClass != null) {
-			if (superClass.equals(GhidraScript.class)) {
-				break; // not interested in the built-in classes
-			}
-			else if (superClass.equals(HeadlessScript.class)) {
-				break; // not interested in the built-in classes
-			}
-			parentClasses.add(superClass);
-			superClass = superClass.getSuperclass();
-		}
-		return parentClasses;
-	}
-
-	@Deprecated
-	private Class<?> getScriptClass(ResourceFile scriptSourceFile) {
-		String clazzName = GhidraScriptUtil.getBaseName(scriptSourceFile);
-		try {
-			return Class.forName(clazzName, true, new JavaScriptClassLoader());
-		}
-		catch (NoClassDefFoundError | ClassNotFoundException e) {
-			Msg.error(this, "Unable to find class file for script file: " + scriptSourceFile, e);
-		}
-		catch (GhidraScriptUnsupportedClassVersionError e) {
-			// Unusual Code Alert!: This implies the script was compiled in a newer
-			// version of Java. So, just delete the class file and try again.
-			ResourceFile classFile = e.getClassFile();
-			classFile.delete();
-			return null; // trigger re-compile
-		}
-		return null;
-	}
-
-	@Deprecated
-	private void compileParentClasses(ResourceFile sourceFile, PrintWriter writer) {
-
-		List<Class<?>> parentClasses = getParentClasses(sourceFile);
-		if (parentClasses == null) {
-			// this shouldn't happen, as this method is called after the child class is
-			// re-compiled and thus, all parent classes should still be there.
-			return;
-		}
-
-		if (parentClasses.isEmpty()) {
-			// nothing to do--no parent class to re-compile
-			return;
-		}
-
-		//
-		// re-compile each class's source file
-		//
-
-		// first, reverse the order, so that we compile the highest-level classes first,
-		// and then on down, all the way to the script class
-		Collections.reverse(parentClasses);
-
-		// next, add back to the list the script that was just compiled, as it may need
-		// to be re-compiled after the parent classes are re-compiled
-		Class<?> scriptClass = getScriptClass(sourceFile);
-		if (scriptClass == null) {
-			// shouldn't happen
-			return;
-		}
-		parentClasses.add(scriptClass);
-
-		for (Class<?> parentClass : parentClasses) {
-			ResourceFile parentFile = getSourceFile(parentClass);
-			if (parentFile == null) {
-				continue; // not sure if this can happen (inner-class, maybe?)
-			}
-
-			if (!doCompile(parentFile, writer)) {
-				Msg.error(this, "Failed to re-compile parent class: " + parentClass);
-				return;
-			}
-		}
-	}
-
-	@Deprecated
-	private ResourceFile getSourceFile(Class<?> c) {
-		// check all script paths for a dir named
-		String classname = c.getName();
-		String filename = classname.replace('.', '/') + ".java";
-
-		List<ResourceFile> scriptDirs = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile dir : scriptDirs) {
-			ResourceFile possibleFile = new ResourceFile(dir, filename);
-			if (possibleFile.exists()) {
-				return possibleFile;
-			}
-		}
-
-		return null;
-	}
-
-	@Deprecated
-	private String getSourcePath() {
-		return GhidraScriptUtil.getScriptSourceDirectories().stream().map(
-			f -> f.getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
-	}
-
-	@Deprecated
-	private String getClassPath() {
-		String scriptBinDirs = GhidraScriptUtil.getScriptBinDirectories().stream().map(
-			f -> f.getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
-		return System.getProperty("java.class.path") + File.pathSeparator + scriptBinDirs;
+		return false;
 	}
 
 }

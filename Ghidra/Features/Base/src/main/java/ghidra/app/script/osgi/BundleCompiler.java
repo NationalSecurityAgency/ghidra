@@ -27,11 +27,9 @@ import java.util.stream.Stream;
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
 
-import org.apache.felix.framework.util.manifestparser.ManifestParser;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
-import org.osgi.framework.wiring.*;
+import org.osgi.framework.wiring.BundleRequirement;
+import org.osgi.framework.wiring.BundleWiring;
 import org.phidias.compile.BundleJavaManager;
 
 import aQute.bnd.osgi.*;
@@ -43,6 +41,7 @@ import ghidra.util.Msg;
 
 public class BundleCompiler {
 
+	public static final String GENERATED_ACTIVATOR_CLASSNAME = "GeneratedActivator";
 	private BundleHost bh;
 
 	public BundleCompiler(BundleHost bh) {
@@ -51,72 +50,15 @@ public class BundleCompiler {
 
 	JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
-	void wireAdditionalBundles(List<ResourceFile> newSource, BundleJavaManager bjm,
-			PrintWriter writer) throws IOException {
-		// parse metadata for the scripts we're compiling
-		List<ScriptInfo> infos = newSource.stream().filter(GhidraScriptUtil::contains).map(
-			GhidraScriptUtil::getScriptInfo).collect(Collectors.toList());
-
-		// concatenate all imports into a single "Import-Package" string
-		String package_imports = infos.stream().map(ScriptInfo::getImports).filter(
-			s -> s != null && !s.isEmpty()).collect(Collectors.joining(","));
-
-		if (package_imports == null || package_imports.isEmpty()) {
-			return;
-		}
-
-		// parse it with Felix's ManifestParser to a list of BundleRequirement objects
-		Map<String, Object> headerMap = new HashMap<>();
-		headerMap.put(Constants.IMPORT_PACKAGE, package_imports);
-		ManifestParser mp;
-		try {
-			mp = new ManifestParser(null, null, null, headerMap);
-		}
-		catch (BundleException e) {
-			throw new IOException("failed to parse imports metadata", e);
-		}
-		List<BundleRequirement> reqs = mp.getRequirements();
-
-		// enumerate active bundles, looking for capabilities meeting our requirements
-		List<BundleWiring> bundleWirings = new ArrayList<>();
-		for (Bundle b : bh.bc.getBundles()) {
-			if (b.getState() == Bundle.ACTIVE) {
-				BundleWiring bw = b.adapt(BundleWiring.class);
-				boolean keeper = false;
-				for (BundleCapability cap : bw.getCapabilities(null)) {
-					Iterator<BundleRequirement> it = reqs.iterator();
-					while (it.hasNext()) {
-						BundleRequirement req = it.next();
-						if (req.matches(cap)) {
-							it.remove();
-							keeper = true;
-						}
-					}
-				}
-				if (keeper) {
-					bundleWirings.add(bw);
-				}
-			}
-		}
-
-		if (!reqs.isEmpty()) {
-			writer.printf("%d import requirement%s remain%s:\n", reqs.size(),
-				reqs.size() > 1 ? "s" : "", reqs.size() > 1 ? "" : "s");
-			for (BundleRequirement req : reqs) {
-				writer.printf("  %s\n", req.toString());
-			}
-		}
-
-		// finally, add all the wirings we found to bjm
-		bundleWirings.forEach(bw -> bjm.addBundleWiring(bw));
-	}
-
 	// compile a source directory to an exploded bundle
-	public void compileToExplodedBundle(SourceBundleInfo bi, List<ResourceFile> newSource,
-			PrintWriter writer) throws IOException {
+	public void compileToExplodedBundle(SourceBundleInfo bi, PrintWriter writer)
+			throws IOException {
 
 		ResourceFile srcdir = bi.getSourceDir();
 		Path bindir = bi.getBinDir();
+		Files.createDirectories(bindir);
+
+		List<ResourceFile> newSource = bi.getNewSources();
 
 		List<String> options = new ArrayList<>();
 		options.add("-g");
@@ -132,12 +74,24 @@ public class BundleCompiler {
 		final JavaFileManager rfm =
 			new ResourceFileJavaFileManager(Collections.singletonList(bi.getSourceDir()));
 
-		// phidias provides a JavaFileManager for compiling from within a bundle -- making all of the
-		// bundles dependencies available to the compilation.  Here, we are compiling for an as-yet 
-		// non-existant bundle, so we forge the wiring based on metadata.
 		BundleJavaManager bjm = new BundleJavaManager(bh.getHostFramework(), rfm, options);
+		// The phidias BundleJavaManager is for compiling from within a bundle -- it makes the
+		// bundle dependencies available to the compiler classpath.  Here, we are compiling in an as-yet 
+		// non-existing bundle, so we forge the wiring based on @imports metadata.
 
-		wireAdditionalBundles(newSource, bjm, writer);
+		List<BundleRequirement> reqs = bi.getRequirements();
+		List<BundleWiring> bundleWirings = bh.resolve(reqs);
+
+		if (!reqs.isEmpty()) {
+			writer.printf("%d import requirement%s remain%s after resolution:\n", reqs.size(),
+				reqs.size() > 1 ? "s" : "", reqs.size() > 1 ? "" : "s");
+			for (BundleRequirement req : reqs) {
+				writer.printf("  %s\n", req.toString());
+			}
+		}
+
+		// send the capabilities to phidias
+		bundleWirings.forEach(bw -> bjm.addBundleWiring(bw));
 
 		final List<ResourceFileJavaFileObject> compilationUnits = newSource.stream().map(
 			sf -> new ResourceFileJavaFileObject(sf.getParentFile(), sf, Kind.SOURCE)).collect(
@@ -203,7 +157,7 @@ public class BundleCompiler {
 						return new Jar(f.toFile());
 					}
 					catch (IOException e1) {
-						e1.printStackTrace();
+						e1.printStackTrace(writer);
 						return null;
 					}
 				});
@@ -229,14 +183,19 @@ public class BundleCompiler {
 				}
 			}
 			if (activator_classname == null) {
-				activator_classname = "GeneratedActivator";
+				activator_classname = GENERATED_ACTIVATOR_CLASSNAME;
 				if (!createActivator(bindir, activator_classname, writer)) {
 					Msg.error(this, "failed to create activator");
 					return;
 				}
 				// since we add the activator after bndtools built the imports, we should add its imports too
 				String imps = ma.getValue(Constants.IMPORT_PACKAGE);
-				ma.putValue(Constants.IMPORT_PACKAGE, imps + ",ghidra.app.script.osgi");
+				if (imps == null) {
+					ma.putValue(Constants.IMPORT_PACKAGE, "ghidra.app.script.osgi");
+				}
+				else {
+					ma.putValue(Constants.IMPORT_PACKAGE, imps + ",ghidra.app.script.osgi");
+				}
 			}
 			ma.putValue(Constants.BUNDLE_ACTIVATOR, activator_classname);
 
@@ -247,31 +206,32 @@ public class BundleCompiler {
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			e.printStackTrace(writer);
 		}
 		finally {
 			analyzer.close();
 		}
 	}
 
-	private boolean createActivator(Path bindir, String activator_classname, Writer output)
+	private boolean createActivator(Path bindir, String activator_classname, Writer writer)
 			throws IOException {
 		Path activator_dest = bindir.resolve(activator_classname + ".java");
 
-		try (PrintWriter writer =
+		try (PrintWriter out =
 			new PrintWriter(Files.newBufferedWriter(activator_dest, Charset.forName("UTF-8")))) {
-			writer.println("import ghidra.app.script.osgi.GhidraBundleActivator;");
-			writer.println("import org.osgi.framework.BundleActivator;");
-			writer.println("import org.osgi.framework.BundleContext;");
-			writer.println("public class GeneratedActivator extends GhidraBundleActivator {");
-			writer.println("  protected void start(BundleContext bc, Object api) {");
-			writer.println("    // TODO: stuff to do on bundle start");
-			writer.println("  }");
-			writer.println("  protected void stop(BundleContext bc, Object api) {");
-			writer.println("    // TODO: stuff to do on bundle stop");
-			writer.println("  }");
-			writer.println();
-			writer.println("}");
+			out.println("import ghidra.app.script.osgi.GhidraBundleActivator;");
+			out.println("import org.osgi.framework.BundleActivator;");
+			out.println("import org.osgi.framework.BundleContext;");
+			out.println("public class " + GENERATED_ACTIVATOR_CLASSNAME +
+				" extends GhidraBundleActivator {");
+			out.println("  protected void start(BundleContext bc, Object api) {");
+			out.println("    // TODO: stuff to do on bundle start");
+			out.println("  }");
+			out.println("  protected void stop(BundleContext bc, Object api) {");
+			out.println("    // TODO: stuff to do on bundle stop");
+			out.println("  }");
+			out.println();
+			out.println("}");
 		}
 		catch (IOException ex) {
 			ex.printStackTrace();
@@ -288,16 +248,16 @@ public class BundleCompiler {
 		options.add(System.getProperty("java.class.path"));
 		options.add("-proc:none");
 
-		StandardJavaFileManager fm0 = compiler.getStandardFileManager(null, null, null);
-		BundleJavaManager fm = new BundleJavaManager(bh.getHostFramework(), fm0, options);
+		StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null);
+		BundleJavaManager bjm = new BundleJavaManager(bh.getHostFramework(), fm, options);
 		Iterable<? extends JavaFileObject> compilationUnits2 =
-			fm0.getJavaFileObjectsFromPaths(List.of(activator_dest));
+			fm.getJavaFileObjectsFromPaths(List.of(activator_dest));
 		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 		JavaCompiler.CompilationTask task2 =
-			compiler.getTask(output, fm, diagnostics, options, null, compilationUnits2);
+			compiler.getTask(writer, bjm, diagnostics, options, null, compilationUnits2);
 		if (!task2.call()) {
 			for (Diagnostic<? extends JavaFileObject> d : diagnostics.getDiagnostics()) {
-				output.write(d.getSource().toString() + ": " + d.getMessage(null) + "\n");
+				writer.write(d.getSource().toString() + ": " + d.getMessage(null) + "\n");
 			}
 			return false;
 		}
