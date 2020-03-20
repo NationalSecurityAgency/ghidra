@@ -23,7 +23,6 @@ import org.osgi.framework.Bundle;
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.app.script.osgi.*;
-import ghidra.app.script.osgi.BundleHost.SourceBundleInfo;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
@@ -34,7 +33,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		if (_bundle_host == null) {
 			_bundle_host = new BundleHost();
 			try {
-				_bundle_host.start_felix();
+				_bundle_host.startFelix();
 			}
 			catch (OSGiException | IOException e) {
 				throw new RuntimeException(e);
@@ -43,7 +42,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return _bundle_host;
 	}
 
-	private SourceBundleInfo getBundleInfoForScript(ResourceFile sourceFile) {
+	public SourceBundleInfo getBundleInfoForScript(ResourceFile sourceFile) {
 		ResourceFile sourceDir = getSourceDirectoryForScript(sourceFile);
 		if (sourceDir == null) {
 			return null;
@@ -138,10 +137,12 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			}
 			// as much source as possible built, install bundle and start it if necessary
 			Bundle b = bi.getBundle();
+			if (b == null) {
+				b = bi.install();
+				needsBundleActivate = true;
+			}
+
 			if (needsBundleActivate) {
-				if (b == null) {
-					b = bi.install();
-				}
 				bundle_host.synchronousStart(b);
 			}
 
@@ -235,16 +236,29 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return "//";
 	}
 
+	/**
+	 * compile sourcefile and test that the corresponding class is loadable.
+	 * 
+	 * @param sourceFile path to Java source file
+	 * @param writer for messages to user
+	 * @return true if compilation succeeded and script can be loaded
+	 * @deprecated compilation of a single script doesn't make sense anymore, directories are compiled to bundles.
+	 * 
+	 */
+	@Deprecated
+	protected boolean compile(ResourceFile sourceFile, final PrintWriter writer) {
+		try {
+			return getScriptInstance(sourceFile, writer) != null;
+		}
+		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 	@Deprecated
 	protected boolean needsCompile(ResourceFile sourceFile, File classFile) {
 		return true;
-	}
-
-	@SuppressWarnings("unused")
-	@Deprecated
-	protected boolean compile(ResourceFile sourceFile, final PrintWriter writer)
-			throws ClassNotFoundException {
-		return false;
 	}
 
 }

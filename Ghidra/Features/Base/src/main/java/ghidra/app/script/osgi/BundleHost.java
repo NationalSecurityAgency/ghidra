@@ -36,8 +36,6 @@ import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScriptUtil;
-import ghidra.app.script.ScriptInfo;
 import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -54,11 +52,11 @@ public class BundleHost {
 		}
 	}
 
-	// XXX this should be remembered in savestate
+	// XXX this should be remembered in bundlehosts's savestate
 	HashMap<ResourceFile, SourceBundleInfo> file2sbi = new HashMap<>();
 
 	public SourceBundleInfo getSourceBundleInfo(ResourceFile sourceDir) {
-		return file2sbi.computeIfAbsent(sourceDir, SourceBundleInfo::new);
+		return file2sbi.computeIfAbsent(sourceDir, sd -> new SourceBundleInfo(this, sd));
 	}
 
 	// XXX consumers should clean up after themselves
@@ -94,193 +92,6 @@ public class BundleHost {
 	protected static class BuildFailure {
 		long when = -1;
 		StringBuilder message = new StringBuilder();
-	}
-
-	public class SourceBundleInfo {
-		final private ResourceFile sourceDir;
-		final String symbolicName;
-		final private Path binDir;
-		final private String bundleLoc;
-
-		//// information indexed by source file
-
-		// XXX add separate missing requirements tracking
-		final HashMap<ResourceFile, BuildFailure> buildErrors = new HashMap<>();
-
-		// cached values parsed form @imports tags on default-package source files
-
-		public SourceBundleInfo(ResourceFile sourceDir) {
-			this.sourceDir = sourceDir;
-			this.symbolicName = getSymbolicNameFromSourceDir(sourceDir);
-			this.binDir = BundleHost.this.getCompiledBundlesDir().resolve(symbolicName);
-
-			this.bundleLoc =
-				"reference:file://" + getBinDir().toAbsolutePath().normalize().toString();
-
-		}
-
-		public String classNameForScript(ResourceFile sourceFile) {
-			String p;
-			try {
-				p = sourceFile.getCanonicalPath();
-				p = p.substring(1 + getSourceDir().getCanonicalPath().length(), p.length() - 5);// relative path less ".java"
-				return p.replace(File.separatorChar, '.');
-			}
-			catch (IOException e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-
-		public Bundle getBundle() {
-			return BundleHost.this.getBundle(getBundleLoc());
-		}
-
-		public String getBundleLoc() {
-			return bundleLoc;
-		}
-
-		public ResourceFile getSourceDir() {
-			return sourceDir;
-		}
-
-		public Path getBinDir() {
-			return binDir;
-		}
-
-		public Bundle install() throws GhidraBundleException {
-			return BundleHost.this.installFromLoc(getBundleLoc());
-		}
-
-		public void buildError(ResourceFile rf, String err) {
-			BuildFailure f = buildErrors.computeIfAbsent(rf, x -> new BuildFailure());
-			f.when = rf.lastModified();
-			f.message.append(err);
-		}
-
-		public String getPreviousBuildErrors() {
-			return buildErrors.values().stream().map(e -> e.message.toString()).collect(
-				Collectors.joining());
-		}
-
-		/**
-		 * check for build errors from last time
-		 * @param rf file to test
-		 * @return true if this file had errors and hasn't changed
-		 */
-		private boolean syncBuildErrors(ResourceFile rf) {
-			BuildFailure f = buildErrors.get(rf);
-			if (f != null) {
-				if (f.when == rf.lastModified()) {
-					return true;
-				}
-				buildErrors.remove(rf);
-			}
-			return false;
-		}
-
-		public List<BundleRequirement> getRequirements() {
-			return foundRequirements;
-		}
-
-		final List<ResourceFile> newSources = new ArrayList<>();
-		List<Path> oldBin = new ArrayList<>();
-
-		boolean foundNewManifest;
-		private List<BundleRequirement> foundRequirements;
-
-		private void computeRequirements() throws OSGiException {
-			foundRequirements = null;
-			Map<String, BundleRequirement> dedupedreqs = new HashMap<>();
-			// parse metadata from all Java source in sourceDir
-			for (ResourceFile rf : sourceDir.listFiles()) {
-				if (rf.getName().endsWith(".java")) {
-					// NB: ScriptInfo will update field values if lastModified has changed since last time they were computed
-					ScriptInfo si = GhidraScriptUtil.getScriptInfo(rf);
-					String imps = si.getImports();
-					if (imps != null && !imps.isEmpty()) {
-						for (BundleRequirement req : BundleHost.parseImports(imps)) {
-							dedupedreqs.put(req.toString(), req);
-						}
-					}
-				}
-			}
-			foundRequirements = new ArrayList<>(dedupedreqs.values());
-		}
-
-		/**
-		 * look for new sources, metadata, manifest file.
-		 * 
-		 * @param writer for reporting status to user
-		 * @throws IOException while accessing manifest file
-		 * @throws OSGiException while parsing imports
-		 */
-		public void updateFromFilesystem(PrintWriter writer) throws IOException, OSGiException {
-
-			// look for new source files
-			newSources.clear();
-			oldBin.clear();
-			ResourceFile smf =
-				new ResourceFile(getSourceDir(), "META-INF" + File.separator + "MANIFEST.MF");
-			Path dmf = getBinDir().resolve("META-INF").resolve("MANIFEST.MF");
-
-			foundNewManifest = smf.exists() && (Files.notExists(dmf) ||
-				smf.lastModified() > Files.getLastModifiedTime(dmf).toMillis());
-
-			BundleHost.visitDiscrepencies(getSourceDir(), getBinDir(), (sf, bfs) -> {
-				if (sf != null) {
-					newSources.add(sf);
-				}
-				if (bfs != null) {
-					oldBin.addAll(bfs);
-				}
-			});
-
-			computeRequirements();
-
-			// remove source files that failed last time and haven't changed 
-			Iterator<ResourceFile> it = newSources.iterator();
-			while (it.hasNext()) {
-				ResourceFile sf = it.next();
-				if (syncBuildErrors(sf)) {
-					it.remove();
-				}
-			}
-		}
-
-		public void deleteOldBinaries() throws IOException {
-			for (Path bf : oldBin) {
-				Files.delete(bf);
-			}
-			// oldBin.clear();
-		}
-
-		public int getFailingSourcesCount() {
-			return buildErrors.size();
-		}
-
-		public int getNewSourcesCount() {
-			return newSources.size();
-		}
-
-		public List<ResourceFile> getNewSources() {
-			return newSources;
-		}
-
-		public boolean newManifestFile() {
-			return foundNewManifest;
-		}
-
-		long lastCompileAttempt;
-
-		public void compileAttempted() {
-			lastCompileAttempt = System.currentTimeMillis();
-		}
-
-		public long getLastCompileAttempt() {
-			return lastCompileAttempt;
-		}
-
 	}
 
 	String buildExtraPackages() {
@@ -381,7 +192,7 @@ public class BundleHost {
 	 * @throws OSGiException framework failures
 	 * @throws IOException filesystem setup
 	 */
-	public void start_felix() throws OSGiException, IOException {
+	public void startFelix() throws OSGiException, IOException {
 
 		Properties config = new Properties();
 
@@ -495,7 +306,7 @@ public class BundleHost {
 
 	}
 
-	private Path getOsgiDir() {
+	static private Path getOsgiDir() {
 		Path usersettings = Application.getUserSettingsDirectory().toPath();
 		return usersettings.resolve("osgi");
 	}
@@ -511,7 +322,7 @@ public class BundleHost {
 		return getCompiledBundlesDir().toAbsolutePath().toString();
 	}
 
-	public Path getCompiledBundlesDir() {
+	static public Path getCompiledBundlesDir() {
 		return getOsgiDir().resolve("compiled-bundles");
 	}
 

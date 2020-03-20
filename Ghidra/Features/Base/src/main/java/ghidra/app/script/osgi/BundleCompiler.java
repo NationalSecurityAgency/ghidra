@@ -36,7 +36,6 @@ import aQute.bnd.osgi.*;
 import aQute.bnd.osgi.Clazz.QUERY;
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
-import ghidra.app.script.osgi.BundleHost.SourceBundleInfo;
 
 public class BundleCompiler {
 
