@@ -24,8 +24,7 @@ import java.util.*;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 import org.apache.felix.framework.FrameworkFactory;
 import org.apache.felix.framework.util.FelixConstants;
@@ -40,7 +39,6 @@ import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.ScriptInfo;
 import ghidra.framework.Application;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -52,7 +50,7 @@ public class BundleHost {
 
 	public void dispose() {
 		if (felix != null) {
-			stop_felix();
+			forceStopFelix();
 		}
 	}
 
@@ -73,16 +71,21 @@ public class BundleHost {
 	 * 
 	 * @param imports Import-Package value
 	 * @return deduced requirements or null if there was an error
-	 * @throws BundleException on failed parse
+	 * @throws OSGiException on parse failure 
 	 */
-	static List<BundleRequirement> parseImports(String imports) throws BundleException {
+	static List<BundleRequirement> parseImports(String imports) throws OSGiException {
 
 		// parse it with Felix's ManifestParser to a list of BundleRequirement objects
 		Map<String, Object> headerMap = new HashMap<>();
 		headerMap.put(Constants.IMPORT_PACKAGE, imports);
 		ManifestParser mp;
-		mp = new ManifestParser(null, null, null, headerMap);
-		return mp.getRequirements();
+		try {
+			mp = new ManifestParser(null, null, null, headerMap);
+			return mp.getRequirements();
+		}
+		catch (org.osgi.framework.BundleException e) {
+			throw new OSGiException("parsing Import-Package: " + imports, e);
+		}
 	}
 
 	/**
@@ -145,8 +148,8 @@ public class BundleHost {
 			return binDir;
 		}
 
-		public Bundle install() throws BundleException {
-			return BundleHost.this.bc.installBundle(getBundleLoc());
+		public Bundle install() throws GhidraBundleException {
+			return BundleHost.this.installFromLoc(getBundleLoc());
 		}
 
 		public void buildError(ResourceFile rf, String err) {
@@ -186,7 +189,7 @@ public class BundleHost {
 		boolean foundNewManifest;
 		private List<BundleRequirement> foundRequirements;
 
-		private void computeRequirements() throws BundleException {
+		private void computeRequirements() throws OSGiException {
 			foundRequirements = null;
 			Map<String, BundleRequirement> dedupedreqs = new HashMap<>();
 			// parse metadata from all Java source in sourceDir
@@ -209,9 +212,10 @@ public class BundleHost {
 		 * look for new sources, metadata, manifest file.
 		 * 
 		 * @param writer for reporting status to user
-		 * @throws IOException when there are unexpected issues w/ the filesystem
+		 * @throws IOException while accessing manifest file
+		 * @throws OSGiException while parsing imports
 		 */
-		public void udpateFromFilesystem(PrintWriter writer) throws IOException {
+		public void updateFromFilesystem(PrintWriter writer) throws IOException, OSGiException {
 
 			// look for new source files
 			newSources.clear();
@@ -232,14 +236,7 @@ public class BundleHost {
 				}
 			});
 
-			try {
-				computeRequirements();
-			}
-			catch (BundleException e) {
-				Msg.error(this, "computing requirements", e);
-				e.printStackTrace(writer);
-				return;
-			}
+			computeRequirements();
 
 			// remove source files that failed last time and haven't changed 
 			Iterator<ResourceFile> it = newSources.iterator();
@@ -274,6 +271,16 @@ public class BundleHost {
 			return foundNewManifest;
 		}
 
+		long lastCompileAttempt;
+
+		public void compileAttempted() {
+			lastCompileAttempt = System.currentTimeMillis();
+		}
+
+		public long getLastCompileAttempt() {
+			return lastCompileAttempt;
+		}
+
 	}
 
 	String buildExtraPackages() {
@@ -286,14 +293,26 @@ public class BundleHost {
 	Framework felix;
 	Bundle fileinstall_bundle;
 
-	Bundle installFromPath(String path_to_jar) throws BundleException {
-		Path p = Paths.get(path_to_jar);
-		return bc.installBundle("file://" + p.toAbsolutePath().normalize().toString());
+	Bundle installFromPath(Path p) throws GhidraBundleException {
+		return installFromLoc("file://" + p.toAbsolutePath().normalize().toString());
 	}
 
-	Bundle installFromPathAs(String path_to_jar, String location)
-			throws FileNotFoundException, IOException, BundleException {
-		return bc.installBundle(location, new FileInputStream(new File(path_to_jar)));
+	Bundle installFromLoc(String bundle_loc) throws GhidraBundleException {
+		try {
+			return bc.installBundle(bundle_loc);
+		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(bundle_loc, "installing from bundle location", e);
+		}
+	}
+
+	Bundle installAsLoc(String bundle_loc, InputStream contents) throws GhidraBundleException {
+		try {
+			return bc.installBundle(bundle_loc, contents);
+		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(bundle_loc, "installing as bundle location", e);
+		}
 	}
 
 	void dumpLoadedBundles() {
@@ -356,7 +375,13 @@ public class BundleHost {
 
 	}
 
-	public void start_felix() throws BundleException, IOException {
+	/**
+	 * start the framework
+	 * 
+	 * @throws OSGiException framework failures
+	 * @throws IOException filesystem setup
+	 */
+	public void start_felix() throws OSGiException, IOException {
 
 		Properties config = new Properties();
 
@@ -388,7 +413,12 @@ public class BundleHost {
 		FrameworkFactory factory = new FrameworkFactory();
 		felix = factory.newFramework(config);
 
-		felix.init();
+		try {
+			felix.init();
+		}
+		catch (BundleException e) {
+			throw new OSGiException("initializing felix OSGi framework", e);
+		}
 		bc = felix.getBundleContext();
 		AutoProcessor.process(config, bc);
 
@@ -454,7 +484,12 @@ public class BundleHost {
 			}
 		});
 
-		felix.start();
+		try {
+			felix.start();
+		}
+		catch (BundleException e) {
+			throw new OSGiException("starting felix OSGi framework", e);
+		}
 		// fileinstall_bundle = installFromPath(findJarForClass(FileInstall.class));
 		// fileinstall_bundle.start();
 
@@ -484,69 +519,61 @@ public class BundleHost {
 		return bc.getBundle(bundleLoc);
 	}
 
-	// return true if it was running in the first place
-	public boolean synchronousStop(Bundle b) throws InterruptedException, BundleException {
-		if (b != null) {
-			switch (b.getState()) {
-				case Bundle.STARTING:
-				case Bundle.ACTIVE:
-					b.stop();
-				case Bundle.STOPPING:
-					while (true) {
-						switch (b.getState()) {
-							case Bundle.ACTIVE:
-							case Bundle.STOPPING:
-								Thread.sleep(500);
-							default:
-								return true;
-						}
-					}
-				case Bundle.INSTALLED:
-				case Bundle.RESOLVED:
-				case Bundle.UNINSTALLED:
-			}
-		}
-		return false;
+	static private boolean oneOf(Bundle b, int... bundle_states) {
+		Integer s = b.getState();
+		return IntStream.of(bundle_states).anyMatch(s::equals);
 	}
 
-	public boolean synchronousUninstall(Bundle b) throws InterruptedException, BundleException {
-		if (b != null) {
-			if (b.getState() != Bundle.UNINSTALLED) {
-				b.uninstall();
-				while (true) {
-					if (b.getState() == Bundle.UNINSTALLED) {
-						return true;
-					}
-					Thread.sleep(500);
-				}
-			}
-		}
-		return false;
-	}
-
-	public boolean waitForBundleStart(String location)
-			throws InterruptedException, BundleException {
+	static private void waitFor(Bundle b, int... bundle_states) throws InterruptedException {
 		while (true) {
-			Bundle b = bc.getBundle(location);
-			if (b != null) {
-				switch (b.getState()) {
-					case Bundle.ACTIVE:
-						return true;
-					case Bundle.UNINSTALLED:
-					case Bundle.STOPPING:
-						return false;
-					case Bundle.INSTALLED:
-					case Bundle.RESOLVED:
-						b.start();
-						continue;
-					case Bundle.STARTING:
-				}
+			if (oneOf(b, bundle_states)) {
+				return;
 			}
 			Thread.sleep(500);
 		}
 	}
 
-	public void stop_felix() {
+	public void synchronousStart(Bundle b) throws InterruptedException, GhidraBundleException {
+		if (b.getState() == Bundle.ACTIVE) {
+			return;
+		}
+		try {
+			b.start();
+		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(b, "starting bundle", e);
+		}
+		waitFor(b, Bundle.ACTIVE);
+	}
+
+	public void synchronousStop(Bundle b) throws InterruptedException, GhidraBundleException {
+		if (oneOf(b, Bundle.RESOLVED, Bundle.INSTALLED, Bundle.UNINSTALLED)) {
+			return;
+		}
+		try {
+			b.stop();
+		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(b, "stopping bundle", e);
+		}
+		waitFor(b, Bundle.RESOLVED, Bundle.INSTALLED, Bundle.UNINSTALLED);
+	}
+
+	public void synchronousUninstall(Bundle b) throws InterruptedException, GhidraBundleException {
+		if (b.getState() == Bundle.UNINSTALLED) {
+			return;
+		}
+		try {
+			// stop first??
+			b.uninstall();
+		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(b, "unisntalling bundle", e);
+		}
+		waitFor(b, Bundle.UNINSTALLED);
+	}
+
+	void forceStopFelix() {
 		Task t = new Task("killing felix", false, false, true, true) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {

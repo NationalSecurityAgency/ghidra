@@ -37,7 +37,6 @@ import aQute.bnd.osgi.Clazz.QUERY;
 import generic.jar.ResourceFile;
 import ghidra.app.script.*;
 import ghidra.app.script.osgi.BundleHost.SourceBundleInfo;
-import ghidra.util.Msg;
 
 public class BundleCompiler {
 
@@ -50,9 +49,18 @@ public class BundleCompiler {
 
 	JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
-	// compile a source directory to an exploded bundle
+	/**
+	 *  compile a source directory to an exploded bundle
+	 *  
+	 * @param bi the bundle info to build
+	 * @param writer for updating the user during compilation
+	 * @throws IOException for source/manifest file reading/generation and binary deletion/creation
+	 * @throws OSGiException if generation of bundle metadata fails
+	 */
 	public void compileToExplodedBundle(SourceBundleInfo bi, PrintWriter writer)
-			throws IOException {
+			throws IOException, OSGiException {
+
+		bi.compileAttempted();
 
 		ResourceFile srcdir = bi.getSourceDir();
 		Path bindir = bi.getBinDir();
@@ -171,21 +179,31 @@ public class BundleCompiler {
 		// analyzer.setBundleActivator(s);
 
 		try {
-			Manifest manifest = analyzer.calcManifest();
+			Manifest manifest;
+			try {
+				manifest = analyzer.calcManifest();
+			}
+			catch (Exception e) {
+				throw new OSGiException("failed to calculate manifest by analyzing code", e);
+			}
 			Attributes ma = manifest.getMainAttributes();
 
 			String activator_classname = null;
-			for (Clazz clazz : analyzer.getClassspace().values()) {
-				if (clazz.is(QUERY.IMPLEMENTS,
-					new Instruction("org.osgi.framework.BundleActivator"), analyzer)) {
-					System.err.printf("found BundleActivator class %s\n", clazz);
-					activator_classname = clazz.toString();
+			try {
+				for (Clazz clazz : analyzer.getClassspace().values()) {
+					if (clazz.is(QUERY.IMPLEMENTS,
+						new Instruction("org.osgi.framework.BundleActivator"), analyzer)) {
+						System.err.printf("found BundleActivator class %s\n", clazz);
+						activator_classname = clazz.toString();
+					}
 				}
+			}
+			catch (Exception e) {
+				throw new OSGiException("failed to query classes while searching for activator", e);
 			}
 			if (activator_classname == null) {
 				activator_classname = GENERATED_ACTIVATOR_CLASSNAME;
-				if (!createActivator(bindir, activator_classname, writer)) {
-					Msg.error(this, "failed to create activator");
+				if (!buildDefaultActivator(bindir, activator_classname, writer)) {
 					return;
 				}
 				// since we add the activator after bndtools built the imports, we should add its imports too
@@ -205,15 +223,22 @@ public class BundleCompiler {
 				manifest.write(out);
 			}
 		}
-		catch (Exception e) {
-			e.printStackTrace(writer);
-		}
 		finally {
 			analyzer.close();
 		}
 	}
 
-	private boolean createActivator(Path bindir, String activator_classname, Writer writer)
+	/**
+	 * create and compile a default bundle activator
+	 * 
+	 * @param bindir destination for class file
+	 * @param activator_classname the name to use for the genearted activator class
+	 * @param writer for writing compile errors
+	 * @return true if compilation succeeded
+	 * @throws IOException for failed write of source/binary activator
+	 */
+	private boolean buildDefaultActivator(Path bindir, String activator_classname,
+			Writer writer)
 			throws IOException {
 		Path activator_dest = bindir.resolve(activator_classname + ".java");
 
@@ -232,10 +257,6 @@ public class BundleCompiler {
 			out.println("  }");
 			out.println();
 			out.println("}");
-		}
-		catch (IOException ex) {
-			ex.printStackTrace();
-			return false;
 		}
 
 		List<String> options = new ArrayList<>();
