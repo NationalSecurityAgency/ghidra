@@ -44,6 +44,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	public AbstractDemanglerAnalyzer(String name, String description) {
 		super(name, description, AnalyzerType.BYTE_ANALYZER);
 		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before().before());
+		setSupportsOneTimeAnalysis();
 	}
 
 	@Override
@@ -58,7 +59,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 		DemanglerOptions options = getOptions();
 		if (!validateOptions(options, log)) {
-			log.error(getName(), "Invalid demangler options--cannot demangle");
+			log.appendMsg(getName(), "Invalid demangler options--cannot demangle");
 			return false;
 		}
 

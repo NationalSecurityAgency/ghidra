@@ -849,9 +849,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		for (AutoAnalysisManagerListener listener : listeners) {
 			listener.analysisEnded(this);
 		}
-		if (log.getMsgCount() > 0) {
-			Msg.info(AutoAnalysisManager.class, log.toString());
-		}
 		log.clear();
 	}
 

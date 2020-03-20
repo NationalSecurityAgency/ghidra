@@ -145,10 +145,12 @@ public class ImportBatchTask extends Task {
 			Object consumer = new Object();
 			try {
 				MessageLog messageLog = new MessageLog();
-				List<DomainObject> importedObjects = loadSpec.getLoader().load(byteProvider,
-					fixupProjectFilename(destInfo.second), destInfo.first, loadSpec,
-					getOptionsFor(batchLoadConfig, loadSpec, byteProvider), messageLog, consumer,
-					monitor);
+				List<DomainObject> importedObjects = loadSpec.getLoader()
+						.load(byteProvider,
+							fixupProjectFilename(destInfo.second), destInfo.first, loadSpec,
+							getOptionsFor(batchLoadConfig, loadSpec, byteProvider), messageLog,
+							consumer,
+							monitor);
 
 				// TODO: accumulate batch results
 				if (importedObjects != null) {
@@ -163,7 +165,7 @@ public class ImportBatchTask extends Task {
 
 				Msg.info(this, "Imported " + destInfo.first + "/ " + destInfo.second + ", " +
 					totalAppsImported + " of " + totalEnabledApps);
-				if (messageLog.getMsgCount() > 0) {
+				if (messageLog.hasMessages()) {
 					Msg.info(this, "Additional info:\n" + messageLog.toString());
 				}
 			}
