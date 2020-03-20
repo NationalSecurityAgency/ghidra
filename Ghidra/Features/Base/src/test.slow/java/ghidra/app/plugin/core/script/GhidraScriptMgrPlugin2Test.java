@@ -28,6 +28,7 @@ import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.JavaScriptProvider;
+import ghidra.app.script.osgi.SourceBundleInfo;
 import ghidra.test.ScriptTaskListener;
 import ghidra.util.TaskUtilities;
 import utilities.util.FileUtilities;
@@ -147,7 +148,8 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		assertTrue("Unable to delete class files from the user scripts directory", isEmpty);
 
 		// remove all class files from the user script bin dir
-		File userScriptsBinDir = new File(GhidraScriptUtil.USER_SCRIPTS_BIN_DIR);
+		File userScriptsBinDir =
+			SourceBundleInfo.getBindirFromScriptFile(new ResourceFile(newScriptFile)).toFile();
 		File[] userScriptBinDirFiles = userScriptsBinDir.listFiles(classFileFilter);
 		for (File file : userScriptBinDirFiles) {
 			file.delete();
@@ -189,11 +191,12 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		waitForScriptCompletion(scriptID, 20000);
 
 		// verify that the generated class file is placed in the default scripting home/bin
-		File userScriptsBinDir = new File(GhidraScriptUtil.USER_SCRIPTS_BIN_DIR);
+		File userScriptsBinDir =
+			SourceBundleInfo.getBindirFromScriptFile(systemScriptFile).toFile();
 		String className = scriptName.replace(".java", ".class");
 		File expectedClassFile = new File(userScriptsBinDir, className);
 
-		assertTrue("System script not compiled to the exptected directory",
+		assertTrue("System script not compiled to the expected directory",
 			expectedClassFile.exists());
 	}
 
@@ -225,7 +228,8 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		waitForScriptCompletion(scriptID, 20000);
 
 		// verify a bin dir was created and that the class file is in it
-		File binDir = new File(GhidraScriptUtil.USER_SCRIPTS_BIN_DIR);
+		File binDir =
+			SourceBundleInfo.getBindirFromScriptFile(new ResourceFile(newScriptFile)).toFile();
 		assertTrue("bin output dir not created", binDir.exists());
 
 		File scriptClassFile = new File(binDir, rawScriptName + ".class");
