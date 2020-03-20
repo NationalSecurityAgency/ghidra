@@ -18,12 +18,14 @@ package ghidra.app.util.demangler.gnu;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import generic.json.Json;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.demangler.*;
 import ghidra.program.model.lang.CompilerSpec;
@@ -138,23 +140,22 @@ public class GnuDemanglerParser {
 	 * Sample:  Magick::operator<(Magick::Coordinate const&, Magick::Coordinate const&)
 	 * 		    std::basic_istream<char, std::char_traits<char> >& std::operator>><char, std::char_traits<char> >(std::basic_istream<char, std::char_traits<char> >&, char&)
 	 *          bool myContainer<int>::operator<< <double>(double)
+	 *          bool operator< <myContainer<int> >(myContainer<int> const&)
 	 *         
 	 * Pattern: [return_type] operator operator_character(s) (opeartor_params) [trailing text]
 	 *
 	 * Parts:
-	 * 			-optional a return type (capture group 1)
-	 * 			-operator (capture group 2)
-	 * 			-operator character(s) (capture group 3)
+	 * 			-operator with characters (capture group 1)
+	 * 			-operator character(s) (capture group 2)
 	 *          -optional space
-	 *          -optional templates (capture group 4)
-	 *          -parameters (capture group 5)
-	 *          -trailing text (capture group 6)
+	 *          -optional templates (capture group 3)
+	 *          -parameters (capture group 4)
 	 *          
 	 * Note:     this regex is generated from all known operator patterns and looks like:
 	 * 			(.*operator(generated_text).*)\s*(\(.*\))(.*)
 	 */
-	private static final Pattern OVERLOAD_OPERATOR_PATTERN =
-		createOverloadedOperatorPattern();
+	private static final Pattern OVERLOAD_OPERATOR_NAME_PATTERN =
+		createOverloadedOperatorNamePattern();
 
 	/*
 	* Sample:  std::integral_constant<bool, false>::operator bool() const
@@ -246,32 +247,47 @@ public class GnuDemanglerParser {
 	 */
 	private static final Pattern ENDS_WITH_DIGITS_PATTERN = Pattern.compile("(.*?)\\d+");
 
-	private static Pattern createOverloadedOperatorPattern() {
+	private static Pattern createOverloadedOperatorNamePattern() {
 
+		// note: the order of these matters--the single characters must come after the 
+		//       multi-character entries; otherwise, the single characters will match before
+		//       longer matches
 		//@formatter:off
-		Set<String> operators = new HashSet<>(Set.of(
+		List<String> operators = new LinkedList<>(List.of(			
 			"++", "--",
+			">>=", "<<=",
+			"->*", "->",
+			"==", "!=", ">=", "<=",
+			"&&", "||", ">>", "<<",
+			"+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", 
 			"+", "-", "*", "/", "%",
-			"==", "!=", ">", "<", ">=", "<=",
-			"&", "|", ">>", "<<", "~", "^",
-			"&&", "||", "!",
-			"=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", ">>=", "<<=",
-			",", "()",
-			"\"\""
+			"~", "^", "&", "|", "!", "<", ">", "=",			
+			",", "()"
 		));
 		//@formatter:on
 
 		CollectionUtils.transform(operators, Pattern::quote);
 		String alternated = StringUtils.join(operators, "|");
 
-		String returnType = "(.* ){0,1}";
+		//
+		// We have some extra 'operator' style constructs to add to the normal operator overloading
+		// 
+		// User Defined Literal 
+		// Sample: operator"" _init(char const*, unsigned long)  
+		//        
+		// Pattern: operator"" _someText(opeartor_params)
+		// 
+		String userDefinedLiteral = "\"\"\\s_.+";
+		String extra = userDefinedLiteral;
+		alternated += '|' + extra;
+
 		String operatorTemplates = "(<.+>){0,1}";
 		String operatorPrefix =
-			"(.*" + OPERATOR + "(" + alternated + ")\\s*" + operatorTemplates + ".*)\\s*";
+			".*(.*" + OPERATOR + "(" + alternated + ")\\s*" + operatorTemplates + ".*)\\s*";
 		String parameters = "(\\(.*\\))";
 		String trailing = "(.*)";
 
-		return Pattern.compile(returnType + operatorPrefix + parameters + trailing);
+		return Pattern.compile(operatorPrefix + parameters + trailing);
 	}
 
 	private String mangledSource;
@@ -363,48 +379,40 @@ public class GnuDemanglerParser {
 
 	private DemangledObject parseFunctionOrVariable(String demangled) {
 
-		ParameterLocator paramLocator = new ParameterLocator(demangled);
-		if (!paramLocator.hasParameters()) {
+		FunctionSignatureParts signatureParts = new FunctionSignatureParts(demangled);
+		if (!signatureParts.isValidFunction()) {
 			return parseVariable(demangled);
 		}
 
-		int paramStart = paramLocator.getParamStart();
-		int paramEnd = paramLocator.getParamEnd();
-
-		String parameterString = demangled.substring(paramStart + 1, paramEnd).trim();
-		List<DemangledDataType> parameters = parseParameters(parameterString);
-
-		// 'prefix' is the text before the parameters
-		int prefixEndPos = paramStart;
-		String prefix = demangled.substring(0, prefixEndPos).trim();
-		prefix = fixupInternalSeparators(prefix);
-
-		int nameStart = Math.max(0, prefix.lastIndexOf(' '));
-		String name = prefix.substring(nameStart, prefix.length()).trim();
 		DemangledFunction function = new DemangledFunction(mangledSource, demangled, null);
 
-		String simpleName = name;
+		String simpleName = signatureParts.getName();
 		LambdaName lambdaName = getLambdaName(demangled);
 		if (lambdaName != null) {
 			String uniqueName = lambdaName.getFullText();
-			String fullLambda = fixupInternalSeparators(uniqueName);
-			simpleName = name.replace("{lambda", fullLambda);
+			String escapedLambda = removeInternalSpaces(uniqueName);
+			simpleName = simpleName.replace("{lambda", escapedLambda);
 			function = new DemangledLambda(mangledSource, demangled, null);
 			function.setSignature(lambdaName.getFullText());
 		}
 
-		// For GNU, we cannot leave the return type as null, because the DemangleCmd will fill in
-		// pointer to the class to accommodate windows demangling
-		function.setReturnType(new DemangledDataType(mangledSource, demangled, "undefined"));
-		for (DemangledDataType parameter : parameters) {
+		//
+		// Function Parts: name, params, return type, modifiers
+		//
+		setNameAndNamespace(function, simpleName);
+
+		for (DemangledDataType parameter : signatureParts.getParameters()) {
 			function.addParameter(parameter);
 		}
 
-		setNameAndNamespace(function, simpleName);
+		// For GNU, we cannot leave the return type as null, because the DemangleCmd will fill in
+		// pointer to the class to accommodate windows demangling
+		DemangledDataType defaultReturnType =
+			new DemangledDataType(mangledSource, demangled, "undefined");
+		function.setReturnType(defaultReturnType);
 
-		// check for return type
-		if (nameStart > 0) {
-			String returnType = prefix.substring(0, nameStart);
+		String returnType = signatureParts.getReturnType();
+		if (returnType != null) {
 			setReturnType(function, returnType);
 		}
 
@@ -476,46 +484,12 @@ public class GnuDemanglerParser {
 	}
 
 	/**
-	 * Replaces all SPACES and COLONS inside of groups (templates/parentheses) 
-	 * with UNDERSCORES and DASHES, respectively
+	 * Removes spaces inside of templates and parentheses by either dropping the spaces or 
+	 * replacing them with an underscore when they are surrounded by word characters
 	 */
-	private String fixupInternalSeparators(String name) {
-		StringBuilder buffer = new StringBuilder();
-		int depth = 0;
-		char last = NULL_CHAR;
-		for (int i = 0; i < name.length(); ++i) {
-			char ch = name.charAt(i);
-			if (ch == '<' || ch == '(') {
-				++depth;
-			}
-			else if ((ch == '>' || ch == ')') && depth != 0) {
-				--depth;
-			}
-
-			if (depth > 0 && ch == ' ') {
-				char next = (i + 1) < name.length() ? name.charAt(i + 1) : NULL_CHAR;
-				if (isSurroundedByCharacters(last, next)) {
-					// separate words with a value so they don't run together; drop the other spaces
-					buffer.append('_');
-				}
-			}
-			else if (depth > 0 && ch == ':') {
-				buffer.append('-');
-			}
-			else {
-				buffer.append(ch);
-			}
-
-			last = ch;
-		}
-		return buffer.toString().trim();
-	}
-
-	private boolean isSurroundedByCharacters(char last, char next) {
-		if (last == NULL_CHAR || next == NULL_CHAR) {
-			return false;
-		}
-		return Character.isLetterOrDigit(last) && Character.isLetterOrDigit(next);
+	private String removeInternalSpaces(String name) {
+		CondensedString cs = new CondensedString(name);
+		return cs.getCondensedString();
 	}
 
 	/**
@@ -1037,7 +1011,7 @@ public class GnuDemanglerParser {
 		 	
 		 */
 
-		String nameString = fixupInternalSeparators(demangled).trim();
+		String nameString = removeInternalSpaces(demangled).trim();
 		DemangledVariable variable =
 			new DemangledVariable(mangledSource, demangledSource, (String) null);
 		setNameAndNamespace(variable, nameString);
@@ -1050,8 +1024,8 @@ public class GnuDemanglerParser {
 	 * The following will be created {@literal "Namespace{A}->Namespace{B}->Namespace{C}"}
 	 * and Namespace{C} will be returned.
 	 * 
-	 * <p>This method will also escape spaces and namespace separators inside of templates
-	 * (see {@link #fixupInternalSeparators(String)}).
+	 * <p>This method will also escape spaces separators inside of templates
+	 * (see {@link #removeInternalSpaces(String)}).
 	 * 
 	 * @param names the names to convert
 	 * @return the newly created type
@@ -1062,13 +1036,13 @@ public class GnuDemanglerParser {
 		}
 		int index = names.size() - 1;
 		String rawName = names.get(index);
-		String escapedName = fixupInternalSeparators(rawName);
+		String escapedName = removeInternalSpaces(rawName);
 		DemangledType myNamespace = new DemangledType(mangledSource, demangledSource, escapedName);
 
 		DemangledType namespace = myNamespace;
 		while (--index >= 0) {
 			rawName = names.get(index);
-			escapedName = fixupInternalSeparators(rawName);
+			escapedName = removeInternalSpaces(rawName);
 			DemangledType parentNamespace =
 				new DemangledType(mangledSource, demangledSource, escapedName);
 			namespace.setNamespace(parentNamespace);
@@ -1201,7 +1175,7 @@ public class GnuDemanglerParser {
 				new DemangledString(mangledSource, demangledSource, "typeinfo-name", type,
 					-1/*unknown length*/, false);
 			demangledString.setSpecialPrefix("typeinfo name for ");
-			String namespaceString = fixupInternalSeparators(type);
+			String namespaceString = removeInternalSpaces(type);
 			setNamespace(demangledString, namespaceString);
 			return demangledString;
 		}
@@ -1259,7 +1233,7 @@ public class GnuDemanglerParser {
 
 		@Override
 		boolean matches(String text) {
-			matcher = OVERLOAD_OPERATOR_PATTERN.matcher(text);
+			matcher = OVERLOAD_OPERATOR_NAME_PATTERN.matcher(text);
 			return matcher.matches();
 		}
 
@@ -1276,44 +1250,33 @@ public class GnuDemanglerParser {
 			//
 			// NS1::operator<(NS1::Coordinate const &,NS1::Coordinate const &)
 			//
+			String operatorChars = matcher.group(2);
+			String templates = matcher.group(3);
+			templates = templates == null ? "" : templates;
 
-			// prefix: return_type operator operator_chars[templates]
-			// 		   (everything before the parameters)
-			String returnTypeText = matcher.group(1);
-			String operatorPrefix = matcher.group(2);
-			//String operatorChars = matcher.group(3);
-			String templates = matcher.group(4);
-			String parametersText = matcher.group(5);
-			//String trailing = matcher.group(6);
+			//
+			// The 'operator' functions have symbols that confuse our default function parsing.  
+			// Specifically, operators that use shift symbols (<, <<, >, >>) will cause our 
+			// template parsing to fail.  To default the failure, we will install a temporary 
+			// function name here and then restore it after parsing is finished.
+			//
+			String originalPrefix = OPERATOR + operatorChars + templates;
+			String placeholder = "TEMPNAMEPLACEHOLDERVALUE";
+			String tempName = demangled.replace(originalPrefix, placeholder);
 
-			String operatorName = operatorPrefix;
-
-			operatorPrefix = fixupInternalSeparators(operatorPrefix);
-
-			if (returnTypeText == null) {
-				returnTypeText = "undefined";
-			}
-			returnTypeText = fixupInternalSeparators(returnTypeText);
-			DemangledDataType returnType = createTypeInNamespace(returnTypeText);
-
-			DemangledFunction function =
-				new DemangledFunction(mangledSource, demangledSource, (String) null);
+			DemangledFunction function = (DemangledFunction) parseFunctionOrVariable(tempName);
 			function.setOverloadedOperator(true);
-			function.setReturnType(returnType);
+			function.setName(originalPrefix);
 
 			if (!StringUtils.isBlank(templates)) {
-				int templateIndex = operatorName.lastIndexOf(templates);
-				operatorName = operatorName.substring(0, templateIndex);
-				DemangledTemplate demangledTemplate = parseTemplate(templates);
+				String escapedPrefix = removeInternalSpaces(originalPrefix);
+				String escapedTemplates = removeInternalSpaces(templates);
+				int templateIndex = escapedPrefix.indexOf(escapedTemplates);
+				String operatorName = escapedPrefix.substring(0, templateIndex);
+				DemangledTemplate demangledTemplate = parseTemplate(escapedTemplates);
+
 				function.setTemplate(demangledTemplate);
-			}
-
-			operatorName = fixupInternalSeparators(operatorName);
-			setNameAndNamespace(function, operatorName);
-
-			List<DemangledDataType> parameters = parseParameters(parametersText);
-			for (DemangledDataType parameter : parameters) {
-				function.addParameter(parameter);
+				function.setName(operatorName);
 			}
 
 			return function;
@@ -1541,6 +1504,195 @@ public class GnuDemanglerParser {
 					.append("params", params)
 					.append("trailing", trailing)
 					.toString();
+		}
+	}
+
+	/**
+	 * An object that will parse a function signature string into parts: return type, name, 
+	 * and parameters.  {@link #isValidFunction()} can be called to check if the given sting is
+	 * indeed a function signature.
+	 */
+	private class FunctionSignatureParts {
+
+		private boolean isFunction;
+
+		private String rawReturnType;
+		private String returnType;
+
+		private String rawName;
+		private String name;
+
+		private List<DemangledDataType> parameters;
+
+		FunctionSignatureParts(String signatureString) {
+
+			ParameterLocator paramLocator = new ParameterLocator(signatureString);
+			if (!paramLocator.hasParameters()) {
+				return;
+			}
+
+			isFunction = true;
+			int paramStart = paramLocator.getParamStart();
+			int paramEnd = paramLocator.getParamEnd();
+
+			String parameterString = signatureString.substring(paramStart + 1, paramEnd).trim();
+			parameters = parseParameters(parameterString);
+
+			// 'prefix' is the text before the parameters
+			int prefixEndPos = paramStart;
+			String rawPrefix = signatureString.substring(0, prefixEndPos).trim();
+
+			CondensedString prefixString = new CondensedString(rawPrefix);
+			String prefix = prefixString.getCondensedString();
+			int nameStart = Math.max(0, prefix.lastIndexOf(' '));
+
+			rawName = prefixString.substringOriginal(nameStart, prefix.length());
+			name = removeInternalSpaces(rawName);
+
+			// check for return type
+			if (nameStart > 0) {
+				rawReturnType = prefixString.substringOriginal(0, nameStart);
+				returnType = removeInternalSpaces(rawReturnType);
+			}
+		}
+
+		String getReturnType() {
+			return returnType;
+		}
+
+		String getName() {
+			return name;
+		}
+
+		boolean isValidFunction() {
+			return isFunction;
+		}
+
+		List<DemangledDataType> getParameters() {
+			return parameters;
+		}
+
+		@Override
+		public String toString() {
+			return Json.toString(this);
+		}
+	}
+
+	/**
+	 * An object that will change the input string (such as to remove spaces) while maintaining
+	 * the ability to translate from the new string back to the old string
+	 */
+	private class CondensedString {
+
+		private String originalString;
+		private String condensedString;
+		private List<Part> parts = new ArrayList<>();
+
+		CondensedString(String input) {
+			this.originalString = input;
+			this.condensedString = createFixedString(input);
+		}
+
+		private String createFixedString(String name) {
+
+			int depth = 0;
+			char last = NULL_CHAR;
+			for (int i = 0; i < name.length(); ++i) {
+
+				Part part = new Part();
+				parts.add(part);
+				char ch = name.charAt(i);
+				part.original = Character.toString(ch);
+				part.condensed = part.original; // default case
+				if (ch == '<' || ch == '(') {
+					++depth;
+				}
+				else if ((ch == '>' || ch == ')') && depth != 0) {
+					--depth;
+				}
+
+				if (depth > 0 && ch == ' ') {
+					char next = (i + 1) < name.length() ? name.charAt(i + 1) : NULL_CHAR;
+					if (isSurroundedByCharacters(last, next)) {
+						// separate words with a value so they don't run together; drop the other spaces
+						part.condensed = Character.toString('_');
+					}
+					else {
+						part.condensed = ""; // consume the space
+					}
+				}
+
+				last = ch;
+			}
+
+			return parts.stream()
+					.map(p -> p.condensed)
+					.collect(Collectors.joining())
+					.trim();
+		}
+
+		private boolean isSurroundedByCharacters(char last, char next) {
+			if (last == NULL_CHAR || next == NULL_CHAR) {
+				return false;
+			}
+			return Character.isLetterOrDigit(last) && Character.isLetterOrDigit(next);
+		}
+
+		/**
+		 * Returns the original string value that has been 'condensed', which means to remove 
+		 * internal spaces
+		 * @return the condensed string
+		 */
+		String getCondensedString() {
+			return condensedString;
+		}
+
+		/**
+		 * Uses the given start and end <b>from the 'condensed' string</b> to create a substring of
+		 * the original string
+		 * @param condensedStart the start in the condensed string
+		 * @param condensedEnd the end in the condensed string
+		 * @return the substring from the original string
+		 */
+		String substringOriginal(int condensedStart, int condensedEnd) {
+
+			int start = condensedToOriginal(condensedStart);
+			int end = condensedToOriginal(condensedEnd);
+			return originalString.substring(start, end);
+		}
+
+		private int condensedToOriginal(int index) {
+
+			int next = index + 1;
+			int n = 0;
+			for (int i = 0; i < parts.size(); i++) {
+				Part p = parts.get(i);
+				n += p.condensed.length();
+				if (n == next) {
+					return i;
+				}
+			}
+
+			if (n == index) {
+				return parts.size(); // user asked for length of the 'condensed' string
+			}
+
+			throw new IndexOutOfBoundsException("Index not in condensed string: " + index);
+		}
+
+		@Override
+		public String toString() {
+			return Json.toString(this);
+		}
+
+		private class Part {
+			String original;
+			String condensed = "";
+
+			@Override
+			public String toString() {
+				return Json.toString(this);
+			}
 		}
 	}
 }
