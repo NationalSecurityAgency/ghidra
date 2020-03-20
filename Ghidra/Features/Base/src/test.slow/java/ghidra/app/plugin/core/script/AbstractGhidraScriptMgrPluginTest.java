@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.Window;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -165,7 +166,19 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 			testScriptFile.delete();
 		}
 
+		wipeUserScripts();
+
 		env.dispose();
+	}
+
+	protected void wipeUserScripts() throws IOException {
+		java.nio.file.Path userScriptDir =
+			java.nio.file.Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
+		Iterator<java.nio.file.Path> it = Files.list(userScriptDir).iterator();
+		while (it.hasNext()) {
+			Files.walk(it.next()).sorted(Comparator.reverseOrder()).map(
+				java.nio.file.Path::toFile).forEach(File::delete);
+		}
 	}
 
 //==================================================================================================
