@@ -20,7 +20,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.Set;
 
-import javax.swing.ImageIcon;
+import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
 import org.jdom.Element;
@@ -434,6 +434,21 @@ public class DummyTool extends PluginTool {
 
 	@Override
 	public PluginClassManager getPluginClassManager() {
+		return null;
+	}
+
+	@Override
+	public void addStatusComponent(JComponent c, boolean addBorder, boolean rightSide) {
+		//do nothing
+	}
+
+	@Override
+	public void removeStatusComponent(JComponent c) {
+		//do nothing
+	}
+
+	@Override
+	public JFrame getToolFrame() {
 		return null;
 	}
 }
