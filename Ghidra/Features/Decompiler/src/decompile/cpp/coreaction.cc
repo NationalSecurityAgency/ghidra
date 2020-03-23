@@ -607,6 +607,7 @@ int4 ActionLaneDivide::apply(Funcdata &data)
     if (allStorageProcessed) break;
   }
   data.clearLanedAccessMap();
+  data.setLanedRegGenerated();
   return 0;
 }
 
@@ -1209,31 +1210,11 @@ int4 ActionDeindirect::apply(Funcdata &data)
   return 0;
 }
 
-/// Check if the given Varnode has a matching LanedRegister record. If so, add its
-/// storage location to the given function's laned access list.
-/// \param data is the given function
-/// \param vn is the given Varnode
-void ActionVarnodeProps::markLanedVarnode(Funcdata &data,Varnode *vn)
-
-{
-  if (vn->isConstant()) return;
-  Architecture *glb = data.getArch();
-  const LanedRegister *lanedRegister  = glb->getLanedRegister(vn->getAddr(),vn->getSize());
-  if (lanedRegister != (const LanedRegister *)0)
-    data.markLanedVarnode(vn,lanedRegister);
-}
-
 int4 ActionVarnodeProps::apply(Funcdata &data)
 
 {
   Architecture *glb = data.getArch();
   bool cachereadonly = glb->readonlypropagate;
-  int4 minLanedSize = 1000000;		// Default size meant to filter no Varnodes
-  if (!data.isLanedRegComplete()) {
-    int4 sz = glb->getMinimumLanedRegisterSize();
-    if (sz > 0)
-      minLanedSize = sz;
-  }
   VarnodeLocSet::const_iterator iter;
   Varnode *vn;
 
@@ -1242,8 +1223,6 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
     vn = *iter++;		// Advance iterator in case vn is deleted
     if (vn->isAnnotation()) continue;
     int4 vnSize = vn->getSize();
-    if (vnSize >= minLanedSize)
-      markLanedVarnode(data, vn);
     if (vn->hasActionProperty()) {
       if (cachereadonly&&vn->isReadOnly()) {
 	if (data.fillinReadOnly(vn)) // Try to replace vn with its lookup in LoadImage

@@ -36,6 +36,7 @@ Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,int4 sz)
   high_level_index = 0;
   cast_phase_index = 0;
   glb = scope->getArch();
+  minLanedSize = glb->getMinimumLanedRegisterSize();
   name = nm;
 
   size = sz;
@@ -69,6 +70,7 @@ void Funcdata::clear(void)
   clean_up_index = 0;
   high_level_index = 0;
   cast_phase_index = 0;
+  minLanedSize = glb->getMinimumLanedRegisterSize();
 
   localmap->clearUnlocked();	// Clear non-permanent stuff
   localmap->resetLocalWindow();

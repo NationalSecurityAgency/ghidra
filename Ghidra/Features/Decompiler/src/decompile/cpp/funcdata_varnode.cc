@@ -85,6 +85,9 @@ Varnode *Funcdata::newUnique(int4 s,Datatype *ct)
     ct = glb->types->getBase(s,TYPE_UNKNOWN);
   Varnode *vn = vbank.createUnique(s,ct);
   assignHigh(vn);
+  if (s >= minLanedSize)
+    checkForLanedRegister(s, vn->getAddr());
+
 				// No chance of matching localmap
   return vn;
 }
@@ -104,6 +107,8 @@ Varnode *Funcdata::newVarnodeOut(int4 s,const Address &m,PcodeOp *op)
   op->setOutput(vn);
   assignHigh(vn);
 
+  if (s >= minLanedSize)
+    checkForLanedRegister(s,m);
   uint4 vflags = 0;
   SymbolEntry *entry = localmap->queryProperties(m,s,op->getAddr(),vflags);
   if (entry != (SymbolEntry *)0)
@@ -126,6 +131,8 @@ Varnode *Funcdata::newUniqueOut(int4 s,PcodeOp *op)
   Varnode *vn = vbank.createDefUnique(s,ct,op);
   op->setOutput(vn);
   assignHigh(vn);
+  if (s >= minLanedSize)
+    checkForLanedRegister(s, vn->getAddr());
   // No chance of matching localmap
   return vn;
 }
@@ -147,6 +154,8 @@ Varnode *Funcdata::newVarnode(int4 s,const Address &m,Datatype *ct)
   vn = vbank.create(s,m,ct);
   assignHigh(vn);
 
+  if (s >= minLanedSize)
+    checkForLanedRegister(s,m);
   uint4 vflags=0;
   SymbolEntry *entry = localmap->queryProperties(vn->getAddr(),vn->getSize(),Address(),vflags);
   if (entry != (SymbolEntry *)0)	// Let entry try to force type
@@ -280,19 +289,21 @@ void Funcdata::destroyVarnode(Varnode *vn)
   vbank.destroy(vn);
 }
 
-/// Record the given Varnode as a potential laned register access.
-/// The address and size of the Varnode is recorded, anticipating that new
-/// Varnodes at the same storage location may be created
-/// \param vn is the given Varnode to mark
-/// \param lanedReg is the laned register record to associate with the Varnode
-void Funcdata::markLanedVarnode(Varnode *vn,const LanedRegister *lanedReg)
+/// Check if the given storage range is a potential laned register.
+/// If so, record the storage with the matching laned register record.
+/// \param s is the size of the storage range in bytes
+/// \param addr is the starting address of the storage range
+void Funcdata::checkForLanedRegister(int4 size,const Address &addr)
 
 {
+  const LanedRegister *lanedRegister  = glb->getLanedRegister(addr,size);
+  if (lanedRegister == (const LanedRegister *)0)
+    return;
   VarnodeData storage;
-  storage.space = vn->getSpace();
-  storage.offset = vn->getOffset();
-  storage.size = vn->getSize();
-  lanedMap[storage] = lanedReg;
+  storage.space = addr.getSpace();
+  storage.offset = addr.getOffset();
+  storage.size = size;
+  lanedMap[storage] = lanedRegister;
 }
 
 /// Look up the Symbol visible in \b this function's Scope and return the HighVariable
