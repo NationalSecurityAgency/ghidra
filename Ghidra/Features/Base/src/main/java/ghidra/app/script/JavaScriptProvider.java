@@ -61,11 +61,19 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	@Override
-	public boolean deleteScript(ResourceFile scriptSource) {
-		// Assuming script is in default java package, so using script's base name as class name.
-		File clazzFile = getClassFile(scriptSource, GhidraScriptUtil.getBaseName(scriptSource));
-		clazzFile.delete();
-		return super.deleteScript(scriptSource);
+	public boolean deleteScript(ResourceFile sourceFile) {
+		Bundle b = getBundleInfoForScript(sourceFile).getBundle();
+		if (b != null) {
+			try {
+				getBundleHost().synchronousUninstall(b);
+			}
+			catch (GhidraBundleException | InterruptedException e) {
+				e.printStackTrace();
+				Msg.error(this, "while stopping script's bundle to delete it", e);
+				return false;
+			}
+		}
+		return super.deleteScript(sourceFile);
 	}
 
 	@Override
@@ -178,6 +186,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	 * @param className  The class's name (including package if applicable).
 	 * @return The class file corresponding to the given source file and class name.
 	 */
+	@Deprecated
 	protected File getClassFile(ResourceFile sourceFile, String className) {
 		ResourceFile resourceFile =
 			GhidraScriptUtil.getClassFileByResourceFile(sourceFile, className);

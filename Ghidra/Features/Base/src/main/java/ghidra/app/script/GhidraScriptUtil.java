@@ -22,6 +22,7 @@ import org.apache.commons.collections4.map.LazyMap;
 
 import generic.jar.ResourceFile;
 import generic.util.Path;
+import ghidra.app.script.osgi.SourceBundleInfo;
 import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -49,20 +50,13 @@ public class GhidraScriptUtil {
 	 * The default compile output directory
 	 */
 	//@formatter:off
+	@Deprecated
 	public static String USER_SCRIPTS_BIN_DIR = 
 							 Application.getUserSettingsDirectory() + File.separator +
 							 "dev" + File.separator + 
 							 SCRIPTS_SUBDIR_NAME + File.separator +  
 							 BIN_DIR_NAME;
 	//@formatter:on
-
-	private static void createUserScriptsDirs() {
-		File scriptsDir = new File(USER_SCRIPTS_DIR);
-		scriptsDir.mkdirs();
-
-		File binDir = new File(USER_SCRIPTS_BIN_DIR);
-		binDir.mkdirs();
-	}
 
 	private static List<Path> scriptDirectoryPaths = new ArrayList<>();
 
@@ -72,7 +66,6 @@ public class GhidraScriptUtil {
 		LazyMap.lazyMap(new HashMap<String, List<ResourceFile>>(), () -> new ArrayList<>());
 
 	static {
-		createUserScriptsDirs();
 		scriptDirectoryPaths = getDefaultScriptDirectories();
 	}
 
@@ -214,9 +207,10 @@ public class GhidraScriptUtil {
 	 * @return the directory
 	 */
 	public static ResourceFile getScriptCompileOutputDirectory(ResourceFile scriptFile) {
-		return new ResourceFile(USER_SCRIPTS_BIN_DIR);
+		return new ResourceFile(SourceBundleInfo.getBindirFromScriptFile(scriptFile).toFile());
 	}
 
+	@Deprecated
 	static ResourceFile getClassFile(ResourceFile sourceFile, String rawName) {
 		if (sourceFile != null) {
 			// prefer resource files when they exist, as we know exactly which file we want to load
@@ -236,7 +230,10 @@ public class GhidraScriptUtil {
 	 * @param sourceFile the source file for which to find the generated class file.
 	 * @param rawName the name of the class, without file extension or path info.
 	 * @return the class file generated from the given source file.
+	 * 
+	 * @deprecated the bundle class loader will take care of this, no classpath pollution
 	 */
+	@Deprecated
 	static ResourceFile getClassFileByResourceFile(ResourceFile sourceFile, String rawName) {
 		String javaAbsolutePath = sourceFile.getAbsolutePath();
 		String classAbsolutePath = javaAbsolutePath.replace(".java", ".class");
@@ -270,7 +267,7 @@ public class GhidraScriptUtil {
 		}
 
 		// default to a non-existent file
-		return new ResourceFile(GhidraScriptUtil.USER_SCRIPTS_BIN_DIR + "/" + className);
+		return new ResourceFile(GhidraScriptUtil.getScriptCompileOutputDirectory(sourceFile), className);
 	}
 
 	private static ResourceFile getClassFileByName(String rawName) {
@@ -358,8 +355,9 @@ public class GhidraScriptUtil {
 	 * 
 	 * @see #getScriptCompileOutputDirectory(ResourceFile)
 	 */
+	@Deprecated
 	public static List<ResourceFile> getScriptBinDirectories() {
-		return Arrays.asList(new ResourceFile(USER_SCRIPTS_BIN_DIR));
+		return Collections.emptyList();
 	}
 
 	/**
