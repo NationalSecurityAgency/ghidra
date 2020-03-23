@@ -471,7 +471,7 @@ public class SelectionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForThreadedModel();
 	}
 
-	private void waitForThrsadedModel() {
+	private void waitForThreadedModel() {
 		int numWaits = 0;
 		int sleepyTime = 10;
 		int maxWaits = ((MAX_ROW_COUNT + 1) * MAX_THREAD_SLEEP_DELAY) / sleepyTime;
