@@ -426,6 +426,20 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(ResourceFile scriptFile, TaskListener listener) {
+		if (SystemUtilities.isEventDispatchThread()) {
+			new TaskLauncher(new Task("compiling script", true, true, true, true) {
+				@Override
+				public void run(TaskMonitor monitor) throws CancelledException {
+					doRunScript(scriptFile, listener);
+				}
+			}, plugin.getTool().getToolFrame(), 1000);
+		}
+		else {
+			doRunScript(scriptFile, listener);
+		}
+	}
+
+	private void doRunScript(ResourceFile scriptFile, TaskListener listener) {
 		lastRunScript = scriptFile;
 
 		ConsoleService console = plugin.getConsoleService();
