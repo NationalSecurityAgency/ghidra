@@ -15,7 +15,9 @@
  */
 package docking.widgets.table;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
@@ -469,7 +471,7 @@ public class SelectionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForThreadedModel();
 	}
 
-	private void waitForThreadedModel() {
+	private void waitForThrsadedModel() {
 		int numWaits = 0;
 		int sleepyTime = 10;
 		int maxWaits = ((MAX_ROW_COUNT + 1) * MAX_THREAD_SLEEP_DELAY) / sleepyTime;
