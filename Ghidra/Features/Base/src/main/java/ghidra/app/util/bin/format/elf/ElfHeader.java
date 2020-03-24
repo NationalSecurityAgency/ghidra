@@ -1707,7 +1707,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return e_entry component ordinal 
 	 */
 	public int getEntryComponentOrdinal() {
-		return 9;
+		return 11;
 	}
 
 	/**
@@ -1716,7 +1716,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return e_phoff component ordinal 
 	 */
 	public int getPhoffComponentOrdinal() {
-		return 10;
+		return 12;
 	}
 
 	/**
@@ -1725,7 +1725,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return e_shoff component ordinal 
 	 */
 	public int getShoffComponentOrdinal() {
-		return 11;
+		return 13;
 	}
 
 	private void addSection(ElfSectionHeader newSection) {
