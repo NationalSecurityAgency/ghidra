@@ -43,6 +43,9 @@
         <constraint primary="7"        processor="x86"     endian="little" size="32" />
         <constraint primary="16777223" processor="x86"     endian="little" size="64" />
     </constraint>
+    <constraint loader="DYLD Cache" compilerSpecID="gcc">
+        <constraint primary="x86_64"   processor="x86"     endian="little" size="64" />
+    </constraint>
     <constraint loader="Common Object File Format (COFF)" compilerSpecID="gcc">
         <constraint primary="332"     processor="x86"          endian="little" size="32" />
         <constraint primary="-31132"  processor="x86"          endian="little" size="64" />

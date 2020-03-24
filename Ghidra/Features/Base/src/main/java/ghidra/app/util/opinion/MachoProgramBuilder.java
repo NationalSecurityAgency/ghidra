@@ -41,7 +41,8 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -296,8 +297,9 @@ public class MachoProgramBuilder {
 			long dataLength, String comment, String source, boolean r, boolean w, boolean x,
 			boolean zeroFill) throws Exception {
 
-		// iOS 12 address fixup
-		if ((start.getOffset() & 0xfff000000000L) != 0) {
+		// iOS 12 chained pointer address fixup (does not apply to x86)
+		if (!program.getLanguageID().getIdAsString().startsWith("x86") &&
+			(start.getOffset() & 0xfff000000000L) != 0) {
 			start = space.getAddress(start.getOffset() | 0xffff000000000000L);
 		}
 
