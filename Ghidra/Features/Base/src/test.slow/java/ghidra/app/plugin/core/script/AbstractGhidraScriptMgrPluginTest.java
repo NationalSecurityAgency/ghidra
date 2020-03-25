@@ -1157,14 +1157,18 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		return info.getSourceFile();
 	}
 
+	static protected String CANCELLABLE_SCRIPT_NAME = TestChangeProgramScript.class.getName();
+
 	protected void cancel() throws Exception {
-		Window window = waitForWindowByTitleContaining("TestScript");
+		Window window = waitForWindowByTitleContaining(CANCELLABLE_SCRIPT_NAME);
 		assertNotNull("Could not find script progress dialog", window);
 		pressButtonByText(window, "Cancel");
 	}
 
 	protected TestChangeProgramScript startCancellableScript() throws Exception {
 		TestChangeProgramScript script = new TestChangeProgramScript();
+		ResourceFile fakeFile = new ResourceFile(createTempFile(CANCELLABLE_SCRIPT_NAME, "java"));
+		script.setSourceFile(fakeFile);
 		runScript(script);
 
 		boolean success = script.waitForStart();
@@ -1189,7 +1193,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		pressButtonByText(window, "No");
 		assertFalse(window.isShowing());
 
-		window = waitForWindowByTitleContaining("TestScript");
+		window = waitForWindowByTitleContaining(CANCELLABLE_SCRIPT_NAME);
 		assertNotNull("Could not find script progress dialog", window);
 
 		script.testOver();
@@ -1199,13 +1203,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected void runScript(GhidraScript script) throws Exception {
-
-		deleteSimilarTempFiles("TestScript");
-
-		File tempFile = createTempFile("TestScript", "java");
-		tempFile.deleteOnExit();
-		ResourceFile fakeFile = new ResourceFile(tempFile);
-		Task task = new RunScriptTask(fakeFile, script, plugin.getCurrentState(), console);
+		Task task = new RunScriptTask(script, plugin.getCurrentState(), console);
 		task.addTaskListener(provider.getTaskListener());
 		new TaskLauncher(task, plugin.getTool().getToolFrame());
 	}
@@ -1220,10 +1218,9 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected String runScriptAndGetOutput(GhidraScript script) throws Exception {
-		ResourceFile fakeFile = new ResourceFile(createTempFile("TestScript", "java"));
 		SpyConsole spyConsole = installSpyConsole();
 
-		Task task = new RunScriptTask(fakeFile, script, plugin.getCurrentState(), spyConsole);
+		Task task = new RunScriptTask(script, plugin.getCurrentState(), spyConsole);
 		task.addTaskListener(provider.getTaskListener());
 
 		CountDownLatch latch = new CountDownLatch(1);

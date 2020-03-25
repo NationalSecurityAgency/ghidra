@@ -446,8 +446,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		RunScriptTask task =
-			new RunScriptTask(scriptFile, script, plugin.getCurrentState(), console);
+		RunScriptTask task = new RunScriptTask(script, plugin.getCurrentState(), console);
 		runningScriptTaskSet.add(task);
 		task.addTaskListener(listener);
 		task.addTaskListener(cleanupTaskSetListener);
