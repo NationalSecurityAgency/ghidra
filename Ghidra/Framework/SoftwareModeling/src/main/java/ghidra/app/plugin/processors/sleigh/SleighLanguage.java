@@ -127,7 +127,11 @@ public class SleighLanguage implements Language {
 		// for now we'll assume yes.
 		contextcache = new ContextCache();
 
-		ResourceFile slaFile = ensureSpecificationIsCompiled(langDescription);
+		ResourceFile slaFile = langDescription.getSlaFile();
+		if (!slaFile.exists() ||
+			(slaFile.canWrite() && (isSLAWrongVersion(slaFile) || isSLAStale(slaFile)))) {
+			reloadLanguage(TaskMonitor.DUMMY, true);
+		}
 
 		// Read in the sleigh specification
 		readSpecification(slaFile);
@@ -144,38 +148,60 @@ public class SleighLanguage implements Language {
 		initParallelHelper();
 	}
 
-	private ResourceFile ensureSpecificationIsCompiled(SleighLanguageDescription langDescription)
-			throws IOException {
-		ResourceFile slaFile = langDescription.getSlaFile();
-		if (!slaFile.exists()) {
-			reloadLanguage(TaskMonitor.DUMMY, true);
-		}
-		else {
-			String slafilename = slaFile.getName();
-			int index = slafilename.lastIndexOf('.');
-			String slabase = slafilename.substring(0, index);
-			String slaspecfilename = slabase + ".slaspec";
-			ResourceFile slaspecFile = new ResourceFile(slaFile.getParentFile(), slaspecfilename);
-			if (slaspecFile.canWrite()) {
-				File resourceAsFile = slaspecFile.getFile(true);
-				SleighPreprocessor preprocessor =
-					new SleighPreprocessor(new ModuleDefinitionsAdapter(), resourceAsFile);
-				long sourceTimestamp = Long.MAX_VALUE;
-				try {
-					sourceTimestamp = preprocessor.scanForTimestamp();
-				}
-				catch (Exception e) {
-					// squash the error because we will force recompilation and errors
-					// will propagate elsewhere
-				}
-				long compiledTimestamp = slaFile.lastModified();
-				if (sourceTimestamp > compiledTimestamp) {
-					reloadLanguage(TaskMonitor.DUMMY, true);
-				}
-			}
-		}
+	private boolean isSLAWrongVersion(ResourceFile slaFile) {
 
-		return slaFile;
+		try {
+			XmlPullParser parser = XmlPullParserFactory.create(slaFile, new ErrorHandler() {
+
+				@Override
+				public void warning(SAXParseException exception) throws SAXException {
+					// ignore
+				}
+
+				@Override
+				public void fatalError(SAXParseException exception) throws SAXException {
+					throw exception;
+				}
+
+				@Override
+				public void error(SAXParseException exception) throws SAXException {
+					throw exception;
+				}
+			}, false);
+
+			XmlElement e = parser.peek();
+			if (!"sleigh".equals(e.getName())) {
+				return true;
+			}
+
+			int version = SpecXmlUtils.decodeInt(e.getAttribute("version"));
+			return (version != SLA_FORMAT_VERSION);
+		}
+		catch (SAXException | IOException e) {
+			return true;
+		}
+	}
+
+	private boolean isSLAStale(ResourceFile slaFile) {
+		String slafilename = slaFile.getName();
+		int index = slafilename.lastIndexOf('.');
+		String slabase = slafilename.substring(0, index);
+		String slaspecfilename = slabase + ".slaspec";
+		ResourceFile slaspecFile = new ResourceFile(slaFile.getParentFile(), slaspecfilename);
+
+		File resourceAsFile = slaspecFile.getFile(true);
+		SleighPreprocessor preprocessor =
+			new SleighPreprocessor(new ModuleDefinitionsAdapter(), resourceAsFile);
+		long sourceTimestamp = Long.MAX_VALUE;
+		try {
+			sourceTimestamp = preprocessor.scanForTimestamp();
+		}
+		catch (Exception e) {
+			// squash the error because we will force recompilation and errors
+			// will propagate elsewhere
+		}
+		long compiledTimestamp = slaFile.lastModified();
+		return (sourceTimestamp > compiledTimestamp);
 	}
 
 	/**
