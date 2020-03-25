@@ -29,11 +29,11 @@ import org.junit.Test;
 
 import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
+import docking.widgets.bundlemanager.BundlePath;
+import docking.widgets.bundlemanager.BundlePathManager;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.list.ListPanel;
-import docking.widgets.pathmanager.PathManager;
 import generic.jar.ResourceFile;
-import generic.util.Path;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.JavaScriptProvider;
 import ghidra.util.StringUtilities;
@@ -284,15 +284,15 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		performAction(pathAction, false);
 		waitForSwing();
 
-		PickPathsDialog pathsDialog = waitForDialogComponent(PickPathsDialog.class);
+		BundlePathSelectionDialog pathsDialog = waitForDialogComponent(BundlePathSelectionDialog.class);
 
 		final File dir = new File(getTestDirectoryPath() + "/test_scripts");
 		dir.mkdirs();
 
-		final PathManager pathManager = pathsDialog.getPathManager();
+		final BundlePathManager pathManager = pathsDialog.getBundleManager();
 		SwingUtilities.invokeLater(() -> {
-			List<Path> paths = pathManager.getPaths();
-			paths.add(0, new Path(dir));
+			List<BundlePath> paths = pathManager.getPaths();
+			paths.add(0, new BundlePath(dir));
 			pathManager.setPaths(paths);
 		});
 		waitForSwing();

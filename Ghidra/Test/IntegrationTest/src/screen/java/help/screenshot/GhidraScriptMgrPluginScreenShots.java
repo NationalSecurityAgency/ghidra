@@ -24,11 +24,11 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import docking.DockingWindowManager;
-import docking.widgets.pathmanager.PathManager;
+import docking.widgets.bundlemanager.BundlePath;
+import docking.widgets.bundlemanager.BundlePathManager;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
-import generic.util.Path;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.plugin.core.script.*;
 import ghidra.app.script.GhidraScriptUtil;
@@ -112,18 +112,18 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testScript_Dirs() throws Exception {
-		List<Path> paths = new ArrayList<>();
-		paths.add(new Path("$USER_HOME/ghidra_scripts"));
-		paths.add(new Path("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
-		paths.add(new Path("/User/defined/invalid/directory"));
+		List<BundlePath> paths = new ArrayList<>();
+		paths.add(new BundlePath("$USER_HOME/ghidra_scripts"));
+		paths.add(new BundlePath("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
+		paths.add(new BundlePath("/User/defined/invalid/directory"));
 
 		ComponentProvider provider = showProvider(GhidraScriptComponentProvider.class);
-		PathManager pathManager = (PathManager) getInstanceField("pathManager", provider);
-		pathManager.setPaths(paths);
-		final PickPathsDialog pathsDialog = new PickPathsDialog(null, pathManager);
+		BundlePathManager bundleManager = (BundlePathManager) getInstanceField("bundlePathManager", provider);
+		bundleManager.setPaths(paths);
+		final BundlePathSelectionDialog pathsDialog = new BundlePathSelectionDialog(null, bundleManager);
 		runSwing(() -> DockingWindowManager.showDialog(null, pathsDialog), false);
 
-		PickPathsDialog dialog = waitForDialogComponent(PickPathsDialog.class);
+		BundlePathSelectionDialog dialog = waitForDialogComponent(BundlePathSelectionDialog.class);
 		captureDialog(dialog);
 	}
 

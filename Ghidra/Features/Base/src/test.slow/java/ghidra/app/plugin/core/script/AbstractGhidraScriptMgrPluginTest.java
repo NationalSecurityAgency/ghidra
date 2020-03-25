@@ -21,6 +21,7 @@ import java.awt.Window;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -38,15 +39,15 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
+import docking.widgets.bundlemanager.BundlePath;
+import docking.widgets.bundlemanager.BundlePathManager;
 import docking.widgets.filter.FilterTextField;
-import docking.widgets.pathmanager.PathManager;
 import docking.widgets.table.GDynamicColumnTableModel;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import generic.test.TestUtils;
-import generic.util.Path;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.script.*;
@@ -65,7 +66,6 @@ import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import util.CollectionUtils;
-import utilities.util.FileUtilities;
 
 public abstract class AbstractGhidraScriptMgrPluginTest
 		extends AbstractGhidraHeadedIntegrationTest {
@@ -125,7 +125,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		assertNotNull(scriptTable);
 
 		// this clears out the static map that accumulates values between tests
-		GhidraScriptUtil.clean();
+		GhidraScriptUtil.clearMetadata();
 		runSwing(() -> provider.refresh());
 
 		cleanupOldTestFiles();
@@ -171,13 +171,19 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		env.dispose();
 	}
 
+	static protected void wipe(Path path) throws IOException {
+		if (Files.exists(path)) {
+			for (Path p : (Iterable<Path>) Files.walk(path).sorted(
+				Comparator.reverseOrder())::iterator) {
+				Files.deleteIfExists(p);
+			}
+		}
+	}
+
 	protected void wipeUserScripts() throws IOException {
-		java.nio.file.Path userScriptDir =
-			java.nio.file.Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
-		Iterator<java.nio.file.Path> it = Files.list(userScriptDir).iterator();
-		while (it.hasNext()) {
-			Files.walk(it.next()).sorted(Comparator.reverseOrder()).map(
-				java.nio.file.Path::toFile).forEach(File::delete);
+		Path userScriptDir = java.nio.file.Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
+		for (Path p : (Iterable<Path>) Files.list(userScriptDir)::iterator) {
+			wipe(p);
 		}
 	}
 
@@ -220,13 +226,13 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected void assertScriptManagerKnowsAbout(ResourceFile script) {
-		assertTrue(GhidraScriptUtil.contains(script));
+		assertTrue(GhidraScriptUtil.containsMetadata(script));
 		assertNull(provider.getActionManager().get(script));
 	}
 
 	protected void assertScriptManagerForgotAbout(ResourceFile script) {
 
-		assertFalse(GhidraScriptUtil.contains(script));
+		assertFalse(GhidraScriptUtil.containsMetadata(script));
 		assertNull(provider.getActionManager().get(script));
 		assertNull(provider.getEditorMap().get(script));
 	}
@@ -965,25 +971,17 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	}
 
-	protected void addScriptPath(final File file) {
-		final PathManager pathManager = (PathManager) getInstanceField("pathManager", provider);
-		runSwing(() -> pathManager.addPath(new ResourceFile(file), true));
-	}
-
-	protected void cleanupOldTestFiles() {
-		// remove the 'bin' directory so that any scripts we use will be recompiled
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptBinDirectories();
-		for (ResourceFile file : dirs) {
-			FileUtilities.deleteDir(file.getFile(false));
-			file.mkdir();// recreate the file or the compiler will complain
-		}
+	protected void cleanupOldTestFiles() throws IOException {
+		// remove the compiled bundles directory so that any scripts we use will be recompiled
+		wipe(GhidraScriptUtil.getCompiledBundlesDir());
 
 		String myTestName = super.testName.getMethodName();
 
 		// destroy any NewScriptxxx files...and Temp ones too
-		PathManager pathManager = (PathManager) TestUtils.getInstanceField("pathManager", provider);
-		List<Path> paths = pathManager.getPaths();
-		for (Path path : paths) {
+		BundlePathManager pathManager =
+			(BundlePathManager) TestUtils.getInstanceField("bundlePathManager", provider);
+		List<BundlePath> paths = pathManager.getPaths();
+		for (BundlePath path : paths) {
 			File file = path.getPath().getFile(false);
 			File[] listFiles = file.listFiles();
 			if (listFiles == null) {
@@ -1034,7 +1032,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		waitForSwing();
 
 		int waitCount = 0;
-		while (!flag.ended && waitCount < 201) {
+		while (!flag.ended && waitCount < 301) {
 			try {
 				Thread.sleep(DEFAULT_WAIT_DELAY);
 			}

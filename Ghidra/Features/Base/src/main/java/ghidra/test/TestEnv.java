@@ -35,6 +35,7 @@ import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
+import ghidra.app.script.GhidraScript;
 import ghidra.app.script.JavaScriptProvider;
 import ghidra.app.services.ProgramManager;
 import ghidra.base.project.GhidraProject;
@@ -550,15 +551,18 @@ public class TestEnv {
 	}
 
 	public ScriptTaskListener runScript(File script) throws PluginException {
-
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
 		PrintWriter writer = new PrintWriter(System.out);
 		ResourceFile resourceFile = new ResourceFile(script);
-		Boolean result = (Boolean) AbstractGenericTest.invokeInstanceMethod("compile",
-			scriptProvider, new Class<?>[] { ResourceFile.class, PrintWriter.class },
-			new Object[] { resourceFile, writer });
-
-		if (!result) {
+		GhidraScript scr=null;
+		try {
+			scr=scriptProvider.getScriptInstance(resourceFile, writer);
+		}
+		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+			
+		}
+		if (scr==null) {
 			writer.flush();
 			throw new RuntimeException("Failed to compile script " + script.getAbsolutePath());
 		}
@@ -881,7 +885,7 @@ public class TestEnv {
 
 			Project project = frontEndToolInstance.getProject();
 			ToolServices toolServices = project.getToolServices();
-			PluginTool newTool = (PluginTool) toolServices.launchTool(toolName, null);
+			PluginTool newTool = toolServices.launchTool(toolName, null);
 			if (newTool == null) {
 				// couldn't find the tool in the workspace...check the test area
 				newTool = launchDefaultToolByName(toolName);

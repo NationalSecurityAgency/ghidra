@@ -150,9 +150,12 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		// remove all class files from the user script bin dir
 		File userScriptsBinDir =
 			SourceBundleInfo.getBindirFromScriptFile(new ResourceFile(newScriptFile)).toFile();
-		File[] userScriptBinDirFiles = userScriptsBinDir.listFiles(classFileFilter);
-		for (File file : userScriptBinDirFiles) {
-			file.delete();
+		File[] userScriptBinDirFiles;
+		if (userScriptsBinDir.exists()) {
+			userScriptBinDirFiles = userScriptsBinDir.listFiles(classFileFilter);
+			for (File file : userScriptBinDirFiles) {
+				file.delete();
+			}
 		}
 		userScriptBinDirFiles = userScriptsDir.listFiles(classFileFilter);
 		isEmpty = userScriptBinDirFiles == null || userScriptBinDirFiles.length == 0;
@@ -213,7 +216,7 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		FileUtilities.deleteDir(tempScriptDir);
 		tempScriptDir.mkdir();
 
-		addScriptPath(tempScriptDir);
+		provider.enableScriptDirectory(new ResourceFile(tempScriptDir));
 
 		// create a script file in that directory
 		String rawScriptName = testName.getMethodName();
