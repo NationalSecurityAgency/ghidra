@@ -353,7 +353,7 @@ class GhidraScriptActionManager {
 		scriptDirsAction = new DockingAction("Script Directories", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				provider.pickPaths();
+				provider.showBundlePathSelectionDialog();
 			}
 
 			@Override

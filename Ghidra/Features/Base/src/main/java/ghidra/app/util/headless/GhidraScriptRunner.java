@@ -19,8 +19,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import docking.widgets.bundlemanager.BundlePath;
 import generic.jar.ResourceFile;
-import generic.util.Path;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.app.script.*;
@@ -192,16 +192,16 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 	 * Gather paths where scripts may be found.
 	 */
 	private void initializeScriptPaths() {
-		List<Path> paths;
+		List<BundlePath> paths;
 		if (scriptPaths == null || scriptPaths.isEmpty()) {
-			paths = GhidraScriptUtil.getDefaultScriptDirectories();
+			paths = GhidraScriptUtil.getDefaultScriptBundles();
 		}
 		else {
-			paths = new ArrayList<Path>();
+			paths = new ArrayList<>();
 			for (String path : scriptPaths) {
-				paths.add(new Path(path, true, false, true));
+				paths.add(new BundlePath(path, true, false, true));
 			}
-			for (Path path : GhidraScriptUtil.getDefaultScriptDirectories()) {
+			for (BundlePath path : GhidraScriptUtil.getDefaultScriptBundles()) {
 				if (path.isEnabled() && !paths.contains(path)) {
 					paths.add(path);
 				}

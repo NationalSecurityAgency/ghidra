@@ -130,7 +130,7 @@ public class BundleCompiler {
 				if (compilationUnits.remove(sf)) {
 					writer.printf("skipping %s\n", sf.toString());
 					// if it's a script, mark it for having compile errors
-					if (GhidraScriptUtil.contains(rf)) {
+					if (GhidraScriptUtil.containsMetadata(rf)) {
 						ScriptInfo info = GhidraScriptUtil.getScriptInfo(rf);
 						info.setCompileErrors(true);
 					}
@@ -140,7 +140,7 @@ public class BundleCompiler {
 		// mark the successful compilations
 		for (ResourceFileJavaFileObject sf : compilationUnits) {
 			ResourceFile rf = sf.getFile();
-			if (GhidraScriptUtil.contains(rf)) {
+			if (GhidraScriptUtil.containsMetadata(rf)) {
 				ScriptInfo info = GhidraScriptUtil.getScriptInfo(rf);
 				info.setCompileErrors(false);
 			}
@@ -158,7 +158,7 @@ public class BundleCompiler {
 		Analyzer analyzer = new Analyzer();
 		analyzer.setJar(new Jar(bindir.toFile())); // give bnd the contents
 		Stream<Object> bjars =
-			Files.list(bh.getCompiledBundlesDir()).filter(f -> f.toString().endsWith(".jar")).map(
+			Files.list(GhidraScriptUtil.getCompiledBundlesDir()).filter(f -> f.toString().endsWith(".jar")).map(
 				f -> {
 					try {
 						return new Jar(f.toFile());

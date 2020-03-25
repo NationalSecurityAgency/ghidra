@@ -20,6 +20,7 @@ import java.net.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import docking.widgets.bundlemanager.BundlePath;
 import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import generic.util.Path;
@@ -660,16 +661,16 @@ public class HeadlessAnalyzer {
 	 */
 	private void initializeScriptPaths() {
 
-		List<Path> paths;
+		List<BundlePath> paths;
 		if (options.scriptPaths == null || options.scriptPaths.isEmpty()) {
-			paths = GhidraScriptUtil.getDefaultScriptDirectories();
+			paths = GhidraScriptUtil.getDefaultScriptBundles();
 		}
 		else {
 			paths = new ArrayList<>();
 			for (String path : options.scriptPaths) {
-				paths.add(new Path(path, true, false, true));
+				paths.add(new BundlePath(path, true, false, true));
 			}
-			for (Path path : GhidraScriptUtil.getDefaultScriptDirectories()) {
+			for (BundlePath path : GhidraScriptUtil.getDefaultScriptBundles()) {
 				if (path.isEnabled() && !paths.contains(path)) {
 					paths.add(path);
 				}

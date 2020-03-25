@@ -600,7 +600,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		}
 
-		provider.checkNewScriptDirectoryEnablement(saveAsFile);
+		provider.enableScriptDirectory(saveAsFile.getParentFile());
 
 		try {
 			String str = textArea.getText();

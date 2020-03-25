@@ -35,7 +35,7 @@ public class SourceBundleInfo {
 		bundle_host = bundleHost;
 		this.sourceDir = sourceDir;
 		this.symbolicName = BundleHost.getSymbolicNameFromSourceDir(sourceDir);
-		this.binDir = BundleHost.getCompiledBundlesDir().resolve(symbolicName);
+		this.binDir = GhidraScriptUtil.getCompiledBundlesDir().resolve(symbolicName);
 
 		this.bundleLoc = "reference:file://" + getBinDir().toAbsolutePath().normalize().toString();
 
@@ -44,7 +44,7 @@ public class SourceBundleInfo {
 	static public Path getBindirFromScriptFile(ResourceFile sourceFile) {
 		ResourceFile tmpSourceDir = sourceFile.getParentFile();
 		String tmpSymbolicName = BundleHost.getSymbolicNameFromSourceDir(tmpSourceDir);
-		return BundleHost.getCompiledBundlesDir().resolve(tmpSymbolicName);
+		return GhidraScriptUtil.getCompiledBundlesDir().resolve(tmpSymbolicName);
 	}
 
 	public String classNameForScript(ResourceFile sourceFile) {

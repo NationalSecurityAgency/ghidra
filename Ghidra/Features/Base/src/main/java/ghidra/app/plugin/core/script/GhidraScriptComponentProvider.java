@@ -33,9 +33,7 @@ import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.OptionDialog;
-import docking.widgets.filechooser.GhidraFileChooserMode;
-import docking.widgets.pathmanager.PathManager;
-import docking.widgets.pathmanager.PathManagerListener;
+import docking.widgets.bundlemanager.*;
 import docking.widgets.table.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
@@ -47,10 +45,10 @@ import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import resources.ResourceManager;
@@ -72,7 +70,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private GTree scriptCategoryTree;
 	private DraggableScriptTable scriptTable;
 	private GhidraScriptTableModel tableModel;
-	private PathManager pathManager;
+	private BundlePathManager bundlePathManager;
 	private TaskListener taskListener = new ScriptTaskListener();
 	private GhidraScriptActionManager actionManager;
 	private GhidraTableFilterPanel<ResourceFile> tableFilterPanel;
@@ -120,7 +118,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		scriptTable.dispose();
 		tableFilterPanel.dispose();
 		actionManager.dispose();
-		pathManager.dispose();
+		bundlePathManager.dispose();
 	}
 
 	GhidraScriptActionManager getActionManager() {
@@ -131,8 +129,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return editorMap;
 	}
 
-	void pickPaths() {
-		PickPathsDialog pd = new PickPathsDialog(getComponent(), pathManager);
+	void showBundlePathSelectionDialog() {
+		BundlePathSelectionDialog pd =
+			new BundlePathSelectionDialog(getComponent(), bundlePathManager);
 		pd.setHelpLocation(actionManager.getPathHelpLocation());
 		pd.show();
 		if (pd.hasChanged()) {
@@ -149,9 +148,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void performRefresh() {
-
-		GhidraScriptUtil.setScriptDirectories(pathManager.getPaths());
-		GhidraScriptUtil.clean();
+		GhidraScriptUtil.setScriptDirectories(bundlePathManager.getPaths());
+		GhidraScriptUtil.clearMetadata();
 		refresh();
 	}
 
@@ -207,7 +205,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		checkNewScriptDirectoryEnablement(renameFile);
+		enableScriptDirectory(renameFile.getParentFile());
 
 		renameScriptByCopying(script, provider, renameFile);
 	}
@@ -354,15 +352,15 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public List<Path> getScriptDirectories() {
-		return pathManager.getPaths();
+	public List<BundlePath> getScriptDirectories() {
+		return bundlePathManager.getPaths();
 	}
 
-	public void checkNewScriptDirectoryEnablement(ResourceFile scriptFile) {
-		if (pathManager.addPath(scriptFile.getParentFile(), true)) {
+	public void enableScriptDirectory(ResourceFile scriptDir) {
+		if (bundlePathManager.enablePath(scriptDir)) {
 			Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
-				"The directory containing the new script has been automatically enabled for use:\n" +
-					scriptFile.getParentFile().getAbsolutePath());
+				"The directory has been automatically enabled for use:\n" +
+					scriptDir.getAbsolutePath());
 		}
 	}
 
@@ -386,7 +384,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 			newFile = dialog.getFile();
 
-			checkNewScriptDirectoryEnablement(newFile);
+			enableScriptDirectory(newFile.getParentFile());
 
 			String category = StringUtils.join(getSelectedCategoryPath(), ScriptInfo.DELIMITTER);
 			provider.createNewScript(newFile, category);
@@ -410,7 +408,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(String scriptName, TaskListener listener) {
-		List<Path> dirPaths = pathManager.getPaths();
+		List<BundlePath> dirPaths = bundlePathManager.getPaths();
 		for (Path dir : dirPaths) {
 			ResourceFile scriptSource = new ResourceFile(dir.getPath(), scriptName);
 			if (scriptSource.exists()) {
@@ -427,7 +425,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	void runScript(ResourceFile scriptFile, TaskListener listener) {
 		if (SystemUtilities.isEventDispatchThread()) {
-			new TaskLauncher(new Task("compiling script", true, true, true, true) {
+			new TaskLauncher(new Task("compiling script directory", true, false, true, true) {
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
 					doRunScript(scriptFile, listener);
@@ -532,7 +530,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void refresh() {
-
 		hasBeenRefreshed = true;
 
 		TreePath preRefreshSelectionPath = scriptCategoryTree.getSelectionPath();
@@ -550,13 +547,14 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void updateAvailableScriptFilesForAllPaths() {
-
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		List<Path> dirPaths = pathManager.getPaths();
-		for (Path dirPath : dirPaths) {
-			updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator,
-				dirPath.getPath());
+		List<BundlePath> bundlePaths = bundlePathManager.getPaths();
+		for (BundlePath bundlePath : bundlePaths) {
+			if (bundlePath.isDirectory()) {
+				updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator,
+					bundlePath.getPath());
+			}
 		}
 
 		// note: do this after the loop to prevent a flurry of table model update events
@@ -719,7 +717,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 
 		actionManager.removeAction(script);
-		GhidraScriptUtil.unloadScript(script);
+		GhidraScriptUtil.removeMetadata(script);
 		return true;
 	}
 
@@ -747,13 +745,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void build() {
-		pathManager = new PathManager(GhidraScriptUtil.getDefaultScriptDirectories(), true, false);
-		pathManager.setFileChooserProperties("Select Script Directory", "LastGhidraScriptDirectory",
-			GhidraFileChooserMode.DIRECTORIES_ONLY, false, null);
+		bundlePathManager = new BundlePathManager(GhidraScriptUtil.getDefaultScriptBundles());
+		bundlePathManager.setFileChooserProperties("Select Script Bundle",
+			"LastGhidraScriptBundle");
 
-		pathManager.addListener(new PathManagerListener() {
+		bundlePathManager.addListener(new BundlePathManagerListener() {
 			@Override
-			public void pathsChanged() {
+			public void bundlesChanged() {
 				if (isVisible()) { // we will be refreshed when first shown
 					performRefresh();
 				}
@@ -795,9 +793,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 		});
 
-		scriptCategoryTree.getSelectionModel()
-				.setSelectionMode(
-					TreeSelectionModel.SINGLE_TREE_SELECTION);
+		scriptCategoryTree.getSelectionModel().setSelectionMode(
+			TreeSelectionModel.SINGLE_TREE_SELECTION);
 
 		tableModel = new GhidraScriptTableModel(this);
 
@@ -1031,10 +1028,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public void readConfigState(SaveState saveState) {
-		pathManager.restoreState(saveState);
+		bundlePathManager.restoreState(saveState);
 
 		// pull in the just-loaded paths
-		List<Path> paths = pathManager.getPaths();
+		List<BundlePath> paths = bundlePathManager.getPaths();
 		GhidraScriptUtil.setScriptDirectories(paths);
 		actionManager.restoreUserDefinedKeybindings(saveState);
 		actionManager.restoreScriptsThatAreInTool(saveState);
@@ -1058,7 +1055,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public void writeConfigState(SaveState saveState) {
-		pathManager.saveState(saveState);
+		bundlePathManager.saveState(saveState);
 		actionManager.saveUserDefinedKeybindings(saveState);
 		actionManager.saveScriptsThatAreInTool(saveState);
 

@@ -22,32 +22,17 @@ import org.osgi.framework.Bundle;
 
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
 import ghidra.app.script.osgi.*;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
-	// XXX embedded OSGi should be a service
-	BundleHost _bundle_host;
-
-	private BundleHost getBundleHost() {
-		if (_bundle_host == null) {
-			_bundle_host = new BundleHost();
-			try {
-				_bundle_host.startFelix();
-			}
-			catch (OSGiException | IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return _bundle_host;
-	}
-
-	public SourceBundleInfo getBundleInfoForScript(ResourceFile sourceFile) {
-		ResourceFile sourceDir = getSourceDirectoryForScript(sourceFile);
+	public SourceBundleInfo getBundleInfoForSource(ResourceFile sourceFile) {
+		ResourceFile sourceDir = getSourceDirectoryContaining(sourceFile);
 		if (sourceDir == null) {
 			return null;
 		}
-		return getBundleHost().getSourceBundleInfo(sourceDir);
+		return GhidraScriptMgrPlugin.getBundleHost().getSourceBundleInfo(sourceDir);
 	}
 
 	@Override
@@ -62,10 +47,10 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 	@Override
 	public boolean deleteScript(ResourceFile sourceFile) {
-		Bundle b = getBundleInfoForScript(sourceFile).getBundle();
+		Bundle b = getBundleInfoForSource(sourceFile).getBundle();
 		if (b != null) {
 			try {
-				getBundleHost().synchronousUninstall(b);
+				GhidraScriptMgrPlugin.getBundleHost().synchronousUninstall(b);
 			}
 			catch (GhidraBundleException | InterruptedException e) {
 				e.printStackTrace();
@@ -80,83 +65,9 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
-		if (writer == null) {
-			writer = new NullPrintWriter();
-		}
-
 		try {
-
-			SourceBundleInfo bi = getBundleInfoForScript(sourceFile);
-
-			bi.updateFromFilesystem(writer);
-
-			// needsCompile => needsBundleActivate
-			boolean needsCompile = false;
-			boolean needsBundleActivate = false;
-
-			int failing = bi.getFailingSourcesCount();
-			int newSourcecount = bi.getNewSourcesCount();
-
-			long lastBundleActivation = 0; // XXX record last bundle activation in pathmanager
-			if (failing > 0 && (lastBundleActivation > bi.getLastCompileAttempt())) {
-				needsCompile = true;
-			}
-
-			if (newSourcecount == 0) {
-				if (failing > 0) {
-					writer.printf(
-						"%s hasn't changed, with %d file%s failing in previous build(s):\n",
-						bi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
-					writer.printf("%s\n", bi.getPreviousBuildErrors());
-				}
-				if (bi.newManifestFile()) {
-					needsCompile = true;
-				}
-			}
-			else {
-				needsCompile = true;
-			}
-
-			needsBundleActivate |= needsCompile;
-
-			BundleHost bundle_host = getBundleHost();
-			if (needsBundleActivate) {
-				writer.printf("%s has %d new/updated %d failed in previous build(s)%s\n",
-					bi.getSourceDir().toString(), newSourcecount, failing,
-					bi.newManifestFile() ? " and the manifest is new" : "");
-
-				// if there a bundle is currently active, uninstall it
-				Bundle b = bi.getBundle();
-				if (b != null) {
-					bundle_host.synchronousUninstall(b);
-				}
-
-				// once we've committed to recompile and regenerate generated classes, delete the old stuff
-				if (needsCompile) {
-					bi.deleteOldBinaries();
-
-					BundleCompiler bc = new BundleCompiler(bundle_host);
-
-					long startTime = System.nanoTime();
-					bc.compileToExplodedBundle(bi, writer);
-					long endTime = System.nanoTime();
-					writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
-				}
-			}
-			// as much source as possible built, install bundle and start it if necessary
-			Bundle b = bi.getBundle();
-			if (b == null) {
-				b = bi.install();
-				needsBundleActivate = true;
-			}
-
-			if (needsBundleActivate) {
-				bundle_host.synchronousStart(b);
-			}
-
-			String classname = bi.classNameForScript(sourceFile);
+			Class<?> clazz = loadClass(sourceFile, writer);
 			Object object;
-			Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
 			object = clazz.getDeclaredConstructor().newInstance();
 
 			if (object instanceof GhidraScript) {
@@ -169,33 +80,94 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			writer.println(message);
 			Msg.error(this, message);
 			return null; // class is not GhidraScript
+
 		}
-		catch (NoSuchMethodException | IOException | IllegalArgumentException
-				| InvocationTargetException | SecurityException | InterruptedException
-				| OSGiException e) {
-			// XXX getScriptInstance only distinguishes exception to print one of three messages.
+		catch (OSGiException | IOException | InterruptedException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new ClassNotFoundException("", e);
 		}
 	}
 
-	/**
-	 * Gets the class file corresponding to the given source file and class name. If the class is in a package, the
-	 * class name should include the full package name.
-	 * 
-	 * @param sourceFile The class's source file.
-	 * @param className  The class's name (including package if applicable).
-	 * @return The class file corresponding to the given source file and class name.
-	 */
-	@Deprecated
-	protected File getClassFile(ResourceFile sourceFile, String className) {
-		ResourceFile resourceFile =
-			GhidraScriptUtil.getClassFileByResourceFile(sourceFile, className);
+	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer)
+			throws IOException, OSGiException, ClassNotFoundException, InterruptedException {
 
-		File file = resourceFile.getFile(false);
-		return file;
+		if (writer == null) {
+			writer = new NullPrintWriter();
+		}
+
+		SourceBundleInfo bi = getBundleInfoForSource(sourceFile);
+
+		bi.updateFromFilesystem(writer);
+
+		// needsCompile => needsBundleActivate
+		boolean needsCompile = false;
+		boolean needsBundleActivate = false;
+
+		int failing = bi.getFailingSourcesCount();
+		int newSourcecount = bi.getNewSourcesCount();
+
+		long lastBundleActivation = 0; // XXX record last bundle activation in pathmanager
+		if (failing > 0 && (lastBundleActivation > bi.getLastCompileAttempt())) {
+			needsCompile = true;
+		}
+
+		if (newSourcecount == 0) {
+			if (failing > 0) {
+				writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
+					bi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
+				writer.printf("%s\n", bi.getPreviousBuildErrors());
+			}
+			if (bi.newManifestFile()) {
+				needsCompile = true;
+			}
+		}
+		else {
+			needsCompile = true;
+		}
+
+		needsBundleActivate |= needsCompile;
+
+		BundleHost bundle_host = GhidraScriptMgrPlugin.getBundleHost();
+		if (needsBundleActivate) {
+			writer.printf("%s has %d new/updated %d failed in previous build(s)%s\n",
+				bi.getSourceDir().toString(), newSourcecount, failing,
+				bi.newManifestFile() ? " and the manifest is new" : "");
+
+			// if there a bundle is currently active, uninstall it
+			Bundle b = bi.getBundle();
+			if (b != null) {
+				bundle_host.synchronousUninstall(b);
+			}
+
+			// once we've committed to recompile and regenerate generated classes, delete the old stuff
+			if (needsCompile) {
+				bi.deleteOldBinaries();
+
+				BundleCompiler bc = new BundleCompiler(bundle_host);
+
+				long startTime = System.nanoTime();
+				bc.compileToExplodedBundle(bi, writer);
+				long endTime = System.nanoTime();
+				writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
+			}
+		}
+		// as much source as possible built, install bundle and start it if necessary
+		Bundle b = bi.getBundle();
+		if (b == null) {
+			b = bi.install();
+			needsBundleActivate = true;
+		}
+
+		if (needsBundleActivate) {
+			bundle_host.synchronousStart(b);
+		}
+
+		String classname = bi.classNameForScript(sourceFile);
+		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
+		return clazz;
 	}
-
-	public static ResourceFile getSourceDirectoryForScript(ResourceFile sourceFile) {
+	
+	public static ResourceFile getSourceDirectoryContaining(ResourceFile sourceFile) {
 		String sourcePath = sourceFile.getAbsolutePath();
 		for (ResourceFile sourceDir : GhidraScriptUtil.getScriptSourceDirectories()) {
 			if (sourcePath.startsWith(sourceDir.getAbsolutePath())) {
@@ -243,31 +215,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	@Override
 	public String getCommentCharacter() {
 		return "//";
-	}
-
-	/**
-	 * compile sourcefile and test that the corresponding class is loadable.
-	 * 
-	 * @param sourceFile path to Java source file
-	 * @param writer for messages to user
-	 * @return true if compilation succeeded and script can be loaded
-	 * @deprecated compilation of a single script doesn't make sense anymore, directories are compiled to bundles.
-	 * 
-	 */
-	@Deprecated
-	protected boolean compile(ResourceFile sourceFile, final PrintWriter writer) {
-		try {
-			return getScriptInstance(sourceFile, writer) != null;
-		}
-		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	@Deprecated
-	protected boolean needsCompile(ResourceFile sourceFile, File classFile) {
-		return true;
 	}
 
 }

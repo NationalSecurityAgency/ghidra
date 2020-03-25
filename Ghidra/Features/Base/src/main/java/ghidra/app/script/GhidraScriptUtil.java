@@ -16,12 +16,15 @@
 package ghidra.app.script;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.map.LazyMap;
 
+import docking.widgets.bundlemanager.BundlePath;
 import generic.jar.ResourceFile;
-import generic.util.Path;
 import ghidra.app.script.osgi.SourceBundleInfo;
 import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
@@ -46,19 +49,7 @@ public class GhidraScriptUtil {
 	 */
 	public static String USER_SCRIPTS_DIR = buildUserScriptsDirectory();
 
-	/**
-	 * The default compile output directory
-	 */
-	//@formatter:off
-	@Deprecated
-	public static String USER_SCRIPTS_BIN_DIR = 
-							 Application.getUserSettingsDirectory() + File.separator +
-							 "dev" + File.separator + 
-							 SCRIPTS_SUBDIR_NAME + File.separator +  
-							 BIN_DIR_NAME;
-	//@formatter:on
-
-	private static List<Path> scriptDirectoryPaths = new ArrayList<>();
+	private static List<BundlePath> scriptBundlePaths = new ArrayList<>();
 
 	private static Map<ResourceFile, ScriptInfo> scriptFileToInfoMap = new HashMap<>();
 
@@ -66,7 +57,7 @@ public class GhidraScriptUtil {
 		LazyMap.lazyMap(new HashMap<String, List<ResourceFile>>(), () -> new ArrayList<>());
 
 	static {
-		scriptDirectoryPaths = getDefaultScriptDirectories();
+		scriptBundlePaths = getDefaultScriptBundles();
 	}
 
 	/** The last time a request was made to refresh */
@@ -106,9 +97,9 @@ public class GhidraScriptUtil {
 	 * Returns a list of the default script directories.
 	 * @return a list of the default script directories
 	 */
-	public static List<Path> getDefaultScriptDirectories() {
+	public static List<BundlePath> getDefaultScriptBundles() {
 
-		List<Path> pathsList = new ArrayList<>();
+		List<BundlePath> pathsList = new ArrayList<>();
 
 		addScriptPaths(pathsList, SCRIPTS_SUBDIR_NAME);
 		addScriptPaths(pathsList, DEV_SCRIPTS_SUBDIR_NAME);
@@ -116,14 +107,14 @@ public class GhidraScriptUtil {
 		Collections.sort(pathsList);
 
 		// this one should always be first
-		pathsList.add(0, new Path(new ResourceFile(USER_SCRIPTS_DIR), true, false, false));
+		pathsList.add(0, new BundlePath(new ResourceFile(USER_SCRIPTS_DIR), true, false, false));
 		return pathsList;
 	}
 
-	private static void addScriptPaths(List<Path> pathsList, String directoryName) {
+	private static void addScriptPaths(List<BundlePath> pathsList, String directoryName) {
 		Iterable<ResourceFile> files = Application.findModuleSubDirectories(directoryName);
 		for (ResourceFile file : files) {
-			pathsList.add(new Path(file, true, false, true));
+			pathsList.add(new BundlePath(file, true, false, true));
 		}
 	}
 
@@ -170,7 +161,7 @@ public class GhidraScriptUtil {
 	 */
 	public static List<ResourceFile> getScriptSourceDirectories() {
 		ArrayList<ResourceFile> dirs = new ArrayList<>();
-		for (Path path : scriptDirectoryPaths) {
+		for (BundlePath path : scriptBundlePaths) {
 			dirs.add(path.getPath());
 		}
 		return dirs;
@@ -180,8 +171,8 @@ public class GhidraScriptUtil {
 	 * Sets the script directories to the new paths.
 	 * @param newPaths the new script directories
 	 */
-	public static void setScriptDirectories(List<Path> newPaths) {
-		scriptDirectoryPaths = new ArrayList<>(newPaths);
+	public static void setScriptDirectories(List<BundlePath> newPaths) {
+		scriptBundlePaths = new ArrayList<>(newPaths);
 	}
 
 	/**
@@ -189,9 +180,9 @@ public class GhidraScriptUtil {
 	 * @param directory the directory
 	 * @return the path for the specified directory
 	 */
-	public static Path getScriptPath(ResourceFile directory) {
+	public static BundlePath getScriptPath(ResourceFile directory) {
 		if (directory.isDirectory()) {
-			for (Path path : scriptDirectoryPaths) {
+			for (BundlePath path : scriptBundlePaths) {
 				if (path.getPath().equals(directory)) {
 					return path;
 				}
@@ -210,143 +201,13 @@ public class GhidraScriptUtil {
 		return new ResourceFile(SourceBundleInfo.getBindirFromScriptFile(scriptFile).toFile());
 	}
 
-	@Deprecated
-	static ResourceFile getClassFile(ResourceFile sourceFile, String rawName) {
-		if (sourceFile != null) {
-			// prefer resource files when they exist, as we know exactly which file we want to load
-			return GhidraScriptUtil.getClassFileByResourceFile(sourceFile, rawName);
-		}
-
-		return getClassFileByName(rawName);
+	public static Path getOsgiDir() {
+		Path usersettings = Application.getUserSettingsDirectory().toPath();
+		return usersettings.resolve("osgi");
 	}
 
-	/**
-	 * Uses the given {@link ResourceFile} to find its class file.  This method is needed
-	 * due to the fact that we sometimes can find a class file in more than one location, 
-	 * such as when using an installation version of Ghidra in the same environment as 
-	 * a development version of Ghidra.  We get better debugging when we use the class file
-	 * that is associated with the given source file.
-	 * 
-	 * @param sourceFile the source file for which to find the generated class file.
-	 * @param rawName the name of the class, without file extension or path info.
-	 * @return the class file generated from the given source file.
-	 * 
-	 * @deprecated the bundle class loader will take care of this, no classpath pollution
-	 */
-	@Deprecated
-	static ResourceFile getClassFileByResourceFile(ResourceFile sourceFile, String rawName) {
-		String javaAbsolutePath = sourceFile.getAbsolutePath();
-		String classAbsolutePath = javaAbsolutePath.replace(".java", ".class");
-
-		String path = rawName.replace('.', '/');
-		String className = path + ".class";
-
-		ResourceFile classFile =
-			findClassFile(getDevelopmentScriptBinDirectories(), classAbsolutePath, className);
-		if (classFile != null) {
-			Msg.trace(GhidraScriptUtil.class,
-				"Resource file " + sourceFile + " class found at " + classFile);
-			return classFile;
-		}
-
-		ResourceFile defaultCompilerDirectory = getScriptCompileOutputDirectory(sourceFile);
-		classFile =
-			new ResourceFile(new File(defaultCompilerDirectory.getAbsolutePath(), className));
-		if (classFile.exists()) {
-			// This should always exist when we compile the script ourselves
-			Msg.trace(GhidraScriptUtil.class,
-				"Resource file " + sourceFile + " class found at " + classFile);
-			return classFile;
-		}
-
-		classFile = findClassFile(getScriptBinDirectories(), classAbsolutePath, className);
-		if (classFile != null) {
-			Msg.trace(GhidraScriptUtil.class,
-				"Resource file " + sourceFile + " class found at " + classFile);
-			return classFile;
-		}
-
-		// default to a non-existent file
-		return new ResourceFile(GhidraScriptUtil.getScriptCompileOutputDirectory(sourceFile), className);
-	}
-
-	private static ResourceFile getClassFileByName(String rawName) {
-		String path = rawName.replace('.', '/');
-		String className = path + ".class";
-
-		//
-		// Note: in this case, we *only* want to search the script bin dirs, as we do not want
-		//       to find other class elements that may be in the development environment.  For 
-		//       example, we do not want to find non-script classes in the development bin dirs, 
-		//       as those are loaded by our parent class loader.  If we load them, then they will
-		//       not be the same class instances.
-		//
-		Set<ResourceFile> matchingClassFiles = new HashSet<>();
-		Collection<ResourceFile> userBinDirectories = GhidraScriptUtil.getScriptBinDirectories();
-		for (ResourceFile file : userBinDirectories) {
-			ResourceFile testFile = new ResourceFile(file, className);
-			if (testFile.exists()) {
-				matchingClassFiles.add(testFile);
-			}
-		}
-
-		return maybeWarnAboutNameConflict(className, matchingClassFiles);
-	}
-
-	private static ResourceFile findClassFile(Collection<ResourceFile> binDirs,
-			String classAbsolutePath, String className) {
-
-		Set<ResourceFile> matchingClassFiles = new HashSet<>();
-		for (ResourceFile binDir : binDirs) {
-			ResourceFile binParentFile = binDir.getParentFile();
-			String absoluteParentPath = binParentFile.getAbsolutePath();
-			if (classAbsolutePath.startsWith(absoluteParentPath)) {
-				ResourceFile potentialFile = new ResourceFile(binDir, className);
-				if (potentialFile.exists()) {
-					matchingClassFiles.add(potentialFile);
-				}
-			}
-		}
-
-		return maybeWarnAboutNameConflict(className, matchingClassFiles);
-	}
-
-	private static ResourceFile maybeWarnAboutNameConflict(String className,
-			Set<ResourceFile> matchingClassFiles) {
-		int matchCount = matchingClassFiles.size();
-		if (matchCount == 1) {
-			return matchingClassFiles.iterator().next();
-		}
-		else if (matchCount > 1) {
-
-			//
-			// Unusual Code: When running from Eclipse we need to use the class file that is
-			//               in the Eclipse project's bin.  If not, then users cannot debug
-			//               the scripts, as Eclipse doesn't know how to find the source.  This
-			//               can happen when users link source into the scripts project.
-			//               We don't know if we are running from Eclipse, which means that this
-			//               will give out the wrong file in the case where we are not, but there
-			//               happen to be two different class files with the same name.  
-			//
-			ResourceFile preferredFile = null;
-			for (ResourceFile file : matchingClassFiles) {
-				if (file.getParentFile().getAbsolutePath().equals(
-					GhidraScriptUtil.USER_SCRIPTS_BIN_DIR)) {
-					preferredFile = file;
-					break;
-				}
-			}
-
-			if (preferredFile == null) {
-				// just pick one
-				preferredFile = matchingClassFiles.iterator().next();
-			}
-
-			Msg.warn(GhidraScriptUtil.class, "Found " + matchCount + " class files named " +
-				className + ".  Using: " + preferredFile);
-			return preferredFile;
-		}
-		return null;
+	public static Path getCompiledBundlesDir() {
+		return getOsgiDir().resolve("compiled-bundles");
 	}
 
 	/**
@@ -354,10 +215,20 @@ public class GhidraScriptUtil {
 	 * @return the list
 	 * 
 	 * @see #getScriptCompileOutputDirectory(ResourceFile)
+	 * 
+	 * @deprecated class files shouldn't be accessed directly
 	 */
 	@Deprecated
 	public static List<ResourceFile> getScriptBinDirectories() {
-		return Collections.emptyList();
+		try {
+			return Files.list(getOsgiDir()).filter(Files::isDirectory).map(
+				x -> new ResourceFile(x.toFile())).collect(Collectors.toList());
+		}
+		catch (IOException e) {
+			Msg.showError(GhidraScriptUtil.class, null, "error",
+				"error listing user osgi directory", e);
+			return Collections.emptyList();
+		}
 	}
 
 	/**
@@ -373,7 +244,7 @@ public class GhidraScriptUtil {
 		}
 
 		Set<ResourceFile> dirs = new HashSet<>();
-		for (Path path : scriptDirectoryPaths) {
+		for (BundlePath path : scriptBundlePaths) {
 			//
 			// Assumed structure of script dir path:
 			//    /some/path/Ghidra/Features/Module/ghidra_scripts
@@ -389,18 +260,11 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Deletes all script class files.
+	 * clear ScriptInfo metadata cached by GhidraScriptUtil
 	 */
-	public static void clean() {
+	public static void clearMetadata() {
 		scriptFileToInfoMap.clear(); // clear our cache of old files
 		scriptNameToFilesMap.clear();
-
-		File userdir = new File(USER_SCRIPTS_DIR);
-		File[] classFiles = userdir.listFiles(
-			(FileFilter) pathname -> pathname.getName().toLowerCase().endsWith(".class"));
-		for (File classFile : classFiles) {
-			classFile.delete();
-		}
 	}
 
 	/**
@@ -425,7 +289,7 @@ public class GhidraScriptUtil {
 	 * @param scriptFile the script file
 	 * @return true if a ScriptInfo object exists
 	 */
-	public static boolean contains(ResourceFile scriptFile) {
+	public static boolean containsMetadata(ResourceFile scriptFile) {
 		return scriptFileToInfoMap.containsKey(scriptFile);
 	}
 
@@ -433,7 +297,7 @@ public class GhidraScriptUtil {
 	 * Removes the ScriptInfo object for the specified file
 	 * @param scriptFile the script file
 	 */
-	public static void unloadScript(ResourceFile scriptFile) {
+	public static void removeMetadata(ResourceFile scriptFile) {
 		scriptFileToInfoMap.remove(scriptFile);
 
 		Iterator<ResourceFile> iter = scriptNameToFilesMap.get(scriptFile.getName()).iterator();
@@ -543,14 +407,14 @@ public class GhidraScriptUtil {
 	 * @throws IOException if an i/o error occurs
 	 */
 	public static ResourceFile createNewScript(GhidraScriptProvider provider,
-			ResourceFile parentDirectory, List<Path> scriptDirectories) throws IOException {
+			ResourceFile parentDirectory, List<BundlePath> scriptDirectories) throws IOException {
 		String baseName = GhidraScriptConstants.DEFAULT_SCRIPT_NAME;
 		String extension = provider.getExtension();
 		return createNewScript(baseName, extension, parentDirectory, scriptDirectories);
 	}
 
 	private static ResourceFile createNewScript(String scriptName, String extension,
-			ResourceFile parentDirctory, List<Path> scriptDirectories) throws IOException {
+			ResourceFile parentDirctory, List<BundlePath> scriptDirectories) throws IOException {
 		String baseName = scriptName;
 		String className = baseName + extension;
 
@@ -571,15 +435,18 @@ public class GhidraScriptUtil {
 	}
 
 	/** Returns true if the given filename exists in any of the given directories */
-	private static ResourceFile findScriptFileInPaths(List<Path> scriptDirectories,
+	private static ResourceFile findScriptFileInPaths(List<BundlePath> scriptDirectories,
 			String filename) {
 
 		String validatedName = fixupName(filename);
 
-		for (Path path : scriptDirectories) {
-			ResourceFile file = new ResourceFile(path.getPath(), validatedName);
-			if (file.exists()) {
-				return file;
+		for (BundlePath path : scriptDirectories) {
+			ResourceFile resourceFile = path.getPath();
+			if (resourceFile.isDirectory()) {
+				ResourceFile file = new ResourceFile(resourceFile, validatedName);
+				if (file.exists()) {
+					return file;
+				}
 			}
 		}
 		return null;
@@ -626,7 +493,7 @@ public class GhidraScriptUtil {
 			return info;
 		}
 
-		ResourceFile file = findScriptFileInPaths(scriptDirectoryPaths, name);
+		ResourceFile file = findScriptFileInPaths(scriptBundlePaths, name);
 		if (file == null) {
 			return null;
 		}
@@ -636,7 +503,7 @@ public class GhidraScriptUtil {
 
 	public static List<ResourceFile> getAllScripts() {
 		List<ResourceFile> scriptList = new ArrayList<>();
-		for (Path dirPath : scriptDirectoryPaths) {
+		for (BundlePath dirPath : scriptBundlePaths) {
 			updateAvailableScriptFilesForDirectory(scriptList, dirPath.getPath());
 		}
 		return scriptList;
@@ -727,4 +594,5 @@ public class GhidraScriptUtil {
 			files.forEach(file -> scriptFileToInfoMap.get(file).setDuplicate(isDuplicate));
 		});
 	}
+
 }

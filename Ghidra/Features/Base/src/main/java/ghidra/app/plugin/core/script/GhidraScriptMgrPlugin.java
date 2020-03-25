@@ -26,6 +26,8 @@ import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.eclipse.EclipseConnection;
 import ghidra.app.plugin.core.eclipse.EclipseIntegrationOptionsPlugin;
 import ghidra.app.script.GhidraState;
+import ghidra.app.script.osgi.BundleHost;
+import ghidra.app.script.osgi.OSGiException;
 import ghidra.app.services.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.ToolOptions;
@@ -47,6 +49,22 @@ import ghidra.util.task.TaskListener;
 )
 //@formatter:on
 public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScriptService {
+
+	// XXX embedded OSGi should be a service, but ScriptProviders don't have any way to access services
+	static private BundleHost _bundle_host;
+
+	static public BundleHost getBundleHost() {
+		if (_bundle_host == null) {
+			_bundle_host = new BundleHost();
+			try {
+				_bundle_host.startFelix();
+			}
+			catch (OSGiException | IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return _bundle_host;
+	}
 
 	private GhidraScriptComponentProvider provider;
 

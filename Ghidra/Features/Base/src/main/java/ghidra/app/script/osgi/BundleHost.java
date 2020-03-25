@@ -36,7 +36,7 @@ import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
 import generic.jar.ResourceFile;
-import ghidra.framework.Application;
+import ghidra.app.script.GhidraScriptUtil;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -59,7 +59,7 @@ public class BundleHost {
 		return file2sbi.computeIfAbsent(sourceDir, sd -> new SourceBundleInfo(this, sd));
 	}
 
-	// XXX consumers should clean up after themselves
+	// XXX consumers must clean up after themselves
 	public void removeSourceBundleInfo(ResourceFile sourceDir) {
 		file2sbi.remove(sourceDir);
 	}
@@ -306,24 +306,15 @@ public class BundleHost {
 
 	}
 
-	static private Path getOsgiDir() {
-		Path usersettings = Application.getUserSettingsDirectory().toPath();
-		return usersettings.resolve("osgi");
-	}
-
 	private String makeCacheDir() throws IOException {
-		Path cache_dir = getOsgiDir().resolve("felixcache");
+		Path cache_dir = GhidraScriptUtil.getOsgiDir().resolve("felixcache");
 		Files.createDirectories(cache_dir);
 		return cache_dir.toAbsolutePath().toString();
 	}
 
 	/** comma separated list of directories watched for bundles by fileinstaller */
 	private String getWatchedBundleDirs() {
-		return getCompiledBundlesDir().toAbsolutePath().toString();
-	}
-
-	static public Path getCompiledBundlesDir() {
-		return getOsgiDir().resolve("compiled-bundles");
+		return GhidraScriptUtil.getCompiledBundlesDir().toAbsolutePath().toString();
 	}
 
 	public Bundle getBundle(String bundleLoc) {
@@ -434,6 +425,7 @@ public class BundleHost {
 		return false;
 	}
 
+	
 	public interface NewSourceCallback {
 		void found(ResourceFile source_file, Collection<Path> class_files) throws Throwable;
 	}

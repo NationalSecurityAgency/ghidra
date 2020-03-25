@@ -20,25 +20,25 @@ import javax.swing.JComponent;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.widgets.pathmanager.PathManager;
-import docking.widgets.pathmanager.PathManagerListener;
+import docking.widgets.bundlemanager.BundlePathManager;
+import docking.widgets.bundlemanager.BundlePathManagerListener;
 
-public class PickPathsDialog extends DialogComponentProvider implements PathManagerListener {
+public class BundlePathSelectionDialog extends DialogComponentProvider implements BundlePathManagerListener {
 	private JComponent parent;
-	private PathManager pathMgr;
+	private BundlePathManager bundlePathMgr;
 	private boolean changed = false;
 
-	public PickPathsDialog(JComponent parent, PathManager pathMgr) {
-		super("Script Directories");
+	public BundlePathSelectionDialog(JComponent parent, BundlePathManager bundleManager) {
+		super("Script Bundles");
 		this.parent = parent;
-		this.pathMgr = pathMgr;
-		pathMgr.addListener(this);
-		addWorkPanel(pathMgr.getComponent());
+		this.bundlePathMgr = bundleManager;
+		bundleManager.addListener(this);
+		addWorkPanel(bundleManager.getComponent());
 		addDismissButton();
 	}
 
-	PathManager getPathManager() {
-		return pathMgr;
+	BundlePathManager getBundleManager() {
+		return bundlePathMgr;
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class PickPathsDialog extends DialogComponentProvider implements PathMana
 	}
 
 	@Override
-	public void pathsChanged() {
+	public void bundlesChanged() {
 		changed = true;
 	}
 
@@ -61,7 +61,7 @@ public class PickPathsDialog extends DialogComponentProvider implements PathMana
 
 	@Override
 	protected void dismissCallback() {
-		pathMgr.removeListener(this);
+		bundlePathMgr.removeListener(this);
 		close();
 	}
 

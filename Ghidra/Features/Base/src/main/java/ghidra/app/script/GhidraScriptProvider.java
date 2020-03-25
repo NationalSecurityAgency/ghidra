@@ -62,7 +62,7 @@ public abstract class GhidraScriptProvider implements ExtensionPoint,
 	public boolean deleteScript(ResourceFile scriptSource) {
 		boolean deleted = !scriptSource.exists() || scriptSource.delete();
 		if (deleted) {
-			GhidraScriptUtil.unloadScript(scriptSource);
+			GhidraScriptUtil.removeMetadata(scriptSource);
 		}
 		return deleted;
 	}
