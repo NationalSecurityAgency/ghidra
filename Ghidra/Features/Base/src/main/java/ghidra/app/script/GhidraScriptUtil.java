@@ -162,7 +162,9 @@ public class GhidraScriptUtil {
 	public static List<ResourceFile> getScriptSourceDirectories() {
 		ArrayList<ResourceFile> dirs = new ArrayList<>();
 		for (BundlePath path : scriptBundlePaths) {
-			dirs.add(path.getPath());
+			if (path.isDirectory()) {
+				dirs.add(path.getPath());
+			}
 		}
 		return dirs;
 	}
