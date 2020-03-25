@@ -278,7 +278,7 @@ libdecomp.a:	$(LIBDECOMP_OPT_OBJS)
 	ar qc libdecomp.a $(LIBDECOMP_OPT_OBJS)
 	ranlib libdecomp.a
 
-sleighexamp_dir:
+sleighexamp_dir: slghscan.cc
 	rm -rf $(SLEIGHVERSION)
 	mkdir $(SLEIGHVERSION)
 	mkdir $(SLEIGHVERSION)/src $(SLEIGHVERSION)/specfiles
