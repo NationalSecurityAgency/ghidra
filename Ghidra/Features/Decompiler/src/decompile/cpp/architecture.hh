@@ -130,6 +130,7 @@ public:
   vector<AddrSpace *> inferPtrSpaces;	///< Set of address spaces in which a pointer constant is inferable
   int4 funcptr_align;		///< How many bits of alignment a function ptr has
   uint4 flowoptions;            ///< options passed to flow following engine
+  int4 alias_block_level;	///< Aliases blocked by 0=none, 1=struct, 2=array, 3=all
   vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
 
   Database *symboltab;		///< Memory map of global variables and functions

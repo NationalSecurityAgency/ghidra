@@ -246,7 +246,7 @@ class Heritage {
   void reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
   void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
   void guardInput(const Address &addr,int4 size,vector<Varnode *> &input);
-  void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,int4 size);
+  void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size);
   void guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);
   void guardStores(const Address &addr,int4 size,vector<Varnode *> &write);
   void guardLoads(uint4 flags,const Address &addr,int4 size,vector<Varnode *> &write);

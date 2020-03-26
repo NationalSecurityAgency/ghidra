@@ -1084,6 +1084,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
   if (rangemap == (EntryMap *)0) return;
   list<SymbolEntry>::iterator iter,enditer;
 
+  int4 alias_block_level = glb->alias_block_level;
   bool aliason = false;
   uintb curalias=0;
   int4 i=0;
@@ -1107,8 +1108,17 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 	aliason = false;
       if (!aliason)
 	symbol->getScope()->setAttribute(symbol,Varnode::nolocalalias);
-      if (symbol->isTypeLocked())
-	aliason = false;
+      if (symbol->isTypeLocked() && alias_block_level != 0) {
+	if (alias_block_level == 3)
+	  aliason = false;		// For this level, all locked data-types block aliases
+	else {
+	  type_metatype meta = symbol->getType()->getMetatype();
+	  if (meta == TYPE_STRUCT)
+	    aliason = false;		// Only structures block aliases
+	  else if (meta == TYPE_ARRAY && alias_block_level > 1)
+	    aliason = false;		// Only arrays (and structures) block aliases
+	}
+      }
     }
   }
 }

@@ -482,7 +482,7 @@ int4 ParamListStandard::characterizeAsParam(const Address &loc,int4 size) const
     const ParamEntry *testEntry = (*iterpair.first).getParamEntry();
     if (testEntry->getMinSize() <= size && testEntry->justifiedContain(loc, size)==0)
       return 1;
-    if (testEntry->containedBy(loc, size))
+    if (testEntry->isExclusion() && testEntry->containedBy(loc, size))
       res = 2;
     ++iterpair.first;
   }
@@ -490,7 +490,7 @@ int4 ParamListStandard::characterizeAsParam(const Address &loc,int4 size) const
     iterpair.second = resolver->find_end(loc.getOffset() + (size-1));
     while(iterpair.first != iterpair.second) {
       const ParamEntry *testEntry = (*iterpair.first).getParamEntry();
-      if (testEntry->containedBy(loc, size)) {
+      if (testEntry->isExclusion() && testEntry->containedBy(loc, size)) {
 	res = 2;
 	break;
       }
@@ -953,9 +953,12 @@ bool ParamListStandard::getBiggestContainedParam(const Address &loc,int4 size,Va
   ParamEntryResolver *resolver = resolverMap[index];
   if (resolver == (ParamEntryResolver *)0)
     return false;
+  Address endLoc = loc + (size-1);
+  if (endLoc.getOffset() < loc.getOffset())
+    return false;	// Assume there is no parameter if we see wrapping
   const ParamEntry *maxEntry = (const ParamEntry *)0;
   ParamEntryResolver::const_iterator iter = resolver->find_begin(loc.getOffset());
-  ParamEntryResolver::const_iterator enditer = resolver->find_end(loc.getOffset() + (size-1));
+  ParamEntryResolver::const_iterator enditer = resolver->find_end(endLoc.getOffset());
   while(iter != enditer) {
     const ParamEntry *testEntry = (*iter).getParamEntry();
     ++iter;
@@ -966,9 +969,9 @@ bool ParamListStandard::getBiggestContainedParam(const Address &loc,int4 size,Va
 	maxEntry = testEntry;
     }
   }
-  if (!maxEntry->isExclusion())
-    return false;
   if (maxEntry != (const ParamEntry *)0) {
+    if (!maxEntry->isExclusion())
+      return false;
     res.space = maxEntry->getSpace();
     res.offset = maxEntry->getBase();
     res.size = maxEntry->getSize();
