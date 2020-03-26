@@ -25,7 +25,6 @@ import org.apache.commons.collections4.map.LazyMap;
 
 import docking.widgets.bundlemanager.BundlePath;
 import generic.jar.ResourceFile;
-import ghidra.app.script.osgi.SourceBundleInfo;
 import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -193,16 +192,6 @@ public class GhidraScriptUtil {
 		return null;
 	}
 
-	/**
-	 * Returns the output directory to which the given script file's generated .class file should
-	 * be written
-	 * @param scriptFile the script file
-	 * @return the directory
-	 */
-	public static ResourceFile getScriptCompileOutputDirectory(ResourceFile scriptFile) {
-		return new ResourceFile(SourceBundleInfo.getBindirFromScriptFile(scriptFile).toFile());
-	}
-
 	public static Path getOsgiDir() {
 		Path usersettings = Application.getUserSettingsDirectory().toPath();
 		return usersettings.resolve("osgi");
@@ -213,15 +202,13 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Returns the list of directories to which scripts are compiled.
+	 * Returns the list of exploded bundle directories
 	 * @return the list
 	 * 
-	 * @see #getScriptCompileOutputDirectory(ResourceFile)
-	 * 
-	 * @deprecated class files shouldn't be accessed directly
+	 * @deprecated accessing class file directly precludes OSGi wiring according to requirements and capabilities 
 	 */
 	@Deprecated
-	public static List<ResourceFile> getScriptBinDirectories() {
+	public static List<ResourceFile> getExplodedBundlePaths() {
 		try {
 			return Files.list(getOsgiDir()).filter(Files::isDirectory).map(
 				x -> new ResourceFile(x.toFile())).collect(Collectors.toList());
