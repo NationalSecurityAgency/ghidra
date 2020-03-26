@@ -332,7 +332,6 @@ class GhidraScriptActionManager {
 		refreshAction = new DockingAction("Refresh", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				GhidraScriptUtil.refreshRequested();
 				provider.refresh();
 			}
 
@@ -350,10 +349,10 @@ class GhidraScriptActionManager {
 		refreshAction.setEnabled(true);
 		plugin.getTool().addLocalAction(provider, refreshAction);
 
-		scriptDirsAction = new DockingAction("Script Directories", plugin.getName()) {
+		scriptDirsAction = new DockingAction("Bundle Status", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				provider.showBundlePathSelectionDialog();
+				provider.showBundleStatusDialog();
 			}
 
 			@Override
@@ -362,12 +361,12 @@ class GhidraScriptActionManager {
 				return (contextObject instanceof GTable) || (contextObject instanceof ResourceFile);
 			}
 		};
-		scriptDirsAction.setPopupMenuData(new MenuData(new String[] { "Script Directories" },
+		scriptDirsAction.setPopupMenuData(new MenuData(new String[] { "Bundle Status" },
 			ResourceManager.loadImage("images/text_list_bullets.png"), null));
 		scriptDirsAction.setToolBarData(
 			new ToolBarData(ResourceManager.loadImage("images/text_list_bullets.png"), null));
 
-		scriptDirsAction.setDescription("Script Directories");
+		scriptDirsAction.setDescription("Bundle Status");
 		scriptDirsAction.setEnabled(true);
 		plugin.getTool().addLocalAction(provider, scriptDirsAction);
 

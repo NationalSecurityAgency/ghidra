@@ -20,6 +20,7 @@ import java.awt.Rectangle;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -33,13 +34,13 @@ import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.OptionDialog;
-import docking.widgets.bundlemanager.*;
 import docking.widgets.table.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
 import generic.util.Path;
+import ghidra.app.plugin.core.script.osgi.*;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
@@ -70,7 +71,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private GTree scriptCategoryTree;
 	private DraggableScriptTable scriptTable;
 	private GhidraScriptTableModel tableModel;
-	private BundlePathManager bundlePathManager;
+	private BundleStatusProvider bundlePathManager;
 	private TaskListener taskListener = new ScriptTaskListener();
 	private GhidraScriptActionManager actionManager;
 	private GhidraTableFilterPanel<ResourceFile> tableFilterPanel;
@@ -129,22 +130,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return editorMap;
 	}
 
-	void showBundlePathSelectionDialog() {
-		BundlePathSelectionDialog pd =
-			new BundlePathSelectionDialog(getComponent(), bundlePathManager);
-		pd.setHelpLocation(actionManager.getPathHelpLocation());
-		pd.show();
-		if (pd.hasChanged()) {
-			plugin.getTool().setConfigChanged(true);
-
-			// Note: do this here, instead of performRefresh() below, as we don't want
-			// initialization refreshes to trigger excessive updating.  Presumably, the
-			// system is in a good state after default initialization.  However, when the *user*
-			// changes the paths, that is a signal to refresh after we have already initialized.
-			GhidraScriptUtil.refreshRequested();
-
-			performRefresh();
-		}
+	void showBundleStatusDialog() {
+		bundlePathManager.setVisible(true);
 	}
 
 	private void performRefresh() {
@@ -353,7 +340,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public List<BundlePath> getScriptDirectories() {
-		return bundlePathManager.getPaths();
+		return bundlePathManager.getPaths().stream().filter(BundlePath::isDirectory).collect(
+			Collectors.toList());
 	}
 
 	public void enableScriptDirectory(ResourceFile scriptDir) {
@@ -744,21 +732,16 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void build() {
-		bundlePathManager = new BundlePathManager(GhidraScriptUtil.getDefaultScriptBundles());
+		bundlePathManager =
+			new BundleStatusProvider(plugin.getTool(), plugin.getName());
 		bundlePathManager.setFileChooserProperties("Select Script Bundle",
 			"LastGhidraScriptBundle");
 
 		bundlePathManager.addListener(new BundlePathManagerListener() {
 			@Override
 			public void bundlesChanged() {
-				if (isVisible()) { // we will be refreshed when first shown
-					performRefresh();
-				}
-			}
-
-			@Override
-			public void pathMessage(String message) {
-				// don't care
+				plugin.getTool().setConfigChanged(true);
+				performRefresh();
 			}
 		});
 

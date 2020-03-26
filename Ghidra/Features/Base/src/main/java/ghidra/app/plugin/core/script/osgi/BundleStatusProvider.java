@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.bundlemanager;
+package ghidra.app.plugin.core.script.osgi;
 
 import java.awt.*;
 import java.io.File;
@@ -30,21 +30,20 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
 import ghidra.framework.options.SaveState;
+import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import resources.ResourceManager;
 
 /**
- * Component that has a table to show pathnames; the panel includes buttons to control
- * the order of the paths, and to add and remove paths. The add button brings up a
- * file chooser. Call the setFileChooser() method to control how the file chooser should
- * behave.  If the table entries should not be edited, call setEditingEnabled(false).
+ * component for managing OSGi bundle status
  */
-public class BundlePathManager {
+public class BundleStatusProvider extends ComponentProviderAdapter {
 	private JPanel panel;
 	private GTable bundlePathTable;
-	private BundlePathManagerModel bundlePathModel;
+	private BundleStatusModel bundlePathModel;
 	private TableModelListener bundlePathModelListener;
 	private JButton addButton;
 	private JButton removeButton;
@@ -55,13 +54,10 @@ public class BundlePathManager {
 	private GhidraFileFilter filter;
 	private ArrayList<BundlePathManagerListener> listeners = new ArrayList<>();
 
-	/**
-	 * Construct a new BundlePathManager.
-	 * @param paths list of paths to show; may be null
-	 * if new paths are to be added to the end of the table
-	 */
-	public BundlePathManager(List<BundlePath> paths) {
-		create(paths);
+	public BundleStatusProvider(PluginTool tool, String owner) {
+		super(tool, "Bundle Status Manager", "my owner");
+		build();
+		addToTool();
 	}
 
 	/**
@@ -147,13 +143,19 @@ public class BundlePathManager {
 		return new ArrayList<>(listeners);
 	}
 
-	private void fireBundlesChanged() {
+	void fireBundlesChanged() {
 		for (BundlePathManagerListener listener : listeners) {
 			listener.bundlesChanged();
 		}
 	}
 
-	private void create(List<BundlePath> paths) {
+	void fireBundlePathChanged(BundlePath path) {
+		for (BundlePathManagerListener listener : listeners) {
+			listener.bundlePathChanged(path);
+		}
+	}
+
+	private void build() {
 		panel = new JPanel(new BorderLayout(5, 5));
 
 		selectionColor = new Color(204, 204, 255);
@@ -181,9 +183,11 @@ public class BundlePathManager {
 		++gbc.gridy;
 		buttonPanel.add(removeButton, gbc);
 
-		bundlePathModelListener = e -> fireBundlesChanged();
+		bundlePathModelListener = e -> {
+			fireBundlesChanged();
+		};
 
-		bundlePathModel = new BundlePathManagerModel(this, paths);
+		bundlePathModel = new BundleStatusModel(this);
 		bundlePathModel.addTableModelListener(bundlePathModelListener);
 
 		bundlePathTable = new GTable(bundlePathModel);
@@ -195,28 +199,28 @@ public class BundlePathManager {
 		int skinnyWidth = 50;
 
 		TableColumn column =
-			bundlePathTable.getColumnModel().getColumn(BundlePathManagerModel.COLUMN.Enabled.index);
+			bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Enabled.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
 		column =
-			bundlePathTable.getColumnModel().getColumn(BundlePathManagerModel.COLUMN.Active.index);
+			bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Active.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
 		column =
-			bundlePathTable.getColumnModel().getColumn(BundlePathManagerModel.COLUMN.Type.index);
+			bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Type.index);
 
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		column.setMaxWidth(10 +
 			SwingUtilities.computeStringWidth(fontmetrics, BundlePath.Type.SourceDir.toString()));
 
 		column =
-			bundlePathTable.getColumnModel().getColumn(BundlePathManagerModel.COLUMN.Path.index);
+			bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Path.index);
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -281,7 +285,6 @@ public class BundlePathManager {
 	private void add() {
 		if (fileChooser == null) {
 			fileChooser = new GhidraFileChooser(panel);
-			// XXX bad behavior w/ text box when multiselection is enabled
 			fileChooser.setMultiSelectionEnabled(true);
 			fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
 			fileChooser.setTitle(title);
@@ -329,6 +332,7 @@ public class BundlePathManager {
 	 * Returns the GUI component for the path manager.
 	 * @return the GUI component for the path manager
 	 */
+	@Override
 	public JComponent getComponent() {
 		return panel;
 	}

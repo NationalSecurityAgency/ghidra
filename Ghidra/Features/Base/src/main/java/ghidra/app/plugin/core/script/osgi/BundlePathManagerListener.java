@@ -14,16 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.bundlemanager;
-
+package ghidra.app.plugin.core.script.osgi;
 
 public interface BundlePathManagerListener {
 
-	public void pathMessage(String message);
+	default public void pathMessage(String message) {
+		// 
+	}
 
 	/**
-	 * Notified when the user changes the paths in the PathManager.  This could be the addition
-	 * or removal of Path objects, or a simple reordering of the paths.
+	 * Called when the list of bundle paths changes
 	 */
-	public void bundlesChanged();
+	default public void bundlesChanged() {
+		// 
+	}
+
+	/**
+	 * called when a bundle path changes
+	 * @param path that whose attributes changed 
+	 */
+	default public void bundlePathChanged(BundlePath path) {
+		// 
+	}
 }

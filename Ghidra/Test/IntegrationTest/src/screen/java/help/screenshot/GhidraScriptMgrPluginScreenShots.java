@@ -23,14 +23,13 @@ import javax.swing.*;
 import org.junit.Test;
 
 import docking.ComponentProvider;
-import docking.DockingWindowManager;
-import docking.widgets.bundlemanager.BundlePath;
-import docking.widgets.bundlemanager.BundlePathManager;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.plugin.core.script.*;
+import ghidra.app.plugin.core.script.osgi.BundlePath;
+import ghidra.app.plugin.core.script.osgi.BundleStatusProvider;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.services.ConsoleService;
 import ghidra.util.HelpLocation;
@@ -117,14 +116,11 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 		paths.add(new BundlePath("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
 		paths.add(new BundlePath("/User/defined/invalid/directory"));
 
-		ComponentProvider provider = showProvider(GhidraScriptComponentProvider.class);
-		BundlePathManager bundleManager = (BundlePathManager) getInstanceField("bundlePathManager", provider);
-		bundleManager.setPaths(paths);
-		final BundlePathSelectionDialog pathsDialog = new BundlePathSelectionDialog(null, bundleManager);
-		runSwing(() -> DockingWindowManager.showDialog(null, pathsDialog), false);
-
-		BundlePathSelectionDialog dialog = waitForDialogComponent(BundlePathSelectionDialog.class);
-		captureDialog(dialog);
+		BundleStatusProvider bundleStatus = showProvider(BundleStatusProvider.class);
+		bundleStatus.setPaths(paths);
+		
+		waitForComponentProvider(BundleStatusProvider.class);
+		captureComponent(bundleStatus.getComponent());
 	}
 
 	@Test

@@ -20,13 +20,13 @@ import java.net.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import docking.widgets.bundlemanager.BundlePath;
 import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import generic.util.Path;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraJarApplicationLayout;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.app.script.*;
 import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
 import ghidra.app.util.importer.AutoImporter;

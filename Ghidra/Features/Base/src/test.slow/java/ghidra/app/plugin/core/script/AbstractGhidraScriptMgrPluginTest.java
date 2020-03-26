@@ -39,8 +39,6 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
-import docking.widgets.bundlemanager.BundlePath;
-import docking.widgets.bundlemanager.BundlePathManager;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.table.GDynamicColumnTableModel;
 import docking.widgets.table.RowObjectTableModel;
@@ -50,6 +48,8 @@ import generic.jar.ResourceFile;
 import generic.test.TestUtils;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
+import ghidra.app.plugin.core.script.osgi.BundlePath;
+import ghidra.app.plugin.core.script.osgi.BundleStatusProvider;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.Application;
@@ -978,8 +978,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		String myTestName = super.testName.getMethodName();
 
 		// destroy any NewScriptxxx files...and Temp ones too
-		BundlePathManager pathManager =
-			(BundlePathManager) TestUtils.getInstanceField("bundlePathManager", provider);
+		BundleStatusProvider pathManager =
+			(BundleStatusProvider) TestUtils.getInstanceField("bundlePathManager", provider);
 		List<BundlePath> paths = pathManager.getPaths();
 		for (BundlePath path : paths) {
 			File file = path.getPath().getFile(false);

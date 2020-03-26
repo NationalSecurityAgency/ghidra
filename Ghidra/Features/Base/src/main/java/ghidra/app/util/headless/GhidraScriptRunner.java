@@ -19,10 +19,10 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import docking.widgets.bundlemanager.BundlePath;
 import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
+import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.app.script.*;
 import ghidra.framework.Application;
 import ghidra.framework.HeadlessGhidraApplicationConfiguration;

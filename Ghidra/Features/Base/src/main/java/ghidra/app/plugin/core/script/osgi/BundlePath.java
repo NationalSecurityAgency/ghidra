@@ -1,4 +1,4 @@
-package docking.widgets.bundlemanager;
+package ghidra.app.plugin.core.script.osgi;
 
 import java.io.File;
 
@@ -11,7 +11,6 @@ public class BundlePath extends Path {
 	public static enum Type {
 		BndScript, Jar, SourceDir, INVALID
 	}
-
 
 	static public Type getType(File f) {
 		if (f.isDirectory()) {
@@ -40,6 +39,7 @@ public class BundlePath extends Path {
 		}
 		return Type.INVALID;
 	}
+
 	final Type type;
 
 	public BundlePath(File path) {
@@ -74,6 +74,11 @@ public class BundlePath extends Path {
 	public boolean isActive() {
 		return active;
 	}
+
+	public void setActive(Boolean b) {
+		active = b;
+	}
+
 	public boolean isDirectory() {
 		return getPath().isDirectory();
 	}

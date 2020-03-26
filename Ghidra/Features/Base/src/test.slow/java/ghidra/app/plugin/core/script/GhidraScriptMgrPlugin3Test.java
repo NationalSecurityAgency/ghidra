@@ -29,11 +29,11 @@ import org.junit.Test;
 
 import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
-import docking.widgets.bundlemanager.BundlePath;
-import docking.widgets.bundlemanager.BundlePathManager;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.list.ListPanel;
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.script.osgi.BundlePath;
+import ghidra.app.plugin.core.script.osgi.BundleStatusProvider;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.JavaScriptProvider;
 import ghidra.util.StringUtilities;
@@ -280,26 +280,21 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		// Tests that the user can add an additional script path directory and choose that one
 		// to use
 		//
-		DockingActionIf pathAction = getAction(plugin, "Script Directories");
-		performAction(pathAction, false);
+		DockingActionIf bundleStatusAction = getAction(plugin, "Bundle Status");
+		performAction(bundleStatusAction, false);
 		waitForSwing();
 
-		BundlePathSelectionDialog pathsDialog = waitForDialogComponent(BundlePathSelectionDialog.class);
+		final BundleStatusProvider bundleStatusProvider = waitForComponentProvider(BundleStatusProvider.class);
 
 		final File dir = new File(getTestDirectoryPath() + "/test_scripts");
 		dir.mkdirs();
 
-		final BundlePathManager pathManager = pathsDialog.getBundleManager();
 		SwingUtilities.invokeLater(() -> {
-			List<BundlePath> paths = pathManager.getPaths();
+			List<BundlePath> paths = bundleStatusProvider.getPaths();
 			paths.add(0, new BundlePath(dir));
-			pathManager.setPaths(paths);
+			bundleStatusProvider.setPaths(paths);
 		});
 		waitForSwing();
-
-		pressButtonByText(pathsDialog, "Dismiss");
-		waitForSwing();
-		assertTrue(!pathsDialog.isShowing());
 
 		pressNewButton();
 

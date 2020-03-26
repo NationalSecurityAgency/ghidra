@@ -14,15 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.bundlemanager;
+package ghidra.app.plugin.core.script.osgi;
 
 import java.util.*;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import docking.widgets.table.AbstractSortedTableModel;
+import ghidra.app.script.GhidraScriptUtil;
 
-class BundlePathManagerModel extends AbstractSortedTableModel<BundlePath> {
+class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 	private static int column_counter = 0;
 
 	static enum COLUMN {
@@ -45,7 +44,7 @@ class BundlePathManagerModel extends AbstractSortedTableModel<BundlePath> {
 
 			@Override
 			void setValue(BundlePath path, Object aValue) {
-				throw new NotImplementedException("TODO!");
+				path.setActive((Boolean) aValue);
 			}
 		},
 		Type(String.class) {
@@ -109,12 +108,13 @@ class BundlePathManagerModel extends AbstractSortedTableModel<BundlePath> {
 		}
 	}
 
-	private BundlePathManager mgr;
+	private BundleStatusProvider mgr;
 	private List<BundlePath> paths = new ArrayList<>();
 
-	BundlePathManagerModel(BundlePathManager mgr, List<BundlePath> paths) {
+	BundleStatusModel(BundleStatusProvider mgr) {
 		super();
 		this.mgr = mgr;
+		List<BundlePath> paths=GhidraScriptUtil.getDefaultScriptBundles();
 		this.paths.addAll(dedupPaths(paths));
 		fireTableDataChanged();
 	}
@@ -267,6 +267,7 @@ class BundlePathManagerModel extends AbstractSortedTableModel<BundlePath> {
 		BundlePath path = paths.get(rowIndex);
 		COLUMN.val(columnIndex).setValue(path, aValue);
 		fireTableDataChanged();
+		mgr.fireBundlePathChanged(path);
 	}
 
 	@Override

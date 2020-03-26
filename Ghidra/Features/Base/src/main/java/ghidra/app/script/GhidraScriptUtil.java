@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.map.LazyMap;
 
-import docking.widgets.bundlemanager.BundlePath;
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -59,9 +59,6 @@ public class GhidraScriptUtil {
 		scriptBundlePaths = getDefaultScriptBundles();
 	}
 
-	/** The last time a request was made to refresh */
-	private static long lastRefreshRequestTimestamp = System.currentTimeMillis();
-
 	/**
 	 * User's home scripts directory. Some tests may override the default using the 
 	 * SystemUtilities.USER_SCRIPTS_DIR system property.
@@ -78,18 +75,6 @@ public class GhidraScriptUtil {
 
 		String sourcePath = root + File.separator + SCRIPTS_SUBDIR_NAME;
 		return sourcePath;
-	}
-
-	/**
-	 * Stores the time of the refresh request so that clients may later ask when the last 
-	 * refresh took place.
-	 */
-	public static void refreshRequested() {
-		lastRefreshRequestTimestamp = System.currentTimeMillis();
-	}
-
-	public static long getLastRefreshRequestTimestamp() {
-		return lastRefreshRequestTimestamp;
 	}
 
 	/**
