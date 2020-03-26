@@ -22,7 +22,6 @@ import org.osgi.framework.Bundle;
 
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
 import ghidra.app.script.osgi.*;
 import ghidra.util.Msg;
 
@@ -32,7 +31,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		if (sourceDir == null) {
 			return null;
 		}
-		return GhidraScriptMgrPlugin.getBundleHost().getSourceBundleInfo(sourceDir);
+		return BundleHost.getInstance().getSourceBundleInfo(sourceDir);
 	}
 
 	@Override
@@ -50,7 +49,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		Bundle b = getBundleInfoForSource(sourceFile).getBundle();
 		if (b != null) {
 			try {
-				GhidraScriptMgrPlugin.getBundleHost().synchronousUninstall(b);
+				BundleHost.getInstance().synchronousUninstall(b);
 			}
 			catch (GhidraBundleException | InterruptedException e) {
 				e.printStackTrace();
@@ -127,7 +126,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		needsBundleActivate |= needsCompile;
 
-		BundleHost bundle_host = GhidraScriptMgrPlugin.getBundleHost();
+		BundleHost bundle_host = BundleHost.getInstance();
 		if (needsBundleActivate) {
 			writer.printf("%s has %d new/updated %d failed in previous build(s)%s\n",
 				bi.getSourceDir().toString(), newSourcecount, failing,
@@ -166,7 +165,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
 		return clazz;
 	}
-	
+
 	public static ResourceFile getSourceDirectoryContaining(ResourceFile sourceFile) {
 		String sourcePath = sourceFile.getAbsolutePath();
 		for (ResourceFile sourceDir : GhidraScriptUtil.getScriptSourceDirectories()) {

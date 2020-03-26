@@ -42,6 +42,22 @@ import ghidra.util.task.*;
 
 // XXX this class should be part of a service/plugin
 public class BundleHost {
+	// XXX embedded OSGi should be a service, but ScriptProviders don't have any way to access services
+	static private BundleHost _instance;
+
+	static public BundleHost getInstance() {
+		if (_instance == null) {
+			_instance = new BundleHost();
+			try {
+				_instance.startFelix();
+			}
+			catch (OSGiException | IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return _instance;
+	}
+
 	static public String getSymbolicNameFromSourceDir(ResourceFile sourceDir) {
 		return Integer.toHexString(sourceDir.getAbsolutePath().hashCode());
 	}
@@ -214,10 +230,6 @@ public class BundleHost {
 		config.setProperty("ds.showtrace", "true");
 		config.setProperty("ds.showerrors", "true");
 
-		config.setProperty("felix.fileinstall.dir", getWatchedBundleDirs());
-		// config.setProperty("felix.fileinstall.log.level", "999");
-		// config.setProperty("felix.fileinstall.log.default", "jul"); // stdout
-		config.setProperty("felix.fileinstall.bundles.new.start", "true"); // autostart bundles
 		config.put(FelixConstants.LOG_LEVEL_PROP, "999");// was 4
 		config.put(FelixConstants.LOG_LOGGER_PROP, new FelixLogger());
 
@@ -301,20 +313,12 @@ public class BundleHost {
 		catch (BundleException e) {
 			throw new OSGiException("starting felix OSGi framework", e);
 		}
-		// fileinstall_bundle = installFromPath(findJarForClass(FileInstall.class));
-		// fileinstall_bundle.start();
-
 	}
 
 	private String makeCacheDir() throws IOException {
 		Path cache_dir = GhidraScriptUtil.getOsgiDir().resolve("felixcache");
 		Files.createDirectories(cache_dir);
 		return cache_dir.toAbsolutePath().toString();
-	}
-
-	/** comma separated list of directories watched for bundles by fileinstaller */
-	private String getWatchedBundleDirs() {
-		return GhidraScriptUtil.getCompiledBundlesDir().toAbsolutePath().toString();
 	}
 
 	public Bundle getBundle(String bundleLoc) {
@@ -399,39 +403,12 @@ public class BundleHost {
 		return felix;
 	}
 
-	public boolean stopBundleWatcher() {
-		if (fileinstall_bundle != null) {
-			try {
-				fileinstall_bundle.stop();
-				return true;
-			}
-			catch (BundleException e) {
-				e.printStackTrace();
-			}
-		}
-		return false;
-	}
-
-	public boolean startBundleWatcher() {
-		if (fileinstall_bundle != null) {
-			try {
-				fileinstall_bundle.start();
-				return true;
-			}
-			catch (BundleException e) {
-				e.printStackTrace();
-			}
-		}
-		return false;
-	}
-
-	
-	public interface NewSourceCallback {
+	public interface DiscrepencyCallback {
 		void found(ResourceFile source_file, Collection<Path> class_files) throws Throwable;
 	}
 
 	public static void visitDiscrepencies(ResourceFile srcdir, Path bindir,
-			NewSourceCallback new_source_cb) {
+			DiscrepencyCallback new_source_cb) {
 		try {
 			// delete class files for which java is either newer, or no longer exists
 			Deque<ResourceFile> stack = new ArrayDeque<>();

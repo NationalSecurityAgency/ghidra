@@ -42,6 +42,7 @@ import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.app.plugin.core.script.osgi.*;
 import ghidra.app.script.*;
+import ghidra.app.script.osgi.BundleHost;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -71,7 +72,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private GTree scriptCategoryTree;
 	private DraggableScriptTable scriptTable;
 	private GhidraScriptTableModel tableModel;
-	private BundleStatusProvider bundlePathManager;
+	private BundleStatusProvider bundleStatusProvider;
 	private TaskListener taskListener = new ScriptTaskListener();
 	private GhidraScriptActionManager actionManager;
 	private GhidraTableFilterPanel<ResourceFile> tableFilterPanel;
@@ -119,7 +120,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		scriptTable.dispose();
 		tableFilterPanel.dispose();
 		actionManager.dispose();
-		bundlePathManager.dispose();
+		bundleStatusProvider.dispose();
 	}
 
 	GhidraScriptActionManager getActionManager() {
@@ -131,11 +132,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void showBundleStatusDialog() {
-		bundlePathManager.setVisible(true);
+		bundleStatusProvider.setVisible(true);
 	}
 
 	private void performRefresh() {
-		GhidraScriptUtil.setScriptDirectories(bundlePathManager.getPaths());
+		GhidraScriptUtil.setScriptDirectories(bundleStatusProvider.getPaths());
 		GhidraScriptUtil.clearMetadata();
 		refresh();
 	}
@@ -340,12 +341,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public List<BundlePath> getScriptDirectories() {
-		return bundlePathManager.getPaths().stream().filter(BundlePath::isDirectory).collect(
+		return bundleStatusProvider.getPaths().stream().filter(BundlePath::isDirectory).collect(
 			Collectors.toList());
 	}
 
 	public void enableScriptDirectory(ResourceFile scriptDir) {
-		if (bundlePathManager.enablePath(scriptDir)) {
+		if (bundleStatusProvider.enablePath(scriptDir)) {
 			Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
 				"The directory has been automatically enabled for use:\n" +
 					scriptDir.getAbsolutePath());
@@ -396,7 +397,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(String scriptName, TaskListener listener) {
-		List<BundlePath> dirPaths = bundlePathManager.getPaths();
+		List<BundlePath> dirPaths = bundleStatusProvider.getPaths();
 		for (Path dir : dirPaths) {
 			ResourceFile scriptSource = new ResourceFile(dir.getPath(), scriptName);
 			if (scriptSource.exists()) {
@@ -536,7 +537,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void updateAvailableScriptFilesForAllPaths() {
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		List<BundlePath> bundlePaths = bundlePathManager.getPaths();
+		List<BundlePath> bundlePaths = bundleStatusProvider.getPaths();
 		for (BundlePath bundlePath : bundlePaths) {
 			if (bundlePath.isDirectory()) {
 				updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator,
@@ -732,12 +733,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void build() {
-		bundlePathManager =
-			new BundleStatusProvider(plugin.getTool(), plugin.getName());
-		bundlePathManager.setFileChooserProperties("Select Script Bundle",
+		
+		bundleStatusProvider =
+			new BundleStatusProvider(plugin.getTool(), plugin.getName(), BundleHost.getInstance());
+		bundleStatusProvider.setFileChooserProperties("Select Script Bundle",
 			"LastGhidraScriptBundle");
 
-		bundlePathManager.addListener(new BundlePathManagerListener() {
+		bundleStatusProvider.addListener(new BundlePathManagerListener() {
 			@Override
 			public void bundlesChanged() {
 				plugin.getTool().setConfigChanged(true);
@@ -1010,10 +1012,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public void readConfigState(SaveState saveState) {
-		bundlePathManager.restoreState(saveState);
+		bundleStatusProvider.restoreState(saveState);
 
 		// pull in the just-loaded paths
-		List<BundlePath> paths = bundlePathManager.getPaths();
+		List<BundlePath> paths = bundleStatusProvider.getPaths();
 		GhidraScriptUtil.setScriptDirectories(paths);
 		actionManager.restoreUserDefinedKeybindings(saveState);
 		actionManager.restoreScriptsThatAreInTool(saveState);
@@ -1037,7 +1039,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public void writeConfigState(SaveState saveState) {
-		bundlePathManager.saveState(saveState);
+		bundleStatusProvider.saveState(saveState);
 		actionManager.saveUserDefinedKeybindings(saveState);
 		actionManager.saveScriptsThatAreInTool(saveState);
 

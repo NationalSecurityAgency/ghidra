@@ -108,14 +108,13 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		}
 	}
 
-	private BundleStatusProvider mgr;
+	private BundleStatusProvider provider;
 	private List<BundlePath> paths = new ArrayList<>();
 
-	BundleStatusModel(BundleStatusProvider mgr) {
+	BundleStatusModel(BundleStatusProvider provider) {
 		super();
-		this.mgr = mgr;
-		List<BundlePath> paths=GhidraScriptUtil.getDefaultScriptBundles();
-		this.paths.addAll(dedupPaths(paths));
+		this.provider = provider;
+		this.paths.addAll(dedupPaths(GhidraScriptUtil.getDefaultScriptBundles()));
 		fireTableDataChanged();
 	}
 
@@ -176,7 +175,7 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 			paths.remove(path);
 		}
 		else {
-			List<BundlePathManagerListener> listeners = mgr.getListeners();
+			List<BundlePathManagerListener> listeners = provider.getListeners();
 			for (BundlePathManagerListener listener : listeners) {
 				listener.pathMessage("Unable to remove path.");
 			}
@@ -194,7 +193,7 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 				paths.remove(path);
 			}
 			else {
-				List<BundlePathManagerListener> listeners = mgr.getListeners();
+				List<BundlePathManagerListener> listeners = provider.getListeners();
 				for (BundlePathManagerListener listener : listeners) {
 					listener.pathMessage("Unable to remove path.");
 				}
@@ -267,7 +266,7 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		BundlePath path = paths.get(rowIndex);
 		COLUMN.val(columnIndex).setValue(path, aValue);
 		fireTableDataChanged();
-		mgr.fireBundlePathChanged(path);
+		provider.fireBundlePathChanged(path);
 	}
 
 	@Override

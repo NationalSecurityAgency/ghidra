@@ -116,11 +116,11 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 		paths.add(new BundlePath("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
 		paths.add(new BundlePath("/User/defined/invalid/directory"));
 
-		BundleStatusProvider bundleStatus = showProvider(BundleStatusProvider.class);
-		bundleStatus.setPaths(paths);
+		BundleStatusProvider bundleStatusProvider = showProvider(BundleStatusProvider.class);
+		bundleStatusProvider.setPaths(paths);
 		
 		waitForComponentProvider(BundleStatusProvider.class);
-		captureComponent(bundleStatus.getComponent());
+		captureComponent(bundleStatusProvider.getComponent());
 	}
 
 	@Test

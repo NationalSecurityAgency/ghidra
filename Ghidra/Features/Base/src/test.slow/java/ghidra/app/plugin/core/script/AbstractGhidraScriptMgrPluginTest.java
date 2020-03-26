@@ -978,9 +978,9 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		String myTestName = super.testName.getMethodName();
 
 		// destroy any NewScriptxxx files...and Temp ones too
-		BundleStatusProvider pathManager =
+		BundleStatusProvider bundleStatusProvider =
 			(BundleStatusProvider) TestUtils.getInstanceField("bundlePathManager", provider);
-		List<BundlePath> paths = pathManager.getPaths();
+		List<BundlePath> paths = bundleStatusProvider.getPaths();
 		for (BundlePath path : paths) {
 			File file = path.getPath().getFile(false);
 			File[] listFiles = file.listFiles();

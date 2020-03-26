@@ -29,6 +29,7 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
+import ghidra.app.script.osgi.BundleHost;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -43,7 +44,7 @@ import resources.ResourceManager;
 public class BundleStatusProvider extends ComponentProviderAdapter {
 	private JPanel panel;
 	private GTable bundlePathTable;
-	private BundleStatusModel bundlePathModel;
+	private BundleStatusModel bundleStatusModel;
 	private TableModelListener bundlePathModelListener;
 	private JButton addButton;
 	private JButton removeButton;
@@ -54,8 +55,11 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	private GhidraFileFilter filter;
 	private ArrayList<BundlePathManagerListener> listeners = new ArrayList<>();
 
-	public BundleStatusProvider(PluginTool tool, String owner) {
+	private BundleHost bundleHost;
+
+	public BundleStatusProvider(PluginTool tool, String owner, BundleHost bundleHost) {
 		super(tool, "Bundle Status Manager", "my owner");
+		this.bundleHost = bundleHost;
 		build();
 		addToTool();
 	}
@@ -89,7 +93,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	 * @return enabled paths
 	 */
 	public List<BundlePath> getPaths() {
-		return bundlePathModel.getPaths();
+		return bundleStatusModel.getPaths();
 	}
 
 	/**
@@ -99,11 +103,11 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	 */
 	public boolean enablePath(ResourceFile file) {
 		ResourceFile dir = file.isDirectory() ? file : file.getParentFile();
-		for (BundlePath path : bundlePathModel.getAllPaths()) {
+		for (BundlePath path : bundleStatusModel.getAllPaths()) {
 			if (path.getPath().equals(dir)) {
 				if (!path.isEnabled()) {
 					path.setEnabled(true);
-					bundlePathModel.fireTableDataChanged();
+					bundleStatusModel.fireTableDataChanged();
 					fireBundlesChanged();
 					return true;
 				}
@@ -112,21 +116,21 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		}
 		BundlePath p = new BundlePath(dir);
 		p.setEnabled(true);
-		bundlePathModel.addPath(p);
+		bundleStatusModel.addPath(p);
 		Preferences.setProperty(preferenceForLastSelectedBundle, dir.getAbsolutePath());
 		fireBundlesChanged();
 		return true;
 	}
 
 	public void setPaths(List<BundlePath> paths) {
-		bundlePathModel.setPaths(paths);
+		bundleStatusModel.setPaths(paths);
 	}
 
 	/**
 	 * Clear the paths in the table.
 	 */
 	public void clear() {
-		bundlePathModel.clear();
+		bundleStatusModel.clear();
 	}
 
 	public void addListener(BundlePathManagerListener listener) {
@@ -187,10 +191,10 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			fireBundlesChanged();
 		};
 
-		bundlePathModel = new BundleStatusModel(this);
-		bundlePathModel.addTableModelListener(bundlePathModelListener);
+		bundleStatusModel = new BundleStatusModel(this);
+		bundleStatusModel.addTableModelListener(bundlePathModelListener);
 
-		bundlePathTable = new GTable(bundlePathModel);
+		bundlePathTable = new GTable(bundleStatusModel);
 		bundlePathTable.setName("BUNDLEPATH_TABLE");
 		bundlePathTable.setSelectionBackground(selectionColor);
 		bundlePathTable.setSelectionForeground(Color.BLACK);
@@ -205,22 +209,19 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
-		column =
-			bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Active.index);
+		column = bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Active.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
-		column =
-			bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Type.index);
+		column = bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Type.index);
 
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		column.setMaxWidth(10 +
 			SwingUtilities.computeStringWidth(fontmetrics, BundlePath.Type.SourceDir.toString()));
 
-		column =
-			bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Path.index);
+		column = bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Path.index);
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -235,7 +236,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		});
 
 		GTableFilterPanel<BundlePath> filterPanel =
-			new GTableFilterPanel<>(bundlePathTable, bundlePathModel);
+			new GTableFilterPanel<>(bundlePathTable, bundleStatusModel);
 
 		JScrollPane scrollPane = new JScrollPane(bundlePathTable);
 		scrollPane.getViewport().setBackground(bundlePathTable.getBackground());
@@ -267,12 +268,12 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		if (selectedRows == null) {
 			return;
 		}
-		bundlePathModel.remove(selectedRows);
+		bundleStatusModel.remove(selectedRows);
 
 		// select the next row based on what was selected
 		Arrays.sort(selectedRows);
 		int row = selectedRows[selectedRows.length - 1] + 1 - selectedRows.length;
-		int count = bundlePathModel.getRowCount();
+		int count = bundleStatusModel.getRowCount();
 		if (row >= count) {
 			row = count - 1;
 		}
@@ -323,7 +324,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 				files.get(0).getAbsolutePath());
 			for (File element : files) {
 				BundlePath p = new BundlePath(element);
-				bundlePathModel.addPath(p);
+				bundleStatusModel.addPath(p);
 			}
 		}
 	}
@@ -342,7 +343,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	 * @param ss the SaveState object
 	 */
 	public void saveState(SaveState ss) {
-		List<BundlePath> paths = bundlePathModel.getAllPaths();
+		List<BundlePath> paths = bundleStatusModel.getAllPaths();
 
 		String[] pathArr = new String[paths.size()];
 		boolean[] enableArr = new boolean[paths.size()];
@@ -379,15 +380,15 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		 * Temporarily remove the listener to prevent too many
 		 * notifications from being sent.
 		 */
-		bundlePathModel.removeTableModelListener(bundlePathModelListener);
+		bundleStatusModel.removeTableModelListener(bundlePathModelListener);
 
 		boolean[] enableArr =
 			ss.getBooleans("BundleManagerPanel_ENABLE", new boolean[pathArr.length]);
 		boolean[] editArr = ss.getBooleans("BundleManagerPanel_EDIT", new boolean[pathArr.length]);
 		boolean[] readArr = ss.getBooleans("BundleManagerPanel_READ", new boolean[pathArr.length]);
 
-		List<BundlePath> oldPaths = bundlePathModel.getAllPaths();
-		bundlePathModel.clear();
+		List<BundlePath> oldPaths = bundleStatusModel.getAllPaths();
+		bundleStatusModel.clear();
 
 		for (int i = 0; i < pathArr.length; i++) {
 			BundlePath path = new BundlePath(pathArr[i], enableArr[i], editArr[i], readArr[i]);
@@ -405,19 +406,19 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 				// This is needed to thin-out old default entries
 				continue;
 			}
-			bundlePathModel.addPath(path);
+			bundleStatusModel.addPath(path);
 		}
 
 		for (BundlePath path : oldPaths) {
 			if (!path.isEditable()) {
-				bundlePathModel.addPath(path);
+				bundleStatusModel.addPath(path);
 			}
 		}
 
 		/*
 		 * Reinstall the listener then fire the update.
 		 */
-		bundlePathModel.addTableModelListener(bundlePathModelListener);
+		bundleStatusModel.addTableModelListener(bundlePathModelListener);
 		fireBundlesChanged();
 	}
 
