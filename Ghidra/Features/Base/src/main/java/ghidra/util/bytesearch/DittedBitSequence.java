@@ -23,7 +23,7 @@ import ghidra.xml.XmlPullParser;
 
 /**
  * A pattern of bits/mask to match to a stream of bytes.  The bits/mask can be of any length.
- * The sequence can be initialized by:
+ * The sequence can be initialized by:<pre>
  * 
  *    a string
  *    an array of bytes (no mask)
@@ -31,7 +31,7 @@ import ghidra.xml.XmlPullParser;
  *    
  *  The dits represent bits(binary) or nibbles(hex) that are don't care, for example:
  *     0x..d.4de2 ....0000 .1...... 00101101 11101001
- *  where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)
+ *  where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)</pre>
  */
 
 public class DittedBitSequence {
@@ -329,12 +329,12 @@ public class DittedBitSequence {
 
 	/**
 	 * restore ditted string from XML stream with hex/binary ditted sequences in the form:
-	 *    <data> 0x..d.4de2 ....0000 .1...... 00101101 11101001 </data>
+	 *    {@code <data>} 0x..d.4de2 ....0000 .1...... 00101101 11101001 {@code </data>}
 	 * where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)
 	 * 
 	 * @param parser XML pull parser stream
 	 * 
-	 * @return number of bytes read from XML <data> tag
+	 * @return number of bytes read from XML {@code <data>} tag
 	 * 
 	 * @throws IOException if XML read has an error
 	 */

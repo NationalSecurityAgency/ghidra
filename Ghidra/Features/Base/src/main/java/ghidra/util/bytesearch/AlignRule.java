@@ -24,10 +24,10 @@ import ghidra.xml.XmlPullParser;
  * alignment at an offset from the location the pattern matches. 
  * 
  * The pattern can be constructed or restored from XML of the form,
- * where alignOffset=mark, alignmask=bits
- * 
- *     <align mark="0" bits="1"/>
- *   
+ * where alignOffset=mark, alignmask=bits<pre>
+ *
+ *     {@code <align mark="0" bits="1"/>}
+ *   </pre>
  */
 
 public class AlignRule implements PostRule {
@@ -44,13 +44,14 @@ public class AlignRule implements PostRule {
 	 * specified by the alignmask bits that must be zero.
 	 * 
 	 *   Normally alignOffset is 0, since most patterns will match at the address that must be aligned
-	 *   To align a match, use the following
+	 *   To align a match, use the following:<pre>
 	 *
 	 *  align to  2 = alignmask 0x1 - lower bit must be zero
 	 *  align to  4 = alignmask 0x3 - lower two bits must be zero
 	 *  align to  8 = alignmask 0x7 - lower three bits must be zero
 	 *  align to 16 = alignmask 0xF - lower four bits must be zero
 	 *  ....
+	 * </pre>
 	 *  Other strange alignments could be specified, but most likely the above suffice.
 	 * @param alignOffset - bytes offset from pattern to check for alignment
 	 * @param alignmask - the mask where a 1 bit must be zero

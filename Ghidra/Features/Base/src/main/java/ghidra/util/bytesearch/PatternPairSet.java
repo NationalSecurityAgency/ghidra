@@ -32,7 +32,7 @@ import ghidra.xml.XmlPullParser;
  * a value when matching (not don't care).  There is a pre pattern bits of check and post pattern bits
  * of check.  The bits of check are used to statistically gauge the accuracy of the pattern.
  * 
- * An example of the XML format follows:
+ * An example of the XML format follows:<pre>{@literal
  *   <patternpairs totalbits="32" postbits="16">
  *    <prepatterns>
  *      <data>0xe12fff1.                  </data>
@@ -49,7 +49,7 @@ import ghidra.xml.XmlPullParser;
  *      <funcstart/>
  *    </postpatterns>
  *  </patternpairs>
- *  
+ *  }</pre>
  *  Note: The post Patterns can also have a set of rules that must be satisfied along with one of the
  *  Pattern DittedBitSequence matches.
  */

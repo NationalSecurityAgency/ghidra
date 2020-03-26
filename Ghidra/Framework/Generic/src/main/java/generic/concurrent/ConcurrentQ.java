@@ -23,9 +23,9 @@ import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A queue for easily scheduling tasks to be run in parallel (or sequentially) 
- * via a thread pool.  This class provides a clean separation of items that need to 
- * be processed from the algorithm that does the processing, making it easy to parallelize 
+ * A queue for easily scheduling tasks to be run in parallel (or sequentially)
+ * via a thread pool.  This class provides a clean separation of items that need to
+ * be processed from the algorithm that does the processing, making it easy to parallelize
  * the processing of multiple items.   Further, you can control the maximum number of items that
  * can be processed concurrently.  This is useful to throttle operations that may starve the
  * other threads in the system.  You may also control how many items get placed into the queue
@@ -35,21 +35,21 @@ import ghidra.util.task.TaskMonitor;
  * <hr>
  * <p>
  * <u>Put and Forget:</u>
- * <pre>{@literal
- * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
+ * <pre>
+ * {@literal QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>()} {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
  *         // do work here...
  *     }
  * };
- * 
- * ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();
+ *
+ * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();}
  * builder.setThreadPoolName("Thread Pool Name");
  * concurrentQ = builder.getQueue(callback);
  * ...
  * ...
  * concurrentQ.add(item); // where item is one of the instances of ITEM
- * 
- * }</pre>
+ *
+ * </pre>
  * <hr>
  * <p>
  * <u>Put Items and Handle Results in Any Order as They Available:</u>
@@ -59,14 +59,14 @@ import ghidra.util.task.TaskMonitor;
  *         // do work here...
  *     }
  * };
- * 
+ *
  * {@literal QItemListener<ITEM, RESULT> itemListener = new QItemListener<ITEM, RESULT>()} {
  *     {@literal public void itemProcessed(QResult<ITEM, RESULT> result)} {
  *         RESULT result = result.getResult();
  *             <span style="color:blue"><b>// work on my result...</b></span>
  *         }
  * };
- * 
+ *
  * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>()};
  * builder.setThreadPoolName("Thread Pool Name");
  * <span style="color:blue"><b>builder.setListener(itemListener);</b></span>
@@ -76,18 +76,18 @@ import ghidra.util.task.TaskMonitor;
  * concurrentQ.add(item); // where item is one of the instances of ITEM
  * concurrentQ.add(item);
  * concurrentQ.add(item);
- * 
+ *
  * </pre>
- * 
+ *
  * <hr>
  * <p>
  * <u>Put Items and Handle Results When All Items Have Been Processed:</u>
- * <pre>{@literal
- * QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>() {
+ * <pre>
+ * {@literal QCallback<ITEM, RESULT> callback = new AbstractQCallback<ITEM, RESULT>()} {
  *     public RESULT process(ITEM item, TaskMonitor monitor) {
  *         // do work here...
  *     }
- * };}
+ * };
  *
  * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();}
  * builder.setThreadPoolName("Thread Pool Name");
@@ -99,11 +99,11 @@ import ghidra.util.task.TaskMonitor;
  * concurrentQ.add(item);
  * concurrentQ.add(item);
  * ...
- * 
- * <span style="color:blue"><b>{@literal List<QResult<I, R>> results = concurrentQ.waitForResults();}</b></span>{@literal
+ *
+ * <span style="color:blue"><b>{@literal List<QResult<I, R>> results = concurrentQ.waitForResults();}</b></span>
  * // process the results...
- * 
- * }</pre>
+ *
+ * </pre>
  * <hr>
  * <p>
  * <u>Put Items, <b>Blocking While Full</b>, and Handle Results in Any Order as They Available:</u>
@@ -114,13 +114,13 @@ import ghidra.util.task.TaskMonitor;
  *     }
  * };
  *
- * QItemListener<ITEM, RESULT> itemListener = new QItemListener<ITEM, RESULT>() {
- *     public void itemProcessed(QResult<ITEM, RESULT> result) {
+ * {@literal QItemListener<ITEM, RESULT> itemListener = new QItemListener<ITEM, RESULT>()} {
+ *     {@literal public void itemProcessed(QResult<ITEM, RESULT> result)} {
  *         RESULT result = result.getResult();
  *             // work on my result...
  *         }
  * };
- * 
+ *
  * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>()};
  * builder.setThreadPoolName("Thread Pool Name");
  * <span style="color:blue"><b>builder.setQueue(new LinkedBlockingQueue(100));</b></span>
@@ -129,13 +129,13 @@ import ghidra.util.task.TaskMonitor;
  * ...
  * {@literal Iterator<ITEM> iterator = <get an iterator for 1000s of items somewhere>}
  * <span style="color:blue"><b>{@code concurrentQ.offer(iterator); // this call will block when the queue fills up (100 items or more)}</b></span>
- * 
+ *
  * </pre>
  * <hr>
- * 
+ *
  * @param <I> The type of the items to be processed.
  * @param <R> The type of objects resulting from processing an item; if you don't care about the
- *            return value, then make this value whatever you want, like <code>Object</code> or the 
+ *            return value, then make this value whatever you want, like <code>Object</code> or the
  *            same value as {@code I} and return null from {@link QCallback#process(Object, TaskMonitor)}.
  */
 public class ConcurrentQ<I, R> {
