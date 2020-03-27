@@ -130,4 +130,20 @@ public class SymbolPathParserTest extends AbstractGTest {
 		assertListEqualOrdered(expected, list);
 	}
 
+	@Test
+	public void testUnmatchedAngleBracketFallback1() {
+		// Contrived example to test naive parsing going into fallback mode due to unmatched
+		//  angle brackets.  The expected result here is not an accurate result that we would
+		//  expect from a more sophisticated parser.
+		String name = "A::operator<=::B<C<int>::<unnamed-tag>>::E";
+		List<String> list = SymbolPathParser.parse(name);
+		List<String> expected = new ArrayList<>();
+		expected.add("A");
+		expected.add("operator<=");
+		expected.add("B<C<int>");
+		expected.add("<unnamed-tag>>");
+		expected.add("E");
+		assertListEqualOrdered(expected, list);
+	}
+
 }
