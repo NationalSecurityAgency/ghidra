@@ -16,6 +16,7 @@
 // Set up decompiler for specific architectures
 
 #include "coreaction.hh"
+#include "flow.hh"
 #ifdef CPUI_RULECOMPILE
 #include "rulecompile.hh"
 #endif
@@ -1253,7 +1254,8 @@ void Architecture::resetDefaultsInternal(void)
   max_implied_ref = 2;		// 2 is best, in specific cases a higher number might be good
   max_term_duplication = 2;	// 2 and 3 (4) are reasonable
   max_basetype_size = 10;	// Needs to be 8 or bigger
-  flowoptions = 0;
+  flowoptions = FlowInfo::error_toomanyinstructions;
+  max_instructions = 100000;
   infer_pointers = true;
   readonlypropagate = false;
   alias_block_level = 2;	// Block structs and arrays by default

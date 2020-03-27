@@ -136,7 +136,7 @@ void Funcdata::startProcessing(void)
     warningHeader("This is an inlined function");
   Address baddr(baseaddr.getSpace(),0);
   Address eaddr(baseaddr.getSpace(),~((uintb)0));
-  followFlow(baddr,eaddr,0);
+  followFlow(baddr,eaddr);
   structureReset();
   sortCallSpecs();		// Must come after structure reset
   heritage.buildInfoList();

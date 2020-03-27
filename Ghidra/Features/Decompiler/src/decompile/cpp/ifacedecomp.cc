@@ -360,10 +360,10 @@ static void IfcFollowFlow(ostream &s,IfaceDecompData *dcp,const Address &offset,
     if (size==0) {
       Address baddr(dcp->fd->getAddress().getSpace(),0);
       Address eaddr(dcp->fd->getAddress().getSpace(),dcp->fd->getAddress().getSpace()->getHighest());
-      dcp->fd->followFlow(baddr,eaddr,0);
+      dcp->fd->followFlow(baddr,eaddr);
     }
     else
-      dcp->fd->followFlow(offset,offset+size,0);
+      dcp->fd->followFlow(offset,offset+size);
     s << "Function " << dcp->fd->getName() << ": ";
     dcp->fd->getAddress().printRaw(s);
     s << endl;

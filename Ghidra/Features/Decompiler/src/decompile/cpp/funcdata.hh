@@ -160,7 +160,7 @@ public:
   void startCleanUp(void) { clean_up_index = vbank.getCreateIndex(); }	///< Start \e clean-up phase
   uint4 getCleanUpIndex(void) const { return clean_up_index; }	///< Get creation index at the start of \b clean-up phase
 
-  void followFlow(const Address &baddr,const Address &eadddr,uint4 insn_max);
+  void followFlow(const Address &baddr,const Address &eadddr);
   void truncatedFlow(const Funcdata *fd,const FlowInfo *flow);
   bool inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
   void overrideFlow(const Address &addr,uint4 type);

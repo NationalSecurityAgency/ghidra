@@ -700,12 +700,10 @@ void Funcdata::markIndirectCreation(PcodeOp *indop,bool possibleOutput)
 /// \brief Generate raw p-code for the function
 ///
 /// Follow flow from the entry point generating PcodeOps for each instruction encountered.
-/// The caller can provide a bounding range that constrains where control can flow to
-/// and can also provide a maximum number of instructions that will be followed.
+/// The caller can provide a bounding range that constrains where control can flow to.
 /// \param baddr is the beginning of the constraining range
 /// \param eaddr is the end of the constraining range
-/// \param insn_max is the maximum number of instructions to follow
-void Funcdata::followFlow(const Address &baddr,const Address &eaddr,uint4 insn_max)
+void Funcdata::followFlow(const Address &baddr,const Address &eaddr)
 
 {
   if (!obank.empty()) {
@@ -719,8 +717,7 @@ void Funcdata::followFlow(const Address &baddr,const Address &eaddr,uint4 insn_m
   FlowInfo flow(*this,obank,bblocks,qlst);
   flow.setRange(baddr,eaddr);
   flow.setFlags(fl);
-  if (insn_max != 0)
-    flow.setMaximumInstructions(insn_max);
+  flow.setMaximumInstructions(glb->max_instructions);
   flow.generateOps();
   size = flow.getSize();
   // Cannot keep track of function sizes in general because of non-contiguous functions
