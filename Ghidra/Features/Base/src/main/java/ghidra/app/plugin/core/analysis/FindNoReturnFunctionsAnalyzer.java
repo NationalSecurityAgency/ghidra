@@ -423,7 +423,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 			visited.add(blockAddr);
 
 			FlowType flowType = block.getFlowType();
-			if (flowType.isTerminal()) {
+			if (flowType.isTerminal() && !flowType.isCall()) {
 				return false;
 			}
 
