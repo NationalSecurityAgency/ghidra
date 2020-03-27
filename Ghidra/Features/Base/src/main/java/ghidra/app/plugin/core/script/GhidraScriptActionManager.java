@@ -52,7 +52,7 @@ class GhidraScriptActionManager {
 	private GhidraScriptComponentProvider provider;
 	private GhidraScriptMgrPlugin plugin;
 	private DockingAction refreshAction;
-	private DockingAction scriptDirsAction;
+	private DockingAction bundlePathsAction;
 	private DockingAction newAction;
 	private DockingAction runAction;
 	private DockingAction runLastAction;
@@ -349,10 +349,10 @@ class GhidraScriptActionManager {
 		refreshAction.setEnabled(true);
 		plugin.getTool().addLocalAction(provider, refreshAction);
 
-		scriptDirsAction = new DockingAction("Bundle Status", plugin.getName()) {
+		bundlePathsAction = new DockingAction("Bundle Status", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				provider.showBundleStatusDialog();
+				provider.showBundleStatusComponent();
 			}
 
 			@Override
@@ -361,14 +361,14 @@ class GhidraScriptActionManager {
 				return (contextObject instanceof GTable) || (contextObject instanceof ResourceFile);
 			}
 		};
-		scriptDirsAction.setPopupMenuData(new MenuData(new String[] { "Bundle Status" },
+		bundlePathsAction.setPopupMenuData(new MenuData(new String[] { "Bundle Status" },
 			ResourceManager.loadImage("images/text_list_bullets.png"), null));
-		scriptDirsAction.setToolBarData(
+		bundlePathsAction.setToolBarData(
 			new ToolBarData(ResourceManager.loadImage("images/text_list_bullets.png"), null));
 
-		scriptDirsAction.setDescription("Bundle Status");
-		scriptDirsAction.setEnabled(true);
-		plugin.getTool().addLocalAction(provider, scriptDirsAction);
+		bundlePathsAction.setDescription("Bundle Status");
+		bundlePathsAction.setEnabled(true);
+		plugin.getTool().addLocalAction(provider, bundlePathsAction);
 
 		helpAction = new DockingAction("Ghidra API Help", plugin.getName()) {
 			@Override
@@ -437,7 +437,7 @@ class GhidraScriptActionManager {
 	}
 
 	HelpLocation getPathHelpLocation() {
-		return new HelpLocation(plugin.getName(), scriptDirsAction.getName());
+		return new HelpLocation(plugin.getName(), bundlePathsAction.getName());
 	}
 
 	HelpLocation getKeyBindingHelpLocation() {

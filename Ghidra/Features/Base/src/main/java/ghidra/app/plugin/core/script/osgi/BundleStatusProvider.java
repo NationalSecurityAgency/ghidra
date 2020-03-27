@@ -22,14 +22,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
-import generic.jar.ResourceFile;
-import ghidra.app.script.osgi.BundleHost;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -42,38 +39,40 @@ import resources.ResourceManager;
  * component for managing OSGi bundle status
  */
 public class BundleStatusProvider extends ComponentProviderAdapter {
+	static String preferenceForLastSelectedBundle = "LastGhidraScriptBundle";
+
 	private JPanel panel;
 	private GTable bundlePathTable;
-	private BundleStatusModel bundleStatusModel;
-	private TableModelListener bundlePathModelListener;
+	private final BundleStatusModel bundleStatusModel;
 	private JButton addButton;
 	private JButton removeButton;
 	private Color selectionColor;
 	private GhidraFileChooser fileChooser;
-	private String preferenceForLastSelectedBundle = Preferences.LAST_IMPORT_DIRECTORY;
-	private String title = "Select File";
 	private GhidraFileFilter filter;
 	private ArrayList<BundlePathManagerListener> listeners = new ArrayList<>();
 
-	private BundleHost bundleHost;
-
-	public BundleStatusProvider(PluginTool tool, String owner, BundleHost bundleHost) {
-		super(tool, "Bundle Status Manager", "my owner");
-		this.bundleHost = bundleHost;
-		build();
-		addToTool();
+	void fireBundlesChanged() {
+		for (BundlePathManagerListener listener : listeners) {
+			listener.bundlesChanged();
+		}
 	}
 
-	/**
-	 * Set properties on the file chooser that is displayed when the "Add" button is pressed.
-	 * @param title title of the file chooser
-	 * @param preferenceForLastSelectedBundle Preference to use as the starting selection in the
-	 * file chooser
-	 */
+	void fireBundleEnablementChanged(BundlePath path, boolean newValue) {
+		for (BundlePathManagerListener listener : listeners) {
+			listener.bundleEnablementChanged(path, newValue);
+		}
+	}
 
-	public void setFileChooserProperties(String title, String preferenceForLastSelectedBundle) {
-		this.title = title;
-		this.preferenceForLastSelectedBundle = preferenceForLastSelectedBundle;
+	void fireBundleActivationChanged(BundlePath path, boolean newValue) {
+		for (BundlePathManagerListener listener : listeners) {
+			listener.bundleActivationChanged(path, newValue);
+		}
+	}
+
+	public BundleStatusProvider(PluginTool tool, String owner) {
+		super(tool, "Bundle Status Manager", owner);
+		this.bundleStatusModel = new BundleStatusModel(this);
+
 		this.filter = new GhidraFileFilter() {
 			@Override
 			public String getDescription() {
@@ -86,51 +85,13 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			}
 		};
 		this.fileChooser = null;
+
+		build();
+		addToTool();
 	}
 
-	/**
-	 * Return enabled paths in the table.
-	 * @return enabled paths
-	 */
-	public List<BundlePath> getPaths() {
-		return bundleStatusModel.getPaths();
-	}
-
-	/**
-	 * (add and) enable a path
-	 * @param file path to enable 
-	 * @return true if the path is new
-	 */
-	public boolean enablePath(ResourceFile file) {
-		ResourceFile dir = file.isDirectory() ? file : file.getParentFile();
-		for (BundlePath path : bundleStatusModel.getAllPaths()) {
-			if (path.getPath().equals(dir)) {
-				if (!path.isEnabled()) {
-					path.setEnabled(true);
-					bundleStatusModel.fireTableDataChanged();
-					fireBundlesChanged();
-					return true;
-				}
-				return false;
-			}
-		}
-		BundlePath p = new BundlePath(dir);
-		p.setEnabled(true);
-		bundleStatusModel.addPath(p);
-		Preferences.setProperty(preferenceForLastSelectedBundle, dir.getAbsolutePath());
-		fireBundlesChanged();
-		return true;
-	}
-
-	public void setPaths(List<BundlePath> paths) {
-		bundleStatusModel.setPaths(paths);
-	}
-
-	/**
-	 * Clear the paths in the table.
-	 */
-	public void clear() {
-		bundleStatusModel.clear();
+	public BundleStatusModel getModel() {
+		return bundleStatusModel;
 	}
 
 	public void addListener(BundlePathManagerListener listener) {
@@ -143,27 +104,11 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		listeners.remove(listener);
 	}
 
-	public List<BundlePathManagerListener> getListeners() {
-		return new ArrayList<>(listeners);
-	}
-
-	void fireBundlesChanged() {
-		for (BundlePathManagerListener listener : listeners) {
-			listener.bundlesChanged();
-		}
-	}
-
-	void fireBundlePathChanged(BundlePath path) {
-		for (BundlePathManagerListener listener : listeners) {
-			listener.bundlePathChanged(path);
-		}
-	}
-
 	private void build() {
 		panel = new JPanel(new BorderLayout(5, 5));
 
 		selectionColor = new Color(204, 204, 255);
-
+		
 		addButton = new JButton(ResourceManager.loadImage("images/Plus.png"));
 		addButton.setName("AddBundle");
 		addButton.setToolTipText("Display file chooser to add bundles to list");
@@ -187,13 +132,6 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		++gbc.gridy;
 		buttonPanel.add(removeButton, gbc);
 
-		bundlePathModelListener = e -> {
-			fireBundlesChanged();
-		};
-
-		bundleStatusModel = new BundleStatusModel(this);
-		bundleStatusModel.addTableModelListener(bundlePathModelListener);
-
 		bundlePathTable = new GTable(bundleStatusModel);
 		bundlePathTable.setName("BUNDLEPATH_TABLE");
 		bundlePathTable.setSelectionBackground(selectionColor);
@@ -203,25 +141,25 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		int skinnyWidth = 50;
 
 		TableColumn column =
-			bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Enabled.index);
+			bundlePathTable.getColumnModel().getColumn(bundleStatusModel.enabledColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
-		column = bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Active.index);
+		column = bundlePathTable.getColumnModel().getColumn(bundleStatusModel.activeColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
-		column = bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Type.index);
+		column = bundlePathTable.getColumnModel().getColumn(bundleStatusModel.typeColumn.index);
 
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		column.setMaxWidth(10 +
 			SwingUtilities.computeStringWidth(fontmetrics, BundlePath.Type.SourceDir.toString()));
 
-		column = bundlePathTable.getColumnModel().getColumn(BundleStatusModel.COLUMN.Path.index);
+		column = bundlePathTable.getColumnModel().getColumn(bundleStatusModel.pathColumn.index);
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -265,7 +203,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 	private void remove() {
 		int[] selectedRows = bundlePathTable.getSelectedRows();
-		if (selectedRows == null) {
+		if (selectedRows == null || selectedRows.length == 0) {
 			return;
 		}
 		bundleStatusModel.remove(selectedRows);
@@ -281,6 +219,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			bundlePathTable.setRowSelectionInterval(row, row);
 		}
 		updateButtonsEnabled();
+		fireBundlesChanged();
 	}
 
 	private void add() {
@@ -288,7 +227,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			fileChooser = new GhidraFileChooser(panel);
 			fileChooser.setMultiSelectionEnabled(true);
 			fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
-			fileChooser.setTitle(title);
+			fileChooser.setTitle("Select Script Bundle(s)");
 			// fileChooser.setApproveButtonToolTipText(title);
 			if (filter != null) {
 				fileChooser.addFileFilter(new GhidraFileFilter() {
@@ -326,13 +265,10 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 				BundlePath p = new BundlePath(element);
 				bundleStatusModel.addPath(p);
 			}
+			fireBundlesChanged();
 		}
 	}
 
-	/**
-	 * Returns the GUI component for the path manager.
-	 * @return the GUI component for the path manager
-	 */
 	@Override
 	public JComponent getComponent() {
 		return panel;
@@ -376,12 +312,6 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		/*
-		 * Temporarily remove the listener to prevent too many
-		 * notifications from being sent.
-		 */
-		bundleStatusModel.removeTableModelListener(bundlePathModelListener);
-
 		boolean[] enableArr =
 			ss.getBooleans("BundleManagerPanel_ENABLE", new boolean[pathArr.length]);
 		boolean[] editArr = ss.getBooleans("BundleManagerPanel_EDIT", new boolean[pathArr.length]);
@@ -415,10 +345,6 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			}
 		}
 
-		/*
-		 * Reinstall the listener then fire the update.
-		 */
-		bundleStatusModel.addTableModelListener(bundlePathModelListener);
 		fireBundlesChanged();
 	}
 
@@ -433,5 +359,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 	public void dispose() {
 		bundlePathTable.dispose();
+	}
+
+	void selectRow(int rowIndex) {
+		bundlePathTable.selectRow(rowIndex);
 	}
 }

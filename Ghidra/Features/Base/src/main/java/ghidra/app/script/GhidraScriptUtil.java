@@ -154,10 +154,10 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Sets the script directories to the new paths.
-	 * @param newPaths the new script directories
+	 * Sets the script bundle paths
+	 * @param newPaths the new script bundle paths
 	 */
-	public static void setScriptDirectories(List<BundlePath> newPaths) {
+	public static void setScriptBundlePaths(List<BundlePath> newPaths) {
 		scriptBundlePaths = new ArrayList<>(newPaths);
 	}
 

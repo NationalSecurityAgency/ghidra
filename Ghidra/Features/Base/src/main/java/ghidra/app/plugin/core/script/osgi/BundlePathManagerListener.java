@@ -18,22 +18,12 @@ package ghidra.app.plugin.core.script.osgi;
 
 public interface BundlePathManagerListener {
 
-	default public void pathMessage(String message) {
-		// 
-	}
-
 	/**
 	 * Called when the list of bundle paths changes
 	 */
-	default public void bundlesChanged() {
-		// 
-	}
+	public void bundlesChanged();
 
-	/**
-	 * called when a bundle path changes
-	 * @param path that whose attributes changed 
-	 */
-	default public void bundlePathChanged(BundlePath path) {
-		// 
-	}
+	public void bundleEnablementChanged(BundlePath path, boolean newValue);
+	public void bundleActivationChanged(BundlePath path, boolean newValue);
+	
 }

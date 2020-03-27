@@ -290,9 +290,9 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		dir.mkdirs();
 
 		SwingUtilities.invokeLater(() -> {
-			List<BundlePath> paths = bundleStatusProvider.getPaths();
+			List<BundlePath> paths = bundleStatusProvider.getModel().getPaths();
 			paths.add(0, new BundlePath(dir));
-			bundleStatusProvider.setPaths(paths);
+			bundleStatusProvider.getModel().setPaths(paths);
 		});
 		waitForSwing();
 

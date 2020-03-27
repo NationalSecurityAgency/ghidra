@@ -16,67 +16,29 @@
  */
 package ghidra.app.plugin.core.script.osgi;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.table.AbstractSortedTableModel;
+import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
+import ghidra.framework.preferences.Preferences;
+import ghidra.util.Msg;
 
-class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
-	private static int column_counter = 0;
+public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
+	List<Column> columns = new ArrayList<>();
 
-	static enum COLUMN {
-		Enabled(Boolean.class) {
-			@Override
-			Object getValue(BundlePath path) {
-				return path.isEnabled();
-			}
-
-			@Override
-			void setValue(BundlePath path, Object aValue) {
-				path.setEnabled((Boolean) aValue);
-			}
-		},
-		Active(Boolean.class) {
-			@Override
-			Object getValue(BundlePath path) {
-				return path.isActive();
-			}
-
-			@Override
-			void setValue(BundlePath path, Object aValue) {
-				path.setActive((Boolean) aValue);
-			}
-		},
-		Type(String.class) {
-			@Override
-			boolean editable(BundlePath path) {
-				return false;
-			}
-
-			@Override
-			Object getValue(BundlePath path) {
-				return path.getType().toString();
-			}
-
-		},
-		Path(BundlePath.class) {
-			@Override
-			boolean editable(BundlePath path) {
-				return true;
-			}
-
-			@Override
-			void setValue(BundlePath path, Object aValue) {
-				if (path.isEditable()) {
-					BundlePath newpath = (BundlePath) aValue;
-					path.setPath(newpath.getPath());
-				}
-			}
-		},
-		__badcolumnindex__(Object.class);
-
+	class Column {
 		final Class<?> clazz;
 		final int index;
+		final String name;
+
+		Column(String name, Class<?> clazz) {
+			this.name = name;
+			this.index = columns.size();
+			columns.add(this);
+			this.clazz = clazz;
+		}
 
 		boolean editable(BundlePath path) {
 			return true;
@@ -86,26 +48,73 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 			return path;
 		}
 
-		COLUMN(Class<?> clazz) {
-			this.index = column_counter++;
-			this.clazz = clazz;
-		}
-
-		static COLUMN[] vals = values();
-		static {
-			vals = Arrays.copyOf(vals, vals.length - 1);
-		}
-
-		static COLUMN val(int i) {
-			if (i >= 0 && i < vals.length) {
-				return vals[i];
-			}
-			return __badcolumnindex__;
-		}
-
 		void setValue(BundlePath path, Object aValue) {
 			// do nothing
 		}
+
+	}
+
+	Column enabledColumn = new Column("Enabled", Boolean.class) {
+		@Override
+		Object getValue(BundlePath path) {
+			return path.isEnabled();
+		}
+
+		@Override
+		void setValue(BundlePath path, Object newValue) {
+			path.setEnabled((Boolean) newValue);
+			provider.fireBundleEnablementChanged(path, (Boolean) newValue);
+		}
+	};
+	Column activeColumn = new Column("Active", Boolean.class) {
+		@Override
+		Object getValue(BundlePath path) {
+			return path.isActive();
+		}
+
+		@Override
+		void setValue(BundlePath path, Object newValue) {
+			path.setActive((Boolean) newValue);
+			provider.fireBundleActivationChanged(path, (Boolean) newValue);
+		}
+	};
+	Column typeColumn = new Column("Type", String.class) {
+		@Override
+		boolean editable(BundlePath path) {
+			return false;
+		}
+
+		@Override
+		Object getValue(BundlePath path) {
+			return path.getType().toString();
+		}
+	};
+
+	Column pathColumn = new Column("Path", BundlePath.class) {
+		@Override
+		boolean editable(BundlePath path) {
+			return true;
+		}
+
+		@Override
+		void setValue(BundlePath path, Object aValue) {
+			if (path.isEditable()) {
+				BundlePath newpath = (BundlePath) aValue;
+				path.setPath(newpath.getPath());
+			}
+		}
+	};
+	Column badColumn = new Column("INVALID", Object.class);
+	{
+		columns.remove(columns.size() - 1); // pop badColumn
+
+	}
+
+	Column getColumn(int i) {
+		if (i >= 0 && i < columns.size()) {
+			return columns.get(i);
+		}
+		return badColumn;
 	}
 
 	private BundleStatusProvider provider;
@@ -115,6 +124,7 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		super();
 		this.provider = provider;
 		this.paths.addAll(dedupPaths(GhidraScriptUtil.getDefaultScriptBundles()));
+
 		fireTableDataChanged();
 	}
 
@@ -136,7 +146,7 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		return new ArrayList<BundlePath>(paths);
 	}
 
-	List<BundlePath> getPaths() {
+	public List<BundlePath> getPaths() {
 		List<BundlePath> list = new ArrayList<>();
 		for (BundlePath path : paths) {
 			if (path.isEnabled()) {
@@ -146,17 +156,8 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		return list;
 	}
 
-	void setPaths(List<BundlePath> paths) {
+	public void setPaths(List<BundlePath> paths) {
 		this.paths = new ArrayList<>(paths);
-		fireTableDataChanged();
-	}
-
-	void setPaths(BundlePath[] pathsArr) {
-		paths.clear();
-		paths = new ArrayList<>();
-		for (BundlePath element : pathsArr) {
-			paths.add(element);
-		}
 		fireTableDataChanged();
 	}
 
@@ -169,20 +170,6 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		fireTableRowsInserted(index, index);
 	}
 
-	void removePath(BundlePath path) {
-		int index = paths.indexOf(path);
-		if (path.isEditable()) {
-			paths.remove(path);
-		}
-		else {
-			List<BundlePathManagerListener> listeners = provider.getListeners();
-			for (BundlePathManagerListener listener : listeners) {
-				listener.pathMessage("Unable to remove path.");
-			}
-		}
-		fireTableRowsDeleted(index, index);
-	}
-
 	void remove(int[] selectedRows) {
 		List<BundlePath> list = new ArrayList<>();
 		for (int selectedRow : selectedRows) {
@@ -193,56 +180,18 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 				paths.remove(path);
 			}
 			else {
-				List<BundlePathManagerListener> listeners = provider.getListeners();
-				for (BundlePathManagerListener listener : listeners) {
-					listener.pathMessage("Unable to remove path.");
-				}
+				Msg.showInfo(this, this.provider.getComponent(), "Unabled to remove path",
+					"System path cannot be removed: " + path.toString());
 			}
 		}
 		fireTableDataChanged();
 	}
 
-	int moveUp(int index) {
-		if (index < 0 || index >= paths.size()) {
-			return -1;
-		}
-		BundlePath path = paths.remove(index);
-		if (index == 0) {
-			paths.add(path);//place it last in the list
-		}
-		else {
-			paths.add(index - 1, path);
-		}
-		fireTableDataChanged();
-		return paths.indexOf(path);
-	}
-
-	int moveDown(int index) {
-		if (index < 0 || index >= paths.size()) {
-			return -1;
-		}
-		int size = paths.size();
-		BundlePath path = paths.remove(index);
-		if (index == size - 1) {
-			paths.add(0, path);//move to the top of the list
-		}
-		else {
-			paths.add(index + 1, path);
-		}
-		fireTableDataChanged();
-		return paths.indexOf(path);
-	}
-
 	/***************************************************/
 
 	@Override
-	public java.lang.Class<?> getColumnClass(int columnIndex) {
-		return COLUMN.val(columnIndex).clazz;
-	}
-
-	@Override
 	public int getColumnCount() {
-		return COLUMN.vals.length;
+		return columns.size();
 	}
 
 	@Override
@@ -251,22 +200,30 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 	}
 
 	@Override
+	public java.lang.Class<?> getColumnClass(int columnIndex) {
+		return getColumn(columnIndex).clazz;
+	}
+
+	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		BundlePath path = paths.get(rowIndex);
-		return COLUMN.val(columnIndex).editable(path);
+		return getColumn(columnIndex).editable(path);
 	}
 
 	@Override
 	public String getColumnName(int columnIndex) {
-		return COLUMN.val(columnIndex).toString();
+		return getColumn(columnIndex).name;
 	}
 
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 		BundlePath path = paths.get(rowIndex);
-		COLUMN.val(columnIndex).setValue(path, aValue);
-		fireTableDataChanged();
-		provider.fireBundlePathChanged(path);
+		getColumn(columnIndex).setValue(path, aValue);
+	}
+
+	@Override
+	public Object getColumnValueForRow(BundlePath path, int columnIndex) {
+		return getColumn(columnIndex).getValue(path);
 	}
 
 	@Override
@@ -284,8 +241,29 @@ class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		return paths;
 	}
 
-	@Override
-	public Object getColumnValueForRow(BundlePath path, int columnIndex) {
-		return COLUMN.val(columnIndex).getValue(path);
+	/**
+	 * (add and) enable a path
+	 * @param file path to enable 
+	 * @return true if the path is new
+	 */
+	public boolean enablePath(ResourceFile file) {
+		ResourceFile dir = file.isDirectory() ? file : file.getParentFile();
+		for (BundlePath path : getAllPaths()) {
+			if (path.getPath().equals(dir)) {
+				if (!path.isEnabled()) {
+					path.setEnabled(true);
+					fireTableDataChanged();
+					provider.fireBundlesChanged();
+					return true;
+				}
+				return false;
+			}
+		}
+		BundlePath p = new BundlePath(dir);
+		p.setEnabled(true);
+		addPath(p);
+		Preferences.setProperty(BundleStatusProvider.preferenceForLastSelectedBundle, dir.getAbsolutePath());
+		provider.fireBundlesChanged();
+		return true;
 	}
 }

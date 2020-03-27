@@ -42,7 +42,6 @@ import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.app.plugin.core.script.osgi.*;
 import ghidra.app.script.*;
-import ghidra.app.script.osgi.BundleHost;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -131,12 +130,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return editorMap;
 	}
 
-	void showBundleStatusDialog() {
+	void showBundleStatusComponent() {
 		bundleStatusProvider.setVisible(true);
 	}
 
 	private void performRefresh() {
-		GhidraScriptUtil.setScriptDirectories(bundleStatusProvider.getPaths());
+		GhidraScriptUtil.setScriptBundlePaths(bundleStatusProvider.getModel().getPaths());
 		GhidraScriptUtil.clearMetadata();
 		refresh();
 	}
@@ -341,12 +340,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public List<BundlePath> getScriptDirectories() {
-		return bundleStatusProvider.getPaths().stream().filter(BundlePath::isDirectory).collect(
-			Collectors.toList());
+		return bundleStatusProvider.getModel().getPaths().stream().filter(
+			BundlePath::isDirectory).collect(Collectors.toList());
 	}
 
 	public void enableScriptDirectory(ResourceFile scriptDir) {
-		if (bundleStatusProvider.enablePath(scriptDir)) {
+		if (bundleStatusProvider.getModel().enablePath(scriptDir)) {
 			Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
 				"The directory has been automatically enabled for use:\n" +
 					scriptDir.getAbsolutePath());
@@ -397,7 +396,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(String scriptName, TaskListener listener) {
-		List<BundlePath> dirPaths = bundleStatusProvider.getPaths();
+		List<BundlePath> dirPaths = bundleStatusProvider.getModel().getPaths();
 		for (Path dir : dirPaths) {
 			ResourceFile scriptSource = new ResourceFile(dir.getPath(), scriptName);
 			if (scriptSource.exists()) {
@@ -537,7 +536,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void updateAvailableScriptFilesForAllPaths() {
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		List<BundlePath> bundlePaths = bundleStatusProvider.getPaths();
+		List<BundlePath> bundlePaths = bundleStatusProvider.getModel().getPaths();
 		for (BundlePath bundlePath : bundlePaths) {
 			if (bundlePath.isDirectory()) {
 				updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator,
@@ -733,17 +732,29 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void build() {
-		
-		bundleStatusProvider =
-			new BundleStatusProvider(plugin.getTool(), plugin.getName(), BundleHost.getInstance());
-		bundleStatusProvider.setFileChooserProperties("Select Script Bundle",
-			"LastGhidraScriptBundle");
+
+		bundleStatusProvider = new BundleStatusProvider(plugin.getTool(), plugin.getName());
 
 		bundleStatusProvider.addListener(new BundlePathManagerListener() {
 			@Override
 			public void bundlesChanged() {
 				plugin.getTool().setConfigChanged(true);
 				performRefresh();
+			}
+
+			@Override
+			public void bundleEnablementChanged(BundlePath path, boolean enabled) {
+				System.err.printf("XXXX %s is now %s\n", path.toString(),
+					enabled ? "enabled" : "disabled");
+				if (path.isDirectory()) {
+					performRefresh();
+				}
+			}
+
+			@Override
+			public void bundleActivationChanged(BundlePath path, boolean newValue) {
+				System.err.printf("XXXX %s is now %s\n", path.toString(),
+					newValue ? "active" : "inactive");
 			}
 		});
 
@@ -1015,8 +1026,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		bundleStatusProvider.restoreState(saveState);
 
 		// pull in the just-loaded paths
-		List<BundlePath> paths = bundleStatusProvider.getPaths();
-		GhidraScriptUtil.setScriptDirectories(paths);
+		List<BundlePath> paths = bundleStatusProvider.getModel().getPaths();
+		GhidraScriptUtil.setScriptBundlePaths(paths);
 		actionManager.restoreUserDefinedKeybindings(saveState);
 		actionManager.restoreScriptsThatAreInTool(saveState);
 
