@@ -164,6 +164,8 @@ public:
 #endif
   Architecture(void);		///< Construct an uninitialized Architecture
   void init(DocumentStorage &store); ///< Load the image and configure architecture
+  void resetDefaultsInternal(void);	///< Reset default values for options specific to Architecture
+  void resetDefaults(void);		///< Reset defaults values for options owned by \b this
   ProtoModel *getModel(const string &nm) const;		///< Get a specific PrototypeModel
   bool hasModel(const string &nm) const;		///< Does this Architecture have a specific PrototypeModel
   bool highPtrPossible(const Address &loc,int4 size) const; ///< Are pointers possible to the given location?

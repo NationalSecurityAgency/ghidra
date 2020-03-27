@@ -4703,11 +4703,12 @@ void TermOrder::sortTerms(void)
   sort(sorter.begin(),sorter.end(),additiveCompare);
 }
 
-/// Build the default \e root Actions: decompile, jumptable, normalize, paramid, register, firstpass
-/// \param allacts is the database that will hold the \e root Actions
-void build_defaultactions(ActionDatabase &allacts)
+/// (Re)build the default \e root Actions: decompile, jumptable, normalize, paramid, register, firstpass
+void ActionDatabase::buildDefaultGroups(void)
 
 {
+  if (isDefaultGroups) return;
+  groupmap.clear();
   const char *members[] = { "base", "protorecovery", "protorecovery_a", "deindirect", "localrecovery",
 			    "deadcode", "typerecovery", "stackptrflow",
 			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
@@ -4716,36 +4717,37 @@ void build_defaultactions(ActionDatabase &allacts)
 			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
 			    "unreachable", "subvar", "floatprecision", 
 			    "conditionalexe", "" };
-  allacts.setGroup("decompile",members);
+  setGroup("decompile",members);
 
   const char *jumptab[] = { "base", "noproto", "localrecovery", "deadcode", "stackptrflow",
 			    "stackvars", "analysis", "segment", "subvar", "conditionalexe", "" };
-  allacts.setGroup("jumptable",jumptab);
+  setGroup("jumptable",jumptab);
 
  const  char *normali[] = { "base", "protorecovery", "protorecovery_b", "deindirect", "localrecovery",
 			    "deadcode", "stackptrflow", "normalanalysis",
 			    "stackvars", "deadcontrolflow", "analysis", "fixateproto", "nodejoin",
 			    "unreachable", "subvar", "floatprecision", "normalizebranches",
 			    "conditionalexe", "" };
-  allacts.setGroup("normalize",normali);
+  setGroup("normalize",normali);
 
   const  char *paramid[] = { "base", "protorecovery", "protorecovery_b", "deindirect", "localrecovery",
                              "deadcode", "typerecovery", "stackptrflow", "siganalysis",
                              "stackvars", "deadcontrolflow", "analysis", "fixateproto",
                              "unreachable", "subvar", "floatprecision",
                              "conditionalexe", "" };
-  allacts.setGroup("paramid",paramid);
+  setGroup("paramid",paramid);
 
   const char *regmemb[] = { "base", "analysis", "subvar", "" };
-  allacts.setGroup("register",regmemb);
+  setGroup("register",regmemb);
 
   const char *firstmem[] = { "base", "" };
-  allacts.setGroup("firstpass",firstmem);
+  setGroup("firstpass",firstmem);
+  isDefaultGroups = true;
 }
 
 /// Construct the \b universal Action that contains all possible components
 /// \param conf is the Architecture that will use the Action
-void universal_action(Architecture *conf)
+void ActionDatabase::universalAction(Architecture *conf)
 
 {
   vector<Rule *>::iterator iter;
@@ -4757,9 +4759,8 @@ void universal_action(Architecture *conf)
   ActionGroup *actstackstall;
   AddrSpace *stackspace = conf->getStackSpace();
 
-  build_defaultactions(conf->allacts);
   act = new ActionRestartGroup(Action::rule_onceperfunc,"universal",1);
-  conf->allacts.registerUniversal(act);
+  registerAction(universalname,act);
 
   act->addAction( new ActionStart("base"));
   act->addAction( new ActionConstbase("base"));

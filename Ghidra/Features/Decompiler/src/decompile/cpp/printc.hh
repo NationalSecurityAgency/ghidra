@@ -159,6 +159,7 @@ protected:
   void opHiddenFunc(const PcodeOp *op);			///< Push the given p-code op as a hidden token
   static bool hasCharTerminator(uint1 *buffer,int4 size,int4 charsize);
   bool printCharacterConstant(ostream &s,const Address &addr,int4 charsize) const;
+  void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
   virtual void pushConstant(uintb val,const Datatype *ct,
 			    const Varnode *vn,const PcodeOp *op);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
@@ -200,6 +201,7 @@ public:
   void setDisplayUnplaced(bool val) { option_unplaced = val; }	///< Toggle whether \e unplaced comments are displayed in the header
   void setHideImpliedExts(bool val) { option_hide_exts = val; }	///< Toggle whether implied extensions are hidden
   virtual ~PrintC(void) {}
+  virtual void resetDefaults(void);
   virtual void adjustTypeOperators(void);
   virtual void setCommentStyle(const string &nm);
   virtual bool isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const;

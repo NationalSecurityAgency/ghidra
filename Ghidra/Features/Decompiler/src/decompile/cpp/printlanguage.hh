@@ -275,6 +275,8 @@ protected:
   void opBinary(const OpToken *tok,const PcodeOp *op);			///< Push a binary operator onto the RPN stack
   void opUnary(const OpToken *tok,const PcodeOp *op);			///< Push a unary operator onto the RPN stack
   int4 getPending(void) const { return pending; }			///< Get the number of pending nodes yet to be put on the RPN stack
+  void resetDefaultsInternal(void);					///< Reset options to default for PrintLanguage
+
 
   /// \brief Print a single unicode character as a \e character \e constant for the high-level language
   ///
@@ -421,6 +423,7 @@ public:
   void setFlat(bool val);						///< Set whether nesting code structure should be emitted
 
   virtual void adjustTypeOperators(void)=0;				///< Set basic data-type information for p-code operators
+  virtual void resetDefaults(void);					///< Set printing options to their default value
   virtual void clear(void);						///< Clear the RPN stack and the low-level emitter
   virtual void setIntegerFormat(const string &nm);			///< Set the default integer format
 

@@ -296,14 +296,16 @@ class ActionDatabase {
   string currentactname;			///< The name associated with the current root Action
   map<string,ActionGroupList> groupmap;		///< Map from root Action name to the grouplist it uses
   map<string,Action *> actionmap;		///< Map from name to root Action
+  bool isDefaultGroups;				///< \b true if only the default groups are set
   static const char universalname[];		///< The name of the \e universal root Action
   void registerAction(const string &nm,Action *act);	///< Register a \e root Action
+  void buildDefaultGroups(void);		///< Set up descriptions of preconfigured root Actions
   Action *getAction(const string &nm) const;				///< Look up a \e root Action by name
   Action *deriveAction(const string &baseaction,const string &grp);	///< Derive a \e root Action
 public:
-  ActionDatabase(void) { currentact = (Action *)0; }	///< Constructor
+  ActionDatabase(void) { currentact = (Action *)0; isDefaultGroups = false; }	///< Constructor
   ~ActionDatabase(void);				///< Destructor
-  void registerUniversal(Action *act);			///< Register the \e universal root Action
+  void resetDefaults(void);			///< (Re)set the default configuration
   Action *getCurrent(void) const { return currentact; }	///< Get the current \e root Action
   const string &getCurrentName(void) const { return currentactname; }	///< Get the name of the current \e root Action
   const ActionGroupList &getGroup(const string &grp) const;	///< Get a specific grouplist by name
@@ -314,6 +316,7 @@ public:
   void cloneGroup(const string &oldname,const string &newname);		///< Clone a \e root Action
   bool addToGroup(const string &grp,const string &basegroup);		///< Add a group to a \e root Action
   bool removeFromGroup(const string &grp,const string &basegroup);	///< Remove a group from a \e root Action
+  void universalAction(Architecture *glb);		///< Build the universal action
 };
 
 #endif

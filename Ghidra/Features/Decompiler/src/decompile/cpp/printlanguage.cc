@@ -61,13 +61,10 @@ PrintLanguage::PrintLanguage(Architecture *g,const string &nm)
   castStrategy = (CastStrategy *)0;
   name = nm;
   curscope = (Scope *)0;
-  emit = new EmitPrettyPrint(100);
+  emit = new EmitPrettyPrint();
 
-  mods = 0;
   pending = 0;
-  line_commentindent = 20;
-  instr_comment_type = Comment::user2 | Comment::warning;
-  head_comment_type = Comment::header | Comment::warningheader;
+  resetDefaultsInternal();
 }
 
 PrintLanguage::~PrintLanguage(void)
@@ -692,6 +689,15 @@ void PrintLanguage::opUnary(const OpToken *tok,const PcodeOp *op)
   pushVnImplied(op->getIn(0),op,mods);
 }
 
+void PrintLanguage::resetDefaultsInternal(void)
+
+{
+  mods = 0;
+  head_comment_type = Comment::header | Comment::warningheader;
+  line_commentindent = 20;
+  instr_comment_type = Comment::user2 | Comment::warning;
+}
+
 /// The comment will get emitted as a single line using the high-level language's
 /// delimiters with the given indent level
 /// \param indent is the number of characters to indent
@@ -765,6 +771,13 @@ void PrintLanguage::setFlat(bool val)
     mods |= flat;
   else
     mods &= ~flat;
+}
+
+void PrintLanguage::resetDefaults(void)
+
+{
+  emit->resetDefaults();
+  resetDefaultsInternal();
 }
 
 void PrintLanguage::clear(void)

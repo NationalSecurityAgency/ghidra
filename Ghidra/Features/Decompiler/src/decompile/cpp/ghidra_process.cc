@@ -433,6 +433,7 @@ void SetOptions::rawAction(void)
 {
   res = false;
 
+  ghidra->resetDefaults();
   ghidra->options->restoreXml(doc->getRoot());
   delete doc;
   doc = (Document *)0;

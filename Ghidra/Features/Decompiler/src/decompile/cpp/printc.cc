@@ -94,12 +94,6 @@ PrintLanguage *PrintCCapability::buildLanguage(Architecture *glb)
 PrintC::PrintC(Architecture *g,const string &nm) : PrintLanguage(g,nm)
 
 {
-  option_NULL = false;
-  option_inplace_ops = false;
-  option_convention = true;
-  option_nocasts = false;
-  option_unplaced = false;
-  option_hide_exts = true;
   nullToken = "NULL";
   
   // Set the flip tokens
@@ -111,7 +105,7 @@ PrintC::PrintC(Architecture *g,const string &nm) : PrintLanguage(g,nm)
   not_equal.negate = &equal;
 
   castStrategy = new CastStrategyC();
-  setCStyleComments();
+  resetDefaultsPrintC();
 }
 
 /// Push nested components of a data-type declaration onto a stack, so we can access it bottom up
@@ -1282,6 +1276,18 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize
   return res;
 }
 
+void PrintC::resetDefaultsPrintC(void)
+
+{
+  option_convention = true;
+  option_hide_exts = true;
+  option_inplace_ops = false;
+  option_nocasts = false;
+  option_NULL = false;
+  option_unplaced = false;
+  setCStyleComments();
+}
+
 /// \brief Push a single character constant to the RPN stack
 ///
 /// For C, a character constant is usually emitted as the character in single quotes.
@@ -1929,6 +1935,13 @@ void PrintC::emitGotoStatement(const FlowBlock *bl,const FlowBlock *exp_bl,
   }
   emit->print(";");
   emit->endStatement(id);
+}
+
+void PrintC::resetDefaults(void)
+
+{
+  PrintLanguage::resetDefaults();
+  resetDefaultsPrintC();
 }
 
 void PrintC::adjustTypeOperators(void)

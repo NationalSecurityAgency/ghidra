@@ -86,17 +86,10 @@ Architecture::Architecture(void)
 
 {
   //  endian = -1;
-  trim_recurse_max = 5;		// Reasonable default value
-  max_implied_ref = 2;		// 2 is best, in specific cases a higher number might be good
-  max_term_duplication = 2;	// 2 and 3 (4) are pretty reasonable
-  max_basetype_size = 10;	// Needs to be 8 or bigger
+  resetDefaultsInternal();
   min_funcsymbol_size = 1;
   aggressive_ext_trim = false;
-  readonlypropagate = false;
-  infer_pointers = true;
   funcptr_align = 0;
-  flowoptions = 0;
-  alias_block_level = 2;	// Block structs and arrays by default
   defaultfp = (ProtoModel *)0;
   defaultReturnAddr.space = (AddrSpace *)0;
   evalfp_current = (ProtoModel *)0;
@@ -508,8 +501,8 @@ void Architecture::buildAction(DocumentStorage &store)
 
 {
   parseExtraRules(store);	// Look for any additional rules
-  universal_action(this);
-  allacts.setCurrent("decompile");
+  allacts.universalAction(this);
+  allacts.resetDefaults();
 }
 
 /// This builds the database which holds the status registers setings and other
@@ -1251,6 +1244,30 @@ void Architecture::init(DocumentStorage &store)
 
   buildInstructions(store); // Must be called after translate is built
   fillinReadOnlyFromLoader();
+}
+
+void Architecture::resetDefaultsInternal(void)
+
+{
+  trim_recurse_max = 5;
+  max_implied_ref = 2;		// 2 is best, in specific cases a higher number might be good
+  max_term_duplication = 2;	// 2 and 3 (4) are reasonable
+  max_basetype_size = 10;	// Needs to be 8 or bigger
+  flowoptions = 0;
+  infer_pointers = true;
+  readonlypropagate = false;
+  alias_block_level = 2;	// Block structs and arrays by default
+}
+
+/// Reset options that can be modified by the OptionDatabase. This includes
+/// options specific to this class and options under PrintLanguage and ActionDatabase
+void Architecture::resetDefaults(void)
+
+{
+  resetDefaultsInternal();
+  allacts.resetDefaults();
+  for(int4 i=0;i<printlist.size();++i)
+    printlist[i]->resetDefaults();
 }
 
 Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding)
