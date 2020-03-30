@@ -287,7 +287,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		dir.getFile(false).mkdirs();
 
 		SwingUtilities.invokeLater(() -> {
-			bundleStatusProvider.getModel().insertPathForTesting(0, dir.getAbsolutePath());
+			bundleStatusProvider.getModel().insertPathForTesting(dir.getAbsolutePath());
 		});
 		waitForSwing();
 

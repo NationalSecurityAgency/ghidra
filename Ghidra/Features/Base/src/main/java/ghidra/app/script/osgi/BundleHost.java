@@ -35,8 +35,8 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
+import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -534,26 +534,7 @@ public class BundleHost {
 	}
 
 	/**
-	 * Change the status of the bundle referenced by <code>path</code>
-	 * 
-	 * @param path the bundle path to activate/deactivate
-	 * @param value the new activation value
-	 * @throws InterruptedException
-	 */
-	public void setActive(BundlePath path, boolean value) throws InterruptedException {
-		if (path.isDirectory()) {
-			SourceBundleInfo sbi = getSourceBundleInfo(path.getPath());
-		}
-		Thread.sleep(3000);
-	}
-
-	/**
-	 * synchronously perform steps necessary to activate bundle:
-	 * <ol>
-	 * <li>if source bundle, checkCompile</li>
-	 * <li>b</li>
-	 * 
-	 * </ol>  
+	 * compile a source bundle if it's binary is out of sync
 	 * 
 	 * @param bi the bundle info
 	 * @param writer where to write issues
@@ -562,8 +543,12 @@ public class BundleHost {
 	 * @return the activated bundle
 	 * @throws InterruptedException if interrupted while waiting for bundle state change
 	 */
-	public Bundle activate(SourceBundleInfo bi, PrintWriter writer)
+	public Bundle compileSourceBundle(SourceBundleInfo bi, PrintWriter writer)
 			throws OSGiException, IOException, InterruptedException {
+		if (writer == null) {
+			writer = new NullPrintWriter();
+		}
+
 		bi.updateFromFilesystem(writer);
 
 		// needsCompile => needsBundleActivate
@@ -609,10 +594,10 @@ public class BundleHost {
 			if (needsCompile) {
 				bi.deleteOldBinaries();
 
-				BundleCompiler bc = new BundleCompiler(this);
+				BundleCompiler bundleCompiler = new BundleCompiler(this);
 
 				long startTime = System.nanoTime();
-				bc.compileToExplodedBundle(bi, writer);
+				bundleCompiler.compileToExplodedBundle(bi, writer);
 				long endTime = System.nanoTime();
 				writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
 			}
@@ -628,6 +613,14 @@ public class BundleHost {
 			synchronousStart(b);
 		}
 		return b;
+	}
+
+	public void addListener(BundleListener bundleListener) {
+		bc.addBundleListener(bundleListener);
+	}
+
+	public void removeListener(BundleListener bundleListener) {
+		bc.removeBundleListener(bundleListener);
 	}
 
 }

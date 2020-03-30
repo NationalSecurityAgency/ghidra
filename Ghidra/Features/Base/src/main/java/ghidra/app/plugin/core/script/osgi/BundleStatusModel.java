@@ -19,9 +19,13 @@ package ghidra.app.plugin.core.script.osgi;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.osgi.framework.*;
+
 import docking.widgets.table.AbstractSortedTableModel;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
+import ghidra.app.script.osgi.BundleHost;
+import ghidra.app.script.osgi.SourceBundleInfo;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 
@@ -126,18 +130,101 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 
 	private BundleStatusProvider provider;
 	private List<BundlePath> paths;
+	private BundleHost bundleHost;
+	BundleListener bundleListener;
 
-	BundleStatusModel(BundleStatusProvider provider) {
+	private Map<String, BundlePath> loc2bp = new HashMap<>();
+
+	BundlePath getPath(String bundleLocation) {
+		return loc2bp.get(bundleLocation);
+	}
+
+	public String getBundleLoc(BundlePath bp) {
+		switch (bp.getType()) {
+			case Jar:
+				return bp.getPath().getAbsolutePath();
+			case SourceDir:
+				SourceBundleInfo bi = bundleHost.getSourceBundleInfo(bp.getPath());
+				return bi.getBundleLoc();
+			case BndScript:
+				// XXX 
+			case INVALID:
+			default:
+				break;
+		}
+		return null;
+	}
+
+	/** 
+	 * (re)compute cached mapping from bundleloc to bundlepath
+	 */
+	private void computeCache() {
+		loc2bp.clear();
+		for (BundlePath bp : paths) {
+			String loc = getBundleLoc(bp);
+			if (loc != null) {
+				loc2bp.put(loc, bp);
+			}
+		}
+	}
+
+	BundleStatusModel(BundleStatusProvider provider, BundleHost bundleHost) {
 		super();
 		this.provider = provider;
+		this.bundleHost = bundleHost;
 
 		// add unmodifiable paths
 		this.paths = GhidraScriptUtil.getSystemScriptPaths().stream().distinct().map(
 			f -> new BundlePath(f, true, true)).collect(Collectors.toList());
 		// add user path
 		this.paths.add(0, new BundlePath(GhidraScriptUtil.getUserScriptDirectory(), true, false));
+		computeCache();
+
+		bundleHost.addListener(bundleListener = new BundleListener() {
+			@Override
+			public void bundleChanged(BundleEvent event) {
+				Bundle b = event.getBundle();
+				BundlePath bp;
+				switch (event.getType()) {
+					case BundleEvent.INSTALLED:
+					case BundleEvent.LAZY_ACTIVATION:
+					case BundleEvent.RESOLVED:
+					case BundleEvent.STARTING:
+					case BundleEvent.STOPPED:
+					case BundleEvent.STOPPING:
+					case BundleEvent.UNRESOLVED:
+					case BundleEvent.UPDATED:
+						break;
+					case BundleEvent.STARTED:
+						bp = getPath(b.getLocation());
+						if (bp != null) {
+							bp.setActive(true);
+							int row = getRowIndex(bp);
+							fireTableRowsUpdated(row, row);
+						}
+						break;
+					case BundleEvent.UNINSTALLED:
+						bp = getPath(b.getLocation());
+						if (bp != null) {
+							bp.setActive(false);
+							int row = getRowIndex(bp);
+							fireTableRowsUpdated(row, row);
+						}
+						break;
+					default:
+						System.err.printf("What is a %d event??", event.getType());
+						break;
+				}
+			}
+		});
 
 		fireTableDataChanged();
+	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		bundleHost.removeListener(bundleListener);
 	}
 
 	void clear() {
@@ -158,13 +245,30 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		return list;
 	}
 
-	void addPath(BundlePath path) {
+	private void addPath(BundlePath path) {
 		if (paths.contains(path)) {
 			return;
 		}
+		String loc = getBundleLoc(path);
+		if (loc != null) {
+			loc2bp.put(loc, path);
+		}
+
 		int index = paths.size();
 		paths.add(path);
 		fireTableRowsInserted(index, index);
+	}
+
+	BundlePath addNewPath(ResourceFile path, boolean enabled, boolean readonly) {
+		BundlePath p = new BundlePath(path, enabled, readonly);
+		addPath(p);
+		return p;
+	}
+
+	BundlePath addNewPath(String path, boolean enabled, boolean readonly) {
+		BundlePath p = new BundlePath(path, enabled, readonly);
+		addPath(p);
+		return p;
 	}
 
 	void remove(int[] selectedRows) {
@@ -175,6 +279,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		for (BundlePath path : list) {
 			if (!path.isReadOnly()) {
 				paths.remove(path);
+				loc2bp.remove(getBundleLoc(path));
 			}
 			else {
 				Msg.showInfo(this, this.provider.getComponent(), "Unabled to remove path",
@@ -256,8 +361,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 				return false;
 			}
 		}
-		BundlePath p = new BundlePath(dir, true, false);
-		addPath(p);
+		addNewPath(dir, true, false);
 		Preferences.setProperty(BundleStatusProvider.preferenceForLastSelectedBundle,
 			dir.getAbsolutePath());
 		provider.fireBundlesChanged();
@@ -285,6 +389,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 	public void setPathsForTesting(List<String> testingPaths) {
 		this.paths = testingPaths.stream().map(f -> new BundlePath(f, true, false)).collect(
 			Collectors.toList());
+		computeCache();
 		fireTableDataChanged();
 	}
 
@@ -292,12 +397,10 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 	 * This is for testing only!
 	 * 
 	 * insert path, marked editable and non-readonly
-	 * @param index index to insert at 
 	 * @param path the path to insert
 	 */
-	public void insertPathForTesting(int index, String path) {
-		paths.add(0, new BundlePath(path, true, false));
-		fireTableRowsInserted(0, 0);
+	public void insertPathForTesting(String path) {
+		addNewPath(path, true, false);
 	}
 
 }

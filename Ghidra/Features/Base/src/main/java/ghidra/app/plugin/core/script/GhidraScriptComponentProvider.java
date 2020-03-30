@@ -29,6 +29,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import org.apache.commons.lang3.StringUtils;
+import org.osgi.framework.Bundle;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
@@ -42,6 +43,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.script.osgi.*;
 import ghidra.app.script.*;
 import ghidra.app.script.osgi.BundleHost;
+import ghidra.app.script.osgi.SourceBundleInfo;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -100,7 +102,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin, BundleHost bundleHost) {
 		super(plugin.getTool(), "Script Manager", plugin.getName());
 		this.plugin = plugin;
-		this.bundleHost=bundleHost;
+		this.bundleHost = bundleHost;
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		setIcon(ResourceManager.loadImage("images/play.png"));
@@ -740,8 +742,30 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
 				try {
-					bundleHost.setActive(path, activate);
-					path.setActive(activate);
+					if (activate) {
+						if (path.getType() == BundlePath.Type.SourceDir) {
+							SourceBundleInfo sbi = bundleHost.getSourceBundleInfo(path.getPath());
+							ConsoleService console =
+								plugin.getTool().getService(ConsoleService.class);
+							bundleHost.compileSourceBundle(sbi, console.getStdErr());
+						}
+						String loc = bundleStatusProvider.getModel().getBundleLoc(path);
+						if (loc != null) {
+							Bundle bundle = bundleHost.getBundle(loc);
+							if (bundle != null) {
+								bundle.start();
+							}
+						}
+					}
+					else { // deactivate
+						String loc = bundleStatusProvider.getModel().getBundleLoc(path);
+						if (loc != null) {
+							Bundle bundle = bundleHost.getBundle(loc);
+							if (bundle != null) {
+								bundle.uninstall();
+							}
+						}
+					}
 				}
 				catch (Exception e) {
 					Msg.showError(this, GhidraScriptComponentProvider.this.getComponent(),
@@ -757,7 +781,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void build() {
-		bundleStatusProvider = new BundleStatusProvider(plugin.getTool(), plugin.getName());
+		bundleStatusProvider =
+			new BundleStatusProvider(plugin.getTool(), plugin.getName(), bundleHost);
 
 		bundleStatusProvider.addListener(new BundlePathManagerListener() {
 			@Override
@@ -768,7 +793,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 			@Override
 			public void bundleEnablementChanged(BundlePath path, boolean enabled) {
-				if (path.isActive()) {
+				if (!enabled && path.isActive()) {
 					startActivateDeactiveTask(path, false);
 				}
 

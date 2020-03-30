@@ -29,10 +29,10 @@ import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.ScriptInfo;
 import ghidra.app.script.osgi.BundleHost.BuildFailure;
 
+/**
+ * The SourceBundleInfo class is a cache of information about source directory bundles.
+ */
 public class SourceBundleInfo {
-	/**
-	 * 
-	 */
 	private final BundleHost bundle_host;
 	final private ResourceFile sourceDir;
 	final String symbolicName;
@@ -223,5 +223,4 @@ public class SourceBundleInfo {
 	public long getLastCompileAttempt() {
 		return lastCompileAttempt;
 	}
-
 }

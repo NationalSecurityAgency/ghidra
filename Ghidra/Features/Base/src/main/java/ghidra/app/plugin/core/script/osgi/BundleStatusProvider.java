@@ -29,6 +29,7 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
+import ghidra.app.script.osgi.BundleHost;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -75,9 +76,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public BundleStatusProvider(PluginTool tool, String owner) {
+	public BundleStatusProvider(PluginTool tool, String owner, BundleHost bundleHost) {
 		super(tool, "Bundle Status Manager", owner);
-		this.bundleStatusModel = new BundleStatusModel(this);
+		this.bundleStatusModel = new BundleStatusModel(this, bundleHost);
 
 		this.filter = new GhidraFileFilter() {
 			@Override
@@ -118,13 +119,13 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		addButton = new JButton(ResourceManager.loadImage("images/Plus.png"));
 		addButton.setName("AddBundle");
 		addButton.setToolTipText("Display file chooser to add bundles to list");
-		addButton.addActionListener(e -> add());
+		addButton.addActionListener(e -> addButtonAction());
 		addButton.setFocusable(false);
 
 		removeButton = new JButton(ResourceManager.loadImage("images/edit-delete.png"));
 		removeButton.setName("RemoveBundle");
 		removeButton.setToolTipText("Remove selected bundle(s) from list");
-		removeButton.addActionListener(e -> remove());
+		removeButton.addActionListener(e -> removeButtonAction());
 		removeButton.setFocusable(false);
 
 		JPanel buttonPanel = new JPanel(new GridBagLayout());
@@ -231,7 +232,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		removeButton.setEnabled(rows.length > 0);
 	}
 
-	private void remove() {
+	private void removeButtonAction() {
 		int[] selectedRows = bundlePathTable.getSelectedRows();
 		if (selectedRows == null || selectedRows.length == 0) {
 			return;
@@ -252,7 +253,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		fireBundlesChanged();
 	}
 
-	private void add() {
+	private void addButtonAction() {
 		if (fileChooser == null) {
 			fileChooser = new GhidraFileChooser(panel);
 			fileChooser.setMultiSelectionEnabled(true);
@@ -292,8 +293,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			Preferences.setProperty(preferenceForLastSelectedBundle,
 				files.get(0).getAbsolutePath());
 			for (File element : files) {
-				BundlePath p = new BundlePath(new ResourceFile(element), true, false);
-				bundleStatusModel.addPath(p);
+				bundleStatusModel.addNewPath(new ResourceFile(element), true, false);
 			}
 			fireBundlesChanged();
 		}
@@ -313,19 +313,19 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 		String[] pathArr = new String[paths.size()];
 		boolean[] enableArr = new boolean[paths.size()];
-		boolean[] readArr = new boolean[paths.size()];
+		boolean[] readonlyArr = new boolean[paths.size()];
 
 		int index = 0;
 		for (BundlePath path : paths) {
 			pathArr[index] = path.getPathAsString();
 			enableArr[index] = path.isEnabled();
-			readArr[index] = path.isReadOnly();
+			readonlyArr[index] = path.isReadOnly();
 			++index;
 		}
 
 		ss.putStrings("BundleStatus_PATH", pathArr);
 		ss.putBooleans("BundleStatus_ENABLE", enableArr);
-		ss.putBooleans("BundleStatus_READ", readArr);
+		ss.putBooleans("BundleStatus_READ", readonlyArr);
 	}
 
 	/**
@@ -339,38 +339,24 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		boolean[] enableArr =
-			ss.getBooleans("BundleStatus_ENABLE", new boolean[pathArr.length]);
-		boolean[] readArr = ss.getBooleans("BundleStatus_READ", new boolean[pathArr.length]);
+		boolean[] enableArr = ss.getBooleans("BundleStatus_ENABLE", new boolean[pathArr.length]);
+		boolean[] readonlyArr = ss.getBooleans("BundleStatus_READ", new boolean[pathArr.length]);
 
-		List<BundlePath> oldPaths = bundleStatusModel.getAllPaths();
+		List<BundlePath> currentPaths = bundleStatusModel.getAllPaths();
 		bundleStatusModel.clear();
 
 		for (int i = 0; i < pathArr.length; i++) {
-			BundlePath path = new BundlePath(pathArr[i], enableArr[i], readArr[i]);
-			BundlePath oldPath = getPath(path.getPathAsString(), oldPaths);
-			if (oldPath != null) {
-				if (!oldPath.isEditable()) {
-					boolean enabled = path.isEnabled();
-					path = oldPath;
-					path.setEnabled(enabled);
-				}
-				oldPaths.remove(oldPath);
+			BundlePath currentPath = getPath(pathArr[i], currentPaths);
+			if (currentPath != null) {
+				currentPaths.remove(currentPath);
+				bundleStatusModel.addNewPath(pathArr[i],enableArr[i],readonlyArr[i]);
 			}
-			else if (path.isReadOnly()) {
+			else if (!readonlyArr[i]) {
 				// skip read-only paths which are not present in the current config
 				// This is needed to thin-out old default entries
-				continue;
-			}
-			bundleStatusModel.addPath(path);
-		}
-
-		for (BundlePath path : oldPaths) {
-			if (!path.isEditable()) {
-				bundleStatusModel.addPath(path);
+				bundleStatusModel.addNewPath(pathArr[i],enableArr[i],readonlyArr[i]);
 			}
 		}
-
 		fireBundlesChanged();
 	}
 

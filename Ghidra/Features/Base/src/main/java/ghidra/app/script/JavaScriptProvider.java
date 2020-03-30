@@ -20,7 +20,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.osgi.framework.Bundle;
 
-import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.app.script.osgi.*;
 import ghidra.util.Msg;
@@ -90,12 +89,8 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	static public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer)
 			throws IOException, OSGiException, ClassNotFoundException, InterruptedException {
 
-		if (writer == null) {
-			writer = new NullPrintWriter();
-		}
-
 		SourceBundleInfo bi = getBundleInfoForSource(sourceFile);
-		Bundle b = BundleHost.getInstance().activate(bi, writer);
+		Bundle b = BundleHost.getInstance().compileSourceBundle(bi, writer);
 		String classname = bi.classNameForScript(sourceFile);
 		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
 		return clazz;
@@ -104,7 +99,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	public static ResourceFile getSourceDirectoryContaining(ResourceFile sourceFile) {
 		String sourcePath = sourceFile.getAbsolutePath();
 		for (ResourceFile sourceDir : GhidraScriptUtil.getScriptSourceDirectories()) {
-			if (sourcePath.startsWith(sourceDir.getAbsolutePath())) {
+			if (sourcePath.startsWith(sourceDir.getAbsolutePath()+File.separatorChar)) {
 				return sourceDir;
 			}
 		}

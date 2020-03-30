@@ -20,6 +20,9 @@ import java.io.File;
 import generic.jar.ResourceFile;
 import generic.util.Path;
 
+/**
+ * The BundlePath class represents the runtime state and user preferences for OSGi bundles in Ghidra.  
+ */
 public class BundlePath extends Path {
 	final Type type;
 
