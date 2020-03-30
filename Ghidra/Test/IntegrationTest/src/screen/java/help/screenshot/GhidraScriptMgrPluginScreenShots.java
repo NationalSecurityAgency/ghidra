@@ -28,7 +28,6 @@ import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.plugin.core.script.*;
-import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.app.plugin.core.script.osgi.BundleStatusProvider;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.services.ConsoleService;
@@ -50,10 +49,10 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 		performAction("New", "GhidraScriptMgrPlugin", false);
 
-		JDialog d = waitForJDialog(null, "New Script: Type", 5000);
+		JDialog d = waitForJDialog("New Script: Type");
 		pressButtonByText(d, "OK");
 
-		d = waitForJDialog(null, "New Script", 5000);
+		d = waitForJDialog("New Script");
 		pressButtonByText(d, "OK");
 
 		captureIsolatedProvider(GhidraScriptEditorComponentProvider.class, 597, 600);
@@ -111,13 +110,13 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testScript_Dirs() throws Exception {
-		List<BundlePath> paths = new ArrayList<>();
-		paths.add(new BundlePath("$USER_HOME/ghidra_scripts"));
-		paths.add(new BundlePath("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
-		paths.add(new BundlePath("/User/defined/invalid/directory"));
+		List<String> paths = new ArrayList<>();
+		paths.add("$USER_HOME/ghidra_scripts");
+		paths.add("$GHIDRA_HOME/Features/Base/ghidra_scripts");
+		paths.add("/User/defined/invalid/directory");
 
 		BundleStatusProvider bundleStatusProvider = showProvider(BundleStatusProvider.class);
-		bundleStatusProvider.getModel().setPaths(paths);
+		bundleStatusProvider.getModel().setPathsForTesting(paths);
 		
 		waitForComponentProvider(BundleStatusProvider.class);
 		captureComponent(bundleStatusProvider.getComponent());

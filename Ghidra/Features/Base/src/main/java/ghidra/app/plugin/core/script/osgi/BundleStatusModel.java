@@ -16,8 +16,8 @@
  */
 package ghidra.app.plugin.core.script.osgi;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import docking.widgets.table.AbstractSortedTableModel;
 import generic.jar.ResourceFile;
@@ -41,20 +41,25 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		}
 
 		boolean editable(BundlePath path) {
-			return true;
+			return false;
 		}
 
 		Object getValue(BundlePath path) {
-			return path;
+			return null;
 		}
 
 		void setValue(BundlePath path, Object aValue) {
-			// do nothing
+			throw new RuntimeException(name + " is not editable!");
 		}
 
 	}
 
 	Column enabledColumn = new Column("Enabled", Boolean.class) {
+		@Override
+		boolean editable(BundlePath path) {
+			return path.exists();
+		}
+
 		@Override
 		Object getValue(BundlePath path) {
 			return path.isEnabled();
@@ -67,6 +72,11 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		}
 	};
 	Column activeColumn = new Column("Active", Boolean.class) {
+		@Override
+		boolean editable(BundlePath path) {
+			return path.exists(); // XXX maybe only if it's already enabled
+		}
+
 		@Override
 		Object getValue(BundlePath path) {
 			return path.isActive();
@@ -93,15 +103,12 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 	Column pathColumn = new Column("Path", BundlePath.class) {
 		@Override
 		boolean editable(BundlePath path) {
-			return true;
+			return false;
 		}
 
 		@Override
-		void setValue(BundlePath path, Object aValue) {
-			if (path.isEditable()) {
-				BundlePath newpath = (BundlePath) aValue;
-				path.setPath(newpath.getPath());
-			}
+		Object getValue(BundlePath path) {
+			return path;
 		}
 	};
 	Column badColumn = new Column("INVALID", Object.class);
@@ -118,24 +125,19 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 	}
 
 	private BundleStatusProvider provider;
-	private List<BundlePath> paths = new ArrayList<>();
+	private List<BundlePath> paths;
 
 	BundleStatusModel(BundleStatusProvider provider) {
 		super();
 		this.provider = provider;
-		this.paths.addAll(dedupPaths(GhidraScriptUtil.getDefaultScriptBundles()));
+
+		// add unmodifiable paths
+		this.paths = GhidraScriptUtil.getSystemScriptPaths().stream().distinct().map(
+			f -> new BundlePath(f, true, true)).collect(Collectors.toList());
+		// add user path
+		this.paths.add(0, new BundlePath(GhidraScriptUtil.getUserScriptDirectory(), true, false));
 
 		fireTableDataChanged();
-	}
-
-	private List<BundlePath> dedupPaths(List<BundlePath> newPaths) {
-		List<BundlePath> dedupedPaths = new ArrayList<>();
-		for (BundlePath path : newPaths) {
-			if (!dedupedPaths.contains(path)) {
-				dedupedPaths.add(path);
-			}
-		}
-		return dedupedPaths;
 	}
 
 	void clear() {
@@ -146,19 +148,14 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 		return new ArrayList<BundlePath>(paths);
 	}
 
-	public List<BundlePath> getPaths() {
-		List<BundlePath> list = new ArrayList<>();
+	public List<ResourceFile> getPaths() {
+		List<ResourceFile> list = new ArrayList<>();
 		for (BundlePath path : paths) {
 			if (path.isEnabled()) {
-				list.add(path);
+				list.add(path.getPath());
 			}
 		}
 		return list;
-	}
-
-	public void setPaths(List<BundlePath> paths) {
-		this.paths = new ArrayList<>(paths);
-		fireTableDataChanged();
 	}
 
 	void addPath(BundlePath path) {
@@ -176,7 +173,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 			list.add(paths.get(selectedRow));
 		}
 		for (BundlePath path : list) {
-			if (path.isEditable()) {
+			if (!path.isReadOnly()) {
 				paths.remove(path);
 			}
 			else {
@@ -259,11 +256,48 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundlePath> {
 				return false;
 			}
 		}
-		BundlePath p = new BundlePath(dir);
-		p.setEnabled(true);
+		BundlePath p = new BundlePath(dir, true, false);
 		addPath(p);
-		Preferences.setProperty(BundleStatusProvider.preferenceForLastSelectedBundle, dir.getAbsolutePath());
+		Preferences.setProperty(BundleStatusProvider.preferenceForLastSelectedBundle,
+			dir.getAbsolutePath());
 		provider.fireBundlesChanged();
 		return true;
 	}
+
+	/**
+	 * Test whether the given <code>bundle</code> is managed and not marked readonly
+	 * @param bundle the path to test 
+	 * @return true if the bundle is managed and not marked readonly
+	 */
+	public boolean isWriteable(ResourceFile bundle) {
+		Optional<BundlePath> o = paths.stream().filter(
+			bp -> bp.isDirectory() && bp.getPath().equals(bundle)).findFirst();
+		return o.isPresent() && !o.get().isReadOnly();
+	}
+
+	/**
+	 * This is for testing only!
+	 * 
+	 * each path is marked editable and non-readonly
+	 * 
+	 * @param testingPaths the paths to use
+	 */
+	public void setPathsForTesting(List<String> testingPaths) {
+		this.paths = testingPaths.stream().map(f -> new BundlePath(f, true, false)).collect(
+			Collectors.toList());
+		fireTableDataChanged();
+	}
+
+	/**
+	 * This is for testing only!
+	 * 
+	 * insert path, marked editable and non-readonly
+	 * @param index index to insert at 
+	 * @param path the path to insert
+	 */
+	public void insertPathForTesting(int index, String path) {
+		paths.add(0, new BundlePath(path, true, false));
+		fireTableRowsInserted(0, 0);
+	}
+
 }

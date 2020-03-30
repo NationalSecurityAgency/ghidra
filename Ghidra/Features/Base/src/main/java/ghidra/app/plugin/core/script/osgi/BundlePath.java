@@ -21,7 +21,10 @@ import generic.jar.ResourceFile;
 import generic.util.Path;
 
 public class BundlePath extends Path {
+	final Type type;
+
 	boolean active = false;
+	boolean busy = false;
 
 	public static enum Type {
 		BndScript, Jar, SourceDir, INVALID
@@ -55,47 +58,43 @@ public class BundlePath extends Path {
 		return Type.INVALID;
 	}
 
-	final Type type;
-
-	public BundlePath(File path) {
-		super(path);
-		type = getType(getPath());
-	}
-
 	public Type getType() {
 		return type;
 	}
 
-	public BundlePath(ResourceFile rf) {
-		super(rf);
+	BundlePath(String path, boolean enabled, boolean readonly) {
+		super(path, enabled, false /*editable */, readonly);
 		type = getType(getPath());
 	}
 
-	public BundlePath(String absolutePath) {
-		super(absolutePath);
+	BundlePath(ResourceFile path, boolean enabled, boolean readonly) {
+		super(path, enabled, false /* editable */, readonly);
 		type = getType(getPath());
 	}
 
-	public BundlePath(String a, boolean b, boolean c, boolean d) {
-		super(a, b, c, d);
-		type = getType(getPath());
-	}
-
-	public BundlePath(ResourceFile a, boolean b, boolean c, boolean d) {
-		super(a, b, c, d);
-		type = getType(getPath());
+	public boolean isDirectory() {
+		return getPath().isDirectory();
 	}
 
 	public boolean isActive() {
 		return active;
 	}
 
-	public void setActive(Boolean b) {
+	@Override
+	public boolean isEditable() {
+		return false;
+	}
+
+	public void setActive(boolean b) {
 		active = b;
 	}
 
-	public boolean isDirectory() {
-		return getPath().isDirectory();
+	public void setBusy(boolean b) {
+		busy = b;
+	}
+
+	public boolean getBusy() {
+		return busy;
 	}
 
 }

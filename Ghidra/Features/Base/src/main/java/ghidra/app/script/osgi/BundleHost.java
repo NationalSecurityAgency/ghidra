@@ -36,6 +36,7 @@ import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -530,6 +531,103 @@ public class BundleHost {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Change the status of the bundle referenced by <code>path</code>
+	 * 
+	 * @param path the bundle path to activate/deactivate
+	 * @param value the new activation value
+	 * @throws InterruptedException
+	 */
+	public void setActive(BundlePath path, boolean value) throws InterruptedException {
+		if (path.isDirectory()) {
+			SourceBundleInfo sbi = getSourceBundleInfo(path.getPath());
+		}
+		Thread.sleep(3000);
+	}
+
+	/**
+	 * synchronously perform steps necessary to activate bundle:
+	 * <ol>
+	 * <li>if source bundle, checkCompile</li>
+	 * <li>b</li>
+	 * 
+	 * </ol>  
+	 * 
+	 * @param bi the bundle info
+	 * @param writer where to write issues
+	 * @throws OSGiException if bundle operations fail
+	 * @throws IOException if there are issues with the contents of the bundle
+	 * @return the activated bundle
+	 * @throws InterruptedException if interrupted while waiting for bundle state change
+	 */
+	public Bundle activate(SourceBundleInfo bi, PrintWriter writer)
+			throws OSGiException, IOException, InterruptedException {
+		bi.updateFromFilesystem(writer);
+
+		// needsCompile => needsBundleActivate
+		boolean needsCompile = false;
+		boolean needsBundleActivate = false;
+
+		int failing = bi.getFailingSourcesCount();
+		int newSourcecount = bi.getNewSourcesCount();
+
+		long lastBundleActivation = 0; // XXX record last bundle activation in bundlestatusmodel
+		if (failing > 0 && (lastBundleActivation > bi.getLastCompileAttempt())) {
+			needsCompile = true;
+		}
+
+		if (newSourcecount == 0) {
+			if (failing > 0) {
+				writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
+					bi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
+				writer.printf("%s\n", bi.getPreviousBuildErrors());
+			}
+			if (bi.newManifestFile()) {
+				needsCompile = true;
+			}
+		}
+		else {
+			needsCompile = true;
+		}
+
+		needsBundleActivate |= needsCompile;
+
+		if (needsBundleActivate) {
+			writer.printf("%s has %d new/updated %d failed in previous build(s)%s\n",
+				bi.getSourceDir().toString(), newSourcecount, failing,
+				bi.newManifestFile() ? " and the manifest is new" : "");
+
+			// if there a bundle is currently active, uninstall it
+			Bundle b = bi.getBundle();
+			if (b != null) {
+				synchronousUninstall(b);
+			}
+
+			// once we've committed to recompile and regenerate generated classes, delete the old stuff
+			if (needsCompile) {
+				bi.deleteOldBinaries();
+
+				BundleCompiler bc = new BundleCompiler(this);
+
+				long startTime = System.nanoTime();
+				bc.compileToExplodedBundle(bi, writer);
+				long endTime = System.nanoTime();
+				writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
+			}
+		}
+		// as much source as possible built, install bundle and start it if necessary
+		Bundle b = bi.getBundle();
+		if (b == null) {
+			b = bi.install();
+			needsBundleActivate = true;
+		}
+
+		if (needsBundleActivate) {
+			synchronousStart(b);
+		}
+		return b;
 	}
 
 }

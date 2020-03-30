@@ -22,7 +22,6 @@ import java.util.List;
 import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
-import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.app.script.*;
 import ghidra.framework.Application;
 import ghidra.framework.HeadlessGhidraApplicationConfiguration;
@@ -31,7 +30,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
 
 /**
@@ -76,7 +75,7 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 		try {
 			PrintWriter writer = new PrintWriter(System.out);
 			Msg.info(this, "SCRIPT: " + scriptName);
-			script.execute(scriptState, TaskMonitorAdapter.DUMMY_MONITOR, writer);
+			script.execute(scriptState, TaskMonitor.DUMMY, writer);
 			writer.flush();
 		}
 		catch (Exception exc) {
@@ -100,8 +99,8 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 		GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSourceFile);
 
 		if (provider == null) {
-			throw new IOException("Missing plugin needed to run scripts of this type. Please "
-				+ "ensure you have installed the necessary plugin.");
+			throw new IOException("Missing plugin needed to run scripts of this type. Please " +
+				"ensure you have installed the necessary plugin.");
 		}
 
 		PrintWriter writer = new PrintWriter(System.out);
@@ -192,20 +191,18 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 	 * Gather paths where scripts may be found.
 	 */
 	private void initializeScriptPaths() {
-		List<BundlePath> paths;
+		List<ResourceFile> paths;
 		if (scriptPaths == null || scriptPaths.isEmpty()) {
-			paths = GhidraScriptUtil.getDefaultScriptBundles();
+			paths = GhidraScriptUtil.getSystemScriptPaths();
+			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
 		}
 		else {
 			paths = new ArrayList<>();
 			for (String path : scriptPaths) {
-				paths.add(new BundlePath(path, true, false, true));
+				paths.add(new ResourceFile(path));
 			}
-			for (BundlePath path : GhidraScriptUtil.getDefaultScriptBundles()) {
-				if (path.isEnabled() && !paths.contains(path)) {
-					paths.add(path);
-				}
-			}
+			paths.addAll(GhidraScriptUtil.getSystemScriptPaths());
+			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
 		}
 		GhidraScriptUtil.setScriptBundlePaths(paths);
 

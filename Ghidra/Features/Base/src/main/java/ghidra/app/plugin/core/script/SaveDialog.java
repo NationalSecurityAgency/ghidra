@@ -19,7 +19,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -31,7 +32,6 @@ import docking.widgets.MultiLineLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.ListPanel;
 import generic.jar.ResourceFile;
-import generic.util.Path;
 import ghidra.app.script.*;
 import ghidra.util.HelpLocation;
 
@@ -49,7 +49,7 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	public SaveDialog(Component parent, String title,
 			GhidraScriptComponentProvider componentProvider, ResourceFile scriptFile,
 			HelpLocation help) {
-		this(parent, title, componentProvider, getScriptPaths(), scriptFile, help);
+		this(parent, title, componentProvider, componentProvider.getWritableScriptDirectories(), scriptFile, help);
 	}
 
 	public SaveDialog(Component parent, String title,
@@ -83,21 +83,6 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 		setHelpLocation(help);
 
 		DockingWindowManager.showDialog(parent, this);
-	}
-
-	private static List<ResourceFile> getScriptPaths() {
-		List<ResourceFile> newPaths = new ArrayList<>();
-
-		List<ResourceFile> scriptPaths = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile directory : scriptPaths) {
-			Path path = GhidraScriptUtil.getScriptPath(directory);
-			if (path != null && !path.isReadOnly()) {
-				newPaths.add(directory);
-			}
-		}
-
-		Collections.sort(newPaths);
-		return newPaths;
 	}
 
 	private JPanel buildNamePanel() {

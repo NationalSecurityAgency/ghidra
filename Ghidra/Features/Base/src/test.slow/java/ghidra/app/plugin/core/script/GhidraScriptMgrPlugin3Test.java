@@ -19,9 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import javax.swing.*;
 
@@ -32,7 +30,6 @@ import docking.action.DockingActionIf;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.list.ListPanel;
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.app.plugin.core.script.osgi.BundleStatusProvider;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.JavaScriptProvider;
@@ -286,13 +283,11 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 		final BundleStatusProvider bundleStatusProvider = waitForComponentProvider(BundleStatusProvider.class);
 
-		final File dir = new File(getTestDirectoryPath() + "/test_scripts");
-		dir.mkdirs();
+		final ResourceFile dir = new ResourceFile(getTestDirectoryPath() + "/test_scripts");
+		dir.getFile(false).mkdirs();
 
 		SwingUtilities.invokeLater(() -> {
-			List<BundlePath> paths = bundleStatusProvider.getModel().getPaths();
-			paths.add(0, new BundlePath(dir));
-			bundleStatusProvider.getModel().setPaths(paths);
+			bundleStatusProvider.getModel().insertPathForTesting(0, dir.getAbsolutePath());
 		});
 		waitForSwing();
 
@@ -333,7 +328,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		assertTrue(newScript.exists());
 
 		assertNotNull(newScript);
-		assertEquals(dir, newScript.getParentFile().getFile(false));
+		assertEquals(dir.getAbsolutePath(), newScript.getParentFile().getFile(false).getAbsolutePath());
 
 		newScript.delete();
 		dir.delete();

@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.map.LazyMap;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -48,7 +47,7 @@ public class GhidraScriptUtil {
 	 */
 	public static String USER_SCRIPTS_DIR = buildUserScriptsDirectory();
 
-	private static List<BundlePath> scriptBundlePaths = new ArrayList<>();
+	private static List<ResourceFile> scriptBundlePaths = new ArrayList<>();
 
 	private static Map<ResourceFile, ScriptInfo> scriptFileToInfoMap = new HashMap<>();
 
@@ -56,7 +55,8 @@ public class GhidraScriptUtil {
 		LazyMap.lazyMap(new HashMap<String, List<ResourceFile>>(), () -> new ArrayList<>());
 
 	static {
-		scriptBundlePaths = getDefaultScriptBundles();
+		scriptBundlePaths = getSystemScriptPaths();
+		scriptBundlePaths.add(0, getUserScriptDirectory());
 	}
 
 	/**
@@ -81,25 +81,22 @@ public class GhidraScriptUtil {
 	 * Returns a list of the default script directories.
 	 * @return a list of the default script directories
 	 */
-	public static List<BundlePath> getDefaultScriptBundles() {
-
-		List<BundlePath> pathsList = new ArrayList<>();
+	public static List<ResourceFile> getSystemScriptPaths() {
+		List<ResourceFile> pathsList = new ArrayList<>();
 
 		addScriptPaths(pathsList, SCRIPTS_SUBDIR_NAME);
 		addScriptPaths(pathsList, DEV_SCRIPTS_SUBDIR_NAME);
 
 		Collections.sort(pathsList);
-
-		// this one should always be first
-		pathsList.add(0, new BundlePath(new ResourceFile(USER_SCRIPTS_DIR), true, false, false));
 		return pathsList;
 	}
 
-	private static void addScriptPaths(List<BundlePath> pathsList, String directoryName) {
-		Iterable<ResourceFile> files = Application.findModuleSubDirectories(directoryName);
-		for (ResourceFile file : files) {
-			pathsList.add(new BundlePath(file, true, false, true));
-		}
+	public static ResourceFile getUserScriptDirectory() {
+		return new ResourceFile(USER_SCRIPTS_DIR);
+	}
+
+	private static void addScriptPaths(List<ResourceFile> pathsList, String directoryName) {
+		pathsList.addAll(Application.findModuleSubDirectories(directoryName));
 	}
 
 	/**
@@ -144,37 +141,16 @@ public class GhidraScriptUtil {
 	 * @return a list of the current script directories
 	 */
 	public static List<ResourceFile> getScriptSourceDirectories() {
-		ArrayList<ResourceFile> dirs = new ArrayList<>();
-		for (BundlePath path : scriptBundlePaths) {
-			if (path.isDirectory()) {
-				dirs.add(path.getPath());
-			}
-		}
-		return dirs;
+		return scriptBundlePaths.stream().filter(ResourceFile::isDirectory).collect(
+			Collectors.toList());
 	}
 
 	/**
 	 * Sets the script bundle paths
 	 * @param newPaths the new script bundle paths
 	 */
-	public static void setScriptBundlePaths(List<BundlePath> newPaths) {
+	public static void setScriptBundlePaths(List<ResourceFile> newPaths) {
 		scriptBundlePaths = new ArrayList<>(newPaths);
-	}
-
-	/**
-	 * Returns the PATH for the specified directory.
-	 * @param directory the directory
-	 * @return the path for the specified directory
-	 */
-	public static BundlePath getScriptPath(ResourceFile directory) {
-		if (directory.isDirectory()) {
-			for (BundlePath path : scriptBundlePaths) {
-				if (path.getPath().equals(directory)) {
-					return path;
-				}
-			}
-		}
-		return null;
 	}
 
 	public static Path getOsgiDir() {
@@ -218,7 +194,7 @@ public class GhidraScriptUtil {
 		}
 
 		Set<ResourceFile> dirs = new HashSet<>();
-		for (BundlePath path : scriptBundlePaths) {
+		for (ResourceFile scriptDir : scriptBundlePaths) {
 			//
 			// Assumed structure of script dir path:
 			//    /some/path/Ghidra/Features/Module/ghidra_scripts
@@ -226,7 +202,6 @@ public class GhidraScriptUtil {
 			// Desired path:
 			//    /some/path/Ghidra/Features/Module/bin/scripts
 
-			ResourceFile scriptDir = path.getPath();
 			ResourceFile moduleDir = scriptDir.getParentFile();
 			dirs.add(new ResourceFile(moduleDir, BIN_DIR_NAME + File.separator + "scripts"));
 		}
@@ -381,14 +356,14 @@ public class GhidraScriptUtil {
 	 * @throws IOException if an i/o error occurs
 	 */
 	public static ResourceFile createNewScript(GhidraScriptProvider provider,
-			ResourceFile parentDirectory, List<BundlePath> scriptDirectories) throws IOException {
+			ResourceFile parentDirectory, List<ResourceFile> scriptDirectories) throws IOException {
 		String baseName = GhidraScriptConstants.DEFAULT_SCRIPT_NAME;
 		String extension = provider.getExtension();
 		return createNewScript(baseName, extension, parentDirectory, scriptDirectories);
 	}
 
 	private static ResourceFile createNewScript(String scriptName, String extension,
-			ResourceFile parentDirctory, List<BundlePath> scriptDirectories) throws IOException {
+			ResourceFile parentDirctory, List<ResourceFile> scriptDirectories) throws IOException {
 		String baseName = scriptName;
 		String className = baseName + extension;
 
@@ -409,13 +384,12 @@ public class GhidraScriptUtil {
 	}
 
 	/** Returns true if the given filename exists in any of the given directories */
-	private static ResourceFile findScriptFileInPaths(List<BundlePath> scriptDirectories,
+	private static ResourceFile findScriptFileInPaths(List<ResourceFile> scriptDirectories,
 			String filename) {
 
 		String validatedName = fixupName(filename);
 
-		for (BundlePath path : scriptDirectories) {
-			ResourceFile resourceFile = path.getPath();
+		for (ResourceFile resourceFile : scriptDirectories) {
 			if (resourceFile.isDirectory()) {
 				ResourceFile file = new ResourceFile(resourceFile, validatedName);
 				if (file.exists()) {
@@ -477,8 +451,8 @@ public class GhidraScriptUtil {
 
 	public static List<ResourceFile> getAllScripts() {
 		List<ResourceFile> scriptList = new ArrayList<>();
-		for (BundlePath dirPath : scriptBundlePaths) {
-			updateAvailableScriptFilesForDirectory(scriptList, dirPath.getPath());
+		for (ResourceFile dirPath : scriptBundlePaths) {
+			updateAvailableScriptFilesForDirectory(scriptList, dirPath);
 		}
 		return scriptList;
 	}

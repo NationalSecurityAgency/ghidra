@@ -39,9 +39,9 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
-import generic.util.Path;
 import ghidra.app.plugin.core.script.osgi.*;
 import ghidra.app.script.*;
+import ghidra.app.script.osgi.BundleHost;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -97,9 +97,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	};
 
-	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin) {
+	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin, BundleHost bundleHost) {
 		super(plugin.getTool(), "Script Manager", plugin.getName());
 		this.plugin = plugin;
+		this.bundleHost=bundleHost;
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		setIcon(ResourceManager.loadImage("images/play.png"));
@@ -161,8 +162,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	void renameScript() {
 		ResourceFile script = getSelectedScript();
 		ResourceFile directory = script.getParentFile();
-		Path path = GhidraScriptUtil.getScriptPath(directory);
-		if (path == null || path.isReadOnly()) {
+		if (!bundleStatusProvider.getModel().isWriteable(directory)) {
 			Msg.showWarn(getClass(), getComponent(), getName(),
 				"Unable to rename scripts in '" + directory + "'.");
 			return;
@@ -297,8 +297,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 		ResourceFile directory = script.getParentFile();
 
-		Path path = GhidraScriptUtil.getScriptPath(directory);
-		if (path == null || path.isReadOnly()) {
+		if (!bundleStatusProvider.getModel().isWriteable(directory)) {
 			Msg.showWarn(getClass(), getComponent(), getName(),
 				"Unable to delete scripts in '" + directory + "'.");
 			return;
@@ -339,9 +338,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public List<BundlePath> getScriptDirectories() {
+	public List<ResourceFile> getScriptDirectories() {
 		return bundleStatusProvider.getModel().getPaths().stream().filter(
-			BundlePath::isDirectory).collect(Collectors.toList());
+			ResourceFile::isDirectory).collect(Collectors.toList());
 	}
 
 	public void enableScriptDirectory(ResourceFile scriptDir) {
@@ -396,9 +395,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(String scriptName, TaskListener listener) {
-		List<BundlePath> dirPaths = bundleStatusProvider.getModel().getPaths();
-		for (Path dir : dirPaths) {
-			ResourceFile scriptSource = new ResourceFile(dir.getPath(), scriptName);
+		List<ResourceFile> dirPaths = bundleStatusProvider.getModel().getPaths();
+		for (ResourceFile dir : dirPaths) {
+			ResourceFile scriptSource = new ResourceFile(dir, scriptName);
 			if (scriptSource.exists()) {
 				runScript(scriptSource, listener);
 				return;
@@ -536,11 +535,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void updateAvailableScriptFilesForAllPaths() {
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		List<BundlePath> bundlePaths = bundleStatusProvider.getModel().getPaths();
-		for (BundlePath bundlePath : bundlePaths) {
+		List<ResourceFile> bundlePaths = bundleStatusProvider.getModel().getPaths();
+		for (ResourceFile bundlePath : bundlePaths) {
 			if (bundlePath.isDirectory()) {
 				updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator,
-					bundlePath.getPath());
+					bundlePath);
 			}
 		}
 
@@ -731,8 +730,33 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return true;
 	}
 
-	private void build() {
+	final private BundleHost bundleHost;
 
+	void startActivateDeactiveTask(BundlePath path, boolean activate) {
+		path.setBusy(true);
+		bundleStatusProvider.notifyTableChanged();
+
+		new TaskLauncher(new Task((activate ? "Activating" : "Deactivating ") + " bundle...") {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				try {
+					bundleHost.setActive(path, activate);
+					path.setActive(activate);
+				}
+				catch (Exception e) {
+					Msg.showError(this, GhidraScriptComponentProvider.this.getComponent(),
+						"activation failed", e);
+				}
+				finally {
+					path.setBusy(false);
+					bundleStatusProvider.notifyTableChanged();
+				}
+			}
+		}, null, 1000);
+
+	}
+
+	private void build() {
 		bundleStatusProvider = new BundleStatusProvider(plugin.getTool(), plugin.getName());
 
 		bundleStatusProvider.addListener(new BundlePathManagerListener() {
@@ -744,8 +768,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 			@Override
 			public void bundleEnablementChanged(BundlePath path, boolean enabled) {
-				System.err.printf("XXXX %s is now %s\n", path.toString(),
-					enabled ? "enabled" : "disabled");
+				if (path.isActive()) {
+					startActivateDeactiveTask(path, false);
+				}
+
 				if (path.isDirectory()) {
 					performRefresh();
 				}
@@ -753,8 +779,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 			@Override
 			public void bundleActivationChanged(BundlePath path, boolean newValue) {
-				System.err.printf("XXXX %s is now %s\n", path.toString(),
-					newValue ? "active" : "inactive");
+				startActivateDeactiveTask(path, newValue);
 			}
 		});
 
@@ -1026,7 +1051,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		bundleStatusProvider.restoreState(saveState);
 
 		// pull in the just-loaded paths
-		List<BundlePath> paths = bundleStatusProvider.getModel().getPaths();
+		List<ResourceFile> paths = bundleStatusProvider.getModel().getPaths();
 		GhidraScriptUtil.setScriptBundlePaths(paths);
 		actionManager.restoreUserDefinedKeybindings(saveState);
 		actionManager.restoreScriptsThatAreInTool(saveState);
@@ -1160,6 +1185,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			// never be a sub-filter of anything.
 			return false;
 		}
+	}
+
+	public List<ResourceFile> getWritableScriptDirectories() {
+		BundleStatusModel m = bundleStatusProvider.getModel();
+		return m.getPaths().stream().filter(ResourceFile::isDirectory).filter(
+			m::isWriteable).collect(Collectors.toList());
 	}
 
 }

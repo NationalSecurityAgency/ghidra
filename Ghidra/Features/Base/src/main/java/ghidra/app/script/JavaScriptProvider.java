@@ -26,7 +26,7 @@ import ghidra.app.script.osgi.*;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
-	public SourceBundleInfo getBundleInfoForSource(ResourceFile sourceFile) {
+	static public SourceBundleInfo getBundleInfoForSource(ResourceFile sourceFile) {
 		ResourceFile sourceDir = getSourceDirectoryContaining(sourceFile);
 		if (sourceDir == null) {
 			return null;
@@ -87,7 +87,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 	}
 
-	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer)
+	static public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer)
 			throws IOException, OSGiException, ClassNotFoundException, InterruptedException {
 
 		if (writer == null) {
@@ -95,72 +95,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 
 		SourceBundleInfo bi = getBundleInfoForSource(sourceFile);
-
-		bi.updateFromFilesystem(writer);
-
-		// needsCompile => needsBundleActivate
-		boolean needsCompile = false;
-		boolean needsBundleActivate = false;
-
-		int failing = bi.getFailingSourcesCount();
-		int newSourcecount = bi.getNewSourcesCount();
-
-		long lastBundleActivation = 0; // XXX record last bundle activation in pathmanager
-		if (failing > 0 && (lastBundleActivation > bi.getLastCompileAttempt())) {
-			needsCompile = true;
-		}
-
-		if (newSourcecount == 0) {
-			if (failing > 0) {
-				writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
-					bi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
-				writer.printf("%s\n", bi.getPreviousBuildErrors());
-			}
-			if (bi.newManifestFile()) {
-				needsCompile = true;
-			}
-		}
-		else {
-			needsCompile = true;
-		}
-
-		needsBundleActivate |= needsCompile;
-
-		BundleHost bundle_host = BundleHost.getInstance();
-		if (needsBundleActivate) {
-			writer.printf("%s has %d new/updated %d failed in previous build(s)%s\n",
-				bi.getSourceDir().toString(), newSourcecount, failing,
-				bi.newManifestFile() ? " and the manifest is new" : "");
-
-			// if there a bundle is currently active, uninstall it
-			Bundle b = bi.getBundle();
-			if (b != null) {
-				bundle_host.synchronousUninstall(b);
-			}
-
-			// once we've committed to recompile and regenerate generated classes, delete the old stuff
-			if (needsCompile) {
-				bi.deleteOldBinaries();
-
-				BundleCompiler bc = new BundleCompiler(bundle_host);
-
-				long startTime = System.nanoTime();
-				bc.compileToExplodedBundle(bi, writer);
-				long endTime = System.nanoTime();
-				writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
-			}
-		}
-		// as much source as possible built, install bundle and start it if necessary
-		Bundle b = bi.getBundle();
-		if (b == null) {
-			b = bi.install();
-			needsBundleActivate = true;
-		}
-
-		if (needsBundleActivate) {
-			bundle_host.synchronousStart(b);
-		}
-
+		Bundle b = BundleHost.getInstance().activate(bi, writer);
 		String classname = bi.classNameForScript(sourceFile);
 		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
 		return clazz;

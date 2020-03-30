@@ -22,11 +22,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableColumn;
 
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
+import generic.jar.ResourceFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -50,6 +52,10 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	private GhidraFileChooser fileChooser;
 	private GhidraFileFilter filter;
 	private ArrayList<BundlePathManagerListener> listeners = new ArrayList<>();
+
+	public void notifyTableChanged() {
+		bundlePathTable.notifyTableChanged(new TableModelEvent(bundleStatusModel));
+	}
 
 	void fireBundlesChanged() {
 		for (BundlePathManagerListener listener : listeners) {
@@ -108,7 +114,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		panel = new JPanel(new BorderLayout(5, 5));
 
 		selectionColor = new Color(204, 204, 255);
-		
+
 		addButton = new JButton(ResourceManager.loadImage("images/Plus.png"));
 		addButton.setName("AddBundle");
 		addButton.setToolTipText("Display file chooser to add bundles to list");
@@ -138,6 +144,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		bundlePathTable.setSelectionForeground(Color.BLACK);
 		bundlePathTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
+		// to allow custom cell renderers
+		bundlePathTable.setAutoCreateColumnsFromModel(false);
+
 		int skinnyWidth = 50;
 
 		TableColumn column =
@@ -152,6 +161,27 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
+		column.setCellRenderer(new GBooleanCellRenderer() {
+			@Override
+			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+				BundlePath path = (BundlePath) data.getRowObject();
+				Component x = super.getTableCellRendererComponent(data);
+				if (path.getBusy()) {
+					cb.setVisible(false);
+					cb.setEnabled(false);
+					setHorizontalAlignment(SwingConstants.CENTER);
+					setText("...");
+				}
+				else {
+					cb.setVisible(true);
+					cb.setEnabled(true);
+					setText("");
+				}
+				return x;
+
+			}
+
+		});
 
 		column = bundlePathTable.getColumnModel().getColumn(bundleStatusModel.typeColumn.index);
 
@@ -163,13 +193,13 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-				JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
+				JLabel c = (JLabel) super.getTableCellRendererComponent(data);
 
 				BundlePath path = (BundlePath) data.getValue();
 				if (!path.exists()) {
-					renderer.setForeground(Color.RED);
+					c.setForeground(Color.RED);
 				}
-				return renderer;
+				return c;
 			}
 		});
 
@@ -262,7 +292,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			Preferences.setProperty(preferenceForLastSelectedBundle,
 				files.get(0).getAbsolutePath());
 			for (File element : files) {
-				BundlePath p = new BundlePath(element);
+				BundlePath p = new BundlePath(new ResourceFile(element), true, false);
 				bundleStatusModel.addPath(p);
 			}
 			fireBundlesChanged();
@@ -283,22 +313,19 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 		String[] pathArr = new String[paths.size()];
 		boolean[] enableArr = new boolean[paths.size()];
-		boolean[] editArr = new boolean[paths.size()];
 		boolean[] readArr = new boolean[paths.size()];
 
 		int index = 0;
 		for (BundlePath path : paths) {
 			pathArr[index] = path.getPathAsString();
 			enableArr[index] = path.isEnabled();
-			editArr[index] = path.isEditable();
 			readArr[index] = path.isReadOnly();
 			++index;
 		}
 
-		ss.putStrings("BundleManagerPanel_PATH", pathArr);
-		ss.putBooleans("BundleManagerPanel_ENABLE", enableArr);
-		ss.putBooleans("BundleManagerPanel_EDIT", editArr);
-		ss.putBooleans("BundleManagerPanel_READ", readArr);
+		ss.putStrings("BundleStatus_PATH", pathArr);
+		ss.putBooleans("BundleStatus_ENABLE", enableArr);
+		ss.putBooleans("BundleStatus_READ", readArr);
 	}
 
 	/**
@@ -306,22 +333,21 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	 * @param ss the SaveState object
 	 */
 	public void restoreState(SaveState ss) {
-		String[] pathArr = ss.getStrings("BundleManagerPanel_PATH", new String[0]);
+		String[] pathArr = ss.getStrings("BundleStatus_PATH", new String[0]);
 
 		if (pathArr.length == 0) {
 			return;
 		}
 
 		boolean[] enableArr =
-			ss.getBooleans("BundleManagerPanel_ENABLE", new boolean[pathArr.length]);
-		boolean[] editArr = ss.getBooleans("BundleManagerPanel_EDIT", new boolean[pathArr.length]);
-		boolean[] readArr = ss.getBooleans("BundleManagerPanel_READ", new boolean[pathArr.length]);
+			ss.getBooleans("BundleStatus_ENABLE", new boolean[pathArr.length]);
+		boolean[] readArr = ss.getBooleans("BundleStatus_READ", new boolean[pathArr.length]);
 
 		List<BundlePath> oldPaths = bundleStatusModel.getAllPaths();
 		bundleStatusModel.clear();
 
 		for (int i = 0; i < pathArr.length; i++) {
-			BundlePath path = new BundlePath(pathArr[i], enableArr[i], editArr[i], readArr[i]);
+			BundlePath path = new BundlePath(pathArr[i], enableArr[i], readArr[i]);
 			BundlePath oldPath = getPath(path.getPathAsString(), oldPaths);
 			if (oldPath != null) {
 				if (!oldPath.isEditable()) {
@@ -361,7 +387,4 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		bundlePathTable.dispose();
 	}
 
-	void selectRow(int rowIndex) {
-		bundlePathTable.selectRow(rowIndex);
-	}
 }

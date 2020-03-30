@@ -26,7 +26,6 @@ import generic.util.Path;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraJarApplicationLayout;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.plugin.core.script.osgi.BundlePath;
 import ghidra.app.script.*;
 import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
 import ghidra.app.util.importer.AutoImporter;
@@ -661,20 +660,18 @@ public class HeadlessAnalyzer {
 	 */
 	private void initializeScriptPaths() {
 
-		List<BundlePath> paths;
+		List<ResourceFile> paths;
 		if (options.scriptPaths == null || options.scriptPaths.isEmpty()) {
-			paths = GhidraScriptUtil.getDefaultScriptBundles();
+			paths = GhidraScriptUtil.getSystemScriptPaths();
+			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
 		}
 		else {
 			paths = new ArrayList<>();
 			for (String path : options.scriptPaths) {
-				paths.add(new BundlePath(path, true, false, true));
+				paths.add(new ResourceFile(path));
 			}
-			for (BundlePath path : GhidraScriptUtil.getDefaultScriptBundles()) {
-				if (path.isEnabled() && !paths.contains(path)) {
-					paths.add(path);
-				}
-			}
+			paths.addAll(GhidraScriptUtil.getSystemScriptPaths());
+			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
 		}
 		GhidraScriptUtil.setScriptBundlePaths(paths);
 
