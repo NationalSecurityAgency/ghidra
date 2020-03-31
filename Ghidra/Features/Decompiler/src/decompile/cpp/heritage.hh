@@ -219,7 +219,7 @@ class Heritage {
   /// \brief Get the heritage status for the given address space
   HeritageInfo *getInfo(AddrSpace *spc) { return &(infolist[spc->getIndex()]); }
 
-  /// \brief Get the heriage status for the given address space
+  /// \brief Get the heritage status for the given address space
   const HeritageInfo *getInfo(AddrSpace *spc) const { return &(infolist[spc->getIndex()]); }
 
   void splitJoinLevel(vector<Varnode *> &lastcombo,vector<Varnode *> &nextlev,JoinRecord *joinrec);

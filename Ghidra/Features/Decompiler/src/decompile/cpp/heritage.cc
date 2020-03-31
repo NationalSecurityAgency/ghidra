@@ -2340,7 +2340,7 @@ const LoadGuard *Heritage::getStoreGuard(PcodeOp *op) const
 
 /// \brief Get the number times heritage was performed for the given address space
 ///
-/// A negative number indicates the number of passes to be wait before the first
+/// A negative number indicates the number of passes to wait before the first
 /// heritage will occur.
 /// \param spc is the given address space
 /// \return the number of heritage passes performed
@@ -2350,7 +2350,7 @@ int4 Heritage::numHeritagePasses(AddrSpace *spc) const
   const HeritageInfo *info = getInfo(spc);
   if (!info->isHeritaged())
     throw LowlevelError("Trying to calculate passes for non-heritaged space");
-  return (info->delay - pass);
+  return (pass - info->delay);
 }
 
 /// Record that Varnodes have been removed from the given space so that we can
