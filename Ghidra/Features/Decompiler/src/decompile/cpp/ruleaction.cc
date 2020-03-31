@@ -2932,10 +2932,17 @@ int4 RuleIndirectCollapse::applyOp(PcodeOp *op,Funcdata &data)
 	return 0;
     }
     else if (indop->usesSpacebasePtr()) {
-      const LoadGuard *guard = data.getStoreGuard(indop);
-      if (guard != (const LoadGuard *)0) {
-	if (guard->isGuarded(op->getOut()->getAddr()))
+      if (indop->code() == CPUI_STORE) {
+	const LoadGuard *guard = data.getStoreGuard(indop);
+	if (guard != (const LoadGuard *)0) {
+	  if (guard->isGuarded(op->getOut()->getAddr()))
+	    return 0;
+	}
+	else {
+	  // A marked STORE that is not guarded should eventually get converted to a COPY
+	  // so we keep the INDIRECT until that happens
 	  return 0;
+	}
       }
     }
     else
