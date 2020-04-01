@@ -737,6 +737,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	void startActivateDeactiveTask(BundlePath path, boolean activate) {
 		path.setBusy(true);
 		bundleStatusProvider.notifyTableChanged();
+		ConsoleService console = plugin.getTool().getService(ConsoleService.class);
 
 		new TaskLauncher(new Task((activate ? "Activating" : "Deactivating ") + " bundle...") {
 			@Override
@@ -745,16 +746,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 					if (activate) {
 						if (path.getType() == BundlePath.Type.SourceDir) {
 							SourceBundleInfo sbi = bundleHost.getSourceBundleInfo(path.getPath());
-							ConsoleService console =
-								plugin.getTool().getService(ConsoleService.class);
 							bundleHost.compileSourceBundle(sbi, console.getStdErr());
 						}
 						String loc = bundleStatusProvider.getModel().getBundleLoc(path);
 						if (loc != null) {
-							Bundle bundle = bundleHost.getBundle(loc);
-							if (bundle != null) {
-								bundle.start();
-							}
+							bundleHost.activateSynchronously(loc);
 						}
 					}
 					else { // deactivate
@@ -762,14 +758,17 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 						if (loc != null) {
 							Bundle bundle = bundleHost.getBundle(loc);
 							if (bundle != null) {
-								bundle.uninstall();
+								bundleHost.deactivateSynchronously(bundle);
 							}
 						}
 					}
 				}
 				catch (Exception e) {
+					e.printStackTrace(console.getStdErr());
+					path.setActive(!activate);
+
 					Msg.showError(this, GhidraScriptComponentProvider.this.getComponent(),
-						"activation failed", e);
+						"bundle activation failed", e.getMessage());
 				}
 				finally {
 					path.setBusy(false);
@@ -784,7 +783,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		bundleStatusProvider =
 			new BundleStatusProvider(plugin.getTool(), plugin.getName(), bundleHost);
 
-		bundleStatusProvider.addListener(new BundlePathManagerListener() {
+		bundleStatusProvider.getModel().addListener(new BundleStatusListener() {
 			@Override
 			public void bundlesChanged() {
 				plugin.getTool().setConfigChanged(true);
@@ -1073,7 +1072,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public void readConfigState(SaveState saveState) {
-		bundleStatusProvider.restoreState(saveState);
+		bundleStatusProvider.getModel().restoreState(saveState);
 
 		// pull in the just-loaded paths
 		List<ResourceFile> paths = bundleStatusProvider.getModel().getPaths();
@@ -1100,7 +1099,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public void writeConfigState(SaveState saveState) {
-		bundleStatusProvider.saveState(saveState);
+		bundleStatusProvider.getModel().saveState(saveState);
 		actionManager.saveUserDefinedKeybindings(saveState);
 		actionManager.saveScriptsThatAreInTool(saveState);
 

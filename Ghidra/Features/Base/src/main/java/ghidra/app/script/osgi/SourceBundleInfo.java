@@ -30,24 +30,29 @@ import ghidra.app.script.ScriptInfo;
 import ghidra.app.script.osgi.BundleHost.BuildFailure;
 
 /**
- * The SourceBundleInfo class is a cache of information about source directory bundles.
+ * The SourceBundleInfo class is a cache of information for bundles built from source directories.
  */
 public class SourceBundleInfo {
-	private final BundleHost bundle_host;
+	private final BundleHost bundleHost;
 	final private ResourceFile sourceDir;
 	final String symbolicName;
 	final private Path binDir;
 	final private String bundleLoc;
+	boolean foundNewManifest;
+
+	final List<ResourceFile> newSources = new ArrayList<>();
+	final List<Path> oldBin = new ArrayList<>();
 
 	//// information indexed by source file
 
-	// XXX add separate missing requirements tracking
 	final HashMap<ResourceFile, BuildFailure> buildErrors = new HashMap<>();
+	final HashMap<ResourceFile, List<BundleRequirement>> buildReqs = new HashMap<>();
+	final HashMap<String, List<ResourceFile>> req2file = new HashMap<>();
 
 	// cached values parsed form @imports tags on default-package source files
 
 	public SourceBundleInfo(BundleHost bundleHost, ResourceFile sourceDir) {
-		bundle_host = bundleHost;
+		this.bundleHost = bundleHost;
 		this.sourceDir = sourceDir;
 		this.symbolicName = BundleHost.getSymbolicNameFromSourceDir(sourceDir);
 		this.binDir = GhidraScriptUtil.getCompiledBundlesDir().resolve(symbolicName);
@@ -75,14 +80,6 @@ public class SourceBundleInfo {
 		}
 	}
 
-	public Bundle getBundle() {
-		return bundle_host.getBundle(getBundleLoc());
-	}
-
-	public String getBundleLoc() {
-		return bundleLoc;
-	}
-
 	public ResourceFile getSourceDir() {
 		return sourceDir;
 	}
@@ -92,7 +89,7 @@ public class SourceBundleInfo {
 	}
 
 	public Bundle install() throws GhidraBundleException {
-		return bundle_host.installFromLoc(getBundleLoc());
+		return bundleHost.installFromLoc(getBundleLoc());
 	}
 
 	public void buildError(ResourceFile rf, String err) {
@@ -107,59 +104,49 @@ public class SourceBundleInfo {
 	}
 
 	/**
-	 * check for build errors from last time
-	 * @param rf file to test
-	 * @return true if this file had errors and hasn't changed
+	 * update buildReqs based on \@imports tag in java files from the default package
+	 * 
+	 * @throws OSGiException on failure to parse the \@imports tag
 	 */
-	private boolean syncBuildErrors(ResourceFile rf) {
-		BuildFailure f = buildErrors.get(rf);
-		if (f != null) {
-			if (f.when == rf.lastModified()) {
-				return true;
-			}
-			buildErrors.remove(rf);
-		}
-		return false;
-	}
-
-	public List<BundleRequirement> getRequirements() {
-		return foundRequirements;
-	}
-
-	final List<ResourceFile> newSources = new ArrayList<>();
-	List<Path> oldBin = new ArrayList<>();
-
-	boolean foundNewManifest;
-	private List<BundleRequirement> foundRequirements;
-
 	private void computeRequirements() throws OSGiException {
-		foundRequirements = null;
-		Map<String, BundleRequirement> dedupedreqs = new HashMap<>();
 		// parse metadata from all Java source in sourceDir
+		buildReqs.clear();
+		req2file.clear();
+
 		for (ResourceFile rf : sourceDir.listFiles()) {
 			if (rf.getName().endsWith(".java")) {
 				// NB: ScriptInfo will update field values if lastModified has changed since last time they were computed
 				ScriptInfo si = GhidraScriptUtil.getScriptInfo(rf);
 				String imps = si.getImports();
 				if (imps != null && !imps.isEmpty()) {
-					for (BundleRequirement req : BundleHost.parseImports(imps)) {
-						dedupedreqs.put(req.toString(), req);
+					List<BundleRequirement> reqs = BundleHost.parseImports(imps);
+					buildReqs.put(rf, reqs);
+					for (BundleRequirement req : reqs) {
+						req2file.computeIfAbsent(req.toString(), x -> new ArrayList<>()).add(rf);
 					}
 				}
 			}
 		}
-		foundRequirements = new ArrayList<>(dedupedreqs.values());
+	}
+
+	public List<BundleRequirement> getAllReqs() {
+		Map<String, BundleRequirement> dedupedReqs = new HashMap<>();
+		buildReqs.values().stream().flatMap(List::stream).forEach(
+			r -> dedupedReqs.putIfAbsent(r.toString(), r));
+
+		return new ArrayList<>(dedupedReqs.values());
 	}
 
 	/**
 	 * look for new sources, metadata, manifest file.
+	 * 
+	 * if files had errors last time, haven't changed, and no new requirements are available, remove them.
 	 * 
 	 * @param writer for reporting status to user
 	 * @throws IOException while accessing manifest file
 	 * @throws OSGiException while parsing imports
 	 */
 	public void updateFromFilesystem(PrintWriter writer) throws IOException, OSGiException {
-
 		// look for new source files
 		newSources.clear();
 		oldBin.clear();
@@ -181,12 +168,21 @@ public class SourceBundleInfo {
 
 		computeRequirements();
 
-		// remove source files that failed last time and haven't changed 
+		// remove source files that failed last time, haven't changed, and don't have new dependencies available
 		Iterator<ResourceFile> it = newSources.iterator();
 		while (it.hasNext()) {
 			ResourceFile sf = it.next();
-			if (syncBuildErrors(sf)) {
-				it.remove();
+			BuildFailure f = buildErrors.get(sf);
+			if (f != null) {
+				if (f.when == sf.lastModified()) {
+					List<BundleRequirement> r = buildReqs.get(sf);
+					if (r == null || r.isEmpty() || !bundleHost.canResolveAll(r)) {
+						it.remove();
+						continue;
+					}
+				}
+				// it's either new or worth trying again
+				buildErrors.remove(sf);
 			}
 		}
 	}
@@ -223,4 +219,32 @@ public class SourceBundleInfo {
 	public long getLastCompileAttempt() {
 		return lastCompileAttempt;
 	}
+
+	String summary = "";
+
+	public void setSummary(String summary) {
+		this.summary = summary;
+	}
+
+	public void appendSummary(String s) {
+		if (!summary.isEmpty()) {
+			summary += ", " + s;
+		}
+		else {
+			summary = s;
+		}
+	}
+
+	public String getSummary() {
+		return summary;
+	}
+
+	public Bundle getBundle() {
+		return bundleHost.getBundle(getBundleLoc());
+	}
+
+	public String getBundleLoc() {
+		return bundleLoc;
+	}
+
 }

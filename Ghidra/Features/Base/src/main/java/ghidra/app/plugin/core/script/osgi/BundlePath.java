@@ -28,6 +28,7 @@ public class BundlePath extends Path {
 
 	boolean active = false;
 	boolean busy = false;
+	String summary;
 
 	public static enum Type {
 		BndScript, Jar, SourceDir, INVALID
@@ -98,6 +99,14 @@ public class BundlePath extends Path {
 
 	public boolean getBusy() {
 		return busy;
+	}
+
+	public void setSummary(String summary) {
+		this.summary = summary;
+	}
+
+	public String getSummary() {
+		return summary;
 	}
 
 }

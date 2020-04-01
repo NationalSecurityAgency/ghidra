@@ -48,7 +48,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		Bundle b = getBundleInfoForSource(sourceFile).getBundle();
 		if (b != null) {
 			try {
-				BundleHost.getInstance().synchronousUninstall(b);
+				BundleHost.getInstance().deactivateSynchronously(b);
 			}
 			catch (GhidraBundleException | InterruptedException e) {
 				e.printStackTrace();
@@ -89,8 +89,18 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	static public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer)
 			throws IOException, OSGiException, ClassNotFoundException, InterruptedException {
 
+		BundleHost bundleHost = BundleHost.getInstance();
+
 		SourceBundleInfo bi = getBundleInfoForSource(sourceFile);
-		Bundle b = BundleHost.getInstance().compileSourceBundle(bi, writer);
+		bundleHost.compileSourceBundle(bi, writer);
+
+		// as much source as possible built, install bundle and start it if necessary
+		Bundle b = bi.getBundle();
+		if (b == null) {
+			b = bi.install();
+		}
+		bundleHost.activateSynchronously(b);
+
 		String classname = bi.classNameForScript(sourceFile);
 		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
 		return clazz;
@@ -99,7 +109,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	public static ResourceFile getSourceDirectoryContaining(ResourceFile sourceFile) {
 		String sourcePath = sourceFile.getAbsolutePath();
 		for (ResourceFile sourceDir : GhidraScriptUtil.getScriptSourceDirectories()) {
-			if (sourcePath.startsWith(sourceDir.getAbsolutePath()+File.separatorChar)) {
+			if (sourcePath.startsWith(sourceDir.getAbsolutePath() + File.separatorChar)) {
 				return sourceDir;
 			}
 		}

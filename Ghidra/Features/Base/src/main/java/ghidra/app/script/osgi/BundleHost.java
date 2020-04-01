@@ -125,7 +125,7 @@ public class BundleHost {
 		return installFromLoc("file://" + p.toAbsolutePath().normalize().toString());
 	}
 
-	Bundle installFromLoc(String bundle_loc) throws GhidraBundleException {
+	public Bundle installFromLoc(String bundle_loc) throws GhidraBundleException {
 		try {
 			return bc.installBundle(bundle_loc);
 		}
@@ -182,6 +182,12 @@ public class BundleHost {
 		return bundleWirings;
 	}
 
+	public boolean canResolveAll(Collection<BundleRequirement> reqs) {
+		LinkedList<BundleRequirement> tmp = new LinkedList<>(reqs);
+		resolve(tmp);
+		return tmp.isEmpty();
+	}
+
 	class FelixLogger extends org.apache.felix.framework.Logger {
 		@Override
 		protected void doLog(int level, String msg, Throwable throwable) {
@@ -201,6 +207,33 @@ public class BundleHost {
 			// plugin.printf("felixlogger: %s %s %s\n", bundle, msg, throwable);
 		}
 
+	}
+
+	static String getEventTypeString(BundleEvent e) {
+		switch (e.getType()) {
+			case BundleEvent.INSTALLED:
+				return "INSTALLED";
+			case BundleEvent.RESOLVED:
+				return "RESOLVED";
+			case BundleEvent.LAZY_ACTIVATION:
+				return "LAZY_ACTIVATION";
+			case BundleEvent.STARTING:
+				return "STARTING";
+			case BundleEvent.STARTED:
+				return "STARTED";
+			case BundleEvent.STOPPING:
+				return "STOPPING";
+			case BundleEvent.STOPPED:
+				return "STOPPED";
+			case BundleEvent.UPDATED:
+				return "UPDATED";
+			case BundleEvent.UNRESOLVED:
+				return "UNRESOLVED";
+			case BundleEvent.UNINSTALLED:
+				return "UNINSTALLED";
+			default:
+				return "???";
+		}
 	}
 
 	/**
@@ -287,22 +320,20 @@ public class BundleHost {
 			}
 		});
 		bc.addBundleListener(new BundleListener() {
-
 			@Override
 			public void bundleChanged(BundleEvent event) {
-				// System.err.printf("%s %s\n", event.getBundle(), event);
+				Bundle b = event.getBundle();
+				String n = b.getSymbolicName();
+				String l = b.getLocation();
+				System.err.printf("%s %s from %s\n", getEventTypeString(event), n, l);
 				switch (event.getType()) {
-					case BundleEvent.INSTALLED:
-						System.err.printf("INSTALLED %s\n", event.getBundle().getSymbolicName());
+					case BundleEvent.STARTED:
+						fireBundleActivationChange(b, true);
 						break;
 					case BundleEvent.UNINSTALLED:
-						System.err.printf("UNINSTALLED %s\n", event.getBundle().getSymbolicName());
+						fireBundleActivationChange(b, false);
 						break;
-					case BundleEvent.STARTED:
-						System.err.printf("STARTED %s\n", event.getBundle().getSymbolicName());
-						break;
-					case BundleEvent.STOPPED:
-						System.err.printf("STOPPED %s\n", event.getBundle().getSymbolicName());
+					default:
 						break;
 				}
 			}
@@ -340,7 +371,7 @@ public class BundleHost {
 		}
 	}
 
-	public void synchronousStart(Bundle b) throws InterruptedException, GhidraBundleException {
+	public void activateSynchronously(Bundle b) throws InterruptedException, GhidraBundleException {
 		if (b.getState() == Bundle.ACTIVE) {
 			return;
 		}
@@ -353,31 +384,35 @@ public class BundleHost {
 		waitFor(b, Bundle.ACTIVE);
 	}
 
-	public void synchronousStop(Bundle b) throws InterruptedException, GhidraBundleException {
-		if (oneOf(b, Bundle.RESOLVED, Bundle.INSTALLED, Bundle.UNINSTALLED)) {
-			return;
+	public void activateSynchronously(String bundleLoc)
+			throws GhidraBundleException, InterruptedException {
+		Bundle bundle = getBundle(bundleLoc);
+		if (bundle == null) {
+			bundle = installFromLoc(bundleLoc);
 		}
-		try {
-			b.stop();
-		}
-		catch (BundleException e) {
-			throw new GhidraBundleException(b, "stopping bundle", e);
-		}
-		waitFor(b, Bundle.RESOLVED, Bundle.INSTALLED, Bundle.UNINSTALLED);
+		activateSynchronously(bundle);
 	}
 
-	public void synchronousUninstall(Bundle b) throws InterruptedException, GhidraBundleException {
+	public void deactivateSynchronously(Bundle b)
+			throws InterruptedException, GhidraBundleException {
 		if (b.getState() == Bundle.UNINSTALLED) {
 			return;
 		}
-		try {
-			// stop first??
-			b.uninstall();
+		FrameworkWiring fw = felix.adapt(FrameworkWiring.class);
+		LinkedList<Bundle> dependents =
+			new LinkedList<Bundle>(fw.getDependencyClosure(Collections.singleton(b)));
+		System.err.printf("%s has %d dependendts\n", b.getSymbolicName(), dependents.size());
+		while (!dependents.isEmpty()) {
+			b = dependents.pop();
+			try {
+				b.uninstall();
+				fw.refreshBundles(dependents);
+			}
+			catch (BundleException e) {
+				throw new GhidraBundleException(b, "uninstalling bundle", e);
+			}
+			waitFor(b, Bundle.UNINSTALLED);
 		}
-		catch (BundleException e) {
-			throw new GhidraBundleException(b, "unisntalling bundle", e);
-		}
-		waitFor(b, Bundle.UNINSTALLED);
 	}
 
 	void forceStopFelix() {
@@ -534,42 +569,40 @@ public class BundleHost {
 	}
 
 	/**
-	 * compile a source bundle if it's binary is out of sync
+	 * compile a source bundle if it's out of sync
 	 * 
-	 * @param bi the bundle info
+	 * @param sbi the bundle info
 	 * @param writer where to write issues
 	 * @throws OSGiException if bundle operations fail
 	 * @throws IOException if there are issues with the contents of the bundle
 	 * @return the activated bundle
 	 * @throws InterruptedException if interrupted while waiting for bundle state change
 	 */
-	public Bundle compileSourceBundle(SourceBundleInfo bi, PrintWriter writer)
+	public boolean compileSourceBundle(SourceBundleInfo sbi, PrintWriter writer)
 			throws OSGiException, IOException, InterruptedException {
 		if (writer == null) {
 			writer = new NullPrintWriter();
 		}
 
-		bi.updateFromFilesystem(writer);
-
-		// needsCompile => needsBundleActivate
 		boolean needsCompile = false;
-		boolean needsBundleActivate = false;
 
-		int failing = bi.getFailingSourcesCount();
-		int newSourcecount = bi.getNewSourcesCount();
+		sbi.updateFromFilesystem(writer);
+
+		int failing = sbi.getFailingSourcesCount();
+		int newSourcecount = sbi.getNewSourcesCount();
 
 		long lastBundleActivation = 0; // XXX record last bundle activation in bundlestatusmodel
-		if (failing > 0 && (lastBundleActivation > bi.getLastCompileAttempt())) {
+		if (failing > 0 && (lastBundleActivation > sbi.getLastCompileAttempt())) {
 			needsCompile = true;
 		}
 
 		if (newSourcecount == 0) {
 			if (failing > 0) {
 				writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
-					bi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
-				writer.printf("%s\n", bi.getPreviousBuildErrors());
+					sbi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
+				writer.printf("%s\n", sbi.getPreviousBuildErrors());
 			}
-			if (bi.newManifestFile()) {
+			if (sbi.newManifestFile()) {
 				needsCompile = true;
 			}
 		}
@@ -577,50 +610,59 @@ public class BundleHost {
 			needsCompile = true;
 		}
 
-		needsBundleActivate |= needsCompile;
-
-		if (needsBundleActivate) {
-			writer.printf("%s has %d new/updated %d failed in previous build(s)%s\n",
-				bi.getSourceDir().toString(), newSourcecount, failing,
-				bi.newManifestFile() ? " and the manifest is new" : "");
+		if (needsCompile) {
+			writer.printf("%d new files, %d skipped, %s\n", newSourcecount, failing,
+				sbi.newManifestFile() ? ", new manifest" : "");
 
 			// if there a bundle is currently active, uninstall it
-			Bundle b = bi.getBundle();
+			Bundle b = sbi.getBundle();
 			if (b != null) {
-				synchronousUninstall(b);
+				deactivateSynchronously(b);
 			}
 
 			// once we've committed to recompile and regenerate generated classes, delete the old stuff
-			if (needsCompile) {
-				bi.deleteOldBinaries();
+			sbi.deleteOldBinaries();
 
-				BundleCompiler bundleCompiler = new BundleCompiler(this);
+			BundleCompiler bundleCompiler = new BundleCompiler(this);
 
-				long startTime = System.nanoTime();
-				bundleCompiler.compileToExplodedBundle(bi, writer);
-				long endTime = System.nanoTime();
-				writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
+			long startTime = System.nanoTime();
+			bundleCompiler.compileToExplodedBundle(sbi, writer);
+			long endTime = System.nanoTime();
+			writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
+			fireSourceBundleCompiled(sbi);
+			return true;
+		}
+		return false;
+	}
+
+	List<OSGiListener> osgiListeners = new ArrayList<>();
+
+	void fireSourceBundleCompiled(SourceBundleInfo sbi) {
+		synchronized (osgiListeners) {
+			for (OSGiListener l : osgiListeners) {
+				l.sourceBundleCompiled(sbi);
 			}
 		}
-		// as much source as possible built, install bundle and start it if necessary
-		Bundle b = bi.getBundle();
-		if (b == null) {
-			b = bi.install();
-			needsBundleActivate = true;
-		}
-
-		if (needsBundleActivate) {
-			synchronousStart(b);
-		}
-		return b;
 	}
 
-	public void addListener(BundleListener bundleListener) {
-		bc.addBundleListener(bundleListener);
+	void fireBundleActivationChange(Bundle b, boolean newActivation) {
+		synchronized (osgiListeners) {
+			for (OSGiListener l : osgiListeners) {
+				l.bundleActivationChange(b, newActivation);
+			}
+		}
 	}
 
-	public void removeListener(BundleListener bundleListener) {
-		bc.removeBundleListener(bundleListener);
+	public void addListener(OSGiListener osgiListener) {
+		synchronized (osgiListeners) {
+			osgiListeners.add(osgiListener);
+		}
+	}
+
+	public void removeListener(OSGiListener osgiListener) {
+		synchronized (osgiListeners) {
+			osgiListeners.remove(osgiListener);
+		}
 	}
 
 }

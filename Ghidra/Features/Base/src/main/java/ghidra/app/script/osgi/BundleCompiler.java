@@ -51,21 +51,21 @@ public class BundleCompiler {
 	/**
 	 *  compile a source directory to an exploded bundle
 	 *  
-	 * @param bi the bundle info to build
+	 * @param sbi the bundle info to build
 	 * @param writer for updating the user during compilation
 	 * @throws IOException for source/manifest file reading/generation and binary deletion/creation
 	 * @throws OSGiException if generation of bundle metadata fails
 	 */
-	public void compileToExplodedBundle(SourceBundleInfo bi, PrintWriter writer)
+	public void compileToExplodedBundle(SourceBundleInfo sbi, PrintWriter writer)
 			throws IOException, OSGiException {
 
-		bi.compileAttempted();
+		sbi.compileAttempted();
+		sbi.setSummary(String.format("build %d files, skipping %d%s", sbi.getNewSourcesCount(),
+			sbi.getFailingSourcesCount(), sbi.newManifestFile() ? ", new manifest" : ""));
 
-		ResourceFile srcdir = bi.getSourceDir();
-		Path bindir = bi.getBinDir();
+		ResourceFile srcdir = sbi.getSourceDir();
+		Path bindir = sbi.getBinDir();
 		Files.createDirectories(bindir);
-
-		List<ResourceFile> newSource = bi.getNewSources();
 
 		List<String> options = new ArrayList<>();
 		options.add("-g");
@@ -79,28 +79,44 @@ public class BundleCompiler {
 
 		// final JavaFileManager rfm = new ResourceFileJavaFileManager(Collections.singletonList(bi.getSourceDir()));
 		final JavaFileManager rfm =
-			new ResourceFileJavaFileManager(Collections.singletonList(bi.getSourceDir()));
+			new ResourceFileJavaFileManager(Collections.singletonList(sbi.getSourceDir()));
 
 		BundleJavaManager bjm = new BundleJavaManager(bh.getHostFramework(), rfm, options);
 		// The phidias BundleJavaManager is for compiling from within a bundle -- it makes the
 		// bundle dependencies available to the compiler classpath.  Here, we are compiling in an as-yet 
 		// non-existing bundle, so we forge the wiring based on @imports metadata.
 
-		List<BundleRequirement> reqs = bi.getRequirements();
+		// XXX skip this if there's a source manifest, emit warnings about @imports
+		// get wires for currently active bundles to satisfy all requirements
+		List<BundleRequirement> reqs = sbi.getAllReqs();
 		List<BundleWiring> bundleWirings = bh.resolve(reqs);
 
 		if (!reqs.isEmpty()) {
-			writer.printf("%d import requirement%s remain%s after resolution:\n", reqs.size(),
+			writer.printf("%d import requirement%s remain%s unresolved:\n", reqs.size(),
 				reqs.size() > 1 ? "s" : "", reqs.size() > 1 ? "" : "s");
 			for (BundleRequirement req : reqs) {
 				writer.printf("  %s\n", req.toString());
 			}
+
+			sbi.setSummary(
+				String.format("%d missing @import%s:", reqs.size(), reqs.size() > 1 ? "s" : "",
+					reqs.stream().flatMap(
+						r -> OSGiUtils.extractPackages(r.toString()).stream()).distinct().collect(
+							Collectors.joining(","))));
+		}
+		else {
+			sbi.setSummary("");
+		}
+		// XXX add sources that will fail to call attention
+		List<ResourceFile> newSource = sbi.getNewSources();
+		for (BundleRequirement req : reqs) {
+			newSource.addAll(sbi.req2file.get(req.toString()));
 		}
 
 		// send the capabilities to phidias
-		bundleWirings.forEach(bw -> bjm.addBundleWiring(bw));
+		bundleWirings.forEach(bjm::addBundleWiring);
 
-		final List<ResourceFileJavaFileObject> compilationUnits = newSource.stream().map(
+		final List<ResourceFileJavaFileObject> sourceFiles = newSource.stream().map(
 			sf -> new ResourceFileJavaFileObject(sf.getParentFile(), sf, Kind.SOURCE)).collect(
 				Collectors.toList());
 
@@ -110,11 +126,11 @@ public class BundleCompiler {
 		}
 
 		// try to compile, if we fail, avoid offenders and try again
-		while (!compilationUnits.isEmpty()) {
+		while (!sourceFiles.isEmpty()) {
 			DiagnosticCollector<JavaFileObject> diagnostics =
 				new DiagnosticCollector<JavaFileObject>();
 			JavaCompiler.CompilationTask task =
-				compiler.getTask(writer, bjm, diagnostics, options, null, compilationUnits);
+				compiler.getTask(writer, bjm, diagnostics, options, null, sourceFiles);
 			// task.setProcessors // for annotation processing / code generation
 
 			Boolean successfulCompilation = task.call();
@@ -126,8 +142,8 @@ public class BundleCompiler {
 				writer.write(err);
 				ResourceFileJavaFileObject sf = (ResourceFileJavaFileObject) d.getSource();
 				ResourceFile rf = sf.getFile();
-				bi.buildError(rf, err); // remember all errors for this file
-				if (compilationUnits.remove(sf)) {
+				sbi.buildError(rf, err); // remember all errors for this file
+				if (sourceFiles.remove(sf)) {
 					writer.printf("skipping %s\n", sf.toString());
 					// if it's a script, mark it for having compile errors
 					if (GhidraScriptUtil.containsMetadata(rf)) {
@@ -138,12 +154,17 @@ public class BundleCompiler {
 			}
 		}
 		// mark the successful compilations
-		for (ResourceFileJavaFileObject sf : compilationUnits) {
+		for (ResourceFileJavaFileObject sf : sourceFiles) {
 			ResourceFile rf = sf.getFile();
 			if (GhidraScriptUtil.containsMetadata(rf)) {
 				ScriptInfo info = GhidraScriptUtil.getScriptInfo(rf);
 				info.setCompileErrors(false);
 			}
+		}
+		// buildErrors is now up to date, set status
+		if (sbi.getFailingSourcesCount() > 0) {
+			sbi.appendSummary(
+				String.format("%d failing source files", sbi.getFailingSourcesCount()));
 		}
 
 		ResourceFile smf = new ResourceFile(srcdir, "META-INF" + File.separator + "MANIFEST.MF");
@@ -157,17 +178,16 @@ public class BundleCompiler {
 		// no manifest, so create one with bndtools
 		Analyzer analyzer = new Analyzer();
 		analyzer.setJar(new Jar(bindir.toFile())); // give bnd the contents
-		Stream<Object> bjars =
-			Files.list(GhidraScriptUtil.getCompiledBundlesDir()).filter(f -> f.toString().endsWith(".jar")).map(
-				f -> {
-					try {
-						return new Jar(f.toFile());
-					}
-					catch (IOException e1) {
-						e1.printStackTrace(writer);
-						return null;
-					}
-				});
+		Stream<Object> bjars = Files.list(GhidraScriptUtil.getCompiledBundlesDir()).filter(
+			f -> f.toString().endsWith(".jar")).map(f -> {
+				try {
+					return new Jar(f.toFile());
+				}
+				catch (IOException e1) {
+					e1.printStackTrace(writer);
+					return null;
+				}
+			});
 
 		analyzer.addClasspath(bjars.collect(Collectors.toUnmodifiableList()));
 		analyzer.setProperty("Bundle-SymbolicName",
@@ -183,6 +203,7 @@ public class BundleCompiler {
 				manifest = analyzer.calcManifest();
 			}
 			catch (Exception e) {
+				sbi.appendSummary("bad manifest");
 				throw new OSGiException("failed to calculate manifest by analyzing code", e);
 			}
 			Attributes ma = manifest.getMainAttributes();
@@ -198,11 +219,13 @@ public class BundleCompiler {
 				}
 			}
 			catch (Exception e) {
+				sbi.appendSummary("failed bnd analysis");
 				throw new OSGiException("failed to query classes while searching for activator", e);
 			}
 			if (activator_classname == null) {
 				activator_classname = GENERATED_ACTIVATOR_CLASSNAME;
 				if (!buildDefaultActivator(bindir, activator_classname, writer)) {
+					sbi.appendSummary("failed to build generated activator");
 					return;
 				}
 				// since we add the activator after bndtools built the imports, we should add its imports too
@@ -236,8 +259,7 @@ public class BundleCompiler {
 	 * @return true if compilation succeeded
 	 * @throws IOException for failed write of source/binary activator
 	 */
-	private boolean buildDefaultActivator(Path bindir, String activator_classname,
-			Writer writer)
+	private boolean buildDefaultActivator(Path bindir, String activator_classname, Writer writer)
 			throws IOException {
 		Path activator_dest = bindir.resolve(activator_classname + ".java");
 
@@ -270,12 +292,12 @@ public class BundleCompiler {
 
 		StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null);
 		BundleJavaManager bjm = new BundleJavaManager(bh.getHostFramework(), fm, options);
-		Iterable<? extends JavaFileObject> compilationUnits2 =
+		Iterable<? extends JavaFileObject> sourceFiles =
 			fm.getJavaFileObjectsFromPaths(List.of(activator_dest));
 		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-		JavaCompiler.CompilationTask task2 =
-			compiler.getTask(writer, bjm, diagnostics, options, null, compilationUnits2);
-		if (!task2.call()) {
+		JavaCompiler.CompilationTask task =
+			compiler.getTask(writer, bjm, diagnostics, options, null, sourceFiles);
+		if (!task.call()) {
 			for (Diagnostic<? extends JavaFileObject> d : diagnostics.getDiagnostics()) {
 				writer.write(d.getSource().toString() + ": " + d.getMessage(null) + "\n");
 			}

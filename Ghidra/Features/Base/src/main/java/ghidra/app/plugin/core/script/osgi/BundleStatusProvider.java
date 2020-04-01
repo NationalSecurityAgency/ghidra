@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.script.osgi;
 
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,9 +27,7 @@ import javax.swing.table.TableColumn;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
-import generic.jar.ResourceFile;
 import ghidra.app.script.osgi.BundleHost;
-import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
@@ -45,35 +42,16 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	static String preferenceForLastSelectedBundle = "LastGhidraScriptBundle";
 
 	private JPanel panel;
-	private GTable bundlePathTable;
+	private GTable bundleStatusTable;
 	private final BundleStatusModel bundleStatusModel;
 	private JButton addButton;
 	private JButton removeButton;
 	private Color selectionColor;
 	private GhidraFileChooser fileChooser;
 	private GhidraFileFilter filter;
-	private ArrayList<BundlePathManagerListener> listeners = new ArrayList<>();
 
 	public void notifyTableChanged() {
-		bundlePathTable.notifyTableChanged(new TableModelEvent(bundleStatusModel));
-	}
-
-	void fireBundlesChanged() {
-		for (BundlePathManagerListener listener : listeners) {
-			listener.bundlesChanged();
-		}
-	}
-
-	void fireBundleEnablementChanged(BundlePath path, boolean newValue) {
-		for (BundlePathManagerListener listener : listeners) {
-			listener.bundleEnablementChanged(path, newValue);
-		}
-	}
-
-	void fireBundleActivationChanged(BundlePath path, boolean newValue) {
-		for (BundlePathManagerListener listener : listeners) {
-			listener.bundleActivationChanged(path, newValue);
-		}
+		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusModel));
 	}
 
 	public BundleStatusProvider(PluginTool tool, String owner, BundleHost bundleHost) {
@@ -99,16 +77,6 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 	public BundleStatusModel getModel() {
 		return bundleStatusModel;
-	}
-
-	public void addListener(BundlePathManagerListener listener) {
-		if (!listeners.contains(listener)) {
-			listeners.add(listener);
-		}
-	}
-
-	public void removeListener(BundlePathManagerListener listener) {
-		listeners.remove(listener);
 	}
 
 	private void build() {
@@ -139,25 +107,25 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		++gbc.gridy;
 		buttonPanel.add(removeButton, gbc);
 
-		bundlePathTable = new GTable(bundleStatusModel);
-		bundlePathTable.setName("BUNDLEPATH_TABLE");
-		bundlePathTable.setSelectionBackground(selectionColor);
-		bundlePathTable.setSelectionForeground(Color.BLACK);
-		bundlePathTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		bundleStatusTable = new GTable(bundleStatusModel);
+		bundleStatusTable.setName("BUNDLEPATH_TABLE");
+		bundleStatusTable.setSelectionBackground(selectionColor);
+		bundleStatusTable.setSelectionForeground(Color.BLACK);
+		bundleStatusTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		// to allow custom cell renderers
-		bundlePathTable.setAutoCreateColumnsFromModel(false);
+		bundleStatusTable.setAutoCreateColumnsFromModel(false);
 
 		int skinnyWidth = 50;
 
 		TableColumn column =
-			bundlePathTable.getColumnModel().getColumn(bundleStatusModel.enabledColumn.index);
+			bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.enabledColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
-		column = bundlePathTable.getColumnModel().getColumn(bundleStatusModel.activeColumn.index);
+		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.activeColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
@@ -184,13 +152,13 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 		});
 
-		column = bundlePathTable.getColumnModel().getColumn(bundleStatusModel.typeColumn.index);
+		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.typeColumn.index);
 
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		column.setMaxWidth(10 +
 			SwingUtilities.computeStringWidth(fontmetrics, BundlePath.Type.SourceDir.toString()));
 
-		column = bundlePathTable.getColumnModel().getColumn(bundleStatusModel.pathColumn.index);
+		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.pathColumn.index);
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -205,12 +173,12 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		});
 
 		GTableFilterPanel<BundlePath> filterPanel =
-			new GTableFilterPanel<>(bundlePathTable, bundleStatusModel);
+			new GTableFilterPanel<>(bundleStatusTable, bundleStatusModel);
 
-		JScrollPane scrollPane = new JScrollPane(bundlePathTable);
-		scrollPane.getViewport().setBackground(bundlePathTable.getBackground());
+		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
+		scrollPane.getViewport().setBackground(bundleStatusTable.getBackground());
 
-		ListSelectionModel selModel = bundlePathTable.getSelectionModel();
+		ListSelectionModel selModel = bundleStatusTable.getSelectionModel();
 		selModel.addListSelectionListener(e -> {
 			if (e.getValueIsAdjusting()) {
 				return;
@@ -228,12 +196,12 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	}
 
 	private void updateButtonsEnabled() {
-		int[] rows = bundlePathTable.getSelectedRows();
+		int[] rows = bundleStatusTable.getSelectedRows();
 		removeButton.setEnabled(rows.length > 0);
 	}
 
 	private void removeButtonAction() {
-		int[] selectedRows = bundlePathTable.getSelectedRows();
+		int[] selectedRows = bundleStatusTable.getSelectedRows();
 		if (selectedRows == null || selectedRows.length == 0) {
 			return;
 		}
@@ -247,10 +215,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			row = count - 1;
 		}
 		if (row >= 0) {
-			bundlePathTable.setRowSelectionInterval(row, row);
+			bundleStatusTable.setRowSelectionInterval(row, row);
 		}
 		updateButtonsEnabled();
-		fireBundlesChanged();
 	}
 
 	private void addButtonAction() {
@@ -292,10 +259,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		if (!files.isEmpty()) {
 			Preferences.setProperty(preferenceForLastSelectedBundle,
 				files.get(0).getAbsolutePath());
-			for (File element : files) {
-				bundleStatusModel.addNewPath(new ResourceFile(element), true, false);
-			}
-			fireBundlesChanged();
+			bundleStatusModel.addNewPaths(files, true, false);
 		}
 	}
 
@@ -304,73 +268,12 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		return panel;
 	}
 
-	/**
-	 * Saves the paths to the specified SaveState object.
-	 * @param ss the SaveState object
-	 */
-	public void saveState(SaveState ss) {
-		List<BundlePath> paths = bundleStatusModel.getAllPaths();
-
-		String[] pathArr = new String[paths.size()];
-		boolean[] enableArr = new boolean[paths.size()];
-		boolean[] readonlyArr = new boolean[paths.size()];
-
-		int index = 0;
-		for (BundlePath path : paths) {
-			pathArr[index] = path.getPathAsString();
-			enableArr[index] = path.isEnabled();
-			readonlyArr[index] = path.isReadOnly();
-			++index;
-		}
-
-		ss.putStrings("BundleStatus_PATH", pathArr);
-		ss.putBooleans("BundleStatus_ENABLE", enableArr);
-		ss.putBooleans("BundleStatus_READ", readonlyArr);
-	}
-
-	/**
-	 * Restores the paths from the specified SaveState object.
-	 * @param ss the SaveState object
-	 */
-	public void restoreState(SaveState ss) {
-		String[] pathArr = ss.getStrings("BundleStatus_PATH", new String[0]);
-
-		if (pathArr.length == 0) {
-			return;
-		}
-
-		boolean[] enableArr = ss.getBooleans("BundleStatus_ENABLE", new boolean[pathArr.length]);
-		boolean[] readonlyArr = ss.getBooleans("BundleStatus_READ", new boolean[pathArr.length]);
-
-		List<BundlePath> currentPaths = bundleStatusModel.getAllPaths();
-		bundleStatusModel.clear();
-
-		for (int i = 0; i < pathArr.length; i++) {
-			BundlePath currentPath = getPath(pathArr[i], currentPaths);
-			if (currentPath != null) {
-				currentPaths.remove(currentPath);
-				bundleStatusModel.addNewPath(pathArr[i],enableArr[i],readonlyArr[i]);
-			}
-			else if (!readonlyArr[i]) {
-				// skip read-only paths which are not present in the current config
-				// This is needed to thin-out old default entries
-				bundleStatusModel.addNewPath(pathArr[i],enableArr[i],readonlyArr[i]);
-			}
-		}
-		fireBundlesChanged();
-	}
-
-	private static BundlePath getPath(String filepath, List<BundlePath> paths) {
-		for (BundlePath path : paths) {
-			if (filepath.equals(path.getPathAsString())) {
-				return path;
-			}
-		}
-		return null;
-	}
-
 	public void dispose() {
-		bundlePathTable.dispose();
+		bundleStatusTable.dispose();
+	}
+
+	void selectRow(int rowIndex) {
+		bundleStatusTable.selectRow(rowIndex);
 	}
 
 }
