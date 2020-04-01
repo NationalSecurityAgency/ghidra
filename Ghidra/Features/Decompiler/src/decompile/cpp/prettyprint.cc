@@ -16,20 +16,20 @@
 #include "prettyprint.hh"
 #include "funcdata.hh"
 
-const char *EmitXml::highlight[] = { "color=\"keyword\"",
-					      "color=\"comment\"",
-					      "color=\"type\"",
-					      "color=\"funcname\"",
-					      "color=\"var\"",
-					      "color=\"const\"",
-					      "color=\"param\"",
-					      "color=\"global\"",
+const char *EmitXml::highlight[] = { " color=\"keyword\"",
+					      " color=\"comment\"",
+					      " color=\"type\"",
+					      " color=\"funcname\"",
+					      " color=\"var\"",
+					      " color=\"const\"",
+					      " color=\"param\"",
+					      " color=\"global\"",
 					      "" };
 
 /// Inform the emitter that generation of the source code document has begun
 /// \return an id associated with the document
 int4 EmitXml::beginDocument(void) {
-  *s << "<clang_document " << highlight[(int4)no_color] << '>';
+  *s << "<clang_document" << highlight[(int4)no_color] << '>';
   return 0;
 }
 
@@ -42,7 +42,7 @@ void EmitXml::endDocument(int4 id) {
 /// Inform the emitter that generation of a function body has begun
 /// \return an id associated with the function body
 int4 EmitXml::beginFunction(const Funcdata *fd) {
-  *s << "<function " << highlight[(int4)no_color];
+  *s << "<function" << highlight[(int4)no_color];
   *s << '>';
   return 0;
 }
@@ -58,7 +58,7 @@ void EmitXml::endFunction(int4 id) {
 /// \param bl is the block structure object associated with the section
 /// \return an id associated with the section
 int4 EmitXml::beginBlock(const FlowBlock *bl) {
-  *s << "<block " << highlight[(int4)no_color] << " blockref=\"0x" << hex <<
+  *s << "<block" << highlight[(int4)no_color] << " blockref=\"0x" << hex <<
     bl->getIndex() << "\">";
   return 0;
 }
@@ -71,7 +71,7 @@ void EmitXml::endBlock(int4 id) {
 
 /// Tell the emitter that a new line is desired at the current indent level
 void EmitXml::tagLine(void) {
-  *s << "<break " << highlight[(int4)no_color] << " indent=\"0x" << hex <<
+  *s << "<break" << highlight[(int4)no_color] << " indent=\"0x" << hex <<
     indentlevel << "\"/>";
 }
 
@@ -79,7 +79,7 @@ void EmitXml::tagLine(void) {
 /// is overridden only for the line, then it returns to its previous value.
 /// \param indent is the desired indent level for the new line
 void EmitXml::tagLine(int4 indent) {
-  *s << "<break " << highlight[(int4)no_color] << " indent=\"0x" << hex <<
+  *s << "<break" << highlight[(int4)no_color] << " indent=\"0x" << hex <<
     indent << "\"/>";
 }
 
@@ -87,7 +87,7 @@ void EmitXml::tagLine(int4 indent) {
 /// \param vn (if non-null) is the storage location for the return value
 /// \return an id associated with the return type
 int4 EmitXml::beginReturnType(const Varnode *vn) {
-  *s << "<return_type " << highlight[(int4)no_color];
+  *s << "<return_type" << highlight[(int4)no_color];
   if (vn != (const Varnode *)0)
     *s << " varref=\"0x" << hex << vn->getCreateIndex() << "\">";
   else
@@ -105,7 +105,7 @@ void EmitXml::endReturnType(int4 id) {
 /// \param sym is the symbol being declared
 /// \return an id associated with the declaration
 int4 EmitXml::beginVarDecl(const Symbol *sym) {
-  *s << "<vardecl " << highlight[(int4)no_color];
+  *s << "<vardecl" << highlight[(int4)no_color];
   *s << " symref=\"0x" << hex << sym->getId() << "\">";
   return 0;
 }
@@ -120,7 +120,7 @@ void EmitXml::endVarDecl(int4 id) {
 /// \param op is the root p-code operation of the statement
 /// \return an id associated with the statement
 int4 EmitXml::beginStatement(const PcodeOp *op) {
-  *s << "<statement " << highlight[(int4)no_color];
+  *s << "<statement" << highlight[(int4)no_color];
   if (op != (const PcodeOp *)0)
     *s << " opref=\"0x" << hex << op->getTime() << "\">";
   else
@@ -137,7 +137,7 @@ void EmitXml::endStatement(int4 id) {
 /// Inform the emitter that a function prototype is starting.
 /// \return an id associated with the prototype
 int4 EmitXml::beginFuncProto(void) {
-  *s << "<funcproto " << highlight[(int4)no_color] << '>';
+  *s << "<funcproto" << highlight[(int4)no_color] << '>';
   return 0;
 }
 
@@ -157,7 +157,7 @@ void EmitXml::endFuncProto(int4 id) {
 void EmitXml::tagVariable(const char *ptr,syntax_highlight hl,
 			    const Varnode *vn,const PcodeOp *op)
 {
-  *s << "<variable " << highlight[(int4)hl];
+  *s << "<variable" << highlight[(int4)hl];
   if (vn != (const Varnode *)0)
     *s << " varref=\"0x" << hex << vn->getCreateIndex() << '\"';
   if (op != (const PcodeOp *)0)
@@ -177,7 +177,7 @@ void EmitXml::tagVariable(const char *ptr,syntax_highlight hl,
 void EmitXml::tagOp(const char *ptr,syntax_highlight hl,
 		      const PcodeOp *op)
 {
-  *s << "<op " << highlight[(int4)hl];
+  *s << "<op" << highlight[(int4)hl];
   if (op != (const PcodeOp *)0)
     *s << " opref=\"0x" << hex << op->getTime() << "\">";
   else
@@ -197,7 +197,7 @@ void EmitXml::tagOp(const char *ptr,syntax_highlight hl,
 void EmitXml::tagFuncName(const char *ptr,syntax_highlight hl,
 			    const Funcdata *fd,const PcodeOp *op)
 {
-  *s << "<funcname " << highlight[(int4)hl];
+  *s << "<funcname" << highlight[(int4)hl];
   if (op != (const PcodeOp *)0)
     *s << " opref=\"0x" << hex << op->getTime() << "\">";
   else
@@ -214,7 +214,7 @@ void EmitXml::tagFuncName(const char *ptr,syntax_highlight hl,
 /// \param hl indicates how the identifier should be highlighted
 /// \param ct is the data-type description object
 void EmitXml::tagType(const char *ptr,syntax_highlight hl,const Datatype *ct) {
-  *s << "<type " << highlight[(int4)hl];
+  *s << "<type" << highlight[(int4)hl];
   if (ct->getId() != 0) {
     *s << " id=\"0x" << hex << ct->getId() << '\"';
   }
@@ -232,7 +232,7 @@ void EmitXml::tagType(const char *ptr,syntax_highlight hl,const Datatype *ct) {
 /// \param ct is the data-type associated with the field
 /// \param o is the (byte) offset of the field within its structured data-type
 void EmitXml::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 o) {
-  *s << "<field " << highlight[(int4)hl];
+  *s << "<field" << highlight[(int4)hl];
   if (ct != (const Datatype *)0) {
     *s << " name=\"";
     xml_escape(*s,ct->getName().c_str());
@@ -258,7 +258,7 @@ void EmitXml::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,in
 /// \param off is the offset of the address where the comment is attached
 void EmitXml::tagComment(const char *ptr,syntax_highlight hl,
 			   const AddrSpace *spc,uintb off) {
-  *s << "<comment " << highlight[(int4)hl];
+  *s << "<comment" << highlight[(int4)hl];
   *s << " space=\"" << spc->getName();
   *s << "\" off=\"0x" << hex << off << "\">";
   xml_escape(*s,ptr);
@@ -275,7 +275,7 @@ void EmitXml::tagComment(const char *ptr,syntax_highlight hl,
 /// \param off is the offset of the code address being labeled
 void EmitXml::tagLabel(const char *ptr,syntax_highlight hl,
 			 const AddrSpace *spc,uintb off) {
-  *s << "<label " << highlight[(int4)hl];
+  *s << "<label" << highlight[(int4)hl];
   *s << " space=\"" << spc->getName();
   *s << "\" off=\"0x" << hex << off << "\">";
   xml_escape(*s,ptr);
@@ -291,9 +291,16 @@ void EmitXml::tagLabel(const char *ptr,syntax_highlight hl,
 void EmitXml::print(const char *str,syntax_highlight hl)
 
 {
-  *s << "<syntax " << highlight[(int4)hl] << '>';
-  xml_escape(*s,str);
-  *s << "</syntax>";
+  if ('\0' == *str && no_color == hl)
+    return;
+  *s << "<syntax" << highlight[(int4)hl];
+  if ('\0' == *str)
+    *s << "/>";
+  else {
+    *s << '>';
+    xml_escape(*s,str);
+    *s << "</syntax>";
+  }
 }
 
 /// This method emits the parenthesis character itself and also starts a printing unit
@@ -304,7 +311,7 @@ void EmitXml::print(const char *str,syntax_highlight hl)
 int4 EmitXml::openParen(char o,int4 id)
 
 {
-  *s << "<syntax " << highlight[(int4)no_color];
+  *s << "<syntax" << highlight[(int4)no_color];
   *s << " open=\"" << dec << id << "\">";
   *s << o;
   *s << "</syntax>";
@@ -319,7 +326,7 @@ int4 EmitXml::openParen(char o,int4 id)
 void EmitXml::closeParen(char c,int4 id)
 
 {
-  *s << "<syntax " << highlight[(int4)no_color];
+  *s << "<syntax" << highlight[(int4)no_color];
   *s << " close=\"" << dec << id << "\">";
   *s << c;
   *s << "</syntax>";
