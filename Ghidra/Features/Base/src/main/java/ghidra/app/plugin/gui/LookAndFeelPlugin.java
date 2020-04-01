@@ -139,7 +139,7 @@ public class LookAndFeelPlugin extends Plugin implements FrontEndOnly, OptionsCh
 
 		int choice = OptionDialog.showYesNoDialog(null, "Change Look and Feel?", "The '" +
 			USE_INVERTED_COLORS_NAME + "' setting works best with the " +
-			"'Metal' Look and Feel.\nWould  you like to switch to that Look and Feel upon restart?");
+			"'Metal' Look and Feel.\nWould you like to switch to that Look and Feel upon restart?");
 		if (choice == OptionDialog.YES_OPTION) {
 			SystemUtilities.runSwingLater(() -> {
 
