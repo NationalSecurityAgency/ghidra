@@ -27,6 +27,7 @@ import javax.swing.table.TableColumn;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
+import generic.jar.ResourceFile;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -182,8 +183,8 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 				JLabel c = (JLabel) super.getTableCellRendererComponent(data);
 
-				BundleStatus status = (BundleStatus) data.getValue();
-				if (!status.pathExists()) {
+				ResourceFile path = (ResourceFile) data.getValue();
+				if (!path.exists()) {
 					c.setForeground(Color.RED);
 				}
 				return c;

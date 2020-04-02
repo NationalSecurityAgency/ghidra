@@ -19,13 +19,29 @@ import generic.jar.ResourceFile;
 import generic.util.Path;
 
 /**
- * The BundleStatus class represents the runtime state and user preferences for OSGi bundles in Ghidra.  
+ * The BundleStatus class represents the runtime state and user preferences for OSGi bundles in Ghidra.
+ * 
+ * XXX: this class relies on generic.util.Path solely for the parsing and formatting of USER_HOME and GHIDRA_HOME
  */
-public class BundleStatus extends Path {
+public class BundleStatus implements Comparable<BundleStatus> {
+	final Path path;
 	final GhidraBundle.Type type;
 
 	boolean active = false;
 	boolean busy = false;
+
+	public boolean isEnabled() {
+		return path.isEnabled();
+	}
+
+	public void setEnabled(boolean isEnabled) {
+		path.setEnabled(isEnabled);
+	}
+
+	public boolean isReadOnly() {
+		return path.isReadOnly();
+	}
+
 	String summary;
 
 	public GhidraBundle.Type getType() {
@@ -33,12 +49,12 @@ public class BundleStatus extends Path {
 	}
 
 	BundleStatus(String path, boolean enabled, boolean readonly) {
-		super(path, enabled, false /*editable */, readonly);
+		this.path = new Path(path, enabled, false, readonly);
 		type = GhidraBundle.getType(getPath());
 	}
 
 	BundleStatus(ResourceFile path, boolean enabled, boolean readonly) {
-		super(path, enabled, false /* editable */, readonly);
+		this.path = new Path(path, enabled, false, readonly);
 		type = GhidraBundle.getType(getPath());
 	}
 
@@ -48,11 +64,6 @@ public class BundleStatus extends Path {
 
 	public boolean isActive() {
 		return active;
-	}
-
-	@Override
-	public boolean isEditable() {
-		return false;
 	}
 
 	public void setActive(boolean b) {
@@ -75,8 +86,21 @@ public class BundleStatus extends Path {
 		return summary;
 	}
 
+	public ResourceFile getPath() {
+		return path.getPath();
+	}
+
 	public boolean pathExists() {
-		return exists();
+		return path.exists();
+	}
+
+	@Override
+	public int compareTo(BundleStatus o) {
+		return path.compareTo(o != null ? o.path : null);
+	}
+
+	public String getPathAsString() {
+		return path.getPathAsString();
 	}
 
 }

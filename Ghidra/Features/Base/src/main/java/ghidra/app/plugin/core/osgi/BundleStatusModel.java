@@ -99,10 +99,10 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		}
 	};
 
-	Column pathColumn = new Column("Path", String.class) {
+	Column pathColumn = new Column("Path", ResourceFile.class) {
 		@Override
 		Object getValue(BundleStatus status) {
-			return status.getPath().toString();
+			return status.getPath();
 		}
 	};
 	Column summaryColumn = new Column("Summary", String.class) {
@@ -164,7 +164,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		// add user path
 		this.statuses.add(0,
 			new BundleStatus(GhidraScriptUtil.getUserScriptDirectory(), true, false));
-		
+
 		computeCache();
 
 		bundleHost.addListener(bundleListener = new OSGiListener() {

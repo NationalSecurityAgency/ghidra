@@ -77,7 +77,6 @@ public class BundleCompiler {
 		options.add(System.getProperty("java.class.path") + File.pathSeparator + bindir.toString());
 		options.add("-proc:none");
 
-		// final JavaFileManager rfm = new ResourceFileJavaFileManager(Collections.singletonList(bi.getSourceDir()));
 		final JavaFileManager rfm =
 			new ResourceFileJavaFileManager(Collections.singletonList(sb.getSourceDir()));
 
