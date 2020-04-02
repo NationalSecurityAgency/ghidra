@@ -89,26 +89,21 @@ public class GhidraSourceBundle implements GhidraBundle {
 		}
 	}
 
-	public ResourceFile getSourceDir() {
+	ResourceFile getSourceDir() {
 		return sourceDir;
 	}
 
-	public Path getBinDir() {
+	Path getBinDir() {
 		return binDir;
 	}
 
-	@Override
-	public Bundle install() throws GhidraBundleException {
-		return bundleHost.installFromLoc(getBundleLoc());
-	}
-
-	public void buildError(ResourceFile rf, String err) {
+	void buildError(ResourceFile rf, String err) {
 		BuildFailure f = buildErrors.computeIfAbsent(rf, x -> new BundleHost.BuildFailure());
 		f.when = rf.lastModified();
 		f.message.append(err);
 	}
 
-	public String getPreviousBuildErrors() {
+	private String getPreviousBuildErrors() {
 		return buildErrors.values().stream().map(e -> e.message.toString()).collect(
 			Collectors.joining());
 	}
@@ -144,7 +139,7 @@ public class GhidraSourceBundle implements GhidraBundle {
 		}
 	}
 
-	public List<BundleRequirement> getAllReqs() {
+	List<BundleRequirement> getAllReqs() {
 		Map<String, BundleRequirement> dedupedReqs = new HashMap<>();
 		buildReqs.values().stream().flatMap(List::stream).forEach(
 			r -> dedupedReqs.putIfAbsent(r.toString(), r));
@@ -161,7 +156,7 @@ public class GhidraSourceBundle implements GhidraBundle {
 	 * @throws IOException while accessing manifest file
 	 * @throws OSGiException while parsing imports
 	 */
-	public void updateFromFilesystem(PrintWriter writer) throws IOException, OSGiException {
+	void updateFromFilesystem(PrintWriter writer) throws IOException, OSGiException {
 		// look for new source files
 		newSources.clear();
 		oldBin.clear();
@@ -202,18 +197,18 @@ public class GhidraSourceBundle implements GhidraBundle {
 		}
 	}
 
-	public void deleteOldBinaries() throws IOException {
+	private void deleteOldBinaries() throws IOException {
 		for (Path bf : oldBin) {
 			Files.delete(bf);
 		}
 		// oldBin.clear();
 	}
 
-	public int getFailingSourcesCount() {
+	int getFailingSourcesCount() {
 		return buildErrors.size();
 	}
 
-	public int getNewSourcesCount() {
+	int getNewSourcesCount() {
 		return newSources.size();
 	}
 
@@ -221,27 +216,27 @@ public class GhidraSourceBundle implements GhidraBundle {
 		return newSources;
 	}
 
-	public boolean newManifestFile() {
+	boolean newManifestFile() {
 		return foundNewManifest;
 	}
 
 	long lastCompileAttempt;
 
-	public void compileAttempted() {
+	void compileAttempted() {
 		lastCompileAttempt = System.currentTimeMillis();
 	}
 
-	public long getLastCompileAttempt() {
+	long getLastCompileAttempt() {
 		return lastCompileAttempt;
 	}
 
 	String summary = "";
 
-	public void setSummary(String summary) {
+	void setSummary(String summary) {
 		this.summary = summary;
 	}
 
-	public void appendSummary(String s) {
+	void appendSummary(String s) {
 		if (!summary.isEmpty()) {
 			summary += ", " + s;
 		}
@@ -253,11 +248,6 @@ public class GhidraSourceBundle implements GhidraBundle {
 	@Override
 	public String getSummary() {
 		return summary;
-	}
-
-	@Override
-	public Bundle getBundle() throws GhidraBundleException {
-		return bundleHost.getBundle(getBundleLoc());
 	}
 
 	@Override
@@ -297,6 +287,11 @@ public class GhidraSourceBundle implements GhidraBundle {
 			needsCompile = true;
 		}
 
+		// finally, we should be able to handle empty directories
+		if (!binDir.toFile().exists()) {
+			needsCompile = true;
+		}
+
 		if (needsCompile) {
 			writer.printf("%d new files, %d skipped, %s\n", newSourcecount, failing,
 				newManifestFile() ? ", new manifest" : "");
@@ -321,4 +316,15 @@ public class GhidraSourceBundle implements GhidraBundle {
 		}
 		return false;
 	}
+
+	@Override
+	public Bundle install() throws GhidraBundleException {
+		return bundleHost.installFromLoc(getBundleLoc());
+	}
+
+	@Override
+	public Bundle getBundle() throws GhidraBundleException {
+		return bundleHost.getBundle(getBundleLoc());
+	}
+
 }

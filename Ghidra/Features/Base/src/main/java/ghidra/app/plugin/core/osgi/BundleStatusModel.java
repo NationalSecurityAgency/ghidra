@@ -199,7 +199,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 			}
 		});
 
-		fireTableDataChanged();
+		// fireTableDataChanged(); // this is done by the addNewPaths during restoreState 
 	}
 
 	@Override
@@ -226,21 +226,17 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		if (loc != null) {
 			loc2status.put(loc, path);
 		}
-
-		int index = statuses.size();
 		statuses.add(path);
-		fireTableRowsInserted(index, index);
 	}
 
+	/**
+	 *  add new status and fire a table udpate
+	 */
 	private BundleStatus addNewStatus(ResourceFile path, boolean enabled, boolean readonly) {
 		BundleStatus p = new BundleStatus(path, enabled, readonly);
+		int index = statuses.size();
 		addStatus(p);
-		return p;
-	}
-
-	private BundleStatus addNewStatus(String path, boolean enabled, boolean readonly) {
-		BundleStatus p = new BundleStatus(path, enabled, readonly);
-		addStatus(p);
+		fireTableRowsInserted(index, index);
 		return p;
 	}
 
@@ -391,7 +387,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 	 * @param path the path to insert
 	 */
 	public void insertPathForTesting(String path) {
-		addNewStatus(path, true, false);
+		addNewStatus(new ResourceFile(path), true, false);
 	}
 
 	private ArrayList<BundleStatusListener> listeners = new ArrayList<>();
@@ -455,14 +451,15 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 			BundleStatus currentStatus = getStatus(pathArr[i], currentPaths);
 			if (currentStatus != null) {
 				currentPaths.remove(currentStatus);
-				addNewStatus(pathArr[i], enableArr[i], readonlyArr[i]);
+				addStatus(new BundleStatus(pathArr[i], enableArr[i], readonlyArr[i]));
 			}
 			else if (!readonlyArr[i]) {
 				// skip read-only statuses which are not present in the current config
 				// This is needed to thin-out old default entries
-				addNewStatus(pathArr[i], enableArr[i], readonlyArr[i]);
+				addStatus(new BundleStatus(pathArr[i], enableArr[i], readonlyArr[i]));
 			}
 		}
+		fireTableDataChanged();
 		fireBundlesChanged();
 	}
 
