@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.script.osgi;
+package ghidra.app.plugin.core.osgi;
 
-import ghidra.util.exception.UsrException;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 
-public class OSGiException extends UsrException {
-	public OSGiException(String msg, Throwable cause) {
-		super(msg, cause);
+public abstract class GhidraBundleActivator implements BundleActivator {
+	protected abstract void start(BundleContext bc, Object api);
+
+	protected abstract void stop(BundleContext bc, Object api);
+
+	@Override
+	final public void start(BundleContext bc) throws Exception {
+		start(bc, null);
 	}
 
-	public OSGiException(String msg) {
-		super(msg);
+	@Override
+	final public void stop(BundleContext bc) throws Exception {
+		stop(bc, null);
 	}
+
 }

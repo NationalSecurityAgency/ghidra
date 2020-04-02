@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ghidra.app.script.osgi;
+package ghidra.app.plugin.core.osgi;
 
 import java.util.stream.Collectors;
 
@@ -51,9 +51,9 @@ public class GhidraBundleException extends OSGiException {
 			BundleException be = (BundleException) e;
 			switch (be.getType()) {
 				default:
-				case BundleException.UNSPECIFIED:
 					return "No exception type";
-
+				case BundleException.UNSPECIFIED:
+					return "UNSPECIFIED";
 				/**
 				 * The operation was unsupported. This type can be used anywhere a
 				 * BundleException can be thrown.

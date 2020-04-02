@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.script.osgi;
+package ghidra.app.plugin.core.osgi;
+import ghidra.util.exception.UsrException;
 
-public interface BundleStatusListener {
 
-	/**
-	 * Called when the list of bundle paths changes
-	 */
-	public void bundlesChanged();
+public class OSGiException extends UsrException {
+	public OSGiException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
 
-	public void bundleEnablementChanged(BundlePath path, boolean newValue);
-	public void bundleActivationChanged(BundlePath path, boolean newValue);
-	
+	public OSGiException(String msg) {
+		super(msg);
+	}
 }

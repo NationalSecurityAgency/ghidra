@@ -1,10 +1,10 @@
-package ghidra.app.script.osgi;
+package ghidra.app.plugin.core.osgi;
 
 import org.osgi.framework.Bundle;
 
 public interface OSGiListener {
 
-	void sourceBundleCompiled(SourceBundleInfo sbi);
+	void sourceBundleCompiled(GhidraSourceBundle sb);
 
 	void bundleActivationChange(Bundle b, boolean newActivation);
 }

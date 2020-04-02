@@ -1,5 +1,6 @@
 /* ###
  * IP: GHIDRA
+ * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package ghidra.app.plugin.core.osgi;
 
-package ghidra.app.script.osgi;
+public interface BundleStatusListener {
 
-import java.util.List;
-import java.util.Scanner;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+	/**
+	 * Called when the list of bundle paths changes
+	 */
+	default public void bundlesChanged() {
+		//
+	}
 
-public class OSGiUtils {
+	default public void bundleEnablementChanged(BundleStatus status, boolean newValue) {
+		//
+	}
 
-	public static List<String> extractPackages(String str) {
-		try (Scanner s = new Scanner(str)) {
-			return s.findAll(Pattern.compile("\\(osgi\\.wiring\\.package=([^)]*)\\)")).map(m -> {
-				return m.group(1);
-			}).collect(Collectors.toList());
-		}
+	default public void bundleActivationChanged(BundleStatus status, boolean newValue) {
+		//
 	}
 
 }

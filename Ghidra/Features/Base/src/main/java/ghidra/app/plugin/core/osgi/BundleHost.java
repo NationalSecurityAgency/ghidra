@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.script.osgi;
+package ghidra.app.plugin.core.osgi;
 
 import static java.util.stream.Collectors.*;
 
@@ -35,15 +35,13 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
-import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
-// XXX this class should be part of a service/plugin
 public class BundleHost {
-	// XXX embedded OSGi should be a service, but ScriptProviders don't have any way to access services
+	// XXX ScriptProviders don't have any way to access services or other way to access system wide resources
 	static private BundleHost _instance;
 
 	static public BundleHost getInstance() {
@@ -69,16 +67,28 @@ public class BundleHost {
 		}
 	}
 
-	// XXX this should be remembered in bundlehosts's savestate
-	HashMap<ResourceFile, SourceBundleInfo> file2sbi = new HashMap<>();
+	// XXX this should be remembered by bundlehosts's savestate
+	HashMap<ResourceFile, GhidraBundle> file2sbi = new HashMap<>();
 
-	public SourceBundleInfo getSourceBundleInfo(ResourceFile sourceDir) {
-		return file2sbi.computeIfAbsent(sourceDir, sd -> new SourceBundleInfo(this, sd));
+	public GhidraBundle getGhidraBundle(ResourceFile path) {
+		return file2sbi.computeIfAbsent(path, this::createGhidraBundle);
+	}
+
+	public GhidraBundle createGhidraBundle(ResourceFile path) {
+		switch (GhidraBundle.getType(path)) {
+			case SourceDir:
+				return new GhidraSourceBundle(this, path);
+			case BndScript:
+			case Jar:
+			default:
+				break;
+		}
+		return null;
 	}
 
 	// XXX consumers must clean up after themselves
-	public void removeSourceBundleInfo(ResourceFile sourceDir) {
-		file2sbi.remove(sourceDir);
+	public void removeSourceBundleInfo(ResourceFile path) {
+		file2sbi.remove(path);
 	}
 
 	/**
@@ -86,21 +96,16 @@ public class BundleHost {
 	 * 
 	 * @param imports Import-Package value
 	 * @return deduced requirements or null if there was an error
-	 * @throws OSGiException on parse failure 
+	 * @throws BundleException on parse failure
 	 */
-	static List<BundleRequirement> parseImports(String imports) throws OSGiException {
+	static List<BundleRequirement> parseImports(String imports) throws BundleException {
 
 		// parse it with Felix's ManifestParser to a list of BundleRequirement objects
 		Map<String, Object> headerMap = new HashMap<>();
 		headerMap.put(Constants.IMPORT_PACKAGE, imports);
 		ManifestParser mp;
-		try {
-			mp = new ManifestParser(null, null, null, headerMap);
-			return mp.getRequirements();
-		}
-		catch (org.osgi.framework.BundleException e) {
-			throw new OSGiException("parsing Import-Package: " + imports, e);
-		}
+		mp = new ManifestParser(null, null, null, headerMap);
+		return mp.getRequirements();
 	}
 
 	/**
@@ -415,6 +420,14 @@ public class BundleHost {
 		}
 	}
 
+	public void deactivateSynchronously(String bundleLoc)
+			throws GhidraBundleException, InterruptedException {
+		Bundle b = getBundle(bundleLoc);
+		if (b != null) {
+			deactivateSynchronously(b);
+		}
+	}
+
 	void forceStopFelix() {
 		Task t = new Task("killing felix", false, false, true, true) {
 			@Override
@@ -568,76 +581,9 @@ public class BundleHost {
 		}
 	}
 
-	/**
-	 * compile a source bundle if it's out of sync
-	 * 
-	 * @param sbi the bundle info
-	 * @param writer where to write issues
-	 * @throws OSGiException if bundle operations fail
-	 * @throws IOException if there are issues with the contents of the bundle
-	 * @return the activated bundle
-	 * @throws InterruptedException if interrupted while waiting for bundle state change
-	 */
-	public boolean compileSourceBundle(SourceBundleInfo sbi, PrintWriter writer)
-			throws OSGiException, IOException, InterruptedException {
-		if (writer == null) {
-			writer = new NullPrintWriter();
-		}
-
-		boolean needsCompile = false;
-
-		sbi.updateFromFilesystem(writer);
-
-		int failing = sbi.getFailingSourcesCount();
-		int newSourcecount = sbi.getNewSourcesCount();
-
-		long lastBundleActivation = 0; // XXX record last bundle activation in bundlestatusmodel
-		if (failing > 0 && (lastBundleActivation > sbi.getLastCompileAttempt())) {
-			needsCompile = true;
-		}
-
-		if (newSourcecount == 0) {
-			if (failing > 0) {
-				writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
-					sbi.getSourceDir().toString(), failing, failing > 1 ? "s" : "");
-				writer.printf("%s\n", sbi.getPreviousBuildErrors());
-			}
-			if (sbi.newManifestFile()) {
-				needsCompile = true;
-			}
-		}
-		else {
-			needsCompile = true;
-		}
-
-		if (needsCompile) {
-			writer.printf("%d new files, %d skipped, %s\n", newSourcecount, failing,
-				sbi.newManifestFile() ? ", new manifest" : "");
-
-			// if there a bundle is currently active, uninstall it
-			Bundle b = sbi.getBundle();
-			if (b != null) {
-				deactivateSynchronously(b);
-			}
-
-			// once we've committed to recompile and regenerate generated classes, delete the old stuff
-			sbi.deleteOldBinaries();
-
-			BundleCompiler bundleCompiler = new BundleCompiler(this);
-
-			long startTime = System.nanoTime();
-			bundleCompiler.compileToExplodedBundle(sbi, writer);
-			long endTime = System.nanoTime();
-			writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
-			fireSourceBundleCompiled(sbi);
-			return true;
-		}
-		return false;
-	}
-
 	List<OSGiListener> osgiListeners = new ArrayList<>();
 
-	void fireSourceBundleCompiled(SourceBundleInfo sbi) {
+	void fireSourceBundleCompiled(GhidraSourceBundle sbi) {
 		synchronized (osgiListeners) {
 			for (OSGiListener l : osgiListeners) {
 				l.sourceBundleCompiled(sbi);

@@ -26,9 +26,9 @@ import org.junit.Test;
 import docking.widgets.table.SelectionManager;
 import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
+import ghidra.app.plugin.core.osgi.GhidraSourceBundle;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.JavaScriptProvider;
-import ghidra.app.script.osgi.SourceBundleInfo;
 import ghidra.test.ScriptTaskListener;
 import ghidra.util.TaskUtilities;
 import utilities.util.FileUtilities;
@@ -149,7 +149,7 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 
 		// remove all class files from the user script bin dir
 		File userScriptsBinDir =
-			SourceBundleInfo.getBindirFromScriptFile(new ResourceFile(newScriptFile)).toFile();
+			GhidraSourceBundle.getBindirFromScriptFile(new ResourceFile(newScriptFile)).toFile();
 		File[] userScriptBinDirFiles;
 		if (userScriptsBinDir.exists()) {
 			userScriptBinDirFiles = userScriptsBinDir.listFiles(classFileFilter);
@@ -195,7 +195,7 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 
 		// verify that the generated class file is placed in the default scripting home/bin
 		File userScriptsBinDir =
-			SourceBundleInfo.getBindirFromScriptFile(systemScriptFile).toFile();
+			GhidraSourceBundle.getBindirFromScriptFile(systemScriptFile).toFile();
 		String className = scriptName.replace(".java", ".class");
 		File expectedClassFile = new File(userScriptsBinDir, className);
 
@@ -232,7 +232,7 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 
 		// verify a bin dir was created and that the class file is in it
 		File binDir =
-			SourceBundleInfo.getBindirFromScriptFile(new ResourceFile(newScriptFile)).toFile();
+			GhidraSourceBundle.getBindirFromScriptFile(new ResourceFile(newScriptFile)).toFile();
 		assertTrue("bin output dir not created", binDir.exists());
 
 		File scriptClassFile = new File(binDir, rawScriptName + ".class");

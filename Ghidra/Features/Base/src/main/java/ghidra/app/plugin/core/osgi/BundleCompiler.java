@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.script.osgi;
+package ghidra.app.plugin.core.osgi;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -38,33 +38,33 @@ import generic.jar.ResourceFile;
 import ghidra.app.script.*;
 
 public class BundleCompiler {
-
-	public static final String GENERATED_ACTIVATOR_CLASSNAME = "GeneratedActivator";
 	private BundleHost bh;
 
-	public BundleCompiler(BundleHost bh) {
+	static final String GENERATED_ACTIVATOR_CLASSNAME = "GeneratedActivator";
+
+	BundleCompiler(BundleHost bh) {
 		this.bh = bh;
 	}
 
-	JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+	private JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
 	/**
 	 *  compile a source directory to an exploded bundle
 	 *  
-	 * @param sbi the bundle info to build
+	 * @param sb the bundle info to build
 	 * @param writer for updating the user during compilation
 	 * @throws IOException for source/manifest file reading/generation and binary deletion/creation
 	 * @throws OSGiException if generation of bundle metadata fails
 	 */
-	public void compileToExplodedBundle(SourceBundleInfo sbi, PrintWriter writer)
+	void compileToExplodedBundle(GhidraSourceBundle sb, PrintWriter writer)
 			throws IOException, OSGiException {
 
-		sbi.compileAttempted();
-		sbi.setSummary(String.format("build %d files, skipping %d%s", sbi.getNewSourcesCount(),
-			sbi.getFailingSourcesCount(), sbi.newManifestFile() ? ", new manifest" : ""));
+		sb.compileAttempted();
+		sb.setSummary(String.format("build %d files, skipping %d%s", sb.getNewSourcesCount(),
+			sb.getFailingSourcesCount(), sb.newManifestFile() ? ", new manifest" : ""));
 
-		ResourceFile srcdir = sbi.getSourceDir();
-		Path bindir = sbi.getBinDir();
+		ResourceFile srcdir = sb.getSourceDir();
+		Path bindir = sb.getBinDir();
 		Files.createDirectories(bindir);
 
 		List<String> options = new ArrayList<>();
@@ -79,7 +79,7 @@ public class BundleCompiler {
 
 		// final JavaFileManager rfm = new ResourceFileJavaFileManager(Collections.singletonList(bi.getSourceDir()));
 		final JavaFileManager rfm =
-			new ResourceFileJavaFileManager(Collections.singletonList(sbi.getSourceDir()));
+			new ResourceFileJavaFileManager(Collections.singletonList(sb.getSourceDir()));
 
 		BundleJavaManager bjm = new BundleJavaManager(bh.getHostFramework(), rfm, options);
 		// The phidias BundleJavaManager is for compiling from within a bundle -- it makes the
@@ -88,7 +88,7 @@ public class BundleCompiler {
 
 		// XXX skip this if there's a source manifest, emit warnings about @imports
 		// get wires for currently active bundles to satisfy all requirements
-		List<BundleRequirement> reqs = sbi.getAllReqs();
+		List<BundleRequirement> reqs = sb.getAllReqs();
 		List<BundleWiring> bundleWirings = bh.resolve(reqs);
 
 		if (!reqs.isEmpty()) {
@@ -98,19 +98,19 @@ public class BundleCompiler {
 				writer.printf("  %s\n", req.toString());
 			}
 
-			sbi.setSummary(
+			sb.setSummary(
 				String.format("%d missing @import%s:", reqs.size(), reqs.size() > 1 ? "s" : "",
 					reqs.stream().flatMap(
 						r -> OSGiUtils.extractPackages(r.toString()).stream()).distinct().collect(
 							Collectors.joining(","))));
 		}
 		else {
-			sbi.setSummary("");
+			sb.setSummary("");
 		}
 		// XXX add sources that will fail to call attention
-		List<ResourceFile> newSource = sbi.getNewSources();
+		List<ResourceFile> newSource = sb.getNewSources();
 		for (BundleRequirement req : reqs) {
-			newSource.addAll(sbi.req2file.get(req.toString()));
+			newSource.addAll(sb.req2file.get(req.toString()));
 		}
 
 		// send the capabilities to phidias
@@ -142,7 +142,7 @@ public class BundleCompiler {
 				writer.write(err);
 				ResourceFileJavaFileObject sf = (ResourceFileJavaFileObject) d.getSource();
 				ResourceFile rf = sf.getFile();
-				sbi.buildError(rf, err); // remember all errors for this file
+				sb.buildError(rf, err); // remember all errors for this file
 				if (sourceFiles.remove(sf)) {
 					writer.printf("skipping %s\n", sf.toString());
 					// if it's a script, mark it for having compile errors
@@ -162,9 +162,8 @@ public class BundleCompiler {
 			}
 		}
 		// buildErrors is now up to date, set status
-		if (sbi.getFailingSourcesCount() > 0) {
-			sbi.appendSummary(
-				String.format("%d failing source files", sbi.getFailingSourcesCount()));
+		if (sb.getFailingSourcesCount() > 0) {
+			sb.appendSummary(String.format("%d failing source files", sb.getFailingSourcesCount()));
 		}
 
 		ResourceFile smf = new ResourceFile(srcdir, "META-INF" + File.separator + "MANIFEST.MF");
@@ -203,7 +202,7 @@ public class BundleCompiler {
 				manifest = analyzer.calcManifest();
 			}
 			catch (Exception e) {
-				sbi.appendSummary("bad manifest");
+				sb.appendSummary("bad manifest");
 				throw new OSGiException("failed to calculate manifest by analyzing code", e);
 			}
 			Attributes ma = manifest.getMainAttributes();
@@ -219,22 +218,24 @@ public class BundleCompiler {
 				}
 			}
 			catch (Exception e) {
-				sbi.appendSummary("failed bnd analysis");
+				sb.appendSummary("failed bnd analysis");
 				throw new OSGiException("failed to query classes while searching for activator", e);
 			}
 			if (activator_classname == null) {
 				activator_classname = GENERATED_ACTIVATOR_CLASSNAME;
 				if (!buildDefaultActivator(bindir, activator_classname, writer)) {
-					sbi.appendSummary("failed to build generated activator");
+					sb.appendSummary("failed to build generated activator");
 					return;
 				}
 				// since we add the activator after bndtools built the imports, we should add its imports too
 				String imps = ma.getValue(Constants.IMPORT_PACKAGE);
 				if (imps == null) {
-					ma.putValue(Constants.IMPORT_PACKAGE, "ghidra.app.script.osgi");
+					ma.putValue(Constants.IMPORT_PACKAGE,
+						GhidraBundleActivator.class.getPackageName());
 				}
 				else {
-					ma.putValue(Constants.IMPORT_PACKAGE, imps + ",ghidra.app.script.osgi");
+					ma.putValue(Constants.IMPORT_PACKAGE,
+						imps + "," + GhidraBundleActivator.class.getPackageName());
 				}
 			}
 			ma.putValue(Constants.BUNDLE_ACTIVATOR, activator_classname);
@@ -265,7 +266,7 @@ public class BundleCompiler {
 
 		try (PrintWriter out =
 			new PrintWriter(Files.newBufferedWriter(activator_dest, Charset.forName("UTF-8")))) {
-			out.println("import ghidra.app.script.osgi.GhidraBundleActivator;");
+			out.println("import " + GhidraBundleActivator.class.getName() + ";");
 			out.println("import org.osgi.framework.BundleActivator;");
 			out.println("import org.osgi.framework.BundleContext;");
 			out.println("public class " + GENERATED_ACTIVATOR_CLASSNAME +

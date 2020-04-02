@@ -16,21 +16,20 @@
 package ghidra.app.script;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 
 import org.osgi.framework.Bundle;
 
 import generic.jar.ResourceFile;
-import ghidra.app.script.osgi.*;
+import ghidra.app.plugin.core.osgi.*;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
-	static public SourceBundleInfo getBundleInfoForSource(ResourceFile sourceFile) {
+	static public GhidraSourceBundle getBundleForSource(ResourceFile sourceFile) {
 		ResourceFile sourceDir = getSourceDirectoryContaining(sourceFile);
 		if (sourceDir == null) {
 			return null;
 		}
-		return BundleHost.getInstance().getSourceBundleInfo(sourceDir);
+		return (GhidraSourceBundle) BundleHost.getInstance().getGhidraBundle(sourceDir);
 	}
 
 	@Override
@@ -45,16 +44,16 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 	@Override
 	public boolean deleteScript(ResourceFile sourceFile) {
-		Bundle b = getBundleInfoForSource(sourceFile).getBundle();
-		if (b != null) {
-			try {
+		try {
+			Bundle b = getBundleForSource(sourceFile).getBundle();
+			if (b != null) {
 				BundleHost.getInstance().deactivateSynchronously(b);
 			}
-			catch (GhidraBundleException | InterruptedException e) {
-				e.printStackTrace();
-				Msg.error(this, "while stopping script's bundle to delete it", e);
-				return false;
-			}
+		}
+		catch (GhidraBundleException | InterruptedException e) {
+			e.printStackTrace();
+			Msg.error(this, "while deactivating bundle for delete", e);
+			return false;
 		}
 		return super.deleteScript(sourceFile);
 	}
@@ -62,7 +61,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	@Override
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-
 		try {
 			Class<?> clazz = loadClass(sourceFile, writer);
 			Object object;
@@ -80,25 +78,21 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			return null; // class is not GhidraScript
 
 		}
-		catch (OSGiException | IOException | InterruptedException | IllegalArgumentException
-				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+			throw e;
+		}
+		catch (Exception e) {
 			throw new ClassNotFoundException("", e);
 		}
 	}
 
-	static public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer)
-			throws IOException, OSGiException, ClassNotFoundException, InterruptedException {
+	static public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
 
 		BundleHost bundleHost = BundleHost.getInstance();
 
-		SourceBundleInfo bi = getBundleInfoForSource(sourceFile);
-		bundleHost.compileSourceBundle(bi, writer);
-
-		// as much source as possible built, install bundle and start it if necessary
-		Bundle b = bi.getBundle();
-		if (b == null) {
-			b = bi.install();
-		}
+		GhidraSourceBundle bi = getBundleForSource(sourceFile);
+		bi.build(writer);
+		Bundle b = bi.install();
 		bundleHost.activateSynchronously(b);
 
 		String classname = bi.classNameForScript(sourceFile);

@@ -13,67 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.script.osgi;
-
-import java.io.File;
+package ghidra.app.plugin.core.osgi;
 
 import generic.jar.ResourceFile;
 import generic.util.Path;
 
 /**
- * The BundlePath class represents the runtime state and user preferences for OSGi bundles in Ghidra.  
+ * The BundleStatus class represents the runtime state and user preferences for OSGi bundles in Ghidra.  
  */
-public class BundlePath extends Path {
-	final Type type;
+public class BundleStatus extends Path {
+	final GhidraBundle.Type type;
 
 	boolean active = false;
 	boolean busy = false;
 	String summary;
 
-	public static enum Type {
-		BndScript, Jar, SourceDir, INVALID
-	}
-
-	static public Type getType(File f) {
-		if (f.isDirectory()) {
-			return Type.SourceDir;
-		}
-		String n = f.getName().toLowerCase();
-		if (n.endsWith(".bnd")) {
-			return Type.BndScript;
-		}
-		if (n.endsWith(".jar")) {
-			return Type.Jar;
-		}
-		return Type.INVALID;
-	}
-
-	static public Type getType(ResourceFile rf) {
-		if (rf.isDirectory()) {
-			return Type.SourceDir;
-		}
-		String n = rf.getName().toLowerCase();
-		if (n.endsWith(".bnd")) {
-			return Type.BndScript;
-		}
-		if (n.endsWith(".jar")) {
-			return Type.Jar;
-		}
-		return Type.INVALID;
-	}
-
-	public Type getType() {
+	public GhidraBundle.Type getType() {
 		return type;
 	}
 
-	BundlePath(String path, boolean enabled, boolean readonly) {
+	BundleStatus(String path, boolean enabled, boolean readonly) {
 		super(path, enabled, false /*editable */, readonly);
-		type = getType(getPath());
+		type = GhidraBundle.getType(getPath());
 	}
 
-	BundlePath(ResourceFile path, boolean enabled, boolean readonly) {
+	BundleStatus(ResourceFile path, boolean enabled, boolean readonly) {
 		super(path, enabled, false /* editable */, readonly);
-		type = getType(getPath());
+		type = GhidraBundle.getType(getPath());
 	}
 
 	public boolean isDirectory() {
@@ -107,6 +73,10 @@ public class BundlePath extends Path {
 
 	public String getSummary() {
 		return summary;
+	}
+
+	public boolean pathExists() {
+		return exists();
 	}
 
 }

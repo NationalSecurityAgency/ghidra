@@ -30,7 +30,7 @@ import docking.action.DockingActionIf;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.list.ListPanel;
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.script.osgi.BundleStatusProvider;
+import ghidra.app.plugin.core.osgi.BundleStatusProvider;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.JavaScriptProvider;
 import ghidra.util.StringUtilities;

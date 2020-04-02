@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.script.osgi;
+package ghidra.app.plugin.core.osgi;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -22,20 +22,23 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleException;
 import org.osgi.framework.wiring.BundleRequirement;
 
+import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.osgi.BundleHost.BuildFailure;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.ScriptInfo;
-import ghidra.app.script.osgi.BundleHost.BuildFailure;
 
 /**
  * The SourceBundleInfo class is a cache of information for bundles built from source directories.
  */
-public class SourceBundleInfo {
-	private final BundleHost bundleHost;
+public class GhidraSourceBundle implements GhidraBundle {
+	final private BundleHost bundleHost;
 	final private ResourceFile sourceDir;
-	final String symbolicName;
+
+	final private String symbolicName;
 	final private Path binDir;
 	final private String bundleLoc;
 	boolean foundNewManifest;
@@ -51,9 +54,9 @@ public class SourceBundleInfo {
 
 	// cached values parsed form @imports tags on default-package source files
 
-	public SourceBundleInfo(BundleHost bundleHost, ResourceFile sourceDir) {
+	public GhidraSourceBundle(BundleHost bundleHost, ResourceFile sourceDirectory) {
 		this.bundleHost = bundleHost;
-		this.sourceDir = sourceDir;
+		this.sourceDir = sourceDirectory;
 		this.symbolicName = BundleHost.getSymbolicNameFromSourceDir(sourceDir);
 		this.binDir = GhidraScriptUtil.getCompiledBundlesDir().resolve(symbolicName);
 
@@ -61,6 +64,12 @@ public class SourceBundleInfo {
 
 	}
 
+	/**
+	 * for testing only!!!
+	 * 
+	 * @param sourceFile a ghidra script file
+	 * @return the directory its class is compiled to
+	 */
 	static public Path getBindirFromScriptFile(ResourceFile sourceFile) {
 		ResourceFile tmpSourceDir = sourceFile.getParentFile();
 		String tmpSymbolicName = BundleHost.getSymbolicNameFromSourceDir(tmpSourceDir);
@@ -88,6 +97,7 @@ public class SourceBundleInfo {
 		return binDir;
 	}
 
+	@Override
 	public Bundle install() throws GhidraBundleException {
 		return bundleHost.installFromLoc(getBundleLoc());
 	}
@@ -105,10 +115,9 @@ public class SourceBundleInfo {
 
 	/**
 	 * update buildReqs based on \@imports tag in java files from the default package
-	 * 
-	 * @throws OSGiException on failure to parse the \@imports tag
+	 * @throws GhidraBundleException on failure to parse the \@imports tag
 	 */
-	private void computeRequirements() throws OSGiException {
+	private void computeRequirements() throws GhidraBundleException {
 		// parse metadata from all Java source in sourceDir
 		buildReqs.clear();
 		req2file.clear();
@@ -119,7 +128,13 @@ public class SourceBundleInfo {
 				ScriptInfo si = GhidraScriptUtil.getScriptInfo(rf);
 				String imps = si.getImports();
 				if (imps != null && !imps.isEmpty()) {
-					List<BundleRequirement> reqs = BundleHost.parseImports(imps);
+					List<BundleRequirement> reqs;
+					try {
+						reqs = BundleHost.parseImports(imps);
+					}
+					catch (BundleException e) {
+						throw new GhidraBundleException(getBundleLoc(), "parsing manifest", e);
+					}
 					buildReqs.put(rf, reqs);
 					for (BundleRequirement req : reqs) {
 						req2file.computeIfAbsent(req.toString(), x -> new ArrayList<>()).add(rf);
@@ -235,16 +250,75 @@ public class SourceBundleInfo {
 		}
 	}
 
+	@Override
 	public String getSummary() {
 		return summary;
 	}
 
-	public Bundle getBundle() {
+	@Override
+	public Bundle getBundle() throws GhidraBundleException {
 		return bundleHost.getBundle(getBundleLoc());
 	}
 
+	@Override
 	public String getBundleLoc() {
 		return bundleLoc;
 	}
 
+	@Override
+	public boolean build(PrintWriter writer) throws Exception {
+		if (writer == null) {
+			writer = new NullPrintWriter();
+		}
+
+		boolean needsCompile = false;
+
+		updateFromFilesystem(writer);
+
+		int failing = getFailingSourcesCount();
+		int newSourcecount = getNewSourcesCount();
+
+		long lastBundleActivation = 0; // XXX record last bundle activation in bundlestatusmodel
+		if (failing > 0 && (lastBundleActivation > getLastCompileAttempt())) {
+			needsCompile = true;
+		}
+
+		if (newSourcecount == 0) {
+			if (failing > 0) {
+				writer.printf("%s hasn't changed, with %d file%s failing in previous build(s):\n",
+					getSourceDir().toString(), failing, failing > 1 ? "s" : "");
+				writer.printf("%s\n", getPreviousBuildErrors());
+			}
+			if (newManifestFile()) {
+				needsCompile = true;
+			}
+		}
+		else {
+			needsCompile = true;
+		}
+
+		if (needsCompile) {
+			writer.printf("%d new files, %d skipped, %s\n", newSourcecount, failing,
+				newManifestFile() ? ", new manifest" : "");
+
+			// if there a bundle is currently active, uninstall it
+			Bundle b = getBundle();
+			if (b != null) {
+				bundleHost.deactivateSynchronously(b);
+			}
+
+			// once we've committed to recompile and regenerate generated classes, delete the old stuff
+			deleteOldBinaries();
+
+			BundleCompiler bundleCompiler = new BundleCompiler(bundleHost);
+
+			long startTime = System.nanoTime();
+			bundleCompiler.compileToExplodedBundle(this, writer);
+			long endTime = System.nanoTime();
+			writer.printf("%3.2f seconds compile time.\n", (endTime - startTime) / 1e9);
+			bundleHost.fireSourceBundleCompiled(this);
+			return true;
+		}
+		return false;
+	}
 }

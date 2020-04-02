@@ -48,7 +48,7 @@ import generic.jar.ResourceFile;
 import generic.test.TestUtils;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
-import ghidra.app.plugin.core.script.osgi.BundleStatusProvider;
+import ghidra.app.plugin.core.osgi.BundleStatusProvider;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.Application;
@@ -979,7 +979,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		// destroy any NewScriptxxx files...and Temp ones too
 		BundleStatusProvider bundleStatusProvider =
 			(BundleStatusProvider) TestUtils.getInstanceField("bundleStatusProvider", provider);
-		List<ResourceFile> paths = bundleStatusProvider.getModel().getPaths();
+		List<ResourceFile> paths = bundleStatusProvider.getModel().getEnabledPaths();
 		for (ResourceFile path : paths) {
 			File file = path.getFile(false);
 			File[] listFiles = file.listFiles();

@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.script.osgi;
 
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
+package ghidra.app.plugin.core.osgi;
 
-public abstract class GhidraBundleActivator implements BundleActivator {
-	protected abstract void start(BundleContext bc, Object api);
+import java.util.List;
+import java.util.Scanner;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-	protected abstract void stop(BundleContext bc, Object api);
+public class OSGiUtils {
 
-	@Override
-	final public void start(BundleContext bc) throws Exception {
-		start(bc, null);
-	}
-
-	@Override
-	final public void stop(BundleContext bc) throws Exception {
-		stop(bc, null);
+	public static List<String> extractPackages(String str) {
+		try (Scanner s = new Scanner(str)) {
+			return s.findAll(Pattern.compile("\\(osgi\\.wiring\\.package=([^)]*)\\)")).map(m -> {
+				return m.group(1);
+			}).collect(Collectors.toList());
+		}
 	}
 
 }

@@ -169,7 +169,7 @@ public class GhidraScriptUtil {
 	 * @deprecated accessing class file directly precludes OSGi wiring according to requirements and capabilities 
 	 */
 	@Deprecated
-	public static List<ResourceFile> getExplodedBundlePaths() {
+	public static List<ResourceFile> getExplodedCompiledSourceBundlePaths() {
 		try {
 			return Files.list(getOsgiDir()).filter(Files::isDirectory).map(
 				x -> new ResourceFile(x.toFile())).collect(Collectors.toList());

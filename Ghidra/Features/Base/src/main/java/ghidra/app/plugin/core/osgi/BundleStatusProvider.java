@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.script.osgi;
+package ghidra.app.plugin.core.osgi;
 
 import java.awt.*;
 import java.io.File;
@@ -27,12 +27,15 @@ import javax.swing.table.TableColumn;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
-import ghidra.app.script.osgi.BundleHost;
+import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
+import ghidra.util.task.*;
 import resources.ResourceManager;
 
 /**
@@ -49,14 +52,29 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	private Color selectionColor;
 	private GhidraFileChooser fileChooser;
 	private GhidraFileFilter filter;
+	private final BundleHost bundleHost;
 
 	public void notifyTableChanged() {
 		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusModel));
 	}
 
-	public BundleStatusProvider(PluginTool tool, String owner, BundleHost bundleHost) {
+	public BundleStatusProvider(PluginTool tool, String owner) {
 		super(tool, "Bundle Status Manager", owner);
+		this.bundleHost = BundleHost.getInstance();
 		this.bundleStatusModel = new BundleStatusModel(this, bundleHost);
+		bundleStatusModel.addListener(new BundleStatusListener() {
+			@Override
+			public void bundleEnablementChanged(BundleStatus status, boolean enabled) {
+				if (!enabled && status.isActive()) {
+					startActivateDeactiveTask(status, false);
+				}
+			}
+
+			@Override
+			public void bundleActivationChanged(BundleStatus status, boolean newValue) {
+				startActivateDeactiveTask(status, newValue);
+			}
+		});
 
 		this.filter = new GhidraFileFilter() {
 			@Override
@@ -66,7 +84,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 			@Override
 			public boolean accept(File path, GhidraFileChooserModel model) {
-				return BundlePath.getType(path) != BundlePath.Type.INVALID;
+				return GhidraBundle.getType(path) != GhidraBundle.Type.INVALID;
 			}
 		};
 		this.fileChooser = null;
@@ -108,7 +126,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		buttonPanel.add(removeButton, gbc);
 
 		bundleStatusTable = new GTable(bundleStatusModel);
-		bundleStatusTable.setName("BUNDLEPATH_TABLE");
+		bundleStatusTable.setName("BUNDLESTATUS_TABLE");
 		bundleStatusTable.setSelectionBackground(selectionColor);
 		bundleStatusTable.setSelectionForeground(Color.BLACK);
 		bundleStatusTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -133,9 +151,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		column.setCellRenderer(new GBooleanCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-				BundlePath path = (BundlePath) data.getRowObject();
+				BundleStatus status = (BundleStatus) data.getRowObject();
 				Component x = super.getTableCellRendererComponent(data);
-				if (path.getBusy()) {
+				if (status.getBusy()) {
 					cb.setVisible(false);
 					cb.setEnabled(false);
 					setHorizontalAlignment(SwingConstants.CENTER);
@@ -156,7 +174,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		column.setMaxWidth(10 +
-			SwingUtilities.computeStringWidth(fontmetrics, BundlePath.Type.SourceDir.toString()));
+			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SourceDir.toString()));
 
 		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.pathColumn.index);
 		column.setCellRenderer(new GTableCellRenderer() {
@@ -164,15 +182,15 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 				JLabel c = (JLabel) super.getTableCellRendererComponent(data);
 
-				BundlePath path = (BundlePath) data.getValue();
-				if (!path.exists()) {
+				BundleStatus status = (BundleStatus) data.getValue();
+				if (!status.pathExists()) {
 					c.setForeground(Color.RED);
 				}
 				return c;
 			}
 		});
 
-		GTableFilterPanel<BundlePath> filterPanel =
+		GTableFilterPanel<BundleStatus> filterPanel =
 			new GTableFilterPanel<>(bundleStatusTable, bundleStatusModel);
 
 		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
@@ -272,6 +290,39 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		bundleStatusTable.dispose();
 	}
 
+	private void startActivateDeactiveTask(BundleStatus status, boolean activate) {
+		status.setBusy(true);
+		notifyTableChanged();
+		ConsoleService console = getTool().getService(ConsoleService.class);
+
+		new TaskLauncher(new Task((activate ? "Activating" : "Deactivating ") + " bundle...") {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				try {
+					GhidraBundle sb = bundleHost.getGhidraBundle(status.getPath());
+					if (activate) {
+						sb.build(console.getStdErr());
+						bundleHost.activateSynchronously(sb.getBundleLoc());
+					}
+					else { // deactivate
+						bundleHost.deactivateSynchronously(sb.getBundleLoc());
+					}
+				}
+				catch (Exception e) {
+					e.printStackTrace(console.getStdErr());
+					status.setActive(!activate);
+
+					Msg.showError(this, getComponent(), "bundle activation failed", e.getMessage());
+				}
+				finally {
+					status.setBusy(false);
+					notifyTableChanged();
+				}
+			}
+		}, null, 1000);
+	}
+
+	// XXX workaround for RowObjectSelection.. repair
 	void selectRow(int rowIndex) {
 		bundleStatusTable.selectRow(rowIndex);
 	}

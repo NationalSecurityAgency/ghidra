@@ -29,7 +29,6 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import org.apache.commons.lang3.StringUtils;
-import org.osgi.framework.Bundle;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
@@ -40,10 +39,8 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.script.osgi.*;
+import ghidra.app.plugin.core.osgi.*;
 import ghidra.app.script.*;
-import ghidra.app.script.osgi.BundleHost;
-import ghidra.app.script.osgi.SourceBundleInfo;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -99,10 +96,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	};
 
-	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin, BundleHost bundleHost) {
+	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin) {
 		super(plugin.getTool(), "Script Manager", plugin.getName());
 		this.plugin = plugin;
-		this.bundleHost = bundleHost;
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		setIcon(ResourceManager.loadImage("images/play.png"));
@@ -116,7 +112,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void dispose() {
-
 		editorMap.clear();
 		scriptCategoryTree.dispose();
 		scriptTable.dispose();
@@ -138,7 +133,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void performRefresh() {
-		GhidraScriptUtil.setScriptBundlePaths(bundleStatusProvider.getModel().getPaths());
+		GhidraScriptUtil.setScriptBundlePaths(bundleStatusProvider.getModel().getEnabledPaths());
 		GhidraScriptUtil.clearMetadata();
 		refresh();
 	}
@@ -341,7 +336,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public List<ResourceFile> getScriptDirectories() {
-		return bundleStatusProvider.getModel().getPaths().stream().filter(
+		return bundleStatusProvider.getModel().getEnabledPaths().stream().filter(
 			ResourceFile::isDirectory).collect(Collectors.toList());
 	}
 
@@ -397,7 +392,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(String scriptName, TaskListener listener) {
-		List<ResourceFile> dirPaths = bundleStatusProvider.getModel().getPaths();
+		List<ResourceFile> dirPaths = bundleStatusProvider.getModel().getEnabledPaths();
 		for (ResourceFile dir : dirPaths) {
 			ResourceFile scriptSource = new ResourceFile(dir, scriptName);
 			if (scriptSource.exists()) {
@@ -457,7 +452,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			console.addErrorMessage("", "Unable to instantiate script: " + scriptName);
 		}
 		catch (ClassNotFoundException e) {
-			console.addErrorMessage("", "Unable to locate script class: " + e.getMessage());
+			console.addErrorMessage("", "Unable to locate script class: " + scriptName);
+			e.printStackTrace();
 		}
 
 		// show the error icon
@@ -537,7 +533,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void updateAvailableScriptFilesForAllPaths() {
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		List<ResourceFile> bundlePaths = bundleStatusProvider.getModel().getPaths();
+		List<ResourceFile> bundlePaths = bundleStatusProvider.getModel().getEnabledPaths();
 		for (ResourceFile bundlePath : bundlePaths) {
 			if (bundlePath.isDirectory()) {
 				updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator,
@@ -732,56 +728,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return true;
 	}
 
-	final private BundleHost bundleHost;
-
-	void startActivateDeactiveTask(BundlePath path, boolean activate) {
-		path.setBusy(true);
-		bundleStatusProvider.notifyTableChanged();
-		ConsoleService console = plugin.getTool().getService(ConsoleService.class);
-
-		new TaskLauncher(new Task((activate ? "Activating" : "Deactivating ") + " bundle...") {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				try {
-					if (activate) {
-						if (path.getType() == BundlePath.Type.SourceDir) {
-							SourceBundleInfo sbi = bundleHost.getSourceBundleInfo(path.getPath());
-							bundleHost.compileSourceBundle(sbi, console.getStdErr());
-						}
-						String loc = bundleStatusProvider.getModel().getBundleLoc(path);
-						if (loc != null) {
-							bundleHost.activateSynchronously(loc);
-						}
-					}
-					else { // deactivate
-						String loc = bundleStatusProvider.getModel().getBundleLoc(path);
-						if (loc != null) {
-							Bundle bundle = bundleHost.getBundle(loc);
-							if (bundle != null) {
-								bundleHost.deactivateSynchronously(bundle);
-							}
-						}
-					}
-				}
-				catch (Exception e) {
-					e.printStackTrace(console.getStdErr());
-					path.setActive(!activate);
-
-					Msg.showError(this, GhidraScriptComponentProvider.this.getComponent(),
-						"bundle activation failed", e.getMessage());
-				}
-				finally {
-					path.setBusy(false);
-					bundleStatusProvider.notifyTableChanged();
-				}
-			}
-		}, null, 1000);
-
-	}
-
 	private void build() {
-		bundleStatusProvider =
-			new BundleStatusProvider(plugin.getTool(), plugin.getName(), bundleHost);
+		bundleStatusProvider = new BundleStatusProvider(plugin.getTool(), plugin.getName());
 
 		bundleStatusProvider.getModel().addListener(new BundleStatusListener() {
 			@Override
@@ -791,19 +739,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 
 			@Override
-			public void bundleEnablementChanged(BundlePath path, boolean enabled) {
-				if (!enabled && path.isActive()) {
-					startActivateDeactiveTask(path, false);
-				}
-
-				if (path.isDirectory()) {
+			public void bundleEnablementChanged(BundleStatus status, boolean enabled) {
+				if (status.isDirectory()) {
 					performRefresh();
 				}
-			}
-
-			@Override
-			public void bundleActivationChanged(BundlePath path, boolean newValue) {
-				startActivateDeactiveTask(path, newValue);
 			}
 		});
 
@@ -1075,7 +1014,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		bundleStatusProvider.getModel().restoreState(saveState);
 
 		// pull in the just-loaded paths
-		List<ResourceFile> paths = bundleStatusProvider.getModel().getPaths();
+		List<ResourceFile> paths = bundleStatusProvider.getModel().getEnabledPaths();
 		GhidraScriptUtil.setScriptBundlePaths(paths);
 		actionManager.restoreUserDefinedKeybindings(saveState);
 		actionManager.restoreScriptsThatAreInTool(saveState);
@@ -1213,7 +1152,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	public List<ResourceFile> getWritableScriptDirectories() {
 		BundleStatusModel m = bundleStatusProvider.getModel();
-		return m.getPaths().stream().filter(ResourceFile::isDirectory).filter(
+		return m.getEnabledPaths().stream().filter(ResourceFile::isDirectory).filter(
 			m::isWriteable).collect(Collectors.toList());
 	}
 
