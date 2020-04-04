@@ -24,6 +24,8 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableColumn;
 
+import docking.ActionContext;
+import docking.action.*;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
@@ -37,6 +39,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.*;
+import resources.Icons;
 import resources.ResourceManager;
 
 /**
@@ -48,8 +51,6 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	private JPanel panel;
 	private GTable bundleStatusTable;
 	private final BundleStatusModel bundleStatusModel;
-	private JButton addButton;
-	private JButton removeButton;
 	private Color selectionColor;
 	private GhidraFileChooser fileChooser;
 	private GhidraFileFilter filter;
@@ -91,7 +92,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		this.fileChooser = null;
 
 		build();
+		//getTool().addComponentProvider(this, false);
 		addToTool();
+		createActions();
 	}
 
 	public BundleStatusModel getModel() {
@@ -103,34 +106,18 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 		selectionColor = new Color(204, 204, 255);
 
-		addButton = new JButton(ResourceManager.loadImage("images/Plus.png"));
-		addButton.setName("AddBundle");
-		addButton.setToolTipText("Display file chooser to add bundles to list");
-		addButton.addActionListener(e -> addButtonAction());
-		addButton.setFocusable(false);
-
-		removeButton = new JButton(ResourceManager.loadImage("images/edit-delete.png"));
-		removeButton.setName("RemoveBundle");
-		removeButton.setToolTipText("Remove selected bundle(s) from list");
-		removeButton.addActionListener(e -> removeButtonAction());
-		removeButton.setFocusable(false);
-
-		JPanel buttonPanel = new JPanel(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.CENTER;
-		gbc.insets = new Insets(0, 0, 0, 0);
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-
-		buttonPanel.add(addButton, gbc);
-		++gbc.gridy;
-		buttonPanel.add(removeButton, gbc);
-
 		bundleStatusTable = new GTable(bundleStatusModel);
 		bundleStatusTable.setName("BUNDLESTATUS_TABLE");
 		bundleStatusTable.setSelectionBackground(selectionColor);
 		bundleStatusTable.setSelectionForeground(Color.BLACK);
 		bundleStatusTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+		bundleStatusTable.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+			tool.contextChanged(BundleStatusProvider.this);
+		});
 
 		// to allow custom cell renderers
 		bundleStatusTable.setAutoCreateColumnsFromModel(false);
@@ -197,29 +184,83 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
 		scrollPane.getViewport().setBackground(bundleStatusTable.getBackground());
 
-		ListSelectionModel selModel = bundleStatusTable.getSelectionModel();
-		selModel.addListSelectionListener(e -> {
-			if (e.getValueIsAdjusting()) {
-				return;
-			}
-			updateButtonsEnabled();
-		});
-		updateButtonsEnabled();
-
-		JPanel centerPanel = new JPanel(new BorderLayout());
-		centerPanel.add(scrollPane, BorderLayout.CENTER);
-		centerPanel.add(filterPanel, BorderLayout.SOUTH);
-		panel.add(centerPanel, BorderLayout.CENTER);
-		panel.add(buttonPanel, BorderLayout.EAST);
+		panel.add(filterPanel, BorderLayout.SOUTH);
+		panel.add(scrollPane, BorderLayout.CENTER);
 		panel.setPreferredSize(new Dimension(800, 400));
 	}
 
-	private void updateButtonsEnabled() {
-		int[] rows = bundleStatusTable.getSelectedRows();
-		removeButton.setEnabled(rows.length > 0);
+	private void createActions() {
+		DockingAction action;
+		//
+
+		action = new DockingAction("Clean", this.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				int[] selectedRows = bundleStatusTable.getSelectedRows();
+				for (BundleStatus o : bundleStatusModel.getRowObjects(selectedRows)) {
+					bundleHost.getGhidraBundle(o.getPath()).clean();
+				}
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return bundleStatusTable.getSelectedRows().length > 0;
+			}
+
+		};
+		action.setPopupMenuData(
+			new MenuData(new String[] { "Clean bundle(s)" }, Icons.REFRESH_ICON, null));
+		action.setToolBarData(new ToolBarData(Icons.REFRESH_ICON, null));
+
+		action.setDescription("Clean selected bundles");
+		action.setEnabled(false);
+		getTool().addLocalAction(this, action);
+
+		// 
+		action = new DockingAction("AddBundle", this.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				addBundlesAction();
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return true;
+			}
+
+		};
+		action.setPopupMenuData(new MenuData(new String[] { "Add bundle" },
+			ResourceManager.loadImage("images/Plus.png"), null));
+		action.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/Plus.png"), null));
+
+		action.setDescription("Display file chooser to add bundles to list");
+		action.setEnabled(true);
+		getTool().addLocalAction(this, action);
+
+		// 
+		action = new DockingAction("RemoveBundle", this.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				removeBundlesAction();
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return bundleStatusTable.getSelectedRows().length > 0;
+			}
+
+		};
+		action.setPopupMenuData(new MenuData(new String[] { "Remove bundle(s)" },
+			ResourceManager.loadImage("images/edit-delete.png"), null));
+		action.setToolBarData(
+			new ToolBarData(ResourceManager.loadImage("images/edit-delete.png"), null));
+
+		action.setDescription("Remove selected bundles");
+		action.setEnabled(true);
+		getTool().addLocalAction(this, action);
 	}
 
-	private void removeButtonAction() {
+	private void removeBundlesAction() {
 		int[] selectedRows = bundleStatusTable.getSelectedRows();
 		if (selectedRows == null || selectedRows.length == 0) {
 			return;
@@ -236,10 +277,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		if (row >= 0) {
 			bundleStatusTable.setRowSelectionInterval(row, row);
 		}
-		updateButtonsEnabled();
 	}
 
-	private void addButtonAction() {
+	private void addBundlesAction() {
 		if (fileChooser == null) {
 			fileChooser = new GhidraFileChooser(panel);
 			fileChooser.setMultiSelectionEnabled(true);
@@ -286,6 +326,13 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	public JComponent getComponent() {
 		return panel;
 	}
+
+	/*
+	@Override
+	public ActionContext getActionContext(MouseEvent event) {
+		return new ActionContext(this, bundleStatusTable.getSelectedRows(), bundleStatusTable);
+	}
+	*/
 
 	public void dispose() {
 		bundleStatusTable.dispose();

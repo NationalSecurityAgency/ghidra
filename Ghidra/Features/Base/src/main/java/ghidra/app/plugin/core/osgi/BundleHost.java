@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.osgi;
 
-import static java.util.stream.Collectors.*;
-
 import java.io.*;
 import java.net.URL;
 import java.nio.file.*;
@@ -111,7 +109,7 @@ public class BundleHost {
 	/**
 	 * cache of data corresponding to a source directory that is bound to be an exploded bundle
 	 */
-	protected static class BuildFailure {
+	public static class BuildFailure {
 		long when = -1;
 		StringBuilder message = new StringBuilder();
 	}
@@ -452,67 +450,6 @@ public class BundleHost {
 		return felix;
 	}
 
-	public interface DiscrepencyCallback {
-		void found(ResourceFile source_file, Collection<Path> class_files) throws Throwable;
-	}
-
-	public static void visitDiscrepencies(ResourceFile srcdir, Path bindir,
-			DiscrepencyCallback new_source_cb) {
-		try {
-			// delete class files for which java is either newer, or no longer exists
-			Deque<ResourceFile> stack = new ArrayDeque<>();
-			stack.add(srcdir);
-			while (!stack.isEmpty()) {
-				ResourceFile sd = stack.pop();
-				String relpath = sd.getAbsolutePath().substring(srcdir.getAbsolutePath().length());
-				if (relpath.startsWith(File.separator)) {
-					relpath = relpath.substring(1);
-				}
-				Path bd = bindir.resolve(relpath);
-
-				// index the class files in the corresponding directory by basename
-				Map<String, List<Path>> binfiles =
-					Files.exists(bd) ? Files.list(bd).filter(x -> Files.isRegularFile(x) &&
-						x.getFileName().toString().endsWith(".class")).collect(groupingBy(x -> {
-							String s = x.getFileName().toString();
-							int money = s.indexOf('$');
-							if (money >= 0) {
-								return s.substring(0, money);
-							}
-							return s.substring(0, s.length() - 6);
-						})) : Collections.emptyMap();
-
-				for (ResourceFile sf : sd.listFiles()) {
-					if (sf.isDirectory()) {
-						stack.push(sf);
-					}
-					else {
-						String n = sf.getName();
-						if (n.endsWith(".java")) {
-							long sfl = sf.lastModified();
-							List<Path> bfs = binfiles.remove(n.substring(0, n.length() - 5));
-							long bfl = (bfs == null || bfs.isEmpty()) ? -1
-									: bfs.stream().mapToLong(
-										bf -> bf.toFile().lastModified()).min().getAsLong();
-							if (sfl > bfl) {
-								new_source_cb.found(sf, bfs);
-							}
-						}
-					}
-				}
-				// any remaining .class files are missing .java files
-				if (!binfiles.isEmpty()) {
-					new_source_cb.found(null,
-						binfiles.values().stream().flatMap(l -> l.stream()).collect(
-							Collectors.toList()));
-				}
-			}
-		}
-		catch (Throwable t) {
-			t.printStackTrace();
-		}
-	}
-
 	// from https://dzone.com/articles/locate-jar-classpath-given
 	static String findJarForClass(Class<?> c) {
 		final URL location;
@@ -583,10 +520,10 @@ public class BundleHost {
 
 	List<OSGiListener> osgiListeners = new ArrayList<>();
 
-	void fireSourceBundleCompiled(GhidraSourceBundle sbi) {
+	void fireBundleBuilt(GhidraBundle sbi) {
 		synchronized (osgiListeners) {
 			for (OSGiListener l : osgiListeners) {
-				l.sourceBundleCompiled(sbi);
+				l.bundleBuilt(sbi);
 			}
 		}
 	}

@@ -40,6 +40,7 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.*;
+import ghidra.app.plugin.core.osgi.BundleHost.BuildFailure;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
@@ -731,6 +732,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void build() {
 		bundleStatusProvider = new BundleStatusProvider(plugin.getTool(), plugin.getName());
 
+		// XXX remember listener to remove later
 		bundleStatusProvider.getModel().addListener(new BundleStatusListener() {
 			@Override
 			public void bundlesChanged() {
@@ -742,6 +744,24 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			public void bundleEnablementChanged(BundleStatus status, boolean enabled) {
 				if (status.isDirectory()) {
 					performRefresh();
+				}
+			}
+		});
+
+		BundleHost.getInstance().addListener(new OSGiListener() {
+
+			@Override
+			public void bundleBuilt(GhidraBundle sb) {
+				if (sb instanceof GhidraSourceBundle) {
+					GhidraSourceBundle gsb = (GhidraSourceBundle) sb;
+					for (ResourceFile sf : gsb.getNewSources()) {
+						if (GhidraScriptUtil.containsMetadata(sf)) {
+							ScriptInfo info = GhidraScriptUtil.getScriptInfo(sf);
+							BuildFailure e = gsb.getErrors(sf);
+							info.setCompileErrors(e != null);
+						}
+					}
+					tableModel.fireTableDataChanged();
 				}
 			}
 		});

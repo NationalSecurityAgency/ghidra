@@ -60,9 +60,6 @@ public class BundleCompiler {
 			throws IOException, OSGiException {
 
 		sb.compileAttempted();
-		sb.setSummary(String.format("build %d files, skipping %d%s", sb.getNewSourcesCount(),
-			sb.getFailingSourcesCount(), sb.newManifestFile() ? ", new manifest" : ""));
-
 		ResourceFile srcdir = sb.getSourceDir();
 		Path bindir = sb.getBinDir();
 		Files.createDirectories(bindir);
@@ -98,7 +95,7 @@ public class BundleCompiler {
 			}
 
 			sb.setSummary(
-				String.format("%d missing @import%s:", reqs.size(), reqs.size() > 1 ? "s" : "",
+				String.format("%d missing @import%s:%s", reqs.size(), reqs.size() > 1 ? "s" : "",
 					reqs.stream().flatMap(
 						r -> OSGiUtils.extractPackages(r.toString()).stream()).distinct().collect(
 							Collectors.joining(","))));
@@ -106,16 +103,12 @@ public class BundleCompiler {
 		else {
 			sb.setSummary("");
 		}
-		// XXX add sources that will fail to call attention
-		List<ResourceFile> newSource = sb.getNewSources();
-		for (BundleRequirement req : reqs) {
-			newSource.addAll(sb.req2file.get(req.toString()));
-		}
+		List<ResourceFile> newSources = sb.getNewSources();
 
 		// send the capabilities to phidias
 		bundleWirings.forEach(bjm::addBundleWiring);
 
-		final List<ResourceFileJavaFileObject> sourceFiles = newSource.stream().map(
+		final List<ResourceFileJavaFileObject> sourceFiles = newSources.stream().map(
 			sf -> new ResourceFileJavaFileObject(sf.getParentFile(), sf, Kind.SOURCE)).collect(
 				Collectors.toList());
 
@@ -144,21 +137,13 @@ public class BundleCompiler {
 				sb.buildError(rf, err); // remember all errors for this file
 				if (sourceFiles.remove(sf)) {
 					writer.printf("skipping %s\n", sf.toString());
-					// if it's a script, mark it for having compile errors
-					if (GhidraScriptUtil.containsMetadata(rf)) {
-						ScriptInfo info = GhidraScriptUtil.getScriptInfo(rf);
-						info.setCompileErrors(true);
-					}
 				}
 			}
 		}
 		// mark the successful compilations
 		for (ResourceFileJavaFileObject sf : sourceFiles) {
 			ResourceFile rf = sf.getFile();
-			if (GhidraScriptUtil.containsMetadata(rf)) {
-				ScriptInfo info = GhidraScriptUtil.getScriptInfo(rf);
-				info.setCompileErrors(false);
-			}
+			sb.buildSuccess(rf);
 		}
 		// buildErrors is now up to date, set status
 		if (sb.getFailingSourcesCount() > 0) {

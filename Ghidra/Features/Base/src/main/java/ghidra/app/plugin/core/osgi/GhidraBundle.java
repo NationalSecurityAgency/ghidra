@@ -13,6 +13,8 @@ public interface GhidraBundle {
 		BndScript, Jar, SourceDir, INVALID
 	}
 
+	void clean();
+
 	/**
 	 * attempt to build loadable bundle, if possible
 	 *  

@@ -4,7 +4,11 @@ import org.osgi.framework.Bundle;
 
 public interface OSGiListener {
 
-	void sourceBundleCompiled(GhidraSourceBundle sb);
+	default void bundleBuilt(GhidraBundle gb) {
+		//
+	}
 
-	void bundleActivationChange(Bundle b, boolean newActivation);
+	default void bundleActivationChange(Bundle b, boolean newActivation) {
+		//
+	}
 }

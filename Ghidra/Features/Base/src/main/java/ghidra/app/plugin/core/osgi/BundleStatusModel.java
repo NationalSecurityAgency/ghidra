@@ -169,7 +169,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 
 		bundleHost.addListener(bundleListener = new OSGiListener() {
 			@Override
-			public void sourceBundleCompiled(GhidraSourceBundle sb) {
+			public void bundleBuilt(GhidraBundle sb) {
 				BundleStatus bp = getStatus(sb.getBundleLoc());
 				if (bp != null) {
 					bp.setSummary(sb.getSummary());
@@ -180,20 +180,23 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 
 			@Override
 			public void bundleActivationChange(Bundle b, boolean newActivation) {
-				BundleStatus bp = getStatus(b.getLocation());
+				BundleStatus status = getStatus(b.getLocation());
+				if (status == null) {
+					Msg.showError(BundleStatusModel.this, provider.getComponent(),
+						"bundle status error", "bundle has no status!");
+				}
 				if (newActivation) {
-					if (bp != null) {
-						bp.setActive(true);
-						int row = getRowIndex(bp);
-						fireTableRowsUpdated(row, row);
-					}
+					GhidraBundle gb = bundleHost.getGhidraBundle(status.getPath());
+					status.setActive(true);
+					status.setSummary(gb.getSummary());
+					int row = getRowIndex(status);
+					fireTableRowsUpdated(row, row);
 				}
 				else {
-					if (bp != null) {
-						bp.setActive(false);
-						int row = getRowIndex(bp);
-						fireTableRowsUpdated(row, row);
-					}
+					status.setActive(false);
+					status.setSummary("");
+					int row = getRowIndex(status);
+					fireTableRowsUpdated(row, row);
 				}
 
 			}
@@ -248,11 +251,13 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 	 * @param readonly mark them all as readonly
 	 */
 	void addNewPaths(List<File> files, boolean enabled, boolean readonly) {
+		int index = statuses.size();
 		for (File f : files) {
 			BundleStatus status = new BundleStatus(new ResourceFile(f), enabled, readonly);
 			addStatus(status);
 		}
 		fireBundlesChanged();
+		fireTableRowsInserted(index, files.size() - 1);
 	}
 
 	void remove(int[] selectedRows) {
@@ -492,5 +497,13 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		ss.putStrings("BundleStatus_PATH", pathArr);
 		ss.putBooleans("BundleStatus_ENABLE", enableArr);
 		ss.putBooleans("BundleStatus_READ", readonlyArr);
+	}
+
+	public List<BundleStatus> getRowObjects(int[] rowIndices) {
+		List<BundleStatus> rows = new ArrayList<>(rowIndices.length);
+		for (int i : rowIndices) {
+			rows.add(statuses.get(i));
+		}
+		return rows;
 	}
 }
