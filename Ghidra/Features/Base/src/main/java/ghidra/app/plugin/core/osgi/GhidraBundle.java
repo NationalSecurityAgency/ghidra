@@ -2,8 +2,10 @@ package ghidra.app.plugin.core.osgi;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.List;
 
 import org.osgi.framework.Bundle;
+import org.osgi.framework.wiring.BundleRequirement;
 
 import generic.jar.ResourceFile;
 
@@ -13,7 +15,12 @@ public interface GhidraBundle {
 		BndScript, Jar, SourceDir, INVALID
 	}
 
-	void clean();
+	/**
+	 * clean build artifacts generated during build of this bundle
+	 * 
+	 * @return true if anything was done
+	 */
+	boolean clean();
 
 	/**
 	 * attempt to build loadable bundle, if possible
@@ -59,5 +66,7 @@ public interface GhidraBundle {
 		}
 		return GhidraBundle.Type.INVALID;
 	}
+
+	List<BundleRequirement> getAllReqs();
 
 }

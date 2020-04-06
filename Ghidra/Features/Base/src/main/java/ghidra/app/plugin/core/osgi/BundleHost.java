@@ -78,6 +78,7 @@ public class BundleHost {
 				return new GhidraSourceBundle(this, path);
 			case BndScript:
 			case Jar:
+				return new GhidraJarBundle(this, path);
 			default:
 				break;
 		}

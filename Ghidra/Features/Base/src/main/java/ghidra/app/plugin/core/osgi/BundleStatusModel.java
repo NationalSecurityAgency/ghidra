@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.osgi.framework.Bundle;
 
 import docking.widgets.table.AbstractSortedTableModel;
+import docking.widgets.table.TableSortingContext;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.framework.options.SaveState;
@@ -260,9 +261,9 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		fireTableRowsInserted(index, files.size() - 1);
 	}
 
-	void remove(int[] selectedRows) {
+	void remove(int[] selectedModelRows) {
 		List<BundleStatus> toRemove = new ArrayList<>();
-		for (int selectedRow : selectedRows) {
+		for (int selectedRow : selectedModelRows) {
 			toRemove.add(statuses.get(selectedRow));
 		}
 		for (BundleStatus status : toRemove) {
@@ -311,8 +312,8 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 		BundleStatus status = statuses.get(rowIndex);
 		getColumn(columnIndex).setValue(status, aValue);
-		// XXX: avoid RowObjectSelectionManager.repairSelection by selecting the row we're editing
-		provider.selectRow(rowIndex);
+		// XXX I don't know why it's unselected, but it's maddening
+		provider.selectModelRow(rowIndex);
 	}
 
 	@Override
@@ -499,11 +500,47 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		ss.putBooleans("BundleStatus_READ", readonlyArr);
 	}
 
-	public List<BundleStatus> getRowObjects(int[] rowIndices) {
-		List<BundleStatus> rows = new ArrayList<>(rowIndices.length);
-		for (int i : rowIndices) {
-			rows.add(statuses.get(i));
+	public List<BundleStatus> getRowObjects(int[] modelRowIndices) {
+		List<BundleStatus> rows = new ArrayList<>(modelRowIndices.length);
+		for (int i : modelRowIndices) {
+			rows.add(getRowObject(i));
 		}
 		return rows;
 	}
+
+	/**
+	 * avoid generating events when nothing changes 
+	 */
+	@Override
+	protected void sort(List<BundleStatus> data, TableSortingContext<BundleStatus> sortingContext) {
+
+		if (sortingContext.isUnsorted()) {
+			// this is the 'no sort' state
+			sortCompleted(sortingContext);
+			notifyModelSorted(false);
+			return;
+		}
+
+		hasEverSorted = true; // signal that we have sorted at least one time
+
+		boolean[] change = { false };
+		Comparator<BundleStatus> proxy = new Comparator<BundleStatus>() {
+			Comparator<BundleStatus> p = sortingContext.getComparator();
+
+			@Override
+			public int compare(BundleStatus o1, BundleStatus o2) {
+				int v = p.compare(o1, o2);
+				if (v < 0) {
+					change[0] = true;
+				}
+				return v;
+			}
+		};
+		Collections.sort(data, proxy);
+		sortCompleted(sortingContext);
+		if (change[0]) {
+			notifyModelSorted(false);
+		}
+	}
+
 }
