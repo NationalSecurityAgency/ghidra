@@ -36,7 +36,7 @@ import ghidra.util.Msg;
  */
 public class SSLContextInitializer implements ModuleInitializer {
 
-	private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
+	private static final String DEFAULT_TLS_PROTOCOL = "TLS";  // use Java's default enabled TLS protocols
 
 	private static final String PROTOCOL_PROPERTY = "ghidra.net.ssl.protocol";
 
