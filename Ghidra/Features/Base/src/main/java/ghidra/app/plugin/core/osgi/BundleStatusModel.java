@@ -261,11 +261,10 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		fireTableRowsInserted(index, files.size() - 1);
 	}
 
-	void remove(int[] selectedModelRows) {
-		List<BundleStatus> toRemove = new ArrayList<>();
-		for (int selectedRow : selectedModelRows) {
-			toRemove.add(statuses.get(selectedRow));
-		}
+	void remove(int[] modelRows) {
+		List<BundleStatus> toRemove = Arrays.stream(modelRows).mapToObj(statuses::get).collect(
+			Collectors.toUnmodifiableList());
+
 		for (BundleStatus status : toRemove) {
 			if (!status.isReadOnly()) {
 				statuses.remove(status);
@@ -273,7 +272,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 			}
 			else {
 				Msg.showInfo(this, this.provider.getComponent(), "Unabled to remove path",
-					"System path cannot be removed: " + status.toString());
+					"System path cannot be removed: " + status.getPath().toString());
 			}
 		}
 		fireTableDataChanged();
@@ -386,51 +385,41 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		fireTableDataChanged();
 	}
 
-	/**
-	 * This is for testing only!
-	 * 
-	 * insert path, marked editable and non-readonly
-	 * @param path the path to insert
-	 */
-	public void insertPathForTesting(String path) {
-		addNewStatus(new ResourceFile(path), true, false);
-	}
-
-	private ArrayList<BundleStatusListener> listeners = new ArrayList<>();
+	private ArrayList<BundleStatusListener> bundleStatusListeners = new ArrayList<>();
 
 	public void addListener(BundleStatusListener listener) {
-		synchronized (listeners) {
-			if (!listeners.contains(listener)) {
-				listeners.add(listener);
+		synchronized (bundleStatusListeners) {
+			if (!bundleStatusListeners.contains(listener)) {
+				bundleStatusListeners.add(listener);
 			}
 		}
 	}
 
 	public void removeListener(BundleStatusListener listener) {
-		synchronized (listeners) {
-			listeners.remove(listener);
+		synchronized (bundleStatusListeners) {
+			bundleStatusListeners.remove(listener);
 		}
 	}
 
 	private void fireBundlesChanged() {
-		synchronized (listeners) {
-			for (BundleStatusListener listener : listeners) {
+		synchronized (bundleStatusListeners) {
+			for (BundleStatusListener listener : bundleStatusListeners) {
 				listener.bundlesChanged();
 			}
 		}
 	}
 
 	void fireBundleEnablementChanged(BundleStatus path, boolean newValue) {
-		synchronized (listeners) {
-			for (BundleStatusListener listener : listeners) {
+		synchronized (bundleStatusListeners) {
+			for (BundleStatusListener listener : bundleStatusListeners) {
 				listener.bundleEnablementChanged(path, newValue);
 			}
 		}
 	}
 
 	void fireBundleActivationChanged(BundleStatus path, boolean newValue) {
-		synchronized (listeners) {
-			for (BundleStatusListener listener : listeners) {
+		synchronized (bundleStatusListeners) {
+			for (BundleStatusListener listener : bundleStatusListeners) {
 				listener.bundleActivationChanged(path, newValue);
 			}
 		}
@@ -509,7 +498,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 	}
 
 	/**
-	 * avoid generating events when nothing changes 
+	 * overridden to avoid generating events when nothing changed 
 	 */
 	@Override
 	protected void sort(List<BundleStatus> data, TableSortingContext<BundleStatus> sortingContext) {

@@ -283,6 +283,17 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return tableModel.getScriptAt(tableFilterPanel.getModelRow(rowIndex));
 	}
 
+	public List<ResourceFile> getScriptDirectories() {
+		return bundleStatusProvider.getModel().getEnabledPaths().stream().filter(
+			ResourceFile::isDirectory).collect(Collectors.toList());
+	}
+
+	public List<ResourceFile> getWritableScriptDirectories() {
+		BundleStatusModel m = bundleStatusProvider.getModel();
+		return m.getEnabledPaths().stream().filter(ResourceFile::isDirectory).filter(
+			m::isWriteable).collect(Collectors.toList());
+	}
+
 	boolean isEditorOpen(ResourceFile script) {
 		GhidraScriptEditorComponentProvider editor = editorMap.get(script);
 		return editor != null && plugin.getTool().isVisible(editor);
@@ -334,11 +345,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			int viewRow = getViewRowForModelRow(selectedModelRow - 1);
 			scriptTable.setRowSelectionInterval(viewRow, viewRow);
 		}
-	}
-
-	public List<ResourceFile> getScriptDirectories() {
-		return bundleStatusProvider.getModel().getEnabledPaths().stream().filter(
-			ResourceFile::isDirectory).collect(Collectors.toList());
 	}
 
 	public void enableScriptDirectory(ResourceFile scriptDir) {
@@ -454,7 +460,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 		catch (ClassNotFoundException e) {
 			console.addErrorMessage("", "Unable to locate script class: " + scriptName);
-			e.printStackTrace();
 		}
 
 		// show the error icon
@@ -521,8 +526,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		updateAvailableScriptFilesForAllPaths();
 
-		tableModel.fireTableDataChanged();
-
 		trimUnusedTreeCategories();
 
 		scriptRoot.fireNodeStructureChanged(scriptRoot);
@@ -534,12 +537,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void updateAvailableScriptFilesForAllPaths() {
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		List<ResourceFile> bundlePaths = bundleStatusProvider.getModel().getEnabledPaths();
-		for (ResourceFile bundlePath : bundlePaths) {
-			if (bundlePath.isDirectory()) {
-				updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator,
-					bundlePath);
-			}
+		for (ResourceFile bundlePath : getScriptDirectories()) {
+			updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator, bundlePath);
 		}
 
 		// note: do this after the loop to prevent a flurry of table model update events
@@ -587,6 +586,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			if (scriptAction != null) {
 				scriptAction.refresh();
 			}
+
 		}
 	}
 
@@ -606,9 +606,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		 */
 
 		// note: turn String[] to List<String> to use hashing
-		Iterator<ScriptInfo> scripts = GhidraScriptUtil.getScriptInfoIterator();
 		Set<List<String>> categories = new HashSet<>();
-		for (ScriptInfo info : CollectionUtils.asIterable(scripts)) {
+		for (ScriptInfo info : GhidraScriptUtil.getScriptInfoIterable()) {
 			String[] path = info.getCategory();
 			List<String> category = Arrays.asList(path);
 			for (int i = 1; i <= category.size(); i++) {
@@ -684,6 +683,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return editor;
 	}
 
+	/**
+	 * reassign an existing editor component 
+	 * 
+	 * @param oldScript who the editor is currently assigned to
+	 * @param newScript the new script to assign it to
+	 */
 	void switchEditor(ResourceFile oldScript, ResourceFile newScript) {
 		GhidraScriptEditorComponentProvider editor = editorMap.get(oldScript);
 		editorMap.put(newScript, editor);
@@ -1131,7 +1136,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		@Override
 		public boolean acceptsRow(ResourceFile script) {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
+			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
+			if (info == null) {
+				return false;
+			}
 			String[] category = getSelectedCategoryPath();
 
 			if (category == null) { // root node
@@ -1168,12 +1176,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			// never be a sub-filter of anything.
 			return false;
 		}
-	}
-
-	public List<ResourceFile> getWritableScriptDirectories() {
-		BundleStatusModel m = bundleStatusProvider.getModel();
-		return m.getEnabledPaths().stream().filter(ResourceFile::isDirectory).filter(
-			m::isWriteable).collect(Collectors.toList());
 	}
 
 }

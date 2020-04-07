@@ -23,9 +23,10 @@ import org.apache.logging.log4j.*;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Test;
 
+import docking.test.AbstractDockingTest;
 import docking.widgets.table.SelectionManager;
 import generic.jar.ResourceFile;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import ghidra.app.plugin.core.osgi.GhidraSourceBundle;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.JavaScriptProvider;
@@ -211,7 +212,7 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		//
 
 		// create a user-defined directory
-		File tempDir = new File(AbstractGenericTest.getTestDirectoryPath());
+		File tempDir = new File(AbstractGTest.getTestDirectoryPath());
 		File tempScriptDir = new File(tempDir, "TestScriptDir");
 		FileUtilities.deleteDir(tempScriptDir);
 		tempScriptDir.mkdir();
@@ -251,7 +252,7 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 
 		chooseJavaProvider();
 
-		SaveDialog sd = env.waitForDialogComponent(SaveDialog.class, MAX_TIME);
+		SaveDialog sd = AbstractDockingTest.waitForDialogComponent(SaveDialog.class);
 		pressButtonByText(sd, "OK");
 
 		refreshProvider();

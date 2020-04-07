@@ -99,12 +99,13 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	}
 
 	void insertScripts(List<ResourceFile> scriptFiles) {
+		int rowStart = scriptList.size();
 		for (ResourceFile script : scriptFiles) {
 			if (!scriptList.contains(script)) {
 				scriptList.add(script);
 			}
 		}
-		fireTableDataChanged();
+		fireTableRowsInserted(rowStart, rowStart + scriptFiles.size()-1);
 	}
 
 	void removeScript(ResourceFile script) {
@@ -190,7 +191,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	}
 
 	private class ScriptActionColumn
-	extends AbstractDynamicTableColumn<ResourceFile, Boolean, Object> {
+			extends AbstractDynamicTableColumn<ResourceFile, Boolean, Object> {
 
 		@Override
 		public String getColumnDescription() {
@@ -318,7 +319,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	}
 
 	private class DescriptionColumn
-	extends AbstractDynamicTableColumn<ResourceFile, String, Object> {
+			extends AbstractDynamicTableColumn<ResourceFile, String, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -339,10 +340,9 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	}
 
 	private class KeyBindingColumn
-	extends AbstractDynamicTableColumn<ResourceFile, KeyBindingsInfo, Object> {
+			extends AbstractDynamicTableColumn<ResourceFile, KeyBindingsInfo, Object> {
 
-		private GColumnRenderer<KeyBindingsInfo> renderer =
-				new AbstractGColumnRenderer<>() {
+		private GColumnRenderer<KeyBindingsInfo> renderer = new AbstractGColumnRenderer<>() {
 
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -365,8 +365,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 					if (info.hasAction) {
 						component.setForeground(Color.BLACK);
-						component.setToolTipText(
-							"Keybinding for action in tool" + keybindingText);
+						component.setToolTipText("Keybinding for action in tool" + keybindingText);
 					}
 					else {
 						component.setForeground(Color.LIGHT_GRAY);
@@ -376,7 +375,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 				if (isSelected) {
 					Color selectedForegroundColor =
-							(info.errorMessage != null) ? Color.PINK : Color.WHITE;
+						(info.errorMessage != null) ? Color.PINK : Color.WHITE;
 					component.setForeground(selectedForegroundColor);
 				}
 				return component;

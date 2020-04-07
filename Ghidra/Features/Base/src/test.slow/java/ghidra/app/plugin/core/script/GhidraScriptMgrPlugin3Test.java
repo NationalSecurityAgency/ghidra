@@ -281,13 +281,14 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		performAction(bundleStatusAction, false);
 		waitForSwing();
 
-		final BundleStatusProvider bundleStatusProvider = waitForComponentProvider(BundleStatusProvider.class);
+		final BundleStatusProvider bundleStatusProvider =
+			waitForComponentProvider(BundleStatusProvider.class);
 
 		final ResourceFile dir = new ResourceFile(getTestDirectoryPath() + "/test_scripts");
 		dir.getFile(false).mkdirs();
 
 		SwingUtilities.invokeLater(() -> {
-			bundleStatusProvider.getModel().insertPathForTesting(dir.getAbsolutePath());
+			bundleStatusProvider.getModel().enablePath(dir);
 		});
 		waitForSwing();
 
@@ -328,10 +329,11 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		assertTrue(newScript.exists());
 
 		assertNotNull(newScript);
-		assertEquals(dir.getAbsolutePath(), newScript.getParentFile().getFile(false).getAbsolutePath());
+		assertEquals(dir.getAbsolutePath(),
+			newScript.getParentFile().getFile(false).getAbsolutePath());
 
-		newScript.delete();
-		dir.delete();
+		deleteFile(newScript);
+		deleteFile(dir);
 		waitForSwing();
 	}
 

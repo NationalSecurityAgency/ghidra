@@ -65,6 +65,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		super(tool, "Bundle Status Manager", owner);
 		this.bundleHost = BundleHost.getInstance();
 		this.bundleStatusModel = new BundleStatusModel(this, bundleHost);
+
 		bundleStatusModel.addListener(new BundleStatusListener() {
 			@Override
 			public void bundleEnablementChanged(BundleStatus status, boolean enabled) {
@@ -93,7 +94,6 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		this.fileChooser = null;
 
 		build();
-		//getTool().addComponentProvider(this, false);
 		addToTool();
 		createActions();
 	}
@@ -194,7 +194,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		action = new DockingAction("ActivateBundle", this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				startActivateSelectedTask();
+				doActivateBundle();
 			}
 
 			@Override
@@ -214,7 +214,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		action = new DockingAction("DeactivateBundle", this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				startDeactivateSelectedTask();
+				doDeactivateBundle();
 			}
 
 			@Override
@@ -234,14 +234,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		action = new DockingAction("CleanBundle", this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				int[] selectedModelRows = getSelectedModelRows();
-				boolean anythingCleaned = false;
-				for (BundleStatus o : bundleStatusModel.getRowObjects(selectedModelRows)) {
-					anythingCleaned |= bundleHost.getGhidraBundle(o.getPath()).clean();
-				}
-				if (anythingCleaned) {
-					AnimationUtils.shakeComponent(getComponent());
-				}
+				doClean();
 			}
 
 			@Override
@@ -262,7 +255,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		action = new DockingAction("AddBundle", this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				addBundlesAction();
+				showAddBundlesFileChooser();
 			}
 
 			@Override
@@ -284,7 +277,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		action = new DockingAction("RemoveBundle", this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				removeBundlesAction();
+				doRemoveBundles();
 			}
 
 			@Override
@@ -316,7 +309,18 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		return Arrays.stream(selectedRows).map(filterPanel::getModelRow).toArray();
 	}
 
-	private void removeBundlesAction() {
+	private void doClean() {
+		int[] selectedModelRows = getSelectedModelRows();
+		boolean anythingCleaned = false;
+		for (BundleStatus o : bundleStatusModel.getRowObjects(selectedModelRows)) {
+			anythingCleaned |= bundleHost.getGhidraBundle(o.getPath()).clean();
+		}
+		if (anythingCleaned) {
+			AnimationUtils.shakeComponent(getComponent());
+		}
+	}
+
+	private void doRemoveBundles() {
 		int[] selectedModelRows = getSelectedModelRows();
 		if (selectedModelRows == null || selectedModelRows.length == 0) {
 			return;
@@ -326,7 +330,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		bundleStatusTable.clearSelection();
 	}
 
-	private void addBundlesAction() {
+	private void showAddBundlesFileChooser() {
 		if (fileChooser == null) {
 			fileChooser = new GhidraFileChooser(panel);
 			fileChooser.setMultiSelectionEnabled(true);
@@ -369,14 +373,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	/*
-	@Override
-	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, bundleStatusTable.getSelectedRows(), bundleStatusTable);
-	}
-	*/
-
-	protected void startActivateSelectedTask() {
+	protected void doActivateBundle() {
 		ConsoleService console = getTool().getService(ConsoleService.class);
 		int[] selectedModelRows = getSelectedModelRows();
 
@@ -428,7 +425,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		}, getComponent(), 1000);
 	}
 
-	protected void startDeactivateSelectedTask() {
+	protected void doDeactivateBundle() {
 		ConsoleService console = getTool().getService(ConsoleService.class);
 		int[] selectedModelRows = getSelectedModelRows();
 
@@ -466,7 +463,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 	protected void startActivateDeactiveTask(BundleStatus status, boolean activate) {
 		status.setBusy(true);
-		notifyTableRowChanged(bundleStatusModel.getRowIndex(status));
+		notifyTableRowChanged(status);
 		ConsoleService console = getTool().getService(ConsoleService.class);
 
 		new TaskLauncher(new Task((activate ? "Activating" : "Deactivating ") + " bundle...") {
@@ -493,7 +490,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 				}
 				finally {
 					status.setBusy(false);
-					notifyTableRowChanged(bundleStatusModel.getRowIndex(status));
+					notifyTableRowChanged(status);
 				}
 			}
 		}, null, 1000);
@@ -503,12 +500,10 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		return bundleStatusModel;
 	}
 
-	public void notifyTableChanged() {
-		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusModel));
-	}
-
-	public void notifyTableRowChanged(int rowIndex) {
-		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusModel, rowIndex));
+	public void notifyTableRowChanged(BundleStatus status) {
+		int modelRowIndex = bundleStatusModel.getRowIndex(status);
+		int viewRowIndex = filterPanel.getViewRow(modelRowIndex);
+		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusModel, viewRowIndex));
 	}
 
 	@Override

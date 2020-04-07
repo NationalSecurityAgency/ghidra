@@ -61,6 +61,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	@Override
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		ScriptInfo info = GhidraScriptUtil.getScriptInfo(sourceFile);
 		try {
 			Class<?> clazz = loadClass(sourceFile, writer);
 			Object object;
@@ -75,13 +76,16 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			String message = "Not a valid Ghidra script: " + sourceFile.getName();
 			writer.println(message);
 			Msg.error(this, message);
+			info.setCompileErrors(true);
 			return null; // class is not GhidraScript
 
 		}
 		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+			info.setCompileErrors(true);
 			throw e;
 		}
 		catch (Exception e) {
+			info.setCompileErrors(true);
 			throw new ClassNotFoundException("", e);
 		}
 	}

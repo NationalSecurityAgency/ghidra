@@ -31,8 +31,8 @@ public class DraggableScriptTable extends GhidraTable implements Draggable {
 	private final GhidraScriptComponentProvider provider;
 
 	/**
-	 * Constructs a new DraggableGhidraTable using the specified table model.
-	 * @param scriptModel the table model
+	 * Constructs a new DraggableGhidraTable.
+	 * @param provider the provider, from which getTableModel and getScriptAt are used
 	 */
 	public DraggableScriptTable(GhidraScriptComponentProvider provider) {
 		super(provider.getTableModel());

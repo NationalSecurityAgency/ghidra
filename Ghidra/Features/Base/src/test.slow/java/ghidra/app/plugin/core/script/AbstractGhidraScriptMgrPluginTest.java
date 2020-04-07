@@ -20,8 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.Window;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -168,6 +167,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		wipeUserScripts();
 
 		env.dispose();
+	}
+
+	static protected void wipe(ResourceFile path) throws IOException {
+		wipe(Paths.get(path.getAbsolutePath()));
 	}
 
 	static protected void wipe(Path path) throws IOException {

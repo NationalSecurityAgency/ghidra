@@ -21,13 +21,10 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.map.LazyMap;
-
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.TaskMonitor;
 
@@ -39,7 +36,6 @@ public class GhidraScriptUtil {
 	private static final String SCRIPTS_SUBDIR_NAME = "ghidra_scripts";
 	private static final String DEV_SCRIPTS_SUBDIR_NAME = "developer_scripts";
 
-	private static final String BIN_DIR_NAME = "bin";
 	private static List<GhidraScriptProvider> providers = null;
 
 	/**
@@ -51,8 +47,7 @@ public class GhidraScriptUtil {
 
 	private static Map<ResourceFile, ScriptInfo> scriptFileToInfoMap = new HashMap<>();
 
-	private static Map<String, List<ResourceFile>> scriptNameToFilesMap =
-		LazyMap.lazyMap(new HashMap<String, List<ResourceFile>>(), () -> new ArrayList<>());
+	private static Map<String, List<ResourceFile>> scriptNameToFilesMap = new HashMap<>();
 
 	static {
 		scriptBundlePaths = getSystemScriptPaths();
@@ -153,6 +148,14 @@ public class GhidraScriptUtil {
 		scriptBundlePaths = new ArrayList<>(newPaths);
 	}
 
+	public static List<ResourceFile> getAllScripts() {
+		List<ResourceFile> scriptList = new ArrayList<>();
+		for (ResourceFile dirPath : scriptBundlePaths) {
+			updateAvailableScriptFilesForDirectory(scriptList, dirPath);
+		}
+		return scriptList;
+	}
+
 	public static Path getOsgiDir() {
 		Path usersettings = Application.getUserSettingsDirectory().toPath();
 		return usersettings.resolve("osgi");
@@ -179,33 +182,6 @@ public class GhidraScriptUtil {
 				"error listing user osgi directory", e);
 			return Collections.emptyList();
 		}
-	}
-
-	/**
-	 * Returns a list of directories.  Development directories differ from standard script
-	 * directories in that the former have a bin directory at a different location from 
-	 * the latter, due to the setup of the development environment.
-	 * 
-	 * @return Returns a list of directories 
-	 */
-	static Collection<ResourceFile> getDevelopmentScriptBinDirectories() {
-		if (!SystemUtilities.isInDevelopmentMode() || SystemUtilities.isInTestingMode()) {
-			return Collections.emptyList();
-		}
-
-		Set<ResourceFile> dirs = new HashSet<>();
-		for (ResourceFile scriptDir : scriptBundlePaths) {
-			//
-			// Assumed structure of script dir path:
-			//    /some/path/Ghidra/Features/Module/ghidra_scripts
-			// 
-			// Desired path:
-			//    /some/path/Ghidra/Features/Module/bin/scripts
-
-			ResourceFile moduleDir = scriptDir.getParentFile();
-			dirs.add(new ResourceFile(moduleDir, BIN_DIR_NAME + File.separator + "scripts"));
-		}
-		return dirs;
 	}
 
 	/**
@@ -249,22 +225,29 @@ public class GhidraScriptUtil {
 	public static void removeMetadata(ResourceFile scriptFile) {
 		scriptFileToInfoMap.remove(scriptFile);
 
-		Iterator<ResourceFile> iter = scriptNameToFilesMap.get(scriptFile.getName()).iterator();
-		while (iter.hasNext()) {
-			ResourceFile rFile = iter.next();
-			if (scriptFile.equals(rFile)) {
-				iter.remove();
-				break;
+		String name = scriptFile.getName();
+		List<ResourceFile> files = scriptNameToFilesMap.get(name);
+		if (files != null) {
+			Iterator<ResourceFile> iter = files.iterator();
+			while (iter.hasNext()) {
+				ResourceFile rFile = iter.next();
+				if (scriptFile.equals(rFile)) {
+					iter.remove();
+					break;
+				}
+			}
+			if (files.isEmpty()) {
+				scriptNameToFilesMap.remove(name);
 			}
 		}
 	}
 
 	/**
-	 * Returns an iterator over all script info objects.
-	 * @return an iterator over all script info objects
+	 * get all scripts
+	 * @return an iterable over all script info objects
 	 */
-	public static Iterator<ScriptInfo> getScriptInfoIterator() {
-		return scriptFileToInfoMap.values().iterator();
+	public static Iterable<ScriptInfo> getScriptInfoIterable() {
+		return () -> scriptFileToInfoMap.values().iterator();
 	}
 
 	/**
@@ -284,7 +267,8 @@ public class GhidraScriptUtil {
 		scriptFileToInfoMap.put(scriptFile, info);
 		String name = scriptFile.getName();
 
-		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(name);
+		List<ResourceFile> matchingFiles =
+			scriptNameToFilesMap.computeIfAbsent(name, (n) -> new ArrayList<>());
 		matchingFiles.add(scriptFile);
 		markAnyDuplicates(matchingFiles);
 
@@ -449,14 +433,6 @@ public class GhidraScriptUtil {
 		return getScriptInfo(file); // this will cache the created info
 	}
 
-	public static List<ResourceFile> getAllScripts() {
-		List<ResourceFile> scriptList = new ArrayList<>();
-		for (ResourceFile dirPath : scriptBundlePaths) {
-			updateAvailableScriptFilesForDirectory(scriptList, dirPath);
-		}
-		return scriptList;
-	}
-
 	private static void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptAccumulator,
 			ResourceFile directory) {
 		ResourceFile[] files = directory.listFiles();
@@ -492,10 +468,14 @@ public class GhidraScriptUtil {
 	 */
 	public static ScriptInfo getExistingScriptInfo(String scriptName) {
 		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(scriptName);
-		if (matchingFiles.isEmpty()) {
+		if (matchingFiles == null || matchingFiles.isEmpty()) {
 			return null;
 		}
 		return scriptFileToInfoMap.get(matchingFiles.get(0));
+	}
+
+	public static ScriptInfo getExistingScriptInfo(ResourceFile script) {
+		return scriptFileToInfoMap.get(script);
 	}
 
 	/**
@@ -537,7 +517,6 @@ public class GhidraScriptUtil {
 	 */
 	public static void refreshDuplicates() {
 		scriptNameToFilesMap.values().forEach(files -> {
-
 			boolean isDuplicate = files.size() > 1;
 			files.forEach(file -> scriptFileToInfoMap.get(file).setDuplicate(isDuplicate));
 		});
