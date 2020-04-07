@@ -2068,8 +2068,7 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
 :CALL rm32      is vexMode=0 & addrsize=0 & opsize=1 & byte=0xff; rm32 & reg_opcode=2 ...   { push24(&:4 inst_next); call [rm32]; }
 :CALL rm32      is vexMode=0 & addrsize=1 & opsize=1 & byte=0xff; rm32 & reg_opcode=2 ...   { push44(&:4 inst_next); call [rm32]; }
 @ifdef IA64
-:CALL rm64      is vexMode=0 & addrsize=2 & opsize=1 & byte=0xff; rm64 & reg_opcode=2 ...   { push88(&:8 inst_next); call [rm64]; }
-:CALL rm64      is vexMode=0 & addrsize=2 & opsize=2 & byte=0xff; rm64 & reg_opcode=2 ...   { push88(&:8 inst_next); call [rm64]; }
+:CALL rm64      is vexMode=0 & addrsize=2 & (opsize=1 | opsize=2) & byte=0xff; rm64 & reg_opcode=2 ...   { push88(&:8 inst_next); call [rm64]; }
 @endif
 
 :CALLF ptr1616      is vexMode=0 & addrsize=0 & opsize=0 & byte=0x9a; ptr1616           { push22(CS); build ptr1616; push22(&:2 inst_next); call ptr1616; }
