@@ -36,7 +36,7 @@ for /f "tokens=2" %%# in ("%cmdcmdline%") do if /i "%%#" equ "/c" set DOUBLE_CLI
 :: '% ~' dereferences the value in param 0
 :: 'd' - drive
 :: 'p' - path (without filename)
-set SUPPORT_DIR=%~dp0
+set "SUPPORT_DIR=%~dp0"
 
 ::
 :: Parse arguments
@@ -63,20 +63,20 @@ goto showUsage
 ::
 :: Production Environment
 ::
-set INSTALL_DIR=%SUPPORT_DIR%..\
-set CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\lib\Utility.jar
-set LS_CPATH=%SUPPORT_DIR%LaunchSupport.jar
-set DEBUG_LOG4J=%SUPPORT_DIR%debug.log4j.xml
+set "INSTALL_DIR=%SUPPORT_DIR%..\"
+set "CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\lib\Utility.jar"
+set "LS_CPATH=%SUPPORT_DIR%LaunchSupport.jar"
+set "DEBUG_LOG4J=%SUPPORT_DIR%debug.log4j.xml"
 
 if exist "%INSTALL_DIR%Ghidra" goto continue2
 
 ::
 :: Development Environment
 ::
-set INSTALL_DIR=%INSTALL_DIR%..\..\..\
-set CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\bin\main
-set LS_CPATH=%INSTALL_DIR%GhidraBuild\LaunchSupport\bin\main
-set DEBUG_LOG4J=%INSTALL_DIR%Ghidra\RuntimeScripts\Common\support\debug.log4j.xml
+set "INSTALL_DIR=%INSTALL_DIR%..\..\..\"
+set "CPATH=%INSTALL_DIR%Ghidra\Framework\Utility\bin\main"
+set "LS_CPATH=%INSTALL_DIR%GhidraBuild\LaunchSupport\bin\main"
+set "DEBUG_LOG4J=%INSTALL_DIR%Ghidra\RuntimeScripts\Common\support\debug.log4j.xml"
 
 :continue2
 
