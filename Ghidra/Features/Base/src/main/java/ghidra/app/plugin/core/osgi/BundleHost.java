@@ -34,7 +34,7 @@ import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScriptUtil;
+import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -351,8 +351,21 @@ public class BundleHost {
 		}
 	}
 
+	public static Path getCompiledBundlesDir() {
+		return getOsgiDir().resolve("compiled-bundles");
+	}
+
+	public static Path getOsgiDir() {
+		Path usersettings = Application.getUserSettingsDirectory().toPath();
+		return usersettings.resolve("osgi");
+	}
+
+	static public Path getCacheDir() {
+		return BundleHost.getOsgiDir().resolve("felixcache");
+	}
+
 	private String makeCacheDir() throws IOException {
-		Path cache_dir = GhidraScriptUtil.getOsgiDir().resolve("felixcache");
+		Path cache_dir = getCacheDir();
 		Files.createDirectories(cache_dir);
 		return cache_dir.toAbsolutePath().toString();
 	}

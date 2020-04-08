@@ -975,7 +975,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected void cleanupOldTestFiles() throws IOException {
 		// remove the compiled bundles directory so that any scripts we use will be recompiled
-		wipe(GhidraScriptUtil.getCompiledBundlesDir());
+		wipe(BundleHost.getCompiledBundlesDir());
 
 		String myTestName = super.testName.getMethodName();
 

@@ -80,7 +80,7 @@ public class GhidraSourceBundle implements GhidraBundle {
 		this.bundleHost = bundleHost;
 		this.sourceDir = sourceDirectory;
 		this.symbolicName = BundleHost.getSymbolicNameFromSourceDir(sourceDir);
-		this.binDir = GhidraScriptUtil.getCompiledBundlesDir().resolve(symbolicName);
+		this.binDir = BundleHost.getCompiledBundlesDir().resolve(symbolicName);
 
 		this.bundleLoc = "reference:file://" + getBinDir().toAbsolutePath().normalize().toString();
 
@@ -95,7 +95,7 @@ public class GhidraSourceBundle implements GhidraBundle {
 	static public Path getBindirFromScriptFile(ResourceFile sourceFile) {
 		ResourceFile tmpSourceDir = sourceFile.getParentFile();
 		String tmpSymbolicName = BundleHost.getSymbolicNameFromSourceDir(tmpSourceDir);
-		return GhidraScriptUtil.getCompiledBundlesDir().resolve(tmpSymbolicName);
+		return BundleHost.getCompiledBundlesDir().resolve(tmpSymbolicName);
 	}
 
 	public String classNameForScript(ResourceFile sourceFile) {
@@ -634,7 +634,7 @@ public class GhidraSourceBundle implements GhidraBundle {
 		// no manifest, so create one with bndtools
 		Analyzer analyzer = new Analyzer();
 		analyzer.setJar(new Jar(bindir.toFile())); // give bnd the contents
-		Stream<Object> bjars = Files.list(GhidraScriptUtil.getCompiledBundlesDir()).filter(
+		Stream<Object> bjars = Files.list(BundleHost.getCompiledBundlesDir()).filter(
 			f -> f.toString().endsWith(".jar")).map(f -> {
 				try {
 					return new Jar(f.toFile());

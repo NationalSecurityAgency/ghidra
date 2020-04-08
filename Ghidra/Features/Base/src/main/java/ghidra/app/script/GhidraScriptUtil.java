@@ -17,11 +17,11 @@ package ghidra.app.script;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -156,15 +156,6 @@ public class GhidraScriptUtil {
 		return scriptList;
 	}
 
-	public static Path getOsgiDir() {
-		Path usersettings = Application.getUserSettingsDirectory().toPath();
-		return usersettings.resolve("osgi");
-	}
-
-	public static Path getCompiledBundlesDir() {
-		return getOsgiDir().resolve("compiled-bundles");
-	}
-
 	/**
 	 * Returns the list of exploded bundle directories
 	 * @return the list
@@ -174,7 +165,7 @@ public class GhidraScriptUtil {
 	@Deprecated
 	public static List<ResourceFile> getExplodedCompiledSourceBundlePaths() {
 		try {
-			return Files.list(getOsgiDir()).filter(Files::isDirectory).map(
+			return Files.list(BundleHost.getOsgiDir()).filter(Files::isDirectory).map(
 				x -> new ResourceFile(x.toFile())).collect(Collectors.toList());
 		}
 		catch (IOException e) {
