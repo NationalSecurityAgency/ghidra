@@ -245,15 +245,8 @@ gradle prepDev
 The `prepDev` tasks primarily include generating some source, indexing our built-in help, and unpacking some dependencies.
 
 ### Import Eclipse Projects
-To develop/modify Ghidra, import Ghidra into Eclipse using the integrated BuildShip plugin.
-Select __File -> Import__, expand Gradle, and select "Existing Gradle Project."
-Select the root of the source repo as the root Gradle project.
-Be sure to select Gradle 5.0, or point it at your local installation.
-You may see build path errors until the environment is properly prepared, as described below.
-
-*Alternatively*, you may have Gradle generate the Eclipse projects and import those instead.
-This is the way to go if you'd prefer not to activate Gradle's BuildShip plugin.
-From the project root:
+To develop/modify Ghidra, you must first use Gradle to generate Eclipse projects.  From the project 
+root:
 
 ```bash
 gradle eclipse
