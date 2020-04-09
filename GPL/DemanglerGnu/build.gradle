@@ -34,6 +34,10 @@ model {
 			architecture 'x86_64'
 			operatingSystem 'linux'
 		}
+		linux_aarch64 {
+			architecture 'aarch64'
+			operatingSystem 'linux'
+		}
 		osx64 {
 			architecture 'x86_64'
 			operatingSystem 'osx'
@@ -99,6 +103,7 @@ model {
 		demangler_gnu_v2_33_1(NativeExecutableSpec) {
 			targetPlatform "win64"
 			targetPlatform "linux64"
+			targetPlatform "linux_aarch64"
 			targetPlatform "osx64"
 			sources {
 				c {
@@ -118,6 +123,7 @@ model {
 		demangler_gnu_v2_24(NativeExecutableSpec) {
 			targetPlatform "win64"
 			targetPlatform "linux64"
+			targetPlatform "linux_aarch64"
 			targetPlatform "osx64"
 			sources {
 				c {

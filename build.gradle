@@ -77,7 +77,7 @@ else {
  *		project.OS_NAMES.each {...}
  ****************************************************************************/
 
-project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64"])
+project.ext.set("OS_NAMES", ["osx64", "win32", "win64", "linux64", "linux_aarch64"])
 
 /****************************************************************************
  * Establish Visual Studio configuration environment for Windows native builds
@@ -264,6 +264,7 @@ String getCurrentPlatformName() {
 		
 	boolean isX86_32 = archName.equals("x86") || archName.equals("i386");
 	boolean isX86_64 = archName.equals("x86_64") || archName.equals("amd64");
+	boolean isaarch64 = archName.equals("arm64") || archName.equals("aarch64");
 
 	if (osName.startsWith("Windows")) {
 		if (isX86_32) {
@@ -276,6 +277,8 @@ String getCurrentPlatformName() {
 	else if (osName.startsWith("Linux")) {
 		if (isX86_64) {
 			return 'linux64'
+		} else if (isaarch64)  {
+			return 'linux_aarch64'
 		}
 	}
 	else if (osName.startsWith("Mac OS X")) {
