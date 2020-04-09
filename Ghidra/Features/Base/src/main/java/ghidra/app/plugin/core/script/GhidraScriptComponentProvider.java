@@ -240,6 +240,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 				action.setKeyBindingData(new KeyBindingData(ks));
 			}
 
+			assert !GhidraScriptUtil.containsMetadata(
+				renameFile) : "renamed script already has metadata";
+			GhidraScriptUtil.getScriptInfo(renameFile);
+
 			tableModel.switchScript(script, renameFile);
 			setSelectedScript(renameFile);
 		}
@@ -384,7 +388,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 				new GhidraScriptEditorComponentProvider(plugin, this, newFile);
 			editorMap.put(newFile, editor);
 
+			// create the ScriptInfo object now, before the TableModelEvent handlers
+			// attempt to use it.
+			assert !GhidraScriptUtil.containsMetadata(newFile) : "new source already has metadata?";
+			GhidraScriptUtil.getScriptInfo(newFile);
+
 			tableModel.insertScript(newFile);
+
 			int index = getScriptIndex(newFile);
 
 			if (index >= 0) {
@@ -542,6 +552,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 
 		// note: do this after the loop to prevent a flurry of table model update events
+		// scriptinfo was created in updateAvailableScriptfilesForDirectory
 		tableModel.insertScripts(scriptAccumulator);
 
 		for (ResourceFile file : scriptsToRemove) {
@@ -566,7 +577,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 					// model.insertScript(element);
 					scriptAccumulator.add(scriptFile);
 				}
-				scriptRoot.insert(scriptFile);
+				// new ScriptInfo objects are created on performRefresh, e.g. on startup. Other
+				// refresh operations might have old infos.
+				// assert !GhidraScriptUtil.containsMetadata(scriptFile): "info already exists for script during refresh";
+				ScriptInfo info = GhidraScriptUtil.getScriptInfo(scriptFile);
+				String[] categoryPath = info.getCategory();
+				scriptRoot.insert(categoryPath);
 			}
 			scriptsToRemove.remove(scriptFile);
 		}
@@ -579,7 +595,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		for (ResourceFile script : scripts) {
 			// First get the ScriptInfo object and refresh, which will ensure any
 			// info data (ie: script icons) will be reloaded.
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
+			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
 			info.refresh();
 
 			ScriptAction scriptAction = actionManager.get(script);
@@ -693,6 +709,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		GhidraScriptEditorComponentProvider editor = editorMap.get(oldScript);
 		editorMap.put(newScript, editor);
 		editorMap.remove(oldScript);
+		// create corresponding info before inserting in table
+		GhidraScriptUtil.getScriptInfo(newScript);
 		tableModel.insertScript(newScript);
 	}
 
@@ -761,7 +779,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 					GhidraSourceBundle gsb = (GhidraSourceBundle) sb;
 					for (ResourceFile sf : gsb.getNewSources()) {
 						if (GhidraScriptUtil.containsMetadata(sf)) {
-							ScriptInfo info = GhidraScriptUtil.getScriptInfo(sf);
+							ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(sf);
 							BuildFailure e = gsb.getErrors(sf);
 							info.setCompileErrors(e != null);
 						}
@@ -906,11 +924,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		// the selected script has been changed, update the description panel
 		updateDescriptionPanel();
-		updateCategoryTree(script);
+
+		ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
+		updateCategoryTree(info.getCategory());
 	}
 
-	private void updateCategoryTree(ResourceFile script) {
-		scriptRoot.insert(script);
+	private void updateCategoryTree(String[] categoryPath) {
+		scriptRoot.insert(categoryPath);
 		trimUnusedTreeCategories();
 	}
 
@@ -922,7 +942,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 			@Override
 			public List<String> transform(ResourceFile script) {
-				ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
+				ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
 				list.clear();
 				list.add(info.getName());
 				list.add(info.getDescription());
@@ -953,20 +973,22 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void updateDescriptionPanel() {
-		descriptionTextPane.setText("");
+		String text = "Error! no script info!";
 		ResourceFile script = getSelectedScript();
-		if (script == null) {
-			return;
+		if (script != null) {
+			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
+			if (info != null) {
+				text = info.getToolTipText();
+			}
 		}
+		final String ftext = text;
 
-		ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
-		if (info != null) {
-			descriptionTextPane.setText(info.getToolTipText());
-
-			// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
-			// which will overwrite our location setting
-			SwingUtilities.invokeLater(() -> descriptionTextPane.setCaretPosition(0));
-		}
+		// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
+		// which will overwrite our location setting
+		SwingUtilities.invokeLater(() -> {
+			descriptionTextPane.setText(ftext);
+			descriptionTextPane.setCaretPosition(0);
+		});
 	}
 
 	private int getModelRowForViewRow(int viewRow) {
@@ -1137,9 +1159,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		@Override
 		public boolean acceptsRow(ResourceFile script) {
 			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
-			if (info == null) {
-				return false;
-			}
 			String[] category = getSelectedCategoryPath();
 
 			if (category == null) { // root node

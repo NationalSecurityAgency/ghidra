@@ -238,7 +238,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
 
 				ResourceFile file = (ResourceFile) data.getRowObject();
-				ScriptInfo info = GhidraScriptUtil.getScriptInfo(file);
+				ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(file);
 
 				label.setText(null);
 				label.setToolTipText(null);
@@ -279,7 +279,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public ImageIcon getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(rowObject);
+			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(rowObject);
 			if (info.isCompileErrors() || info.isDuplicate()) {
 				return ERROR_IMG;
 			}
@@ -329,7 +329,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public String getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(rowObject);
+			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(rowObject);
 			return info.getDescription();
 		}
 
@@ -401,7 +401,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public KeyBindingsInfo getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(rowObject);
+			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(rowObject);
 			KeyStroke actionKeyStroke = provider.getActionManager().getKeyBinding(rowObject);
 			boolean isActionBinding = false;
 			KeyStroke keyBinding = info.getKeyBinding();
@@ -459,7 +459,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public String getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(rowObject);
+			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(rowObject);
 			return getCategoryString(info);
 		}
 

@@ -129,8 +129,10 @@ class GhidraScriptActionManager {
 				continue;
 			}
 			ResourceFile scriptFile = action.getScript();
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(scriptFile);
+			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(scriptFile);
 			if (info == null) {
+				Msg.showError(this, provider.getComponent(), "Bad state?",
+					"action associated with a script that has no info");
 				continue;//bad state?
 			}
 

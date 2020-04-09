@@ -200,16 +200,6 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Returns true if a ScriptInfo object exists for
-	 * the specified script file.
-	 * @param scriptFile the script file
-	 * @return true if a ScriptInfo object exists
-	 */
-	public static boolean containsMetadata(ResourceFile scriptFile) {
-		return scriptFileToInfoMap.containsKey(scriptFile);
-	}
-
-	/**
 	 * Removes the ScriptInfo object for the specified file
 	 * @param scriptFile the script file
 	 */
@@ -242,7 +232,11 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Returns the script info object for the specified script file
+	 * Returns the script info object for the specified script file,
+	 * construct a new one if necessary.
+	 * 
+	 * Only call this method if you expect to be creating ScriptInfo objects.
+	 * Prefer getExistingScriptInfo instead. 
 	 * 
 	 * @param scriptFile the script file
 	 * @return the script info object for the specified script file
@@ -266,9 +260,67 @@ public class GhidraScriptUtil {
 		return info;
 	}
 
+	/**
+	 * Returns true if a ScriptInfo object exists for
+	 * the specified script file.
+	 * @param scriptFile the script file
+	 * @return true if a ScriptInfo object exists
+	 */
+	public static boolean containsMetadata(ResourceFile scriptFile) {
+		return scriptFileToInfoMap.containsKey(scriptFile);
+	}
+
+	public static ScriptInfo getExistingScriptInfo(ResourceFile script) {
+		ScriptInfo info = scriptFileToInfoMap.get(script);
+		if (info == null) {
+			String s = (script.exists() ? "" : "non") + "existing script" + script.toString() +
+				" is missing info we thought was there";
+			System.err.println(s);
+			Msg.showError(GhidraScriptUtil.class, null, "ScriptInfo lookup", s);
+		}
+		return info;
+	}
+
+	/**
+	 * Returns the existing script info for the given name.  The script environment limits 
+	 * scripts such that names are unique.  If this method returns a non-null value, then the 
+	 * name given name is taken.
+	 * 
+	 * @param scriptName the name of the script for which to get a ScriptInfo
+	 * @return a ScriptInfo matching the given name; null if no script by that name is known to
+	 *         the script manager
+	 */
+	public static ScriptInfo getExistingScriptInfo(String scriptName) {
+		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(scriptName);
+		if (matchingFiles == null || matchingFiles.isEmpty()) {
+			return null;
+		}
+		return scriptFileToInfoMap.get(matchingFiles.get(0));
+	}
+
+	/**
+	 * Looks through all of the current {@link ScriptInfo}s to see if one already exists with 
+	 * the given name.
+	 * @param scriptName The name to check
+	 * @return true if the name is not taken by an existing {@link ScriptInfo}.
+	 */
+	public static boolean alreadyExists(String scriptName) {
+		return getExistingScriptInfo(scriptName) != null;
+	}
+
 	private static void markAnyDuplicates(List<ResourceFile> files) {
 		boolean isDuplicate = files.size() > 1;
 		files.forEach(f -> scriptFileToInfoMap.get(f).setDuplicate(isDuplicate));
+	}
+
+	/**
+	 * Updates every known script's duplicate value. 
+	 */
+	public static void refreshDuplicates() {
+		scriptNameToFilesMap.values().forEach(files -> {
+			boolean isDuplicate = files.size() > 1;
+			files.forEach(file -> scriptFileToInfoMap.get(file).setDuplicate(isDuplicate));
+		});
 	}
 
 	/**
@@ -421,7 +473,7 @@ public class GhidraScriptUtil {
 			return null;
 		}
 
-		return getScriptInfo(file); // this will cache the created info
+		return getExistingScriptInfo(file); // this will cache the created info
 	}
 
 	private static void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptAccumulator,
@@ -436,37 +488,6 @@ public class GhidraScriptUtil {
 				scriptAccumulator.add(scriptFile);
 			}
 		}
-	}
-
-	/**
-	 * Looks through all of the current {@link ScriptInfo}s to see if one already exists with 
-	 * the given name.
-	 * @param scriptName The name to check
-	 * @return true if the name is not taken by an existing {@link ScriptInfo}.
-	 */
-	public static boolean alreadyExists(String scriptName) {
-		return getExistingScriptInfo(scriptName) != null;
-	}
-
-	/**
-	 * Returns the existing script info for the given name.  The script environment limits 
-	 * scripts such that names are unique.  If this method returns a non-null value, then the 
-	 * name given name is taken.
-	 * 
-	 * @param scriptName the name of the script for which to get a ScriptInfo
-	 * @return a ScriptInfo matching the given name; null if no script by that name is known to
-	 *         the script manager
-	 */
-	public static ScriptInfo getExistingScriptInfo(String scriptName) {
-		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(scriptName);
-		if (matchingFiles == null || matchingFiles.isEmpty()) {
-			return null;
-		}
-		return scriptFileToInfoMap.get(matchingFiles.get(0));
-	}
-
-	public static ScriptInfo getExistingScriptInfo(ResourceFile script) {
-		return scriptFileToInfoMap.get(script);
 	}
 
 	/**
@@ -501,16 +522,6 @@ public class GhidraScriptUtil {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Updates every known script's duplicate value. 
-	 */
-	public static void refreshDuplicates() {
-		scriptNameToFilesMap.values().forEach(files -> {
-			boolean isDuplicate = files.size() > 1;
-			files.forEach(file -> scriptFileToInfoMap.get(file).setDuplicate(isDuplicate));
-		});
 	}
 
 }

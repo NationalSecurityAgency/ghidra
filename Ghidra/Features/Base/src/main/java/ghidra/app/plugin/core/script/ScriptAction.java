@@ -90,7 +90,7 @@ class ScriptAction extends DockingAction {
 		}
 
 		// check to see if we have a fallback value         
-		ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
+		ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
 		KeyStroke metadataKeyStroke = info.getKeyBinding();
 		if (metadataKeyStroke == null) {
 			// there is no fallback value; the current keybinding data is what we want
@@ -105,7 +105,7 @@ class ScriptAction extends DockingAction {
 		// we have a user defined keybinding if the keystroke for the action differs from 
 		// that which is defined in the metadata of the script
 		KeyStroke actionKeyStroke = keyBindingData.getKeyBinding();
-		ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
+		ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
 		KeyStroke metadataKeyBinding = info.getKeyBinding();
 		isUserDefinedKeyBinding = !SystemUtilities.isEqual(actionKeyStroke, metadataKeyBinding);
 	}
@@ -119,7 +119,7 @@ class ScriptAction extends DockingAction {
 	}
 
 	void refresh() {
-		ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
+		ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
 		KeyStroke stroke = info.getKeyBinding();
 		if (!isUserDefinedKeyBinding) {
 			setKeyBindingData(new KeyBindingData(stroke));

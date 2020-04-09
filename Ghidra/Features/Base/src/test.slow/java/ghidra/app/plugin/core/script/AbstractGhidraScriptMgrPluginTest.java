@@ -47,7 +47,7 @@ import generic.jar.ResourceFile;
 import generic.test.TestUtils;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
-import ghidra.app.plugin.core.osgi.BundleStatusProvider;
+import ghidra.app.plugin.core.osgi.*;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.Application;
@@ -60,7 +60,6 @@ import ghidra.util.*;
 import ghidra.util.datastruct.FixedSizeStack;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import util.CollectionUtils;
@@ -76,7 +75,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected ConsoleService console;
 
 	protected Program program;
-	protected GhidraTable scriptTable;
+	protected DraggableScriptTable scriptTable;
 	protected JTextPane consoleTextPane;
 	protected GhidraScriptEditorComponentProvider editor;
 	protected JTextArea editorTextArea;
@@ -87,7 +86,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	@Before
 	public void setUp() throws Exception {
-
 		setErrorGUIEnabled(false);
 
 		// change the eclipse port so that Eclipse doesn't try to edit the script when
@@ -119,16 +117,20 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 			(JTextPane) findComponentByName(consoleProvider.getComponent(), "CONSOLE");
 		assertNotNull(consoleTextPane);
 
-		scriptTable = (GhidraTable) findComponentByName(provider.getComponent(), "SCRIPT_TABLE");
+		scriptTable =
+			(DraggableScriptTable) findComponentByName(provider.getComponent(), "SCRIPT_TABLE");
 		assertNotNull(scriptTable);
 
-		// this clears out the static map that accumulates values between tests
-		GhidraScriptUtil.clearMetadata();
-		runSwing(() -> provider.refresh());
+		clearConsole();
 
 		cleanupOldTestFiles();
 
-		clearConsole();
+		// synchronize GhidraScriptUtil static metadata with GUI metadata
+		runSwing(() -> provider.refresh());
+
+		waitForSwing();
+
+		System.err.printf("===== Starting %s ======\n", testName.getMethodName());
 	}
 
 	protected Program buildProgram() throws Exception {
@@ -156,15 +158,16 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	@After
 	public void tearDown() throws Exception {
-
 		closeAllWindows();
 		waitForSwing();
 
-		if (testScriptFile != null) {
-			testScriptFile.delete();
+		if (testScriptFile != null && testScriptFile.exists()) {
+			deleteFile(testScriptFile);
+			testScriptFile = null;
 		}
-
 		wipeUserScripts();
+
+		BundleHost.getInstance().removeAllListeners();
 
 		env.dispose();
 	}
@@ -628,6 +631,15 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		waitForSwing();
 	}
 
+	protected void addScriptDirectory(ResourceFile scriptDir) {
+		provider.enableScriptDirectory(scriptDir);
+
+		@SuppressWarnings("unchecked")
+		List<ResourceFile> scriptBundlePaths =
+			(List<ResourceFile>) getInstanceField("scriptBundlePaths", GhidraScriptUtil.class);
+		scriptBundlePaths.add(scriptDir);
+	}
+
 	protected String runScript(String scriptName) throws Exception {
 		clearConsole();
 
@@ -973,6 +985,46 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	}
 
+	/**
+	 * rip out GUI listeners from bundle and OSGI components
+	 * use as follows:
+	 * 
+	 * <pre>{@code
+	 *   try (var rewire = unwireGUI()) {
+	 *     // ... test code ...
+	 *   }
+	 * }</pre>
+	 * 
+	 * @return an undo closure which puts the listeners back in place
+	 */
+	@SuppressWarnings("unchecked")
+	protected AutoCloseable unwireGUI() {
+		waitForSwing();
+		BundleStatusProvider bundleStatusProvider =
+			(BundleStatusProvider) TestUtils.getInstanceField("bundleStatusProvider", provider);
+		BundleStatusModel bundleStatusModel = bundleStatusProvider.getModel();
+
+		List<BundleStatusListener> bundleStatusListeners =
+			(List<BundleStatusListener>) TestUtils.getInstanceField("bundleStatusListeners",
+				bundleStatusModel);
+
+		List<BundleStatusListener> storedBundleStatusListeners =
+			new ArrayList<>(bundleStatusListeners);
+		bundleStatusListeners.clear();
+
+		List<OSGiListener> osgiListeners =
+			(List<OSGiListener>) TestUtils.getInstanceField("osgiListeners",
+				BundleHost.getInstance());
+		ArrayList<OSGiListener> storedOsgiListeners = new ArrayList<>(osgiListeners);
+		osgiListeners.clear();
+
+		return () -> {
+			waitForSwing();
+			bundleStatusListeners.addAll(storedBundleStatusListeners);
+			osgiListeners.addAll(storedOsgiListeners);
+		};
+	}
+
 	protected void cleanupOldTestFiles() throws IOException {
 		// remove the compiled bundles directory so that any scripts we use will be recompiled
 		wipe(BundleHost.getCompiledBundlesDir());
@@ -983,6 +1035,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		BundleStatusProvider bundleStatusProvider =
 			(BundleStatusProvider) TestUtils.getInstanceField("bundleStatusProvider", provider);
 		List<ResourceFile> paths = bundleStatusProvider.getModel().getEnabledPaths();
+
 		for (ResourceFile path : paths) {
 			File file = path.getFile(false);
 			File[] listFiles = file.listFiles();
@@ -994,12 +1047,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 				String name = dirFile.getName();
 				if (name.startsWith("NewScript") || name.startsWith("Temp") ||
 					name.startsWith(myTestName)) {
-					dirFile.delete();
+					deleteFile(new ResourceFile(dirFile));
 				}
 			}
 		}
-
-		refreshProvider();
 	}
 
 	protected void closeScriptProvider() {
@@ -1211,7 +1262,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected String runScriptAndGetOutput(ResourceFile scriptFile) throws Exception {
-
 		GhidraScriptProvider scriptProvider = GhidraScriptUtil.getProvider(scriptFile);
 		GhidraScript script =
 			scriptProvider.getScriptInstance(scriptFile, new PrintWriter(System.err));

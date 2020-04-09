@@ -146,15 +146,18 @@ public class GhidraSourceBundle implements GhidraBundle {
 
 	/**
 	 * update buildReqs based on \@imports tag in java files from the default package
+	 * 
 	 * @throws GhidraBundleException on failure to parse the \@imports tag
 	 */
 	private void updateRequirementsFromMetadata() throws GhidraBundleException {
-		// parse metadata from all Java source in sourceDir
 		buildReqs.clear();
 		req2file.clear();
 
 		for (ResourceFile rf : sourceDir.listFiles()) {
 			if (rf.getName().endsWith(".java")) {
+				// without GhidraScriptComponentProvider.updateAvailableScriptFilesForDirectory, or GhidraScriptComponentProvider.newScript
+				// this might be the earliest need for ScriptInfo, so allow construction.
+
 				// NB: ScriptInfo will update field values if lastModified has changed since last time they were computed
 				ScriptInfo si = GhidraScriptUtil.getScriptInfo(rf);
 				String imps = si.getImports();

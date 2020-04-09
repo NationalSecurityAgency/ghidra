@@ -39,6 +39,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
 public class BundleHost {
+	protected static final boolean DUMP_TO_STDERR = false;
 	// XXX ScriptProviders don't have any way to access services or other way to access system wide resources
 	static private BundleHost _instance;
 
@@ -302,7 +303,9 @@ public class BundleHost {
 
 			@Override
 			public void frameworkEvent(FrameworkEvent event) {
-				System.err.printf("%s %s\n", event.getBundle(), event);
+				if (DUMP_TO_STDERR) {
+					System.err.printf("%s %s\n", event.getBundle(), event);
+				}
 			}
 		});
 
@@ -318,8 +321,10 @@ public class BundleHost {
 					type = "unregistering";
 				}
 
-				System.err.printf("%s %s from %s\n", event.getSource(), type,
-					event.getServiceReference().getBundle().getLocation());
+				if (DUMP_TO_STDERR) {
+					System.err.printf("%s %s from %s\n", event.getSource(), type,
+						event.getServiceReference().getBundle().getLocation());
+				}
 
 			}
 		});
@@ -327,9 +332,11 @@ public class BundleHost {
 			@Override
 			public void bundleChanged(BundleEvent event) {
 				Bundle b = event.getBundle();
-				String n = b.getSymbolicName();
-				String l = b.getLocation();
-				System.err.printf("%s %s from %s\n", getEventTypeString(event), n, l);
+				if (DUMP_TO_STDERR) {
+					String n = b.getSymbolicName();
+					String l = b.getLocation();
+					System.err.printf("%s %s from %s\n", getEventTypeString(event), n, l);
+				}
 				switch (event.getType()) {
 					case BundleEvent.STARTED:
 						fireBundleActivationChange(b, true);
@@ -418,7 +425,6 @@ public class BundleHost {
 		FrameworkWiring fw = felix.adapt(FrameworkWiring.class);
 		LinkedList<Bundle> dependents =
 			new LinkedList<Bundle>(fw.getDependencyClosure(Collections.singleton(b)));
-		System.err.printf("%s has %d dependendts\n", b.getSymbolicName(), dependents.size());
 		while (!dependents.isEmpty()) {
 			b = dependents.pop();
 			try {
@@ -559,6 +565,12 @@ public class BundleHost {
 	public void removeListener(OSGiListener osgiListener) {
 		synchronized (osgiListeners) {
 			osgiListeners.remove(osgiListener);
+		}
+	}
+
+	public void removeAllListeners() {
+		synchronized (osgiListeners) {
+			osgiListeners.clear();
 		}
 	}
 

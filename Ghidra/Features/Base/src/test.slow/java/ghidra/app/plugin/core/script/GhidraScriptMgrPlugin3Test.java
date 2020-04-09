@@ -161,7 +161,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 		assertEquals(rowCount + 1, getRowCount());
 
-		newScript.delete();
+		deleteFile(newScript);
 	}
 
 	@Test
@@ -184,7 +184,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		assertCategoryInTree(newCategory);
 		assertCategoryNotInTree(oldCategory);
 
-		newScript.delete();
+		deleteFile(newScript);
 	}
 
 	@Test
@@ -208,7 +208,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		assertCategoryInTree(newCategory);
 		assertCategoryNotInTree(oldCategory);
 
-		newScript.delete();
+		deleteFile(newScript);
 	}
 
 	@Test
@@ -394,6 +394,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		chooseDiscaredEditorChanges();
 
 		assertFalse("Editor not closed after discarding changes", editor.isVisible());
+
 	}
 
 	@Test

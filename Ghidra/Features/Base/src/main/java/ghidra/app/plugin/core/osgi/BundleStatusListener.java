@@ -16,6 +16,9 @@
  */
 package ghidra.app.plugin.core.osgi;
 
+/**
+ * events thrown by BundleStatusModel component
+ */
 public interface BundleStatusListener {
 
 	/**
