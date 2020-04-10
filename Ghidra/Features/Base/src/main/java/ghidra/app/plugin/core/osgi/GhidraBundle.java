@@ -9,10 +9,18 @@ import org.osgi.framework.wiring.BundleRequirement;
 
 import generic.jar.ResourceFile;
 
-public interface GhidraBundle {
+public abstract class GhidraBundle {
 
-	enum Type {
-		BndScript, Jar, SourceDir, INVALID
+	protected final ResourceFile path;
+	protected final BundleHost bundleHost;
+	protected boolean enabled;
+	protected boolean systemBundle;
+
+	GhidraBundle(BundleHost bundleHost, ResourceFile path, boolean enabled, boolean systemBundle) {
+		this.bundleHost = bundleHost;
+		this.path = path;
+		this.enabled = enabled;
+		this.systemBundle = systemBundle;
 	}
 
 	/**
@@ -20,24 +28,38 @@ public interface GhidraBundle {
 	 * 
 	 * @return true if anything was done
 	 */
-	boolean clean();
+	abstract boolean clean();
 
 	/**
-	 * attempt to build loadable bundle, if possible
+	 * build OSGi bundle if possible
 	 *  
 	 * @param writer console for user messages 
-	 * @return true if build was successful
-	 * @throws Exception XXX
+	 * @return true if build happened, false if already built
+	 * @throws Exception sorry, wasn't possible
 	 */
-	boolean build(PrintWriter writer) throws Exception;
+	abstract boolean build(PrintWriter writer) throws Exception;
 
-	String getBundleLoc();
+	abstract String getSummary();
 
-	Bundle getBundle() throws GhidraBundleException;
+	abstract String getBundleLoc();
 
-	Bundle install() throws GhidraBundleException;
+	abstract List<BundleRequirement> getAllReqs();
 
-	String getSummary();
+	public ResourceFile getPath() {
+		return path;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public boolean isSystemBundle() {
+		return systemBundle;
+	}
+
+	enum Type {
+		BndScript, Jar, SourceDir, INVALID
+	}
 
 	static GhidraBundle.Type getType(ResourceFile rf) {
 		if (rf.isDirectory()) {
@@ -67,6 +89,11 @@ public interface GhidraBundle {
 		return GhidraBundle.Type.INVALID;
 	}
 
-	List<BundleRequirement> getAllReqs();
+	public Bundle getBundle() {
+		return bundleHost.getBundle(getBundleLoc());
+	}
 
+	public Bundle install() throws GhidraBundleException {
+		return bundleHost.installFromLoc(getBundleLoc());
+	}
 }

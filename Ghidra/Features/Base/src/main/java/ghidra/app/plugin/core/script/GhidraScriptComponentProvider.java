@@ -134,7 +134,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void performRefresh() {
-		GhidraScriptUtil.setScriptBundlePaths(bundleStatusProvider.getModel().getEnabledPaths());
+		GhidraScriptUtil.getBundleHost().setBundlePaths(
+			bundleStatusProvider.getModel().getEnabledPaths());
 		GhidraScriptUtil.clearMetadata();
 		refresh();
 	}
@@ -1062,7 +1063,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		// pull in the just-loaded paths
 		List<ResourceFile> paths = bundleStatusProvider.getModel().getEnabledPaths();
-		GhidraScriptUtil.setScriptBundlePaths(paths);
+		GhidraScriptUtil.initializeScriptBundlePaths(paths);
 		actionManager.restoreUserDefinedKeybindings(saveState);
 		actionManager.restoreScriptsThatAreInTool(saveState);
 

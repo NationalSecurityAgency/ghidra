@@ -43,15 +43,66 @@ public class GhidraScriptUtil {
 	 */
 	public static String USER_SCRIPTS_DIR = buildUserScriptsDirectory();
 
-	private static List<ResourceFile> scriptBundlePaths = new ArrayList<>();
-
 	private static Map<ResourceFile, ScriptInfo> scriptFileToInfoMap = new HashMap<>();
 
 	private static Map<String, List<ResourceFile>> scriptNameToFilesMap = new HashMap<>();
 
-	static {
-		scriptBundlePaths = getSystemScriptPaths();
-		scriptBundlePaths.add(0, getUserScriptDirectory());
+	static BundleHost _bundleHost = BundleHost.getInstance();
+
+	public static BundleHost getBundleHost() {
+		return _bundleHost;
+	}
+
+	/**
+	 * Sets the script bundle paths
+	 * @param newPaths the new script bundle paths
+	 */
+	public static void initializeScriptBundlePaths(List<ResourceFile> newPaths) {
+		_bundleHost.setBundlePaths(new ArrayList<>(newPaths));
+	}
+
+	/**
+	 * Uses the given name to find a matching script.  This method only works because of the
+	 * limitation that all script names in Ghidra must be unique.  If the given name has multiple
+	 * script matches, then a warning will be logged.
+	 * 
+	 * @param name The name for which to find a script
+	 * @return The ScriptInfo that has the given name
+	 */
+	public static ScriptInfo findScriptByName(String name) {
+		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(name);
+		if (matchingFiles != null && !matchingFiles.isEmpty()) {
+			ScriptInfo info = scriptFileToInfoMap.get(matchingFiles.get(0));
+			if (matchingFiles.size() > 1) {
+				Msg.warn(GhidraScriptUtil.class, "Found duplicate scripts for name: " + name +
+					".  Binding to script: " + info.getSourceFile());
+			}
+			return info;
+		}
+
+		ResourceFile file = findScriptFileInPaths(_bundleHost.getBundlePaths(), name);
+		if (file == null) {
+			return null;
+		}
+
+		return getExistingScriptInfo(file); // this will cache the created info
+	}
+
+	public static List<ResourceFile> getAllScripts() {
+		List<ResourceFile> scriptList = new ArrayList<>();
+		for (ResourceFile dirPath : _bundleHost.getBundlePaths()) {
+			updateAvailableScriptFilesForDirectory(scriptList, dirPath);
+		}
+		return scriptList;
+	}
+
+	/**
+	 * Returns a list of the current script directories.
+	 * @return a list of the current script directories
+	 */
+	public static List<ResourceFile> getScriptSourceDirectories() {
+		return _bundleHost.getBundlePaths().stream().filter(ResourceFile::isDirectory).collect(
+			Collectors.toList());
 	}
 
 	/**
@@ -129,31 +180,6 @@ public class GhidraScriptUtil {
 			Msg.error(null, "Unexpected Exception: " + e.getMessage(), e);
 			return true;
 		}
-	}
-
-	/**
-	 * Returns a list of the current script directories.
-	 * @return a list of the current script directories
-	 */
-	public static List<ResourceFile> getScriptSourceDirectories() {
-		return scriptBundlePaths.stream().filter(ResourceFile::isDirectory).collect(
-			Collectors.toList());
-	}
-
-	/**
-	 * Sets the script bundle paths
-	 * @param newPaths the new script bundle paths
-	 */
-	public static void setScriptBundlePaths(List<ResourceFile> newPaths) {
-		scriptBundlePaths = new ArrayList<>(newPaths);
-	}
-
-	public static List<ResourceFile> getAllScripts() {
-		List<ResourceFile> scriptList = new ArrayList<>();
-		for (ResourceFile dirPath : scriptBundlePaths) {
-			updateAvailableScriptFilesForDirectory(scriptList, dirPath);
-		}
-		return scriptList;
 	}
 
 	/**
@@ -447,33 +473,6 @@ public class GhidraScriptUtil {
 			path = path.substring(0, innerClassIndex);
 		}
 		return path + ".java";
-	}
-
-	/**
-	 * Uses the given name to find a matching script.  This method only works because of the
-	 * limitation that all script names in Ghidra must be unique.  If the given name has multiple
-	 * script matches, then a warning will be logged.
-	 * 
-	 * @param name The name for which to find a script
-	 * @return The ScriptInfo that has the given name
-	 */
-	public static ScriptInfo findScriptByName(String name) {
-		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(name);
-		if (matchingFiles != null && !matchingFiles.isEmpty()) {
-			ScriptInfo info = scriptFileToInfoMap.get(matchingFiles.get(0));
-			if (matchingFiles.size() > 1) {
-				Msg.warn(GhidraScriptUtil.class, "Found duplicate scripts for name: " + name +
-					".  Binding to script: " + info.getSourceFile());
-			}
-			return info;
-		}
-
-		ResourceFile file = findScriptFileInPaths(scriptBundlePaths, name);
-		if (file == null) {
-			return null;
-		}
-
-		return getExistingScriptInfo(file); // this will cache the created info
 	}
 
 	private static void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptAccumulator,

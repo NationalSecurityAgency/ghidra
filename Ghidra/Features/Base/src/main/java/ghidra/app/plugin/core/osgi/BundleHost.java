@@ -34,6 +34,7 @@ import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
 import generic.jar.ResourceFile;
+import ghidra.app.script.GhidraScriptUtil;
 import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -66,20 +67,26 @@ public class BundleHost {
 		}
 	}
 
-	// XXX this should be remembered by bundlehosts's savestate
-	HashMap<ResourceFile, GhidraBundle> file2sbi = new HashMap<>();
+	HashMap<ResourceFile, GhidraBundle> bp2gb = new HashMap<>();
 
 	public GhidraBundle getGhidraBundle(ResourceFile path) {
-		return file2sbi.computeIfAbsent(path, this::createGhidraBundle);
+		return bp2gb.computeIfAbsent(path, p -> newGhidraBundle0(path, true, false));
 	}
 
-	public GhidraBundle createGhidraBundle(ResourceFile path) {
+	public GhidraBundle newGhidraBundle(ResourceFile path, boolean enabled, boolean systemBundle) {
+		GhidraBundle gb = newGhidraBundle0(path, enabled, systemBundle);
+		bp2gb.put(path, gb);
+		return gb;
+	}
+
+	private GhidraBundle newGhidraBundle0(ResourceFile path, boolean enabled,
+			boolean systemBundle) {
 		switch (GhidraBundle.getType(path)) {
 			case SourceDir:
-				return new GhidraSourceBundle(this, path);
+				return new GhidraSourceBundle(this, path, enabled, systemBundle);
 			case BndScript:
 			case Jar:
-				return new GhidraJarBundle(this, path);
+				return new GhidraJarBundle(this, path, enabled, systemBundle);
 			default:
 				break;
 		}
@@ -87,8 +94,8 @@ public class BundleHost {
 	}
 
 	// XXX consumers must clean up after themselves
-	public void removeSourceBundleInfo(ResourceFile path) {
-		file2sbi.remove(path);
+	public void removeGhidraBundle(ResourceFile path) {
+		bp2gb.remove(path);
 	}
 
 	/**
@@ -99,7 +106,6 @@ public class BundleHost {
 	 * @throws BundleException on parse failure
 	 */
 	static List<BundleRequirement> parseImports(String imports) throws BundleException {
-
 		// parse it with Felix's ManifestParser to a list of BundleRequirement objects
 		Map<String, Object> headerMap = new HashMap<>();
 		headerMap.put(Constants.IMPORT_PACKAGE, imports);
@@ -572,6 +578,21 @@ public class BundleHost {
 		synchronized (osgiListeners) {
 			osgiListeners.clear();
 		}
+	}
+
+	private List<ResourceFile> bundlePaths = new ArrayList<>();
+
+	{
+		setBundlePaths(GhidraScriptUtil.getSystemScriptPaths());
+		getBundlePaths().add(0, GhidraScriptUtil.getUserScriptDirectory());
+	}
+
+	public List<ResourceFile> getBundlePaths() {
+		return bundlePaths;
+	}
+
+	public void setBundlePaths(List<ResourceFile> bundlePaths) {
+		this.bundlePaths = bundlePaths;
 	}
 
 }

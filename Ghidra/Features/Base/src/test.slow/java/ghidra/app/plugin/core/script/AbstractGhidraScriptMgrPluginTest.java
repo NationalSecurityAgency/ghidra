@@ -636,7 +636,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		@SuppressWarnings("unchecked")
 		List<ResourceFile> scriptBundlePaths =
-			(List<ResourceFile>) getInstanceField("scriptBundlePaths", GhidraScriptUtil.class);
+			(List<ResourceFile>) getInstanceField("bundlePaths", GhidraScriptUtil.getBundleHost());
 		scriptBundlePaths.add(scriptDir);
 	}
 

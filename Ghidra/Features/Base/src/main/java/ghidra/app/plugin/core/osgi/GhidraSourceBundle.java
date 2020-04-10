@@ -50,13 +50,10 @@ import ghidra.util.Msg;
 /**
  * The SourceBundleInfo class is a cache of information for bundles built from source directories.
  */
-public class GhidraSourceBundle implements GhidraBundle {
+public class GhidraSourceBundle extends GhidraBundle {
 	public interface DiscrepencyCallback {
 		void found(ResourceFile source_file, Collection<Path> class_files) throws Throwable;
 	}
-
-	final private BundleHost bundleHost;
-	final private ResourceFile sourceDir;
 
 	final private String symbolicName;
 	final private Path binDir;
@@ -76,14 +73,14 @@ public class GhidraSourceBundle implements GhidraBundle {
 
 	// cached values parsed form @imports tags on default-package source files
 
-	public GhidraSourceBundle(BundleHost bundleHost, ResourceFile sourceDirectory) {
-		this.bundleHost = bundleHost;
-		this.sourceDir = sourceDirectory;
-		this.symbolicName = BundleHost.getSymbolicNameFromSourceDir(sourceDir);
+	public GhidraSourceBundle(BundleHost bundleHost, ResourceFile sourceDirectory, boolean enabled,
+			boolean systemBundle) {
+		super(bundleHost, sourceDirectory, enabled, systemBundle);
+
+		this.symbolicName = BundleHost.getSymbolicNameFromSourceDir(path);
 		this.binDir = BundleHost.getCompiledBundlesDir().resolve(symbolicName);
 
 		this.bundleLoc = "reference:file://" + getBinDir().toAbsolutePath().normalize().toString();
-
 	}
 
 	/**
@@ -112,7 +109,7 @@ public class GhidraSourceBundle implements GhidraBundle {
 	}
 
 	ResourceFile getSourceDir() {
-		return sourceDir;
+		return path;
 	}
 
 	Path getBinDir() {
@@ -153,7 +150,7 @@ public class GhidraSourceBundle implements GhidraBundle {
 		buildReqs.clear();
 		req2file.clear();
 
-		for (ResourceFile rf : sourceDir.listFiles()) {
+		for (ResourceFile rf : path.listFiles()) {
 			if (rf.getName().endsWith(".java")) {
 				// without GhidraScriptComponentProvider.updateAvailableScriptFilesForDirectory, or GhidraScriptComponentProvider.newScript
 				// this might be the earliest need for ScriptInfo, so allow construction.
@@ -404,16 +401,6 @@ public class GhidraSourceBundle implements GhidraBundle {
 	}
 
 	@Override
-	public Bundle install() throws GhidraBundleException {
-		return bundleHost.installFromLoc(getBundleLoc());
-	}
-
-	@Override
-	public Bundle getBundle() throws GhidraBundleException {
-		return bundleHost.getBundle(getBundleLoc());
-	}
-
-	@Override
 	public boolean clean() {
 		try {
 			Bundle b = getBundle();
@@ -434,7 +421,7 @@ public class GhidraSourceBundle implements GhidraBundle {
 
 	private ResourceFile[] correspondingBinaries(ResourceFile source) {
 		String parentPath = source.getParentFile().getAbsolutePath();
-		String relpath = parentPath.substring(sourceDir.getAbsolutePath().length());
+		String relpath = parentPath.substring(path.getAbsolutePath().length());
 		if (relpath.startsWith(File.separator)) {
 			relpath = relpath.substring(1);
 		}
@@ -475,11 +462,10 @@ public class GhidraSourceBundle implements GhidraBundle {
 		try {
 			// delete class files for which java is either newer, or no longer exists
 			Deque<ResourceFile> stack = new ArrayDeque<>();
-			stack.add(sourceDir);
+			stack.add(path);
 			while (!stack.isEmpty()) {
 				ResourceFile sd = stack.pop();
-				String relpath =
-					sd.getAbsolutePath().substring(sourceDir.getAbsolutePath().length());
+				String relpath = sd.getAbsolutePath().substring(path.getAbsolutePath().length());
 				if (relpath.startsWith(File.separator)) {
 					relpath = relpath.substring(1);
 				}

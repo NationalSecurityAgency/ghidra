@@ -204,7 +204,7 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 			paths.addAll(GhidraScriptUtil.getSystemScriptPaths());
 			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
 		}
-		GhidraScriptUtil.setScriptBundlePaths(paths);
+		GhidraScriptUtil.initializeScriptBundlePaths(paths);
 
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {

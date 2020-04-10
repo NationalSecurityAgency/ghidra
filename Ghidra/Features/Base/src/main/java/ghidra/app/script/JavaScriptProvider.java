@@ -24,12 +24,18 @@ import ghidra.app.plugin.core.osgi.*;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
-	static public GhidraSourceBundle getBundleForSource(ResourceFile sourceFile) {
+	final private BundleHost _bundleHost;
+
+	public JavaScriptProvider() {
+		_bundleHost = GhidraScriptUtil.getBundleHost();
+	}
+
+	public GhidraSourceBundle getBundleForSource(ResourceFile sourceFile) {
 		ResourceFile sourceDir = getSourceDirectoryContaining(sourceFile);
 		if (sourceDir == null) {
 			return null;
 		}
-		return (GhidraSourceBundle) BundleHost.getInstance().getGhidraBundle(sourceDir);
+		return (GhidraSourceBundle) _bundleHost.getGhidraBundle(sourceDir);
 	}
 
 	@Override
@@ -47,7 +53,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		try {
 			Bundle b = getBundleForSource(sourceFile).getBundle();
 			if (b != null) {
-				BundleHost.getInstance().deactivateSynchronously(b);
+				_bundleHost.deactivateSynchronously(b);
 			}
 		}
 		catch (GhidraBundleException | InterruptedException e) {
@@ -90,14 +96,11 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 	}
 
-	static public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
-
-		BundleHost bundleHost = BundleHost.getInstance();
-
+	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
 		GhidraSourceBundle bi = getBundleForSource(sourceFile);
 		bi.build(writer);
 		Bundle b = bi.install();
-		bundleHost.activateSynchronously(b);
+		_bundleHost.activateSynchronously(b);
 
 		String classname = bi.classNameForScript(sourceFile);
 		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
