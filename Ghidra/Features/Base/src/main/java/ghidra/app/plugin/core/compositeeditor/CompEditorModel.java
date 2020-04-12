@@ -897,8 +897,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 */
 	private boolean shiftComponentsUp(int startRowIndex, int endRowIndex) {
 		int numComps = getNumComponents();
-		if ((startRowIndex > endRowIndex) || startRowIndex <= 0 || startRowIndex >= numComps ||
-			endRowIndex <= 0 || endRowIndex >= numComps) {
+		if (startRowIndex > endRowIndex || startRowIndex <= 0 || startRowIndex >= numComps
+				|| endRowIndex >= numComps) {
 			return false;
 		}
 		DataTypeComponent comp = getComponent(startRowIndex - 1);
@@ -923,8 +923,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 */
 	private boolean shiftComponentsDown(int startRowIndex, int endRowIndex) {
 		int numComps = getNumComponents();
-		if ((startRowIndex > endRowIndex) || startRowIndex < 0 || startRowIndex >= numComps - 1 ||
-			endRowIndex < 0 || endRowIndex >= numComps - 1) {
+		if (startRowIndex > endRowIndex || startRowIndex < 0 || startRowIndex >= numComps - 1
+				|| endRowIndex >= numComps - 1) {
 			return false;
 		}
 		DataTypeComponent comp = getComponent(endRowIndex + 1);
@@ -1447,29 +1447,22 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 			else {
 				if (this.hadChanges) {
 					if (originalDataTypePath.equals(oldPath)) {
-						if (hadChanges) {
-							consideringReplacedDataType = true;
-							try {
-								String message =
-									"<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
-										" has changed outside the editor.<br>" +
-										"Discard edits & reload the " + getTypeName() + "?";
-								String title = "Reload " + getTypeName() + " Editor?";
-								int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
-									provider.getComponent(), title, message);
-								if (response == OptionDialog.OPTION_ONE) {
-									load(getOriginalComposite());
-								}
-								originalComponentsChanged();
+						consideringReplacedDataType = true;
+						try {
+							String message =
+								"<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
+									" has changed outside the editor.<br>" +
+									"Discard edits & reload the " + getTypeName() + "?";
+							String title = "Reload " + getTypeName() + " Editor?";
+							int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
+								provider.getComponent(), title, message);
+							if (response == OptionDialog.OPTION_ONE) {
+								load(getOriginalComposite());
 							}
-							finally {
-								consideringReplacedDataType = false;
-							}
+							originalComponentsChanged();
 						}
-						else {
-							load(getOriginalComposite());
-							setStatus(viewComposite.getPathName() + " changed outside the editor.",
-								false);
+						finally {
+							consideringReplacedDataType = false;
 						}
 					}
 					else {
@@ -1639,7 +1632,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		Composite oldComposite = getOriginalComposite();
 		if (oldComposite == null) {
 			hadChanges = false;
-			return hadChanges;
+			return false;
 		}
 		hadChanges = !(viewComposite.isInternallyAligned() == oldComposite.isInternallyAligned() &&
 			viewComposite.getPackingValue() == oldComposite.getPackingValue() &&

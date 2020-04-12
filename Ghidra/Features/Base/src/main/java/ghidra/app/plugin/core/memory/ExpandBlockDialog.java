@@ -62,7 +62,8 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 
 	/**
 	 * Constructor
-	 * @param parent
+	 * @param tool
+	 * @param model
 	 * @param block
 	 * @param af
 	 * @param dialogType
@@ -86,7 +87,7 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 	}
 
 	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
+	 * @see DialogComponentProvider#okCallback()
 	 */
 	@Override
 	protected void okCallback() {

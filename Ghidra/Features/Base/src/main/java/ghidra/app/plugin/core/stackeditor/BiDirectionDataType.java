@@ -36,7 +36,8 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	/**
 	 * @param name
-	 * @param length
+	 * @param negativeLength
+	 * @param positiveLength
 	 */
 	protected BiDirectionDataType(String name, int negativeLength, int positiveLength,
 			int splitOffset, DataTypeManager dtm) {

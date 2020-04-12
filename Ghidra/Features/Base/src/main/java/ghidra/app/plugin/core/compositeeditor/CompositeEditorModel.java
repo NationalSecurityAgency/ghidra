@@ -867,9 +867,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 			baseDt = comp.getDataType();
 			baseDt = DataTypeUtils.getBaseDataType(baseDt);
 		}
-		return ((baseDt != null) && !(baseDt instanceof BuiltInDataType) &&
-			!(baseDt instanceof MissingBuiltInDataType) &&
-			((baseDt instanceof Structure) || baseDt instanceof Union || baseDt instanceof Enum));
+		return !(baseDt instanceof BuiltInDataType) && (baseDt instanceof Structure
+				|| baseDt instanceof Union || baseDt instanceof Enum);
 	}
 
 	@Override
@@ -1110,12 +1109,6 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		DataTypeManager originalDTM = getOriginalDataTypeManager();
 		DataType newDt = DataTypeHelper.parseDataType(rowIndex, dtString, this, originalDTM,
 			provider.dtmService);
-		if (newDt == null) {
-			if (dt != null) {
-				throw new UsrException("No data type was specified.");
-			}
-			throw new AssertException("Can't set data type to null.");
-		}
 
 		checkIsAllowableDataType(newDt, element == null || !element.isFlexibleArrayComponent());
 

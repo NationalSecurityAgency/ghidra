@@ -91,7 +91,6 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		 * Return true if is OK to drop the transferable at the location
 		 * specified the event.
 		 * @param e event that has current state of drag and drop operation
-		 * @param data data that is being dragged
 		 */
 		@Override
 		public boolean isDropOk(DropTargetDragEvent e) {
@@ -171,10 +170,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 	/**
 	 * Set the code unit location.
 	 * @param cu code unit
-	 * @param loc location
 	 * @param opIndex operand index
-	 * @param showBlockID ID for what to show for the block name in the
-	 * operand
 	 */
 	void setCodeUnitLocation(CodeUnit cu, int opIndex, int subIndex, boolean locked) {
 		if (cu != null) {

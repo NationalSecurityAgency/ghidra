@@ -303,7 +303,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	private void enableOptions(ListSelectionModel lsm) {
 		// find out how many items are selected.
-		int numSelected = 0;
+		int numSelected;
 		if (lsm == null || lsm.isSelectionEmpty()) {
 			numSelected = 0;
 		}

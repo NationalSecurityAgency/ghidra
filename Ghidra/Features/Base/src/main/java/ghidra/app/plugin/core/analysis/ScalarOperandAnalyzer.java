@@ -154,9 +154,8 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 					// don't do any addresses that could be numbers, even if they are in the
 					//   address space.
 					long value = scalar.getUnsignedValue();
-					if (value < 4096 || value == 0xffff || value == 0xff00 || value == 0xffffff ||
-						value == 0xff0000 || value == 0xff00ff || value == 0xffffffff ||
-						value == 0xffffff00 || value == 0xffff0000 || value == 0xff000000) {
+					if (value < 4096 || value == 0xffff || value == 0xff00 || value == 0xffffff
+							|| value == 0xff0000 || value == 0xff00ff) {
 						continue;
 					}
 				}

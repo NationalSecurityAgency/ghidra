@@ -133,11 +133,6 @@ class PasteManager {
 			ArrayList<ProgramNode> list =
 				(ArrayList<ProgramNode>) t.getTransferData(TreeTransferable.localTreeNodeFlavor);
 
-			if (list == null) {
-				// SCR 7990--something bad has happened to the copy buffer
-				return;
-			}
-
 			for (int i = 0; i < list.size(); i++) {
 				ProgramNode tnode = list.get(i);
 

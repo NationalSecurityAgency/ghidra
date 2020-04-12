@@ -55,10 +55,8 @@ public class CodeCompletionWindow extends JDialog {
 	 * We pass in the PluginTool so we can get a reference to the Frame we are
 	 * popping up over, as well as the text field we are coming from (so we
 	 * can fine-tune where we pop up).
-	 * 
-	 * @param tool the PluginTool the has the Frame we are popping up over
-	 * @param console the ConsolePlugin we are providing services for
-	 * @param outputTextField the JTextField from whence we came
+	 *
+	 * @param textField the JTextField from whence we came
 	 */
 	public CodeCompletionWindow(Window parent, InterpreterPanel cp, JTextPane textField) {
 		super(parent);

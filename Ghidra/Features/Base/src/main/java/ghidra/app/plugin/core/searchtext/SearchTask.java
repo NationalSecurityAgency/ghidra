@@ -40,8 +40,6 @@ class SearchTask extends Task {
 	/**
 	 * Constructor for SearchTask.
 	 * @param textSearcher existing search to use
-	 * @param listener listener that will be called when the search
-	 * completes
 	 */
 	SearchTask(Navigatable navigatable, Program program, Searcher textSearcher) {
 		super("Searching Program Text", true, true, false);

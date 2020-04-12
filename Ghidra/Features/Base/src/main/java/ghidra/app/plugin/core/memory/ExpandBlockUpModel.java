@@ -67,7 +67,7 @@ class ExpandBlockUpModel extends ExpandBlockModel {
 	}
 	/**
 	 * 
-	 * @see ghidra.app.plugin.core.memory.ExpandBlockModel#setLength(int)
+	 * @see ghidra.app.plugin.core.memory.ExpandBlockModel#setLength(long)
 	 */
 	@Override
     void setLength(long length) {

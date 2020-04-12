@@ -50,7 +50,6 @@ public class ArchiveDialog extends DialogComponentProvider {
 	/**
 	 * Constructor
 	 *
-	 * @param parent the parent frame of the NumberInputDialog.
 	 * @param plugin the archive plugin using this dialog.
 	 */
 	ArchiveDialog(ArchivePlugin plugin) {
@@ -209,7 +208,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 		}
 		File file = new File(archive);
 		String pathName = file.getAbsolutePath();
-		if (pathName == null || pathName.length() == 0) {
+		if (pathName.length() == 0) {
 			return null;
 		}
 		if (!pathName.endsWith(ArchivePlugin.ARCHIVE_EXTENSION)) {

@@ -46,9 +46,7 @@ public class DataTypeSyncDialog extends DialogComponentProvider implements DataT
 	/**
 	 * Creates a data type synchronization dialog
 	 * @param plugin the data type manager plug-in
-	 * @param synchronizer the data type synchronizer for synchronizing a program and archive.
 	 * @param list the list of data types to be displayed to the user.
-	 * @param commit true means data types from the program data types are to be committed 
 	 * back to the associated data types in the archive. false means update the program data 
 	 * types with changes that were made in the archive.
 	 */

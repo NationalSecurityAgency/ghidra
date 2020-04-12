@@ -63,7 +63,7 @@ class FallThroughModel implements ChangeListener {
 	}
 	/**
 	 * Set the current address
-	 * @param inst instruction whose fallthrough may be changed
+	 * @param address instruction may be changed at this address
 	 */
 	void setHomeAddress(Address address) {
 		Instruction inst = program.getListing().getInstructionAt(address);
@@ -79,7 +79,7 @@ class FallThroughModel implements ChangeListener {
 	}
 	/**
 	 * 
-	 * Get the current address for the instruction whose fallthough
+	 * Get the current address for the instruction whose fallthrough
 	 * may change.
 	 */
 	Address getAddress() {
@@ -185,7 +185,7 @@ class FallThroughModel implements ChangeListener {
 	
 	/**
 	 * Method autoOverride.
-	 * @param currentSelection
+	 * @param view
 	 */
 	void autoOverride(AddressSetView view) {
 		CompoundCmd cmd = new CompoundCmd("Auto-Override");

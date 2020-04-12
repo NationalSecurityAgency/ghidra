@@ -865,7 +865,7 @@ public class MultiTabPanel extends JPanel {
 
 	private Window findParent() {
 		Container parent = getParent();
-		while (!(parent instanceof Window) && !(parent instanceof JFrame)) {
+		while (!(parent instanceof Window)) {
 			parent = parent.getParent();
 		}
 		return (Window) parent;

@@ -41,7 +41,6 @@ public class SearchDirectionWidget extends ControlPanelWidget {
 
 	/**
 	 * 
-	 * @param plugin
 	 * @param title
 	 * @param dialog
 	 */

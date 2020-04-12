@@ -267,7 +267,7 @@ public class RestoreDialog extends DialogComponentProvider {
 
 		File file = new File(archive);
 		String pathName = file.getAbsolutePath();
-		if (pathName == null || pathName.length() == 0) {
+		if (pathName.length() == 0) {
 			return null;
 		}
 		if (!pathName.endsWith(ArchivePlugin.ARCHIVE_EXTENSION)) {
@@ -301,13 +301,12 @@ public class RestoreDialog extends DialogComponentProvider {
 			return false;
 		}
 		String restoreDir = restoreField.getText().trim();
-		if (restoreDir == null || restoreDir.equals("") || !(new File(restoreDir)).isDirectory()) {
+		if (restoreDir.equals("") || !new File(restoreDir).isDirectory()) {
 			setStatusText("Specify a valid project directory.");
 			return false;
 		}
 		String restoreProjectName = projectNameField.getText().trim();
-		if (restoreProjectName == null || restoreProjectName.equals("") ||
-			!NamingUtilities.isValidName(restoreProjectName)) {
+		if (restoreProjectName.equals("") || !NamingUtilities.isValidName(restoreProjectName)) {
 			setStatusText("Specify a valid project name.");
 			return false;
 		}
@@ -331,7 +330,7 @@ public class RestoreDialog extends DialogComponentProvider {
 	 * Creates a file chooser for selecting files with the specified extension.
 	 * @param extension the file extension for valid files to choose.
 	 * @param desc the description for the extension
-	 * @param fileURL the URL indicating the default directory/file to select.
+	 * @param filePathName the filepath indicating the default directory/file to select.
 	 * @return the file chooser.
 	 */
 	private GhidraFileChooser createFileChooser(String extension, String desc,

@@ -53,7 +53,7 @@ public class EditStackAction extends ListingContextAction {
 
 	/**
 	 * Method called when the action is invoked.
-	 * @param ActionEvent details regarding the invocation of this action
+	 * @param context details regarding the invocation of this action
 	 */
 	@Override
 	public void actionPerformed(ListingActionContext context) {

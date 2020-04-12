@@ -440,8 +440,7 @@ class StructureEditorModel extends CompEditorModel {
 	 */
 	private boolean shiftComponentsUp(int startIndex, int endIndex) {
 		int numComps = getNumComponents();
-		if ((startIndex > endIndex) || startIndex <= 0 || startIndex >= numComps || endIndex <= 0 ||
-			endIndex >= numComps) {
+		if (startIndex > endIndex || startIndex <= 0 || startIndex >= numComps || endIndex >= numComps) {
 			return false;
 		}
 		int len = getLength();
@@ -476,8 +475,8 @@ class StructureEditorModel extends CompEditorModel {
 	 */
 	private boolean shiftComponentsDown(int startIndex, int endIndex) {
 		int numComponents = getNumComponents();
-		if ((startIndex > endIndex) || startIndex < 0 || startIndex >= numComponents - 1 ||
-			endIndex < 0 || endIndex >= numComponents - 1) {
+		if (startIndex > endIndex || startIndex < 0 || startIndex >= numComponents - 1
+				|| endIndex >= numComponents - 1) {
 			return false;
 		}
 		int len = getLength();
@@ -878,12 +877,12 @@ class StructureEditorModel extends CompEditorModel {
 
 			// FreeForm editing mode (showing Undefined Bytes).
 			int numAvailable = comp.getLength() + getNumUndefinedBytesAt(rowIndex + 1);
-			return (maxLength == -1) ? numAvailable : Math.min(maxLength, numAvailable);
+			return Math.min(maxLength, numAvailable);
 		}
 		DataTypeComponent startComp = getComponent(currentRange.getStart().getIndex().intValue());
 		DataTypeComponent endComp = getComponent(currentRange.getEnd().getIndex().intValue() - 1);
 		int numAvailable = endComp.getOffset() + endComp.getLength() - startComp.getOffset();
-		return (maxLength == -1) ? numAvailable : Math.min(maxLength, numAvailable);
+		return Math.min(maxLength, numAvailable);
 	}
 
 	/**
@@ -1272,7 +1271,7 @@ class StructureEditorModel extends CompEditorModel {
 				firstDtc = component;
 			}
 			if (component == null) {
-				lastDtc = component;
+				lastDtc = null;
 				continue;
 			}
 
@@ -1421,7 +1420,7 @@ class StructureEditorModel extends CompEditorModel {
 			}
 		}
 		// This component is a structure so unpackage it.
-		else if (currentDataType instanceof Structure) {
+		else {
 			Structure struct = (Structure) currentDataType;
 			numComps = struct.getNumComponents();
 			if (numComps > 0) {

@@ -56,8 +56,8 @@ class CreateFunctionAction extends ListingContextAction {
 	/**
 	 * Create a new action, to create a function at the current location with a selection
 	 * 
-	 * @param string  name of the action
-	 * @param functionPlugin does checking for this action
+	 * @param name name of the action
+	 * @param plugin does checking for this action
 	 * @param allowExisting allow an existing function at this location
 	 * @param createThunk if true thunk will be created
 	 */
@@ -98,7 +98,7 @@ class CreateFunctionAction extends ListingContextAction {
 
 	/**
 	 * Method called when the action is invoked.
-	 * @param ActionEvent details regarding the invocation of this action
+	 * @param context details regarding the invocation of this action
 	 */
 	@Override
 	public void actionPerformed(ListingActionContext context) {
@@ -147,7 +147,7 @@ class CreateFunctionAction extends ListingContextAction {
 			}
 		}
 		else {
-			cmd = new CreateFunctionCmd(name, entry, body, SourceType.USER_DEFINED, allowExisting,
+			cmd = new CreateFunctionCmd(null, entry, body, SourceType.USER_DEFINED, allowExisting,
 				allowExisting);
 		}
 		funcPlugin.execute(context.getProgram(), cmd);

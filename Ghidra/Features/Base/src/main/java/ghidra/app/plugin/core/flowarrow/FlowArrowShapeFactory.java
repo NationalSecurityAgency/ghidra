@@ -164,7 +164,7 @@ class FlowArrowShapeFactory {
 			arrowPath.lineTo(x + halfHeight, offset + TRIANGLE_WIDTH);
 			arrowPath.closePath();
 		}
-		else if (endY == height) {
+		else {
 			arrowPath.moveTo(x, height);
 			arrowPath.lineTo(x - halfHeight, height - TRIANGLE_WIDTH);
 			arrowPath.lineTo(x + halfHeight, height - TRIANGLE_WIDTH);

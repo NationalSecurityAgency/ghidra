@@ -317,9 +317,6 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	 * @param program
 	 * @param fromInstrAddr existing instruction address to be used for
 	 * context regeneration
-	 * @param flowFallthrough true if fall-through location is clear and
-	 * is the intended disassembly start location, else only the future
-	 * flow context state is needed.
 	 * @param context disassembly context.
 	 */
 	private void repairFlowContextFrom(Program program, Address fromInstrAddr,

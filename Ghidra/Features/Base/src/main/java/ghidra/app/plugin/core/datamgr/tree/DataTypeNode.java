@@ -172,9 +172,8 @@ public class DataTypeNode extends DataTypeTreeNode {
 	}
 
 	private boolean canRename() {
-		return !(dataType instanceof BuiltInDataType ||
-			dataType instanceof MissingBuiltInDataType || dataType instanceof Array ||
-			dataType instanceof Pointer);
+		return !(dataType instanceof BuiltInDataType || dataType instanceof Array
+				|| dataType instanceof Pointer);
 	}
 
 	@Override

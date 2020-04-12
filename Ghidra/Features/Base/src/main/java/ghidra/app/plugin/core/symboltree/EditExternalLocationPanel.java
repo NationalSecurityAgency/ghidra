@@ -472,7 +472,7 @@ class EditExternalLocationPanel extends JPanel {
 				return true;
 			}
 
-			ExternalLocation extLocation = addExternalLocation(externalLocation, name,
+			ExternalLocation extLocation = addExternalLocation(null, name,
 				libraryProgramPathname, label, addr, functionCheckBox.isSelected());
 			return (extLocation != null);
 		}

@@ -523,7 +523,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		/**
 		 * Sets the contents to the provided value.
 		 * 
-		 * @param displayContents The value that the view should display.
+		 * @param addressInfos The value that the view should display.
 		 */
 		void setContents(DisassembledAddressInfo[] addressInfos) {
 			contentList.setListData(addressInfos);
@@ -607,7 +607,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 
 	/**
 	 * An object that provides information about the address that it wraps.
-	 * The info knows how to locate a {@link CodeInfo} object for the address
+	 * The info knows how to locate a {@link CodeUnit} object for the address
 	 * and can generate a string preview of the address.
 	 */
 	private class DisassembledAddressInfo {
@@ -683,7 +683,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		/**
 		 * Get the code unit from the program location.
 		 *
-		 * @param  The address from which we want the CodeUnit.
+		 * @param address The address from which we want the CodeUnit.
 		 * @return CodeUnit null if there is no location.
 		 */
 		private CodeUnit getCodeUnitForAddress(Address address) {

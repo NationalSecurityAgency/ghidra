@@ -70,7 +70,7 @@ public class StringAndScores {
 			char currentChar = stringChars[i];
 
 			// If character is not ASCII, replace with space
-			if ((currentChar >= 0) && (currentChar <= 127)) {
+			if (currentChar <= 127) {
 				asciiStringChars[i] = stringChars[i];
 			}
 			else {

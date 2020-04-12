@@ -110,9 +110,6 @@ public class CaptureFunctionDataTypesAction extends DockingAction {
 		else if (node instanceof ProjectArchiveNode) {
 			message = "The data type archive \"" + node.getName() + "\" isn't checked out.";
 		}
-		else if (node instanceof ProjectArchiveNode) {
-			message = "The data type archive \"" + node.getName() + "\" isn't open for editing.";
-		}
 		else {
 			message = "The data type archive \"" + node.getName() + "\" isn't modifiable.";
 		}

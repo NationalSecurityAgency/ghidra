@@ -39,8 +39,7 @@ class RenameEquatesCmd implements Command {
 
 	/**
 	 * Constructor
-	 * @param program the current program
-	 * @param equate the equate to be renamed.
+	 * @param oldEquateName the equate to be renamed.
 	 * @param newEquateName the new name for the equate
 	 */
 	RenameEquatesCmd(String oldEquateName, String newEquateName) {
@@ -57,7 +56,7 @@ class RenameEquatesCmd implements Command {
 	}
 
 	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
+	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	@Override
 	public boolean applyTo(DomainObject obj) {

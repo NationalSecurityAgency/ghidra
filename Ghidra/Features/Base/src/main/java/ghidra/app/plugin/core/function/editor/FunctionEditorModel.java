@@ -494,7 +494,6 @@ public class FunctionEditorModel {
 	 * Get the effective function to which changes will be made.  This
 	 * will be the same as function unless it is a thunk in which case
 	 * the returned function will be the ultimate non-thunk function.
-	 * @param function
 	 * @return non-thunk function
 	 */
 	private Function getAffectiveFunction() {

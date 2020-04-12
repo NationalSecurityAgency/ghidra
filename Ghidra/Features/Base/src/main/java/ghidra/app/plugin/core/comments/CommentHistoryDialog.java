@@ -57,7 +57,6 @@ public class CommentHistoryDialog extends DialogComponentProvider implements Cha
 		 
 	/**
 	 * Construct a new CommentHistoryDialog
-	 * @param parent parent of this dialog
 	 */
 	CommentHistoryDialog() {
 		super("Show Comment History");

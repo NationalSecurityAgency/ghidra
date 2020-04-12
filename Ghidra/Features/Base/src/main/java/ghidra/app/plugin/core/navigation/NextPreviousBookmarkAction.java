@@ -173,10 +173,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 			}
 		}
 
-		if (!bookmarkIterator.hasNext()) {
-			return null;
-		}
-		return bookmarkIterator.next();
+		return null;
 	}
 
 	private boolean isNotBuiltInType(Address address, Bookmark nextBookmark, Address nextAddress) {

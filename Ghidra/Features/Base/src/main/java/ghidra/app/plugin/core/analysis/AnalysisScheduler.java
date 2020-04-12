@@ -187,7 +187,7 @@ public class AnalysisScheduler {
 		monitor.setProgress(0);
 		boolean result = false;
 		if (!saveAddSet.isEmpty()) {
-			result |= analyzer.added(program, saveAddSet, monitor, log);
+			result = analyzer.added(program, saveAddSet, monitor, log);
 		}
 
 		if (!saveRemoveSet.isEmpty()) {

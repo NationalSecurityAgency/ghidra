@@ -56,8 +56,7 @@ public class LabelMgrPlugin extends Plugin {
 	/**
 	 * Constructor
 	 *
-	 * @param plugintool
-	 *            reference to the tool
+	 * @param tool reference to the tool
 	 */
 	public LabelMgrPlugin(PluginTool tool) {
 		super(tool);
@@ -275,7 +274,7 @@ public class LabelMgrPlugin extends Plugin {
 	/**
 	 * Return true if the given context has label history.
 	 *
-	 * @param contextObj
+	 * @param context
 	 * @return
 	 */
 	boolean hasLabelHistory(ListingActionContext context) {
@@ -284,10 +283,6 @@ public class LabelMgrPlugin extends Plugin {
 		if (location instanceof CodeUnitLocation) {
 			CodeUnitLocation loc = (CodeUnitLocation) location;
 			addr = loc.getAddress();
-		}
-		else if (location instanceof OperandFieldLocation) {
-			Address a = ((OperandFieldLocation) location).getRefAddress();
-			addr = (a == null) ? addr : a;
 		}
 
 		SymbolTable st = context.getProgram().getSymbolTable();

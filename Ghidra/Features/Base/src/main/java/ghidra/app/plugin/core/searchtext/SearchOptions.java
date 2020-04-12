@@ -43,10 +43,10 @@ public class SearchOptions implements Cloneable {
 	 * @param functions true to search for function text
 	 * @param comments true to search comments
 	 * @param labels true to search labels
-	 * @param instructionsMnemonic true to search instruction mnemonics
-	 * @param instructionsOperand true to search instruction operands
-	 * @param dataMnemonic true to search data mnemonics
-	 * @param dataValue true to search data values
+	 * @param instructionMnemonics true to search instruction mnemonics
+	 * @param instructionOperands true to search instruction operands
+	 * @param dataMnemonics true to search data mnemonics
+	 * @param dataOperands true to search data values
 	 * @param caseSensitive true if search is to be case sensitive
 	 * @param direction true means forward, false means backward search 
 	 */

@@ -20,7 +20,6 @@ import java.util.List;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.ScriptInfo;

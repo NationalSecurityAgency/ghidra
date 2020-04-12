@@ -110,7 +110,7 @@ class ImageBaseDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
+	 * @see DialogComponentProvider#okCallback()
 	 */
 	@Override
     protected void okCallback() {

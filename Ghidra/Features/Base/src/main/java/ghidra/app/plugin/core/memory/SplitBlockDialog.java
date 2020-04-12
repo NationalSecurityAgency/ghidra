@@ -56,7 +56,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 
 	/**
 	 * Constructor
-	 * @param parent
+	 * @param plugin
 	 * @param block
 	 * @param af
 	 */
@@ -75,7 +75,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
+	 * @see DialogComponentProvider#okCallback()
 	 */
 	@Override
 	protected void okCallback() {

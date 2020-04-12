@@ -35,7 +35,7 @@ class EditThunkFunctionAction extends ProgramContextAction {
 
 	/**
 	 * Create a new action, to edit a thunk function at the current location
-	 * @param functionPlugin does checking for this action
+	 * @param plugin does checking for this action
 	 */
 	public EditThunkFunctionAction(FunctionPlugin plugin) {
 		super("Set Thunked Function", plugin.getName());
@@ -53,7 +53,7 @@ class EditThunkFunctionAction extends ProgramContextAction {
 
 	/**
 	 * Method called when the action is invoked.
-	 * @param ActionEvent details regarding the invocation of this action
+	 * @param context details regarding the invocation of this action
 	 */
 	@Override
 	public void actionPerformed(ProgramActionContext context) {

@@ -118,7 +118,7 @@ public class ProgramTreeSelectionPlugin extends ProgramPlugin {
 		/**
 		 * Determine if the Module Select action should be visible within
 		 * the popup menu for the specified active object.
-		 * @param activeObj the object under the mouse location for the popup.
+		 * @param context to provide the object under the mouse location for the popup.
 		 * @return true if action should be made visible in popup menu.
 		 */
 		@Override

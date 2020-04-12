@@ -112,7 +112,7 @@ class UnionEditorModel extends CompEditorModel {
 		// There shouldn't be a selection when this is called.
 		switch (columnIndex) {
 			case DATATYPE:
-				if ((rowIndex >= 0) && (rowIndex <= numComponents)) {
+				if (rowIndex <= numComponents) {
 					return true;
 				}
 				return false;

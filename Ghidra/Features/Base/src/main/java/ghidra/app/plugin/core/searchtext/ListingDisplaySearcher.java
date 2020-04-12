@@ -80,7 +80,6 @@ class ListingDisplaySearcher implements Searcher {
 
 	/**
 	 * Constructor
-	 * @param codeViewerService service to get the Layouts
 	 * @param program current program
 	 * @param startLocation location from where to begin searching
 	 * @param set address set; may be null

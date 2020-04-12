@@ -301,19 +301,6 @@ public class DisassemblerPlugin extends Plugin {
 		return currentProgram.getMemory().contains(address);
 	}
 
-	/**
-	 * @see ghidra.app.plugin.contrib.disassembler.DisassemblyTaskListener#disassembleMessageReported(String)
-	 */
-	public void disassembleMessageReported(String msg) {
-		tool.setStatusInfo(msg);
-	}
-
-	/**
-	 * @see ghidra.app.plugin.contrib.disassembler.DisassemblyTaskListener#disassemblyDone(DisassemblyTask)
-	 */
-	public void disassemblyDone(Disassembler task) {
-	}
-
 	public void setDefaultContext(ListingActionContext context) {
 
 		Program contextProgram = context.getProgram();

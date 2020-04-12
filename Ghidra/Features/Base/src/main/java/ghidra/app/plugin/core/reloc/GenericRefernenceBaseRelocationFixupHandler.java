@@ -88,7 +88,7 @@ public class GenericRefernenceBaseRelocationFixupHandler extends RelocationFixup
 
 		Address address = relocation.getAddress();
 		Memory memory = program.getMemory();
-		long value = memory.getInt(address) & 0xffffffff;
+		long value = memory.getInt(address);
 		int newValue = (int) (value + diff);
 		Address candiateRelocationValue = newImageBase.getNewAddress(newValue);
 		if (hasMatchingReference(program, address, candiateRelocationValue)) {

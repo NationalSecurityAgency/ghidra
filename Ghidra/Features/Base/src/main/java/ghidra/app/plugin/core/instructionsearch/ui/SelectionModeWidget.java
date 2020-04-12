@@ -44,8 +44,7 @@ public class SelectionModeWidget extends ControlPanelWidget {
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param plugin
+	 *
 	 * @param title
 	 * @param parent
 	 */

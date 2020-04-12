@@ -121,8 +121,8 @@ public class FunctionUtility {
 	 * If the specified name is  a default parameter name then the original default name passed
 	 * in is returned.
 	 * @param symbolTable the symbol table containing symbols for the indicated namespace
-	 * @param namespace the namespace containing symbol names to check.
-	 * @param baseName the base name to append with an integer number if necessary
+	 * @param function the namespace containing symbol names to check.
+	 * @param name the base name to append with an integer number if necessary
 	 * to create a unique name.
 	 * @param namesNotToBeUsed set of names that should not be used when determining a unique name.
 	 * @return a unique parameter name

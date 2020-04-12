@@ -68,7 +68,7 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	 * This class is not meant to be instantiated directly, but rather by
 	 * subclasses.
 	 *
-	 * @param plugin A reference to the FunctionPlugin.
+	 * @param tool A reference to the PluginTool.
 	 * @param title The title of the dialog.
 	 * @param function the function which is having its signature edited.
 	 */
@@ -321,10 +321,6 @@ public class EditFunctionSignatureDialog extends DialogComponentProvider {
 	protected boolean applyChanges() throws CancelledException {
 		// create the command
 		Command command = createCommand();
-
-		if (command == null) {
-			return false;
-		}
 
 		// run the command
 		if (!getTool().execute(command, getProgram())) {

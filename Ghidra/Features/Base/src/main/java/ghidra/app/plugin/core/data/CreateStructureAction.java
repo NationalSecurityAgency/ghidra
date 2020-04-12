@@ -44,8 +44,7 @@ class CreateStructureAction extends ListingContextAction {
 
 	/**
 	 * Constructor
-	 * @param name action name
-	 * @param owner owner of this action (the plugin name)
+	 * @param plugin
 	 */
 	public CreateStructureAction(DataPlugin plugin) {
 		super("Create Structure", plugin.getName());

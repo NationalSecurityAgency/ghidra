@@ -384,7 +384,7 @@ public abstract class LocationDescriptor {
 	 * Sets a listener on this descriptor that will be notified when the references contained
 	 * in this descriptor may no longer be accurate.  For example, the listener will be called
 	 * when an undo or redo is performed in Ghidra.
-	 * @param modelChangeListener The listener to add.
+	 * @param modelFreshnessListener The listener to add.
 	 */
 	void setModelFreshnessListener(ChangeListener modelFreshnessListener) {
 		this.modelFreshnessListener = modelFreshnessListener;

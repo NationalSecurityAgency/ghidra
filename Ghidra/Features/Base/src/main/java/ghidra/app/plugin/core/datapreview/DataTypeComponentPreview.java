@@ -100,7 +100,7 @@ class DataTypeComponentPreview implements Preview {
             if (parentPreview == null && that.parentPreview != null) {
                 return compareTo(that.parentPreview);
             }
-            if (parentPreview != null && that.parentPreview != null) {
+            if (parentPreview != null) {
                 int value = parentPreview.compareTo(that.parentPreview);
                 if (value != 0) {
                     return value;

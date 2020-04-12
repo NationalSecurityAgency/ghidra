@@ -696,11 +696,6 @@ public class ProgramTreePlugin extends ProgramPlugin
 				}
 				tree.reload();
 
-				for (int i = 0; i < selectList.size(); i++) {
-					GroupPath gp = (GroupPath) selectList.get(i);
-					tree.addGroupSelectionPath(gp);
-				}
-
 				for (int i = 0; i < expandList.size(); i++) {
 					GroupPath gp = expandList.get(i);
 					tree.expand(gp);
@@ -857,8 +852,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 		String baseName = PluginConstants.DEFAULT_TREE_NAME;
 		int index = 1;
 		String viewName = baseName;
-		boolean done = false;
-		while (!done) {
+		while (true) {
 			ProgramModule root = listing.getRootModule(viewName);
 			if (root == null) {
 				CreateDefaultTreeCmd cmd = new CreateDefaultTreeCmd(viewName);

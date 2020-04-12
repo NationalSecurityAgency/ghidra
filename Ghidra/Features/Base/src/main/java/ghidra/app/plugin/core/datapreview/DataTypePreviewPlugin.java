@@ -599,7 +599,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 				tool.setStatusInfo("Dynamic structure data types do not support previewing.");
 				return false;
 			}
-			if (dt instanceof FunctionDefinition || dt instanceof FunctionDefinitionDataType) {
+			if (dt instanceof FunctionDefinition) {
 				tool.setStatusInfo("Function definition data types do not support previewing.");
 				return false;
 			}

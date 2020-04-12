@@ -941,13 +941,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 
 		ScriptInfo info = GhidraScriptUtil.getScriptInfo(script);
-		if (info != null) {
-			descriptionTextPane.setText(info.getToolTipText());
+		descriptionTextPane.setText(info.getToolTipText());
 
-			// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
-			// which will overwrite our location setting
-			SwingUtilities.invokeLater(() -> descriptionTextPane.setCaretPosition(0));
-		}
+		// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
+		// which will overwrite our location setting
+		SwingUtilities.invokeLater(() -> descriptionTextPane.setCaretPosition(0));
 	}
 
 	private int getModelRowForViewRow(int viewRow) {

@@ -46,7 +46,7 @@ public final class ReferenceUtils {
 	public static final String CONTEXT_CALLOUT_END = "|]";
 
 	public static final String CONTEXT_CALLOUT_START_REGEX = "\\[\\|";
-	public static final String CONTEXT_CALLOUT_END_REGEX = "\\|\\]";
+	public static final String CONTEXT_CALLOUT_END_REGEX = "\\|]";
 
 	private ReferenceUtils() {
 		// utility class
@@ -253,7 +253,7 @@ public final class ReferenceUtils {
 			// external functions don't get searched by type discovery  
 			localsOnly = false;
 			iterator = listing.getExternalFunctions();
-			findDataTypeMatchesInFunctionHeaders(asSet, iterator, dataType, localsOnly, monitor);
+			findDataTypeMatchesInFunctionHeaders(asSet, iterator, dataType, false, monitor);
 		}
 
 		Predicate<Data> dataMatcher = data -> {
@@ -359,7 +359,7 @@ public final class ReferenceUtils {
 		}
 		else if (includeTypedefs && dataType instanceof TypeDef) {
 			DataType baseDataType = ((TypeDef) dataType).getBaseDataType();
-			return getBaseDataType(baseDataType, includeTypedefs);
+			return getBaseDataType(baseDataType, true);
 		}
 		return dataType;
 	}

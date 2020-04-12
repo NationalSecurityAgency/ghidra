@@ -177,7 +177,7 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 	void setProgram(Program program) {
 		this.program = program;
 		if (program == null) {
-			updateTableModel(program);
+			updateTableModel(null);
 			return;
 		}
 

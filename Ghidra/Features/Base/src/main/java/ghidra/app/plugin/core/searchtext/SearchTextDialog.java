@@ -595,22 +595,18 @@ class SearchTextDialog extends DialogComponentProvider {
 	}
 
 	public void setCurrentField(ProgramLocation textField, boolean isInstruction) {
-		if (textField instanceof CommentFieldLocation ||
-			textField instanceof EolCommentFieldLocation ||
-			textField instanceof PlateFieldLocation ||
-			textField instanceof PostCommentFieldLocation) {
+		if (textField instanceof CommentFieldLocation) {
 			commentsCB.setSelected(true);
 		}
 		if (textField instanceof LabelFieldLocation) {
 			labelsCB.setSelected(true);
 		}
-		if (textField instanceof FunctionNameFieldLocation ||
-			textField instanceof FunctionRepeatableCommentFieldLocation ||
-			textField instanceof FunctionSignatureFieldLocation ||
-			textField instanceof VariableCommentFieldLocation ||
-			textField instanceof VariableLocFieldLocation ||
-			textField instanceof VariableNameFieldLocation ||
-			textField instanceof VariableTypeFieldLocation) {
+		if (textField instanceof FunctionRepeatableCommentFieldLocation ||
+				textField instanceof FunctionSignatureFieldLocation ||
+				textField instanceof VariableCommentFieldLocation ||
+				textField instanceof VariableLocFieldLocation ||
+				textField instanceof VariableNameFieldLocation ||
+				textField instanceof VariableTypeFieldLocation) {
 
 			functionsCB.setSelected(true);
 		}

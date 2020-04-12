@@ -160,7 +160,7 @@ public class DataTypeSynchronizer {
 	/**
 	 * Updates a single data type in the program to match the associated source data type from the
 	 * archive.
-	 * @param dataType the program data type
+	 * @param refDT the program data type
 	 * @return true if the update succeeds.
 	 */
 	public static boolean update(DataTypeManagerHandler dtmHandler, DataType refDT) {

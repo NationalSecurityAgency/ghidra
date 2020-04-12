@@ -168,11 +168,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 
 			// last ditch effort, try to paste as a byte string
 			String string = (String) pasteData.getTransferData(DataFlavor.stringFlavor);
-			if (string != null) {
-				return pasteByteString(string);
-			}
+			return pasteByteString(string);
 
-			tool.setStatusInfo("Paste failed: unsupported data type", true);
 		}
 		catch (Exception e) {
 			String msg = e.getMessage();

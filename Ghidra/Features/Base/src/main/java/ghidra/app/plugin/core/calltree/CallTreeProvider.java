@@ -283,7 +283,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 					for (TreePath path : selectionPaths) {
 						GTreeNode node = (GTreeNode) path.getLastPathComponent();
-						if (node instanceof GTreeNode) {
+						if (node != null) {
 							return false;
 						}
 					}

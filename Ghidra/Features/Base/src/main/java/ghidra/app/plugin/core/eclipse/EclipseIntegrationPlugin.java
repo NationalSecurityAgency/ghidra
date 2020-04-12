@@ -194,7 +194,7 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 			}
 			if (ghidraDevFile == null) {
 				Msg.showError(this, null, errorTitle,
-					"GhidraDev Eclipse extension does not exist:\n" + ghidraDevFile);
+					"GhidraDev Eclipse extension does not exist:\n" + null);
 				return;
 			}
 			
