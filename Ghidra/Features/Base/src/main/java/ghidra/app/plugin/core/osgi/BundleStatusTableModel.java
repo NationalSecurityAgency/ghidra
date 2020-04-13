@@ -136,7 +136,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		return status;
 	}
 
-	public String getBundleLoc(BundleStatus status) {
+	private String getBundleLoc(BundleStatus status) {
 		GhidraBundle gb = bundleHost.getExistingGhidraBundle(status.getPath());
 		if (gb != null) {
 			return gb.getBundleLoc();
@@ -369,16 +369,6 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		return statuses;
 	}
 
-	/**
-	 * Test whether the given <code>bundle</code> is managed and not marked readonly
-	 * @param bundle the path to test 
-	 * @return true if the bundle is managed and not marked readonly
-	 */
-	public boolean isWriteable(ResourceFile bundle) {
-		Optional<BundleStatus> o = statuses.stream().filter(
-			status -> status.isDirectory() && status.getPath().equals(bundle)).findFirst();
-		return o.isPresent() && !o.get().isReadOnly();
-	}
 
 	/**
 	 * This is for testing only!

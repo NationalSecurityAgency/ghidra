@@ -281,7 +281,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	void dispose() {
 		editorMap.clear();
- 		scriptCategoryTree.dispose();
+		scriptCategoryTree.dispose();
 		scriptTable.dispose();
 		tableFilterPanel.dispose();
 		actionManager.dispose();
@@ -326,7 +326,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	void renameScript() {
 		ResourceFile script = getSelectedScript();
 		ResourceFile directory = script.getParentFile();
-		if (!bundleStatusComponentProvider.getModel().isWriteable(directory)) {
+
+		if (bundleHost.getExistingGhidraBundle(directory).isSystemBundle()) {
 			Msg.showWarn(getClass(), getComponent(), getName(),
 				"Unable to rename scripts in '" + directory + "'.");
 			return;
@@ -450,14 +451,15 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public List<ResourceFile> getScriptDirectories() {
-		return bundleStatusComponentProvider.getModel().getEnabledPaths().stream().filter(
-			ResourceFile::isDirectory).collect(Collectors.toList());
+		return bundleHost.getGhidraBundles().stream().filter(
+			GhidraSourceBundle.class::isInstance).map(GhidraBundle::getPath).collect(
+				Collectors.toList());
 	}
 
 	public List<ResourceFile> getWritableScriptDirectories() {
-		BundleStatusTableModel m = bundleStatusComponentProvider.getModel();
-		return m.getEnabledPaths().stream().filter(ResourceFile::isDirectory).filter(
-			m::isWriteable).collect(Collectors.toList());
+		return bundleHost.getGhidraBundles().stream().filter(
+			GhidraSourceBundle.class::isInstance).filter(gb -> !gb.isSystemBundle()).map(
+				GhidraBundle::getPath).collect(Collectors.toList());
 	}
 
 	boolean isEditorOpen(ResourceFile script) {
@@ -472,7 +474,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 		ResourceFile directory = script.getParentFile();
 
-		if (!bundleStatusComponentProvider.getModel().isWriteable(directory)) {
+		if (bundleHost.getExistingGhidraBundle(directory).isSystemBundle()) {
 			Msg.showWarn(getClass(), getComponent(), getName(),
 				"Unable to delete scripts in '" + directory + "'.");
 			return;
