@@ -184,6 +184,12 @@ define pcodeop special2;
     Status = Status | 1;
 }
 
+# http://people.cs.pitt.edu/~don/coe1502/current/Unit4a/Unit4a.html
+# 0100 0010 0000 0000 0000 0000 0001 0000
+:rfe                           is $(AMODE) & prime=0x10 & fct=0x10 & bit25=1 & copfill=0  {
+    Status = (Status & 0xfffffff0) | ((Status & 0x3c) >> 2);
+}
+
 # 0100 0010 0000 0000 0000 0000 0001 1000
 :eret                           is $(AMODE) & prime=0x10 & fct=0x18 & bit25=1 & copfill=0  {
     return[EPC];
