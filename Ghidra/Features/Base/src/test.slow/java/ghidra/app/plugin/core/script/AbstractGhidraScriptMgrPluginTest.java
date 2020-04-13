@@ -47,7 +47,8 @@ import generic.jar.ResourceFile;
 import generic.test.TestUtils;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
-import ghidra.app.plugin.core.osgi.*;
+import ghidra.app.plugin.core.osgi.BundleHost;
+import ghidra.app.plugin.core.osgi.BundleStatusComponentProvider;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.Application;
@@ -86,6 +87,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	@Before
 	public void setUp() throws Exception {
+		System.err.printf("===== Starting %s ======\n", testName.getMethodName());
+
 		setErrorGUIEnabled(false);
 
 		// change the eclipse port so that Eclipse doesn't try to edit the script when
@@ -130,7 +133,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		waitForSwing();
 
-		System.err.printf("===== Starting %s ======\n", testName.getMethodName());
 	}
 
 	protected Program buildProgram() throws Exception {
@@ -166,8 +168,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 			testScriptFile = null;
 		}
 		wipeUserScripts();
-
-		BundleHost.getInstance().removeAllListeners();
 
 		env.dispose();
 	}
@@ -632,12 +632,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected void addScriptDirectory(ResourceFile scriptDir) {
-		provider.enableScriptDirectory(scriptDir);
-
-		@SuppressWarnings("unchecked")
-		List<ResourceFile> scriptBundlePaths =
-			(List<ResourceFile>) getInstanceField("bundlePaths", GhidraScriptUtil.getBundleHost());
-		scriptBundlePaths.add(scriptDir);
+		// when there is a provider, GhidraScriptUtil has the same BundleHost
+		provider.getBundleHost().enablePath(scriptDir);
 	}
 
 	protected String runScript(String scriptName) throws Exception {
@@ -985,46 +981,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	}
 
-	/**
-	 * rip out GUI listeners from bundle and OSGI components
-	 * use as follows:
-	 * 
-	 * <pre>{@code
-	 *   try (var rewire = unwireGUI()) {
-	 *     // ... test code ...
-	 *   }
-	 * }</pre>
-	 * 
-	 * @return an undo closure which puts the listeners back in place
-	 */
-	@SuppressWarnings("unchecked")
-	protected AutoCloseable unwireGUI() {
-		waitForSwing();
-		BundleStatusProvider bundleStatusProvider =
-			(BundleStatusProvider) TestUtils.getInstanceField("bundleStatusProvider", provider);
-		BundleStatusModel bundleStatusModel = bundleStatusProvider.getModel();
-
-		List<BundleStatusListener> bundleStatusListeners =
-			(List<BundleStatusListener>) TestUtils.getInstanceField("bundleStatusListeners",
-				bundleStatusModel);
-
-		List<BundleStatusListener> storedBundleStatusListeners =
-			new ArrayList<>(bundleStatusListeners);
-		bundleStatusListeners.clear();
-
-		List<OSGiListener> osgiListeners =
-			(List<OSGiListener>) TestUtils.getInstanceField("osgiListeners",
-				BundleHost.getInstance());
-		ArrayList<OSGiListener> storedOsgiListeners = new ArrayList<>(osgiListeners);
-		osgiListeners.clear();
-
-		return () -> {
-			waitForSwing();
-			bundleStatusListeners.addAll(storedBundleStatusListeners);
-			osgiListeners.addAll(storedOsgiListeners);
-		};
-	}
-
 	protected void cleanupOldTestFiles() throws IOException {
 		// remove the compiled bundles directory so that any scripts we use will be recompiled
 		wipe(BundleHost.getCompiledBundlesDir());
@@ -1032,9 +988,9 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		String myTestName = super.testName.getMethodName();
 
 		// destroy any NewScriptxxx files...and Temp ones too
-		BundleStatusProvider bundleStatusProvider =
-			(BundleStatusProvider) TestUtils.getInstanceField("bundleStatusProvider", provider);
-		List<ResourceFile> paths = bundleStatusProvider.getModel().getEnabledPaths();
+		BundleStatusComponentProvider bundleStatusComponentProvider =
+			(BundleStatusComponentProvider) TestUtils.getInstanceField("bundleStatusComponentProvider", provider);
+		List<ResourceFile> paths = bundleStatusComponentProvider.getModel().getEnabledPaths();
 
 		for (ResourceFile path : paths) {
 			File file = path.getFile(false);

@@ -20,17 +20,12 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.osgi.framework.Bundle;
-
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.TableSortingContext;
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScriptUtil;
-import ghidra.framework.options.SaveState;
-import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 
-public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
+public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatus> {
 	List<Column> columns = new ArrayList<>();
 
 	class Column {
@@ -72,8 +67,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 
 		@Override
 		void setValue(BundleStatus status, Object newValue) {
-			status.setEnabled((Boolean) newValue);
-			fireBundleEnablementChanged(status, (Boolean) newValue);
+			fireBundleEnablementChangeRequested(status, (Boolean) newValue);
 		}
 	};
 	Column activeColumn = new Column("Active", Boolean.class) {
@@ -90,7 +84,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		@Override
 		void setValue(BundleStatus status, Object newValue) {
 			status.setActive((Boolean) newValue);
-			fireBundleActivationChanged(status, (Boolean) newValue);
+			fireBundleActivationChangeRequested(status, (Boolean) newValue);
 		}
 	};
 	Column typeColumn = new Column("Type", String.class) {
@@ -126,19 +120,28 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		return badColumn;
 	}
 
-	private BundleStatusProvider provider;
+	private BundleStatusComponentProvider provider;
 	private List<BundleStatus> statuses;
 	private BundleHost bundleHost;
-	OSGiListener bundleListener;
+	BundleHostListener bundleListener;
 
 	private Map<String, BundleStatus> loc2status = new HashMap<>();
 
-	BundleStatus getStatus(String bundleLocation) {
-		return loc2status.get(bundleLocation);
+	BundleStatus getStatus(GhidraBundle gb) {
+		BundleStatus status = loc2status.get(gb.getBundleLoc());
+		if (status == null) {
+			Msg.showError(BundleStatusTableModel.this, provider.getComponent(), "bundle status error",
+				"bundle has no status!");
+		}
+		return status;
 	}
 
 	public String getBundleLoc(BundleStatus status) {
-		return bundleHost.getGhidraBundle(status.getPath()).getBundleLoc();
+		GhidraBundle gb = bundleHost.getExistingGhidraBundle(status.getPath());
+		if (gb != null) {
+			return gb.getBundleLoc();
+		}
+		return null;
 	}
 
 	/** 
@@ -154,56 +157,75 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		}
 	}
 
-	BundleStatusModel(BundleStatusProvider provider, BundleHost bundleHost) {
+	BundleStatusTableModel(BundleStatusComponentProvider provider, BundleHost bundleHost) {
 		super();
 		this.provider = provider;
 		this.bundleHost = bundleHost;
+		statuses = new ArrayList<>();
 
-		// add unmodifiable paths
-		this.statuses = GhidraScriptUtil.getSystemScriptPaths().stream().distinct().map(
-			f -> new BundleStatus(f, true, true)).collect(Collectors.toList());
-		// add user path
-		this.statuses.add(0,
-			new BundleStatus(GhidraScriptUtil.getUserScriptDirectory(), true, false));
-
-		computeCache();
-
-		bundleHost.addListener(bundleListener = new OSGiListener() {
+		bundleHost.addListener(bundleListener = new BundleHostListener() {
 			@Override
-			public void bundleBuilt(GhidraBundle sb) {
-				BundleStatus bp = getStatus(sb.getBundleLoc());
-				if (bp != null) {
-					bp.setSummary(sb.getSummary());
-					int row = getRowIndex(bp);
-					fireTableRowsUpdated(row, row);
-				}
+			public void bundleBuilt(GhidraBundle gb) {
+				BundleStatus status = getStatus(gb);
+				status.setSummary(gb.getSummary());
+				int row = getRowIndex(status);
+				fireTableRowsUpdated(row, row);
 			}
 
 			@Override
-			public void bundleActivationChange(Bundle b, boolean newActivation) {
-				BundleStatus status = getStatus(b.getLocation());
-				if (status == null) {
-					Msg.showError(BundleStatusModel.this, provider.getComponent(),
-						"bundle status error", "bundle has no status!");
-				}
+			public void bundleActivationChange(GhidraBundle gb, boolean newActivation) {
+				BundleStatus status = getStatus(gb);
+				int row = getRowIndex(status);
 				if (newActivation) {
-					GhidraBundle gb = bundleHost.getGhidraBundle(status.getPath());
 					status.setActive(true);
 					status.setSummary(gb.getSummary());
-					int row = getRowIndex(status);
-					fireTableRowsUpdated(row, row);
 				}
 				else {
 					status.setActive(false);
 					status.setSummary("");
-					int row = getRowIndex(status);
-					fireTableRowsUpdated(row, row);
 				}
-
+				fireTableRowsUpdated(row, row);
 			}
-		});
 
-		// fireTableDataChanged(); // this is done by the addNewPaths during restoreState 
+			@Override
+			public void bundleAdded(GhidraBundle gb) {
+				addNewStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle());
+			}
+
+			@Override
+			public void bundlesAdded(Collection<GhidraBundle> gbundles) {
+				int index = statuses.size();
+				for (GhidraBundle gb : gbundles) {
+					BundleStatus status =
+						new BundleStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle());
+					addStatusNoFire(status);
+				}
+				fireTableRowsInserted(index, gbundles.size() - 1);
+			}
+
+			@Override
+			public void bundleRemoved(GhidraBundle gbundle) {
+				BundleStatus status = getStatus(gbundle);
+				removeStatus(status);
+			}
+
+			@Override
+			public void bundlesRemoved(Collection<GhidraBundle> gbundles) {
+				List<BundleStatus> toRemove =
+					gbundles.stream().map(BundleStatusTableModel.this::getStatus).collect(
+						Collectors.toUnmodifiableList());
+				removeStatuses(toRemove);
+			}
+
+			@Override
+			public void bundleEnablementChange(GhidraBundle gbundle, boolean newEnablement) {
+				BundleStatus status = getStatus(gbundle);
+				status.setEnabled(newEnablement);
+				int row = getRowIndex(status);
+				fireTableRowsUpdated(row, row);
+			}
+
+		});
 	}
 
 	@Override
@@ -222,7 +244,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		return list;
 	}
 
-	private void addStatus(BundleStatus path) {
+	private void addStatusNoFire(BundleStatus path) {
 		if (statuses.contains(path)) {
 			return;
 		}
@@ -239,7 +261,7 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 	private BundleStatus addNewStatus(ResourceFile path, boolean enabled, boolean readonly) {
 		BundleStatus p = new BundleStatus(path, enabled, readonly);
 		int index = statuses.size();
-		addStatus(p);
+		addStatusNoFire(p);
 		fireTableRowsInserted(index, index);
 		return p;
 	}
@@ -251,32 +273,44 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 	 * @param enabled mark them all as enabled
 	 * @param readonly mark them all as readonly
 	 */
-	void addNewPaths(List<File> files, boolean enabled, boolean readonly) {
+	void addNewStatuses(List<File> files, boolean enabled, boolean readonly) {
 		int index = statuses.size();
 		for (File f : files) {
 			BundleStatus status = new BundleStatus(new ResourceFile(f), enabled, readonly);
-			addStatus(status);
+			addStatusNoFire(status);
 		}
-		fireBundlesChanged();
 		fireTableRowsInserted(index, files.size() - 1);
+	}
+
+	private int removeStatusNoFire(BundleStatus status) {
+		if (!status.isReadOnly()) {
+			int i = statuses.indexOf(status);
+			loc2status.remove(getBundleLoc(status));
+			return i;
+		}
+		Msg.showInfo(this, this.provider.getComponent(), "Unabled to remove path",
+			"System path cannot be removed: " + status.getPath().toString());
+		return -1;
+	}
+
+	void removeStatus(BundleStatus status) {
+		int row = removeStatusNoFire(status);
+		if (row >= 0) {
+			fireTableRowsDeleted(row, row);
+		}
 	}
 
 	void remove(int[] modelRows) {
 		List<BundleStatus> toRemove = Arrays.stream(modelRows).mapToObj(statuses::get).collect(
 			Collectors.toUnmodifiableList());
+		removeStatuses(toRemove);
+	}
 
+	void removeStatuses(List<BundleStatus> toRemove) {
 		for (BundleStatus status : toRemove) {
-			if (!status.isReadOnly()) {
-				statuses.remove(status);
-				loc2status.remove(getBundleLoc(status));
-			}
-			else {
-				Msg.showInfo(this, this.provider.getComponent(), "Unabled to remove path",
-					"System path cannot be removed: " + status.getPath().toString());
-			}
+			removeStatusNoFire(status);
 		}
 		fireTableDataChanged();
-		fireBundlesChanged();
 	}
 
 	/***************************************************/
@@ -327,37 +361,12 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 
 	@Override
 	public String getName() {
-		return BundleStatusModel.class.getSimpleName();
+		return BundleStatusTableModel.class.getSimpleName();
 	}
 
 	@Override
 	public List<BundleStatus> getModelData() {
 		return statuses;
-	}
-
-	/**
-	 * (add and) enable a path
-	 * @param file path to enable 
-	 * @return true if the path is new
-	 */
-	public boolean enablePath(ResourceFile file) {
-		ResourceFile dir = file.isDirectory() ? file : file.getParentFile();
-		for (BundleStatus path : statuses) {
-			if (path.getPath().equals(dir)) {
-				if (!path.isEnabled()) {
-					path.setEnabled(true);
-					fireTableDataChanged();
-					fireBundlesChanged();
-					return true;
-				}
-				return false;
-			}
-		}
-		addNewStatus(dir, true, false);
-		Preferences.setProperty(BundleStatusProvider.preferenceForLastSelectedBundle,
-			dir.getAbsolutePath());
-		fireBundlesChanged();
-		return true;
 	}
 
 	/**
@@ -385,9 +394,9 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		fireTableDataChanged();
 	}
 
-	private ArrayList<BundleStatusListener> bundleStatusListeners = new ArrayList<>();
+	private ArrayList<BundleStatusChangeRequestListener> bundleStatusListeners = new ArrayList<>();
 
-	public void addListener(BundleStatusListener listener) {
+	public void addListener(BundleStatusChangeRequestListener listener) {
 		synchronized (bundleStatusListeners) {
 			if (!bundleStatusListeners.contains(listener)) {
 				bundleStatusListeners.add(listener);
@@ -395,98 +404,26 @@ public class BundleStatusModel extends AbstractSortedTableModel<BundleStatus> {
 		}
 	}
 
-	public void removeListener(BundleStatusListener listener) {
+	public void removeListener(BundleStatusChangeRequestListener listener) {
 		synchronized (bundleStatusListeners) {
 			bundleStatusListeners.remove(listener);
 		}
 	}
 
-	private void fireBundlesChanged() {
+	void fireBundleEnablementChangeRequested(BundleStatus path, boolean newValue) {
 		synchronized (bundleStatusListeners) {
-			for (BundleStatusListener listener : bundleStatusListeners) {
-				listener.bundlesChanged();
+			for (BundleStatusChangeRequestListener listener : bundleStatusListeners) {
+				listener.bundleEnablementChangeRequest(path, newValue);
 			}
 		}
 	}
 
-	void fireBundleEnablementChanged(BundleStatus path, boolean newValue) {
+	void fireBundleActivationChangeRequested(BundleStatus path, boolean newValue) {
 		synchronized (bundleStatusListeners) {
-			for (BundleStatusListener listener : bundleStatusListeners) {
-				listener.bundleEnablementChanged(path, newValue);
+			for (BundleStatusChangeRequestListener listener : bundleStatusListeners) {
+				listener.bundleActivationChangeRequest(path, newValue);
 			}
 		}
-	}
-
-	void fireBundleActivationChanged(BundleStatus path, boolean newValue) {
-		synchronized (bundleStatusListeners) {
-			for (BundleStatusListener listener : bundleStatusListeners) {
-				listener.bundleActivationChanged(path, newValue);
-			}
-		}
-	}
-
-	/**
-	 * Restores the statuses from the specified SaveState object.
-	 * @param ss the SaveState object
-	 */
-	public void restoreState(SaveState ss) {
-		String[] pathArr = ss.getStrings("BundleStatus_PATH", new String[0]);
-
-		if (pathArr.length == 0) {
-			return;
-		}
-
-		boolean[] enableArr = ss.getBooleans("BundleStatus_ENABLE", new boolean[pathArr.length]);
-		boolean[] readonlyArr = ss.getBooleans("BundleStatus_READ", new boolean[pathArr.length]);
-
-		List<BundleStatus> currentPaths = new ArrayList<>(statuses);
-		statuses.clear();
-
-		for (int i = 0; i < pathArr.length; i++) {
-			BundleStatus currentStatus = getStatus(pathArr[i], currentPaths);
-			if (currentStatus != null) {
-				currentPaths.remove(currentStatus);
-				addStatus(new BundleStatus(pathArr[i], enableArr[i], readonlyArr[i]));
-			}
-			else if (!readonlyArr[i]) {
-				// skip read-only statuses which are not present in the current config
-				// This is needed to thin-out old default entries
-				addStatus(new BundleStatus(pathArr[i], enableArr[i], readonlyArr[i]));
-			}
-		}
-		fireTableDataChanged();
-		fireBundlesChanged();
-	}
-
-	private static BundleStatus getStatus(String filepath, List<BundleStatus> statuses) {
-		for (BundleStatus status : statuses) {
-			if (filepath.equals(status.getPathAsString())) {
-				return status;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Saves the statuses to the specified SaveState object.
-	 * @param ss the SaveState object
-	 */
-	public void saveState(SaveState ss) {
-		String[] pathArr = new String[statuses.size()];
-		boolean[] enableArr = new boolean[statuses.size()];
-		boolean[] readonlyArr = new boolean[statuses.size()];
-
-		int index = 0;
-		for (BundleStatus status : statuses) {
-			pathArr[index] = status.getPathAsString();
-			enableArr[index] = status.isEnabled();
-			readonlyArr[index] = status.isReadOnly();
-			++index;
-		}
-
-		ss.putStrings("BundleStatus_PATH", pathArr);
-		ss.putBooleans("BundleStatus_ENABLE", enableArr);
-		ss.putBooleans("BundleStatus_READ", readonlyArr);
 	}
 
 	public List<BundleStatus> getRowObjects(int[] modelRowIndices) {

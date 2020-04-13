@@ -17,22 +17,15 @@
 package ghidra.app.plugin.core.osgi;
 
 /**
- * events thrown by BundleStatusModel component
+ * events thrown by BundleStatus component when buttons are clicked
  */
-public interface BundleStatusListener {
+public interface BundleStatusChangeRequestListener {
 
-	/**
-	 * Called when the list of bundle paths changes
-	 */
-	default public void bundlesChanged() {
+	default public void bundleEnablementChangeRequest(BundleStatus status, boolean newValue) {
 		//
 	}
 
-	default public void bundleEnablementChanged(BundleStatus status, boolean newValue) {
-		//
-	}
-
-	default public void bundleActivationChanged(BundleStatus status, boolean newValue) {
+	default public void bundleActivationChangeRequest(BundleStatus status, boolean newValue) {
 		//
 	}
 

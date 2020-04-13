@@ -19,6 +19,8 @@ import java.io.*;
 import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,31 +36,21 @@ import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScriptUtil;
 import ghidra.framework.Application;
+import ghidra.framework.options.SaveState;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
 public class BundleHost {
 	protected static final boolean DUMP_TO_STDERR = false;
-	// XXX ScriptProviders don't have any way to access services or other way to access system wide resources
-	static private BundleHost _instance;
-
-	static public BundleHost getInstance() {
-		if (_instance == null) {
-			_instance = new BundleHost();
-			try {
-				_instance.startFelix();
-			}
-			catch (OSGiException | IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		return _instance;
-	}
 
 	static public String getSymbolicNameFromSourceDir(ResourceFile sourceDir) {
 		return Integer.toHexString(sourceDir.getAbsolutePath().hashCode());
+	}
+
+	public BundleHost() {
+		//
 	}
 
 	public void dispose() {
@@ -68,25 +60,59 @@ public class BundleHost {
 	}
 
 	HashMap<ResourceFile, GhidraBundle> bp2gb = new HashMap<>();
+	HashMap<String, GhidraBundle> bl2gb = new HashMap<>();
 
-	public GhidraBundle getGhidraBundle(ResourceFile path) {
-		return bp2gb.computeIfAbsent(path, p -> newGhidraBundle0(path, true, false));
+	public GhidraBundle getExistingGhidraBundle(ResourceFile bundlePath) {
+		GhidraBundle r = bp2gb.get(bundlePath);
+		if (r == null) {
+			Msg.showError(this, null, "ghidra bundle cache",
+				"getExistingGhidraBundle before GhidraBundle created: " + bundlePath);
+		}
+		return r;
 	}
 
-	public GhidraBundle newGhidraBundle(ResourceFile path, boolean enabled, boolean systemBundle) {
-		GhidraBundle gb = newGhidraBundle0(path, enabled, systemBundle);
-		bp2gb.put(path, gb);
+	public GhidraBundle enablePath(ResourceFile bundlePath) {
+		GhidraBundle gb = bp2gb.get(bundlePath);
+		if (gb == null) {
+			gb = addGhidraBundle(bundlePath, true, false);
+		}
 		return gb;
 	}
 
-	private GhidraBundle newGhidraBundle0(ResourceFile path, boolean enabled,
+	public GhidraBundle addGhidraBundle(ResourceFile path, boolean enabled, boolean systemBundle) {
+		GhidraBundle gb = newGhidraBundle(this, path, enabled, systemBundle);
+		bp2gb.put(path, gb);
+		bl2gb.put(gb.getBundleLoc(), gb);
+		fireBundleAdded(gb);
+		return gb;
+	}
+
+	public void addGhidraBundles(List<ResourceFile> paths, boolean enabled, boolean systemBundle) {
+		Map<ResourceFile, GhidraBundle> newmap =
+			paths.stream().collect(Collectors.toUnmodifiableMap(Function.identity(),
+				path -> newGhidraBundle(BundleHost.this, path, enabled, systemBundle)));
+		bp2gb.putAll(newmap);
+		bl2gb.putAll(newmap.values().stream().collect(
+			Collectors.toUnmodifiableMap(GhidraBundle::getBundleLoc, Function.identity())));
+		fireBundlesAdded(newmap.values());
+	}
+
+	public void add(List<GhidraBundle> gbundles) {
+		for (GhidraBundle gb : gbundles) {
+			bp2gb.put(gb.getPath(), gb);
+			bl2gb.put(gb.getBundleLoc(), gb);
+		}
+		fireBundlesAdded(gbundles);
+	}
+
+	static private GhidraBundle newGhidraBundle(BundleHost bh, ResourceFile path, boolean enabled,
 			boolean systemBundle) {
 		switch (GhidraBundle.getType(path)) {
 			case SourceDir:
-				return new GhidraSourceBundle(this, path, enabled, systemBundle);
+				return new GhidraSourceBundle(bh, path, enabled, systemBundle);
 			case BndScript:
 			case Jar:
-				return new GhidraJarBundle(this, path, enabled, systemBundle);
+				return new GhidraJarBundle(bh, path, enabled, systemBundle);
 			default:
 				break;
 		}
@@ -94,8 +120,30 @@ public class BundleHost {
 	}
 
 	// XXX consumers must clean up after themselves
-	public void removeGhidraBundle(ResourceFile path) {
-		bp2gb.remove(path);
+	public void removeBundlePath(ResourceFile bundlePath) {
+		GhidraBundle gb = bp2gb.remove(bundlePath);
+		bl2gb.remove(gb.getBundleLoc());
+		fireBundleRemoved(gb);
+	}
+
+	public void removeBundleLoc(String bundleLoc) {
+		GhidraBundle gb = bl2gb.remove(bundleLoc);
+		bp2gb.remove(gb.getPath());
+		fireBundleRemoved(gb);
+	}
+
+	public void remove(GhidraBundle gb) {
+		bp2gb.remove(gb.getPath());
+		bl2gb.remove(gb.getBundleLoc());
+		fireBundleRemoved(gb);
+	}
+
+	public void remove(Collection<GhidraBundle> gbundles) {
+		for (GhidraBundle gb : gbundles) {
+			bp2gb.remove(gb.getPath());
+			bl2gb.remove(gb.getBundleLoc());
+		}
+		fireBundlesRemoved(gbundles);
 	}
 
 	/**
@@ -343,12 +391,15 @@ public class BundleHost {
 					String l = b.getLocation();
 					System.err.printf("%s %s from %s\n", getEventTypeString(event), n, l);
 				}
+				GhidraBundle gb;
 				switch (event.getType()) {
 					case BundleEvent.STARTED:
-						fireBundleActivationChange(b, true);
+						gb = bl2gb.get(b.getLocation());
+						fireBundleActivationChange(gb, true);
 						break;
 					case BundleEvent.UNINSTALLED:
-						fireBundleActivationChange(b, false);
+						gb = bl2gb.get(b.getLocation());
+						fireBundleActivationChange(gb, false);
 						break;
 					default:
 						break;
@@ -544,55 +595,159 @@ public class BundleHost {
 		}
 	}
 
-	List<OSGiListener> osgiListeners = new ArrayList<>();
+	List<BundleHostListener> listeners = new ArrayList<>();
 
 	void fireBundleBuilt(GhidraBundle sbi) {
-		synchronized (osgiListeners) {
-			for (OSGiListener l : osgiListeners) {
+		synchronized (listeners) {
+			for (BundleHostListener l : listeners) {
 				l.bundleBuilt(sbi);
 			}
 		}
 	}
 
-	void fireBundleActivationChange(Bundle b, boolean newActivation) {
-		synchronized (osgiListeners) {
-			for (OSGiListener l : osgiListeners) {
-				l.bundleActivationChange(b, newActivation);
+	void fireBundleEnablementChange(GhidraBundle gb, boolean newEnablement) {
+		synchronized (listeners) {
+			for (BundleHostListener l : listeners) {
+				l.bundleEnablementChange(gb, newEnablement);
 			}
 		}
 	}
 
-	public void addListener(OSGiListener osgiListener) {
-		synchronized (osgiListeners) {
-			osgiListeners.add(osgiListener);
+	void fireBundleActivationChange(GhidraBundle gb, boolean newEnablement) {
+		synchronized (listeners) {
+			for (BundleHostListener l : listeners) {
+				l.bundleActivationChange(gb, newEnablement);
+			}
 		}
 	}
 
-	public void removeListener(OSGiListener osgiListener) {
-		synchronized (osgiListeners) {
-			osgiListeners.remove(osgiListener);
+	private void fireBundleAdded(GhidraBundle gb) {
+		synchronized (listeners) {
+			for (BundleHostListener l : listeners) {
+				l.bundleAdded(gb);
+			}
+		}
+	}
+
+	private void fireBundleRemoved(GhidraBundle gb) {
+		synchronized (listeners) {
+			for (BundleHostListener l : listeners) {
+				l.bundleRemoved(gb);
+			}
+		}
+	}
+
+	private void fireBundlesAdded(Collection<GhidraBundle> gbundles) {
+		synchronized (listeners) {
+			for (BundleHostListener l : listeners) {
+				l.bundlesAdded(gbundles);
+			}
+		}
+	}
+
+	private void fireBundlesRemoved(Collection<GhidraBundle> gbundles) {
+		synchronized (listeners) {
+			for (BundleHostListener l : listeners) {
+				l.bundlesRemoved(gbundles);
+			}
+		}
+	}
+
+	public void addListener(BundleHostListener bundleHostListener) {
+		synchronized (listeners) {
+			listeners.add(bundleHostListener);
+		}
+	}
+
+	public void removeListener(BundleHostListener bundleHostListener) {
+		synchronized (listeners) {
+			listeners.remove(bundleHostListener);
 		}
 	}
 
 	public void removeAllListeners() {
-		synchronized (osgiListeners) {
-			osgiListeners.clear();
+		synchronized (listeners) {
+			listeners.clear();
 		}
 	}
 
-	private List<ResourceFile> bundlePaths = new ArrayList<>();
-
-	{
-		setBundlePaths(GhidraScriptUtil.getSystemScriptPaths());
-		getBundlePaths().add(0, GhidraScriptUtil.getUserScriptDirectory());
+	public Collection<GhidraBundle> getGhidraBundles() {
+		return bp2gb.values();
 	}
 
-	public List<ResourceFile> getBundlePaths() {
-		return bundlePaths;
+	public Collection<ResourceFile> getBundlePaths() {
+		return bp2gb.keySet();
 	}
 
-	public void setBundlePaths(List<ResourceFile> bundlePaths) {
-		this.bundlePaths = bundlePaths;
+	public boolean enable(GhidraBundle gbundle) {
+		if (!gbundle.enabled) {
+			gbundle.enabled = true;
+			fireBundleEnablementChange(gbundle, true);
+		}
+		return false;
+	}
+
+	/*
+	 * this is done at most once, and it's done AFTER system bundles have been added.
+	 */
+	public void restoreState(SaveState ss) {
+		// XXX lock bundlehost operations
+		String[] pathArr = ss.getStrings("BundleHost_PATH", new String[0]);
+
+		if (pathArr.length == 0) {
+			return;
+		}
+
+		boolean[] enableArr = ss.getBooleans("BundleHost_ENABLE", new boolean[pathArr.length]);
+		boolean[] systemArr = ss.getBooleans("BundleHost_SYSTEM", new boolean[pathArr.length]);
+
+		List<GhidraBundle> added = new ArrayList<>();
+
+		for (int i = 0; i < pathArr.length; i++) {
+			ResourceFile bp = new ResourceFile(pathArr[i]);
+			boolean en = enableArr[i];
+			boolean sys = systemArr[i];
+			GhidraBundle gb = bp2gb.get(bp);
+			if (gb != null) {
+				if (en != gb.isEnabled()) {
+					gb.enabled = en;
+					fireBundleEnablementChange(gb, en);
+				}
+				if (sys != gb.isSystemBundle()) {
+					gb.systemBundle = sys;
+					Msg.error(this, String.format("%s went from %system to %system", bp,
+						sys ? "not " : "", sys ? "" : "not "));
+				}
+			}
+			else if (sys) {
+				// stored system bundles that weren't already initialized must be old, drop 'm.
+			}
+			else {
+				added.add(newGhidraBundle(this, bp, en, sys));
+			}
+		}
+
+		add(added);
+	}
+
+	public void saveState(SaveState ss) {
+		int n = bp2gb.size();
+		String[] pathArr = new String[n];
+		boolean[] enableArr = new boolean[n];
+		boolean[] systemArr = new boolean[n];
+
+		int index = 0;
+		for (Entry<ResourceFile, GhidraBundle> e : bp2gb.entrySet()) {
+			GhidraBundle gb = e.getValue();
+			pathArr[index] = gb.getPath().toString();
+			enableArr[index] = gb.isEnabled();
+			systemArr[index] = gb.isSystemBundle();
+			++index;
+		}
+
+		ss.putStrings("BundleHost_PATH", pathArr);
+		ss.putBooleans("BundleHost_ENABLE", enableArr);
+		ss.putBooleans("BundleHost_SYSTEM", systemArr);
 	}
 
 }

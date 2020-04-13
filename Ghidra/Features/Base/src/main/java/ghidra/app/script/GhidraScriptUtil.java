@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.BundleHost;
+import ghidra.app.plugin.core.osgi.OSGiException;
 import ghidra.framework.Application;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -47,18 +48,51 @@ public class GhidraScriptUtil {
 
 	private static Map<String, List<ResourceFile>> scriptNameToFilesMap = new HashMap<>();
 
-	static BundleHost _bundleHost = BundleHost.getInstance();
+	static BundleHost _bundleHost;
 
 	public static BundleHost getBundleHost() {
 		return _bundleHost;
 	}
 
+	public static void initialize(BundleHost bundleHost) {
+		if (_bundleHost != null) {
+			throw new RuntimeException("GhidraScriptUtil initialized multiple times!");
+		}
+
+		try {
+			_bundleHost = bundleHost;
+			_bundleHost.startFelix();
+		}
+		catch (OSGiException | IOException e) {
+			e.printStackTrace();
+			Msg.error(GhidraScript.class, "failed to initialize BundleHost", e);
+		}
+	}
+
 	/**
-	 * Sets the script bundle paths
-	 * @param newPaths the new script bundle paths
+	 * initialization for headless runs.
+	 * 
+	 * @param bundleHost the host to use 
+	 * @param paths bundle paths added as system bundles
+	 * 
 	 */
-	public static void initializeScriptBundlePaths(List<ResourceFile> newPaths) {
-		_bundleHost.setBundlePaths(new ArrayList<>(newPaths));
+	public static void initialize(BundleHost bundleHost, List<ResourceFile> paths) {
+		initialize(bundleHost);
+		_bundleHost.addGhidraBundles(paths, true, true);
+	}
+
+	public static void dispose() {
+		clearMetadata();
+		_bundleHost = null;
+		providers = null;
+	}
+
+	/**
+	 * clear ScriptInfo metadata cached by GhidraScriptUtil
+	 */
+	public static void clearMetadata() {
+		scriptFileToInfoMap.clear();
+		scriptNameToFilesMap.clear();
 	}
 
 	/**
@@ -199,14 +233,6 @@ public class GhidraScriptUtil {
 				"error listing user osgi directory", e);
 			return Collections.emptyList();
 		}
-	}
-
-	/**
-	 * clear ScriptInfo metadata cached by GhidraScriptUtil
-	 */
-	public static void clearMetadata() {
-		scriptFileToInfoMap.clear(); // clear our cache of old files
-		scriptNameToFilesMap.clear();
 	}
 
 	/**
@@ -437,7 +463,7 @@ public class GhidraScriptUtil {
 	}
 
 	/** Returns true if the given filename exists in any of the given directories */
-	private static ResourceFile findScriptFileInPaths(List<ResourceFile> scriptDirectories,
+	private static ResourceFile findScriptFileInPaths(Collection<ResourceFile> scriptDirectories,
 			String filename) {
 
 		String validatedName = fixupName(filename);

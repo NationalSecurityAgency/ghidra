@@ -22,6 +22,7 @@ import java.util.List;
 import generic.jar.ResourceFile;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
+import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.*;
 import ghidra.framework.Application;
 import ghidra.framework.HeadlessGhidraApplicationConfiguration;
@@ -204,7 +205,7 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 			paths.addAll(GhidraScriptUtil.getSystemScriptPaths());
 			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
 		}
-		GhidraScriptUtil.initializeScriptBundlePaths(paths);
+		GhidraScriptUtil.initialize(new BundleHost(), paths);
 
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {

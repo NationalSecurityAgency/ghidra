@@ -30,7 +30,6 @@ import docking.action.DockingActionIf;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.list.ListPanel;
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.osgi.BundleStatusProvider;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.JavaScriptProvider;
 import ghidra.util.StringUtilities;
@@ -281,15 +280,10 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		performAction(bundleStatusAction, false);
 		waitForSwing();
 
-		final BundleStatusProvider bundleStatusProvider =
-			waitForComponentProvider(BundleStatusProvider.class);
-
 		final ResourceFile dir = new ResourceFile(getTestDirectoryPath() + "/test_scripts");
 		dir.getFile(false).mkdirs();
 
-		SwingUtilities.invokeLater(() -> {
-			bundleStatusProvider.getModel().enablePath(dir);
-		});
+		provider.getBundleHost().enablePath(dir);
 		waitForSwing();
 
 		pressNewButton();

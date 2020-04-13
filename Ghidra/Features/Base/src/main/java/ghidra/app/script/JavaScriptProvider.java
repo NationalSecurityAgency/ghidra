@@ -35,7 +35,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		if (sourceDir == null) {
 			return null;
 		}
-		return (GhidraSourceBundle) _bundleHost.getGhidraBundle(sourceDir);
+		return (GhidraSourceBundle) _bundleHost.getExistingGhidraBundle(sourceDir);
 	}
 
 	@Override
@@ -67,6 +67,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	@Override
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		// in headless operation, ScriptInfo objects can be created here
 		ScriptInfo info = GhidraScriptUtil.getScriptInfo(sourceFile);
 		try {
 			Class<?> clazz = loadClass(sourceFile, writer);

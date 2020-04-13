@@ -359,7 +359,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 		int failing = getFailingSourcesCount();
 		int newSourcecount = getNewSourcesCount();
 
-		long lastBundleActivation = 0; // XXX record last bundle activation in bundlestatusmodel
+		long lastBundleActivation = 0; // XXX record last bundle activation in bundlehost
 		if (failing > 0 && (lastBundleActivation > getLastCompileAttempt())) {
 			needsCompile = true;
 		}

@@ -551,6 +551,12 @@ public class TestEnv {
 	}
 
 	public ScriptTaskListener runScript(File script) throws PluginException {
+		GhidraScriptMgrPlugin sm = getPlugin(GhidraScriptMgrPlugin.class);
+		if (sm == null) {
+			lazyTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
+			sm = getPlugin(GhidraScriptMgrPlugin.class);
+		}
+		
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
 		PrintWriter writer = new PrintWriter(System.out);
 		ResourceFile resourceFile = new ResourceFile(script);
@@ -567,11 +573,6 @@ public class TestEnv {
 			throw new RuntimeException("Failed to compile script " + script.getAbsolutePath());
 		}
 
-		GhidraScriptMgrPlugin sm = getPlugin(GhidraScriptMgrPlugin.class);
-		if (sm == null) {
-			lazyTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
-			sm = getPlugin(GhidraScriptMgrPlugin.class);
-		}
 
 		String scriptName = script.getName();
 		ScriptTaskListener listener = new ScriptTaskListener(scriptName);

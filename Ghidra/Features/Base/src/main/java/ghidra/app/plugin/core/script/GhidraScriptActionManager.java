@@ -52,7 +52,7 @@ class GhidraScriptActionManager {
 	private GhidraScriptComponentProvider provider;
 	private GhidraScriptMgrPlugin plugin;
 	private DockingAction refreshAction;
-	private DockingAction bundlePathsAction;
+	private DockingAction bundleStatusAction;
 	private DockingAction newAction;
 	private DockingAction runAction;
 	private DockingAction runLastAction;
@@ -351,7 +351,7 @@ class GhidraScriptActionManager {
 		refreshAction.setEnabled(true);
 		plugin.getTool().addLocalAction(provider, refreshAction);
 
-		bundlePathsAction = new DockingAction("Bundle Status", plugin.getName()) {
+		bundleStatusAction = new DockingAction("Bundle Status", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				provider.showBundleStatusComponent();
@@ -363,14 +363,14 @@ class GhidraScriptActionManager {
 				return (contextObject instanceof GTable) || (contextObject instanceof ResourceFile);
 			}
 		};
-		bundlePathsAction.setPopupMenuData(new MenuData(new String[] { "Bundle Status" },
+		bundleStatusAction.setPopupMenuData(new MenuData(new String[] { "Bundle Status" },
 			ResourceManager.loadImage("images/text_list_bullets.png"), null));
-		bundlePathsAction.setToolBarData(
+		bundleStatusAction.setToolBarData(
 			new ToolBarData(ResourceManager.loadImage("images/text_list_bullets.png"), null));
 
-		bundlePathsAction.setDescription("Bundle Status");
-		bundlePathsAction.setEnabled(true);
-		plugin.getTool().addLocalAction(provider, bundlePathsAction);
+		bundleStatusAction.setDescription("Bundle Status");
+		bundleStatusAction.setEnabled(true);
+		plugin.getTool().addLocalAction(provider, bundleStatusAction);
 
 		helpAction = new DockingAction("Ghidra API Help", plugin.getName()) {
 			@Override
@@ -439,7 +439,7 @@ class GhidraScriptActionManager {
 	}
 
 	HelpLocation getPathHelpLocation() {
-		return new HelpLocation(plugin.getName(), bundlePathsAction.getName());
+		return new HelpLocation(plugin.getName(), bundleStatusAction.getName());
 	}
 
 	HelpLocation getKeyBindingHelpLocation() {

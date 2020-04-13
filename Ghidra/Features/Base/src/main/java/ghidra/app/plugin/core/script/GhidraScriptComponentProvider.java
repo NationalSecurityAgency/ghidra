@@ -23,7 +23,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -71,7 +72,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private GTree scriptCategoryTree;
 	private DraggableScriptTable scriptTable;
 	private GhidraScriptTableModel tableModel;
-	private BundleStatusProvider bundleStatusProvider;
+	private BundleStatusComponentProvider bundleStatusComponentProvider;
 	private TaskListener taskListener = new ScriptTaskListener();
 	private GhidraScriptActionManager actionManager;
 	private GhidraTableFilterPanel<ResourceFile> tableFilterPanel;
@@ -97,9 +98,26 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	};
 
+	final private BundleHost bundleHost;
+	final private RefreshingBundleHostListener refreshingBundleHostListener =
+		new RefreshingBundleHostListener();
+
 	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin) {
 		super(plugin.getTool(), "Script Manager", plugin.getName());
+
 		this.plugin = plugin;
+
+		bundleHost = new BundleHost();
+		GhidraScriptUtil.initialize(bundleHost);
+
+		// first, let the status component register its bundle host listener
+		bundleStatusComponentProvider =
+			new BundleStatusComponentProvider(plugin.getTool(), plugin.getName(), bundleHost);
+		// now add bundles
+		bundleHost.addGhidraBundle(GhidraScriptUtil.getUserScriptDirectory(), true, false);
+		bundleHost.addGhidraBundles(GhidraScriptUtil.getSystemScriptPaths(), true, true);
+		// finally, add the GUI listener for this component
+		bundleHost.addListener(refreshingBundleHostListener);
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		setIcon(ResourceManager.loadImage("images/play.png"));
@@ -107,18 +125,172 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		setWindowGroup(WINDOW_GROUP);
 
 		build();
+
 		plugin.getTool().addComponentProvider(this, false);
 		actionManager = new GhidraScriptActionManager(this, plugin);
 		updateTitle();
 	}
 
+	private void build() {
+		scriptRoot = new RootNode();
+
+		scriptCategoryTree = new GTree(scriptRoot);
+		scriptCategoryTree.setName("CATEGORY_TREE");
+		scriptCategoryTree.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				maybeSelect(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				maybeSelect(e);
+			}
+
+			private void maybeSelect(MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					TreePath path = scriptCategoryTree.getPathForLocation(e.getX(), e.getY());
+					scriptCategoryTree.setSelectionPath(path);
+				}
+			}
+		});
+		scriptCategoryTree.addGTreeSelectionListener(e -> {
+			tableModel.fireTableDataChanged(); // trigger a refilter
+			TreePath path = e.getPath();
+			if (path != null) {
+				scriptCategoryTree.expandPath(path);
+			}
+		});
+
+		scriptCategoryTree.getSelectionModel().setSelectionMode(
+			TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+		tableModel = new GhidraScriptTableModel(this);
+
+		scriptTable = new DraggableScriptTable(this, tableModel);
+		scriptTable.setName("SCRIPT_TABLE");
+		scriptTable.setAutoLookupColumn(tableModel.getNameColumnIndex());
+		scriptTable.setRowSelectionAllowed(true);
+		scriptTable.setAutoCreateColumnsFromModel(false);
+		scriptTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		scriptTable.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+			tool.contextChanged(GhidraScriptComponentProvider.this);
+			updateDescriptionPanel();
+		});
+		tableModel.addTableModelListener(e -> updateTitle());
+
+		scriptTable.addMouseListener(new GMouseListenerAdapter() {
+			@Override
+			public void popupTriggered(MouseEvent e) {
+				int displayRow = scriptTable.rowAtPoint(e.getPoint());
+				if (displayRow >= 0) {
+					scriptTable.setRowSelectionInterval(displayRow, displayRow);
+				}
+			}
+
+			@Override
+			public void doubleClickTriggered(MouseEvent e) {
+				runScript();
+			}
+		});
+
+		TableColumnModel columnModel = scriptTable.getColumnModel();
+		// Set default column sizes
+		for (int i = 0; i < columnModel.getColumnCount(); i++) {
+			TableColumn column = columnModel.getColumn(i);
+			String name = (String) column.getHeaderValue();
+			switch (name) {
+				case GhidraScriptTableModel.SCRIPT_ACTION_COLUMN_NAME:
+					initializeUnresizableColumn(column, 50);
+					break;
+				case GhidraScriptTableModel.SCRIPT_STATUS_COLUMN_NAME:
+					initializeUnresizableColumn(column, 50);
+					break;
+			}
+		}
+
+		JScrollPane scriptTableScroll = new JScrollPane(scriptTable);
+		buildFilter();
+
+		JPanel tablePanel = new JPanel(new BorderLayout());
+		tablePanel.add(scriptTableScroll, BorderLayout.CENTER);
+		tablePanel.add(tableFilterPanel, BorderLayout.SOUTH);
+
+		JSplitPane treeTableSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		treeTableSplit.setLeftComponent(scriptCategoryTree);
+		treeTableSplit.setRightComponent(tablePanel);
+		treeTableSplit.setDividerLocation(150);
+
+		JComponent descriptionPanel = buildDescriptionComponent();
+
+		dataDescriptionSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		dataDescriptionSplit.setResizeWeight(TOP_PREFERRED_RESIZE_WEIGHT);
+		dataDescriptionSplit.setName("dataDescriptionSplit");
+		dataDescriptionSplit.setTopComponent(treeTableSplit);
+		dataDescriptionSplit.setBottomComponent(descriptionPanel);
+
+		component = new JPanel(new BorderLayout());
+		component.add(dataDescriptionSplit, BorderLayout.CENTER);
+	}
+
+	//==================================================================================================
+	// Inner Classes
+	//==================================================================================================
+
+	public void readConfigState(SaveState saveState) {
+		bundleHost.restoreState(saveState);
+
+		actionManager.restoreUserDefinedKeybindings(saveState);
+		actionManager.restoreScriptsThatAreInTool(saveState);
+
+		final int descriptionDividerLocation = saveState.getInt(DESCRIPTION_DIVIDER_LOCATION, 0);
+		if (descriptionDividerLocation > 0) {
+
+			ComponentListener listener = new ComponentAdapter() {
+				@Override
+				public void componentResized(ComponentEvent e) {
+					dataDescriptionSplit.setResizeWeight(TOP_PREFERRED_RESIZE_WEIGHT); // give the top pane the most space
+				}
+			};
+			component.addComponentListener(listener);
+
+			dataDescriptionSplit.setDividerLocation(descriptionDividerLocation);
+		}
+
+		String filterText = saveState.getString(FILTER_TEXT, "");
+		tableFilterPanel.setFilterText(filterText);
+	}
+
+	public void writeConfigState(SaveState saveState) {
+		bundleHost.saveState(saveState);
+
+		actionManager.saveUserDefinedKeybindings(saveState);
+		actionManager.saveScriptsThatAreInTool(saveState);
+
+		int dividerLocation = dataDescriptionSplit.getDividerLocation();
+		if (dividerLocation > 0) {
+			saveState.putInt(DESCRIPTION_DIVIDER_LOCATION, dividerLocation);
+		}
+
+		String filterText = tableFilterPanel.getFilterText();
+		saveState.putString(FILTER_TEXT, filterText);
+	}
+
 	void dispose() {
 		editorMap.clear();
-		scriptCategoryTree.dispose();
+ 		scriptCategoryTree.dispose();
 		scriptTable.dispose();
 		tableFilterPanel.dispose();
 		actionManager.dispose();
-		bundleStatusProvider.dispose();
+		bundleStatusComponentProvider.dispose();
+		GhidraScriptUtil.dispose();
+	}
+
+	public BundleHost getBundleHost() {
+		return bundleHost;
 	}
 
 	GhidraScriptActionManager getActionManager() {
@@ -130,14 +302,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void showBundleStatusComponent() {
-		bundleStatusProvider.setVisible(true);
-	}
-
-	private void performRefresh() {
-		GhidraScriptUtil.getBundleHost().setBundlePaths(
-			bundleStatusProvider.getModel().getEnabledPaths());
-		GhidraScriptUtil.clearMetadata();
-		refresh();
+		bundleStatusComponentProvider.setVisible(true);
 	}
 
 	void assignKeyBinding() {
@@ -161,7 +326,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	void renameScript() {
 		ResourceFile script = getSelectedScript();
 		ResourceFile directory = script.getParentFile();
-		if (!bundleStatusProvider.getModel().isWriteable(directory)) {
+		if (!bundleStatusComponentProvider.getModel().isWriteable(directory)) {
 			Msg.showWarn(getClass(), getComponent(), getName(),
 				"Unable to rename scripts in '" + directory + "'.");
 			return;
@@ -272,10 +437,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	TableModel getTableModel() {
-		return tableModel;
-	}
-
 	JTable getTable() {
 		return scriptTable;
 	}
@@ -284,17 +445,17 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return tableFilterPanel.getViewRow(tableModel.getScriptIndex(scriptFile));
 	}
 
-	ResourceFile getScriptAt(int rowIndex) {
-		return tableModel.getScriptAt(tableFilterPanel.getModelRow(rowIndex));
+	ResourceFile getScriptAt(int viewRowIndex) {
+		return tableModel.getScriptAt(tableFilterPanel.getModelRow(viewRowIndex));
 	}
 
 	public List<ResourceFile> getScriptDirectories() {
-		return bundleStatusProvider.getModel().getEnabledPaths().stream().filter(
+		return bundleStatusComponentProvider.getModel().getEnabledPaths().stream().filter(
 			ResourceFile::isDirectory).collect(Collectors.toList());
 	}
 
 	public List<ResourceFile> getWritableScriptDirectories() {
-		BundleStatusModel m = bundleStatusProvider.getModel();
+		BundleStatusTableModel m = bundleStatusComponentProvider.getModel();
 		return m.getEnabledPaths().stream().filter(ResourceFile::isDirectory).filter(
 			m::isWriteable).collect(Collectors.toList());
 	}
@@ -311,7 +472,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 		ResourceFile directory = script.getParentFile();
 
-		if (!bundleStatusProvider.getModel().isWriteable(directory)) {
+		if (!bundleStatusComponentProvider.getModel().isWriteable(directory)) {
 			Msg.showWarn(getClass(), getComponent(), getName(),
 				"Unable to delete scripts in '" + directory + "'.");
 			return;
@@ -353,11 +514,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public void enableScriptDirectory(ResourceFile scriptDir) {
-		if (bundleStatusProvider.getModel().enablePath(scriptDir)) {
-			Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
-				"The directory has been automatically enabled for use:\n" +
-					scriptDir.getAbsolutePath());
-		}
+		bundleHost.enablePath(scriptDir);
+		Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
+			"The directory has been automatically enabled for use:\n" +
+				scriptDir.getAbsolutePath());
 	}
 
 	void newScript() {
@@ -410,12 +570,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(String scriptName, TaskListener listener) {
-		List<ResourceFile> dirPaths = bundleStatusProvider.getModel().getEnabledPaths();
-		for (ResourceFile dir : dirPaths) {
-			ResourceFile scriptSource = new ResourceFile(dir, scriptName);
-			if (scriptSource.exists()) {
-				runScript(scriptSource, listener);
-				return;
+		for (ResourceFile dir : bundleHost.getBundlePaths()) {
+			if (dir.isDirectory()) {
+				ResourceFile scriptSource = new ResourceFile(dir, scriptName);
+				if (scriptSource.exists()) {
+					runScript(scriptSource, listener);
+					return;
+				}
 			}
 		}
 		throw new IllegalArgumentException("Script does not exist: " + scriptName);
@@ -528,6 +689,60 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			categoryPath[i] = ((GTreeNode) path[i + 1]).getName();
 		}
 		return categoryPath;
+	}
+
+	class RefreshingBundleHostListener implements BundleHostListener {
+
+		@Override
+		public void bundleBuilt(GhidraBundle sb) {
+			if (sb instanceof GhidraSourceBundle) {
+				GhidraSourceBundle gsb = (GhidraSourceBundle) sb;
+				for (ResourceFile sf : gsb.getNewSources()) {
+					if (GhidraScriptUtil.containsMetadata(sf)) {
+						ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(sf);
+						BuildFailure e = gsb.getErrors(sf);
+						info.setCompileErrors(e != null);
+					}
+				}
+				tableModel.fireTableDataChanged();
+			}
+		}
+
+		@Override
+		public void bundleEnablementChange(GhidraBundle gbundle, boolean newEnablment) {
+			if (gbundle instanceof GhidraSourceBundle) {
+				performRefresh();
+			}
+		}
+
+		@Override
+		public void bundleAdded(GhidraBundle gbundle) {
+			plugin.getTool().setConfigChanged(true);
+			performRefresh();
+		}
+
+		@Override
+		public void bundlesAdded(Collection<GhidraBundle> gbundles) {
+			plugin.getTool().setConfigChanged(true);
+			performRefresh();
+		}
+
+		@Override
+		public void bundleRemoved(GhidraBundle gbundle) {
+			plugin.getTool().setConfigChanged(true);
+			performRefresh();
+		}
+
+		@Override
+		public void bundlesRemoved(Collection<GhidraBundle> gbundles) {
+			plugin.getTool().setConfigChanged(true);
+			performRefresh();
+		}
+	}
+
+	private void performRefresh() {
+		GhidraScriptUtil.clearMetadata();
+		refresh();
 	}
 
 	void refresh() {
@@ -753,147 +968,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return true;
 	}
 
-	private void build() {
-		bundleStatusProvider = new BundleStatusProvider(plugin.getTool(), plugin.getName());
-
-		// XXX remember listener to remove later
-		bundleStatusProvider.getModel().addListener(new BundleStatusListener() {
-			@Override
-			public void bundlesChanged() {
-				plugin.getTool().setConfigChanged(true);
-				performRefresh();
-			}
-
-			@Override
-			public void bundleEnablementChanged(BundleStatus status, boolean enabled) {
-				if (status.isDirectory()) {
-					performRefresh();
-				}
-			}
-		});
-
-		BundleHost.getInstance().addListener(new OSGiListener() {
-
-			@Override
-			public void bundleBuilt(GhidraBundle sb) {
-				if (sb instanceof GhidraSourceBundle) {
-					GhidraSourceBundle gsb = (GhidraSourceBundle) sb;
-					for (ResourceFile sf : gsb.getNewSources()) {
-						if (GhidraScriptUtil.containsMetadata(sf)) {
-							ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(sf);
-							BuildFailure e = gsb.getErrors(sf);
-							info.setCompileErrors(e != null);
-						}
-					}
-					tableModel.fireTableDataChanged();
-				}
-			}
-		});
-
-		scriptRoot = new RootNode();
-
-		scriptCategoryTree = new GTree(scriptRoot);
-		scriptCategoryTree.setName("CATEGORY_TREE");
-		scriptCategoryTree.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent e) {
-				maybeSelect(e);
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				maybeSelect(e);
-			}
-
-			private void maybeSelect(MouseEvent e) {
-				if (e.isPopupTrigger()) {
-					TreePath path = scriptCategoryTree.getPathForLocation(e.getX(), e.getY());
-					scriptCategoryTree.setSelectionPath(path);
-				}
-			}
-		});
-		scriptCategoryTree.addGTreeSelectionListener(e -> {
-			tableModel.fireTableDataChanged(); // trigger a refilter
-			TreePath path = e.getPath();
-			if (path != null) {
-				scriptCategoryTree.expandPath(path);
-			}
-		});
-
-		scriptCategoryTree.getSelectionModel().setSelectionMode(
-			TreeSelectionModel.SINGLE_TREE_SELECTION);
-
-		tableModel = new GhidraScriptTableModel(this);
-
-		scriptTable = new DraggableScriptTable(this);
-		scriptTable.setName("SCRIPT_TABLE");
-		scriptTable.setAutoLookupColumn(tableModel.getNameColumnIndex());
-		scriptTable.setRowSelectionAllowed(true);
-		scriptTable.setAutoCreateColumnsFromModel(false);
-		scriptTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		scriptTable.getSelectionModel().addListSelectionListener(e -> {
-			if (e.getValueIsAdjusting()) {
-				return;
-			}
-			tool.contextChanged(GhidraScriptComponentProvider.this);
-			updateDescriptionPanel();
-		});
-		tableModel.addTableModelListener(e -> updateTitle());
-
-		scriptTable.addMouseListener(new GMouseListenerAdapter() {
-			@Override
-			public void popupTriggered(MouseEvent e) {
-				int displayRow = scriptTable.rowAtPoint(e.getPoint());
-				if (displayRow >= 0) {
-					scriptTable.setRowSelectionInterval(displayRow, displayRow);
-				}
-			}
-
-			@Override
-			public void doubleClickTriggered(MouseEvent e) {
-				runScript();
-			}
-		});
-
-		TableColumnModel columnModel = scriptTable.getColumnModel();
-		// Set default column sizes
-		for (int i = 0; i < columnModel.getColumnCount(); i++) {
-			TableColumn column = columnModel.getColumn(i);
-			String name = (String) column.getHeaderValue();
-			switch (name) {
-				case GhidraScriptTableModel.SCRIPT_ACTION_COLUMN_NAME:
-					initializeUnresizableColumn(column, 50);
-					break;
-				case GhidraScriptTableModel.SCRIPT_STATUS_COLUMN_NAME:
-					initializeUnresizableColumn(column, 50);
-					break;
-			}
-		}
-
-		JScrollPane scriptTableScroll = new JScrollPane(scriptTable);
-		buildFilter();
-
-		JPanel tablePanel = new JPanel(new BorderLayout());
-		tablePanel.add(scriptTableScroll, BorderLayout.CENTER);
-		tablePanel.add(tableFilterPanel, BorderLayout.SOUTH);
-
-		JSplitPane treeTableSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		treeTableSplit.setLeftComponent(scriptCategoryTree);
-		treeTableSplit.setRightComponent(tablePanel);
-		treeTableSplit.setDividerLocation(150);
-
-		JComponent descriptionPanel = buildDescriptionComponent();
-
-		dataDescriptionSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		dataDescriptionSplit.setResizeWeight(TOP_PREFERRED_RESIZE_WEIGHT);
-		dataDescriptionSplit.setName("dataDescriptionSplit");
-		dataDescriptionSplit.setTopComponent(treeTableSplit);
-		dataDescriptionSplit.setBottomComponent(descriptionPanel);
-
-		component = new JPanel(new BorderLayout());
-		component.add(dataDescriptionSplit, BorderLayout.CENTER);
-	}
-
 	private void initializeUnresizableColumn(TableColumn column, int width) {
 		column.setPreferredWidth(width);
 		column.setMinWidth(width);
@@ -1058,47 +1132,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public void readConfigState(SaveState saveState) {
-		bundleStatusProvider.getModel().restoreState(saveState);
-
-		// pull in the just-loaded paths
-		List<ResourceFile> paths = bundleStatusProvider.getModel().getEnabledPaths();
-		GhidraScriptUtil.initializeScriptBundlePaths(paths);
-		actionManager.restoreUserDefinedKeybindings(saveState);
-		actionManager.restoreScriptsThatAreInTool(saveState);
-
-		final int descriptionDividerLocation = saveState.getInt(DESCRIPTION_DIVIDER_LOCATION, 0);
-		if (descriptionDividerLocation > 0) {
-
-			ComponentListener listener = new ComponentAdapter() {
-				@Override
-				public void componentResized(ComponentEvent e) {
-					dataDescriptionSplit.setResizeWeight(TOP_PREFERRED_RESIZE_WEIGHT); // give the top pane the most space
-				}
-			};
-			component.addComponentListener(listener);
-
-			dataDescriptionSplit.setDividerLocation(descriptionDividerLocation);
-		}
-
-		String filterText = saveState.getString(FILTER_TEXT, "");
-		tableFilterPanel.setFilterText(filterText);
-	}
-
-	public void writeConfigState(SaveState saveState) {
-		bundleStatusProvider.getModel().saveState(saveState);
-		actionManager.saveUserDefinedKeybindings(saveState);
-		actionManager.saveScriptsThatAreInTool(saveState);
-
-		int dividerLocation = dataDescriptionSplit.getDividerLocation();
-		if (dividerLocation > 0) {
-			saveState.putInt(DESCRIPTION_DIVIDER_LOCATION, dividerLocation);
-		}
-
-		String filterText = tableFilterPanel.getFilterText();
-		saveState.putString(FILTER_TEXT, filterText);
-	}
-
 	/********************************************************************/
 
 	@Override
@@ -1149,10 +1182,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 		}
 	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
 
 	/** Table filter that uses the state of the tree to further filter */
 	private class ScriptTableSecondaryFilter implements TableFilter<ResourceFile> {

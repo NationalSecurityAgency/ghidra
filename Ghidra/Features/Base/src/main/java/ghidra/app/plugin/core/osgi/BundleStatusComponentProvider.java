@@ -46,12 +46,12 @@ import resources.ResourceManager;
 /**
  * component for managing OSGi bundle status
  */
-public class BundleStatusProvider extends ComponentProviderAdapter {
+public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	static String preferenceForLastSelectedBundle = "LastGhidraScriptBundle";
 
 	private JPanel panel;
 	private LessFreneticGTable bundleStatusTable;
-	private final BundleStatusModel bundleStatusModel;
+	private final BundleStatusTableModel bundleStatusTableModel;
 	private GTableFilterPanel<BundleStatus> filterPanel;
 
 	private GhidraFileChooser fileChooser;
@@ -61,23 +61,24 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	static final String BUNDLE_GROUP = "0bundle group";
 	static final String BUNDLE_LIST_GROUP = "1bundle list group";
 
-	public BundleStatusProvider(PluginTool tool, String owner) {
-		super(tool, "Bundle Status Manager", owner);
-		this.bundleHost = BundleHost.getInstance();
-		this.bundleStatusModel = new BundleStatusModel(this, bundleHost);
+	public BundleStatusComponentProvider(PluginTool tool, String owner, BundleHost bundleHost) {
+		super(tool, "Bundle Status Component", owner);
+		this.bundleHost = bundleHost;
+		this.bundleStatusTableModel = new BundleStatusTableModel(this, bundleHost);
 
-		bundleStatusModel.addListener(new BundleStatusListener() {
+		bundleStatusTableModel.addListener(new BundleStatusChangeRequestListener() {
 			@Override
-			public void bundleEnablementChanged(BundleStatus status, boolean enabled) {
+			public void bundleEnablementChangeRequest(BundleStatus status, boolean enabled) {
 				if (!enabled && status.isActive()) {
 					startActivateDeactiveTask(status, false);
 				}
 			}
 
 			@Override
-			public void bundleActivationChanged(BundleStatus status, boolean newValue) {
+			public void bundleActivationChangeRequest(BundleStatus status, boolean newValue) {
 				startActivateDeactiveTask(status, newValue);
 			}
+
 		});
 
 		this.filter = new GhidraFileFilter() {
@@ -101,7 +102,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	private void build() {
 		panel = new JPanel(new BorderLayout(5, 5));
 
-		bundleStatusTable = new LessFreneticGTable(bundleStatusModel);
+		bundleStatusTable = new LessFreneticGTable(bundleStatusTableModel);
 		bundleStatusTable.setName("BUNDLESTATUS_TABLE");
 		bundleStatusTable.setSelectionBackground(new Color(204, 204, 255));
 		bundleStatusTable.setSelectionForeground(Color.BLACK);
@@ -112,7 +113,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			if (e.getValueIsAdjusting()) {
 				return;
 			}
-			tool.contextChanged(BundleStatusProvider.this);
+			tool.contextChanged(BundleStatusComponentProvider.this);
 		});
 
 		// to allow custom cell renderers
@@ -124,14 +125,14 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 
 		// 
 		column =
-			bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.enabledColumn.index);
+			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.enabledColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
 		// 
-		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.activeColumn.index);
+		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.activeColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
@@ -159,11 +160,11 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		});
 
 		// 
-		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.typeColumn.index);
+		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.typeColumn.index);
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		column.setMaxWidth(10 +
 			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SourceDir.toString()));
-		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusModel.pathColumn.index);
+		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.pathColumn.index);
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -177,7 +178,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			}
 		});
 
-		filterPanel = new GTableFilterPanel<>(bundleStatusTable, bundleStatusModel);
+		filterPanel = new GTableFilterPanel<>(bundleStatusTable, bundleStatusTableModel);
 
 		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
 		scrollPane.getViewport().setBackground(bundleStatusTable.getBackground());
@@ -312,8 +313,8 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 	private void doClean() {
 		int[] selectedModelRows = getSelectedModelRows();
 		boolean anythingCleaned = false;
-		for (BundleStatus o : bundleStatusModel.getRowObjects(selectedModelRows)) {
-			anythingCleaned |= bundleHost.getGhidraBundle(o.getPath()).clean();
+		for (BundleStatus bs : bundleStatusTableModel.getRowObjects(selectedModelRows)) {
+			anythingCleaned |= bundleHost.getExistingGhidraBundle(bs.getPath()).clean();
 		}
 		if (anythingCleaned) {
 			AnimationUtils.shakeComponent(getComponent());
@@ -326,7 +327,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			return;
 		}
 
-		bundleStatusModel.remove(selectedModelRows);
+		bundleStatusTableModel.remove(selectedModelRows);
 		bundleStatusTable.clearSelection();
 	}
 
@@ -369,7 +370,10 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		if (!files.isEmpty()) {
 			Preferences.setProperty(preferenceForLastSelectedBundle,
 				files.get(0).getAbsolutePath());
-			bundleStatusModel.addNewPaths(files, true, false);
+
+			bundleHost.addGhidraBundles(
+				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList()),
+				true, false);
 		}
 	}
 
@@ -386,9 +390,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 				bundleStatusTable.chill();
 
 				List<GhidraBundle> gbs =
-					bundleStatusModel.getRowObjects(selectedModelRows).stream().filter(
+					bundleStatusTableModel.getRowObjects(selectedModelRows).stream().filter(
 						bs -> !bs.isActive()).map(
-							bs -> bundleHost.getGhidraBundle(bs.getPath())).collect(
+							bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
 								Collectors.toList());
 				int total = gbs.size();
 				int total_activated = 0;
@@ -435,9 +439,9 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 				long startTime = System.nanoTime();
 
 				List<GhidraBundle> gbs =
-					bundleStatusModel.getRowObjects(selectedModelRows).stream().filter(
+					bundleStatusTableModel.getRowObjects(selectedModelRows).stream().filter(
 						bs -> bs.isActive()).map(
-							bs -> bundleHost.getGhidraBundle(bs.getPath())).collect(
+							bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
 								Collectors.toList());
 
 				int total = gbs.size();
@@ -470,7 +474,7 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
 				try {
-					GhidraBundle sb = bundleHost.getGhidraBundle(status.getPath());
+					GhidraBundle sb = bundleHost.getExistingGhidraBundle(status.getPath());
 					if (activate) {
 						sb.build(console.getStdErr());
 						bundleHost.activateSynchronously(sb.getBundleLoc());
@@ -496,14 +500,14 @@ public class BundleStatusProvider extends ComponentProviderAdapter {
 		}, null, 1000);
 	}
 
-	public BundleStatusModel getModel() {
-		return bundleStatusModel;
+	public BundleStatusTableModel getModel() {
+		return bundleStatusTableModel;
 	}
 
 	public void notifyTableRowChanged(BundleStatus status) {
-		int modelRowIndex = bundleStatusModel.getRowIndex(status);
+		int modelRowIndex = bundleStatusTableModel.getRowIndex(status);
 		int viewRowIndex = filterPanel.getViewRow(modelRowIndex);
-		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusModel, viewRowIndex));
+		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusTableModel, viewRowIndex));
 	}
 
 	@Override
