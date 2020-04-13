@@ -159,9 +159,8 @@ public class ParamInfo {
 					model.getProgram());
 			}
 			// preserve original source type if name unchanged
-			SourceType source = SourceType.USER_DEFINED;
 			return new MyParameter(name, formalDataType, variableStorage, model.getProgram(),
-				source);
+					SourceType.USER_DEFINED);
 		}
 		catch (InvalidInputException e) {
 			throw new AssertException("Unexpected exception", e);

@@ -117,7 +117,6 @@ class CreateFunctionAction extends ListingContextAction {
 			return;
 		}
 
-		String name = null;
 		Function func = context.getProgram().getFunctionManager().getFunctionContaining(entry);
 		if (func != null && func.getEntryPoint().equals(entry)) {
 			if (createThunk) {
