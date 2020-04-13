@@ -97,7 +97,7 @@ public abstract class AbstractCreateStructureCmd implements Command {
      * structure with data and then returning the data type object that 
      * represents the newly created structure.
      * 
-     * @param structureInfo The stucture info object that describes the newly
+     * @param structureInfo The structure info object that describes the newly
      *        created structure.
      * @return The new data type that represents the created structure.
      */

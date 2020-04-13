@@ -28,7 +28,7 @@ import ghidra.util.exception.DuplicateNameException;
  * <p>
  * The {@code ModulePackages} attribute indicates all the packages of a module that are 
  * exported or opened by the {@code Module} attribute, as well as all the package of the service
- * implementations recored in the {@code Module} attribute.
+ * implementations recorded in the {@code Module} attribute.
  */
 public class ModulePackagesAttribute extends AbstractAttributeInfo {
 
