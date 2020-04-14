@@ -1084,9 +1084,9 @@ macro push44(x) {
 }
 
 macro pushseg44(x) {
-  mysave:2 = x;
+  mysave:4 = zext(x);
   $(STACKPTR) = $(STACKPTR) - 4;
-  *:2 $(STACKPTR) = mysave;
+  *:4 $(STACKPTR) = mysave;
 }
 
 macro push48(x) {
@@ -1115,9 +1115,9 @@ macro push88(x) {
 }
 
 macro pushseg88(x) {
-  mysave:2 = x;
+  mysave:8 = zext(x);
   $(STACKPTR) = $(STACKPTR) - 8;
-  *:2 $(STACKPTR) = mysave;
+  *:8 $(STACKPTR) = mysave;
 }
 @endif
 
