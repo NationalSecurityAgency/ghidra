@@ -627,6 +627,11 @@ public class DataTypeManagerHandler {
 		newManager.addDataTypeManagerListener(listenerDelegate);
 		dataTypeIndexer.removeDataTypeManager(oldManager);
 		dataTypeIndexer.addDataTypeManager(newManager);
+		
+		if (newManager instanceof FileDataTypeManager) {
+			((FileDataTypeManager)newManager).setDataOrganization(plugin.getProgram().getCompilerSpec().getDataOrganization());
+		}
+		
 		fireDataTypeManagerChanged(archive);
 	}
 

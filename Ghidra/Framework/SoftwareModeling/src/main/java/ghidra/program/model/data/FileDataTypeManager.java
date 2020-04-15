@@ -192,6 +192,15 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		fname = fname + SUFFIX;
 		return new File(file.getParentFile(), fname);
 	}
+	
+	/**
+	 * Set the data organization used by this data type manager.
+	 * 
+	 * @param org the new data organization
+	 */
+	public void setDataOrganization(DataOrganization org) {
+		dataOrganization = org;
+	}
 
 	private void updateRootCategoryName(ResourceFile newFile, Category root) {
 		String newName = getRootName(newFile.getName());
