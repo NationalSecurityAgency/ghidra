@@ -34,9 +34,11 @@ public class ResourceFileJavaFileManager implements JavaFileManager {
 
 	private StandardJavaFileManager fileManager;
 	private List<ResourceFile> sourceDirs;
+	private Set<ResourceFile> avoid;
 
-	public ResourceFileJavaFileManager(List<ResourceFile> sourceDirs) {
+	public ResourceFileJavaFileManager(List<ResourceFile> sourceDirs, Set<ResourceFile> avoid) {
 		this.sourceDirs = sourceDirs;
+		this.avoid = avoid;
 		JavaCompiler javaCompiler = ToolProvider.getSystemJavaCompiler();
 		if (javaCompiler == null) {
 			throw new AssertException("Can't find java compiler");
@@ -59,7 +61,6 @@ public class ResourceFileJavaFileManager implements JavaFileManager {
 	public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds,
 			boolean recurse) throws IOException {
 
-		Iterable<JavaFileObject> result = fileManager.list(location, packageName, kinds, recurse);
 		if (location.equals(StandardLocation.SOURCE_PATH)) {
 			String relativePath = packageName.replace('.', '/');
 			List<JavaFileObject> newResult = new ArrayList<>();
@@ -70,15 +71,15 @@ public class ResourceFileJavaFileManager implements JavaFileManager {
 					gatherFiles(sourceDir, packageDir, newResult, kinds, recurse);
 				}
 			}
-			result.forEach(newResult::add);
-			result = newResult;
+			return newResult;
 		}
-		return result;
+		return fileManager.list(location, packageName, kinds, recurse);
 	}
 
 	private void gatherFiles(ResourceFile root, ResourceFile file, List<JavaFileObject> accumulator,
 			Set<Kind> kinds, boolean recurse) {
-		ResourceFile[] listFiles = file.listFiles();
+		List<ResourceFile> listFiles = new ArrayList<>(Arrays.asList(file.listFiles()));
+		listFiles.removeAll(avoid);
 		for (ResourceFile resourceFile : listFiles) {
 			if (resourceFile.isDirectory()) {
 				if (recurse) {

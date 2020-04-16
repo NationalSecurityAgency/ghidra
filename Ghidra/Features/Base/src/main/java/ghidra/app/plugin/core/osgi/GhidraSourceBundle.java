@@ -538,8 +538,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 		options.add(System.getProperty("java.class.path") + File.pathSeparator + bindir.toString());
 		options.add("-proc:none");
 
-		final JavaFileManager rfm =
-			new ResourceFileJavaFileManager(Collections.singletonList(getSourceDir()));
+		final ResourceFileJavaFileManager rfm = new ResourceFileJavaFileManager(
+			Collections.singletonList(getSourceDir()), buildErrors.keySet());
 
 		BundleJavaManager bjm = new BundleJavaManager(bundleHost.getHostFramework(), rfm, options);
 		// The phidias BundleJavaManager is for compiling from within a bundle -- it makes the
@@ -591,16 +591,24 @@ public class GhidraSourceBundle extends GhidraBundle {
 			if (successfulCompilation) {
 				break;
 			}
+			Set<ResourceFileJavaFileObject> hadErrors = new HashSet<>();
 			for (Diagnostic<? extends JavaFileObject> d : diagnostics.getDiagnostics()) {
 				String err = d.toString() + "\n";
 				writer.write(err);
 				ResourceFileJavaFileObject sf = (ResourceFileJavaFileObject) d.getSource();
 				ResourceFile rf = sf.getFile();
 				buildError(rf, err); // remember all errors for this file
+				hadErrors.add(sf);
+			}
+			for (ResourceFileJavaFileObject sf : hadErrors) {
 				if (sourceFiles.remove(sf)) {
-					writer.printf("skipping %s\n", sf.toString());
+					writer.printf("skipping %s\n", sf.getFile().toString());
+				}
+				else {
+					throw new IOException("compilation error loop condition for " + sf.getFile().toString());
 				}
 			}
+
 		}
 		// mark the successful compilations
 		for (ResourceFileJavaFileObject sf : sourceFiles) {
@@ -638,6 +646,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 		analyzer.setProperty("Bundle-SymbolicName",
 			BundleHost.getSymbolicNameFromSourceDir(srcdir));
 		analyzer.setProperty("Bundle-Version", "1.0");
+		// XXX we must constrain analyzed imports according to constraints declared in @imports tags
 		analyzer.setProperty("Import-Package", "*");
 		analyzer.setProperty("Export-Package", "!*.private.*,!*.internal.*,*");
 		// analyzer.setBundleActivator(s);
