@@ -1,0 +1,1081 @@
+### General ###
+
+define endian=big;
+define alignment=2;
+define space ram type=ram_space size=4 wordsize=1 default;
+define space register type=register_space size=4;
+
+define register offset=0 size=4
+[a0 a1 a2 a3 a4 a5 s0 s1 s2 s3 s4 s5 s6 s7 s8 ta t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 p0 p1 fp gp lp sp];
+
+define register offset=0x90 size=4
+[pc ipc mult_addr mult_inc];
+
+define register offset=0x100 size=8
+[d0 d1];
+
+define register offset=0x100 size=4
+[d0.hi d0.lo d1.hi d1.lo];
+
+
+
+define token instr32(32)
+    OpSz        = (31, 31)
+    Opc         = (25, 30)
+    Rt          = (20, 24)
+    Rth         = (21, 24)
+    Rtl         = (21, 24)
+    Ra          = (15, 19)
+    Rb          = (10, 14)
+    Rd          = (5, 9)
+    Rs          = (5, 9)
+    Sub5        = (0, 4)
+    Sub6        = (0, 5)
+    Sub8        = (0, 7)
+    Imm5u       = (10, 14)
+    Imm5s       = (10, 14) signed
+    Br1t        = (14, 14)
+    Br2t        = (16, 19)
+    Alu2Mod     = (6, 9)
+    Dtl         = (22, 24)
+    Dt          = (21, 21)
+    Dtlow       = (21, 21)
+    Dthigh      = (21, 21)
+    Dtr         = (20, 20)
+    JIt         = (24, 24)
+    Imm19s      = (0, 18) signed
+    Imm18s      = (0, 17) signed
+    Imm17s      = (0, 16) signed
+    Imm16s      = (0, 15) signed
+    Imm14s      = (0, 13) signed
+    Imm15u      = (0, 14)
+    Imm15s      = (0, 14) signed
+    Imm20u      = (0, 19)
+    Imm20s      = (0, 19) signed
+    Imm24s      = (0, 23) signed
+    Imm11s		= (8, 18) signed
+    Imm8s		= (0, 7) signed
+    sv          = (8, 9)
+    SrIdx       = (10, 19)
+    Swid        = (5, 19)
+
+    CctlZ       = (11, 14)
+    CctlLevel   = (10, 10)
+    CctlSub     = (5, 9)
+
+    MsyncZ      = (8, 19)
+    MsyncSub    = (5, 7)
+
+    DtIt        = (8, 9)
+    Jz          = (6, 7)
+    JrHint      = (5, 5)
+
+    ToggleL     = (21, 24)
+    Toggle      = (20, 20)
+
+    Usr         = (15, 19)
+    Group       = (10, 14)
+
+    DprefD      = (24, 24)
+    DprefSub    = (20, 23)
+
+    TlbopSub    = (5, 9)
+
+    StandbyZ    = (7, 9)
+    StandbySub  = (5, 6)
+    
+    GpSub1      = (19, 19)
+    GpSub2      = (18, 19)
+    GpSub3      = (17, 19)
+
+    sh          = (5, 9)
+    
+    Bxxc		= (19, 19)
+
+    LsmwRa = (15, 19)
+    LsmwRb = (20, 24)
+    LsmwRb_ = (20, 24)
+    LsmwRe = (10, 14)
+    LsmwRe_ = (10, 14)
+    Enable4 = (6, 9)
+    Enable4_fp = (9, 9)
+    Enable4_gp = (8, 8)
+    Enable4_lp = (7, 7)
+    Enable4_sp = (6, 6)
+    LsmwLs = (5, 5)
+    LsmwBa = (4, 4)
+    LsmwId = (3, 3)
+    LsmwM = (2, 2)
+    LsmwSub = (0, 1)
+;
+
+attach variables [Rt Rs Ra Rb Rd LsmwRa LsmwRb LsmwRe] [
+    a0 a1 a2 a3 a4 a5 s0 s1 s2 s3 s4 s5 s6 s7 s8 ta t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 p0 p1 fp gp lp sp
+];
+
+attach variables [Rtl] [
+    a0 a2 a4 s0 s2 s4 s6 s8 t0 t2 t4 t6 t8 p0 fp lp
+];
+
+attach variables [Rth] [
+    a1 a3 a5 s1 s3 s5 s7 ta t1 t3 t5 t7 t9 p1 gp sp
+];
+
+attach variables [Dt] [
+    d0 d1
+];
+
+attach variables [Dtlow] [
+    d0.lo d1.lo
+];
+
+attach variables [Dthigh] [
+    d0.hi d1.hi
+];
+
+
+@define I32     "(OpSz=0)"
+@define ALU_1   "(Opc=0b100000)"
+@define ALU_2   "(Opc=0b100001)"
+@define ALU2Z   "(Alu2Mod=0b0000)"
+@define GPR     "(Alu2Mod=0b0001)"
+@define BR1     "(Opc=0b100110)"
+@define BR2     "(Opc=0b100111)"
+@define BR3     "(Opc=0b101101)"
+@define LSMW    "(Opc=0b011101)"
+@define JI      "(Opc=0b100100)"
+@define MEM     "(Opc=0b011100)"
+@define MISC    "(Opc=0b110010)"
+@define JREG    "(Opc=0b100101)"
+@define SBGP    "(Opc=0b011111)"
+@define LBGP    "(Opc=0b010111)"
+@define HWGP    "(Opc=0b011110)"
+@define SIMD    "(Opc=0b111000)"
+
+
+
+### ALU Instruction with Immediate ###
+
+:addi  Rt, Ra, Imm15s is $(I32) & Opc=0b101000 & Rt & Ra & Imm15s { Rt = Ra + Imm15s; }
+:subri Rt, Ra, Imm15s is $(I32) & Opc=0b101001 & Rt & Ra & Imm15s { Rt = Imm15s - Ra; }
+:andi  Rt, Ra, Imm15u is $(I32) & Opc=0b101010 & Rt & Ra & Imm15u { Rt = Ra & Imm15u; }
+:ori   Rt, Ra, Imm15u is $(I32) & Opc=0b101100 & Rt & Ra & Imm15u { Rt = Ra | Imm15u; }
+:xori  Rt, Ra, Imm15u is $(I32) & Opc=0b101011 & Rt & Ra & Imm15u { Rt = Ra ^ Imm15u; }
+:slti  Rt, Ra, Imm15s is $(I32) & Opc=0b101110 & Rt & Ra & Imm15s { Rt = zext(Ra < Imm15s); }
+:sltsi Rt, Ra, Imm15s is $(I32) & Opc=0b101111 & Rt & Ra & Imm15s { Rt = zext(Ra s< Imm15s); }
+:movi  Rt,     Imm20s is $(I32) & Opc=0b100010 & Rt & Imm20s      { Rt = Imm20s; }
+:sethi Rt,     Imm20u is $(I32) & Opc=0b100011 & Rt & Imm20u      { Rt = Imm20u << 12;}
+
+
+### ALU Instruction ###
+
+:add  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00000 { Rt = Ra + Rb; }
+:sub  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00001 { Rt = Ra - Rb; }
+:and  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00010 { Rt = Ra & Rb; }
+:xor  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00011 { Rt = Ra ^ Rb; }
+:or   Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00100 { Rt = Ra | Rb; }
+:nor  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00101 { Rt = ~(Ra | Rb); }
+:slt  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00110 { Rt = zext(Ra < Rb); }
+:slts Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00111 { Rt = zext(Ra s< Rb); }
+:sva  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b11000 { Rt = zext(scarry(Ra, Rb)); }
+:svs  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b11001 { Rt = zext(sborrow(Ra, Rb)); }
+:seb  Rt, Ra     is $(I32) & $(ALU_1) & Rt & Ra & Rb=0b00000 & Rd=0 & Sub5=0b10000 { local tmp = Ra; Rt = sext(tmp:1); }
+:seh  Rt, Ra     is $(I32) & $(ALU_1) & Rt & Ra & Rb=0b00000 & Rd=0 & Sub5=0b10001 { local tmp = Ra; Rt = sext(tmp:2); }
+:zeb  Rt, Ra     is $(I32) & Opc=0b101010 & Rt & Ra & Imm15u=0xff                  { local tmp = Ra; Rt = zext(tmp:1); }
+:zeh  Rt, Ra     is $(I32) & $(ALU_1) & Rt & Ra & Rb=0b00000 & Rd=0 & Sub5=0b10011 { local tmp = Ra; Rt = zext(tmp:2); }
+:wsbh Rt, Ra     is $(I32) & $(ALU_1) & Rt & Ra & Rb=0b00000 & Rd=0 & Sub5=0b10100
+{
+    Rt = ((Ra & 0x000000ff) << 8)
+       | ((Ra & 0x0000ff00) >> 8)
+       | ((Ra & 0x00ff0000) << 8)
+       | ((Ra & 0xff000000) >> 8);
+}
+
+
+### Shifter Instruction ###
+
+:slli  Rt, Ra, Imm5u is $(I32) & $(ALU_1) & Rt & Ra & Imm5u & Rd=0 & Sub5=0b01000 { Rt = Ra  << Imm5u; }
+:srli  Rt, Ra, Imm5u is $(I32) & $(ALU_1) & Rt & Ra & Imm5u & Rd=0 & Sub5=0b01001 { Rt = Ra  >> Imm5u; }
+:srai  Rt, Ra, Imm5u is $(I32) & $(ALU_1) & Rt & Ra & Imm5u & Rd=0 & Sub5=0b01010 { Rt = Ra s>> Imm5u; }
+:rotri Rt, Ra, Imm5u is $(I32) & $(ALU_1) & Rt & Ra & Imm5u & Rd=0 & Sub5=0b01011 { Rt = (Ra >> Imm5u) | (Ra << (32 - Imm5u)); }
+:sll   Rt, Ra, Rb    is $(I32) & $(ALU_1) & Rt & Ra & Rb    & Rd=0 & Sub5=0b01100 { tmp:4 = Rb & 0b11111; Rt = Ra  << tmp; }
+:srl   Rt, Ra, Rb    is $(I32) & $(ALU_1) & Rt & Ra & Rb    & Rd=0 & Sub5=0b01101 { tmp:4 = Rb & 0b11111; Rt = Ra  >> tmp; }
+:sra   Rt, Ra, Rb    is $(I32) & $(ALU_1) & Rt & Ra & Rb    & Rd=0 & Sub5=0b01110 { tmp:4 = Rb & 0b11111; Rt = Ra s>> tmp; }
+:rotr  Rt, Ra, Rb    is $(I32) & $(ALU_1) & Rt & Ra & Rb    & Rd=0 & Sub5=0b01111 { tmp:4 = Rb & 0b11111; Rt = (Ra >> tmp) | (Ra << (32 - tmp)); }
+
+
+### Multiply Instruction ###
+
+:mul     Rt,    Ra, Rb is $(I32) & $(ALU_2) & Rt                    & Ra & Rb & $(ALU2Z) & Sub6=0b100100 { Rt = Ra * Rb; }
+:mults64 Dt,    Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dt    & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b101000 { Dt = sext(Ra) * sext(Rb); }
+:mult64  Dt,    Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dt    & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b101001 { Dt = zext(Ra) * zext(Rb); }
+:madds64 Dt,    Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dt    & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b101010 { Dt = Dt + (sext(Ra) * sext(Rb)); }
+:madd64  Dt,    Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dt    & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b101011 { Dt = Dt + (zext(Ra) * zext(Rb)); }
+:msubs64 Dt,    Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dt    & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b101100 { Dt = Dt - (sext(Ra) * sext(Rb)); }
+:msub64  Dt,    Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dt    & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b101101 { Dt = Dt - (zext(Ra) * zext(Rb)); }
+:mult32  Dtlow, Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dtlow & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b110001 { Dtlow = Ra * Rb; }
+:madd32  Dtlow, Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dtlow & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b110011 { Dtlow = Dtlow + (Ra * Rb); }
+:msub32  Dtlow, Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dtlow & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b110101 { Dtlow = Dtlow - (Ra * Rb); }
+
+
+# TODO : special instruction, but used get the division results
+# There are more special registers
+UsrName: d0.lo is Group=0 & Usr=0 & d0.lo { export d0.lo; }
+UsrName: d0.hi is Group=0 & Usr=1 & d0.hi { export d0.hi; }
+UsrName: d1.lo is Group=0 & Usr=2 & d1.lo { export d1.lo; }
+UsrName: d1.hi is Group=0 & Usr=3 & d1.hi { export d1.hi; }
+
+:mfusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100000 { UsrName = Rt; }
+:mtusr Rt, UsrName is $(I32) & $(ALU_2) & Rt & UsrName & $(ALU2Z) & Sub6=0b100001 { Rt = UsrName; }
+
+
+### Divide Instructions ###
+
+:div  Dt, Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dt & Dtlow & Dthigh & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b101111 { Dtlow = Ra  / Rb; Dthigh = Ra  % Rb; }
+:divs Dt, Ra, Rb is $(I32) & $(ALU_2) & Dtl=0 & Dt & Dtlow & Dthigh & Dtr=0 & Ra & Rb & $(ALU2Z) & Sub6=0b101110 { Dtlow = Ra s/ Rb; Dthigh = Ra s% Rb; }
+
+
+### Load / Store Instruction (immediate) ###
+
+ByteOffset: off is Imm15s [ off = Imm15s << 0; ] { export *[const]:4 off; }
+HalfOffset: off is Imm15s [ off = Imm15s << 1; ] { export *[const]:4 off; }
+WordOffset: off is Imm15s [ off = Imm15s << 2; ] { export *[const]:4 off; }
+
+AddrByteRaImm15s: [Ra + ByteOffset] is Ra & ByteOffset { addr:4 = Ra + ByteOffset; export addr; }
+AddrHalfRaImm15s: [Ra + HalfOffset] is Ra & HalfOffset { addr:4 = Ra + HalfOffset; export addr; }
+AddrWordRaImm15s: [Ra + WordOffset] is Ra & WordOffset { addr:4 = Ra + WordOffset; export addr; }
+
+:lwi  Rt, AddrWordRaImm15s is $(I32) & Opc=0b000010 & Rt & AddrWordRaImm15s { Rt = *AddrWordRaImm15s; }
+:lhi  Rt, AddrHalfRaImm15s is $(I32) & Opc=0b000001 & Rt & AddrHalfRaImm15s { local tmp:2 = *AddrHalfRaImm15s; Rt = zext(tmp); }
+:lhsi Rt, AddrHalfRaImm15s is $(I32) & Opc=0b010001 & Rt & AddrHalfRaImm15s { local tmp:2 = *AddrHalfRaImm15s; Rt = sext(tmp); }
+:lbi  Rt, AddrByteRaImm15s is $(I32) & Opc=0b000000 & Rt & AddrByteRaImm15s { local tmp:1 = *AddrByteRaImm15s; Rt = zext(tmp); }
+:lbsi Rt, AddrByteRaImm15s is $(I32) & Opc=0b010000 & Rt & AddrByteRaImm15s { local tmp:1 = *AddrByteRaImm15s; Rt = sext(tmp); }
+:swi  Rt, AddrWordRaImm15s is $(I32) & Opc=0b001010 & Rt & AddrWordRaImm15s { *AddrWordRaImm15s = Rt; }
+:shi  Rt, AddrHalfRaImm15s is $(I32) & Opc=0b001001 & Rt & AddrHalfRaImm15s { local tmp = Rt; *AddrHalfRaImm15s = tmp:2; }
+:sbi  Rt, AddrByteRaImm15s is $(I32) & Opc=0b001000 & Rt & AddrByteRaImm15s { local tmp = Rt; *AddrByteRaImm15s = tmp:1; }
+
+### Load / Store Instruction (immediate, postincr) ###
+
+:lwi.bi  Rt, [Ra], WordOffset is $(I32) & Opc=0b000110 & Rt & Ra & WordOffset { Rt = *Ra; Ra = Ra + WordOffset; }
+:lhi.bi  Rt, [Ra], HalfOffset is $(I32) & Opc=0b000101 & Rt & Ra & HalfOffset { local tmp:2 = *Ra; Rt = zext(tmp); Ra = Ra + HalfOffset; }
+:lhsi.bi Rt, [Ra], HalfOffset is $(I32) & Opc=0b010101 & Rt & Ra & HalfOffset { local tmp:2 = *Ra; Rt = sext(tmp); Ra = Ra + HalfOffset; }
+:lbi.bi  Rt, [Ra], ByteOffset is $(I32) & Opc=0b000100 & Rt & Ra & ByteOffset { local tmp:1 = *Ra; Rt = zext(tmp); Ra = Ra + ByteOffset; }
+:lbsi.bi Rt, [Ra], ByteOffset is $(I32) & Opc=0b010100 & Rt & Ra & ByteOffset { local tmp:1 = *Ra; Rt = sext(tmp); Ra = Ra + ByteOffset; }
+:swi.bi  Rt, [Ra], WordOffset is $(I32) & Opc=0b001110 & Rt & Ra & WordOffset { *Ra = Rt; Ra = Ra + WordOffset; }
+:shi.bi  Rt, [Ra], HalfOffset is $(I32) & Opc=0b001101 & Rt & Ra & HalfOffset { local tmp = Rt; *Ra = tmp:2; Ra = Ra + HalfOffset; }
+:sbi.bi  Rt, [Ra], ByteOffset is $(I32) & Opc=0b001100 & Rt & Ra & ByteOffset { local tmp = Rt; *Ra = tmp:1; Ra = Ra + ByteOffset; }
+
+
+### Load / Store Instruction (register) ###
+
+OffsetRbsv: (Rb "<<" sv) is Rb & sv { off:4 = Rb << sv; export off; }
+AddrRaRbsv: [Ra + OffsetRbsv] is Ra & OffsetRbsv { addr:4 = Ra + OffsetRbsv; export addr; }
+
+:lw  Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00000010 { Rt = *AddrRaRbsv; }
+:lh  Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00000001 { local tmp:2 = *AddrRaRbsv; Rt = zext(tmp); }
+:lhs Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00010001 { local tmp:2 = *AddrRaRbsv; Rt = sext(tmp); }
+:lb  Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00000000 { local tmp:1 = *AddrRaRbsv; Rt = zext(tmp); }
+:lbs Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00010000 { local tmp:1 = *AddrRaRbsv; Rt = sext(tmp); }
+:sw  Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00001010 { *AddrRaRbsv = Rt; }
+:sh  Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00001001 { local tmp = Rt; *AddrRaRbsv = tmp:2; }
+:sb  Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00001000 { local tmp = Rt; *AddrRaRbsv = tmp:1; }
+
+
+### Load / Store Instruction (register, postincr) ###
+
+:lw.bi  Rt, [Ra], OffsetRbsv is $(I32) & $(MEM) & Rt & Ra & OffsetRbsv & Sub8=0b00000110 { Rt = *Ra; Ra = Ra + OffsetRbsv; }
+:lh.bi  Rt, [Ra], OffsetRbsv is $(I32) & $(MEM) & Rt & Ra & OffsetRbsv & Sub8=0b00000101 { local tmp:2 = *Ra; Rt = zext(tmp); Ra = Ra + OffsetRbsv; }
+:lhs.bi Rt, [Ra], OffsetRbsv is $(I32) & $(MEM) & Rt & Ra & OffsetRbsv & Sub8=0b00010101 { local tmp:2 = *Ra; Rt = sext(tmp); Ra = Ra + OffsetRbsv; }
+:lb.bi  Rt, [Ra], OffsetRbsv is $(I32) & $(MEM) & Rt & Ra & OffsetRbsv & Sub8=0b00000100 { local tmp:1 = *Ra; Rt = zext(tmp); Ra = Ra + OffsetRbsv; }
+:lbs.bi Rt, [Ra], OffsetRbsv is $(I32) & $(MEM) & Rt & Ra & OffsetRbsv & Sub8=0b00010100 { local tmp:1 = *Ra; Rt = sext(tmp); Ra = Ra + OffsetRbsv; }
+:sw.bi  Rt, [Ra], OffsetRbsv is $(I32) & $(MEM) & Rt & Ra & OffsetRbsv & Sub8=0b00001110 { *Ra = Rt; Ra = Ra + OffsetRbsv; }
+:sh.bi  Rt, [Ra], OffsetRbsv is $(I32) & $(MEM) & Rt & Ra & OffsetRbsv & Sub8=0b00001101 { local tmp = Rt; *Ra = tmp:2; Ra = Ra + OffsetRbsv; }
+:sb.bi  Rt, [Ra], OffsetRbsv is $(I32) & $(MEM) & Rt & Ra & OffsetRbsv & Sub8=0b00001100 { local tmp = Rt; *Ra = tmp:1; Ra = Ra + OffsetRbsv; }
+
+
+### Load / Store Multiple Word Instruction ###
+
+# TODO : this is ugly
+@include "lsmw.sinc"
+
+LsmwBa_: "b" is LsmwBa=0 { }
+LsmwBa_: "a" is LsmwBa=1 { }
+
+LsmwId_: "i" is LsmwId=0 { }
+LsmwId_: "d" is LsmwId=1 { }
+
+LsmwM_: ""  is LsmwRa & LsmwM=0 { }
+LsmwM_: "m" is LsmwRa & LsmwM=1 { LsmwRa = mult_addr; }
+
+
+:lmw.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is $(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=0 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b00 & Lmw.regs
+{
+    mult_addr = LsmwRa;
+    build Lmw.regs;
+    build LsmwM_;
+}
+
+:smw.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is $(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=1 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b00 & Smw.regs
+{
+    mult_addr = LsmwRa;
+    build Smw.regs;
+    build LsmwM_;
+}
+
+
+### Load / Store Instruction for Atomic Updates ###
+
+:llw Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00011000 { Rt = *AddrRaRbsv; }
+:scw Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00011001 { *AddrRaRbsv = Rt; }
+
+
+### Load / Store Instructions with User-mode Privilege ###
+
+# TODO : special constraint (user-mode address translation)
+
+:lwup Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00100010 { Rt = *AddrRaRbsv; }
+:swup Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00101010 { *AddrRaRbsv = Rt; }
+
+
+### Jump Instruction ###
+
+Rel24: addr is Imm24s [ addr = inst_start + (Imm24s << 1); ] { export *:4 addr; }
+
+:j    Rel24 is $(I32) & $(JI)   & JIt=0 & Rel24 { goto Rel24; }
+:jal  Rel24 is $(I32) & $(JI)   & JIt=1 & Rel24 { lp = inst_next; call Rel24; }
+:jr   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00000 { goto [Rb]; }
+:ret  Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=1 & Sub5=0b00000 { return [Rb]; }
+:jral Rt,Rb is $(I32) & $(JREG) & Rt & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00001 { Rt = inst_next; call [Rb]; }
+
+
+### Branch Instruction ###
+Rel14: addr is Imm14s [ addr = inst_start + (Imm14s << 1); ] { export *:4 addr; }
+Rel16: addr is Imm16s [ addr = inst_start + (Imm16s << 1); ] { export *:4 addr; }
+
+:beq  Rt, Ra, Rel14 is $(I32) & $(BR1) & Rt & Ra & Br1t=0 & Rel14 { if(Rt == Ra) goto Rel14; }
+:bne  Rt, Ra, Rel14 is $(I32) & $(BR1) & Rt & Ra & Br1t=1 & Rel14 { if(Rt != Ra) goto Rel14; }
+:beqz Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0010 & Rel16 { if(Rt == 0)  goto Rel16; }
+:bnez Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0011 & Rel16 { if(Rt != 0)  goto Rel16; }
+:bgez Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0100 & Rel16 { if(Rt s>= 0) goto Rel16; }
+:bltz Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0101 & Rel16 { if(Rt s< 0)  goto Rel16; }
+:bgtz Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0110 & Rel16 { if(Rt s> 0)  goto Rel16; }
+:blez Rt,     Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b0111 & Rel16 { if(Rt s<= 0) goto Rel16; }
+
+
+### Branch with link Instruction ###
+
+:bgezal Rt, Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b1100 & Rel16
+{   
+    lp = inst_next;
+    if(Rt s>= 0) goto <end>;
+        call Rel16;
+    <end>
+}
+
+:bltzal Rt, Rel16 is $(I32) & $(BR2) & Rt & Br2t=0b1101 & Rel16
+{   
+    lp = inst_next;
+    if(Rt s< 0) goto <end>;
+        call Rel16;
+    <end>
+}
+
+
+### Read / Write System Registers ###
+
+# TODO : special instruction, do we create the system registers ?
+define pcodeop mfsr;
+define pcodeop mtsr;
+
+:mfsr Rt, SrIdx is $(I32) & $(MISC) & Rt & SrIdx & Rd=0 & Sub5=0b00010 { Rt = mfsr(SrIdx:4); }
+:mtsr Rt, SrIdx is $(I32) & $(MISC) & Rt & SrIdx & Rd=0 & Sub5=0b00011 { mtsr(SrIdx:4, Rt:4); }
+
+
+### Jump Register with System Register Update ###
+
+# TODO : special constraint (address translation off)
+
+:jr.itoff  Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=0 & Sub5=0b00000 { goto [Rb]; }
+:jr.toff   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=0 & Sub5=0b00000 { goto [Rb]; }
+:jral.iton Rt,Rb is $(I32) & $(JREG) & Rt   & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=0 & Sub5=0b00001 { Rt = inst_next; call [Rb]; }
+:jral.ton  Rt,Rb is $(I32) & $(JREG) & Rt   & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=0 & Sub5=0b00001 { Rt = inst_next; call [Rb]; }
+
+
+### MMU Instruction ###
+
+define pcodeop TLB_TargetRead;
+define pcodeop TLB_TargetWrite;
+define pcodeop TLB_RWrite;
+define pcodeop TLB_RWriteLock;
+define pcodeop TLB_Unlock;
+define pcodeop TLB_Probe;
+define pcodeop TLB_Invalidate;
+define pcodeop TLB_FlushAll;
+
+:tlbop Ra,"TargetRead"  is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=0 & Sub5=0b01110 { TLB_TargetRead(Ra:4); }
+:tlbop Ra,"TargetWrite" is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=1 & Sub5=0b01110 { TLB_TargetWrite(Ra:4); }
+:tlbop Ra,"RWrite"      is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=2 & Sub5=0b01110 { TLB_RWrite(Ra:4); }
+:tlbop Ra,"RWriteLock"  is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=3 & Sub5=0b01110 { TLB_RWriteLock(Ra:4); }
+:tlbop Ra,"Unlock"      is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=4 & Sub5=0b01110 { TLB_Unlock(Ra:4); }
+:tlbop Rt,Ra,"Probe"    is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=5 & Sub5=0b01110 { TLB_Probe(Rt:4, Ra:4); }
+:tlbop Ra,"Invalidate"  is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=6 & Sub5=0b01110 { TLB_Invalidate(Ra:4); }
+:tlbop "FlushAll"       is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=7 & Sub5=0b01110 { TLB_FlushAll(); }
+
+
+### Conditional Move ###
+
+:cmovz Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b11010
+{
+    if(Rb != 0) goto <end>;
+        Rt = Ra;
+    <end>
+}
+
+:cmovn Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b11011
+{
+    if(Rb == 0) goto <end>;
+        Rt = Ra;
+    <end>
+}
+
+
+### Synchronization Instruction ###
+
+# TODO : special function, and subfunctions
+
+define pcodeop msync;
+define pcodeop isync;
+
+:msync MsyncSub is $(I32) & $(MISC) & Rt=0 & MsyncZ=0 & MsyncSub & Sub5=0b01100 { msync(MsyncSub:1); }
+:isync Rt       is $(I32) & $(MISC) & Rt & Ra=0 & Rb=0 & Rd=0    & Sub5=0b01101 { isync(Rt:4); }
+
+### Prefetch Instruction ###
+
+define pcodeop dpref;
+
+OffsetRbsv2: (Rb "<<" sv) is Rb & sv { off:4 = Rb << (sv + 1); export off; }
+AddrRaRbsv2: [Ra + OffsetRbsv2] is Ra & OffsetRbsv2 { addr:4 = Ra + OffsetRbsv2; export addr; }
+
+:dpref DprefSub, AddrRaRbsv2 is $(I32) & $(MEM) & DprefD=0 & DprefSub & AddrRaRbsv2 & Sub8=0b00010011 {
+    dpref(DprefSub:1, AddrRaRbsv2:4);
+}
+
+DprefD_: "w" is DprefD=0 { }
+DprefD_: "d" is DprefD=1 { }
+
+DprefiAddr: [Ra + Offset] is DprefD=0 & Ra & Imm15s [ Offset = Imm15s << 2; ] { export *[const]:4 Offset; }
+DprefiAddr: [Ra + Offset] is DprefD=1 & Ra & Imm15s [ Offset = Imm15s << 3; ] { export *[const]:4 Offset; }
+
+:dprefi.^DprefD_ DprefSub, DprefiAddr is $(I32) & Opc=0b010011 & DprefD_ & DprefSub & DprefiAddr {
+    dpref(DprefSub:1, DprefiAddr:4);
+}
+
+
+### NOP Instruction ###
+
+:nop is $(I32) & $(ALU_1) & Rt=0 & Ra=0 & Imm5u=0 & Rd=0 & Sub5=0b01001 { }
+
+
+### Serialization Instruction ###
+
+define pcodeop dsb;
+define pcodeop isb;
+
+:dsb is $(I32) & $(MISC) & Rt=0 & Ra=0 & Rb=0 & Rd=0 & Sub5=0b01000 { dsb(); }
+:isb is $(I32) & $(MISC) & Rt=0 & Ra=0 & Rb=0 & Rd=0 & Sub5=0b01001 { isb(); }
+
+
+### Exception Generation Instruction ###
+
+define pcodeop break;
+define pcodeop syscall;
+define pcodeop trap;
+
+:break   Swid is $(I32) & $(MISC) & Rt=0 & Swid & Sub5=0b01010 { break(Swid:4); }
+:syscall Swid is $(I32) & $(MISC) & Rt=0 & Swid & Sub5=0b01011 { syscall(Swid:4); }
+:trap    Swid is $(I32) & $(MISC) & Rt=0 & Swid & Sub5=0b00101 { trap(Swid:4); }
+
+:teqz Rt, Swid is $(I32) & $(MISC) & Rt & Swid & Sub5=0b00110
+{
+    if(Rt != 0) goto <end>;
+        trap(Swid:4);
+    <end>
+}
+
+:tnez Rt, Swid is $(I32) & $(MISC) & Rt & Swid & Sub5=0b00111
+{
+    if(Rt == 0) goto <end>;
+        trap(Swid:4);
+    <end>
+}
+
+
+### Special Return Instruction ###
+
+:iret is $(I32) & $(MISC) & Rt=0 & Ra=0 & Rb=0 & Rd=0 & Sub5=0b00100 { return [ipc]; }
+
+# TODO : special constraint (address translation off)
+:ret.itoff Rb is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b01 & Jz=0 & JrHint=1 & Sub5=0b00000 { return [Rb]; }
+:ret.toff  Rb is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b11 & Jz=0 & JrHint=1 & Sub5=0b00000 { return [Rb]; }
+
+
+### Cache Control Instruction ###
+
+# TODO : special function, with subfunctions
+define pcodeop cctl;
+
+:cctl Rt, Ra, CctlLevel, CctlSub is $(I32) & $(MISC) & Rt & Ra & CctlZ=0 & CctlLevel & CctlSub & Sub5=0b00001 { cctl(Rt:4, Ra:4, CctlLevel:1, CctlSub:1); }
+
+
+# Miscellaneous Instructions (Baseline)
+
+# TODO : special function. Not sure if we use context or registers for this.
+
+define pcodeop setgie;
+
+SetgieEN: "d" is Toggle=0 { setgie(0:1); }
+SetgieEN: "e" is Toggle=1 { setgie(1:1); }
+
+:setgie.^SetgieEN is $(I32) & $(MISC) & ToggleL=0 & SetgieEN & SrIdx=0b0010000000 & Rd=0b00010 & Sub5=0b00011 { }
+
+define pcodeop setend;
+
+SetendBE: "l" is Toggle=0 { setend(0:1); }
+SetendBE: "b" is Toggle=1 { setend(1:1); }
+
+:setend.^SetendBE is $(I32) & $(MISC) & ToggleL=0 & SetendBE & SrIdx=0b0010000000 & Rd=0b00001 & Sub5=0b00011 { }
+
+:standby StandbySub is $(I32) & $(MISC) & Rt=0 & Ra=0 & Rb=0 & StandbyZ=0 & StandbySub & Sub5=0b00000 { goto inst_start; }
+
+
+
+### 32-bit Baseline V2 instructions ###
+
+@if defined(BASELINE_V2)
+
+### ALU Instructions ###
+
+:addi.gp is $(I32) & $(SBGP) & Rt & GpSub1=0b1 & Imm19s { Rt = gp + Imm19s; }
+
+
+### Multiply and Divide Instructions (V2) ###
+
+:mulr64 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b101001 & Rtl & Rth
+{
+    res:8 = zext(Ra) * zext(Rb);
+@if ENDIAN == "big"
+    Rtl = res(4);
+    Rth = res:4;
+@else
+    Rtl = res:4;
+    Rth = res(4);
+@endif
+}
+
+:mulsr64 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b101000 & Rtl & Rth
+{
+    res:8 = sext(Ra) * sext(Rb);
+@if ENDIAN == "big"
+    Rtl = res(4);
+    Rth = res:4;
+@else
+    Rtl = res:4;
+    Rth = res(4);
+@endif
+}
+
+:maddr32 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b110011 { Rt = Rt + (Ra * Rb); }
+:msubr32 Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(GPR) & Sub6=0b110101 { Rt = Rt - (Ra * Rb); }
+:divr    Rt, Rs, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rs & Sub5=0b10111 { local div = Ra / Rb; local mod = Ra % Rb; Rs = mod; Rt = div; }
+:divsr   Rt, Rs, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rs & Sub5=0b10110 { local div = Ra s/ Rb; local mod = Ra s% Rb; Rs = mod; Rt = div; }
+
+
+### Load/Store Instructions ###
+
+GpByteAddress: [+ off] is Imm19s [ off = Imm19s << 0; ] { addr:4 = gp + off; export addr; }
+GpHalfAddress: [+ off] is Imm18s [ off = Imm18s << 1; ] { addr:4 = gp + off; export addr; }
+GpWordAddress: [+ off] is Imm17s [ off = Imm17s << 2; ] { addr:4 = gp + off; export addr; }
+
+:lbi.gp Rt,  GpByteAddress is $(I32) & $(LBGP) & Rt & GpSub1=0b0   & GpByteAddress { local tmp:1 = *GpByteAddress; Rt = zext(tmp); }
+:lbsi.gp Rt, GpByteAddress is $(I32) & $(LBGP) & Rt & GpSub1=0b1   & GpByteAddress { local tmp:1 = *GpByteAddress; Rt = sext(tmp); }
+:lhi.gp Rt,  GpHalfAddress is $(I32) & $(HWGP) & Rt & GpSub2=0b00  & GpHalfAddress { local tmp:2 = *GpHalfAddress; Rt = zext(tmp); }
+:lhsi.gp Rt, GpHalfAddress is $(I32) & $(HWGP) & Rt & GpSub2=0b01  & GpHalfAddress { local tmp:2 = *GpHalfAddress; Rt = sext(tmp); }
+:lwi.gp Rt,  GpWordAddress is $(I32) & $(HWGP) & Rt & GpSub3=0b110 & GpWordAddress { Rt = *GpWordAddress; }
+:sbi.gp Rt,  GpByteAddress is $(I32) & $(SBGP) & Rt & GpSub1=0b0   & GpByteAddress { local tmp = Rt; *GpByteAddress = tmp:1; }
+:shi.gp Rt,  GpHalfAddress is $(I32) & $(HWGP) & Rt & GpSub2=0b10  & GpHalfAddress { local tmp = Rt; *GpHalfAddress = tmp:2; }
+:swi.gp Rt,  GpWordAddress is $(I32) & $(HWGP) & Rt & GpSub3=0b111 & GpWordAddress { *GpWordAddress = Rt; }
+
+# TODO : same as lmw/smw, this is horrible
+
+:lmwa.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is $(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=0 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b01 & Lmwa.regs
+{
+    mult_addr = LsmwRa;
+    build Lmwa.regs;
+    build LsmwM_;
+}
+
+:smwa.^LsmwBa_^LsmwId_^LsmwM_ LsmwRb, [LsmwRa], LsmwRe, Enable4 is $(I32) & $(LSMW) & LsmwRb & LsmwRa & LsmwRe & Enable4 & LsmwLs=1 & LsmwBa_ & LsmwId_ & LsmwM_ & LsmwSub=0b01 & Smwa.regs
+{
+    mult_addr = LsmwRa;
+    build Smwa.regs;
+    build LsmwM_;
+}
+
+:lbup Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00100000 { local tmp:1 = *AddrRaRbsv; Rt = zext(tmp); }
+:sbup Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00101000 { local tmp = Rt; *AddrRaRbsv = tmp:1; }
+
+@endif
+
+
+
+### 32-bit Baseline V3 instructions ###
+
+@if defined(BASELINE_V3)
+
+### ALU Instructions with Shift Operation (v3) ###
+
+:add_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00000 { Rt = Ra + (Rb << sh); }
+:and_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00010 { Rt = Ra & (Rb << sh); }
+:or_slli  Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00100 { Rt = Ra | (Rb << sh); }
+:sub_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00001 { Rt = Ra - (Rb << sh); }
+:xor_slli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b00011 { Rt = Ra ^ (Rb << sh); }
+
+:add_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11100 { Rt = Ra + (Rb << sh); }
+:and_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11110 { Rt = Ra & (Rb << sh); }
+:or_srli  Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b10101 { Rt = Ra | (Rb << sh); }
+:sub_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11101 { Rt = Ra - (Rb << sh); }
+:xor_srli Rt, Ra, Rb, sh is $(I32) & $(ALU_1) & Rt & Ra & Rb & sh & Sub5=0b11111 { Rt = Ra ^ (Rb << sh); }
+
+### Conditional Branch and Jump Instructions (V3) ###
+
+Rel8: addr is Imm8s [ addr = inst_start + (Imm8s << 1); ] { export *:4 addr; }
+:beqc  Rt, Imm11s, Rel8 is $(I32) & $(BR3) & Rt & Bxxc=0 & Imm11s & Rel8 { if(Rt == Imm11s) goto Rel8; }
+:bnec  Rt, Imm11s, Rel8 is $(I32) & $(BR3) & Rt & Bxxc=1 & Imm11s & Rel8 { if(Rt != Imm11s) goto Rel8; }
+
+:jralnez Rt,Rb is $(I32) & $(JREG) & Rt & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00011 { if(Rb == 0) goto <end>; Rt = inst_next; call [Rb]; <end> }
+:jrnez   Rb    is $(I32) & $(JREG) & Rt=0 & Ra=0 & Rb & DtIt=0b00 & Jz=0 & JrHint=0 & Sub5=0b00010 { if(Rb == 0) goto <end>; goto [Rb]; <end> }
+
+### Bit Manipulation Instructions (V3) ###
+
+:bitc  Rt, Ra, Rb     is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b10010 { Rt = Ra & (~Rb); }
+:bitci Rt, Ra, Imm15u is $(I32) & Opc=0b110011 & Rt & Ra & Imm15u { Rt = Ra & (~Imm15u); }
+
+### Cache Control Instruction (V3) ###
+
+# TODO: Add CCTL L1D_WBALL, level
+
+@endif
+
+
+
+### 32-bit ISA extension ###
+
+### ALU Instruction (Performance) ###
+
+@if defined(PERFORMANCE_V1)
+
+:abs Rt, Ra is $(I32) & $(ALU_2) & Rt & Ra & Rb=0 & $(ALU2Z) & Sub6=0b000011
+{
+    gez:4 = zext(Ra s>= 0);
+    ltz:4 = zext(Ra s< 0);
+    Rt = (Ra * gez) | ((-Ra) * ltz);
+}
+
+:ave Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b000010
+{
+    Rt = (Ra + Rb + 1) s>> 2;
+}
+
+:max Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b000000
+{
+    altb:4 = zext(Ra s< Rb);
+    ageb:4 = zext(Ra s>= Rb);
+    Rt = (Ra * ageb) | (Rb * altb);
+}
+
+:min Rt, Ra, Rb is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b000001
+{
+    altb:4 = zext(Ra s< Rb);
+    ageb:4 = zext(Ra s>= Rb);
+    Rt = (Ra * altb) | (Rb * ageb);
+}
+
+:bset Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b001000 { Rt = Ra | (1 << Imm5u); }
+:bclr Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b001001 { Rt = Ra & ~(1 << Imm5u); }
+:btgl Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b001010 { Rt = Ra ^ (1 << Imm5u); }
+:btst Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b001011 { Rt = (Ra >> Imm5u) & 1; }
+
+:clips Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b000100
+{
+    local upper:4 = (1 << Imm5u) - 1;
+    local lower:4 = -(1 << Imm5u);
+    if(Ra s<= upper) goto <elif>;
+        Rt = upper;
+        goto <end>;
+    <elif>
+    if(Ra s>= lower) goto <else>;
+        Rt = lower;
+        goto <end>;
+    <else>
+        Rt = Ra;
+    <end>
+}
+:clip Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b000101
+{
+    local upper:4 = (1 << Imm5u) - 1;
+    if(Ra s<= upper) goto <elif>;
+        Rt = upper;
+        goto <end>;
+    <elif>
+    if(Ra s>= 0) goto <else>;
+        Rt = 0;
+        goto <end>;
+    <else>
+        Rt = Ra;
+    <end>
+}
+
+:clz Rt, Ra is $(I32) & $(ALU_2) & Rt & Ra & Imm5u=0 & $(ALU2Z) & Sub6=0b000111
+{
+  countTmp:4 = 0;
+  inputTmp:4 = Ra;
+
+ <loopbegin>
+  if ((inputTmp & 0x80000000) != 0) goto <loopend>;
+
+  countTmp = countTmp + 1;
+  inputTmp = (inputTmp << 1) | 1;
+  goto <loopbegin>;
+
+ <loopend>
+  Rt = countTmp;
+}
+
+:clo Rt, Ra is $(I32) & $(ALU_2) & Rt & Ra & Imm5u=0 & $(ALU2Z) & Sub6=0b000110
+{
+  countTmp:4 = 0;
+  inputTmp:4 = Ra;
+
+ <loopbegin>
+  if ((inputTmp & 0x80000000) == 0) goto <loopend>;
+
+  countTmp = countTmp + 1;
+  inputTmp = (inputTmp << 1) | 1;
+  goto <loopbegin>;
+
+ <loopend>
+  Rt = countTmp;
+}
+
+@endif
+
+
+### Performance Extension V2 ###
+
+@if defined(PERFORMANCE_V2)
+
+# TODO : arithmetic functions: bs*
+:bse is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001100 unimpl
+:bsp is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001101 unimpl
+
+macro add_abs_diff(dst, src1, src2, shift)
+{
+    local src1_ = src1 >> shift;
+    local src2_ = src2 >> shift;
+    local src1__ = src1_:1;
+    local src2__ = src2_:1;
+    local a:1 = src1__ - src2__;
+    local agez:1 = zext(a s>= 0);
+    local altz:1 = zext(a s< 0);
+    local aabs:1 = (a * agez) | ((-a) * altz);
+    dst = dst + zext(aabs);
+}
+:pbsad Rt, Ra, Rb is $(I32) & $(SIMD) & Rt & Ra & Rb & Rd=0 & Sub5=0b0000
+{
+    Rt = 0;
+    add_abs_diff(Rt, Ra, Rb, 0);
+    add_abs_diff(Rt, Ra, Rb, 8);
+    add_abs_diff(Rt, Ra, Rb, 16);
+    add_abs_diff(Rt, Ra, Rb, 24);
+}
+:pbsada Rt, Ra, Rb is $(I32) & $(SIMD) & Rt & Ra & Rb & Rd=0 & Sub5=0b0001
+{
+    add_abs_diff(Rt, Ra, Rb, 0);
+    add_abs_diff(Rt, Ra, Rb, 8);
+    add_abs_diff(Rt, Ra, Rb, 16);
+    add_abs_diff(Rt, Ra, Rb, 24);
+}
+
+@endif
+
+
+
+
+########### 16b ############
+
+define token instr16(16)
+    opsz        = (15, 15)
+    opc4        = (11, 14)
+    opc5        = (10, 14)
+    opc6        = (9, 14)
+    opc7        = (8, 14)
+    opc8        = (7, 14)
+    opc10       = (5, 14)
+    re2         = (5, 6)
+    rt5         = (5, 9)
+    ra4         = (5, 8)
+    rt4         = (5, 8)
+    ra5         = (0, 4)
+    rb5         = (0, 4)
+    rt5b        = (0, 4)
+    rt3         = (6, 8)
+    rt3b        = (8, 10)
+    ra3         = (3, 5)
+    rb3         = (0, 2)
+    imm3u       = (0, 2)
+    imm3ub      = (3, 5)
+    imm5u       = (0, 4)
+    imm5s       = (0, 4) signed
+    imm6u       = (0, 5)
+    imm7u       = (0, 6)
+    imm8s       = (0, 7) signed
+    imm10s      = (0, 9) signed
+    xwi37_ls    = (7, 7)
+    swid9       = (0, 8)
+    rt5e1       = (4, 7)
+    rt5e2       = (4, 7)
+    ra5e1       = (0, 3)
+    ra5e2       = (0, 3)
+;
+
+attach variables [rt5 ra5 rb5 rt5b] [
+    a0 a1 a2 a3 a4 a5 s0 s1 s2 s3 s4 s5 s6 s7 s8 ta t0 t1 t2 t3 t4 t5 t6 t7 t8 t9 p0 p1 fp gp lp sp
+];
+
+attach variables [ra4 rt4] [
+    a0 a1 a2 a3 a4 a5 s0 s1 s2 s3 s4 s5 t0 t1 t2 t3
+];
+
+attach variables [rt3 ra3 rt3b rb3] [
+    a0 a1 a2 a3 a4 a5 s0 s1
+];
+
+attach variables [ra5e1 rt5e1] [
+    a0 a2 a4 s0 s2 s4 s6 s8 t0 t2 t4 t6 t8 p0 fp lp
+];
+attach variables [ra5e2 rt5e2] [
+    a1 a3 a5 s1 s3 s5 s7 ta t1 t3 t5 t7 t9 p1 gp sp
+];
+
+attach variables [re2] [
+    s0 s2 s4 s8
+];
+
+
+@define I16     "(opsz=1)"
+@define BFMI333 "(opc6=0b001011)"
+@define XWI37   "(opc4=0b0111)"
+@define XWI37SP "(opc4=0b1110)"
+@define MISC33  "(opc6=0b111111)"
+
+
+### Move Instruction ###
+
+:movi55 rt5, imm5s is $(I16) & opc5=0b00001 & rt5 & imm5s { rt5 = imm5s; }
+:mov55  rt5,   ra5 is $(I16) & opc5=0b00000 & rt5 & ra5   { rt5 = ra5; }
+
+
+### Add/Sub Instruction with Immediate ###
+
+:addi45  rt4,      imm5u is $(I16) & opc6=0b000110 & rt4       & imm5u { rt4 = rt4 + imm5u; }
+:addi333 rt3, ra3, imm3u is $(I16) & opc6=0b001110 & rt3 & ra3 & imm3u { rt3 = ra3 + imm3u; }
+:subi45  rt4,      imm5u is $(I16) & opc6=0b000111 & rt4       & imm5u { rt4 = rt4 - imm5u; }
+:subi333 rt3, ra3, imm3u is $(I16) & opc6=0b001111 & rt3 & ra3 & imm3u { rt3 = ra3 - imm3u; }
+
+
+### Add/Sub Instruction ###
+
+:add45   rt4,      rb5 is $(I16) & opc6=0b000100 & rt4       & rb5 { rt4 = rt4 + rb5; }
+:add333  rt3, ra3, rb3 is $(I16) & opc6=0b001100 & rt3 & ra3 & rb3 { rt3 = ra3 + rb3; }
+:sub45   rt4,      rb5 is $(I16) & opc6=0b000101 & rt4       & rb5 { rt4 = rt4 - rb5; }
+:sub333  rt3, ra3, rb3 is $(I16) & opc6=0b001101 & rt3 & ra3 & rb3 { rt3 = ra3 - rb3; }
+
+
+### Shift Instruction with Immediate ###
+
+:srai45  rt4,      imm5u is $(I16) & opc6=0b001000 & rt4       & imm5u { rt4 = rt4 s>> imm5u; }
+:srli45  rt4,      imm5u is $(I16) & opc6=0b001001 & rt4       & imm5u { rt4 = rt4 >> imm5u; }
+:slli333 rt3, ra3, imm3u is $(I16) & opc6=0b001010 & rt3 & ra3 & imm3u { rt3 = ra3 << imm3u; }
+
+
+### Bit Field Mask Instruction with Immediate ###
+
+:zeb33  rt3, ra3 is $(I16) & $(BFMI333) & rt3 & ra3 & imm3u=0b000 { local tmp = ra3; rt3 = zext(tmp:1); }
+:zeh33  rt3, ra3 is $(I16) & $(BFMI333) & rt3 & ra3 & imm3u=0b001 { local tmp = ra3; rt3 = zext(tmp:2); }
+:seb33  rt3, ra3 is $(I16) & $(BFMI333) & rt3 & ra3 & imm3u=0b010 { local tmp = ra3; rt3 = sext(tmp:1); }
+:seh33  rt3, ra3 is $(I16) & $(BFMI333) & rt3 & ra3 & imm3u=0b011 { local tmp = ra3; rt3 = sext(tmp:2); }
+:xlsb33 rt3, ra3 is $(I16) & $(BFMI333) & rt3 & ra3 & imm3u=0b100 { rt3 = ra3 & 1; }
+:x11b33 rt3, ra3 is $(I16) & $(BFMI333) & rt3 & ra3 & imm3u=0b101 { rt3 = ra3 & 0x7ff; }
+
+
+### Load / Store Instruction ###
+
+:lwi450 rt4,[ra5] is $(I16) & opc6=0b011010 & rt4 & ra5 { rt4 = *ra5; }
+
+rel3w: off is imm3u [ off = imm3u << 2; ] { export *[const]:4 off; }
+rel3h: off is imm3u [ off = imm3u << 1; ] { export *[const]:4 off; }
+rel3b: off is imm3u [ off = imm3u << 0 ; ] { export *[const]:4 off; }
+ra3_rel3w: [ra3 + rel3w] is ra3 & rel3w { addr:4 = ra3 + rel3w; export addr; }
+ra3_rel3h: [ra3 + rel3h] is ra3 & rel3h { addr:4 = ra3 + rel3h; export addr; }
+ra3_rel3b: [ra3 + rel3b] is ra3 & rel3b { addr:4 = ra3 + rel3b; export addr; }
+
+:lwi333    rt3, ra3_rel3w    is $(I16) & opc6=0b010000 & rt3 & ra3_rel3w   { rt3 = *ra3_rel3w; }
+:lwi333.bi rt3, [ra3], rel3w is $(I16) & opc6=0b010001 & rt3 & ra3 & rel3w { rt3 = *ra3; ra3 = ra3 + rel3w; }
+:lhi333    rt3, ra3_rel3h    is $(I16) & opc6=0b010010 & rt3 & ra3_rel3h   { local tmp:2 = *ra3_rel3h; rt3 = zext(tmp); }
+:lbi333    rt3, ra3_rel3b    is $(I16) & opc6=0b010011 & rt3 & ra3_rel3b   { local tmp:1 = *ra3_rel3b; rt3 = zext(tmp); }
+:swi450    rt4, [ra5]        is $(I16) & opc6=0b011011 & rt4 & ra5         { *ra5 = rt4; }
+:swi333    rt3, ra3_rel3w    is $(I16) & opc6=0b010100 & rt3 & ra3_rel3w   { *ra3_rel3w = rt3; }
+:swi333.bi rt3, [ra3], rel3w is $(I16) & opc6=0b010101 & rt3 & ra3 & rel3w { *ra3 = rt3; ra3 = ra3 + rel3w; }
+:shi333    rt3, ra3_rel3h    is $(I16) & opc6=0b010110 & rt3 & ra3_rel3h   { local tmp = rt3; *ra3_rel3h = tmp:2; }
+:sbi333    rt3, ra3_rel3b    is $(I16) & opc6=0b010111 & rt3 & ra3_rel3b   { local tmp = rt3; *ra3_rel3b = tmp:1; }
+
+
+### Load/Store Instruction with Implied FP ###
+
+rel7w: off is imm7u [ off = imm7u << 2; ] { export *[const]:4 off; }
+fp_rel7w: [fp + rel7w] is fp & rel7w { addr:4 = fp + rel7w; export addr; }
+
+:lwi37 rt3b, fp_rel7w is $(I16) & rt3b & $(XWI37) & xwi37_ls=0 & fp_rel7w { rt3b = *fp_rel7w; }
+:swi37 rt3b, fp_rel7w is $(I16) & rt3b & $(XWI37) & xwi37_ls=1 & fp_rel7w { *fp_rel7w = rt3b; }
+
+
+### Branch and Jump Instruction ###
+
+rel8: addr is imm8s [ addr = inst_start + (imm8s << 1); ] { export *:4 addr; }
+
+
+:beqs38 rt3b,rel8 is $(I16) & opc4=0b1010 & rt3b & rel8 { if(a5 == rt3b) goto rel8; }
+:bnes38 rt3b,rel8 is $(I16) & opc4=0b1011 & rt3b & rel8 { if(a5 != rt3b) goto rel8; }
+:beqz38 rt3b,rel8 is $(I16) & opc4=0b1000 & rt3b & rel8 { if(rt3b == 0) goto rel8; }
+:bnez38 rt3b,rel8 is $(I16) & opc4=0b1001 & rt3b & rel8 { if(rt3b != 0) goto rel8; }
+
+:j8    rel8 is $(I16) & opc7=0b1010101     & rel8 { goto rel8; }
+:jr5   rb5  is $(I16) & opc10=0b1011101000 & rb5  { goto [rb5]; }
+:ret5  rb5  is $(I16) & opc10=0b1011101100 & rb5  { return [rb5]; }
+:jral5 rb5  is $(I16) & opc10=0b1011101001 & rb5  { lp = inst_next; call [rb5]; }
+
+
+### Compare and Branch Instruction ###
+
+:slti45  ra4, imm5u is $(I16) & opc6=0b110011 & ra4 & imm5u { ta = zext(ra4 < imm5u); }
+:sltsi45 ra4, imm5u is $(I16) & opc6=0b110010 & ra4 & imm5u { ta = zext(ra4 s< imm5u); }
+:slt45   ra4, rb5   is $(I16) & opc6=0b110001 & ra4 & rb5   { ta = zext(ra4 < rb5); }
+:slts45  ra4, rb5   is $(I16) & opc6=0b110000 & ra4 & rb5   { ta = zext(ra4 s< rb5); }
+
+:beqzs8 rel8 is $(I16) & opc7=0b1101000 & rel8 { if(ta == 0) goto rel8; }
+:bnezs8 rel8 is $(I16) & opc7=0b1101001 & rel8 { if(ta != 0) goto rel8; }
+
+
+### Misc Instruction ###
+
+:break16 swid9 is $(I16) & opc6=0b110101 & swid9 { break(swid9:4); }
+:nop16 is $(I16) & opc6=0b001001 & rt4=0b0000 & imm5u=0b00000 { }
+
+
+### ALU Instructions (V2) ###
+
+@if defined(BASELINE_V2)
+
+:addi10.sp imm10s is $(I16) & opc5=0b11011 & imm10s { sp = sp + imm10s; }
+
+
+### Load/Store Instruction (V2) ###
+
+sp_rel7w: [+ rel7w] is rel7w { addr:4 = sp + rel7w; export addr; }
+
+:lwi37.sp rt3b, sp_rel7w is $(I16) & rt3b & $(XWI37SP) & xwi37_ls=0 & sp_rel7w { rt3b = *sp_rel7w; }
+:swi37.sp rt3b, sp_rel7w is $(I16) & rt3b & $(XWI37SP) & xwi37_ls=1 & sp_rel7w { *sp_rel7w = rt3b; }
+
+@endif
+
+
+
+### 16-bit Baseline V3 instructions ###
+
+@if defined(BASELINE_V3)
+
+### ALU Instructions (V3 16-bit) ###
+
+imm6u_: imm8 is imm6u [ imm8 = imm6u << 2; ] { export *[const]:4 imm8; }
+:addri36.sp rt3, imm6u_ is $(I16) & opc6=0b011000 & rt3 & imm6u_ { rt3 = sp + imm6u_; }
+:add5.pc rt5b is $(I16) & opc10=0b1011101101 & rt5b { rt5b = pc + rt5b; }
+:and33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b110 { rt3 = rt3 & ra3; }
+:neg33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b010 { rt3 = -ra3; }
+:not33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b011 { rt3 = ~ra3; }
+:or33  rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b111 { rt3 = rt3 | ra3; }
+:xor33 rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b101 { rt3 = rt3 ^ ra3; }
+
+### Bit Manipulation Instructions (V3 16-bit) ###
+
+:bmski33 rt3, imm3ub is $(I16) & opc6=0b001011 & rt3 & imm3ub & imm3u=0b110 { rt3 = (rt3 >> imm3ub) & 1; }
+:fexti33 rt3, imm3ub is $(I16) & opc6=0b001011 & rt3 & imm3ub & imm3u=0b111 { rt3 = rt3 & ((1 << (imm3ub + 1)) - 1); }
+
+### Misc. Instructions (V3 16-bit) ###
+
+imm7n: off is imm5u [ off = -((32 - imm5u) << 2); ] { export *[const]:4 off; }
+:lwi45.fe rt4, [imm7n] is $(I16) & opc6=0b011001 & rt4 & imm7n { addr:4 = s2 + imm7n; rt4 = *addr; }
+
+:movd44 rt5e1, ra5e1 is $(I16) & opc7=0b1111101 & rt5e1 & rt5e2 & ra5e1 & ra5e2 { rt5e1 = ra5e1; rt5e2 = ra5e2; }
+
+imm5u_: imm6 is imm5u [ imm6 = imm5u + 16; ] { export *[const]:4 imm6; }
+:movpi45 rt4, imm5u_ is $(I16) & opc6=0b111101 & rt4 & imm5u_ { rt4 = imm5u_; }
+
+:mul33  rt3, ra3 is $(I16) & $(MISC33) & rt3 & ra3 & imm3u=0b100 { rt3 = rt3 * ra3; }
+
+# Note: POP25 and PUSH25 are highly untested ! And they just look messy :/
+imm5u__: imm8 is imm5u [ imm8 = imm5u << 3; ] { export *[const]:4 imm8; }
+
+macro push25_special() { Smwad(lp); Smwad(gp); Smwad(fp); }
+macro push25_s0() { Smwad(s0); }
+macro push25_s2() { Smwad(s2); Smwad(s1); push25_s0(); }
+macro push25_s4() { Smwad(s4); Smwad(s3); push25_s2(); }
+macro push25_s8() { Smwad(s8); Smwad(s7); Smwad(s6); Smwad(s5); push25_s4(); }
+
+push25_re: re2 is re2 & re2=0 { push25_s0(); }
+push25_re: re2 is re2 & re2=1 { push25_s2(); }
+push25_re: re2 is re2 & re2=2 { push25_s4(); }
+push25_re: re2 is re2 & re2=3 { push25_s8(); }
+
+:push25 push25_re, imm5u__ is $(I16) & opc8=0b11111000 & re2 & push25_re & imm5u__ {
+	mult_addr = sp;
+	push25_special();
+	build push25_re;
+	sp = mult_addr - imm5u__;
+	if(re2 < 1) goto <end>;
+		s2 = pc & 0xfffffffc;
+	<end>
+}
+
+macro pop25_special() { Lmwbi(fp); Lmwbi(gp); Lmwbi(lp);   }
+macro pop25_s0() { Lmwbi(s0); }
+macro pop25_s2() { pop25_s0(); Lmwbi(s1); Lmwbi(s2); }
+macro pop25_s4() { pop25_s2(); Lmwbi(s3); Lmwbi(s4); }
+macro pop25_s8() { pop25_s4(); Lmwbi(s5); Lmwbi(s6); Lmwbi(s7); Lmwbi(s8); }
+
+pop25_re: re2 is re2 & re2=0 { pop25_s0(); }
+pop25_re: re2 is re2 & re2=1 { pop25_s2(); }
+pop25_re: re2 is re2 & re2=2 { pop25_s4(); }
+pop25_re: re2 is re2 & re2=3 { pop25_s8(); }
+
+:pop25 pop25_re, imm5u__ is $(I16) & opc8=0b11111001 & re2 & pop25_re & imm5u__ {
+	mult_addr = sp;
+	build pop25_re;
+	pop25_special();
+	sp = mult_addr + imm5u__;
+	return [lp];
+}
+
+
+@endif
+
+
