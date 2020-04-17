@@ -18,6 +18,7 @@ package ghidra.app.decompiler;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import javax.xml.parsers.SAXParser;
@@ -27,14 +28,15 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
+import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.ConstantPool.Record;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
@@ -65,6 +67,7 @@ public class DecompileCallback {
 	private AddressFactory addrfactory;
 	private ConstantPool cpool;
 	private PcodeDataTypeManager dtmanage;
+	private Charset utf8Charset;
 	private String nativeMessage;
 	private boolean showNamespace;
 
@@ -84,6 +87,7 @@ public class DecompileCallback {
 		cpool = null;
 		nativeMessage = null;
 		debug = null;
+		utf8Charset = Charset.availableCharsets().get("UTF-8");
 	}
 
 	private static SAXParser getSAXParser() throws PcodeXMLException {
@@ -1175,6 +1179,66 @@ public class DecompileCallback {
 			return listing.getFunctionAt(extRef.getToAddress());
 		}
 		return listing.getFunctionAt(addr);
+	}
+
+	public byte[] getStringData(String addrString, String dtName, String dtId) {
+		Address addr;
+		int maxBytes;
+		try {
+			maxBytes = readXMLSize(addrString);
+			addr = Varnode.readXMLAddress(addrString, addrfactory, funcEntry.getAddressSpace());
+			if (addr == Address.NO_ADDRESS) {
+				throw new PcodeXMLException("Address does not physically map");
+			}
+		}
+		catch (PcodeXMLException e) {
+			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
+			return null;
+		}
+		Data data = program.getListing().getDataContaining(addr);
+		Settings settings = SettingsImpl.NO_SETTINGS;
+		AbstractStringDataType dataType = null;
+		if (data != null) {
+			settings = data;
+			if (data.getDataType() instanceof AbstractStringDataType) {
+				dataType = (AbstractStringDataType) data.getDataType();
+			}
+		}
+		if (dataType == null) {
+			DataType dt = dtmanage.findBaseType(dtName, dtId);
+			if (dt instanceof AbstractStringDataType) {
+				dataType = (AbstractStringDataType) dt;
+			}
+			else {
+				if (dt != null) {
+					int size = dt.getLength();
+					if (size == 2) {
+						dataType = TerminatedUnicodeDataType.dataType;
+					}
+					else if (size == 4) {
+						dataType = TerminatedUnicode32DataType.dataType;
+					}
+					else {
+						dataType = TerminatedStringDataType.dataType;
+					}
+				}
+				else {
+					dataType = TerminatedStringDataType.dataType;
+				}
+			}
+		}
+		MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
+		Object value = dataType.getValue(buf, settings, maxBytes);
+		if (!(value instanceof String)) {
+			return null;
+		}
+		String stringVal = (String) value;
+		byte[] res = stringVal.getBytes(utf8Charset);
+		if (res.length > maxBytes) {
+			byte[] trim = new byte[maxBytes];
+			System.arraycopy(res, 0, trim, 0, maxBytes);
+		}
+		return res;
 	}
 
 //==================================================================================================

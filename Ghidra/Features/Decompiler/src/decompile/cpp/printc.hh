@@ -157,8 +157,7 @@ protected:
   void opFunc(const PcodeOp *op);			///< Push a \e functional expression based on the given p-code op to the RPN stack
   void opTypeCast(const PcodeOp *op);			///< Push the given p-code op using type-cast syntax to the RPN stack
   void opHiddenFunc(const PcodeOp *op);			///< Push the given p-code op as a hidden token
-  static bool hasCharTerminator(uint1 *buffer,int4 size,int4 charsize);
-  bool printCharacterConstant(ostream &s,const Address &addr,int4 charsize) const;
+  bool printCharacterConstant(ostream &s,const Address &addr,Datatype *charType) const;
   void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
   virtual void pushConstant(uintb val,const Datatype *ct,
 			    const Varnode *vn,const PcodeOp *op);
@@ -204,7 +203,6 @@ public:
   virtual void resetDefaults(void);
   virtual void adjustTypeOperators(void);
   virtual void setCommentStyle(const string &nm);
-  virtual bool isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const;
   virtual void docTypeDefinitions(const TypeFactory *typegrp);
   virtual void docAllGlobals(void);
   virtual void docSingleGlobal(const Symbol *sym);

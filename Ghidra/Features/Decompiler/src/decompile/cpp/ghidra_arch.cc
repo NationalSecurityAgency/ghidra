@@ -615,6 +615,52 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   readResponseEnd(sin);
 }
 
+uint4 ArchitectureGhidra::getStringData(uint1 *buf,const Address &addr,Datatype *ct,int4 maxBytes)
+
+{
+  sout.write("\000\000\001\004",4);
+  writeStringStream(sout,"getString");
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  addr.saveXml(sout,maxBytes);
+  sout.write("\000\000\001\017",4);
+  writeStringStream(sout,ct->getName());
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << dec << (int8)ct->getId();	// Pass as a signed integer
+  sout.write("\000\000\001\017",4);
+
+  sout.write("\000\000\001\005",4);
+  sout.flush();
+
+  readToResponse(sin);
+  int4 type = readToAnyBurst(sin);
+  uint4 size = 0;
+  if (type == 12) {
+    int4 c = sin.get();
+    size ^= (c-0x20);
+    c = sin.get();
+    size ^= ((c-0x20)<<6);
+    uint1 *dblbuf = new uint1[size * 2];
+    sin.read((char *)dblbuf,size*2);
+    for (int4 i=0; i < size; i++) {
+      buf[i] = ((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A');
+    }
+    delete [] dblbuf;
+  }
+  else if ((type&1)==1) {
+    ostringstream errmsg;
+    errmsg << "GHIDRA has no string in the loadimage at " << addr.getShortcut();
+    addr.printRaw(errmsg);
+    throw DataUnavailError(errmsg.str());
+  }
+  else
+    throw JavaError("alignment","Expecting bytes or end of query response");
+  type = readToAnyBurst(sin);
+  if (type != 13)
+    throw JavaError("alignment","Expecting byte alignment end");
+  readResponseEnd(sin);
+  return size;
+}
+
 /// \brief Retrieve p-code to inject for a specific context
 ///
 /// The particular injection is named and is of one of the types:

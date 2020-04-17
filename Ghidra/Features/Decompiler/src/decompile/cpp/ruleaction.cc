@@ -6409,14 +6409,8 @@ int4 RulePtrsubCharConstant::applyOp(PcodeOp *op,Funcdata &data)
   if (!scope->isReadOnly(symaddr,1,op->getAddr()))
     return 0;
   // Check if data at the address looks like a string
-  uint1 buffer[128];
-  try {
-    data.getArch()->loader->loadFill(buffer,128,symaddr);
-  } catch(DataUnavailError &err) {
+  if (!data.getArch()->stringManager->isString(symaddr, basetype))
     return 0;
-  }
-  bool isstring = data.getArch()->print->isCharacterConstant(buffer,128,basetype->getSize());
-  if (!isstring) return 0;
 
   // If we reach here, the PTRSUB should be converted to a (COPY of a) pointer constant.
   bool removeCopy = false;

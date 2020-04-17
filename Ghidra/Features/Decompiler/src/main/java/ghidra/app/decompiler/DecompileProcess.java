@@ -326,7 +326,12 @@ public class DecompileProcess {
 								}
 								break;
 							case 'S':
-								getSymbol();					// getSymbol
+								if (name.equals("getString")) {
+									getStringData();
+								}
+								else {
+									getSymbol();					// getSymbol
+								}
 								break;
 							case 'T':
 								if (name.equals("getType")) {
@@ -767,6 +772,31 @@ public class DecompileProcess {
 		write(query_response_start);
 		if ((res != null) && (res.length > 0)) {
 			write(byte_start);
+			byte[] dblres = new byte[res.length * 2];
+			for (int i = 0; i < res.length; i++) {
+				dblres[i * 2] = (byte) (((res[i] >> 4) & 0xf) + 65);
+				dblres[i * 2 + 1] = (byte) ((res[i] & 0xf) + 65);
+			}
+			write(dblres);
+			write(byte_end);
+		}
+		write(query_response_end);
+	}
+
+	private void getStringData() throws IOException {
+		String addr = readQueryString();
+		String dtName = readQueryString();
+		String dtId = readQueryString();
+		byte[] res = callback.getStringData(addr, dtName, dtId);
+		write(query_response_start);
+		if ((res != null) && (res.length > 0)) {
+			int sz = res.length;
+			int sz1 = (sz & 0x3f) + 0x20;
+			sz >>>= 6;
+			int sz2 = (sz & 0x3f) + 0x20;
+			write(byte_start);
+			write(sz1);
+			write(sz2);
 			byte[] dblres = new byte[res.length * 2];
 			for (int i = 0; i < res.length; i++) {
 				dblres[i * 2] = (byte) (((res[i] >> 4) & 0xf) + 65);

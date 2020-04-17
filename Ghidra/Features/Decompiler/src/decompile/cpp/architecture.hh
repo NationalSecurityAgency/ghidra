@@ -28,6 +28,7 @@
 #include "loadimage.hh"
 #include "globalcontext.hh"
 #include "comment.hh"
+#include "stringmanage.hh"
 #include "userop.hh"
 #include "options.hh"
 #include "transform.hh"
@@ -147,6 +148,7 @@ public:
   PcodeInjectLibrary *pcodeinjectlib;	///< Pcode injection manager
   RangeList nohighptr;          ///< Ranges for which high-level pointers are not possible
   CommentDatabase *commentdb;	///< Comments for this architecture
+  StringManager *stringManager;	///< Manager of decoded strings
   ConstantPool *cpool;		///< Deferred constant values
   PrintLanguage *print;	        ///< Current high-level language printer
   vector<PrintLanguage *> printlist;	///< List of high-level language printers supported
@@ -227,6 +229,7 @@ protected:
 
   virtual void buildTypegrp(DocumentStorage &store);		///< Build the data-type factory/container
   virtual void buildCommentDB(DocumentStorage &store);		///< Build the comment database
+  virtual void buildStringManager(DocumentStorage &store);	///< Build the string manager
   virtual void buildConstantPool(DocumentStorage &store);	///< Build the constant pool
   virtual void buildInstructions(DocumentStorage &store);	///< Register the p-code operations
   virtual void buildAction(DocumentStorage &store);		///< Build the Action framework

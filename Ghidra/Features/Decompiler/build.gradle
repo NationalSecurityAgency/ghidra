@@ -271,6 +271,7 @@ model {
 		                include "database.cc"
 		                include "cpool.cc"
 		                include "comment.cc"
+						include "stringmanage.cc"
 		                include "fspec.cc"
 		                include "action.cc"
 		                include "loadimage.cc"
@@ -321,6 +322,7 @@ model {
 		                include "cpool_ghidra.cc"
 		                include "ghidra_process.cc"
 		                include "comment_ghidra.cc"
+						include "string_ghidra.cc"
 		         //       include "callgraph.cc"			// uncomment for debug
 		         //       include "ifacedecomp.cc"		// uncomment for debug
 		         //       include "ifaceterm.cc"			// uncomment for debug

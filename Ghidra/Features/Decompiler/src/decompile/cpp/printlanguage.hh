@@ -267,9 +267,6 @@ protected:
   void emitOp(const ReversePolish &entry);				///< Send an operator token from the RPN to the emitter
   void emitAtom(const Atom &atom);					///< Send an variable token from the RPN to the emitter
   static bool unicodeNeedsEscape(int4 codepoint);			///< Determine if the given codepoint needs to be escaped
-  static void writeUtf8(ostream &s,int4 codepoint);			///< Write unicode character to stream in UTF8 encoding
-  static int4 readUtf16(const uint1 *buf,bool bigend);			///< Read a 2-byte UTF16 element from a byte array
-  static int4 getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4 &skip);
   bool escapeCharacterData(ostream &s,const uint1 *buf,int4 count,int4 charsize,bool bigend) const;
   void recurse(void);							///< Emit from the RPN stack as much as possible
   void opBinary(const OpToken *tok,const PcodeOp *op);			///< Push a binary operator onto the RPN stack
@@ -433,14 +430,6 @@ public:
   /// then it will choose from among the schemes it knows
   /// \param nm is the configuration description
   virtual void setCommentStyle(const string &nm)=0;
-
-  /// \brief Decide is the given byte array looks like a character string
-  ///
-  /// This looks for encodings and/or a terminator that is appropriate for the high-level language
-  /// \param buf is a pointer to the byte array
-  /// \param size is the number of bytes in the array
-  /// \param charsize is the size in bytes of the encoding element (i.e. UTF8, UTF16, etc.) to assume
-  virtual bool isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const=0;
 
   /// \brief Emit definitions of data-types
   ///

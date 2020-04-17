@@ -1164,7 +1164,7 @@ void PrintC::printUnicode(ostream &s,int4 onechar) const
       s << "\\x" << setfill('0') << setw(8) << hex << onechar;
     return;
   }
-  writeUtf8(s, onechar);		// emit normally
+  StringManager::writeUtf8(s, onechar);		// emit normally
 }
 
 void PrintC::pushType(const Datatype *ct)
@@ -1204,32 +1204,6 @@ bool PrintC::doEmitWideCharPrefix(void) const
   return true;
 }
 
-/// \brief Check if the byte buffer has a (unicode) string terminator
-///
-/// \param buffer is the byte buffer
-/// \param size is the number of bytes in the buffer
-/// \param charsize is the presumed size (in bytes) of character elements
-/// \return \b true if a string terminator is found
-bool PrintC::hasCharTerminator(uint1 *buffer,int4 size,int4 charsize)
-
-{
-  for(int4 i=0;i<size;i+=charsize) {
-    bool isTerminator = true;
-    for(int4 j=0;j<charsize;++j) {
-      if (buffer[i+j] != 0) {	// Non-zero bytes means character can't be a null terminator
-	isTerminator = false;
-	break;
-      }
-    }
-    if (isTerminator) return true;
-  }
-  return false;
-}
-
-#define STR_LITERAL_BUFFER_MAXSIZE 2048
-#define STR_LITERAL_BUFFER_INCREMENT 32
-
-
 /// \brief Print a quoted (unicode) string at the given address.
 ///
 /// Data for the string is obtained directly from the LoadImage.  The bytes are checked
@@ -1237,43 +1211,27 @@ bool PrintC::hasCharTerminator(uint1 *buffer,int4 size,int4 charsize)
 /// pass, the string is emitted.
 /// \param s is the output stream to print to
 /// \param addr is the address of the string data within the LoadImage
-/// \param charsize is the number of bytes in an encoded element (i.e. UTF8, UTF16, or UTF32)
+/// \param charType is the underlying character data-type
 /// \return \b true if a proper string was found and printed to the stream
-bool PrintC::printCharacterConstant(ostream &s,const Address &addr,int4 charsize) const
+bool PrintC::printCharacterConstant(ostream &s,const Address &addr,Datatype *charType) const
 
 {
-  uint1 buffer[STR_LITERAL_BUFFER_MAXSIZE+4]; // Additional buffer for get_codepoint skip readahead
-  int4 curBufferSize = 0;
-  bool foundTerminator = false;
+  const uint1 *buffer;
+  StringManager *manager = glb->stringManager;
   try {
-    do {
-      uint4 newBufferSize = curBufferSize + STR_LITERAL_BUFFER_INCREMENT;
-      glb->loader->loadFill(buffer+curBufferSize,STR_LITERAL_BUFFER_INCREMENT,addr + curBufferSize);
-      foundTerminator = hasCharTerminator(buffer+curBufferSize,STR_LITERAL_BUFFER_INCREMENT,charsize);
-      curBufferSize = newBufferSize;
-    } while ((curBufferSize < STR_LITERAL_BUFFER_MAXSIZE)&&(!foundTerminator));
+    buffer = manager->getStringData(addr, charType);
   } catch(DataUnavailError &err) {
     return false;
   }
-  buffer[curBufferSize] = 0;		// Make sure bytes for final codepoint read are initialized
-  buffer[curBufferSize+1] = 0;
-  buffer[curBufferSize+2] = 0;
-  buffer[curBufferSize+3] = 0;
-  bool bigend = glb->translate->isBigEndian();
-  bool res;
-  if (isCharacterConstant(buffer,curBufferSize,charsize)) {
-    if (doEmitWideCharPrefix() && charsize > 1)
-      s << 'L';			// Print symbol indicating wide character
-    s << '"';
-    if (!escapeCharacterData(s,buffer,curBufferSize,charsize,bigend))
-      s << "...\" /* TRUNCATED STRING LITERAL */";
-    else s << '"';
-     
-    res = true;
-  }
+  if (doEmitWideCharPrefix() && charType->getSize() > 1)
+    s << 'L';			// Print symbol indicating wide character
+  s << '"';
+  if (!escapeCharacterData(s,buffer,manager->getMaximumBytes(),charType->getSize(),glb->translate->isBigEndian()))
+    s << "...\" /* TRUNCATED STRING LITERAL */";
   else
-    res = false;
-  return res;
+    s << '"';
+
+  return true;
 }
 
 void PrintC::resetDefaultsPrintC(void)
@@ -1373,7 +1331,7 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
 
   ostringstream str;
   Datatype *subct = ct->getPtrTo();
-  if (!printCharacterConstant(str,stringaddr,subct->getSize()))
+  if (!printCharacterConstant(str,stringaddr,subct))
     return false;		// Can we get a nice ASCII string
 
   pushAtom(Atom(str.str(),vartoken,EmitXml::const_color,op,vn));
@@ -1577,7 +1535,7 @@ void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
       SymbolEntry *entry = sym->getFirstWholeMap();
       if (entry != (SymbolEntry *)0) {
 	ostringstream s;
-	if (printCharacterConstant(s,entry->getAddr(),subct->getSize())) {
+	if (printCharacterConstant(s,entry->getAddr(),subct)) {
 	  pushAtom(Atom(s.str(),vartoken,EmitXml::const_color,op,vn));
 	  return;
 	}
@@ -1961,25 +1919,6 @@ void PrintC::setCommentStyle(const string &nm)
     setCPlusPlusStyleComments();
   else
     throw LowlevelError("Unknown comment style. Use \"c\" or \"cplusplus\"");
-}
-
-bool PrintC::isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const
-
-{
-  // Return true if this looks like a c-string
-  // If the string is encoded in UTF8 or ASCII, we get (on average) a bit of check
-  // per character.  For UTF16, the surrogate reserved area gives at least some check.
-  if (buf == (const uint1 *)0) return false;
-  bool bigend = glb->translate->isBigEndian();
-  int4 i=0;
-  int4 skip = charsize;
-  while(i<size) {
-    int4 codepoint = getCodepoint(buf+i,charsize,bigend,skip);
-    if (codepoint < 0) return false;
-    if (codepoint == 0) break;
-    i += skip;
-  }
-  return true;
 }
 
 /// \brief Emit the definition of the given data-type

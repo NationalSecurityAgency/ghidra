@@ -100,6 +100,7 @@ Architecture::Architecture(void)
   loader = (LoadImage *)0;
   pcodeinjectlib = (PcodeInjectLibrary *)0;
   commentdb = (CommentDatabase *)0;
+  stringManager = (StringManager *)0;
   cpool = (ConstantPool *)0;
   symboltab = new Database(this);
   context = (ContextDatabase *)0;
@@ -152,6 +153,8 @@ Architecture::~Architecture(void)
     delete pcodeinjectlib;
   if (commentdb != (CommentDatabase *)0)
     delete commentdb;
+  if (stringManager != (StringManager *)0)
+    delete stringManager;
   if (cpool != (ConstantPool *)0)
     delete cpool;
   if (context != (ContextDatabase *)0)
@@ -268,6 +271,7 @@ void Architecture::clearAnalysis(Funcdata *fd)
   fd->clear();			// Clear stuff internal to function
   // Clear out any analysis generated comments
   commentdb->clearType(fd->getAddress(),Comment::warning|Comment::warningheader);
+  stringManager->clear();
 }
 
 /// Symbols do not necessarily need to be available for the decompiler.
@@ -405,6 +409,7 @@ void Architecture::saveXml(ostream &s) const
   symboltab->saveXml(s);
   context->saveXml(s);
   commentdb->saveXml(s);
+  stringManager->saveXml(s);
   if (!cpool->empty())
     cpool->saveXml(s);
   s << "</save_state>\n";
@@ -437,6 +442,8 @@ void Architecture::restoreXml(DocumentStorage &store)
       context->restoreXml(subel,this);
     else if (subel->getName() == "commentdb")
       commentdb->restoreXml(subel,this);
+    else if (subel->getName() == "stringmanage")
+      stringManager->restoreXml(subel,this);
     else if (subel->getName() == "constantpool")
       cpool->restoreXml(subel,*types);
     else if (subel->getName() == "optionslist")
@@ -573,6 +580,14 @@ void Architecture::buildCommentDB(DocumentStorage &store)
 
 {
   commentdb = new CommentDatabaseInternal();
+}
+
+/// Build container that holds decoded strings
+/// \param store may hold configuration information
+void Architecture::buildStringManager(DocumentStorage &store)
+
+{
+  stringManager = new StringManagerUnicode(this,2048);
 }
 
 /// Some processor models (Java byte-code) need a database of constants.
@@ -1237,6 +1252,7 @@ void Architecture::init(DocumentStorage &store)
   buildContext(store);
   buildTypegrp(store);
   buildCommentDB(store);
+  buildStringManager(store);
   buildConstantPool(store);
 
   restoreFromSpec(store);

@@ -245,6 +245,7 @@ void FlushNative::rawAction(void)
   ghidra->symboltab->deleteSubScopes(globscope); // Flush cached function and globals database
   ghidra->types->clearNoncore(); // Reset type information
   ghidra->commentdb->clear();	// Clear any comments
+  ghidra->stringManager->clear();	// Clear string decodings
   ghidra->cpool->clear();
   res = 0;
 }
