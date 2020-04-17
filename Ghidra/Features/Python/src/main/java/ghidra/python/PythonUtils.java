@@ -27,7 +27,7 @@ import utilities.util.FileUtilities;
  */
 public class PythonUtils {
 
-	public static final String PYTHON_NAME = "jython-2.7.1";
+	public static final String PYTHON_NAME = "jython-2.7.2";
 	public static final String PYTHON_CACHEDIR = "jython_cachedir";
 	public static final String PYTHON_SRC = "python-src";
 
