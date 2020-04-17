@@ -705,6 +705,12 @@ public class BundleHost {
 
 		for (int i = 0; i < pathArr.length; i++) {
 			ResourceFile bp = new ResourceFile(pathArr[i]);
+			if (!bp.exists()) {
+				Msg.showWarn(this, null, "missing bundle path",
+					"the bundle path " + bp.toString() + " no longer exists, removing");
+
+				continue;
+			}
 			boolean en = enableArr[i];
 			boolean sys = systemArr[i];
 			GhidraBundle gb = bp2gb.get(bp);
