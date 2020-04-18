@@ -396,9 +396,24 @@ define pcodeop mtsr;
 
 ### MMU Instruction ###
 
-# TODO : special function, and subfunctions
+define pcodeop TLB_TargetRead;
+define pcodeop TLB_TargetWrite;
+define pcodeop TLB_RWrite;
+define pcodeop TLB_RWriteLock;
+define pcodeop TLB_Unlock;
+define pcodeop TLB_Probe;
+define pcodeop TLB_Invalidate;
+define pcodeop TLB_FlushAll;
 
-:tlbop Rt,Ra,TlbopSub is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub & Sub5=0b01110 unimpl
+:tlbop Ra,"TargetRead"  is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=0 & Sub5=0b01110 { TLB_TargetRead(Ra:4); }
+:tlbop Ra,"TargetWrite" is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=1 & Sub5=0b01110 { TLB_TargetWrite(Ra:4); }
+:tlbop Ra,"RWrite"      is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=2 & Sub5=0b01110 { TLB_RWrite(Ra:4); }
+:tlbop Ra,"RWriteLock"  is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=3 & Sub5=0b01110 { TLB_RWriteLock(Ra:4); }
+:tlbop Ra,"Unlock"      is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=4 & Sub5=0b01110 { TLB_Unlock(Ra:4); }
+:tlbop Rt,Ra,"Probe"    is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=5 & Sub5=0b01110 { TLB_Probe(Rt:4, Ra:4); }
+:tlbop Ra,"Invalidate"  is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=6 & Sub5=0b01110 { TLB_Invalidate(Ra:4); }
+:tlbop "FlushAll"       is $(I32) & $(MISC) & Rt & Ra & Rb=0 & TlbopSub=7 & Sub5=0b01110 { TLB_FlushAll(); }
+
 
 ### Conditional Move ###
 
