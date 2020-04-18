@@ -690,9 +690,33 @@ GpWordAddress: [+ off] is Imm17s [ off = Imm17s << 2; ] { addr:4 = gp + off; exp
 :bse is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001100 unimpl
 :bsp is $(I32) & $(ALU_2) & Rt & Ra & Rb & $(ALU2Z) & Sub6=0b001101 unimpl
 
-# TODO : arithmetic functions: pbs*
-:pbsad Rt, Ra, Rb is $(I32) & $(SIMD) & Rt & Ra & Rb & Rd=0 & Sub5=0b0000 unimpl
-:pbsada Rt, Ra, Rb is $(I32) & $(SIMD) & Rt & Ra & Rb & Rd=0 & Sub5=0b0001 unimpl
+macro add_abs_diff(dst, src1, src2, shift)
+{
+    local src1_ = src1 >> shift;
+    local src2_ = src2 >> shift;
+    local src1__ = src1_:1;
+    local src2__ = src2_:1;
+    local a:1 = src1__ - src2__;
+    local agez:1 = zext(a s>= 0);
+    local altz:1 = zext(a s< 0);
+    local aabs:1 = (a * agez) | ((-a) * altz);
+    dst = dst + zext(aabs);
+}
+:pbsad Rt, Ra, Rb is $(I32) & $(SIMD) & Rt & Ra & Rb & Rd=0 & Sub5=0b0000
+{
+    Rt = 0;
+    add_abs_diff(Rt, Ra, Rb, 0);
+    add_abs_diff(Rt, Ra, Rb, 8);
+    add_abs_diff(Rt, Ra, Rb, 16);
+    add_abs_diff(Rt, Ra, Rb, 24);
+}
+:pbsada Rt, Ra, Rb is $(I32) & $(SIMD) & Rt & Ra & Rb & Rd=0 & Sub5=0b0001
+{
+    add_abs_diff(Rt, Ra, Rb, 0);
+    add_abs_diff(Rt, Ra, Rb, 8);
+    add_abs_diff(Rt, Ra, Rb, 16);
+    add_abs_diff(Rt, Ra, Rb, 24);
+}
 
 @endif
 
