@@ -444,12 +444,13 @@ define pcodeop isync;
 
 ### Prefetch Instruction ###
 
-# TODO : special function, and subfunctions
-
 define pcodeop dpref;
 
-:dpref DprefSub, AddrRaRbsv is $(I32) & $(MEM) & DprefD=0 & DprefSub & AddrRaRbsv & Sub8=0b00010011 {
-    dpref(DprefSub:1, AddrRaRbsv:4);
+OffsetRbsv2: (Rb "<<" sv) is Rb & sv { off:4 = Rb << (sv + 1); export off; }
+AddrRaRbsv2: [Ra + OffsetRbsv2] is Ra & OffsetRbsv2 { addr:4 = Ra + OffsetRbsv2; export addr; }
+
+:dpref DprefSub, AddrRaRbsv2 is $(I32) & $(MEM) & DprefD=0 & DprefSub & AddrRaRbsv2 & Sub8=0b00010011 {
+    dpref(DprefSub:1, AddrRaRbsv2:4);
 }
 
 DprefD_: "w" is DprefD=0 { }
