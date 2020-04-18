@@ -318,8 +318,6 @@ LsmwM_: "m" is LsmwRa & LsmwM=1 { LsmwRa = mult_addr; }
 
 ### Load / Store Instruction for Atomic Updates ###
 
-# TODO : special constraint (atomicity)
-
 :llw Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00011000 { Rt = *AddrRaRbsv; }
 :scw Rt, AddrRaRbsv is $(I32) & $(MEM) & Rt & AddrRaRbsv & Sub8=0b00011001 { *AddrRaRbsv = Rt; }
 
