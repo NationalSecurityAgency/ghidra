@@ -643,9 +643,35 @@ GpWordAddress: [+ off] is Imm17s [ off = Imm17s << 2; ] { addr:4 = gp + off; exp
 :btgl Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b001010 { Rt = Ra ^ (1 << Imm5u); }
 :btst Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b001011 { Rt = (Ra >> Imm5u) & 1; }
 
-# TODO : arithmetic functions: clip*
-:clips Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b000100 unimpl
-:clip Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b000101 unimpl
+:clips Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b000100
+{
+    local upper:4 = (1 << Imm5u) - 1;
+    local lower:4 = -(1 << Imm5u);
+    if(Ra s<= upper) goto <elif>;
+        Rt = upper;
+        goto <end>;
+    <elif>
+    if(Ra s>= lower) goto <else>;
+        Rt = lower;
+        goto <end>;
+    <else>
+        Rt = Ra;
+    <end>
+}
+:clip Rt, Ra, Imm5u is $(I32) & $(ALU_2) & Rt & Ra & Imm5u & $(ALU2Z) & Sub6=0b000101
+{
+    local upper:4 = (1 << Imm5u) - 1;
+    if(Ra <= upper) goto <elif>;
+        Rt = upper;
+        goto <end>;
+    <elif>
+    if(Ra >= 0) goto <else>;
+        Rt = 0;
+        goto <end>;
+    <else>
+        Rt = Ra;
+    <end>
+}
 
 :clz Rt, Ra is $(I32) & $(ALU_2) & Rt & Ra & Imm5u=0 & $(ALU2Z) & Sub6=0b000111
 {
