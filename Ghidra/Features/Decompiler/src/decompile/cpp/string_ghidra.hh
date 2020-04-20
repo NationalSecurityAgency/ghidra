@@ -33,7 +33,7 @@ class GhidraStringManager : public StringManager {
 public:
   GhidraStringManager(ArchitectureGhidra *g,int4 max);	///< Constructor
   virtual ~GhidraStringManager(void);
-  virtual const uint1 *getStringData(const Address &addr,Datatype *charType);
+  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType);
 };
 
 #endif

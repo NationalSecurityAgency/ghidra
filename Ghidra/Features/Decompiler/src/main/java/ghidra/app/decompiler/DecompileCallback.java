@@ -1181,6 +1181,35 @@ public class DecompileCallback {
 		return listing.getFunctionAt(addr);
 	}
 
+	/**
+	 * Return true if there are no "replacement" characters in the string
+	 * @param string is the string to test
+	 * @return true if no replacements
+	 */
+	private boolean isValidChars(String string) {
+		char replaceChar = '\ufffd';
+		for (int i = 0; i < string.length(); ++i) {
+			char c = string.charAt(i);
+			if (c == replaceChar) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Check for a string at an address and return a UTF8 encoded byte array.
+	 * If there is already data present at the address, use this to determine the
+	 * string encoding. Otherwise use the data-type info passed in to determine the encoding.
+	 * Check that the bytes at the address represent a valid string encoding that doesn't
+	 * exceed the maximum byte limit passed in.  Return null if the string is invalid.
+	 * Return the string translated into a UTF8 byte array otherwise.  A (valid) empty
+	 * string is returned as a zero length array.
+	 * @param addrString is the XML encoded address and maximum byte limit
+	 * @param dtName is the name of a character data-type
+	 * @param dtId is the id associated with the character data-type
+	 * @return the UTF8 encoded byte array or null
+	 */
 	public byte[] getStringData(String addrString, String dtName, String dtId) {
 		Address addr;
 		int maxBytes;
@@ -1199,9 +1228,21 @@ public class DecompileCallback {
 		Settings settings = SettingsImpl.NO_SETTINGS;
 		AbstractStringDataType dataType = null;
 		if (data != null) {
-			settings = data;
 			if (data.getDataType() instanceof AbstractStringDataType) {
+				settings = data;
 				dataType = (AbstractStringDataType) data.getDataType();
+				int len = data.getLength();
+				if (len > 0) {
+					long diff = addr.subtract(data.getAddress()) *
+						addr.getAddressSpace().getAddressableUnitSize();
+					if (diff < 0 || diff >= len) {
+						return null;
+					}
+					len -= diff;
+					if (len < maxBytes) {
+						maxBytes = len;
+					}
+				}
 			}
 		}
 		if (dataType == null) {
@@ -1228,17 +1269,17 @@ public class DecompileCallback {
 			}
 		}
 		MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
-		Object value = dataType.getValue(buf, settings, maxBytes);
-		if (!(value instanceof String)) {
+		StringDataInstance stringInstance = dataType.getStringDataInstance(buf, settings, maxBytes);
+		int len = stringInstance.getStringLength();
+		if (len < 0 || len > maxBytes) {
 			return null;
 		}
-		String stringVal = (String) value;
-		byte[] res = stringVal.getBytes(utf8Charset);
-		if (res.length > maxBytes) {
-			byte[] trim = new byte[maxBytes];
-			System.arraycopy(res, 0, trim, 0, maxBytes);
+
+		String stringVal = stringInstance.getStringValue();
+		if (!isValidChars(stringVal)) {
+			return null;
 		}
-		return res;
+		return stringVal.getBytes(utf8Charset);
 	}
 
 //==================================================================================================

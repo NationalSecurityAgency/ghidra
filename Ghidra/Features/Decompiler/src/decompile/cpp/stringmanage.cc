@@ -16,21 +16,6 @@
 #include "stringmanage.hh"
 #include "architecture.hh"
 
-/// Before calling, we must check that there is no other buffer stored at the address.
-/// \param addr is the Address to store the buffer at
-/// \param buf is the buffer to be copied into storage
-/// \param size is the number of bytes in the buffer
-/// \return the new permanent copy of the buffer
-const uint1 *StringManager::mapBuffer(const Address &addr,const uint1 *buf,int4 size)
-
-{
-  uint1 *storeBuf = new uint1[size + 1];
-  stringMap[addr] = storeBuf;
-  memcpy(storeBuf,buf,size);
-  storeBuf[size] = 0;
-  return storeBuf;
-}
-
 /// \param max is the maximum number of bytes to allow in a decoded string
 StringManager::StringManager(int4 max)
 
@@ -42,16 +27,6 @@ StringManager::~StringManager(void)
 
 {
   clear();
-}
-
-void StringManager::clear(void)
-
-{
-  map<Address,const uint1 *>::iterator iter;
-
-  for(iter=stringMap.begin();iter!=stringMap.end();++iter) {
-    delete [] (*iter).second;
-  }
 }
 
 /// Encode the given unicode codepoint as UTF8 (1, 2, 3, or 4 bytes) and
@@ -103,14 +78,8 @@ void StringManager::writeUtf8(ostream &s,int4 codepoint)
 bool StringManager::isString(const Address &addr,Datatype *charType)
 
 {
-  const uint1 *buffer = (const uint1 *)0;
-  try {
-    buffer = getStringData(addr,charType);
-  }
-  catch(DataUnavailError &err) {
-    return false;
-  }
-  return (buffer != (const uint1 *)0);
+  const vector<uint1> &buffer(getStringData(addr,charType));
+  return !buffer.empty();
 }
 
 /// Write \<stringmanage> tag, with \<string> sub-tags.
@@ -120,15 +89,14 @@ void StringManager::saveXml(ostream &s) const
 {
   s << "<stringmanage>\n";
 
-  map<Address,const uint1 *>::const_iterator iter1;
+  map<Address,vector<uint1> >::const_iterator iter1;
   for(iter1=stringMap.begin();iter1!=stringMap.end();++iter1) {
     s << "<string>\n";
     (*iter1).first.saveXml(s);
-    const uint1 *buf = (*iter1).second;
+    const vector<uint1> &vec( (*iter1).second );
     s << " <bytes>\n" << setfill('0');
-    for(int4 i=0;;++i) {
-      if (buf[i] == 0) break;
-      s << hex << setw(2) << (int4)buf[i];
+    for(int4 i=0;vec.size();++i) {
+      s << hex << setw(2) << (int4)vec[i];
       if (i%20 == 19)
 	s << "\n  ";
     }
@@ -148,7 +116,7 @@ void StringManager::restoreXml(const Element *el,const AddrSpaceManager *m)
   iter = list.begin();
   Address addr = Address::restoreXml(*iter, m);
   ++iter;
-  vector<uint1> vec;
+  vector<uint1> &vec(stringMap[addr]);
   istringstream is((*iter)->getContent());
   int4 val;
   char c1, c2;
@@ -174,7 +142,6 @@ void StringManager::restoreXml(const Element *el,const AddrSpaceManager *m)
     c1 = is.get();
     c2 = is.get();
   }
-  mapBuffer(addr,vec.data(),vec.size());
 }
 
 /// \param buffer is the byte buffer
@@ -300,49 +267,61 @@ StringManagerUnicode::~StringManagerUnicode(void)
   delete [] testBuffer;
 }
 
-const uint1 *StringManagerUnicode::getStringData(const Address &addr,Datatype *charType)
+const vector<uint1> &StringManagerUnicode::getStringData(const Address &addr,Datatype *charType)
 
 {
-  map<Address,const uint1 *>::iterator iter;
+  map<Address,vector<uint1> >::iterator iter;
   iter = stringMap.find(addr);
   if (iter != stringMap.end())
     return (*iter).second;
+
+  vector<uint1> &vec(stringMap[addr]);		// Allocate (initially empty) byte vector
 
   int4 curBufferSize = 0;
   int4 charsize = charType->getSize();
   bool foundTerminator = false;
 
-  do {
-    int4 amount = 32;	// Grab 32 bytes of image at a time
-    uint4 newBufferSize = curBufferSize + amount;
-    if (newBufferSize > maximumBytes) {
-      newBufferSize = maximumBytes;
-      amount = newBufferSize - curBufferSize;
-      if (amount == 0) break;
-    }
-    glb->loader->loadFill(testBuffer+curBufferSize,amount,addr + curBufferSize);
-    foundTerminator = hasCharTerminator(testBuffer+curBufferSize,amount,charsize);
-    curBufferSize = newBufferSize;
-  } while (!foundTerminator);
+  try {
+    do {
+      int4 amount = 32;	// Grab 32 bytes of image at a time
+      uint4 newBufferSize = curBufferSize + amount;
+      if (newBufferSize > maximumBytes) {
+	newBufferSize = maximumBytes;
+	amount = newBufferSize - curBufferSize;
+	if (amount == 0)
+	  break;
+      }
+      glb->loader->loadFill(testBuffer + curBufferSize, amount,
+			    addr + curBufferSize);
+      foundTerminator = hasCharTerminator(testBuffer + curBufferSize, amount,
+					  charsize);
+      curBufferSize = newBufferSize;
+    } while (!foundTerminator);
+  } catch (DataUnavailError &err) {
+    return vec;			// Return the empty buffer
+  }
 
-  const uint1 *resBuffer;
   if (charsize == 1) {
     if (!isCharacterConstant(testBuffer,curBufferSize,charsize))
-      return (const uint1 *)0;
-    resBuffer = mapBuffer(addr,testBuffer,curBufferSize);
+      return vec;		// Return the empty buffer
+    vec.reserve(curBufferSize);
+    vec.assign(testBuffer,testBuffer+curBufferSize);
   }
   else {
     // We need to translate to UTF8
     ostringstream s;
     if (!writeUnicode(s, testBuffer, curBufferSize, charsize))
-      return (const uint1 *)0;
+      return vec;		// Return the empty buffer
     string resString = s.str();
     int4 newSize = resString.size();
     if (newSize > maximumBytes)
       newSize = maximumBytes;
-    resBuffer = mapBuffer(addr,(const uint1 *)resString.c_str(),newSize);
+    vector<uint1> &vec(stringMap[addr]);
+    vec.reserve(newSize);
+    const uint1 *ptr = (const uint1 *)resString.c_str();
+    vec.assign(ptr,ptr+newSize);
   }
-  return resBuffer;
+  return vec;
 }
 
 /// If the string is encoded in UTF8 or ASCII, we get (on average) a bit of check

@@ -19,6 +19,7 @@
 #include "ghidra_translate.hh"
 #include "typegrp_ghidra.hh"
 #include "comment_ghidra.hh"
+#include "string_ghidra.hh"
 #include "cpool_ghidra.hh"
 #include "inject_ghidra.hh"
 
@@ -346,6 +347,12 @@ void ArchitectureGhidra::buildCommentDB(DocumentStorage &store)
   commentdb = new CommentDatabaseGhidra(this);
 }
 
+void ArchitectureGhidra::buildStringManager(DocumentStorage &store)
+
+{
+  stringManager = new GhidraStringManager(this,2048);
+}
+
 void ArchitectureGhidra::buildConstantPool(DocumentStorage &store)
 
 {
@@ -615,7 +622,7 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   readResponseEnd(sin);
 }
 
-uint4 ArchitectureGhidra::getStringData(uint1 *buf,const Address &addr,Datatype *ct,int4 maxBytes)
+void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes)
 
 {
   sout.write("\000\000\001\004",4);
@@ -633,32 +640,28 @@ uint4 ArchitectureGhidra::getStringData(uint1 *buf,const Address &addr,Datatype 
 
   readToResponse(sin);
   int4 type = readToAnyBurst(sin);
-  uint4 size = 0;
   if (type == 12) {
     int4 c = sin.get();
-    size ^= (c-0x20);
+    uint4 size = (c-0x20);
     c = sin.get();
     size ^= ((c-0x20)<<6);
+    buffer.reserve(size);
     uint1 *dblbuf = new uint1[size * 2];
     sin.read((char *)dblbuf,size*2);
     for (int4 i=0; i < size; i++) {
-      buf[i] = ((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A');
+      buffer.push_back(((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A'));
     }
     delete [] dblbuf;
+    type = readToAnyBurst(sin);
+    if (type != 13)
+      throw JavaError("alignment","Expecting byte alignment end");
+    type = readToAnyBurst(sin);
   }
-  else if ((type&1)==1) {
-    ostringstream errmsg;
-    errmsg << "GHIDRA has no string in the loadimage at " << addr.getShortcut();
-    addr.printRaw(errmsg);
-    throw DataUnavailError(errmsg.str());
+  if ((type&1)==1) {
+    // Leave the buffer empty
   }
   else
-    throw JavaError("alignment","Expecting bytes or end of query response");
-  type = readToAnyBurst(sin);
-  if (type != 13)
-    throw JavaError("alignment","Expecting byte alignment end");
-  readResponseEnd(sin);
-  return size;
+    throw JavaError("alignment","Expecting end of query response");
 }
 
 /// \brief Retrieve p-code to inject for a specific context

@@ -30,27 +30,25 @@ class Architecture;
 /// Stores the decoded string until its needed for presentation.
 class StringManager {
 protected:
-  map<Address,const uint1 *> stringMap;	///< Map from address to string (in UTF8 format)
-  int4 maximumBytes;			///< Maximum bytes (in UTF8 encoding) allowed
-
-  const uint1 *mapBuffer(const Address &addr,const uint1 *buf,int4 size);	///< Move a decoded buffer into storage
+  map<Address,vector<uint1> > stringMap;	///< Map from address to string (in UTF8 format)
+  int4 maximumBytes;				///< Maximum bytes (in UTF8 encoding) allowed
 public:
   StringManager(int4 max);		///< Constructor
   virtual ~StringManager(void);		///< Destructor
 
   int4 getMaximumBytes(void) const { return maximumBytes; }	///< Return the maximum bytes allowed in a string decoding
-  void clear(void);			///< Clear out any cached strings
+  void clear(void) { stringMap.clear(); }			///< Clear out any cached strings
 
   bool isString(const Address &addr,Datatype *charType);	// Determine if data at the given address is a string
 
   /// \brief Retrieve string data at the given address as a UTF8 byte array
   ///
-  /// If the address does not represent string data, null is returned. Otherwise,
+  /// If the address does not represent string data, a zero length vector is returned. Otherwise,
   /// the string data is fetched, converted to a UTF8 encoding, cached and returned.
   /// \param addr is the given address
   /// \param charType is a character data-type indicating the encoding
-  /// \return the byte array of UTF8 data (or null)
-  virtual const uint1 *getStringData(const Address &addr,Datatype *charType)=0;
+  /// \return the byte array of UTF8 data
+  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType)=0;
 
   void saveXml(ostream &s) const;	///< Save cached strings to a stream as XML
   void restoreXml(const Element *el,const AddrSpaceManager *m);	///< Restore string cache from XML
@@ -72,7 +70,7 @@ public:
   StringManagerUnicode(Architecture *g,int4 max);	///< Constructor
   virtual ~StringManagerUnicode(void);
 
-  virtual const uint1 *getStringData(const Address &addr,Datatype *charType);
+  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType);
   bool isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const;	///< Return \b true if buffer looks like unicode
   bool writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 charsize);	///< Write unicode byte array to stream (as UTF8)
 };

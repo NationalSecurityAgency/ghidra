@@ -74,6 +74,7 @@ class ArchitectureGhidra : public Architecture {
   virtual PcodeInjectLibrary *buildPcodeInjectLibrary(void);
   virtual void buildTypegrp(DocumentStorage &store);
   virtual void buildCommentDB(DocumentStorage &store);
+  virtual void buildStringManager(DocumentStorage &store);
   virtual void buildConstantPool(DocumentStorage &store);
   virtual void buildContext(DocumentStorage &store);
   virtual void buildSpecFile(DocumentStorage &store);
@@ -124,7 +125,7 @@ public:
 
   bool getSendParamMeasures(void) const { return sendParamMeasures; }	///< Get the current setting for emitting parameter info
 
-  virtual uint4 getStringData(uint1 *buf,const Address &addr,Datatype *ct,int4 maxBytes);
+  virtual void getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes);
   virtual void printMessage(const string &message) const;
 
   static void segvHandler(int4 sig);				///< Handler for a segment violation (SIGSEGV) signal

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ghidra_string.hh"
+#include "string_ghidra.hh"
 
 GhidraStringManager::GhidraStringManager(ArchitectureGhidra *g,int4 max)
   : StringManager(max)
@@ -28,14 +28,15 @@ GhidraStringManager::~GhidraStringManager(void)
   delete [] testBuffer;
 }
 
-const uint1 *GhidraStringManager::getStringData(const Address &addr,Datatype *charType)
+const vector<uint1> &GhidraStringManager::getStringData(const Address &addr,Datatype *charType)
 
 {
-  map<Address,const uint1 *>::iterator iter;
+  map<Address,vector<uint1> >::iterator iter;
   iter = stringMap.find(addr);
   if (iter != stringMap.end())
     return (*iter).second;
 
-  int4 size = glb->getStringData(testBuffer, addr, charType, maximumBytes);
-  return mapBuffer(addr, testBuffer, size);
+  vector<uint1> &buffer(stringMap[addr]);
+  glb->getStringData(buffer, addr, charType, maximumBytes);
+  return buffer;
 }
