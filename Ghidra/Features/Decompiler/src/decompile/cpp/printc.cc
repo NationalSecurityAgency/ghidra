@@ -1219,20 +1219,18 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,Datatype *cha
   StringManager *manager = glb->stringManager;
 
   // Retrieve UTF8 version of string
-  const vector<uint1> &buffer(manager->getStringData(addr, charType));
+  bool isTrunc = false;
+  const vector<uint1> &buffer(manager->getStringData(addr, charType, isTrunc));
   if (buffer.empty())
     return false;
   if (doEmitWideCharPrefix() && charType->getSize() > 1)
     s << 'L';			// Print symbol indicating wide character
   s << '"';
-  if (!escapeCharacterData(s,buffer.data(),buffer.size(),1,glb->translate->isBigEndian()))
+  escapeCharacterData(s,buffer.data(),buffer.size(),1,glb->translate->isBigEndian());
+  if (isTrunc)
     s << "...\" /* TRUNCATED STRING LITERAL */";
-  else {
-    if (buffer.size() > manager->getMaximumBytes())
-      s << "...\" /* TRUNCATED STRING LITERAL */";
-    else
-      s << '"';
-  }
+  else
+    s << '"';
 
   return true;
 }

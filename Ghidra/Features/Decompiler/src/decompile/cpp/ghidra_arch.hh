@@ -125,7 +125,7 @@ public:
 
   bool getSendParamMeasures(void) const { return sendParamMeasures; }	///< Get the current setting for emitting parameter info
 
-  virtual void getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes);
+  virtual void getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes,bool &isTrunc);
   virtual void printMessage(const string &message) const;
 
   static void segvHandler(int4 sig);				///< Handler for a segment violation (SIGSEGV) signal

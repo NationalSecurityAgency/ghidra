@@ -30,13 +30,17 @@ class Architecture;
 /// Stores the decoded string until its needed for presentation.
 class StringManager {
 protected:
-  map<Address,vector<uint1> > stringMap;	///< Map from address to string (in UTF8 format)
-  int4 maximumBytes;				///< Maximum bytes (in UTF8 encoding) allowed
+  class StringData {
+  public:
+    bool isTruncated;		// \b true if the the string is truncated
+    vector<uint1> byteData;	// UTF8 encoded string data
+  };
+  map<Address,StringData> stringMap;	///< Map from address to string data
+  int4 maximumChars;			///< Maximum characters in a string before truncating
 public:
   StringManager(int4 max);		///< Constructor
   virtual ~StringManager(void);		///< Destructor
 
-  int4 getMaximumBytes(void) const { return maximumBytes; }	///< Return the maximum bytes allowed in a string decoding
   void clear(void) { stringMap.clear(); }			///< Clear out any cached strings
 
   bool isString(const Address &addr,Datatype *charType);	// Determine if data at the given address is a string
@@ -47,8 +51,9 @@ public:
   /// the string data is fetched, converted to a UTF8 encoding, cached and returned.
   /// \param addr is the given address
   /// \param charType is a character data-type indicating the encoding
+  /// \param isTrunc passes back whether the string is truncated
   /// \return the byte array of UTF8 data
-  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType)=0;
+  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc)=0;
 
   void saveXml(ostream &s) const;	///< Save cached strings to a stream as XML
   void restoreXml(const Element *el,const AddrSpaceManager *m);	///< Restore string cache from XML
@@ -66,13 +71,13 @@ public:
 class StringManagerUnicode : public StringManager {
   Architecture *glb;		///< Underlying architecture
   uint1 *testBuffer;		///< Temporary buffer for pulling in loadimage bytes
+  int4 checkCharacters(const uint1 *buf,int4 size,int4 charsize) const;	///< Make sure buffer has valid bounded set of unicode
 public:
   StringManagerUnicode(Architecture *g,int4 max);	///< Constructor
   virtual ~StringManagerUnicode(void);
 
-  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType);
-  bool isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const;	///< Return \b true if buffer looks like unicode
-  bool writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 charsize);	///< Write unicode byte array to stream (as UTF8)
+  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc);
+  bool writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 charsize);	///< Translate/copy unicode to UTF8
 };
 
 #endif

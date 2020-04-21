@@ -622,7 +622,7 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   readResponseEnd(sin);
 }
 
-void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes)
+void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes,bool &isTrunc)
 
 {
   sout.write("\000\000\001\004",4);
@@ -645,6 +645,7 @@ void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr
     uint4 size = (c-0x20);
     c = sin.get();
     size ^= ((c-0x20)<<6);
+    isTrunc = (sin.get() != 0);
     buffer.reserve(size);
     uint1 *dblbuf = new uint1[size * 2];
     sin.read((char *)dblbuf,size*2);

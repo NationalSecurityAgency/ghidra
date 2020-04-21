@@ -787,9 +787,10 @@ public class DecompileProcess {
 		String addr = readQueryString();
 		String dtName = readQueryString();
 		String dtId = readQueryString();
-		byte[] res = callback.getStringData(addr, dtName, dtId);
+		DecompileCallback.StringData stringData = callback.getStringData(addr, dtName, dtId);
 		write(query_response_start);
-		if (res != null) {
+		if (stringData != null) {
+			byte[] res = stringData.byteData;
 			int sz = res.length + 1;		// We add a null terminator character
 			int sz1 = (sz & 0x3f) + 0x20;
 			sz >>>= 6;
@@ -797,6 +798,7 @@ public class DecompileProcess {
 			write(byte_start);
 			write(sz1);
 			write(sz2);
+			write(stringData.isTruncated ? 1 : 0);
 			byte[] dblres = new byte[res.length * 2 + 2];
 			for (int i = 0; i < res.length; i++) {
 				dblres[i * 2] = (byte) (((res[i] >> 4) & 0xf) + 65);

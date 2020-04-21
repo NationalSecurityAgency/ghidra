@@ -28,15 +28,19 @@ GhidraStringManager::~GhidraStringManager(void)
   delete [] testBuffer;
 }
 
-const vector<uint1> &GhidraStringManager::getStringData(const Address &addr,Datatype *charType)
+const vector<uint1> &GhidraStringManager::getStringData(const Address &addr,Datatype *charType,bool &isTrunc)
 
 {
-  map<Address,vector<uint1> >::iterator iter;
+  map<Address,StringData>::iterator iter;
   iter = stringMap.find(addr);
-  if (iter != stringMap.end())
-    return (*iter).second;
+  if (iter != stringMap.end()) {
+    isTrunc = (*iter).second.isTruncated;
+    return (*iter).second.byteData;
+  }
 
-  vector<uint1> &buffer(stringMap[addr]);
-  glb->getStringData(buffer, addr, charType, maximumBytes);
-  return buffer;
+  StringData &stringData(stringMap[addr]);
+  stringData.isTruncated = false;
+  glb->getStringData(stringData.byteData, addr, charType, maximumChars,stringData.isTruncated);
+  isTrunc = stringData.isTruncated;
+  return stringData.byteData;
 }

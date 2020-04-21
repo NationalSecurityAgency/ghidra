@@ -16,11 +16,11 @@
 #include "stringmanage.hh"
 #include "architecture.hh"
 
-/// \param max is the maximum number of bytes to allow in a decoded string
+/// \param max is the maximum number of characters to allow before truncating string
 StringManager::StringManager(int4 max)
 
 {
-  maximumBytes = max;
+  maximumChars = max;
 }
 
 StringManager::~StringManager(void)
@@ -78,7 +78,8 @@ void StringManager::writeUtf8(ostream &s,int4 codepoint)
 bool StringManager::isString(const Address &addr,Datatype *charType)
 
 {
-  const vector<uint1> &buffer(getStringData(addr,charType));
+  bool isTrunc;		// unused here
+  const vector<uint1> &buffer(getStringData(addr,charType,isTrunc));
   return !buffer.empty();
 }
 
@@ -89,14 +90,16 @@ void StringManager::saveXml(ostream &s) const
 {
   s << "<stringmanage>\n";
 
-  map<Address,vector<uint1> >::const_iterator iter1;
+  map<Address,StringData>::const_iterator iter1;
   for(iter1=stringMap.begin();iter1!=stringMap.end();++iter1) {
     s << "<string>\n";
     (*iter1).first.saveXml(s);
-    const vector<uint1> &vec( (*iter1).second );
-    s << " <bytes>\n" << setfill('0');
-    for(int4 i=0;vec.size();++i) {
-      s << hex << setw(2) << (int4)vec[i];
+    const StringData &stringData( (*iter1).second );
+    s << " <bytes";
+    a_v_b(s, "trunc", stringData.isTruncated);
+    s << ">\n" << setfill('0');
+    for(int4 i=0;stringData.byteData.size();++i) {
+      s << hex << setw(2) << (int4)stringData.byteData[i];
       if (i%20 == 19)
 	s << "\n  ";
     }
@@ -116,7 +119,8 @@ void StringManager::restoreXml(const Element *el,const AddrSpaceManager *m)
   iter = list.begin();
   Address addr = Address::restoreXml(*iter, m);
   ++iter;
-  vector<uint1> &vec(stringMap[addr]);
+  StringData &stringData(stringMap[addr]);
+  stringData.isTruncated = xml_readbool((*iter)->getAttributeValue("trunc"));
   istringstream is((*iter)->getContent());
   int4 val;
   char c1, c2;
@@ -137,7 +141,7 @@ void StringManager::restoreXml(const Element *el,const AddrSpaceManager *m)
     else
       c2 = c2 + 10 - 'a';
     val = c1 * 16 + c2;
-    vec.push_back((uint1) val);
+    stringData.byteData.push_back((uint1) val);
     is >> ws;
     c1 = is.get();
     c2 = is.get();
@@ -267,15 +271,19 @@ StringManagerUnicode::~StringManagerUnicode(void)
   delete [] testBuffer;
 }
 
-const vector<uint1> &StringManagerUnicode::getStringData(const Address &addr,Datatype *charType)
+const vector<uint1> &StringManagerUnicode::getStringData(const Address &addr,Datatype *charType,bool &isTrunc)
 
 {
-  map<Address,vector<uint1> >::iterator iter;
+  map<Address,StringData>::iterator iter;
   iter = stringMap.find(addr);
-  if (iter != stringMap.end())
-    return (*iter).second;
+  if (iter != stringMap.end()) {
+    isTrunc = (*iter).second.isTruncated;
+    return (*iter).second.byteData;
+  }
 
-  vector<uint1> &vec(stringMap[addr]);		// Allocate (initially empty) byte vector
+  StringData &stringData(stringMap[addr]);		// Allocate (initially empty) byte vector
+  stringData.isTruncated = false;
+  isTrunc = false;
 
   int4 curBufferSize = 0;
   int4 charsize = charType->getSize();
@@ -285,11 +293,12 @@ const vector<uint1> &StringManagerUnicode::getStringData(const Address &addr,Dat
     do {
       int4 amount = 32;	// Grab 32 bytes of image at a time
       uint4 newBufferSize = curBufferSize + amount;
-      if (newBufferSize > maximumBytes) {
-	newBufferSize = maximumBytes;
+      if (newBufferSize > maximumChars) {
+	newBufferSize = maximumChars;
 	amount = newBufferSize - curBufferSize;
-	if (amount == 0)
-	  break;
+	if (amount == 0) {
+	  return stringData.byteData;		// Could not find terminator
+	}
       }
       glb->loader->loadFill(testBuffer + curBufferSize, amount,
 			    addr + curBufferSize);
@@ -298,52 +307,56 @@ const vector<uint1> &StringManagerUnicode::getStringData(const Address &addr,Dat
       curBufferSize = newBufferSize;
     } while (!foundTerminator);
   } catch (DataUnavailError &err) {
-    return vec;			// Return the empty buffer
+    return stringData.byteData;			// Return the empty buffer
   }
 
-  if (charsize == 1) {
-    if (!isCharacterConstant(testBuffer,curBufferSize,charsize))
-      return vec;		// Return the empty buffer
-    vec.reserve(curBufferSize);
-    vec.assign(testBuffer,testBuffer+curBufferSize);
+  int4 numChars = checkCharacters(testBuffer, curBufferSize, charsize);
+  if (numChars < 0)
+    return stringData.byteData;		// Return the empty buffer (invalid encoding)
+  if (charsize == 1 && numChars < maximumChars) {
+    stringData.byteData.reserve(curBufferSize);
+    stringData.byteData.assign(testBuffer,testBuffer+curBufferSize);
   }
   else {
-    // We need to translate to UTF8
+    // We need to translate to UTF8 and/or truncate
     ostringstream s;
     if (!writeUnicode(s, testBuffer, curBufferSize, charsize))
-      return vec;		// Return the empty buffer
+      return stringData.byteData;		// Return the empty buffer
     string resString = s.str();
     int4 newSize = resString.size();
-    if (newSize > maximumBytes)
-      newSize = maximumBytes;
-    vector<uint1> &vec(stringMap[addr]);
-    vec.reserve(newSize);
+    stringData.byteData.reserve(newSize + 1);
     const uint1 *ptr = (const uint1 *)resString.c_str();
-    vec.assign(ptr,ptr+newSize);
+    stringData.byteData.assign(ptr,ptr+newSize);
+    stringData.byteData[newSize] = 0;		// Make sure there is a null terminator
   }
-  return vec;
+  stringData.isTruncated = (numChars >= maximumChars);
+  isTrunc = stringData.isTruncated;
+  return stringData.byteData;
 }
 
+/// Check that the given buffer contains valid unicode.
 /// If the string is encoded in UTF8 or ASCII, we get (on average) a bit of check
 /// per character.  For UTF16, the surrogate reserved area gives at least some check.
 /// \param buf is the byte array to check
 /// \param size is the size of the buffer in bytes
 /// \param charsize is the UTF encoding (1=UTF8, 2=UTF16, 4=UTF32)
-/// \return \b true if the buffer is filled with valid unicode
-bool StringManagerUnicode::isCharacterConstant(const uint1 *buf,int4 size,int4 charsize) const
+/// \return the number of characters or -1 if there is an invalid encoding
+int4 StringManagerUnicode::checkCharacters(const uint1 *buf,int4 size,int4 charsize) const
 
 {
-  if (buf == (const uint1 *)0) return false;
+  if (buf == (const uint1 *)0) return -1;
   bool bigend = glb->translate->isBigEndian();
   int4 i=0;
+  int4 count=0;
   int4 skip = charsize;
   while(i<size) {
     int4 codepoint = getCodepoint(buf+i,charsize,bigend,skip);
-    if (codepoint < 0) return false;
+    if (codepoint < 0) return -1;
     if (codepoint == 0) break;
+    count += 1;
     i += skip;
   }
-  return true;
+  return count;
 }
 
 /// Assume the buffer contains a null terminated unicode encoded string.
@@ -358,6 +371,7 @@ bool StringManagerUnicode::writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 
 {
   bool bigend = glb->translate->isBigEndian();
   int4 i=0;
+  int4 count=0;
   int4 skip = charsize;
   while(i<size) {
     int4 codepoint = getCodepoint(buffer+i,charsize,bigend,skip);
@@ -365,6 +379,9 @@ bool StringManagerUnicode::writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 
     if (codepoint == 0) break;		// Terminator
     writeUtf8(s, codepoint);
     i += skip;
+    count += 1;
+    if (count >= maximumChars)
+      break;
   }
   return true;
 }
