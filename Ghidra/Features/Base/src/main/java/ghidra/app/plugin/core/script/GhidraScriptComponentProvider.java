@@ -102,21 +102,21 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	final private RefreshingBundleHostListener refreshingBundleHostListener =
 		new RefreshingBundleHostListener();
 
-	static private boolean loaded = false;
+	static private int loaded = 0;
 
 	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin) {
 		super(plugin.getTool(), "Script Manager", plugin.getName());
 
 		this.plugin = plugin;
 
-		if (!loaded) {
-			loaded = true;
+		if (loaded == 0) {
 			bundleHost = new BundleHost();
 			GhidraScriptUtil.initialize(bundleHost);
 		}
 		else {
 			bundleHost = GhidraScriptUtil.getBundleHost();
 		}
+		loaded += 1;
 
 		// first, let the status component register its bundle host listener
 		bundleStatusComponentProvider =
@@ -294,7 +294,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		tableFilterPanel.dispose();
 		actionManager.dispose();
 		bundleStatusComponentProvider.dispose();
-		GhidraScriptUtil.dispose();
+
+		loaded -= 1;
+		if (loaded == 0) {
+			GhidraScriptUtil.dispose();
+		}
 	}
 
 	public BundleHost getBundleHost() {
