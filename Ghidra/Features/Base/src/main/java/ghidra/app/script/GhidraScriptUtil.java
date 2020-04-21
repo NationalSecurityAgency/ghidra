@@ -61,7 +61,7 @@ public class GhidraScriptUtil {
 
 		try {
 			_bundleHost = bundleHost;
-			_bundleHost.startFelix();
+			_bundleHost.startFramework();
 		}
 		catch (OSGiException | IOException e) {
 			e.printStackTrace();

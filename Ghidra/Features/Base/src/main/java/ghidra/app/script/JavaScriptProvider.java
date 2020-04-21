@@ -98,12 +98,13 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
-		GhidraSourceBundle bi = getBundleForSource(sourceFile);
-		bi.build(writer);
-		Bundle b = bi.install();
+		GhidraSourceBundle gb = getBundleForSource(sourceFile);
+		gb.build(writer);
+		Bundle b = _bundleHost.installFromLoc(gb.getBundleLoc());
+
 		_bundleHost.activateSynchronously(b);
 
-		String classname = bi.classNameForScript(sourceFile);
+		String classname = gb.classNameForScript(sourceFile);
 		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
 		return clazz;
 	}

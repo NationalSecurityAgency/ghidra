@@ -52,11 +52,15 @@ public abstract class GhidraBundle {
 	 * @return true if build happened, false if already built
 	 * @throws Exception sorry, wasn't possible
 	 */
-	abstract boolean build(PrintWriter writer) throws Exception;
+	public abstract boolean build(PrintWriter writer) throws Exception;
 
-	abstract String getSummary();
+	public boolean build() throws Exception {
+		return build(new PrintWriter(System.err));
+	}
 
-	abstract String getBundleLoc();
+	public abstract String getSummary();
+
+	public abstract String getBundleLoc();
 
 	abstract List<BundleRequirement> getAllReqs();
 
@@ -108,7 +112,13 @@ public abstract class GhidraBundle {
 		return bundleHost.getBundle(getBundleLoc());
 	}
 
-	public Bundle install() throws GhidraBundleException {
-		return bundleHost.installFromLoc(getBundleLoc());
+	public void activate() throws Exception {
+		activate(new PrintWriter(System.err));
 	}
+
+	public void activate(PrintWriter writer) throws Exception {
+		build(writer);
+		bundleHost.activateSynchronously(getBundleLoc());
+	}
+
 }

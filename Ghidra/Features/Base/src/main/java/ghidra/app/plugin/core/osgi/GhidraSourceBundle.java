@@ -175,12 +175,12 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 	}
 
-	private List<BundleRequirement> getComputedReqs() {
+	private Map<String, BundleRequirement> getComputedReqs() {
 		Map<String, BundleRequirement> dedupedReqs = new HashMap<>();
 		buildReqs.values().stream().flatMap(List::stream).forEach(
 			r -> dedupedReqs.putIfAbsent(r.toString(), r));
 
-		return new ArrayList<>(dedupedReqs.values());
+		return dedupedReqs;
 	}
 
 	@Override
@@ -191,7 +191,22 @@ public class GhidraSourceBundle extends GhidraBundle {
 		catch (GhidraBundleException e) {
 			throw new RuntimeException(e);
 		}
-		return getComputedReqs();
+		Map<String, BundleRequirement> reqs = getComputedReqs();
+		// insert requirements from a source manifest
+		ResourceFile manifest = getSourceManifestPath();
+		if (manifest.exists()) {
+			try {
+				Manifest m = new Manifest(manifest.getInputStream());
+				String imports = m.getMainAttributes().getValue("Import-Package");
+				for (BundleRequirement r : BundleHost.parseImports(imports)) {
+					reqs.putIfAbsent(r.toString(), r);
+				}
+			}
+			catch (IOException | BundleException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return new ArrayList<>(reqs.values());
 	}
 
 	/**
@@ -287,9 +302,12 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return bundleLoc;
 	}
 
+	ResourceFile getSourceManifestPath() {
+		return new ResourceFile(getSourceDir(), "META-INF" + File.separator + "MANIFEST.MF");
+	}
+
 	boolean hasNewManifest() throws IOException {
-		ResourceFile smf =
-			new ResourceFile(getSourceDir(), "META-INF" + File.separator + "MANIFEST.MF");
+		ResourceFile smf = getSourceManifestPath();
 		Path dmf = getBinDir().resolve("META-INF").resolve("MANIFEST.MF");
 
 		return smf.exists() && (Files.notExists(dmf) ||
@@ -605,7 +623,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 					writer.printf("skipping %s\n", sf.getFile().toString());
 				}
 				else {
-					throw new IOException("compilation error loop condition for " + sf.getFile().toString());
+					throw new IOException(
+						"compilation error loop condition for " + sf.getFile().toString());
 				}
 			}
 
@@ -620,10 +639,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 			appendSummary(String.format("%d failing source files", getFailingSourcesCount()));
 		}
 
-		ResourceFile smf = new ResourceFile(srcdir, "META-INF" + File.separator + "MANIFEST.MF");
+		ResourceFile smf = getSourceManifestPath();
 		if (smf.exists()) {
-			System.err.printf("Found manifest, not generating one\n");
-			Files.createFile(dmf);
+			Files.createDirectories(dmf.getParent());
 			Files.copy(smf.getInputStream(), dmf, StandardCopyOption.REPLACE_EXISTING);
 			return;
 		}

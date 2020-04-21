@@ -55,7 +55,7 @@ public class BundleHost {
 
 	public void dispose() {
 		if (felix != null) {
-			forceStopFelix();
+			forceStopFramework();
 		}
 	}
 
@@ -301,7 +301,7 @@ public class BundleHost {
 	 * @throws OSGiException framework failures
 	 * @throws IOException filesystem setup
 	 */
-	public void startFelix() throws OSGiException, IOException {
+	public void startFramework() throws OSGiException, IOException {
 
 		Properties config = new Properties();
 
@@ -503,20 +503,22 @@ public class BundleHost {
 		}
 	}
 
-	void forceStopFelix() {
-		Task t = new Task("killing felix", false, false, true, true) {
+	void forceStopFramework() {
+		try {
+			felix.stop();
+			felix.waitForStop(5000);
+			felix = null;
+		}
+		catch (BundleException | InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	void forceStopFrameworkTask() {
+		Task t = new Task("killing OSGi framework", false, false, true, true) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
-				try {
-					felix.stop();
-					System.err.printf("trying to kill felix...\n");
-					FrameworkEvent x = felix.waitForStop(5000);
-					System.err.printf("killed felix with %s", x.toString());
-					felix = null;
-				}
-				catch (BundleException | InterruptedException e) {
-					System.err.printf("failed to kill felix: %s", e);
-				}
+				forceStopFramework();
 			}
 
 		};
