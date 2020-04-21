@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.osgi;
 import java.awt.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -124,15 +125,16 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		TableColumn column;
 
 		// 
-		column =
-			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.enabledColumn.index);
+		column = bundleStatusTable.getColumnModel().getColumn(
+			bundleStatusTableModel.enabledColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
 		// 
-		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.activeColumn.index);
+		column =
+			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.activeColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
@@ -160,11 +162,13 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		});
 
 		// 
-		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.typeColumn.index);
+		column =
+			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.typeColumn.index);
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		column.setMaxWidth(10 +
 			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SourceDir.toString()));
-		column = bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.pathColumn.index);
+		column =
+			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.pathColumn.index);
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -389,24 +393,36 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				// suppress RowObjectSelectionManager repairs until after we're done
 				bundleStatusTable.chill();
 
-				List<GhidraBundle> gbs =
+				List<BundleStatus> statuses =
 					bundleStatusTableModel.getRowObjects(selectedModelRows).stream().filter(
-						bs -> !bs.isActive()).map(
-							bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
-								Collectors.toList());
+						bs -> !bs.isActive()).collect(Collectors.toUnmodifiableList());
+
+				for (BundleStatus bs : statuses) {
+					bs.setBusy(true);
+				}
+				notifyTableDataChanged();
+
+				List<GhidraBundle> gbs = statuses.stream().map(
+					bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
+						Collectors.toList());
 				int total = gbs.size();
 				int total_activated = 0;
 
 				monitor.setMaximum(gbs.size());
-				while (!gbs.isEmpty()) {
+				while (!gbs.isEmpty() && !monitor.isCancelled()) {
 					List<GhidraBundle> l = gbs.stream().filter(
 						gb -> bundleHost.canResolveAll(gb.getAllReqs())).collect(
 							Collectors.toList());
 					if (l.isEmpty()) {
-						console.getStdErr().printf("%d unresolvable bundles remain\n", gbs.size());
-						return;
+						console.getStdErr().printf("%d incompletely resolved bundles remain\n",
+							gbs.size());
+						// final round
+						l = gbs;
+						gbs = Collections.emptyList();
 					}
-					gbs.removeAll(l);
+					else {
+						gbs.removeAll(l);
+					}
 
 					for (GhidraBundle gb : l) {
 						try {
@@ -419,6 +435,12 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 						}
 						monitor.incrementProgress(1);
 					}
+				}
+				if (monitor.isCancelled()) {
+					for (BundleStatus bs : statuses) {
+						bs.setBusy(false);
+					}
+					notifyTableDataChanged();
 				}
 				long endTime = System.nanoTime();
 				console.getStdOut().printf("%d/%d bundles activated in %3.2f seconds.\n",
@@ -507,7 +529,12 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	public void notifyTableRowChanged(BundleStatus status) {
 		int modelRowIndex = bundleStatusTableModel.getRowIndex(status);
 		int viewRowIndex = filterPanel.getViewRow(modelRowIndex);
-		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusTableModel, viewRowIndex));
+		bundleStatusTable.notifyTableChanged(
+			new TableModelEvent(bundleStatusTableModel, viewRowIndex));
+	}
+
+	public void notifyTableDataChanged() {
+		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusTableModel));
 	}
 
 	@Override

@@ -420,18 +420,24 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	@Override
 	public boolean clean() {
+		boolean anythingChanged = false;
+		if (!buildErrors.isEmpty()) {
+			buildErrors.clear();
+			anythingChanged |= true;
+		}
+
 		try {
 			Bundle b = getBundle();
 			if (b != null) {
 				bundleHost.deactivateSynchronously(b);
 			}
-			return wipeBinDir();
+			return anythingChanged | wipeBinDir();
 		}
 		catch (IOException | GhidraBundleException | InterruptedException e) {
 			Msg.showError(this, null, "source bundle clean error",
 				"while attempting to delete the compiled directory, an exception was thrown", e);
 		}
-		return false;
+		return anythingChanged;
 	}
 
 	private static Predicate<String> bintail =
