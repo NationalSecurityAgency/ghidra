@@ -94,7 +94,7 @@ public class DecompileCallback {
 		cpool = null;
 		nativeMessage = null;
 		debug = null;
-		utf8Charset = Charset.availableCharsets().get("UTF-8");
+		utf8Charset = Charset.availableCharsets().get(CharsetInfo.UTF8);
 	}
 
 	private static SAXParser getSAXParser() throws PcodeXMLException {
