@@ -161,6 +161,9 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		this.provider = provider;
 		this.bundleHost = bundleHost;
 		statuses = new ArrayList<>();
+		for (GhidraBundle gb : bundleHost.getGhidraBundles()) {
+			addNewStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle());
+		}
 
 		bundleHost.addListener(bundleListener = new BundleHostListener() {
 			@Override

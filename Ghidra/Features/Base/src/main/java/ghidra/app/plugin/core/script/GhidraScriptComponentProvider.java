@@ -112,19 +112,17 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		if (loaded == 0) {
 			bundleHost = new BundleHost();
 			GhidraScriptUtil.initialize(bundleHost);
+			bundleHost.addGhidraBundle(GhidraScriptUtil.getUserScriptDirectory(), true, false);
+			bundleHost.addGhidraBundles(GhidraScriptUtil.getSystemScriptPaths(), true, true);
 		}
 		else {
 			bundleHost = GhidraScriptUtil.getBundleHost();
 		}
 		loaded += 1;
 
-		// first, let the status component register its bundle host listener
 		bundleStatusComponentProvider =
 			new BundleStatusComponentProvider(plugin.getTool(), plugin.getName(), bundleHost);
-		// now add bundles
-		bundleHost.addGhidraBundle(GhidraScriptUtil.getUserScriptDirectory(), true, false);
-		bundleHost.addGhidraBundles(GhidraScriptUtil.getSystemScriptPaths(), true, true);
-		// finally, add the GUI listener for this component
+
 		bundleHost.addListener(refreshingBundleHostListener);
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
