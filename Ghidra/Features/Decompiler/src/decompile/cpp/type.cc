@@ -63,6 +63,20 @@ void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr)
   }
 }
 
+/// If \b this and the other given data-type are both variable length and come from the
+/// the same base data-type, return \b true.
+/// \param ct is the other given data-type to compare with \b this
+/// \return \b true if they are the same variable length data-type.
+bool Datatype::hasSameVariableBase(const Datatype *ct) const
+
+{
+  if (!isVariableLength()) return false;
+  if (!ct->isVariableLength()) return false;
+  uint8 thisId = hashSize(id, size);
+  uint8 themId = hashSize(ct->id, ct->size);
+  return (thisId == themId);
+}
+
 /// Print a raw description of the type to stream. Intended for debugging.
 /// Not intended to produce parsable C.
 /// \param s is the output stream
@@ -240,8 +254,13 @@ void Datatype::saveXmlBasic(ostream &s) const
 
 {
   a_v(s,"name",name);
-  if (id != 0) {
-    s << " id=\"0x" << hex << id << '\"';
+  uint8 saveId;
+  if (isVariableLength())
+    saveId = hashSize(id, size);
+  else
+    saveId = id;
+  if (saveId != 0) {
+    s << " id=\"0x" << hex << saveId << '\"';
   }
   a_v_i(s,"size",size);
   string metastring;
@@ -249,6 +268,10 @@ void Datatype::saveXmlBasic(ostream &s) const
   a_v(s,"metatype",metastring);
   if ((flags & coretype)!=0)
     a_v_b(s,"core",true);
+  if (isVariableLength())
+    a_v_b(s,"varlength",true);
+  if ((flags & opaque_string)!=0)
+    a_v_b(s,"opaquestring",true);
 }
 
 /// Write a simple reference to \b this data-type as an XML \<typeref> tag,
@@ -283,18 +306,31 @@ void Datatype::restoreXmlBasic(const Element *el)
   metatype = string2metatype( el->getAttributeValue("metatype") );
   id = 0;
   for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i) == "core") {
+    const string &attribName( el->getAttributeName(i) );
+    if (attribName == "core") {
       if (xml_readbool(el->getAttributeValue(i)))
 	flags |= coretype;
     }
-    else if (el->getAttributeName(i) == "id") {
+    else if (attribName == "id") {
       istringstream i1(el->getAttributeValue(i));
       i1.unsetf(ios::dec | ios::hex | ios::oct);
       i1 >> id;
     }
+    else if (attribName == "varlength") {
+      if (xml_readbool(el->getAttributeValue(i)))
+	flags |= variable_length;
+    }
+    else if (attribName == "opaquestring") {
+      if (xml_readbool(el->getAttributeValue(i)))
+	flags |= opaque_string;
+    }
   }
   if ((id==0)&&(name.size()>0))	// If there is a type name
     id = hashName(name);	// There must be some kind of id
+  if (isVariableLength()) {
+    // Id needs to be unique compared to another data-type with the same name
+    id = hashSize(id, size);
+  }
 }
 
 /// Restore a Datatype object from an XML element
@@ -324,6 +360,21 @@ uint8 Datatype::hashName(const string &nm)
   tmp <<= 63;
   res |= tmp;	// Make sure the hash is negative (to distinguish it from database id's)
   return res;
+}
+
+/// This allows IDs for variable length structures to be uniquefied based on size.
+/// A base ID is given and a size of the specific instance. A unique ID is returned.
+/// The hashing is reversible by feeding the output ID back into this function with the same size.
+/// \param id is the given ID to (de)uniquify
+/// \param size is the instance size of the structure
+/// \param return the (de)uniquified id
+uint8 Datatype::hashSize(uint8 id,int4 size)
+
+{
+  uint8 sizeHash = size;
+  sizeHash *= 0x98251033aecbabaf;	// Hash the size
+  id ^= sizeHash;
+  return id;
 }
 
 void TypeChar::saveXml(ostream &s) const
@@ -1483,8 +1534,9 @@ Datatype *TypeFactory::setName(Datatype *ct,const string &n)
 /// \param fd is the list of fields to set
 /// \param ot is the TypeStruct object to modify
 /// \param fixedsize is 0 or the forced size of the structure
+/// \param flags are other flags to set on the structure
 /// \return true if modification was successful
-bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize)
+bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags)
 
 {
   int4 offset,cursize,curalign;
@@ -1529,6 +1581,7 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize)
 
   tree.erase(ot);
   ot->setFields(fd);
+  ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length));
   if (fixedsize > 0) {		// If the caller is trying to force a size
     if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
       ot->size = fixedsize;	//     Force the bigger size
@@ -2073,20 +2126,27 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
       int4 num = el->getNumAttributes();
       uint8 newid = 0;
       int4 structsize = 0;
+      bool isVarLength = false;
       for(int4 i=0;i<num;++i) {
-	if (el->getAttributeName(i) == "id") {
+	const string &attribName(el->getAttributeName(i));
+	if (attribName == "id") {
 	  istringstream s(el->getAttributeValue(i));
 	  s.unsetf(ios::dec | ios::hex | ios::oct);
 	  s >> newid;
 	}
-	else if (el->getAttributeName(i) == "size") {
+	else if (attribName == "size") {
 	  istringstream s(el->getAttributeValue(i));
 	  s.unsetf(ios::dec | ios::hex | ios::oct);
 	  s >> structsize;
 	}
+	else if (attribName == "varlength") {
+	  isVarLength = xml_readbool(el->getAttributeValue(i));
+	}
       }
       if (newid == 0)
 	newid = Datatype::hashName(structname);
+      if (isVarLength)
+	newid = Datatype::hashSize(newid, structsize);
       ct = findByIdLocal(structname,newid);
       bool stubfirst = false;
       if (ct == (Datatype *)0) {
@@ -2105,7 +2165,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
 	  throw LowlevelError("Redefinition of structure: "+structname);
       }
       else			// If structure is a placeholder stub
-	if (!setFields(ts.field,(TypeStruct *)ct,ts.size)) // Define structure now by copying fields
+	if (!setFields(ts.field,(TypeStruct *)ct,ts.size,ts.flags)) // Define structure now by copying fields
 	  throw LowlevelError("Bad structure definition");
     }
     break;

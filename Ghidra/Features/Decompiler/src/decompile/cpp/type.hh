@@ -73,7 +73,9 @@ protected:
     enumtype = 4,		///< An enumeration type (as well as an integer)
     poweroftwo = 8,		///< An enumeration type where all values are of 2^^n form
     utf16 = 16,			///< 16-bit wide chars in unicode UTF16
-    utf32 = 32			///< 32-bit wide chars in unicode UTF32
+    utf32 = 32,			///< 32-bit wide chars in unicode UTF32
+    opaque_string = 64,		///< Structure that should be treated as a string
+    variable_length = 128	///< May be other structures with same name different lengths
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
@@ -85,6 +87,7 @@ protected:
   void restoreXmlBasic(const Element *el);	///< Recover basic data-type properties
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore data-type from XML
   static uint8 hashName(const string &nm);	///< Produce a data-type id by hashing the type name
+  static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
 public:
   /// Construct the base data-type copying low-level properties of another
   Datatype(const Datatype &op) { size = op.size; name=op.name; metatype=op.metatype; flags=op.flags; id=op.id; }
@@ -94,12 +97,15 @@ public:
   Datatype(int4 s,type_metatype m,const string &n) { name=n; size=s; metatype=m; flags=0; id=0; }
   virtual ~Datatype(void) {}	///< Destructor
   bool isCoreType(void) const { return ((flags&coretype)!=0); }	///< Is this a core data-type
-  bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32))!=0); }	///< Does this print as a 'char'
+  bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32|opaque_string))!=0); }	///< Does this print as a 'char'
   bool isEnumType(void) const { return ((flags&enumtype)!=0); }		///< Is this an enumerated type
   bool isPowerOfTwo(void) const { return ((flags&poweroftwo)!=0); }	///< Is this a flag-based enumeration
   bool isASCII(void) const { return ((flags&chartype)!=0); }	///< Does this print as an ASCII 'char'
   bool isUTF16(void) const { return ((flags&utf16)!=0); }	///< Does this print as UTF16 'wchar'
   bool isUTF32(void) const { return ((flags&utf32)!=0); }	///< Does this print as UTF32 'wchar'
+  bool isVariableLength(void) const { return ((flags&variable_length)!=0); }	///< Is \b this a variable length structure
+  bool hasSameVariableBase(const Datatype *ct) const;		///< Are these the same variable length data-type
+  bool isOpaqueString(void) const { return ((flags&opaque_string)!=0); }	///< Is \b this an opaquely encoded string
   uint4 getInheritable(void) const { return (flags & coretype); }	///< Get properties pointers inherit
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
   uint8 getId(void) const { return id; }			///< Get the type id
@@ -412,7 +418,7 @@ public:
   Architecture *getArch(void) const { return glb; }	///< Get the Architecture object
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
-  bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize);	///< Set fields on a TypeStruct
+  bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeStruct
   bool setEnumValues(const vector<string> &namelist,
 		      const vector<uintb> &vallist,
 		      const vector<bool> &assignlist,

@@ -1223,7 +1223,7 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,Datatype *cha
   const vector<uint1> &buffer(manager->getStringData(addr, charType, isTrunc));
   if (buffer.empty())
     return false;
-  if (doEmitWideCharPrefix() && charType->getSize() > 1)
+  if (doEmitWideCharPrefix() && charType->getSize() > 1 && !charType->isOpaqueString())
     s << 'L';			// Print symbol indicating wide character
   s << '"';
   escapeCharacterData(s,buffer.data(),buffer.size(),1,glb->translate->isBigEndian());

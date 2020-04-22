@@ -234,7 +234,12 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
   if (curtype == reqtype) return (Datatype *)0;	// Different typedefs could point to the same type
   if ((reqbase->getMetatype()==TYPE_VOID)||(reqbase->getMetatype()==TYPE_VOID))
     return (Datatype *)0;	// Don't cast from or to VOID
-  if (reqbase->getSize() != curbase->getSize()) return reqtype; // Always cast change in size
+  if (reqbase->getSize() != curbase->getSize()) {
+    if (reqbase->isVariableLength() && isptr && reqbase->hasSameVariableBase(curbase)) {
+      return (Datatype *)0;	// Don't need a cast
+    }
+    return reqtype; // Otherwise, always cast change in size
+  }
   switch(reqbase->getMetatype()) {
   case TYPE_UNKNOWN:
     return (Datatype *)0;
