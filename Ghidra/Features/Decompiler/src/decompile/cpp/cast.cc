@@ -232,7 +232,7 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
     isptr = true;
   }
   if (curtype == reqtype) return (Datatype *)0;	// Different typedefs could point to the same type
-  if ((reqbase->getMetatype()==TYPE_VOID)||(reqbase->getMetatype()==TYPE_VOID))
+  if ((reqbase->getMetatype()==TYPE_VOID)||(curtype->getMetatype()==TYPE_VOID))
     return (Datatype *)0;	// Don't cast from or to VOID
   if (reqbase->getSize() != curbase->getSize()) {
     if (reqbase->isVariableLength() && isptr && reqbase->hasSameVariableBase(curbase)) {
@@ -375,7 +375,7 @@ Datatype *CastStrategyJava::castStandard(Datatype *reqtype,Datatype *curtype,
   if ((reqbase->getMetatype()==TYPE_PTR)||(curbase->getMetatype()==TYPE_PTR))
     return (Datatype *)0;		// There must be explicit cast op between objects, so assume no cast necessary
 
-  if ((reqbase->getMetatype()==TYPE_VOID)||(reqbase->getMetatype()==TYPE_VOID))
+  if ((reqbase->getMetatype()==TYPE_VOID)||(curtype->getMetatype()==TYPE_VOID))
     return (Datatype *)0;	// Don't cast from or to VOID
   if (reqbase->getSize() != curbase->getSize()) return reqtype; // Always cast change in size
   switch(reqbase->getMetatype()) {

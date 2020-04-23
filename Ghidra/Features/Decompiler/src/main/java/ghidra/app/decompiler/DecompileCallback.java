@@ -61,6 +61,7 @@ public class DecompileCallback {
 		boolean isTruncated;		// Did we truncate the string
 		public byte[] byteData;		// The UTF8 encoding of the string
 	}
+
 	private DecompileDebug debug;
 	private Program program;
 	private Listing listing;
@@ -725,7 +726,6 @@ public class DecompileCallback {
 		resBuf.append("\n"); // Make into official XML document
 		String res = resBuf.toString();
 		if (debug != null) {
-			debug.getType(name, res);
 			debug.getType(type);
 		}
 		return res;
@@ -1305,6 +1305,9 @@ public class DecompileCallback {
 			stringVal = stringVal.substring(0, maxChars);
 		}
 		stringData.byteData = stringVal.getBytes(utf8Charset);
+		if (debug != null) {
+			debug.getStringData(addr, stringData);
+		}
 		return stringData;
 	}
 

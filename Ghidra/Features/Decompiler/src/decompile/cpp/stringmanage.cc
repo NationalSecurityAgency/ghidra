@@ -111,40 +111,42 @@ void StringManager::saveXml(ostream &s) const
 /// Read \<stringmanage> tag, with \<string> sub-tags.
 /// \param el is the root tag element
 /// \param m is the manager for looking up AddressSpaces
-void StringManager::restoreXml(const Element *el,const AddrSpaceManager *m)
+void StringManager::restoreXml(const Element *el, const AddrSpaceManager *m)
 
 {
   const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  Address addr = Address::restoreXml(*iter, m);
-  ++iter;
-  StringData &stringData(stringMap[addr]);
-  stringData.isTruncated = xml_readbool((*iter)->getAttributeValue("trunc"));
-  istringstream is((*iter)->getContent());
-  int4 val;
-  char c1, c2;
-  is >> ws;
-  c1 = is.get();
-  c2 = is.get();
-  while ((c1 > 0) && (c2 > 0)) {
-    if (c1 <= '9')
-      c1 = c1 - '0';
-    else if (c1 <= 'F')
-      c1 = c1 + 10 - 'A';
-    else
-      c1 = c1 + 10 - 'a';
-    if (c2 <= '9')
-      c2 = c2 - '0';
-    else if (c2 <= 'F')
-      c2 = c2 + 10 - 'A';
-    else
-      c2 = c2 + 10 - 'a';
-    val = c1 * 16 + c2;
-    stringData.byteData.push_back((uint1) val);
+  List::const_iterator iter1;
+  for (iter1 = list.begin(); iter1 != list.end(); ++iter1) {
+    List::const_iterator iter2 = (*iter1)->getChildren().begin();
+    Address addr = Address::restoreXml(*iter2, m);
+    ++iter2;
+    StringData &stringData(stringMap[addr]);
+    stringData.isTruncated = xml_readbool((*iter2)->getAttributeValue("trunc"));
+    istringstream is((*iter2)->getContent());
+    int4 val;
+    char c1, c2;
     is >> ws;
     c1 = is.get();
     c2 = is.get();
+    while ((c1 > 0) && (c2 > 0)) {
+      if (c1 <= '9')
+	c1 = c1 - '0';
+      else if (c1 <= 'F')
+	c1 = c1 + 10 - 'A';
+      else
+	c1 = c1 + 10 - 'a';
+      if (c2 <= '9')
+	c2 = c2 - '0';
+      else if (c2 <= 'F')
+	c2 = c2 + 10 - 'A';
+      else
+	c2 = c2 + 10 - 'a';
+      val = c1 * 16 + c2;
+      stringData.byteData.push_back((uint1) val);
+      is >> ws;
+      c1 = is.get();
+      c2 = is.get();
+    }
   }
 }
 
@@ -284,6 +286,9 @@ const vector<uint1> &StringManagerUnicode::getStringData(const Address &addr,Dat
   StringData &stringData(stringMap[addr]);		// Allocate (initially empty) byte vector
   stringData.isTruncated = false;
   isTrunc = false;
+
+  if (charType->isOpaqueString())		// Cannot currently test for an opaque encoding
+    return stringData.byteData;			// Return the empty buffer
 
   int4 curBufferSize = 0;
   int4 charsize = charType->getSize();
