@@ -1037,7 +1037,7 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
     sublist.back().offset = -1;	// Let typegrp figure out offset
   }
 
-  if (!glb->types->setFields(sublist,res,-1)) {
+  if (!glb->types->setFields(sublist,res,-1,0)) {
     setError("Bad structure definition");
     glb->types->destroyType(res);
     return (Datatype *)0;
