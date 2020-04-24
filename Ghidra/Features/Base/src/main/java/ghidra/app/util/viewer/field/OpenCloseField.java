@@ -153,7 +153,7 @@ public class OpenCloseField implements ListingField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
 		
 		// center in the heightAbove area (negative, since 0 is the baseline of text, which is at
 		// the bottom of the heightAbove)        

@@ -177,7 +177,7 @@ public class IndentField implements ListingField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
 		g.setColor(Color.LIGHT_GRAY);
 
 		// draw the vertical lines to the left of the data (these are shown when there are vertical

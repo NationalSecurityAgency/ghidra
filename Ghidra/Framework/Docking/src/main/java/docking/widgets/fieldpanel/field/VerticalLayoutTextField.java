@@ -208,7 +208,7 @@ public class VerticalLayoutTextField implements TextField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
 		if (context.isPrinting()) {
 			print(g, context);
 			return;
@@ -227,10 +227,29 @@ public class VerticalLayoutTextField implements TextField {
 		Color fieldBackgroundColor = colorManager.getBackgroundColor();
 		if (fieldBackgroundColor != null) {
 			g.setColor(fieldBackgroundColor);
-			g.fillRect(startX, -heightAbove, width, rowHeight);
+
+			// restrict background rectangle to clipping rectangle
+			int startY = Math.max(-heightAbove, clip.y);
+			int clippedHeight = Math.min(rowHeight - (startY + heightAbove), clip.height);
+			g.fillRect(startX, startY, width, clippedHeight);
 		}
+		int translatedY = 0;
 		for (int i = 0; i < n; i++) {
 			ClippingTextField clippingField = (ClippingTextField) subFields.get(i);
+			int subFieldHeight = clippingField.getHeight();
+			int startY = translatedY - heightAbove;
+
+			// if this line is totally above the clip, skip it, but still must translate for next line
+			if (startY + subFieldHeight < clip.y) {
+				g.translate(0, subFieldHeight);
+				translatedY += subFieldHeight;
+				continue;
+			}
+
+			// if this line is totally below clip region, we are done
+			if (startY > clip.y + clip.height) {
+				break;
+			}
 
 			// translate the highlights
 			for (Highlight highlight : highlights) {
@@ -243,10 +262,11 @@ public class VerticalLayoutTextField implements TextField {
 				clippingField.paintCursor(g, context.getCursorColor(), cursorLoc);
 			}
 
-			g.translate(0, clippingField.getHeight());
+			g.translate(0, subFieldHeight);
+			translatedY += subFieldHeight;
 			columns += clippingField.getText().length() + lineDelimiter.length();
 		}
-		g.translate(0, -height);
+		g.translate(0, -translatedY);
 	}
 
 	private void print(Graphics g, PaintContext context) {
