@@ -45,10 +45,6 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 		action.addPropertyChangeListener(this);
 	}
 
-	String getGroup() {
-		return toolBarAction.getToolBarData().getToolBarGroup();
-	}
-
 	/**
 	 * Returns a button for this items action
 	 * @return the button
@@ -133,14 +129,6 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 	@Override
 	public String toString() {
 		return toolBarAction.getName();
-	}
-
-	private ComponentProvider getComponentProvider() {
-		DockingWindowManager manager = windowManager;
-		if (manager == null) {
-			manager = DockingWindowManager.getActiveInstance();
-		}
-		return manager.getActiveComponentProvider();
 	}
 
 	@Override
