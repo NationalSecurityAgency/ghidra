@@ -17,8 +17,10 @@
 // This script works with Sleigh PIC languages and creates a
 // switch at the current instruction which should be modifying the 
 // program counter.
+// @category PIC
 
-import ghidra.app.plugin.core.analysis.*;
+import ghidra.app.plugin.core.analysis.PicProcessor;
+import ghidra.app.plugin.core.analysis.PicSwitchAnalyzer;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Processor;
