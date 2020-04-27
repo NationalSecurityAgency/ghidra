@@ -109,7 +109,18 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		DockingWindowManager.clearMouseOverHelp();
-		ActionContext context = windowManager.getActionContext(toolBarAction);
+
+		DockingWindowManager manager = windowManager;
+		if (manager == null) {
+			manager = DockingWindowManager.getActiveInstance();
+		}
+
+		// no valid windowManager?
+		if (manager == null) {
+			return;
+		}
+
+		ActionContext context = manager.getActionContext(toolBarAction);
 
 		context.setSourceObject(event.getSource());
 
