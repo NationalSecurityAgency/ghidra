@@ -28,16 +28,40 @@
 #include "action.hh"
 
 /// \brief Structure for sorting out pointer expression trees
+///
+/// Given a base pointer of known data-type and an additive expression involving
+/// the pointer, group the terms of the expression into:
+///   - Constant multiple of the base data-type
+///   - Non-constant multiples of the base data-type
+///   - Multiples of an array element size: rewrite using PTRADD
+///   - Drill down into sub-components of the base data-type: rewrite using PTRSUB
+///   - Remaining offsets
+///
 class AddTreeState {
-public:
+  PcodeOp *baseOp;		///< Base of the ADD tree
   Varnode *ptr;			///< The pointer varnode
-  int4 size;			///< Size of ptr type in question
+  const TypePointer *ct;	///< The pointer data-type
+  int4 ptrsize;			///< Size of the pointer
+  int4 size;			///< Size of data-type being pointed to
+  uintb ptrmask;		///< Mask for modulo calculations in ptr space
+  uintb offset;			///< Number of bytes we dig into the base data-type
+  uintb correct;		///< Number of bytes being double counted
   vector<Varnode *> multiple;	///< Varnodes which are multiples of size
   vector<uintb> coeff;		///< Associated constant multiple
   vector<Varnode *> nonmult;	///< Varnodes which are not multiples
   uintb multsum;		///< Sum of multiple constants
   uintb nonmultsum;		///< Sum of non-multiple constants
+  bool isSubtype;		///< Is there a sub-type (using CPUI_PTRSUB)
+  bool checkTerm(Varnode *vn);			///< Accumulate details of given term and continue tree traversal
+  bool spanAddTree(PcodeOp *op);		///< Walk the given sub-tree
+  void calcSubtype(void);			///< Calculate final sub-type offset
+  Varnode *buildMultiples(Funcdata &data);	///< Build part of tree that is multiple of base size
+  Varnode *buildExtra(Funcdata &data);		///< Build part of tree not accounted for by multiples or \e offset
+public:
   bool valid;			///< Full tree search was performed
+  AddTreeState(PcodeOp *op,int4 slot);	///< Construct given root of ADD tree and pointer
+  void walkTree(void);		///< Traverse the entire ADD tree
+  void buildTree(Funcdata &data);	///< Build the transformed ADD tree
 };
 
 class RuleEarlyRemoval : public Rule {
@@ -993,9 +1017,7 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RulePtrArith : public Rule {
-  static bool checkTerm(Varnode *vn,AddTreeState *state);
-  static bool spanAddTree(PcodeOp *op,AddTreeState *state);
-  static int4 transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Funcdata &data);
+  static bool verifyAddTreeBottom(PcodeOp *op,int4 slot);
 public:
   RulePtrArith(const string &g) : Rule(g, 0, "ptrarith") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
