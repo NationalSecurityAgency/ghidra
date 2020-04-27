@@ -27,7 +27,6 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
@@ -655,18 +654,6 @@ public class GhidraSourceBundle extends GhidraBundle {
 		// no manifest, so create one with bndtools
 		Analyzer analyzer = new Analyzer();
 		analyzer.setJar(new Jar(bindir.toFile())); // give bnd the contents
-		Stream<Object> bjars = Files.list(BundleHost.getCompiledBundlesDir()).filter(
-			f -> f.toString().endsWith(".jar")).map(f -> {
-				try {
-					return new Jar(f.toFile());
-				}
-				catch (IOException e1) {
-					e1.printStackTrace(writer);
-					return null;
-				}
-			});
-
-		analyzer.addClasspath(bjars.collect(Collectors.toUnmodifiableList()));
 		analyzer.setProperty("Bundle-SymbolicName",
 			BundleHost.getSymbolicNameFromSourceDir(srcdir));
 		analyzer.setProperty("Bundle-Version", "1.0");

@@ -74,7 +74,7 @@ public class BundleStatus implements Comparable<BundleStatus> {
 		busy = b;
 	}
 
-	public boolean getBusy() {
+	public boolean isBusy() {
 		return busy;
 	}
 
