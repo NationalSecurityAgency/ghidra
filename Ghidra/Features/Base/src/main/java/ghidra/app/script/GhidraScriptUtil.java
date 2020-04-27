@@ -73,12 +73,20 @@ public class GhidraScriptUtil {
 	 * initialization for headless runs.
 	 * 
 	 * @param bundleHost the host to use 
-	 * @param paths bundle paths added as system bundles
+	 * @param extraSystemPaths additional system paths for this run, can be null 
 	 * 
 	 */
-	public static void initialize(BundleHost bundleHost, List<ResourceFile> paths) {
+	public static void initialize(BundleHost bundleHost, List<String> extraSystemPaths) {
 		initialize(bundleHost);
-		_bundleHost.addGhidraBundles(paths, true, true);
+
+		if (extraSystemPaths != null) {
+			for (String path : extraSystemPaths) {
+				bundleHost.addGhidraBundle(new ResourceFile(path), true, true);
+			}
+		}
+
+		bundleHost.addGhidraBundle(GhidraScriptUtil.getUserScriptDirectory(), true, false);
+		bundleHost.addGhidraBundles(GhidraScriptUtil.getSystemScriptPaths(), true, true);
 	}
 
 	public static void dispose() {

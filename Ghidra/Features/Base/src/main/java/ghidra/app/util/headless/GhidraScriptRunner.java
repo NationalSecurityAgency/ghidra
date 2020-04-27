@@ -16,7 +16,6 @@
 package ghidra.app.util.headless;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 import generic.jar.ResourceFile;
@@ -192,20 +191,7 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 	 * Gather paths where scripts may be found.
 	 */
 	private void initializeScriptPaths() {
-		List<ResourceFile> paths;
-		if (scriptPaths == null || scriptPaths.isEmpty()) {
-			paths = GhidraScriptUtil.getSystemScriptPaths();
-			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
-		}
-		else {
-			paths = new ArrayList<>();
-			for (String path : scriptPaths) {
-				paths.add(new ResourceFile(path));
-			}
-			paths.addAll(GhidraScriptUtil.getSystemScriptPaths());
-			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
-		}
-		GhidraScriptUtil.initialize(new BundleHost(), paths);
+		GhidraScriptUtil.initialize(new BundleHost(), scriptPaths);
 
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {

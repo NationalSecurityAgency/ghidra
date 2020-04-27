@@ -660,21 +660,7 @@ public class HeadlessAnalyzer {
 	 * Gather paths where scripts may be found.
 	 */
 	private void initializeScriptPaths() {
-
-		List<ResourceFile> paths;
-		if (options.scriptPaths == null || options.scriptPaths.isEmpty()) {
-			paths = GhidraScriptUtil.getSystemScriptPaths();
-			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
-		}
-		else {
-			paths = new ArrayList<>();
-			for (String path : options.scriptPaths) {
-				paths.add(new ResourceFile(path));
-			}
-			paths.addAll(GhidraScriptUtil.getSystemScriptPaths());
-			paths.add(0, GhidraScriptUtil.getUserScriptDirectory());
-		}
-		GhidraScriptUtil.initialize(new BundleHost(), paths);
+		GhidraScriptUtil.initialize(new BundleHost(), options.scriptPaths);
 
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {
