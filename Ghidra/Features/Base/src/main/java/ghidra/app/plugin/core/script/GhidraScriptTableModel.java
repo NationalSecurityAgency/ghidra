@@ -23,7 +23,7 @@ import javax.swing.*;
 
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScriptUtil;
+import ghidra.app.script.GhidraScriptInfoManager;
 import ghidra.app.script.ScriptInfo;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -44,10 +44,13 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 	private GhidraScriptComponentProvider provider;
 	private List<ResourceFile> scriptList = new ArrayList<>();
+	final private GhidraScriptInfoManager infoManager;
 
-	GhidraScriptTableModel(GhidraScriptComponentProvider provider) {
+	GhidraScriptTableModel(GhidraScriptComponentProvider provider,
+			GhidraScriptInfoManager infoManager) {
 		super(provider.getTool());
 		this.provider = provider;
+		this.infoManager = infoManager;
 	}
 
 	@Override
@@ -105,7 +108,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 				scriptList.add(script);
 			}
 		}
-		fireTableRowsInserted(rowStart, rowStart + scriptFiles.size()-1);
+		fireTableRowsInserted(rowStart, rowStart + scriptFiles.size() - 1);
 	}
 
 	void removeScript(ResourceFile script) {
@@ -238,7 +241,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
 
 				ResourceFile file = (ResourceFile) data.getRowObject();
-				ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(file);
+				ScriptInfo info = infoManager.getExistingScriptInfo(file);
 
 				label.setText(null);
 				label.setToolTipText(null);
@@ -279,7 +282,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public ImageIcon getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(rowObject);
+			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			if (info.isCompileErrors() || info.isDuplicate()) {
 				return ERROR_IMG;
 			}
@@ -329,7 +332,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public String getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(rowObject);
+			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			return info.getDescription();
 		}
 
@@ -401,7 +404,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public KeyBindingsInfo getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(rowObject);
+			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			KeyStroke actionKeyStroke = provider.getActionManager().getKeyBinding(rowObject);
 			boolean isActionBinding = false;
 			KeyStroke keyBinding = info.getKeyBinding();
@@ -459,7 +462,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		@Override
 		public String getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
-			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(rowObject);
+			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			return getCategoryString(info);
 		}
 

@@ -44,17 +44,13 @@ public class GhidraScriptUtil {
 	 */
 	public static String USER_SCRIPTS_DIR = buildUserScriptsDirectory();
 
-	private static Map<ResourceFile, ScriptInfo> scriptFileToInfoMap = new HashMap<>();
-
-	private static Map<String, List<ResourceFile>> scriptNameToFilesMap = new HashMap<>();
-
 	static BundleHost _bundleHost;
 
 	public static BundleHost getBundleHost() {
 		return _bundleHost;
 	}
 
-	public static void initialize(BundleHost bundleHost) {
+	private static void setBundleHost(BundleHost bundleHost) {
 		if (_bundleHost != null) {
 			throw new RuntimeException("GhidraScriptUtil initialized multiple times!");
 		}
@@ -70,15 +66,14 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * initialization for headless runs.
+	 * initialize state of GhidraScriptUtil with user, system paths, and optional extra system paths.
 	 * 
 	 * @param bundleHost the host to use 
 	 * @param extraSystemPaths additional system paths for this run, can be null 
 	 * 
 	 */
 	public static void initialize(BundleHost bundleHost, List<String> extraSystemPaths) {
-		initialize(bundleHost);
-
+		setBundleHost(bundleHost);
 		if (extraSystemPaths != null) {
 			for (String path : extraSystemPaths) {
 				bundleHost.addGhidraBundle(new ResourceFile(path), true, true);
@@ -90,17 +85,11 @@ public class GhidraScriptUtil {
 	}
 
 	public static void dispose() {
-		clearMetadata();
-		_bundleHost = null;
+		if (_bundleHost != null) {
+			_bundleHost.dispose();
+			_bundleHost = null;
+		}
 		providers = null;
-	}
-
-	/**
-	 * clear ScriptInfo metadata cached by GhidraScriptUtil
-	 */
-	public static void clearMetadata() {
-		scriptFileToInfoMap.clear();
-		scriptNameToFilesMap.clear();
 	}
 
 	/**
@@ -110,6 +99,20 @@ public class GhidraScriptUtil {
 	public static List<ResourceFile> getScriptSourceDirectories() {
 		return _bundleHost.getBundlePaths().stream().filter(ResourceFile::isDirectory).collect(
 			Collectors.toList());
+	}
+
+	public static ResourceFile getSourceDirectoryContaining(ResourceFile sourceFile) {
+		String sourcePath = sourceFile.getAbsolutePath();
+		for (ResourceFile sourceDir : getScriptSourceDirectories()) {
+			if (sourcePath.startsWith(sourceDir.getAbsolutePath() + File.separatorChar)) {
+				return sourceDir;
+			}
+		}
+		return null;
+	}
+
+	public static ResourceFile findScriptByName(String scriptName) {
+		return findScriptFileInPaths(getScriptSourceDirectories(), scriptName);
 	}
 
 	/**
@@ -225,130 +228,6 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Removes the ScriptInfo object for the specified file
-	 * @param scriptFile the script file
-	 */
-	public static void removeMetadata(ResourceFile scriptFile) {
-		scriptFileToInfoMap.remove(scriptFile);
-
-		String name = scriptFile.getName();
-		List<ResourceFile> files = scriptNameToFilesMap.get(name);
-		if (files != null) {
-			Iterator<ResourceFile> iter = files.iterator();
-			while (iter.hasNext()) {
-				ResourceFile rFile = iter.next();
-				if (scriptFile.equals(rFile)) {
-					iter.remove();
-					break;
-				}
-			}
-			if (files.isEmpty()) {
-				scriptNameToFilesMap.remove(name);
-			}
-		}
-	}
-
-	/**
-	 * get all scripts
-	 * @return an iterable over all script info objects
-	 */
-	public static Iterable<ScriptInfo> getScriptInfoIterable() {
-		return () -> scriptFileToInfoMap.values().iterator();
-	}
-
-	/**
-	 * Returns the script info object for the specified script file,
-	 * construct a new one if necessary.
-	 * 
-	 * Only call this method if you expect to be creating ScriptInfo objects.
-	 * Prefer getExistingScriptInfo instead. 
-	 * 
-	 * @param scriptFile the script file
-	 * @return the script info object for the specified script file
-	 */
-	public static ScriptInfo getScriptInfo(ResourceFile scriptFile) {
-		ScriptInfo info = scriptFileToInfoMap.get(scriptFile);
-		if (info != null) {
-			return info;
-		}
-
-		GhidraScriptProvider gsp = getProvider(scriptFile);
-		info = new ScriptInfo(gsp, scriptFile);
-		scriptFileToInfoMap.put(scriptFile, info);
-		String name = scriptFile.getName();
-
-		List<ResourceFile> matchingFiles =
-			scriptNameToFilesMap.computeIfAbsent(name, (n) -> new ArrayList<>());
-		matchingFiles.add(scriptFile);
-		markAnyDuplicates(matchingFiles);
-
-		return info;
-	}
-
-	/**
-	 * Returns true if a ScriptInfo object exists for
-	 * the specified script file.
-	 * @param scriptFile the script file
-	 * @return true if a ScriptInfo object exists
-	 */
-	public static boolean containsMetadata(ResourceFile scriptFile) {
-		return scriptFileToInfoMap.containsKey(scriptFile);
-	}
-
-	public static ScriptInfo getExistingScriptInfo(ResourceFile script) {
-		ScriptInfo info = scriptFileToInfoMap.get(script);
-		if (info == null) {
-			String s = (script.exists() ? "" : "non") + "existing script" + script.toString() +
-				" is missing info we thought was there";
-			System.err.println(s);
-			Msg.showError(GhidraScriptUtil.class, null, "ScriptInfo lookup", s);
-		}
-		return info;
-	}
-
-	/**
-	 * Returns the existing script info for the given name.  The script environment limits 
-	 * scripts such that names are unique.  If this method returns a non-null value, then the 
-	 * name given name is taken.
-	 * 
-	 * @param scriptName the name of the script for which to get a ScriptInfo
-	 * @return a ScriptInfo matching the given name; null if no script by that name is known to
-	 *         the script manager
-	 */
-	public static ScriptInfo getExistingScriptInfo(String scriptName) {
-		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(scriptName);
-		if (matchingFiles == null || matchingFiles.isEmpty()) {
-			return null;
-		}
-		return scriptFileToInfoMap.get(matchingFiles.get(0));
-	}
-
-	/**
-	 * Looks through all of the current {@link ScriptInfo}s to see if one already exists with 
-	 * the given name.
-	 * @param scriptName The name to check
-	 * @return true if the name is not taken by an existing {@link ScriptInfo}.
-	 */
-	public static boolean alreadyExists(String scriptName) {
-		return getExistingScriptInfo(scriptName) != null;
-	}
-
-	private static void markAnyDuplicates(List<ResourceFile> files) {
-		boolean isDuplicate = files.size() > 1;
-		files.forEach(f -> scriptFileToInfoMap.get(f).setDuplicate(isDuplicate));
-	}
-
-	/**
-	 * Updates every known script's duplicate value. 
-	 */
-	public static void refreshDuplicates() {
-		scriptNameToFilesMap.values().forEach(files -> {
-			boolean isDuplicate = files.size() > 1;
-			files.forEach(file -> scriptFileToInfoMap.get(file).setDuplicate(isDuplicate));
-		});
-	}
-
-	/**
 	 * Returns a list of all Ghidra script providers
 	 * 
 	 * @return a list of all Ghidra script providers
@@ -435,6 +314,10 @@ public class GhidraScriptUtil {
 		return new ResourceFile(parentDirctory, className);
 	}
 
+	public static ScriptInfo newScriptInfo(ResourceFile file) {
+		return new ScriptInfo(getProvider(file), file);
+	}
+
 	/**
 	 * Fixup name issues, such as package parts in the name and inner class names.
 	 * <p>
@@ -457,8 +340,8 @@ public class GhidraScriptUtil {
 		return path + ".java";
 	}
 
-	/** Returns true if the given filename exists in any of the given directories */
-	private static ResourceFile findScriptFileInPaths(Collection<ResourceFile> scriptDirectories,
+	static ResourceFile findScriptFileInPaths(
+			Collection<ResourceFile> scriptDirectories,
 			String filename) {
 
 		String validatedName = fixupName(filename);
@@ -472,33 +355,6 @@ public class GhidraScriptUtil {
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Uses the given name to find a matching script.  This method only works because of the
-	 * limitation that all script names in Ghidra must be unique.  If the given name has multiple
-	 * script matches, then a warning will be logged.
-	 * 
-	 * @param name The name for which to find a script
-	 * @return The ScriptInfo that has the given name
-	 */
-	public static ScriptInfo findScriptByName(String name) {
-		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(name);
-		if (matchingFiles != null && !matchingFiles.isEmpty()) {
-			ScriptInfo info = scriptFileToInfoMap.get(matchingFiles.get(0));
-			if (matchingFiles.size() > 1) {
-				Msg.warn(GhidraScriptUtil.class, "Found duplicate scripts for name: " + name +
-					".  Binding to script: " + info.getSourceFile());
-			}
-			return info;
-		}
-
-		ResourceFile file = findScriptFileInPaths(_bundleHost.getBundlePaths(), name);
-		if (file == null) {
-			return null;
-		}
-
-		return getExistingScriptInfo(file); // this will cache the created info
 	}
 
 	/* only used by GhidraScriptAnalyzerAdapter */
@@ -535,33 +391,6 @@ public class GhidraScriptUtil {
 		}
 
 		return true;
-	}
-
-	@Deprecated
-	private static void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptAccumulator,
-			ResourceFile directory) {
-		ResourceFile[] files = directory.listFiles();
-		if (files == null) {
-			return;
-		}
-
-		for (ResourceFile scriptFile : files) {
-			if (scriptFile.isFile() && hasScriptProvider(scriptFile)) {
-				scriptAccumulator.add(scriptFile);
-			}
-		}
-	}
-
-	/*
-	 * used only by RecipeEditorDialog
-	 */
-	@Deprecated
-	public static List<ResourceFile> getAllScripts() {
-		List<ResourceFile> scriptList = new ArrayList<>();
-		for (ResourceFile dirPath : _bundleHost.getBundlePaths()) {
-			updateAvailableScriptFilesForDirectory(scriptList, dirPath);
-		}
-		return scriptList;
 	}
 
 }

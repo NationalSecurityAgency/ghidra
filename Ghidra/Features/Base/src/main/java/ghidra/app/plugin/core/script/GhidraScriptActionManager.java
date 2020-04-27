@@ -33,8 +33,7 @@ import docking.actions.KeyBindingUtils;
 import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScriptUtil;
-import ghidra.app.script.ScriptInfo;
+import ghidra.app.script.*;
 import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
 import ghidra.util.*;
@@ -51,6 +50,7 @@ class GhidraScriptActionManager {
 
 	private GhidraScriptComponentProvider provider;
 	private GhidraScriptMgrPlugin plugin;
+	private GhidraScriptInfoManager infoManager;
 	private DockingAction refreshAction;
 	private DockingAction bundleStatusAction;
 	private DockingAction newAction;
@@ -65,10 +65,11 @@ class GhidraScriptActionManager {
 	private DockingAction helpAction;
 	private Map<ResourceFile, ScriptAction> actionMap = new HashMap<>();
 
-	GhidraScriptActionManager(GhidraScriptComponentProvider provider,
-			GhidraScriptMgrPlugin plugin) {
+	GhidraScriptActionManager(GhidraScriptComponentProvider provider, GhidraScriptMgrPlugin plugin,
+			GhidraScriptInfoManager infoManager) {
 		this.provider = provider;
 		this.plugin = plugin;
+		this.infoManager = infoManager;
 		createActions();
 	}
 
@@ -107,7 +108,7 @@ class GhidraScriptActionManager {
 	void restoreScriptsThatAreInTool(SaveState saveState) {
 		String[] array = saveState.getStrings(SCRIPT_ACTIONS_KEY, new String[0]);
 		for (String filename : array) {
-			ScriptInfo info = GhidraScriptUtil.findScriptByName(filename);
+			ScriptInfo info = infoManager.findScriptByName(filename);
 			if (info != null) { // the file may have been deleted from disk
 				provider.getActionManager().createAction(info.getSourceFile());
 			}
@@ -129,7 +130,7 @@ class GhidraScriptActionManager {
 				continue;
 			}
 			ResourceFile scriptFile = action.getScript();
-			ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(scriptFile);
+			ScriptInfo info = infoManager.getExistingScriptInfo(scriptFile);
 			if (info == null) {
 				Msg.showError(this, provider.getComponent(), "Bad state?",
 					"action associated with a script that has no info");

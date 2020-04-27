@@ -48,7 +48,7 @@ public class GhidraScriptAnalyzerAdapter extends AbstractAnalyzer {
 	}
 
 	private static String getDescription(ResourceFile file) {
-		return GhidraScriptUtil.getScriptInfo(file).getDescription();
+		return GhidraScriptUtil.newScriptInfo(file).getDescription();
 	}
 
 	public void setPrintWriter(PrintWriter writer) {

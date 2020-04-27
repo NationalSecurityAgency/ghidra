@@ -25,6 +25,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.eclipse.EclipseConnection;
 import ghidra.app.plugin.core.eclipse.EclipseIntegrationOptionsPlugin;
+import ghidra.app.plugin.core.osgi.BundleHost;
+import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
 import ghidra.framework.options.SaveState;
@@ -50,16 +52,31 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 
 	final private GhidraScriptComponentProvider provider;
 
+	static private int loaded = 0;
+	final private BundleHost bundleHost;
+
 	public GhidraScriptMgrPlugin(PluginTool tool) {
 		super(tool, true, true, true);
+		if (loaded == 0) {
+			bundleHost = new BundleHost();
+			GhidraScriptUtil.initialize(bundleHost, null);
+		}
+		else {
+			bundleHost = GhidraScriptUtil.getBundleHost();
+		}
+		loaded += 1;
 
-		provider = new GhidraScriptComponentProvider(this);
+		provider = new GhidraScriptComponentProvider(this, bundleHost);
 	}
 
 	@Override
 	protected void dispose() {
 		super.dispose();
 		provider.dispose();
+		loaded -= 1;
+		if (loaded == 0) {
+			GhidraScriptUtil.dispose();
+		}
 	}
 
 	@Override

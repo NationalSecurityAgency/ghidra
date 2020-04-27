@@ -31,7 +31,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	public GhidraSourceBundle getBundleForSource(ResourceFile sourceFile) {
-		ResourceFile sourceDir = getSourceDirectoryContaining(sourceFile);
+		ResourceFile sourceDir = GhidraScriptUtil.getSourceDirectoryContaining(sourceFile);
 		if (sourceDir == null) {
 			return null;
 		}
@@ -67,8 +67,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	@Override
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		// in headless operation, ScriptInfo objects can be created here
-		ScriptInfo info = GhidraScriptUtil.getScriptInfo(sourceFile);
 		try {
 			Class<?> clazz = loadClass(sourceFile, writer);
 			Object object;
@@ -83,16 +81,13 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			String message = "Not a valid Ghidra script: " + sourceFile.getName();
 			writer.println(message);
 			Msg.error(this, message);
-			info.setCompileErrors(true);
 			return null; // class is not GhidraScript
 
 		}
 		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-			info.setCompileErrors(true);
 			throw e;
 		}
 		catch (Exception e) {
-			info.setCompileErrors(true);
 			throw new ClassNotFoundException("", e);
 		}
 	}
@@ -107,16 +102,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		String classname = gb.classNameForScript(sourceFile);
 		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
 		return clazz;
-	}
-
-	public static ResourceFile getSourceDirectoryContaining(ResourceFile sourceFile) {
-		String sourcePath = sourceFile.getAbsolutePath();
-		for (ResourceFile sourceDir : GhidraScriptUtil.getScriptSourceDirectories()) {
-			if (sourcePath.startsWith(sourceDir.getAbsolutePath() + File.separatorChar)) {
-				return sourceDir;
-			}
-		}
-		return null;
 	}
 
 	@Override

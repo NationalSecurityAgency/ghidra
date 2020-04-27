@@ -21,11 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jdom.Element;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
+import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.GhidraScriptUtil;
-import ghidra.app.script.ScriptInfo;
 import ghidra.app.services.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -47,6 +47,12 @@ public class AnalysisRecipeTest extends AbstractGhidraHeadlessIntegrationTest {
 		programBuilder.createMemory("AAA", "0x100", 0x1000);
 		program = programBuilder.getProgram();
 		analyzers = new ArrayList<>();
+		GhidraScriptUtil.initialize(new BundleHost(), null);
+	}
+
+	@After
+	public void cleanup() {
+		GhidraScriptUtil.dispose();
 	}
 
 	@Test
@@ -88,9 +94,9 @@ public class AnalysisRecipeTest extends AbstractGhidraHeadlessIntegrationTest {
 		analyzers.add(analyzer1);
 		analyzers.add(analyzer2);
 		recipe = new AnalysisRecipe("Test Recipe", analyzers, program);
-		ScriptInfo info = GhidraScriptUtil.findScriptByName("HelloWorldScript.java");
-		assertNotNull(info);
-		recipe.addScriptAnalyzer(info.getSourceFile(), AnalyzerType.INSTRUCTION_ANALYZER, 15);
+		ResourceFile sourceFile = GhidraScriptUtil.findScriptByName("HelloWorldScript.java");
+		assertNotNull(sourceFile);
+		recipe.addScriptAnalyzer(sourceFile, AnalyzerType.INSTRUCTION_ANALYZER, 15);
 		AnalysisPhase lastPhase = recipe.getLastPhase();
 		AnalysisPhase firstPhase = recipe.createPhase();
 

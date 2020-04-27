@@ -36,7 +36,7 @@ import ghidra.app.script.*;
 import ghidra.util.HelpLocation;
 
 public class SaveDialog extends DialogComponentProvider implements ListSelectionListener {
-	private GhidraScriptComponentProvider componentProvider;
+	protected GhidraScriptComponentProvider componentProvider;
 	private GhidraScriptProvider provider;
 
 	private List<ResourceFile> paths;
@@ -49,7 +49,8 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	public SaveDialog(Component parent, String title,
 			GhidraScriptComponentProvider componentProvider, ResourceFile scriptFile,
 			HelpLocation help) {
-		this(parent, title, componentProvider, componentProvider.getWritableScriptDirectories(), scriptFile, help);
+		this(parent, title, componentProvider, componentProvider.getWritableScriptDirectories(),
+			scriptFile, help);
 	}
 
 	public SaveDialog(Component parent, String title,
@@ -161,7 +162,7 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	}
 
 	protected String getDuplicateNameErrorMessage(String name) {
-		ScriptInfo existingInfo = GhidraScriptUtil.getExistingScriptInfo(name);
+		ScriptInfo existingInfo = componentProvider.getInfoManager().getExistingScriptInfo(name);
 		if (existingInfo != null) {
 			// make sure the script has not been deleted
 			ResourceFile sourceFile = existingInfo.getSourceFile();

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import org.junit.*;
 
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.app.services.*;
 import ghidra.framework.task.GScheduledTask;
@@ -77,6 +78,12 @@ public class AnalysisManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 		programBuilder.createMemory("AAA", "0x100", 0x1000);
 		program = programBuilder.getProgram();
 		analyzers = new ArrayList<>();
+		GhidraScriptUtil.initialize(new BundleHost(), null);
+	}
+
+	@After
+	public void cleanup() {
+		GhidraScriptUtil.dispose();
 	}
 
 	@Test

@@ -140,6 +140,11 @@ public class GhidraSourceBundle extends GhidraBundle {
 			Collectors.joining());
 	}
 
+	private String parseImps(ResourceFile javaSource) {
+		// XXX don't use @imports, use an annotation 
+		return GhidraScriptUtil.newScriptInfo(javaSource).getImports();
+	}
+
 	/**
 	 * update buildReqs based on \@imports tag in java files from the default package
 	 * 
@@ -155,8 +160,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 				// this might be the earliest need for ScriptInfo, so allow construction.
 
 				// NB: ScriptInfo will update field values if lastModified has changed since last time they were computed
-				ScriptInfo si = GhidraScriptUtil.getScriptInfo(rf);
-				String imps = si.getImports();
+				String imps = parseImps(rf);
 				if (imps != null && !imps.isEmpty()) {
 					List<BundleRequirement> reqs;
 					try {

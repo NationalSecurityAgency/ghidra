@@ -21,7 +21,7 @@ import javax.swing.KeyStroke;
 import docking.ActionContext;
 import docking.action.*;
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScriptUtil;
+import ghidra.app.script.GhidraScriptInfoManager;
 import ghidra.app.script.ScriptInfo;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
@@ -30,6 +30,7 @@ class ScriptAction extends DockingAction {
 	private static final String SCRIPT_GROUP = "_SCRIPT_GROUP_";
 
 	private GhidraScriptMgrPlugin plugin;
+	private GhidraScriptInfoManager infoManager;
 	private ResourceFile script;
 
 	/** Signals that the keybinding value has been set by the user from the GUI (used for persistence) */
@@ -38,6 +39,7 @@ class ScriptAction extends DockingAction {
 	ScriptAction(GhidraScriptMgrPlugin plugin, ResourceFile script) {
 		super(script.getName(), plugin.getName());
 		this.plugin = plugin;
+		this.infoManager = plugin.getProvider().getInfoManager();
 		this.script = script;
 		setEnabled(true);
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
@@ -90,7 +92,7 @@ class ScriptAction extends DockingAction {
 		}
 
 		// check to see if we have a fallback value         
-		ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
+		ScriptInfo info = infoManager.getExistingScriptInfo(script);
 		KeyStroke metadataKeyStroke = info.getKeyBinding();
 		if (metadataKeyStroke == null) {
 			// there is no fallback value; the current keybinding data is what we want
@@ -105,7 +107,7 @@ class ScriptAction extends DockingAction {
 		// we have a user defined keybinding if the keystroke for the action differs from 
 		// that which is defined in the metadata of the script
 		KeyStroke actionKeyStroke = keyBindingData.getKeyBinding();
-		ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
+		ScriptInfo info = infoManager.getExistingScriptInfo(script);
 		KeyStroke metadataKeyBinding = info.getKeyBinding();
 		isUserDefinedKeyBinding = !SystemUtilities.isEqual(actionKeyStroke, metadataKeyBinding);
 	}
@@ -119,7 +121,7 @@ class ScriptAction extends DockingAction {
 	}
 
 	void refresh() {
-		ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(script);
+		ScriptInfo info = infoManager.getExistingScriptInfo(script);
 		KeyStroke stroke = info.getKeyBinding();
 		if (!isUserDefinedKeyBinding) {
 			setKeyBindingData(new KeyBindingData(stroke));

@@ -54,9 +54,7 @@ public class BundleHost {
 	}
 
 	public void dispose() {
-		if (felix != null) {
-			forceStopFramework();
-		}
+		disposeFramework();
 	}
 
 	HashMap<ResourceFile, GhidraBundle> bp2gb = new HashMap<>();
@@ -503,14 +501,16 @@ public class BundleHost {
 		}
 	}
 
-	void forceStopFramework() {
-		try {
-			felix.stop();
-			felix.waitForStop(5000);
-			felix = null;
-		}
-		catch (BundleException | InterruptedException e) {
-			e.printStackTrace();
+	void disposeFramework() {
+		if (felix != null) {
+			try {
+				felix.stop();
+				felix.waitForStop(5000);
+				felix = null;
+			}
+			catch (BundleException | InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -518,7 +518,7 @@ public class BundleHost {
 		Task t = new Task("killing OSGi framework", false, false, true, true) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
-				forceStopFramework();
+				disposeFramework();
 			}
 
 		};
@@ -599,10 +599,10 @@ public class BundleHost {
 
 	List<BundleHostListener> listeners = new ArrayList<>();
 
-	void fireBundleBuilt(GhidraBundle sbi) {
+	void fireBundleBuilt(GhidraBundle gb) {
 		synchronized (listeners) {
 			for (BundleHostListener l : listeners) {
-				l.bundleBuilt(sbi);
+				l.bundleBuilt(gb);
 			}
 		}
 	}

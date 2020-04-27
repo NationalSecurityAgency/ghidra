@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.framework.analysis;
 
+import org.jdom.Element;
+
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
-import ghidra.app.script.ScriptInfo;
 import ghidra.app.services.*;
-
-import org.jdom.Element;
 
 class AnalyzerInfo implements Comparable<AnalyzerInfo> {
 	static final String XML_ELEMENT_NAME = "ANALYZER";
@@ -48,10 +46,12 @@ class AnalyzerInfo implements Comparable<AnalyzerInfo> {
 		// first make all One-Shot Analyzers sort before all other types.
 		AnalyzerType myType = analyzer.getAnalysisType();
 		AnalyzerType otherType = o.analyzer.getAnalysisType();
-		if (myType == AnalyzerType.ONE_SHOT_ANALYZER && otherType != AnalyzerType.ONE_SHOT_ANALYZER) {
+		if (myType == AnalyzerType.ONE_SHOT_ANALYZER &&
+			otherType != AnalyzerType.ONE_SHOT_ANALYZER) {
 			return -1;
 		}
-		if (myType != AnalyzerType.ONE_SHOT_ANALYZER && otherType == AnalyzerType.ONE_SHOT_ANALYZER) {
+		if (myType != AnalyzerType.ONE_SHOT_ANALYZER &&
+			otherType == AnalyzerType.ONE_SHOT_ANALYZER) {
 			return 1;
 		}
 
@@ -125,13 +125,13 @@ class AnalyzerInfo implements Comparable<AnalyzerInfo> {
 		return startPhase;
 	}
 
-	public static AnalyzerInfo createInfoForWrappedAnalzyer(AnalysisRecipe recipe, Element element) {
+	public static AnalyzerInfo createInfoForWrappedAnalzyer(AnalysisRecipe recipe,
+			Element element) {
 		String scriptName = element.getAttributeValue("SCRIPT_NAME");
 		String type = element.getAttributeValue("ANALYZER_TYPE");
 		AnalyzerType analyzerType = AnalyzerType.valueOf(type);
 		int priority = Integer.parseInt(element.getAttributeValue("PRIORITY"));
-		ScriptInfo scriptInfo = GhidraScriptUtil.findScriptByName(scriptName);
-		ResourceFile file = scriptInfo.getSourceFile();
+		ResourceFile file = GhidraScriptUtil.findScriptByName(scriptName);
 		Analyzer analyzer = new GhidraScriptAnalyzerAdapter(file, analyzerType, priority);
 		return new AnalyzerInfo(recipe, analyzer, true);
 	}

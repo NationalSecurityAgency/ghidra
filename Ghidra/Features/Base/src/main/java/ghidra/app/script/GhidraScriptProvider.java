@@ -15,19 +15,19 @@
  */
 package ghidra.app.script;
 
-import generic.jar.ResourceFile;
-import ghidra.util.classfinder.ExtensionPoint;
-
 import java.io.IOException;
 import java.io.PrintWriter;
+
+import generic.jar.ResourceFile;
+import ghidra.util.classfinder.ExtensionPoint;
 
 /**
  * NOTE:  ALL GhidraScriptProvider CLASSES MUST END IN "ScriptProvider".  If not,
  * the ClassSearcher will not find them.
  *
  */
-public abstract class GhidraScriptProvider implements ExtensionPoint,
-		Comparable<GhidraScriptProvider> {
+public abstract class GhidraScriptProvider
+		implements ExtensionPoint, Comparable<GhidraScriptProvider> {
 
 	@Override
 	public String toString() {
@@ -59,11 +59,7 @@ public abstract class GhidraScriptProvider implements ExtensionPoint,
 	 * @return true if the script was completely deleted and cleaned up
 	 */
 	public boolean deleteScript(ResourceFile scriptSource) {
-		boolean deleted = !scriptSource.exists() || scriptSource.delete();
-		if (deleted) {
-			GhidraScriptUtil.removeMetadata(scriptSource);
-		}
-		return deleted;
+		return !scriptSource.exists() || scriptSource.delete();
 	}
 
 	/**

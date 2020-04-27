@@ -26,7 +26,6 @@ import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
-import ghidra.app.script.ScriptInfo;
 import ghidra.app.services.AnalyzerType;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.VerticalLayout;
@@ -36,8 +35,9 @@ public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFil
 	private IntegerTextField priorityField;
 
 	public GhidraScriptSelectionDialog() {
-		super("Create Script Based Analyzer", "Script Name:", GhidraScriptUtil.getAllScripts(),
-			new ScriptNameConverter(), new ScriptDescriptionConverter());
+		super("Create Script Based Analyzer", "Script Name:",
+			GhidraScriptUtil.getScriptSourceDirectories(), new ScriptNameConverter(),
+			new ScriptDescriptionConverter());
 	}
 
 	@Override
@@ -116,8 +116,7 @@ public class GhidraScriptSelectionDialog extends ListSelectionDialog<ResourceFil
 	private static class ScriptDescriptionConverter implements DataToStringConverter<ResourceFile> {
 		@Override
 		public String getString(ResourceFile resourceFile) {
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(resourceFile);
-			return info.getDescription();
+			return GhidraScriptUtil.newScriptInfo(resourceFile).getDescription();
 		}
 	}
 

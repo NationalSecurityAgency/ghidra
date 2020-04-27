@@ -231,13 +231,12 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected void assertScriptManagerKnowsAbout(ResourceFile script) {
-		assertTrue(GhidraScriptUtil.containsMetadata(script));
+		assertTrue(provider.getInfoManager().containsMetadata(script));
 		assertNull(provider.getActionManager().get(script));
 	}
 
 	protected void assertScriptManagerForgotAbout(ResourceFile script) {
-
-		assertFalse(GhidraScriptUtil.containsMetadata(script));
+		assertFalse(provider.getInfoManager().containsMetadata(script));
 		assertNull(provider.getActionManager().get(script));
 		assertNull(provider.getEditorMap().get(script));
 	}
@@ -989,7 +988,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		// destroy any NewScriptxxx files...and Temp ones too
 		BundleStatusComponentProvider bundleStatusComponentProvider =
-			(BundleStatusComponentProvider) TestUtils.getInstanceField("bundleStatusComponentProvider", provider);
+			(BundleStatusComponentProvider) TestUtils.getInstanceField(
+				"bundleStatusComponentProvider", provider);
 		List<ResourceFile> paths = bundleStatusComponentProvider.getModel().getEnabledPaths();
 
 		for (ResourceFile path : paths) {
@@ -1161,7 +1161,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	}
 
 	protected ResourceFile findScript(String name) {
-		ScriptInfo info = GhidraScriptUtil.getExistingScriptInfo(name);
+		ScriptInfo info = provider.getInfoManager().getExistingScriptInfo(name);
 		assertNotNull("Cannot find script by the given name: " + name, info);
 		return info.getSourceFile();
 	}

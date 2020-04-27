@@ -78,7 +78,7 @@ public class ScriptInfo {
 	 * @param provider the script provider (for example, java or python)
 	 * @param sourceFile the script source file
 	 */
-	public ScriptInfo(GhidraScriptProvider provider, ResourceFile sourceFile) {
+	ScriptInfo(GhidraScriptProvider provider, ResourceFile sourceFile) {
 		this.provider = provider;
 		this.sourceFile = sourceFile;
 
