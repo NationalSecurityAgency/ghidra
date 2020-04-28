@@ -31,12 +31,14 @@
 ///
 /// Given a base pointer of known data-type and an additive expression involving
 /// the pointer, group the terms of the expression into:
-///   - Constant multiple of the base data-type
+///   - A constant multiple of the base data-type
 ///   - Non-constant multiples of the base data-type
-///   - Multiples of an array element size: rewrite using PTRADD
-///   - Drill down into sub-components of the base data-type: rewrite using PTRSUB
-///   - Remaining offsets
+///   - An constant offset to a sub-component of the base data-type
+///   - An remaining terms
 ///
+/// The \e multiple terms are rewritten using a CPUI_PTRADD. The constant offset
+/// is rewritten using a CPUI_PTRSUB.  Other terms are added back in.  Analysis may cause
+/// multiplication (CPUI_INT_MULT) by a constant to be distributed to its CPUI_INT_ADD input.
 class AddTreeState {
   PcodeOp *baseOp;		///< Base of the ADD tree
   Varnode *ptr;			///< The pointer varnode
@@ -52,6 +54,7 @@ class AddTreeState {
   uintb multsum;		///< Sum of multiple constants
   uintb nonmultsum;		///< Sum of non-multiple constants
   bool isSubtype;		///< Is there a sub-type (using CPUI_PTRSUB)
+  bool checkMultTerm(Varnode *vn,PcodeOp *op);	///< Accumulate details of INT_MULT term and continue traversal if appropriate
   bool checkTerm(Varnode *vn);			///< Accumulate details of given term and continue tree traversal
   bool spanAddTree(PcodeOp *op);		///< Walk the given sub-tree
   void calcSubtype(void);			///< Calculate final sub-type offset

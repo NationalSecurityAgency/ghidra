@@ -5670,16 +5670,59 @@ AddTreeState::AddTreeState(PcodeOp *op,int4 slot)
   isSubtype = false;
 }
 
+/// Examine a CPUI_INT_MULT element in the middle of the add tree. Determine if we treat
+/// the output simply as a leaf, or if the multiply needs to be distributed to an
+/// additive subtree.  If the Varnode is a leaf of the tree, return \b true if
+/// it is considered a multiple of the base data-type size. If the Varnode is the
+/// root of another additive sub-tree, return \b true if no sub-node is a multiple.
+/// \param vn is the output Varnode of the operation
+/// \param op is the CPUI_INT_MULT operation
+/// \return \b true if there are no multiples of the base data-type size discovered
+bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op)
+
+{
+  Varnode *vnconst = op->getIn(1);
+  Varnode *vnterm = op->getIn(0);
+  uintb val,rem;
+
+  if (vnterm->isFree()) {
+    valid = false;
+    return false;
+  }
+  if (vnconst->isConstant()) {
+    val = vnconst->getOffset();
+    if (size == 0)
+      rem = val;
+    else {
+      intb sval = (intb) val;
+      sign_extend(sval, vn->getSize() * 8 - 1);
+      rem = sval % size;
+    }
+    if (rem != 0) {
+      if ((val > size) && (size != 0)) {
+	valid = false; // Size is too big: pointer type must be wrong
+	return false;
+      }
+      return true;
+    }
+    if (rem == 0) {
+      multiple.push_back(vnterm);
+      coeff.push_back(val);
+      return false;
+    }
+  }
+  return true;
+}
+
 /// If the given Varnode is a constant or multiplicative term, update
 /// totals. If the Varnode is additive, traverse its sub-terms.
 /// \param vn is the given Varnode term
-/// \return \b true if Varnode is a NON-multiple
+/// \return \b true if the sub-tree rooted at the given Varnode contains no multiples
 bool AddTreeState::checkTerm(Varnode *vn)
 
 {
   uintb val;
   intb rem;
-  Varnode *vnconst,*vnterm;
   PcodeOp *def;
 
   if (vn == ptr) return false;
@@ -5707,42 +5750,26 @@ bool AddTreeState::checkTerm(Varnode *vn)
       valid = false;
       return false;
     }
-    if (def->code() == CPUI_INT_MULT) { // Check for constant coeff indicating size
-      vnconst = def->getIn(1);
-      vnterm = def->getIn(0);
-      if (vnconst->isConstant()) {
-	val = vnconst->getOffset();
-	if (size == 0)
-	  rem = val;
-	else {
-	  intb sval = (intb) val;
-	  sign_extend(sval, vn->getSize() * 8 - 1);
-	  rem = sval % size;
-	}
-	if (rem!=0) {
-	  if ((val > size)&&(size!=0)) {
-	    valid = false; // Size is too big: pointer type must be wrong
-	    return false;
-	  }
-	  return true;
-	}
-	if (rem==0) {
-	  multiple.push_back(vnterm);
-	  coeff.push_back(val);
-	  return false;
-	}
-      }
-    }
+    if (def->code() == CPUI_INT_MULT)	// Check for constant coeff indicating size
+      return checkMultTerm(vn, def);
+  }
+  else if (vn->isFree()) {
+    valid = false;
+    return false;
   }
   return true;
 }
 
-/// Recursively walk the sub-tree from the given root.  This routine returns
-/// \b true if no leaf nodes of the tree have been identified in the sub-tree.
-/// In this case, this root may itself be a leaf (we don't know yet), otherwise
-/// we know this root is \e not a leaf.
+/// Recursively walk the sub-tree from the given root.
+/// Terms that are a \e multiple of the base data-type size are accumulated either in
+/// the the sum of constant multiples or the container of non-constant multiples.
+/// Terms that are a \e non-multiple are accumulated either in the sum of constant
+/// non-multiples or the container of non-constant non-multiples. The constant
+/// non-multiples are counted twice, once in the sum, and once in the container.
+/// This routine returns \b true if no node of the sub-tree is considered a multiple
+/// of the base data-type size (or \b false if any node is considered a multiple).
 /// \param op is the root of the sub-expression to traverse
-/// \return \b true if the given root might be a leaf
+/// \return \b true if the given sub-tree contains no multiple nodes
 bool AddTreeState::spanAddTree(PcodeOp *op)
 		  
 {
@@ -5754,12 +5781,11 @@ bool AddTreeState::spanAddTree(PcodeOp *op)
   if (!valid) return false;
 
   if (one_is_non&&two_is_non) return true;
-  // Reaching here we know either, slot 0 or 1 is a leaf
   if (one_is_non)
     nonmult.push_back(op->getIn(0));
   if (two_is_non)
     nonmult.push_back(op->getIn(1));
-  return false;		// We are definitely not a leaf
+  return false;		// At least one of the sides contains multiples
 }
 
 /// Make final calcultions to determine if a pointer to a sub data-type of the base
