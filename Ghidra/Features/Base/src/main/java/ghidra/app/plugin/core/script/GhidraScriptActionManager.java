@@ -33,7 +33,8 @@ import docking.actions.KeyBindingUtils;
 import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
-import ghidra.app.script.*;
+import ghidra.app.script.GhidraScriptInfoManager;
+import ghidra.app.script.ScriptInfo;
 import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
 import ghidra.util.*;
@@ -79,7 +80,7 @@ class GhidraScriptActionManager {
 	}
 
 	void restoreUserDefinedKeybindings(SaveState saveState) {
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptSourceDirectories();
+		Collection<ResourceFile> dirs = provider.getBundleHost().getBundlePaths();
 		String[] names = saveState.getNames();
 
 		for (String name : names) {

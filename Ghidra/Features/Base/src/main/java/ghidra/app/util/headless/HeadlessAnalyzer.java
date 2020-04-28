@@ -676,12 +676,9 @@ public class HeadlessAnalyzer {
 		if (scriptSource.exists()) {
 			return scriptSource;
 		}
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile dir : dirs) {
-			scriptSource = new ResourceFile(dir, scriptName);
-			if (scriptSource.exists()) {
-				return scriptSource;
-			}
+		scriptSource = GhidraScriptUtil.findScriptByName(scriptName);
+		if (scriptSource != null) {
+			return scriptSource;
 		}
 		throw new IllegalArgumentException("Script not found: " + scriptName);
 	}

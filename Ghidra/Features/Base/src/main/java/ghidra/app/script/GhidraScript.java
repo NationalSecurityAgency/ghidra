@@ -790,35 +790,32 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 */
 	public void runScript(String scriptName, String[] scriptArguments, GhidraState scriptState)
 			throws Exception {
-		List<ResourceFile> dirs = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile dir : dirs) {
-			ResourceFile scriptSource = new ResourceFile(dir, scriptName);
-			if (scriptSource.exists()) {
-				GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSource);
+		ResourceFile scriptSource = GhidraScriptUtil.findScriptByName(scriptName);
+		if (scriptSource != null) {
+			GhidraScriptProvider provider = GhidraScriptUtil.getProvider(scriptSource);
 
-				if (provider == null) {
-					throw new IOException("Attempting to run subscript '" + scriptName +
-						"': unable to run this script type.");
-				}
-
-				GhidraScript script = provider.getScriptInstance(scriptSource, writer);
-				script.setScriptArgs(scriptArguments);
-
-				if (potentialPropertiesFileLocs.size() > 0) {
-					script.setPotentialPropertiesFileLocations(potentialPropertiesFileLocs);
-				}
-
-				if (scriptState == state) {
-					updateStateFromVariables();
-				}
-
-				script.execute(scriptState, monitor, writer);
-
-				if (scriptState == state) {
-					loadVariablesFromState();
-				}
-				return;
+			if (provider == null) {
+				throw new IOException("Attempting to run subscript '" + scriptName +
+					"': unable to run this script type.");
 			}
+
+			GhidraScript script = provider.getScriptInstance(scriptSource, writer);
+			script.setScriptArgs(scriptArguments);
+
+			if (potentialPropertiesFileLocs.size() > 0) {
+				script.setPotentialPropertiesFileLocations(potentialPropertiesFileLocs);
+			}
+
+			if (scriptState == state) {
+				updateStateFromVariables();
+			}
+
+			script.execute(scriptState, monitor, writer);
+
+			if (scriptState == state) {
+				loadVariablesFromState();
+			}
+			return;
 		}
 
 		boolean shouldContinue = false;
