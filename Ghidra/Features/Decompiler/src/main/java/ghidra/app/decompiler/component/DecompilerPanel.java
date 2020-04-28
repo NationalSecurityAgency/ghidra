@@ -88,6 +88,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private Color searchHighlightColor;
 	private SearchLocation currentSearchLocation;
 
+	private int mouseNextAddressButton;
+	private int mousePrevAddressButton;
+
 	private DecompileData decompileData = new EmptyDecompileData("No Function");
 	private final DecompilerClipboardProvider clipboard;
 
@@ -123,6 +126,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		currentVariableHighlightColor = options.getCurrentVariableHighlightColor();
 		middleMouseHighlightColor = options.getMiddleMouseHighlightColor();
 		middleMouseHighlightButton = options.getMiddleMouseHighlightButton();
+		mouseNextAddressButton = options.getMouseNextAddressButton();
+		mousePrevAddressButton = options.getMousePrevAddressButton();
 
 		setLayout(new BorderLayout());
 		add(scroller);
@@ -571,6 +576,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			}
 		}
 
+		if (buttonState == mouseNextAddressButton && clickCount == 1) {
+			controller.goToNextPrevAddress(true);
+		}
+
+		if (buttonState == mousePrevAddressButton && clickCount == 1) {
+			controller.goToNextPrevAddress(false);
+		}
+
 		if (buttonState == middleMouseHighlightButton && clickCount == 1) {
 			togglePrimaryHighlight(location, field, middleMouseHighlightColor);
 		}
@@ -993,6 +1006,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		middleMouseHighlightColor = decompilerOptions.getMiddleMouseHighlightColor();
 		middleMouseHighlightButton = decompilerOptions.getMiddleMouseHighlightButton();
 		searchHighlightColor = decompilerOptions.getSearchHighlightColor();
+
+		mouseNextAddressButton = decompilerOptions.getMouseNextAddressButton();
+		mousePrevAddressButton = decompilerOptions.getMousePrevAddressButton();
 
 		highlightController.setHighlightColor(currentVariableHighlightColor);
 	}

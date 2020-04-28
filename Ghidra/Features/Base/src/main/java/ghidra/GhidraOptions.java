@@ -175,13 +175,27 @@ public interface GhidraOptions {
 	final String CURSOR_HIGHLIGHT_GROUP = "Cursor Text Highlight";
 
 	final String CURSOR_HIGHLIGHT_BUTTON_NAME =
-		CURSOR_HIGHLIGHT_GROUP + Options.DELIMITER + "Mouse Button To Activate";
+			CURSOR_HIGHLIGHT_GROUP + Options.DELIMITER + "Mouse Button To Activate";
 
 	final String HIGHLIGHT_COLOR_NAME =
-		CURSOR_HIGHLIGHT_GROUP + Options.DELIMITER + "Highlight Color";
+			CURSOR_HIGHLIGHT_GROUP + Options.DELIMITER + "Highlight Color";
+
+	//
+	// mouse next/prev history
+	//
+
+	String MOUSE_NEXT_PREV_ADDR_GROUP = "Mouse Next/Previous Address";
+
+	String MOUSE_NEXT_ADDR_BUTTON_NAME =
+			MOUSE_NEXT_PREV_ADDR_GROUP + Options.DELIMITER + "Mouse Button Next Address";
+
+	String MOUSE_PREV_ADDR_BUTTON_NAME =
+			MOUSE_NEXT_PREV_ADDR_GROUP + Options.DELIMITER + "Mouse Button Previous Address";
 
 	public static enum CURSOR_MOUSE_BUTTON_NAMES {
-		LEFT(MouseEvent.BUTTON1), MIDDLE(MouseEvent.BUTTON2), RIGHT(MouseEvent.BUTTON3);
+		LEFT(MouseEvent.BUTTON1), MIDDLE(MouseEvent.BUTTON2), RIGHT(MouseEvent.BUTTON3), FOURTH(4),
+		FIFTH(5), SIXTH(6), SEVENTH(7), EIGHTH(8),
+		NINTH(9), TENTH(10);
 		private int mouseEventID;
 
 		CURSOR_MOUSE_BUTTON_NAMES(int mouseEventID) {

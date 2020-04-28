@@ -1304,7 +1304,9 @@ public class FieldPanel extends JPanel
 		public void mousePressed(MouseEvent e) {
 			hoverHandler.stopHover();
 			mouseHandler.mousePressed(e);
-			cursorHandler.setCursorPos(e.getX(), e.getY(), EventTrigger.GUI_ACTION);
+			if (e.getButton() <= MouseEvent.BUTTON3) {
+				cursorHandler.setCursorPos(e.getX(), e.getY(), EventTrigger.GUI_ACTION);
+			}
 		}
 
 		@Override

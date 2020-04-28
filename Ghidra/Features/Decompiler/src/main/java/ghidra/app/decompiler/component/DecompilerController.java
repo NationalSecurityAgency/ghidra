@@ -272,6 +272,10 @@ public class DecompilerController {
 		callbackHandler.goToFunction(function, newWindow);
 	}
 
+	void goToNextPrevAddress(boolean isNext) {
+		callbackHandler.goToNextPrevAddress(isNext);
+	}
+
 	void goToLabel(String labelName, boolean newWindow) {
 		callbackHandler.goToLabel(labelName, newWindow);
 	}

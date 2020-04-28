@@ -265,6 +265,9 @@ public class DecompileOptions {
 	private Color middleMouseHighlightColor;
 	private int middleMouseHighlightButton = MouseEvent.BUTTON2;
 
+	private int mouseNextAddressButton = CURSOR_MOUSE_BUTTON_NAMES.SEVENTH.getMouseEventID();
+	private int mousePrevAddressButton = CURSOR_MOUSE_BUTTON_NAMES.SIXTH.getMouseEventID();
+
 	private final static String HIGHLIGHT_CURRENT_VARIABLE_MSG =
 		"Display.Color for Current Variable Highlight";
 	private final static Color HIGHLIGHT_CURRENT_VARIABLE_DEF = new Color(255, 255, 0, 128);
@@ -446,14 +449,22 @@ public class DecompileOptions {
 		}
 
 		PluginTool tool = ownerPlugin.getTool();
-		Options toolOptions = tool.getOptions(CATEGORY_BROWSER_FIELDS);
+		Options toolBrowserFieldsOptions = tool.getOptions(CATEGORY_BROWSER_FIELDS);
+		Options toolDecompilerOptions = tool.getOptions("Decompiler");
 
 		middleMouseHighlightColor =
-			toolOptions.getColor(HIGHLIGHT_COLOR_NAME, HIGHLIGHT_MIDDLE_MOUSE_DEF);
+				toolBrowserFieldsOptions.getColor(HIGHLIGHT_COLOR_NAME, HIGHLIGHT_MIDDLE_MOUSE_DEF);
 
-		CURSOR_MOUSE_BUTTON_NAMES mouseEvent =
-			toolOptions.getEnum(CURSOR_HIGHLIGHT_BUTTON_NAME, CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
-		middleMouseHighlightButton = mouseEvent.getMouseEventID();
+		CURSOR_MOUSE_BUTTON_NAMES mouseHighlightEvent = toolBrowserFieldsOptions
+				.getEnum(CURSOR_HIGHLIGHT_BUTTON_NAME, CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
+		CURSOR_MOUSE_BUTTON_NAMES mouseNextAddressEvent = toolDecompilerOptions
+				.getEnum(MOUSE_NEXT_ADDR_BUTTON_NAME, CURSOR_MOUSE_BUTTON_NAMES.SIXTH);
+		CURSOR_MOUSE_BUTTON_NAMES mousePrevAddressEvent = toolDecompilerOptions
+				.getEnum(MOUSE_PREV_ADDR_BUTTON_NAME, CURSOR_MOUSE_BUTTON_NAMES.FIFTH);
+
+		middleMouseHighlightButton = mouseHighlightEvent.getMouseEventID();
+		mouseNextAddressButton = mouseNextAddressEvent.getMouseEventID();
+		mousePrevAddressButton = mousePrevAddressEvent.getMouseEventID();
 	}
 
 	/**
@@ -721,6 +732,14 @@ public class DecompileOptions {
 
 	public int getMiddleMouseHighlightButton() {
 		return middleMouseHighlightButton;
+	}
+
+	public int getMouseNextAddressButton() {
+		return mouseNextAddressButton;
+	}
+
+	public int getMousePrevAddressButton() {
+		return mousePrevAddressButton;
 	}
 
 	public boolean isPRECommentIncluded() {

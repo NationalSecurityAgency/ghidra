@@ -640,6 +640,25 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
+	public void goToNextPrevAddress(boolean isNext) {
+		NavigationHistoryService historyService = tool.getService(NavigationHistoryService.class);
+		if (historyService == null) {
+			return;
+		}
+
+		Navigatable navigatable = null;
+		GoToService service = tool.getService(GoToService.class);
+		if (service != null) {
+			navigatable = service.getDefaultNavigatable();
+		}
+		if (isNext) {
+			historyService.next(navigatable);
+		} else {
+			historyService.previous(navigatable);
+		}
+	}
+
+	@Override
 	public void doWheNotBusy(Callback c) {
 		followUpWork.offer(c);
 		followUpWorkUpdater.update();
