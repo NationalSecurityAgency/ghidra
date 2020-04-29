@@ -1019,8 +1019,7 @@ bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
 bool Funcdata::distributeIntMult(Funcdata &data,PcodeOp *op)
 
 {
-  Varnode *newvn1,*newvn2,*newcvn;
-  PcodeOp *newop1, *newop2;
+  Varnode *newvn0,*newvn1;
   PcodeOp *addop = op->getIn(0)->getDef();
   Varnode *vn0 = addop->getIn(0);
   Varnode *vn1 = addop->getIn(1);
@@ -1029,32 +1028,38 @@ bool Funcdata::distributeIntMult(Funcdata &data,PcodeOp *op)
   uintb coeff = op->getIn(1)->getOffset();
   int4 size = op->getOut()->getSize();
 				// Do distribution
-  newop1 = data.newOp(2,op->getAddr());
-  data.opSetOpcode(newop1,CPUI_INT_MULT);
-  newvn1 = data.newUniqueOut(size,newop1);
+  if (vn0->isConstant()) {
+    uintb val = coeff * vn0->getOffset();
+    val &= calc_mask(size);
+    newvn0 = data.newConstant(size,val);
+  }
+  else {
+    PcodeOp *newop0 = data.newOp(2,op->getAddr());
+    data.opSetOpcode(newop0,CPUI_INT_MULT);
+    newvn0 = data.newUniqueOut(size,newop0);
+    data.opSetInput(newop0, vn0, 0); // To first input of original add
+    Varnode *newcvn = data.newConstant(size,coeff);
+    data.opSetInput(newop0, newcvn, 1);
+    data.opInsertBefore(newop0, op);
+  }
 
-  newop2 = data.newOp(2,op->getAddr());
-  data.opSetOpcode(newop2,CPUI_INT_MULT);
-  newvn2 = data.newUniqueOut(size,newop2);
+  if (vn1->isConstant()) {
+    uintb val = coeff * vn1->getOffset();
+    val &= calc_mask(size);
+    newvn1 = data.newConstant(size,val);
+  }
+  else {
+    PcodeOp *newop1 = data.newOp(2,op->getAddr());
+    data.opSetOpcode(newop1,CPUI_INT_MULT);
+    newvn1 = data.newUniqueOut(size,newop1);
+    data.opSetInput(newop1, vn1, 0); // To second input of original add
+    Varnode *newcvn = data.newConstant(size,coeff);
+    data.opSetInput(newop1, newcvn, 1);
+    data.opInsertBefore(newop1, op);
+  }
 
-  if (vn0->isConstant())
-    data.opSetInput(newop1, data.newConstant(size,vn0->getOffset()),0);
-  else
-    data.opSetInput(newop1, vn0, 0); // To first input of original add
-  newcvn = data.newConstant(size,coeff);
-  data.opSetInput(newop1, newcvn, 1);
-  data.opInsertBefore(newop1, op);
-
-  if (vn1->isConstant())
-    data.opSetInput(newop2, data.newConstant(size,vn1->getOffset()),0);
-  else
-    data.opSetInput(newop2, vn1, 0); // To second input of original add
-  newcvn = data.newConstant(size,coeff);
-  data.opSetInput(newop2, newcvn, 1);
-  data.opInsertBefore(newop2, op);
-
-  data.opSetInput( op, newvn1, 0); // new ADD's inputs are outputs of new MULTs
-  data.opSetInput( op, newvn2, 1);
+  data.opSetInput( op, newvn0, 0); // new ADD's inputs are outputs of new MULTs
+  data.opSetInput( op, newvn1, 1);
   data.opSetOpcode(op, CPUI_INT_ADD);
 
   return true;
