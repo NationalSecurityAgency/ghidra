@@ -19,8 +19,7 @@ import java.io.IOException;
 
 import db.DBBuffer;
 import db.Record;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.Memory;
 
 /**
  * Implementation of SubMemoryBlock for blocks that store bytes in their own private database
@@ -31,7 +30,7 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 
 	BufferSubMemoryBlock(MemoryMapDBAdapter adapter, Record record) throws IOException {
 		super(adapter, record);
-		int bufferID = record.getIntValue(MemoryMapDBAdapter.SUB_SOURCE_ID_COL);
+		int bufferID = record.getIntValue(MemoryMapDBAdapter.SUB_INT_DATA1_COL);
 		buf = adapter.getBuffer(bufferID);
 	}
 
@@ -96,11 +95,6 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	protected MemoryBlockType getType() {
-		return MemoryBlockType.DEFAULT;
-	}
-
-	@Override
 	protected SubMemoryBlock split(long memBlockOffset) throws IOException {
 		// convert from offset in block to offset in this sub block
 		int offset = (int) (memBlockOffset - subBlockOffset);
@@ -120,15 +114,5 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 	@Override
 	protected String getDescription() {
 		return "";
-	}
-
-	@Override
-	protected ByteSourceRangeList getByteSourceRangeList(MemoryBlock block, Address start,
-			long memBlockOffset,
-			long size) {
-		long sourceId = -buf.getId(); 	// buffers use negative id values; FileBytes use positive id values.
-		ByteSourceRange bsRange =
-			new ByteSourceRange(block, start, size, sourceId, memBlockOffset - subBlockOffset);
-		return new ByteSourceRangeList(bsRange);
 	}
 }

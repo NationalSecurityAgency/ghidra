@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,8 @@
  */
 package ghidra.program.util;
 
+import java.util.ArrayList;
+
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -25,8 +26,6 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.ArrayList;
 
 /**
  * <CODE>MemoryDiff</CODE> determines where the memory differs between two programs as well as the
@@ -179,12 +178,12 @@ public class MemoryDiff {
 	 */
 	public AddressRange[] getDifferentAddressRanges() {
 		ArrayList<AddressRange> rangeDiffs = new ArrayList<AddressRange>();
-		for (int i = 0; i < ranges.length; i++) {
-			Address addr = ranges[i].getMinAddress();
+		for (AddressRange range : ranges) {
+			Address addr = range.getMinAddress();
 			MemoryBlock block1 = memory1.getBlock(addr);
 			MemoryBlock block2 = memory2.getBlock(addr);
 			if (!sameMemoryBlock(block1, block2)) {
-				rangeDiffs.add(ranges[i]);
+				rangeDiffs.add(range);
 			}
 		}
 		return rangeDiffs.toArray(new AddressRange[rangeDiffs.size()]);
@@ -271,15 +270,8 @@ public class MemoryDiff {
 						memory1.join(firstBlock, secondBlock);
 					}
 					return true;
-				} catch (MemoryBlockException e) {
-				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				} catch (LockException e) {
-				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				} catch (MemoryConflictException e) {
-				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				} catch (AddressOverflowException e) {
-				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
-				} catch (NotFoundException e) {
+				}
+				catch (Exception e) {
 				    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 				}
 				return false;

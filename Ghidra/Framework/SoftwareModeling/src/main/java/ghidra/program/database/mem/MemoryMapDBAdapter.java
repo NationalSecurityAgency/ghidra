@@ -46,8 +46,30 @@ abstract class MemoryMapDBAdapter {
 	public static final int SUB_TYPE_COL = MemoryMapDBAdapterV3.V3_SUB_TYPE_COL;
 	public static final int SUB_LENGTH_COL = MemoryMapDBAdapterV3.V3_SUB_LENGTH_COL;
 	public static final int SUB_START_OFFSET_COL = MemoryMapDBAdapterV3.V3_SUB_START_OFFSET_COL;
-	public static final int SUB_SOURCE_ID_COL = MemoryMapDBAdapterV3.V3_SUB_SOURCE_ID_COL;
-	public static final int SUB_SOURCE_OFFSET_COL = MemoryMapDBAdapterV3.V3_SUB_SOURCE_OFFSET_COL;
+
+	/**
+	 * Subblock record int data1 usage:
+	 * <ul>
+	 * <li>{@link BufferSubMemoryBlock} - data buffer ID</li>
+	 * <li>{@link FileBytesSubMemoryBlock} - file bytes layered data buffer ID</li>
+	 * <li>{@link ByteMappedSubMemoryBlock} - encoded byte mapping scheme</li>
+	 * <li>{@link BitMappedSubMemoryBlock} - (not used) 0</li>
+	 * <li>{@link UninitializedSubMemoryBlock} - (not used) 0</li>
+	 * </ul>
+	 */
+	public static final int SUB_INT_DATA1_COL = MemoryMapDBAdapterV3.V3_SUB_INT_DATA1_COL;
+
+	/**
+	 * Subblock record long data2 usage:
+	 * <ul>
+	 * <li>{@link BufferSubMemoryBlock} - (not used) 0</li>
+	 * <li>{@link FileBytesSubMemoryBlock} - starting byte offset within file bytes buffer</li>
+	 * <li>{@link ByteMappedSubMemoryBlock} - encoded mapped source address</li>
+	 * <li>{@link BitMappedSubMemoryBlock} - encoded mapped source address</li>
+	 * <li>{@link UninitializedSubMemoryBlock} - (not used) 0</li>
+	 * </ul>
+	 */
+	public static final int SUB_LONG_DATA2_COL = MemoryMapDBAdapterV3.V3_SUB_LONG_DATA2_COL;
 
 	public static final byte SUB_TYPE_BIT_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BIT_MAPPED;
 	public static final byte SUB_TYPE_BYTE_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BYTE_MAPPED;
@@ -121,7 +143,7 @@ abstract class MemoryMapDBAdapter {
 					}
 					newBlock =
 						newAdapter.createBlock(block.getType(), block.getName(), block.getStart(),
-							block.getSize(), mappedAddress, false, block.getPermissions());
+							block.getSize(), mappedAddress, false, block.getPermissions(), 0);
 				}
 				newBlock.setComment(block.getComment());
 				newBlock.setSourceName(block.getSourceName());
@@ -192,16 +214,19 @@ abstract class MemoryMapDBAdapter {
 	 * @param name the name of the block.
 	 * @param startAddr the start address of the block
 	 * @param length the size of the block
-	 * @param mappedAddress the address at which to overlay this block. (If the type is overlay)
-	 * @param initializeBytes if true, creates a database buffer for the bytes in the block
+	 * @param mappedAddress the starting byte source address at which to map 
+	 * the block. (used for bit/byte-mapped blocks only)
+	 * @param initializeBytes if true, creates a database buffer for storing the 
+	 * bytes in the block (applies to initialized default blocks only)
 	 * @param permissions the new block permissions
+	 * @param encodedMappingScheme byte mapping scheme (used by byte-mapped blocks only)
 	 * @return new memory block
 	 * @throws IOException if a database IO error occurs.
 	 * @throws AddressOverflowException if block length is too large for the underlying space
 	 */
 	abstract MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
-			long length, Address mappedAddress, boolean initializeBytes, int permissions)
-			throws AddressOverflowException, IOException;
+			long length, Address mappedAddress, boolean initializeBytes, int permissions,
+			int encodedMappingScheme) throws AddressOverflowException, IOException;
 
 	/**
 	 * Deletes the given memory block.
@@ -253,15 +278,13 @@ abstract class MemoryMapDBAdapter {
 	 * sub block starts
 	 * @param length the length of this sub block
 	 * @param subType the type of the subBlock
-	 * @param sourceID if the type is a buffer, then this is the buffer id.  If the type is file bytes,
-	 * then this is the FileBytes id.  
-	 * @param sourceOffset if the type is file bytes, then this is the offset into the filebytes. If
-	 * the type is mapped, then this is the encoded mapped address.
+	 * @param data1 subblock implementation specific integer data 
+	 * @param data2 subblock implementation specific long data 
 	 * @return the newly created record.
 	 * @throws IOException if a database error occurs
 	 */
 	abstract Record createSubBlockRecord(long memBlockId, long startingOffset, long length,
-			byte subType, int sourceID, long sourceOffset) throws IOException;
+			byte subType, int data1, long data2) throws IOException;
 
 	/**
 	 * Creates a new memory block.
