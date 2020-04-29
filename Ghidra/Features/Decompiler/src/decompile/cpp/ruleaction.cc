@@ -94,57 +94,6 @@ Varnode *RuleCollectTerms::getMultCoeff(Varnode *vn,uintb &coef)
   return testop->getIn(0);
 }
 
-/// If a term has a multiplicative coefficient, but the underlying term is still additive,
-/// in some situations we may need to distribute the coefficient before simplifying further.
-/// The given PcodeOp is a INT_MULT where the second input is a constant. We also
-/// know the first input is formed with INT_ADD. Distribute the coefficient to the INT_ADD inputs.
-/// \param data is the function being analyzed
-/// \param op is the given PcodeOp
-/// \return 1 if the action was performed
-int4 RuleCollectTerms::doDistribute(Funcdata &data,PcodeOp *op)
-
-{
-  Varnode *newvn1,*newvn2,*newcvn;
-  PcodeOp *newop1, *newop2;
-  PcodeOp *addop = op->getIn(0)->getDef();
-  Varnode *vn0 = addop->getIn(0);
-  Varnode *vn1 = addop->getIn(1);
-  if ((vn0->isFree())&&(!vn0->isConstant())) return 0;
-  if ((vn1->isFree())&&(!vn1->isConstant())) return 0;
-  uintb coeff = op->getIn(1)->getOffset();
-  int4 size = op->getOut()->getSize();
-				// Do distribution
-  newop1 = data.newOp(2,op->getAddr());
-  data.opSetOpcode(newop1,CPUI_INT_MULT);
-  newvn1 = data.newUniqueOut(size,newop1);
-
-  newop2 = data.newOp(2,op->getAddr());
-  data.opSetOpcode(newop2,CPUI_INT_MULT);
-  newvn2 = data.newUniqueOut(size,newop2);
-
-  if (vn0->isConstant())
-    data.opSetInput(newop1, data.newConstant(size,vn0->getOffset()),0);
-  else
-    data.opSetInput(newop1, vn0, 0); // To first input of original add
-  newcvn = data.newConstant(size,coeff);
-  data.opSetInput(newop1, newcvn, 1);
-  data.opInsertBefore(newop1, op);
-
-  if (vn1->isConstant())
-    data.opSetInput(newop2, data.newConstant(size,vn1->getOffset()),0);
-  else
-    data.opSetInput(newop2, vn1, 0); // To second input of original add
-  newcvn = data.newConstant(size,coeff);
-  data.opSetInput(newop2, newcvn, 1);
-  data.opInsertBefore(newop2, op);
-
-  data.opSetInput( op, newvn1, 0); // new ADD's inputs are outputs of new MULTs
-  data.opSetInput( op, newvn2, 1);
-  data.opSetOpcode(op, CPUI_INT_ADD);
-
-  return 1;
-}
-
 /// \class RuleCollectTerms
 /// \brief Collect terms in a sum: `V * c + V * d   =>  V * (c + d)`
 void RuleCollectTerms::getOpList(vector<uint4> &oplist) const
@@ -177,9 +126,9 @@ int4 RuleCollectTerms::applyOp(PcodeOp *op,Funcdata &data)
       vn2 = getMultCoeff(vn2,coef2);
       if (vn1 == vn2) {		// Terms that can be combined
 	if (order[i-1]->getMultiplier() != (PcodeOp *)0)
-	  return doDistribute(data,order[i-1]->getMultiplier());
+	  return Funcdata::distributeIntMult(data,order[i-1]->getMultiplier()) ? 1 : 0;
 	if (order[i]->getMultiplier() != (PcodeOp *)0)
-	  return doDistribute(data,order[i]->getMultiplier());
+	  return Funcdata::distributeIntMult(data,order[i]->getMultiplier()) ? 1 : 0;
 	coef1 = (coef1 + coef2) & calc_mask(vn1->getSize()); // The new coefficient
 	Varnode *newcoeff = data.newConstant(vn1->getSize(),coef1);
 	Varnode *zerocoeff = data.newConstant(vn1->getSize(),0);
@@ -5653,8 +5602,24 @@ int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
-AddTreeState::AddTreeState(PcodeOp *op,int4 slot)
+void AddTreeState::clear(void)
 
+{
+  multsum = 0;
+  nonmultsum = 0;
+  multiple.clear();
+  coeff.clear();
+  nonmult.clear();
+  correct = 0;
+  offset = 0;
+  valid = true;
+  isDistributeUsed = false;
+  isSubtype = false;
+  distributeOp = (PcodeOp *)0;
+}
+
+AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
+  : data(d)
 {
   baseOp = op;
   ptr = op->getIn(slot);
@@ -5667,7 +5632,10 @@ AddTreeState::AddTreeState(PcodeOp *op,int4 slot)
   correct = 0;
   offset = 0;
   valid = true;		// Valid until proven otherwise
+  preventDistribution = false;
+  isDistributeUsed = false;
   isSubtype = false;
+  distributeOp = (PcodeOp *)0;
 }
 
 /// Examine a CPUI_INT_MULT element in the middle of the add tree. Determine if we treat
@@ -5677,8 +5645,9 @@ AddTreeState::AddTreeState(PcodeOp *op,int4 slot)
 /// root of another additive sub-tree, return \b true if no sub-node is a multiple.
 /// \param vn is the output Varnode of the operation
 /// \param op is the CPUI_INT_MULT operation
+/// \param treeCoeff is constant multiple being applied to the node
 /// \return \b true if there are no multiples of the base data-type size discovered
-bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op)
+bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uintb treeCoeff)
 
 {
   Varnode *vnconst = op->getIn(1);
@@ -5690,7 +5659,7 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op)
     return false;
   }
   if (vnconst->isConstant()) {
-    val = vnconst->getOffset();
+    val = (vnconst->getOffset() * treeCoeff) & ptrmask;
     if (size == 0)
       rem = val;
     else {
@@ -5703,9 +5672,18 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op)
 	valid = false; // Size is too big: pointer type must be wrong
 	return false;
       }
+      if (!preventDistribution) {
+	if (vnterm->isWritten() && vnterm->getDef()->code() == CPUI_INT_ADD) {
+	  if (distributeOp == (PcodeOp *)0)
+	    distributeOp = op;
+	  return spanAddTree(vnterm->getDef(), val);
+	}
+      }
       return true;
     }
-    if (rem == 0) {
+    else {
+      if (treeCoeff != 1)
+	isDistributeUsed = true;
       multiple.push_back(vnterm);
       coeff.push_back(val);
       return false;
@@ -5717,8 +5695,9 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op)
 /// If the given Varnode is a constant or multiplicative term, update
 /// totals. If the Varnode is additive, traverse its sub-terms.
 /// \param vn is the given Varnode term
+/// \param treeCoeff is a constant multiple applied to the entire sub-tree
 /// \return \b true if the sub-tree rooted at the given Varnode contains no multiples
-bool AddTreeState::checkTerm(Varnode *vn)
+bool AddTreeState::checkTerm(Varnode *vn,uintb treeCoeff)
 
 {
   uintb val;
@@ -5727,7 +5706,9 @@ bool AddTreeState::checkTerm(Varnode *vn)
 
   if (vn == ptr) return false;
   if (vn->isConstant()) {
-    val = vn->getOffset();
+    if (treeCoeff != 1)
+      isDistributeUsed = true;
+    val = vn->getOffset() * treeCoeff;
     if (size == 0)
       rem = val;
     else {
@@ -5745,13 +5726,13 @@ bool AddTreeState::checkTerm(Varnode *vn)
   if (vn->isWritten()) {
     def = vn->getDef();
     if (def->code() == CPUI_INT_ADD) // Recurse
-      return spanAddTree(def);
+      return spanAddTree(def, treeCoeff);
     if (def->code() == CPUI_COPY) { // Not finished reducing yet
       valid = false;
       return false;
     }
     if (def->code() == CPUI_INT_MULT)	// Check for constant coeff indicating size
-      return checkMultTerm(vn, def);
+      return checkMultTerm(vn, def, treeCoeff);
   }
   else if (vn->isFree()) {
     valid = false;
@@ -5769,15 +5750,16 @@ bool AddTreeState::checkTerm(Varnode *vn)
 /// This routine returns \b true if no node of the sub-tree is considered a multiple
 /// of the base data-type size (or \b false if any node is considered a multiple).
 /// \param op is the root of the sub-expression to traverse
+/// \param treeCoeff is a constant multiple applied to the entire additive tree
 /// \return \b true if the given sub-tree contains no multiple nodes
-bool AddTreeState::spanAddTree(PcodeOp *op)
+bool AddTreeState::spanAddTree(PcodeOp *op,uintb treeCoeff)
 		  
 {
   bool one_is_non,two_is_non;
 
-  one_is_non = checkTerm(op->getIn(0));
+  one_is_non = checkTerm(op->getIn(0),treeCoeff);
   if (!valid) return false;
-  two_is_non = checkTerm(op->getIn(1));
+  two_is_non = checkTerm(op->getIn(1),treeCoeff);
   if (!valid) return false;
 
   if (one_is_non&&two_is_non) return true;
@@ -5853,9 +5835,8 @@ void AddTreeState::calcSubtype(void)
 /// Construct part of the tree that sums to a multiple of the base data-type size.
 /// This value will be added to the base pointer as a CPUI_PTRADD. The final Varnode produced
 /// by the sum is returned.  If there are no multiples, null is returned.
-/// \param data is the function being operated on
 /// \return the output Varnode of the multiple tree or null
-Varnode *AddTreeState::buildMultiples(Funcdata &data)
+Varnode *AddTreeState::buildMultiples(void)
 
 {
   Varnode *resNode;
@@ -5889,9 +5870,8 @@ Varnode *AddTreeState::buildMultiples(Funcdata &data)
 /// Create a subtree summing all the elements that aren't multiples of the base data-type size.
 /// Correct for any double counting of non-multiple constants.
 /// Return the final Varnode holding the sum or null if there are no terms.
-/// \param data is the function being operated on
 /// \return the final Varnode or null
-Varnode *AddTreeState::buildExtra(Funcdata &data)
+Varnode *AddTreeState::buildExtra(void)
 
 {
   correct = (correct+offset) & ptrmask; // Total correction that needs to be made
@@ -5923,23 +5903,47 @@ Varnode *AddTreeState::buildExtra(Funcdata &data)
   return resNode;
 }
 
-void AddTreeState::walkTree(void)
+/// \return \b true if a transform was applied
+bool AddTreeState::apply(void)
 
 {
-  spanAddTree(baseOp);
-  if (!valid) return;		// Were there any show stoppers
+  spanAddTree(baseOp,1);
+  if (!valid) return false;		// Were there any show stoppers
+  if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
+    clear();
+    preventDistribution = true;
+    spanAddTree(baseOp,1);
+  }
   calcSubtype();
+  if (!valid) return false;
+  while(valid && distributeOp != (PcodeOp *)0) {
+    if (!Funcdata::distributeIntMult(data, distributeOp)) {
+      valid = false;
+      break;
+    }
+    clear();
+    spanAddTree(baseOp,1);
+    if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
+      clear();
+      preventDistribution = true;
+      spanAddTree(baseOp,1);
+    }
+  }
+  if (!valid)
+    throw LowlevelError("Problems distributing in ptrarith");
+  buildTree();
+  return true;
 }
 
 /// The original ADD tree has been successfully spit into \e multiple and
 /// \e non-multiple pieces.  Rewrite the tree as a pointer expression, putting
 /// any \e multiple pieces into a PTRADD operation, creating a PTRSUB if a sub
 /// data-type offset has been calculated, and preserving and remaining terms.
-void AddTreeState::buildTree(Funcdata &data)
+void AddTreeState::buildTree(void)
 
 {
-  Varnode *multNode = buildMultiples(data);
-  Varnode *extraNode = buildExtra(data);
+  Varnode *multNode = buildMultiples();
+  Varnode *extraNode = buildExtra();
   PcodeOp *newop = (PcodeOp *)0;
 
   // Create PTRADD portion of operation
@@ -6069,12 +6073,9 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
     // probably some sort of padding going on
     return 0;
 
-  AddTreeState state(op,slot);
-  state.walkTree();		// Find multiples and non-multiples of base data-type size
-  if (!state.valid)
+  AddTreeState state(data,op,slot);
+  if (!state.apply())
     return 0;
-
-  state.buildTree(data);
   return 1;
 }
 

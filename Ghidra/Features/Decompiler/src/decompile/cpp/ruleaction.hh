@@ -40,6 +40,7 @@
 /// is rewritten using a CPUI_PTRSUB.  Other terms are added back in.  Analysis may cause
 /// multiplication (CPUI_INT_MULT) by a constant to be distributed to its CPUI_INT_ADD input.
 class AddTreeState {
+  Funcdata &data;		///< The function containing the expression
   PcodeOp *baseOp;		///< Base of the ADD tree
   Varnode *ptr;			///< The pointer varnode
   const TypePointer *ct;	///< The pointer data-type
@@ -51,20 +52,24 @@ class AddTreeState {
   vector<Varnode *> multiple;	///< Varnodes which are multiples of size
   vector<uintb> coeff;		///< Associated constant multiple
   vector<Varnode *> nonmult;	///< Varnodes which are not multiples
+  PcodeOp *distributeOp;	///< A CPUI_INT_MULT op that needs to be distributed
   uintb multsum;		///< Sum of multiple constants
   uintb nonmultsum;		///< Sum of non-multiple constants
+  bool preventDistribution;	///< Do not distribute "multiply by constant" operation
+  bool isDistributeUsed;	///< Are terms produced by distributing used
   bool isSubtype;		///< Is there a sub-type (using CPUI_PTRSUB)
-  bool checkMultTerm(Varnode *vn,PcodeOp *op);	///< Accumulate details of INT_MULT term and continue traversal if appropriate
-  bool checkTerm(Varnode *vn);			///< Accumulate details of given term and continue tree traversal
-  bool spanAddTree(PcodeOp *op);		///< Walk the given sub-tree
-  void calcSubtype(void);			///< Calculate final sub-type offset
-  Varnode *buildMultiples(Funcdata &data);	///< Build part of tree that is multiple of base size
-  Varnode *buildExtra(Funcdata &data);		///< Build part of tree not accounted for by multiples or \e offset
+  bool valid;			///< Set to \b true if the whole expression can be transformed
+  bool checkMultTerm(Varnode *vn,PcodeOp *op, uintb treeCoeff);	///< Accumulate details of INT_MULT term and continue traversal if appropriate
+  bool checkTerm(Varnode *vn, uintb treeCoeff);			///< Accumulate details of given term and continue tree traversal
+  bool spanAddTree(PcodeOp *op, uintb treeCoeff);		///< Walk the given sub-tree accumulating details
+  void calcSubtype(void);		///< Calculate final sub-type offset
+  Varnode *buildMultiples(void);	///< Build part of tree that is multiple of base size
+  Varnode *buildExtra(void);		///< Build part of tree not accounted for by multiples or \e offset
+  void buildTree(void);			///< Build the transformed ADD tree
+  void clear(void);			///< Reset for a new ADD tree traversal
 public:
-  bool valid;			///< Full tree search was performed
-  AddTreeState(PcodeOp *op,int4 slot);	///< Construct given root of ADD tree and pointer
-  void walkTree(void);		///< Traverse the entire ADD tree
-  void buildTree(Funcdata &data);	///< Build the transformed ADD tree
+  AddTreeState(Funcdata &d,PcodeOp *op,int4 slot);	///< Construct given root of ADD tree and pointer
+  bool apply(void);		///< Attempt to transform the pointer expression
 };
 
 class RuleEarlyRemoval : public Rule {
@@ -85,7 +90,6 @@ public:
 // };
 class RuleCollectTerms : public Rule {
   static Varnode *getMultCoeff(Varnode *vn,uintb &coef);	///< Get the multiplicative coefficient
-  static int4 doDistribute(Funcdata &data,PcodeOp *op);		///< Distribute coefficient within one term
 public:
   RuleCollectTerms(const string &g) : Rule(g, 0, "collect_terms") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {

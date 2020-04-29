@@ -1009,6 +1009,57 @@ bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
   return true;
 }
 
+/// If a term has a multiplicative coefficient, but the underlying term is still additive,
+/// in some situations we may need to distribute the coefficient before simplifying further.
+/// The given PcodeOp is a INT_MULT where the second input is a constant. We also
+/// know the first input is formed with INT_ADD. Distribute the coefficient to the INT_ADD inputs.
+/// \param data is the function being analyzed
+/// \param op is the given PcodeOp
+/// \return \b truee if the action was performed
+bool Funcdata::distributeIntMult(Funcdata &data,PcodeOp *op)
+
+{
+  Varnode *newvn1,*newvn2,*newcvn;
+  PcodeOp *newop1, *newop2;
+  PcodeOp *addop = op->getIn(0)->getDef();
+  Varnode *vn0 = addop->getIn(0);
+  Varnode *vn1 = addop->getIn(1);
+  if ((vn0->isFree())&&(!vn0->isConstant())) return false;
+  if ((vn1->isFree())&&(!vn1->isConstant())) return false;
+  uintb coeff = op->getIn(1)->getOffset();
+  int4 size = op->getOut()->getSize();
+				// Do distribution
+  newop1 = data.newOp(2,op->getAddr());
+  data.opSetOpcode(newop1,CPUI_INT_MULT);
+  newvn1 = data.newUniqueOut(size,newop1);
+
+  newop2 = data.newOp(2,op->getAddr());
+  data.opSetOpcode(newop2,CPUI_INT_MULT);
+  newvn2 = data.newUniqueOut(size,newop2);
+
+  if (vn0->isConstant())
+    data.opSetInput(newop1, data.newConstant(size,vn0->getOffset()),0);
+  else
+    data.opSetInput(newop1, vn0, 0); // To first input of original add
+  newcvn = data.newConstant(size,coeff);
+  data.opSetInput(newop1, newcvn, 1);
+  data.opInsertBefore(newop1, op);
+
+  if (vn1->isConstant())
+    data.opSetInput(newop2, data.newConstant(size,vn1->getOffset()),0);
+  else
+    data.opSetInput(newop2, vn1, 0); // To second input of original add
+  newcvn = data.newConstant(size,coeff);
+  data.opSetInput(newop2, newcvn, 1);
+  data.opInsertBefore(newop2, op);
+
+  data.opSetInput( op, newvn1, 0); // new ADD's inputs are outputs of new MULTs
+  data.opSetInput( op, newvn2, 1);
+  data.opSetOpcode(op, CPUI_INT_ADD);
+
+  return true;
+}
+
 /// \brief Trace a boolean value to a set of PcodeOps that can be changed to flip the boolean value
 ///
 /// The boolean Varnode is either the output of the given PcodeOp or the
