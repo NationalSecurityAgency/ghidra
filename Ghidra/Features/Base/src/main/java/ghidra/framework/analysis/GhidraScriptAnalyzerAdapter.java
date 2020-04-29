@@ -70,7 +70,30 @@ public class GhidraScriptAnalyzerAdapter extends AbstractAnalyzer {
 		Project project = null;
 		GhidraState scriptState = new GhidraState(null, project, program, loc, selection, null);
 
-		return GhidraScriptUtil.runScript(scriptState, script, writer, this, monitor);
+		return runScript(scriptState, monitor);
+	}
+
+	private boolean runScript(GhidraState scriptState, TaskMonitor monitor) {
+
+		ResourceFile srcFile = script.getSourceFile();
+		String scriptName =
+			srcFile != null ? srcFile.getAbsolutePath() : (script.getClass().getName() + ".class");
+
+		try {
+			Msg.info(this, "SCRIPT: " + scriptName);
+			script.execute(scriptState, monitor, writer);
+			writer.flush();
+		}
+		catch (Exception exc) {
+			Program prog = scriptState.getCurrentProgram();
+			String path = (prog != null ? prog.getExecutablePath() : "Current program is null.");
+			String logErrorMsg =
+				path + "\nREPORT SCRIPT ERROR: " + scriptName + " : " + exc.getMessage();
+			Msg.error(this, logErrorMsg, exc);
+			return false;
+		}
+
+		return true;
 	}
 
 	private GhidraScript getGhidraScript() {

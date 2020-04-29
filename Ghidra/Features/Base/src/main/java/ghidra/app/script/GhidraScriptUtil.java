@@ -24,10 +24,8 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.plugin.core.osgi.OSGiException;
 import ghidra.framework.Application;
-import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * A utility class for managing script directories and ScriptInfo objects.
@@ -355,42 +353,6 @@ public class GhidraScriptUtil {
 			}
 		}
 		return null;
-	}
-
-	/* only used by GhidraScriptAnalyzerAdapter */
-	/**
-	 * Runs the specified script with the specified state
-	 * 
-	 * @param scriptState state representing environment variables that the script is able to access
-	 * @param script  Script to be run
-	 * @param writer the writer to which warning and error messages will be written
-	 * @param originator the client class requesting the script run; used for logging
-	 * @param monitor the task monitor
-	 * @return  whether the script successfully completed running
-	 */
-	@Deprecated
-	public static boolean runScript(GhidraState scriptState, GhidraScript script,
-			PrintWriter writer, Object originator, TaskMonitor monitor) {
-
-		ResourceFile srcFile = script.getSourceFile();
-		String scriptName =
-			srcFile != null ? srcFile.getAbsolutePath() : (script.getClass().getName() + ".class");
-
-		try {
-			Msg.info(originator, "SCRIPT: " + scriptName);
-			script.execute(scriptState, monitor, writer);
-			writer.flush();
-		}
-		catch (Exception exc) {
-			Program prog = scriptState.getCurrentProgram();
-			String path = (prog != null ? prog.getExecutablePath() : "Current program is null.");
-			String logErrorMsg =
-				path + "\nREPORT SCRIPT ERROR: " + scriptName + " : " + exc.getMessage();
-			Msg.error(originator, logErrorMsg, exc);
-			return false;
-		}
-
-		return true;
 	}
 
 }
