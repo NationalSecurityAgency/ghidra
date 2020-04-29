@@ -49,8 +49,14 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 			System.exit(0);
 		}
 		String logFile = null; //TODO get from arguments?
-		initialize(layout, logFile, true);
-		runScript(args[0]);
+		GhidraScriptUtil.initialize(new BundleHost(), scriptPaths);
+		try {
+			initialize(layout, logFile, true);
+			runScript(args[0]);
+		}
+		finally {
+			GhidraScriptUtil.dispose();
+		}
 	}
 
 	private void runScript(String string) throws Exception {
@@ -188,8 +194,6 @@ public class GhidraScriptRunner implements GhidraLaunchable {
 	 * Gather paths where scripts may be found.
 	 */
 	private void initializeScriptPaths() {
-		GhidraScriptUtil.initialize(new BundleHost(), scriptPaths);
-
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {
 			buf.append("\n    ");

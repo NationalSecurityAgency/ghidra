@@ -293,56 +293,62 @@ public class HeadlessAnalyzer {
 			}
 		}
 
-		initializeScriptPaths();
-		compileScripts();
-
-		Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
-
-		GhidraURLConnection c = (GhidraURLConnection) ghidraURL.openConnection();
-		c.setReadOnly(options.readOnly); // writable repository connection
-
-		if (c.getRepositoryName() == null) {
-			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
-		}
-
-		Msg.info(this, "Opening ghidra repository project: " + ghidraURL);
-		Object obj = c.getContent();
-		if (!(obj instanceof GhidraURLWrappedContent)) {
-			throw new IOException(
-				"Connect to repository folder failed. Response code: " + c.getResponseCode());
-		}
-		GhidraURLWrappedContent wrappedContent = (GhidraURLWrappedContent) obj;
-		Object content = null;
+		GhidraScriptUtil.initialize(new BundleHost(), options.scriptPaths);
 		try {
-			content = wrappedContent.getContent(this);
-			if (!(content instanceof DomainFolder)) {
+			initializeScriptPaths();
+			compileScripts();
+
+			Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
+
+			GhidraURLConnection c = (GhidraURLConnection) ghidraURL.openConnection();
+			c.setReadOnly(options.readOnly); // writable repository connection
+
+			if (c.getRepositoryName() == null) {
+				throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
+			}
+
+			Msg.info(this, "Opening ghidra repository project: " + ghidraURL);
+			Object obj = c.getContent();
+			if (!(obj instanceof GhidraURLWrappedContent)) {
+				throw new IOException(
+					"Connect to repository folder failed. Response code: " + c.getResponseCode());
+			}
+			GhidraURLWrappedContent wrappedContent = (GhidraURLWrappedContent) obj;
+			Object content = null;
+			try {
+				content = wrappedContent.getContent(this);
+				if (!(content instanceof DomainFolder)) {
+					throw new IOException("Connect to repository folder failed");
+				}
+
+				DomainFolder folder = (DomainFolder) content;
+				project = new HeadlessProject(getProjectManager(), c);
+
+				if (!checkUpdateOptions()) {
+					return; // TODO: Should an exception be thrown?
+				}
+
+				if (options.runScriptsNoImport) {
+					processNoImport(folder.getPathname());
+				}
+				else {
+					processWithImport(folder.getPathname(), filesToImport);
+				}
+			}
+			catch (NotFoundException e) {
 				throw new IOException("Connect to repository folder failed");
 			}
-
-			DomainFolder folder = (DomainFolder) content;
-			project = new HeadlessProject(getProjectManager(), c);
-
-			if (!checkUpdateOptions()) {
-				return; // TODO: Should an exception be thrown?
+			finally {
+				if (content != null) {
+					wrappedContent.release(content, this);
+				}
+				if (project != null) {
+					project.close();
+				}
 			}
-
-			if (options.runScriptsNoImport) {
-				processNoImport(folder.getPathname());
-			}
-			else {
-				processWithImport(folder.getPathname(), filesToImport);
-			}
-		}
-		catch (NotFoundException e) {
-			throw new IOException("Connect to repository folder failed");
 		}
 		finally {
-			if (content != null) {
-				wrappedContent.release(content, this);
-			}
-			if (project != null) {
-				project.close();
-			}
+			GhidraScriptUtil.dispose();
 		}
 	}
 
@@ -394,53 +400,59 @@ public class HeadlessAnalyzer {
 			}
 		}
 
-		initializeScriptPaths();
-		compileScripts();
-
-		Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
-
-		File dir = new File(projectLocation);
-		ProjectLocator locator = new ProjectLocator(dir.getAbsolutePath(), projectName);
-
-		if (locator.getProjectDir().exists()) {
-			project = openProject(locator);
-		}
-		else {
-			if (options.runScriptsNoImport) {
-				Msg.error(this, "Could not find project: " + locator +
-					" -- should already exist in -process mode.");
-				throw new IOException("Could not find project: " + locator);
-			}
-
-			if (!options.runScriptsNoImport && options.readOnly) {
-				// assume temporary when importing with readOnly option
-				options.deleteProject = true;
-			}
-
-			Msg.info(this,
-				"Creating " + (options.deleteProject ? "temporary " : "") + "project: " + locator);
-			project = getProjectManager().createProject(locator, null, false);
-		}
-
+		GhidraScriptUtil.initialize(new BundleHost(), options.scriptPaths);
 		try {
+			initializeScriptPaths();
+			compileScripts();
 
-			if (!checkUpdateOptions()) {
-				return; // TODO: Should an exception be thrown?
-			}
+			Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
 
-			if (options.runScriptsNoImport) {
-				processNoImport(rootFolderPath);
+			File dir = new File(projectLocation);
+			ProjectLocator locator = new ProjectLocator(dir.getAbsolutePath(), projectName);
+
+			if (locator.getProjectDir().exists()) {
+				project = openProject(locator);
 			}
 			else {
-				processWithImport(rootFolderPath, filesToImport);
+				if (options.runScriptsNoImport) {
+					Msg.error(this, "Could not find project: " + locator +
+						" -- should already exist in -process mode.");
+					throw new IOException("Could not find project: " + locator);
+				}
+
+				if (!options.runScriptsNoImport && options.readOnly) {
+					// assume temporary when importing with readOnly option
+					options.deleteProject = true;
+				}
+
+				Msg.info(this, "Creating " + (options.deleteProject ? "temporary " : "") +
+					"project: " + locator);
+				project = getProjectManager().createProject(locator, null, false);
+			}
+
+			try {
+
+				if (!checkUpdateOptions()) {
+					return; // TODO: Should an exception be thrown?
+				}
+
+				if (options.runScriptsNoImport) {
+					processNoImport(rootFolderPath);
+				}
+				else {
+					processWithImport(rootFolderPath, filesToImport);
+				}
+			}
+			finally {
+				project.close();
+				if (!options.runScriptsNoImport && options.deleteProject) {
+					FileUtilities.deleteDir(locator.getProjectDir());
+					locator.getMarkerFile().delete();
+				}
 			}
 		}
 		finally {
-			project.close();
-			if (!options.runScriptsNoImport && options.deleteProject) {
-				FileUtilities.deleteDir(locator.getProjectDir());
-				locator.getMarkerFile().delete();
-			}
+			GhidraScriptUtil.dispose();
 		}
 	}
 
@@ -660,8 +672,6 @@ public class HeadlessAnalyzer {
 	 * Gather paths where scripts may be found.
 	 */
 	private void initializeScriptPaths() {
-		GhidraScriptUtil.initialize(new BundleHost(), options.scriptPaths);
-
 		StringBuffer buf = new StringBuffer("HEADLESS Script Paths:");
 		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {
 			buf.append("\n    ");

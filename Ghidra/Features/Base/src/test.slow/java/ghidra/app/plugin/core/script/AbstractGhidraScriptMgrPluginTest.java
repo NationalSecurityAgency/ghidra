@@ -87,8 +87,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	@Before
 	public void setUp() throws Exception {
-		System.err.printf("===== Starting %s ======\n", testName.getMethodName());
-
 		setErrorGUIEnabled(false);
 
 		// change the eclipse port so that Eclipse doesn't try to edit the script when
