@@ -109,7 +109,7 @@ class GhidraScriptActionManager {
 	void restoreScriptsThatAreInTool(SaveState saveState) {
 		String[] array = saveState.getStrings(SCRIPT_ACTIONS_KEY, new String[0]);
 		for (String filename : array) {
-			ScriptInfo info = infoManager.findScriptByName(filename);
+			ScriptInfo info = infoManager.findScriptInfoByName(filename);
 			if (info != null) { // the file may have been deleted from disk
 				provider.getActionManager().createAction(info.getSourceFile());
 			}

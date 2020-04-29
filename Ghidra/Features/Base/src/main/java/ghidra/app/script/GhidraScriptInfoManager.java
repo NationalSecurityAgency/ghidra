@@ -168,26 +168,21 @@ public class GhidraScriptInfoManager {
 	 * limitation that all script names in Ghidra must be unique.  If the given name has multiple
 	 * script matches, then a warning will be logged.
 	 * 
-	 * @param name The name for which to find a script
+	 * @param scriptName The name for which to find a script
 	 * @return The ScriptInfo that has the given name
 	 */
-	public ScriptInfo findScriptByName(String name) {
-		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(name);
+	public ScriptInfo findScriptInfoByName(String scriptName) {
+		List<ResourceFile> matchingFiles = scriptNameToFilesMap.get(scriptName);
 		if (matchingFiles != null && !matchingFiles.isEmpty()) {
 			ScriptInfo info = scriptFileToInfoMap.get(matchingFiles.get(0));
 			if (matchingFiles.size() > 1) {
 				Msg.warn(GhidraScriptInfoManager.class, "Found duplicate scripts for name: " +
-					name + ".  Binding to script: " + info.getSourceFile());
+					scriptName + ".  Binding to script: " + info.getSourceFile());
 			}
 			return info;
 		}
 
-		ResourceFile file = GhidraScriptUtil.findScriptFileInPaths(
-			GhidraScriptUtil.getBundleHost().getBundlePaths(), name);
-		if (file == null) {
-			return null;
-		}
-
-		return getExistingScriptInfo(file); // this will cache the created info
+		// don't search in paths
+		return null;
 	}
 }
