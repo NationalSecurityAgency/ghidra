@@ -152,12 +152,16 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 		}
 		ULONGLONG lenArray = getLength( *pType );
 		ULONGLONG lenElem  = getLength( *pBaseType );
-		if (lenElem == 0) {//prevent divide by zero...
-			lenElem = lenArray;
+		ULONGLONG sz;
+		if (lenElem == 0) {
+			sz = 0;//prevent divide by zero...
+		}
+		else {
+			sz = lenArray / lenElem;
 		}
 		const size_t strLen = suffix.length() + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
 		std::vector<wchar_t> str(strLen);
-		swprintf_s(str.data(), strLen, L"%s[%I64d]", suffix.c_str(), lenArray / lenElem);
+		swprintf_s(str.data(), strLen, L"%s[%I64d]", suffix.c_str(), sz);
 		return printType(pBaseType, str.data());
 	} 
 
