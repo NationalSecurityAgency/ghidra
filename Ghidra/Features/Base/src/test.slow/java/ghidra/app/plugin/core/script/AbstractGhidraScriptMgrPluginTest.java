@@ -1039,7 +1039,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		waitForSwing();
 
 		int waitCount = 0;
-		while (!flag.ended && waitCount < 301) {
+		while (!flag.ended && waitCount < 401) {
 			try {
 				Thread.sleep(DEFAULT_WAIT_DELAY);
 			}
