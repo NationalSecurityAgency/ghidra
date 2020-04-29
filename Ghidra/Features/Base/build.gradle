@@ -27,7 +27,6 @@ dependencies {
 	compile project(':Help')
 
 	compile 'org.apache.felix:org.apache.felix.framework:6.0.3'
-	compile 'org.apache.felix:org.apache.felix.main:6.0.3'
 	compile 'com.github.rotty3000:phidias:0.3.7'
 	compile 'biz.aQute.bnd:biz.aQute.bndlib:5.0.0'
 	compile 'org.slf4j:slf4j-api:1.7.25'

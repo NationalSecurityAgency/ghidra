@@ -29,7 +29,6 @@ import java.util.stream.*;
 import org.apache.felix.framework.FrameworkFactory;
 import org.apache.felix.framework.util.FelixConstants;
 import org.apache.felix.framework.util.manifestparser.ManifestParser;
-import org.apache.felix.main.AutoProcessor;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.wiring.*;
@@ -334,7 +333,6 @@ public class BundleHost {
 			throw new OSGiException("initializing felix OSGi framework", e);
 		}
 		bc = felix.getBundleContext();
-		AutoProcessor.process(config, bc);
 
 		ServiceReference<LogReaderService> ref = bc.getServiceReference(LogReaderService.class);
 		if (ref != null) {
