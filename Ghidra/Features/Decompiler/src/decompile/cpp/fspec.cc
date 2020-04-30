@@ -553,7 +553,7 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,bool isinput,T
 	  spc = typefactory.getArch()->getDefaultDataSpace();
 	int4 pointersize = spc->getAddrSize();
 	int4 wordsize = spc->getWordSize();
-	Datatype *pointertp = typefactory.getTypePointerAbsolute(pointersize,proto[i],wordsize);
+	Datatype *pointertp = typefactory.getTypePointer(pointersize,proto[i],wordsize);
 	res.back().addr = assignAddress(pointertp,status);
 	res.back().type = pointertp;
 	res.back().flags = Varnode::indirectstorage;
@@ -1102,7 +1102,7 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,bool isinpu
       spc = typefactory.getArch()->getDefaultDataSpace();
     int4 pointersize = spc->getAddrSize();
     int4 wordsize = spc->getWordSize();
-    Datatype *pointertp = typefactory.getTypePointerAbsolute(pointersize, proto[0], wordsize);
+    Datatype *pointertp = typefactory.getTypePointer(pointersize, proto[0], wordsize);
     res.back().addr = assignAddress(pointertp,status);
     if (res.back().addr.isInvalid())
       throw ParamUnassignedError("Cannot assign return value as a pointer");

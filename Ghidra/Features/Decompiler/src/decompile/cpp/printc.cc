@@ -645,6 +645,13 @@ void PrintC::opPtradd(const PcodeOp *op)
 {
   bool printval = isSet(print_load_value|print_store_value);
   uint4 m = mods & ~(print_load_value|print_store_value);
+  if (!printval) {
+    TypePointer *tp = (TypePointer *)op->getIn(0)->getHigh()->getType();
+    if (tp->getMetatype() == TYPE_PTR) {
+      if (tp->getPtrTo()->getMetatype() == TYPE_ARRAY)
+	printval = true;
+    }
+  }
   if (printval)			// Use array notation if we need value
     pushOp(&subscript,op);
   else				// just a '+'

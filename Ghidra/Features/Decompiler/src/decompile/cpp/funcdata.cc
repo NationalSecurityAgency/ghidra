@@ -345,7 +345,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
 
   Symbol *sym = entry->getSymbol();
   Datatype *entrytype = sym->getType();
-  Datatype *ptrentrytype = glb->types->getTypePointer(sz,entrytype,spaceid->getWordSize());
+  Datatype *ptrentrytype = glb->types->getTypePointerStripArray(sz,entrytype,spaceid->getWordSize());
   bool typelock = sym->isTypeLocked();
   if (typelock && (entrytype->getMetatype() == TYPE_UNKNOWN))
     typelock = false;

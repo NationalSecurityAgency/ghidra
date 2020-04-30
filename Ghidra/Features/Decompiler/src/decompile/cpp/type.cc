@@ -1799,22 +1799,18 @@ TypeCode *TypeFactory::getTypeCode(const string &nm)
   return (TypeCode *) findAdd(tmp);
 }
 
-/// This creates a pointer to a given data-type.  It doesn't allow
-/// a "pointer to array" to be created however and will drill-down to
-/// the first non-array data-type
+/// This creates a pointer to a given data-type.  If the given data-type is
+/// an array, the TYPE_ARRAY property is stripped off, and a pointer to
+/// the array element data-type is returned.
 /// \param s is the size of the pointer
 /// \param pt is the pointed-to data-type
 /// \param ws is the wordsize associated with the pointer
 /// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
+TypePointer *TypeFactory::getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws)
 
-{				// Create pointer to type -pt-
-  if (pt->getMetatype() == TYPE_ARRAY) {
-    // Do no allow pointers to array
-    do {
-      pt = ((TypeArray *)pt)->getBase();
-    } while(pt->getMetatype() == TYPE_ARRAY);
-  }
+{
+  if (pt->getMetatype() == TYPE_ARRAY)
+    pt = ((TypeArray *)pt)->getBase();		// Strip the first ARRAY type
   TypePointer tmp(s,pt,ws);
   return (TypePointer *) findAdd(tmp);
 }
@@ -1824,7 +1820,7 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
 /// \param pt is the pointed-to data-type
 /// \param ws is the wordsize associated with the pointer
 /// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointerAbsolute(int4 s,Datatype *pt,uint4 ws)
+TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
 
 {
   TypePointer tmp(s,pt,ws);
@@ -1946,7 +1942,7 @@ Datatype *TypeFactory::downChain(Datatype *ptrtype,uintb &off)
   pt = pt->getSubType(off,&off);
   if (pt == (Datatype *)0)
     return (Datatype *)0;
-  return getTypePointer(ptype->size,pt,ptype->getWordSize());
+  return getTypePointerStripArray(ptype->size,pt,ptype->getWordSize());
 }
 
 /// The data-type propagation system can push around data-types that are \e partial or are

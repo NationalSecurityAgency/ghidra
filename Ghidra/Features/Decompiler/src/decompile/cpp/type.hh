@@ -430,8 +430,8 @@ public:
   Datatype *getBase(int4 s,type_metatype m);			///< Get atomic type
   Datatype *getBase(int4 s,type_metatype m,const string &n);	///< Get named atomic type
   TypeCode *getTypeCode(void);					///< Get an "anonymous" function data-type
-  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type
-  TypePointer *getTypePointerAbsolute(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
+  TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type, stripping an ARRAY level
+  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
   TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure

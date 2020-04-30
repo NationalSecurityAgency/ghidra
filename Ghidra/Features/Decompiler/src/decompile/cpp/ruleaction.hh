@@ -50,7 +50,7 @@ class AddTreeState {
   uintb offset;			///< Number of bytes we dig into the base data-type
   uintb correct;		///< Number of bytes being double counted
   vector<Varnode *> multiple;	///< Varnodes which are multiples of size
-  vector<uintb> coeff;		///< Associated constant multiple
+  vector<intb> coeff;		///< Associated constant multiple
   vector<Varnode *> nonmult;	///< Varnodes which are not multiples
   PcodeOp *distributeOp;	///< A CPUI_INT_MULT op that needs to be distributed
   uintb multsum;		///< Sum of multiple constants

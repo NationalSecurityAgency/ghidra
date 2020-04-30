@@ -5652,7 +5652,7 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uintb treeCoeff)
 {
   Varnode *vnconst = op->getIn(1);
   Varnode *vnterm = op->getIn(0);
-  uintb val,rem;
+  uintb val;
 
   if (vnterm->isFree()) {
     valid = false;
@@ -5660,13 +5660,9 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uintb treeCoeff)
   }
   if (vnconst->isConstant()) {
     val = (vnconst->getOffset() * treeCoeff) & ptrmask;
-    if (size == 0)
-      rem = val;
-    else {
-      intb sval = (intb) val;
-      sign_extend(sval, vn->getSize() * 8 - 1);
-      rem = sval % size;
-    }
+    intb sval = (intb) val;
+    sign_extend(sval, vn->getSize() * 8 - 1);
+    intb rem = (size == 0) ? sval : sval % size;
     if (rem != 0) {
       if ((val > size) && (size != 0)) {
 	valid = false; // Size is too big: pointer type must be wrong
@@ -5685,7 +5681,7 @@ bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uintb treeCoeff)
       if (treeCoeff != 1)
 	isDistributeUsed = true;
       multiple.push_back(vnterm);
-      coeff.push_back(val);
+      coeff.push_back(sval);
       return false;
     }
   }
@@ -5701,7 +5697,6 @@ bool AddTreeState::checkTerm(Varnode *vn,uintb treeCoeff)
 
 {
   uintb val;
-  intb rem;
   PcodeOp *def;
 
   if (vn == ptr) return false;
@@ -5709,13 +5704,9 @@ bool AddTreeState::checkTerm(Varnode *vn,uintb treeCoeff)
     if (treeCoeff != 1)
       isDistributeUsed = true;
     val = vn->getOffset() * treeCoeff;
-    if (size == 0)
-      rem = val;
-    else {
-      intb sval = (intb)val;
-      sign_extend(sval,vn->getSize()*8-1);
-      rem = sval % size;
-    }
+    intb sval = (intb)val;
+    sign_extend(sval,vn->getSize()*8-1);
+    intb rem = (size == 0) ? sval : (sval % size);
     if (rem!=0) {		// constant is not multiple of size
       nonmultsum += val;
       return true;
@@ -5851,7 +5842,7 @@ Varnode *AddTreeState::buildMultiples(void)
   else
     resNode= data.newConstant(ptrsize,constCoeff);
   for(int4 i=0;i<multiple.size();++i) {
-    uintb finalCoeff = (size==0) ? (uintb)0 : coeff[i] / size;
+    uintb finalCoeff = (size==0) ? (uintb)0 : (coeff[i] / size) & ptrmask;
     Varnode *vn = multiple[i];
     if (finalCoeff != 1) {
       PcodeOp *op = data.newOpBefore(baseOp,CPUI_INT_MULT,vn,data.newConstant(ptrsize,finalCoeff));

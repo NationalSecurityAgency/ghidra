@@ -654,7 +654,7 @@ Datatype *PointerModifier::modType(Datatype *base,const TypeDeclarator *decl,Arc
 {
   int4 addrsize = glb->getDefaultDataSpace()->getAddrSize();
   Datatype *restype;
-  restype = glb->types->getTypePointerAbsolute(addrsize,base,glb->getDefaultDataSpace()->getWordSize());
+  restype = glb->types->getTypePointer(addrsize,base,glb->getDefaultDataSpace()->getWordSize());
   return restype;
 }
 
