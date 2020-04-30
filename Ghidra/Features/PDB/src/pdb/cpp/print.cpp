@@ -154,7 +154,7 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 		ULONGLONG lenElem  = getLength( *pBaseType );
 		ULONGLONG sz;
 		if (lenElem == 0) {
-			sz = 0;//prevent divide by zero...
+			sz = 1;//prevent divide by zero...
 		}
 		else {
 			sz = lenArray / lenElem;
