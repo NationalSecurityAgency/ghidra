@@ -68,7 +68,7 @@ public class WrappingTaskMonitor implements TaskMonitor {
 			delegate.removeCancelledListener(l);
 		}
 
-		newDelegate.setMaximum(delegate.getMaximum());
+		newDelegate.initialize(delegate.getMaximum());
 		newDelegate.setProgress(delegate.getProgress());
 		newDelegate.setMessage(delegate.getMessage());
 		newDelegate.setIndeterminate(delegate.isIndeterminate());
