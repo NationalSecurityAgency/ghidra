@@ -5626,7 +5626,8 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   ct = (const TypePointer *)ptr->getType();
   ptrsize = ptr->getSize();
   ptrmask = calc_mask(ptrsize);
-  size = AddrSpace::byteToAddressInt(ct->getPtrTo()->getSize(),ct->getWordSize());
+  baseType = ct->getPtrTo();
+  size = AddrSpace::byteToAddressInt(baseType->getSize(),ct->getWordSize());
   multsum = 0;		// Sums start out as zero
   nonmultsum = 0;
   correct = 0;
@@ -5701,16 +5702,21 @@ bool AddTreeState::checkTerm(Varnode *vn,uintb treeCoeff)
 
   if (vn == ptr) return false;
   if (vn->isConstant()) {
-    if (treeCoeff != 1)
-      isDistributeUsed = true;
     val = vn->getOffset() * treeCoeff;
     intb sval = (intb)val;
     sign_extend(sval,vn->getSize()*8-1);
     intb rem = (size == 0) ? sval : (sval % size);
     if (rem!=0) {		// constant is not multiple of size
+      if (treeCoeff != 1) {
+	// An offset "into" the base data-type makes little sense unless is has subcomponents
+	if (baseType->getMetatype() == TYPE_ARRAY || baseType->getMetatype() == TYPE_STRUCT)
+	  isDistributeUsed = true;
+      }
       nonmultsum += val;
       return true;
     }
+    if (treeCoeff != 1)
+      isDistributeUsed = true;
     multsum += val;		// Add multiples of size into multsum
     return false;
   }
@@ -5786,11 +5792,11 @@ void AddTreeState::calcSubtype(void)
     }
     isSubtype = false;		// There are no offsets INTO the pointer
   }
-  else if (ct->getPtrTo()->getMetatype() == TYPE_SPACEBASE) {
+  else if (baseType->getMetatype() == TYPE_SPACEBASE) {
     uintb nonmultbytes = AddrSpace::addressToByte(nonmultsum,ct->getWordSize()); // Convert to bytes
     uintb extra;
     // Get offset into mapped variable
-    if (ct->getPtrTo()->getSubType(nonmultbytes, &extra) == (Datatype*)0) {
+    if (baseType->getSubType(nonmultbytes, &extra) == (Datatype*)0) {
       valid = false;		// Cannot find mapped variable but nonmult is non-empty
       return;
     }
@@ -5798,12 +5804,12 @@ void AddTreeState::calcSubtype(void)
     offset = (nonmultsum - extra) & ptrmask;
     isSubtype = true;
   }
-  else if (ct->getPtrTo()->getMetatype() == TYPE_STRUCT) {
+  else if (baseType->getMetatype() == TYPE_STRUCT) {
     uintb nonmultbytes = AddrSpace::addressToByte(nonmultsum,ct->getWordSize()); // Convert to bytes
     uintb extra;
     // Get offset into field in structure
-    if (ct->getPtrTo()->getSubType(nonmultbytes, &extra) == (Datatype*) 0) {
-      if (nonmultbytes >= ct->getPtrTo()->getSize()) {
+    if (baseType->getSubType(nonmultbytes, &extra) == (Datatype*) 0) {
+      if (nonmultbytes >= size) {
 	valid = false; // Out of structure's bounds
 	return;
       }
@@ -5813,7 +5819,7 @@ void AddTreeState::calcSubtype(void)
     offset = (nonmultsum - extra) & ptrmask;
     isSubtype = true;
   }
-  else if (ct->getPtrTo()->getMetatype() == TYPE_ARRAY) {
+  else if (baseType->getMetatype() == TYPE_ARRAY) {
     isSubtype = true;
     offset = 0;
   }

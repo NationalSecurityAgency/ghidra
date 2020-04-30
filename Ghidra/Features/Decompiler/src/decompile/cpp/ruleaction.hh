@@ -44,6 +44,7 @@ class AddTreeState {
   PcodeOp *baseOp;		///< Base of the ADD tree
   Varnode *ptr;			///< The pointer varnode
   const TypePointer *ct;	///< The pointer data-type
+  const Datatype *baseType;	///< The base data-type being pointed at
   int4 ptrsize;			///< Size of the pointer
   int4 size;			///< Size of data-type being pointed to
   uintb ptrmask;		///< Mask for modulo calculations in ptr space
