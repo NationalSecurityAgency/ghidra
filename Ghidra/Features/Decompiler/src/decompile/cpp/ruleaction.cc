@@ -126,9 +126,9 @@ int4 RuleCollectTerms::applyOp(PcodeOp *op,Funcdata &data)
       vn2 = getMultCoeff(vn2,coef2);
       if (vn1 == vn2) {		// Terms that can be combined
 	if (order[i-1]->getMultiplier() != (PcodeOp *)0)
-	  return Funcdata::distributeIntMult(data,order[i-1]->getMultiplier()) ? 1 : 0;
+	  return data.distributeIntMultAdd(order[i-1]->getMultiplier()) ? 1 : 0;
 	if (order[i]->getMultiplier() != (PcodeOp *)0)
-	  return Funcdata::distributeIntMult(data,order[i]->getMultiplier()) ? 1 : 0;
+	  return data.distributeIntMultAdd(order[i]->getMultiplier()) ? 1 : 0;
 	coef1 = (coef1 + coef2) & calc_mask(vn1->getSize()); // The new coefficient
 	Varnode *newcoeff = data.newConstant(vn1->getSize(),coef1);
 	Varnode *zerocoeff = data.newConstant(vn1->getSize(),0);
@@ -609,7 +609,7 @@ void RuleIntLessEqual::getOpList(vector<uint4> &oplist) const
 int4 RuleIntLessEqual::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  if (Funcdata::replaceLessequal(data,op))
+  if (data.replaceLessequal(op))
     return 1;
   return 0;
 }
@@ -5917,10 +5917,13 @@ bool AddTreeState::apply(void)
   calcSubtype();
   if (!valid) return false;
   while(valid && distributeOp != (PcodeOp *)0) {
-    if (!Funcdata::distributeIntMult(data, distributeOp)) {
+    if (!data.distributeIntMultAdd(distributeOp)) {
       valid = false;
       break;
     }
+    // Collapse any z = (x * #c) * #d  expressions produced by the distribute
+    data.collapseIntMultMult(distributeOp->getIn(0));
+    data.collapseIntMultMult(distributeOp->getIn(1));
     clear();
     spanAddTree(baseOp,1);
     if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {

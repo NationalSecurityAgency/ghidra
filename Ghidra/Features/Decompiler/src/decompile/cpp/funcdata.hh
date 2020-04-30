@@ -507,8 +507,9 @@ public:
   void switchEdge(FlowBlock *inblock,BlockBasic *outbefore,FlowBlock *outafter);
   void spliceBlockBasic(BlockBasic *bl);	///< Merge the given basic block with the block it flows into
   void installSwitchDefaults(void);		///< Make sure default switch cases are properly labeled
-  static bool replaceLessequal(Funcdata &data,PcodeOp *op);	///< Replace INT_LESSEQUAL and INT_SLESSEQUAL expressions
-  static bool distributeIntMult(Funcdata &data,PcodeOp *op);	///< Distribute constant coefficient to additive input
+  bool replaceLessequal(PcodeOp *op);		///< Replace INT_LESSEQUAL and INT_SLESSEQUAL expressions
+  bool distributeIntMultAdd(PcodeOp *op);	///< Distribute constant coefficient to additive input
+  bool collapseIntMultMult(Varnode *vn);	///< Collapse constant coefficients for two chained CPUI_INT_MULT
   static bool compareCallspecs(const FuncCallSpecs *a,const FuncCallSpecs *b);
 
 #ifdef OPACTION_DEBUG

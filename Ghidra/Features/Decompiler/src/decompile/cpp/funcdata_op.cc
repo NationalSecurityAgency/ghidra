@@ -969,10 +969,9 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
 ///   - `c <= x`   with  `c-1 < x`   OR
 ///   - `x <= c`   with  `x < c+1`
 ///
-/// \param data is the function being analyzed
 /// \param op is comparison PcodeOp
 /// \return true if a valid replacement was performed
-bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
+bool Funcdata::replaceLessequal(PcodeOp *op)
 
 {
   Varnode *vn;
@@ -995,17 +994,17 @@ bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
   if (op->code() == CPUI_INT_SLESSEQUAL) {
     if ((val<0)&&(val+diff>0)) return false; // Check for sign overflow
     if ((val>0)&&(val+diff<0)) return false;
-    data.opSetOpcode(op,CPUI_INT_SLESS);
+    opSetOpcode(op,CPUI_INT_SLESS);
   }
   else {			// Check for unsigned overflow
     if ((diff==-1)&&(val==0)) return false;
     if ((diff==1)&&(val==-1)) return false;
-    data.opSetOpcode(op,CPUI_INT_LESS);
+    opSetOpcode(op,CPUI_INT_LESS);
   }
   uintb res = (val+diff) & calc_mask(vn->getSize());
-  Varnode *newvn = data.newConstant(vn->getSize(),res);
+  Varnode *newvn = newConstant(vn->getSize(),res);
   newvn->copySymbol(vn);	// Preserve data-type (and any Symbol info)
-  data.opSetInput(op,newvn,i);
+  opSetInput(op,newvn,i);
   return true;
 }
 
@@ -1013,10 +1012,9 @@ bool Funcdata::replaceLessequal(Funcdata &data,PcodeOp *op)
 /// in some situations we may need to distribute the coefficient before simplifying further.
 /// The given PcodeOp is a INT_MULT where the second input is a constant. We also
 /// know the first input is formed with INT_ADD. Distribute the coefficient to the INT_ADD inputs.
-/// \param data is the function being analyzed
 /// \param op is the given PcodeOp
-/// \return \b truee if the action was performed
-bool Funcdata::distributeIntMult(Funcdata &data,PcodeOp *op)
+/// \return \b true if the action was performed
+bool Funcdata::distributeIntMultAdd(PcodeOp *op)
 
 {
   Varnode *newvn0,*newvn1;
@@ -1031,37 +1029,70 @@ bool Funcdata::distributeIntMult(Funcdata &data,PcodeOp *op)
   if (vn0->isConstant()) {
     uintb val = coeff * vn0->getOffset();
     val &= calc_mask(size);
-    newvn0 = data.newConstant(size,val);
+    newvn0 = newConstant(size,val);
   }
   else {
-    PcodeOp *newop0 = data.newOp(2,op->getAddr());
-    data.opSetOpcode(newop0,CPUI_INT_MULT);
-    newvn0 = data.newUniqueOut(size,newop0);
-    data.opSetInput(newop0, vn0, 0); // To first input of original add
-    Varnode *newcvn = data.newConstant(size,coeff);
-    data.opSetInput(newop0, newcvn, 1);
-    data.opInsertBefore(newop0, op);
+    PcodeOp *newop0 = newOp(2,op->getAddr());
+    opSetOpcode(newop0,CPUI_INT_MULT);
+    newvn0 = newUniqueOut(size,newop0);
+    opSetInput(newop0, vn0, 0); // To first input of original add
+    Varnode *newcvn = newConstant(size,coeff);
+    opSetInput(newop0, newcvn, 1);
+    opInsertBefore(newop0, op);
   }
 
   if (vn1->isConstant()) {
     uintb val = coeff * vn1->getOffset();
     val &= calc_mask(size);
-    newvn1 = data.newConstant(size,val);
+    newvn1 = newConstant(size,val);
   }
   else {
-    PcodeOp *newop1 = data.newOp(2,op->getAddr());
-    data.opSetOpcode(newop1,CPUI_INT_MULT);
-    newvn1 = data.newUniqueOut(size,newop1);
-    data.opSetInput(newop1, vn1, 0); // To second input of original add
-    Varnode *newcvn = data.newConstant(size,coeff);
-    data.opSetInput(newop1, newcvn, 1);
-    data.opInsertBefore(newop1, op);
+    PcodeOp *newop1 = newOp(2,op->getAddr());
+    opSetOpcode(newop1,CPUI_INT_MULT);
+    newvn1 = newUniqueOut(size,newop1);
+    opSetInput(newop1, vn1, 0); // To second input of original add
+    Varnode *newcvn = newConstant(size,coeff);
+    opSetInput(newop1, newcvn, 1);
+    opInsertBefore(newop1, op);
   }
 
-  data.opSetInput( op, newvn0, 0); // new ADD's inputs are outputs of new MULTs
-  data.opSetInput( op, newvn1, 1);
-  data.opSetOpcode(op, CPUI_INT_ADD);
+  opSetInput( op, newvn0, 0); // new ADD's inputs are outputs of new MULTs
+  opSetInput( op, newvn1, 1);
+  opSetOpcode(op, CPUI_INT_ADD);
 
+  return true;
+}
+
+/// If:
+///   - The given Varnode is defined by a CPUI_INT_MULT.
+///   - The second input to the INT_MULT is a constant.
+///   - The first input is defined by another CPUI_INT_MULT,
+///   - This multiply is also by a constant.
+///
+/// The constants are combined and \b true is returned.
+/// Otherwise no change is made and \b false is returned.
+/// \param vn is the given Varnode
+/// \return \b true if a change was made
+bool Funcdata::collapseIntMultMult(Varnode *vn)
+
+{
+  if (!vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  if (op->code() != CPUI_INT_MULT) return false;
+  Varnode *constVnFirst = op->getIn(1);
+  if (!constVnFirst->isConstant()) return false;
+  if (!op->getIn(0)->isWritten()) return false;
+  PcodeOp *otherMultOp = op->getIn(0)->getDef();
+  if (otherMultOp->code() != CPUI_INT_MULT) return false;
+  Varnode *constVnSecond = otherMultOp->getIn(1);
+  if (!constVnSecond->isConstant()) return false;
+  Varnode *invn = otherMultOp->getIn(0);
+  if (invn->isFree()) return false;
+  int4 size = invn->getSize();
+  uintb val = (constVnFirst->getOffset() * constVnSecond->getOffset()) & calc_mask(size);
+  Varnode *newvn = newConstant(size,val);
+  opSetInput(op,newvn,1);
+  opSetInput(op,invn,0);
   return true;
 }
 
@@ -1162,7 +1193,7 @@ void opFlipInPlaceExecute(Funcdata &data,vector<PcodeOp *> &fliplist)
 	data.opSwapInput(op,0,1);
 
 	if ((opc == CPUI_INT_LESSEQUAL)||(opc == CPUI_INT_SLESSEQUAL))
-	  Funcdata::replaceLessequal(data,op);
+	  data.replaceLessequal(op);
       }
     }
   }
