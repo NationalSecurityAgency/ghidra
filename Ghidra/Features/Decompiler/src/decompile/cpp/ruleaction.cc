@@ -5928,9 +5928,16 @@ bool AddTreeState::apply(void)
       preventDistribution = true;
       spanAddTree(baseOp,1);
     }
+    calcSubtype();
   }
-  if (!valid)
-    throw LowlevelError("Problems distributing in ptrarith");
+  if (!valid) {
+    // Distribution transforms were made
+    ostringstream s;
+    s << "Problems distributing in pointer arithmetic at ";
+    baseOp->getAddr().printRaw(s);
+    data.warningHeader(s.str());
+    return true;
+  }
   buildTree();
   return true;
 }

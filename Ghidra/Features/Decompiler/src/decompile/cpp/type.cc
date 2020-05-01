@@ -1939,10 +1939,14 @@ Datatype *TypeFactory::downChain(Datatype *ptrtype,uintb &off)
   if (ptrtype->metatype != TYPE_PTR) return (Datatype *)0;
   TypePointer *ptype = (TypePointer *)ptrtype;
   Datatype *pt = ptype->ptrto;
+  // If we know we have exactly one of an array, strip the array to get pointer to element
+  bool doStrip = (pt->getMetatype() != TYPE_ARRAY);
   pt = pt->getSubType(off,&off);
   if (pt == (Datatype *)0)
     return (Datatype *)0;
-  return getTypePointerStripArray(ptype->size,pt,ptype->getWordSize());
+  if (doStrip)
+    return getTypePointerStripArray(ptype->size, pt, ptype->getWordSize());
+  return getTypePointer(ptype->size,pt,ptype->getWordSize());
 }
 
 /// The data-type propagation system can push around data-types that are \e partial or are
