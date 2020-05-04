@@ -46,7 +46,7 @@ void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr)
 	s << "   ";
       else
 	s << setfill('0') << setw(2) << hex << (uint4) buffer[start+i-addr] << ' ';
-      
+
     }
     s << "  ";
     for(i=0;i<16;++i)
@@ -104,7 +104,33 @@ Datatype *Datatype::getSubType(uintb off,uintb *newoff) const
   return (Datatype *)0;
 }
 
-/// Compare \b this with another data-type.
+/// Find the first component data-type after the given offset that is (or contains)
+/// an array, and pass back the difference between the component's start and the given offset.
+/// Return the component data-type or null if no array is found.
+/// \param off is the given offset into \b this data-type
+/// \param newoff is used to pass back the offset difference
+/// \param elSize is used to pass back the array element size
+/// \return the component data-type or null
+Datatype *Datatype::nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  return (TypeArray *)0;
+}
+
+/// Find the first component data-type before the given offset that is (or contains)
+/// an array, and pass back the difference between the component's start and the given offset.
+/// Return the component data-type or null if no array is found.
+/// \param off is the given offset into \b this data-type
+/// \param newoff is used to pass back the offset difference
+/// \param elSize is used to pass back the array element size
+/// \return the component data-type or null
+Datatype *Datatype::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  return (TypeArray *)0;
+}
+
+// Compare \b this with another data-type.
 /// 0 (equality) means the data-types are functionally equivalent (even if names differ)
 /// Smaller types come earlier. More specific types come earlier.
 /// \param op is the data-type to compare with \b this
@@ -561,7 +587,7 @@ void TypeArray::saveXml(ostream &s) const
   s << "<type";
   saveXmlBasic(s);
   a_v_i(s,"arraysize",arraysize);
-  s << '>'; 
+  s << '>';
   arrayof->saveXmlRef(s);
   s << "</type>";
 }
@@ -614,7 +640,7 @@ void TypeEnum::setNameMap(const map<uintb,string> &nmap)
     fieldisempty = true;
     while(curmask != lastmask) {	// Repeat until there is no change in the current mask
       lastmask = curmask;		// Note changes from last time through
-      
+
       for(iter=namemap.begin();iter!=namemap.end();++iter) { // For every named enumeration value
 	uintb val = (*iter).first;
 	if ((val & curmask) != 0) {	// If the value shares ANY bits in common with the current mask
@@ -628,7 +654,7 @@ void TypeEnum::setNameMap(const map<uintb,string> &nmap)
       int4 msb = mostsigbit_set(curmask);
       if (msb > curmaxbit)
 	curmaxbit = msb;
-      
+
       uintb mask1 = 1;
       mask1 = (mask1 << lsb) - 1;     // every bit below lsb is set to 1
       uintb mask2 = 1;
@@ -791,7 +817,7 @@ void TypeStruct::setFields(const vector<TypeField> &fd)
 /// \return the index into the field list or -1
 int4 TypeStruct::getFieldIter(int4 off) const
 
-{				// Find subfield of given offset
+{
   int4 min = 0;
   int4 max = field.size()-1;
 
@@ -806,6 +832,30 @@ int4 TypeStruct::getFieldIter(int4 off) const
       min = mid + 1;
     }
   }
+  return -1;
+}
+
+/// The field returned may or may not contain the offset.  If there are no fields
+/// that occur earlier than the offset, return -1.
+/// \param off is the given offset
+/// \return the index of the nearest field or -1
+int4 TypeStruct::getLowerBoundField(int4 off) const
+
+{
+  if (field.empty()) return -1;
+  int4 min = 0;
+  int4 max = field.size()-1;
+
+  while(min < max) {
+    int4 mid = (min + max + 1)/2;
+    if (field[mid].offset > off)
+      max = mid - 1;
+    else {			// curfield.offset <= off
+      min = mid;
+    }
+  }
+  if (min == max && field[min].offset <= off)
+    return min;
   return -1;
 }
 
@@ -835,12 +885,67 @@ Datatype *TypeStruct::getSubType(uintb off,uintb *newoff) const
 
 {				// Go down one level to field that contains offset
   int4 i;
-  
+
   i = getFieldIter(off);
   if (i < 0) return Datatype::getSubType(off,newoff);
   const TypeField &curfield( field[i] );
   *newoff = off - curfield.offset;
   return curfield.type;
+}
+
+Datatype *TypeStruct::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  int4 i = getLowerBoundField(off);
+  while(i >= 0) {
+    const TypeField &subfield( field[i] );
+    int4 diff = (int4)off - subfield.offset;
+    if (diff > 128) break;
+    Datatype *subtype = subfield.type;
+    if (subtype->getMetatype() == TYPE_ARRAY) {
+      *newoff = (intb)diff;
+      *elSize = ((TypeArray *)subtype)->getBase()->getSize();
+      return subtype;
+    }
+    else {
+      uintb suboff;
+      Datatype *res = subtype->nearestArrayedComponentBackward(subtype->getSize(), &suboff, elSize);
+      if (res != (Datatype *)0) {
+	*newoff = (intb)diff;
+	return subtype;
+      }
+    }
+    i -= 1;
+  }
+  return (Datatype *)0;
+}
+
+Datatype *TypeStruct::nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  int4 i = getLowerBoundField(off);
+  i += 1;
+  while(i<field.size()) {
+    const TypeField &subfield( field[i] );
+    int4 diff = subfield.offset - off;
+    if (diff > 128) break;
+    Datatype *subtype = subfield.type;
+    if (subtype->getMetatype() == TYPE_ARRAY) {
+      *newoff = (intb)-diff;
+      *elSize = ((TypeArray *)subtype)->getBase()->getSize();
+      return subtype;
+    }
+    else {
+      uintb suboff;
+      Datatype *res = subtype->nearestArrayedComponentForward(0, &suboff, elSize);
+      if (res != (Datatype *)0) {
+	*newoff = (intb)-diff;
+	return subtype;
+      }
+    }
+    i += 1;
+  }
+  return (Datatype *)0;
 }
 
 int4 TypeStruct::compare(const Datatype &op,int4 level) const
@@ -1186,13 +1291,81 @@ Datatype *TypeSpacebase::getSubType(uintb off,uintb *newoff) const
   // Assume symbol being referenced is address tied so we use a null point of context
   // FIXME: A valid point of context may be necessary in the future
   smallest = scope->queryContainer(addr,1,nullPoint);
-  
+
   if (smallest == (SymbolEntry *)0) {
     *newoff = 0;
     return glb->types->getBase(1,TYPE_UNKNOWN);
   }
   *newoff = (addr.getOffset() - smallest->getAddr().getOffset()) + smallest->getOffset();
   return smallest->getSymbol()->getType();
+}
+
+Datatype *TypeSpacebase::nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  Scope *scope = getMap();
+  off = AddrSpace::byteToAddress(off, spaceid->getWordSize());	// Convert from byte offset to address unit
+  // It should always be the case that the given offset represents a full encoding of the
+  // pointer, so the point of context is unused and the size is given as -1
+  Address nullPoint;
+  uintb fullEncoding;
+  Address addr = glb->resolveConstant(spaceid, off, -1, nullPoint, fullEncoding);
+  SymbolEntry *smallest = scope->queryContainer(addr,1,nullPoint);
+  Address nextAddr;
+  Datatype *symbolType;
+  if (smallest == (SymbolEntry *)0 || smallest->getOffset() != 0)
+    nextAddr = addr + 32;
+  else {
+    symbolType = smallest->getSymbol()->getType();
+    if (symbolType->getMetatype() == TYPE_STRUCT) {
+      uintb structOff = addr.getOffset() - smallest->getAddr().getOffset();
+      uintb dummyOff;
+      Datatype *res = symbolType->nearestArrayedComponentForward(structOff, &dummyOff, elSize);
+      if (res != (Datatype *)0) {
+	*newoff = structOff;
+	return symbolType;
+      }
+    }
+    int4 size = AddrSpace::byteToAddressInt(smallest->getSize(), spaceid->getWordSize());
+    nextAddr = smallest->getAddr() + size;
+  }
+  if (nextAddr < addr)
+    return (Datatype *)0;		// Don't let the address wrap
+  smallest = scope->queryContainer(nextAddr,1,nullPoint);
+  if (smallest == (SymbolEntry *)0 || smallest->getOffset() != 0)
+    return (Datatype *)0;
+  symbolType = smallest->getSymbol()->getType();
+  *newoff = addr.getOffset() - smallest->getAddr().getOffset();
+  if (symbolType->getMetatype() == TYPE_ARRAY) {
+    *elSize = ((TypeArray *)symbolType)->getBase()->getSize();
+    return symbolType;
+  }
+  if (symbolType->getMetatype() == TYPE_STRUCT) {
+    uintb dummyOff;
+    Datatype *res = symbolType->nearestArrayedComponentForward(0, &dummyOff, elSize);
+    if (res != (Datatype *)0)
+      return symbolType;
+  }
+  return (Datatype *)0;
+}
+
+Datatype *TypeSpacebase::nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const
+
+{
+  Datatype *subType = getSubType(off, newoff);
+  if (subType == (Datatype *)0)
+    return (Datatype *)0;
+  if (subType->getMetatype() == TYPE_ARRAY) {
+    *elSize = ((TypeArray *)subType)->getBase()->getSize();
+    return subType;
+  }
+  if (subType->getMetatype() == TYPE_STRUCT) {
+    uintb dummyOff;
+    Datatype *res = subType->nearestArrayedComponentBackward(*newoff,&dummyOff,elSize);
+    if (res != (Datatype *)0)
+      return subType;
+  }
+  return (Datatype *)0;
 }
 
 int4 TypeSpacebase::compare(const Datatype &op,int4 level) const
@@ -1478,7 +1651,7 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
 
 {
   Datatype *newtype,*res;
-  
+
   if (ct.name.size()!=0) {	// If there is a name
     if (ct.id == 0)		// There must be an id
       throw LowlevelError("Datatype must have a valid id");
@@ -1509,7 +1682,7 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
     nametree.insert(newtype);
   return newtype;
 }
-  
+
 /// This routine renames a Datatype object and fixes up cross-referencing
 /// \param ct is the data-type to rename
 /// \param n is the new name

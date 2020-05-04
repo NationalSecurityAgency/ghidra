@@ -113,6 +113,8 @@ public:
   const string &getName(void) const { return name; }		///< Get the type name
   virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
   virtual Datatype *getSubType(uintb off,uintb *newoff) const; ///< Recover component data-type one-level down
+  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual int4 numDepend(void) const { return 0; }	///< Return number of component sub-types
   virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }	///< Return the i-th component sub-type
   virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
@@ -310,6 +312,7 @@ protected:
   vector<TypeField> field;			///< The list of fields
   void setFields(const vector<TypeField> &fd);	///< Establish fields for \b this
   int4 getFieldIter(int4 off) const;		///< Get index into field list
+  int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
@@ -318,6 +321,8 @@ public:
   vector<TypeField>::const_iterator endField(void) const { return field.end(); }	///< End of fields
   const TypeField *getField(int4 off,int4 sz,int4 *newoff) const;	///< Get field based on offset
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
@@ -376,6 +381,8 @@ public:
   Scope *getMap(void) const;	///< Get the symbol table indexed by \b this
   Address getAddress(uintb off,int4 sz,const Address &point) const;	///< Construct an Address given an offset
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeSpacebase(*this); }

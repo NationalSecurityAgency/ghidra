@@ -5639,6 +5639,93 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   distributeOp = (PcodeOp *)0;
 }
 
+/// Even if the current base data-type is not an array, the pointer expression may incorporate
+/// an array access for a sub component.  This manifests as a non-constant non-multiple terms in
+/// the tree.  If this term is itself defined by a CPUI_INT_MULT with a constant, the constant
+/// indicates a likely element size. Return a non-zero value, the likely element size, if there
+/// is evidence of a non-constant non-multiple term. Return zero otherwise.
+/// \return a non-zero value indicating likely element size, or zero
+uint4 AddTreeState::findArrayHint(void) const
+
+{
+  uint4 res = 0;
+  for(int4 i=0;i<nonmult.size();++i) {
+    Varnode *vn = nonmult[i];
+    if (vn->isConstant()) continue;
+    uint4 vncoeff = 1;
+    if (vn->isWritten()) {
+      PcodeOp *op = vn->getDef();
+      if (op->code() == CPUI_INT_MULT) {
+	Varnode *vnconst = op->getIn(1);
+	if (vnconst->isConstant()) {
+	  intb sval = vnconst->getOffset();
+	  sign_extend(sval,vnconst->getSize()*8-1);
+	  vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
+	}
+      }
+    }
+    if (vncoeff > res)
+      res = vncoeff;
+  }
+  return res;
+}
+
+/// \brief Given an offset into the base data-type and array hints find sub-component being referenced
+///
+/// An explicit offset should target a specific sub data-type,
+/// but array indexing may confuse things.  This method passes
+/// back the offset of the best matching component, searching among components
+/// that are \e nearby the given offset, preferring a matching array element size
+/// and a component start that is nearer to the offset.
+/// \param off is the given offset into the data-type
+/// \param arrayHint if non-zero indicates array access, where the value is the element size
+/// \param newoff is used to pass back the actual offset of the selected component
+/// \return \b true if a good component match was found
+bool AddTreeState::hasMatchingSubType(uintb off,uint4 arrayHint,uintb *newoff) const
+
+{
+  if (arrayHint == 0)
+    return (baseType->getSubType(off,newoff) != (Datatype *)0);
+
+  int4 elSizeBefore;
+  uintb offBefore;
+  Datatype *typeBefore = baseType->nearestArrayedComponentBackward(off, &offBefore, &elSizeBefore);
+  if (typeBefore != (Datatype *)0) {
+    if (arrayHint == 1 || elSizeBefore == arrayHint) {
+      int4 sizeAddr = AddrSpace::byteToAddressInt(typeBefore->getSize(),ct->getWordSize());
+      if (offBefore < sizeAddr) {
+	// If the offset is \e inside a component with a compatible array, return it.
+	*newoff = offBefore;
+	return true;
+      }
+    }
+  }
+  int4 elSizeAfter;
+  uintb offAfter;
+  Datatype *typeAfter = baseType->nearestArrayedComponentForward(off, &offAfter, &elSizeAfter);
+  if (typeBefore == (Datatype *)0 && typeAfter == (Datatype *)0)
+    return (baseType->getSubType(off,newoff) != (Datatype *)0);
+  if (typeBefore == (Datatype *)0) {
+    *newoff = offAfter;
+    return true;
+  }
+  if (typeAfter == (Datatype *)0) {
+    *newoff = offBefore;
+    return true;
+  }
+
+  uintb distBefore = offBefore;
+  uintb distAfter = -offAfter;
+  if (arrayHint != 1) {
+    if (elSizeBefore != arrayHint)
+      distBefore += 0x1000;
+    if (elSizeAfter != arrayHint)
+      distAfter += 0x1000;
+  }
+  *newoff = (distAfter < distBefore) ? offAfter : offBefore;
+  return true;
+}
+
 /// Examine a CPUI_INT_MULT element in the middle of the add tree. Determine if we treat
 /// the output simply as a leaf, or if the multiply needs to be distributed to an
 /// additive subtree.  If the Varnode is a leaf of the tree, return \b true if
@@ -5774,13 +5861,27 @@ void AddTreeState::calcSubtype(void)
 {
   nonmultsum &= ptrmask;	// Make sure we are modulo ptr's space
   multsum &= ptrmask;
-  if (size == 0)
+  if (size == 0 || nonmultsum < size)
     offset = nonmultsum;
   else {
+    // For a sum that falls completely outside the data-type, there is presumably some
+    // type of constant term added to an array index either at the current level or lower.
+    // If we knew here whether an array of the baseType was possible we could make a slightly
+    // better decision.
     intb snonmult = (intb)nonmultsum;
     sign_extend(snonmult,ptrsize*8-1);
     snonmult = snonmult % size;
-    offset = (snonmult < 0) ? (uintb)(snonmult + size) : (uintb)snonmult;
+    if (snonmult >= 0)
+      // We assume the sum is big enough it represents an array index at this level
+      offset = (uintb)snonmult;
+    else {
+      // For a negative sum, if the baseType is a structure and there is array hints,
+      // we assume the sum is an array index at a lower level
+      if (baseType->getMetatype() == TYPE_STRUCT && findArrayHint() != 0)
+	offset = nonmultsum;
+      else
+	offset = (uintb)(snonmult + size);
+    }
   }
   correct = nonmultsum - offset;
   nonmultsum = offset;
@@ -5795,8 +5896,9 @@ void AddTreeState::calcSubtype(void)
   else if (baseType->getMetatype() == TYPE_SPACEBASE) {
     uintb nonmultbytes = AddrSpace::addressToByte(nonmultsum,ct->getWordSize()); // Convert to bytes
     uintb extra;
+    uint4 arrayHint = findArrayHint();
     // Get offset into mapped variable
-    if (baseType->getSubType(nonmultbytes, &extra) == (Datatype*)0) {
+    if (!hasMatchingSubType(nonmultbytes, arrayHint, &extra)) {
       valid = false;		// Cannot find mapped variable but nonmult is non-empty
       return;
     }
@@ -5807,9 +5909,10 @@ void AddTreeState::calcSubtype(void)
   else if (baseType->getMetatype() == TYPE_STRUCT) {
     uintb nonmultbytes = AddrSpace::addressToByte(nonmultsum,ct->getWordSize()); // Convert to bytes
     uintb extra;
+    uint4 arrayHint = findArrayHint();
     // Get offset into field in structure
-    if (baseType->getSubType(nonmultbytes, &extra) == (Datatype*) 0) {
-      if (nonmultbytes >= size) {
+    if (!hasMatchingSubType(nonmultbytes, arrayHint, &extra)) {
+      if (nonmultbytes >= baseType->getSize()) {	// Compare as bytes! not address units
 	valid = false; // Out of structure's bounds
 	return;
       }

@@ -46,7 +46,7 @@ class AddTreeState {
   const TypePointer *ct;	///< The pointer data-type
   const Datatype *baseType;	///< The base data-type being pointed at
   int4 ptrsize;			///< Size of the pointer
-  int4 size;			///< Size of data-type being pointed to
+  int4 size;			///< Size of data-type being pointed to (in address units)
   uintb ptrmask;		///< Mask for modulo calculations in ptr space
   uintb offset;			///< Number of bytes we dig into the base data-type
   uintb correct;		///< Number of bytes being double counted
@@ -60,6 +60,8 @@ class AddTreeState {
   bool isDistributeUsed;	///< Are terms produced by distributing used
   bool isSubtype;		///< Is there a sub-type (using CPUI_PTRSUB)
   bool valid;			///< Set to \b true if the whole expression can be transformed
+  uint4 findArrayHint(void) const;	///< Look for evidence of an array in a sub-component
+  bool hasMatchingSubType(uintb off,uint4 arrayHint,uintb *newoff) const;
   bool checkMultTerm(Varnode *vn,PcodeOp *op, uintb treeCoeff);	///< Accumulate details of INT_MULT term and continue traversal if appropriate
   bool checkTerm(Varnode *vn, uintb treeCoeff);			///< Accumulate details of given term and continue tree traversal
   bool spanAddTree(PcodeOp *op, uintb treeCoeff);		///< Walk the given sub-tree accumulating details
