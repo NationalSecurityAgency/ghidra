@@ -323,8 +323,9 @@ void dumpFunctionLines( IDiaSymbol& symbol, IDiaSession& session )
 		DWORD end = 0;
 		pLine->get_lineNumberEnd( &end );
 
+		std::wstring escapedSourceFileName = escapeXmlEntities(std::wstring(sourceFileName.GetBSTR(), sourceFileName.length()));
 		printf("%S<line_number source_file=\"%ws\" start=\"%d\" end=\"%d\" addr=\"0x%x\" /> \n",
-					indent(12).c_str(), sourceFileName.GetBSTR(), start, end, addr);
+					indent(12).c_str(), escapedSourceFileName.c_str(), start, end, addr);
 	}
 }
 
@@ -401,7 +402,8 @@ void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
 		bstr_t name;
 		DWORD id = 0;
 		if( (pSourceFile->get_fileName( name.GetAddress() ) == S_OK) && (pSourceFile->get_uniqueId( &id ) == S_OK) ) {
-			printf("%S<source_file name=\"%ws\" id=\"0x%x\" /> \n", indent(12).c_str(), name.GetBSTR(), id);
+			std::wstring escapedName = escapeXmlEntities(std::wstring(name.GetBSTR(), name.length()));
+			printf("%S<source_file name=\"%ws\" id=\"0x%x\" /> \n", indent(12).c_str(), escapedName.c_str(), id);
 		}
 		pSourceFile = NULL;
 	}
