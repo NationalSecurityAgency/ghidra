@@ -411,6 +411,9 @@ public class SleighPreprocessor implements ExpressionEnvironment {
 
 	@Override
 	public void reportError(String msg) {
+		if (isInif()) {
+			return;
+		}
 		errorCount += 1;
 		Location location = new Location(file.getName(),lineno);
 		Msg.error(this, location + ": " + msg);
