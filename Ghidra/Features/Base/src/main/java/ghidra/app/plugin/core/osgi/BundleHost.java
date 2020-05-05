@@ -244,15 +244,15 @@ public class BundleHost {
 		return tmp.isEmpty();
 	}
 
-	class FelixLogger extends org.apache.felix.framework.Logger {
+	class FelixStderrLogger extends org.apache.felix.framework.Logger {
 		@Override
 		protected void doLog(int level, String msg, Throwable throwable) {
-			// plugin.printf("felixlogger: %s %s\n", msg, throwable);
+			System.err.printf("felixlogger: %s %s\n", msg, throwable);
 		}
 
 		@Override
-		protected void doLogOut(int level, String s, Throwable throwable) {
-			// plugin.printf("felixlogger: %s %s\n", s, throwable);
+		protected void doLogOut(int level, String msg, Throwable throwable) {
+			System.err.printf("felixlogger: %s %s\n", msg, throwable);
 		}
 
 		@SuppressWarnings("rawtypes")
@@ -260,7 +260,7 @@ public class BundleHost {
 		@Override
 		protected void doLog(final Bundle bundle, final ServiceReference sr, final int level,
 				final String msg, final Throwable throwable) {
-			// plugin.printf("felixlogger: %s %s %s\n", bundle, msg, throwable);
+			System.err.printf("felixlogger: %s %s %s\n", bundle, msg, throwable);
 		}
 
 	}
@@ -302,26 +302,27 @@ public class BundleHost {
 
 		Properties config = new Properties();
 
+		// allow multiple bundles w/ the same symbolic name -- location can distinguish
 		config.setProperty(Constants.FRAMEWORK_BSNVERSION, Constants.FRAMEWORK_BSNVERSION_MULTIPLE);
-		config.setProperty(Constants.FRAMEWORK_SYSTEMCAPABILITIES,
-			"osgi.ee; osgi.ee=\"JavaSE\";version:List=\"11\"");
+		// use the default, inferred from environment
+		// config.setProperty(Constants.FRAMEWORK_SYSTEMCAPABILITIES,"osgi.ee; osgi.ee=\"JavaSE\";version:List=\"...\"");
+
+		// compute and add everything in the class path.  extra packages have lower precedence than imports,
+		// so an Import-Package / @importpackage will override the "living off the land" default
 		config.setProperty(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, buildExtraPackages());
-		// extra packages have lower precedence than imports, so a Bundle-Import will
-		// prevent "living off the land"
 
-		config.setProperty("org.osgi.service.http.port", "8080");
-
+		// only clean on first startup, o/w keep our storage around
 		config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN,
 			Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
+
+		// setup the cache path
 		config.setProperty(Constants.FRAMEWORK_STORAGE, makeCacheDir());
 
-		// more properties available at:
-		// http://felix.apache.org/documentation/subprojects/apache-felix-service-component-runtime.html
-		config.setProperty("ds.showtrace", "true");
-		config.setProperty("ds.showerrors", "true");
-
-		config.put(FelixConstants.LOG_LEVEL_PROP, "999");// was 4
-		config.put(FelixConstants.LOG_LOGGER_PROP, new FelixLogger());
+		config.put(FelixConstants.LOG_LEVEL_PROP, "1");
+		if (DUMP_TO_STDERR) {
+			config.put(FelixConstants.LOG_LEVEL_PROP, "999");
+			config.put(FelixConstants.LOG_LOGGER_PROP, new FelixStderrLogger());
+		}
 
 		FrameworkFactory factory = new FrameworkFactory();
 		felix = factory.newFramework(config);
@@ -349,35 +350,31 @@ public class BundleHost {
 			// plugin.printf("no logreaderservice in felix!\n");
 		}
 
-		bc.addFrameworkListener(new FrameworkListener() {
-
-			@Override
-			public void frameworkEvent(FrameworkEvent event) {
-				if (DUMP_TO_STDERR) {
+		if (DUMP_TO_STDERR) {
+			bc.addFrameworkListener(new FrameworkListener() {
+				@Override
+				public void frameworkEvent(FrameworkEvent event) {
 					System.err.printf("%s %s\n", event.getBundle(), event);
 				}
-			}
-		});
+			});
+			bc.addServiceListener(new ServiceListener() {
+				@Override
+				public void serviceChanged(ServiceEvent event) {
 
-		bc.addServiceListener(new ServiceListener() {
-			@Override
-			public void serviceChanged(ServiceEvent event) {
+					String type = "?";
+					if (event.getType() == ServiceEvent.REGISTERED) {
+						type = "registered";
+					}
+					else if (event.getType() == ServiceEvent.UNREGISTERING) {
+						type = "unregistering";
+					}
 
-				String type = "?";
-				if (event.getType() == ServiceEvent.REGISTERED) {
-					type = "registered";
-				}
-				else if (event.getType() == ServiceEvent.UNREGISTERING) {
-					type = "unregistering";
-				}
-
-				if (DUMP_TO_STDERR) {
 					System.err.printf("%s %s from %s\n", event.getSource(), type,
 						event.getServiceReference().getBundle().getLocation());
-				}
 
-			}
-		});
+				}
+			});
+		}
 		bc.addBundleListener(new BundleListener() {
 			@Override
 			public void bundleChanged(BundleEvent event) {
