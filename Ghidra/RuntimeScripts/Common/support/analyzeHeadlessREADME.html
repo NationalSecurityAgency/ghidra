@@ -112,6 +112,8 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
         [[<a href="#import">-import [&lt;directory&gt;|&lt;file&gt;]+</a>] | [<a href="#process">-process [&lt;project_file&gt;]]</a>]
         [<a href="#preScript">-preScript &lt;ScriptName&gt;&nbsp;[&lt;arg&gt;]*</a>]
         [<a href="#postScript">-postScript &lt;ScriptName&gt;&nbsp[&lt;arg&gt;]*</a>]
+        [<a href="#initScript">-initScript &lt;ScriptName&gt;&nbsp[&lt;arg&gt;]*</a>]
+        [<a href="#cleanupScript">-cleanupScript &lt;ScriptName&gt;&nbsp[&lt;arg&gt;]*</a>]
         [<a href="#scriptPath">-scriptPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;</a>]
         [<a href="#propertiesPath">-propertiesPath &quot;&lt;path1&gt;[;&lt;path2&gt;...]&quot;</a>]
         [<a href="#scriptLog">-scriptlog &lt;path to script log file&gt;</a>]
@@ -306,6 +308,40 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     <br><br>
     This option must be repeated to specify additional scripts. See the <a href="#scripting">Scripting</a> 
     section for a description of advanced scripting capabilities.
+    </LI>
+
+    <br><br>
+    
+    <LI>
+    <a name="initScript"><typewriter>-initScript &lt;ScriptName.ext&gt;&nbsp[&lt;arg&gt;]*</typewriter>
+    </a><br>Identifies the name of a script that will execute before <b>ANY</b> programs are imported/analyzed, 
+    and an optional list of arguments to pass to the script. The script name must include its file 
+    extension (i.e., <typewriter>MyScript.java</typewriter>).
+    <br><br>
+    <B><I>This parameter expects the script name only; do not include the path to the script.</I></B> The
+    Headless Analyzer searches specific default locations for the named script, but additional script 
+    director(ies) may also be specified (see the <a href="#scriptPath"><typewriter>-scriptPath</typewriter>
+    </a> argument for more information).
+    <br><br>
+    This option must be repeated to specify additional scripts. See the <a href="#scripting">Scripting
+    </a> section for a description of advanced scripting capabilities.
+    </LI>
+
+    <br><br>
+    
+    <LI>
+    <a name="cleanupScript"><typewriter>-cleanupScript &lt;ScriptName.ext&gt;&nbsp[&lt;arg&gt;]*</typewriter>
+    </a><br>Identifies the name of a script that will execute after <b>ALL</b> programs are imported/analyzed, 
+    and an optional list of arguments to pass to the script. The script name must include its file 
+    extension (i.e., <typewriter>MyScript.java</typewriter>).
+    <br><br>
+    <B><I>This parameter expects the script name only; do not include the path to the script.</I></B> The
+    Headless Analyzer searches specific default locations for the named script, but additional script 
+    director(ies) may also be specified (see the <a href="#scriptPath"><typewriter>-scriptPath</typewriter>
+    </a> argument for more information).
+    <br><br>
+    This option must be repeated to specify additional scripts. See the <a href="#scripting">Scripting
+    </a> section for a description of advanced scripting capabilities.
     </LI>
 
     <br><br>

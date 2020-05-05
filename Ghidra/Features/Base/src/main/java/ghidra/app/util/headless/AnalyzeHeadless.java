@@ -149,8 +149,10 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		String keystorePath = null;
 		String serverUID = null;
 		boolean allowPasswordPrompt = false;
-		List<Pair<String, String[]>> preScripts = new LinkedList<>();
-		List<Pair<String, String[]>> postScripts = new LinkedList<>();
+		List<Pair<String, String[]>> preScripts = new ArrayList<>();
+		List<Pair<String, String[]>> postScripts = new ArrayList<>();
+		List<Pair<String, String[]>> initScripts = new ArrayList<>();
+		List<Pair<String, String[]>> cleanupScripts = new ArrayList<>();
 
 		for (int argi = startIndex; argi < args.length; argi++) {
 
@@ -198,6 +200,18 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 				String[] scriptArgs = getSubArguments(args, argi);
 				argi += scriptArgs.length;
 				postScripts.add(new Pair<>(scriptName, scriptArgs));
+			}
+			else if (checkArgument("-initscript", args, argi)) {
+				String scriptName = args[++argi];
+				String[] scriptArgs = getSubArguments(args, argi);
+				argi += scriptArgs.length;
+				initScripts.add(new Pair<>(scriptName, scriptArgs));
+			}
+			else if (checkArgument("-cleanupscript", args, argi)) {
+				String scriptName = args[++argi];
+				String[] scriptArgs = getSubArguments(args, argi);
+				argi += scriptArgs.length;
+				cleanupScripts.add(new Pair<>(scriptName, scriptArgs));
 			}
 			else if (checkArgument("-scriptPath", args, argi)) {
 				options.setScriptDirectories(args[++argi]);
@@ -314,9 +328,11 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			}
 		}
 
-		// Set up pre and post scripts
+		// Set up scripts
 		options.setPreScriptsWithArgs(preScripts);
 		options.setPostScriptsWithArgs(postScripts);
+		options.setInitScriptsWithArgs(initScripts);
+		options.setCleanupScriptsWithArgs(cleanupScripts);
 
 		// Set loader and loader args
 		options.setLoader(loaderName, loaderArgs);

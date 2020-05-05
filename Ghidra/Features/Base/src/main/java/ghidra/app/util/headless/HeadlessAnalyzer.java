@@ -325,12 +325,25 @@ public class HeadlessAnalyzer {
 				return; // TODO: Should an exception be thrown?
 			}
 
+			// Run init scripts
+			GhidraState scriptState = new GhidraState(null, project, null, null, null, null);
+			HeadlessContinuationOption scriptStatus = runScriptsList(options.initScripts,
+				options.initScriptFileMap, scriptState, HeadlessContinuationOption.CONTINUE);
+			if (scriptStatus == HeadlessContinuationOption.ABORT ||
+				scriptStatus == HeadlessContinuationOption.ABORT_AND_DELETE) {
+				return;
+			}
+
 			if (options.runScriptsNoImport) {
 				processNoImport(folder.getPathname());
 			}
 			else {
 				processWithImport(folder.getPathname(), filesToImport);
 			}
+
+			// Run cleanup scripts
+			runScriptsList(options.cleanupScripts, options.cleanupScriptFileMap, scriptState,
+				scriptStatus);
 		}
 		catch (NotFoundException e) {
 			throw new IOException("Connect to repository folder failed");
@@ -427,12 +440,25 @@ public class HeadlessAnalyzer {
 				return; // TODO: Should an exception be thrown?
 			}
 
+			// Run init scripts
+			GhidraState scriptState = new GhidraState(null, project, null, null, null, null);
+			HeadlessContinuationOption scriptStatus = runScriptsList(options.initScripts,
+				options.initScriptFileMap, scriptState, HeadlessContinuationOption.CONTINUE);
+			if (scriptStatus == HeadlessContinuationOption.ABORT ||
+				scriptStatus == HeadlessContinuationOption.ABORT_AND_DELETE) {
+				return;
+			}
+
 			if (options.runScriptsNoImport) {
 				processNoImport(rootFolderPath);
 			}
 			else {
 				processWithImport(rootFolderPath, filesToImport);
 			}
+
+			// Run cleanup scripts
+			runScriptsList(options.cleanupScripts, options.cleanupScriptFileMap, scriptState,
+				scriptStatus);
 		}
 		finally {
 			project.close();
@@ -820,9 +846,14 @@ public class HeadlessAnalyzer {
 		if (options.preScriptFileMap == null) {
 			options.preScriptFileMap = checkScriptsList(options.preScripts);
 		}
-
 		if (options.postScriptFileMap == null) {
 			options.postScriptFileMap = checkScriptsList(options.postScripts);
+		}
+		if (options.initScriptFileMap == null) {
+			options.initScriptFileMap = checkScriptsList(options.initScripts);
+		}
+		if (options.cleanupScriptFileMap == null) {
+			options.cleanupScriptFileMap = checkScriptsList(options.cleanupScripts);
 		}
 	}
 

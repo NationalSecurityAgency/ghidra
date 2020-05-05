@@ -50,6 +50,14 @@ public class HeadlessOptions {
 	List<Pair<String, String[]>> postScripts;
 	Map<String, ResourceFile> postScriptFileMap;
 
+	// -initScript
+	List<Pair<String, String[]>> initScripts;
+	Map<String, ResourceFile> initScriptFileMap;
+
+	// -cleanupScript
+	List<Pair<String, String[]>> cleanupScripts;
+	Map<String, ResourceFile> cleanupScriptFileMap;
+
 	// -scriptPath
 	List<String> scriptPaths;
 
@@ -224,6 +232,26 @@ public class HeadlessOptions {
 	public void setPostScriptsWithArgs(List<Pair<String, String[]>> postScripts) {
 		this.postScripts = postScripts;
 		this.postScriptFileMap = null;
+	}
+
+	/**
+	 * Set the ordered list of scripts to execute prior to the import/analysis of ANY programs.
+	 * 
+	 * @param initScripts list of script names/script argument pairs
+	 */
+	public void setInitScriptsWithArgs(List<Pair<String, String[]>> initScripts) {
+		this.initScripts = initScripts;
+		this.initScriptFileMap = null;
+	}
+
+	/**
+	 * Set the ordered list of scripts to execute after ALL programs have been imported/analyzed.
+	 * 
+	 * @param cleanupScripts list of script names/script argument pairs
+	 */
+	public void setCleanupScriptsWithArgs(List<Pair<String, String[]>> cleanupScripts) {
+		this.cleanupScripts = cleanupScripts;
+		this.cleanupScriptFileMap = null;
 	}
 
 	/**
