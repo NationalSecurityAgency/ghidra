@@ -261,22 +261,6 @@ public class SleighLanguage implements Language {
 	}
 
 	@Override
-	public List<AddressLabelInfo> getDefaultLabels() {
-		ArrayList<AddressLabelInfo> list = new ArrayList<>();
-
-		Register regs[] = getRegisters();
-		for (Register reg : regs) {
-			if (reg.getAddressSpace().isMemorySpace()) {
-				AddressLabelInfo entry = new AddressLabelInfo(reg.getAddress(), reg.getName(), true,
-					SourceType.IMPORTED);
-				list.add(entry);
-			}
-		}
-		list.addAll(getDefaultSymbols());
-		return list;
-	}
-
-	@Override
 	public MemoryBlockDefinition[] getDefaultMemoryBlocks() {
 		return defaultMemoryBlocks;
 	}

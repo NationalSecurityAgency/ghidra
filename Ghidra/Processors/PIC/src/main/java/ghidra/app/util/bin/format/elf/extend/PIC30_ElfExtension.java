@@ -29,7 +29,61 @@ public class PIC30_ElfExtension extends ElfExtension {
 
 	public static final int EM_DSPIC30F = 118; /* Microchip Technology dsPIC30F DSC */
 
+	// ELF Header Flags (e_flags)
+	public static final int P30F = 1 << 0;
+	public static final int P30FSMPS = 1 << 1;
+	public static final int P33F = 1 << 2;
+	public static final int P24F = 1 << 3;
+	public static final int P24H = 1 << 4;
+	public static final int P24FK = 1 << 5;
+	public static final int P33E = 1 << 6;
+	public static final int P24E = 1 << 7;
+
+	// Section Header Flags (sh_flags)
+	public static final int SHF_MEMORY = (1 << 18); /* User-defined memory */
+	public static final int SHF_UNUSED = (1 << 19); /* Unused */
+	/* OS and processor-specific flags start at postion 20 */
+	public static final int SHF_SECURE = (1 << 20); /* Secure segment */
+	public static final int SHF_BOOT = (1 << 21); /* Boot segment */
+	public static final int SHF_DMA = (1 << 22); /* DMA memory */
+	public static final int SHF_NOLOAD = (1 << 23); /* Do not allocate or load */
+	public static final int SHF_NEAR = (1 << 24); /* Near memory */
+	public static final int SHF_PERSIST = (1 << 25); /* Persistent */
+	public static final int SHF_XMEM = (1 << 26); /* X Memory */
+	public static final int SHF_YMEM = (1 << 27); /* Y Memory */
 	public static final int SHF_PSV = (1 << 28); /* Constants in program memory */
+	public static final int SHF_EEDATA = (1 << 29); /* Data Flash memory */
+	public static final int SHF_ABSOLUTE = (1 << 30); /* Absolute address */
+	public static final int SHF_REVERSE = (1 << 31); /* Reverse aligned */
+
+	/**
+		NOTES:
+		
+			EDS/PSV Sections - section data resides with ROM space but is accessable via the
+			the RAM data space at 0x8000 - 0xFFFF with the use of page register.  Page use
+			may vary by CPU (EDS, PSV low-word access, PSV high-word access). PSV high-word
+			access capability is only provided when EDS is supported. See page registers
+			DSRPAG and DSWPAG.  Page registers must be non-zero when used.  Page boundary 
+			handling must be explicitly handled in code.  EDS memory may be directly 
+			accessed provided the page register as been 
+			
+			Three ways to access page memory:
+			
+			1. Direct access using DSRPAG/DSWPAGpage registers (PIC24E, dsPIC33E and dsPIC33C).
+			   With read/write page register set to non-zero value, offset 0..0x7FFF within
+			   the page may be directly accessed by first setting bit-15 of offset before
+			   performing a load or store to the range 0x8000..0xFFFF.
+			   
+			2. Table read/write instruction may be used by setting TBLPAG register and 
+			   performing operation with a table offset in the range 0..0x7FFF.
+			   
+			3. PSV direct access with PSVPAG register (PIC24F, PIC24H, dsPIC30F AND dsPIC33F).
+			   Set PSV bit of CORCONL register, set page in PSVPAG register (macro psvpage() used
+			   to obtain page from symbol). Access location with offset 0..0x7FFF (macro psvoffset() used
+			   to obtain offset from symbol).  Macro produces offset in the range 0x8000..0xFFFF.
+				
+	
+	**/
 
 	@Override
 	public boolean canHandle(ElfHeader elf) {
@@ -84,11 +138,30 @@ public class PIC30_ElfExtension extends ElfExtension {
 
 	private boolean isDataLoad(ElfSectionHeader section) {
 		if (!section.isAlloc()) {
-			return false;
+			return isDebugSection(section);
 		}
 		return !section.isExecutable();
 	}
-
+	
+	private boolean isDataLoad(MemoryLoadable loadable) {
+		if (loadable instanceof ElfSectionHeader) {
+			return isDataLoad((ElfSectionHeader)loadable);
+		}
+		return isDataLoad((ElfProgramHeader)loadable);
+	}
+	
+	private boolean isDebugSection(ElfSectionHeader section) {
+		String name = section.getNameAsString();
+		return name.startsWith(".debug_") || ".comment".equals(name);
+	}
+	
+	private boolean isDebugSection(MemoryLoadable loadable) {
+		if (loadable instanceof ElfSectionHeader) {
+			return isDebugSection((ElfSectionHeader)loadable);
+		}
+		return false;
+	}
+	
 	@Override
 	public long getAdjustedLoadSize(ElfProgramHeader elfProgramHeader) {
 		long fileSize = elfProgramHeader.getFileSize();
@@ -111,48 +184,60 @@ public class PIC30_ElfExtension extends ElfExtension {
 	public InputStream getFilteredLoadInputStream(ElfLoadHelper elfLoadHelper,
 			MemoryLoadable loadable, Address start, long dataLength, InputStream dataInput) {
 		Language language = elfLoadHelper.getProgram().getLanguage();
-		if (!language.getDefaultDataSpace().equals(start.getAddressSpace().getPhysicalSpace())) {
+		if (!isDataLoad(loadable) && !language.getDefaultDataSpace().equals(start.getAddressSpace().getPhysicalSpace())) {
 			return dataInput;
 		}
 
 		if (loadable instanceof ElfSectionHeader) {
 			ElfSectionHeader section = (ElfSectionHeader) loadable;
-			if ((section.getFlags() & SHF_PSV) != 0) {
+			if (!elfLoadHelper.getElfHeader().isRelocatable() && (section.getFlags() & SHF_PSV) != 0) {
 				// TODO: this is really mapped into ROM space where PT_LOAD was done to physical memory
 				// In the absence of suitable mapping, we will load into RAM space
 				return new PIC30FilteredPSVDataInputStream(dataInput);
 			}
 		}
+		else {
+			return new PIC30FilteredPSVDataInputStream(dataInput);
+		}
 
 		// Data space loading pads after every byte with Microchip toolchain 
 		// NOTE: this could vary and we may need to improve detection of this situation
 
-		return new PIC30FilteredDataInputStream(dataInput);
+		return new PIC30FilteredDataInputStream(dataInput, !isDebugSection(loadable));
 	}
 
 	@Override
 	public boolean hasFilteredLoadInputStream(ElfLoadHelper elfLoadHelper, MemoryLoadable loadable,
 			Address start) {
+		if (loadable == null) {
+			return false;
+		}
+		if (isDataLoad(loadable)) {
+			return true;
+		}
 		Language language = elfLoadHelper.getProgram().getLanguage();
 		return language.getDefaultDataSpace().equals(start.getAddressSpace().getPhysicalSpace());
 	}
-
+	
 	private static class PIC30FilteredDataInputStream extends FilterInputStream {
 
 		// BYTES:  <byte> <pad>
 
 		protected boolean padByteToggle;
 		protected long pos;
-
-		protected PIC30FilteredDataInputStream(InputStream in) {
+		
+		private final boolean checkPadding;
+		
+		protected PIC30FilteredDataInputStream(InputStream in, boolean checkPadding) {
 			super(in);
 			padByteToggle = false; // first byte is data not padding
+			this.checkPadding = checkPadding;
 		}
 
 		protected int readNextByte() throws IOException {
 			int r = in.read();
-			if (padByteToggle && r != 0) {
-				// expected padding
+			if (checkPadding && padByteToggle && r != 0) {
+				// expected padding - debug sections appear to be inconsistent with filler
 				throw new IOException("expected Data padding byte, pos=" + pos);
 			}
 			++pos;
@@ -204,7 +289,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 		private boolean firstByteToggle; // firstByte of data or pad 
 
 		protected PIC30FilteredPSVDataInputStream(InputStream in) {
-			super(in);
+			super(in, true);
 			firstByteToggle = true;
 		}
 

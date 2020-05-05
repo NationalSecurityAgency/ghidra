@@ -443,7 +443,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	}
 
 	private boolean isLanguageDefinedEntry(Program program, Address addr) {
-		List<AddressLabelInfo> labelList = program.getLanguage().getDefaultLabels();
+		List<AddressLabelInfo> labelList = program.getLanguage().getDefaultSymbols();
 		for (AddressLabelInfo info : labelList) {
 			if (addr.equals(info.getAddress())) {
 				return info.isEntry();
@@ -453,7 +453,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	}
 
 	private boolean isLanguageDefinedEntryPointer(Program program, Address addr) {
-		List<AddressLabelInfo> labelList = program.getLanguage().getDefaultLabels();
+		List<AddressLabelInfo> labelList = program.getLanguage().getDefaultSymbols();
 		for (AddressLabelInfo info : labelList) {
 			if (addr.equals(info.getAddress())) {
 				ProcessorSymbolType type = info.getProcessorSymbolType();

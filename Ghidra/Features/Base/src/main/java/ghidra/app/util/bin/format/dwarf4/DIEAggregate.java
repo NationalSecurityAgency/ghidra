@@ -865,7 +865,7 @@ public class DIEAggregate {
 
 			// if the DWARF attr was a DW_FORM_addr, it doesn't need fixing up
 			if (high.form == DWARFForm.DW_FORM_addr) {
-				return highVal.getUnsignedValue() + getProgram().getProgramBaseAddressFixup();
+				return highVal.getUnsignedValue() + getProgram().getProgramBaseAddressFixup() - 1;
 			}
 
 			// else it was a DW_FORM_data value and is relative to the lowPC value
