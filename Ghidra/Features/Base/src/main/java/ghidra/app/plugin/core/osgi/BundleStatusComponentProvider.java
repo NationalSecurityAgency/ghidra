@@ -37,6 +37,7 @@ import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -62,7 +63,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	static final String BUNDLE_LIST_GROUP = "1bundle list group";
 
 	public BundleStatusComponentProvider(PluginTool tool, String owner, BundleHost bundleHost) {
-		super(tool, "Bundle Status Component", owner);
+		super(tool, "BundleManager", owner);
+		setHelpLocation(new HelpLocation("BundleManager", "BundleManager"));
+		setTitle("Bundle Manager");
+
 		this.bundleHost = bundleHost;
 		this.bundleStatusTableModel = new BundleStatusTableModel(this, bundleHost);
 
@@ -119,10 +123,9 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		// to allow custom cell renderers
 		bundleStatusTable.setAutoCreateColumnsFromModel(false);
 
-		int skinnyWidth = 50;
-
 		TableColumn column;
 
+		int skinnyWidth = 60;
 		// 
 		column = bundleStatusTable.getColumnModel().getColumn(
 			bundleStatusTableModel.enabledColumn.index);

@@ -301,7 +301,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		pushNewBundle();
 		// @imports tag is only parsed from classes in default package
 		addClass(
-			"//@imports lib\n"
+			"//@importpackage lib\n"
 			,
 			"import lib.Library;\n"
 			,

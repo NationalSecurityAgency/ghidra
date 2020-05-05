@@ -353,7 +353,7 @@ class GhidraScriptActionManager {
 		refreshAction.setEnabled(true);
 		plugin.getTool().addLocalAction(provider, refreshAction);
 
-		bundleStatusAction = new DockingAction("Bundle Status", plugin.getName()) {
+		bundleStatusAction = new DockingAction("Script Directories", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				provider.showBundleStatusComponent();

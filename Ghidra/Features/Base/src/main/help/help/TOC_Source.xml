@@ -354,9 +354,10 @@
                 <tocdef id="Create a New Script" sortgroup="k" text="Create a New Script" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm#New" />
                 <tocdef id="Refresh Script List" sortgroup="l" text="Refresh Script List" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm#Refresh" />
                 <tocdef id="Add and Remove Script Directories" sortgroup="m" text="Add and Remove Script Directories" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm#Script_Directories" />
-                <tocdef id="Ghidra Script Development" sortgroup="n" text="Ghidra Script Development" target="help/topics/GhidraScriptMgrPlugin/ScriptDevelopment.htm" />
             </tocdef>
             <tocdef id="Console" sortgroup="e" text="Console" target="help/topics/ConsolePlugin/console.html" />
+            <tocdef id="Ghidra Script Development" sortgroup="f" text="Ghidra Script Development" target="help/topics/GhidraScriptMgrPlugin/ScriptDevelopment.htm" />
+            <tocdef id="Ghidra Bundles" sortgroup="g" text="Ghidra Bundles" target="help/topics/BundleManager/BundleManager.htm" />
         </tocdef>
         
         <tocdef id="Program Validator" 

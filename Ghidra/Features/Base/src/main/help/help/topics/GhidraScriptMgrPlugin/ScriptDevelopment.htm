@@ -48,7 +48,7 @@
       	This is highly recommended if you plan to do more than simple edits to scripts.</P>
     </BLOCKQUOTE>
 
-    <H2><A name="meta_data">Meta-data</H2>	
+    <H2><A name="meta_data" />Meta-data</H2>	
 	
     <BLOCKQUOTE>
       <P>The scripting framework supports special meta-data comments. This comment is treated
@@ -83,6 +83,28 @@
           <P>For example, <CODE>"@category categoryA.categoryB"</CODE>.<BR>
           </P>
         </BLOCKQUOTE>
+
+        <P><B><CODE>@importpackage</CODE></B></P>
+
+        <BLOCKQUOTE>
+          <P>This tag is a convenience for declaring <A href="../BundleManager/BundleManager.htm#dependency">bundle dependencies</A>.  The tag's
+          contents syntax is that of the <a href="https://osgi.org/specification/osgi.core/7.0.0/framework.module.html#framework.module.importpackage"><CODE>Import-Package</CODE> attribute</a>
+          in an OSGi bundle manifest.
+          </P>
+
+          <P>For example:</P>
+
+          <BLOCKQUOTE>
+            <P><TT>
+              @importpackage com.example.library<BR>
+              @importpackage org.apache.commons.collections.properties;version=4.4<BR>
+              @importpackage org.ghidra.analysis;version="[1.1,2)"<BR>
+              @importpackage com.example.library1,com.example.library2<BR>
+            </TT></P>
+          </BLOCKQUOTE>
+
+        </BLOCKQUOTE>
+
 
         <P><B><CODE>@keybinding</CODE></B></P>
 

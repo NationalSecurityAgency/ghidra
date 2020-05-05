@@ -142,7 +142,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	private String parseImps(ResourceFile javaSource) {
 		// XXX don't use @imports, use an annotation 
-		return GhidraScriptUtil.newScriptInfo(javaSource).getImports();
+		return GhidraScriptUtil.newScriptInfo(javaSource).getImportPackage();
 	}
 
 	/**

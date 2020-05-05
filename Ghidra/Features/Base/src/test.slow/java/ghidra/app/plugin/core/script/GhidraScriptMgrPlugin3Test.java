@@ -276,7 +276,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		// Tests that the user can add an additional script path directory and choose that one
 		// to use
 		//
-		DockingActionIf bundleStatusAction = getAction(plugin, "Bundle Status");
+		DockingActionIf bundleStatusAction = getAction(plugin, "Script Directories");
 		performAction(bundleStatusAction, false);
 		waitForSwing();
 

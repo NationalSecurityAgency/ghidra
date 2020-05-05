@@ -45,14 +45,14 @@ public class ScriptInfo {
 	 */
 	public static final String DELIMITTER = ".";
 
-	public static final String AT_AUTHOR = "@author";
-	public static final String AT_CATEGORY = "@category";
-	public static final String AT_KEYBINDING = "@keybinding";
-	public static final String AT_MENUPATH = "@menupath";
-	public static final String AT_TOOLBAR = "@toolbar";
+	static final String AT_AUTHOR = "@author";
+	static final String AT_CATEGORY = "@category";
+	static final String AT_KEYBINDING = "@keybinding";
+	static final String AT_MENUPATH = "@menupath";
+	static final String AT_TOOLBAR = "@toolbar";
 
 	// omit from METADATA to avoid pre-populating in new scripts
-	public static final String AT_IMPORTS = "@imports";
+	private static final String AT_IMPORTPACKAGE = "@importpackage";
 
 	public static final String[] METADATA =
 		{ AT_AUTHOR, AT_CATEGORY, AT_KEYBINDING, AT_MENUPATH, AT_TOOLBAR, };
@@ -71,7 +71,7 @@ public class ScriptInfo {
 	private String[] menupath = new String[0];
 	private String toolbar;
 	private ImageIcon toolbarImage;
-	private String imports;
+	private String importpackage;
 
 	/**
 	 * Constructs a new script.
@@ -96,7 +96,7 @@ public class ScriptInfo {
 		menupath = new String[0];
 		toolbar = null;
 		toolbarImage = null;
-		imports = null;
+		importpackage = null;
 		keybindingErrorMessage = null;
 	}
 
@@ -277,8 +277,8 @@ public class ScriptInfo {
 			else if (line.startsWith(AT_TOOLBAR)) {
 				toolbar = getTagValue(AT_TOOLBAR, line);
 			}
-			else if (line.startsWith(AT_IMPORTS)) {
-				imports = getTagValue(AT_IMPORTS, line);
+			else if (line.startsWith(AT_IMPORTPACKAGE)) {
+				importpackage = getTagValue(AT_IMPORTPACKAGE, line);
 			}
 		}
 		catch (Exception e) {
@@ -440,9 +440,9 @@ public class ScriptInfo {
 	 * Returns the script imports
 	 * @return the script imports
 	 */
-	public String getImports() {
+	public String getImportPackage() {
 		parseHeader();
-		return imports;
+		return importpackage;
 	}
 
 	/**
