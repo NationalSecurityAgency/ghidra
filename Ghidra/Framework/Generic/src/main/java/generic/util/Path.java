@@ -15,11 +15,11 @@
  */
 package generic.util;
 
+import java.io.File;
+
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
-
-import java.io.File;
 
 /**
  * A class to represent a PATH item.
@@ -190,10 +190,11 @@ public class Path implements Comparable<Path> {
 	/**
 	 * Returns the path as a string <b>with path element placeholders</b>, such as 
 	 * {@link #GHIDRA_HOME}.
+	 * @param path the path
 	 * 
 	 * @return the path as a string .
 	 */
-	public String getPathAsString() {
+	static public String getPathAsString(ResourceFile path) {
 		String userHome = System.getProperty("user.home");
 		String absolutePath = path.getAbsolutePath();
 		for (ResourceFile appRoot : Application.getApplicationRootDirectories()) {
@@ -214,6 +215,16 @@ public class Path implements Comparable<Path> {
 		}
 
 		return absolutePath.replace('\\', '/');
+	}
+
+	/**
+	 * Returns the path as a string <b>with path element placeholders</b>, such as 
+	 * {@link #GHIDRA_HOME}.
+	 * 
+	 * @return the path as a string .
+	 */
+	public String getPathAsString() {
+		return getPathAsString(path);
 	}
 
 	/** 

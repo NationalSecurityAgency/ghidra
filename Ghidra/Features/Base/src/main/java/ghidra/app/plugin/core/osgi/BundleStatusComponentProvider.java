@@ -33,6 +33,7 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
+import generic.util.Path;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -174,9 +175,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-				JLabel c = (JLabel) super.getTableCellRendererComponent(data);
-
 				ResourceFile path = (ResourceFile) data.getValue();
+				JLabel c = (JLabel) super.getTableCellRendererComponent(data);
+				c.setText(Path.getPathAsString(path));
+
 				if (!path.exists()) {
 					c.setForeground(Color.RED);
 				}
