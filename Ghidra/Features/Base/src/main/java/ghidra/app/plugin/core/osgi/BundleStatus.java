@@ -83,7 +83,7 @@ public class BundleStatus implements Comparable<BundleStatus> {
 	}
 
 	public String getSummary() {
-		return summary;
+		return summary != null ? summary : "";
 	}
 
 	public ResourceFile getPath() {

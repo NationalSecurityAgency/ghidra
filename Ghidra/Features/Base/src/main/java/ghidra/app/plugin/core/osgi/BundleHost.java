@@ -375,10 +375,16 @@ public class BundleHost {
 				}
 			});
 		}
+
+		final Bundle systemBundle = bc.getBundle();
 		bc.addBundleListener(new BundleListener() {
 			@Override
 			public void bundleChanged(BundleEvent event) {
 				Bundle b = event.getBundle();
+
+				if (b == systemBundle) {
+					return;
+				}
 				if (DUMP_TO_STDERR) {
 					String n = b.getSymbolicName();
 					String l = b.getLocation();
@@ -388,11 +394,23 @@ public class BundleHost {
 				switch (event.getType()) {
 					case BundleEvent.STARTED:
 						gb = bl2gb.get(b.getLocation());
-						fireBundleActivationChange(gb, true);
+						if (gb != null) {
+							fireBundleActivationChange(gb, true);
+						}
+						else {
+							Msg.error(this,
+								String.format("not a GhidraBundle: %s\n", b.getLocation()));
+						}
 						break;
 					case BundleEvent.UNINSTALLED:
 						gb = bl2gb.get(b.getLocation());
-						fireBundleActivationChange(gb, false);
+						if (gb != null) {
+							fireBundleActivationChange(gb, false);
+						}
+						else {
+							Msg.error(this,
+								String.format("not a GhidraBundle: %s\n", b.getLocation()));
+						}
 						break;
 					default:
 						break;
@@ -598,10 +616,10 @@ public class BundleHost {
 
 	List<BundleHostListener> listeners = new ArrayList<>();
 
-	void fireBundleBuilt(GhidraBundle gb) {
+	void fireBundleBuilt(GhidraBundle gb, String summary) {
 		synchronized (listeners) {
 			for (BundleHostListener l : listeners) {
-				l.bundleBuilt(gb);
+				l.bundleBuilt(gb, summary);
 			}
 		}
 	}

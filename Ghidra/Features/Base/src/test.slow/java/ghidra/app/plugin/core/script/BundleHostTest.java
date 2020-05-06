@@ -42,6 +42,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	BundleHost bundleHost;
+	CapturingBundleHostListener bhl;
 
 	Set<Path> tmpdirs = new HashSet<>();
 	LinkedList<GhidraBundle> gbstack = new LinkedList<>();
@@ -59,12 +60,23 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		return current_gb;
 	}
 
+	static class CapturingBundleHostListener implements BundleHostListener {
+		String lastBuildSummary;
+
+		@Override
+		public void bundleBuilt(GhidraBundle gbundle, String summary) {
+			this.lastBuildSummary = summary;
+		}
+	}
+
 	@Before
 	public void setup() throws OSGiException, IOException {
 		wipe(BundleHost.getCompiledBundlesDir());
 
 		bundleHost = new BundleHost();
 		bundleHost.startFramework();
+		bhl = new CapturingBundleHostListener();
+		bundleHost.addListener(bhl);
 
 		pushNewBundle();
 	}
@@ -72,6 +84,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	@After
 	public void tearDown() throws IOException {
 		bundleHost.dispose();
+		bhl = null;
 		bundleHost = null;
 
 		for (Path tmpdir : tmpdirs) {
@@ -82,13 +95,14 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected void buildWithExpectations(String expectedCompilerOutput, String expectedSummary)
 			throws Exception {
 		StringWriter sw = new StringWriter();
+
 		current_gb.build(new PrintWriter(sw));
 		sw.flush();
 
 		assertEquals("unexpected output during build", expectedCompilerOutput,
 			sw.getBuffer().toString());
 
-		assertEquals("wrong summary", expectedSummary, current_gb.getSummary());
+		assertEquals("wrong summary", expectedSummary, bhl.lastBuildSummary);
 	}
 
 	protected void activate() throws Exception {

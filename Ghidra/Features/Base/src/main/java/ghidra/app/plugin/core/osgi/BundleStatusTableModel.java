@@ -170,9 +170,9 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 
 		bundleHost.addListener(bundleListener = new BundleHostListener() {
 			@Override
-			public void bundleBuilt(GhidraBundle gb) {
+			public void bundleBuilt(GhidraBundle gb, String summary) {
 				BundleStatus status = getStatus(gb);
-				status.setSummary(gb.getSummary());
+				status.setSummary(summary);
 				int row = getRowIndex(status);
 				fireTableRowsUpdated(row, row);
 			}
@@ -184,11 +184,9 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 				status.setBusy(false);
 				if (newActivation) {
 					status.setActive(true);
-					status.setSummary(gb.getSummary());
 				}
 				else {
 					status.setActive(false);
-					status.setSummary("");
 				}
 				fireTableRowsUpdated(row, row);
 			}

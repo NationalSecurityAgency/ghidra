@@ -58,8 +58,6 @@ public abstract class GhidraBundle {
 		return build(new PrintWriter(System.err));
 	}
 
-	public abstract String getSummary();
-
 	public abstract String getBundleLoc();
 
 	abstract List<BundleRequirement> getAllReqs();

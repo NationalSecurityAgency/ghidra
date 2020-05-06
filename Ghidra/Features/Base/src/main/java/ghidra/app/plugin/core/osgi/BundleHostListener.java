@@ -22,7 +22,7 @@ import java.util.Collection;
  */
 public interface BundleHostListener {
 
-	default void bundleBuilt(GhidraBundle gbundle) {
+	default void bundleBuilt(GhidraBundle gbundle, String summary) {
 		//
 	}
 

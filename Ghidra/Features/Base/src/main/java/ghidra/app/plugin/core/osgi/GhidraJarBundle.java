@@ -51,11 +51,6 @@ public class GhidraJarBundle extends GhidraBundle {
 	}
 
 	@Override
-	public String getSummary() {
-		return null;
-	}
-
-	@Override
 	public List<BundleRequirement> getAllReqs() {
 		Jar jar;
 		try {

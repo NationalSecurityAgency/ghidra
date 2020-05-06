@@ -118,6 +118,7 @@ src/main/help/help/topics/BookmarkPlugin/images/BookmarksFilter.png||GHIDRA||||E
 src/main/help/help/topics/BookmarkPlugin/images/MarkerForBookmark.png||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/images/NextSelectionBlock16.gif||GHIDRA||||END|
 src/main/help/help/topics/BookmarkPlugin/images/PreviousSelectionBlock16.gif||GHIDRA||||END|
+src/main/help/help/topics/BundleManager/BundleManager.htm||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/CParser.htm||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/images/ParseCSource.png||GHIDRA||||END|
 src/main/help/help/topics/CParserPlugin/images/ParseError.png||GHIDRA||||END|
@@ -437,7 +438,6 @@ src/main/help/help/topics/GhidraScriptMgrPlugin/images/text_list_bullets.png||FA
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/text_lowercase.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/textfield_rename.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/undo.png||GHIDRA||||END|
-src/main/help/help/topics/BundleManager/BundleManager.htm||GHIDRA||||END|
 src/main/help/help/topics/GhidraServer/GhidraServer.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/glossary.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/images/BigEndian.png||GHIDRA||reviewed||END|

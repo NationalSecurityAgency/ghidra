@@ -323,8 +323,13 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		boolean anythingCleaned = false;
 		for (BundleStatus bs : bundleStatusTableModel.getRowObjects(selectedModelRows)) {
 			anythingCleaned |= bundleHost.getExistingGhidraBundle(bs.getPath()).clean();
+			if (!bs.getSummary().isEmpty()) {
+				bs.setSummary("");
+				anythingCleaned |= true;
+			}
 		}
 		if (anythingCleaned) {
+			getModel().fireTableDataChanged();
 			AnimationUtils.shakeComponent(getComponent());
 		}
 	}

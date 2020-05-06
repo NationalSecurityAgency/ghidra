@@ -252,7 +252,11 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	private void deleteOldBinaries() throws IOException {
-		for (Path bf : oldBin) {
+		// dedupe and omit files that don't exist
+		oldBin.sort(null);
+		Iterable<Path> paths = () -> oldBin.stream().distinct().filter(Files::exists).iterator();
+
+		for (Path bf : paths) {
 			Files.delete(bf);
 		}
 		// oldBin.clear();
@@ -278,26 +282,6 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	long getLastCompileAttempt() {
 		return lastCompileAttempt;
-	}
-
-	String summary = "";
-
-	void setSummary(String summary) {
-		this.summary = summary;
-	}
-
-	void appendSummary(String s) {
-		if (!summary.isEmpty()) {
-			summary += ", " + s;
-		}
-		else {
-			summary = s;
-		}
-	}
-
-	@Override
-	public String getSummary() {
-		return summary;
 	}
 
 	@Override
@@ -371,9 +355,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 				if (!newSources.contains(sf)) {
 					newSources.add(sf);
 				}
-				for (ResourceFile oldbin : correspondingBinaries(sf)) {
-					oldbin.delete();
-				}
+
+				Arrays.stream(correspondingBinaries(sf)).map(
+					rf -> rf.getFile(false).toPath()).forEach(oldBin::add);
 			}
 		}
 
@@ -414,8 +398,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 			// once we've committed to recompile and regenerate generated classes, delete the old stuff
 			deleteOldBinaries();
 
-			compileToExplodedBundle(writer);
-			bundleHost.fireBundleBuilt(this);
+			String summary = compileToExplodedBundle(writer);
+			bundleHost.fireBundleBuilt(this, summary);
 			return true;
 		}
 		return false;
@@ -541,6 +525,29 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 	}
 
+	static private class Summary {
+		static String SEP = ", ";
+		final StringWriter sw = new StringWriter();
+		final PrintWriter pw = new PrintWriter(sw, true);
+
+		void printf(String format, Object... args) {
+			if (sw.getBuffer().length() > 0) {
+				pw.write(SEP);
+			}
+			pw.printf(format, args);
+		}
+
+		void print(String arg) {
+			pw.print(arg);
+		}
+
+		String getValue() {
+			pw.flush();
+			return sw.getBuffer().toString();
+		}
+
+	}
+
 	/**
 	 *  compile a source directory to an exploded bundle
 	 *  
@@ -548,12 +555,14 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 * @throws IOException for source/manifest file reading/generation and binary deletion/creation
 	 * @throws OSGiException if generation of bundle metadata fails
 	 */
-	private void compileToExplodedBundle(PrintWriter writer) throws IOException, OSGiException {
+	private String compileToExplodedBundle(PrintWriter writer) throws IOException, OSGiException {
 
 		compileAttempted();
 		ResourceFile srcdir = getSourceDir();
 		Path bindir = getBinDir();
 		Files.createDirectories(bindir);
+
+		Summary summary = new Summary();
 
 		List<String> options = new ArrayList<>();
 		options.add("-g");
@@ -585,14 +594,10 @@ public class GhidraSourceBundle extends GhidraBundle {
 				writer.printf("  %s\n", req.toString());
 			}
 
-			setSummary(
-				String.format("%d missing @import%s:%s", reqs.size(), reqs.size() > 1 ? "s" : "",
-					reqs.stream().flatMap(
-						r -> OSGiUtils.extractPackages(r.toString()).stream()).distinct().collect(
-							Collectors.joining(","))));
-		}
-		else {
-			setSummary("");
+			summary.printf("%d missing @import%s:%s", reqs.size(), reqs.size() > 1 ? "s" : "",
+				reqs.stream().flatMap(
+					r -> OSGiUtils.extractPackages(r.toString()).stream()).distinct().collect(
+						Collectors.joining(",")));
 		}
 		// send the capabilities to phidias
 		bundleWirings.forEach(bjm::addBundleWiring);
@@ -645,14 +650,14 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 		// buildErrors is now up to date, set status
 		if (getFailingSourcesCount() > 0) {
-			appendSummary(String.format("%d failing source files", getFailingSourcesCount()));
+			summary.printf("%d failing source files", getFailingSourcesCount());
 		}
 
 		ResourceFile smf = getSourceManifestPath();
 		if (smf.exists()) {
 			Files.createDirectories(dmf.getParent());
 			Files.copy(smf.getInputStream(), dmf, StandardCopyOption.REPLACE_EXISTING);
-			return;
+			return summary.getValue();
 		}
 
 		// no manifest, so create one with bndtools
@@ -672,7 +677,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 				manifest = analyzer.calcManifest();
 			}
 			catch (Exception e) {
-				appendSummary("bad manifest");
+				summary.print("bad manifest");
 				throw new OSGiException("failed to calculate manifest by analyzing code", e);
 			}
 			Attributes ma = manifest.getMainAttributes();
@@ -688,14 +693,14 @@ public class GhidraSourceBundle extends GhidraBundle {
 				}
 			}
 			catch (Exception e) {
-				appendSummary("failed bnd analysis");
+				summary.print("failed bnd analysis");
 				throw new OSGiException("failed to query classes while searching for activator", e);
 			}
 			if (activator_classname == null) {
 				activator_classname = GENERATED_ACTIVATOR_CLASSNAME;
 				if (!buildDefaultActivator(bindir, activator_classname, writer)) {
-					appendSummary("failed to build generated activator");
-					return;
+					summary.print("failed to build generated activator");
+					return summary.getValue();
 				}
 				// since we add the activator after bndtools built the imports, we should add its imports too
 				String imps = ma.getValue(Constants.IMPORT_PACKAGE);
@@ -719,6 +724,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 		finally {
 			analyzer.close();
 		}
+		return summary.getValue();
 	}
 
 	/**

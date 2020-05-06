@@ -698,7 +698,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	class RefreshingBundleHostListener implements BundleHostListener {
 
 		@Override
-		public void bundleBuilt(GhidraBundle sb) {
+		public void bundleBuilt(GhidraBundle sb, String summary) {
 			if (sb instanceof GhidraSourceBundle) {
 				GhidraSourceBundle gsb = (GhidraSourceBundle) sb;
 				for (ResourceFile sf : gsb.getNewSources()) {
