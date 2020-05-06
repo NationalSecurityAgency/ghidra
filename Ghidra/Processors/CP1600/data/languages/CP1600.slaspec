@@ -41,6 +41,7 @@ define token double16 (32)
 
 define token immediate16 (16)
 	imm16  = (0, 15)
+	simm16 = (0, 15) signed
 	addr16 = (0, 15)
 ;
 
@@ -56,7 +57,7 @@ attach variables [ reg24_25      ] [ R4 R5 R6 R7             ];
 
 jmpdest16:     reloc is address_hi & address_lo [ reloc = (address_hi << 10) + address_lo; ] { export *:2 reloc;                         }
 branchdest16:  reloc is branch_sign=0 ; imm16   [ reloc = inst_start + 2 + imm16;          ] { export *:2 reloc;                         }
-branchdest16:  reloc is branch_sign=1 ; imm16   [ reloc = inst_start + 2 - imm16;          ] { export *:2 reloc;                         }
+branchdest16:  reloc is branch_sign=1 ; simm16  [ reloc = inst_start + 2 + ~simm16;        ] { export *:2 reloc;                         }
 splitimm16:    split is value_hi & value_lo     [ split = (value_hi << 8) + value_lo;      ] { local tmp:2 = split & 0xFFFF; export tmp; }
 
 impliedval16: reg3_5 is reg3_5 & (target3_5=0 | target3_5=1 | target3_5=2 | target3_5=3 | target3_5=7) & doublebyte=0 {
