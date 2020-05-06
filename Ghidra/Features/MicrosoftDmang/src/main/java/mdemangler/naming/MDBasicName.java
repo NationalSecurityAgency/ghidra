@@ -29,7 +29,7 @@ public class MDBasicName extends MDParsableItem {
 	MDReusableName reusableName;
 	MDObjectCPP embeddedObject;
 	MDQualification embeddedObjectQualification;
-	String nameModifier = "";
+	String nameModifier;
 
 	public MDBasicName(MDMang dmang) {
 		super(dmang);
@@ -127,6 +127,22 @@ public class MDBasicName extends MDParsableItem {
 		}
 	}
 
+	// This needs to be separate from nameModifier.  The contrived example that follows
+	//  shows that both a nameModifier as well as a castTypeString should be considered
+	//  separately, as both can exist.  Trying to manage multiple calls to
+	//  setNameModifier() would not work because their order would need to be managed and
+	//  the results merged.  Makes no sense to have anything but two separate notions.
+	//	"??Bname@@O7AAHXZ"
+	//	"[thunk]:protected: virtual __cdecl name::operator int`adjustor{8}' (void)"
+	public void setCastTypeString(String castTypeString) {
+		if (specialName != null) {
+			specialName.setCastTypeString(castTypeString);
+		}
+		else if (tn != null) {
+			tn.setCastTypeString(castTypeString);
+		}
+	}
+
 	@Override
 	public void insert(StringBuilder builder) {
 		if (reusableName != null) {
@@ -141,7 +157,9 @@ public class MDBasicName extends MDParsableItem {
 		else {
 			tn.insert(builder);
 		}
-		builder.append(nameModifier);
+		if (nameModifier != null) {
+			builder.append(nameModifier);
+		}
 	}
 
 	@Override

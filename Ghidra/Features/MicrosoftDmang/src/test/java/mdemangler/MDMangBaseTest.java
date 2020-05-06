@@ -14492,6 +14492,21 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		demangleAndTest();
 	}
 
+	// Contrived example to make sure that the nameModifier (pushed into MDBasicName) and
+	//  the recent addition, castTypeString (pushed to MDBasicName and below), play well
+	//  together.  It also shows, that they should probably both be considered separate
+	//  (i.e., do not use nameModifier to push in the castTypeString... we would have to
+	//  manage merging and multiple calls... does not make sense to even consider it).
+	// Note: the cast operator used to have the cast-to type emitted in MDFunctionType,
+	//  and me moved it to MDSpecialName.
+	@Test
+	public void testCastOperatorWithAdjustorModifier() throws Exception {
+		mangled = "??Bname@@O7AAHXZ";
+		msTruth = "[thunk]:protected: virtual __cdecl name::operator int`adjustor{8}' (void)";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
 	//TODO: ignore for now.
 	@Ignore
 	public void testFuzzyFit() throws Exception {

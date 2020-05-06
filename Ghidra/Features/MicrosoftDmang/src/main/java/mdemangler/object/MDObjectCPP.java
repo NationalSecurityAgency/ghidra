@@ -16,6 +16,7 @@
 package mdemangler.object;
 
 import mdemangler.*;
+import mdemangler.functiontype.MDFunctionType;
 import mdemangler.naming.*;
 import mdemangler.typeinfo.MDTypeInfo;
 import mdemangler.typeinfo.MDTypeInfoParser;
@@ -141,6 +142,11 @@ public class MDObjectCPP extends MDObject {
 				typeInfo.parse();
 				if (!typeInfo.getNameModifier().isEmpty()) {
 					qualifiedName.setNameModifier(typeInfo.getNameModifier());
+				}
+				if (qualifiedName.isTypeCast() && typeInfo.getMDType() instanceof MDFunctionType &&
+					((MDFunctionType) typeInfo.getMDType()).hasReturn()) {
+					qualifiedName.setCastTypeString(
+						((MDFunctionType) typeInfo.getMDType()).getReturnType().toString());
 				}
 			}
 		}

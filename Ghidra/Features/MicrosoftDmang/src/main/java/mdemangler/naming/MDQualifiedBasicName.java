@@ -93,6 +93,13 @@ public class MDQualifiedBasicName extends MDParsableItem {
 		}
 	}
 
+	public void setCastTypeString(String castTypeString) {
+		if (basicName == null) {
+			return;
+		}
+		basicName.setCastTypeString(castTypeString);
+	}
+
 	public MDBasicName getBasicName() {
 		return basicName;
 	}

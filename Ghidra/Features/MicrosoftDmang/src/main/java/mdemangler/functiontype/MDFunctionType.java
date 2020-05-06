@@ -86,6 +86,10 @@ public class MDFunctionType extends MDType {
 		hasReturn = false;
 	}
 
+	public boolean hasReturn() {
+		return hasReturn;
+	}
+
 	public boolean hasArgs() {
 		return hasArgs;
 	}
@@ -148,12 +152,15 @@ public class MDFunctionType extends MDType {
 		// Following to to clean the Based5 "bug" if seen.  See comments in MDBasedAttribute.
 		dmang.cleanOutput(conventionBuilder);
 		dmang.insertString(builder, conventionBuilder.toString());
-		if (hasReturn && isTypeCast) {
-			StringBuilder retBuilder = new StringBuilder();
-			retType.insert(retBuilder);
-			dmang.appendString(builder, " ");
-			dmang.appendString(builder, retBuilder.toString());
-		}
+		//This logic moved to MdSpecialName, so that we can get a qualified name with the
+		// appropriate cast-to type in the name.  Keeping here, commented out, for
+		// a digestion period (20200506).
+//		if (hasReturn && isTypeCast) {
+//			StringBuilder retBuilder = new StringBuilder();
+//			retType.insert(retBuilder);
+//			dmang.appendString(builder, " ");
+//			dmang.appendString(builder, retBuilder.toString());
+//		}
 		if (fromModifier) {
 			dmang.insertString(builder, "(");
 			dmang.appendString(builder, ")");
