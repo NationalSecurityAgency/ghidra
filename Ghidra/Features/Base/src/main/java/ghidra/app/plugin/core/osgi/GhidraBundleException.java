@@ -39,7 +39,7 @@ public class GhidraBundleException extends OSGiException {
 	}
 
 	public String getBundleLocation() {
-		return bundle_loc;
+		return bundle_loc != null ? bundle_loc : bundle.getLocation();
 	}
 
 	static private String parsedCause(Throwable e) {

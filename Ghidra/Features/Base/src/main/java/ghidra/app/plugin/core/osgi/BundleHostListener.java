@@ -54,4 +54,8 @@ public interface BundleHostListener {
 		}
 	}
 
+	default void bundleException(GhidraBundleException gbe) {
+		//
+	}
+
 }

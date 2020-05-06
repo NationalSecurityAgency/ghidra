@@ -82,7 +82,6 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 
 		@Override
 		void setValue(BundleStatus status, Object newValue) {
-			status.setActive((Boolean) newValue);
 			fireBundleActivationChangeRequested(status, (Boolean) newValue);
 		}
 	};
@@ -127,7 +126,11 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	private Map<String, BundleStatus> loc2status = new HashMap<>();
 
 	BundleStatus getStatus(GhidraBundle gb) {
-		BundleStatus status = loc2status.get(gb.getBundleLoc());
+		return getStatusFromLoc(gb.getBundleLoc());
+	}
+
+	BundleStatus getStatusFromLoc(String bundleLoc) {
+		BundleStatus status = loc2status.get(bundleLoc);
 		if (status == null) {
 			Msg.showError(BundleStatusTableModel.this, provider.getComponent(),
 				"bundle status error", "bundle has no status!");
@@ -224,6 +227,14 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 			public void bundleEnablementChange(GhidraBundle gbundle, boolean newEnablement) {
 				BundleStatus status = getStatus(gbundle);
 				status.setEnabled(newEnablement);
+				int row = getRowIndex(status);
+				fireTableRowsUpdated(row, row);
+			}
+
+			@Override
+			public void bundleException(GhidraBundleException gbe) {
+				BundleStatus status = getStatusFromLoc(gbe.getBundleLocation());
+				status.setSummary(gbe.getMessage());
 				int row = getRowIndex(status);
 				fireTableRowsUpdated(row, row);
 			}

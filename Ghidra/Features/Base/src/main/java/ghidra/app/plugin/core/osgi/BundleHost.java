@@ -453,7 +453,9 @@ public class BundleHost {
 			b.start();
 		}
 		catch (BundleException e) {
-			throw new GhidraBundleException(b, "starting bundle", e);
+			GhidraBundleException gbe = new GhidraBundleException(b, "activating bundle", e);
+			fireBundleException(gbe);
+			throw gbe;
 		}
 		waitFor(b, Bundle.ACTIVE);
 	}
@@ -482,7 +484,9 @@ public class BundleHost {
 				fw.refreshBundles(dependents);
 			}
 			catch (BundleException e) {
-				throw new GhidraBundleException(b, "uninstalling bundle", e);
+				GhidraBundleException gbe = new GhidraBundleException(b, "deactivating bundle", e);
+				fireBundleException(gbe);
+				throw gbe;
 			}
 			waitFor(b, Bundle.UNINSTALLED);
 		}
@@ -646,6 +650,14 @@ public class BundleHost {
 		synchronized (listeners) {
 			for (BundleHostListener l : listeners) {
 				l.bundlesRemoved(gbundles);
+			}
+		}
+	}
+
+	private void fireBundleException(GhidraBundleException gbe) {
+		synchronized (listeners) {
+			for (BundleHostListener l : listeners) {
+				l.bundleException(gbe);
 			}
 		}
 	}
