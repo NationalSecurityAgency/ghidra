@@ -513,56 +513,56 @@ with : operation_size=1 {
 
 }
 
-:ADDI imm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; imm16 {
+:ADDI "#"imm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; imm16 {
 	addition(reg0_2, imm16);
 }
 
-:ANDI imm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; imm16 {
+:ANDI "#"imm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; imm16 {
 	reg0_2 = reg0_2 & imm16;
 	resultFlags(reg0_2);
 }
 
-:CMPI imm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; imm16 {
+:CMPI "#"imm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; imm16 {
 	comparison(reg0_2, imm16);
 }
 
-:MVII imm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; imm16 {
+:MVII "#"imm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; imm16 {
 	reg0_2 = imm16;
 }
 
-:SUBI imm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; imm16 {
+:SUBI "#"imm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; imm16 {
 	subtraction(reg0_2, imm16);
 }
 
-:XORI imm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; imm16 {
+:XORI "#"imm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; imm16 {
 	reg0_2 = reg0_2 ^ imm16;
 	resultFlags(reg0_2);
 }
 
 with : doublebyte=1 {
 
-:ADDI splitimm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; splitimm16 {
+:ADDI "#"splitimm16, reg0_2 is opcode3_9=0x005F & reg0_2 ; splitimm16 {
 	addition(reg0_2, splitimm16);
 }
 
-:ANDI splitimm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; splitimm16 {
+:ANDI "#"splitimm16, reg0_2 is opcode3_9=0x0077 & reg0_2 ; splitimm16 {
 	reg0_2 = reg0_2 & splitimm16;
 	resultFlags(reg0_2);
 }
 
-:CMPI splitimm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; splitimm16 {
+:CMPI "#"splitimm16, reg0_2 is opcode3_9=0x006F & reg0_2 ; splitimm16 {
 	comparison(reg0_2, splitimm16);
 }
 
-:MVII splitimm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; splitimm16 {
+:MVII "#"splitimm16, reg0_2 is opcode3_9=0x0057 & reg0_2 ; splitimm16 {
 	reg0_2 = splitimm16;
 }
 
-:SUBI splitimm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; splitimm16 {
+:SUBI "#"splitimm16, reg0_2 is opcode3_9=0x0067 & reg0_2 ; splitimm16 {
 	subtraction(reg0_2, splitimm16);
 }
 
-:XORI splitimm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; splitimm16 {
+:XORI "#"splitimm16, reg0_2 is opcode3_9=0x007F & reg0_2 ; splitimm16 {
 	reg0_2 = reg0_2 ^ splitimm16;
 	resultFlags(reg0_2);
 }
