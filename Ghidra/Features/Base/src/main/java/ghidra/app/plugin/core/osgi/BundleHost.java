@@ -589,8 +589,9 @@ public class BundleHost {
 		try {
 			Files.walk(dirPath).filter(p -> p.toString().endsWith(".class")).forEach(p -> {
 				String n = dirPath.relativize(p).toString();
-				int lastSlash = n.lastIndexOf('/');
-				s.add(lastSlash > 0 ? n.substring(0, lastSlash).replace('/', '.') : "");
+				int lastSlash = n.lastIndexOf(File.separatorChar);
+				s.add(lastSlash > 0 ? n.substring(0, lastSlash).replace(File.separatorChar, '.')
+						: "");
 			});
 
 		}
