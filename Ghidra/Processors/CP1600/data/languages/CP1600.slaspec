@@ -10,6 +10,7 @@ define register offset=0x20 size=4 [ contextreg ];
 define token opcode_word (16)
 	target3_5          = (3, 5)
 	reg3_5             = (3, 5)
+	target0_2          = (0, 2)
 	reg0_2             = (0, 2)
 	reg0_1             = (0, 1)
 	operation_size     = (2, 2)
@@ -366,6 +367,10 @@ define pcodeop SoftwareInterrupt;
 
 :TCI is opcode0_9=0x0005 {
 	TerminateCurrentInterrupt();
+}
+
+:TSTR reg0_2 is opcode6_9=0x0002 & reg0_2 & ((target0_2=0 & target3_5=0) | (target0_2=1 & target3_5=1) | (target0_2=2 & target3_5=2) | (target0_2=3 & target3_5=3) | (target0_2=4 & target3_5=4) | (target0_2=5 & target3_5=5) | (target0_2=6 & target3_5=6) | (target0_2=7 & target3_5=7)) {
+	resultFlags(reg0_2);
 }
 
 :XOR addr16, reg0_2 is opcode3_9=0x0078 & reg0_2 ; addr16 {
