@@ -323,6 +323,16 @@ define pcodeop SoftwareInterrupt;
 :NOPP is opcode6_9=0x0008 & branch_external=0 & branch_condition=8 ; imm16 {
 }
 
+:PSHR reg0_2 is opcode6_9=0x0009 & reg0_2 & reg3_5=6 {
+	local ptr:2 = R6;
+	*ptr = reg0_2;
+	R6 = R6 + 1;
+}
+
+:PULR reg0_2 is opcode6_9=0x000A & impliedval16 & reg0_2 & reg3_5=6 {
+	reg0_2 = impliedval16;
+}
+
 :RSWD reg0_2 is opcode3_9=0x0007 & reg0_2 {
 	C = (reg0_2 & 0b00001000) != 0;
 	O = (reg0_2 & 0b00010000) != 0;
