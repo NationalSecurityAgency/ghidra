@@ -3425,11 +3425,11 @@ int4 ActionDeadCode::apply(Funcdata &data)
 
     op->clearIndirectSource();
     if (op->isCall()) {
-      if (op->code() == CPUI_CALLOTHER) {
+      // Postpone setting consumption on CALL and CALLIND inputs
+      if (op->isCallWithoutSpec()) {
 	for(i=0;i<op->numInput();++i)
 	  pushConsumed(~((uintb)0),op->getIn(i),worklist);
       }
-      // Postpone setting consumption on CALL and CALLIND inputs
       if (!op->isAssignment())
 	continue;
     }

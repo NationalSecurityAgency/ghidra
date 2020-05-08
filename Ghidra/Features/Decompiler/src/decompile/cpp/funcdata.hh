@@ -433,7 +433,7 @@ public:
   void opMarkNonPrinting(PcodeOp *op) { op->setFlag(PcodeOp::nonprinting); }	///< Mark PcodeOp as not being printed
   void opMarkSpecialPrint(PcodeOp *op) { op->setAdditionalFlag(PcodeOp::special_print); }	///< Mark PcodeOp as needing special printing
   void opMarkNoCollapse(PcodeOp *op) { op->setFlag(PcodeOp::nocollapse); }	///< Mark PcodeOp as not collapsible
-  void opMarkCpoolTransformed(PcodeOp *op) { op->setFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited
+  void opMarkCpoolTransformed(PcodeOp *op) { op->setAdditionalFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited
   void opMarkCalculatedBool(PcodeOp *op) { op->setFlag(PcodeOp::calculated_bool); }	///< Mark PcodeOp as having boolean output
   void opMarkSpacebasePtr(PcodeOp *op) { op->setFlag(PcodeOp::spacebase_ptr); }	///< Mark PcodeOp as LOAD/STORE from spacebase ptr
   void opClearSpacebasePtr(PcodeOp *op) { op->clearFlag(PcodeOp::spacebase_ptr); }	///< Unmark PcodeOp as using spacebase ptr
