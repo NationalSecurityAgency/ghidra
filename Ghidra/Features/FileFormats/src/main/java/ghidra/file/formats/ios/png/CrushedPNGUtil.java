@@ -207,8 +207,9 @@ public class CrushedPNGUtil {
 			throws PNGFormatException {
 		int width;
 		int height;
-		if (ihdrChunk.getInterlaceMethod() == 1) {
+		if (ihdrChunk.getInterlaceMethod() == CrushedPNGConstants.ADAM7_INTERLACE) {
 			//Msg.debug(this, "Checking Adam7 unpacking");
+			int y = 0;
 			for (int pass = 0; pass < CrushedPNGConstants.STARTING_COL.length; pass++) {
 				width =
 					(ihdrChunk.getImgWidth() - CrushedPNGConstants.STARTING_COL[pass] +
@@ -220,7 +221,6 @@ public class CrushedPNGUtil {
 						CrushedPNGConstants.ROW_INCREMENT[pass];
 
 				int row = 0;
-				int y = 0;
 				while (row < height) {
 					if (decompressedResult[y] > 4) {
 						throw new PNGFormatException("Unknown row filter type " +
@@ -236,7 +236,7 @@ public class CrushedPNGUtil {
 				}
 			}
 
-			int y = 0;
+			y = 0;
 			for (int pass = 0; pass < CrushedPNGConstants.STARTING_COL.length; pass++) {
 
 				//Formula taken from pngcheck

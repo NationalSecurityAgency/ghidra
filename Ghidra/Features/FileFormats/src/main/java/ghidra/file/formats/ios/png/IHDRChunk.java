@@ -133,13 +133,14 @@ public class IHDRChunk {
 
 			for (int pass = 0; pass < CrushedPNGConstants.STARTING_ROW.length; pass++) {
 				int height =
-					(imgHeight - CrushedPNGConstants.STARTING_ROW[pass] + CrushedPNGConstants.ROW_INCREMENT[pass - 1]) /
+					(imgHeight - CrushedPNGConstants.STARTING_ROW[pass] + CrushedPNGConstants.ROW_INCREMENT[pass] - 1) /
 						CrushedPNGConstants.ROW_INCREMENT[pass];
 				rowFilterBytes += height;
 			}
 
+		} else {
+			rowFilterBytes = imgHeight;
 		}
-		rowFilterBytes = imgHeight;
 	}
 
 	public int getImgWidth() {
