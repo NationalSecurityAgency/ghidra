@@ -138,8 +138,9 @@ public class IHDRChunk {
 				rowFilterBytes += height;
 			}
 
+		} else {
+			rowFilterBytes = imgHeight;
 		}
-		rowFilterBytes = imgHeight;
 	}
 
 	public int getImgWidth() {
