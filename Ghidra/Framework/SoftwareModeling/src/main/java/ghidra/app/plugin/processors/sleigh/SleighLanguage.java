@@ -149,9 +149,9 @@ public class SleighLanguage implements Language {
 	}
 
 	private boolean isSLAWrongVersion(ResourceFile slaFile) {
-
+		XmlPullParser parser = null;
 		try {
-			XmlPullParser parser = XmlPullParserFactory.create(slaFile, new ErrorHandler() {
+			parser = XmlPullParserFactory.create(slaFile, new ErrorHandler() {
 
 				@Override
 				public void warning(SAXParseException exception) throws SAXException {
@@ -179,6 +179,11 @@ public class SleighLanguage implements Language {
 		}
 		catch (SAXException | IOException e) {
 			return true;
+		}
+		finally {
+			if (parser != null) {
+				parser.dispose();
+			}
 		}
 	}
 
@@ -536,20 +541,24 @@ public class SleighLanguage implements Language {
 	private void readInitialDescription() throws SAXException, IOException {
 		ResourceFile specFile = description.getSpecFile();
 		XmlPullParser parser = XmlPullParserFactory.create(specFile, SPEC_ERR_HANDLER, false);
-		XmlElement nextElement = parser.peek();
-		while (nextElement != null && !nextElement.getName().equals("segmented_address")) {
-			parser.next(); // skip element
-			nextElement = parser.peek();
-		}
-		if (nextElement != null) {
-			XmlElement element = parser.start(); // segmented_address element
-			segmentedspace = element.getAttribute("space");
-			segmentType = element.getAttribute("type");
-			if (segmentType == null) {
-				segmentType = "";
+		try {
+			XmlElement nextElement = parser.peek();
+			while (nextElement != null && !nextElement.getName().equals("segmented_address")) {
+				parser.next(); // skip element
+				nextElement = parser.peek();
+			}
+			if (nextElement != null) {
+				XmlElement element = parser.start(); // segmented_address element
+				segmentedspace = element.getAttribute("space");
+				segmentType = element.getAttribute("type");
+				if (segmentType == null) {
+					segmentType = "";
+				}
 			}
 		}
-		parser.dispose();
+		finally {
+			parser.dispose();
+		}
 	}
 
 	private void setDefaultDataSpace(String spaceName) {
@@ -842,8 +851,12 @@ public class SleighLanguage implements Language {
 	private void readRemainingSpecification() throws SAXException, IOException {
 		ResourceFile specFile = description.getSpecFile();
 		XmlPullParser parser = XmlPullParserFactory.create(specFile, SPEC_ERR_HANDLER, false);
-		read(parser);
-		parser.dispose();
+		try {
+			read(parser);
+		}
+		finally {
+			parser.dispose();
+		}
 	}
 
 	private void readSpecification(final ResourceFile sleighfile)
@@ -865,8 +878,12 @@ public class SleighLanguage implements Language {
 			}
 		};
 		XmlPullParser parser = XmlPullParserFactory.create(sleighfile, errHandler, false);
-		restoreXml(parser);
-		parser.dispose();
+		try {
+			restoreXml(parser);
+		}
+		finally {
+			parser.dispose();
+		}
 	}
 
 	private void restoreXml(XmlPullParser parser) throws UnknownInstructionException {
