@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.osgi;
 import java.awt.*;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -177,7 +176,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 				ResourceFile path = (ResourceFile) data.getValue();
 				JLabel c = (JLabel) super.getTableCellRendererComponent(data);
-				c.setText(Path.getPathAsString(path));
+				c.setText(Path.toPathString(path));
 
 				if (!path.exists()) {
 					c.setForeground(Color.RED);
@@ -391,14 +390,11 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	protected void doActivateBundles() {
-		ConsoleService console = getTool().getService(ConsoleService.class);
 		int[] selectedModelRows = getSelectedModelRows();
 
 		new TaskLauncher(new Task("activating", true, true, false) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
-				long startTime = System.nanoTime();
-
 				// suppress RowObjectSelectionManager repairs until after we're done
 				bundleStatusTable.chill();
 
@@ -414,40 +410,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				List<GhidraBundle> gbs = statuses.stream().map(
 					bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
 						Collectors.toList());
-				int total = gbs.size();
-				int total_activated = 0;
+				bundleHost.activateAll(gbs, monitor, getTool().getService(ConsoleService.class).getStdErr());
 
-				monitor.setMaximum(gbs.size());
-				while (!gbs.isEmpty() && !monitor.isCancelled()) {
-					List<GhidraBundle> l = gbs.stream().filter(
-						gb -> bundleHost.canResolveAll(gb.getAllReqs())).collect(
-							Collectors.toList());
-					if (l.isEmpty()) {
-						console.getStdErr().printf("%d incompletely resolved bundles remain\n",
-							gbs.size());
-						// final round
-						l = gbs;
-						gbs = Collections.emptyList();
-					}
-					else {
-						gbs.removeAll(l);
-					}
-
-					for (GhidraBundle gb : l) {
-						if (monitor.isCancelled()) {
-							break;
-						}
-						try {
-							gb.build(console.getStdErr());
-							bundleHost.activateSynchronously(gb.getBundleLoc());
-							++total_activated;
-						}
-						catch (Exception e) {
-							e.printStackTrace(console.getStdErr());
-						}
-						monitor.incrementProgress(1);
-					}
-				}
 				boolean anybusy = false;
 				for (BundleStatus bs : statuses) {
 					if (bs.isBusy()) {
@@ -458,10 +422,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				if (anybusy) {
 					notifyTableDataChanged();
 				}
-
-				long endTime = System.nanoTime();
-				console.getStdOut().printf("%d/%d bundles activated in %3.2f seconds.\n",
-					total_activated, total, (endTime - startTime) / 1e9);
 
 				bundleStatusTable.thaw();
 			}

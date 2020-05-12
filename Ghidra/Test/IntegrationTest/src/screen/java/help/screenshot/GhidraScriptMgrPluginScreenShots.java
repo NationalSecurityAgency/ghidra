@@ -26,6 +26,7 @@ import docking.ComponentProvider;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
+import generic.util.Path;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.plugin.core.osgi.BundleStatusComponentProvider;
 import ghidra.app.plugin.core.script.*;
@@ -110,14 +111,16 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testScript_Dirs() throws Exception {
-		List<String> paths = new ArrayList<>();
-		paths.add("$USER_HOME/ghidra_scripts");
-		paths.add("$GHIDRA_HOME/Features/Base/ghidra_scripts");
-		paths.add("/User/defined/invalid/directory");
+		List<ResourceFile> paths = new ArrayList<>();
+		paths.add(Path.fromPathString("$USER_HOME/ghidra_scripts"));
+		paths.add(Path.fromPathString("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
+		paths.add(Path.fromPathString("/User/defined/invalid/directory"));
 
-		BundleStatusComponentProvider bundleStatusComponentProvider = showProvider(BundleStatusComponentProvider.class);
+		BundleStatusComponentProvider bundleStatusComponentProvider =
+			showProvider(BundleStatusComponentProvider.class);
+
 		bundleStatusComponentProvider.getModel().setPathsForTesting(paths);
-		
+
 		waitForComponentProvider(BundleStatusComponentProvider.class);
 		captureComponent(bundleStatusComponentProvider.getComponent());
 	}

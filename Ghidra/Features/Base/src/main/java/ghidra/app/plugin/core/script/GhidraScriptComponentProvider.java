@@ -66,12 +66,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	static final String WINDOW_GROUP = "Script Group";
 
 	private Map<ResourceFile, GhidraScriptEditorComponentProvider> editorMap = new HashMap<>();
-	private GhidraScriptMgrPlugin plugin;
+	final private GhidraScriptMgrPlugin plugin;
 	private JPanel component;
 	private RootNode scriptRoot;
 	private GTree scriptCategoryTree;
 	private DraggableScriptTable scriptTable;
-	private GhidraScriptInfoManager infoManager;
+	final private GhidraScriptInfoManager infoManager;
 	private GhidraScriptTableModel tableModel;
 	private BundleStatusComponentProvider bundleStatusComponentProvider;
 	private TaskListener taskListener = new ScriptTaskListener();
@@ -237,7 +237,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	//==================================================================================================
 
 	public void readConfigState(SaveState saveState) {
-		bundleHost.restoreState(saveState);
+		bundleHost.restoreStateAndActivate(saveState, getTool());
 
 		actionManager.restoreUserDefinedKeybindings(saveState);
 		actionManager.restoreScriptsThatAreInTool(saveState);

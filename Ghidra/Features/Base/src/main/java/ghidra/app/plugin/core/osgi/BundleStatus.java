@@ -48,11 +48,6 @@ public class BundleStatus implements Comparable<BundleStatus> {
 		return type;
 	}
 
-	BundleStatus(String path, boolean enabled, boolean readonly) {
-		this.path = new Path(path, enabled, false, readonly);
-		type = GhidraBundle.getType(getPath());
-	}
-
 	BundleStatus(ResourceFile path, boolean enabled, boolean readonly) {
 		this.path = new Path(path, enabled, false, readonly);
 		type = GhidraBundle.getType(getPath());

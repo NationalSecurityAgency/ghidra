@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.osgi;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -146,26 +145,13 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		return null;
 	}
 
-	/** 
-	 * (re)compute cached mapping from bundleloc to bundlepath
-	 */
-	private void computeCache() {
-		loc2status.clear();
-		for (BundleStatus status : statuses) {
-			String loc = getBundleLoc(status);
-			if (loc != null) {
-				loc2status.put(loc, status);
-			}
-		}
-	}
-
 	BundleStatusTableModel(BundleStatusComponentProvider provider, BundleHost bundleHost) {
 		super();
 		this.provider = provider;
 		this.bundleHost = bundleHost;
 		statuses = new ArrayList<>();
 		for (GhidraBundle gb : bundleHost.getGhidraBundles()) {
-			addNewStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle());
+			addNewStatus(gb);
 		}
 
 		bundleHost.addListener(bundleListener = new BundleHostListener() {
@@ -193,16 +179,14 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 
 			@Override
 			public void bundleAdded(GhidraBundle gb) {
-				addNewStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle());
+				addNewStatus(gb);
 			}
 
 			@Override
 			public void bundlesAdded(Collection<GhidraBundle> gbundles) {
 				int index = statuses.size();
 				for (GhidraBundle gb : gbundles) {
-					BundleStatus status =
-						new BundleStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle());
-					addStatusNoFire(status);
+					addNewStatusNoFire(gb);
 				}
 				fireTableRowsInserted(index, gbundles.size() - 1);
 			}
@@ -256,42 +240,27 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		return list;
 	}
 
-	private void addStatusNoFire(BundleStatus path) {
-		if (statuses.contains(path)) {
-			return;
+	
+	private void addNewStatusNoFire(GhidraBundle gb) {
+		BundleStatus status = new BundleStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle());
+		if (statuses.contains(status)) {
+			throw new RuntimeException("Bundle status manager already contains " + gb.getPath().toString());
 		}
-		String loc = getBundleLoc(path);
+		status.setActive(gb.isActive());
+		String loc = getBundleLoc(status);
 		if (loc != null) {
-			loc2status.put(loc, path);
+			loc2status.put(loc, status);
 		}
-		statuses.add(path);
+		statuses.add(status);
 	}
 
 	/**
-	 *  add new status and fire a table udpate
+	 *  add new status and fire a table update
 	 */
-	private BundleStatus addNewStatus(ResourceFile path, boolean enabled, boolean readonly) {
-		BundleStatus p = new BundleStatus(path, enabled, readonly);
+	private void addNewStatus(GhidraBundle gb) {
 		int index = statuses.size();
-		addStatusNoFire(p);
+		addNewStatusNoFire(gb);
 		fireTableRowsInserted(index, index);
-		return p;
-	}
-
-	/**
-	 * create new BundleStatus objects for each of the given files
-	 * 
-	 * @param files the files.. given...
-	 * @param enabled mark them all as enabled
-	 * @param readonly mark them all as readonly
-	 */
-	void addNewStatuses(List<File> files, boolean enabled, boolean readonly) {
-		int index = statuses.size();
-		for (File f : files) {
-			BundleStatus status = new BundleStatus(new ResourceFile(f), enabled, readonly);
-			addStatusNoFire(status);
-		}
-		fireTableRowsInserted(index, files.size() - 1);
 	}
 
 	private int removeStatusNoFire(BundleStatus status) {
@@ -381,20 +350,6 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		return statuses;
 	}
 
-	/**
-	 * This is for testing only!
-	 * 
-	 * each path is marked editable and non-readonly
-	 * 
-	 * @param testingPaths the statuses to use
-	 */
-	public void setPathsForTesting(List<String> testingPaths) {
-		this.statuses = testingPaths.stream().map(f -> new BundleStatus(f, true, false)).collect(
-			Collectors.toList());
-		computeCache();
-		fireTableDataChanged();
-	}
-
 	private ArrayList<BundleStatusChangeRequestListener> bundleStatusListeners = new ArrayList<>();
 
 	public void addListener(BundleStatusChangeRequestListener listener) {
@@ -468,6 +423,33 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		if (change[0]) {
 			notifyModelSorted(false);
 		}
+	}
+
+	/** 
+	 * (re)compute cached mapping from bundleloc to bundlepath
+	 */
+	private void computeCache() {
+		loc2status.clear();
+		for (BundleStatus status : statuses) {
+			String loc = getBundleLoc(status);
+			if (loc != null) {
+				loc2status.put(loc, status);
+			}
+		}
+	}
+
+	/**
+	 * This is for testing only!  during normal execution, statuses are only added through BundleHostListener bundle(s) added events.
+	 * 
+	 * each path is marked editable and non-readonly
+	 * 
+	 * @param paths the statuses to use
+	 */
+	public void setPathsForTesting(List<ResourceFile> paths) {
+		this.statuses =
+			paths.stream().map(f -> new BundleStatus(f, true, false)).collect(Collectors.toList());
+		computeCache();
+		fireTableDataChanged();
 	}
 
 }

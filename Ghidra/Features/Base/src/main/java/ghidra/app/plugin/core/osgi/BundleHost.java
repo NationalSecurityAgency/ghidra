@@ -34,9 +34,11 @@ import org.osgi.framework.launch.Framework;
 import org.osgi.framework.wiring.*;
 import org.osgi.service.log.*;
 
+import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -68,12 +70,22 @@ public class BundleHost {
 		return r;
 	}
 
-	public GhidraBundle enablePath(ResourceFile bundlePath) {
+	public boolean enablePath(ResourceFile bundlePath) {
 		GhidraBundle gb = bp2gb.get(bundlePath);
 		if (gb == null) {
 			gb = addGhidraBundle(bundlePath, true, false);
+			return true;
 		}
-		return gb;
+		return enable(gb);
+	}
+
+	public boolean enable(GhidraBundle gbundle) {
+		if (!gbundle.isEnabled()) {
+			gbundle.setEnabled(true);
+			fireBundleEnablementChange(gbundle, true);
+			return true;
+		}
+		return false;
 	}
 
 	public GhidraBundle addGhidraBundle(ResourceFile path, boolean enabled, boolean systemBundle) {
@@ -707,18 +719,10 @@ public class BundleHost {
 		return bp2gb.keySet();
 	}
 
-	public boolean enable(GhidraBundle gbundle) {
-		if (!gbundle.enabled) {
-			gbundle.enabled = true;
-			fireBundleEnablementChange(gbundle, true);
-		}
-		return false;
-	}
-
 	/*
 	 * this is done at most once, and it's done AFTER system bundles have been added.
 	 */
-	public void restoreState(SaveState ss) {
+	public void restoreStateAndActivate(SaveState ss, PluginTool tool) {
 		// XXX lock bundlehost operations
 		String[] pathArr = ss.getStrings("BundleHost_PATH", new String[0]);
 
@@ -727,12 +731,14 @@ public class BundleHost {
 		}
 
 		boolean[] enableArr = ss.getBooleans("BundleHost_ENABLE", new boolean[pathArr.length]);
+		boolean[] activeArr = ss.getBooleans("BundleHost_ACTIVE", new boolean[pathArr.length]);
 		boolean[] systemArr = ss.getBooleans("BundleHost_SYSTEM", new boolean[pathArr.length]);
 
 		List<GhidraBundle> added = new ArrayList<>();
-
+		List<GhidraBundle> need_activation = new ArrayList<>();
 		for (int i = 0; i < pathArr.length; i++) {
-			ResourceFile bp = new ResourceFile(pathArr[i]);
+
+			ResourceFile bp = generic.util.Path.fromPathString(pathArr[i]);
 			if (!bp.exists()) {
 				Msg.showWarn(this, null, "missing bundle path",
 					"the bundle path " + bp.toString() + " no longer exists, removing");
@@ -740,11 +746,12 @@ public class BundleHost {
 				continue;
 			}
 			boolean en = enableArr[i];
+			boolean act = activeArr[i];
 			boolean sys = systemArr[i];
 			GhidraBundle gb = bp2gb.get(bp);
 			if (gb != null) {
 				if (en != gb.isEnabled()) {
-					gb.enabled = en;
+					gb.setEnabled(en);
 					fireBundleEnablementChange(gb, en);
 				}
 				if (sys != gb.isSystemBundle()) {
@@ -757,31 +764,75 @@ public class BundleHost {
 				// stored system bundles that weren't already initialized must be old, drop 'm.
 			}
 			else {
-				added.add(newGhidraBundle(this, bp, en, sys));
+				added.add(gb = newGhidraBundle(this, bp, en, sys));
+			}
+			if (gb != null && act) {
+				need_activation.add(gb);
 			}
 		}
-
 		add(added);
+
+		new TaskLauncher(new Task("restoring bundle state", true, true, false) {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+				activateAll(need_activation, monitor, new NullPrintWriter());
+			}
+		});
 	}
 
 	public void saveState(SaveState ss) {
 		int n = bp2gb.size();
 		String[] pathArr = new String[n];
 		boolean[] enableArr = new boolean[n];
+		boolean[] activeArr = new boolean[n];
 		boolean[] systemArr = new boolean[n];
 
 		int index = 0;
 		for (Entry<ResourceFile, GhidraBundle> e : bp2gb.entrySet()) {
 			GhidraBundle gb = e.getValue();
-			pathArr[index] = gb.getPath().toString();
+			pathArr[index] = generic.util.Path.toPathString(gb.getPath());
 			enableArr[index] = gb.isEnabled();
+			activeArr[index] = gb.isActive();
 			systemArr[index] = gb.isSystemBundle();
 			++index;
 		}
 
 		ss.putStrings("BundleHost_PATH", pathArr);
 		ss.putBooleans("BundleHost_ENABLE", enableArr);
+		ss.putBooleans("BundleHost_ACTIVE", activeArr);
 		ss.putBooleans("BundleHost_SYSTEM", systemArr);
+	}
+
+	protected void activateAll(List<GhidraBundle> gbs, TaskMonitor monitor, PrintWriter console) {
+
+		monitor.setMaximum(gbs.size());
+		while (!gbs.isEmpty() && !monitor.isCancelled()) {
+			List<GhidraBundle> l =
+				gbs.stream().filter(gb -> canResolveAll(gb.getAllReqs())).collect(
+					Collectors.toList());
+			if (l.isEmpty()) {
+				// final round
+				l = gbs;
+				gbs = Collections.emptyList();
+			}
+			else {
+				gbs.removeAll(l);
+			}
+
+			for (GhidraBundle gb : l) {
+				if (monitor.isCancelled()) {
+					break;
+				}
+				try {
+					gb.build(console);
+					activateSynchronously(gb.getBundleLoc());
+				}
+				catch (Exception e) {
+					e.printStackTrace(console);
+				}
+				monitor.incrementProgress(1);
+			}
+		}
 	}
 
 }

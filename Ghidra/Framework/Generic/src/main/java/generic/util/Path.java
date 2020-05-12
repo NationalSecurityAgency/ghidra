@@ -106,27 +106,14 @@ public class Path implements Comparable<Path> {
 	 * @param isReadOnly if true files contained within directory are considered read-only
 	 */
 	public Path(String path, boolean isEnabled, boolean isEditable, boolean isReadOnly) {
-		if (path.startsWith(GHIDRA_HOME)) {
-			this.path = resolveGhidraHome(path);
-		}
-		else if (path.startsWith(USER_HOME)) {
-			String userHome = System.getProperty("user.home");
-			int length = USER_HOME.length();
-			String relativePath = path.substring(length);
-			this.path = new ResourceFile(new File(userHome + relativePath));
-		}
-		else {
-			this.path = new ResourceFile(path);
-		}
-		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
-			this.path = this.path.getCanonicalFile();
-		}
+		this.path = fromPathString(path);
+
 		this.isEnabled = isEnabled;
 		this.isEditable = isEditable;
 		this.isReadOnly = isReadOnly;
 	}
 
-	private ResourceFile resolveGhidraHome(String scriptPath) {
+	static private ResourceFile resolveGhidraHome(String scriptPath) {
 		ResourceFile pathFile = null;
 		for (ResourceFile root : Application.getApplicationRootDirectories()) {
 			int length = GHIDRA_HOME.length();
@@ -188,13 +175,41 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
+	 * Parse the path string <b>with path element placeholders</b>, such as 
+	 * {@link #GHIDRA_HOME}.
+	 * @param path the path
+	 * 
+	 * @return the path as a ResourceFile.
+	 */
+	public static ResourceFile fromPathString(String path) {
+		ResourceFile rf = null;
+		if (path.startsWith(GHIDRA_HOME)) {
+			rf = resolveGhidraHome(path);
+		}
+		else if (path.startsWith(USER_HOME)) {
+			String userHome = System.getProperty("user.home");
+			int length = USER_HOME.length();
+			String relativePath = path.substring(length);
+			rf = new ResourceFile(new File(userHome + relativePath));
+		}
+		else {
+			rf = new ResourceFile(path);
+		}
+		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
+			rf = rf.getCanonicalFile();
+		}
+
+		return rf;
+	}
+
+	/**
 	 * Returns the path as a string <b>with path element placeholders</b>, such as 
 	 * {@link #GHIDRA_HOME}.
 	 * @param path the path
 	 * 
 	 * @return the path as a string .
 	 */
-	static public String getPathAsString(ResourceFile path) {
+	static public String toPathString(ResourceFile path) {
 		String userHome = System.getProperty("user.home");
 		String absolutePath = path.getAbsolutePath();
 		for (ResourceFile appRoot : Application.getApplicationRootDirectories()) {
@@ -224,7 +239,7 @@ public class Path implements Comparable<Path> {
 	 * @return the path as a string .
 	 */
 	public String getPathAsString() {
-		return getPathAsString(path);
+		return toPathString(path);
 	}
 
 	/** 

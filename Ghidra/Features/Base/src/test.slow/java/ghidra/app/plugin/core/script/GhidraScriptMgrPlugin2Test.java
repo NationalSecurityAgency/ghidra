@@ -216,7 +216,8 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		tempScriptDir.mkdir();
 
 		ResourceFile scriptDir = new ResourceFile(tempScriptDir);
-		addScriptDirectory(scriptDir);
+		provider.getBundleHost().enablePath(scriptDir);
+
 		try {
 			// create a script file in that directory
 			String rawScriptName = testName.getMethodName();

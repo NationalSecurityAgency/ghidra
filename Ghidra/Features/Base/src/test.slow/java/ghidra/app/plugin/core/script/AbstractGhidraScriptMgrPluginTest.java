@@ -628,11 +628,6 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		waitForSwing();
 	}
 
-	protected void addScriptDirectory(ResourceFile scriptDir) {
-		// when there is a provider, GhidraScriptUtil has the same BundleHost
-		provider.getBundleHost().enablePath(scriptDir);
-	}
-
 	protected String runScript(String scriptName) throws Exception {
 		clearConsole();
 

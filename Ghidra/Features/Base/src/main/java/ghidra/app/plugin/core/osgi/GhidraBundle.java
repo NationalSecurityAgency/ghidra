@@ -70,6 +70,10 @@ public abstract class GhidraBundle {
 		return enabled;
 	}
 
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
 	public boolean isSystemBundle() {
 		return systemBundle;
 	}
@@ -117,6 +121,11 @@ public abstract class GhidraBundle {
 	public void activate(PrintWriter writer) throws Exception {
 		build(writer);
 		bundleHost.activateSynchronously(getBundleLoc());
+	}
+
+	public boolean isActive() {
+		Bundle b = getBundle();
+		return (b != null) && b.getState() == Bundle.ACTIVE;
 	}
 
 }

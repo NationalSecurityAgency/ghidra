@@ -1683,7 +1683,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 		if (SwingUtilities.isEventDispatchThread()) {
 			Msg.error(AbstractGenericTest.class,
-				"Incorrectly called yeildToSwing() from the Swing thread");
+				"Incorrectly called yieldToSwing() from the Swing thread");
 			return; // shouldn't happen
 		}
 
