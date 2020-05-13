@@ -78,25 +78,27 @@ impliedval16: reg3_5 is reg3_5 & target3_5=6 & doublebyte=0 {
 }
 
 impliedval16: reg3_5 is reg3_5 & (target3_5=4 | target3_5=5) & doublebyte=1 {
-	local tmp:2 = zext(*:1 reg3_5);
-	reg3_5 = reg3_5 + 1;
-	tmp = tmp | (zext(*:1 reg3_5) << 8);
-	reg3_5 = reg3_5 + 1;
+	local val:4 = *:4 reg3_5;
+	local low:1 = val(2);
+	local high:1 = val(0);
+	local tmp:2 = (zext(high) << 8) | zext(low);
+	reg3_5 = reg3_5 + 2;
 	export tmp;
 }
 
 impliedval16: reg3_5 is reg3_5 & target3_5=6 & doublebyte=1 {
-	reg3_5 = reg3_5 - 1;
-	local tmp:2 = zext(*:1 reg3_5);
-	reg3_5 = reg3_5 - 1;
-	tmp = tmp | (zext(*:1 reg3_5) << 8);
+	reg3_5 = reg3_5 - 2;
+	local val:4 = *:4 reg3_5;
+	local low:1 = val(2);
+	local high:1 = val(0);
+	local tmp:2 = (zext(high) << 8) | zext(low);
 	export tmp;
 }
 
 impliedval16: reg3_5 is reg3_5 & (target3_5=0 | target3_5=1 | target3_5=2 | target3_5=3 | target3_5=7) & doublebyte=1 {
-	local tmp:2 = zext(*:1 reg3_5);
-	tmp = tmp | (zext(*:1 reg3_5) << 8);
-	export tmp;
+	local val:2 = *:1 reg3_5;
+	val = (zext(val) << 8) | zext(val);
+	export val;
 }
 
 checkbranch:  is reg0_2=7 { goto [R7]; }
