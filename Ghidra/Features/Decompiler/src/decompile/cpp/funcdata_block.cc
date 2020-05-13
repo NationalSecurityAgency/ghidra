@@ -793,7 +793,7 @@ void Funcdata::nodeSplitCloneVarnode(PcodeOp *op,PcodeOp *newop)
   uint4 vflags = opvn->getFlags();
   vflags &= (Varnode::externref | Varnode::volatil | Varnode::incidental_copy |
 	     Varnode::readonly | Varnode::persist |
-	     Varnode::addrtied | Varnode::addrforce | Varnode::auto_live);
+	     Varnode::addrtied | Varnode::addrforce);
   newvn->setFlags(vflags);
 }
 

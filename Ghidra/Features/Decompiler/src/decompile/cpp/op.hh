@@ -250,6 +250,7 @@ class PcodeOpBank {
   list<PcodeOp *> deadlist;		///< List of \e dead PcodeOps
   list<PcodeOp *> alivelist;		///< List of \e alive PcodeOps
   list<PcodeOp *> storelist;		///< List of STORE PcodeOps
+  list<PcodeOp *> loadlist;		///< list of LOAD PcodeOps
   list<PcodeOp *> returnlist;		///< List of RETURN PcodeOps
   list<PcodeOp *> useroplist;		///< List of user-defined PcodeOps
   list<PcodeOp *> deadandgone;		///< List of retired PcodeOps

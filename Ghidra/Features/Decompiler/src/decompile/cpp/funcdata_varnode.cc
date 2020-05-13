@@ -257,7 +257,7 @@ Varnode *Funcdata::cloneVarnode(const Varnode *vn)
   // These are the flags we allow to be cloned
   vflags &= (Varnode::annotation | Varnode::externref |
 	     Varnode::readonly | Varnode::persist |
-	     Varnode::addrtied | Varnode::addrforce | Varnode::auto_live |
+	     Varnode::addrtied | Varnode::addrforce |
 	     Varnode::indirect_creation | Varnode::incidental_copy |
 	     Varnode::volatil | Varnode::mapped);
   newvn->setFlags(vflags);
@@ -503,7 +503,7 @@ void Funcdata::transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffs
 {
   uintb newConsume = (vn->getConsume() >> 8*lsbOffset) & calc_mask(newVn->getSize());
 
-  uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce|Varnode::auto_live);
+  uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce);
 
   newVn->setFlags(vnFlags);	// Preserve addrforce setting
   newVn->setConsume(newConsume);
@@ -805,7 +805,7 @@ void Funcdata::calcNZMask(void)
 
 /// \brief Update Varnode properties based on (new) Symbol information
 ///
-/// Boolean properties \b addrtied, \b addrforce, \b auto_live, and \b nolocalalias
+/// Boolean properties \b addrtied, \b addrforce, and \b nolocalalias
 /// for Varnodes are updated based on new Symbol information they map to.
 /// The caller can elect to update data-type information as well, where Varnodes
 /// and their associated HighVariables have their data-type finalized based symbols.
@@ -874,7 +874,7 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
 /// to point to the first Varnode after the affected set.
 ///
 /// The only properties that can be effectively changed with this
-/// routine are \b mapped, \b addrtied, \b addrforce, \b auto_live, and \b nolocalalias.
+/// routine are \b mapped, \b addrtied, \b addrforce, and \b nolocalalias.
 /// HighVariable splits must occur if \b addrtied is cleared.
 ///
 /// If the given data-type is non-null, an attempt is made to update all the Varnodes
@@ -895,13 +895,13 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
 				// We take special care with the addrtied flag
 				// as we cannot set it here if it is clear
 				// We can CLEAR but not SET the addrtied flag
-				// If addrtied is cleared, so should addrforce and auto_live
+				// If addrtied is cleared, so should addrforce
   if ((flags&Varnode::addrtied)==0) // Is the addrtied flags cleared
-    mask |= Varnode::addrtied | Varnode::addrforce | Varnode::auto_live;
+    mask |= Varnode::addrtied | Varnode::addrforce;
   // We can set the nolocalalias flag, but not clear it
   // If nolocalalias is set, then addrforce should be cleared
   if ((flags&Varnode::nolocalalias)!=0)
-    mask |= Varnode::nolocalalias | Varnode::addrforce | Varnode::auto_live;
+    mask |= Varnode::nolocalalias | Varnode::addrforce;
   flags &= mask;
 
   vn = *iter;
