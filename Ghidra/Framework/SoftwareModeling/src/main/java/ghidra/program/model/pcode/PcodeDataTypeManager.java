@@ -591,19 +591,17 @@ public class PcodeDataTypeManager {
 			if (sz <= 0) {
 				sz = size;
 			}
+			appendNameIdAttributes(resBuf, origType);
 			if (sz < 16) {
-				appendNameIdAttributes(resBuf, origType);
 				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "unknown");
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
 				resBuf.append('>');
 			}
 			else {
-				SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "array");
+				// Build an "opaque" structure with no fields
+				SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "struct");
 				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
-				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", sz);
 				resBuf.append('>');
-				resBuf.append(buildTypeRef(new ByteDataType(), 1));
 			}
 		}
 		return resBuf.toString();
