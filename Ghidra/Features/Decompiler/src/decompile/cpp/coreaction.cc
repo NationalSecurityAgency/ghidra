@@ -1215,6 +1215,7 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
 {
   Architecture *glb = data.getArch();
   bool cachereadonly = glb->readonlypropagate;
+  int4 pass = data.getHeritagePass();
   VarnodeLocSet::const_iterator iter;
   Varnode *vn;
 
@@ -1223,7 +1224,29 @@ int4 ActionVarnodeProps::apply(Funcdata &data)
     vn = *iter++;		// Advance iterator in case vn is deleted
     if (vn->isAnnotation()) continue;
     int4 vnSize = vn->getSize();
-    if (vn->hasActionProperty()) {
+    if (vn->isAutoLiveHold()) {
+      if (pass > 0) {
+	if (vn->isWritten()) {
+	  PcodeOp *loadOp = vn->getDef();
+	  if (loadOp->code() == CPUI_LOAD) {
+	    Varnode *ptr = loadOp->getIn(1);
+	    if (ptr->isConstant() || ptr->isReadOnly())
+	      continue;
+	    if (ptr->isWritten()) {
+	      PcodeOp *copyOp = ptr->getDef();
+	      if (copyOp->code() == CPUI_COPY) {
+		ptr = copyOp->getIn(0);
+		if (ptr->isConstant() || ptr->isReadOnly())
+		  continue;
+	      }
+	    }
+	  }
+	}
+	vn->clearAutoLiveHold();
+	count += 1;
+      }
+    }
+    else if (vn->hasActionProperty()) {
       if (cachereadonly&&vn->isReadOnly()) {
 	if (data.fillinReadOnly(vn)) // Try to replace vn with its lookup in LoadImage
 	  count += 1;
@@ -3383,6 +3406,84 @@ uintb ActionDeadCode::gatherConsumedReturn(Funcdata &data)
   return consumeVal;
 }
 
+/// \brief Determine if the given Varnode may eventually collapse to a constant
+///
+/// Recursively check if the Varnode is either:
+///   - Copied from a constant
+///   - The result of adding constants
+///   - Loaded from a pointer that is a constant
+///
+/// \param vn is the given Varnode
+/// \param addCount is the number of CPUI_INT_ADD operations seen so far
+/// \param loadCount is the number of CPUI_LOAD operations seen so far
+/// \return \b true if the Varnode (might) collapse to a constant
+bool ActionDeadCode::isEventualConstant(Varnode *vn,int4 addCount,int4 loadCount)
+
+{
+  if (vn->isConstant()) return true;
+  if (!vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  while(op->code() == CPUI_COPY) {
+    vn = op->getIn(0);
+    if (vn->isConstant()) return true;
+    if (!vn->isWritten()) return false;
+    op = vn->getDef();
+  }
+  switch(op->code()) {
+    case CPUI_INT_ADD:
+      if (addCount > 0) return false;
+      if (!isEventualConstant(op->getIn(0),addCount+1,loadCount))
+	return false;
+      return isEventualConstant(op->getIn(1),addCount+1,loadCount);
+    case CPUI_LOAD:
+      if (loadCount > 0) return false;
+      return isEventualConstant(op->getIn(1),0,loadCount+1);
+    case CPUI_INT_LEFT:
+    case CPUI_INT_RIGHT:
+    case CPUI_INT_SRIGHT:
+    case CPUI_INT_MULT:
+      if (!op->getIn(1)->isConstant())
+	return false;
+      return isEventualConstant(op->getIn(0),addCount,loadCount);
+    case CPUI_INT_ZEXT:
+    case CPUI_INT_SEXT:
+      return isEventualConstant(op->getIn(0),addCount,loadCount);
+    default:
+      break;
+  }
+  return false;
+}
+
+/// \brief Check if there are any unconsumed LOADs that may be from volatile addresses.
+///
+/// It may be too early to remove certain LOAD operations even though their result isn't
+/// consumed because it be of a volatile address with side effects.  If a LOAD meets this
+/// criteria, it is added to the worklist and \b true is returned.
+/// \param data is the function being analyzed
+/// \return \b true if there was at least one LOAD added to the worklist
+bool ActionDeadCode::lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist)
+
+{
+  if (data.getHeritagePass() > 1) return false;
+  if (data.isJumptableRecoveryOn()) return false;
+  list<PcodeOp *>::const_iterator iter = data.beginOp(CPUI_LOAD);
+  list<PcodeOp *>::const_iterator enditer = data.endOp(CPUI_LOAD);
+  bool res = false;
+  while(iter != enditer) {
+    PcodeOp *op = *iter;
+    ++iter;
+    if (op->isDead()) continue;
+    Varnode *vn = op->getOut();
+    if (vn->isConsumeVacuous()) continue;
+    if (isEventualConstant(op->getIn(1), 0, 0)) {
+      pushConsumed(~(uintb)0, vn, worklist);
+      vn->setAutoLiveHold();
+      res = true;
+    }
+  }
+  return res;
+}
+
 int4 ActionDeadCode::apply(Funcdata &data)
 
 {
@@ -3475,6 +3576,11 @@ int4 ActionDeadCode::apply(Funcdata &data)
 				// Propagate the consume flags
   while(!worklist.empty())
     propagateConsumed(worklist);
+
+  if (lastChanceLoad(data, worklist)) {
+    while(!worklist.empty())
+      propagateConsumed(worklist);
+  }
 
   for(i=0;i<manage->numSpaces();++i) {
     spc = manage->getSpace(i);

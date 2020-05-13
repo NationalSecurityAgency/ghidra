@@ -102,7 +102,8 @@ public:
     precishi = 0x4000000,	///< Is this Varnode the high part of a double precision value
     indirectstorage = 0x8000000, ///< Is this Varnode storing a pointer to the actual symbol
     hiddenretparm = 0x10000000,	 ///< Does this varnode point to the return value storage location
-    incidental_copy = 0x20000000 ///< Do copies of this varnode happen as a side-effect
+    incidental_copy = 0x20000000, ///< Do copies of this varnode happen as a side-effect
+    autolive_hold = 0x40000000	///< Temporarily block dead-code removal of \b this
   };
   /// Additional boolean properties on a Varnode
   enum addl_flags {
@@ -228,7 +229,8 @@ public:
   /// Are all Varnodes at this storage location components of the same high-level variable?
   bool isAddrTied(void) const { return ((flags&(Varnode::addrtied|Varnode::insert))==(Varnode::addrtied|Varnode::insert)); }
   bool isAddrForce(void) const { return ((flags&Varnode::addrforce)!=0); } ///< Is \b this value forced into a particular storage location?
-  bool isAutoLive(void) const { return ((flags&Varnode::addrforce)!=0); } ///< Is \b this varnode exempt from dead-code removal?
+  bool isAutoLive(void) const { return ((flags&(Varnode::addrforce|Varnode::autolive_hold))!=0); } ///< Is \b this varnode exempt from dead-code removal?
+  bool isAutoLiveHold(void) const { return ((flags&Varnode::autolive_hold)!=0); }	///< Is there a temporary hold on dead-code removal?
   bool isMapped(void) const { return ((flags&Varnode::mapped)!=0); } ///< Is there or should be formal symbol information associated with \b this?
   bool isUnaffected(void) const { return ((flags&Varnode::unaffected)!=0); } ///< Is \b this a value that is supposed to be preserved across the function?
   bool isSpacebase(void) const { return ((flags&Varnode::spacebase)!=0); } ///< Is this location used to store the base point for a virtual address space?
@@ -296,6 +298,8 @@ public:
   void clearPrecisHi(void) { clearFlags(Varnode::precishi); } ///< Clear the mark indicating a double precision portion
   void setWriteMask(void) { addlflags |= Varnode::writemask; } ///< Mark \b this as not a true \e write when computing SSA form
   void clearWriteMask(void) { addlflags &= ~Varnode::writemask; } ///< Clear the mark indicating \b this is not a true write
+  void setAutoLiveHold(void) { flags |= Varnode::autolive_hold; }	///< Place temporary hold on dead code removal
+  void clearAutoLiveHold(void) { flags &= ~Varnode::autolive_hold; }	///< Clear temporary hold on dead code removal
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
   bool updateType(Datatype *ct,bool lock,bool override); ///< (Possibly) set the Datatype given various restrictions
   void setStackStore(void) { addlflags |= Varnode::stack_store; } ///< Mark as produced by explicit CPUI_STORE

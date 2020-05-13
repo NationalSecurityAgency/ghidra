@@ -200,6 +200,8 @@ public:
   Varnode *findSpacebaseInput(AddrSpace *id) const;
   void spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
 
+  int4 getHeritagePass(void) const { return heritage.getPass(); }	///< Get overall count of heritage passes
+
   /// \brief Get the number of heritage passes performed for the given address space
   ///
   /// \param spc is the address space

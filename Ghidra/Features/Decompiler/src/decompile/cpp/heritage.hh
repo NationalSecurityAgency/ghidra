@@ -267,6 +267,8 @@ class Heritage {
 public:
   Heritage(Funcdata *data);	///< Constructor
 
+  int4 getPass(void) const { return pass; }	///< Get overall count of heritage passes
+
   /// \brief Get the pass number when the given address was heritaged
   ///
   /// \param addr is the given address
