@@ -93,8 +93,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * 18-Jul-2018 - version 20 - added support for external locations storing both
 	 *                            address and original-imported-name packed into symbol data3.
 	 *                            Read of old symbol data3 format does not require upgrade.
+	 * 14-May-2020 - version 21 - added support for overlay mapped blocks and byte mapping
+	 *                            schemes other than the default 1:1
 	 */
-	static final int DB_VERSION = 20;
+	static final int DB_VERSION = 21;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
