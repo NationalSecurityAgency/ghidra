@@ -15,8 +15,7 @@
  */
 package ghidra.program.database.mem;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -31,7 +30,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 /**
  * Test for the BitMemoryBlock for the database implementation.
  */
-public class BitMemoryBlockTest extends AbstractGhidraHeadedIntegrationTest {
+public class BitMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTest {
 	private AddressSpace byteSpace;
 	private AddressSpace bitSpace;
 	private MemoryBlock block;
@@ -43,7 +42,7 @@ public class BitMemoryBlockTest extends AbstractGhidraHeadedIntegrationTest {
 	 * Constructor for BitMemoryBlockTest.
 	 * @param name
 	 */
-	public BitMemoryBlockTest() {
+	public BitMappedMemoryBlockTest() {
 		super();
 	}
 
@@ -74,11 +73,12 @@ public class BitMemoryBlockTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testCreateNewBlock() throws Exception {
 		memory.createBitMappedBlock("BIT_BLOCK", bitSpace.getAddress(0), bitSpace.getAddress(0x20),
-			0x20);
+			0x20, false);
 		Address newStart = bitSpace.getAddress(0x40);
 
 		MemoryBlock newblock =
-			memory.createBitMappedBlock("BitTest", newStart, bitSpace.getAddress(0x20), 0x50);
+			memory.createBitMappedBlock("BitTest", newStart, bitSpace.getAddress(0x20), 0x50,
+				false);
 		assertNotNull(newblock);
 		assertEquals(newStart, newblock.getStart());
 	}
@@ -86,7 +86,7 @@ public class BitMemoryBlockTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testNoUnderlyingMemory() throws Exception {
 		MemoryBlock bitBlock = memory.createBitMappedBlock("BIT_BLOCK", bitSpace.getAddress(0),
-			bitSpace.getAddress(0x20), 0x20);
+			bitSpace.getAddress(0x20), 0x20, false);
 
 		Address addr = bitSpace.getAddress(0x40);
 		MemoryBlock newblock = memory.createBlock(bitBlock, "BitTest", addr, 0x50);
@@ -101,7 +101,7 @@ public class BitMemoryBlockTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testGetByte() throws Exception {
 		MemoryBlock bitBlock = memory.createBitMappedBlock("BIT_BLOCK", bitSpace.getAddress(0),
-			byteSpace.getAddress(0x20), 256);
+			byteSpace.getAddress(0x20), 256, false);
 
 		for (int i = 0; i < 256; i += 2) {
 			assertEquals(0, bitBlock.getByte(bitSpace.getAddress(i)));
@@ -113,7 +113,7 @@ public class BitMemoryBlockTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testPutByte() throws Exception {
 		MemoryBlock bitBlock = memory.createBitMappedBlock("BIT_BLOCK", bitSpace.getAddress(0),
-			byteSpace.getAddress(0x20), 256);
+			byteSpace.getAddress(0x20), 256, false);
 		for (int i = 0; i < 256; i += 2) {
 			bitBlock.putByte(bitSpace.getAddress(i), (byte) 1);
 			bitBlock.putByte(bitSpace.getAddress(i + 1), (byte) 0);

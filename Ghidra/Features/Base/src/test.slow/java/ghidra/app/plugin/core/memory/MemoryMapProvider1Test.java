@@ -482,7 +482,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 
 		// add a bit overlay block, live block, and an unitialized block
 		int transactionID = program.startTransaction("test");
-		memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100);
+		memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
 		memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
 		program.endTransaction(transactionID, true);
 
@@ -508,7 +508,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	public void testSortBlockTypeDescending() throws Exception {
 		// add a bit overlay block, live block, and an unitialized block
 		int transactionID = program.startTransaction("test");
-		memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100);
+		memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
 		memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
 		program.endTransaction(transactionID, true);
 
@@ -540,7 +540,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		//
 		int transactionID = program.startTransaction("test");
 		MemoryBlock block =
-			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100);
+			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
 		block.setSourceName("this is a test");
 		block = memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
 		block.setSourceName("other source");
@@ -581,7 +581,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		//
 		int transactionID = program.startTransaction("test");
 		MemoryBlock block =
-			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100);
+			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
 		block.setSourceName("this is a test");
 		block = memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
 		block.setSourceName("other source");

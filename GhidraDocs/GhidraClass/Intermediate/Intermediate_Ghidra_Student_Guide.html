@@ -279,14 +279,16 @@
 <ul class="medium">
   <li>The Memory Map</li>
   <li>Allows users to add, delete, move, split, merge, or expand memory blocks in their program.</li>
-  <li>Memory Blocks can be byte-mapped, bit-mapped (if supported by processor) or overlays</li>
+  <li>Default memory blocks may be uninitialized or initialized using specified data</li>  
+  <li>Other memory block types include byte-mapped and bit-mapped</li>
+  <li>Any memory block may be created as an overlay</li>
   <li>Allows users to rename memory blocks</li>
   <li>Allows users to change the image base of their program</li>
   <li>Allows users to edit settings on individual memory blocks</li>
   <ul>
     <li>Read/Write/Execute</li>
     <li>Volatile/non-volatile</li>
-    <li>Initialized/non-initialized</li>
+    <li>Initialized/non-initialized (default blocks only)</li>
   </ul>
 </ul>
 <div role="note">

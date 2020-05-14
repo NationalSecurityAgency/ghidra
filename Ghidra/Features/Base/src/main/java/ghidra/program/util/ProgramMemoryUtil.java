@@ -225,7 +225,7 @@ public class ProgramMemoryUtil {
 		AddressSet addrSet = new AddressSet();
 		MemoryBlock[] memBlocks = program.getMemory().getBlocks();
 		for (MemoryBlock memoryBlock : memBlocks) {
-			if (memoryBlock.getType() == MemoryBlockType.OVERLAY) {
+			if (memoryBlock.isOverlay()) {
 				AddressRange addressRange =
 					new AddressRangeImpl(memoryBlock.getStart(), memoryBlock.getEnd());
 				addrSet.add(addressRange);
