@@ -563,12 +563,16 @@ public class ImporterDialog extends DialogComponentProvider {
 	}
 
 	private LanguageCompilerSpecPair getPreferredLanguage(Loader loader) {
+		LanguageCompilerSpecPair preferredSpecPair = null;
 		for (LoadSpec loadSpec : loaderMap.get(loader)) {
 			if (loadSpec.isPreferred()) {
-				return loadSpec.getLanguageCompilerSpec();
+				if (preferredSpecPair != null) {
+					return null;
+				}
+				preferredSpecPair = loadSpec.getLanguageCompilerSpec();
 			}
 		}
-		return null;
+		return preferredSpecPair;
 	}
 
 	private DomainFolder getProjectRootFolder() {

@@ -586,11 +586,6 @@ class OldLanguage implements Language {
 	}
 
 	@Override
-	public List<AddressLabelInfo> getDefaultLabels() {
-		throw new UnsupportedOperationException("Language for upgrade use only (getDefaultLabels)");
-	}
-
-	@Override
 	public Register getProgramCounter() {
 		throw new UnsupportedOperationException(
 			"Language for upgrade use only (getProgramCounter)");

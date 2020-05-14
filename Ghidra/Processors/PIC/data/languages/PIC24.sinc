@@ -806,10 +806,10 @@ f13byte_t:  TOK_f13                           is TOK_B=1 & TOK_f13
   { export *[ram]:1 TOK_f13; }
 
 f15_t:      addr                              is TOK_f15
-  [ addr = ( TOK_f15 << 1 ); ] { tmp:2 = addr; export *[ram]:2 tmp; }
+  [ addr = ( TOK_f15 << 1 ); ] { export *[ram]:2 addr; }
 
 f15b_t:      addr                             is TOK_f15b
-  [ addr = ( TOK_f15b << 1 ); ] { tmp:2 = addr; export *[ram]:2 tmp; }
+  [ addr = ( TOK_f15b << 1 ); ] { export *[ram]:2 addr; }
 
 k3_t:       "#"TOK_k3                         is TOK_k3
   { export *[const]:1 TOK_k3; }
@@ -3992,6 +3992,8 @@ define pcodeop pic30_rem2;
   Wnd_t = -shift;
 }
 
+# TODO: locate encoding details for FEX instruction 
+# :fex
 
 :ff1l Ws_t,Wnd_t is OP_23_20=0xC & OP_19_16=0xF & OP_15_12=0x8 & OP_11=0x0 & Wnd_t & $(WSconstraint) & Ws_t {
 
@@ -7609,6 +7611,12 @@ define pcodeop pwrsavOp;
   testSRL_Z(Wnd_t);
 }
 
+# SSTEP - ICD instruction compatible with Microchips ICD debugging hardware
+# TODO: locate encoding details for SSTEP instruction 
+# define pcodeop sstep;
+# :sstep is OP_23_0=?? {
+#	sstep(); # In-Circuit Debugger (ICD) Single Step
+# }
 
 :sub.w   f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0x5 & OP_15=0 & WREG_t & f13_t {
 
@@ -8184,6 +8192,11 @@ define pcodeop verifyslave;
 } 
 @endif
 
+# URUN - ICD instruction compatible with Microchips ICD debugging hardware
+define pcodeop urun;
+:urun is OP_23_0=0xDAC000 {
+	urun(); # In-Circuit Debugger (ICD) Run
+}
 
 :xor.w f13_t^WREG_t is OP_23_20=0xB & OP_19_16=0x6 & OP_15=1 & WREG_t & f13_t  { 
 
