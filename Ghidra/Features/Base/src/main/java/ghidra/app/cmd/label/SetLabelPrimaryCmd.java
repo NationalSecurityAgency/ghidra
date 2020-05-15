@@ -65,6 +65,9 @@ public class SetLabelPrimaryCmd implements Command {
 			return false;
 		}
 
+		if (namespace == null) {
+			namespace = program.getGlobalNamespace();
+		}
 		symbol = st.getSymbol(name, addr, namespace);
 		if (symbol == null) {
 			// no new symbol - not an error condition if the previous symbol was dynamic.  The
@@ -95,7 +98,6 @@ public class SetLabelPrimaryCmd implements Command {
 				return false;
 			}
 			SourceType symbolSource = symbol.getSource();
-			namespace = symbol.getParentNamespace(); // update namespace in case null was specified
 			symbol.delete();
 			try {
 				oldSymbol.setNameAndNamespace(name, namespace, symbolSource);
