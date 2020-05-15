@@ -92,10 +92,10 @@ public class SetLabelPrimaryCmd implements Command {
 			String oldName = oldSymbol.getName();
 			SourceType oldSource = oldSymbol.getSource();
 			Namespace oldParent = oldSymbol.getParentNamespace();
-			if (symbol.getParentNamespace() == oldSymbol.getObject()) {
-				errorMsg = "local label can not be made primary at function entry point: " +
-					symbol.getName(true);
-				return false;
+			if (namespace == oldSymbol.getObject()) {
+				// local label promotion - switch names but not namespaces
+				oldParent = namespace;
+				namespace = oldSymbol.getParentNamespace();
 			}
 			SourceType symbolSource = symbol.getSource();
 			symbol.delete();
