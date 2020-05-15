@@ -31,7 +31,8 @@ import ghidra.service.graph.AttributedVertex;
 public class GhidraIconCache {
 
 	private static final int DEFAULT_STROKE_THICKNESS = 8;
-	private static final int DEFAULT_FONT_SIZE = 20;
+	private static final int DEFAULT_FONT_SIZE = 12;
+	private static final String DEFAULT_FONT_NAME = "Dialog";
 	private static final int DEFAULT_MARGIN_BORDER_SIZE = 4;
 	private static final float LABEL_TO_ICON_PROPORTION_WAG = 1.4f;
 	private static final double SQRT_2 = Math.sqrt(2.0);
@@ -64,7 +65,7 @@ public class GhidraIconCache {
 	private Icon createIcon(AttributedVertex vertex) {
 		rendererLabel.setText(ProgramGraphFunctions.getLabel(vertex));
 
-		rendererLabel.setFont(new Font("Serif", Font.BOLD, DEFAULT_FONT_SIZE));
+		rendererLabel.setFont(new Font(DEFAULT_FONT_NAME, Font.BOLD, DEFAULT_FONT_SIZE));
 		rendererLabel.setForeground(Color.black);
 		rendererLabel.setBackground(Color.white);
 		rendererLabel.setOpaque(true);

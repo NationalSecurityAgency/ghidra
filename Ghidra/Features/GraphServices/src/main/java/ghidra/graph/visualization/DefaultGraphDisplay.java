@@ -229,7 +229,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.toolBarIcon(Icons.REFRESH_ICON)
 				.onAction(context -> {
 					viewer.reset();
-					viewer.scaleToLayout();
+					viewer.scaleToLayout(true);
 				})
 				.buildAndInstallLocal(componentProvider);
 
@@ -345,17 +345,13 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				Collection<AttributedVertex> selectedVertices = getVertices(e.getItem());
 				List<String> selectedVertexIds = toVertexIds(selectedVertices);
 				notifySelectionChanged(selectedVertexIds);
-				multiSelectedVertexPaintable.setSelectedVertices(selectedVertices);
 
 				AttributedVertex vertex = CollectionUtils.any(selectedVertices);
 				if (vertex != null) {
-					singleSelectedVertexPaintable.setSelectedVertex(vertex);
 					notifyLocationChanged(vertex.getId());
 				}
 			}
 			else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				singleSelectedVertexPaintable.setSelectedVertex(null);
-				multiSelectedVertexPaintable.setSelectedVertices(Collections.emptySet());
 				notifySelectionChanged(Collections.emptyList());
 			}
 			viewer.repaint();
@@ -399,7 +395,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		else if (!Arrays.asList(nodeSelectedState.getSelectedObjects()).containsAll(selected)) {
 			nodeSelectedState.clear();
 			nodeSelectedState.select(selected, false);
-			multiSelectedVertexPaintable.setSelectedVertices(selected);
 			scrollToSelected(selected);
 		}
 		viewer.repaint();
@@ -418,7 +413,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		Optional<AttributedVertex> selected =
 			graph.vertexSet().stream().filter(v -> vertexID.equals(v.getId())).findFirst();
 		log.fine("picking address:" + vertexID + " returned " + selected);
-		singleSelectedVertexPaintable.setSelectedVertex(selected.orElse(null));
 		viewer.repaint();
 		selected.ifPresent(this::scrollToSelected);
 		viewer.repaint();
