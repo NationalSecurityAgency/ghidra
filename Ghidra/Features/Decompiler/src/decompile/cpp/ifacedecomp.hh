@@ -54,6 +54,7 @@ public:
 #endif
   IfaceDecompData(void);
   virtual ~IfaceDecompData(void);
+  void allocateCallGraph(void);
   void abortFunction(ostream &s);
   void clearArchitecture(void);
 };

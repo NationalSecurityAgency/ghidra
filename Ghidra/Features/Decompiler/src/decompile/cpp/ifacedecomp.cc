@@ -225,6 +225,14 @@ IfaceDecompData::~IfaceDecompData(void)
 // fd will get deleted with Database
 }
 
+void IfaceDecompData::allocateCallGraph(void)
+
+{
+  if (cgraph != (CallGraph *)0)
+    delete cgraph;
+  cgraph = new CallGraph(conf);
+}
+
 void IfaceDecompData::abortFunction(ostream &s)
 
 {				// Clear references to current function
@@ -2096,10 +2104,7 @@ void IfcDuplicateHash::iterationCallback(Funcdata *fd)
 void IfcCallGraphBuild::execute(istream &s)
 
 { // Build call graph from existing function starts
-  if (dcp->cgraph != (CallGraph *)0)
-    delete dcp->cgraph;
-
-  dcp->cgraph = new CallGraph(dcp->conf);
+  dcp->allocateCallGraph();
 
   dcp->cgraph->buildAllNodes();		// Build a node in the graph for existing symbols
   quick = false;
@@ -2146,11 +2151,7 @@ void IfcCallGraphBuild::iterationCallback(Funcdata *fd)
 void IfcCallGraphBuildQuick::execute(istream &s)
 
 { // Build call graph from existing function starts, do only disassembly
-  if (dcp->cgraph != (CallGraph *)0)
-    delete dcp->cgraph;
-
-  dcp->cgraph = new CallGraph(dcp->conf);
-
+  dcp->allocateCallGraph();
   dcp->cgraph->buildAllNodes();	// Build a node in the graph for existing symbols
   quick = true;
   iterateFunctionsAddrOrder();
@@ -2199,7 +2200,7 @@ void IfcCallGraphLoad::execute(istream &s)
   DocumentStorage store;
   Document *doc = store.parseDocument(is);
 
-  dcp->cgraph = new CallGraph(dcp->conf);
+  dcp->allocateCallGraph();
   dcp->cgraph->restoreXml(doc->getRoot());
   *status->optr << "Successfully read in callgraph" << endl;
 
@@ -2744,6 +2745,7 @@ void mainloop(IfaceStatus *status) {
   for(;;) {
     while(!status->isStreamFinished()) {
       status->writePrompt();
+      status->optr->flush();
       execute(status,dcp);
     }
     if (status->done) break;

@@ -182,6 +182,12 @@ bool Action::setBreakPoint(uint4 tp,const string &specify)
   return false;
 }
 
+void Action::clearBreakPoints(void)
+
+{
+  breakpoint = 0;
+}
+
 /// If enabled, a warning will be printed whenever this action applies.
 /// The warning can be toggled for \b this Action or some sub-action by
 /// specifying its name.
@@ -369,6 +375,15 @@ void ActionGroup::addAction(Action *ac)
 
 {
   list.push_back(ac);
+}
+
+void ActionGroup::clearBreakPoints(void)
+
+{
+  vector<Action *>::const_iterator iter;
+  for(iter=list.begin();iter!= list.end();++iter)
+    (*iter)->clearBreakPoints();
+  Action::clearBreakPoints();
 }
 
 Action *ActionGroup::clone(const ActionGroupList &grouplist) const
@@ -868,6 +883,15 @@ int4 ActionPool::apply(Funcdata &data)
 	  if (0!=processOp((*op_state).second,data)) return -1;
 
   return 0;			// Indicate successful completion
+}
+
+void ActionPool::clearBreakPoints(void)
+
+{
+  vector<Rule *>::const_iterator iter;
+  for(iter=allrules.begin();iter!=allrules.end();++iter)
+    (*iter)->clearBreakPoints();
+  Action::clearBreakPoints();
 }
 
 Action *ActionPool::clone(const ActionGroupList &grouplist) const
