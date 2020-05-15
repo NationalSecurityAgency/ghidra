@@ -826,7 +826,7 @@ public interface Memory extends AddressSetView {
 		}
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i);
-			if (c < 0x20 || c >= 0x7f || c == ':') {
+			if (c <= 0x20 || c >= 0x7f || c == ':') {
 				return false;
 			}
 		}

@@ -268,36 +268,38 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(".test", model.getValueAt(0, MemoryMapModel.NAME));
 	}
 
-	@Test
-	public void testDuplicateName() throws Exception {
-		table.addRowSelectionInterval(0, 0);
-		Rectangle rect = table.getCellRect(0, MemoryMapModel.NAME, true);
-		clickMouse(table, 1, rect.x, rect.y, 2, 0);
-		waitForPostedSwingRunnables();
-
-		SwingUtilities.invokeLater(() -> {
-			int row = 0;
-			TableCellEditor editor = table.getCellEditor(row, MemoryMapModel.NAME);
-			Component c = editor.getTableCellEditorComponent(table,
-				model.getValueAt(row, MemoryMapModel.NAME), true, row, MemoryMapModel.NAME);
-			JTextField tf = (JTextField) c;
-
-			tf.setText(".data");
-			editor.stopCellEditing();
-		});
-		waitForPostedSwingRunnables();
-		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
-
-		final OptionDialog d =
-			waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
-
-		assertNotNull(d);
-		String msg = findMessage(d.getComponent());
-		assertNotNull(msg);
-		assertEquals("Block named .data already exists.", msg);
-		SwingUtilities.invokeAndWait(() -> d.close());
-
-	}
+// Test Eliminated - Memory API allows duplicate names which is a common occurance
+// with import formats such as ELF
+//
+//	public void testDuplicateName() throws Exception {
+//		table.addRowSelectionInterval(0, 0);
+//		Rectangle rect = table.getCellRect(0, MemoryMapModel.NAME, true);
+//		clickMouse(table, 1, rect.x, rect.y, 2, 0);
+//		waitForPostedSwingRunnables();
+//
+//		SwingUtilities.invokeLater(() -> {
+//			int row = 0;
+//			TableCellEditor editor = table.getCellEditor(row, MemoryMapModel.NAME);
+//			Component c = editor.getTableCellEditorComponent(table,
+//				model.getValueAt(row, MemoryMapModel.NAME), true, row, MemoryMapModel.NAME);
+//			JTextField tf = (JTextField) c;
+//
+//			tf.setText(".data");
+//			editor.stopCellEditing();
+//		});
+//		waitForPostedSwingRunnables();
+//		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
+//
+//		final OptionDialog d =
+//			waitForDialogComponent(tool.getToolFrame(), OptionDialog.class, 2000);
+//
+//		assertNotNull(d);
+//		String msg = findMessage(d.getComponent());
+//		assertNotNull(msg);
+//		assertEquals("Block named .data already exists.", msg);
+//		SwingUtilities.invokeAndWait(() -> d.close());
+//
+//	}
 
 	@Test
 	public void testEditComment() throws Exception {

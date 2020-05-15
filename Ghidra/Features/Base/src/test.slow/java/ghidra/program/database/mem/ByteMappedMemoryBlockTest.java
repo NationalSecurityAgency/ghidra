@@ -351,4 +351,21 @@ public class ByteMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(4, block2.getBytes(addr(0x100), data2));
 		assertTrue(Arrays.equals(new byte[] { 1, 2, -3, -4 }, data2));
 	}
+
+	@Test
+	public void testNoUnderlyingMemory() throws Exception {
+
+		MemoryBlock byteMappedBlock = memory.createByteMappedBlock("BYTE_BLOCK", addr(0x1000),
+			addr(0x1020), 0x10, new ByteMappingScheme(1, 1), false);
+
+		Address addr = addr(0x1040);
+		MemoryBlock newblock = memory.createBlock(byteMappedBlock, "Test", addr, 0x20);
+		try {
+			newblock.getByte(addr);
+			Assert.fail("Should not have gotten a byte");
+		}
+		catch (MemoryAccessException e) {
+			// expected
+		}
+	}
 }

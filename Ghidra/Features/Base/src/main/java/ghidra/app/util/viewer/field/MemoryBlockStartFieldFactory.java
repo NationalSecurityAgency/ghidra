@@ -112,10 +112,16 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		}
 		CodeUnit cu = (CodeUnit) proxyObject;
 
+		String[] comments;
 		List<AttributedString> attributedStrings = createBlockStartText(cu);
-		String[] comments = new String[attributedStrings.size()];
-		for (int i = 0; i < comments.length; i++) {
-			comments[i] = attributedStrings.get(i).getText();
+		if (attributedStrings == null) {
+			comments = new String[0];
+		}
+		else {
+			comments = new String[attributedStrings.size()];
+			for (int i = 0; i < comments.length; i++) {
+				comments[i] = attributedStrings.get(i).getText();
+			}
 		}
 
 		return new MemoryBlockStartFieldLocation(cu.getProgram(), cu.getMinAddress(), null, row,

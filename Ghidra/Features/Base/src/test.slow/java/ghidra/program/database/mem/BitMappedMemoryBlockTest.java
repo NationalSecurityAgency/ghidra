@@ -95,6 +95,7 @@ public class BitMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTes
 			Assert.fail("Should not have gotten a byte");
 		}
 		catch (MemoryAccessException e) {
+			// expected
 		}
 	}
 

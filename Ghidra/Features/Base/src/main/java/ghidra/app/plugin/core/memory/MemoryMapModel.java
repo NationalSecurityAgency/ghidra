@@ -267,7 +267,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 					if (name.equals(block.getName())) {
 						break;
 					}
-					if (Memory.isValidAddressSpaceName(name)) {
+					if (!Memory.isValidAddressSpaceName(name)) {
 						Msg.showError(this, provider.getComponent(), "Invalid Name",
 							"Invalid Memory Block Name: " + name);
 						break;

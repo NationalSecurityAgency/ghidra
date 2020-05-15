@@ -360,13 +360,16 @@ class AddBlockModel {
 	}
 
 	private boolean hasMappedAddressIfNeeded() {
-		if (blockType == MemoryBlockType.BIT_MAPPED || blockType == MemoryBlockType.BYTE_MAPPED) {
-			if (baseAddr == null) {
-				String blockTypeStr =
-					(blockType == MemoryBlockType.BIT_MAPPED) ? "bit-mapped" : "byte-mapped";
-				message = "Please enter a source address for the " + blockTypeStr + " block";
-				return false;
-			}
+		if (blockType != MemoryBlockType.BIT_MAPPED && blockType != MemoryBlockType.BYTE_MAPPED) {
+			return true;
+		}
+		if (baseAddr == null) {
+			String blockTypeStr =
+				(blockType == MemoryBlockType.BIT_MAPPED) ? "bit-mapped" : "byte-mapped";
+			message = "Please enter a source address for the " + blockTypeStr + " block";
+			return false;
+		}
+		if (blockType == MemoryBlockType.BYTE_MAPPED) {
 			if (schemeDestByteCount <= 0 || schemeDestByteCount > Byte.MAX_VALUE ||
 				schemeSrcByteCount <= 0 || schemeSrcByteCount > Byte.MAX_VALUE) {
 				message = "Mapping ratio values must be within range: 1 to 127";

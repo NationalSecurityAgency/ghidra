@@ -163,7 +163,7 @@ public class MemoryBlockDB implements MemoryBlock {
 			if (oldName.equals(name)) {
 				return;
 			}
-			memMap.checkBlockName(name);
+			memMap.checkBlockName(name, isOverlay());
 			try {
 				if (isOverlay()) {
 					memMap.overlayBlockRenamed(oldName, name);
