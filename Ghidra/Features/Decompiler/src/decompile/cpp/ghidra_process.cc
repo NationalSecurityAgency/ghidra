@@ -48,6 +48,7 @@ void connect_to_console(Funcdata *fd)
   decomp_data->conf = fd->getArch();
   ostream *oldPrintStream = decomp_data->conf->print->getOutputStream();
   bool emitXml = decomp_data->conf->print->emitsXml();
+  decomp_data->conf->setDebugStream(remote->getOutputStream());
   decomp_data->conf->print->setOutputStream(remote->getOutputStream());
   decomp_data->conf->print->setXML(false);
   ghidra_dcp->reset();
