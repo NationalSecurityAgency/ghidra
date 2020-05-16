@@ -1558,6 +1558,62 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testExtendedTypes__P() throws Exception {
+		mangled = "?Name@@3_PA";
+		msTruth = "UNKNOWN Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__Q() throws Exception {
+		mangled = "?Name@@3_QA";
+		msTruth = "char8_t Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__R() throws Exception {
+		mangled = "?Name@@3_RA";
+		msTruth = "<unknown> Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__S() throws Exception {
+		mangled = "?Name@@3_SA";
+		msTruth = "char16_t Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__T() throws Exception {
+		mangled = "?Name@@3_TA";
+		msTruth = "UNKNOWN Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__U() throws Exception {
+		mangled = "?Name@@3_UA";
+		msTruth = "char32_t Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testExtendedTypes__V() throws Exception {
+		mangled = "?Name@@3_VA";
+		msTruth = "UNKNOWN Name";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
 	public void testExtendedTypes__W() throws Exception {
 		mangled = "?Name@@3_WA";
 		msTruth = "wchar_t Name";
