@@ -9,8 +9,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.zip.*;
 
-import org.apache.commons.compress.utils.IOUtils;
-
 import ghidra.file.formats.zlib.ZLIB;
 import ghidra.util.task.TaskMonitor;
 
@@ -102,37 +100,31 @@ public class CrushedPNGUtil {
 			int expectedSize =
 				(ihdrChunk.getBytesPerLine() * ihdrChunk.getImgHeight()) +
 					ihdrChunk.getRowFilterBytes();
+			byte[] results;
+			try (ByteArrayOutputStream decompressedOutput = new ByteArrayOutputStream(expectedSize);
+				InflaterOutputStream inflaterStream = new InflaterOutputStream(decompressedOutput)) {
 
-			InputStream inputStream = new ByteArrayInputStream(getFixedIdatDataBytes(idatStream));
-			byte[] results = new byte[expectedSize];
-			Inflater inflater = new Inflater();
-			inflater.setInput(IOUtils.toByteArray(inputStream));
-			//inflater.setInput(convertInputStreamToByteArray(inputStream));
-			int numDecompressed = inflater.inflate(results);
-
-			if (numDecompressed != expectedSize) {
+				inflaterStream.write(ZLIB_COMPRESSION_DEFAULT);
+				idatStream.writeTo(inflaterStream);
+				inflaterStream.finish();
+				results = decompressedOutput.toByteArray();
+			}
+			if (results.length != expectedSize) {
 				throw new PNGFormatException("Decompression Error, expected " + expectedSize +
-					" bytes, but got " + numDecompressed + " bytes");
+					" bytes, but got " + results.length + " bytes");
 			}
 
 			//Processes the IDAT chunks to 'uncrushify' them
 			processIDATChunks(ihdrChunk, results);
 
-			//Conservative sized repack array
-			byte[] tmp = new byte[CrushedPNGConstants.INITIAL_REPACK_SIZE];
-			Deflater deflater = new Deflater();
-			deflater.setInput(results);
-			deflater.finish();
-			int numCompressed = deflater.deflate(tmp);
+			try (ByteArrayOutputStream compressedOutput = new ByteArrayOutputStream(CrushedPNGConstants.INITIAL_REPACK_SIZE);
+				DeflaterOutputStream deflaterStream = new DeflaterOutputStream(compressedOutput)) {
 
-			if (numCompressed <= 0) {
-				throw new PNGFormatException("Number of compressed bytes <= 0");
+				deflaterStream.write(results);
+				deflaterStream.finish();
+				deflaterStream.flush();
+				repackArray = compressedOutput.toByteArray();
 			}
-			repackArray = new byte[numCompressed];
-			for (int i = 0; i < numCompressed; i++) {
-				repackArray[i] = tmp[i];
-			}
-
 		}
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
