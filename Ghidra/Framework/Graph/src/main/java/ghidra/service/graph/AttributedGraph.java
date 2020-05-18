@@ -80,6 +80,7 @@ public class AttributedGraph extends AbstractBaseGraph<AttributedVertex, Attribu
 		if (vertexMap.containsKey(id)) {
 			AttributedVertex vertex = vertexMap.get(id);
 			vertex.setName(name);
+			return vertex;
 		}
 		AttributedVertex newVertex = new AttributedVertex(id, name);
 		addVertex(newVertex);

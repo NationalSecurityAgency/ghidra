@@ -88,7 +88,7 @@ public class AttributedGraphTest {
 
 		assertEquals(1, graph.getVertexCount());
 		assertTrue(v1 == v2);
-		assertEquals("Bob", v2.getName());
+		assertEquals("Joe", v2.getName());
 	}
 
 	@Test
