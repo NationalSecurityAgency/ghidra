@@ -145,31 +145,31 @@ public class CrushedPNGUtil {
 			if (!(Arrays.equals(idBytes, CrushedPNGConstants.INSERTED_IOS_CHUNK))) {
 
 				//If the chunk is the old IDAT chunk replace with new IDAT data
-				if (Arrays.equals(idBytes, CrushedPNGConstants.IDAT_CHUNK) && !wroteIDAT) {
+				if ((repackArray != null) && Arrays.equals(idBytes, CrushedPNGConstants.IDAT_CHUNK)) {
+					if (!wroteIDAT) {
+						//Write the chunk data length
+						int dataLength = repackArray.length;
+						byte[] lengthBytes = ByteBuffer.allocate(4).putInt(dataLength).array();
+						outputStream.write(lengthBytes);
 
-					//Write the chunk data length
-					int dataLength = repackArray.length;
-					byte[] lengthBytes = ByteBuffer.allocate(4).putInt(dataLength).array();
-					outputStream.write(lengthBytes);
+						//Gather ID and data together to calculate CRC32
+						byte[] idat = new byte[CrushedPNGConstants.IDAT_CHUNK.length + dataLength];
+						for (int i = 0; i < CrushedPNGConstants.IDAT_CHUNK.length; i++) {
+							idat[i] = CrushedPNGConstants.IDAT_CHUNK[i];
+						}
+						for (int i = 0; i < dataLength; i++) {
+							idat[CrushedPNGConstants.IDAT_CHUNK.length + i] = repackArray[i];
+						}
 
-					//Gather ID and data together to calculate CRC32
-					byte[] idat = new byte[CrushedPNGConstants.IDAT_CHUNK.length + dataLength];
-					for (int i = 0; i < CrushedPNGConstants.IDAT_CHUNK.length; i++) {
-						idat[i] = CrushedPNGConstants.IDAT_CHUNK[i];
+						//Write the chunk data
+						outputStream.write(idat);
+
+						//Calculate and write chunk crc32
+						byte[] checksum = calculateCRC32(idat);
+						outputStream.write(checksum);
+
+						wroteIDAT = true;
 					}
-					for (int i = 0; i < dataLength; i++) {
-						idat[CrushedPNGConstants.IDAT_CHUNK.length + i] = repackArray[i];
-					}
-
-					//Write the chunk data
-					outputStream.write(idat);
-
-					//Calculate and write chunk crc32
-					byte[] checksum = calculateCRC32(idat);
-					outputStream.write(checksum);
-
-					wroteIDAT = true;
-
 				}
 				else {
 
