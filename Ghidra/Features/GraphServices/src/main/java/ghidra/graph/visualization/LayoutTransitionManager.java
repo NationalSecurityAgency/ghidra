@@ -58,7 +58,7 @@ class LayoutTransitionManager {
 	/**
 	 * a {@link Comparator} to sort edges during layout graph traversal
 	 */
-	Comparator<AttributedEdge> edgeComparator;
+	Comparator<AttributedEdge> edgeComparator = (e1, e2) -> 0;
 
 	/**
 	 * a {@link MultiActionDockingAction} to allow the user to select a layout algorithm
