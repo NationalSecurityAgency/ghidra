@@ -28,7 +28,7 @@ import ghidra.program.model.address.KeyRange;
 /**
  * Generic cache implementation for objects that extend DatabaseObject. This is a reference based
  * cache such that objects are only ever automatically removed from the cache when there are no
- * references to that object. It also maintains small "hard" cache so that recently accessed objects
+ * references to that object. It also maintains a small "hard" cache so that recently accessed objects
  * are not prematurely removed from the cache if there are no references to them.
  * 
  * @param <T> The type of the object stored in this cache
@@ -143,18 +143,18 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 */
 	public synchronized List<T> getCachedObjects() {
 		ArrayList<T> list = new ArrayList<T>();
+		processQueue();
 		for (KeyedSoftReference ref : map.values()) {
 			T obj = ref.get();
 			if (obj != null) {
 				list.add(obj);
 			}
 		}
-		processQueue();
 		return list;
 	}
 
 	/**
-	 * Delete all objects from hashTable whose key is contained
+	 * Delete all objects from HashMap whose key is contained
 	 * within the specified keyRanges.
 	 * @param keyRanges key ranges to delete
 	 */
@@ -171,7 +171,7 @@ public class DBObjectCache<T extends DatabaseObject> {
 	}
 
 	/**
-	 * Delete all objects from hashTable whose key is contained
+	 * Delete all objects from cache whose key is contained
 	 * within the specified keyRanges.  Iteration over all
 	 * keys contained within keyRanges will be performed.
 	 * @param keyRanges key ranges to delete
@@ -192,9 +192,9 @@ public class DBObjectCache<T extends DatabaseObject> {
 	}
 
 	/**
-	 * Delete all objects from hashTable whose key is contained
+	 * Delete all objects from cache whose key is contained
 	 * within the specified keyRanges.  Iteration over all
-	 * keys contained within hashTable will be performed.
+	 * keys contained within map will be performed.
 	 * @param keyRanges key ranges to delete
 	 */
 	private void deleteLargeKeyRanges(List<KeyRange> keyRanges) {
