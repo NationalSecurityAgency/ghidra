@@ -23,7 +23,7 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.mz.DOSHeader;
+import ghidra.app.util.bin.format.mz.OldDOSHeader;
 import ghidra.app.util.bin.format.mz.OldStyleExecutable;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.store.LockException;
@@ -67,7 +67,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			return loadSpecs;
 		}
 		OldStyleExecutable ose = new OldStyleExecutable(provider);
-		DOSHeader dos = ose.getDOSHeader();
+		OldDOSHeader dos = ose.getOldDOSHeader();
 		if (dos.isDosSignature() && !dos.hasNewExeHeader() && !dos.hasPeHeader()) {
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), "" + dos.e_magic(), null);
@@ -98,7 +98,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		Memory memory = prog.getMemory();
 
 		OldStyleExecutable ose = new OldStyleExecutable(provider);
-		DOSHeader dos = ose.getDOSHeader();
+		OldDOSHeader dos = ose.getOldDOSHeader();
 		BinaryReader reader = ose.getBinaryReader();
 
 		if (monitor.isCancelled()) {
@@ -117,7 +117,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 		monitor.setMessage("Processing relocations...");
-		doRelocations(prog, reader, dos);
+		doRelocations(prog, reader, dos, log);
 
 		if (monitor.isCancelled()) {
 			return;
@@ -137,7 +137,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void setRegisters(ProgramContext context, Symbol entry, MemoryBlock[] blocks,
-			DOSHeader dos) {
+			OldDOSHeader dos) {
 		if (entry == null) {
 			return;
 		}
@@ -170,7 +170,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			context.setValue(sp, entry.getAddress(), entry.getAddress(),
 				BigInteger.valueOf(Conv.shortToLong(dos.e_sp())));
 			context.setValue(ss, entry.getAddress(), entry.getAddress(),
-				BigInteger.valueOf(Conv.shortToLong(dos.e_ss())));
+				BigInteger.valueOf(Conv.intToLong((dos.e_ss() + INITIAL_SEGMENT_VAL) & Conv.SHORT_MASK)));
 
 			BigInteger csValue = BigInteger.valueOf(
 				Conv.intToLong(((SegmentedAddress) entry.getAddress()).getSegment()));
@@ -245,15 +245,16 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processSegments(Program program, FileBytes fileBytes, SegmentedAddressSpace space,
-			BinaryReader reader, DOSHeader dos, MessageLog log, TaskMonitor monitor) {
+			BinaryReader reader, OldDOSHeader dos, MessageLog log, TaskMonitor monitor) {
 		try {
 			int relocationTableOffset = Conv.shortToInt(dos.e_lfarlc());
 			int csStart = INITIAL_SEGMENT_VAL;
 			int dataStart = dos.e_cparhdr() << 4;
 
 			HashMap<Address, Address> segMap = new HashMap<Address, Address>();
+			// Handle overflow
 			SegmentedAddress codeAddress =
-				space.getAddress(Conv.shortToInt(dos.e_cs()) + csStart, 0);
+				space.getAddress((Conv.shortToInt((dos.e_cs())) + csStart) & Conv.SHORT_MASK, 0);
 			segMap.put(codeAddress, codeAddress);
 			codeAddress = space.getAddress(csStart, 0);
 			segMap.put(codeAddress, codeAddress);			// This is there data starts loading
@@ -264,7 +265,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				int seg = Conv.shortToInt(reader.readNextShort());
 
 				// compute the new segment referenced at the location
-				SegmentedAddress segStartAddr = space.getAddress(seg + csStart, 0);
+				SegmentedAddress segStartAddr = space.getAddress((seg + csStart) & Conv.SHORT_MASK, 0);
 				segMap.put(segStartAddr, segStartAddr);
 
 				int location = (seg << 4) + off;
@@ -331,6 +332,13 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 					" extra bytes starting at file offset 0x" + Integer.toHexString(exeEndOffset));
 			}
 
+			// create the allocated memory
+			Memory mem = program.getMemory();
+			Address end = mem.getMaxAddress().add(1);
+			// TODO: Handle overflow, consider minalloc
+			MemoryBlockUtils.createUninitializedBlock(program, false, "Alloc", end, 
+					dos.e_maxalloc() * 16, "", "mz", true, true, false, log);
+			
 //			// create the stack segment
 //			SegmentedAddress stackStart = space.getAddress((dos.e_ss() + csStart), 0);
 //			mbu.createUninitializedBlock(false, "Stack", stackStart, dos.e_sp(), "", "", true, true, false);
@@ -344,7 +352,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void doRelocations(Program prog, BinaryReader reader, DOSHeader dos) {
+	private void doRelocations(Program prog, BinaryReader reader, OldDOSHeader dos, MessageLog log) {
 		try {
 			Memory mem = prog.getMemory();
 			SegmentedAddressSpace space =
@@ -360,40 +368,34 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				int off = Conv.shortToInt(reader.readNextShort());
 				int seg = Conv.shortToInt(reader.readNextShort());
 
-				//SegmentedAddress segStartAddr = space.getAddress(seg + csStart, 0);
-
-				int location = (seg << 4) + off;
+				int location = ((seg << 4) + off) & Conv.SHORT_MASK;
 				int locOffset = location + dataStart;
 
-				// compute the new segment referenced at the location
-				SegmentedAddress fixupAddr = space.getAddress(seg + csStart, off);
-				int value = Conv.shortToInt(reader.readShort(locOffset));
-				int fixupAddrSeg = (value + csStart) & Conv.SHORT_MASK;
-				mem.setShort(fixupAddr, (short) fixupAddrSeg);
+				try {
+					// compute the new segment referenced at the location
+					SegmentedAddress fixupAddr = space.getAddress((seg + csStart) & Conv.SHORT_MASK, off);
+					int value = Conv.shortToInt(reader.readShort(locOffset));
+					int fixupAddrSeg = (value + csStart) & Conv.SHORT_MASK;
+					mem.setShort(fixupAddr, (short) fixupAddrSeg);
 
-				// Add to relocation table
-				prog.getRelocationTable()
-						.add(fixupAddr, 0, new long[] { off, seg }, null, null);
+					// Add to relocation table
+					prog.getRelocationTable()
+							.add(fixupAddr, 0, new long[] { off, seg }, null, null);
+				}
+				catch (AddressOutOfBoundsException|IOException|MemoryAccessException e) {
+					log.error("MzLoader", "Failed to process relocation " + i + ": " + e.getMessage());
+				}
 			}
 		}
 		catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		catch (MemoryAccessException e) {
-			throw new RuntimeException(e);
+			log.error("MzLoader", "Failed to process relocation table: " + e.getMessage());
 		}
 	}
 
 	private void createSymbols(SegmentedAddressSpace space, SymbolTable symbolTable,
-			DOSHeader dos) {
+			OldDOSHeader dos) {
 		int ipValue = Conv.shortToInt(dos.e_ip());
-		int codeSegment = Conv.shortToInt(dos.e_cs()) + INITIAL_SEGMENT_VAL;
-
-		if (codeSegment > Conv.SHORT_MASK) {
-			System.out.println("Invalid entry point location: " + Integer.toHexString(codeSegment) +
-				":" + Integer.toHexString(ipValue));
-			return;
-		}
+		int codeSegment = (Conv.shortToInt(dos.e_cs()) + INITIAL_SEGMENT_VAL) & Conv.SHORT_MASK;
 
 		Address addr = space.getAddress(codeSegment, ipValue);
 

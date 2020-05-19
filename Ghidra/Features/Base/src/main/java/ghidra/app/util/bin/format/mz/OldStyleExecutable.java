@@ -27,7 +27,7 @@ import ghidra.app.util.bin.ByteProvider;
  */
 public class OldStyleExecutable {
 	private BinaryReader reader;
-    private DOSHeader dosHeader;
+    private OldDOSHeader dosHeader;
 
     /**
      * Constructs a new instance of an old-style executable
@@ -36,7 +36,7 @@ public class OldStyleExecutable {
      */
 	public OldStyleExecutable(ByteProvider bp) throws IOException {
 		reader = new BinaryReader(bp, true);
-		dosHeader = new DOSHeader(reader);
+		dosHeader = new OldDOSHeader(reader);
     }
 
     /**
@@ -51,7 +51,7 @@ public class OldStyleExecutable {
      * Returns the DOS Header from this old-style executable.
      * @return the DOS Header from this old-style executable
      */
-    public DOSHeader getDOSHeader() {
+    public OldDOSHeader getOldDOSHeader() {
         return dosHeader;
     }
 }
