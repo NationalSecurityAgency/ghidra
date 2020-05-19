@@ -51,7 +51,7 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 			TaskMonitor monitor) {
 
 		if (reuseGraph && !displays.isEmpty()) {
-			return getExistingGraph();
+			return getVisibleGraph();
 		}
 
 		DefaultGraphDisplay display =
@@ -66,9 +66,16 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 		this.options = graphOptions;
 	}
 
-	private GraphDisplay getExistingGraph() {
-		DefaultGraphDisplay display = displays.iterator().next();
-		return display;
+	/**
+	 * Get a {@code GraphDisplay} that is 'showing', assuming that is the one the user
+	 * wishes to append to.
+	 * Called only when displays is not empty. If there are no 'showing' displays,
+	 * return one from the Set via its iterator
+	 * @return a display that is showing
+	 */
+	private GraphDisplay getVisibleGraph() {
+		return displays.stream().filter(d -> d.getComponent().isShowing())
+				.findAny().orElse(displays.iterator().next());
 	}
 
 	@Override
