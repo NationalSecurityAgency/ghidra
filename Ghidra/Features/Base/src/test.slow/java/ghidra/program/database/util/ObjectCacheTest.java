@@ -20,12 +20,14 @@ package ghidra.program.database.util;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 
 import org.junit.Test;
 
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
+import ghidra.program.model.address.KeyRange;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
 /**
@@ -77,11 +79,31 @@ public class ObjectCacheTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(obj1 != obj2);
 
 		obj1.getValue(); // previously, this would have caused obj2 to be removed
-							// from the cache, thereby causing obj3 to be a new instance.
+						// from the cache, thereby causing obj3 to be a new instance.
 
 		TestObj obj3 = getTestObj(1);
 		assertTrue(obj2 == obj3);
 
+	}
+
+	@Test
+	public void testDeleteRange() {
+		for (int i = 0; i < 10; i++) {
+			getTestObj(i);
+		}
+		assertEquals(10, cache.size());
+		cache.delete(Arrays.asList(new KeyRange(4, 6)));
+		assertEquals(7, cache.size());
+	}
+
+	@Test
+	public void testDeleteBigRange() {
+		for (int i = 0; i < 10; i++) {
+			getTestObj(i);
+		}
+		assertEquals(10, cache.size());
+		cache.delete(Arrays.asList(new KeyRange(2, 100)));
+		assertEquals(2, cache.size());
 	}
 
 	private TestObj getTestObj(int key) {
