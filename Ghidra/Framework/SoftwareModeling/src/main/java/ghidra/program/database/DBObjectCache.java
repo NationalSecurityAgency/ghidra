@@ -199,19 +199,18 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * @param keyRanges key ranges to delete
 	 */
 	private void deleteLargeKeyRanges(List<KeyRange> keyRanges) {
-		//@formatter:off
-		map.keySet().stream()
-			.filter(key -> keyRangesContain(keyRanges, key))
-			.collect(Collectors.toList())
-			.forEach(key -> {
-				KeyedSoftReference ref = map.remove(key);
-				DatabaseObject obj = ref.get();
-				if (obj != null) {
-					obj.setDeleted();
-					ref.clear();
-				}
-			});
-		//@formatter:on
+		map.keySet()
+				.stream()
+				.filter(key -> keyRangesContain(keyRanges, key))
+				.collect(Collectors.toList())
+				.forEach(key -> {
+					KeyedSoftReference ref = map.remove(key);
+					DatabaseObject obj = ref.get();
+					if (obj != null) {
+						obj.setDeleted();
+						ref.clear();
+					}
+				});
 	}
 
 	/**
@@ -281,12 +280,11 @@ public class DBObjectCache<T extends DatabaseObject> {
 			}
 		}
 		else {
-			//@formatter:off
-			map.keySet().stream()
-				.filter(key -> (key >= startKey && key <= endKey))
-				.collect(Collectors.toList())
-				.forEach(key -> doInvalidate(key));
-			//@formatter:on
+			map.keySet()
+					.stream()
+					.filter(key -> (key >= startKey && key <= endKey))
+					.collect(Collectors.toList())
+					.forEach(key -> doInvalidate(key));
 		}
 	}
 
