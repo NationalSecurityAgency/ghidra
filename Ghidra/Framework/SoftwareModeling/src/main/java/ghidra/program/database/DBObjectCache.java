@@ -21,6 +21,7 @@ package ghidra.program.database;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import db.Record;
 import ghidra.program.model.address.KeyRange;
@@ -198,16 +199,19 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * @param keyRanges key ranges to delete
 	 */
 	private void deleteLargeKeyRanges(List<KeyRange> keyRanges) {
-		for (Long key : map.keySet()) {
-			if (keyRangesContain(keyRanges, key)) {
+		//@formatter:off
+		map.keySet().stream()
+			.filter(key -> keyRangesContain(keyRanges, key))
+			.collect(Collectors.toList())
+			.forEach(key -> {
 				KeyedSoftReference ref = map.remove(key);
 				DatabaseObject obj = ref.get();
 				if (obj != null) {
 					obj.setDeleted();
 					ref.clear();
 				}
-			}
-		}
+			});
+		//@formatter:on
 	}
 
 	/**
@@ -270,17 +274,19 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * @param endKey the last key in the range to invalidate.
 	 */
 	public synchronized void invalidate(long startKey, long endKey) {
+		processQueue();
 		if (endKey - startKey < map.size()) {
 			for (long i = startKey; i <= endKey; i++) {
-				invalidate(i);
+				doInvalidate(i);
 			}
 		}
 		else {
-			for (long key : map.keySet()) {
-				if (key >= startKey && key <= endKey) {
-					invalidate(key);
-				}
-			}
+			//@formatter:off
+			map.keySet().stream()
+				.filter(key -> (key >= startKey && key <= endKey))
+				.collect(Collectors.toList())
+				.forEach(key -> doInvalidate(key));
+			//@formatter:on
 		}
 	}
 
@@ -307,6 +313,10 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 */
 	public synchronized void invalidate(long key) {
 		processQueue();
+		doInvalidate(key);
+	}
+
+	private void doInvalidate(long key) {
 		KeyedSoftReference ref = map.get(key);
 		if (ref != null) {
 			T obj = ref.get();
