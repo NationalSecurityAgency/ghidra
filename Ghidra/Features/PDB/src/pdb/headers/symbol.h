@@ -27,6 +27,7 @@ std::wstring   getName(IDiaSymbol& pSymbol);
 std::wstring   getUndecoratedName(IDiaSymbol& pSymbol);
 DWORD          getRVA(IDiaSymbol& pSymbol);
 ULONGLONG      getLength(IDiaSymbol& pSymbol);
+DWORD          getCount(IDiaSymbol& pSymbol);
 DWORD          getTag(IDiaSymbol& pSymbol);
 std::wstring   getTagAsString(IDiaSymbol& pSymbol);
 DWORD          getKind(IDiaSymbol& pSymbol);
