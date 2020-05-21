@@ -39,7 +39,6 @@ import ghidra.program.model.lang.CompilerSpec;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassTranslator;
 import ghidra.util.datastruct.FixedSizeHashMap;
-import ghidra.util.datastruct.LongObjectHashtable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -3490,15 +3489,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	class IdsToDataTypeMap {
-		private Map<UniversalID, LongObjectHashtable<DataType>> map = new HashMap<>();
+		private Map<UniversalID, Map<Long, DataType>> map = new HashMap<>();
 
 		DataType getDataType(UniversalID sourceID, UniversalID dataTypeID) {
 			if (sourceID == null || sourceID.equals(universalID)) {
 				sourceID = LOCAL_ARCHIVE_UNIVERSAL_ID;
 			}
-			LongObjectHashtable<DataType> idMap = map.get(sourceID);
+			Map<Long, DataType> idMap = map.get(sourceID);
 			if (idMap == null) {
-				idMap = new LongObjectHashtable<>();
+				idMap = new HashMap<>();
 				map.put(sourceID, idMap);
 			}
 			DataType dt = idMap.get(dataTypeID.getValue());
@@ -3527,7 +3526,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			else {
 				sourceID = sourceArchive.getSourceArchiveID();
 			}
-			LongObjectHashtable<DataType> idMap = map.get(sourceID);
+			Map<Long, DataType> idMap = map.get(sourceID);
 			if (idMap != null) {
 				idMap.remove(dataTypeID.getValue());
 			}
