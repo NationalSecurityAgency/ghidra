@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.osgi;
 
 import java.awt.*;
 import java.io.File;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +38,7 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -73,14 +74,26 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		bundleStatusTableModel.addListener(new BundleStatusChangeRequestListener() {
 			@Override
 			public void bundleEnablementChangeRequest(BundleStatus status, boolean enabled) {
-				if (!enabled && status.isActive()) {
-					startActivateDeactiveTask(status, false);
+				GhidraBundle gb = bundleHost.getExistingGhidraBundle(status.getPath());
+				if (gb instanceof GhidraPlaceholderBundle) {
+					return;
+				}
+				if (enabled) {
+					bundleHost.enable(gb);
+				}
+				else {
+					if (status.isActive()) {
+						startActivateDeactiveTask(status, false);
+					}
+					bundleHost.disable(gb);
 				}
 			}
 
 			@Override
 			public void bundleActivationChangeRequest(BundleStatus status, boolean newValue) {
-				startActivateDeactiveTask(status, newValue);
+				if (status.isEnabled()) {
+					startActivateDeactiveTask(status, newValue);
+				}
 			}
 
 		});
@@ -177,8 +190,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				ResourceFile path = (ResourceFile) data.getValue();
 				JLabel c = (JLabel) super.getTableCellRendererComponent(data);
 				c.setText(Path.toPathString(path));
-
-				if (!path.exists()) {
+				GhidraBundle gb = bundleHost.getExistingGhidraBundle(path);
+				if (gb == null || gb instanceof GhidraPlaceholderBundle || !path.exists()) {
 					c.setForeground(Color.RED);
 				}
 				return c;
@@ -338,9 +351,26 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		if (selectedModelRows == null || selectedModelRows.length == 0) {
 			return;
 		}
+		doDeactivateBundles();
 
-		bundleStatusTableModel.remove(selectedModelRows);
-		bundleStatusTable.clearSelection();
+		Map<Boolean, List<GhidraBundle>> bundles =
+			bundleStatusTableModel.getRowObjects(selectedModelRows).stream().map(
+				bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
+					Collectors.partitioningBy(gb -> gb.isSystemBundle()));
+		List<GhidraBundle> systemBundles = bundles.get(true);
+		if (!systemBundles.isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+			for (GhidraBundle gb : systemBundles) {
+				bundleHost.disable(gb);
+				sb.append(gb.getPath() + "\n");
+			}
+			Msg.showWarn(this, this.getComponent(), "Unabled to remove",
+				"System bundles cannot be removed:\n" + sb.toString());
+
+		}
+
+		bundleHost.remove(bundles.get(false));
+
 	}
 
 	private void showAddBundlesFileChooser() {
@@ -402,15 +432,19 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 					bundleStatusTableModel.getRowObjects(selectedModelRows).stream().filter(
 						bs -> !bs.isActive()).collect(Collectors.toUnmodifiableList());
 
+				List<GhidraBundle> gbs = new ArrayList<>();
 				for (BundleStatus bs : statuses) {
-					bs.setBusy(true);
+					GhidraBundle gb = bundleHost.getExistingGhidraBundle(bs.getPath());
+					if (!(gb instanceof GhidraPlaceholderBundle)) {
+						bs.setBusy(true);
+						bundleHost.enable(gb);
+						gbs.add(gb);
+					}
 				}
 				notifyTableDataChanged();
 
-				List<GhidraBundle> gbs = statuses.stream().map(
-					bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
-						Collectors.toList());
-				bundleHost.activateAll(gbs, monitor, getTool().getService(ConsoleService.class).getStdErr());
+				bundleHost.activateAll(gbs, monitor,
+					getTool().getService(ConsoleService.class).getStdErr());
 
 				boolean anybusy = false;
 				for (BundleStatus bs : statuses) {
@@ -435,31 +469,22 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		new TaskLauncher(new Task("deactivating", true, true, false) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
-				long startTime = System.nanoTime();
-
 				List<GhidraBundle> gbs =
 					bundleStatusTableModel.getRowObjects(selectedModelRows).stream().filter(
 						bs -> bs.isActive()).map(
 							bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
 								Collectors.toList());
 
-				int total = gbs.size();
-				int total_deactivated = 0;
 				monitor.setMaximum(gbs.size());
 				for (GhidraBundle gb : gbs) {
 					try {
 						bundleHost.deactivateSynchronously(gb.getBundleLoc());
-						++total_deactivated;
 					}
 					catch (GhidraBundleException | InterruptedException e) {
 						e.printStackTrace(console.getStdErr());
 					}
 					monitor.incrementProgress(1);
 				}
-				long endTime = System.nanoTime();
-				console.getStdOut().printf("%d/%d bundles deactivated in %3.2f seconds.\n",
-					total_deactivated, total, (endTime - startTime) / 1e9);
-
 			}
 		}, getComponent(), 1000);
 	}
@@ -473,13 +498,13 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
 				try {
-					GhidraBundle sb = bundleHost.getExistingGhidraBundle(status.getPath());
+					GhidraBundle gb = bundleHost.getExistingGhidraBundle(status.getPath());
 					if (activate) {
-						sb.build(console.getStdErr());
-						bundleHost.activateSynchronously(sb.getBundleLoc());
+						gb.build(console.getStdErr());
+						bundleHost.activateSynchronously(gb.getBundleLoc());
 					}
 					else { // deactivate
-						bundleHost.deactivateSynchronously(sb.getBundleLoc());
+						bundleHost.deactivateSynchronously(gb.getBundleLoc());
 					}
 				}
 				catch (Exception e) {

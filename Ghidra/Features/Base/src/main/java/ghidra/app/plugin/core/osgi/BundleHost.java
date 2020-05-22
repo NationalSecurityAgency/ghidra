@@ -88,6 +88,15 @@ public class BundleHost {
 		return false;
 	}
 
+	public boolean disable(GhidraBundle gbundle) {
+		if (gbundle.isEnabled()) {
+			gbundle.setEnabled(false);
+			fireBundleEnablementChange(gbundle, false);
+			return true;
+		}
+		return false;
+	}
+
 	public GhidraBundle addGhidraBundle(ResourceFile path, boolean enabled, boolean systemBundle) {
 		GhidraBundle gb = newGhidraBundle(this, path, enabled, systemBundle);
 		bp2gb.put(path, gb);
@@ -119,13 +128,13 @@ public class BundleHost {
 		switch (GhidraBundle.getType(path)) {
 			case SourceDir:
 				return new GhidraSourceBundle(bh, path, enabled, systemBundle);
-			case BndScript:
 			case Jar:
 				return new GhidraJarBundle(bh, path, enabled, systemBundle);
+			case BndScript:
 			default:
 				break;
 		}
-		return null;
+		return new GhidraPlaceholderBundle(bh, path, enabled, systemBundle);
 	}
 
 	// XXX consumers must clean up after themselves
@@ -739,12 +748,6 @@ public class BundleHost {
 		for (int i = 0; i < pathArr.length; i++) {
 
 			ResourceFile bp = generic.util.Path.fromPathString(pathArr[i]);
-			if (!bp.exists()) {
-				Msg.showWarn(this, null, "missing bundle path",
-					"the bundle path " + bp.toString() + " no longer exists, removing");
-
-				continue;
-			}
 			boolean en = enableArr[i];
 			boolean act = activeArr[i];
 			boolean sys = systemArr[i];

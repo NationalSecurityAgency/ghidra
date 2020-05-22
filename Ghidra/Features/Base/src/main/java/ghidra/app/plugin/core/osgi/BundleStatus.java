@@ -26,6 +26,7 @@ import generic.util.Path;
 public class BundleStatus implements Comparable<BundleStatus> {
 	final Path path;
 	final GhidraBundle.Type type;
+	final String bundleLoc;
 
 	boolean active = false;
 	boolean busy = false;
@@ -48,9 +49,10 @@ public class BundleStatus implements Comparable<BundleStatus> {
 		return type;
 	}
 
-	BundleStatus(ResourceFile path, boolean enabled, boolean readonly) {
+	BundleStatus(ResourceFile path, boolean enabled, boolean readonly, String bundleLoc) {
 		this.path = new Path(path, enabled, false, readonly);
 		type = GhidraBundle.getType(getPath());
+		this.bundleLoc = bundleLoc;
 	}
 
 	public boolean isDirectory() {
@@ -96,6 +98,10 @@ public class BundleStatus implements Comparable<BundleStatus> {
 
 	public String getPathAsString() {
 		return path.getPathAsString();
+	}
+
+	public String getBundleLoc() {
+		return bundleLoc;
 	}
 
 }

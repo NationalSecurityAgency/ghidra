@@ -137,14 +137,6 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		return status;
 	}
 
-	private String getBundleLoc(BundleStatus status) {
-		GhidraBundle gb = bundleHost.getExistingGhidraBundle(status.getPath());
-		if (gb != null) {
-			return gb.getBundleLoc();
-		}
-		return null;
-	}
-
 	BundleStatusTableModel(BundleStatusComponentProvider provider, BundleHost bundleHost) {
 		super();
 		this.provider = provider;
@@ -240,17 +232,15 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		return list;
 	}
 
-	
 	private void addNewStatusNoFire(GhidraBundle gb) {
-		BundleStatus status = new BundleStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle());
+		BundleStatus status =
+			new BundleStatus(gb.getPath(), gb.isEnabled(), gb.isSystemBundle(), gb.getBundleLoc());
 		if (statuses.contains(status)) {
-			throw new RuntimeException("Bundle status manager already contains " + gb.getPath().toString());
+			throw new RuntimeException(
+				"Bundle status manager already contains " + gb.getPath().toString());
 		}
 		status.setActive(gb.isActive());
-		String loc = getBundleLoc(status);
-		if (loc != null) {
-			loc2status.put(loc, status);
-		}
+		loc2status.put(status.getBundleLoc(), status);
 		statuses.add(status);
 	}
 
@@ -266,11 +256,10 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	private int removeStatusNoFire(BundleStatus status) {
 		if (!status.isReadOnly()) {
 			int i = statuses.indexOf(status);
-			loc2status.remove(getBundleLoc(status));
+			statuses.remove(i);
+			loc2status.remove(status.getBundleLoc());
 			return i;
 		}
-		Msg.showInfo(this, this.provider.getComponent(), "Unabled to remove path",
-			"System path cannot be removed: " + status.getPath().toString());
 		return -1;
 	}
 
@@ -431,10 +420,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	private void computeCache() {
 		loc2status.clear();
 		for (BundleStatus status : statuses) {
-			String loc = getBundleLoc(status);
-			if (loc != null) {
-				loc2status.put(loc, status);
-			}
+			loc2status.put(status.getBundleLoc(), status);
 		}
 	}
 
@@ -446,8 +432,8 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	 * @param paths the statuses to use
 	 */
 	public void setPathsForTesting(List<ResourceFile> paths) {
-		this.statuses =
-			paths.stream().map(f -> new BundleStatus(f, true, false)).collect(Collectors.toList());
+		this.statuses = paths.stream().map(f -> new BundleStatus(f, true, false, null)).collect(
+			Collectors.toList());
 		computeCache();
 		fireTableDataChanged();
 	}

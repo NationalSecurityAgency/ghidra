@@ -98,6 +98,11 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		env = new TestEnv();
 		env.showTool(program);
 		env.getTool().addPlugin(CodeBrowserPlugin.class.getName());
+		Path userScriptDir = java.nio.file.Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
+		if (Files.notExists(userScriptDir)) {
+			Files.createDirectories(userScriptDir);
+		}
+
 		env.getTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
 
 		browser = env.getPlugin(CodeBrowserPlugin.class);

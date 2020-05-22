@@ -453,8 +453,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	public List<ResourceFile> getScriptDirectories() {
 		return bundleHost.getGhidraBundles().stream().filter(
-			GhidraSourceBundle.class::isInstance).map(GhidraBundle::getPath).collect(
-				Collectors.toList());
+			gb -> gb.isEnabled() && gb instanceof GhidraSourceBundle).map(
+				GhidraBundle::getPath).collect(Collectors.toList());
 	}
 
 	public List<ResourceFile> getWritableScriptDirectories() {
@@ -715,38 +715,33 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		@Override
 		public void bundleEnablementChange(GhidraBundle gbundle, boolean newEnablment) {
 			if (gbundle instanceof GhidraSourceBundle) {
-				performRefresh();
+				refresh();
 			}
 		}
 
 		@Override
 		public void bundleAdded(GhidraBundle gbundle) {
 			plugin.getTool().setConfigChanged(true);
-			performRefresh();
+			refresh();
 		}
 
 		@Override
 		public void bundlesAdded(Collection<GhidraBundle> gbundles) {
 			plugin.getTool().setConfigChanged(true);
-			performRefresh();
+			refresh();
 		}
 
 		@Override
 		public void bundleRemoved(GhidraBundle gbundle) {
 			plugin.getTool().setConfigChanged(true);
-			performRefresh();
+			refresh();
 		}
 
 		@Override
 		public void bundlesRemoved(Collection<GhidraBundle> gbundles) {
 			plugin.getTool().setConfigChanged(true);
-			performRefresh();
+			refresh();
 		}
-	}
-
-	private void performRefresh() {
-		infoManager.clearMetadata();
-		refresh();
 	}
 
 	void refresh() {
@@ -777,6 +772,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		for (ResourceFile file : scriptsToRemove) {
 			removeScript(file);
+			infoManager.removeMetadata(file);
 		}
 
 		infoManager.refreshDuplicates();
@@ -1141,7 +1137,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	@Override
 	public void componentShown() {
 		if (!hasBeenRefreshed) {
-			performRefresh();
+			refresh();
 		}
 	}
 
