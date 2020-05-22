@@ -96,7 +96,8 @@ class ClassJar extends ClassLocation {
 		//
 		// Dev Mode - don't scan 3rd-party jar files
 		// 
-		if (pathName.contains("ExternalLibraries")) {
+		if (pathName.contains("ExternalLibraries") || pathName.contains("caches") ||
+			pathName.contains("flatrepo")) {
 			return true;
 		}
 
