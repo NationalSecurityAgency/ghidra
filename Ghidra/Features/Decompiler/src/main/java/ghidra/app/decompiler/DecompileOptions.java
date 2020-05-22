@@ -629,6 +629,10 @@ public class DecompileOptions {
 			eliminateUnreachable ? "on" : "off");
 		appendOption(buf, "currentaction", iface.getSimplificationStyle(), "doubleprecis",
 			simplifyDoublePrecision ? "on" : "off");
+
+		// Must set language early so that the object is in place before other option changes
+		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
+
 		appendOption(buf, "ignoreunimplemented", ignoreunimpl ? "on" : "off", "", "");
 		appendOption(buf, "inferconstptr", inferconstptr ? "on" : "off", "", "");
 		appendOption(buf, "nullprinting", nullToken ? "on" : "off", "", "");
@@ -651,8 +655,6 @@ public class DecompileOptions {
 		appendOption(buf, "commentheader", "warningheader", commentWARNInclude ? "on" : "off", "");
 
 		appendOption(buf, "integerformat", integerFormat.getOptionString(), "", "");
-
-		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
 
 		appendOption(buf, "protoeval", protoEvalModel, "", "");
 		buf.append("</optionslist>\n");

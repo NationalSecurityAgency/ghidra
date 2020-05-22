@@ -19,6 +19,7 @@
 #include "ghidra_translate.hh"
 #include "typegrp_ghidra.hh"
 #include "comment_ghidra.hh"
+#include "string_ghidra.hh"
 #include "cpool_ghidra.hh"
 #include "inject_ghidra.hh"
 
@@ -346,6 +347,12 @@ void ArchitectureGhidra::buildCommentDB(DocumentStorage &store)
   commentdb = new CommentDatabaseGhidra(this);
 }
 
+void ArchitectureGhidra::buildStringManager(DocumentStorage &store)
+
+{
+  stringManager = new GhidraStringManager(this,2048);
+}
+
 void ArchitectureGhidra::buildConstantPool(DocumentStorage &store)
 
 {
@@ -613,6 +620,49 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   if (type != 13)
     throw JavaError("alignment","Expecting byte alignment end");
   readResponseEnd(sin);
+}
+
+void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes,bool &isTrunc)
+
+{
+  sout.write("\000\000\001\004",4);
+  writeStringStream(sout,"getString");
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  addr.saveXml(sout,maxBytes);
+  sout.write("\000\000\001\017",4);
+  writeStringStream(sout,ct->getName());
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << dec << (int8)ct->getId();	// Pass as a signed integer
+  sout.write("\000\000\001\017",4);
+
+  sout.write("\000\000\001\005",4);
+  sout.flush();
+
+  readToResponse(sin);
+  int4 type = readToAnyBurst(sin);
+  if (type == 12) {
+    int4 c = sin.get();
+    uint4 size = (c-0x20);
+    c = sin.get();
+    size ^= ((c-0x20)<<6);
+    isTrunc = (sin.get() != 0);
+    buffer.reserve(size);
+    uint1 *dblbuf = new uint1[size * 2];
+    sin.read((char *)dblbuf,size*2);
+    for (int4 i=0; i < size; i++) {
+      buffer.push_back(((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A'));
+    }
+    delete [] dblbuf;
+    type = readToAnyBurst(sin);
+    if (type != 13)
+      throw JavaError("alignment","Expecting byte alignment end");
+    type = readToAnyBurst(sin);
+  }
+  if ((type&1)==1) {
+    // Leave the buffer empty
+  }
+  else
+    throw JavaError("alignment","Expecting end of query response");
 }
 
 /// \brief Retrieve p-code to inject for a specific context

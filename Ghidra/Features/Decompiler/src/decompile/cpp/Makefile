@@ -75,7 +75,7 @@ EXTERNAL_CONSOLEEXT_NAMES=$(subst .cc,,$(notdir $(EXTERNAL_CONSOLEEXT_SOURCE)))
 CORE=	xml space float address pcoderaw translate opcodes globalcontext
 # Additional core files for any projects that decompile
 DECCORE=capability architecture options graph cover block cast typeop database cpool \
-	comment fspec action loadimage grammar varnode op \
+	comment stringmanage fspec action loadimage grammar varnode op \
 	type variable varmap jumptable emulate emulateutil flow userop \
 	funcdata funcdata_block funcdata_op funcdata_varnode pcodeinject \
 	heritage prefersplit rangeutil ruleaction subflow blockaction merge double \
@@ -87,7 +87,7 @@ SLEIGH=	sleigh pcodeparse pcodecompile sleighbase slghsymbol \
 # Additional files for the GHIDRA specific build
 GHIDRA=	ghidra_arch inject_ghidra ghidra_translate loadimage_ghidra \
 	typegrp_ghidra database_ghidra ghidra_context cpool_ghidra \
-	ghidra_process comment_ghidra $(GHIDRAEXT_NAMES)
+	ghidra_process comment_ghidra string_ghidra $(GHIDRAEXT_NAMES)
 # Additional files specific to the sleigh compiler
 SLACOMP=slgh_compile slghparse slghscan
 # Additional special files that should not be considered part of the library

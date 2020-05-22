@@ -182,6 +182,12 @@ bool Action::setBreakPoint(uint4 tp,const string &specify)
   return false;
 }
 
+void Action::clearBreakPoints(void)
+
+{
+  breakpoint = 0;
+}
+
 /// If enabled, a warning will be printed whenever this action applies.
 /// The warning can be toggled for \b this Action or some sub-action by
 /// specifying its name.
@@ -369,6 +375,15 @@ void ActionGroup::addAction(Action *ac)
 
 {
   list.push_back(ac);
+}
+
+void ActionGroup::clearBreakPoints(void)
+
+{
+  vector<Action *>::const_iterator iter;
+  for(iter=list.begin();iter!= list.end();++iter)
+    (*iter)->clearBreakPoints();
+  Action::clearBreakPoints();
 }
 
 Action *ActionGroup::clone(const ActionGroupList &grouplist) const
@@ -870,6 +885,15 @@ int4 ActionPool::apply(Funcdata &data)
   return 0;			// Indicate successful completion
 }
 
+void ActionPool::clearBreakPoints(void)
+
+{
+  vector<Rule *>::const_iterator iter;
+  for(iter=allrules.begin();iter!=allrules.end();++iter)
+    (*iter)->clearBreakPoints();
+  Action::clearBreakPoints();
+}
+
 Action *ActionPool::clone(const ActionGroupList &grouplist) const
 
 {
@@ -955,13 +979,26 @@ ActionDatabase::~ActionDatabase(void)
     delete (*iter).second;
 }
 
-/// This provides the database with the single Action from which all other
-/// \e root Actions are derived.  The Action has a reserved name "universal"
-/// \param act is the universal Action
-void ActionDatabase::registerUniversal(Action *act)
+/// Clear out (possibly altered) root Actions. Reset the default groups.
+/// Set the default root action "decompile"
+void ActionDatabase::resetDefaults(void)
 
 {
-  registerAction(universalname,act);
+  Action *universalAction = (Action *)0;
+  map<string,Action *>::iterator iter;
+  iter = actionmap.find(universalname);
+  if (iter != actionmap.end())
+    universalAction = (*iter).second;
+  for(iter = actionmap.begin();iter!=actionmap.end();++iter) {
+    Action *curAction = (*iter).second;
+    if (curAction != universalAction)
+      delete curAction;		// Clear out any old (modified) root actions
+  }
+  actionmap.clear();
+  registerAction(universalname, universalAction);
+
+  buildDefaultGroups();
+  setCurrent("decompile");	// The default root action
 }
 
 const ActionGroupList &ActionDatabase::getGroup(const string &grp) const
@@ -1019,13 +1056,15 @@ Action *ActionDatabase::toggleAction(const string &grp, const string &basegrp,bo
 /// \param argv is a list of static char pointers, which must end with a NULL pointer, or a zero length string.
 void ActionDatabase::setGroup(const string &grp,const char **argv)
 
-{  ActionGroupList &curgrp( groupmap[ grp ] );
+{
+  ActionGroupList &curgrp( groupmap[ grp ] );
   curgrp.list.clear();		// Clear out any old members
   for(int4 i=0;;++i) {
     if (argv[i] == (char *)0) break;
     if (argv[i][0] == '\0') break;
     curgrp.list.insert( argv[i] );
   }
+  isDefaultGroups = false;
 }
 
 /// Copy an existing \e root Action by copying its grouplist, giving it a new name.
@@ -1038,6 +1077,7 @@ void ActionDatabase::cloneGroup(const string &oldname,const string &newname)
 {
   const ActionGroupList &curgrp(getGroup(oldname)); // Should already exist
   groupmap[ newname ] = curgrp;	// Copy the group
+  isDefaultGroups = false;
 }
 
 /// Add a group to the grouplist for a particular \e root Action.
@@ -1046,7 +1086,9 @@ void ActionDatabase::cloneGroup(const string &oldname,const string &newname)
 /// \param basegroup is the group to add
 /// \return \b true for a new addition, \b false is the group was already present
 bool ActionDatabase::addToGroup(const string &grp, const string &basegroup)
+
 {
+  isDefaultGroups = false;
   ActionGroupList &curgrp( groupmap[ grp ] );
   return curgrp.list.insert( basegroup ).second;
 }
@@ -1057,7 +1099,9 @@ bool ActionDatabase::addToGroup(const string &grp, const string &basegroup)
 /// \param basegrp is the group to remove
 /// \return \b true if the group existed and was removed
 bool ActionDatabase::removeFromGroup(const string &grp, const string &basegrp)
+
 {
+  isDefaultGroups = false;
   ActionGroupList &curgrp( groupmap[ grp ] );
   return (curgrp.list.erase(basegrp) > 0);
 }

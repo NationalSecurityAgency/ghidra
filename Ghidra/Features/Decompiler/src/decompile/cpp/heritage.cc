@@ -800,10 +800,15 @@ bool Heritage::protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
     ++iter;
     if (op->isDead()) continue;
     Varnode *vn = op->getIn(1);
-    if (vn->isWritten()) {
-      PcodeOp *copyOp = vn->getDef();
-      if (copyOp->code() == CPUI_COPY)
-	vn = copyOp->getIn(0);
+    while (vn->isWritten()) {
+      PcodeOp *defOp = vn->getDef();
+      OpCode opc = defOp->code();
+      if (opc == CPUI_COPY)
+	vn = defOp->getIn(0);
+      else if (opc == CPUI_INT_ADD && defOp->getIn(1)->isConstant())
+	vn = defOp->getIn(0);
+      else
+	break;
     }
     if (vn->isFree() && vn->getSpace() == spc) {
       fd->opMarkSpacebasePtr(op);	// Mark op as spacebase STORE, even though we're not sure
@@ -913,8 +918,17 @@ bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &fr
 	}
 	case CPUI_STORE:
 	{
-	  if (curNode.traversals != 0) {
-	    generateStoreGuard(curNode, op, spc);
+	  if (op->getIn(1) == curNode.vn) {	// Make sure the STORE pointer comes from our path
+	    if (curNode.traversals != 0) {
+	      generateStoreGuard(curNode, op, spc);
+	    }
+	    else {
+	      // If there were no traversals (of non-constant ADD or MULTIEQUAL) then the
+	      // pointer is equal to the stackpointer plus a constant (through an indirect is possible)
+	      // This will likely get resolved in the next heritage pass, but we leave the
+	      // spacebaseptr mark on, so that that the indirects don't get removed
+	      fd->opMarkSpacebasePtr(op);
+	    }
 	  }
 	  break;
 	}
@@ -2340,7 +2354,7 @@ const LoadGuard *Heritage::getStoreGuard(PcodeOp *op) const
 
 /// \brief Get the number times heritage was performed for the given address space
 ///
-/// A negative number indicates the number of passes to be wait before the first
+/// A negative number indicates the number of passes to wait before the first
 /// heritage will occur.
 /// \param spc is the given address space
 /// \return the number of heritage passes performed
@@ -2350,7 +2364,7 @@ int4 Heritage::numHeritagePasses(AddrSpace *spc) const
   const HeritageInfo *info = getInfo(spc);
   if (!info->isHeritaged())
     throw LowlevelError("Trying to calculate passes for non-heritaged space");
-  return (info->delay - pass);
+  return (pass - info->delay);
 }
 
 /// Record that Varnodes have been removed from the given space so that we can

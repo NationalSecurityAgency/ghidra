@@ -56,13 +56,13 @@ class Funcdata {
     restart_pending = 0x200,	///< Analysis must be restarted (because of new override info)
     unimplemented_present = 0x400,	///< Set if function contains unimplemented instructions
     baddata_present = 0x800,	///< Set if function flowed into bad data
-    double_precis_on = 0x1000,	///< Set if we are performing double precision recovery
-    big_varnodes_generated = 0x2000	///< Set when search for laned registers is complete
+    double_precis_on = 0x1000	///< Set if we are performing double precision recovery
   };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
   uint4 high_level_index;	///< Creation index of first Varnode created after HighVariables are created
   uint4 cast_phase_index;	///< Creation index of first Varnode created after ActionSetCasts
+  uint4 minLanedSize;		///< Minimum Varnode size to check as LanedRegister
   Architecture *glb;		///< Global configuration data
   string name;			///< Name of function
   int4 size;			///< Number of bytes of binary data in function body
@@ -132,8 +132,7 @@ public:
   bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Has data-type recovery processes started
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
-  bool isLanedRegComplete(void) const { return ((flags&big_varnodes_generated)!=0); }	///< Have potential laned registers been generated
-  void setLanedRegGenerated(void) { flags |= big_varnodes_generated; }	///< Mark that laned registers have been collected
+  void setLanedRegGenerated(void) { minLanedSize = 1000000; }	///< Mark that laned registers have been collected
 
   /// \brief Toggle whether \b this is being used for jump-table recovery
   ///
@@ -161,7 +160,7 @@ public:
   void startCleanUp(void) { clean_up_index = vbank.getCreateIndex(); }	///< Start \e clean-up phase
   uint4 getCleanUpIndex(void) const { return clean_up_index; }	///< Get creation index at the start of \b clean-up phase
 
-  void followFlow(const Address &baddr,const Address &eadddr,uint4 insn_max);
+  void followFlow(const Address &baddr,const Address &eadddr);
   void truncatedFlow(const Funcdata *fd,const FlowInfo *flow);
   bool inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop);
   void overrideFlow(const Address &addr,uint4 type);
@@ -200,6 +199,8 @@ public:
   Varnode *newSpacebasePtr(AddrSpace *id);	///< Construct a new \e spacebase register for a given address space
   Varnode *findSpacebaseInput(AddrSpace *id) const;
   void spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const Address &rampoint,uintb origval,int4 origsize);
+
+  int4 getHeritagePass(void) const { return heritage.getPass(); }	///< Get overall count of heritage passes
 
   /// \brief Get the number of heritage passes performed for the given address space
   ///
@@ -350,7 +351,7 @@ public:
   /// \brief End of (input or free) Varnodes at a given storage address
   VarnodeDefSet::const_iterator endDef(uint4 fl,const Address &addr) const { return vbank.endDef(fl,addr); }
 
-  void markLanedVarnode(Varnode *vn,const LanedRegister *lanedReg);	///< Mark Varnode as potential laned register
+  void checkForLanedRegister(int4 size,const Address &addr);	///< Check for a potential laned register
   map<VarnodeData,const LanedRegister *>::const_iterator beginLaneAccess(void) const { return lanedMap.begin(); }	///< Beginning iterator over laned accesses
   map<VarnodeData,const LanedRegister *>::const_iterator endLaneAccess(void) const { return lanedMap.end(); }	///< Ending iterator over laned accesses
   void clearLanedAccessMap(void) { lanedMap.clear(); }	///< Clear records from the laned access list
@@ -434,7 +435,7 @@ public:
   void opMarkNonPrinting(PcodeOp *op) { op->setFlag(PcodeOp::nonprinting); }	///< Mark PcodeOp as not being printed
   void opMarkSpecialPrint(PcodeOp *op) { op->setAdditionalFlag(PcodeOp::special_print); }	///< Mark PcodeOp as needing special printing
   void opMarkNoCollapse(PcodeOp *op) { op->setFlag(PcodeOp::nocollapse); }	///< Mark PcodeOp as not collapsible
-  void opMarkCpoolTransformed(PcodeOp *op) { op->setFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited
+  void opMarkCpoolTransformed(PcodeOp *op) { op->setAdditionalFlag(PcodeOp::is_cpool_transformed); }	///< Mark cpool record was visited
   void opMarkCalculatedBool(PcodeOp *op) { op->setFlag(PcodeOp::calculated_bool); }	///< Mark PcodeOp as having boolean output
   void opMarkSpacebasePtr(PcodeOp *op) { op->setFlag(PcodeOp::spacebase_ptr); }	///< Mark PcodeOp as LOAD/STORE from spacebase ptr
   void opClearSpacebasePtr(PcodeOp *op) { op->clearFlag(PcodeOp::spacebase_ptr); }	///< Unmark PcodeOp as using spacebase ptr
@@ -508,7 +509,9 @@ public:
   void switchEdge(FlowBlock *inblock,BlockBasic *outbefore,FlowBlock *outafter);
   void spliceBlockBasic(BlockBasic *bl);	///< Merge the given basic block with the block it flows into
   void installSwitchDefaults(void);		///< Make sure default switch cases are properly labeled
-  static bool replaceLessequal(Funcdata &data,PcodeOp *op);	///< Replace INT_LESSEQUAL and INT_SLESSEQUAL expressions
+  bool replaceLessequal(PcodeOp *op);		///< Replace INT_LESSEQUAL and INT_SLESSEQUAL expressions
+  bool distributeIntMultAdd(PcodeOp *op);	///< Distribute constant coefficient to additive input
+  bool collapseIntMultMult(Varnode *vn);	///< Collapse constant coefficients for two chained CPUI_INT_MULT
   static bool compareCallspecs(const FuncCallSpecs *a,const FuncCallSpecs *b);
 
 #ifdef OPACTION_DEBUG

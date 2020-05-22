@@ -537,7 +537,7 @@ void TypeOpBranchind::printRaw(ostream &s,const PcodeOp *op)
 TypeOpCall::TypeOpCall(TypeFactory *t) : TypeOp(t,CPUI_CALL,"call")
 
 {
-  opflags = (PcodeOp::special|PcodeOp::call|PcodeOp::coderef|PcodeOp::nocollapse);
+  opflags = (PcodeOp::special|PcodeOp::call|PcodeOp::has_callspec|PcodeOp::coderef|PcodeOp::nocollapse);
   behave = new OpBehavior(CPUI_CALL,false,true); // Dummy behavior
 }
 
@@ -610,7 +610,7 @@ Datatype *TypeOpCall::getOutputLocal(const PcodeOp *op) const
 TypeOpCallind::TypeOpCallind(TypeFactory *t) : TypeOp(t,CPUI_CALLIND,"callind")
 
 {
-  opflags = PcodeOp::special|PcodeOp::call|PcodeOp::nocollapse;
+  opflags = PcodeOp::special|PcodeOp::call|PcodeOp::has_callspec|PcodeOp::nocollapse;
   behave = new OpBehavior(CPUI_CALLIND,false,true); // Dummy behavior
 }
 

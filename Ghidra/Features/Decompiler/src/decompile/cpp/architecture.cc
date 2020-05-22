@@ -16,6 +16,7 @@
 // Set up decompiler for specific architectures
 
 #include "coreaction.hh"
+#include "flow.hh"
 #ifdef CPUI_RULECOMPILE
 #include "rulecompile.hh"
 #endif
@@ -86,17 +87,10 @@ Architecture::Architecture(void)
 
 {
   //  endian = -1;
-  trim_recurse_max = 5;		// Reasonable default value
-  max_implied_ref = 2;		// 2 is best, in specific cases a higher number might be good
-  max_term_duplication = 2;	// 2 and 3 (4) are pretty reasonable
-  max_basetype_size = 10;	// Needs to be 8 or bigger
+  resetDefaultsInternal();
   min_funcsymbol_size = 1;
   aggressive_ext_trim = false;
-  readonlypropagate = false;
-  infer_pointers = true;
   funcptr_align = 0;
-  flowoptions = 0;
-  alias_block_level = 2;	// Block structs and arrays by default
   defaultfp = (ProtoModel *)0;
   defaultReturnAddr.space = (AddrSpace *)0;
   evalfp_current = (ProtoModel *)0;
@@ -106,6 +100,7 @@ Architecture::Architecture(void)
   loader = (LoadImage *)0;
   pcodeinjectlib = (PcodeInjectLibrary *)0;
   commentdb = (CommentDatabase *)0;
+  stringManager = (StringManager *)0;
   cpool = (ConstantPool *)0;
   symboltab = new Database(this);
   context = (ContextDatabase *)0;
@@ -158,6 +153,8 @@ Architecture::~Architecture(void)
     delete pcodeinjectlib;
   if (commentdb != (CommentDatabase *)0)
     delete commentdb;
+  if (stringManager != (StringManager *)0)
+    delete stringManager;
   if (cpool != (ConstantPool *)0)
     delete cpool;
   if (context != (ContextDatabase *)0)
@@ -274,6 +271,7 @@ void Architecture::clearAnalysis(Funcdata *fd)
   fd->clear();			// Clear stuff internal to function
   // Clear out any analysis generated comments
   commentdb->clearType(fd->getAddress(),Comment::warning|Comment::warningheader);
+  stringManager->clear();
 }
 
 /// Symbols do not necessarily need to be available for the decompiler.
@@ -411,6 +409,7 @@ void Architecture::saveXml(ostream &s) const
   symboltab->saveXml(s);
   context->saveXml(s);
   commentdb->saveXml(s);
+  stringManager->saveXml(s);
   if (!cpool->empty())
     cpool->saveXml(s);
   s << "</save_state>\n";
@@ -443,6 +442,8 @@ void Architecture::restoreXml(DocumentStorage &store)
       context->restoreXml(subel,this);
     else if (subel->getName() == "commentdb")
       commentdb->restoreXml(subel,this);
+    else if (subel->getName() == "stringmanage")
+      stringManager->restoreXml(subel,this);
     else if (subel->getName() == "constantpool")
       cpool->restoreXml(subel,*types);
     else if (subel->getName() == "optionslist")
@@ -508,8 +509,8 @@ void Architecture::buildAction(DocumentStorage &store)
 
 {
   parseExtraRules(store);	// Look for any additional rules
-  universal_action(this);
-  allacts.setCurrent("decompile");
+  allacts.universalAction(this);
+  allacts.resetDefaults();
 }
 
 /// This builds the database which holds the status registers setings and other
@@ -579,6 +580,14 @@ void Architecture::buildCommentDB(DocumentStorage &store)
 
 {
   commentdb = new CommentDatabaseInternal();
+}
+
+/// Build container that holds decoded strings
+/// \param store may hold configuration information
+void Architecture::buildStringManager(DocumentStorage &store)
+
+{
+  stringManager = new StringManagerUnicode(this,2048);
 }
 
 /// Some processor models (Java byte-code) need a database of constants.
@@ -1243,6 +1252,7 @@ void Architecture::init(DocumentStorage &store)
   buildContext(store);
   buildTypegrp(store);
   buildCommentDB(store);
+  buildStringManager(store);
   buildConstantPool(store);
 
   restoreFromSpec(store);
@@ -1251,6 +1261,31 @@ void Architecture::init(DocumentStorage &store)
 
   buildInstructions(store); // Must be called after translate is built
   fillinReadOnlyFromLoader();
+}
+
+void Architecture::resetDefaultsInternal(void)
+
+{
+  trim_recurse_max = 5;
+  max_implied_ref = 2;		// 2 is best, in specific cases a higher number might be good
+  max_term_duplication = 2;	// 2 and 3 (4) are reasonable
+  max_basetype_size = 10;	// Needs to be 8 or bigger
+  flowoptions = FlowInfo::error_toomanyinstructions;
+  max_instructions = 100000;
+  infer_pointers = true;
+  readonlypropagate = false;
+  alias_block_level = 2;	// Block structs and arrays by default
+}
+
+/// Reset options that can be modified by the OptionDatabase. This includes
+/// options specific to this class and options under PrintLanguage and ActionDatabase
+void Architecture::resetDefaults(void)
+
+{
+  resetDefaultsInternal();
+  allacts.resetDefaults();
+  for(int4 i=0;i<printlist.size();++i)
+    printlist[i]->resetDefaults();
 }
 
 Address SegmentedResolver::resolve(uintb val,int4 sz,const Address &point,uintb &fullEncoding)

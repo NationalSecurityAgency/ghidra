@@ -36,6 +36,7 @@ Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,int4 sz)
   high_level_index = 0;
   cast_phase_index = 0;
   glb = scope->getArch();
+  minLanedSize = glb->getMinimumLanedRegisterSize();
   name = nm;
 
   size = sz;
@@ -69,6 +70,7 @@ void Funcdata::clear(void)
   clean_up_index = 0;
   high_level_index = 0;
   cast_phase_index = 0;
+  minLanedSize = glb->getMinimumLanedRegisterSize();
 
   localmap->clearUnlocked();	// Clear non-permanent stuff
   localmap->resetLocalWindow();
@@ -134,7 +136,7 @@ void Funcdata::startProcessing(void)
     warningHeader("This is an inlined function");
   Address baddr(baseaddr.getSpace(),0);
   Address eaddr(baseaddr.getSpace(),~((uintb)0));
-  followFlow(baddr,eaddr,0);
+  followFlow(baddr,eaddr);
   structureReset();
   sortCallSpecs();		// Must come after structure reset
   heritage.buildInfoList();
@@ -343,7 +345,7 @@ void Funcdata::spacebaseConstant(PcodeOp *op,int4 slot,SymbolEntry *entry,const 
 
   Symbol *sym = entry->getSymbol();
   Datatype *entrytype = sym->getType();
-  Datatype *ptrentrytype = glb->types->getTypePointer(sz,entrytype,spaceid->getWordSize());
+  Datatype *ptrentrytype = glb->types->getTypePointerStripArray(sz,entrytype,spaceid->getWordSize());
   bool typelock = sym->isTypeLocked();
   if (typelock && (entrytype->getMetatype() == TYPE_UNKNOWN))
     typelock = false;

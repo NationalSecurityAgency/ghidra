@@ -211,9 +211,7 @@ public:
 ///   - Read-only Varnodes are converted to the underlying constant
 ///   - Volatile Varnodes are converted read/write functions
 ///   - Varnodes whose values are not consumed are replaced with constant 0 Varnodes
-///   - Large Varnodes are flagged for lane analysis
 class ActionVarnodeProps : public Action {
-  void markLanedVarnode(Funcdata &data,Varnode *vn);	///< Mark possible laned register storage
 public:
   ActionVarnodeProps(const string &g) : Action(0,"varnodeprops",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
@@ -543,6 +541,8 @@ class ActionDeadCode : public Action {
   static bool neverConsumed(Varnode *vn,Funcdata &data);
   static void markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist);
   static uintb gatherConsumedReturn(Funcdata &data);
+  static bool isEventualConstant(Varnode *vn,int4 addCount,int4 loadCount);
+  static bool lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist);
 public:
   ActionDeadCode(const string &g) : Action(0,"deadcode",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {

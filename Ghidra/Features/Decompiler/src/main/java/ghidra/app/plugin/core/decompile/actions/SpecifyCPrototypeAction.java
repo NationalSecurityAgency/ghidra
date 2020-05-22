@@ -119,7 +119,7 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 
 		ParameterDefinition[] args = new ParameterDefinitionImpl[np];
 		for (int i = 0; i < np; i++) {
-			HighParam parm = hf.getLocalSymbolMap().getParam(i);
+			HighSymbol parm = hf.getLocalSymbolMap().getParamSymbol(i);
 			args[i] = new ParameterDefinitionImpl(parm.getName(), parm.getDataType(), null);
 		}
 		fsig.setArguments(args);

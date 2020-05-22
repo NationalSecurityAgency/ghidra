@@ -94,57 +94,6 @@ Varnode *RuleCollectTerms::getMultCoeff(Varnode *vn,uintb &coef)
   return testop->getIn(0);
 }
 
-/// If a term has a multiplicative coefficient, but the underlying term is still additive,
-/// in some situations we may need to distribute the coefficient before simplifying further.
-/// The given PcodeOp is a INT_MULT where the second input is a constant. We also
-/// know the first input is formed with INT_ADD. Distribute the coefficient to the INT_ADD inputs.
-/// \param data is the function being analyzed
-/// \param op is the given PcodeOp
-/// \return 1 if the action was performed
-int4 RuleCollectTerms::doDistribute(Funcdata &data,PcodeOp *op)
-
-{
-  Varnode *newvn1,*newvn2,*newcvn;
-  PcodeOp *newop1, *newop2;
-  PcodeOp *addop = op->getIn(0)->getDef();
-  Varnode *vn0 = addop->getIn(0);
-  Varnode *vn1 = addop->getIn(1);
-  if ((vn0->isFree())&&(!vn0->isConstant())) return 0;
-  if ((vn1->isFree())&&(!vn1->isConstant())) return 0;
-  uintb coeff = op->getIn(1)->getOffset();
-  int4 size = op->getOut()->getSize();
-				// Do distribution
-  newop1 = data.newOp(2,op->getAddr());
-  data.opSetOpcode(newop1,CPUI_INT_MULT);
-  newvn1 = data.newUniqueOut(size,newop1);
-
-  newop2 = data.newOp(2,op->getAddr());
-  data.opSetOpcode(newop2,CPUI_INT_MULT);
-  newvn2 = data.newUniqueOut(size,newop2);
-
-  if (vn0->isConstant())
-    data.opSetInput(newop1, data.newConstant(size,vn0->getOffset()),0);
-  else
-    data.opSetInput(newop1, vn0, 0); // To first input of original add
-  newcvn = data.newConstant(size,coeff);
-  data.opSetInput(newop1, newcvn, 1);
-  data.opInsertBefore(newop1, op);
-
-  if (vn1->isConstant())
-    data.opSetInput(newop2, data.newConstant(size,vn1->getOffset()),0);
-  else
-    data.opSetInput(newop2, vn1, 0); // To second input of original add
-  newcvn = data.newConstant(size,coeff);
-  data.opSetInput(newop2, newcvn, 1);
-  data.opInsertBefore(newop2, op);
-
-  data.opSetInput( op, newvn1, 0); // new ADD's inputs are outputs of new MULTs
-  data.opSetInput( op, newvn2, 1);
-  data.opSetOpcode(op, CPUI_INT_ADD);
-
-  return 1;
-}
-
 /// \class RuleCollectTerms
 /// \brief Collect terms in a sum: `V * c + V * d   =>  V * (c + d)`
 void RuleCollectTerms::getOpList(vector<uint4> &oplist) const
@@ -177,9 +126,9 @@ int4 RuleCollectTerms::applyOp(PcodeOp *op,Funcdata &data)
       vn2 = getMultCoeff(vn2,coef2);
       if (vn1 == vn2) {		// Terms that can be combined
 	if (order[i-1]->getMultiplier() != (PcodeOp *)0)
-	  return doDistribute(data,order[i-1]->getMultiplier());
+	  return data.distributeIntMultAdd(order[i-1]->getMultiplier()) ? 1 : 0;
 	if (order[i]->getMultiplier() != (PcodeOp *)0)
-	  return doDistribute(data,order[i]->getMultiplier());
+	  return data.distributeIntMultAdd(order[i]->getMultiplier()) ? 1 : 0;
 	coef1 = (coef1 + coef2) & calc_mask(vn1->getSize()); // The new coefficient
 	Varnode *newcoeff = data.newConstant(vn1->getSize(),coef1);
 	Varnode *zerocoeff = data.newConstant(vn1->getSize(),0);
@@ -660,7 +609,7 @@ void RuleIntLessEqual::getOpList(vector<uint4> &oplist) const
 int4 RuleIntLessEqual::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  if (Funcdata::replaceLessequal(data,op))
+  if (data.replaceLessequal(op))
     return 1;
   return 0;
 }
@@ -2932,10 +2881,17 @@ int4 RuleIndirectCollapse::applyOp(PcodeOp *op,Funcdata &data)
 	return 0;
     }
     else if (indop->usesSpacebasePtr()) {
-      const LoadGuard *guard = data.getStoreGuard(indop);
-      if (guard != (const LoadGuard *)0) {
-	if (guard->isGuarded(op->getOut()->getAddr()))
+      if (indop->code() == CPUI_STORE) {
+	const LoadGuard *guard = data.getStoreGuard(indop);
+	if (guard != (const LoadGuard *)0) {
+	  if (guard->isGuarded(op->getOut()->getAddr()))
+	    return 0;
+	}
+	else {
+	  // A marked STORE that is not guarded should eventually get converted to a COPY
+	  // so we keep the INDIRECT until that happens
 	  return 0;
+	}
       }
     }
     else
@@ -5646,262 +5602,528 @@ int4 RuleEqual2Constant::applyOp(PcodeOp *op,Funcdata &data)
   return 1;
 }
 
-/// \brief Accumulate details of given term and continue tree traversal
-///
-/// If the given Varnode is a constant or multiplicative term, update
-/// totals in the state object. If the Varnode is additive, traverse its sub-terms.
-/// \param vn is the given Varnode term
-/// \param state is the state object
-/// \return \b true if Varnode is a NON-multiple
-bool RulePtrArith::checkTerm(Varnode *vn,AddTreeState *state)
+void AddTreeState::clear(void)
 
 {
-  uintb val;
-  intb rem;
-  Varnode *vnconst,*vnterm;
-  PcodeOp *def;
+  multsum = 0;
+  nonmultsum = 0;
+  multiple.clear();
+  coeff.clear();
+  nonmult.clear();
+  correct = 0;
+  offset = 0;
+  valid = true;
+  isDistributeUsed = false;
+  isSubtype = false;
+  distributeOp = (PcodeOp *)0;
+}
 
-  if (vn == state->ptr) return false;
-  if (vn->isConstant()) {
-    val = vn->getOffset();
-    if (state->size == 0)
-      rem = val;
-    else {
-      intb sval = (intb)val;
-      sign_extend(sval,vn->getSize()*8-1);
-      rem = sval % state->size;
-    }
-    if (rem!=0) {		// constant is not multiple of size
-      state->nonmultsum += val;
-      return true;
-    }
-    state->multsum += val;	// Add multiples of size into multsum
-    return false;
-  }
-  if (vn->isWritten()) {
-    def = vn->getDef();
-    if (def->code() == CPUI_INT_ADD) // Recurse
-      return spanAddTree(def,state);
-    if (def->code() == CPUI_COPY) { // Not finished reducing yet
-      state->valid = false;
-      return false;
-    }
-    if (def->code() == CPUI_INT_MULT) { // Check for constant coeff indicating size
-      vnconst = def->getIn(1);
-      vnterm = def->getIn(0);
-      if (vnconst->isConstant()) {
-	val = vnconst->getOffset();
-	if (state->size == 0)
-	  rem = val;
-	else {
-	  intb sval = (intb) val;
-	  sign_extend(sval, vn->getSize() * 8 - 1);
-	  rem = sval % state->size;
-	}
-	if (rem!=0) {
-	  if ((val > state->size)&&(state->size!=0)) {
-	    state->valid = false; // Size is too big: pointer type must be wrong
-	    return false;
-	  }
-	  return true;
-	}
-	if (rem==0) {
-	  state->multiple.push_back(vnterm);
-	  state->coeff.push_back(val);
-	  return false;
+AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
+  : data(d)
+{
+  baseOp = op;
+  ptr = op->getIn(slot);
+  ct = (const TypePointer *)ptr->getType();
+  ptrsize = ptr->getSize();
+  ptrmask = calc_mask(ptrsize);
+  baseType = ct->getPtrTo();
+  size = AddrSpace::byteToAddressInt(baseType->getSize(),ct->getWordSize());
+  multsum = 0;		// Sums start out as zero
+  nonmultsum = 0;
+  correct = 0;
+  offset = 0;
+  valid = true;		// Valid until proven otherwise
+  preventDistribution = false;
+  isDistributeUsed = false;
+  isSubtype = false;
+  distributeOp = (PcodeOp *)0;
+}
+
+/// Even if the current base data-type is not an array, the pointer expression may incorporate
+/// an array access for a sub component.  This manifests as a non-constant non-multiple terms in
+/// the tree.  If this term is itself defined by a CPUI_INT_MULT with a constant, the constant
+/// indicates a likely element size. Return a non-zero value, the likely element size, if there
+/// is evidence of a non-constant non-multiple term. Return zero otherwise.
+/// \return a non-zero value indicating likely element size, or zero
+uint4 AddTreeState::findArrayHint(void) const
+
+{
+  uint4 res = 0;
+  for(int4 i=0;i<nonmult.size();++i) {
+    Varnode *vn = nonmult[i];
+    if (vn->isConstant()) continue;
+    uint4 vncoeff = 1;
+    if (vn->isWritten()) {
+      PcodeOp *op = vn->getDef();
+      if (op->code() == CPUI_INT_MULT) {
+	Varnode *vnconst = op->getIn(1);
+	if (vnconst->isConstant()) {
+	  intb sval = vnconst->getOffset();
+	  sign_extend(sval,vnconst->getSize()*8-1);
+	  vncoeff = (sval < 0) ? (uint4)-sval : (uint4)sval;
 	}
       }
+    }
+    if (vncoeff > res)
+      res = vncoeff;
+  }
+  return res;
+}
+
+/// \brief Given an offset into the base data-type and array hints find sub-component being referenced
+///
+/// An explicit offset should target a specific sub data-type,
+/// but array indexing may confuse things.  This method passes
+/// back the offset of the best matching component, searching among components
+/// that are \e nearby the given offset, preferring a matching array element size
+/// and a component start that is nearer to the offset.
+/// \param off is the given offset into the data-type
+/// \param arrayHint if non-zero indicates array access, where the value is the element size
+/// \param newoff is used to pass back the actual offset of the selected component
+/// \return \b true if a good component match was found
+bool AddTreeState::hasMatchingSubType(uintb off,uint4 arrayHint,uintb *newoff) const
+
+{
+  if (arrayHint == 0)
+    return (baseType->getSubType(off,newoff) != (Datatype *)0);
+
+  int4 elSizeBefore;
+  uintb offBefore;
+  Datatype *typeBefore = baseType->nearestArrayedComponentBackward(off, &offBefore, &elSizeBefore);
+  if (typeBefore != (Datatype *)0) {
+    if (arrayHint == 1 || elSizeBefore == arrayHint) {
+      int4 sizeAddr = AddrSpace::byteToAddressInt(typeBefore->getSize(),ct->getWordSize());
+      if (offBefore < sizeAddr) {
+	// If the offset is \e inside a component with a compatible array, return it.
+	*newoff = offBefore;
+	return true;
+      }
+    }
+  }
+  int4 elSizeAfter;
+  uintb offAfter;
+  Datatype *typeAfter = baseType->nearestArrayedComponentForward(off, &offAfter, &elSizeAfter);
+  if (typeBefore == (Datatype *)0 && typeAfter == (Datatype *)0)
+    return (baseType->getSubType(off,newoff) != (Datatype *)0);
+  if (typeBefore == (Datatype *)0) {
+    *newoff = offAfter;
+    return true;
+  }
+  if (typeAfter == (Datatype *)0) {
+    *newoff = offBefore;
+    return true;
+  }
+
+  uintb distBefore = offBefore;
+  uintb distAfter = -offAfter;
+  if (arrayHint != 1) {
+    if (elSizeBefore != arrayHint)
+      distBefore += 0x1000;
+    if (elSizeAfter != arrayHint)
+      distAfter += 0x1000;
+  }
+  *newoff = (distAfter < distBefore) ? offAfter : offBefore;
+  return true;
+}
+
+/// Examine a CPUI_INT_MULT element in the middle of the add tree. Determine if we treat
+/// the output simply as a leaf, or if the multiply needs to be distributed to an
+/// additive subtree.  If the Varnode is a leaf of the tree, return \b true if
+/// it is considered a multiple of the base data-type size. If the Varnode is the
+/// root of another additive sub-tree, return \b true if no sub-node is a multiple.
+/// \param vn is the output Varnode of the operation
+/// \param op is the CPUI_INT_MULT operation
+/// \param treeCoeff is constant multiple being applied to the node
+/// \return \b true if there are no multiples of the base data-type size discovered
+bool AddTreeState::checkMultTerm(Varnode *vn,PcodeOp *op,uintb treeCoeff)
+
+{
+  Varnode *vnconst = op->getIn(1);
+  Varnode *vnterm = op->getIn(0);
+  uintb val;
+
+  if (vnterm->isFree()) {
+    valid = false;
+    return false;
+  }
+  if (vnconst->isConstant()) {
+    val = (vnconst->getOffset() * treeCoeff) & ptrmask;
+    intb sval = (intb) val;
+    sign_extend(sval, vn->getSize() * 8 - 1);
+    intb rem = (size == 0) ? sval : sval % size;
+    if (rem != 0) {
+      if ((val > size) && (size != 0)) {
+	valid = false; // Size is too big: pointer type must be wrong
+	return false;
+      }
+      if (!preventDistribution) {
+	if (vnterm->isWritten() && vnterm->getDef()->code() == CPUI_INT_ADD) {
+	  if (distributeOp == (PcodeOp *)0)
+	    distributeOp = op;
+	  return spanAddTree(vnterm->getDef(), val);
+	}
+      }
+      return true;
+    }
+    else {
+      if (treeCoeff != 1)
+	isDistributeUsed = true;
+      multiple.push_back(vnterm);
+      coeff.push_back(sval);
+      return false;
     }
   }
   return true;
 }
 
-/// \brief Traverse the additive expression accumulating offset information.
-///
+/// If the given Varnode is a constant or multiplicative term, update
+/// totals. If the Varnode is additive, traverse its sub-terms.
+/// \param vn is the given Varnode term
+/// \param treeCoeff is a constant multiple applied to the entire sub-tree
+/// \return \b true if the sub-tree rooted at the given Varnode contains no multiples
+bool AddTreeState::checkTerm(Varnode *vn,uintb treeCoeff)
+
+{
+  uintb val;
+  PcodeOp *def;
+
+  if (vn == ptr) return false;
+  if (vn->isConstant()) {
+    val = vn->getOffset() * treeCoeff;
+    intb sval = (intb)val;
+    sign_extend(sval,vn->getSize()*8-1);
+    intb rem = (size == 0) ? sval : (sval % size);
+    if (rem!=0) {		// constant is not multiple of size
+      if (treeCoeff != 1) {
+	// An offset "into" the base data-type makes little sense unless is has subcomponents
+	if (baseType->getMetatype() == TYPE_ARRAY || baseType->getMetatype() == TYPE_STRUCT)
+	  isDistributeUsed = true;
+      }
+      nonmultsum += val;
+      return true;
+    }
+    if (treeCoeff != 1)
+      isDistributeUsed = true;
+    multsum += val;		// Add multiples of size into multsum
+    return false;
+  }
+  if (vn->isWritten()) {
+    def = vn->getDef();
+    if (def->code() == CPUI_INT_ADD) // Recurse
+      return spanAddTree(def, treeCoeff);
+    if (def->code() == CPUI_COPY) { // Not finished reducing yet
+      valid = false;
+      return false;
+    }
+    if (def->code() == CPUI_INT_MULT)	// Check for constant coeff indicating size
+      return checkMultTerm(vn, def, treeCoeff);
+  }
+  else if (vn->isFree()) {
+    valid = false;
+    return false;
+  }
+  return true;
+}
+
+/// Recursively walk the sub-tree from the given root.
+/// Terms that are a \e multiple of the base data-type size are accumulated either in
+/// the the sum of constant multiples or the container of non-constant multiples.
+/// Terms that are a \e non-multiple are accumulated either in the sum of constant
+/// non-multiples or the container of non-constant non-multiples. The constant
+/// non-multiples are counted twice, once in the sum, and once in the container.
+/// This routine returns \b true if no node of the sub-tree is considered a multiple
+/// of the base data-type size (or \b false if any node is considered a multiple).
 /// \param op is the root of the sub-expression to traverse
-/// \param state holds the offset information
-/// \return \b true if the sub-expression is invalid or a NON-multiple
-bool RulePtrArith::spanAddTree(PcodeOp *op,AddTreeState *state)
+/// \param treeCoeff is a constant multiple applied to the entire additive tree
+/// \return \b true if the given sub-tree contains no multiple nodes
+bool AddTreeState::spanAddTree(PcodeOp *op,uintb treeCoeff)
 		  
 {
   bool one_is_non,two_is_non;
 
-  one_is_non = checkTerm(op->getIn(0),state);
-  if (!state->valid) return false;
-  two_is_non = checkTerm(op->getIn(1),state);
-  if (!state->valid) return false;
+  one_is_non = checkTerm(op->getIn(0),treeCoeff);
+  if (!valid) return false;
+  two_is_non = checkTerm(op->getIn(1),treeCoeff);
+  if (!valid) return false;
 
   if (one_is_non&&two_is_non) return true;
   if (one_is_non)
-    state->nonmult.push_back(op->getIn(0));
+    nonmult.push_back(op->getIn(0));
   if (two_is_non)
-    state->nonmult.push_back(op->getIn(1));
-  return false;
+    nonmult.push_back(op->getIn(1));
+  return false;		// At least one of the sides contains multiples
 }
 
-/// \brief Rewrite a pointer expression using PTRSUB and PTRADD
-///
-/// Given a base pointer of known data-type and an additive expression involving
-/// the pointer, group the terms of the expression into:
-///   - Constant multiple of the base data-type
-///   - Non-constant multiples of the base data-type
-///   - Multiples of an array element size: rewrite using PTRADD
-///   - Drill down into sub-components of the base data-type: rewrite using PTRSUB
-///   - Remaining offsets
-///
-/// \param bottom_op is the root Varnode of the expression
-/// \param ptr_op is the PcodeOp taking the base pointer as input
-/// \param slot is the input slot of the base pointer
-/// \param data is the function being analyzed
-/// \return 1 if modifications are made, 0 otherwise
-int4 RulePtrArith::transformPtr(PcodeOp *bottom_op,PcodeOp *ptr_op,int4 slot,Funcdata &data)
+/// Make final calcultions to determine if a pointer to a sub data-type of the base
+/// data-type is being calculated, which will result in a CPUI_PTRSUB being generated.
+void AddTreeState::calcSubtype(void)
 
 {
-  AddTreeState state;
-  const TypePointer *ct;
-  bool yes_subtype,offset_corrected;
-  int4 i,ptrsize;
-  uintb ptrmask,correct,coeff,offset,nonmultbytes,extra;
-  Varnode *ptrbump;	// Will contain final result of PTR addition
-  Varnode *fullother;	// Will contain anything else not part of PTR add
-  Varnode *newvn;
-  PcodeOp *newop = (PcodeOp *)0;
-
-  state.ptr = ptr_op->getIn(slot);
-  ct = (const TypePointer *) state.ptr->getType();
-  ptrsize = state.ptr->getSize();
-  state.size = AddrSpace::byteToAddressInt(ct->getPtrTo()->getSize(),ct->getWordSize());
-  state.multsum = 0;		// Sums start out as zero
-  state.nonmultsum = 0;
-  state.valid = true;		// Valid until proven otherwise
-
-  spanAddTree(bottom_op,&state); // Find multiples and non-multiples of ct->getSize()
-  if (!state.valid) return 0;	// Were there any show stoppers
-  ptrmask = calc_mask(ptrsize);
-  state.nonmultsum &= ptrmask; // Make sure we are modulo ptr's space
-  state.multsum &= ptrmask;
-  if (state.size == 0)
-    offset = state.nonmultsum;
+  nonmultsum &= ptrmask;	// Make sure we are modulo ptr's space
+  multsum &= ptrmask;
+  if (size == 0 || nonmultsum < size)
+    offset = nonmultsum;
   else {
-    intb snonmult = (intb)state.nonmultsum;
+    // For a sum that falls completely outside the data-type, there is presumably some
+    // type of constant term added to an array index either at the current level or lower.
+    // If we knew here whether an array of the baseType was possible we could make a slightly
+    // better decision.
+    intb snonmult = (intb)nonmultsum;
     sign_extend(snonmult,ptrsize*8-1);
-    snonmult = snonmult % state.size;
-    offset = (snonmult < 0) ? (uintb)(snonmult + state.size) : (uintb)snonmult;
-  }
-  correct = state.nonmultsum - offset;
-  state.nonmultsum = offset;
-  state.multsum = (state.multsum + correct) & ptrmask;	// Some extra multiples of size
-
-				// Figure out if there is any subtype
-  if (state.nonmult.empty()) {
-    if ((state.multsum==0)&&state.multiple.empty()) // Is there anything at all
-      return 0;
-    yes_subtype = false;	// If there are no offsets INTO the pointer
-    offset = 0;			// Do not check if there are sub structures
-  }
-  else if (ct->getPtrTo()->getMetatype()==TYPE_SPACEBASE) {
-    nonmultbytes = AddrSpace::addressToByte(state.nonmultsum,ct->getWordSize()); // Convert to bytes
-				// Get offset into mapped variable
-    if (ct->getPtrTo()->getSubType(nonmultbytes,&extra)==(Datatype *)0)
-      return 0;			// Cannot find mapped variable but nonmult is non-empty
-    extra = AddrSpace::byteToAddress(extra,ct->getWordSize()); // Convert back to address units
-    offset = (state.nonmultsum - extra) & ptrmask;
-    yes_subtype = true;
-  }
-  else if (ct->getPtrTo()->getMetatype()==TYPE_STRUCT) {
-    nonmultbytes = AddrSpace::addressToByte(state.nonmultsum,ct->getWordSize()); // Convert to bytes
-				// Get offset into field in structure
-    if (ct->getPtrTo()->getSubType(nonmultbytes,&extra)==(Datatype *)0) {
-      if (nonmultbytes >= ct->getPtrTo()->getSize()) return 0; // Out of structure's bounds
-      extra = 0;		// No field, but pretend there is something there
+    snonmult = snonmult % size;
+    if (snonmult >= 0)
+      // We assume the sum is big enough it represents an array index at this level
+      offset = (uintb)snonmult;
+    else {
+      // For a negative sum, if the baseType is a structure and there is array hints,
+      // we assume the sum is an array index at a lower level
+      if (baseType->getMetatype() == TYPE_STRUCT && findArrayHint() != 0)
+	offset = nonmultsum;
+      else
+	offset = (uintb)(snonmult + size);
     }
-    extra = AddrSpace::byteToAddress(extra,ct->getWordSize()); // Convert back to address units
-    offset = (state.nonmultsum - extra) & ptrmask;
-    yes_subtype = true;
   }
-  else if (ct->getPtrTo()->getMetatype()==TYPE_ARRAY) {
-    yes_subtype = true;
+  correct = nonmultsum - offset;
+  nonmultsum = offset;
+  multsum = (multsum + correct) & ptrmask;	// Some extra multiples of size
+  if (nonmult.empty()) {
+    if ((multsum == 0) && multiple.empty()) {	// Is there anything at all
+      valid = false;
+      return;
+    }
+    isSubtype = false;		// There are no offsets INTO the pointer
+  }
+  else if (baseType->getMetatype() == TYPE_SPACEBASE) {
+    uintb nonmultbytes = AddrSpace::addressToByte(nonmultsum,ct->getWordSize()); // Convert to bytes
+    uintb extra;
+    uint4 arrayHint = findArrayHint();
+    // Get offset into mapped variable
+    if (!hasMatchingSubType(nonmultbytes, arrayHint, &extra)) {
+      valid = false;		// Cannot find mapped variable but nonmult is non-empty
+      return;
+    }
+    extra = AddrSpace::byteToAddress(extra, ct->getWordSize()); // Convert back to address units
+    offset = (nonmultsum - extra) & ptrmask;
+    isSubtype = true;
+  }
+  else if (baseType->getMetatype() == TYPE_STRUCT) {
+    uintb nonmultbytes = AddrSpace::addressToByte(nonmultsum,ct->getWordSize()); // Convert to bytes
+    uintb extra;
+    uint4 arrayHint = findArrayHint();
+    // Get offset into field in structure
+    if (!hasMatchingSubType(nonmultbytes, arrayHint, &extra)) {
+      if (nonmultbytes >= baseType->getSize()) {	// Compare as bytes! not address units
+	valid = false; // Out of structure's bounds
+	return;
+      }
+      extra = 0;	// No field, but pretend there is something there
+    }
+    extra = AddrSpace::byteToAddress(extra, ct->getWordSize()); // Convert back to address units
+    offset = (nonmultsum - extra) & ptrmask;
+    isSubtype = true;
+  }
+  else if (baseType->getMetatype() == TYPE_ARRAY) {
+    isSubtype = true;
     offset = 0;
   }
-  else				// No struct or array, but nonmult is non-empty
-    return 0;			// There is substructure we don't know about
+  else {
+    // No struct or array, but nonmult is non-empty
+    valid = false;			// There is substructure we don't know about
+  }
+}
 
-				// Be sure to preserve sign in division below
-				// Calc size-relative constant PTR addition
-  intb smultsum = (intb)state.multsum;
+/// Construct part of the tree that sums to a multiple of the base data-type size.
+/// This value will be added to the base pointer as a CPUI_PTRADD. The final Varnode produced
+/// by the sum is returned.  If there are no multiples, null is returned.
+/// \return the output Varnode of the multiple tree or null
+Varnode *AddTreeState::buildMultiples(void)
+
+{
+  Varnode *resNode;
+
+  // Be sure to preserve sign in division below
+  // Calc size-relative constant PTR addition
+  intb smultsum = (intb)multsum;
   sign_extend(smultsum,ptrsize*8-1);
-  coeff = (state.size==0) ? (uintb)0 : (smultsum / state.size) & ptrmask;
-  if (coeff == 0)
-    ptrbump = (Varnode *)0;
+  uintb constCoeff = (size==0) ? (uintb)0 : (smultsum / size) & ptrmask;
+  if (constCoeff == 0)
+    resNode = (Varnode *)0;
   else
-    ptrbump = data.newConstant(ptrsize,coeff);
-  for(i=0;i<state.multiple.size();++i) {
-    coeff = (state.size==0) ? (uintb)0 : state.coeff[i] / state.size;
-    newvn = state.multiple[i];
-    if (coeff != 1) {
-      newop = data.newOpBefore(bottom_op,CPUI_INT_MULT,newvn,data.newConstant(ptrsize,coeff));
-      newvn = newop->getOut();
+    resNode= data.newConstant(ptrsize,constCoeff);
+  for(int4 i=0;i<multiple.size();++i) {
+    uintb finalCoeff = (size==0) ? (uintb)0 : (coeff[i] / size) & ptrmask;
+    Varnode *vn = multiple[i];
+    if (finalCoeff != 1) {
+      PcodeOp *op = data.newOpBefore(baseOp,CPUI_INT_MULT,vn,data.newConstant(ptrsize,finalCoeff));
+      vn = op->getOut();
     }
-    if (ptrbump == (Varnode *)0)
-      ptrbump = newvn;
+    if (resNode == (Varnode *)0)
+      resNode = vn;
     else {
-      newop = data.newOpBefore(bottom_op,CPUI_INT_ADD, newvn, ptrbump);
-      ptrbump = newop->getOut();
+      PcodeOp *op = data.newOpBefore(baseOp,CPUI_INT_ADD, vn, resNode);
+      resNode = op->getOut();
     }
   }
-				// Create PTRADD portion of operation
-  if (ptrbump != (Varnode *)0) { 
-    newop = data.newOpBefore(bottom_op,CPUI_PTRADD,
-			     state.ptr,ptrbump,data.newConstant(ptrsize,state.size));
-    ptrbump = newop->getOut();
-  }
-  else
-    ptrbump = state.ptr;
-				// Add up any remaining pieces
+  return resNode;
+}
+
+/// Create a subtree summing all the elements that aren't multiples of the base data-type size.
+/// Correct for any double counting of non-multiple constants.
+/// Return the final Varnode holding the sum or null if there are no terms.
+/// \return the final Varnode or null
+Varnode *AddTreeState::buildExtra(void)
+
+{
   correct = (correct+offset) & ptrmask; // Total correction that needs to be made
-  offset_corrected= (correct==0);
-  fullother = (Varnode *)0;
-  for(i=0;i<state.nonmult.size();++i) {
-    newvn = state.nonmult[i];
-    if ((!offset_corrected)&&(newvn->isConstant()))
-      if (newvn->getOffset() == correct) {
+  bool offset_corrected= (correct==0);
+  Varnode *resNode = (Varnode *)0;
+  for(int4 i=0;i<nonmult.size();++i) {
+    Varnode *vn = nonmult[i];
+    if ((!offset_corrected)&&(vn->isConstant()))
+      if (vn->getOffset() == correct) {
 	offset_corrected = true;
 	continue;
       }
-    if (fullother == (Varnode *)0)
-      fullother = newvn;
+    if (resNode == (Varnode *)0)
+      resNode = vn;
     else {
-      newop = data.newOpBefore(bottom_op,CPUI_INT_ADD,newvn,fullother);
-      fullother = newop->getOut();
+      PcodeOp *op = data.newOpBefore(baseOp,CPUI_INT_ADD,vn,resNode);
+      resNode = op->getOut();
     }
   }
   if (!offset_corrected) {
-    newvn = data.newConstant(ptrsize,uintb_negate(correct-1,ptrsize));
-    if (fullother == (Varnode *)0)
-      fullother = newvn;
+    Varnode *vn = data.newConstant(ptrsize,uintb_negate(correct-1,ptrsize));
+    if (resNode == (Varnode *)0)
+      resNode = vn;
     else {
-      newop = data.newOpBefore(bottom_op,CPUI_INT_ADD,newvn,fullother);
-      fullother = newop->getOut();
+      PcodeOp *op = data.newOpBefore(baseOp,CPUI_INT_ADD,vn,resNode);
+      resNode = op->getOut();
     }
   }
-				// Do PTRSUB portion of operation
-  if (yes_subtype) {
-    newop = data.newOpBefore(bottom_op,CPUI_PTRSUB,ptrbump,data.newConstant(ptrsize,offset));
-    ptrbump = newop->getOut();
+  return resNode;
+}
+
+/// \return \b true if a transform was applied
+bool AddTreeState::apply(void)
+
+{
+  spanAddTree(baseOp,1);
+  if (!valid) return false;		// Were there any show stoppers
+  if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
+    clear();
+    preventDistribution = true;
+    spanAddTree(baseOp,1);
   }
-    
-  if (fullother != (Varnode *)0)
-    newop = data.newOpBefore(bottom_op,CPUI_INT_ADD,ptrbump,fullother);
+  calcSubtype();
+  if (!valid) return false;
+  while(valid && distributeOp != (PcodeOp *)0) {
+    if (!data.distributeIntMultAdd(distributeOp)) {
+      valid = false;
+      break;
+    }
+    // Collapse any z = (x * #c) * #d  expressions produced by the distribute
+    data.collapseIntMultMult(distributeOp->getIn(0));
+    data.collapseIntMultMult(distributeOp->getIn(1));
+    clear();
+    spanAddTree(baseOp,1);
+    if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
+      clear();
+      preventDistribution = true;
+      spanAddTree(baseOp,1);
+    }
+    calcSubtype();
+  }
+  if (!valid) {
+    // Distribution transforms were made
+    ostringstream s;
+    s << "Problems distributing in pointer arithmetic at ";
+    baseOp->getAddr().printRaw(s);
+    data.warningHeader(s.str());
+    return true;
+  }
+  buildTree();
+  return true;
+}
+
+/// The original ADD tree has been successfully spit into \e multiple and
+/// \e non-multiple pieces.  Rewrite the tree as a pointer expression, putting
+/// any \e multiple pieces into a PTRADD operation, creating a PTRSUB if a sub
+/// data-type offset has been calculated, and preserving and remaining terms.
+void AddTreeState::buildTree(void)
+
+{
+  Varnode *multNode = buildMultiples();
+  Varnode *extraNode = buildExtra();
+  PcodeOp *newop = (PcodeOp *)0;
+
+  // Create PTRADD portion of operation
+  if (multNode != (Varnode *)0) {
+    newop = data.newOpBefore(baseOp,CPUI_PTRADD,ptr,multNode,data.newConstant(ptrsize,size));
+    multNode = newop->getOut();
+  }
+  else
+    multNode = ptr;		// Zero multiple terms
+
+  // Create PTRSUB portion of operation
+  if (isSubtype) {
+    newop = data.newOpBefore(baseOp,CPUI_PTRSUB,multNode,data.newConstant(ptrsize,offset));
+    multNode = newop->getOut();
+  }
+
+  // Add back in any remaining terms
+  if (extraNode != (Varnode *)0)
+    newop = data.newOpBefore(baseOp,CPUI_INT_ADD,multNode,extraNode);
 
   if (newop == (PcodeOp *)0) {
-    // This shouldn't happen, but does because of negative offsets
-    // Should be fixed when we convert everything to signed calc
-    data.warning("ptrarith problems",ptr_op->getAddr());
-    return 0;
+    // This should never happen
+    data.warning("ptrarith problems",baseOp->getAddr());
+    return;
   }
-  data.opSetOutput(newop,bottom_op->getOut());
-  data.opDestroy(bottom_op);
-  return 1;
+  data.opSetOutput(newop,baseOp->getOut());
+  data.opDestroy(baseOp);
+}
+
+/// \brief Verify that given PcodeOp occurs at the bottom of the CPUI_INT_ADD tree
+///
+/// The main RulePtrArith algorithm assumes that the pointer Varnode is at the bottom
+/// of the expression tree that is adding an offset to the pointer.  This routine
+/// verifies this condition.
+/// \param op is the given PcodeOp which is the putative last operation in the tree
+/// \param slot is the slot of the pointer Varnode within the given PcodeOp
+/// \return \b true if the pointer is at the bottom of the tree, \b false otherwise
+bool RulePtrArith::verifyAddTreeBottom(PcodeOp *op,int4 slot)
+
+{
+  Varnode *vn = op->getOut();
+  Varnode *ptrbase = op->getIn(slot);
+  list<PcodeOp *>::const_iterator iter=vn->beginDescend();
+  OpCode opc;
+  if (iter == vn->endDescend()) return false; // Don't bother if no descendants
+  PcodeOp *lowerop = *iter++;
+  opc = lowerop->code();
+  if (vn->isSpacebase())		// For the RESULT to be a spacebase pointer
+    if (iter!=vn->endDescend())		// It must have only 1 descendant
+      return false;
+  if (opc == CPUI_INT_ADD)		// Check for lone descendant which is an ADD
+    if (iter==vn->endDescend())
+      return false;			 // this is not bottom of add tree
+  if (ptrbase->isSpacebase() && (ptrbase->isInput()||(ptrbase->isConstant())) &&
+      (op->getIn(1-slot)->isConstant())) {
+    // Look for ANY descendant which LOADs or STOREs off of vn
+    if ((opc==CPUI_LOAD)||(opc==CPUI_STORE)) {
+      if (lowerop->getIn(1) == vn)
+	return false;
+    }
+    while(iter!=vn->endDescend()) {
+      opc = (*iter)->code();
+      if ((opc==CPUI_LOAD)||(opc==CPUI_STORE)) {
+	if ((*iter)->getIn(1) == vn)
+	  return false;
+      }
+      ++iter;
+    }
+  }
+  return true;
 }
 
 /// \class RulePtrArith
@@ -5932,56 +6154,25 @@ void RulePtrArith::getOpList(vector<uint4> &oplist) const
 int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  int4 i;
+  int4 slot;
   const Datatype *ct = (const Datatype *)0; // Unnecessary initialization
-  const TypePointer *tp;
-  Varnode *vn,*ptrbase;
-  PcodeOp *lowerop;
 
   if (!data.isTypeRecoveryOn()) return 0;
 
-  for(i=0;i<op->numInput();++i) { // Search for pointer type
-    ct = op->getIn(i)->getType();
+  for(slot=0;slot<op->numInput();++slot) { // Search for pointer type
+    ct = op->getIn(slot)->getType();
     if (ct->getMetatype() == TYPE_PTR) break;
   }
-  if (i == op->numInput()) return 0;
+  if (slot == op->numInput()) return 0;
+  if (!verifyAddTreeBottom(op, slot)) return 0;
 
-  vn = op->getOut();
-  ptrbase = op->getIn(i);
-  list<PcodeOp *>::const_iterator iter=vn->beginDescend();
-  OpCode opc;
-  if (iter == vn->endDescend()) return 0; // Don't bother if no descendants
-  lowerop = *iter++;
-  opc = lowerop->code();
-  if (vn->isSpacebase())		// For the RESULT to be a spacebase pointer
-    if (iter!=vn->endDescend()) return 0; // It must have only 1 descendant
-  if (opc == CPUI_INT_ADD)	// Check for lone descendant which is an ADD
-    if (iter==vn->endDescend()) return 0; // this is not bottom of add tree
-  if (ptrbase->isSpacebase() && (ptrbase->isInput()||(ptrbase->isConstant())) &&
-      (op->getIn(1-i)->isConstant())) {
-				// Look for ANY descendant which
-    // LOADs or STOREs off of vn
-    if ((opc==CPUI_LOAD)||(opc==CPUI_STORE)) {
-      if (lowerop->getIn(1) == vn)
-	return 0;
-    }
-    while(iter!=vn->endDescend()) {
-      opc = (*iter)->code();
-      if ((opc==CPUI_LOAD)||(opc==CPUI_STORE)) {
-	if ((*iter)->getIn(1) == vn)
-	  return 0;
-      }
-      ++iter;
-    }
-  }
-    
-  tp = (const TypePointer *) ct;
+  const TypePointer *tp = (const TypePointer *) ct;
   ct = tp->getPtrTo();		// Type being pointed to
   int4 unitsize = AddrSpace::addressToByteInt(1,tp->getWordSize());
   if (ct->getSize() == unitsize) { // Degenerate case
     vector<Varnode *> newparams;
-    newparams.push_back( ptrbase );
-    newparams.push_back( op->getIn(1-i) );
+    newparams.push_back( op->getIn(slot) );
+    newparams.push_back( op->getIn(1-slot) );
     newparams.push_back( data.newConstant(tp->getSize(),1));
     data.opSetAllInput(op,newparams);
     data.opSetOpcode(op,CPUI_PTRADD);
@@ -5992,7 +6183,10 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
     // probably some sort of padding going on
     return 0;
 
-  return transformPtr(op,op,i,data);
+  AddTreeState state(data,op,slot);
+  if (!state.apply())
+    return 0;
+  return 1;
 }
 
 /// \class RuleStructOffset0
@@ -6402,14 +6596,8 @@ int4 RulePtrsubCharConstant::applyOp(PcodeOp *op,Funcdata &data)
   if (!scope->isReadOnly(symaddr,1,op->getAddr()))
     return 0;
   // Check if data at the address looks like a string
-  uint1 buffer[128];
-  try {
-    data.getArch()->loader->loadFill(buffer,128,symaddr);
-  } catch(DataUnavailError &err) {
+  if (!data.getArch()->stringManager->isString(symaddr, basetype))
     return 0;
-  }
-  bool isstring = data.getArch()->print->isCharacterConstant(buffer,128,basetype->getSize());
-  if (!isstring) return 0;
 
   // If we reach here, the PTRSUB should be converted to a (COPY of a) pointer constant.
   bool removeCopy = false;

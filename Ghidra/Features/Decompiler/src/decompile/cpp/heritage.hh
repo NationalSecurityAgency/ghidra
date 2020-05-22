@@ -219,7 +219,7 @@ class Heritage {
   /// \brief Get the heritage status for the given address space
   HeritageInfo *getInfo(AddrSpace *spc) { return &(infolist[spc->getIndex()]); }
 
-  /// \brief Get the heriage status for the given address space
+  /// \brief Get the heritage status for the given address space
   const HeritageInfo *getInfo(AddrSpace *spc) const { return &(infolist[spc->getIndex()]); }
 
   void splitJoinLevel(vector<Varnode *> &lastcombo,vector<Varnode *> &nextlev,JoinRecord *joinrec);
@@ -266,6 +266,8 @@ class Heritage {
   void rename(void);
 public:
   Heritage(Funcdata *data);	///< Constructor
+
+  int4 getPass(void) const { return pass; }	///< Get overall count of heritage passes
 
   /// \brief Get the pass number when the given address was heritaged
   ///

@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 #include "interface.hh"
+#ifdef __REMOTE_SOCKET__
+#include "sys/socket.h"
+#include "sys/un.h"
+#include "unistd.h"
+#include "ext/stdio_filebuf.h"
+#endif
 
 vector<IfaceCapability *> IfaceCapability::thelist;
 
@@ -29,6 +35,84 @@ void IfaceCapability::registerAllCommands(IfaceStatus *status)
   for(uint4 i=0;i<thelist.size();++i)
     thelist[i]->registerCommands(status);
 }
+
+#ifdef __REMOTE_SOCKET__
+
+RemoteSocket::RemoteSocket(void)
+
+{
+  fileDescriptor = 0;
+  inbuf = (basic_filebuf<char> *)0;
+  outbuf = (basic_filebuf<char> *)0;
+  inStream = (istream *)0;
+  outStream = (ostream *)0;
+  isOpen = false;
+}
+
+void RemoteSocket::close(void)
+
+{
+  if (inStream != (istream *)0) {
+    delete inStream;
+    inStream = (istream *)0;
+  }
+  if (outStream != (ostream *)0) {
+    delete outStream;
+    outStream = (ostream *)0;
+  }
+  if (inbuf != (basic_filebuf<char> *)0) {
+    // Destroying the buffer should automatically close the socket
+    delete inbuf;
+    inbuf = (basic_filebuf<char> *)0;
+  }
+  if (outbuf != (basic_filebuf<char> *)0) {
+    delete outbuf;
+    outbuf = (basic_filebuf<char> *)0;
+  }
+  isOpen = false;
+}
+
+bool RemoteSocket::open(const string &filename)
+
+{
+  if (isOpen) return false;
+  if ((fileDescriptor = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+    throw IfaceError("Could not create socket");
+  struct sockaddr_un addr;
+  addr.sun_family = AF_UNIX;
+  int4 len = filename.length();
+  if (len >= sizeof(addr.sun_path))
+    throw IfaceError("Socket name too long");
+  memcpy(addr.sun_path,filename.c_str(),len);
+  addr.sun_path[len] = '\0';
+  len += sizeof(addr.sun_family);
+  if (connect(fileDescriptor, (struct sockaddr *)&addr, len) < 0) {
+    ::close(fileDescriptor);
+    return false;
+  }
+
+  fdopen(fileDescriptor, "r");
+  inbuf = new __gnu_cxx::stdio_filebuf<char>(fileDescriptor,ios::in);
+  fdopen(fileDescriptor, "w");
+  outbuf = new __gnu_cxx::stdio_filebuf<char>(fileDescriptor,ios::out);
+  inStream = new istream(inbuf);
+  outStream = new ostream(outbuf);
+  isOpen = true;
+  return true;
+}
+
+bool RemoteSocket::isSocketOpen(void)
+
+{
+  if (!isOpen) return false;
+  if (inStream->eof()) {
+    close();
+    return false;
+  }
+  return true;
+}
+
+#endif
 
 IfaceStatus::IfaceStatus(const string &prmpt,istream &is,ostream &os,int4 mxhist)
 
@@ -73,6 +157,15 @@ void IfaceStatus::popScript(void)
   flagstack.pop_back();
   errorisdone = ((flags & 1)!=0);
   inerror = false;
+}
+
+void IfaceStatus::reset(void)
+
+{
+  while(!inputstack.empty())
+    popScript();
+  errorisdone = false;
+  done = false;
 }
 
 void IfaceStatus::saveHistory(const string &line)
