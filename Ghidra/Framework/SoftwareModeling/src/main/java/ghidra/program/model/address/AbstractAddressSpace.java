@@ -282,9 +282,13 @@ abstract class AbstractAddressSpace implements AddressSpace {
 	public long subtract(Address addr1, Address addr2) {
 		AddressSpace space1 = addr1.getAddressSpace();
 		AddressSpace space2 = addr2.getAddressSpace();
-		if (!addr1.getAddressSpace().equals(addr2.getAddressSpace())) {
+		if (!space1.equals(space2)) {
 			// if the two spaces are actually based in the same space, calculate the offset
-			if (space1.getBaseSpaceID() != space2.getBaseSpaceID()) {
+			int base1 = space1.isOverlaySpace() ? ((OverlayAddressSpace) space1).getBaseSpaceID()
+					: space1.getSpaceID();
+			int base2 = space2.isOverlaySpace() ? ((OverlayAddressSpace) space2).getBaseSpaceID()
+					: space2.getSpaceID();
+			if (base1 != base2) {
 				throw new IllegalArgumentException("Address are in different spaces " +
 					addr1.getAddressSpace().getName() + " != " + addr2.getAddressSpace().getName());
 			}
@@ -478,8 +482,9 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		return minAddress;
 	}
 
-	private int compareToOverlaySpace(AddressSpace overlaySpace) {
-		int baseCompare = getBaseSpaceID() - overlaySpace.getBaseSpaceID();
+	private int compareAsOverlaySpace(AddressSpace overlaySpace) {
+		int baseCompare = ((OverlayAddressSpace) this).getBaseSpaceID() -
+			((OverlayAddressSpace) overlaySpace).getBaseSpaceID();
 		if (baseCompare == 0) {
 			long otherMinOffset = overlaySpace.getMinAddress().getOffset();
 			if (minOffset == otherMinOffset) {
@@ -498,7 +503,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 		if (isOverlaySpace()) {
 			if (space.isOverlaySpace()) {
 				// Both spaces are overlay spaces
-				return compareToOverlaySpace(space);
+				return compareAsOverlaySpace(space);
 			}
 			// I'm an overlay, other space is NOT an overlay
 			return 1;
@@ -519,7 +524,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 			// source within a list/set of addresses from a second source.
 			return 0;
 		}
-		int c = getBaseSpaceID() - space.getBaseSpaceID();
+		int c = getSpaceID() - space.getSpaceID();
 		if (c == 0) {
 			c = getClass().getName().compareTo(space.getClass().getName());
 		}
@@ -557,12 +562,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 	}
 
 	@Override
-	public int getBaseSpaceID() {
-		return spaceID;
-	}
-
-	@Override
-	public int getUniqueSpaceID() {
+	public int getSpaceID() {
 		return spaceID;
 	}
 

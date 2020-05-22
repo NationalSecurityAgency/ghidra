@@ -117,7 +117,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	@Override
 	public Address getAddress(int spaceID, long offset) {
 		Address addr = super.getAddress(spaceID, offset);
-		if (addr == null && spaceID == stackSpace.getUniqueSpaceID()) {
+		if (addr == null && spaceID == stackSpace.getSpaceID()) {
 			return stackSpace.getAddress(offset);
 		}
 		return addr;
