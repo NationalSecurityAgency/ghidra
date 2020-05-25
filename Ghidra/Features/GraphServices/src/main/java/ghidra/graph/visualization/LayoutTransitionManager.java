@@ -122,11 +122,7 @@ class LayoutTransitionManager {
 		visualizationServer.getRenderContext().getMultiLayerTransformer().setToIdentity();
 		LayoutAlgorithm<AttributedVertex> layoutAlgorithm = builder.build();
 
-		if (layoutAlgorithm instanceof RenderContextAware) {
-			((RenderContextAware<AttributedVertex, AttributedEdge>) layoutAlgorithm)
-				.setRenderContext(visualizationServer.getRenderContext());
-		}
-		else {
+		if (!(layoutAlgorithm instanceof EdgeShapeFunctionSupplier)) {
 			visualizationServer.getRenderContext().setEdgeShapeFunction(originalEdgeShapeFunction);
 		}
 		if (layoutAlgorithm instanceof VertexShapeAware) {
@@ -148,10 +144,6 @@ class LayoutTransitionManager {
 			int preferredWidth = layoutModel.getPreferredWidth();
 			int preferredHeight = layoutModel.getPreferredHeight();
 			layoutModel.setSize(preferredWidth, preferredHeight);
-		}
-		if (layoutAlgorithm instanceof RenderContextAware) {
-			((RenderContextAware<AttributedVertex, AttributedEdge>) layoutAlgorithm)
-				.setRenderContext(renderContext);
 		}
 		if (layoutAlgorithm instanceof AfterRunnable) {
 			((AfterRunnable) layoutAlgorithm).setAfter(visualizationServer::scaleToLayout);

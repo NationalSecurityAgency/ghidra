@@ -72,7 +72,8 @@
 		<logger name="ghidra.app.util.importer" level="DEBUG" />
 		<logger name="ghidra.app.util.opinion" level="DEBUG" />
 		<logger name="ghidra.util.classfinder" level="DEBUG" />			
-		<logger name="ghidra.util.task" level="DEBUG" />		
+		<logger name="ghidra.util.task" level="DEBUG" />
+		<logger name="org.jungrapht.visualization" level="INFO" />
 
 		<Root level="ALL">
 			<AppenderRef ref="console" level="DEBUG"/>      

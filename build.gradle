@@ -56,6 +56,9 @@ if (file("flatRepo").isDirectory()) {
 	allprojects {
 		repositories {
 			mavenLocal()
+			maven {
+				url "https://oss.sonatype.org/content/repositories/snapshots"
+			}
 			mavenCentral()
 			jcenter()
 			flatDir name: "flat", dirs:["$rootProject.projectDir/flatRepo"]

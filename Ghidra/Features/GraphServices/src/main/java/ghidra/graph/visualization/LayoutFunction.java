@@ -46,17 +46,20 @@ class LayoutFunction
 	static final String MULTI_ROW_EDGE_AWARE_TREE = "Hierarchical MultiRow";
 	static final String EDGE_AWARE_TREE = "Hierarchical";
 	static final String EDGE_AWARE_RADIAL = "Radial";
+	static final String GEM = "Gem (Graph Embedder)";
 
 	public String[] getNames() {
 		return new String[] { EDGE_AWARE_TREE, MULTI_ROW_EDGE_AWARE_TREE, TIDIER_TREE,
 				MIN_CROSS_TOP_DOWN, MIN_CROSS_LONGEST_PATH, MIN_CROSS_NETWORK_SIMPLEX,
 				MIN_CROSS_COFFMAN_GRAHAM, CIRCLE_MINCROSS, KAMADA_KAWAI, FRUCTERMAN_REINGOLD,
-				EDGE_AWARE_RADIAL };
+				EDGE_AWARE_RADIAL, GEM };
 	}
 
 	@Override
 	public LayoutAlgorithm.Builder<AttributedVertex, ?, ?> apply(String name) {
 		switch(name) {
+			case GEM:
+				return GEMLayoutAlgorithm.edgeAwareBuilder();
 			case KAMADA_KAWAI:
 				return KKLayoutAlgorithm.<AttributedVertex> builder().preRelaxDuration(1000);
 			case FRUCTERMAN_REINGOLD:

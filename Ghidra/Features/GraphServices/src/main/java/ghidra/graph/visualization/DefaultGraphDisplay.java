@@ -130,6 +130,19 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		this.pluginTool = graphDisplayProvider.getPluginTool();
 		this.viewer = createViewer();
 
+		this.viewer.getVisualizationModel().getLayoutModel()
+				.getLayoutStateChangeSupport().addLayoutStateChangeListener(
+						evt -> {
+							if (evt.active) {
+								// could show a 'Layout Busy' Dialog here
+								log.info("LayoutAlgorithm started");
+							} else {
+								// could close 'Layout Busy' dialog
+								log.info("LayoutAlgorithm has finished");
+							}
+						}
+		);
+
 		buildHighlighers();
 
 		componentProvider = new DefaultGraphDisplayComponentProvider(this, pluginTool);
