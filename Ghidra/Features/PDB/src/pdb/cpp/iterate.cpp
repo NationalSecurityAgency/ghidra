@@ -20,7 +20,8 @@ static void iterateEnumMembers(IDiaSymbol& symbol) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
 	CComPtr<IDiaSymbol> pMember;
-	symbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
+	HRESULT res = symbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
+	handleFindChildrenError(res);
 	if (pEnum == NULL) {
 		return;
 	}
@@ -42,7 +43,8 @@ void iterateEnums(PDBApiContext& ctx) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
 	CComPtr<IDiaSymbol> pSymbol;
-	ctx.Global().findChildren(SymTagEnum, NULL, nsNone, &pEnum);
+	HRESULT res = ctx.Global().findChildren(SymTagEnum, NULL, nsNone, &pEnum);
+	handleFindChildrenError(res);
 	if (pEnum == NULL) {
 		return;
 	}
@@ -73,7 +75,8 @@ void iterateEnums(PDBApiContext& ctx) {
 static void iterateMembers(IDiaSymbol& symbol) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
-	symbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
+	HRESULT res = symbol.findChildren(SymTagNull, NULL, nsNone, &pEnum);
+	handleFindChildrenError(res);
 	if (pEnum == NULL) {
 		return;
 	}
@@ -99,7 +102,8 @@ static void iterateMembers(IDiaSymbol& symbol) {
 void iterateDataTypes(PDBApiContext& ctx) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
-	ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	HRESULT res = ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	handleFindChildrenError(res);
 	if (pEnum == NULL) {
 		return;
 	}
@@ -141,7 +145,8 @@ void iterateDataTypes(PDBApiContext& ctx) {
 void iterateTypedefs(PDBApiContext& ctx) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
-	ctx.Global().findChildren(SymTagTypedef, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	HRESULT res = ctx.Global().findChildren(SymTagTypedef, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	handleFindChildrenError(res);
 	if (pEnum == NULL) {
 		return;
 	}
@@ -168,7 +173,8 @@ void iterateTypedefs(PDBApiContext& ctx) {
 void iterateClasses(PDBApiContext& ctx) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
-	ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	HRESULT res = ctx.Global().findChildren(SymTagUDT, NULL, nsNone/*nsfCaseInsensitive|nsfUndecoratedName*/, &pEnum);
+	handleFindChildrenError(res);
 	if (pEnum == NULL) {
 		return;
 	}
@@ -332,7 +338,8 @@ void iterateFunctions(PDBApiContext& ctx) {
 	DWORD celt = 0;
 	CComPtr<IDiaEnumSymbols> pEnum;
 	CComPtr<IDiaSymbol> pSymbol;
-	ctx.Global().findChildren(SymTagFunction, NULL, nsNone, &pEnum);
+	HRESULT res = ctx.Global().findChildren(SymTagNull, NULL, nsNone, &pEnum);
+	handleFindChildrenError(res);
 	if (pEnum == NULL) {
 		return;
 	}
