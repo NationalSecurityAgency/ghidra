@@ -225,7 +225,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				Object contextObject = context.getContextObject();
-				return contextObject == GhidraScriptEditorComponentProvider.this;
+				return contextObject == GhidraScriptEditorComponentProvider.this && !undoStack.isEmpty();
 			}
 		};
 		undoAction.setDescription("Undo");
@@ -245,7 +245,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				Object contextObject = context.getContextObject();
-				return contextObject == GhidraScriptEditorComponentProvider.this;
+				return contextObject == GhidraScriptEditorComponentProvider.this && !redoStack.isEmpty();
 			}
 		};
 		redoAction.setDescription("Redo");
