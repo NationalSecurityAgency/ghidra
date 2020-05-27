@@ -37,7 +37,7 @@ import ghidra.util.exception.AssertException;
 
 class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryModelIf {
 	private static final int DEFAULT_ICON_SIZE = 16;
-	private static final int WIDTH_PADDING = 14;
+	private static final int WIDTH_PADDING = 20;
 	private static final int HEIGHT_PADDING = 5;
 
 	private GhidraFileChooser chooser;
