@@ -1,0 +1,3 @@
+# sleigh specification file for Hitachi HD6301
+
+@include "6301.sinc"
