@@ -217,9 +217,7 @@ EA: "["addr",PCR]" is noOffset5=1 & idxMode=29; simm16 [ addr = inst_next + simm
 }
 EA: "["imm16"]" is imm8=0x9F; imm16
 {
-     local eaddr:2 = imm16;
-     eaddr = *:2 eaddr;
-     export eaddr; 
+     export *:2 imm16;
 }
 
 ################################################################
