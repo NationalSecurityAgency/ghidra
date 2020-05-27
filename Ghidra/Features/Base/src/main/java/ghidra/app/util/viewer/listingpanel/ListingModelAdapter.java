@@ -605,6 +605,11 @@ public class ListingModelAdapter implements LayoutModel, ListingModelListener {
 			return new AddressSet();
 		}
 
+		@Override
+		public ListingModel copy() {
+			return new EmptyBigListingModel();
+		}
+
 	}
 
 	public Layout getLayout(Address addr) {

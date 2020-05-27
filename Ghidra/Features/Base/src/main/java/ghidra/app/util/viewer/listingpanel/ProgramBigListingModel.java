@@ -611,4 +611,9 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 			}
 		}
 	}
+
+	@Override
+	public ListingModel copy() {
+		return new ProgramBigListingModel(program, formatMgr);
+	}
 }
