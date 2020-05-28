@@ -36,9 +36,9 @@ public class EntryTable {
      * @param index the index where the entry table begins
      * @param byteCount the length in bytes of the entry table
      */
-    EntryTable(FactoryBundledWithBinaryReader reader, short index, short byteCount) throws IOException {
+    EntryTable(FactoryBundledWithBinaryReader reader, int index, short byteCount) throws IOException {
         long oldIndex = reader.getPointerIndex();
-        reader.setPointerIndex(Conv.shortToInt(index));
+        reader.setPointerIndex(index);
 
         ArrayList<EntryTableBundle> list = new ArrayList<EntryTableBundle>();
         while (true) {

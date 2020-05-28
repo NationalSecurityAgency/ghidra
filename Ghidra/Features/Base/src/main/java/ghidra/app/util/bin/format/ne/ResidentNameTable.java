@@ -29,9 +29,9 @@ import java.util.ArrayList;
 public class ResidentNameTable {
     private LengthStringOrdinalSet [] names;
 
-    ResidentNameTable(FactoryBundledWithBinaryReader reader, short index) throws IOException {
+    ResidentNameTable(FactoryBundledWithBinaryReader reader, int index) throws IOException {
         long oldIndex = reader.getPointerIndex();
-        reader.setPointerIndex(Conv.shortToInt(index));
+        reader.setPointerIndex(index);
 
         ArrayList<LengthStringOrdinalSet> list = new ArrayList<LengthStringOrdinalSet>();
         while (true) {

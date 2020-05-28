@@ -47,7 +47,7 @@ public class NewExecutable {
 
         if (dosHeader.isDosSignature()) {
             try {
-				winHeader = new WindowsHeader(reader, baseAddr, (short) dosHeader.e_lfanew());
+				winHeader = new WindowsHeader(reader, baseAddr, dosHeader.e_lfanew());
             }
             catch (InvalidWindowsHeaderException e) {
             }
