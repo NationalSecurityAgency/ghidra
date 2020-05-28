@@ -25,15 +25,15 @@ import ghidra.app.util.bin.BinaryReader;
  * 
  */
 public class ImportedNameTable {
-	private BinaryReader reader;
-    private short index;
+    private BinaryReader reader;
+    private int index;
 
     /**
      * Constructs a new imported name table.
      * @param reader the binary reader
      * @param index the index where the table begins
      */
-	ImportedNameTable(BinaryReader reader, short index) {
+    ImportedNameTable(BinaryReader reader, int index) {
         this.reader = reader;
         this.index = index;
     }
@@ -48,7 +48,7 @@ public class ImportedNameTable {
      */
     public LengthStringSet getNameAt(short offset) throws IOException {
         long oldIndex = reader.getPointerIndex();
-		int newIndex = Short.toUnsignedInt(index) + Short.toUnsignedInt(offset);
+        int newIndex = index + Short.toUnsignedInt(offset);
         reader.setPointerIndex(newIndex);
         LengthStringSet lss = new LengthStringSet(reader);
         reader.setPointerIndex(oldIndex);
