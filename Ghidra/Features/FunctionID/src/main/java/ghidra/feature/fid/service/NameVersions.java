@@ -15,8 +15,7 @@
  */
 package ghidra.feature.fid.service;
 
-import ghidra.app.util.demangler.DemangledObject;
-import ghidra.app.util.demangler.DemanglerUtil;
+import ghidra.app.util.demangler.*;
 import ghidra.program.model.listing.Program;
 
 public class NameVersions {
@@ -44,12 +43,51 @@ public class NameVersions {
 		return null;
 	}
 
+	private static String getBaseClass(Demangled namespace) {
+		String name = namespace.getNamespaceName();		// First level of namespace
+		// Check for evidence of anonymous or unnamed namespace, which won't be distinguishing
+		if (name.length() > 1 && name.charAt(0) == '`') {
+			char firstChar = name.charAt(1);
+			if (firstChar >= '0' && firstChar <= '9') {
+				return namespace.getNamespaceString();	// Get full namespace
+			}
+		}
+		return name;
+	}
+
+	private static String constructBaseName(DemangledObject demangledObj) {
+		String origName = demangledObj.getName();
+		String name = origName.replaceFirst("_*", "");
+		Demangled namespace = demangledObj.getNamespace();
+		if (namespace != null) {
+			if (name.endsWith("destructor'") ||
+				name.startsWith("operator") ||
+				name.startsWith("dtor$")) {
+				String baseClassName = getBaseClass(namespace);
+				if (baseClassName == null) {
+					return null;
+				}
+				return baseClassName + "::" + origName;
+			}
+			String fullString = namespace.getNamespaceString();
+			if (fullString != null && fullString.startsWith("std::")) {
+				// Common containers, make sure we keep the whole name
+				if (fullString.startsWith("std::vector") || fullString.startsWith("std::list") ||
+					fullString.startsWith("std::map") || fullString.startsWith("std::set") ||
+					fullString.startsWith("std::basic_string")) {
+					return fullString + "::" + origName;
+				}
+			}
+		}
+		return name;
+	}
+
 	public static NameVersions generate(String rawName,Program program) {
 		NameVersions result = new NameVersions(rawName);
 		if (rawName != null) {
 			DemangledObject demangledObj = demangle(program, rawName);
 			if (demangledObj != null) {
-				result.demangledBaseName = demangledObj.getName().replaceFirst("_*", "");
+				result.demangledBaseName = constructBaseName(demangledObj);
 			}
 	
 			// Put base names with underscores removed in a HashSet
