@@ -1242,13 +1242,8 @@ public class CodeBrowserPlugin extends Plugin
 	}
 
 	@Override
-	public Layout getLayout(Address addr) {
-		return connectedProvider.getListingPanel().getLayout(addr);
-	}
-
-	@Override
 	public ListingModel getListingModel() {
-		return connectedProvider.getListingPanel().getListingModel();
+		return connectedProvider.getListingPanel().getListingModel().copy();
 	}
 
 	@Override
