@@ -211,7 +211,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 * Returns the current ListingModel used by this panel.
 	 */
 	public ListingModel getListingModel() {
-		return listingModel.copy();
+		return listingModel;
 	}
 
 	/**
