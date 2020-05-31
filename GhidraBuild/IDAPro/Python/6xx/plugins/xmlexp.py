@@ -1683,9 +1683,9 @@ class XmlExporter:
             regcmt = idaapi.get_member_cmt(member.id, False)
             rptcmt = idaapi.get_member_cmt(member.id, True)
             if regcmt != None:
-                regcmt  = idaapi.tag_remove(regcmt + " ", 0)
+                regcmt  = idaapi.tag_remove(regcmt + " ")
             if rptcmt != None:
-                rptrcmt = idaapi.tag_remove(rptcmt + " ", 0)
+                rptrcmt = idaapi.tag_remove(rptcmt + " ")
             has_regcmt = regcmt != None and len(regcmt) > 0
             has_rptcmt = rptcmt != None and len(rptcmt) > 0
             has_content = has_regcmt or has_rptcmt
