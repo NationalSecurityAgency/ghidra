@@ -177,7 +177,7 @@ public class PythonPlugin extends ProgramPlugin
 	 */
 	private void resetInterpreter() {
 
-		TaskLauncher.launchModal("Resetting Python...", () -> {
+		TaskLauncher.launchNonModal("Resetting Python...", (TaskMonitor monitor) -> {
 			resetInterpreterInBackground();
 		});
 	}
