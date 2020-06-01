@@ -4088,7 +4088,7 @@ Varnode *FuncCallSpecs::buildParam(Funcdata &data,Varnode *vn,ProtoParameter *pa
   Varnode *newout = data.newUniqueOut(param->getSize(),newop);
   // Its possible vn is free, in which case the SetInput would give it multiple descendants
   // See we construct a new version
-  if (vn->isFree() && (!vn->hasNoDescend()))
+  if (vn->isFree() && !vn->isConstant() && !vn->hasNoDescend())
     vn = data.newVarnode(vn->getSize(),vn->getAddr());
   data.opSetInput(newop,vn,0);
   data.opSetInput(newop,data.newConstant(4,0),1);
