@@ -1045,6 +1045,8 @@ TOKEN :
 	|
 	<PCOMMA : ",">
 	|
+	<PEQUALS : "=">
+	|
 	<PINTEGER_LITERAL : 
 		<PDECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
 		|
@@ -1531,7 +1533,7 @@ void DeclConstant() : {}
 void PragmaSpec() : {
 }
 {
-  ( ( <PRAGMA> ) PragmaSpecifier() )
+  ( ( <PRAGMA> ) (PragmaSpecifier())+ )
 }
 
  
@@ -1543,8 +1545,9 @@ void PragmaSpecifier() : {
 {
   LOOKAHEAD(3)
   <POPEN> PragmaSpecifier() <PCLOSE> |
-      id=<PIDENTIFIER> (<PIDENTIFIER> | <PINTEGER_LITERAL> | <PSTRING_LITERAL>)*
-          [ <POPEN> [ ds1=PragmaConstant() [ ( <PCOMMA> ds2=PragmaConstant() ) [ ( <PCOMMA> ds3=PragmaConstant() ) [ ( <PCOMMA> PragmaConstant() )+ ] ] ] ] <PCLOSE> ]
+  id=<PIDENTIFIER>
+    ( [ <POPEN> [ ds1=PragmaConstant() [ ( <PCOMMA> ds2=PragmaConstant() ) [ ( <PCOMMA> ds3=PragmaConstant() ) [ ( <PCOMMA> PragmaConstant() )+ ] ] ] ] <PCLOSE> ] |
+    [ <PEQUALS> ( <PIDENTIFIER> | <PSTRING_LITERAL> | <PINTEGER_LITERAL>) ] )
   {
 	if (id.image.equals("pack") && ds1 != null) {
 		Token newPackVal = ds1;
