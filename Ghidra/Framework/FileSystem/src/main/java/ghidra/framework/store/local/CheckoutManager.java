@@ -310,12 +310,11 @@ class CheckoutManager {
 		Element root = new Element("CHECKOUT_LIST");
 		root.setAttribute("NEXT_ID", Long.toString(nextCheckoutId));
 
-		for (long id : checkouts.keySet()) {
-			ItemCheckoutStatus coStatus = checkouts.get(id);
+		for (ItemCheckoutStatus status : checkouts.values()) {
 			// TRANSIENT checkout data must not be persisted - the existence
 			// of such checkouts is retained in-memory only
-			if (coStatus.getCheckoutType() != CheckoutType.TRANSIENT) {
-				root.addContent(getCheckoutElement(coStatus));
+			if (status.getCheckoutType() != CheckoutType.TRANSIENT) {
+				root.addContent(getCheckoutElement(status));
 			}
 		}
 

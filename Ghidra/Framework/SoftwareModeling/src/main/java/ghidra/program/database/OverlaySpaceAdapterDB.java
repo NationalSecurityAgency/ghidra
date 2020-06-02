@@ -162,11 +162,8 @@ class OverlaySpaceAdapterDB {
 				}
 			}
 		}
-		if (map.size() != 0) {
-			for (OverlayAddressSpace space : map.values()) {
-				factory.removeOverlaySpace(space.getName());
-			}
-			map.clear();
+		for (OverlayAddressSpace space : map.values()) {
+			factory.removeOverlaySpace(space.getName());
 		}
 	}
 

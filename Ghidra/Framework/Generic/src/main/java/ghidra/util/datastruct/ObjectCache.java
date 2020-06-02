@@ -106,37 +106,6 @@ public class ObjectCache {
 	}
 
 	/**
-	 * Clear both hard and weak caches.
-	 * The cache should be cleared when all cached objects have become invalid.
-	 */
-	public synchronized void clear() {
-		processQueue();
-		for (KeyedSoftReference<?> ref : hashTable.values()) {
-			ref.clear();
-		}
-
-		hashTable.clear();
-		refQueue = new ReferenceQueue<Object>();
-	}
-
-	/**
-	 * Remove the specified range of keyed objects from both hard and weak caches.
-	 * A cache range should be cleared when the corresponding objects have become invalid.
-	 * @param startKey minimum object key value
-	 * @param endKey maximum object key value
-	 */
-	public synchronized void remove(long startKey, long endKey) {
-		if ((endKey >> 1) - (startKey >> 1) < (hashTable.size() >> 1)) {
-			for (long i = startKey; i <= endKey; i++) {
-				remove(i);
-			}
-		}
-		else {
-			hashTable.keySet().removeIf(key -> (key >= startKey && key <= endKey));
-		}
-	}
-
-	/**
 	 * Remove the specified keyed object from both hard and weak caches.
 	 * An object should be removed from the cache when it becomes invalid.
 	 * @param key object key

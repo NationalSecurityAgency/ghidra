@@ -35,7 +35,7 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 	 */
 	public StringAttribute(String name, KeyIndexableSet<T> set) {
 		super(name, set);
-		this.values = new HashMap<>(set.capacity());// String[set.capacity()];
+		this.values = new HashMap<>();
 	}
 
 	/** Set the value of this attribute for the specified KeyedObject.
