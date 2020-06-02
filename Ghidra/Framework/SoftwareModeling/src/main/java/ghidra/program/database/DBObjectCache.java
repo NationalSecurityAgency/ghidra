@@ -21,7 +21,6 @@ package ghidra.program.database;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import db.Record;
 import ghidra.program.model.address.KeyRange;
@@ -199,18 +198,21 @@ public class DBObjectCache<T extends DatabaseObject> {
 	 * @param keyRanges key ranges to delete
 	 */
 	private void deleteLargeKeyRanges(List<KeyRange> keyRanges) {
-		map.keySet()
-				.stream()
-				.filter(key -> keyRangesContain(keyRanges, key))
-				.collect(Collectors.toList())
-				.forEach(key -> {
-					KeyedSoftReference ref = map.remove(key);
-					DatabaseObject obj = ref.get();
-					if (obj != null) {
-						obj.setDeleted();
-						ref.clear();
-					}
-				});
+		map.values().removeIf(ref -> checkRef(ref, keyRanges));
+	}
+
+	private boolean checkRef(KeyedSoftReference ref, List<KeyRange> keyRanges) {
+		long key = ref.getKey();
+		if (keyRangesContain(keyRanges, key)) {
+			DatabaseObject obj = ref.get();
+			if (obj != null) {
+				obj.setDeleted();
+				ref.clear();
+			}
+			return true;
+		}
+		return false;
+
 	}
 
 	/**
@@ -268,27 +270,6 @@ public class DBObjectCache<T extends DatabaseObject> {
 	}
 
 	/**
-	 * Invalidates a range of objects in the cache.
-	 * @param startKey the first key in the range to invalidate.
-	 * @param endKey the last key in the range to invalidate.
-	 */
-	public synchronized void invalidate(long startKey, long endKey) {
-		processQueue();
-		if (endKey - startKey < map.size()) {
-			for (long i = startKey; i <= endKey; i++) {
-				doInvalidate(i);
-			}
-		}
-		else {
-			map.keySet()
-					.stream()
-					.filter(key -> (key >= startKey && key <= endKey))
-					.collect(Collectors.toList())
-					.forEach(key -> doInvalidate(key));
-		}
-	}
-
-	/**
 	 * Removes the object with the given key from the cache.
 	 * @param key the key of the object to remove.
 	 */
@@ -302,25 +283,6 @@ public class DBObjectCache<T extends DatabaseObject> {
 				ref.clear();
 			}
 			map.remove(key);
-		}
-	}
-
-	/**
-	 * Invalidates the object with given key.
-	 * @param key the key of the object to invalidate.
-	 */
-	public synchronized void invalidate(long key) {
-		processQueue();
-		doInvalidate(key);
-	}
-
-	private void doInvalidate(long key) {
-		KeyedSoftReference ref = map.get(key);
-		if (ref != null) {
-			T obj = ref.get();
-			if (obj != null) {
-				obj.setInvalid();
-			}
 		}
 	}
 

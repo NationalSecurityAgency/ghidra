@@ -16,13 +16,14 @@
 package ghidra.program.database;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import db.*;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.program.util.LanguageTranslator;
-import ghidra.util.datastruct.LongObjectHashtable;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -115,7 +116,7 @@ class OverlaySpaceAdapterDB {
 	}
 
 	void updateOverlaySpaces(ProgramAddressFactory factory) throws IOException {
-		LongObjectHashtable<OverlayAddressSpace> map = new LongObjectHashtable<>();
+		Map<Long, OverlayAddressSpace> map = new HashMap<>();
 		for (AddressSpace space : factory.getAllAddressSpaces()) {
 			if (space instanceof OverlayAddressSpace) {
 				OverlayAddressSpace os = (OverlayAddressSpace) space;
@@ -161,12 +162,8 @@ class OverlaySpaceAdapterDB {
 				}
 			}
 		}
-		if (map.size() != 0) {
-			long[] keys = map.getKeys();
-			for (int i = 0; i < keys.length; i++) {
-				OverlayAddressSpace space = map.remove(keys[i]);
-				factory.removeOverlaySpace(space.getName());
-			}
+		for (OverlayAddressSpace space : map.values()) {
+			factory.removeOverlaySpace(space.getName());
 		}
 	}
 
