@@ -614,6 +614,8 @@ public class ProgramBigListingModel implements ListingModel, FormatModelListener
 
 	@Override
 	public ListingModel copy() {
-		return new ProgramBigListingModel(program, formatMgr);
+		ProgramBigListingModel model = new ProgramBigListingModel(program, formatMgr);
+		model.openCloseMgr = openCloseMgr;
+		return model;
 	}
 }
