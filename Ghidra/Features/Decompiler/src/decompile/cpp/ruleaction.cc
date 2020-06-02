@@ -6553,7 +6553,6 @@ bool RulePtrsubCharConstant::pushConstFurther(Funcdata &data,TypePointer *outtyp
   Varnode *vn = op->getIn(1);
   if (!vn->isConstant()) return false;			// that is adding a constant
   uintb addval = vn->getOffset();
-  if (addval > 128) return false;		// Sanity check on string size
   addval *= op->getIn(2)->getOffset();
   val += addval;
   Varnode *newconst = data.newConstant(vn->getSize(),val);
