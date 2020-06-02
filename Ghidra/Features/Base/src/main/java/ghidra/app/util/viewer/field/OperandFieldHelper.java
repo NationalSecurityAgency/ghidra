@@ -391,19 +391,28 @@ abstract class OperandFieldHelper extends FieldFactory {
 
 	private ListingField getFieldForInstruction(Instruction inst, ProxyObj<?> proxy, int varWidth) {
 		int numOperands = inst.getNumOperands();
+
+		List<FieldElement> elements = new ArrayList<>();
 		if (numOperands == 0) {
-			return null;
-		}
-
-		List<OperandFieldElement> elements = new ArrayList<>();
-		int characterOffset = createSeparatorFieldElement(inst, 0, 0, 0, 0, elements);
-
-		for (int opIndex = 0; opIndex < numOperands; opIndex++) {
-			OperandRepresentationList operandRepresentationList =
-				codeUnitFormat.getOperandRepresentationList(inst, opIndex);
-			characterOffset = addElementsForOperand(inst, elements, opIndex,
-				operandRepresentationList, characterOffset);
-			characterOffset = 0;
+			String separator = inst.getSeparator(0);
+			if (separator == null) {
+				return null;
+			}
+	
+			AttributedString as = new AttributedString(separator, separatorAttributes.colorAttribute,
+				getMetrics(separatorAttributes.styleAttribute));
+			FieldElement fieldElement = new TextFieldElement(as, 0, 0);
+			elements.add(fieldElement);
+		} else {
+			int characterOffset = createSeparatorFieldElement(inst, 0, 0, 0, 0, elements);
+	
+			for (int opIndex = 0; opIndex < numOperands; opIndex++) {
+				OperandRepresentationList operandRepresentationList =
+					codeUnitFormat.getOperandRepresentationList(inst, opIndex);
+				characterOffset = addElementsForOperand(inst, elements, opIndex,
+					operandRepresentationList, characterOffset);
+				characterOffset = 0;
+			}
 		}
 
 		// There may be operands with no representation objects, so we don't want to create a composite field element.
@@ -414,7 +423,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 			new CompositeFieldElement(elements), startX + varWidth, width, hlProvider);
 	}
 
-	private int addElementsForOperand(Instruction inst, List<OperandFieldElement> elements,
+	private int addElementsForOperand(Instruction inst, List<FieldElement> elements,
 			int opIndex, OperandRepresentationList opRepList, int characterOffset) {
 		int subOpIndex = 0;
 		if (opRepList == null || opRepList.hasError()) {
@@ -437,7 +446,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 			characterOffset, elements);
 	}
 
-	private int addElements(Instruction inst, List<OperandFieldElement> elements, List<?> objList,
+	private int addElements(Instruction inst, List<FieldElement> elements, List<?> objList,
 			int opIndex, int subOpIndex, boolean underline, int characterOffset) {
 		for (int i = 0; i < objList.size(); i++) {
 			characterOffset = addElement(inst, elements, objList.get(i), underline, opIndex,
@@ -446,7 +455,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 		return characterOffset;
 	}
 
-	private int addElement(Instruction inst, List<OperandFieldElement> elements, Object opElem,
+	private int addElement(Instruction inst, List<FieldElement> elements, Object opElem,
 			boolean underline, int opIndex, int subOpIndex, int characterOffset) {
 
 		if (opElem instanceof VariableOffset) {
@@ -468,7 +477,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 	}
 
 	private int createSeparatorFieldElement(Instruction instruction, int separatorIndex,
-			int opIndex, int subOpIndex, int characterOffset, List<OperandFieldElement> elements) {
+			int opIndex, int subOpIndex, int characterOffset, List<FieldElement> elements) {
 		String separator = instruction.getSeparator(separatorIndex);
 		if (separator == null) {
 			return characterOffset;
