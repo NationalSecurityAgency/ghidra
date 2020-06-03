@@ -1087,38 +1087,59 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
 /// \param op is the PcodeOp using the value
 void PrintC::push_float(uintb val,int4 sz,const Varnode *vn,const PcodeOp *op)
 {
-  ostringstream t;
+  string token;
 
   const FloatFormat *format = glb->translate->getFloatFormat(sz);
   if (format == (const FloatFormat *)0) {
-    t << "FLOAT_UNKNOWN";
+    token = "FLOAT_UNKNOWN";
   }
   else {
     FloatFormat::floatclass type;
     double floatval = format->getHostFloat(val,&type);
     if (type == FloatFormat::infinity) {
       if (format->extractSign(val))
-	t << '-';
-      t << "INFINITY";
+	token = "-INFINITY";
+      else
+	token = "INFINITY";
     }
     else if (type == FloatFormat::nan) {
       if (format->extractSign(val))
-	t << '-';
-      t << "NAN";
+	token = "-NAN";
+      else
+	token = "NAN";
     }
     else {
-      if ((mods & force_scinote)!=0)
+      ostringstream t;
+      if ((mods & force_scinote)!=0) {
 	t.setf( ios::scientific ); // Set to scientific notation
-      else
-	t.setf( ios::fixed );	// Otherwise use fixed notation
-      t.precision(8);		// Number of digits of precision
-      t << floatval;
+	t.precision(format->getDecimalPrecision()-1);
+	t << floatval;
+	token = t.str();
+      }
+      else {
+	// Try to print "minimal" accurate representation of the float
+	t.unsetf( ios::floatfield );	// Use "default" notation
+	t.precision(format->getDecimalPrecision());
+	t << floatval;
+	token = t.str();
+	bool looksLikeFloat = false;
+	for(int4 i=0;i<token.size();++i) {
+	  char c = token[i];
+	  if (c == '.' || c == 'e') {
+	    looksLikeFloat = true;
+	    break;
+	  }
+	}
+	if (!looksLikeFloat) {
+	  token += ".0";	// Force token to look like a floating-point value
+	}
+      }
     }
   }
   if (vn==(const Varnode *)0)
-    pushAtom(Atom(t.str(),syntax,EmitXml::const_color,op));
+    pushAtom(Atom(token,syntax,EmitXml::const_color,op));
   else
-    pushAtom(Atom(t.str(),vartoken,EmitXml::const_color,op,vn));
+    pushAtom(Atom(token,vartoken,EmitXml::const_color,op,vn));
 }
 
 void PrintC::printUnicode(ostream &s,int4 onechar) const
