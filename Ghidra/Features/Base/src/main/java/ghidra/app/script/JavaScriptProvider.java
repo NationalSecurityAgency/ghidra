@@ -25,7 +25,6 @@ import javax.tools.JavaFileObject.Kind;
 
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
-import ghidra.app.util.headless.HeadlessScript;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
@@ -59,15 +58,11 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 
 		// Assuming script is in default java package, so using script's base name as class name.
-		File clazzFile = getClassFile(sourceFile, GhidraScriptUtil.getBaseName(sourceFile));
-		if (needsCompile(sourceFile, clazzFile)) {
-			compile(sourceFile, writer); // may throw an exception
-		}
-		else if (scriptCompiledExternally(clazzFile)) {
-			forceClassReload();
-		}
-
 		String clazzName = GhidraScriptUtil.getBaseName(sourceFile);
+		File clazzFile = getClassFile(sourceFile, clazzName);
+
+		// Compile the source file and its dependencies.  Compilation will only occur if necessary.
+		compile(sourceFile, clazzFile, writer); // may throw an exception
 
 		Class<?> clazz = null;
 		try {
@@ -123,79 +118,111 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 
 		// Need to compile if the script's source file is newer than its corresponding class file.
-		if (sourceFile.lastModified() > classFile.lastModified()) {
-			return true;
-		}
-
-		// Need to compile if parent classes are not up to date.
-		return !areAllParentClassesUpToDate(sourceFile);
+		return sourceFile.lastModified() > classFile.lastModified();
 	}
 
-	protected boolean scriptCompiledExternally(File classFile) {
-
-		Long modifiedTimeWhenLoaded = loader.lastModified(classFile);
-		if (modifiedTimeWhenLoaded == null) {
-			// never been loaded, so doesn't matter
-			return false;
-		}
-
-		if (classFile.lastModified() > modifiedTimeWhenLoaded) {
-			return true;
-		}
-
-		return false;
-	}
-
-	private boolean areAllParentClassesUpToDate(ResourceFile sourceFile) {
-
-		List<Class<?>> parentClasses = getParentClasses(sourceFile);
-		if (parentClasses == null) {
-			// some class is missing!
-			return false;
-		}
-
-		if (parentClasses.isEmpty()) {
-			// nothing to do--no parent class to re-compile
-			return true;
-		}
-
-		// check each parent for modification
-		for (Class<?> clazz : parentClasses) {
-			ResourceFile parentFile = getSourceFile(clazz);
-			if (parentFile == null) {
-				continue; // not sure if this can happen (inner-class, maybe?)
-			}
-
-			// Parent class might have a non-default java package, so use class's full name.
-			File clazzFile = getClassFile(parentFile, clazz.getName());
-
-			if (parentFile.lastModified() > clazzFile.lastModified()) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	protected boolean compile(ResourceFile sourceFile, final PrintWriter writer)
+	protected void compile(ResourceFile sourceFile, File classFile, final PrintWriter writer)
 			throws ClassNotFoundException {
 
 		ScriptInfo info = GhidraScriptUtil.getScriptInfo(sourceFile);
 		info.setCompileErrors(true);
-
-		if (!doCompile(sourceFile, writer)) {
-			writer.flush(); // force any error messages out
-			throw new ClassNotFoundException("Unable to compile class: " + sourceFile.getName());
+		
+		// Compile primary source file (if necessary)
+		if (needsCompile(sourceFile, classFile)) {
+			if (!doCompile(sourceFile, writer)) {
+				writer.flush(); // force any error messages out
+				throw new ClassNotFoundException(
+					"Unable to compile class: " + sourceFile.getName());
+			}
+			writer.println("Successfully compiled: " + sourceFile.getName());
 		}
 
-		compileParentClasses(sourceFile, writer);
-
+		// Compile dependent source files (if necessary)
+		Set<String> processedClasses = new HashSet<>();
+		Queue<String> pendingClasses = new LinkedList<>(findDependencies(classFile));
+		while (!pendingClasses.isEmpty()) {
+			String depClassName = pendingClasses.remove();
+			if (processedClasses.contains(depClassName)) {
+				continue;
+			}
+			ResourceFile depSourceFile = findDependentSourceFile(depClassName);
+			if (depSourceFile != null) {
+				File depClassFile = getClassFile(depSourceFile, depClassName);
+				if (needsCompile(depSourceFile, depClassFile)) {
+					if (!doCompile(depSourceFile, writer)) {
+						writer.flush(); // force any error messages out
+						throw new ClassNotFoundException(
+							"Unable to compile class: " + depSourceFile.getName());
+					}
+					writer.println("Successfully compiled: " + depSourceFile.getName());
+				}
+				processedClasses.add(depClassName);
+				pendingClasses.addAll(findDependencies(depClassFile));
+			}
+		}
+		
 		forceClassReload();
-
 		info.setCompileErrors(false);
-		writer.println("Successfully compiled: " + sourceFile.getName());
+	}
 
-		return true;
+	/**
+	 * Finds the dependent class names (including package) of the given class file.
+	 * 
+	 * @param classFile The class file to find the dependencies of
+	 * @return A {@link Collection} of dependent class names (name includes package)
+	 */
+	private Collection<String> findDependencies(File classFile) {
+		List<String> deps = new ArrayList<>();
+
+		Optional<java.util.spi.ToolProvider> jdeps = java.util.spi.ToolProvider.findFirst("jdeps");
+		if (jdeps.isEmpty()) {
+			Msg.error(this, "Failed to locate jdeps tool");
+			return deps;
+		}
+
+		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+		ByteArrayOutputStream errStream = new ByteArrayOutputStream();
+
+		try (PrintStream out = new PrintStream(outStream);
+				PrintStream err = new PrintStream(errStream)) {
+			int exitCode = jdeps.get()
+					.run(out, err, "--multi-release", "11", "-v", "-cp", getClassPath(),
+						classFile.getAbsolutePath());
+			if (exitCode != 0) {
+				Msg.error(this, "jdeps returned with exit code " + exitCode);
+				Msg.error(this, errStream.toString());
+				return deps;
+			}
+			for (String line : outStream.toString().split("[\\r\\n]+")) {
+				if (!line.startsWith(" ")) {
+					continue;
+				}
+				String[] parts = line.trim().split("\\s+", 4);
+				if (parts.length == 4 && parts[1].equals("->")) {
+					deps.add(parts[2]);
+				}
+			}
+		}
+
+		return deps;
+	}
+
+	/**
+	 * Finds the given class name's corresponding source file from the set of script source
+	 * directories.
+	 * 
+	 * @param className The name of the class who's source file to find
+	 * @return The given class name's corresponding source file from the set of script source
+	 *   directories.
+	 */
+	private ResourceFile findDependentSourceFile(String className) {
+		for (ResourceFile dir : GhidraScriptUtil.getScriptSourceDirectories()) {
+			ResourceFile sourceFile = new ResourceFile(dir, className.replace('.', '/') + ".java");
+			if (sourceFile.isFile()) {
+				return sourceFile;
+			}
+		}
+		return null;
 	}
 
 	private boolean doCompile(ResourceFile sourceFile, final PrintWriter writer) {
@@ -233,106 +260,6 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 		CompilationTask task = javaCompiler.getTask(writer, fileManager, null, options, null, list);
 		return task.call();
-	}
-
-	private List<Class<?>> getParentClasses(ResourceFile scriptSourceFile) {
-
-		Class<?> scriptClass = getScriptClass(scriptSourceFile);
-		if (scriptClass == null) {
-			return null; // special signal that there was a problem
-		}
-
-		List<Class<?>> parentClasses = new ArrayList<>();
-		Class<?> superClass = scriptClass.getSuperclass();
-		while (superClass != null) {
-			if (superClass.equals(GhidraScript.class)) {
-				break; // not interested in the built-in classes
-			}
-			else if (superClass.equals(HeadlessScript.class)) {
-				break; // not interested in the built-in classes
-			}
-			parentClasses.add(superClass);
-			superClass = superClass.getSuperclass();
-		}
-		return parentClasses;
-	}
-
-	private Class<?> getScriptClass(ResourceFile scriptSourceFile) {
-		String clazzName = GhidraScriptUtil.getBaseName(scriptSourceFile);
-		try {
-			return Class.forName(clazzName, true, new JavaScriptClassLoader());
-		}
-		catch (NoClassDefFoundError | ClassNotFoundException e) {
-			Msg.error(this, "Unable to find class file for script file: " + scriptSourceFile, e);
-		}
-		catch (GhidraScriptUnsupportedClassVersionError e) {
-			// Unusual Code Alert!: This implies the script was compiled in a newer
-			// version of Java.  So, just delete the class file and try again.
-			ResourceFile classFile = e.getClassFile();
-			classFile.delete();
-			return null; // trigger re-compile
-		}
-		return null;
-	}
-
-	private void compileParentClasses(ResourceFile sourceFile, PrintWriter writer) {
-
-		List<Class<?>> parentClasses = getParentClasses(sourceFile);
-		if (parentClasses == null) {
-			// this shouldn't happen, as this method is called after the child class is
-			// re-compiled and thus, all parent classes should still be there.
-			return;
-		}
-
-		if (parentClasses.isEmpty()) {
-			// nothing to do--no parent class to re-compile
-			return;
-		}
-
-		//
-		// re-compile each class's source file
-		//
-
-		// first, reverse the order, so that we compile the highest-level classes first,
-		// and then on down, all the way to the script class
-		Collections.reverse(parentClasses);
-
-		// next, add back to the list the script that was just compiled, as it may need
-		// to be re-compiled after the parent classes are re-compiled
-		Class<?> scriptClass = getScriptClass(sourceFile);
-		if (scriptClass == null) {
-			// shouldn't happen
-			return;
-		}
-		parentClasses.add(scriptClass);
-
-		for (Class<?> parentClass : parentClasses) {
-			ResourceFile parentFile = getSourceFile(parentClass);
-			if (parentFile == null) {
-				continue; // not sure if this can happen (inner-class, maybe?)
-			}
-
-			if (!doCompile(parentFile, writer)) {
-				Msg.error(this, "Failed to re-compile parent class: " + parentClass);
-				return;
-			}
-		}
-	}
-
-	private ResourceFile getSourceFile(Class<?> c) {
-		// check all script paths for a dir named
-		String classname = c.getName();
-		String filename = classname.replace('.', '/') + ".java";
-
-		List<ResourceFile> scriptDirs = GhidraScriptUtil.getScriptSourceDirectories();
-		for (ResourceFile dir : scriptDirs) {
-			ResourceFile possibleFile = new ResourceFile(dir, filename);
-			if (possibleFile.exists()) {
-				return possibleFile;
-			}
-		}
-
-		return null;
 	}
 
 	private String getSourcePath() {
