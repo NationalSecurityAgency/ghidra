@@ -252,12 +252,14 @@ class CategoryDB extends DatabaseObject implements Category {
 		mgr.lock.acquire();
 		try {
 			checkDeleted();
-			dt = dt.clone(dt.getDataTypeManager());
-			try {
-				dt.setCategoryPath(getCategoryPath());
-			}
-			catch (DuplicateNameException e) {
-				// can't happen here because we made a copy
+			if (!getCategoryPath().equals(dt.getCategoryPath())) {
+				dt = dt.clone(dt.getDataTypeManager());
+				try {
+					dt.setCategoryPath(getCategoryPath());
+				}
+				catch (DuplicateNameException e) {
+					// can't happen here because we made a copy
+				}
 			}
 			DataType resolvedDataType = mgr.resolve(dt, handler);
 			return resolvedDataType;
@@ -427,6 +429,7 @@ class CategoryDB extends DatabaseObject implements Category {
 	@Override
 	public Category copyCategory(Category category, DataTypeConflictHandler handler,
 			TaskMonitor monitor) {
+		// TODO: source archive handling is not documented
 		boolean isInSameArchive = (mgr == category.getDataTypeManager());
 		mgr.lock.acquire();
 		try {

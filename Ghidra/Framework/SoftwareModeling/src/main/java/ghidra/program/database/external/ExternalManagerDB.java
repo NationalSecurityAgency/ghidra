@@ -261,7 +261,6 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		SourceType locSourceType = checkExternalLabel(extLabel, extAddr, sourceType);
 		lock.acquire();
 		try {
-			// FIXME:
 			Namespace libraryScope = getLibraryScope(extLibraryName);
 			if (libraryScope == null) {
 				libraryScope = addExternalName(extLibraryName, null,

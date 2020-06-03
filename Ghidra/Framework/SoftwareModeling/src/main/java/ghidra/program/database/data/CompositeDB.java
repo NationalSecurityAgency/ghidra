@@ -45,11 +45,13 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 
 	/**
 	 * Constructor for a composite data type (structure or union).
-	 * @param dataMgr the data type manager containing this data type.
-	 * @param cache DataTypeDB object cache
+	 * 
+	 * @param dataMgr          the data type manager containing this data type.
+	 * @param cache            DataTypeDB object cache
 	 * @param compositeAdapter the database adapter for this data type.
-	 * @param componentAdapter the database adapter for the components of this data type.
-	 * @param record the database record for this data type.
+	 * @param componentAdapter the database adapter for the components of this data
+	 *                         type.
+	 * @param record           the database record for this data type.
 	 */
 	CompositeDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
 			CompositeDBAdapter compositeAdapter, ComponentDBAdapter componentAdapter,
@@ -61,19 +63,21 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	}
 
 	/**
-	 * Perform initialization of instance fields during instantiation
-	 * or instance refresh
+	 * Perform initialization of instance fields during instantiation or instance
+	 * refresh
 	 */
 	protected abstract void initialize();
 
 	/**
-	 * Get the preferred length for a new component.  For Unions and internally aligned
-	 * structures the preferred component length for a fixed-length dataType will be the 
-	 * length of that dataType.  Otherwise the length returned will be no larger than the
-	 * specified length.
+	 * Get the preferred length for a new component. For Unions and internally
+	 * aligned structures the preferred component length for a fixed-length dataType
+	 * will be the length of that dataType. Otherwise the length returned will be no
+	 * larger than the specified length.
+	 * 
 	 * @param dataType new component datatype
-	 * @param length constrained length or -1 to force use of dataType size.  Dynamic types
-	 * such as string must have a positive length specified.
+	 * @param length   constrained length or -1 to force use of dataType size.
+	 *                 Dynamic types such as string must have a positive length
+	 *                 specified.
 	 * @return preferred component length
 	 */
 	protected int getPreferredComponentLength(DataType dataType, int length) {
@@ -106,12 +110,13 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 
 	/**
 	 * Handle replacement of datatype which may impact bitfield datatype.
+	 * 
 	 * @param bitfieldComponent bitfield component
-	 * @param oldDt affected datatype which has been removed or replaced
-	 * @param newDt replacement datatype
-	 * @param true if bitfield component was modified
-	 * @throws InvalidDataTypeException if bitfield was based upon oldDt but new datatype is 
-	 * invalid for a bitfield 
+	 * @param oldDt             affected datatype which has been removed or replaced
+	 * @param newDt             replacement datatype
+	 * @param                   true if bitfield component was modified
+	 * @throws InvalidDataTypeException if bitfield was based upon oldDt but new
+	 *                                  datatype is invalid for a bitfield
 	 */
 	protected boolean updateBitFieldDataType(DataTypeComponentDB bitfieldComponent, DataType oldDt,
 			DataType newDt) throws InvalidDataTypeException {
@@ -252,22 +257,34 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	}
 
 	/**
-	 * This method throws an exception if the indicated data type is an ancestor
-	 * of this data type. In other words, the specified data type has a component
-	 * or sub-component containing this data type.
+	 * This method throws an exception if the indicated data type is an ancestor of
+	 * this data type. In other words, the specified data type has a component or
+	 * sub-component containing this data type.
+	 * 
 	 * @param dataType the data type
-	 * @throws IllegalArgumentException if the data type is an ancestor of this
-	 * data type.
+	 * @throws DataTypeDependencyException if the data type is an ancestor of this
+	 *                                     data type.
 	 */
-	protected void checkAncestry(DataType dataType) {
+	protected void checkAncestry(DataType dataType) throws DataTypeDependencyException {
 		if (this.equals(dataType)) {
-			throw new IllegalArgumentException(
+			throw new DataTypeDependencyException(
 				"Data type " + getDisplayName() + " can't contain itself.");
 		}
 		else if (DataTypeUtilities.isSecondPartOfFirst(dataType, this)) {
-			throw new IllegalArgumentException("Data type " + dataType.getDisplayName() + " has " +
-				getDisplayName() + " within it.");
+			throw new DataTypeDependencyException("Data type " + dataType.getDisplayName() +
+				" has " + getDisplayName() + " within it.");
 		}
+	}
+
+	protected DataType doCheckedResolve(DataType dt, DataTypeConflictHandler handler)
+			throws DataTypeDependencyException {
+		if (dt instanceof Pointer) {
+			pointerPostResolveRequired = true;
+			return resolve(((Pointer) dt).newPointer(DataType.DEFAULT));
+		}
+		dt = resolve(dt, handler);
+		checkAncestry(dt);
+		return dt;
 	}
 
 	@Override
@@ -277,8 +294,9 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	}
 
 	/**
-	 * This method throws an exception if the indicated data type is not
-	 * a valid data type for a component of this composite data type.
+	 * This method throws an exception if the indicated data type is not a valid
+	 * data type for a component of this composite data type.
+	 * 
 	 * @param dataType the data type to be checked.
 	 * @throws IllegalArgumentException if the data type is invalid.
 	 */
@@ -576,6 +594,30 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 	}
 
+	@Override
+	public abstract DataTypeComponentDB[] getDefinedComponents();
+
+	@Override
+	protected void postPointerResolve(DataType definitionDt, DataTypeConflictHandler handler) {
+		Composite composite = (Composite) definitionDt;
+		DataTypeComponent[] definedComponents = composite.getDefinedComponents();
+		DataTypeComponentDB[] myDefinedComponents = getDefinedComponents();
+		if (definedComponents.length != myDefinedComponents.length) {
+			throw new IllegalArgumentException("mismatched definition datatype");
+		}
+		for (int i = 0; i < definedComponents.length; i++) {
+			DataTypeComponent dtc = definedComponents[i];
+			DataType dt = dtc.getDataType();
+			if (dt instanceof Pointer) {
+				DataTypeComponentDB myDtc = myDefinedComponents[i];
+				myDtc.getDataType().removeParent(this);
+				dt = dataMgr.resolve(dt, handler);
+				myDtc.setDataType(dt);
+				dt.addParent(this);
+			}
+		}
+	}
+
 	/**
 	 * Notification that this composite data type's alignment has changed.
 	 */
@@ -649,10 +691,12 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	}
 
 	/**
-	 * Adjusts the internal alignment of components within this composite based on the current
-	 * settings of the internal alignment, packing, alignment type and minimum alignment value.
-	 * This method should be called whenever any of the above settings are changed or whenever
-	 * a components data type is changed or a component is added or removed.
+	 * Adjusts the internal alignment of components within this composite based on
+	 * the current settings of the internal alignment, packing, alignment type and
+	 * minimum alignment value. This method should be called whenever any of the
+	 * above settings are changed or whenever a components data type is changed or a
+	 * component is added or removed.
+	 * 
 	 * @param notify
 	 */
 	protected abstract void adjustInternalAlignment(boolean notify);
@@ -665,11 +709,14 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 
 	/**
 	 * Dump all components for use in {@link #toString()} representation.
+	 * 
 	 * @param buffer string buffer
-	 * @param pad padding to be used with each component output line
+	 * @param pad    padding to be used with each component output line
 	 */
 	protected void dumpComponents(StringBuilder buffer, String pad) {
-		for (DataTypeComponent dtc : getComponents()) {
+		// limit output of filler components for unaligned structures
+		DataTypeComponent[] components = getDefinedComponents();
+		for (DataTypeComponent dtc : components) {
 			DataType dataType = dtc.getDataType();
 			buffer.append(pad + dtc.getOffset());
 			buffer.append(pad + dataType.getName());

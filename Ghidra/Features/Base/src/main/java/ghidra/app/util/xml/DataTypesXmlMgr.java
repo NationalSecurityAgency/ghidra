@@ -626,7 +626,7 @@ public class DataTypesXmlMgr {
 		attrs.addAttribute("SIZE", struct.isNotYetDefined() ? 0 : struct.getLength(), true);
 		writer.startElement("STRUCTURE", attrs);
 		writeRegularComment(writer, struct.getDescription());
-		DataTypeComponent[] members = struct.getComponents();
+		DataTypeComponent[] members = struct.getDefinedComponents();
 		for (DataTypeComponent member : members) {
 			writerMember(writer, member);
 		}

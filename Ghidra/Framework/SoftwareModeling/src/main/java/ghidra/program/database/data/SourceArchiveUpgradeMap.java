@@ -18,9 +18,7 @@ package ghidra.program.database.data;
 import java.util.HashMap;
 import java.util.Map;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
-import ghidra.program.model.data.ArchiveType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.util.UniversalID;

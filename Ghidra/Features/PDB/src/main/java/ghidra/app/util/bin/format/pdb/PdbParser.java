@@ -294,7 +294,7 @@ public class PdbParser {
 
 		// Ensure that all data types are resolved
 		if (dataTypeParser != null) {
-			dataTypeParser.flushDataTypeCache(monitor);
+			dataTypeParser.flushDataTypeCache();
 		}
 	}
 

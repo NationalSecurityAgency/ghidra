@@ -24,7 +24,6 @@ import javax.swing.table.AbstractTableModel;
 
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.data.*;
 import ghidra.util.*;
@@ -1062,7 +1061,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return true if a sub-component is in the indicated category.
 	 */
 	boolean hasSubDtInCategory(Composite parentDt, String catPath) {
-		DataTypeComponent components[] = parentDt.getComponents();
+		DataTypeComponent components[] = parentDt.getDefinedComponents();
 		// FUTURE Add a structure to keep track of which composites were searched so they aren't searched multiple times.
 		for (DataTypeComponent component : components) {
 			DataType subDt = component.getDataType();
@@ -1087,7 +1086,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return true if the composite data type has the data type as a sub-component.
 	 */
 	protected boolean hasSubDt(Composite parentDt, DataTypePath dtPath) {
-		DataTypeComponent components[] = parentDt.getComponents();
+		DataTypeComponent components[] = parentDt.getDefinedComponents();
 		for (DataTypeComponent component : components) {
 			DataType subDt = component.getDataType();
 

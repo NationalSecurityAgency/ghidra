@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.database.data;
+package ghidra.app.util.bin.format.dwarf4.next;
 
 import static org.junit.Assert.*;
 
@@ -30,18 +30,14 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
  *  
  * 
  */
-public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
+public class DWARFConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
-	private DataTypeManagerDB dataMgr;
+	private DataTypeManager dataMgr;
 	private int transactionID;
 
 	private CategoryPath root = new CategoryPath(CategoryPath.ROOT, "conflict_test");
 
-	/**
-	 * Constructor for DataManagerTest.
-	 * @param arg0
-	 */
-	public ConflictHandlerTest() {
+	public DWARFConflictHandlerTest() {
 		super();
 	}
 
@@ -53,9 +49,6 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		program.endTransaction(transactionID, true);
 	}
 
-	/*
-	 * @see TestCase#setUp()
-	 */
 	@Before
 	public void setUp() throws Exception {
 		program = createDefaultProgram(testName.getMethodName(), ProgramBuilder._TOY, this);
@@ -63,9 +56,6 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		startTransaction();
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 		endTransaction();
@@ -90,6 +80,14 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		return struct;
 	}
 
+	private StructureDataType createPopulated2Partial(DataTypeManager dtm) {
+		StructureDataType struct = createPopulated2(dtm);
+		struct.clearComponent(2);
+		struct.clearComponent(1);
+
+		return struct;
+	}
+
 	private StructureDataType createStub(DataTypeManager dtm, int size) {
 		return new StructureDataType(root, "struct1", size, dtm);
 	}
@@ -107,13 +105,13 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	 */
 	private void assertStruct(Composite existingStruct, Composite addingStruct,
 			ConflictResult expectedResult) {
-		DataType existingResult = dataMgr.addDataType(existingStruct,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType existingResult =
+			dataMgr.addDataType(existingStruct, DWARFDataTypeConflictHandler.INSTANCE);
 		DataType existingResult_copy = existingResult.copy(null);
 
 		DataType addingCopy = addingStruct.copy(null);
-		DataType addedResult = dataMgr.addDataType(addingStruct,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType addedResult =
+			dataMgr.addDataType(addingStruct, DWARFDataTypeConflictHandler.INSTANCE);
 
 		switch (expectedResult) {
 			case USE_EXISTING:
@@ -153,7 +151,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DWARFDataTypeConflictHandler#INSTANCE}
 	 * conflict handler to ensure that adding a empty conflicting structure resolves to a previous
 	 * populated structure.
 	 */
@@ -168,7 +166,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DWARFDataTypeConflictHandler#INSTANCE}
 	 * conflict handler to ensure that adding a populated structure replaces an existing
 	 * 'empty' structure.  'Empty' means either 0 byte length or 1 byte length structs
 	 * as previous versions of Ghidra did not allow truly empty structs.
@@ -185,10 +183,36 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testAddPopulatedStructOverwriteSameSizedStub() {
+		StructureDataType populated = createPopulated(dataMgr);
+		assertStruct(createStub(dataMgr, populated.getLength()), populated,
+			ConflictResult.REPLACE_EXISTING);
+	}
+
+	@Test
+	public void testAddStubStructUseSameSizedPopulated() {
+		StructureDataType populated = createPopulated(dataMgr);
+		assertStruct(populated, createStub(dataMgr, populated.getLength()),
+			ConflictResult.USE_EXISTING);
+	}
+
+	@Test
 	public void testAddStubStructCreateConflict() {
 		StructureDataType populated = createPopulated(dataMgr);
 		assertStruct(populated, createStub(dataMgr, populated.getLength() + 1),
 			ConflictResult.RENAME_AND_ADD);
+	}
+
+	@Test
+	public void testAddPartialStructResolveToPopulatedStruct() {
+		assertStruct(createPopulated2(dataMgr), createPopulated2Partial(dataMgr),
+			ConflictResult.USE_EXISTING);
+	}
+
+	@Test
+	public void testAddPopulatedStructOverwritePartialStruct() {
+		assertStruct(createPopulated2Partial(dataMgr), createPopulated2(dataMgr),
+			ConflictResult.REPLACE_EXISTING);
 	}
 
 	@Test
@@ -214,6 +238,19 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testAddPopulatedUnionOverwritePartial() {
+		Union populated = new UnionDataType(root, "union1", dataMgr);
+		populated.add(new CharDataType(dataMgr), 1, "blah1", null);
+		populated.add(new IntegerDataType(dataMgr), 4, "blah2", null);
+		populated.add(new IntegerDataType(dataMgr), 4, "blah3", null);
+
+		Union partial = new UnionDataType(root, "union1", dataMgr);
+		partial.add(new CharDataType(dataMgr), 1, "blah1", null);
+
+		assertStruct(partial, populated, ConflictResult.REPLACE_EXISTING);
+	}
+
+	@Test
 	public void testAddConflictUnion() {
 		Union populated = new UnionDataType(root, "union1", dataMgr);
 		populated.add(new CharDataType(dataMgr), 1, "blah1", null);
@@ -226,8 +263,23 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertStruct(populated, populated2, ConflictResult.RENAME_AND_ADD);
 	}
 
+	@Test
+	public void testAddPartialUnionWithStubStructResolveToExisting() {
+		Structure s1a = createPopulated(dataMgr);
+		Union populated = new UnionDataType(root, "union1", dataMgr);
+		populated.add(new CharDataType(dataMgr), 1, "blah1", null);
+		populated.add(s1a, s1a.getLength(), "blah2", null);
+		populated.add(s1a, s1a.getLength(), null, null);
+
+		Structure s1b = createStub(dataMgr, 0);
+		Union partial = new UnionDataType(root, "union1", dataMgr);
+		partial.add(s1b, s1b.getLength(), "blah2", null);
+
+		assertStruct(populated, partial, ConflictResult.USE_EXISTING);
+	}
+
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DWARFDataTypeConflictHandler#INSTANCE}
 	 * conflict handler to ensure that adding a conflicting typedef to a conflicting stub structure 
 	 * (when there is already a typedef to a populated structure) correctly uses the 
 	 * existing populated structure and existing typedef to the populated structure.
@@ -241,8 +293,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		StructureDataType stubStructure = createStub(dataMgr, 0);
 		TypeDef stubTD = new TypedefDataType(root, "typedef1", stubStructure, dataMgr);
-		DataType stubTDResult = dataMgr.addDataType(stubTD,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType stubTDResult = dataMgr.addDataType(stubTD, DWARFDataTypeConflictHandler.INSTANCE);
 
 		assertTrue(stubTDResult instanceof TypeDef);
 
@@ -253,7 +304,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DWARFDataTypeConflictHandler#INSTANCE}
 	 * conflict handler to ensure that adding truly conflicting structures and typedefs
 	 * are treated as new data types and are renamed to a different name when added.
 	 */
@@ -269,8 +320,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		StructureDataType struct1b = createPopulated2(dataMgr);
 		TypeDef td1b = new TypedefDataType(root, "typedef1", struct1b, dataMgr);
-		DataType td1b_result = dataMgr.addDataType(td1b,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType td1b_result = dataMgr.addDataType(td1b, DWARFDataTypeConflictHandler.INSTANCE);
 		String td1b_result_path = td1b_result.getPathName();
 
 		DataType s1b_result = ((TypeDef) td1b_result).getDataType();
@@ -283,7 +333,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DWARFDataTypeConflictHandler#INSTANCE}
 	 * conflict handler when adding a conflicting typedef impl that is referred to multiple 
 	 * times during a single addDataType() call.
 	 * <p>
@@ -301,8 +351,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testTypedefConflictToConflictStructMultiRef() {
 		StructureDataType struct1a = createPopulated(dataMgr);
 		TypeDef td1a = new TypedefDataType(root, "typedef1", struct1a, dataMgr);
-		DataType td1a_result = dataMgr.addDataType(td1a,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType td1a_result = dataMgr.addDataType(td1a, DWARFDataTypeConflictHandler.INSTANCE);
 
 		StructureDataType struct1b = createPopulated2(dataMgr);
 		TypeDef td1b = new TypedefDataType(root, "typedef1", struct1b, dataMgr);
@@ -313,8 +362,8 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		struct2.add(td1b, "typedef1_instance2", "second");
 		struct2.add(td1b, "typedef1_instance3", "third");
 
-		Structure struct2_result = (Structure) dataMgr.addDataType(struct2,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		Structure struct2_result =
+			(Structure) dataMgr.addDataType(struct2, DWARFDataTypeConflictHandler.INSTANCE);
 
 		TypeDef td1b_result = (TypeDef) struct2_result.getComponent(0).getDataType();
 		String td1b_conflict_name = td1b_result.getPathName();
@@ -328,7 +377,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DWARFDataTypeConflictHandler#INSTANCE}
 	 * conflict handler  when adding a conflicting typedef impl (but equiv) that is referred to multiple 
 	 * times during a single addDataType() call.
 	 * <p>
@@ -340,8 +389,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testTypedefToStubUseExistingTypedefToPopulatedStructureMultiRef() {
 		StructureDataType struct1a = createPopulated(dataMgr);
 		TypeDef td1a = new TypedefDataType(root, "typedef1", struct1a, dataMgr);
-		DataType td1a_result = dataMgr.addDataType(td1a,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType td1a_result = dataMgr.addDataType(td1a, DWARFDataTypeConflictHandler.INSTANCE);
 		String origtd1Name = td1a_result.getPathName();
 
 		StructureDataType struct1b = createStub(dataMgr, 0);
@@ -356,8 +404,8 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 		struct2.add(ptd, "typedef1_instance2", "second");
 		struct2.add(ptd, "typedef1_instance3", "third");
 
-		Structure struct2_result = (Structure) dataMgr.addDataType(struct2,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		Structure struct2_result =
+			(Structure) dataMgr.addDataType(struct2, DWARFDataTypeConflictHandler.INSTANCE);
 
 		for (DataTypeComponent dtc : struct2_result.getComponents()) {
 			Pointer pr = (Pointer) dtc.getDataType();
@@ -368,7 +416,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DWARFDataTypeConflictHandler#INSTANCE}
 	 * conflict handler when adding a typedef to a populated when there is already a typedef
 	 * to a stub structure.  
 	 */
@@ -376,16 +424,14 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testAddTypedefToPopulatedStructReplaceTypedefToStubStructure() {
 		StructureDataType struct1a = createStub(dataMgr, 0);
 		TypeDef td1a = new TypedefDataType(root, "typedef1", struct1a, dataMgr);
-		DataType td1a_result = dataMgr.addDataType(td1a,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType td1a_result = dataMgr.addDataType(td1a, DWARFDataTypeConflictHandler.INSTANCE);
 		String td1a_pathname = td1a_result.getPathName();
 		String struct1a_pathname = ((TypeDef) td1a_result).getDataType().getPathName();
 
 		StructureDataType struct1b = createPopulated(dataMgr);
 		TypeDef td1b = new TypedefDataType(root, "typedef1", struct1b, dataMgr);
 
-		DataType td1b_result = dataMgr.addDataType(td1b,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType td1b_result = dataMgr.addDataType(td1b, DWARFDataTypeConflictHandler.INSTANCE);
 		String td1b_pathname = td1b_result.getPathName();
 		String struct1b_pathname = ((TypeDef) td1b_result).getDataType().getPathName();
 
@@ -393,6 +439,38 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 			td1b_pathname);
 		assertEquals("Typedef target should have same name as previous typedef target",
 			struct1a_pathname, struct1b_pathname);
+	}
+
+	@Test
+	public void testResolveDataTypeStructConflict() throws Exception {
+		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
+		int id = dtm.startTransaction("");
+		Category otherRoot = dataMgr.getRootCategory();
+		Category subc = otherRoot.createCategory("subc");
+
+		Structure struct = new StructureDataType(subc.getCategoryPath(), "struct1", 10);
+
+		DataType resolvedStruct = dtm.resolve(struct, DWARFDataTypeConflictHandler.INSTANCE);
+		assertTrue(struct.isEquivalent(resolvedStruct));
+		assertEquals("/subc/struct1", resolvedStruct.getPathName());
+
+		struct.replace(0, dtm.resolve(new PointerDataType(resolvedStruct, 4, dtm),
+			DWARFDataTypeConflictHandler.INSTANCE), 4);
+
+		// NOTE: placing a DB dataType in an Impl datatype results in an invalid
+		// Impl type if one of its children refer to a deleted datatype.  The
+		// 'struct' instance is such a case.
+
+		DataType resolvedStructA = dtm.resolve(struct, DWARFDataTypeConflictHandler.INSTANCE);
+
+		// Update struct with the expected result (old empty struct was replaced)
+		struct.replace(0, new PointerDataType(resolvedStructA, 4, dtm), 4);
+
+		assertTrue(struct.isEquivalent(resolvedStructA));
+		assertEquals("/subc/struct1", resolvedStructA.getPathName());
+
+		dtm.endTransaction(id, true);
+		dtm.close();
 	}
 
 	@Test
@@ -404,15 +482,13 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		EnumDataType e = new EnumDataType(subc.getCategoryPath(), "Enum", 2);
 
-		DataType resolvedEnum =
-			dtm.resolve(e, DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType resolvedEnum = dtm.resolve(e, DWARFDataTypeConflictHandler.INSTANCE);
 		assertTrue(e.isEquivalent(resolvedEnum));
 		assertEquals("/subc/Enum", resolvedEnum.getPathName());
 
 		e.add("xyz", 1);
 
-		resolvedEnum =
-			dtm.resolve(e, DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		resolvedEnum = dtm.resolve(e, DWARFDataTypeConflictHandler.INSTANCE);
 		assertTrue(e.isEquivalent(resolvedEnum));
 		assertEquals("/subc/Enum.conflict", resolvedEnum.getPathName());
 

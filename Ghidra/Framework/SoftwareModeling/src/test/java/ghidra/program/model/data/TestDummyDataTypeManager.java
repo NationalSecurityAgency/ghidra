@@ -17,9 +17,9 @@ package ghidra.program.model.data;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -55,6 +55,12 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	public DataType addDataType(DataType dataType, DataTypeConflictHandler handler) {
 		// stub
 		return null;
+	}
+
+	@Override
+	public void addDataTypes(Collection<DataType> dataTypes, DataTypeConflictHandler handler,
+			TaskMonitor monitor) throws CancelledException {
+		// stub
 	}
 
 	@Override

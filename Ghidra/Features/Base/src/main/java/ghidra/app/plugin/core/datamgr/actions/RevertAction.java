@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.datamgr.actions;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypeSyncInfo;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.SourceArchive;
 import ghidra.util.HelpLocation;
 
 import java.util.List;

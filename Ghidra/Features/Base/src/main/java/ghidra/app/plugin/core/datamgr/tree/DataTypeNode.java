@@ -24,7 +24,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;

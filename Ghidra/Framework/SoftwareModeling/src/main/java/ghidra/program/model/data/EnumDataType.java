@@ -18,7 +18,6 @@ package ghidra.program.model.data;
 import java.math.BigInteger;
 import java.util.*;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.data.DataTypeUtilities;

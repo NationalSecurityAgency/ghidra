@@ -55,7 +55,7 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	}
 
 	/**
-	 * Validate the specified datatype based upon its' use as a parameter or return type.
+	 * Validate the specified datatype based upon its use as a parameter or return type.
 	 * Ensure that the datatype has been cloned to the specified datatype manager (dtMgr).  
 	 * @param dataType datatype to be validated
 	 * @param dtMgr target datatype manager
