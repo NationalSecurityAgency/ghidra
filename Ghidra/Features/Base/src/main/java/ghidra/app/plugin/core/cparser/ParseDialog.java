@@ -43,6 +43,7 @@ import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
+import ghidra.util.task.Task;
 import resources.Icons;
 import resources.ResourceManager;
 
@@ -94,7 +95,7 @@ class ParseDialog extends DialogComponentProvider {
 	private boolean saveAsInProgress;
 
 	ParseDialog(CParserPlugin plugin) {
-		super("Parse C Source", false);
+		super("Parse C Source", false, true, true, true);
 
 		this.plugin = plugin;
 		itemList = new ArrayList<>();
@@ -685,12 +686,18 @@ class ParseDialog extends DialogComponentProvider {
 
 	@Override
 	public void close() {
+		if(pathPanel.getTable().isEditing())
+			pathPanel.getTable().getCellEditor().cancelCellEditing();
 		cancelCurrentTask();
 		super.close();
 	}
 
 	public String getParseOptions() {
 		return parseOptionsField.getText();
+	}
+
+	public void executeProgressTask(Task task, int delay) {
+		super.executeProgressTask(task, delay);
 	}
 
 	private class ComboBoxItem {

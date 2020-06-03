@@ -226,6 +226,7 @@ public class PathnameTablePanel extends JPanel {
 		pathnameTable.setSelectionForeground(Color.BLACK);
 		pathnameTable.setTableHeader(null);
 		pathnameTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		pathnameTable.putClientProperty("terminateEditOnFocusLost", true);
 		JScrollPane scrollPane = new JScrollPane(pathnameTable);
 		scrollPane.getViewport().setBackground(pathnameTable.getBackground());
 

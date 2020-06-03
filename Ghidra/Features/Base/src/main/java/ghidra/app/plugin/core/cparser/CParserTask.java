@@ -22,7 +22,6 @@ import javax.swing.SwingUtilities;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.util.Msg;
-import ghidra.util.exception.DuplicateFileException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
@@ -39,7 +38,7 @@ class CParserTask extends Task {
 	private DataTypeManager dtMgr;
 
 	CParserTask(CParserPlugin plugin, String[] filenames, String options, String dataFileName) {
-		super("Parsing C Files", true, false, false);
+		super("Parsing C Files", true, true, false);
 
 		this.plugin = plugin;
 		this.filenames = filenames;
@@ -49,7 +48,7 @@ class CParserTask extends Task {
 
 	public CParserTask(CParserPlugin plugin, String[] filenames, String options,
 			DataTypeManager dataTypeManager) {
-		super("Parsing C Files", true, false, false);
+		super("Parsing C Files", true, true, false);
 
 		this.plugin = plugin;
 		this.filenames = filenames;
@@ -59,76 +58,53 @@ class CParserTask extends Task {
 
 	@Override
 	public void run(TaskMonitor monitor) {
-		DataTypeManager fileDtMgr = null;
 		try {
-			if (dtMgr == null) {
+			if (dataFileName != null) {
 				File file = new File(dataFileName);
 				dtMgr = FileDataTypeManager.createFileArchive(file);
-				fileDtMgr = dtMgr;
 			}
 
 			plugin.parse(filenames, options, dtMgr, monitor);
+			if (monitor.isCancelled()) {
+				SwingUtilities.invokeLater(() -> {
+					Msg.showInfo(getClass(),
+						plugin.getDialog().getComponent(), "Cancelled", "Task was cancelled.");
+				});
+			}
+
 			if (dataFileName != null) {
 				if (dtMgr.getDataTypeCount(true) != 0) {
 					try {
 						((FileDataTypeManager) dtMgr).save();
-						dtMgr.close();
-						SwingUtilities.invokeLater(new Runnable() {
-							@Override
-							public void run() {
-								Msg.showInfo(
-									getClass(), plugin.getDialog().getComponent(),
-									"Created Archive File", "Successfully created archive file\n" +
-										((FileDataTypeManager) dtMgr).getFilename());
-							}
-
+						SwingUtilities.invokeLater(() -> {
+							Msg.showInfo(getClass(),
+								plugin.getDialog().getComponent(),
+								"Created Archive File", "Successfully created archive file\n" +
+									((FileDataTypeManager) dtMgr).getFilename());
 						});
-					}
-					catch (DuplicateFileException e) {
-						Msg.showError(this, plugin.getDialog().getComponent(), "Error During Save",
-							e.getMessage());
 					}
 					catch (Exception e) {
 						Msg.showError(this, plugin.getDialog().getComponent(), "Error During Save",
 							"Could not save to file " + dataFileName, e);
 					}
 					finally {
-						if (dtMgr instanceof FileDataTypeManager) {
-							dtMgr.close();
-						}
+						dtMgr.close();
 					}
 				}
-				else {
-					SwingUtilities.invokeLater(new Runnable() {
-						@Override
-						public void run() {
-							Msg.showInfo(getClass(),
-								plugin.getDialog().getComponent(), "Parse Errors", "File was not created due to parse errors.");
-						}
+				else if (!monitor.isCancelled()) {
+					SwingUtilities.invokeLater(() -> {
+						Msg.showInfo(getClass(),
+							plugin.getDialog().getComponent(), "Parse Errors", "No datatypes were found");
 					});
 				}
 			}
 		}
-		catch (ghidra.app.util.cparser.C.ParseException e) {
+		catch (ghidra.app.util.cparser.C.ParseException | ghidra.app.util.cparser.CPP.ParseException e) {
 			final String errMsg = e.getMessage();
 			System.err.println(errMsg);
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					Msg.showInfo(getClass(),
-						plugin.getDialog().getComponent(), "Parse Errors", errMsg);
-				}
-			});
-		}
-		catch (ghidra.app.util.cparser.CPP.ParseException e) {
-			final String errMsg = e.getMessage();
-			System.err.println(errMsg);
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					Msg.showInfo(getClass(),
-						plugin.getDialog().getComponent(), "Parse Errors", errMsg);
-				}
+			SwingUtilities.invokeLater(() -> {
+				Msg.showInfo(getClass(),
+					plugin.getDialog().getComponent(), "Parse Errors", errMsg);
 			});
 		}
 		catch (Exception e) {
@@ -136,8 +112,8 @@ class CParserTask extends Task {
 				"Parse header files failed", e);
 		}
 		finally {
-			if (fileDtMgr != null) {
-				fileDtMgr.close();
+			if (dataFileName != null && dtMgr != null) {
+				dtMgr.close();
 			}
 		}
 	}
