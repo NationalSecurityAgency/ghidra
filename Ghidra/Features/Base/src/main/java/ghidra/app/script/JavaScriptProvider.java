@@ -57,16 +57,12 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			writer = new NullPrintWriter();
 		}
 
-		// Assuming script is in default java package, so using script's base name as class name.
-		String clazzName = GhidraScriptUtil.getBaseName(sourceFile);
-		File clazzFile = getClassFile(sourceFile, clazzName);
-
 		// Compile the source file and its dependencies.  Compilation will only occur if necessary.
-		compile(sourceFile, clazzFile, writer); // may throw an exception
+		compile(sourceFile, writer); // may throw an exception
 
 		Class<?> clazz = null;
 		try {
-			clazz = Class.forName(clazzName, true, loader);
+			clazz = Class.forName(GhidraScriptUtil.getBaseName(sourceFile), true, loader);
 		}
 		catch (GhidraScriptUnsupportedClassVersionError e) {
 			// Unusual Code Alert!: This implies the script was compiled in a newer
@@ -121,11 +117,15 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		return sourceFile.lastModified() > classFile.lastModified();
 	}
 
-	protected void compile(ResourceFile sourceFile, File classFile, final PrintWriter writer)
+	protected boolean compile(ResourceFile sourceFile, final PrintWriter writer)
 			throws ClassNotFoundException {
 
 		ScriptInfo info = GhidraScriptUtil.getScriptInfo(sourceFile);
 		info.setCompileErrors(true);
+		boolean compiledSomething = false;
+
+		// Assuming script is in default java package, so using script's base name as class name
+		File classFile = getClassFile(sourceFile, GhidraScriptUtil.getBaseName(sourceFile));
 		
 		// Compile primary source file (if necessary)
 		if (needsCompile(sourceFile, classFile)) {
@@ -134,6 +134,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 				throw new ClassNotFoundException(
 					"Unable to compile class: " + sourceFile.getName());
 			}
+			compiledSomething = true;
 			writer.println("Successfully compiled: " + sourceFile.getName());
 		}
 
@@ -154,6 +155,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 						throw new ClassNotFoundException(
 							"Unable to compile class: " + depSourceFile.getName());
 					}
+					compiledSomething = true;
 					writer.println("Successfully compiled: " + depSourceFile.getName());
 				}
 				processedClasses.add(depClassName);
@@ -161,8 +163,12 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			}
 		}
 		
-		forceClassReload();
+		if (compiledSomething) {
+			forceClassReload();
+		}
+
 		info.setCompileErrors(false);
+		return true;
 	}
 
 	/**
