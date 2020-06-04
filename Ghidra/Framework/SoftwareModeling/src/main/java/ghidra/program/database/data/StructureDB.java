@@ -1168,7 +1168,7 @@ class StructureDB extends CompositeDB implements Structure {
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				dataMgr.flushResolveCacheAndClearQueue();
+				dataMgr.flushResolveQueue(true);
 			}
 			lock.release();
 		}

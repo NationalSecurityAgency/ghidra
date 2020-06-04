@@ -257,7 +257,7 @@ class UnionDB extends CompositeDB implements Union {
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				dataMgr.flushResolveCacheAndClearQueue();
+				dataMgr.flushResolveQueue(true);
 			}
 			lock.release();
 		}

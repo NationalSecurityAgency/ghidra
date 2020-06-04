@@ -812,7 +812,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				flushResolveCacheAndClearQueue();
+				flushResolveQueue(true);
 			}
 			if (isEquivalenceCacheOwner) {
 				clearEquivalenceCache();
@@ -1142,15 +1142,26 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		lock.acquire();
 		boolean isEquivalenceCacheOwner = activateEquivalenceCache();
 		boolean isResolveCacheOwner = activateResolveCache();
+		// TODO: extended hold time on lock may cause the GUI to become
+		// unresponsive.  Consider releasing lock between resolves, although
+		// this exposes risk of having active resolve queue/cache without lock
 		try {
+			monitor.setMessage("Adding datatypes...");
+			monitor.setMaximum(dataTypes.size());
+			monitor.setProgress(0);
+			int i = 0;
 			for (DataType dt : dataTypes) {
 				monitor.checkCanceled();
 				resolve(dt, handler);
+				if (isResolveCacheOwner) {
+					flushResolveQueue(false);
+				}
+				monitor.setProgress(++i);
 			}
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				flushResolveCacheAndClearQueue();
+				flushResolveQueue(true);
 			}
 			if (isEquivalenceCacheOwner) {
 				clearEquivalenceCache();
@@ -3764,19 +3775,17 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	/**
 	 * Activate resolveCache and associated resolveQueue if not already active. If
 	 * this method returns true caller is responsible for flushing resolveQueue and
-	 * invoking {@link #flushResolveCacheAndClearQueue(DataTypeConflictHandler)}
-	 * when resolve. For each completed resolve
-	 * {@link #cacheResolvedDataType(DataType, DataType)} should be called.
+	 * invoking {@link #flushResolveQueue(boolean)} when resolve complete. 
+	 * For each completed resolve {@link #cacheResolvedDataType(DataType, DataType)} 
+	 * should be invoked.
 	 * 
-	 * @return true if resolveCache and resolveQueue activated else false if
-	 *         previously activated.
+	 * @return true if resolveCache activated else false if already active.
 	 */
 	boolean activateResolveCache() {
 		if (resolveCache != null) {
 			return false;
 		}
 		resolveCache = new IdentityHashMap<>();
-		resolveQueue = new TreeSet<>();
 		return true;
 	}
 
@@ -3788,10 +3797,19 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 */
 	void queuePostResolve(DataTypeDB resolvedDt, DataType definitionDt) {
 		resolvedDt.resolving = true;
+		if (resolveQueue == null) {
+			resolveQueue = new TreeSet<>();
+		}
 		resolveQueue.add(new ResolvePair(resolvedDt, definitionDt));
 	}
 
-	void flushResolveCacheAndClearQueue() {
+	void flushResolveQueue(boolean deactivateCache) {
+		if (resolveQueue == null) {
+			if (deactivateCache) {
+				resolveCache = null;
+			}
+			return;
+		}
 		DataTypeConflictHandler handler = getDependencyConflictHandler();
 		while (!resolveQueue.isEmpty()) {
 			ResolvePair resolvePair = resolveQueue.pollFirst();
@@ -3805,8 +3823,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				resolvedDt.pointerPostResolveRequired = false;
 			}
 		}
-		resolveCache = null;
 		resolveQueue = null;
+		if (deactivateCache) {
+			resolveCache = null;
+		}
 	}
 
 	private DataType getCachedResolve(DataType dt) {

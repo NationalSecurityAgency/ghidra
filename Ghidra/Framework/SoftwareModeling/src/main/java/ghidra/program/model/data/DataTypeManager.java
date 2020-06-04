@@ -101,6 +101,9 @@ public interface DataTypeManager {
 	 * Sequentially adds a collection of datatypes to this data manager.  
 	 * This method provides the added benefit of equivalence caching
 	 * for improved performance.
+	 * <br>
+	 * WARNING: This is an experimental method whoose use may cause the GUI and
+	 * task monitor to become unresponsive due to extended hold times on the manager lock.
 	 * @param dataTypes collection of datatypes
 	 * @param handler conflict handler
 	 * @param monitor task monitor
