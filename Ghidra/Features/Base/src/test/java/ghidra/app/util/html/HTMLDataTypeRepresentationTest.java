@@ -674,7 +674,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		HTMLDataTypeRepresentation[] diff = r1.diff(r2);
 		showDiffs(diff[0], diff[1]);
 
-		assertOnlyTypeDefBodiesDifferent(diff);
+		assertTypeDefHeaderAndBodiesDifferent(diff);
 	}
 
 	@Test
@@ -695,7 +695,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		HTMLDataTypeRepresentation[] diff = r1.diff(r2);
 		showDiffs(diff[0], diff[1]);
 
-		assertOnlyTypeDefBodySizeDifferent(diff);
+		assertOnlyHeaderAndTypeDefBodySizeDifferent(diff);
 	}
 
 	@Test
@@ -807,13 +807,13 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 // Private Methods
 //==================================================================================================
 
-	private void assertOnlyTypeDefBodySizeDifferent(HTMLDataTypeRepresentation[] diff) {
+	private void assertOnlyHeaderAndTypeDefBodySizeDifferent(HTMLDataTypeRepresentation[] diff) {
 		TypeDefDataTypeHTMLRepresentation td1 = (TypeDefDataTypeHTMLRepresentation) diff[0];
 		TypeDefDataTypeHTMLRepresentation td2 = (TypeDefDataTypeHTMLRepresentation) diff[1];
 
 		List<ValidatableLine> h1 = td1.headerContent;
 		List<ValidatableLine> h2 = td2.headerContent;
-		assertEquals("TypeDef diff should have same headers", h1, h2);
+		Assert.assertNotEquals("TypeDef diff should have different headers", h1, h2);
 
 		List<ValidatableLine> b1 = td1.bodyContent;
 		List<ValidatableLine> b2 = td2.bodyContent;
@@ -861,11 +861,24 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 
 		List<ValidatableLine> h1 = td1.headerContent;
 		List<ValidatableLine> h2 = td2.headerContent;
-		assertEquals("TypeDef diff should not have different headers", h1, h2);
+		assertEquals("TypeDef diff should have same headers", h1, h2);
 
 		List<ValidatableLine> b1 = td1.bodyContent;
 		List<ValidatableLine> b2 = td2.bodyContent;
-		Assert.assertNotEquals("TypeDef diff should not have the same bodies", b1, b2);
+		Assert.assertNotEquals("TypeDef diff should have different bodies", b1, b2);
+	}
+
+	private void assertTypeDefHeaderAndBodiesDifferent(HTMLDataTypeRepresentation[] diff) {
+		TypeDefDataTypeHTMLRepresentation td1 = (TypeDefDataTypeHTMLRepresentation) diff[0];
+		TypeDefDataTypeHTMLRepresentation td2 = (TypeDefDataTypeHTMLRepresentation) diff[1];
+
+		List<ValidatableLine> h1 = td1.headerContent;
+		List<ValidatableLine> h2 = td2.headerContent;
+		Assert.assertNotEquals("TypeDef diff should have different headers", h1, h2);
+
+		List<ValidatableLine> b1 = td1.bodyContent;
+		List<ValidatableLine> b2 = td2.bodyContent;
+		Assert.assertNotEquals("TypeDef diff should have different bodies", b1, b2);
 	}
 
 	private void assertCompositeHeaderDiffers_AtIndex(

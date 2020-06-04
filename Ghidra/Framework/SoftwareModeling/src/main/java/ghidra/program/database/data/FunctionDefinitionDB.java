@@ -260,7 +260,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			for (int i = 0; i < args.length; i++) {
 				DataType type =
 					ParameterDefinitionImpl.validateDataType(args[i].getDataType(), dataMgr, false);
-				DataType resolvedDt = resolve(type, dataMgr.getCurrentConflictHandler());
+				DataType resolvedDt = resolve(type, dataMgr.getDependencyConflictHandler());
 				paramAdapter.createRecord(dataMgr.getID(resolvedDt), key, i, args[i].getName(),
 					args[i].getComment(), args[i].getLength());
 				resolvedDt.addParent(this);
@@ -287,7 +287,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			if (type == null) {
 				type = DataType.DEFAULT;
 			}
-			DataType resolvedDt = resolve(type, dataMgr.getCurrentConflictHandler());
+			DataType resolvedDt = resolve(type, dataMgr.getDependencyConflictHandler());
 			record.setLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_RETURN_ID_COL,
 				dataMgr.getID(resolvedDt));
 			funDefAdapter.updateRecord(record, true);
@@ -472,7 +472,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 				param.getDataType().removeParent(this);
 				paramAdapter.removeRecord(param.getKey());
 			}
-			DataType rdt = resolve(dt, dataMgr.getCurrentConflictHandler());
+			DataType rdt = resolve(dt, dataMgr.getDependencyConflictHandler());
 			rdt.addParent(this);
 			paramAdapter.createRecord(dataMgr.getID(rdt), key, ordinal, name, comment,
 				dt.getLength());

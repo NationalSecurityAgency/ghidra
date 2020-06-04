@@ -427,9 +427,9 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
 			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   9   undefined   1   null   \"\"\n" + 
-			"   10   undefined   1   null   \"\"\n" + 
-			"   11   undefined   1   null   \"\"\n" + 
+//			"   9   undefined   1   null   \"\"\n" + 
+//			"   10   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1   null   \"\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", struct);
 		//@formatter:on
@@ -446,9 +446,9 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   7   byte   1   field4   \"Comment4\"\n" + 
 			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   8   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   9   undefined   1   null   \"\"\n" + 
-			"   10   undefined   1   null   \"\"\n" + 
-			"   11   undefined   1   null   \"\"\n" + 
+//			"   9   undefined   1   null   \"\"\n" + 
+//			"   10   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1   null   \"\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", struct);
 		//@formatter:on
@@ -467,12 +467,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   1   word   2   null   \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-			"   8   undefined   1   null   \"\"\n" + 
-			"   9   undefined   1   null   \"\"\n" + 
+//			"   8   undefined   1   null   \"\"\n" + 
+//			"   9   undefined   1   null   \"\"\n" + 
 			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   11   undefined   1   null   \"\"\n" + 
-			"   12   undefined   1   null   \"\"\n" + 
-			"   13   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1   null   \"\"\n" + 
+//			"   12   undefined   1   null   \"\"\n" + 
+//			"   13   undefined   1   null   \"\"\n" + 
 			"}\n" + 
 			"Size = 14   Actual Alignment = 1", struct);
 		//@formatter:on
@@ -487,13 +487,13 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   1   word   2   null   \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-			"   8   undefined   1   null   \"\"\n" + 
-			"   9   undefined   1   null   \"\"\n" + 
+//			"   8   undefined   1   null   \"\"\n" + 
+//			"   9   undefined   1   null   \"\"\n" + 
 			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   10   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   11   undefined   1   null   \"\"\n" + 
-			"   12   undefined   1   null   \"\"\n" + 
-			"   13   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1   null   \"\"\n" + 
+//			"   12   undefined   1   null   \"\"\n" + 
+//			"   13   undefined   1   null   \"\"\n" + 
 			"}\n" + 
 			"Size = 14   Actual Alignment = 1", struct);
 		//@formatter:on
@@ -509,11 +509,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   3   undefined   1   null   \"\"\n" + 
-			"   4   undefined   1   null   \"\"\n" + 
-			"   5   undefined   1   null   \"\"\n" + 
+//			"   3   undefined   1   null   \"\"\n" + 
+//			"   4   undefined   1   null   \"\"\n" + 
+//			"   5   undefined   1   null   \"\"\n" + 
 			"   6   word   2   null   \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
@@ -528,12 +528,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   3   undefined   1   null   \"\"\n" + 
-			"   4   undefined   1   null   \"\"\n" + 
-			"   5   undefined   1   null   \"\"\n" + 
+//			"   3   undefined   1   null   \"\"\n" + 
+//			"   4   undefined   1   null   \"\"\n" + 
+//			"   5   undefined   1   null   \"\"\n" + 
 			"   6   word   2   null   \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
@@ -548,11 +548,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-			"   5   undefined   1   null   \"\"\n" + 
+//			"   5   undefined   1   null   \"\"\n" + 
 			"   6   word   2   null   \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
@@ -576,7 +576,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
@@ -610,11 +610,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
-			"   3   undefined   1   null   \"\"\n" + 
-			"   4   undefined   1   null   \"\"\n" + 
-			"   5   undefined   1   null   \"\"\n" + 
+//			"   3   undefined   1   null   \"\"\n" + 
+//			"   4   undefined   1   null   \"\"\n" + 
+//			"   5   undefined   1   null   \"\"\n" + 
 			"   6   word   2   null   \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
@@ -629,12 +629,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
-			"   3   undefined   1   null   \"\"\n" + 
-			"   4   undefined   1   null   \"\"\n" + 
-			"   5   undefined   1   null   \"\"\n" + 
+//			"   3   undefined   1   null   \"\"\n" + 
+//			"   4   undefined   1   null   \"\"\n" + 
+//			"   5   undefined   1   null   \"\"\n" + 
 			"   6   word   2   null   \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
@@ -649,11 +649,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" + 
-			"   5   undefined   1   null   \"\"\n" + 
+//			"   5   undefined   1   null   \"\"\n" + 
 			"   6   word   2   null   \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
@@ -668,7 +668,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" + 
@@ -696,7 +696,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"Unaligned\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1   null   \"\"\n" + 
 			"   2   float   4   null   \"\"\n" + 
 			"   6   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   6   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
@@ -1150,11 +1150,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   1   word   2   null   \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-			"   8   undefined   1   null   \"\"\n" + 
+//			"   8   undefined   1   null   \"\"\n" + 
 			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" + 
 			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
 			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
-			"   11   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1   null   \"\"\n" + 
 			"   Foo[0]   0   myFlex   \"flexComment\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", struct);
@@ -1175,11 +1175,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   1   word   2   null   \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-			"   8   undefined   1   null   \"\"\n" + 
+//			"   8   undefined   1   null   \"\"\n" + 
 			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" + 
 			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
 			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
-			"   11   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1   null   \"\"\n" + 
 			"   Foo[0]   0   myFlex   \"flexComment\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", newStruct);

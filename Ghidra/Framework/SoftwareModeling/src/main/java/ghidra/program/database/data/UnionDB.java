@@ -250,21 +250,23 @@ class UnionDB extends CompositeDB implements Union {
 		boolean isResolveCacheOwner = dataMgr.activateResolveCache();
 		try {
 			checkDeleted();
-			doReplaceWith((Union) dataType, true, dataMgr.getCurrentConflictHandler());
+			doReplaceWith((Union) dataType, true);
 		}
 		catch (DataTypeDependencyException e) {
 			throw new IllegalArgumentException(e.getMessage(), e);
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				dataMgr.flushResolveCacheAndClearQueue(null);
+				dataMgr.flushResolveCacheAndClearQueue();
 			}
 			lock.release();
 		}
 	}
 
-	void doReplaceWith(Union union, boolean notify, DataTypeConflictHandler handler)
+	void doReplaceWith(Union union, boolean notify)
 			throws DataTypeDependencyException {
+
+		DataTypeConflictHandler handler = dataMgr.getDependencyConflictHandler();
 
 		// pre-resolved component types to catch dependency issues early
 		DataTypeComponent[] otherComponents = union.getComponents();

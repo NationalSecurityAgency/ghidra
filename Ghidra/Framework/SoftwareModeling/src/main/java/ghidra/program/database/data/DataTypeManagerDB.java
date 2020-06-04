@@ -812,7 +812,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				flushResolveCacheAndClearQueue(handler);
+				flushResolveCacheAndClearQueue();
 			}
 			if (isEquivalenceCacheOwner) {
 				clearEquivalenceCache();
@@ -909,7 +909,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 			case REPLACE_EXISTING: // new type replaces old conflicted type
 				try {
-					if (updateExistingDataType(existingDataType, dataType, handler)) {
+					if (updateExistingDataType(existingDataType, dataType)) {
 						return existingDataType;
 					}
 					renameToUnusedConflictName(existingDataType);
@@ -919,12 +919,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 						replace(existingDataType, newDataType);
 					}
 					catch (DataTypeDependencyException e) {
-						throw new AssertException(e);
+						throw new IllegalArgumentException(
+							"Invalid datatype replacement: " + newDataType.getName(), e);
 					}
 					return newDataType;
 				}
 				catch (DataTypeDependencyException e) {
-					// fallthrough to RENAME_AND_ADD
+					// new type refers to old type - fallthrough to RENAME_AND_ADD
+					// TODO: alternatively we could throw an exception
 				}
 
 			case RENAME_AND_ADD: // default handler behavior
@@ -970,13 +972,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * 
 	 * @param existingDataType existing datatype
 	 * @param dataType         new datatype
-	 * @param handler          conflict handler
 	 * @return true if replacment approach was successful, else false
 	 * @throws DataTypeDependencyException if datatype contains dependency issues
 	 *                                     during resolve process
 	 */
-	private boolean updateExistingDataType(DataType existingDataType, DataType dataType,
-			DataTypeConflictHandler handler) throws DataTypeDependencyException {
+	private boolean updateExistingDataType(DataType existingDataType, DataType dataType)
+			throws DataTypeDependencyException {
 
 		// TODO: this approach could be added to other DB datatypes to avoid
 		// unnececesary creation and removal.
@@ -987,7 +988,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					return false;
 				}
 				StructureDB existingStruct = (StructureDB) existingDataType;
-				existingStruct.doReplaceWith((Structure) dataType, true, handler);
+				existingStruct.doReplaceWith((Structure) dataType, true);
 				return true;
 			}
 			else if (existingDataType instanceof UnionDB) {
@@ -995,7 +996,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					return false;
 				}
 				UnionDB existingUnion = (UnionDB) existingDataType;
-				existingUnion.doReplaceWith((Union) dataType, true, handler);
+				existingUnion.doReplaceWith((Union) dataType, true);
 				return true;
 			}
 		}
@@ -1149,7 +1150,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				flushResolveCacheAndClearQueue(handler);
+				flushResolveCacheAndClearQueue();
 			}
 			if (isEquivalenceCacheOwner) {
 				clearEquivalenceCache();
@@ -1504,12 +1505,16 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Get the current active datatype conflict handler
+	 * Get the datatype conflict handler to be used when resolving
+	 * datatype dependencies
 	 * 
-	 * @return current active datatype conflict handler
+	 * @return dependency datatype conflict handler
 	 */
-	DataTypeConflictHandler getCurrentConflictHandler() {
-		return currentHandler;
+	DataTypeConflictHandler getDependencyConflictHandler() {
+		if (currentHandler == null) {
+			return DataTypeConflictHandler.DEFAULT_HANDLER;
+		}
+		return currentHandler.getSubsequentHandler();
 	}
 
 	@Override
@@ -2273,17 +2278,17 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			else if (dt instanceof Structure) {
 				Structure structure = (Structure) dt;
 				newDataType = createStructure(structure, name, cat, sourceArchiveIdValue,
-					id.getValue(), handler);
+					id.getValue());
 			}
 			else if (dt instanceof TypeDef) {
 				TypeDef typedef = (TypeDef) dt;
 				newDataType =
-					createTypeDef(typedef, name, cat, sourceArchiveIdValue, id.getValue(), handler);
+					createTypeDef(typedef, name, cat, sourceArchiveIdValue, id.getValue());
 			}
 			else if (dt instanceof Union) {
 				Union union = (Union) dt;
 				newDataType =
-					createUnion(union, name, cat, sourceArchiveIdValue, id.getValue(), handler);
+					createUnion(union, name, cat, sourceArchiveIdValue, id.getValue());
 			}
 			else if (dt instanceof Enum) {
 				Enum enumm = (Enum) dt;
@@ -2292,7 +2297,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			else if (dt instanceof FunctionDefinition) {
 				FunctionDefinition funDef = (FunctionDefinition) dt;
 				newDataType = createFunctionDefinition(funDef, name, cat, sourceArchiveIdValue,
-					id.getValue(), handler);
+					id.getValue());
 			}
 			else if (dt instanceof BuiltInDataType) {
 				BuiltInDataType builtInDataType = (BuiltInDataType) dt;
@@ -2316,7 +2321,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private Structure createStructure(Structure struct, String name, CategoryDB category,
-			long sourceArchiveIdValue, long universalIdValue, DataTypeConflictHandler handler)
+			long sourceArchiveIdValue, long universalIdValue)
 			throws IOException {
 		try {
 			if (name == null || name.length() == 0) {
@@ -2338,7 +2343,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			// Make sure category knows about structure before replace is performed
 			category.dataTypeAdded(structDB);
 
-			structDB.doReplaceWith(struct, false, handler);
+			structDB.doReplaceWith(struct, false);
 			structDB.setDescription(struct.getDescription());
 //			structDB.notifySizeChanged();
 			// doReplaceWith updated the last change time so set it back to what we want.
@@ -2347,7 +2352,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return structDB;
 		}
 		catch (DataTypeDependencyException e) {
-			throw new AssertException(e); // unexpected for new type
+			throw new IllegalArgumentException("Invalid structure: " + struct.getName(), e);
 		}
 		finally {
 			creatingDataType--;
@@ -2386,12 +2391,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private TypeDef createTypeDef(TypeDef typedef, String name, Category cat,
-			long sourceArchiveIdValue, long universalIdValue, DataTypeConflictHandler handler)
+			long sourceArchiveIdValue, long universalIdValue)
 			throws IOException {
 		if (name == null || name.length() == 0) {
 			throw new IllegalArgumentException("Data type must have a valid name");
 		}
-		DataType dataType = resolve(typedef.getDataType(), handler);
+		DataType dataType = resolve(typedef.getDataType(), getDependencyConflictHandler());
 		Record record = typedefAdapter.createRecord(getID(dataType), name, cat.getID(),
 			sourceArchiveIdValue, universalIdValue, typedef.getLastChangeTime());
 		TypedefDB typedefDB = new TypedefDB(this, dtCache, typedefAdapter, record);
@@ -2401,7 +2406,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private Union createUnion(Union union, String name, CategoryDB category,
-			long sourceArchiveIdValue, long universalIdValue, DataTypeConflictHandler handler)
+			long sourceArchiveIdValue, long universalIdValue)
 			throws IOException {
 		if (name == null || name.length() == 0) {
 			throw new IllegalArgumentException("Data type must have a valid name");
@@ -2417,7 +2422,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			// Make sure category knows about union before replace is performed
 			category.dataTypeAdded(unionDB);
 
-			unionDB.doReplaceWith(union, false, handler);
+			unionDB.doReplaceWith(union, false);
 			unionDB.setDescription(union.getDescription());
 //			unionDB.notifySizeChanged();
 			// doReplaceWith updated the last change time so set it back to what we want.
@@ -2426,7 +2431,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return unionDB;
 		}
 		catch (DataTypeDependencyException e) {
-			throw new AssertException(e); // unexpected for new type
+			throw new IllegalArgumentException("Invalid union: " + union.getName(), e);
 		}
 		finally {
 			creatingDataType--;
@@ -2658,8 +2663,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private FunctionDefinition createFunctionDefinition(FunctionDefinition funDef, String name,
-			CategoryDB cat, long sourceArchiveIdValue, long universalIdValue,
-			DataTypeConflictHandler handler) throws IOException {
+			CategoryDB cat, long sourceArchiveIdValue, long universalIdValue) throws IOException {
 		if (name == null || name.length() == 0) {
 			throw new IllegalArgumentException("Data type must have a valid name");
 		}
@@ -3750,7 +3754,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 						replace(dataType, resolve(builtIn, null));
 					}
 					catch (DataTypeDependencyException e) {
-						throw new AssertException("Got DataTypeDependencyException on built in");
+						throw new AssertException("Got DataTypeDependencyException on built in", e);
 					}
 				}
 			}
@@ -3787,7 +3791,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		resolveQueue.add(new ResolvePair(resolvedDt, definitionDt));
 	}
 
-	void flushResolveCacheAndClearQueue(DataTypeConflictHandler handler) {
+	void flushResolveCacheAndClearQueue() {
+		DataTypeConflictHandler handler = getDependencyConflictHandler();
 		while (!resolveQueue.isEmpty()) {
 			ResolvePair resolvePair = resolveQueue.pollFirst();
 			DataTypeDB resolvedDt = resolvePair.resolvedDt;

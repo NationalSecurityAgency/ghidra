@@ -1158,7 +1158,7 @@ class StructureDB extends CompositeDB implements Structure {
 		boolean isResolveCacheOwner = dataMgr.activateResolveCache();
 		try {
 			checkDeleted();
-			doReplaceWith((Structure) dataType, true, dataMgr.getCurrentConflictHandler());
+			doReplaceWith((Structure) dataType, true);
 		}
 		catch (DataTypeDependencyException e) {
 			throw new IllegalArgumentException(e.getMessage(), e);
@@ -1168,7 +1168,7 @@ class StructureDB extends CompositeDB implements Structure {
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				dataMgr.flushResolveCacheAndClearQueue(null);
+				dataMgr.flushResolveCacheAndClearQueue();
 			}
 			lock.release();
 		}
@@ -1179,14 +1179,15 @@ class StructureDB extends CompositeDB implements Structure {
 	 * 
 	 * @param struct
 	 * @param notify
-	 * @param handler
 	 * @return true if fully completed else false if pointer component post resolve
 	 *         required
 	 * @throws DataTypeDependencyException
 	 * @throws IOException
 	 */
-	void doReplaceWith(Structure struct, boolean notify, DataTypeConflictHandler handler)
+	void doReplaceWith(Structure struct, boolean notify)
 			throws DataTypeDependencyException, IOException {
+
+		DataTypeConflictHandler handler = dataMgr.getDependencyConflictHandler();
 
 		// pre-resolved component types to catch dependency issues early
 		DataTypeComponent flexComponent = struct.getFlexibleArrayComponent();

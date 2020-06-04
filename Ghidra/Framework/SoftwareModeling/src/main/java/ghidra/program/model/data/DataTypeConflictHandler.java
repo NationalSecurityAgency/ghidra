@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import ghidra.util.Msg;
-
 public abstract class DataTypeConflictHandler {
 
 	/**
@@ -62,10 +60,10 @@ public abstract class DataTypeConflictHandler {
 	public final static DataTypeConflictHandler DEFAULT_HANDLER = new DataTypeConflictHandler() {
 		@Override
 		public ConflictResult resolveConflict(DataType addedDataType, DataType existingDataType) {
-			Msg.info(this,
-				"Conflict with existing type " + existingDataType.getName() + "(" +
-					existingDataType.getDescription() +
-					"), new type will be renamed with .conflict suffix");
+//			Msg.info(this,
+//				"Conflict with existing type " + existingDataType.getName() + "(" +
+//					existingDataType.getDescription() +
+//					"), new type will be renamed with .conflict suffix");
 			return ConflictResult.RENAME_AND_ADD;
 		}
 
@@ -142,8 +140,8 @@ public abstract class DataTypeConflictHandler {
 	public final static DataTypeConflictHandler KEEP_HANDLER = new DataTypeConflictHandler() {
 		@Override
 		public ConflictResult resolveConflict(DataType addedDataType, DataType existingDataType) {
-			Msg.info(this, "New type not added in favor of existing type " +
-				existingDataType.getName() + "(" + existingDataType.getDescription() + ")");
+//			Msg.info(this, "New type not added in favor of existing type " +
+//				existingDataType.getName() + "(" + existingDataType.getDescription() + ")");
 			return ConflictResult.USE_EXISTING;
 		}
 
