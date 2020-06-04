@@ -69,7 +69,7 @@ public abstract class DataTypeConflictHandler {
 
 		@Override
 		public boolean shouldUpdate(DataType sourceDataType, DataType localDataType) {
-			return true;
+			return true;  // TODO: uncertain this is appropriate
 		}
 
 		@Override
@@ -202,7 +202,7 @@ public abstract class DataTypeConflictHandler {
 
 			@Override
 			public boolean shouldUpdate(DataType sourceDataType, DataType localDataType) {
-				return sourceDataType.getLastChangeTime() > localDataType.getLastChangeTime();
+				return false;
 			}
 
 			@Override
