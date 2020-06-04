@@ -276,13 +276,13 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 	}
 
-	protected DataType doCheckedResolve(DataType dt, DataTypeConflictHandler handler)
+	protected DataType doCheckedResolve(DataType dt)
 			throws DataTypeDependencyException {
 		if (dt instanceof Pointer) {
 			pointerPostResolveRequired = true;
 			return resolve(((Pointer) dt).newPointer(DataType.DEFAULT));
 		}
-		dt = resolve(dt, handler);
+		dt = resolve(dt);
 		checkAncestry(dt);
 		return dt;
 	}

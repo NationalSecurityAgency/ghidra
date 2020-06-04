@@ -268,15 +268,11 @@ abstract class DataTypeDB extends DatabaseObject implements DataType, ChangeList
 	}
 
 	protected DataType resolve(DataType dt) {
-		return resolve(dt, dataMgr.getDependencyConflictHandler());
-	}
-
-	protected DataType resolve(DataType dt, DataTypeConflictHandler handler) {
 		// complex types should keep equivalence checks to a minimum while resolving
 		// and when post-resolve required for pointers
 		resolving = true;
 		try {
-			dt = dataMgr.resolve(dt, handler);
+			dt = dataMgr.resolve(dt, dataMgr.getDependencyConflictHandler());
 		}
 		finally {
 			resolving = false;

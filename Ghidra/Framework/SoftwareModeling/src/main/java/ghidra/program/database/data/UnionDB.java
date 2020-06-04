@@ -266,13 +266,11 @@ class UnionDB extends CompositeDB implements Union {
 	void doReplaceWith(Union union, boolean notify)
 			throws DataTypeDependencyException {
 
-		DataTypeConflictHandler handler = dataMgr.getDependencyConflictHandler();
-
 		// pre-resolved component types to catch dependency issues early
 		DataTypeComponent[] otherComponents = union.getComponents();
 		DataType[] resolvedDts = new DataType[otherComponents.length];
 		for (int i = 0; i < otherComponents.length; i++) {
-			resolvedDts[i] = doCheckedResolve(otherComponents[i].getDataType(), handler);
+			resolvedDts[i] = doCheckedResolve(otherComponents[i].getDataType());
 			checkAncestry(resolvedDts[i]);
 		}
 

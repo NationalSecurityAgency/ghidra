@@ -115,7 +115,7 @@ class StructureDB extends CompositeDB implements Structure {
 
 			if (validateAlignAndNotify) {
 				validateDataType(dataType);
-				dataType = resolve(dataType, null);
+				dataType = resolve(dataType);
 				checkAncestry(dataType);
 			}
 
@@ -172,7 +172,7 @@ class StructureDB extends CompositeDB implements Structure {
 
 			if (validateAlignAndNotify) {
 				validateDataType(dataType);
-				dataType = resolve(dataType, null);
+				dataType = resolve(dataType);
 				if (isInvalidFlexArrayDataType(dataType)) {
 					throw new IllegalArgumentException(
 						"Unsupported flexType: " + dataType.getDisplayName());
@@ -1187,18 +1187,16 @@ class StructureDB extends CompositeDB implements Structure {
 	void doReplaceWith(Structure struct, boolean notify)
 			throws DataTypeDependencyException, IOException {
 
-		DataTypeConflictHandler handler = dataMgr.getDependencyConflictHandler();
-
 		// pre-resolved component types to catch dependency issues early
 		DataTypeComponent flexComponent = struct.getFlexibleArrayComponent();
 		DataTypeComponent[] otherComponents = struct.getDefinedComponents();
 		DataType[] resolvedDts = new DataType[otherComponents.length];
 		for (int i = 0; i < otherComponents.length; i++) {
-			resolvedDts[i] = doCheckedResolve(otherComponents[i].getDataType(), handler);
+			resolvedDts[i] = doCheckedResolve(otherComponents[i].getDataType());
 		}
 		DataType resolvedFlexDt = null;
 		if (flexComponent != null) {
-			resolvedFlexDt = doCheckedResolve(flexComponent.getDataType(), handler);
+			resolvedFlexDt = doCheckedResolve(flexComponent.getDataType());
 			if (isInvalidFlexArrayDataType(resolvedFlexDt)) {
 				throw new IllegalArgumentException(
 					"Unsupported flexType: " + resolvedFlexDt.getDisplayName());
