@@ -62,7 +62,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 			getApplicationInstallationDir());
 
 		// Extensions
-		extensionInstallationDir = findExtensionInstallationDirectory();
+		extensionInstallationDirs = findExtensionInstallationDirectories();
 		extensionArchiveDir = findExtensionArchiveDirectory();
 
 		// Patch directory
@@ -217,17 +217,20 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	}
 
 	/**
-	 * Returns the directory where all Ghidra extension archives should be
-	 * installed. This should be at the following location:<br>
+	 * Returns a prioritized list of directories where Ghidra extensions are installed. These 
+	 * should be at the following locations:<br>
 	 * <ul>
+	 * <li><code>[user settings dir]/Extensions</code></li>
 	 * <li><code>[application install dir]/Ghidra/Extensions</code></li>
 	 * <li><code>ghidra/Ghidra/Extensions</code> (development mode)</li>
 	 * </ul>
 	 * 
 	 * @return the install folder, or null if can't be determined
 	 */
-	protected ResourceFile findExtensionInstallationDirectory() {
+	protected List<ResourceFile> findExtensionInstallationDirectories() {
 
+		List<ResourceFile> dirs = new ArrayList<>();
+		
 		// Would like to find a better way to do this, but for the moment this seems the
 		// only solution. We want to get the 'Extensions' directory in ghidra, but there's 
 		// no way to retrieve that directory directly. We can only get the full set of 
@@ -237,13 +240,14 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 			ResourceFile rootDir = getApplicationRootDirs().iterator().next();
 			File temp = new File(rootDir.getFile(false), "Extensions");
 			if (temp.exists()) {
-				return new ResourceFile(temp);
+				dirs.add(new ResourceFile(temp));
 			}
-
-			return null;
+		}
+		else {
+			dirs.add(new ResourceFile(new File(userSettingsDir, "Extensions")));
+			dirs.add(new ResourceFile(applicationInstallationDir, "Ghidra/Extensions"));
 		}
 
-		ResourceFile installDir = findGhidraApplicationInstallationDir();
-		return new ResourceFile(installDir, "Ghidra/Extensions");
+		return dirs;
 	}
 }
