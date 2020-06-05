@@ -51,9 +51,9 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	@Override
 	public boolean deleteScript(ResourceFile sourceFile) {
 		try {
-			Bundle b = getBundleForSource(sourceFile).getBundle();
-			if (b != null) {
-				_bundleHost.deactivateSynchronously(b);
+			Bundle osgiBundle = getBundleForSource(sourceFile).getOSGiBundle();
+			if (osgiBundle != null) {
+				_bundleHost.deactivateSynchronously(osgiBundle);
 			}
 		}
 		catch (GhidraBundleException | InterruptedException e) {
@@ -95,7 +95,8 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
 		GhidraSourceBundle gb = getBundleForSource(sourceFile);
 		gb.build(writer);
-		Bundle b = _bundleHost.installFromLoc(gb.getBundleLoc());
+		
+		Bundle b = _bundleHost.install(gb);
 
 		_bundleHost.activateSynchronously(b);
 

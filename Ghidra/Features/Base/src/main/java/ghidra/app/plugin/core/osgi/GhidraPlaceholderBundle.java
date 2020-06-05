@@ -23,11 +23,14 @@ import org.osgi.framework.wiring.BundleRequirement;
 
 import generic.jar.ResourceFile;
 
+/**
+ * {@link GhidraPlaceholderBundle} represents invalid bundle paths in the GUI.
+ */
 public class GhidraPlaceholderBundle extends GhidraBundle {
 
-	GhidraPlaceholderBundle(BundleHost bundleHost, ResourceFile path, boolean enabled,
-			boolean systemBundle) {
-		super(bundleHost, path, enabled, systemBundle);
+	GhidraPlaceholderBundle(BundleHost bundleHost, ResourceFile bundlePath, boolean isEnabled,
+			boolean isSystemBundle) {
+		super(bundleHost, bundlePath, isEnabled, isSystemBundle);
 	}
 
 	@Override
@@ -41,12 +44,12 @@ public class GhidraPlaceholderBundle extends GhidraBundle {
 	}
 
 	@Override
-	public String getBundleLoc() {
+	public String getBundleLocation() {
 		return "invalid://" + getPath();
 	}
 
 	@Override
-	List<BundleRequirement> getAllReqs() {
+	List<BundleRequirement> getAllRequirements() {
 		return Collections.emptyList();
 	}
 

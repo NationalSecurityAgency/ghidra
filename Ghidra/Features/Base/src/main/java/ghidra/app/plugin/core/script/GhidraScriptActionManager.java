@@ -578,10 +578,10 @@ class GhidraScriptActionManager {
 		}
 
 		private void launchJavadoc() {
-			URI URI = entryFile.toURI();
-			URL URL = null;
+			URI uri = entryFile.toURI();
+			URL url = null;
 			try {
-				URL = URI.toURL();
+				url = uri.toURL();
 			}
 			catch (MalformedURLException e) {
 				// shouldn't happen
@@ -591,7 +591,7 @@ class GhidraScriptActionManager {
 				return;
 			}
 
-			BrowserLoader.display(URL, URL, plugin.getTool());
+			BrowserLoader.display(url, url, plugin.getTool());
 		}
 
 		private void writeZipEntry(File unzipDirectory, ZipEntry entry, InputStream inputStream)

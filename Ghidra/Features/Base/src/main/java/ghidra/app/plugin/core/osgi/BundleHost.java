@@ -16,23 +16,19 @@
 package ghidra.app.plugin.core.osgi;
 
 import java.io.*;
-import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.jar.JarFile;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.felix.framework.FrameworkFactory;
+import org.apache.felix.framework.Logger;
 import org.apache.felix.framework.util.FelixConstants;
-import org.apache.felix.framework.util.manifestparser.ManifestParser;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.wiring.*;
-import org.osgi.service.log.*;
 
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
@@ -43,186 +39,278 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
+/**
+ * Hosts the embedded OSGi framework and manages {@link GhidraBundle}s.
+ * 
+ * <br/><br/>
+ * note: {@link GhidraBundle}, its implementations, and this class constitute 
+ * a bridge between OSGi's {@link Bundle} and Ghidra.
+ * - unqualified, "bundle" will mean {@link GhidraBundle}
+ * - use of OSGi types, including {@link Bundle} and {@link Framework}, should be package scoped (not public)  
+ * - OSGi bundle lifecycle is simplified to "active" and "inactive" (OSGi's "uninstalled" state)
+ */
 public class BundleHost {
-	protected static final boolean DUMP_TO_STDERR = false;
+	protected static final boolean STDERR_DEBUGGING = false;
+	private static final String saveStateTagPath = "BundleHost_PATH";
+	private static final String saveStateTagEnabled = "BundleHost_ENABLE";
+	private static final String saveStateTagActive = "BundleHost_ACTIVE";
+	private static final String saveStateTagSystem = "BundleHost_SYSTEM";
 
-	static public String getSymbolicNameFromSourceDir(ResourceFile sourceDir) {
-		return Integer.toHexString(sourceDir.getAbsolutePath().hashCode());
-	}
+	HashMap<ResourceFile, GhidraBundle> bundlePathToBundleMap = new HashMap<>();
+	HashMap<String, GhidraBundle> bundleLocationToBundleMap = new HashMap<>();
 
+	BundleContext frameworkBundleContext;
+	Framework felixFramework;
+
+	List<BundleHostListener> listeners = new ArrayList<>();
+
+	/** constructor */
 	public BundleHost() {
 		//
 	}
 
-	public void dispose() {
-		disposeFramework();
-	}
-
-	HashMap<ResourceFile, GhidraBundle> bp2gb = new HashMap<>();
-	HashMap<String, GhidraBundle> bl2gb = new HashMap<>();
-
-	public GhidraBundle getExistingGhidraBundle(ResourceFile bundlePath) {
-		GhidraBundle r = bp2gb.get(bundlePath);
-		if (r == null) {
-			Msg.showError(this, null, "ghidra bundle cache",
-				"getExistingGhidraBundle before GhidraBundle created: " + bundlePath);
-		}
-		return r;
-	}
-
-	public boolean enablePath(ResourceFile bundlePath) {
-		GhidraBundle gb = bp2gb.get(bundlePath);
-		if (gb == null) {
-			gb = addGhidraBundle(bundlePath, true, false);
-			return true;
-		}
-		return enable(gb);
-	}
-
-	public boolean enable(GhidraBundle gbundle) {
-		if (!gbundle.isEnabled()) {
-			gbundle.setEnabled(true);
-			fireBundleEnablementChange(gbundle, true);
-			return true;
-		}
-		return false;
-	}
-
-	public boolean disable(GhidraBundle gbundle) {
-		if (gbundle.isEnabled()) {
-			gbundle.setEnabled(false);
-			fireBundleEnablementChange(gbundle, false);
-			return true;
-		}
-		return false;
-	}
-
-	public GhidraBundle addGhidraBundle(ResourceFile path, boolean enabled, boolean systemBundle) {
-		GhidraBundle gb = newGhidraBundle(this, path, enabled, systemBundle);
-		bp2gb.put(path, gb);
-		bl2gb.put(gb.getBundleLoc(), gb);
-		fireBundleAdded(gb);
-		return gb;
-	}
-
-	public void addGhidraBundles(List<ResourceFile> paths, boolean enabled, boolean systemBundle) {
-		Map<ResourceFile, GhidraBundle> newmap =
-			paths.stream().collect(Collectors.toUnmodifiableMap(Function.identity(),
-				path -> newGhidraBundle(BundleHost.this, path, enabled, systemBundle)));
-		bp2gb.putAll(newmap);
-		bl2gb.putAll(newmap.values().stream().collect(
-			Collectors.toUnmodifiableMap(GhidraBundle::getBundleLoc, Function.identity())));
-		fireBundlesAdded(newmap.values());
-	}
-
-	public void add(List<GhidraBundle> gbundles) {
-		for (GhidraBundle gb : gbundles) {
-			bp2gb.put(gb.getPath(), gb);
-			bl2gb.put(gb.getBundleLoc(), gb);
-		}
-		fireBundlesAdded(gbundles);
-	}
-
-	static private GhidraBundle newGhidraBundle(BundleHost bh, ResourceFile path, boolean enabled,
-			boolean systemBundle) {
-		switch (GhidraBundle.getType(path)) {
+	private static GhidraBundle newGhidraBundle(BundleHost bundleHost, ResourceFile bundlePath,
+			boolean enabled, boolean systemBundle) {
+		switch (GhidraBundle.getType(bundlePath)) {
 			case SourceDir:
-				return new GhidraSourceBundle(bh, path, enabled, systemBundle);
+				return new GhidraSourceBundle(bundleHost, bundlePath, enabled, systemBundle);
 			case Jar:
-				return new GhidraJarBundle(bh, path, enabled, systemBundle);
+				return new GhidraJarBundle(bundleHost, bundlePath, enabled, systemBundle);
 			case BndScript:
 			default:
 				break;
 		}
-		return new GhidraPlaceholderBundle(bh, path, enabled, systemBundle);
-	}
-
-	// XXX consumers must clean up after themselves
-	public void removeBundlePath(ResourceFile bundlePath) {
-		GhidraBundle gb = bp2gb.remove(bundlePath);
-		bl2gb.remove(gb.getBundleLoc());
-		fireBundleRemoved(gb);
-	}
-
-	public void removeBundleLoc(String bundleLoc) {
-		GhidraBundle gb = bl2gb.remove(bundleLoc);
-		bp2gb.remove(gb.getPath());
-		fireBundleRemoved(gb);
-	}
-
-	public void remove(GhidraBundle gb) {
-		bp2gb.remove(gb.getPath());
-		bl2gb.remove(gb.getBundleLoc());
-		fireBundleRemoved(gb);
-	}
-
-	public void remove(Collection<GhidraBundle> gbundles) {
-		for (GhidraBundle gb : gbundles) {
-			bp2gb.remove(gb.getPath());
-			bl2gb.remove(gb.getBundleLoc());
-		}
-		fireBundlesRemoved(gbundles);
+		return new GhidraPlaceholderBundle(bundleHost, bundlePath, enabled, systemBundle);
 	}
 
 	/**
-	 * parse Import-Package string from a bundle manifest
+	 * stop the framework.
+	 */
+	public void dispose() {
+		stopFramework();
+	}
+
+	/**
+	 * If there is currently a bundle managed with path {@code bundlePath}, return its {@link GhidraBundle}, 
+	 * otherwise return {@code null}. 
 	 * 
-	 * @param imports Import-Package value
-	 * @return deduced requirements or null if there was an error
-	 * @throws BundleException on parse failure
+	 * @param bundlePath the bundlePath of the sought bundle
+	 * @return a {@link GhidraBundle} or {@code null}
 	 */
-	static List<BundleRequirement> parseImports(String imports) throws BundleException {
-		// parse it with Felix's ManifestParser to a list of BundleRequirement objects
-		Map<String, Object> headerMap = new HashMap<>();
-		headerMap.put(Constants.IMPORT_PACKAGE, imports);
-		ManifestParser mp;
-		mp = new ManifestParser(null, null, null, headerMap);
-		return mp.getRequirements();
+	public GhidraBundle getExistingGhidraBundle(ResourceFile bundlePath) {
+		GhidraBundle bundle = bundlePathToBundleMap.get(bundlePath);
+		if (bundle == null) {
+			Msg.showError(this, null, "ghidra bundle cache",
+				"getExistingGhidraBundle expected a GhidraBundle created at " + bundlePath +
+					" but none was found");
+		}
+		return bundle;
 	}
 
 	/**
-	 * cache of data corresponding to a source directory that is bound to be an exploded bundle
+	 * If a {@link GhidraBundle} hasn't already been added for {@bundlePath}, add it now as a 
+	 * non-system bundle.
+	 * 
+	 * Enable the bundle.
+	 * 
+	 * @param bundlePath the path to the bundle to (add and) enable
+	 * @return false if the bundle was already enabled
 	 */
-	public static class BuildFailure {
-		long when = -1;
-		StringBuilder message = new StringBuilder();
+	public boolean enablePath(ResourceFile bundlePath) {
+		GhidraBundle bundle = bundlePathToBundleMap.get(bundlePath);
+		if (bundle == null) {
+			bundle = add(bundlePath, true, false);
+			return true;
+		}
+		return enable(bundle);
 	}
 
-	String buildExtraPackages() {
-		Set<String> packages = new HashSet<>();
-		getPackagesFromClasspath(packages);
-		return packages.stream().collect(Collectors.joining(","));
+	/**
+	 * Enable a bundle and notify listeners.
+	 * 
+	 * @param bundle the bundle to enable
+	 * @return false if the bundle was already enabled
+	 */
+	public boolean enable(GhidraBundle bundle) {
+		if (!bundle.isEnabled()) {
+			bundle.setEnabled(true);
+			fireBundleEnablementChange(bundle, true);
+			return true;
+		}
+		return false;
 	}
 
-	BundleContext bc;
-	Framework felix;
-	Bundle fileinstall_bundle;
+	/**
+	 * Disable a bundle and notify listeners.
+	 * 
+	 * @param bundle the bundle to disable
+	 * @return true if the bundle was enabled
+	 */
+	public boolean disable(GhidraBundle bundle) {
+		if (bundle.isEnabled()) {
+			bundle.setEnabled(false);
+			fireBundleEnablementChange(bundle, false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Create a new GhidraBundle and add to the list of managed bundles
+	 * 
+	 * @param bundlePath the bundle's path
+	 * @param enabled if the new bundle should be enabled
+	 * @param systemBundle if the new bundle is a system bundle
+	 * @return a new GhidraBundle
+	 */
+	public GhidraBundle add(ResourceFile bundlePath, boolean enabled, boolean systemBundle) {
+		GhidraBundle bundle = newGhidraBundle(this, bundlePath, enabled, systemBundle);
+		bundlePathToBundleMap.put(bundlePath, bundle);
+		bundleLocationToBundleMap.put(bundle.getBundleLocation(), bundle);
+		fireBundleAdded(bundle);
+		return bundle;
+	}
+
+	/**
+	 * Create new GhidraBundles and add to the list of managed bundles.  All GhidraBundles created 
+	 * with the same {@code enabled} and {@code systemBundle} values. 
+	 * 
+	 * @param bundlePaths a list of bundle paths
+	 * @param enabled if the new bundle should be enabled
+	 * @param systemBundle if the new bundle is a system bundle
+	 */
+	public void add(List<ResourceFile> bundlePaths, boolean enabled, boolean systemBundle) {
+		Map<ResourceFile, GhidraBundle> newBundleMap = bundlePaths.stream()
+			.collect(Collectors.toUnmodifiableMap(Function.identity(),
+				bundlePath -> newGhidraBundle(BundleHost.this, bundlePath, enabled, systemBundle)));
+		bundlePathToBundleMap.putAll(newBundleMap);
+		bundleLocationToBundleMap.putAll(newBundleMap.values()
+			.stream()
+			.collect(
+				Collectors.toUnmodifiableMap(GhidraBundle::getBundleLocation, Function.identity())));
+		fireBundlesAdded(newBundleMap.values());
+	}
+
+	/**
+	 * Add bundles to the list of managed bundles.
+	 * 
+	 * @param bundles the bundles to add
+	 */
+	public void add(List<GhidraBundle> bundles) {
+		for (GhidraBundle bundle : bundles) {
+			bundlePathToBundleMap.put(bundle.getPath(), bundle);
+			bundleLocationToBundleMap.put(bundle.getBundleLocation(), bundle);
+		}
+		fireBundlesAdded(bundles);
+	}
+
+	/**
+	 * Remove a bundle from the list of managed bundles.
+	 * 
+	 * @param bundlePath the path of the bundle to remove
+	 */
+	public void removeBundlePath(ResourceFile bundlePath) {
+		GhidraBundle bundle = bundlePathToBundleMap.remove(bundlePath);
+		bundleLocationToBundleMap.remove(bundle.getBundleLocation());
+		fireBundleRemoved(bundle);
+	}
+
+	/**
+	 * Remove a bundle from the list of managed bundles.
+	 * 
+	 * @param bundleLocation the location id of the bundle to remove
+	 */
+	public void removeBundleLoc(String bundleLocation) {
+		GhidraBundle bundle = bundleLocationToBundleMap.remove(bundleLocation);
+		bundlePathToBundleMap.remove(bundle.getPath());
+		fireBundleRemoved(bundle);
+	}
+
+	/**
+	 * Remove a bundle from the list of managed bundles.
+	 * 
+	 * @param bundle the bundle to remove
+	 */
+	public void remove(GhidraBundle bundle) {
+		bundlePathToBundleMap.remove(bundle.getPath());
+		bundleLocationToBundleMap.remove(bundle.getBundleLocation());
+		fireBundleRemoved(bundle);
+	}
+
+	/**
+	 * Remove bundles from the list of managed bundles.
+	 * 
+	 * @param bundles the bundles to remove
+	 */
+	public void remove(Collection<GhidraBundle> bundles) {
+		for (GhidraBundle bundle : bundles) {
+			bundlePathToBundleMap.remove(bundle.getPath());
+			bundleLocationToBundleMap.remove(bundle.getBundleLocation());
+		}
+		fireBundlesRemoved(bundles);
+	}
 
 	Bundle installFromPath(Path p) throws GhidraBundleException {
 		return installFromLoc("file://" + p.toAbsolutePath().normalize().toString());
 	}
 
-	public Bundle installFromLoc(String bundle_loc) throws GhidraBundleException {
+	/**
+	 * Try to install a bundle.
+	 * 
+	 * 
+	 * @param bundle the bundle to install
+	 * @return the OSGi bundle returned by the framework
+	 * @throws GhidraBundleException when install fails
+	 */
+	public Bundle install(GhidraBundle bundle) throws GhidraBundleException {
 		try {
-			return bc.installBundle(bundle_loc);
+			return frameworkBundleContext.installBundle(bundle.getBundleLocation());
 		}
 		catch (BundleException e) {
-			throw new GhidraBundleException(bundle_loc, "installing from bundle location", e);
+			throw new GhidraBundleException(bundle.getBundleLocation(),
+				"installing from bundle location", e);
 		}
 	}
 
-	Bundle installAsLoc(String bundle_loc, InputStream contents) throws GhidraBundleException {
+	Bundle installFromLoc(String bundleLocation) throws GhidraBundleException {
 		try {
-			return bc.installBundle(bundle_loc, contents);
+			return frameworkBundleContext.installBundle(bundleLocation);
 		}
 		catch (BundleException e) {
-			throw new GhidraBundleException(bundle_loc, "installing as bundle location", e);
+			throw new GhidraBundleException(bundleLocation, "installing from bundle location", e);
 		}
+	}
+
+	Bundle installAsLoc(String bundleLocation, InputStream contents) throws GhidraBundleException {
+		try {
+			return frameworkBundleContext.installBundle(bundleLocation, contents);
+		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(bundleLocation, "installing as bundle location", e);
+		}
+	}
+
+	/** 
+	 * return all of the currently managed bundles
+	 *  
+	 * @return all the bundles
+	 */
+	public Collection<GhidraBundle> getGhidraBundles() {
+		return bundlePathToBundleMap.values();
+	}
+
+	/**
+	 * return paths of currently managed bundles
+	 * 
+	 * @return all the bundle paths
+	 */
+	public Collection<ResourceFile> getBundlePaths() {
+		return bundlePathToBundleMap.keySet();
 	}
 
 	void dumpLoadedBundles() {
 		System.err.printf("=== Bundles ===\n");
-		for (Bundle bundle : bc.getBundles()) {
+		for (Bundle bundle : frameworkBundleContext.getBundles()) {
 			System.err.printf("%s: %s: %s: %s\n", bundle.getBundleId(), bundle.getSymbolicName(),
 				bundle.getState(), bundle.getVersion());
 		}
@@ -237,9 +325,9 @@ public class BundleHost {
 	public List<BundleWiring> resolve(List<BundleRequirement> reqs) {
 		// enumerate active bundles, looking for capabilities meeting our requirements
 		List<BundleWiring> bundleWirings = new ArrayList<>();
-		for (Bundle b : bc.getBundles()) {
-			if (b.getState() == Bundle.ACTIVE) {
-				BundleWiring bw = b.adapt(BundleWiring.class);
+		for (Bundle bundle : frameworkBundleContext.getBundles()) {
+			if (bundle.getState() == Bundle.ACTIVE) {
+				BundleWiring bw = bundle.adapt(BundleWiring.class);
 				boolean keeper = false;
 				for (BundleCapability cap : bw.getCapabilities(null)) {
 					Iterator<BundleRequirement> it = reqs.iterator();
@@ -259,68 +347,70 @@ public class BundleHost {
 		return bundleWirings;
 	}
 
-	public boolean canResolveAll(Collection<BundleRequirement> reqs) {
-		LinkedList<BundleRequirement> tmp = new LinkedList<>(reqs);
-		resolve(tmp);
-		return tmp.isEmpty();
+	/**
+	 * Attempt to resolve {@code requirements} against the currently active bundles.
+	 * 
+	 * @param requirements a list of {@link BundleRequirement} objects
+	 * @return true if all of the requiremetns can be resolved
+	 */
+	public boolean canResolveAll(Collection<BundleRequirement> requirements) {
+		LinkedList<BundleRequirement> tmpRequirements = new LinkedList<>(requirements);
+		resolve(tmpRequirements);
+		return tmpRequirements.isEmpty();
 	}
 
-	class FelixStderrLogger extends org.apache.felix.framework.Logger {
+	private class FelixStderrLogger extends Logger {
 		@Override
-		protected void doLog(int level, String msg, Throwable throwable) {
-			System.err.printf("felixlogger: %s %s\n", msg, throwable);
+		protected void doLog(int level, String message, Throwable throwable) {
+			System.err.printf("felixlogger: %s %s\n", message, throwable);
 		}
 
 		@Override
-		protected void doLogOut(int level, String msg, Throwable throwable) {
-			System.err.printf("felixlogger: %s %s\n", msg, throwable);
+		protected void doLogOut(int level, String message, Throwable throwable) {
+			System.err.printf("felixlogger: %s %s\n", message, throwable);
 		}
 
 		@SuppressWarnings("rawtypes")
 
 		@Override
 		protected void doLog(final Bundle bundle, final ServiceReference sr, final int level,
-				final String msg, final Throwable throwable) {
-			System.err.printf("felixlogger: %s %s %s\n", bundle, msg, throwable);
+				final String message, final Throwable throwable) {
+			System.err.printf("felixlogger: %s %s %s\n", bundle, message, throwable);
 		}
 
 	}
 
-	static String getEventTypeString(BundleEvent e) {
-		switch (e.getType()) {
-			case BundleEvent.INSTALLED:
-				return "INSTALLED";
-			case BundleEvent.RESOLVED:
-				return "RESOLVED";
-			case BundleEvent.LAZY_ACTIVATION:
-				return "LAZY_ACTIVATION";
-			case BundleEvent.STARTING:
-				return "STARTING";
-			case BundleEvent.STARTED:
-				return "STARTED";
-			case BundleEvent.STOPPING:
-				return "STOPPING";
-			case BundleEvent.STOPPED:
-				return "STOPPED";
-			case BundleEvent.UPDATED:
-				return "UPDATED";
-			case BundleEvent.UNRESOLVED:
-				return "UNRESOLVED";
-			case BundleEvent.UNINSTALLED:
-				return "UNINSTALLED";
-			default:
-				return "???";
-		}
+	protected String buildExtraSystemPackages() {
+		Set<String> packages = new HashSet<>();
+		OSGiUtils.getPackagesFromClasspath(packages);
+		return packages.stream().collect(Collectors.joining(","));
 	}
 
 	/**
-	 * start the framework
+	 * A subdirectory of the user settings directory for storing OSGi artifacts.
 	 * 
-	 * @throws OSGiException framework failures
-	 * @throws IOException filesystem setup
+	 * @return the path
 	 */
-	public void startFramework() throws OSGiException, IOException {
+	public static Path getOsgiDir() {
+		Path usersettings = Application.getUserSettingsDirectory().toPath();
+		return usersettings.resolve("osgi");
+	}
 
+	/**
+	 * A directory for use by Felix as a cache
+	 * @return the directory
+	 */
+	protected static Path getCacheDir() {
+		return BundleHost.getOsgiDir().resolve("felixcache");
+	}
+
+	private static String makeCacheDir() throws IOException {
+		Path cacheDir = getCacheDir();
+		Files.createDirectories(cacheDir);
+		return cacheDir.toAbsolutePath().toString();
+	}
+
+	protected void createAndConfigureFramework() throws IOException {
 		Properties config = new Properties();
 
 		// allow multiple bundles w/ the same symbolic name -- location can distinguish
@@ -330,7 +420,7 @@ public class BundleHost {
 
 		// compute and add everything in the class path.  extra packages have lower precedence than imports,
 		// so an Import-Package / @importpackage will override the "living off the land" default
-		config.setProperty(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, buildExtraPackages());
+		config.setProperty(Constants.FRAMEWORK_SYSTEMPACKAGES_EXTRA, buildExtraSystemPackages());
 
 		// only clean on first startup, o/w keep our storage around
 		config.setProperty(Constants.FRAMEWORK_STORAGE_CLEAN,
@@ -340,97 +430,80 @@ public class BundleHost {
 		config.setProperty(Constants.FRAMEWORK_STORAGE, makeCacheDir());
 
 		config.put(FelixConstants.LOG_LEVEL_PROP, "1");
-		if (DUMP_TO_STDERR) {
+		if (STDERR_DEBUGGING) {
 			config.put(FelixConstants.LOG_LEVEL_PROP, "999");
 			config.put(FelixConstants.LOG_LOGGER_PROP, new FelixStderrLogger());
 		}
 
 		FrameworkFactory factory = new FrameworkFactory();
-		felix = factory.newFramework(config);
+		felixFramework = factory.newFramework(config);
+	}
 
-		try {
-			felix.init();
-		}
-		catch (BundleException e) {
-			throw new OSGiException("initializing felix OSGi framework", e);
-		}
-		bc = felix.getBundleContext();
+	protected void addDebuggingListeners() {
+		frameworkBundleContext.addFrameworkListener(new FrameworkListener() {
+			@Override
+			public void frameworkEvent(FrameworkEvent event) {
+				System.err.printf("%s %s\n", event.getBundle(), event);
+			}
+		});
+		frameworkBundleContext.addServiceListener(new ServiceListener() {
+			@Override
+			public void serviceChanged(ServiceEvent event) {
 
-		ServiceReference<LogReaderService> ref = bc.getServiceReference(LogReaderService.class);
-		if (ref != null) {
-			LogReaderService reader = bc.getService(ref);
-			reader.addLogListener(new LogListener() {
-
-				@Override
-				public void logged(LogEntry entry) {
-					// plugin.printf("%s: %s\n", entry.getBundle(), entry.getMessage());
+				String type = "?";
+				if (event.getType() == ServiceEvent.REGISTERED) {
+					type = "registered";
 				}
-			});
-		}
-		else {
-			// plugin.printf("no logreaderservice in felix!\n");
-		}
-
-		if (DUMP_TO_STDERR) {
-			bc.addFrameworkListener(new FrameworkListener() {
-				@Override
-				public void frameworkEvent(FrameworkEvent event) {
-					System.err.printf("%s %s\n", event.getBundle(), event);
+				else if (event.getType() == ServiceEvent.UNREGISTERING) {
+					type = "unregistering";
 				}
-			});
-			bc.addServiceListener(new ServiceListener() {
-				@Override
-				public void serviceChanged(ServiceEvent event) {
 
-					String type = "?";
-					if (event.getType() == ServiceEvent.REGISTERED) {
-						type = "registered";
-					}
-					else if (event.getType() == ServiceEvent.UNREGISTERING) {
-						type = "unregistering";
-					}
+				System.err.printf("%s %s from %s\n", event.getSource(), type,
+					event.getServiceReference().getBundle().getLocation());
 
-					System.err.printf("%s %s from %s\n", event.getSource(), type,
-						event.getServiceReference().getBundle().getLocation());
+			}
+		});
+	}
 
-				}
-			});
-		}
-
-		final Bundle systemBundle = bc.getBundle();
-		bc.addBundleListener(new BundleListener() {
+	/**
+	 * add the {@code BundleListener} that notifies listeners of bundle activation changes
+	 */
+	protected void addBundleListener() {
+		final Bundle systemBundle = frameworkBundleContext.getBundle();
+		frameworkBundleContext.addBundleListener(new BundleListener() {
 			@Override
 			public void bundleChanged(BundleEvent event) {
-				Bundle b = event.getBundle();
+				Bundle osgiBundle = event.getBundle();
 
-				if (b == systemBundle) {
+				// ignore events on the system bundle
+				if (osgiBundle == systemBundle) {
 					return;
 				}
-				if (DUMP_TO_STDERR) {
-					String n = b.getSymbolicName();
-					String l = b.getLocation();
-					System.err.printf("%s %s from %s\n", getEventTypeString(event), n, l);
+				if (STDERR_DEBUGGING) {
+					String n = osgiBundle.getSymbolicName();
+					String l = osgiBundle.getLocation();
+					System.err.printf("%s %s from %s\n", OSGiUtils.getEventTypeString(event), n, l);
 				}
-				GhidraBundle gb;
+				GhidraBundle bundle;
 				switch (event.getType()) {
 					case BundleEvent.STARTED:
-						gb = bl2gb.get(b.getLocation());
-						if (gb != null) {
-							fireBundleActivationChange(gb, true);
+						bundle = bundleLocationToBundleMap.get(osgiBundle.getLocation());
+						if (bundle != null) {
+							fireBundleActivationChange(bundle, true);
 						}
 						else {
-							Msg.error(this,
-								String.format("not a GhidraBundle: %s\n", b.getLocation()));
+							Msg.error(this, String.format("not a GhidraBundle: %s\n",
+								osgiBundle.getLocation()));
 						}
 						break;
 					case BundleEvent.UNINSTALLED:
-						gb = bl2gb.get(b.getLocation());
-						if (gb != null) {
-							fireBundleActivationChange(gb, false);
+						bundle = bundleLocationToBundleMap.get(osgiBundle.getLocation());
+						if (bundle != null) {
+							fireBundleActivationChange(bundle, false);
 						}
 						else {
-							Msg.error(this,
-								String.format("not a GhidraBundle: %s\n", b.getLocation()));
+							Msg.error(this, String.format("not a GhidraBundle: %s\n",
+								osgiBundle.getLocation()));
 						}
 						break;
 					default:
@@ -438,113 +511,48 @@ public class BundleHost {
 				}
 			}
 		});
+	}
+
+	/**
+	 * start the framework
+	 * 
+	 * @throws OSGiException framework failures
+	 * @throws IOException filesystem setup
+	 */
+	public void startFramework() throws OSGiException, IOException {
+		createAndConfigureFramework();
 
 		try {
-			felix.start();
+			felixFramework.init();
+		}
+		catch (BundleException e) {
+			throw new OSGiException("initializing felix OSGi framework", e);
+		}
+		frameworkBundleContext = felixFramework.getBundleContext();
+
+		if (STDERR_DEBUGGING) {
+			addDebuggingListeners();
+		}
+
+		addBundleListener();
+
+		try {
+			felixFramework.start();
 		}
 		catch (BundleException e) {
 			throw new OSGiException("starting felix OSGi framework", e);
 		}
 	}
 
-	public static Path getCompiledBundlesDir() {
-		return getOsgiDir().resolve("compiled-bundles");
-	}
-
-	public static Path getOsgiDir() {
-		Path usersettings = Application.getUserSettingsDirectory().toPath();
-		return usersettings.resolve("osgi");
-	}
-
-	static public Path getCacheDir() {
-		return BundleHost.getOsgiDir().resolve("felixcache");
-	}
-
-	private String makeCacheDir() throws IOException {
-		Path cache_dir = getCacheDir();
-		Files.createDirectories(cache_dir);
-		return cache_dir.toAbsolutePath().toString();
-	}
-
-	public Bundle getBundle(String bundleLoc) {
-		return bc.getBundle(bundleLoc);
-	}
-
-	static private boolean oneOf(Bundle b, int... bundle_states) {
-		Integer s = b.getState();
-		return IntStream.of(bundle_states).anyMatch(s::equals);
-	}
-
-	static private void waitFor(Bundle b, int... bundle_states) throws InterruptedException {
-		while (true) {
-			if (oneOf(b, bundle_states)) {
-				return;
-			}
-			Thread.sleep(500);
-		}
-	}
-
-	public void activateSynchronously(Bundle b) throws InterruptedException, GhidraBundleException {
-		if (b.getState() == Bundle.ACTIVE) {
-			return;
-		}
-		try {
-			b.start();
-		}
-		catch (BundleException e) {
-			GhidraBundleException gbe = new GhidraBundleException(b, "activating bundle", e);
-			fireBundleException(gbe);
-			throw gbe;
-		}
-		waitFor(b, Bundle.ACTIVE);
-	}
-
-	public void activateSynchronously(String bundleLoc)
-			throws GhidraBundleException, InterruptedException {
-		Bundle bundle = getBundle(bundleLoc);
-		if (bundle == null) {
-			bundle = installFromLoc(bundleLoc);
-		}
-		activateSynchronously(bundle);
-	}
-
-	public void deactivateSynchronously(Bundle b)
-			throws InterruptedException, GhidraBundleException {
-		if (b.getState() == Bundle.UNINSTALLED) {
-			return;
-		}
-		FrameworkWiring fw = felix.adapt(FrameworkWiring.class);
-		LinkedList<Bundle> dependents =
-			new LinkedList<Bundle>(fw.getDependencyClosure(Collections.singleton(b)));
-		while (!dependents.isEmpty()) {
-			b = dependents.pop();
+	/**
+	 * stop the OSGi framework synchronously
+	 */
+	protected void stopFramework() {
+		if (felixFramework != null) {
 			try {
-				b.uninstall();
-				fw.refreshBundles(dependents);
-			}
-			catch (BundleException e) {
-				GhidraBundleException gbe = new GhidraBundleException(b, "deactivating bundle", e);
-				fireBundleException(gbe);
-				throw gbe;
-			}
-			waitFor(b, Bundle.UNINSTALLED);
-		}
-	}
-
-	public void deactivateSynchronously(String bundleLoc)
-			throws GhidraBundleException, InterruptedException {
-		Bundle b = getBundle(bundleLoc);
-		if (b != null) {
-			deactivateSynchronously(b);
-		}
-	}
-
-	void disposeFramework() {
-		if (felix != null) {
-			try {
-				felix.stop();
-				felix.waitForStop(5000);
-				felix = null;
+				felixFramework.stop();
+				felixFramework.waitForStop(5000);
+				felixFramework = null;
 			}
 			catch (BundleException | InterruptedException e) {
 				e.printStackTrace();
@@ -552,128 +560,213 @@ public class BundleHost {
 		}
 	}
 
-	void forceStopFrameworkTask() {
-		Task t = new Task("killing OSGi framework", false, false, true, true) {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				disposeFramework();
+	/**
+	 * @return the OSGi framework
+	 */
+	Framework getHostFramework() {
+		return felixFramework;
+	}
+
+	/**
+	 * Get the OSGi bundle with the given bundle location identifier.
+	 * 
+	 * @param bundleLocation the bundle location identifier
+	 * @return the OSGi bundle or null
+	 */
+	Bundle getOSGiBundle(String bundleLocation) {
+		return frameworkBundleContext.getBundle(bundleLocation);
+	}
+
+	private static boolean anyMatch(Bundle bundle, int... bundleStates) {
+		Integer s = bundle.getState();
+		return IntStream.of(bundleStates).anyMatch(s::equals);
+	}
+
+	private static void waitFor(Bundle bundle, int... bundleStates) throws InterruptedException {
+		while (true) {
+			if (anyMatch(bundle, bundleStates)) {
+				return;
 			}
-
-		};
-		new TaskLauncher(t, null);
-	}
-
-	public Framework getHostFramework() {
-		return felix;
-	}
-
-	// from https://dzone.com/articles/locate-jar-classpath-given
-	static String findJarForClass(Class<?> c) {
-		final URL location;
-		final String classLocation = c.getName().replace('.', '/') + ".class";
-		final ClassLoader loader = c.getClassLoader();
-		if (loader == null) {
-			location = ClassLoader.getSystemResource(classLocation);
+			Thread.sleep(500);
 		}
-		else {
-			location = loader.getResource(classLocation);
+	}
+
+	/**
+	 * Activate a bundle, returning only after the bundle is active.
+	 * 
+	 * @param bundle the bundle
+	 * @throws InterruptedException if the wait is interrupted
+	 * @throws GhidraBundleException if there's a problem activating
+	 */
+	public void activateSynchronously(Bundle bundle)
+			throws InterruptedException, GhidraBundleException {
+		if (bundle.getState() == Bundle.ACTIVE) {
+			return;
 		}
-		if (location != null) {
-			Pattern p = Pattern.compile("^.*:(.*)!.*$");
-			Matcher m = p.matcher(location.toString());
-			if (m.find()) {
-				return m.group(1);
-			}
-			return null; // not loaded from jar?
-		}
-		return null;
-	}
-
-	static void getPackagesFromClasspath(Set<String> s) {
-		getClasspathElements().forEach(p -> {
-			if (Files.isDirectory(p)) {
-				collectPackagesFromDirectory(p, s);
-			}
-			else if (p.toString().endsWith(".jar")) {
-				collectPackagesFromJar(p, s);
-			}
-		});
-	}
-
-	static Stream<Path> getClasspathElements() {
-		String classpathStr = System.getProperty("java.class.path");
-		return Collections.list(new StringTokenizer(classpathStr, File.pathSeparator)).stream().map(
-			String.class::cast).map(Paths::get).map(Path::normalize);
-	}
-
-	static void collectPackagesFromDirectory(Path dirPath, Set<String> s) {
 		try {
-			Files.walk(dirPath).filter(p -> p.toString().endsWith(".class")).forEach(p -> {
-				String n = dirPath.relativize(p).toString();
-				int lastSlash = n.lastIndexOf(File.separatorChar);
-				s.add(lastSlash > 0 ? n.substring(0, lastSlash).replace(File.separatorChar, '.')
-						: "");
-			});
-
+			bundle.start();
 		}
-		catch (IOException e) {
-			e.printStackTrace();
+		catch (BundleException e) {
+			GhidraBundleException gbe = new GhidraBundleException(bundle, "activating bundle", e);
+			fireBundleException(gbe);
+			throw gbe;
+		}
+		waitFor(bundle, Bundle.ACTIVE);
+	}
+
+	/**
+	 * Activate a bundle, returning only after the bundle is active.
+	 * 
+	 * @param bundleLocation the bundle location identifier
+	 * @throws InterruptedException if the wait is interrupted
+	 * @throws GhidraBundleException if there's a problem activating
+	 */
+	public void activateSynchronously(String bundleLocation)
+			throws GhidraBundleException, InterruptedException {
+		Bundle bundle = getOSGiBundle(bundleLocation);
+		if (bundle == null) {
+			bundle = installFromLoc(bundleLocation);
+		}
+		activateSynchronously(bundle);
+	}
+
+	/**
+	 * Deactivate a bundle, returning only after the bundle is inactive.
+	 * 
+	 * @param bundle the bundle
+	 * @throws InterruptedException if the wait is interrupted
+	 * @throws GhidraBundleException if there's a problem activating
+	 */
+	public void deactivateSynchronously(Bundle bundle)
+			throws InterruptedException, GhidraBundleException {
+		if (bundle.getState() == Bundle.UNINSTALLED) {
+			return;
+		}
+		FrameworkWiring frameworkWiring = felixFramework.adapt(FrameworkWiring.class);
+		LinkedList<Bundle> dependentBundles = new LinkedList<Bundle>(
+			frameworkWiring.getDependencyClosure(Collections.singleton(bundle)));
+		while (!dependentBundles.isEmpty()) {
+			Bundle dependentBundle = dependentBundles.pop();
+			try {
+				dependentBundle.uninstall();
+				frameworkWiring.refreshBundles(dependentBundles);
+			}
+			catch (BundleException e) {
+				GhidraBundleException exception =
+					new GhidraBundleException(dependentBundle, "deactivating bundle", e);
+				fireBundleException(exception);
+				throw exception;
+			}
+			waitFor(dependentBundle, Bundle.UNINSTALLED);
 		}
 	}
 
-	static void collectPackagesFromJar(Path jarPath, Set<String> s) {
-		try {
-			try (JarFile j = new JarFile(jarPath.toFile())) {
-				j.stream().filter(je -> je.getName().endsWith(".class")).forEach(je -> {
-					String n = je.getName();
-					int lastSlash = n.lastIndexOf('/');
-					s.add(lastSlash > 0 ? n.substring(0, lastSlash).replace('/', '.') : "");
-				});
+	/**
+	 * Deactivate a bundle, returning only after the bundle is inactive.
+	 * 
+	 * @param bundleLocation the bundle location identifier
+	 * @throws InterruptedException if the wait is interrupted
+	 * @throws GhidraBundleException if there's a problem activating
+	 */
+	public void deactivateSynchronously(String bundleLocation)
+			throws GhidraBundleException, InterruptedException {
+		Bundle bundle = getOSGiBundle(bundleLocation);
+		if (bundle != null) {
+			deactivateSynchronously(bundle);
+		}
+	}
+
+	/**
+	 * Remove a listener for OSGi framework events.
+	 * 
+	 * @param bundleHostListener the listener
+	 */
+	public void removeListener(BundleHostListener bundleHostListener) {
+		synchronized (listeners) {
+			listeners.remove(bundleHostListener);
+		}
+	}
+
+	protected void activateAll(Collection<GhidraBundle> bundles, TaskMonitor monitor,
+			PrintWriter console) {
+		List<GhidraBundle> bundlesRemaining = new ArrayList<>(bundles);
+	
+		monitor.setMaximum(bundlesRemaining.size());
+		while (!bundlesRemaining.isEmpty() && !monitor.isCancelled()) {
+			List<GhidraBundle> resolvableBundles = bundlesRemaining.stream()
+				.filter(bundle -> canResolveAll(bundle.getAllRequirements()))
+				.collect(Collectors.toList());
+			if (resolvableBundles.isEmpty()) {
+				// final round, try everything we couldn't resolve to generate errors
+				resolvableBundles = bundlesRemaining;
+				bundlesRemaining = Collections.emptyList();
+			}
+			else {
+				bundlesRemaining.removeAll(resolvableBundles);
+			}
+	
+			for (GhidraBundle bundle : resolvableBundles) {
+				if (monitor.isCancelled()) {
+					break;
+				}
+				try {
+					bundle.build(console);
+					activateSynchronously(bundle.getBundleLocation());
+				}
+				catch (Exception e) {
+					e.printStackTrace(console);
+				}
+				monitor.incrementProgress(1);
 			}
 		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
-	List<BundleHostListener> listeners = new ArrayList<>();
+	/**
+	 * Used by {@link GhidraBundle}s to notify the host that a bundle has been built.
+	 * 
+	 * @param bundle the bundle that was built
+	 * @param summary a summary of anything notable (errors or warnings) during the build
+	 */
+	void notifyBundleBuilt(GhidraBundle bundle, String summary) {
+		fireBundleBuilt(bundle, summary);
+	}
 
-	void fireBundleBuilt(GhidraBundle gb, String summary) {
+	private void fireBundleBuilt(GhidraBundle bundle, String summary) {
 		synchronized (listeners) {
 			for (BundleHostListener l : listeners) {
-				l.bundleBuilt(gb, summary);
+				l.bundleBuilt(bundle, summary);
 			}
 		}
 	}
 
-	void fireBundleEnablementChange(GhidraBundle gb, boolean newEnablement) {
+	private void fireBundleEnablementChange(GhidraBundle bundle, boolean newEnablement) {
 		synchronized (listeners) {
 			for (BundleHostListener l : listeners) {
-				l.bundleEnablementChange(gb, newEnablement);
+				l.bundleEnablementChange(bundle, newEnablement);
 			}
 		}
 	}
 
-	void fireBundleActivationChange(GhidraBundle gb, boolean newEnablement) {
+	private void fireBundleActivationChange(GhidraBundle bundle, boolean newEnablement) {
 		synchronized (listeners) {
 			for (BundleHostListener l : listeners) {
-				l.bundleActivationChange(gb, newEnablement);
+				l.bundleActivationChange(bundle, newEnablement);
 			}
 		}
 	}
 
-	private void fireBundleAdded(GhidraBundle gb) {
+	private void fireBundleAdded(GhidraBundle bundle) {
 		synchronized (listeners) {
 			for (BundleHostListener l : listeners) {
-				l.bundleAdded(gb);
+				l.bundleAdded(bundle);
 			}
 		}
 	}
 
-	private void fireBundleRemoved(GhidraBundle gb) {
+	private void fireBundleRemoved(GhidraBundle bundle) {
 		synchronized (listeners) {
 			for (BundleHostListener l : listeners) {
-				l.bundleRemoved(gb);
+				l.bundleRemoved(bundle);
 			}
 		}
 	}
@@ -702,140 +795,106 @@ public class BundleHost {
 		}
 	}
 
+	/**
+	 * Add a listener for OSGi framework events.
+	 * 
+	 * @param bundleHostListener the listener
+	 */
 	public void addListener(BundleHostListener bundleHostListener) {
 		synchronized (listeners) {
 			listeners.add(bundleHostListener);
 		}
 	}
 
-	public void removeListener(BundleHostListener bundleHostListener) {
-		synchronized (listeners) {
-			listeners.remove(bundleHostListener);
-		}
-	}
-
-	public void removeAllListeners() {
-		synchronized (listeners) {
-			listeners.clear();
-		}
-	}
-
-	public Collection<GhidraBundle> getGhidraBundles() {
-		return bp2gb.values();
-	}
-
-	public Collection<ResourceFile> getBundlePaths() {
-		return bp2gb.keySet();
-	}
-
-	/*
-	 * this is done at most once, and it's done AFTER system bundles have been added.
-	 */
-	public void restoreStateAndActivate(SaveState ss, PluginTool tool) {
-		// XXX lock bundlehost operations
-		String[] pathArr = ss.getStrings("BundleHost_PATH", new String[0]);
-
-		if (pathArr.length == 0) {
-			return;
-		}
-
-		boolean[] enableArr = ss.getBooleans("BundleHost_ENABLE", new boolean[pathArr.length]);
-		boolean[] activeArr = ss.getBooleans("BundleHost_ACTIVE", new boolean[pathArr.length]);
-		boolean[] systemArr = ss.getBooleans("BundleHost_SYSTEM", new boolean[pathArr.length]);
-
-		List<GhidraBundle> added = new ArrayList<>();
-		List<GhidraBundle> need_activation = new ArrayList<>();
-		for (int i = 0; i < pathArr.length; i++) {
-
-			ResourceFile bp = generic.util.Path.fromPathString(pathArr[i]);
-			boolean en = enableArr[i];
-			boolean act = activeArr[i];
-			boolean sys = systemArr[i];
-			GhidraBundle gb = bp2gb.get(bp);
-			if (gb != null) {
-				if (en != gb.isEnabled()) {
-					gb.setEnabled(en);
-					fireBundleEnablementChange(gb, en);
+	private void startActivateAllTask(Collection<GhidraBundle> bundlesToActivate) {
+		if (!bundlesToActivate.isEmpty()) {
+			new TaskLauncher(new Task("restoring bundle state", true, true, false) {
+				@Override
+				public void run(TaskMonitor monitor) throws CancelledException {
+					activateAll(bundlesToActivate, monitor, new NullPrintWriter());
 				}
-				if (sys != gb.isSystemBundle()) {
-					gb.systemBundle = sys;
-					Msg.error(this, String.format("%s went from %system to %system", bp,
-						sys ? "not " : "", sys ? "" : "not "));
+			});
+		}
+	}
+
+	/**
+	 * Restore the list of managed bundles from {@code saveState} and each bundle's state.
+	 * 
+	 * Bundles that had been active are reactivated.
+	 * 
+	 * note: This is done once on startup, AFTER system bundles have been added.
+	 * 
+	 * @param saveState the state object
+	 * @param tool the tool
+	 */
+	public void restoreManagedBundleState(SaveState saveState, PluginTool tool) {
+		String[] bundlePaths = saveState.getStrings(saveStateTagPath, new String[0]);
+
+		boolean[] bundleIsEnabled =
+			saveState.getBooleans(saveStateTagEnabled, new boolean[bundlePaths.length]);
+		boolean[] bundleIsActive =
+			saveState.getBooleans(saveStateTagActive, new boolean[bundlePaths.length]);
+		boolean[] bundleIsSystem =
+			saveState.getBooleans(saveStateTagSystem, new boolean[bundlePaths.length]);
+
+		List<GhidraBundle> newBundles = new ArrayList<>();
+		List<GhidraBundle> bundlesToActivate = new ArrayList<>();
+		for (int i = 0; i < bundlePaths.length; i++) {
+			ResourceFile bundlePath = generic.util.Path.fromPathString(bundlePaths[i]);
+			boolean isEnabled = bundleIsEnabled[i];
+			boolean isActive = bundleIsActive[i];
+			boolean isSystem = bundleIsSystem[i];
+			GhidraBundle bundle = bundlePathToBundleMap.get(bundlePath);
+			if (bundle != null) {
+				if (isEnabled != bundle.isEnabled()) {
+					bundle.setEnabled(isEnabled);
+					fireBundleEnablementChange(bundle, isEnabled);
+				}
+				if (isSystem != bundle.isSystemBundle()) {
+					bundle.systemBundle = isSystem;
+					Msg.error(this, String.format("%s went from %system to %system", bundlePath,
+						isSystem ? "not " : "", isSystem ? "" : "not "));
 				}
 			}
-			else if (sys) {
+			else if (isSystem) {
 				// stored system bundles that weren't already initialized must be old, drop 'm.
 			}
 			else {
-				added.add(gb = newGhidraBundle(this, bp, en, sys));
+				newBundles.add(bundle = newGhidraBundle(this, bundlePath, isEnabled, isSystem));
 			}
-			if (gb != null && act) {
-				need_activation.add(gb);
+			if (bundle != null && isActive) {
+				bundlesToActivate.add(bundle);
 			}
 		}
-		add(added);
-
-		new TaskLauncher(new Task("restoring bundle state", true, true, false) {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				activateAll(need_activation, monitor, new NullPrintWriter());
-			}
-		});
+		add(newBundles);
+		startActivateAllTask(bundlesToActivate);
 	}
 
-	public void saveState(SaveState ss) {
-		int n = bp2gb.size();
-		String[] pathArr = new String[n];
-		boolean[] enableArr = new boolean[n];
-		boolean[] activeArr = new boolean[n];
-		boolean[] systemArr = new boolean[n];
+	/**
+	 * Save the list of managed bundles and each bundle's state.
+	 * 
+	 * @param saveState the state object
+	 */
+	public void saveManagedBundleState(SaveState saveState) {
+		int numBundles = bundlePathToBundleMap.size();
+		String[] bundlePaths = new String[numBundles];
+		boolean[] bundleIsEnabled = new boolean[numBundles];
+		boolean[] bundleIsActive = new boolean[numBundles];
+		boolean[] bundleIsSystem = new boolean[numBundles];
 
 		int index = 0;
-		for (Entry<ResourceFile, GhidraBundle> e : bp2gb.entrySet()) {
-			GhidraBundle gb = e.getValue();
-			pathArr[index] = generic.util.Path.toPathString(gb.getPath());
-			enableArr[index] = gb.isEnabled();
-			activeArr[index] = gb.isActive();
-			systemArr[index] = gb.isSystemBundle();
+		for (GhidraBundle bundle : bundlePathToBundleMap.values()) {
+			bundlePaths[index] = generic.util.Path.toPathString(bundle.getPath());
+			bundleIsEnabled[index] = bundle.isEnabled();
+			bundleIsActive[index] = bundle.isActive();
+			bundleIsSystem[index] = bundle.isSystemBundle();
 			++index;
 		}
 
-		ss.putStrings("BundleHost_PATH", pathArr);
-		ss.putBooleans("BundleHost_ENABLE", enableArr);
-		ss.putBooleans("BundleHost_ACTIVE", activeArr);
-		ss.putBooleans("BundleHost_SYSTEM", systemArr);
-	}
-
-	protected void activateAll(List<GhidraBundle> gbs, TaskMonitor monitor, PrintWriter console) {
-
-		monitor.setMaximum(gbs.size());
-		while (!gbs.isEmpty() && !monitor.isCancelled()) {
-			List<GhidraBundle> l =
-				gbs.stream().filter(gb -> canResolveAll(gb.getAllReqs())).collect(
-					Collectors.toList());
-			if (l.isEmpty()) {
-				// final round
-				l = gbs;
-				gbs = Collections.emptyList();
-			}
-			else {
-				gbs.removeAll(l);
-			}
-
-			for (GhidraBundle gb : l) {
-				if (monitor.isCancelled()) {
-					break;
-				}
-				try {
-					gb.build(console);
-					activateSynchronously(gb.getBundleLoc());
-				}
-				catch (Exception e) {
-					e.printStackTrace(console);
-				}
-				monitor.incrementProgress(1);
-			}
-		}
+		saveState.putStrings(saveStateTagPath, bundlePaths);
+		saveState.putBooleans(saveStateTagEnabled, bundleIsEnabled);
+		saveState.putBooleans(saveStateTagActive, bundleIsActive);
+		saveState.putBooleans(saveStateTagSystem, bundleIsSystem);
 	}
 
 }

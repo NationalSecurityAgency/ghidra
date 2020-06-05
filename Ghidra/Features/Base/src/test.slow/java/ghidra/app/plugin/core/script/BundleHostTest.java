@@ -55,7 +55,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		tmpdirs.add(tmpDir);
 
 		ResourceFile rp = new ResourceFile(tmpDir.toFile());
-		current_gb = bundleHost.addGhidraBundle(rp, true, false);
+		current_gb = bundleHost.add(rp, true, false);
 		gbstack.push(current_gb);
 		return current_gb;
 	}
@@ -71,7 +71,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Before
 	public void setup() throws OSGiException, IOException {
-		wipe(BundleHost.getCompiledBundlesDir());
+		wipe(GhidraSourceBundle.getCompiledBundlesDir());
 
 		bundleHost = new BundleHost();
 		bundleHost.startFramework();
@@ -106,7 +106,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	protected void activate() throws Exception {
-		Bundle bundle = bundleHost.installFromLoc(current_gb.getBundleLoc());
+		Bundle bundle = bundleHost.install(current_gb);
 		assertNotNull("failed to install bundle", bundle);
 		bundle.start();
 	}
@@ -117,7 +117,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	protected Class<?> loadClass(String classname) throws ClassNotFoundException {
-		Class<?> clazz = current_gb.getBundle().loadClass(classname);
+		Class<?> clazz = current_gb.getOSGiBundle().loadClass(classname);
 		assertNotNull("failed to load class", clazz);
 		return clazz;
 	}
@@ -313,7 +313,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		
 		pushNewBundle();
-		// @imports tag is only parsed from classes in default package
+		// @importpackages tag is only parsed from classes in default package
 		addClass(
 			"//@importpackage lib\n"
 			,

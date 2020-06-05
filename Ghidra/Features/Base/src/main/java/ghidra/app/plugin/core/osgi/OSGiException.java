@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 package ghidra.app.plugin.core.osgi;
+
 import ghidra.util.exception.UsrException;
 
-
 public class OSGiException extends UsrException {
-	public OSGiException(String msg, Throwable cause) {
-		super(msg, cause);
+	/**
+	 * Wrapper for exceptions originating with an OSGi operation.
+	 * 
+	 * @param message a contextual message
+	 * @param cause the original exception
+	 */
+	public OSGiException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
-	public OSGiException(String msg) {
-		super(msg);
+	/**
+	 * Wrapper for exceptions originating with an OSGi operation.
+	 * 
+	 * @param message a contextual message
+	 */
+	public OSGiException(String message) {
+		super(message);
 	}
 }

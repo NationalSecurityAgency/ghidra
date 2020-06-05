@@ -19,18 +19,18 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 public abstract class GhidraBundleActivator implements BundleActivator {
-	protected abstract void start(BundleContext bc, Object api);
+	protected abstract void start(BundleContext bundleContext, Object api);
 
-	protected abstract void stop(BundleContext bc, Object api);
+	protected abstract void stop(BundleContext bundleContext, Object api);
 
 	@Override
-	final public void start(BundleContext bc) throws Exception {
-		start(bc, null);
+	public final void start(BundleContext bundleContext) throws Exception {
+		start(bundleContext, null);
 	}
 
 	@Override
-	final public void stop(BundleContext bc) throws Exception {
-		stop(bc, null);
+	public final void stop(BundleContext bundleContext) throws Exception {
+		stop(bundleContext, null);
 	}
 
 }

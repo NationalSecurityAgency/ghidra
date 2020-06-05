@@ -26,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -44,11 +45,9 @@ import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
-import generic.test.TestUtils;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
-import ghidra.app.plugin.core.osgi.BundleHost;
-import ghidra.app.plugin.core.osgi.BundleStatusComponentProvider;
+import ghidra.app.plugin.core.osgi.GhidraSourceBundle;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.Application;
@@ -181,8 +180,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	static protected void wipe(Path path) throws IOException {
 		if (Files.exists(path)) {
-			for (Path p : (Iterable<Path>) Files.walk(path).sorted(
-				Comparator.reverseOrder())::iterator) {
+			for (Path p : (Iterable<Path>) Files.walk(path)
+				.sorted(Comparator.reverseOrder())::iterator) {
 				Files.deleteIfExists(p);
 			}
 		}
@@ -687,8 +686,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 				"Contents of file on disk do not match that of the editor after performing " +
 					"a save operation: " + file);
 			printChars(expectedContents, fileText);
-			Assert.fail(
-				"Contents of file on disk do not match that of the editor after performing " +
+			Assert
+				.fail("Contents of file on disk do not match that of the editor after performing " +
 					"a save operation: " + file);
 		}
 //
@@ -980,15 +979,16 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected void cleanupOldTestFiles() throws IOException {
 		// remove the compiled bundles directory so that any scripts we use will be recompiled
-		wipe(BundleHost.getCompiledBundlesDir());
+		wipe(GhidraSourceBundle.getCompiledBundlesDir());
 
 		String myTestName = super.testName.getMethodName();
 
 		// destroy any NewScriptxxx files...and Temp ones too
-		BundleStatusComponentProvider bundleStatusComponentProvider =
-			(BundleStatusComponentProvider) TestUtils.getInstanceField(
-				"bundleStatusComponentProvider", provider);
-		List<ResourceFile> paths = bundleStatusComponentProvider.getModel().getEnabledPaths();
+		List<ResourceFile> paths = provider.getBundleHost()
+			.getBundlePaths()
+			.stream()
+			.filter(ResourceFile::isDirectory)
+			.collect(Collectors.toList());
 
 		for (ResourceFile path : paths) {
 			File file = path.getFile(false);

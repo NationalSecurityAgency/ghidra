@@ -49,7 +49,10 @@ import resources.ResourceManager;
  * component for managing OSGi bundle status
  */
 public class BundleStatusComponentProvider extends ComponentProviderAdapter {
-	static String preferenceForLastSelectedBundle = "LastGhidraBundle";
+	static final String BUNDLE_GROUP = "0bundle group";
+	static final String BUNDLE_LIST_GROUP = "1bundle list group";
+
+	static final String PREFENCE_LAST_SELECTED_BUNDLE = "LastGhidraBundle";
 
 	private JPanel panel;
 	private LessFreneticGTable bundleStatusTable;
@@ -60,9 +63,14 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	private GhidraFileFilter filter;
 	private final BundleHost bundleHost;
 
-	static final String BUNDLE_GROUP = "0bundle group";
-	static final String BUNDLE_LIST_GROUP = "1bundle list group";
-
+	/**
+	 * {@link BundleStatusComponentProvider} visualizes bundle status and exposes actions for
+	 * adding, removing, enabling, disabling, activating, and deactivating bundles.
+	 * 
+	 * @param tool the tool
+	 * @param owner the owner name
+	 * @param bundleHost the bundle host
+	 */
 	public BundleStatusComponentProvider(PluginTool tool, String owner, BundleHost bundleHost) {
 		super(tool, "BundleManager", owner);
 		setHelpLocation(new HelpLocation("BundleManager", "BundleManager"));
@@ -136,12 +144,24 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		// to allow custom cell renderers
 		bundleStatusTable.setAutoCreateColumnsFromModel(false);
 
+		configureTableColumns();
+		filterPanel = new GTableFilterPanel<>(bundleStatusTable, bundleStatusTableModel);
+
+		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
+		scrollPane.getViewport().setBackground(bundleStatusTable.getBackground());
+
+		panel.add(filterPanel, BorderLayout.SOUTH);
+		panel.add(scrollPane, BorderLayout.CENTER);
+		panel.setPreferredSize(new Dimension(800, 400));
+	}
+
+	private void configureTableColumns() {
 		TableColumn column;
 
 		int skinnyWidth = 60;
 		// 
-		column = bundleStatusTable.getColumnModel().getColumn(
-			bundleStatusTableModel.enabledColumn.index);
+		column = bundleStatusTable.getColumnModel()
+			.getColumn(bundleStatusTableModel.enabledColumn.index);
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
@@ -171,9 +191,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 					setText("");
 				}
 				return x;
-
 			}
-
 		});
 
 		// 
@@ -197,82 +215,63 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				return c;
 			}
 		});
+	}
 
-		filterPanel = new GTableFilterPanel<>(bundleStatusTable, bundleStatusTableModel);
+	private void addBundlesAction(String actionName, String description, Icon icon,
+			Runnable runnable) {
+		DockingAction action = new DockingAction(actionName, this.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				runnable.run();
+			}
 
-		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
-		scrollPane.getViewport().setBackground(bundleStatusTable.getBackground());
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return bundleStatusTable.getSelectedRows().length > 0;
+			}
+		};
+		action.setPopupMenuData(new MenuData(new String[] { description }, icon, BUNDLE_GROUP));
+		action.setToolBarData(new ToolBarData(icon, BUNDLE_GROUP));
+		action.setDescription(description);
+		action.setEnabled(false);
+		getTool().addLocalAction(this, action);
 
-		panel.add(filterPanel, BorderLayout.SOUTH);
-		panel.add(scrollPane, BorderLayout.CENTER);
-		panel.setPreferredSize(new Dimension(800, 400));
+	}
+
+	private void addBundleListAction(String actionName, String name, String description, Icon icon,
+			Runnable runnable) {
+		DockingAction action = new DockingAction(actionName, this.getName()) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				runnable.run();
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				return true;
+			}
+		};
+		action.setPopupMenuData(new MenuData(new String[] { name }, icon, BUNDLE_LIST_GROUP));
+		action.setToolBarData(new ToolBarData(icon, BUNDLE_LIST_GROUP));
+		action.setDescription(description);
+		action.setEnabled(true);
+		getTool().addLocalAction(this, action);
+
 	}
 
 	private void createActions() {
 		DockingAction action;
 
-		//
-		action = new DockingAction("ActivateBundles", this.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				doActivateBundles();
-			}
+		addBundlesAction("ActivateBundles", "Activate bundle(s)",
+			ResourceManager.loadImage("images/media-playback-start.png"), this::doActivateBundles);
 
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return bundleStatusTable.getSelectedRows().length > 0;
-			}
-		};
-		action.setPopupMenuData(new MenuData(new String[] { "Activate bundle(s)" },
-			ResourceManager.loadImage("images/media-playback-start.png"), BUNDLE_GROUP));
-		action.setToolBarData(new ToolBarData(
-			ResourceManager.loadImage("images/media-playback-start.png"), BUNDLE_GROUP));
-		action.setDescription("Activate bundle(s)");
-		action.setEnabled(false);
-		getTool().addLocalAction(this, action);
+		addBundlesAction("DeactivateBundles", "Deactivate bundle(s)",
+			ResourceManager.loadImage("images/media-playback-stop.png"), this::doDeactivateBundles);
+
+		addBundlesAction("CleanBundles", "Clean bundle(s)",
+			ResourceManager.loadImage("images/erase16.png"), this::doClean);
 
 		//
-		action = new DockingAction("DeactivateBundles", this.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				doDeactivateBundles();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return bundleStatusTable.getSelectedRows().length > 0;
-			}
-		};
-		action.setPopupMenuData(new MenuData(new String[] { "Deactivate bundle(s)" },
-			ResourceManager.loadImage("images/media-playback-stop.png"), BUNDLE_GROUP));
-		action.setToolBarData(new ToolBarData(
-			ResourceManager.loadImage("images/media-playback-stop.png"), BUNDLE_GROUP));
-		action.setDescription("Deactivate bundle(s)");
-		action.setEnabled(false);
-		getTool().addLocalAction(this, action);
-
-		//
-		action = new DockingAction("CleanBundles", this.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				doClean();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return bundleStatusTable.getSelectedRows().length > 0;
-			}
-		};
-		// cache is a lightning bolt
-		action.setPopupMenuData(new MenuData(new String[] { "Clean bundle(s)" },
-			ResourceManager.loadImage("images/erase16.png"), BUNDLE_GROUP));
-		action.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/erase16.png"), BUNDLE_GROUP));
-		action.setDescription("Clean build artifacts for bundle(s)");
-		action.setEnabled(false);
-		getTool().addLocalAction(this, action);
-
-		// 
 		action = new DockingAction("AddBundles", this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -285,16 +284,16 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			}
 
 		};
-		action.setPopupMenuData(new MenuData(new String[] { "Add bundle(s)" },
-			ResourceManager.loadImage("images/Plus.png"), BUNDLE_LIST_GROUP));
-		action.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/Plus.png"), BUNDLE_LIST_GROUP));
-
+		Icon icon = ResourceManager.loadImage("images/Plus.png");
+		action.setPopupMenuData(
+			new MenuData(new String[] { "Add bundle(s)" }, icon, BUNDLE_LIST_GROUP));
+		action.setToolBarData(new ToolBarData(icon, BUNDLE_LIST_GROUP));
 		action.setDescription("Display file chooser to add bundles to list");
 		action.setEnabled(true);
 		getTool().addLocalAction(this, action);
 
-		// 
+		//
+		icon = ResourceManager.loadImage("images/edit-delete.png");
 		action = new DockingAction("RemoveBundles", this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -307,11 +306,9 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			}
 
 		};
-		action.setPopupMenuData(new MenuData(new String[] { "Remove bundle(s)" },
-			ResourceManager.loadImage("images/edit-delete.png"), BUNDLE_LIST_GROUP));
-		action.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/edit-delete.png"),
-			BUNDLE_LIST_GROUP));
-
+		action.setPopupMenuData(
+			new MenuData(new String[] { "Remove bundle(s)" }, icon, BUNDLE_LIST_GROUP));
+		action.setToolBarData(new ToolBarData(icon, BUNDLE_LIST_GROUP));
 		action.setDescription("Remove selected bundle(s) from the list");
 		action.setEnabled(true);
 		getTool().addLocalAction(this, action);
@@ -341,7 +338,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			}
 		}
 		if (anythingCleaned) {
-			getModel().fireTableDataChanged();
+			bundleStatusTableModel.fireTableDataChanged();
 			AnimationUtils.shakeComponent(getComponent());
 		}
 	}
@@ -354,9 +351,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		doDeactivateBundles();
 
 		Map<Boolean, List<GhidraBundle>> bundles =
-			bundleStatusTableModel.getRowObjects(selectedModelRows).stream().map(
-				bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
-					Collectors.partitioningBy(gb -> gb.isSystemBundle()));
+			bundleStatusTableModel.getRowObjects(selectedModelRows)
+				.stream()
+				.map(bs -> bundleHost.getExistingGhidraBundle(bs.getPath()))
+				.collect(Collectors.partitioningBy(gb -> gb.isSystemBundle()));
 		List<GhidraBundle> systemBundles = bundles.get(true);
 		if (!systemBundles.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
@@ -388,19 +386,19 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 					}
 
 					@Override
-					public boolean accept(File f, GhidraFileChooserModel l_model) {
-						return filter.accept(f, l_model);
+					public boolean accept(File f, GhidraFileChooserModel model) {
+						return filter.accept(f, model);
 					}
 				});
 			}
-			String lastSelected = Preferences.getProperty(preferenceForLastSelectedBundle);
+			String lastSelected = Preferences.getProperty(PREFENCE_LAST_SELECTED_BUNDLE);
 			if (lastSelected != null) {
 				File f = new File(lastSelected);
 				fileChooser.setSelectedFile(f);
 			}
 		}
 		else {
-			String lastSelected = Preferences.getProperty(preferenceForLastSelectedBundle);
+			String lastSelected = Preferences.getProperty(PREFENCE_LAST_SELECTED_BUNDLE);
 			if (lastSelected != null) {
 				File f = new File(lastSelected);
 				fileChooser.setSelectedFile(f);
@@ -410,10 +408,9 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		List<File> files = fileChooser.getSelectedFiles();
 		if (!files.isEmpty()) {
-			Preferences.setProperty(preferenceForLastSelectedBundle,
-				files.get(0).getAbsolutePath());
+			Preferences.setProperty(PREFENCE_LAST_SELECTED_BUNDLE, files.get(0).getAbsolutePath());
 
-			bundleHost.addGhidraBundles(
+			bundleHost.add(
 				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList()),
 				true, false);
 		}
@@ -429,8 +426,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				bundleStatusTable.chill();
 
 				List<BundleStatus> statuses =
-					bundleStatusTableModel.getRowObjects(selectedModelRows).stream().filter(
-						bs -> !bs.isActive()).collect(Collectors.toUnmodifiableList());
+					bundleStatusTableModel.getRowObjects(selectedModelRows)
+						.stream()
+						.filter(bs -> !bs.isActive())
+						.collect(Collectors.toUnmodifiableList());
 
 				List<GhidraBundle> gbs = new ArrayList<>();
 				for (BundleStatus bs : statuses) {
@@ -469,16 +468,16 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		new TaskLauncher(new Task("deactivating", true, true, false) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
-				List<GhidraBundle> gbs =
-					bundleStatusTableModel.getRowObjects(selectedModelRows).stream().filter(
-						bs -> bs.isActive()).map(
-							bs -> bundleHost.getExistingGhidraBundle(bs.getPath())).collect(
-								Collectors.toList());
+				List<GhidraBundle> gbs = bundleStatusTableModel.getRowObjects(selectedModelRows)
+					.stream()
+					.filter(bs -> bs.isActive())
+					.map(bs -> bundleHost.getExistingGhidraBundle(bs.getPath()))
+					.collect(Collectors.toList());
 
 				monitor.setMaximum(gbs.size());
 				for (GhidraBundle gb : gbs) {
 					try {
-						bundleHost.deactivateSynchronously(gb.getBundleLoc());
+						bundleHost.deactivateSynchronously(gb.getBundleLocation());
 					}
 					catch (GhidraBundleException | InterruptedException e) {
 						e.printStackTrace(console.getStdErr());
@@ -501,10 +500,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 					GhidraBundle gb = bundleHost.getExistingGhidraBundle(status.getPath());
 					if (activate) {
 						gb.build(console.getStdErr());
-						bundleHost.activateSynchronously(gb.getBundleLoc());
+						bundleHost.activateSynchronously(gb.getBundleLocation());
 					}
 					else { // deactivate
-						bundleHost.deactivateSynchronously(gb.getBundleLoc());
+						bundleHost.deactivateSynchronously(gb.getBundleLocation());
 					}
 				}
 				catch (Exception e) {
@@ -518,18 +517,14 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}, null, 1000);
 	}
 
-	public BundleStatusTableModel getModel() {
-		return bundleStatusTableModel;
-	}
-
-	public void notifyTableRowChanged(BundleStatus status) {
+	private void notifyTableRowChanged(BundleStatus status) {
 		int modelRowIndex = bundleStatusTableModel.getRowIndex(status);
 		int viewRowIndex = filterPanel.getViewRow(modelRowIndex);
-		bundleStatusTable.notifyTableChanged(
-			new TableModelEvent(bundleStatusTableModel, viewRowIndex));
+		bundleStatusTable
+			.notifyTableChanged(new TableModelEvent(bundleStatusTableModel, viewRowIndex));
 	}
 
-	public void notifyTableDataChanged() {
+	private void notifyTableDataChanged() {
 		bundleStatusTable.notifyTableChanged(new TableModelEvent(bundleStatusTableModel));
 	}
 
@@ -545,12 +540,28 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 	*/
 
+	/**
+	 * cleanup this component
+	 */
 	public void dispose() {
 		bundleStatusTable.dispose();
 	}
 
 	void selectModelRow(int modelRowIndex) {
 		bundleStatusTable.selectRow(filterPanel.getViewRow(modelRowIndex));
+	}
+
+	/**
+	 * This is for testing only!  during normal execution, statuses are only added through BundleHostListener bundle(s) added events.
+	 * 
+	 * each path is marked editable and non-readonly
+	 * 
+	 * @param bundlePaths the paths to use
+	 */
+	public void setPathsForTesting(List<ResourceFile> bundlePaths) {
+		bundleStatusTableModel.setModelData(bundlePaths.stream()
+			.map(f -> new BundleStatus(f, true, false, null))
+			.collect(Collectors.toList()));
 	}
 
 }

@@ -22,39 +22,84 @@ import java.util.Collection;
  */
 public interface BundleHostListener {
 
-	default void bundleBuilt(GhidraBundle gbundle, String summary) {
+	/**
+	 * Invoked when a bundle is built.
+	 * 
+	 * @param bundle the bundle
+	 * @param summary a summary of the build
+	 */
+	default void bundleBuilt(GhidraBundle bundle, String summary) {
 		//
 	}
 
-	default void bundleEnablementChange(GhidraBundle gbundle, boolean newEnablement) {
+	/**
+	 * Invoked when a bundle is enabled or disabled.
+	 * 
+	 * @param bundle the bundle
+	 * @param newEnablement true if enabled, false if disabled
+	 */
+	default void bundleEnablementChange(GhidraBundle bundle, boolean newEnablement) {
 		//
 	}
 
-	default void bundleActivationChange(GhidraBundle gbundle, boolean newActivation) {
+	/**
+	 * Invoked when a bundle is activated or deactivated.
+	 * 
+	 * @param bundle the bundle
+	 * @param newActivation true if activated, false if deactivated
+	 */
+	default void bundleActivationChange(GhidraBundle bundle, boolean newActivation) {
 		//
 	}
 
-	default void bundleAdded(GhidraBundle gbundle) {
+	/**
+	 * Invoked when a bundle is added to {@link BundleHost}
+	 * 
+	 * @param bundle the bundle
+	 */
+	default void bundleAdded(GhidraBundle bundle) {
 		//
 	}
 
-	default void bundlesAdded(Collection<GhidraBundle> gbundles) {
-		for (GhidraBundle gbundle : gbundles) {
-			bundleAdded(gbundle);
+	/**
+	 * Invoked when a number of bundles is added at once. A listener should implement this method
+	 * to avoid repeated invocation of {@link #bundleAdded} in quick succession. 
+	 * 
+	 * @param bundles the bundles
+	 */
+	default void bundlesAdded(Collection<GhidraBundle> bundles) {
+		for (GhidraBundle bundle : bundles) {
+			bundleAdded(bundle);
 		}
 	}
 
-	default void bundleRemoved(GhidraBundle gbundle) {
+	/**
+	 * Invoked when a bundle is removed from {@link BundleHost}
+	 * 
+	 * @param bundle the bundle
+	 */
+	default void bundleRemoved(GhidraBundle bundle) {
 		//
 	}
 
-	default void bundlesRemoved(Collection<GhidraBundle> gbundles) {
-		for (GhidraBundle gbundle : gbundles) {
-			bundleRemoved(gbundle);
+	/**
+	 * Invoked when a number of bundles is removed at once. A listener should implement this method
+	 * to avoid repeated invocation of {@link #bundleRemoved} in quick succession. 
+	 * 
+	 * @param bundles the bundles
+	 */
+	default void bundlesRemoved(Collection<GhidraBundle> bundles) {
+		for (GhidraBundle bundle : bundles) {
+			bundleRemoved(bundle);
 		}
 	}
 
-	default void bundleException(GhidraBundleException gbe) {
+	/**
+	 * Invoked when {@link BundleHost} excepts during bundle activation/deactivation.
+	 * 
+	 * @param exception the exception thrown
+	 */
+	default void bundleException(GhidraBundleException exception) {
 		//
 	}
 

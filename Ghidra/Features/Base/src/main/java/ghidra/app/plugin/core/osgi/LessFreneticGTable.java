@@ -23,7 +23,7 @@ import docking.widgets.table.*;
 
 /**
  * RowObjectSelectionManager attempts to repair selections in a filtered table
- * before and after filter events.  The additiona selection events, however, cause focus changes we don't want. 
+ * before and after filter events.  The additional selection events, however, cause focus changes we don't want. 
  */
 class LessFreneticGTable extends GTable {
 	boolean chilled = false;
@@ -35,25 +35,27 @@ class LessFreneticGTable extends GTable {
 		}
 
 		@Override
-		public void tableChanged(TableModelEvent e) {
+		public void tableChanged(TableModelEvent event) {
 			if (!chilled) {
-				super.tableChanged(e);
+				super.tableChanged(event);
 			}
 		}
 
 	}
 
+	LessFreneticGTable(TableModel model) {
+		super(model);
+	}
+
+	/** suppress issuing table change events */
 	public void chill() {
 		chilled = true;
 	}
 
+	/** resume issuing table change events */
 	public void thaw() {
 		chilled = false;
 		notifyTableChanged(new TableModelEvent(getModel()));
-	}
-
-	LessFreneticGTable(TableModel dm) {
-		super(dm);
 	}
 
 	@SuppressWarnings("unchecked")

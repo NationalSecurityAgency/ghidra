@@ -21,28 +21,52 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 
 public class GhidraBundleException extends OSGiException {
-	private Bundle bundle;
-	private String bundle_loc;
+	private final Bundle bundle;
+	private final String bundleLocation;
 
+	/**
+	 * {@link GhidraBundleException}s store the context associated with exceptions thrown during bundle operations.
+	 * 
+	 * @param bundle the bundle (if available)
+	 * @param msg a contextual message
+	 * @param cause the original exception
+	 */
 	public GhidraBundleException(Bundle bundle, String msg, BundleException cause) {
 		super(msg + ": " + parsedCause(cause), cause);
 		this.bundle = bundle;
+		this.bundleLocation = bundle.getLocation();
 	}
 
-	public GhidraBundleException(String bundle_loc, String msg, BundleException cause) {
+	/**
+	 * {@link GhidraBundleException}s store the context associated with exceptions thrown during bundle operations.
+	 * 
+	 * @param bundleLocation the bundle location identifier (since no bundle is available)
+	 * @param msg a contextual message
+	 * @param cause the original exception
+	 */
+	public GhidraBundleException(String bundleLocation, String msg, BundleException cause) {
 		super(msg + ": " + parsedCause(cause), cause);
-		this.bundle_loc = bundle_loc;
+		this.bundle = null;
+		this.bundleLocation = bundleLocation;
 	}
 
+	/**
+	 * @return the associated bundle, or null.  If null, the bundle location identifier will be non-null
+	 */
 	public Bundle getBundle() {
 		return bundle;
 	}
 
+	/**
+	 * When no {@link Bundle} is available, {@link #getBundle()} will return {@code null}. 
+	 * 
+	 * @return the bundle location identifier of the offending bundle.
+	 */
 	public String getBundleLocation() {
-		return bundle_loc != null ? bundle_loc : bundle.getLocation();
+		return bundleLocation != null ? bundleLocation : bundle.getLocation();
 	}
 
-	static private String parsedCause(Throwable e) {
+	private static String parsedCause(Throwable e) {
 		if (e == null) {
 			return "";
 		}
@@ -81,9 +105,10 @@ public class GhidraBundleException extends OSGiException {
 						return message;
 					}
 					// parse the package constraints from filters in the BundleRequirement string
-					String packages =
-						OSGiUtils.extractPackages(be.getMessage()).stream().distinct().collect(
-							Collectors.joining("\n"));
+					String packages = OSGiUtils.extractPackageNamesFromFailedResolution(be.getMessage())
+						.stream()
+						.distinct()
+						.collect(Collectors.joining("\n"));
 					return "RESOLVE_ERROR with reference to packages:\n" + packages;
 				}
 

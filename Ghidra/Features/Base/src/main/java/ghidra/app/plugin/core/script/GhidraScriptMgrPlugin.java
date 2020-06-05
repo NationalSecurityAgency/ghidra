@@ -50,10 +50,10 @@ import ghidra.util.task.TaskListener;
 //@formatter:on
 public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScriptService {
 
-	final private GhidraScriptComponentProvider provider;
+	private final GhidraScriptComponentProvider provider;
 
-	static private int loaded = 0;
-	final private BundleHost bundleHost;
+	private static int loaded = 0;
+	private final BundleHost bundleHost;
 
 	public GhidraScriptMgrPlugin(PluginTool tool) {
 		super(tool, true, true, true);

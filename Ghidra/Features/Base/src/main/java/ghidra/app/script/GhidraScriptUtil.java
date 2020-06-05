@@ -74,12 +74,12 @@ public class GhidraScriptUtil {
 		setBundleHost(bundleHost);
 		if (extraSystemPaths != null) {
 			for (String path : extraSystemPaths) {
-				bundleHost.addGhidraBundle(new ResourceFile(path), true, true);
+				bundleHost.add(new ResourceFile(path), true, true);
 			}
 		}
 
-		bundleHost.addGhidraBundle(GhidraScriptUtil.getUserScriptDirectory(), true, false);
-		bundleHost.addGhidraBundles(GhidraScriptUtil.getSystemScriptPaths(), true, true);
+		bundleHost.add(GhidraScriptUtil.getUserScriptDirectory(), true, false);
+		bundleHost.add(GhidraScriptUtil.getSystemScriptPaths(), true, true);
 	}
 
 	public static void dispose() {

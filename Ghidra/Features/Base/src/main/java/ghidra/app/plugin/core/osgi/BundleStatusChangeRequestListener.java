@@ -20,11 +20,23 @@ package ghidra.app.plugin.core.osgi;
  */
 public interface BundleStatusChangeRequestListener {
 
-	default public void bundleEnablementChangeRequest(BundleStatus status, boolean newValue) {
+	/**
+	 * Invoked when the user requests that a bundle is enabled/disabled.
+	 * 
+	 * @param status the current status
+	 * @param newValue true if enabled, false if disabled
+	 */
+	default void bundleEnablementChangeRequest(BundleStatus status, boolean newValue) {
 		//
 	}
 
-	default public void bundleActivationChangeRequest(BundleStatus status, boolean newValue) {
+	/**
+	 * Invoked when the user requests that a bundle is activated/deactivated.
+	 * 
+	 * @param status the current status
+	 * @param newValue true if activated, false if deactivated
+	 */
+	default void bundleActivationChangeRequest(BundleStatus status, boolean newValue) {
 		//
 	}
 

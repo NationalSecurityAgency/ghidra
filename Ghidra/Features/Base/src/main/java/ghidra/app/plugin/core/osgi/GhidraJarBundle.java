@@ -26,13 +26,24 @@ import aQute.bnd.osgi.Constants;
 import aQute.bnd.osgi.Jar;
 import generic.jar.ResourceFile;
 
+/**
+ * Proxy to an ordinary OSGi Jar bundle.  {@link GhidraJarBundle#build(PrintWriter)} does nothing.   
+ */
 public class GhidraJarBundle extends GhidraBundle {
-	final String bundleLoc;
+	final String bundleLocation;
 
+	/**
+	 * {@link GhidraJarBundle} wraps an ordinary OSGi bundle .jar.
+	 * 
+	 * @param bundleHost the {@link BundleHost} instance this bundle will belong to
+	 * @param path the jar file's path
+	 * @param enabled true to start enabled
+	 * @param systemBundle true if this is a Ghidra system bundle
+	 */
 	public GhidraJarBundle(BundleHost bundleHost, ResourceFile path, boolean enabled,
 			boolean systemBundle) {
 		super(bundleHost, path, enabled, systemBundle);
-		this.bundleLoc = "file://" + path.getAbsolutePath().toString();
+		this.bundleLocation = "file://" + path.getAbsolutePath().toString();
 	}
 
 	@Override
@@ -46,19 +57,19 @@ public class GhidraJarBundle extends GhidraBundle {
 	}
 
 	@Override
-	public String getBundleLoc() {
-		return bundleLoc;
+	public String getBundleLocation() {
+		return bundleLocation;
 	}
 
 	@Override
-	public List<BundleRequirement> getAllReqs() {
+	public List<BundleRequirement> getAllRequirements() {
 		Jar jar;
 		try {
 			jar = new Jar(path.getFile(true));
 			Manifest m = jar.getManifest();
 			String imps = m.getMainAttributes().getValue(Constants.IMPORT_PACKAGE);
 			if (imps != null) {
-				return BundleHost.parseImports(imps);
+				return OSGiUtils.parseImports(imps);
 			}
 			return Collections.emptyList();
 		}

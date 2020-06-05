@@ -41,7 +41,6 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.*;
-import ghidra.app.plugin.core.osgi.BundleHost.BuildFailure;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.options.SaveState;
@@ -66,12 +65,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	static final String WINDOW_GROUP = "Script Group";
 
 	private Map<ResourceFile, GhidraScriptEditorComponentProvider> editorMap = new HashMap<>();
-	final private GhidraScriptMgrPlugin plugin;
+	private final GhidraScriptMgrPlugin plugin;
 	private JPanel component;
 	private RootNode scriptRoot;
 	private GTree scriptCategoryTree;
 	private DraggableScriptTable scriptTable;
-	final private GhidraScriptInfoManager infoManager;
+	private final GhidraScriptInfoManager infoManager;
 	private GhidraScriptTableModel tableModel;
 	private BundleStatusComponentProvider bundleStatusComponentProvider;
 	private TaskListener taskListener = new ScriptTaskListener();
@@ -99,8 +98,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	};
 
-	final private BundleHost bundleHost;
-	final private RefreshingBundleHostListener refreshingBundleHostListener =
+	private final BundleHost bundleHost;
+	private final RefreshingBundleHostListener refreshingBundleHostListener =
 		new RefreshingBundleHostListener();
 
 	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin, BundleHost bundleHost) {
@@ -158,8 +157,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 		});
 
-		scriptCategoryTree.getSelectionModel().setSelectionMode(
-			TreeSelectionModel.SINGLE_TREE_SELECTION);
+		scriptCategoryTree.getSelectionModel()
+			.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 
 		tableModel = new GhidraScriptTableModel(this, infoManager);
 
@@ -237,7 +236,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	//==================================================================================================
 
 	public void readConfigState(SaveState saveState) {
-		bundleHost.restoreStateAndActivate(saveState, getTool());
+		bundleHost.restoreManagedBundleState(saveState, getTool());
 
 		actionManager.restoreUserDefinedKeybindings(saveState);
 		actionManager.restoreScriptsThatAreInTool(saveState);
@@ -261,7 +260,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public void writeConfigState(SaveState saveState) {
-		bundleHost.saveState(saveState);
+		bundleHost.saveManagedBundleState(saveState);
 
 		actionManager.saveUserDefinedKeybindings(saveState);
 		actionManager.saveScriptsThatAreInTool(saveState);
@@ -408,8 +407,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 				action.setKeyBindingData(new KeyBindingData(ks));
 			}
 
-			assert !infoManager.containsMetadata(
-				renameFile) : "renamed script already has metadata";
+			assert !infoManager
+				.containsMetadata(renameFile) : "renamed script already has metadata";
 			infoManager.getScriptInfo(renameFile);
 
 			tableModel.switchScript(script, renameFile);
@@ -452,15 +451,20 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	public List<ResourceFile> getScriptDirectories() {
-		return bundleHost.getGhidraBundles().stream().filter(
-			gb -> gb.isEnabled() && gb instanceof GhidraSourceBundle).map(
-				GhidraBundle::getPath).collect(Collectors.toList());
+		return bundleHost.getGhidraBundles()
+			.stream()
+			.filter(bundle -> bundle.isEnabled() && bundle instanceof GhidraSourceBundle)
+			.map(GhidraBundle::getPath)
+			.collect(Collectors.toList());
 	}
 
 	public List<ResourceFile> getWritableScriptDirectories() {
-		return bundleHost.getGhidraBundles().stream().filter(
-			GhidraSourceBundle.class::isInstance).filter(gb -> !gb.isSystemBundle()).map(
-				GhidraBundle::getPath).collect(Collectors.toList());
+		return bundleHost.getGhidraBundles()
+			.stream()
+			.filter(GhidraSourceBundle.class::isInstance)
+			.filter(bundle -> !bundle.isSystemBundle())
+			.map(GhidraBundle::getPath)
+			.collect(Collectors.toList());
 	}
 
 	boolean isEditorOpen(ResourceFile script) {
@@ -698,14 +702,14 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	class RefreshingBundleHostListener implements BundleHostListener {
 
 		@Override
-		public void bundleBuilt(GhidraBundle sb, String summary) {
-			if (sb instanceof GhidraSourceBundle) {
-				GhidraSourceBundle gsb = (GhidraSourceBundle) sb;
-				for (ResourceFile sf : gsb.getNewSources()) {
-					if (infoManager.containsMetadata(sf)) {
-						ScriptInfo info = infoManager.getExistingScriptInfo(sf);
-						BuildFailure e = gsb.getErrors(sf);
-						info.setCompileErrors(e != null);
+		public void bundleBuilt(GhidraBundle bundle, String summary) {
+			if (bundle instanceof GhidraSourceBundle) {
+				GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
+				for (ResourceFile sourceFile : sourceBundle.getNewSources()) {
+					if (infoManager.containsMetadata(sourceFile)) {
+						ScriptInfo scriptInfo = infoManager.getExistingScriptInfo(sourceFile);
+						GhidraBundle.BuildFailure e = sourceBundle.getErrors(sourceFile);
+						scriptInfo.setCompileErrors(e != null);
 					}
 				}
 				tableModel.fireTableDataChanged();
@@ -713,32 +717,32 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 
 		@Override
-		public void bundleEnablementChange(GhidraBundle gbundle, boolean newEnablment) {
-			if (gbundle instanceof GhidraSourceBundle) {
+		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablment) {
+			if (bundle instanceof GhidraSourceBundle) {
 				refresh();
 			}
 		}
 
 		@Override
-		public void bundleAdded(GhidraBundle gbundle) {
+		public void bundleAdded(GhidraBundle bundle) {
 			plugin.getTool().setConfigChanged(true);
 			refresh();
 		}
 
 		@Override
-		public void bundlesAdded(Collection<GhidraBundle> gbundles) {
+		public void bundlesAdded(Collection<GhidraBundle> bundles) {
 			plugin.getTool().setConfigChanged(true);
 			refresh();
 		}
 
 		@Override
-		public void bundleRemoved(GhidraBundle gbundle) {
+		public void bundleRemoved(GhidraBundle bundle) {
 			plugin.getTool().setConfigChanged(true);
 			refresh();
 		}
 
 		@Override
-		public void bundlesRemoved(Collection<GhidraBundle> gbundles) {
+		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
 			plugin.getTool().setConfigChanged(true);
 			refresh();
 		}
@@ -1030,10 +1034,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private JComponent buildDescriptionComponent() {
-		JPanel descriptionPanel = new JPanel(new BorderLayout());
 		descriptionTextPane = new JTextPane();
 		descriptionTextPane.setEditable(false);
 		descriptionTextPane.setEditorKit(new HTMLEditorKit());
+		JPanel descriptionPanel = new JPanel(new BorderLayout());
 		descriptionPanel.add(descriptionTextPane);
 		JScrollPane scrollPane = new JScrollPane(descriptionPanel);
 

@@ -39,12 +39,12 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	private static final String EMPTY_STRING = "";
 	private static final ImageIcon ERROR_IMG = Icons.ERROR_ICON;
 
-	final static String SCRIPT_ACTION_COLUMN_NAME = "In Tool";
-	final static String SCRIPT_STATUS_COLUMN_NAME = "Status";
+	static final String SCRIPT_ACTION_COLUMN_NAME = "In Tool";
+	static final String SCRIPT_STATUS_COLUMN_NAME = "Status";
 
 	private GhidraScriptComponentProvider provider;
 	private List<ResourceFile> scriptList = new ArrayList<>();
-	final private GhidraScriptInfoManager infoManager;
+	private final GhidraScriptInfoManager infoManager;
 
 	GhidraScriptTableModel(GhidraScriptComponentProvider provider,
 			GhidraScriptInfoManager infoManager) {
