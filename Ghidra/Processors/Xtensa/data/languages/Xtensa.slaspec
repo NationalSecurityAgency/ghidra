@@ -1,0 +1,778 @@
+# sleigh specification file for Tensilica Xtensa Architecture
+
+define endian=little;
+define alignment=1;
+
+define space RAM     type=ram_space      size=4  default;
+define space register type=register_space size=1;
+define space special_register type=ram_space size=4;
+
+define register offset=0x00 size=4 [ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 ];
+
+#not all registers are 32Bit but for sake of simplicity they are here
+define special_register offset=0 size=4 [ LBEG LEND LCOUNT SAR BR LITBASE ];
+define special_register offset=48 size=4 [ SCOMPARE1 ];
+define special_register offset=64 size=4 [ ACCLO ACCHI ];
+define special_register offset=128 size=4 [ M0 M1 M2 M3 ];
+define special_register offset=288 size=4 [ WindowBase WindowStart ];
+define special_register offset=332 size=4 [ PTEVADDR ];
+define special_register offset=356 size=4 [ MMID RASID ITLBCFG DTLBCFG ];
+define special_register offset=384 size=4 [ IBREAKENABLE ];
+define special_register offset=392 size=4 [ CACHEATTR ATOMCTL ];
+define special_register offset=416 size=4 [ DDR ];
+define special_register offset=424 size=4 [ MEPC MEPS MESAVE MESR MECR MEVADDR ];
+define special_register offset=512 size=4 [ IBREAKA0 IBREAKA1 ];
+define special_register offset=576 size=4 [ DBREAKA0 DBREAKA1 ];
+define special_register offset=640 size=4 [ DBREAKC0 DBREAKC1 ];
+define special_register offset=708 size=4 [ EPC1 EPC2 EPC3 EPC4 EPC5 EPC6 EPC7 ];
+define special_register offset=768 size=4 [ DEPC ];
+define special_register offset=776 size=4 [ EPS2 EPS3 EPS4 EPS5 EPS6 EPS7 ];
+define special_register offset=836 size=4 [ EXCSAVE1 EXCSAVE2 EXCSAVE3 EXCSAVE4 EXCSAVE5 EXCSAVE6 EXCSAVE7 ];
+define special_register offset=896 size=4 [ CPENABLE ];
+define special_register offset=900 size=4 [ INTERRUPT INTSET INTCLEAR INTENABLE ];# assuming it's a typo in the manual and INTERRUPT has number 225
+define special_register offset=920 size=4 [ PS VECBASE EXCCAUSE DEBUGCAUSE CCOUNT PRID ICOUNT ICOUNTLEVEL EXCVADDR ];
+define special_register offset=960 size=4 [ CCOMPARE0 CCOMPARE1 CCOMPARE2 ];
+define special_register offset=976 size=4 [ MISC0 MISC1 MISC2 MISC3 ];
+
+#TOKENS
+define token instr(24)
+	op2=(20,23) op1=(16,19) ar=(12,15) as=(8,11) at=(4,7) op0=(0,3)
+	                         r=(12,15)  s=(8,11)  t=(4,7)
+	op1_h=(17,19) op1_l=(16,16)
+	op2_h=(21,23) op2_l=(20,20)
+	r_h=(13,15) r_l=(12,12)
+	t_h=(5,7) t_l=(4,4)
+	imm8=(16,23) dec
+	imm16=(8,23) dec
+	imm12=(12,23) dec
+	imm18=(6,23) at_l=(4,5)
+	sr=(8,15)
+;
+
+define token instN(16)
+	arN=(12,15) asN=(8,11) atN=(4,7) opN=(0,3)
+	atN_l=(4,5) atN_h=(6,7)
+	atN_7=(7,7) atN_imm7=(4,6)
+	imm4t=(4,7)
+	imm4s=(8,11)
+	imm4r=(12,15)
+;
+
+attach variables [ ar as at ] [ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 ];
+attach variables [ arN asN atN ] [ a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 ];
+attach variables [ sr ] [ LBEG LEND LCOUNT SAR BR LITBASE _ _ _ _ _ _ SCOMPARE1 _ _ _ ACCLO ACCHI _ _ _ _ _ _ _ _ _ _ _ _ _ _ M0 M1 M2 M3 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ WindowBase WindowStart _ _ _ _ _ _ _ _ _ PTEVADDR _ _ _ _ _  MMID RASID ITLBCFG DTLBCFG _ _ _ IBREAKENABLE _ CACHEATTR ATOMCTL _ _ _ _ DDR _ MEPC MEPS MESAVE MESR MECR MEVADDR _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ IBREAKA0 IBREAKA1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ DBREAKA0 DBREAKA1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ DBREAKC0 DBREAKC1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ EPC1 EPC2 EPC3 EPC4 EPC5 EPC6 EPC7 _ _ _ _ _ _ _ _ DEPC _ EPS2 EPS3 EPS4 EPS5 EPS6 EPS7 _ _ _ _ _ _ _ _ _ EXCSAVE1 EXCSAVE2 EXCSAVE3 EXCSAVE4 EXCSAVE5 EXCSAVE6 EXCSAVE7 _ _ _ _ _ _ _ _ CPENABLE INTERRUPT INTSET INTCLEAR INTENABLE _ PS VECBASE EXCCAUSE DEBUGCAUSE CCOUNT PRID ICOUNT ICOUNTLEVEL EXCVADDR _ CCOMPARE0 CCOMPARE1 CCOMPARE2 _ MISC0 MISC1 MISC2 MISC3 _ _ _ _ _ _ _ _ ];
+
+#Pseudo Instructions
+dest: reloc is imm8 [ reloc = inst_next + imm8 + (imm8/128)*-256 + 1; ] { #normally this would be imm8 +1, but imm8 is sign extended, therefore the -256
+    export *:4 reloc;
+}
+
+dest12: reloc is imm12 [ reloc = inst_next + imm12 + (imm12/2048)*-4096 + 1; ] {
+	export *:4 reloc;
+}
+
+dest18: reloc is imm18 [ reloc = inst_next + imm18 + (imm18/131072)*-262144 + 1; ] {
+	export *:4 reloc;
+}
+
+destN: reloc is atN_l & arN [ reloc=inst_next + arN + atN_l*16 + 2; ] {
+	export *:4 reloc;
+}
+
+destC: reloc is imm18 [ reloc = ((inst_next-3) & 0xFFFFFFFC) + ((imm18 + (imm18/131072)*-262144)*4) + 4; ] {
+	export *:4 reloc;
+}
+
+#  Core Instructions
+# -------------------
+
+:ABS ar, at is op2=0x6 & op1=0x0 & ar & as=0x1 & at & op0=0x0
+{
+	ar = abs(at);
+}
+
+:ADD ar, as, at is op2=0x8 & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = as + at;
+}
+
+:ADDI at, as, imm is imm8 & ar=0xC & as & at & op0=0x2 [ imm = imm8 + (imm8/128)*-256; ]
+{
+	at = as + imm;
+}
+
+:ADDMI at, as, imm is imm8 & ar=0xD & as & at & op0=0x2 [ imm = (imm8 + (imm8/128)*-256)*256; ]
+{
+	at = as + imm;
+}
+
+:ADDX2 ar, as, at is op2=0x9 & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = (as<<1) + at;
+}
+
+:ADDX4 ar, as, at is op2=0xA & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = (as<<2) + at;
+}
+
+:ADDX8 ar, as, at is op2=0xB & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = (as<<3) + at;
+}
+
+:AND ar, as, at is op2=0x1 & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = as & at;
+}
+
+:BALL as, at, dest is dest & ar=0x4 & as & at & op0=0x7
+{
+	if(((~as) & at) == 0) goto dest;
+}
+
+:BANY as, at, dest is dest & ar=0x8 & as & at & op0=0x7
+{
+	if((as & at) != 0) goto dest;
+}
+
+:BBC as, at, dest is dest & ar=0x5 & as & at & op0=0x7
+{
+	if((as & (0x1 << at)) == 0) goto dest;
+}
+
+:BBCI as, bbi, dest is dest & r_h=0b011 & r_l & as & t & op0=0x7 [ bbi=t + (r_l << 4); ]
+{
+	if(((as >> bbi) & 0x00000001) == 0) goto dest;
+}
+
+:BBS as, at, dest is dest & ar=0xD & as & at & op0=0x7
+{
+	if((as & (0x1 << at)) != 0) goto dest;
+}
+
+:BBSI as, bbi, dest is dest & r_h=0b111 & r_l & as & t & op0=0x7 [ bbi=t + (r_l << 4); ]
+{
+	if(((as >> bbi) & 0x00000001) != 0) goto dest;
+}
+
+:BEQ as, at, dest is dest & ar=0x1 & as & at & op0=0x7
+{
+	if(as == at) goto dest;
+}
+
+:BEQI as, imm, dest is dest & r & as & t=0x2 & op0=0x6
+#since there is no '==' in Pattern Expressions we have to XOR with the inverse and divide by 16 to get a 1 if the patter matches and a 0 if not
+[ imm=((r^0xF)/15)*0xFFFFFFFF +
+      ((r^0xE)/15)*0x00000001 +
+      ((r^0xD)/15)*0x00000002 +
+      ((r^0xC)/15)*0x00000003 +
+      ((r^0xB)/15)*0x00000004 +
+      ((r^0xA)/15)*0x00000005 +
+      ((r^0x9)/15)*0x00000006 +
+      ((r^0x8)/15)*0x00000007 +
+      ((r^0x7)/15)*0x00000008 +
+      ((r^0x6)/15)*0x0000000A +
+      ((r^0x5)/15)*0x0000000C +
+      ((r^0x4)/15)*0x00000010 +
+      ((r^0x3)/15)*0x00000020 +
+      ((r^0x2)/15)*0x00000040 +
+      ((r^0x1)/15)*0x00000080 +
+      ((r^0x0)/15)*0x00000100; ]
+{
+	if(as == imm) goto dest;
+}
+
+:BEQZ as, dest12 is dest12 & as & at=0x1 & op0=0x6
+{
+	if(as == 0) goto dest12;
+}
+
+:BGE as, at, dest is dest & ar=0xA & as & at & op0=0x7
+{
+	if(as s>= at) goto dest;
+}
+
+:BGEI as, imm , dest is dest & r & as & t=0xE & op0=0x6
+#since there is no '==' in Pattern Expressions we have to XOR with the inverse and divide by 16 to get a 1 if the patter matches and a 0 if not
+[ imm=((r^0xF)/15)*0xFFFFFFFF +
+      ((r^0xE)/15)*0x00000001 +
+      ((r^0xD)/15)*0x00000002 +
+      ((r^0xC)/15)*0x00000003 +
+      ((r^0xB)/15)*0x00000004 +
+      ((r^0xA)/15)*0x00000005 +
+      ((r^0x9)/15)*0x00000006 +
+      ((r^0x8)/15)*0x00000007 +
+      ((r^0x7)/15)*0x00000008 +
+      ((r^0x6)/15)*0x0000000A +
+      ((r^0x5)/15)*0x0000000C +
+      ((r^0x4)/15)*0x00000010 +
+      ((r^0x3)/15)*0x00000020 +
+      ((r^0x2)/15)*0x00000040 +
+      ((r^0x1)/15)*0x00000080 +
+      ((r^0x0)/15)*0x00000100; ]
+{
+	if(as s>= imm) goto dest;
+}
+
+:BGEU as, at, dest is dest & ar=0xB & as & at & op0=0x7
+{
+	if(as >= at) goto dest;
+}
+
+:BGEUI as, imm, dest is dest & r & as & t=0xF & op0=0x6
+#since there is no '==' in Pattern Expressions we have to XOR with the inverse and divide by 16 to get a 1 if the patter matches and a 0 if not
+[ imm=((r^0xF)/15)*0x00008000 +
+      ((r^0xE)/15)*0x00010000 +
+      ((r^0xD)/15)*0x00000002 +
+      ((r^0xC)/15)*0x00000003 +
+      ((r^0xB)/15)*0x00000004 +
+      ((r^0xA)/15)*0x00000005 +
+      ((r^0x9)/15)*0x00000006 +
+      ((r^0x8)/15)*0x00000007 +
+      ((r^0x7)/15)*0x00000008 +
+      ((r^0x6)/15)*0x0000000A +
+      ((r^0x5)/15)*0x0000000C +
+      ((r^0x4)/15)*0x00000010 +
+      ((r^0x3)/15)*0x00000020 +
+      ((r^0x2)/15)*0x00000040 +
+      ((r^0x1)/15)*0x00000080 +
+      ((r^0x0)/15)*0x00000100; ]
+{
+	if(as >= imm) goto dest;
+}
+:BGEZ as, dest12 is dest12 & as & t=0xD & op0=0x6
+{
+	if(as s>= 0) goto dest12;
+}
+
+:BLT as, at, dest is dest & ar=0x2 & as & at & op0=0x7
+{
+	if(as s< at) goto dest;
+}
+
+:BLTI as, imm, dest is dest & r & as & t=0xA & op0=0x6
+#since there is no '==' in Pattern Expressions we have to XOR with the inverse and divide by 16 to get a 1 if the patter matches and a 0 if not
+[ imm=((r^0xF)/15)*0xFFFFFFFF +
+      ((r^0xE)/15)*0x00000001 +
+      ((r^0xD)/15)*0x00000002 +
+      ((r^0xC)/15)*0x00000003 +
+      ((r^0xB)/15)*0x00000004 +
+      ((r^0xA)/15)*0x00000005 +
+      ((r^0x9)/15)*0x00000006 +
+      ((r^0x8)/15)*0x00000007 +
+      ((r^0x7)/15)*0x00000008 +
+      ((r^0x6)/15)*0x0000000A +
+      ((r^0x5)/15)*0x0000000C +
+      ((r^0x4)/15)*0x00000010 +
+      ((r^0x3)/15)*0x00000020 +
+      ((r^0x2)/15)*0x00000040 +
+      ((r^0x1)/15)*0x00000080 +
+      ((r^0x0)/15)*0x00000100; ]
+{
+	if(as s< imm) goto dest;
+}
+
+:BLTU as, at, dest is dest & r=0x3 & as & at & op0=0x7
+{
+	if(as < at) goto dest;
+}
+
+:BLTUI as, imm, dest is dest & r & as & at=0xB & op0=0x6
+#since there is no '==' in Pattern Expressions we have to XOR with the inverse and divide by 16 to get a 1 if the patter matches and a 0 if not
+[ imm=((r^0xF)/15)*0x00008000 +
+      ((r^0xE)/15)*0x00010000 +
+      ((r^0xD)/15)*0x00000002 +
+      ((r^0xC)/15)*0x00000003 +
+      ((r^0xB)/15)*0x00000004 +
+      ((r^0xA)/15)*0x00000005 +
+      ((r^0x9)/15)*0x00000006 +
+      ((r^0x8)/15)*0x00000007 +
+      ((r^0x7)/15)*0x00000008 +
+      ((r^0x6)/15)*0x0000000A +
+      ((r^0x5)/15)*0x0000000C +
+      ((r^0x4)/15)*0x00000010 +
+      ((r^0x3)/15)*0x00000020 +
+      ((r^0x2)/15)*0x00000040 +
+      ((r^0x1)/15)*0x00000080 +
+      ((r^0x0)/15)*0x00000100; ]
+{
+	if(as < imm) goto dest;
+}
+
+:BLTZ as, dest12 is dest12 & as & t=0x9 & op0=0x6
+{
+	if(as s< 0) goto dest12;
+}
+
+:BNALL as, at, dest is dest & r=0xC & as & at & op0=0x7
+{
+	if(((~as) & at) != 0) goto dest;
+}
+
+:BNE as, at, dest is dest & r=0x9 & as & at & op0=0x7
+{
+	if( as != at ) goto dest;
+}
+
+:BNEI as, imm, dest is dest & r & as & t=0x6 & op0=0x6
+#since there is no '==' in Pattern Expressions we have to XOR with the inverse and divide by 16 to get a 1 if the patter matches and a 0 if not
+[ imm=((r^0xF)/15)*0xFFFFFFFF +
+      ((r^0xE)/15)*0x00000001 +
+      ((r^0xD)/15)*0x00000002 +
+      ((r^0xC)/15)*0x00000003 +
+      ((r^0xB)/15)*0x00000004 +
+      ((r^0xA)/15)*0x00000005 +
+      ((r^0x9)/15)*0x00000006 +
+      ((r^0x8)/15)*0x00000007 +
+      ((r^0x7)/15)*0x00000008 +
+      ((r^0x6)/15)*0x0000000A +
+      ((r^0x5)/15)*0x0000000C +
+      ((r^0x4)/15)*0x00000010 +
+      ((r^0x3)/15)*0x00000020 +
+      ((r^0x2)/15)*0x00000040 +
+      ((r^0x1)/15)*0x00000080 +
+      ((r^0x0)/15)*0x00000100; ]
+{
+	if(as != imm) goto dest;
+}
+
+:BNEZ as, dest12 is dest12 & as & at=0x5 & op0=0x6
+{
+	if(!(as == 0)) goto dest12;
+}
+
+:BNONE as, at, dest is dest & ar=0x0 & as & at & op0=0x7
+{
+	if((as & at) == 0x00000000) goto dest;
+}
+
+:CALL0 destC is destC & at_l=0b00 & op0=0x5
+{
+	a0 = inst_next;
+	call destC;
+}
+
+:CALLX0 as is op2=0x0 & op1=0x0 & ar=0x0 & as & at=0xC & op0=0x0
+{
+	call_dest:4 = as;
+	a0 = inst_next;
+	call [call_dest];
+}
+
+:DSYNC is op2=0x0 & op1=0x0 & r=0x2 & s=0x0 & t=0x3 & op0=0x0
+{} # waits for all previously fetched WSR.*, XSR.*, WDTLB, and IDTLB instructions
+:ESYNC is op2=0x0 & op1=0x0 & r=0x2 & s=0x0 & t=0x2 & op0=0x0
+{} # waits for all previously fetched WSR.*, and XSR.* instructions
+
+:EXTUI ar, at, shiftimm, maskimm is op2 & op1_h=0b010 & op1_l & ar & s & at & op0=0x0 [ shiftimm=s + (op1_l << 4); maskimm=op2+1; ]
+{
+	local mask = 0xFFFF >> (16-maskimm);
+	ar = (at >> shiftimm) & mask;
+}
+
+:EXTW is op2=0x0 & op1=0x0 & r=0x2 & s=0x0 & t=0xD & op0=0x0
+{} # waits for all external and internal effects, including processor pins
+
+:ILL is op2=0x0 & op1=0x0 & ar=0x0 & as=0x0 & at=0x0 & op0=0x0
+{} # illegal instruction
+
+:ISYNC is op2=0x0 & op1=0x0 & r=0x2 & s=0x0 & t=0x0 & op0=0x0
+{} # waits for all previously fetched load, store, cache, TLB, WSR.*, and XSR.*instructions
+
+:J dest18 is dest18 & at_l=0b00 & op0=0x6
+{
+	goto dest18;
+}
+
+:JX as is op2=0x0 & op1=0x0 & r=0x0 & as & t=0xA & op0=0x0
+{
+	call_dest:4 = as;
+	goto [call_dest];
+}
+
+:L8UI at, as, imm8 is imm8 & r=0x0 & as & at & op0=0x2
+{
+	local addr = as + imm8;
+	at = zext(*:1 addr);
+}
+
+:L16SI at, as imm8_var is imm8 & r=0x9 & as & at & op0=0x2 [ imm8_var=imm8*2; ]
+{
+	local addr = as + (imm8 << 1);
+	tmp = *:2 addr;
+	at = sext(tmp);
+}
+
+:L16UI at, as imm8_var is imm8 & r=0x1 & as & at & op0=0x2 [ imm8_var=imm8*2; ]
+{
+	local addr = as + (imm8 << 1);
+	tmp = *:2 addr;
+	at = zext(tmp);
+}
+
+:L32I at, as, imm8_var is imm8 & ar=0x2 & as & at & op0=0x2 [ imm8_var=imm8*4; ]
+{
+	local addr = as + (imm8 << 2);	#multiply by 4
+	at = * addr;
+}
+
+:L32R at, ld_dest is imm16 & at & op0=0x1 [ ld_dest = ((inst_next+0) & 0xFFFFFFFC) + (0xFFFC0000 | (imm16 << 2)); ]
+{
+	local addr:4 = ld_dest;
+	at = *:4 addr;
+}
+
+# waits until all previous load, store, aquire, release, prefetch and cache instructions are done
+:MEMW is op2=0x0 & op1=0x0 & ar=0x2 & as=0x0 & at=0xC & op0=0x0
+{
+}
+
+:MOVEQZ ar, as, at is op2=0x8 & op1=0x3 & ar & as & at & op0=0x0
+{
+	# performs a move operation from as to ar when at == 0
+	if(!(at == 0)) goto <end>;
+	ar = as;
+  <end>
+}
+
+:MOVGEZ ar, as, at is op2=0xB & op1=0x3 & ar & as & at & op0=0x0
+{
+	# performs a move operation from as to ar when at >= 0
+	if(!(at s>= 0)) goto <end>;
+	ar = as;
+  <end>
+}
+
+:MOVI at, _imm12 is imm8 & ar=0xA & s & at & op0=0x2 [ _imm12=imm8 + (s << 8); ]
+{
+	at = _imm12;
+}
+
+:MOVLTZ ar, as, at is op2=0xA & op1=0x3 & ar & as & at & op0=0x0
+{
+	# performs a move operation from as to ar when at < 0
+	if(!(at s< 0)) goto <end>;
+	ar = as;
+  <end>
+}
+:MOVNEZ ar, as, at is op2=0x9 & op1=0x3 & ar & as & at & op0=0
+{
+	if(!(at != 0)) goto <end>;
+	ar = as;
+  <end>
+}
+
+:MULL ar, as , at is op2=0x8 & op1=0x2 & ar & as & at & op0=0x0
+{
+	ar = as * at;
+}
+
+:NEG ar, at is op2=0x6 & op1=0x0 & ar & s=0x0 & at & op0=0x0
+{
+	ar = 0 - at;
+}
+:NOP is op2=0x0 & op1=0x0 & r=0x2 & s=0x0 & t=0xF & op0=0x0
+{}
+
+:OR ar, as, at is op2=0x2 & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = as | at;
+}
+
+:RER at, as is op2=0x4 & op1=0x0 & r=0x6 & as & at & op0=0x0
+{}#Almost never used, so no implementation yet
+
+
+:RET is op2=0x0 & op1=0x0 & r=0x0 & s=0x0 & t=0x8 & op0=0x0
+{
+	return [a0];
+}
+
+:RSR.^sr at is op2=0x0 & op1=0x3 & sr & at & op0=0x0
+{
+	at = *[special_register]sr;
+}
+
+# waits for all previously fetched WSR.* instructions
+:RSYNC is op2=0x0 & op1=0x0 & r=0x2 & s=0x0 & t=0x1 & op0=0x0
+{
+}
+#:RUR.*		There is a lot of inconsistency in the datasheet about this one and I haven't found any software, that uses this instruction
+
+:S8I at, as, imm8 is imm8 & ar=0x4 & as & at & op0=0x2
+{
+	local addr = as + imm8;
+	*:1 addr = at;
+}
+
+:S16I at, as, imm8 is imm8 & ar=0x5 & as & at & op0=0x2
+{
+	local addr = as + (imm8 << 1);
+	*:2 addr = at;
+}
+
+:S32I at, as imm8_var is imm8 & ar=0x6 & as & at & op0=0x2 [ imm8_var=imm8*4; ]
+{
+	local addr = as + (imm8 << 2);
+	*:4 addr = at;
+}
+
+:SLL ar, as is op2=0xA & op1=0x1 & ar & as & t=0x0 & op0=0x0
+{
+	sar:4 = 12;
+	sa:4 = (*[special_register]:4 sar) & 0x0000001F;
+	ar = as << sa;
+}
+
+:SLLI ar, as, imm is op2_h=0b000 & op2_l & op1=0x1 & ar & as & t & op0=0x0 [ imm=32 - (t + (op2_l << 4)); ] # 32 - because a funnel shifter is used
+{
+	ar = as << imm;
+}
+
+:SRA ar, at is op2=0xB & op1=0x1 & ar & s=0x0 & at & op0=0x0
+{
+	sar:4 = 12;
+	ar = at s>> *[special_register]:4 sar;
+}
+
+:SRAI ar, at, imm is op2_h=0b001 & op2_l & op1=0x1 & ar & s & at & op0=0x0 [ imm=s + (op2_l << 4); ]
+{
+	ar = at s>> imm;
+}
+
+:SRC ar, as, at is op2=0x8 & op1=0x1 & ar & as & at & op0=0x0
+{
+	sar:4 = 12;
+	concat:8 = (zext(as) << 32) + zext(at);
+	shft:8 = concat >> *[special_register]:4 sar;
+	ar = shft:4;
+}
+
+:SRL ar, at is op2=0x9 & op1=0x1 & ar & s=0x0 & at & op0=0x0
+{
+	sar:4 = 12;
+	ar = at >> *[special_register]:4 sar;
+}
+
+:SRLI ar, at, s is op2=0x4 & op1=0x1 & ar & s & at & op0=0x0
+{
+	ar = at >> s;
+}
+
+:SSA8B as is op2=0x4 & op1=0x0 & r=0x3 & as & t=0x0 & op0=0x0
+{
+	sar:4 = 12;
+	*[special_register]:4 sar = 32 - ((as*8) & 0x0000001F);
+}
+
+:SSA8L as is op2=0x4 & op1=0x0 & r=0x2 & as & t=0x0 & op0=0x0
+{
+	sar:4 = 12;
+	*[special_register]:4 sar = (as*8) & 0x0000001F;
+}
+
+:SSAI imm is op2=0x4 & op1=0x0 & r=0x4 & s & t_h=0b000 & t_l & op0=0x0 [ imm = s + (t_l << 4); ]
+{
+	sar:4 = 12;
+	*[special_register]:4 sar = imm;
+}
+
+:SSL as is op2=0x4 & op1=0x0 & r=0x1 & as & t=0x0 & op0=0x0
+{
+	sar:4 = 12;
+	*[special_register]:4 sar = 32 - (as & 0x0000001F);
+}
+
+:SSR as is op2=0x4 & op1=0x0 & r=0x0 & as & t=0x0 & op0=0x0
+{
+	sar:4 = 12;
+	*[special_register]:4 sar = as & 0x0000001F;
+}
+
+:SUB ar, as, at is op2=0xC & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = as - at;
+}
+
+:SUBX2 ar, as, at is op2=0xD & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = (as << 1) - at;
+}
+
+:SUBX4 ar, as, at is op2=0xE & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = (as << 2) - at;
+}
+
+:SUBX8 ar, as, at is op2=0xF & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = (as << 3) - at;
+}
+:WER at, as is op2=0x4 & op1=0x0 & r=0x7 & as & at & op0=0x0
+{}#Almost never used, so no implementation yet
+
+
+:WSR.^sr at is op2=0x1 & op1=0x3 & sr & at & op0=0x0
+{
+	*[special_register]:4 sr = at;
+}
+#:WUR.*		There is a lot of inconsistency in the datasheet about this one and I haven't found any software, that uses this instruction
+
+:XOR ar, as, at is op2=0x3 & op1=0x0 & ar & as & at & op0=0x0
+{
+	ar = as ^ at;
+}
+
+:XSR.^sr at is op2=0x6 & op1=0x1 & sr & at & op0=0x0
+{
+	tmp = *[special_register]sr;
+	*[special_register]:4 sr = at;
+	at = tmp;
+}
+
+
+#  Code Density Option Instructions
+# ----------------------------------
+
+:ADD.N arN, asN, atN is arN & asN & atN & opN=0xA
+{
+	arN = asN + atN;
+}
+
+:ADDI.N arN, asN, imm4t is arN & asN & imm4t & opN=0xB
+{
+	arN = asN + imm4t;
+}
+:ADDI.N arN, asN, -1 is arN & asN & atN=0x0 & opN=0xB
+{
+	arN = asN - 1;
+}
+
+:BEQZ.N asN, destN is destN & asN & atN_h=0b10 & opN=0xC
+{
+	if(asN == 0) goto destN;
+}
+
+:BENZ.N asN, destN is destN & asN & atN_h=0b11 & opN=0xC
+{
+	if(asN != 0) goto destN;
+}
+
+:BREAK.N imm4s is arN=0xF & imm4s & atN=0x2 & opN=0xD unimpl # I have no idea how to do breakpoints
+
+:L32I.N atN, asN, imm4r_var is imm4r & asN & atN & opN=0x8 [ imm4r_var=imm4r*4; ]
+{
+	local addr = asN + (imm4r << 2);
+	atN = * addr;
+}
+
+:MOV.N atN, asN is arN=0x0 & asN & atN & opN=0xD
+{
+	atN = asN;
+}
+
+:MOVI.N asN, imm7 is arN & asN & atN_7=0b0 & atN_imm7 & opN=0xC [ imm7=(((atN_imm7 & (atN_imm7 << 1)) & 0b100) << 5) + (arN + atN_imm7*16); ]
+{
+	asN = sext(imm7:1);
+}
+
+:NOP.N      is arN=0xF & asN=0x0 & atN=0x3 & opN=0xD
+{
+}
+
+:RET.N      is arN=0xF & asN=0x0 & atN=0x0 & opN=0xD
+{
+	return [a0];
+}
+
+:S32I.N atN, asN, imm4r_var is imm4r & asN & atN & opN=0x9 [ imm4r_var=imm4r*4; ]
+{
+	local addr = asN + (imm4r << 2);
+	*addr = atN;
+}
+
+#  Exception Option Instructions
+# ----------------------------------
+
+:EXCW is op2=0x0 & op1=0x0 & r=0x2 & s=0x0 & t=0x8 & op0=0x0
+{}
+
+:RFE is op2=0x0 & op1=0x0 & r=0x3 & s=0x0 & t=0x0 & op0=0x0
+{}
+
+#  16-bit Interger Multiply Option Instructions
+# ----------------------------------
+
+:MUL16S ar, as, at is op2=0xD & op1=0x1 & ar & as & at & op0=0x0
+{
+	ar = sext(as:2) * sext(at:2);
+}
+
+:MUL16U ar, as, at is op2=0xC & op1=0x1 & ar & as & at & op0=0x0
+{
+	ar = zext(as:2) * zext(at:2);
+}
+
+#  Debug Option Instructions
+# ----------------------------------
+
+:BREAK s, t is op2=0x0 & op1=0x0 & r=0x4 & s & t & op0=0x0
+{}
+
+# Miscellaneous Operations Option
+# ----------------------------------
+
+:NSAU at, as is op2=0x4 & op1=0x0 & r=0xF & as & at & op0=0x0
+{
+	# returns leading zeros
+	tmp:4 = 0;
+  <loopstart>
+	tmp = tmp + 1;
+	if(tmp == 33) goto <end>;
+	if(((as >> (32 - tmp)) & 0x1) == 0) goto <loopstart>;
+
+  <end>
+	at = tmp - 1;
+}
+
+# Interrupt Option
+# ----------------------------------
+:RSIL at, s is op2=0x0 & op1=0x0 & r=0x6 & s & at & op0=0x0
+{
+	ps:4 = 920;
+	at = *[special_register]:4 ps;
+	#sets the lower four bits of the PS register (PS.INTLEVEL) to s
+	*[special_register]:4 ps = *[special_register]:4 ps | (0x0000000F & s);
+}
+
+:WAITI s is op2=0x0 & op1=0x0 & r=0x7 & s & t=0x0 & op0=0x0
+{
+	ps:4 = 920;
+	#sets the lower four bits of the PS register (PS.INTLEVEL) to s
+	*[special_register]:4 ps = *[special_register]:4 ps | (0x0000000F & s);
+	#wait for interrupt can not be implemented
+}
+
+:RFI s is op2=0x0 & op1=0x0 & r=0x3 & s & t=0x1 & op0=0x0
+{
+	ps:4 = 920;
+	eps:4 = 776 + (s-2)*4;
+	epc:4 = 712 + (s-2)*4;
+
+	*[special_register]:4 ps = *[special_register]:4 eps;
+	addr:4 = *[special_register]:4 epc;
+	return [addr];
+}
+
+# Region Protection Option
+# ----------------------------------
+:WDTLB at, as is op2=0x5 & op1=0x0 & r=0xE & as & at & op0=0x0
+{
+
+}
+
+:WITLB at, as is op2=0x5 & op1=0x0 & r=0x6 & as & at & op0=0x0
+{
+
+}

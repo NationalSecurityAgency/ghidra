@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+
+  <language processor="Xtensa"
+            endian="little"
+            size="24"
+            variant="default"
+            version="1.0"
+            slafile="Xtensa.sla"
+            processorspec="Xtensa.pspec"
+            manualindexfile=""
+            id="Xtensa:LE:24:default">
+    <description>Tensilica Xtensa Instruction Set Architecture</description>
+    <compiler name="default" spec="Xtensa.cspec" id="default"/>
+  </language>
+  
+</language_definitions>
