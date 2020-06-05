@@ -133,26 +133,34 @@ public class ExtensionUtils {
 
 		ApplicationLayout layout = Application.getApplicationLayout();
 
-		if (layout.getExtensionInstallationDir() == null ||
-			!layout.getExtensionInstallationDir().exists()) {
-			return Collections.emptySet();
-		}
-
 		// The set to return;
 		Set<ExtensionDetails> extensions = new HashSet<>();
 
 		// Find all extension.properties or extension.properties.uninstalled files in
 		// the install directory and create a ExtensionDetails object for each.
-		ResourceFile installDir = layout.getExtensionInstallationDir();
-		List<ResourceFile> propFiles = findExtensionPropertyFiles(installDir, includeUninstalled);
-		for (ResourceFile propFile : propFiles) {
-			
-			ExtensionDetails details = createExtensionDetailsFromPropertyFile(propFile);
+		for (ResourceFile installDir : layout.getExtensionInstallationDirs()) {
+			if (!installDir.isDirectory()) {
+				continue;
+			}
+			List<ResourceFile> propFiles =
+				findExtensionPropertyFiles(installDir, includeUninstalled);
+			for (ResourceFile propFile : propFiles) {
 
-			// We found this extension in the installation directory, so set the install path
-			// property and add to the final set.
-			details.setInstallPath(propFile.getParentFile().getAbsolutePath());
-			extensions.add(details);
+				ExtensionDetails details = createExtensionDetailsFromPropertyFile(propFile);
+
+				// We found this extension in the installation directory, so set the install path
+				// property and add to the final set.
+				details.setInstallPath(propFile.getParentFile().getAbsolutePath());
+				if (!extensions.contains(details)) {
+					extensions.add(details);
+				}
+				else {
+					Msg.warn(null,
+						"Skipping extension \"" + details.getName() + "\" found at " +
+							details.getInstallPath() +
+							". Extension by that name installed in higher priority location.");
+				}
+			}
 		}
 
 		return extensions;
@@ -219,8 +227,13 @@ public class ExtensionUtils {
 	 * @return true if installed
 	 */
 	public static boolean isInstalled(String extensionName) {
-		return new File(Application.getApplicationLayout().getExtensionInstallationDir() +
-			File.separator + extensionName).exists();
+		for (ResourceFile installDir : Application.getApplicationLayout()
+				.getExtensionInstallationDirs()) {
+			if (new ResourceFile(installDir, extensionName).exists()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -267,16 +280,15 @@ public class ExtensionUtils {
 			return false;
 		}
 
+		File installDir = new ResourceFile(
+			Application.getApplicationLayout().getExtensionInstallationDirs().get(0),
+			extension.getName()).getFile(false);
+
 		if (extension.getArchivePath() == null) {
 			// Special Case: If the archive path is null then this must be an extension that 
 			// was installed from an external location, then uninstalled. In this case, there
 			// should be a Module.manifest.uninstalled and extension.properties.uninstalled
 			// present. If so, just restore them. If not, there's a problem.
-
-			String installPath = Application.getApplicationLayout().getExtensionInstallationDir() +
-				File.separator + extension.getName();
-			File installDir = new File(installPath);
-
 			if (installDir.exists()) {
 				return restoreStateFiles(installDir);
 			}
@@ -299,19 +311,13 @@ public class ExtensionUtils {
 		// the GUI then tries to reinstall it without restarting Ghidra, the extension hasn't actually
 		// been removed yet; just the manifest file has been renamed. In this case we don't need to go through 
 		// the full install process of unzipping or copying files to the install location. All we need
-		// to do is rename the manifest file from Module.manifest.uninstall back to Module.manifest.
-		String installPath = Application.getApplicationLayout().getExtensionInstallationDir() + File.separator +
-				extension.getName();
-		File installDir = new File(installPath);
-		
+		// to do is rename the manifest file from Module.manifest.uninstall back to Module.manifest.	
 		if (installDir.exists()) {
 			return restoreStateFiles(installDir);
 		}
 		
 		if (install(file)) {
-			extension.setInstallPath(
-				Application.getApplicationLayout().getExtensionInstallationDir() + File.separator +
-					extension.getName());
+			extension.setInstallPath(installDir + File.separator + extension.getName());
 			return true;
 		}
 
@@ -554,7 +560,9 @@ public class ExtensionUtils {
 					File errorFile = e.getErrorFile();
 					if (errorFile != null) {
 						// Get the root of the extension in the install location.
-						ResourceFile installDir = Application.getApplicationLayout().getExtensionInstallationDir();
+						ResourceFile installDir = Application.getApplicationLayout()
+								.getExtensionInstallationDirs()
+								.get(0);
 						
 						// Get the root directory of the extension (strip off the install folder location and
 						// grab the first part of the remaining path).
@@ -755,7 +763,7 @@ public class ExtensionUtils {
 		File newDir = null;
 		try {			
 			newDir =
-				new File(Application.getApplicationLayout().getExtensionInstallationDir() +
+				new File(Application.getApplicationLayout().getExtensionInstallationDirs().get(0) +
 					File.separator + extension.getName());
 			FileUtilities.deleteDir(newDir, monitor);
 			FileUtilities.copyDir(extension, newDir, monitor);
@@ -788,11 +796,10 @@ public class ExtensionUtils {
 				ExtensionExceptionType.ZIP_ERROR);
 		}
 
-		if (layout.getExtensionInstallationDir() == null ||
-			!layout.getExtensionInstallationDir().exists()) {
+		ResourceFile installDir = layout.getExtensionInstallationDirs().get(0);
+		if (installDir == null || !installDir.exists()) {
 			throw new ExtensionException(
-				"Extension installation directory is not valid: " +
-					layout.getExtensionInstallationDir(),
+				"Extension installation directory is not valid: " + installDir,
 				ExtensionExceptionType.INVALID_INSTALL_LOCATION);
 		}
 
@@ -803,8 +810,7 @@ public class ExtensionUtils {
 
 				ZipArchiveEntry entry = entries.nextElement();
 
-				String filePath =
-					(layout.getExtensionInstallationDir() + File.separator + entry.getName());
+				String filePath = installDir + File.separator + entry.getName();
 
 				File file = new File(filePath);
 
