@@ -153,7 +153,7 @@ class IdaXml:
         if os.path.isfile(os.path.join(ida_diskio.get_user_idadir(), 'python', 'idaxml.py')):
             f = os.path.join(ida_diskio.get_user_idadir(), 'python', 'idaxml.py')
         else:
-            f = os.path.join(ida_diskio.idadir('python'), '/idaxml.py')
+            f = os.path.join(ida_diskio.idadir('python'), 'idaxml.py')
         ftime = time.localtime(os.path.getmtime(f))
         ts = time.strftime('%b %d %Y %H:%M:%S', ftime)
         version = "\nXML " + what + " v" + IDAXML_VERSION
@@ -241,7 +241,7 @@ class XmlExporter(IdaXml):
         self.inf = ida_idaapi.get_inf_structure()
         self.min_ea = self.inf.min_ea
         self.max_ea = self.inf.max_ea
-        self.cbsize = (ida_idp.ph_get_cnbits()+7)/8
+        self.cbsize = int((ida_idp.ph_get_cnbits()+7)/8)
         self.processor = str.upper(ida_idp.get_idp_name())
         self.batch = ida_kernwin.cvar.batch
 
@@ -360,16 +360,19 @@ class XmlExporter(IdaXml):
             String containing either the character or the entity
             substition string.
         """
-        if ((ord(ch) < 0x20) and (ord(ch) != 0x09 and
-             ord(ch) != 0x0A and ord(ch) != 0x0D)): return ''
+        x = ch
+        if not isinstance(ch, int):
+            x = ord(ch)
+        if ((x < 0x20) and (x != 0x09 and
+             x != 0x0A and x != 0x0D)): return ''
         elif ch == '&' :  return '&amp;'
         elif ch == '<' :  return "&lt;"
         elif ch == '>' :  return "&gt;"
         elif ch == '\'' : return "&apos;"
         elif ch == '"' :  return "&quot;"
         elif ch == '\x7F': return ''
-        elif ord(ch) > 0x7F: return '&#x' + format(ord(ch),"x") + ";"
-        return ch
+        elif x > 0x7F: return '&#x' + format(x,"x") + ";"
+        return chr(x)
     
 
     def check_for_entities(self, text):
@@ -701,7 +704,7 @@ class XmlExporter(IdaXml):
                 if msize == 0:
                     msize = 1
             if idc.is_strlit(f) == False and size != msize:
-                dtype = "%s[%d]" % (dtype, size/msize)
+                dtype = "%s[%d]" % (dtype, int(size/msize))
             self.start_element(DEFINED_DATA)
             self.write_address_attribute(ADDRESS, addr)
             self.write_attribute(DATATYPE, dtype)
@@ -1095,7 +1098,7 @@ class XmlExporter(IdaXml):
                 if size < msize: size = msize
             if (size != msize):
                 arraytype = self.get_member_type(m)
-                dtype = "%s[%d]" % (arraytype, size/msize)
+                dtype = "%s[%d]" % (arraytype, int(size/msize))
             self.write_attribute(DATATYPE, dtype)
             self.write_numeric_attribute(SIZE, size*self.cbsize)
             regcmt = ida_struct.get_member_cmt(m.id, False)
@@ -1531,7 +1534,7 @@ class XmlExporter(IdaXml):
             if size < msize: size = msize
             if (idc.is_strlit(f) == False and ida_bytes.is_align(f) == False
                 and size != msize):
-                mtype = "%s[%d]" % (mtype, size/msize)
+                mtype = "%s[%d]" % (mtype, int(size/msize))
             self.write_attribute(DATATYPE, mtype)
             self.write_numeric_attribute(SIZE, size*self.cbsize)
             regcmt = ida_struct.get_member_cmt(member.id, False)
