@@ -41,9 +41,8 @@ import resources.Icons;
 import resources.ResourceManager;
 
 public class GhidraScriptEditorComponentProvider extends ComponentProvider {
-
-	private static final int MAX_UNDO_REDO_SIZE = 50;
-
+	static final String EDITOR_COMPONENT_NAME="EDITOR";
+	
 	static final String CHANGE_DESTINATION_TITLE = "Where Would You Like to Store Your Changes?";
 	static final String FILE_ON_DISK_CHANGED_TITLE = "File Changed on Disk";
 	static final String FILE_ON_DISK_MISSING_TITLE = "File on Disk is Missing";
@@ -53,7 +52,9 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	static final String KEEP_CHANGES_TEXT = "Keep Changes";
 	static final String DISCARD_CHANGES_TEXT = "Discard Changes";
 
-	static Font defaultFont = new Font("monospaced", Font.PLAIN, 12);
+	private static final int MAX_UNDO_REDO_SIZE = 50;
+
+	private static Font defaultFont = new Font("monospaced", Font.PLAIN, 12);
 
 	static void restoreState(SaveState saveState) {
 		String name = saveState.getString("DEFAULT_FONT_NAME", "Monospaced");
@@ -67,6 +68,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		saveState.putInt("DEFAULT_FONT_STYLE", defaultFont.getStyle());
 		saveState.putInt("DEFAULT_FONT_SIZE", defaultFont.getSize());
 	}
+
 
 	private GhidraScriptMgrPlugin plugin;
 	private GhidraScriptComponentProvider provider;
@@ -675,7 +677,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			super(text);
 
 			setFont(defaultFont);
-			setName("EDITOR");
+			setName(EDITOR_COMPONENT_NAME);
 			setWrapStyleWord(false);
 			Document document = getDocument();
 			document.addUndoableEditListener(e -> {

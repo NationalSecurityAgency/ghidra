@@ -174,11 +174,11 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		env.dispose();
 	}
 
-	static protected void wipe(ResourceFile path) throws IOException {
+	protected static void wipe(ResourceFile path) throws IOException {
 		wipe(Paths.get(path.getAbsolutePath()));
 	}
 
-	static protected void wipe(Path path) throws IOException {
+	protected static void wipe(Path path) throws IOException {
 		if (Files.exists(path)) {
 			for (Path p : (Iterable<Path>) Files.walk(path)
 				.sorted(Comparator.reverseOrder())::iterator) {
@@ -392,7 +392,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		assertNotNull(editor);
 
-		editorTextArea = (JTextArea) findComponentByName(editor.getComponent(), "EDITOR");
+		editorTextArea = (JTextArea) findComponentByName(editor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 		assertNotNull(editorTextArea);
 
 		buffer = new StringBuffer(editorTextArea.getText());
@@ -411,7 +411,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		// initialize our editor variable to the newly opened editor
 		editor = waitForComponentProvider(GhidraScriptEditorComponentProvider.class);
-		editorTextArea = (JTextArea) findComponentByName(editor.getComponent(), "EDITOR");
+		editorTextArea = (JTextArea) findComponentByName(editor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 
 		waitForSwing();
 
@@ -850,7 +850,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		Map<ResourceFile, GhidraScriptEditorComponentProvider> map = provider.getEditorMap();
 		GhidraScriptEditorComponentProvider fileEditor = map.get(file);
 		final JTextArea textArea =
-			(JTextArea) findComponentByName(fileEditor.getComponent(), "EDITOR");
+			(JTextArea) findComponentByName(fileEditor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 		assertNotNull(textArea);
 
 		final String[] box = new String[1];
@@ -1164,7 +1164,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		return info.getSourceFile();
 	}
 
-	static protected String CANCELLABLE_SCRIPT_NAME = TestChangeProgramScript.class.getName();
+	protected static String CANCELLABLE_SCRIPT_NAME = TestChangeProgramScript.class.getName();
 
 	protected void cancel() throws Exception {
 		Window window = waitForWindowByTitleContaining(CANCELLABLE_SCRIPT_NAME);
@@ -1494,7 +1494,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected JTextComponent grabScriptEditorTextArea() {
 		GhidraScriptEditorComponentProvider scriptEditor = grabScriptEditor();
-		JTextArea textArea = (JTextArea) findComponentByName(scriptEditor.getComponent(), "EDITOR");
+		JTextArea textArea = (JTextArea) findComponentByName(scriptEditor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 		assertNotNull(textArea);
 		return textArea;
 	}
@@ -1596,9 +1596,9 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 					}
 				}
 			}
-			catch (CancelledException ce) {
+			catch (CancelledException e) {
 				doneLatch.countDown();
-				throw ce;
+				throw e;
 			}
 
 			doneLatch.countDown();

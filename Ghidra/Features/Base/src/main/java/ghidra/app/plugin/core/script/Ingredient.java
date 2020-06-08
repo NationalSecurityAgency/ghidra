@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,5 +16,5 @@
 package ghidra.app.plugin.core.script;
 
 public interface Ingredient {
-	public IngredientDescription [] getIngredientDescriptions();
+	IngredientDescription [] getIngredientDescriptions();
 }

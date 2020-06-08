@@ -129,6 +129,9 @@ import ghidra.util.task.TaskMonitor;
  * @see ghidra.program.model.listing.Program
  */
 public abstract class GhidraScript extends FlatProgramAPI {
+	// Stores last-selected value for askXxx() methods, used to pre-populate askXxx()
+	// GUI dialogs if they are run more than once
+	private static Map<String, Map<Class<?>, Object>> askMap = new HashMap<>();
 
 	protected ResourceFile sourceFile;
 	protected GhidraState state;
@@ -174,16 +177,19 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		SUSPENDED
 	}
 
-	// Stores last-selected value for askXxx() methods, used to pre-populate askXxx()
-	// GUI dialogs if they are run more than once
-	private static Map<String, Map<Class<?>, Object>> askMap = new HashMap<>();
-
 	/**
 	 * The run method is where the script specific code is placed.
 	 * @throws Exception if any exception occurs.
 	 */
 	protected abstract void run() throws Exception;
 
+	/**
+	 * Set the context for this script.
+	 * 
+	 * @param state state object
+	 * @param monitor the monitor to use during run
+	 * @param writer the target of script "print" statements
+	 */
 	public final void set(GhidraState state, TaskMonitor monitor, PrintWriter writer) {
 		this.state = state;
 		this.monitor = monitor;
@@ -191,6 +197,14 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		loadVariablesFromState();
 	}
 
+	/**
+	 * Execute/run script and {@link #doCleanup} afterwards.
+	 * 
+	 * @param runState state object
+	 * @param runMonitor the monitor to use during run
+	 * @param runWriter the target of script "print" statements
+	 * @throws Exception if the script excepts
+	 */
 	public final void execute(GhidraState runState, TaskMonitor runMonitor, PrintWriter runWriter)
 			throws Exception {
 		boolean success = false;
@@ -203,8 +217,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		}
 	}
 
-	private final void doExecute(GhidraState runState, TaskMonitor runMonitor,
-			PrintWriter runWriter) throws Exception {
+	private void doExecute(GhidraState runState, TaskMonitor runMonitor, PrintWriter runWriter)
+			throws Exception {
 		this.state = runState;
 		this.monitor = runMonitor;
 		this.writer = runWriter;
@@ -478,6 +492,11 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		return state;
 	}
 
+	/**
+	 * Set the script {@link #currentAddress}, {@link #currentLocation}, and update state object.
+	 * 
+	 * @param address the new address
+	 */
 	public final void setCurrentLocation(Address address) {
 		state.setCurrentAddress(address);
 		this.currentAddress = address;
@@ -545,8 +564,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		if (isRunningHeadless()) {
 			// only change client authenticator in headless mode
 			try {
-				HeadlessClientAuthenticator.installHeadlessClientAuthenticator(
-					ClientUtil.getUserName(), null, false);
+				HeadlessClientAuthenticator
+					.installHeadlessClientAuthenticator(ClientUtil.getUserName(), null, false);
 			}
 			catch (IOException e) {
 				throw new RuntimeException("Unexpected Exception", e);
@@ -1408,7 +1427,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 					// Tests if text actually equals "true" or "false
 					String tempBool = analysisOptionValue.toLowerCase();
 
-					if (tempBool.equals("true") || tempBool.equals("false")) {
+					if ("true".equals(tempBool) || "false".equals(tempBool)) {
 						options.setBoolean(analysisOption, Boolean.valueOf(tempBool));
 					}
 
@@ -1785,13 +1804,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			}
 			else {
 				try {
-					SwingUtilities.invokeAndWait(
-						() -> Msg.showInfo(getClass(), null, name, message));
+					SwingUtilities
+						.invokeAndWait(() -> Msg.showInfo(getClass(), null, name, message));
 				}
-				catch (InterruptedException e1) {
+				catch (InterruptedException e) {
 					// shouldn't happen
 				}
-				catch (InvocationTargetException e1) {
+				catch (InvocationTargetException e) {
 					// shouldn't happen
 				}
 			}
@@ -1970,7 +1989,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	private interface CancellableFunction<T, R> {
-		public R apply(T t) throws CancelledException;
+		R apply(T t) throws CancelledException;
 	}
 
 	/**
@@ -2778,10 +2797,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @throws IllegalArgumentException if the parsed value is not a valid double.
 	 */
 	public double parseDouble(String val) {
-		if (val.equalsIgnoreCase("pi")) {
+		if ("pi".equalsIgnoreCase(val)) {
 			return Math.PI;
 		}
-		if (val.equalsIgnoreCase("e")) {
+		if ("e".equalsIgnoreCase(val)) {
 			return Math.E;
 		}
 		try {
@@ -3254,7 +3273,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @throws IllegalArgumentException if the parsed value is not a valid boolean.
 	 */
 	public Boolean parseBoolean(String val) {
-		if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false")) {
+		if ("true".equalsIgnoreCase(val) || "false".equalsIgnoreCase(val)) {
 			return Boolean.parseBoolean(val);
 		}
 		throw new IllegalArgumentException("Invalid boolean: " + val);

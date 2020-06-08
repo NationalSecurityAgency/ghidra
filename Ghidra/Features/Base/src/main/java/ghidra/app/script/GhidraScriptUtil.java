@@ -15,7 +15,8 @@
  */
 package ghidra.app.script;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,31 +32,38 @@ import ghidra.util.classfinder.ClassSearcher;
  * A utility class for managing script directories and ScriptInfo objects.
  */
 public class GhidraScriptUtil {
-
-	private static final String SCRIPTS_SUBDIR_NAME = "ghidra_scripts";
-	private static final String DEV_SCRIPTS_SUBDIR_NAME = "developer_scripts";
-
-	private static List<GhidraScriptProvider> providers = null;
-
 	/**
 	 * User's home scripts directory
 	 */
 	public static String USER_SCRIPTS_DIR = buildUserScriptsDirectory();
 
-	static BundleHost _bundleHost;
+	private static BundleHost bundleHost;
 
+	private static final String SCRIPTS_SUBDIR_NAME = "ghidra_scripts";
+	private static final String DEV_SCRIPTS_SUBDIR_NAME = "developer_scripts";
+
+	private static List<GhidraScriptProvider> providers;
+
+	/**
+	 * @return the bundle host used for scripting
+	 */
 	public static BundleHost getBundleHost() {
-		return _bundleHost;
+		return bundleHost;
 	}
 
-	private static void setBundleHost(BundleHost bundleHost) {
-		if (_bundleHost != null) {
+	/**
+	 * set the bundle host and start the framework
+	 * 
+	 * @param aBundleHost the bundle host
+	 */
+	private static void setBundleHost(BundleHost aBundleHost) {
+		if (bundleHost != null) {
 			throw new RuntimeException("GhidraScriptUtil initialized multiple times!");
 		}
 
 		try {
-			_bundleHost = bundleHost;
-			_bundleHost.startFramework();
+			bundleHost = aBundleHost;
+			bundleHost.startFramework();
 		}
 		catch (OSGiException | IOException e) {
 			e.printStackTrace();
@@ -66,26 +74,29 @@ public class GhidraScriptUtil {
 	/**
 	 * initialize state of GhidraScriptUtil with user, system paths, and optional extra system paths.
 	 * 
-	 * @param bundleHost the host to use 
+	 * @param aBundleHost the host to use 
 	 * @param extraSystemPaths additional system paths for this run, can be null 
 	 * 
 	 */
-	public static void initialize(BundleHost bundleHost, List<String> extraSystemPaths) {
-		setBundleHost(bundleHost);
+	public static void initialize(BundleHost aBundleHost, List<String> extraSystemPaths) {
+		setBundleHost(aBundleHost);
 		if (extraSystemPaths != null) {
 			for (String path : extraSystemPaths) {
 				bundleHost.add(new ResourceFile(path), true, true);
 			}
 		}
 
-		bundleHost.add(GhidraScriptUtil.getUserScriptDirectory(), true, false);
-		bundleHost.add(GhidraScriptUtil.getSystemScriptPaths(), true, true);
+		bundleHost.add(getUserScriptDirectory(), true, false);
+		bundleHost.add(getSystemScriptPaths(), true, true);
 	}
 
+	/**
+	 * dispose of the bundle host and providers list
+	 */
 	public static void dispose() {
-		if (_bundleHost != null) {
-			_bundleHost.dispose();
-			_bundleHost = null;
+		if (bundleHost != null) {
+			bundleHost.dispose();
+			bundleHost = null;
 		}
 		providers = null;
 	}
@@ -95,8 +106,10 @@ public class GhidraScriptUtil {
 	 * @return a list of the current script directories
 	 */
 	public static List<ResourceFile> getScriptSourceDirectories() {
-		return _bundleHost.getBundlePaths().stream().filter(ResourceFile::isDirectory).collect(
-			Collectors.toList());
+		return bundleHost.getBundlePaths()
+			.stream()
+			.filter(ResourceFile::isDirectory)
+			.collect(Collectors.toList());
 	}
 
 	public static ResourceFile getSourceDirectoryContaining(ResourceFile sourceFile) {
@@ -199,8 +212,10 @@ public class GhidraScriptUtil {
 	@Deprecated
 	public static List<ResourceFile> getExplodedCompiledSourceBundlePaths() {
 		try {
-			return Files.list(BundleHost.getOsgiDir()).filter(Files::isDirectory).map(
-				x -> new ResourceFile(x.toFile())).collect(Collectors.toList());
+			return Files.list(BundleHost.getOsgiDir())
+				.filter(Files::isDirectory)
+				.map(x -> new ResourceFile(x.toFile()))
+				.collect(Collectors.toList());
 		}
 		catch (IOException e) {
 			Msg.showError(GhidraScriptUtil.class, null, "error",
@@ -231,7 +246,7 @@ public class GhidraScriptUtil {
 	 * @return a list of all Ghidra script providers
 	 */
 	// Note: this method is synchronized so that two threads do not try to create the list when null
-	public synchronized static List<GhidraScriptProvider> getProviders() {
+	public static synchronized List<GhidraScriptProvider> getProviders() {
 		if (providers == null) {
 			List<GhidraScriptProvider> newProviders =
 				new ArrayList<>(ClassSearcher.getInstances(GhidraScriptProvider.class));
@@ -338,8 +353,7 @@ public class GhidraScriptUtil {
 		return path + ".java";
 	}
 
-	static ResourceFile findScriptFileInPaths(
-			Collection<ResourceFile> scriptDirectories,
+	static ResourceFile findScriptFileInPaths(Collection<ResourceFile> scriptDirectories,
 			String filename) {
 
 		String validatedName = fixupName(filename);

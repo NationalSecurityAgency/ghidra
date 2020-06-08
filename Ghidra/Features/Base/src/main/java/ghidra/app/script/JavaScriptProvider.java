@@ -24,18 +24,27 @@ import ghidra.app.plugin.core.osgi.*;
 import ghidra.util.Msg;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
-	final private BundleHost _bundleHost;
+	private final BundleHost bundleHost;
 
+	/**
+	 * Create a new {@link JavaScriptProvider} associated with the current bundle host used by scripting.
+	 */
 	public JavaScriptProvider() {
-		_bundleHost = GhidraScriptUtil.getBundleHost();
+		bundleHost = GhidraScriptUtil.getBundleHost();
 	}
 
+	/**
+	 * Get the {@link GhidraSourceBundle} containing the given source file, assuming it already exists.
+	 * 
+	 * @param sourceFile the source file
+	 * @return the bundle
+	 */
 	public GhidraSourceBundle getBundleForSource(ResourceFile sourceFile) {
 		ResourceFile sourceDir = GhidraScriptUtil.getSourceDirectoryContaining(sourceFile);
 		if (sourceDir == null) {
 			return null;
 		}
-		return (GhidraSourceBundle) _bundleHost.getExistingGhidraBundle(sourceDir);
+		return (GhidraSourceBundle) bundleHost.getExistingGhidraBundle(sourceDir);
 	}
 
 	@Override
@@ -53,7 +62,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		try {
 			Bundle osgiBundle = getBundleForSource(sourceFile).getOSGiBundle();
 			if (osgiBundle != null) {
-				_bundleHost.deactivateSynchronously(osgiBundle);
+				bundleHost.deactivateSynchronously(osgiBundle);
 			}
 		}
 		catch (GhidraBundleException | InterruptedException e) {
@@ -92,13 +101,22 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 	}
 
+	/**
+	 * Activate and build the {@link GhidraSourceBundle} containing {@code sourceFile} 
+	 * then load the script's class from its class loader. 
+	 * 
+	 * @param sourceFile the source file
+	 * @param writer the target for build messages
+	 * @return the loaded {@link Class} object
+	 * @throws Exception if build, activation, or class loading fail
+	 */
 	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
 		GhidraSourceBundle gb = getBundleForSource(sourceFile);
 		gb.build(writer);
-		
-		Bundle b = _bundleHost.install(gb);
 
-		_bundleHost.activateSynchronously(b);
+		Bundle b = bundleHost.install(gb);
+
+		bundleHost.activateSynchronously(b);
 
 		String classname = gb.classNameForScript(sourceFile);
 		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException

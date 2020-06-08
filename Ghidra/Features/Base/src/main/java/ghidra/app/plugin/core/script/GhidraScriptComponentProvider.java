@@ -20,6 +20,7 @@ import java.awt.Rectangle;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -57,12 +58,11 @@ import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
 public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
+	static final String WINDOW_GROUP = "Script Group";
 
 	private static final double TOP_PREFERRED_RESIZE_WEIGHT = .80;
 	private static final String DESCRIPTION_DIVIDER_LOCATION = "DESCRIPTION_DIVIDER_LOCATION";
 	private static final String FILTER_TEXT = "FILTER_TEXT";
-
-	static final String WINDOW_GROUP = "Script Group";
 
 	private Map<ResourceFile, GhidraScriptEditorComponentProvider> editorMap = new HashMap<>();
 	private final GhidraScriptMgrPlugin plugin;
@@ -126,7 +126,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		updateTitle();
 	}
 
-	private void build() {
+	private void buildCategoryTree() {
 		scriptRoot = new RootNode();
 
 		scriptCategoryTree = new GTree(scriptRoot);
@@ -159,6 +159,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		scriptCategoryTree.getSelectionModel()
 			.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+	}
+
+	private void build() {
+		buildCategoryTree();
 
 		tableModel = new GhidraScriptTableModel(this, infoManager);
 
@@ -231,10 +235,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		component.add(dataDescriptionSplit, BorderLayout.CENTER);
 	}
 
-	//==================================================================================================
-	// Inner Classes
-	//==================================================================================================
-
+	/**
+	 * Restore state for bundles, user actions, and filter.
+	 * 
+	 * @param saveState the state object
+	 */
 	public void readConfigState(SaveState saveState) {
 		bundleHost.restoreManagedBundleState(saveState, getTool());
 
@@ -258,6 +263,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		String filterText = saveState.getString(FILTER_TEXT, "");
 		tableFilterPanel.setFilterText(filterText);
 	}
+
+	/**
+	 * Save state for bundles, user actions, and filter.
+	 * 
+	 * @param saveState the state object
+	 */
 
 	public void writeConfigState(SaveState saveState) {
 		bundleHost.saveManagedBundleState(saveState);
@@ -283,6 +294,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		bundleStatusComponentProvider.dispose();
 	}
 
+	/**
+	 * @return the bundle host used for scripting, ultimately from {@link GhidraScriptUtil#getBundleHost()}
+	 */
 	public BundleHost getBundleHost() {
 		return bundleHost;
 	}
@@ -297,10 +311,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	Map<ResourceFile, GhidraScriptEditorComponentProvider> getEditorMap() {
 		return editorMap;
-	}
-
-	void showBundleStatusComponent() {
-		bundleStatusComponentProvider.setVisible(true);
 	}
 
 	void assignKeyBinding() {
@@ -360,82 +370,72 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		renameScriptByCopying(script, provider, renameFile);
 	}
 
+	/**
+	 * Copy a script, renaming references to the class name.
+	 * 
+	 * @param sourceScript source script
+	 * @param destinationScript destination script
+	 * @throws IOException if we fail to create temp, write contents, copy, or delete temp
+	 */
+	private void copyScript(ResourceFile sourceScript, ResourceFile destinationScript)
+			throws IOException {
+		String oldClassName = GhidraScriptUtil.getBaseName(sourceScript);
+		String newClassName = GhidraScriptUtil.getBaseName(destinationScript);
+
+		ResourceFile parentFile = sourceScript.getParentFile();
+		ResourceFile temp = new ResourceFile(parentFile, "ghidraScript.tmp");
+		try (PrintWriter writer = new PrintWriter(temp.getOutputStream())) {
+			try (BufferedReader reader =
+				new BufferedReader(new InputStreamReader(sourceScript.getInputStream()))) {
+				while (true) {
+					String line = reader.readLine();
+					if (line == null) {
+						break;
+					}
+					writer.println(line.replaceAll(oldClassName, newClassName));
+				}
+			}
+		}
+		FileUtilities.copyFile(temp, destinationScript, TaskMonitor.DUMMY);
+		temp.delete();
+	}
+
 	private void renameScriptByCopying(ResourceFile script, GhidraScriptProvider provider,
 			ResourceFile renameFile) {
-		String oldClassName = GhidraScriptUtil.getBaseName(script);
-		String newClassName = GhidraScriptUtil.getBaseName(renameFile);
-
-		ResourceFile temp = null;
-		PrintWriter writer = null;
-		BufferedReader reader = null;
 		try {
-
-			ResourceFile parentFile = script.getParentFile();
-			temp = new ResourceFile(parentFile, "ghidraScript.tmp");
-			writer = new PrintWriter(temp.getOutputStream());
-			reader = new BufferedReader(new InputStreamReader(script.getInputStream()));
-			while (true) {
-				String line = reader.readLine();
-				if (line == null) {
-					break;
-				}
-				writer.println(line.replaceAll(oldClassName, newClassName));
-			}
-			reader.close();
-			writer.close();
-
-			FileUtilities.copyFile(temp, renameFile, TaskMonitor.DUMMY);
-
-			if (!renameFile.exists()) {
-				Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
-					"The rename operation failed.\nPlease check file permissions.");
-				return;
-			}
-
-			if (!provider.deleteScript(script)) {
-				Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
-					"Unable to remove original file.\nPlease check file permissions.");
-				renameFile.delete();
-				return;
-			}
-			infoManager.removeMetadata(script);
-
-			if (actionManager.hasScriptAction(script)) {
-				KeyStroke ks = actionManager.getKeyBinding(script);
-				actionManager.removeAction(script);
-				ScriptAction action = actionManager.createAction(renameFile);
-				action.setKeyBindingData(new KeyBindingData(ks));
-			}
-
-			assert !infoManager
-				.containsMetadata(renameFile) : "renamed script already has metadata";
-			infoManager.getScriptInfo(renameFile);
-
-			tableModel.switchScript(script, renameFile);
-			setSelectedScript(renameFile);
+			copyScript(script, renameFile);
 		}
 		catch (IOException e) {
 			Msg.showError(getClass(), getComponent(), "Unable to rename script", e.getMessage());
 			return;
 		}
-		finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				}
-				catch (IOException e) {
-					// we tried
-				}
-			}
 
-			if (writer != null) {
-				writer.close();
-			}
-
-			if (temp != null) {
-				temp.delete();
-			}
+		if (!renameFile.exists()) {
+			Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
+				"The rename operation failed.\nPlease check file permissions.");
+			return;
 		}
+
+		if (!provider.deleteScript(script)) {
+			Msg.showWarn(getClass(), getComponent(), "Unable to rename script",
+				"Unable to remove original file.\nPlease check file permissions.");
+			renameFile.delete();
+			return;
+		}
+		infoManager.removeMetadata(script);
+
+		if (actionManager.hasScriptAction(script)) {
+			KeyStroke ks = actionManager.getKeyBinding(script);
+			actionManager.removeAction(script);
+			ScriptAction action = actionManager.createAction(renameFile);
+			action.setKeyBindingData(new KeyBindingData(ks));
+		}
+
+		assert !infoManager.containsMetadata(renameFile) : "renamed script already has metadata";
+		infoManager.getScriptInfo(renameFile);
+
+		tableModel.switchScript(script, renameFile);
+		setSelectedScript(renameFile);
 	}
 
 	JTable getTable() {
@@ -450,19 +450,27 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return tableModel.getScriptAt(tableFilterPanel.getModelRow(viewRowIndex));
 	}
 
+	/**
+	 * @return enabled bundle paths from the scripting bundle host
+	 */
 	public List<ResourceFile> getScriptDirectories() {
 		return bundleHost.getGhidraBundles()
 			.stream()
-			.filter(bundle -> bundle.isEnabled() && bundle instanceof GhidraSourceBundle)
+			.filter(GhidraSourceBundle.class::isInstance)
+			.filter(GhidraBundle::isEnabled)
 			.map(GhidraBundle::getPath)
 			.collect(Collectors.toList());
 	}
 
+	/**
+	 * @return non-system bundle paths from the scripting bundle host
+	 */
 	public List<ResourceFile> getWritableScriptDirectories() {
 		return bundleHost.getGhidraBundles()
 			.stream()
 			.filter(GhidraSourceBundle.class::isInstance)
-			.filter(bundle -> !bundle.isSystemBundle())
+			.filter(Predicate.not(GhidraBundle::isSystemBundle))
+			.filter(GhidraBundle::isEnabled)
 			.map(GhidraBundle::getPath)
 			.collect(Collectors.toList());
 	}
@@ -496,7 +504,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 				}
 				else {
 					Msg.showInfo(getClass(), getComponent(), getName(),
-						"Unable to delete script '" + script.getName() + "'" + "\n" +
+						"Unable to delete script '" + script.getName() + "'\n" +
 							"Please verify the file permissions.");
 				}
 			}
@@ -521,7 +529,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public void enableScriptDirectory(ResourceFile scriptDir) {
+	void enableScriptDirectory(ResourceFile scriptDir) {
 		bundleHost.enablePath(scriptDir);
 		Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
 			"The directory has been automatically enabled for use:\n" +
@@ -697,6 +705,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			categoryPath[i] = ((GTreeNode) path[i + 1]).getName();
 		}
 		return categoryPath;
+	}
+
+	void showBundleStatusComponent() {
+		bundleStatusComponentProvider.setVisible(true);
 	}
 
 	class RefreshingBundleHostListener implements BundleHostListener {

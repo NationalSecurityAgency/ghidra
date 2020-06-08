@@ -36,12 +36,8 @@ import resources.ResourceManager;
  * This class parses the meta-data about a script.
  */
 public class ScriptInfo {
-
-	private static final Pattern DOCUMENTATION_START = Pattern.compile("/\\*");
-	private static final Pattern DOCUMENTATION_END = Pattern.compile("\\*/");
-
 	/**
-	 * The delimiter used to categories and menu paths.
+	 * The delimiter used in categories and menu paths.
 	 */
 	public static final String DELIMITTER = ".";
 
@@ -50,6 +46,9 @@ public class ScriptInfo {
 	static final String AT_KEYBINDING = "@keybinding";
 	static final String AT_MENUPATH = "@menupath";
 	static final String AT_TOOLBAR = "@toolbar";
+
+	private static final Pattern DOCUMENTATION_START = Pattern.compile("/\\*");
+	private static final Pattern DOCUMENTATION_END = Pattern.compile("\\*/");
 
 	// omit from METADATA to avoid pre-populating in new scripts
 	private static final String AT_IMPORTPACKAGE = "@importpackage";
@@ -231,7 +230,7 @@ public class ScriptInfo {
 			description = buffer.toString();
 			modified = sourceFile.lastModified();
 		}
-		catch (Exception e) {
+		catch (IOException e) {
 			Msg.debug(this, "Unexpected exception reading script: " + sourceFile, e);
 		}
 		finally {
@@ -403,6 +402,9 @@ public class ScriptInfo {
 		return keyBinding;
 	}
 
+	/**
+	 * @return an error resulting from parsing keybinding metadata 
+	 */
 	public String getKeyBindingErrorMessage() {
 		return keybindingErrorMessage;
 	}
@@ -460,7 +462,6 @@ public class ScriptInfo {
 		String space = HTML_SPACE;
 		String htmlAuthor = bold("Author:") + space + escapeHTML(toString(author));
 		String htmlCategory = bold("Category:") + space + escapeHTML(toString(category));
-
 		String htmlKeyBinding = bold("Key Binding:") + space + getKeybindingToolTip();
 		String htmlMenuPath = bold("Menu Path:") + space + escapeHTML(toString(menupath));
 
@@ -505,10 +506,16 @@ public class ScriptInfo {
 		return StringUtils.defaultString(joined);
 	}
 
+	/**
+	 * @return true if the script either has compiler errors, or is a duplicate
+	 */
 	public boolean hasErrors() {
 		return isCompileErrors() || isDuplicate();
 	}
 
+	/**
+	 * @return a generic error message
+	 */
 	public String getErrorMessage() {
 		if (isCompileErrors()) {
 			return "Script contains compiler errors";

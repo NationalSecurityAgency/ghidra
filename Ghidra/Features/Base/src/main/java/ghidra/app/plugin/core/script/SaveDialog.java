@@ -37,6 +37,8 @@ import ghidra.util.HelpLocation;
 
 public class SaveDialog extends DialogComponentProvider implements ListSelectionListener {
 	protected GhidraScriptComponentProvider componentProvider;
+	protected ResourceFile scriptFile;
+
 	private GhidraScriptProvider provider;
 
 	private List<ResourceFile> paths;
@@ -44,15 +46,22 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	private JTextField nameField;
 	private boolean cancelled;
 
-	protected ResourceFile scriptFile;
-
-	public SaveDialog(Component parent, String title,
-			GhidraScriptComponentProvider componentProvider, ResourceFile scriptFile,
-			HelpLocation help) {
+	SaveDialog(Component parent, String title, GhidraScriptComponentProvider componentProvider,
+			ResourceFile scriptFile, HelpLocation help) {
 		this(parent, title, componentProvider, componentProvider.getWritableScriptDirectories(),
 			scriptFile, help);
 	}
 
+	/**
+	 * Only called directly from testing!
+	 * 
+	 * @param parent parent component
+	 * @param title dialog title
+	 * @param componentProvider the provider
+	 * @param scriptDirs list of directories to give as options when saving
+	 * @param scriptFile the default save location
+	 * @param help contextual help, e.g. for rename or save
+	 */
 	public SaveDialog(Component parent, String title,
 			GhidraScriptComponentProvider componentProvider, List<ResourceFile> scriptDirs,
 			ResourceFile scriptFile, HelpLocation help) {

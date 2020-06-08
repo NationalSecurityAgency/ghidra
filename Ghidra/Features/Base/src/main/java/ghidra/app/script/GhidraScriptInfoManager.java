@@ -28,6 +28,9 @@ public class GhidraScriptInfoManager {
 	private Map<ResourceFile, ScriptInfo> scriptFileToInfoMap = new HashMap<>();
 	private Map<String, List<ResourceFile>> scriptNameToFilesMap = new HashMap<>();
 
+	/**
+	 * clear stored metadata
+	 */
 	public void dispose() {
 		clearMetadata();
 	}
@@ -110,6 +113,12 @@ public class GhidraScriptInfoManager {
 		return scriptFileToInfoMap.containsKey(scriptFile);
 	}
 
+	/**
+	 * Get {@link ScriptInfo} for {@code script} under the assumption that it's already managed.
+	 * 
+	 * @param script the script
+	 * @return info or null if the assumption was wrong. If null is returned, an error dialog is shown
+	 */
 	public ScriptInfo getExistingScriptInfo(ResourceFile script) {
 		ScriptInfo info = scriptFileToInfoMap.get(script);
 		if (info == null) {

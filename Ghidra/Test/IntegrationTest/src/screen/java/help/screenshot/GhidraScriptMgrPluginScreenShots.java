@@ -119,7 +119,7 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 		BundleStatusComponentProvider bundleStatusComponentProvider =
 			showProvider(BundleStatusComponentProvider.class);
 
-		bundleStatusComponentProvider.getModel().setPathsForTesting(paths);
+		bundleStatusComponentProvider.setPathsForTesting(paths);
 
 		waitForComponentProvider(BundleStatusComponentProvider.class);
 		captureComponent(bundleStatusComponentProvider.getComponent());

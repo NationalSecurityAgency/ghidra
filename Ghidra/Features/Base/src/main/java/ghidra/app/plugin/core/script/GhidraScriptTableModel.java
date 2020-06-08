@@ -35,12 +35,11 @@ import ghidra.util.table.column.GColumnRenderer;
 import resources.Icons;
 
 class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Object> {
+	static final String SCRIPT_ACTION_COLUMN_NAME = "In Tool";
+	static final String SCRIPT_STATUS_COLUMN_NAME = "Status";
 
 	private static final String EMPTY_STRING = "";
 	private static final ImageIcon ERROR_IMG = Icons.ERROR_ICON;
-
-	static final String SCRIPT_ACTION_COLUMN_NAME = "In Tool";
-	static final String SCRIPT_STATUS_COLUMN_NAME = "Status";
 
 	private GhidraScriptComponentProvider provider;
 	private List<ResourceFile> scriptList = new ArrayList<>();
@@ -276,7 +275,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 		@Override
 		public String getColumnName() {
-			return "Status";
+			return SCRIPT_STATUS_COLUMN_NAME;
 		}
 
 		@Override

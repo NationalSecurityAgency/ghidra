@@ -41,7 +41,7 @@ public class GhidraState {
 	private ProgramSelection currentSelection;
 	private ProgramSelection currentHighlight;
 	private HashMap<String, Object> envmap = new HashMap<>();
-	private GatherParamPanel gatherParamPanel = null;
+	private GatherParamPanel gatherParamPanel;
 	private Project project;
 	private final boolean isGlobalState;
 
@@ -105,6 +105,7 @@ public class GhidraState {
 
 	/**
 	 * Sets the current program.
+	 * @param program the new program object
 	 */
 	public void setCurrentProgram(Program program) {
 		if (program == currentProgram) {
@@ -117,11 +118,19 @@ public class GhidraState {
 		gatherParamPanel.currentProgramChanged();
 	}
 
+	/**
+	 * @return the address of the current location
+	 */
 	public Address getCurrentAddress() {
 		return currentLocation != null ? currentLocation.getAddress() : null;
 
 	}
 
+	/**
+	 * If it differs, set the current location to the given address and fire a {@link ProgramLocationPluginEvent}.
+	 * 
+	 * @param address the address
+	 */
 	public void setCurrentAddress(Address address) {
 		if (SystemUtilities.isEqual(address, getCurrentAddress())) {
 			return;
@@ -129,10 +138,18 @@ public class GhidraState {
 		setCurrentLocation(new ProgramLocation(currentProgram, address));
 	}
 
+	/**
+	 * @return the current location
+	 */
 	public ProgramLocation getCurrentLocation() {
 		return currentLocation;
 	}
 
+	/**
+	 * If it differs, set the current location and fire a {@link ProgramLocationPluginEvent}.
+	 * 
+	 * @param location
+	 */
 	public void setCurrentLocation(ProgramLocation location) {
 		if (SystemUtilities.isEqual(currentLocation, location)) {
 			return;
@@ -144,10 +161,18 @@ public class GhidraState {
 		}
 	}
 
+	/**
+	 * @return the currently highlighted selection
+	 */
 	public ProgramSelection getCurrentHighlight() {
 		return currentHighlight;
 	}
 
+	/**
+	 * Set the currently highlighted selection and fire a {@link ProgramHighlightPluginEvent}.
+	 * 
+	 * @param highlight the selection
+	 */
 	public void setCurrentHighlight(ProgramSelection highlight) {
 		if (SystemUtilities.isEqual(currentHighlight, highlight)) {
 			return;
@@ -162,10 +187,18 @@ public class GhidraState {
 		}
 	}
 
+	/**
+	 * @return the current selection
+	 */
 	public ProgramSelection getCurrentSelection() {
 		return currentSelection;
 	}
 
+	/**
+	 * Set the current selection and fire a {@link kProgramSelectionPluginEvent}.
+	 * 
+	 * @param selection the selection
+	 */
 	public void setCurrentSelection(ProgramSelection selection) {
 		if (SystemUtilities.isEqual(currentSelection, selection)) {
 			return;
@@ -181,27 +214,27 @@ public class GhidraState {
 	}
 
 	public void addEnvironmentVar(String name, byte value) {
-		envmap.put(name, new Byte(value));
+		envmap.put(name, Byte.valueOf(value));
 	}
 
 	public void addEnvironmentVar(String name, short value) {
-		envmap.put(name, new Short(value));
+		envmap.put(name, Short.valueOf(value));
 	}
 
 	public void addEnvironmentVar(String name, int value) {
-		envmap.put(name, new Integer(value));
+		envmap.put(name, Integer.valueOf(value));
 	}
 
 	public void addEnvironmentVar(String name, long value) {
-		envmap.put(name, new Long(value));
+		envmap.put(name, Long.valueOf(value));
 	}
 
 	public void addEnvironmentVar(String name, float value) {
-		envmap.put(name, new Float(value));
+		envmap.put(name, Float.valueOf(value));
 	}
 
 	public void addEnvironmentVar(String name, double value) {
-		envmap.put(name, new Double(value));
+		envmap.put(name, Double.valueOf(value));
 	}
 
 	public void addEnvironmentVar(String name, Object value) {
