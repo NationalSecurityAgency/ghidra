@@ -165,7 +165,7 @@ attach variables [Dthigh] [
 :add  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00000 { Rt = Ra + Rb; }
 :sub  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00001 { Rt = Ra - Rb; }
 :and  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00010 { Rt = Ra & Rb; }
-:xor  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00011 { Rt = Ra & Rb; }
+:xor  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00011 { Rt = Ra ^ Rb; }
 :or   Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00100 { Rt = Ra | Rb; }
 :nor  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00101 { Rt = ~(Ra | Rb); }
 :slt  Rt, Ra, Rb is $(I32) & $(ALU_1) & Rt & Ra & Rb & Rd=0 & Sub5=0b00110 { Rt = zext(Ra < Rb); }
