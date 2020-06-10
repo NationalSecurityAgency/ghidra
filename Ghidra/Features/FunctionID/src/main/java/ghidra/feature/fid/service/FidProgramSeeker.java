@@ -48,7 +48,7 @@ public class FidProgramSeeker {
 
 	public final int MAX_NUM_PARENTS_FOR_SCORE = 500; // Limit number of (useless) parent (caller) functions
 
-	private final int CACHE_SIZE = 120000; // Maximum number of FidQuadHash cached
+	private final int MAX_CACHE_SIZE = 2000000; // Maximum number of FidQuadHash cached
 
 	private final float scoreThreshold; // Code unit score a function must achieve to be considered a match
 	private final int mediumHashCodeUnitLengthLimit;
@@ -72,7 +72,10 @@ public class FidProgramSeeker {
 		this.scoreThreshold = scoreThreshold;
 		this.mediumHashCodeUnitLengthLimit = mediumHashCodeUnitLengthLimit;
 		FidHasherFactory factory = new FidHasherFactory(hasher);
-		this.cacheFactory = new FIDFixedSizeMRUCachingFactory(factory, CACHE_SIZE);
+		int cacheSize = program.getFunctionManager().getFunctionCount();
+		cacheSize = (cacheSize < 100) ? 100 : cacheSize;
+		cacheSize = (cacheSize > MAX_CACHE_SIZE) ? MAX_CACHE_SIZE : cacheSize;
+		this.cacheFactory = new FIDFixedSizeMRUCachingFactory(factory, cacheSize);
 	}
 
 	public static ArrayList<Function> getChildren(Function function, boolean followThunks) {
