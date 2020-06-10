@@ -38,15 +38,16 @@ define register offset=0x200 size=8 [ dr0             dr2             dr4       
 # Floating-Point System Registers
 define register offset=0x300 size=4 [fpscr fpul];
 
-# FPSCR Flags (initial value = H'0004 0001)
-@define FP_RM       "fpscr[0,2]"
-@define FP_FLAG     "fpscr[2,5]"
-@define FP_ENABLE   "fpscr[7,5]"
-@define FP_CAUSE    "fpscr[12,6]"
-@define FP_DN       "fpscr[18,1]"
-@define FP_PR       "fpscr[19,1]"
-@define FP_SZ       "fpscr[20,1]"
-@define FP_QIS      "fpscr[22,1]"
+# Floating-Point Context Registers
+define context fpscr
+    fpscr_pr=        (19,19)
+    fpscr_sz=        (20,20)
+;
+
+# FPSCR Flags
+@define FPSCR_PR     "fpscr[19,1]"
+@define FPSCR_SZ     "fpscr[20,1]"
+
 
 @endif
 
@@ -2033,167 +2034,167 @@ define pcodeop Sleep_Standby;
 #
 
 # FABS FRn                  1111nnnn01011101 |FRn| → FRn
-:fabs ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b01011101
+:fabs ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b01011101 & fpscr_pr=0b0
 {
     ffrn_08_11 = abs(ffrn_08_11);
 }
 
 #FABS DRn                  1111nnn001011101 |DRn| → DRn
-:fabs fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_00_07=0b01011101 & fop_08_08=0b0
+:fabs fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_00_07=0b01011101 & fop_08_08=0b0 & fpscr_pr=0b1
 {
     fdrn_09_11 = abs(fdrn_09_11);
 }
 
 # FADD FRm, FRn             1111nnnnmmmm0000 FRn + FRm → FRn
-:fadd ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0000
+:fadd ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0000 & fpscr_pr=0b0
 {
     ffrn_08_11 = ffrn_08_11 f+ ffrm_04_07;
 }
 
 # FADD DRm, DRn             1111nnn0mmm00000 DRn + DRm → DRn
-:fadd fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0000
+:fadd fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0000 & fpscr_pr=0b1
 {
     fdrn_09_11 = fdrn_09_11 f+ fdrm_05_07;
 }
 
 # FCMP/EQ FRm, FRn          1111nnnnmmmm0100 (FRn=FRm)? 1:0 → T
-:fcmp"/eq" ffrm_04_07, ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0100
+:fcmp"/eq" ffrm_04_07, ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0100 & fpscr_pr=0b0
 {
     $(T_FLAG) = (ffrn_08_11 f== ffrm_04_07);
 }
 
 # FCMP/EQ DRm, DRn          1111nnn0mmm00100 (DRn=DRm)? 1:0 → T
-:fcmp"/eq" fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0100
+:fcmp"/eq" fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0100 & fpscr_pr=0b1
 {
     $(T_FLAG) = (fdrn_09_11 f== fdrm_05_07);
 }
 
 # FCMP/GT FRm, FRn          1111nnnnmmmm0101 (FRn>FRm)? 1:0 → T
-:fcmp"/gt" ffrm_04_07, ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0101
+:fcmp"/gt" ffrm_04_07, ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0101 & fpscr_pr=0b0
 {
     $(T_FLAG) = (ffrn_08_11 f> ffrm_04_07);
 }
 
 # FCMP/GT DRm, DRn          1111nnn0mmm00101 (DRn>DRm)? 1:0 → T
-:fcmp"/gt" fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0101
+:fcmp"/gt" fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0101 & fpscr_pr=0b1
 {
     $(T_FLAG) = (fdrn_09_11 f> fdrm_05_07);
 }
 
 # FCNVDS DRm, FPUL          1111mmm010111101 (float) DRm → FPUL
-:fcnvds fdrm_09_11, fpul    is fpul & fop_12_15=0b1111 & fdrm_09_11 & fop_08_08=0b0 & fop_00_07=0b10111101
+:fcnvds fdrm_09_11, fpul    is fpul & fop_12_15=0b1111 & fdrm_09_11 & fop_08_08=0b0 & fop_00_07=0b10111101 & fpscr_pr=0b1
 {
     fpul = float2float(fdrm_09_11);
 }
 
 # FCNVSD FPUL, DRn          1111nnn010101101 (double) FPUL → DRn
-:fcnvsd fpul, fdrn_09_11    is fpul & fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fop_00_07=0b10101101
+:fcnvsd fpul, fdrn_09_11    is fpul & fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fop_00_07=0b10101101 & fpscr_pr=0b1
 {
     fdrn_09_11 = float2float(fpul);
 }
 
 # FDIV FRm, FRn             1111nnnnmmmm0011 FRn/FRm → FRn
-:fdiv ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0011
+:fdiv ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0011 & fpscr_pr=0b0
 {
     ffrn_08_11 = ffrn_08_11 f/ ffrm_04_07;
 }
 
 # FDIV DRm, DRn             1111nnn0mmm00011 DRn/DRm → DRn
-:fdiv fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0011
+:fdiv fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0011 & fpscr_pr=0b1
 {
     fdrn_09_11 = fdrn_09_11 f/ fdrm_05_07;
 }
 
 # FLDI0 FRn                 1111nnnn10001101 0 × 00000000 → FRn
-:fldi0 ffrn_08_11       is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b10001101
+:fldi0 ffrn_08_11       is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b10001101 & fpscr_pr=0b0
 {
     ffrn_08_11 = 0x00000000;
 }
 
 # FLDI1 FRn                 1111nnnn10011101 0 × 3F800000 → FRn
-:fldi1 ffrn_08_11       is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b10011101
+:fldi1 ffrn_08_11       is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b10011101 & fpscr_pr=0b0
 {
     ffrn_08_11 = 0x3F800000;
 }
 
 
 # FLDS FRm, FPUL            1111mmmm00011101 FRm → FPUL
-:flds ffrm_08_11, fpul  is fpul & fop_12_15=0b1111 & ffrm_08_11 & fop_00_07=0b00011101
+:flds ffrm_08_11, fpul  is fpul & fop_12_15=0b1111 & ffrm_08_11 & fop_00_07=0b00011101 & fpscr_pr=0b0
 {
     fpul = ffrm_08_11;
 }
 
 # FLOAT FPUL,FRn            1111nnnn00101101 (float) FPUL → FRn
-:float fpul, ffrn_08_11     is fpul & fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b00101101
+:float fpul, ffrn_08_11     is fpul & fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b00101101 & fpscr_pr=0b0
 {
     ffrn_08_11 = int2float(fpul);
 }
 
 # FLOAT FPUL,DRn            1111nnn000101101 (double) FPUL → DRn
-:float fpul, fdrn_09_11     is fpul & fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fop_00_07=0b00101101
+:float fpul, fdrn_09_11     is fpul & fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fop_00_07=0b00101101 & fpscr_pr=0b1
 {
     fdrn_09_11 = int2float(fpul);
 }
 
 # FMAC FR0, FRm, FRn        1111nnnnmmmm1110 FR0 × FRm + FRn → FRn
-:fmac fr0, ffrm_04_07, ffrn_08_11       is fr0 & fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b1110
+:fmac fr0, ffrm_04_07, ffrn_08_11       is fr0 & fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b1110 & fpscr_pr=0b0
 {
     ffrn_08_11 = ffrn_08_11 f+ (ffrm_04_07 f* fr0);
 }
 
 # FMOV FRm, FRn             1111nnnnmmmm1100 FRm → FRn
-:fmov ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b1100
+:fmov ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b1100 & fpscr_sz=0b0
 {
     ffrn_08_11 = ffrm_04_07;
 }
 
 # FMOV DRm, DRn             1111nnn0mmm01100 DRm → DRn
-:fmov fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b1100
+:fmov fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b1100 & fpscr_sz=0b1
 {
     fdrn_09_11 = fdrm_05_07;
 }
 
 # FMOV.S @(R0, Rm), FRn     1111nnnnmmmm0110 (R0+Rm) → FRn
-:fmov.s @(r0, f_rm_04_07), ffrn_08_11    is r0 & fop_12_15=0b1111 & ffrn_08_11 & f_rm_04_07 & fop_00_03=0b0110
+:fmov.s @(r0, f_rm_04_07), ffrn_08_11    is r0 & fop_12_15=0b1111 & ffrn_08_11 & f_rm_04_07 & fop_00_03=0b0110 & fpscr_sz=0b0
 {
     ffrn_08_11 = *:4 (r0 + f_rm_04_07);
 }
 
 # FMOV.D @(R0, Rm), DRn     1111nnn0mmmm0110 (R0+Rm) → DRn
-:fmov.d @(r0, f_rm_04_07), fdrn_09_11    is r0 & fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & f_rm_04_07 & fop_00_03=0b0110
+:fmov.d @(r0, f_rm_04_07), fdrn_09_11    is r0 & fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & f_rm_04_07 & fop_00_03=0b0110 & fpscr_sz=0b1
 {
     fdrn_09_11 = *:8 (r0 + f_rm_04_07);
 }
 
 # FMOV.S @Rm+, FRn          1111nnnnmmmm1001 (Rm) → FRn, Rm+ = 4
-:fmov.s @f_rm_04_07+, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & f_rm_04_07 & fop_00_03=0b1001
+:fmov.s @f_rm_04_07+, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & f_rm_04_07 & fop_00_03=0b1001 & fpscr_sz=0b0
 {
     ffrn_08_11 = *:4 (f_rm_04_07);
     f_rm_04_07 = f_rm_04_07 + 4;
 }
 
 # FMOV.D @Rm+, DRn          1111nnn0mmmm1001 (Rm) → DRn, Rm+ = 8
-:fmov.d @f_rm_04_07+, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & f_rm_04_07 & fop_00_03=0b1001
+:fmov.d @f_rm_04_07+, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & f_rm_04_07 & fop_00_03=0b1001 & fpscr_sz=0b1
 {
     fdrn_09_11 = *:8 (f_rm_04_07);
     f_rm_04_07 = f_rm_04_07 + 8;
 }
 
 # FMOV.S @Rm, FRn           1111nnnnmmmm1000 (Rm) → FRn
-:fmov.s @f_rm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & f_rm_04_07 & fop_00_03=0b1000
+:fmov.s @f_rm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & f_rm_04_07 & fop_00_03=0b1000 & fpscr_sz=0b0
 {
     ffrn_08_11 = *:4 (f_rm_04_07);
 }
 
 # FMOV.D @Rm, DRn           1111nnn0mmmm1000 (Rm) → DRn
-:fmov.d @f_rm_04_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & f_rm_04_07 & fop_00_03=0b1000
+:fmov.d @f_rm_04_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & f_rm_04_07 & fop_00_03=0b1000 & fpscr_sz=0b1
 {
     fdrn_09_11 = *:8 (f_rm_04_07);
 }
 
 # FMOV.S @(disp12,Rm),FRn     0011nnnnmmmm0001 0111dddddddddddd  (disp×4+Rm) → FRn
 :fmov.s @(disp12, lf_rm_20_23), lffrn_24_27
-    is lfop_28_31=0b0011 & lffrn_24_27 & lf_rm_20_23 & lfop_12_19=0b00010111 & lfdisp_00_11
+    is lfop_28_31=0b0011 & lffrn_24_27 & lf_rm_20_23 & lfop_12_19=0b00010111 & lfdisp_00_11 & fpscr_sz=0b0
     [ disp12 = lfdisp_00_11 * 4; ]
 {
     lffrn_24_27 = *:4 (disp12 + lf_rm_20_23);
@@ -2201,7 +2202,7 @@ define pcodeop Sleep_Standby;
 
 # FMOV.D @(disp12,Rm),DRn     0011nnn0mmmm0001 0111dddddddddddd  (disp×8+Rm) → DRn
 :fmov.d @(disp12, lf_rm_20_23), lfdrn_25_27
-    is lfop_28_31=0b0011 & lfdrn_25_27 & lfop_24_24=0b0 & lf_rm_20_23 & lfop_12_19=0b00010111 & lfdisp_00_11
+    is lfop_28_31=0b0011 & lfdrn_25_27 & lfop_24_24=0b0 & lf_rm_20_23 & lfop_12_19=0b00010111 & lfdisp_00_11 & fpscr_sz=0b1
     [ disp12 = lfdisp_00_11 * 8; ]
 {
     lfdrn_25_27 = *:8 (disp12 + lf_rm_20_23);
@@ -2209,46 +2210,46 @@ define pcodeop Sleep_Standby;
 
 
 # FMOV.S FRm, @( R0,Rn )      1111nnnnmmmm0111 FRm → (R0+Rn)
-:fmov.s ffrm_04_07, @( r0, f_rn_08_11 )      is r0 & fop_12_15=0b1111 & f_rn_08_11 & ffrm_04_07 & fop_00_03=0b0111
+:fmov.s ffrm_04_07, @( r0, f_rn_08_11 )      is r0 & fop_12_15=0b1111 & f_rn_08_11 & ffrm_04_07 & fop_00_03=0b0111 & fpscr_sz=0b0
 {
     *:4 (f_rn_08_11 + r0) = ffrm_04_07;
 }
 
 # FMOV.D DRm, @( R0,Rn )      1111nnnnmmm00111 DRm → (R0+Rn)
-:fmov.d fdrm_05_07, @( r0, f_rn_08_11 )      is r0 & fop_12_15=0b1111 & f_rn_08_11 & fdrm_05_07 & fop_04_04=0b0 & fop_00_03=0b0111
+:fmov.d fdrm_05_07, @( r0, f_rn_08_11 )      is r0 & fop_12_15=0b1111 & f_rn_08_11 & fdrm_05_07 & fop_04_04=0b0 & fop_00_03=0b0111 & fpscr_sz=0b1
 {
     *:8 (f_rn_08_11 + r0) = fdrm_05_07;
 }
 
 # FMOV.S FRm, @-Rn            1111nnnnmmmm1011 Rn- = 4, FRm → (Rn)
-:fmov.s ffrm_04_07, @-f_rn_08_11      is fop_12_15=0b1111 & f_rn_08_11 & ffrm_04_07 & fop_00_03=0b1011
+:fmov.s ffrm_04_07, @-f_rn_08_11      is fop_12_15=0b1111 & f_rn_08_11 & ffrm_04_07 & fop_00_03=0b1011 & fpscr_sz=0b0
 {
     f_rn_08_11 = f_rn_08_11 - 4;
     *:4 (f_rn_08_11) = ffrm_04_07;
 }
 
 # FMOV.D DRm, @-Rn            1111nnnnmmm01011 Rn- = 8, DRm → (Rn)
-:fmod.s fdrm_05_07, @-f_rn_08_11      is fop_12_15=0b1111 & f_rn_08_11 & fdrm_05_07 & fop_04_04=0b0 & fop_00_03=0b1011
+:fmod.s fdrm_05_07, @-f_rn_08_11      is fop_12_15=0b1111 & f_rn_08_11 & fdrm_05_07 & fop_04_04=0b0 & fop_00_03=0b1011 & fpscr_sz=0b1
 {
     f_rn_08_11 = f_rn_08_11 - 8;
     *:8 (f_rn_08_11) = fdrm_05_07;
 }
 
 # FMOV.S FRm, @Rn             1111nnnnmmmm1010 FRm → (Rn)
-:fmov.s ffrm_04_07, @f_rn_08_11      is fop_12_15=0b1111 & f_rn_08_11 & ffrm_04_07 & fop_00_03=0b1010
+:fmov.s ffrm_04_07, @f_rn_08_11      is fop_12_15=0b1111 & f_rn_08_11 & ffrm_04_07 & fop_00_03=0b1010 & fpscr_sz=0b0
 {
     *:4 (f_rn_08_11) = ffrm_04_07;
 }
 
 # FMOV.D DRm, @Rn             1111nnnnmmm01010 DRm → (Rn)
-:fmov.d fdrm_05_07, @f_rn_08_11      is fop_12_15=0b1111 & f_rn_08_11 & fdrm_05_07 & fop_04_04=0b0 & fop_00_03=0b1010
+:fmov.d fdrm_05_07, @f_rn_08_11      is fop_12_15=0b1111 & f_rn_08_11 & fdrm_05_07 & fop_04_04=0b0 & fop_00_03=0b1010 & fpscr_sz=0b1
 {
     *:8 (f_rn_08_11) = fdrm_05_07;
 }
 
 # FMOV.S FRm, @(disp12,Rn)    0011nnnnmmmm0001 0011dddddddddddd FRm → (disp×4+Rn)
 :fmov.s lffrm_20_23, @(disp12, lf_rn_24_27)
-    is lfop_28_31=0b0011 & lf_rn_24_27 & lffrm_20_23 & lfop_12_19=0b00010011 & lfdisp_00_11
+    is lfop_28_31=0b0011 & lf_rn_24_27 & lffrm_20_23 & lfop_12_19=0b00010011 & lfdisp_00_11 & fpscr_sz=0b0
     [ disp12 = lfdisp_00_11 * 4; ]
 {
     *:4 (disp12 + lf_rn_24_27) = lffrm_20_23;
@@ -2257,80 +2258,74 @@ define pcodeop Sleep_Standby;
 
 # FMOV.D DRm, @(disp12,Rn)    0011nnnnmmm000010 011dddddddddddd DRm → (disp×8+Rn)
 :fmov.d lfdrm_21_23, @(disp12, lf_rn_24_27)
-    is lfop_28_31=0b0011 & lf_rn_24_27 & lfdrm_21_23 & lfop_20_20=0b0 & lfop_12_19=0b00010011 & lfdisp_00_11
+    is lfop_28_31=0b0011 & lf_rn_24_27 & lfdrm_21_23 & lfop_20_20=0b0 & lfop_12_19=0b00010011 & lfdisp_00_11 & fpscr_pr=0b1
     [ disp12 = lfdisp_00_11 * 8; ]
 {
     *:8 (disp12 + lf_rn_24_27) = lfdrm_21_23;
 }
 
 # FMUL FRm, FRn               1111nnnnmmmm0010 FRn × FRm → FRn
-:fmul ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0010
+:fmul ffrm_04_07, ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0010 & fpscr_pr=0b0
 {
     ffrn_08_11 = ffrn_08_11 f* ffrm_04_07;
 }
 
 # FMUL DRm, DRn               1111nnn0mmm00010 DRn × DRm → DRn
-:fmul fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0010
+:fmul fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0010 & fpscr_pr=0b1
 {
     fdrn_09_11 = fdrn_09_11 f* fdrm_05_07;
 }
 
 # FNEG FRn                    1111nnnn01001101 -FRn → FRn
-:fneg ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b01001101
+:fneg ffrn_08_11    is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b01001101 & fpscr_pr=0b0
 {
     ffrn_08_11 = f- ffrn_08_11;
 }
 
 # FNEG DRn                    1111nnn001001101 -DRn → DRn
-:fneg fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fop_00_07=0b01001101
+:fneg fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fop_00_07=0b01001101 & fpscr_pr=0b1
 {
     fdrn_09_11 = f- fdrn_09_11;
 }
 
-# FSCHG                       1111001111111101 FPSCR.SZ = ~ FPSCR.SZ
-:fschg  is fop_00_15=0b1111001111111101
-{
-    $(FP_SZ) = ~ $(FP_SZ);
-}
-
 # FSQRT FRn                   1111nnnn01101101 √FRn → FRn
-:fsqrt ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b01101101
+:fsqrt ffrn_08_11   is fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b01101101 & fpscr_pr=0b0
 {
     ffrn_08_11 = sqrt(ffrn_08_11);
 }
 
 # FSQRT DRn                   1111nnn001101101 √DRn → DRn
-:fsqrt fdrn_09_11   is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fop_00_07=0b01101101
+:fsqrt fdrn_09_11   is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fop_00_07=0b01101101 & fpscr_pr=0b1
 {
     fdrn_09_11 = sqrt(fdrn_09_11);
 }
 
 # FSTS FPUL, FRn              1111nnnn00001101 FPUL → FRn
-:fsts fpul, ffrn_08_11  is fpul & fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b00001101
+:fsts fpul, ffrn_08_11  is fpul & fop_12_15=0b1111 & ffrn_08_11 & fop_00_07=0b00001101 & fpscr_pr=0b0 & fpscr_pr=0b0
 {
     ffrn_08_11 = fpul;
 }
 
 # FSUB FRm, FRn               1111nnnnmmmm0001 FRn - FRm → FRn
-:fsub ffrm_04_07, ffrn_08_11        is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0001
+:fsub ffrm_04_07, ffrn_08_11        is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0001 & fpscr_pr=0b0
 {
     ffrn_08_11 = ffrn_08_11 f- ffrm_04_07;
 }
 
 # FSUB DRm, DRn               1111nnn0mmm00001 DRn - DRm → DRn
-:fsub fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0001
+:fsub fdrm_05_07, fdrn_09_11    is fop_12_15=0b1111 & fdrn_09_11 & fop_08_08=0b0 & fdrm_05_07 & fop_04_04 = 0b0 & fop_00_03=0b0001 & fpscr_pr=0b1
 {
     fdrn_09_11 = fdrn_09_11 f- fdrm_05_07;
 }
 
 # FTRC FRm, FPUL              1111mmmm00111101 (long) FRm → FPUL
-:ftrc ffrm_08_11, fpul  is fpul & fop_12_15=0b1111 & ffrm_08_11 & fop_00_07=0b00111101
+:ftrc ffrm_08_11, fpul  is fpul & fop_12_15=0b1111 & ffrm_08_11 & fop_00_07=0b00111101 & fpscr_pr=0b0
 {
     fpul = trunc(ffrm_08_11);
 }
 
 # FTRC DRm, FPUL              1111mmm000111101 (long) DRm → FPUL
-:ftrc fdrm_09_11, fpul  is fpul & fop_12_15=0b1111 & fdrm_09_11 & fop_08_08=0b0 & fop_00_07=0b00111101
+:ftrc fdrm_09_11, fpul  is fpul & fop_12_15=0b1111 & fdrm_09_11 & fop_08_08=0b0 & fop_00_07=0b00111101 & fpscr_pr=0b1
 {
     fpul = trunc(fdrm_09_11);
 }
@@ -2347,7 +2342,7 @@ define pcodeop Sleep_Standby;
 # LDS Rm,FPSCR          0100mmmm01101010    Rm → FPSCR
 :lds rm_08_11, fpscr    is fpscr & opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b01101010
 {
-    fpscr = rm_08_11;
+    fpscr = rm_08_11 & 0x003FFFFF;
 }
 
 # LDS Rm,FPUL           0100mmmm01011010    Rm → FPUL
@@ -2359,7 +2354,7 @@ define pcodeop Sleep_Standby;
 # LDS.L @Rm+, FPSCR     0100mmmm01100110    (Rm) → FPSCR, Rm+ = 4
 :lds.l @rm_08_11+, fpscr    is fpscr & opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b01100110
 {
-    fpscr = *:4 (rm_08_11);
+    fpscr = *:4 (rm_08_11) & 0x003FFFFF;
     rm_08_11 = rm_08_11 + 4;
 }
 
@@ -2373,7 +2368,7 @@ define pcodeop Sleep_Standby;
 # STS FPSCR, Rn         0000nnnn01101010    FPSCR → Rn
 :sts fpscr, rn_08_11    is fpscr & opcode_12_15=0b0000 & rn_08_11 & opcode_00_07=0b01101010
 {
-    rn_08_11 = fpscr;
+    rn_08_11 = fpscr & 0x003FFFFF;
 }
 
 # STS FPUL,Rn           0000nnnn01011010    FPUL → Rn
@@ -2386,7 +2381,7 @@ define pcodeop Sleep_Standby;
 :sts.l fpscr, @-rn_08_11    is fpscr & opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b01100010
 {
     rn_08_11 = rn_08_11 - 4;
-    *:4 (rn_08_11) = fpscr;
+    *:4 (rn_08_11) = fpscr & 0x003FFFFF;
 }
 
 # STS.L FPUL,@-Rn       0100nnnn01010010    Rn- = 4, FPUL → (Rn)
@@ -2394,6 +2389,14 @@ define pcodeop Sleep_Standby;
 {
     rn_08_11 = rn_08_11 - 4;
     *:4 (rn_08_11) = fpul;
+}
+
+# FSCHG                       1111001111111101 FPSCR.SZ = ~ FPSCR.SZ
+:fschg  is fop_00_15=0b1111001111111101
+{
+    if ($(FPSCR_PR) == 0b0) goto <skip>;
+    $(FPSCR_SZ) = ~ $(FPSCR_SZ);
+    <skip>
 }
 
 # @if defined(FPU)
