@@ -49,6 +49,9 @@ public class FIDFixedSizeMRUCachingFactory implements Factory<Function, FidHashQ
 		}
 
 		value = delegate.get(func);
+		if (value == null) {
+			return null;
+		}
 		cache.put(entryPoint, value);
 		return value;
 	}
