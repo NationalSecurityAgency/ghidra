@@ -2392,14 +2392,10 @@ define pcodeop Sleep_Standby;
 }
 
 # FSCHG                       1111001111111101 FPSCR.SZ = ~ FPSCR.SZ
-:fschg  is fop_00_15=0b1111001111111101
+:fschg  is fop_00_15=0b1111001111111101 [ fpscr_sz = fpscr_sz ^ fpscr_pr; globalset(inst_next,fpscr_sz); ]
 {
-    if ($(FPSCR_PR) == 0b0) goto <skip>;
-    $(FPSCR_SZ) = ~ $(FPSCR_SZ);
-    <skip>
 }
 
-# @if defined(FPU)
 @endif
 
 
