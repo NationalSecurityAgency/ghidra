@@ -965,6 +965,14 @@ is b_2431=0xd4 & b_2123=1 & imm16 & b_0204=0 & b_0001=0
 	goto [pc];
 }
 
+bti_target: "c"  is b_0607=1 { }
+bti_target: "j"  is b_0607=2 { }
+bti_target: "jc" is b_0607=3 { }
+
+:bti bti_target
+is b_1231=0xd5032 & b_0811=0x4 & bti_target & b_0005=0x1f
+{}
+
 # C6.2.37 CASB, CASAB, CASALB, CASLB page C6-580 line 33952 KEEPWITH
 
 cas_var: "a" is b_22=1 & b_15=0 { }
