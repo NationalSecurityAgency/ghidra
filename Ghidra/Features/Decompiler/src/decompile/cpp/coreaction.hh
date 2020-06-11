@@ -1015,9 +1015,6 @@ public:
   virtual int4 apply(Funcdata &data);
 };
 
-extern void universal_action(Architecture *conf);		///< The generic decompilation action
-extern void build_defaultactions(ActionDatabase &allacts);	///< Build the default actions
-
 /// \brief A class that holds a data-type traversal state during type propagation
 ///
 /// For a given Varnode, this class iterates all the possible edges its
