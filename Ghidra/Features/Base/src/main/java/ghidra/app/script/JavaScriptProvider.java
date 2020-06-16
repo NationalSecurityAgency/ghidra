@@ -65,7 +65,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 				bundleHost.deactivateSynchronously(osgiBundle);
 			}
 		}
-		catch (GhidraBundleException | InterruptedException e) {
+		catch (GhidraBundleException e) {
 			e.printStackTrace();
 			Msg.error(this, "while deactivating bundle for delete", e);
 			return false;

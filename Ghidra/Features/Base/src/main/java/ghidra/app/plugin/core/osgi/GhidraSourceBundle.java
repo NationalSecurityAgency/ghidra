@@ -523,7 +523,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			}
 			return anythingChanged | wipeBinDir();
 		}
-		catch (IOException | GhidraBundleException | InterruptedException e) {
+		catch (IOException | GhidraBundleException e) {
 			Msg.showError(this, null, "source bundle clean error",
 				"while attempting to delete the compiled directory, an exception was thrown", e);
 		}

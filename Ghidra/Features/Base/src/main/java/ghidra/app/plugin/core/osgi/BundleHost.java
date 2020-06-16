@@ -19,9 +19,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.apache.felix.framework.FrameworkFactory;
 import org.apache.felix.framework.util.FelixConstants;
@@ -520,29 +520,13 @@ public class BundleHost {
 		return frameworkBundleContext.getBundle(bundleLocation);
 	}
 
-	private static boolean anyMatch(Bundle bundle, int... bundleStates) {
-		Integer bundleState = bundle.getState();
-		return IntStream.of(bundleStates).anyMatch(bundleState::equals);
-	}
-
-	private static void waitFor(Bundle bundle, int... bundleStates) throws InterruptedException {
-		while (true) {
-			if (anyMatch(bundle, bundleStates)) {
-				return;
-			}
-			Thread.sleep(500);
-		}
-	}
-
 	/**
-	 * Activate a bundle, returning only after the bundle is active.
+	 * Activate a bundle. Either an exception is thrown or the bundle will be in "ACTIVE" state.
 	 * 
 	 * @param bundle the bundle
-	 * @throws InterruptedException if the wait is interrupted
 	 * @throws GhidraBundleException if there's a problem activating
 	 */
-	public void activateSynchronously(Bundle bundle)
-			throws InterruptedException, GhidraBundleException {
+	public void activateSynchronously(Bundle bundle) throws GhidraBundleException {
 		if (bundle.getState() == Bundle.ACTIVE) {
 			return;
 		}
@@ -555,11 +539,10 @@ public class BundleHost {
 			fireBundleException(bundleException);
 			throw bundleException;
 		}
-		waitFor(bundle, Bundle.ACTIVE);
 	}
 
 	/**
-	 * Activate a bundle, returning only after the bundle is active.
+	 * Activate a bundle. Either an exception is thrown or the bundle will be in "ACTIVE" state.
 	 * 
 	 * @param bundleLocation the bundle location identifier
 	 * @throws InterruptedException if the wait is interrupted
@@ -575,14 +558,12 @@ public class BundleHost {
 	}
 
 	/**
-	 * Deactivate a bundle, returning only after the bundle is inactive.
+	 * Deactivate a bundle. Either an exception is thrown or the bundle will be in "UNINSTALLED" state.
 	 * 
 	 * @param bundle the bundle
-	 * @throws InterruptedException if the wait is interrupted
 	 * @throws GhidraBundleException if there's a problem activating
 	 */
-	public void deactivateSynchronously(Bundle bundle)
-			throws InterruptedException, GhidraBundleException {
+	public void deactivateSynchronously(Bundle bundle) throws GhidraBundleException {
 		if (bundle.getState() == Bundle.UNINSTALLED) {
 			return;
 		}
@@ -593,7 +574,10 @@ public class BundleHost {
 			Bundle dependentBundle = dependentBundles.pop();
 			try {
 				dependentBundle.uninstall();
-				frameworkWiring.refreshBundles(dependentBundles);
+				if (dependentBundle.getState() != Bundle.UNINSTALLED) {
+					System.err.printf("It ain't uninstalled!\n");
+				}
+				refreshBundlesSynchronously(new ArrayList<>(dependentBundles));
 			}
 			catch (BundleException e) {
 				GhidraBundleException exception =
@@ -601,12 +585,11 @@ public class BundleHost {
 				fireBundleException(exception);
 				throw exception;
 			}
-			waitFor(dependentBundle, Bundle.UNINSTALLED);
 		}
 	}
 
 	/**
-	 * Deactivate a bundle, returning only after the bundle is inactive.
+	 * Deactivate a bundle. Either an exception is thrown or the bundle will be in "UNINSTALLED" state.
 	 * 
 	 * @param bundleLocation the bundle location identifier
 	 * @throws InterruptedException if the wait is interrupted
@@ -617,6 +600,39 @@ public class BundleHost {
 		Bundle bundle = getOSGiBundle(bundleLocation);
 		if (bundle != null) {
 			deactivateSynchronously(bundle);
+		}
+	}
+
+	/**
+	 * Refreshes the specified bundles. This forces the update (replacement) 
+	 * or removal of packages exported by the specified bundles.
+	 * 
+	 * @param bundles the bundles to refresh
+	 * @see FrameworkWiring#refreshBundles
+	 */
+	protected void refreshBundlesSynchronously(Collection<Bundle> bundles) {
+		FrameworkWiring frameworkWiring = felixFramework.adapt(FrameworkWiring.class);
+		Semaphore sema = new Semaphore(0);
+		frameworkWiring.refreshBundles(bundles, new FrameworkListener() {
+			@Override
+			public void frameworkEvent(FrameworkEvent event) {
+				switch (event.getType()) {
+					case FrameworkEvent.ERROR:
+						Bundle bundle = event.getBundle();
+						Msg.error(BundleHost.this,
+							String.format("OSGi error refreshing bundle: %s", bundle));
+						break;
+					case FrameworkEvent.PACKAGES_REFRESHED:
+						sema.release();
+						break;
+				}
+			}
+		});
+		try {
+			sema.acquire();
+		}
+		catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 
