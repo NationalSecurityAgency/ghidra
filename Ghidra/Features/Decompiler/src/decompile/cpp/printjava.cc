@@ -99,6 +99,8 @@ void PrintJava::pushTypeEnd(const Datatype *ct)
 void PrintJava::adjustTypeOperators(void)
 
 {
+  scope.print = ".";
+  shift_right.print = ">>>";
   TypeOp::selectJavaOperators(glb->inst,true);
 }
 

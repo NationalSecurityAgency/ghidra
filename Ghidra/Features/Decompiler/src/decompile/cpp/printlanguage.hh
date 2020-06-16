@@ -230,8 +230,7 @@ public:
 private:
   string name;				///< The name of the high-level language
   vector<uint4> modstack;		///< Printing modification stack
-  vector<Scope *> scopestack;		///< The symbol scope stack
-  Scope *curscope;			///< The current symbol scope
+  vector<const Scope *> scopestack;	///< The symbol scope stack
   vector<ReversePolish> revpol;		///< The Reverse Polish Notation (RPN) token stack
   vector<NodePending> nodepend;		///< Data-flow nodes waiting to be pushed onto the RPN stack
   int4 pending;				///< Number of data-flow nodes waiting to be pushed
@@ -240,6 +239,7 @@ private:
   string commentend;			///< Delimiter characters (if any) for the end of a comment
 protected:
   Architecture *glb;			///< The Architecture owning the language emitter
+  const Scope *curscope;		///< The current symbol scope
   CastStrategy *castStrategy;		///< The strategy for emitting explicit \e case operations
   EmitXml *emit;			///< The low-level token emitter
   uint4 mods;				///< Currently active printing modifications
@@ -251,8 +251,8 @@ protected:
 #endif
   // Routines that are probably consistent across languages
   bool isSet(uint4 m) const { return ((mods & m)!=0); }				///< Is the given printing modification active
-  void pushScope(Scope *sc) { scopestack.push_back(sc); curscope = sc; }	///< Push a new symbol scope
-  void popScope(void) { scopestack.pop_back(); curscope = scopestack.back(); }	///< Pop to the previous symbol scope
+  void pushScope(const Scope *sc) { scopestack.push_back(sc); curscope = sc; }	///< Push a new symbol scope
+  void popScope(void);								///< Pop to the previous symbol scope
   void pushMod(void) { modstack.push_back(mods); }				///< Push current printing modifications to the stack
   void popMod(void) { mods = modstack.back(); modstack.pop_back(); }		///< Pop to the previous printing modifications
   void setMod(uint4 m) { mods |= m; }						///< Activate the given printing modification
@@ -405,7 +405,6 @@ public:
   CastStrategy *getCastStrategy(void) const { return castStrategy; }	///< Get the casting strategy for the language
   ostream *getOutputStream(void) const { return emit->getOutputStream(); }	///< Get the output stream being emitted to
   void setOutputStream(ostream *t) { emit->setOutputStream(t); }	///< Set the output stream to emit to
-  void setScope(Scope *sc) { curscope = sc; }				///< Set the current Symbol scope
   void setMaxLineSize(int4 mls) { emit->setMaxLineSize(mls); }		///< Set the maximum number of characters per line
   void setIndentIncrement(int4 inc) { emit->setIndentIncrement(inc); }	///< Set the number of characters to indent per level of code nesting
   void setLineCommentIndent(int4 val);					///< Set the number of characters to indent comment lines

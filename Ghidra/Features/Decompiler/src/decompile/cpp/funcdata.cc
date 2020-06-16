@@ -20,7 +20,7 @@
 /// \param scope is Symbol scope associated with the function
 /// \param addr is the entry address for the function
 /// \param sz is the number of bytes (of code) in the function body
-Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,int4 sz)
+Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,FunctionSymbol *sym,int4 sz)
   : baseaddr(addr),
     funcp(),
     vbank(scope->getArch(),
@@ -31,6 +31,7 @@ Funcdata::Funcdata(const string &nm,Scope *scope,const Address &addr,int4 sz)
 
 {				// Initialize high-level properties of
 				// function by giving address and size
+  functionSymbol = sym;
   flags = 0;
   clean_up_index = 0;
   high_level_index = 0;

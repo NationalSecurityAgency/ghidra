@@ -18,10 +18,10 @@
 
 /// \param g is the Architecture and connection to the Ghidra client
 ScopeGhidra::ScopeGhidra(ArchitectureGhidra *g)
-  : Scope("",g)
+  : Scope("",g,this)
 {
   ghidra = g;
-  cache = new ScopeInternal("",g);
+  cache = new ScopeInternal("",g,this);
   cacheDirty = false;
 }
 

@@ -167,6 +167,8 @@ protected:
   uint2 catindex;		///< Index within category
   uint8 symbolId;		///< Unique id, 0=unassigned
   vector<list<SymbolEntry>::iterator> mapentry;	///< List of storage locations labeled with \b this Symbol
+  mutable const Scope *depthScope;	///< Scope associated with current depth resolution
+  mutable int4 depthResolution;	///< Number of namespace elements required to resolve symbol in current scope
   uint4 wholeCount;		///< Number of SymbolEntries that map to the whole Symbol
   virtual ~Symbol(void) {}	///< Destructor
   void setDisplayFormat(uint4 val);	///< Set the display format for \b this Symbol
@@ -183,13 +185,9 @@ public:
     isolate = 16,		///< Symbol should not speculatively merge automatically
     merge_problems = 32		///< Set if some SymbolEntrys did not get merged
   };
-  /// \brief Construct given a name and data-type
-  Symbol(Scope *sc,const string &nm,Datatype *ct)
-  { scope=sc; name=nm; nameDedup=0; type=ct; flags=0; dispflags=0; category=-1; symbolId=0; wholeCount=0; }
 
-  /// \brief Construct for use with restoreXml()
-  Symbol(Scope *sc) { scope=sc; nameDedup=0; flags=0; dispflags=0; category=-1; symbolId = 0; wholeCount=0; }
-
+  Symbol(Scope *sc,const string &nm,Datatype *ct);	///< Construct given a name and data-type
+  Symbol(Scope *sc);		  			///< Construct for use with restoreXml()
   const string &getName(void) const { return name; }		///< Get the local name of the symbol
   Datatype *getType(void) const { return type; }		///< Get the data-type
   uint8 getId(void) const { return symbolId; }			///< Get a unique id for the symbol
@@ -214,7 +212,7 @@ public:
   int4 numEntries(void) const { return mapentry.size(); }	///< Return the number of SymbolEntrys
   SymbolEntry *getMapEntry(int4 i) const { return &(*mapentry[i]); }	///< Return the i-th SymbolEntry for \b this Symbol
   int4 getMapEntryPosition(const SymbolEntry *entry) const;	///< Position of given SymbolEntry within \b this multi-entry Symbol
-  int4 getResolutionDepth(const Scope *useScope) const;		///< Get the number of scope names to print to resolve symbol in given context
+  int4 getResolutionDepth(const Scope *useScope) const;		///< Get number of scope names needed to resolve \b this symbol
   void saveXmlHeader(ostream &s) const;				///< Save basic Symbol properties as XML attributes
   void restoreXmlHeader(const Element *el);			///< Restore basic Symbol properties from XML
   void saveXmlBody(ostream &s) const;				///< Save details of the Symbol to XML
@@ -415,6 +413,7 @@ class Scope {
   friend class ScopeCompare;
   RangeList rangetree;				///< Range of data addresses \e owned by \b this scope
   Scope *parent;				///< The parent scope
+  Scope *owner;					///< Scope using \b this as a cache
   ScopeMap children;				///< Sorted list of child scopes
   void attachScope(Scope *child);		///< Attach a new child Scope to \b this
   void detachScope(ScopeMap::iterator iter);	///< Detach a child Scope from \b this
@@ -502,8 +501,8 @@ public:
   void turnOffDebug(void) const { debugon = false; }
 #endif
   /// \brief Construct an empty scope, given a name and Architecture
-  Scope(const string &nm,Architecture *g) {
-    name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; uniqueId = 0;
+  Scope(const string &nm,Architecture *g,Scope *own) {
+    name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; uniqueId = 0; owner=own;
 #ifdef OPACTION_DEBUG
     debugon = false;
 #endif
@@ -694,7 +693,7 @@ public:
   bool isSubScope(const Scope *scp) const;			///< Is this a sub-scope of the given Scope
   string getFullName(void) const;				///< Get the full name of \b this Scope
   void getNameSegments(vector<string> &vec) const;		///< Get the fullname of \b this in segments
-  void getScopePath(vector<Scope *> &vec) const;		///< Get the ordered list of parent scopes to \b this
+  void getScopePath(vector<const Scope *> &vec) const;		///< Get the ordered list of scopes up to \b this
   bool isNameUsed(const string &nm,const Scope *op2) const;	///< Is the given name in use within given scope path
   const Scope *findDistinguishingScope(const Scope *op2) const;	///< Find first ancestor of \b this not shared by given scope
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associated with \b this
@@ -735,6 +734,7 @@ protected:
   uint8 nextUniqueId;				///< Next available symbol id
 public:
   ScopeInternal(const string &nm,Architecture *g);	///< Construct the Scope
+  ScopeInternal(const string &nm,Architecture *g, Scope *own);	///< Construct as a cache
   virtual void clear(void);
   virtual void categorySanity(void);			///< Make sure Symbol categories are sane
   virtual void clearCategory(int4 cat);
@@ -869,5 +869,42 @@ public:
   void restoreXml(const Element *el);				///< Recover the whole database from XML
   void restoreXmlScope(const Element *el,Scope *new_scope);	///< Register and fill out a single Scope from XML
 };
+
+/// \param sc is the scope containing the new symbol
+/// \param nm is the local name of the symbol
+/// \param ct is the data-type of the symbol
+inline Symbol::Symbol(Scope *sc,const string &nm,Datatype *ct)
+
+{
+  scope=sc;
+  name=nm;
+  nameDedup=0;
+  type=ct;
+  flags=0;
+  dispflags=0;
+  category=-1;
+  catindex = 0;
+  symbolId=0;
+  wholeCount=0;
+  depthScope = (const Scope *)0;
+  depthResolution = 0;
+}
+
+/// \param sc is the scope containing the new symbol
+inline Symbol::Symbol(Scope *sc)
+
+{
+  scope=sc;
+  nameDedup=0;
+  type = (Datatype *)0;
+  flags=0;
+  dispflags=0;
+  category=-1;
+  catindex = 0;
+  symbolId = 0;
+  wholeCount=0;
+  depthScope = (const Scope *)0;
+  depthResolution = 0;
+}
 
 #endif

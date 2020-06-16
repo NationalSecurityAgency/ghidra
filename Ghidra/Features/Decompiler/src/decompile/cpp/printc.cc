@@ -38,6 +38,7 @@ OpToken PrintC::binary_plus = { "+", 2, 50, true, OpToken::binary, 1, 0, (OpToke
 OpToken PrintC::binary_minus = { "-", 2, 50, false, OpToken::binary, 1, 0, (OpToken *)0 };
 OpToken PrintC::shift_left = { "<<", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
 OpToken PrintC::shift_right = { ">>", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::shift_sright = { ">>", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
 OpToken PrintC::less_than = { "<", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
 OpToken PrintC::less_equal = { "<=", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
 OpToken PrintC::greater_than = { ">", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
@@ -163,6 +164,48 @@ void PrintC::pushPrototypeInputs(const FuncProto *proto)
 	// In C++, empty parens mean void, we use the ANSI C convention
 	pushAtom(Atom("",blanktoken,EmitXml::no_color)); // An empty list of parameters
       }
+    }
+  }
+}
+
+/// Calculate what elements of a given symbol's namespace path are necessary to distinguish
+/// it within the current scope. Then print these elements.
+/// \param symbol is the given symbol
+void PrintC::pushSymbolScope(const Symbol *symbol)
+
+{
+  int4 scopedepth = symbol->getResolutionDepth(curscope);
+  if (scopedepth != 0) {
+    vector<const Scope *> scopeList;
+    const Scope *point = symbol->getScope();
+    for(int4 i=0;i<scopedepth;++i) {
+      scopeList.push_back(point);
+      point = point->getParent();
+      pushOp(&scope, (PcodeOp *)0);
+    }
+    for(int4 i=scopedepth-1;i>=0;--i) {
+      pushAtom(Atom(scopeList[i]->getName(),syntax,EmitXml::global_color,(PcodeOp *)0,(Varnode *)0));
+    }
+  }
+}
+
+/// Emit the elements of the given function's namespace path that distinguish it within
+/// the current scope.
+/// \param fd is the given function
+void PrintC::emitSymbolScope(const Symbol *symbol)
+
+{
+  int4 scopedepth = symbol->getResolutionDepth(curscope);
+  if (scopedepth != 0) {
+    vector<const Scope *> scopeList;
+    const Scope *point = symbol->getScope();
+    for(int4 i=0;i<scopedepth;++i) {
+      scopeList.push_back(point);
+      point = point->getParent();
+    }
+    for(int4 i=scopedepth-1;i>=0;--i) {
+      emit->print(scopeList[i]->getName().c_str(), EmitXml::global_color);
+      emit->print(scope.print, EmitXml::no_color);
     }
   }
 }
@@ -453,8 +496,12 @@ void PrintC::opCall(const PcodeOp *op)
       string name = genericFunctionName(fc->getEntryAddress());
       pushAtom(Atom(name,functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
     }
-    else
+    else {
+      Funcdata *fd = fc->getFuncdata();
+      if (fd != (Funcdata *)0)
+	pushSymbolScope(fd->getSymbol());
       pushAtom(Atom(fc->getName(),functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
+    }
   }
   else {
     clear();
@@ -718,8 +765,10 @@ void PrintC::opPtrsub(const PcodeOp *op)
     int4 newoff;
     const TypeField *fld = ((TypeStruct *)ct)->getField((int4)suboff,0,&newoff);
     if (fld == (const TypeField *)0) {
-      if (ct->getSize() <= suboff)
+      if (ct->getSize() <= suboff) {
+	clear();
 	throw LowlevelError("PTRSUB out of bounds into struct");
+      }
       // Try to match the Ghidra's default field name from DataTypeComponent.getDefaultFieldName
       ostringstream s;
       s << "field_0x" << hex << suboff;
@@ -1577,7 +1626,7 @@ void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
     tokenColor = EmitXml::param_color;
   else
     tokenColor = EmitXml::var_color;
-  // FIXME: resolve scopes
+  pushSymbolScope(sym);
   if (sym->hasMergeProblems() && vn != (Varnode *)0) {
     HighVariable *high = vn->getHigh();
     if (high->isUnmerged()) {
@@ -1934,6 +1983,8 @@ void PrintC::resetDefaults(void)
 void PrintC::adjustTypeOperators(void)
 
 {
+  scope.print = "::";
+  shift_right.print = ">>";
   TypeOp::selectJavaOperators(glb->inst,false);
 }
 
@@ -2179,12 +2230,14 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
     }
   }
   int4 id1 = emit->openGroup();
+  emitSymbolScope(fd->getSymbol());
   emit->tagFuncName(fd->getName().c_str(),EmitXml::funcname_color,
 		    fd,(PcodeOp *)0);
 
   emit->spaces(function_call.spacing,function_call.bump);
   int4 id2 = emit->openParen('(');
   emit->spaces(0,function_call.bump);
+  pushScope(fd->getScopeLocal());		// Enter the function's scope for parameters
   emitPrototypeInputs(proto);
   emit->closeParen(')',id2);
   emit->closeGroup(id1);
@@ -2241,7 +2294,7 @@ void PrintC::docFunction(const Funcdata *fd)
     int4 id1 = emit->beginFunction(fd);
     emitCommentFuncHeader(fd);
     emit->tagLine();
-    emitFunctionDeclaration(fd);
+    emitFunctionDeclaration(fd);	// Causes us to enter function's scope
     emit->tagLine();
     emit->tagLine();
     int4 id = emit->startIndent();
@@ -2251,6 +2304,7 @@ void PrintC::docFunction(const Funcdata *fd)
       emitBlockGraph(&fd->getBasicBlocks());
     else
       emitBlockGraph(&fd->getStructure());
+    popScope();				// Exit function's scope
     emit->stopIndent(id);
     emit->tagLine();
     emit->print("}");
