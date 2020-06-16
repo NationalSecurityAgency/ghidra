@@ -238,13 +238,6 @@ public class SymbolUtilities {
 		if (containsInvalidChars(name)) {
 			throw new InvalidInputException("Symbol name contains invalid characters: " + name);
 		}
-		if (address.isMemoryAddress() && isReservedDynamicLabelName(name, addrFactory)) {
-			if (symbolType == SymbolType.FUNCTION && getDefaultFunctionName(address).equals(name)) {
-				return;
-			}
-			throw new InvalidInputException(
-				"Symbol name matches possible default symbol name: " + name);
-		}
 	}
 
 	/**
