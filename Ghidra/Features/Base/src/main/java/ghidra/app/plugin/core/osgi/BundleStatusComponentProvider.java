@@ -172,8 +172,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		column =
 			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.typeColumn.index);
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
-		column.setMaxWidth(10 +
-			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SOURCE_DIR.toString()));
+		int width = 10 +
+			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SOURCE_DIR.toString());
+		column.setMaxWidth(width);
+		column.setWidth(width);
 		column =
 			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.pathColumn.index);
 		column.setCellRenderer(new GTableCellRenderer() {
