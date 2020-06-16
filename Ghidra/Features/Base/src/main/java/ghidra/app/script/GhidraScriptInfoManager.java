@@ -79,7 +79,7 @@ public class GhidraScriptInfoManager {
 	 * Returns the script info object for the specified script file,
 	 * construct a new one if necessary.
 	 * 
-	 * Only call this method if you expect to be creating ScriptInfo objects.
+	 * <p>Only call this method if you expect to be creating ScriptInfo objects.
 	 * Prefer getExistingScriptInfo instead. 
 	 * 
 	 * @param scriptFile the script file
@@ -122,10 +122,9 @@ public class GhidraScriptInfoManager {
 	public ScriptInfo getExistingScriptInfo(ResourceFile script) {
 		ScriptInfo info = scriptFileToInfoMap.get(script);
 		if (info == null) {
-			String s = (script.exists() ? "" : "non") + "existing script" + script.toString() +
+			String error = (script.exists() ? "" : "non") + "existing script" + script.toString() +
 				" is missing expected ScriptInfo";
-			System.err.println(s);
-			Msg.showError(GhidraScriptInfoManager.class, null, "ScriptInfo lookup", s);
+			Msg.showError(GhidraScriptInfoManager.class, null, "ScriptInfo lookup", error);
 		}
 		return info;
 	}

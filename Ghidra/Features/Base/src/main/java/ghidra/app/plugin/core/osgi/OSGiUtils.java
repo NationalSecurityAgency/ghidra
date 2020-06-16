@@ -77,17 +77,17 @@ public class OSGiUtils {
 	/**
 	 * parse Import-Package string from a bundle manifest
 	 * 
-	 * @param imports Import-Package value
+	 * @param importPackageString Import-Package value
 	 * @return deduced requirements or null if there was an error
 	 * @throws BundleException on parse failure
 	 */
-	static List<BundleRequirement> parseImports(String imports) throws BundleException {
+	static List<BundleRequirement> parseImportPackage(String importPackageString)
+			throws BundleException {
 		// parse it with Felix's ManifestParser to a list of BundleRequirement objects
 		Map<String, Object> headerMap = new HashMap<>();
-		headerMap.put(Constants.IMPORT_PACKAGE, imports);
-		ManifestParser mp;
-		mp = new ManifestParser(null, null, null, headerMap);
-		return mp.getRequirements();
+		headerMap.put(Constants.IMPORT_PACKAGE, importPackageString);
+		ManifestParser manifestParser = new ManifestParser(null, null, null, headerMap);
+		return manifestParser.getRequirements();
 	}
 
 	// from https://dzone.com/articles/locate-jar-classpath-given
@@ -102,10 +102,10 @@ public class OSGiUtils {
 			location = loader.getResource(classLocation);
 		}
 		if (location != null) {
-			Pattern p = Pattern.compile("^.*:(.*)!.*$");
-			Matcher m = p.matcher(location.toString());
-			if (m.find()) {
-				return m.group(1);
+			Pattern pattern = Pattern.compile("^.*:(.*)!.*$");
+			Matcher matcher = pattern.matcher(location.toString());
+			if (matcher.find()) {
+				return matcher.group(1);
 			}
 			return null; // not loaded from jar?
 		}
@@ -132,13 +132,14 @@ public class OSGiUtils {
 			.map(Path::normalize);
 	}
 
-	static void collectPackagesFromDirectory(Path dirPath, Set<String> s) {
+	static void collectPackagesFromDirectory(Path dirPath, Set<String> packages) {
 		try {
-			Files.walk(dirPath).filter(p -> p.toString().endsWith(".class")).forEach(p -> {
-				String n = dirPath.relativize(p).toString();
-				int lastSlash = n.lastIndexOf(File.separatorChar);
-				s.add(lastSlash > 0 ? n.substring(0, lastSlash).replace(File.separatorChar, '.')
-						: "");
+			Files.walk(dirPath).filter(p -> p.toString().endsWith(".class")).forEach(path -> {
+				String relativePath = dirPath.relativize(path).toString();
+				int lastSlash = relativePath.lastIndexOf(File.separatorChar);
+				packages
+					.add(lastSlash > 0 ? relativePath.substring(0, lastSlash).replace(File.separatorChar, '.')
+							: "");
 			});
 
 		}
@@ -147,13 +148,13 @@ public class OSGiUtils {
 		}
 	}
 
-	static void collectPackagesFromJar(Path jarPath, Set<String> s) {
+	static void collectPackagesFromJar(Path jarPath, Set<String> packages) {
 		try {
 			try (JarFile j = new JarFile(jarPath.toFile())) {
-				j.stream().filter(je -> je.getName().endsWith(".class")).forEach(je -> {
-					String n = je.getName();
-					int lastSlash = n.lastIndexOf('/');
-					s.add(lastSlash > 0 ? n.substring(0, lastSlash).replace('/', '.') : "");
+				j.stream().filter(entry -> entry.getName().endsWith(".class")).forEach(jarEntry -> {
+					String entryName = jarEntry.getName();
+					int lastSlash = entryName.lastIndexOf('/');
+					packages.add(lastSlash > 0 ? entryName.substring(0, lastSlash).replace('/', '.') : "");
 				});
 			}
 		}

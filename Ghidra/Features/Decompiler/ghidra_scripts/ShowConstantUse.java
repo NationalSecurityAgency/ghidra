@@ -137,16 +137,16 @@ public class ShowConstantUse extends GhidraScript {
 		tableDialog.setMessage("Finished!");
 	}
 
-	private Function getReferencedFunction(Address faddr) {
-		Function f = currentProgram.getFunctionManager().getFunctionAt(faddr);
+	private Function getReferencedFunction(Address functionAddress) {
+		Function f = currentProgram.getFunctionManager().getFunctionAt(functionAddress);
 		// couldn't find the function, see if there is an external ref there.
 		if (f == null) {
 			Reference[] referencesFrom =
-				currentProgram.getReferenceManager().getReferencesFrom(faddr);
-			for (Reference element : referencesFrom) {
-				if (element.isExternalReference()) {
-					faddr = element.getToAddress();
-					f = currentProgram.getFunctionManager().getFunctionAt(faddr);
+				currentProgram.getReferenceManager().getReferencesFrom(functionAddress);
+			for (Reference reference : referencesFrom) {
+				if (reference.isExternalReference()) {
+					functionAddress = reference.getToAddress();
+					f = currentProgram.getFunctionManager().getFunctionAt(functionAddress);
 					if (f != null) {
 						break;
 					}

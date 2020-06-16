@@ -21,6 +21,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -30,6 +31,7 @@ import javax.swing.KeyStroke;
 import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.actions.KeyBindingUtils;
 import docking.tool.ToolConstants;
 import docking.widgets.table.GTable;
@@ -61,7 +63,6 @@ class GhidraScriptActionManager {
 	private DockingAction globalRunLastAction;
 	private DockingAction renameAction;
 	private DockingAction keyBindingAction;
-	private DockingAction helpAction;
 	private Map<ResourceFile, ScriptAction> actionMap = new HashMap<>();
 
 	GhidraScriptActionManager(GhidraScriptComponentProvider provider, GhidraScriptMgrPlugin plugin,
@@ -78,7 +79,7 @@ class GhidraScriptActionManager {
 	}
 
 	void restoreUserDefinedKeybindings(SaveState saveState) {
-		Collection<ResourceFile> dirs = provider.getBundleHost().getBundlePaths();
+		Collection<ResourceFile> dirs = provider.getBundleHost().getBundleFiles();
 		String[] names = saveState.getNames();
 
 		for (String name : names) {
@@ -172,54 +173,32 @@ class GhidraScriptActionManager {
 		globalRunLastAction.firePropertyChanged(DockingActionIf.DESCRIPTION_PROPERTY, "", newDesc);
 	}
 
-	private DockingAction createScriptAction(String name, String menuEntry,
-			String actionDescription, Icon icon, String toolBarGroup, Runnable runnable) {
-		DockingAction action = new DockingAction(name, plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				runnable.run();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				return contextObject instanceof ResourceFile;
-			}
-		};
-		action.setPopupMenuData(new MenuData(new String[] { menuEntry }, icon));
-		action.setToolBarData(new ToolBarData(icon, toolBarGroup));
-
-		action.setDescription(actionDescription);
-		action.setEnabled(false);
-
-		plugin.getTool().addLocalAction(provider, action);
-
-		return action;
+	private DockingAction createScriptAction(String name, String menuEntry, String description,
+			Icon icon, String toolBarGroup, Runnable runnable) {
+		return new ActionBuilder(name, plugin.getName()).popupMenuPath(menuEntry)
+			.popupMenuIcon(icon)
+			.toolBarIcon(icon)
+			.toolBarGroup(toolBarGroup)
+			.description(description)
+			.enabled(false)
+			.enabledWhen(context -> context.getContextObject() instanceof ResourceFile)
+			.onAction(context -> runnable.run())
+			.buildAndInstallLocal(provider);
 	}
 
-	private DockingAction createScriptTableAction(String name, String actionDescription, Icon icon,
+	private DockingAction createScriptTableAction(String name, String description, Icon icon,
 			Runnable runnable) {
-		DockingAction action = new DockingAction(name, plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				runnable.run();
-			}
-
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
+		return new ActionBuilder(name, plugin.getName()).popupMenuPath(name)
+			.popupMenuIcon(icon)
+			.toolBarIcon(icon)
+			.toolBarGroup(null)
+			.description(description)
+			.enabledWhen(context -> {
 				Object contextObject = context.getContextObject();
 				return (contextObject instanceof GTable) || (contextObject instanceof ResourceFile);
-			}
-		};
-		action.setPopupMenuData(new MenuData(new String[] { name }, icon));
-		action.setToolBarData(new ToolBarData(icon, null));
-
-		action.setDescription(actionDescription);
-		action.setEnabled(true);
-
-		plugin.getTool().addLocalAction(provider, action);
-
-		return action;
+			})
+			.onAction(context -> runnable.run())
+			.buildAndInstallLocal(provider);
 	}
 
 	private void createActions() {
@@ -253,60 +232,57 @@ class GhidraScriptActionManager {
 		newAction = createScriptTableAction("New", "Create New Script",
 			ResourceManager.loadImage("images/script_add.png"), provider::newScript);
 
-		createScriptTableAction("Refresh", "Refresh Script List",
-			Icons.REFRESH_ICON, provider::refresh);
+		createScriptTableAction("Refresh", "Refresh Script List", Icons.REFRESH_ICON,
+			provider::refresh);
 
 		showBundleStatusAction = createScriptTableAction("Script Directories",
 			"Manage Script Directories", ResourceManager.loadImage("images/text_list_bullets.png"),
 			provider::showBundleStatusComponent);
 
-		helpAction = new DockingAction("Ghidra API Help", plugin.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showGhidraScriptJavadoc();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				return (contextObject instanceof GTable) || (contextObject instanceof ResourceFile);
-			}
-
-			@Override
-			public boolean isAddToPopup(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				return (contextObject instanceof GTable) || (contextObject instanceof ResourceFile);
-			}
+		Icon icon = ResourceManager.loadImage("images/red-cross.png");
+		Predicate<ActionContext> test = context -> {
+			Object contextObject = context.getContextObject();
+			return (contextObject instanceof GTable) || (contextObject instanceof ResourceFile);
 		};
 
-		helpAction.setPopupMenuData(new MenuData(new String[] { "Ghidra API Help" },
-			ResourceManager.loadImage("images/red-cross.png"), null));
-		helpAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/red-cross.png"), null));
+		new ActionBuilder("Ghidra API Help", plugin.getName()).popupMenuPath("Ghidra API Help")
+			.popupMenuIcon(icon)
+			.popupWhen(test)
+			.toolBarIcon(icon)
+			.toolBarGroup(null)
+			.description("Help")
+			.helpLocation(new HelpLocation(plugin.getName(), "Help"))
+			.enabledWhen(test)
+			.onAction(context -> showGhidraScriptJavadoc())
+			.buildAndInstallLocal(provider);
 
-		helpAction.setDescription("Help");
-		helpAction.setEnabled(true);
-		helpAction.setHelpLocation(new HelpLocation(plugin.getName(), "Help"));
-		plugin.getTool().addLocalAction(provider, helpAction);
-
-		DockingAction globalHelpAction = new DockingAction("Ghidra API Help", plugin.getName()) {
+		// XXX In order to override a method of the new DockingAction and use the builder, we
+		// need to override the build method of the ActionBuilder.  When the ActionBuilder is 
+		// updated, this code can be cleaned up.
+		new ActionBuilder("Ghidra API Help", plugin.getName()) {
 			@Override
-			public void actionPerformed(ActionContext context) {
-				showGhidraScriptJavadoc();
-			}
+			public DockingAction build() {
+				validate();
+				DockingAction action = new DockingAction(name, owner, keyBindingType) {
+					@Override
+					public void actionPerformed(ActionContext context) {
+						actionCallback.accept(context);
+					}
 
-			@Override
-			public boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
-				return true;
+					@Override
+					public boolean shouldAddToWindow(boolean isMainWindow,
+							Set<Class<?>> contextTypes) {
+						return true;
+					}
+				};
+				decorateAction(action);
+				return action;
 			}
-		};
-		globalHelpAction.setEnabled(true);
-		globalHelpAction.setHelpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"));
-		globalHelpAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_HELP, "Ghidra API Help" }, null,
-				ToolConstants.HELP_CONTENTS_MENU_GROUP));
-		plugin.getTool().addAction(globalHelpAction);
-
+		}.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
+			.menuPath(ToolConstants.MENU_HELP, "Ghidra API Help")
+			.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
+			.onAction(context -> showGhidraScriptJavadoc())
+			.buildAndInstall(plugin.getTool());
 	}
 
 	private void showGhidraScriptJavadoc() {

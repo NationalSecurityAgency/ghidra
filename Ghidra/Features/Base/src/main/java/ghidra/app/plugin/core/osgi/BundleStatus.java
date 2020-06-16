@@ -19,34 +19,38 @@ import generic.jar.ResourceFile;
 import generic.util.Path;
 
 /**
- * The BundleStatus class represents the runtime state and user preferences for OSGi bundles in Ghidra.
+ * The BundleStatus class represents the runtime state and user preferences for bundles.
  */
 public class BundleStatus implements Comparable<BundleStatus> {
-	final Path path;
-	final GhidraBundle.Type type;
-	final String bundleLocation;
+	private final GhidraBundle.Type type;
+	private final String location;
 
-	boolean active = false;
-	boolean busy = false;
+	private final ResourceFile file;
+	private final boolean readOnly;
+	private boolean enabled;
+	private boolean active = false;
+	private boolean busy = false;
 
-	String summary;
+	private String summary;
 
-	BundleStatus(ResourceFile path, boolean enabled, boolean readonly, String bundleLoc) {
-		this.path = new Path(path, enabled, false, readonly);
-		type = GhidraBundle.getType(getPath());
-		this.bundleLocation = bundleLoc;
+	BundleStatus(ResourceFile bundleFile, boolean enabled, boolean readOnly, String bundleLoc) {
+		this.file = bundleFile;
+		type = GhidraBundle.getType(getFile());
+		this.location = bundleLoc;
+		this.enabled = enabled;
+		this.readOnly = readOnly;
 	}
 
 	@Override
 	public int compareTo(BundleStatus o) {
-		return path.compareTo(o != null ? o.path : null);
+		return Path.toPathString(file).compareTo(o != null ? Path.toPathString(o.file) : null);
 	}
 
 	/**
 	 * @return true if the bundle is enabled
 	 */
 	public boolean isEnabled() {
-		return path.isEnabled();
+		return enabled;
 	}
 
 	/**
@@ -55,14 +59,14 @@ public class BundleStatus implements Comparable<BundleStatus> {
 	 * @param isEnabled true to set status to enabled
 	 */
 	public void setEnabled(boolean isEnabled) {
-		path.setEnabled(isEnabled);
+		this.enabled = isEnabled;
 	}
 
 	/**
 	 * @return true if the bundle is read only
 	 */
 	public boolean isReadOnly() {
-		return path.isReadOnly();
+		return readOnly;
 	}
 
 	/**
@@ -107,31 +111,31 @@ public class BundleStatus implements Comparable<BundleStatus> {
 	}
 
 	/**
-	 * @return the bundle's path
+	 * @return the bundle file
 	 */
-	public ResourceFile getPath() {
-		return path.getPath();
+	public ResourceFile getFile() {
+		return file;
 	}
 
 	/**
-	 * @return true if the bundle's path exists
+	 * @return true if the bundle file exists
 	 */
-	public boolean pathExists() {
-		return path.exists();
+	public boolean fileExists() {
+		return file.exists();
 	}
 
 	/**
-	 * @return the bundle's path as a string, using $USER and $GHIDRA_HOME when appropriate 
+	 * @return the bundle file path, using $USER and $GHIDRA_HOME when appropriate 
 	 */
 	public String getPathAsString() {
-		return path.getPathAsString();
+		return Path.toPathString(file);
 	}
 
 	/**
 	 * @return the bundle's location identifier
 	 */
-	public String getBundleLocation() {
-		return bundleLocation;
+	public String getLocationIdentifier() {
+		return location;
 	}
 
 	void setBusy(boolean isBusy) {

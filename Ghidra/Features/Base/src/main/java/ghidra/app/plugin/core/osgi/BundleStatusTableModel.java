@@ -16,46 +16,28 @@
 package ghidra.app.plugin.core.osgi;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+
+import javax.swing.SwingUtilities;
+import javax.swing.event.TableModelEvent;
 
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.TableSortingContext;
 import generic.jar.ResourceFile;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
 
+/**
+ * Model for {@link BundleStatus} objects. 
+ */
 public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatus> {
 	List<Column> columns = new ArrayList<>();
-
-	class Column {
-		final Class<?> clazz;
-		final int index;
-		final String name;
-
-		Column(String name, Class<?> clazz) {
-			this.name = name;
-			this.index = columns.size();
-			columns.add(this);
-			this.clazz = clazz;
-		}
-
-		boolean editable(BundleStatus status) {
-			return false;
-		}
-
-		Object getValue(BundleStatus status) {
-			return null;
-		}
-
-		void setValue(BundleStatus status, Object aValue) {
-			throw new RuntimeException(name + " is not editable!");
-		}
-
-	}
 
 	Column enabledColumn = new Column("Enabled", Boolean.class) {
 		@Override
 		boolean editable(BundleStatus status) {
-			return status.pathExists();
+			return status.fileExists();
 		}
 
 		@Override
@@ -71,7 +53,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	Column activeColumn = new Column("Active", Boolean.class) {
 		@Override
 		boolean editable(BundleStatus status) {
-			return status.pathExists() && status.isEnabled();
+			return status.fileExists() && status.isEnabled();
 		}
 
 		@Override
@@ -94,7 +76,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	Column pathColumn = new Column("Path", ResourceFile.class) {
 		@Override
 		Object getValue(BundleStatus status) {
-			return status.getPath();
+			return status.getFile();
 		}
 	};
 	Column summaryColumn = new Column("Summary", String.class) {
@@ -115,76 +97,9 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	private Map<String, BundleStatus> bundleLocToStatusMap = new HashMap<>();
 	private BundleHostListener bundleHostListener;
 
-	private ArrayList<BundleStatusChangeRequestListener> bundleStatusListeners = new ArrayList<>();
+	private List<BundleStatusChangeRequestListener> bundleStatusListeners =
+		new CopyOnWriteArrayList<>();
 	private List<BundleStatus> statuses;
-
-	protected class MyBundleHostListener implements BundleHostListener {
-		@Override
-		public void bundleBuilt(GhidraBundle bundle, String summary) {
-			BundleStatus status = getStatus(bundle);
-			status.setSummary(summary);
-			int row = getRowIndex(status);
-			fireTableRowsUpdated(row, row);
-		}
-
-		@Override
-		public void bundleActivationChange(GhidraBundle bundle, boolean newActivation) {
-			BundleStatus status = getStatus(bundle);
-			int row = getRowIndex(status);
-			status.setBusy(false);
-			if (newActivation) {
-				status.setActive(true);
-			}
-			else {
-				status.setActive(false);
-			}
-			fireTableRowsUpdated(row, row);
-		}
-
-		@Override
-		public void bundleAdded(GhidraBundle bundle) {
-			addNewStatus(bundle);
-		}
-
-		@Override
-		public void bundlesAdded(Collection<GhidraBundle> bundles) {
-			int index = statuses.size();
-			for (GhidraBundle bundle : bundles) {
-				addNewStatusNoFire(bundle);
-			}
-			fireTableRowsInserted(index, bundles.size() - 1);
-		}
-
-		@Override
-		public void bundleRemoved(GhidraBundle bundle) {
-			BundleStatus status = getStatus(bundle);
-			removeStatus(status);
-		}
-
-		@Override
-		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
-			List<BundleStatus> toRemove = bundles.stream()
-				.map(BundleStatusTableModel.this::getStatus)
-				.collect(Collectors.toUnmodifiableList());
-			removeStatuses(toRemove);
-		}
-
-		@Override
-		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablement) {
-			BundleStatus status = getStatus(bundle);
-			status.setEnabled(newEnablement);
-			int row = getRowIndex(status);
-			fireTableRowsUpdated(row, row);
-		}
-
-		@Override
-		public void bundleException(GhidraBundleException exception) {
-			BundleStatus status = getStatusFromLoc(exception.getBundleLocation());
-			status.setSummary(exception.getMessage());
-			int row = getRowIndex(status);
-			fireTableRowsUpdated(row, row);
-		}
-	}
 
 	BundleStatusTableModel(BundleStatusComponentProvider provider, BundleHost bundleHost) {
 		super();
@@ -195,7 +110,8 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 			addNewStatus(bundle);
 		}
 
-		bundleHost.addListener(bundleHostListener = new MyBundleHostListener());
+		bundleHostListener = new MyBundleHostListener();
+		bundleHost.addListener(bundleHostListener);
 	}
 
 	Column getColumn(int i) {
@@ -206,7 +122,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	}
 
 	BundleStatus getStatus(GhidraBundle bundle) {
-		return getStatusFromLoc(bundle.getBundleLocation());
+		return getStatusFromLoc(bundle.getLocationIdentifier());
 	}
 
 	BundleStatus getStatusFromLoc(String bundleLoc) {
@@ -224,15 +140,25 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		bundleHost.removeListener(bundleHostListener);
 	}
 
+	@Override
+	public void fireTableChanged(TableModelEvent e) {
+		if (SwingUtilities.isEventDispatchThread()) {
+			super.fireTableChanged(e);
+			return;
+		}
+		final TableModelEvent e1 = e;
+		SwingUtilities.invokeLater(() -> BundleStatusTableModel.super.fireTableChanged(e1));
+	}
+
 	private void addNewStatusNoFire(GhidraBundle bundle) {
-		BundleStatus status = new BundleStatus(bundle.getPath(), bundle.isEnabled(),
-			bundle.isSystemBundle(), bundle.getBundleLocation());
+		BundleStatus status = new BundleStatus(bundle.getFile(), bundle.isEnabled(),
+			bundle.isSystemBundle(), bundle.getLocationIdentifier());
 		if (statuses.contains(status)) {
 			throw new RuntimeException(
-				"Bundle status manager already contains " + bundle.getPath().toString());
+				"Bundle status manager already contains " + bundle.getFile().toString());
 		}
 		status.setActive(bundle.isActive());
-		bundleLocToStatusMap.put(status.getBundleLocation(), status);
+		bundleLocToStatusMap.put(status.getLocationIdentifier(), status);
 		statuses.add(status);
 	}
 
@@ -247,10 +173,10 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 
 	private int removeStatusNoFire(BundleStatus status) {
 		if (!status.isReadOnly()) {
-			int i = statuses.indexOf(status);
-			statuses.remove(i);
-			bundleLocToStatusMap.remove(status.getBundleLocation());
-			return i;
+			int statusIndex = statuses.indexOf(status);
+			statuses.remove(statusIndex);
+			bundleLocToStatusMap.remove(status.getLocationIdentifier());
+			return statusIndex;
 		}
 		return -1;
 	}
@@ -289,7 +215,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	}
 
 	@Override
-	public java.lang.Class<?> getColumnClass(int columnIndex) {
+	public Class<?> getColumnClass(int columnIndex) {
 		return getColumn(columnIndex).clazz;
 	}
 
@@ -341,15 +267,13 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	/**
 	 * Add a change request listener.
 	 * 
-	 * When the user requests a change to the status of a bundle, each listener is called.
+	 * <p>When the user requests a change to the status of a bundle, each listener is called.
 	 * 
 	 * @param listener the listener to add
 	 */
 	public void addListener(BundleStatusChangeRequestListener listener) {
-		synchronized (bundleStatusListeners) {
-			if (!bundleStatusListeners.contains(listener)) {
-				bundleStatusListeners.add(listener);
-			}
+		if (!bundleStatusListeners.contains(listener)) {
+			bundleStatusListeners.add(listener);
 		}
 	}
 
@@ -359,24 +283,18 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	 * @param listener the listener to remove
 	 */
 	public void removeListener(BundleStatusChangeRequestListener listener) {
-		synchronized (bundleStatusListeners) {
-			bundleStatusListeners.remove(listener);
+		bundleStatusListeners.remove(listener);
+	}
+
+	void fireBundleEnablementChangeRequested(BundleStatus status, boolean newValue) {
+		for (BundleStatusChangeRequestListener listener : bundleStatusListeners) {
+			listener.bundleEnablementChangeRequest(status, newValue);
 		}
 	}
 
-	void fireBundleEnablementChangeRequested(BundleStatus path, boolean newValue) {
-		synchronized (bundleStatusListeners) {
-			for (BundleStatusChangeRequestListener listener : bundleStatusListeners) {
-				listener.bundleEnablementChangeRequest(path, newValue);
-			}
-		}
-	}
-
-	void fireBundleActivationChangeRequested(BundleStatus path, boolean newValue) {
-		synchronized (bundleStatusListeners) {
-			for (BundleStatusChangeRequestListener listener : bundleStatusListeners) {
-				listener.bundleActivationChangeRequest(path, newValue);
-			}
+	void fireBundleActivationChangeRequested(BundleStatus status, boolean newValue) {
+		for (BundleStatusChangeRequestListener listener : bundleStatusListeners) {
+			listener.bundleActivationChangeRequest(status, newValue);
 		}
 	}
 
@@ -399,6 +317,8 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	 */
 	@Override
 	protected void sort(List<BundleStatus> data, TableSortingContext<BundleStatus> sortingContext) {
+		// notify accesses listeners, must be done on swing thread
+		SystemUtilities.assertThisIsTheSwingThread("Must be called on the Swing thread");
 
 		if (sortingContext.isUnsorted()) {
 			// this is the 'no sort' state
@@ -409,22 +329,23 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 
 		hasEverSorted = true; // signal that we have sorted at least one time
 
-		boolean[] change = { false };
-		Comparator<BundleStatus> proxy = new Comparator<BundleStatus>() {
-			Comparator<BundleStatus> p = sortingContext.getComparator();
+		// wrap the assigned comparator to detect if the order changes
+		boolean[] changed = { false };
+		Comparator<BundleStatus> wrapper = new Comparator<BundleStatus>() {
+			Comparator<BundleStatus> comparator = sortingContext.getComparator();
 
 			@Override
 			public int compare(BundleStatus o1, BundleStatus o2) {
-				int v = p.compare(o1, o2);
-				if (v < 0) {
-					change[0] = true;
+				int result = comparator.compare(o1, o2);
+				if (result < 0) {
+					changed[0] = true;
 				}
-				return v;
+				return result;
 			}
 		};
-		Collections.sort(data, proxy);
+		Collections.sort(data, wrapper);
 		sortCompleted(sortingContext);
-		if (change[0]) {
+		if (changed[0]) {
 			notifyModelSorted(false);
 		}
 	}
@@ -435,8 +356,106 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	private void computeCache() {
 		bundleLocToStatusMap.clear();
 		for (BundleStatus status : statuses) {
-			bundleLocToStatusMap.put(status.getBundleLocation(), status);
+			bundleLocToStatusMap.put(status.getLocationIdentifier(), status);
 		}
+	}
+
+	/**
+	 * when bundles are added or removed, update the table.
+	 * when bundles change enablement or activation, update rows.
+	 */
+	protected class MyBundleHostListener implements BundleHostListener {
+		@Override
+		public void bundleBuilt(GhidraBundle bundle, String summary) {
+			BundleStatus status = getStatus(bundle);
+			status.setSummary(summary);
+			int row = getRowIndex(status);
+			fireTableRowsUpdated(row, row);
+		}
+	
+		@Override
+		public void bundleActivationChange(GhidraBundle bundle, boolean newActivation) {
+			BundleStatus status = getStatus(bundle);
+			int row = getRowIndex(status);
+			status.setBusy(false);
+			if (newActivation) {
+				status.setActive(true);
+			}
+			else {
+				status.setActive(false);
+			}
+			fireTableRowsUpdated(row, row);
+		}
+	
+		@Override
+		public void bundleAdded(GhidraBundle bundle) {
+			addNewStatus(bundle);
+		}
+	
+		@Override
+		public void bundlesAdded(Collection<GhidraBundle> bundles) {
+			int index = statuses.size();
+			for (GhidraBundle bundle : bundles) {
+				addNewStatusNoFire(bundle);
+			}
+			fireTableRowsInserted(index, bundles.size() - 1);
+		}
+	
+		@Override
+		public void bundleRemoved(GhidraBundle bundle) {
+			BundleStatus status = getStatus(bundle);
+			removeStatus(status);
+		}
+	
+		@Override
+		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
+			List<BundleStatus> toRemove = bundles.stream()
+				.map(BundleStatusTableModel.this::getStatus)
+				.collect(Collectors.toUnmodifiableList());
+			removeStatuses(toRemove);
+		}
+	
+		@Override
+		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablement) {
+			BundleStatus status = getStatus(bundle);
+			status.setEnabled(newEnablement);
+			int row = getRowIndex(status);
+			fireTableRowsUpdated(row, row);
+		}
+	
+		@Override
+		public void bundleException(GhidraBundleException exception) {
+			BundleStatus status = getStatusFromLoc(exception.getBundleLocation());
+			status.setSummary(exception.getMessage());
+			int row = getRowIndex(status);
+			fireTableRowsUpdated(row, row);
+		}
+	}
+
+	class Column {
+		final Class<?> clazz;
+		final int index;
+		final String name;
+
+		Column(String name, Class<?> clazz) {
+			this.name = name;
+			this.index = columns.size();
+			columns.add(this);
+			this.clazz = clazz;
+		}
+
+		boolean editable(BundleStatus status) {
+			return false;
+		}
+
+		Object getValue(BundleStatus status) {
+			return null;
+		}
+
+		void setValue(BundleStatus status, Object aValue) {
+			throw new RuntimeException(name + " is not editable!");
+		}
+
 	}
 
 }

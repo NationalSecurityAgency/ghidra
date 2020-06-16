@@ -17,9 +17,12 @@ package ghidra.app.plugin.core.osgi;
 
 import ghidra.util.exception.UsrException;
 
+/**
+ * Wrapper for exceptions originating with an OSGi operation.
+ */
 public class OSGiException extends UsrException {
 	/**
-	 * Wrapper for exceptions originating with an OSGi operation.
+	 * Create an exception with given {@code message} and {@code cause}.
 	 * 
 	 * @param message a contextual message
 	 * @param cause the original exception
@@ -29,7 +32,7 @@ public class OSGiException extends UsrException {
 	}
 
 	/**
-	 * Wrapper for exceptions originating with an OSGi operation.
+	 * Create an exception with given {@code message}.
 	 * 
 	 * @param message a contextual message
 	 */

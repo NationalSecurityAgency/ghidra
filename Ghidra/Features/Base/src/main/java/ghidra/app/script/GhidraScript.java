@@ -98,9 +98,9 @@ import ghidra.util.task.TaskMonitor;
  * </pre>
  * <h3>Ghidra Script State</h3>
  * <blockquote>
- * <p>
- * All scripts, when run, will be handed the current state in the form of class
- * instance variable. These variables are:
+ * 
+ * <p>All scripts, when run, will be handed the current state in the form of class instance 
+ * variable. These variables are:
  * <ol>
  *   <li><code>currentProgram</code>: the active program</li>
  *   <li><code>currentAddress</code>: the address of the current cursor location in the tool</li>

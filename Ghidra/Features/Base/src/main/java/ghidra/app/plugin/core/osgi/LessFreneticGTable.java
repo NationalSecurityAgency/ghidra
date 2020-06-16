@@ -22,8 +22,11 @@ import javax.swing.table.TableModel;
 import docking.widgets.table.*;
 
 /**
- * RowObjectSelectionManager attempts to repair selections in a filtered table
- * before and after filter events.  The additional selection events, however, cause focus changes we don't want. 
+ *  {@link RowObjectSelectionManager} attempts to repair selections in a filtered table
+ *  before and after filter events.  The additional selection events, however, cause focus changes we don't want.
+ * 
+ *  <p>if the behavior is a bug in RowObjectSelectionManager, and it's fixed, this
+ *  class can go away and it's use in {@link BundleStatusComponentProvider} replaced with GTable.
  */
 class LessFreneticGTable extends GTable {
 	boolean chilled = false;

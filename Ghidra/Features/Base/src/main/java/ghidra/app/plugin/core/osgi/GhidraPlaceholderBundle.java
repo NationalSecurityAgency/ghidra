@@ -28,9 +28,9 @@ import generic.jar.ResourceFile;
  */
 public class GhidraPlaceholderBundle extends GhidraBundle {
 
-	GhidraPlaceholderBundle(BundleHost bundleHost, ResourceFile bundlePath, boolean isEnabled,
+	GhidraPlaceholderBundle(BundleHost bundleHost, ResourceFile bundleFile, boolean isEnabled,
 			boolean isSystemBundle) {
-		super(bundleHost, bundlePath, isEnabled, isSystemBundle);
+		super(bundleHost, bundleFile, isEnabled, isSystemBundle);
 	}
 
 	@Override
@@ -44,8 +44,8 @@ public class GhidraPlaceholderBundle extends GhidraBundle {
 	}
 
 	@Override
-	public String getBundleLocation() {
-		return "invalid://" + getPath();
+	public String getLocationIdentifier() {
+		return "invalid://" + getFile();
 	}
 
 	@Override

@@ -29,15 +29,16 @@ import generic.jar.ResourceFile;
  */
 public abstract class GhidraBundle {
 
-	protected final ResourceFile path;
+	protected final ResourceFile file;
+
 	protected final BundleHost bundleHost;
 	protected boolean enabled;
 	protected boolean systemBundle;
 
-	GhidraBundle(BundleHost bundleHost, ResourceFile bundlePath, boolean enabled,
+	GhidraBundle(BundleHost bundleHost, ResourceFile bundleFile, boolean enabled,
 			boolean systemBundle) {
 		this.bundleHost = bundleHost;
-		this.path = bundlePath;
+		this.file = bundleFile;
 		this.enabled = enabled;
 		this.systemBundle = systemBundle;
 	}
@@ -59,29 +60,36 @@ public abstract class GhidraBundle {
 	public abstract boolean build(PrintWriter writer) throws Exception;
 
 	/**
-	 * same as {@link #build(PrintWriter)} with writer = {@link System.err}.
+	 * same as {@link #build(PrintWriter)} with writer = {@link System#err}.
+	 * 
+	 * @return true if build happened, false if already built
+	 * @throws Exception if the build cannot complete
 	 */
-	@SuppressWarnings("javadoc")
 	public boolean build() throws Exception {
 		return build(new PrintWriter(System.err));
 	}
 
 	/**
 	 * Return the location identifier of the bundle that this GhidraBundle represents.
-	 * The location identifier is passed to {@link org.osgi.framework.BundleContext#installBundle} when this
-	 * bundle is installed.
+	 * 
+	 * <p>The location identifier is used by the framework, e.g. it is passed to
+	 * {@link org.osgi.framework.BundleContext#installBundle} when the bundle is 
+	 * first installed.
+	 * 
+	 * <p>Although the bundle location is a URI, outside of interactions with the framework,
+	 * the bundle location should remain opaque.
 	 * 
 	 * @return location identifier of this bundle 
 	 */
-	public abstract String getBundleLocation();
+	public abstract String getLocationIdentifier();
 
 	abstract List<BundleRequirement> getAllRequirements();
 
 	/**
-	 * @return this bundle's path
+	 * @return the file where this bundle is loaded from
 	 */
-	public ResourceFile getPath() {
-		return path;
+	public ResourceFile getFile() {
+		return file;
 	}
 
 	/**
@@ -94,7 +102,7 @@ public abstract class GhidraBundle {
 	/**
 	 * set the enablement flag for this bundle.
 	 * 
-	 * If a bundle is enabled its contents will be scanned, e.g. for scripts.
+	 * <p>If a bundle is enabled its contents will be scanned, e.g. for scripts.
 	 * 
 	 * @param enabled new state
 	 */
@@ -112,81 +120,74 @@ public abstract class GhidraBundle {
 	}
 
 	/**
-	 * A GhidraBundle can be
-	 * <ul>
-	 * <li>a Bndtools .bnd script</li>
-	 * <li>an OSGi bundle .jar file</li>
-	 * <li>a directory of Java source</li>
-	 * </u>
-	 *  
-	 */
-	enum Type {
-		BndScript, Jar, SourceDir, INVALID
-	}
-
-	/**
-	 * a string error with a time stamp
-	 */
-	public static class BuildFailure {
-		long when = -1;
-		StringBuilder message = new StringBuilder();
-	}
-
-	/**
-	 * Get the type of a GhidraBundle from its path.
+	 * Get the type of a GhidraBundle from its file.
 	 * 
-	 * @param path a resource path
+	 * @param file a bundle file
 	 * @return the type
 	 */
-	static GhidraBundle.Type getType(ResourceFile path) {
-		if (path.isDirectory()) {
-			return GhidraBundle.Type.SourceDir;
+	static GhidraBundle.Type getType(ResourceFile file) {
+		if (file.isDirectory()) {
+			return GhidraBundle.Type.SOURCE_DIR;
 		}
-		String n = path.getName().toLowerCase();
-		if (n.endsWith(".bnd")) {
-			return GhidraBundle.Type.BndScript;
+		String fileName = file.getName().toLowerCase();
+		if (fileName.endsWith(".bnd")) {
+			return GhidraBundle.Type.BND_SCRIPT;
 		}
-		if (n.endsWith(".jar")) {
-			return GhidraBundle.Type.Jar;
+		if (fileName.endsWith(".jar")) {
+			return GhidraBundle.Type.JAR;
 		}
 		return GhidraBundle.Type.INVALID;
 	}
 
 	/**
-	 * Get the type of a GhidraBundle from its path.
+	 * Get the type of a GhidraBundle from its file.
 	 * 
-	 * @param path a file system path
+	 * @param file a bundle file
 	 * @return the type
 	 */
-	public static GhidraBundle.Type getType(File path) {
-		if (path.isDirectory()) {
-			return GhidraBundle.Type.SourceDir;
+	public static GhidraBundle.Type getType(File file) {
+		if (file.isDirectory()) {
+			return GhidraBundle.Type.SOURCE_DIR;
 		}
-		String n = path.getName().toLowerCase();
-		if (n.endsWith(".bnd")) {
-			return GhidraBundle.Type.BndScript;
+		String fileName = file.getName().toLowerCase();
+		if (fileName.endsWith(".bnd")) {
+			return GhidraBundle.Type.BND_SCRIPT;
 		}
-		if (n.endsWith(".jar")) {
-			return GhidraBundle.Type.Jar;
+		if (fileName.endsWith(".jar")) {
+			return GhidraBundle.Type.JAR;
 		}
 		return GhidraBundle.Type.INVALID;
 	}
 
 	/**
-	 * Get the OSGi bundle respresented by this GhidraBundle or null
+	 * Get the OSGi bundle represented by this GhidraBundle or null if it isn't in
+	 * the "installed" state.
 	 * 
 	 * @return a Bundle or null
 	 */
 	public Bundle getOSGiBundle() {
-		return bundleHost.getOSGiBundle(getBundleLocation());
+		return bundleHost.getOSGiBundle(getLocationIdentifier());
 	}
 
 	/**
 	 * @return true if this bundle is active
 	 */
 	public boolean isActive() {
-		Bundle b = getOSGiBundle();
-		return (b != null) && b.getState() == Bundle.ACTIVE;
+		Bundle bundle = getOSGiBundle();
+		return (bundle != null) && bundle.getState() == Bundle.ACTIVE;
+	}
+
+	/**
+	 * A GhidraBundle can be
+	 * <ul>
+	 * <li>a Bndtools .bnd script</li>
+	 * <li>an OSGi bundle .jar file</li>
+	 * <li>a directory of Java source</li>
+	 * </ul>
+	 *  
+	 */
+	enum Type {
+		BND_SCRIPT, JAR, SOURCE_DIR, INVALID
 	}
 
 }

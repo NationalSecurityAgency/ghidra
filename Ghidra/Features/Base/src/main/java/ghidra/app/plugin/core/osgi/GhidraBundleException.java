@@ -20,12 +20,15 @@ import java.util.stream.Collectors;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 
+/**
+ * {@link GhidraBundleException}s store the context associated with exceptions thrown during bundle operations.
+ */
 public class GhidraBundleException extends OSGiException {
 	private final Bundle bundle;
 	private final String bundleLocation;
 
 	/**
-	 * {@link GhidraBundleException}s store the context associated with exceptions thrown during bundle operations.
+	 * Construct a new exception originating with {@code bundle}.
 	 * 
 	 * @param bundle the bundle (if available)
 	 * @param msg a contextual message
@@ -38,7 +41,7 @@ public class GhidraBundleException extends OSGiException {
 	}
 
 	/**
-	 * {@link GhidraBundleException}s store the context associated with exceptions thrown during bundle operations.
+	 * Construct a new exception originating with the bundle having location identifier {@code bundleLocation}.
 	 * 
 	 * @param bundleLocation the bundle location identifier (since no bundle is available)
 	 * @param msg a contextual message
@@ -71,73 +74,56 @@ public class GhidraBundleException extends OSGiException {
 			return "";
 		}
 		if (e instanceof BundleException) {
-			BundleException be = (BundleException) e;
-			switch (be.getType()) {
+			BundleException bundleException = (BundleException) e;
+			switch (bundleException.getType()) {
 				default:
 					return "No exception type";
 				case BundleException.UNSPECIFIED:
 					return "UNSPECIFIED";
-				/**
-				 * The operation was unsupported. This type can be used anywhere a
-				 * BundleException can be thrown.
-				 */
+				// The operation was unsupported. This type can be used anywhere a BundleException can be thrown.
 				case BundleException.UNSUPPORTED_OPERATION:
 					return "UNSUPPORTED_OPERATION";
 
-				/**
-				 * The operation was invalid.
-				 */
+				// The operation was invalid.
 				case BundleException.INVALID_OPERATION:
 					return "INVALID_OPERATION";
 
-				/**
-				 * The bundle manifest was in error.
-				 */
+				// The bundle manifest was in error.
 				case BundleException.MANIFEST_ERROR:
 					return "MANIFEST_ERROR";
 
-				/**
-				 * The bundle was not resolved.
-				 */
+				// The bundle was not resolved.
 				case BundleException.RESOLVE_ERROR: {
-					String message = be.getMessage();
+					String message = bundleException.getMessage();
 					if (message.startsWith("Unable to acquire global lock")) {
 						return message;
 					}
 					// parse the package constraints from filters in the BundleRequirement string
-					String packages = OSGiUtils.extractPackageNamesFromFailedResolution(be.getMessage())
-						.stream()
-						.distinct()
-						.collect(Collectors.joining("\n"));
+					String packages =
+						OSGiUtils.extractPackageNamesFromFailedResolution(bundleException.getMessage())
+							.stream()
+							.distinct()
+							.collect(Collectors.joining("\n"));
 					return "RESOLVE_ERROR with reference to packages:\n" + packages;
 				}
 
-				/**
-				 * The bundle activator was in error.
-				 */
+				// The bundle activator was in error.
 				case BundleException.ACTIVATOR_ERROR:
 					return "ACTIVATOR_ERROR";
 
-				/**
-				 * The operation failed due to insufficient permissions.
-				 */
+				// The operation failed due to insufficient permissions.
 				case BundleException.SECURITY_ERROR:
 					return "SECURITY_ERROR";
 
-				/**
-				 * The operation failed to complete the requested lifecycle state change.
-				 */
+				// The operation failed to complete the requested lifecycle state change.
 				case BundleException.STATECHANGE_ERROR:
 					return "STATECHANGE_ERROR";
 
-				/**
-				 * The bundle could not be resolved due to an error with the
-				 * Bundle-NativeCode header.
-				 */
+				// The bundle could not be resolved due to an error with the Bundle-NativeCode header.
 				case BundleException.NATIVECODE_ERROR:
 					return "NATIVECODE_ERROR";
 
-				/**
+				/*
 				 * The install or update operation failed because another already installed
 				 * bundle has the same symbolic name and version. This exception type will
 				 * only occur if the framework is configured to only allow a single bundle
@@ -148,25 +134,16 @@ public class GhidraBundleException extends OSGiException {
 				case BundleException.DUPLICATE_BUNDLE_ERROR:
 					return "DUPLICATE_BUNDLE_ERROR";
 
-				/**
-				 * The start transient operation failed because the start level of the
-				 * bundle is greater than the current framework start level
-				 */
+				// The start transient operation failed because the start level of the bundle 
+				// is greater than the current framework start level
 				case BundleException.START_TRANSIENT_ERROR:
 					return "START_TRANSIENT_ERROR";
 
-				/**
-				 * The framework received an error while reading the input stream for a
-				 * bundle.
-				 */
+				// The framework received an error while reading the input stream for a bundle.
 				case BundleException.READ_ERROR:
 					return "READ_ERROR";
 
-				/**
-				 * A framework hook rejected the operation.
-				 * 
-				 * @since 1.6
-				 */
+				// A framework hook rejected the operation.
 				case BundleException.REJECTED_BY_HOOK:
 					return "REJECTED_BY_HOOK";
 			}

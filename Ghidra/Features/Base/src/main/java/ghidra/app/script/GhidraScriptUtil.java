@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.BundleHost;
 import ghidra.app.plugin.core.osgi.OSGiException;
+import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
@@ -37,6 +38,9 @@ public class GhidraScriptUtil {
 	 */
 	public static String USER_SCRIPTS_DIR = buildUserScriptsDirectory();
 
+	/**
+	 * this instance is Ghidra's singleton, a reference is held here and in {@link GhidraScriptMgrPlugin}
+	 */
 	private static BundleHost bundleHost;
 
 	private static final String SCRIPTS_SUBDIR_NAME = "ghidra_scripts";
@@ -87,7 +91,7 @@ public class GhidraScriptUtil {
 		}
 
 		bundleHost.add(getUserScriptDirectory(), true, false);
-		bundleHost.add(getSystemScriptPaths(), true, true);
+		bundleHost.add(getSystemScriptDirectories(), true, true);
 	}
 
 	/**
@@ -106,13 +110,19 @@ public class GhidraScriptUtil {
 	 * @return a list of the current script directories
 	 */
 	public static List<ResourceFile> getScriptSourceDirectories() {
-		return bundleHost.getBundlePaths()
+		return bundleHost.getBundleFiles()
 			.stream()
 			.filter(ResourceFile::isDirectory)
 			.collect(Collectors.toList());
 	}
 
-	public static ResourceFile getSourceDirectoryContaining(ResourceFile sourceFile) {
+	/**
+	 * Search the currently managed source directories for the given script file.
+	 * 
+	 * @param sourceFile the source file
+	 * @return the source directory if found, or null if not
+	 */
+	public static ResourceFile findSourceDirectoryContaining(ResourceFile sourceFile) {
 		String sourcePath = sourceFile.getAbsolutePath();
 		for (ResourceFile sourceDir : getScriptSourceDirectories()) {
 			if (sourcePath.startsWith(sourceDir.getAbsolutePath() + File.separatorChar)) {
@@ -122,6 +132,12 @@ public class GhidraScriptUtil {
 		return null;
 	}
 
+	/**
+	 * Search the currently managed scripts for one with the given name.
+	 * 
+	 * @param scriptName the name
+	 * @return the first file found or null if none are found
+	 */
 	public static ResourceFile findScriptByName(String scriptName) {
 		return findScriptFileInPaths(getScriptSourceDirectories(), scriptName);
 	}
@@ -148,22 +164,22 @@ public class GhidraScriptUtil {
 	 * Returns a list of the default script directories.
 	 * @return a list of the default script directories
 	 */
-	public static List<ResourceFile> getSystemScriptPaths() {
-		List<ResourceFile> pathsList = new ArrayList<>();
+	public static List<ResourceFile> getSystemScriptDirectories() {
+		List<ResourceFile> dirList = new ArrayList<>();
 
-		addScriptPaths(pathsList, SCRIPTS_SUBDIR_NAME);
-		addScriptPaths(pathsList, DEV_SCRIPTS_SUBDIR_NAME);
+		addScriptDirectories(dirList, SCRIPTS_SUBDIR_NAME);
+		addScriptDirectories(dirList, DEV_SCRIPTS_SUBDIR_NAME);
 
-		Collections.sort(pathsList);
-		return pathsList;
+		Collections.sort(dirList);
+		return dirList;
 	}
 
 	public static ResourceFile getUserScriptDirectory() {
 		return new ResourceFile(USER_SCRIPTS_DIR);
 	}
 
-	private static void addScriptPaths(List<ResourceFile> pathsList, String directoryName) {
-		pathsList.addAll(Application.findModuleSubDirectories(directoryName));
+	private static void addScriptDirectories(List<ResourceFile> dirList, String directoryName) {
+		dirList.addAll(Application.findModuleSubDirectories(directoryName));
 	}
 
 	/**
@@ -171,7 +187,7 @@ public class GhidraScriptUtil {
 	 * @param file script file or directory
 	 * @return true if file contained within Ghidra installation area
 	 */
-	public static boolean isSystemScriptPath(ResourceFile file) {
+	public static boolean isSystemScript(ResourceFile file) {
 		return isSystemFile(file);
 	}
 
@@ -333,8 +349,8 @@ public class GhidraScriptUtil {
 
 	/**
 	 * Fixup name issues, such as package parts in the name and inner class names.
-	 * <p>
-	 * This method can handle names with or without '.java' at the end; names with 
+	 * 
+	 * <p>This method can handle names with or without '.java' at the end; names with 
 	 * '$' (inner classes) and names with '.' characters for package separators
 	 * 
 	 * @param name the name of the script

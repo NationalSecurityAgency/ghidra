@@ -261,20 +261,20 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected ResourceFile finishNewScriptDialog(String newScriptName) {
 
-		SaveDialog sd = waitForDialogComponent(SaveDialog.class);
+		SaveDialog saveDialog = waitForDialogComponent(SaveDialog.class);
 		if (newScriptName != null) {
-			setNewScriptName(sd, newScriptName);
+			setNewScriptName(saveDialog, newScriptName);
 		}
 
-		pressButtonByText(sd, "OK");
+		pressButtonByText(saveDialog, "OK");
 		waitForSwing();
 
-		ResourceFile newFile = (ResourceFile) invokeInstanceMethod("getFile", sd);
+		ResourceFile newFile = (ResourceFile) invokeInstanceMethod("getFile", saveDialog);
 		assertNotNull(newFile);
 
-		JTextField textField = (JTextField) getInstanceField("nameField", sd);
-		assertTrue("New script dialog did not close.  Message: " + sd.getStatusText() +
-			" - text: " + textField.getText(), !sd.isShowing());
+		JTextField textField = (JTextField) getInstanceField("nameField", saveDialog);
+		assertTrue("New script dialog did not close.  Message: " + saveDialog.getStatusText() +
+			" - text: " + textField.getText(), !saveDialog.isShowing());
 
 		return newFile;
 	}
@@ -334,8 +334,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		GDynamicColumnTableModel<?, ?> model =
 			(GDynamicColumnTableModel<?, ?>) RowObjectTableModel.unwrap(tableModel);
 
-		int n = model.getColumnCount();
-		for (int i = 0; i < n; i++) {
+		int columnCount = model.getColumnCount();
+		for (int i = 0; i < columnCount; i++) {
 			String name = model.getColumnName(i);
 			if (columnName.equals(name)) {
 				return i;
@@ -405,8 +405,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		chooseJavaProvider();
 
-		SaveDialog sd = waitForDialogComponent(SaveDialog.class);
-		pressButtonByText(sd, "OK");
+		SaveDialog saveDialog = waitForDialogComponent(SaveDialog.class);
+		pressButtonByText(saveDialog, "OK");
 		waitForSwing();
 
 		// initialize our editor variable to the newly opened editor
@@ -415,7 +415,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		waitForSwing();
 
-		return sd.getFile();
+		return saveDialog.getFile();
 	}
 
 	protected void assertCannotCreateNewScriptByName(final String name) throws Exception {
@@ -847,8 +847,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected void assertEditorContentsSame(ResourceFile file, String expectedText) {
 
-		Map<ResourceFile, GhidraScriptEditorComponentProvider> map = provider.getEditorMap();
-		GhidraScriptEditorComponentProvider fileEditor = map.get(file);
+		Map<ResourceFile, GhidraScriptEditorComponentProvider> editorMap = provider.getEditorMap();
+		GhidraScriptEditorComponentProvider fileEditor = editorMap.get(file);
 		final JTextArea textArea =
 			(JTextArea) findComponentByName(fileEditor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 		assertNotNull(textArea);
@@ -985,7 +985,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		// destroy any NewScriptxxx files...and Temp ones too
 		List<ResourceFile> paths = provider.getBundleHost()
-			.getBundlePaths()
+			.getBundleFiles()
 			.stream()
 			.filter(ResourceFile::isDirectory)
 			.collect(Collectors.toList());
@@ -1139,7 +1139,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	private boolean isReadOnly(ResourceFile script) {
 		assertNotNull(script);
-		return GhidraScriptUtil.isSystemScriptPath(script);
+		return GhidraScriptUtil.isSystemScript(script);
 	}
 
 	protected void assertSaveButtonDisabled() {

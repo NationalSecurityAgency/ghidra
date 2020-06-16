@@ -458,7 +458,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			.stream()
 			.filter(GhidraSourceBundle.class::isInstance)
 			.filter(GhidraBundle::isEnabled)
-			.map(GhidraBundle::getPath)
+			.map(GhidraBundle::getFile)
 			.collect(Collectors.toList());
 	}
 
@@ -471,7 +471,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			.filter(GhidraSourceBundle.class::isInstance)
 			.filter(Predicate.not(GhidraBundle::isSystemBundle))
 			.filter(GhidraBundle::isEnabled)
-			.map(GhidraBundle::getPath)
+			.map(GhidraBundle::getFile)
 			.collect(Collectors.toList());
 	}
 
@@ -530,7 +530,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void enableScriptDirectory(ResourceFile scriptDir) {
-		bundleHost.enablePath(scriptDir);
+		bundleHost.enable(scriptDir);
 		Msg.showInfo(this, getComponent(), "Script Path Added/Enabled",
 			"The directory has been automatically enabled for use:\n" +
 				scriptDir.getAbsolutePath());
@@ -586,7 +586,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void runScript(String scriptName, TaskListener listener) {
-		for (ResourceFile dir : bundleHost.getBundlePaths()) {
+		for (ResourceFile dir : bundleHost.getBundleFiles()) {
 			if (dir.isDirectory()) {
 				ResourceFile scriptSource = new ResourceFile(dir, scriptName);
 				if (scriptSource.exists()) {
@@ -711,55 +711,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		bundleStatusComponentProvider.setVisible(true);
 	}
 
-	class RefreshingBundleHostListener implements BundleHostListener {
-
-		@Override
-		public void bundleBuilt(GhidraBundle bundle, String summary) {
-			if (bundle instanceof GhidraSourceBundle) {
-				GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
-				for (ResourceFile sourceFile : sourceBundle.getNewSources()) {
-					if (infoManager.containsMetadata(sourceFile)) {
-						ScriptInfo scriptInfo = infoManager.getExistingScriptInfo(sourceFile);
-						GhidraBundle.BuildFailure e = sourceBundle.getErrors(sourceFile);
-						scriptInfo.setCompileErrors(e != null);
-					}
-				}
-				tableModel.fireTableDataChanged();
-			}
-		}
-
-		@Override
-		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablment) {
-			if (bundle instanceof GhidraSourceBundle) {
-				refresh();
-			}
-		}
-
-		@Override
-		public void bundleAdded(GhidraBundle bundle) {
-			plugin.getTool().setConfigChanged(true);
-			refresh();
-		}
-
-		@Override
-		public void bundlesAdded(Collection<GhidraBundle> bundles) {
-			plugin.getTool().setConfigChanged(true);
-			refresh();
-		}
-
-		@Override
-		public void bundleRemoved(GhidraBundle bundle) {
-			plugin.getTool().setConfigChanged(true);
-			refresh();
-		}
-
-		@Override
-		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
-			plugin.getTool().setConfigChanged(true);
-			refresh();
-		}
-	}
-
 	void refresh() {
 		hasBeenRefreshed = true;
 
@@ -778,8 +729,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void updateAvailableScriptFilesForAllPaths() {
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
 		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		for (ResourceFile bundlePath : getScriptDirectories()) {
-			updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator, bundlePath);
+		for (ResourceFile bundleFile : getScriptDirectories()) {
+			updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator, bundleFile);
 		}
 
 		// note: do this after the loop to prevent a flurry of table model update events
@@ -1135,21 +1086,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		return taskListener;
 	}
 
-	private class ScriptTaskListener implements TaskListener {
-		@Override
-		public void taskCancelled(Task task) {
-			taskCompleted(task);
-		}
-
-		@Override
-		public void taskCompleted(Task task) {
-			Rectangle visibleRect = scriptTable.getVisibleRect();
-			scriptTable.repaint(visibleRect);
-		}
-	}
-
-	/********************************************************************/
-
 	@Override
 	public void componentShown() {
 		if (!hasBeenRefreshed) {
@@ -1196,6 +1132,69 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			if (program == scriptTask.getProgram()) {
 				scriptTask.cancel();
 			}
+		}
+	}
+
+	/** passed to runScript, repaints scriptTable when a script completes */
+	private class ScriptTaskListener implements TaskListener {
+		@Override
+		public void taskCancelled(Task task) {
+			taskCompleted(task);
+		}
+
+		@Override
+		public void taskCompleted(Task task) {
+			Rectangle visibleRect = scriptTable.getVisibleRect();
+			scriptTable.repaint(visibleRect);
+		}
+	}
+
+	class RefreshingBundleHostListener implements BundleHostListener {
+
+		@Override
+		public void bundleBuilt(GhidraBundle bundle, String summary) {
+			if (bundle instanceof GhidraSourceBundle) {
+				GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
+				for (ResourceFile sourceFile : sourceBundle.getNewSources()) {
+					if (infoManager.containsMetadata(sourceFile)) {
+						ScriptInfo scriptInfo = infoManager.getExistingScriptInfo(sourceFile);
+						BuildError e = sourceBundle.getErrors(sourceFile);
+						scriptInfo.setCompileErrors(e != null);
+					}
+				}
+				tableModel.fireTableDataChanged();
+			}
+		}
+
+		@Override
+		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablment) {
+			if (bundle instanceof GhidraSourceBundle) {
+				refresh();
+			}
+		}
+
+		@Override
+		public void bundleAdded(GhidraBundle bundle) {
+			plugin.getTool().setConfigChanged(true);
+			refresh();
+		}
+
+		@Override
+		public void bundlesAdded(Collection<GhidraBundle> bundles) {
+			plugin.getTool().setConfigChanged(true);
+			refresh();
+		}
+
+		@Override
+		public void bundleRemoved(GhidraBundle bundle) {
+			plugin.getTool().setConfigChanged(true);
+			refresh();
+		}
+
+		@Override
+		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
+			plugin.getTool().setConfigChanged(true);
+			refresh();
 		}
 	}
 

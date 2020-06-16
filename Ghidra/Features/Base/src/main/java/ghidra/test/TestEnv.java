@@ -550,33 +550,33 @@ public class TestEnv {
 		});
 	}
 
-	public ScriptTaskListener runScript(File script) throws PluginException {
-		GhidraScriptMgrPlugin sm = getPlugin(GhidraScriptMgrPlugin.class);
-		if (sm == null) {
+	public ScriptTaskListener runScript(File scriptFile) throws PluginException {
+		GhidraScriptMgrPlugin scriptManagerPlugin = getPlugin(GhidraScriptMgrPlugin.class);
+		if (scriptManagerPlugin == null) {
 			lazyTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
-			sm = getPlugin(GhidraScriptMgrPlugin.class);
+			scriptManagerPlugin = getPlugin(GhidraScriptMgrPlugin.class);
 		}
 		
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
 		PrintWriter writer = new PrintWriter(System.out);
-		ResourceFile resourceFile = new ResourceFile(script);
-		GhidraScript scr=null;
+		ResourceFile resourceFile = new ResourceFile(scriptFile);
+		GhidraScript script=null;
 		try {
-			scr=scriptProvider.getScriptInstance(resourceFile, writer);
+			script=scriptProvider.getScriptInstance(resourceFile, writer);
 		}
 		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
 			
 		}
-		if (scr==null) {
+		if (script==null) {
 			writer.flush();
-			throw new RuntimeException("Failed to compile script " + script.getAbsolutePath());
+			throw new RuntimeException("Failed to compile script " + scriptFile.getAbsolutePath());
 		}
 
 
-		String scriptName = script.getName();
+		String scriptName = scriptFile.getName();
 		ScriptTaskListener listener = new ScriptTaskListener(scriptName);
-		sm.runScript(scriptName, listener);
+		scriptManagerPlugin.runScript(scriptName, listener);
 		return listener;
 	}
 

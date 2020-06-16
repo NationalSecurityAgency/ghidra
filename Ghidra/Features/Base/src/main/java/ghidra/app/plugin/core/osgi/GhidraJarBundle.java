@@ -36,14 +36,14 @@ public class GhidraJarBundle extends GhidraBundle {
 	 * {@link GhidraJarBundle} wraps an ordinary OSGi bundle .jar.
 	 * 
 	 * @param bundleHost the {@link BundleHost} instance this bundle will belong to
-	 * @param path the jar file's path
+	 * @param file the jar file
 	 * @param enabled true to start enabled
 	 * @param systemBundle true if this is a Ghidra system bundle
 	 */
-	public GhidraJarBundle(BundleHost bundleHost, ResourceFile path, boolean enabled,
+	public GhidraJarBundle(BundleHost bundleHost, ResourceFile file, boolean enabled,
 			boolean systemBundle) {
-		super(bundleHost, path, enabled, systemBundle);
-		this.bundleLocation = "file://" + path.getAbsolutePath().toString();
+		super(bundleHost, file, enabled, systemBundle);
+		this.bundleLocation = "file://" + file.getAbsolutePath().toString();
 	}
 
 	@Override
@@ -57,19 +57,17 @@ public class GhidraJarBundle extends GhidraBundle {
 	}
 
 	@Override
-	public String getBundleLocation() {
+	public String getLocationIdentifier() {
 		return bundleLocation;
 	}
 
 	@Override
 	public List<BundleRequirement> getAllRequirements() {
-		Jar jar;
-		try {
-			jar = new Jar(path.getFile(true));
-			Manifest m = jar.getManifest();
-			String imps = m.getMainAttributes().getValue(Constants.IMPORT_PACKAGE);
-			if (imps != null) {
-				return OSGiUtils.parseImports(imps);
+		try (Jar jar = new Jar(file.getFile(true))) {
+			Manifest manifest = jar.getManifest();
+			String importPackageString = manifest.getMainAttributes().getValue(Constants.IMPORT_PACKAGE);
+			if (importPackageString != null) {
+				return OSGiUtils.parseImportPackage(importPackageString);
 			}
 			return Collections.emptyList();
 		}

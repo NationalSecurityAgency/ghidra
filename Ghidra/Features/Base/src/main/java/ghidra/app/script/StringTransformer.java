@@ -16,5 +16,5 @@
 package ghidra.app.script;
 
 public interface StringTransformer<T> {
-	T apply(String s);
+	public T apply(String s);
 }

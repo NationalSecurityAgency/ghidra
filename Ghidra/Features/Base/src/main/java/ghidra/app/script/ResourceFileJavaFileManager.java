@@ -26,9 +26,9 @@ import generic.jar.ResourceFile;
 import ghidra.util.exception.AssertException;
 
 /**
- * A {@link JavaFileManager} that works with Ghidra's {@link ResourceFile}'s.
- * <p>
- * This class is used to dynamically compile Ghidra scripts.
+ * A {@link JavaFileManager} that works with Ghidra's {@link ResourceFile}s.
+ * 
+ * <p>This class is used to dynamically compile Ghidra scripts.
  */
 public class ResourceFileJavaFileManager implements JavaFileManager {
 

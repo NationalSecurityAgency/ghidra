@@ -25,8 +25,7 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableColumn;
 
-import docking.ActionContext;
-import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.util.AnimationUtils;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -79,32 +78,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		this.bundleHost = bundleHost;
 		this.bundleStatusTableModel = new BundleStatusTableModel(this, bundleHost);
 
-		bundleStatusTableModel.addListener(new BundleStatusChangeRequestListener() {
-			@Override
-			public void bundleEnablementChangeRequest(BundleStatus status, boolean enabled) {
-				GhidraBundle gb = bundleHost.getExistingGhidraBundle(status.getPath());
-				if (gb instanceof GhidraPlaceholderBundle) {
-					return;
-				}
-				if (enabled) {
-					bundleHost.enable(gb);
-				}
-				else {
-					if (status.isActive()) {
-						startActivateDeactiveTask(status, false);
-					}
-					bundleHost.disable(gb);
-				}
-			}
-
-			@Override
-			public void bundleActivationChangeRequest(BundleStatus status, boolean newValue) {
-				if (status.isEnabled()) {
-					startActivateDeactiveTask(status, newValue);
-				}
-			}
-
-		});
+		bundleStatusTableModel.addListener(new MyBundleStatusChangeRequestListener());
 
 		this.filter = new GhidraFileFilter() {
 			@Override
@@ -113,8 +87,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			}
 
 			@Override
-			public boolean accept(File path, GhidraFileChooserModel model) {
-				return GhidraBundle.getType(path) != GhidraBundle.Type.INVALID;
+			public boolean accept(File file, GhidraFileChooserModel model) {
+				return GhidraBundle.getType(file) != GhidraBundle.Type.INVALID;
 			}
 		};
 		this.fileChooser = null;
@@ -178,7 +152,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 				BundleStatus status = (BundleStatus) data.getRowObject();
-				Component x = super.getTableCellRendererComponent(data);
+				Component component = super.getTableCellRendererComponent(data);
 				if (status.isBusy()) {
 					cb.setVisible(false);
 					cb.setEnabled(false);
@@ -190,7 +164,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 					cb.setEnabled(true);
 					setText("");
 				}
-				return x;
+				return component;
 			}
 		});
 
@@ -199,69 +173,40 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.typeColumn.index);
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		column.setMaxWidth(10 +
-			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SourceDir.toString()));
+			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SOURCE_DIR.toString()));
 		column =
 			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.pathColumn.index);
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-				ResourceFile path = (ResourceFile) data.getValue();
-				JLabel c = (JLabel) super.getTableCellRendererComponent(data);
-				c.setText(Path.toPathString(path));
-				GhidraBundle gb = bundleHost.getExistingGhidraBundle(path);
-				if (gb == null || gb instanceof GhidraPlaceholderBundle || !path.exists()) {
-					c.setForeground(Color.RED);
+				ResourceFile file = (ResourceFile) data.getValue();
+				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+				label.setText(Path.toPathString(file));
+				GhidraBundle bundle = bundleHost.getExistingGhidraBundle(file);
+				if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
+					label.setForeground(Color.RED);
 				}
-				return c;
+				return label;
 			}
 		});
 	}
 
 	private void addBundlesAction(String actionName, String description, Icon icon,
 			Runnable runnable) {
-		DockingAction action = new DockingAction(actionName, this.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				runnable.run();
-			}
 
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return bundleStatusTable.getSelectedRows().length > 0;
-			}
-		};
-		action.setPopupMenuData(new MenuData(new String[] { description }, icon, BUNDLE_GROUP));
-		action.setToolBarData(new ToolBarData(icon, BUNDLE_GROUP));
-		action.setDescription(description);
-		action.setEnabled(false);
-		getTool().addLocalAction(this, action);
-
-	}
-
-	private void addBundleListAction(String actionName, String name, String description, Icon icon,
-			Runnable runnable) {
-		DockingAction action = new DockingAction(actionName, this.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				runnable.run();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return true;
-			}
-		};
-		action.setPopupMenuData(new MenuData(new String[] { name }, icon, BUNDLE_LIST_GROUP));
-		action.setToolBarData(new ToolBarData(icon, BUNDLE_LIST_GROUP));
-		action.setDescription(description);
-		action.setEnabled(true);
-		getTool().addLocalAction(this, action);
-
+		new ActionBuilder(actionName, this.getName()).popupMenuPath(description)
+			.popupMenuIcon(icon)
+			.popupMenuGroup(BUNDLE_GROUP)
+			.toolBarIcon(icon)
+			.toolBarGroup(BUNDLE_GROUP)
+			.description(description)
+			.enabled(false)
+			.enabledWhen(context -> bundleStatusTable.getSelectedRows().length > 0)
+			.onAction(context -> runnable.run())
+			.buildAndInstallLocal(this);
 	}
 
 	private void createActions() {
-		DockingAction action;
-
 		addBundlesAction("ActivateBundles", "Activate bundle(s)",
 			ResourceManager.loadImage("images/media-playback-start.png"), this::doActivateBundles);
 
@@ -271,47 +216,26 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		addBundlesAction("CleanBundles", "Clean bundle(s)",
 			ResourceManager.loadImage("images/erase16.png"), this::doClean);
 
-		//
-		action = new DockingAction("AddBundles", this.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				showAddBundlesFileChooser();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return true;
-			}
-
-		};
 		Icon icon = ResourceManager.loadImage("images/Plus.png");
-		action.setPopupMenuData(
-			new MenuData(new String[] { "Add bundle(s)" }, icon, BUNDLE_LIST_GROUP));
-		action.setToolBarData(new ToolBarData(icon, BUNDLE_LIST_GROUP));
-		action.setDescription("Display file chooser to add bundles to list");
-		action.setEnabled(true);
-		getTool().addLocalAction(this, action);
+		new ActionBuilder("AddBundles", this.getName()).popupMenuPath("Add Bundle(s)")
+			.popupMenuIcon(icon)
+			.popupMenuGroup(BUNDLE_LIST_GROUP)
+			.toolBarIcon(icon)
+			.toolBarGroup(BUNDLE_LIST_GROUP)
+			.description("Display file chooser to add bundles to list")
+			.onAction(c -> showAddBundlesFileChooser())
+			.buildAndInstallLocal(this);
 
-		//
 		icon = ResourceManager.loadImage("images/edit-delete.png");
-		action = new DockingAction("RemoveBundles", this.getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				doRemoveBundles();
-			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				return bundleStatusTable.getSelectedRows().length > 0;
-			}
-
-		};
-		action.setPopupMenuData(
-			new MenuData(new String[] { "Remove bundle(s)" }, icon, BUNDLE_LIST_GROUP));
-		action.setToolBarData(new ToolBarData(icon, BUNDLE_LIST_GROUP));
-		action.setDescription("Remove selected bundle(s) from the list");
-		action.setEnabled(true);
-		getTool().addLocalAction(this, action);
+		new ActionBuilder("RemoveBundles", this.getName()).popupMenuPath("Remove bundle(s)")
+			.popupMenuIcon(icon)
+			.popupMenuGroup(BUNDLE_LIST_GROUP)
+			.toolBarIcon(icon)
+			.toolBarGroup(BUNDLE_LIST_GROUP)
+			.description("Remove selected bundle(s) from the list")
+			.enabledWhen(c -> bundleStatusTable.getSelectedRows().length > 0)
+			.onAction(c -> doRemoveBundles())
+			.buildAndInstallLocal(this);
 	}
 
 	/**
@@ -330,10 +254,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	private void doClean() {
 		int[] selectedModelRows = getSelectedModelRows();
 		boolean anythingCleaned = false;
-		for (BundleStatus bs : bundleStatusTableModel.getRowObjects(selectedModelRows)) {
-			anythingCleaned |= bundleHost.getExistingGhidraBundle(bs.getPath()).clean();
-			if (!bs.getSummary().isEmpty()) {
-				bs.setSummary("");
+		for (BundleStatus status : bundleStatusTableModel.getRowObjects(selectedModelRows)) {
+			anythingCleaned |= bundleHost.getExistingGhidraBundle(status.getFile()).clean();
+			if (!status.getSummary().isEmpty()) {
+				status.setSummary("");
 				anythingCleaned |= true;
 			}
 		}
@@ -350,25 +274,25 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 		doDeactivateBundles();
 
+		// partition bundles into system (bundles.get(true)) and non-system (bundles.get(false)).
 		Map<Boolean, List<GhidraBundle>> bundles =
 			bundleStatusTableModel.getRowObjects(selectedModelRows)
 				.stream()
-				.map(bs -> bundleHost.getExistingGhidraBundle(bs.getPath()))
-				.collect(Collectors.partitioningBy(gb -> gb.isSystemBundle()));
+				.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
+				.collect(Collectors.partitioningBy(GhidraBundle::isSystemBundle));
+
 		List<GhidraBundle> systemBundles = bundles.get(true);
 		if (!systemBundles.isEmpty()) {
-			StringBuilder sb = new StringBuilder();
-			for (GhidraBundle gb : systemBundles) {
-				bundleHost.disable(gb);
-				sb.append(gb.getPath() + "\n");
+			StringBuilder stringBuilder = new StringBuilder();
+			for (GhidraBundle bundle : systemBundles) {
+				bundleHost.disable(bundle);
+				stringBuilder.append(bundle.getFile() + "\n");
 			}
 			Msg.showWarn(this, this.getComponent(), "Unabled to remove",
-				"System bundles cannot be removed:\n" + sb.toString());
-
+				"System bundles cannot be removed:\n" + stringBuilder.toString());
 		}
 
 		bundleHost.remove(bundles.get(false));
-
 	}
 
 	private void showAddBundlesFileChooser() {
@@ -393,15 +317,15 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			}
 			String lastSelected = Preferences.getProperty(PREFENCE_LAST_SELECTED_BUNDLE);
 			if (lastSelected != null) {
-				File f = new File(lastSelected);
-				fileChooser.setSelectedFile(f);
+				File lastSelectedFile = new File(lastSelected);
+				fileChooser.setSelectedFile(lastSelectedFile);
 			}
 		}
 		else {
 			String lastSelected = Preferences.getProperty(PREFENCE_LAST_SELECTED_BUNDLE);
 			if (lastSelected != null) {
-				File f = new File(lastSelected);
-				fileChooser.setSelectedFile(f);
+				File lastSelectedFile = new File(lastSelected);
+				fileChooser.setSelectedFile(lastSelectedFile);
 			}
 			fileChooser.rescanCurrentDirectory();
 		}
@@ -417,104 +341,24 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	protected void doActivateBundles() {
-		int[] selectedModelRows = getSelectedModelRows();
-
-		new TaskLauncher(new Task("activating", true, true, false) {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				// suppress RowObjectSelectionManager repairs until after we're done
-				bundleStatusTable.chill();
-
-				List<BundleStatus> statuses =
-					bundleStatusTableModel.getRowObjects(selectedModelRows)
-						.stream()
-						.filter(bs -> !bs.isActive())
-						.collect(Collectors.toUnmodifiableList());
-
-				List<GhidraBundle> gbs = new ArrayList<>();
-				for (BundleStatus bs : statuses) {
-					GhidraBundle gb = bundleHost.getExistingGhidraBundle(bs.getPath());
-					if (!(gb instanceof GhidraPlaceholderBundle)) {
-						bs.setBusy(true);
-						bundleHost.enable(gb);
-						gbs.add(gb);
-					}
-				}
-				notifyTableDataChanged();
-
-				bundleHost.activateAll(gbs, monitor,
-					getTool().getService(ConsoleService.class).getStdErr());
-
-				boolean anybusy = false;
-				for (BundleStatus bs : statuses) {
-					if (bs.isBusy()) {
-						anybusy = true;
-						bs.setBusy(false);
-					}
-				}
-				if (anybusy) {
-					notifyTableDataChanged();
-				}
-
-				bundleStatusTable.thaw();
-			}
-		}, getComponent(), 1000);
+		new TaskLauncher(
+			new ActivateBundlesTask("activating", true, true, false, getSelectedModelRows()),
+			getComponent(), 1000);
 	}
 
 	protected void doDeactivateBundles() {
-		ConsoleService console = getTool().getService(ConsoleService.class);
-		int[] selectedModelRows = getSelectedModelRows();
-
-		new TaskLauncher(new Task("deactivating", true, true, false) {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				List<GhidraBundle> gbs = bundleStatusTableModel.getRowObjects(selectedModelRows)
-					.stream()
-					.filter(bs -> bs.isActive())
-					.map(bs -> bundleHost.getExistingGhidraBundle(bs.getPath()))
-					.collect(Collectors.toList());
-
-				monitor.setMaximum(gbs.size());
-				for (GhidraBundle gb : gbs) {
-					try {
-						bundleHost.deactivateSynchronously(gb.getBundleLocation());
-					}
-					catch (GhidraBundleException | InterruptedException e) {
-						e.printStackTrace(console.getStdErr());
-					}
-					monitor.incrementProgress(1);
-				}
-			}
-		}, getComponent(), 1000);
+		new TaskLauncher(
+			new DeactivateBundlesTask("deactivating", true, true, false, getSelectedModelRows()),
+			getComponent(), 1000);
 	}
 
-	protected void startActivateDeactiveTask(BundleStatus status, boolean activate) {
+	protected void doActivateDeactivateBundle(BundleStatus status, boolean activate) {
 		status.setBusy(true);
 		notifyTableRowChanged(status);
-		ConsoleService console = getTool().getService(ConsoleService.class);
-
-		new TaskLauncher(new Task((activate ? "Activating" : "Deactivating ") + " bundle...") {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				try {
-					GhidraBundle gb = bundleHost.getExistingGhidraBundle(status.getPath());
-					if (activate) {
-						gb.build(console.getStdErr());
-						bundleHost.activateSynchronously(gb.getBundleLocation());
-					}
-					else { // deactivate
-						bundleHost.deactivateSynchronously(gb.getBundleLocation());
-					}
-				}
-				catch (Exception e) {
-					e.printStackTrace(console.getStdErr());
-				}
-				finally {
-					status.setBusy(false);
-					notifyTableRowChanged(status);
-				}
-			}
-		}, null, 1000);
+		new TaskLauncher(
+			new ActivateDeactivateBundleTask(
+				(activate ? "Activating" : "Deactivating ") + " bundle...", status, activate),
+			null, 1000);
 	}
 
 	private void notifyTableRowChanged(BundleStatus status) {
@@ -554,14 +398,159 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	/**
 	 * This is for testing only!  during normal execution, statuses are only added through BundleHostListener bundle(s) added events.
 	 * 
-	 * each path is marked editable and non-readonly
+	 * <p>each new bundle will be enabled and writable
 	 * 
-	 * @param bundlePaths the paths to use
+	 * @param bundleFiles the files to use
 	 */
-	public void setPathsForTesting(List<ResourceFile> bundlePaths) {
-		bundleStatusTableModel.setModelData(bundlePaths.stream()
+	public void setBundleFilesForTesting(List<ResourceFile> bundleFiles) {
+		bundleStatusTableModel.setModelData(bundleFiles.stream()
 			.map(f -> new BundleStatus(f, true, false, null))
 			.collect(Collectors.toList()));
+	}
+
+	private class ActivateBundlesTask extends Task {
+		private final int[] selectedModelRows;
+
+		private ActivateBundlesTask(String title, boolean canCancel, boolean hasProgress,
+				boolean isModal, int[] selectedModelRows) {
+			super(title, canCancel, hasProgress, isModal);
+			this.selectedModelRows = selectedModelRows;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			// suppress RowObjectSelectionManager repairs until after we're done
+			bundleStatusTable.chill();
+
+			List<BundleStatus> statuses = bundleStatusTableModel.getRowObjects(selectedModelRows)
+				.stream()
+				.filter(bs -> !bs.isActive())
+				.collect(Collectors.toUnmodifiableList());
+
+			List<GhidraBundle> bundles = new ArrayList<>();
+			for (BundleStatus status : statuses) {
+				GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
+				if (!(bundle instanceof GhidraPlaceholderBundle)) {
+					status.setBusy(true);
+					bundleHost.enable(bundle);
+					bundles.add(bundle);
+				}
+			}
+			notifyTableDataChanged();
+
+			bundleHost.activateAll(bundles, monitor,
+				getTool().getService(ConsoleService.class).getStdErr());
+
+			boolean anybusy = false;
+			for (BundleStatus status : statuses) {
+				if (status.isBusy()) {
+					anybusy = true;
+					status.setBusy(false);
+				}
+			}
+			if (anybusy) {
+				notifyTableDataChanged();
+			}
+
+			bundleStatusTable.thaw();
+		}
+	}
+
+	private class DeactivateBundlesTask extends Task {
+		private final int[] selectedModelRows;
+
+		private DeactivateBundlesTask(String title, boolean canCancel, boolean hasProgress,
+				boolean isModal, int[] selectedModelRows) {
+			super(title, canCancel, hasProgress, isModal);
+			this.selectedModelRows = selectedModelRows;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			List<GhidraBundle> bundles = bundleStatusTableModel.getRowObjects(selectedModelRows)
+				.stream()
+				.filter(bs -> bs.isActive())
+				.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
+				.collect(Collectors.toList());
+
+			monitor.setMaximum(bundles.size());
+			for (GhidraBundle bundle : bundles) {
+				try {
+					bundleHost.deactivateSynchronously(bundle.getLocationIdentifier());
+				}
+				catch (GhidraBundleException | InterruptedException e) {
+					ConsoleService console = getTool().getService(ConsoleService.class);
+					e.printStackTrace(console.getStdErr());
+				}
+				monitor.incrementProgress(1);
+			}
+		}
+	}
+
+	/*
+	 * Activating/deactivating a single bundle doesn't require resolving dependents,
+	 * so this task is slightly different from the others.
+	 */
+	private class ActivateDeactivateBundleTask extends Task {
+		private final BundleStatus status;
+		private final boolean activate;
+
+		private ActivateDeactivateBundleTask(String title, BundleStatus status, boolean activate) {
+			super(title);
+			this.status = status;
+			this.activate = activate;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			ConsoleService console = getTool().getService(ConsoleService.class);
+			try {
+				GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
+				if (activate) {
+					bundle.build(console.getStdErr());
+					bundleHost.activateSynchronously(bundle.getLocationIdentifier());
+				}
+				else { // deactivate
+					bundleHost.deactivateSynchronously(bundle.getLocationIdentifier());
+				}
+			}
+			catch (Exception e) {
+				e.printStackTrace(console.getStdErr());
+			}
+			finally {
+				status.setBusy(false);
+				notifyTableRowChanged(status);
+			}
+		}
+	}
+
+	/**
+	 * Listener that responds to change requests from the {@link BundleStatusTableModel}.
+	 */
+	private class MyBundleStatusChangeRequestListener implements BundleStatusChangeRequestListener {
+		@Override
+		public void bundleEnablementChangeRequest(BundleStatus status, boolean enabled) {
+			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
+			if (bundle instanceof GhidraPlaceholderBundle) {
+				return;
+			}
+			if (enabled) {
+				bundleHost.enable(bundle);
+			}
+			else {
+				if (status.isActive()) {
+					doActivateDeactivateBundle(status, false);
+				}
+				bundleHost.disable(bundle);
+			}
+		}
+
+		@Override
+		public void bundleActivationChangeRequest(BundleStatus status, boolean newValue) {
+			if (status.isEnabled()) {
+				doActivateDeactivateBundle(status, newValue);
+			}
+		}
 	}
 
 }

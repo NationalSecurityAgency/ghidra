@@ -27,8 +27,8 @@ import generic.jar.ResourceFile;
 
 /**
  * A {@link JavaFileObject} that works with Ghidra's {@link ResourceFileJavaFileManager}.
- * <p>
- * This class is used to dynamically compile Ghidra scripts.
+ * 
+ * <p>This class is used to dynamically compile Ghidra scripts.
  */
 public class ResourceFileJavaFileObject implements JavaFileObject {
 

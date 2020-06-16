@@ -26,7 +26,7 @@ import ghidra.util.Msg;
  * Handles processing for .properties files associated with a GhidraScript (.properties file and
  * script should share the same basename).
  * 
- * This should only be called/used by the GhidraScript class. 
+ * <p>This should only be called/used by the GhidraScript class. 
  */
 public class GhidraScriptProperties {
 

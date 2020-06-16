@@ -133,8 +133,8 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		}
 	}
 
-	private boolean isReadOnly(ResourceFile scriptSourceFile1) {
-		return GhidraScriptUtil.isSystemScriptPath(scriptSourceFile1);
+	private static boolean isReadOnly(ResourceFile scriptSourceFile) {
+		return GhidraScriptUtil.isSystemScript(scriptSourceFile);
 	}
 
 //    private boolean isSystemScript() {

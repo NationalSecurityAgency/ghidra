@@ -216,7 +216,7 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 		tempScriptDir.mkdir();
 
 		ResourceFile scriptDir = new ResourceFile(tempScriptDir);
-		provider.getBundleHost().enablePath(scriptDir);
+		provider.getBundleHost().enable(scriptDir);
 
 		try {
 			// create a script file in that directory
@@ -257,8 +257,8 @@ public class GhidraScriptMgrPlugin2Test extends AbstractGhidraScriptMgrPluginTes
 
 		chooseJavaProvider();
 
-		SaveDialog sd = AbstractDockingTest.waitForDialogComponent(SaveDialog.class);
-		pressButtonByText(sd, "OK");
+		SaveDialog saveDialog = AbstractDockingTest.waitForDialogComponent(SaveDialog.class);
+		pressButtonByText(saveDialog, "OK");
 
 		refreshProvider();
 

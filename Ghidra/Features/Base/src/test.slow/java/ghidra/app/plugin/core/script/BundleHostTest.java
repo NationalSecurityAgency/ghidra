@@ -32,7 +32,15 @@ import ghidra.app.plugin.core.osgi.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 
 public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
-	static protected void wipe(Path path) throws IOException {
+	BundleHost bundleHost;
+	CapturingBundleHostListener capturingBundleHostListener;
+
+	Set<Path> tempDirs = new HashSet<>();
+	LinkedList<GhidraBundle> bundleStack = new LinkedList<>();
+	GhidraBundle currentBundle;
+
+	
+	protected static void wipe(Path path) throws IOException {
 		if (Files.exists(path)) {
 			for (Path p : (Iterable<Path>) Files.walk(path).sorted(
 				Comparator.reverseOrder())::iterator) {
@@ -41,23 +49,17 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 	}
 
-	BundleHost bundleHost;
-	CapturingBundleHostListener bhl;
-
-	Set<Path> tmpdirs = new HashSet<>();
-	LinkedList<GhidraBundle> gbstack = new LinkedList<>();
-	GhidraBundle current_gb;
 
 	protected GhidraBundle pushNewBundle() throws IOException {
-		String dir = String.format("sourcebundle%03d", tmpdirs.size());
+		String dir = String.format("sourcebundle%03d", tempDirs.size());
 		Path tmpDir = new File(getTestDirectoryPath(), dir).toPath();
 		Files.createDirectories(tmpDir);
-		tmpdirs.add(tmpDir);
+		tempDirs.add(tmpDir);
 
-		ResourceFile rp = new ResourceFile(tmpDir.toFile());
-		current_gb = bundleHost.add(rp, true, false);
-		gbstack.push(current_gb);
-		return current_gb;
+		ResourceFile sourceDirectory = new ResourceFile(tmpDir.toFile());
+		currentBundle = bundleHost.add(sourceDirectory, true, false);
+		bundleStack.push(currentBundle);
+		return currentBundle;
 	}
 
 	static class CapturingBundleHostListener implements BundleHostListener {
@@ -75,8 +77,8 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		bundleHost = new BundleHost();
 		bundleHost.startFramework();
-		bhl = new CapturingBundleHostListener();
-		bundleHost.addListener(bhl);
+		capturingBundleHostListener = new CapturingBundleHostListener();
+		bundleHost.addListener(capturingBundleHostListener);
 
 		pushNewBundle();
 	}
@@ -84,29 +86,29 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	@After
 	public void tearDown() throws IOException {
 		bundleHost.dispose();
-		bhl = null;
+		capturingBundleHostListener = null;
 		bundleHost = null;
 
-		for (Path tmpdir : tmpdirs) {
+		for (Path tmpdir : tempDirs) {
 			wipe(tmpdir);
 		}
 	}
 
 	protected void buildWithExpectations(String expectedCompilerOutput, String expectedSummary)
 			throws Exception {
-		StringWriter sw = new StringWriter();
+		StringWriter stringWriter = new StringWriter();
 
-		current_gb.build(new PrintWriter(sw));
-		sw.flush();
+		currentBundle.build(new PrintWriter(stringWriter));
+		stringWriter.flush();
 
 		assertEquals("unexpected output during build", expectedCompilerOutput,
-			sw.getBuffer().toString());
+			stringWriter.getBuffer().toString());
 
-		assertEquals("wrong summary", expectedSummary, bhl.lastBuildSummary);
+		assertEquals("wrong summary", expectedSummary, capturingBundleHostListener.lastBuildSummary);
 	}
 
 	protected void activate() throws Exception {
-		Bundle bundle = bundleHost.install(current_gb);
+		Bundle bundle = bundleHost.install(currentBundle);
 		assertNotNull("failed to install bundle", bundle);
 		bundle.start();
 	}
@@ -117,7 +119,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	protected Class<?> loadClass(String classname) throws ClassNotFoundException {
-		Class<?> clazz = current_gb.getOSGiBundle().loadClass(classname);
+		Class<?> clazz = currentBundle.getOSGiBundle().loadClass(classname);
 		assertNotNull("failed to load class", clazz);
 		return clazz;
 	}
@@ -133,19 +135,19 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected void addClass(String meta, String imports, String fullclassname, String body)
 			throws IOException {
 		String simplename;
-		Path tmpsource = current_gb.getPath().getFile(false).toPath();
+		Path tmpsource = currentBundle.getFile().getFile(false).toPath();
 
 		if (fullclassname.contains(".")) {
 			String packagename;
 
-			Pattern classpat = Pattern.compile("^(.*)\\.([^.]*)$");
-			Matcher m = classpat.matcher(fullclassname);
-			if (!m.matches()) {
+			Pattern pattern = Pattern.compile("^(.*)\\.([^.]*)$");
+			Matcher matcher = pattern.matcher(fullclassname);
+			if (!matcher.matches()) {
 				throw new IllegalArgumentException(
 					"fullclassname must be of the form \"xxxx.xxxx.Xxxx\"");
 			}
-			packagename = m.group(1);
-			simplename = m.group(2);
+			packagename = matcher.group(1);
+			simplename = matcher.group(2);
 
 			for (String n : packagename.split("\\.")) {
 				tmpsource = tmpsource.resolve(n);
@@ -169,9 +171,9 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	protected Object getInstance(String classname) throws Exception {
 		Class<?> clazz = loadClass(classname);
-		Object o = clazz.getDeclaredConstructor().newInstance();
-		assertNotNull("failed to create instance", o);
-		return o;
+		Object object = clazz.getDeclaredConstructor().newInstance();
+		assertNotNull("failed to create instance", object);
+		return object;
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -221,9 +223,9 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			"BClass.java:7: error: ';' expected\n" + 
 			"   failing java goes here\n" + 
 			"                         ^\n" + 
-			String.format("skipping %s/apackage/BClass.java\n", current_gb.getPath().toString())
+			String.format("skipping %s/apackage/BClass.java\n", currentBundle.getFile().toString())
 			,
-			"1 failing source files"
+			"1 source file with errors"
 		); 
 		// @formatter:on
 
@@ -290,9 +292,9 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			"	                     ^\n" + 
 			"  symbol:   variable Library\n" + 
 			"  location: class apackage.AClass\n" + 
-			String.format("skipping %s/apackage/AClass.java\n", current_gb.getPath().toString())
+			String.format("skipping %s/apackage/AClass.java\n", currentBundle.getFile().toString())
 			,
-			"1 failing source files"
+			"1 source file with errors"
 		);
 		// @formatter:on
 	}
@@ -313,7 +315,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		
 		pushNewBundle();
-		// @importpackages tag is only parsed from classes in default package
+		// @importpackage tag is only parsed from classes in default package
 		addClass(
 			"//@importpackage lib\n"
 			,
@@ -353,10 +355,10 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			"}\n"
 		);
 		
-		Path p = current_gb.getPath().getFile(false).toPath();
-		p=p.resolve("META-INF");
-		Files.createDirectories(p);
-		Path manifest=p.resolve("MANIFEST.MF");
+		Path path = currentBundle.getFile().getFile(false).toPath();
+		path=path.resolve("META-INF");
+		Files.createDirectories(path);
+		Path manifest=path.resolve("MANIFEST.MF");
 		
 		Files.writeString(manifest,
 			"Manifest-Version: 1.0\n" + 

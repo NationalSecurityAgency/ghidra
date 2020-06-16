@@ -40,7 +40,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	 * @return the bundle
 	 */
 	public GhidraSourceBundle getBundleForSource(ResourceFile sourceFile) {
-		ResourceFile sourceDir = GhidraScriptUtil.getSourceDirectoryContaining(sourceFile);
+		ResourceFile sourceDir = GhidraScriptUtil.findSourceDirectoryContaining(sourceFile);
 		if (sourceDir == null) {
 			return null;
 		}
@@ -111,15 +111,15 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	 * @throws Exception if build, activation, or class loading fail
 	 */
 	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
-		GhidraSourceBundle gb = getBundleForSource(sourceFile);
-		gb.build(writer);
+		GhidraSourceBundle bundle = getBundleForSource(sourceFile);
+		bundle.build(writer);
 
-		Bundle b = bundleHost.install(gb);
+		Bundle osgiBundle = bundleHost.install(bundle);
 
-		bundleHost.activateSynchronously(b);
+		bundleHost.activateSynchronously(osgiBundle);
 
-		String classname = gb.classNameForScript(sourceFile);
-		Class<?> clazz = b.loadClass(classname); // throws ClassNotFoundException
+		String classname = bundle.classNameForScript(sourceFile);
+		Class<?> clazz = osgiBundle.loadClass(classname); // throws ClassNotFoundException
 		return clazz;
 	}
 

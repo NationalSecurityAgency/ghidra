@@ -111,15 +111,15 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 
 	@Test
 	public void testScript_Dirs() throws Exception {
-		List<ResourceFile> paths = new ArrayList<>();
-		paths.add(Path.fromPathString("$USER_HOME/ghidra_scripts"));
-		paths.add(Path.fromPathString("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
-		paths.add(Path.fromPathString("/User/defined/invalid/directory"));
+		List<ResourceFile> bundleFiles = new ArrayList<>();
+		bundleFiles.add(Path.fromPathString("$USER_HOME/ghidra_scripts"));
+		bundleFiles.add(Path.fromPathString("$GHIDRA_HOME/Features/Base/ghidra_scripts"));
+		bundleFiles.add(Path.fromPathString("/User/defined/invalid/directory"));
 
 		BundleStatusComponentProvider bundleStatusComponentProvider =
 			showProvider(BundleStatusComponentProvider.class);
 
-		bundleStatusComponentProvider.setPathsForTesting(paths);
+		bundleStatusComponentProvider.setBundleFilesForTesting(bundleFiles);
 
 		waitForComponentProvider(BundleStatusComponentProvider.class);
 		captureComponent(bundleStatusComponentProvider.getComponent());

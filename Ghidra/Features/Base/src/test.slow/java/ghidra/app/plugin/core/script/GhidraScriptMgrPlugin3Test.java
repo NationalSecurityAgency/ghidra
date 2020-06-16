@@ -148,11 +148,11 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 	public void testRefreshFindsNewScript() throws Exception {
 		int rowCount = getRowCount();
 
-		JavaScriptProvider jsp = new JavaScriptProvider();
+		JavaScriptProvider javaScriptProvider = new JavaScriptProvider();
 
-		ResourceFile newScript = GhidraScriptUtil.createNewScript(jsp,
+		ResourceFile newScript = GhidraScriptUtil.createNewScript(javaScriptProvider,
 			new ResourceFile(GhidraScriptUtil.USER_SCRIPTS_DIR), provider.getScriptDirectories());
-		jsp.createNewScript(newScript, null);
+		javaScriptProvider.createNewScript(newScript, null);
 
 		refreshScriptManager();
 
@@ -283,16 +283,16 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		final ResourceFile dir = new ResourceFile(getTestDirectoryPath() + "/test_scripts");
 		dir.getFile(false).mkdirs();
 
-		provider.getBundleHost().enablePath(dir);
+		provider.getBundleHost().enable(dir);
 		waitForSwing();
 
 		pressNewButton();
 
 		chooseJavaProvider();
 
-		SaveDialog sd = waitForDialogComponent(SaveDialog.class);
+		SaveDialog saveDialog = waitForDialogComponent(SaveDialog.class);
 
-		final ListPanel listPanel = (ListPanel) findComponentByName(sd.getComponent(), "PATH_LIST");
+		final ListPanel listPanel = (ListPanel) findComponentByName(saveDialog.getComponent(), "PATH_LIST");
 		assertNotNull(listPanel);
 		assertTrue(listPanel.isVisible());
 		assertEquals(2, listPanel.getListModel().getSize());
@@ -315,11 +315,11 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		}, false);
 		waitForSwing();
 
-		pressButtonByText(sd, "OK");
-		assertTrue(!sd.isShowing());
+		pressButtonByText(saveDialog, "OK");
+		assertTrue(!saveDialog.isShowing());
 		waitForTasks();
 
-		ResourceFile newScript = sd.getFile();
+		ResourceFile newScript = saveDialog.getFile();
 		assertTrue(newScript.exists());
 
 		assertNotNull(newScript);
