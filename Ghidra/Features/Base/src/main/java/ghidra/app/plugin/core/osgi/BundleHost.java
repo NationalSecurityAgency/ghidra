@@ -19,7 +19,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -612,24 +612,20 @@ public class BundleHost {
 	 */
 	protected void refreshBundlesSynchronously(Collection<Bundle> bundles) {
 		FrameworkWiring frameworkWiring = felixFramework.adapt(FrameworkWiring.class);
-		Semaphore sema = new Semaphore(0);
+		final CountDownLatch latch = new CountDownLatch(1);
 		frameworkWiring.refreshBundles(bundles, new FrameworkListener() {
 			@Override
 			public void frameworkEvent(FrameworkEvent event) {
-				switch (event.getType()) {
-					case FrameworkEvent.ERROR:
-						Bundle bundle = event.getBundle();
-						Msg.error(BundleHost.this,
-							String.format("OSGi error refreshing bundle: %s", bundle));
-						break;
-					case FrameworkEvent.PACKAGES_REFRESHED:
-						sema.release();
-						break;
+				if (event.getType() == FrameworkEvent.ERROR) {
+					Bundle bundle = event.getBundle();
+					Msg.error(BundleHost.this,
+						String.format("OSGi error refreshing bundle: %s", bundle));
 				}
+				latch.countDown();
 			}
 		});
 		try {
-			sema.acquire();
+			latch.await();
 		}
 		catch (InterruptedException e) {
 			e.printStackTrace();
