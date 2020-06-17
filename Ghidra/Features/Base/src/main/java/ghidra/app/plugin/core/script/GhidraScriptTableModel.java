@@ -20,6 +20,7 @@ import java.awt.Component;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
@@ -210,6 +211,16 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 				ServiceProvider sp) throws IllegalArgumentException {
 			return provider.getActionManager().hasScriptAction(rowObject);
 		}
+	}
+
+	@Override
+	public void fireTableChanged(TableModelEvent e) {
+		if (SwingUtilities.isEventDispatchThread()) {
+			super.fireTableChanged(e);
+			return;
+		}
+		final TableModelEvent e1 = e;
+		SwingUtilities.invokeLater(() -> GhidraScriptTableModel.super.fireTableChanged(e1));
 	}
 
 	private class StatusColumn extends AbstractDynamicTableColumn<ResourceFile, ImageIcon, Object> {
