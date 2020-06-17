@@ -379,13 +379,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		return panel;
 	}
 
-	/*
-	@Override
-	public ActionContext getActionContext(MouseEvent event) {
-		return new ActionContext(this, bundleStatusTable.getSelectedRows(), bundleStatusTable);
-	}
-	*/
-
 	/**
 	 * cleanup this component
 	 */

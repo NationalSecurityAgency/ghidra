@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.osgi;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
@@ -330,7 +331,8 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		hasEverSorted = true; // signal that we have sorted at least one time
 
 		// wrap the assigned comparator to detect if the order changes
-		boolean[] changed = { false };
+
+		AtomicBoolean changed = new AtomicBoolean(false);
 		Comparator<BundleStatus> wrapper = new Comparator<BundleStatus>() {
 			Comparator<BundleStatus> comparator = sortingContext.getComparator();
 
@@ -338,14 +340,14 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 			public int compare(BundleStatus o1, BundleStatus o2) {
 				int result = comparator.compare(o1, o2);
 				if (result < 0) {
-					changed[0] = true;
+					changed.set(true);
 				}
 				return result;
 			}
 		};
 		Collections.sort(data, wrapper);
 		sortCompleted(sortingContext);
-		if (changed[0]) {
+		if (changed.get()) {
 			notifyModelSorted(false);
 		}
 	}
@@ -372,7 +374,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 			int row = getRowIndex(status);
 			fireTableRowsUpdated(row, row);
 		}
-	
+
 		@Override
 		public void bundleActivationChange(GhidraBundle bundle, boolean newActivation) {
 			BundleStatus status = getStatus(bundle);
@@ -386,12 +388,12 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 			}
 			fireTableRowsUpdated(row, row);
 		}
-	
+
 		@Override
 		public void bundleAdded(GhidraBundle bundle) {
 			addNewStatus(bundle);
 		}
-	
+
 		@Override
 		public void bundlesAdded(Collection<GhidraBundle> bundles) {
 			int index = statuses.size();
@@ -400,13 +402,13 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 			}
 			fireTableRowsInserted(index, bundles.size() - 1);
 		}
-	
+
 		@Override
 		public void bundleRemoved(GhidraBundle bundle) {
 			BundleStatus status = getStatus(bundle);
 			removeStatus(status);
 		}
-	
+
 		@Override
 		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
 			List<BundleStatus> toRemove = bundles.stream()
@@ -414,7 +416,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 				.collect(Collectors.toUnmodifiableList());
 			removeStatuses(toRemove);
 		}
-	
+
 		@Override
 		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablement) {
 			BundleStatus status = getStatus(bundle);
@@ -422,7 +424,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 			int row = getRowIndex(status);
 			fireTableRowsUpdated(row, row);
 		}
-	
+
 		@Override
 		public void bundleException(GhidraBundleException exception) {
 			BundleStatus status = getStatusFromLoc(exception.getBundleLocation());

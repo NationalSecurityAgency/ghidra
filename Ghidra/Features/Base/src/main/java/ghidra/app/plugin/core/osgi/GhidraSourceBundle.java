@@ -571,9 +571,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 *   	binary_root/com/blah/Blah$Inner$Innerer.class
 	 *   	...
 	 * </pre>
-	 * @param cb callback
+	 * @param callback callback
 	 */
-	protected void visitDiscrepancies(DiscrepencyCallback cb) {
+	protected void visitDiscrepancies(DiscrepencyCallback callback) {
 		try {
 			Deque<ResourceFile> stack = new ArrayDeque<>();
 			// start in the source directory root
@@ -598,13 +598,13 @@ public class GhidraSourceBundle extends GhidraBundle {
 					else {
 						List<Path> classFiles = mapper.findAndRemove(sourceFile);
 						if (classFiles != null) {
-							cb.found(sourceFile, classFiles);
+							callback.found(sourceFile, classFiles);
 						}
 					}
 				}
 				// any remaining .class files are missing .java files
 				if (mapper.hasExtraClassFiles()) {
-					cb.found(null, mapper.extraClassFiles());
+					callback.found(null, mapper.extraClassFiles());
 				}
 			}
 		}
