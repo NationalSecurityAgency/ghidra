@@ -19,6 +19,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -65,7 +66,7 @@ public class BundleHost {
 	BundleContext frameworkBundleContext;
 	Framework felixFramework;
 
-	List<BundleHostListener> listeners = new ArrayList<>();
+	List<BundleHostListener> listeners = new CopyOnWriteArrayList<>();
 
 	/** constructor */
 	public BundleHost() {
@@ -638,9 +639,7 @@ public class BundleHost {
 	 * @param bundleHostListener the listener
 	 */
 	public void removeListener(BundleHostListener bundleHostListener) {
-		synchronized (listeners) {
-			listeners.remove(bundleHostListener);
-		}
+		listeners.remove(bundleHostListener);
 	}
 
 	protected void activateAll(Collection<GhidraBundle> bundles, TaskMonitor monitor,
@@ -688,66 +687,50 @@ public class BundleHost {
 	}
 
 	private void fireBundleBuilt(GhidraBundle bundle, String summary) {
-		synchronized (listeners) {
-			for (BundleHostListener l : listeners) {
-				l.bundleBuilt(bundle, summary);
-			}
+		for (BundleHostListener l : listeners) {
+			l.bundleBuilt(bundle, summary);
 		}
 	}
 
 	private void fireBundleEnablementChange(GhidraBundle bundle, boolean newEnablement) {
-		synchronized (listeners) {
-			for (BundleHostListener l : listeners) {
-				l.bundleEnablementChange(bundle, newEnablement);
-			}
+		for (BundleHostListener l : listeners) {
+			l.bundleEnablementChange(bundle, newEnablement);
 		}
 	}
 
 	private void fireBundleActivationChange(GhidraBundle bundle, boolean newEnablement) {
-		synchronized (listeners) {
-			for (BundleHostListener l : listeners) {
-				l.bundleActivationChange(bundle, newEnablement);
-			}
+		for (BundleHostListener l : listeners) {
+			l.bundleActivationChange(bundle, newEnablement);
 		}
 	}
 
 	private void fireBundleAdded(GhidraBundle bundle) {
-		synchronized (listeners) {
-			for (BundleHostListener l : listeners) {
-				l.bundleAdded(bundle);
-			}
+		for (BundleHostListener l : listeners) {
+			l.bundleAdded(bundle);
 		}
 	}
 
 	private void fireBundleRemoved(GhidraBundle bundle) {
-		synchronized (listeners) {
-			for (BundleHostListener l : listeners) {
-				l.bundleRemoved(bundle);
-			}
+		for (BundleHostListener l : listeners) {
+			l.bundleRemoved(bundle);
 		}
 	}
 
 	private void fireBundlesAdded(Collection<GhidraBundle> gbundles) {
-		synchronized (listeners) {
-			for (BundleHostListener l : listeners) {
-				l.bundlesAdded(gbundles);
-			}
+		for (BundleHostListener l : listeners) {
+			l.bundlesAdded(gbundles);
 		}
 	}
 
 	private void fireBundlesRemoved(Collection<GhidraBundle> gbundles) {
-		synchronized (listeners) {
-			for (BundleHostListener l : listeners) {
-				l.bundlesRemoved(gbundles);
-			}
+		for (BundleHostListener l : listeners) {
+			l.bundlesRemoved(gbundles);
 		}
 	}
 
 	private void fireBundleException(GhidraBundleException gbe) {
-		synchronized (listeners) {
-			for (BundleHostListener l : listeners) {
-				l.bundleException(gbe);
-			}
+		for (BundleHostListener l : listeners) {
+			l.bundleException(gbe);
 		}
 	}
 
@@ -757,9 +740,7 @@ public class BundleHost {
 	 * @param bundleHostListener the listener
 	 */
 	public void addListener(BundleHostListener bundleHostListener) {
-		synchronized (listeners) {
-			listeners.add(bundleHostListener);
-		}
+		listeners.add(bundleHostListener);
 	}
 
 	private void startActivateAllTask(Collection<GhidraBundle> bundlesToActivate) {
