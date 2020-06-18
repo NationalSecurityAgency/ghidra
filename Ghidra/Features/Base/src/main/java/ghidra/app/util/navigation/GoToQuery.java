@@ -17,6 +17,8 @@ package ghidra.app.util.navigation;
 
 import java.awt.Component;
 import java.util.*;
+import java.util.regex.*;
+import java.util.stream.IntStream;
 
 import javax.swing.SwingUtilities;
 
@@ -35,6 +37,9 @@ import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -42,12 +47,28 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 import ghidra.util.SystemUtilities;
 import ghidra.util.table.AddressArrayTableModel;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.TaskMonitor;
 
 public class GoToQuery {
+	/**
+	 * Matches the following:
+	 * [index] or this[index]
+	 * *[index] or *this[index]
+	 */
+	private static final Pattern ARRAY_COMPONENT_PATTERN =
+		Pattern.compile("\\*?(?:this)?(?:\\[((?:0x)?\\p{XDigit}+)\\])");
+	
+	/**
+	 * Matches .field_name or ->field_name plus [index] if present
+	 * Groups: operator: 1, field: 2, index: 3
+	 */
+	private static final Pattern COMPONENT_PATTERN =
+		Pattern.compile("((?:->)|\\.)(\\w+)(?:\\[((?:0x)?\\p{XDigit}+)\\])?");
+
 	private QueryData queryData;
 	private Address fromAddress;
 	private GhidraProgramTableModel<?> model;
@@ -101,6 +122,9 @@ public class GoToQuery {
 
 	public boolean processQuery() {
 		if (processAddressExpression()) {
+			return true;
+		}
+		if (processComponentExpression()) {
 			return true;
 		}
 		if (processWildCard()) {
@@ -319,6 +343,119 @@ public class GoToQuery {
 			}
 		}
 		return false;
+	}
+
+	private boolean processComponentExpression() {
+		// check for defined data at the currentLocation
+		Program program = navigatable.getProgram();
+		Data data = DataUtilities.getDataAtLocation(navigatable.getLocation());
+		while (data != null && !(data.isArray() || data.isStructure())) {
+			data = data.getParent();
+		}
+		if (data == null) {
+			return false;
+		}
+
+		String queryInput = queryData.getQueryString();
+		data = doProcessComponentExpression(data, queryInput);
+		if (data == null) {
+			return false;
+		}
+		
+		ProgramLocation loc;
+		
+		// handle primary dereference '*' if present
+		if (queryInput.charAt(0) == '*') {
+			if (!data.isPointer()) {
+				return false;
+			}
+			loc = new ProgramLocation(program, (Address) data.getValue());
+		} else {
+			loc = new ProgramLocation(program, data.getAddress());
+		}
+		
+		// perform goTo
+		boolean success = goTo(program, loc);
+		notifyListener(success);
+		return true;
+	}
+	
+	private static Data getDataAt(Program program, Address address) {
+		Listing listing = program.getListing();
+		Data data = listing.getDataContaining(address);
+		while (data != null && !data.getAddress().equals(address)) {
+			data = data.getComponentAt((int) address.subtract(data.getAddress()));
+		}
+		return data;
+	}
+	
+	private static Data doProcessComponentExpression(Data data, String queryInput) {
+		Matcher matcher = ARRAY_COMPONENT_PATTERN.matcher(queryInput);
+		boolean followPointers = false;
+		if (data.isArray() && matcher.lookingAt()) {
+			data = getArrayComponent(data, matcher.group(1));
+			followPointers = true;
+		}
+		matcher = COMPONENT_PATTERN.matcher(queryInput);
+		for (MatchResult result : CollectionUtils.asIterable(matcher.results().iterator())) {
+			if (data == null) {
+				break;
+			}
+			data = processSubComponentExpression(data, result, followPointers);
+			followPointers = true;	
+		}
+		return data;
+	}
+	
+	private static Data processSubComponentExpression(Data data, MatchResult matcher,
+			boolean followPointer) {
+		Listing listing = data.getProgram().getListing();
+		// Named groups refused to cooperate
+		// Groups: operator: 1, field: 2, index: 3
+		if (followPointer && matcher.group(1).equals("->")) {
+			if (!data.isPointer()) {
+				return null;
+			}
+			data = listing.getDataAt((Address) data.getValue());
+		}
+		data = getComponent(data, matcher.group(2));
+		if (data != null) {
+			String index = matcher.group(3);
+			if (index != null) {
+				if (data.isPointer()) {
+					data = getDataAt(data.getProgram(), (Address) data.getValue());
+				}
+				data = getArrayComponent(data, index);
+			}
+		}
+		return data;
+	}
+	
+	private static Data getArrayComponent(Data data, String index) {
+		if (data == null || !data.isArray()) {
+			return null;
+		}
+		try {
+			long value = NumericUtilities.parseLong(index);
+			if (value < 0 || value >= data.getNumComponents() || value > Integer.MAX_VALUE) {
+				return null;
+			}
+			return data.getComponent((int) value);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+	
+	private static Data getComponent(Data data, String name) {
+		if (data == null || !data.isStructure()) {
+			return null;
+		}
+		return IntStream.range(0, data.getNumComponents())
+			.mapToObj(data::getComponent)
+			.filter(d -> d.getFieldName() != null)
+			.filter(d -> d.getFieldName().equals(name))
+			.findFirst()
+			.orElse(null);
 	}
 
 	private QueryData cleanupQuery(Program program, QueryData qData) {
