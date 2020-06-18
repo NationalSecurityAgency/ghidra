@@ -25,7 +25,8 @@ class DexToJarExceptionHandler implements DexExceptionHandler {
 	private Exception e;
 
 	@Override
-	public void handleMethodTranslateException(Method method, DexMethodNode node, MethodVisitor visitor, Exception e) {
+	public void handleMethodTranslateException(Method method, DexMethodNode node,
+			MethodVisitor visitor, Exception e) {
 		this.e = e;
 	}
 

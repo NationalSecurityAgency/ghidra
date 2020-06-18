@@ -15,35 +15,51 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import ghidra.app.util.bin.*;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.StructConverterUtil;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
+
+/**
+ * https://source.android.com/devices/tech/dalvik/dex-format#string-item
+ */
 public class StringIDItem implements StructConverter {
 
 	private int stringDataOffset;
 	private StringDataItem _stringDataItem;
 
-	public StringIDItem( BinaryReader reader ) throws IOException {
-		stringDataOffset = reader.readNextInt( );
-
-		_stringDataItem = new StringDataItem( this, reader );
+	public StringIDItem(BinaryReader reader, DexHeader dexHeader) throws IOException {
+		stringDataOffset = reader.readNextInt();
+		try {
+			_stringDataItem = new StringDataItem(this, reader, dexHeader);
+		}
+		catch (Exception e) {
+			//ignore
+			_stringDataItem =
+				new StringDataItem("Invalid_String_0x" + Integer.toHexString(stringDataOffset));
+		}
 	}
 
-	public int getStringDataOffset( ) {
+	/**
+	 * NOTE: For CDEX files, this value is relative to DataOffset in DexHeader
+	 * @return the string data offset
+	 */
+	public int getStringDataOffset() {
 		return stringDataOffset;
 	}
 
-	public StringDataItem getStringDataItem( ) {
+	public StringDataItem getStringDataItem() {
 		return _stringDataItem;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( StringIDItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(StringIDItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

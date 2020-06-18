@@ -16,6 +16,7 @@
 package ghidra.file.formats.android.dex.format;
 
 import ghidra.app.util.bin.*;
+import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -27,33 +28,33 @@ public class AnnotationOffsetItem implements StructConverter {
 
 	private AnnotationItem _item;
 
-	public AnnotationOffsetItem( BinaryReader reader ) throws IOException {
-		annotationsOffset = reader.readNextInt( );
+	public AnnotationOffsetItem(BinaryReader reader, DexHeader dexHeader) throws IOException {
+		annotationsOffset = reader.readNextInt();
 
-		if ( annotationsOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
+		if (annotationsOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( annotationsOffset );
-				_item = new AnnotationItem( reader );
+				reader.setPointerIndex(DexUtil.adjustOffset(annotationsOffset, dexHeader));
+				_item = new AnnotationItem(reader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 	}
 
-	public int getAnnotationsOffset( ) {
+	public int getAnnotationsOffset() {
 		return annotationsOffset;
 	}
 
-	public AnnotationItem getItem( ) {
+	public AnnotationItem getItem() {
 		return _item;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( AnnotationOffsetItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(AnnotationOffsetItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

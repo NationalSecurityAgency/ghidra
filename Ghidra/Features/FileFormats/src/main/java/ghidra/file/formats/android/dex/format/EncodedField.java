@@ -33,7 +33,7 @@ public class EncodedField implements StructConverter {
 	private int accessFlags;
 	private int accessFlagsLength;// in bytes
 
-	public EncodedField( BinaryReader reader ) throws IOException {
+	public EncodedField(BinaryReader reader) throws IOException {
 
 		LEB128 leb128 = LEB128.readUnsignedValue(reader);
 		_fileOffset = leb128.getOffset();
@@ -45,25 +45,27 @@ public class EncodedField implements StructConverter {
 		accessFlagsLength = leb128.getLength();
 	}
 
-	public long getFileOffset( ) {
+	public long getFileOffset() {
 		return _fileOffset;
 	}
 
-	public int getFieldIndexDifference( ) {
+	public int getFieldIndexDifference() {
 		return fieldIndexDifference;
 	}
 
-	public int getAccessFlags( ) {
+	public int getAccessFlags() {
 		return accessFlags;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
+	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = "encoded_field_" + fieldIndexDifferenceLength + "_" + accessFlagsLength;
-		Structure structure = new StructureDataType( name, 0 );
-		structure.add( new ArrayDataType( BYTE, fieldIndexDifferenceLength, BYTE.getLength( ) ), "field_idx_diff", null );
-		structure.add( new ArrayDataType( BYTE, accessFlagsLength, BYTE.getLength( ) ), "accessFlags", null );
-		structure.setCategoryPath( new CategoryPath( "/dex/encoded_field" ) );
+		Structure structure = new StructureDataType(name, 0);
+		structure.add(new ArrayDataType(BYTE, fieldIndexDifferenceLength, BYTE.getLength()),
+			"field_idx_diff", null);
+		structure.add(new ArrayDataType(BYTE, accessFlagsLength, BYTE.getLength()), "accessFlags",
+			null);
+		structure.setCategoryPath(new CategoryPath("/dex/encoded_field"));
 		return structure;
 	}
 }

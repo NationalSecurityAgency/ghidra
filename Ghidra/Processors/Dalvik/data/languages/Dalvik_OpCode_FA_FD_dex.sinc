@@ -1,0 +1,178 @@
+define token invoke_poly_operands_2 ( 8 )
+	POLY_ARG_COUNT       = ( 4 , 7 )
+	POLY_PARAM_G         = ( 0 , 3 )
+;
+
+define token invoke_poly_operands_1 ( 48 )
+	POLY_METHOD_INDEX    = (  0 , 15 )
+	POLY_PARAM_D         = ( 16 , 19 )
+	POLY_PARAM_C         = ( 20 , 23 )
+	POLY_PARAM_F         = ( 24 , 27 )
+	POLY_PARAM_E         = ( 28 , 31 )
+	POLY_PROTO_INDEX     = ( 32 , 47 )
+;
+
+#define token invoke_poly_operands_1 ( 64 )
+#	POLY_METHOD_INDEX    = (  0 , 15 )
+#	POLY_METHOD_HANDLE   = ( 16 , 31 )
+#	POLY_PARAM_D         = ( 32 , 35 )
+#	POLY_PARAM_C         = ( 36 , 39 )
+#	POLY_PARAM_F         = ( 40 , 43 )
+#	POLY_PARAM_E         = ( 44 , 47 )
+#	POLY_PROTO_INDEX     = ( 48 , 63 )
+#;
+
+regPolyC:   reg is POLY_PARAM_C  [ reg = (POLY_PARAM_C  * 4) + 0x1000; ] { export *[register]:4 reg; }
+regPolyD:   reg is POLY_PARAM_D  [ reg = (POLY_PARAM_D  * 4) + 0x1000; ] { export *[register]:4 reg; }
+regPolyE:   reg is POLY_PARAM_E  [ reg = (POLY_PARAM_E  * 4) + 0x1000; ] { export *[register]:4 reg; }
+regPolyF:   reg is POLY_PARAM_F  [ reg = (POLY_PARAM_F  * 4) + 0x1000; ] { export *[register]:4 reg; }
+regPolyG:   reg is POLY_PARAM_G  [ reg = (POLY_PARAM_G  * 4) + 0x1000; ] { export *[register]:4 reg; }
+
+define token invoke_poly_range_operands ( 40 )
+	POLY_RANGE_ARG_COUNT	= (  0 ,  7 )
+	POLY_RANGE_METHOD_INDEX	= (  8 , 23 )
+	POLY_RANGE_PROTO_INDEX	= ( 24 , 39 )
+;
+
+#------------------------------------------------------------------------------------
+# V(0xFA, INVOKE_POLYMORPHIC, "invoke-polymorphic", k45cc, kIndexMethodAndProtoRef, kContinue | kThrow | kInvoke, kVerifyRegBMethod | kVerifyVarArgNonZero | kVerifyRegHPrototype) \
+#
+# invoke-polymorphic {vC, vD, vE, vF, vG}, meth@BBBB, proto@HHHH
+#
+#	A: argument word count (4 bits)
+#	B: method reference index (16 bits)
+#	C: method handle reference to invoke (16 bits)
+#	D..G: argument registers (4 bits each)
+#	H: prototype reference index (16 bits)
+#
+#		case Instruction::k45cc: {    // op {vC, vD, vE, vF, vG}, method@BBBB, proto@HHHH
+#
+# Invoke the indicated method handle. 
+# The result (if any) may be stored with an appropriate move-result* variant as the immediately subsequent instruction.  
+# The method reference must be to java.lang.invoke.MethodHandle.invoke or java.lang.invoke.MethodHandle.invokeExact.
+# The prototype reference describes the argument types provided and the expected return type. 
+#
+# Present in Dex files from version 038 onwards. 
+
+:invoke_polymorphic "meth@"^POLY_METHOD_INDEX,"proto@"^POLY_PROTO_INDEX,{} is inst0=0xfa ; POLY_ARG_COUNT=0 ; POLY_METHOD_INDEX & POLY_PROTO_INDEX
+{
+	#TODO pCode
+}
+:invoke_polymorphic "meth@"^POLY_METHOD_INDEX,"proto@"^POLY_PROTO_INDEX,{regPolyC} is inst0=0xfa ; POLY_ARG_COUNT=1 ; POLY_METHOD_INDEX & POLY_PROTO_INDEX & regPolyC
+{
+	#TODO pCode
+}
+:invoke_polymorphic "meth@"^POLY_METHOD_INDEX,"proto@"^POLY_PROTO_INDEX,{regPolyC,regPolyD} is inst0=0xfa ; POLY_ARG_COUNT=2 ; POLY_METHOD_INDEX & POLY_PROTO_INDEX & regPolyC & regPolyD
+{
+	#TODO pCode
+}
+:invoke_polymorphic "meth@"^POLY_METHOD_INDEX,"proto@"^POLY_PROTO_INDEX,{regPolyC,regPolyD,regPolyE} is inst0=0xfa ; POLY_ARG_COUNT=3 ; POLY_METHOD_INDEX & POLY_PROTO_INDEX & regPolyC & regPolyD & regPolyE
+{
+	#TODO pCode
+}
+:invoke_polymorphic "meth@"^POLY_METHOD_INDEX,"proto@"^POLY_PROTO_INDEX,{regPolyC,regPolyD,regPolyE,regPolyF} is inst0=0xfa ; POLY_ARG_COUNT=4 ; POLY_METHOD_INDEX & POLY_PROTO_INDEX & regPolyC & regPolyD & regPolyE & regPolyF
+{
+	#TODO pCode
+}
+:invoke_polymorphic "meth@"^POLY_METHOD_INDEX,"proto@"^POLY_PROTO_INDEX,{regPolyC,regPolyD,regPolyE,regPolyF,regPolyG} is inst0=0xfa ; POLY_ARG_COUNT=5 ; POLY_METHOD_INDEX & POLY_PROTO_INDEX & regPolyC & regPolyD & regPolyE & regPolyF ; regPolyG 
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------
+# V(0xFB, INVOKE_POLYMORPHIC_RANGE, "invoke-polymorphic/range", k4rcc, kIndexMethodAndProtoRef, kContinue | kThrow | kInvoke, kVerifyRegBMethod | kVerifyVarArgRangeNonZero | kVerifyRegHPrototype) \
+#
+# invoke-polymorphic/range {vCCCC .. vNNNN}, meth@BBBB, proto@HHHH
+#
+#	A: argument word count (8 bits)
+#	B: method reference index (16 bits)
+#	C: method handle reference to invoke (16 bits)
+#	H: prototype reference index (16 bits)
+#	N = A + C - 1
+#
+#		case Instruction::k4rcc: {     // op {vCCCC .. v(CCCC+AA-1)}, method@BBBB, proto@HHHH
+#
+# Invoke the indicated method handle. See the invoke-polymorphic description above for details.
+#
+# Present in Dex files from version 038 onwards. 
+
+:invoke_polymorphic_range "meth@"^POLY_RANGE_METHOD_INDEX,"cnt@"^POLY_RANGE_ARG_COUNT,"proto@"^POLY_RANGE_PROTO_INDEX is inst0=0xfb ; POLY_RANGE_ARG_COUNT & POLY_RANGE_METHOD_INDEX & POLY_RANGE_PROTO_INDEX
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------
+# V(0xFC, INVOKE_CUSTOM, "invoke-custom", k35c, kIndexCallSiteRef, kContinue | kThrow, kVerifyRegBCallSite | kVerifyVarArg) \
+#
+# invoke-custom {vC, vD, vE, vF, vG}, call_site@BBBB
+#
+#	A: argument word count (4 bits)
+#	B: call site reference index (16 bits)
+#	C..G: argument registers (4 bits each) 
+#
+# Resolves and invokes the indicated call site. 
+# The result from the invocation (if any) may be stored with an 
+# appropriate move-result* variant as the immediately subsequent instruction.
+#
+# This instruction executes in two phases: call site resolution and call site invocation.
+# 
+# Call site resolution checks whether the indicated call site has an associated 
+# java.lang.invoke.CallSite instance. If not, the bootstrap linker method for the 
+# indicated call site is invoked using arguments present in the DEX file (see call_site_item). 
+# The bootstrap linker method returns a java.lang.invoke.CallSite instance that will then 
+# be associated with the indicated call site if no association exists. Another thread may 
+# have already made the association first, and if so execution of the instruction continues 
+# with the first associated java.lang.invoke.CallSite instance.
+#
+# Call site invocation is made on the java.lang.invoke.MethodHandle target of the resolved 
+# java.lang.invoke.CallSite instance. The target is invoked as if executing invoke-polymorphic 
+# (described above) using the method handle and arguments to the invoke-custom instruction as 
+# the arguments to an exact method handle invocation. 
+#
+# Present in Dex files from version 038 onwards. 
+
+:invoke_custom METHOD_INDEX,{} is inst0=0xfc ; N_PARAMS=0 & METHOD_INDEX
+{
+	#TODO pCode -- see invoke_direct
+}
+:invoke_custom METHOD_INDEX,{regParamC} is inst0=0xfc ; N_PARAMS=1 & METHOD_INDEX & regParamC
+{
+	#TODO pCode
+}
+:invoke_custom ^METHOD_INDEX,{regParamC,regParamD} is inst0=0xfc ; N_PARAMS=2 & METHOD_INDEX & regParamC & regParamD
+{
+	#TODO pCode
+}
+:invoke_custom METHOD_INDEX,{regParamC,regParamD,regParamE} is inst0=0xfc ; N_PARAMS=3 & METHOD_INDEX & regParamC & regParamD & regParamE
+{
+	#TODO pCode
+}
+:invoke_custom METHOD_INDEX,{regParamC,regParamD,regParamE,regParamF} is inst0=0xfc ; N_PARAMS=4 & METHOD_INDEX & regParamC & regParamD & regParamE & regParamF
+{
+	#TODO pCode
+}
+:invoke_custom METHOD_INDEX,{regParamC,regParamD,regParamE,regParamF,regParamG} is inst0=0xfc ; N_PARAMS=5 & METHOD_INDEX & regParamC & regParamD & regParamE & regParamF & regParamG
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------
+# V(0xFD, INVOKE_CUSTOM_RANGE, "invoke-custom/range", k3rc, kIndexCallSiteRef, kContinue | kThrow, kVerifyRegBCallSite | kVerifyVarArgRange) \
+#
+# invoke-custom/range {vCCCC .. vNNNN}, call_site@BBBB
+#
+#	A: argument word count (8 bits)
+#	B: call site reference index (16 bits)
+#	C: first argument register (16-bits)
+#	N = A + C - 1
+#
+# Resolve and invoke a call site. See the invoke-custom description above for details.
+#
+# Present in Dex files from version 038 onwards. 
+
+:invoke_custom_range B_BITS_0_15,A_BITS_0_7,registerC16  is inst0=0xfd ; A_BITS_0_7 ; B_BITS_0_15 ; registerC16
+{
+	#TODO pCode -- see invoke_direct_range
+}
+
+#------------------------------------------------------------------------------------

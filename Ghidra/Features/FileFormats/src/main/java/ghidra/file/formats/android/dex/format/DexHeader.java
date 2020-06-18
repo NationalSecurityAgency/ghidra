@@ -29,10 +29,13 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * https://android.googlesource.com/platform/art/+/master/libdexfile/dex/dex_file.h#91
+ */
 public class DexHeader implements StructConverter {
 
 	private byte[] magic;
-	private byte [] version;
+	private byte[] version;
 	private int checksum;
 	private byte[] signature;
 	private int fileSize;
@@ -67,6 +70,8 @@ public class DexHeader implements StructConverter {
 	private AddressCache methodXref = new AddressCache(); // Index to method address cache
 	private DataTypeCache typeXref = new DataTypeCache(); // Index to datatype cache
 
+	private boolean parsed = false;
+
 	public static class AddressCache extends FixedSizeHashMap<Integer, Address> {
 		private static final int MAX_ENTRIES = 500;
 
@@ -84,12 +89,10 @@ public class DexHeader implements StructConverter {
 	}
 
 	public DexHeader(BinaryReader reader) throws IOException {
-		magic = reader.readNextByteArray( DexConstants.DEX_MAGIC_BASE.length( ) );
-		version = reader.readNextByteArray( DexConstants.DEX_VERSION_LENGTH );
+		magic = reader.readNextByteArray(DexConstants.DEX_MAGIC_BASE.length());
+		version = reader.readNextByteArray(DexConstants.DEX_VERSION_LENGTH);
 
-		if (!DexConstants.DEX_MAGIC_BASE.equals(new String(magic))) {
-			throw new IOException("not a dex file.");
-		}
+		checkMagic();
 
 		checksum = reader.readNextInt();
 		signature = reader.readNextByteArray(20);
@@ -113,15 +116,22 @@ public class DexHeader implements StructConverter {
 		classDefsIdsOffset = reader.readNextInt();
 		dataSize = reader.readNextInt();
 		dataOffset = reader.readNextInt();
+	}
 
-		reader.setPointerIndex(mapOffset);
+	public void parse(BinaryReader reader) throws IOException {
+		if (parsed) {
+			return;
+		}
+		parsed = true;
+
+		reader.setPointerIndex(DexUtil.adjustOffset(mapOffset, this));
 		if (mapOffset > 0) {
 			mapList = new MapList(reader);
 		}
 
 		reader.setPointerIndex(stringIdsOffset);
 		for (int i = 0; i < stringIdsSize; ++i) {
-			strings.add(new StringIDItem(reader));
+			strings.add(new StringIDItem(reader, this));
 		}
 
 		reader.setPointerIndex(typeIdsOffset);
@@ -131,7 +141,7 @@ public class DexHeader implements StructConverter {
 
 		reader.setPointerIndex(protoIdsOffset);
 		for (int i = 0; i < protoIdsSize; ++i) {
-			prototypes.add(new PrototypesIDItem(reader));
+			prototypes.add(new PrototypesIDItem(reader, this));
 		}
 
 		reader.setPointerIndex(fieldIdsOffset);
@@ -146,8 +156,29 @@ public class DexHeader implements StructConverter {
 
 		reader.setPointerIndex(classDefsIdsOffset);
 		for (int i = 0; i < classDefsIdsSize; ++i) {
-			classDefs.add(new ClassDefItem(reader));
+			classDefs.add(new ClassDefItem(reader, this));
 		}
+	}
+
+	protected void checkMagic() throws IOException {
+		if (!DexConstants.DEX_MAGIC_BASE.equals(new String(getMagic()))) {
+			throw new IOException("not a dex file.");
+		}
+	}
+
+	/**
+	 * According to dex_file.h, the map offset is relative to data offset
+	 * <br>
+	 * https://android.googlesource.com/platform/art/+/refs/heads/master/libdexfile/dex/dex_file.h
+	 * <br>
+	 * <code>
+	 * uint32_t map_off_ = 0;  // map list offset from data_off_
+	 * </code>
+	 * but it appears to only be true when dealing with compact dex files!
+	 * @return true if offsets in this DEX file are relative
+	 */
+	public boolean isDataOffsetRelative() {
+		return false;
 	}
 
 	@Override
@@ -185,13 +216,14 @@ public class DexHeader implements StructConverter {
 		return magic;
 	}
 
-	public byte [] getVersion( ) {
+	public byte[] getVersion() {
 		return version;
 	}
 
 	/**
 	 * Adler32 checksum of the rest of the file (everything but magic and this field);
 	 * used to detect file corruption 
+	 * @return the checksum
 	 */
 	public int getChecksum() {
 		return checksum;
@@ -200,6 +232,7 @@ public class DexHeader implements StructConverter {
 	/**
 	 * SHA-1 signature (hash) of the rest of the file (everything but magic, checksum, and this field); 
 	 * used to uniquely identify files 
+	 * @return the signature
 	 */
 	public byte[] getSignature() {
 		return signature;
@@ -207,6 +240,7 @@ public class DexHeader implements StructConverter {
 
 	/**
 	 * Size of the entire file (including the header), in bytes 
+	 * @return the file size in bytes
 	 */
 	public int getFileSize() {
 		return fileSize;
@@ -216,6 +250,7 @@ public class DexHeader implements StructConverter {
 	 * Size of the header (this entire section), in bytes. 
 	 * This allows for at least a limited amount of 
 	 * backwards/forwards compatibility without invalidating the format. 
+	 * @return the header size in bytes
 	 */
 	public int getHeaderSize() {
 		return headerSize;
@@ -223,6 +258,7 @@ public class DexHeader implements StructConverter {
 
 	/**
 	 * Endianness tag. Either "ENDIAN_CONSTANT or REVERSE_ENDIAN_CONSTANT". 
+	 * @return the endianness
 	 */
 	public int getEndianTag() {
 		return endianTag;
@@ -316,6 +352,11 @@ public class DexHeader implements StructConverter {
 		return linkSize;
 	}
 
+	/**
+	 * NOTE: For CDEX files, this value is relative to DataOffset in DexHeader
+	 * Return the MAP offset.
+	 * @return the MAP offset
+	 */
 	public int getMapOffset() {
 		return mapOffset;
 	}
@@ -337,8 +378,9 @@ public class DexHeader implements StructConverter {
 				try {
 					val = program.getMemory().getInt(addr);
 					if (val != -1) {			// If there is an address here, it is in memory location of function
-						addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(
-							val & 0xffffffffL);
+						addr = program.getAddressFactory()
+								.getDefaultAddressSpace()
+								.getAddress(Integer.toUnsignedLong(val));
 					}
 					// Otherwise, the method is external, and we use the lookup address as placeholder
 				}

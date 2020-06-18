@@ -23,73 +23,73 @@ import ghidra.app.util.bin.format.dwarf4.LEB128;
 class DebugInfoStateMachineReader {
 	private static final int MAX_SIZE = 0x10000; // 64k
 
-	static int computeLength( BinaryReader reader ) throws IOException {
+	static int computeLength(BinaryReader reader) throws IOException {
 		long start = reader.getPointerIndex();
 
 		while (reader.getPointerIndex() - start < MAX_SIZE) {
 
-			byte opcode = reader.readNextByte( );
+			byte opcode = reader.readNextByte();
 
-            switch( opcode ) {
-                case DebugStateMachineOpCodes.DBG_END_SEQUENCE: {
+			switch (opcode) {
+				case DebugStateMachineOpCodes.DBG_END_SEQUENCE: {
 					return (int) (reader.getPointerIndex() - start);//done!
-                }
-                case DebugStateMachineOpCodes.DBG_ADVANCE_PC: {
+				}
+				case DebugStateMachineOpCodes.DBG_ADVANCE_PC: {
 					LEB128.readAsUInt32(reader);
-                    break;
-                }
-                case DebugStateMachineOpCodes.DBG_ADVANCE_LINE: {
+					break;
+				}
+				case DebugStateMachineOpCodes.DBG_ADVANCE_LINE: {
 					LEB128.readAsUInt32(reader);
-                    break;
-                }
-                case DebugStateMachineOpCodes.DBG_START_LOCAL: {
+					break;
+				}
+				case DebugStateMachineOpCodes.DBG_START_LOCAL: {
 					int register = LEB128.readAsUInt32(reader);
 
-            		//TODO uleb128p1
+					//TODO uleb128p1
 					int name = LEB128.readAsUInt32(reader);
 
-            		//TODO uleb128p1
+					//TODO uleb128p1
 					int type = LEB128.readAsUInt32(reader);
 
-                    break;
-                }
-                case DebugStateMachineOpCodes.DBG_START_LOCAL_EXTENDED: {
+					break;
+				}
+				case DebugStateMachineOpCodes.DBG_START_LOCAL_EXTENDED: {
 					int register = LEB128.readAsUInt32(reader);
 
-            		//TODO uleb128p1
+					//TODO uleb128p1
 					int name = LEB128.readAsUInt32(reader);
 
-            		//TODO uleb128p1
+					//TODO uleb128p1
 					int type = LEB128.readAsUInt32(reader);
 
-            		//TODO uleb128p1
+					//TODO uleb128p1
 					int signature = LEB128.readAsUInt32(reader);
 
-                    break;
-                }
-                case DebugStateMachineOpCodes.DBG_END_LOCAL: {
+					break;
+				}
+				case DebugStateMachineOpCodes.DBG_END_LOCAL: {
 					int register = LEB128.readAsUInt32(reader);
-                    break;
-                }
-                case DebugStateMachineOpCodes.DBG_RESTART_LOCAL: {
+					break;
+				}
+				case DebugStateMachineOpCodes.DBG_RESTART_LOCAL: {
 					int register = LEB128.readAsUInt32(reader);
-                    break;
-                }
-                case DebugStateMachineOpCodes.DBG_SET_PROLOGUE_END: {
-                    break;
-                }
-                case DebugStateMachineOpCodes.DBG_SET_EPILOGUE_BEGIN: {
-                    break;
-                }
-                case DebugStateMachineOpCodes.DBG_SET_FILE: {
-                	//TODO uleb128p1
+					break;
+				}
+				case DebugStateMachineOpCodes.DBG_SET_PROLOGUE_END: {
+					break;
+				}
+				case DebugStateMachineOpCodes.DBG_SET_EPILOGUE_BEGIN: {
+					break;
+				}
+				case DebugStateMachineOpCodes.DBG_SET_FILE: {
+					//TODO uleb128p1
 					int name = LEB128.readAsUInt32(reader);
-                    break;
-                }
-                default: {
-                	break;
-                }
-            }
+					break;
+				}
+				default: {
+					break;
+				}
+			}
 		}
 
 		return 0;

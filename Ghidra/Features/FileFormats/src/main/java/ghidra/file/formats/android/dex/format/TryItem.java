@@ -32,10 +32,10 @@ public class TryItem implements StructConverter {
 	private short instructionCount;
 	private short handlerOffset;
 
-	TryItem( BinaryReader reader ) throws IOException {
-		startAddress = reader.readNextInt( );
-		instructionCount = reader.readNextShort( );
-		handlerOffset = reader.readNextShort( );
+	TryItem(BinaryReader reader) throws IOException {
+		startAddress = reader.readNextInt();
+		instructionCount = reader.readNextShort();
+		handlerOffset = reader.readNextShort();
 	}
 
 	/**
@@ -44,7 +44,7 @@ public class TryItem implements StructConverter {
 	 * The address is a count of 16-bit code units to the start of the first covered instruction.
 	 * </pre>
 	 */
-	public int getStartAddress( ) {
+	public int getStartAddress() {
 		return startAddress;
 	}
 
@@ -54,7 +54,7 @@ public class TryItem implements StructConverter {
 	 * The last code unit covered (inclusive) is start_addr + insn_count - 1.
 	 * </pre>
 	 */
-	public short getInstructionCount( ) {
+	public short getInstructionCount() {
 		return instructionCount;
 	}
 
@@ -65,14 +65,14 @@ public class TryItem implements StructConverter {
 	 * This must be an offset to the start of an encoded_catch_handler.
 	 * </pre>
 	 */
-	public short getHandlerOffset( ) {
+	public short getHandlerOffset() {
 		return handlerOffset;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( TryItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(TryItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

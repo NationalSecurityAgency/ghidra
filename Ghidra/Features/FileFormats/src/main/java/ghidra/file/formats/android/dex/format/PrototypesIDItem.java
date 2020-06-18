@@ -15,11 +15,15 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import ghidra.app.util.bin.*;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.StructConverterUtil;
+import ghidra.file.formats.android.dex.util.DexUtil;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.DuplicateNameException;
 
 public class PrototypesIDItem implements StructConverter {
 
@@ -28,43 +32,46 @@ public class PrototypesIDItem implements StructConverter {
 	private int parametersOffset;
 	private TypeList _parameters;
 
-	public PrototypesIDItem( BinaryReader reader ) throws IOException {
-		shortyIndex = reader.readNextInt( );
-		returnTypeIndex = reader.readNextInt( );
-		parametersOffset = reader.readNextInt( );
+	public PrototypesIDItem(BinaryReader reader, DexHeader dexHeader) throws IOException {
+		shortyIndex = reader.readNextInt();
+		returnTypeIndex = reader.readNextInt();
+		parametersOffset = reader.readNextInt();
 
-		if ( parametersOffset > 0 ) {
-			long oldIndex = reader.getPointerIndex( );
+		if (parametersOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( parametersOffset );
-				_parameters = new TypeList( reader );
+				reader.setPointerIndex(DexUtil.adjustOffset(parametersOffset, dexHeader));
+				_parameters = new TypeList(reader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 	}
 
-	public int getShortyIndex( ) {
+	public int getShortyIndex() {
 		return shortyIndex;
 	}
 
-	public int getReturnTypeIndex( ) {
+	public int getReturnTypeIndex() {
 		return returnTypeIndex;
 	}
 
-	public int getParametersOffset( ) {
+	/**
+	 * NOTE: For CDEX files, this value is relative to DataOffset in DexHeader
+	 */
+	public int getParametersOffset() {
 		return parametersOffset;
 	}
 
-	public TypeList getParameters( ) {
+	public TypeList getParameters() {
 		return _parameters;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( PrototypesIDItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(PrototypesIDItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

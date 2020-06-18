@@ -35,28 +35,30 @@ import ghidra.util.task.TaskMonitor;
 public class OdexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 
 	@Override
-	public boolean analyze( Program program, AddressSetView set, TaskMonitor monitor, MessageLog log ) throws Exception {
+	public boolean analyze(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
+			throws Exception {
 
-		Address address = toAddr( program, 0x0 );
+		Address address = toAddr(program, 0x0);
 
-		if ( getDataAt( program, address ) != null ) {
-			log.appendMsg( "data already exists." );
+		if (getDataAt(program, address) != null) {
+			log.appendMsg("data already exists.");
 			return true;
 		}
 
-		Memory memory = program.getMemory( );
-		MemoryBlock block = memory.getBlock( "ram" );
-		block.setRead( true );
-		block.setWrite( false );
-		block.setExecute( false );
+		Memory memory = program.getMemory();
+		MemoryBlock block = memory.getBlock("ram");
+		block.setRead(true);
+		block.setWrite(false);
+		block.setExecute(false);
 
-		ByteProvider provider = new MemoryByteProvider( program.getMemory( ), program.getMinAddress( ) );
-		BinaryReader reader = new BinaryReader( provider, true );
+		ByteProvider provider =
+			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		BinaryReader reader = new BinaryReader(provider, true);
 
-		OdexHeader header = new OdexHeader( reader );
+		OdexHeader header = new OdexHeader(reader);
 
 		DataType headerDataType = header.toDataType();
-		createData( program, address, headerDataType);
+		createData(program, address, headerDataType);
 
 		createFragment(program, "header", address, address.add(headerDataType.getLength()));
 
@@ -65,87 +67,88 @@ public class OdexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 
 		Address depsAddress = toAddr(program, header.getDepsOffset());
 		createFragment(program, "deps", depsAddress, depsAddress.add(header.getDepsLength()));
-		processDeps( program, header, monitor, log );
+		processDeps(program, header, monitor, log);
 
 		Address auxAddress = toAddr(program, header.getAuxOffset());
 		createFragment(program, "aux", auxAddress, auxAddress.add(header.getAuxLength()));
 
-		monitor.setMessage( "ODEX: cleaning up tree" );
-		removeEmptyFragments( program );
+		monitor.setMessage("ODEX: cleaning up tree");
+		removeEmptyFragments(program);
 
 		return true;
 	}
 
 	@Override
-	public boolean canAnalyze( Program program ) {
-		ByteProvider provider = new MemoryByteProvider( program.getMemory( ), program.getMinAddress( ) );
-		return OdexConstants.isOdexFile( provider );
+	public boolean canAnalyze(Program program) {
+		ByteProvider provider =
+			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		return OdexConstants.isOdexFile(provider);
 	}
 
 	@Override
-	public AnalyzerType getAnalysisType( ) {
+	public AnalyzerType getAnalysisType() {
 		return AnalyzerType.BYTE_ANALYZER;
 	}
 
 	@Override
-	public boolean getDefaultEnablement( Program program ) {
+	public boolean getDefaultEnablement(Program program) {
 		return true;
 	}
 
 	@Override
-	public String getDescription( ) {
+	public String getDescription() {
 		return "Android ODEX Header Format";
 	}
 
 	@Override
-	public String getName( ) {
+	public String getName() {
 		return "Android ODEX Header Format";
 	}
 
 	@Override
-	public AnalysisPriority getPriority( ) {
-		return new AnalysisPriority( 0 );
+	public AnalysisPriority getPriority() {
+		return new AnalysisPriority(0);
 	}
 
 	@Override
-	public boolean isPrototype( ) {
+	public boolean isPrototype() {
 		return false;
 	}
 
-	private void processDeps(Program program, OdexHeader header,
-			TaskMonitor monitor, MessageLog log) throws Exception {
+	private void processDeps(Program program, OdexHeader header, TaskMonitor monitor,
+			MessageLog log) throws Exception {
 
 		int depsOffset = header.getDepsOffset();
 		int depsLength = header.getDepsLength();
 
-		Address depsAddress = toAddr( program, depsOffset );
-		Address depsEndAddress = depsAddress.add( depsLength );
+		Address depsAddress = toAddr(program, depsOffset);
+		Address depsEndAddress = depsAddress.add(depsLength);
 
-		createData( program, depsAddress, new DWordDataType() );
-		depsAddress = depsAddress.add( 4 );
+		createData(program, depsAddress, new DWordDataType());
+		depsAddress = depsAddress.add(4);
 
-		createData( program, depsAddress, new DWordDataType() );
-		depsAddress = depsAddress.add( 4 );
+		createData(program, depsAddress, new DWordDataType());
+		depsAddress = depsAddress.add(4);
 
-		createData( program, depsAddress, new DWordDataType() );
-		depsAddress = depsAddress.add( 4 );
+		createData(program, depsAddress, new DWordDataType());
+		depsAddress = depsAddress.add(4);
 
-		createData( program, depsAddress, new DWordDataType() );
-		depsAddress = depsAddress.add( 4 );
+		createData(program, depsAddress, new DWordDataType());
+		depsAddress = depsAddress.add(4);
 
-		while ( depsAddress.compareTo(depsEndAddress) < 0 ) {
+		while (depsAddress.compareTo(depsEndAddress) < 0) {
 			monitor.checkCanceled();
 
-			createData( program, depsAddress, new DWordDataType() );
+			createData(program, depsAddress, new DWordDataType());
 			int stringLength = program.getMemory().getInt(depsAddress);
-			depsAddress = depsAddress.add( 4 );
+			depsAddress = depsAddress.add(4);
 
 			program.getListing().createData(depsAddress, new StringDataType(), stringLength);
-			depsAddress = depsAddress.add( stringLength );
+			depsAddress = depsAddress.add(stringLength);
 
-			for ( int i = 0; i < 5; ++i ) {
-				createData( program, depsAddress, new DWordDataType() );
-				depsAddress = depsAddress.add( 4 );
+			for (int i = 0; i < 5; ++i) {
+				createData(program, depsAddress, new DWordDataType());
+				depsAddress = depsAddress.add(4);
 			}
 		}
 	}

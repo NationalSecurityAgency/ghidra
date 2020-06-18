@@ -1,0 +1,94 @@
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xE3, IGET_QUICK, "iget-quick", k22c, true, kFieldRef, kContinue | kThrow, kVerifyRegA | kVerifyRegB) \
+
+:iget_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xe3 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	registerA4 = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xE4, IGET_WIDE_QUICK, "iget-wide-quick", k22c, true, kFieldRef, kContinue | kThrow, kVerifyRegAWide | kVerifyRegB) \
+
+:iget_wide_quick "field@"^C_BITS_0_15,registerA4w,registerB4   is inst0=0xe4 ; registerA4w & registerB4 ; C_BITS_0_15 
+{
+	registerA4w = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xE5, IGET_OBJECT_QUICK, "iget-object-quick", k22c, true, kFieldRef, kContinue | kThrow, kVerifyRegA | kVerifyRegB) \
+
+:iget_object_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xe5 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	registerA4 = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xE6, IPUT_QUICK, "iput-quick", k22c, false, kFieldRef, kContinue | kThrow, kVerifyRegA | kVerifyRegB) \
+
+:iput_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xe6 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xE7, IPUT_WIDE_QUICK, "iput-wide-quick", k22c, false, kFieldRef, kContinue | kThrow, kVerifyRegAWide | kVerifyRegB) \
+
+:iput_wide_quick "field@"^C_BITS_0_15,registerA4w,registerB4  is inst0=0xe7 ; registerA4w & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4w );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xE8, IPUT_OBJECT_QUICK, "iput-object-quick", k22c, false, kFieldRef, kContinue | kThrow, kVerifyRegA | kVerifyRegB) \
+
+:iput_object_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xe8 ; registerA4 & registerB4 ; C_BITS_0_15 
+{
+	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xE9, INVOKE_VIRTUAL_QUICK, "invoke-virtual-quick", k35c, false, kMethodRef, kContinue | kThrow | kInvoke, kVerifyVarArg) \
+
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET is inst0=0xe9 ; N_PARAMS=0 & VTABLE_OFFSET
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4 );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC is inst0=0xe9 ; N_PARAMS=1 & VTABLE_OFFSET & regParamC
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD is inst0=0xe9 ; N_PARAMS=2 & VTABLE_OFFSET & regParamC & regParamD
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC, regParamD );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE is inst0=0xe9 ; N_PARAMS=3 & VTABLE_OFFSET & regParamC & regParamD & regParamE
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE,regParamF is inst0=0xe9 ; N_PARAMS=4 & VTABLE_OFFSET & regParamC & regParamD & regParamE & regParamF
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE, regParamF );
+}
+:invoke_virtual_quick "vtable@"^VTABLE_OFFSET,regParamC,regParamD,regParamE,regParamF,regParamG is inst0=0xe9 ; N_PARAMS=5 & VTABLE_OFFSET & regParamC & regParamD & regParamE & regParamF & regParamG
+{
+	invokeVirtualQuick( VTABLE_OFFSET:4, regParamC, regParamD, regParamE, regParamF, regParamG );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xEA, INVOKE_VIRTUAL_RANGE_QUICK, "invoke-virtual/range-quick", k3rc, false, kMethodRef, kContinue | kThrow | kInvoke, kVerifyVarArgRange) \
+
+:invoke_virtual_quick_range "vtable@"^B_BITS_0_15,A_BITS_0_7,registerC16  is inst0=0xea ; A_BITS_0_7 ; B_BITS_0_15 ; registerC16
+{
+	invokeVirtualQuickRange( B_BITS_0_15:4, A_BITS_0_7:4, registerC16 );
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------

@@ -1,0 +1,20 @@
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xFE, CONST_METHOD_HANDLE, "const-method-handle", k21c, kIndexMethodHandleRef, kContinue | kThrow, 0, kVerifyRegA | kVerifyRegBMethodHandle) \
+
+:const_method_handle registerA8,B_BITS_0_15 is inst0=0xfe ; registerA8 ; B_BITS_0_15
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------
+# V(0xFF, CONST_METHOD_TYPE, "const-method-type", k21c, kIndexProtoRef, kContinue | kThrow, 0, kVerifyRegA | kVerifyRegBPrototype)
+
+:const_method_type registerA8,B_BITS_0_15 is inst0=0xff ; registerA8 ; B_BITS_0_15
+{
+	#TODO pCode
+}
+
+#------------------------------------------------------------------------------------

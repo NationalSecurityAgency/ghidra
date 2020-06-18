@@ -29,39 +29,39 @@ public class PackedSwitchPayload implements StructConverter {
 	private short ident;
 	private short size;
 	private int firstKey;
-	private int [] targets;
+	private int[] targets;
 
-	public PackedSwitchPayload( BinaryReader reader ) throws IOException {
-		ident = reader.readNextShort( );
-		size = reader.readNextShort( );
-		firstKey = reader.readNextInt( );
-		targets = reader.readNextIntArray( size & 0xffff );
+	public PackedSwitchPayload(BinaryReader reader) throws IOException {
+		ident = reader.readNextShort();
+		size = reader.readNextShort();
+		firstKey = reader.readNextInt();
+		targets = reader.readNextIntArray(size & 0xffff);
 	}
 
-	public short getIdent( ) {
+	public short getIdent() {
 		return ident;
 	}
 
-	public short getSize( ) {
+	public short getSize() {
 		return size;
 	}
 
-	public int getFirstKey( ) {
+	public int getFirstKey() {
 		return firstKey;
 	}
 
-	public int [] getTargets( ) {
+	public int[] getTargets() {
 		return targets;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "packed_switch_payload_" + size, 0 );
-		structure.add( WORD, "ident", null );
-		structure.add( WORD, "size", null );
-		structure.add( DWORD, "first_key", null );
-		structure.add( new ArrayDataType( DWORD, size & 0xffff, DWORD.getLength( ) ), "targets", null );
-		structure.setCategoryPath( new CategoryPath( "/dex/packed_switch_payload" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType("packed_switch_payload_" + size, 0);
+		structure.add(WORD, "ident", null);
+		structure.add(WORD, "size", null);
+		structure.add(DWORD, "first_key", null);
+		structure.add(new ArrayDataType(DWORD, size & 0xffff, DWORD.getLength()), "targets", null);
+		structure.setCategoryPath(new CategoryPath("/dex/packed_switch_payload"));
 		return structure;
 	}
 

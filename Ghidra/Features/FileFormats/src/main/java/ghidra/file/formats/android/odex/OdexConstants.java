@@ -17,6 +17,19 @@ package ghidra.file.formats.android.odex;
 
 import ghidra.app.util.bin.ByteProvider;
 
+/**
+ * 
+ * https://android.googlesource.com/platform/dalvik/+/refs/heads/kitkat-release/libdex/DexFile.h
+ * https://android.googlesource.com/platform/dalvik/+/refs/heads/lollipop-release/libdex/DexFile.h
+ * https://android.googlesource.com/platform/dalvik/+/refs/heads/marshmallow-release/libdex/DexFile.h
+ * https://android.googlesource.com/platform/dalvik/+/refs/heads/nougat-release/libdex/DexFile.h
+ * https://android.googlesource.com/platform/dalvik/+/refs/heads/oreo-release/libdex/DexFile.h
+ * https://android.googlesource.com/platform/dalvik/+/refs/heads/pie-release/libdex/DexFile.h
+ * https://android.googlesource.com/platform/dalvik/+/refs/heads/android10-release/libdex/DexFile.h
+ * 
+ * Removed in Android11
+ * 
+ */
 public final class OdexConstants {
 
 	public final static String ODEX_MAGIC_35 = "dey\n035\0";
@@ -25,13 +38,13 @@ public final class OdexConstants {
 
 	public final static int ODEX_MAGIC_LENGTH = ODEX_MAGIC_36.length();
 
-	public final static boolean isOdexFile( ByteProvider provider ) {
+	public final static boolean isOdexFile(ByteProvider provider) {
 		try {
-			byte [] bytes = provider.readBytes( 0, ODEX_MAGIC_LENGTH );
-			return ODEX_MAGIC_35.equals( new String( bytes ) ) ||
-				   ODEX_MAGIC_36.equals( new String( bytes ) );
+			String magic = new String(provider.readBytes(0, ODEX_MAGIC_LENGTH));
+			return ODEX_MAGIC_35.equals(new String(magic)) ||
+				ODEX_MAGIC_36.equals(new String(magic));
 		}
-		catch ( Exception e ) {
+		catch (Exception e) {
 			// ignore
 		}
 		return false;

@@ -27,11 +27,14 @@ import ghidra.util.exception.InvalidInputException;
 
 public final class DexUtil {
 
-	public final static long METHOD_ADDRESS = 0x50000000;
+	public final static long METHOD_ADDRESS = 0x50000000L;
 
-	public final static long LOOKUP_ADDRESS = 0xE0000000;
+	public final static long LOOKUP_ADDRESS = 0xE0000000L;
 
-	public final static long MAX_METHOD_LENGTH = (long) Math.pow(2, 16) * 4;
+	/**
+	 * Max size possible 0x10000 (2^16) methods * pointer size
+	 */
+	public final static long MAX_METHOD_LENGTH = 0x80000;
 
 	public final static String CLASSDEF_NAME = "__classdef__";
 
@@ -39,12 +42,26 @@ public final class DexUtil {
 
 	public final static String HANDLE_PATH = "/handles/";
 
+	/**
+	 * Converts the method index into the address where the method is stored in memory
+	 * @param program the program
+	 * @param methodIndex the method index
+	 * @return address where method of index is stored
+	 */
 	public static Address toLookupAddress(Program program, int methodIndex) {
+		int pointerSize = program.getLanguage().getDefaultSpace().getPointerSize();
 		AddressFactory addressFactory = program.getAddressFactory();
 		AddressSpace defaultAddressSpace = addressFactory.getDefaultAddressSpace();
-		return defaultAddressSpace.getAddress(DexUtil.LOOKUP_ADDRESS + (methodIndex * 4));
+		return defaultAddressSpace.getAddress(DexUtil.LOOKUP_ADDRESS + (methodIndex * pointerSize));
 	}
 
+	/**
+	 * Returns the namespace with the given name.
+	 * If namespace does not exist, then it gets created first.
+	 * @param program the program containing the namespace
+	 * @param name the namespace name
+	 * @return the namespace object
+	 */
 	public static Namespace getOrCreateNameSpace(Program program, String name) {
 		SymbolTable symbolTable = program.getSymbolTable();
 		Namespace parent = program.getGlobalNamespace();
@@ -61,12 +78,27 @@ public final class DexUtil {
 		}
 	}
 
+	/**
+	 * Converts the mangled namespace into a namespace hierarchy,
+	 * @param program the program containing the namespaces
+	 * @param className the mangled classname
+	 * @return the child namespace
+	 * @throws InvalidInputException if an invalid character exists in the className
+	 */
 	public static Namespace createNameSpaceFromMangledClassName(Program program, String className)
 			throws InvalidInputException {
 		Namespace namespace = program.getGlobalNamespace();
 		return createNameSpaceFromMangledClassName(program, namespace, className);
 	}
 
+	/**
+	 * Converts the mangled namespace into a namespace hierarchy,
+	 * @param program the program containing the namespaces
+	 * @param parentNamespace the parent namespace
+	 * @param className the mangled classname
+	 * @return the child namespace
+	 * @throws InvalidInputException if an invalid character exists in the className
+	 */
 	public static Namespace createNameSpaceFromMangledClassName(Program program,
 			Namespace parentNamespace, String className) throws InvalidInputException {
 		SymbolTable symbolTable = program.getSymbolTable();
@@ -101,10 +133,22 @@ public final class DexUtil {
 		return parentNamespace;
 	}
 
+	/**
+	 * Converts the typeIndex into the Type String.
+	 * @param header the DEX/CDEX header
+	 * @param typeIndex the type index
+	 * @return the Type String
+	 */
 	public static String convertTypeIndexToString(DexHeader header, short typeIndex) {
 		return convertTypeIndexToString(header, typeIndex & 0xffff);
 	}
 
+	/**
+	 * Converts the typeIndex into the Type String.
+	 * @param header the DEX/CDEX header
+	 * @param typeIndex the type index
+	 * @return the Type String
+	 */
 	public static String convertTypeIndexToString(DexHeader header, int typeIndex) {
 		if (typeIndex == -1) {//java.lang.Object, no super class
 			return "<none>";
@@ -113,11 +157,26 @@ public final class DexUtil {
 		return convertToString(header, typeItem.getDescriptorIndex());
 	}
 
+	/**
+	 * Converts the stringIndex into the actual String.
+	 * @param header the DEX/CDEX header
+	 * @param stringIndex the string index
+	 * @return the actual String
+	 */
 	public static String convertToString(DexHeader header, int stringIndex) {
 		StringIDItem stringItem = header.getStrings().get(stringIndex);
+		if (stringItem == null || stringItem.getStringDataItem() == null) {
+			return "INVALID STRING 0x" + Integer.toHexString(stringIndex);
+		}
 		return stringItem.getStringDataItem().getString();
 	}
 
+	/**
+	 * Converts the prototypeIndex into the Prototype object.
+	 * @param header the DEX/CDEX header
+	 * @param prototypeIndex the prototype index
+	 * @return the Prototype object
+	 */
 	public static String convertPrototypeIndexToString(DexHeader header, short prototypeIndex) {
 		PrototypesIDItem prototype = header.getPrototypes().get(prototypeIndex & 0xffff);
 		StringBuilder builder = new StringBuilder();
@@ -134,6 +193,12 @@ public final class DexUtil {
 		return builder.toString();
 	}
 
+	/**
+	 * Converts the string package/class into an array
+	 * @param prefix the prefix
+	 * @param classString the class string
+	 * @return the array of package/class
+	 */
 	public static String[] convertClassStringToPathArray(String prefix, String classString) {
 		int len = classString.length();
 		if (len == 0) {
@@ -148,6 +213,12 @@ public final class DexUtil {
 		return (prefix + classString.substring(1, len - 1)).split("/");
 	}
 
+	/**
+	 * Converts the data type string into a Ghidra data type
+	 * @param dtm the data type manager for getting data types.
+	 * @param dataTypeString the data type string (java encodings)
+	 * @return the Ghidra datatype
+	 */
 	public static DataType toDataType(DataTypeManager dtm, String dataTypeString) {
 		if (dataTypeString.length() == 0) {
 			return null;
@@ -189,5 +260,33 @@ public final class DexUtil {
 			default:
 				return null;
 		}
+	}
+
+	/**
+	 * Adjusts the specified offset relative to the data offset.
+	 * Some DEX/CDEX files do not start at 0x0.
+	 * @param offset the offset
+	 * @param header the DEX/CDEX header
+	 * @return the offset, adjusted as needed
+	 */
+	public static int adjustOffset(int offset, DexHeader header) {
+		if (header.isDataOffsetRelative()) {
+			return offset + header.getDataOffset();
+		}
+		return offset;
+	}
+
+	/**
+	 * Adjusts the specified offset relative to the data offset.
+	 * Some DEX/CDEX files do not start at 0x0.
+	 * @param offset the offset
+	 * @param header the DEX/CDEX header
+	 * @return the offset, adjusted as needed
+	 */
+	public static long adjustOffset(long offset, DexHeader header) {
+		if (header.isDataOffsetRelative()) {
+			return offset + Integer.toUnsignedLong(header.getDataOffset());
+		}
+		return offset;
 	}
 }

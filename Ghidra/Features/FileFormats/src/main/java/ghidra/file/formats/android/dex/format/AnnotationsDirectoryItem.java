@@ -15,22 +15,17 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
-
 import java.io.IOException;
 import java.util.*;
 
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.file.formats.android.dex.util.DexUtil;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
+
 /**
- * annotations_directory_item
- * 
- * referenced from class_def_item
- * 
- * appears in the data section
- * 
- * alignment: 4 bytes
+ * https://android.googlesource.com/platform/art/+/master/libdexfile/dex/dex_file_structs.h#209
  */
 public class AnnotationsDirectoryItem implements StructConverter {
 
@@ -38,95 +33,94 @@ public class AnnotationsDirectoryItem implements StructConverter {
 	private int fieldsSize;
 	private int annotatedMethodsSize;
 	private int annotatedParametersSize;
-	private List< FieldAnnotation > fieldAnnotations = new ArrayList< FieldAnnotation >( );
-	private List< MethodAnnotation > methodAnnotations = new ArrayList< MethodAnnotation >( );
-	private List< ParameterAnnotation > parameterAnnotations = new ArrayList< ParameterAnnotation >( );
+	private List<FieldAnnotationsItem> fieldAnnotations = new ArrayList<FieldAnnotationsItem>();
+	private List<MethodAnnotationsItem> methodAnnotations = new ArrayList<MethodAnnotationsItem>();
+	private List<ParameterAnnotationsItem> parameterAnnotations =
+		new ArrayList<ParameterAnnotationsItem>();
 	private AnnotationSetItem _classAnnotations;
 
-	public AnnotationsDirectoryItem( BinaryReader reader ) throws IOException {
+	public AnnotationsDirectoryItem(BinaryReader reader, DexHeader dexHeader) throws IOException {
 
-		classAnnotationsOffset = reader.readNextInt( );
-		fieldsSize = reader.readNextInt( );
-		annotatedMethodsSize = reader.readNextInt( );
-		annotatedParametersSize = reader.readNextInt( );
+		classAnnotationsOffset = reader.readNextInt();
+		fieldsSize = reader.readNextInt();
+		annotatedMethodsSize = reader.readNextInt();
+		annotatedParametersSize = reader.readNextInt();
 
-		for ( int i = 0 ; i < fieldsSize ; ++i ) {
-			fieldAnnotations.add( new FieldAnnotation( reader ) );
+		for (int i = 0; i < fieldsSize; ++i) {
+			fieldAnnotations.add(new FieldAnnotationsItem(reader, dexHeader));
 		}
-		for ( int i = 0 ; i < annotatedMethodsSize ; ++i ) {
-			methodAnnotations.add( new MethodAnnotation( reader ) );
-		}
-		for ( int i = 0 ; i < annotatedParametersSize ; ++i ) {
-			parameterAnnotations.add( new ParameterAnnotation( reader ) );
+		for (int i = 0; i < annotatedMethodsSize; ++i) {
+			methodAnnotations.add(new MethodAnnotationsItem(reader, dexHeader));
 		}
 
-		if ( classAnnotationsOffset > 0 ){
-			long oldIndex = reader.getPointerIndex( );
+		if (classAnnotationsOffset > 0) {
+			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex( classAnnotationsOffset );
-				_classAnnotations = new AnnotationSetItem( reader );
+				reader.setPointerIndex(DexUtil.adjustOffset(classAnnotationsOffset, dexHeader));
+				_classAnnotations = new AnnotationSetItem(reader, dexHeader);
 			}
 			finally {
-				reader.setPointerIndex( oldIndex );
+				reader.setPointerIndex(oldIndex);
 			}
 		}
 	}
 
-	public int getClassAnnotationsOffset( ) {
+	public int getClassAnnotationsOffset() {
 		return classAnnotationsOffset;
 	}
 
-	public int getFieldsSize( ) {
+	public int getFieldsSize() {
 		return fieldsSize;
 	}
 
-	public int getAnnotatedMethodsSize( ) {
+	public int getAnnotatedMethodsSize() {
 		return annotatedMethodsSize;
 	}
 
-	public int getAnnotatedParametersSize( ) {
+	public int getAnnotatedParametersSize() {
 		return annotatedParametersSize;
 	}
 
-	public List< FieldAnnotation > getFieldAnnotations( ) {
-		return Collections.unmodifiableList( fieldAnnotations );
+	public List<FieldAnnotationsItem> getFieldAnnotations() {
+		return Collections.unmodifiableList(fieldAnnotations);
 	}
 
-	public List< MethodAnnotation > getMethodAnnotations( ) {
-		return Collections.unmodifiableList( methodAnnotations );
+	public List<MethodAnnotationsItem> getMethodAnnotations() {
+		return Collections.unmodifiableList(methodAnnotations);
 	}
 
-	public List< ParameterAnnotation > getParameterAnnotations( ) {
-		return Collections.unmodifiableList( parameterAnnotations );
+	public List<ParameterAnnotationsItem> getParameterAnnotations() {
+		return Collections.unmodifiableList(parameterAnnotations);
 	}
 
-	public AnnotationSetItem getClassAnnotations( ) {
+	public AnnotationSetItem getClassAnnotations() {
 		return _classAnnotations;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "annotations_directory_item_" + fieldsSize + "_" + annotatedMethodsSize + "_" + annotatedParametersSize, 0 );
-		structure.add( DWORD, "class_annotations_off", null );
-		structure.add( DWORD, "fields_size", null );
-		structure.add( DWORD, "annotated_methods_size", null );
-		structure.add( DWORD, "annotated_parameters_size", null );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType("annotations_directory_item_" + fieldsSize +
+			"_" + annotatedMethodsSize + "_" + annotatedParametersSize, 0);
+		structure.add(DWORD, "class_annotations_off", null);
+		structure.add(DWORD, "fields_size", null);
+		structure.add(DWORD, "annotated_methods_size", null);
+		structure.add(DWORD, "annotated_parameters_size", null);
 		int index = 0;
-		for ( FieldAnnotation field : fieldAnnotations ) {
-			structure.add( field.toDataType( ), "field_" + index, null );
+		for (FieldAnnotationsItem field : fieldAnnotations) {
+			structure.add(field.toDataType(), "field_" + index, null);
 			++index;
 		}
 		index = 0;
-		for ( MethodAnnotation method : methodAnnotations ) {
-			structure.add( method.toDataType( ), "method_" + index, null );
+		for (MethodAnnotationsItem method : methodAnnotations) {
+			structure.add(method.toDataType(), "method_" + index, null);
 			++index;
 		}
 		index = 0;
-		for ( ParameterAnnotation parameter : parameterAnnotations ) {
-			structure.add( parameter.toDataType( ), "parameter_" + index, null );
+		for (ParameterAnnotationsItem parameter : parameterAnnotations) {
+			structure.add(parameter.toDataType(), "parameter_" + index, null);
 			++index;
 		}
-		structure.setCategoryPath( new CategoryPath( "/dex/annotations_directory_item" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/annotations_directory_item"));
 		return structure;
 	}
 

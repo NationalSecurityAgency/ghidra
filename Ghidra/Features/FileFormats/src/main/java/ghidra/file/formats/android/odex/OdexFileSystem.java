@@ -67,18 +67,18 @@ public class OdexFileSystem extends GFileSystemBase {
 	public String getInfo(GFile file, TaskMonitor monitor) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Magic:       " + odexHeader.getMagic()).append("\n");
-		builder.append("Dex Offset:  " + Integer.toHexString(odexHeader.getDexOffset())).append(
-			"\n");
-		builder.append("Dex Length:  " + Integer.toHexString(odexHeader.getDexLength())).append(
-			"\n");
-		builder.append("Deps Offset: " + Integer.toHexString(odexHeader.getDepsOffset())).append(
-			"\n");
-		builder.append("Deps Length: " + Integer.toHexString(odexHeader.getDepsLength())).append(
-			"\n");
-		builder.append("Aux Offset:  " + Integer.toHexString(odexHeader.getAuxOffset())).append(
-			"\n");
-		builder.append("Aux Length:  " + Integer.toHexString(odexHeader.getAuxLength())).append(
-			"\n");
+		builder.append("Dex Offset:  " + Integer.toHexString(odexHeader.getDexOffset()))
+				.append("\n");
+		builder.append("Dex Length:  " + Integer.toHexString(odexHeader.getDexLength()))
+				.append("\n");
+		builder.append("Deps Offset: " + Integer.toHexString(odexHeader.getDepsOffset()))
+				.append("\n");
+		builder.append("Deps Length: " + Integer.toHexString(odexHeader.getDepsLength()))
+				.append("\n");
+		builder.append("Aux Offset:  " + Integer.toHexString(odexHeader.getAuxOffset()))
+				.append("\n");
+		builder.append("Aux Length:  " + Integer.toHexString(odexHeader.getAuxLength()))
+				.append("\n");
 		builder.append("Flags:       " + Integer.toHexString(odexHeader.getFlags())).append("\n");
 		return builder.toString();
 	}

@@ -30,33 +30,33 @@ public class MethodIDItem implements StructConverter {
 	private short protoIndex;
 	private int nameIndex;
 
-	public MethodIDItem( BinaryReader reader ) throws IOException {
-		_fileOffset = reader.getPointerIndex( );
-		classIndex = reader.readNextShort( );
-		protoIndex = reader.readNextShort( );
-		nameIndex = reader.readNextInt( );
+	public MethodIDItem(BinaryReader reader) throws IOException {
+		_fileOffset = reader.getPointerIndex();
+		classIndex = reader.readNextShort();
+		protoIndex = reader.readNextShort();
+		nameIndex = reader.readNextInt();
 	}
 
 	public long getFileOffset() {
 		return _fileOffset;
 	}
 
-	public int getClassIndex( ) {
+	public int getClassIndex() {
 		return classIndex;
 	}
 
-	public short getProtoIndex( ) {
+	public short getProtoIndex() {
 		return protoIndex;
 	}
 
-	public int getNameIndex( ) {
+	public int getNameIndex() {
 		return nameIndex;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( MethodIDItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(MethodIDItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

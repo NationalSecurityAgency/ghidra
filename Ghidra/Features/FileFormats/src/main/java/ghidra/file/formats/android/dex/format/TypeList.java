@@ -26,38 +26,38 @@ import java.util.*;
 public class TypeList implements StructConverter {
 
 	private int size;
-	private List< TypeItem > items = new ArrayList< TypeItem >( );
+	private List<TypeItem> items = new ArrayList<TypeItem>();
 
-	public TypeList( BinaryReader reader ) throws IOException {
-		size = reader.readNextInt( );
-		for ( int i = 0 ; i < size ; ++i ) {
-			items.add( new TypeItem( reader ) );
+	public TypeList(BinaryReader reader) throws IOException {
+		size = reader.readNextInt();
+		for (int i = 0; i < size; ++i) {
+			items.add(new TypeItem(reader));
 		}
 	}
 
 	/**
 	 * Size of the list, in entries
 	 */
-	public int getSize( ) {
+	public int getSize() {
 		return size;
 	}
 
 	/**
 	 * Elements of the list
 	 */
-	public List< TypeItem > getItems( ) {
-		return Collections.unmodifiableList( items );
+	public List<TypeItem> getItems() {
+		return Collections.unmodifiableList(items);
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType( "type_list" + size, 0 );
-		structure.add( DWORD, "size", null );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType("type_list" + size, 0);
+		structure.add(DWORD, "size", null);
 		int index = 0;
-		for ( TypeItem item : items ) {
-			structure.add( item.toDataType( ), "item_" + ( index++ ), null );
+		for (TypeItem item : items) {
+			structure.add(item.toDataType(), "item_" + (index++), null);
 		}
-		structure.setCategoryPath( new CategoryPath( "/dex" ) );
+		structure.setCategoryPath(new CategoryPath("/dex"));
 		return structure;
 	}
 

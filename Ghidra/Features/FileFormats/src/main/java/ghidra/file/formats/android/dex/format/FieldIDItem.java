@@ -28,28 +28,28 @@ public class FieldIDItem implements StructConverter {
 	private short typeIndex;
 	private int nameIndex;
 
-	public FieldIDItem( BinaryReader reader ) throws IOException {
-		classIndex = reader.readNextShort( );
-		typeIndex = reader.readNextShort( );
-		nameIndex = reader.readNextInt( );
+	public FieldIDItem(BinaryReader reader) throws IOException {
+		classIndex = reader.readNextShort();
+		typeIndex = reader.readNextShort();
+		nameIndex = reader.readNextInt();
 	}
 
-	public short getClassIndex( ) {
+	public short getClassIndex() {
 		return classIndex;
 	}
 
-	public short getTypeIndex( ) {
+	public short getTypeIndex() {
 		return typeIndex;
 	}
 
-	public int getNameIndex( ) {
+	public int getNameIndex() {
 		return nameIndex;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType dataType = StructConverterUtil.toDataType( FieldIDItem.class );
-		dataType.setCategoryPath( new CategoryPath( "/dex" ) );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType dataType = StructConverterUtil.toDataType(FieldIDItem.class);
+		dataType.setCategoryPath(new CategoryPath("/dex"));
 		return dataType;
 	}
 

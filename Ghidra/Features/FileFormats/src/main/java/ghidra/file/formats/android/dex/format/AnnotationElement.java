@@ -29,35 +29,37 @@ public class AnnotationElement implements StructConverter {
 	private int nameIndexLength;// in bytes
 	private EncodedValue value;
 
-	public AnnotationElement( BinaryReader reader ) throws IOException {
+	public AnnotationElement(BinaryReader reader) throws IOException {
 		LEB128 leb128 = LEB128.readUnsignedValue(reader);
 		nameIndex = leb128.asUInt32();
 		nameIndexLength = leb128.getLength();
 
-		value = new EncodedValue( reader );
+		value = new EncodedValue(reader);
 	}
 
-	public int getNameIndex( ) {
+	public int getNameIndex() {
 		return nameIndex;
 	}
 
-	public EncodedValue getValue( ) {
+	public EncodedValue getValue() {
 		return value;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		DataType encodeValueDataType = value.toDataType( );
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		DataType encodeValueDataType = value.toDataType();
 
-		String name = "annotation_element" + "_" + nameIndexLength + "_" + encodeValueDataType.getName( );
+		String name =
+			"annotation_element" + "_" + nameIndexLength + "_" + encodeValueDataType.getName();
 
-		Structure structure = new StructureDataType( name, 0 );
+		Structure structure = new StructureDataType(name, 0);
 
-		structure.add( new ArrayDataType( BYTE, nameIndexLength, BYTE.getLength( ) ), "nameIndex", null );
+		structure.add(new ArrayDataType(BYTE, nameIndexLength, BYTE.getLength()), "nameIndex",
+			null);
 
-		structure.add( encodeValueDataType, "value", null );
+		structure.add(encodeValueDataType, "value", null);
 
-		structure.setCategoryPath( new CategoryPath( "/dex/annotation_element" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/annotation_element"));
 		// try {
 		// structure.setName( name + "_" + structure.getLength( ) );
 		// }

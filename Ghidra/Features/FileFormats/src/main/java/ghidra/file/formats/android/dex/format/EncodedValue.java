@@ -29,19 +29,19 @@ public class EncodedValue implements StructConverter {
 	private byte valueType;
 	private byte valueArgs;
 
-	private byte [] valueBytes;
+	private byte[] valueBytes;
 
 	private EncodedArray array;
 	private EncodedAnnotation annotation;
 
-	public EncodedValue( BinaryReader reader ) throws IOException {
-		value = reader.readNextByte( );
-		valueType = ( byte ) ( value & 0x1f );
-		valueArgs = ( byte ) ( ( value & 0xe0 ) >> 5 );
+	public EncodedValue(BinaryReader reader) throws IOException {
+		value = reader.readNextByte();
+		valueType = (byte) (value & 0x1f);
+		valueArgs = (byte) ((value & 0xe0) >> 5);
 
 		// length of value[] is based on TYPE....
 
-		switch ( valueType ) {
+		switch (valueType) {
 			case ValueFormats.VALUE_BYTE:
 			case ValueFormats.VALUE_SHORT:
 			case ValueFormats.VALUE_CHAR:
@@ -54,15 +54,15 @@ public class EncodedValue implements StructConverter {
 			case ValueFormats.VALUE_FIELD:
 			case ValueFormats.VALUE_METHOD:
 			case ValueFormats.VALUE_ENUM: {
-				valueBytes = reader.readNextByteArray( valueArgs + 1 );
+				valueBytes = reader.readNextByteArray(valueArgs + 1);
 				break;
 			}
 			case ValueFormats.VALUE_ARRAY: {
-				array = new EncodedArray( reader );
+				array = new EncodedArray(reader);
 				break;
 			}
 			case ValueFormats.VALUE_ANNOTATION: {
-				annotation = new EncodedAnnotation( reader );
+				annotation = new EncodedAnnotation(reader);
 				break;
 			}
 			case ValueFormats.VALUE_NULL: {
@@ -71,50 +71,51 @@ public class EncodedValue implements StructConverter {
 			case ValueFormats.VALUE_BOOLEAN: {
 				break;// do nothing...
 			}
-			default : {
-				//TODO throw new RuntimeException( "unsupported encoded value: 0x" + Integer.toHexString( valueType & 0xff ) );
+			default: {
+				break;// do nothing...
 			}
 		}
 	}
 
-	public byte getValueArgs( ) {
+	public byte getValueArgs() {
 		return valueArgs;
 	}
 
-	public byte getValueType( ) {
+	public byte getValueType() {
 		return valueType;
 	}
 
-	public byte [] getValueBytes( ) {
+	public byte[] getValueBytes() {
 		return valueBytes;
 	}
 
-	public byte getValueByte( ) {
-		return valueBytes[ 0 ];
+	public byte getValueByte() {
+		return valueBytes[0];
 	}
 
-	public EncodedArray getArray( ) {
+	public EncodedArray getArray() {
 		return array;
 	}
 
-	public EncodedAnnotation getAnnotation( ) {
+	public EncodedAnnotation getAnnotation() {
 		return annotation;
 	}
 
-	public boolean isValueBoolean( ) {
+	public boolean isValueBoolean() {
 		return valueArgs == 1;
 	}
 
-	byte getValue( ) {
+	byte getValue() {
 		return value;
 	}
 
 	@Override
-	public DataType toDataType( ) throws DuplicateNameException, IOException {
-		StringBuilder builder = new StringBuilder( "encoded_value_0x" + Integer.toHexString( value & 0xff ) );
-		Structure structure = new StructureDataType( builder.toString( ), 0 );
-		structure.add( BYTE, "valueType", null );
-		switch ( valueType ) {
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		StringBuilder builder =
+			new StringBuilder("encoded_value_0x" + Integer.toHexString(value & 0xff));
+		Structure structure = new StructureDataType(builder.toString(), 0);
+		structure.add(BYTE, "valueType", null);
+		switch (valueType) {
 			case ValueFormats.VALUE_BYTE:
 			case ValueFormats.VALUE_SHORT:
 			case ValueFormats.VALUE_CHAR:
@@ -127,20 +128,20 @@ public class EncodedValue implements StructConverter {
 			case ValueFormats.VALUE_FIELD:
 			case ValueFormats.VALUE_METHOD:
 			case ValueFormats.VALUE_ENUM: {
-				int length = ( valueArgs & 0xff ) + 1;
-				structure.add( new ArrayDataType( BYTE, length, BYTE.getLength( ) ), "value", null );
-				builder.append( "_" + length );
+				int length = (valueArgs & 0xff) + 1;
+				structure.add(new ArrayDataType(BYTE, length, BYTE.getLength()), "value", null);
+				builder.append("_" + length);
 				break;
 			}
 			case ValueFormats.VALUE_ARRAY: {
-				builder.append( "_" + array.getValues().length );
-				structure.add( array.toDataType( ), "value", null );
+				builder.append("_" + array.getValues().length);
+				structure.add(array.toDataType(), "value", null);
 				break;
 			}
 			case ValueFormats.VALUE_ANNOTATION: {
-				DataType dataType = annotation.toDataType( );
-				structure.add( dataType, "value", null );
-				builder.append( "_" + dataType.getName( ) );
+				DataType dataType = annotation.toDataType();
+				structure.add(dataType, "value", null);
+				builder.append("_" + dataType.getName());
 				break;
 			}
 			case ValueFormats.VALUE_NULL: {
@@ -149,17 +150,17 @@ public class EncodedValue implements StructConverter {
 			case ValueFormats.VALUE_BOOLEAN: {
 				break;// do nothing
 			}
-			default : {
+			default: {
 				//TODO throw new RuntimeException( "unsupported encoded value: 0x" + Integer.toHexString( valueType & 0xff ) );
 			}
 		}
 		try {
-			structure.setName( builder.toString( ) );
+			structure.setName(builder.toString());
 		}
-		catch ( InvalidNameException e ) {
+		catch (InvalidNameException e) {
 			// ignore, should never happen
 		}
-		structure.setCategoryPath( new CategoryPath( "/dex/encoded_value" ) );
+		structure.setCategoryPath(new CategoryPath("/dex/encoded_value"));
 		return structure;
 	}
 }

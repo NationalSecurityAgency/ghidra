@@ -23,6 +23,7 @@ import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.model.address.Address;
@@ -46,7 +47,7 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 
 		BinaryReader reader = new BinaryReader(provider, true);
 		try {
-			DexHeader header = new DexHeader(reader);
+			DexHeader header = DexHeaderFactory.getDexHeader(reader);
 			if (DexConstants.DEX_MAGIC_BASE.equals(new String(header.getMagic()))) {
 				List<QueryResult> queries =
 					QueryOpinionService.query(getName(), DexConstants.MACHINE, null);
@@ -80,7 +81,7 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 			}
 
 			BinaryReader reader = new BinaryReader( provider, true );
-			DexHeader header = new DexHeader( reader );
+			DexHeader header = DexHeaderFactory.getDexHeader( reader );
 
 			monitor.setMessage( "DEX Loader: creating method byte code" );
 
