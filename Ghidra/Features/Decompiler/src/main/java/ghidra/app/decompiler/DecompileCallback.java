@@ -704,7 +704,7 @@ public class DecompileCallback {
 			hfunc.grabFromFunction(extrapop, false, (extrapop != default_extrapop));
 
 			HighSymbol funcSymbol = new HighFunctionSymbol(addr, 2, hfunc);
-			Namespace namespc = func.getParentNamespace();
+			Namespace namespc = funcSymbol.getNamespace();
 			if (debug != null) {
 				debug.getFNTypes(hfunc);
 			}
@@ -945,7 +945,7 @@ public class DecompileCallback {
 					(extrapop != default_extrapop));
 
 				HighSymbol functionSymbol = new HighFunctionSymbol(entry, (int) (diff + 1), hfunc);
-				Namespace namespc = func.getParentNamespace();
+				Namespace namespc = functionSymbol.getNamespace();
 				if (debug != null) {
 					debug.getFNTypes(hfunc);
 				}

@@ -19,6 +19,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
@@ -126,6 +127,18 @@ public class HighSymbol {
 	public Symbol getSymbol() {
 		if (id != 0) {
 			return function.getFunction().getProgram().getSymbolTable().getSymbol(id);
+		}
+		return null;
+	}
+
+	/**
+	 * Fetch the namespace owning this symbol, if it exists.
+	 * @return the Namespace object or null
+	 */
+	public Namespace getNamespace() {
+		Symbol sym = getSymbol();
+		if (sym != null) {
+			return sym.getParentNamespace();
 		}
 		return null;
 	}

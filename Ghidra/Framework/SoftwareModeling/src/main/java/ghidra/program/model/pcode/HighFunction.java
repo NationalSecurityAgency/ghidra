@@ -467,8 +467,8 @@ public class HighFunction extends PcodeSyntaxTree {
 		proto.buildPrototypeXML(resBuf, getDataTypeManager());
 		if ((jumpTables != null) && (jumpTables.size() > 0)) {
 			resBuf.append("<jumptablelist>\n");
-			for (int i = 0; i < jumpTables.size(); ++i) {
-				jumpTables.get(i).buildXml(resBuf);
+			for (JumpTable jumpTable : jumpTables) {
+				jumpTable.buildXml(resBuf);
 			}
 			resBuf.append("</jumptablelist>\n");
 		}
@@ -478,8 +478,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		}
 		if ((protoOverrides != null) && (protoOverrides.size() > 0)) {
 			PcodeDataTypeManager dtmanage = getDataTypeManager();
-			for (int i = 0; i < protoOverrides.size(); ++i) {
-				DataTypeSymbol sym = protoOverrides.get(i);
+			for (DataTypeSymbol sym : protoOverrides) {
 				Address addr = sym.getAddress();
 				FunctionPrototype fproto = new FunctionPrototype(
 					(FunctionSignature) sym.getDataType(), compilerSpec, false);
@@ -626,6 +625,9 @@ public class HighFunction extends PcodeSyntaxTree {
 		Namespace curspc = namespc;
 		while (curspc != null) {
 			arr.add(0, curspc.getName());
+			if (curspc instanceof Library) {
+				break;		// Treat library namespace as root
+			}
 			curspc = curspc.getParentNamespace();
 		}
 		buf.append("<val/>\n"); // Force global scope to have empty name
