@@ -325,31 +325,31 @@ public class LocalSymbolMap {
 	}
 
 	/**
-	 * @return an XML document string representing this local variable map.
+	 * Output an XML document representing this local variable map.
+	 * @param resBuf is the buffer to write to
+	 * @param namespace if the namespace of the function
 	 */
-	public String buildLocalDbXML() {		// Get memory mapped local variables
-		StringBuilder res = new StringBuilder();
-		res.append("<localdb");
-		SpecXmlUtils.encodeBooleanAttribute(res, "lock", false);
-		SpecXmlUtils.encodeStringAttribute(res, "main", spacename);
-		res.append(">\n");
-		res.append("<scope");
-		SpecXmlUtils.xmlEscapeAttribute(res, "name", func.getFunction().getName());
-		res.append(">\n");
-		res.append("<parent>\n");
-		HighFunction.createNamespaceTag(res, func.getFunction().getParentNamespace());
-		res.append("</parent>\n");
-		res.append("<rangelist/>\n");	// Empty address range
-		res.append("<symbollist>\n");
+	public void buildLocalDbXML(StringBuilder resBuf, Namespace namespace) {		// Get memory mapped local variables
+		resBuf.append("<localdb");
+		SpecXmlUtils.encodeBooleanAttribute(resBuf, "lock", false);
+		SpecXmlUtils.encodeStringAttribute(resBuf, "main", spacename);
+		resBuf.append(">\n");
+		resBuf.append("<scope");
+		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getFunction().getName());
+		resBuf.append(">\n");
+		resBuf.append("<parent>\n");
+		HighFunction.createNamespaceTag(resBuf, namespace);
+		resBuf.append("</parent>\n");
+		resBuf.append("<rangelist/>\n");	// Empty address range
+		resBuf.append("<symbollist>\n");
 		Iterator<HighSymbol> iter = symbolMap.values().iterator();
 		while (iter.hasNext()) {
 			HighSymbol sym = iter.next();
-			HighSymbol.buildMapSymXML(res, sym);
+			HighSymbol.buildMapSymXML(resBuf, sym);
 		}
-		res.append("</symbollist>\n");
-		res.append("</scope>\n");
-		res.append("</localdb>\n");
-		return res.toString();
+		resBuf.append("</symbollist>\n");
+		resBuf.append("</scope>\n");
+		resBuf.append("</localdb>\n");
 	}
 
 	/**

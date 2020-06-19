@@ -75,7 +75,8 @@ public class HighFunctionSymbol extends HighSymbol {
 	public void saveXML(StringBuilder buf) {
 		MappedEntry entry = (MappedEntry) getFirstWholeMap();
 		String funcString =
-			function.buildFunctionXML(getId(), entry.getStorage().getMinAddress(), entry.getSize());
+			function.buildFunctionXML(getId(), getNamespace(), entry.getStorage().getMinAddress(),
+				entry.getSize());
 		buf.append(funcString);
 	}
 }

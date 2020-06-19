@@ -1326,6 +1326,7 @@ void Funcdata::mapGlobals(void)
     vn = *iter++;
     if (vn->isFree()) continue;
     if (!vn->isPersist()) continue; // Could be a code ref
+    if (vn->getSymbolEntry() != (SymbolEntry *)0) continue;
     maxvn = vn;
     Address addr = vn->getAddr();
     Address endaddr = addr + vn->getSize();

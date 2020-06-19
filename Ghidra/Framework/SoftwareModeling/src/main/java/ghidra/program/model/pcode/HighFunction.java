@@ -436,11 +436,12 @@ public class HighFunction extends PcodeSyntaxTree {
 	 * addresses near its entry point.
 	 *
 	 * @param id is the id associated with the function symbol
+	 * @param namespace is the namespace containing the function symbol
 	 * @param entryPoint pass null to use the function entryPoint, pass an address to force an entry point
 	 * @param size describes how many bytes the function occupies as code
 	 * @return the XML string
 	 */
-	public String buildFunctionXML(long id, Address entryPoint, int size) {
+	public String buildFunctionXML(long id, Namespace namespace, Address entryPoint, int size) {
 		// Functions aren't necessarily contiguous with the smallest address being the entry point
 		// So size needs to be smaller than size of the contiguous chunk containing the entry point
 		StringBuilder resBuf = new StringBuilder();
@@ -463,7 +464,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		else {
 			resBuf.append(Varnode.buildXMLAddress(entryPoint)); // Address is forced on XML
 		}
-		resBuf.append(localSymbols.buildLocalDbXML());
+		localSymbols.buildLocalDbXML(resBuf, namespace);
 		proto.buildPrototypeXML(resBuf, getDataTypeManager());
 		if ((jumpTables != null) && (jumpTables.size() > 0)) {
 			resBuf.append("<jumptablelist>\n");

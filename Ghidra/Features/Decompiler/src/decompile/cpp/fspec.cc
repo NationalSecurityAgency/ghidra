@@ -2479,7 +2479,7 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
     }
   }
   if (res->sym == (Symbol *)0) {
-    if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) != scope)
+    if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) == (Scope *)0)
       usepoint = restricted_usepoint; 
     res->sym = scope->addSymbol(nm,pieces.type,pieces.addr,usepoint)->getSymbol();
     scope->setCategory(res->sym,0,i);
