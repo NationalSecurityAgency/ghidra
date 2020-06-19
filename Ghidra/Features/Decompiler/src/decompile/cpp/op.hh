@@ -95,7 +95,7 @@ public:
     spacebase_ptr = 0x4000000,	///< Loads or stores from a dynamic pointer into a spacebase
     indirect_creation = 0x8000000,  ///< Output varnode is created by indirect effect
     calculated_bool = 0x10000000, ///< Output has been determined to be a 1-bit boolean value
-    is_cpool_transformed = 0x20000000, ///< Have we checked for cpool transforms
+    has_callspec = 0x20000000,	///< Op has a call specification associated with it
     ptrflow = 0x40000000,	///< Op consumes or produces a ptr
     indirect_store = 0x80000000	///< CPUI_INDIRECT is caused by CPUI_STORE
   };
@@ -107,7 +107,8 @@ public:
     special_print = 0x10,	///< Op is marked for special printing
     modified = 0x20,		///< This op has been modified by the current action
     warning = 0x40,		///< Warning has been generated for this op
-    incidental_copy = 0x80	///< Treat this as \e incidental for parameter recovery algorithms
+    incidental_copy = 0x80,	///< Treat this as \e incidental for parameter recovery algorithms
+    is_cpool_transformed = 0x100 ///< Have we checked for cpool transforms
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -155,6 +156,7 @@ public:
   list<PcodeOp *>::iterator getBasicIter(void) const { return basiciter; } ///< Get position within basic block
   /// \brief Get the slot number of the indicated input varnode
   int4 getSlot(const Varnode *vn) const { int4 i,n; n=inrefs.size(); for(i=0;i<n;++i) if (inrefs[i]==vn) break; return i; }
+  int4 getRepeatSlot(const Varnode *vn,int4 firstSlot,list<PcodeOp *>::const_iterator iter) const;
   /// \brief Get the evaluation type of this op
   uint4 getEvalType(void) const { return (flags&(PcodeOp::unary|PcodeOp::binary|PcodeOp::special)); }
   /// \brief Get type which indicates unusual halt in control-flow
@@ -163,6 +165,8 @@ public:
   bool isDead(void) const { return ((flags&PcodeOp::dead)!=0); } ///< Return \b true if this op is dead
   bool isAssignment(void) const { return (output!=(Varnode *)0); } ///< Return \b true is this op has an output
   bool isCall(void) const { return ((flags&PcodeOp::call)!=0); } ///< Return \b true if this op indicates call semantics
+  /// \brief Return \b true if this op acts as call but does not have a full specification
+  bool isCallWithoutSpec(void) const { return ((flags&(PcodeOp::call|PcodeOp::has_callspec))==PcodeOp::call); }
   bool isMarker(void) const { return ((flags&PcodeOp::marker)!=0); } ///< Return \b true is a special SSA form op
   bool isIndirectCreation(void) const { return ((flags&PcodeOp::indirect_creation)!=0); } ///< Return \b true if op creates a varnode indirectly
   bool isIndirectStore(void) const { return ((flags&PcodeOp::indirect_store)!=0); }	///< Return \b true if \b this INDIRECT is caused by STORE
@@ -202,7 +206,7 @@ public:
   /// \brief Return \b true if output is 1-bit boolean
   bool isCalculatedBool(void) const { return ((flags&(PcodeOp::calculated_bool|PcodeOp::booloutput))!=0); }
   /// \brief Return \b true if we have already examined this cpool
-  bool isCpoolTransformed(void) const { return ((flags&PcodeOp::is_cpool_transformed)!=0); }
+  bool isCpoolTransformed(void) const { return ((addlflags&PcodeOp::is_cpool_transformed)!=0); }
   bool isCollapsible(void) const; ///< Return \b true if this can be collapsed to a COPY of a constant
   /// \brief Return \b true if this LOADs or STOREs from a dynamic \e spacebase pointer
   bool usesSpacebasePtr(void) const { return ((flags&PcodeOp::spacebase_ptr)!=0); }
@@ -218,7 +222,6 @@ public:
   PcodeOp *target(void) const;	///< Return starting op for instruction associated with this op
   uintb getNZMaskLocal(bool cliploop) const; ///< Calculate known zero bits for output to this op
   int4 compareOrder(const PcodeOp *bop) const; ///< Compare the control-flow order of this and \e bop
-  void push(PrintLanguage *lng) const { opcode->push(lng,this); } ///< Push this op as a display token
   void printRaw(ostream &s) const { opcode->printRaw(s,this); }	///< Print raw info about this op to stream
   const string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
   void printDebug(ostream &s) const; ///< Print debug description of this op to stream
@@ -247,6 +250,7 @@ class PcodeOpBank {
   list<PcodeOp *> deadlist;		///< List of \e dead PcodeOps
   list<PcodeOp *> alivelist;		///< List of \e alive PcodeOps
   list<PcodeOp *> storelist;		///< List of STORE PcodeOps
+  list<PcodeOp *> loadlist;		///< list of LOAD PcodeOps
   list<PcodeOp *> returnlist;		///< List of RETURN PcodeOps
   list<PcodeOp *> useroplist;		///< List of user-defined PcodeOps
   list<PcodeOp *> deadandgone;		///< List of retired PcodeOps

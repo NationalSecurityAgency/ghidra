@@ -630,17 +630,17 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 				tool = runningTools[0];
 			}
 		}
-	
+
 		assertNotNull("Did not find a single running " + toolName + " tool", tool);
 		assertEquals("Running tool is not " + toolName, toolName, tool.getName());
-	
+
 		return tool;
 	}
 
 	private void initializeToolChestToJustCodeBrowser() {
 		final ToolServices toolServices = frontEndTool.getToolServices();
 		final ToolChest toolChest = toolServices.getToolChest();
-	
+
 		final AtomicReference<String> failedTool = new AtomicReference<>();
 		runSwing(() -> {
 			ToolTemplate[] toolTemplates = toolChest.getToolTemplates();
@@ -653,9 +653,9 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 					}
 				}
 			}
-	
+
 		});
-	
+
 		String toolName = failedTool.get();
 		assertNull("Failed to remove tool: " + toolName, toolName);
 		assertEquals("Did not remove tools as expected", 1, toolChest.getToolCount());
@@ -690,7 +690,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		DockingActionIf createAction = getAction("Create Tool");
 		performAction(createAction, true);
 		PluginTool[] tools = frontEndTool.getProject().getToolManager().getRunningTools();
-		final PluginTool tool = (PluginTool) tools[0];
+		final PluginTool tool = tools[0];
 		runSwing(() -> {
 			try {
 				tool.addPlugin(CodeBrowserPlugin.class.getName());

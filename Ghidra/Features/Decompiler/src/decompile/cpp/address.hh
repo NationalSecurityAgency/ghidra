@@ -80,6 +80,7 @@ public:
   int4 overlap(int4 skip,const Address &op,int4 size) const; ///< Determine how two address ranges overlap
   bool isContiguous(int4 sz,const Address &loaddr,int4 losz) const; ///< Does \e this form a contigous range with \e loaddr
   bool isConstant(void) const; ///< Is this a \e constant \e value
+  void renormalize(int4 size);	///< Make sure there is a backing JoinRecord if \b this is in the \e join space
   bool isJoin(void) const;	///< Is this a \e join \e value
   void saveXml(ostream &s) const; ///< Save this to a stream as an XML tag
   void saveXml(ostream &s,int4 size) const; ///< Save this and a size to a stream as an XML tag
@@ -481,6 +482,24 @@ inline uintb pcode_right(uintb val,int4 sa) {
 inline uintb pcode_left(uintb val,int4 sa) {
   if (sa >= 8*sizeof(uintb)) return 0;
   return val << sa;
+}
+
+/// \brief Calculate smallest mask that covers the given value
+///
+/// Calculcate a mask that covers either the least significant byte, uint2, uint4, or uint8,
+/// whatever is smallest.
+/// \param val is the given value
+/// \return the minimal mask
+inline uintb minimalmask(uintb val)
+
+{
+  if (val > 0xffffffff)
+    return ~((uintb)0);
+  if (val > 0xffff)
+    return 0xffffffff;
+  if (val > 0xff)
+    return 0xffff;
+  return 0xff;
 }
 
 extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-bit is set

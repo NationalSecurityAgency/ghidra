@@ -59,7 +59,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		Set<Function> functions = filterFunctions(program, dataType, monitor);
 
 		try {
-			ParallelDecompiler.decompileFunctions(qCallback, program, functions, monitor);
+			ParallelDecompiler.decompileFunctions(qCallback, functions, monitor);
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt(); // reset the flag
@@ -83,7 +83,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		Set<Function> functions = filterFunctions(program, dataType, monitor);
 
 		try {
-			ParallelDecompiler.decompileFunctions(qCallback, program, functions, monitor);
+			ParallelDecompiler.decompileFunctions(qCallback, functions, monitor);
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt(); // reset the flag

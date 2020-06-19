@@ -91,7 +91,7 @@ public interface SymbolTable {
 	 * @param namespace the namespace of the symbol.
 	 * @param source the source of this symbol
 	 * <br>Some symbol types, such as function symbols, can set the source to Symbol.DEFAULT.
-	 *
+	 * @return new code or function symbol
 	 * @throws IllegalArgumentException if you try to set the source to DEFAULT for a symbol type
 	 * that doesn't allow it, or an improper addr if specified
 	 */

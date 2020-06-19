@@ -24,6 +24,7 @@ import java.awt.event.KeyListener;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 
+import docking.action.MultipleKeyAction;
 import docking.actions.KeyBindingUtils;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
@@ -127,7 +128,8 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		}
 
 		// some known special cases that we don't wish to process
-		if (!isValidContextForKeyStroke(KeyStroke.getKeyStrokeForEvent(event))) {
+		KeyStroke ks = KeyStroke.getKeyStrokeForEvent(event);
+		if (!isValidContextForKeyStroke(ks)) {
 			return false;
 		}
 
@@ -135,7 +137,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false;
 		}
 
-		KeyBindingPrecedence keyBindingPrecedence = action.getKeyBindingPrecedence();
+		KeyBindingPrecedence keyBindingPrecedence = getValidKeyBindingPrecedence(action);
 		if (keyBindingPrecedence == null) {
 			// Odd Code: we use the precedence as a signal to say that, when it is null, there
 			//           are no valid bindings to be processed.  We used to have a isValidContext()
@@ -155,6 +157,15 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			   processActionAtPrecedence(DefaultLevel, keyBindingPrecedence, action, event) ||
 			   throwAssertException();
 		// @formatter:on
+	}
+
+	private KeyBindingPrecedence getValidKeyBindingPrecedence(DockingKeyBindingAction action) {
+
+		if (action instanceof MultipleKeyAction) {
+			MultipleKeyAction multiAction = (MultipleKeyAction) action;
+			return multiAction.geValidKeyBindingPrecedence(focusProvider.getFocusOwner());
+		}
+		return action.getKeyBindingPrecedence();
 	}
 
 	/**
@@ -218,7 +229,13 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	private boolean isValidContextForKeyStroke(KeyStroke keyStroke) {
 		Window activeWindow = focusProvider.getActiveWindow();
 		if (activeWindow instanceof DockingDialog) {
-			return false; // we don't want to process our key bindings when in DockingDialogs
+
+			// The choice to ignore modal dialogs was made long ago.  We cannot remember why the
+			// choice was made, but speculate that odd things can happen when keybindings are 
+			// processed with modal dialogs open.  For now, do not let key bindings get processed 
+			// for modal dialogs.  This can be changed in the future if needed.   
+			DockingDialog dialog = (DockingDialog) activeWindow;
+			return !dialog.isModal();
 		}
 		return true; // default case; allow it through
 	}

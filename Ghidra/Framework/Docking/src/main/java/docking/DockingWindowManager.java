@@ -354,14 +354,32 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Get the window which contains the specified Provider's component.
+	 * Get the window that contains the specified Provider's component
 	 * @param provider component provider
-	 * @return window or null if component is not visible or not found.
+	 * @return window or null if component is not visible or not found
 	 */
 	public Window getProviderWindow(ComponentProvider provider) {
 		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
 		if (placeholder != null) {
 			return root.getWindow(placeholder);
+		}
+		return null;
+	}
+
+	/**
+	 * Get the provider that contains the specified component
+	 * @param c the component
+	 * @return the provider; null if now containing provider is found
+	 */
+	public ComponentProvider getProvider(Component c) {
+		if (c != null) {
+			DockableComponent dc = getDockableComponent(c);
+			if (dc != null) {
+				ComponentPlaceholder placeholder = dc.getComponentWindowingPlaceholder();
+				if (placeholder != null) {
+					return placeholder.getProvider();
+				}
+			}
 		}
 		return null;
 	}
@@ -1245,7 +1263,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		root.update(); // do this before rebuilding the menu, as new windows may be opened
 		buildComponentMenu();
-		SystemUtilities.runSwingLater(() -> updateFocus());
+		Swing.runLater(() -> updateFocus());
 	}
 
 	private void updateFocus() {
@@ -1292,7 +1310,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		SystemUtilities.runSwingLater(() -> {
+		Swing.runLater(() -> {
 			KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 			Window activeWindow = kfm.getActiveWindow();
 			if (activeWindow == null) {
@@ -1480,7 +1498,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		// Note: do this later, since, during this callback, component providers can do 
 		//       things that break focus (e.g., launch a modal dialog).  By doing this later, 
 		//       it gives the java focus engine a chance to get in the correct state.
-		SystemUtilities.runSwingLater(() -> setFocusedComponent(placeholder));
+		Swing.runLater(() -> setFocusedComponent(placeholder));
 	}
 
 	private boolean ensureDockableComponentContainsFocusOwner(Component newFocusComponent,
@@ -1515,7 +1533,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		// else use last focus component in window
 		WindowNode node = root.getNodeForWindow(window);
 		if (node == null) {
-			throw new AssertException("Cant find node for window!!");
+			return null;
 		}
 
 		// NOTE: We only allow focus within a window on a component that belongs to within a
@@ -1610,17 +1628,23 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private boolean isMyWindow(Window win) {
-		if (root == null) {
+		if (root == null || win == null) {
 			return false;
 		}
-		if (root.getMainWindow() == win) {
+
+		Window rootFrame = root.getMainWindow();
+		if (rootFrame == win) {
 			return true;
 		}
-		Iterator<DetachedWindowNode> iter = root.getDetachedWindows().iterator();
-		while (iter.hasNext()) {
-			if (iter.next().getWindow() == win) {
-				return true;
-			}
+
+		WindowNode node = root.getNodeForWindow(win);
+		if (node != null) {
+			return true;
+		}
+
+		// see if the given window is a child of the root node's frame
+		if (SwingUtilities.isDescendingFrom(win, rootFrame)) {
+			return true;
 		}
 		return false;
 	}
@@ -1704,10 +1728,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		};
 
 		if (provider.isModal()) {
-			SystemUtilities.runSwingNow(r);
+			Swing.runNow(r);
 		}
 		else {
-			SystemUtilities.runIfSwingOrPostSwingLater(r);
+			Swing.runIfSwingOrRunLater(r);
 		}
 	}
 
@@ -2137,12 +2161,43 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Returns the global action context for the tool
-	 * @return  the global action context for the tool
+	 * Returns the default action context for the tool
+	 * @return the default action context for the tool
 	 */
-	public ActionContext getGlobalActionContext() {
+	public ActionContext getDefaultToolContext() {
 		return defaultProvider == null ? new ActionContext()
 				: defaultProvider.getActionContext(null);
+	}
+
+	/**
+	 * Gets the {@link ActionContext} appropriate for the given action.  This will normally
+	 * be the context from the currently focused {@link ComponentProvider}.  If that
+	 * context is not valid for the given action and the action supports using the default
+	 * tool context, then the default tool context will be returned.  Otherwise, returns null.
+	 * 
+	 * @param action the action for which to get an {@link ActionContext}
+	 * @return the {@link ActionContext} appropriate for the given action or null
+	 */
+	public ActionContext getActionContext(DockingActionIf action) {
+		ComponentProvider provider = getActiveComponentProvider();
+		ActionContext context = provider == null ? null : provider.getActionContext(null);
+
+		if (context == null) {
+			context = new ActionContext(provider, null);
+		}
+
+		if (action.isValidContext(context)) {
+			return context;
+		}
+
+		if (action.supportsDefaultToolContext()) {
+			ActionContext toolContext = getDefaultToolContext();
+			if (action.isValidContext(toolContext)) {
+				return toolContext;
+			}
+		}
+		return context;
+
 	}
 
 	void notifyContextListeners(ComponentPlaceholder placeHolder, ActionContext actionContext) {

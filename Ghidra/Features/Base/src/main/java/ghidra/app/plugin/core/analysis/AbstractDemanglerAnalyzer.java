@@ -233,7 +233,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 		log.appendMsg(getName(),
 			"Failed to apply mangled symbol at " + address + "; name:  " +
-				demangled.getMangledName() + failMessage);
+				demangled.getMangledString() + failMessage);
 	}
 
 	protected String cleanSymbol(Address address, String name) {

@@ -23,7 +23,8 @@
 
 // @category Analysis 
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.function.Consumer;
 
 import org.apache.commons.collections4.IteratorUtils;
 
@@ -33,6 +34,8 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.tablechooser.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.pcode.PcodeOpAST;
 import ghidra.util.task.TaskMonitor;
 
 public class CompareFunctionSizesScript extends GhidraScript {
@@ -41,51 +44,44 @@ public class CompareFunctionSizesScript extends GhidraScript {
 	protected void run() throws Exception {
 
 		if (isRunningHeadless()) {
-			printf("This script cannot be run headlessly.\n");
+			println("This script cannot be run headlessly");
 			return;
 		}
 
-		DecompilerCallback<FuncBodyData> callback = new DecompilerCallback<FuncBodyData>(
+		TableChooserDialog tableDialog =
+			createTableChooserDialog(currentProgram.getName() + " function sizes", null);
+		configureTableColumns(tableDialog);
+		tableDialog.show();
+
+		DecompilerCallback<FuncBodyData> callback = new DecompilerCallback<>(
 			currentProgram, new CompareFunctionSizesScriptConfigurer(currentProgram)) {
 
 			@Override
 			public FuncBodyData process(DecompileResults results, TaskMonitor tMonitor)
 					throws Exception {
-				InstructionIterator instIter = currentProgram.getListing().getInstructions(
-					results.getFunction().getBody(), true);
-				int numInstructions = IteratorUtils.size(instIter);
-				//indicate failure of decompilation by having 0 high pcode ops
+
+				Listing listing = currentProgram.getListing();
+				Function function = results.getFunction();
+				InstructionIterator it = listing.getInstructions(function.getBody(), true);
+				int numInstructions = IteratorUtils.size(it);
+
+				// indicate failure of decompilation by having 0 high pcode ops
 				int numHighOps = 0;
-				if (results.getHighFunction() != null &&
-					results.getHighFunction().getPcodeOps() != null) {
-					numHighOps = IteratorUtils.size(results.getHighFunction().getPcodeOps());
+				HighFunction highFunction = results.getHighFunction();
+				if (highFunction != null) {
+					Iterator<PcodeOpAST> ops = highFunction.getPcodeOps();
+					if (ops != null) {
+						numHighOps = IteratorUtils.size(ops);
+					}
 				}
-				return new FuncBodyData(results.getFunction(), numInstructions, numHighOps);
+				return new FuncBodyData(function, numInstructions, numHighOps);
 			}
 		};
 
-		Set<Function> funcsToDecompile = new HashSet<>();
-		FunctionIterator fIter = currentProgram.getFunctionManager().getFunctionsNoStubs(true);
-		fIter.forEach(e -> funcsToDecompile.add(e));
-
-		if (funcsToDecompile.isEmpty()) {
-			popup("No functions to decompile!");
-			return;
-		}
-
-		List<FuncBodyData> funcBodyData = ParallelDecompiler.decompileFunctions(callback,
-			currentProgram, funcsToDecompile, monitor);
-
-		monitor.checkCanceled();
-
-		TableChooserDialog tableDialog =
-			createTableChooserDialog(currentProgram.getName() + " function sizes", null);
-		configureTableColumns(tableDialog);
-
-		tableDialog.show();
-		for (FuncBodyData bodyData : funcBodyData) {
-			tableDialog.add(bodyData);
-		}
+		Consumer<FuncBodyData> consumer = data -> tableDialog.add(data);
+		FunctionIterator it = currentProgram.getFunctionManager().getFunctionsNoStubs(true);
+		ParallelDecompiler.decompileFunctions(callback, currentProgram, it, consumer, monitor);
+		callback.dispose();
 	}
 
 	class CompareFunctionSizesScriptConfigurer implements DecompileConfigurer {
@@ -210,7 +206,7 @@ public class CompareFunctionSizesScript extends GhidraScript {
 			}
 		};
 
-		ColumnDisplay<Integer> highOpsColumn = new AbstractComparableColumnDisplay<Integer>() {
+		ColumnDisplay<Integer> highOpsColumn = new AbstractComparableColumnDisplay<>() {
 
 			@Override
 			public Integer getColumnValue(AddressableRowObject rowObject) {
@@ -223,7 +219,7 @@ public class CompareFunctionSizesScript extends GhidraScript {
 			}
 		};
 
-		ColumnDisplay<Integer> instructionColumn = new AbstractComparableColumnDisplay<Integer>() {
+		ColumnDisplay<Integer> instructionColumn = new AbstractComparableColumnDisplay<>() {
 
 			@Override
 			public Integer getColumnValue(AddressableRowObject rowObject) {
@@ -236,7 +232,7 @@ public class CompareFunctionSizesScript extends GhidraScript {
 			}
 		};
 
-		ColumnDisplay<Double> ratioColumn = new AbstractComparableColumnDisplay<Double>() {
+		ColumnDisplay<Double> ratioColumn = new AbstractComparableColumnDisplay<>() {
 
 			@Override
 			public Double getColumnValue(AddressableRowObject rowObject) {

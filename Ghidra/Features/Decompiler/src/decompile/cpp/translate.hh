@@ -201,6 +201,7 @@ public:
   bool isFloatExtension(void) const { return (pieces.size() == 1); }	///< Does this record extend a float varnode
   const VarnodeData &getPiece(int4 i) const { return pieces[i]; }	///< Get the i-th piece
   const VarnodeData &getUnified(void) const { return unified; }		///< Get the Varnode whole
+  Address getEquivalentAddress(uintb offset,int4 &pos) const;	///< Given offset in \join space, get equivalent address of piece
   bool operator<(const JoinRecord &op2) const; ///< Compare records lexigraphically by pieces
 };
 
@@ -242,6 +243,7 @@ protected:
   void copySpaces(const AddrSpaceManager *op2);	///< Copy spaces from another manager
   void addSpacebasePointer(SpacebaseSpace *basespace,const VarnodeData &ptrdata,int4 truncSize,bool stackGrowth); ///< Set the base register of a spacebase space
   void insertResolver(AddrSpace *spc,AddressResolver *rsolv); ///< Override the base resolver for a space
+  JoinRecord *findJoinInternal(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
 public:
   AddrSpaceManager(void);	///< Construct an empty address space manager
   virtual ~AddrSpaceManager(void); ///< Destroy the manager
@@ -272,6 +274,9 @@ public:
 
   /// \brief Build a logical whole from register pairs
   Address constructJoinAddress(const Translate *translate,const Address &hiaddr,int4 hisz,const Address &loaddr,int4 losz);
+
+  /// \brief Make sure a possibly offset \e join address has a proper JoinRecord
+  void renormalizeJoinAddress(Address &addr,int4 size);
 };
 
 /// \brief The interface to a translation engine for a processor.

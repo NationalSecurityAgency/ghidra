@@ -40,14 +40,15 @@ class PointerDB extends DataTypeDB implements Pointer {
 	private String displayName;
 
 	/**
-	 * <code>isEquivalentActive</code> is used to break cyclical recursion
-	 * when performing an {@link #isEquivalent(DataType)} checks on pointers
-	 * which must also check the base datatype equivelency.
+	 * <code>isEquivalentActive</code> is used to break cyclical recursion when
+	 * performing an {@link #isEquivalent(DataType)} checks on pointers which must
+	 * also check the base datatype equivelency.
 	 */
 	private ThreadLocal<Boolean> isEquivalentActive = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
 	/**
 	 * Constructor
+	 * 
 	 * @param dataMgr
 	 * @param cache
 	 * @param adapter
@@ -307,6 +308,15 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return false;
 		}
 
+		// TODO: The pointer deep-dive equivalence checking on the referenced datatype can 
+		// cause types containing pointers (composites, functions) to conflict when in
+		// reality the referenced type simply has multiple implementations which differ.
+		// Although without doing this Ghidra may fail to resolve dependencies which differ
+		// from those already contained within a datatype manager.
+		// Ghidra's rigid datatype relationships prevent the flexibility to handle 
+		// multiple implementations of a named datatype without inducing a conflicted
+		// datatype hierarchy.
+
 		if (isEquivalentActive.get()) {
 			return true;
 		}
@@ -359,11 +369,12 @@ class PointerDB extends DataTypeDB implements Pointer {
 	/**
 	 * @see ghidra.program.model.data.DataType#setCategoryPath(ghidra.program.model.data.CategoryPath)
 	 *
-	 * Note: this does get called, but in a tricky way.  If externally, someone calls
-	 * setCategoryPath, nothing happens because it is overridden in this class to do nothing.
-	 * However, if updatePath is called, then this method calls super.setCategoryPath which
-	 * bypasses the "overriddenness" of setCategoryPath, resulting in this method getting called.
-	
+	 *      Note: this does get called, but in a tricky way. If externally, someone
+	 *      calls setCategoryPath, nothing happens because it is overridden in this
+	 *      class to do nothing. However, if updatePath is called, then this method
+	 *      calls super.setCategoryPath which bypasses the "overriddenness" of
+	 *      setCategoryPath, resulting in this method getting called.
+	 * 
 	 */
 	@Override
 	protected void doSetCategoryPathRecord(long categoryID) throws IOException {

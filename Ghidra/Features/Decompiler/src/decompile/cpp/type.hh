@@ -73,7 +73,9 @@ protected:
     enumtype = 4,		///< An enumeration type (as well as an integer)
     poweroftwo = 8,		///< An enumeration type where all values are of 2^^n form
     utf16 = 16,			///< 16-bit wide chars in unicode UTF16
-    utf32 = 32			///< 32-bit wide chars in unicode UTF32
+    utf32 = 32,			///< 32-bit wide chars in unicode UTF32
+    opaque_string = 64,		///< Structure that should be treated as a string
+    variable_length = 128	///< May be other structures with same name different lengths
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
@@ -85,6 +87,7 @@ protected:
   void restoreXmlBasic(const Element *el);	///< Recover basic data-type properties
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore data-type from XML
   static uint8 hashName(const string &nm);	///< Produce a data-type id by hashing the type name
+  static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
 public:
   /// Construct the base data-type copying low-level properties of another
   Datatype(const Datatype &op) { size = op.size; name=op.name; metatype=op.metatype; flags=op.flags; id=op.id; }
@@ -94,12 +97,15 @@ public:
   Datatype(int4 s,type_metatype m,const string &n) { name=n; size=s; metatype=m; flags=0; id=0; }
   virtual ~Datatype(void) {}	///< Destructor
   bool isCoreType(void) const { return ((flags&coretype)!=0); }	///< Is this a core data-type
-  bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32))!=0); }	///< Does this print as a 'char'
+  bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32|opaque_string))!=0); }	///< Does this print as a 'char'
   bool isEnumType(void) const { return ((flags&enumtype)!=0); }		///< Is this an enumerated type
   bool isPowerOfTwo(void) const { return ((flags&poweroftwo)!=0); }	///< Is this a flag-based enumeration
   bool isASCII(void) const { return ((flags&chartype)!=0); }	///< Does this print as an ASCII 'char'
   bool isUTF16(void) const { return ((flags&utf16)!=0); }	///< Does this print as UTF16 'wchar'
   bool isUTF32(void) const { return ((flags&utf32)!=0); }	///< Does this print as UTF32 'wchar'
+  bool isVariableLength(void) const { return ((flags&variable_length)!=0); }	///< Is \b this a variable length structure
+  bool hasSameVariableBase(const Datatype *ct) const;		///< Are these the same variable length data-type
+  bool isOpaqueString(void) const { return ((flags&opaque_string)!=0); }	///< Is \b this an opaquely encoded string
   uint4 getInheritable(void) const { return (flags & coretype); }	///< Get properties pointers inherit
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
   uint8 getId(void) const { return id; }			///< Get the type id
@@ -107,6 +113,8 @@ public:
   const string &getName(void) const { return name; }		///< Get the type name
   virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
   virtual Datatype *getSubType(uintb off,uintb *newoff) const; ///< Recover component data-type one-level down
+  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual int4 numDepend(void) const { return 0; }	///< Return number of component sub-types
   virtual Datatype *getDepend(int4 index) const { return (Datatype *)0; }	///< Return the i-th component sub-type
   virtual void printNameBase(ostream &s) const { if (!name.empty()) s<<name[0]; } ///< Print name as short prefix
@@ -115,6 +123,7 @@ public:
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
   virtual void saveXml(ostream &s) const;	///< Serialize the data-type to XML
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
+  int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
   void saveXmlBasic(ostream &s) const;	///< Save basic data-type properties
   void saveXmlRef(ostream &s) const;	///< Write an XML reference of \b this to stream
 };
@@ -303,6 +312,7 @@ protected:
   vector<TypeField> field;			///< The list of fields
   void setFields(const vector<TypeField> &fd);	///< Establish fields for \b this
   int4 getFieldIter(int4 off) const;		///< Get index into field list
+  int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
@@ -311,6 +321,8 @@ public:
   vector<TypeField>::const_iterator endField(void) const { return field.end(); }	///< End of fields
   const TypeField *getField(int4 off,int4 sz,int4 *newoff) const;	///< Get field based on offset
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
@@ -369,6 +381,8 @@ public:
   Scope *getMap(void) const;	///< Get the symbol table indexed by \b this
   Address getAddress(uintb off,int4 sz,const Address &point) const;	///< Construct an Address given an offset
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
+  virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const; // For tree structure
   virtual Datatype *clone(void) const { return new TypeSpacebase(*this); }
@@ -411,7 +425,7 @@ public:
   Architecture *getArch(void) const { return glb; }	///< Get the Architecture object
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
-  bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize);	///< Set fields on a TypeStruct
+  bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeStruct
   bool setEnumValues(const vector<string> &namelist,
 		      const vector<uintb> &vallist,
 		      const vector<bool> &assignlist,
@@ -423,8 +437,8 @@ public:
   Datatype *getBase(int4 s,type_metatype m);			///< Get atomic type
   Datatype *getBase(int4 s,type_metatype m,const string &n);	///< Get named atomic type
   TypeCode *getTypeCode(void);					///< Get an "anonymous" function data-type
-  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type
-  TypePointer *getTypePointerAbsolute(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
+  TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type, stripping an ARRAY level
+  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
   TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure
@@ -446,5 +460,20 @@ public:
   void setCoreType(const string &name,int4 size,type_metatype meta,bool chartp);	///< Create a core data-type
   void cacheCoreTypes(void);				///< Cache common types
 };
+
+/// Order data-types, with special handling of the \e bool data-type. Data-types are compared
+/// using the normal ordering, but \e bool is ordered after all other data-types. A return value
+/// of 0 indicates the data-types are the same, -1 indicates that \b this is prefered (ordered earlier),
+/// and 1 indicates \b this is ordered later.
+/// \param op is the other data-type to compare with \b this
+/// \return -1, 0, or 1
+inline int4 Datatype::typeOrderBool(const Datatype &op) const
+
+{
+  if (this == &op) return 0;
+  if (metatype == TYPE_BOOL) return 1;		// Never prefer bool over other data-types
+  if (op.metatype == TYPE_BOOL) return -1;
+  return compare(op,10);
+}
 
 #endif

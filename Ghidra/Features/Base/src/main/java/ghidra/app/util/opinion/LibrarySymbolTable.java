@@ -562,14 +562,18 @@ class LibrarySymbolTable {
 		}
 		// TODO: should consider checking version instead of last modified
 		XmlPullParser parser = XmlPullParserFactory.create(exportsFile, ERROR_HANDLER, false);
-		XmlElement start = parser.start("LIBRARY");
-		String path = start.getAttribute("PATH");
-		String dateString = start.getAttribute("DATE");
-		parser.dispose();
-		Date date = TIMESTAMP_FORMAT.parse(dateString);
-		long lastModifiedSeconds = (libraryFile.lastModified() / 1000) * 1000; // file time in seconds
-		return date.equals(new Date(lastModifiedSeconds)) &&
-			path.equalsIgnoreCase(libraryFile.getAbsolutePath());
+		try {
+			XmlElement start = parser.start("LIBRARY");
+			String path = start.getAttribute("PATH");
+			String dateString = start.getAttribute("DATE");
+			Date date = TIMESTAMP_FORMAT.parse(dateString);
+			long lastModifiedSeconds = (libraryFile.lastModified() / 1000) * 1000; // file time in seconds
+			return date.equals(new Date(lastModifiedSeconds)) &&
+				path.equalsIgnoreCase(libraryFile.getAbsolutePath());
+		}
+		finally {
+			parser.dispose();
+		}
 	}
 
 	private static final ErrorHandler ERROR_HANDLER = new ErrorHandler() {

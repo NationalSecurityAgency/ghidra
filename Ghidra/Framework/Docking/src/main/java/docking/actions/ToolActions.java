@@ -18,6 +18,8 @@ package docking.actions;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.Action;
 import javax.swing.KeyStroke;
@@ -41,6 +43,9 @@ import util.CollectionUtils;
  */
 public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
+	// matches the full action name (e.g., "Action Name (Owner Name)"
+	private Pattern ACTION_NAME_PATTERN = Pattern.compile("(.+) \\((.+)\\)");
+
 	private ActionToGuiHelper actionGuiHelper;
 
 	/*
@@ -57,6 +62,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	private ToolOptions keyBindingOptions;
 	private Tool dockingTool;
 	private KeyBindingsManager keyBindingsManager;
+	private OptionsChangeListener optionChangeListener = (options, optionName, oldValue,
+			newValue) -> updateKeyBindingsFromOptions(options, optionName, (KeyStroke) newValue);
 
 	/**
 	 * Construct an ActionManager
@@ -69,6 +76,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		this.actionGuiHelper = actionToGuiHelper;
 		this.keyBindingsManager = new KeyBindingsManager(tool);
 		this.keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
+		this.keyBindingOptions.addOptionsChangeListener(optionChangeListener);
 
 		createReservedKeyBindings();
 		SharedActionRegistry.installSharedActions(tool, this);
@@ -356,13 +364,33 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		return actionsByNameByOwner.get(owner).get(name);
 	}
 
+	private void updateKeyBindingsFromOptions(ToolOptions options, String optionName,
+			KeyStroke newKs) {
+
+		// note: the 'shared actions' update themselves, so we only need to handle standard actions 
+
+		Matcher matcher = ACTION_NAME_PATTERN.matcher(optionName);
+		matcher.find();
+		String name = matcher.group(1);
+		String owner = matcher.group(2);
+
+		Set<DockingActionIf> actions = actionsByNameByOwner.get(owner).get(name);
+		for (DockingActionIf action : actions) {
+			KeyStroke oldKs = action.getKeyBinding();
+			if (Objects.equals(oldKs, newKs)) {
+				continue; // prevent bouncing
+			}
+			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKs));
+		}
+	}
+
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 		if (!evt.getPropertyName().equals(DockingActionIf.KEYBINDING_DATA_PROPERTY)) {
 			return;
 		}
 
-		DockingAction action = (DockingAction) evt.getSource();
+		DockingActionIf action = (DockingActionIf) evt.getSource();
 		if (!action.getKeyBindingType().isManaged()) {
 			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu 
 			// in the case that this action is one of the tool's special actions
@@ -376,13 +404,12 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 			newKeyStroke = newKeyBindingData.getKeyBinding();
 		}
 
-		Options opt = dockingTool.getOptions(DockingToolConstants.KEY_BINDINGS);
-		KeyStroke optKeyStroke = opt.getKeyStroke(action.getFullName(), null);
+		KeyStroke optKeyStroke = keyBindingOptions.getKeyStroke(action.getFullName(), null);
 		if (newKeyStroke == null) {
-			opt.removeOption(action.getFullName());
+			keyBindingOptions.removeOption(action.getFullName());
 		}
 		else if (!newKeyStroke.equals(optKeyStroke)) {
-			opt.setKeyStroke(action.getFullName(), newKeyStroke);
+			keyBindingOptions.setKeyStroke(action.getFullName(), newKeyStroke);
 			keyBindingsChanged();
 		}
 	}
@@ -424,6 +451,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	 * 
 	 * @param placeholder the placeholder containing information related to the action it represents
 	 */
+	@Override
 	public void registerSharedActionPlaceholder(SharedDockingActionPlaceholder placeholder) {
 
 		String name = placeholder.getName();

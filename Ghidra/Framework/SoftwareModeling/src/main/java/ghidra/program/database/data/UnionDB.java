@@ -27,8 +27,6 @@ import ghidra.util.Msg;
 
 /**
  * Database implementation for the Union data type.
- *
- *
  */
 class UnionDB extends CompositeDB implements Union {
 
@@ -38,6 +36,7 @@ class UnionDB extends CompositeDB implements Union {
 
 	/**
 	 * Constructor
+	 * 
 	 * @param dataMgr
 	 * @param cache
 	 * @param compositeAdapter
@@ -57,8 +56,8 @@ class UnionDB extends CompositeDB implements Union {
 
 		try {
 			long[] ids = componentAdapter.getComponentIdsInComposite(key);
-			for (int i = 0; i < ids.length; i++) {
-				Record rec = componentAdapter.getRecord(ids[i]);
+			for (long id : ids) {
+				Record rec = componentAdapter.getRecord(id);
 				components.add(new DataTypeComponentDB(dataMgr, componentAdapter, this, rec));
 			}
 		}
@@ -84,13 +83,17 @@ class UnionDB extends CompositeDB implements Union {
 	}
 
 	@Override
-	public DataTypeComponent add(DataType dataType, int length, String name, String comment) {
+	public DataTypeComponent add(DataType dataType, int length, String componentName,
+			String comment) throws IllegalArgumentException {
 		lock.acquire();
 		try {
 			checkDeleted();
-			DataTypeComponent dtc = doAdd(dataType, length, name, comment);
+			DataTypeComponent dtc = doAdd(dataType, length, componentName, comment, true);
 			adjustLength(true, true);
 			return dtc;
+		}
+		catch (DataTypeDependencyException e) {
+			throw new IllegalArgumentException(e.getMessage(), e);
 		}
 		finally {
 			lock.release();
@@ -117,14 +120,17 @@ class UnionDB extends CompositeDB implements Union {
 		return length;
 	}
 
-	private DataTypeComponent doAdd(DataType dataType, int length, String name, String comment) {
+	private DataTypeComponent doAdd(DataType dataType, int length, String name, String comment,
+			boolean validateAlignAndNotify) throws DataTypeDependencyException {
 
 		validateDataType(dataType);
 
 		dataType = adjustBitField(dataType);
 
-		dataType = resolve(dataType);
-		checkAncestry(dataType);
+		if (validateAlignAndNotify) {
+			dataType = resolve(dataType);
+			checkAncestry(dataType);
+		}
 
 		length = getPreferredComponentLength(dataType, length);
 
@@ -161,7 +167,7 @@ class UnionDB extends CompositeDB implements Union {
 
 	@Override
 	public DataTypeComponent insert(int ordinal, DataType dataType, int length, String name,
-			String comment) {
+			String comment) throws IllegalArgumentException {
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -182,6 +188,9 @@ class UnionDB extends CompositeDB implements Union {
 
 			adjustLength(true, true);
 			return dtc;
+		}
+		catch (DataTypeDependencyException e) {
+			throw new IllegalArgumentException(e.getMessage(), e);
 		}
 		finally {
 			lock.release();
@@ -232,53 +241,72 @@ class UnionDB extends CompositeDB implements Union {
 		}
 	}
 
-	/**
-	 * Replaces the internal components of this union with components of the
-	 * given union.
-	 * @param dataType the union to get the component information from.
-	 * @throws IllegalArgumentException if any of the component data types
-	 * are not allowed to replace a component in this composite data type.
-	 * For example, suppose dt1 contains dt2. Therefore it is not valid
-	 * to replace a dt2 component with dt1 since this would cause a cyclic
-	 * dependency.
-	 */
 	@Override
 	public void replaceWith(DataType dataType) {
 		if (!(dataType instanceof Union)) {
 			throw new IllegalArgumentException();
 		}
-		doReplaceWith((Union) dataType, true, null);
-	}
-
-	void doReplaceWith(Union union, boolean notify, DataTypeConflictHandler handler) {
 		lock.acquire();
+		boolean isResolveCacheOwner = dataMgr.activateResolveCache();
 		try {
 			checkDeleted();
-
-			long oldMinAlignment = getMinimumAlignment();
-			for (int i = 0; i < components.size(); i++) {
-				DataTypeComponentDB dtc = components.get(i);
-				dtc.getDataType().removeParent(this);
-				removeComponent(dtc.getKey());
-			}
-			components.clear();
-
-			setAlignment(union, notify);
-
-			for (DataTypeComponent dtc : union.getComponents()) {
-				DataType dt = dtc.getDataType();
-				doAdd(dt, dtc.getLength(), dtc.getFieldName(), dtc.getComment());
-			}
-
-			adjustLength(notify, true); // TODO: VERIFY! is it always appropriate to set update time??
-
-			if (notify && (oldMinAlignment != getMinimumAlignment())) {
-				notifyAlignmentChanged();
-			}
-
+			doReplaceWith((Union) dataType, true);
+		}
+		catch (DataTypeDependencyException e) {
+			throw new IllegalArgumentException(e.getMessage(), e);
 		}
 		finally {
+			if (isResolveCacheOwner) {
+				dataMgr.flushResolveQueue(true);
+			}
 			lock.release();
+		}
+	}
+
+	void doReplaceWith(Union union, boolean notify)
+			throws DataTypeDependencyException {
+
+		// pre-resolved component types to catch dependency issues early
+		DataTypeComponent[] otherComponents = union.getComponents();
+		DataType[] resolvedDts = new DataType[otherComponents.length];
+		for (int i = 0; i < otherComponents.length; i++) {
+			resolvedDts[i] = doCheckedResolve(otherComponents[i].getDataType());
+			checkAncestry(resolvedDts[i]);
+		}
+
+		int oldLength = unionLength;
+		int oldMinAlignment = getMinimumAlignment();
+
+		for (int i = 0; i < components.size(); i++) {
+			DataTypeComponentDB dtc = components.get(i);
+			dtc.getDataType().removeParent(this);
+			removeComponent(dtc.getKey());
+		}
+		components.clear();
+
+		setAlignment(union, false);
+
+		for (int i = 0; i < otherComponents.length; i++) {
+			DataTypeComponent dtc = otherComponents[i];
+			doAdd(resolvedDts[i], dtc.getLength(), dtc.getFieldName(), dtc.getComment(), false);
+		}
+
+		adjustLength(false, false);
+
+		if (notify) {
+			if (oldMinAlignment != getMinimumAlignment()) {
+				notifyAlignmentChanged();
+			}
+			else if (oldLength != unionLength) {
+				notifySizeChanged();
+			}
+			else {
+				dataMgr.dataTypeChanged(this);
+			}
+		}
+
+		if (pointerPostResolveRequired) {
+			dataMgr.queuePostResolve(this, union);
 		}
 	}
 
@@ -321,6 +349,11 @@ class UnionDB extends CompositeDB implements Union {
 	}
 
 	@Override
+	public int getNumDefinedComponents() {
+		return getNumComponents();
+	}
+
+	@Override
 	public DataTypeComponent getComponent(int ordinal) {
 		lock.acquire();
 		try {
@@ -336,15 +369,20 @@ class UnionDB extends CompositeDB implements Union {
 	}
 
 	@Override
-	public DataTypeComponent[] getComponents() {
+	public DataTypeComponentDB[] getComponents() {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return components.toArray(new DataTypeComponent[components.size()]);
+			return components.toArray(new DataTypeComponentDB[components.size()]);
 		}
 		finally {
 			lock.release();
 		}
+	}
+
+	@Override
+	public DataTypeComponentDB[] getDefinedComponents() {
+		return getComponents();
 	}
 
 	@Override
@@ -419,7 +457,7 @@ class UnionDB extends CompositeDB implements Union {
 		baseDataType = resolve(baseDataType);
 
 		// Both aligned and unaligned bitfields use same adjustment
-		// unaligned must force bitfield placement at byte offset 0 
+		// unaligned must force bitfield placement at byte offset 0
 		int bitSize = bitfieldDt.getDeclaredBitSize();
 		int effectiveBitSize =
 			BitFieldDataType.getEffectiveBitSize(bitSize, baseDataType.getLength());
@@ -515,40 +553,54 @@ class UnionDB extends CompositeDB implements Union {
 	}
 
 	@Override
-	public boolean isEquivalent(DataType dt) {
-		if (dt == this) {
+	public boolean isEquivalent(DataType dataType) {
+
+		if (dataType == this) {
 			return true;
 		}
-		if (dt == null || !(dt instanceof Union)) {
+		if (!(dataType instanceof Union)) {
 			return false;
 		}
 
 		checkIsValid();
-		if (resolving) {
-			if (dt.getUniversalID().equals(getUniversalID())) {
+		if (resolving) { // actively resolving children
+			if (dataType.getUniversalID().equals(getUniversalID())) {
 				return true;
 			}
-			return DataTypeUtilities.equalsIgnoreConflict(getPathName(), dt.getPathName());
+			return DataTypeUtilities.equalsIgnoreConflict(getPathName(), dataType.getPathName());
 		}
-		Union union = (Union) dt;
-		if (isInternallyAligned() != union.isInternallyAligned() ||
-			isDefaultAligned() != union.isDefaultAligned() ||
-			isMachineAligned() != union.isMachineAligned() ||
-			getMinimumAlignment() != union.getMinimumAlignment() ||
-			getPackingValue() != union.getPackingValue()) {
-			// rely on component match instead of checking length
-			// since dynamic component sizes could affect length
-			return false;
+
+		Boolean isEquivalent = dataMgr.getCachedEquivalence(this, dataType);
+		if (isEquivalent != null) {
+			return isEquivalent;
 		}
-		DataTypeComponent[] myComps = getComponents();
-		DataTypeComponent[] otherComps = union.getComponents();
-		if (myComps.length != otherComps.length) {
-			return false;
-		}
-		for (int i = 0; i < myComps.length; i++) {
-			if (!myComps[i].isEquivalent(otherComps[i])) {
+
+		try {
+			isEquivalent = false;
+			Union union = (Union) dataType;
+			if (isInternallyAligned() != union.isInternallyAligned() ||
+				isDefaultAligned() != union.isDefaultAligned() ||
+				isMachineAligned() != union.isMachineAligned() ||
+				getMinimumAlignment() != union.getMinimumAlignment() ||
+				getPackingValue() != union.getPackingValue()) {
+				// rely on component match instead of checking length
+				// since dynamic component sizes could affect length
 				return false;
 			}
+			DataTypeComponent[] myComps = getComponents();
+			DataTypeComponent[] otherComps = union.getComponents();
+			if (myComps.length != otherComps.length) {
+				return false;
+			}
+			for (int i = 0; i < myComps.length; i++) {
+				if (!myComps[i].isEquivalent(otherComps[i])) {
+					return false;
+				}
+			}
+			isEquivalent = true;
+		}
+		finally {
+			dataMgr.putCachedEquivalence(this, dataType, isEquivalent);
 		}
 		return true;
 	}

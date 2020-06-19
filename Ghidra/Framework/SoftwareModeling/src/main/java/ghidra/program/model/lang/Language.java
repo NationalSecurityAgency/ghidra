@@ -227,13 +227,6 @@ public interface Language {
 	public Register getRegister(Address addr, int size);
 
 	/**
-	 * Return the list of labels for well-known locations.
-	 * 
-	 * @return AddressLabelPair[] empty array if there are no labels
-	 */
-	public List<AddressLabelInfo> getDefaultLabels();
-
-	/**
 	 * Get the default program counter register for this language if there is
 	 * one.
 	 * 
@@ -254,7 +247,8 @@ public interface Language {
 	public MemoryBlockDefinition[] getDefaultMemoryBlocks();
 
 	/**
-	 * Returns the default symbols for this language.
+	 * Returns the default symbols for this language.  This list does not 
+	 * contain registers.
 	 * @return the default symbols for this language
 	 */
 	public List<AddressLabelInfo> getDefaultSymbols();

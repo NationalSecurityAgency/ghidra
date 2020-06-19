@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,15 @@
  */
 package ghidra.program.model.block;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
 
 /**
  * <CODE>IsolatedEntryCodeSubModel</CODE> (S-model) defines subroutines with a
@@ -34,7 +33,7 @@ import java.util.LinkedList;
  * the set of addresses contained within each subroutine. Unlike the
  * OverlapCodeSubModel, the address set of a IsolatedEntryCodeSubModel
  * subroutine is permitted to span entry-points of other subroutines based upon
- * the possible flows from its' entry- point.
+ * the possible flows from its entry- point.
  *
  * @see ghidra.program.model.block.CodeBlockModel
  * @see ghidra.program.model.block.OverlapCodeSubModel
@@ -79,13 +78,15 @@ public class IsolatedEntrySubModel extends OverlapCodeSubModel {
     	
     	// Create address list which contains all other entry points for this M-model sub
         CodeBlock mSub = modelM.getCodeBlockAt(mStartAddr, monitor);
-        if (mSub == null)
-            return null;
+        if (mSub == null) {
+			return null;
+		}
         Address[] mEntryPts = mSub.getStartAddresses();
         ArrayList<Address> startSet = new ArrayList<Address>();
-        for (int i = 0; i < mEntryPts.length; i++) {
-            if (!mStartAddr.equals(mEntryPts[i]))
-                startSet.add(mEntryPts[i]);
+        for (Address mEntryPt : mEntryPts) {
+            if (!mStartAddr.equals(mEntryPt)) {
+				startSet.add(mEntryPt);
+			}
         }
 
 		// create a holder for the blockSet
@@ -100,20 +101,25 @@ public class IsolatedEntrySubModel extends OverlapCodeSubModel {
         // Build model-S subroutine from basic blocks
         while (!todoList.isEmpty()) {
         
-        	if (monitor.isCancelled())
-        		throw new CancelledException();
+        	if (monitor.isCancelled()) {
+				throw new CancelledException();
+			}
         		
         	// Get basic block at the specified address 
         	Address a = todoList.removeLast();  
-        	if (addrSet.contains(a) || startSet.contains(a)) // <<-- only difference from Model-O
-        		continue; // already processed this block or encountered another Model-M entry point  
+        	if (addrSet.contains(a) || startSet.contains(a))
+			 {
+				continue; // already processed this block or encountered another Model-M entry point  
+			}
 	        CodeBlock bblock = bbModel.getFirstCodeBlockContaining(a, monitor);
-	        if (bblock == null)
-	        	continue;
+	        if (bblock == null) {
+				continue;
+			}
 	        	
 	        // Verify that the block contains instructions
-	        if (listing.getInstructionAt(a) == null)
-	        	continue;
+	        if (listing.getInstructionAt(a) == null) {
+				continue;
+			}
 	        	
 	        // Add basic block to subroutine address set
 	        addrSet.add(bblock);

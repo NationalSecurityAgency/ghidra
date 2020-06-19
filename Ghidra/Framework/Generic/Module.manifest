@@ -6,3 +6,4 @@ MODULE FILE LICENSE: lib/log4j-core-2.12.1.jar Apache License 2.0
 MODULE FILE LICENSE: lib/commons-collections4-4.1.jar Apache License 2.0
 MODULE FILE LICENSE: lib/commons-lang3-3.9.jar Apache License 2.0
 MODULE FILE LICENSE: lib/commons-io-2.6.jar Apache License 2.0
+MODULE FILE LICENSE: lib/commons-text-1.6.jar Apache License 2.0

@@ -259,4 +259,14 @@ public class ElfRelocationContext {
 		}
 	}
 
+	/**
+	 * Get relocation address
+	 * @param baseAddress base address
+	 * @param relocOffset relocation offset relative to baseAddress
+	 * @return relocation address
+	 */
+	public Address getRelocationAddress(Address baseAddress, long relocOffset) {
+		return baseAddress.addWrap(relocOffset);
+	}
+
 }

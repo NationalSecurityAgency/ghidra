@@ -28,7 +28,8 @@ import docking.widgets.tree.*;
 import docking.widgets.tree.internal.DefaultGTreeDataTransformer;
 import docking.widgets.tree.support.GTreeRenderer;
 import ghidra.app.plugin.core.datamgr.*;
-import ghidra.app.plugin.core.datamgr.archive.*;
+import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
+import ghidra.app.plugin.core.datamgr.archive.FileArchive;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
@@ -269,7 +270,7 @@ public class DataTypeArchiveGTree extends GTree {
 		}
 
 		private void addCompositeStrings(Composite composite, List<String> results) {
-			DataTypeComponent[] components = composite.getComponents();
+			DataTypeComponent[] components = composite.getDefinedComponents();
 			for (DataTypeComponent component : components) {
 				String fieldName = component.getFieldName();
 				if (fieldName != null) {

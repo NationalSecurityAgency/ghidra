@@ -55,7 +55,8 @@ public class StructureFactory {
 	 *              <li>if there are no data components to add to the structure
 	 *         </ul>
 	 */
-	public static Structure createStructureDataType(Program program, Address address, int dataLength) {
+	public static Structure createStructureDataType(Program program, Address address,
+			int dataLength) {
 		return createStructureDataType(program, address, dataLength, DEFAULT_STRUCTURE_NAME, true);
 	}
 
@@ -89,8 +90,8 @@ public class StructureFactory {
 		}
 
 		if (dataLength <= 0) {
-			throw new IllegalArgumentException("Structure length must be positive, not " +
-				dataLength);
+			throw new IllegalArgumentException(
+				"Structure length must be positive, not " + dataLength);
 		}
 
 		Address endAddress;
@@ -116,7 +117,7 @@ public class StructureFactory {
 			name = providerContext.getUniqueName(name);
 		}
 
-		Structure newStructure = new StructureDataType(name, 0);
+		Structure newStructure = new StructureDataType(name, 0, program.getDataTypeManager());
 
 		initializeStructureFromContext(newStructure, providerContext, dataLength);
 
@@ -211,16 +212,15 @@ public class StructureFactory {
 		}
 
 		// create the context
-		DataTypeProviderContext providerContext =
-			new ProgramStructureProviderContext(program, data.getMinAddress(),
-				(Structure) parentDataType, comp1.getParentOffset());
+		DataTypeProviderContext providerContext = new ProgramStructureProviderContext(program,
+			data.getMinAddress(), (Structure) parentDataType, comp1.getParentOffset());
 
 		String name = structureName;
 		if (makeUniqueName) {
 			name = providerContext.getUniqueName(name);
 		}
 
-		Structure newStructure = new StructureDataType(name, 0);
+		Structure newStructure = new StructureDataType(name, 0, program.getDataTypeManager());
 
 		initializeStructureFromContext(newStructure, providerContext, dataLength);
 

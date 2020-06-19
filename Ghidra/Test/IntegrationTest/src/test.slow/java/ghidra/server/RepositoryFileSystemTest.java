@@ -58,7 +58,7 @@ public class RepositoryFileSystemTest extends AbstractGhidraHeadedIntegrationTes
 		FileUtilities.deleteDir(serverRoot);
 		serverRoot.mkdir();
 
-		mgr = new RepositoryManager(serverRoot, false, false, 0, false);
+		mgr = new RepositoryManager(serverRoot, false, 0, false);
 		mgr.getUserManager().addUser(USER);
 
 		repository = mgr.createRepository(USER, "My_Repository");

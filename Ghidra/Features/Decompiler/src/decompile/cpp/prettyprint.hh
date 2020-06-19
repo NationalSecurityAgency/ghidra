@@ -80,8 +80,9 @@ protected:
   int4 indentlevel;			///< Current indent level (in fixed width characters)
   int4 parenlevel;			///< Current depth of parentheses
   int4 indentincrement;			///< Change in indentlevel per level of nesting
+  void resetDefaultsInternal(void) { indentincrement = 2; }	///< Set options to default values for EmitXml
 public:
-  EmitXml(void) { s = (ostream *)0; indentlevel=0; parenlevel=0; indentincrement=2; }	///< Constructor
+  EmitXml(void) { s = (ostream *)0; indentlevel=0; parenlevel=0; resetDefaultsInternal(); }	///< Constructor
 
   /// \brief Possible types of syntax highlighting
   enum syntax_highlight {
@@ -195,6 +196,9 @@ public:
   ///
   /// \return \b true if \b this produces an XML markup of its emitted source code
   virtual bool emitsXml(void) const { return true; }
+
+  /// \brief (Re)set the default emitting options
+  virtual void resetDefaults(void);
 
   /// \brief Get the current parentheses depth
   ///
@@ -649,9 +653,11 @@ template<typename _type>
 void circularqueue<_type>::setMax(int4 sz)
 
 {
-  delete [] cache;
-  max = sz;
-  cache = new _type [ sz ];
+  if (max != sz) {
+    delete [] cache;
+    max = sz;
+    cache = new _type [ sz ];
+  }
   left = 1;			// This operation empties queue
   right = 0;
 }
@@ -721,8 +727,9 @@ class EmitPrettyPrint : public EmitXml {
   void print(const TokenSplit &tok);	///< Output the given token to the low-level emitter
   void advanceleft(void);	///< Emit tokens that have been fully committed
   void scan(void);		///< Process a new token
+  void resetDefaultsPrettyPrint(void) { setMaxLineSize(100); }
 public:
-  EmitPrettyPrint(int4 mls);	///< Construct with an initial maximum line size
+  EmitPrettyPrint(void);	///< Construct with an initial maximum line size
   virtual ~EmitPrettyPrint(void);
   virtual int4 beginDocument(void);
   virtual void endDocument(int4 id);
@@ -768,6 +775,7 @@ public:
   virtual int4 getMaxLineSize(void) const { return maxlinesize; }
   virtual void setCommentFill(const string &fill) { commentfill = fill; }
   virtual bool emitsXml(void) const { return lowlevel->emitsXml(); }
+  virtual void resetDefaults(void);
   void setXML(bool val);	///< Toggle whether the low-level emitter emits XML markup or not
 };
 

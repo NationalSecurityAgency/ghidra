@@ -20,7 +20,6 @@ import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
-import ghidra.framework.store.LockException;
 import ghidra.program.database.*;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.map.*;
@@ -2140,7 +2139,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		}
 		if (dt instanceof Structure) {
 			Structure structDt = (Structure) dt;
-			for (DataTypeComponent component : structDt.getComponents()) {
+			for (DataTypeComponent component : structDt.getDefinedComponents()) {
 				if (containsAddressComponents(component.getDataType())) {
 					return true;
 				}

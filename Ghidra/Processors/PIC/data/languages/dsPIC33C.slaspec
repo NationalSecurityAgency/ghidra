@@ -1,0 +1,7 @@
+# This module defines Microchip PIC-24. 
+
+define endian=little; # little endian only
+
+@define dsPIC33C "1"
+
+@include "PIC24.sinc"

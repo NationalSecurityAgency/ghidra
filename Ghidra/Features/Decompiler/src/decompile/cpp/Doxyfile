@@ -457,7 +457,7 @@ RECURSIVE              = NO
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = unify.hh unify.cc rulecompile.hh rulecompile.cc slgh_compile.hh slgh_compile.hh slghpattern.hh slghpattern.cc slghpatexpress.hh slghpatexpress.cc slghsymbol.hh slghsymbol.cc ifacedecomp.hh ifacedecomp.cc ifaceterm.hh ifaceterm.cc codedata.hh codedata.cc semantics.hh semantics.cc grammar.hh grammar.cc callgraph.hh callgraph.cc filemanage.hh filemanage.cc graph.hh graph.cc interface.hh interface.cc loadimage_bfd.hh loadimage_bfd.cc pcodecompile.cc pcodecompile.hh pcodeparse.hh pcodeparse.cc inject_sleigh.hh inject_sleigh.cc context.hh context.cc consolemain.cc sleighexample.cc
+EXCLUDE                = unify.hh unify.cc rulecompile.hh rulecompile.cc slgh_compile.hh slgh_compile.hh slghpattern.hh slghpattern.cc slghpatexpress.hh slghpatexpress.cc slghsymbol.hh slghsymbol.cc ifacedecomp.hh ifacedecomp.cc ifaceterm.hh ifaceterm.cc codedata.hh codedata.cc semantics.hh semantics.cc grammar.hh grammar.cc callgraph.hh callgraph.cc filemanage.hh filemanage.cc graph.hh graph.cc interface.hh interface.cc loadimage_bfd.hh loadimage_bfd.cc pcodecompile.cc pcodecompile.hh pcodeparse.hh pcodeparse.cc inject_sleigh.hh inject_sleigh.cc context.hh context.cc consolemain.cc sleighexample.cc xml.cc
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 

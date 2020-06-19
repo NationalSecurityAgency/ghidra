@@ -62,14 +62,22 @@ class SubvariableFlow {
   /// \brief Operation with a new logical value as (part of) input, but output Varnode is unchanged
   class PatchRecord {
     friend class SubvariableFlow;
-    int4 type;			///< 0=COPY 1=compare 2=call 3=AND/SHIFT
-    PcodeOp *pullop;		///< Op being affected
+    /// The possible types of patches on ops being performed
+    enum patchtype {
+      copy_patch,		///< Turn op into a COPY of the logical value
+      compare_patch,		///< Turn compare op inputs into logical values
+      parameter_patch,		///< Convert a CALL/CALLIND/RETURN/BRANCHIND parameter into logical value
+      extension_patch,		///< Convert op into something that copies/extends logical value, adding zero bits
+      push_patch		///< Convert an operator output to the logical value
+    };
+    patchtype type;		///< The type of \b this patch
+    PcodeOp *patchOp;		///< Op being affected
     ReplaceVarnode *in1;	///< The logical variable input
     ReplaceVarnode *in2;	///< (optional second parameter)
     int4 slot;			///< slot being affected or other parameter
   };
 
-  int4 flowsize;		///< Size of the lgoical data-flow in bytes
+  int4 flowsize;		///< Size of the logical data-flow in bytes
   int4 bitsize;			///< Number of bits in logical variable
   bool returnsTraversed;	///< Have we tried to flow logical value across CPUI_RETURNs
   bool aggressive;		///< Do we "know" initial seed point must be a sub variable
@@ -87,16 +95,17 @@ class SubvariableFlow {
   ReplaceVarnode *setReplacement(Varnode *vn,uintb mask,bool &inworklist);
   ReplaceOp *createOp(OpCode opc,int4 numparam,ReplaceVarnode *outrvn);
   ReplaceOp *createOpDown(OpCode opc,int4 numparam,PcodeOp *op,ReplaceVarnode *inrvn,int4 slot);
-  void patchIndirect(PcodeOp *newop,PcodeOp *oldop,ReplaceVarnode *out);
   bool tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
   bool tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot);
-  bool tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn);
+  bool tryCallReturnPush(PcodeOp *op,ReplaceVarnode *rvn);
+  bool trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn);
   bool traceForward(ReplaceVarnode *rvn);	///< Trace the logical data-flow forward for the given subgraph variable
   bool traceBackward(ReplaceVarnode *rvn);	///< Trace the logical data-flow backward for the given subgraph variable
   bool traceForwardSext(ReplaceVarnode *rvn);	///< Trace logical data-flow forward assuming sign-extensions
   bool traceBackwardSext(ReplaceVarnode *rvn);	///< Trace logical data-flow backward assuming sign-extensions
   bool createLink(ReplaceOp *rop,uintb mask,int4 slot,Varnode *vn);
   bool createCompareBridge(PcodeOp *op,ReplaceVarnode *inrvn,int4 slot,Varnode *othervn);
+  void addPush(PcodeOp *pushOp,ReplaceVarnode *rvn);
   void addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn);
   void addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);
   void addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 slot);
@@ -109,7 +118,7 @@ class SubvariableFlow {
   Varnode *getReplaceVarnode(ReplaceVarnode *rvn);
   bool processNextWork(void);		///< Extend the subgraph from the next node in the worklist
 public:
-  SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext);	///< Constructor
+  SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext,bool big);	///< Constructor
   bool doTrace(void);			///< Trace logical value through data-flow, constructing transform
   void doReplacement(void);		///< Perform the discovered transform, making logical values explicit
 };

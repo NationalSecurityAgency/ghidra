@@ -29,6 +29,7 @@ import ghidra.app.util.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.util.OptionsService;
+import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
@@ -44,12 +45,21 @@ public class CppExporter extends Exporter {
 	public static final String CREATE_C_FILE = "Create C File (.c)";
 	public static final String CREATE_HEADER_FILE = "Create Header File (.h)";
 	public static final String USE_CPP_STYLE_COMMENTS = "Use C++ Style comments (//)";
+	public static final String EMIT_TYPE_DEFINITONS = "Emit data-type definitions";
+	public static final String FUNCTION_TAG_FILTERS = "Function tags to filter";
+	public static final String FUNCTION_TAG_EXCLUDE = "Function tags excluded";
 
 	private static String EOL = System.getProperty("line.separator");
 
 	private boolean isCreateHeaderFile = false;
 	private boolean isCreateCFile = true;
 	private boolean isUseCppStyleComments = true;
+	private boolean emitDataTypeDefinitions = true;
+	private String tagOptions = "";
+
+	private ArrayList<FunctionTag> tagList = null;
+	private boolean tagsExclude = true;
+
 	//private boolean isSplitFunctions   = false;
 	private DecompileOptions options;
 	private boolean userSuppliedOptions = false;
@@ -64,6 +74,18 @@ public class CppExporter extends Exporter {
 		this.userSuppliedOptions = true;
 	}
 
+	public CppExporter(boolean createHeader, boolean createFile, boolean emitTypes,
+			boolean excludeTags, String tags) {
+		this();
+		isCreateHeaderFile = createHeader;
+		isCreateCFile = createFile;
+		emitDataTypeDefinitions = emitTypes;
+		tagsExclude = excludeTags;
+		if (tags != null) {
+			tagOptions = tags;
+		}
+	}
+
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
@@ -75,6 +97,7 @@ public class CppExporter extends Exporter {
 		Program program = (Program) domainObj;
 
 		configureOptions(program);
+		configureFunctionTags(program);
 
 		if (addrSet == null) {
 			addrSet = program.getMemory();
@@ -99,7 +122,9 @@ public class CppExporter extends Exporter {
 			ParallelDecompiler.createChunkingParallelDecompiler(callback, chunkingMonitor);
 
 		try {
-			writeProgramDataTypes(program, header, headerWriter, cFileWriter, chunkingMonitor);
+			if (emitDataTypeDefinitions) {
+				writeProgramDataTypes(program, header, headerWriter, cFileWriter, chunkingMonitor);
+			}
 			chunkingMonitor.checkCanceled();
 
 			decompileAndExport(addrSet, program, headerWriter, cFileWriter, parallelDecompiler,
@@ -150,7 +175,21 @@ public class CppExporter extends Exporter {
 				functions.clear();
 			}
 
-			functions.add(iterator.next());
+			Function currentFunction = iterator.next();
+			if (tagList != null) {
+				Set<FunctionTag> tags = currentFunction.getTags();
+				boolean hasTag = false;
+				for (FunctionTag tag : tagList) {
+					if (tags.contains(tag)) {
+						hasTag = true;
+						break;
+					}
+				}
+				if (tagsExclude == hasTag) {
+					continue;
+				}
+			}
+			functions.add(currentFunction);
 		}
 
 		// handle any remaining functions
@@ -214,6 +253,27 @@ public class CppExporter extends Exporter {
 		}
 	}
 
+	private void configureFunctionTags(Program program) {
+		if (tagOptions != null && tagOptions.length() != 0) {
+			FunctionManager functionManager = program.getFunctionManager();
+			if (functionManager instanceof FunctionManagerDB) {
+				FunctionTagManager tagManager =
+					((FunctionManagerDB) functionManager).getFunctionTagManager();
+				String[] split = tagOptions.split(",");
+				tagList = new ArrayList<FunctionTag>();
+				for (String tag : split) {
+					FunctionTag functionTag = tagManager.getFunctionTag(tag.trim());
+					if (functionTag != null) {
+						tagList.add(functionTag);
+					}
+				}
+				if (tagList.isEmpty()) {
+					tagList = null;
+				}
+			}
+		}
+	}
+
 	private void writeProgramDataTypes(Program program, File header, PrintWriter headerWriter,
 			PrintWriter cFileWriter, TaskMonitor monitor) throws IOException, CancelledException {
 		if (headerWriter != null) {
@@ -256,10 +316,13 @@ public class CppExporter extends Exporter {
 	@Override
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		ArrayList<Option> list = new ArrayList<>();
-		list.add(new Option(CREATE_HEADER_FILE, new Boolean(isCreateHeaderFile)));
-		list.add(new Option(CREATE_C_FILE, new Boolean(isCreateCFile)));
+		list.add(new Option(CREATE_HEADER_FILE, Boolean.valueOf(isCreateHeaderFile)));
+		list.add(new Option(CREATE_C_FILE, Boolean.valueOf(isCreateCFile)));
 		//list.add(new Option(SPLIT_FILE, new Boolean(isSplitFunctions)));
-		list.add(new Option(USE_CPP_STYLE_COMMENTS, new Boolean(isUseCppStyleComments)));
+		list.add(new Option(USE_CPP_STYLE_COMMENTS, Boolean.valueOf(isUseCppStyleComments)));
+		list.add(new Option(EMIT_TYPE_DEFINITONS, Boolean.valueOf(emitDataTypeDefinitions)));
+		list.add(new Option(FUNCTION_TAG_FILTERS, tagOptions));
+		list.add(new Option(FUNCTION_TAG_EXCLUDE, Boolean.valueOf(tagsExclude)));
 		return list;
 	}
 
@@ -279,6 +342,15 @@ public class CppExporter extends Exporter {
 				}
 				else if (optName.equals(USE_CPP_STYLE_COMMENTS)) {
 					isUseCppStyleComments = ((Boolean) option.getValue()).booleanValue();
+				}
+				else if (optName.equals(EMIT_TYPE_DEFINITONS)) {
+					emitDataTypeDefinitions = ((Boolean) option.getValue()).booleanValue();
+				}
+				else if (optName.equals(FUNCTION_TAG_FILTERS)) {
+					tagOptions = (String) option.getValue();
+				}
+				else if (optName.equals(FUNCTION_TAG_EXCLUDE)) {
+					tagsExclude = ((Boolean) option.getValue()).booleanValue();
 				}
 				else {
 					throw new OptionException("Unknown option: " + optName);
@@ -304,7 +376,7 @@ public class CppExporter extends Exporter {
 	/**
 	 * Generate suitable C-style definition statements (#define) for any fake data-type names
 	 * which may be produced by the decompiler (e.g., unkint, unkuint, etc.).
-	 * @param dataOrganization
+	 * @param dataOrganization is the data organization to result the size of core types.
 	 * @return multi-line string containing C-style declarations of fake decompiler types.
 	 */
 	private static String getFakeCTypeDefinitions(DataOrganization dataOrganization) {

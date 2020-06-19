@@ -179,7 +179,8 @@ public abstract class AbstractProgramLoader implements Loader {
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean isLoadIntoProgram) {
 		ArrayList<Option> list = new ArrayList<>();
-		list.add(new Option(APPLY_LABELS_OPTION_NAME, shouldApplyProcessorLabelsByDefault(),
+		list.add(new Option(APPLY_LABELS_OPTION_NAME,
+			shouldApplyProcessorLabelsByDefault(),
 			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-applyLabels"));
 		list.add(new Option(ANCHOR_LABELS_OPTION_NAME, true, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-anchorLabels"));
@@ -404,56 +405,70 @@ public abstract class AbstractProgramLoader implements Loader {
 	private void applyProcessorLabels(List<Option> options, Program program) {
 		int id = program.startTransaction("Finalize load");
 		try {
+			Language lang = program.getLanguage();
+			// always create anchored symbols for memory mapped registers
+			// which may be explicitly referenced by pcode
+			for (Register reg : lang.getRegisters()) {
+				Address addr = reg.getAddress();
+				if (addr.isMemoryAddress()) {
+					AddressLabelInfo info = new AddressLabelInfo(addr, reg.getName(),
+						reg.isBaseRegister(), SourceType.IMPORTED);
+					createSymbol(program, info, true);
+				}
+			}
+			// optionally create default symbols defined by pspec
 			if (shouldApplyProcessorLabels(options)) {
 				boolean anchorSymbols = shouldAnchorSymbols(options);
-				Language lang = program.getLanguage();
-				SymbolTable symTable = program.getSymbolTable();
-
-				List<AddressLabelInfo> labels = lang.getDefaultLabels();
+				List<AddressLabelInfo> labels = lang.getDefaultSymbols();
 				for (AddressLabelInfo info : labels) {
-					Address addr = info.getAddress();
-					Symbol s = symTable.getPrimarySymbol(addr);
-					try {
-						if (s == null || s.getSource() == SourceType.IMPORTED) {
-							Namespace namespace = program.getGlobalNamespace();
-							if (info.getScope() != null) {
-								namespace = info.getScope();
-							}
-							s = symTable.createLabel(addr, info.getLabel(), namespace,
-								info.getSource());
-							if (info.isEntry()) {
-								symTable.addExternalEntryPoint(addr);
-							}
-							if (info.isPrimary()) {
-								s.setPrimary();
-							}
-							if (anchorSymbols) {
-								s.setPinned(true);
-							}
-						}
-						else if (s.getSource() == SourceType.DEFAULT) {
-							String labelName = info.getLabel();
-							if (s.getSymbolType() == SymbolType.FUNCTION) {
-								Function f = (Function) s.getObject();
-								f.setName(labelName, SourceType.IMPORTED);
-							}
-							else {
-								s.setName(labelName, SourceType.IMPORTED);
-							}
-							if (anchorSymbols) {
-								s.setPinned(true);
-							}
-						}
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						// Nothing to do
-					}
+					createSymbol(program, info, anchorSymbols);
 				}
 			}
 			GhidraProgramUtilities.removeAnalyzedFlag(program);
 		}
 		finally {
 			program.endTransaction(id, true);
+		}
+	}
+
+	private void createSymbol(Program program, AddressLabelInfo info, boolean anchorSymbols) {
+		SymbolTable symTable = program.getSymbolTable();
+		Address addr = info.getAddress();
+		Symbol s = symTable.getPrimarySymbol(addr);
+		try {
+			if (s == null || s.getSource() == SourceType.IMPORTED) {
+				Namespace namespace = program.getGlobalNamespace();
+				if (info.getScope() != null) {
+					namespace = info.getScope();
+				}
+				s = symTable.createLabel(addr, info.getLabel(), namespace,
+					info.getSource());
+				if (info.isEntry()) {
+					symTable.addExternalEntryPoint(addr);
+				}
+				if (info.isPrimary()) {
+					s.setPrimary();
+				}
+				if (anchorSymbols) {
+					s.setPinned(true);
+				}
+			}
+			else if (s.getSource() == SourceType.DEFAULT) {
+				String labelName = info.getLabel();
+				if (s.getSymbolType() == SymbolType.FUNCTION) {
+					Function f = (Function) s.getObject();
+					f.setName(labelName, SourceType.IMPORTED);
+				}
+				else {
+					s.setName(labelName, SourceType.IMPORTED);
+				}
+				if (anchorSymbols) {
+					s.setPinned(true);
+				}
+			}
+		}
+		catch (DuplicateNameException | InvalidInputException e) {
+			// Nothing to do
 		}
 	}
 

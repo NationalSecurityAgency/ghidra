@@ -36,6 +36,18 @@ public class KeyBindingData {
 		this(KeyStroke.getKeyStroke(keyCode, modifiers));
 	}
 
+	public KeyBindingData(String keyStrokeString) {
+		this(parseKeyStrokeString(keyStrokeString));
+	}
+
+	private static KeyStroke parseKeyStrokeString(String keyStrokeString) {
+		KeyStroke keyStroke = KeyBindingUtils.parseKeyStroke(keyStrokeString);
+		if (keyStroke == null) {
+			throw new IllegalArgumentException("Invalid keystroke string: " + keyStrokeString);
+		}
+		return keyStroke;
+	}
+
 	public KeyBindingData(KeyStroke keyStroke, KeyBindingPrecedence precedence) {
 		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
 			throw new IllegalArgumentException(

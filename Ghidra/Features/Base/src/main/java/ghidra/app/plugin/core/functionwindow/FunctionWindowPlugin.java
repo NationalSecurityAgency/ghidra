@@ -15,12 +15,9 @@
  */
 package ghidra.app.plugin.core.functionwindow;
 
-import javax.swing.KeyStroke;
-
 import docking.ComponentProvider;
 import docking.ComponentProviderActivationListener;
 import docking.action.DockingAction;
-import docking.action.KeyBindingData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -29,8 +26,6 @@ import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromFunctionTableAction;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.model.*;
-import ghidra.framework.options.OptionsChangeListener;
-import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -55,7 +50,7 @@ import ghidra.util.task.SwingUpdateManager;
 )
 //@formatter:on
 public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectListener,
-		OptionsChangeListener, ComponentProviderActivationListener {
+		ComponentProviderActivationListener {
 
 	private DockingAction selectAction;
 	private DockingAction compareFunctionsAction;
@@ -66,12 +61,7 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 	public FunctionWindowPlugin(PluginTool tool) {
 		super(tool, true, false);
 
-		swingMgr = new SwingUpdateManager(1000, new Runnable() {
-			@Override
-			public void run() {
-				provider.reload();
-			}
-		});
+		swingMgr = new SwingUpdateManager(1000, () -> provider.reload());
 	}
 
 	@Override
@@ -219,20 +209,6 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 
 		compareFunctionsAction = new CompareFunctionsFromFunctionTableAction(tool, getName());
 		tool.addLocalAction(provider, compareFunctionsAction);
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-
-		if (optionName.startsWith(selectAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			selectAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
-		if (optionName.startsWith(compareFunctionsAction.getName())) {
-			KeyStroke keyStroke = (KeyStroke) newValue;
-			compareFunctionsAction.setUnvalidatedKeyBindingData(new KeyBindingData(keyStroke));
-		}
 	}
 
 	void showFunctions() {

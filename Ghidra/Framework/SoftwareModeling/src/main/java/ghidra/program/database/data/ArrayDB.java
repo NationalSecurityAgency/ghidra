@@ -184,9 +184,6 @@ class ArrayDB extends DataTypeDB implements Array {
 
 	@Override
 	public boolean isEquivalent(DataType dt) {
-		if (dt == null) {
-			return false;
-		}
 		if (dt == this) {
 			return true;
 		}

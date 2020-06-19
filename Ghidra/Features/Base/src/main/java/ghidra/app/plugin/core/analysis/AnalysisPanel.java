@@ -137,12 +137,15 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 					throw new AssertException(
 						"Analyzer enable property that is not boolean - " + analyzerName);
 				}
-				analyzerNames.add(analyzerName);
+
 				Analyzer analyzer = manager.getAnalyzer(analyzerName);
-				if (analyzer != null && analyzer.isPrototype()) {
-					prototypeAnalyzers.add(analyzerName);
+				if (analyzer != null) {
+					analyzerNames.add(analyzerName);
+					if (analyzer.isPrototype()) {
+						prototypeAnalyzers.add(analyzerName);
+					}
+					analyzerEnablement.add(analysisOptions.getBoolean(analyzerName, false));
 				}
-				analyzerEnablement.add(analysisOptions.getBoolean(analyzerName, false));
 			}
 		}
 	}
@@ -325,16 +328,17 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 			if (e.getValueIsAdjusting()) {
 				return;
 			}
-			ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 
+			ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 			int selectedRow = lsm.getMinSelectionIndex();
-			if (selectedRow == -1) {//TODO
+			if (selectedRow == -1) {
 				analyzerOptionsPanel.removeAll();
 				analyzerOptionsPanel.validate();
 				analyzerOptionsPanel.repaint();
 				descriptionComponent.setText("");
 				return;
 			}
+
 			String analyzerName = analyzerNames.get(selectedRow);
 			setAnalyzerSelected(analyzerName);
 		});

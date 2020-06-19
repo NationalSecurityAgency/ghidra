@@ -295,6 +295,17 @@
   </resolveprototype>
   <eval_current_prototype name="__cdecl/__regparm"/>
 
+  <callfixup name="get_pc_thunk_ax">
+    <target name="__i686.get_pc_thunk.ax"/>
+    <target name="__x86.get_pc_thunk.ax"/>
+    <pcode>
+      <body><![CDATA[
+      EAX = * ESP;
+      ESP = ESP + 4;
+      ]]></body>
+    </pcode>
+  </callfixup>
+  
   <callfixup name="get_pc_thunk_bx">
     <target name="__i686.get_pc_thunk.bx"/>
     <target name="__x86.get_pc_thunk.bx"/>
@@ -323,6 +334,17 @@
     <pcode>
       <body><![CDATA[
       EDX = * ESP;
+      ESP = ESP + 4;
+      ]]></body>
+    </pcode>
+  </callfixup>
+  
+    <callfixup name="get_pc_thunk_si">
+    <target name="__i686.get_pc_thunk.si"/>
+    <target name="__x86.get_pc_thunk.si"/>
+    <pcode>
+      <body><![CDATA[
+      ESI = * ESP;
       ESP = ESP + 4;
       ]]></body>
     </pcode>

@@ -226,6 +226,16 @@ public class DockingActionProxy
 
 	@Override
 	public String toString() {
-		return dockingAction.getName();
+		return dockingAction.toString();
+	}
+
+	@Override
+	public void setSupportsDefaultToolContext(boolean newValue) {
+		dockingAction.setSupportsDefaultToolContext(newValue);
+	}
+
+	@Override
+	public boolean supportsDefaultToolContext() {
+		return dockingAction.supportsDefaultToolContext();
 	}
 }

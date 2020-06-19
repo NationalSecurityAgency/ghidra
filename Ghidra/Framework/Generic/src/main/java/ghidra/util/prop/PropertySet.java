@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +15,39 @@
  */
 package ghidra.util.prop;
 
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+
 import ghidra.util.LongIterator;
-import ghidra.util.datastruct.LongObjectHashtable;
 import ghidra.util.datastruct.NoSuchIndexException;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NoValueException;
-
-import java.io.*;
 
 /**
  * Base class for managing properties that are accessed by an index. Property
  * values are determined by the derived class.
  */
 public abstract class PropertySet implements Serializable {
-    private final static long serialVersionUID = 1;
+	private final static long serialVersionUID = 1;
 	protected static final NoValueException noValueException = new NoValueException();
-	private final static int DEFAULT_NUMBER_PAGE_BITS=12;
+	private final static int DEFAULT_NUMBER_PAGE_BITS = 12;
 	private final static int MIN_NUMBER_PAGE_BITS = 8;
 	private final static int MAX_NUMBER_PAGE_BITS = 15;	// must be kept less than
 														// size of a short
 
-    private String name;
-    protected PropertyPageIndex propertyPageIndex; // table of pageIDs
+	private String name;
+	protected PropertyPageIndex propertyPageIndex; // table of pageIDs
 	private int numPageBits; // number of bits from long used as page offset
 	private long pageMask; // a mask for the offset bits, i.e. has a 1 if and only if
-						   // the bit is part of the offset
+							// the bit is part of the offset
 	protected short pageSize; // max elements in each page
-    protected int numProperties;
-    private LongObjectHashtable<PropertyPage> ht;
-    private Class<?> objectClass;
-
+	protected int numProperties;
+	private Map<Long, PropertyPage> ht;
+	private Class<?> objectClass;
 
 	protected PropertySet(String name, Class<?> objectClass) {
-		this(name, DEFAULT_NUMBER_PAGE_BITS, objectClass);	
+		this(name, DEFAULT_NUMBER_PAGE_BITS, objectClass);
 	}
 
 	/**
@@ -59,22 +58,22 @@ public abstract class PropertySet implements Serializable {
 	 *		more than 15.
 	 */
 	protected PropertySet(String name, int numPageBits, Class<?> objectClass) {
-        this.objectClass = objectClass;
-        ht = new LongObjectHashtable<PropertyPage>();
+		this.objectClass = objectClass;
+		ht = new HashMap<>();
 
 		this.name = name;
-		if(numPageBits > MAX_NUMBER_PAGE_BITS) {
+		if (numPageBits > MAX_NUMBER_PAGE_BITS) {
 			numPageBits = MAX_NUMBER_PAGE_BITS;
 		}
-		else if(numPageBits < MIN_NUMBER_PAGE_BITS) {
+		else if (numPageBits < MIN_NUMBER_PAGE_BITS) {
 			numPageBits = MIN_NUMBER_PAGE_BITS;
 		}
 		this.numPageBits = numPageBits;
 		// compute the page mask
 		pageMask = -1L;
-		pageMask = pageMask >>> (64-numPageBits); // 64 = size of long
+		pageMask = pageMask >>> (64 - numPageBits); // 64 = size of long
 
-		pageSize = (short)(pageMask + 1);
+		pageSize = (short) (pageMask + 1);
 		propertyPageIndex = new PropertyPageIndex();
 	}
 
@@ -84,15 +83,15 @@ public abstract class PropertySet implements Serializable {
 	 * @return the size (in bytes) of the data that is stored in this property
 	 * set.
 	 */
-    public abstract int getDataSize();
-    
-    /**
+	public abstract int getDataSize();
+
+	/**
 	 * Get the name for this property manager.
 	 */
 	public synchronized String getName() {
 		return name;
 	}
-	
+
 	/**
 	 * Returns property object class associated with this set.
 	 */
@@ -100,19 +99,19 @@ public abstract class PropertySet implements Serializable {
 		return objectClass;
 	}
 
-    protected PropertyPage getPage(long pageId) {
-        return ht.get(pageId);
-    }
-    
-    protected PropertyPage getOrCreatePage(long pageID) {
-        PropertyPage page = getPage(pageID);
-		if(page == null) {
-			page = new PropertyPage(pageSize,pageID,getDataSize(),objectClass);
-			ht.put(pageID,page);
+	protected PropertyPage getPage(long pageId) {
+		return ht.get(pageId);
+	}
+
+	protected PropertyPage getOrCreatePage(long pageID) {
+		PropertyPage page = getPage(pageID);
+		if (page == null) {
+			page = new PropertyPage(pageSize, pageID, getDataSize(), objectClass);
+			ht.put(pageID, page);
 			propertyPageIndex.add(pageID);
 		}
-        return page;
-    }
+		return page;
+	}
 
 	/**
 	 * Given two indices it indicates whether there is an index in
@@ -123,21 +122,22 @@ public abstract class PropertySet implements Serializable {
 	 * @return boolean true if at least one index in the range
 	 * has the property, false otherwise.
 	 */
-	public boolean intersects(long start,long end) {
-        if (hasProperty(start)) {
-            return true;
-        }
-        try {
-            long index = this.getNextPropertyIndex(start);
-            if (index <= end) {
-                return true;
-            }
-        }
-        catch(NoSuchIndexException e) {
-            return false;
-        }
-        return false;
+	public boolean intersects(long start, long end) {
+		if (hasProperty(start)) {
+			return true;
+		}
+		try {
+			long index = this.getNextPropertyIndex(start);
+			if (index <= end) {
+				return true;
+			}
+		}
+		catch (NoSuchIndexException e) {
+			return false;
+		}
+		return false;
 	}
+
 	/**
 	 * Removes all property values within a given range.
 	 * @param start begin range
@@ -147,23 +147,23 @@ public abstract class PropertySet implements Serializable {
 	 */
 	public synchronized boolean removeRange(long start, long end) {
 
-		boolean status=false;
-        // go from start to end
-           // get the page starting at start
-           // get page start index and end index
-           //    subtract page.getSize() from numProperties
-           //    remove the entire page
-           //    increment start by size of page
-           // else
-           //    for (i<endofPage; start++)
-           //       call slow remove(index);
+		boolean status = false;
+		// go from start to end
+		// get the page starting at start
+		// get page start index and end index
+		//    subtract page.getSize() from numProperties
+		//    remove the entire page
+		//    increment start by size of page
+		// else
+		//    for (i<endofPage; start++)
+		//       call slow remove(index);
 
-        while (start <= end) {
-            // get page containing start
-            long pageID = getPageID(start);
-            short offset = getPageOffset(start);
+		while (start <= end) {
+			// get page containing start
+			long pageID = getPageID(start);
+			short offset = getPageOffset(start);
 
-            PropertyPage page = getPage(pageID);
+			PropertyPage page = getPage(pageID);
 
 			if (page == null) {
 				long nextPageId = propertyPageIndex.getNext(pageID);
@@ -174,27 +174,27 @@ public abstract class PropertySet implements Serializable {
 				continue;
 			}
 
-            // if start is beginning of page && end of page is still less than start
-            if (offset == 0 && (pageSize+start) <= end) {
+			// if start is beginning of page && end of page is still less than start
+			if (offset == 0 && (pageSize + start) <= end) {
 
-            	// decrement # properties on a page
-                this.numProperties -= page.getSize();
+				// decrement # properties on a page
+				this.numProperties -= page.getSize();
 
-                // remove the entire page
-                ht.remove(pageID);
-                propertyPageIndex.remove(pageID);
+				// remove the entire page
+				ht.remove(pageID);
+				propertyPageIndex.remove(pageID);
 
-                status = true;
-                long nextPageId = propertyPageIndex.getNext(pageID);
-                start = nextPageId << numPageBits;
-            } 
-            else {
-                // start at offset, and remove each property
-                for (; offset < pageSize && start <= end; offset++, start++) {
-                    status |= removeFromPage(page, pageID, offset);
-                }
-            }
-        }
+				status = true;
+				long nextPageId = propertyPageIndex.getNext(pageID);
+				start = nextPageId << numPageBits;
+			}
+			else {
+				// start at offset, and remove each property
+				for (; offset < pageSize && start <= end; offset++, start++) {
+					status |= removeFromPage(page, pageID, offset);
+				}
+			}
+		}
 
 		return status;
 	}
@@ -211,35 +211,36 @@ public abstract class PropertySet implements Serializable {
 
 		PropertyPage page = getPage(pageID);
 
-        return removeFromPage(page, pageID, offset);
-    }
+		return removeFromPage(page, pageID, offset);
+	}
 
-    /**
-     * Remove the property on page at offset.  If Page is now empty, remove it.
-     */
-    private boolean removeFromPage(PropertyPage page, long pageID, short offset) {
-		if(page != null) {
+	/**
+	 * Remove the property on page at offset.  If Page is now empty, remove it.
+	 */
+	private boolean removeFromPage(PropertyPage page, long pageID, short offset) {
+		if (page != null) {
 
 			boolean removed = page.remove(offset);
-            if (removed) {
-                numProperties--;
-            }
+			if (removed) {
+				numProperties--;
+			}
 
-			if(page.isEmpty()) {
-                ht.remove(pageID);
+			if (page.isEmpty()) {
+				ht.remove(pageID);
 				propertyPageIndex.remove(pageID);
 			}
 			return removed;
 		}
 		return false;
 	}
+
 	/**
 	 * returns whether there is a property value at index.
 	 * @param index the long representation of an address.
 	 */
 	public synchronized boolean hasProperty(long index) {
 		PropertyPage page = getPage(getPageID(index));
-		if(page == null) {
+		if (page == null) {
 			return false;
 		}
 		return page.hasProperty(getPageOffset(index));
@@ -256,29 +257,29 @@ public abstract class PropertySet implements Serializable {
 		short offset = getPageOffset(index);
 		PropertyPage page = getPage(pageID);
 
-		if(page != null) {
+		if (page != null) {
 			short nextOffset = page.getNext(offset);
 
-			if(nextOffset >= 0) {
+			if (nextOffset >= 0) {
 				return getIndex(pageID, nextOffset);
 			}
 		}
 
 		pageID = propertyPageIndex.getNext(pageID);
 
-		if(pageID >= 0) {
+		if (pageID >= 0) {
 			page = getPage(pageID);
-			if(page != null) {
+			if (page != null) {
 				short nextOffset = page.getFirst();
-                if (nextOffset < 0) {
-                    throw new AssertException(
-                        "Page (" + pageID +
-                        ") exists but there is no 'first' offset");
-                }
+				if (nextOffset < 0) {
+					throw new AssertException(
+						"Page (" + pageID +
+							") exists but there is no 'first' offset");
+				}
 				return getIndex(pageID, nextOffset);
 			}
 		}
-        throw NoSuchIndexException.noSuchIndexException;
+		throw NoSuchIndexException.noSuchIndexException;
 	}
 
 	/**
@@ -295,36 +296,37 @@ public abstract class PropertySet implements Serializable {
 
 		PropertyPage page = getPage(pageID);
 
-		if(page != null) {
+		if (page != null) {
 			short prevOffset = page.getPrevious(offset);
-			if(prevOffset >= 0) {
+			if (prevOffset >= 0) {
 				return getIndex(pageID, prevOffset);
 			}
 		}
 
 		pageID = propertyPageIndex.getPrevious(pageID);
 
-		if(pageID >= 0) {
+		if (pageID >= 0) {
 			page = getPage(pageID);
-			if(page != null) {
+			if (page != null) {
 				short prevOffset = page.getLast();
-                if (prevOffset < 0) {
-                    throw new AssertException(
-                        "Page (" + pageID +
-                        ") exists but there is no 'last' offset");
-                }
+				if (prevOffset < 0) {
+					throw new AssertException(
+						"Page (" + pageID +
+							") exists but there is no 'last' offset");
+				}
 				return getIndex(pageID, prevOffset);
 			}
 		}
 
-        throw NoSuchIndexException.noSuchIndexException;
+		throw NoSuchIndexException.noSuchIndexException;
 	}
+
 	/**
 	 * Get the first index where a property value exists.
 	 * @throws NoSuchIndexException when there is no property value for any index.
 	 */
 	public synchronized long getFirstPropertyIndex() throws NoSuchIndexException {
-		if(hasProperty(0)) {
+		if (hasProperty(0)) {
 			return 0;
 		}
 		return getNextPropertyIndex(0);
@@ -337,18 +339,19 @@ public abstract class PropertySet implements Serializable {
 	 */
 	public synchronized long getLastPropertyIndex() throws NoSuchIndexException {
 		// -1 should be the highest possible address
-		if(hasProperty(-1)) {
+		if (hasProperty(-1)) {
 			return -1;
 		}
 		return getPreviousPropertyIndex(-1);
 	}
+
 	/**
 	 * Get the number of properties in the set.
 	 * @return the number of properties
 	 */
-   public int getSize() {
-        return numProperties;
-    }
+	public int getSize() {
+		return numProperties;
+	}
 
 	/**
 	 * Extract the page ID from the given index.
@@ -364,7 +367,7 @@ public abstract class PropertySet implements Serializable {
 	 * @param index the long representation of an address.
 	 */
 	protected final short getPageOffset(long index) {
-		return(short)(index & pageMask);
+		return (short) (index & pageMask);
 	}
 
 	/**
@@ -372,9 +375,9 @@ public abstract class PropertySet implements Serializable {
 	 * @return the long representation of an address.
 	 */
 	protected final long getIndex(long pageID, short offset) {
-		return(pageID << numPageBits) | offset;
+		return (pageID << numPageBits) | offset;
 	}
-	
+
 	/**
 	 * Move the range of properties to the newStart index.
 	 * @param start the beginning of the property range to move
@@ -382,48 +385,50 @@ public abstract class PropertySet implements Serializable {
 	 * @param newStart the new beginning of the property range after the move
 	 */
 	public void moveRange(long start, long end, long newStart) {
-        if (newStart < start) {
-            long clearSize = end-start+1;
-            long offset = start - newStart;
-            if (offset < clearSize) {
-                clearSize = offset;
-            }
-            removeRange(newStart, newStart+clearSize-1);
-            LongIterator it = getPropertyIterator(start, end);
-            while(it.hasNext()) {
-                long index = it.next();
-                moveIndex(index, index-offset);
-            }
-        }
-        else {
-            long clearSize = end-start+1;
-            long offset = newStart - start;
-            if (offset < clearSize) {
-                clearSize = offset;
-            }
-            if (newStart > end) {
-                removeRange(newStart, newStart+clearSize-1);
-            }
-            else {
-                removeRange(end+1, end+clearSize);
-            }
+		if (newStart < start) {
+			long clearSize = end - start + 1;
+			long offset = start - newStart;
+			if (offset < clearSize) {
+				clearSize = offset;
+			}
+			removeRange(newStart, newStart + clearSize - 1);
+			LongIterator it = getPropertyIterator(start, end);
+			while (it.hasNext()) {
+				long index = it.next();
+				moveIndex(index, index - offset);
+			}
+		}
+		else {
+			long clearSize = end - start + 1;
+			long offset = newStart - start;
+			if (offset < clearSize) {
+				clearSize = offset;
+			}
+			if (newStart > end) {
+				removeRange(newStart, newStart + clearSize - 1);
+			}
+			else {
+				removeRange(end + 1, end + clearSize);
+			}
 
-            LongIterator it = getPropertyIterator(end+1);
-            while(it.hasPrevious()) {
-                long index = it.previous();
-                if (index < start)  {
-                    break;
-                }
-                moveIndex(index, index+offset);
-            }
-        }
-    }
+			LongIterator it = getPropertyIterator(end + 1);
+			while (it.hasPrevious()) {
+				long index = it.previous();
+				if (index < start) {
+					break;
+				}
+				moveIndex(index, index + offset);
+			}
+		}
+	}
 
 	protected abstract void moveIndex(long from, long to);
-	protected abstract void saveProperty(ObjectOutputStream oos, long addr) 
-		throws IOException;
-	protected abstract void restoreProperty(ObjectInputStream ois, long addr) 
-		throws IOException, ClassNotFoundException;
+
+	protected abstract void saveProperty(ObjectOutputStream oos, long addr)
+			throws IOException;
+
+	protected abstract void restoreProperty(ObjectInputStream ois, long addr)
+			throws IOException, ClassNotFoundException;
 
 	/**
 	 * Creates an iterator over all the indexes that have this property within
@@ -433,10 +438,10 @@ public abstract class PropertySet implements Serializable {
 	 * @param end The end address to search
 	 * @return LongIterator Iterator over indexes that have properties.
 	 */
-	public LongIterator getPropertyIterator(long start,long end) {
+	public LongIterator getPropertyIterator(long start, long end) {
 		return new LongIteratorImpl(this, start, end);
 	}
-	
+
 	/**
 	 * Creates an iterator over all the indexes that have this property within
 	 * the given range.
@@ -451,6 +456,7 @@ public abstract class PropertySet implements Serializable {
 	public LongIterator getPropertyIterator(long start, long end, boolean atStart) {
 		return new LongIteratorImpl(this, start, end, atStart);
 	}
+
 	/**  
 	 * Returns an iterator over the indices having the given property
 	 * value.
@@ -478,7 +484,6 @@ public abstract class PropertySet implements Serializable {
 		return new LongIteratorImpl(this, start, before);
 	}
 
-
 	/**
 	 * Saves all property values between start and end to the output stream
 	 * @param oos the output stream
@@ -487,15 +492,15 @@ public abstract class PropertySet implements Serializable {
 	 * @throws IOException if an I/O error occurs on the write.
 	 */
 	public void saveProperties(ObjectOutputStream oos, long start, long end)
-		     throws IOException{
+			throws IOException {
 
-        oos.writeLong(start);
-        oos.writeLong(end);
-	    if (hasProperty(start)) {
+		oos.writeLong(start);
+		oos.writeLong(end);
+		if (hasProperty(start)) {
 			oos.writeByte(1);
 			oos.writeLong(start);
 			saveProperty(oos, start);
-	    }
+		}
 		try {
 			long index = start;
 			while ((index = getNextPropertyIndex(index)) <= end) {
@@ -504,10 +509,11 @@ public abstract class PropertySet implements Serializable {
 				saveProperty(oos, index);
 			}
 		}
-		catch(NoSuchIndexException e) {}
+		catch (NoSuchIndexException e) {
+		}
 		oos.writeByte(0);
 	}
-	
+
 	/**
 	 * Restores all the properties from the input stream.  Any existing
 	 * properties will first be removed.
@@ -516,56 +522,22 @@ public abstract class PropertySet implements Serializable {
 	 * @throws ClassNotFoundException if the a class cannot be determined for
 	 * the property value.
 	 */
-	public void restoreProperties(ObjectInputStream ois) throws
-				IOException, ClassNotFoundException {
-        long start = ois.readLong();
-        long end = ois.readLong();
-        this.removeRange(start,end);
-		while(ois.readByte() != 0) {
+	public void restoreProperties(ObjectInputStream ois)
+			throws IOException, ClassNotFoundException {
+		long start = ois.readLong();
+		long end = ois.readLong();
+		this.removeRange(start, end);
+		while (ois.readByte() != 0) {
 			long index = ois.readLong();
 			restoreProperty(ois, index);
 		}
 	}
-	
-	/**
-	 * Saves all properties to the given output stream.
-	 * @param out the output stream.
-	 * @throws IOException I/O error occurs while writing output.
-	 */
-	public void saveAll(ObjectOutputStream out) throws IOException {
-		out.writeObject(name);
-		out.writeObject(propertyPageIndex);
-		out.writeInt(numPageBits);
-		out.writeLong(pageMask);
-		out.writeShort(pageSize);
-		out.writeInt(numProperties);
-		out.writeObject(ht);
-		out.writeObject(objectClass);
-	}
 
 	/**
-	 * Restores all properties values from the input stream.
-	 * @param in the input stream.
-	 * @throws IOException if I/O error occurs while reading from stream.
-	 * @throws ClassNotFoundException if the a class cannot be determined for
-	 * the property value.
-	 */
-	@SuppressWarnings("unchecked") // the type must match or it is a bug
-    public void restoreAll(ObjectInputStream in) throws IOException, ClassNotFoundException {
-	    name = (String)in.readObject();
-		propertyPageIndex = (PropertyPageIndex)in.readObject();
-		numPageBits = in.readInt();
-		pageMask = in.readLong();
-		pageSize = in.readShort();
-		numProperties = in.readInt();
-		ht = (LongObjectHashtable<PropertyPage>) in.readObject();
-		objectClass = (Class<?>)in.readObject();
-	}
-	/**
-     * Based upon the type of property manager that this is, the appropriate
-     * visit() method will be called within the PropertyVisitor.
-     * @param visitor object implementing the PropertyVisitor interface.
-     * @param addr the address of where to visit (get) the property.
+	 * Based upon the type of property manager that this is, the appropriate
+	 * visit() method will be called within the PropertyVisitor.
+	 * @param visitor object implementing the PropertyVisitor interface.
+	 * @param addr the address of where to visit (get) the property.
 	 */
 	public abstract void applyValue(PropertyVisitor visitor, long addr);
 

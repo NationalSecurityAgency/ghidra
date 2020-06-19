@@ -266,7 +266,7 @@ public abstract class PCodeTestAbstractControlBlock {
 	}
 
 	protected int getStructureComponent(Structure testInfoStruct, String fieldName) {
-		for (DataTypeComponent component : testInfoStruct.getComponents()) {
+		for (DataTypeComponent component : testInfoStruct.getDefinedComponents()) {
 			if (fieldName.equals(component.getFieldName())) {
 				return component.getOffset();
 			}

@@ -57,7 +57,7 @@ public class GnuDemanglerIntegrationTest extends AbstractGhidraHeadlessIntegrati
 		String mangled = "MyFunction__11MyNamespacePQ215$ParamNamespace9paramName";
 
 		GnuDemangler demangler = new GnuDemangler();
-		demangler.canDemangle(program);// this perform initialization
+		demangler.canDemangle(program);// this performs initialization
 
 		GnuDemanglerOptions options = new GnuDemanglerOptions();
 		options.setDemangleOnlyKnownPatterns(false);

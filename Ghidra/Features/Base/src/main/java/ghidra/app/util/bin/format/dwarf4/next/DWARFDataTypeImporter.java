@@ -408,8 +408,8 @@ public class DWARFDataTypeImporter {
 			}
 		}
 
-		DataType result = dataTypeManager.addDataType(enumDT,
-			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		DataType result =
+			dataTypeManager.addDataType(enumDT, DWARFDataTypeConflictHandler.INSTANCE);
 
 		return new DWARFDataType(result, dni, diea.getOffset());
 	}
@@ -1339,7 +1339,7 @@ public class DWARFDataTypeImporter {
 
 		@Override
 		public String toString() {
-			return dataType.toString() + "|" + (dni != null ? dni.toString() : "na") + "|" +
+			return dataType.getName() + " | " + (dni != null ? dni.toString() : "na") + " | " +
 				hexOffsets();
 		}
 

@@ -18,6 +18,7 @@ package ghidra.app.decompiler;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import javax.xml.parsers.SAXParser;
@@ -27,14 +28,15 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
+import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.ConstantPool.Record;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
@@ -52,6 +54,14 @@ import ghidra.util.xml.XmlUtilities;
  */
 public class DecompileCallback {
 
+	/**
+	 * Data returned for a query about strings
+	 */
+	public static class StringData {
+		boolean isTruncated;		// Did we truncate the string
+		public byte[] byteData;		// The UTF8 encoding of the string
+	}
+
 	private DecompileDebug debug;
 	private Program program;
 	private Listing listing;
@@ -65,6 +75,7 @@ public class DecompileCallback {
 	private AddressFactory addrfactory;
 	private ConstantPool cpool;
 	private PcodeDataTypeManager dtmanage;
+	private Charset utf8Charset;
 	private String nativeMessage;
 	private boolean showNamespace;
 
@@ -84,6 +95,7 @@ public class DecompileCallback {
 		cpool = null;
 		nativeMessage = null;
 		debug = null;
+		utf8Charset = Charset.availableCharsets().get(CharsetInfo.UTF8);
 	}
 
 	private static SAXParser getSAXParser() throws PcodeXMLException {
@@ -714,7 +726,6 @@ public class DecompileCallback {
 		resBuf.append("\n"); // Make into official XML document
 		String res = resBuf.toString();
 		if (debug != null) {
-			debug.getType(name, res);
 			debug.getType(type);
 		}
 		return res;
@@ -1175,6 +1186,129 @@ public class DecompileCallback {
 			return listing.getFunctionAt(extRef.getToAddress());
 		}
 		return listing.getFunctionAt(addr);
+	}
+
+	/**
+	 * Return true if there are no "replacement" characters in the string
+	 * @param string is the string to test
+	 * @return true if no replacements
+	 */
+	private boolean isValidChars(String string) {
+		char replaceChar = '\ufffd';
+		for (int i = 0; i < string.length(); ++i) {
+			char c = string.charAt(i);
+			if (c == replaceChar) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Check for a string at an address and return a UTF8 encoded byte array.
+	 * If there is already data present at the address, use this to determine the
+	 * string encoding. Otherwise use the data-type info passed in to determine the encoding.
+	 * Check that the bytes at the address represent a valid string encoding that doesn't
+	 * exceed the maximum character limit passed in.  Return null if the string is invalid.
+	 * Return the string translated into a UTF8 byte array otherwise.  A (valid) empty
+	 * string is returned as a zero length array.
+	 * @param addrString is the XML encoded address and maximum byte limit
+	 * @param dtName is the name of a character data-type
+	 * @param dtId is the id associated with the character data-type
+	 * @return the UTF8 encoded byte array or null
+	 */
+	public StringData getStringData(String addrString, String dtName, String dtId) {
+		Address addr;
+		int maxChars;
+		try {
+			maxChars = readXMLSize(addrString);
+			addr = Varnode.readXMLAddress(addrString, addrfactory, funcEntry.getAddressSpace());
+			if (addr == Address.NO_ADDRESS) {
+				throw new PcodeXMLException("Address does not physically map");
+			}
+		}
+		catch (PcodeXMLException e) {
+			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
+			return null;
+		}
+		Data data = program.getListing().getDataContaining(addr);
+		Settings settings = SettingsImpl.NO_SETTINGS;
+		AbstractStringDataType dataType = null;
+		StringDataInstance stringInstance = null;
+		int length = 0;
+		if (data != null) {
+			if (data.getDataType() instanceof AbstractStringDataType) {
+				// There is already a string here.  Use its configuration to
+				// set up the StringDataInstance
+				settings = data;
+				dataType = (AbstractStringDataType) data.getDataType();
+				length = data.getLength();
+				if (length <= 0) {
+					return null;
+				}
+				long diff = addr.subtract(data.getAddress()) *
+					addr.getAddressSpace().getAddressableUnitSize();
+				if (diff < 0 || diff >= length) {
+					return null;
+				}
+				length -= diff;
+				MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
+				stringInstance = dataType.getStringDataInstance(buf, settings, length);
+			}
+		}
+		if (stringInstance == null) {
+			// There is no string and/or something else at the address.
+			// Setup StringDataInstance based on raw memory
+			DataType dt = dtmanage.findBaseType(dtName, dtId);
+			if (dt instanceof AbstractStringDataType) {
+				dataType = (AbstractStringDataType) dt;
+			}
+			else {
+				if (dt != null) {
+					int size = dt.getLength();
+					if (size == 2) {
+						dataType = TerminatedUnicodeDataType.dataType;
+					}
+					else if (size == 4) {
+						dataType = TerminatedUnicode32DataType.dataType;
+					}
+					else {
+						dataType = TerminatedStringDataType.dataType;
+					}
+				}
+				else {
+					dataType = TerminatedStringDataType.dataType;
+				}
+			}
+			MemoryBufferImpl buf = new MemoryBufferImpl(program.getMemory(), addr, 64);
+			stringInstance = dataType.getStringDataInstance(buf, settings, maxChars);
+			length = stringInstance.getStringLength();
+			if (length < 0 || length > maxChars) {
+				return null;
+			}
+		}
+		String stringVal;
+		if (stringInstance.isShowTranslation() && stringInstance.getTranslatedValue() != null) {
+			stringVal = stringInstance.getTranslatedValue();
+		}
+		else {
+			stringVal = stringInstance.getStringValue();
+		}
+
+		if (!isValidChars(stringVal)) {
+			return null;
+		}
+		StringData stringData = new StringData();
+		stringData.isTruncated = false;
+		if (stringVal.length() > maxChars) {
+			stringData.isTruncated = true;
+			stringVal = stringVal.substring(0, maxChars);
+		}
+		stringData.byteData = stringVal.getBytes(utf8Charset);
+		if (debug != null) {
+			debug.getStringData(addr, stringData);
+		}
+		return stringData;
 	}
 
 //==================================================================================================

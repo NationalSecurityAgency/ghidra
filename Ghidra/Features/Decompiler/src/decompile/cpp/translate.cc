@@ -118,6 +118,41 @@ void SpacebaseSpace::restoreXml(const Element *el)
   contain = getManager()->getSpaceByName(el->getAttributeValue("contain"));
 }
 
+/// The \e join space range maps to the underlying pieces in a natural endian aware way.
+/// Given an offset in the range, figure out what address it is mapping to.
+/// The particular piece is passed back as an index, and the Address is returned.
+/// \param offset is the offset within \b this range to map
+/// \param pos will hold the passed back piece index
+/// \return the Address mapped to
+Address JoinRecord::getEquivalentAddress(uintb offset,int4 &pos) const
+
+{
+  if (offset < unified.offset)
+    return Address();		// offset comes before this range
+  int4 smallOff = (int4)(offset - unified.offset);
+  if (pieces[0].space->isBigEndian()) {
+    for(pos=0;pos<pieces.size();++pos) {
+      int4 pieceSize = pieces[pos].size;
+      if (smallOff < pieceSize)
+	break;
+      smallOff -= pieceSize;
+    }
+    if (pos == pieces.size())
+      return Address();		// offset comes after this range
+  }
+  else {
+    for (pos = pieces.size() - 1; pos >= 0; --pos) {
+      int4 pieceSize = pieces[pos].size;
+      if (smallOff < pieceSize)
+	break;
+      smallOff -= pieceSize;
+    }
+    if (pos < 0)
+      return Address();		// offset comes after this range
+  }
+  return Address(pieces[pos].space,pieces[pos].offset + smallOff);
+}
+
 /// Allow sorting on JoinRecords so that a collection of pieces can be quickly mapped to
 /// its logical whole, specified with a join address
 bool JoinRecord::operator<(const JoinRecord &op2) const
@@ -613,13 +648,37 @@ JoinRecord *AddrSpaceManager::findAddJoin(const vector<VarnodeData> &pieces,uint
 }
 
 /// Given a specific \e offset into the \e join address space, recover the JoinRecord that
+/// contains the offset, as a range in the \e join address space.  If there is no existing
+/// record, null is returned.
+/// \param offset is an offset into the join space
+/// \return the JoinRecord containing that offset or null
+JoinRecord *AddrSpaceManager::findJoinInternal(uintb offset) const
+
+{
+  int4 min=0;
+  int4 max=splitlist.size()-1;
+  while(min<=max) {		// Binary search
+    int4 mid = (min+max)/2;
+    JoinRecord *rec = splitlist[mid];
+    uintb val = rec->unified.offset;
+    if (val + rec->unified.size <= offset)
+      min = mid + 1;
+    else if (val > offset)
+      max = mid - 1;
+    else
+      return rec;
+  }
+  return (JoinRecord *)0;
+}
+
+/// Given a specific \e offset into the \e join address space, recover the JoinRecord that
 /// lists the pieces corresponding to that offset.  The offset must originally have come from
 /// a JoinRecord returned by \b findAddJoin, otherwise this method throws an exception.
 /// \param offset is an offset into the join space
 /// \return the JoinRecord for that offset
 JoinRecord *AddrSpaceManager::findJoin(uintb offset) const
 
-{ // Find a split record given the unified (join space) offset
+{
   int4 min=0;
   int4 max=splitlist.size()-1;
   while(min<=max) {		// Binary search
@@ -731,6 +790,48 @@ Address AddrSpaceManager::constructJoinAddress(const Translate *translate,
   pieces[1].size = losz;
   JoinRecord *join = findAddJoin(pieces,0);
   return join->getUnified().getAddr();
+}
+
+/// If an Address in the \e join AddressSpace is shifted from its original offset, it may no
+/// longer have a valid JoinRecord.  The shift or size change may even make the address of
+/// one of the pieces a more natural representation.  Given a new Address and size, this method
+/// decides if there is a matching JoinRecord. If not it either constructs a new JoinRecord or
+/// computes the address within the containing piece.  The given Address is changed if necessary
+/// either to the offset corresponding to the new JoinRecord or to a normal \e non-join Address.
+/// \param addr is the given Address
+/// \param size is the size of the range in bytes
+void AddrSpaceManager::renormalizeJoinAddress(Address &addr,int4 size)
+
+{
+  JoinRecord *joinRecord = findJoinInternal(addr.getOffset());
+  if (joinRecord == (JoinRecord *)0)
+    throw LowlevelError("Join address not covered by a JoinRecord");
+  if (addr.getOffset() == joinRecord->unified.offset && size == joinRecord->unified.size)
+    return;		// JoinRecord matches perfectly, no change necessary
+  int4 pos1;
+  Address addr1 = joinRecord->getEquivalentAddress(addr.getOffset(), pos1);
+  int4 pos2;
+  Address addr2 = joinRecord->getEquivalentAddress(addr.getOffset() + (size-1), pos2);
+  if (addr2.isInvalid())
+    throw LowlevelError("Join address range not covered");
+  if (pos1 == pos2) {
+    addr = addr1;
+    return;
+  }
+  vector<VarnodeData> newPieces;
+  newPieces.push_back(joinRecord->pieces[pos1]);
+  int4 sizeTrunc1 = (int4)(addr1.getOffset() - joinRecord->pieces[pos1].offset);
+  pos1 += 1;
+  while(pos1 <= pos2) {
+    newPieces.push_back(joinRecord->pieces[pos1]);
+    pos1 += 1;
+  }
+  int4 sizeTrunc2 = joinRecord->pieces[pos2].size - (int4)(addr2.getOffset() - joinRecord->pieces[pos2].offset) - 1;
+  newPieces.front().offset = addr1.getOffset();
+  newPieces.front().size -= sizeTrunc1;
+  newPieces.back().size -= sizeTrunc2;
+  JoinRecord *newJoinRecord = findAddJoin(newPieces, size);
+  addr = Address(newJoinRecord->unified.space,newJoinRecord->unified.offset);
 }
 
 /// This constructs only a shell for the Translate object.  It

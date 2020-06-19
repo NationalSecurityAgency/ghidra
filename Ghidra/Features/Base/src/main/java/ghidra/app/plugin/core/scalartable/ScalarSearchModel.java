@@ -19,29 +19,15 @@ import java.awt.Component;
 import java.math.BigInteger;
 import java.util.Comparator;
 
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.table.TableModel;
 
-import docking.widgets.table.AbstractDynamicTableColumn;
-import docking.widgets.table.DiscoverableTableUtils;
-import docking.widgets.table.GTableCellRenderingData;
-import docking.widgets.table.TableColumnDescriptor;
+import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeIterator;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.Resource;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.DataIterator;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.InstructionIterator;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
@@ -52,10 +38,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
-import ghidra.util.table.field.AddressTableColumn;
-import ghidra.util.table.field.FunctionNameTableColumn;
-import ghidra.util.table.field.PreviewTableColumn;
-import ghidra.util.table.field.ProgramLocationTableColumn;
+import ghidra.util.table.field.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -234,12 +217,8 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 		}
 
 		Scalar scalar = rowObject.getScalar();
-		long value = scalar.getSignedValue();
-		if (value < minValue) {
-			return;
-		}
-
-		if (value > maxValue) {
+		long value = scalar.isSigned() ? scalar.getSignedValue() : scalar.getUnsignedValue();
+		if ((value < minValue) || (value > maxValue)) {
 			return;
 		}
 

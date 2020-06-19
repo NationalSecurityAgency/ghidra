@@ -1,0 +1,26 @@
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply plugin: 'eclipse'
+
+eclipse.project.name = 'Features Graph Services'
+
+
+dependencies {
+	compile project(":Base")
+
+	compile "com.github.tomnelson:jungrapht-visualization:1.0-RC8"
+	compile "org.jgrapht:jgrapht-core:1.4.0"
+	
+	// not using jgrapht-io code that depends on antlr, so exclude antlr
+	compile ("org.jgrapht:jgrapht-io:1.4.0") { exclude group: "org.antlr", module: "antlr4-runtime" }
+	runtime "org.slf4j:slf4j-api:1.7.25"
+	runtime "org.slf4j:slf4j-nop:1.7.25"
+	runtime "org.jheaps:jheaps:0.11"
+      
+	helpPath project(path: ":Base", configuration: 'helpPath')
+	
+}
+

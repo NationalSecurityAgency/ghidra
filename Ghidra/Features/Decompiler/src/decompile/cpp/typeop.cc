@@ -537,7 +537,7 @@ void TypeOpBranchind::printRaw(ostream &s,const PcodeOp *op)
 TypeOpCall::TypeOpCall(TypeFactory *t) : TypeOp(t,CPUI_CALL,"call")
 
 {
-  opflags = (PcodeOp::special|PcodeOp::call|PcodeOp::coderef|PcodeOp::nocollapse);
+  opflags = (PcodeOp::special|PcodeOp::call|PcodeOp::has_callspec|PcodeOp::coderef|PcodeOp::nocollapse);
   behave = new OpBehavior(CPUI_CALL,false,true); // Dummy behavior
 }
 
@@ -610,7 +610,7 @@ Datatype *TypeOpCall::getOutputLocal(const PcodeOp *op) const
 TypeOpCallind::TypeOpCallind(TypeFactory *t) : TypeOp(t,CPUI_CALLIND,"callind")
 
 {
-  opflags = PcodeOp::special|PcodeOp::call|PcodeOp::nocollapse;
+  opflags = PcodeOp::special|PcodeOp::call|PcodeOp::has_callspec|PcodeOp::nocollapse;
   behave = new OpBehavior(CPUI_CALLIND,false,true); // Dummy behavior
 }
 
@@ -1161,8 +1161,12 @@ Datatype *TypeOpIntRight::getInputCast(const PcodeOp *op,int4 slot,const CastStr
 
 {
   if (slot == 0) {
+    const Varnode *vn = op->getIn(0);
     Datatype *reqtype = op->inputTypeLocal(slot);
-    Datatype *curtype = op->getIn(slot)->getHigh()->getType();
+    Datatype *curtype = vn->getHigh()->getType();
+    int4 promoType = castStrategy->intPromotionType(vn);
+    if (promoType != CastStrategy::NO_PROMOTION && ((promoType & CastStrategy::UNSIGNED_EXTENSION)==0))
+      return reqtype;
     return castStrategy->castStandard(reqtype,curtype,true,true);
   }
   return TypeOpBinary::getInputCast(op,slot,castStrategy);
@@ -1199,8 +1203,12 @@ Datatype *TypeOpIntSright::getInputCast(const PcodeOp *op,int4 slot,const CastSt
 
 {
   if (slot == 0) {
+    const Varnode *vn = op->getIn(0);
     Datatype *reqtype = op->inputTypeLocal(slot);
-    Datatype *curtype = op->getIn(slot)->getHigh()->getType();
+    Datatype *curtype = vn->getHigh()->getType();
+    int4 promoType = castStrategy->intPromotionType(vn);
+    if (promoType != CastStrategy::NO_PROMOTION && ((promoType & CastStrategy::SIGNED_EXTENSION)==0))
+      return reqtype;
     return castStrategy->castStandard(reqtype,curtype,true,true);
   }
   return TypeOpBinary::getInputCast(op,slot,castStrategy);
@@ -1248,8 +1256,12 @@ TypeOpIntDiv::TypeOpIntDiv(TypeFactory *t)
 Datatype *TypeOpIntDiv::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
 
 {
+  const Varnode *vn = op->getIn(slot);
   Datatype *reqtype = op->inputTypeLocal(slot);
-  Datatype *curtype = op->getIn(slot)->getHigh()->getType();
+  Datatype *curtype = vn->getHigh()->getType();
+  int4 promoType = castStrategy->intPromotionType(vn);
+  if (promoType != CastStrategy::NO_PROMOTION && ((promoType & CastStrategy::UNSIGNED_EXTENSION)==0))
+    return reqtype;
   return castStrategy->castStandard(reqtype,curtype,true,true);
 }
 
@@ -1264,8 +1276,12 @@ TypeOpIntSdiv::TypeOpIntSdiv(TypeFactory *t)
 Datatype *TypeOpIntSdiv::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
 
 {
+  const Varnode *vn = op->getIn(slot);
   Datatype *reqtype = op->inputTypeLocal(slot);
-  Datatype *curtype = op->getIn(slot)->getHigh()->getType();
+  Datatype *curtype = vn->getHigh()->getType();
+  int4 promoType = castStrategy->intPromotionType(vn);
+  if (promoType != CastStrategy::NO_PROMOTION && ((promoType & CastStrategy::SIGNED_EXTENSION)==0))
+    return reqtype;
   return castStrategy->castStandard(reqtype,curtype,true,true);
 }
 
@@ -1280,12 +1296,13 @@ TypeOpIntRem::TypeOpIntRem(TypeFactory *t)
 Datatype *TypeOpIntRem::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
 
 {
-  if (slot == 0) {
-    Datatype *reqtype = op->inputTypeLocal(slot);
-    Datatype *curtype = op->getIn(slot)->getHigh()->getType();
-    return castStrategy->castStandard(reqtype,curtype,true,true);
-  }
-  return TypeOpBinary::getInputCast(op,slot,castStrategy);
+  const Varnode *vn = op->getIn(slot);
+  Datatype *reqtype = op->inputTypeLocal(slot);
+  Datatype *curtype = vn->getHigh()->getType();
+  int4 promoType = castStrategy->intPromotionType(vn);
+  if (promoType != CastStrategy::NO_PROMOTION && ((promoType & CastStrategy::UNSIGNED_EXTENSION)==0))
+    return reqtype;
+  return castStrategy->castStandard(reqtype,curtype,true,true);
 }
 
 TypeOpIntSrem::TypeOpIntSrem(TypeFactory *t)
@@ -1299,12 +1316,13 @@ TypeOpIntSrem::TypeOpIntSrem(TypeFactory *t)
 Datatype *TypeOpIntSrem::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
 
 {
-  if (slot == 0) {
-    Datatype *reqtype = op->inputTypeLocal(slot);
-    Datatype *curtype = op->getIn(slot)->getHigh()->getType();
-    return castStrategy->castStandard(reqtype,curtype,true,true);
-  }
-  return TypeOpBinary::getInputCast(op,slot,castStrategy);
+  const Varnode *vn = op->getIn(slot);
+  Datatype *reqtype = op->inputTypeLocal(slot);
+  Datatype *curtype = vn->getHigh()->getType();
+  int4 promoType = castStrategy->intPromotionType(vn);
+  if (promoType != CastStrategy::NO_PROMOTION && ((promoType & CastStrategy::SIGNED_EXTENSION)==0))
+    return reqtype;
+  return castStrategy->castStandard(reqtype,curtype,true,true);
 }
 
 TypeOpBoolNegate::TypeOpBoolNegate(TypeFactory *t)

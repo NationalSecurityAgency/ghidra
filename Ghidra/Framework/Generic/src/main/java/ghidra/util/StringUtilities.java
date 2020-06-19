@@ -23,6 +23,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import generic.json.Json;
+
 /**
  * Class with static methods that deal with string manipulation.
  */
@@ -442,7 +444,6 @@ public class StringUtilities {
 		return true;
 	}
 
-
 	/**
 	 * Convert tabs in the given string to spaces using
 	 * a default tab width of 8 spaces.
@@ -647,7 +648,6 @@ public class StringUtilities {
 		return location.getWord();
 	}
 
-
 	public static WordLocation findWordLocation(String s, int index, char[] charsToAllow) {
 
 		int len = s.length();
@@ -772,6 +772,18 @@ public class StringUtilities {
 			--byteIndex;
 		}
 		return new String(bytes);
+	}
+
+	/**
+	 * Creates a JSON string for the given object using all of its fields.  To control the
+	 * fields that are in the result string, see {@link Json}.
+	 * 
+	 * <P>This is here as a marker to point users to the real {@link Json} String utility.  
+	 * @param o the object for which to create a string
+	 * @return the string
+	 */
+	public static String toStingJson(Object o) {
+		return Json.toString(o);
 	}
 
 	public static String toStringWithIndent(Object o) {

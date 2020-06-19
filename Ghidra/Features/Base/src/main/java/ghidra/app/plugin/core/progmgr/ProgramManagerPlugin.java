@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.progmgr;
 
 import java.awt.Component;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyEditor;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -26,16 +25,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.swing.Icon;
-
-import docking.ActionContext;
-import docking.DockingUtils;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import docking.options.editor.*;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
-import ghidra.app.context.ProgramContextAction;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.ProgramManager;
@@ -59,7 +54,6 @@ import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 //@formatter:off
 @PluginInfo(
@@ -86,13 +80,15 @@ import resources.ResourceManager;
 //@formatter:on
 public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
+	private static final String SAVE_GROUP = "DomainObjectSave";
+	private static final String OPEN_GROUP = "DomainObjectOpen";
 	private MultiProgramManager programMgr;
 	private ProgramSaveManager programSaveMgr;
 	private DockingAction openAction;
 	private DockingAction saveAllAction;
-	private ProgramContextAction closeAction;
-	private ProgramContextAction saveAction;
-	private ProgramContextAction saveAsAction;
+	private DockingAction closeAction;
+	private DockingAction saveAction;
+	private DockingAction saveAsAction;
 	private DockingAction optionsAction;
 	private DockingAction closeOthersAction;
 	private DockingAction closeAllAction;
@@ -101,7 +97,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	private boolean locked = false;
 	private UndoAction undoAction;
 	private RedoAction redoAction;
-	private ProgramActionContext lastProgramContext;
 	private ProgramLocation currentLocation;
 
 	public ProgramManagerPlugin(PluginTool tool) {
@@ -527,206 +522,73 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 		int subMenuGroupOrder = 1;
 
-		openAction = new DockingAction("Open File", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				open();
-			}
-		};
-		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_FILE, "&Open..." }, "DomainObjectOpen");
-		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
-		openAction.setMenuBarData(menuData);
-		openAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_O, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+		openAction = new ActionBuilder("Open File", getName())
+				.onAction(c -> open())
+				.menuPath(ToolConstants.MENU_FILE, "&Open...")
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
+				.keyBinding("ctrl O")
+				.buildAndInstall(tool);
 
-		closeAction = new ProgramContextAction("Close File", getName()) {
-			@Override
-			public void actionPerformed(ProgramActionContext programContext) {
-				closeProgram(programContext.getProgram(), false);
-			}
+		closeAction = new ActionBuilder("Close File", getName())
+				.menuPath(ToolConstants.MENU_FILE, "&Close")
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
+				.withContext(ProgramActionContext.class)
+				.onAction(c -> closeProgram(c.getProgram(), false))
+				.keyBinding("ctrl W")
+				.buildAndInstall(tool);
 
-			@Override
-			public boolean isValidContext(ActionContext context) {
-				if (!super.isValidContext(context)) {
-					getMenuBarData().setMenuItemName("&Close");
-					setDescription("Close Program");
-					return false;
-				}
-				return true;
-			}
+		closeOthersAction = new ActionBuilder("Close Others", getName())
+				.menuPath(ToolConstants.MENU_FILE, "Close &Others")
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
+				.enabled(false)
+				.onAction(c -> closeOtherPrograms(false))
+				.buildAndInstall(tool);
 
-			@Override
-			public boolean isEnabledForContext(ProgramActionContext context) {
-				Program program = context.getProgram();
-				String programName = "'" + program.getDomainFile().getName() + "'";
-				getMenuBarData().setMenuItemName("&Close " + programName);
-				setDescription("<html>Close " + HTMLUtilities.escapeHTML(programName));
-				return true;
-			}
-		};
-		String[] closeActionMenuPath = { ToolConstants.MENU_FILE, "&Close" };
-		menuData = new MenuData(closeActionMenuPath, null, "DomainObjectOpen");
-		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
-		closeAction.setMenuBarData(menuData);
+		closeAllAction = new ActionBuilder("Close All", getName())
+				.menuPath(ToolConstants.MENU_FILE, "Close &All")
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
+				.onAction(c -> closeAllPrograms(false))
+				.enabled(false)
+				.buildAndInstall(tool);
 
-		closeOthersAction = new DockingAction("Close Others", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				closeOtherPrograms(false);
-			}
-		};
-		closeOthersAction.setEnabled(false);
-		String[] menuPath = { ToolConstants.MENU_FILE, "Close &Others" };
-		menuData = new MenuData(menuPath, null, "DomainObjectOpen");
-		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
-		closeOthersAction.setMenuBarData(menuData);
+		saveAction = new ActionBuilder("Save File", "&Save")
+				.menuPath(ToolConstants.MENU_FILE, "Close &All")
+				.description("Save Program")
+				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
+				.menuIcon(null)
+				.toolBarIcon("images/disk.png")
+				.toolBarGroup(ToolConstants.TOOLBAR_GROUP_ONE)
+				.keyBinding("ctrl S")
+				.withContext(ProgramActionContext.class)
+				.enabledWhen(c -> c.getProgram() != null && c.getProgram().isChanged())
+				.onAction(c -> programSaveMgr.saveProgram(c.getProgram()))
+				.buildAndInstall(tool);
 
-		closeAllAction = new DockingAction("Close All", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				closeAllPrograms(false);
-			}
-		};
-		closeAllAction.setEnabled(false);
-		String[] nenuPath = { ToolConstants.MENU_FILE, "Close &All" };
-		menuData = new MenuData(nenuPath, null, "DomainObjectOpen");
-		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
-		closeAllAction.setMenuBarData(menuData);
+		saveAsAction = new ActionBuilder("Save As File", getName())
+				.menuPath(ToolConstants.MENU_FILE, "Save &As...")
+				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
+				.withContext(ProgramActionContext.class)
+				.onAction(c -> programSaveMgr.saveAs(c.getProgram()))
+				.buildAndInstall(tool);
 
-		saveAction = new ProgramContextAction("Save File", getName()) {
-			@Override
-			public void actionPerformed(ProgramActionContext programContext) {
-				programSaveMgr.saveProgram(programContext.getProgram());
-				// setEnabled(false);
-			}
+		saveAllAction = new ActionBuilder("Save All Files", getName())
+				.menuPath(ToolConstants.MENU_FILE, "Save All")
+				.description("Save All Programs")
+				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
+				.onAction(c -> programSaveMgr.saveChangedPrograms())
+				.buildAndInstall(tool);
 
-			@Override
-			public boolean isValidContext(ActionContext context) {
-				lastProgramContext = null;
-				if (!super.isValidContext(context)) {
-					getMenuBarData().setMenuItemName("&Save");
-					setDescription("Save Program");
-					return false;
-				}
-				return true;
-			}
-
-			@Override
-			public boolean isEnabledForContext(ProgramActionContext context) {
-				lastProgramContext = context;
-				Program program = context.getProgram();
-				String programName = "'" + program.getDomainFile().getName() + "'";
-				getMenuBarData().setMenuItemName("&Save " + programName);
-				setDescription("Save " + programName);
-				return program.isChanged();
-			}
-
-			@Override
-			protected boolean isValidContext(ProgramActionContext context) {
-				return super.isValidContext(context);
-			}
-		};
-		String[] saveMenuPath = { ToolConstants.MENU_FILE, "&Save" };
-		Icon saveIcon = ResourceManager.loadImage("images/disk.png");
-		String saveGroup = ToolConstants.TOOLBAR_GROUP_ONE;
-		subMenuGroupOrder = 0;
-
-		menuData = new MenuData(saveMenuPath, saveIcon, saveGroup);
-		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
-		saveAction.setMenuBarData(menuData);
-		saveAction.setToolBarData(new ToolBarData(saveIcon, saveGroup));
-		saveAction
-				.setKeyBindingData(new KeyBindingData('S', DockingUtils.CONTROL_KEY_MODIFIER_MASK));
-		saveAction.setDescription("Save Program");
-
-		saveAsAction = new ProgramContextAction("Save As File", getName()) {
-			@Override
-			public void actionPerformed(ProgramActionContext programContext) {
-				programSaveMgr.saveAs(programContext.getProgram());
-			}
-
-			@Override
-			public boolean isValidContext(ActionContext context) {
-				if (!super.isValidContext(context)) {
-					getMenuBarData().setMenuItemName("Save &As...");
-					setDescription("Save &As...");
-					return false;
-				}
-				return true;
-			}
-
-			@Override
-			public boolean isEnabledForContext(ProgramActionContext context) {
-				Program program = context.getProgram();
-				String programName = "'" + program.getDomainFile().getName() + "'";
-				String menuName = "Save " + programName + " &As...";
-				getMenuBarData().setMenuItemName(menuName);
-				setDescription(menuName);
-				return true;
-			}
-		};
-		String[] saveAsPath = { ToolConstants.MENU_FILE, "Save &As..." };
-		menuData = new MenuData(saveAsPath, null, "DomainObjectSave");
-		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
-		saveAsAction.setMenuBarData(menuData);
-
-		saveAllAction = new DockingAction("Save All Files", getName()) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				programSaveMgr.saveChangedPrograms();
-			}
-		};
-		menuData =
-			new MenuData(new String[] { ToolConstants.MENU_FILE, "Save All" }, "DomainObjectSave");
-		menuData.setMenuSubGroup(Integer.toString(subMenuGroupOrder++));
-		saveAllAction.setMenuBarData(menuData);
-		saveAllAction.setDescription("Save All Programs");
-
-		optionsAction = new ProgramContextAction("Program Options", getName()) {
-			@Override
-			public void actionPerformed(ProgramActionContext programContext) {
-				showProgramOptions(programContext.getProgram());
-			}
-
-			@Override
-			public boolean isValidContext(ActionContext context) {
-				if (!super.isValidContext(context)) {
-					getMenuBarData().setMenuItemName("Program Options");
-					return false;
-				}
-				return true;
-			}
-
-			@Override
-			public boolean isEnabledForContext(ProgramActionContext context) {
-				lastProgramContext = context;
-				Program program = context.getProgram();
-				String programName = program.getDomainFile().getName();
-				getMenuBarData().setMenuItemName("Options for " + programName + "...");
-				return true;
-			}
-		};
-		String[] optionsPath = { ToolConstants.MENU_EDIT, "P&rogram Options..." };
-		menuData = new MenuData(optionsPath, null, ToolConstants.TOOL_OPTIONS_MENU_GROUP);
-
-		// update these options to appear below those for the tool, which we know is defined
-		// inside of ToolConstants
-		menuData.setMenuSubGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP + "b");
-		optionsAction.setMenuBarData(menuData);
-		optionsAction.setDescription("Edit Options for current program");
+		optionsAction = new ActionBuilder("Program Options", getName())
+				.menuPath(ToolConstants.MENU_EDIT, "P&rogram Options...")
+				.description("Edit Options for current program")
+				.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP,
+					ToolConstants.TOOL_OPTIONS_MENU_GROUP + "b")
+				.withContext(ProgramActionContext.class)
+				.onAction(c -> showProgramOptions(c.getProgram()))
+				.buildAndInstall(tool);
 
 		undoAction = new UndoAction(tool, getName());
 		redoAction = new RedoAction(tool, getName());
-
-		tool.addAction(openAction);
-		tool.addAction(closeAction);
-		tool.addAction(closeOthersAction);
-		tool.addAction(closeAllAction);
-		tool.addAction(saveAction);
-		tool.addAction(saveAsAction);
-		tool.addAction(saveAllAction);
-		tool.addAction(optionsAction);
 		tool.addAction(undoAction);
 		tool.addAction(redoAction);
 	}
@@ -791,6 +653,10 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	private void updateActions() {
 		Program p = programMgr.getCurrentProgram();
+		updateCloseAction(p);
+		updateProgramOptionsAction(p);
+		updateSaveAction(p);
+		updateSaveAsAction(p);
 		closeAllAction.setEnabled(p != null);
 		optionsAction.setEnabled(p != null);
 		Program[] programList = programMgr.getAllPrograms();
@@ -803,6 +669,54 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			}
 		}
 		tool.contextChanged(null);
+	}
+
+	private void updateSaveAction(Program p) {
+		if (p == null) {
+			saveAction.getMenuBarData().setMenuItemName("&Save");
+			saveAction.setDescription("Save Program");
+			saveAction.setEnabled(false);
+		}
+		else {
+			String programName = "'" + p.getDomainFile().getName() + "'";
+			saveAction.getMenuBarData().setMenuItemName("&Save " + programName);
+			saveAction.setDescription("Save " + programName);
+			saveAction.setEnabled(p.isChanged());
+		}
+	}
+
+	private void updateSaveAsAction(Program p) {
+		if (p == null) {
+			saveAsAction.getMenuBarData().setMenuItemName("Save &As...");
+		}
+		else {
+			String programName = "'" + p.getDomainFile().getName() + "'";
+			saveAsAction.getMenuBarData().setMenuItemName("Save " + programName + " &As...");
+		}
+	}
+
+	private void updateProgramOptionsAction(Program p) {
+		if (p == null) {
+			optionsAction.getMenuBarData().setMenuItemName("Program Options");
+		}
+		else {
+			String programName = "'" + p.getDomainFile().getName() + "'";
+			optionsAction.getMenuBarData().setMenuItemName("Options for " + programName + "...");
+		}
+		optionsAction.setEnabled(p != null);
+	}
+
+	private void updateCloseAction(Program p) {
+		if (p == null) {
+			closeAction.getMenuBarData().setMenuItemName("&Close");
+			closeAction.setDescription("Close Program");
+		}
+		else {
+			String programName = "'" + p.getDomainFile().getName() + "'";
+			closeAction.getMenuBarData().setMenuItemName("&Close " + programName);
+			closeAction.setDescription("<html>Close " + HTMLUtilities.escapeHTML(programName));
+		}
+		closeAction.setEnabled(p != null);
 	}
 
 	private void open() {
@@ -875,17 +789,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	void updateProgramActions() {
 		updateSaveAllAction();
-		if (lastProgramContext != null) {
-			updateProgramAction(undoAction);
-			updateProgramAction(redoAction);
-			updateProgramAction(saveAction);
-			updateProgramAction(saveAsAction);
-		}
-	}
-
-	private void updateProgramAction(ProgramContextAction action) {
-		boolean isEnabled = action.isEnabledForContext(lastProgramContext);
-		action.setEnabled(isEnabled);
+		Program p = getCurrentProgram();
+		updateSaveAction(getCurrentProgram());
+		updateSaveAsAction(getCurrentProgram());
+		undoAction.update(p);
+		redoAction.update(p);
 	}
 
 	private void updateSaveAllAction() {

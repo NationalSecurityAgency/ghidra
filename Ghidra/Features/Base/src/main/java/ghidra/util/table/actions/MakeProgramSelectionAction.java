@@ -51,6 +51,8 @@ public class MakeProgramSelectionAction extends DockingAction {
 	 */
 	public MakeProgramSelectionAction(String owner, GhidraTable table) {
 		super("Make Selection", owner, KeyBindingType.SHARED);
+		this.table = table;
+		init();
 	}
 
 	/**
@@ -65,6 +67,10 @@ public class MakeProgramSelectionAction extends DockingAction {
 		this.plugin = plugin;
 		this.table = table;
 
+		init();
+	}
+
+	private void init() {
 		setPopupMenuData(
 			new MenuData(new String[] { "Make Selection" }, Icons.MAKE_SELECTION_ICON));
 		setToolBarData(new ToolBarData(Icons.MAKE_SELECTION_ICON));

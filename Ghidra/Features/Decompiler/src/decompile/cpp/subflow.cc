@@ -193,38 +193,6 @@ SubvariableFlow::ReplaceOp *SubvariableFlow::createOpDown(OpCode opc,int4 numpar
   return rop;
 }
 
-/// \brief Convert a new INDIRECT op into the logically trimmed variant of the given original PcodeOp
-///
-/// This method assumes the original op was an \e indirect \e creation. The input and output
-/// Varnode for the new INDIRECT are not provided by this method. It only provides the
-/// \e indirect \e effect input and patches up any active parameter recovery process.
-/// \param newop is the new INDIRECT op to convert
-/// \param oldop is the original INDIRECT op
-/// \param out is the subgraph output variable node of the new INDIRECT
-void SubvariableFlow::patchIndirect(PcodeOp *newop,PcodeOp *oldop, ReplaceVarnode *out)
-
-{
-  PcodeOp *indop = PcodeOp::getOpFromConst(oldop->getIn(1)->getAddr());
-  bool possibleout = !oldop->getIn(0)->isIndirectZero();
-  Varnode *outvn = getReplaceVarnode(out);
-  fd->opSetOutput(newop,outvn);
-  fd->opSetOpcode(newop, CPUI_INDIRECT);
-  fd->opSetInput(newop,fd->newConstant(outvn->getSize(),0),0);
-  fd->opSetInput(newop,fd->newVarnodeIop(indop),1);
-  fd->markIndirectCreation(newop,possibleout);
-  fd->opInsertBefore(newop, indop);
-  FuncCallSpecs *fc = fd->getCallSpecs(indop);
-  if (fc == (FuncCallSpecs *)0) return;
-  if (fc->isOutputActive()) {
-    ParamActive *active = fc->getActiveOutput();
-    int4 trial = active->whichTrial( out->vn->getAddr(), out->vn->getSize() );
-    if (trial < 0)
-      throw LowlevelError("Cannot trim output trial to subflow");
-    Address addr = getReplacementAddress(out);
-    active->shrink(trial,addr,flowsize);
-  }
-}
-
 /// \brief Determine if the given subgraph variable can act as a parameter to the given CALL op
 ///
 /// We assume the variable flows as a parameter to the CALL. If the CALL doesn't lock the parameter
@@ -238,14 +206,18 @@ bool SubvariableFlow::tryCallPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 
 {
   if (slot == 0) return false;
+  if (!aggressive) {
+    if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
+      return false;				// Don't truncate
+  }
   FuncCallSpecs *fc = fd->getCallSpecs(op);
   if (fc == (FuncCallSpecs *)0) return false;
   if (fc->isInputActive()) return false; // Don't trim while in the middle of figuring out params
   if (fc->isInputLocked() && (!fc->isDotdotdot())) return false;
 
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;
-  patchlist.back().pullop = op;
+  patchlist.back().type = PatchRecord::parameter_patch;
+  patchlist.back().patchOp = op;
   patchlist.back().in1 = rvn;
   patchlist.back().slot = slot;
   pullcount += 1;		// A true terminal modification
@@ -265,6 +237,10 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 {
   if (slot == 0) return false;	// Don't deal with actual return address container
   if (fd->getFuncProto().isOutputLocked()) return false;
+  if (!aggressive) {
+    if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
+      return false;				// Don't truncate
+  }
 
   if (!returnsTraversed) {
     // If we plan to truncate the size of a return variable, we need to propagate the logical size to any other
@@ -283,12 +259,21 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 	return false;
       if (inworklist)
 	worklist.push_back(rep);
+      else if (retvn->isConstant() && retop != op) {
+	// Trace won't revisit this RETURN, so we need to generate patch now
+	patchlist.push_back(PatchRecord());
+	patchlist.back().type = PatchRecord::parameter_patch;
+	patchlist.back().patchOp = retop;
+	patchlist.back().in1 = rep;
+	patchlist.back().slot = slot;
+	pullcount += 1;
+      }
     }
     returnsTraversed = true;
   }
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;
-  patchlist.back().pullop = op;
+  patchlist.back().type = PatchRecord::parameter_patch;
+  patchlist.back().patchOp = op;
   patchlist.back().in1 = rvn;
   patchlist.back().slot = slot;
   pullcount += 1;		// A true terminal modification
@@ -302,24 +287,44 @@ bool SubvariableFlow::tryReturnPull(PcodeOp *op,ReplaceVarnode *rvn,int4 slot)
 /// \param op is the given INDIRECT
 /// \param rvn is the given subgraph variable acting as the output of the INDIRECT
 /// \return \b true if we can successfully trim the value to its logical size
-bool SubvariableFlow::tryCallReturnPull(PcodeOp *op,ReplaceVarnode *rvn)
+bool SubvariableFlow::tryCallReturnPush(PcodeOp *op,ReplaceVarnode *rvn)
 
 {
-  if (!op->isIndirectCreation()) return false;
-  PcodeOp *indop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr());
-  FuncCallSpecs *fc = fd->getCallSpecs(indop);
+  if (!aggressive) {
+    if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
+      return false;				// Don't truncate
+  }
+  if ((rvn->mask & 1) == 0) return false;	// Verify the logical value is the least significant part
+  if (bitsize < 8) return false;		// Make sure logical value is at least a byte
+  FuncCallSpecs *fc = fd->getCallSpecs(op);
   if (fc == (FuncCallSpecs *)0) return false;
   if (fc->isOutputLocked()) return false;
-  
-  if (fc->isOutputActive()) {
-    ParamActive *active = fc->getActiveOutput();
-    int4 trial = active->whichTrial( rvn->vn->getAddr(), rvn->vn->getSize() );
-    if (trial < 0) return false;
-    Address newaddr = getReplacementAddress(rvn);
-    if (!active->testShrink(trial,newaddr, flowsize ))
-      return false;
-  }
-  createOp(CPUI_INDIRECT,2,rvn);
+  if (fc->isOutputActive()) return false;	// Don't trim while in the middle of figuring out return value
+
+  addPush(op,rvn);
+  // pullcount += 1;		// This is a push NOT a pull
+  return true;
+}
+
+/// \brief Determine if the subgraph variable can act as a switch variable for the given BRANCHIND
+///
+/// We query the JumpTable associated with the BRANCHIND to see if its switch variable
+/// can be trimmed as indicated by the logical flow.
+/// \param op is the given BRANCHIND op
+/// \param rvn is the subgraph variable flowing to the BRANCHIND
+/// \return \b true if the switch variable can be successfully trimmed to its logical size
+bool SubvariableFlow::trySwitchPull(PcodeOp *op,ReplaceVarnode *rvn)
+
+{
+  if ((rvn->mask & 1) == 0) return false;	// Logical value must be justified
+  if ((rvn->vn->getConsume()&~rvn->mask)!=0)	// If there's something outside the mask being consumed
+    return false;				//  we can't trim
+  patchlist.push_back(PatchRecord());
+  patchlist.back().type = PatchRecord::parameter_patch;
+  patchlist.back().patchOp = op;
+  patchlist.back().in1 = rvn;
+  patchlist.back().slot = 0;
+  pullcount += 1;		// A true terminal modification
   return true;
 }
 
@@ -339,14 +344,14 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
   bool booldir;
   int4 dcount = 0;
   int4 hcount = 0;
+  int4 callcount = 0;
 
   list<PcodeOp *>::const_iterator iter,enditer;
-  iter = rvn->vn->beginDescend();
   enditer = rvn->vn->endDescend();
-  while(iter != enditer) {
-    op = *iter++;
+  for(iter = rvn->vn->beginDescend();iter != enditer;++iter) {
+    op = *iter;
     outvn = op->getOut();
-    if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
+    if ((outvn!=(Varnode *)0)&&outvn->isMark()&&!op->isCall())
       continue;
     dcount += 1;		// Count this descendant
     slot = op->getSlot(rvn->vn);
@@ -472,7 +477,15 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       sa = (int4)op->getIn(1)->getOffset() * 8;
       newmask = (rvn->mask >> sa) & calc_mask(outvn->getSize());
       if (newmask == 0) break;	// subvar is set to zero, truncate flow
-      if (rvn->mask != (newmask << sa)) return false;
+      if (rvn->mask != (newmask << sa)) {	// Some kind of truncation of the logical value
+	if (flowsize > ((sa/8) + outvn->getSize()) && (rvn->mask & 1) != 0) {
+	  // Only a piece of the logical value remains
+	  addTerminalPatchSameOp(op, rvn, 0);
+	  hcount += 1;
+	  break;
+	}
+	return false;
+      }
       if (((newmask & 1)!=0)&&(outvn->getSize()==flowsize)) {
 	addTerminalPatch(op,rvn);
 	hcount += 1;		// Dealt with this descendant
@@ -549,13 +562,18 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       break;
     case CPUI_CALL:
     case CPUI_CALLIND:
-      if (!aggressive) return false;
+      callcount += 1;
+      if (callcount > 1)
+	slot = op->getRepeatSlot(rvn->vn, slot, iter);
       if (!tryCallPull(op,rvn,slot)) return false;
       hcount += 1;		// Dealt with this descendant
       break;
     case CPUI_RETURN:
-      if (!aggressive) return false;
       if (!tryReturnPull(op,rvn,slot)) return false;
+      hcount += 1;
+      break;
+    case CPUI_BRANCHIND:
+      if (!trySwitchPull(op, rvn)) return false;
       hcount += 1;
       break;
     case CPUI_BOOL_NEGATE:
@@ -632,8 +650,13 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
     return true;
   case CPUI_INT_ZEXT:
   case CPUI_INT_SEXT:
-    if ((rvn->mask & calc_mask(op->getIn(0)->getSize())) != rvn->mask)
+    if ((rvn->mask & calc_mask(op->getIn(0)->getSize())) != rvn->mask) {
+      if ((rvn->mask & 1)!=0 && flowsize > op->getIn(0)->getSize()) {
+	addPush(op,rvn);
+	return true;
+      }
       break;	       // Check if subvariable comes through extension
+    }
     rop = createOp(CPUI_COPY,1,rvn);
     if (!createLink(rop,rvn->mask,0,op->getIn(0))) return false;
     return true;
@@ -723,12 +746,10 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
       return true;
     }
     break;
-  case CPUI_INDIRECT:
-    // TODO: This assumes that the INDIRECT is CALL-based.  Add STORE-based logic.
-    if (aggressive) {
-      if (tryCallReturnPull(op,rvn))
-	return true;
-    }
+  case CPUI_CALL:
+  case CPUI_CALLIND:
+    if (tryCallReturnPush(op,rvn))
+      return true;
     break;
   case CPUI_INT_EQUAL:
   case CPUI_INT_NOTEQUAL:
@@ -773,14 +794,14 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
   int4 slot;
   int4 dcount = 0;
   int4 hcount = 0;
+  int4 callcount = 0;
 
   list<PcodeOp *>::const_iterator iter,enditer;
-  iter = rvn->vn->beginDescend();
   enditer = rvn->vn->endDescend();
-  while(iter != enditer) {
-    op = *iter++;
+  for(iter=rvn->vn->beginDescend();iter != enditer;++iter) {
+    op = *iter;
     outvn = op->getOut();
-    if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
+    if ((outvn!=(Varnode *)0)&&outvn->isMark()&&!op->isCall())
       continue;
     dcount += 1;		// Count this descendant
     slot = op->getSlot(rvn->vn);
@@ -828,13 +849,18 @@ bool SubvariableFlow::traceForwardSext(ReplaceVarnode *rvn)
       break;
     case CPUI_CALL:
     case CPUI_CALLIND:
-      if (!aggressive) return false;
+      callcount += 1;
+      if (callcount > 1)
+	slot = op->getRepeatSlot(rvn->vn, slot, iter);
       if (!tryCallPull(op,rvn,slot)) return false;
       hcount += 1;		// Dealt with this descendant
       break;
     case CPUI_RETURN:
-      if (!aggressive) return false;
       if (!tryReturnPull(op,rvn,slot)) return false;
+      hcount += 1;
+      break;
+    case CPUI_BRANCHIND:
+      if (!trySwitchPull(op,rvn)) return false;
       hcount += 1;
       break;
     default:
@@ -871,6 +897,13 @@ bool SubvariableFlow::traceBackwardSext(ReplaceVarnode *rvn)
       if (!createLink(rop,rvn->mask,i,op->getIn(i))) // Same inputs and mask
 	return false;
     return true;
+  case CPUI_INT_ZEXT:
+    if (op->getIn(0)->getSize() < flowsize) {
+      // zero extension from a smaller size still acts as a signed extension
+      addPush(op,rvn);
+      return true;
+    }
+    break;
   case CPUI_INT_SEXT:
     if (flowsize != op->getIn(0)->getSize()) return false;
     rop = createOp(CPUI_COPY,1,rvn);
@@ -885,11 +918,10 @@ bool SubvariableFlow::traceBackwardSext(ReplaceVarnode *rvn)
     if (rop->input.size()==1)
       addConstant(rop,calc_mask(op->getIn(1)->getSize()),1,op->getIn(1)->getOffset()); // Preserve the shift amount
     return true;
-  case CPUI_INDIRECT:
-    if (aggressive) {
-      if (tryCallReturnPull(op,rvn))
-	return true;
-    }
+  case CPUI_CALL:
+  case CPUI_CALLIND:
+    if (tryCallReturnPush(op,rvn))
+      return true;
     break;
   default:
     break;
@@ -1006,6 +1038,21 @@ void SubvariableFlow::createNewOut(ReplaceOp *rop,uintb mask)
   res->def = rop;
 }
 
+/// \brief Mark an operation where original data-flow is being pushed into a subgraph variable
+///
+/// The operation is not manipulating the logical value, but it produces a variable containing
+/// the logical value. The original op will not change but will just produce a smaller value.
+/// \param pushOp is the operation to mark
+/// \param rvn is the output variable holding the logical value
+void SubvariableFlow::addPush(PcodeOp *pushOp,ReplaceVarnode *rvn)
+
+{
+  patchlist.push_front(PatchRecord());		// Push to the front of the patch list
+  patchlist.front().type = PatchRecord::push_patch;
+  patchlist.front().patchOp = pushOp;
+  patchlist.front().in1 = rvn;
+}
+
 /// \brief Mark an operation where a subgraph variable is naturally copied into the original data-flow
 ///
 /// If the operations naturally takes the given logical value as input but the output
@@ -1017,8 +1064,8 @@ void SubvariableFlow::addTerminalPatch(PcodeOp *pullop,ReplaceVarnode *rvn)
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 0;	// Ultimately gets converted to a COPY
-  patchlist.back().pullop = pullop;	// Operation pulling the variable out
+  patchlist.back().type = PatchRecord::copy_patch;	// Ultimately gets converted to a COPY
+  patchlist.back().patchOp = pullop;	// Operation pulling the variable out
   patchlist.back().in1 = rvn;	// Point in container flow for pull
   pullcount += 1;		// a true terminal modification
 }
@@ -1035,8 +1082,8 @@ void SubvariableFlow::addTerminalPatchSameOp(PcodeOp *pullop,ReplaceVarnode *rvn
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;	// Keep the original op, just change input
-  patchlist.back().pullop = pullop;	// Operation pulling the variable out
+  patchlist.back().type = PatchRecord::parameter_patch;	// Keep the original op, just change input
+  patchlist.back().patchOp = pullop;	// Operation pulling the variable out
   patchlist.back().in1 = rvn;	// Point in container flow for pull
   patchlist.back().slot = slot;
   pullcount += 1;		// a true terminal modification
@@ -1053,8 +1100,8 @@ void SubvariableFlow::addBooleanPatch(PcodeOp *pullop,ReplaceVarnode *rvn,int4 s
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 2;	// Make no change to the operator, just put in the new input
-  patchlist.back().pullop = pullop;	// Operation pulling the variable out
+  patchlist.back().type = PatchRecord::parameter_patch;	// Make no change to the operator, just put in the new input
+  patchlist.back().patchOp = pullop;	// Operation pulling the variable out
   patchlist.back().in1 = rvn;	// Point in container flow for pull
   patchlist.back().slot = slot;
   // this is not a true modification
@@ -1071,9 +1118,9 @@ void SubvariableFlow::addSuggestedPatch(ReplaceVarnode *rvn,PcodeOp *pushop,int4
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 3;
+  patchlist.back().type = PatchRecord::extension_patch;
   patchlist.back().in1 = rvn;
-  patchlist.back().pullop = pushop;
+  patchlist.back().patchOp = pushop;
   if (sa == -1)
     sa = leastsigbit_set(rvn->mask);
   patchlist.back().slot = sa;
@@ -1091,8 +1138,8 @@ void SubvariableFlow::addComparePatch(ReplaceVarnode *in1,ReplaceVarnode *in2,Pc
 
 {
   patchlist.push_back(PatchRecord());
-  patchlist.back().type = 1;
-  patchlist.back().pullop = op;
+  patchlist.back().type = PatchRecord::compare_patch;
+  patchlist.back().patchOp = op;
   patchlist.back().in1 = in1;
   patchlist.back().in2 = in2;
   pullcount += 1;
@@ -1152,6 +1199,7 @@ Address SubvariableFlow::getReplacementAddress(ReplaceVarnode *rvn) const
     addr = addr + (rvn->vn->getSize() - flowsize - sa);
   else
     addr = addr + sa;
+  addr.renormalize(flowsize);
   return addr;
 }
 
@@ -1212,7 +1260,8 @@ bool SubvariableFlow::processNextWork(void)
 /// \param mask is a mask where 1 bits indicate the position of the logical value within the \e root Varnode
 /// \param aggr is \b true if we should use aggressive (less restrictive) tests during the trace
 /// \param sext is \b true if we should assume sign extensions from the logical value into its container
-SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext)
+/// \param big is \b true if we look for subvariable flow for \e big (8-byte) logical values
+SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,bool sext,bool big)
 
 {
   fd = f;
@@ -1232,6 +1281,13 @@ SubvariableFlow::SubvariableFlow(Funcdata *f,Varnode *root,uintb mask,bool aggr,
     flowsize = 3;
   else if (bitsize <= 32)
     flowsize = 4;
+  else if (bitsize <= 64) {
+    if (!big) {
+      fd = (Funcdata *)0;
+      return;
+    }
+    flowsize = 8;
+  }
   else {
     fd = (Funcdata *)0;
     return;
@@ -1271,27 +1327,39 @@ bool SubvariableFlow::doTrace(void)
 void SubvariableFlow::doReplacement(void)
 
 {
+  list<PatchRecord>::iterator piter;
   list<ReplaceOp>::iterator iter;
+
+  // Do up front processing of the call return patches, which will be at the front of the list
+  for(piter=patchlist.begin();piter!=patchlist.end();++piter) {
+    if ((*piter).type != PatchRecord::push_patch) break;
+    PcodeOp *pushOp = (*piter).patchOp;
+    Varnode *newVn = getReplaceVarnode((*piter).in1);
+    Varnode *oldVn = pushOp->getOut();
+    fd->opSetOutput(pushOp, newVn);
+
+    // Create placeholder defining op for old Varnode, until dead code cleans it up
+    PcodeOp *newZext = fd->newOp(1, pushOp->getAddr());
+    fd->opSetOpcode(newZext, CPUI_INT_ZEXT);
+    fd->opSetInput(newZext,newVn,0);
+    fd->opSetOutput(newZext,oldVn);
+    fd->opInsertAfter(newZext, pushOp);
+  }
 
   // Define all the outputs first
   for(iter=oplist.begin();iter!=oplist.end();++iter) {
     PcodeOp *newop = fd->newOp((*iter).numparams,(*iter).op->getAddr());
     (*iter).replacement = newop;
-    if ((*iter).opc == CPUI_INDIRECT) {
-      patchIndirect( newop, (*iter).op, (*iter).output );
-    }
-    else {
-      fd->opSetOpcode(newop,(*iter).opc);
-      ReplaceVarnode *rout = (*iter).output;
-      //      if (rout != (ReplaceVarnode *)0) {
-      //	if (rout->replacement == (Varnode *)0)
-      //	  rout->replacement = fd->newUniqueOut(flowsize,newop);
-      //	else
-      //	  fd->opSetOutput(newop,rout->replacement);
-      //      }
-      fd->opSetOutput(newop,getReplaceVarnode(rout));
-      fd->opInsertAfter(newop,(*iter).op);
-    }
+    fd->opSetOpcode(newop,(*iter).opc);
+    ReplaceVarnode *rout = (*iter).output;
+    //      if (rout != (ReplaceVarnode *)0) {
+    //	if (rout->replacement == (Varnode *)0)
+    //	  rout->replacement = fd->newUniqueOut(flowsize,newop);
+    //	else
+    //	  fd->opSetOutput(newop,rout->replacement);
+    //      }
+    fd->opSetOutput(newop,getReplaceVarnode(rout));
+    fd->opInsertAfter(newop,(*iter).op);
   }
 
   // Set all the inputs
@@ -1303,51 +1371,55 @@ void SubvariableFlow::doReplacement(void)
 
   // These are operations that carry flow from the small variable into an existing
   // variable of the correct size
-  list<PatchRecord>::iterator piter;
-  for(piter=patchlist.begin();piter!=patchlist.end();++piter) {
-    PcodeOp *pullop = (*piter).pullop;
-    int4 type = (*piter).type;
-    if (type == 0) {
+  for(;piter!=patchlist.end();++piter) {
+    PcodeOp *pullop = (*piter).patchOp;
+    switch((*piter).type) {
+    case PatchRecord::copy_patch:
       while(pullop->numInput() > 1)
 	fd->opRemoveInput(pullop,pullop->numInput()-1);
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in1),0);
       fd->opSetOpcode(pullop,CPUI_COPY);
-    }
-    else if (type == 1) {	// A comparison
+      break;
+    case PatchRecord::compare_patch:
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in1),0);
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in2),1);
-    }
-    else if (type == 2) {	// A call parameter or return value
+      break;
+    case PatchRecord::parameter_patch:
       fd->opSetInput(pullop,getReplaceVarnode((*piter).in1),(*piter).slot);
-    }
-    else if (type == 3) {
-      // These are operations that flow the small variable into a bigger variable but
-      // where all the remaining bits are zero
-      int4 sa = (*piter).slot;
-      vector<Varnode *> invec;
-      Varnode *inVn = getReplaceVarnode((*piter).in1);
-      int4 outSize = pullop->getOut()->getSize();
-      if (sa == 0) {
-	invec.push_back( inVn );
-	OpCode opc = (inVn->getSize() == outSize) ? CPUI_COPY : CPUI_INT_ZEXT;
-	fd->opSetOpcode( pullop, opc );
-	fd->opSetAllInput(pullop,invec);
-      }
-      else {
-	if (inVn->getSize() != outSize) {
-	  PcodeOp *zextop = fd->newOp(1,pullop->getAddr());
-	  fd->opSetOpcode( zextop, CPUI_INT_ZEXT );
-	  Varnode *zextout = fd->newUniqueOut(outSize,zextop);
-	  fd->opSetInput(zextop,inVn,0);
-	  fd->opInsertBefore(zextop,pullop);
-	  invec.push_back(zextout);
-	}
-	else
+      break;
+    case PatchRecord::extension_patch:
+      {
+	// These are operations that flow the small variable into a bigger variable but
+	// where all the remaining bits are zero
+	int4 sa = (*piter).slot;
+	vector<Varnode *> invec;
+	Varnode *inVn = getReplaceVarnode((*piter).in1);
+	int4 outSize = pullop->getOut()->getSize();
+	if (sa == 0) {
 	  invec.push_back(inVn);
-	invec.push_back(fd->newConstant(4,sa));
-	fd->opSetAllInput(pullop,invec);
-	fd->opSetOpcode( pullop, CPUI_INT_LEFT);
+	  OpCode opc = (inVn->getSize() == outSize) ? CPUI_COPY : CPUI_INT_ZEXT;
+	  fd->opSetOpcode(pullop, opc);
+	  fd->opSetAllInput(pullop, invec);
+	}
+	else {
+	  if (inVn->getSize() != outSize) {
+	    PcodeOp *zextop = fd->newOp(1, pullop->getAddr());
+	    fd->opSetOpcode(zextop, CPUI_INT_ZEXT);
+	    Varnode *zextout = fd->newUniqueOut(outSize, zextop);
+	    fd->opSetInput(zextop, inVn, 0);
+	    fd->opInsertBefore(zextop, pullop);
+	    invec.push_back(zextout);
+	  }
+	  else
+	    invec.push_back(inVn);
+	  invec.push_back(fd->newConstant(4, sa));
+	  fd->opSetAllInput(pullop, invec);
+	  fd->opSetOpcode(pullop, CPUI_INT_LEFT);
+	}
+	break;
       }
+    case PatchRecord::push_patch:
+      break;	// Shouldn't see these here, handled earlier
     }
   }
 }
@@ -1705,7 +1777,6 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     Varnode *outvn = op->getOut();
     if ((outvn!=(Varnode *)0)&&(outvn->isMark()))
       continue;
-    int4 slot = op->getSlot(vn);
     switch(op->code()) {
     case CPUI_COPY:
     case CPUI_FLOAT_CEIL:
@@ -1723,7 +1794,7 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
       TransformOp *rop = newOpReplace(op->numInput(), op->code(), op);
       TransformVar *outrvn = setReplacement(outvn);
       if (outrvn == (TransformVar *)0) return false;
-      opSetInput(rop,rvn,slot);
+      opSetInput(rop,rvn,op->getSlot(vn));
       opSetOutput(rop,outrvn);
       break;
     }
@@ -1741,18 +1812,20 @@ bool SubfloatFlow::traceForward(TransformVar *rvn)
     case CPUI_FLOAT_LESS:
     case CPUI_FLOAT_LESSEQUAL:
     {
+      int4 slot = op->getSlot(vn);
       TransformVar *rvn2 = setReplacement(op->getIn(1-slot));
       if (rvn2 == (TransformVar *)0) return false;
-      TransformOp *rop = newPreexistingOp(2, op->code(), op);
-      if (slot == 0) {
-	opSetInput(rop,rvn,0);
-	opSetInput(rop,rvn2,1);
+      if (rvn == rvn2) {
+	list<PcodeOp *>::const_iterator ourIter = iter;
+	--ourIter;	// Back up one to our original iterator
+	slot = op->getRepeatSlot(vn, slot, ourIter);
       }
-      else {
-	opSetInput(rop,rvn2,0);
-	opSetInput(rop,rvn,1);
+      if (preexistingGuard(slot, rvn2)) {
+	TransformOp *rop = newPreexistingOp(2, op->code(), op);
+	opSetInput(rop, rvn, 0);
+	opSetInput(rop, rvn2, 1);
+	terminatorCount += 1;
       }
-      terminatorCount += 1;
       break;
     }
     case CPUI_FLOAT_TRUNC:

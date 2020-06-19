@@ -1837,8 +1837,8 @@ is sf=1 & op=1 & s=0 & b_2428=0x1a & b_2123=4 & Rm_GPR64 & InvCondOp & b_1011=1 
 # C6.2.59 CRC32B, CRC32H, CRC32W, CRC32X page C6-611 line 35802 KEEPWITH
 # sf == 0 && sz = 00 CRC32CB variant
 
-crcpoly: "" is b_12=0 { local tmp = 0x04C11DB7:4; export *[const]:4 tmp; }
-crcpoly: "c" is b_12=1 { local tmp = 0x1EDC6F41:4; export *[const]:4 tmp; }
+crcpoly: "" is b_12=0 {tmp:4 = 0x04C11DB7; export *[const]:4 tmp; }
+crcpoly: "c" is b_12=1 { tmp:4 = 0x1EDC6F41; export *[const]:4 tmp; }
 
 # C6.2.59 CRC32B, CRC32H, CRC32W, CRC32X page C6-611 line 35802 MATCH x1ac04000/mask=x7fe0f000
 # C6.2.60 CRC32CB, CRC32CH, CRC32CW, CRC32CX page C6-613 line 35898 MATCH x1ac05000/mask=x7fe0f000

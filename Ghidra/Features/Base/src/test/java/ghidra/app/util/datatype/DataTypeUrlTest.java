@@ -115,7 +115,7 @@ public class DataTypeUrlTest {
 
 		String dtmId = "3295333330922457057";
 		String dtId = "3295333330922457056";
-		String name = " ";
+		String name = "";
 		String urlString = "datatype:/" + dtmId + "?uid=" + dtId + "&name=" + name;
 
 		new DataTypeUrl(urlString);

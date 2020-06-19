@@ -196,6 +196,7 @@ void TransformVar::createReplacement(Funcdata *fd)
       if (vn->getSpace()->isBigEndian())
 	bytePos = vn->getSize() - bytePos - byteSize;
       Address addr = vn->getAddr() + bytePos;
+      addr.renormalize(byteSize);
       if (def == (TransformOp *)0)
 	replacement = fd->newVarnode(byteSize,addr);
       else
@@ -225,6 +226,8 @@ void TransformOp::createReplacement(Funcdata *fd)
     fd->opSetOpcode(op, opc);
     while(input.size() < op->numInput())
       fd->opRemoveInput(op, op->numInput()-1);
+    for(int4 i=0;i<op->numInput();++i)
+      fd->opUnsetInput(op,i);			// Clear any remaining inputs
     while(op->numInput() < input.size())
       fd->opInsertInput(op, (Varnode *)0, op->numInput()-1);
   }

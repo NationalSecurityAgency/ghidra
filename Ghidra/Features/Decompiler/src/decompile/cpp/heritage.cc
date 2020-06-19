@@ -279,8 +279,8 @@ Varnode *Heritage::normalizeWriteSize(Varnode *vn,const Address &addr,int4 size)
       pieceaddr = addr;
     else
       pieceaddr = addr + (overlap+vn->getSize());
-    if (op->isCall() && callOpIndirectEffect(pieceaddr,mostsigsize,op)) {	// Unless CALL definitely has no effect on piece
-      newop = fd->newIndirectCreation(op,pieceaddr,mostsigsize,false);		// Don't create a new big read if write is from a CALL
+    if (op->isCall() && callOpIndirectEffect(pieceaddr,mostsigsize,op)) {	// Does CALL have an effect on piece
+      newop = fd->newIndirectCreation(op,pieceaddr,mostsigsize,false);	// Don't create a new big read if write is from a CALL
       mostvn = newop->getOut();
     }
     else {
@@ -800,10 +800,15 @@ bool Heritage::protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores)
     ++iter;
     if (op->isDead()) continue;
     Varnode *vn = op->getIn(1);
-    if (vn->isWritten()) {
-      PcodeOp *copyOp = vn->getDef();
-      if (copyOp->code() == CPUI_COPY)
-	vn = copyOp->getIn(0);
+    while (vn->isWritten()) {
+      PcodeOp *defOp = vn->getDef();
+      OpCode opc = defOp->code();
+      if (opc == CPUI_COPY)
+	vn = defOp->getIn(0);
+      else if (opc == CPUI_INT_ADD && defOp->getIn(1)->isConstant())
+	vn = defOp->getIn(0);
+      else
+	break;
     }
     if (vn->isFree() && vn->getSpace() == spc) {
       fd->opMarkSpacebasePtr(op);	// Mark op as spacebase STORE, even though we're not sure
@@ -913,8 +918,17 @@ bool Heritage::discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &fr
 	}
 	case CPUI_STORE:
 	{
-	  if (curNode.traversals != 0) {
-	    generateStoreGuard(curNode, op, spc);
+	  if (op->getIn(1) == curNode.vn) {	// Make sure the STORE pointer comes from our path
+	    if (curNode.traversals != 0) {
+	      generateStoreGuard(curNode, op, spc);
+	    }
+	    else {
+	      // If there were no traversals (of non-constant ADD or MULTIEQUAL) then the
+	      // pointer is equal to the stackpointer plus a constant (through an indirect is possible)
+	      // This will likely get resolved in the next heritage pass, but we leave the
+	      // spacebaseptr mark on, so that that the indirects don't get removed
+	      fd->opMarkSpacebasePtr(op);
+	    }
 	  }
 	  break;
 	}
@@ -1043,17 +1057,20 @@ void Heritage::guard(const Address &addr,int4 size,vector<Varnode *> &read,vecto
 /// pulls out the potential parameter.
 /// \param fc is the call site potentially taking a parameter
 /// \param addr is the starting address of the range
+/// \param transAddr is the start of the same range from the callee's stack perspective
 /// \param size is the size of the range in bytes
-void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,int4 size)
+void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size)
 
 {
   VarnodeData vData;
 
-  if (fc->getBiggestContainedInputParam(addr, size, vData)) {
+  if (fc->getBiggestContainedInputParam(transAddr, size, vData)) {
     ParamActive *active = fc->getActiveInput();
-    Address taddr(vData.space,vData.offset);
-    if (active->whichTrial(taddr, size) < 0) { // If not already a trial
-      int4 truncateAmount = addr.justifiedContain(size, taddr, vData.size, false);
+    Address truncAddr(vData.space,vData.offset);
+    if (active->whichTrial(truncAddr, size) < 0) { // If not already a trial
+      int4 truncateAmount = transAddr.justifiedContain(size, truncAddr, vData.size, false);
+      int4 diff = (int4)(truncAddr.getOffset() - transAddr.getOffset());
+      truncAddr = addr + diff;		// Convert truncated Address to caller's perspective
       PcodeOp *op = fc->getOp();
       PcodeOp *subpieceOp = fd->newOp(2,op->getAddr());
       fd->opSetOpcode(subpieceOp, CPUI_SUBPIECE);
@@ -1061,9 +1078,9 @@ void Heritage::guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,i
       wholeVn->setActiveHeritage();
       fd->opSetInput(subpieceOp,wholeVn,0);
       fd->opSetInput(subpieceOp,fd->newConstant(4,truncateAmount),1);
-      Varnode *vn = fd->newVarnodeOut(vData.size, taddr, subpieceOp);
+      Varnode *vn = fd->newVarnodeOut(vData.size, truncAddr, subpieceOp);
       fd->opInsertBefore(subpieceOp,op);
-      active->registerTrial(taddr, vData.size);
+      active->registerTrial(truncAddr, vData.size);
       fd->opInsertInput(op, vn, op->numInput());
     }
   }
@@ -1121,21 +1138,21 @@ void Heritage::guardCalls(uint4 flags,const Address &addr,int4 size,vector<Varno
 	  tryregister = false;
 	}
       }
-      Address taddr(spc,off);
+      Address transAddr(spc,off);	// Address relative to callee's stack
       if (tryregister) {
-	int4 inputCharacter = fc->characterizeAsInputParam(taddr,size);
+	int4 inputCharacter = fc->characterizeAsInputParam(transAddr,size);
 	if (inputCharacter == 1) {		// Call could be using this range as an input parameter
 	  ParamActive *active = fc->getActiveInput();
-	  if (active->whichTrial(taddr,size)<0) { // If not already a trial
+	  if (active->whichTrial(transAddr,size)<0) { // If not already a trial
 	    PcodeOp *op = fc->getOp();
-	    active->registerTrial(taddr,size);
+	    active->registerTrial(transAddr,size);
 	    Varnode *vn = fd->newVarnode(size,addr);
 	    vn->setActiveHeritage();
 	    fd->opInsertInput(op,vn,op->numInput());
 	  }
 	}
 	else if (inputCharacter == 2)		// Call may be using part of this range as an input parameter
-	  guardCallOverlappingInput(fc, addr, size);
+	  guardCallOverlappingInput(fc, addr, transAddr, size);
       }
     }
     // We do not guard the call if the effect is "unaffected" or "reload"
@@ -2337,7 +2354,7 @@ const LoadGuard *Heritage::getStoreGuard(PcodeOp *op) const
 
 /// \brief Get the number times heritage was performed for the given address space
 ///
-/// A negative number indicates the number of passes to be wait before the first
+/// A negative number indicates the number of passes to wait before the first
 /// heritage will occur.
 /// \param spc is the given address space
 /// \return the number of heritage passes performed
@@ -2347,7 +2364,7 @@ int4 Heritage::numHeritagePasses(AddrSpace *spc) const
   const HeritageInfo *info = getInfo(spc);
   if (!info->isHeritaged())
     throw LowlevelError("Trying to calculate passes for non-heritaged space");
-  return (info->delay - pass);
+  return (pass - info->delay);
 }
 
 /// Record that Varnodes have been removed from the given space so that we can

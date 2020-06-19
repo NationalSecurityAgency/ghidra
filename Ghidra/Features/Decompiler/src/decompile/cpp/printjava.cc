@@ -190,7 +190,7 @@ void PrintJava::printUnicode(ostream &s,int4 onechar) const
       s << "\\ux" << setfill('0') << setw(8) << hex << onechar;
     return;
   }
-  writeUtf8(s, onechar);		// Emit normally
+  StringManager::writeUtf8(s, onechar);		// Emit normally
 }
 
 void PrintJava::opLoad(const PcodeOp *op)

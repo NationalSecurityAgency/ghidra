@@ -18,7 +18,6 @@ package ghidra.program.database.data;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.data.*;
@@ -157,21 +156,25 @@ public class DataTypeUtilities {
 		if (firstDataType.equals(secondDataType)) {
 			return true;
 		}
-		else if (firstDataType instanceof Array) {
+		if (firstDataType instanceof Array) {
 			DataType elementDataType = ((Array) firstDataType).getDataType();
 			return isSecondPartOfFirst(elementDataType, secondDataType);
 		}
-		else if (firstDataType instanceof TypeDef) {
+		if (firstDataType instanceof TypeDef) {
 			DataType innerDataType = ((TypeDef) firstDataType).getDataType();
 			return isSecondPartOfFirst(innerDataType, secondDataType);
 		}
-		else if (firstDataType instanceof Composite) {
+		if (firstDataType instanceof Composite) {
 			Composite compositeDataType = (Composite) firstDataType;
-			int numComponents = compositeDataType.getNumComponents();
-			for (int i = 0; i < numComponents; i++) {
-				DataTypeComponent dtc = compositeDataType.getComponent(i);
+			for (DataTypeComponent dtc : compositeDataType.getDefinedComponents()) {
 				DataType dataTypeToCheck = dtc.getDataType();
 				if (isSecondPartOfFirst(dataTypeToCheck, secondDataType)) {
+					return true;
+				}
+			}
+			if (firstDataType instanceof Structure) {
+				DataTypeComponent flexDtc = ((Structure) firstDataType).getFlexibleArrayComponent();
+				if (flexDtc != null && isSecondPartOfFirst(flexDtc.getDataType(), secondDataType)) {
 					return true;
 				}
 			}
@@ -180,7 +183,10 @@ public class DataTypeUtilities {
 	}
 
 	/**
-	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID.
+	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID
+	 * @param dataType1 first data type 
+	 * @param dataType2 second data type
+	 * @return true if types correspond to the same type from a source archive
 	 */
 	public static boolean isSameDataType(DataType dataType1, DataType dataType2) {
 		UniversalID id1 = dataType1.getUniversalID();
@@ -203,10 +209,15 @@ public class DataTypeUtilities {
 	/**
 	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID OR
 	 * are equivalent
+	 * @param dataType1 first data type (if invoked by DB object or manager, this argument
+	 * must correspond to the DataTypeDB). 
+	 * @param dataType2 second data type
+	 * @return true if types correspond to the same type from a source archive 
+	 * or they are equivelent, otherwise false
 	 */
 	public static boolean isSameOrEquivalentDataType(DataType dataType1, DataType dataType2) {
 		// if they contain datatypes that have same ids, then they represent the same dataType
-		if (DataTypeUtilities.isSameDataType(dataType1, dataType2)) {
+		if (isSameDataType(dataType1, dataType2)) {
 			return true;
 		}
 		// otherwise, check if they are equivalent

@@ -248,7 +248,7 @@ public class EventManager {
 
 	private void sendEvents() {
 
-		Swing.assertThisIsTheSwingThread("Events must be sent on the Swing thread");
+		Swing.assertSwingThread("Events must be sent on the Swing thread");
 
 		synchronized (eventQ) {
 			currentEvent = eventQ.poll();

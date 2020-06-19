@@ -15,35 +15,84 @@
  */
 package docking.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
-import java.awt.*;
-import java.awt.datatransfer.*;
-import java.awt.event.*;
+import java.awt.AWTEvent;
+import java.awt.AWTException;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.Window;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.Action;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
-import docking.*;
+import docking.ActionContext;
+import docking.ComponentPlaceholder;
+import docking.ComponentProvider;
+import docking.DialogComponentProvider;
+import docking.DockableComponent;
+import docking.DockingDialog;
+import docking.DockingErrorDisplay;
+import docking.DockingWindowManager;
+import docking.EmptyBorderToggleButton;
+import docking.Tool;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingActionIf;
 import docking.actions.DockingToolActions;
 import docking.dnd.GClipboard;
 import docking.framework.DockingApplicationConfiguration;
-import docking.menu.DockingToolbarButton;
+import docking.menu.DialogToolbarButton;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -55,7 +104,9 @@ import generic.test.ConcurrentTestExceptionHandler;
 import generic.util.image.ImageUtils;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.ApplicationConfiguration;
-import ghidra.util.*;
+import ghidra.util.ConsoleErrorDisplay;
+import ghidra.util.ErrorDisplay;
+import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.worker.Worker;
@@ -217,25 +268,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	public static Window waitForWindowByTitleContaining(String text) {
-		return waitForWindowByTitleContaining(null, text, DEFAULT_WAIT_TIMEOUT);
-	}
-
-	/**
-	 * Deprecated
-	 * @param parentWindow the window; unused 
-	 * @param text the window title text part
-	 * @param timeoutMS the timeout; unused
-	 * @return window
-	 * @deprecated Instead call one of the methods that does not take a timeout
-	 *             (we are standardizing timeouts).  The timeouts passed to this method will
-	 *             be ignored in favor of the standard value.
-	 */
-	@Deprecated
-	public static Window waitForWindowByTitleContaining(Window parentWindow, String text,
-			int timeoutMS) {
 
 		// try at least one time
-		Window window = getWindowByTitleContaining(parentWindow, text);
+		Window window = getWindowByTitleContaining(null, text);
 		if (window != null) {
 			return window;// we found it...no waiting required
 		}
@@ -244,7 +279,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		int timeout = DEFAULT_WAIT_TIMEOUT;
 		while (totalTime <= timeout) {
 
-			window = getWindowByTitleContaining(parentWindow, text);
+			window = getWindowByTitleContaining(null, text);
 			if (window != null) {
 				return window;
 			}
@@ -254,43 +289,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 		throw new AssertionFailedError(
 			"Timed-out waiting for window containg title '" + text + "'");
-	}
-
-	/**
-	 * Waits for a window with the given name.  If <code>parentWindow</code> is not null, then it
-	 * will be used to find subordinate windows.  If <code>parentWindow</code> is null, then all
-	 * existing frames will be searched.
-	 *
-	 * @param parentWindow The parent of the window for which to search, or null to search all
-	 *        open frames
-	 * @param title The title of the window for which to search
-	 * @param timeoutMS The timeout after which this method will wait no more
-	 * @return The window, if found, null otherwise.
-	 *
-	 * @deprecated Instead call one of the methods that does not take a timeout
-	 *             (we are standardizing timeouts).  The timeouts passed to this method will
-	 *             be ignored in favor of the standard value.
-	 */
-	@Deprecated
-	public static Window waitForWindow(Window parentWindow, String title, int timeoutMS) {
-
-		Window window = getWindowByTitle(parentWindow, title);
-		if (window != null) {
-			return window;// we found it...no waiting required
-		}
-
-		int totalTime = 0;
-		int timeout = DEFAULT_WAIT_TIMEOUT;
-		while (totalTime <= timeout) {
-
-			window = getWindowByTitle(parentWindow, title);
-			if (window != null) {
-				return window;
-			}
-
-			totalTime += sleep(DEFAULT_WAIT_DELAY);
-		}
-		throw new AssertionFailedError("Timed-out waiting for window with title '" + title + "'");
 	}
 
 	/**
@@ -1134,9 +1132,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	public static Set<DockingActionIf> getActionsByOwnerAndName(Tool tool, String owner,
 			String name) {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
-		return ownerActions.stream()
-				.filter(action -> action.getName().equals(name))
-				.collect(Collectors.toSet());
+		return ownerActions.stream().filter(action -> action.getName().equals(name)).collect(
+			Collectors.toSet());
 	}
 
 	/**
@@ -1188,7 +1185,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		if (actions.size() > 1) {
 			// This shouldn't happen
 			throw new AssertionFailedError(
-				"Found more than one action for name '" + name + " (" + owner + ")'");
+				"Found more than one action for name '" + name + " (" + owner + ")'\n\t" + actions);
 		}
 
 		return CollectionUtils.any(actions);
@@ -1430,9 +1427,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 			if (element instanceof JButton) {
 
 				JButton button = (JButton) element;
-				if (button instanceof DockingToolbarButton) {
+				if (button instanceof DialogToolbarButton) {
 					DockingActionIf dockingAction =
-						((DockingToolbarButton) button).getDockingAction();
+						((DialogToolbarButton) button).getDockingAction();
 					if (dockingAction.getName().equals(name)) {
 						return button;
 					}
@@ -1717,6 +1714,21 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
+	 * Fires a {@link KeyListener#keyPressed(KeyEvent)}, 
+	 * {@link KeyListener#keyTyped(KeyEvent)}
+	 * and {@link KeyListener#keyReleased(KeyEvent)} for the given key stroke
+	 * 
+	 * @param c the destination component
+	 * @param ks the key stroke
+	 */
+	public static void triggerKey(Component c, KeyStroke ks) {
+		int modifiers = ks.getModifiers();
+		char keyChar = ks.getKeyChar();
+		int keyCode = ks.getKeyCode();
+		triggerKey(c, modifiers, keyCode, keyChar);
+	}
+
+	/**
 	 * Fires a {@link KeyListener#keyPressed(KeyEvent)}, {@link KeyListener#keyTyped(KeyEvent)}
 	 * and {@link KeyListener#keyReleased(KeyEvent)} for the given key code and char.
 	 *
@@ -1823,25 +1835,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		ERROR_DISPLAY_WRAPPER.setErrorDisplayDelegate(display);
 		Msg.setErrorDisplay(ERROR_DISPLAY_WRAPPER);
 		useErrorGUI = enable;
-	}
-
-	/**
-	 * Signals that the client expected the System Under Test (SUT) to report errors.  Use this
-	 * when you wish to verify that errors are reported and you do not want those errors to
-	 * fail the test.  The default value for this setting is false, which means that any
-	 * errors reported will fail the running test.
-	 *
-	 * @param expected true if errors are expected.
-	 */
-	public static void setErrorsExpected(boolean expected) {
-		if (expected) {
-			Msg.error(AbstractDockingTest.class, ">>>>>>>>>>>>>>>> Expected Exception");
-			ConcurrentTestExceptionHandler.disable();
-		}
-		else {
-			Msg.error(AbstractDockingTest.class, "<<<<<<<<<<<<<<<< End Expected Exception");
-			ConcurrentTestExceptionHandler.enable();
-		}
 	}
 
 	/**

@@ -15,31 +15,33 @@
  */
 package ghidra.app.tablechooser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import javax.swing.*;
 
+import org.junit.*;
+
+import docking.*;
+import docking.action.*;
+import docking.actions.KeyEntryDialog;
+import docking.actions.ToolActions;
+import docking.tool.util.DockingToolConstants;
 import ghidra.app.nav.Navigatable;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.DummyPluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.TestAddress;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
+import resources.Icons;
 import util.CollectionUtils;
 
 public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest {
@@ -48,8 +50,9 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 	private static final TestExecutorDecision DEFAULT_DECISION = r -> true;
 
 	private DummyPluginTool tool;
-	private TableChooserDialog dialog;
 	private SpyTableChooserExecutor executor;
+	private TableChooserDialog dialog;
+	private TestAction testAction;
 
 	/** Interface for tests to signal what is expected of the executor */
 	private TestExecutorDecision testDecision = DEFAULT_DECISION;
@@ -64,7 +67,6 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 	public void tearDown() {
 		runSwing(() -> {
 			tool.close();
-			//dialog.close();
 		});
 	}
 
@@ -75,8 +77,13 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		tool.setVisible(true);
 		Program program = new ToyProgramBuilder("Test", true).getProgram();
 		Navigatable navigatable = null;
-		dialog = new TableChooserDialog(tool, executor, program, "Title", navigatable);
+		dialog = new TableChooserDialog(tool, executor, program, "Dialog Title", navigatable);
+
+		testAction = new TestAction();
+		dialog.addAction(testAction);
+
 		dialog.show();
+		waitForDialogComponent(TableChooserDialog.class);
 		loadData();
 	}
 
@@ -250,9 +257,104 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		assertOnlyExecutedOnce(selected2);
 	}
 
+	@Test
+	public void testActionToolBarButtonIconUpdate() {
+
+		Icon icon = testAction.getToolBarData().getIcon();
+		JButton button = getToolBarButton(icon);
+		assertNotNull("Could not find button for icon: " + icon, button);
+
+		Icon newIcon = Icons.LEFT_ICON;
+		runSwing(() -> testAction.setToolBarData(new ToolBarData(newIcon)));
+		button = getToolBarButton(newIcon);
+		assertNotNull("Could not find button for icon: " + icon, button);
+	}
+
+	@Test
+	public void testActionKeyBinding() {
+		KeyStroke ks = testAction.getKeyBinding();
+		triggerKey(dialog.getComponent(), ks);
+		assertTrue(testAction.wasInvoked());
+	}
+
+	@Test
+	public void testActionKeyBinding_ChangeKeyBinding_FromOptions() {
+		KeyStroke newKs = KeyStroke.getKeyStroke('A', 0, false);
+		setOptionsKeyStroke(testAction, newKs);
+		triggerKey(dialog.getComponent(), newKs);
+		assertTrue(testAction.wasInvoked());
+	}
+
+	@Test
+	public void testActionKeyBinding_ChangeKeyBinding_FromKeyBindingDialog() {
+		KeyStroke newKs = KeyStroke.getKeyStroke('A', 0, false);
+		setKeyBindingViaF4Dialog(testAction, newKs);
+		triggerKey(dialog.getComponent(), newKs);
+		assertTrue("Action was not invoked from the new key binding: " + newKs,
+			testAction.wasInvoked());
+	}
+
+	@Test
+	public void testSetKeyBindingUpdatesToolBarButtonTooltip() {
+
+		JButton button = getToolBarButton(testAction);
+		String toolTip = button.getToolTipText();
+		assertTrue(toolTip.contains("(Z)"));
+
+		KeyStroke newKs = KeyStroke.getKeyStroke('A', 0, false);
+		setOptionsKeyStroke(testAction, newKs);
+
+		String newToolTip = button.getToolTipText();
+		assertTrue(newToolTip.contains("(A)"));
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void setKeyBindingViaF4Dialog(DockingAction action, KeyStroke ks) {
+
+		// simulate the user mousing over the toolbar button
+		assertNotNull("Provider action not installed in toolbar", action);
+		DockingWindowManager.setMouseOverAction(action);
+
+		performLaunchKeyStrokeDialogAction();
+		KeyEntryDialog keyDialog = waitForDialogComponent(KeyEntryDialog.class);
+
+		runSwing(() -> keyDialog.setKeyStroke(ks));
+
+		pressButtonByText(keyDialog, "OK");
+
+		assertFalse("Invalid key stroke: " + ks, runSwing(() -> keyDialog.isVisible()));
+	}
+
+	private void performLaunchKeyStrokeDialogAction() {
+		ToolActions toolActions = (ToolActions) ((AbstractDockingTool) tool).getToolActions();
+		Action action = toolActions.getAction(KeyStroke.getKeyStroke("F4"));
+		assertNotNull(action);
+		runSwing(() -> action.actionPerformed(new ActionEvent(this, 0, "")), false);
+	}
+
+	private void setOptionsKeyStroke(DockingAction action, KeyStroke newKs) {
+
+		ToolOptions keyOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
+
+		String name = action.getName() + " (" + action.getOwner() + ")";
+		runSwing(() -> keyOptions.setKeyStroke(name, newKs));
+		waitForSwing();
+
+		KeyStroke actual = action.getKeyBinding();
+		assertEquals("Key binding was not updated after changing options", newKs, actual);
+	}
+
+	private JButton getToolBarButton(TestAction action) {
+		return getToolBarButton(action.getToolBarData().getIcon());
+	}
+
+	private JButton getToolBarButton(Icon icon) {
+		JButton button = findButtonByIcon(dialog.getComponent(), icon);
+		return button;
+	}
 
 	private void assertRowCount(int expected) {
 		int actual = getRowCount();
@@ -398,6 +500,31 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		@Override
 		public String toString() {
 			return getAddress().toString();
+		}
+	}
+
+	private class TestAction extends DockingAction {
+
+		private int invoked;
+
+		TestAction() {
+			super("Test Action", "Test Owner");
+
+			KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0, false);
+			setKeyBindingData(new KeyBindingData(ks));
+			setToolBarData(new ToolBarData(Icons.ERROR_ICON));
+		}
+
+		@Override
+		public void actionPerformed(ActionContext context) {
+			invoked++;
+		}
+
+		boolean wasInvoked() {
+			if (invoked > 1) {
+				fail("Action invoked more than once");
+			}
+			return invoked == 1;
 		}
 	}
 }

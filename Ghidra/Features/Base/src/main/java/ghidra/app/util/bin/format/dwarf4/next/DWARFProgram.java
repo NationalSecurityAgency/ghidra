@@ -187,11 +187,10 @@ public class DWARFProgram implements Closeable {
 		this.nameLengthCutoffSize = Math.max(MIN_NAME_LENGTH_CUTOFF,
 			Math.min(importOptions.getNameLengthCutoff(), MAX_NAME_LENGTH_CUTOFF));
 
-
 		monitor.setMessage("Reading DWARF debug string table");
 		this.debugStrings = StringTable.readStringTable(
 			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR));
-		Msg.info(this, "Read DWARF debug string table, " + debugStrings.getByteCount() + " bytes.");
+//		Msg.info(this, "Read DWARF debug string table, " + debugStrings.getByteCount() + " bytes.");
 
 		this.attributeFactory = new DWARFAttributeFactory(this);
 

@@ -15,6 +15,8 @@
  */
 package mdemangler;
 
+import static org.junit.Assert.*;
+
 import ghidra.util.Msg;
 import mdemangler.datatype.MDDataType;
 
@@ -65,7 +67,7 @@ public class MDBaseTestConfiguration {
 	 * @param mstruth Truth that was output from one of the Microsoft tools (e.g., undname).
 	 * @param ghtruth Truth that we would like to see for Ghidra version of the tool.
 	 * @param ms2013truth Like mstruth, but from Visual Studio 2013 version of tool.
-	 * @throws Exception
+	 * @throws Exception if any exceptions are thrown
 	 */
 	public void demangleAndTest(String mangledArg, String mdtruth, String mstruth, String ghtruth,
 			String ms2013truth) throws Exception {
@@ -105,24 +107,24 @@ public class MDBaseTestConfiguration {
 		//  expect to be able to demangle the input (truth not equal to mangleArg), then we
 		//  expect the output to be that which we desire ("truth".equals(demangled)).
 		if ((truth.equals(mangledArg)) && isMangled(mangledArg)) {
-			assert (demangled.isEmpty());
+			assertTrue(demangled.isEmpty());
 		}
 		else {
-			assert(truth.equals(demangled));
+			assertEquals(truth, demangled);
 		}
 		if (mangledArg.startsWith(".?A")) {
-			assert ((demangItem != null) && (demangItem instanceof MDDataType)); // Test for data type.
+			assertTrue((demangItem != null) && (demangItem instanceof MDDataType)); // Test for data type.
 		}
 	}
 
-	private boolean isMangled(String mangled) {
-		if (mangled.charAt(0) == '?') {
+	private boolean isMangled(String s) {
+		if (s.charAt(0) == '?') {
 			return true;
 		}
-		else if (mangled.startsWith("__")) {
+		else if (s.startsWith("__")) {
 			return true;
 		}
-		else if ((mangled.charAt(0) == '_') || Character.isUpperCase(mangled.charAt(1))) {
+		else if ((s.charAt(0) == '_') || Character.isUpperCase(s.charAt(1))) {
 			return true;
 		}
 		return false;
