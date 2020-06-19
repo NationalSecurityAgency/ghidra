@@ -20,15 +20,17 @@ import java.util.List;
 import javax.swing.tree.TreePath;
 
 import docking.ComponentProvider;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
+import ghidra.framework.main.datatable.ProjectDataContext;
+import ghidra.framework.main.datatable.ProjectTreePanelContext;
 import ghidra.framework.model.*;
 
-public class ProjectDataTreeActionContext extends ProjectDataActionContext {
+public class ProjectTreeContext extends ProjectDataContext
+		implements ProjectTreePanelContext {
 
 	private TreePath[] selectionPaths;
 	private DataTree tree;
 
-	public ProjectDataTreeActionContext(ComponentProvider provider, ProjectData projectData,
+	public ProjectTreeContext(ComponentProvider provider, ProjectData projectData,
 			TreePath[] selectionPaths,
 			List<DomainFolder> folderList, List<DomainFile> fileList, DataTree tree,
 			boolean isActiveProject) {

@@ -40,8 +40,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
-import ghidra.framework.main.datatree.ClearCutAction;
-import ghidra.framework.main.datatree.ProjectDataTreePanel;
+import ghidra.framework.main.datatree.*;
 import ghidra.framework.main.projectdata.actions.*;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
@@ -211,7 +210,9 @@ public class FrontEndPlugin extends Plugin
 		String owner = getName();
 		String groupName = "Cut/copy/paste/new1";
 
-		newFolderAction = new ProjectDataNewFolderAction(owner, groupName);
+		newFolderAction =
+			new ProjectDataNewFolderAction<ProjectTreeContext>(owner, groupName,
+				ProjectTreeContext.class);
 		groupName = "Cut/copy/paste/new2";
 
 		cutAction = new ProjectDataCutAction(owner, groupName);
@@ -230,9 +231,11 @@ public class FrontEndPlugin extends Plugin
 		openAction = new ProjectDataOpenDefaultToolAction(owner, "Open");
 
 		groupName = "Expand/Collapse";
-		expandAction = new ProjectDataExpandAction(owner, groupName);
+		expandAction = new ProjectDataExpandAction<ProjectTreeContext>(owner, groupName,
+			ProjectTreeContext.class);
 
-		collapseAction = new ProjectDataCollapseAction(owner, groupName);
+		collapseAction = new ProjectDataCollapseAction<ProjectTreeContext>(owner, groupName,
+			ProjectTreeContext.class);
 
 		groupName = "Select/Toggle";
 		selectAction = new ProjectDataSelectAction(owner, groupName);
@@ -982,14 +985,14 @@ public class FrontEndPlugin extends Plugin
 			@Override
 			public void actionPerformed(ActionContext context) {
 				ToolButton tb = (ToolButton) context.getContextObject();
-				PluginTool pluginTool = (PluginTool) tb.getRunningTool();
+				PluginTool pluginTool = tb.getRunningTool();
 				pluginTool.showConfig(true, false);
 			}
 
 			@Override
 			boolean isEnabledForContext(ToolButton toolButton) {
 				if (toolButton.isRunningTool()) {
-					PluginTool pluginTool = (PluginTool) toolButton.getRunningTool();
+					PluginTool pluginTool = toolButton.getRunningTool();
 					return pluginTool.isConfigurable();
 				}
 				return false;

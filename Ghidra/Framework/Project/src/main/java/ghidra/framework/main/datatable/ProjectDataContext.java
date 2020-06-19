@@ -27,16 +27,15 @@ import ghidra.framework.model.*;
  * A context that understands files that live in a {@link Project}.  Most of the clients of
  * this context will use its notion of selected {@link DomainFile}s and folders.
  */
-public class ProjectDataActionContext extends ActionContext implements DomainFileContext {
+public class ProjectDataContext extends ActionContext implements DomainFileContext {
 
 	private List<DomainFolder> selectedFolders;
 	private List<DomainFile> selectedFiles;
 	private Component comp;
 	private boolean isActiveProject;
 	private ProjectData projectData;
-	private boolean isTransient;
 
-	public ProjectDataActionContext(ComponentProvider provider, ProjectData projectData,
+	public ProjectDataContext(ComponentProvider provider, ProjectData projectData,
 			Object contextObject, List<DomainFolder> selectedFolders,
 			List<DomainFile> selectedFiles, Component comp, boolean isActiveProject) {
 
@@ -117,21 +116,5 @@ public class ProjectDataActionContext extends ActionContext implements DomainFil
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Transient data is that which will appear in a temporary project dialog
-	 * @param isTransient true if transient
-	 */
-	public void setTransient(boolean isTransient) {
-		this.isTransient = isTransient;
-	}
-
-	/**
-	 * Transient data is that which will appear in a temporary project dialog
-	 * @return true if transient
-	 */
-	public boolean isTransient() {
-		return isTransient;
 	}
 }

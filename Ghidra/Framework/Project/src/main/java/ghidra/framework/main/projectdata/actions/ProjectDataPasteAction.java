@@ -40,7 +40,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 	}
 
 	@Override
-	protected void actionPerformed(ProjectDataTreeActionContext context) {
+	protected void actionPerformed(ProjectTreeContext context) {
 		GTreeNode node = (GTreeNode) context.getContextObject();
 		DomainFolderNode destNode = getFolderForNode(node);
 
@@ -48,7 +48,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 	}
 
 	@Override
-	protected boolean isEnabledForContext(ProjectDataTreeActionContext context) {
+	protected boolean isEnabledForContext(ProjectTreeContext context) {
 		if (!context.hasExactlyOneFileOrFolder()) {
 			return false;
 		}
@@ -62,7 +62,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 	}
 
 	@Override
-	protected boolean isAddToPopup(ProjectDataTreeActionContext context) {
+	protected boolean isAddToPopup(ProjectTreeContext context) {
 		if (!context.hasOneOrMoreFilesAndFolders()) {
 			return false;
 		}

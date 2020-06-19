@@ -30,7 +30,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.FrontEndable;
 import ghidra.framework.main.datatable.DomainFileInfo;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatree.DomainFileNode;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
@@ -82,6 +82,10 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
+				if (!(context instanceof ProjectDataContext)) {
+					return false;
+				}
+
 				Object contextObject = context.getContextObject();
 				if (contextObject instanceof GTreeNode) {
 					GTreeNode node = (GTreeNode) contextObject;
@@ -92,9 +96,7 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 					}
 				}
 
-				if (!(context instanceof ProjectDataActionContext)) {
-					return false;
-				}
+
 
 				if (!(contextObject instanceof DomainFileInfo)) {
 					return false;
@@ -328,7 +330,7 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 					String defaultToolName = toolServices.getDefaultToolTemplate(file).getName();
 					for (PluginTool t : toolServices.getRunningTools()) {
 						if (t.getName().equals(defaultToolName)) {
-							openTool = (PluginTool) t;
+							openTool = t;
 							break;
 						}
 					}
@@ -336,7 +338,7 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 						openTool.acceptDomainFiles(new DomainFile[] { file });
 					}
 					else {
-						openTool = (PluginTool) tool.getToolServices().launchDefaultTool(file);
+						openTool = tool.getToolServices().launchDefaultTool(file);
 					}
 				});
 			}

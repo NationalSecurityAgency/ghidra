@@ -21,11 +21,11 @@ import java.util.List;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
-import ghidra.framework.main.datatable.ProjectDataContextAction;
+import ghidra.framework.main.datatable.ProjectDataContext;
+import ghidra.framework.main.datatable.ProjectDataAction;
 import ghidra.framework.model.DomainFile;
 
-public class ProjectDataOpenDefaultToolAction extends ProjectDataContextAction {
+public class ProjectDataOpenDefaultToolAction extends ProjectDataAction {
 
 	public ProjectDataOpenDefaultToolAction(String owner, String group) {
 		super("Open File", owner);
@@ -35,13 +35,13 @@ public class ProjectDataOpenDefaultToolAction extends ProjectDataContextAction {
 	}
 
 	@Override
-	protected void actionPerformed(ProjectDataActionContext context) {
+	protected void actionPerformed(ProjectDataContext context) {
 		List<DomainFile> selectedFiles = context.getSelectedFiles();
 		AppInfo.getActiveProject().getToolServices().launchDefaultTool(selectedFiles.get(0));
 	}
 
 	@Override
-	protected boolean isEnabledForContext(ProjectDataActionContext context) {
+	protected boolean isEnabledForContext(ProjectDataContext context) {
 		return context.getSelectedFiles().size() > 0 && context.getSelectedFolders().size() == 0;
 	}
 }
