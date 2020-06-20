@@ -15,6 +15,7 @@
  */
 package ghidra.graph.visualization;
 
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import org.jungrapht.visualization.layout.algorithms.*;
@@ -61,30 +62,38 @@ class LayoutFunction
 			case GEM:
 				return GEMLayoutAlgorithm.edgeAwareBuilder();
 			case KAMADA_KAWAI:
-				return KKLayoutAlgorithm.<AttributedVertex> builder().preRelaxDuration(1000);
+				return KKLayoutAlgorithm.<AttributedVertex> builder()
+						.executor(Executors.newSingleThreadExecutor())
+						.preRelaxDuration(1000);
 			case FRUCTERMAN_REINGOLD:
 				return FRLayoutAlgorithm.<AttributedVertex> builder()
-					.repulsionContractBuilder(BarnesHutFRRepulsion.barnesHutBuilder());
+					.repulsionContractBuilder(BarnesHutFRRepulsion.barnesHutBuilder())
+					.executor(Executors.newSingleThreadExecutor());
 			case CIRCLE_MINCROSS:
 				return CircleLayoutAlgorithm.<AttributedVertex> builder()
+						.executor(Executors.newSingleThreadExecutor())
 					.reduceEdgeCrossing(true);
 			case TIDIER_TREE:
 				return TidierTreeLayoutAlgorithm.<AttributedVertex, AttributedEdge> edgeAwareBuilder();
 			case MIN_CROSS_TOP_DOWN:
 				return HierarchicalMinCrossLayoutAlgorithm
 					.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.executor(Executors.newSingleThreadExecutor())
 						.layering(Layering.TOP_DOWN);
 			case MIN_CROSS_LONGEST_PATH:
 				return EiglspergerLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.executor(Executors.newSingleThreadExecutor())
 						.layering(Layering.LONGEST_PATH);
 			case MIN_CROSS_NETWORK_SIMPLEX:
 				return EiglspergerLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.executor(Executors.newSingleThreadExecutor())
 						.layering(Layering.NETWORK_SIMPLEX);
 			case MIN_CROSS_COFFMAN_GRAHAM:
 				return EiglspergerLayoutAlgorithm
 						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
+						.executor(Executors.newSingleThreadExecutor())
 						.layering(Layering.COFFMAN_GRAHAM);
 			case MULTI_ROW_EDGE_AWARE_TREE:
 				return MultiRowEdgeAwareTreeLayoutAlgorithm

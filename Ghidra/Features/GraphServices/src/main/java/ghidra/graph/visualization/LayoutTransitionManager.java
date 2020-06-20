@@ -17,12 +17,19 @@ package ghidra.graph.visualization;
 
 import static ghidra.graph.visualization.LayoutFunction.*;
 
+import java.awt.BorderLayout;
+import java.awt.Dialog;
 import java.awt.Shape;
+import java.awt.Window;
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import generic.concurrent.GThreadPool;
+import ghidra.util.Swing;
 import org.jgrapht.Graph;
 import org.jungrapht.visualization.RenderContext;
 import org.jungrapht.visualization.VisualizationServer;
@@ -33,6 +40,8 @@ import org.jungrapht.visualization.util.Context;
 
 import docking.menu.MultiActionDockingAction;
 import ghidra.service.graph.*;
+
+import javax.swing.*;
 
 /**
  * Manages the selection and transition from one {@link LayoutAlgorithm} to another
@@ -87,6 +96,11 @@ class LayoutTransitionManager {
 	 */
 	private Function<Context<Graph<AttributedVertex, AttributedEdge>, AttributedEdge>, Shape> originalEdgeShapeFunction;
 
+	private JDialog layoutWorkingWindow;
+
+	GThreadPool pool;
+
+	Executor currentExecutor;
 
 	/**
 	 * Create an instance with passed parameters
@@ -105,7 +119,57 @@ class LayoutTransitionManager {
 		this.vertexShapeFunction = visualizationServer.getRenderContext().getVertexShapeFunction();
 		this.originalEdgeShapeFunction =
 			visualizationServer.getRenderContext().getEdgeShapeFunction();
+		this.pool = GThreadPool.getSharedThreadPool("LayoutAlgorithms");
 
+		visualizationServer.getVisualizationModel().getLayoutModel()
+				.getLayoutStateChangeSupport().addLayoutStateChangeListener(
+				evt -> {
+					if (evt.active) {
+						showLayoutWorking(currentExecutor);
+						// could show a 'Layout Busy' Dialog here
+//						log.info("LayoutAlgorithm started");
+					} else {
+						// could close 'Layout Busy' dialog
+//						if (currentExecutor != null) {
+//							if (currentExecutor instanceof )
+//						}
+						hideLayoutWorking();
+//						log.info("LayoutAlgorithm has finished");
+					}
+				}
+		);
+	}
+
+	protected void showLayoutWorking(Executor executor) {
+		if (this.layoutWorkingWindow != null) {
+			this.layoutWorkingWindow.dispose();
+		}
+		Window win = SwingUtilities.getWindowAncestor(visualizationServer.getComponent());
+		JProgressBar progressBar = new JProgressBar();
+		progressBar.setIndeterminate(true);
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(progressBar, BorderLayout.CENTER);
+		panel.add(new JLabel("Please wait......."), BorderLayout.PAGE_START);
+		JButton cancel = new JButton("Cancel");
+		cancel.addActionListener(evt -> {
+			((ThreadPoolExecutor) executor).shutdownNow();
+			layoutWorkingWindow.setVisible(false);
+		});
+		panel.add(cancel);
+		this.layoutWorkingWindow = new JDialog(win, "Dialog", Dialog.ModalityType.MODELESS);
+		this.layoutWorkingWindow.add(panel);
+		this.layoutWorkingWindow.setTitle("Layout Algorithm");
+		this.layoutWorkingWindow.pack();
+//		}
+		this.layoutWorkingWindow.setLocationRelativeTo(win);
+		this.layoutWorkingWindow.setVisible(true);
+	}
+
+	protected void hideLayoutWorking() {
+//		JOptionPane.getRootFrame().dispose();
+		if (this.layoutWorkingWindow != null) {
+			this.layoutWorkingWindow.setVisible(false);
+		}
 	}
 
 	public void setGraph(AttributedGraph graph) {
@@ -122,6 +186,10 @@ class LayoutTransitionManager {
 		visualizationServer.getRenderContext().getMultiLayerTransformer().setToIdentity();
 		LayoutAlgorithm<AttributedVertex> layoutAlgorithm = builder.build();
 
+		if (layoutAlgorithm instanceof Threaded) {
+			currentExecutor = pool.getExecutor();
+			((Threaded)layoutAlgorithm).setExecutor(currentExecutor);
+		}
 		if (!(layoutAlgorithm instanceof EdgeShapeFunctionSupplier)) {
 			visualizationServer.getRenderContext().setEdgeShapeFunction(originalEdgeShapeFunction);
 		}

@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 
+import docking.widgets.PopupWindow;
 import org.jgrapht.Graph;
 import org.jungrapht.visualization.*;
 import org.jungrapht.visualization.annotations.MultiSelectedVertexPaintable;
@@ -54,6 +55,7 @@ import ghidra.service.graph.*;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
+import org.jungrapht.visualization.util.GraphImage;
 import resources.Icons;
 import util.CollectionUtils;
 
@@ -118,6 +120,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	private SingleSelectedVertexPaintable<AttributedVertex, AttributedEdge> singleSelectedVertexPaintable;
 	private MultiSelectedVertexPaintable<AttributedVertex, AttributedEdge> multiSelectedVertexPaintable;
 	private DefaultGraphDisplayProvider graphDisplayProvider;
+	private JDialog layoutWorkingWindow;
 
 	/**
 	 * Create the initial display, the graph-less visualization viewer, and its controls
@@ -130,18 +133,20 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		this.pluginTool = graphDisplayProvider.getPluginTool();
 		this.viewer = createViewer();
 
-		this.viewer.getVisualizationModel().getLayoutModel()
-				.getLayoutStateChangeSupport().addLayoutStateChangeListener(
-						evt -> {
-							if (evt.active) {
-								// could show a 'Layout Busy' Dialog here
-								log.info("LayoutAlgorithm started");
-							} else {
-								// could close 'Layout Busy' dialog
-								log.info("LayoutAlgorithm has finished");
-							}
-						}
-		);
+//		this.viewer.getVisualizationModel().getLayoutModel()
+//				.getLayoutStateChangeSupport().addLayoutStateChangeListener(
+//						evt -> {
+//							if (evt.active) {
+//								// could show a 'Layout Busy' Dialog here
+//								showLayoutWorking();
+//								log.info("LayoutAlgorithm started");
+//							} else {
+//								// could close 'Layout Busy' dialog
+//								hideLayoutWorking();
+//								log.info("LayoutAlgorithm has finished");
+//							}
+//						}
+//		);
 
 		buildHighlighers();
 
@@ -171,6 +176,32 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		JComponent component = viewer.getComponent();
 		component.setFocusable(true);
 		return component;
+	}
+
+	protected void showLayoutWorking() {
+		if (this.layoutWorkingWindow != null) {
+			this.layoutWorkingWindow.dispose();
+		}
+			Window win = SwingUtilities.getWindowAncestor(viewer.getComponent());
+			JProgressBar progressBar = new JProgressBar();
+			progressBar.setIndeterminate(true);
+			JPanel panel = new JPanel(new BorderLayout());
+			panel.add(progressBar, BorderLayout.CENTER);
+			panel.add(new JLabel("Please wait......."), BorderLayout.PAGE_START);
+			this.layoutWorkingWindow = new JDialog(win, "Dialog", Dialog.ModalityType.MODELESS);
+			this.layoutWorkingWindow.add(panel);
+			this.layoutWorkingWindow.setTitle("Layout Algorithm");
+			this.layoutWorkingWindow.pack();
+//		}
+		this.layoutWorkingWindow.setLocationRelativeTo(win);
+		this.layoutWorkingWindow.setVisible(true);
+	}
+
+	protected void hideLayoutWorking() {
+//		JOptionPane.getRootFrame().dispose();
+		if (this.layoutWorkingWindow != null) {
+			this.layoutWorkingWindow.setVisible(false);
+		}
 	}
 
 	int getId() {
