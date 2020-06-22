@@ -23,75 +23,23 @@ import java.util.stream.Collectors;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 
-import docking.widgets.table.AbstractSortedTableModel;
-import docking.widgets.table.TableSortingContext;
+import docking.widgets.table.*;
 import generic.jar.ResourceFile;
+import ghidra.docking.settings.Settings;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
 /**
  * Model for {@link BundleStatus} objects. 
  */
-public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatus> {
-	List<Column> columns = new ArrayList<>();
-
-	Column enabledColumn = new Column("Enabled", Boolean.class) {
-		@Override
-		boolean editable(BundleStatus status) {
-			return status.fileExists();
-		}
-
-		@Override
-		Object getValue(BundleStatus status) {
-			return status.isEnabled();
-		}
-
-		@Override
-		void setValue(BundleStatus status, Object newValue) {
-			fireBundleEnablementChangeRequested(status, (Boolean) newValue);
-		}
-	};
-	Column activeColumn = new Column("Active", Boolean.class) {
-		@Override
-		boolean editable(BundleStatus status) {
-			return status.fileExists() && status.isEnabled();
-		}
-
-		@Override
-		Object getValue(BundleStatus status) {
-			return status.isActive();
-		}
-
-		@Override
-		void setValue(BundleStatus status, Object newValue) {
-			fireBundleActivationChangeRequested(status, (Boolean) newValue);
-		}
-	};
-	Column typeColumn = new Column("Type", String.class) {
-		@Override
-		Object getValue(BundleStatus status) {
-			return status.getType().toString();
-		}
-	};
-
-	Column pathColumn = new Column("Path", ResourceFile.class) {
-		@Override
-		Object getValue(BundleStatus status) {
-			return status.getFile();
-		}
-	};
-	Column summaryColumn = new Column("Summary", String.class) {
-		@Override
-		Object getValue(BundleStatus status) {
-			return status.getSummary();
-		}
-	};
-
-	Column badColumn = new Column("INVALID", Object.class);
-	{
-		columns.remove(columns.size() - 1); // pop badColumn
-
-	}
+public class BundleStatusTableModel
+		extends GDynamicColumnTableModel<BundleStatus, List<BundleStatus>> {
+	Column<Boolean> enabledColumn;
+	Column<Boolean> activeColumn;
+	Column<String> typeColumn;
+	Column<ResourceFile> pathColumn;
+	Column<String> summaryColumn;
 
 	private BundleHost bundleHost;
 	private BundleStatusComponentProvider provider;
@@ -103,7 +51,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	private List<BundleStatus> statuses;
 
 	BundleStatusTableModel(BundleStatusComponentProvider provider, BundleHost bundleHost) {
-		super();
+		super(provider.getTool());
 		this.provider = provider;
 		this.bundleHost = bundleHost;
 		statuses = new ArrayList<>();
@@ -113,13 +61,6 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 
 		bundleHostListener = new MyBundleHostListener();
 		bundleHost.addListener(bundleHostListener);
-	}
-
-	Column getColumn(int i) {
-		if (i >= 0 && i < columns.size()) {
-			return columns.get(i);
-		}
-		return badColumn;
 	}
 
 	BundleStatus getStatus(GhidraBundle bundle) {
@@ -183,9 +124,9 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	}
 
 	void removeStatus(BundleStatus status) {
-		int row = removeStatusNoFire(status);
-		if (row >= 0) {
-			fireTableRowsDeleted(row, row);
+		int rowIndex = removeStatusNoFire(status);
+		if (rowIndex >= 0) {
+			fireTableRowsDeleted(rowIndex, rowIndex);
 		}
 	}
 
@@ -206,42 +147,21 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 	/***************************************************/
 
 	@Override
-	public int getColumnCount() {
-		return columns.size();
-	}
-
-	@Override
-	public int getRowCount() {
-		return statuses.size();
-	}
-
-	@Override
-	public Class<?> getColumnClass(int columnIndex) {
-		return getColumn(columnIndex).clazz;
-	}
-
-	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		BundleStatus status = statuses.get(rowIndex);
-		return getColumn(columnIndex).editable(status);
+		return ((Column<?>) getColumn(columnIndex)).editable(status);
 	}
 
-	@Override
-	public String getColumnName(int columnIndex) {
-		return getColumn(columnIndex).name;
-	}
-
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
 		BundleStatus status = statuses.get(rowIndex);
-		getColumn(columnIndex).setValue(status, aValue);
-		// anything that's clicked on should become selected!
-		provider.selectModelRow(rowIndex);
-	}
-
-	@Override
-	public Object getColumnValueForRow(BundleStatus status, int columnIndex) {
-		return getColumn(columnIndex).getValue(status);
+		Column column = ((Column) getColumn(columnIndex));
+		if (column.getColumnClass().isInstance(aValue)) {
+			column.setValue(status, aValue);
+			// anything that's clicked on should become selected!
+			provider.selectModelRow(rowIndex);
+		}
 	}
 
 	@Override
@@ -371,14 +291,14 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		public void bundleBuilt(GhidraBundle bundle, String summary) {
 			BundleStatus status = getStatus(bundle);
 			status.setSummary(summary);
-			int row = getRowIndex(status);
-			fireTableRowsUpdated(row, row);
+			int rowIndex = getRowIndex(status);
+			fireTableRowsUpdated(rowIndex, rowIndex);
 		}
 
 		@Override
 		public void bundleActivationChange(GhidraBundle bundle, boolean newActivation) {
 			BundleStatus status = getStatus(bundle);
-			int row = getRowIndex(status);
+			int rowIndex = getRowIndex(status);
 			status.setBusy(false);
 			if (newActivation) {
 				status.setActive(true);
@@ -386,7 +306,7 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 			else {
 				status.setActive(false);
 			}
-			fireTableRowsUpdated(row, row);
+			fireTableRowsUpdated(rowIndex, rowIndex);
 		}
 
 		@Override
@@ -421,41 +341,121 @@ public class BundleStatusTableModel extends AbstractSortedTableModel<BundleStatu
 		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablement) {
 			BundleStatus status = getStatus(bundle);
 			status.setEnabled(newEnablement);
-			int row = getRowIndex(status);
-			fireTableRowsUpdated(row, row);
+			int rowIndex = getRowIndex(status);
+			fireTableRowsUpdated(rowIndex, rowIndex);
 		}
 
 		@Override
 		public void bundleException(GhidraBundleException exception) {
 			BundleStatus status = getStatusFromLoc(exception.getBundleLocation());
 			status.setSummary(exception.getMessage());
-			int row = getRowIndex(status);
-			fireTableRowsUpdated(row, row);
+			int rowIndex = getRowIndex(status);
+			fireTableRowsUpdated(rowIndex, rowIndex);
 		}
 	}
 
-	class Column {
-		final Class<?> clazz;
-		final int index;
+	@Override
+	public List<BundleStatus> getDataSource() {
+		return statuses;
+	}
+
+	@Override
+	protected TableColumnDescriptor<BundleStatus> createTableColumnDescriptor() {
+		TableColumnDescriptor<BundleStatus> columnDescriptor = new TableColumnDescriptor<>();
+		enabledColumn = new Column<>("Enabled") {
+			@Override
+			boolean editable(BundleStatus status) {
+				return status.fileExists();
+			}
+
+			@Override
+			Boolean getValue(BundleStatus status) {
+				return status.isEnabled();
+			}
+
+			@Override
+			void setValue(BundleStatus status, Boolean newValue) {
+				fireBundleEnablementChangeRequested(status, newValue);
+			}
+		};
+		columnDescriptor.addVisibleColumn(enabledColumn);
+
+		activeColumn = new Column<>("Active") {
+			@Override
+			boolean editable(BundleStatus status) {
+				return status.fileExists() && status.isEnabled();
+			}
+
+			@Override
+			public Boolean getValue(BundleStatus status) {
+				return status.isActive();
+			}
+
+			@Override
+			void setValue(BundleStatus status, Boolean newValue) {
+				fireBundleActivationChangeRequested(status, newValue);
+			}
+
+		};
+		columnDescriptor.addHiddenColumn(activeColumn);
+
+		typeColumn = new Column<>("Type") {
+			public String getValue(BundleStatus status) {
+				return status.getType().toString();
+			}
+
+		};
+		columnDescriptor.addVisibleColumn(typeColumn);
+
+		pathColumn = new Column<>("Path") {
+			public ResourceFile getValue(BundleStatus status) {
+				return status.getFile();
+			}
+		};
+		columnDescriptor.addVisibleColumn(pathColumn);
+
+		summaryColumn = new Column<>("Summary") {
+			public String getValue(BundleStatus status) {
+				return status.getSummary();
+			}
+		};
+		columnDescriptor.addVisibleColumn(summaryColumn);
+
+		return columnDescriptor;
+	}
+
+	abstract class Column<ROW_TYPE>
+			extends AbstractDynamicTableColumn<BundleStatus, ROW_TYPE, List<BundleStatus>> {
 		final String name;
 
-		Column(String name, Class<?> clazz) {
+		Column(String name) {
+			super();
 			this.name = name;
-			this.index = columns.size();
-			columns.add(this);
-			this.clazz = clazz;
 		}
 
 		boolean editable(BundleStatus status) {
 			return false;
 		}
 
-		Object getValue(BundleStatus status) {
-			return null;
+		abstract ROW_TYPE getValue(BundleStatus status);
+
+		@Override
+		public ROW_TYPE getValue(BundleStatus rowObject, Settings settings, List<BundleStatus> data,
+				ServiceProvider serviceProvider0) throws IllegalArgumentException {
+			return getValue(rowObject);
 		}
 
-		void setValue(BundleStatus status, Object aValue) {
+		void setValue(BundleStatus status, ROW_TYPE aValue) {
 			throw new RuntimeException(name + " is not editable!");
+		}
+
+		@Override
+		public String getColumnName() {
+			return name;
+		}
+
+		int getModelIndex() {
+			return getColumnIndex(this);
 		}
 
 	}

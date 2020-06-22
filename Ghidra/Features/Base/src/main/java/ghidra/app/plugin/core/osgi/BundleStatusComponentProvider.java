@@ -133,17 +133,19 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		TableColumn column;
 
 		int skinnyWidth = 60;
+		GTableColumnModel columnModel = (GTableColumnModel) bundleStatusTable.getColumnModel();
+		
+		List<TableColumn> columns = columnModel.getAllColumns();
+
 		// 
-		column = bundleStatusTable.getColumnModel()
-			.getColumn(bundleStatusTableModel.enabledColumn.index);
+		column = columns.get(bundleStatusTableModel.enabledColumn.getModelIndex());
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
 		column.setWidth(skinnyWidth);
 
 		// 
-		column =
-			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.activeColumn.index);
+		column = columns.get(bundleStatusTableModel.activeColumn.getModelIndex());
 		column.setPreferredWidth(skinnyWidth);
 		column.setMinWidth(skinnyWidth);
 		column.setMaxWidth(skinnyWidth);
@@ -167,17 +169,18 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				return component;
 			}
 		});
+		columnModel.setVisible(column, false);
 
 		// 
-		column =
-			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.typeColumn.index);
+		column = columns.get(bundleStatusTableModel.typeColumn.getModelIndex());
 		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
 		int width = 10 +
 			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SOURCE_DIR.toString());
 		column.setMaxWidth(width);
 		column.setWidth(width);
-		column =
-			bundleStatusTable.getColumnModel().getColumn(bundleStatusTableModel.pathColumn.index);
+
+		// 
+		column = columns.get(bundleStatusTableModel.pathColumn.getModelIndex());
 		column.setCellRenderer(new GTableCellRenderer() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
