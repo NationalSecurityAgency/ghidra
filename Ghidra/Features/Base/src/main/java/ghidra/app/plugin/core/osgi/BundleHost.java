@@ -732,9 +732,9 @@ public class BundleHost {
 		}
 	}
 
-	private void fireBundleException(GhidraBundleException gbe) {
+	private void fireBundleException(GhidraBundleException exception) {
 		for (BundleHostListener l : listeners) {
-			l.bundleException(gbe);
+			l.bundleException(exception);
 		}
 	}
 

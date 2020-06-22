@@ -168,7 +168,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			.popupMenuGroup(BUNDLE_LIST_GROUP)
 			.toolBarIcon(icon)
 			.toolBarGroup(BUNDLE_LIST_GROUP)
-			.description("(re)Activate all enabled bundles in dependency order")
+			.description("Refresh bundles by cleaning and reactivating all enabled bundles")
 			.onAction(c -> doRefresh())
 			.buildAndInstallLocal(this);
 
@@ -535,13 +535,14 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	 */
 	private class MyBundleStatusChangeRequestListener implements BundleStatusChangeRequestListener {
 		@Override
-		public void bundleEnablementChangeRequest(BundleStatus status, boolean enabled) {
+		public void bundleEnablementChangeRequest(BundleStatus status, boolean newValue) {
 			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
 			if (bundle instanceof GhidraPlaceholderBundle) {
 				return;
 			}
-			if (enabled) {
+			if (newValue) {
 				bundleHost.enable(bundle);
+				doActivateDeactivateBundle(status, true);
 			}
 			else {
 				if (status.isActive()) {
