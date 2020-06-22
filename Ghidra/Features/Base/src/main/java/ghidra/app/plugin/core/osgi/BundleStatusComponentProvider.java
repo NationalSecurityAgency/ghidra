@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
-import javax.swing.table.TableColumn;
 
 import docking.action.builder.ActionBuilder;
 import docking.util.AnimationUtils;
@@ -33,6 +32,7 @@ import docking.widgets.table.*;
 import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.app.services.ConsoleService;
+import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
@@ -41,6 +41,8 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
+import ghidra.util.table.column.AbstractGColumnRenderer;
+import ghidra.util.table.column.AbstractWrapperTypeColumnRenderer;
 import ghidra.util.task.*;
 import resources.ResourceManager;
 
@@ -130,70 +132,14 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void configureTableColumns() {
-		TableColumn column;
-
-		int skinnyWidth = 60;
-		GTableColumnModel columnModel = (GTableColumnModel) bundleStatusTable.getColumnModel();
-		
-		List<TableColumn> columns = columnModel.getAllColumns();
-
-		// 
-		column = columns.get(bundleStatusTableModel.enabledColumn.getModelIndex());
-		column.setPreferredWidth(skinnyWidth);
-		column.setMinWidth(skinnyWidth);
-		column.setMaxWidth(skinnyWidth);
-		column.setWidth(skinnyWidth);
-
-		// 
-		column = columns.get(bundleStatusTableModel.activeColumn.getModelIndex());
-		column.setPreferredWidth(skinnyWidth);
-		column.setMinWidth(skinnyWidth);
-		column.setMaxWidth(skinnyWidth);
-		column.setWidth(skinnyWidth);
-		column.setCellRenderer(new GBooleanCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-				BundleStatus status = (BundleStatus) data.getRowObject();
-				Component component = super.getTableCellRendererComponent(data);
-				if (status.isBusy()) {
-					cb.setVisible(false);
-					cb.setEnabled(false);
-					setHorizontalAlignment(SwingConstants.CENTER);
-					setText("...");
-				}
-				else {
-					cb.setVisible(true);
-					cb.setEnabled(true);
-					setText("");
-				}
-				return component;
-			}
-		});
-		columnModel.setVisible(column, false);
-
-		// 
-		column = columns.get(bundleStatusTableModel.typeColumn.getModelIndex());
-		FontMetrics fontmetrics = panel.getFontMetrics(panel.getFont());
-		int width = 10 +
-			SwingUtilities.computeStringWidth(fontmetrics, GhidraBundle.Type.SOURCE_DIR.toString());
-		column.setMaxWidth(width);
-		column.setWidth(width);
-
-		// 
-		column = columns.get(bundleStatusTableModel.pathColumn.getModelIndex());
-		column.setCellRenderer(new GTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-				ResourceFile file = (ResourceFile) data.getValue();
-				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
-				label.setText(Path.toPathString(file));
-				GhidraBundle bundle = bundleHost.getExistingGhidraBundle(file);
-				if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
-					label.setForeground(Color.RED);
-				}
-				return label;
-			}
-		});
+		int skinnyWidth=60;
+		BusyBooleanRenderer renderer = new BusyBooleanRenderer();
+		bundleStatusTableModel.activeColumn.setColumnRenderer(renderer);
+		bundleStatusTableModel.activeColumn.setColumnPreferredWidth(skinnyWidth);
+		bundleStatusTableModel.enabledColumn.setColumnRenderer(renderer);
+		bundleStatusTableModel.enabledColumn.setColumnPreferredWidth(skinnyWidth);
+		bundleStatusTableModel.typeColumn.setColumnPreferredWidth(90);
+		bundleStatusTableModel.pathColumn.setColumnRenderer(new MissingFileRenderer());
 	}
 
 	private void addBundlesAction(String actionName, String description, Icon icon,
@@ -551,4 +497,45 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	private class BusyBooleanRenderer extends GBooleanCellRenderer
+			implements AbstractWrapperTypeColumnRenderer<Boolean> {
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			BundleStatus status = (BundleStatus) data.getRowObject();
+			Component component = super.getTableCellRendererComponent(data);
+			if (status.isBusy()) {
+				cb.setVisible(false);
+				cb.setEnabled(false);
+				setHorizontalAlignment(SwingConstants.CENTER);
+				setText("...");
+			}
+			else {
+				cb.setVisible(true);
+				cb.setEnabled(true);
+				setText("");
+			}
+			return component;
+		}
+
+	}
+
+	private class MissingFileRenderer extends AbstractGColumnRenderer<ResourceFile> {
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			ResourceFile file = (ResourceFile) data.getValue();
+			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+			label.setText(Path.toPathString(file));
+			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(file);
+			if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
+				label.setForeground(Color.RED);
+			}
+			return label;
+		}
+
+		@Override
+		public String getFilterString(ResourceFile file, Settings settings) {
+			return Path.toPathString(file);
+		}
+
+	}
 }

@@ -29,6 +29,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import ghidra.util.table.column.GColumnRenderer;
 
 /**
  * Model for {@link BundleStatus} objects. 
@@ -361,6 +362,7 @@ public class BundleStatusTableModel
 
 	@Override
 	protected TableColumnDescriptor<BundleStatus> createTableColumnDescriptor() {
+
 		TableColumnDescriptor<BundleStatus> columnDescriptor = new TableColumnDescriptor<>();
 		enabledColumn = new Column<>("Enabled") {
 			@Override
@@ -395,26 +397,34 @@ public class BundleStatusTableModel
 			void setValue(BundleStatus status, Boolean newValue) {
 				fireBundleActivationChangeRequested(status, newValue);
 			}
-
 		};
 		columnDescriptor.addHiddenColumn(activeColumn);
 
 		typeColumn = new Column<>("Type") {
+			@Override
 			public String getValue(BundleStatus status) {
 				return status.getType().toString();
+			}
+
+			@Override
+			public int getColumnPreferredWidth() {
+				return 90;
 			}
 
 		};
 		columnDescriptor.addVisibleColumn(typeColumn);
 
 		pathColumn = new Column<>("Path") {
+			@Override
 			public ResourceFile getValue(BundleStatus status) {
 				return status.getFile();
 			}
+
 		};
 		columnDescriptor.addVisibleColumn(pathColumn);
 
 		summaryColumn = new Column<>("Summary") {
+			@Override
 			public String getValue(BundleStatus status) {
 				return status.getSummary();
 			}
@@ -424,38 +434,59 @@ public class BundleStatusTableModel
 		return columnDescriptor;
 	}
 
-	abstract class Column<ROW_TYPE>
-			extends AbstractDynamicTableColumn<BundleStatus, ROW_TYPE, List<BundleStatus>> {
-		final String name;
+	abstract class Column<COLUMN_TYPE>
+			extends AbstractDynamicTableColumn<BundleStatus, COLUMN_TYPE, List<BundleStatus>> {
+		final String columnName;
+		GColumnRenderer<COLUMN_TYPE> renderer;
+		int width = -1;
 
 		Column(String name) {
 			super();
-			this.name = name;
+			this.columnName = name;
 		}
 
 		boolean editable(BundleStatus status) {
 			return false;
 		}
 
-		abstract ROW_TYPE getValue(BundleStatus status);
+		abstract COLUMN_TYPE getValue(BundleStatus status);
 
 		@Override
-		public ROW_TYPE getValue(BundleStatus rowObject, Settings settings, List<BundleStatus> data,
-				ServiceProvider serviceProvider0) throws IllegalArgumentException {
+		public COLUMN_TYPE getValue(BundleStatus rowObject, Settings settings,
+				List<BundleStatus> data, ServiceProvider serviceProvider0)
+				throws IllegalArgumentException {
 			return getValue(rowObject);
 		}
 
-		void setValue(BundleStatus status, ROW_TYPE aValue) {
-			throw new RuntimeException(name + " is not editable!");
+		void setValue(BundleStatus status, COLUMN_TYPE aValue) {
+			throw new RuntimeException(columnName + " is not editable!");
 		}
 
 		@Override
 		public String getColumnName() {
-			return name;
+			return columnName;
 		}
 
 		int getModelIndex() {
 			return getColumnIndex(this);
+		}
+
+		public void setColumnRenderer(GColumnRenderer<COLUMN_TYPE> renderer) {
+			this.renderer = renderer;
+		}
+
+		@Override
+		public GColumnRenderer<COLUMN_TYPE> getColumnRenderer() {
+			return renderer;
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return width;
+		}
+
+		public void setColumnPreferredWidth(int width) {
+			this.width = width;
 		}
 
 	}
