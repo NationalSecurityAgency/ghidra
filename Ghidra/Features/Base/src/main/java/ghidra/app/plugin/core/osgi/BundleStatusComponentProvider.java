@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.osgi;
 
 import java.awt.*;
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,16 +45,21 @@ import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.AbstractWrapperTypeColumnRenderer;
 import ghidra.util.task.*;
+import resources.Icons;
 import resources.ResourceManager;
 
 /**
  * component for managing OSGi bundle status
  */
 public class BundleStatusComponentProvider extends ComponentProviderAdapter {
+
 	static final String BUNDLE_GROUP = "0bundle group";
 	static final String BUNDLE_LIST_GROUP = "1bundle list group";
 
 	static final String PREFENCE_LAST_SELECTED_BUNDLE = "LastGhidraBundle";
+
+	private static final Color DARK_GREEN = new Color(0.0f, .6f, 0.0f);
+	private static final Color DARK_RED = new Color(0.6f, .1f, 0.0f);
 
 	private JPanel panel;
 	private LessFreneticGTable bundleStatusTable;
@@ -132,14 +138,12 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void configureTableColumns() {
-		int skinnyWidth=60;
-		BusyBooleanRenderer renderer = new BusyBooleanRenderer();
-		bundleStatusTableModel.activeColumn.setColumnRenderer(renderer);
+		int skinnyWidth = 60;
+		bundleStatusTableModel.activeColumn.setColumnRenderer(new BusyBooleanRenderer());
 		bundleStatusTableModel.activeColumn.setColumnPreferredWidth(skinnyWidth);
-		bundleStatusTableModel.enabledColumn.setColumnRenderer(renderer);
 		bundleStatusTableModel.enabledColumn.setColumnPreferredWidth(skinnyWidth);
 		bundleStatusTableModel.typeColumn.setColumnPreferredWidth(90);
-		bundleStatusTableModel.pathColumn.setColumnRenderer(new MissingFileRenderer());
+		bundleStatusTableModel.pathColumn.setColumnRenderer(new BundleFileRenderer());
 	}
 
 	private void addBundlesAction(String actionName, String description, Icon icon,
@@ -158,6 +162,16 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void createActions() {
+		Icon icon = Icons.REFRESH_ICON;
+		new ActionBuilder("RefreshBundles", this.getName()).popupMenuPath("Refresh all")
+			.popupMenuIcon(icon)
+			.popupMenuGroup(BUNDLE_LIST_GROUP)
+			.toolBarIcon(icon)
+			.toolBarGroup(BUNDLE_LIST_GROUP)
+			.description("(re)Activate all enabled bundles in dependency order")
+			.onAction(c -> doRefresh())
+			.buildAndInstallLocal(this);
+
 		addBundlesAction("ActivateBundles", "Activate bundle(s)",
 			ResourceManager.loadImage("images/media-playback-start.png"), this::doActivateBundles);
 
@@ -167,7 +181,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		addBundlesAction("CleanBundles", "Clean bundle(s)",
 			ResourceManager.loadImage("images/erase16.png"), this::doClean);
 
-		Icon icon = ResourceManager.loadImage("images/Plus.png");
+		icon = ResourceManager.loadImage("images/Plus.png");
 		new ActionBuilder("AddBundles", this.getName()).popupMenuPath("Add Bundle(s)")
 			.popupMenuIcon(icon)
 			.popupMenuGroup(BUNDLE_LIST_GROUP)
@@ -200,6 +214,32 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			return null;
 		}
 		return Arrays.stream(selectedRows).map(filterPanel::getModelRow).toArray();
+	}
+
+	private void doRefresh() {
+		PrintWriter errOut = getTool().getService(ConsoleService.class).getStdErr();
+
+		List<BundleStatus> statuses = bundleStatusTableModel.getModelData()
+			.stream()
+			.filter(BundleStatus::isEnabled)
+			.collect(Collectors.toList());
+
+		// clean them all..
+		for (BundleStatus status : statuses) {
+			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
+			bundle.clean();
+			status.setSummary("");
+			try {
+				bundleHost.deactivateSynchronously(bundle.getLocationIdentifier());
+			}
+			catch (GhidraBundleException | InterruptedException e) {
+				e.printStackTrace(errOut);
+			}
+		}
+
+		// then activate them all
+		new TaskLauncher(new ActivateBundlesTask("activating", true, true, false, statuses),
+			getComponent(), 1000);
 	}
 
 	private void doClean() {
@@ -291,15 +331,19 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	protected List<BundleStatus> getSelectedStatuses() {
+		return bundleStatusTableModel.getRowObjects(getSelectedModelRows());
+	}
+
 	protected void doActivateBundles() {
 		new TaskLauncher(
-			new ActivateBundlesTask("activating", true, true, false, getSelectedModelRows()),
+			new ActivateBundlesTask("activating", true, true, false, getSelectedStatuses()),
 			getComponent(), 1000);
 	}
 
 	protected void doDeactivateBundles() {
 		new TaskLauncher(
-			new DeactivateBundlesTask("deactivating", true, true, false, getSelectedModelRows()),
+			new DeactivateBundlesTask("deactivating", true, true, false, getSelectedStatuses()),
 			getComponent(), 1000);
 	}
 
@@ -353,23 +397,18 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private class ActivateBundlesTask extends Task {
-		private final int[] selectedModelRows;
+		private final List<BundleStatus> statuses;
 
 		private ActivateBundlesTask(String title, boolean canCancel, boolean hasProgress,
-				boolean isModal, int[] selectedModelRows) {
+				boolean isModal, List<BundleStatus> statuses) {
 			super(title, canCancel, hasProgress, isModal);
-			this.selectedModelRows = selectedModelRows;
+			this.statuses = statuses;
 		}
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 			// suppress RowObjectSelectionManager repairs until after we're done
 			bundleStatusTable.chill();
-
-			List<BundleStatus> statuses = bundleStatusTableModel.getRowObjects(selectedModelRows)
-				.stream()
-				.filter(bs -> !bs.isActive())
-				.collect(Collectors.toUnmodifiableList());
 
 			List<GhidraBundle> bundles = new ArrayList<>();
 			for (BundleStatus status : statuses) {
@@ -401,20 +440,19 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private class DeactivateBundlesTask extends Task {
-		private final int[] selectedModelRows;
+		final List<BundleStatus> statuses;
 
 		private DeactivateBundlesTask(String title, boolean canCancel, boolean hasProgress,
-				boolean isModal, int[] selectedModelRows) {
+				boolean isModal, List<BundleStatus> statuses) {
 			super(title, canCancel, hasProgress, isModal);
-			this.selectedModelRows = selectedModelRows;
+			this.statuses = statuses;
 		}
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			List<GhidraBundle> bundles = bundleStatusTableModel.getRowObjects(selectedModelRows)
-				.stream()
-				.filter(bs -> bs.isActive())
-				.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
+			List<GhidraBundle> bundles = statuses.stream()
+				.filter(status -> status.isActive())
+				.map(status -> bundleHost.getExistingGhidraBundle(status.getFile()))
 				.collect(Collectors.toList());
 
 			monitor.setMaximum(bundles.size());
@@ -519,15 +557,33 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 	}
 
-	private class MissingFileRenderer extends AbstractGColumnRenderer<ResourceFile> {
+	private class BundleFileRenderer extends AbstractGColumnRenderer<ResourceFile> {
+
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			BundleStatus status = (BundleStatus) data.getRowObject();
 			ResourceFile file = (ResourceFile) data.getValue();
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+			label.setFont(defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD));
 			label.setText(Path.toPathString(file));
 			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(file);
 			if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
-				label.setForeground(Color.RED);
+				label.setBackground(Color.RED);
+				label.setForeground(Color.BLACK);
+			}
+			else {
+				if (status.isBusy()) {
+					label.setForeground(Color.GRAY);
+				}
+				else if (!status.isEnabled()) {
+					label.setForeground(Color.BLACK);
+				}
+				else if (status.isActive()) {
+					label.setForeground(DARK_GREEN);
+				}
+				else {
+					label.setForeground(DARK_RED);
+				}
 			}
 			return label;
 		}
