@@ -263,27 +263,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		if (selectedModelRows == null || selectedModelRows.length == 0) {
 			return;
 		}
-		doDeactivateBundles();
-
-		// partition bundles into system (bundles.get(true)) and non-system (bundles.get(false)).
-		Map<Boolean, List<GhidraBundle>> bundles =
-			bundleStatusTableModel.getRowObjects(selectedModelRows)
-				.stream()
-				.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
-				.collect(Collectors.partitioningBy(GhidraBundle::isSystemBundle));
-
-		List<GhidraBundle> systemBundles = bundles.get(true);
-		if (!systemBundles.isEmpty()) {
-			StringBuilder stringBuilder = new StringBuilder();
-			for (GhidraBundle bundle : systemBundles) {
-				bundleHost.disable(bundle);
-				stringBuilder.append(bundle.getFile() + "\n");
-			}
-			Msg.showWarn(this, this.getComponent(), "Unabled to remove",
-				"System bundles cannot be removed:\n" + stringBuilder.toString());
-		}
-
-		bundleHost.remove(bundles.get(false));
+		new TaskLauncher(new RemoveBundlesTask("removing bundles", getSelectedStatuses()),
+			getComponent(), 1000);
 	}
 
 	private void showAddBundlesFileChooser() {
@@ -324,10 +305,17 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		List<File> files = fileChooser.getSelectedFiles();
 		if (!files.isEmpty()) {
 			Preferences.setProperty(PREFENCE_LAST_SELECTED_BUNDLE, files.get(0).getAbsolutePath());
+			List<ResourceFile> resourceFiles =
+				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList());
+			Collection<GhidraBundle> bundles = bundleHost.add(resourceFiles, true, false);
 
-			bundleHost.add(
-				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList()),
-				true, false);
+			new TaskLauncher(new Task("activating new bundles") {
+				@Override
+				public void run(TaskMonitor monitor) throws CancelledException {
+					bundleHost.activateAll(bundles, monitor,
+						getTool().getService(ConsoleService.class).getStdErr());
+				}
+			}, getComponent(), 1000);
 		}
 	}
 
@@ -394,6 +382,42 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		bundleStatusTableModel.setModelData(bundleFiles.stream()
 			.map(f -> new BundleStatus(f, true, false, null))
 			.collect(Collectors.toList()));
+	}
+
+	private final class RemoveBundlesTask extends Task {
+		private final DeactivateBundlesTask deactivateBundlesTask;
+		private final List<BundleStatus> statuses;
+
+		private RemoveBundlesTask(String title, List<BundleStatus> statuses) {
+			super(title);
+			this.deactivateBundlesTask =
+				new DeactivateBundlesTask("deactivating", true, true, false, statuses);
+			this.statuses = statuses;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			deactivateBundlesTask.run(monitor);
+			if (!monitor.isCancelled()) {
+				// partition bundles into system (bundles.get(true)) and non-system (bundles.get(false)).
+				Map<Boolean, List<GhidraBundle>> bundles = statuses.stream()
+					.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
+					.collect(Collectors.partitioningBy(GhidraBundle::isSystemBundle));
+
+				List<GhidraBundle> systemBundles = bundles.get(true);
+				if (!systemBundles.isEmpty()) {
+					StringBuilder stringBuilder = new StringBuilder();
+					for (GhidraBundle bundle : systemBundles) {
+						bundleHost.disable(bundle);
+						stringBuilder.append(bundle.getFile() + "\n");
+					}
+					Msg.showWarn(this, BundleStatusComponentProvider.this.getComponent(),
+						"Unabled to remove",
+						"System bundles cannot be removed:\n" + stringBuilder.toString());
+				}
+				bundleHost.remove(bundles.get(false));
+			}
+		}
 	}
 
 	private class ActivateBundlesTask extends Task {

@@ -120,6 +120,9 @@ public class GhidraScriptInfoManager {
 	 * @return info or null if the assumption was wrong. If null is returned, an error dialog is shown
 	 */
 	public ScriptInfo getExistingScriptInfo(ResourceFile script) {
+		if (script == null) {
+			return null;
+		}
 		ScriptInfo info = scriptFileToInfoMap.get(script);
 		if (info == null) {
 			String error = (script.exists() ? "" : "non") + "existing script" + script.toString() +

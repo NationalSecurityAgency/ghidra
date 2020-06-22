@@ -182,8 +182,10 @@ public class BundleHost {
 	 * @param bundleFiles a list of bundle files
 	 * @param enabled if the new bundle should be enabled
 	 * @param systemBundle if the new bundle is a system bundle
+	 * @return the new bundle objects
 	 */
-	public void add(List<ResourceFile> bundleFiles, boolean enabled, boolean systemBundle) {
+	public Collection<GhidraBundle> add(List<ResourceFile> bundleFiles, boolean enabled,
+			boolean systemBundle) {
 		Map<ResourceFile, GhidraBundle> newBundleMap = bundleFiles.stream()
 			.collect(Collectors.toUnmodifiableMap(Function.identity(),
 				bundleFile -> createGhidraBundle(BundleHost.this, bundleFile, enabled,
@@ -193,7 +195,9 @@ public class BundleHost {
 			.stream()
 			.collect(Collectors.toUnmodifiableMap(GhidraBundle::getLocationIdentifier,
 				Function.identity())));
-		fireBundlesAdded(newBundleMap.values());
+		Collection<GhidraBundle> newBundles = newBundleMap.values();
+		fireBundlesAdded(newBundles);
+		return newBundles;
 	}
 
 	/**
