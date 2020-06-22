@@ -1308,6 +1308,35 @@ void Funcdata::splitUses(Varnode *vn)
 				// Dead-code actions should remove original op
 }
 
+/// Find the minimal Address range covering the given Varnode that doesn't split other Varnodes
+/// \param vn is the given Varnode
+/// \param sz is used to pass back the size of the resulting range
+/// \return the starting address of the resulting range
+Address Funcdata::findDisjointCover(Varnode *vn,int4 &sz)
+
+{
+  Address addr = vn->getAddr();
+  Address endaddr = addr + vn->getSize();
+  VarnodeLocSet::const_iterator iter = vn->lociter;
+
+  while(iter != beginLoc()) {
+    --iter;
+    Varnode *curvn = *iter;
+    Address curEnd = curvn->getAddr() + curvn->getSize();
+    if (curEnd <= addr) break;
+    addr = curvn->getAddr();
+  }
+  iter = vn->lociter;
+  while(iter != endLoc()) {
+    Varnode *curvn = *iter;
+    ++iter;
+    if (endaddr <= curvn->getAddr()) break;
+    endaddr = curvn->getAddr() + curvn->getSize();
+  }
+  sz = (int4)(endaddr.getOffset() - addr.getOffset());
+  return addr;
+}
+
 /// Search for \e addrtied Varnodes whose storage falls in the global Scope, then
 /// build a new global Symbol if one didn't exist before.
 void Funcdata::mapGlobals(void)

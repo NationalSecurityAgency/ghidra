@@ -1327,8 +1327,8 @@ public:
   bool checkInputSplit(const Address &loc,int4 size,int4 splitpoint) const {
     return model->checkInputSplit(loc,size,splitpoint); }
 
-  void updateInputTypes(const vector<Varnode *> &triallist,ParamActive *activeinput);
-  void updateInputNoTypes(const vector<Varnode *> &triallist,ParamActive *activeinput,TypeFactory *factory);
+  void updateInputTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput);
+  void updateInputNoTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput);
   void updateOutputTypes(const vector<Varnode *> &triallist);
   void updateOutputNoTypes(const vector<Varnode *> &triallist,TypeFactory *factory);
   void updateAllTypes(const vector<string> &namelist,const vector<Datatype *> &typelist,bool dtdtdt);

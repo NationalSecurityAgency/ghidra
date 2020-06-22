@@ -17,8 +17,7 @@ package ghidra.program.model.pcode;
 
 import java.util.*;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
 import ghidra.program.model.listing.*;
@@ -184,16 +183,18 @@ public class LocalSymbolMap {
 			if (symbol != null) {
 				id = symbol.getID();
 			}
-			Address defAddr = null;
-			if (!storage.isStackStorage()) {
-				defAddr = dbFunction.getEntryPoint().addWrap(local.getFirstUseOffset());
-			}
 			HighSymbol sym;
 			if (storage.isHashStorage()) {
+				Address defAddr = dbFunction.getEntryPoint().addWrap(local.getFirstUseOffset());
 				sym =
 					newDynamicSymbol(id, name, dt, storage.getFirstVarnode().getOffset(), defAddr);
 			}
 			else {
+				Address defAddr = null;
+				int addrType = storage.getFirstVarnode().getAddress().getAddressSpace().getType();
+				if (addrType != AddressSpace.TYPE_STACK && addrType != AddressSpace.TYPE_RAM) {
+					defAddr = dbFunction.getEntryPoint().addWrap(local.getFirstUseOffset());
+				}
 				sym = newMappedSymbol(id, name, dt, storage, defAddr, -1);
 			}
 			sym.setTypeLock(istypelock);

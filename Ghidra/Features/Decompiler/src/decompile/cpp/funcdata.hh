@@ -266,6 +266,8 @@ public:
   void adjustInputVarnodes(const Address &addr,int4 size);
   void deleteVarnode(Varnode *vn) { vbank.destroy(vn); }	///< Delete the given varnode
 
+  Address findDisjointCover(Varnode *vn,int4 &sz);	///< Find range covering given Varnode and any intersecting Varnodes
+
   /// \brief Find the first input Varnode covered by the given range
   ///
   /// \param s is the size of the range in bytes

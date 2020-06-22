@@ -3924,9 +3924,9 @@ int4 ActionInputPrototype::apply(Funcdata &data)
       }
     }
     if (data.isHighOn())
-      data.getFuncProto().updateInputTypes(triallist,&active);
+      data.getFuncProto().updateInputTypes(data,triallist,&active);
     else
-      data.getFuncProto().updateInputNoTypes(triallist,&active,data.getArch()->types);
+      data.getFuncProto().updateInputNoTypes(data,triallist,&active);
   }
   data.clearDeadVarnodes();
 #ifdef OPACTION_DEBUG

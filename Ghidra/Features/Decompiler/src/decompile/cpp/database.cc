@@ -1069,13 +1069,23 @@ void Scope::removeRange(AddrSpace *spc,uintb first,uintb last)
 /// In particular, the SymbolEntry is assumed to map the entire Symbol.
 /// \param entry is the given SymbolEntry
 /// \return a SymbolEntry which has been fully integrated
-SymbolEntry *Scope::addMap(const SymbolEntry &entry)
+SymbolEntry *Scope::addMap(SymbolEntry &entry)
 
 {
   // First set properties of this symbol based on scope
   //  entry.symbol->flags |= Varnode::mapped;
   if (isGlobal())
     entry.symbol->flags |= Varnode::persist;
+  else if (!entry.addr.isInvalid()) {
+    // If this is not a global scope, but the address is in the global discovery range
+    // we still mark the symbol as persistent
+    Scope *glbScope = glb->symboltab->getGlobalScope();
+    Address addr;
+    if (glbScope->inScope(entry.addr, 1, addr)) {
+      entry.symbol->flags |= Varnode::persist;
+      entry.uselimit.clear();	// FIXME: Kludge for incorrectly generated XML
+    }
+  }
 
   SymbolEntry *res;
   int4 consumeSize = entry.symbol->getBytesConsumed();

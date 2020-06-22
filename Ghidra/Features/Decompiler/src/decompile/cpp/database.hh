@@ -492,7 +492,7 @@ protected:
   /// \return the newly created SymbolEntry
   virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
 					     const RangeList &uselim)=0;
-  SymbolEntry *addMap(const SymbolEntry &entry);	///< Integrate a SymbolEntry into the range maps
+  SymbolEntry *addMap(SymbolEntry &entry);	///< Integrate a SymbolEntry into the range maps
   void setSymbolId(Symbol *sym,uint8 id) const { sym->symbolId = id; }	///< Adjust the id associated with a symbol
 public:
 #ifdef OPACTION_DEBUG
