@@ -288,10 +288,10 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 		long offset = readRegister(stackPtrReg).longValue() + relativeOffset;
 		byte[] bytes = new byte[size];
 		if (program.getMemory().isBigEndian()) {
-			BigEndianDataConverter.INSTANCE.getBytes(value, bytes);
+			BigEndianDataConverter.INSTANCE.getBytes(value, size, bytes, 0);
 		}
 		else {
-			LittleEndianDataConverter.INSTANCE.getBytes(value, bytes);
+			LittleEndianDataConverter.INSTANCE.getBytes(value, size, bytes, 0);
 		}
 		writeMemory(stackMemorySpace.getAddress(offset), bytes);
 	}
