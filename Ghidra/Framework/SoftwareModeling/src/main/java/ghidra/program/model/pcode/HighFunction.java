@@ -618,25 +618,39 @@ public class HighFunction extends PcodeSyntaxTree {
 		}
 	}
 
-	static public void createNamespaceTag(StringBuilder buf, Namespace namespc) {
-		if (namespc == null) {
-			return;
-		}
-		ArrayList<String> arr = new ArrayList<String>();
-		Namespace curspc = namespc;
-		while (curspc != null) {
-			arr.add(0, curspc.getName());
-			if (curspc instanceof Library) {
-				break;		// Treat library namespace as root
+	/**
+	 * Append an XML &lt;parent&gt; tag to the buffer describing the formal path elements
+	 * from the root (global) namespace up to the given namespace
+	 * @param buf is the buffer to write to
+	 * @param namespace is the namespace being described
+	 * @param includeId is true if the XML tag should include namespace ids
+	 */
+	static public void createNamespaceTag(StringBuilder buf, Namespace namespace,
+			boolean includeId) {
+		buf.append("<parent>\n");
+		if (namespace != null) {
+			ArrayList<Namespace> arr = new ArrayList<Namespace>();
+			Namespace curspc = namespace;
+			while (curspc != null) {
+				arr.add(0, curspc);
+				if (curspc instanceof Library) {
+					break;		// Treat library namespace as root
+				}
+				curspc = curspc.getParentNamespace();
 			}
-			curspc = curspc.getParentNamespace();
+			buf.append("<val/>\n"); // Force global scope to have empty name
+			for (int i = 1; i < arr.size(); ++i) {
+				Namespace curScope = arr.get(i);
+				buf.append("<val");
+				if (includeId) {
+					SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", curScope.getID());
+				}
+				buf.append('>');
+				SpecXmlUtils.xmlEscape(buf, curScope.getName());
+				buf.append("</val>\n");
+			}
 		}
-		buf.append("<val/>\n"); // Force global scope to have empty name
-		for (int i = 1; i < arr.size(); ++i) {
-			buf.append("<val>");
-			SpecXmlUtils.xmlEscape(buf, arr.get(i));
-			buf.append("</val>\n");
-		}
+		buf.append("</parent>\n");
 	}
 
 	/**

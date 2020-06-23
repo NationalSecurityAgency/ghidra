@@ -522,18 +522,19 @@ public class DecompileDebug {
 		}
 		while (scopename != null) {
 			StringBuilder datahead = new StringBuilder();
+			Namespace parentNamespace;
 			datahead.append("<scope");
 			// Force globalnamespace to have blank name
-			if (scopename != globalnamespace) {
+			if (scopename != globalnamespace && !(scopename instanceof Library)) {
 				SpecXmlUtils.xmlEscapeAttribute(datahead, "name", scopename.getName());
+				parentNamespace = scopename.getParentNamespace();
 			}
 			else {
 				SpecXmlUtils.encodeStringAttribute(datahead, "name", "");
+				parentNamespace = null;
 			}
 			datahead.append(">\n");
-			datahead.append("<parent>\n");
-			HighFunction.createNamespaceTag(datahead, scopename.getParentNamespace());
-			datahead.append("</parent>\n");
+			HighFunction.createNamespaceTag(datahead, parentNamespace, false);
 			if (scopename != globalnamespace) {
 				datahead.append("<rangeequalssymbols/>\n");
 			}

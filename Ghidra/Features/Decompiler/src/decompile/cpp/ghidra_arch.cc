@@ -515,6 +515,25 @@ Document *ArchitectureGhidra::getExternalRefXML(const Address &addr)
   return readXMLAll(sin);
 }
 
+/// Ask the Ghidra client to list all namespace elements between the global root
+/// and the namespace of the given id. The client should return a \<parent> tag with
+/// a \<val> child for each namespace in the path.
+/// \param id is the given id of the namespace to resolve
+/// \return the XML document
+Document *ArchitectureGhidra::getNamespacePath(uint8 id)
+
+{
+  sout.write("\000\000\001\004",4);
+  writeStringStream(sout,"getNamespacePath");
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << hex << id;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\005",4);
+  sout.flush();
+
+  return readXMLAll(sin);
+}
+
 /// Get the name of the primary symbol at the given address.
 /// This is used to fetch within function \e labels. Only a name is returned.
 /// \param addr is the given address

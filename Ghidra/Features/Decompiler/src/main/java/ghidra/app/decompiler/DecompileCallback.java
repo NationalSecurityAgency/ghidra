@@ -528,6 +528,15 @@ public class DecompileCallback {
 		return sym.getName();
 	}
 
+	private Namespace getNameSpaceByID(long id) {
+		Symbol namespaceSym = program.getSymbolTable().getSymbol(id);
+		Object namespace = namespaceSym.getObject();
+		if (namespace instanceof Namespace) {
+			return (Namespace) namespace;
+		}
+		return null;
+	}
+
 	private String getNamespacePrefix(Namespace ns) {
 		if (ns.getID() == Namespace.GLOBAL_NAMESPACE_ID) {
 			return null;
@@ -541,6 +550,18 @@ public class DecompileCallback {
 			return parentName + "_" + name;
 		}
 		return name;
+	}
+
+	/**
+	 * Return an XML description of the formal namespace path to the given namespace
+	 * @param id is the ID of the given namespace
+	 * @return a parent XML tag
+	 */
+	public String getNamespacePath(long id) {
+		Namespace namespace = getNameSpaceByID(id);
+		StringBuilder buf = new StringBuilder();
+		HighFunction.createNamespaceTag(buf, namespace, true);
+		return buf.toString();
 	}
 
 	private void generateHeaderCommentXML(Function func, StringBuilder buf) {
@@ -802,16 +823,17 @@ public class DecompileCallback {
 	}
 
 	private String buildResult(HighSymbol highSymbol, Namespace namespc) {
-		StringBuilder res = new StringBuilder();
-		res.append("<result>\n");
-		res.append("<parent>\n");
-		if (namespc == null) {
-			res.append("<val/>"); // Assume global scope
+		long namespaceId;
+		if (namespc == null || namespc instanceof Library) {
+			namespaceId = Namespace.GLOBAL_NAMESPACE_ID;
 		}
 		else {
-			HighFunction.createNamespaceTag(res, namespc);
+			namespaceId = namespc.getID();
 		}
-		res.append("</parent>\n");
+		StringBuilder res = new StringBuilder();
+		res.append("<result");
+		SpecXmlUtils.encodeUnsignedIntegerAttribute(res, "id", namespaceId);
+		res.append(">\n");
 		if (debug != null) {
 			StringBuilder res2 = new StringBuilder();
 			HighSymbol.buildMapSymXML(res2, highSymbol);

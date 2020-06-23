@@ -36,14 +36,15 @@ class ScopeGhidra : public Scope {
   ArchitectureGhidra *ghidra;		///< Architecture and connection to the Ghidra client
   mutable ScopeInternal *cache;		///< An internal cache of previously fetched Symbol objects
   mutable RangeList holes;		///< List of (queried) memory ranges with no Symbol in them
+  mutable map<uint8,Scope *> namespaceMap;	///< Map from id to formal global namespace objects
   vector<int4> spacerange;		///< List of address spaces that are in the global range
   partmap<Address,uint4> flagbaseDefault;	///< Default boolean properties on memory
   mutable bool cacheDirty;		///< Is flagbaseDefault different from cache
   Symbol *dump2Cache(Document *doc) const;			///< Parse a response into the cache
   Symbol *removeQuery(const Address &addr) const;		///< Process a query that missed the cache
   void processHole(const Element *el) const;			///< Process a response describing a hole
-  Scope *createNewScope(const string &nm,Scope *par) const;	///< Create a global \e namespace Scope
-  Scope *reresolveScope(const vector<string> &path) const;	///< Find the Scope that will contain a result Symbol
+  Scope *createNewScope(const string &nm,uint8 id,Scope *par) const;	///< Create a global \e namespace Scope
+  Scope *reresolveScope(uint8 id) const;	///< Find the Scope that will contain a result Symbol
   virtual void addRange(AddrSpace *spc,uintb first,uintb last);
   virtual void removeRange(AddrSpace *spc,uintb first,uintb last) {
     throw LowlevelError("remove_range should not be performed on ghidra scope");
@@ -124,11 +125,14 @@ public:
 /// be a ScopeGhidra.  This will query the Ghidra client on behalf of the \e namespace and
 /// register any new symbols with \b this Scope.
 class ScopeGhidraNamespace : public ScopeInternal {
+  uint8 scopeId;			///< Internal id allowing Ghidra client to reference formal namespaces
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
 				      const RangeList &uselim);
 public:
-  ScopeGhidraNamespace(const string &nm,Architecture *g)
-    : ScopeInternal(nm,g) {}		///< Constructor
+  ScopeGhidraNamespace(const string &nm,uint8 id,Architecture *g)
+    : ScopeInternal(nm,g) { scopeId = id; }		///< Constructor
+
+  uint8 getId(void) const { return scopeId; }		///< Get the Ghidra specific id
 };
 
 #endif

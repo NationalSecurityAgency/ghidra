@@ -314,6 +314,9 @@ public class DecompileProcess {
 							case 'M':
 								getMappedSymbolsXML();			// getMappedSymbolsXML
 								break;
+							case 'N':
+								getNamespacePath();
+								break;
 							case 'P':
 								getPcodePacked();				// getPacked
 								break;
@@ -704,6 +707,17 @@ public class DecompileProcess {
 		String addr = readQueryString();
 
 		String res = callback.getMappedSymbolsXML(addr);
+		write(query_response_start);
+		if ((res != null) && (res.length() != 0)) {
+			writeString(res);
+		}
+		write(query_response_end);
+	}
+
+	private void getNamespacePath() throws IOException {
+		String idString = readQueryString();
+		long id = Long.parseLong(idString, 16);
+		String res = callback.getNamespacePath(id);
 		write(query_response_start);
 		if ((res != null) && (res.length() != 0)) {
 			writeString(res);

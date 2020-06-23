@@ -92,6 +92,7 @@ public:
   uint1 *getPcodePacked(const Address &addr);			///< Get p-code for a single instruction
   Document *getMappedSymbolsXML(const Address &addr);		///< Get symbols associated with the given address
   Document *getExternalRefXML(const Address &addr);		///< Retrieve a description of an external function
+  Document *getNamespacePath(uint8 id);				///< Get a description of a namespace path
   string getCodeLabel(const Address &addr);			///< Retrieve a label at the given address
   Document *getType(const string &name,uint8 id);		///< Retrieve a data-type description for the given name and id
   Document *getComments(const Address &fad,uint4 flags);	///< Retrieve comments for a particular function
