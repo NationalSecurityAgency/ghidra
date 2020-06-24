@@ -101,6 +101,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private final BundleHost bundleHost;
 	private final RefreshingBundleHostListener refreshingBundleHostListener =
 		new RefreshingBundleHostListener();
+	final private SwingUpdateManager refreshUpdateManager = new SwingUpdateManager(this::doRefresh);
 
 	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin, BundleHost bundleHost) {
 		super(plugin.getTool(), "Script Manager", plugin.getName());
@@ -158,7 +159,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		});
 
 		scriptCategoryTree.getSelectionModel()
-			.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+				.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 	}
 
 	private void build() {
@@ -455,11 +456,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	 */
 	public List<ResourceFile> getScriptDirectories() {
 		return bundleHost.getGhidraBundles()
-			.stream()
-			.filter(GhidraSourceBundle.class::isInstance)
-			.filter(GhidraBundle::isEnabled)
-			.map(GhidraBundle::getFile)
-			.collect(Collectors.toList());
+				.stream()
+				.filter(GhidraSourceBundle.class::isInstance)
+				.filter(GhidraBundle::isEnabled)
+				.map(GhidraBundle::getFile)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -467,12 +468,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	 */
 	public List<ResourceFile> getWritableScriptDirectories() {
 		return bundleHost.getGhidraBundles()
-			.stream()
-			.filter(GhidraSourceBundle.class::isInstance)
-			.filter(Predicate.not(GhidraBundle::isSystemBundle))
-			.filter(GhidraBundle::isEnabled)
-			.map(GhidraBundle::getFile)
-			.collect(Collectors.toList());
+				.stream()
+				.filter(GhidraSourceBundle.class::isInstance)
+				.filter(Predicate.not(GhidraBundle::isSystemBundle))
+				.filter(GhidraBundle::isEnabled)
+				.map(GhidraBundle::getFile)
+				.collect(Collectors.toList());
 	}
 
 	boolean isEditorOpen(ResourceFile script) {
@@ -712,6 +713,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void refresh() {
+		refreshUpdateManager.update();
+	}
+
+	void doRefresh() {
 		hasBeenRefreshed = true;
 
 		TreePath preRefreshSelectionPath = scriptCategoryTree.getSelectionPath();

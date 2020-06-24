@@ -134,25 +134,25 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			Runnable runnable) {
 
 		new ActionBuilder(actionName, this.getName()).popupMenuPath(description)
-			.popupMenuIcon(icon)
-			.popupMenuGroup(BUNDLE_GROUP)
-			.description(description)
-			.enabled(false)
-			.enabledWhen(context -> bundleStatusTable.getSelectedRows().length > 0)
-			.onAction(context -> runnable.run())
-			.buildAndInstallLocal(this);
+				.popupMenuIcon(icon)
+				.popupMenuGroup(BUNDLE_GROUP)
+				.description(description)
+				.enabled(false)
+				.enabledWhen(context -> bundleStatusTable.getSelectedRows().length > 0)
+				.onAction(context -> runnable.run())
+				.buildAndInstallLocal(this);
 	}
 
 	private void createActions() {
 		Icon icon = Icons.REFRESH_ICON;
 		new ActionBuilder("RefreshBundles", this.getName()).popupMenuPath("Refresh all")
-			.popupMenuIcon(icon)
-			.popupMenuGroup(BUNDLE_LIST_GROUP)
-			.toolBarIcon(icon)
-			.toolBarGroup(BUNDLE_LIST_GROUP)
-			.description("Refresh state by cleaning and reactivating all enabled bundles")
-			.onAction(c -> doRefresh())
-			.buildAndInstallLocal(this);
+				.popupMenuIcon(icon)
+				.popupMenuGroup(BUNDLE_LIST_GROUP)
+				.toolBarIcon(icon)
+				.toolBarGroup(BUNDLE_LIST_GROUP)
+				.description("Refresh state by cleaning and reactivating all enabled bundles")
+				.onAction(c -> doRefresh())
+				.buildAndInstallLocal(this);
 
 		addBundlesAction("ActivateBundles", "Enable selected bundle(s)",
 			ResourceManager.loadImage("images/media-playback-start.png"), this::doEnableBundles);
@@ -165,25 +165,25 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		icon = ResourceManager.loadImage("images/Plus.png");
 		new ActionBuilder("AddBundles", this.getName()).popupMenuPath("Add bundle(s)")
-			.popupMenuIcon(icon)
-			.popupMenuGroup(BUNDLE_LIST_GROUP)
-			.toolBarIcon(icon)
-			.toolBarGroup(BUNDLE_LIST_GROUP)
-			.description("Display file chooser to add bundles to list")
-			.onAction(c -> showAddBundlesFileChooser())
-			.buildAndInstallLocal(this);
+				.popupMenuIcon(icon)
+				.popupMenuGroup(BUNDLE_LIST_GROUP)
+				.toolBarIcon(icon)
+				.toolBarGroup(BUNDLE_LIST_GROUP)
+				.description("Display file chooser to add bundles to list")
+				.onAction(c -> showAddBundlesFileChooser())
+				.buildAndInstallLocal(this);
 
 		icon = ResourceManager.loadImage("images/edit-delete.png");
 		new ActionBuilder("RemoveBundles", this.getName())
-			.popupMenuPath("Remove selected bundle(s)")
-			.popupMenuIcon(icon)
-			.popupMenuGroup(BUNDLE_LIST_GROUP)
-			.toolBarIcon(icon)
-			.toolBarGroup(BUNDLE_LIST_GROUP)
-			.description("Remove selected bundle(s) from the list")
-			.enabledWhen(c -> bundleStatusTable.getSelectedRows().length > 0)
-			.onAction(c -> doRemoveBundles())
-			.buildAndInstallLocal(this);
+				.popupMenuPath("Remove selected bundle(s)")
+				.popupMenuIcon(icon)
+				.popupMenuGroup(BUNDLE_LIST_GROUP)
+				.toolBarIcon(icon)
+				.toolBarGroup(BUNDLE_LIST_GROUP)
+				.description("Remove selected bundle(s) from the list")
+				.enabledWhen(c -> bundleStatusTable.getSelectedRows().length > 0)
+				.onAction(c -> doRemoveBundles())
+				.buildAndInstallLocal(this);
 	}
 
 	/**
@@ -203,9 +203,9 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		PrintWriter errOut = getTool().getService(ConsoleService.class).getStdErr();
 
 		List<BundleStatus> statuses = bundleStatusTableModel.getModelData()
-			.stream()
-			.filter(BundleStatus::isEnabled)
-			.collect(Collectors.toList());
+				.stream()
+				.filter(BundleStatus::isEnabled)
+				.collect(Collectors.toList());
 
 		// clean them all..
 		for (BundleStatus status : statuses) {
@@ -330,7 +330,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		int modelRowIndex = bundleStatusTableModel.getRowIndex(status);
 		int viewRowIndex = filterPanel.getViewRow(modelRowIndex);
 		bundleStatusTable
-			.notifyTableChanged(new TableModelEvent(bundleStatusTableModel, viewRowIndex));
+				.notifyTableChanged(new TableModelEvent(bundleStatusTableModel, viewRowIndex));
 	}
 
 	private void notifyTableDataChanged() {
@@ -362,8 +362,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	 */
 	public void setBundleFilesForTesting(List<ResourceFile> bundleFiles) {
 		bundleStatusTableModel.setModelData(bundleFiles.stream()
-			.map(f -> new BundleStatus(f, true, false, null))
-			.collect(Collectors.toList()));
+				.map(f -> new BundleStatus(f, true, false, null))
+				.collect(Collectors.toList()));
 	}
 
 	private final class RemoveBundlesTask extends Task {
@@ -383,8 +383,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			if (!monitor.isCancelled()) {
 				// partition bundles into system (bundles.get(true)) and non-system (bundles.get(false)).
 				Map<Boolean, List<GhidraBundle>> bundles = statuses.stream()
-					.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
-					.collect(Collectors.partitioningBy(GhidraBundle::isSystemBundle));
+						.map(bs -> bundleHost.getExistingGhidraBundle(bs.getFile()))
+						.collect(Collectors.partitioningBy(GhidraBundle::isSystemBundle));
 
 				List<GhidraBundle> systemBundles = bundles.get(true);
 				if (!systemBundles.isEmpty()) {
@@ -456,9 +456,9 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 			List<GhidraBundle> bundles = statuses.stream()
-				.filter(status -> status.isActive())
-				.map(status -> bundleHost.getExistingGhidraBundle(status.getFile()))
-				.collect(Collectors.toList());
+					.filter(status -> status.isActive())
+					.map(status -> bundleHost.getExistingGhidraBundle(status.getFile()))
+					.collect(Collectors.toList());
 
 			monitor.setMaximum(bundles.size());
 			for (GhidraBundle bundle : bundles) {
