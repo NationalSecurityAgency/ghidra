@@ -43,7 +43,7 @@ public class BundleStatus implements Comparable<BundleStatus> {
 
 	@Override
 	public int compareTo(BundleStatus o) {
-		return Path.toPathString(file).compareTo(o != null ? Path.toPathString(o.file) : null);
+		return file.compareTo(o.file);
 	}
 
 	/**

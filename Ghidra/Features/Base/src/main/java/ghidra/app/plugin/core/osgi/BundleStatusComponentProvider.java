@@ -29,11 +29,10 @@ import docking.action.builder.ActionBuilder;
 import docking.util.AnimationUtils;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
-import docking.widgets.table.*;
+import docking.widgets.table.GTableFilterPanel;
 import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.app.services.ConsoleService;
-import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
@@ -42,8 +41,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
-import ghidra.util.table.column.AbstractGColumnRenderer;
-import ghidra.util.table.column.AbstractWrapperTypeColumnRenderer;
 import ghidra.util.task.*;
 import resources.Icons;
 import resources.ResourceManager;
@@ -57,9 +54,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	static final String BUNDLE_LIST_GROUP = "1bundle list group";
 
 	static final String PREFENCE_LAST_SELECTED_BUNDLE = "LastGhidraBundle";
-
-	private static final Color DARK_GREEN = new Color(0.0f, .6f, 0.0f);
-	private static final Color DARK_RED = new Color(0.6f, .1f, 0.0f);
 
 	private JPanel panel;
 	private LessFreneticGTable bundleStatusTable;
@@ -126,7 +120,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		// to allow custom cell renderers
 		bundleStatusTable.setAutoCreateColumnsFromModel(false);
 
-		configureTableColumns();
 		filterPanel = new GTableFilterPanel<>(bundleStatusTable, bundleStatusTableModel);
 
 		JScrollPane scrollPane = new JScrollPane(bundleStatusTable);
@@ -137,23 +130,12 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		panel.setPreferredSize(new Dimension(800, 400));
 	}
 
-	private void configureTableColumns() {
-		int skinnyWidth = 60;
-		bundleStatusTableModel.activeColumn.setColumnRenderer(new BusyBooleanRenderer());
-		bundleStatusTableModel.activeColumn.setColumnPreferredWidth(skinnyWidth);
-		bundleStatusTableModel.enabledColumn.setColumnPreferredWidth(skinnyWidth);
-		bundleStatusTableModel.typeColumn.setColumnPreferredWidth(90);
-		bundleStatusTableModel.pathColumn.setColumnRenderer(new BundleFileRenderer());
-	}
-
 	private void addBundlesAction(String actionName, String description, Icon icon,
 			Runnable runnable) {
 
 		new ActionBuilder(actionName, this.getName()).popupMenuPath(description)
 			.popupMenuIcon(icon)
 			.popupMenuGroup(BUNDLE_GROUP)
-			.toolBarIcon(icon)
-			.toolBarGroup(BUNDLE_GROUP)
 			.description(description)
 			.enabled(false)
 			.enabledWhen(context -> bundleStatusTable.getSelectedRows().length > 0)
@@ -168,21 +150,21 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			.popupMenuGroup(BUNDLE_LIST_GROUP)
 			.toolBarIcon(icon)
 			.toolBarGroup(BUNDLE_LIST_GROUP)
-			.description("Refresh bundles by cleaning and reactivating all enabled bundles")
+			.description("Refresh state by cleaning and reactivating all enabled bundles")
 			.onAction(c -> doRefresh())
 			.buildAndInstallLocal(this);
 
-		addBundlesAction("ActivateBundles", "Activate bundle(s)",
-			ResourceManager.loadImage("images/media-playback-start.png"), this::doActivateBundles);
+		addBundlesAction("ActivateBundles", "Enable selected bundle(s)",
+			ResourceManager.loadImage("images/media-playback-start.png"), this::doEnableBundles);
 
-		addBundlesAction("DeactivateBundles", "Deactivate bundle(s)",
-			ResourceManager.loadImage("images/media-playback-stop.png"), this::doDeactivateBundles);
+		addBundlesAction("DeactivateBundles", "Disable selected bundle(s)",
+			ResourceManager.loadImage("images/media-playback-stop.png"), this::doDisableBundles);
 
-		addBundlesAction("CleanBundles", "Clean bundle(s)",
-			ResourceManager.loadImage("images/erase16.png"), this::doClean);
+		addBundlesAction("CleanBundles", "Clean selected bundle build cache(s)",
+			ResourceManager.loadImage("images/erase16.png"), this::doCleanBundleBuildCaches);
 
 		icon = ResourceManager.loadImage("images/Plus.png");
-		new ActionBuilder("AddBundles", this.getName()).popupMenuPath("Add Bundle(s)")
+		new ActionBuilder("AddBundles", this.getName()).popupMenuPath("Add bundle(s)")
 			.popupMenuIcon(icon)
 			.popupMenuGroup(BUNDLE_LIST_GROUP)
 			.toolBarIcon(icon)
@@ -192,7 +174,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			.buildAndInstallLocal(this);
 
 		icon = ResourceManager.loadImage("images/edit-delete.png");
-		new ActionBuilder("RemoveBundles", this.getName()).popupMenuPath("Remove bundle(s)")
+		new ActionBuilder("RemoveBundles", this.getName())
+			.popupMenuPath("Remove selected bundle(s)")
 			.popupMenuIcon(icon)
 			.popupMenuGroup(BUNDLE_LIST_GROUP)
 			.toolBarIcon(icon)
@@ -238,11 +221,12 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 
 		// then activate them all
-		new TaskLauncher(new ActivateBundlesTask("activating", true, true, false, statuses),
+		new TaskLauncher(
+			new EnableAndActivateBundlesTask("activating", true, true, false, statuses),
 			getComponent(), 1000);
 	}
 
-	private void doClean() {
+	private void doCleanBundleBuildCaches() {
 		int[] selectedModelRows = getSelectedModelRows();
 		boolean anythingCleaned = false;
 		for (BundleStatus status : bundleStatusTableModel.getRowObjects(selectedModelRows)) {
@@ -323,16 +307,14 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		return bundleStatusTableModel.getRowObjects(getSelectedModelRows());
 	}
 
-	protected void doActivateBundles() {
-		new TaskLauncher(
-			new ActivateBundlesTask("activating", true, true, false, getSelectedStatuses()),
-			getComponent(), 1000);
+	protected void doEnableBundles() {
+		new TaskLauncher(new EnableAndActivateBundlesTask("activating", true, true, false,
+			getSelectedStatuses()), getComponent(), 1000);
 	}
 
-	protected void doDeactivateBundles() {
-		new TaskLauncher(
-			new DeactivateBundlesTask("deactivating", true, true, false, getSelectedStatuses()),
-			getComponent(), 1000);
+	protected void doDisableBundles() {
+		new TaskLauncher(new DeactivateAndDisableBundlesTask("deactivating", true, true, false,
+			getSelectedStatuses()), getComponent(), 1000);
 	}
 
 	protected void doActivateDeactivateBundle(BundleStatus status, boolean activate) {
@@ -385,13 +367,13 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private final class RemoveBundlesTask extends Task {
-		private final DeactivateBundlesTask deactivateBundlesTask;
+		private final DeactivateAndDisableBundlesTask deactivateBundlesTask;
 		private final List<BundleStatus> statuses;
 
 		private RemoveBundlesTask(String title, List<BundleStatus> statuses) {
 			super(title);
 			this.deactivateBundlesTask =
-				new DeactivateBundlesTask("deactivating", true, true, false, statuses);
+				new DeactivateAndDisableBundlesTask("deactivating", true, true, false, statuses);
 			this.statuses = statuses;
 		}
 
@@ -408,8 +390,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				if (!systemBundles.isEmpty()) {
 					StringBuilder stringBuilder = new StringBuilder();
 					for (GhidraBundle bundle : systemBundles) {
-						bundleHost.disable(bundle);
-						stringBuilder.append(bundle.getFile() + "\n");
+						stringBuilder.append(Path.toPathString(bundle.getFile()) + "\n");
 					}
 					Msg.showWarn(this, BundleStatusComponentProvider.this.getComponent(),
 						"Unabled to remove",
@@ -420,10 +401,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private class ActivateBundlesTask extends Task {
+	private class EnableAndActivateBundlesTask extends Task {
 		private final List<BundleStatus> statuses;
 
-		private ActivateBundlesTask(String title, boolean canCancel, boolean hasProgress,
+		private EnableAndActivateBundlesTask(String title, boolean canCancel, boolean hasProgress,
 				boolean isModal, List<BundleStatus> statuses) {
 			super(title, canCancel, hasProgress, isModal);
 			this.statuses = statuses;
@@ -463,11 +444,11 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private class DeactivateBundlesTask extends Task {
+	private class DeactivateAndDisableBundlesTask extends Task {
 		final List<BundleStatus> statuses;
 
-		private DeactivateBundlesTask(String title, boolean canCancel, boolean hasProgress,
-				boolean isModal, List<BundleStatus> statuses) {
+		private DeactivateAndDisableBundlesTask(String title, boolean canCancel,
+				boolean hasProgress, boolean isModal, List<BundleStatus> statuses) {
 			super(title, canCancel, hasProgress, isModal);
 			this.statuses = statuses;
 		}
@@ -483,6 +464,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			for (GhidraBundle bundle : bundles) {
 				try {
 					bundleHost.deactivateSynchronously(bundle.getLocationIdentifier());
+					bundleHost.disable(bundle);
 				}
 				catch (GhidraBundleException | InterruptedException e) {
 					ConsoleService console = getTool().getService(ConsoleService.class);
@@ -558,65 +540,5 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				doActivateDeactivateBundle(status, newValue);
 			}
 		}
-	}
-
-	private class BusyBooleanRenderer extends GBooleanCellRenderer
-			implements AbstractWrapperTypeColumnRenderer<Boolean> {
-		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-			BundleStatus status = (BundleStatus) data.getRowObject();
-			Component component = super.getTableCellRendererComponent(data);
-			if (status.isBusy()) {
-				cb.setVisible(false);
-				cb.setEnabled(false);
-				setHorizontalAlignment(SwingConstants.CENTER);
-				setText("...");
-			}
-			else {
-				cb.setVisible(true);
-				cb.setEnabled(true);
-				setText("");
-			}
-			return component;
-		}
-
-	}
-
-	private class BundleFileRenderer extends AbstractGColumnRenderer<ResourceFile> {
-
-		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-			BundleStatus status = (BundleStatus) data.getRowObject();
-			ResourceFile file = (ResourceFile) data.getValue();
-			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
-			label.setFont(defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD));
-			label.setText(Path.toPathString(file));
-			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(file);
-			if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
-				label.setBackground(Color.RED);
-				label.setForeground(Color.BLACK);
-			}
-			else {
-				if (status.isBusy()) {
-					label.setForeground(Color.GRAY);
-				}
-				else if (!status.isEnabled()) {
-					label.setForeground(Color.BLACK);
-				}
-				else if (status.isActive()) {
-					label.setForeground(DARK_GREEN);
-				}
-				else {
-					label.setForeground(DARK_RED);
-				}
-			}
-			return label;
-		}
-
-		@Override
-		public String getFilterString(ResourceFile file, Settings settings) {
-			return Path.toPathString(file);
-		}
-
 	}
 }

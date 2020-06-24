@@ -147,6 +147,11 @@ public class BundleHost {
 
 	private static GhidraBundle createGhidraBundle(BundleHost bundleHost, ResourceFile bundleFile,
 			boolean enabled, boolean systemBundle) {
+		if (!bundleFile.exists()) {
+			return new GhidraPlaceholderBundle(bundleHost, bundleFile, enabled, systemBundle,
+				"file not found: " + generic.util.Path.toPathString(bundleFile));
+		}
+
 		switch (GhidraBundle.getType(bundleFile)) {
 			case SOURCE_DIR:
 				return new GhidraSourceBundle(bundleHost, bundleFile, enabled, systemBundle);
@@ -156,7 +161,8 @@ public class BundleHost {
 			default:
 				break;
 		}
-		return new GhidraPlaceholderBundle(bundleHost, bundleFile, enabled, systemBundle);
+		return new GhidraPlaceholderBundle(bundleHost, bundleFile, enabled, systemBundle,
+			"no bundle type for " + generic.util.Path.toPathString(bundleFile));
 	}
 
 	/**

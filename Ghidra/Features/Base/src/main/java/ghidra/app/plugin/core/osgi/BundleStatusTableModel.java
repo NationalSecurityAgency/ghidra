@@ -15,32 +15,35 @@
  */
 package ghidra.app.plugin.core.osgi;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
+import generic.util.Path;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.table.column.GColumnRenderer;
+import ghidra.util.table.column.*;
 
 /**
  * Model for {@link BundleStatus} objects. 
  */
 public class BundleStatusTableModel
 		extends GDynamicColumnTableModel<BundleStatus, List<BundleStatus>> {
-	Column<Boolean> enabledColumn;
-	Column<Boolean> activeColumn;
-	Column<String> typeColumn;
-	Column<ResourceFile> pathColumn;
-	Column<String> summaryColumn;
+	private static final Color COLOR_BUNDLE_ERROR = Color.RED;
+	private static final Color COLOR_BUNDLE_DISABLED = Color.DARK_GRAY;
+	private static final Color COLOR_BUNDLE_BUSY = Color.GRAY;
+	private static final Color COLOR_BUNDLE_INACTIVE = Color.BLACK;
+	private static final Color COLOR_BUNDLE_ACTIVE = new Color(0.0f, .6f, 0.0f); // a dark green
 
 	private BundleHost bundleHost;
 	private BundleStatusComponentProvider provider;
@@ -150,7 +153,7 @@ public class BundleStatusTableModel
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 		BundleStatus status = statuses.get(rowIndex);
-		return ((Column<?>) getColumn(columnIndex)).editable(status);
+		return ((Column<?>) getColumn(columnIndex)).isEditable(status);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -362,104 +365,32 @@ public class BundleStatusTableModel
 
 	@Override
 	protected TableColumnDescriptor<BundleStatus> createTableColumnDescriptor() {
-
 		TableColumnDescriptor<BundleStatus> columnDescriptor = new TableColumnDescriptor<>();
-		enabledColumn = new Column<>("Enabled") {
-			@Override
-			boolean editable(BundleStatus status) {
-				return status.fileExists();
-			}
 
-			@Override
-			Boolean getValue(BundleStatus status) {
-				return status.isEnabled();
-			}
-
-			@Override
-			void setValue(BundleStatus status, Boolean newValue) {
-				fireBundleEnablementChangeRequested(status, newValue);
-			}
-		};
-		columnDescriptor.addVisibleColumn(enabledColumn);
-
-		activeColumn = new Column<>("Active") {
-			@Override
-			boolean editable(BundleStatus status) {
-				return status.fileExists() && status.isEnabled();
-			}
-
-			@Override
-			public Boolean getValue(BundleStatus status) {
-				return status.isActive();
-			}
-
-			@Override
-			void setValue(BundleStatus status, Boolean newValue) {
-				fireBundleActivationChangeRequested(status, newValue);
-			}
-		};
-		columnDescriptor.addHiddenColumn(activeColumn);
-
-		typeColumn = new Column<>("Type") {
-			@Override
-			public String getValue(BundleStatus status) {
-				return status.getType().toString();
-			}
-
-			@Override
-			public int getColumnPreferredWidth() {
-				return 90;
-			}
-
-		};
-		columnDescriptor.addVisibleColumn(typeColumn);
-
-		pathColumn = new Column<>("Path") {
-			@Override
-			public ResourceFile getValue(BundleStatus status) {
-				return status.getFile();
-			}
-
-		};
-		columnDescriptor.addVisibleColumn(pathColumn);
-
-		summaryColumn = new Column<>("Summary") {
-			@Override
-			public String getValue(BundleStatus status) {
-				return status.getSummary();
-			}
-		};
-		columnDescriptor.addVisibleColumn(summaryColumn);
+		columnDescriptor.addVisibleColumn(new EnabledColumn());
+		columnDescriptor.addVisibleColumn(new BundleFileColumn());
+		columnDescriptor.addVisibleColumn(new BuildSummaryColumn());
+		columnDescriptor.addHiddenColumn(new OSGiStatusColumn());
+		columnDescriptor.addHiddenColumn(new BundleTypeColumn());
 
 		return columnDescriptor;
 	}
 
-	abstract class Column<COLUMN_TYPE>
+	private abstract class Column<COLUMN_TYPE>
 			extends AbstractDynamicTableColumn<BundleStatus, COLUMN_TYPE, List<BundleStatus>> {
 		final String columnName;
-		GColumnRenderer<COLUMN_TYPE> renderer;
-		int width = -1;
 
-		Column(String name) {
-			super();
-			this.columnName = name;
-		}
-
-		boolean editable(BundleStatus status) {
-			return false;
-		}
-
-		abstract COLUMN_TYPE getValue(BundleStatus status);
-
-		@Override
-		public COLUMN_TYPE getValue(BundleStatus rowObject, Settings settings,
-				List<BundleStatus> data, ServiceProvider serviceProvider0)
-				throws IllegalArgumentException {
-			return getValue(rowObject);
+		Column(String columnName) {
+			this.columnName = columnName;
 		}
 
 		void setValue(BundleStatus status, COLUMN_TYPE aValue) {
 			throw new RuntimeException(columnName + " is not editable!");
+
+		}
+
+		boolean isEditable(BundleStatus status) {
+			return false;
 		}
 
 		@Override
@@ -467,26 +398,179 @@ public class BundleStatusTableModel
 			return columnName;
 		}
 
-		int getModelIndex() {
-			return getColumnIndex(this);
-		}
+	}
 
-		public void setColumnRenderer(GColumnRenderer<COLUMN_TYPE> renderer) {
-			this.renderer = renderer;
+	private class OSGiStatusColumn extends Column<String> {
+		OSGiStatusColumn() {
+			super("OSGi Status");
 		}
 
 		@Override
-		public GColumnRenderer<COLUMN_TYPE> getColumnRenderer() {
-			return renderer;
+		public String getValue(BundleStatus status, Settings settings, List<BundleStatus> data,
+				ServiceProvider serviceProvider0) throws IllegalArgumentException {
+			if (!status.isEnabled()) {
+				return "";
+			}
+			if (status.isBusy()) {
+				return "...";
+			}
+			if (status.isActive()) {
+				return "Active";
+			}
+			return "Inactive";
 		}
 
 		@Override
 		public int getColumnPreferredWidth() {
-			return width;
+			return 100;
+		}
+	}
+
+	private class BundleTypeColumn extends Column<String> {
+		BundleTypeColumn() {
+			super("Bundle Type");
 		}
 
-		public void setColumnPreferredWidth(int width) {
-			this.width = width;
+		@Override
+		public String getValue(BundleStatus status, Settings settings, List<BundleStatus> data,
+				ServiceProvider serviceProvider0) throws IllegalArgumentException {
+			return status.getType().toString();
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 90;
+		}
+
+	}
+
+	private class EnabledColumn extends Column<Boolean> {
+		EnabledColumn() {
+			super("Enabled");
+		}
+
+		@Override
+		public Boolean getValue(BundleStatus status, Settings settings, List<BundleStatus> data,
+				ServiceProvider serviceProvider0) throws IllegalArgumentException {
+			return status.isEnabled();
+		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 60;
+		}
+
+		@Override
+		boolean isEditable(BundleStatus status) {
+			return status.fileExists();
+		}
+
+		@Override
+		void setValue(BundleStatus status, Boolean newValue) {
+			fireBundleEnablementChangeRequested(status, newValue);
+		}
+
+	}
+
+	private class BundleFileColumn extends Column<ResourceFile> {
+		final BundleFileRenderer renderer = new BundleFileRenderer();
+
+		BundleFileColumn() {
+			super("Path");
+		}
+
+		@Override
+		public ResourceFile getValue(BundleStatus status, Settings settings,
+				List<BundleStatus> data, ServiceProvider serviceProvider0)
+				throws IllegalArgumentException {
+			return status.getFile();
+		}
+
+		@Override
+		public GColumnRenderer<ResourceFile> getColumnRenderer() {
+			return renderer;
+		}
+
+	}
+
+	private class BuildSummaryColumn extends Column<String> {
+
+		BuildSummaryColumn() {
+			super("Build Summary");
+		}
+
+		@Override
+		public String getValue(BundleStatus status, Settings settings, List<BundleStatus> data,
+				ServiceProvider serviceProvider0) throws IllegalArgumentException {
+			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
+			if (bundle == null) {
+				return "bundle cache error";
+			}
+			else if (bundle instanceof GhidraPlaceholderBundle) {
+				// placeholders will have a summary assigned on construction
+				return ((GhidraPlaceholderBundle) bundle).getSummary();
+			}
+			// other bundles will update their summary on build
+			return status.getSummary();
+		}
+
+	}
+
+	private class BundleFileRenderer extends AbstractGColumnRenderer<ResourceFile> {
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			BundleStatus status = (BundleStatus) data.getRowObject();
+			ResourceFile file = (ResourceFile) data.getValue();
+			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+			label.setFont(defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD));
+			label.setText(Path.toPathString(file));
+			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(file);
+			if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
+				label.setForeground(COLOR_BUNDLE_ERROR);
+			}
+			else {
+				if (status.isBusy()) {
+					label.setForeground(COLOR_BUNDLE_BUSY);
+				}
+				else if (!status.isEnabled()) {
+					label.setForeground(COLOR_BUNDLE_DISABLED);
+				}
+				else if (status.isActive()) {
+					label.setForeground(COLOR_BUNDLE_ACTIVE);
+				}
+				else {
+					label.setForeground(COLOR_BUNDLE_INACTIVE);
+				}
+			}
+			return label;
+		}
+
+		@Override
+		public String getFilterString(ResourceFile file, Settings settings) {
+			return Path.toPathString(file);
+		}
+
+	}
+
+	private class BusyBooleanRenderer extends GBooleanCellRenderer
+			implements AbstractWrapperTypeColumnRenderer<Boolean> {
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			BundleStatus status = (BundleStatus) data.getRowObject();
+			Component component = super.getTableCellRendererComponent(data);
+			if (status.isBusy()) {
+				cb.setVisible(false);
+				cb.setEnabled(false);
+				setHorizontalAlignment(SwingConstants.CENTER);
+				setText("...");
+			}
+			else {
+				cb.setVisible(true);
+				cb.setEnabled(true);
+				setText("");
+			}
+			return component;
 		}
 
 	}

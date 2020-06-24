@@ -27,10 +27,19 @@ import generic.jar.ResourceFile;
  * {@link GhidraPlaceholderBundle} represents invalid bundle paths in the GUI.
  */
 public class GhidraPlaceholderBundle extends GhidraBundle {
+	final String summary;
 
 	GhidraPlaceholderBundle(BundleHost bundleHost, ResourceFile bundleFile, boolean isEnabled,
-			boolean isSystemBundle) {
+			boolean isSystemBundle, String summary) {
 		super(bundleHost, bundleFile, isEnabled, isSystemBundle);
+		this.summary = summary;
+	}
+
+	/**
+	 * @return a summary of the reason for this placeholder
+	 */
+	String getSummary() {
+		return summary;
 	}
 
 	@Override
