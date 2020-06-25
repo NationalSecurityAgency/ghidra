@@ -193,14 +193,14 @@ public class BundleHost {
 	public Collection<GhidraBundle> add(List<ResourceFile> bundleFiles, boolean enabled,
 			boolean systemBundle) {
 		Map<ResourceFile, GhidraBundle> newBundleMap = bundleFiles.stream()
-			.collect(Collectors.toUnmodifiableMap(Function.identity(),
-				bundleFile -> createGhidraBundle(BundleHost.this, bundleFile, enabled,
-					systemBundle)));
+				.collect(Collectors.toUnmodifiableMap(Function.identity(),
+					bundleFile -> createGhidraBundle(BundleHost.this, bundleFile, enabled,
+						systemBundle)));
 		fileToBundleMap.putAll(newBundleMap);
 		bundleLocationToBundleMap.putAll(newBundleMap.values()
-			.stream()
-			.collect(Collectors.toUnmodifiableMap(GhidraBundle::getLocationIdentifier,
-				Function.identity())));
+				.stream()
+				.collect(Collectors.toUnmodifiableMap(GhidraBundle::getLocationIdentifier,
+					Function.identity())));
 		Collection<GhidraBundle> newBundles = newBundleMap.values();
 		fireBundlesAdded(newBundles);
 		return newBundles;
@@ -482,7 +482,7 @@ public class BundleHost {
 		}
 
 		frameworkBundleContext
-			.addBundleListener(new MyBundleListener(frameworkBundleContext.getBundle()));
+				.addBundleListener(new MyBundleListener(frameworkBundleContext.getBundle()));
 
 		try {
 			felixFramework.start();
@@ -659,8 +659,8 @@ public class BundleHost {
 		monitor.setMaximum(bundlesRemaining.size());
 		while (!bundlesRemaining.isEmpty() && !monitor.isCancelled()) {
 			List<GhidraBundle> resolvableBundles = bundlesRemaining.stream()
-				.filter(bundle -> canResolveAll(bundle.getAllRequirements()))
-				.collect(Collectors.toList());
+					.filter(bundle -> canResolveAll(bundle.getAllRequirements()))
+					.collect(Collectors.toList());
 			if (resolvableBundles.isEmpty()) {
 				// final round, try everything we couldn't resolve to generate errors
 				resolvableBundles = bundlesRemaining;
@@ -881,7 +881,8 @@ public class BundleHost {
 							String.format("not a GhidraBundle: %s\n", osgiBundle.getLocation()));
 					}
 					break;
-				case BundleEvent.UNINSTALLED:
+				// force "inactive" updates for all other states
+				default:
 					bundle = bundleLocationToBundleMap.get(osgiBundle.getLocation());
 					if (bundle != null) {
 						fireBundleActivationChange(bundle, false);
@@ -890,8 +891,6 @@ public class BundleHost {
 						Msg.error(this,
 							String.format("not a GhidraBundle: %s\n", osgiBundle.getLocation()));
 					}
-					break;
-				default:
 					break;
 			}
 		}

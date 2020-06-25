@@ -162,8 +162,16 @@
       <li> <span style="font-weight:bold;color:#009900">active</span> - the bundle is built and classes within
         can be loaded
     </ul>
-    </p>
-    <p>The normally hidden column "OSGi State" is also available.</p>
+
+    <p>The normally hidden column "OSGi State" is also available.  In addition to the Bundle
+    state, this column will report</p>
+    <ul style="padding-left:8em">
+      <li> (DISABLED) - if the bundle is disabled
+      <li> (ENABLED) - if the bundle is enabled, but the bundle manager has no handle to it.
+        If this state persists, there is likely an internal error
+      <li> (UNINSTALLED) - if the bundle is enabled, but the framework has released its handle.
+        This is typical for an inactive bundle
+    </ul>
 
 
     <h2><a name="AddBundles"/><a name="RemoveBundles"/>Adding and removing bundles from the manager</h2>

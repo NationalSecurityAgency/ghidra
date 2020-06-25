@@ -411,7 +411,7 @@ public class BundleStatusTableModel
 		public String getValue(BundleStatus status, Settings settings, List<BundleStatus> data,
 				ServiceProvider serviceProvider0) throws IllegalArgumentException {
 			if (!status.isEnabled()) {
-				return "(disabled)";
+				return "(DISABLED)";
 			}
 			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
 			if (bundle != null) {
@@ -419,9 +419,9 @@ public class BundleStatusTableModel
 				if (osgiBundle != null) {
 					return OSGiUtils.getStateString(osgiBundle);
 				}
-				return "uninstalled";
+				return "(UNINSTALLED)";
 			}
-			return "(enabled)";
+			return "(ENABLED)";
 		}
 
 		@Override
