@@ -712,11 +712,21 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		bundleStatusComponentProvider.setVisible(true);
 	}
 
+	/**
+	 * refresh the list of scripts by listing files in each script directory.
+	 * 
+	 * Note: this method can be used off the swing event thread.
+	 */
 	void refresh() {
 		refreshUpdateManager.update();
 	}
 
-	void doRefresh() {
+	/**
+	 * refresh the list of scripts by listing files in each script directory.
+	 * 
+	 * Note: this method MUST NOT BE USED off the swing event thread.
+	 */
+	private void doRefresh() {
 		hasBeenRefreshed = true;
 
 		TreePath preRefreshSelectionPath = scriptCategoryTree.getSelectionPath();

@@ -18,9 +18,9 @@
     <p>To support modularity while preserving the dynamic nature of scripts,
     Ghidra uses <a href="https://www.osgi.org">OSGi</a>.  Without delving too
     much into terminology, the key things to know are </p>
-    <ol style="padding-left:5em">
+    <ol style="padding-left:8em">
       <li>The unit of modularity in OSGi is the <em>bundle</em>.  Bundles are
-        <em>mostly independent</em> components with well-defined,
+        <em>mostly independent</em> components with well-defined
         collaborations.
       </li>
 
@@ -28,14 +28,17 @@
         manifest file that tells the framework what it uses and what it
         provides.</li>
 
-      <li>Bundles can <em>export</em> packages for use by other bundles.
-        Exported packages can have versions.</li>
+      <li>Bundles can <em>export</em> Java packages for use by other bundles,
+        and packages can have version numbers assigned.</li>
 
-      <li>Bundles can <em>import</em> packages from other bundles.  Imports can
-        be constrained by version.</li>
+      <li>Bundles can <em>import</em> packages from other bundles, and each
+        import can be constrained by version number or range.</li>
 
-      <li>Ghidra can compile source directories to bundles.  We refer to these
-        as <a href="BundleManager.htm#source_bundles"><em>source bundles</em></a>.
+      <li>Bundles are Jars, but Ghidra will automatically compile source
+        directories to bundles.  We refer to source directories intended to be
+        used in OSGi as <a href="BundleManager.htm#sourceBundles"> <em>source
+            bundles</em></a>. <em>In particular</em> Ghidra script directories
+        are source bundles.
 
       <li>The entire Ghidra API is part of the "system bundle", so hosted
         bundles have complete access.</li>
@@ -43,15 +46,15 @@
     </ol>
 
 
-    <h2><a name="source_bundles"/>Source bundles</h2> 
+    <h2><a name="sourceBundles"/>Source bundles</h2> 
     <p>When a directory is added to the Bundle Manager, it is treated as a
-    <em>source bundle</em> and its Java contents will be compiled to <br>
+    <em>source bundle</em>. When enabled, its Java contents are compiled to <br>
     &nbsp;&nbsp;&nbsp;&nbsp;<code>&lt;user home&gt;/.ghidra/.ghidra-&lt;version&gt;/osgi/compiled-bundles/&lt;hash&gt;</code>, <br>
     where <code>&lt;hash&gt;</code> is a hash of the source bundle location.</p>
     <h3>exploded bundles</h3>
     <p>
-    Each subdirectory of <code>compiled-bundles/</code> is an <em>exploded jar</em> --  by re-compressing it,
-    we get a standard Jar bundle:
+    Each subdirectory of <code>compiled-bundles/</code> is an <em>exploded
+      jar</em> --  by compressing it, we get a standard Jar bundle:
     </p>
     <code>
       <pre>
@@ -62,11 +65,11 @@
     <code>mybundle.jar</code> could then be shared in binary form. 
     </p>
 
-    <h3>generated files</h3>
+    <h3><a name="generated_files"/>generated files</h3>
     <p>If there is no manifest in the source directory, Ghidra generates one
     using <a href="https://bnd.bndtools.org/">bndlib</a> so that:
     </p>
-    <ul style="padding-left:5em">
+    <ul style="padding-left:8em">
       <li>Every package is exported unless it contains <code>private</code> or <code>internal</code> in its name.</li>
       <li>Currently active bundles satisfying <code>@importpackage</code> requirments made available for import.</li>
       <li>Every package from Ghidra core is available for import. (Ghidra's core API is part of the system bundle)</li>
@@ -76,14 +79,13 @@
     </p>
 
     <h2><a name="dependency"/>Dependency</h2> 
-    <p>Two basic types of code dependency are available when developing with
-    OSGi, intra-bundle and inter-bundle.</p>
+    <p>Two types of code dependency are available when developing with OSGi, intra-bundle and
+    inter-bundle.</p>
 
     <h3>intra-bundle (<em>compile time</em>) dependency</h3>
-    <p>Classes within a bundle, e.g. source files in a source bundle, can rely
-    one another with Java's usual package <code>import</code>.</p>
-    <p>This kind of dependency is resolved at compile time -- if a class isn't
-    imported or present, compilation will fail!</p>
+    <p>Classes within a bundle, e.g. source files in a source bundle, can rely one another with
+    Java's usual package <code>import</code>.</p> <p>This kind of dependency is resolved at
+    compile time -- if a class isn't imported or present, compilation will fail!</p>
 
     <h3>inter-bundle (<em>run time</em>) dependency</h3>
     <p>To make use of code from <em>other</em> bundles, a bundle must declare its
@@ -101,10 +103,12 @@
     which we'll describe afterwards.</p>
 
     <h4><code>Import-Package</code> in the manifest</h4>
-    <p>You can find more detail at https://osgi.org for more detail.</p>
-    <p>These examples should demonstrated the most common usage.  Note: the
-    file <code>META-INF/MANIFEST.MF</code> should have only <em>one</em>
-    <code>Import-Package</code> entry:</p>
+    <p>You can find a high level description of OSGi at <a href="https://osgi.org">https://osgi.org</a> and details 
+    <a href="https://osgi.org/specification/osgi.core/7.0.0/framework.module.html#framework.module.importpackage">
+      here
+    </a>.
+
+    <p>Examples of the syntax for common cases are below:</p>
     <code>
     <pre>
           Import-Package:com.example.stuff
@@ -115,38 +119,74 @@
           Import-Package:com.example.stuff;version="[1.2.0,1.3)",org.example.otherstuff;version=2.3.4
     </pre>
     </code>
+    <p>Note: the file <code>META-INF/MANIFEST.MF</code> should have only <em>one</em>
+    <code>Import-Package</code> entry.</p>
+
+
 
     <h4><code>@importpackage</code> in source</h4>
-    <p>If a source bundle includes a file <code>META-INF/MANIFEST.MF</code>, it
-    will be used as the bundle's manifest.  If not, a manifest will be
-    generated, see <a href="#source_bundles">above</a>.</p>
+    <p>If a source bundle includes a file <code>META-INF/MANIFEST.MF</code>, it will be used as
+    the bundle's manifest.  If not, a manifest will be generated, see <a
+    href="#generated_files">above</a>.</p>
 
     <p>Ghidra provides a shortcut to populate <code>Import-Package</code>, the
-    <code>@importpackage</code> metadata tag.  The <code>@importpackage</code>
-    values from all source files in a source bundle are appended to the
-    generated manifest <code>Import-Package</code> attribute.</p>
+    <code>@importpackage</code> metadata tag.  The <code>@importpackage</code> values from all
+    source files in the root of a source bundle are appended to the generated manifest's
+    <code>Import-Package</code> attribute.</p>
+
+
+    <h2><a name="EnableBundles"/><a name="DisableBundles"/>Enabling and disabling bundles</h2>
+    <p>For a bundle's contents to be available (e.g. for loading classes), its <a
+    href="https://docs.osgi.org/specification/osgi.core/7.0.0/framework.lifecycle.html#d0e9143">
+    OSGi state</a> must be "<code>ACTIVE</CODE>".  Ghidra generally takes care of this, but
+    the following provides more details about the underlying OSGi for debugging.</p>
+
+    <p>Ghidra activates a bundle when added, enabled, or when a script contained within is
+    run.<p>
+
+    <p>When enabled, the root directory of a source bundle is also scanned for Ghidra scripts
+    and any found are added to the script manager.</p>
+
+    <p>When <em>dis</em>abled, any dependents of a bundle are stopped/deactivated first, then
+    the bundle itself is stopped. Its scripts are then removed from the script manager.</p>
+
+    <p>The color of each bundle path reflects state as follows:</p>
+    <ul style="padding-left:8em">
+      <li> <span style="font-weight:bold;color:red">error</span> - e.g. the bundle file is missing
+      <li> <span style="font-weight:bold;color:#404040">disabled</span> - Ghidra knows the
+        path, but that's it
+      <li> <span style="font-weight:bold;color:black">inactive</span> - scripts are visible in the script
+        manager, but no classes are loaded.  A bundle moves into this state when its
+        dependencies become inactive (e.g. by being disabled), one of its scripts is deleted, or its cache is <a
+        href="#CleanBundles">cleaned</a>
+      <li> <span style="font-weight:bold;color:#009900">active</span> - the bundle is built and classes within
+        can be loaded
+    </ul>
+    </p>
+    <p>The normally hidden column "OSGi State" is also available.</p>
 
 
     <h2><a name="AddBundles"/><a name="RemoveBundles"/>Adding and removing bundles from the manager</h2>
-    <p>Adding a directory to the bundle manager and then enabling it makes any
-    contained scripts visible in the script manager.</p>
-    <p>Removing a bundle deactives, disables, and removes it from the list.</p>
+    <p>Adding a directory to the bundle manager will also enable it, so scripts within become
+    available in the script manager.</p>
 
-    <h2><a name="ActivateBundles"/><a name="DeactivateBundles"/>Activating and deactivating bundles</h2>
-    <p>In order to make a bundle's contents available to other bundles, it must
-    be activated.  This corresponds the OSGi bundle <code>ACTIVE</code> state.
-    Ghidra will compile source bundles prior to installing and activating.</p>
+    <p>Removing a bundle disables it, so its scripts will be removed from the script manager
+    and its dependents will become inactive.</p>
 
-    <p>On deactivation, any dependents of a bundle are stopped first, then the
-    bundle itself is stopped</p>
 
     <h2><a name="CleanBundles"/>Cleaning bundles</h2>
-    <p>When Ghidra builds a source bundle, the result is cached to a
-    subdirectory of <br>
+    <p>When Ghidra builds a source bundle, the results are written to the
+    directory <br>
     &nbsp;&nbsp;&nbsp;&nbsp;<code>&lt;user home&gt;/.ghidra/.ghidra-&lt;version&gt;/osgi/compiled-bundles/&lt;hash&gt;</code>. <br>
-    These cached files speed up subsequent builds.  A <em>clean</em>
-    deactivates then wipes the subdirectory of the selected bundle.</p>
-    <p>The summary of a bundle is also cleared.</p>
+    These files can then be loaded by the OSGi framework.</p>
+
+    <p>A <em>clean</em> deactivates then wipes this subdirectory for each selected bundle and
+    clears its build summary.</p>
+
+    <p>If a source bundle's imports aren't available during build, some source files can
+    produce errors.  In order to force Ghidra to recompile, one must either modify the files
+    with errors or <em>clean</em> the bundle then re-enable.</p>
+
 
   </body>
 </html>
