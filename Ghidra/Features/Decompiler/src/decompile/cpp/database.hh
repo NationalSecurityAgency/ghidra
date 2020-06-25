@@ -603,13 +603,14 @@ public:
   /// \param res will contain any matching Symbols
   virtual void findByName(const string &name,vector<Symbol *> &res) const=0;
 
-  /// \brief Check if the given name is used within \b this scope.
+  /// \brief Check if the given name is occurs within the given scope path.
   ///
-  /// Only \b this scope is checked. If one or more symbols exist with the given name,
-  /// \b true is returned.
-  /// \param name is the given name to check for
-  /// \return \b true if the name is used within \b this scope
-  virtual bool isNameUsed(const string &name) const=0;
+  /// Test for the presence of a symbol with the given name in either \b this scope or
+  /// an ancestor scope up to but not including the given terminating scope.
+  /// If the name is used \b true is returned.
+  /// \param nm is the given name to test
+  /// \param op2 is the terminating ancestor scope (or null)
+  virtual bool isNameUsed(const string &nm,const Scope *op2) const=0;
 
   /// \brief Convert an \e external \e reference to the referenced function
   ///
@@ -694,7 +695,6 @@ public:
   string getFullName(void) const;				///< Get the full name of \b this Scope
   void getNameSegments(vector<string> &vec) const;		///< Get the fullname of \b this in segments
   void getScopePath(vector<const Scope *> &vec) const;		///< Get the ordered list of scopes up to \b this
-  bool isNameUsed(const string &nm,const Scope *op2) const;	///< Is the given name in use within given scope path
   const Scope *findDistinguishingScope(const Scope *op2) const;	///< Find first ancestor of \b this not shared by given scope
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associated with \b this
   Scope *getParent(void) const { return parent; }		///< Get the parent Scope (or NULL if \b this is the global Scope)
@@ -766,7 +766,7 @@ public:
   virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const;
 
   virtual void findByName(const string &name,vector<Symbol *> &res) const;
-  virtual bool isNameUsed(const string &name) const;
+  virtual bool isNameUsed(const string &nm,const Scope *op2) const;
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
   virtual string buildVariableName(const Address &addr,

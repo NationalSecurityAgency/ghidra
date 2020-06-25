@@ -1420,23 +1420,6 @@ void Scope::getScopePath(vector<const Scope *> &vec) const
   }
 }
 
-/// Test for the presence of a symbol with the given name in either \b this scope or
-/// an ancestor scope up to but not including the given terminating scope.
-/// If the name is used \b true is returned.
-/// \param nm is the given name to test
-/// \param op2 is the terminating ancestor scope (or null)
-bool Scope::isNameUsed(const string &nm,const Scope *op2) const
-
-{
-  const Scope *currentScope = this;
-  while(currentScope != op2) {
-    if (currentScope->isNameUsed(nm))
-      return true;
-    currentScope = currentScope->parent;
-  }
-  return false;
-}
-
 /// Any two scopes share at least the \e global scope as a common ancestor. We find the first scope
 /// that is \e not in common.  The scope returned will always be an ancestor of \b this.
 /// If \b this is an ancestor of the other given scope, then null is returned.
@@ -2305,13 +2288,21 @@ void ScopeInternal::findByName(const string &name,vector<Symbol *> &res) const
   }
 }
 
-bool ScopeInternal::isNameUsed(const string &name) const
+bool ScopeInternal::isNameUsed(const string &nm,const Scope *op2) const
 
 {
   Symbol sym((Scope *)0,name,(Datatype *)0);
   SymbolNameTree::const_iterator iter = nametree.lower_bound(&sym);
-  if (iter == nametree.end()) return false;
-  return ((*iter)->getName() == name);
+  if (iter != nametree.end()) {
+    if ((*iter)->getName() == name)
+      return true;
+  }
+  Scope *par = getParent();
+  if (par == (Scope *)0 || par == op2)
+    return false;
+  if (par->getParent() == (Scope *)0)	// Never recurse into global scope
+    return false;
+  return par->isNameUsed(nm, op2);
 }
 
 string ScopeInternal::buildVariableName(const Address &addr,

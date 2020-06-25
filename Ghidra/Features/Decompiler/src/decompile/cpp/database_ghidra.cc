@@ -421,3 +421,13 @@ SymbolEntry *ScopeGhidraNamespace::addMapInternal(Symbol *sym,uint4 exfl,const A
   glb->symboltab->addRange(this,res->getAddr().getSpace(),res->getFirst(),res->getLast());
   return res;
 }
+
+bool ScopeGhidraNamespace::isNameUsed(const string &nm,const Scope *op2) const
+
+{
+  if (ArchitectureGhidra::isDynamicSymbolName(nm))
+    return false;		// Just assume default FUN_ and DAT_ names don't collide
+  const ScopeGhidraNamespace *otherScope = dynamic_cast<const ScopeGhidraNamespace *>(op2);
+  uint8 otherId = (otherScope != (const ScopeGhidraNamespace *)0) ? otherScope->getId() : 0;
+  return ghidra->isNameUsed(nm, scopeId, otherId);
+}

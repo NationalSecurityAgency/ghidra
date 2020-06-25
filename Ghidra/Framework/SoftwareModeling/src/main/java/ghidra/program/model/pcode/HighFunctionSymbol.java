@@ -60,13 +60,11 @@ public class HighFunctionSymbol extends HighSymbol {
 	public Namespace getNamespace() {
 		Function func = function.getFunction();
 		Namespace namespc = func.getParentNamespace();
-		if (func.isThunk()) {
+		while (func.isThunk() && namespc.getID() == Namespace.GLOBAL_NAMESPACE_ID) {
 			// Thunks can be in a different namespace than the thunked function.
 			// We choose the thunk's namespace unless it is the global namespace
-			if (namespc.getID() == Namespace.GLOBAL_NAMESPACE_ID) {
-				Function baseFunc = func.getThunkedFunction(true);
-				namespc = baseFunc.getParentNamespace();
-			}
+			func = func.getThunkedFunction(false);
+			namespc = func.getParentNamespace();
 		}
 		return namespc;
 	}

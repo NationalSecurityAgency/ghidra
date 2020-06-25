@@ -54,6 +54,7 @@ import ghidra.util.xml.XmlUtilities;
  */
 public class DecompileCallback {
 
+	public final static int MAX_SYMBOL_COUNT = 16;
 	/**
 	 * Data returned for a query about strings
 	 */
@@ -550,6 +551,57 @@ public class DecompileCallback {
 			return parentName + "_" + name;
 		}
 		return name;
+	}
+
+	/**
+	 * Decide if a given name is used by any namespace between a starting namespace
+	 * and a stopping namespace.  I.e. check for a name collision along a specific namespace path.
+	 * Currently, Ghidra is inefficient at calculating this perfectly, so this routine calculates
+	 * an approximation that can occasionally indicate a collision when there isn't.
+	 * @param name is the given name to check for collisions
+	 * @param startId is the id specifying the starting namespace
+	 * @param stopId is the id specifying the stopping namespace
+	 * @return true if the name (likely) occurs in one of the namespaces on the path
+	 */
+	public boolean isNameUsed(String name, long startId, long stopId) {
+		Namespace namespace = getNameSpaceByID(startId);
+		int pathSize = 0;
+		Namespace curspace = namespace;
+		long curId = namespace.getID();
+		while (curId != stopId && curId != 0) {
+			pathSize += 1;
+			curspace = curspace.getParentNamespace();
+			curId = curspace.getID();
+		}
+		long path[] = new long[pathSize];
+		curspace = namespace;
+		path[0] = startId;
+		for (int i = 1; i < pathSize; ++i) {
+			curspace = curspace.getParentNamespace();
+			path[i] = curspace.getID();
+		}
+		int count = 0;
+		SymbolIterator iter = program.getSymbolTable().getSymbols(name);
+		for (;;) {
+			if (!iter.hasNext()) {
+				break;
+			}
+			count += 1;
+			if (count > MAX_SYMBOL_COUNT) {
+				break;
+			}
+			Namespace symSpace = iter.next().getParentNamespace();
+			long id = symSpace.getID();
+			if (id == Namespace.GLOBAL_NAMESPACE_ID) {
+				continue;	// Common case we know can't match anything in path
+			}
+			for (int i = 0; i < pathSize; ++i) {
+				if (path[i] == id) {
+					return true;
+				}
+			}
+		}
+		return (count > MAX_SYMBOL_COUNT);
 	}
 
 	/**

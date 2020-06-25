@@ -93,6 +93,7 @@ public:
   Document *getMappedSymbolsXML(const Address &addr);		///< Get symbols associated with the given address
   Document *getExternalRefXML(const Address &addr);		///< Retrieve a description of an external function
   Document *getNamespacePath(uint8 id);				///< Get a description of a namespace path
+  bool isNameUsed(const string &nm,uint8 startId,uint8 stopId);	///< Is given name used along namespace path
   string getCodeLabel(const Address &addr);			///< Retrieve a label at the given address
   Document *getType(const string &name,uint8 id);		///< Retrieve a data-type description for the given name and id
   Document *getComments(const Address &fad,uint4 flags);	///< Retrieve comments for a particular function
@@ -131,6 +132,7 @@ public:
 
   static void segvHandler(int4 sig);				///< Handler for a segment violation (SIGSEGV) signal
   static int4 readToAnyBurst(istream &s);			///< Read the next message protocol marker
+  static bool readBoolStream(istream &s);			///< Read a boolean value from the client
   static void readStringStream(istream &s,string &res);		///< Receive a string from the client
   static void writeStringStream(ostream &s,const string &msg);	///< Send a string to the client
   static void readToResponse(istream &s);			///< Read the query response protocol marker
@@ -140,6 +142,8 @@ public:
   static uint1 *readPackedStream(istream &s);			///< Read packed p-code op information
   static uint1 *readPackedAll(istream &s);			///< Read a whole response as packed p-code op information
   static void passJavaException(ostream &s,const string &tp,const string &msg);
+
+  static bool isDynamicSymbolName(const string &nm);		///< Check if name is of form FUN_.. or DAT_..
 };
 
 #endif
