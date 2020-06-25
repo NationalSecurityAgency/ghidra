@@ -47,7 +47,6 @@ public class FunctionPrototype {
 	private boolean isinline; // Function should be inlined by the decompiler
 	private boolean noreturn; // Calls to this function do not return
 	private boolean custom;	// Uses custom storage for parameters
-	private boolean hasThis;	// Function has a method this pointer
 	private boolean isConstruct;	// Function is an object contructor
 	private boolean isDestruct;		// Function is an object destructor
 
@@ -60,7 +59,7 @@ public class FunctionPrototype {
 	public FunctionPrototype(LocalSymbolMap ls, Function func) {
 		localsyms = ls;
 		modelname = null;
-		gconv = null;
+		gconv = func.getSignature().getGenericCallingConvention();
 		injectname = null;
 		returntype = null;
 		returnstorage = null;
@@ -72,7 +71,6 @@ public class FunctionPrototype {
 		isinline = func.isInline();
 		noreturn = func.hasNoReturn();
 		custom = func.hasCustomVariableStorage();
-		hasThis = false;
 		isConstruct = false;
 		isDestruct = false;
 		extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
@@ -102,7 +100,6 @@ public class FunctionPrototype {
 		noreturn = false;
 		custom = false;
 		extrapop = model.getExtrapop();
-		hasThis = false;
 		isConstruct = false;
 		isDestruct = false;
 		// FIXME: If the FunctionDefinition has no parameters
@@ -280,7 +277,7 @@ public class FunctionPrototype {
 	 * @return true if this function is a method taking a 'this' pointer as a parameter
 	 */
 	public boolean hasThisPointer() {
-		return hasThis;
+		return gconv == GenericCallingConvention.thiscall;
 	}
 
 	/**
@@ -343,8 +340,8 @@ public class FunctionPrototype {
 		if (custom) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "custom", custom);
 		}
-		if (hasThis) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "hasthis", hasThis);
+		if (hasThisPointer()) {
+			SpecXmlUtils.encodeBooleanAttribute(res, "hasthis", true);
 		}
 		if (isConstruct) {
 			SpecXmlUtils.encodeBooleanAttribute(res, "constructor", isConstruct);
@@ -451,10 +448,6 @@ public class FunctionPrototype {
 		custom = false;
 		if (node.hasAttribute("custom")) {
 			custom = SpecXmlUtils.decodeBoolean(node.getAttribute("custom"));
-		}
-		hasThis = false;
-		if (node.hasAttribute("hasthis")) {
-			hasThis = SpecXmlUtils.decodeBoolean(node.getAttribute("hasthis"));
 		}
 		isConstruct = false;
 		if (node.hasAttribute("constructor")) {
