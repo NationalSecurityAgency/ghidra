@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 
+import org.osgi.framework.Bundle;
+
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
 import generic.util.Path;
@@ -402,22 +404,24 @@ public class BundleStatusTableModel
 
 	private class OSGiStatusColumn extends Column<String> {
 		OSGiStatusColumn() {
-			super("OSGi Status");
+			super("OSGi State");
 		}
 
 		@Override
 		public String getValue(BundleStatus status, Settings settings, List<BundleStatus> data,
 				ServiceProvider serviceProvider0) throws IllegalArgumentException {
 			if (!status.isEnabled()) {
-				return "";
+				return "(disabled)";
 			}
-			if (status.isBusy()) {
-				return "...";
+			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
+			if (bundle != null) {
+				Bundle osgiBundle = bundle.getOSGiBundle();
+				if (osgiBundle != null) {
+					return OSGiUtils.getStateString(osgiBundle);
+				}
+				return "uninstalled";
 			}
-			if (status.isActive()) {
-				return "Active";
-			}
-			return "Inactive";
+			return "(enabled)";
 		}
 
 		@Override

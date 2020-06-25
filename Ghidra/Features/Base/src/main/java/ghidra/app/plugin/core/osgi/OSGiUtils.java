@@ -74,6 +74,25 @@ public class OSGiUtils {
 		}
 	}
 
+	static String getStateString(Bundle bundle) {
+		switch (bundle.getState()) {
+			case Bundle.UNINSTALLED:
+				return "UNINSTALLED";
+			case Bundle.INSTALLED:
+				return "INSTALLED";
+			case Bundle.RESOLVED:
+				return "RESOLVED";
+			case Bundle.STARTING:
+				return "STARTING";
+			case Bundle.STOPPING:
+				return "STOPPING";
+			case Bundle.ACTIVE:
+				return "ACTIVE";
+			default:
+				return "unknown state";
+		}
+	}
+
 	/**
 	 * parse Import-Package string from a bundle manifest
 	 * 
@@ -126,10 +145,10 @@ public class OSGiUtils {
 	static Stream<Path> getClasspathElements() {
 		String classpathStr = System.getProperty("java.class.path");
 		return Collections.list(new StringTokenizer(classpathStr, File.pathSeparator))
-			.stream()
-			.map(String.class::cast)
-			.map(Paths::get)
-			.map(Path::normalize);
+				.stream()
+				.map(String.class::cast)
+				.map(Paths::get)
+				.map(Path::normalize);
 	}
 
 	static void collectPackagesFromDirectory(Path dirPath, Set<String> packages) {
@@ -137,9 +156,9 @@ public class OSGiUtils {
 			Files.walk(dirPath).filter(p -> p.toString().endsWith(".class")).forEach(path -> {
 				String relativePath = dirPath.relativize(path).toString();
 				int lastSlash = relativePath.lastIndexOf(File.separatorChar);
-				packages
-					.add(lastSlash > 0 ? relativePath.substring(0, lastSlash).replace(File.separatorChar, '.')
-							: "");
+				packages.add(lastSlash > 0
+						? relativePath.substring(0, lastSlash).replace(File.separatorChar, '.')
+						: "");
 			});
 
 		}
@@ -154,7 +173,8 @@ public class OSGiUtils {
 				j.stream().filter(entry -> entry.getName().endsWith(".class")).forEach(jarEntry -> {
 					String entryName = jarEntry.getName();
 					int lastSlash = entryName.lastIndexOf('/');
-					packages.add(lastSlash > 0 ? entryName.substring(0, lastSlash).replace('/', '.') : "");
+					packages.add(
+						lastSlash > 0 ? entryName.substring(0, lastSlash).replace('/', '.') : "");
 				});
 			}
 		}
