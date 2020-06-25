@@ -371,6 +371,9 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			ListingActionContext programContext = getListingContext(context);
+			if (programContext == null) {
+				return false;
+			}
 			Program p = programContext.getProgram();
 			if (p != canAnalyzeProgram) {
 				canAnalyzeProgram = p;
