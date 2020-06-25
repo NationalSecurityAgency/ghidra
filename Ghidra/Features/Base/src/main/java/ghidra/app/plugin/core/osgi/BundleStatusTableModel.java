@@ -136,8 +136,8 @@ public class BundleStatusTableModel
 
 	void remove(int[] modelRows) {
 		List<BundleStatus> toRemove = Arrays.stream(modelRows)
-			.mapToObj(statuses::get)
-			.collect(Collectors.toUnmodifiableList());
+				.mapToObj(statuses::get)
+				.collect(Collectors.toUnmodifiableList());
 		removeStatuses(toRemove);
 	}
 
@@ -336,8 +336,8 @@ public class BundleStatusTableModel
 		@Override
 		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
 			List<BundleStatus> toRemove = bundles.stream()
-				.map(BundleStatusTableModel.this::getStatus)
-				.collect(Collectors.toUnmodifiableList());
+					.map(BundleStatusTableModel.this::getStatus)
+					.collect(Collectors.toUnmodifiableList());
 			removeStatuses(toRemove);
 		}
 
@@ -474,6 +474,8 @@ public class BundleStatusTableModel
 
 	private class BundleFileColumn extends Column<ResourceFile> {
 		final BundleFileRenderer renderer = new BundleFileRenderer();
+		final Comparator<ResourceFile> comparator =
+			(a, b) -> Path.toPathString(a).compareTo(Path.toPathString(b));
 
 		BundleFileColumn() {
 			super("Path");
@@ -489,6 +491,11 @@ public class BundleStatusTableModel
 		@Override
 		public GColumnRenderer<ResourceFile> getColumnRenderer() {
 			return renderer;
+		}
+
+		@Override
+		public Comparator<ResourceFile> getComparator() {
+			return comparator;
 		}
 
 	}
