@@ -15,24 +15,25 @@
  */
 package ghidra.framework.main.projectdata.actions;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.SwingUtilities;
 
-import docking.ActionContext;
 import docking.action.ContextSpecificAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
-import ghidra.framework.main.datatable.ProjectTreePanelContext;
+import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.main.datatree.DataTree;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
-import ghidra.util.Msg;
+import ghidra.util.InvalidNameException;
+import ghidra.util.Swing;
+import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 
-public class ProjectDataNewFolderAction<T extends ProjectTreePanelContext> extends ContextSpecificAction<T> {
+public class ProjectDataNewFolderAction<T extends ProjectTreeContext> extends ContextSpecificAction<T> {
 
 	private static Icon icon = ResourceManager.loadImage("images/folder_add.png");
 
@@ -40,21 +41,6 @@ public class ProjectDataNewFolderAction<T extends ProjectTreePanelContext> exten
 		super("New Folder", owner, contextClass);
 		setPopupMenuData(new MenuData(new String[] { "New Folder" }, icon, group));
 		markHelpUnnecessary();
-	}
-
-	@Override
-	public boolean isValidContext(ActionContext actionContext) {
-		return super.isValidContext(actionContext);
-	}
-
-	@Override
-	public boolean isEnabledForContext(ActionContext actionContext) {
-		return super.isEnabledForContext(actionContext);
-	}
-
-	@Override
-	public boolean isAddToPopup(ActionContext actionContext) {
-		return super.isAddToPopup(actionContext);
 	}
 
 	@Override
@@ -72,22 +58,28 @@ public class ProjectDataNewFolderAction<T extends ProjectTreePanelContext> exten
 	 * a folder.
 	 */
 	private void createNewFolder(T context) {
-		DomainFolder folder = getFolder(context);
-		String name = getNewFolderName(folder);
-		try {
-			final DomainFolder newFolder = folder.createFolder(name);
-			final DataTree tree = context.getTree();
-			SwingUtilities.invokeLater(() -> {
-				GTreeNode node = findNodeForFolder(tree, newFolder);
-				if (node != null) {
-					tree.setEditable(true);
-					tree.startEditing(node.getParent(), node.getName());
-				}
-			});
+		DomainFolder parentFolder = getFolder(context);
 
+		DomainFolder newFolder = createNewFolderWithDefaultName(parentFolder);
+		DataTree tree = context.getTree();
+
+		Swing.runLater(() -> {
+			GTreeNode node = findNodeForFolder(tree, newFolder);
+			if (node != null) {
+				tree.setEditable(true);
+				tree.startEditing(node.getParent(), node.getName());
+			}
+		});
+
+	}
+
+	private DomainFolder createNewFolderWithDefaultName(DomainFolder parentFolder) {
+		String name = getNewFolderName(parentFolder);
+		try {
+			return parentFolder.createFolder(name);
 		}
-		catch (Exception e) {
-			Msg.showError(this, context.getTree(), "Create Folder Failed", e.getMessage());
+		catch (InvalidNameException | IOException e) {
+			throw new AssertException("Unexpected Error creating new folder: "+name, e);
 		}
 	}
 

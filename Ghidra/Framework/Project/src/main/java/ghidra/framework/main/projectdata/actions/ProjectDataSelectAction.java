@@ -24,7 +24,7 @@ import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatable.ProjectTreeAction;
 import ghidra.framework.main.datatree.DataTree;
-import ghidra.framework.main.datatree.ProjectTreeContext;
+import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
 
 public class ProjectDataSelectAction extends ProjectTreeAction {
 
@@ -35,7 +35,7 @@ public class ProjectDataSelectAction extends ProjectTreeAction {
 	}
 
 	@Override
-	protected void actionPerformed(ProjectTreeContext context) {
+	protected void actionPerformed(FrontEndProjectTreeContext context) {
 		DataTree tree = context.getTree();
 		TreePath[] paths = context.getSelectionPaths();
 		GTreeNode node = (GTreeNode) paths[0].getLastPathComponent();
@@ -43,7 +43,7 @@ public class ProjectDataSelectAction extends ProjectTreeAction {
 	}
 
 	@Override
-	public boolean isAddToPopup(ProjectTreeContext context) {
+	public boolean isAddToPopup(FrontEndProjectTreeContext context) {
 		return context.getFolderCount() == 1 && context.getFileCount() == 0;
 	}
 

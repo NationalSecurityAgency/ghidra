@@ -20,10 +20,10 @@ import javax.swing.tree.TreePath;
 import docking.action.ContextSpecificAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
-import ghidra.framework.main.datatable.ProjectTreePanelContext;
+import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.main.datatree.DataTree;
 
-public class ProjectDataExpandAction<T extends ProjectTreePanelContext>
+public class ProjectDataExpandAction<T extends ProjectTreeContext>
 		extends ContextSpecificAction<T> {
 
 	public ProjectDataExpandAction(String owner, String group, Class<T> contextClass) {

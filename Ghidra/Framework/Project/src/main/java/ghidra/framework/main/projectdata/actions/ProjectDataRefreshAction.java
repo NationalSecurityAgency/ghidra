@@ -24,13 +24,13 @@ import javax.swing.Icon;
 import docking.action.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.datatable.ProjectDataContext;
-import ghidra.framework.main.datatable.ProjectDataAction;
+import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.model.ProjectData;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.*;
 import resources.Icons;
 
-public class ProjectDataRefreshAction extends ProjectDataAction {
+public class ProjectDataRefreshAction extends FrontendProjectTreeAction {
 
 	private static Icon icon = Icons.REFRESH_ICON;
 

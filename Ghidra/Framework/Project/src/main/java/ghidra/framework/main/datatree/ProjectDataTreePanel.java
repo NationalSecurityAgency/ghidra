@@ -340,11 +340,11 @@ public class ProjectDataTreePanel extends JPanel {
 		
 		// provider is null when called from the DataTreeDialog, use different context
 		if (provider == null) {
-			return new ProjectTreeDialogContext(projectData, selectionPaths, domainFolderList,
+			return new DialogProjectTreeContext(projectData, selectionPaths, domainFolderList,
 				domainFileList, tree);
 		}
 
-		return new ProjectTreeContext(provider, projectData, selectionPaths,
+		return new FrontEndProjectTreeContext(provider, projectData, selectionPaths,
 			domainFolderList, domainFileList, tree, isActiveProject);
 	}
 

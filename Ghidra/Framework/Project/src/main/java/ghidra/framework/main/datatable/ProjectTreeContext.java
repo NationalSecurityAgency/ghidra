@@ -24,12 +24,12 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 
 /**
- * Common methods appropriate for both the {@link ProjectTreeContext} and the 
- * {@link ProjectTreeDialogContext}.  The project tree actions required that the contexts be
+ * Common methods appropriate for both the {@link FrontEndProjectTreeContext} and the 
+ * {@link DialogProjectTreeContext}.  The project tree actions require that the contexts be
  * separate even though they need many of the same methods. By extracting the methods to this
  * interface, the contexts can be kept separate, but can share action code.
  */
-public interface ProjectTreePanelContext {
+public interface ProjectTreeContext {
 
 	/**
 	 * Returns the number of folders selected in the tree.

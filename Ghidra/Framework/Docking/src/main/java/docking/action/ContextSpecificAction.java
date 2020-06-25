@@ -84,6 +84,12 @@ public abstract class ContextSpecificAction<T> extends DockingAction {
 
 	}
 
+	/**
+	 * The actionPerformed method with a more specific ActionContext. 
+	 * See {@link DockingAction#actionPerformed(ActionContext)}
+	 * 
+	 * @param context the more specific {@link ActionContext}
+	 */
 	abstract protected void actionPerformed(T context);
 
 	protected boolean isAddToPopup(T context) {

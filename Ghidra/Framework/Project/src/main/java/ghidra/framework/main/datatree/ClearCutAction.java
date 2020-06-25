@@ -30,12 +30,12 @@ public class ClearCutAction extends ProjectTreeAction {
 	}
 
 	@Override
-	public boolean isEnabledForContext(ProjectTreeContext context) {
+	public boolean isEnabledForContext(FrontEndProjectTreeContext context) {
 		return DataTreeClipboardUtils.isCuttablePresent();
 	}
 
 	@Override
-	public void actionPerformed(ProjectTreeContext context) {
+	public void actionPerformed(FrontEndProjectTreeContext context) {
 		DataTreeClipboardUtils.clearCuttables();
 	}
 }

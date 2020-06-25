@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.main.datatable;
+package ghidra.framework.main;
 
-import docking.action.ContextSpecificAction;
+import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
+import ghidra.framework.main.projectdata.actions.ProjectDataCollapseAction;
 
-public abstract class ProjectDataAction
-		extends ContextSpecificAction<ProjectDataContext> {
+/**
+ * {@link ProjectDataCollapseAction} configured to work in the frontend.
+ */
+public class FrontEndProjectDataCollapseAction
+		extends ProjectDataCollapseAction<FrontEndProjectTreeContext> {
 
-	public ProjectDataAction(String name, String owner) {
-		super(name, owner, ProjectDataContext.class);
-	}
-
-	@Override
-	protected boolean isEnabledForContext(ProjectDataContext context) {
-		return context.hasOneOrMoreFilesAndFolders();
+	public FrontEndProjectDataCollapseAction(String owner, String group) {
+		super(owner, group, FrontEndProjectTreeContext.class);
 	}
 
 }

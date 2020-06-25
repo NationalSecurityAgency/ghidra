@@ -17,7 +17,7 @@ package ghidra.framework.main.datatable;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
-import ghidra.framework.main.datatree.ProjectTreeContext;
+import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
 
 public abstract class ProjectTreeAction extends DockingAction {
 
@@ -27,11 +27,11 @@ public abstract class ProjectTreeAction extends DockingAction {
 
 	@Override
 	public final boolean isEnabledForContext(ActionContext actionContext) {
-		if (!(actionContext instanceof ProjectTreeContext)) {
+		if (!(actionContext instanceof FrontEndProjectTreeContext)) {
 			return false;
 		}
 
-		ProjectTreeContext context = (ProjectTreeContext) actionContext;
+		FrontEndProjectTreeContext context = (FrontEndProjectTreeContext) actionContext;
 		return isEnabledForContext(context);
 	}
 
@@ -45,26 +45,26 @@ public abstract class ProjectTreeAction extends DockingAction {
 		return false;
 	}
 
-	protected boolean isEnabledForContext(ProjectTreeContext context) {
+	protected boolean isEnabledForContext(FrontEndProjectTreeContext context) {
 		return context.hasOneOrMoreFilesAndFolders();
 	}
 
 	@Override
 	public final void actionPerformed(ActionContext context) {
-		actionPerformed((ProjectTreeContext) context);
+		actionPerformed((FrontEndProjectTreeContext) context);
 	}
 
-	protected abstract void actionPerformed(ProjectTreeContext context);
+	protected abstract void actionPerformed(FrontEndProjectTreeContext context);
 
 	@Override
 	public boolean isValidContext(ActionContext context) {
-		if (!(context instanceof ProjectTreeContext)) {
+		if (!(context instanceof FrontEndProjectTreeContext)) {
 			return false;
 		}
-		return isValidContext((ProjectTreeContext) context);
+		return isValidContext((FrontEndProjectTreeContext) context);
 	}
 
-	protected boolean isValidContext(ProjectTreeContext context) {
+	protected boolean isValidContext(FrontEndProjectTreeContext context) {
 		return true;
 	}
 
@@ -73,10 +73,10 @@ public abstract class ProjectTreeAction extends DockingAction {
 		if (!isEnabledForContext(context)) {
 			return false;
 		}
-		return isAddToPopup((ProjectTreeContext) context);
+		return isAddToPopup((FrontEndProjectTreeContext) context);
 	}
 
-	protected boolean isAddToPopup(ProjectTreeContext context) {
+	protected boolean isAddToPopup(FrontEndProjectTreeContext context) {
 		return isEnabledForContext(context);
 	}
 

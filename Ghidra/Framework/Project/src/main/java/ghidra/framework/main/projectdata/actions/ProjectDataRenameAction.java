@@ -33,7 +33,7 @@ import ghidra.framework.model.DomainFolder;
 import ghidra.util.Msg;
 import resources.ResourceManager;
 
-public class ProjectDataRenameAction extends ProjectDataAction {
+public class ProjectDataRenameAction extends FrontendProjectTreeAction {
 	private static Icon icon = ResourceManager.loadImage("images/page_edit.png");
 
 	public ProjectDataRenameAction(String owner, String group) {

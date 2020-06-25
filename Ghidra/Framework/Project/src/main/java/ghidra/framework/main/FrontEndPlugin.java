@@ -40,7 +40,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
-import ghidra.framework.main.datatree.*;
+import ghidra.framework.main.datatree.ClearCutAction;
+import ghidra.framework.main.datatree.ProjectDataTreePanel;
 import ghidra.framework.main.projectdata.actions.*;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
@@ -208,38 +209,27 @@ public class FrontEndPlugin extends Plugin
 
 	private void createActions() {
 		String owner = getName();
+
 		String groupName = "Cut/copy/paste/new1";
+		newFolderAction = new FrontEndProjectDataNewFolderAction(owner, groupName);
 
-		newFolderAction =
-			new ProjectDataNewFolderAction<ProjectTreeContext>(owner, groupName,
-				ProjectTreeContext.class);
 		groupName = "Cut/copy/paste/new2";
-
 		cutAction = new ProjectDataCutAction(owner, groupName);
-
 		clearCutAction = new ClearCutAction(owner);
-
 		copyAction = new ProjectDataCopyAction(owner, groupName);
-
 		pasteAction = new ProjectDataPasteAction(owner, groupName);
 
 		groupName = "Delete/Rename";
 		renameAction = new ProjectDataRenameAction(owner, groupName);
-
 		deleteAction = new ProjectDataDeleteAction(owner, groupName);
-
 		openAction = new ProjectDataOpenDefaultToolAction(owner, "Open");
 
 		groupName = "Expand/Collapse";
-		expandAction = new ProjectDataExpandAction<ProjectTreeContext>(owner, groupName,
-			ProjectTreeContext.class);
-
-		collapseAction = new ProjectDataCollapseAction<ProjectTreeContext>(owner, groupName,
-			ProjectTreeContext.class);
+		expandAction = new FrontEndProjectDataExpandAction(owner, groupName);
+		collapseAction = new FrontEndProjectDataCollapseAction(owner, groupName);
 
 		groupName = "Select/Toggle";
 		selectAction = new ProjectDataSelectAction(owner, groupName);
-
 		readOnlyAction = new ProjectDataReadOnlyAction(owner, groupName);
 
 		groupName = "XRefresh";

@@ -26,7 +26,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.CodeViewerService;
 import ghidra.framework.main.FrontEndable;
 import ghidra.framework.main.datatable.ProjectDataContext;
-import ghidra.framework.main.datatable.ProjectDataAction;
+import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.*;
@@ -83,7 +83,7 @@ public class ExporterPlugin extends Plugin implements FrontEndable {
 	}
 
 	private void createFrontEndAction() {
-		DockingAction action = new ProjectDataAction("Export", getName()) {
+		DockingAction action = new FrontendProjectTreeAction("Export", getName()) {
 
 			@Override
 			protected void actionPerformed(ProjectDataContext context) {

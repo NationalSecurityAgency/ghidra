@@ -258,6 +258,10 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * @param childList this list of nodes to be set as children of this node
 	 */
 	public void setChildren(List<GTreeNode> childList) {
+		System.out.println("Setting children for node: " + getTreePath());
+		for (GTreeNode child : childList) {
+			System.out.println("\tchild name: " + child.getName());
+		}
 		Swing.runNow(() -> doSetChildrenAndFireEvent(childList));
 	}
 

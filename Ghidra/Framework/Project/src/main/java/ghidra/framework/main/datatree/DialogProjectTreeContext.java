@@ -21,23 +21,20 @@ import java.util.List;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
-import ghidra.framework.main.datatable.ProjectTreePanelContext;
+import ghidra.framework.main.datatable.ProjectTreeContext;
 import ghidra.framework.model.*;
 
 /**
- * Context specific to the DataTreeDialog. Previously, the same context class was used
- *  by both the project window and the project file chooser dialog.  This cause issues with duplicate
- *  actions showing up in the dialog.  Using a different, but similar context object allowed
- *  actions to do a better job of determining when they are appropriate.
+ * Context specific to the DataTreeDialog.
  */
-public class ProjectTreeDialogContext extends ActionContext implements ProjectTreePanelContext {
+public class DialogProjectTreeContext extends ActionContext implements ProjectTreeContext {
 
 	private TreePath[] selectionPaths;
 	private DataTree tree;
 	private List<DomainFolder> selectedFolders;
 	private List<DomainFile> selectedFiles;
 
-	public ProjectTreeDialogContext(ProjectData projectData,
+	public DialogProjectTreeContext(ProjectData projectData,
 			TreePath[] selectionPaths,
 			List<DomainFolder> folderList, List<DomainFile> fileList, DataTree tree) {
 		super(null, getContextObject(selectionPaths), tree);

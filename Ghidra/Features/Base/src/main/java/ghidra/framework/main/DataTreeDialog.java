@@ -33,7 +33,6 @@ import docking.widgets.label.GLabel;
 import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
-import ghidra.framework.main.datatree.ProjectTreeDialogContext;
 import ghidra.framework.main.projectdata.actions.*;
 import ghidra.framework.model.*;
 import ghidra.util.Msg;
@@ -159,17 +158,13 @@ public class DataTreeDialog extends DialogComponentProvider
 
 	private void createActions() {
 		String owner = "DataTreeDialogActions";
-		String groupName = "Cut/copy/paste/new";
 
-		newFolderAction = new ProjectDataNewFolderAction<ProjectTreeDialogContext>(owner, groupName,
-			ProjectTreeDialogContext.class);
+		String groupName = "Cut/copy/paste/new";
+		newFolderAction = new DialogProjectDataNewFolderAction(owner, groupName);
 
 		groupName = "Expand/Collapse";
-		expandAction = new ProjectDataExpandAction<ProjectTreeDialogContext>(owner, groupName,
-			ProjectTreeDialogContext.class);
-
-		collapseAction = new ProjectDataCollapseAction<ProjectTreeDialogContext>(owner, groupName,
-			ProjectTreeDialogContext.class);
+		expandAction = new DialogProjectDataExpandAction(owner, groupName);
+		collapseAction = new DialogProjectDataCollapseAction(owner, groupName);
 
 		addAction(newFolderAction);
 		addAction(expandAction);

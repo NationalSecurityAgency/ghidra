@@ -22,13 +22,13 @@ import javax.swing.Icon;
 import docking.action.MenuData;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.datatable.ProjectDataContext;
-import ghidra.framework.main.datatable.ProjectDataAction;
+import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 
-public class ProjectDataOpenToolAction extends ProjectDataAction {
+public class ProjectDataOpenToolAction extends FrontendProjectTreeAction {
 	private String toolName;
 
 	public ProjectDataOpenToolAction(String owner, String group, String toolName, Icon icon) {

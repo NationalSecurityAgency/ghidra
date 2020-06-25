@@ -30,7 +30,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.FrontEndable;
 import ghidra.framework.main.datatable.ProjectDataContext;
-import ghidra.framework.main.datatable.ProjectDataAction;
+import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -74,7 +74,7 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 
 	private void setupActions() {
 		if (tool instanceof FrontEndTool) {
-			aboutAction = new ProjectDataAction(ACTION_NAME, PLUGIN_NAME) {
+			aboutAction = new FrontendProjectTreeAction(ACTION_NAME, PLUGIN_NAME) {
 
 				@Override
 				protected void actionPerformed(ProjectDataContext context) {

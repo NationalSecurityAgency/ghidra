@@ -22,10 +22,10 @@ import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.datatable.ProjectDataContext;
-import ghidra.framework.main.datatable.ProjectDataAction;
+import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.model.DomainFile;
 
-public class ProjectDataOpenDefaultToolAction extends ProjectDataAction {
+public class ProjectDataOpenDefaultToolAction extends FrontendProjectTreeAction {
 
 	public ProjectDataOpenDefaultToolAction(String owner, String group) {
 		super("Open File", owner);
