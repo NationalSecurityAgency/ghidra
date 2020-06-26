@@ -575,6 +575,7 @@ void PrintLanguage::resetDefaultsInternal(void)
   mods = 0;
   head_comment_type = Comment::header | Comment::warningheader;
   line_commentindent = 20;
+  namespc_strategy = MINIMAL_NAMESPACES;
   instr_comment_type = Comment::user2 | Comment::warning;
 }
 

@@ -230,6 +230,35 @@ public class DecompileOptions {
 	private final static boolean COMMENTHEAD_OPTIONDEFAULT = true;
 	private boolean commentHeadInclude;
 
+	public enum NamespaceStrategy {
+		Minimal("minimal", "Minimally"),
+		All("all", "Always"),
+		Never("none", "Never");
+
+		private String label;
+		private String optionString;
+
+		private NamespaceStrategy(String optString, String label) {
+			this.label = label;
+			this.optionString = optString;
+		}
+
+		public String getOptionString() {
+			return optionString;
+		}
+
+		@Override
+		public String toString() {
+			return label;
+		}
+	}
+
+	private final static String NAMESPACE_OPTIONSTRING = "Display.Display Namespaces";
+	private final static String NAMESPACE_OPTIONDESCRIPTION =
+		"Choose how/if namespace tokens should be displayed along with symbol names";
+	private final static NamespaceStrategy NAMESPACE_OPTIONDEFAULT = NamespaceStrategy.Minimal;
+	private NamespaceStrategy namespaceStrategy;
+
 	private final static String INTEGERFORMAT_OPTIONSTRING = "Display.Integer format";
 	private final static String INTEGERFORMAT_OPTIONDESCRIPTION =
 		"Choose how to display integers: as hexadecimal, decimal, or best fit";
@@ -317,13 +346,10 @@ public class DecompileOptions {
 		"Number of Decompiled Functions to Cache in the Decompile Window";
 
 	private final static String LINE_NUMBER_MSG = "Display.Display Line Numbers";
-	private final static String NAMESPACE_MSG = "Display.Display Namespaces";
 	private final static String DECOMPILE_TIMEOUT = "Decompiler Timeout (seconds)";
 	private final static String PAYLOAD_LIMIT = "Decompiler Max-Payload (MBytes)";
 	private final static Boolean LINE_NUMBER_DEF = Boolean.TRUE;
-	private final static Boolean NAMESPACES_DEF = Boolean.FALSE;
 	private boolean displayLineNumbers;
-	private boolean displayNamespaces;
 	private int decompileTimeoutSeconds;
 	private int payloadLimitMBytes;
 	private int cachedResultsSize;
@@ -354,6 +380,7 @@ public class DecompileOptions {
 		commentEOLInclude = COMMENTEOL_OPTIONDEFAULT;
 		commentWARNInclude = COMMENTWARN_OPTIONDEFAULT;
 		commentHeadInclude = COMMENTHEAD_OPTIONDEFAULT;
+		namespaceStrategy = NAMESPACE_OPTIONDEFAULT;
 		integerFormat = INTEGERFORMAT_OPTIONDEFAULT;
 		keywordColor = HIGHLIGHT_KEYWORD_DEF;
 		functionColor = HIGHLIGHT_FUNCTION_DEF;
@@ -367,7 +394,6 @@ public class DecompileOptions {
 		codeViewerBackgroundColor = CODE_VIEWER_BACKGROUND_COLOR;
 		defaultFont = DEFAULT_FONT;
 		displayLineNumbers = LINE_NUMBER_DEF;
-		displayNamespaces = NAMESPACES_DEF;
 		displayLanguage = BasicCompilerSpec.DECOMPILER_OUTPUT_DEF;
 		protoEvalModel = "default";
 		decompileTimeoutSeconds = SUGGESTED_DECOMPILE_TIMEOUT_SECS;
@@ -414,6 +440,7 @@ public class DecompileOptions {
 		commentPLATEInclude = opt.getBoolean(COMMENTPLATE_OPTIONSTRING, COMMENTPLATE_OPTIONDEFAULT);
 		commentWARNInclude = opt.getBoolean(COMMENTWARN_OPTIONSTRING, COMMENTWARN_OPTIONDEFAULT);
 		commentHeadInclude = opt.getBoolean(COMMENTHEAD_OPTIONSTRING, COMMENTHEAD_OPTIONDEFAULT);
+		namespaceStrategy = opt.getEnum(NAMESPACE_OPTIONSTRING, NAMESPACE_OPTIONDEFAULT);
 		integerFormat = opt.getEnum(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT);
 		keywordColor = opt.getColor(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_DEF);
 		typeColor = opt.getColor(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_DEF);
@@ -432,7 +459,6 @@ public class DecompileOptions {
 		defaultFont = SystemUtilities.adjustForFontSizeOverride(defaultFont);
 		defaultSearchHighlightColor = opt.getColor(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_DEF);
 		displayLineNumbers = opt.getBoolean(LINE_NUMBER_MSG, LINE_NUMBER_DEF);
-		displayNamespaces = opt.getBoolean(NAMESPACE_MSG, NAMESPACES_DEF);
 		decompileTimeoutSeconds = opt.getInt(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS);
 		payloadLimitMBytes = opt.getInt(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES);
 		cachedResultsSize = opt.getInt(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE);
@@ -541,6 +567,8 @@ public class DecompileOptions {
 			COMMENTWARN_OPTIONDESCRIPTION);
 		opt.registerOption(COMMENTHEAD_OPTIONSTRING, COMMENTHEAD_OPTIONDEFAULT, help,
 			COMMENTHEAD_OPTIONDESCRIPTION);
+		opt.registerOption(NAMESPACE_OPTIONSTRING, NAMESPACE_OPTIONDEFAULT, help,
+			NAMESPACE_OPTIONDESCRIPTION);
 		opt.registerOption(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT, help,
 			INTEGERFORMAT_OPTIONDESCRIPTION);
 		opt.registerOption(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_DEF, help,
@@ -569,8 +597,6 @@ public class DecompileOptions {
 			"The color used to highlight matches using the Find Dialog.");
 		opt.registerOption(LINE_NUMBER_MSG, LINE_NUMBER_DEF, help,
 			"Toggle for displaying line numbers in the decompiler.");
-		opt.registerOption(NAMESPACE_MSG, NAMESPACES_DEF, help,
-			"Toggle for dislaying namespaces for functions.");
 		opt.registerOption(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS, help,
 			"The number of seconds to allow the decompiler to run before terminating the " +
 				"decompiler.\nCurrently this does not affect the UI, which will run indefinitely. " +
@@ -653,6 +679,8 @@ public class DecompileOptions {
 		appendOption(buf, "commentinstruction", "warning", commentWARNInclude ? "on" : "off", "");
 		appendOption(buf, "commentheader", "header", commentHeadInclude ? "on" : "off", "");
 		appendOption(buf, "commentheader", "warningheader", commentWARNInclude ? "on" : "off", "");
+
+		appendOption(buf, "namespacestrategy", namespaceStrategy.getOptionString(), "", "");
 
 		appendOption(buf, "integerformat", integerFormat.getOptionString(), "", "");
 
@@ -791,10 +819,6 @@ public class DecompileOptions {
 
 	public boolean isDisplayLineNumbers() {
 		return displayLineNumbers;
-	}
-
-	public boolean isDisplayNamespaces() {
-		return displayNamespaces;
 	}
 
 	public DecompilerLanguage getDisplayLanguage() {

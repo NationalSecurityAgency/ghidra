@@ -51,22 +51,19 @@ public class HighFunction extends PcodeSyntaxTree {
 	private GlobalSymbolMap globalSymbols;
 	private List<JumpTable> jumpTables;
 	private List<DataTypeSymbol> protoOverrides;
-	private boolean showNamespace = true;
 
 	/**
 	 * @param function  function associated with the higher level function abstraction.
 	 * @param language  description of the processor language of the function
 	 * @param compilerSpec description of the compiler that produced the function
 	 * @param dtManager data type manager
-	 * @param showNamespace true signals to print function names with their namespace
 	 */
 	public HighFunction(Function function, Language language, CompilerSpec compilerSpec,
-			PcodeDataTypeManager dtManager, boolean showNamespace) {
+			PcodeDataTypeManager dtManager) {
 		super(function.getProgram().getAddressFactory(), dtManager);
 		func = function;
 		this.language = language;
 		this.compilerSpec = compilerSpec;
-		this.showNamespace = showNamespace;
 		localSymbols = new LocalSymbolMap(this, "stack");
 		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
@@ -260,9 +257,9 @@ public class HighFunction extends PcodeSyntaxTree {
 	public void readXML(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement start = parser.start("function");
 		String name = start.getAttribute("name");
-		if (!func.getName(showNamespace).equals(name)) {
+		if (!func.getName().equals(name)) {
 			throw new PcodeXMLException(
-				"Function name mismatch: " + func.getName(showNamespace) + " + " + name);
+				"Function name mismatch: " + func.getName() + " + " + name);
 		}
 		while (!parser.peek().isEnd()) {
 			XmlElement subel = parser.peek();
@@ -449,7 +446,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		if (id != 0) {
 			SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
 		}
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getName(showNamespace));
+		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getName());
 		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
 		if (func.isInline()) {
 			SpecXmlUtils.encodeBooleanAttribute(resBuf, "inline", true);

@@ -70,7 +70,6 @@ public class DecompileProcess {
 	private int archId = -1;              // architecture id for decomp process
 	private DecompileCallback callback;   // Callback interface for decompiler
 	private int maxResultSizeMBYtes = 50; // maximum result size in MBytes to allow from decompiler
-	private boolean showNamespace;        // whether to show namespaces for functions
 
 	public enum DisposeState {
 		NOT_DISPOSED,        // Process was/is not disposed
@@ -441,7 +440,6 @@ public class DecompileProcess {
 			String cspecxml, String tspecxml, String coretypesxml)
 			throws IOException, DecompileException {
 		callback = cback;
-		callback.setShowNamespace(showNamespace);
 
 		setup();
 		String restring = null;
@@ -589,11 +587,6 @@ public class DecompileProcess {
 
 	public void setMaxResultSize(int maxResultSizeMBytes) {
 		this.maxResultSizeMBYtes = maxResultSizeMBytes;
-	}
-
-	public void setShowNamespace(boolean showNamespace) {
-		this.showNamespace = showNamespace;
-		callback.setShowNamespace(showNamespace);
 	}
 
 	/**

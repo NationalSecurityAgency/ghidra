@@ -78,7 +78,6 @@ public class DecompileCallback {
 	private PcodeDataTypeManager dtmanage;
 	private Charset utf8Charset;
 	private String nativeMessage;
-	private boolean showNamespace;
 
 	private InstructionBlock lastPseudoInstructionBlock;
 	private Disassembler pseudoDisassembler;
@@ -152,10 +151,6 @@ public class DecompileCallback {
 	 */
 	void setNativeMessage(String msg) {
 		nativeMessage = msg;
-	}
-
-	public void setShowNamespace(boolean showNamespace) {
-		this.showNamespace = showNamespace;
 	}
 
 	public synchronized int readXMLSize(String addrxml) {
@@ -770,8 +765,7 @@ public class DecompileCallback {
 				return null;
 			}
 
-			HighFunction hfunc =
-				new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage, showNamespace);
+			HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
 
 			int extrapop = getExtraPopOverride(func, addr);
 			hfunc.grabFromFunction(extrapop, false, (extrapop != default_extrapop));
@@ -1012,7 +1006,7 @@ public class DecompileCallback {
 			long diff = addr.getOffset() - entry.getOffset();
 			if ((diff >= 0) && (diff < 8)) {
 				HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec,
-					dtmanage, showNamespace);
+					dtmanage);
 
 				int extrapop = getExtraPopOverride(func, addr);
 				hfunc.grabFromFunction(extrapop, includeDefaultNames,

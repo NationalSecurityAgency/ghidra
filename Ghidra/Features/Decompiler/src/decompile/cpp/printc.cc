@@ -174,7 +174,17 @@ void PrintC::pushPrototypeInputs(const FuncProto *proto)
 void PrintC::pushSymbolScope(const Symbol *symbol)
 
 {
-  int4 scopedepth = symbol->getResolutionDepth(curscope);
+  int4 scopedepth;
+  if (namespc_strategy == MINIMAL_NAMESPACES)
+    scopedepth = symbol->getResolutionDepth(curscope);
+  else if (namespc_strategy == ALL_NAMESPACES) {
+    if (symbol->getScope() == curscope)
+      scopedepth = 0;
+    else
+      scopedepth = symbol->getResolutionDepth((const Scope *)0);
+  }
+  else
+    scopedepth = 0;
   if (scopedepth != 0) {
     vector<const Scope *> scopeList;
     const Scope *point = symbol->getScope();
@@ -195,7 +205,17 @@ void PrintC::pushSymbolScope(const Symbol *symbol)
 void PrintC::emitSymbolScope(const Symbol *symbol)
 
 {
-  int4 scopedepth = symbol->getResolutionDepth(curscope);
+  int4 scopedepth;
+  if (namespc_strategy == MINIMAL_NAMESPACES)
+    scopedepth = symbol->getResolutionDepth(curscope);
+  else if (namespc_strategy == ALL_NAMESPACES) {
+    if (symbol->getScope() == curscope)
+      scopedepth = 0;
+    else
+      scopedepth = symbol->getResolutionDepth((const Scope *)0);
+  }
+  else
+    scopedepth = 0;
   if (scopedepth != 0) {
     vector<const Scope *> scopeList;
     const Scope *point = symbol->getScope();

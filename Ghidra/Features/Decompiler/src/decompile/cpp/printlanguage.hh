@@ -162,6 +162,13 @@ public:
     blanktoken			///< For anonymous types
   };
 
+  /// \brief Strategies for displaying namespace tokens
+  enum namespace_strategy {
+    MINIMAL_NAMESPACES = 0,	///< (default) Print just enough namespace info to fully resolve symbol
+    NO_NAMESPACES = 1,		///< Never print namespace information
+    ALL_NAMESPACES = 2		///< Always print all namespace information
+  };
+
   /// \brief An entry on the reverse polish notation (RPN) stack
   struct ReversePolish {
     const OpToken *tok;		///< The operator token
@@ -245,6 +252,7 @@ protected:
   uint4 mods;				///< Currently active printing modifications
   uint4 instr_comment_type;		///< Type of instruction comments to display
   uint4 head_comment_type;		///< Type of header comments to display
+  namespace_strategy namespc_strategy;	///< How should namespace tokens be displayed
 #ifdef CPUI_DEBUG
   bool isStackEmpty(void) const { return (nodepend.empty()&&revpol.empty()); }	///< Return \b true if the RPN stack is empty
   bool isModStackEmpty(void) const { return modstack.empty(); }			///< Return \b true if the printing modification stack is empty
@@ -412,6 +420,7 @@ public:
 			   bool usecommentfill);			///< Establish comment delimiters for the language
   uint4 getInstructionComment(void) const { return instr_comment_type; }	///< Get the type of comments suitable within the body of a function
   void setInstructionComment(uint4 val) { instr_comment_type = val; }	///< Set the type of comments suitable within the body of a function
+  void setNamespaceStrategy(namespace_strategy strat) { namespc_strategy = strat; }	///< Set how namespace tokens are displayed
   uint4 getHeaderComment(void) const { return head_comment_type; }	///< Get the type of comments suitable for a function header
   void setHeaderComment(uint4 val) { head_comment_type = val; }		///< Set the type of comments suitable for a function header
   bool emitsXml(void) const { return emit->emitsXml(); }		///< Does the low-level emitter, emit XML markup
