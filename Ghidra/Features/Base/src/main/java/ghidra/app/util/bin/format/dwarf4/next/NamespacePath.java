@@ -59,12 +59,9 @@ public class NamespacePath implements Comparable<NamespacePath> {
 	}
 
 	private static final String FWDSLASH_MANGLE = "-fwdslash-";
-	private static final String COLON_MANGLE = "-";
 
 	private static String preMangleName(String name) {
-		return name == null ? null
-				: name.replaceAll(":", COLON_MANGLE).replaceAll(" ", "").replaceAll("/",
-					FWDSLASH_MANGLE);
+		return name == null ? null : name.replaceAll(" ", "").replaceAll("/", FWDSLASH_MANGLE);
 	}
 
 	private final NamespacePath parent;
