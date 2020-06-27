@@ -119,22 +119,15 @@ class LayoutTransitionManager {
 		this.vertexShapeFunction = visualizationServer.getRenderContext().getVertexShapeFunction();
 		this.originalEdgeShapeFunction =
 			visualizationServer.getRenderContext().getEdgeShapeFunction();
-		this.pool = GThreadPool.getSharedThreadPool("LayoutAlgorithms");
+		this.pool = GThreadPool.getPrivateThreadPool("LayoutAlgorithms");
 
 		visualizationServer.getVisualizationModel().getLayoutModel()
 				.getLayoutStateChangeSupport().addLayoutStateChangeListener(
 				evt -> {
 					if (evt.active) {
 						showLayoutWorking(currentExecutor);
-						// could show a 'Layout Busy' Dialog here
-//						log.info("LayoutAlgorithm started");
 					} else {
-						// could close 'Layout Busy' dialog
-//						if (currentExecutor != null) {
-//							if (currentExecutor instanceof )
-//						}
 						hideLayoutWorking();
-//						log.info("LayoutAlgorithm has finished");
 					}
 				}
 		);
@@ -154,6 +147,7 @@ class LayoutTransitionManager {
 		cancel.addActionListener(evt -> {
 			((ThreadPoolExecutor) executor).shutdownNow();
 			layoutWorkingWindow.setVisible(false);
+			pool = GThreadPool.getPrivateThreadPool("LayoutAlgorithms");
 		});
 		panel.add(cancel);
 		this.layoutWorkingWindow = new JDialog(win, "Dialog", Dialog.ModalityType.MODELESS);
@@ -186,9 +180,9 @@ class LayoutTransitionManager {
 		visualizationServer.getRenderContext().getMultiLayerTransformer().setToIdentity();
 		LayoutAlgorithm<AttributedVertex> layoutAlgorithm = builder.build();
 
-		if (layoutAlgorithm instanceof Threaded) {
+		if (layoutAlgorithm instanceof ExecutorConsumer) {
 			currentExecutor = pool.getExecutor();
-			((Threaded)layoutAlgorithm).setExecutor(currentExecutor);
+			((ExecutorConsumer)layoutAlgorithm).setExecutor(currentExecutor);
 		}
 		if (!(layoutAlgorithm instanceof EdgeShapeFunctionSupplier)) {
 			visualizationServer.getRenderContext().setEdgeShapeFunction(originalEdgeShapeFunction);
