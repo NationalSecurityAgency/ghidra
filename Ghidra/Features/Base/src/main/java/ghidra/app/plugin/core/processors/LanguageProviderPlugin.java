@@ -24,14 +24,11 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
-import docking.widgets.tree.GTreeNode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.FrontEndable;
-import ghidra.framework.main.datatable.DomainFileInfo;
 import ghidra.framework.main.datatable.ProjectDataContext;
-import ghidra.framework.main.datatree.DomainFileNode;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -71,47 +68,39 @@ public final class LanguageProviderPlugin extends Plugin implements FrontEndable
 
 		setLanguageAction = new DockingAction("Set Language", getName()) {
 
-			DomainFile domainFile;
-
 			@Override
 			public void actionPerformed(ActionContext context) {
-				if (domainFile != null) {
-					setLanguage(domainFile);
+				DomainFile file = getDomainFile((ProjectDataContext) context);
+				if (file != null) {
+					setLanguage(file);
 				}
 			}
 
 			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (!(context instanceof ProjectDataContext)) {
+			public boolean isEnabledForContext(ActionContext actionContext) {
+				if (!(actionContext instanceof ProjectDataContext)) {
+					return false;
+				}
+				ProjectDataContext context = (ProjectDataContext) actionContext;
+				DomainFile file = getDomainFile(context);
+				if (file == null) {
 					return false;
 				}
 
-				Object contextObject = context.getContextObject();
-				if (contextObject instanceof GTreeNode) {
-					GTreeNode node = (GTreeNode) contextObject;
-					if (node instanceof DomainFileNode) {
-						domainFile = ((DomainFileNode) node).getDomainFile();
-						return domainFile.isInWritableProject() &&
-							Program.class.isAssignableFrom(domainFile.getDomainObjectClass());
-					}
+				return file.isInWritableProject() &&
+					Program.class.isAssignableFrom(file.getDomainObjectClass());
+			}
+
+			private DomainFile getDomainFile(ProjectDataContext context) {
+				if (context.getFileCount() == 1 && context.getFolderCount() == 0) {
+					return context.getSelectedFiles().get(0);
 				}
-
-
-
-				if (!(contextObject instanceof DomainFileInfo)) {
-					return false;
-				}
-
-				DomainFileInfo info = (DomainFileInfo) context.getContextObject();
-				domainFile = info.getDomainFile();
-				return domainFile.isInWritableProject() &&
-					Program.class.isAssignableFrom(domainFile.getDomainObjectClass());
+				return null;
 			}
 
 			@Override
 			public void dispose() {
 				super.dispose();
-				domainFile = null;
 			}
 
 		};
