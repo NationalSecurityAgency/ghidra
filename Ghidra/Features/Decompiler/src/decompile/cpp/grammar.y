@@ -524,7 +524,7 @@ uint4 GrammarLexer::moveState(char lookahead)
     }
     else if ((lookahead>='a')&&(lookahead<='z')) {
     }
-    else if (lookahead == '_') {
+    else if (lookahead == '_' || lookahead == ':') {
     }
     else {
       state = start;

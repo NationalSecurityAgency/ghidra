@@ -43,12 +43,12 @@ class ScopeGhidra : public Scope {
   Symbol *dump2Cache(Document *doc) const;			///< Parse a response into the cache
   Symbol *removeQuery(const Address &addr) const;		///< Process a query that missed the cache
   void processHole(const Element *el) const;			///< Process a response describing a hole
-  Scope *createNewScope(const string &nm,uint8 id,Scope *par) const;	///< Create a global \e namespace Scope
   Scope *reresolveScope(uint8 id) const;	///< Find the Scope that will contain a result Symbol
   virtual void addRange(AddrSpace *spc,uintb first,uintb last);
   virtual void removeRange(AddrSpace *spc,uintb first,uintb last) {
     throw LowlevelError("remove_range should not be performed on ghidra scope");
   }
+  virtual Scope *buildSubScope(const string &nm);
   virtual void addSymbolInternal(Symbol *sym) { throw LowlevelError("add_symbol_internal unimplemented"); }
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
 				      const RangeList &uselim) { throw LowlevelError("addMap unimplemented"); }
@@ -125,15 +125,18 @@ public:
 /// be a ScopeGhidra.  This will query the Ghidra client on behalf of the \e namespace and
 /// register any new symbols with \b this Scope.
 class ScopeGhidraNamespace : public ScopeInternal {
+  friend class ScopeGhidra;
   ArchitectureGhidra *ghidra;		///< Connection to the Ghidra client
   uint8 scopeId;			///< Internal id allowing Ghidra client to reference formal namespaces
+  void setClientId(uint8 id) { scopeId = id; }
+protected:
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
 				      const RangeList &uselim);
 public:
-  ScopeGhidraNamespace(const string &nm,uint8 id,ArchitectureGhidra *g)
-    : ScopeInternal(nm,g) { ghidra = g; scopeId = id; }		///< Constructor
+  ScopeGhidraNamespace(const string &nm,ArchitectureGhidra *g)
+    : ScopeInternal(nm,g) { ghidra = g; scopeId = 0; }		///< Constructor
 
-  uint8 getId(void) const { return scopeId; }		///< Get the Ghidra specific id
+  uint8 getClientId(void) const { return scopeId; }		///< Get the Ghidra specific id
   virtual bool isNameUsed(const string &nm,const Scope *op2) const;
 };
 

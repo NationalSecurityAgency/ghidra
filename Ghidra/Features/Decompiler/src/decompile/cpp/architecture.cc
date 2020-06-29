@@ -276,16 +276,18 @@ void Architecture::clearAnalysis(Funcdata *fd)
 
 /// Symbols do not necessarily need to be available for the decompiler.
 /// This routine loads all the \e load \e image knows about into the symbol table
-void Architecture::readLoaderSymbols(void)
+/// \param delim is the delimiter separating namespaces from symbol base names
+void Architecture::readLoaderSymbols(const string &delim)
 
 {
   if (loadersymbols_parsed) return; // already read
-  Scope *scope = symboltab->getGlobalScope();
   loader->openSymbols();
   loadersymbols_parsed = true;
   LoadImageFunc record;
   while(loader->getNextSymbol(record)) {
-    scope->addFunction(record.address,record.name);
+    string basename;
+    Scope *scope = symboltab->findCreateScopeFromSymbolName(record.name, delim, basename, (Scope *)0);
+    scope->addFunction(record.address,basename);
   }
   loader->closeSymbols();
 }
@@ -324,9 +326,13 @@ SegmentOp *Architecture::getSegmentOp(AddrSpace *spc) const
 void Architecture::setPrototype(const PrototypePieces &pieces)
 
 {
-  Funcdata *fd = symboltab->getGlobalScope()->queryFunction( pieces.name );
+  string basename;
+  Scope *scope = symboltab->resolveScopeFromSymbolName(pieces.name, "::", basename, (Scope *)0);
+  if (scope == (Scope *)0)
+    throw ParseError("Unknown namespace: " + pieces.name);
+  Funcdata *fd = scope->queryFunction( basename );
   if (fd == (Funcdata *)0)
-    throw ParseError("Unknown function name: "+pieces.name);
+    throw ParseError("Unknown function name: " + pieces.name);
 
   fd->getFuncProto().setPieces(pieces);
 }

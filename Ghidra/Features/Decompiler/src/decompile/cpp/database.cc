@@ -1702,6 +1702,12 @@ bool Scope::isReadOnly(const Address &addr,int4 size,const Address &usepoint) co
   return ((flags & Varnode::readonly)!=0);
 }
 
+Scope *ScopeInternal::buildSubScope(const string &nm)
+
+{
+  return new ScopeInternal(nm,glb);
+}
+
 void ScopeInternal::addSymbolInternal(Symbol *sym)
 
 {
@@ -2291,10 +2297,10 @@ void ScopeInternal::findByName(const string &name,vector<Symbol *> &res) const
 bool ScopeInternal::isNameUsed(const string &nm,const Scope *op2) const
 
 {
-  Symbol sym((Scope *)0,name,(Datatype *)0);
+  Symbol sym((Scope *)0,nm,(Datatype *)0);
   SymbolNameTree::const_iterator iter = nametree.lower_bound(&sym);
   if (iter != nametree.end()) {
-    if ((*iter)->getName() == name)
+    if ((*iter)->getName() == nm)
       return true;
   }
   Scope *par = getParent();
@@ -2583,6 +2589,23 @@ void ScopeInternal::processHole(const Element *el)
   }
 }
 
+/// \brief Parse a \<collision> tag indicating a named symbol with no storage or data-type info
+///
+/// Let the decompiler know that a name is occupied within the scope for isNameUsed queries, without
+/// specifying storage and data-type information about the symbol.  This is modeled currently by
+/// creating an unmapped symbol.
+/// \param el is the \<collision> element
+void ScopeInternal::processCollision(const Element *el)
+
+{
+  const string &nm(el->getAttributeValue("name"));
+  SymbolNameTree::const_iterator iter = findFirstByName(nm);
+  if (iter == nametree.end()) {
+    Datatype *ct = glb->types->getBase(1,TYPE_INT);
+    addSymbol(nm,ct);
+  }
+}
+
 /// \brief Insert a Symbol into the \b nametree
 ///
 /// Duplicate symbol names are allowed for by establishing a deduplication id for the Symbol.
@@ -2657,6 +2680,8 @@ void ScopeInternal::restoreXml(const Element *el)
       }
       else if (subel->getName() == "hole")
 	processHole(subel);
+      else if (subel->getName() == "collision")
+	processCollision(subel);
       else
 	throw LowlevelError("Unknown symbollist tag: "+subel->getName());
       ++iter2;
@@ -2911,6 +2936,22 @@ void Database::removeRange(Scope *scope,AddrSpace *spc,uintb first,uintb last)
   fillResolve(scope);
 }
 
+/// Look for an immediate child scope by name in a given parent.  If does not exist,
+/// create a new scope with the name and attach it to the parent.
+/// \param nm is the base name of the desired subscope
+/// \param parent is the given parent scope to search
+/// \return the subscope object either found or created
+Scope *Database::findCreateSubscope(const string &nm,Scope *parent)
+
+{
+  Scope *res = parent->resolveScope(nm);
+  if (res != (Scope *)0)
+    return res;
+  res = globalscope->buildSubScope(nm);
+  attachScope(res, parent);
+  return res;
+}
+
 /// An \e absolute \e path of Scope names must be provided, from the global
 /// Scope down to the desired Scope.  If the first path name is blank (""), it
 /// matches the global Scope.  If the first path name is not blank, the
@@ -2945,8 +2986,8 @@ Scope *Database::resolveScope(const vector<string> &subnames) const
 /// \param basename will hold the passed back base Symbol name
 /// \param start is the Scope to start drilling down from, or NULL for the global scope
 /// \return the Scope being referred to by the name
-Scope *Database::resolveScopeSymbolName(const string &fullname,const string &delim,string &basename,
-					Scope *start) const
+Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string &delim,string &basename,
+					    Scope *start) const
 {
   if (start == (Scope *)0)
     start = globalscope;
@@ -2960,6 +3001,37 @@ Scope *Database::resolveScopeSymbolName(const string &fullname,const string &del
     start = start->resolveScope(scopename);
     if (start == (Scope *)0)	// Was the scope name bad
       return start;
+    mark = endmark + delim.size();
+  }
+  basename = fullname.substr(mark,endmark);
+  return start;
+}
+
+/// \brief Find and/or create Scopes associated with a qualified Symbol name
+///
+/// The name is parsed using a \b delimiter that is passed in. The name can
+/// be only partially qualified by passing in a starting Scope, which the
+/// name is assumed to be relative to. Otherwise the name is assumed to be
+/// relative to the global Scope.  The unqualified (base) name of the Symbol
+/// is passed back to the caller.  Any missing scope in the path is created.
+/// \param fullname is the qualified Symbol name
+/// \param delim is the delimiter separating names
+/// \param basename will hold the passed back base Symbol name
+/// \param start is the Scope to start drilling down from, or NULL for the global scope
+/// \return the Scope being referred to by the name
+Scope *Database::findCreateScopeFromSymbolName(const string &fullname,const string &delim,string &basename,
+					       Scope *start)
+{
+  if (start == (Scope *)0)
+    start = globalscope;
+
+  string::size_type mark = 0;
+  string::size_type endmark;
+  for(;;) {
+    endmark = fullname.find(delim,mark);
+    if (endmark == string::npos) break;
+    string scopename = fullname.substr(mark,endmark-mark);
+    start = findCreateSubscope(scopename, start);
     mark = endmark + delim.size();
   }
   basename = fullname.substr(mark,endmark);
@@ -3114,28 +3186,13 @@ void Database::restoreXml(const Element *el)
 
   for(;iter!=list.end();++iter) {
     const Element *subel = *iter;
-    Scope *new_scope;
     string name;
     vector<string> parnames;
     parseParentTag(subel,name,parnames);
     parnames.push_back(name);
-    new_scope = resolveScope(parnames);
-    if (new_scope == (Scope *)0) {
-      // Scope wasn't pre-existing
-      Scope *curscope = globalscope;
-      int4 i;
-      for(i=1;i<parnames.size();++i) {
-	Scope *nextscope = curscope->resolveScope(parnames[i]); // Resolve through any pre-existing scopes
-	if (nextscope == (Scope *)0) break;
-	curscope = nextscope;
-      }
-      while(i != parnames.size()) {
-	new_scope = new ScopeInternal(parnames[i],glb); // Create any new scopes, up to and including
-	attachScope(new_scope,curscope); // the scope represented by this Element
-	curscope = new_scope;
-	i += 1;
-      }
-    }
+    Scope *new_scope = globalscope;
+    for(int4 i=1;i<parnames.size();++i)
+      new_scope = findCreateSubscope(parnames[i], new_scope);
     new_scope->restoreXml(subel);
   }
 }

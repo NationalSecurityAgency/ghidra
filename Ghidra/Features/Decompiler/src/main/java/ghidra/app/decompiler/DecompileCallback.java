@@ -563,7 +563,7 @@ public class DecompileCallback {
 		int pathSize = 0;
 		Namespace curspace = namespace;
 		long curId = namespace.getID();
-		while (curId != stopId && curId != 0) {
+		while (curId != stopId && curId != 0 && !(curspace instanceof Library)) {
 			pathSize += 1;
 			curspace = curspace.getParentNamespace();
 			curId = curspace.getID();
@@ -592,6 +592,9 @@ public class DecompileCallback {
 			}
 			for (int i = 0; i < pathSize; ++i) {
 				if (path[i] == id) {
+					if (debug != null) {
+						debug.nameIsUsed(symSpace, name);
+					}
 					return true;
 				}
 			}

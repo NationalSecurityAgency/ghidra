@@ -16,6 +16,12 @@
 #include "database_ghidra.hh"
 #include "funcdata.hh"
 
+Scope *ScopeGhidra::buildSubScope(const string &nm)
+
+{
+  return new ScopeGhidraNamespace(nm,ghidra);
+}
+
 /// \param g is the Architecture and connection to the Ghidra client
 ScopeGhidra::ScopeGhidra(ArchitectureGhidra *g)
   : Scope("",g,this)
@@ -29,30 +35,6 @@ ScopeGhidra::~ScopeGhidra(void)
 
 {
   delete cache;
-}
-
-/// Ghidra may report that a Symbol is in a \e namespace. This method
-/// creates a dedicated Scope object to hold such a Symbol. The immediate
-/// parent for the new Scope must already exist.
-/// \param nm is the name of the new \e namespace
-/// \param id is the Ghidra specific id associated with the namespace
-/// \param par is the parent Scope
-/// \return the new \e namespace Scope
-Scope *ScopeGhidra::createNewScope(const string &nm,uint8 id,Scope *par) const
-
-{
-  Scope *newscope = par->resolveScope(nm);
-  if (newscope != (Scope *)0) {
-    // Its possible because of the way that we merge root namespaces that
-    // Ghidra has distinct namespace ids for namespaces that we want merged
-    // So we return any existing namespace even though the id is different.
-    return newscope;
-  }
-  newscope = new ScopeGhidraNamespace(nm,id,ghidra);
-  ghidra->symboltab->attachScope(newscope,par);
-  if (id != 0)
-    namespaceMap[id] = newscope;
-  return newscope;
 }
 
 /// The Ghidra client reports a \e namespace id associated with
@@ -85,8 +67,13 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
       s.unsetf(ios::dec | ios::hex | ios::oct);
       s >> scopeId;
       miter = namespaceMap.find(scopeId);
-      if (miter == namespaceMap.end())
-	curscope = createNewScope(el->getContent(), scopeId, curscope);
+      if (miter == namespaceMap.end()) {
+	curscope = glb->symboltab->findCreateSubscope(el->getContent(), curscope);
+	ScopeGhidraNamespace *ghidraScope = (ScopeGhidraNamespace *)curscope;
+	if (ghidraScope->getClientId() == 0)
+	  ghidraScope->setClientId(scopeId);
+	namespaceMap[scopeId] = curscope;
+      }
       else
 	curscope = (*miter).second;
     }
@@ -428,6 +415,6 @@ bool ScopeGhidraNamespace::isNameUsed(const string &nm,const Scope *op2) const
   if (ArchitectureGhidra::isDynamicSymbolName(nm))
     return false;		// Just assume default FUN_ and DAT_ names don't collide
   const ScopeGhidraNamespace *otherScope = dynamic_cast<const ScopeGhidraNamespace *>(op2);
-  uint8 otherId = (otherScope != (const ScopeGhidraNamespace *)0) ? otherScope->getId() : 0;
+  uint8 otherId = (otherScope != (const ScopeGhidraNamespace *)0) ? otherScope->getClientId() : 0;
   return ghidra->isNameUsed(nm, scopeId, otherId);
 }

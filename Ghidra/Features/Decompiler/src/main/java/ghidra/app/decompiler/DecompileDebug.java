@@ -677,6 +677,14 @@ public class DecompileDebug {
 		cpool.add(buf.toString());
 	}
 
+	public void nameIsUsed(Namespace spc, String nm) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("<collision");
+		SpecXmlUtils.xmlEscapeAttribute(buffer, "name", nm);
+		buffer.append("/>\n");
+		getMapped(spc, buffer.toString());
+	}
+
 	public void addFlowOverride(Address addr,FlowOverride fo) {
 		StringBuilder buf = new StringBuilder();
 		buf.append("<flow type=\"");

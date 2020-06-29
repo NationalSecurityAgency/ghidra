@@ -418,7 +418,6 @@ class Scope {
   void attachScope(Scope *child);		///< Attach a new child Scope to \b this
   void detachScope(ScopeMap::iterator iter);	///< Detach a child Scope from \b this
   void assignId(uint4 val) { uniqueId = val; }	///< Let the database assign a unique id to \b this scope
-
 protected:
   Architecture *glb;				///< Architecture of \b this scope
   string name;					///< Name of \b this scope
@@ -453,6 +452,15 @@ protected:
 					  LabSymbol **addrmatch);
 
   const RangeList &getRangeTree(void) const { return rangetree; }	///< Access the address ranges owned by \b this Scope
+
+  /// \brief Build an unattached Scope to be associated as a sub-scope of \b this
+  ///
+  /// This is a Scope object \e factory, intended to be called off of the global scope for building
+  /// global namespace scopes.  Function scopes are handled differently.
+  /// \param nm is the name of the new scope
+  /// \return the new Scope object
+  virtual Scope *buildSubScope(const string &nm)=0;
+
   virtual void restrictScope(Funcdata *f);				///< Convert \b this to a local Scope
 
   // These add/remove range are for scope \b discovery, i.e. we may
@@ -719,9 +727,11 @@ public:
 /// a \b maptable, which is a list of rangemaps that own the SymbolEntry objects.
 class ScopeInternal : public Scope {
   void processHole(const Element *el);
+  void processCollision(const Element *el);
   void insertNameTree(Symbol *sym);
   SymbolNameTree::const_iterator findFirstByName(const string &name) const;
 protected:
+  virtual Scope *buildSubScope(const string &nm);	///< Build an unattached Scope to be associated as a sub-scope of \b this
   virtual void addSymbolInternal(Symbol *sym);
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,const RangeList &uselim);
   virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
@@ -858,7 +868,9 @@ public:
   void removeRange(Scope *scope,AddrSpace *spc,uintb first,uintb last);	///< Remove an address range from \e ownership of a Scope
   Scope *getGlobalScope(void) const { return globalscope; }	///< Get the global Scope
   Scope *resolveScope(const vector<string> &subnames) const;	///< Look-up a Scope by name
-  Scope *resolveScopeSymbolName(const string &fullname,const string &delim,string &basename,Scope *start) const;
+  Scope *resolveScopeFromSymbolName(const string &fullname,const string &delim,string &basename,Scope *start) const;
+  Scope *findCreateSubscope(const string &nm,Scope *parent);	/// Find (and if not found create) a specific subscope
+  Scope *findCreateScopeFromSymbolName(const string &fullname,const string &delim,string &basename,Scope *start);
   const Scope *mapScope(const Scope *qpoint,const Address &addr,const Address &usepoint) const;
   Scope *mapScope(Scope *qpoint,const Address &addr,const Address &usepoint);
   uint4 getProperty(const Address &addr) const { return flagbase.getValue(addr); }	///< Get boolean properties at the given address

@@ -59,6 +59,7 @@ class PrintJava : public PrintC {
   virtual void printUnicode(ostream &s,int4 onechar) const;
 public:
   PrintJava(Architecture *g,const string &nm="java-language");	///< Constructor
+  virtual void docFunction(const Funcdata *fd);
   virtual void pushTypeStart(const Datatype *ct,bool noident);
   virtual void pushTypeEnd(const Datatype *ct);
   virtual bool doEmitWideCharPrefix(void) const { return false; }
