@@ -1251,7 +1251,7 @@ macro subCarryFlags ( op1, op2 ) {
 macro resultflags(result) {
  SF = result s< 0;
  ZF = result == 0;
- PF = popcount(result) & 1;
+ PF = ((popcount(result & 0xff) & 1:1) == 0);
  # AF not implemented
 }
 
@@ -1264,7 +1264,7 @@ macro shiftresultflags(result,count) {
 
  local newZF = (result == 0);
  ZF = (!notzero & ZF) | (notzero & newZF);
- PF = popcount(result) & 1;
+ PF = ((popcount(result & 0xff) & 1:1) == 0);
  # AF not implemented
 }
 
@@ -1283,9 +1283,9 @@ macro logicalflags() {
  OF = 0;
 }
 
-macro imultflags(highhalf) {
- CF = highhalf != 0 & highhalf != -1;
- OF = CF;
+macro imultflags(low,total){
+  CF = sext(low) != total;
+  OF = CF;
 }
 
 macro multflags(highhalf) {
@@ -1941,10 +1941,10 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
                                               Rmr64 = tmp | ((Rmr64 & 0x00000000000000ff) << 56); }
 @endif
 
-:BT r16,Reg16		is vexMode=0 & opsize=0 & byte=0xf; byte=0xa3; mod=3 & r16 & Reg16		{ CF = ((r16 >> (Reg16 &  0xf)) & 1) != 0; }
+:BT Rmr16,Reg16		is vexMode=0 & opsize=0 & byte=0xf; byte=0xa3; mod=3 & Rmr16 & Reg16		{ CF = ((Rmr16 >> (Reg16 &  0xf)) & 1) != 0; }
 :BT Mem,Reg16		is vexMode=0 & opsize=0 & byte=0xf; byte=0xa3; Mem & Reg16 ...		{ local ptr = Mem + (sext(Reg16) s>> 3);
 											  CF = ((*:1 ptr >> (Reg16 & 0x7)) & 1) != 0; }
-:BT r32,Reg32		is vexMode=0 & opsize=1 & byte=0xf; byte=0xa3; mod=3 & r32 & Reg32		{ CF = ((r32 >> (Reg32 & 0x1f)) & 1) != 0; }
+:BT Rmr32,Reg32		is vexMode=0 & opsize=1 & byte=0xf; byte=0xa3; mod=3 & Rmr32 & Reg32		{ CF = ((Rmr32 >> (Reg32 & 0x1f)) & 1) != 0; }
 :BT Mem,Reg32		is vexMode=0 & opsize=1 & byte=0xf; byte=0xa3; Mem & Reg32 ...		{
 @ifdef IA64
     local ptr = Mem + (sext(Reg32) s>> 3);
@@ -1954,7 +1954,7 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
     CF = ((*:1 ptr >> (Reg32 & 0x7)) & 1) != 0;
 }
 @ifdef IA64
-:BT r64,Reg64		is vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; mod=3 & r64 & Reg64		{ CF = ((r64 >> (Reg64 & 0x3f)) & 1) != 0; }
+:BT Rmr64,Reg64		is vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; mod=3 & Rmr64 & Reg64		{ CF = ((Rmr64 >> (Reg64 & 0x3f)) & 1) != 0; }
 :BT Mem,Reg64		is vexMode=0 & opsize=2 & byte=0xf; byte=0xa3; Mem & Reg64 ...		{ local ptr = Mem + (Reg64 s>> 3);
 											  CF = ((*:1 ptr >> (Reg64 & 0x7)) & 1) != 0; }
 @endif
@@ -1964,9 +1964,9 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
 :BT rm64,imm8       is vexMode=0 & opsize=2 & byte=0xf; byte=0xba; (rm64 & reg_opcode=4 ...); imm8  { CF = ((rm64 >> (imm8 & 0x3f)) & 1) != 0; }
 @endif
 
-:BTC r16,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xbb; mod=3 & r16 & Reg16		{ local bit=Reg16&0xf; local val=(r16>>bit)&1; r16=r16^(1<<bit); CF=(val!=0); }
+:BTC Rmr16,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xbb; mod=3 & Rmr16 & Reg16		{ local bit=Reg16&0xf; local val=(Rmr16>>bit)&1; Rmr16=Rmr16^(1<<bit); CF=(val!=0); }
 :BTC Mem,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xbb; Mem & Reg16 ...		{ local ptr = Mem + (sext(Reg16) s>> 3); local bit=Reg16&7; local val = (*:1 ptr >> bit) & 1; *:1 ptr= *:1 ptr ^(1<<bit); CF=(val!=0); }
-:BTC r32,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xbb; mod=3 & r32 & Reg32		{ local bit=Reg32&0x1f; local val=(r32>>bit)&1; r32=r32^(1<<bit); CF=(val!=0); }
+:BTC Rmr32,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xbb; mod=3 & Rmr32 & Reg32		{ local bit=Reg32&0x1f; local val=(Rmr32>>bit)&1; Rmr32=Rmr32^(1<<bit); CF=(val!=0); }
 :BTC Mem,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xbb; Mem & Reg32 ...		{
 @ifdef IA64
     local ptr = Mem + (sext(Reg32) s>> 3);
@@ -1979,18 +1979,18 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
     CF = (val != 0);
 }
 @ifdef IA64
-:BTC r64,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xbb; mod=3 & r64 & Reg64		{ local bit=Reg64&0x3f; local val=(r64>>bit)&1; r64=r64^(1<<bit); CF=(val!=0); }
+:BTC Rmr64,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xbb; mod=3 & Rmr64 & Reg64		{ local bit=Reg64&0x3f; local val=(Rmr64>>bit)&1; Rmr64=Rmr64^(1<<bit); CF=(val!=0); }
 :BTC Mem,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xbb; Mem & Reg64 ...		{ local ptr = Mem + (Reg64 s>> 3); local bit=Reg64&7; local val = (*:1 ptr >> bit) & 1; *:1 ptr = *:1 ptr ^ (1<<bit); CF = (val != 0); }
 @endif
-:BTC rm16,imm8     is vexMode=0 & opsize=0 & byte=0xf; byte=0xba; (rm16 & reg_opcode=7 ...); imm8   { local bit=imm8&0xf; local val=(rm16>>bit)&1; rm16=rm16^(val<<bit); CF=(val!=0); }
-:BTC rm32,imm8     is vexMode=0 & opsize=1 & byte=0xf; byte=0xba; (rm32 & reg_opcode=7 ...); imm8   { local bit=imm8&0x1f; local val=(rm32>>bit)&1; rm32=rm32^(val<<bit); CF=(val!=0); }
+:BTC rm16,imm8     is vexMode=0 & opsize=0 & byte=0xf; byte=0xba; (rm16 & reg_opcode=7 ...); imm8   { local bit=imm8&0xf; local val=(rm16>>bit)&1; rm16=rm16^(1<<bit); CF=(val!=0); }
+:BTC rm32,imm8     is vexMode=0 & opsize=1 & byte=0xf; byte=0xba; (rm32 & reg_opcode=7 ...); imm8   { local bit=imm8&0x1f; local val=(rm32>>bit)&1; rm32=rm32^(1<<bit); CF=(val!=0); }
 @ifdef IA64
-:BTC rm64,imm8     is vexMode=0 & opsize=2 & byte=0xf; byte=0xba; (rm64 & reg_opcode=7 ...); imm8   { local bit=imm8&0x3f; local val=(rm64>>bit)&1; rm64=rm64^(val<<bit); CF=(val!=0); }
+:BTC rm64,imm8     is vexMode=0 & opsize=2 & byte=0xf; byte=0xba; (rm64 & reg_opcode=7 ...); imm8   { local bit=imm8&0x3f; local val=(rm64>>bit)&1; rm64=rm64^(1<<bit); CF=(val!=0); }
 @endif
 
-:BTR r16,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xb3; mod=3 & r16 & Reg16		{ local bit=Reg16&0xf; local val=(r16>>bit)&1; r16=r16 & ~(1<<bit); CF=(val!=0); }
+:BTR Rmr16,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xb3; mod=3 & Rmr16 & Reg16		{ local bit=Reg16&0xf; local val=(Rmr16>>bit)&1; Rmr16=Rmr16 & ~(1<<bit); CF=(val!=0); }
 :BTR Mem,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xb3; Mem & Reg16 ...		{ local ptr = Mem + (sext(Reg16) s>> 3); local bit=Reg16&7; local val=(*:1 ptr >> bit) & 1; *:1 ptr = *:1 ptr & ~(1<<bit); CF = (val!=0); }
-:BTR r32,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xb3; mod=3 & r32 & Reg32		{ local bit=Reg32&0x1f; local val=(r32>>bit)&1; r32=r32 & ~(1<<bit); CF=(val!=0); }
+:BTR Rmr32,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xb3; mod=3 & Rmr32 & Reg32		{ local bit=Reg32&0x1f; local val=(Rmr32>>bit)&1; Rmr32=Rmr32 & ~(1<<bit); CF=(val!=0); }
 :BTR Mem,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xb3; Mem & Reg32 ...		{
 @ifdef IA64
     local ptr = Mem + (sext(Reg32) s>> 3);
@@ -2003,7 +2003,7 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
     CF = (val!=0);
 }
 @ifdef IA64
-:BTR r64,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xb3; mod=3 & r64 & Reg64		{ local bit=Reg64&0x3f; local val=(r64>>bit)&1; r64=r64 & ~(1<<bit); CF=(val!=0); }
+:BTR Rmr64,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xb3; mod=3 & Rmr64 & Reg64		{ local bit=Reg64&0x3f; local val=(Rmr64>>bit)&1; Rmr64=Rmr64 & ~(1<<bit); CF=(val!=0); }
 :BTR Mem,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xb3; Mem & Reg64 ...		{ local ptr = Mem + (Reg64 s>> 3); local bit = Reg64 & 7; local val = (*:1 ptr >> bit) & 1; *:1 ptr = *:1 ptr & ~(1<<bit); CF = (val!=0); }
 @endif
 :BTR rm16,imm8     is vexMode=0 & opsize=0 & byte=0xf; byte=0xba; (rm16 & reg_opcode=6 ...); imm8   { local bit=imm8&0xf; local val=(rm16>>bit)&1; rm16=rm16 & ~(1<<bit); CF=(val!=0); }
@@ -2012,9 +2012,9 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
 :BTR rm64,imm8     is vexMode=0 & opsize=2 & byte=0xf; byte=0xba; (rm64 & reg_opcode=6 ...); imm8   { local bit=imm8&0x3f; local val=(rm64>>bit)&1; rm64=rm64 & ~(1<<bit); CF=(val!=0); }
 @endif
 
-:BTS r16,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xab; mod=3 & r16 & Reg16		{ local bit=Reg16&0xf; local val=(r16>>bit)&1; r16=r16 | (1<<bit); CF=(val!=0); }
+:BTS Rmr16,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xab; mod=3 & Rmr16 & Reg16		{ local bit=Reg16&0xf; local val=(Rmr16>>bit)&1; Rmr16=Rmr16 | (1<<bit); CF=(val!=0); }
 :BTS Mem,Reg16	is vexMode=0 & opsize=0 & byte=0xf; byte=0xab; Mem & Reg16 ...		{ local ptr = Mem + (sext(Reg16) s>> 3); local bit = Reg16&7; local val = (*:1 ptr >> bit) & 1; *:1 ptr = *:1 ptr | (1<<bit); CF = (val != 0); }
-:BTS r32,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xab; mod=3 & r32 & Reg32		{ local bit=Reg32&0x1f; local val=(r32>>bit)&1; r32=r32 | (1<<bit); CF=(val!=0); }
+:BTS Rmr32,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xab; mod=3 & Rmr32 & Reg32		{ local bit=Reg32&0x1f; local val=(Rmr32>>bit)&1; Rmr32=Rmr32 | (1<<bit); CF=(val!=0); }
 :BTS Mem,Reg32	is vexMode=0 & opsize=1 & byte=0xf; byte=0xab; Mem & Reg32 ...		{
 @ifdef IA64
     local ptr = Mem + (sext(Reg32) s>>3);
@@ -2027,7 +2027,7 @@ Suffix3D: imm8        is imm8 [ suffix3D=imm8; ] { }
     CF = (val != 0);
 }
 @ifdef IA64
-:BTS r64,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xab; mod=3 & r64 & Reg64		{ local bit=Reg64&0x3f; local val=(r64>>bit)&1; r64=r64 | (1<<bit); CF=(val!=0); }
+:BTS Rmr64,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xab; mod=3 & Rmr64 & Reg64		{ local bit=Reg64&0x3f; local val=(Rmr64>>bit)&1; Rmr64=Rmr64 | (1<<bit); CF=(val!=0); }
 :BTS Mem,Reg64	is vexMode=0 & opsize=2 & byte=0xf; byte=0xab; Mem & Reg64 ...		{ local ptr = Mem + (Reg64 s>>3); local bit = Reg64 & 7; local val = (*:1 ptr >> bit) & 1; *:1 ptr = *:1 ptr | (1<<bit); CF = (val != 0); }
 @endif
 :BTS rm16,imm8     is vexMode=0 & opsize=0 & byte=0xf; byte=0xba; (rm16 & reg_opcode=5 ...); imm8   { local bit=imm8&0xf; local val=(rm16>>bit)&1; rm16=rm16 | (1<<bit); CF=(val!=0); }
@@ -2127,7 +2127,7 @@ define pcodeop clzero;
 :CMC			is vexMode=0 & byte=0xf5						{ CF = CF==0; }
 
 :CMOV^cc Reg16,rm16 is vexMode=0 & opsize=0 & byte=0xf; row=4 & cc; rm16 & Reg16 ...    { if (!cc) goto inst_next; Reg16 = rm16; }
-:CMOV^cc Reg32,rm32 is vexMode=0 & opsize=1 & byte=0xf; row=4 & cc; rm32 & Reg32 ... & check_Reg32_dest ...   { if (!cc) goto inst_next; Reg32 = rm32; build check_Reg32_dest; }
+:CMOV^cc Reg32,rm32 is vexMode=0 & opsize=1 & byte=0xf; row=4 & cc; rm32 & Reg32 ... & check_Reg32_dest ...   { build check_Reg32_dest; if (!cc) goto inst_next; Reg32 = rm32;}
 @ifdef IA64
 :CMOV^cc Reg64,rm64 is vexMode=0 & opsize=2 & byte=0xf; row=4 & cc; rm64 & Reg64 ...    { if (!cc) goto inst_next; Reg64 = rm64; }
 @endif
@@ -2157,7 +2157,7 @@ define pcodeop clzero;
 @endif
 :CMP Reg8,rm8       is vexMode=0 & byte=0x3a; rm8 & Reg8 ...                            { subflags( Reg8,rm8  ); local tmp =  Reg8 -    rm8; resultflags(tmp); } 
 :CMP Reg16,rm16     is vexMode=0 & opsize=0 & byte=0x3b; rm16 & Reg16 ...       { subflags(Reg16,rm16 ); local tmp = Reg16 -   rm16; resultflags(tmp); }
-:CMP Reg32,rm32     is vexMode=0 & opsize=1 & byte=0x3b; rm32 & Reg32 ... & check_Reg32_dest ...      { subflags(Reg32,rm32 ); local tmp = Reg32 -   rm32; build check_Reg32_dest; resultflags(tmp); }
+:CMP Reg32,Rmr32     is vexMode=0 & opsize=1 & byte=0x3b; Rmr32 & Reg32       { subflags(Reg32,Rmr32 ); local tmp = Reg32 -   Rmr32; resultflags(tmp); }
 @ifdef IA64
 :CMP Reg64,rm64     is vexMode=0 & opsize=2 & byte=0x3b; rm64 & Reg64 ...       { subflags(Reg64,rm64 ); local tmp = Reg64 -   rm64; resultflags(tmp); }
 @endif
@@ -2172,17 +2172,17 @@ define pcodeop clzero;
 :CMPXCHG rm8,Reg8  is vexMode=0 & byte=0xf; byte=0xa6; rm8 & Reg8 ...           { }
 :CMPXCHG rm8,Reg8  is vexMode=0 & byte=0xf; byte=0xb0; rm8 & Reg8 ...           { subflags(AL,rm8); local tmp=AL-rm8; resultflags(tmp);
                                           local diff = rm8^Reg8; rm8 = rm8 ^ (ZF*diff);
-                                          diff = AL & rm8; AL = AL ^ (ZF*diff); }
+                                          diff = AL ^ rm8; AL = AL ^ ((ZF==0)*diff); }
 :CMPXCHG rm16,Reg16    is vexMode=0 & opsize=0 & byte=0xf; byte=0xb1; rm16 & Reg16 ...  { subflags(AX,rm16); local tmp=AX-rm16; resultflags(tmp);
                                           local diff = rm16^Reg16; rm16 = rm16 ^ (zext(ZF) * diff);
-                                          diff = AX & rm16; AX = AX ^ (zext(ZF) * diff); }
+                                          diff = AX ^ rm16; AX = AX ^ (zext(ZF==0) * diff); }
 :CMPXCHG rm32,Reg32    is vexMode=0 & opsize=1 & byte=0xf; byte=0xb1; rm32 & Reg32 ...  { subflags(EAX,rm32); local tmp=EAX-rm32; resultflags(tmp);
                                           local diff = rm32^Reg32; rm32 = rm32 ^ (zext(ZF) * diff);
-                                          diff = EAX & rm32; EAX = EAX ^ (zext(ZF) * diff); }
+                                          diff = EAX ^ rm32; EAX = EAX ^ (zext(ZF==0) * diff); }
 @ifdef IA64
 :CMPXCHG rm64,Reg64    is vexMode=0 & opsize=2 & byte=0xf; byte=0xb1; rm64 & Reg64 ...  { subflags(RAX,rm64); local tmp=RAX-rm64; resultflags(tmp);
                                           local diff = rm64^Reg64; rm64 = rm64 ^ (zext(ZF) * diff);
-                                          diff = RAX & rm64; RAX = RAX ^ (zext(ZF) * diff); }
+                                          diff = RAX ^ rm64; RAX = RAX ^ (zext(ZF==0) * diff); }
 @endif
 
 :CMPXCHG8B  m64        is vexMode=0 & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & m64 {
@@ -2637,41 +2637,41 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
                                                   RDX = rem:8; }
 @endif
 
-:IMUL             rm8   is vexMode=0 & byte=0xf6; rm8 & reg_opcode=5 ...            { AX = sext(AL) * sext(rm8); imultflags(AH); }    
+:IMUL             rm8   is vexMode=0 & byte=0xf6; rm8 & reg_opcode=5 ...            { AX = sext(AL) * sext(rm8); imultflags(AL,AX); }    
 :IMUL            rm16   is vexMode=0 & opsize=0 & byte=0xf7; rm16 & reg_opcode=5 ...    { tmp:4 = sext(AX) * sext(rm16);
-                                          DX = tmp(2); AX = tmp(0); imultflags(DX); }
+                                          DX = tmp(2); AX = tmp(0); imultflags(AX,tmp); }
 :IMUL            rm32   is vexMode=0 & opsize=1 & byte=0xf7; rm32 & reg_opcode=5 ...    { tmp:8 = sext(EAX) * sext(rm32);
-                                          EDX = tmp(4); EAX = tmp(0); imultflags(EDX); }
+                                          EDX = tmp(4); EAX = tmp(0); imultflags(EAX,tmp); }
 @ifdef IA64
 # We do a second multiply so emulator(s) that only have precision up to 64 bits will still get lower 64 bits correct
 :IMUL            rm64   is vexMode=0 & opsize=2 & byte=0xf7; rm64 & reg_opcode=5 ...    { tmp:16 = sext(RAX) * sext(rm64);
-                                          RDX = tmp(8); RAX = RAX * rm64; imultflags(RDX); }
+                                          RDX = tmp(8); RAX = RAX * rm64; imultflags(RAX,tmp); }
 @endif
 :IMUL      Reg16,rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xaf; rm16 & Reg16 ... { tmp:4 = sext(Reg16) * sext(rm16);
-                                          Reg16 = tmp(0); high:2 = tmp(2); imultflags(high);}
+                                          Reg16 = tmp(0); high:2 = tmp(2); imultflags(Reg16,tmp);}
 :IMUL      Reg32,rm32   is vexMode=0 & opsize=1 & byte=0xf; byte=0xaf; rm32 & Reg32 ... & check_Reg32_dest ... { tmp:8 = sext(Reg32) * sext(rm32);
-                                          Reg32 = tmp(0); high:4 = tmp(4); imultflags(high); build check_Reg32_dest; }
+                                          Reg32 = tmp(0); high:4 = tmp(4); imultflags(Reg32,tmp); build check_Reg32_dest; }
 @ifdef IA64
 # We do a second multiply so emulator(s) that only have precision up to 64 bits will still get lower 64 bits correct
 :IMUL      Reg64,rm64   is vexMode=0 & opsize=2 & byte=0xf; byte=0xaf; rm64 & Reg64 ... { tmp:16 = sext(Reg64) * sext(rm64);
-                                          Reg64 = Reg64 * rm64; high:8 = tmp(8); imultflags(high);}
+                                          Reg64 = Reg64 * rm64; high:8 = tmp(8); imultflags(Reg64,tmp);}
 @endif
 :IMUL Reg16,rm16,simm8_16  is vexMode=0 & opsize=0 & byte=0x6b; (rm16 & Reg16 ...) ; simm8_16 { tmp:4 = sext(rm16) * sext(simm8_16);
-                                          Reg16 = tmp(0); high:2 = tmp(2); imultflags(high);}
+                                          Reg16 = tmp(0); high:2 = tmp(2); imultflags(Reg16,tmp);}
 :IMUL Reg32,rm32,simm8_32  is vexMode=0 & opsize=1 & byte=0x6b; (rm32 & Reg32 ... & check_Reg32_dest ... ) ; simm8_32 { tmp:8 = sext(rm32) * sext(simm8_32);
-                                          Reg32 = tmp(0); high:4 = tmp(4); imultflags(high); build check_Reg32_dest; }
+                                          Reg32 = tmp(0); high:4 = tmp(4); imultflags(Reg32,tmp); build check_Reg32_dest; }
 @ifdef IA64
 # We do a second multiply so emulator(s) that only have precision up to 64 bits will still get lower 64 bits correct
 :IMUL Reg64,rm64,simm8_64  is vexMode=0 & opsize=2 & byte=0x6b; (rm64 & Reg64 ...) ; simm8_64 { tmp:16 = sext(rm64) * sext(simm8_64);
-                                          Reg64 = rm64 * simm8_64; high:8 = tmp(8); imultflags(high);}
+                                          Reg64 = rm64 * simm8_64; high:8 = tmp(8); imultflags(Reg64,tmp);}
 @endif
 :IMUL Reg16,rm16,simm16_16 is vexMode=0 & opsize=0 & byte=0x69; (rm16 & Reg16 ...) ; simm16_16    { tmp:4 = sext(rm16) * sext(simm16_16);
-                                          Reg16 = tmp(0); high:2 = tmp(2); imultflags(high);}
+                                          Reg16 = tmp(0); high:2 = tmp(2); imultflags(Reg16,tmp);}
 :IMUL Reg32,rm32,simm32_32 is vexMode=0 & opsize=1 & byte=0x69; (rm32 & Reg32 ... & check_Reg32_dest ...) ; simm32_32    { tmp:8 = sext(rm32) * sext(simm32_32);
-                                          Reg32 = tmp(0); high:4 = tmp(4); imultflags(high); build check_Reg32_dest; }
+                                          Reg32 = tmp(0); high:4 = tmp(4); imultflags(Reg32,tmp); build check_Reg32_dest; }
 @ifdef IA64
 :IMUL Reg64,rm64,simm32_32 is vexMode=0 & opsize=2 & byte=0x69; (rm64 & Reg64 ...) ; simm32_32    { tmp:16 = sext(rm64) * sext(simm32_32);
-                                          Reg64 = rm64 * sext(simm32_32); high:8 = tmp(8); imultflags(high);}
+                                          Reg64 = rm64 * sext(simm32_32); high:8 = tmp(8); imultflags(Reg64,tmp);}
 @endif
 
 # these appear in intelman2.pdf, but do they really exist?
