@@ -204,13 +204,14 @@ public class NamespaceManager implements ManagerDB {
 	 * @throws OverlappingNamespaceException if the address set to test overlaps a namespace body.
 	 */
 	public void overlapsNamespace(AddressSetView set) throws OverlappingNamespaceException {
-		AddressRangeIterator iter =
-			namespaceMap.getAddressRanges(set.getMinAddress(), set.getMaxAddress());
-		while (iter.hasNext()) {
-			AddressRange range = iter.next();
-			if (set.intersects(range.getMinAddress(), range.getMaxAddress())) {
-				throw new OverlappingNamespaceException(range.getMinAddress(),
-					range.getMaxAddress());
+		AddressRangeIterator addressRanges = set.getAddressRanges();
+		for (AddressRange addressRange : addressRanges) {
+			AddressRangeIterator namesSpaceRanges = namespaceMap.getAddressRanges(
+				addressRange.getMinAddress(), addressRange.getMaxAddress());
+			AddressRange existingRange = namesSpaceRanges.next();
+			if (existingRange != null) {
+				throw new OverlappingNamespaceException(existingRange.getMinAddress(),
+					existingRange.getMaxAddress());
 			}
 		}
 	}
