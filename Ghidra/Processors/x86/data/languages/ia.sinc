@@ -2157,7 +2157,8 @@ define pcodeop clzero;
 @endif
 :CMP Reg8,rm8       is vexMode=0 & byte=0x3a; rm8 & Reg8 ...                            { subflags( Reg8,rm8  ); local tmp =  Reg8 -    rm8; resultflags(tmp); } 
 :CMP Reg16,rm16     is vexMode=0 & opsize=0 & byte=0x3b; rm16 & Reg16 ...       { subflags(Reg16,rm16 ); local tmp = Reg16 -   rm16; resultflags(tmp); }
-:CMP Reg32,Rmr32     is vexMode=0 & opsize=1 & byte=0x3b; Rmr32 & Reg32       { subflags(Reg32,Rmr32 ); local tmp = Reg32 -   Rmr32; resultflags(tmp); }
+:CMP Reg32,Rmr32     is vexMode=0 & opsize=1 & byte=0x3b; Reg32 & mod=3 & Rmr32       { subflags(Reg32,Rmr32 ); local tmp = Reg32 -   Rmr32; resultflags(tmp); }
+:CMP Reg32,m32     is vexMode=0 & opsize=1 & byte=0x3b; Reg32 ... & m32      {subflags(Reg32,m32 ); local tmp = Reg32 -   m32; resultflags(tmp); }
 @ifdef IA64
 :CMP Reg64,rm64     is vexMode=0 & opsize=2 & byte=0x3b; rm64 & Reg64 ...       { subflags(Reg64,rm64 ); local tmp = Reg64 -   rm64; resultflags(tmp); }
 @endif
