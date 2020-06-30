@@ -920,9 +920,8 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 				disassemblerContext.flowToAddress(addr);
 
-				// TODO: An overall better caching of bytes for this block could be done instead
-				//       the previous buffering done here was not doing any buffering
-				MemBuffer instrMemBuffer = new DumbMemBufferImpl(blockMemBuffer.getMemory(), addr);
+				MemBuffer instrMemBuffer = new WrappedMemBuffer(blockMemBuffer,
+						(int) addr.subtract(blockMemBuffer.getAddress()));
 
 				adjustPreParseContext(instrMemBuffer);
 

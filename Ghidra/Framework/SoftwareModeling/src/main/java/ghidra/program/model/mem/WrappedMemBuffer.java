@@ -19,12 +19,23 @@ import java.math.BigInteger;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.util.GhidraDataConverter;
 
 public class WrappedMemBuffer implements MemBuffer {
+
+	private final GhidraDataConverter converter;
 
 	private final MemBuffer memBuffer;
 	private int baseOffset;
 	private Address address;
+
+	private static final int DEFAULT_BUFSIZE = 10;
+
+	private byte[] buffer;
+	private int subBufferIndex = 0;
+	private int minOffset = 0;
+	private int maxOffset = -1;
+	private int threshold = 0;
 
 	/**
 	 * Construct a wrapped MemBuffer with an adjustable base offset
@@ -33,8 +44,30 @@ public class WrappedMemBuffer implements MemBuffer {
 	 * @throws AddressOutOfBoundsException
 	 */
 	public WrappedMemBuffer(MemBuffer buf, int offset) throws AddressOutOfBoundsException {
+		this(buf, DEFAULT_BUFSIZE, offset);
+	}
+
+	/**
+	 * Construct a wrapped MemBuffer with an adjustable base offset
+	 * @param buf memory buffer
+	 * @buffersize size of cache buffer - specify 0 for no buffering
+	 * @param offset base offset for this buffer relative to buf's address
+	 * @throws AddressOutOfBoundsException
+	 */
+	public WrappedMemBuffer(MemBuffer buf, int bufferSize, int offset)
+			throws AddressOutOfBoundsException {
 		this.memBuffer = buf;
+		this.converter = GhidraDataConverter.getInstance(buf.isBigEndian());
+
+		buffer = new byte[bufferSize];
+		threshold = bufferSize / 100; // 1/100 of buffer size
+		
 		setBaseOffset(offset);
+	}
+
+	@Override
+	public Address getAddress() {
+		return address;
 	}
 
 	/**
@@ -43,13 +76,28 @@ public class WrappedMemBuffer implements MemBuffer {
 	 * @throws AddressOutOfBoundsException
 	 */
 	public void setBaseOffset(int offset) throws AddressOutOfBoundsException {
-		this.baseOffset = offset;
-		this.address = memBuffer.getAddress().add(baseOffset);
-	}
+		this.address = memBuffer.getAddress().add(offset);
 
-	@Override
-	public Address getAddress() {
-		return address;
+		// already set, changing position
+		if (minOffset <= maxOffset) {
+			long diff = offset - baseOffset;
+			if (diff >= minOffset && diff < (maxOffset - threshold)) {
+				baseOffset = offset;
+				minOffset -= (int) diff;
+				maxOffset -= (int) diff;
+				subBufferIndex += diff;
+				return;
+			}
+		}
+		this.baseOffset = offset;
+
+		if (buffer.length > 0) {
+			subBufferIndex = 0;
+			minOffset = 0;
+			maxOffset = -1;
+
+			maxOffset = memBuffer.getBytes(buffer, baseOffset) - 1;
+		}
 	}
 
 	/**
@@ -70,11 +118,40 @@ public class WrappedMemBuffer implements MemBuffer {
 
 	@Override
 	public byte getByte(int offset) throws MemoryAccessException {
-		return memBuffer.getByte(computeOffset(offset));
+		// no buffering, just get the byte
+		if (buffer.length <= 0) {
+			return memBuffer.getByte(computeOffset(offset));
+		}
+
+		// byte found in buffer
+		if ((offset >= minOffset) && (offset <= maxOffset)) {
+			return buffer[subBufferIndex + offset];
+		}
+
+		// fill the buffer
+		int nRead = memBuffer.getBytes(buffer, computeOffset(offset));
+
+		subBufferIndex = -offset;
+		minOffset = offset;
+		maxOffset = offset + nRead - 1;
+
+		if (nRead == 0) {
+			throw new MemoryAccessException();
+		}
+		return buffer[0];
 	}
 
 	@Override
 	public int getBytes(byte[] b, int offset) {
+		if (buffer.length > 0) {
+			// bytes are contained in the buffer
+			if (offset >= minOffset && (b.length + offset) <= maxOffset) {
+				System.arraycopy(buffer, subBufferIndex + offset, b, 0, b.length);
+				return b.length;
+			}
+		}
+
+		// grab from wrapped buffer, too many bytes, or no buffer
 		try {
 			return memBuffer.getBytes(b, computeOffset(offset));
 		}
@@ -84,33 +161,33 @@ public class WrappedMemBuffer implements MemBuffer {
 	}
 
 	@Override
-	public int getInt(int offset) throws MemoryAccessException {
-		return memBuffer.getInt(computeOffset(offset));
-	}
-
-	@Override
-	public long getLong(int offset) throws MemoryAccessException {
-		return memBuffer.getLong(computeOffset(offset));
-	}
-
-	@Override
-	public BigInteger getBigInteger(int offset, int size, boolean signed)
-			throws MemoryAccessException {
-		return memBuffer.getBigInteger(computeOffset(offset), size, signed);
-	}
-
-	@Override
 	public Memory getMemory() {
 		return memBuffer.getMemory();
 	}
 
 	@Override
-	public short getShort(int offset) throws MemoryAccessException {
-		return memBuffer.getShort(computeOffset(offset));
+	public boolean isBigEndian() {
+		return memBuffer.isBigEndian();
 	}
 
 	@Override
-	public boolean isBigEndian() {
-		return memBuffer.isBigEndian();
+	public short getShort(int offset) throws MemoryAccessException {
+		return converter.getShort(this, computeOffset(offset));
+	}
+
+	@Override
+	public int getInt(int offset) throws MemoryAccessException {
+		return converter.getInt(this, computeOffset(offset));
+	}
+
+	@Override
+	public long getLong(int offset) throws MemoryAccessException {
+		return converter.getLong(this, computeOffset(offset));
+	}
+
+	@Override
+	public BigInteger getBigInteger(int offset, int size, boolean signed)
+			throws MemoryAccessException {
+		return converter.getBigInteger(this, computeOffset(offset), size, signed);
 	}
 }
