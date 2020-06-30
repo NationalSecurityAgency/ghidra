@@ -599,7 +599,7 @@ public class HighFunctionDBUtil {
 
 			if (name != null) {
 				try {
-					setGlobalName(highSymbol, highSymbol.getName(), source);
+					setGlobalName(highSymbol, name, source);
 				}
 				catch (DuplicateNameException e) {
 					if (isRename) {
