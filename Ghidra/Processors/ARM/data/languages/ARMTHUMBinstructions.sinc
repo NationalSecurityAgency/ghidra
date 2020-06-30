@@ -4768,7 +4768,7 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
 {
    build ItCond;
   build ThumbExpandImm12;
-  local tmp = Rn0003 | ThumbExpandImm12;
+  local tmp = Rn0003 ^ ThumbExpandImm12;
   resflags(tmp);
   th_affectflags();
 }
@@ -4777,7 +4777,7 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
 {
    build ItCond;
   build thshift2;
-  local tmp = Rn0003 | thshift2;
+  local tmp = Rn0003 ^ thshift2;
   resflags(tmp);
   th_affectflags();
 }
