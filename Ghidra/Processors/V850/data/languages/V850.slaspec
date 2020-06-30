@@ -17,12 +17,12 @@ define space  register  type=register_space size=4;
 #####	     		Helpers 		#####
 #####################################################
 
-@include "Helpers/Register.sinc"
-@include "Helpers/Tokens.sinc"
-@include "Helpers/Variables.sinc"
-@include "Helpers/Conditions.sinc"
-@include "Helpers/Macros.sinc"
-@include "Helpers/Extras.sinc"
+@include "./Helpers/Register.sinc"
+@include "./Helpers/Tokens.sinc"
+@include "./Helpers/Variables.sinc"
+@include "./Helpers/Conditions.sinc"
+@include "./Helpers/Macros.sinc"
+@include "./Helpers/Extras.sinc"
 
 
 
@@ -30,8 +30,8 @@ define space  register  type=register_space size=4;
 #####	     	    Instructions		#####
 #####################################################
 
-@include "Instructions/Arithmetic.sinc"
-@include "Instructions/Float.sinc"
-@include "Instructions/Load_Store.sinc"
-@include "Instructions/Logic.sinc"
-@include "Instructions/Special.sinc"
+@include "./Instructions/Arithmetic.sinc"
+@include "./Instructions/Float.sinc"
+@include "./Instructions/Load_Store.sinc"
+@include "./Instructions/Logic.sinc"
+@include "./Instructions/Special.sinc"
