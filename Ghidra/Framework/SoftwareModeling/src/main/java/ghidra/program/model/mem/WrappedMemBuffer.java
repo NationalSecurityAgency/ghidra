@@ -129,6 +129,7 @@ public class WrappedMemBuffer implements MemBuffer {
 		}
 
 		fillBuffer(offset);
+
 		return buffer[0];
 	}
 
