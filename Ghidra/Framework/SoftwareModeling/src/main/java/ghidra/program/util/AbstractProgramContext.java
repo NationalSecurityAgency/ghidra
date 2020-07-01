@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,17 @@
  */
 package ghidra.program.util;
 
+import java.util.*;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.ProgramContext;
 
-import java.util.*;
-
 abstract public class AbstractProgramContext implements ProgramContext, DefaultProgramContext {
 
-	protected Map<String, Register> registerNameMap;
+	private Map<String, Register> registerNameMap = null;
 	protected Register[] registers;
 	protected Register baseContextRegister;
 
@@ -39,8 +38,7 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 	protected AbstractProgramContext(Register[] registers) {
 		this.registers = registers;
 
-		registerNameMap = new HashMap<String, Register>();
-		initNameMap();
+		initRegisterMap();
 
 		if (baseContextRegister != null) {
 			nonFlowingContextRegisterMask = baseContextRegister.getBaseMask().clone();
@@ -111,15 +109,12 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 		return value.clearBitValues(flowingContextRegisterMask);
 	}
 
-	protected void initNameMap() {
+	protected void initRegisterMap() {
+		registerNameMap = null;
 		baseContextRegister = null;
 		for (Register register : registers) {
-			registerNameMap.put(register.getName().toUpperCase(), register);
 			if (register.isProcessorContext()) {
 				baseContextRegister = register.getBaseRegister();
-			}
-			for (String alias : register.getAliases()) {
-				registerNameMap.put(alias.toUpperCase(), register);
 			}
 		}
 		if (baseContextRegister == null) {
@@ -127,7 +122,16 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 				new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT", Address.NO_ADDRESS, 4, true, 0);
 		}
 		defaultDisassemblyContext = new RegisterValue(baseContextRegister);
+	}
 
+	private void initRegisterNameMap() {
+		// NOTE: if you want upper case names recognized, override this method and add them
+		for (Register register : registers) {
+			registerNameMap.put(register.getName(), register);
+			for (String alias : register.getAliases()) {
+				registerNameMap.put(alias, register);
+			}
+		}
 	}
 
 	@Override
@@ -143,7 +147,13 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 
 	@Override
 	public final Register getRegister(String name) {
-		return registerNameMap.get(name.toUpperCase());
+		// if register map hasn't been initialized, initialize it
+		if (registerNameMap == null) {
+			registerNameMap = new HashMap<String, Register>();
+			initRegisterNameMap();
+		}
+		Register reg = registerNameMap.get(name);
+		return reg;
 	}
 
 	@Override
