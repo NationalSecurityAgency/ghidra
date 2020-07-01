@@ -82,6 +82,7 @@ protected:
   static OpToken binary_minus;		///< The \e binary \e subtraction operator
   static OpToken shift_left;		///< The \e left \e shift operator
   static OpToken shift_right;		///< The \e right \e shift operator
+  static OpToken shift_sright;		///< The signed \e right \e shift operator
   static OpToken less_than;		///< The \e less \e than operator
   static OpToken less_equal;		///< The \e less \e than \e or \e equal operator
   static OpToken greater_than;		///< The \e greater \e than operator
@@ -124,6 +125,8 @@ protected:
   // Routines that are specific to C/C++
   void buildTypeStack(const Datatype *ct,vector<const Datatype *> &typestack);	///< Prepare to push components of a data-type declaration
   void pushPrototypeInputs(const FuncProto *proto);				///< Push input parameters
+  void pushSymbolScope(const Symbol *symbol);			///< Push tokens resolving a symbol's scope
+  void emitSymbolScope(const Symbol *symbol);			///< Emit tokens resolving a symbol's scope
   virtual void pushTypeStart(const Datatype *ct,bool noident);	///< Push part of a data-type declaration onto the RPN stack, up to the identifier
   virtual void pushTypeEnd(const Datatype *ct);			///< Push the tail ends of a data-type declaration onto the RPN stack
   void pushBoolConstant(uintb val,const TypeBase *ct,const Varnode *vn,
@@ -251,7 +254,7 @@ public:
   virtual void opIntOr(const PcodeOp *op) { opBinary(&bitwise_or,op); }
   virtual void opIntLeft(const PcodeOp *op) { opBinary(&shift_left,op); }
   virtual void opIntRight(const PcodeOp *op) { opBinary(&shift_right,op); }
-  virtual void opIntSright(const PcodeOp *op) { opBinary(&shift_right,op); }
+  virtual void opIntSright(const PcodeOp *op) { opBinary(&shift_sright,op); }
   virtual void opIntMult(const PcodeOp *op) { opBinary(&multiply,op); }
   virtual void opIntDiv(const PcodeOp *op) { opBinary(&divide,op); }
   virtual void opIntSdiv(const PcodeOp *op) { opBinary(&divide,op); }

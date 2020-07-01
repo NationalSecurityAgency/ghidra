@@ -105,6 +105,16 @@ void PrintLanguage::setCommentDelimeter(const string &start,const string &stop,b
   }
 }
 
+void PrintLanguage::popScope(void)
+
+{
+  scopestack.pop_back();
+  if (scopestack.empty())
+    curscope = (Scope *)0;
+  else
+    curscope = scopestack.back();
+}
+
 /// This generally will recursively push an entire expression onto the RPN stack,
 /// up to Varnode objects marked as \e explicit, and will decide token order
 /// and parenthesis placement. As the ordering gets resolved,
@@ -565,6 +575,7 @@ void PrintLanguage::resetDefaultsInternal(void)
   mods = 0;
   head_comment_type = Comment::header | Comment::warningheader;
   line_commentindent = 20;
+  namespc_strategy = MINIMAL_NAMESPACES;
   instr_comment_type = Comment::user2 | Comment::warning;
 }
 
@@ -658,10 +669,8 @@ void PrintLanguage::clear(void)
     mods = modstack.front();
     modstack.clear();
   }
-  if (!scopestack.empty()) {
-    curscope = scopestack.front();
-    scopestack.clear();
-  }
+  scopestack.clear();
+  curscope = (const Scope *)0;
   revpol.clear();
   pending = 0;
 

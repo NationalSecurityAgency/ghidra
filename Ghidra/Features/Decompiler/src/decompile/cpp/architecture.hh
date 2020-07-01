@@ -177,7 +177,7 @@ public:
   int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
   void setDefaultModel(const string &nm);		///< Set the default PrototypeModel
   void clearAnalysis(Funcdata *fd);			///< Clear analysis specific to a function
-  void readLoaderSymbols(void);		 		///< Read any symbols from loader into database
+  void readLoaderSymbols(const string &delim);		 ///< Read any symbols from loader into database
   void collectBehaviors(vector<OpBehavior *> &behave) const;	///< Provide a list of OpBehavior objects
   SegmentOp *getSegmentOp(AddrSpace *spc) const;	///< Retrieve the \e segment op for the given space if any
   void setPrototype(const PrototypePieces &pieces);	///< Set the prototype for a particular function

@@ -1087,8 +1087,16 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     // Since we are looking for a global address
     // Assume it is address tied and use empty usepoint
   SymbolEntry *entry = data.getScopeLocal()->getParent()->queryContainer(rampoint,1,Address());
-  if (needexacthit&&(entry != (SymbolEntry *)0)) {
-    if (entry->getAddr() != rampoint)
+  if (entry != (SymbolEntry *)0) {
+    Datatype *ptrType = entry->getSymbol()->getType();
+    if (ptrType->getMetatype() == TYPE_ARRAY) {
+      Datatype *ct = ((TypeArray *)ptrType)->getBase();
+      // In the special case of strings (character arrays) we allow the constant pointer to
+      // refer to the middle of the string
+      if (ct->isCharPrint())
+	needexacthit = false;
+    }
+    if (needexacthit && entry->getAddr() != rampoint)
       return (SymbolEntry *)0;
   }
   return entry;
@@ -3916,9 +3924,9 @@ int4 ActionInputPrototype::apply(Funcdata &data)
       }
     }
     if (data.isHighOn())
-      data.getFuncProto().updateInputTypes(triallist,&active);
+      data.getFuncProto().updateInputTypes(data,triallist,&active);
     else
-      data.getFuncProto().updateInputNoTypes(triallist,&active,data.getArch()->types);
+      data.getFuncProto().updateInputNoTypes(data,triallist,&active);
   }
   data.clearDeadVarnodes();
 #ifdef OPACTION_DEBUG

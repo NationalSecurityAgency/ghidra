@@ -393,7 +393,7 @@ void IfcFuncload::execute(istream &s)
     throw IfaceExecutionError("No image loaded");
 
   string basename;
-  Scope *funcscope = dcp->conf->symboltab->resolveScopeSymbolName(funcname,"::",basename,(Scope *)0);
+  Scope *funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcname,"::",basename,(Scope *)0);
   if (funcscope == (Scope *)0)
     throw IfaceExecutionError("Bad namespace: "+funcname);
   dcp->fd = funcscope->queryFunction( basename ); // Is function already in database
@@ -438,7 +438,7 @@ void IfcReadSymbols::execute(istream &s)
   if (dcp->conf->loader == (LoadImage *)0)
     throw IfaceExecutionError("No binary loaded");
 
-  dcp->conf->readLoaderSymbols();
+  dcp->conf->readLoaderSymbols("::");
 }
 
 void IfcMapaddress::execute(istream &s)
@@ -460,9 +460,16 @@ void IfcMapaddress::execute(istream &s)
     Symbol *sym;
     uint4 flags = Varnode::namelock|Varnode::typelock;
     flags |= dcp->conf->symboltab->getProperty(addr); // Inherit existing properties
-    sym = dcp->conf->symboltab->getGlobalScope()->addSymbol(name,ct,addr,Address())->getSymbol();
+    string basename;
+    Scope *scope = dcp->conf->symboltab->findCreateScopeFromSymbolName(name, "::", basename, (Scope *)0);
+    sym = scope->addSymbol(basename,ct,addr,Address())->getSymbol();
     sym->getScope()->setAttribute(sym,flags);
+    if (scope->getParent() != (Scope *)0) {		// If this is a global namespace scope
+      SymbolEntry *e = sym->getFirstWholeMap();		// Adjust range
+      dcp->conf->symboltab->addRange(scope,e->getAddr().getSpace(),e->getFirst(),e->getLast());
+    }
   }
+
 }
 
 void IfcMaphash::execute(istream &s)
@@ -497,7 +504,9 @@ void IfcMapfunction::execute(istream &s)
   s >> name;			// Read optional name
   if (name.empty())
     dcp->conf->nameFunction(addr,name); // Pick default name if necessary
-  dcp->fd = dcp->conf->symboltab->getGlobalScope()->addFunction(addr,name)->getFunction();
+  string basename;
+  Scope *scope = dcp->conf->symboltab->findCreateScopeFromSymbolName(name, "::", basename, (Scope *)0);
+  dcp->fd = scope->addFunction(addr,name)->getFunction();
 
   string nocode;
   s >> ws >> nocode;
@@ -1774,18 +1783,15 @@ void IfcPrintMap::execute(istream &s)
   
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image");
-  if ((name=="global")||(dcp->fd==(Funcdata *)0)) {
-    scope = dcp->conf->symboltab->getGlobalScope();
-    name = "";
+  if (name.size() != 0 || dcp->fd==(Funcdata *)0) {
+    string fullname = name + "::a";		// Add fake variable name
+    scope = dcp->conf->symboltab->resolveScopeFromSymbolName(fullname, "::", fullname, (Scope *)0);
   }
   else
     scope = dcp->fd->getScopeLocal();
     
-  if (name.size() != 0) {
-    scope = scope->resolveScope(name);
-    if (scope == (Scope *)0)
-      throw IfaceExecutionError("No map named: "+name);
-  }
+  if (scope == (Scope *)0)
+    throw IfaceExecutionError("No map named: "+name);
 
   *status->fileoptr << scope->getFullName() << endl;
   scope->printBounds(*status->fileoptr);

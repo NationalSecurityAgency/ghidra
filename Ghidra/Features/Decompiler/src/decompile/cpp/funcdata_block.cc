@@ -495,7 +495,7 @@ int4 Funcdata::stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow)
   s1 << name << "@@jump@";
   op->getAddr().printRaw(s1);
 
-  Funcdata partial(s1.str(),localmap->getParent(),baseaddr);
+  Funcdata partial(s1.str(),localmap->getParent(),baseaddr,(FunctionSymbol *)0);
   partial.flags |= jumptablerecovery_on; // Mark that this Funcdata object is dedicated to jumptable recovery
   partial.truncatedFlow(this,flow);
 

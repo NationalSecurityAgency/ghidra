@@ -66,7 +66,7 @@ LocationMap::iterator LocationMap::add(Address addr,int4 size,int4 pass,int4 &in
 /// describing the associated range and when it was heritaged.
 /// \param addr is the given address
 /// \return the iterator to the SizeMap entry or the end iterator is the address is unheritaged
-LocationMap::iterator LocationMap::find(Address addr)
+LocationMap::iterator LocationMap::find(const Address &addr)
 
 {
   iterator iter = themap.upper_bound(addr); // First range after address
@@ -80,7 +80,7 @@ LocationMap::iterator LocationMap::find(Address addr)
 /// Return the pass number when the given address was heritaged, or -1 if it was not heritaged
 /// \param addr is the given address
 /// \return the pass number of -1
-int4 LocationMap::findPass(Address addr) const
+int4 LocationMap::findPass(const Address &addr) const
 
 {
   map<Address,SizePass>::const_iterator iter = themap.upper_bound(addr); // First range after address

@@ -70,7 +70,6 @@ public class DecompileProcess {
 	private int archId = -1;              // architecture id for decomp process
 	private DecompileCallback callback;   // Callback interface for decompiler
 	private int maxResultSizeMBYtes = 50; // maximum result size in MBytes to allow from decompiler
-	private boolean showNamespace;        // whether to show namespaces for functions
 
 	public enum DisposeState {
 		NOT_DISPOSED,        // Process was/is not disposed
@@ -240,7 +239,7 @@ public class DecompileProcess {
 	/**
 	 * Transfer bytes written to -out- to decompiler process
 	 * @param out has the collected byte for this write
-	 * @throws IOException
+	 * @throws IOException for any problems with the output stream
 	 */
 	private void writeBytes(PackedBytes out) throws IOException {
 		write(string_start);
@@ -288,6 +287,9 @@ public class DecompileProcess {
 							throw new Exception("Bad decompiler query: " + name);
 						}
 						switch (name.charAt(3)) {
+							case 'a':							// isNameUsed
+								isNameUsed();
+								break;
 							case 'B':
 								getBytes();						// getBytes
 								break;
@@ -313,6 +315,9 @@ public class DecompileProcess {
 								break;
 							case 'M':
 								getMappedSymbolsXML();			// getMappedSymbolsXML
+								break;
+							case 'N':
+								getNamespacePath();
 								break;
 							case 'P':
 								getPcodePacked();				// getPacked
@@ -427,14 +432,14 @@ public class DecompileProcess {
 	 * @param pspecxml = string containing .pspec xml
 	 * @param cspecxml = string containing .cspec xml
 	 * @param tspecxml = XML string containing translator spec
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @param coretypesxml = XML description of core data-types
+	 * @throws IOException for problems with the pipe to the decompiler process
+	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized void registerProgram(DecompileCallback cback, String pspecxml,
 			String cspecxml, String tspecxml, String coretypesxml)
 			throws IOException, DecompileException {
 		callback = cback;
-		callback.setShowNamespace(showNamespace);
 
 		setup();
 		String restring = null;
@@ -457,9 +462,9 @@ public class DecompileProcess {
 
 	/**
 	 * Free decompiler resources
-	 * @return
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @return 1 if a program was actively deregistered, 0 otherwise
+	 * @throws IOException for problems with the pipe to the decompiler
+	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized int deregisterProgram() throws IOException, DecompileException {
 		if (!statusGood) {
@@ -483,8 +488,8 @@ public class DecompileProcess {
 	 * Send a single command to the decompiler with no parameters and return response
 	 * @param command is the name of the command to execute
 	 * @return the response String
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for any problems with the pipe to the decompiler process
+	 * @throws DecompileException for any problems executing the command
 	 */
 	public synchronized LimitedByteBuffer sendCommand(String command)
 			throws IOException, DecompileException {
@@ -515,8 +520,8 @@ public class DecompileProcess {
 	 * @param param an additional parameter for the command
 	 * @param timeoutSecs the number of seconds to run before timing out
 	 * @return the response string
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for any problems with the pipe to the decompiler process
+	 * @throws DecompileException for any problems while executing the command
 	 */
 	public synchronized LimitedByteBuffer sendCommand1ParamTimeout(String command, String param,
 			int timeoutSecs) throws IOException, DecompileException {
@@ -555,8 +560,8 @@ public class DecompileProcess {
 	 * @param param1  is the first parameter string
 	 * @param param2  is the second parameter string
 	 * @return the result string
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for any problems with the pipe to the decompiler process
+	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized LimitedByteBuffer sendCommand2Params(String command, String param1,
 			String param2) throws IOException, DecompileException {
@@ -584,18 +589,13 @@ public class DecompileProcess {
 		this.maxResultSizeMBYtes = maxResultSizeMBytes;
 	}
 
-	public void setShowNamespace(boolean showNamespace) {
-		this.showNamespace = showNamespace;
-		callback.setShowNamespace(showNamespace);
-	}
-
 	/**
 	 * Send a command to the decompiler with one parameter and return the result
 	 * @param command is the command string
 	 * @param param1 is the parameter as a string
 	 * @return the result string
-	 * @throws IOException
-	 * @throws DecompileException
+	 * @throws IOException for problems with the pipe to the decompiler process
+	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized LimitedByteBuffer sendCommand1Param(String command, String param1)
 			throws IOException, DecompileException {
@@ -708,6 +708,31 @@ public class DecompileProcess {
 		if ((res != null) && (res.length() != 0)) {
 			writeString(res);
 		}
+		write(query_response_end);
+	}
+
+	private void getNamespacePath() throws IOException {
+		String idString = readQueryString();
+		long id = Long.parseLong(idString, 16);
+		String res = callback.getNamespacePath(id);
+		write(query_response_start);
+		if ((res != null) && (res.length() != 0)) {
+			writeString(res);
+		}
+		write(query_response_end);
+	}
+
+	private void isNameUsed() throws IOException {
+		String name = readQueryString();
+		String startString = readQueryString();
+		String stopString = readQueryString();
+		long startId = Long.parseLong(startString, 16);
+		long stopId = Long.parseLong(stopString, 16);
+		boolean res = callback.isNameUsed(name, startId, stopId);
+		write(query_response_start);
+		write(string_start);
+		write(res ? 't' : 'f');
+		write(string_end);
 		write(query_response_end);
 	}
 

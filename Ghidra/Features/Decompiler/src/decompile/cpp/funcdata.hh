@@ -63,9 +63,10 @@ class Funcdata {
   uint4 high_level_index;	///< Creation index of first Varnode created after HighVariables are created
   uint4 cast_phase_index;	///< Creation index of first Varnode created after ActionSetCasts
   uint4 minLanedSize;		///< Minimum Varnode size to check as LanedRegister
-  Architecture *glb;		///< Global configuration data
-  string name;			///< Name of function
   int4 size;			///< Number of bytes of binary data in function body
+  Architecture *glb;		///< Global configuration data
+  FunctionSymbol *functionSymbol;	///< The symbol representing \b this function
+  string name;			///< Name of function
   Address baseaddr;		///< Starting code address of binary data
   FuncProto funcp;		///< Prototype of this function
   ScopeLocal *localmap;		///< Local variables (symbols in the function scope)
@@ -119,12 +120,13 @@ class Funcdata {
   static PcodeOp *findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
 				    bool findbranch,bool findcall,bool findreturn);
 public:
-  Funcdata(const string &nm,Scope *conf,const Address &addr,int4 sz=0);	///< Constructor
+  Funcdata(const string &nm,Scope *conf,const Address &addr,FunctionSymbol *sym,int4 sz=0);	///< Constructor
   ~Funcdata(void);							///< Destructor
   const string &getName(void) const { return name; }			///< Get the function's local symbol name
   const Address &getAddress(void) const { return baseaddr; }		///< Get the entry point address
   int4 getSize(void) const { return size; }				///< Get the function body size in bytes
-  Architecture *getArch(void) const { return glb; }			///< Get the program/architecture owning the function
+  Architecture *getArch(void) const { return glb; }			///< Get the program/architecture owning \b this function
+  FunctionSymbol *getSymbol(void) const { return functionSymbol; }	///< Return the symbol associated with \b this function
   bool isHighOn(void) const { return ((flags&highlevel_on)!=0); }	///< Are high-level variables assigned to Varnodes
   bool isProcStarted(void) const { return ((flags&processing_started)!=0); }	///< Has processing of the function started
   bool isProcComplete(void) const { return ((flags&processing_complete)!=0); }	///< Is processing of the function complete
@@ -263,6 +265,8 @@ public:
   Varnode *setInputVarnode(Varnode *vn);			///< Mark a Varnode as an input to the function
   void adjustInputVarnodes(const Address &addr,int4 size);
   void deleteVarnode(Varnode *vn) { vbank.destroy(vn); }	///< Delete the given varnode
+
+  Address findDisjointCover(Varnode *vn,int4 &sz);	///< Find range covering given Varnode and any intersecting Varnodes
 
   /// \brief Find the first input Varnode covered by the given range
   ///

@@ -96,7 +96,7 @@ void IfcLoadFile::execute(istream &s)
     return;
   }
   if (capa->getName() == "xml")		// If file is xml
-    dcp->conf->readLoaderSymbols(); // Read in loader symbols
+    dcp->conf->readLoaderSymbols("::"); // Read in loader symbols
 #ifdef OPACTION_DEBUG
   dcp->conf->setDebugStream(status->optr);
 #endif

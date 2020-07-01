@@ -54,6 +54,7 @@ import ghidra.util.xml.XmlUtilities;
  */
 public class DecompileCallback {
 
+	public final static int MAX_SYMBOL_COUNT = 16;
 	/**
 	 * Data returned for a query about strings
 	 */
@@ -77,7 +78,6 @@ public class DecompileCallback {
 	private PcodeDataTypeManager dtmanage;
 	private Charset utf8Charset;
 	private String nativeMessage;
-	private boolean showNamespace;
 
 	private InstructionBlock lastPseudoInstructionBlock;
 	private Disassembler pseudoDisassembler;
@@ -151,10 +151,6 @@ public class DecompileCallback {
 	 */
 	void setNativeMessage(String msg) {
 		nativeMessage = msg;
-	}
-
-	public void setShowNamespace(boolean showNamespace) {
-		this.showNamespace = showNamespace;
 	}
 
 	public synchronized int readXMLSize(String addrxml) {
@@ -528,6 +524,15 @@ public class DecompileCallback {
 		return sym.getName();
 	}
 
+	private Namespace getNameSpaceByID(long id) {
+		Symbol namespaceSym = program.getSymbolTable().getSymbol(id);
+		Object namespace = namespaceSym.getObject();
+		if (namespace instanceof Namespace) {
+			return (Namespace) namespace;
+		}
+		return null;
+	}
+
 	private String getNamespacePrefix(Namespace ns) {
 		if (ns.getID() == Namespace.GLOBAL_NAMESPACE_ID) {
 			return null;
@@ -541,6 +546,72 @@ public class DecompileCallback {
 			return parentName + "_" + name;
 		}
 		return name;
+	}
+
+	/**
+	 * Decide if a given name is used by any namespace between a starting namespace
+	 * and a stopping namespace.  I.e. check for a name collision along a specific namespace path.
+	 * Currently, Ghidra is inefficient at calculating this perfectly, so this routine calculates
+	 * an approximation that can occasionally indicate a collision when there isn't.
+	 * @param name is the given name to check for collisions
+	 * @param startId is the id specifying the starting namespace
+	 * @param stopId is the id specifying the stopping namespace
+	 * @return true if the name (likely) occurs in one of the namespaces on the path
+	 */
+	public boolean isNameUsed(String name, long startId, long stopId) {
+		Namespace namespace = getNameSpaceByID(startId);
+		int pathSize = 0;
+		Namespace curspace = namespace;
+		long curId = namespace.getID();
+		while (curId != stopId && curId != 0 && !(curspace instanceof Library)) {
+			pathSize += 1;
+			curspace = curspace.getParentNamespace();
+			curId = curspace.getID();
+		}
+		long path[] = new long[pathSize];
+		curspace = namespace;
+		path[0] = startId;
+		for (int i = 1; i < pathSize; ++i) {
+			curspace = curspace.getParentNamespace();
+			path[i] = curspace.getID();
+		}
+		int count = 0;
+		SymbolIterator iter = program.getSymbolTable().getSymbols(name);
+		for (;;) {
+			if (!iter.hasNext()) {
+				break;
+			}
+			count += 1;
+			if (count > MAX_SYMBOL_COUNT) {
+				break;
+			}
+			Namespace symSpace = iter.next().getParentNamespace();
+			long id = symSpace.getID();
+			if (id == Namespace.GLOBAL_NAMESPACE_ID) {
+				continue;	// Common case we know can't match anything in path
+			}
+			for (int i = 0; i < pathSize; ++i) {
+				if (path[i] == id) {
+					if (debug != null) {
+						debug.nameIsUsed(symSpace, name);
+					}
+					return true;
+				}
+			}
+		}
+		return (count > MAX_SYMBOL_COUNT);
+	}
+
+	/**
+	 * Return an XML description of the formal namespace path to the given namespace
+	 * @param id is the ID of the given namespace
+	 * @return a parent XML tag
+	 */
+	public String getNamespacePath(long id) {
+		Namespace namespace = getNameSpaceByID(id);
+		StringBuilder buf = new StringBuilder();
+		HighFunction.createNamespaceTag(buf, namespace, true);
+		return buf.toString();
 	}
 
 	private void generateHeaderCommentXML(Function func, StringBuilder buf) {
@@ -697,14 +768,13 @@ public class DecompileCallback {
 				return null;
 			}
 
-			HighFunction hfunc =
-				new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage, showNamespace);
+			HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
 
 			int extrapop = getExtraPopOverride(func, addr);
 			hfunc.grabFromFunction(extrapop, false, (extrapop != default_extrapop));
 
 			HighSymbol funcSymbol = new HighFunctionSymbol(addr, 2, hfunc);
-			Namespace namespc = func.getParentNamespace();
+			Namespace namespc = funcSymbol.getNamespace();
 			if (debug != null) {
 				debug.getFNTypes(hfunc);
 			}
@@ -802,16 +872,17 @@ public class DecompileCallback {
 	}
 
 	private String buildResult(HighSymbol highSymbol, Namespace namespc) {
-		StringBuilder res = new StringBuilder();
-		res.append("<result>\n");
-		res.append("<parent>\n");
-		if (namespc == null) {
-			res.append("<val/>"); // Assume global scope
+		long namespaceId;
+		if (namespc == null || namespc instanceof Library) {
+			namespaceId = Namespace.GLOBAL_NAMESPACE_ID;
 		}
 		else {
-			HighFunction.createNamespaceTag(res, namespc);
+			namespaceId = namespc.getID();
 		}
-		res.append("</parent>\n");
+		StringBuilder res = new StringBuilder();
+		res.append("<result");
+		SpecXmlUtils.encodeUnsignedIntegerAttribute(res, "id", namespaceId);
+		res.append(">\n");
 		if (debug != null) {
 			StringBuilder res2 = new StringBuilder();
 			HighSymbol.buildMapSymXML(res2, highSymbol);
@@ -938,14 +1009,14 @@ public class DecompileCallback {
 			long diff = addr.getOffset() - entry.getOffset();
 			if ((diff >= 0) && (diff < 8)) {
 				HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec,
-					dtmanage, showNamespace);
+					dtmanage);
 
 				int extrapop = getExtraPopOverride(func, addr);
 				hfunc.grabFromFunction(extrapop, includeDefaultNames,
 					(extrapop != default_extrapop));
 
 				HighSymbol functionSymbol = new HighFunctionSymbol(entry, (int) (diff + 1), hfunc);
-				Namespace namespc = func.getParentNamespace();
+				Namespace namespc = functionSymbol.getNamespace();
 				if (debug != null) {
 					debug.getFNTypes(hfunc);
 				}

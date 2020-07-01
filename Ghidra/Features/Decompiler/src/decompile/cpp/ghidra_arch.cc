@@ -81,6 +81,34 @@ int4 ArchitectureGhidra::readToAnyBurst(istream &s)
   }
 }
 
+/// Read the string protocol start, a single character, then the protocol end.
+/// If the character is a 't', return \b true, otherwise \b false.
+/// \param s is the input stream from the client
+/// \return the passed back boolean value
+bool ArchitectureGhidra::readBoolStream(istream &s)
+
+{
+  int4 c;
+  bool res;
+
+  int4 type = readToAnyBurst(s);
+  if (type != 14) throw JavaError("alignment","Expecting string");
+  c = s.get();
+  res = (c == 't');
+  c = s.get();
+  while(c==0) {
+    c = s.get();
+  }
+  if (c==1) {
+    c = s.get();
+    if (c == 15)
+      return res;
+  }
+  if (c<0)			// If pipe closed, our parent process is probably dead
+    exit(1);			// So we exit to avoid a runaway process
+  throw JavaError("alignment","Expecting string terminator");
+}
+
 /// Characters are read up to the next protocol marked and placed into a string.
 /// The protocol marker is consumed and must indicate the end of a string
 /// or an exception is thrown.
@@ -515,6 +543,48 @@ Document *ArchitectureGhidra::getExternalRefXML(const Address &addr)
   return readXMLAll(sin);
 }
 
+/// Ask the Ghidra client to list all namespace elements between the global root
+/// and the namespace of the given id. The client should return a \<parent> tag with
+/// a \<val> child for each namespace in the path.
+/// \param id is the given id of the namespace to resolve
+/// \return the XML document
+Document *ArchitectureGhidra::getNamespacePath(uint8 id)
+
+{
+  sout.write("\000\000\001\004",4);
+  writeStringStream(sout,"getNamespacePath");
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << hex << id;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\005",4);
+  sout.flush();
+
+  return readXMLAll(sin);
+}
+
+bool ArchitectureGhidra::isNameUsed(const string &nm,uint8 startId,uint8 stopId)
+
+{
+  sout.write("\000\000\001\004",4);
+  writeStringStream(sout,"isNameUsed");
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << nm;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << hex << startId;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << hex << stopId;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\005",4);
+  sout.flush();
+
+  readToResponse(sin);
+  bool res = readBoolStream(sin);
+  readResponseEnd(sin);
+  return res;
+}
+
 /// Get the name of the primary symbol at the given address.
 /// This is used to fetch within function \e labels. Only a name is returned.
 /// \param addr is the given address
@@ -772,3 +842,25 @@ ArchitectureGhidra::ArchitectureGhidra(const string &pspec,const string &cspec,c
   sendCcode = true;
   sendParamMeasures = false;
 }
+
+bool ArchitectureGhidra::isDynamicSymbolName(const string &nm)
+
+{
+  if (nm.size() < 8) return false;	// 4 characters of prefix, at least 4 of address
+  if (nm[3] != '_') return false;
+  if (nm[0]=='F' && nm[1]=='U' && nm[2]=='N') {
+  }
+  else if (nm[0]=='D' && nm[1]=='A' && nm[2]=='T') {
+  }
+  else {
+    return false;
+  }
+  for(int4 i=nm.size()-4;i<nm.size();++i) {
+    char c = nm[i];
+    if (c>='0' && c<='9') continue;
+    if (c>='a' && c<='f') continue;
+    return false;
+  }
+  return true;
+}
+
