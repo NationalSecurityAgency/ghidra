@@ -989,7 +989,7 @@ public class VarnodeContext implements ProcessorContext {
 		}
 		BigInteger spaceVal = getTranslatedSpaceValue(reg, fromAddr, toAddr);
 		if (spaceVal != null) {
-			if (addrFactory.getConstantSpace().getBaseSpaceID() != spaceVal.intValue()) {
+			if (addrFactory.getConstantSpace().getSpaceID() != spaceVal.intValue()) {
 				return null;
 			}
 		}
@@ -1224,7 +1224,7 @@ public class VarnodeContext implements ProcessorContext {
 		if (regSpace == null) {
 			regSpace = ((OffsetAddressFactory) addrFactory).createNewOffsetSpace(name);
 		}
-		spaceID = regSpace.getBaseSpaceID();
+		spaceID = regSpace.getSpaceID();
 		return spaceID;
 	}
 
@@ -1242,7 +1242,7 @@ public class VarnodeContext implements ProcessorContext {
 			throws NotFoundException {
 		// degenerate case, don't need to know the value
 		if (val1.equals(val2)) {
-			return createVarnode(0, addrFactory.getConstantSpace().getBaseSpaceID(),
+			return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(),
 				val1.getSize());
 		}
 		int spaceID = val1.getSpace();
@@ -1430,7 +1430,7 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	public boolean isSymbolicSpace(AddressSpace space) {
-		int spaceID = space.getUniqueSpaceID();
+		int spaceID = space.getSpaceID();
 		return OffsetAddressFactory.isSymbolSpace(spaceID);
 	}
 
