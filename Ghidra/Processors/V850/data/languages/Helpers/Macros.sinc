@@ -120,12 +120,14 @@ macro set_OV0_S_Z(var)
 
 ##### General-Macros #####
 
-macro either_or(res, cond, true, false)		# if condition is != 0
+# if condition is != 0
+macro either_or(res, cond, true, false)	
 {
 	res = (true * zext(cond != 0)) + (false * zext(cond == 0));
 }
 
-macro either_or1(res, cond, true, false)	# if condition is == 1
+# if condition is == 1
+macro either_or1(res, cond, true, false)
 {
 	res = (true * zext(cond == 1)) + (false * zext(cond != 1));
 }
