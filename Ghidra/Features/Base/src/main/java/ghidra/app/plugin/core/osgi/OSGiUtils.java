@@ -30,7 +30,16 @@ import org.apache.felix.framework.util.manifestparser.ManifestParser;
 import org.osgi.framework.*;
 import org.osgi.framework.wiring.BundleRequirement;
 
+import ghidra.util.Msg;
+
 public class OSGiUtils {
+	/*
+	 * Match group 1 contains the file name from a resource string, e.g.  from
+	 *     file:/path/to/some.jar!/Some.class
+	 * we get "/path/to/some.jar", everything between ':' and '!'
+	 * 
+	 */
+	private static Pattern JAR_FILENAME_EXTRACTOR = Pattern.compile("^.*:(.*)!.*$");
 
 	/**
 	 * The syntax of the error generated when OSGi requirements cannot be resolved is
@@ -111,9 +120,9 @@ public class OSGiUtils {
 
 	// from https://dzone.com/articles/locate-jar-classpath-given
 	static String findJarForClass(Class<?> c) {
-		final URL location;
-		final String classLocation = c.getName().replace('.', '/') + ".class";
-		final ClassLoader loader = c.getClassLoader();
+		URL location;
+		String classLocation = c.getName().replace('.', '/') + ".class";
+		ClassLoader loader = c.getClassLoader();
 		if (loader == null) {
 			location = ClassLoader.getSystemResource(classLocation);
 		}
@@ -121,8 +130,7 @@ public class OSGiUtils {
 			location = loader.getResource(classLocation);
 		}
 		if (location != null) {
-			Pattern pattern = Pattern.compile("^.*:(.*)!.*$");
-			Matcher matcher = pattern.matcher(location.toString());
+			Matcher matcher = JAR_FILENAME_EXTRACTOR.matcher(location.toString());
 			if (matcher.find()) {
 				return matcher.group(1);
 			}
@@ -160,10 +168,9 @@ public class OSGiUtils {
 						? relativePath.substring(0, lastSlash).replace(File.separatorChar, '.')
 						: "");
 			});
-
 		}
 		catch (IOException e) {
-			e.printStackTrace();
+			Msg.error(OSGiUtils.class, "Error while collecting packages from directory", e);
 		}
 	}
 
@@ -179,7 +186,7 @@ public class OSGiUtils {
 			}
 		}
 		catch (IOException e) {
-			e.printStackTrace();
+			Msg.error(OSGiUtils.class, "Error while collecting packages from jar", e);
 		}
 	}
 

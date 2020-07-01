@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import generic.jar.ResourceFile;
@@ -48,6 +49,9 @@ public class GhidraScriptUtil {
 
 	private static List<GhidraScriptProvider> providers;
 
+	// number of references from the GUI  to bundleHost
+	private static AtomicInteger referenceCount = new AtomicInteger(0);
+
 	/**
 	 * @return the bundle host used for scripting
 	 */
@@ -70,8 +74,7 @@ public class GhidraScriptUtil {
 			bundleHost.startFramework();
 		}
 		catch (OSGiException | IOException e) {
-			e.printStackTrace();
-			Msg.error(GhidraScript.class, "failed to initialize BundleHost", e);
+			Msg.error(GhidraScript.class, "Failed to initialize BundleHost", e);
 		}
 	}
 
@@ -111,9 +114,9 @@ public class GhidraScriptUtil {
 	 */
 	public static List<ResourceFile> getScriptSourceDirectories() {
 		return bundleHost.getBundleFiles()
-			.stream()
-			.filter(ResourceFile::isDirectory)
-			.collect(Collectors.toList());
+				.stream()
+				.filter(ResourceFile::isDirectory)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -229,9 +232,9 @@ public class GhidraScriptUtil {
 	public static List<ResourceFile> getExplodedCompiledSourceBundlePaths() {
 		try {
 			return Files.list(BundleHost.getOsgiDir())
-				.filter(Files::isDirectory)
-				.map(x -> new ResourceFile(x.toFile()))
-				.collect(Collectors.toList());
+					.filter(Files::isDirectory)
+					.map(x -> new ResourceFile(x.toFile()))
+					.collect(Collectors.toList());
 		}
 		catch (IOException e) {
 			Msg.showError(GhidraScriptUtil.class, null, "error",
@@ -383,6 +386,28 @@ public class GhidraScriptUtil {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * When running the GUI, {@link GhidraScriptUtil} manages a single {@link BundleHost} instance.
+	 * 
+	 * @return the BundleHost singleton
+	 */
+	public static BundleHost acquireBundleHostReference() {
+		if (referenceCount.getAndIncrement() == 0) {
+			initialize(new BundleHost(), null);
+		}
+		return bundleHost;
+	}
+
+	/**
+	 * release the reference the BundleHost reference.  When no references remain, 
+	 * {@link #dispose()} is called. 
+	 */
+	public static void releaseBundleHostReference() {
+		if (referenceCount.getAndDecrement() == 1) {
+			dispose();
+		}
 	}
 
 }

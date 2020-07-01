@@ -55,6 +55,12 @@ import ghidra.util.Msg;
  */
 public class GhidraSourceBundle extends GhidraBundle {
 	private static final String GENERATED_ACTIVATOR_CLASSNAME = "GeneratedActivator";
+	/*
+	 * Match the leftover part of a class file on removing the class name, e.g.
+	 * we've found "MyClass.java", so we match "MyClass.class" by removing "MyClass" then
+	 * computing IS_CLASS_FILE.test(".class") == true.  We  want to match inner 
+	 * class files like "MyClass$2.class" too, so IS_CLASS_FILE.test("$2.class") is also true.
+	 */
 	private static final Predicate<String> IS_CLASS_FILE =
 		Pattern.compile("(\\$.*)?\\.class", Pattern.CASE_INSENSITIVE).asMatchPredicate();
 
@@ -170,7 +176,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			return path.replace(File.separatorChar, '.');
 		}
 		catch (IOException e) {
-			e.printStackTrace();
+			Msg.error(this, "getting class name for script", e);
 			return null;
 		}
 	}
@@ -201,9 +207,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	private String getPreviousBuildErrors() {
 		return buildErrors.values()
-			.stream()
-			.map(BuildError::getMessage)
-			.collect(Collectors.joining());
+				.stream()
+				.map(BuildError::getMessage)
+				.collect(Collectors.joining());
 	}
 
 	private String parseImportPackageMetadata(ResourceFile javaSource) {
@@ -233,14 +239,14 @@ public class GhidraSourceBundle extends GhidraBundle {
 						requirements = OSGiUtils.parseImportPackage(importPackage);
 					}
 					catch (BundleException e) {
-						throw new GhidraBundleException(getLocationIdentifier(), "parsing manifest",
+						throw new GhidraBundleException(getLocationIdentifier(), "parsing metadata",
 							e);
 					}
 					sourceFileToRequirements.put(rootSourceFile, requirements);
 					for (BundleRequirement requirement : requirements) {
 						requirementToSourceFileMap
-							.computeIfAbsent(requirement.toString(), x -> new ArrayList<>())
-							.add(rootSourceFile);
+								.computeIfAbsent(requirement.toString(), x -> new ArrayList<>())
+								.add(rootSourceFile);
 					}
 				}
 			}
@@ -250,9 +256,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 	private Map<String, BundleRequirement> getComputedReqs() {
 		Map<String, BundleRequirement> dedupedReqs = new HashMap<>();
 		sourceFileToRequirements.values()
-			.stream()
-			.flatMap(List::stream)
-			.forEach(r -> dedupedReqs.putIfAbsent(r.toString(), r));
+				.stream()
+				.flatMap(List::stream)
+				.forEach(r -> dedupedReqs.putIfAbsent(r.toString(), r));
 
 		return dedupedReqs;
 	}
@@ -270,10 +276,12 @@ public class GhidraSourceBundle extends GhidraBundle {
 		ResourceFile manifestFile = getSourceManifestFile();
 		if (manifestFile.exists()) {
 			try {
-				Manifest manifest = new Manifest(manifestFile.getInputStream());
-				String importPackage = manifest.getMainAttributes().getValue("Import-Package");
-				for (BundleRequirement r : OSGiUtils.parseImportPackage(importPackage)) {
-					reqs.putIfAbsent(r.toString(), r);
+				try (InputStream manifestInputStream = manifestFile.getInputStream()) {
+					Manifest manifest = new Manifest(manifestInputStream);
+					String importPackage = manifest.getMainAttributes().getValue("Import-Package");
+					for (BundleRequirement r : OSGiUtils.parseImportPackage(importPackage)) {
+						reqs.putIfAbsent(r.toString(), r);
+					}
 				}
 			}
 			catch (IOException | BundleException e) {
@@ -385,18 +393,18 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	boolean hasNewManifest() {
-		ResourceFile sourceManfiest = getSourceManifestFile();
+		ResourceFile sourceManifest = getSourceManifestFile();
 		Path binaryManifest = getBinaryManifestPath();
 
-		return sourceManfiest.exists() && (Files.notExists(binaryManifest) ||
-			sourceManfiest.lastModified() > binaryManifest.toFile().lastModified());
+		return sourceManifest.exists() && (Files.notExists(binaryManifest) ||
+			sourceManifest.lastModified() > binaryManifest.toFile().lastModified());
 	}
 
 	protected static boolean wipeContents(Path path) throws IOException {
 		if (Files.exists(path)) {
 			boolean anythingDeleted = false;
 			for (Path p : (Iterable<Path>) Files.walk(path)
-				.sorted(Comparator.reverseOrder())::iterator) {
+					.sorted(Comparator.reverseOrder())::iterator) {
 				anythingDeleted |= Files.deleteIfExists(p);
 			}
 			return anythingDeleted;
@@ -445,8 +453,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 				}
 
 				Arrays.stream(correspondingBinaries(sourceFile))
-					.map(rf -> rf.getFile(false).toPath())
-					.forEach(oldBinaries::add);
+						.map(rf -> rf.getFile(false).toPath())
+						.forEach(oldBinaries::add);
 			}
 		}
 	}
@@ -524,8 +532,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 			return anythingChanged | wipeBinDir();
 		}
 		catch (IOException | GhidraBundleException e) {
-			Msg.showError(this, null, "source bundle clean error",
-				"while attempting to delete the compiled directory, an exception was thrown", e);
+			Msg.showError(this, null, "Source bundle clean error",
+				"While attempting to delete the compiled directory, an exception was thrown", e);
 		}
 		return anythingChanged;
 	}
@@ -582,7 +590,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			while (!stack.isEmpty()) {
 				ResourceFile sourceSubdir = stack.pop();
 				String relPath = sourceSubdir.getAbsolutePath()
-					.substring(getSourceDirectory().getAbsolutePath().length());
+						.substring(getSourceDirectory().getAbsolutePath().length());
 				if (relPath.startsWith(File.separator)) {
 					relPath = relPath.substring(1);
 				}
@@ -646,10 +654,11 @@ public class GhidraSourceBundle extends GhidraBundle {
 			summary.printf("%d missing @importpackage%s:%s", requirements.size(),
 				requirements.size() > 1 ? "s" : "",
 				requirements.stream()
-					.flatMap(r -> OSGiUtils.extractPackageNamesFromFailedResolution(r.toString())
-						.stream())
-					.distinct()
-					.collect(Collectors.joining(",")));
+						.flatMap(
+							r -> OSGiUtils.extractPackageNamesFromFailedResolution(r.toString())
+									.stream())
+						.distinct()
+						.collect(Collectors.joining(",")));
 		}
 		// send the capabilities to phidias
 		bundleWirings.forEach(bundleJavaManager::addBundleWiring);
@@ -845,15 +854,15 @@ public class GhidraSourceBundle extends GhidraBundle {
 		options.add("-sourcepath");
 		options.add(getSourceDirectory().toString());
 		options.add("-classpath");
-		options
-			.add(System.getProperty("java.class.path") + File.pathSeparator + binaryDir.toString());
+		options.add(
+			System.getProperty("java.class.path") + File.pathSeparator + binaryDir.toString());
 		options.add("-proc:none");
 
 		BundleJavaManager bundleJavaManager = createBundleJavaManager(writer, summary, options);
 
 		final List<ResourceFileJavaFileObject> sourceFiles = newSources.stream()
-			.map(sf -> new ResourceFileJavaFileObject(sf.getParentFile(), sf, Kind.SOURCE))
-			.collect(Collectors.toList());
+				.map(sf -> new ResourceFileJavaFileObject(sf.getParentFile(), sf, Kind.SOURCE))
+				.collect(Collectors.toList());
 
 		Path binaryManifest = getBinaryManifestPath();
 		if (Files.exists(binaryManifest)) {
@@ -880,8 +889,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 		ResourceFile sourceManifest = getSourceManifestFile();
 		if (sourceManifest.exists()) {
 			Files.createDirectories(binaryManifest.getParent());
-			Files.copy(sourceManifest.getInputStream(), binaryManifest,
-				StandardCopyOption.REPLACE_EXISTING);
+			try (InputStream inStream = sourceManifest.getInputStream()) {
+				Files.copy(inStream, binaryManifest, StandardCopyOption.REPLACE_EXISTING);
+			}
 			return summary.getValue();
 		}
 
@@ -943,18 +953,18 @@ public class GhidraSourceBundle extends GhidraBundle {
 		 */
 		ClassMapper(Path directory) throws IOException {
 			classToClassFilesMap = Files.exists(directory) ? Files.list(directory)
-				.filter(
-					f -> Files.isRegularFile(f) && f.getFileName().toString().endsWith(".class"))
-				.collect(groupingBy(f -> {
-					String fileName = f.getFileName().toString();
-					// if f is the class file of an inner class, use the class name
-					int money = fileName.indexOf('$');
-					if (money >= 0) {
-						return fileName.substring(0, money);
-					}
-					// drop ".class"
-					return fileName.substring(0, fileName.length() - 6);
-				})) : Collections.emptyMap();
+					.filter(f -> Files.isRegularFile(f) &&
+						f.getFileName().toString().endsWith(".class"))
+					.collect(groupingBy(f -> {
+						String fileName = f.getFileName().toString();
+						// if f is the class file of an inner class, use the class name
+						int money = fileName.indexOf('$');
+						if (money >= 0) {
+							return fileName.substring(0, money);
+						}
+						// drop ".class"
+						return fileName.substring(0, fileName.length() - 6);
+					})) : Collections.emptyMap();
 		}
 
 		List<Path> findAndRemove(ResourceFile sourceFile) {
@@ -968,9 +978,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 				}
 				long lastModifiedClassFile = classFiles.isEmpty() ? -1
 						: classFiles.stream()
-							.mapToLong(p -> p.toFile().lastModified())
-							.min()
-							.getAsLong();
+								.mapToLong(p -> p.toFile().lastModified())
+								.min()
+								.getAsLong();
 				// if source is newer than the oldest binary, report
 				if (lastModifiedSource > lastModifiedClassFile) {
 					return classFiles;
@@ -985,9 +995,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 		public Collection<Path> extraClassFiles() {
 			return classToClassFilesMap.values()
-				.stream()
-				.flatMap(l -> l.stream())
-				.collect(Collectors.toList());
+					.stream()
+					.flatMap(l -> l.stream())
+					.collect(Collectors.toList());
 		}
 
 	}

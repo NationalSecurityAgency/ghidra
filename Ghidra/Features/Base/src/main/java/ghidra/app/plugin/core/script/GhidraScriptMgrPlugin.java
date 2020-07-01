@@ -48,9 +48,6 @@ import ghidra.util.task.TaskListener;
 )
 //@formatter:on
 public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScriptService {
-	/** number of GhidraScriptMgrPlugin references to the BundleHost owned by {@link GhidraScriptUtil} */
-	private static int referenceCount = 0;
-
 	private final GhidraScriptComponentProvider provider;
 
 	private final BundleHost bundleHost;
@@ -62,17 +59,11 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 	 */
 	public GhidraScriptMgrPlugin(PluginTool tool) {
 		super(tool, true, true, true);
-		// Each tool starts a new script manager plugin, but we only ever want one bundle host.
-		// We store the one BundleHost in GhidraScriptUtil and keep a count of references to it.
-		if (referenceCount == 0) {
-			bundleHost = new BundleHost();
-			GhidraScriptUtil.initialize(bundleHost, null);
-		}
-		else {
-			bundleHost = GhidraScriptUtil.getBundleHost();
-		}
-		referenceCount += 1;
 
+		// Each tool starts a new script manager plugin, but we only ever want one bundle host.
+		// GhidraScriptUtil (creates and) manages one instance.
+		bundleHost = GhidraScriptUtil.acquireBundleHostReference();
+		
 		provider = new GhidraScriptComponentProvider(this, bundleHost);
 	}
 
@@ -80,10 +71,7 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 	protected void dispose() {
 		super.dispose();
 		provider.dispose();
-		referenceCount -= 1;
-		if (referenceCount == 0) {
-			GhidraScriptUtil.dispose();
-		}
+		GhidraScriptUtil.releaseBundleHostReference();
 	}
 
 	@Override

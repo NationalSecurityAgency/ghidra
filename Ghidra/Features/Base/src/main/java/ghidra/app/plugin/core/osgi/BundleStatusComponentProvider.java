@@ -26,7 +26,6 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 
 import docking.action.builder.ActionBuilder;
-import docking.util.AnimationUtils;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.GTableFilterPanel;
@@ -200,8 +199,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void doRefresh() {
-		PrintWriter errOut = getTool().getService(ConsoleService.class).getStdErr();
-
 		List<BundleStatus> statuses = bundleStatusTableModel.getModelData()
 				.stream()
 				.filter(BundleStatus::isEnabled)
@@ -216,7 +213,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				bundleHost.deactivateSynchronously(bundle.getLocationIdentifier());
 			}
 			catch (GhidraBundleException | InterruptedException e) {
-				e.printStackTrace(errOut);
+				Msg.error(this, "Error while deactivating bundle", e);
 			}
 		}
 
@@ -238,7 +235,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 		if (anythingCleaned) {
 			bundleStatusTableModel.fireTableDataChanged();
-			AnimationUtils.shakeComponent(getComponent());
 		}
 	}
 
@@ -293,13 +289,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList());
 			Collection<GhidraBundle> bundles = bundleHost.add(resourceFiles, true, false);
 
-			new TaskLauncher(new Task("activating new bundles") {
-				@Override
-				public void run(TaskMonitor monitor) throws CancelledException {
-					bundleHost.activateAll(bundles, monitor,
-						getTool().getService(ConsoleService.class).getStdErr());
-				}
-			}, getComponent(), 1000);
+			TaskLauncher.launchNonModal("activating new bundles", (monitor) -> {
+				bundleHost.activateAll(bundles, monitor,
+					getTool().getService(ConsoleService.class).getStdErr());
+			});
 		}
 	}
 
@@ -308,12 +301,13 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	protected void doEnableBundles() {
-		new TaskLauncher(new EnableAndActivateBundlesTask("activating", true, true, false,
-			getSelectedStatuses()), getComponent(), 1000);
+		new TaskLauncher(
+			new EnableAndActivateBundlesTask("enabling", true, true, false, getSelectedStatuses()),
+			getComponent(), 1000);
 	}
 
 	protected void doDisableBundles() {
-		new TaskLauncher(new DeactivateAndDisableBundlesTask("deactivating", true, true, false,
+		new TaskLauncher(new DeactivateAndDisableBundlesTask("disabling", true, true, false,
 			getSelectedStatuses()), getComponent(), 1000);
 	}
 
@@ -456,7 +450,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 			List<GhidraBundle> bundles = statuses.stream()
-					.filter(status -> status.isActive())
+					.filter(status -> status.isEnabled())
 					.map(status -> bundleHost.getExistingGhidraBundle(status.getFile()))
 					.collect(Collectors.toList());
 
@@ -467,8 +461,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 					bundleHost.disable(bundle);
 				}
 				catch (GhidraBundleException | InterruptedException e) {
-					ConsoleService console = getTool().getService(ConsoleService.class);
-					e.printStackTrace(console.getStdErr());
+					Msg.error(this, "Error while deactivating and disabling bundle", e);
 				}
 				monitor.incrementProgress(1);
 			}
@@ -503,7 +496,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				}
 			}
 			catch (Exception e) {
-				e.printStackTrace(console.getStdErr());
+				Msg.error(this, "Error during activation/deactivation of bundle", e);
 			}
 			finally {
 				status.setBusy(false);

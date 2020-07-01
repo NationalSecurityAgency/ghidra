@@ -66,8 +66,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 			}
 		}
 		catch (GhidraBundleException e) {
-			e.printStackTrace();
-			Msg.error(this, "while deactivating bundle for delete", e);
+			Msg.error(this, "Error while deactivating bundle for delete", e);
 			return false;
 		}
 		return super.deleteScript(sourceFile);

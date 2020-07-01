@@ -586,7 +586,7 @@ public class BundleHost {
 			try {
 				dependentBundle.uninstall();
 				if (dependentBundle.getState() != Bundle.UNINSTALLED) {
-					System.err.printf("It ain't uninstalled!\n");
+					Msg.error(this, "Failed to uninstall bundle: " + dependentBundle.getLocation());
 				}
 				refreshBundlesSynchronously(new ArrayList<>(dependentBundles));
 			}
@@ -799,7 +799,7 @@ public class BundleHost {
 				}
 				if (isSystem != bundle.isSystemBundle()) {
 					bundle.systemBundle = isSystem;
-					Msg.error(this, String.format("%s went from %system to %system", bundleFile,
+					Msg.error(this, String.format("Error, bundle %s went from %system to %system", bundleFile,
 						isSystem ? "not " : "", isSystem ? "" : "not "));
 				}
 			}
@@ -878,7 +878,7 @@ public class BundleHost {
 					}
 					else {
 						Msg.error(this,
-							String.format("not a GhidraBundle: %s\n", osgiBundle.getLocation()));
+							String.format("Error, bundle event for non-GhidraBundle: %s\n", osgiBundle.getLocation()));
 					}
 					break;
 				// force "inactive" updates for all other states
@@ -889,7 +889,7 @@ public class BundleHost {
 					}
 					else {
 						Msg.error(this,
-							String.format("not a GhidraBundle: %s\n", osgiBundle.getLocation()));
+							String.format("Error, bundle event for non-GhidraBundle: %s\n", osgiBundle.getLocation()));
 					}
 					break;
 			}

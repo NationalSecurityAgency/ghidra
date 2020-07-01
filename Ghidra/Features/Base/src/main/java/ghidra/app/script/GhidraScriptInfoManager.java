@@ -53,14 +53,7 @@ public class GhidraScriptInfoManager {
 		String name = scriptFile.getName();
 		List<ResourceFile> files = scriptNameToFilesMap.get(name);
 		if (files != null) {
-			Iterator<ResourceFile> iter = files.iterator();
-			while (iter.hasNext()) {
-				ResourceFile rFile = iter.next();
-				if (scriptFile.equals(rFile)) {
-					iter.remove();
-					break;
-				}
-			}
+			files.remove(scriptFile);
 			if (files.isEmpty()) {
 				scriptNameToFilesMap.remove(name);
 			}

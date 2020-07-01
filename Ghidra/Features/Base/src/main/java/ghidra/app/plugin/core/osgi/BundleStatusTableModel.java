@@ -67,6 +67,9 @@ public class BundleStatusTableModel
 
 		bundleHostListener = new MyBundleHostListener();
 		bundleHost.addListener(bundleHostListener);
+
+		// sort by path
+		setDefaultTableSortState(TableSortState.createDefaultSortState(1, true));
 	}
 
 	BundleStatus getStatus(GhidraBundle bundle) {
@@ -560,28 +563,6 @@ public class BundleStatusTableModel
 		@Override
 		public String getFilterString(ResourceFile file, Settings settings) {
 			return Path.toPathString(file);
-		}
-
-	}
-
-	private class BusyBooleanRenderer extends GBooleanCellRenderer
-			implements AbstractWrapperTypeColumnRenderer<Boolean> {
-		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-			BundleStatus status = (BundleStatus) data.getRowObject();
-			Component component = super.getTableCellRendererComponent(data);
-			if (status.isBusy()) {
-				cb.setVisible(false);
-				cb.setEnabled(false);
-				setHorizontalAlignment(SwingConstants.CENTER);
-				setText("...");
-			}
-			else {
-				cb.setVisible(true);
-				cb.setEnabled(true);
-				setText("");
-			}
-			return component;
 		}
 
 	}
