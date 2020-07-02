@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -181,7 +182,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 	protected static void wipe(Path path) throws IOException {
 		if (Files.exists(path)) {
 			for (Path p : (Iterable<Path>) Files.walk(path)
-				.sorted(Comparator.reverseOrder())::iterator) {
+					.sorted(Comparator.reverseOrder())::iterator) {
 				Files.deleteIfExists(p);
 			}
 		}
@@ -189,8 +190,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected void wipeUserScripts() throws IOException {
 		Path userScriptDir = java.nio.file.Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
-		for (Path p : (Iterable<Path>) Files.list(userScriptDir)::iterator) {
-			wipe(p);
+		try (Stream<Path> pathStream = Files.list(userScriptDir)) {
+			for (Path p : (Iterable<Path>) pathStream::iterator) {
+				wipe(p);
+			}
 		}
 	}
 
@@ -392,7 +395,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		assertNotNull(editor);
 
-		editorTextArea = (JTextArea) findComponentByName(editor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
+		editorTextArea = (JTextArea) findComponentByName(editor.getComponent(),
+			GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 		assertNotNull(editorTextArea);
 
 		buffer = new StringBuffer(editorTextArea.getText());
@@ -411,7 +415,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		// initialize our editor variable to the newly opened editor
 		editor = waitForComponentProvider(GhidraScriptEditorComponentProvider.class);
-		editorTextArea = (JTextArea) findComponentByName(editor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
+		editorTextArea = (JTextArea) findComponentByName(editor.getComponent(),
+			GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 
 		waitForSwing();
 
@@ -686,8 +691,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 				"Contents of file on disk do not match that of the editor after performing " +
 					"a save operation: " + file);
 			printChars(expectedContents, fileText);
-			Assert
-				.fail("Contents of file on disk do not match that of the editor after performing " +
+			Assert.fail(
+				"Contents of file on disk do not match that of the editor after performing " +
 					"a save operation: " + file);
 		}
 //
@@ -849,8 +854,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		Map<ResourceFile, GhidraScriptEditorComponentProvider> editorMap = provider.getEditorMap();
 		GhidraScriptEditorComponentProvider fileEditor = editorMap.get(file);
-		final JTextArea textArea =
-			(JTextArea) findComponentByName(fileEditor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
+		final JTextArea textArea = (JTextArea) findComponentByName(fileEditor.getComponent(),
+			GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 		assertNotNull(textArea);
 
 		final String[] box = new String[1];
@@ -985,10 +990,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		// destroy any NewScriptxxx files...and Temp ones too
 		List<ResourceFile> paths = provider.getBundleHost()
-			.getBundleFiles()
-			.stream()
-			.filter(ResourceFile::isDirectory)
-			.collect(Collectors.toList());
+				.getBundleFiles()
+				.stream()
+				.filter(ResourceFile::isDirectory)
+				.collect(Collectors.toList());
 
 		for (ResourceFile path : paths) {
 			File file = path.getFile(false);
@@ -1494,7 +1499,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected JTextComponent grabScriptEditorTextArea() {
 		GhidraScriptEditorComponentProvider scriptEditor = grabScriptEditor();
-		JTextArea textArea = (JTextArea) findComponentByName(scriptEditor.getComponent(), GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
+		JTextArea textArea = (JTextArea) findComponentByName(scriptEditor.getComponent(),
+			GhidraScriptEditorComponentProvider.EDITOR_COMPONENT_NAME);
 		assertNotNull(textArea);
 		return textArea;
 	}

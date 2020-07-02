@@ -27,6 +27,7 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
@@ -952,19 +953,26 @@ public class GhidraSourceBundle extends GhidraBundle {
 		 * @throws IOException if there's a problem listing files
 		 */
 		ClassMapper(Path directory) throws IOException {
-			classToClassFilesMap = Files.exists(directory) ? Files.list(directory)
-					.filter(f -> Files.isRegularFile(f) &&
-						f.getFileName().toString().endsWith(".class"))
-					.collect(groupingBy(f -> {
-						String fileName = f.getFileName().toString();
-						// if f is the class file of an inner class, use the class name
-						int money = fileName.indexOf('$');
-						if (money >= 0) {
-							return fileName.substring(0, money);
-						}
-						// drop ".class"
-						return fileName.substring(0, fileName.length() - 6);
-					})) : Collections.emptyMap();
+			if (Files.exists(directory)) {
+				try (Stream<Path> pathStream = Files.list(directory)) {
+					classToClassFilesMap = pathStream
+							.filter(f -> Files.isRegularFile(f) &&
+								f.getFileName().toString().endsWith(".class"))
+							.collect(groupingBy(f -> {
+								String fileName = f.getFileName().toString();
+								// if f is the class file of an inner class, use the class name
+								int money = fileName.indexOf('$');
+								if (money >= 0) {
+									return fileName.substring(0, money);
+								}
+								// drop ".class"
+								return fileName.substring(0, fileName.length() - 6);
+							}));
+				}
+			}
+			else {
+				classToClassFilesMap = Collections.emptyMap();
+			}
 		}
 
 		List<Path> findAndRemove(ResourceFile sourceFile) {

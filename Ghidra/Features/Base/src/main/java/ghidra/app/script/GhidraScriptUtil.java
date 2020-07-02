@@ -18,9 +18,11 @@ package ghidra.app.script;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.BundleHost;
@@ -230,9 +232,8 @@ public class GhidraScriptUtil {
 	 */
 	@Deprecated
 	public static List<ResourceFile> getExplodedCompiledSourceBundlePaths() {
-		try {
-			return Files.list(BundleHost.getOsgiDir())
-					.filter(Files::isDirectory)
+		try (Stream<Path> pathStream = Files.list(BundleHost.getOsgiDir())) {
+			return pathStream.filter(Files::isDirectory)
 					.map(x -> new ResourceFile(x.toFile()))
 					.collect(Collectors.toList());
 		}
