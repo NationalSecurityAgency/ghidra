@@ -15,7 +15,12 @@
  */
 package ghidra.app.plugin.core.decompile;
 
+import org.junit.Before;
 import org.junit.Test;
+
+import ghidra.app.decompiler.DecompileOptions.NamespaceStrategy;
+import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.util.OptionsService;
 
 /**
  * This test is very similar in concept to {@link DecompilerFindReferencesToActionTest}, 
@@ -33,6 +38,16 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 	@Override
 	protected String getProgramName() {
 		return "ghidra/app/extension/datatype/finder/functions_with_structure_usage.gzf";
+	}
+
+	@Override
+	@Before
+	public void setUp() throws Exception {
+
+		super.setUp();
+		OptionsService service = provider.getTool().getService(OptionsService.class);
+		ToolOptions opt = service.getOptions("Decompiler");
+		opt.setEnum("Display.Display Namespaces", NamespaceStrategy.Never);
 	}
 
 	@Test
