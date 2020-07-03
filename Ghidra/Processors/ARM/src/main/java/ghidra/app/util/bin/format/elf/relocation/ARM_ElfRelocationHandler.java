@@ -41,7 +41,9 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 		Program program = elfRelocationContext.getProgram();
 
 		Memory memory = program.getMemory();
-
+		
+		boolean instructionEndian = program.getLanguage().getLanguageDescription().getInstructionEndian().isBigEndian();		
+		
 		int type = relocation.getType();
 		if (type == ARM_ElfRelocationConstants.R_ARM_NONE) {
 			return;
@@ -63,7 +65,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 
 		switch (type) {
 			case ARM_ElfRelocationConstants.R_ARM_PC24: {
-				int oldValue = memory.getInt(relocationAddress);
+				int oldValue = memory.getInt(relocationAddress, instructionEndian);
 				newValue = (int) (symbolValue + addend);
 				newValue -= (offset + 8);  // PC relative, PC will be 8 bytes after inst start
 				if (isThumb) {
@@ -77,7 +79,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				else {
 					newValue = (oldValue & 0xff000000) | ((newValue >> 2) & 0x00ffffff);
 				}
-				memory.setInt(relocationAddress, newValue);
+				memory.setInt(relocationAddress, newValue, instructionEndian);
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_ABS32: {
@@ -99,12 +101,12 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_LDR_PC_G0: {
-				int oldValue = memory.getInt(relocationAddress);
+				int oldValue = memory.getInt(relocationAddress, instructionEndian);
 				newValue = (int) (symbolValue + addend);
 				newValue -= (offset + 8);  // PC relative, PC will be 8 bytes after inst start
 				newValue = (oldValue & 0xff7ff000) | ((~(newValue >> 31) & 1) << 23) |
 					((newValue >> 2) & 0xfff);
-				memory.setInt(relocationAddress, newValue);
+				memory.setInt(relocationAddress, newValue, instructionEndian);
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_ABS16: {
@@ -113,10 +115,10 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_ABS12: {
-				int oldValue = memory.getInt(relocationAddress);
+				int oldValue = memory.getInt(relocationAddress, instructionEndian);
 				newValue = (int) (symbolValue + addend);
 				newValue = (oldValue & 0xfffff000) | (newValue & 0x00000fff);
-				memory.setInt(relocationAddress, newValue);
+				memory.setInt(relocationAddress, newValue, instructionEndian);
 				break;
 			}
 			/*
@@ -141,8 +143,8 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				// since it is adding in the oldvalue below, don't need to add in 4 for pc offset
 				newValue -= (offset);
 
-				short oldValueH = memory.getShort(relocationAddress);
-				short oldValueL = memory.getShort(relocationAddress.add(2));
+				short oldValueH = memory.getShort(relocationAddress, instructionEndian);
+				short oldValueL = memory.getShort(relocationAddress.add(2), instructionEndian);
 				boolean isBLX = (oldValueL & 0x1000) == 0;
 
 				int s = (oldValueH & (1 << 10)) >> 10;
@@ -166,17 +168,17 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 					newValueL &= 0xfffe;
 				}
 
-				memory.setShort(relocationAddress, newValueH);
-				memory.setShort(relocationAddress.add(2), newValueL);
+				memory.setShort(relocationAddress, newValueH, instructionEndian);
+				memory.setShort(relocationAddress.add(2), newValueL, instructionEndian);
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_THM_PC8: {
-				short oldValue = memory.getShort(relocationAddress);
+				short oldValue = memory.getShort(relocationAddress, instructionEndian);
 				newValue = (int) (symbolValue + addend);
 				newValue -= (offset + 4);   // PC relative, PC will be 4 bytes past inst start
 				newValue = newValue >> 1;
 				short sValue = (short) ((oldValue & 0xff00) | (newValue & 0x00ff));
-				memory.setShort(relocationAddress, sValue);
+				memory.setShort(relocationAddress, sValue, instructionEndian);
 				break;
 			}
 			/*
@@ -270,7 +272,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 			case ARM_ElfRelocationConstants.R_ARM_JUMP24:
 			case ARM_ElfRelocationConstants.R_ARM_CALL:
 			case ARM_ElfRelocationConstants.R_ARM_GOT_PLT32:
-				int oldValue = memory.getInt(relocationAddress);
+				int oldValue = memory.getInt(relocationAddress, instructionEndian);
 				newValue = (int) (symbolValue + addend);
 
 				newValue -= (offset + 8);   // PC relative, PC will be 8 bytes past inst start
@@ -284,7 +286,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				else {
 					newValue = (oldValue & 0xff000000) | ((newValue >> 2) & 0x00ffffff);
 				}
-				memory.setInt(relocationAddress, newValue);
+				memory.setInt(relocationAddress, newValue, instructionEndian);
 				break;
 
 			/*
