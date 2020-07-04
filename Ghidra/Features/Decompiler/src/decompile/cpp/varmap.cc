@@ -1240,6 +1240,7 @@ SymbolEntry *ScopeLocal::remapSymbolDynamic(Symbol *sym,uint8 hash,const Address
 void ScopeLocal::recoverNameRecommendationsForSymbols(void)
 
 {
+  Address param_usepoint = fd->getAddress() - 1;
   list<NameRecommend>::const_iterator iter;
   for(iter=nameRecommend.begin();iter!=nameRecommend.end();++iter) {
     const Address &addr((*iter).getAddr());
@@ -1258,7 +1259,10 @@ void ScopeLocal::recoverNameRecommendationsForSymbols(void)
       vn = fd->findLinkedVarnode(entry);
     }
     else {
-      vn = fd->findVarnodeWritten(size,addr,usepoint);
+      if (usepoint == param_usepoint)
+	vn = fd->findVarnodeInput(size, addr);
+      else
+	vn = fd->findVarnodeWritten(size,addr,usepoint);
       if (vn == (Varnode *)0) continue;
       sym = vn->getHigh()->getSymbol();
       if (sym == (Symbol *)0) continue;
