@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.osgi;
 
 import java.awt.*;
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
