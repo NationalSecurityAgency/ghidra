@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.totd;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -83,7 +82,7 @@ public class TipOfTheDayPlugin extends Plugin implements FrontEndOnly {
 
 	private List<String> loadTips() throws IOException {
 		try (InputStream in = getClass().getResourceAsStream("tips.txt")) {
-			return FileUtilities.getLines(in);
+			return in == null ? Collections.emptyList() : FileUtilities.getLines(in);
 		}
 	}
 

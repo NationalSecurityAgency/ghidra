@@ -463,19 +463,19 @@ public final class FileUtilities {
 			return dir.delete();
 		}
 
-		for (int i = 0; i < files.length; i++) {
+		for (File file : files) {
 			monitor.checkCanceled();
-			if (files[i].isDirectory()) {
+			if (file.isDirectory()) {
 				// use a dummy monitor as not to ruin our progress
-				if (!doDeleteDir(files[i], monitor)) {
-					printDebug("Unable to delete directory: " + files[i]);
+				if (!doDeleteDir(file, monitor)) {
+					printDebug("Unable to delete directory: " + file);
 					return false;
 				}
 			}
 			else {
-				monitor.setMessage("Deleting file: " + files[i]);
-				if (!files[i].delete()) {
-					printDebug("Unable to delete file: " + files[i]);
+				monitor.setMessage("Deleting file: " + file);
+				if (!file.delete()) {
+					printDebug("Unable to delete file: " + file);
 					return false;
 				}
 			}
@@ -681,13 +681,11 @@ public final class FileUtilities {
 	 * <p>
 	 * @param file The text file to read in
 	 * @return a list of file lines
-	 * @throws IOException
+	 * @throws IOException if an error occurs trying to read the file.
 	 */
 	public static List<String> getLines(ResourceFile file) throws IOException {
-		try {
-			BufferedReader in = new BufferedReader(
-				new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
-			return getLines(in);
+		try (InputStream is = file.getInputStream()) {
+			return getLines(is);
 		}
 		catch (FileNotFoundException exc) {
 			return new ArrayList<>();
@@ -738,7 +736,7 @@ public final class FileUtilities {
 	 * @throws IOException if there are any issues reading the file
 	 */
 	public static List<String> getLines(InputStream is) throws IOException {
-		return getLines(new BufferedReader(new InputStreamReader(is)));
+		return getLines(new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8)));
 	}
 
 	/**
@@ -790,22 +788,12 @@ public final class FileUtilities {
 	 * @throws IOException if there are any issues reading the file
 	 */
 	public static List<String> getLines(BufferedReader in) throws IOException {
-		try {
-			List<String> fileLines = new ArrayList<>();
-			String line;
-			while ((line = in.readLine()) != null) {
-				fileLines.add(line);
-			}
-			return fileLines;
+		List<String> fileLines = new ArrayList<>();
+		String line;
+		while ((line = in.readLine()) != null) {
+			fileLines.add(line);
 		}
-		finally {
-			try {
-				in.close();
-			}
-			catch (IOException e) {
-				// don't care; we tried
-			}
-		}
+		return fileLines;
 	}
 
 	/**
