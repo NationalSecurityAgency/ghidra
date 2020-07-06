@@ -33,8 +33,7 @@ import generic.util.Path;
 import ghidra.app.plugin.core.osgi.*;
 
 public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
-	protected static String BUNDLE_PATH =
-		translateSeperators("$GHIDRA_HOME/Features/Base/ghidra_scripts");
+	protected static String BUNDLE_PATH ="$GHIDRA_HOME/Features/Base/ghidra_scripts";
 	protected static String SCRIPT_NAME = "HelloWorldScript.java";
 	protected static String SCRIPT_PATH =
 		translateSeperators("$GHIDRA_HOME/Features/Base/ghidra_scripts/" + SCRIPT_NAME);
