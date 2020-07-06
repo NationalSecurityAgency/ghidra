@@ -39,16 +39,14 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	LinkedList<GhidraBundle> bundleStack = new LinkedList<>();
 	GhidraBundle currentBundle;
 
-	
 	protected static void wipe(Path path) throws IOException {
 		if (Files.exists(path)) {
-			for (Path p : (Iterable<Path>) Files.walk(path).sorted(
-				Comparator.reverseOrder())::iterator) {
+			for (Path p : (Iterable<Path>) Files.walk(path)
+					.sorted(Comparator.reverseOrder())::iterator) {
 				Files.deleteIfExists(p);
 			}
 		}
 	}
-
 
 	protected GhidraBundle pushNewBundle() throws IOException {
 		String dir = String.format("sourcebundle%03d", tempDirs.size());
@@ -104,7 +102,8 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals("unexpected output during build", expectedCompilerOutput,
 			stringWriter.getBuffer().toString());
 
-		assertEquals("wrong summary", expectedSummary, capturingBundleHostListener.lastBuildSummary);
+		assertEquals("wrong summary", expectedSummary,
+			capturingBundleHostListener.lastBuildSummary);
 	}
 
 	protected void activate() throws Exception {
@@ -223,7 +222,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			"BClass.java:7: error: ';' expected\n" + 
 			"   failing java goes here\n" + 
 			"                         ^\n" + 
-			String.format("skipping %s/apackage/BClass.java\n", currentBundle.getFile().toString())
+			"skipping "+currentBundle.getFile().toString()+File.separator+"apackage"+File.separator+"BClass.java\n"
 			,
 			"1 source file with errors"
 		); 
@@ -291,8 +290,8 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			"	return \"lib says \" + Library.sup();\n" + 
 			"	                     ^\n" + 
 			"  symbol:   variable Library\n" + 
-			"  location: class apackage.AClass\n" + 
-			String.format("skipping %s/apackage/AClass.java\n", currentBundle.getFile().toString())
+			"  location: class apackage.AClass\n" +
+			"skipping "+currentBundle.getFile().toString()+File.separator+"apackage"+File.separator+"AClass.java\n"
 			,
 			"1 source file with errors"
 		);
