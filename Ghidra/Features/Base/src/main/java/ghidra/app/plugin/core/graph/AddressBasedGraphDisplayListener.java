@@ -163,23 +163,40 @@ public abstract class AddressBasedGraphDisplayListener
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED)) {
+		if (!(ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
+			ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED) ||
+			ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED))) {
 			return;
 		}
+
 		for (DomainObjectChangeRecord record : ev) {
-			if (record.getEventType() == ChangeManager.DOCR_SYMBOL_RENAMED) {
+			if (record instanceof ProgramChangeRecord) {
 				ProgramChangeRecord programRecord = (ProgramChangeRecord) record;
-				handleSymbolRenamed(programRecord);
+				Address address = programRecord.getStart();
+
+				if (record.getEventType() == ChangeManager.DOCR_SYMBOL_RENAMED) {
+					handleSymbolAddedOrRenamed(address, (Symbol) programRecord.getObject());
+				}
+				else if (record.getEventType() == ChangeManager.DOCR_SYMBOL_ADDED) {
+					handleSymbolAddedOrRenamed(address, (Symbol) programRecord.getNewValue());
+				}
+				else if (record.getEventType() == ChangeManager.DOCR_SYMBOL_REMOVED) {
+					handleSymbolRemoved(address);
+				}
 			}
 		}
 	}
 
-	private void handleSymbolRenamed(ProgramChangeRecord programRecord) {
-		Symbol symbol = (Symbol) programRecord.getObject();
-		String newName = symbol.getName();
-		Address address = symbol.getAddress();
+	private void handleSymbolAddedOrRenamed(Address address, Symbol symbol) {
 		String id = getVertexIdForAddress(address);
-		graphDisplay.updateVertexName(id, newName);
+		graphDisplay.updateVertexName(id, symbol.getName());
+	}
+
+	private void handleSymbolRemoved(Address address) {
+		String id = getVertexIdForAddress(address);
+		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
+		String displayName = symbol == null ? address.toString() : symbol.getName();
+		graphDisplay.updateVertexName(id, displayName);
 	}
 
 	private void dispose() {
