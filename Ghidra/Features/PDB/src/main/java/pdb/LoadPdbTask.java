@@ -108,7 +108,7 @@ class LoadPdbTask extends Task {
 			Msg.showError(getClass(), null, "Load PDB Failed", message, t);
 		}
 
-		if (log.getMsgCount() > 0) {
+		if (log.hasMessages()) {
 			MultiLineMessageDialog dialog = new MultiLineMessageDialog("Load PDB File",
 				"There were warnings/errors loading the PDB file.", log.toString(),
 				MultiLineMessageDialog.WARNING_MESSAGE, false);
