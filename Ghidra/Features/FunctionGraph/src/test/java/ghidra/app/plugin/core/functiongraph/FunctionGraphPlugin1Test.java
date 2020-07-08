@@ -31,6 +31,7 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
+import docking.dnd.GClipboard;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.VisualizationModel;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -393,7 +394,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		// 
 		// Initialize the clipboard with known data
 		//
-		Clipboard systemClipboard = tool.getToolFrame().getToolkit().getSystemClipboard();
+		Clipboard systemClipboard = GClipboard.getSystemClipboard();
 		systemClipboard.setContents(DUMMY_TRANSFERABLE, null);
 		waitForSwing();
 
@@ -446,7 +447,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		// 
 		// Initialize the clipboard with known data
 		//
-		Clipboard systemClipboard = tool.getToolFrame().getToolkit().getSystemClipboard();
+		Clipboard systemClipboard = GClipboard.getSystemClipboard();
 		systemClipboard.setContents(DUMMY_TRANSFERABLE, null);
 		waitForSwing();
 

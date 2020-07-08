@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.functionwindow;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import javax.swing.*;
@@ -24,6 +25,8 @@ import javax.swing.table.*;
 import org.junit.*;
 
 import docking.ComponentProvider;
+import docking.action.DockingActionIf;
+import docking.tool.ToolConstants;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.table.GTable;
@@ -132,6 +135,46 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 		String endValue = getRenderedTableCellValue(functionTable, row, column);
 		assertNotEquals("Changing the format did not change the view", startValue, endValue);
+	}
+
+	@Test
+	public void testCopyingFunctionSignature() throws Exception {
+
+		int row = 0;
+		int column = getColumnIndex("Function Signature");
+		select(row);
+
+		String signatureText = getRenderedTableCellValue(functionTable, row, column);
+
+		DockingActionIf copyAction = getAction(tool, ToolConstants.SHARED_OWNER, "Table Data Copy");
+		performAction(copyAction);
+
+		// 
+		// Note: we cannot make this call:
+		// String clipboardText = getClipboardText();
+		//
+		// The copy action of the table uses Java's built-in copy code.  That code uses the system
+		// clipboard, which we cannot rely on in a testing environment.  So, we will just call
+		// the code under test directly.
+		//
+
+		// flag to trigger copy code
+		setInstanceField("copying", functionTable, Boolean.TRUE);
+		String copyText = getCopyText(row, column);
+		assertThat(copyText, containsString(signatureText));
+	}
+
+	private String getCopyText(int row, int column) {
+		Object value = runSwing(() -> functionTable.getValueAt(row, column));
+		assertNotNull(value);
+		return value.toString();
+	}
+
+	private void select(int row) {
+		runSwing(() -> {
+			functionTable.clearSelection();
+			functionTable.addRowSelectionInterval(row, row);
+		});
 	}
 
 	private int getFormatRow(SettingsDialog dialog) {
