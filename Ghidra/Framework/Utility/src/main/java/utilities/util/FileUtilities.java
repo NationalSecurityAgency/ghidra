@@ -175,7 +175,13 @@ public final class FileUtilities {
 		}
 	}
 
-	public static byte[] getBytes(InputStream is) throws IOException {
+	/**
+	 * Reads the bytes from the stream into a byte array
+	 * @param is the input stream to read
+	 * @return a byte[] containing the bytes from the stream.
+	 * @throws IOException if an I/O error occurs reading
+	 */
+	public static byte[] getBytesFromStream(InputStream is) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		byte[] bytes = new byte[4096];
 		int n;
