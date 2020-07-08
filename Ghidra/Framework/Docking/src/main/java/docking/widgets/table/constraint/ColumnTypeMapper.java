@@ -58,6 +58,26 @@ public abstract class ColumnTypeMapper<T, M> implements ExtensionPoint {
 		this.destinationType = destinationType;
 	}
 
+	@Override
+	public int hashCode() {
+		return sourceType.hashCode() + destinationType.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		ColumnTypeMapper<?, ?> other = (ColumnTypeMapper<?, ?>) obj;
+		return destinationType == other.destinationType && sourceType == other.sourceType;
+	}
+
 	/**
 	 * Converts an object of type T1 to an object of type T2
 	 * @param value the object to convert.
