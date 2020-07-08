@@ -1702,8 +1702,13 @@ public class GhidraFileChooser extends DialogComponentProvider
 	void userSelectedFiles(List<File> files) {
 		selectedFiles.setFiles(files);
 
-		// Update the display when we are in single selection mode
-		if (!isMultiSelectionEnabled()) {
+		// Update the display to...
+		if (isMultiSelectionEnabled() && selectedFiles.size() > 1) {
+			// clear the filename text field when multiple files are selected
+			filenameTextField.setText("");
+		}
+		else {
+			// set the filename text on single selection, regardless of mode
 			updateTextFieldForFile(selectedFiles.getFile());
 		}
 	}
