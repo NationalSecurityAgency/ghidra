@@ -352,11 +352,9 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 				throw new IllegalArgumentException(
 					"Function entryPoint may not be created on defined data");
 			}
-			try {
-				namespaceMgr.overlapsNamespace(body);
-			}
-			catch (OverlappingNamespaceException e) {
-				throw new OverlappingFunctionException(entryPoint, e);
+			
+			if (namespaceMgr.overlapsNamespace(body) != null) {
+				throw new OverlappingFunctionException(entryPoint);
 			}
 
 			if (name == null || name.length() == 0 ||
