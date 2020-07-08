@@ -161,9 +161,8 @@ public final class FileUtilities {
 		}
 		byte[] data = new byte[(int) length];
 
-		InputStream fis = sourceFile.getInputStream();
 
-		try {
+		try (InputStream fis = sourceFile.getInputStream()) {
 			if (fis.skip(offset) != offset) {
 				throw new IOException("Did not skip to the specified offset!");
 			}
@@ -173,9 +172,6 @@ public final class FileUtilities {
 					", but read " + n);
 			}
 			return data;
-		}
-		finally {
-			fis.close();
 		}
 	}
 
@@ -255,15 +251,11 @@ public final class FileUtilities {
 	public final static void copyFile(ResourceFile fromFile, File toFile, boolean append,
 			TaskMonitor monitor) throws IOException {
 
-		InputStream fin = fromFile.getInputStream();
-		try {
+		try (InputStream fin = fromFile.getInputStream()) {
 			if (monitor != null) {
 				monitor.initialize((int) fromFile.length());
 			}
 			copyStreamToFile(fin, toFile, append, monitor);
-		}
-		finally {
-			fin.close();
 		}
 	}
 
@@ -279,25 +271,13 @@ public final class FileUtilities {
 	public final static void copyFile(ResourceFile fromFile, ResourceFile toFile,
 			TaskMonitor monitor) throws IOException {
 
-		InputStream fin = null;
-		OutputStream out = null;
-		try {
-			fin = fromFile.getInputStream();
-			out = toFile.getOutputStream();
+		try (InputStream fin = fromFile.getInputStream();
+				OutputStream out = toFile.getOutputStream()) {
 
 			if (monitor != null) {
 				monitor.initialize((int) fromFile.length());
 			}
 			copyStreamToStream(fin, out, monitor);
-		}
-		finally {
-			if (fin != null) {
-				fin.close();
-			}
-
-			if (out != null) {
-				out.close();
-			}
 		}
 	}
 
@@ -619,18 +599,11 @@ public final class FileUtilities {
 	public final static void copyFileToStream(File fromFile, OutputStream out, TaskMonitor monitor)
 			throws IOException {
 
-		InputStream fin = null;
-		try {
-			fin = new FileInputStream(fromFile);
+		try (InputStream fin = new FileInputStream(fromFile)) {
 			if (monitor != null) {
 				monitor.initialize((int) fromFile.length());
 			}
 			copyStreamToStream(fin, out, monitor);
-		}
-		finally {
-			if (fin != null) {
-				fin.close();
-			}
 		}
 	}
 
@@ -729,9 +702,8 @@ public final class FileUtilities {
 	/**
 	 * Returns all of the lines in the given {@link InputStream} without any newline characters.
 	 * <p>
-	 * <b>The input stream is closed as a side-effect.</b>
 	 *
-	 * @param is the input stream from which to read, as a side effect, it is closed
+	 * @param is the input stream from which to read
 	 * @return a {@link List} of strings representing the text lines of the file
 	 * @throws IOException if there are any issues reading the file
 	 */
@@ -744,9 +716,7 @@ public final class FileUtilities {
 	 * <p>
 	 * EOL characters are normalized to simple '\n's.
 	 * <p>
-	 * <b>The input stream is closed as a side-effect.</b>
-	 * <p>
-	 * @param is the input stream from which to read, as a side effect, it is closed
+	 * @param is the input stream from which to read
 	 * @return the content as a String
 	 * @throws IOException if there are any issues reading the file
 	 */
@@ -780,10 +750,8 @@ public final class FileUtilities {
 
 	/**
 	 * Returns all of the lines in the {@link BufferedReader} without any newline characters.
-	 * <p>
-	 * The BufferedReader is closed before returning.
 	 *
-	 * @param in BufferedReader to read lines from, as a side effect, it is closed
+	 * @param in BufferedReader to read lines from. The caller is responsible for closing the reader
 	 * @return a {@link List} of strings representing the text lines of the file
 	 * @throws IOException if there are any issues reading the file
 	 */
