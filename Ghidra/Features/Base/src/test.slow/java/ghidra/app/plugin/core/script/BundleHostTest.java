@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.junit.*;
 import org.osgi.framework.Bundle;
@@ -41,9 +42,10 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	protected static void wipe(Path path) throws IOException {
 		if (Files.exists(path)) {
-			for (Path p : (Iterable<Path>) Files.walk(path)
-					.sorted(Comparator.reverseOrder())::iterator) {
-				Files.deleteIfExists(p);
+			try (Stream<Path> walk = Files.walk(path)) {
+				for (Path p : (Iterable<Path>) walk.sorted(Comparator.reverseOrder())::iterator) {
+					Files.deleteIfExists(p);
+				}
 			}
 		}
 	}

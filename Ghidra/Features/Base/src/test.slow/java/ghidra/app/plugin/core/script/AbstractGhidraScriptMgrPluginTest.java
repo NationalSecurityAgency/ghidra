@@ -181,9 +181,10 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	protected static void wipe(Path path) throws IOException {
 		if (Files.exists(path)) {
-			for (Path p : (Iterable<Path>) Files.walk(path)
-					.sorted(Comparator.reverseOrder())::iterator) {
-				Files.deleteIfExists(p);
+			try (Stream<Path> walk = Files.walk(path)) {
+				for (Path p : (Iterable<Path>) walk.sorted(Comparator.reverseOrder())::iterator) {
+					Files.deleteIfExists(p);
+				}
 			}
 		}
 	}

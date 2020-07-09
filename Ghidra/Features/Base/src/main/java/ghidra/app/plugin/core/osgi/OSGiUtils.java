@@ -160,8 +160,8 @@ public class OSGiUtils {
 	}
 
 	static void collectPackagesFromDirectory(Path dirPath, Set<String> packages) {
-		try {
-			Files.walk(dirPath).filter(p -> p.toString().endsWith(".class")).forEach(path -> {
+		try (Stream<Path> walk = Files.walk(dirPath)) {
+			walk.filter(p -> p.toString().endsWith(".class")).forEach(path -> {
 				String relativePath = dirPath.relativize(path).toString();
 				int lastSlash = relativePath.lastIndexOf(File.separatorChar);
 				packages.add(lastSlash > 0

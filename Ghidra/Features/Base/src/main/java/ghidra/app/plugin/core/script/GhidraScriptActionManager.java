@@ -20,8 +20,10 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -176,29 +178,30 @@ class GhidraScriptActionManager {
 	private DockingAction createScriptAction(String name, String menuEntry, String description,
 			Icon icon, String toolBarGroup, Runnable runnable) {
 		return new ActionBuilder(name, plugin.getName()).popupMenuPath(menuEntry)
-			.popupMenuIcon(icon)
-			.toolBarIcon(icon)
-			.toolBarGroup(toolBarGroup)
-			.description(description)
-			.enabled(false)
-			.enabledWhen(context -> context.getContextObject() instanceof ResourceFile)
-			.onAction(context -> runnable.run())
-			.buildAndInstallLocal(provider);
+				.popupMenuIcon(icon)
+				.toolBarIcon(icon)
+				.toolBarGroup(toolBarGroup)
+				.description(description)
+				.enabled(false)
+				.enabledWhen(context -> context.getContextObject() instanceof ResourceFile)
+				.onAction(context -> runnable.run())
+				.buildAndInstallLocal(provider);
 	}
 
 	private DockingAction createScriptTableAction(String name, String description, Icon icon,
 			Runnable runnable) {
 		return new ActionBuilder(name, plugin.getName()).popupMenuPath(name)
-			.popupMenuIcon(icon)
-			.toolBarIcon(icon)
-			.toolBarGroup(null)
-			.description(description)
-			.enabledWhen(context -> {
-				Object contextObject = context.getContextObject();
-				return (contextObject instanceof GTable) || (contextObject instanceof ResourceFile);
-			})
-			.onAction(context -> runnable.run())
-			.buildAndInstallLocal(provider);
+				.popupMenuIcon(icon)
+				.toolBarIcon(icon)
+				.toolBarGroup(null)
+				.description(description)
+				.enabledWhen(context -> {
+					Object contextObject = context.getContextObject();
+					return (contextObject instanceof GTable) ||
+						(contextObject instanceof ResourceFile);
+				})
+				.onAction(context -> runnable.run())
+				.buildAndInstallLocal(provider);
 	}
 
 	private void createActions() {
@@ -246,15 +249,15 @@ class GhidraScriptActionManager {
 		};
 
 		new ActionBuilder("Ghidra API Help", plugin.getName()).popupMenuPath("Ghidra API Help")
-			.popupMenuIcon(icon)
-			.popupWhen(test)
-			.toolBarIcon(icon)
-			.toolBarGroup(null)
-			.description("Help")
-			.helpLocation(new HelpLocation(plugin.getName(), "Help"))
-			.enabledWhen(test)
-			.onAction(context -> showGhidraScriptJavadoc())
-			.buildAndInstallLocal(provider);
+				.popupMenuIcon(icon)
+				.popupWhen(test)
+				.toolBarIcon(icon)
+				.toolBarGroup(null)
+				.description("Help")
+				.helpLocation(new HelpLocation(plugin.getName(), "Help"))
+				.enabledWhen(test)
+				.onAction(context -> showGhidraScriptJavadoc())
+				.buildAndInstallLocal(provider);
 
 		// XXX In order to override a method of the new DockingAction and use the builder, we
 		// need to override the build method of the ActionBuilder.  When the ActionBuilder is 
@@ -279,10 +282,10 @@ class GhidraScriptActionManager {
 				return action;
 			}
 		}.menuGroup(ToolConstants.HELP_CONTENTS_MENU_GROUP)
-			.menuPath(ToolConstants.MENU_HELP, "Ghidra API Help")
-			.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
-			.onAction(context -> showGhidraScriptJavadoc())
-			.buildAndInstall(plugin.getTool());
+				.menuPath(ToolConstants.MENU_HELP, "Ghidra API Help")
+				.helpLocation(new HelpLocation("Misc", "Welcome_to_Ghidra_Help"))
+				.onAction(context -> showGhidraScriptJavadoc())
+				.buildAndInstall(plugin.getTool());
 	}
 
 	private void showGhidraScriptJavadoc() {
@@ -397,9 +400,11 @@ class GhidraScriptActionManager {
 				if (versionedExtractDir.exists()) {
 
 					// Open Javadoc if all the files are present
-					if (zf.size() + 1 == Files.walk(versionedExtractDir.toPath()).count()) {
-						launchJavadoc();
-						return;
+					try (Stream<Path> walk = Files.walk(versionedExtractDir.toPath())) {
+						if (zf.size() + 1 == walk.count()) {
+							launchJavadoc();
+							return;
+						}
 					}
 
 					// Delete corrupted directory and continue

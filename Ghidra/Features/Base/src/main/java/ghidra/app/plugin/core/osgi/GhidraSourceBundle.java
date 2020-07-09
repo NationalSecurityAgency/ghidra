@@ -404,9 +404,10 @@ public class GhidraSourceBundle extends GhidraBundle {
 	protected static boolean wipeContents(Path path) throws IOException {
 		if (Files.exists(path)) {
 			boolean anythingDeleted = false;
-			for (Path p : (Iterable<Path>) Files.walk(path)
-					.sorted(Comparator.reverseOrder())::iterator) {
-				anythingDeleted |= Files.deleteIfExists(p);
+			try (Stream<Path> walk = Files.walk(path)) {
+				for (Path p : (Iterable<Path>) walk.sorted(Comparator.reverseOrder())::iterator) {
+					anythingDeleted |= Files.deleteIfExists(p);
+				}
 			}
 			return anythingDeleted;
 		}
@@ -859,44 +860,46 @@ public class GhidraSourceBundle extends GhidraBundle {
 			System.getProperty("java.class.path") + File.pathSeparator + binaryDir.toString());
 		options.add("-proc:none");
 
-		BundleJavaManager bundleJavaManager = createBundleJavaManager(writer, summary, options);
+		try (BundleJavaManager bundleJavaManager =
+			createBundleJavaManager(writer, summary, options)) {
 
-		final List<ResourceFileJavaFileObject> sourceFiles = newSources.stream()
-				.map(sf -> new ResourceFileJavaFileObject(sf.getParentFile(), sf, Kind.SOURCE))
-				.collect(Collectors.toList());
+			final List<ResourceFileJavaFileObject> sourceFiles = newSources.stream()
+					.map(sf -> new ResourceFileJavaFileObject(sf.getParentFile(), sf, Kind.SOURCE))
+					.collect(Collectors.toList());
 
-		Path binaryManifest = getBinaryManifestPath();
-		if (Files.exists(binaryManifest)) {
-			Files.delete(binaryManifest);
-		}
-
-		// try to compile, if we fail, avoid offenders and try again
-		while (!sourceFiles.isEmpty()) {
-			if (tryBuild(writer, bundleJavaManager, sourceFiles, options)) {
-				break;
+			Path binaryManifest = getBinaryManifestPath();
+			if (Files.exists(binaryManifest)) {
+				Files.delete(binaryManifest);
 			}
-		}
 
-		// mark the successful compilations
-		for (ResourceFileJavaFileObject sourceFile : sourceFiles) {
-			buildSuccess(sourceFile.getFile());
-		}
-		// buildErrors is now up to date, set status
-		if (getBuildErrorCount() > 0) {
-			int count = getBuildErrorCount();
-			summary.printf("%d source file%s with errors", count, count > 1 ? "s" : "");
-		}
-
-		ResourceFile sourceManifest = getSourceManifestFile();
-		if (sourceManifest.exists()) {
-			Files.createDirectories(binaryManifest.getParent());
-			try (InputStream inStream = sourceManifest.getInputStream()) {
-				Files.copy(inStream, binaryManifest, StandardCopyOption.REPLACE_EXISTING);
+			// try to compile, if we fail, avoid offenders and try again
+			while (!sourceFiles.isEmpty()) {
+				if (tryBuild(writer, bundleJavaManager, sourceFiles, options)) {
+					break;
+				}
 			}
-			return summary.getValue();
-		}
 
-		return generateManifest(writer, summary, binaryManifest);
+			// mark the successful compilations
+			for (ResourceFileJavaFileObject sourceFile : sourceFiles) {
+				buildSuccess(sourceFile.getFile());
+			}
+			// buildErrors is now up to date, set status
+			if (getBuildErrorCount() > 0) {
+				int count = getBuildErrorCount();
+				summary.printf("%d source file%s with errors", count, count > 1 ? "s" : "");
+			}
+
+			ResourceFile sourceManifest = getSourceManifestFile();
+			if (sourceManifest.exists()) {
+				Files.createDirectories(binaryManifest.getParent());
+				try (InputStream inStream = sourceManifest.getInputStream()) {
+					Files.copy(inStream, binaryManifest, StandardCopyOption.REPLACE_EXISTING);
+				}
+				return summary.getValue();
+			}
+
+			return generateManifest(writer, summary, binaryManifest);
+		}
 	}
 
 	protected static class Compilation {
