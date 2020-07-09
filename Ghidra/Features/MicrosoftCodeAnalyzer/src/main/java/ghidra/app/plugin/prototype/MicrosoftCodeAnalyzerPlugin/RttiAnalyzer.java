@@ -225,7 +225,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 		int rtti0PointerOffset = Rtti4Model.getRtti0PointerComponentOffset();
 
-		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("RTTI0 refernces");
+		MemoryBytePatternSearcher searcher = new MemoryBytePatternSearcher("RTTI0 references");
 
 		for (Address rtti0Address : rtti0Locations) {
 			byte[] bytes;
