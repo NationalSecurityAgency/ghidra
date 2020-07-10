@@ -72,6 +72,10 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		// We need the parent component's Font instead of using our
 		// own #getFont() because we are not a child of the parent yet and
 		// the font may be set to something other than the default.
+		// Use 1/3 of the line height of the font to ensure visually consistent
+		// padding between rows.  (historically, 5px was used as the padding
+		// between the default 12pt (15px lineht) rows, so 15px lineht/5px padding
+		// equals .333 ratio.) 
 		FontMetrics metrics = cellRenderer.getFontMetrics(font);
 		setFixedCellHeight(
 			Math.max(metrics.getHeight(), DEFAULT_ICON_SIZE) +
