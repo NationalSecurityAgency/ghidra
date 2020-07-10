@@ -866,6 +866,46 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
   return updateoccurred;
 }
 
+/// A Varnode overlaps the given SymbolEntry.  Make sure the Varnode is part of the variable
+/// underlying the Symbol.  If not, remap things so that the Varnode maps to a distinct Symbol.
+/// In either case, attach the appropriate Symbol to the Varnode
+/// \param entry is the given SymbolEntry
+/// \param vn is the overlapping Varnode
+/// \return the Symbol attached to the Varnode
+Symbol *Funcdata::handleSymbolConflict(SymbolEntry *entry,Varnode *vn)
+
+{
+  if (vn->isInput() || vn->isAddrTied() ||
+      vn->isPersist() || vn->isConstant() || entry->isDynamic()) {
+    vn->setSymbolEntry(entry);
+    return entry->getSymbol();
+  }
+  HighVariable *high = vn->getHigh();
+  Varnode *otherVn;
+  HighVariable *otherHigh = (HighVariable *)0;
+  // Look for a conflicting HighVariable
+  VarnodeLocSet::const_iterator iter = beginLoc(entry->getSize(),entry->getAddr());
+  while(iter != endLoc()) {
+    otherVn = *iter;
+    if (otherVn->getSize() != entry->getSize()) break;
+    if (otherVn->getAddr() != entry->getAddr()) break;
+    HighVariable *tmpHigh = otherVn->getHigh();
+    if (tmpHigh != high) {
+      otherHigh = tmpHigh;
+      break;
+    }
+    ++iter;
+  }
+  if (otherHigh == (HighVariable *)0) {
+    vn->setSymbolEntry(entry);
+    return entry->getSymbol();
+  }
+
+  // If we reach here, we have a conflicting variable
+  buildDynamicSymbol(vn);
+  return vn->getSymbolEntry()->getSymbol();
+}
+
 /// \brief Update properties (and the data-type) for a set of Varnodes associated with one Symbol
 ///
 /// The set of Varnodes with the same size and address all have their boolean properties
@@ -994,8 +1034,7 @@ Symbol *Funcdata::linkSymbol(Varnode *vn)
   // Find any entry overlapping base address
   entry = localmap->queryProperties(vn->getAddr(), 1, usepoint, flags);
   if (entry != (SymbolEntry *) 0) {
-    sym = entry->getSymbol();
-    vn->setSymbolEntry(entry);
+    sym = handleSymbolConflict(entry, vn);
   }
   else {			// Must create a symbol entry
     if (!vn->isPersist()) {	// Only create local symbol
