@@ -817,22 +817,26 @@ public class GhidraSourceBundle extends GhidraBundle {
 		options.add(System.getProperty("java.class.path"));
 		options.add("-proc:none");
 
-		StandardJavaFileManager javaFileManager = compiler.getStandardFileManager(null, null, null);
-		BundleJavaManager bundleJavaManager =
-			new BundleJavaManager(bundleHost.getHostFramework(), javaFileManager, options);
-		Iterable<? extends JavaFileObject> sourceFiles =
-			javaFileManager.getJavaFileObjectsFromPaths(List.of(activatorSourceFileName));
-		DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-		JavaCompiler.CompilationTask task =
-			compiler.getTask(writer, bundleJavaManager, diagnostics, options, null, sourceFiles);
-		if (!task.call()) {
-			for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
-				writer.write(
-					diagnostic.getSource().toString() + ": " + diagnostic.getMessage(null) + "\n");
+		try (StandardJavaFileManager javaFileManager =
+			compiler.getStandardFileManager(null, null, null);
+				BundleJavaManager bundleJavaManager = new BundleJavaManager(
+					bundleHost.getHostFramework(), javaFileManager, options);) {
+			Iterable<? extends JavaFileObject> sourceFiles =
+				javaFileManager.getJavaFileObjectsFromPaths(List.of(activatorSourceFileName));
+			DiagnosticCollector<JavaFileObject> diagnostics =
+				new DiagnosticCollector<JavaFileObject>();
+			JavaCompiler.CompilationTask task = compiler.getTask(writer, bundleJavaManager,
+				diagnostics, options, null, sourceFiles);
+			if (!task.call()) {
+				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics
+						.getDiagnostics()) {
+					writer.write(diagnostic.getSource().toString() + ": " +
+						diagnostic.getMessage(null) + "\n");
+				}
+				return false;
 			}
-			return false;
+			return true;
 		}
-		return true;
 	}
 
 	/**
