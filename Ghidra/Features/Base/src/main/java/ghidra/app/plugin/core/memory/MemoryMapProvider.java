@@ -635,10 +635,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		memManager.mergeBlocks(blocks);
 	}
 
-	/**
-	 * @param cursor
-	 */
-	public void setCursor(Cursor cursor) {
+	void setCursor(Cursor cursor) {
 		tool.getToolFrame().setCursor(cursor);
 	}
 
@@ -657,9 +654,9 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		return plugin.getTool();
 	}
 
-	// ==================================================================================================
-	// Inner Classes
-	// ==================================================================================================
+// ==================================================================================================
+// Inner Classes
+// ==================================================================================================
 
 	private class MemoryMapTable extends GhidraTable {
 		MemoryMapTable(TableModel model) {
@@ -670,7 +667,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 
 		@Override
-		protected <T> SelectionManager createSelectionManager(TableModel model) {
+		protected <T> SelectionManager createSelectionManager() {
 			return null;
 		}
 	}

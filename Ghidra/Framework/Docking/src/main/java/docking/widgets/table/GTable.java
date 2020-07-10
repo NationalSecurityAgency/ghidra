@@ -225,7 +225,15 @@ public class GTable extends JTable {
 
 		initializeRowHeight();
 
-		selectionManager = createSelectionManager(dataModel);
+		selectionManager = createSelectionManager();
+	}
+
+	protected <T> SelectionManager createSelectionManager() {
+		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
+		if (rowModel != null) {
+			return new RowObjectSelectionManager<>(this, rowModel);
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -233,9 +241,10 @@ public class GTable extends JTable {
 	// an arbitrary type T defined here.  So, T doesn't really exist and therefore the cast isn't
 	// really casting to anything.  The SelectionManager will take on the type of the given model.
 	// The T is just there on the SelectionManager to make its internal methods consistent.
-	protected <T> SelectionManager createSelectionManager(TableModel model) {
+	private <T> RowObjectTableModel<T> getRowObjectTableModel() {
+		TableModel model = getModel();
 		if (model instanceof RowObjectTableModel) {
-			return new RowObjectSelectionManager<>(this, (RowObjectTableModel<T>) model);
+			return (RowObjectTableModel<T>) model;
 		}
 
 		return null;
@@ -994,14 +1003,25 @@ public class GTable extends JTable {
 	 */
 	@Override
 	public Object getValueAt(int row, int column) {
-		Object value = super.getValueAt(row, column);
-
 		if (!copying) {
-			return value;
+			return super.getValueAt(row, column);
 		}
 
+		Object value = getCellValue(row, column);
 		Object updated = maybeConvertValue(value);
 		return updated;
+	}
+
+	private Object getCellValue(int row, int column) {
+		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
+		if (rowModel == null) {
+			Object value = super.getValueAt(row, column);
+			return maybeConvertValue(value);
+		}
+
+		Object rowObject = rowModel.getRowObject(row);
+		String stringValue = TableUtils.getTableCellStringValue(rowModel, rowObject, column);
+		return maybeConvertValue(stringValue);
 	}
 
 	private Object maybeConvertValue(Object value) {
