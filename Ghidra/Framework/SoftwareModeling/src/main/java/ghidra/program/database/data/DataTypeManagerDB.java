@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -306,6 +307,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @param errHandler the error handler
 	 * @param lock       database lock
 	 * @param monitor    the current task monitor
+	 * @throws CancelledException if an upgrade is cancelled
+	 * @throws IOException if there is a problem reading the database
+	 * @throws VersionException if any database handle's version doesn't match the expected version
 	 */
 	protected DataTypeManagerDB(DBHandle handle, AddressMap addrMap, int openMode,
 			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
@@ -657,6 +661,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				baseName = baseName.substring(0, pos);
 			}
 			catch (NumberFormatException e) {
+				// the number will get updated below
 			}
 		}
 		while (getDataType(path, name) != null) {
@@ -678,6 +683,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				baseName = baseName.substring(0, pos);
 			}
 			catch (NumberFormatException e) {
+				// the number will get updated below
 			}
 		}
 		while (getDataType(path1, name) != null || getDataType(path2, name) != null) {
@@ -972,7 +978,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * 
 	 * @param existingDataType existing datatype
 	 * @param dataType         new datatype
-	 * @return true if replacment approach was successful, else false
+	 * @return true if replacement approach was successful, else false
 	 * @throws DataTypeDependencyException if datatype contains dependency issues
 	 *                                     during resolve process
 	 */
@@ -980,7 +986,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			throws DataTypeDependencyException {
 
 		// TODO: this approach could be added to other DB datatypes to avoid
-		// unnececesary creation and removal.
+		// unnecessary creation and removal.
 
 		try {
 			if (existingDataType instanceof StructureDB) {
@@ -1266,6 +1272,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					replacementDt.setLastChangeTime(lastChangeTime);
 				}
 				catch (Exception e) {
+					Msg.error(this, "Unable to set the name to " + existingDt.getName() +
+						"on " + replacementDt + " while replacing the original datatype", e);
 				}
 			}
 			CategoryPath path = existingDt.getCategoryPath();
@@ -1276,6 +1284,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 				catch (Exception e) {
 					// not sure what to do here
+					Msg.error(this, "Unable to set the CatagoryPath to " + path +
+						"on " + replacementDt + " while replacing the original datatype", e);
 				}
 			}
 			return replacementDt;
@@ -1543,10 +1553,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return BAD_DATATYPE_ID;
 		}
 		if (dt instanceof DatabaseObject) {
-			// NOTE: Implementation DOES NOT check or guarentee that dt
-			// or its returned ID correspond to this datatype manager instance.
-			// This seems incorrect although it's possible that uses depend
-			// on this behavior.
+			// NOTE: Implementation DOES NOT check or guarantee that datatype or its returned ID 
+			// correspond to this datatype manager instance. This seems incorrect although it's 
+			// possible that uses depend on this behavior.
 			return ((DatabaseObject) dt).getKey();
 		}
 
@@ -1801,7 +1810,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				case BUILT_IN:
 					boolean status = builtinAdapter.removeRecord(dataID);
 					if (status) {
-						dt = builtInMap.remove(new Long(dataID));
+						dt = builtInMap.remove(dataID);
 						builtIn2IdMap.remove(dt);
 					}
 					break;
@@ -2049,51 +2058,57 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private DataType getBuiltInDataType(long dataTypeID, Record record) {
 		lock.acquire();
 		try {
-			Long key = new Long(dataTypeID);
+			Long key = dataTypeID;
 			DataType dt = builtInMap.get(key);
 
-			if (dt == null) {
-				if (record == null) {
-					record = builtinAdapter.getRecord(dataTypeID);
-				}
-				if (record != null) {
-					long catID = record.getLongValue(BuiltinDBAdapter.BUILT_IN_CAT_COL);
-					CategoryDB catDB = getCategoryDB(catID);
-					CategoryPath catPath = catDB.getCategoryPath();
-					String classPath = record.getString(BuiltinDBAdapter.BUILT_IN_CLASSNAME_COL);
-					String name = record.getString(BuiltinDBAdapter.BUILT_IN_NAME_COL);
-					try { // TODO: !! Can we look for alternate constructor which takes DTM argument
-						Class<?> c;
+			if (dt != null) {
+				return dt;
+			}
 
-						try {
-							c = Class.forName(classPath);
-						}
-						catch (ClassNotFoundException | NoClassDefFoundError e) {
-							// Check the classNameMap.
-							String newClassPath = ClassTranslator.get(classPath);
-							if (newClassPath == null) {
-								throw e;
-							}
-							try {
-								c = Class.forName(newClassPath);
-							}
-							catch (ClassNotFoundException e1) {
-								throw e1;
-							}
-						}
-						dt = (BuiltInDataType) c.newInstance();
-						dt.setName(name);
-						dt.setCategoryPath(catPath);
-						dt = dt.clone(this);
-						dt.setDefaultSettings(new SettingsDBManager(this, dt, dataTypeID));
-					}
-					catch (Exception e) {
-						dt = new MissingBuiltInDataType(catPath, name, classPath, this);
-					}
-					builtInMap.put(key, dt);
-					builtIn2IdMap.put(dt, key);
+			if (record == null) {
+				record = builtinAdapter.getRecord(dataTypeID);
+
+				if (record == null) {
+					return null;
 				}
 			}
+
+			long catID = record.getLongValue(BuiltinDBAdapter.BUILT_IN_CAT_COL);
+			CategoryDB catDB = getCategoryDB(catID);
+			CategoryPath catPath = catDB.getCategoryPath();
+			String classPath = record.getString(BuiltinDBAdapter.BUILT_IN_CLASSNAME_COL);
+			String name = record.getString(BuiltinDBAdapter.BUILT_IN_NAME_COL);
+			try { // TODO: !! Can we look for alternate constructor which takes DTM argument
+				Class<?> c;
+
+				try {
+					c = Class.forName(classPath);
+				}
+				catch (ClassNotFoundException | NoClassDefFoundError e) {
+					// Check the classNameMap.
+					String newClassPath = ClassTranslator.get(classPath);
+					if (newClassPath == null) {
+						throw e;
+					}
+					try {
+						c = Class.forName(newClassPath);
+					}
+					catch (ClassNotFoundException e1) {
+						throw e1;
+					}
+				}
+
+				dt = (BuiltInDataType) c.getDeclaredConstructor().newInstance();
+				dt.setName(name);
+				dt.setCategoryPath(catPath);
+				dt = dt.clone(this);
+				dt.setDefaultSettings(new SettingsDBManager(this, dt, dataTypeID));
+			}
+			catch (Exception e) {
+				dt = new MissingBuiltInDataType(catPath, name, classPath, this);
+			}
+			builtInMap.put(key, dt);
+			builtIn2IdMap.put(dt, key);
 			return dt;
 		}
 		catch (IOException e) {
@@ -2745,6 +2760,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 			}
 			catch (IOException e) {
+				Msg.error(this, "Unexpected exception iterating structures", e);
 			}
 		}
 	}
@@ -2788,6 +2804,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 			}
 			catch (IOException e) {
+				Msg.error(this, "Unexpected exception iterating composites", e);
 			}
 		}
 	}
@@ -2799,12 +2816,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		 * than the second.
 		 * <p>
 		 *
-		 * @param o1 the first object to be compared.
-		 * @param o2 the second object to be compared.
+		 * @param d1 the first datatype to be compared
+		 * @param d2 the second datatype to be compared
 		 * @return a negative integer, zero, or a positive integer as the first argument
-		 *         is less than, equal to, or greater than the second.
+		 *         is less than, equal to, or greater than the second
 		 * @throws ClassCastException if the arguments' types prevent them from being
-		 *                            compared by this Comparator.
+		 *                            compared by this Comparator
 		 */
 		@Override
 		public int compare(DataType d1, DataType d2) {
@@ -2830,10 +2847,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Notifys the category path changed
+	 * Notifies the category path changed
 	 * 
-	 * @param dt       the datatype whose path changed.
-	 * @param oldPath  the old category.
+	 * @param dt       the datatype whose path changed
+	 * @param oldPath  the old category
 	 * @param oldCatId the old category's record id
 	 */
 	void dataTypeCategoryPathChanged(DataTypeDB dt, CategoryPath oldPath, long oldCatId) {
@@ -2986,6 +3003,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @param name     the name of the settings
 	 * @param value    the value for the settings, must be either a String, byte[]
 	 *                 or Long
+	 * @return true if the settings were updated
 	 */
 	public boolean setSettings(Address dataAddr, String name, Object value) {
 		if (value instanceof String) {
@@ -3068,6 +3086,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * 
 	 * @param dataAddr the address of the data for this settings
 	 * @param name     the name of settings.
+	 * @return the settings object
 	 */
 	public Object getSettings(Address dataAddr, String name) {
 		Object obj = getStringSettingsValue(dataAddr, name);
@@ -3082,10 +3101,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Clear the setting.
+	 * Clear the setting
 	 * 
 	 * @param dataAddr min address of data
-	 * @param name     settings name
+	 * @param name settings name
+	 * @return true if the settings were cleared
 	 */
 	public boolean clearSetting(Address dataAddr, String name) {
 		if (instanceSettingsAdapter == null) {
@@ -3175,12 +3195,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Move the settings in the range to the new start address.
+	 * Move the settings in the range to the new start address
 	 * 
 	 * @param fromAddr start address from where to move
 	 * @param toAddr   new Address to move to
-	 * @param length   number of addresses to move.
+	 * @param length   number of addresses to move
 	 * @param monitor  progress monitor
+	 * @throws CancelledException if the operation was cancelled
 	 */
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
@@ -3246,9 +3267,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Returns all the Settings names for the given address.
+	 * Returns all the Settings names for the given address
 	 * 
 	 * @param dataAddr the address
+	 * @return the names
 	 */
 	public String[] getNames(Address dataAddr) {
 		if (instanceSettingsAdapter == null) {
@@ -3275,9 +3297,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	/**
-	 * Returns true if no settings are set for the given address.
+	 * Returns true if no settings are set for the given address
 	 * 
-	 * @param dataAddr the address to test.
+	 * @param dataAddr the address to test
+	 * @return true if not settings
 	 */
 	public boolean isEmptySetting(Address dataAddr) {
 		if (instanceSettingsAdapter == null) {
@@ -3665,8 +3688,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			// DT remove this check
 			throw new AssertException("should not be called with id of 0");
 		}
-		UniversalID sourceID = sourceArchive == null ? null : sourceArchive.getSourceArchiveID();
 
+		UniversalID sourceID = sourceArchive == null ? null : sourceArchive.getSourceArchiveID();
 		return idsToDataTypeMap.getDataType(sourceID, datatypeID);
 	}
 
@@ -3978,14 +4001,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		 * 
 		 * @param key datatype identity pair (see
 		 *            {@link DataTypeManagerDB#getEquivalenceKey(DataTypeDB, DataType)}
-		 * @return true if cache contains specified dataype identify pair
+		 * @return true if cache contains specified datatype identify pair
 		 */
 		boolean contains(long key) {
 			return cacheMap.containsKey(key);
 		}
 
 		/**
-		 * Replace or put datatype pair equivalance state into cache without impacting
+		 * Replace or put datatype pair equivalence state into cache without impacting
 		 * its internal activity counter.
 		 * 
 		 * @param key datatype identity pair (see
@@ -3996,13 +4019,13 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 
 		/**
-		 * Put datatype pair equivalance state into cache. A null value is used to
+		 * Put datatype pair equivalence state into cache. A null value is used to
 		 * indicate an equivalence check will be determined and another call made to
 		 * this method to update the cache with the equivalence state.
 		 * 
 		 * @param key   datatype identity pair (see
 		 *              {@link DataTypeManagerDB#getEquivalenceKey(DataTypeDB, DataType)}
-		 * @param value equivelence state (specify {@code null} to indicate equivalence
+		 * @param value equivalence state (specify {@code null} to indicate equivalence
 		 *              determination is in-progress)
 		 */
 		void putValue(long key, Boolean value) {
@@ -4031,19 +4054,21 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 */
 	private class IdsToDataTypeMap {
 
-		private Map<UniversalID, Map<UniversalID, DataType>> map = new HashMap<>();
+		private Map<UniversalID, Map<UniversalID, DataType>> map = new ConcurrentHashMap<>();
 
 		DataType getDataType(UniversalID sourceID, UniversalID dataTypeID) {
 			if (sourceID == null || sourceID.equals(universalID)) {
 				sourceID = LOCAL_ARCHIVE_UNIVERSAL_ID;
 			}
-			Map<UniversalID, DataType> idMap = map.computeIfAbsent(sourceID, k -> new HashMap<>());
+
+			Map<UniversalID, DataType> idMap =
+				map.computeIfAbsent(sourceID, k -> new ConcurrentHashMap<>());
 			final UniversalID sourceArchiveID = sourceID;
 			return idMap.computeIfAbsent(dataTypeID,
 				k -> findDataTypeForIDs(sourceArchiveID, dataTypeID));
 		}
 
-		public void clear() {
+		void clear() {
 			map.clear();
 		}
 

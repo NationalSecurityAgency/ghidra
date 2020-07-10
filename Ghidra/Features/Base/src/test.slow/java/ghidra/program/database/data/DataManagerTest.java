@@ -27,6 +27,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.InvalidNameException;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
@@ -112,27 +113,27 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(4, list.size());
 
 		ArrayList<DataType> dataTypeList = new ArrayList<DataType>();
-		dataMgr.findDataTypes("nu", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("nu", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(0, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("*num", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("*num", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(4, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("*num*", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("*num*", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(4, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("num*", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("num*", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(0, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("*n*m*", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("*n*m*", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(4, dataTypeList.size());
 
 		dataTypeList.clear();
-		dataMgr.findDataTypes("*n*u*", dataTypeList, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.findDataTypes("*n*u*", dataTypeList, false, TaskMonitor.DUMMY);
 		assertEquals(4, dataTypeList.size());
 	}
 
