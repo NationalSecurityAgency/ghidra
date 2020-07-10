@@ -90,8 +90,8 @@ public class VersionControlAddAction extends VersionControlAction {
 		if (unversioned.isEmpty()) {
 			return;
 		}
-		ArrayList<DomainFile> list = new ArrayList<DomainFile>();
-		ArrayList<DomainFile> changedList = new ArrayList<DomainFile>();
+		ArrayList<DomainFile> list = new ArrayList<>();
+		ArrayList<DomainFile> changedList = new ArrayList<>();
 		for (DomainFile domainFile : unversioned) {
 			if (domainFile.isBusy()) {
 				Msg.showWarn(getClass(), null, "Add To Version Control Failed!",
@@ -152,7 +152,9 @@ public class VersionControlAddAction extends VersionControlAction {
 						return;
 					}
 
+					// Note: this used to be a sleep(200) 
 					Swing.allowSwingToProcessEvents();
+
 					df.addToVersionControl(comments, keepCheckedOut, monitor);
 				}
 			}
