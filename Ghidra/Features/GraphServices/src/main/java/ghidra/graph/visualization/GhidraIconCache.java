@@ -34,7 +34,7 @@ public class GhidraIconCache {
 	private static final int DEFAULT_FONT_SIZE = 12;
 	private static final String DEFAULT_FONT_NAME = "Dialog";
 	private static final int DEFAULT_MARGIN_BORDER_SIZE = 4;
-	private static final float LABEL_TO_ICON_PROPORTION_WAG = 1.4f;
+	private static final float LABEL_TO_ICON_PROPORTION_WAG = 1.1f;
 	private static final double SQRT_2 = Math.sqrt(2.0);
 	private JLabel rendererLabel = new JLabel();
 	private Map<RenderingHints.Key, Object> renderingHints = new HashMap<>();
@@ -128,7 +128,7 @@ public class GhidraIconCache {
 			case DIAMOND:
 			default: // ELLIPSE
 				scalex =
-					labelSize.getWidth() / vertexShape.getBounds().getWidth() * SQRT_2;
+					labelSize.getWidth() / vertexShape.getBounds().getWidth() * 1.1;
 				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * 2;
 				vertexShape = AffineTransform.getScaleInstance(scalex, scaley)
 					.createTransformedShape(vertexShape);

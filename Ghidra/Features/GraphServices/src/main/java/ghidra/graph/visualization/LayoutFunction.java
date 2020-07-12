@@ -67,7 +67,7 @@ class LayoutFunction
 						.preRelaxDuration(1000);
 			case FRUCTERMAN_REINGOLD:
 				return FRLayoutAlgorithm.<AttributedVertex> builder()
-					.repulsionContractBuilder(BarnesHutFRRepulsion.barnesHutBuilder())
+					.repulsionContractBuilder(BarnesHutFRRepulsion.builder())
 					.executor(Executors.newSingleThreadExecutor());
 			case CIRCLE_MINCROSS:
 				return CircleLayoutAlgorithm.<AttributedVertex> builder()
