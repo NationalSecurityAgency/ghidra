@@ -6363,30 +6363,8 @@ int4 RulePtrsubUndo::applyOp(PcodeOp *op,Funcdata &data)
   if (!data.isTypeRecoveryOn()) return 0;
 
   Varnode *basevn = op->getIn(0);
-  TypePointer *ct = (TypePointer *)basevn->getType();
-  bool undo = false;
-  
-  if (ct->getMetatype()!=TYPE_PTR)
-    undo = true;
-  else {
-    Datatype *basetype = ct->getPtrTo();
-    if (basetype->getMetatype()==TYPE_SPACEBASE) {
-      uintb newoff = AddrSpace::addressToByte(op->getIn(1)->getOffset(),ct->getWordSize());
-      basetype->getSubType(newoff,&newoff);
-      if (newoff != 0)
-	undo = true;
-    }
-    else {
-      int4 size = op->getIn(1)->getOffset();
-      int4 typesize = basetype->getSize();
-      if ((basetype->getMetatype()!=TYPE_ARRAY)&&(basetype->getMetatype()!=TYPE_STRUCT))
-	undo = true;		// Not a pointer to a structured type
-      else if ((typesize <= AddrSpace::addressToByteInt(size,ct->getWordSize()))&&(typesize!=0))
-	undo = true;
-    }
-  }
-
-  if (!undo) return 0;
+  if (basevn->getType()->isPtrsubMatching(op->getIn(1)->getOffset()))
+    return 0;
 
   data.opSetOpcode(op,CPUI_INT_ADD);
   return 1;

@@ -2289,6 +2289,16 @@ int4 ActionSetCasts::apply(Funcdata &data)
 	if ((ct->getMetatype() != TYPE_PTR)||(ct->getPtrTo()->getSize() != AddrSpace::addressToByteInt(sz, ct->getWordSize())))
 	  data.opUndoPtradd(op,true);
       }
+      else if (opc == CPUI_PTRSUB) {	// Check for PTRSUB that no longer fits pointer
+	if (!op->getIn(0)->getHigh()->getType()->isPtrsubMatching(op->getIn(1)->getOffset())) {
+	  if (op->getIn(1)->getOffset() == 0) {
+	    data.opRemoveInput(op, 1);
+	    data.opSetOpcode(op, CPUI_COPY);
+	  }
+	  else
+	    data.opSetOpcode(op, CPUI_INT_ADD);
+	}
+      }
       for(int4 i=0;i<op->numInput();++i) // Do input casts first, as output may depend on input
 	count += castInput(op,i,data,castStrategy);
       if (opc == CPUI_LOAD) {

@@ -316,6 +316,35 @@ void Datatype::saveXmlRef(ostream &s) const
     saveXml(s);
 }
 
+/// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
+/// Perform this check.
+/// \param is the given offset
+/// \return \b true if \b this is a suitable PTRSUB data-type
+bool Datatype::isPtrsubMatching(uintb offset) const
+
+{
+  if (metatype != TYPE_PTR)
+    return false;
+
+  Datatype *basetype = ((TypePointer *)this)->getPtrTo();
+  uint4 wordsize = ((TypePointer *)this)->getWordSize();
+  if (basetype->metatype==TYPE_SPACEBASE) {
+    uintb newoff = AddrSpace::addressToByte(offset,wordsize);
+    basetype->getSubType(newoff,&newoff);
+    if (newoff != 0)
+      return false;
+  }
+  else {
+    int4 size = offset;
+    int4 typesize = basetype->getSize();
+    if ((basetype->metatype != TYPE_ARRAY)&&(basetype->metatype != TYPE_STRUCT))
+      return false;	// Not a pointer to a structured type
+    else if ((typesize <= AddrSpace::addressToByteInt(size,wordsize))&&(typesize!=0))
+      return false;
+  }
+  return true;
+}
+
 /// Restore the basic properties (name,size,id) of a data-type from an XML element
 /// Properties are read from the attributes of the element
 /// \param el is the XML element
