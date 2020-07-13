@@ -44,7 +44,6 @@ import ghidra.program.database.register.ProgramRegisterContextDB;
 import ghidra.program.database.reloc.RelocationManager;
 import ghidra.program.database.symbol.*;
 import ghidra.program.database.util.AddressSetPropertyMapDB;
-import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -488,7 +487,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return ve;
 	}
 
-	
 	@Override
 	protected void setDomainFile(DomainFile df) {
 		super.setDomainFile(df);
@@ -2210,19 +2208,14 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				monitor.setProgress(0);
 				ProgramRegisterContextDB contextMgr =
 					(ProgramRegisterContextDB) getProgramContext();
+
 				if (redisassemblyRequired) {
 					contextMgr.setLanguage(translator, compilerSpec, memoryManager, monitor);
+					repairContext(oldLanguageVersion, oldLanguageMinorVersion, translator, monitor);
+					getCodeManager().reDisassembleAllInstructions(monitor);
 				}
 				else {
 					contextMgr.initializeDefaultValues(language, compilerSpec);
-				}
-
-				if (redisassemblyRequired) {
-					Disassembler.clearUnimplementedPcodeWarnings(this, null, monitor);
-					repairContext(oldLanguageVersion, oldLanguageMinorVersion, translator, monitor);
-					monitor.setMessage("Updating instructions...");
-					monitor.setProgress(0);
-					getCodeManager().reDisassembleAllInstructions(500, monitor);
 				}
 
 				// Force function manager to reconcile calling conventions
