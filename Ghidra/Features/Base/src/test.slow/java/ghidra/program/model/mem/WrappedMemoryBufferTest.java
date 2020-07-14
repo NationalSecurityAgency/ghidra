@@ -80,6 +80,80 @@ public class WrappedMemoryBufferTest extends AbstractGhidraHeadedIntegrationTest
 		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 0, 0, 0, 0 },
 			bytes);
 	}
+	
+	@Test
+	public void testGetBytesBuffered() throws Exception {
+		loadProgram("notepad");
+
+		Address minAddr = program.getMinAddress();
+		Address maxAddr = program.getMaxAddress();
+		setBytes(minAddr, new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 });
+
+		memBuf = new MemoryBufferImpl(program.getMemory(), minAddr);
+		memBuf = new WrappedMemBuffer(memBuf, 4, 0);
+		byte[] bytes = new byte[6];
+		// test get too many for cache
+		assertEquals(6, memBuf.getBytes(bytes, 2));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 2, 3, 4, 5, 6, 7 },
+			bytes);
+
+		// test not in buffer
+		memBuf = new WrappedMemBuffer(memBuf, 6, 0);
+		assertEquals(6, memBuf.getBytes(bytes, 0));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 0, 1, 2, 3, 4, 5 },
+			bytes);
+		assertEquals(6, memBuf.getBytes(bytes, 2));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 2, 3, 4, 5, 6, 7 },
+			bytes);		
+		assertEquals(6, memBuf.getBytes(bytes, 8));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 8, 9, 10, 11, 12, 13 },
+			bytes);
+		assertEquals(6, memBuf.getBytes(bytes, 1));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 1, 2, 3, 4, 5, 6 },
+			bytes);
+		
+		assertEquals(10, memBuf.getByte(10));
+		assertEquals(0, memBuf.getByte(0));
+		assertEquals(5, memBuf.getByte(5));
+		assertEquals(6, memBuf.getByte(6));
+	}
+	
+	@Test
+	public void testGetBytesNoBuffered() throws Exception {
+		loadProgram("notepad");
+
+		Address minAddr = program.getMinAddress();
+		Address maxAddr = program.getMaxAddress();
+		setBytes(minAddr, new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 });
+
+		memBuf = new MemoryBufferImpl(program.getMemory(), minAddr);
+		memBuf = new WrappedMemBuffer(memBuf, 0, 0);
+		byte[] bytes = new byte[6];
+		// test get too many for cache
+		assertEquals(6, memBuf.getBytes(bytes, 2));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 2, 3, 4, 5, 6, 7 },
+			bytes);
+
+		// test not in buffer
+		memBuf = new WrappedMemBuffer(memBuf, 0, 0);
+		assertEquals(6, memBuf.getBytes(bytes, 0));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 0, 1, 2, 3, 4, 5 },
+			bytes);
+		assertEquals(6, memBuf.getBytes(bytes, 2));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 2, 3, 4, 5, 6, 7 },
+			bytes);		
+		assertEquals(6, memBuf.getBytes(bytes, 8));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 8, 9, 10, 11, 12, 13 },
+			bytes);
+		assertEquals(6, memBuf.getBytes(bytes, 1));
+		Assert.assertArrayEquals("Unexpected bytes read from memBuf", new byte[] { 1, 2, 3, 4, 5, 6 },
+			bytes);
+		
+		assertEquals(10, memBuf.getByte(10));
+		assertEquals(0, memBuf.getByte(0));
+		assertEquals(5, memBuf.getByte(5));
+		assertEquals(6, memBuf.getByte(6));
+	}
 
 	private void setBytes(Address addr, byte[] bytes) throws MemoryAccessException {
 

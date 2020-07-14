@@ -29,7 +29,7 @@ public class WrappedMemBuffer implements MemBuffer {
 	private int baseOffset;
 	private Address address;
 
-	private static final int DEFAULT_BUFSIZE = 10;
+	private static final int DEFAULT_BUFSIZE = 0;  // default no buffer
 
 	private byte[] buffer;
 	private int subBufferIndex = 0;
@@ -80,12 +80,12 @@ public class WrappedMemBuffer implements MemBuffer {
 
 		// already set, changing position
 		if (minOffset <= maxOffset) {
-			long diff = offset - baseOffset;
-			if (diff >= minOffset && diff < (maxOffset - threshold)) {
+			long curOffset = offset - baseOffset; // convert the new offset into an offset based on current offset
+			if (curOffset >= minOffset && curOffset < (maxOffset - threshold)) {
 				baseOffset = offset;
-				minOffset -= (int) diff;
-				maxOffset -= (int) diff;
-				subBufferIndex += diff;
+				minOffset -= (int) curOffset;
+				maxOffset -= (int) curOffset;
+				subBufferIndex += curOffset;
 				return;
 			}
 		}
@@ -128,6 +128,35 @@ public class WrappedMemBuffer implements MemBuffer {
 			return buffer[subBufferIndex + offset];
 		}
 
+		fillBuffer(offset);
+		return buffer[0];
+	}
+
+	@Override
+	public int getBytes(byte[] b, int offset) {
+		try {
+			// if there is a buffer, and the number of bytes requested will fit in the buffer
+			if (buffer.length > 0 && b.length <= buffer.length) {
+				// bytes not in buffer
+				if (offset < minOffset || (b.length + offset - 1) > maxOffset) {
+					fillBuffer(offset);
+				}
+				// bytes are contained in the buffer
+				if (offset >= minOffset && (b.length + offset - 1) <= maxOffset) {
+					System.arraycopy(buffer, subBufferIndex + offset, b, 0, b.length);
+					return b.length;
+				}
+			}
+
+			// grab from wrapped buffer, too many bytes, or no buffer
+			return memBuffer.getBytes(b, computeOffset(offset));
+			
+		} catch (MemoryAccessException e) {
+			return 0;
+		}
+	}
+
+	private void fillBuffer(int offset) throws MemoryAccessException {
 		// fill the buffer
 		int nRead = memBuffer.getBytes(buffer, computeOffset(offset));
 
@@ -137,26 +166,6 @@ public class WrappedMemBuffer implements MemBuffer {
 
 		if (nRead == 0) {
 			throw new MemoryAccessException();
-		}
-		return buffer[0];
-	}
-
-	@Override
-	public int getBytes(byte[] b, int offset) {
-		if (buffer.length > 0) {
-			// bytes are contained in the buffer
-			if (offset >= minOffset && (b.length + offset) <= maxOffset) {
-				System.arraycopy(buffer, subBufferIndex + offset, b, 0, b.length);
-				return b.length;
-			}
-		}
-
-		// grab from wrapped buffer, too many bytes, or no buffer
-		try {
-			return memBuffer.getBytes(b, computeOffset(offset));
-		}
-		catch (MemoryAccessException e) {
-			return 0;
 		}
 	}
 
