@@ -16,6 +16,7 @@
 package ghidra;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.List;
 
 import generic.jar.ResourceFile;
@@ -54,7 +55,7 @@ public class GhidraTestApplicationLayout extends GhidraApplicationLayout {
 	@Override
 	protected List<ResourceFile> findExtensionInstallationDirectories() {
 		File installDir = new File(getUserTempDir(), "ExtensionInstallDir");
-		return List.of(new ResourceFile(installDir));
+		return Collections.singletonList(new ResourceFile(installDir));
 	}
 
 	@Override

@@ -78,6 +78,6 @@ public class GhidraJarApplicationLayout extends GhidraApplicationLayout {
 	protected List<ResourceFile> findExtensionInstallationDirectories() {
 		ResourceFile extensionInstallDir = new ResourceFile(
 			ApplicationLayout.class.getResource("/_Root/Ghidra/Extensions").toExternalForm());
-		return List.of(extensionInstallDir);
+		return Collections.singletonList(extensionInstallDir);
 	}
 }
