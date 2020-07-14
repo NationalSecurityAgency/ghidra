@@ -5386,8 +5386,12 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 :strex^COND  Rd,Rm,[Rn]    is $(AMODE) &  COND & c2027=0x18 & c0411=0xf9 & Rn & Rd & Rm
 {
 	build COND;
-	*Rn = Rm;
+	local tmp = Rn;
+	access:1 = hasExclusiveAccess(tmp);
+	Rd = 1;
+	if (!access) goto inst_next;
 	Rd = 0;
+	*tmp = Rm;
 }
 
 @endif # VERSION_6
