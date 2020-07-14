@@ -25,6 +25,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.block.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.*;
 import ghidra.util.HTMLUtilities;
@@ -103,6 +104,7 @@ public class BlockGraphTask extends Task {
 	private final static String ENTRY_NEXUS_NAME = "Entry Points";
 	private CodeBlockModel blockModel;
 	private AddressSetView selection;
+	private ProgramLocation location;
 	private GraphDisplayProvider graphService;
 	private boolean reuseGraph;
 	private boolean appendGraph;
@@ -112,9 +114,10 @@ public class BlockGraphTask extends Task {
 
 
 	public BlockGraphTask(String actionName, boolean graphEntryPointNexus, boolean showCode,
-			boolean reuseGraph,
-			boolean appendGraph, PluginTool tool, ProgramSelection selection,
-			CodeBlockModel blockModel, GraphDisplayProvider graphService) {
+			boolean reuseGraph, boolean appendGraph, PluginTool tool, ProgramSelection selection,
+			ProgramLocation location, CodeBlockModel blockModel,
+			GraphDisplayProvider graphService) {
+
 		super("Graph Program", true, false, true);
 		this.actionName = actionName;
 
@@ -127,6 +130,7 @@ public class BlockGraphTask extends Task {
 		this.graphService = graphService;
 		this.colorizingService = tool.getService(ColorizingService.class);
 		this.selection = selection;
+		this.location = location;
 		this.program = blockModel.getProgram();
 	}
 
@@ -139,8 +143,10 @@ public class BlockGraphTask extends Task {
 		monitor.setMessage("Generating Graph...");
 		try {
 			GraphDisplay display = graphService.getGraphDisplay(reuseGraph, monitor);
-			display.setGraphDisplayListener(
-				new BlockModelGraphDisplayListener(tool, blockModel, display));
+			BlockModelGraphDisplayListener listener =
+				new BlockModelGraphDisplayListener(tool, blockModel, display);
+			display.setGraphDisplayListener(listener);
+
 			if (showCode) {
 				display.defineVertexAttribute(CODE_ATTRIBUTE);
 				display.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
@@ -148,6 +154,16 @@ public class BlockGraphTask extends Task {
 					codeLimitPerBlock + 1);
 			}
 			display.setGraph(graph, actionName, appendGraph, monitor);
+
+			if (location != null) {
+				display.setLocation(listener.getVertexIdForAddress(location.getAddress()));
+			}
+			if (selection != null && !selection.isEmpty()) {
+				List<String> selectedVertices = listener.getVertices(selection);
+				if (selectedVertices != null) {
+					display.selectVertices(selectedVertices);
+				}
+			}
 		}
 		catch (GraphException e) {
 			if (!monitor.isCancelled()) {

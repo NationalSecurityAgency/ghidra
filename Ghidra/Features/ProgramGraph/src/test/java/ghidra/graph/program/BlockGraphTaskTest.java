@@ -38,7 +38,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		TestGraphService graphService = new TestGraphService();
 		BlockGraphTask task =
 			new BlockGraphTask("test", false, DONT_SHOW_CODE, false, false,
-				tool, null, model, graphService);
+				tool, null, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
 
@@ -99,7 +99,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		TestGraphService graphService = new TestGraphService();
 		BlockGraphTask task =
 			new BlockGraphTask("test", false, SHOW_CODE, false, false,
-				tool, null, model, graphService);
+				tool, null, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
 
@@ -152,7 +152,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		TestGraphService graphService = new TestGraphService();
 		BlockGraphTask task =
 			new BlockGraphTask("test", false, false, false, false,
-				tool, null, model, graphService);
+				tool, null, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
 
@@ -199,7 +199,7 @@ public class BlockGraphTaskTest extends AbstractBlockGraphTest {
 		ProgramSelection sel = new ProgramSelection(addr(0x1002239), addr(0x1002247));
 		BlockGraphTask task =
 			new BlockGraphTask("test", false, DONT_SHOW_CODE, false, false,
-				tool, sel, model, graphService);
+				tool, sel, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
 

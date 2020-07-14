@@ -43,7 +43,7 @@ public class BlockGraphEventTest extends AbstractBlockGraphTest {
 		TestGraphService graphService = new TestGraphService();
 		BlockGraphTask task =
 			new BlockGraphTask("test", false, false, false, false,
-				tool, null, model, graphService);
+				tool, null, null, model, graphService);
 
 		task.monitoredRun(TaskMonitor.DUMMY);
 

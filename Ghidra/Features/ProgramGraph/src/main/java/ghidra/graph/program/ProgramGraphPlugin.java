@@ -298,7 +298,8 @@ public class ProgramGraphPlugin extends ProgramPlugin
 				blockModelService.getNewModelByName(modelName, currentProgram, true);
 			BlockGraphTask task =
 				new BlockGraphTask(actionName, graphEntryPointNexus, showCode, reuseGraph,
-					appendToGraph, tool, currentSelection, model, defaultGraphService);
+					appendToGraph, tool, currentSelection, currentLocation, model,
+					defaultGraphService);
 			task.setCodeLimitPerBlock(codeLimitPerBlock);
 			new TaskLauncher(task, tool.getToolFrame());
 		}
