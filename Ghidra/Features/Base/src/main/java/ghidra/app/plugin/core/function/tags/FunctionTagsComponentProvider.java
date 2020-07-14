@@ -227,7 +227,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, wrapper, allFunctionsPanel);
 
 		mainPanel.add(splitter, BorderLayout.CENTER);
-		
+
 		splitter.setResizeWeight(0.5f);
 		splitter.setDividerLocation(0.5f);
 
@@ -318,7 +318,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		sourcePanel.setProgram(program);
 		targetPanel.setProgram(program);
 		allFunctionsPanel.setProgram(program);
-		
+
 		// Get the currently selected tags and use them to update the
 		// all functions panel. If there is no current selection, leave the
 		// table as-is.
@@ -401,6 +401,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 				String text = textField.getText();
 				sourcePanel.setFilterText(text);
 				targetPanel.setFilterText(text);
+				allFunctionsPanel.setFilterText(text);
 
 				if (!text.isEmpty()) {
 					filterInputTF.setBackground(Color.YELLOW);
