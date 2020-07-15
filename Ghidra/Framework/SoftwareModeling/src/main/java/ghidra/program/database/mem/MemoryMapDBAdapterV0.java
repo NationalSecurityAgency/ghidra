@@ -156,7 +156,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 				return new ByteMappedSubMemoryBlock(this, record);
 			case MemoryMapDBAdapterV2.INITIALIZED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_BUFFER);
-				record.setLongValue(SUB_SOURCE_OFFSET_COL, bufID);
+				record.setLongValue(SUB_LONG_DATA2_COL, bufID);
 				return new BufferSubMemoryBlock(this, record);
 			case MemoryMapDBAdapterV2.UNINITIALIZED:
 				record.setByteValue(SUB_TYPE_COL, SUB_TYPE_UNITIALIZED);
@@ -223,7 +223,8 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 
 	@Override
 	MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
-			long length, Address overlayAddr, boolean initializeBytes, int permissions)
+			long length, Address overlayAddr, boolean initializeBytes, int permissions,
+			int mappingScheme)
 			throws IOException {
 		throw new UnsupportedOperationException();
 	}
@@ -253,7 +254,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 
 	@Override
 	Record createSubBlockRecord(long memBlockId, long startingOffset, long length, byte subType,
-			int sourceID, long sourceOffset) throws IOException {
+			int data1, long data2) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

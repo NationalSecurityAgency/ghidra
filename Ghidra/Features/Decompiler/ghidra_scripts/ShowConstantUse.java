@@ -23,6 +23,8 @@
 //
 //@category Search
 
+import java.util.*;
+
 import generic.jar.ResourceFile;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerUtils;
@@ -42,8 +44,6 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
-
-import java.util.*;
 
 public class ShowConstantUse extends GhidraScript {
 	private DecompInterface decomplib;
@@ -143,9 +143,9 @@ public class ShowConstantUse extends GhidraScript {
 		if (f == null) {
 			Reference[] referencesFrom =
 				currentProgram.getReferenceManager().getReferencesFrom(faddr);
-			for (int i = 0; i < referencesFrom.length; i++) {
-				if (referencesFrom[i].isExternalReference()) {
-					faddr = referencesFrom[i].getToAddress();
+			for (Reference element : referencesFrom) {
+				if (element.isExternalReference()) {
+					faddr = element.getToAddress();
 					f = currentProgram.getFunctionManager().getFunctionAt(faddr);
 					if (f != null) {
 						break;
@@ -437,8 +437,7 @@ public class ShowConstantUse extends GhidraScript {
 		keys = constLocs.keySet();
 		Address[] keyArray = keys.toArray(new Address[0]);
 		Arrays.sort(keyArray);
-		for (int i = 0; i < keyArray.length; i++) {
-			Address loc = keyArray[i];
+		for (Address loc : keyArray) {
 			Long constant = constLocs.get(loc);
 			tableChooserDialog.add(new ConstUseLocation(currentProgram, loc, constant, null));
 		}
@@ -872,7 +871,7 @@ public class ShowConstantUse extends GhidraScript {
 				if (def.getInput(0).isConstant() && def.getInput(1).isConstant()) {
 					long space = def.getInput(0).getOffset();
 					long offset = def.getInput(1).getOffset();
-					if (space != funcEntry.getAddressSpace().getBaseSpaceID()) {
+					if (space != funcEntry.getAddressSpace().getSpaceID()) {
 						break;
 					}
 					try {

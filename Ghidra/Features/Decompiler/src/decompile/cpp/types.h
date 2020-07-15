@@ -239,6 +239,7 @@ CPUI_DEBUG        --    This is the ONE debug switch that should be passed in
 #ifdef CPUI_DEBUG
 # define OPACTION_DEBUG
 # define PRETTY_DEBUG
+//# define __REMOTE_SOCKET__
 //# define TYPEPROP_DEBUG
 //# define DFSVERIFY_DEBUG
 //# define BLOCKCONSISTENT_DEBUG

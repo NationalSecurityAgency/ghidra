@@ -161,9 +161,8 @@ public final class FileUtilities {
 		}
 		byte[] data = new byte[(int) length];
 
-		InputStream fis = sourceFile.getInputStream();
 
-		try {
+		try (InputStream fis = sourceFile.getInputStream()) {
 			if (fis.skip(offset) != offset) {
 				throw new IOException("Did not skip to the specified offset!");
 			}
@@ -174,12 +173,15 @@ public final class FileUtilities {
 			}
 			return data;
 		}
-		finally {
-			fis.close();
-		}
 	}
 
-	public static byte[] getBytes(InputStream is) throws IOException {
+	/**
+	 * Reads the bytes from the stream into a byte array
+	 * @param is the input stream to read
+	 * @return a byte[] containing the bytes from the stream.
+	 * @throws IOException if an I/O error occurs reading
+	 */
+	public static byte[] getBytesFromStream(InputStream is) throws IOException {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		byte[] bytes = new byte[4096];
 		int n;
@@ -255,15 +257,11 @@ public final class FileUtilities {
 	public final static void copyFile(ResourceFile fromFile, File toFile, boolean append,
 			TaskMonitor monitor) throws IOException {
 
-		InputStream fin = fromFile.getInputStream();
-		try {
+		try (InputStream fin = fromFile.getInputStream()) {
 			if (monitor != null) {
 				monitor.initialize((int) fromFile.length());
 			}
 			copyStreamToFile(fin, toFile, append, monitor);
-		}
-		finally {
-			fin.close();
 		}
 	}
 
@@ -279,25 +277,13 @@ public final class FileUtilities {
 	public final static void copyFile(ResourceFile fromFile, ResourceFile toFile,
 			TaskMonitor monitor) throws IOException {
 
-		InputStream fin = null;
-		OutputStream out = null;
-		try {
-			fin = fromFile.getInputStream();
-			out = toFile.getOutputStream();
+		try (InputStream fin = fromFile.getInputStream();
+				OutputStream out = toFile.getOutputStream()) {
 
 			if (monitor != null) {
 				monitor.initialize((int) fromFile.length());
 			}
 			copyStreamToStream(fin, out, monitor);
-		}
-		finally {
-			if (fin != null) {
-				fin.close();
-			}
-
-			if (out != null) {
-				out.close();
-			}
 		}
 	}
 
@@ -463,19 +449,19 @@ public final class FileUtilities {
 			return dir.delete();
 		}
 
-		for (int i = 0; i < files.length; i++) {
+		for (File file : files) {
 			monitor.checkCanceled();
-			if (files[i].isDirectory()) {
+			if (file.isDirectory()) {
 				// use a dummy monitor as not to ruin our progress
-				if (!doDeleteDir(files[i], monitor)) {
-					printDebug("Unable to delete directory: " + files[i]);
+				if (!doDeleteDir(file, monitor)) {
+					printDebug("Unable to delete directory: " + file);
 					return false;
 				}
 			}
 			else {
-				monitor.setMessage("Deleting file: " + files[i]);
-				if (!files[i].delete()) {
-					printDebug("Unable to delete file: " + files[i]);
+				monitor.setMessage("Deleting file: " + file);
+				if (!file.delete()) {
+					printDebug("Unable to delete file: " + file);
 					return false;
 				}
 			}
@@ -619,18 +605,11 @@ public final class FileUtilities {
 	public final static void copyFileToStream(File fromFile, OutputStream out, TaskMonitor monitor)
 			throws IOException {
 
-		InputStream fin = null;
-		try {
-			fin = new FileInputStream(fromFile);
+		try (InputStream fin = new FileInputStream(fromFile)) {
 			if (monitor != null) {
 				monitor.initialize((int) fromFile.length());
 			}
 			copyStreamToStream(fin, out, monitor);
-		}
-		finally {
-			if (fin != null) {
-				fin.close();
-			}
 		}
 	}
 
@@ -681,13 +660,11 @@ public final class FileUtilities {
 	 * <p>
 	 * @param file The text file to read in
 	 * @return a list of file lines
-	 * @throws IOException
+	 * @throws IOException if an error occurs trying to read the file.
 	 */
 	public static List<String> getLines(ResourceFile file) throws IOException {
-		try {
-			BufferedReader in = new BufferedReader(
-				new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
-			return getLines(in);
+		try (InputStream is = file.getInputStream()) {
+			return getLines(is);
 		}
 		catch (FileNotFoundException exc) {
 			return new ArrayList<>();
@@ -731,14 +708,13 @@ public final class FileUtilities {
 	/**
 	 * Returns all of the lines in the given {@link InputStream} without any newline characters.
 	 * <p>
-	 * <b>The input stream is closed as a side-effect.</b>
 	 *
-	 * @param is the input stream from which to read, as a side effect, it is closed
+	 * @param is the input stream from which to read
 	 * @return a {@link List} of strings representing the text lines of the file
 	 * @throws IOException if there are any issues reading the file
 	 */
 	public static List<String> getLines(InputStream is) throws IOException {
-		return getLines(new BufferedReader(new InputStreamReader(is)));
+		return getLines(new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8)));
 	}
 
 	/**
@@ -746,9 +722,7 @@ public final class FileUtilities {
 	 * <p>
 	 * EOL characters are normalized to simple '\n's.
 	 * <p>
-	 * <b>The input stream is closed as a side-effect.</b>
-	 * <p>
-	 * @param is the input stream from which to read, as a side effect, it is closed
+	 * @param is the input stream from which to read
 	 * @return the content as a String
 	 * @throws IOException if there are any issues reading the file
 	 */
@@ -782,30 +756,18 @@ public final class FileUtilities {
 
 	/**
 	 * Returns all of the lines in the {@link BufferedReader} without any newline characters.
-	 * <p>
-	 * The BufferedReader is closed before returning.
 	 *
-	 * @param in BufferedReader to read lines from, as a side effect, it is closed
+	 * @param in BufferedReader to read lines from. The caller is responsible for closing the reader
 	 * @return a {@link List} of strings representing the text lines of the file
 	 * @throws IOException if there are any issues reading the file
 	 */
 	public static List<String> getLines(BufferedReader in) throws IOException {
-		try {
-			List<String> fileLines = new ArrayList<>();
-			String line;
-			while ((line = in.readLine()) != null) {
-				fileLines.add(line);
-			}
-			return fileLines;
+		List<String> fileLines = new ArrayList<>();
+		String line;
+		while ((line = in.readLine()) != null) {
+			fileLines.add(line);
 		}
-		finally {
-			try {
-				in.close();
-			}
-			catch (IOException e) {
-				// don't care; we tried
-			}
-		}
+		return fileLines;
 	}
 
 	/**

@@ -124,7 +124,7 @@ class TaskRunner {
 
 	private void showTaskDialog(WrappingTaskMonitor monitor) {
 
-		Swing.assertThisIsTheSwingThread("Must be on the Swing thread build the Task Dialog");
+		Swing.assertSwingThread("Must be on the Swing thread build the Task Dialog");
 
 		taskDialog = buildTaskDialog(parent, monitor);
 		monitor.setDelegate(taskDialog); // initialize the dialog to the current state of the monitor

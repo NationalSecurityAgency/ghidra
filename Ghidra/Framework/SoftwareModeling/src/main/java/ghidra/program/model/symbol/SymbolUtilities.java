@@ -238,13 +238,6 @@ public class SymbolUtilities {
 		if (containsInvalidChars(name)) {
 			throw new InvalidInputException("Symbol name contains invalid characters: " + name);
 		}
-		if (address.isMemoryAddress() && isReservedDynamicLabelName(name, addrFactory)) {
-			if (symbolType == SymbolType.FUNCTION && getDefaultFunctionName(address).equals(name)) {
-				return;
-			}
-			throw new InvalidInputException(
-				"Symbol name matches possible default symbol name: " + name);
-		}
 	}
 
 	/**
@@ -965,7 +958,7 @@ public class SymbolUtilities {
 	 * may be returned.  If attempting to create a global symbol and the name already exists 
 	 * at the address no symbol will be created and null will be returned.  
 	 * If attempting to create a non-global symbol, which does not exist,
-	 * and a global symbol does exist with same name its' namespace will be changed. 
+	 * and a global symbol does exist with same name its namespace will be changed. 
 	 * @param program program within which the symbol should be created
 	 * @param address memory address where symbol should be created
 	 * @param namespace symbol namespace or null for global

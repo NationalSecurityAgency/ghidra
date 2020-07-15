@@ -130,6 +130,11 @@ public class MemoryBlockStub implements MemoryBlock {
 	}
 
 	@Override
+	public boolean isOverlay() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public String getSourceName() {
 		throw new UnsupportedOperationException();
 	}

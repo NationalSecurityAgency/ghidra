@@ -117,7 +117,6 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * The mnemonic for the menu action (optional)
 	 */
 	private int menuMnemonic = MenuData.NO_MNEMONIC;
-
 	/**
 	 * The icon for the  menu item (optional)
 	 */

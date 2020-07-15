@@ -5,7 +5,6 @@
     <ICON LOCATION="greenDragon24.png" />
     <TOOL TOOL_NAME="CodeBrowser" INSTANCE_NAME="">
         <OPTIONS />
-        <PACKAGE NAME="Renoir Graph" />
         <PACKAGE NAME="Ghidra Core">
             <INCLUDE CLASS="ghidra.app.plugin.core.interpreter.InterpreterPanelPlugin" />
             <INCLUDE CLASS="ghidra.app.plugin.core.editor.TextEditorManagerPlugin" />

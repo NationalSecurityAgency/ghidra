@@ -22,7 +22,7 @@ public class CompositeAlignmentHelper {
 		int allComponentsLCM = 1;
 		int packingAlignment = composite.getPackingValue();
 
-		DataTypeComponent[] dataTypeComponents = composite.getComponents();
+		DataTypeComponent[] dataTypeComponents = composite.getDefinedComponents();
 		for (DataTypeComponent dataTypeComponent : dataTypeComponents) {
 			int impartedAlignment = CompositeAlignmentHelper.getPackedAlignment(dataOrganization,
 				packingAlignment, dataTypeComponent);

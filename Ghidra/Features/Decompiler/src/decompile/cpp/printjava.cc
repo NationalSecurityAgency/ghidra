@@ -46,6 +46,20 @@ PrintJava::PrintJava(Architecture *glb,const string &nm) : PrintC(glb,nm)
   castStrategy = new CastStrategyJava();
 }
 
+void PrintJava::docFunction(const Funcdata *fd)
+
+{
+  bool singletonFunction = false;
+  if (curscope == (const Scope *)0) {
+    singletonFunction = true;
+    // Always assume we are in the scope of the parent class
+    pushScope(fd->getScopeLocal()->getParent());
+  }
+  PrintC::docFunction(fd);
+  if (singletonFunction)
+    popScope();
+}
+
 /// Print a data-type up to the identifier, store off array sizes
 /// for printing after the identifier. Find the root type (the one with an identifier)
 /// and the count number of wrapping arrays.
@@ -99,6 +113,8 @@ void PrintJava::pushTypeEnd(const Datatype *ct)
 void PrintJava::adjustTypeOperators(void)
 
 {
+  scope.print = ".";
+  shift_right.print = ">>>";
   TypeOp::selectJavaOperators(glb->inst,true);
 }
 
@@ -190,7 +206,7 @@ void PrintJava::printUnicode(ostream &s,int4 onechar) const
       s << "\\ux" << setfill('0') << setw(8) << hex << onechar;
     return;
   }
-  writeUtf8(s, onechar);		// Emit normally
+  StringManager::writeUtf8(s, onechar);		// Emit normally
 }
 
 void PrintJava::opLoad(const PcodeOp *op)

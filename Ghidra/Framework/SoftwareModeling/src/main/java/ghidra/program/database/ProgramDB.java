@@ -44,7 +44,6 @@ import ghidra.program.database.register.ProgramRegisterContextDB;
 import ghidra.program.database.reloc.RelocationManager;
 import ghidra.program.database.symbol.*;
 import ghidra.program.database.util.AddressSetPropertyMapDB;
-import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -93,8 +92,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * 18-Jul-2018 - version 20 - added support for external locations storing both
 	 *                            address and original-imported-name packed into symbol data3.
 	 *                            Read of old symbol data3 format does not require upgrade.
+	 * 14-May-2020 - version 21 - added support for overlay mapped blocks and byte mapping
+	 *                            schemes other than the default 1:1
 	 */
-	static final int DB_VERSION = 20;
+	static final int DB_VERSION = 21;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -486,7 +487,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return ve;
 	}
 
-	
 	@Override
 	protected void setDomainFile(DomainFile df) {
 		super.setDomainFile(df);
@@ -2208,19 +2208,14 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				monitor.setProgress(0);
 				ProgramRegisterContextDB contextMgr =
 					(ProgramRegisterContextDB) getProgramContext();
+
 				if (redisassemblyRequired) {
 					contextMgr.setLanguage(translator, compilerSpec, memoryManager, monitor);
+					repairContext(oldLanguageVersion, oldLanguageMinorVersion, translator, monitor);
+					getCodeManager().reDisassembleAllInstructions(monitor);
 				}
 				else {
 					contextMgr.initializeDefaultValues(language, compilerSpec);
-				}
-
-				if (redisassemblyRequired) {
-					Disassembler.clearUnimplementedPcodeWarnings(this, null, monitor);
-					repairContext(oldLanguageVersion, oldLanguageMinorVersion, translator, monitor);
-					monitor.setMessage("Updating instructions...");
-					monitor.setProgress(0);
-					getCodeManager().reDisassembleAllInstructions(500, monitor);
 				}
 
 				// Force function manager to reconcile calling conventions

@@ -123,7 +123,7 @@ public class EmptyTextField implements Field {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager map, RowColLocation cursorLoc, int rowHeight) {
 		paintCursor(g, context.getCursorColor(), cursorLoc);
 	}
 

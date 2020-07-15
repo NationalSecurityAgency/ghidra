@@ -513,7 +513,9 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 			listingHoverHandler.initializeListingHoverHandler(handler);
 			listingHoverHandler.dispose();
 		}
+
 		listingHoverHandler = handler;
+		fieldPanel.setHoverProvider(listingHoverHandler);
 	}
 
 	public void dispose() {
@@ -600,7 +602,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		Address address = loc.getAddress();
 		AddressSpace locAddressSpace = address.getAddressSpace();
 		AddressSpace programAddressSpace =
-			program.getAddressFactory().getAddressSpace(locAddressSpace.getUniqueSpaceID());
+			program.getAddressFactory().getAddressSpace(locAddressSpace.getSpaceID());
 		if (programAddressSpace != locAddressSpace) {
 			FieldLocation compatibleLocation =
 				getFieldLocationForDifferingAddressSpaces(loc, program);

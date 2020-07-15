@@ -207,8 +207,9 @@ public class LocalBufferFile implements BufferFile {
 	 * @throws IOException if an I/O error occurs during file creation
 	 */
 	public LocalBufferFile(File file, int bufferSize) throws IOException {
-		if (file.exists())
+		if (file.exists()) {
 			throw new DuplicateFileException("File " + file + " already exists");
+		}
 		this.file = file;
 		this.bufferSize = bufferSize;
 		this.blockSize = bufferSize + BUFFER_PREFIX_SIZE;
@@ -293,8 +294,9 @@ public class LocalBufferFile implements BufferFile {
 	@Override
 	public int getParameter(String name) throws NoSuchElementException {
 		Object obj = userParms.get(name);
-		if (obj == null)
+		if (obj == null) {
 			throw new NoSuchElementException(name);
+		}
 		return ((Integer) obj).intValue();
 	}
 
@@ -409,7 +411,7 @@ public class LocalBufferFile implements BufferFile {
 
 	/**
 	 * Set random access file (raf) position to the file block containing the specified buffer 
-	 * identified by its' bufferIndex.  It is important to understand the distinction between 
+	 * identified by its bufferIndex.  It is important to understand the distinction between 
 	 * blocks and buffers, where buffers are stored within file blocks which are slightly larger.  
 	 * In addition, the first file block stores the file header and is not used to store a buffer.
 	 * @param bufferIndex buffer index
@@ -449,24 +451,27 @@ public class LocalBufferFile implements BufferFile {
 
 		// Check magic number
 		long magicNumber = raf.readLong();
-		if (magicNumber != MAGIC_NUMBER)
+		if (magicNumber != MAGIC_NUMBER) {
 			throw new IOException("Unrecognized file format");
+		}
 
 		// Read file ID
 		fileId = raf.readLong();
 
 		// Check file format version	
 		int headerFormatVersion = raf.readInt();
-		if (headerFormatVersion != HEADER_FORMAT_VERSION)
+		if (headerFormatVersion != HEADER_FORMAT_VERSION) {
 			throw new IOException("Unrecognized file format");
+		}
 
 		// Read buffer size, free buffer count, and first free buffer index
 		blockSize = raf.readInt();
 		bufferSize = blockSize - BUFFER_PREFIX_SIZE;
 		int firstFreeBufferIndex = raf.readInt();
 		long len = raf.length();
-		if ((len % blockSize) != 0)
+		if ((len % blockSize) != 0) {
 			throw new IOException("Corrupt file");
+		}
 		bufferCount = (int) (len / blockSize) - 1;
 
 		// Read user-defined integer parameters values
@@ -488,13 +493,13 @@ public class LocalBufferFile implements BufferFile {
 	 */
 	private void writeHeader() throws IOException {
 
-		if (readOnly)
+		if (readOnly) {
 			throw new IOException("File is read-only");
+		}
 
 		// Output free list
 		int prev = -1;
-		for (int i = 0; i < freeIndexes.length; i++) {
-			int index = freeIndexes[i];
+		for (int index : freeIndexes) {
 			putFreeBlock(index, prev);
 			prev = index;
 		}
@@ -512,15 +517,15 @@ public class LocalBufferFile implements BufferFile {
 		String[] parmNames = getParameterNames();
 		raf.writeInt(parmNames.length);
 		int cnt = VER1_FIXED_HEADER_LENGTH;
-		for (int i = 0; i < parmNames.length; i++) {
-			byte[] nameBytes = parmNames[i].getBytes(STRING_ENCODING);
+		for (String parmName : parmNames) {
+			byte[] nameBytes = parmName.getBytes(STRING_ENCODING);
 			cnt += 8 + nameBytes.length;
 			if (cnt > bufferSize) {
 				throw new IOException("Buffer size too small");
 			}
 			raf.writeInt(nameBytes.length);
 			raf.write(nameBytes);
-			raf.writeInt(getParameter(parmNames[i]));
+			raf.writeInt(getParameter(parmName));
 		}
 	}
 
@@ -624,8 +629,9 @@ public class LocalBufferFile implements BufferFile {
 
 		byte[] data = buf.data;
 		boolean empty = buf.isEmpty();
-		if (!empty && data.length != bufferSize)
+		if (!empty && data.length != bufferSize) {
 			throw new IllegalArgumentException("Bad buffer size");
+		}
 
 		int blockIndex = buf.getId() + 1;
 
@@ -644,10 +650,12 @@ public class LocalBufferFile implements BufferFile {
 	@Override
 	public synchronized DataBuffer get(DataBuffer buf, int index) throws IOException {
 
-		if (index > bufferCount)
+		if (index > bufferCount) {
 			throw new EOFException("Buffer index too large (" + index + " > " + bufferCount + ")");
-		if (raf == null)
+		}
+		if (raf == null) {
 			throw new ClosedException();
+		}
 
 		seekBufferBlock(index);
 
@@ -684,18 +692,22 @@ public class LocalBufferFile implements BufferFile {
 	@Override
 	public synchronized void put(DataBuffer buf, int index) throws IOException {
 
-		if (readOnly)
+		if (readOnly) {
 			throw new IOException("File is read-only");
-		if (raf == null)
+		}
+		if (raf == null) {
 			throw new ClosedException();
+		}
 
-		if (index > MAX_BUFFER_INDEX)
+		if (index > MAX_BUFFER_INDEX) {
 			throw new EOFException("Buffer index too large, exceeds max-int");
+		}
 
 		byte[] data = buf.data;
 		boolean empty = buf.isEmpty();
-		if (!empty && data.length != bufferSize)
+		if (!empty && data.length != bufferSize) {
 			throw new IllegalArgumentException("Bad buffer size");
+		}
 
 		seekBufferBlock(index);
 
@@ -741,8 +753,9 @@ public class LocalBufferFile implements BufferFile {
 	 */
 	void truncate(int indexCount) throws IOException {
 
-		if (readOnly)
+		if (readOnly) {
 			throw new IOException("File is read-only");
+		}
 
 		long size = (indexCount + 1) * blockSize;
 		raf.setLength(size);
@@ -756,8 +769,9 @@ public class LocalBufferFile implements BufferFile {
 	 */
 	boolean flush() throws IOException {
 
-		if (raf == null || readOnly || temporary)
+		if (raf == null || readOnly || temporary) {
 			return false;
+		}
 
 		// write header
 		writeHeader();
@@ -824,8 +838,9 @@ public class LocalBufferFile implements BufferFile {
 	@Override
 	public synchronized boolean setReadOnly() throws IOException {
 
-		if (!flush())
+		if (!flush()) {
 			return false;
+		}
 
 		raf.close();
 		raf = new RandomAccessFile(file, "r");
@@ -893,8 +908,9 @@ public class LocalBufferFile implements BufferFile {
 	@Override
 	public synchronized boolean delete() {
 
-		if (raf == null || readOnly)
+		if (raf == null || readOnly) {
 			return false;
+		}
 
 		boolean success = false;
 		try {
@@ -1376,11 +1392,13 @@ public class LocalBufferFile implements BufferFile {
 	 */
 	public static void copyFile(BufferFile srcFile, BufferFile destFile, ChangeMap changeMap,
 			TaskMonitor monitor) throws IOException, CancelledException {
-		if (destFile.isReadOnly())
+		if (destFile.isReadOnly()) {
 			throw new IOException("File is read-only");
+		}
 
-		if (srcFile.getBufferSize() != destFile.getBufferSize())
+		if (srcFile.getBufferSize() != destFile.getBufferSize()) {
 			throw new IOException("Buffer sizes differ");
+		}
 
 		if (monitor == null) {
 			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
@@ -1405,8 +1423,7 @@ public class LocalBufferFile implements BufferFile {
 		if (headerTransferRequired) {
 			destFile.clearParameters();
 			String[] parmNames = srcFile.getParameterNames();
-			for (int i = 0; i < parmNames.length; i++) {
-				String name = parmNames[i];
+			for (String name : parmNames) {
 				destFile.setParameter(name, srcFile.getParameter(name));
 			}
 			monitor.setProgress(srcBlockCnt + 1);
@@ -1512,12 +1529,13 @@ public class LocalBufferFile implements BufferFile {
 	 */
 	public static void cleanupOldPreSaveFiles(File dir, long beforeNow) {
 		File[] oldFiles = dir.listFiles(new BufferFileFilter(null, PRESAVE_FILE_EXT));
-		if (oldFiles == null)
+		if (oldFiles == null) {
 			return;
-		for (int i = 0; i < oldFiles.length; i++) {
-			if ((beforeNow == 0 || oldFiles[i].lastModified() < beforeNow) &&
-				oldFiles[i].delete()) {
-				Msg.info(LocalBufferFile.class, "Removed old presave file: " + oldFiles[i]);
+		}
+		for (File oldFile : oldFiles) {
+			if ((beforeNow == 0 || oldFile.lastModified() < beforeNow) &&
+				oldFile.delete()) {
+				Msg.info(LocalBufferFile.class, "Removed old presave file: " + oldFile);
 			}
 		}
 	}
@@ -1529,8 +1547,9 @@ public class LocalBufferFile implements BufferFile {
 	 */
 	static int getRecommendedBufferSize(int requestedBufferSize) {
 		int size = (requestedBufferSize + BUFFER_PREFIX_SIZE) & -MINIMUM_BLOCK_SIZE;
-		if (size <= 0)
+		if (size <= 0) {
 			size = MINIMUM_BLOCK_SIZE;
+		}
 		return size - BUFFER_PREFIX_SIZE;
 	}
 

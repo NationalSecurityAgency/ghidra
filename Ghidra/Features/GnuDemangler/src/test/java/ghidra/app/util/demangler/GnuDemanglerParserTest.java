@@ -155,7 +155,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledFunction.class);
 		assertName(object, "find", "std",
-			"_Rb_tree<Location,Location,std--_Identity<Location>,std--less<Location>,std--allocator<Location>>");
+			"_Rb_tree<Location,Location,std::_Identity<Location>,std::less<Location>,std::allocator<Location>>");
 
 		DemangledFunction function = (DemangledFunction) object;
 		List<DemangledDataType> parameters = function.getParameters();
@@ -179,7 +179,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		List<DemangledDataType> parameters = function.getParameters();
 
 		assertEquals(
-			"__insertion_sort<__gnu_cxx--__normal_iterator<std--pair<unsigned_long,PcodeOp*>*,std--vector<std--pair<unsigned_long,PcodeOp*>,std--allocator<std--pair<unsigned_long,PcodeOp*>>>>,bool(*)(std--pair<unsigned_long,PcodeOp*>const&,std--pair<unsigned_long,PcodeOp*>const&)>",
+			"__insertion_sort<__gnu_cxx::__normal_iterator<std::pair<unsigned_long,PcodeOp*>*,std::vector<std::pair<unsigned_long,PcodeOp*>,std::allocator<std::pair<unsigned_long,PcodeOp*>>>>,bool(*)(std::pair<unsigned_long,PcodeOp*>const&,std::pair<unsigned_long,PcodeOp*>const&)>",
 			function.getName());
 		assertEquals("std", function.getNamespace().getName());
 
@@ -210,11 +210,11 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledFunction.class);
 		assertName(object, "insert", "std",
-			"set<bbnode*,std--less<bbnode*>,std--allocator<bbnode*>>");
+			"set<bbnode*,std::less<bbnode*>,std::allocator<bbnode*>>");
 
 		DemangledFunction method = (DemangledFunction) object;
 		assertEquals(
-			"undefined std::set<bbnode*,std--less<bbnode*>,std--allocator<bbnode*>>::insert(bbnode const * &)",
+			"undefined std::set<bbnode*,std::less<bbnode*>,std::allocator<bbnode*>>::insert(bbnode const * &)",
 			method.getSignature(false));
 		List<DemangledDataType> parameters = method.getParameters();
 		assertEquals(1, parameters.size());
@@ -266,10 +266,10 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledThunk.class);
 		assertName(object, "~basic_ostringstream", "std",
-			"basic_ostringstream<char,std--char_traits<char>,pool_allocator<char>>");
+			"basic_ostringstream<char,std::char_traits<char>,pool_allocator<char>>");
 
 		assertEquals(
-			"virtual thunk to undefined __thiscall std::basic_ostringstream<char,std--char_traits<char>,pool_allocator<char>>::~basic_ostringstream(void)",
+			"virtual thunk to undefined __thiscall std::basic_ostringstream<char,std::char_traits<char>,pool_allocator<char>>::~basic_ostringstream(void)",
 			object.getSignature(false));
 	}
 
@@ -455,9 +455,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledAddressTable.class);
-		assertName(object, "typeinfo", "std", "unary_function<MagickLib--_DrawContext*,void>");
+		assertName(object, "typeinfo", "std", "unary_function<MagickLib::_DrawContext*,void>");
 
-		assertEquals("std::unary_function<MagickLib--_DrawContext*,void>::typeinfo",
+		assertEquals("std::unary_function<MagickLib::_DrawContext*,void>::typeinfo",
 			object.getSignature(false));
 	}
 
@@ -470,7 +470,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledString.class);
-		assertName(object, "typeinfo-name", "std", "unary_function<MagickLib--_DrawContext*,void>");
+		assertName(object, "typeinfo-name", "std", "unary_function<MagickLib::_DrawContext*,void>");
 
 		assertEquals("typeinfo name for std::unary_function<MagickLib::_DrawContext*, void>",
 			object.getSignature(false));
@@ -760,9 +760,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledVariable.class);
-		assertName(object, "aaa<(bbb--ccc)120,ddd>");
+		assertName(object, "aaa<(bbb::ccc)120,ddd>");
 
-		assertEquals("aaa<(bbb--ccc)120,ddd>", object.getSignature(false));
+		assertEquals("aaa<(bbb::ccc)120,ddd>", object.getSignature(false));
 
 		//
 		// Functions
@@ -829,9 +829,28 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String name = object.getName();
 		assertEquals("operator>>", name);
 		assertEquals(
-			"std::basic_istream<char,std--char_traits<char>>& " +
+			"std::basic_istream<char,std::char_traits<char>> & " +
 				"std::operator>><char,std::char_traits<char>>" +
 				"(std::basic_istream<char,std::char_traits<char>> &,char &)",
+			object.getSignature());
+	}
+
+	@Test
+	public void testOverloadedLeftShiftOperatorWithFunctionPointer() {
+
+		String mangled = "_ZNSolsEPFRSoS_E";
+		parser = new GnuDemanglerParser();
+		DemangledObject object = parser.parse(mangled,
+			"std::basic_ostream<char, std::char_traits<char> >" +
+				"::operator<<(std::basic_ostream<char, std::char_traits<char> >&" +
+				"(*)(std::basic_ostream<char, std::char_traits<char> >&))");
+		String name = object.getName();
+		assertEquals("operator<<", name);
+		assertName(object, "operator<<", "std", "basic_ostream<char,std::char_traits<char>>");
+		assertEquals(
+			"undefined std::basic_ostream<char,std::char_traits<char>>" +
+				"::operator<<(" +
+				"std::basic_ostream<char,std::char_traits<char>> & ()(std::basic_ostream<char,std::char_traits<char>> &))",
 			object.getSignature());
 	}
 
@@ -1062,11 +1081,11 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertType(object, DemangledFunction.class);
 
 		assertName(object,
-			"__uninitialized_copy_aux<MeCab--(anonymous_namespace)--Range*,MeCab--(anonymous_namespace)--Range*>",
+			"__uninitialized_copy_aux<MeCab::(anonymous_namespace)::Range*,MeCab::(anonymous_namespace)::Range*>",
 			"std");
 
 		assertEquals(
-			"MeCab::(anonymous_namespace)::Range * std::__uninitialized_copy_aux<MeCab--(anonymous_namespace)--Range*,MeCab--(anonymous_namespace)--Range*>(MeCab::(anonymous_namespace)::Range *,MeCab::(anonymous_namespace)::Range *,MeCab::(anonymous_namespace)::Range *,std::__false_type)",
+			"MeCab::(anonymous_namespace)::Range * std::__uninitialized_copy_aux<MeCab::(anonymous_namespace)::Range*,MeCab::(anonymous_namespace)::Range*>(MeCab::(anonymous_namespace)::Range *,MeCab::(anonymous_namespace)::Range *,MeCab::(anonymous_namespace)::Range *,std::__false_type)",
 			object.getSignature(false));
 	}
 
@@ -1103,10 +1122,10 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"Ofc::TSimpleTypeHelper<Art::Percentage>::ToString(Art::Percentage const&, Ofc::TFixedVarStr<(int)2085>&)";
 		DemangledObject object = parser.parse("nomangled", demangled);
 		assertType(object, DemangledFunction.class);
-		assertName(object, "ToString", "Ofc", "TSimpleTypeHelper<Art--Percentage>");
+		assertName(object, "ToString", "Ofc", "TSimpleTypeHelper<Art::Percentage>");
 
 		assertEquals(
-			"undefined Ofc::TSimpleTypeHelper<Art--Percentage>::ToString(Art::Percentage const &,Ofc::TFixedVarStr<(int)2085> &)",
+			"undefined Ofc::TSimpleTypeHelper<Art::Percentage>::ToString(Art::Percentage const &,Ofc::TFixedVarStr<(int)2085> &)",
 			object.getSignature(false));
 	}
 
@@ -1225,10 +1244,10 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledObject object = parser.parse(mangled, demangled);
 		assertType(object, DemangledFunction.class);
 		assertName(object, "_M_insert_aux", "std",
-			"vector<boost--function<void()>,std--allocator<boost--function<void()>>>");
+			"vector<boost::function<void()>,std::allocator<boost::function<void()>>>");
 
 		assertEquals(
-			"undefined std::vector<boost--function<void()>,std--allocator<boost--function<void()>>>::_M_insert_aux(__gnu_cxx::__normal_iterator<boost::function<void ()> *,std::vector<boost::function<void ()>,std::allocator<boost::function<void ()>>>>,boost::function<void ()> const &)",
+			"undefined std::vector<boost::function<void()>,std::allocator<boost::function<void()>>>::_M_insert_aux(__gnu_cxx::__normal_iterator<boost::function<void ()> *,std::vector<boost::function<void ()>,std::allocator<boost::function<void ()>>>>,boost::function<void ()> const &)",
 			object.getSignature(false));
 	}
 
@@ -1392,12 +1411,12 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		assertName(object, "__invoke",
 			"GrGLFunction<unsigned_char_const*(unsigned_int)>",
-			"GrGLFunction<skia_bindings--CreateGLES2InterfaceBindings(gpu--gles2--GLES2Interface*,gpu--ContextSupport*)--$_0>(skia_bindings--CreateGLES2InterfaceBindings(gpu--gles2--GLES2Interface*,gpu--ContextSupport*)--$_0)",
+			"GrGLFunction<skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*,gpu::ContextSupport*)::$_0>(skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*,gpu::ContextSupport*)::$_0)",
 			"{lambda(void_const*,unsigned_int)#1}");
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"undefined GrGLFunction<unsigned_char_const*(unsigned_int)>::GrGLFunction<skia_bindings--CreateGLES2InterfaceBindings(gpu--gles2--GLES2Interface*,gpu--ContextSupport*)--$_0>(skia_bindings--CreateGLES2InterfaceBindings(gpu--gles2--GLES2Interface*,gpu--ContextSupport*)--$_0)::{lambda(void_const*,unsigned_int)#1}::__invoke(void const *,unsigned int)",
+			"undefined GrGLFunction<unsigned_char_const*(unsigned_int)>::GrGLFunction<skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*,gpu::ContextSupport*)::$_0>(skia_bindings::CreateGLES2InterfaceBindings(gpu::gles2::GLES2Interface*,gpu::ContextSupport*)::$_0)::{lambda(void_const*,unsigned_int)#1}::__invoke(void const *,unsigned int)",
 			signature);
 	}
 

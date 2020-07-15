@@ -32,9 +32,7 @@ import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.util.RangeMapAdapter;
 import ghidra.program.util.RegisterValueStore;
 import ghidra.util.Lock;
-import ghidra.util.datastruct.LongObjectHashtable;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -61,7 +59,7 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	 * address ranges using the PropertyMap utilities.
 	 */
 	private HashMap<String, Register> registersMap;
-	private LongObjectHashtable<AddressRangeMapDB> valueMaps;
+	private Map<Integer, AddressRangeMapDB> valueMaps;
 	private Register baseContextRegister;
 	protected Map<Register, RegisterValueStore> defaultRegisterValueMap;
 
@@ -88,7 +86,7 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 		defaultRegisterValueMap = new HashMap<Register, RegisterValueStore>();
 
 		registersMap = new HashMap<String, Register>();
-		valueMaps = new LongObjectHashtable<AddressRangeMapDB>();
+		valueMaps = new HashMap<>();
 		registerSpaceSize = 0;
 
 		for (Register register : registers) {
@@ -350,7 +348,7 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	public void invalidateCache(boolean all) throws IOException {
 		lock.acquire();
 		try {
-			valueMaps.removeAll();
+			valueMaps.clear();
 		}
 		finally {
 			lock.release();

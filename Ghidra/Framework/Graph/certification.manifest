@@ -2,8 +2,10 @@
 ##MODULE IP: BSD
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: LGPL 2.1
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
+data/ExtensionPoint.manifest||GHIDRA||||END|
 src/main/docs/README.txt||GHIDRA||||END|
 src/main/docs/VerticesAndEdges.png||GHIDRA||||END|
 src/main/docs/VerticesAndEdges.xml||GHIDRA||||END|

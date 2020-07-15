@@ -127,7 +127,7 @@ public class FunctionSignatureDecompilerHover extends AbstractConfigurableHover
 			AddressFactory factory = program.getAddressFactory();
 			AddressSpace space = factory.getDefaultAddressSpace();
 			try {
-				Address asAddress = factory.getAddress(space.getBaseSpaceID(), scalarLong);
+				Address asAddress = factory.getAddress(space.getSpaceID(), scalarLong);
 				Function function = program.getListing().getFunctionAt(asAddress);
 				if (function != null) {
 					String content = ToolTipUtils.getToolTipText(function, false);

@@ -104,34 +104,41 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 			// In this case, we are also inserting a <body> that specifies the font-family
 			// to get us back to the same font the rest of the GUI is using.
 
-			JTextPane textpane = new JTextPane();
-			String fontfamily = textpane.getFont().getFamily();
+			JTextPane textPane = new JTextPane();
+			String fontfamily = textPane.getFont().getFamily();
 			detailedMessage = "<html><body style=\"font-family: " + fontfamily + "\">" +
 				detailedMessage.substring(6);
 
 			// Set the textpane to not auto-scroll to bottom when adding text
-			DefaultCaret caret = (DefaultCaret) textpane.getCaret();
+			DefaultCaret caret = (DefaultCaret) textPane.getCaret();
 			caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
-			textpane.setContentType("text/html");
-			textpane.setText(detailedMessage);
-			textpane.setEditable(false);
+			textPane.setContentType("text/html");
+			textPane.setText(detailedMessage);
+			textPane.setEditable(false);
 
-			DockingUtils.setTransparent(textpane);
-			JScrollPane scrollPane = new JScrollPane(textpane);
+			DockingUtils.setTransparent(textPane);
+			JScrollPane scrollPane = new JScrollPane(textPane);
 			DockingUtils.setTransparent(scrollPane);
 			scrollPane.setBorder(BorderFactory.createEmptyBorder());
 			workPanel.add(scrollPane, BorderLayout.CENTER);
+
+			// note: this must be done after adding the text component to the scroll pane 
+			//       (seems like the scroll pane is changing the border)
+			textPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		}
 		else {
-			JTextArea textarea = new JTextArea(detailedMessage);
-			textarea.setEditable(false);
+			JTextArea textArea = new JTextArea(detailedMessage);
+			textArea.setEditable(false);
 
-			DockingUtils.setTransparent(textarea);
-			JScrollPane scrollPane = new JScrollPane(textarea);
+			DockingUtils.setTransparent(textArea);
+			JScrollPane scrollPane = new JScrollPane(textArea);
 			DockingUtils.setTransparent(scrollPane);
-			scrollPane.setBorder(BorderFactory.createEmptyBorder());
 			workPanel.add(scrollPane, BorderLayout.CENTER);
+
+			// note: this must be done after adding the text component to the scroll pane 
+			//       (seems like the scroll pane is changing the border)
+			textArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		}
 
 		Icon icon = OptionDialog.getIconForMessageType(messageType);
@@ -147,10 +154,14 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 		setFocusComponent(okButton);
 		setDefaultButton(okButton);
 		setRememberSize(false);
+
+		// A somewhat arbitrary number to prevent the dialog from stretching across the screen
+		setPreferredSize(600, 300);
 	}
 
 	@Override
 	protected void okCallback() {
 		close();
 	}
+
 }

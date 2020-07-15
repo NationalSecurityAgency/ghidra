@@ -875,7 +875,7 @@ stbrace: {strlist }	is strlist			{ }
 psbrace: { pshlist }	is pshlist			{ }
 
 # Some extra subconstructors for the push and pop instructions
-pclbrace:ldlist^"," pc }	is ldlist & pc			{ build ldlist; pc = *mult_addr; mult_addr = mult_addr + 4; }
+pclbrace:{ldlist^"," pc }	is ldlist & pc			{ build ldlist; pc = *mult_addr; mult_addr = mult_addr + 4; }
 pclbrace:{ pc }	is thc0007=0 & pc					{ pc = *mult_addr; mult_addr = mult_addr + 4; }
 pcpbrace:{ pshlist^"," lr }	is pshlist & lr			{ mult_addr = mult_addr - 4; *mult_addr = lr; build pshlist; }
 pcpbrace:{ lr }	is thc0007=0 & lr					{ mult_addr = mult_addr - 4; *mult_addr = lr; }
@@ -4768,7 +4768,7 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
 {
    build ItCond;
   build ThumbExpandImm12;
-  local tmp = Rn0003 | ThumbExpandImm12;
+  local tmp = Rn0003 ^ ThumbExpandImm12;
   resflags(tmp);
   th_affectflags();
 }
@@ -4777,7 +4777,7 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
 {
    build ItCond;
   build thshift2;
-  local tmp = Rn0003 | thshift2;
+  local tmp = Rn0003 ^ thshift2;
   resflags(tmp);
   th_affectflags();
 }

@@ -230,7 +230,7 @@ public class ReverseClippingTextField implements TextField {
 
 	@Override
 	public void paint(JComponent c, Graphics g, PaintContext context,
-			FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
+			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
 		if (context.isPrinting()) {
 			print(g, context);
 		}

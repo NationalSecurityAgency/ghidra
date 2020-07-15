@@ -589,6 +589,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
         <LI><typewriter>-loader-loadExternalLibs &lt;true|false&gt;</typewriter></LI> 
         <LI><typewriter>-loader-applyRelocations &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-imagebase &lt;imagebase<sup>3</sup>&gt;</typewriter></LI>
+        <LI><typewriter>-loader-dataImageBase &lt;dataImageBase<sup>4</sup>&gt;</typewriter></LI>
         <LI><typewriter>-loader-includeOtherBlocks &lt;true|false&gt;</typewriter></LI>
         <LI><typewriter>-loader-resolveExternalSymbols &lt;true|false&gt;</typewriter></LI>
       </UL>
@@ -609,9 +610,11 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
       </UL>
     </UL>
     <br>
-    <sup>1. Address must be in the form [space:]offset.  Space is optional, and offset is a hex value with no leading 0x.</sup><br>
-    <sup>2. To specify hexadecimal, use a leading 0x.</sup><br>
-    <sup>3. Address is in the default space, and must be specified as a hexadecimal value without the leading 0x.</sup><br>
+    <sup>1</sup>Address must be in the form [space:]offset.  Space is optional, and offset is a hex value with no leading 0x.<br>
+    <sup>2</sup>To specify hexadecimal, use a leading 0x.<br>
+    <sup>3</sup>Base address is in the default space and must be specified as a hexadecimal value without the leading 0x.<br>
+    <sup>4</sup>Base address is in the default data space and must be specified as a hexadecimal value without the leading 0x.
+    This option only applies to Harvard Architecture processors when loading relocatable ELF binaries (i.e., object modules).<br>
     </LI>
 
 </UL>

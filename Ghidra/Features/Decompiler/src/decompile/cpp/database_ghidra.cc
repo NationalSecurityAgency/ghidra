@@ -16,12 +16,18 @@
 #include "database_ghidra.hh"
 #include "funcdata.hh"
 
+Scope *ScopeGhidra::buildSubScope(const string &nm)
+
+{
+  return new ScopeGhidraNamespace(nm,ghidra);
+}
+
 /// \param g is the Architecture and connection to the Ghidra client
 ScopeGhidra::ScopeGhidra(ArchitectureGhidra *g)
-  : Scope("",g)
+  : Scope("",g,this)
 {
   ghidra = g;
-  cache = new ScopeInternal("",g);
+  cache = new ScopeInternal("",g,this);
   cacheDirty = false;
 }
 
@@ -31,50 +37,51 @@ ScopeGhidra::~ScopeGhidra(void)
   delete cache;
 }
 
-/// Ghidra may report that a Symbol is in a \e namespace. This method
-/// creates a dedicated Scope object to hold such a Symbol. The immediate
-/// parent for the new Scope must already exist.
-/// \param nm is the name of the new \e namespace
-/// \param par is the parent Scope
-/// \return the new \e namespace Scope
-Scope *ScopeGhidra::createNewScope(const string &nm,Scope *par) const
-
-{
-  Scope *newscope = new ScopeGhidraNamespace(nm,ghidra);
-  ghidra->symboltab->attachScope(newscope,par);
-//   Document *doc = ghidra->getScopeProperties(newscope);
-//   if (doc == (Document *)0)
-//     throw LowlevelError("Bad getScopeProperties response");
-//   const Element *root = doc->getRoot();
-//   if (root->getName() == "rangelist") {
-//     RangeList newrangetree;
-//     newrangetree.restoreXml(root,ghidra);
-//     ghidra->symboltab->set_range(newscope,newrangetree);
-//   }
-//   delete doc;
-  return newscope;
-}
-
-/// The Ghidra client reports a \e namespace path associated with
-/// Symbol. Determine if this Scope already exists in the cache and built
+/// The Ghidra client reports a \e namespace id associated with
+/// Symbol. Determine if a matching \e namespac Scope already exists in the cache and build
 /// it if it isn't. This may mean creating a new \e namespace Scope.
-/// \param path is absolute path to the desired Scope
-/// \return the Scope matching the path.
-Scope *ScopeGhidra::reresolveScope(const vector<string> &path) const
+/// \param id is the ID associated with the Ghidra namespace
+/// \return the Scope matching the id.
+Scope *ScopeGhidra::reresolveScope(uint8 id) const
 
 {
-  if (path.size()==1) return cache;
-  // Get pointer to ourselves (which is not const)
-  Scope *curscope = glb->symboltab->getGlobalScope();
-  int4 i;
-  for(i=1;i<path.size();++i) {
-    Scope *nextscope = curscope->resolveScope(path[i]);
-    if (nextscope == (Scope *)0) break;
-    curscope = nextscope;
+  if (id == 0) return cache;
+  map<uint8,Scope *>::const_iterator miter = namespaceMap.find(id);
+  if (miter != namespaceMap.end())
+    return (*miter).second;		// Scope was previously cached
+
+  Document *doc = ghidra->getNamespacePath(id);
+  if (doc == (Document *)0)
+    throw LowlevelError("Could not get namespace info");
+
+  Scope *curscope = glb->symboltab->getGlobalScope();	// Get pointer to ourselves (which is not const)
+  try {
+    const List &list(doc->getRoot()->getChildren());
+    List::const_iterator iter = list.begin();
+    ++iter;		// Skip element describing the root scope
+    while(iter != list.end()) {
+      const Element *el = *iter;
+      ++iter;
+      uint8 scopeId;
+      istringstream s(el->getAttributeValue("id"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> scopeId;
+      miter = namespaceMap.find(scopeId);
+      if (miter == namespaceMap.end()) {
+	curscope = glb->symboltab->findCreateSubscope(el->getContent(), curscope);
+	ScopeGhidraNamespace *ghidraScope = (ScopeGhidraNamespace *)curscope;
+	if (ghidraScope->getClientId() == 0)
+	  ghidraScope->setClientId(scopeId);
+	namespaceMap[scopeId] = curscope;
+      }
+      else
+	curscope = (*miter).second;
+    }
+    delete doc;
   }
-  while(i != path.size()) {
-    curscope = createNewScope(path[i],curscope);
-    i += 1;
+  catch(LowlevelError &err) {
+    delete doc;
+    throw err;
   }
   return curscope;
 }
@@ -126,16 +133,14 @@ Symbol *ScopeGhidra::dump2Cache(Document *doc) const
   }
 
   List::const_iterator iter = el->getChildren().begin();
-  // The first subnode must be scope information
-  el = *iter;
-  vector<string> path;
-  const List &list2(el->getChildren());
-  List::const_iterator iter2;
-  for(iter2=list2.begin();iter2!=list2.end();++iter2)
-    path.push_back( (*iter2)->getContent() );
+  uint8 scopeId;
+  {
+    istringstream s(el->getAttributeValue("id"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> scopeId;
+  }
 
-  Scope *scope = reresolveScope(path);
-  ++iter;			// The second part is a <mapsym>
+  Scope *scope = reresolveScope(scopeId);
   el = *iter;
   try {
     sym = scope->addMapSym(el);
@@ -255,6 +260,7 @@ void ScopeGhidra::clear(void)
 {
   cache->clear();
   holes.clear();
+  namespaceMap.clear();
   if (cacheDirty) {
     ghidra->symboltab->setProperties(flagbaseDefault); // Restore database properties to defaults
     cacheDirty = false;
@@ -401,4 +407,14 @@ SymbolEntry *ScopeGhidraNamespace::addMapInternal(Symbol *sym,uint4 exfl,const A
   res = ScopeInternal::addMapInternal(sym,exfl,addr,off,sz,uselim);
   glb->symboltab->addRange(this,res->getAddr().getSpace(),res->getFirst(),res->getLast());
   return res;
+}
+
+bool ScopeGhidraNamespace::isNameUsed(const string &nm,const Scope *op2) const
+
+{
+  if (ArchitectureGhidra::isDynamicSymbolName(nm))
+    return false;		// Just assume default FUN_ and DAT_ names don't collide
+  const ScopeGhidraNamespace *otherScope = dynamic_cast<const ScopeGhidraNamespace *>(op2);
+  uint8 otherId = (otherScope != (const ScopeGhidraNamespace *)0) ? otherScope->getClientId() : 0;
+  return ghidra->isNameUsed(nm, scopeId, otherId);
 }

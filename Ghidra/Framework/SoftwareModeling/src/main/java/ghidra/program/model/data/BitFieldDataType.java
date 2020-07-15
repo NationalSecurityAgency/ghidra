@@ -29,7 +29,7 @@ import utilities.util.ArrayUtilities;
  * for use within data structures.  The length (i.e., storage size) of this bitfield datatype is
  * the minimum number of bytes required to contain the bitfield at its specified offset.
  * The effective bit-size of a bitfield will be limited by the size of the base
- * datatype whose size may be controlled by its' associated datatype manager and data organization
+ * datatype whose size may be controlled by its associated datatype manager and data organization
  * (e.g., {@link IntegerDataType}). 
  * <p>
  * NOTE: Instantiation of this datatype implementation is intended for internal use only.  

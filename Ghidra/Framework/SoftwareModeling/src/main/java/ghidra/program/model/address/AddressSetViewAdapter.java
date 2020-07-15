@@ -172,4 +172,9 @@ public class AddressSetViewAdapter implements AddressSetView {
 	public Address findFirstAddressInCommon(AddressSetView otherSet) {
 		return set.findFirstAddressInCommon(otherSet);
 	}
+
+	@Override
+	public String toString() {
+		return set.toString();
+	}
 }

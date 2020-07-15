@@ -13,7 +13,6 @@ eclipse.project.name = 'Features Decompiler'
 dependencies {
 	compile project(':Base')
 	compile project(':SoftwareModeling')
-	
 	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
 	integrationTestRuntime project(path: ':Base', configuration: 'testArtifacts')
 	testCompile "org.jmockit:jmockit:1.44"
@@ -271,6 +270,7 @@ model {
 		                include "database.cc"
 		                include "cpool.cc"
 		                include "comment.cc"
+						include "stringmanage.cc"
 		                include "fspec.cc"
 		                include "action.cc"
 		                include "loadimage.cc"
@@ -321,6 +321,7 @@ model {
 		                include "cpool_ghidra.cc"
 		                include "ghidra_process.cc"
 		                include "comment_ghidra.cc"
+						include "string_ghidra.cc"
 		         //       include "callgraph.cc"			// uncomment for debug
 		         //       include "ifacedecomp.cc"		// uncomment for debug
 		         //       include "ifaceterm.cc"			// uncomment for debug

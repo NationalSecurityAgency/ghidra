@@ -337,13 +337,15 @@ public class ProjectDataTreePanel extends JPanel {
 				domainFileList.add(((DomainFileNode) node).getDomainFile());
 			}
 		}
+		
+		// provider is null when called from the DataTreeDialog, use different context
+		if (provider == null) {
+			return new DialogProjectTreeContext(projectData, selectionPaths, domainFolderList,
+				domainFileList, tree);
+		}
 
-		ProjectDataTreeActionContext context =
-			new ProjectDataTreeActionContext(provider, projectData, selectionPaths,
-				domainFolderList, domainFileList, tree, isActiveProject);
-		boolean isTransient = tool == null; // null for stand-alone dialog, not the project's tree
-		context.setTransient(isTransient);
-		return context;
+		return new FrontEndProjectTreeContext(provider, projectData, selectionPaths,
+			domainFolderList, domainFileList, tree, isActiveProject);
 	}
 
 	public DataTree getDataTree() {

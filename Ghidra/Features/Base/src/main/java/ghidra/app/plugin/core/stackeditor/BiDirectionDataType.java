@@ -243,7 +243,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponentImpl insertAtOffset(int offset, DataType dataType, int length,
-			String newName, String comment) {
+			String newName, String comment) throws IllegalArgumentException {
 		if (offset < splitOffset - negativeLength || offset >= splitOffset + positiveLength) {
 			throw new IllegalArgumentException(
 				"Offset " + offset + " is not in " + getDisplayName() + ".");
@@ -304,7 +304,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponent addPositive(DataType dataType, int length, String newName,
-			String comment) {
+			String comment) throws IllegalArgumentException {
 
 		validateDataType(dataType);
 		checkAncestry(dataType);
@@ -325,7 +325,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponent addNegative(DataType dataType, int length, String newName,
-			String comment) {
+			String comment) throws IllegalArgumentException {
 
 		validateDataType(dataType);
 		checkAncestry(dataType);
@@ -682,7 +682,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponent replace(int index, DataType dataType, int length, String newName,
-			String comment) {
+			String comment) throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
 		if (index < 0 || index >= numComponents) {
 			throw new ArrayIndexOutOfBoundsException(index);
 		}
@@ -695,7 +695,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	@Override
 	public DataTypeComponent replaceAtOffset(int offset, DataType dataType, int length,
-			String newName, String comment) {
+			String newName, String comment) throws IllegalArgumentException {
 		if (offset < splitOffset - negativeLength || offset >= splitOffset + positiveLength) {
 			throw new IllegalArgumentException(
 				"Offset " + offset + " is not in " + getDisplayName() + ".");

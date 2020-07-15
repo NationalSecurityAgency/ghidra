@@ -108,7 +108,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		// use this index to make sure that the following actions are ordered in the way that 
 		// they are inserted
 		int subGroupIndex = 0;
-		
+
 		autoAnalyzeAction = new ActionBuilder("Auto Analyze", getName())
 				.menuPath("&Analysis", "&Auto Analyze...")
 				.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
@@ -319,9 +319,16 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	@Override
 	public void analysisEnded(AutoAnalysisManager manager) {
 		MessageLog log = manager.getMessageLog();
-		if (log.getMsgCount() > 0) {
+		if (log.hasMessages()) {
+
+			log.write(AutoAnalysisManager.class, "Analysis Log Messages");
+
+			String shortMessage = "There were warnings/errors issued during analysis.";
+			String detailedMessage =
+				"(These messages are also written to the application log file)\n\n" +
+					log.toString();
 			MultiLineMessageDialog dialog = new MultiLineMessageDialog("Auto Analysis Summary",
-				"There were warnings/errors issued during analysis.", log.toString(),
+				shortMessage, detailedMessage,
 				MultiLineMessageDialog.WARNING_MESSAGE, false);//modal?
 			DockingWindowManager.showDialog(null, dialog);
 		}
@@ -371,6 +378,9 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			ListingActionContext programContext = getListingContext(context);
+			if (programContext == null) {
+				return false;
+			}
 			Program p = programContext.getProgram();
 			if (p != canAnalyzeProgram) {
 				canAnalyzeProgram = p;

@@ -17,6 +17,7 @@ package ghidra.program.model.mem;
 
 import java.util.Optional;
 
+import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
@@ -75,12 +76,19 @@ public interface MemoryBlockSourceInfo {
 	long getFileBytesOffset(Address address);
 
 	/**
-	 * Returns an {@link Optional} {@link AddressRange} for the mapped addresses if this is mapped
+	 * Returns an {@link Optional} {@link AddressRange} for the mapped addresses if this is a mapped
 	 * memory block (bit mapped or byte mapped). Otherwise, the Optional is empty.
-	 * @return an {@link Optional} {@link AddressRange} for the mapped addresses if this is mapped
+	 * @return an {@link Optional} {@link AddressRange} for the mapped addresses if this is a mapped
 	 * memory block
 	 */
 	Optional<AddressRange> getMappedRange();
+
+	/**
+	 * Returns an {@link Optional} {@link ByteMappingScheme} employed if this is a byte-mapped 
+	 * memory block.  Otherwise, the Optional is empty. 
+	 * @return an {@link Optional} {@link ByteMappingScheme} employed if this is a byte-mapped memory block. 
+	 */
+	Optional<ByteMappingScheme> getByteMappingScheme();
 
 	/**
 	 * Returns the containing Memory Block 

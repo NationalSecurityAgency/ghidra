@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import db.*;
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
+import ghidra.program.model.data.SourceArchive;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;

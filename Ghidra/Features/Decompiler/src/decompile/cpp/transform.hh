@@ -182,6 +182,7 @@ public:
   TransformVar *getSplit(Varnode *vn,const LaneDescription &description,int4 numLanes,int4 startLane);
   void opSetInput(TransformOp *rop,TransformVar *rvn,int4 slot);	///< Mark given variable as input to given op
   void opSetOutput(TransformOp *rop,TransformVar *rvn);		///< Mark given variable as output of given op
+  static bool preexistingGuard(int4 slot,TransformVar *rvn);	///< Should newPreexistingOp be called
 
   void apply(void);		///< Apply the full transform to the function
 };
@@ -224,6 +225,25 @@ inline void TransformManager::opSetOutput(TransformOp *rop,TransformVar *rvn)
 {
   rop->output = rvn;
   rvn->def = rop;
+}
+
+/// Varnode marking prevents duplicate TransformOp (and TransformVar) records from getting
+/// created, except in the case of a preexisting PcodeOp with 2 (or more) non-constant inputs.
+/// Because the op is preexisting the output Varnode doesn't get marked, and the op will
+/// be visited for each input.  This method determines when the TransformOp object should be
+/// created, with the goal of creating it exactly once even though the op is visited more than once.
+/// It currently assumes the PcodeOp is binary, and the slot along which the op is
+/// currently visited is passed in, along with the TransformVar for the \e other input. It returns
+/// \b true if the TransformOp should be created.
+/// \param slot is the incoming slot along which the op is visited
+/// \param rvn is the other input
+inline bool TransformManager::preexistingGuard(int4 slot,TransformVar *rvn)
+
+{
+  if (slot == 0) return true;	// If we came in on the first slot, build the TransformOp
+  if (rvn->type == TransformVar::piece || rvn->type == TransformVar::piece_temp)
+    return false;		// The op was/will be visited on slot 0, don't create TransformOp now
+  return true;			// The op was not (will not be) visited on slot 0, build now
 }
 
 #endif

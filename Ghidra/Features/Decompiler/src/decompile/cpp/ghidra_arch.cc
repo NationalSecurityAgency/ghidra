@@ -19,6 +19,7 @@
 #include "ghidra_translate.hh"
 #include "typegrp_ghidra.hh"
 #include "comment_ghidra.hh"
+#include "string_ghidra.hh"
 #include "cpool_ghidra.hh"
 #include "inject_ghidra.hh"
 
@@ -78,6 +79,34 @@ int4 ArchitectureGhidra::readToAnyBurst(istream &s)
     if (c<0)			// If pipe closed, our parent process is probably dead
       exit(1);			// So we exit to avoid a runaway process
   }
+}
+
+/// Read the string protocol start, a single character, then the protocol end.
+/// If the character is a 't', return \b true, otherwise \b false.
+/// \param s is the input stream from the client
+/// \return the passed back boolean value
+bool ArchitectureGhidra::readBoolStream(istream &s)
+
+{
+  int4 c;
+  bool res;
+
+  int4 type = readToAnyBurst(s);
+  if (type != 14) throw JavaError("alignment","Expecting string");
+  c = s.get();
+  res = (c == 't');
+  c = s.get();
+  while(c==0) {
+    c = s.get();
+  }
+  if (c==1) {
+    c = s.get();
+    if (c == 15)
+      return res;
+  }
+  if (c<0)			// If pipe closed, our parent process is probably dead
+    exit(1);			// So we exit to avoid a runaway process
+  throw JavaError("alignment","Expecting string terminator");
 }
 
 /// Characters are read up to the next protocol marked and placed into a string.
@@ -346,6 +375,12 @@ void ArchitectureGhidra::buildCommentDB(DocumentStorage &store)
   commentdb = new CommentDatabaseGhidra(this);
 }
 
+void ArchitectureGhidra::buildStringManager(DocumentStorage &store)
+
+{
+  stringManager = new GhidraStringManager(this,2048);
+}
+
 void ArchitectureGhidra::buildConstantPool(DocumentStorage &store)
 
 {
@@ -508,6 +543,48 @@ Document *ArchitectureGhidra::getExternalRefXML(const Address &addr)
   return readXMLAll(sin);
 }
 
+/// Ask the Ghidra client to list all namespace elements between the global root
+/// and the namespace of the given id. The client should return a \<parent> tag with
+/// a \<val> child for each namespace in the path.
+/// \param id is the given id of the namespace to resolve
+/// \return the XML document
+Document *ArchitectureGhidra::getNamespacePath(uint8 id)
+
+{
+  sout.write("\000\000\001\004",4);
+  writeStringStream(sout,"getNamespacePath");
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << hex << id;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\005",4);
+  sout.flush();
+
+  return readXMLAll(sin);
+}
+
+bool ArchitectureGhidra::isNameUsed(const string &nm,uint8 startId,uint8 stopId)
+
+{
+  sout.write("\000\000\001\004",4);
+  writeStringStream(sout,"isNameUsed");
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << nm;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << hex << startId;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << hex << stopId;
+  sout.write("\000\000\001\017",4);
+  sout.write("\000\000\001\005",4);
+  sout.flush();
+
+  readToResponse(sin);
+  bool res = readBoolStream(sin);
+  readResponseEnd(sin);
+  return res;
+}
+
 /// Get the name of the primary symbol at the given address.
 /// This is used to fetch within function \e labels. Only a name is returned.
 /// \param addr is the given address
@@ -613,6 +690,49 @@ void ArchitectureGhidra::getBytes(uint1 *buf,int4 size,const Address &inaddr)
   if (type != 13)
     throw JavaError("alignment","Expecting byte alignment end");
   readResponseEnd(sin);
+}
+
+void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr,Datatype *ct,int4 maxBytes,bool &isTrunc)
+
+{
+  sout.write("\000\000\001\004",4);
+  writeStringStream(sout,"getString");
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  addr.saveXml(sout,maxBytes);
+  sout.write("\000\000\001\017",4);
+  writeStringStream(sout,ct->getName());
+  sout.write("\000\000\001\016",4); // Beginning of string header
+  sout << dec << (int8)ct->getId();	// Pass as a signed integer
+  sout.write("\000\000\001\017",4);
+
+  sout.write("\000\000\001\005",4);
+  sout.flush();
+
+  readToResponse(sin);
+  int4 type = readToAnyBurst(sin);
+  if (type == 12) {
+    int4 c = sin.get();
+    uint4 size = (c-0x20);
+    c = sin.get();
+    size ^= ((c-0x20)<<6);
+    isTrunc = (sin.get() != 0);
+    buffer.reserve(size);
+    uint1 *dblbuf = new uint1[size * 2];
+    sin.read((char *)dblbuf,size*2);
+    for (int4 i=0; i < size; i++) {
+      buffer.push_back(((dblbuf[i*2]-'A') << 4) | (dblbuf[i*2 + 1]-'A'));
+    }
+    delete [] dblbuf;
+    type = readToAnyBurst(sin);
+    if (type != 13)
+      throw JavaError("alignment","Expecting byte alignment end");
+    type = readToAnyBurst(sin);
+  }
+  if ((type&1)==1) {
+    // Leave the buffer empty
+  }
+  else
+    throw JavaError("alignment","Expecting end of query response");
 }
 
 /// \brief Retrieve p-code to inject for a specific context
@@ -722,3 +842,25 @@ ArchitectureGhidra::ArchitectureGhidra(const string &pspec,const string &cspec,c
   sendCcode = true;
   sendParamMeasures = false;
 }
+
+bool ArchitectureGhidra::isDynamicSymbolName(const string &nm)
+
+{
+  if (nm.size() < 8) return false;	// 4 characters of prefix, at least 4 of address
+  if (nm[3] != '_') return false;
+  if (nm[0]=='F' && nm[1]=='U' && nm[2]=='N') {
+  }
+  else if (nm[0]=='D' && nm[1]=='A' && nm[2]=='T') {
+  }
+  else {
+    return false;
+  }
+  for(int4 i=nm.size()-4;i<nm.size();++i) {
+    char c = nm[i];
+    if (c>='0' && c<='9') continue;
+    if (c>='a' && c<='f') continue;
+    return false;
+  }
+  return true;
+}
+

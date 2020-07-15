@@ -15,30 +15,17 @@
  */
 package ghidra.feature.fid.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
-import generic.cache.FixedSizeMRUCachingFactory;
-import ghidra.feature.fid.db.FidQueryService;
-import ghidra.feature.fid.db.FunctionRecord;
-import ghidra.feature.fid.db.LibraryRecord;
+import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.hash.FidHashQuad;
 import ghidra.feature.fid.hash.FidHasher;
 import ghidra.feature.fid.plugin.HashLookupListMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.FunctionIterator;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.ReferenceIterator;
-import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -61,13 +48,13 @@ public class FidProgramSeeker {
 
 	public final int MAX_NUM_PARENTS_FOR_SCORE = 500; // Limit number of (useless) parent (caller) functions
 
-	private final int CACHE_SIZE = 10000; // Maximum number of FidQuadHash cached
+	private final int MAX_CACHE_SIZE = 2000000; // Maximum number of FidQuadHash cached
 
 	private final float scoreThreshold; // Code unit score a function must achieve to be considered a match
 	private final int mediumHashCodeUnitLengthLimit;
 	private final FidQueryService fidQueryService;
 	private final Program program;
-	private final FixedSizeMRUCachingFactory<Function, FidHashQuad> cacheFactory;
+	private final FIDFixedSizeMRUCachingFactory cacheFactory;
 
 	/**
 	 * Creates a seek object.
@@ -78,24 +65,27 @@ public class FidProgramSeeker {
 	 * @param mediumHashCodeUnitLengthLimit the medium hash size
 	 */
 	public FidProgramSeeker(FidQueryService fidQueryService, Program program, FidHasher hasher,
-			byte shortHashCodeUnitLength, byte mediumHashCodeUnitLengthLimit, float scoreThreshold) {
+			byte shortHashCodeUnitLength, byte mediumHashCodeUnitLengthLimit,
+			float scoreThreshold) {
 		this.fidQueryService = fidQueryService;
 		this.program = program;
 		this.scoreThreshold = scoreThreshold;
 		this.mediumHashCodeUnitLengthLimit = mediumHashCodeUnitLengthLimit;
 		FidHasherFactory factory = new FidHasherFactory(hasher);
-		this.cacheFactory =
-			new FixedSizeMRUCachingFactory<Function, FidHashQuad>(factory, CACHE_SIZE);
+		int cacheSize = program.getFunctionManager().getFunctionCount();
+		cacheSize = (cacheSize < 100) ? 100 : cacheSize;
+		cacheSize = (cacheSize > MAX_CACHE_SIZE) ? MAX_CACHE_SIZE : cacheSize;
+		this.cacheFactory = new FIDFixedSizeMRUCachingFactory(factory, cacheSize);
 	}
 
-	public static ArrayList<Function> getChildren(Function function,boolean followThunks) {
+	public static ArrayList<Function> getChildren(Function function, boolean followThunks) {
 		Program program = function.getProgram();
 		FunctionManager functionManager = program.getFunctionManager();
 		ReferenceManager referenceManager = program.getReferenceManager();
 		HashSet<Address> alreadyDone = new HashSet<Address>();
 		ArrayList<Function> funcList = new ArrayList<Function>();
 		AddressIterator referenceIterator =
-				referenceManager.getReferenceSourceIterator(function.getBody(), true);
+			referenceManager.getReferenceSourceIterator(function.getBody(), true);
 		for (Address address : referenceIterator) {
 //			monitor.checkCanceled();
 			Reference[] referencesFrom = referenceManager.getReferencesFrom(address);
@@ -149,7 +139,7 @@ public class FidProgramSeeker {
 		}
 	}
 
-	public static ArrayList<Function> getParents(Function function,boolean followThunks) {
+	public static ArrayList<Function> getParents(Function function, boolean followThunks) {
 		Program program = function.getProgram();
 		FunctionManager functionManager = program.getFunctionManager();
 		ReferenceManager referenceManager = program.getReferenceManager();
@@ -160,11 +150,12 @@ public class FidProgramSeeker {
 		Address[] thunkAddresses = null;
 		if (followThunks) {
 			thunkAddresses = function.getFunctionThunkAddresses();
-			if (thunkAddresses != null)
+			if (thunkAddresses != null) {
 				size = thunkAddresses.length;
+			}
 		}
 		int pos = -1;
-		for(;;) {
+		for (;;) {
 			ReferenceIterator referenceIterator = referenceManager.getReferencesTo(curAddr);
 			for (Reference reference : referenceIterator) {
 				// monitor.checkCanceled();
@@ -181,7 +172,9 @@ public class FidProgramSeeker {
 				}
 			}
 			pos += 1;
-			if (pos >= size) break;
+			if (pos >= size) {
+				break;
+			}
 			curAddr = thunkAddresses[pos];
 		}
 
@@ -216,8 +209,8 @@ public class FidProgramSeeker {
 	 * @return the FidSearchResult describing any discovered matches
 	 * @throws CancelledException if the user cancels
 	 */
-	private FidSearchResult processMatches(Function function, HashFamily family, TaskMonitor monitor)
-			throws CancelledException {
+	private FidSearchResult processMatches(Function function, HashFamily family,
+			TaskMonitor monitor) throws CancelledException {
 		List<HashMatch> hashMatches = lookupFamily(family, monitor);
 		FidSearchResult searchResult = null;
 		if (!hashMatches.isEmpty()) {
@@ -264,10 +257,9 @@ public class FidProgramSeeker {
 		ArrayList<FidMatch> fidMatches = new ArrayList<FidMatch>();
 		for (FidMatchScore hashMatch : culledHashMatches) {
 			monitor.checkCanceled();
-			FidMatch match =
-				new FidMatchImpl(
-					fidQueryService.getLibraryForFunction(hashMatch.getFunctionRecord()),
-					function.getEntryPoint(), hashMatch);
+			FidMatch match = new FidMatchImpl(
+				fidQueryService.getLibraryForFunction(hashMatch.getFunctionRecord()),
+				function.getEntryPoint(), hashMatch);
 			fidMatches.add(match);
 		}
 		return new FidSearchResult(function, family.getHash(), fidMatches);
@@ -365,8 +357,9 @@ public class FidProgramSeeker {
 		functionScore += 0.67 * specificCodeUnits; // Each specific constant count is worth 2/3 of a whole code unit
 		if (functionRecord.isForceRelation()) {
 			// If both auto-pass and force-relation are on, do not ding score if some children match
-			if (!functionRecord.autoPass() || (childCodeUnits == 0))
+			if (!functionRecord.autoPass() || (childCodeUnits == 0)) {
 				functionScore = 0;
+			}
 		}
 		float childScore = childCodeUnits;
 		float parentScore = parentCodeUnits;

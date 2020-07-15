@@ -235,7 +235,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		ToolBarData tbd = getToolBarData();
 		tbd.setIcon(getIcon(actionState));
 
-		setDescription(getTooTipText());
+		setDescription(getToolTipText());
 		actionStateChanged(actionState, trigger);
 	}
 
@@ -288,7 +288,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		throw new UnsupportedOperationException();
 	}
 
-	public String getTooTipText() {
+	public String getToolTipText() {
 		return getName() + ": " + getCurrentState().getName();
 	}
 

@@ -85,6 +85,9 @@ Varnode *Funcdata::newUnique(int4 s,Datatype *ct)
     ct = glb->types->getBase(s,TYPE_UNKNOWN);
   Varnode *vn = vbank.createUnique(s,ct);
   assignHigh(vn);
+  if (s >= minLanedSize)
+    checkForLanedRegister(s, vn->getAddr());
+
 				// No chance of matching localmap
   return vn;
 }
@@ -104,6 +107,8 @@ Varnode *Funcdata::newVarnodeOut(int4 s,const Address &m,PcodeOp *op)
   op->setOutput(vn);
   assignHigh(vn);
 
+  if (s >= minLanedSize)
+    checkForLanedRegister(s,m);
   uint4 vflags = 0;
   SymbolEntry *entry = localmap->queryProperties(m,s,op->getAddr(),vflags);
   if (entry != (SymbolEntry *)0)
@@ -126,6 +131,8 @@ Varnode *Funcdata::newUniqueOut(int4 s,PcodeOp *op)
   Varnode *vn = vbank.createDefUnique(s,ct,op);
   op->setOutput(vn);
   assignHigh(vn);
+  if (s >= minLanedSize)
+    checkForLanedRegister(s, vn->getAddr());
   // No chance of matching localmap
   return vn;
 }
@@ -147,6 +154,8 @@ Varnode *Funcdata::newVarnode(int4 s,const Address &m,Datatype *ct)
   vn = vbank.create(s,m,ct);
   assignHigh(vn);
 
+  if (s >= minLanedSize)
+    checkForLanedRegister(s,m);
   uint4 vflags=0;
   SymbolEntry *entry = localmap->queryProperties(vn->getAddr(),vn->getSize(),Address(),vflags);
   if (entry != (SymbolEntry *)0)	// Let entry try to force type
@@ -248,7 +257,7 @@ Varnode *Funcdata::cloneVarnode(const Varnode *vn)
   // These are the flags we allow to be cloned
   vflags &= (Varnode::annotation | Varnode::externref |
 	     Varnode::readonly | Varnode::persist |
-	     Varnode::addrtied | Varnode::addrforce | Varnode::auto_live |
+	     Varnode::addrtied | Varnode::addrforce |
 	     Varnode::indirect_creation | Varnode::incidental_copy |
 	     Varnode::volatil | Varnode::mapped);
   newvn->setFlags(vflags);
@@ -280,19 +289,21 @@ void Funcdata::destroyVarnode(Varnode *vn)
   vbank.destroy(vn);
 }
 
-/// Record the given Varnode as a potential laned register access.
-/// The address and size of the Varnode is recorded, anticipating that new
-/// Varnodes at the same storage location may be created
-/// \param vn is the given Varnode to mark
-/// \param lanedReg is the laned register record to associate with the Varnode
-void Funcdata::markLanedVarnode(Varnode *vn,const LanedRegister *lanedReg)
+/// Check if the given storage range is a potential laned register.
+/// If so, record the storage with the matching laned register record.
+/// \param s is the size of the storage range in bytes
+/// \param addr is the starting address of the storage range
+void Funcdata::checkForLanedRegister(int4 size,const Address &addr)
 
 {
+  const LanedRegister *lanedRegister  = glb->getLanedRegister(addr,size);
+  if (lanedRegister == (const LanedRegister *)0)
+    return;
   VarnodeData storage;
-  storage.space = vn->getSpace();
-  storage.offset = vn->getOffset();
-  storage.size = vn->getSize();
-  lanedMap[storage] = lanedReg;
+  storage.space = addr.getSpace();
+  storage.offset = addr.getOffset();
+  storage.size = size;
+  lanedMap[storage] = lanedRegister;
 }
 
 /// Look up the Symbol visible in \b this function's Scope and return the HighVariable
@@ -492,7 +503,7 @@ void Funcdata::transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffs
 {
   uintb newConsume = (vn->getConsume() >> 8*lsbOffset) & calc_mask(newVn->getSize());
 
-  uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce|Varnode::auto_live);
+  uint4 vnFlags = vn->getFlags() & (Varnode::directwrite|Varnode::addrforce);
 
   newVn->setFlags(vnFlags);	// Preserve addrforce setting
   newVn->setConsume(newConsume);
@@ -794,7 +805,7 @@ void Funcdata::calcNZMask(void)
 
 /// \brief Update Varnode properties based on (new) Symbol information
 ///
-/// Boolean properties \b addrtied, \b addrforce, \b auto_live, and \b nolocalalias
+/// Boolean properties \b addrtied, \b addrforce, and \b nolocalalias
 /// for Varnodes are updated based on new Symbol information they map to.
 /// The caller can elect to update data-type information as well, where Varnodes
 /// and their associated HighVariables have their data-type finalized based symbols.
@@ -863,7 +874,7 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
 /// to point to the first Varnode after the affected set.
 ///
 /// The only properties that can be effectively changed with this
-/// routine are \b mapped, \b addrtied, \b addrforce, \b auto_live, and \b nolocalalias.
+/// routine are \b mapped, \b addrtied, \b addrforce, and \b nolocalalias.
 /// HighVariable splits must occur if \b addrtied is cleared.
 ///
 /// If the given data-type is non-null, an attempt is made to update all the Varnodes
@@ -884,13 +895,13 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
 				// We take special care with the addrtied flag
 				// as we cannot set it here if it is clear
 				// We can CLEAR but not SET the addrtied flag
-				// If addrtied is cleared, so should addrforce and auto_live
+				// If addrtied is cleared, so should addrforce
   if ((flags&Varnode::addrtied)==0) // Is the addrtied flags cleared
-    mask |= Varnode::addrtied | Varnode::addrforce | Varnode::auto_live;
+    mask |= Varnode::addrtied | Varnode::addrforce;
   // We can set the nolocalalias flag, but not clear it
   // If nolocalalias is set, then addrforce should be cleared
   if ((flags&Varnode::nolocalalias)!=0)
-    mask |= Varnode::nolocalalias | Varnode::addrforce | Varnode::auto_live;
+    mask |= Varnode::nolocalalias | Varnode::addrforce;
   flags &= mask;
 
   vn = *iter;
@@ -1297,6 +1308,35 @@ void Funcdata::splitUses(Varnode *vn)
 				// Dead-code actions should remove original op
 }
 
+/// Find the minimal Address range covering the given Varnode that doesn't split other Varnodes
+/// \param vn is the given Varnode
+/// \param sz is used to pass back the size of the resulting range
+/// \return the starting address of the resulting range
+Address Funcdata::findDisjointCover(Varnode *vn,int4 &sz)
+
+{
+  Address addr = vn->getAddr();
+  Address endaddr = addr + vn->getSize();
+  VarnodeLocSet::const_iterator iter = vn->lociter;
+
+  while(iter != beginLoc()) {
+    --iter;
+    Varnode *curvn = *iter;
+    Address curEnd = curvn->getAddr() + curvn->getSize();
+    if (curEnd <= addr) break;
+    addr = curvn->getAddr();
+  }
+  iter = vn->lociter;
+  while(iter != endLoc()) {
+    Varnode *curvn = *iter;
+    ++iter;
+    if (endaddr <= curvn->getAddr()) break;
+    endaddr = curvn->getAddr() + curvn->getSize();
+  }
+  sz = (int4)(endaddr.getOffset() - addr.getOffset());
+  return addr;
+}
+
 /// Search for \e addrtied Varnodes whose storage falls in the global Scope, then
 /// build a new global Symbol if one didn't exist before.
 void Funcdata::mapGlobals(void)
@@ -1315,6 +1355,7 @@ void Funcdata::mapGlobals(void)
     vn = *iter++;
     if (vn->isFree()) continue;
     if (!vn->isPersist()) continue; // Could be a code ref
+    if (vn->getSymbolEntry() != (SymbolEntry *)0) continue;
     maxvn = vn;
     Address addr = vn->getAddr();
     Address endaddr = addr + vn->getSize();
@@ -1649,6 +1690,12 @@ int4 AncestorRealistic::enterNode(State &state)
     multiDepth += 1;
     stateStack.push_back(State(op,0));
     return enter_node;				// Nothing to check, start traversing inputs of MULTIEQUAL
+  case CPUI_PIECE:
+    // If the trial is getting pieced together and then truncated in a register,
+    // this is evidence of artificial data-flow.
+    if (state.vn->getSize() > trial->getSize() && state.vn->getSpace()->getType() != IPTR_SPACEBASE)
+      return pop_fail;
+    return pop_solid;
   default:
     return pop_solid;				// Any other LOAD or arithmetic/logical operation is viewed as solid movement
   }

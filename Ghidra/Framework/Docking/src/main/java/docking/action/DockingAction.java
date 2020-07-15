@@ -594,7 +594,6 @@ public abstract class DockingAction implements DockingActionIf {
 			inceptionInformation = "";
 			return;
 		}
-
 		inceptionInformation = getInceptionFromTheFirstClassThatIsNotUsOrABuilder();
 	}
 

@@ -71,7 +71,7 @@ public class DefaultAddressFactory implements AddressFactory {
 				this.defaultSpace = space;
 			}
 			spaceNameTable.put(space.getName(), space);
-			spaceLookup.put(space.getUniqueSpaceID(), space);
+			spaceLookup.put(space.getSpaceID(), space);
 			if (space.getType() == AddressSpace.TYPE_CONSTANT) {
 				constantSpace = space;
 			}
@@ -270,7 +270,7 @@ public class DefaultAddressFactory implements AddressFactory {
 	@Override
 	public long getIndex(Address addr) {
 		AddressSpace space = addr.getAddressSpace();
-		int id = space.getUniqueSpaceID();
+		int id = space.getSpaceID();
 		if (spaceLookup.get(id) == null) {
 			spaceLookup.put(id, space);
 		}
@@ -385,7 +385,7 @@ public class DefaultAddressFactory implements AddressFactory {
 		}
 		spaces.add(space);
 		spaceNameTable.put(space.getName(), space);
-		spaceLookup.put(space.getUniqueSpaceID(), space);
+		spaceLookup.put(space.getSpaceID(), space);
 
 		if (space.isMemorySpace()) {
 			memoryAddressSet.addRange(space.getMinAddress(), space.getMaxAddress());
@@ -415,7 +415,7 @@ public class DefaultAddressFactory implements AddressFactory {
 		if (deletedSpace != null) {
 			spaces.remove(deletedSpace);
 			spaceNameTable.remove(deletedSpace.getName());
-			spaceLookup.remove(deletedSpace.getUniqueSpaceID());
+			spaceLookup.remove(deletedSpace.getSpaceID());
 			if (deletedSpace.getType() == AddressSpace.TYPE_RAM ||
 				deletedSpace.getType() == AddressSpace.TYPE_CODE) {
 				memoryAddressSet.deleteRange(deletedSpace.getMinAddress(),

@@ -30,6 +30,7 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 
 public class MemoryBlockDB implements MemoryBlock {
+
 	private MemoryMapDBAdapter adapter;
 	protected Record record;
 	private Address startAddress;
@@ -39,6 +40,8 @@ public class MemoryBlockDB implements MemoryBlock {
 	private volatile boolean invalid;
 	private long id;
 	private SubMemoryBlock lastSubBlock;
+
+	private List<MemoryBlockDB> mappedBlocks; // list of mapped blocks which map onto this block
 
 	MemoryBlockDB(MemoryMapDBAdapter adapter, Record record, List<SubMemoryBlock> subBlocks) {
 		this.adapter = adapter;
@@ -74,6 +77,33 @@ public class MemoryBlockDB implements MemoryBlock {
 		lastSubBlock = null;
 		Collections.sort(list);
 		subBlocks = list;
+		mappedBlocks = null;
+	}
+
+	/**
+	 * Add a block which is mapped onto this block
+	 * @param mappedBlock mapped memory block
+	 */
+	void addMappedBlock(MemoryBlockDB mappedBlock) {
+		if (mappedBlocks == null) {
+			mappedBlocks = new ArrayList<>();
+		}
+		mappedBlocks.add(mappedBlock);
+	}
+
+	/**
+	 * Clear list of blocks mapped onto this block
+	 */
+	void clearMappedBlockList() {
+		mappedBlocks = null;
+	}
+
+	/**
+	 * Get collection of blocks which map onto this block.
+	 * @return collection of blocks which map onto this block or null if none identified
+	 */
+	Collection<MemoryBlockDB> getMappedBlocks() {
+		return mappedBlocks;
 	}
 
 	@Override
@@ -130,8 +160,12 @@ public class MemoryBlockDB implements MemoryBlock {
 		memMap.lock.acquire();
 		try {
 			checkValid();
+			if (oldName.equals(name)) {
+				return;
+			}
+			memMap.checkBlockName(name, isOverlay());
 			try {
-				if (getStart().getAddressSpace().isOverlaySpace()) {
+				if (isOverlay()) {
 					memMap.overlayBlockRenamed(oldName, name);
 				}
 				record.setString(MemoryMapDBAdapter.NAME_COL, name);
@@ -394,10 +428,12 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	@Override
 	public MemoryBlockType getType() {
-		if (startAddress.getAddressSpace().isOverlaySpace()) {
-			return MemoryBlockType.OVERLAY;
-		}
 		return subBlocks.get(0).getType();
+	}
+
+	@Override
+	public boolean isOverlay() {
+		return startAddress.getAddressSpace().isOverlaySpace();
 	}
 
 	public byte getByte(long offset) throws MemoryAccessException {
@@ -585,7 +621,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		throw new IllegalArgumentException("offset " + offset + " not in this block");
 	}
 
-	public void initializeBlock(byte initialValue) throws IOException {
+	void initializeBlock(byte initialValue) throws IOException {
 		lastSubBlock = null;
 		for (SubMemoryBlock subBlock : subBlocks) {
 			subBlock.delete();
@@ -685,32 +721,6 @@ public class MemoryBlockDB implements MemoryBlock {
 			}
 		}
 		return false;
-	}
-
-	ByteSourceRangeList getByteSourceRangeList(Address address, long size) {
-		long blockOffset = address.subtract(startAddress);
-		size = Math.min(size, length - blockOffset);
-
-		SubMemoryBlock subBlock = getSubBlock(blockOffset);
-		long subBlockOffset = blockOffset - subBlock.getStartingOffset();
-		long available = subBlock.subBlockLength - subBlockOffset;
-		long subSize = Math.min(size, available);
-		if (subSize == size) {
-			return subBlock.getByteSourceRangeList(this, address, blockOffset, size);
-		}
-		Address start = address;
-		ByteSourceRangeList set =
-			subBlock.getByteSourceRangeList(this, start, blockOffset, subSize);
-
-		long total = subSize;
-		while (total < size) {
-			subBlock = getSubBlock(blockOffset + total);
-			subSize = Math.min(size - total, subBlock.subBlockLength);
-			start = address.add(total);
-			set.add(subBlock.getByteSourceRangeList(this, start, blockOffset + total, subSize));
-			total += subSize;
-		}
-		return set;
 	}
 
 }

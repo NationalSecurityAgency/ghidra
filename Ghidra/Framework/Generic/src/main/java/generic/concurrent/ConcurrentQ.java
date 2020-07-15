@@ -791,7 +791,17 @@ public class ConcurrentQ<I, R> {
 		@Override
 		public void taskEnded(long id, I Item, long total, long progress) {
 			if (!jobsReportProgress) {
-				if (total != monitor.getMaximum()) {
+				// 
+				// This code works in 2 ways.  The default case is that clients place items on 
+				// the queue.  As the amount of work grows, so too does the max progress value. 
+				// This obviates the need for clients to manager progress.  (The downside to this
+				// is that the progress may keep getting pushed back as it approaches the 
+				// current maximum value.)  The second case is where the client has specified a 
+				// true maximum value.  In that case, this code will not change the maxmimum
+				// (assuming that the client does not put more items into the queue than they 
+				// specified).
+				//
+				if (total > monitor.getMaximum()) {
 					monitor.setMaximum(total);
 				}
 				monitor.setProgress(progress);

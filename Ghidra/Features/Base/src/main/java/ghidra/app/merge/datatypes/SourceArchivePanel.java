@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,8 @@
  */
 package ghidra.app.merge.datatypes;
 
-import ghidra.app.plugin.core.datamgr.archive.SourceArchive;
 import ghidra.program.model.data.ArchiveType;
+import ghidra.program.model.data.SourceArchive;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

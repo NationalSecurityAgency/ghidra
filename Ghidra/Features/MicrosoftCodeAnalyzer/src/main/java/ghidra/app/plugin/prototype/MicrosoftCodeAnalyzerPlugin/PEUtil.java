@@ -77,7 +77,7 @@ public class PEUtil {
 		try {
 			int addrAsInt = memory.getInt(addr);
 			Address pointedToAddr =
-				addressFactory.getAddress(defaultSpace.getBaseSpaceID(), addrAsInt);
+				addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
 			return memory.contains(pointedToAddr);
 		}
 		catch (MemoryAccessException e) {
@@ -92,7 +92,7 @@ public class PEUtil {
 		try {
 			int addrAsInt = memory.getInt(addr);
 			Address pointedToAddr =
-				addressFactory.getAddress(defaultSpace.getBaseSpaceID(), addrAsInt);
+				addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
 			if (memory.contains(pointedToAddr)) {
 				GuidInfo guidInfo = GuidUtil.getKnownGuid(program, pointedToAddr);
 				if (guidInfo != null) {

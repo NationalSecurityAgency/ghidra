@@ -86,6 +86,7 @@ public class AnalysisManager {
 		}
 		List<AnalysisPhase> analysisPhases = recipe.getAnalysisPhases();
 		boolean isFirstPhase = true;
+		taskManager.setSuspended(true);
 		for (AnalysisPhase analysisPhase : analysisPhases) {
 			taskManager.scheduleTask(new StartPhaseTask(analysisPhase), 0, analysisPhase.getName());
 			if (isFirstPhase) {
@@ -94,6 +95,7 @@ public class AnalysisManager {
 					analysisPhase.getName());
 			}
 		}
+		taskManager.setSuspended(false);
 
 	}
 

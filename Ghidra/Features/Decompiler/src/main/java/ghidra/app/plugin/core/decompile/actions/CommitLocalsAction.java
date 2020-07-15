@@ -26,9 +26,9 @@ public class CommitLocalsAction extends AbstractDecompilerAction {
 
 	public CommitLocalsAction() {
 		super("Commit Locals");
-		setPopupMenuData(new MenuData(new String[] { "Commit Locals" }, "Commit"));
+		setPopupMenuData(new MenuData(new String[] { "Commit Local Names" }, "Commit"));
 		setDescription(
-			"Save Local variable definitions to Program, locking them into their current type definitions");
+			"Save Local variable names from Decompiler window to Program");
 	}
 
 	@Override
@@ -42,10 +42,10 @@ public class CommitLocalsAction extends AbstractDecompilerAction {
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		Program program = context.getProgram();
-		int transaction = program.startTransaction("Commit Params/Return");
+		int transaction = program.startTransaction("Commit Local Names");
 		try {
 			HighFunction hfunc = context.getHighFunction();
-			HighFunctionDBUtil.commitLocalsToDatabase(hfunc, SourceType.USER_DEFINED);
+			HighFunctionDBUtil.commitLocalNamesToDatabase(hfunc, SourceType.USER_DEFINED);
 		}
 		finally {
 			program.endTransaction(transaction, true);

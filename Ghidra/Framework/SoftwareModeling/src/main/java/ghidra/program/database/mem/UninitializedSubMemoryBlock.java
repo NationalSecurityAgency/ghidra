@@ -18,8 +18,7 @@ package ghidra.program.database.mem;
 import java.io.IOException;
 
 import db.Record;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.mem.*;
+import ghidra.program.model.mem.MemoryAccessException;
 
 /**
  * Implementation of SubMemoryBlock for uninitialized blocks.
@@ -28,7 +27,6 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 
 	UninitializedSubMemoryBlock(MemoryMapDBAdapter adapter, Record record) {
 		super(adapter, record);
-		subBlockOffset = record.getLongValue(MemoryMapDBAdapter.SUB_START_OFFSET_COL);
 	}
 
 	@Override
@@ -53,12 +51,12 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 
 	@Override
 	public void putByte(long offset, byte b) throws MemoryAccessException {
-		throw new MemoryAccessException("Attempted to read from uninitialized block");
+		throw new MemoryAccessException("Attempted to write to an uninitialized block");
 	}
 
 	@Override
 	public int putBytes(long offset, byte[] b, int off, int len) throws MemoryAccessException {
-		throw new MemoryAccessException("Attempted to read from uninitialized block");
+		throw new MemoryAccessException("Attempted to write to an uninitialized block");
 	}
 
 	@Override
@@ -69,11 +67,6 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 		setLength(subBlockLength + block.subBlockLength);
 		adapter.deleteSubBlock(block.record.getKey());
 		return true;
-	}
-
-	@Override
-	protected MemoryBlockType getType() {
-		return MemoryBlockType.DEFAULT;
 	}
 
 	@Override
@@ -94,13 +87,6 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 	@Override
 	protected String getDescription() {
 		return "";
-	}
-
-	@Override
-	protected ByteSourceRangeList getByteSourceRangeList(MemoryBlock block, Address start,
-			long memBlockOffset,
-			long size) {
-		return new ByteSourceRangeList();
 	}
 
 }

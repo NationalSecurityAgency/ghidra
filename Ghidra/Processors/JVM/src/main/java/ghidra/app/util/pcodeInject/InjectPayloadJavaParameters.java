@@ -111,9 +111,9 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 		}
 
 		AddressSpace paramSpace = program.getAddressFactory().getAddressSpace("parameterSpace");
-		int paramSpaceID = paramSpace.getBaseSpaceID();
+		int paramSpaceID = paramSpace.getSpaceID();
 		AddressSpace lva = program.getAddressFactory().getAddressSpace("localVariableArray");
-		int lvaID = lva.getBaseSpaceID();
+		int lvaID = lva.getSpaceID();
 		AddressSpace constant = program.getAddressFactory().getConstantSpace();
 
 		PcodeOp[] resOps = new PcodeOp[1 + 3*numOps];

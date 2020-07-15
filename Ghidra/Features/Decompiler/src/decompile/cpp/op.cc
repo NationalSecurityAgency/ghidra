@@ -627,6 +627,9 @@ void PcodeOpBank::addToCodeList(PcodeOp *op)
   case CPUI_STORE:
     op->codeiter = storelist.insert(storelist.end(),op);
     break;
+  case CPUI_LOAD:
+    op->codeiter = loadlist.insert(loadlist.end(), op);
+    break;
   case CPUI_RETURN:
     op->codeiter = returnlist.insert(returnlist.end(),op);
     break;
@@ -648,6 +651,9 @@ void PcodeOpBank::removeFromCodeList(PcodeOp *op)
   case CPUI_STORE:
     storelist.erase(op->codeiter);
     break;
+  case CPUI_LOAD:
+    loadlist.erase(op->codeiter);
+    break;
   case CPUI_RETURN:
     returnlist.erase(op->codeiter);
     break;
@@ -663,6 +669,7 @@ void PcodeOpBank::clearCodeLists(void)
 
 {
   storelist.clear();
+  loadlist.clear();
   returnlist.clear();
   useroplist.clear();
 }
@@ -896,6 +903,8 @@ list<PcodeOp *>::const_iterator PcodeOpBank::begin(OpCode opc) const
   switch(opc) {
   case CPUI_STORE:
     return storelist.begin();
+  case CPUI_LOAD:
+    return loadlist.begin();
   case CPUI_RETURN:
     return returnlist.begin();
   case CPUI_CALLOTHER:
@@ -912,6 +921,8 @@ list<PcodeOp *>::const_iterator PcodeOpBank::end(OpCode opc) const
   switch(opc) {
   case CPUI_STORE:
     return storelist.end();
+  case CPUI_LOAD:
+    return loadlist.end();
   case CPUI_RETURN:
     return returnlist.end();
   case CPUI_CALLOTHER:

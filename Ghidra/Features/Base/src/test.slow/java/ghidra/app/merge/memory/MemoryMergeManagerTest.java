@@ -348,7 +348,7 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 					blocks[4].setExecute(false);
 
 					try {
-						blocks[4].setName("special debug");
+						blocks[4].setName("special-debug");
 					}
 					catch (DuplicateNameException e) {
 						Assert.fail();
@@ -382,7 +382,7 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 					blocks[4].setRead(true);
 					blocks[4].setWrite(false);
 					blocks[4].setExecute(true);
-					blocks[4].setName("not used");
+					blocks[4].setName("not-used");
 				}
 				catch (DuplicateNameException e) {
 					Assert.fail();

@@ -482,7 +482,7 @@ int4 ParamListStandard::characterizeAsParam(const Address &loc,int4 size) const
     const ParamEntry *testEntry = (*iterpair.first).getParamEntry();
     if (testEntry->getMinSize() <= size && testEntry->justifiedContain(loc, size)==0)
       return 1;
-    if (testEntry->containedBy(loc, size))
+    if (testEntry->isExclusion() && testEntry->containedBy(loc, size))
       res = 2;
     ++iterpair.first;
   }
@@ -490,7 +490,7 @@ int4 ParamListStandard::characterizeAsParam(const Address &loc,int4 size) const
     iterpair.second = resolver->find_end(loc.getOffset() + (size-1));
     while(iterpair.first != iterpair.second) {
       const ParamEntry *testEntry = (*iterpair.first).getParamEntry();
-      if (testEntry->containedBy(loc, size)) {
+      if (testEntry->isExclusion() && testEntry->containedBy(loc, size)) {
 	res = 2;
 	break;
       }
@@ -553,7 +553,7 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,bool isinput,T
 	  spc = typefactory.getArch()->getDefaultDataSpace();
 	int4 pointersize = spc->getAddrSize();
 	int4 wordsize = spc->getWordSize();
-	Datatype *pointertp = typefactory.getTypePointerAbsolute(pointersize,proto[i],wordsize);
+	Datatype *pointertp = typefactory.getTypePointer(pointersize,proto[i],wordsize);
 	res.back().addr = assignAddress(pointertp,status);
 	res.back().type = pointertp;
 	res.back().flags = Varnode::indirectstorage;
@@ -953,9 +953,12 @@ bool ParamListStandard::getBiggestContainedParam(const Address &loc,int4 size,Va
   ParamEntryResolver *resolver = resolverMap[index];
   if (resolver == (ParamEntryResolver *)0)
     return false;
+  Address endLoc = loc + (size-1);
+  if (endLoc.getOffset() < loc.getOffset())
+    return false;	// Assume there is no parameter if we see wrapping
   const ParamEntry *maxEntry = (const ParamEntry *)0;
   ParamEntryResolver::const_iterator iter = resolver->find_begin(loc.getOffset());
-  ParamEntryResolver::const_iterator enditer = resolver->find_end(loc.getOffset() + (size-1));
+  ParamEntryResolver::const_iterator enditer = resolver->find_end(endLoc.getOffset());
   while(iter != enditer) {
     const ParamEntry *testEntry = (*iter).getParamEntry();
     ++iter;
@@ -966,9 +969,9 @@ bool ParamListStandard::getBiggestContainedParam(const Address &loc,int4 size,Va
 	maxEntry = testEntry;
     }
   }
-  if (!maxEntry->isExclusion())
-    return false;
   if (maxEntry != (const ParamEntry *)0) {
+    if (!maxEntry->isExclusion())
+      return false;
     res.space = maxEntry->getSpace();
     res.offset = maxEntry->getBase();
     res.size = maxEntry->getSize();
@@ -1099,7 +1102,7 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,bool isinpu
       spc = typefactory.getArch()->getDefaultDataSpace();
     int4 pointersize = spc->getAddrSize();
     int4 wordsize = spc->getWordSize();
-    Datatype *pointertp = typefactory.getTypePointerAbsolute(pointersize, proto[0], wordsize);
+    Datatype *pointertp = typefactory.getTypePointer(pointersize, proto[0], wordsize);
     res.back().addr = assignAddress(pointertp,status);
     if (res.back().addr.isInvalid())
       throw ParamUnassignedError("Cannot assign return value as a pointer");
@@ -2476,7 +2479,7 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
     }
   }
   if (res->sym == (Symbol *)0) {
-    if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) != scope)
+    if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) == (Scope *)0)
       usepoint = restricted_usepoint; 
     res->sym = scope->addSymbol(nm,pieces.type,pieces.addr,usepoint)->getSymbol();
     scope->setCategory(res->sym,0,i);
@@ -3179,9 +3182,10 @@ void FuncProto::cancelInjectId(void)
 /// given a list of Varnodes and their associated trial information,
 /// create an input parameter for each trial in order, grabbing data-type
 /// information from the Varnode.  Any old input parameters are cleared.
+/// \param data is the function containing the trial Varnodes
 /// \param triallist is the list of Varnodes
 /// \param activeinput is the trial container
-void FuncProto::updateInputTypes(const vector<Varnode *> &triallist,ParamActive *activeinput)
+void FuncProto::updateInputTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput)
 
 {
   if (isInputLocked()) return;	// Input is locked, do no updating
@@ -3192,15 +3196,25 @@ void FuncProto::updateInputTypes(const vector<Varnode *> &triallist,ParamActive 
     ParamTrial &trial(activeinput->getTrial(i));
     if (trial.isUsed()) {
       Varnode *vn = triallist[trial.getSlot()-1];
-      if (!vn->isMark()) {
-	ParameterPieces pieces;
+      if (vn->isMark()) continue;
+      ParameterPieces pieces;
+      if (vn->isPersist()) {
+	int4 sz;
+	pieces.addr = data.findDisjointCover(vn, sz);
+	if (sz == vn->getSize())
+	  pieces.type = vn->getHigh()->getType();
+	else
+	  pieces.type = data.getArch()->types->getBase(sz, TYPE_UNKNOWN);
+	pieces.flags = 0;
+      }
+      else {
 	pieces.addr = trial.getAddress();
 	pieces.type = vn->getHigh()->getType();
 	pieces.flags = 0;
-	store->setInput(count,"",pieces);
-	count += 1;
-	vn->setMark();		// Make sure vn is used only once
       }
+      store->setInput(count,"",pieces);
+      count += 1;
+      vn->setMark();
     }
   }
   for(int4 i=0;i<triallist.size();++i)
@@ -3212,29 +3226,36 @@ void FuncProto::updateInputTypes(const vector<Varnode *> &triallist,ParamActive 
 /// This is accomplished in the same way as if there were data-types but instead of
 /// pulling a data-type from the Varnode, only the size is used.
 /// Undefined data-types are pulled from the given TypeFactory
+/// \param data is the function containing the trial Varnodes
 /// \param triallist is the list of Varnodes
 /// \param activeinput is the trial container
-/// \param factory is the given TypeFactory
-void FuncProto::updateInputNoTypes(const vector<Varnode *> &triallist,ParamActive *activeinput,
-				   TypeFactory *factory)
+void FuncProto::updateInputNoTypes(Funcdata &data,const vector<Varnode *> &triallist,ParamActive *activeinput)
 {
   if (isInputLocked()) return;	// Input is locked, do no updating
   store->clearAllInputs();
   int4 count = 0;
   int4 numtrials = activeinput->getNumTrials();
+  TypeFactory *factory = data.getArch()->types;
   for(int4 i=0;i<numtrials;++i) {
     ParamTrial &trial(activeinput->getTrial(i));
     if (trial.isUsed()) {
       Varnode *vn = triallist[trial.getSlot()-1];
-      if (!vn->isMark()) {
-	ParameterPieces pieces;
-	pieces.type = factory->getBase(vn->getSize(),TYPE_UNKNOWN);
-	pieces.addr = trial.getAddress();
+      if (vn->isMark()) continue;
+      ParameterPieces pieces;
+      if (vn->isPersist()) {
+	int4 sz;
+	pieces.addr = data.findDisjointCover(vn, sz);
+	pieces.type = factory->getBase(sz, TYPE_UNKNOWN);
 	pieces.flags = 0;
-	store->setInput(count,"",pieces);
-	count += 1;
-	vn->setMark();		// Make sure vn is used only once
       }
+      else {
+	pieces.addr = trial.getAddress();
+	pieces.type = factory->getBase(vn->getSize(),TYPE_UNKNOWN);
+	pieces.flags = 0;
+      }
+      store->setInput(count,"",pieces);
+      count += 1;
+      vn->setMark();		// Make sure vn is used only once
     }
   }
   for(int4 i=0;i<triallist.size();++i)
@@ -4085,7 +4106,7 @@ Varnode *FuncCallSpecs::buildParam(Funcdata &data,Varnode *vn,ProtoParameter *pa
   Varnode *newout = data.newUniqueOut(param->getSize(),newop);
   // Its possible vn is free, in which case the SetInput would give it multiple descendants
   // See we construct a new version
-  if (vn->isFree() && (!vn->hasNoDescend()))
+  if (vn->isFree() && !vn->isConstant() && !vn->hasNoDescend())
     vn = data.newVarnode(vn->getSize(),vn->getAddr());
   data.opSetInput(newop,vn,0);
   data.opSetInput(newop,data.newConstant(4,0),1);

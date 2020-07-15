@@ -20,7 +20,6 @@ import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
-import ghidra.framework.store.LockException;
 import ghidra.program.database.*;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.database.map.*;
@@ -2140,7 +2139,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		}
 		if (dt instanceof Structure) {
 			Structure structDt = (Structure) dt;
-			for (DataTypeComponent component : structDt.getComponents()) {
+			for (DataTypeComponent component : structDt.getDefinedComponents()) {
 				if (containsAddressComponents(component.getDataType())) {
 					return true;
 				}
@@ -3526,13 +3525,13 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * be discarded and all instructions redisassembled following flow and adjusting context as needed.
 	 * Instructions which fail to redisassemble will be marked - since only one byte will be skipped, such bad
 	 * instruction disassembly may cause subsequent errors due to possible instruction shift.
-	 * This method is only intended for use by the ProgramDB setLanguage method.
-	 * @param bookmarkLimit maximum number of errors to bookmark
+	 * This method is only intended for use by the ProgramDB setLanguage method which must ensure that 
+	 * the context has been properly initialized.
 	 * @param monitor task monitor
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if the operation is canceled.
 	 */
-	public void reDisassembleAllInstructions(int bookmarkLimit, TaskMonitor monitor)
+	public void reDisassembleAllInstructions(TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		redisassemblyMode = true;
@@ -3540,6 +3539,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			if (lock.getOwner() != Thread.currentThread()) {
 				throw new IllegalStateException("Must be invoked by lock owner");
 			}
+
+			Disassembler.clearUnimplementedPcodeWarnings(program, null, monitor);
+			Disassembler.clearBadInstructionErrors(program, null, monitor);
+
 			int maxCount = instAdapter.getRecordCount();
 			monitor.initialize(maxCount);
 			monitor.setMessage("Preparing for Re-Disassembly...");

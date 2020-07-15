@@ -15,16 +15,17 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType.*;
+
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
-import ghidra.app.services.GraphService;
+import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
-
 public class GraphASTControlFlowAction extends AbstractDecompilerAction {
 
 	public GraphASTControlFlowAction() {
@@ -40,10 +41,10 @@ public class GraphASTControlFlowAction extends AbstractDecompilerAction {
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		PluginTool tool = context.getTool();
-		GraphService graphService = tool.getService(GraphService.class);
-		if (graphService == null) {
+		GraphDisplayBroker service = tool.getService(GraphDisplayBroker.class);
+		if (service == null) {
 			Msg.showError(this, tool.getToolFrame(), "AST Graph Failed",
-				"GraphService not found: Please add a graph service provider to your tool");
+				"Graph consumer not found: Please add a graph consumer provider to your tool");
 			return;
 		}
 
@@ -53,8 +54,8 @@ public class GraphASTControlFlowAction extends AbstractDecompilerAction {
 		int codeLimitPerBlock = options.getInt("Max Code Lines Displayed", 10);
 		HighFunction highFunction = context.getHighFunction();
 		Address locationAddr = context.getLocation().getAddress();
-		ASTGraphTask task = new ASTGraphTask(graphService, !reuseGraph, codeLimitPerBlock,
-			locationAddr, highFunction, ASTGraphTask.CONTROL_FLOW_GRAPH);
+		ASTGraphTask task = new ASTGraphTask(service, !reuseGraph, codeLimitPerBlock, locationAddr,
+			highFunction, CONTROL_FLOW_GRAPH, tool);
 		new TaskLauncher(task, tool.getToolFrame());
 	}
 

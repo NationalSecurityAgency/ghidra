@@ -248,6 +248,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * Removes this provider from the tool.
 	 */
 	public void removeFromTool() {
+		dockingTool.removeAction(showProviderAction);
 		dockingTool.removeComponentProvider(this);
 	}
 

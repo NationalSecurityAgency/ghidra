@@ -33,7 +33,7 @@ import ghidra.framework.model.DomainFolder;
 import ghidra.util.Msg;
 import resources.ResourceManager;
 
-public class ProjectDataRenameAction extends ProjectDataContextAction {
+public class ProjectDataRenameAction extends FrontendProjectTreeAction {
 	private static Icon icon = ResourceManager.loadImage("images/page_edit.png");
 
 	public ProjectDataRenameAction(String owner, String group) {
@@ -43,7 +43,7 @@ public class ProjectDataRenameAction extends ProjectDataContextAction {
 	}
 
 	@Override
-	protected void actionPerformed(ProjectDataActionContext context) {
+	protected void actionPerformed(ProjectDataContext context) {
 		if (context.getFileCount() == 1) {
 
 			DomainFile file = context.getSelectedFiles().get(0);
@@ -98,7 +98,7 @@ public class ProjectDataRenameAction extends ProjectDataContextAction {
 	}
 
 	@Override
-	protected boolean isEnabledForContext(ProjectDataActionContext context) {
+	protected boolean isEnabledForContext(ProjectDataContext context) {
 		if (!context.hasExactlyOneFileOrFolder()) {
 			return false;
 		}

@@ -406,4 +406,23 @@ public interface Address extends Comparable<Address> {
 	 */
 	public boolean isExternalAddress();
 
+	/**
+	 * Return the minimum of two addresses using Address.compareTo
+	 * @param a first address
+	 * @param b second address
+	 * @return minimum of two addresses
+	 */
+	public static Address min(Address a, Address b) {
+		return a.compareTo(b) <= 0 ? a : b;
+	}
+
+	/**
+	 * Return the maximum of two addresses using Address.compareTo
+	 * @param a first address
+	 * @param b second address
+	 * @return maximum of two addresses
+	 */
+	public static Address max(Address a, Address b) {
+		return a.compareTo(b) > 0 ? a : b;
+	}
 }

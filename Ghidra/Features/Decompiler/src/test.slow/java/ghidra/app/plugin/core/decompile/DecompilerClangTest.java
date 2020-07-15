@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.JButton;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
@@ -37,11 +38,24 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.DecompileOptions.NamespaceStrategy;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.actions.*;
+import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.listing.CodeUnit;
 
 public class DecompilerClangTest extends AbstractDecompilerTest {
+
+	@Override
+	@Before
+	public void setUp() throws Exception {
+
+		super.setUp();
+		OptionsService service = provider.getTool().getService(OptionsService.class);
+		ToolOptions opt = service.getOptions("Decompiler");
+		opt.setEnum("Display.Display Namespaces", NamespaceStrategy.Never);
+	}
 
 	@Override
 	protected String getProgramName() {

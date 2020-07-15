@@ -110,7 +110,7 @@ public abstract class AbstractNextPreviousAction extends CodeViewerContextAction
 
 	void setDirection(boolean isForward) {
 		this.isForward = isForward;
-		setDescription(getDescription());
+		setDescription(getDescriptionString());
 	}
 
 	private String getDescriptionString() {

@@ -92,6 +92,10 @@ task buildExtension (type: Zip) {
 		exclude '.settings/**'
 		exclude 'developer_scripts'
 		exclude '.antProperties.xml'
+		exclude 'gradlew'
+		exclude 'gradlew.bat'
+		exclude 'gradle/wrapper/gradle-wrapper.jar'
+		exclude 'gradle/wrapper/gradle-wrapper.properties'
 		
 		into pathInZip
 	}

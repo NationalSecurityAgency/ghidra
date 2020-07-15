@@ -75,7 +75,7 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 	@Override
 	protected void doLoad(Accumulator<Function> accumulator, TaskMonitor monitor)
 			throws CancelledException {
-		
+
 		if (program == null) {
 			return;
 		}

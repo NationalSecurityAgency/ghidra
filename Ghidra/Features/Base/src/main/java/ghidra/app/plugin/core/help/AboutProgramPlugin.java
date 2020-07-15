@@ -29,8 +29,8 @@ import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.FrontEndable;
-import ghidra.framework.main.datatable.ProjectDataActionContext;
-import ghidra.framework.main.datatable.ProjectDataContextAction;
+import ghidra.framework.main.datatable.ProjectDataContext;
+import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -74,16 +74,16 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 
 	private void setupActions() {
 		if (tool instanceof FrontEndTool) {
-			aboutAction = new ProjectDataContextAction(ACTION_NAME, PLUGIN_NAME) {
+			aboutAction = new FrontendProjectTreeAction(ACTION_NAME, PLUGIN_NAME) {
 
 				@Override
-				protected void actionPerformed(ProjectDataActionContext context) {
+				protected void actionPerformed(ProjectDataContext context) {
 					DomainFile domainFile = context.getSelectedFiles().get(0);
 					showAbout(domainFile, domainFile.getMetadata());
 				}
 
 				@Override
-				protected boolean isAddToPopup(ProjectDataActionContext context) {
+				protected boolean isAddToPopup(ProjectDataContext context) {
 					return context.getFileCount() == 1 && context.getFolderCount() == 0;
 				}
 			};

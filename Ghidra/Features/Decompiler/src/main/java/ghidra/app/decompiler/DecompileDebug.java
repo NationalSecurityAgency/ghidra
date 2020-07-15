@@ -18,6 +18,7 @@ package ghidra.app.decompiler;
 import java.io.*;
 import java.util.*;
 
+import ghidra.app.decompiler.DecompileCallback.StringData;
 import ghidra.app.plugin.processors.sleigh.ContextCache;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.symbol.ContextSymbol;
@@ -35,28 +36,34 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 
+/**
+ * A container for collecting communication between the decompiler and the Ghidra database,
+ * as serviced through DecompileCallback during decompilation of a function.
+ * The query results can then be dumped as an XML document.
+ * The container is populated through methods that mirror the various methods in DecompileCallback.
+ */
 public class DecompileDebug {
-	private Function func;
-	private Program program;
-	private File debugFile;
-	private ArrayList<Namespace> dbscope;
-	private ArrayList<String> database;
-	private ArrayList<String> type;
-	private ArrayList<DataType> dtypes;
-	private ArrayList<String> symbol;
-	private ArrayList<String> context;
-	private ArrayList<String> cpool; 
-	private ArrayList<String> flowoverride;
-	private ArrayList<String> inject;
-	private TreeSet<ByteChunk> byteset;
-	private TreeSet<Address> contextchange;
-	private Register contextRegister;
-	private ProgramContext progctx;
-	private String comments;
-	private Namespace globalnamespace;
-	private AddressRange readonlycache;
-	private boolean readonlycacheval;
-	private PcodeDataTypeManager dtmanage;
+	private Function func;					// The function being decompiled
+	private Program program;				// The program
+	private File debugFile;					// The file to dump the XML document to
+	private ArrayList<Namespace> dbscope;	// Symbol query:  scope
+	private ArrayList<String> database;		//                description of the symbol
+	private ArrayList<DataType> dtypes;		// Data-types queried
+	private ArrayList<String> symbol;		// Names of code labels
+	private ArrayList<String> context;		// Tracked register values associated with an address
+	private ArrayList<String> cpool;		// Constant pool results
+	private ArrayList<String> flowoverride;	// Flow overrides associated with an address
+	private ArrayList<String> inject;		// Injection payloads
+	private TreeSet<ByteChunk> byteset;		// Load image bytes
+	private TreeSet<Address> contextchange;	// Addresses at which there is a context change
+	private TreeMap<Address, StringData> stringmap;	// Strings queried with their associated start address
+	private Register contextRegister;		// The global context register
+	private ProgramContext progctx;			// Program context
+	private String comments;				// All comments associated with the function (in XML form)
+	private Namespace globalnamespace;		// The global namespace
+	private AddressRange readonlycache;		// Current range of addresses with same readonly value (for internal use)
+	private boolean readonlycacheval;		//    Current readonly value (for internal use) 
+	private PcodeDataTypeManager dtmanage;	// Decompiler's data-type manager
 
 	class ByteChunk implements Comparable<ByteChunk> {
 		public Address addr;
@@ -68,22 +75,28 @@ public class DecompileDebug {
 			val = new byte[16];
 			min = (int) ad.getOffset() & 15;
 			int len = v.length - off;
-			if (min + len >= 16)
+			if (min + len >= 16) {
 				len = 16 - min;
+			}
 			max = min + len;
-			for (int i = 0; i < 16; ++i)
+			for (int i = 0; i < 16; ++i) {
 				val[i] = 0;
-			for (int i = 0; i < len; ++i)
+			}
+			for (int i = 0; i < len; ++i) {
 				val[min + i] = v[off + i];
+			}
 		}
 
 		public void merge(ByteChunk op2) {
-			for (int i = op2.min; i < op2.max; ++i)
+			for (int i = op2.min; i < op2.max; ++i) {
 				val[i] = op2.val[i];
-			if (op2.min < min)
+			}
+			if (op2.min < min) {
 				min = op2.min;
-			if (op2.max > max)
+			}
+			if (op2.max > max) {
 				max = op2.max;
+			}
 		}
 
 		@Override
@@ -97,13 +110,13 @@ public class DecompileDebug {
 		debugFile = debugf;
 		dbscope = new ArrayList<Namespace>();
 		database = new ArrayList<String>();
-		type = new ArrayList<String>();
 		dtypes = new ArrayList<DataType>();
 		symbol = new ArrayList<String>();
 		context = new ArrayList<String>();
 		cpool = new ArrayList<String>();
 		byteset = new TreeSet<ByteChunk>();
 		contextchange = new TreeSet<Address>();
+		stringmap = new TreeMap<Address, StringData>();
 		flowoverride = new ArrayList<String>();
 		inject = new ArrayList<String>();
 		contextRegister = null;
@@ -127,8 +140,9 @@ public class DecompileDebug {
 
 	public void shutdown(Language pcodelanguage, String xmlOptions) {
 		OutputStream debugStream;
-		if (debugFile.exists())
+		if (debugFile.exists()) {
 			debugFile.delete();
+		}
 		try {
 			debugStream = new BufferedOutputStream(new FileOutputStream(debugFile));
 		}
@@ -155,6 +169,7 @@ public class DecompileDebug {
 			dumpTrackedContext(debugStream);
 			debugStream.write("</context_points>\n".getBytes());
 			dumpComments(debugStream);
+			dumpStringData(debugStream);
 			dumpCPool(debugStream);
 			dumpConfiguration(debugStream, xmlOptions);
 			dumpFlowOverride(debugStream);
@@ -177,14 +192,16 @@ public class DecompileDebug {
 		binimage += "\">\n";
 		debugStream.write(binimage.getBytes());
 		dumpBytes(debugStream);
-		for (int i = 0; i < symbol.size(); ++i)
-			debugStream.write((symbol.get(i)).getBytes());
+		for (String element : symbol) {
+			debugStream.write((element).getBytes());
+		}
 		debugStream.write("</binaryimage>\n".getBytes());
 	}
 
 	private boolean isReadOnly(Address addr) {
-		if ((readonlycache != null) && (readonlycache.contains(addr)))
+		if ((readonlycache != null) && (readonlycache.contains(addr))) {
 			return readonlycacheval;
+		}
 		MemoryBlock block = program.getMemory().getBlock(addr);
 		readonlycache = null;
 		readonlycacheval = false;
@@ -221,24 +238,31 @@ public class DecompileDebug {
 				SpecXmlUtils.encodeStringAttribute(buf, "space", space.getPhysicalSpace().getName());
 				SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "offset", chunk.addr.getOffset() +
 					chunk.min);
-				if (lastreadonly)
+				if (lastreadonly) {
 					SpecXmlUtils.encodeBooleanAttribute(buf, "readonly", lastreadonly);
+				}
 				buf.append(">\n");
 				tagstarted = true;
 			}
 			for (int i = 0; i < chunk.min; ++i)
+			 {
 				buf.append("  ");					// pad the hex display to 16 bytes
+			}
 			for (int i = chunk.min; i < chunk.max; ++i) {
 				int hi = (chunk.val[i] >> 4) & 0xf;
 				int lo = chunk.val[i] & 0xf;
-				if (hi > 9)
+				if (hi > 9) {
 					hi += 'a' - 10;
-				else
+				}
+				else {
 					hi += '0';
-				if (lo > 9)
+				}
+				if (lo > 9) {
 					lo += 'a' - 10;
-				else
+				}
+				else {
 					lo += '0';
+				}
 				buf.append((char) hi);
 				buf.append((char) lo);
 			}
@@ -252,24 +276,57 @@ public class DecompileDebug {
 				lastspace = space;
 			}
 		}
-		if (tagstarted)
+		if (tagstarted) {
 			buf.append("</bytechunk>\n");
+		}
 		debugStream.write(buf.toString().getBytes());
 	}
 
-//	private void dumpTypes(OutputStream debugStream) throws IOException {
-//		StringBuilder buf = new StringBuilder();
-//		buf.append("<typegrp");
-//		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "structalign", 4);
-//		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "enumsize", 4);
-//		SpecXmlUtils.encodeBooleanAttribute(buf, "enumsigned", false);
-//		buf.append(">\n");
-//		// structalign should come out of pcodelanguage.getCompilerSpec()
-//		debugStream.write(buf.toString().getBytes());
-//		for (int i = type.size() - 1; i >= 0; --i)
-//			debugStream.write((type.get(i)).getBytes());
-//		debugStream.write("</typegrp>\n".getBytes());
-//	}
+	/**
+	 * Dump information on strings that were queried by the decompiler.
+	 * @param debugStream is the stream to write to
+	 * @throws IOException if any i/o error occurs
+	 */
+	private void dumpStringData(OutputStream debugStream) throws IOException {
+		if (stringmap.isEmpty()) {
+			return;
+		}
+		StringBuilder buf = new StringBuilder();
+		buf.append("<stringmanage>\n");
+		for (Map.Entry<Address, StringData> entry : stringmap.entrySet()) {
+			buf.append("<string>\n<addr");
+			Varnode.appendSpaceOffset(buf, entry.getKey());
+			buf.append("/>\n<bytes");
+			SpecXmlUtils.encodeBooleanAttribute(buf, "trunc", entry.getValue().isTruncated);
+			buf.append(">\n  ");
+			int count = 0;
+			for (byte element : entry.getValue().byteData) {
+				int hi = (element >> 4) & 0xf;
+				int lo = element & 0xf;
+				if (hi > 9) {
+					hi += 'a' - 10;
+				}
+				else {
+					hi += '0';
+				}
+				if (lo > 9) {
+					lo += 'a' - 10;
+				}
+				else {
+					lo += '0';
+				}
+				buf.append((char) hi);
+				buf.append((char) lo);
+				if (count % 20 == 19) {
+					buf.append("\n  ");
+				}
+			}
+			buf.append("00\n</bytes>\n");
+			buf.append("</string>\n");
+		}
+		buf.append("</stringmanage>\n");
+		debugStream.write(buf.toString().getBytes());
+	}
 
 	private void dumpDataTypes(OutputStream debugStream) throws IOException {
 		int intSize = program.getCompilerSpec().getDataOrganization().getIntegerSize();
@@ -285,12 +342,15 @@ public class DecompileDebug {
 		DataTypeDependencyOrderer TypeOrderer =
 			new DataTypeDependencyOrderer(program.getDataTypeManager(), dtypes);
 		//First output all structures as zero size so to avoid any cyclic dependencies.
-		for (DataType dataType : TypeOrderer.getStructList())
+		for (DataType dataType : TypeOrderer.getStructList()) {
 			debugStream.write((dtmanage.buildStructTypeZeroSizeOveride(dataType) + "\n").toString().getBytes());
+		}
 		//Next, use the dependency stack to output types.
-		for (DataType dataType : TypeOrderer.getDependencyList())
-			if (!(dataType instanceof BuiltIn)) //If we don't do this, we have a problem with DataType "string" (array of size=-1)
+		for (DataType dataType : TypeOrderer.getDependencyList()) {
+			if (!(dataType instanceof BuiltIn)) {
 				debugStream.write((dtmanage.buildType(dataType, dataType.getLength()) + "\n").toString().getBytes());
+			}
+		}
 		debugStream.write("</typegrp>\n".getBytes());
 	}
 
@@ -299,20 +359,24 @@ public class DecompileDebug {
 		// set associated with the function start
 		// and it is written in xml as if it were
 		// the default tracking set
-		for (int i = 0; i < context.size(); ++i)
-			debugStream.write((context.get(i)).getBytes());
+		for (String element : context) {
+			debugStream.write((element).getBytes());
+		}
 	}
 
 	private ArrayList<ContextSymbol> getContextSymbols() {
 		Language lang = program.getLanguage();
-		if (!(lang instanceof SleighLanguage))
+		if (!(lang instanceof SleighLanguage)) {
 			return null;
+		}
 		ArrayList<ContextSymbol> res = new ArrayList<ContextSymbol>();
 		ghidra.app.plugin.processors.sleigh.symbol.Symbol[] list =
 			((SleighLanguage) lang).getSymbolTable().getSymbolList();
-		for (Symbol element : list)
-			if (element instanceof ContextSymbol)
+		for (Symbol element : list) {
+			if (element instanceof ContextSymbol) {
 				res.add((ContextSymbol) element);
+			}
+		}
 		return res;
 	}
 
@@ -323,8 +387,9 @@ public class DecompileDebug {
 	 */
 	private void getContextChangePoints(Address addr) {
 		AddressRange addrrange = progctx.getRegisterValueRangeContaining(contextRegister, addr);
-		if (addrrange == null)
+		if (addrrange == null) {
 			return;
+		}
 		contextchange.add(addrrange.getMinAddress());
 		try {
 			Address nextaddr = addrrange.getMaxAddress().add(1);
@@ -339,13 +404,14 @@ public class DecompileDebug {
 	 * body of the function. Right now we only get the context at the
 	 * beginning of the function because its difficult to tell where the
 	 * context changes.
-	 * @param debugStream
-	 * @throws IOException
+	 * @param debugStream is the stream being written to
+	 * @throws IOException for any i/o error
 	 */
 	private void dumpPointsetContext(OutputStream debugStream) throws IOException {
 		ArrayList<ContextSymbol> ctxsymbols = getContextSymbols();
-		if (ctxsymbols == null)
+		if (ctxsymbols == null) {
 			return;
+		}
 		ContextCache ctxcache = new ContextCache();
 		ctxcache.registerVariable(contextRegister);
 		int[] buf = new int[ctxcache.getContextSize()];
@@ -359,22 +425,27 @@ public class DecompileDebug {
 			StringBuilder stringBuf = new StringBuilder();
 			if (lastbuf != null) {		// Check to make sure we don't have identical context data
 				int i;
-				for (i = 0; i < buf.length; ++i)
-					if (buf[i] != lastbuf[i])
+				for (i = 0; i < buf.length; ++i) {
+					if (buf[i] != lastbuf[i]) {
 						break;
+					}
+				}
 				if (i == buf.length)
+				 {
 					continue;	// If all data is identical, then changepoint is not necessary
+				}
 			}
-			else
+			else {
 				lastbuf = new int[buf.length];
-			for (int i = 0; i < buf.length; ++i)
+			}
+			for (int i = 0; i < buf.length; ++i) {
 				lastbuf[i] = buf[i];
+			}
 
 			stringBuf.append("<context_pointset");
 			Varnode.appendSpaceOffset(stringBuf, addr);
 			stringBuf.append(">\n");
-			for (int i = 0; i < ctxsymbols.size(); ++i) {
-				ContextSymbol sym = ctxsymbols.get(i);
+			for (ContextSymbol sym : ctxsymbols) {
 				int sbit = sym.getLow();
 				int ebit = sym.getHigh();
 				int word = sbit / (8 * 4);
@@ -395,37 +466,48 @@ public class DecompileDebug {
 	}
 
 	private void dumpCPool(OutputStream debugStream) throws IOException {
-		if (cpool.size() == 0) return;
+		if (cpool.size() == 0) {
+			return;
+		}
 		debugStream.write("<constantpool>\n".getBytes());
-		for(String rec : cpool)
+		for(String rec : cpool) {
 			debugStream.write(rec.getBytes());
+		}
 		debugStream.write("</constantpool>\n".getBytes());
 	}
 
 	private void dumpComments(OutputStream debugStream) throws IOException {
-		if (comments != null)
+		if (comments != null) {
 			debugStream.write(comments.getBytes());
+		}
 	}
 
 	private void dumpConfiguration(OutputStream debugStream, String xmlOptions) throws IOException {
-		if ((xmlOptions != null) && (xmlOptions.length() != 0))
+		if ((xmlOptions != null) && (xmlOptions.length() != 0)) {
 			debugStream.write(xmlOptions.getBytes());
+		}
 	}
 
 	private void dumpFlowOverride(OutputStream debugStream) throws IOException {
-		if (flowoverride.size() == 0) return;
+		if (flowoverride.size() == 0) {
+			return;
+		}
 		debugStream.write("<flowoverridelist>\n".getBytes());
-		for(int i=0;i<flowoverride.size();++i)
-			debugStream.write(flowoverride.get(i).getBytes());
+		for (String element : flowoverride) {
+			debugStream.write(element.getBytes());
+		}
 		
 		debugStream.write("</flowoverridelist>\n".getBytes());		
 	}
 
 	private void dumpInject(OutputStream debugStream) throws IOException {
-		if (inject.size() == 0) return;
+		if (inject.size() == 0) {
+			return;
+		}
 		debugStream.write("<injectdebug>\n".getBytes());
-		for(int i=0;i<inject.size();++i)
-			debugStream.write(inject.get(i).getBytes());
+		for (String element : inject) {
+			debugStream.write(element.getBytes());
+		}
 		debugStream.write("</injectdebug>\n".getBytes());
 	}
 
@@ -434,23 +516,28 @@ public class DecompileDebug {
 		debugStream.write("<db>\n".getBytes());
 		for (int i = 0; i < database.size(); ++i) {
 			scopename = dbscope.get(i);
-			if (scopename != null)
+			if (scopename != null) {
 				break;
+			}
 		}
 		while (scopename != null) {
 			StringBuilder datahead = new StringBuilder();
+			Namespace parentNamespace;
 			datahead.append("<scope");
 			// Force globalnamespace to have blank name
-			if (scopename != globalnamespace)
+			if (scopename != globalnamespace && !(scopename instanceof Library)) {
 				SpecXmlUtils.xmlEscapeAttribute(datahead, "name", scopename.getName());
-			else
+				parentNamespace = scopename.getParentNamespace();
+			}
+			else {
 				SpecXmlUtils.encodeStringAttribute(datahead, "name", "");
+				parentNamespace = null;
+			}
 			datahead.append(">\n");
-			datahead.append("<parent>\n");
-			HighFunction.createNamespaceTag(datahead, scopename.getParentNamespace());
-			datahead.append("</parent>\n");
-			if (scopename != globalnamespace)
+			HighFunction.createNamespaceTag(datahead, parentNamespace, false);
+			if (scopename != globalnamespace) {
 				datahead.append("<rangeequalssymbols/>\n");
+			}
 			datahead.append("<symbollist>\n");
 			debugStream.write(datahead.toString().getBytes());
 			for (int i = 0; i < database.size(); ++i) {
@@ -462,10 +549,11 @@ public class DecompileDebug {
 			}
 			debugStream.write("</symbollist>\n</scope>\n".getBytes());
 			scopename = null;
-			for (int i = 0; i < dbscope.size(); ++i) {
-				scopename = dbscope.get(i);
-				if (scopename != null)
+			for (Namespace element : dbscope) {
+				scopename = element;
+				if (scopename != null) {
 					break;
+				}
 			}
 		}
 		debugStream.write("</db>\n".getBytes());
@@ -476,7 +564,7 @@ public class DecompileDebug {
 	}
 
 	public void getPcode(Address addr, Instruction instr) {
-		if (instr != null)
+		if (instr != null) {
 			try {
 				byte[] bytes;
 				int delaySlotsCnt = instr.getDelaySlotDepth();
@@ -510,6 +598,7 @@ public class DecompileDebug {
 			catch (MemoryAccessException e) {
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			}
+		}
 	}
 
 	public void getBytes(Address addr, byte[] res) {
@@ -521,12 +610,17 @@ public class DecompileDebug {
 				ByteChunk match = byteset.tailSet(chunk).first();
 				match.merge(chunk);
 			}
-			else
+			else {
 				byteset.add(chunk);
+			}
 			Address newaddr = chunk.addr.add(chunk.max);
 			off += newaddr.getOffset() - addr.getOffset();
 			addr = newaddr;
 		}
+	}
+
+	public void getStringData(Address addr, StringData stringData) {
+		stringmap.put(addr, stringData);
 	}
 
 	public void getComments(String comm) {
@@ -545,15 +639,13 @@ public class DecompileDebug {
 	}
 
 	public void getMapped(Namespace namespc, String res) {
-		if (namespc == null)
+		if (namespc == null) {
 			dbscope.add(globalnamespace);
-		else
+		}
+		else {
 			dbscope.add(namespc);
+		}
 		database.add(res);
-	}
-
-	public void getType(String name, String res) {
-		type.add(res);
 	}
 
 	public void getType(DataType dt) {
@@ -562,8 +654,9 @@ public class DecompileDebug {
 
 	public void getFNTypes(HighFunction hfunc) {
 		getType(hfunc.getFunctionPrototype().getReturnType());
-		for (int i = 0; i < hfunc.getFunctionPrototype().getNumParams(); i++)
+		for (int i = 0; i < hfunc.getFunctionPrototype().getNumParams(); i++) {
 			getType(hfunc.getFunctionPrototype().getParam(i).getDataType());
+		}
 	}
 
 	public void getTrackedRegisters(String doc) {
@@ -575,27 +668,41 @@ public class DecompileDebug {
 		buf.append("<ref");
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "a", refs[0]);
 		long val = 0;
-		if (refs.length > 1)
+		if (refs.length > 1) {
 			val = refs[1];
+		}
 		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "b", val);
 		buf.append("/>\n");
 		buf.append(rec);
 		cpool.add(buf.toString());
 	}
 
+	public void nameIsUsed(Namespace spc, String nm) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("<collision");
+		SpecXmlUtils.xmlEscapeAttribute(buffer, "name", nm);
+		buffer.append("/>\n");
+		getMapped(spc, buffer.toString());
+	}
+
 	public void addFlowOverride(Address addr,FlowOverride fo) {
 		StringBuilder buf = new StringBuilder();
 		buf.append("<flow type=\"");
-		if (fo == FlowOverride.BRANCH)
+		if (fo == FlowOverride.BRANCH) {
 			buf.append("branch");
-		else if (fo == FlowOverride.CALL)
+		}
+		else if (fo == FlowOverride.CALL) {
 			buf.append("call");
-		else if (fo == FlowOverride.CALL_RETURN)
+		}
+		else if (fo == FlowOverride.CALL_RETURN) {
 			buf.append("callreturn");
-		else if (fo == FlowOverride.RETURN)
+		}
+		else if (fo == FlowOverride.RETURN) {
 			buf.append("return");
-		else
+		}
+		else {
 			buf.append("none");
+		}
 		buf.append("\"><addr");
 		Varnode.appendSpaceOffset(buf,func.getEntryPoint());
 		buf.append("/><addr");
@@ -604,12 +711,12 @@ public class DecompileDebug {
 		flowoverride.add(buf.toString());
 	}
 
-	public void addInject(Address addr,String name,int type,String payload) {
+	public void addInject(Address addr,String name,int injectType,String payload) {
 		StringBuilder buf = new StringBuilder();
 		buf.append("<inject name=\"");
 		buf.append(name);
 		buf.append('"');
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "type", type);
+		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "type", injectType);
 		buf.append(">\n  <addr");
 		Varnode.appendSpaceOffset(buf, addr);
 		buf.append("/>\n  <payload><![CDATA[\n");

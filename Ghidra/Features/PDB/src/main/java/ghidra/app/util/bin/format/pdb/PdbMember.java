@@ -26,11 +26,21 @@ abstract class PdbMember {
 	final String memberName;
 	final String memberDataTypeName;
 	final int memberOffset;
+	final String memberComment;
 
-	protected PdbMember(String memberName, String memberDataTypeName, int memberOffset) {
+	/**
+	 * Construct <code>PdbMember</code>.
+	 * @param memberName member name
+	 * @param memberDataTypeName member datatype
+	 * @param memberOffset member offset within composite
+	 * @param memberComment optional member comment (may be null)
+	 */
+	protected PdbMember(String memberName, String memberDataTypeName, int memberOffset,
+			String memberComment) {
 		this.memberName = memberName;
 		this.memberDataTypeName = memberDataTypeName;
 		this.memberOffset = memberOffset;
+		this.memberComment = memberComment;
 	}
 
 	@Override
@@ -63,12 +73,19 @@ abstract class PdbMember {
 	}
 
 	/**
+	 * Get the optional member comment 
+	 * @return member comment (may be null)
+	 */
+	public String getComment() {
+		return memberComment;
+	}
+
+	/**
 	 * Get this member's associated data type which has already been cloned for the 
 	 * target program's data type manager.  This indicates a dependency callback
 	 * and may be used to trigger resolution for composites.  When resolving dependencies
 	 * care must be take to avoid circular dependencies which could occur under certain
 	 * error conditions.
-	 * @param member composite member to be resolved
 	 * @return data-type which corresponds to the specified member's data-type name or null
 	 * if unable to resolve.
 	 * @throws CancelledException if operation cancelled
