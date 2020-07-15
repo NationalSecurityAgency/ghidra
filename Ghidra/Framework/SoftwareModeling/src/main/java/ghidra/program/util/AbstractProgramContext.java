@@ -38,7 +38,7 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 	protected AbstractProgramContext(Register[] registers) {
 		this.registers = registers;
 
-		initRegisterMap();
+		init();
 
 		if (baseContextRegister != null) {
 			nonFlowingContextRegisterMask = baseContextRegister.getBaseMask().clone();
@@ -109,12 +109,13 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 		return value.clearBitValues(flowingContextRegisterMask);
 	}
 
-	protected void initRegisterMap() {
+	protected void init() {
 		registerNameMap = null;
 		baseContextRegister = null;
 		for (Register register : registers) {
 			if (register.isProcessorContext()) {
 				baseContextRegister = register.getBaseRegister();
+				break; // should only be one
 			}
 		}
 		if (baseContextRegister == null) {
@@ -124,14 +125,20 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 		defaultDisassemblyContext = new RegisterValue(baseContextRegister);
 	}
 
-	private void initRegisterNameMap() {
-		// NOTE: if you want upper case names recognized, override this method and add them
-		for (Register register : registers) {
-			registerNameMap.put(register.getName(), register);
-			for (String alias : register.getAliases()) {
-				registerNameMap.put(alias, register);
+	private Map<String, Register> getRegisterNameMap() {
+		// if register map hasn't been initialized, initialize it
+		if (registerNameMap == null) {
+			registerNameMap = new HashMap<String, Register>();
+			
+			// NOTE: if you want upper case names recognized, override this method and add them
+			for (Register register : registers) {
+				registerNameMap.put(register.getName(), register);
+				for (String alias : register.getAliases()) {
+					registerNameMap.put(alias, register);
+				}
 			}
 		}
+		return registerNameMap;
 	}
 
 	@Override
@@ -147,12 +154,7 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 
 	@Override
 	public final Register getRegister(String name) {
-		// if register map hasn't been initialized, initialize it
-		if (registerNameMap == null) {
-			registerNameMap = new HashMap<String, Register>();
-			initRegisterNameMap();
-		}
-		Register reg = registerNameMap.get(name);
+		Register reg = getRegisterNameMap().get(name);
 		return reg;
 	}
 
