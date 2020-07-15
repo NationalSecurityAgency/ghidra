@@ -160,14 +160,14 @@ public class WrappedMemBuffer implements MemBuffer {
 	private void fillBuffer(int offset) throws MemoryAccessException {
 		// fill the buffer
 		int nRead = memBuffer.getBytes(buffer, computeOffset(offset));
-
-		subBufferIndex = -offset;
-		minOffset = offset;
-		maxOffset = offset + nRead - 1;
-
+		
 		if (nRead == 0) {
 			throw new MemoryAccessException();
 		}
+		
+		subBufferIndex = -offset;
+		minOffset = offset;
+		maxOffset = offset + nRead - 1;
 	}
 
 	@Override
