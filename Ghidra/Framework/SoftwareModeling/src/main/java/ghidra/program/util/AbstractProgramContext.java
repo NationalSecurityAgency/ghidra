@@ -24,10 +24,10 @@ import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.ProgramContext;
 
 abstract public class AbstractProgramContext implements ProgramContext, DefaultProgramContext {
-
-	private Map<String, Register> registerNameMap = null;
+	
 	protected Register[] registers;
 	protected Register baseContextRegister;
+	private Map<String, Register> registerNameMap;  // lazy initialized only when getRegister(name) called
 
 	private boolean hasNonFlowingContext = false;
 	private byte[] nonFlowingContextRegisterMask;
@@ -126,16 +126,17 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 	}
 
 	private Map<String, Register> getRegisterNameMap() {
+		if (registerNameMap != null) {
+			return registerNameMap;
+		}
 		// if register map hasn't been initialized, initialize it
-		if (registerNameMap == null) {
-			registerNameMap = new HashMap<String, Register>();
-			
-			// NOTE: if you want upper case names recognized, override this method and add them
-			for (Register register : registers) {
-				registerNameMap.put(register.getName(), register);
-				for (String alias : register.getAliases()) {
-					registerNameMap.put(alias, register);
-				}
+		registerNameMap = new HashMap<String, Register>();
+		
+		// NOTE: if you want upper case names recognized, override this method and add them
+		for (Register register : registers) {
+			registerNameMap.put(register.getName(), register);
+			for (String alias : register.getAliases()) {
+				registerNameMap.put(alias, register);
 			}
 		}
 		return registerNameMap;
@@ -154,8 +155,7 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 
 	@Override
 	public final Register getRegister(String name) {
-		Register reg = getRegisterNameMap().get(name);
-		return reg;
+		return getRegisterNameMap().get(name);
 	}
 
 	@Override
