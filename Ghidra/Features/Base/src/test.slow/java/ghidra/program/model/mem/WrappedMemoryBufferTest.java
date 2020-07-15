@@ -167,52 +167,6 @@ public class WrappedMemoryBufferTest extends AbstractGhidraHeadedIntegrationTest
 		}
 	}
 
-
-	@Test
-	public void testSetPosition() throws Exception {
-		loadProgram("notepad");
-
-		Memory mem = program.getMemory();
-		Address addr = program.getMinAddress();
-		memBuf = new MemoryBufferImpl(mem, program.getMinAddress());
-		WrappedMemBuffer wrapBuf = new WrappedMemBuffer(memBuf, 5, 0);
-		for (int i = 0; i < 5000; i++) {
-			assertEquals(mem.getByte(addr), wrapBuf.getByte(0));
-			assertEquals(mem.getByte(addr.add(1)), wrapBuf.getByte(1));
-			assertEquals(mem.getByte(addr.add(2)), wrapBuf.getByte(2));
-			assertEquals(mem.getByte(addr.add(3)), wrapBuf.getByte(3));
-			addr = addr.add(5);
-			int offset = (int) addr.subtract(program.getMinAddress());
-			wrapBuf.setBaseOffset(offset);
-		}
-
-		addr = program.getMinAddress();
-		memBuf = new MemoryBufferImpl(mem, program.getMinAddress());
-		wrapBuf = new WrappedMemBuffer(memBuf, 5, 0);
-		for (int i = 0; i < 500; i++) {
-			assertEquals(mem.getByte(addr), memBuf.getByte(0));
-			assertEquals(mem.getByte(addr.add(1)), memBuf.getByte(1));
-			assertEquals(mem.getByte(addr.add(2)), memBuf.getByte(2));
-			assertEquals(mem.getByte(addr.add(3)), memBuf.getByte(3));
-			addr = addr.add(50);
-			int offset = (int) addr.subtract(program.getMinAddress());
-			wrapBuf.setBaseOffset(offset);
-		}
-
-		addr = program.getMinAddress();
-		memBuf = new MemoryBufferImpl(mem, program.getMinAddress());
-		wrapBuf = new WrappedMemBuffer(memBuf, 5, 0);
-		for (int i = 0; i < 10; i++) {
-			assertEquals(mem.getByte(addr), wrapBuf.getByte(0));
-			assertEquals(mem.getByte(addr.add(1)), wrapBuf.getByte(1));
-			assertEquals(mem.getByte(addr.add(2)), wrapBuf.getByte(2));
-			assertEquals(mem.getByte(addr.add(3)), wrapBuf.getByte(3));
-			addr = addr.add(2000);
-			int offset = (int) addr.subtract(program.getMinAddress());
-			wrapBuf.setBaseOffset(offset);
-		}
-	}
-
 	@Test
 	public void testProgram20bit() throws Exception {
 		program =
@@ -298,10 +252,8 @@ public class WrappedMemoryBufferTest extends AbstractGhidraHeadedIntegrationTest
 
 		assertEquals(mem.getByte(addr), wrapBuf.getByte(0));
 
-		wrapBuf.setBaseOffset(1);
-
 		try {
-			wrapBuf.getByte(0);
+			wrapBuf.getByte(1);
 			Assert.fail("Should not have been able to get byte");
 		}
 		catch (MemoryAccessException e) {
@@ -312,10 +264,8 @@ public class WrappedMemoryBufferTest extends AbstractGhidraHeadedIntegrationTest
 
 		assertEquals(mem.getByte(addr), wrapBuf.getByte(0));
 
-		wrapBuf.setBaseOffset(1);
-
 		try {
-			wrapBuf.getByte(0);
+			wrapBuf.getByte(1);
 			Assert.fail("Should not have been able to get byte");
 		}
 		catch (MemoryAccessException e) {
