@@ -151,6 +151,8 @@ class AddBlockModel {
 
 	void setOverlay(boolean b) {
 		this.isOverlay = b;
+		validateInfo();
+		listener.stateChanged(null);
 	}
 
 	void setInitializedType(InitializedType type) {
