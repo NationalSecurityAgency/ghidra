@@ -50,6 +50,8 @@ import ghidra.util.task.TaskMonitor;
  */
 public class Disassembler implements DisassemblerConflictHandler {
 
+	private static final int DISASSEMBLE_MEMORY_CACHE_SIZE = 8;
+
 	/**
 	 * <code>MARK_BAD_INSTRUCTION_PROPERTY</code> Program Disassembler property 
 	 * enables marking of instruction disassembly errors.  Boolean property is defined
@@ -920,9 +922,8 @@ public class Disassembler implements DisassemblerConflictHandler {
 
 				disassemblerContext.flowToAddress(addr);
 
-				// TODO: An overall better caching of bytes for this block could be done instead
-				//       the previous buffering done here was not doing any buffering
-				MemBuffer instrMemBuffer = new DumbMemBufferImpl(blockMemBuffer.getMemory(), addr);
+				MemBuffer instrMemBuffer = new WrappedMemBuffer(blockMemBuffer, DISASSEMBLE_MEMORY_CACHE_SIZE,
+						(int) addr.subtract(blockMemBuffer.getAddress()));
 
 				adjustPreParseContext(instrMemBuffer);
 
