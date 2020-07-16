@@ -234,6 +234,8 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 	// declared outputs.
 	outputs.file "$workingDir/$buildDir/pcoderef.fo"
 	outputs.file "$workingDir/$buildDir/pcoderef.pdf"
+	outputs.file "$workingDir/$buildDir/cspec.fo"
+	outputs.file "$workingDir/$buildDir/cspec.pdf"
 	outputs.file "$workingDir/$buildDir/sleigh.fo"
 	outputs.file "$workingDir/$buildDir/sleigh.pdf"
 
@@ -263,6 +265,12 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 
 		echo '** Building pcoderef.pdf **'
 		fop $buildDir/pcoderef.fo $buildDir/pcoderef.pdf  2>&1
+
+		echo '** Building cspec.fo **'
+		$xsltproc --output $buildDir/cspec.fo cspec_pdf.xsl cspec.xml 2>&1
+
+		echo '** Building cspec.pdf **'
+		fop $buildDir/cspec.fo $buildDir/cspec.pdf  2>&1
 
 		echo '** Done. **'
 		"""
@@ -336,6 +344,10 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/reference.html
 		cp $installPoint/Frontpage.css $buildDir/html
 		cp $installPoint/languages.css $buildDir/html
+
+		echo '** Building html/cspec.html **'
+		$xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename cspec cspec_html.xsl cspec.xml 2>&1
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/cspec*.html
 
 		echo '** Installing html documentation. **'
 		cp $buildDir/index.html $installPoint/index.html
