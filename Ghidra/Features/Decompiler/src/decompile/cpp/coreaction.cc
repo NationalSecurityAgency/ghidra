@@ -5100,6 +5100,7 @@ void ActionDatabase::universalAction(Architecture *conf)
   act->addAction( actcleanup );
 
   act->addAction( new ActionPreferComplement("blockrecovery") );
+  act->addAction( new ActionStructureTransform("blockrecovery") );
   act->addAction( new ActionNormalizeBranches("normalizebranches") );
   act->addAction( new ActionAssignHigh("merge") );
   act->addAction( new ActionMergeRequired("merge") );

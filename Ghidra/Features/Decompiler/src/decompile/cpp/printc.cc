@@ -2629,11 +2629,68 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   popMod();
 }
 
+/// Print the loop using the keyword \e for, followed by a semicolon separated
+///   - Initializer statement
+///   - Condition statment
+///   - Iterate statement
+///
+/// Then print the body of the loop
+void PrintC::emitForLoop(const BlockWhileDo *bl)
+
+{
+  const PcodeOp *op;
+  int4 indent;
+
+  pushMod();
+  unsetMod(no_branch|only_branch);
+  emitAnyLabelStatement(bl);
+  emit->tagLine();
+  op = bl->getBlock(0)->lastOp();
+  emit->tagOp("for",EmitXml::keyword_color,op);
+  emit->spaces(1);
+  int4 id1 = emit->openParen('(');
+  pushMod();
+  setMod(comma_separate);
+  op = bl->getInitializeOp();		// Emit the (optional) initializer statement
+  if (op != (PcodeOp *)0) {
+    int4 id3 = emit->beginStatement(op);
+    emitExpression(op);
+    emit->endStatement(id3);
+  }
+  emit->print(";");
+  emit->spaces(1);
+  bl->getBlock(0)->emit(this);		// Emit the conditional statement
+  emit->print(";");
+  emit->spaces(1);
+  op = bl->getIterateOp();		// Emit the iterator statement
+  int4 id4 = emit->beginStatement(op);
+  emitExpression(op);
+  emit->endStatement(id4);
+  popMod();
+  emit->closeParen(')',id1);
+  emit->spaces(1);
+  indent = emit->startIndent();
+  emit->print("{");
+  setMod(no_branch); // Dont print goto at bottom of clause
+  int4 id2 = emit->beginBlock(bl->getBlock(1));
+  bl->getBlock(1)->emit(this);
+  emit->endBlock(id2);
+  emit->stopIndent(indent);
+  emit->tagLine();
+  emit->print("}");
+  popMod();
+}
+
 void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
 
 {
   const PcodeOp *op;
   int4 indent;
+
+  if (bl->getIterateOp() != (PcodeOp *)0) {
+    emitForLoop(bl);
+    return;
+  }
 				// whiledo block NEVER prints final branch
   pushMod();
   unsetMod(no_branch|only_branch);

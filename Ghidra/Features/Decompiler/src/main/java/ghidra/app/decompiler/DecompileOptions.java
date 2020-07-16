@@ -85,6 +85,13 @@ public class DecompileOptions {
 	private final static boolean INFERCONSTPTR_OPTIONDEFAULT = true;
 	private boolean inferconstptr;
 
+	private final static String ANALYZEFORLOOPS_OPTIONSTRING = "Analysis.Recover -for- loops";
+	private final static String ANALYZEFORLOOPS_OPTIONDESCRIPTION =
+		"If set, the decompiler attempts to recover for-loop variables, including their initializer, condition, " +
+			"and incrementer statements. Loop variable bounds are displayed as a formal -for- loop header";
+	private final static boolean ANALYZEFORLOOPS_OPTIONDEFAULT = true;
+	private boolean analyzeForLoops;
+
 	private final static String NULLTOKEN_OPTIONSTRING = "Display.Print 'NULL' for null pointers";
 	private final static String NULLTOKEN_OPTIONDESCRIPTION =
 		"If set, any zero valued pointer (null pointer) will " +
@@ -366,6 +373,7 @@ public class DecompileOptions {
 		simplifyDoublePrecision = SIMPLIFY_DOUBLEPRECISION_OPTIONDEFAULT;
 		ignoreunimpl = IGNOREUNIMPL_OPTIONDEFAULT;
 		inferconstptr = INFERCONSTPTR_OPTIONDEFAULT;
+		analyzeForLoops = ANALYZEFORLOOPS_OPTIONDEFAULT;
 		nullToken = NULLTOKEN_OPTIONDEFAULT;
 		inplaceTokens = INPLACEOP_OPTIONDEFAULT;
 		aliasBlock = ALIASBLOCK_OPTIONDEFAULT;
@@ -426,6 +434,8 @@ public class DecompileOptions {
 			SIMPLIFY_DOUBLEPRECISION_OPTIONDEFAULT);
 		ignoreunimpl = opt.getBoolean(IGNOREUNIMPL_OPTIONSTRING, IGNOREUNIMPL_OPTIONDEFAULT);
 		inferconstptr = opt.getBoolean(INFERCONSTPTR_OPTIONSTRING, INFERCONSTPTR_OPTIONDEFAULT);
+		analyzeForLoops =
+			opt.getBoolean(ANALYZEFORLOOPS_OPTIONSTRING, ANALYZEFORLOOPS_OPTIONDEFAULT);
 		nullToken = opt.getBoolean(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT);
 		inplaceTokens = opt.getBoolean(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT);
 		aliasBlock = opt.getEnum(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT);
@@ -547,6 +557,10 @@ public class DecompileOptions {
 			INFERCONSTPTR_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisInferConstants"),
 			INFERCONSTPTR_OPTIONDESCRIPTION);
+		opt.registerOption(ANALYZEFORLOOPS_OPTIONSTRING,
+			ANALYZEFORLOOPS_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisForLoops"),
+			ANALYZEFORLOOPS_OPTIONDESCRIPTION);
 		opt.registerOption(NULLTOKEN_OPTIONSTRING,
 			NULLTOKEN_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayNull"),
@@ -739,6 +753,7 @@ public class DecompileOptions {
 
 		appendOption(buf, "ignoreunimplemented", ignoreunimpl ? "on" : "off", "", "");
 		appendOption(buf, "inferconstptr", inferconstptr ? "on" : "off", "", "");
+		appendOption(buf, "analyzeforloops", analyzeForLoops ? "on" : "off", "", "");
 		appendOption(buf, "nullprinting", nullToken ? "on" : "off", "", "");
 		appendOption(buf, "inplaceops", inplaceTokens ? "on" : "off", "", "");
 		appendOption(buf, "aliasblock", aliasBlock.getOptionString(), "", "");

@@ -1301,6 +1301,7 @@ void Architecture::resetDefaultsInternal(void)
   flowoptions = FlowInfo::error_toomanyinstructions;
   max_instructions = 100000;
   infer_pointers = true;
+  analyze_for_loops = true;
   readonlypropagate = false;
   alias_block_level = 2;	// Block structs and arrays by default
 }

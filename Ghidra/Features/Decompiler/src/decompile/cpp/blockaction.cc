@@ -2095,6 +2095,13 @@ void ConditionalJoin::clear(void)
   mergeneed.clear();
 }
 
+int4 ActionStructureTransform::apply(Funcdata &data)
+
+{
+  data.getStructure().finalTransform(data);
+  return 0;
+}
+
 int4 ActionNormalizeBranches::apply(Funcdata &data)
 
 {
