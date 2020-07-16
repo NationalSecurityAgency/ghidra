@@ -197,13 +197,22 @@ public class BundleHost {
 	 * Create new GhidraBundles and add to the list of managed bundles.  All GhidraBundles created 
 	 * with the same {@code enabled} and {@code systemBundle} values. 
 	 * 
-	 * @param bundleFiles a list of bundle files
+	 * @param bundleFileList a list of bundle files
 	 * @param enabled if the new bundle should be enabled
 	 * @param systemBundle if the new bundle is a system bundle
 	 * @return the new bundle objects
 	 */
-	public Collection<GhidraBundle> add(List<ResourceFile> bundleFiles, boolean enabled,
+	public Collection<GhidraBundle> add(List<ResourceFile> bundleFileList, boolean enabled,
 			boolean systemBundle) {
+		Set<ResourceFile> bundleFiles = new HashSet<>(bundleFileList);
+		Iterator<ResourceFile> bundleFileIterator = bundleFiles.iterator();
+		while (bundleFileIterator.hasNext()) {
+			ResourceFile bundleFile = bundleFileIterator.next();
+			if (fileToBundleMap.containsKey(bundleFile)) {
+				bundleFileIterator.remove();
+				Msg.warn(this, "adding an already managed bundle: " + bundleFile.getAbsolutePath());
+			}
+		}
 		Map<ResourceFile, GhidraBundle> newBundleMap = bundleFiles.stream()
 				.collect(Collectors.toUnmodifiableMap(Function.identity(),
 					bundleFile -> createGhidraBundle(BundleHost.this, bundleFile, enabled,

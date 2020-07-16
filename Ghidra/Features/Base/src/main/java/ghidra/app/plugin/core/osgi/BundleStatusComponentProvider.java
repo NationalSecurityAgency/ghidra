@@ -51,7 +51,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	static final String BUNDLE_GROUP = "0bundle group";
 	static final String BUNDLE_LIST_GROUP = "1bundle list group";
 
-	static final String PREFENCE_LAST_SELECTED_BUNDLE = "LastGhidraBundle";
+	static final String PREFERENCE_LAST_SELECTED_BUNDLE = "LastGhidraBundle";
 
 	private JPanel panel;
 	private LessFreneticGTable bundleStatusTable;
@@ -266,14 +266,14 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 					}
 				});
 			}
-			String lastSelected = Preferences.getProperty(PREFENCE_LAST_SELECTED_BUNDLE);
+			String lastSelected = Preferences.getProperty(PREFERENCE_LAST_SELECTED_BUNDLE);
 			if (lastSelected != null) {
 				File lastSelectedFile = new File(lastSelected);
 				fileChooser.setSelectedFile(lastSelectedFile);
 			}
 		}
 		else {
-			String lastSelected = Preferences.getProperty(PREFENCE_LAST_SELECTED_BUNDLE);
+			String lastSelected = Preferences.getProperty(PREFERENCE_LAST_SELECTED_BUNDLE);
 			if (lastSelected != null) {
 				File lastSelectedFile = new File(lastSelected);
 				fileChooser.setSelectedFile(lastSelectedFile);
@@ -283,7 +283,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		List<File> files = fileChooser.getSelectedFiles();
 		if (!files.isEmpty()) {
-			Preferences.setProperty(PREFENCE_LAST_SELECTED_BUNDLE, files.get(0).getAbsolutePath());
+			Preferences.setProperty(PREFERENCE_LAST_SELECTED_BUNDLE, files.get(0).getAbsolutePath());
 			List<ResourceFile> resourceFiles =
 				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList());
 			Collection<GhidraBundle> bundles = bundleHost.add(resourceFiles, true, false);
