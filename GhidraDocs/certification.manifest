@@ -110,6 +110,12 @@ languages/html/Diagram1.png||GHIDRA||||END|
 languages/html/Diagram2.png||GHIDRA||||END|
 languages/html/Diagram3.png||GHIDRA||||END|
 languages/html/additionalpcode.html||GHIDRA||||END|
+languages/html/cspec_dataorg.html||GHIDRA||||END|
+languages/html/cspec.html||GHIDRA||||END|
+languages/html/cspec_parampass.html||GHIDRA||||END|
+languages/html/cspec_pcodeinterp.html||GHIDRA||||END|
+languages/html/cspec_scopememory.html||GHIDRA||||END|
+languages/html/cspec_specialreg.html||GHIDRA||||END|
 languages/html/pcodedescription.html||GHIDRA||||END|
 languages/html/pcoderef.html||GHIDRA||||END|
 languages/html/pseudo-ops.html||GHIDRA||||END|

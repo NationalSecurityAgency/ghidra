@@ -1,0 +1,376 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>3. Compiler Datatype Organization</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="cspec.html" title="Compiler Specification">
+<link rel="up" href="cspec.html" title="Compiler Specification">
+<link rel="prev" href="cspec_pcodeinterp.html" title="2. Compiler Specific P-code Interpretation">
+<link rel="next" href="cspec_scopememory.html" title="4. Compiler Scoping and Memory Access">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">3. Compiler Datatype Organization</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="cspec_pcodeinterp.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="cspec_scopememory.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="cspec_dataorg"></a>3. Compiler Datatype Organization</h2></div></div></div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm422"></a>3.1. &lt;data_organization&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="data_org.htmltable"></a><table xml:id="data_org.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;absolute_max_alignment&gt;</code></td>
+  <td></td>
+  <td>(Optional) Maximum alignment possible across all datatypes (0 indicates no maximum)</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;machine_alignment&gt;</code></td>
+  <td></td>
+  <td>(Optional) Maximum useful alignment for the underlying architecture</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;default_alignment&gt;</code></td>
+  <td></td>
+  <td>(Optional) Default alignment for any datatype that isn't structure, union, array, or pointer and whose
+      size isn't in the size/alignment map</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;default_pointer_alignment&gt;</code></td>
+  <td></td>
+  <td>(Optional) Default alignment for a pointer that doesn't have a size</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;pointer_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of a pointer</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;pointer_shift&gt;</code></td>
+  <td></td>
+  <td>(Optional) Left-shift amount, in bits, for shifted pointer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;wchar_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of "wchar", the wide character datatype</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;short_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of "short" and other short integer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;integer_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of "int" and other integer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;long_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of "long" and other long integer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;long_long_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of "longlong" integer datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;float_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of "float" and other floating-point datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;double_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of "double" and other double precision floating-point datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;long_double_size&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size of "longdouble" floating-point datatypes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">value</code></td>
+  <td></td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;size_alignment_map&gt;</code></td>
+  <td></td>
+  <td>(Optional) Size to alignment map</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+The <code class="code">&lt;data_organization&gt;</code> tag provides information
+about the sizes of core datatypes and how the compiler typically
+aligns datatypes.  These are required so analysis can determine the
+proper in-memory layout of datatypes, such as those described by C/C++
+style header files. Both sizes and alignments are specified
+in bytes by using the integer <code class="code">value</code> attribute in the
+corresponding tag.  An alignment value indicates that the compiler
+chooses a byte address that is a multiple of that value as the start
+of that datatype.  A value of 1 indicates <span class="emphasis"><em>no
+alignment</em></span>.  Most atomic datatypes get their alignment
+information from the
+<code class="code">&lt;size_alignment_map&gt;</code>.  If the size of a particular datatype
+isn't listed in the map, the <code class="code">&lt;default_alignment&gt;</code> value
+will be used.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm586"></a>3.1.1. &lt;size_alignment_map&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="size_align.htmltable"></a><table xml:id="size_align.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;entry&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Alignment information for a particular size</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">size</code></td>
+  <td>Size of datatype in bytes</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">alignment</code></td>
+  <td>The alignment value</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+Each <code class="code">&lt;entry&gt;</code> maps a specific size to a specific alignment.  Ghidra satisfies requests
+for the alignment of all atomic datatypes (except pointers) by consulting this map.  If it doesn't
+contain the particular size, Ghidra reverts to the <code class="code">&lt;default_alignment&gt;</code> subtag
+in the parent <code class="code">&lt;data_organization&gt;</code> tag.  Its typical to only provide alignments
+for sizes which are a power of 2.
+</p>
+</div>
+<div class="example">
+<a name="idm618"></a><p class="title"><b>Example 9. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;data_organization&gt;
+     &lt;absolute_max_alignment value="0" /&gt;
+     &lt;machine_alignment value="2" /&gt;
+     &lt;default_alignment value="1" /&gt;
+     &lt;default_pointer_alignment value="4" /&gt;
+     &lt;pointer_size value="4" /&gt;
+     &lt;wchar_size value="4" /&gt;
+     &lt;short_size value="2" /&gt;
+     &lt;integer_size value="4" /&gt;
+     &lt;long_size value="4" /&gt;
+     &lt;long_long_size value="8" /&gt;
+     &lt;float_size value="4" /&gt;
+     &lt;double_size value="8" /&gt;
+     &lt;long_double_size value="12" /&gt;
+     &lt;size_alignment_map&gt;
+          &lt;entry size="1" alignment="1" /&gt;
+          &lt;entry size="2" alignment="2" /&gt;
+          &lt;entry size="4" alignment="4" /&gt;
+          &lt;entry size="8" alignment="4" /&gt;
+     &lt;/size_alignment_map&gt;
+  &lt;/data_organization&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm620"></a>3.2. &lt;enum&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="enum.htmltable"></a><table xml:id="enum.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">size</code></td>
+  <td></td>
+  <td>Default size of an enumerated datatype</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">signed</code></td>
+  <td></td>
+  <td>(Optional) <span class="emphasis"><em>true</em></span> or <span class="emphasis"><em>false</em></span> : Is an enumeration viewed as a signed integer</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This is a <span class="bold"><strong>deprecated</strong></span> tag.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm647"></a>3.3. &lt;funcptr&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="funcptr.htmltable"></a><table xml:id="funcptr.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><code class="code">align</code></td>
+  <td></td>
+  <td>Number of alignment bytes for functions</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+Some compilers rely on the alignment of code addresses to provide extra bits of space
+in function pointers where extra internal information can be stored.  On ARM chips in particular,
+the processor itself supports an ARM/THUMB transition bit in code addresses, which are always at
+least 2 byte aligned.  This tag informs the decompiler of this region of encoding in function pointers
+so that it can filter it out, allowing it to find the correct address in various situations. The
+<code class="code">align</code> attribute should always be a power of 2 corresponding to the number of bits
+a compiler might use for additional storage.
+</p>
+<div class="example">
+<a name="idm667"></a><p class="title"><b>Example 10. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;funcptr align="2"/&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="cspec_pcodeinterp.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="cspec_scopememory.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">2. Compiler Specific P-code Interpretation </td>
+<td width="20%" align="center"><a accesskey="h" href="cspec.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 4. Compiler Scoping and Memory Access</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

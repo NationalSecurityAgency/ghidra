@@ -1,0 +1,199 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Compiler Specification</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="cspec.html" title="Compiler Specification">
+<link rel="next" href="cspec_pcodeinterp.html" title="2. Compiler Specific P-code Interpretation">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">Compiler Specification</th></tr>
+<tr>
+<td width="20%" align="left"> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="cspec_pcodeinterp.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="article">
+<div class="titlepage">
+<div><div><h1 class="title">
+<a name="idm1"></a>Compiler Specification</h1></div></div>
+<hr>
+</div>
+<div class="toc">
+<p><b>Table of Contents</b></p>
+<dl class="toc">
+<dt><span class="sect1"><a href="cspec.html#idm4">1. Overview</a></span></dt>
+<dd><dl><dt><span class="sect2"><a href="cspec.html#varnode_tag">1.1. Varnode Tags</a></span></dt></dl></dd>
+<dt><span class="sect1"><a href="cspec_pcodeinterp.html">2. Compiler Specific P-code Interpretation</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="cspec_pcodeinterp.html#idm41">2.1. &lt;context_data&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_pcodeinterp.html#idm181">2.2. &lt;callfixup&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_pcodeinterp.html#idm258">2.3. &lt;callotherfixup&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_pcodeinterp.html#idm364">2.4. &lt;prefersplit&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_pcodeinterp.html#idm397">2.5. &lt;aggressivetrim&gt;</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="cspec_dataorg.html">3. Compiler Datatype Organization</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="cspec_dataorg.html#idm422">3.1. &lt;data_organization&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_dataorg.html#idm620">3.2. &lt;enum&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_dataorg.html#idm647">3.3. &lt;funcptr&gt;</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="cspec_scopememory.html">4. Compiler Scoping and Memory Access</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="cspec_scopememory.html#idm671">4.1. &lt;global&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_scopememory.html#idm720">4.2. &lt;readonly&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_scopememory.html#idm767">4.3. &lt;nohighptr&gt;</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="cspec_specialreg.html">5. Compiler Special Purpose Registers</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="cspec_specialreg.html#idm817">5.1. &lt;stackpointer&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_specialreg.html#return_address">5.2. &lt;returnaddress&gt;</a></span></dt>
+</dl></dd>
+<dt><span class="sect1"><a href="cspec_parampass.html">6. Parameter Passing</a></span></dt>
+<dd><dl>
+<dt><span class="sect2"><a href="cspec_parampass.html#strategy">6.1. Describing Parameters and Allocation Strategies</a></span></dt>
+<dt><span class="sect2"><a href="cspec_parampass.html#idm941">6.2. &lt;default_proto&gt;</a></span></dt>
+<dt><span class="sect2"><a href="cspec_parampass.html#idm963">6.3. &lt;prototype&gt;</a></span></dt>
+</dl></dd>
+</dl>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="idm4"></a>1. Overview</h2></div></div></div>
+<p>
+The <span class="emphasis"><em>compiler specification</em></span> is a required part of
+a Ghidra language module for supporting disassembly and analysis of a
+particular processor.  Its purpose is to encode information about a
+target binary which is specific to the compiler that generated that
+binary. Within Ghidra, the SLEIGH specification allows the decoding of
+machine instructions for a particular processor, like Intel x86, but
+more than one compiler can produce those instructions.  For a
+particular target binary, understanding details about the specific
+compiler used to build it is important to the reverse engineering
+process. The compiler specification fills this need, allowing concepts like parameter
+passing conventions and stack mechanisms to be formally described.
+</p>
+<p>
+A compiler specification is a single file contained in a
+module's <code class="computeroutput">data/languages</code> directory
+with a ".cspec" suffix. There may be more than one ".cspec" file in
+the directory, if Ghidra supports multiple compilers for the same processor.  The
+compiler specification is identified by the 5th field of
+Ghidra's <span class="emphasis"><em>processor id</em></span>.  The id is explicitly
+linked with the ".cspec" by adding a tag in the root ".ldefs" file for
+the processor, also in the same directory.
+</p>
+<div class="example">
+<a name="idm11"></a><p class="title"><b>Example 1. </b></p>
+<div class="example-contents">
+Defining the processor id <code class="code">x86:LE:32:default:gcc</code>
+and associating it with the file <code class="code">x86gcc.cspec</code><pre class="programlisting">
+&lt;language_definitions&gt;
+  ...
+  &lt;language processor="x86"
+            endian="little"
+            size="32"
+            variant="default"
+            version="2.3"
+            slafile="x86.sla"
+            processorspec="x86.pspec"
+            manualindexfile="../manuals/x86.idx"
+            id="x86:LE:32:default"&gt;
+    &lt;description&gt;Intel/AMD 32-bit x86&lt;/description&gt;
+    &lt;compiler name="Visual Studio" spec="x86win.cspec" id="windows"/&gt;
+   <span class="bold"><strong>&lt;compiler name="gcc" spec="x86gcc.cspec" id="gcc"/&gt;</strong></span>
+    &lt;compiler name="Borland" spec="x86borland.cspec" id="borland"/&gt;
+  &lt;/language&gt;
+  ...
+&lt;/language_definitions&gt;
+</pre>
+</div>
+</div>
+<p><br class="example-break">
+</p>
+<p>
+A compiler specification is just an XML file, so it needs to start
+with the usual XML directive and it always
+has <code class="code">&lt;compiler_spec&gt;</code> as the root XML tag.  All
+specific compiler features are described using subtags to this tag. In
+principle, all the subtags are optional except
+the <code class="code">&lt;default_prototype&gt;</code> tag, but there is generally a
+minimum set of tags that are needed to create a useful specification
+(See ???).  In general, the subtags can appear in any order.  The only
+exceptions are that tags which define names,
+like <code class="code">&lt;prototype&gt;</code>, must appear before other tags
+which use that name.
+</p>
+<p>
+The rest of this document is broken up into sections that roughly correspond with aspects of
+compiler design, and then subsections within these address particular tags.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="varnode_tag"></a>1.1. Varnode Tags</h3></div></div></div>
+<p>Many parts of the compiler specification use tags that describe a single varnode. Since architectures
+frequently name many of their registers or special memory locations, it is convenient for the specification
+designer to be able to use these names. But in some cases there is no name and the designer must fall
+back on the defining triple for a varnode: an <span class="emphasis"><em>address space</em></span>, an
+<span class="emphasis"><em>offset</em></span> and a <span class="emphasis"><em>size</em></span>. Hence there are really two different
+XML tags that are used to describe varnodes and both are referred to as a
+<span class="bold"><strong>varnode tag</strong></span>.
+</p>
+<p>
+The <code class="code">&lt;register&gt;</code> tag is used to specify formally named registers, usually defined by
+the SLEIGH specification for the processor. The name must be given in a <span class="emphasis"><em>name</em></span> attribute
+for the tag.
+</p>
+<p>
+The <code class="code">&lt;varnode&gt;</code> tag is used to generically describe any varnode. It must take
+three attributes:
+<span class="emphasis"><em>space</em></span> is a formal name of the address space containing the varnode,
+<span class="emphasis"><em>offset</em></span> is an unsigned integer specifying the byte offset of the varnode
+within the space, and <span class="emphasis"><em>size</em></span> is an integer specifying the size of the varnode in bytes.
+The <code class="code">&lt;varnode&gt;</code> tag can be used to describe any varnode, including named registers, global
+RAM locations, and stack locations. For stack locations, the offset is interpreted relative to the
+function that is being decompiled or is otherwise in scope.  An offset of 0, for instance typically refers
+to the memory location on the stack being pointed to by the formal stack pointer register, upon entry
+to the function being analyzed.
+</p>
+<div class="example">
+<a name="idm37"></a><p class="title"><b>Example 2. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;register name="EAX"/&gt;
+  &lt;register name="r1"/&gt;
+  &lt;varnode space="ram" offset="0x1020" size="4"/&gt;
+  &lt;varnode space="stack" offset="8" size="8"/&gt;
+  &lt;varnode space="stack" offset="0xfffffff8" size="2"/&gt;
+  &lt;varnode space="register" offset="0" size="1"/&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left"> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="cspec_pcodeinterp.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top"> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right" valign="top"> 2. Compiler Specific P-code Interpretation</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>4. Compiler Scoping and Memory Access</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="cspec.html" title="Compiler Specification">
+<link rel="up" href="cspec.html" title="Compiler Specification">
+<link rel="prev" href="cspec_dataorg.html" title="3. Compiler Datatype Organization">
+<link rel="next" href="cspec_specialreg.html" title="5. Compiler Special Purpose Registers">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">4. Compiler Scoping and Memory Access</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="cspec_dataorg.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="cspec_specialreg.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="cspec_scopememory"></a>4. Compiler Scoping and Memory Access</h2></div></div></div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm671"></a>4.1. &lt;global&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="global.htmltable"></a><table xml:id="global.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;register&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Specific register to be marked as global</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>Name of register</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;range&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Range of addresses to be marked as global</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">space</code></td>
+  <td>Address space of the global region</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">first</code></td>
+  <td>(Optional) Starting offset of the region</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">last</code></td>
+  <td>(Optional) Ending offset of the region</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+The <code class="code">&lt;global&gt;</code> tag marks specific memory regions as
+storage locations for the compiler's global variables.  The
+word <span class="emphasis"><em>global</em></span> here refers to the standard scoping
+concept for variables in high-level source code, meaning that the
+variable or memory location is being used as permanent interfunction
+storage. This tag informs the decompiler's <span class="emphasis"><em>discovery</em></span>
+of the scope of particular memory locations.  Any location not marked as global
+in this way is assumed to be local/temporary storage.
+</p>
+<div class="example">
+<a name="idm718"></a><p class="title"><b>Example 11. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;global&gt;
+    &lt;range space="ram"/&gt;
+  &lt;/global&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm720"></a>4.2. &lt;readonly&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="readonly.htmltable"></a><table xml:id="readonly.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;register&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Specific register to be marked as read-only</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>Name of register</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;range&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Range of addresses to be marked as read-only</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">space</code></td>
+  <td>Address space of the read-only region</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">first</code></td>
+  <td>(Optional) Starting offset of the region</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">last</code></td>
+  <td>(Optional) Ending offset of the region</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+The <code class="code">&lt;readonly&gt;</code> tag labels a specific region as
+read-only. From the point of view of the compiler, these memory
+locations hold constant values.  This allows the decompiler to
+propagate these constants and potentially perform additional simplification.
+This tag is not very common because most read-only memory sections are determined
+dynamically from the executable header.
+</p>
+<div class="example">
+<a name="idm765"></a><p class="title"><b>Example 12. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;readonly&gt;
+    &lt;range space="ram" first="0x3000" last="0x3fff"/&gt;
+  &lt;/readonly&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm767"></a>4.3. &lt;nohighptr&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="nohighptr.htmltable"></a><table xml:id="nohighptr.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;register&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Specific register to be marked as not addressable</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>Name of register</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;range&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Range of addresses to be marked as not addressable</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">space</code></td>
+  <td>Address space of the unaddressable region</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">first</code></td>
+  <td>(Optional) Starting offset of the region</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">last</code></td>
+  <td>(Optional) Ending offset of the region</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+The <code class="code">&lt;nohighptr&gt;</code> tag describes a memory region into
+which the compiler does not expect to see pointers from any high-level
+source code.  This is slightly different from saying that there are
+absolutely no indirect references into the region.  This tag is really
+intended to partly address the modeling of <span class="emphasis"><em>memory-mapped
+registers</em></span>.  If a common register is addressable through
+main memory, this can confound decompiler analysis because even
+basic simplifications are blocked by writes through dynamic pointers
+that might affect the register.  This tag provides an apriori guarantee
+that this is not possible for the marked registers.
+</p>
+<div class="example">
+<a name="idm813"></a><p class="title"><b>Example 13. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;nohighptr&gt;
+    &lt;range space="DATA" first="0xf80" last="0xfff"/&gt;
+  &lt;/nohighptr&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="cspec_dataorg.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="cspec_specialreg.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">3. Compiler Datatype Organization </td>
+<td width="20%" align="center"><a accesskey="h" href="cspec.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 5. Compiler Special Purpose Registers</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

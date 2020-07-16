@@ -1,0 +1,587 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>2. Compiler Specific P-code Interpretation</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="cspec.html" title="Compiler Specification">
+<link rel="up" href="cspec.html" title="Compiler Specification">
+<link rel="prev" href="cspec.html" title="Compiler Specification">
+<link rel="next" href="cspec_dataorg.html" title="3. Compiler Datatype Organization">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">2. Compiler Specific P-code Interpretation</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="cspec.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="cspec_dataorg.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="cspec_pcodeinterp"></a>2. Compiler Specific P-code Interpretation</h2></div></div></div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm41"></a>2.1. &lt;context_data&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="context_data.htmltable"></a><table xml:id="context_data.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;context_set&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Set a context variable across a region of memory</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;tracked_set&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Set default value of register</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+A <code class="code">&lt;context_data&gt;</code> tag consists of zero or more <code class="code">&lt;context_set&gt;</code>
+and <code class="code">&lt;tracked_set&gt;</code> subtags, which allow certain values to be assumed by analysis.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm68"></a>2.1.1. &lt;context_set&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="context_set.htmltable"></a><table xml:id="context_set.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">space</code></td>
+  <td></td>
+  <td>Name of address space</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">first</code></td>
+  <td></td>
+  <td>(Optional) Starting offset of range</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">last</code></td>
+  <td></td>
+  <td>(Optional) Ending offset of range</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;set&gt;</code></td>
+  <td></td>
+  <td>Specify the context variable and the new value</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>Name of the context variable</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">val</code></td>
+  <td>Integer value being set</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">description</code></td>
+  <td>(Optional) Description of what is set</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+A <code class="code">&lt;context_set&gt;</code> tag sets a SLEIGH context variable over a specified address range.
+This potentially affects how instructions are disassembled within that range.  This is more
+commonly used in the <span class="emphasis"><em>processor specification</em></span> file but can also be used
+here for specific compilers.
+The attributes <code class="code">space</code>, <code class="code">first</code>, and <code class="code">last</code> describe the range.
+Omitting <code class="code">first</code> and/or <code class="code">last</code> causes the range to start at the beginning
+and/or run to the end of the address space respectively.
+The <code class="code">&lt;set&gt;</code> subtag describes the variable and its setting.
+</p>
+<div class="example">
+<a name="idm126"></a><p class="title"><b>Example 3. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;context_data&gt;
+    &lt;context_set space="ram"&gt;
+      &lt;set name="mode16" val="1" description="Set 16-bit mode across all of ram"/&gt;
+    &lt;/context_set&gt;
+  &lt;/contextdata&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm128"></a>2.1.2. &lt;tracked_set&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="tracked_set.htmltable"></a><table xml:id="tracked_set.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">space</code></td>
+  <td></td>
+  <td>Name of address space</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">first</code></td>
+  <td></td>
+  <td>(Optional) Starting offset of range</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">last</code></td>
+  <td></td>
+  <td>(Optional) Ending offset of range</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;set&gt;</code></td>
+  <td></td>
+  <td>Specify the register and the new value</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>Name of the register</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">val</code></td>
+  <td>Integer value being set</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">description</code></td>
+  <td>(Optional) Description of what is set</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+A <code class="code">&lt;tracked_set&gt;</code> tag informs the decompiler that a register takes a specific value
+for any function whose entry point is in the indicated range.  Compilers sometimes know or assume that
+registers have specific values coming into a function it produces.  This tag allows the decompiler to
+make the same assumption and possibly use constant propagation to make further simplifications.
+</p>
+<div class="example">
+<a name="idm179"></a><p class="title"><b>Example 4. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;context_data&gt;
+    &lt;tracked_set space="ram"&gt;
+      &lt;set name="spsr" val="0"/&gt;
+    &lt;/tracked_set&gt;
+  &lt;/context_data&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm181"></a>2.2. &lt;callfixup&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="callfixup.htmltable"></a><table xml:id="callfixup.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><code class="code">name</code></td>
+  <td></td>
+  <td>The identifier for this callfixup</td>
+</tr></tbody>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;target&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Map this callfixup to a specific symbol</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>The specific symbol name</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;pcode&gt;</code></td>
+  <td></td>
+  <td>Description of p-code to inject.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm215"></a>2.2.1. &lt;pcode&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="pcode.htmltable"></a><table xml:id="pcode.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><code class="code">paramshift</code></td>
+  <td></td>
+  <td>(Optional) Integer for shifting parameters at the callpoint.</td>
+</tr></tbody>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;body&gt;</code></td>
+  <td></td>
+  <td>P-code to inject.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code"><span class="emphasis"><em>text</em></span></code></td>
+  <td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+</div>
+<p>
+Compilers frequently make use of special bookkeeping functions that are really internal to the
+compiler and not a direct reflection of functions in the original source code.  During analysis
+it can be helpful to replace a call to such a function with a snippet of p-code
+that inlines the behavior, or a portion of the behavior, so that the decompiler can use it
+during its simplification rather than displaying it as an opaque call.
+A typical use is to inline <span class="emphasis"><em>prologue</em></span> functions that help set up a stack frame.
+</p>
+<p>
+The <code class="code">name</code> attribute can be used to identify the callfixup
+within the Ghidra CodeBrowser and manually force certain functions to
+be replaced.  The <code class="code">name</code> attribute of
+the <code class="code">&lt;callfixup&gt;</code> tag and any
+optional <code class="code">&lt;target&gt;</code> subtags identify function names
+which will <span class="emphasis"><em>automatically</em></span> be replaced.
+</p>
+<p>
+The text of the <code class="code">&lt;body&gt;</code> subtag is fed directly to
+the SLEIGH semantic expression parser to create the p-code snippet.
+Identifiers are interpreted as formal registers, if the register exists,
+but are otherwise interpreted as temporary registers in the <span class="emphasis"><em>unique</em></span> space
+of the processor.  Its usually best to surround text with the XML &lt;![CDATA[ construct.
+</p>
+<div class="example">
+<a name="idm256"></a><p class="title"><b>Example 5. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;callfixup name="get_pc_thunk_bx"&gt;
+    &lt;target name="__i686.get_pc_thunk.bx"/&gt;
+    &lt;pcode&gt;
+      &lt;body&gt;&lt;![CDATA[
+      EBX = * ESP;
+      ESP = ESP + 4;
+      ]]&gt;&lt;/body&gt;
+    &lt;/pcode&gt;
+  &lt;/callfixup&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm258"></a>2.3. &lt;callotherfixup&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="callotherfixup.htmltable"></a><table xml:id="callotherfixup.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><code class="code">targetop</code></td>
+  <td></td>
+  <td>Name of the <span class="emphasis"><em>CALLOTHER</em></span> operator to inject.</td>
+</tr></tbody>
+<tbody><tr>
+  <td align="right"><code class="code">&lt;pcode&gt;</code></td>
+  <td></td>
+  <td>Description of p-code to inject.</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm283"></a>2.3.1. &lt;pcode&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="pcodeother.htmltable"></a><table xml:id="pcodeother.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;input&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Description of formal input parameter.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>Name of the specific input symbol.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">size</code></td>
+  <td>Expected size of the parameter in bytes.</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;output&gt;</code></td>
+  <td></td>
+  <td>(0 or more) Description of formal output parameter.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>Name of the specific output symbol.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">size</code></td>
+  <td>Expected size of output in bytes.</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;body&gt;</code></td>
+  <td></td>
+  <td>P-code to inject.</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code"><span class="emphasis"><em>text</em></span></code></td>
+  <td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+</div>
+<p>
+The <code class="code">&lt;callotherfixup&gt;</code> is similar to a <code class="code">&lt;callfixup&gt;</code> tag but is used to describe
+injections that replace user-defined p-code operations, rather than <code class="code">CALL</code> operations.  User-defined
+p-code operations, referred to generically as <code class="code">CALLOTHER</code> operations, are <span class="emphasis"><em>black-box</em></span>
+operations that a SLEIGH specification can define to encapsulate complicated (or esoteric) actions performed
+by the processor. The specification must define a unique name for each such operation. The <code class="code">targetop</code>
+attribute links the p-code described here to the specific operation via this name.
+</p>
+<p>
+As with any p-code operation,
+the <code class="code">CALLOTHER</code> takes formal varnodes as inputs and/or outputs.  These varnodes can be referred to
+in the injection <code class="code">&lt;body&gt;</code> by predefining them using <code class="code">&lt;input&gt;</code> or
+<code class="code">&lt;output&gt;</code> tags.  The sequence of <code class="code">&lt;input&gt;</code> tags correspond in order to the
+input parameters of the <code class="code">CALLOTHER</code>, and a <code class="code">&lt;output&gt;</code> tag corresponds to output varnode
+if present.  The tags listed here <span class="bold"><strong>must</strong></span> match the number of input and output
+parameters in the actual p-code operation, or an exception will be thrown during p-code generation. The optional
+<code class="code">size</code> attribute in each tag will, if present, impose a size restriction on the parameter as well.
+</p>
+<p>
+As with a <code class="code">&lt;callfixup&gt;</code>, the <code class="code">&lt;body&gt;</code> tag is fed straight to the SLEIGH semantic
+parser.  It can refer to registers via their symbolic name defined in SLEIGH, it can refer to the operator parameters
+via their <code class="code">&lt;input&gt;</code> or <code class="code">&lt;output&gt;</code> names, and it can also refer to
+<code class="code">inst_start</code> and <code class="code">inst_next</code> as addresses describing the instruction containing the
+<code class="code">CALLOTHER</code>.
+</p>
+<div class="example">
+<a name="idm362"></a><p class="title"><b>Example 6. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;callotherfixup targetop="saturate"&gt;
+    &lt;pcode&gt;
+      &lt;input name="in1" size="4"/&gt;
+      &lt;input name="in2" size="4"/&gt;
+      &lt;body&gt;&lt;![CDATA[
+        in1 = in1 + in2;
+        if (in1 &lt; 0x10000) goto &lt;end&gt;;
+        in1 = 0xffff;
+        &lt;end&gt;
+      ]]&gt;&lt;/body&gt;
+    &lt;/pcode&gt;
+  &lt;/callotherfixup&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm364"></a>2.4. &lt;prefersplit&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="prefersplit.htmltable"></a><table xml:id="prefersplit.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right">style</td>
+  <td></td>
+  <td>Strategy for splitting: <span class="emphasis"><em>inhalf</em></span>
+</td>
+</tr></tbody>
+<tbody><tr>
+  <td align="right"><span class="emphasis"><em>&lt;register&gt; or &lt;varnode&gt;</em></span></td>
+  <td></td>
+  <td>(1 or more) <span class="emphasis"><em>varnode</em></span> tags</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This tag is designed to mark specific registers as <span class="emphasis"><em>packed</em></span>,
+containing multiple logical values that need to be split. The decompiler attempts
+to split up any operator that reads or writes the register into multiple
+p-code operations that operate on each logical value individually.
+</p>
+<p>
+The tag lists one or more <span class="bold"><strong>varnode tags</strong></span> describing the
+registers or other storage locations that need to be split. The <span class="emphasis"><em>style</em></span>
+attribute indicates how the storage locations should be split. Currently the only accepted
+style value is "inhalf", which means that each varnode should be split into two equal pieces.
+</p>
+<p>
+Splitting a varnode is only possible if the all p-code operations it is involved in don't
+mix their action across the logical pieces. If this is not possible, the p-code will
+not be altered for that particular varnode.
+</p>
+<div class="example">
+<a name="idm395"></a><p class="title"><b>Example 7. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;prefersplit style="inhalf"&gt;
+    &lt;register name="xr0"/&gt;
+    &lt;register name="xr1"/&gt;
+    &lt;register name="xr2"/&gt;
+  &lt;prefersplit&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm397"></a>2.5. &lt;aggressivetrim&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="aggressive.htmltable"></a><table xml:id="aggressive.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right">signext</td>
+  <td></td>
+  <td>(Optional) <span class="emphasis"><em>true</em></span> if sign-extension should be aggressively trimmed</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This tag tells the decompiler that p-code extension operations are likely to be a side-effect
+of the processor and are obscuring what is just the manipulation of the smaller logical value.
+The decompiler normally trims extensions and other operations where it can prove that the
+most significant bytes of the result are unused. This tag lets the decompiler be more
+aggressive when use of the extended bytes is more indeterminate. It can assume that extensions into
+sub-function parameters and into the return value are extraneous.
+</p>
+<p>
+The <span class="emphasis"><em>signext</em></span> attribute turns the behavior on specifically for the sign-extension
+operation. Currently there is no toggle for  zero-extensions.
+</p>
+<div class="example">
+<a name="idm418"></a><p class="title"><b>Example 8. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;aggressivetrim signext="true"/&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="cspec.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="cspec_dataorg.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">Compiler Specification </td>
+<td width="20%" align="center"><a accesskey="h" href="cspec.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 3. Compiler Datatype Organization</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

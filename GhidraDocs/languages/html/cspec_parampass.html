@@ -1,0 +1,805 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>6. Parameter Passing</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="cspec.html" title="Compiler Specification">
+<link rel="up" href="cspec.html" title="Compiler Specification">
+<link rel="prev" href="cspec_specialreg.html" title="5. Compiler Special Purpose Registers">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">6. Parameter Passing</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="cspec_specialreg.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> </td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="cspec_parampass"></a>6. Parameter Passing</h2></div></div></div>
+<p>
+A <span class="emphasis"><em>prototype model</em></span>, in Ghidra, is a
+set of rules for determining how parameters and return values
+are passed between a function and its subfunction.  For a high-level
+language (such as C or Java), a function prototype is the ordered list
+of parameters (each specified as a name and a datatype) that are passed to
+the function as input plus the optional value (specified as just a
+dataype) returned by the function.  A prototype model specifies how a compiler
+decides which storage locations are used to hold the actual values at run time.
+</p>
+<p>
+From a reverse engineering perspective, Ghidra also needs to solve the inverse problem:
+given a set of storage locations (registers and stack locations) that look like they
+are inputs and outputs to a function, determine a high-level function prototype that
+produces those locations when compiled.  The same prototype model is
+used to solve this problem as well, but in this case, the solution may not be unique,
+or can only be exactly derived from information that Ghidra doesn't have.
+</p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="strategy"></a>6.1. Describing Parameters and Allocation Strategies</h3></div></div></div>
+<p>
+The <code class="code">&lt;prototype&gt;</code> tag encodes details about a specific prototype model, within a compiler
+specification.  A given compiler spec
+can have multiple prototype models, which are all distinguished by the mandatory <span class="emphasis"><em>name</em></span> attribute
+for the tag.  Other Ghidra tools refer to prototype model's by this name, and it must be unique
+across all models in the compiler spec.  All <code class="code">&lt;prototype&gt;</code> tags must include the subtags,
+<code class="code">&lt;input&gt;</code> and <code class="code">&lt;output&gt;</code>, which list storage locations
+(registers, stack, and other varnodes) as
+the raw material for the prototype model to decide where parameters are stored for passing
+between functions.  The <code class="code">&lt;input&gt;</code> tag holds the resources used to pass input parameters, and
+<code class="code">&lt;output&gt;</code> describes resources for return value storage.  A resource is described by
+the <code class="code">&lt;pentry&gt;</code> tag, which comes in two flavors.  Most <code class="code">&lt;pentry&gt;</code>
+tags describe a storage location to be used by a single variable.  If the tag has an
+<span class="emphasis"><em>align</em></span> attribute however, multiple
+variables can be allocated from the same resource, where different variables must be aligned
+relative to the start of the resource as specified by the attribute's value.
+</p>
+<p>
+How <code class="code">&lt;pentry&gt;</code> resources are used is
+determined by the prototype model's <span class="emphasis"><em>strategy</em></span>. This is specified as an optional attribute
+to the main <code class="code">&lt;prototype&gt;</code> tag.  There are currently only two strategies:
+<span class="emphasis"><em>standard</em></span> and <span class="emphasis"><em>register</em></span>. If the attribute is not present,
+the prototype model defaults to the <span class="emphasis"><em>standard</em></span> strategy.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm916"></a>6.1.1. Standard Strategy</h4></div></div></div>
+<p>
+For this strategy, the <code class="code">&lt;pentry&gt;</code> subtags under the
+<code class="code">&lt;input&gt;</code> tag are viewed as an ordered resource list.
+When assigning storage locations from a list of datatypes, each datatype is evaluated
+in order.  The first <code class="code">&lt;pentry&gt;</code> from the resource list that fits the datatype and hasn't
+been fully used by previous datatypes is assigned to that datatype.
+In this case, the <code class="code">&lt;input&gt;</code> tag
+lists varnodes in the order that a compiler would dole them out when given a list of parameters to
+pass. Integer or pointer values are usually passed first in specially designated registers rather than on the
+stack if there are not enough available registers. There can one stack-based
+<code class="code">&lt;pentry&gt;</code> at the end of the list that will typically match any number of
+parameters of any size or type.
+</p>
+<p>
+If there are separate <code class="code">&lt;pentry&gt;</code> tags for dedicated floating-point registers,
+the standard strategy treats them as a separate resource list, independent of the one for
+integer and pointer datatypes.
+The <code class="code">&lt;pentry&gt;</code> tags specifying floating-point registers are listed in the same
+<code class="code">&lt;input&gt;</code> tag, immediately after the integer registers, and are distinguished by
+the <code class="code">metatype="float"</code> attribute labeling the individual tags.
+</p>
+<p>
+For the inverse case, where the decompiler must infer a prototype from data-flow and liveness, the
+standard strategy expects there to be no <span class="bold"><strong>gaps</strong></span> in the usage of the
+(either) resource list.
+For a putative input varnode to be considered a formal parameter, it must occur somewhere in the
+<code class="code">&lt;pentry&gt;</code> resource list.  If there is a gap, i.e. the second
+<code class="code">&lt;pentry&gt;</code> occurs as a varnode but not the first, then the decompiler
+will fill in the gap by creating an extra <span class="emphasis"><em>unused</em></span> parameter. Or if the gap is too big,
+the original input varnode will not be considered a formal parameter.
+</p>
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm934"></a>6.1.2. Register Strategy</h4></div></div></div>
+<p>
+This allocation strategy is designed for software with a lot of hand-coded assembly routines
+that are not sticking to a particular parameter passing strategy.  The idea is to
+provide <code class="code">&lt;pentry&gt;</code> tags for any register that might conceivably be considered an input
+location.  Then the input varnodes for a function that have a corresponding <code class="code">&lt;pentry&gt;</code>
+are automatically promoted to formal parameters.  In practical terms, this strategy
+behaves in the same way as the Standard strategy, except that in the reverse case,
+the decompiler does not care about gaps in the resource list.  It will not fill in
+gaps, and it will not throw out putative inputs because of large gaps.</p>
+<p>
+When assigning storage locations from a list of datatypes, the same algorithm is applied as in
+the standard strategy.  The first <code class="code">&lt;pentry&gt;</code> that hasn't been used and that fits the
+datatype is assigned.  Note that this may not make as much sense for hand-coded assembly.
+</p>
+</div>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm941"></a>6.2. &lt;default_proto&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="defaultproto.htmltable"></a><table xml:id="defaultproto.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><code class="code">&lt;prototype&gt;</code></td>
+  <td></td>
+  <td>Specification for the default prototype</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+There must be exactly one <code class="code">&lt;default_proto&gt;</code> tag, which contains exactly one
+<code class="code">&lt;prototype&gt;</code> sub-tag. Other <code class="code">&lt;prototype&gt;</code> tags can be listed outside
+of this tag.  The designated default prototype model.  Where users are given the option of choosing from
+among different prototype models, the name "default" is always presented as an option and refers to this
+prototype model. It is also used in some situations where the prototype model is unknown but analysis needs
+to proceed.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm963"></a>6.3. &lt;prototype&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="prototype.htmltable"></a><table xml:id="prototype.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">name</code></td>
+  <td></td>
+  <td>The name of the prototype model</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">extrapop</code></td>
+  <td></td>
+  <td>Amount stack pointer changes across a call or <span class="emphasis"><em>unknown</em></span>
+</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">stackshift</code></td>
+  <td></td>
+  <td>Amount stack changes due to the call mechanism</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">type</code></td>
+  <td></td>
+  <td>(Optional) Generic calling convention type: <span class="emphasis"><em>stdcall</em></span>, <span class="emphasis"><em>cdecl</em></span>,
+  <span class="emphasis"><em>fastcall</em></span>, or <span class="emphasis"><em>thiscall</em></span>
+</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">strategy</code></td>
+  <td></td>
+  <td>(Optional) Allocation strategy: <span class="emphasis"><em>standard</em></span> or <span class="emphasis"><em>register</em></span>
+</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;input&gt;</code></td>
+  <td></td>
+  <td>Resources for input variables</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">pointermax</code></td>
+  <td>(Optional) Max size of parameter before converting to pointer</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">thisbeforeretpointer</code></td>
+  <td>(Optional) <span class="emphasis"><em>true</em></span> if <span class="emphasis"><em>this</em></span> pointer comes before hidden return pointer</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">killedbycall</code></td>
+  <td>(Optional) <span class="emphasis"><em>true</em></span> indicates all input storage locations are considered killed by call</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">&lt;pentry&gt;</code></td>
+  <td>(1 or more) Storage resources</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;output&gt;</code></td>
+  <td></td>
+  <td>Resources for return value</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">killedbycall</code></td>
+  <td>(Optional) <span class="emphasis"><em>true</em></span> indicates all output storage locations are considered killed by call</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">&lt;pentry&gt;</code></td>
+  <td>(1 or more) Storage resources</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;returnaddress&gt;</code></td>
+  <td></td>
+  <td>(Optional) Storage location of return value</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;unaffected&gt;</code></td>
+  <td></td>
+  <td>(Optional) Registers whose value is unaffected across calls</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;killedbycall&gt;</code></td>
+  <td></td>
+  <td>(Optional) Registers whose value does not persist across calls</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;likelytrash&gt;</code></td>
+  <td></td>
+  <td>(Optional) Registers that may hold a trash value entering the function</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">&lt;localrange&gt;</code></td>
+  <td></td>
+  <td>(Optional) Range of stack locations that may hold mapped local variables</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+The <code class="code">&lt;prototype&gt;</code> tag specifies a prototype model. It must have a <span class="emphasis"><em>name</em></span> attribute,
+which gives the name that can be used both in the Ghidra GUI and at other points within the compiler spec. The
+<span class="emphasis"><em>strategy</em></span> attribute indicates the allocation strategy, as described below.
+If omitted the strategy defaults to <span class="emphasis"><em>standard</em></span>.
+</p>
+<p>
+Every <code class="code">&lt;prototype&gt;</code> must specify the <span class="emphasis"><em>extrapop</em></span> attribute. This indicates the change in
+the stack pointer to expect across a call, within the p-code model. For architectures where a call instruction pushes a
+return value on the stack, this value will usually be positive and match the size of the stack-pointer in bytes,
+indicating that a called function usually pops the return value itself and changes the stack pointer in a way not apparent
+in the (callers) p-code. For architectures that use a link register to store the return address, <span class="emphasis"><em>extrapop</em></span>
+is usually zero, indicating to the decompiler that it can expect the stack pointer value not to change across a call. The
+attribute can also be specified as <span class="emphasis"><em>unknown</em></span>. This turns on the fairly onerous analysis associated with the
+Microsoft <span class="emphasis"><em>stdcall</em></span> calling convention, where functions, upon return, pop off their own stack parameters
+in addition to the return address.
+</p>
+<p>
+The <span class="emphasis"><em>stackshift</em></span> attribute is also mandatory and indicates the amount the stack
+pointer changes just due to the call mechanism used to access a function with this prototype.
+The call instruction for many processors pushes the return address onto the stack.
+The <span class="emphasis"><em>stackshift</em></span> attribute would typically be 2, 4, or 8, matching the
+code address size, in this case. For link register mechanisms, this attribute is set to zero.
+</p>
+<p>
+The <span class="emphasis"><em>type</em></span> attribute can be used to associate one of Ghidra's <span class="emphasis"><em>generic calling convention</em></span>
+types with the prototype. The possible values are: <span class="emphasis"><em>stdcall</em></span>, <span class="emphasis"><em>cdecl</em></span>,
+<span class="emphasis"><em>fastcall</em></span>, and <span class="emphasis"><em>thiscall</em></span>. Each of these values can be assigned to at most one
+calling convention across the compiler specification. Generic calling conventions are used to encode calling convention
+information in a Ghidra datatype, like a FunctionDefinitionDataType, which can apply to more than one program or architecture.
+</p>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="input_tag"></a>6.3.1. &lt;input&gt;</h4></div></div></div>
+<p>
+The <code class="code">&lt;input&gt;</code> tag lists the resources used to pass input parameters to a function
+with this prototype. The varnodes used for passing are selected by an
+<span class="emphasis"><em>allocation strategy</em></span> (See <a class="xref" href="cspec_parampass.html#strategy" title="6.1. Describing Parameters and Allocation Strategies">Section 6.1, &#8220;Describing Parameters and Allocation Strategies&#8221;</a>)
+from among the resources specified here. The
+<code class="code">&lt;input&gt;</code> tag contains a list of <code class="code">&lt;pentry&gt;</code> sub-tags describing the varnodes.
+Depending on the allocation strategy, the ordering is typically important.
+</p>
+<p>
+The <span class="emphasis"><em>killedbycall</em></span> attribute if true indicates that all storage locations listed in
+the <code class="code">&lt;input&gt;</code> should be considered as killed by call (See <a class="xref" href="cspec_parampass.html#killedbycall" title="6.3.6. &lt;killedbycall&gt;">Section 6.3.6, &#8220;&lt;killedbycall&gt;&#8221;</a>).
+This attribute is optional and defaults to false.
+</p>
+<p>
+The <span class="emphasis"><em>pointermax</em></span> attribute can be used if there is an absolute limit on the size of
+datatypes passed directly using the standard resources. If present and non-zero, the attribute
+indicates the largest number of bytes for a parameter. Bigger inputs are assumed to have a pointer
+passed instead. When a user specifies a function prototype with a big parameter, Ghidra will automatically
+allocate a storage location that holds the pointer. By default, this substitution does not occur, and large
+parameters go through the normal resource allocation process and are assigned storage that holds the whole
+value directly.
+</p>
+<p>
+The <span class="emphasis"><em>thisbeforeretpointer</em></span> indicates how the two hidden parameters, the
+<span class="emphasis"><em>this</em></span> pointer and the hidden return pointer, are ordered on the stack,
+in the rare case where both occur in a single prototype. If
+the attribute is true, the <span class="emphasis"><em>this</em></span> pointer comes first. By default,
+the hidden return will come first.
+</p>
+<p>
+The following is an example tag using the standard allocation strategy with 3 integer registers and 2
+floating-point registers. If there are more parameters of either type, the compiler allocates storage from
+the stack.
+</p>
+<div class="example">
+<a name="idm1118"></a><p class="title"><b>Example 15. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;input&gt;
+    &lt;pentry minsize="1" maxsize="8" metatype="float"&gt;
+      &lt;register name="f1"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="8" metatype="float"&gt;
+      &lt;register name="f2"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="4"&gt;
+      &lt;register name="a0"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="4"&gt;
+      &lt;register name="a1"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="4"&gt;
+      &lt;register name="a2"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="500" align="4"&gt;
+      &lt;addr offset="16" space="stack"/&gt;
+    &lt;/pentry&gt;
+  &lt;/input&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm1120"></a>6.3.2. &lt;output&gt;</h4></div></div></div>
+<p>
+The handling of
+<code class="code">&lt;pentry&gt;</code> subtags within the <code class="code">&lt;output&gt;</code> tag is slightly different
+than for the input case. Technically, this tag is sensitive to the <span class="emphasis"><em>allocation strategy</em></span>
+selected for the prototype. Currently however, all (both) strategies behave the same for the output parameter.
+</p>
+<p>
+When assigning a storage location for a return value of a given data-type, the
+first <code class="code">&lt;pentry&gt;</code> within list that matches the data-type is used as the storage
+location.  If none of the <code class="code">&lt;pentry&gt;</code> storage locations fit the data-type, a
+<span class="emphasis"><em>Hidden Return Parameter</em></span>
+is triggered. An extra hidden input parameter is passed which holds a pointer to where the function
+will store the return value.
+</p>
+<p>
+In the inverse case, the decompiler examines all (possible) output varnodes that have
+a corresponding <code class="code">&lt;pentry&gt;</code> tag in the resource list. The varnode whose corresponding
+tag occurs the earliest in the list becomes the formal return value for the function.
+If an output varnode matches no <code class="code">&lt;pentry&gt;</code>, then it is rejected as a formal return value.
+</p>
+<div class="example">
+<a name="idm1133"></a><p class="title"><b>Example 16. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;output killedbycall="true"&gt;
+    &lt;pentry minsize="4" maxsize="10" metatype="float" extension="float"&gt;
+      &lt;register name="ST0"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="1" maxsize="4"&gt;
+      &lt;register name="EAX"/&gt;
+    &lt;/pentry&gt;
+    &lt;pentry minsize="5" maxsize="8"&gt;
+      &lt;addr space="join" piece1="EDX" piece2="EAX"/&gt;
+    &lt;/pentry&gt;
+  &lt;/output&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm1135"></a>6.3.3. &lt;pentry&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="pentry.htmltable"></a><table xml:id="pentry.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">minsize</code></td>
+  <td></td>
+  <td>Size (in bytes) of smallest variable stored here</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">maxsize</code></td>
+  <td></td>
+  <td>Size (in bytes) of largest variable stored here</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">align</code></td>
+  <td></td>
+  <td>(Optional) Alignment of successive locations within this entry</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">metatype</code></td>
+  <td></td>
+  <td>(Optional) Restriction on datatype:
+  <span class="emphasis"><em>unknown</em></span>, <span class="emphasis"><em>float</em></span>, <span class="emphasis"><em>int</em></span>, <span class="emphasis"><em>uint</em></span>,
+  or <span class="emphasis"><em>ptr</em></span>
+</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">extension</code></td>
+  <td></td>
+  <td>(Optional) How small values are extended: <span class="emphasis"><em>sign</em></span>, <span class="emphasis"><em>zero</em></span>, <span class="emphasis"><em>inttype</em></span>, <span class="emphasis"><em>float</em></span>,
+  or <span class="emphasis"><em>none</em></span>
+</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;register&gt;</code></td>
+  <td></td>
+  <td>Storage location of the entry</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">name</code></td>
+  <td>Name of register</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;addr&gt;</code></td>
+  <td></td>
+  <td>(alternate form)</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">space</code></td>
+  <td>Address space of the location</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">offset</code></td>
+  <td>Offset (in bytes) of location</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+The <code class="code">&lt;pentry&gt;</code> tag describes the individual memory resources that make up both
+the <code class="code">&lt;input&gt;</code> and <code class="code">&lt;output&gt;</code> resource lists. These
+are consumed by the allocation strategy as it assigns storage for parameters and return values.
+Attributes describe restrictions on how a particular <code class="code">&lt;pentry&gt;</code> resource
+can be used.
+</p>
+<p>
+The storage for the entry is specified by either the <code class="code">&lt;register&gt;</code> or the
+<code class="code">&lt;addr&gt;</code> subtag.  The <code class="code">minsize</code> and <code class="code">maxsize</code> attributes
+restrict the size of the parameter to which the entry is assigned, and the <code class="code">metatype</code>
+attribute restricts the type of the parameter.
+</p>
+<p>
+Metatype refers to the <span class="emphasis"><em>class</em></span>
+of the datatype, independent of size: integer, unsigned integer, floating-point, or pointer. The
+default is <code class="code">unknown</code> or no type restriction. The <code class="code">&lt;metatype&gt;</code> can
+be used to split out a separate floating-point resource list for some allocation strategies.
+In the <span class="emphasis"><em>standard</em></span> strategy for instance, any <code class="code">&lt;pentry&gt;</code> that
+has the attribute <code class="code">metatype="float"</code> is pulled out into a separate list from all the other entries.
+</p>
+<p>
+The optional <code class="code">extension</code> attribute indicates that variables are extended to fill the
+entire location, if the datatype would otherwise occupy fewer bytes. The <span class="emphasis"><em>type</em></span>
+of extension depends on this attribute's value: <code class="code">zero</code> for zero extension,
+<code class="code">sign</code> for sign extension, and <code class="code">float</code> for floating-point extension.
+A value of <code class="code">inttype</code> indicates the value is either sign or zero extended depending on
+the original datatype.  The default is <code class="code">none</code> for no extension.
+</p>
+<p>
+The <code class="code">align</code> attribute indicates that multiple variables can be drawn from the
+<code class="code">pentry</code> resource.  The first variable occupies bytes starting with the address
+of the storage location specified in the tag.  Additional variables start at the next available
+aligned byte.  The attribute value must be a positive integer that specifies the alignment. This
+is typically used to model parameters pulled from a stack resource.  The example below draws
+up to 500 bytes of parameters from the stack, which are 4 byte aligned, starting at an offset
+of 16 bytes from the initial value of the stack pointer.
+</p>
+<div class="example">
+<a name="idm1239"></a><p class="title"><b>Example 17. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;pentry minsize="1" maxsize="500" align="4"&gt;
+    &lt;addr space="stack" offset="16"/&gt;
+  &lt;/pentry&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="proto_returnaddress"></a>6.3.4. &lt;returnaddress&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="proto_returnaddress.htmltable"></a><table xml:id="proto_returnaddress.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><span class="emphasis"><em>&lt;register&gt; or &lt;varnode&gt;</em></span></td>
+  <td></td>
+  <td>One <span class="emphasis"><em>varnode</em></span> tag</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This is an optional tag that describes where the <span class="emphasis"><em>return address</em></span> is stored, upon
+entering a function. If present, it overrides the default value for functions that use this particular
+prototype model. (See <a class="xref" href="cspec_specialreg.html#return_address" title="5.2. &lt;returnaddress&gt;">Section 5.2, &#8220;&lt;returnaddress&gt;&#8221;</a>) It takes a single
+<span class="bold"><strong>varnode tag</strong></span> describing the storage location.
+</p>
+<div class="example">
+<a name="idm1264"></a><p class="title"><b>Example 18. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;returnaddress&gt;
+    &lt;register name="RA" /&gt;
+  &lt;/returnaddress&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm1266"></a>6.3.5. &lt;unaffected&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="unaffected.htmltable"></a><table xml:id="unaffected.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><span class="emphasis"><em>&lt;register&gt; or &lt;varnode&gt;</em></span></td>
+  <td></td>
+  <td>(1 or more) <span class="emphasis"><em>varnode</em></span> tags</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This tag lists one or more storage locations that the compiler knows will not be modified by any sub-function.
+Each storage location is specified as a <span class="bold"><strong>varnode tag</strong></span>.
+</p>
+<p>
+By contract,
+sub-functions must either not touch these locations at all, or they must save off the value and then restore it
+before returning to their caller.  Many ABI documents refer to these as <span class="emphasis"><em>saved registers</em></span>.
+Fundamentally, this allows the decompiler to propagate values across function calls. Without this tag,
+because it is generally looking at a single function in isolation, the decompiler doesn't have enough
+information to safely allow this kind of propagation.
+</p>
+<div class="example">
+<a name="idm1289"></a><p class="title"><b>Example 19. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;unaffected&gt;
+    &lt;register name="ESP"/&gt;
+    &lt;register name="EBP"/&gt;
+  &lt;/unaffected&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="killedbycall"></a>6.3.6. &lt;killedbycall&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="killedbycall.htmltable"></a><table xml:id="killedbycall.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><span class="emphasis"><em>&lt;register&gt; or &lt;varnode&gt;</em></span></td>
+  <td></td>
+  <td>(1 or more) <span class="emphasis"><em>varnode</em></span> tags</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This tag lists one or more storage locations, each specified as a <span class="bold"><strong>varnode tag</strong></span>,
+whose value should be considered killed by call.
+</p>
+<p>
+A register or other storage location is <span class="emphasis"><em>killed by call</em></span> if, from the point
+of view of the calling function, the value of the register before a sub-function call is unrelated
+to its value after the call. This is effectively the opposite of the <code class="code">&lt;unaffected&gt;</code>
+tag which specifies that the value is unchanged across the call.
+</p>
+<p>
+A storage location marked neither <code class="code">&lt;unaffected&gt;</code> or <code class="code">&lt;killedbycall&gt;</code>
+is treated as if it <span class="emphasis"><em>may</em></span> hold different values before and after the call. In other words,
+the storage location represents the same high-level variable before and after, but the call may
+modify the value.
+</p>
+<div class="example">
+<a name="idm1319"></a><p class="title"><b>Example 20. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;killedbycall&gt;
+    &lt;register name="ECX"/&gt;
+    &lt;register name="EDX"/&gt;
+  &lt;/killedbycall&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm1321"></a>6.3.7. &lt;likelytrash&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="likelytrash.htmltable"></a><table xml:id="likelytrash.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><span class="emphasis"><em>&lt;register&gt; or &lt;varnode&gt;</em></span></td>
+  <td></td>
+  <td>(1 or more) <span class="emphasis"><em>varnode</em></span> tags</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This tag lists one or more storage locations specified as a <span class="bold"><strong>varnode tag</strong></span>.
+In specialized cases, compilers can move around what seem like input values to functions, but the
+values are actually unused and the movement is incidental. The canonical example, is the push of a register
+on the stack, where the code is simply trying to make space on the stack.
+</p>
+<p>
+If there is movement and no other explicit manipulation of the input value in a storage location
+tagged this way, the decompiler will treat the movement as dead code.
+</p>
+<div class="example">
+<a name="idm1343"></a><p class="title"><b>Example 21. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;likelytrash&gt;
+    &lt;register name="ECX"/&gt;
+  &lt;/likelytrash&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+<div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="idm1345"></a>6.3.8. &lt;localrange&gt;</h4></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="localrange.htmltable"></a><table xml:id="localrange.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">&lt;range&gt;</code></td>
+  <td></td>
+  <td>(1 or more) Range of bytes eligible for local variables</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">space</code></td>
+  <td>Address space containing range (Usually "stack")</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">first</code></td>
+  <td>(Optional) Starting byte offset of range, default is 0</td>
+</tr>
+<tr>
+  <td></td>
+  <td><code class="code">last</code></td>
+  <td>(Optional) Ending byte offset, default is maximal offset of space</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This tag lists one or more <code class="code">&lt;range&gt;</code> tags that explicitly describe
+all the possible ranges on the stack that can hold mapped local variables other than
+parameters. Individual functions will be assumed to use some subset of this region.
+The <span class="emphasis"><em>first</em></span> and <span class="emphasis"><em>last</em></span> attributes
+to the <code class="code">&lt;range&gt;</code> tag give offsets relative to the incoming value
+of the stack pointer. This affects the decompiler's reconstruction of the stack frame
+for a function and parameter recovery.
+</p>
+<p>
+Omitting this tag and accepting the default is often sufficient. The default sets the local
+range as all bytes not yet pushed on the stack, where the incoming
+stack pointer points to the last byte pushed. An explicit tag is useful when a specific
+region needs to be added to or
+excised from the default. The following example is for the 64-bit x86 prototype model, where
+the caller reserves extra space on the stack for register parameters that needs
+to be added to the default. The <code class="code">&lt;localrange&gt;</code> tag replaces the default,
+so it needs to specify the default range if it wants to keep it.
+</p>
+<div class="example">
+<a name="idm1385"></a><p class="title"><b>Example 22. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;localrange&gt;
+    &lt;range space="stack" first="0xfffffffffff0bdc1" last="0xffffffffffffffff"/&gt;
+    &lt;range space="stack" first="8" last="39"/&gt;
+  &lt;/localrange&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="cspec_specialreg.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> </td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">5. Compiler Special Purpose Registers </td>
+<td width="20%" align="center"><a accesskey="h" href="cspec.html">Home</a></td>
+<td width="40%" align="right" valign="top"> </td>
+</tr>
+</table>
+</div>
+</body>
+</html>

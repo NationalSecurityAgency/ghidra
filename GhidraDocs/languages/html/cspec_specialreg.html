@@ -1,0 +1,159 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>5. Compiler Special Purpose Registers</title>
+<link rel="stylesheet" type="text/css" href="Frontpage.css">
+<link rel="stylesheet" type="text/css" href="languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="cspec.html" title="Compiler Specification">
+<link rel="up" href="cspec.html" title="Compiler Specification">
+<link rel="prev" href="cspec_scopememory.html" title="4. Compiler Scoping and Memory Access">
+<link rel="next" href="cspec_parampass.html" title="6. Parameter Passing">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">5. Compiler Special Purpose Registers</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="cspec_scopememory.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="cspec_parampass.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="sect1">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="cspec_specialreg"></a>5. Compiler Special Purpose Registers</h2></div></div></div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="idm817"></a>5.1. &lt;stackpointer&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="stackpointer.htmltable"></a><table xml:id="stackpointer.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody>
+<tr>
+  <td align="right"><code class="code">register</code></td>
+  <td></td>
+  <td>Name of register to use as stack pointer</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">space</code></td>
+  <td></td>
+  <td>Address space that will hold the <span class="emphasis"><em>stack</em></span>
+</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">growth</code></td>
+  <td></td>
+  <td>(Optional) <span class="emphasis"><em>negative</em></span> or <span class="emphasis"><em>positive</em></span>
+</td>
+</tr>
+<tr>
+  <td align="right"><code class="code">reversejustify</code></td>
+  <td></td>
+  <td>(Optional) <span class="emphasis"><em>true</em></span> or <span class="emphasis"><em>false</em></span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+The <code class="code">&lt;stackpointer&gt;</code> tag informs Ghidra of the main
+stack mechanism for the compiler.  The <code class="code">register</code> attribute
+gives the name of the register that holds the current offset into the
+stack, and the <code class="code">space</code> attribute specifies the name of the
+address space that holds the actual data.  This tag triggers the
+creation of a formal <span class="emphasis"><em>stack</em></span> space.  A separate stack
+space exists virtually for each function being analyzed where offsets
+are calculated relative to the incoming value of this register.  This provides
+a <span class="emphasis"><em>concrete</em></span> storage location for a function's local variables
+even though the true location is dynamically determined.
+</p>
+<p>
+By default the stack is assumed to grow in the <span class="emphasis"><em>negative</em></span> direction,
+meaning that entries which are deeper on the stack are stored at larger offsets, and each
+new entry pushed on the stack causes the stackpointer register to be decremented. But this
+can be changed by setting the <code class="code">growth</code> attribute to <span class="emphasis"><em>positive</em></span>,
+which reverses the direction that new entries are pushed on the stack.
+</p>
+</div>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="return_address"></a>5.2. &lt;returnaddress&gt;</h3></div></div></div>
+<p>
+</p>
+<div class="table">
+<a name="returnaddress.htmltable"></a><table xml:id="returnaddress.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%">
+<col width="15%">
+<col width="61%">
+<thead><tr>
+  <td align="center" colspan="2"><span class="bold"><strong>Attributes and Children</strong></span></td>
+  <td></td>
+</tr></thead>
+<tbody><tr>
+  <td align="right"><span class="emphasis"><em>&lt;register&gt; or &lt;varnode&gt;</em></span></td>
+  <td></td>
+  <td>One <span class="emphasis"><em>varnode</em></span> tag</td>
+</tr></tbody>
+</table>
+</div>
+<p>
+</p>
+<p>
+This tag describes how the return address is stored, upon entry to a function.
+It takes a single varnode sub-tag describing the storage location (See <a class="xref" href="cspec.html#varnode_tag" title="1.1. Varnode Tags">Section 1.1, &#8220;Varnode Tags&#8221;</a>).
+In many cases,
+the decompiler can eliminate return value data-flow without knowing this information
+because the value is never used within the function and other parameter passing is explicitly laid out. Sometimes however,
+return values can look like part of a structure allocated on the stack or can be confused with other data-flow. In these
+cases, the <code class="code">&lt;returnaddress&gt;</code> tag can help by making the standard storage location explicit.
+</p>
+<p>
+The storage location of the return address is actually a property of a prototype model. This tag defines
+a global default for all prototype models, but it can be overridden for individual prototype models.
+See <a class="xref" href="cspec_parampass.html#proto_returnaddress" title="6.3.4. &lt;returnaddress&gt;">Section 6.3.4, &#8220;&lt;returnaddress&gt;&#8221;</a>.
+</p>
+<div class="example">
+<a name="idm889"></a><p class="title"><b>Example 14. </b></p>
+<div class="example-contents"><pre class="programlisting">
+  &lt;returnaddress&gt;
+    &lt;varnode space="stack" offset="0" size="4"/&gt;
+  &lt;/returnaddress&gt;
+</pre></div>
+</div>
+<br class="example-break">
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="cspec_scopememory.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="cspec_parampass.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">4. Compiler Scoping and Memory Access </td>
+<td width="20%" align="center"><a accesskey="h" href="cspec.html">Home</a></td>
+<td width="40%" align="right" valign="top"> 6. Parameter Passing</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

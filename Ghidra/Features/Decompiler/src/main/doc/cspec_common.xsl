@@ -1,11 +1,9 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
 
-  <xsl:import href="/usr/share/sgml/docbook/stylesheet/xsl/docbook-xsl/html/docbook.xsl"/>
-
   <xsl:param name="generate.toc">
     article/appendix  nop
-    article   title
+    article   title,toc
     book      toc,title,figure,table,example,equation
     chapter   nop
     part      toc,title
@@ -22,9 +20,17 @@
     set       toc,title
   </xsl:param>
 
-  <!-- Use our custom cascading style sheet -->
-  <xsl:param name="html.stylesheet" select="'html/Frontpage.css'"/>
+  <!-- Where does the title go, relative to the object -->
+  <xsl:param name="formal.title.placement">
+    figure after
+    example before
+    equation before
+    table before
+    procedure before
+    task before
+  </xsl:param>
 
-  <xsl:output method="html" encoding="UTF8" indent="yes"/>
+  <!-- Automatically number sections -->
+  <xsl:param name="section.autolabel" select="1"/>
 
 </xsl:stylesheet>
