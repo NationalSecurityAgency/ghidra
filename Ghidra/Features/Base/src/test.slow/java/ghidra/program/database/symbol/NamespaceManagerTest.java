@@ -364,30 +364,26 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		set2.addRange(addr(0x20), addr(0x50));
 		set2.addRange(addr(0x1000), addr(0x3000));
 
-		try {
-			namespaceManager.overlapsNamespace(set2);
+		if (namespaceManager.overlapsNamespace(set2) == null) {
 			Assert.fail("Should overlap!");
-		}
-		catch (OverlappingNamespaceException e) {
 		}
 
 		set2 = new AddressSet();
 		set2.addRange(addr(0xff), addr(0x101));
 		set2.addRange(addr(0x1000), addr(0x3000));
 
-		try {
-			namespaceManager.overlapsNamespace(set2);
+		if (namespaceManager.overlapsNamespace(set2) == null) {
 			Assert.fail("Should overlap!");
 		}
-		catch (OverlappingNamespaceException e) {
-		}
+
 
 		set2 = new AddressSet();
 		set.addRange(addr(0x200), addr(0x210));
 		set.addRange(addr(0x55), addr(0xff));
 		set2.addRange(addr(0x1000), addr(0x3000));
-		namespaceManager.overlapsNamespace(set2);
-
+		if (namespaceManager.overlapsNamespace(set2) != null) {
+			Assert.fail("Should not overlap!");
+		}
 	}
 
 @Test
