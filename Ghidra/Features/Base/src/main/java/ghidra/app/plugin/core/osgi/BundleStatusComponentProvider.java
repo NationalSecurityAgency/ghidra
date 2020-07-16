@@ -248,7 +248,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 	private void showAddBundlesFileChooser() {
 		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(panel);
+			fileChooser = new GhidraFileChooser(getComponent());
 			fileChooser.setMultiSelectionEnabled(true);
 			fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
 			fileChooser.setTitle("Select Bundle(s)");
