@@ -27,15 +27,22 @@ import ghidra.util.HelpLocation;
 public class DefaultGraphDisplayComponentProvider extends ComponentProviderAdapter {
 
 	static final String WINDOW_GROUP = "ProgramGraph";
+	private static final String WINDOW_MENU_GROUP_NAME = "Graph";
 	private DefaultGraphDisplay display;
 
 	DefaultGraphDisplayComponentProvider(DefaultGraphDisplay display, PluginTool pluginTool) {
-		super(pluginTool, "Graph: " + display.getId(), "DefaultGraphDisplay");
+		super(pluginTool, "Graph", "DefaultGraphDisplay");
 		this.display = display;
 		setHelpLocation(new HelpLocation("GraphServices", "Default_Graph_Display"));
 		setIcon(DefaultDisplayGraphIcons.PROGRAM_GRAPH_ICON);
 		setTransient();
 		setWindowGroup(WINDOW_GROUP);
+		setSubTitle(Integer.toString(display.getId()));
+	}
+
+	@Override
+	public String getWindowSubMenuName() {
+		return WINDOW_MENU_GROUP_NAME;
 	}
 
 	@Override
