@@ -66,8 +66,9 @@ public class PythonUtils {
 	public static File setupPythonCacheDir(TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		File cacheDir = new File(Application.getUserTempDirectory(), PYTHON_CACHEDIR);
-		if (!FileUtilities.createDir(cacheDir)) {
+		File devDir = new File(Application.getUserSettingsDirectory(), "dev");
+		File cacheDir = new File(devDir, PYTHON_CACHEDIR);
+		if (!FileUtilities.mkdirs(cacheDir)) {
 			throw new IOException("Failed to create the python cache directory at: " + cacheDir);
 		}
 
