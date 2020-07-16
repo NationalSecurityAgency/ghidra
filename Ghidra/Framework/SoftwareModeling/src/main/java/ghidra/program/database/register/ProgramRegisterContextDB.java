@@ -354,7 +354,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 
 		registers = newLanguage.getRegisters();
 		baseContextRegister = newLanguage.getContextBaseRegister();
-		initNameMap();
+		init();
 
 		registerValueMap.clear();
 		initializedCurrentValues();
