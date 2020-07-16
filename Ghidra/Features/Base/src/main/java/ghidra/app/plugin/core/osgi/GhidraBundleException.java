@@ -79,7 +79,7 @@ public class GhidraBundleException extends OSGiException {
 				default:
 					return "No exception type";
 				case BundleException.UNSPECIFIED:
-					return "UNSPECIFIED";
+					return e.getMessage();
 				// The operation was unsupported. This type can be used anywhere a BundleException can be thrown.
 				case BundleException.UNSUPPORTED_OPERATION:
 					return "UNSUPPORTED_OPERATION";
@@ -99,8 +99,8 @@ public class GhidraBundleException extends OSGiException {
 						return message;
 					}
 					// parse the package constraints from filters in the BundleRequirement string
-					String packages =
-						OSGiUtils.extractPackageNamesFromFailedResolution(bundleException.getMessage())
+					String packages = OSGiUtils
+							.extractPackageNamesFromFailedResolution(bundleException.getMessage())
 							.stream()
 							.distinct()
 							.collect(Collectors.joining("\n"));

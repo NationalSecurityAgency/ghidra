@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.jar.Manifest;
 
+import org.osgi.framework.BundleException;
 import org.osgi.framework.wiring.BundleRequirement;
 
 import aQute.bnd.osgi.Constants;
@@ -62,14 +63,19 @@ public class GhidraJarBundle extends GhidraBundle {
 	}
 
 	@Override
-	public List<BundleRequirement> getAllRequirements() {
+	public List<BundleRequirement> getAllRequirements() throws GhidraBundleException {
 		try (Jar jar = new Jar(file.getFile(true))) {
 			Manifest manifest = jar.getManifest();
-			String importPackageString = manifest.getMainAttributes().getValue(Constants.IMPORT_PACKAGE);
+			String importPackageString =
+				manifest.getMainAttributes().getValue(Constants.IMPORT_PACKAGE);
 			if (importPackageString != null) {
 				return OSGiUtils.parseImportPackage(importPackageString);
 			}
 			return Collections.emptyList();
+		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(this.getLocationIdentifier(), "error parsing imports",
+				e);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);

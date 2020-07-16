@@ -54,6 +54,7 @@ import ghidra.util.task.*;
  * </ul>
  */
 public class BundleHost {
+	public static final String ACTIVATING_BUNDLE_ERROR_MSG = "activating bundle";
 	protected static final boolean STDERR_DEBUGGING = false;
 	private static final String SAVE_STATE_TAG_FILE = "BundleHost_FILE";
 	private static final String SAVE_STATE_TAG_ENABLE = "BundleHost_ENABLE";
@@ -129,8 +130,8 @@ public class BundleHost {
 	}
 
 	/**
-	 * If there is currently a bundle managed with file {@code bundleFile},
-	 * return its {@link GhidraBundle}, otherwise return {@code null}. 
+	 * Assuming there is currently a bundle managed with file {@code bundleFile},
+	 * return its {@link GhidraBundle}, otherwise show an error dialog and return {@code null}. 
 	 * 
 	 * @param bundleFile the bundleFile of the sought bundle
 	 * @return a {@link GhidraBundle} or {@code null}
@@ -143,6 +144,17 @@ public class BundleHost {
 					" but none was found");
 		}
 		return bundle;
+	}
+
+	/**
+	 * If there is currently a bundle managed with file {@code bundleFile},
+	 * return its {@link GhidraBundle}, otherwise return {@code null}. 
+	 * 
+	 * @param bundleFile the bundleFile of the sought bundle
+	 * @return a {@link GhidraBundle} or {@code null}
+	 */
+	public GhidraBundle getGhidraBundle(ResourceFile bundleFile) {
+		return fileToBundleMap.get(bundleFile);
 	}
 
 	private static GhidraBundle createGhidraBundle(BundleHost bundleHost, ResourceFile bundleFile,
@@ -546,7 +558,7 @@ public class BundleHost {
 		}
 		catch (BundleException e) {
 			GhidraBundleException bundleException =
-				new GhidraBundleException(bundle, "activating bundle", e);
+				new GhidraBundleException(bundle, ACTIVATING_BUNDLE_ERROR_MSG, e);
 			fireBundleException(bundleException);
 			throw bundleException;
 		}
@@ -658,9 +670,15 @@ public class BundleHost {
 
 		monitor.setMaximum(bundlesRemaining.size());
 		while (!bundlesRemaining.isEmpty() && !monitor.isCancelled()) {
-			List<GhidraBundle> resolvableBundles = bundlesRemaining.stream()
-					.filter(bundle -> canResolveAll(bundle.getAllRequirements()))
-					.collect(Collectors.toList());
+			List<GhidraBundle> resolvableBundles = bundlesRemaining.stream().filter(bundle -> {
+				try {
+					return canResolveAll(bundle.getAllRequirements());
+				}
+				catch (GhidraBundleException e) {
+					// failure in last round will set fireBundleException
+				}
+				return false;
+			}).collect(Collectors.toList());
 			if (resolvableBundles.isEmpty()) {
 				// final round, try everything we couldn't resolve to generate errors
 				resolvableBundles = bundlesRemaining;
@@ -677,6 +695,9 @@ public class BundleHost {
 				try {
 					bundle.build(console);
 					activateSynchronously(bundle.getLocationIdentifier());
+				}
+				catch (GhidraBundleException e) {
+					fireBundleException(e);
 				}
 				catch (Exception e) {
 					e.printStackTrace(console);
@@ -799,8 +820,8 @@ public class BundleHost {
 				}
 				if (isSystem != bundle.isSystemBundle()) {
 					bundle.systemBundle = isSystem;
-					Msg.error(this, String.format("Error, bundle %s went from %system to %system", bundleFile,
-						isSystem ? "not " : "", isSystem ? "" : "not "));
+					Msg.error(this, String.format("Error, bundle %s went from %system to %system",
+						bundleFile, isSystem ? "not " : "", isSystem ? "" : "not "));
 				}
 			}
 			else if (isSystem) {
@@ -878,7 +899,8 @@ public class BundleHost {
 					}
 					else {
 						Msg.error(this,
-							String.format("Error, bundle event for non-GhidraBundle: %s\n", osgiBundle.getLocation()));
+							String.format("Error, bundle event for non-GhidraBundle: %s\n",
+								osgiBundle.getLocation()));
 					}
 					break;
 				// force "inactive" updates for all other states
@@ -889,7 +911,8 @@ public class BundleHost {
 					}
 					else {
 						Msg.error(this,
-							String.format("Error, bundle event for non-GhidraBundle: %s\n", osgiBundle.getLocation()));
+							String.format("Error, bundle event for non-GhidraBundle: %s\n",
+								osgiBundle.getLocation()));
 					}
 					break;
 			}

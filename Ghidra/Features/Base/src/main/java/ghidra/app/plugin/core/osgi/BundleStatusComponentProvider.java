@@ -413,6 +413,9 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
 				if (!(bundle instanceof GhidraPlaceholderBundle)) {
 					status.setBusy(true);
+					if (status.getSummary().startsWith(BundleHost.ACTIVATING_BUNDLE_ERROR_MSG)) {
+						status.setSummary("");
+					}
 					bundleHost.enable(bundle);
 					bundles.add(bundle);
 				}
@@ -488,6 +491,9 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
 				if (activate) {
 					bundle.build(console.getStdErr());
+					if (status.getSummary().startsWith(BundleHost.ACTIVATING_BUNDLE_ERROR_MSG)) {
+						status.setSummary("");
+					}
 					bundleHost.activateSynchronously(bundle.getLocationIdentifier());
 				}
 				else { // deactivate
@@ -495,6 +501,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				}
 			}
 			catch (Exception e) {
+				status.setSummary(e.getMessage());
 				Msg.error(this, "Error during activation/deactivation of bundle", e);
 			}
 			finally {

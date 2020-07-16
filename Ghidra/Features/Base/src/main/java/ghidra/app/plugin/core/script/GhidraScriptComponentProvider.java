@@ -1168,13 +1168,28 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void bundleBuilt(GhidraBundle bundle, String summary) {
+			// on enable, build can happen before the refresh populates the info manager with 
+			// this bundle's scripts, so allow for the possibility and create the info here.
 			if (bundle instanceof GhidraSourceBundle) {
 				GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
-				for (ResourceFile sourceFile : sourceBundle.getNewSources()) {
-					if (infoManager.containsMetadata(sourceFile)) {
-						ScriptInfo scriptInfo = infoManager.getExistingScriptInfo(sourceFile);
-						BuildError e = sourceBundle.getErrors(sourceFile);
-						scriptInfo.setCompileErrors(e != null);
+				ResourceFile sourceDirectory = sourceBundle.getFile();
+				if (summary == null) {
+					// a null summary means the build didn't change anything,
+					// so use any errors from the last build
+					for (ResourceFile sourceFile : sourceBundle.getAllErrors().keySet()) {
+						if (sourceFile.getParentFile().equals(sourceDirectory)) {
+							ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);
+							scriptInfo.setCompileErrors(true);
+						}
+					}
+				}
+				else {
+					for (ResourceFile sourceFile : sourceBundle.getNewSources()) {
+						if (sourceFile.getParentFile().equals(sourceDirectory)) {
+							ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);
+							BuildError e = sourceBundle.getErrors(sourceFile);
+							scriptInfo.setCompileErrors(e != null);
+						}
 					}
 				}
 				tableModel.fireTableDataChanged();

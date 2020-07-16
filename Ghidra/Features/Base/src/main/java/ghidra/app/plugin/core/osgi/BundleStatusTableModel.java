@@ -32,8 +32,7 @@ import generic.jar.ResourceFile;
 import generic.util.Path;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.table.column.*;
 
 /**
@@ -60,6 +59,7 @@ public class BundleStatusTableModel
 		super(provider.getTool());
 		this.provider = provider;
 		this.bundleHost = bundleHost;
+
 		statuses = new ArrayList<>();
 		for (GhidraBundle bundle : bundleHost.getGhidraBundles()) {
 			addNewStatus(bundle);
@@ -72,17 +72,12 @@ public class BundleStatusTableModel
 		setDefaultTableSortState(TableSortState.createDefaultSortState(1, true));
 	}
 
-	BundleStatus getStatus(GhidraBundle bundle) {
+	private BundleStatus getStatus(GhidraBundle bundle) {
 		return getStatusFromLoc(bundle.getLocationIdentifier());
 	}
 
-	BundleStatus getStatusFromLoc(String bundleLoc) {
-		BundleStatus status = bundleLocToStatusMap.get(bundleLoc);
-		if (status == null) {
-			Msg.showError(BundleStatusTableModel.this, provider.getComponent(),
-				"bundle status error", "bundle has no status!");
-		}
-		return status;
+	private BundleStatus getStatusFromLoc(String bundleLoc) {
+		return bundleLocToStatusMap.get(bundleLoc);
 	}
 
 	@Override
@@ -93,14 +88,10 @@ public class BundleStatusTableModel
 
 	@Override
 	public void fireTableChanged(TableModelEvent e) {
-		if (SwingUtilities.isEventDispatchThread()) {
-			super.fireTableChanged(e);
-			return;
-		}
-		final TableModelEvent e1 = e;
-		SwingUtilities.invokeLater(() -> BundleStatusTableModel.super.fireTableChanged(e1));
+		Swing.runIfSwingOrRunLater(() -> BundleStatusTableModel.super.fireTableChanged(e));
 	}
 
+	// must be called on the swing thread
 	private void addNewStatusNoFire(GhidraBundle bundle) {
 		BundleStatus status = new BundleStatus(bundle.getFile(), bundle.isEnabled(),
 			bundle.isSystemBundle(), bundle.getLocationIdentifier());
@@ -117,11 +108,14 @@ public class BundleStatusTableModel
 	 *  add new status and fire a table update
 	 */
 	private void addNewStatus(GhidraBundle bundle) {
-		int index = statuses.size();
-		addNewStatusNoFire(bundle);
-		fireTableRowsInserted(index, index);
+		Swing.runLater(() -> {
+			int index = statuses.size();
+			addNewStatusNoFire(bundle);
+			fireTableRowsInserted(index, index);
+		});
 	}
 
+	// must be called from the swing thread
 	private int removeStatusNoFire(BundleStatus status) {
 		if (!status.isReadOnly()) {
 			int statusIndex = statuses.indexOf(status);
@@ -133,24 +127,21 @@ public class BundleStatusTableModel
 	}
 
 	void removeStatus(BundleStatus status) {
-		int rowIndex = removeStatusNoFire(status);
-		if (rowIndex >= 0) {
-			fireTableRowsDeleted(rowIndex, rowIndex);
-		}
-	}
-
-	void remove(int[] modelRows) {
-		List<BundleStatus> toRemove = Arrays.stream(modelRows)
-				.mapToObj(statuses::get)
-				.collect(Collectors.toUnmodifiableList());
-		removeStatuses(toRemove);
+		Swing.runLater(() -> {
+			int rowIndex = removeStatusNoFire(status);
+			if (rowIndex >= 0) {
+				fireTableRowsDeleted(rowIndex, rowIndex);
+			}
+		});
 	}
 
 	void removeStatuses(List<BundleStatus> toRemove) {
-		for (BundleStatus status : toRemove) {
-			removeStatusNoFire(status);
-		}
-		fireTableDataChanged();
+		Swing.runLater(() -> {
+			for (BundleStatus status : toRemove) {
+				removeStatusNoFire(status);
+			}
+			fireTableDataChanged();
+		});
 	}
 
 	/***************************************************/
@@ -188,6 +179,7 @@ public class BundleStatusTableModel
 		return statuses;
 	}
 
+	// only used in testing
 	void setModelData(List<BundleStatus> statuses) {
 		this.statuses = statuses;
 		computeCache();
@@ -283,6 +275,8 @@ public class BundleStatusTableModel
 
 	/** 
 	 * (re)compute cached mapping from bundleloc to bundlepath
+	 * 
+	 * <p>only used in testing
 	 */
 	private void computeCache() {
 		bundleLocToStatusMap.clear();
@@ -298,68 +292,88 @@ public class BundleStatusTableModel
 	protected class MyBundleHostListener implements BundleHostListener {
 		@Override
 		public void bundleBuilt(GhidraBundle bundle, String summary) {
-			BundleStatus status = getStatus(bundle);
-			status.setSummary(summary);
-			int rowIndex = getRowIndex(status);
-			fireTableRowsUpdated(rowIndex, rowIndex);
+			if (summary != null) {
+				Swing.runLater(() -> {
+					BundleStatus status = getStatus(bundle);
+					status.setSummary(summary);
+					int rowIndex = getRowIndex(status);
+					fireTableRowsUpdated(rowIndex, rowIndex);
+				});
+			}
 		}
 
 		@Override
 		public void bundleActivationChange(GhidraBundle bundle, boolean newActivation) {
-			BundleStatus status = getStatus(bundle);
-			int rowIndex = getRowIndex(status);
-			status.setBusy(false);
-			if (newActivation) {
-				status.setActive(true);
-			}
-			else {
-				status.setActive(false);
-			}
-			fireTableRowsUpdated(rowIndex, rowIndex);
+			Swing.runLater(() -> {
+				BundleStatus status = getStatus(bundle);
+				int rowIndex = getRowIndex(status);
+				status.setBusy(false);
+				if (newActivation) {
+					status.setActive(true);
+				}
+				else {
+					status.setActive(false);
+				}
+				fireTableRowsUpdated(rowIndex, rowIndex);
+			});
 		}
 
 		@Override
 		public void bundleAdded(GhidraBundle bundle) {
-			addNewStatus(bundle);
+			Swing.runLater(() -> {
+				addNewStatus(bundle);
+			});
 		}
 
 		@Override
 		public void bundlesAdded(Collection<GhidraBundle> bundles) {
-			int index = statuses.size();
-			for (GhidraBundle bundle : bundles) {
-				addNewStatusNoFire(bundle);
-			}
-			fireTableRowsInserted(index, bundles.size() - 1);
+			Swing.runLater(() -> {
+				int index = statuses.size();
+				for (GhidraBundle bundle : bundles) {
+					addNewStatusNoFire(bundle);
+				}
+				fireTableRowsInserted(index, bundles.size() - 1);
+			});
 		}
 
 		@Override
 		public void bundleRemoved(GhidraBundle bundle) {
-			BundleStatus status = getStatus(bundle);
-			removeStatus(status);
+			Swing.runLater(() -> {
+				BundleStatus status = getStatus(bundle);
+				removeStatus(status);
+			});
 		}
 
 		@Override
 		public void bundlesRemoved(Collection<GhidraBundle> bundles) {
-			List<BundleStatus> toRemove = bundles.stream()
-					.map(BundleStatusTableModel.this::getStatus)
-					.collect(Collectors.toUnmodifiableList());
-			removeStatuses(toRemove);
+			Swing.runLater(() -> {
+				List<BundleStatus> toRemove = bundles.stream()
+						.map(BundleStatusTableModel.this::getStatus)
+						.collect(Collectors.toUnmodifiableList());
+				removeStatuses(toRemove);
+			});
 		}
 
 		@Override
 		public void bundleEnablementChange(GhidraBundle bundle, boolean newEnablement) {
-			BundleStatus status = getStatus(bundle);
-			status.setEnabled(newEnablement);
-			int rowIndex = getRowIndex(status);
-			fireTableRowsUpdated(rowIndex, rowIndex);
+			Swing.runLater(() -> {
+				BundleStatus status = getStatus(bundle);
+				status.setEnabled(newEnablement);
+				int rowIndex = getRowIndex(status);
+				fireTableRowsUpdated(rowIndex, rowIndex);
+			});
 		}
 
 		@Override
 		public void bundleException(GhidraBundleException exception) {
-			BundleStatus status = getStatusFromLoc(exception.getBundleLocation());
-			status.setSummary(exception.getMessage());
-			int rowIndex = getRowIndex(status);
-			fireTableRowsUpdated(rowIndex, rowIndex);
+			Swing.runLater(() -> {
+				BundleStatus status = getStatusFromLoc(exception.getBundleLocation());
+				if (status != null) {
+					status.setSummary(exception.getMessage());
+					int rowIndex = getRowIndex(status);
+					fireTableRowsUpdated(rowIndex, rowIndex);
+				}
+			});
 		}
 	}
 
@@ -416,7 +430,7 @@ public class BundleStatusTableModel
 			if (!status.isEnabled()) {
 				return "(DISABLED)";
 			}
-			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
+			GhidraBundle bundle = bundleHost.getGhidraBundle(status.getFile());
 			if (bundle != null) {
 				Bundle osgiBundle = bundle.getOSGiBundle();
 				if (osgiBundle != null) {
@@ -516,9 +530,9 @@ public class BundleStatusTableModel
 		@Override
 		public String getValue(BundleStatus status, Settings settings, List<BundleStatus> data,
 				ServiceProvider serviceProvider0) throws IllegalArgumentException {
-			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
+			GhidraBundle bundle = bundleHost.getGhidraBundle(status.getFile());
 			if (bundle == null) {
-				return "bundle cache error";
+				return "no bundle";
 			}
 			else if (bundle instanceof GhidraPlaceholderBundle) {
 				// placeholders will have a summary assigned on construction
@@ -539,7 +553,7 @@ public class BundleStatusTableModel
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
 			label.setFont(defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD));
 			label.setText(Path.toPathString(file));
-			GhidraBundle bundle = bundleHost.getExistingGhidraBundle(file);
+			GhidraBundle bundle = bundleHost.getGhidraBundle(file);
 			if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
 				label.setForeground(COLOR_BUNDLE_ERROR);
 			}

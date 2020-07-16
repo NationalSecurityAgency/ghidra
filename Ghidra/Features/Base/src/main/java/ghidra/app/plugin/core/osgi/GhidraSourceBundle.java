@@ -197,13 +197,22 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * get any errors associated with building the given source file.
+	 * Get any errors associated with building the given source file.
 	 * 
 	 * @param sourceFile the source file
 	 * @return a {@link BuildError} object
 	 */
 	public BuildError getErrors(ResourceFile sourceFile) {
 		return buildErrors.get(sourceFile);
+	}
+
+	/**
+	 * Get the mapping from source file to BuildError.
+	 * 
+	 * @return the error file map
+	 */
+	public Map<ResourceFile, BuildError> getAllErrors() {
+		return Collections.unmodifiableMap(buildErrors);
 	}
 
 	private String getPreviousBuildErrors() {
@@ -240,8 +249,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 						requirements = OSGiUtils.parseImportPackage(importPackage);
 					}
 					catch (BundleException e) {
-						throw new GhidraBundleException(getLocationIdentifier(), "parsing metadata",
-							e);
+						throw new GhidraBundleException(getLocationIdentifier(),
+							"@importpackage error", e);
 					}
 					sourceFileToRequirements.put(rootSourceFile, requirements);
 					for (BundleRequirement requirement : requirements) {
@@ -265,13 +274,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	@Override
-	public List<BundleRequirement> getAllRequirements() {
-		try {
-			updateRequirementsFromMetadata();
-		}
-		catch (GhidraBundleException e) {
-			throw new RuntimeException(e);
-		}
+	public List<BundleRequirement> getAllRequirements() throws GhidraBundleException {
+		updateRequirementsFromMetadata();
 		Map<String, BundleRequirement> reqs = getComputedReqs();
 		// insert requirements from a source manifest
 		ResourceFile manifestFile = getSourceManifestFile();
@@ -490,6 +494,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 					getSourceDirectory().toString(), buildErrorsLastTime,
 					buildErrorsLastTime > 1 ? "s" : "");
 				writer.printf("%s\n", getPreviousBuildErrors());
+				writer.flush();
 			}
 		}
 		else {
@@ -515,6 +520,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			bundleHost.notifyBundleBuilt(this, summary);
 			return true;
 		}
+		bundleHost.notifyBundleBuilt(this, null);
 		return false;
 	}
 
@@ -630,7 +636,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 * bundle requirements.
 	 */
 	private BundleJavaManager createBundleJavaManager(PrintWriter writer, Summary summary,
-			List<String> options) throws IOException {
+			List<String> options) throws IOException, GhidraBundleException {
 		final ResourceFileJavaFileManager resourceFileJavaManager = new ResourceFileJavaFileManager(
 			Collections.singletonList(getSourceDirectory()), buildErrors.keySet());
 

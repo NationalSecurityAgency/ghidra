@@ -67,7 +67,9 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		@Override
 		public void bundleBuilt(GhidraBundle gbundle, String summary) {
-			this.lastBuildSummary = summary;
+			if (summary != null) {
+				this.lastBuildSummary = summary;
+			}
 		}
 	}
 

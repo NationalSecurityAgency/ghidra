@@ -26,7 +26,7 @@ public interface BundleHostListener {
 	 * Invoked when a bundle is built.
 	 * 
 	 * @param bundle the bundle
-	 * @param summary a summary of the build
+	 * @param summary a summary of the build, or null if nothing changed (build returned false)
 	 */
 	default void bundleBuilt(GhidraBundle bundle, String summary) {
 		//

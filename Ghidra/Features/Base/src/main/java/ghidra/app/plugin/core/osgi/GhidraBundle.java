@@ -83,7 +83,7 @@ public abstract class GhidraBundle {
 	 */
 	public abstract String getLocationIdentifier();
 
-	abstract List<BundleRequirement> getAllRequirements();
+	abstract List<BundleRequirement> getAllRequirements() throws GhidraBundleException;
 
 	/**
 	 * @return the file where this bundle is loaded from
