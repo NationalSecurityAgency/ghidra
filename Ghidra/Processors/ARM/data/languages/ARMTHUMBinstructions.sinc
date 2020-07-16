@@ -2321,6 +2321,13 @@ define pcodeop ExclusiveAccess;
   Rt1215 = sext(val);
 }
 
+:ldrt^ItCond^".w" 	Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf85 & Rn0003; Rt1215 & thc0811=14 & Immed8
+{
+  build ItCond;
+  local tmp = Rn0003 + Immed8;
+  Rt1215 = *tmp;
+}
+
 @endif # VERSION_6T2 || VERSION_7
 
 :lsl^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=0x0 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
