@@ -19,39 +19,14 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressIterator;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.lang.InstructionPrototype;
-import ghidra.program.model.lang.InsufficientBytesException;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.model.lang.UnknownContextException;
-import ghidra.program.model.lang.UnknownInstructionException;
-import ghidra.program.model.listing.ContextChangeException;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramContext;
-import ghidra.program.model.mem.ByteMemBufferImpl;
-import ghidra.program.model.mem.DumbMemBufferImpl;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.symbol.FlowType;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.*;
 
 /**
  * PseudoDisassembler.java
@@ -452,8 +427,8 @@ public class PseudoDisassembler {
 			byte[] ptrbytes = new byte[pointerSize];
 			if (memory.getBytes(tempAddr, ptrbytes) == ptrbytes.length) {
 				boolean allZero = true;
-				for (int i = 0; i < ptrbytes.length; i++) {
-					if (ptrbytes[i] != 0) {
+				for (byte ptrbyte : ptrbytes) {
+					if (ptrbyte != 0) {
 						allZero = false;
 						break;
 					}
@@ -779,23 +754,24 @@ public class PseudoDisassembler {
 						}
 					}
 					if (flows != null && flows.length > 0) {
-						for (int j = 0; j < flows.length; j++) {
+						for (Address flow : flows) {
 							// does this reference a valid function?
 							if (program != null) {
-								Symbol[] syms = program.getSymbolTable().getSymbols(flows[j]);
-								for (int k = 0; k < syms.length; k++) {
-									if (syms[k].getSymbolType() == SymbolType.FUNCTION) {
+								Symbol[] syms = program.getSymbolTable().getSymbols(flow);
+								for (Symbol sym : syms) {
+									if (sym.getSymbolType() == SymbolType.FUNCTION) {
 										didCallValidSubroutine = true;
 										break;
 									}
 								}
 							}
 							// if respecting execute flag on memory, test to make sure we did flow into non-execute memory
-							if (respectExecuteFlag && !execSet.isEmpty() && !execSet.contains(flows[j])) {
-								if (!flows[j].isExternalAddress()) {
-									MemoryBlock block = memory.getBlock(flows[j]);
+							if (respectExecuteFlag && !execSet.isEmpty() && !execSet.contains(flow)) {
+								if (!flow.isExternalAddress()) {
+									MemoryBlock block = memory.getBlock(flow);
 									// flowing into non-executable, but readable memory is bad
-									if (block != null && block.isRead()) {
+									if (block != null && block.isRead() &&
+										!MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
 										return false;
 									}
 								}
@@ -875,8 +851,8 @@ public class PseudoDisassembler {
 	 */
 	private boolean isReallyReturn(Instruction instr) {
 		PcodeOp[] pcode = instr.getPcode();
-		for (int i = 0; i < pcode.length; i++) {
-			if (pcode[i].getOpcode() == PcodeOp.RETURN) {
+		for (PcodeOp element : pcode) {
+			if (element.getOpcode() == PcodeOp.RETURN) {
 				return true;
 			}
 		}
