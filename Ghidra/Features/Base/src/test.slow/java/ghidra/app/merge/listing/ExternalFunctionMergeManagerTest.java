@@ -3561,7 +3561,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 					func = getExternalFunction(program, new String[] { "user32.dll", "oranges" });
 					func.setCustomVariableStorage(true);
-					changeToRegisterParameter(func, 1, context.getRegister("R2"));
+					changeToRegisterParameter(func, 1, context.getRegister("r2"));
 
 					func = getExternalFunction(program, new String[] { "user32.dll", "pears" });
 					func.getParameter(0).setName("NewName_0", SourceType.USER_DEFINED);

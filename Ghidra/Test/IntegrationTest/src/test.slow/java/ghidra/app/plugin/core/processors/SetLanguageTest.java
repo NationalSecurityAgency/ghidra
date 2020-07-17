@@ -226,9 +226,9 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 			int txId = p.startTransaction("set Language");
 			addrFactory = p.getAddressFactory();
 			ProgramContext pc = p.getProgramContext();
-			Register ax = pc.getRegister("ax");
-			Register ebp = pc.getRegister("ebp");
-			Register ebx = pc.getRegister("ebx");
+			Register ax = pc.getRegister("AX");
+			Register ebp = pc.getRegister("EBP");
+			Register ebx = pc.getRegister("EBX");
 			pc.setValue(ax, addr("0x1001000"), addr("0x1001000"), BigInteger.valueOf(0x1234));
 			pc.setValue(ebp, addr("0x1001000"), addr("0x1001000"), BigInteger.valueOf(0x12345678));
 			pc.setValue(ebx, addr("0x1001000"), addr("0x1001000"), BigInteger.valueOf(0x12345678));
@@ -250,9 +250,9 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			addrFactory = p.getAddressFactory();
 			ProgramContext pc = p.getProgramContext();
-			Register ax = pc.getRegister("ax");
-			Register ebp = pc.getRegister("ebp");
-			Register ebx = pc.getRegister("ebx");
+			Register ax = pc.getRegister("AX");
+			Register ebp = pc.getRegister("EBP");
+			Register ebx = pc.getRegister("EBX");
 			assertEquals(0x1234, pc.getValue(ax, addr("0x1001000"), false).longValue());
 			assertEquals(0x12345678, pc.getValue(ebp, addr("0x1001000"), false).longValue());
 			assertEquals(0x12345678, pc.getValue(ebx, addr("0x1001000"), false).longValue());
@@ -268,9 +268,9 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 		Program p = (Program) notepadFile.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		addrFactory = p.getAddressFactory();
 		ProgramContext pc = p.getProgramContext();
-		Register eax = pc.getRegister("eax");
-		Register esi = pc.getRegister("esi");
-		Register edi = pc.getRegister("edi");
+		Register eax = pc.getRegister("EAX");
+		Register esi = pc.getRegister("ESI");
+		Register edi = pc.getRegister("EDI");
 		try {
 			int txId = p.startTransaction("set Language");
 
