@@ -434,8 +434,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			}
 			symbol = var.getSymbol();
 		}
-		else if ((loc instanceof FunctionSignatureFieldLocation) ||
-			(loc instanceof FunctionReturnTypeFieldLocation)) {
+		else if (loc instanceof FunctionSignatureFieldLocation) {
 			Function function = program.getFunctionManager().getFunctionContaining(addr);
 			if (function == null) {
 				return;

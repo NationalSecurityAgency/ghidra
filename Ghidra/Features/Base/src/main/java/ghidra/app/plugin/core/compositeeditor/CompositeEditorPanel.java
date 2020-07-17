@@ -488,9 +488,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	private void scrollToCell(int rowIndex, int columnIndex) {
 		if (table.getAutoscrolls()) {
 			Rectangle cellRect = table.getCellRect(rowIndex, columnIndex, false);
-			if (cellRect != null) {
-				table.scrollRectToVisible(cellRect);
-			}
+			table.scrollRectToVisible(cellRect);
 		}
 	}
 

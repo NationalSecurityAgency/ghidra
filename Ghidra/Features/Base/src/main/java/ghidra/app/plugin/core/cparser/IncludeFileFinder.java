@@ -98,7 +98,7 @@ public class IncludeFileFinder {
 				fileList.add(new IncludeFile(file));
 			}
 			else if (recursive) {
-				doFindIncludeFiles(file, fileList, recursive);
+				doFindIncludeFiles(file, fileList, true);
 			}
 		}
 	}

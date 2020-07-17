@@ -55,11 +55,11 @@ public class SelectBackRefsAction extends NavigatableContextAction {
 	}
 	/**
 	 * Method called when the action is invoked.
-	 * @param ActionEvent details regarding the invocation of this action
+	 * @param context details regarding the invocation of this action
 	 */
 	@Override
     public void actionPerformed(NavigatableActionContext context) {
-		AddressSetView addressSet = null;
+		AddressSetView addressSet;
 		
 		if (context.hasSelection()) {
 			addressSet = context.getSelection();

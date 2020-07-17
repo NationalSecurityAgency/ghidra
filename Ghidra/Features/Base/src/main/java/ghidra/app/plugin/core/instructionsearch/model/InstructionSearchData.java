@@ -142,18 +142,14 @@ public class InstructionSearchData extends Observable {
 					}
 
 					instructionMetadata = getInstructionMetadata(logger, cu);
-					if (instructionMetadata != null) {
-						instructions.add(instructionMetadata);
-					}
+					instructions.add(instructionMetadata);
 					processOperands(logger, cu, instructionMetadata);
 
 				}
 				else if (cu instanceof Data) {
 					try {
 						instructionMetadata = getInstructionMetadata(cu);
-						if (instructionMetadata != null) {
-							instructions.add(instructionMetadata);
-						}
+						instructions.add(instructionMetadata);
 					}
 					catch (InvalidInputException e) {
 						Msg.showError(this, null, "Parsing error",
@@ -483,9 +479,7 @@ public class InstructionSearchData extends Observable {
 
 		for (int i = 0; i < logger.getNumOperands(); i++) {
 			OperandMetadata operandMetadata = getOperandMetadata(logger, codeUnit, i);
-			if (operandMetadata != null) {
-				instructionMetadata.getOperands().add(operandMetadata);
-			}
+			instructionMetadata.getOperands().add(operandMetadata);
 		}
 	}
 
@@ -658,7 +652,7 @@ public class InstructionSearchData extends Observable {
 	 * Searches through instructions in the given program for a specific byte
 	 * pattern. If found, returns the instruction. i
 	 * 
-	 * @param program the program to search
+	 * @param plugin the program to search
 	 * @param searchBounds the addresses to search
 	 * @param taskMonitor the task monitor
 	 * @param forwardSearch if true, search through addresses forward

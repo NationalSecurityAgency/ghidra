@@ -330,7 +330,7 @@ public class StackEditorPanel extends CompositeEditorPanel {
 	}
 
 	/**
-	 * @param localSizeField
+	 * @param textField
 	 */
 	private void removeFocusListeners(JTextField textField) {
 		FocusListener[] fl = textField.getFocusListeners();

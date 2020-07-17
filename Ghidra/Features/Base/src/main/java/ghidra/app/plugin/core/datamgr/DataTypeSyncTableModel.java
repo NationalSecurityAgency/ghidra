@@ -48,7 +48,6 @@ class DataTypeSyncTableModel extends AbstractSortedTableModel<RowData> {
 	 * Constructs a table model for synchronizing (committing or updating) data types between a
 	 * program and an archive.
 	 * @param list the list of data types to display.
-	 * @param commit true means Commit, false means Update.
 	 */
 	DataTypeSyncTableModel(List<DataTypeSyncInfo> list, Set<DataTypeSyncInfo> preselectedInfos,
 			boolean showSourceChangeTime) {

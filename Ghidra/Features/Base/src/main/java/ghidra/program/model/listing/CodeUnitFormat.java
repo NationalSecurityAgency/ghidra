@@ -446,8 +446,6 @@ public class CodeUnitFormat {
 	 * @param opIndex operand index
 	 * @param func function containing instruction
 	 * @param primaryRef primary reference
-	 * @param referencedVariable optional variable associated with reference
-	 * @param regIndexMap register index map
 	 * @param representationList
 	 * @return true if primaryRef was included in scalar mark-up
 	 */

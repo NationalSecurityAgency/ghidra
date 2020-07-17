@@ -535,10 +535,6 @@ class StackEditorModel extends CompositeEditorModel {
 		if (getLocalSize() == size) {
 			return;
 		}
-		if (size > MAX_LOCAL_SIZE) {
-			throw new UsrException(
-				"Local size cannot exceed 0x" + Integer.toHexString(MAX_LOCAL_SIZE) + ".");
-		}
 		((StackFrameDataType) viewComposite).setLocalSize(size);
 		notifyCompositeChanged();
 	}
@@ -546,10 +542,6 @@ class StackEditorModel extends CompositeEditorModel {
 	void setParameterSize(int size) throws UsrException {
 		if (getParameterSize() == size) {
 			return;
-		}
-		if (size > MAX_PARAM_SIZE) {
-			throw new UsrException(
-				"Parameter size cannot exceed 0x" + Integer.toHexString(MAX_PARAM_SIZE) + ".");
 		}
 		((StackFrameDataType) viewComposite).setParameterSize(size);
 		notifyCompositeChanged();
@@ -1324,13 +1316,6 @@ class StackEditorModel extends CompositeEditorModel {
 		DataTypeManager originalDTM = getOriginalDataTypeManager();
 		DataType newDt = DataTypeHelper.parseDataType(index, dtString, this, originalDTM,
 			provider.getDtmService());
-
-		if (newDt == null) {
-			if (dt != null) {
-				throw new UsrException("No data type was specified.");
-			}
-			throw new CancelledException();
-		}
 
 		int newLength = newDt.getLength();
 

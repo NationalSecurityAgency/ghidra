@@ -51,11 +51,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 	/**
 	 *
-	 * @param treePanel
-	 * @param destNode  destination node for the data; could be null
+	 * @param destinationNode  destination node for the data; could be null
 	 * if this is a "drop anywhere" situation.
-	 * @param data may be a data type or a list of DataTypeTreeNodes
-	 * @param chosenFlavor data flavor that dictates what data is
 	 * @param actionType either ActionType.COPY or ActionTYPE.MOVE
 	 * @param conflictHandler data type conflict handler
 	 */
@@ -129,11 +126,6 @@ public class DataTypeTreeCopyMoveTask extends Task {
 	 *
 	 * @param archive
 	 * @param source
-	 * @param confirmed is a single element array containing tri-state Boolean flag which
-	 * has the following states:
-	 *   null - (initial state) user has not yet been prompted
-	 *   true - user has confirmed performing associations
-	 *   false - user has denied performing associations
 	 * @throws CancelledException if user has cancelled the operation
 	 */
 	private void associateDataTypes(Archive archive, SourceArchive source)
@@ -247,9 +239,8 @@ public class DataTypeTreeCopyMoveTask extends Task {
 				renameAsCopy(destinationCategory, dataType);
 			}
 			final DataType resolvedDT = destinationCategory.addDataType(dataType, conflictHandler);
-			if (resolvedDT instanceof Pointer || resolvedDT instanceof Array ||
-				resolvedDT instanceof BuiltInDataType ||
-				resolvedDT instanceof MissingBuiltInDataType) {
+			if (resolvedDT instanceof Pointer || resolvedDT instanceof Array
+					|| resolvedDT instanceof BuiltInDataType) {
 				return;
 			}
 			if (!resolvedDT.getCategoryPath().equals(destinationCategory.getCategoryPath())) {
@@ -282,18 +273,16 @@ public class DataTypeTreeCopyMoveTask extends Task {
 					baseName = baseName.substring(indexOf + 3);
 				}
 				else {
-					if (indexOf > 5) {
-						if ((baseName.charAt(indexOf - 1) == '_')) {
-							String copyNumber = baseName.substring(5, indexOf - 1);
-							try {
-								Integer.parseInt(copyNumber);
-								baseName = baseName.substring(indexOf + 3);
-							}
-							catch (NumberFormatException e) {
-								// If can't parse number then assume not one of our numbered copies.
-							}
-
+					if ((baseName.charAt(indexOf - 1) == '_')) {
+						String copyNumber = baseName.substring(5, indexOf - 1);
+						try {
+							Integer.parseInt(copyNumber);
+							baseName = baseName.substring(indexOf + 3);
 						}
+						catch (NumberFormatException e) {
+							// If can't parse number then assume not one of our numbered copies.
+						}
+
 					}
 				}
 			}

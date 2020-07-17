@@ -59,7 +59,7 @@ class EditStructureAction extends ListingContextAction {
 		ProgramLocation loc = context.getLocation();
 		Program program = context.getProgram();
 
-		if (!(loc instanceof VariableLocation) && !(loc instanceof VariableCommentFieldLocation)) {
+		if (!(loc instanceof VariableLocation)) {
 			return false;
 		}
 		DataType dt = getDataType(program, (FunctionLocation) loc);

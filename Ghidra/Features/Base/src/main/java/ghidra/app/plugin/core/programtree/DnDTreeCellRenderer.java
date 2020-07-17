@@ -334,7 +334,7 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 		if (dim != null) {
 			return new Dimension(dim.width, dim.height + 2);
 		}
-		return dim;
+		return null;
 	}
 
 	static Icon getDisabledIcon(String imageName, ImageIcon icon) {

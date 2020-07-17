@@ -1413,7 +1413,6 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	}
 
 	private static PluginTool getAnyTool() {
-		PluginTool anyTool = null;
 		Collection<WeakSet<PluginTool>> values = toolMap.values();
 		for (WeakSet<PluginTool> weakSet : values) {
 			for (PluginTool tool : weakSet) {
@@ -1423,7 +1422,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 				}
 			}
 		}
-		return anyTool;
+		return null;
 	}
 
 	private static int toolCount() {

@@ -66,7 +66,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 	}
 
 	/**
-	 * @see ghidra.util.bean.GhidraDialog#applyCallback()
+	 * @see DialogComponentProvider#applyCallback()
 	 */
 	@Override
 	protected void applyCallback() {
@@ -74,7 +74,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 	}
 
 	/**
-	 * @see ghidra.util.bean.GhidraDialog#cancelCallback()
+	 * @see DialogComponentProvider#cancelCallback()
 	 */
 	@Override
 	protected void cancelCallback() {
@@ -82,7 +82,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 	}
 
 	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
+	 * @see DialogComponentProvider#okCallback()
 	 */
 	@Override
 	protected void okCallback() {

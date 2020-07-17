@@ -238,8 +238,6 @@ public class FindDataTypesContainingAction extends DockingAction {
 		}
 		else if (dt instanceof BuiltInDataType) {
 		}
-		else if (dt instanceof MissingBuiltInDataType) {
-		}
 		else if (dt.equals(DataType.DEFAULT)) {
 
 		}

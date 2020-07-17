@@ -162,7 +162,7 @@ public class AddressTable {
 	/**
 	 * Get a generic name for the table
 	 * 
-	 * @param offset from the top of the table, normally 0
+	 * @param offsetLen from the top of the table, normally 0
 	 * @return a general name for the table based on the start and an optional
 	 *         offset
 	 */
@@ -293,7 +293,6 @@ public class AddressTable {
 	 * @param program
 	 * @param start_inst
 	 * @param opindex
-	 * @param table
 	 * @param flagNewCode
 	 * @param monitor
 	 *
@@ -618,7 +617,6 @@ public class AddressTable {
 	 *
 	 * @param program program we are in
 	 * @param start_inst start instruction of the jump table
-	 * @param table
 	 * @param monitor monitor to output results.
 	 */
 	public void fixupFunctionBody(Program program, Instruction start_inst, TaskMonitor monitor) {
@@ -1206,7 +1204,7 @@ public class AddressTable {
 				Data data = definedData.next();
 				// no data found or past end of table
 				Address dataAddr = data.getMinAddress();
-				if (data == null || dataAddr.compareTo(endAddr) > 0) {
+				if (dataAddr.compareTo(endAddr) > 0) {
 					break;
 				}
 				// data found at start of pointer

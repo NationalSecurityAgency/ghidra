@@ -38,8 +38,8 @@ public class MemoryBlockDiff {
 	public static final int COMMENT       = 0x800;
 	public static final int ALL           = 0xFFF;
 	
-	private MemoryBlock block1;
-	private MemoryBlock block2;
+	private final MemoryBlock block1;
+	private final MemoryBlock block2;
 	private int diffFlags;
 	
 	/**
@@ -193,8 +193,6 @@ public class MemoryBlockDiff {
 	/**
 	 * Gets an integer value that has bits set as flags indicating the types of differences
 	 * that exist between the two memory blocks.
-	 * @param block1 the first program's memory block
-	 * @param block2 the second program's memory block
 	 * @return the memory difference flags
 	 */
 	private int getDiffFlags() {

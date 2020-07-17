@@ -120,10 +120,10 @@ public class HexSearchFormat extends SearchFormat {
 		if ((index1 >= 0) && (index2 >= 0)) {
 			return (byte) 0x00;
 		}
-		if ((index1 >= 0) && (index2 < 0)) {
+		if (index1 >= 0) {
 			return (byte) 0x0F;
 		}
-		if ((index1 < 0) && (index2 >= 0)) {
+		if (index2 >= 0) {
 			return (byte) 0xF0;
 		}
 		return (byte) 0xFF;

@@ -150,7 +150,7 @@ public class ChecksumTableModel extends GDynamicColumnTableModel<ChecksumAlgorit
 			else if (o1 != null && o2 == null) {
 				return -1;
 			}
-			else if (o1 == null && o2 != null) {
+			else if (o1 == null) {
 				return 1;
 			}
 			return o1.compareToIgnoreCase(o2);

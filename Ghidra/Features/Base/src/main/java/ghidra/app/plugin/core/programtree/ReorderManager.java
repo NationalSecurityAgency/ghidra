@@ -132,7 +132,7 @@ class ReorderManager {
     /**
      * Add the given data to the destination node.
      * @param destNode destination node for the data.
-     * @param dropNode data to add
+     * @param dropNodes data to add
      */
     void add(ProgramNode destNode, ProgramNode[] dropNodes, int dropAction, int relativeMousePos) 
             throws NotFoundException, CircularDependencyException, DuplicateGroupException {

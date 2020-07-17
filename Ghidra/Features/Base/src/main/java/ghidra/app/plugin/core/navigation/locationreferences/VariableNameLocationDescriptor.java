@@ -36,7 +36,7 @@ class VariableNameLocationDescriptor extends FunctionParameterNameLocationDescri
 	}
 
 	/**
-	 * Note: this is the same as {@link #VariableNameLocationDescriptor(ProgramLocation, Program)}
+	 * Note: this is the same as {@link #VariableNameLocationDescriptor(VariableNameFieldLocation, Program)}
 	 * except that it allows you to specify an alternate home location.  This is useful for
 	 * finding references to function variable names from operand fields.
 	 */

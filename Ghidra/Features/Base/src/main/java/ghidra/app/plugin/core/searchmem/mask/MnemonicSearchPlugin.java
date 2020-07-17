@@ -32,8 +32,8 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
 /**
- * Defines a set of actions that can be performed on a selection to initiate a memory search.  All
- * actions will ultimately open the {@link MemSearchDialog} with the search string field 
+ * Defines a set of actions that can be performed on a selection to initiate a memory search. All
+ * actions will ultimately open the {@link MemorySearchService} with the search string field
  * pre-populated.
  * 
  */
@@ -77,7 +77,7 @@ public class MnemonicSearchPlugin extends Plugin {
 
 	/**
 	 * Retrieves the selection region from the program, builds the search string, and pops
-	 * up the {@link MemSearchDialog}.
+	 * up the {@link MemorySearchService}.
 	 * 
 	 * @param context
 	 * @param useOps
@@ -115,7 +115,7 @@ public class MnemonicSearchPlugin extends Plugin {
 			MaskGenerator generator = new MaskGenerator(maskControl);
 			MaskValue mask = generator.getMask(program, selection);
 
-			// Now build the search string and set up the search service.  This preps the mem search
+			// Now build the search string and set up the search service. This preps the mem search
 			// dialog with the proper search string.
 			if (mask != null) {
 				maskedBitString = createMaskedBitString(mask.getValue(), mask.getMask());

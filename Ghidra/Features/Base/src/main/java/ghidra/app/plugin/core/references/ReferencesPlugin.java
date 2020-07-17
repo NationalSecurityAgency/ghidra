@@ -413,7 +413,6 @@ public class ReferencesPlugin extends Plugin {
 	 * Check a memory address and warn the user if it has an issue.
 	 * 
 	 * @param c parent component or null
-	 * @param mem program memory
 	 * @param addr address to check
 	 * @param refOffset offset from addr
 	 * @return addr to be used or null if user cancels

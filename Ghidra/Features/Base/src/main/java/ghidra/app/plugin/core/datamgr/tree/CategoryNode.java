@@ -287,7 +287,7 @@ public class CategoryNode extends DataTypeTreeNode {
 	 * a cut/paste operation.
 	 * <p>
 	 * This implementation will throw a runtime exception if this method is called and
-	 * {@link #canCutNode()} returns false.
+	 * {@link #canCut()} returns false.
 	 * @param isCut true signals that the node has been cut; false that it is not cut.
 	 */
 	@Override

@@ -90,7 +90,7 @@ class DnDMoveManager {
     /**
      * Add the given data to the destination node.
      * @param destNode destination node for the data.
-     * @param dropNode data to add
+     * @param dropNodes data to add
      * @param dropAction move or copy
      * @param relativeMousePos mouse position within the node:
 	 *  			-1 --> above node,

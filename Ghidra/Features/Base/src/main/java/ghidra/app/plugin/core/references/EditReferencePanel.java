@@ -46,7 +46,7 @@ abstract class EditReferencePanel extends JPanel {
 	 * This initialization is used when adding a new reference.
 	 * @param fromCodeUnit reference source
 	 * @param opIndex reference source operand
-	 * @param fromSubIndex a valid sub-operand index corresponding to the fromOpIndex.  If -1
+	 * @param subOpIndex a valid sub-operand index corresponding to the fromOpIndex.  If -1
 	 * the current location will be used instead of analyzing the from-operand.
 	 * @return true if panel can support specified code unit and operand
 	 */

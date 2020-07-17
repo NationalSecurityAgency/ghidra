@@ -447,7 +447,7 @@ public class ProgramDnDTree extends DragNDropTree {
 		viewList.remove(path);
 		ProgramNode node = (ProgramNode) path.getLastPathComponent();
 		node.setInView(false);
-		if (node == root || (node != root && node.getParent() != null)) {
+		if (node == root || node.getParent() != null) {
 			reloadNode(node);
 		}
 	}
@@ -1547,13 +1547,11 @@ public class ProgramDnDTree extends DragNDropTree {
 	 * TreeTransferable.localTreeNodeFlavor; return null for all other
 	 * data flavors
 	 *
-	 * @exception DuplicateNameException thrown if a module
-	 * already has a group with the same name
 	 * @exception NotFoundException thrown if a child is
 	 * being moved and it is not found in the targetNode module.
-	 * @exception CodeUnitBoundaryException thrown if
 	 * @exception CircularDependencyException thrown if the
 	 * targetNode module is an ancestor of the data module.
+	 * @exception DuplicateGroupException
 	 */
 	@SuppressWarnings("unchecked")
 	// the cast is OK, since it can only be data we expect
@@ -1782,8 +1780,7 @@ public class ProgramDnDTree extends DragNDropTree {
 			}
 		}
 
-		boolean done = false;
-		while (!done) {
+		while (true) {
 			String name = baseName + " (" + index + ")";
 			if (nameIndexer.get(name) < 0) {
 				if (listing.getModule(treeName, name) == null &&
@@ -1793,7 +1790,6 @@ public class ProgramDnDTree extends DragNDropTree {
 			}
 			++index;
 		}
-		return null; // should never get here
 	}
 
 	/**

@@ -42,7 +42,7 @@ class RemoveEquateCmd implements Command {
 
 	/**
 	 * Constructor
-	 * @param equateName name of equate to be removed.
+	 * @param equateNames names of equate to be removed.
 	 */
 	RemoveEquateCmd(String[] equateNames, PluginTool tool) {
 		this.equateNames = equateNames;
@@ -58,7 +58,7 @@ class RemoveEquateCmd implements Command {
 	}
 
 	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
+	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	@Override
 	public boolean applyTo(DomainObject obj) {

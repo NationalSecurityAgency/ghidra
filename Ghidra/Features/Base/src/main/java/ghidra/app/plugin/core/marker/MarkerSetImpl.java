@@ -264,10 +264,7 @@ abstract class MarkerSetImpl implements MarkerSet {
 			if (this.isPreferred() == other.isPreferred()) {
 				result = priority - other.getPriority();
 			}	//otherwise, exactly one isPreferred
-			else if (this.isPreferred()) {
-				result = 1;
-			}
-			else {
+			else if (!this.isPreferred()) {
 				result = -1;
 			}
 		}
@@ -383,8 +380,7 @@ abstract class MarkerSetImpl implements MarkerSet {
 
 	/**
 	 * Get the tooltip for the marker at the specified index and address.
-	 * 
-	 * @param index index of item to navigate to
+	 *
 	 * @param addr address of item to navigate to
 	 * @param x x location of cursor
 	 * @param y y location of cursor

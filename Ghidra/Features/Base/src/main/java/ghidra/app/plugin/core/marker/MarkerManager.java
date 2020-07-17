@@ -370,8 +370,7 @@ public class MarkerManager implements MarkerService {
 	/**
 	 * Method getTooltip for object under cursor
 	 *
-	 * @param x location of cursor
-	 * @param y location of cursor
+	 * @param event
 	 * @return tool tip string for object under cursor
 	 */
 	String getTooltip(MouseEvent event) {

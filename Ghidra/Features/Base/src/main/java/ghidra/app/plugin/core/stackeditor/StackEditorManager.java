@@ -33,7 +33,6 @@ public class StackEditorManager implements EditorListener {
 	/**
 	 * Constructor
 	 * @param plugin the plugin that owns this manager.
-	 * @param program the active program
 	 */
 	public StackEditorManager(StackEditorManagerPlugin plugin) {
 		this.plugin = plugin;

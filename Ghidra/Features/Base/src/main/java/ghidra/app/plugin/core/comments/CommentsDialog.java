@@ -61,7 +61,7 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 	private boolean wasChanged;
 
 	private boolean enterMode = false;
-	private JCheckBox enterBox = new GCheckBox("Enter accepts comment", enterMode);
+	private JCheckBox enterBox = new GCheckBox("Enter accepts comment", false);
 	{
 		enterBox.addChangeListener(new ChangeListener() {
 			@Override

@@ -347,12 +347,11 @@ public class FunctionPlugin extends Plugin implements DataService {
 			return false;
 		}
 
-		if (location instanceof FunctionThunkFieldLocation ||
-			location instanceof FunctionCallingConventionFieldLocation ||
-			location instanceof FunctionInlineFieldLocation ||
-			location instanceof FunctionNameFieldLocation ||
-			location instanceof FunctionNoReturnFieldLocation ||
-			location instanceof FunctionInlineFieldLocation) {
+		if (location instanceof FunctionThunkFieldLocation
+				|| location instanceof FunctionCallingConventionFieldLocation
+				|| location instanceof FunctionInlineFieldLocation
+				|| location instanceof FunctionNameFieldLocation
+				|| location instanceof FunctionNoReturnFieldLocation) {
 
 			// these locations don't have types
 			return false;
@@ -471,9 +470,9 @@ public class FunctionPlugin extends Plugin implements DataService {
 	 * Lay down the specified dataType on a function return, parameter or local variable
 	 * based upon the programActionContext.  Pointer conversion will be handled
 	 * by merging the existing dataType with the specified dataType.
-	 * @param dataType The DataType to create.
+	 * @param dt The DataType to create.
 	 * @param programActionContext action context
-	 * @param promptForConflictRemoval if true and specified dataType results in a storage conflict,
+	 * @param enableConflictHandling if true and specified dataType results in a storage conflict,
 	 * user may be prompted for removal of conflicting variables (not applicable for return type)
 	 * @return True if the DataType could be created at the given location.
 	 */
@@ -484,11 +483,11 @@ public class FunctionPlugin extends Plugin implements DataService {
 	}
 
 	/**
-	 * This method is the same as {@link #createData(DataType, ProgramLocation)}, except that this
+	 * This method is the same as {@link #createData(DataType, ListingActionContext, boolean)}, except that this
 	 * method will use the given value of <tt>convertPointers</tt> to determine if the new
 	 * DataType should be made into a pointer if the existing DataType is a pointer.
 	 * @param dataType The DataType to create.
-	 * @param location The location at which to create the DataType.
+	 * @param context The context which provides the location at which to create the DataType.
 	 * @param convertPointers True signals to convert the given DataType to a pointer if there is
 	 *        an existing pointer at the specified location.
 	 * @param promptForConflictRemoval if true and specified dataType results in a storage conflict,

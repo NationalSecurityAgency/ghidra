@@ -214,10 +214,10 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 			if (i1 == i2) {
 				return 0;
 			}
-			if (i1 == ERROR_IMG && i2 != ERROR_IMG) {
+			if (i1 == ERROR_IMG) {
 				return -1;
 			}
-			if (i1 != ERROR_IMG && i2 == ERROR_IMG) {
+			if (i2 == ERROR_IMG) {
 				return 1;
 			}
 			if (i1 == null) {

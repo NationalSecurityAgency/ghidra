@@ -68,8 +68,7 @@ public class PointerAction extends CompositeEditorTableAction {
 		// Allow the user to get a "doesn't fit" message on contiguous selection.
 		// Also allow message indicating you must have a selection.
 		boolean hasSelection = model.hasSelection();
-		boolean enable = model.getRowCount() > 0 &&
-			(!hasSelection || (hasSelection && model.isContiguousSelection()));
+		boolean enable = model.getRowCount() > 0 && (!hasSelection || model.isContiguousSelection());
 		setEnabled(enable);
 	}
 }

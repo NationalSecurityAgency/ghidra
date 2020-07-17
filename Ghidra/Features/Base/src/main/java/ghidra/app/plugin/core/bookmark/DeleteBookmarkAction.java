@@ -37,7 +37,6 @@ class DeleteBookmarkAction extends DockingAction {
 	/**
 	 * Creates a new action with the given name and associated to the given
 	 * plugin.
-	 * @param id the name for this action.
 	 * @param plugin the plugin this action is associated with.
 	 */
 	DeleteBookmarkAction(BookmarkPlugin plugin, Bookmark bookmark, boolean isOffcut) {
@@ -69,7 +68,7 @@ class DeleteBookmarkAction extends DockingAction {
 
 	/**
 	 * Method called when the action is invoked.
-	 * @param ActionEvent details regarding the invocation of this action
+	 * @param context details regarding the invocation of this action
 	 */
 	@Override
 	public void actionPerformed(ActionContext context) {

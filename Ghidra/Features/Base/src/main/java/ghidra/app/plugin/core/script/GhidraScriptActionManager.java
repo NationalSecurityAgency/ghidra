@@ -129,11 +129,6 @@ class GhidraScriptActionManager {
 				continue;
 			}
 			ResourceFile scriptFile = action.getScript();
-			ScriptInfo info = GhidraScriptUtil.getScriptInfo(scriptFile);
-			if (info == null) {
-				continue;//bad state?
-			}
-
 			KeyStroke stroke = action.getKeyBinding();
 			if (stroke == null) {
 				saveState.putString(scriptFile.getName(), "");

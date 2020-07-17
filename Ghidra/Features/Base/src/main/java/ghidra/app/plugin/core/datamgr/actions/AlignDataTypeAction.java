@@ -44,8 +44,7 @@ public class AlignDataTypeAction extends DockingAction {
 			return false;
 		}
 		DataType dataType = node.getDataType();
-		if (dataType instanceof BuiltInDataType || dataType instanceof Pointer ||
-			dataType instanceof MissingBuiltInDataType) {
+		if (dataType instanceof BuiltInDataType || dataType instanceof Pointer) {
 			return false;
 		}
 		if (!node.isModifiable()) {

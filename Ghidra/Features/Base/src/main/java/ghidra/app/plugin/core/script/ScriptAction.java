@@ -75,7 +75,7 @@ class ScriptAction extends DockingAction {
 		isUserDefinedKeyBinding = false; // reset
 		if (keyBindingData == null) {
 			// simply clearing out any keybinding data settings
-			super.setKeyBindingData(keyBindingData);
+			super.setKeyBindingData(null);
 			return;
 		}
 

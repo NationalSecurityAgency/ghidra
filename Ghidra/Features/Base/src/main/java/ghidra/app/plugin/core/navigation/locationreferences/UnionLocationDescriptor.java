@@ -44,7 +44,7 @@ class UnionLocationDescriptor extends DataTypeLocationDescriptor {
 		//       field a reference will point to. So, grab all references.
 
 		String fieldName = null;
-		ReferenceUtils.findDataTypeReferences(accumulator, union, fieldName, program,
+		ReferenceUtils.findDataTypeReferences(accumulator, union, null, program,
 			useDynamicSearching, monitor);
 	}
 
@@ -72,10 +72,7 @@ class UnionLocationDescriptor extends DataTypeLocationDescriptor {
 		}
 
 		Data nextParent = getParent(parent);
-		if (nextParent != null) {
-			return nextParent;
-		}
-		return data;
+		return nextParent;
 	}
 
 	@Override

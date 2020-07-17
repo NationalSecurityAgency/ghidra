@@ -317,7 +317,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 				// It's possible during a close program operation to have this 
 				// renderer called with a null value. If so, we can't get the 
 				// function so just use the default renderer.
-				return super.getListCellRendererComponent(list, value, index, isSelected,
+				return super.getListCellRendererComponent(list, null, index, isSelected,
 					cellHasFocus);
 			}
 

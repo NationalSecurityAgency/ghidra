@@ -98,8 +98,7 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 			if (node instanceof DataTypeNode) {
 				DataType dataType = ((DataTypeNode) node).getDataType();
 
-				if (dataType instanceof BuiltInDataType ||
-					dataType instanceof MissingBuiltInDataType) {
+				if (dataType instanceof BuiltInDataType) {
 					return builtinFlavors;
 				}
 				return allSupportedFlavors;

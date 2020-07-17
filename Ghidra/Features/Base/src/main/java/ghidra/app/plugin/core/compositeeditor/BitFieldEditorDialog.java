@@ -211,7 +211,8 @@ public class BitFieldEditorDialog extends DialogComponentProvider {
 		if (composite.isInternallyAligned()) {
 			throw new IllegalArgumentException("Aligned use not supported");
 		}
-		String alignmentMode = composite.isInternallyAligned() ? "Aligned" : "Unaligned";
+		composite.isInternallyAligned();
+		String alignmentMode = "Unaligned";
 		String type = (composite instanceof Union) ? "Union" : "Structure";
 		return alignmentMode + " " + type;
 	}

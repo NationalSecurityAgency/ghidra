@@ -24,7 +24,6 @@ public interface StructureEditorModelListener extends CompositeEditorModelListen
 	 * for the data type being edited.
 	 * Whether the structure is free form, aligned, or packed to a particular maximum alignment.
 	 *
-	 * @param type the new packing state: FREE_FORM, ALIGN, PACK, PACK2, PACK4, or PACK8.
 	 */
 	public abstract void internalAlignmentStateChanged(boolean aligned);
 
@@ -33,7 +32,6 @@ public interface StructureEditorModelListener extends CompositeEditorModelListen
 	 * for the data type being edited.
 	 * Whether the structure is free form, aligned, or packed to a particular maximum alignment.
 	 *
-	 * @param type the new packing state: FREE_FORM, ALIGN, PACK, PACK2, PACK4, or PACK8.
 	 */
 	public abstract void packStateChanged(long packingValue);
 

@@ -89,12 +89,10 @@ class ProgramTreeActionManager implements ClipboardOwner {
 		this.tree = tree;
 		pasteMgr.setProgramTreeView(tree);
 
-		if (tree != null) {
-			DefaultTreeModel treeModel = (DefaultTreeModel) tree.getModel();
-			root = (ProgramNode) treeModel.getRoot();
-			viewList = tree.getViewList();
-			tree.addTreeSelectionListener(selectionListener);
-		}
+		DefaultTreeModel treeModel = (DefaultTreeModel) tree.getModel();
+		root = (ProgramNode) treeModel.getRoot();
+		viewList = tree.getViewList();
+		tree.addTreeSelectionListener(selectionListener);
 	}
 
 	/**
@@ -1268,11 +1266,6 @@ class ProgramTreeActionManager implements ClipboardOwner {
 			}
 			List<ProgramNode> list =
 				(List<ProgramNode>) t.getTransferData(TreeTransferable.localTreeNodeFlavor);
-
-			if (list == null) {
-				// SCR 7990--something bad has happened to the copy buffer
-				return false;
-			}
 
 			boolean pasteEnabled = false;
 			for (int i = 0; i < list.size(); i++) {

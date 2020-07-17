@@ -490,9 +490,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				if (codeUnit instanceof Instruction) {
 					isInstruction = true;
 				}
-				else {
-					isInstruction = false;
-				}
 				searchDialog.setValueFieldText(textSelection);
 				searchDialog.setCurrentField(textField, isInstruction);
 			}
@@ -657,7 +654,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		private Highlight[] getHighlights(String text, int cursorTextOffset) {
 
 			String matchStr = searchOptions.getText().trim();
-			if (matchStr == null || text == null) {
+			if (text == null) {
 				return NO_HIGHLIGHTS;
 			}
 

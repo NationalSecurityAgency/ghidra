@@ -52,7 +52,6 @@ public class OffsetTableDialog extends DialogComponentProvider {
 
 	/**
 	 * Construct a new dialog
-	 * @param parent parent of this dialog
 	 * @param defaultAddress address to put in the address field as a default
 	 * @param addrFactory address factory required by AddressInput object
 	 */

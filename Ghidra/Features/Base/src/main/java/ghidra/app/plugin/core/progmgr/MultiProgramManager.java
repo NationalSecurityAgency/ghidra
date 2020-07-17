@@ -272,7 +272,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	}
 
 	/**
-	 * @param p
+	 * @param newProgram
 	 */
 	private void fireActivatedEvent(Program newProgram) {
 		plugin.firePluginEvent(new ProgramActivatedPluginEvent("", newProgram));

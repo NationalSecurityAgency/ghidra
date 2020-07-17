@@ -51,11 +51,6 @@ class XRefLocationDescriptor extends LocationDescriptor {
 				"Every location descriptor must have a valid home address");
 		}
 
-		if (xrefAddress == null) {
-			label = getLabelForLocation(programLocation);
-			return;
-		}
-
 		label = getLabelForLocation(programLocation);
 	}
 

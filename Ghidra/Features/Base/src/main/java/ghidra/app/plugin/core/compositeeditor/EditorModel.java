@@ -322,8 +322,7 @@ public interface EditorModel {
 	public void cycleDataType(CycleGroup cycleGroup);
 
 	/**
-	 * 
-	 * @param parent
+	 *
 	 * @throws UsrException
 	 */
 	public void createArray() throws UsrException;

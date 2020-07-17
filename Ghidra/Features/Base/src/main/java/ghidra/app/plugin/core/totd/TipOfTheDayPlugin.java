@@ -104,7 +104,7 @@ public class TipOfTheDayPlugin extends Plugin implements FrontEndOnly {
 		final boolean showTips = Boolean.parseBoolean(showTipsStr);
 		if (showTips) {
 			tipIndex = (++tipIndex) % dialog.getNumberOfTips();
-			writePreferences(tipIndex, showTips);
+			writePreferences(tipIndex, true);
 		}
 
 		dialog.setTipIndex(tipIndex);

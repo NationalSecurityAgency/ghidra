@@ -106,9 +106,7 @@ public class MaskContainer {
 
 	/**
 	 * Returns the bytes and masking merged together, as a binary string.
-	 * 
-	 * @param mask
-	 * @param value
+	 *
 	 * @return list containing the value (index 0) and mask (index 1).
 	 */
 	public String toBinaryString() {

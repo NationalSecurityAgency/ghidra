@@ -137,8 +137,6 @@ public class GoToAddressLabelPlugin extends Plugin implements OptionsChangeListe
 	 * Notification that an option changed.
 	 *
 	 * @param options options object containing the property that changed
-	 * @param group name of the group to which this option is associated,
-	 *        null if not associated with any group
 	 * @param opName name of option that changed
 	 * @param oldValue old value of the option
 	 * @param newValue new value of the option

@@ -213,7 +213,7 @@ public class DecimalSearchFormat extends SearchFormat {
 	/**
 	 * Checks for parsable characters that we don't want to allow (dDfF) and removes
 	 * the start of an exponent expression (example 2.34e would become 2.34. So woudl 2.34-)
-	 * @param the string that will be parsed into a float or double
+	 * @param tok string that will be parsed into a float or double
 	 * @return the parsable string
 	 * @exception NumberFormatException thrown if the the tok contains any of "dDfF".
 	 */

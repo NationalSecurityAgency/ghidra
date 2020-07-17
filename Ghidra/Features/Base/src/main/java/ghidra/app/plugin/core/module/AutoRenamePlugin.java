@@ -172,7 +172,6 @@ public class AutoRenamePlugin extends ProgramPlugin {
         /**
          * Construct a new PluginAction
          * @param owner owner of the action
-         * @param plugin instance of module sort plugin
          */
         public AutoRenameAction(String owner) {
             super("Rename Fragment from Program Tree View", owner);
@@ -190,7 +189,6 @@ public class AutoRenamePlugin extends ProgramPlugin {
         /**
          * Determine if the Fragment Auto-Rename action should be visible within
          * the popup menu for the selected nodes within the Program Tree View.
-         * @param activeObj the object under the mouse location for the popup.
          * @return true if action should be made visible in popup menu.
          */
     	@Override

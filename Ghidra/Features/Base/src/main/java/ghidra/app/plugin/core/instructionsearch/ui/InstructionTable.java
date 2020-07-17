@@ -546,7 +546,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	/**
 	 * Creates a new {@link InstructionTableDataObject} for the given operand.
 	 * 
-	 * @param mnemonic the mnemonic ID
+	 * @param row the row in the table
 	 * @param col the column in the table
 	 * @param dataObjects the set of data objects to modify
 	 */

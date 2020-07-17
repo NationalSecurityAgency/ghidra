@@ -43,10 +43,8 @@ class DataTypeComparePanel extends JPanel {
 
 	/**
 	 * Creates a panel for viewing two data types side by side.
-	 * @param dataType1 the first data type to display.
-	 * @param dataType2 the second data type to display.
-	 * @param one_to_two true if this panel should display an arrow from data type 1 to data type 2.
-	 * 		false if the should be from 2 to 1.
+	 * @param clientName
+	 * @param sourceName
 	 */
 	DataTypeComparePanel(String clientName, String sourceName) {
 		super(new GridLayout(0, 2));

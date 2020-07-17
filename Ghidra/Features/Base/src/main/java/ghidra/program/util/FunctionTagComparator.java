@@ -47,8 +47,8 @@ class FunctionTagComparator extends ProgramDiff.ProgramDiffComparatorImpl {
 	 *  equal to (at the same spot in memory), or greater than (comes after 
 	 *  it in memory) the second comment's address.
 	 *  
-	 * @param obj1 the address for the first program's tag.
-	 * @param obj2 the address for the second program's tag.
+	 * @param o1 the address for the first program's tag.
+	 * @param o2 the address for the second program's tag.
 	 * @return -1 if the first comes before the second in memory. 
 	 *          0 if the objects are at the same spot in memory.
 	 *          1 if the first comes after the second in memory.

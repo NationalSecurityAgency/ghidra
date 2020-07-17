@@ -270,7 +270,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 			ProgramLocation adjustedStart = new ProgramLocation(program, maxAddress);
 			if (!adjustedStart.getAddress().equals(maxAddress)) {
 				trimmedSet =
-					trimAddressSet(program, trimmedSet, adjustedStart.getAddress(), forward);
+					trimAddressSet(program, trimmedSet, adjustedStart.getAddress(), false);
 			}
 		}
 		return trimmedSet;

@@ -92,7 +92,7 @@ class RegisterContextBuilder {
 	 * method should be invoked first.
 	 * @param instr set instruction or first instruction of range.
 	 * @param newValue register value
-	 * @param valueAssumed if false the value set point will be at the fall-through
+	 * @param assumed if false the value set point will be at the fall-through
 	 * address of the current instruction (normal set operation), if true the value
 	 * assumed at the start of the specified instr.  If false and instr does not
 	 * have a fall-through, this method has not affect.

@@ -259,8 +259,7 @@ public class NGramUtils {
 
 	/**
 	 * Read in model files, smooth counts, and calculate log probabilities. 
-	 * 
-	 * @param charFileToSlurp  File containing character ngram counts
+	 *
 	 * @throws IOException
 	 */
 	private static void ingestModel(InputStream modelStream, String modelName) throws IOException {

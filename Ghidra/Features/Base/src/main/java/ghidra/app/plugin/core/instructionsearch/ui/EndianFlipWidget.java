@@ -37,8 +37,7 @@ public class EndianFlipWidget extends ControlPanelWidget {
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param plugin
+	 *
 	 * @param title
 	 * @param parent
 	 */
@@ -77,7 +76,7 @@ public class EndianFlipWidget extends ControlPanelWidget {
 	 * Returns the given string as a list of byte strings. 
 	 * 
 	 * @param token the string the parse
-	 * @param tokenLength the length of a byte (2 for hex, 8 for binary)
+	 * @param byteLength the length of a byte (2 for hex, 8 for binary)
 	 * @return
 	 */
 	private List<String> getByteStrings(String token, int byteLength) {

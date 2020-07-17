@@ -131,7 +131,7 @@ class MemSearchDialog extends DialogComponentProvider {
 
 	void setEndianess(boolean isBigEndian) {
 		if (isBigEndian) {
-			bigEndian.setSelected(isBigEndian);
+			bigEndian.setSelected(true);
 		}
 		else {
 			littleEndian.setSelected(true);

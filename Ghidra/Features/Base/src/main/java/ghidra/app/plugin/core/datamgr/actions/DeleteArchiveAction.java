@@ -78,11 +78,7 @@ public class DeleteArchiveAction extends DockingAction {
 		}
 
 		DataTypeTreeNode node = (DataTypeTreeNode) selectionPaths[0].getLastPathComponent();
-		if (!(node instanceof FileArchiveNode)) {
-			return false;
-		}
 		return node instanceof FileArchiveNode;
-
 	}
 
 	@Override

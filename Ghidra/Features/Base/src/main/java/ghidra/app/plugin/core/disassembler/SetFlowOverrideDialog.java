@@ -59,7 +59,7 @@ class SetFlowOverrideDialog extends DialogComponentProvider {
 	/**
 	 * Constructor
 	 * @param tool plugin tool
-	 * @param Program program
+	 * @param program program
 	 * @param selection program selection
 	 */
 	SetFlowOverrideDialog(PluginTool tool, Program program, ProgramSelection selection) {
