@@ -159,7 +159,7 @@ public class MDFunctionType extends MDType {
 			dmang.insertString(builder, "(");
 			dmang.appendString(builder, ")");
 		}
-		if (hasArgs) {
+		if (hasArgs & argsList != null) {
 			dmang.appendString(builder, "(");
 			argsList.insert(builder);
 			dmang.appendString(builder, ")");
@@ -169,7 +169,7 @@ public class MDFunctionType extends MDType {
 			thisPointerCVMod.insert(cvBuilder);
 			dmang.appendString(builder, cvBuilder.toString());
 		}
-		if (hasReturn && !isTypeCast) {
+		if (hasReturn && retType != null && !isTypeCast) {
 			retType.insert(builder);
 		}
 		if (throwAttribute != null) {

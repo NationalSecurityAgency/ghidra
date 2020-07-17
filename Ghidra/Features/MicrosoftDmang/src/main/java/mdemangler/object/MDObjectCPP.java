@@ -158,7 +158,7 @@ public class MDObjectCPP extends MDObject {
 			return;
 		}
 		MDFunctionType functionType = (MDFunctionType) typeInfo.getMDType();
-		if (functionType.hasReturn()) {
+		if (!functionType.hasReturn() || functionType.getReturnType() == null) {
 			Msg.warn(this, "No return type available to set to cast operator name");
 			return;
 		}

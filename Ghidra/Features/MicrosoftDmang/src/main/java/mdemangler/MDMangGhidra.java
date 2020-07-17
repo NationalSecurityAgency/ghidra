@@ -350,14 +350,14 @@ public class MDMangGhidra extends MDMang {
 			convention = CompilerSpec.CALLING_CONVENTION_thiscall;
 		}
 		function.setCallingConvention(convention);
-		if (functionType.hasReturn()) {
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
 			MDDataType retType = functionType.getReturnType();
 			if (!retType.toString().isEmpty()) {
 				function.setReturnType(processDataType(null, retType));
 			}
 		}
-		if (functionType.hasArgs()) {
-			MDArgumentsList args = functionType.getArgumentsList();
+		MDArgumentsList args = functionType.getArgumentsList();
+		if (functionType.hasArgs() && args != null) {
 			for (int index = 0; index < args.getNumArgs(); index++) {
 				function.addParameter(processDataType(null, args.getArg(index)));
 			}
@@ -414,11 +414,11 @@ public class MDMangGhidra extends MDMang {
 		MDFunctionType functionType = (MDFunctionType) pointerType.getReferencedType();
 		functionPointer.setCallingConvention(functionType.getCallingConvention().toString());
 		functionPointer.setModifier(pointerType.getCVMod().toString());
-		if (functionType.hasReturn()) {
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
 			functionPointer.setReturnType(processDataType(null, functionType.getReturnType()));
 		}
-		if (functionType.hasArgs()) {
-			MDArgumentsList args = functionType.getArgumentsList();
+		MDArgumentsList args = functionType.getArgumentsList();
+		if (functionType.hasArgs() && args != null) {
 			for (int index = 0; index < args.getNumArgs(); index++) {
 				functionPointer.addParameter(processDataType(null, args.getArg(index)));
 			}
@@ -454,11 +454,11 @@ public class MDMangGhidra extends MDMang {
 		MDFunctionType functionType = (MDFunctionType) refType.getReferencedType();
 		functionReference.setCallingConvention(functionType.getCallingConvention().toString());
 		functionReference.setModifier(refType.getCVMod().toString());
-		if (functionType.hasReturn()) {
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
 			functionReference.setReturnType(processDataType(null, functionType.getReturnType()));
 		}
-		if (functionType.hasArgs()) {
-			MDArgumentsList args = functionType.getArgumentsList();
+		MDArgumentsList args = functionType.getArgumentsList();
+		if (functionType.hasArgs() && args != null) {
 			for (int index = 0; index < args.getNumArgs(); index++) {
 				functionReference.addParameter(processDataType(null, args.getArg(index)));
 			}
@@ -475,11 +475,11 @@ public class MDMangGhidra extends MDMang {
 		functionDefinition.setCallingConvention(functionType.getCallingConvention().toString());
 		functionDefinition.setModifier(functionIndirectType.getCVMod().toString());
 		functionDefinition.incrementPointerLevels();
-		if (functionType.hasReturn()) {
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
 			functionDefinition.setReturnType(processDataType(null, functionType.getReturnType()));
 		}
-		if (functionType.hasArgs()) {
-			MDArgumentsList args = functionType.getArgumentsList();
+		MDArgumentsList args = functionType.getArgumentsList();
+		if (functionType.hasArgs() && args != null) {
 			for (int index = 0; index < args.getNumArgs(); index++) {
 				functionDefinition.addParameter(processDataType(null, args.getArg(index)));
 			}
@@ -499,11 +499,11 @@ public class MDMangGhidra extends MDMang {
 		functionDefinition.setCallingConvention(functionType.getCallingConvention().toString());
 		functionDefinition.setModifier(modifierType.getCVMod().toString());
 		functionDefinition.incrementPointerLevels();
-		if (functionType.hasReturn()) {
+		if (functionType.hasReturn() && functionType.getReturnType() != null) {
 			functionDefinition.setReturnType(processDataType(null, functionType.getReturnType()));
 		}
-		if (functionType.hasArgs()) {
-			MDArgumentsList args = functionType.getArgumentsList();
+		MDArgumentsList args = functionType.getArgumentsList();
+		if (functionType.hasArgs() && args != null) {
 			for (int index = 0; index < args.getNumArgs(); index++) {
 				functionDefinition.addParameter(processDataType(null, args.getArg(index)));
 			}
