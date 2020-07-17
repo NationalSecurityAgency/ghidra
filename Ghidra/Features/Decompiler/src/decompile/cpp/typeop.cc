@@ -1356,126 +1356,126 @@ TypeOpBoolOr::TypeOpBoolOr(TypeFactory *t)
 TypeOpFloatEqual::TypeOpFloatEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_EQUAL,"==",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
   behave = new OpBehaviorFloatEqual(trans);
 }
 
 TypeOpFloatNotEqual::TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_NOTEQUAL,"!=",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
   behave = new OpBehaviorFloatNotEqual(trans);
 }
 
 TypeOpFloatLess::TypeOpFloatLess(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_LESS,"<",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::booloutput;
   behave = new OpBehaviorFloatLess(trans);
 }
 
 TypeOpFloatLessEqual::TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_LESSEQUAL,"<=",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::booloutput;
   behave = new OpBehaviorFloatLessEqual(trans);
 }
 
 TypeOpFloatNan::TypeOpFloatNan(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_NAN,"NAN",TYPE_BOOL,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::booloutput | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary | PcodeOp::booloutput;
   behave = new OpBehaviorFloatNan(trans);
 }
 
 TypeOpFloatAdd::TypeOpFloatAdd(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_ADD,"+",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::commutative;
   behave = new OpBehaviorFloatAdd(trans);
 }
 
 TypeOpFloatDiv::TypeOpFloatDiv(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_DIV,"/",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary;
   behave = new OpBehaviorFloatDiv(trans);
 }
 
 TypeOpFloatMult::TypeOpFloatMult(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_MULT,"*",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary | PcodeOp::commutative;
   behave = new OpBehaviorFloatMult(trans);
 }
 
 TypeOpFloatSub::TypeOpFloatSub(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_SUB,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::binary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::binary;
   behave = new OpBehaviorFloatSub(trans);
 }
 
 TypeOpFloatNeg::TypeOpFloatNeg(TypeFactory *t,const Translate *trans)
   : TypeOpUnary(t,CPUI_FLOAT_NEG,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatNeg(trans);
 }
 
 TypeOpFloatAbs::TypeOpFloatAbs(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ABS,"ABS",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatAbs(trans);
 }
 
 TypeOpFloatSqrt::TypeOpFloatSqrt(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_SQRT,"SQRT",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatSqrt(trans);
 }
 
 TypeOpFloatInt2Float::TypeOpFloatInt2Float(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_INT2FLOAT,"INT2FLOAT",TYPE_FLOAT,TYPE_INT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatInt2Float(trans);
 }
 
 TypeOpFloatFloat2Float::TypeOpFloatFloat2Float(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_FLOAT2FLOAT,"FLOAT2FLOAT",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatFloat2Float(trans);
 }
 
 TypeOpFloatTrunc::TypeOpFloatTrunc(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_TRUNC,"TRUNC",TYPE_INT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatTrunc(trans);
 }
 
 TypeOpFloatCeil::TypeOpFloatCeil(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_CEIL,"CEIL",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatCeil(trans);
 }
 
 TypeOpFloatFloor::TypeOpFloatFloor(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_FLOOR,"FLOOR",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatFloor(trans);
 }
 
 TypeOpFloatRound::TypeOpFloatRound(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ROUND,"ROUND",TYPE_FLOAT,TYPE_FLOAT)
 {
-  opflags = PcodeOp::unary | PcodeOp::floatingpoint;
+  opflags = PcodeOp::unary;
   behave = new OpBehaviorFloatRound(trans);
 }
 
@@ -1610,8 +1610,8 @@ void TypeOpCast::printRaw(ostream &s,const PcodeOp *op)
 TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
 
 {
-  opflags = PcodeOp::special | PcodeOp::nocollapse;
-  behave = new OpBehavior(CPUI_PTRADD,false,true); // Dummy behavior
+  opflags = PcodeOp::ternary | PcodeOp::nocollapse;
+  behave = new OpBehavior(CPUI_PTRADD,false); // Dummy behavior
 }
 
 Datatype *TypeOpPtradd::getInputLocal(const PcodeOp *op,int4 slot) const
@@ -1664,8 +1664,8 @@ TypeOpPtrsub::TypeOpPtrsub(TypeFactory *t) : TypeOp(t,CPUI_PTRSUB,"->")
 				// So it should be commutative
 				// But the typing information doesn't really
 				// allow this to be commutative.
-  opflags = PcodeOp::special|PcodeOp::nocollapse;
-  behave = new OpBehavior(CPUI_PTRSUB,false,true); // Dummy behavior
+  opflags = PcodeOp::binary|PcodeOp::nocollapse;
+  behave = new OpBehavior(CPUI_PTRSUB,false); // Dummy behavior
 }
 
 Datatype *TypeOpPtrsub::getOutputLocal(const PcodeOp *op) const
@@ -1834,8 +1834,8 @@ void TypeOpNew::printRaw(ostream &s,const PcodeOp *op)
 TypeOpInsert::TypeOpInsert(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INSERT,"INSERT",TYPE_UNKNOWN,TYPE_INT)
 {
-  opflags = PcodeOp::special;
-  behave = new OpBehavior(CPUI_INSERT,false,true);	// Dummy behavior
+  opflags = PcodeOp::ternary;
+  behave = new OpBehavior(CPUI_INSERT,false);	// Dummy behavior
 }
 
 Datatype *TypeOpInsert::getInputLocal(const PcodeOp *op,int4 slot) const
@@ -1849,8 +1849,8 @@ Datatype *TypeOpInsert::getInputLocal(const PcodeOp *op,int4 slot) const
 TypeOpExtract::TypeOpExtract(TypeFactory *t)
   : TypeOpFunc(t,CPUI_EXTRACT,"EXTRACT",TYPE_INT,TYPE_INT)
 {
-  opflags = PcodeOp::special;
-  behave = new OpBehavior(CPUI_EXTRACT,false,true);	// Dummy behavior
+  opflags = PcodeOp::ternary;
+  behave = new OpBehavior(CPUI_EXTRACT,false);	// Dummy behavior
 }
 
 Datatype *TypeOpExtract::getInputLocal(const PcodeOp *op,int4 slot) const
