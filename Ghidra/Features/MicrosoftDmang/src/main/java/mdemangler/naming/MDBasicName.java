@@ -15,6 +15,7 @@
  */
 package mdemangler.naming;
 
+import ghidra.util.Msg;
 import mdemangler.*;
 import mdemangler.object.MDObjectCPP;
 import mdemangler.template.MDTemplateNameAndArguments;
@@ -25,7 +26,7 @@ import mdemangler.template.MDTemplateNameAndArguments;
  */
 public class MDBasicName extends MDParsableItem {
 	MDSpecialName specialName;
-	MDTemplateNameAndArguments tn;
+	MDTemplateNameAndArguments templateNameAndArguments;
 	MDReusableName reusableName;
 	MDObjectCPP embeddedObject;
 	MDQualification embeddedObjectQualification;
@@ -43,8 +44,8 @@ public class MDBasicName extends MDParsableItem {
 		if (specialName != null) {
 			return specialName.isConstructor();
 		}
-		else if (tn != null) {
-			return tn.isConstructor();
+		if (templateNameAndArguments != null) {
+			return templateNameAndArguments.isConstructor();
 		}
 		return false;
 	}
@@ -53,8 +54,8 @@ public class MDBasicName extends MDParsableItem {
 		if (specialName != null) {
 			return specialName.isDestructor();
 		}
-		else if (tn != null) {
-			return tn.isDestructor();
+		if (templateNameAndArguments != null) {
+			return templateNameAndArguments.isDestructor();
 		}
 		return false;
 	}
@@ -63,8 +64,8 @@ public class MDBasicName extends MDParsableItem {
 		if (specialName != null) {
 			return specialName.isTypeCast();
 		}
-		if (tn != null) {
-			return tn.isTypeCast();
+		if (templateNameAndArguments != null) {
+			return templateNameAndArguments.isTypeCast();
 		}
 		return false;
 	}
@@ -98,10 +99,10 @@ public class MDBasicName extends MDParsableItem {
 		if (specialName != null) {
 			return specialName.getName();
 		}
-		else if (tn != null) {
-			return tn.getName();
+		if (templateNameAndArguments != null) {
+			return templateNameAndArguments.getName();
 		}
-		else if (reusableName != null) {
+		if (reusableName != null) {
 			return reusableName.getName();
 		}
 		return "";
@@ -122,8 +123,11 @@ public class MDBasicName extends MDParsableItem {
 		if (specialName != null) {
 			specialName.setName(name);
 		}
-		else if (tn != null) {
-			tn.setName(name);
+		else if (templateNameAndArguments != null) {
+			templateNameAndArguments.setName(name);
+		}
+		else {
+			Msg.warn(this, "name cannot be set");
 		}
 	}
 
@@ -138,8 +142,11 @@ public class MDBasicName extends MDParsableItem {
 		if (specialName != null) {
 			specialName.setCastTypeString(castTypeString);
 		}
-		else if (tn != null) {
-			tn.setCastTypeString(castTypeString);
+		else if (templateNameAndArguments != null) {
+			templateNameAndArguments.setCastTypeString(castTypeString);
+		}
+		else {
+			Msg.warn(this, "castTypeString cannot be set");
 		}
 	}
 
@@ -155,7 +162,7 @@ public class MDBasicName extends MDParsableItem {
 			embeddedObject.insert(builder);
 		}
 		else {
-			tn.insert(builder);
+			templateNameAndArguments.insert(builder);
 		}
 		if (nameModifier != null) {
 			builder.append(nameModifier);
@@ -167,8 +174,8 @@ public class MDBasicName extends MDParsableItem {
 		// First pass can only have name fragment of special name
 		if (dmang.peek() == '?') {
 			if (dmang.peek(1) == '$') {
-				tn = new MDTemplateNameAndArguments(dmang);
-				tn.parse();
+				templateNameAndArguments = new MDTemplateNameAndArguments(dmang);
+				templateNameAndArguments.parse();
 			}
 			else if (dmang.peek(1) == '?') {
 				// Seems to only hit here for second '?' of "???" sequence.

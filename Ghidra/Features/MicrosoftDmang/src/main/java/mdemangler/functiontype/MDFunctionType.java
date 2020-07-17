@@ -31,8 +31,8 @@ public class MDFunctionType extends MDType {
 	private MDCVMod thisPointerCVMod;
 	private MDThrowAttribute throwAttribute;
 	private boolean hasCVModifier = false;
-	private boolean hasReturn = true;
-	private boolean hasArgs = true;
+	private boolean hasReturn;
+	private boolean hasArgs;
 	private boolean isTypeCast;
 	protected boolean fromModifier = false;
 
@@ -43,7 +43,13 @@ public class MDFunctionType extends MDType {
 	}
 
 	public MDFunctionType(MDMang dmang) {
+		this(dmang, true, true);
+	}
+
+	public MDFunctionType(MDMang dmang, boolean hasArgs, boolean hasReturn) {
 		super(dmang);
+		this.hasArgs = hasArgs;
+		this.hasReturn = hasReturn;
 	}
 
 	public MDCallingConvention getCallingConvention() {
@@ -78,24 +84,12 @@ public class MDFunctionType extends MDType {
 		hasCVModifier = true;
 	}
 
-	public void clearHasCVModifier() {
-		hasCVModifier = false;
-	}
-
-	public void setNoReturn() {
-		hasReturn = false;
-	}
-
 	public boolean hasReturn() {
 		return hasReturn;
 	}
 
 	public boolean hasArgs() {
 		return hasArgs;
-	}
-
-	public void setNoArgs() {
-		hasArgs = false;
 	}
 
 	public boolean isTypeCast() {
@@ -135,8 +129,8 @@ public class MDFunctionType extends MDType {
 	@Override
 	public void insert(StringBuilder builder) {
 		super.insert(builder);
-		if ((builder.length() != 0) && (builder.charAt(0) != ' ') && (builder.charAt(0) != '*') &&
-			(builder.charAt(0) != '&') && (builder.charAt(0) != '(')) {
+		String badChars = "*&( ";
+		if (builder.length() != 0 && badChars.indexOf(builder.charAt(0)) == -1) {
 			dmang.insertString(builder, " ");
 		}
 		// Separate conventionBuilder with insertion of MDBasedType is used here to reflect MSFT
