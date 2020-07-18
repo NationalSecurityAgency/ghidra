@@ -31,7 +31,7 @@ import ghidra.util.exception.AssertException;
  * <pre>
  *   | NodeType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | Key0(L) | RecOffset0(4) | IndFlag0(1) |...  
  *     
- *   | KeyN(L) | RecOffsetN(4) | IndFlagN(1) |...&lt;FreeSpace&gt;... | RecN |... | Rec1 |
+ *   | KeyN(L) | RecOffsetN(4) | IndFlagN(1) |...&lt;FreeSpace&gt;... | RecN |... | Rec0 |
  * </pre>
  * IndFlag - if not zero the record has been stored within a chained DBBuffer 
  * whose 4-byte integer buffer ID has been stored within this leaf at the record offset.
@@ -216,8 +216,9 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 	@Override
 	public Record getRecord(Field key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
-		if (index < 0)
+		if (index < 0) {
 			return null;
+		}
 		return getRecord(schema, index);
 	}
 
@@ -351,7 +352,9 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 		}
 
 		if ((len + entrySize) > getFreeSpace())
+		 {
 			return false;  // insufficient space for record storage
+		}
 
 		// Make room for new record
 		int offset = moveRecords(index, -len);
@@ -384,8 +387,9 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 	@Override
 	public void remove(int index) throws IOException {
 
-		if (index < 0 || index >= keyCount)
+		if (index < 0 || index >= keyCount) {
 			throw new AssertException();
+		}
 
 		if (hasIndirectStorage(index)) {
 			removeChainedBuffer(buffer.getInt(getRecordDataOffset(index)));

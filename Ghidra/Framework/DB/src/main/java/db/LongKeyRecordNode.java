@@ -307,6 +307,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 	 * Insert or Update a record.
 	 * @param record data record with long key
 	 * @param table table which will be notified when record is inserted or updated.
+	 * This must be specified when table has indexed columns.
 	 * @return root node which may have changed.
 	 * @throws IOException thrown if IO error occurs
 	 */
@@ -318,6 +319,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 		// Handle record update case
 		if (index >= 0) {
 			if (table != null) {
+				// update index tables associated with table
 				table.updatedRecord(getRecord(table.getSchema(), index), record);
 			}
 			LongKeyNode newRoot = updateRecord(index, record);
@@ -331,6 +333,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 				parent.keyChanged(getKey(1), key);
 			}
 			if (table != null) {
+				// update index tables associated with table
 				table.insertedRecord(record);
 			}
 			return getRoot();
@@ -340,6 +343,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 		if (index == keyCount) {
 			LongKeyNode newRoot = appendNewLeaf(record);
 			if (table != null) {
+				// update index tables associated with table
 				table.insertedRecord(record);
 			}
 			return newRoot;

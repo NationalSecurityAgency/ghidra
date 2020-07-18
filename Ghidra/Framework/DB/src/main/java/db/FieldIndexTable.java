@@ -30,8 +30,6 @@ public class FieldIndexTable extends IndexTable {
 
 	private static final String[] fieldNames = {};
 
-	private final int indexColumn;
-
 	private final IndexField indexKeyType;
 
 	/**
@@ -55,7 +53,6 @@ public class FieldIndexTable extends IndexTable {
 	 */
 	FieldIndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
 		super(primaryTable, indexTableRecord);
-		this.indexColumn = indexTableRecord.getIndexedColumn();
 		indexKeyType = (IndexField) indexTable.getSchema().getKeyFieldType();
 	}
 
@@ -111,7 +108,10 @@ public class FieldIndexTable extends IndexTable {
 
 	@Override
 	void addEntry(Record record) throws IOException {
-		Field indexedField = record.getField(colIndex);
+		Field indexedField = record.getField(indexColumn);
+		if (isSparseIndex && indexedField.isNull()) {
+			return;
+		}
 		IndexField f = indexKeyType.newIndexField(indexedField, record.getKeyField());
 		Record rec = indexTable.getSchema().createRecord(f);
 		indexTable.putRecord(rec);
@@ -119,7 +119,10 @@ public class FieldIndexTable extends IndexTable {
 
 	@Override
 	void deleteEntry(Record record) throws IOException {
-		Field indexedField = record.getField(colIndex);
+		Field indexedField = record.getField(indexColumn);
+		if (isSparseIndex && indexedField.isNull()) {
+			return;
+		}
 		IndexField f = indexKeyType.newIndexField(indexedField, record.getKeyField());
 		indexTable.deleteRecord(f);
 	}

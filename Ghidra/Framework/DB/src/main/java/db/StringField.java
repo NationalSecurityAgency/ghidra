@@ -28,9 +28,14 @@ import ghidra.util.exception.AssertException;
 public final class StringField extends Field {
 
 	/**
+	 * Null string field value
+	 */
+	public static final StringField NULL_VALUE = new StringField(null, true);
+
+	/**
 	 * Instance intended for defining a {@link Table} {@link Schema}
 	 */
-	public static final StringField INSTANCE = new StringField(null, true);
+	public static final StringField INSTANCE = NULL_VALUE;
 
 	private static String ENCODING = "UTF-8";
 
@@ -59,6 +64,18 @@ public final class StringField extends Field {
 	StringField(String str, boolean immutable) {
 		super(immutable);
 		doSetString(str);
+	}
+
+	@Override
+	boolean isNull() {
+		return bytes == null;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		str = null;
+		bytes = null;
 	}
 
 	@Override
@@ -136,36 +153,17 @@ public final class StringField extends Field {
 
 	@Override
 	public String getValueAsString() {
+		if (str == null) {
+			return "null";
+		}
 		return "\"" + str + "\"";
 	}
 
-//	/**
-//	 * Get first 8 bytes of string as long value.
-//	 * First string byte corresponds to most significant byte
-//	 * of long value.
-//	 * If string is null, Long.MIN_VALUE is returned.
-//	 * @see ghidra.framework.store.db.Field#getLongValue()
-//	 */
-//	public long getLongValue() {
-//		if (str == null)
-//			return Long.MIN_VALUE;
-//		long value = 0;
-//		byte[] data;
-//		try {
-//			data = (str == null) ? new byte[0] : str.getBytes(Buffer.ASCII);
-//		} catch (UnsupportedEncodingException e) {
-//			throw new AssertException();
-//		}
-//		for (int i = 0; i < 8 && i < data.length; i++) {
-//			value = (value << 8) | ((long)data[i] & 0x000000ff);
-//		}
-//		return value;
-//	}
-
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof StringField))
+		if (obj == null || !(obj instanceof StringField)) {
 			return false;
+		}
 		StringField f = (StringField) obj;
 		if (str == null) {
 			return (f.str == null);
@@ -207,8 +205,9 @@ public final class StringField extends Field {
 	public int compareTo(Field o) {
 		StringField f = (StringField) o;
 		if (str == null) {
-			if (f.str == null)
+			if (f.str == null) {
 				return 0;
+			}
 			return -1;
 		}
 		else if (f.str == null) {

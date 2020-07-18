@@ -23,17 +23,31 @@ import db.buffers.DataBuffer;
  * <code>Field</code> is an abstract data wrapper for use with Records.
  * Note that when comparing two Field instances both must be of the same 
  * class.
+ * 
+ * <p>Stored Schema Field Type Encoding:</p>
+ * 
+ * <p><U>8-bit Legacy Field Type Encoding (I....FFF)</U></p>
+ * Supported encodings: 0x00..0x06 and 0x80..0x86,
+ * where:
+ * <pre>
+ *     FFF  - indexed field type (0..6)
+ *     I    - index field indicator (only long primary keys were supported)
+ * </pre>
+ *   
+ * <p><U>8-bit Field Type Encoding (PPPPFFFF)</U></p>
+ * (Reserved for future field extensions: 0x88 and 0xf0..0xff)
+ * <pre>
+ *     0xff - see {@link Schema#FIELD_EXTENSION_INDICATOR}
+ * </pre>
+ * where:
+ * <pre>
+ *     FFFF - normal/indexed field type
+ *     PPPP - indexed table primary key type (1000b: LegacyIndexField)  
+ * </pre> 
  */
 public abstract class Field implements Comparable<Field> {
 
 	public static final Field[] EMPTY_ARRAY = new Field[0];
-
-	/**
-	 * 8-bit Field Type Encoding (PPPPFFFF)
-	 * where:
-	 *     FFFF - normal/indexed field type
-	 *     PPPP - indexed table primary key type (1000b indicates LegacyIndexField)  
-	 */
 
 	/**
 	 * Field type for ByteField
@@ -86,10 +100,20 @@ public abstract class Field implements Comparable<Field> {
 	/**
 	 * Legacy Index Primary Key Field type for LongField
 	 * which was previously a boolean indicator for an index 
-	 * field with assumed long primary key.
+	 * field with assumed long primary key.  Applies only 
+	 * to upper-nibble.  This value in the lower-nibble
+	 * is reserved for use in the special-purpose byte value 0x88.
 	 * (see {@link LegacyIndexField})
 	 */
-	static final byte LEGACY_INDEX_LONG_TYPE = 8;
+	static final byte LEGACY_INDEX_LONG_TYPE = 8; 
+
+	// Available field types (6): 0x9..0xE
+
+	/**
+	 * Reserved field encoding.  Intended for special purpose 
+	 * schema used (e.g.
+	 */
+	static final byte FIELD_RESERVED_15_TYPE = 0xf;
 
 	/**
 	 * Field base type mask
@@ -383,6 +407,19 @@ public abstract class Field implements Comparable<Field> {
 	abstract Field getMaxValue();
 
 	/**
+	 * Determine if the field value is null (or zero for
+	 * fixed-length fields)
+	 * @return true if null/zero else false
+	 */
+	abstract boolean isNull();
+
+	/**
+	 * Set this field to its null/zero value
+	 * @throws IllegalFieldAccessException thrown if this field is immutable or is an index field
+	 */
+	abstract void setNull();
+
+	/**
 	 * Performs a fast in-place comparison of this field value with another
 	 * field value stored within the specified buffer at the the specified offset.
 	 * @param buffer data buffer
@@ -400,7 +437,10 @@ public abstract class Field implements Comparable<Field> {
 	 * @throws UnsupportedFieldException if unsupported fieldType specified
 	 */
 	static Field getField(byte fieldType) throws UnsupportedFieldException {
-
+		if (fieldType == 0x88) {
+			// 0x88 - Reserved value (future expanded Field encoding)
+			throw new UnsupportedFieldException(fieldType);
+		}
 		if ((fieldType & INDEX_PRIMARY_KEY_TYPE_MASK) == 0) {
 			switch (fieldType & FIELD_TYPE_MASK) {
 				case LONG_TYPE:
@@ -430,6 +470,10 @@ public abstract class Field implements Comparable<Field> {
 	public static class UnsupportedFieldException extends IOException {
 		UnsupportedFieldException(byte fieldType) {
 			super("Unsupported DB field type: 0x" + Integer.toHexString(fieldType & 0xff));
+		}
+
+		UnsupportedFieldException(String msg) {
+			super(msg);
 		}
 	}
 

@@ -22,31 +22,45 @@ import ghidra.util.exception.AssertException;
 
 /**
  * <code>Record</code> provides a portable container for data
- * associated with a fixed schema defined by a list of Fields.  
- * A record instance contains both a primary key and zero or more data fields 
- * which define the schema.  Either a Field object or a long value 
- * may be used as the primary key.
- * 
+ * associated with a fixed schema.  
+ * A record instance contains both a primary key and zero or more data fields.  
  */
 public class Record implements Comparable<Record> {
 
-	private Field key;
+	final Schema schema;
 
+	private Field key;
 	private Field[] fieldValues;
-	private boolean dirty = false;
 
 	private int length = -1;
-	private boolean isVariableLength;
+
+	boolean dirty = false;
 
 	/**
-	 * Construct a new record.
-	 * The schema is derived from the field values supplied.
-	 * @param key primary key value
-	 * @param schema
+	 * Construct an empty record corresponding to the specified schema and record key
+	 * @param schema record schema
+	 * @param key record key
 	 */
-	Record(Field key, Field[] fieldValues) {
+	Record(Schema schema, Field key) {
+		this.schema = schema;
 		this.key = key;
-		this.fieldValues = fieldValues;
+		if (!schema.getKeyFieldType().isSameType(key)) {
+			throw new IllegalArgumentException("key differs from schema key type");
+		}
+		Field[] schemaFields = schema.getFields();
+		fieldValues = new Field[schemaFields.length];
+		for (int colIndex = 0; colIndex < schemaFields.length; colIndex++) {
+			try {
+				fieldValues[colIndex] = schemaFields[colIndex].newField();
+			}
+			catch (Exception e) {
+				throw new AssertException(e);
+			}
+		}
+	}
+
+	protected void invalidateLength() {
+		length = -1;
 	}
 
 	/**
@@ -54,8 +68,9 @@ public class Record implements Comparable<Record> {
 	 * @param key primary key
 	 */
 	public void setKey(long key) {
-		if (!(this.key instanceof LongField))
+		if (!(this.key instanceof LongField)) {
 			throw new AssertException();
+		}
 		this.key = new LongField(key);
 	}
 
@@ -64,8 +79,9 @@ public class Record implements Comparable<Record> {
 	 * @param key primary key
 	 */
 	public void setKey(Field key) {
-		if (!this.key.getClass().equals(key.getClass()))
+		if (!this.key.getClass().equals(key.getClass())) {
 			throw new AssertException();
+		}
 		this.key = key;
 	}
 
@@ -153,6 +169,7 @@ public class Record implements Comparable<Record> {
 		if (fieldValues[colIndex].getFieldType() != value.getFieldType()) {
 			throw new IllegalArgumentException();
 		}
+		invalidateLength();
 		fieldValues[colIndex] = value;
 	}
 
@@ -203,14 +220,12 @@ public class Record implements Comparable<Record> {
 	 * @return Record
 	 */
 	public Record copy() {
-
-		Field newKey = key.copyField();
-		Field[] fields = new Field[fieldValues.length];
+		Record r = schema.createRecord(key.copyField());
+		Field[] fields = r.getFields();
 		for (int i = 0; i < fields.length; i++) {
-			Field f = fieldValues[i];
-			fields[i] = f.copyField();
+			r.setField(i, fields[i].copyField());
 		}
-		return new Record(newKey, fields);
+		return r;
 	}
 
 	/**
@@ -219,16 +234,23 @@ public class Record implements Comparable<Record> {
 	 * fields within this record when written to a standard Buffer.
 	 * @return int stored record length
 	 */
-	public int length() {
+	public final int length() {
 		if (length < 0) {
-			length = 0;
-			isVariableLength = false;
-			for (int i = 0; i < fieldValues.length; i++) {
-				length += fieldValues[i].length();
-				isVariableLength |= fieldValues[i].isVariableLength();
-			}
+			length = computeLength();
 		}
 		return length;
+	}
+
+	/**
+	 * Compute record storage length
+	 * @return record storage length
+	 */
+	int computeLength() {
+		int len = 0;
+		for (Field fieldValue : fieldValues) {
+			len += fieldValue.length();
+		}
+		return len;
 	}
 
 	/**
@@ -355,7 +377,7 @@ public class Record implements Comparable<Record> {
 	 */
 	public void setBinaryData(int colIndex, byte[] bytes) {
 		dirty = true;
-		length = -1;
+		invalidateLength();
 		fieldValues[colIndex].setBinaryData(bytes);
 	}
 
@@ -377,7 +399,7 @@ public class Record implements Comparable<Record> {
 	 */
 	public void setString(int colIndex, String str) {
 		dirty = true;
-		length = -1;
+		invalidateLength();
 		fieldValues[colIndex].setString(str);
 	}
 
@@ -388,8 +410,8 @@ public class Record implements Comparable<Record> {
 	 * @throws IOException thrown if IO error occurs
 	 */
 	public void write(Buffer buf, int offset) throws IOException {
-		for (int i = 0; i < fieldValues.length; i++) {
-			offset = fieldValues[i].write(buf, offset);
+		for (Field fieldValue : fieldValues) {
+			offset = fieldValue.write(buf, offset);
 		}
 		dirty = false;
 	}
@@ -401,8 +423,8 @@ public class Record implements Comparable<Record> {
 	 * @throws IOException thrown if IO error occurs
 	 */
 	public void read(Buffer buf, int offset) throws IOException {
-		for (int i = 0; i < fieldValues.length; i++) {
-			offset = fieldValues[i].read(buf, offset);
+		for (Field fieldValue : fieldValues) {
+			offset = fieldValue.read(buf, offset);
 		}
 		dirty = false;
 	}
@@ -427,8 +449,9 @@ public class Record implements Comparable<Record> {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Record))
+		if (!(obj instanceof Record)) {
 			return false;
+		}
 		Record rec = (Record) obj;
 		return key.equals(rec.key) && Arrays.equals(fieldValues, rec.fieldValues);
 	}

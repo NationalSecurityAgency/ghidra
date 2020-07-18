@@ -90,7 +90,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 	private Record[] createRandomTableRecords(int schemaType, int recordCnt, int varDataSize)
 			throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, schemaType, true);
+		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, schemaType, true, false);
 		Record[] recs = new Record[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
@@ -114,7 +114,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 	private Record[] createOrderedTableRecords(int schemaType, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, schemaType, true);
+		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, schemaType, true, false);
 		long key = 0;
 		Record[] recs = new Record[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
@@ -1183,7 +1183,7 @@ public class DBIndexedTableTest extends AbstractGenericTest {
 	private Record[] createOrderedRecordRange(int schemaType, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, schemaType, true);
+		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, schemaType, true, false);
 		Record[] recs = new Record[recordCnt];
 		for (int key = 0; key < recordCnt; key++) {
 			try {

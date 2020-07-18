@@ -15,8 +15,13 @@
  */
 package db;
 
-import java.util.ArrayList;
-import java.util.StringTokenizer;
+import java.util.*;
+
+import org.apache.commons.lang3.ArrayUtils;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.primitives.Bytes;
 
 import db.Field.UnsupportedFieldException;
 import ghidra.util.exception.AssertException;
@@ -28,6 +33,10 @@ public class Schema {
 
 	private static final String NAME_SEPARATOR = ";";
 
+	static final byte FIELD_EXTENSION_INDICATOR = -1;
+
+	private static final byte SPARSE_FIELD_LIST_EXTENSION = 1;
+
 	private int version;
 
 	private Field keyType;
@@ -35,6 +44,7 @@ public class Schema {
 
 	private Field[] fields;
 	private String[] fieldNames;
+	private Set<Integer> sparseColumnSet;
 
 	private boolean isVariableLength;
 	private int fixedLength;
@@ -48,17 +58,21 @@ public class Schema {
 	 * @param keyName primary key name
 	 * @param fields array of column fields (representative instances)
 	 * @param fieldNames array of column field names
+	 * @param sparseColumns column indexes corresponding to those
+	 * columns which utilize sparse storage (null if no sparse columns).  
+	 * Valid sparse column indexes are in the range 0..127.
 	 * @throws IllegalArgumentException invalid parameters
 	 */
 	public Schema(int version, Field keyField, String keyName, Field[] fields,
-			String[] fieldNames) {
+			String[] fieldNames, int[] sparseColumns) {
 		this.version = version;
 		this.keyType = keyField;
 		this.keyName = keyName;
 		this.fields = fields;
 		this.fieldNames = fieldNames;
-		if (fields.length != fieldNames.length)
+		if (fields.length != fieldNames.length) {
 			throw new IllegalArgumentException("fieldNames and fields lengths differ");
+		}
 		isVariableLength = false;
 		fixedLength = 0;
 		for (int colIndex = 0; colIndex < fields.length; colIndex++) {
@@ -67,12 +81,33 @@ public class Schema {
 				isVariableLength = true;
 			}
 			fixedLength += field.length();
-			if (fieldNames[colIndex].indexOf(NAME_SEPARATOR) >= 0)
+			if (fieldNames[colIndex].indexOf(NAME_SEPARATOR) >= 0) {
 				throw new IllegalArgumentException("field names may not contain ';'");
+			}
+		}
+		try {
+			initializeSparseColumnSet(ArrayUtils.toObject(sparseColumns));
+		}
+		catch (UnsupportedFieldException e) {
+			throw new IllegalArgumentException(e);
 		}
 		if (isVariableLength) {
 			fixedLength = 0;
 		}
+	}
+
+	/**
+	 * Construct a new Schema.
+	 * @param version schema version
+	 * @param keyField field associated with primary key (representative instance)
+	 * @param keyName primary key name
+	 * @param fields array of column fields (representative instances)
+	 * @param fieldNames array of column field names
+	 * @throws IllegalArgumentException invalid parameters
+	 */
+	public Schema(int version, Field keyField, String keyName, Field[] fields,
+			String[] fieldNames) {
+		this(version, keyField, keyName, fields, fieldNames, null);
 	}
 
 	/**
@@ -84,7 +119,23 @@ public class Schema {
 	 * @throws IllegalArgumentException invalid parameters
 	 */
 	public Schema(int version, String keyName, Field[] fields, String[] fieldNames) {
-		this(version, LongField.INSTANCE, keyName, fields, fieldNames);
+		this(version, LongField.INSTANCE, keyName, fields, fieldNames, null);
+	}
+
+	/**
+	 * Construct a new Schema which uses a long key.
+	 * @param version schema version
+	 * @param keyName primary key name
+	 * @param fields array of column fields (representative instances)
+	 * @param fieldNames array of column field names
+	 * @param sparseColumns column indexes corresponding to those
+	 * columns which utilize sparse storage (null if no sparse columns).
+	 * Valid sparse column indexes are in the range 0..127.
+	 * @throws IllegalArgumentException invalid parameters
+	 */
+	public Schema(int version, String keyName, Field[] fields, String[] fieldNames,
+			int[] sparseColumns) {
+		this(version, LongField.INSTANCE, keyName, fields, fieldNames, sparseColumns);
 	}
 
 	/**
@@ -98,7 +149,25 @@ public class Schema {
 	 */
 	public Schema(int version, Class<?> keyClass, String keyName, Class<?>[] fieldClasses,
 			String[] fieldNames) {
-		this(version, getField(keyClass), keyName, getFields(fieldClasses), fieldNames);
+		this(version, getField(keyClass), keyName, getFields(fieldClasses), fieldNames, null);
+	}
+
+	/**
+	 * Construct a new Schema.
+	 * @param version schema version
+	 * @param keyClass field class associated with primary key
+	 * @param keyName primary key name
+	 * @param fieldClasses array of column field classes
+	 * @param fieldNames array of column field names
+	 * @param sparseColumns column indexes corresponding to those
+	 * columns which utilize sparse storage (null if no sparse columns).
+	 * Valid sparse column indexes are in the range 0..127.
+	 * @throws IllegalArgumentException invalid parameters
+	 */
+	public Schema(int version, Class<?> keyClass, String keyName, Class<?>[] fieldClasses,
+			String[] fieldNames, int[] sparseColumns) {
+		this(version, getField(keyClass), keyName, getFields(fieldClasses), fieldNames,
+			sparseColumns);
 	}
 
 	/**
@@ -110,11 +179,28 @@ public class Schema {
 	 * @throws IllegalArgumentException invalid parameters
 	 */
 	public Schema(int version, String keyName, Class<?>[] fieldClasses, String[] fieldNames) {
-		this(version, LongField.INSTANCE, keyName, getFields(fieldClasses), fieldNames);
+		this(version, LongField.INSTANCE, keyName, getFields(fieldClasses), fieldNames, null);
 	}
 
 	/**
-	 * Construct a new Schema with the given number of columns
+	 * Construct a new Schema which uses a long key.
+	 * @param version schema version
+	 * @param keyName primary key name
+	 * @param fieldClasses array of column field classes
+	 * @param fieldNames array of column field names
+	 * @param sparseColumns column indexes corresponding to those
+	 * columns which utilize sparse storage (null if no sparse columns).
+	 * Valid sparse column indexes are in the range 0..127.
+	 * @throws IllegalArgumentException invalid parameters
+	 */
+	public Schema(int version, String keyName, Class<?>[] fieldClasses, String[] fieldNames,
+			int[] sparseColumns) {
+		this(version, LongField.INSTANCE, keyName, getFields(fieldClasses), fieldNames,
+			sparseColumns);
+	}
+
+	/**
+	 * Construct a Schema based upon encoded
 	 * @param version schema version
 	 * @param encodedKeyFieldType key field type
 	 * @param encodedFieldTypes encoded field types array.
@@ -129,21 +215,122 @@ public class Schema {
 		parseNames(packedFieldNames);
 		isVariableLength = false;
 		fixedLength = 0;
-		fields = new Field[encodedFieldTypes.length];
-		for (int i = 0; i < encodedFieldTypes.length; i++) {
-			byte b = encodedFieldTypes[i];
+
+		initializeFields(encodedFieldTypes); // initializes fields and sparseColumns
+
+		if (fieldNames.length != fields.length) {
+			throw new IllegalArgumentException("fieldNames and column types differ in length");
+		}
+	}
+
+	/**
+	 * Determine if schema employs sparse column storage
+	 * @return true if schema employs sparse column storage
+	 */
+	public boolean hasSparseColumns() {
+		return sparseColumnSet != null;
+	}
+
+	/**
+	 * Determine if the specified column index has been designated as a sparse
+	 * column within the associated record storage
+	 * @param columnIndex column index
+	 * @return true if designated column uses sparse storage
+	 */
+	public boolean isSparseColumn(int columnIndex) {
+		return sparseColumnSet != null && sparseColumnSet.contains(columnIndex);
+	}
+
+	/**
+	 * Initialize field types and related field extensions (e.g., sparse field list).
+	 * The presence of field extensions within the encodedFieldTypes is indicated by a
+	 * -1 (field extension indicator) following the encoded field types.  
+	 * The byte value following the field extension indicator
+	 * is the extension type which is followed by the extension data if applicable.
+	 * A -1 byte is used to separate each extension byte sequence.
+	 * @param encodedFieldTypes encoded field type data
+	 * @throws UnsupportedFieldException if decoding of the encodedFieldTypes fails
+	 */
+	private void initializeFields(byte[] encodedFieldTypes) throws UnsupportedFieldException {
+
+		if (encodedFieldTypes.length == 0) {
+			fields = new Field[0];
+			return;
+		}
+
+		int index = 0;
+
+		ArrayList<Field> fieldList = new ArrayList<>();
+		while (index < encodedFieldTypes.length) {
+			byte b = encodedFieldTypes[index++];
+			if (b == FIELD_EXTENSION_INDICATOR) {
+				break;
+			}
 			Field f = Field.getField(b);
-			fields[i] = f;
+			fieldList.add(f);
 			if (f.isVariableLength()) {
 				isVariableLength = true;
 			}
 			fixedLength += f.length();
 		}
+		fields = fieldList.toArray(new Field[fieldList.size()]);
+
+		while (index < encodedFieldTypes.length) {
+			int extensionType = encodedFieldTypes[index++];
+			if (extensionType == SPARSE_FIELD_LIST_EXTENSION) {
+				index += parseSparseColumnIndexes(encodedFieldTypes, index);
+			}
+			else {
+				throw new UnsupportedFieldException(
+					"Unsupported field extension type: " + extensionType);
+			}
+		}
+
 		if (isVariableLength) {
 			fixedLength = 0;
 		}
-		if (fieldNames.length != encodedFieldTypes.length) {
-			throw new IllegalArgumentException("fieldNames and column types differ in length");
+	}
+
+	private void initializeSparseColumnSet(Integer[] sparseColumns) throws UnsupportedFieldException {
+		if (sparseColumns == null || sparseColumns.length == 0) {
+			return;
+		}
+		Builder<Integer> builder = ImmutableSet.builder();
+		for (int i : sparseColumns) {
+			if (i < 0 || i > Byte.MAX_VALUE || i >= fields.length) {
+				throw new UnsupportedFieldException("Sparse column entry out of range: " + i);
+			}
+			builder.add(i);
+		}
+		sparseColumnSet = builder.build();
+		if (sparseColumnSet.size() != sparseColumns.length) {
+			throw new UnsupportedFieldException("Sparse column set contains duplicate entry");
+		}
+		isVariableLength = true; // sparse records are variable length
+	}
+
+	/**
+	 * Parse the sparse column indexes contained within the encodedFieldTypes data
+	 * @param encodedFieldTypes encoded data bytes
+	 * @param index of first extension data byte within encodedFieldTypes array
+	 * @return number of encoded data bytes consumed
+	 */
+	private int parseSparseColumnIndexes(byte[] encodedFieldTypes, int index)
+			throws UnsupportedFieldException {
+		try {
+			int consumed = 0;
+			ArrayList<Integer> columnIndexes = new ArrayList<>();
+			while (index < encodedFieldTypes.length &&
+				encodedFieldTypes[index] != FIELD_EXTENSION_INDICATOR) {
+				columnIndexes.add((int) encodedFieldTypes[index++]);
+				++consumed;
+			}
+			Integer[] sparseColumns = columnIndexes.toArray(new Integer[columnIndexes.size()]);
+			initializeSparseColumnSet(sparseColumns);
+			return consumed;
+		}
+		catch (ArrayIndexOutOfBoundsException e) {
+			throw new UnsupportedFieldException("Incomplete sparse column data");
 		}
 	}
 
@@ -271,8 +458,8 @@ public class Schema {
 		StringBuffer buf = new StringBuffer();
 		buf.append(keyName);
 		buf.append(NAME_SEPARATOR);
-		for (int i = 0; i < fieldNames.length; i++) {
-			buf.append(fieldNames[i]);
+		for (String fieldName : fieldNames) {
+			buf.append(fieldName);
 			buf.append(NAME_SEPARATOR);
 		}
 		return buf.toString();
@@ -287,12 +474,22 @@ public class Schema {
 	 * @return byte[] field type list as an encoded byte array.
 	 */
 	byte[] getEncodedFieldTypes() {
+		ArrayList<Byte> encodedDataList = new ArrayList<>();
 
-		byte[] encodedFieldTypes = new byte[fields.length];
-		for (int colIndex = 0; colIndex < fields.length; colIndex++) {
-			encodedFieldTypes[colIndex] = fields[colIndex].getFieldType();
+		// add field type encodings
+		for (Field field : fields) {
+			encodedDataList.add(field.getFieldType());
 		}
-		return encodedFieldTypes;
+
+		// add sparse field extension data
+		if (sparseColumnSet != null) {
+			encodedDataList.add(FIELD_EXTENSION_INDICATOR);
+			encodedDataList.add(SPARSE_FIELD_LIST_EXTENSION);
+			for (int col : sparseColumnSet) {
+				encodedDataList.add((byte) col);
+			}
+		}
+		return Bytes.toArray(encodedDataList);
 	}
 
 	/**
@@ -334,19 +531,7 @@ public class Schema {
 	 * @return new record
 	 */
 	public Record createRecord(Field key) {
-		if (!keyType.isSameType(key)) {
-			throw new IllegalArgumentException("key differs from schema key type");
-		}
-		Field[] fieldValues = new Field[fields.length];
-		for (int colIndex = 0; colIndex < fields.length; colIndex++) {
-			try {
-				fieldValues[colIndex] = fields[colIndex].newField();
-			}
-			catch (Exception e) {
-				throw new AssertException(e);
-			}
-		}
-		return new Record(key, fieldValues);
+		return hasSparseColumns() ? new SparseRecord(this, key) : new Record(this, key);
 	}
 
 	/**
@@ -361,6 +546,40 @@ public class Schema {
 		catch (Exception e) {
 			throw new AssertException(e.getMessage());
 		}
+	}
+
+	/**
+	 * Compare two schemas for equality.
+	 * Field names are ignored in this comparison.  Instance variables such as {@link #fixedLength},
+	 * {@link Schema#isVariableLength} and {@link #forceUseVariableLengthKeyNodes} are also ignored.
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Schema)) {
+			return false;
+		}
+		Schema otherSchema = (Schema) obj;
+		if (version != otherSchema.version ||
+			!keyType.getClass().equals(otherSchema.keyType.getClass()) ||
+			fields.length != otherSchema.fields.length) {
+			return false;
+		}
+		for (int i = 0; i < fields.length; i++) {
+			if (!fields[i].getClass().equals(otherSchema.fields[i].getClass())) {
+				return false;
+			}
+		}
+		if (!Objects.equals(sparseColumnSet, otherSchema.sparseColumnSet)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		// Schemas are not intended to be hashed
+		return super.hashCode();
 	}
 
 	@Override

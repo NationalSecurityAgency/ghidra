@@ -36,9 +36,14 @@ public final class ByteField extends Field {
 	public static final ByteField MAX_VALUE = new ByteField(Byte.MAX_VALUE, true);
 
 	/**
+	 * Zero byte field value
+	 */
+	public static final ByteField ZERO_VALUE = new ByteField((byte) 0, true);
+
+	/**
 	 * Instance intended for defining a {@link Table} {@link Schema}
 	 */
-	public static final ByteField INSTANCE = MIN_VALUE;
+	public static final ByteField INSTANCE = ZERO_VALUE;
 
 	private byte value;
 
@@ -64,6 +69,17 @@ public final class ByteField extends Field {
 	ByteField(byte b, boolean immutable) {
 		super(immutable);
 		value = b;
+	}
+
+	@Override
+	boolean isNull() {
+		return value == 0;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		value = 0;
 	}
 
 	@Override
@@ -111,33 +127,38 @@ public final class ByteField extends Field {
 
 	@Override
 	public String getValueAsString() {
-		return "0x" + Integer.toHexString(value);
+		return "0x" + Integer.toHexString(value & 0xff);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ByteField))
+		if (obj == null || !(obj instanceof ByteField)) {
 			return false;
+		}
 		return ((ByteField) obj).value == value;
 	}
 
 	@Override
 	public int compareTo(Field o) {
 		ByteField f = (ByteField) o;
-		if (value == f.value)
+		if (value == f.value) {
 			return 0;
-		else if (value < f.value)
+		}
+		else if (value < f.value) {
 			return -1;
+		}
 		return 1;
 	}
 
 	@Override
 	int compareTo(DataBuffer buffer, int offset) {
 		byte otherValue = buffer.getByte(offset);
-		if (value == otherValue)
+		if (value == otherValue) {
 			return 0;
-		else if (value < otherValue)
+		}
+		else if (value < otherValue) {
 			return -1;
+		}
 		return 1;
 	}
 

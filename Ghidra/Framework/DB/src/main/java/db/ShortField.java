@@ -36,9 +36,14 @@ public final class ShortField extends Field {
 	public static final ShortField MAX_VALUE = new ShortField(Short.MAX_VALUE, true);
 
 	/**
+	 * Zero short field value
+	 */
+	public static final ShortField ZERO_VALUE = new ShortField((short) 0, true);
+
+	/**
 	 * Instance intended for defining a {@link Table} {@link Schema}
 	 */
-	public static final ShortField INSTANCE = MIN_VALUE;
+	public static final ShortField INSTANCE = ZERO_VALUE;
 
 	private short value;
 
@@ -64,6 +69,17 @@ public final class ShortField extends Field {
 	ShortField(short s, boolean immutable) {
 		super(immutable);
 		value = s;
+	}
+
+	@Override
+	boolean isNull() {
+		return value == 0;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		value = 0;
 	}
 
 	@Override
@@ -111,33 +127,38 @@ public final class ShortField extends Field {
 
 	@Override
 	public String getValueAsString() {
-		return "0x" + Integer.toHexString(value);
+		return "0x" + Integer.toHexString(value & 0xffff);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ShortField))
+		if (obj == null || !(obj instanceof ShortField)) {
 			return false;
+		}
 		return ((ShortField) obj).value == value;
 	}
 
 	@Override
 	public int compareTo(Field o) {
 		ShortField f = (ShortField) o;
-		if (value == f.value)
+		if (value == f.value) {
 			return 0;
-		else if (value < f.value)
+		}
+		else if (value < f.value) {
 			return -1;
+		}
 		return 1;
 	}
 
 	@Override
 	int compareTo(DataBuffer buffer, int offset) {
 		short otherValue = buffer.getShort(offset);
-		if (value == otherValue)
+		if (value == otherValue) {
 			return 0;
-		else if (value < otherValue)
+		}
+		else if (value < otherValue) {
 			return -1;
+		}
 		return 1;
 	}
 

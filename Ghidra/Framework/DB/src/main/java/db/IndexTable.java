@@ -53,7 +53,8 @@ abstract class IndexTable {
 	/**
 	 * Indexed column within primary table schema.
 	 */
-	protected final int colIndex;
+	protected final int indexColumn;
+	protected final boolean isSparseIndex;
 
 	/**
 	 * Construct a new or existing secondary index. An existing index must have
@@ -70,7 +71,8 @@ abstract class IndexTable {
 		this.primaryTable = primaryTable;
 		this.indexTableRecord = indexTableRecord;
 		this.indexTable = new Table(primaryTable.getDBHandle(), indexTableRecord);
-		this.colIndex = indexTableRecord.getIndexedColumn();
+		this.indexColumn = indexTableRecord.getIndexedColumn();
+		this.isSparseIndex = primaryTable.getSchema().isSparseColumn(indexColumn);
 		primaryTable.addIndex(this);
 	}
 
@@ -118,7 +120,8 @@ abstract class IndexTable {
 	 * @throws CancelledException if task cancelled
 	 */
 	boolean isConsistent(TaskMonitor monitor) throws IOException, CancelledException {
-		return indexTable.isConsistent(primaryTable.getSchema().getFieldNames()[colIndex], monitor);
+		return indexTable.isConsistent(primaryTable.getSchema().getFieldNames()[indexColumn],
+			monitor);
 	}
 
 	/**
@@ -142,7 +145,7 @@ abstract class IndexTable {
 	 * @return indexed column number
 	 */
 	int getColumnIndex() {
-		return colIndex;
+		return indexColumn;
 	}
 
 	/**
@@ -152,7 +155,7 @@ abstract class IndexTable {
 	 */
 	TableStatistics getStatistics() throws IOException {
 		TableStatistics stats = indexTable.getStatistics();
-		stats.indexColumn = colIndex;
+		stats.indexColumn = indexColumn;
 		return stats;
 	}
 
@@ -194,10 +197,10 @@ abstract class IndexTable {
 
 	/**
 	 * Delete an entry from this index.
-	 * @param record deleted record
+	 * @param oldRecord deleted record
 	 * @throws IOException if IO error occurs
 	 */
-	abstract void deleteEntry(Record record) throws IOException;
+	abstract void deleteEntry(Record oldRecord) throws IOException;
 
 	/**
 	 * Delete all records within this index table.

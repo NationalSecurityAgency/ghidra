@@ -36,9 +36,14 @@ public final class LongField extends Field {
 	public static final LongField MAX_VALUE = new LongField(Long.MAX_VALUE, true);
 
 	/**
+	 * Zero long field value
+	 */
+	public static final LongField ZERO_VALUE = new LongField(0, true);
+
+	/**
 	 * Instance intended for defining a {@link Table} {@link Schema}
 	 */
-	public static final LongField INSTANCE = MIN_VALUE;
+	public static final LongField INSTANCE = ZERO_VALUE;
 
 	private long value;
 
@@ -64,6 +69,17 @@ public final class LongField extends Field {
 	LongField(long l, boolean immutable) {
 		super(immutable);
 		value = l;
+	}
+
+	@Override
+	boolean isNull() {
+		return value == 0;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		value = 0;
 	}
 
 	@Override
@@ -116,8 +132,9 @@ public final class LongField extends Field {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof LongField))
+		if (obj == null || !(obj instanceof LongField)) {
 			return false;
+		}
 		return ((LongField) obj).value == value;
 	}
 
@@ -127,20 +144,24 @@ public final class LongField extends Field {
 			throw new UnsupportedOperationException("may only compare similar Field types");
 		}
 		LongField f = (LongField) o;
-		if (value == f.value)
+		if (value == f.value) {
 			return 0;
-		else if (value < f.value)
+		}
+		else if (value < f.value) {
 			return -1;
+		}
 		return 1;
 	}
 
 	@Override
 	int compareTo(DataBuffer buffer, int offset) {
 		long otherValue = buffer.getLong(offset);
-		if (value == otherValue)
+		if (value == otherValue) {
 			return 0;
-		else if (value < otherValue)
+		}
+		else if (value < otherValue) {
 			return -1;
+		}
 		return 1;
 	}
 

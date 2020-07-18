@@ -22,7 +22,8 @@ import generic.util.UnsignedDataUtils;
 import ghidra.util.BigEndianDataConverter;
 
 /**
- * <code>FixedField10</code> is a 10-byte fixed-length binary field.
+ * <code>FixedField10</code> provide an unsigned 10-byte fixed-length field value.
+ * The most-significant byte corresponds to index-0 (i.e., data[0]).
  */
 public class FixedField10 extends FixedField {
 
@@ -37,10 +38,15 @@ public class FixedField10 extends FixedField {
 	public static FixedField10 MAX_VALUE = new FixedField10(-1L, (short) -1, true);
 
 	/**
+	 * Zero fixed10 field value
+	 */
+	public static final FixedField10 ZERO_VALUE = new FixedField10(null, true);
+
+	/**
 	 * Instance intended for defining a {@link Table} {@link Schema}
 	 */
 	@SuppressWarnings("hiding")
-	public static final FixedField10 INSTANCE = MIN_VALUE;
+	public static final FixedField10 INSTANCE = ZERO_VALUE;
 
 	// This implementation uses both a data byte array and short+long variables
 	// for data storage.  While the short+long is always available, the data 
@@ -81,6 +87,11 @@ public class FixedField10 extends FixedField {
 		super(null, immutable);
 		this.hi8 = hi8;
 		this.lo2 = lo2;
+	}
+
+	@Override
+	boolean isNull() {
+		return hi8 == 0 && lo2 == 0;
 	}
 
 	@Override
@@ -144,10 +155,15 @@ public class FixedField10 extends FixedField {
 
 	@Override
 	public void setBinaryData(byte[] data) {
+		this.data = data;
+		if (data == null) {
+			hi8 = 0;
+			lo2 = 0;
+			return;
+		}
 		if (data.length != 10) {
 			throw new IllegalArgumentException("Invalid FixedField10 length: " + data.length);
 		}
-		this.data = data;
 		hi8 = BigEndianDataConverter.INSTANCE.getLong(data, 0);
 		lo2 = BigEndianDataConverter.INSTANCE.getShort(data, 8);
 	}
@@ -195,15 +211,19 @@ public class FixedField10 extends FixedField {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		FixedField10 other = (FixedField10) obj;
-		if (hi8 != other.hi8)
+		if (hi8 != other.hi8) {
 			return false;
-		if (lo2 != other.lo2)
+		}
+		if (lo2 != other.lo2) {
 			return false;
+		}
 		return true;
 	}
 

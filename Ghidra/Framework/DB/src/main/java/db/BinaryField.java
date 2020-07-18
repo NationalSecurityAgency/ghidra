@@ -59,6 +59,17 @@ public class BinaryField extends Field {
 	}
 
 	@Override
+	boolean isNull() {
+		return data == null;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		data = null;
+	}
+
+	@Override
 	void checkImmutable() {
 		super.checkImmutable();
 		hashcode = null;
@@ -197,8 +208,9 @@ public class BinaryField extends Field {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || obj.getClass() != getClass())
+		if (obj == null || obj.getClass() != getClass()) {
 			return false;
+		}
 		BinaryField f = (BinaryField) obj;
 		return Arrays.equals(f.data, data);
 	}

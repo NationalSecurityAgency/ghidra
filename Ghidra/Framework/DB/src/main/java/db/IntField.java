@@ -36,9 +36,14 @@ public final class IntField extends Field {
 	public static final IntField MAX_VALUE = new IntField(Integer.MAX_VALUE, true);
 
 	/**
+	 * Zero int field value
+	 */
+	public static final IntField ZERO_VALUE = new IntField(0, true);
+
+	/**
 	 * Instance intended for defining a {@link Table} {@link Schema}
 	 */
-	public static final IntField INSTANCE = MIN_VALUE;
+	public static final IntField INSTANCE = ZERO_VALUE;
 
 	private int value;
 
@@ -64,6 +69,17 @@ public final class IntField extends Field {
 	IntField(int i, boolean immutable) {
 		super(immutable);
 		value = i;
+	}
+
+	@Override
+	boolean isNull() {
+		return value == 0;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		value = 0;
 	}
 
 	@Override
@@ -116,28 +132,33 @@ public final class IntField extends Field {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof IntField))
+		if (obj == null || !(obj instanceof IntField)) {
 			return false;
+		}
 		return ((IntField) obj).value == value;
 	}
 
 	@Override
 	public int compareTo(Field o) {
 		IntField f = (IntField) o;
-		if (value == f.value)
+		if (value == f.value) {
 			return 0;
-		else if (value < f.value)
+		}
+		else if (value < f.value) {
 			return -1;
+		}
 		return 1;
 	}
 
 	@Override
 	int compareTo(DataBuffer buffer, int offset) {
 		int otherValue = buffer.getInt(offset);
-		if (value == otherValue)
+		if (value == otherValue) {
 			return 0;
-		else if (value < otherValue)
+		}
+		else if (value < otherValue) {
 			return -1;
+		}
 		return 1;
 	}
 

@@ -41,9 +41,10 @@ public class DBTestUtils {
 	static final int SINGLE_STRING = 6;
 	static final int SINGLE_BINARY = 7;
 	static final int SINGLE_FIXED = 8;
-	static final int ALL_TYPES = 9;
+	static final int ALL_FIXED = 9;
+	static final int ALL_TYPES = 10;
 
-	static final int MAX_SCHEMA_TYPE = 9;
+	static final int MAX_SCHEMA_TYPE = 10;
 
 	//@formatter:off
 	private static final Field[][] schemaFields = { 
@@ -57,17 +58,21 @@ public class DBTestUtils {
 		{ BinaryField.INSTANCE },
 		{ FixedField10.INSTANCE },
 		{ BooleanField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE, 
+			LongField.INSTANCE, FixedField10.INSTANCE },
+		{ BooleanField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE, 
 			LongField.INSTANCE, StringField.INSTANCE, BinaryField.INSTANCE, FixedField10.INSTANCE } };
 	//@formatter:on
 
 	private static final int[][] schemaIndexedColumns =
-		{ {}, {}, {}, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 2, 3, 4, 5, 6, 7 } };
+		{ {}, {}, {}, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 2, 3, 4, 5 },
+			{ 2, 3, 4, 5, 6, 7 } };
 
 	//@formatter:off
 	private static final String[][] schemaFieldNames = { 
 		{}, // no columns
 		{ "Boolean" }, { "Byte" }, { "Int" }, { "Short" }, { "Long" }, 
 		{ "String" }, { "Binary" }, { "Fixed" },
+		{ "Boolean", "Byte", "Int", "Short", "Long", "Fixed" },
 		{ "Boolean", "Byte", "Int", "Short", "Long", "String", "Binary", "Fixed" } 
 	};
 	//@formatter:on
@@ -118,28 +123,49 @@ public class DBTestUtils {
 	 * @param name name of table
 	 * @param schemaType type of schema (use static identifier)
 	 * @param createIndex all fields will be indexed if true
+	 * @param useSparseColumns all fields will use sparse storage if true
 	 * @return Table new table
 	 * @throws IOException
 	 */
-	static Table createLongKeyTable(DBHandle db, String name, int schemaType, boolean createIndex)
+	static Table createLongKeyTable(DBHandle db, String name, int schemaType, boolean createIndex,
+			boolean useSparseColumns)
 			throws IOException {
 		Table t;
 		int indexCnt = 0;
+		int[] indexedColumns = null;
+
+		Schema[] schemas = longKeySchemas;
+		if (useSparseColumns) {
+			for (int i = 0; i < schemas.length; i++) {
+				schemas[i] = createSparseSchema(schemas[i]);
+			}
+		}
+
 		if (createIndex) {
 			indexCnt = getIndexedColumnCount(schemaType);
-			int[] indexedColumns = getAllowedIndexColumns(schemaFields[schemaType]);
-			t = db.createTable(name, longKeySchemas[schemaType], indexedColumns);
+			indexedColumns = getAllowedIndexColumns(schemaFields[schemaType]);
 		}
-		else {
-			t = db.createTable(name, longKeySchemas[schemaType]);
-		}
+
+		t = db.createTable(name, schemas[schemaType], indexedColumns);
+
 		Assert.assertEquals(name, t.getName());
 		Assert.assertEquals(indexCnt, t.getIndexedColumns().length);
 		Assert.assertEquals(Long.MIN_VALUE, t.getMaxKey());
 		Assert.assertEquals(0, t.getRecordCount());
-		Assert.assertEquals(longKeySchemas[schemaType], t.getSchema());
+		Assert.assertEquals(schemas[schemaType], t.getSchema());
 		Assert.assertTrue(t.useLongKeys());
 		return t;
+	}
+
+	private static Schema createSparseSchema(Schema schema) {
+
+		Field[] fields = schema.getFields();
+		int[] sparseColumnIndexes = new int[fields.length];
+		for (int i = 0; i < sparseColumnIndexes.length; i++) {
+			sparseColumnIndexes[i] = i;
+		}
+		return new Schema(schema.getVersion(), schema.getKeyFieldType(), schema.getKeyName(),
+			fields, schema.getFieldNames(), sparseColumnIndexes);
 	}
 
 	static int[] getAllowedIndexColumns(Field[] columnFields) {
@@ -162,25 +188,40 @@ public class DBTestUtils {
 	 * @param name name of table
 	 * @param schemaType type of schema (use static identifier)
 	 * @param createIndex all fields will be indexed if true
+	 * @param useSparseColumns all fields will use sparse storage if true
 	 * @return Table new table
 	 * @throws IOException
 	 */
-	static Table createFixedKeyTable(DBHandle db, String name, int schemaType, boolean createIndex)
+	static Table createFixedKeyTable(DBHandle db, String name, int schemaType, boolean createIndex,
+			boolean useSparseColumns)
 			throws IOException {
 		Table t;
+		int indexCnt = 0;
+		int[] indexedColumns = null;
+
+		Schema[] schemas = fixedKeySchemas;
+		if (useSparseColumns) {
+			for (int i = 0; i < schemas.length; i++) {
+				schemas[i] = createSparseSchema(schemas[i]);
+			}
+		}
+
 		if (createIndex) {
-			int[] indexedColumns = getAllowedIndexColumns(schemaFields[schemaType]);
-			t = db.createTable(name, fixedKeySchemas[schemaType], indexedColumns);
+			indexCnt = getIndexedColumnCount(schemaType);
+			indexedColumns = getAllowedIndexColumns(schemaFields[schemaType]);
+		}
+
+		t = db.createTable(name, schemas[schemaType], indexedColumns);
+
+		if (createIndex) {
 			Assert.assertArrayEquals(schemaIndexedColumns[schemaType], t.getIndexedColumns());
 		}
-		else {
-			t = db.createTable(name, fixedKeySchemas[schemaType]);
-			Assert.assertEquals(0, t.getIndexedColumns().length);
-		}
+
 		Assert.assertEquals(name, t.getName());
+		Assert.assertEquals(indexCnt, t.getIndexedColumns().length);
 		Assert.assertEquals(Long.MIN_VALUE, t.getMaxKey());
 		Assert.assertEquals(0, t.getRecordCount());
-		Assert.assertEquals(fixedKeySchemas[schemaType], t.getSchema());
+		Assert.assertEquals(schemas[schemaType], t.getSchema());
 		Assert.assertTrue(!t.useLongKeys());
 		return t;
 	}

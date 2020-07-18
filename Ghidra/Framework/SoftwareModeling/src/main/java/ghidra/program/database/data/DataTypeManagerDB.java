@@ -776,19 +776,18 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				currentHandler = currentHandler.getSubsequentHandler();
 			}
 
-			SourceArchive sourceArchive = dataType.getSourceArchive();
-			if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
-				return resolveBuiltIn(dataType, currentHandler);
-			}
-
 			resolvedDataType = getCachedResolve(dataType);
 			if (resolvedDataType != null) {
 				return resolvedDataType;
 			}
 
-			// if the dataType has no source or it has no ID (datatypes with no ID are
-			// always local i.e. pointers)
-			if (sourceArchive == null || dataType.getUniversalID() == null) {
+			SourceArchive sourceArchive = dataType.getSourceArchive();
+			if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
+				resolvedDataType = resolveBuiltIn(dataType, currentHandler);
+			}
+			else if (sourceArchive == null || dataType.getUniversalID() == null) {
+				// if the dataType has no source or it has no ID (datatypes with no ID are
+				// always local i.e. pointers)
 				resolvedDataType = resolveNoSourceDataType(dataType, currentHandler);
 			}
 			else if (!sourceArchive.getSourceArchiveID().equals(getUniversalID()) &&
@@ -3690,11 +3689,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public DataType getDataType(SourceArchive sourceArchive, UniversalID datatypeID) {
-		if (datatypeID.getValue() == 0) {
-			// DT remove this check
-			throw new AssertException("should not be called with id of 0");
-		}
-
 		UniversalID sourceID = sourceArchive == null ? null : sourceArchive.getSourceArchiveID();
 		return idsToDataTypeMap.getDataType(sourceID, datatypeID);
 	}

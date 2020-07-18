@@ -55,6 +55,16 @@ class IndexField extends Field {
 		}
 	}
 
+	@Override
+	boolean isNull() {
+		return false; // not-applicable
+	}
+
+	@Override
+	void setNull() {
+		throw new IllegalFieldAccessException("Index field may not be set null");
+	}
+
 	/**
 	 * Get the indexed field value.  If the original value exceeded 
 	 * {@link #MAX_INDEX_FIELD_LENGTH} in length the returned value will
@@ -279,6 +289,10 @@ class IndexField extends Field {
 		Field indexedField = Field.getField((byte) (fieldType & FIELD_TYPE_MASK));
 
 		byte primaryKeyFeldType = (byte) (fieldType >> INDEX_FIELD_TYPE_SHIFT & FIELD_TYPE_MASK);
+		if (primaryKeyFeldType == FIELD_RESERVED_15_TYPE) {
+			// 0xf0..0xff - Reserved for Schema use
+			throw new UnsupportedFieldException(fieldType);
+		}
 		if (primaryKeyFeldType == LEGACY_INDEX_LONG_TYPE) {
 			return new LegacyIndexField(indexedField);
 		}

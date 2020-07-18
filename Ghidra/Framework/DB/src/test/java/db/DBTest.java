@@ -163,7 +163,8 @@ public class DBTest extends AbstractGenericTest {
 	@Test
 	public void testCreateLongKeyTable() throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.ALL_TYPES, false);
+		Table table =
+			DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.ALL_TYPES, false, false);
 		dbh.endTransaction(txId, true);
 		String[] names = table.getSchema().getFieldNames();
 		assertTrue(Arrays.equals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names));
@@ -181,7 +182,7 @@ public class DBTest extends AbstractGenericTest {
 	@Test
 	public void testStoredCreateLongKeyTable() throws IOException {
 		long txId = dbh.startTransaction();
-		DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.ALL_TYPES, false);
+		DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.ALL_TYPES, false, false);
 		dbh.endTransaction(txId, true);
 		saveAsAndReopen(dbName);
 		Table table = dbh.getTable("TABLE1");
@@ -209,7 +210,7 @@ public class DBTest extends AbstractGenericTest {
 		long txId = dbh.startTransaction();
 		for (int i = 0; i < cnt; i++) {
 			DBTestUtils.createLongKeyTable(dbh, "TABLE" + i, i % (DBTestUtils.MAX_SCHEMA_TYPE + 1),
-				false);
+				false, false);
 		}
 		dbh.endTransaction(txId, true);
 		assertEquals(cnt, dbh.getTableCount());
@@ -247,7 +248,7 @@ public class DBTest extends AbstractGenericTest {
 		// All schema fields are indexed
 		long txId = dbh.startTransaction();
 		for (int i = 0; i <= DBTestUtils.MAX_SCHEMA_TYPE; i++) {
-			DBTestUtils.createLongKeyTable(dbh, "TABLE" + i, i, true);
+			DBTestUtils.createLongKeyTable(dbh, "TABLE" + i, i, true, false);
 		}
 		assertEquals(DBTestUtils.MAX_SCHEMA_TYPE + 1, dbh.getTableCount());
 		dbh.endTransaction(txId, true);
@@ -414,7 +415,7 @@ public class DBTest extends AbstractGenericTest {
 
 		}
 		Schema schema = lastTable.getSchema();
-		assertEquals(schema.getFields().length, indexCnt);
+		assertEquals(schema.getFields().length - 2, indexCnt); // ByteField and BooleanField do not support indexing
 		assertEquals(totalTableCnt, tableCnt);
 
 	}

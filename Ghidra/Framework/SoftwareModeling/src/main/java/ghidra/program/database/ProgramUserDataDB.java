@@ -50,8 +50,11 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	/**
 	 * DB_VERSION should be incremented any time a change is made to the overall
 	 * database schema associated with any of the managers.
+	 * 
+	 * NOTE: 19-Jun-2020 Corrections to DB index tables should have no impact on user data 
+	 *                   PropertyMaps which are not indexed.                   
 	 */
-	static final int DB_VERSION = 2;
+	static final int DB_VERSION = 1;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION any time the
@@ -59,7 +62,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	 * until upgrade is performed).  It is assumed that read-only mode is supported
 	 * if the data's version is &gt;= UPGRADE_REQUIRED_BEFORE_VERSION and &lt;= DB_VERSION.
 	 */
-	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 2;
+	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 1;
 
 	private static final String TABLE_NAME = "ProgramUserData";
 	private final static Field[] COL_FIELDS = new Field[] { StringField.INSTANCE };

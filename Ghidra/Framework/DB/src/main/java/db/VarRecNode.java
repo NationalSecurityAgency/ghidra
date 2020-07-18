@@ -30,7 +30,7 @@ import ghidra.util.exception.AssertException;
  * <pre>
  *   | NodeType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | Key0(8) | RecOffset0(4) | IndFlag0(1) |...  
  *     
- *   | KeyN(8) | RecOffsetN(4) | IndFlagN(1) |...<FreeSpace>... | RecN |... | Rec1 |
+ *   | KeyN(8) | RecOffsetN(4) | IndFlagN(1) |...<FreeSpace>... | RecN |... | Rec0 |
  * </pre>
  * IndFlag - if not zero the record has been stored within a chained DBBuffer 
  * whose 4-byte integer buffer ID has been stored within this leaf at the record offset.
@@ -214,8 +214,9 @@ class VarRecNode extends LongKeyRecordNode {
 	@Override
 	Record getRecord(long key, Schema schema) throws IOException {
 		int index = getKeyIndex(key);
-		if (index < 0)
+		if (index < 0) {
 			return null;
+		}
 		return getRecord(schema, index);
 	}
 
@@ -340,7 +341,9 @@ class VarRecNode extends LongKeyRecordNode {
 		}
 
 		if ((len + ENTRY_SIZE) > getFreeSpace())
+		 {
 			return false;  // insufficient space for record storage
+		}
 
 		// Make room for new record
 		int offset = moveRecords(index, -len);
@@ -373,8 +376,9 @@ class VarRecNode extends LongKeyRecordNode {
 	@Override
 	public void remove(int index) throws IOException {
 
-		if (index < 0 || index >= keyCount)
+		if (index < 0 || index >= keyCount) {
 			throw new AssertException();
+		}
 
 		if (hasIndirectStorage(index)) {
 			removeChainedBuffer(buffer.getInt(getRecordDataOffset(index)));
@@ -382,6 +386,7 @@ class VarRecNode extends LongKeyRecordNode {
 		}
 
 		int len = getRecordLength(index);
+
 		moveRecords(index + 1, len);
 
 		int start = KEY_BASE_OFFSET + ((index + 1) * ENTRY_SIZE);

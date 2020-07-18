@@ -21,6 +21,9 @@ package db;
  */
 public abstract class FixedField extends BinaryField {
 
+	@SuppressWarnings("hiding")
+	public static final FixedField10 INSTANCE = null;
+
 	/**
 	 * Construct a fixed-length field
 	 * @param data initial value
@@ -34,6 +37,9 @@ public abstract class FixedField extends BinaryField {
 	public final boolean isVariableLength() {
 		return false;
 	}
+
+	@Override
+	abstract boolean isNull();
 
 	@Override
 	void truncate(int length) {

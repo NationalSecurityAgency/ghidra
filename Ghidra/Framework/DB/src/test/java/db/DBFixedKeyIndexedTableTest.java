@@ -89,7 +89,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	private Record[] createRandomTableRecords(int schemaType, int recordCnt, int varDataSize)
 			throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createFixedKeyTable(dbh, table1Name, schemaType, true);
+		Table table = DBTestUtils.createFixedKeyTable(dbh, table1Name, schemaType, true, false);
 		Record[] recs = new Record[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
 			try {
@@ -113,7 +113,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	private Record[] createOrderedTableRecords(int schemaType, int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createFixedKeyTable(dbh, table1Name, schemaType, true);
+		Table table = DBTestUtils.createFixedKeyTable(dbh, table1Name, schemaType, true, false);
 		FixedField key = new FixedField10(new byte[] { 0x7f, (byte) 0xff, (byte) 0xff, (byte) 0xff,
 			(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff });
 		Record[] recs = new Record[recordCnt];
@@ -158,8 +158,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		Table table = dbh.getTable(table1Name);
 		int[] indexedColumns = table.getIndexedColumns();
 		int step = recordCnt / findCnt;
-		for (int n = 0; n < indexedColumns.length; n++) {
-			int indexColumn = indexedColumns[n];
+		for (int indexColumn : indexedColumns) {
 			for (int i = 0; i < recordCnt; i += step) {
 				Field[] keys = table.findRecords(recs[i].getField(indexColumn), indexColumn);
 				Arrays.sort(keys);
@@ -174,13 +173,13 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	public void testEmptyFixedKeyIterator() throws IOException {
 		createRandomTableRecords(DBTestUtils.ALL_TYPES, 0, 1);
 
+		dbh.undo();
+		dbh.redo();
+
 		saveAsAndReopen(dbName);
 
 		Table table = dbh.getTable(table1Name);
 		assertEquals(0, table.getRecordCount());
-
-		dbh.undo();
-		dbh.redo();
 
 		Field startKey = new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 2, 0 });
 		Field minKey = new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 });
@@ -805,8 +804,6 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			assertEquals(maxIx + 1, ix);
 
 			// Index field iterator (reverse range of unique index values)
-//			minIx = indexFields.size() / 10;
-//			maxIx = minIx * 2;
 			fiter = table.indexFieldIterator(indexFields.get(minIx), indexFields.get(maxIx), false,
 				colIx);
 			ix = maxIx;
@@ -829,8 +826,6 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			assertEquals(-1, ix);
 
 			// Index field iterator (forward range of unique index values)
-//			minIx = indexFields.size() / 10;
-//			maxIx = minIx * 2;
 			startIx = (minIx + maxIx) / 2;
 			fiter = table.indexFieldIterator(indexFields.get(minIx), indexFields.get(maxIx),
 				indexFields.get(startIx), true, colIx);
@@ -842,9 +837,6 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			assertEquals(maxIx + 1, ix);
 
 			// Index field iterator (reverse range of unique index values)
-//			minIx = indexFields.size() / 10;
-//			maxIx = minIx * 2;
-//			startIx = (minIx + maxIx) / 2;
 			fiter = table.indexFieldIterator(indexFields.get(minIx), indexFields.get(maxIx),
 				indexFields.get(startIx), false, colIx);
 			ix = startIx;
@@ -1144,7 +1136,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 	public void testRecordIteratorExtents() throws IOException {
 
 		Record[] recs = null;
-		recs = createOrderedRecordRange(DBTestUtils.SINGLE_SHORT, 30, 2, 1);
+		recs = createOrderedTableRecords(DBTestUtils.SINGLE_SHORT, 30, 2, 1);
 		Table table = dbh.getTable(table1Name);
 		assertEquals(recs.length, table.getRecordCount());
 
@@ -1152,8 +1144,6 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		int colIx = 0;
 		Arrays.sort(recs, new RecColumnComparator(colIx));
 		int recIx = recs.length - 1;
-//		RecordIterator iter = table.indexIterator(colIx, recs[minIx].getField(colIx),
-//								   recs[maxIx].getField(colIx), false);
 		Field minField = new ShortField(Short.MIN_VALUE);
 		Field maxField = new ShortField(Short.MAX_VALUE);
 		RecordIterator iter = table.indexIterator(colIx, minField, maxField, false);
@@ -1162,23 +1152,6 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			assertEquals(recs[recIx--], rec);
 		}
 		assertEquals(recIx, -1);
-	}
-
-	private Record[] createOrderedRecordRange(int schemaType, int recordCnt, long keyIncrement,
-			int varDataSize) throws IOException {
-		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, schemaType, true);
-		Record[] recs = new Record[recordCnt];
-		for (int key = 0; key < recordCnt; key++) {
-			try {
-				recs[key] = DBTestUtils.createMidRangeRecord(table, key, varDataSize, true);
-			}
-			catch (DuplicateKeyException e) {
-				Assert.fail("Duplicate key error");
-			}
-		}
-		dbh.endTransaction(txId, true);
-		return recs;
 	}
 
 	@Test

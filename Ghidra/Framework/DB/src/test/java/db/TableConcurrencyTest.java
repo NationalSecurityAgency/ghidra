@@ -15,8 +15,7 @@
  */
 package db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -47,7 +46,8 @@ public class TableConcurrencyTest extends AbstractGenericTest {
 
 		dbh = new DBHandle(BUFFER_SIZE, CACHE_SIZE);
 		txId = dbh.startTransaction();
-		table1 = DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.SINGLE_LONG, false);
+		table1 =
+			DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.SINGLE_LONG, false, false);
 		table2 = DBTestUtils.createBinaryKeyTable(dbh, "TABLE2", DBTestUtils.SINGLE_LONG, false);
 		schema1 = table1.getSchema();
 		schema2 = table2.getSchema();

@@ -90,7 +90,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
 		Table table =
-			DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
+			DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
 		Record rec = null;
 		try {
 			rec = DBTestUtils.createFixedKeyRecord(table, varDataSize, true);
@@ -280,7 +280,8 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 			throws IOException {
 		long txId = dbh.startTransaction();
 		if (table == null) {
-			table = DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
+			table = DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false,
+				false);
 		}
 		Record[] recs = new Record[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
@@ -305,7 +306,7 @@ public class DBFixedKeyTableTest extends AbstractGenericTest {
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
 		Table table =
-			DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
+			DBTestUtils.createFixedKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
 		FixedField10 key = new FixedField10(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
 		Record[] recs = new Record[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {

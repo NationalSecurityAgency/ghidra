@@ -56,6 +56,17 @@ public final class BooleanField extends Field {
 		this(b, false);
 	}
 
+	@Override
+	boolean isNull() {
+		return value == 0;
+	}
+
+	@Override
+	void setNull() {
+		checkImmutable();
+		value = 0;
+	}
+
 	/**
 	 * Construct a boolean data field with an initial value of b.
 	 * @param b initial value
@@ -116,8 +127,9 @@ public final class BooleanField extends Field {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof BooleanField))
+		if (obj == null || !(obj instanceof BooleanField)) {
 			return false;
+		}
 		BooleanField otherField = (BooleanField) obj;
 		return otherField.value == value;
 	}
@@ -125,20 +137,24 @@ public final class BooleanField extends Field {
 	@Override
 	public int compareTo(Field o) {
 		BooleanField f = (BooleanField) o;
-		if (value == f.value)
+		if (value == f.value) {
 			return 0;
-		else if (value < f.value)
+		}
+		else if (value < f.value) {
 			return -1;
+		}
 		return 1;
 	}
 
 	@Override
 	int compareTo(DataBuffer buffer, int offset) {
 		byte otherValue = buffer.getByte(offset);
-		if (value == otherValue)
+		if (value == otherValue) {
 			return 0;
-		else if (value < otherValue)
+		}
+		else if (value < otherValue) {
 			return -1;
+		}
 		return 1;
 	}
 

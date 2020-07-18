@@ -81,7 +81,8 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	private long insertOneLongKeyRecord(boolean testStoredDB, boolean testGetRecord,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
+		Table table =
+			DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
 		Record rec = null;
 		try {
 			rec = DBTestUtils.createLongKeyRecord(table, true, varDataSize, true);
@@ -265,7 +266,8 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 			throws IOException {
 		long txId = dbh.startTransaction();
 		if (table == null) {
-			table = DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
+			table = DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false,
+				false);
 		}
 		Record[] recs = new Record[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
@@ -289,7 +291,8 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	private Record[] createOrderedLongKeyTableRecords(int recordCnt, long keyIncrement,
 			int varDataSize) throws IOException {
 		long txId = dbh.startTransaction();
-		Table table = DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false);
+		Table table =
+			DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
 		long key = 0;
 		Record[] recs = new Record[recordCnt];
 		for (int i = 0; i < recordCnt; i++) {
