@@ -18,16 +18,15 @@ package ghidra.program.util;
 import java.util.*;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.ProgramContext;
 
 abstract public class AbstractProgramContext implements ProgramContext, DefaultProgramContext {
 	
+	protected Language language;
 	protected Register[] registers;
 	protected Register baseContextRegister;
-	private Map<String, Register> registerNameMap;  // lazy initialized only when getRegister(name) called
 
 	private boolean hasNonFlowingContext = false;
 	private byte[] nonFlowingContextRegisterMask;
@@ -35,17 +34,8 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 
 	protected RegisterValue defaultDisassemblyContext;
 
-	protected AbstractProgramContext(Register[] registers) {
-		this.registers = registers;
-
-		init();
-
-		if (baseContextRegister != null) {
-			nonFlowingContextRegisterMask = baseContextRegister.getBaseMask().clone();
-			Arrays.fill(nonFlowingContextRegisterMask, (byte) 0);
-			flowingContextRegisterMask = nonFlowingContextRegisterMask.clone();
-			initContextBitMasks(baseContextRegister);
-		}
+	protected AbstractProgramContext(Language language) {
+		init(language);
 	}
 
 	/**
@@ -109,37 +99,22 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 		return value.clearBitValues(flowingContextRegisterMask);
 	}
 
-	protected void init() {
-		registerNameMap = null;
-		baseContextRegister = null;
-		for (Register register : registers) {
-			if (register.isProcessorContext()) {
-				baseContextRegister = register.getBaseRegister();
-				break; // should only be one
-			}
-		}
+	protected void init(Language language) {
+		this.language = language;
+		this.registers = language.getRegisters();
+		baseContextRegister = language.getContextBaseRegister();
 		if (baseContextRegister == null) {
 			baseContextRegister =
 				new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT", Address.NO_ADDRESS, 4, true, 0);
 		}
 		defaultDisassemblyContext = new RegisterValue(baseContextRegister);
-	}
-
-	private Map<String, Register> getRegisterNameMap() {
-		if (registerNameMap != null) {
-			return registerNameMap;
-		}
-		// if register map hasn't been initialized, initialize it
-		registerNameMap = new HashMap<String, Register>();
 		
-		// NOTE: if you want upper case names recognized, override this method and add them
-		for (Register register : registers) {
-			registerNameMap.put(register.getName(), register);
-			for (String alias : register.getAliases()) {
-				registerNameMap.put(alias, register);
-			}
+		if (baseContextRegister != null) {
+			nonFlowingContextRegisterMask = baseContextRegister.getBaseMask().clone();
+			Arrays.fill(nonFlowingContextRegisterMask, (byte) 0);
+			flowingContextRegisterMask = nonFlowingContextRegisterMask.clone();
+			initContextBitMasks(baseContextRegister);
 		}
-		return registerNameMap;
 	}
 
 	@Override
@@ -155,7 +130,7 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 
 	@Override
 	public final Register getRegister(String name) {
-		return getRegisterNameMap().get(name);
+		return language.getRegister(name);
 	}
 
 	@Override

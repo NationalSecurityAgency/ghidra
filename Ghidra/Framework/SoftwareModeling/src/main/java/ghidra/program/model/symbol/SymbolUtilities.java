@@ -561,6 +561,12 @@ public class SymbolUtilities {
 	 * @param name the dynamic label name to parse into an address.
 	 */
 	public static Address parseDynamicName(AddressFactory factory, String name) {
+
+		// strip leading underscores
+		while (name.startsWith(UNDERSCORE)) {
+			name = name.substring(1);
+		}
+
 		String[] pieces = name.split(UNDERSCORE);
 		if (pieces.length < 2) { // if we have less than two pieces, then this is not a dynamic name.
 			return null;

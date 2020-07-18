@@ -132,7 +132,8 @@ public class RegisterManager {
 	}
 
 	/**
-	 * Returns context base register or null if one has not been defined by the language.
+	 * Get context base-register
+	 * @return context base register or null if one has not been defined by the language.
 	 */
 	public Register getContextBaseRegister() {
 		return contextBaseRegister;
@@ -140,9 +141,8 @@ public class RegisterManager {
 
 	/**
 	 * Returns the largest register located at the specified address
-	 * 
-	 * @param addr
-	 * @return largest register
+	 * @param addr register address
+	 * @return register or null if not found
 	 */
 	public Register getRegister(Address addr) {
 		if (!addr.isRegisterAddress() && !addr.getAddressSpace().hasMappedRegisters()) {
@@ -154,8 +154,8 @@ public class RegisterManager {
 	/**
 	 * Returns all registers located at the specified address
 	 * 
-	 * @param addr
-	 * @return largest register
+	 * @param addr register address
+	 * @return array of registers found (may be empty)
 	 */
 	public Register[] getRegisters(Address addr) {
 		if (addr.isRegisterAddress() || addr.getAddressSpace().hasMappedRegisters()) {
@@ -177,12 +177,10 @@ public class RegisterManager {
 	}
 
 	/**
-	 * Returns the smallest register at the specified address whose size is 
-	 * greater than or equal the specified size.
+	 * Get register by address and size
 	 * @param addr register address
-	 * @param size the size of the register (in bytes).  A value of 0 will return the 
-	 * largest register at the specified addr
-	 * @return register
+	 * @param size register size
+	 * @return register or null if not found
 	 */
 	public Register getRegister(Address addr, int size) {
 		if (!addr.isRegisterAddress() && !addr.getAddressSpace().hasMappedRegisters()) {
@@ -192,24 +190,29 @@ public class RegisterManager {
 	}
 
 	/**
-	 * Returns the register with the given name;
-	 * @param name the name of the register to retrieve
+	 * Get register by name.  A semi-case-insensitive lookup is performed.
+	 * The specified name must match either the case-sensitive name or
+	 * be entirely lowercase or uppercase.
+	 * @param name register name
+	 * @return register or null if not found
 	 */
 	public Register getRegister(String name) {
 		return registerNameMap.get(name);
 	}
 
 	/**
-	 * Return array of all registers.
-	 * @return all registers
+	 * Get all registers.  Array returned is not protected and must not be modified
+	 * by caller.
+	 * @return array of all registers defined
 	 */
 	public Register[] getRegisters() {
 		return registers;
 	}
 
 	/**
-	 * Returns the array of vector registers, sorted first by size and then by offset
-	 * @return sorted vector registers
+	 * Get all vector registers indentified by processor specification
+	 * in sorted order based upon address and size.
+	 * @return all vector registers
 	 */
 	public Register[] getSortedVectorRegisters() {
 		if (sortedVectorRegisters == null) {

@@ -18,6 +18,7 @@ package ghidra.program.model.lang;
 import java.util.*;
 
 import ghidra.program.model.address.Address;
+import ghidra.util.Msg;
 
 public class RegisterBuilder {
 
@@ -44,14 +45,18 @@ public class RegisterBuilder {
 	}
 
 	public void addRegister(Register register) {
-		Register aliasedReg = null;
+		String name = register.getName();
+		if (registerMap.get(name) != null) {
+			Msg.error(this, "Duplicate register name: " + name);
+			// TODO: should we throw exception - hopefully sleigh will prevent this condition
+		}
 		for (Register reg : registerList) {
 			if (reg.getAddress().equals(register.getAddress()) &&
 				reg.getLeastSignificantBit() == register.getLeastSignificantBit() &&
 				reg.getBitLength() == register.getBitLength()) {
 				// define as register alias
-				reg.addAlias(register.getName());
-				registerMap.put(register.getName(), reg);
+				reg.addAlias(name);
+				addRegisterToMap(register);
 				return;
 			}
 		}
@@ -59,7 +64,14 @@ public class RegisterBuilder {
 			contextAddress = register.getAddress();
 		}
 		registerList.add(register);
-		registerMap.put(register.getName(), register);
+		addRegisterToMap(register);
+	}
+
+	private void addRegisterToMap(Register register) {
+		String name = register.getName();
+		registerMap.put(name, register);
+		registerMap.put(name.toLowerCase(), register);
+		registerMap.put(name.toUpperCase(), register);
 	}
 
 	/**

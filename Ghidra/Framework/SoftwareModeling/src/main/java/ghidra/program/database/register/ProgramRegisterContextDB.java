@@ -49,8 +49,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 	public ProgramRegisterContextDB(DBHandle dbHandle, ErrorHandler errHandler, Language lang,
 			CompilerSpec compilerSpec, AddressMap addrMap, Lock lock, int openMode,
 			CodeManager codeMgr, TaskMonitor monitor) throws VersionException, CancelledException {
-
-		super(lang.getRegisters());
+		super(lang);
 		this.addrMap = addrMap;
 		this.dbHandle = dbHandle;
 		this.errorHandler = errHandler;
@@ -194,6 +193,9 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
+		if (program.getLanguage() != language) {
+			throw new IllegalArgumentException("Program does not correspond to current language");
+		}
 	}
 
 	@Override
@@ -306,16 +308,16 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 			AddressSetView programMemory, TaskMonitor monitor) throws CancelledException {
 
 		if (translator == null) {
-			Language lang = program.getLanguage();
+			// Language instance unchanged
 			boolean clearContext = Boolean.valueOf(
-				lang.getProperty(GhidraLanguagePropertyKeys.RESET_CONTEXT_ON_UPGRADE));
+				language.getProperty(GhidraLanguagePropertyKeys.RESET_CONTEXT_ON_UPGRADE));
 			if (clearContext) {
 				RegisterValueStore store = registerValueMap.get(baseContextRegister);
 				if (store != null) {
 					store.clearAll();
 				}
 			}
-			initializeDefaultValues(lang, newCompilerSpec);
+			initializeDefaultValues(language, newCompilerSpec);
 			return;
 		}
 
@@ -350,11 +352,9 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 			registerValueMap.remove(register);
 		}
 
-		initializeDefaultValues(newLanguage, newCompilerSpec);
+		init(newLanguage);
 
-		registers = newLanguage.getRegisters();
-		baseContextRegister = newLanguage.getContextBaseRegister();
-		init();
+		initializeDefaultValues(newLanguage, newCompilerSpec);
 
 		registerValueMap.clear();
 		initializedCurrentValues();
