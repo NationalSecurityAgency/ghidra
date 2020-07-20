@@ -380,7 +380,7 @@ public class DemangledFunction extends DemangledObject {
 			signature.setVarArgs(true);
 		}
 		if (!function.isExternal() && isParameterMismatch(function, signature)) {
-			bookmarkParameterMismatch(program, function.getEntryPoint(), args);
+			bookmarkParameterMismatch(program, function.getEntryPoint());
 			return true;
 		}
 
@@ -413,26 +413,15 @@ public class DemangledFunction extends DemangledObject {
 		return false;
 	}
 
-	private void bookmarkParameterMismatch(Program program, Address address,
-			List<ParameterDefinitionImpl> args) {
+	private void bookmarkParameterMismatch(Program program, Address address) {
 
 		if (parameters.isEmpty()) {
 			return;
 		}
 
-		int pointerSize = program.getDefaultPointerSize();
 		BookmarkManager bookmarkManager = program.getBookmarkManager();
-		for (ParameterDefinitionImpl arg : args) {
-			if (arg.getLength() > pointerSize) {
-				bookmarkManager.setBookmark(address, BookmarkType.ANALYSIS, "Demangler",
-					"Couldn't apply demangled signature - probably due to datatype that is too " +
-						"large to fit in a parameter");
-			}
-		}
-
 		bookmarkManager.setBookmark(address, BookmarkType.ANALYSIS, "Demangler",
-			"Couldn't apply demangled signature - bad parameter number match (" + args.size() +
-				") in a function in a namespace");
+			"Couldn't apply demangled signature - mismatch with existing signature");
 	}
 
 	static void maybeCreateUndefined(Program program, Address address) {
@@ -545,17 +534,17 @@ public class DemangledFunction extends DemangledObject {
 
 	private boolean isParameterMismatch(Function func, FunctionSignature signature) {
 
+		// Default source types can be overridden
+		if (func.getSignatureSource() == SourceType.DEFAULT) {
+			return false;
+		}
+
 		int existingParameterCount = func.getParameterCount();
 
 		// If we don't know the parameters, and have already decided on This calling
 		// convention. is not a problem.
 		String callingConventionName = func.getCallingConventionName();
 		if (existingParameterCount == 0 && THIS_CALL.equals(callingConventionName)) {
-			return false;
-		}
-
-		// Default source types can be overridden
-		if (func.getSignatureSource() == SourceType.DEFAULT) {
 			return false;
 		}
 
@@ -619,14 +608,14 @@ public class DemangledFunction extends DemangledObject {
 		Parameter[] funcParams = func.getParameters();
 
 		for (Parameter parameter : funcParams) {
-			if (parameter.isAutoParameter() && parameter.getOrdinal() == 0) {
+			if (parameter.isAutoParameter()) {
 				// automatic parameter, is OK.
 				continue;
 			}
 			// check for default type of data type
 			DataType dt = parameter.getDataType();
 			dt = DataTypeUtilities.getBaseDataType(dt);
-			if (dt instanceof Undefined || dt.equals(DefaultDataType.dataType)) {
+			if (Undefined.isUndefined(dt)) {
 				continue;
 			}
 			// if the parameters source is higher than 
@@ -638,8 +627,7 @@ public class DemangledFunction extends DemangledObject {
 		// if already a return type and this one has a return type
 		DataType returnDT = func.getReturnType();
 		returnDT = DataTypeUtilities.getBaseDataType(returnDT);
-		if (!(returnDT instanceof Undefined || returnDT.equals(DefaultDataType.dataType)) &&
-			this.getReturnType() != null) {
+		if (!(Undefined.isUndefined(returnDT)) && this.getReturnType() != null) {
 			return true;
 		}
 
