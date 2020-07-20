@@ -277,10 +277,10 @@ public class RepositoryManager {
 		if (names.length == 0) {
 			log.info("   <none>");
 		}
-		for (String name2 : names) {
-			File f = new File(rootDirFile, NamingUtilities.mangle(name2));
+		for (String name : names) {
+			File f = new File(rootDirFile, NamingUtilities.mangle(name));
 			if (!f.isDirectory()) {
-				log.error("Error while processing repository " + name2 +
+				log.error("Error while processing repository " + name +
 					", directory not found: " + f);
 				continue;
 			}
@@ -288,15 +288,14 @@ public class RepositoryManager {
 				throw new IOException(f.getAbsolutePath() + " can not be written to");
 			}
 			try {
-				Repository rep = new Repository(this, null, f, name2);
-				String name = rep.getName();
+				Repository rep = new Repository(this, null, f, name);
 				repositoryMap.put(name, rep);
 			}
 			catch (UserAccessException e) {
 				// ignore
 			}
 			catch (Exception e) {
-				log.error("Error while processing repository " + name2 + ", " + e.getMessage());
+				log.error("Error while processing repository " + name + ", " + e.getMessage());
 				continue;
 			}
 		}

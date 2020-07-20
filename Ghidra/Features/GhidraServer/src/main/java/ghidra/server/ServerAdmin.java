@@ -130,13 +130,13 @@ public class ServerAdmin implements GhidraLaunchable {
 		int cmdLen = 1;
 		for (; ix < args.length; ix += cmdLen) {
 			boolean queueCmd = true;
-			char[] pwdHash = null;
+			String pwdHash = null;
 			if (UserAdmin.ADD_USER_COMMAND.equals(args[ix])) {  // add user
 				cmdLen = 2;
 				validateSID(args, ix + 1);
 				if (hasOptionalArg(args, ix + 2, UserAdmin.PASSWORD_OPTION)) {
 					++cmdLen;
-					pwdHash = promptForPassword(args[ix + 1]);
+					pwdHash = promptForPasswordAndGetSaltedHash(args[ix + 1]);
 				}
 			}
 			else if (UserAdmin.REMOVE_USER_COMMAND.equals(args[ix])) { // remove user
@@ -148,7 +148,7 @@ public class ServerAdmin implements GhidraLaunchable {
 				validateSID(args, ix + 1);
 				if (hasOptionalArg(args, ix + 2, UserAdmin.PASSWORD_OPTION)) {
 					++cmdLen;
-					pwdHash = promptForPassword(args[ix + 1]);
+					pwdHash = promptForPasswordAndGetSaltedHash(args[ix + 1]);
 				}
 			}
 			else if (UserAdmin.SET_USER_DN_COMMAND.equals(args[ix])) { // set/add user with DN for PKI
@@ -227,7 +227,7 @@ public class ServerAdmin implements GhidraLaunchable {
 		System.out.println();
 	}
 
-	private char[] promptForPassword(String userSID) {
+	private String promptForPasswordAndGetSaltedHash(String userSID) {
 		char[] pwd1 = null;
 		char[] pwd2 = null;
 		try {
@@ -242,7 +242,8 @@ public class ServerAdmin implements GhidraLaunchable {
 				Arrays.fill(pwd1, (char) 0);
 				Arrays.fill(pwd2, (char) 0);
 			}
-			return HashUtilities.getSaltedHash(HashUtilities.SHA256_ALGORITHM, pwd1);
+			char[] saltedHash = HashUtilities.getSaltedHash(HashUtilities.SHA256_ALGORITHM, pwd1);
+			return new String(saltedHash);
 		}
 		catch (IOException e) {
 			System.err.println("Password entry error: " + e.getMessage());
@@ -278,14 +279,18 @@ public class ServerAdmin implements GhidraLaunchable {
 
 				while (true) {
 					c = System.in.read();
-					if (c <= 0 || (Character.isWhitespace((char) c) && c != ' ')) {
+					if (c <= 0 || c == '\n') {
 						break;
+					}
+					if (c == '\r') {
+						continue;
 					}
 					if (password == null) {
 						password = new char[1];
 					}
 					else {
 						char[] newPass = new char[password.length + 1];
+						// copy prior entry into expanded array and clear old array
 						for (int i = 0; i < password.length; i++) {
 							newPass[i] = password[i];
 							password[i] = 0;
@@ -326,8 +331,8 @@ public class ServerAdmin implements GhidraLaunchable {
 	 * @param pwdHash optional password has to append to end of command
 	 */
 	private static void addCommand(ArrayList<String> cmdList, String[] args, int argOffset,
-			int argCnt, char[] pwdHash) {
-		StringBuffer buf = new StringBuffer();
+			int argCnt, String pwdHash) {
+		StringBuilder buf = new StringBuilder();
 		for (int i = 0; i < argCnt; i++) {
 			if (i > 0) {
 				buf.append(' ');
