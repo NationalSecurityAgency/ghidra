@@ -19,6 +19,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
 
 import org.apache.felix.framework.FrameworkFactory;
 import org.apache.felix.framework.util.FelixConstants;
+import org.jgrapht.graph.DirectedMultigraph;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.Framework;
 import org.osgi.framework.wiring.*;
@@ -36,7 +39,6 @@ import ghidra.framework.Application;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
 /**
@@ -673,7 +675,53 @@ public class BundleHost {
 		listeners.remove(bundleHostListener);
 	}
 
-	protected void activateAll(Collection<GhidraBundle> bundles, TaskMonitor monitor,
+	/**
+	 * Activate a set of bundles and any dependencies in topological order.  This method doesn't rely on the
+	 * framework, and so will add non-active dependencies.
+	 * 
+	 * @param bundles bundles to activate
+	 * @param monitor a task monitor
+	 * @param console where to write build messages
+	 */
+	public void activateAll(Collection<GhidraBundle> bundles, TaskMonitor monitor,
+			PrintWriter console) {
+
+		List<GhidraBundle> availableBundles = getGhidraBundles().stream()
+				.filter(GhidraBundle::isEnabled)
+				.collect(Collectors.toList());
+
+		BundleDependencyGraph dependencyGraph =
+			new BundleDependencyGraph(availableBundles, bundles, monitor);
+
+		monitor.setMaximum(dependencyGraph.vertexSet().size());
+
+		for (GhidraBundle bundle : dependencyGraph.inTopologicalOrder()) {
+			if (monitor.isCancelled()) {
+				break;
+			}
+			try {
+				bundle.build(console);
+				activateSynchronously(bundle.getLocationIdentifier());
+			}
+			catch (GhidraBundleException e) {
+				fireBundleException(e);
+			}
+			catch (Exception e) {
+				e.printStackTrace(console);
+			}
+			monitor.incrementProgress(1);
+		}
+	}
+
+	/**
+	 * Activate a set of bundles in dependency topological order by resolving against currently
+	 * active bundles in stages.  No bundles outside those requested will be activated.
+	 * 
+	 * @param bundles bundles to activate
+	 * @param monitor a task monitor
+	 * @param console where to write build messages
+	 */
+	public void activateInStages(Collection<GhidraBundle> bundles, TaskMonitor monitor,
 			PrintWriter console) {
 		List<GhidraBundle> bundlesRemaining = new ArrayList<>(bundles);
 
@@ -783,17 +831,6 @@ public class BundleHost {
 		listeners.add(bundleHostListener);
 	}
 
-	private void startActivateAllTask(Collection<GhidraBundle> bundlesToActivate) {
-		if (!bundlesToActivate.isEmpty()) {
-			new TaskLauncher(new Task("restoring bundle state", true, true, false) {
-				@Override
-				public void run(TaskMonitor monitor) throws CancelledException {
-					activateAll(bundlesToActivate, monitor, new NullPrintWriter());
-				}
-			});
-		}
-	}
-
 	/**
 	 * Restore the list of managed bundles from {@code saveState} and each bundle's state.
 	 * 
@@ -845,7 +882,9 @@ public class BundleHost {
 			}
 		}
 		add(newBundles);
-		startActivateAllTask(bundlesToActivate);
+
+		TaskLauncher.launchNonModal("restoring bundle state",
+			(monitor) -> activateInStages(bundlesToActivate, monitor, new NullPrintWriter()));
 	}
 
 	/**
@@ -873,6 +912,118 @@ public class BundleHost {
 		saveState.putBooleans(SAVE_STATE_TAG_ENABLE, bundleIsEnabled);
 		saveState.putBooleans(SAVE_STATE_TAG_ACTIVE, bundleIsActive);
 		saveState.putBooleans(SAVE_STATE_TAG_SYSTEM, bundleIsSystem);
+	}
+
+	private static class Dependency {
+		// exists only to be distinguished by id
+	}
+
+	private static class BundleDependencyGraph
+			extends DirectedMultigraph<GhidraBundle, Dependency> {
+		final Map<GhidraBundle, List<BundleCapability>> capabilityMap = new HashMap<>();
+		final List<GhidraBundle> availableBundles;
+		final TaskMonitor monitor;
+
+		BundleDependencyGraph(List<GhidraBundle> availableBundles,
+				Collection<GhidraBundle> startingBundles, TaskMonitor monitor) {
+			super(null, null, false);
+			this.availableBundles = availableBundles;
+			this.monitor = monitor;
+
+			Map<GhidraBundle, Set<GhidraBundle>> front = new HashMap<>();
+			for (GhidraBundle bundle : startingBundles) {
+				front.put(bundle, null);
+			}
+
+			while (!front.isEmpty() && !monitor.isCancelled()) {
+				addFront(front);
+				Map<GhidraBundle, Set<GhidraBundle>> newFront = new HashMap<>();
+
+				for (GhidraBundle bundle : front.keySet()) {
+					resolve(bundle, newFront);
+				}
+				handleBackEdges(newFront);
+				front = newFront;
+			}
+
+		}
+
+		Iterable<GhidraBundle> inTopologicalOrder() {
+			return () -> new TopologicalOrderIterator<>(this);
+		}
+
+		void handleBackEdges(Map<GhidraBundle, Set<GhidraBundle>> newFront) {
+			Iterator<Entry<GhidraBundle, Set<GhidraBundle>>> newFrontIter =
+				newFront.entrySet().iterator();
+			while (newFrontIter.hasNext() && !monitor.isCancelled()) {
+				Entry<GhidraBundle, Set<GhidraBundle>> entry = newFrontIter.next();
+				GhidraBundle src = entry.getKey();
+				if (containsVertex(src)) {
+					for (GhidraBundle dst : entry.getValue()) {
+						addEdge(src, dst, new Dependency());
+					}
+					newFrontIter.remove();
+				}
+			}
+		}
+
+		void addFront(Map<GhidraBundle, Set<GhidraBundle>> front) {
+			for (Entry<GhidraBundle, Set<GhidraBundle>> e : front.entrySet()) {
+				GhidraBundle src = e.getKey();
+				availableBundles.add(src);
+				addVertex(src);
+				Set<GhidraBundle> dsts = e.getValue();
+				if (dsts != null) {
+					for (GhidraBundle dst : dsts) {
+						addEdge(src, dst, new Dependency());
+					}
+				}
+			}
+		}
+
+		void resolve(GhidraBundle bundle, Map<GhidraBundle, Set<GhidraBundle>> newFront) {
+			List<BundleRequirement> reqs;
+			try {
+				reqs = new ArrayList<>(bundle.getAllRequirements());
+			}
+			catch (GhidraBundleException e) {
+				throw new RuntimeException(e);
+			}
+			if (reqs.isEmpty()) {
+				return;
+			}
+
+			for (GhidraBundle depBundle : availableBundles) {
+				for (BundleCapability cap : getCapabilities(depBundle)) {
+					if (monitor.isCancelled()) {
+						return;
+					}
+					Iterator<BundleRequirement> reqIter = reqs.iterator();
+					while (reqIter.hasNext()) {
+						BundleRequirement req = reqIter.next();
+						if (req.matches(cap)) {
+							newFront.computeIfAbsent(depBundle, b -> new HashSet<>()).add(bundle);
+							reqIter.remove();
+						}
+					}
+					if (reqs.isEmpty()) {
+						return;
+					}
+				}
+			}
+		}
+
+		List<BundleCapability> getCapabilities(GhidraBundle bundle) {
+			return capabilityMap.computeIfAbsent(bundle, b -> {
+				try {
+					return b.getAllCapabilities();
+				}
+				catch (GhidraBundleException e) {
+					Msg.error(this, "getting capabilities", e);
+					return null;
+				}
+			});
+		}
 	}
 
 	/**

@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.util.List;
 
 import org.osgi.framework.Bundle;
+import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 
 import generic.jar.ResourceFile;
@@ -83,7 +84,9 @@ public abstract class GhidraBundle {
 	 */
 	public abstract String getLocationIdentifier();
 
-	abstract List<BundleRequirement> getAllRequirements() throws GhidraBundleException;
+	public abstract List<BundleRequirement> getAllRequirements() throws GhidraBundleException;
+
+	public abstract List<BundleCapability> getAllCapabilities() throws GhidraBundleException;
 
 	/**
 	 * @return the file where this bundle is loaded from

@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.List;
 
+import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 
 import generic.jar.ResourceFile;
@@ -58,7 +59,12 @@ public class GhidraPlaceholderBundle extends GhidraBundle {
 	}
 
 	@Override
-	List<BundleRequirement> getAllRequirements() {
+	public List<BundleRequirement> getAllRequirements() throws GhidraBundleException {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public List<BundleCapability> getAllCapabilities() throws GhidraBundleException {
 		return Collections.emptyList();
 	}
 

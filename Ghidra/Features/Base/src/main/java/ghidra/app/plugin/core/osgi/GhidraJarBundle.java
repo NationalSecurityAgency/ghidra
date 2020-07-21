@@ -16,14 +16,16 @@
 package ghidra.app.plugin.core.osgi;
 
 import java.io.PrintWriter;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 
-import org.osgi.framework.BundleException;
+import org.apache.felix.framework.util.manifestparser.ManifestParser;
+import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 
-import aQute.bnd.osgi.Constants;
 import aQute.bnd.osgi.Jar;
 import generic.jar.ResourceFile;
 
@@ -62,24 +64,31 @@ public class GhidraJarBundle extends GhidraBundle {
 		return bundleLocation;
 	}
 
-	@Override
-	public List<BundleRequirement> getAllRequirements() throws GhidraBundleException {
+	protected ManifestParser createManifestParser() {
 		try (Jar jar = new Jar(file.getFile(true))) {
 			Manifest manifest = jar.getManifest();
-			String importPackageString =
-				manifest.getMainAttributes().getValue(Constants.IMPORT_PACKAGE);
-			if (importPackageString != null) {
-				return OSGiUtils.parseImportPackage(importPackageString);
-			}
-			return Collections.emptyList();
-		}
-		catch (BundleException e) {
-			throw new GhidraBundleException(this.getLocationIdentifier(), "error parsing imports",
-				e);
+			Attributes mainAttributes = manifest.getMainAttributes();
+			Map<String, Object> headerMap = mainAttributes.entrySet()
+					.stream()
+					.collect(
+						Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
+			return new ManifestParser(null, null, null, headerMap);
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public List<BundleRequirement> getAllRequirements() throws GhidraBundleException {
+		ManifestParser manifestParser = createManifestParser();
+		return manifestParser.getRequirements();
+	}
+
+	@Override
+	public List<BundleCapability> getAllCapabilities() throws GhidraBundleException {
+		ManifestParser manifestParser = createManifestParser();
+		return manifestParser.getCapabilities();
 	}
 
 }

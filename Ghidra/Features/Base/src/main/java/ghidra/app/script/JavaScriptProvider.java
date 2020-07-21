@@ -16,12 +16,14 @@
 package ghidra.app.script;
 
 import java.io.*;
+import java.util.Collections;
 
 import org.osgi.framework.Bundle;
 
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.*;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 public class JavaScriptProvider extends GhidraScriptProvider {
 	private final BundleHost bundleHost;
@@ -111,14 +113,10 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	 */
 	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
 		GhidraSourceBundle bundle = getBundleForSource(sourceFile);
-		bundle.build(writer);
-
-		Bundle osgiBundle = bundleHost.install(bundle);
-
-		bundleHost.activateSynchronously(osgiBundle);
+		bundleHost.activateAll(Collections.singletonList(bundle), TaskMonitor.DUMMY, writer);
 
 		String classname = bundle.classNameForScript(sourceFile);
-		Class<?> clazz = osgiBundle.loadClass(classname); // throws ClassNotFoundException
+		Class<?> clazz = bundle.getOSGiBundle().loadClass(classname); // throws ClassNotFoundException
 		return clazz;
 	}
 

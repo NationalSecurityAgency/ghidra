@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.osgi;
 
 import java.awt.*;
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -217,8 +218,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		}
 
 		// then activate them all
-		new TaskLauncher(
-			new EnableAndActivateBundlesTask("activating", true, true, false, statuses),
+		new TaskLauncher(new EnableAndActivateBundlesTask("activating", statuses, true),
 			getComponent(), 1000);
 	}
 
@@ -283,7 +283,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		List<File> files = fileChooser.getSelectedFiles();
 		if (!files.isEmpty()) {
-			Preferences.setProperty(PREFERENCE_LAST_SELECTED_BUNDLE, files.get(0).getAbsolutePath());
+			Preferences.setProperty(PREFERENCE_LAST_SELECTED_BUNDLE,
+				files.get(0).getAbsolutePath());
 			List<ResourceFile> resourceFiles =
 				files.stream().map(ResourceFile::new).collect(Collectors.toUnmodifiableList());
 			Collection<GhidraBundle> bundles = bundleHost.add(resourceFiles, true, false);
@@ -300,14 +301,13 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	protected void doEnableBundles() {
-		new TaskLauncher(
-			new EnableAndActivateBundlesTask("enabling", true, true, false, getSelectedStatuses()),
+		new TaskLauncher(new EnableAndActivateBundlesTask("enabling", getSelectedStatuses(), false),
 			getComponent(), 1000);
 	}
 
 	protected void doDisableBundles() {
-		new TaskLauncher(new DeactivateAndDisableBundlesTask("disabling", true, true, false,
-			getSelectedStatuses()), getComponent(), 1000);
+		new TaskLauncher(new DeactivateAndDisableBundlesTask("disabling", getSelectedStatuses()),
+			getComponent(), 1000);
 	}
 
 	protected void doActivateDeactivateBundle(BundleStatus status, boolean activate) {
@@ -366,7 +366,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 		private RemoveBundlesTask(String title, List<BundleStatus> statuses) {
 			super(title);
 			this.deactivateBundlesTask =
-				new DeactivateAndDisableBundlesTask("deactivating", true, true, false, statuses);
+				new DeactivateAndDisableBundlesTask("deactivating", statuses);
 			this.statuses = statuses;
 		}
 
@@ -397,10 +397,20 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	private class EnableAndActivateBundlesTask extends Task {
 		private final List<BundleStatus> statuses;
 
-		private EnableAndActivateBundlesTask(String title, boolean canCancel, boolean hasProgress,
-				boolean isModal, List<BundleStatus> statuses) {
-			super(title, canCancel, hasProgress, isModal);
+		private final boolean inStages;
+
+		/**
+		 * A task to enable and activate bundles.
+		 * 
+		 * @param title the title
+		 * @param statuses the bundle statuses
+		 * @param inStages see {@link BundleHost#activateInStages}
+		 */
+		private EnableAndActivateBundlesTask(String title, List<BundleStatus> statuses,
+				boolean inStages) {
+			super(title, true, true, false);
 			this.statuses = statuses;
+			this.inStages = inStages;
 		}
 
 		@Override
@@ -422,8 +432,13 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			}
 			notifyTableDataChanged();
 
-			bundleHost.activateAll(bundles, monitor,
-				getTool().getService(ConsoleService.class).getStdErr());
+			PrintWriter writer = getTool().getService(ConsoleService.class).getStdErr();
+			if (inStages) {
+				bundleHost.activateInStages(bundles, monitor, writer);
+			}
+			else {
+				bundleHost.activateAll(bundles, monitor, writer);
+			}
 
 			boolean anybusy = false;
 			for (BundleStatus status : statuses) {
@@ -443,9 +458,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	private class DeactivateAndDisableBundlesTask extends Task {
 		final List<BundleStatus> statuses;
 
-		private DeactivateAndDisableBundlesTask(String title, boolean canCancel,
-				boolean hasProgress, boolean isModal, List<BundleStatus> statuses) {
-			super(title, canCancel, hasProgress, isModal);
+		private DeactivateAndDisableBundlesTask(String title, List<BundleStatus> statuses) {
+			super(title, true, true, false);
 			this.statuses = statuses;
 		}
 
@@ -490,11 +504,11 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			try {
 				GhidraBundle bundle = bundleHost.getExistingGhidraBundle(status.getFile());
 				if (activate) {
-					bundle.build(console.getStdErr());
 					if (status.getSummary().startsWith(BundleHost.ACTIVATING_BUNDLE_ERROR_MSG)) {
 						status.setSummary("");
 					}
-					bundleHost.activateSynchronously(bundle.getLocationIdentifier());
+					bundleHost.activateAll(Collections.singletonList(bundle), monitor,
+						console.getStdErr());
 				}
 				else { // deactivate
 					bundleHost.deactivateSynchronously(bundle.getLocationIdentifier());

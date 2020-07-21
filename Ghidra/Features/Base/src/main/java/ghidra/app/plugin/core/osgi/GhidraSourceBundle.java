@@ -32,17 +32,18 @@ import java.util.stream.Stream;
 import javax.tools.*;
 import javax.tools.JavaFileObject.Kind;
 
+import org.apache.felix.framework.util.manifestparser.ManifestParser;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
-import org.osgi.framework.wiring.BundleRequirement;
-import org.osgi.framework.wiring.BundleWiring;
+import org.osgi.framework.wiring.*;
 import org.phidias.compile.BundleJavaManager;
 
 import aQute.bnd.osgi.*;
 import aQute.bnd.osgi.Clazz.QUERY;
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
+import generic.jar.ResourceFileFilter;
 import ghidra.app.script.*;
 import ghidra.util.Msg;
 
@@ -56,6 +57,8 @@ import ghidra.util.Msg;
  */
 public class GhidraSourceBundle extends GhidraBundle {
 	private static final String GENERATED_ACTIVATOR_CLASSNAME = "GeneratedActivator";
+	private static final String GENERATED_VERSION = "1.0";
+
 	/*
 	 * Match the leftover part of a class file on removing the class name, e.g.
 	 * we've found "MyClass.java", so we match "MyClass.class" by removing "MyClass" then
@@ -273,27 +276,83 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return dedupedReqs;
 	}
 
-	@Override
-	public List<BundleRequirement> getAllRequirements() throws GhidraBundleException {
-		updateRequirementsFromMetadata();
-		Map<String, BundleRequirement> reqs = getComputedReqs();
-		// insert requirements from a source manifest
+	protected ManifestParser createSourceManifestParser() {
 		ResourceFile manifestFile = getSourceManifestFile();
 		if (manifestFile.exists()) {
-			try {
-				try (InputStream manifestInputStream = manifestFile.getInputStream()) {
-					Manifest manifest = new Manifest(manifestInputStream);
-					String importPackage = manifest.getMainAttributes().getValue("Import-Package");
-					for (BundleRequirement r : OSGiUtils.parseImportPackage(importPackage)) {
-						reqs.putIfAbsent(r.toString(), r);
-					}
-				}
+			try (InputStream manifestInputStream = manifestFile.getInputStream()) {
+				Manifest manifest = new Manifest(manifestInputStream);
+				Attributes mainAttributes = manifest.getMainAttributes();
+				Map<String, Object> headerMap = mainAttributes.entrySet()
+						.stream()
+						.collect(Collectors.toMap(e -> e.getKey().toString(),
+							e -> e.getValue().toString()));
+				return new ManifestParser(null, null, null, headerMap);
 			}
 			catch (IOException | BundleException e) {
 				throw new RuntimeException(e);
 			}
 		}
+		return null;
+	}
+
+	@Override
+	public List<BundleRequirement> getAllRequirements() throws GhidraBundleException {
+		ManifestParser manifestParser = createSourceManifestParser();
+		if (manifestParser != null) {
+			return manifestParser.getRequirements();
+		}
+
+		updateRequirementsFromMetadata();
+		Map<String, BundleRequirement> reqs = getComputedReqs();
 		return new ArrayList<>(reqs.values());
+	}
+
+	protected static void findPackageDirs(List<String> packages, ResourceFile directory) {
+		for (ResourceFile file : directory
+				.listFiles(f -> f.isDirectory() || f.getName().endsWith(".java"))) {
+			if (!file.getName().matches("internal|private")) {
+				boolean added = false;
+				if (file.isDirectory()) {
+					findPackageDirs(packages, file);
+				}
+				else if (!added) {
+					added = true;
+					packages.add(directory.getAbsolutePath());
+				}
+			}
+		}
+	}
+
+	@Override
+	public List<BundleCapability> getAllCapabilities() throws GhidraBundleException {
+		ManifestParser manifestParser = createSourceManifestParser();
+		if (manifestParser != null) {
+			return manifestParser.getCapabilities();
+		}
+
+		int sourceDirLength = getSourceDirectory().getAbsolutePath().length() + 1;
+		List<String> packageDirs = new ArrayList<>();
+		findPackageDirs(packageDirs, getSourceDirectory());
+		StringBuilder sb = new StringBuilder();
+		for (String packageDir : packageDirs) {
+			// skip unnamed package
+			if (packageDir.length() > sourceDirLength) {
+				String packageName =
+					packageDir.substring(sourceDirLength).replace(File.separatorChar, '.');
+				sb.append(',');
+				sb.append(packageName);
+				sb.append(";version=\"" + GENERATED_VERSION + "\"");
+			}
+		}
+		try {
+			if (sb.length() == 0) {
+				return Collections.emptyList();
+			}
+			return OSGiUtils.parseExportPackage(sb.substring(1));
+		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(getLocationIdentifier(), "exports error", e);
+		}
 	}
 
 	/**
@@ -720,7 +779,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 		analyzer.setJar(new Jar(binaryDir.toFile())); // give bnd the contents
 		analyzer.setProperty("Bundle-SymbolicName",
 			GhidraSourceBundle.sourceDirHash(getSourceDirectory()));
-		analyzer.setProperty("Bundle-Version", "1.0");
+		analyzer.setProperty("Bundle-Version", GENERATED_VERSION);
 		// XXX we must constrain analyzed imports according to constraints declared in @importpackage tags
 		analyzer.setProperty("Import-Package", "*");
 		analyzer.setProperty("Export-Package", "!*.private.*,!*.internal.*,*");
@@ -787,7 +846,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 * create and compile a default bundle activator
 	 * 
 	 * @param bindir destination for class file
-	 * @param activatorClassName the name to use for the genearted activator class
+	 * @param activatorClassName the name to use for the generated activator class
 	 * @param writer for writing compile errors
 	 * @return true if compilation succeeded
 	 * @throws IOException for failed write of source/binary activator

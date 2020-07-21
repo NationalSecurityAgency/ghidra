@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 
 import org.apache.felix.framework.util.manifestparser.ManifestParser;
 import org.osgi.framework.*;
+import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 
 import ghidra.util.Msg;
@@ -111,11 +112,25 @@ public class OSGiUtils {
 	 */
 	static List<BundleRequirement> parseImportPackage(String importPackageString)
 			throws BundleException {
-		// parse it with Felix's ManifestParser to a list of BundleRequirement objects
 		Map<String, Object> headerMap = new HashMap<>();
 		headerMap.put(Constants.IMPORT_PACKAGE, importPackageString);
 		ManifestParser manifestParser = new ManifestParser(null, null, null, headerMap);
 		return manifestParser.getRequirements();
+	}
+
+	/**
+	 * parse Export-Package string from a bundle manifest
+	 * 
+	 * @param exportPackageString Import-Package value
+	 * @return deduced capabilities or null if there was an error
+	 * @throws BundleException on parse failure
+	 */
+	static List<BundleCapability> parseExportPackage(String exportPackageString)
+			throws BundleException {
+		Map<String, Object> headerMap = new HashMap<>();
+		headerMap.put(Constants.EXPORT_PACKAGE, exportPackageString);
+		ManifestParser manifestParser = new ManifestParser(null, null, null, headerMap);
+		return manifestParser.getCapabilities();
 	}
 
 	// from https://dzone.com/articles/locate-jar-classpath-given
