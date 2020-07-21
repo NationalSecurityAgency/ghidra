@@ -615,7 +615,7 @@ public class DemangledFunction extends DemangledObject {
 			// check for default type of data type
 			DataType dt = parameter.getDataType();
 			dt = DataTypeUtilities.getBaseDataType(dt);
-			if (Undefined.isUndefined(dt)) {
+			if (dt == null || Undefined.isUndefined(dt)) {
 				continue;
 			}
 			// if the parameters source is higher than 
@@ -627,7 +627,8 @@ public class DemangledFunction extends DemangledObject {
 		// if already a return type and this one has a return type
 		DataType returnDT = func.getReturnType();
 		returnDT = DataTypeUtilities.getBaseDataType(returnDT);
-		if (!(Undefined.isUndefined(returnDT)) && this.getReturnType() != null) {
+		if (!(returnDT == null || Undefined.isUndefined(returnDT)) &&
+			this.getReturnType() != null) {
 			return true;
 		}
 
