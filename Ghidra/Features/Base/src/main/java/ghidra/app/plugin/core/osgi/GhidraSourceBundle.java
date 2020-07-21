@@ -43,7 +43,6 @@ import aQute.bnd.osgi.*;
 import aQute.bnd.osgi.Clazz.QUERY;
 import generic.io.NullPrintWriter;
 import generic.jar.ResourceFile;
-import generic.jar.ResourceFileFilter;
 import ghidra.app.script.*;
 import ghidra.util.Msg;
 
@@ -90,11 +89,14 @@ public class GhidraSourceBundle extends GhidraBundle {
 	private JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
 	//// information indexed by source file
-
 	private final Map<ResourceFile, BuildError> buildErrors = new HashMap<>();
 	private final Map<ResourceFile, List<BundleRequirement>> sourceFileToRequirements =
 		new HashMap<>();
+
 	private final Map<String, List<ResourceFile>> requirementToSourceFileMap = new HashMap<>();
+	private final Set<String> importPackageValues = new HashSet<>();
+
+	private Set<String> missedRequirements = new HashSet<>();
 
 	private long lastCompileAttempt;
 
@@ -237,6 +239,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	private void updateRequirementsFromMetadata() throws GhidraBundleException {
 		sourceFileToRequirements.clear();
 		requirementToSourceFileMap.clear();
+		importPackageValues.clear();
 
 		for (ResourceFile rootSourceFile : getSourceDirectory().listFiles()) {
 			if (rootSourceFile.getName().endsWith(".java")) {
@@ -247,6 +250,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 				// NB: ScriptInfo will update field values if lastModified has changed since last time they were computed
 				String importPackage = parseImportPackageMetadata(rootSourceFile);
 				if (importPackage != null && !importPackage.isEmpty()) {
+					importPackageValues.addAll(
+						ManifestParser.parseDelimitedString(importPackage.strip(), ","));
+
 					List<BundleRequirement> requirements;
 					try {
 						requirements = OSGiUtils.parseImportPackage(importPackage);
@@ -266,6 +272,11 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 	}
 
+	/**
+	 * assumes that {@link #updateRequirementsFromMetadata()} has been called recently
+	 * 
+	 * @return deduped requirements
+	 */
 	private Map<String, BundleRequirement> getComputedReqs() {
 		Map<String, BundleRequirement> dedupedReqs = new HashMap<>();
 		sourceFileToRequirements.values()
@@ -456,6 +467,10 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return binaryDir.resolve("META-INF").resolve("MANIFEST.MF");
 	}
 
+	boolean hasSourceManifest() {
+		return getSourceManifestFile().exists();
+	}
+
 	boolean hasNewManifest() {
 		ResourceFile sourceManifest = getSourceManifestFile();
 		Path binaryManifest = getBinaryManifestPath();
@@ -482,12 +497,12 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * if source with a previous build error now resolves, add it to newSources.
+	 * if source with a previous requirement error now resolves, add it to newSources.
 	 *
 	 * <p>The reason for the previous build error isn't necessarily a missing requirement,
 	 * but this shouldn't be too expensive.
 	 */
-	private void buildIfPreviosErrorNowResolves() {
+	private void addSourcesIfResolutionWillPass() {
 		for (ResourceFile sourceFile : buildErrors.keySet()) {
 			List<BundleRequirement> requirements = sourceFileToRequirements.get(sourceFile);
 			if (requirements != null && !requirements.isEmpty() &&
@@ -506,7 +521,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 * if a file that previously built without errors is now missing some requirements,
 	 * rebuild it to capture errors (if any). 
 	 */
-	void buildIfRequirementsChanged() {
+	void addSourcesIfResolutionWillFail() {
 		// if previous successes no longer resolve, (cleanup) and try again
 		for (Entry<ResourceFile, List<BundleRequirement>> e : sourceFileToRequirements.entrySet()) {
 			ResourceFile sourceFile = e.getKey();
@@ -532,17 +547,29 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 		boolean needsCompile = false;
 
-		// look for a manifest before checking other files
-		boolean newManifest = hasNewManifest();
-		if (newManifest) {
-			wipeBinDir();
+		if (hasSourceManifest()) {
+			sourceFileToRequirements.clear();
+			requirementToSourceFileMap.clear();
+			ArrayList<BundleRequirement> reqs = new ArrayList<>(getAllRequirements());
+			bundleHost.resolve(reqs);
+			HashSet<String> newMissedRequirements = new HashSet<>();
+			for (BundleRequirement req : reqs) {
+				newMissedRequirements.add(req.toString());
+			}
+			if (hasNewManifest() || !newMissedRequirements.equals(missedRequirements)) {
+				missedRequirements = newMissedRequirements;
+				wipeBinDir();
+				buildErrors.clear();
+			}
+			updateFromFilesystem(writer);
 		}
+		else {
+			updateFromFilesystem(writer);
 
-		updateFromFilesystem(writer);
-		updateRequirementsFromMetadata();
-
-		buildIfPreviosErrorNowResolves();
-		buildIfRequirementsChanged();
+			updateRequirementsFromMetadata();
+			addSourcesIfResolutionWillPass();
+			addSourcesIfResolutionWillFail();
+		}
 
 		int buildErrorsLastTime = getBuildErrorCount();
 		int newSourceCount = getNewSourcesCount();
@@ -706,7 +733,6 @@ public class GhidraSourceBundle extends GhidraBundle {
 		// bundle dependencies available to the compiler classpath.  Here, we are compiling in an as-yet 
 		// non-existing bundle, so we forge the wiring based on @importpackage metadata.
 
-		// XXX skip this if there's a source manifest, emit warnings about @importpackage
 		// get wires for currently active bundles to satisfy all requirements
 		List<BundleRequirement> requirements = getAllRequirements();
 		List<BundleWiring> bundleWirings = bundleHost.resolve(requirements);
@@ -715,10 +741,23 @@ public class GhidraSourceBundle extends GhidraBundle {
 			writer.printf("%d import requirement%s remain%s unresolved:\n", requirements.size(),
 				requirements.size() > 1 ? "s" : "", requirements.size() > 1 ? "" : "s");
 			for (BundleRequirement requirement : requirements) {
-				writer.printf("  %s\n", requirement.toString());
+				List<ResourceFile> requiringFiles =
+					requirementToSourceFileMap.get(requirement.toString());
+				if (requiringFiles != null && requiringFiles.size() > 0) {
+					writer.printf("  %s, from %s\n", requirement.toString(),
+						requiringFiles.stream()
+								.map(generic.util.Path::toPathString)
+								.collect(Collectors.joining(",")));
+					for (ResourceFile sourceFile : requiringFiles) {
+						buildError(sourceFile, "failed import");
+					}
+				}
+				else {
+					writer.printf("  %s\n", requirement.toString());
+				}
 			}
 
-			summary.printf("%d missing @importpackage%s:%s", requirements.size(),
+			summary.printf("%d missing package import%s:%s", requirements.size(),
 				requirements.size() > 1 ? "s" : "",
 				requirements.stream()
 						.flatMap(
@@ -771,7 +810,11 @@ public class GhidraSourceBundle extends GhidraBundle {
 		return false;
 	}
 
-	/* analyze the current binary dir and generate a manifest and an activator if one isn't found */
+	/**
+	 * generate a manifest (and an activator)
+	 * 
+	 * assumes that {@link #updateRequirementsFromMetadata()} has been called recently
+	 */
 	private String generateManifest(PrintWriter writer, Summary summary, Path binaryManifest)
 			throws OSGiException, IOException {
 		// no manifest, so create one with bndtools
@@ -780,10 +823,17 @@ public class GhidraSourceBundle extends GhidraBundle {
 		analyzer.setProperty("Bundle-SymbolicName",
 			GhidraSourceBundle.sourceDirHash(getSourceDirectory()));
 		analyzer.setProperty("Bundle-Version", GENERATED_VERSION);
-		// XXX we must constrain analyzed imports according to constraints declared in @importpackage tags
-		analyzer.setProperty("Import-Package", "*");
+
+		if (!importPackageValues.isEmpty()) {
+			// constrain analyzed imports according to what's declared in @importpackage tags
+			analyzer.setProperty("Import-Package",
+				importPackageValues.stream().collect(Collectors.joining(",")) + ",*");
+		}
+		else {
+			analyzer.setProperty("Import-Package", "*");
+		}
+
 		analyzer.setProperty("Export-Package", "!*.private.*,!*.internal.*,*");
-		// analyzer.setBundleActivator(s);
 
 		try {
 			Manifest manifest;
@@ -969,16 +1019,6 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 			return generateManifest(writer, summary, binaryManifest);
 		}
-	}
-
-	protected static class Compilation {
-		PrintWriter writer;
-		Summary summary;
-		List<String> options;
-		BundleJavaManager bundleJavaManager;
-
-		List<ResourceFileJavaFileObject> sourceFiles;
-
 	}
 
 	private static class Summary {
