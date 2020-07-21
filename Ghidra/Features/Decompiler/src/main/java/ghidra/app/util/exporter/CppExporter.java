@@ -243,6 +243,9 @@ public class CppExporter extends Exporter {
 					options.grabFromToolAndProgram(null, opt, program);
 				}
 			}
+			else {
+				options.grabFromProgram(program);	// Let headless pull program specific options
+			}
 
 			if (isUseCppStyleComments) {
 				options.setCommentStyle(CommentStyleEnum.CPPStyle);
