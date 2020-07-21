@@ -67,7 +67,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		initializedCurrentValues();
 
 		if (upgrade) {
-			upgrade(addrMap, lang, monitor);
+			upgrade(addrMap, monitor);
 		}
 
 		if (openMode == DBConstants.UPGRADE && oldContextDataExists) {
@@ -89,13 +89,13 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		return false;
 	}
 
-	private void upgrade(AddressMap addressMapExt, Language language, TaskMonitor monitor)
+	private void upgrade(AddressMap addressMapExt, TaskMonitor monitor)
 			throws CancelledException {
 
 		OldProgramContextDB oldContext =
 			new OldProgramContextDB(dbHandle, errorHandler, language, addressMapExt, lock);
 
-		for (Register register : registers) {
+		for (Register register : language.getRegisters()) {
 			if (register.getBaseRegister() != register) {
 				continue;
 			}
@@ -326,6 +326,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		// Sort the registers by size so that largest come first.
 		// This prevents the remove call below from incorrectly clearing 
 		// smaller registers that are part of a larger register.
+		Register[] registers = language.getRegisters().clone();
 		Arrays.sort(registers, (r1, r2) -> r2.getBitLength() - r1.getBitLength());
 
 		// Map all register stores to new registers

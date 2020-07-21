@@ -205,7 +205,7 @@ abstract public class AbstractStoredProgramContext extends AbstractProgramContex
 	public Register[] getRegistersWithValues() {
 		if (registersWithValues == null) {
 			registersWithValues = new HashSet<>();
-			for (Register register : registers) {
+			for (Register register : language.getRegisters()) {
 				RegisterValueStore store = registerValueMap.get(register.getBaseRegister());
 				if (store != null && !store.isEmpty()) {
 					registersWithValues.add(register);

@@ -120,6 +120,11 @@ class OldLanguage implements Language {
 	}
 
 	@Override
+	public Register[] getContextRegisters() {
+		return registerMgr.getContextRegisters();
+	}
+
+	@Override
 	public Register getRegister(Address addr, int size) {
 		return registerMgr.getRegister(addr, size);
 	}
@@ -137,6 +142,11 @@ class OldLanguage implements Language {
 	@Override
 	public Register[] getRegisters() {
 		return registerMgr.getRegisters();
+	}
+
+	@Override
+	public String[] getRegisterNames() {
+		return registerMgr.getRegisterNames();
 	}
 
 	@Override

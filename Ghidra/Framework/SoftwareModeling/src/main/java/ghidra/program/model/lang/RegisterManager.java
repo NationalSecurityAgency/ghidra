@@ -23,8 +23,12 @@ import ghidra.program.model.address.OldGenericNamespaceAddress;
 public class RegisterManager {
 
 	Register[] registers;
+	Map<String, Register> registerNameMap = new HashMap<String, Register>(); // include aliases and case-variations
+	
+	String[] registerNames; // excludes aliases
+	Register[] contextRegisters;
 	Register contextBaseRegister;
-	Map<String, Register> registerNameMap = new HashMap<String, Register>();
+	
 	Map<RegisterSizeKey, Register> sizeMap = new HashMap<RegisterSizeKey, Register>();
 	Map<Address, List<Register>> registerAddressMap = new HashMap<Address, List<Register>>();
 
@@ -74,21 +78,32 @@ public class RegisterManager {
 		}
 	};
 
-	RegisterManager(Register[] cookedRegisters) {
+	/**
+	 * Construct RegisterManager
+	 * @param cookedRegisters all defined registers with appropriate parent-child relationships
+	 * properly established.
+	 * @param registerNameMap a complete name-to-register map including all register aliases
+	 * and alternate spellings (e.g., case-variations)
+	 */
+	RegisterManager(Register[] cookedRegisters, Map<String, Register> registerNameMap) {
 		registers = cookedRegisters;
+		this.registerNameMap = registerNameMap;
 		initialize();
 	}
 
 	private void initialize() {
+		List<String> registerNameList = new ArrayList<String>();
+		List<Register> contextRegisterList = new ArrayList<Register>();
 		List<Register> registerList = new ArrayList<Register>(Arrays.asList(registers));
 		Collections.sort(registerList, registerSizeComparator);
 		for (Register reg : registerList) {
-			registerNameMap.put(reg.getName(), reg);
-			for (String alias : reg.getAliases()) {
-				registerNameMap.put(alias, reg);
-			}
-			if (reg.isProcessorContext() && reg.isBaseRegister()) {
-				contextBaseRegister = reg;
+			String regName = reg.getName();
+			registerNameList.add(regName);
+			if (reg.isProcessorContext()) {
+				contextRegisterList.add(reg);
+				if (reg.isBaseRegister()) {
+					contextBaseRegister = reg;
+				}
 			}
 
 			Address addr = reg.getAddress();
@@ -114,6 +129,8 @@ public class RegisterManager {
 		for (Register register : registerList) {
 			sizeMap.put(new RegisterSizeKey(register.getAddress(), 0), register);
 		}
+		contextRegisters = contextRegisterList.toArray(new Register[contextRegisterList.size()]);
+		registerNames = registerNameList.toArray(new String[registerNameList.size()]);
 	}
 
 	private void populateSizeMapBigEndian(Register reg) {
@@ -137,6 +154,22 @@ public class RegisterManager {
 	 */
 	public Register getContextBaseRegister() {
 		return contextBaseRegister;
+	}
+
+	/**
+	 * Get unsorted array of all processor context registers (include base context register and children)
+	 * @return all processor context registers
+	 */
+	public Register[] getContextRegisters() {
+		return contextRegisters;
+	}
+
+	/**
+	 * Get unsorted array of all original register names (exludes aliases)
+	 * @return all register names
+	 */
+	public String[] getRegisterNames() {
+		return registerNames;
 	}
 
 	/**

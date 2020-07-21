@@ -1512,7 +1512,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 		private InstructionContext instructionContextCache = null;
 
 		DisassemblerProgramContext() {
-			super(Disassembler.this.language); // getContextRegisters(Disassembler.this.baseContextRegister));
+			super(Disassembler.this.language);
 			if (realProgramContext != null) {
 				setDefaultDisassemblyContext(realProgramContext.getDefaultDisassemblyContext());
 			}
