@@ -51,9 +51,15 @@ public class OSGiUtils {
 	 */
 	static List<String> extractPackageNamesFromFailedResolution(String osgiExceptionMessage) {
 		try (Scanner s = new Scanner(osgiExceptionMessage)) {
-			return s.findAll(Pattern.compile("\\(osgi\\.wiring\\.package=([^)]*)\\)")).map(m -> {
-				return m.group(1);
-			}).collect(Collectors.toList());
+			return s.findAll(
+				Pattern.compile("\\(osgi\\.wiring\\.package=([^)]*)\\)(\\(version[^)]*\\))?"))
+					.map(m -> {
+						if (m.group(2) != null) {
+							return m.group(1) + " " + m.group(2);
+						}
+						return m.group(1);
+					})
+					.collect(Collectors.toList());
 		}
 	}
 

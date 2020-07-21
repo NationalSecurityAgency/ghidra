@@ -187,7 +187,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 		}
 	}
 
-	void buildSuccess(ResourceFile sourceFile) {
+	void clearBuildErrors(ResourceFile sourceFile) {
 		buildErrors.remove(sourceFile);
 	}
 
@@ -749,7 +749,10 @@ public class GhidraSourceBundle extends GhidraBundle {
 								.map(generic.util.Path::toPathString)
 								.collect(Collectors.joining(",")));
 					for (ResourceFile sourceFile : requiringFiles) {
-						buildError(sourceFile, "failed import");
+						buildError(sourceFile,
+							generic.util.Path.toPathString(sourceFile) + " : failed import " +
+								OSGiUtils.extractPackageNamesFromFailedResolution(
+									requirement.toString()));
 					}
 				}
 				else {
@@ -979,6 +982,11 @@ public class GhidraSourceBundle extends GhidraBundle {
 			System.getProperty("java.class.path") + File.pathSeparator + binaryDir.toString());
 		options.add("-proc:none");
 
+		// clear build errors
+		for (ResourceFile sourceFile : newSources) {
+			clearBuildErrors(sourceFile);
+		}
+
 		try (BundleJavaManager bundleJavaManager =
 			createBundleJavaManager(writer, summary, options)) {
 
@@ -998,10 +1006,6 @@ public class GhidraSourceBundle extends GhidraBundle {
 				}
 			}
 
-			// mark the successful compilations
-			for (ResourceFileJavaFileObject sourceFile : sourceFiles) {
-				buildSuccess(sourceFile.getFile());
-			}
 			// buildErrors is now up to date, set status
 			if (getBuildErrorCount() > 0) {
 				int count = getBuildErrorCount();

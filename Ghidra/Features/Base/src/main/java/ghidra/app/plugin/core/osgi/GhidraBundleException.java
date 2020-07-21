@@ -104,7 +104,7 @@ public class GhidraBundleException extends OSGiException {
 							.stream()
 							.distinct()
 							.collect(Collectors.joining("\n"));
-					return "RESOLVE_ERROR with reference to packages:\n" + packages;
+					return "RESOLVE_ERROR - \n" + packages;
 				}
 
 				// The bundle activator was in error.
