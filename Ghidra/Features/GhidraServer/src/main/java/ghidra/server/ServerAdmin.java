@@ -487,12 +487,12 @@ public class ServerAdmin implements GhidraLaunchable {
 		System.err.println("\nSupported commands:");
 		System.err.println("  -add <sid> [--p]");
 		System.err.println(
-			"      Add a new user to the server identified by their sid identifier [-p prompt for password]");
+			"      Add a new user to the server identified by their sid identifier [--p prompt for password]");
 		System.err.println("  -remove <sid>");
 		System.err.println("      Remove the specified user from the server's user list");
 		System.err.println("  -reset <sid> [--p]");
 		System.err.println(
-			"      Reset the specified user's server login password [-p prompt for password]");
+			"      Reset the specified user's server login password [--p prompt for password]");
 		System.err.println("  -dn <sid> \"<dname>\"");
 		System.err.println(
 			"      When PKI authentication is used, add the specified X500 Distinguished Name for a user");
