@@ -1421,6 +1421,25 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFunctionWithLamba_WithUnnamedType() throws Exception {
+
+		//
+		// Mangled: _ZN13SoloGimbalEKFUt_C2Ev 
+		//
+		// Demangled: SoloGimbalEKF::{unnamed type#1}::SoloGimbalEKF()
+		//
+		String mangled = "_ZN13SoloGimbalEKFUt_C2Ev";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String signature = object.getSignature(false);
+		assertEquals("undefined SoloGimbalEKF::{unnamed_type#1}::SoloGimbalEKF(void)", signature);
+	}
+
+	@Test
 	public void testFunctionWithLambda_WrappingAnotherFunctionCall() throws Exception {
 
 		//
