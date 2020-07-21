@@ -17,8 +17,7 @@ package ghidra.program.database.register;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
@@ -326,8 +325,8 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		// Sort the registers by size so that largest come first.
 		// This prevents the remove call below from incorrectly clearing 
 		// smaller registers that are part of a larger register.
-		Register[] registers = language.getRegisters().clone();
-		Arrays.sort(registers, (r1, r2) -> r2.getBitLength() - r1.getBitLength());
+		List<Register> registers = new ArrayList<Register>(language.getRegisters());
+		Collections.sort(registers, (r1, r2) -> r2.getBitLength() - r1.getBitLength());
 
 		// Map all register stores to new registers
 		for (Register register : registers) {

@@ -16,6 +16,7 @@
 package ghidra.program.util;
 
 import java.util.Arrays;
+import java.util.List;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
@@ -128,7 +129,7 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 	}
 
 	@Override
-	public final Register[] getProcessorStateRegisters() {
+	public final List<Register> getContextRegisters() {
 		return language.getContextRegisters();
 	}
 
@@ -138,12 +139,12 @@ abstract public class AbstractProgramContext implements ProgramContext, DefaultP
 	}
 
 	@Override
-	public final String[] getRegisterNames() {
+	public final List<String> getRegisterNames() {
 		return language.getRegisterNames();
 	}
 
 	@Override
-	public final Register[] getRegisters() {
+	public final List<Register> getRegisters() {
 		return language.getRegisters();
 	}
 

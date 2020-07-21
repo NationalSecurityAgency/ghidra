@@ -206,21 +206,21 @@ public interface Language {
 	public Register getRegister(AddressSpace addrspc, long offset, int size);
 
 	/**
-	 * Get the unsorted array of Register objects that this language supports
+	 * Get an unsorted unmodifiable list of Register objects that this language defines
 	 * (including context registers).
 	 * 
-	 * @return the array of processor registers.
+	 * @return unmodifiable list of processor registers.
 	 */
-	public Register[] getRegisters();
+	public List<Register> getRegisters();
 
 	/**
-	 * Get the unsorted array of register names that this language supports
+	 * Get an alphabetical sorted unmodifiable list of original register names 
 	 * (including context registers).  Names correspond to orignal register
 	 * name and not aliases which may be defined.
 	 * 
-	 * @return the array of processor register names.
+	 * @return alphabetical sorted unmodifiable list of original register names.
 	 */
-	public String[] getRegisterNames();
+	public List<String> getRegisterNames();
 
 	/**
 	 * Get a register given the name of the register
@@ -252,19 +252,19 @@ public interface Language {
 	public Register getProgramCounter();
 
 	/**
-	 * Returns context base register or null if one has not been defined by the
+	 * Returns processor context base register or null if one has not been defined by the
 	 * language. 
 	 * @return base context register or null if not defined
 	 */
 	public Register getContextBaseRegister();
 
 	/**
-	 * Get the unsorted array of Context Register objects that this language defines
+	 * Get an unsorted unmodifiable list of processor context registers that this language defines
 	 * (includes context base register and its context field registers).
 	 * 
-	 * @return the array of processor registers.
+	 * @return unmodifiable list of processor registers.
 	 */
-	public Register[] getContextRegisters();
+	public List<Register> getContextRegisters();
 
 	/**
 	 * Returns the default memory blocks for this language.
@@ -412,9 +412,9 @@ public interface Language {
 	public Exception getManualException();
 
 	/**
-	 * Returns the array of vector registers, sorted first by size and then by name.
-	 * @return sorted array of vector registers.
+	 * Returns an unmodifiable list of vector registers, sorted first by size and then by name.
+	 * @return unmodifiable list of vector registers.
 	 */
-	public Register[] getSortedVectorRegisters();
+	public List<Register> getSortedVectorRegisters();
 
 }

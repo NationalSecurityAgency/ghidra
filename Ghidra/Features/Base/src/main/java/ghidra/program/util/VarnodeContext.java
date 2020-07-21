@@ -1389,7 +1389,7 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	@Override
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		return offsetContext.getRegisters();
 	}
 

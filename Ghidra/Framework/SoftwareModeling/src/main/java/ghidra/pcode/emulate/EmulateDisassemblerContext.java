@@ -154,7 +154,7 @@ public class EmulateDisassemblerContext implements DisassemblerContext {
 	}
 
 	@Override
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		throw new UnsupportedOperationException();
 	}
 

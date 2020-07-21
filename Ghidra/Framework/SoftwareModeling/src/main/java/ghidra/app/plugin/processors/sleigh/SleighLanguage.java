@@ -266,7 +266,7 @@ public class SleighLanguage implements Language {
 	}
 
 	@Override
-	public Register[] getContextRegisters() {
+	public List<Register> getContextRegisters() {
 		return getRegisterManager().getContextRegisters();
 	}
 
@@ -336,12 +336,12 @@ public class SleighLanguage implements Language {
 	}
 
 	@Override
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		return getRegisterManager().getRegisters();
 	}
 
 	@Override
-	public String[] getRegisterNames() {
+	public List<String> getRegisterNames() {
 		return getRegisterManager().getRegisterNames();
 	}
 
@@ -1080,11 +1080,8 @@ public class SleighLanguage implements Language {
 	}
 
 	private void xrefRegisters() {
-		Register[] regs = getRegisterManager().getRegisters();
-		for (Register register : regs) {
-			if (register.isProcessorContext()) {
-				contextcache.registerVariable(register);
-			}
+		for (Register register : getRegisterManager().getContextRegisters()) {
+			contextcache.registerVariable(register);
 		}
 	}
 
@@ -1587,7 +1584,7 @@ public class SleighLanguage implements Language {
 	}
 
 	@Override
-	public Register[] getSortedVectorRegisters() {
+	public List<Register> getSortedVectorRegisters() {
 		return registerManager.getSortedVectorRegisters();
 	}
 

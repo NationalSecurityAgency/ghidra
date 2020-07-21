@@ -89,11 +89,15 @@ public class RegisterBuilder {
 		return contextAddress;
 	}
 
+	/**
+	 * Compute current register collection and instantiate a {@link RegisterManager}
+	 * @return new register manager instance
+	 */
 	public RegisterManager getRegisterManager() {
-		return new RegisterManager(computeRegisters(), Collections.unmodifiableMap(registerMap));
+		return new RegisterManager(computeRegisters(), registerMap);
 	}
 
-	private Register[] computeRegisters() {
+	private List<Register> computeRegisters() {
 		List<Register> regList = new LinkedList<>();
 		List<Register> unprocessed = new LinkedList<>(registerList);
 
@@ -115,8 +119,7 @@ public class RegisterBuilder {
 			}
 			bitSize = nextLargerSize;
 		}
-
-		return registerList.toArray(new Register[registerList.size()]);
+		return registerList;
 	}
 
 	private Register[] getChildren(Register parent, List<Register> regList) {

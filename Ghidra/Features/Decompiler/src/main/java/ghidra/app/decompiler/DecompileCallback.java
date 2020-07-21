@@ -839,16 +839,13 @@ public class DecompileCallback {
 			return null;
 		}
 		ProgramContext context = program.getProgramContext();
-		Register[] regs = context.getRegisters();
-		if (regs == null || regs.length == 0) {
-			return null;
-		}
+
 		StringBuilder stringBuf = new StringBuilder();
 
 		stringBuf.append("<tracked_pointset");
 		Varnode.appendSpaceOffset(stringBuf, addr);
 		stringBuf.append(">\n");
-		for (Register reg : regs) {
+		for (Register reg : context.getRegisters()) {
 			if (reg.isProcessorContext()) {
 				continue;
 			}
