@@ -1,1 +1,6 @@
-Internet,https://msdl.microsoft.com/download/symbols
+Internet|https://msdl.microsoft.com/download/symbols/|WARNING: Check your organization's security policy before downloading files from the internet.
+Internet|https://chromium-browser-symsrv.commondatastorage.googleapis.com|WARNING: Check your organization's security policy before downloading files from the internet.
+Internet|https://symbols.mozilla.org/|WARNING: Check your organization's security policy before downloading files from the internet.
+Internet|https://software.intel.com/sites/downloads/symbols/|WARNING: Check your organization's security policy before downloading files from the internet.
+Internet|https://driver-symbols.nvidia.com/|WARNING: Check your organization's security policy before downloading files from the internet.
+Internet|https://download.amd.com/dir/bin|WARNING: Check your organization's security policy before downloading files from the internet.

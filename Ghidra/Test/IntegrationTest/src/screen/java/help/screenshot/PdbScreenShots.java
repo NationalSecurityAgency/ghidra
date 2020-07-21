@@ -15,102 +15,183 @@
  */
 package help.screenshot;
 
-import java.awt.Dimension;
-import java.awt.Window;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 
-import docking.widgets.dialogs.ObjectChooserDialog;
-import ghidra.app.util.pdb.PdbLocator;
-import ghidra.util.Msg;
-import pdb.URLChoice;
+import org.apache.commons.io.FilenameUtils;
+import org.junit.*;
+
+import ghidra.app.util.bin.format.pdb.PdbInfo;
+import ghidra.app.util.bin.format.pdb.PdbInfoDotNet;
+import ghidra.app.util.datatype.microsoft.GUID;
+import ghidra.framework.options.Options;
+import ghidra.program.model.listing.Program;
+import pdb.PdbPlugin;
+import pdb.symbolserver.*;
+import pdb.symbolserver.ui.ConfigPdbDialog;
+import pdb.symbolserver.ui.LoadPdbDialog;
 
 public class PdbScreenShots extends GhidraScreenShotGenerator {
 
-	@Test
-	public void testPdbOrXmlDialog() throws Exception {
+	private static final String GUID1_STR = "012345670123012301230123456789AB";
 
-		performAction("Download_PDB_File", "PdbSymbolServerPlugin", false);
+	private int tx;
+	private File temporaryDir;
 
-		Window pdbDialog = waitForWindow("pdb or pdb.xml");
-		pdbDialog.setSize(new Dimension(750, 200));
-		captureWindow(pdbDialog);
+	@Override
+	@Before
+	public void setUp() throws Exception {
+		super.setUp();
 
-		pressButtonByText(pdbDialog, "Cancel");
+		temporaryDir = createTempDirectory("example_pdb");
+		tx = program.startTransaction("set analyzed flag");
+		Options proplist = program.getOptions(Program.PROGRAM_INFO);
+		proplist.setBoolean(Program.ANALYZED, false);
+		PdbInfo pdbInfo = PdbInfoDotNet.fromValues("HelloWorld.pdb", 1, new GUID(GUID1_STR));
+		pdbInfo.serializeToOptions(proplist);
+		proplist.setString("Executable Location",
+			new File(temporaryDir, program.getName()).getPath());
+	}
+
+	@Override
+	@After
+	public void tearDown() throws Exception {
+		program.endTransaction(tx, false);
+		super.tearDown();
 	}
 
 	@Test
-	public void testPeSpecifiedPathDialog() throws Exception {
-
-		performAction("Download_PDB_File", "PdbSymbolServerPlugin", false);
-
-		Window pdbDialog = waitForWindow("pdb or pdb.xml");
-		pressButtonByText(pdbDialog, "PDB");
-
-		Window peSpecifiedPathDialog = waitForWindow("PE-specified PDB Path");
-		captureWindow(peSpecifiedPathDialog);
-
-		pressButtonByText(peSpecifiedPathDialog, "Cancel");
+	public void testSymbolServerConfig_Screenshot() throws IOException {
+		PdbPlugin.saveSymbolServerServiceConfig(null);
+		ConfigPdbDialog configPdbDialog = new ConfigPdbDialog();
+		showDialogWithoutBlocking(tool, configPdbDialog);
+		waitForSwing();
+		captureDialog(ConfigPdbDialog.class);
 	}
 
 	@Test
-	public void testSymbolServerURLDialog() throws Exception {
-
-		// Set up for local directory
-		PdbLocator.setDefaultPdbSymbolsDir(getTestDataDirectory());
-
-		performAction("Download_PDB_File", "PdbSymbolServerPlugin", false);
-
-		Window pdbDialog = waitForWindow("pdb or pdb.xml");
-		pressButtonByText(pdbDialog, "PDB");
-
-		Window peSpecifiedPathDialog = waitForWindow("PE-specified PDB Path");
-		pressButtonByText(peSpecifiedPathDialog, "Yes");
-
-		Window saveLocationDialog = waitForWindow("Select Location to Save Retrieved File");
-		pressButtonByText(saveLocationDialog, "OK");
-
-		Window urlDialog = waitForWindow("Symbol Server URL");
-		urlDialog.setSize(new Dimension(850, 135));
-
-		captureWindow(urlDialog);
-
-		pressButtonByText(urlDialog, "Cancel");
+	public void testLoadPdb_Initial_Screenshot() throws IOException {
+		LoadPdbDialog loadPdbDialog = new LoadPdbDialog(program);
+		showDialogWithoutBlocking(tool, loadPdbDialog);
+		captureDialog(loadPdbDialog);
+		pressButtonByText(loadPdbDialog, "Cancel");
 	}
 
 	@Test
-	public void testKnownSymbolServerURLsDialog() throws Exception {
+	public void testSymbolServerConfig_AddButtonMenu() throws IOException {
+		File localSymbolStore1Root = new File(temporaryDir, "symbols");
+		LocalSymbolStore.create(localSymbolStore1Root, 1);
+		LocalSymbolStore localSymbolStore1 =
+			new LocalSymbolStoreWithFakePath(localSymbolStore1Root, "/home/user/symbols");
+		SymbolServerService symbolServerService =
+			new SymbolServerService(localSymbolStore1, List.of());
+		PdbPlugin.saveSymbolServerServiceConfig(symbolServerService);
 
-		List<URLChoice> urlChoices = new ArrayList<>();
-		urlChoices.add(new URLChoice("Internet", "https://msdl.microsoft.com/download/symbols"));
-		urlChoices.add(new URLChoice("My Network", "https://my_symbol_server.my.org"));
-
-		final ObjectChooserDialog<URLChoice> urlDialog = new ObjectChooserDialog<>("Choose a URL",
-			URLChoice.class, urlChoices, "getNetwork", "getUrl");
-
+		LoadPdbDialog choosePdbDialog = new LoadPdbDialog(program);
+		showDialogWithoutBlocking(tool, choosePdbDialog);
+		waitForSwing();
+		pressButtonByText(choosePdbDialog, "Advanced >>");
 		runSwing(() -> {
-			// Do nothing
+			choosePdbDialog.pushAddLocationBution();
 		});
-		showDialogWithoutBlocking(tool, urlDialog);
-		captureDialog();
-
-		pressButtonByText(urlDialog, "Cancel");
+		waitForSwing();
+		captureMenu();
 	}
 
 	@Test
-	public void testSuccessDialog() throws Exception {
+	public void testLoadPdb_Advanced_NeedsConfig() throws IOException {
+		PdbPlugin.saveSymbolServerServiceConfig(null);
+		LoadPdbDialog choosePdbDialog = new LoadPdbDialog(program);
+		showDialogWithoutBlocking(tool, choosePdbDialog);
+		waitForSwing();
+		pressButtonByText(choosePdbDialog, "Advanced >>");
+		waitForSwing();
+		captureDialog(LoadPdbDialog.class);
+		pressButtonByText(choosePdbDialog, "Cancel");
+	}
 
-		// Can't really get success message without actually downloading a file.
-		// So, fake out the message by showing the same sort of dialog the user would see.
-		Msg.showInfo(getClass(), null, "File Retrieved",
-			"Downloaded and saved file 'example.pdb' to \n" +
-				"C:\\Symbols\\example.pdb\\1123A456B7889012C3DDFA4556789B011");
+	@Test
+	public void testLoadPdb_Advanced_Screenshot() throws IOException {
+		// Show the advanced side of the LoadPdbDialog, with
+		// some faked search locations and search results so we
+		// can have pretty paths
+		File localSymbolStore1Root = new File(temporaryDir, "symbols");
+		LocalSymbolStore.create(localSymbolStore1Root, 1);
+		LocalSymbolStore localSymbolStore1 =
+			new LocalSymbolStoreWithFakePath(localSymbolStore1Root, "/home/user/symbols");
+		SameDirSymbolStoreWithFakePath sameDirSymbolStoreWithFakePath =
+			new SameDirSymbolStoreWithFakePath(temporaryDir, "/home/user/examples");
+		List<SymbolServer> symbolServers = List.of(sameDirSymbolStoreWithFakePath,
+			new HttpSymbolServer(URI.create("https://msdl.microsoft.com/download/symbols/")));
+		SymbolServerService symbolServerService =
+			new SymbolServerService(localSymbolStore1, symbolServers);
+		PdbPlugin.saveSymbolServerServiceConfig(symbolServerService);
 
-		Window successDialog = waitForWindow("File Retrieved");
-		captureWindow(successDialog);
+		LoadPdbDialog loadPdbDialog = new LoadPdbDialog(program);
+		showDialogWithoutBlocking(tool, loadPdbDialog);
+		waitForSwing();
+		pressButtonByText(loadPdbDialog, "Advanced >>");
+		List<SymbolFileLocation> symbolFileLocations = List.of(
+			new SymbolFileLocation("HelloWorld.pdb/" + GUID1_STR + "1/HelloWorld.pdb",
+				localSymbolStore1, SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 1)),
+			new SymbolFileLocation("HelloWorld.pdb/" + GUID1_STR + "2/HelloWorld.pdb",
+				localSymbolStore1, SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 2)),
+			new SymbolFileLocation("HelloWorld.pdb", sameDirSymbolStoreWithFakePath,
+				SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 1)),
+			new SymbolFileLocation("HelloWorld_ver2.pdb", sameDirSymbolStoreWithFakePath,
+				SymbolFileInfo.fromValues("HelloWorld.pdb", GUID1_STR, 2)));
+		runSwing(() -> {
+			loadPdbDialog
+					.setSearchOptions(FindOption.of(FindOption.ALLOW_REMOTE, FindOption.ANY_AGE));
+			loadPdbDialog.setSymbolServers(symbolServers);
+			loadPdbDialog.setSymbolStorageDirectoryTextOnly("/home/user/symbols");
+			loadPdbDialog.setSearchResults(symbolFileLocations);
+			loadPdbDialog.selectRowByLocation(symbolFileLocations.get(0));
+		});
+		waitForSwing();
+		captureDialog(LoadPdbDialog.class);
+		pressButtonByText(loadPdbDialog, "Cancel");
+	}
 
-		pressButtonByText(successDialog, "OK");
+	private static class LocalSymbolStoreWithFakePath extends LocalSymbolStore {
+		private String fakeRootDirPath;
+
+		public LocalSymbolStoreWithFakePath(File rootDir, String fakeRootDirPath) {
+			super(rootDir);
+			this.fakeRootDirPath = fakeRootDirPath;
+		}
+
+		@Override
+		public String getDescriptiveName() {
+			return fakeRootDirPath;
+		}
+
+		@Override
+		public String getFileLocation(String filename) {
+			return FilenameUtils.concat(fakeRootDirPath, filename);
+		}
+	}
+
+	private static class SameDirSymbolStoreWithFakePath extends SameDirSymbolStore {
+		private String fakeRootDirPath;
+
+		public SameDirSymbolStoreWithFakePath(File rootDir, String fakeRootDirPath) {
+			super(rootDir);
+			this.fakeRootDirPath = fakeRootDirPath;
+		}
+
+		@Override
+		public String getDescriptiveName() {
+			return String.format(PROGRAMS_IMPORT_LOCATION_DESCRIPTION_STR + " - %s",
+				fakeRootDirPath);
+		}
+
+		@Override
+		public String getFileLocation(String filename) {
+			return FilenameUtils.concat(fakeRootDirPath, filename);
+		}
 	}
 }

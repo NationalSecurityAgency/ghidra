@@ -18,6 +18,10 @@ eclipse.project.name = 'GPL CabExtract'
 project.ext.cabextract = "cabextract-1.6"
 
 /*********************************************************************************
+ * Deprecated - will be removed
+ *********************************************************************************/
+ 
+/*********************************************************************************
  * CabExtract platform specific tasks
  *
  * The cabextract tool requires that its 'configure' script is called before make.

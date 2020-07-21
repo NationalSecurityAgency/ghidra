@@ -19,12 +19,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.pdb.PdbLocator;
 import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicator;
@@ -35,7 +32,6 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -63,7 +59,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	static final boolean DEFAULT_ENABLEMENT = true;
 	private static final String DESCRIPTION =
 		"Platform-independent PDB analyzer (No XML support).\n" +
-			"NOTE: still undergoing development, so options may change.";
+			"NOTE: still undergoing development, so options may change.\n" +
+			"PDB Symbol Server searching is configured in Edit -> Symbol Server Config.\n";
 
 	//==============================================================================================
 	// Force-load a PDB file.
@@ -79,18 +76,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private File DEFAULT_FORCE_LOAD_FILE = new File(PdbLocator.DEFAULT_SYMBOLS_DIR, "sample.pdb");
 	private File forceLoadFile;
 
-	// Symbol Repository Path.
-	private static final String OPTION_NAME_SYMBOLPATH = "Symbol Repository Path";
-	private static final String OPTION_DESCRIPTION_SYMBOLPATH =
-		"Directory path to root of Microsoft Symbol Repository Directory";
-	private File symbolsRepositoryDir;
-
-	// Include the PE-Header-Specified PDB path for searching for appropriate PDB file.
-	private static final String OPTION_NAME_INCLUDE_PE_PDB_PATH =
-		"Unsafe: Include PE PDB Path in PDB Search";
-	private static final String OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH =
-		"If checked, specifically searching for PDB in PE-Header-Specified Location.";
-	private boolean includePeSpecifiedPdbPath = false;
+	private boolean searchRemoteLocations = false;
 
 	//==============================================================================================
 	// Additional instance data
@@ -162,34 +148,21 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
-		if (failMissingFilename(programAttributes, log) ||
-			failMissingAttributes(programAttributes, log)) {
-			return true;
-		}
-
-		String pdbFilename;
-		if (doForceLoad) {
-			if (!confirmFile(forceLoadFile)) {
+		File pdbFile = null;
+		if (doForceLoad && forceLoadFile != null) {
+			if (!forceLoadFile.isFile()) {
 				logFailure("Force-load PDB file does not exist: " + forceLoadFile, log);
 				return false;
 			}
-			pdbFilename = forceLoadFile.getAbsolutePath();
+			pdbFile = forceLoadFile;
 		}
 		else {
-			PdbLocator locator = new PdbLocator(symbolsRepositoryDir);
-			pdbFilename =
-				locator.findPdb(program, programAttributes, !SystemUtilities.isInHeadlessMode(),
-					includePeSpecifiedPdbPath, monitor, log, getName());
-			if (pdbFilename == null) {
-				if (!confirmDirectory(symbolsRepositoryDir)) {
-					logFailure("PDB symbol repository directory not found: " + symbolsRepositoryDir,
-						log);
-				}
-				Msg.info(this, "PDB analyzer failed to locate PDB file");
-				return false;
-			}
+			pdbFile = PdbAnalyzerCommon.findPdb(this, program, searchRemoteLocations, monitor);
 		}
-		Msg.info(this, "PDB analyzer parsing file: " + pdbFilename);
+		if (pdbFile == null) {
+			// warnings have already been logged
+			return false;
+		}
 
 		PdbLog.message(
 			"================================================================================");
@@ -197,60 +170,32 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		PdbLog.message("Ghidra Version: " + Application.getApplicationVersion());
 		PdbLog.message(NAME);
 		PdbLog.message(DESCRIPTION);
-		PdbLog.message("PDB Filename: " + pdbFilename + "\n");
+		PdbLog.message("PDB Filename: " + pdbFile + "\n");
 
-		try (AbstractPdb pdb = PdbParser.parse(pdbFilename, pdbReaderOptions, monitor)) {
-			monitor.setMessage("PDB: Parsing " + pdbFilename + "...");
+		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), pdbReaderOptions, monitor)) {
+			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize(monitor);
-			PdbApplicator applicator = new PdbApplicator(pdbFilename, pdb);
+			PdbApplicator applicator = new PdbApplicator(pdbFile.getPath(), pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
 				pdbApplicatorOptions, monitor, log);
 
 		}
 		catch (PdbException | IOException e) {
 			log.appendMsg(getName(),
-				"Issue processing PDB file:  " + pdbFilename + ":\n   " + e.toString());
+				"Issue processing PDB file:  " + pdbFile + ":\n   " + e.toString());
 			return false;
 		}
 
 		return true;
 	}
 
-	// TODO: I changed this method from what was lifted in the old code.  I check for null string
-	//  and I also check for MSCOFF_NAME (TODO: check on the validity of this!!!).  Also, changed
-	//  the comparison to a substring search from a .equals).
 	@Override
 	public boolean canAnalyze(Program program) {
-		String executableFormat = program.getExecutableFormat();
-		return executableFormat != null && (executableFormat.indexOf(PeLoader.PE_NAME) != -1);
-		// TODO: Check for MSCOFF_NAME.  Initial investigation shows that the .debug$T section of
-		//  the MSCOFF (*.obj) file has type records and the .debug$S section has symbol records.
-		//  More than that, in at least one instance, there has been a TypeServer2MsType type
-		//  record that give the GUID, age, and name of the PDB file associated with the MSCOFF
-		//  file.  At this point in time, these two sections of the MSCOFF are read (header and
-		//  raw data), but we do not interpret these sections any further.  Suggest that we "might"
-		//  want to parse some of these records at load time?  Maybe not.  We could, at analysis
-		//  time, add the ability to process these two sections (as part of analysis (though we
-		//  will not be aware of a PDB file yet), and upon discovery of a TypeServer2MsType (or
-		//  perhaps other?), proceed to find the file (if possible) and also process that file.
-		//  We posit that if a record indicates a separate PDB for the types (Note: MSFT indicates
-		//  that only data types will be found in an MSCOFF PDB file), then that will likely be
-		//  the only record in the .debug$T section.
-		// TODO: If the MSCOFF file is located in a MSCOFF ARCHIVE (*.lib), there can be a PDB
-		//  associated with the archive.  We currently do not pass on this association of the
-		//  PDB archive to each underlying MSCOFF file.  Moreover, we believe that we are not
-		//  currently discovering the associated MSCOFF ARCHIVE PDB file when processing the
-		//  MSCOFF ARCHIVE.  Initial indication is that each MSCOFF within the archive will have
-		//  the PDB file that it needs listed, even if redundant for each MSCOFF within the
-		//  archive.
-//		return executableFormat != null && (executableFormat.indexOf(PeLoader.PE_NAME) != -1 ||
-//				executableFormat.indexOf(MSCoffLoader.MSCOFF_NAME) != -1);
+		return PdbAnalyzerCommon.canAnalyzeProgram(program);
 	}
 
 	@Override
 	public void registerOptions(Options options, Program program) {
-
-		symbolsRepositoryDir = PdbLocator.getDefaultPdbSymbolsDir();
 
 		// PDB file location information
 		if (developerMode) {
@@ -259,10 +204,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE,
 				DEFAULT_FORCE_LOAD_FILE, null, OPTION_DESCRIPTION_FORCELOAD_FILE);
 		}
-		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE, symbolsRepositoryDir,
-			null, OPTION_DESCRIPTION_SYMBOLPATH);
-		options.registerOption(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath, null,
-			OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH);
+		options.registerOption(PdbAnalyzerCommon.OPTION_NAME_SEARCH_REMOTE_LOCATIONS,
+			searchRemoteLocations, null,
+			PdbAnalyzerCommon.OPTION_DESCRIPTION_SEARCH_REMOTE_LOCATIONS);
 
 		pdbReaderOptions.registerOptions(options);
 		pdbApplicatorOptions.registerAnalyzerOptions(options);
@@ -279,14 +223,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			forceLoadFile = options.getFile(OPTION_NAME_FORCELOAD_FILE, forceLoadFile);
 		}
 
-		File symbolsDir = options.getFile(OPTION_NAME_SYMBOLPATH, symbolsRepositoryDir);
-		if (!symbolsDir.equals(symbolsRepositoryDir)) {
-			symbolsRepositoryDir = symbolsDir;
-			PdbLocator.setDefaultPdbSymbolsDir(symbolsDir);
-		}
-
-		includePeSpecifiedPdbPath =
-			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
+		searchRemoteLocations = options.getBoolean(
+			PdbAnalyzerCommon.OPTION_NAME_SEARCH_REMOTE_LOCATIONS, searchRemoteLocations);
 
 		pdbReaderOptions.loadOptions(options);
 		pdbApplicatorOptions.loadAnalyzerOptions(options);
@@ -294,51 +232,40 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 	//==============================================================================================
 
-	private boolean failMissingFilename(PdbProgramAttributes attributes, MessageLog log) {
-		if (doForceLoad) {
-			return false; // PDB File property not used for forced load
-		}
-		if (StringUtils.isEmpty(attributes.getPdbFile())) {
-			logFailure("Missing 'PDB File' program property, unable to locate PDB", log);
-			return true;
-		}
-		return false;
-	}
-
 	private void logFailure(String msg, MessageLog log) {
 		log.appendMsg(getName(), msg);
 		log.appendMsg(getName(), "Skipping PDB processing");
 		log.setStatus(msg);
 	}
 
-	private boolean failMissingAttributes(PdbProgramAttributes attributes, MessageLog log) {
-		if (doForceLoad) {
-			return false; // Attributes not used for forced load
-		}
-		// RSDS version should only have GUID; non-RSDS version should only have Signature.
-		String error;
-		if ("RSDS".equals(attributes.getPdbVersion())) {
-			if (!StringUtils.isEmpty(attributes.getPdbGuid())) {
-				return false; // Don't fail.
-			}
-			error = "Missing 'PDB GUID' program property, unable to locate PDB.";
-		}
-		else {
-			if (!StringUtils.isEmpty(attributes.getPdbSignature())) {
-				return false; // Don't fail.
-			}
-			error = "Missing 'PDB Signature' program property, unable to locate PDB.";
-		}
-		logFailure(error, log);
-		return true;
+	/**
+	 * Sets the PDB file that will be used by the analyzer when it is next invoked
+	 * on the specified program.
+	 * <p>
+	 * Normally the analyzer would locate the PDB file on its own, but if a
+	 * headless script wishes to override the analyzer's behaivor, it can
+	 * use this method to specify a file.
+	 * 
+	 * @param program {@link Program}
+	 * @param pdbFile the pdb file
+	 */
+	public static void setPdbFileOption(Program program, File pdbFile) {
+		PdbAnalyzerCommon.setPdbFileOption(NAME, program, pdbFile);
 	}
 
-	private boolean confirmDirectory(File path) {
-		return path.isDirectory();
+	/**
+	 * Sets the "allow remote" option that will be used by the analyzer when it is next invoked
+	 * on the specified program.
+	 * <p>
+	 * Normally when the analyzer attempts to locate a matching PDB file it
+	 * will default to NOT searching remote symbol servers.  A headless script could
+	 * use this method to allow the analyzer to search remote symbol servers.
+	 * 
+	 * @param program {@link Program}
+	 * @param allowRemote boolean flag, true means analyzer can search remote symbol
+	 * servers
+	 */
+	public static void setAllowRemoteOption(Program program, boolean allowRemote) {
+		PdbAnalyzerCommon.setAllowRemoteOption(NAME, program, allowRemote);
 	}
-
-	private boolean confirmFile(File path) {
-		return path.isFile();
-	}
-
 }
