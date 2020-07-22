@@ -92,34 +92,57 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 	 * @param tokenAtCursor is the point in the window the user has selected
 	 * @return the PcodeOp or null
 	 */
-	public static PcodeOp getCallOp(Program program, ClangToken tokenAtCursor) {
+	private static PcodeOp getCallOp(Program program, ClangToken tokenAtCursor) {
 		if (tokenAtCursor == null) {
 			return null;
 		}
+
 		if (tokenAtCursor instanceof ClangFuncNameToken) {
 			return ((ClangFuncNameToken) tokenAtCursor).getPcodeOp();
 		}
 
 		Address addr = tokenAtCursor.getMinAddress();
-		if (addr == null) {
+		if (addr != null) {
+			PcodeOp op = getOpForAddress(program, addr, tokenAtCursor);
+			if (op != null) {
+				return op;
+			}
+		}
+
+		ClangNode parent = tokenAtCursor.Parent();
+		if (parent instanceof ClangStatement) {
+			PcodeOp op = ((ClangStatement) parent).getPcodeOp();
+			int opCode = op.getOpcode();
+			if (opCode == PcodeOp.CALL || opCode == PcodeOp.CALLIND) {
+				return op;
+			}
+		}
+
+		return null;
+	}
+
+	private static PcodeOp getOpForAddress(Program program, Address addr, ClangToken token) {
+
+		ClangFunction cfunc = token.getClangFunction();
+		if (cfunc == null) {
 			return null;
 		}
+
 		Instruction instr = program.getListing().getInstructionAt(addr);
 		if (instr == null) {
 			return null;
 		}
+
 		if (!instr.getFlowType().isCall()) {
 			return null;
 		}
-		ClangFunction cfunc = tokenAtCursor.getClangFunction();
-		if (cfunc == null) {
-			return null;
-		}
+
 		HighFunction hfunc = cfunc.getHighFunction();
 		Iterator<PcodeOpAST> iter = hfunc.getPcodeOps(addr);
 		while (iter.hasNext()) {
 			PcodeOpAST op = iter.next();
-			if ((op.getOpcode() == PcodeOp.CALL) || (op.getOpcode() == PcodeOp.CALLIND)) {
+			int opCode = op.getOpcode();
+			if (opCode == PcodeOp.CALL || opCode == PcodeOp.CALLIND) {
 				return op;
 			}
 		}
@@ -192,7 +215,8 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 			return false;
 		}
 
-		return getCallOp(context.getProgram(), context.getTokenAtCursor()) != null;
+		PcodeOp callOp = getCallOp(context.getProgram(), context.getTokenAtCursor());
+		return callOp != null;
 	}
 
 	@Override
