@@ -435,6 +435,26 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testTypeInfo_AddressTable() throws Exception {
+
+		String mangled = "_ZTIN10NonDiamond1AE";
+		String demangled = process.demangle(mangled);
+		assertEquals("typeinfo for NonDiamond::A", demangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledAddressTable.class);
+		assertName(object, "typeinfo", "NonDiamond", "A");
+
+		assertEquals("NonDiamond::A::typeinfo", object.getSignature(false));
+
+		DemangledAddressTable addressTable = (DemangledAddressTable) object;
+		assertEquals("typeinfo", addressTable.getName());
+		assertEquals("NonDiamond::A::typeinfo", addressTable.getNamespaceString());
+		assertEquals("A", addressTable.getNamespace().getNamespaceName());
+		assertEquals("NonDiamond::A", addressTable.getNamespace().getNamespaceString());
+	}
+
+	@Test
 	public void testTypeInfo() throws Exception {
 		String mangled = "_ZTIN4Arts28FileInputStream_impl_FactoryE";
 
@@ -508,6 +528,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledVariable variable = (DemangledVariable) object;
 		assertEquals("dot", variable.getName());
+		assertEquals("KDirLister::emitChanges()::dot", variable.getNamespaceString());
 		assertEquals("emitChanges()", variable.getNamespace().getNamespaceName());
 		assertEquals("KDirLister::emitChanges()", variable.getNamespace().getNamespaceString());
 		assertNull(variable.getDataType()); // no type information provided

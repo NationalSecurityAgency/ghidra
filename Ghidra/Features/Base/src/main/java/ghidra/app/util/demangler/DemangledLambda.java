@@ -25,11 +25,6 @@ public class DemangledLambda extends DemangledFunction {
 	}
 
 	@Override
-	public String getNamespaceName() {
-		return getName();
-	}
-
-	@Override
 	public String toString() {
 		return getName();
 	}
