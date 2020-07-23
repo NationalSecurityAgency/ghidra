@@ -208,7 +208,6 @@ public class DemangledFunction extends DemangledObject {
 			if (!isTypeCast()) {
 				buffer.append(returnType == null ? "" : returnType.getSignature() + " ");
 			}
-//			buffer.append(returnType == null ? "" : returnType.toSignature() + " ");
 		}
 
 		buffer.append(callingConvention == null ? "" : callingConvention + " ");

@@ -243,13 +243,9 @@ public abstract class DemangledObject implements Demangled {
 		return getSignature(false);
 	}
 
-	/**
-	 * Returns a signature that contains only the name (and parameter list for functions)
-	 * @return the signature
-	 */
 	@Override
 	public String getNamespaceName() {
-		return getSignature(false);
+		return getName();
 	}
 
 	/**
