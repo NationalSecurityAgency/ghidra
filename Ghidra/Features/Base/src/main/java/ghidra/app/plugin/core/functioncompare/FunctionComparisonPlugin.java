@@ -57,7 +57,6 @@ import ghidra.program.util.ProgramChangeRecord;
 public class FunctionComparisonPlugin extends ProgramPlugin
 		implements DomainObjectListener, FunctionComparisonService {
 
-	public final static String FUNCTION_MENU_SUBGROUP = "Function";
 	static final String MENU_PULLRIGHT = "CompareFunctions";
 	static final String POPUP_MENU_GROUP = "CompareFunction";
 
@@ -71,7 +70,6 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	public FunctionComparisonPlugin(PluginTool tool) {
 		super(tool, true, true);
 		functionComparisonManager = new FunctionComparisonProviderManager(this);
-		tool.setMenuGroup(new String[] { MENU_PULLRIGHT }, POPUP_MENU_GROUP);
 	}
 
 	@Override
