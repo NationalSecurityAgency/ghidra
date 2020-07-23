@@ -3683,8 +3683,6 @@ void FuncProto::saveXml(ostream &s) const
     a_v_b(s,"constructor",true);
   if (isDestructor())
     a_v_b(s,"destructor",true);
-  if (hasThisPointer())
-    a_v_b(s,"hasthis",true);
   s << ">\n";
   ProtoParameter *outparam = store->getOutput();
   s << "  <returnsym";
@@ -3827,10 +3825,6 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
     else if (attrname == "destructor") {
       if (xml_readbool(el->getAttributeValue(i)))
 	flags |= is_destructor;
-    }
-    else if (attrname == "hasthis") {
-      if (xml_readbool(el->getAttributeValue(i)))
-	flags |= has_thisptr;
     }
   }
   if (mod != (ProtoModel *)0) // If a model was specified

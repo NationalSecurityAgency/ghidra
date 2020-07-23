@@ -37,13 +37,20 @@ PrintLanguage *PrintJavaCapability::buildLanguage(Architecture *glb)
 PrintJava::PrintJava(Architecture *glb,const string &nm) : PrintC(glb,nm)
 
 {
-  option_NULL = true;			// Automatically use 'null' token
+  resetDefaultsPrintJava();
   nullToken = "null";			// Java standard lower-case 'null'
   mods |= hide_thisparam;		// turn on hiding of 'this' parameter
   if (castStrategy != (CastStrategy *)0)
     delete castStrategy;
 
   castStrategy = new CastStrategyJava();
+}
+
+void PrintJava::resetDefaults(void)
+
+{
+  PrintC::resetDefaults();
+  resetDefaultsPrintJava();
 }
 
 void PrintJava::docFunction(const Funcdata *fd)
@@ -146,6 +153,13 @@ bool PrintJava::isArrayType(const Datatype *ct)
     break;
   }
   return false;
+}
+
+void PrintJava::resetDefaultsPrintJava(void)
+
+{
+  option_NULL = true;			// Automatically use 'null' token
+  option_convention = false;		// Automatically hide convention name
 }
 
 /// Assuming the given Varnode is a dereferenced pointer, determine whether
