@@ -17,8 +17,7 @@ package ghidra.program.model.lang;
 
 import java.util.*;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.OldGenericNamespaceAddress;
+import ghidra.program.model.address.*;
 
 public class RegisterManager {
 
@@ -81,13 +80,13 @@ public class RegisterManager {
 
 	/**
 	 * Construct RegisterManager
-	 * @param cookedRegisters all defined registers with appropriate parent-child relationships
+	 * @param registers all defined registers with appropriate parent-child relationships
 	 * properly established.
 	 * @param registerNameMap a complete name-to-register map including all register aliases
 	 * and alternate spellings (e.g., case-variations)
 	 */
-	RegisterManager(List<Register> cookedRegisters, Map<String, Register> registerNameMap) {
-		this.registers = Collections.unmodifiableList(cookedRegisters);
+	RegisterManager(List<Register> registers, Map<String, Register> registerNameMap) {
+		this.registers = Collections.unmodifiableList(registers);
 		this.registerNameMap = Collections.unmodifiableMap(registerNameMap);
 		initialize();
 	}
@@ -95,9 +94,9 @@ public class RegisterManager {
 	private void initialize() {
 		List<String> registerNameList = new ArrayList<String>();
 		List<Register> contextRegisterList = new ArrayList<Register>();
-		ArrayList<Register> registerList = new ArrayList<>(registers); // copy for sorting
-		Collections.sort(registerList, registerSizeComparator);
-		for (Register reg : registerList) {
+		ArrayList<Register> registerListSortedBySize = new ArrayList<>(registers); // copy for sorting
+		Collections.sort(registerListSortedBySize, registerSizeComparator);
+		for (Register reg : registerListSortedBySize) {
 			String regName = reg.getName();
 			registerNameList.add(regName);
 			if (reg.isProcessorContext()) {
@@ -126,8 +125,8 @@ public class RegisterManager {
 			}
 		}
 		// handle the register size 0 case;
-		Collections.reverse(registerList);
-		for (Register register : registerList) {
+		Collections.reverse(registerListSortedBySize);
+		for (Register register : registerListSortedBySize) {
 			sizeMap.put(new RegisterSizeKey(register.getAddress(), 0), register);
 		}
 		contextRegisters = Collections.unmodifiableList(contextRegisterList);
@@ -183,10 +182,11 @@ public class RegisterManager {
 	 * @return register or null if not found
 	 */
 	public Register getRegister(Address addr) {
-		if (!addr.isRegisterAddress() && !addr.getAddressSpace().hasMappedRegisters()) {
-			return null;
+		AddressSpace space = addr.getAddressSpace();
+		if (space.isRegisterSpace() || space.hasMappedRegisters()) {
+			return sizeMap.get(new RegisterSizeKey(addr, 0));
 		}
-		return sizeMap.get(new RegisterSizeKey(addr, 0));
+		return null;
 	}
 
 	/**
@@ -196,7 +196,8 @@ public class RegisterManager {
 	 * @return array of registers found (may be empty)
 	 */
 	public Register[] getRegisters(Address addr) {
-		if (addr.isRegisterAddress() || addr.getAddressSpace().hasMappedRegisters()) {
+		AddressSpace space = addr.getAddressSpace();
+		if (space.isRegisterSpace() || space.hasMappedRegisters()) {
 			List<Register> list = registerAddressMap.get(getGlobalAddress(addr));
 			if (list != null) {
 				Register[] regs = new Register[list.size()];
@@ -221,10 +222,11 @@ public class RegisterManager {
 	 * @return register or null if not found
 	 */
 	public Register getRegister(Address addr, int size) {
-		if (!addr.isRegisterAddress() && !addr.getAddressSpace().hasMappedRegisters()) {
-			return null;
+		AddressSpace space = addr.getAddressSpace();
+		if (space.isRegisterSpace() || space.hasMappedRegisters()) {
+			return sizeMap.get(new RegisterSizeKey(addr, size));
 		}
-		return sizeMap.get(new RegisterSizeKey(addr, size));
+		return null;
 	}
 
 	/**

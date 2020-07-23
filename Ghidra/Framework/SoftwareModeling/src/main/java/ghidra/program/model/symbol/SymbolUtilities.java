@@ -562,9 +562,9 @@ public class SymbolUtilities {
 	 */
 	public static Address parseDynamicName(AddressFactory factory, String name) {
 
-		// strip leading underscores
-		while (name.startsWith(UNDERSCORE)) {
-			name = name.substring(1);
+		// assume dynamic names will naver start with an underscore
+		if (name.startsWith(UNDERSCORE)) {
+			return null;
 		}
 
 		String[] pieces = name.split(UNDERSCORE);

@@ -192,9 +192,6 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
-		if (program.getLanguage() != language) {
-			throw new IllegalArgumentException("Program does not correspond to current language");
-		}
 	}
 
 	@Override

@@ -103,30 +103,6 @@ class RegisterValuesXmlMgr {
 			}
 		});
 		
-//		ArrayList list = new ArrayList();
-//		for (int i = 0; i < regs.length; i++) {
-//			
-//			Register reg = regs[i];
-//			int minOffset = reg.getOffset();
-//			int maxOffset = minOffset + reg.getSize() - 1;
-//			
-//			// Skip if reg is broken into smaller registers
-//			boolean overlap = false;
-//			for (int n = 0; n < i; n++) {	
-//				int off = regs[n].getOffset();
-//				if (off >= minOffset && off <= maxOffset) {
-//					overlap = true;
-//					break;
-//				}
-//			}
-//			if (!overlap) {
-//				list.add(reg);
-//			}
-//		}
-//		
-//		regs = new Register[list.size()];
-//		list.toArray(regs);
-
 		return regs;
 	}
 
@@ -143,10 +119,6 @@ class RegisterValuesXmlMgr {
 		writer.startElement("REGISTER_VALUES");
 
 		List<Register> regs = getUniqueRegisters();
-
-//for (int i = 0; i < regs.length; i++) {
-//Register reg = regs[i];
-//}
 		if (set == null) {
 			set = program.getMemory();
 		}

@@ -140,7 +140,6 @@ public class SleighLanguage implements Language {
 		loadRegisters(registerBuilder);
 		readRemainingSpecification();
 
-//        registerManager = registerBuilder.getRegisterManager();
 		xrefRegisters();
 
 		instructProtoMap = new LinkedHashMap<>();
