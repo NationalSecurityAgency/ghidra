@@ -362,6 +362,8 @@ void Symbol::saveXmlHeader(ostream &s) const
     a_v_b(s,"hiddenretparm",true);
   if ((dispflags&isolate)!=0)
     a_v_b(s,"merge",false);
+  if ((dispflags&is_this_ptr)!=0)
+    a_v_b(s,"thisptr",true);
   int4 format = getDisplayFormat();
   if (format != 0) {
     s << " format=\"";
@@ -460,6 +462,10 @@ void Symbol::restoreXmlHeader(const Element *el)
 	if (attName == "typelock") {
 	  if (xml_readbool(el->getAttributeValue(i)))
 	    flags |= Varnode::typelock;
+	}
+	else if (attName == "thisptr") {
+	  if (xml_readbool(el->getAttributeValue(i)))
+	    dispflags |= is_this_ptr;
 	}
 	break;
       case 'v':
