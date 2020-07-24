@@ -25,6 +25,12 @@ public class DemangledLambda extends DemangledFunction {
 	}
 
 	@Override
+	public String getNamespaceName() {
+		// overridden to not include parameter list
+		return getName();
+	}
+
+	@Override
 	public String toString() {
 		return getName();
 	}
