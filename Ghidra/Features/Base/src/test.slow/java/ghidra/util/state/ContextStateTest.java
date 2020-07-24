@@ -132,7 +132,7 @@ public class ContextStateTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testStoreConstantWithEntryContext() {
 
-		ProgramContextImpl ctx = new ProgramContextImpl(lang.getRegisters());
+		ProgramContextImpl ctx = new ProgramContextImpl(lang);
 		ctx.setDefaultValue(
 			new RegisterValue(lang.getRegister("EAX"), new BigInteger("fedcba98", 16)), addr(1000),
 			addr(1000));

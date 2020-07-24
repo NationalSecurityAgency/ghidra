@@ -49,16 +49,14 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 
 	private DBHandle dbHandle;
 	private ErrorHandler errHandler;
-	private Register[] registers;
+	private Language language;
 	private AddressMap addrMap;
-	private int registerSpaceSize;
 	private Lock lock;
 
 	/**
 	 * maintain values stored in registers for specified addresses and
 	 * address ranges using the PropertyMap utilities.
 	 */
-	private HashMap<String, Register> registersMap;
 	private Map<Integer, AddressRangeMapDB> valueMaps;
 	private Register baseContextRegister;
 	protected Map<Register, RegisterValueStore> defaultRegisterValueMap;
@@ -82,28 +80,12 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 		this.errHandler = errHandler;
 		this.lock = lock;
 		this.addrMap = addrMap.getOldAddressMap();
-		this.registers = language.getRegisters();
+		this.language = language;
+
 		defaultRegisterValueMap = new HashMap<Register, RegisterValueStore>();
-
-		registersMap = new HashMap<String, Register>();
 		valueMaps = new HashMap<>();
-		registerSpaceSize = 0;
 
-		for (Register register : registers) {
-			String registerName = register.getName();
-			registersMap.put(registerName.toUpperCase(), register);
-
-			int offset = (register.getOffset() & 0xffff);
-			if (offset + register.getMinimumByteSize() > registerSpaceSize) {
-				registerSpaceSize = offset + register.getMinimumByteSize();
-			}
-		}
-		for (Register register : registers) {
-			if (register.isProcessorContext()) {
-				baseContextRegister = register.getBaseRegister();
-				break;
-			}
-		}
+		baseContextRegister = language.getContextBaseRegister();
 		if (baseContextRegister == null) {
 			baseContextRegister =
 				new Register("DEFAULT_CONTEXT", "DEFAULT_CONTEXT",
@@ -186,28 +168,18 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	}
 
 	@Override
-	public Register[] getProcessorStateRegisters() {
-		List<Register> list = new ArrayList<Register>();
-		for (Register register : registers) {
-			if (register.isProcessorContext()) {
-				list.add(register);
-			}
-		}
-		return list.toArray(new Register[list.size()]);
+	public List<Register> getContextRegisters() {
+		return language.getContextRegisters();
 	}
 
 	@Override
 	public Register getRegister(String name) {
-		return registersMap.get(name.toUpperCase());
+		return language.getRegister(name);
 	}
 
 	@Override
-	public String[] getRegisterNames() {
-		List<String> list = new ArrayList<String>();
-		for (Register register : registers) {
-			list.add(register.getName());
-		}
-		return list.toArray(new String[list.size()]);
+	public List<String> getRegisterNames() {
+		return language.getRegisterNames();
 	}
 
 	@Override
@@ -273,8 +245,8 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	}
 
 	@Override
-	public Register[] getRegisters() {
-		return registers;
+	public List<Register> getRegisters() {
+		return language.getRegisters();
 	}
 
 	public long getSigned(Address addr, Register reg) throws UnsupportedOperationException {
@@ -446,7 +418,7 @@ public class OldProgramContextDB implements ProgramContext, DefaultProgramContex
 	public Register[] getRegistersWithValues() {
 		if (registersWithValues == null) {
 			List<Register> tmp = new ArrayList<Register>();
-			for (Register register : registers) {
+			for (Register register : getRegisters()) {
 				AddressRangeIterator it = getRegisterValueAddressRanges(register);
 				if (it.hasNext()) {
 					tmp.add(register);

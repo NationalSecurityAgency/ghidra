@@ -81,9 +81,9 @@ public class SymbolicPropogator {
 	public SymbolicPropogator(Program program) {
 		this.program = program;
 
-		Register regs[] = program.getLanguage().getRegisters();
-		programContext = new ProgramContextImpl(regs);
-		spaceContext = new ProgramContextImpl(regs);
+		Language language = program.getLanguage();
+		programContext = new ProgramContextImpl(language);
+		spaceContext = new ProgramContextImpl(language);
 
 		setPointerMask(program);
 		setExternalRange(program);
@@ -208,8 +208,9 @@ public class SymbolicPropogator {
 	 * @return
 	 */
 	protected VarnodeContext saveOffCurrentContext(Address startAddr) {
-		ProgramContext newValueContext = new ProgramContextImpl(programContext.getRegisters());
-		ProgramContext newSpaceContext = new ProgramContextImpl(programContext.getRegisters());
+		Language language = program.getLanguage();
+		ProgramContext newValueContext = new ProgramContextImpl(language);
+		ProgramContext newSpaceContext = new ProgramContextImpl(language);
 		VarnodeContext newContext = new VarnodeContext(program, newValueContext, newSpaceContext);
 		newContext.setDebug(debug);
 		int constantSpaceID = program.getAddressFactory().getConstantSpace().getSpaceID();

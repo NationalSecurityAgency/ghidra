@@ -100,11 +100,6 @@
                   </attribute>
                 </optional>
                 <optional>
-                  <attribute name="unused">
-                    <ref name="boolean_type"/>
-                  </attribute>
-                </optional>
-                <optional>
                   <attribute name="vector_lane_sizes"/>
                 </optional>
               </element>

@@ -140,7 +140,6 @@ public class SleighLanguage implements Language {
 		loadRegisters(registerBuilder);
 		readRemainingSpecification();
 
-//        registerManager = registerBuilder.getRegisterManager();
 		xrefRegisters();
 
 		instructProtoMap = new LinkedHashMap<>();
@@ -266,6 +265,11 @@ public class SleighLanguage implements Language {
 	}
 
 	@Override
+	public List<Register> getContextRegisters() {
+		return getRegisterManager().getContextRegisters();
+	}
+
+	@Override
 	public MemoryBlockDefinition[] getDefaultMemoryBlocks() {
 		return defaultMemoryBlocks;
 	}
@@ -331,8 +335,13 @@ public class SleighLanguage implements Language {
 	}
 
 	@Override
-	public Register[] getRegisters() {
+	public List<Register> getRegisters() {
 		return getRegisterManager().getRegisters();
+	}
+
+	@Override
+	public List<String> getRegisterNames() {
+		return getRegisterManager().getRegisterNames();
 	}
 
 	@Override
@@ -743,11 +752,7 @@ public class SleighLanguage implements Language {
 					String registerRename = reg.getAttribute("rename");
 					String groupName = reg.getAttribute("group");
 					boolean isHidden = SpecXmlUtils.decodeBoolean(reg.getAttribute("hidden"));
-					boolean isUnused = SpecXmlUtils.decodeBoolean(reg.getAttribute("unused"));
-					if (isUnused) {
-						registerBuilder.removeRegister(registerName);
-					}
-					else if (registerRename != null) {
+					if (registerRename != null) {
 						if (!registerBuilder.renameRegister(registerName, registerRename)) {
 							throw new SleighException(
 								"error renaming " + registerName + " to " + registerRename);
@@ -1074,11 +1079,8 @@ public class SleighLanguage implements Language {
 	}
 
 	private void xrefRegisters() {
-		Register[] regs = getRegisterManager().getRegisters();
-		for (Register register : regs) {
-			if (register.isProcessorContext()) {
-				contextcache.registerVariable(register);
-			}
+		for (Register register : getRegisterManager().getContextRegisters()) {
+			contextcache.registerVariable(register);
 		}
 	}
 
@@ -1581,7 +1583,8 @@ public class SleighLanguage implements Language {
 	}
 
 	@Override
-	public Register[] getSortedVectorRegisters() {
+	public List<Register> getSortedVectorRegisters() {
 		return registerManager.getSortedVectorRegisters();
 	}
+
 }
