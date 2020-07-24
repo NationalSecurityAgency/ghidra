@@ -113,9 +113,8 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * Enables or disables the action
 	 *
 	 * @param newValue  true to enable the action, false to disable it
-	 * @return the enabled value of the action after this call
 	 */
-	public boolean setEnabled(boolean newValue);
+	public void setEnabled(boolean newValue);
 
 	/**
 	 * Sets whether or not this action should be activated using the default tool context if the

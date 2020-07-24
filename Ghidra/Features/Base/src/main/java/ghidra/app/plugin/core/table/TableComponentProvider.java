@@ -305,7 +305,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			return;
 		}
 
-		boolean wasEnabled = selectionNavigationAction.setEnabled(false); // disable navigation events from updates
+		boolean wasEnabled = selectionNavigationAction.isEnabled();
+		selectionNavigationAction.setEnabled(false); // disable navigation events from updates
 
 		int[] selectedRows = threadedTable.getSelectedRows();
 

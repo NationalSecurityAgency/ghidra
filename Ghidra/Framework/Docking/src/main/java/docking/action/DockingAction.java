@@ -217,13 +217,12 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	@Override
-	public boolean setEnabled(boolean newValue) {
+	public void setEnabled(boolean newValue) {
 		if (isEnabled == newValue) {
-			return isEnabled;
+			return;
 		}
 		isEnabled = newValue;
 		firePropertyChanged(ENABLEMENT_PROPERTY, !isEnabled, isEnabled);
-		return !isEnabled;
 	}
 
 	@Override
