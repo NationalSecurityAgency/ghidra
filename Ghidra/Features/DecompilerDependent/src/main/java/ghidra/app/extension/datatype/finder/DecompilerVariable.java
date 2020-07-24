@@ -51,6 +51,12 @@ public abstract class DecompilerVariable {
 			return ((ClangTypeToken) variable).getDataType();
 		}
 
+// not sure if we need this; the type returned here is the structure and not the 
+// field's type
+//		if (variable instanceof ClangFieldToken) {
+//			return ((ClangFieldToken) variable).getDataType();
+//		}
+
 		// Note: this is the icky part of the API.  How to know from where to get the data type?
 		HighVariable highVariable = variable.getHighVariable();
 		if (highVariable != null) {
