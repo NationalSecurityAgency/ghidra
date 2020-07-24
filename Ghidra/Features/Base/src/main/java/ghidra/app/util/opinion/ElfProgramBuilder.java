@@ -2711,7 +2711,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					continue;
 				}
 				long size = elfSectionToLoad.getSize();
-				if (size <= 0 || size >= fileBytes.getSize()) {
+				if (size <= 0 || (elfSectionToLoad.getType() != ElfSectionHeaderConstants.SHT_NOBITS &&  size >= fileBytes.getSize())) {
 					log("Skipping section [" + elfSectionToLoad.getNameAsString() +
 						"] with invalid size");
 					continue;
