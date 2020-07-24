@@ -2305,7 +2305,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		try {
 			parent = validateNamespace(parent, addr, symbolType);
 			source = validateSource(source, name, addr, symbolType);
-			name = validateName(name, addr, symbolType, source);
+			name = validateName(name, source);
 			checkDuplicateSymbolName(addr, name, parent, symbolType);
 
 			return doCreateSymbol(name, addr, parent, symbolType, data1, data2, data3, source);
@@ -2356,7 +2356,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		try {
 			namespace = validateNamespace(namespace, addr, SymbolType.LABEL);
 			source = validateSource(source, name, addr, SymbolType.LABEL);
-			name = validateName(name, addr, SymbolType.LABEL, source);
+			name = validateName(name, source);
 
 			Symbol symbol = getSymbol(name, addr, namespace);
 			if (symbol != null) {
@@ -2400,7 +2400,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 		namespace = validateNamespace(namespace, addr, SymbolType.FUNCTION);
 		source = validateSource(source, name, addr, SymbolType.FUNCTION);
-		name = validateName(name, addr, SymbolType.FUNCTION, source);
+		name = validateName(name, source);
 
 		Symbol[] symbols = getSymbols(addr);
 
@@ -2510,12 +2510,12 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		return null;
 	}
 
-	private String validateName(String name, Address addr, SymbolType type, SourceType source)
+	private String validateName(String name, SourceType source)
 			throws InvalidInputException {
 		if (source == SourceType.DEFAULT) {
 			return "";
 		}
-		SymbolUtilities.validateName(name, addr, type, addrMap.getAddressFactory());
+		SymbolUtilities.validateName(name);
 		return name;
 	}
 
