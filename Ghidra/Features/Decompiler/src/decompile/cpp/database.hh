@@ -173,6 +173,7 @@ protected:
   virtual ~Symbol(void) {}	///< Destructor
   void setDisplayFormat(uint4 val);	///< Set the display format for \b this Symbol
   void checkSizeTypeLock(void);	///< Calculate if \b size_typelock property is on
+  void setThisPointer(bool val);	///< Toggle whether \b this is the "this" pointer for a class method
 public:
   /// \brief Possible display (dispflag) properties for a Symbol
   enum {
@@ -701,6 +702,7 @@ public:
   void saveXmlRecursive(ostream &s,bool onlyGlobal) const;		///< Save all contained scopes as an XML stream
   void overrideSizeLockType(Symbol *sym,Datatype *ct);			///< Change the data-type of a Symbol that is \e sizelocked
   void resetSizeLockType(Symbol *sym);				///< Clear a Symbol's \e size-locked data-type
+  void setThisPointer(Symbol *sym,bool val) { sym->setThisPointer(val); }	///< Toggle the given Symbol as the "this" pointer
   bool isSubScope(const Scope *scp) const;			///< Is this a sub-scope of the given Scope
   string getFullName(void) const;				///< Get the full name of \b this Scope
   void getNameSegments(vector<string> &vec) const;		///< Get the fullname of \b this in segments

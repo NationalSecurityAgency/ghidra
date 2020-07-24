@@ -653,7 +653,8 @@ public class SleighLanguage implements Language {
 		XmlElement element = parser.start("processor_spec");
 		while (!parser.peek().isEnd()) {
 			element = parser.start("properties", "segmented_address", "segmentop", "programcounter",
-				"data_space", "context_data", "volatile", "jumpassist", "incidentalcopy",
+				"data_space", "inferptrbounds", "context_data", "volatile", "jumpassist",
+				"incidentalcopy",
 				"register_data", "default_symbols", "default_memory_blocks");
 			if (element.getName().equals("properties")) {
 				while (!parser.peek().isEnd()) {
@@ -818,6 +819,11 @@ public class SleighLanguage implements Language {
 				list.toArray(defaultMemoryBlocks);
 			}
 			else if (element.getName().equals("incidentalcopy")) {
+				while (parser.peek().isStart()) {
+					parser.discardSubTree();
+				}
+			}
+			else if (element.getName().equals("inferptrbounds")) {
 				while (parser.peek().isStart()) {
 					parser.discardSubTree();
 				}

@@ -421,29 +421,6 @@ FuncCallSpecs *Funcdata::getCallSpecs(const PcodeOp *op) const
   return (FuncCallSpecs *)0;
 }
 
-/// \brief Update CALL PcodeOp properties based on its corresponding call specification
-///
-/// As call specifications for a particular call site are updated, this routine pushes
-/// back properties to the particular CALL op that are relevant for analysis.
-/// \param fc is the call specification
-void Funcdata::updateOpFromSpec(FuncCallSpecs *fc)
-
-{
-  PcodeOp *op = fc->getOp();
-  if (fc->isConstructor())
-    op->setAdditionalFlag(PcodeOp::is_constructor);
-  else
-    op->clearAdditionalFlag(PcodeOp::is_constructor);
-  if (fc->isDestructor())
-    op->setAdditionalFlag(PcodeOp::is_destructor);
-  else
-    op->clearAdditionalFlag(PcodeOp::is_destructor);
-  if (fc->hasThisPointer())
-    op->setAdditionalFlag(PcodeOp::has_thisptr);
-  else
-    op->clearAdditionalFlag(PcodeOp::has_thisptr);
-}
-
 /// \brief Compare call specification objects by call site address
 ///
 /// \param a is the first call specification to compare

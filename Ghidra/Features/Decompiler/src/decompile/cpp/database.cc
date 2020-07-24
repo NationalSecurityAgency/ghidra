@@ -224,6 +224,16 @@ void Symbol::checkSizeTypeLock(void)
     dispflags |= size_typelock;
 }
 
+/// \param val is \b true if we are the "this" pointer
+void Symbol::setThisPointer(bool val)
+
+{
+  if (val)
+    dispflags |= is_this_ptr;
+  else
+    dispflags &= ~((uint4)is_this_ptr);
+}
+
 /// The name for a Symbol can be unspecified.  See ScopeInternal::buildUndefinedName
 /// \return \b true if the name of \b this is undefined
 bool Symbol::isNameUndefined(void) const

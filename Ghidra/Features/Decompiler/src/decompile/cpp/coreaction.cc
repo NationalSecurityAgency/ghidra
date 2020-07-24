@@ -1077,6 +1077,8 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     // Make sure the constant is in the expected range for a pointer
     if (spc->getPointerLowerBound() > vn->getOffset())
       return (SymbolEntry *)0;
+    if (spc->getPointerUpperBound() < vn->getOffset())
+      return (SymbolEntry *)0;
     // Check if the constant looks like a single bit or mask
     if (bit_transitions(vn->getOffset(),vn->getSize()) < 3)
       return (SymbolEntry *)0;
@@ -1205,7 +1207,6 @@ int4 ActionDeindirect::apply(Funcdata &data)
 	    // We use isInputLocked as a test of whether the
 	    // function pointer prototype has been applied before
 	    fc->forceSet(data,*fp);
-	    data.updateOpFromSpec(fc);
 	    count += 1;
 	  }
 	}
@@ -2158,7 +2159,6 @@ int4 ActionDefaultParams::apply(Funcdata &data)
 	fc->setInternal(evalfp,data.getArch()->types->getTypeVoid());
     }
     fc->insertPcode(data);	// Insert any necessary pcode
-    data.updateOpFromSpec(fc);
   }
   return 0;			// Indicate success
 }

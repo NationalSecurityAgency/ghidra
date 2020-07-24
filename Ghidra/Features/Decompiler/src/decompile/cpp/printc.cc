@@ -510,8 +510,9 @@ void PrintC::opCall(const PcodeOp *op)
 {
   pushOp(&function_call,op);
   const Varnode *callpoint = op->getIn(0);
+  FuncCallSpecs *fc;
   if (callpoint->getSpace()->getType()==IPTR_FSPEC) {
-    FuncCallSpecs *fc = FuncCallSpecs::getFspecFromConst(callpoint->getAddr());
+    fc = FuncCallSpecs::getFspecFromConst(callpoint->getAddr());
     if (fc->getName().size()==0) {
       string name = genericFunctionName(fc->getEntryAddress());
       pushAtom(Atom(name,functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
@@ -527,14 +528,22 @@ void PrintC::opCall(const PcodeOp *op)
     clear();
     throw LowlevelError("Missing function callspec");
   }
-  int4 startparam = isSet(hide_thisparam) && op->hasThisPointer() ? 2 : 1;
-  if (op->numInput() > startparam) {
-    for(int4 i=startparam;i<op->numInput()-1;++i)
+  // TODO: Cannot hide "this" on a direct call until we print the whole
+  // thing with the proper C++ method invocation format. Otherwise the output
+  // gives no indication of what object has a method being called.
+  // int4 skip = getHiddenThisSlot(op, fc);
+  int4 skip = -1;
+  int4 count = op->numInput() - 1;	// Number of parameter expressions printed
+  count -= (skip < 0) ? 0 : 1;		// Subtract one if "this" is hidden
+  if (count > 0) {
+    for(int4 i=0;i<count-1;++i)
       pushOp(&comma,op);
-  // implied vn's pushed on in reverse order for efficiency
-  // see PrintLanguage::pushVnImplied
-    for(int4 i=op->numInput()-1;i>=startparam;--i)
+    // implied vn's pushed on in reverse order for efficiency
+    // see PrintLanguage::pushVnImplied
+    for(int4 i=op->numInput()-1;i>=1;--i) {
+      if (i == skip) continue;
       pushVnImplied(op->getIn(i),op,mods);
+    }
   }
   else				// Push empty token for void
     pushAtom(Atom("",blanktoken,EmitXml::no_color));
@@ -545,18 +554,29 @@ void PrintC::opCallind(const PcodeOp *op)
 {
   pushOp(&function_call,op);
   pushOp(&dereference,op);
-  // implied vn's pushed on in reverse order for efficiency
-  // see PrintLanguage::pushVnImplied
-  int4 startparam = isSet(hide_thisparam) && op->hasThisPointer() ? 2 : 1;
-  if (op->numInput()>startparam + 1) {	// Multiple parameters
+  const Funcdata *fd = op->getParent()->getFuncdata();
+  FuncCallSpecs *fc = fd->getCallSpecs(op);
+  if (fc == (FuncCallSpecs *)0)
+    throw LowlevelError("Missing indirect function callspec");
+  int4 skip = getHiddenThisSlot(op, fc);
+  int4 count = op->numInput() - 1;
+  count -= (skip < 0) ? 0 : 1;
+  if (count > 1) {	// Multiple parameters
     pushVnImplied(op->getIn(0),op,mods);
-    for(int4 i=startparam;i<op->numInput()-1;++i)
+    for(int4 i=0;i<count-1;++i)
       pushOp(&comma,op);
-    for(int4 i=op->numInput()-1;i>=startparam;--i)
+    // implied vn's pushed on in reverse order for efficiency
+    // see PrintLanguage::pushVnImplied
+    for(int4 i=op->numInput()-1;i>=1;--i) {
+      if (i == skip) continue;
       pushVnImplied(op->getIn(i),op,mods);
+    }
   }
-  else if (op->numInput()==startparam + 1) {	// One parameter
-    pushVnImplied(op->getIn(startparam),op,mods);
+  else if (count == 1) {	// One parameter
+    if (skip == 1)
+      pushVnImplied(op->getIn(2),op,mods);
+    else
+      pushVnImplied(op->getIn(1),op,mods);
     pushVnImplied(op->getIn(0),op,mods);
   }
   else {			// A void function
@@ -1332,6 +1352,31 @@ bool PrintC::printCharacterConstant(ostream &s,const Address &addr,Datatype *cha
   return true;
 }
 
+/// For the given CALL op, if a "this" pointer exists and needs to be hidden because
+/// of the print configuration, return the Varnode slot corresponding to the "this".
+/// Otherwise return -1.
+/// \param op is the given CALL PcodeOp
+/// \param fc is the function prototype corresponding to the CALL
+/// \return the "this" Varnode slot or -1
+int4 PrintC::getHiddenThisSlot(const PcodeOp *op,FuncProto *fc)
+
+{
+  int4 numInput = op->numInput();
+  if (isSet(hide_thisparam) && fc->hasThisPointer()) {
+    for(int4 i=1;i<numInput-1;++i) {
+      ProtoParameter *param = fc->getParam(i-1);
+      if (param != (ProtoParameter *)0 && param->isThisPointer())
+	return i;
+    }
+    if (numInput >= 2) {
+      ProtoParameter *param = fc->getParam(numInput-2);
+      if (param != (ProtoParameter *)0 && param->isThisPointer())
+	return numInput - 1;
+    }
+  }
+  return -1;
+}
+
 void PrintC::resetDefaultsPrintC(void)
 
 {
@@ -1902,11 +1947,15 @@ void PrintC::emitPrototypeInputs(const FuncProto *proto)
   if (sz == 0)
     emit->print("void",EmitXml::keyword_color);
   else {
+    bool printComma = false;
     for(int4 i=0;i<sz;++i) {
-      if (i!=0)
+      if (printComma)
 	emit->print(",");
       ProtoParameter *param = proto->getParam(i);
+      if (isSet(hide_thisparam) && param->isThisPointer())
+	continue;
       Symbol *sym = param->getSymbol();
+      printComma = true;
       if (sym != (Symbol *)0)
 	emitVarDecl(sym);
       else {

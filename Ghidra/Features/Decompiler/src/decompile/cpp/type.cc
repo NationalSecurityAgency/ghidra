@@ -1153,13 +1153,11 @@ void TypeCode::printRaw(ostream &s) const
 }
 
 /// Assuming \b this has an underlying function prototype, set some of its boolean properties
-/// \param hasThisPtr toggles whether prototype has takes a "this" pointer
 /// \param isConstructor toggles whether the function is a constructor
 /// \param isDestructor toggles whether the function is a destructor
-void TypeCode::setProperties(bool hasThisPtr,bool isConstructor,bool isDestructor)
+void TypeCode::setProperties(bool isConstructor,bool isDestructor)
 
 {
-  proto->setThisPointer(hasThisPtr);
   proto->setConstructor(isConstructor);
   proto->setDestructor(isDestructor);
 }
@@ -2201,11 +2199,10 @@ Datatype *TypeFactory::restoreXmlType(const Element *el)
 ///
 /// Kludge to get flags into code pointer types, when they can't come through XML
 /// \param el is the XML element describing the Datatype
-/// \param hasThisPtr toggles "this" pointer property on "function" datatypes
 /// \param isConstructor toggles "constructor" property on "function" datatypes
 /// \param isDestructor toggles "destructor" property on "function" datatypes
 /// \return the restored Datatype object
-Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool hasThisPtr,bool isConstructor,bool isDestructor)
+Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool isConstructor,bool isDestructor)
 
 {
   TypePointer tp;
@@ -2226,8 +2223,8 @@ Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool hasThi
     throw LowlevelError("Special type restoreXml does not see code");
   TypeCode tc("");
   tc.restoreXml(subel,*this);
-  tc.setProperties(hasThisPtr,isConstructor,isDestructor);	// Add in flags
-  tp.ptrto = findAdd(tc);					// THEN add to container
+  tc.setProperties(isConstructor,isDestructor);		// Add in flags
+  tp.ptrto = findAdd(tc);				// THEN add to container
   return findAdd(tp);
 }
 

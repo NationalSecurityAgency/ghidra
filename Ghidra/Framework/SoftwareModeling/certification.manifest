@@ -29,7 +29,6 @@ src/main/java/ghidra/program/database/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/address/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/block/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/data/package.html||GHIDRA||||END|
-src/main/java/ghidra/program/model/graph/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/lang/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/listing/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/mem/package.html||GHIDRA||||END|
