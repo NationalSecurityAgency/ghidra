@@ -94,13 +94,13 @@ if not %ERRORLEVEL% == 0 (
 
 :: Get the JDK that will be used to launch Ghidra
 set JAVA_HOME=
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -jdk_home -save') do set JAVA_HOME=%%i
+for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
 if "%JAVA_HOME%" == "" (
 	:: No JDK has been setup yet.  Let the user choose one.
-	java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -jdk_home -ask
+	java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -ask
 	
 	:: Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
-	for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -jdk_home -save') do set JAVA_HOME=%%i
+	for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
 	if "!JAVA_HOME!" == "" (
 		echo.
 		echo Failed to find a supported JDK.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
@@ -111,7 +111,7 @@ if "%JAVA_HOME%" == "" (
 set JAVA_CMD=%JAVA_HOME%\bin\java
 
 :: Get the configurable VM arguments from the launch properties
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%\" -vmargs') do set VMARG_LIST=%VMARG_LIST% %%i
+for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -vmargs') do set VMARG_LIST=%VMARG_LIST% %%i
 
 :: Set Max Heap Size if specified
 if not "%MAXMEM%"=="" (
