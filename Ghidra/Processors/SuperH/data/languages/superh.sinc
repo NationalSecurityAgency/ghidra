@@ -1544,7 +1544,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 {
     $(T_FLAG) = ((rn_08_11 & 0x1) != 0);
     
-    rn_08_11 = (rn_08_11 >> 1) | sext($(T_FLAG));
+    rn_08_11 = (rn_08_11 >> 1) | (rn_08_11 << 31);
 }
 
 @if SH_VERSION == "2A"
