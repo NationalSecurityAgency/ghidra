@@ -394,14 +394,14 @@ class GhidraScriptActionManager {
 			}
 
 			File versionedExtractDir = new File(extractDir, version);
-			try (ZipFile zf = new ZipFile(zipFile)) {
+			try (ZipFile zipFileObject = new ZipFile(zipFile)) {
 
 				// Check to see if zip file has been extracted already
 				if (versionedExtractDir.exists()) {
 
 					// Open Javadoc if all the files are present
 					try (Stream<Path> walk = Files.walk(versionedExtractDir.toPath())) {
-						if (zf.size() + 1 == walk.count()) {
+						if (zipFileObject.size() + 1 == walk.count()) {
 							launchJavadoc();
 							return;
 						}
@@ -412,9 +412,9 @@ class GhidraScriptActionManager {
 				}
 
 				monitor.setMessage("Preparing to extract Ghidra API javadoc...");
-				monitor.initialize(zf.size());
+				monitor.initialize(zipFileObject.size());
 
-				Enumeration<? extends ZipEntry> entries = zf.entries();
+				Enumeration<? extends ZipEntry> entries = zipFileObject.entries();
 				while (entries.hasMoreElements()) {
 					if (monitor.isCancelled()) {
 						cleanup(monitor, versionedExtractDir);
@@ -423,7 +423,7 @@ class GhidraScriptActionManager {
 
 					ZipEntry entry = entries.nextElement();
 					monitor.setMessage("Extracting " + entry.getName() + "...");
-					writeZipEntry(versionedExtractDir, entry, zf.getInputStream(entry));
+					writeZipEntry(versionedExtractDir, entry, zipFileObject.getInputStream(entry));
 					monitor.incrementProgress(1);
 				}
 

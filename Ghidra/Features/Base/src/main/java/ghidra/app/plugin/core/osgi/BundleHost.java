@@ -195,19 +195,9 @@ public class BundleHost {
 		return bundle;
 	}
 
-	/**
-	 * Create new GhidraBundles and add to the list of managed bundles.  All GhidraBundles created 
-	 * with the same {@code enabled} and {@code systemBundle} values. 
-	 * 
-	 * @param bundleFileList a list of bundle files
-	 * @param enabled if the new bundle should be enabled
-	 * @param systemBundle if the new bundle is a system bundle
-	 * @return the new bundle objects
-	 */
-	public Collection<GhidraBundle> add(List<ResourceFile> bundleFileList, boolean enabled,
-			boolean systemBundle) {
-		Set<ResourceFile> bundleFiles = new HashSet<>(bundleFileList);
-		Iterator<ResourceFile> bundleFileIterator = bundleFiles.iterator();
+	private Set<ResourceFile> dedupeBundleFiles(List<ResourceFile> bundleFiles) {
+		Set<ResourceFile> dedupedBundleFiles = new HashSet<>(bundleFiles);
+		Iterator<ResourceFile> bundleFileIterator = dedupedBundleFiles.iterator();
 		while (bundleFileIterator.hasNext()) {
 			ResourceFile bundleFile = bundleFileIterator.next();
 			if (fileToBundleMap.containsKey(bundleFile)) {
@@ -215,7 +205,22 @@ public class BundleHost {
 				Msg.warn(this, "adding an already managed bundle: " + bundleFile.getAbsolutePath());
 			}
 		}
-		Map<ResourceFile, GhidraBundle> newBundleMap = bundleFiles.stream()
+		return dedupedBundleFiles;
+	}
+
+	/**
+	 * Create new GhidraBundles and add to the list of managed bundles.  All GhidraBundles created 
+	 * with the same {@code enabled} and {@code systemBundle} values. 
+	 * 
+	 * @param bundleFiles a list of new bundle files to add
+	 * @param enabled if the new bundles should be enabled
+	 * @param systemBundle if the new bundles are system bundles
+	 * @return the new bundle objects
+	 */
+	public Collection<GhidraBundle> add(List<ResourceFile> bundleFiles, boolean enabled,
+			boolean systemBundle) {
+		Set<ResourceFile> dedupedBundleFiles = dedupeBundleFiles(bundleFiles);
+		Map<ResourceFile, GhidraBundle> newBundleMap = dedupedBundleFiles.stream()
 				.collect(Collectors.toUnmodifiableMap(Function.identity(),
 					bundleFile -> createGhidraBundle(BundleHost.this, bundleFile, enabled,
 						systemBundle)));
@@ -957,10 +962,10 @@ public class BundleHost {
 				newFront.entrySet().iterator();
 			while (newFrontIter.hasNext() && !monitor.isCancelled()) {
 				Entry<GhidraBundle, Set<GhidraBundle>> entry = newFrontIter.next();
-				GhidraBundle src = entry.getKey();
-				if (containsVertex(src)) {
-					for (GhidraBundle dst : entry.getValue()) {
-						addEdge(src, dst, new Dependency());
+				GhidraBundle source = entry.getKey();
+				if (containsVertex(source)) {
+					for (GhidraBundle destination : entry.getValue()) {
+						addEdge(source, destination, new Dependency());
 					}
 					newFrontIter.remove();
 				}
@@ -969,44 +974,44 @@ public class BundleHost {
 
 		void addFront(Map<GhidraBundle, Set<GhidraBundle>> front) {
 			for (Entry<GhidraBundle, Set<GhidraBundle>> e : front.entrySet()) {
-				GhidraBundle src = e.getKey();
-				availableBundles.add(src);
-				addVertex(src);
-				Set<GhidraBundle> dsts = e.getValue();
-				if (dsts != null) {
-					for (GhidraBundle dst : dsts) {
-						addEdge(src, dst, new Dependency());
+				GhidraBundle source = e.getKey();
+				availableBundles.add(source);
+				addVertex(source);
+				Set<GhidraBundle> destinations = e.getValue();
+				if (destinations != null) {
+					for (GhidraBundle destination : destinations) {
+						addEdge(source, destination, new Dependency());
 					}
 				}
 			}
 		}
 
 		void resolve(GhidraBundle bundle, Map<GhidraBundle, Set<GhidraBundle>> newFront) {
-			List<BundleRequirement> reqs;
+			List<BundleRequirement> requirements;
 			try {
-				reqs = new ArrayList<>(bundle.getAllRequirements());
+				requirements = new ArrayList<>(bundle.getAllRequirements());
 			}
 			catch (GhidraBundleException e) {
 				throw new RuntimeException(e);
 			}
-			if (reqs.isEmpty()) {
+			if (requirements.isEmpty()) {
 				return;
 			}
 
 			for (GhidraBundle depBundle : availableBundles) {
-				for (BundleCapability cap : getCapabilities(depBundle)) {
+				for (BundleCapability capability : getCapabilities(depBundle)) {
 					if (monitor.isCancelled()) {
 						return;
 					}
-					Iterator<BundleRequirement> reqIter = reqs.iterator();
+					Iterator<BundleRequirement> reqIter = requirements.iterator();
 					while (reqIter.hasNext()) {
 						BundleRequirement req = reqIter.next();
-						if (req.matches(cap)) {
+						if (req.matches(capability)) {
 							newFront.computeIfAbsent(depBundle, b -> new HashSet<>()).add(bundle);
 							reqIter.remove();
 						}
 					}
-					if (reqs.isEmpty()) {
+					if (requirements.isEmpty()) {
 						return;
 					}
 				}

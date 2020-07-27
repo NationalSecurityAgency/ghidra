@@ -42,24 +42,34 @@ public class OSGiUtils {
 	 */
 	private static Pattern JAR_FILENAME_EXTRACTOR = Pattern.compile("^.*:(.*)!.*$");
 
+	/*
+	 * Match group 1 contains the name of the Java package from an OSGi resolution
+	 * error message.  If present, match group 2 will be the version constraint.
+	 * 
+	 * e.g. for the requirement
+	 *   (&(osgi.wiring.package=x.y.z)(version>=1.2.3))
+	 * 
+	 * PACKAGE_NAME_EXTRACTOR will match with group 1 "x.y.z" and group 2 "(version>=1.2.3)". 
+	 * 
+	 */
+	private static Pattern PACKAGE_NAME_EXTRACTOR =
+		Pattern.compile("\\(osgi\\.wiring\\.package=([^)]*)\\)(\\(version[^)]*\\))?");
+
 	/**
 	 * The syntax of the error generated when OSGi requirements cannot be resolved is
-	 * difficult to parse, so we try to extract package names.
+	 * difficult to parse, so we try to extract package name and versions. 
 	 * 
 	 * @param osgiExceptionMessage the exception message
-	 * @return a list of package names
+	 * @return a list of package names, possibly including versions
 	 */
 	static List<String> extractPackageNamesFromFailedResolution(String osgiExceptionMessage) {
 		try (Scanner s = new Scanner(osgiExceptionMessage)) {
-			return s.findAll(
-				Pattern.compile("\\(osgi\\.wiring\\.package=([^)]*)\\)(\\(version[^)]*\\))?"))
-					.map(m -> {
-						if (m.group(2) != null) {
-							return m.group(1) + " " + m.group(2);
-						}
-						return m.group(1);
-					})
-					.collect(Collectors.toList());
+			return s.findAll(PACKAGE_NAME_EXTRACTOR).map(m -> {
+				if (m.group(2) != null) {
+					return m.group(1) + " " + m.group(2);
+				}
+				return m.group(1);
+			}).collect(Collectors.toList());
 		}
 	}
 
