@@ -1,0 +1,111 @@
+name: Ghidra
+on: push
+jobs:
+  # swy: 64-bit linux build --
+  build-lnx:
+    name: Linux
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Java JDK
+      uses: actions/setup-java@v1.4.0
+      with:
+        java-version: 11
+
+    - name: Install dependencies
+      run: |
+        java -version
+        # swy: get rid of this repo once gradle 5.0 is properly supported on ubuntu :)
+        sudo add-apt-repository ppa:cwchien/gradle
+        sudo apt-get update
+        sudo apt install gradle flex bison
+
+    - name: Restore the cached downloads for things Ghidra depends on
+      uses: actions/cache@v2
+      with:
+        path: build/downloads
+        key: ghidra
+
+    - name: Build Ghidra
+      run: |
+        gradle --init-script gradle/support/fetchDependencies.gradle init
+        gradle buildGhidra
+        
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Linux
+        path: build/dist/
+
+  # swy: 64-bit windows build --
+  build-win:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Java JDK
+      uses: actions/setup-java@v1.4.0
+      with:
+        java-version: 11
+
+    - name: Install dependencies
+      run: |
+        java -version
+        choco install winflexbison
+        cd $env:programdata/chocolatey/lib/winflexbison/tools
+        dir .
+        copy win_flex.exe flex.exe
+        copy win_bison.exe bison.exe
+        dir .
+      shell: pwsh
+
+    - name: Restore the cached downloads for things Ghidra depends on
+      uses: actions/cache@v2
+      with:
+        path: build/downloads
+        key: ghidra
+
+    - name: Build Ghidra
+      run: |
+        gradle --init-script gradle/support/fetchDependencies.gradle init
+        $env:Path += ";$env:programdata\chocolatey\lib\winflexbison\tools"
+        gradle buildGhidra
+        
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Windows
+        path: build/dist/
+ 
+  # swy: 64-bit macos build --
+  build-mac:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Java JDK
+      uses: actions/setup-java@v1.4.0
+      with:
+        java-version: 11
+
+    - name: Install dependencies
+      run: |
+        java -version
+        brew install gradle flex bison
+
+    - name: Restore the cached downloads for things Ghidra depends on
+      uses: actions/cache@v2
+      with:
+        path: build/downloads
+        key: ghidra
+
+    - name: Build Ghidra
+      run: |
+        gradle --init-script gradle/support/fetchDependencies.gradle init
+        gradle buildGhidra
+        
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: macOS
+        path: build/dist/
