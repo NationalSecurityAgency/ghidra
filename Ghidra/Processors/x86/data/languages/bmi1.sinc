@@ -86,10 +86,10 @@ macro tzcntflags(input, output) {
 
 :BLSMSK vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=2 ... & rm32
 {
+  CF = (rm32 == 0);
   vexVVVV_r32 = (rm32 - 1) ^ rm32;
 
   SF = (vexVVVV_r32 s< 0);
-  CF = (rm32 == 0);
   ZF = 0;
   OF = 0;
   # AF and PF are undefined
@@ -98,10 +98,10 @@ macro tzcntflags(input, output) {
 @ifdef IA64
 :BLSMSK vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=2 ... & rm64
 {
+  CF = (rm64 == 0);
   vexVVVV_r64 = (rm64 - 1) ^ rm64;
 
   SF = (vexVVVV_r64 s< 0);
-  CF = (rm64 == 0);
   ZF = 0;
   OF = 0;
   # AF and PF are undefined
@@ -111,11 +111,11 @@ macro tzcntflags(input, output) {
 
 :BLSR vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=1 ... & rm32
 {
+  CF = (rm32 == 0);
   vexVVVV_r32 = (rm32 - 1) & rm32;
 
   ZF = (vexVVVV_r32 == 0);
   SF = (vexVVVV_r32 s< 0);
-  CF = (rm32 == 0);
   OF = 0;
   # AF and PF are undefined
 }
@@ -123,11 +123,11 @@ macro tzcntflags(input, output) {
 @ifdef IA64
 :BLSR vexVVVV_r64, rm64 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W1) & vexVVVV_r64; byte=0xf3; reg_opcode=1 ... & rm64
 {
+  CF = (rm64 == 0);
   vexVVVV_r64 = (rm64 - 1) & rm64;
 
   ZF = (vexVVVV_r64 == 0);
   SF = (vexVVVV_r64 s< 0);
-  CF = (rm64 == 0);
   OF = 0;
   # AF and PF are undefined
 }
@@ -147,8 +147,9 @@ macro tzcntflags(input, output) {
   goto <loopbegin>;
 
  <loopend>
+  tzcntflags(rm16, countTmp);
   Reg16 = countTmp;
-  tzcntflags(rm16, Reg16);
+ 
 }
 
 :TZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBC; Reg32 ... & rm32 {
@@ -164,8 +165,8 @@ macro tzcntflags(input, output) {
   goto <loopbegin>;
 
  <loopend>
+  tzcntflags(rm32, countTmp);
   Reg32 = countTmp;
-  tzcntflags(rm32, Reg32);
 }
 
 @ifdef IA64
@@ -182,7 +183,7 @@ macro tzcntflags(input, output) {
   goto <loopbegin>;
 
  <loopend>
+  tzcntflags(rm64, countTmp);
   Reg64 = countTmp;
-  tzcntflags(rm64, Reg64);
 }
 @endif
