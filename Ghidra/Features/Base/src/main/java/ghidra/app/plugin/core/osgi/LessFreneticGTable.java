@@ -63,7 +63,11 @@ class LessFreneticGTable extends GTable {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected <T> SelectionManager createSelectionManager(TableModel model) {
-		return new MySelectionManager<T>(this, (RowObjectTableModel<T>) model);
+	protected <T> SelectionManager createSelectionManager() {
+		TableModel model = getModel();
+		if (model instanceof RowObjectTableModel) {
+			return new MySelectionManager<T>(this, (RowObjectTableModel<T>) model);
+		}
+		return null;
 	}
 }
