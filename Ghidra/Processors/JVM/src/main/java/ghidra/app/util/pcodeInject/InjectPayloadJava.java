@@ -19,6 +19,8 @@ import java.io.IOException;
 
 import ghidra.app.plugin.processors.sleigh.PcodeEmit;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.javaclass.format.ClassFileAnalysisState;
+import ghidra.javaclass.format.ClassFileJava;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 import ghidra.program.model.lang.InjectContext;
 import ghidra.program.model.lang.InjectPayload;
@@ -42,15 +44,15 @@ public abstract class InjectPayloadJava implements InjectPayload {
 	}
 
 	protected static AbstractConstantPoolInfoJava[] getConstantPool(Program program) {
-		ConstantPoolJava cPool = null;
+		ClassFileAnalysisState analysisState;
 		try {
-			cPool = new ConstantPoolJava(program);
+			analysisState = ClassFileAnalysisState.getState(program);
 		}
 		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return null;
 		}
-		return cPool.getConstantPool();
+		ClassFileJava classFile = analysisState.getClassFile();
+		return classFile.getConstantPool();
 	}
 
 	@Override
