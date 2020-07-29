@@ -114,6 +114,13 @@ public class PcodeOpEmitter {
 		defSpaceId = getConstant(defSpace.getSpaceID(), 8);
 	}
 
+	public void defineTemp(String name, int size) {
+		Varnode vn = findVarnode(name, size);
+		if (!vn.isUnique() || vn.getSize() != size) {
+			throw new IllegalArgumentException("Name is already assigned: " + name);
+		}
+	}
+
 	/**
 	 * Emits pcode to push a value of computational category 1 onto the stack.
 	 * @param valueName - name of varnode to push.
@@ -253,7 +260,7 @@ public class PcodeOpEmitter {
 	 * @param pcodeop
 	 * @param args
 	 */
-	public void emitAssignRegisterFromPcodeOpCall(StringBuilder pCode, String register,
+	public void emitAssignRegisterFromPcodeOpCall(String register,
 			String pcodeop, String... args) {
 		Symbol useropSym = language.getSymbolTable().findGlobalSymbol(pcodeop);
 		Varnode out = findRegister(register);
@@ -290,7 +297,15 @@ public class PcodeOpEmitter {
 		AddressSpace spc = language.getAddressFactory().getAddressSpace(space);
 		// TODO: find correct space id
 		in[0] = getConstant(spc.getSpaceID(), 8);
-		in[1] = findRegister(offset);
+		if (offset.charAt(0) <= '9') {
+			String[] piece = offset.split(":");
+			int sz = Integer.parseInt(piece[1]);
+			long val = Long.decode(piece[0]);
+			in[1] = getConstant(val, sz);
+		}
+		else {
+			in[1] = findRegister(offset);
+		}
 		in[2] = findVarnode(value, size);
 		PcodeOp op = new PcodeOp(opAddress, seqnum++, PcodeOp.STORE, in);
 		opList.add(op);

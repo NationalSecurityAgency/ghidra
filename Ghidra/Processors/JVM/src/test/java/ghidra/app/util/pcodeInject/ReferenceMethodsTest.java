@@ -31,8 +31,8 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 
 public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 
-	SleighLanguage language;
-	Address opAddress;
+	private SleighLanguage language;
+	private Address opAddress;
 
 	public ReferenceMethodsTest() {
 
