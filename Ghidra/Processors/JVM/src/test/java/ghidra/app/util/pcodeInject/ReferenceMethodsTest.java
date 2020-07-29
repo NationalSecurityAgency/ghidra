@@ -216,7 +216,7 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		expected.emitAssignVarnodeFromDereference(ReferenceMethods.VALUE, 8,
 			ReferenceMethods.TEMP_1);
 		expected.emitPushCat2Value(ReferenceMethods.VALUE);
-		assertEquals(pCode, expected.toString());
+		assertEquals(pCode, expected);
 	}
 
 	@Test

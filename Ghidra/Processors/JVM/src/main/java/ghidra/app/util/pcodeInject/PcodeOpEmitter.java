@@ -10,7 +10,6 @@ import ghidra.app.plugin.processors.sleigh.symbol.UseropSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
@@ -92,6 +91,13 @@ public class PcodeOpEmitter {
 
 	private Varnode getConstant(long val, int size) {
 		return new Varnode(constSpace.getAddress(val), size);
+	}
+
+	private int findOpCode(String name) {
+		if (name.equals("cpool")) {
+			return PcodeOp.CPOOLREF;
+		}
+		return PcodeOp.COPY;
 	}
 
 	public PcodeOpEmitter(SleighLanguage language, Address opAddr) {
@@ -206,13 +212,7 @@ public class PcodeOpEmitter {
 			for (int i = 0; i < args.length; ++i) {
 				in[i] = constantOrRegister(args[i]);
 			}
-			try {
-				opcode = PcodeOp.getOpcode(pcodeop);
-			}
-			catch (UnknownInstructionException e) {
-				e.printStackTrace();
-				opcode = PcodeOp.COPY;
-			}
+			opcode = findOpCode(pcodeop);
 		}
 		PcodeOp op = new PcodeOp(opAddress, seqnum++, opcode, in, out);
 		opList.add(op);
@@ -247,9 +247,35 @@ public class PcodeOpEmitter {
 		opList.add(op);
 	}
 
+	/**
+	 * Appends the pcode to assign a register to the result of a pcode op call with arguments args
+	 * @param register
+	 * @param pcodeop
+	 * @param args
+	 */
 	public void emitAssignRegisterFromPcodeOpCall(StringBuilder pCode, String register,
 			String pcodeop, String... args) {
-		// TODO:   Mixed name and integer content
+		Symbol useropSym = language.getSymbolTable().findGlobalSymbol(pcodeop);
+		Varnode out = findRegister(register);
+		Varnode[] in;
+		int opcode;
+		if (useropSym instanceof UseropSymbol) {
+			in = new Varnode[args.length + 1];
+			in[0] = getConstant(((UseropSymbol) useropSym).getIndex(), 4);
+			for (int i = 0; i < args.length; ++i) {
+				in[i + 1] = constantOrRegister(args[i]);
+			}
+			opcode = PcodeOp.CALLOTHER;
+		}
+		else {
+			in = new Varnode[args.length];
+			for (int i = 0; i < args.length; ++i) {
+				in[i] = constantOrRegister(args[i]);
+			}
+			opcode = findOpCode(pcodeop);
+		}
+		PcodeOp op = new PcodeOp(opAddress, seqnum++, opcode, in, out);
+		opList.add(op);
 	}
 
 	/**
