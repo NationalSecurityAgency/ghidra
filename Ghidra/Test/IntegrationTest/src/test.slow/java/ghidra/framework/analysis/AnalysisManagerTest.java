@@ -78,6 +78,11 @@ public class AnalysisManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 		programBuilder.createMemory("AAA", "0x100", 0x1000);
 		program = programBuilder.getProgram();
 		analyzers = new ArrayList<>();
+
+		// make sure the user scripts subdirectory exists for createScriptFile
+		File userScriptsDir = new File(GhidraScriptUtil.USER_SCRIPTS_DIR);
+		userScriptsDir.mkdirs();
+		
 		GhidraScriptUtil.initialize(new BundleHost(), null);
 	}
 
