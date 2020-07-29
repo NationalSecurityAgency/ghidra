@@ -22,8 +22,9 @@ macro lzcntflags(input, output) {
   goto <loopbegin>;
 
  <loopend>
+  lzcntflags(rm16, countTmp);
   Reg16 = countTmp;
-  lzcntflags(rm16, Reg16);
+ 
 }
 
 :LZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBD; Reg32 ... & rm32 {
@@ -39,8 +40,9 @@ macro lzcntflags(input, output) {
   goto <loopbegin>;
 
  <loopend>
+  lzcntflags(rm32, countTmp);
   Reg32 = countTmp;
-  lzcntflags(rm32, Reg32);
+
 }
 
 @ifdef IA64
@@ -57,8 +59,9 @@ macro lzcntflags(input, output) {
   goto <loopbegin>;
 
  <loopend>
+  lzcntflags(rm64, countTmp);
   Reg64 = countTmp;
-  lzcntflags(rm64, Reg64);
+  
 }
 @endif
 

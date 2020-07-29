@@ -1264,7 +1264,9 @@ macro shiftresultflags(result,count) {
 
  local newZF = (result == 0);
  ZF = (!notzero & ZF) | (notzero & newZF);
- PF = ((popcount(result & 0xff) & 1:1) == 0);
+ 
+ local newPF = ((popcount(result & 0xff) & 1:1) == 0);
+ PF = (!notzero & PF) | (notzero & newPF);
  # AF not implemented
 }
 
@@ -2351,8 +2353,10 @@ define pcodeop cpuid_brand_part3_info;
 :DEC spec_rm64      is vexMode=0 & opsize=2 & byte=0xff; spec_rm64 & reg_opcode=1 ... { OF = sborrow(spec_rm64,1); spec_rm64 = spec_rm64 - 1; resultflags(spec_rm64); }
 @endif
 
-:DEC Rmr16     is vexMode=0 & opsize=0 & row=4 & page=1 & Rmr16 & bit64=0   { OF = sborrow(Rmr16,1);   Rmr16 =  Rmr16 - 1; resultflags( Rmr16); }
-:DEC Rmr32     is vexMode=0 & opsize=1 & row=4 & page=1 & Rmr32 & check_Rmr32_dest & bit64=0   { OF = sborrow(Rmr32,1);   Rmr32 =  Rmr32 - 1; build check_Rmr32_dest; resultflags( Rmr32); }
+@ifndef IA64
+:DEC Rmr16     is vexMode=0 & opsize=0 & row=4 & page=1 & Rmr16  { OF = sborrow(Rmr16,1);   Rmr16 =  Rmr16 - 1; resultflags( Rmr16); }
+:DEC Rmr32     is vexMode=0 & opsize=1 & row=4 & page=1 & Rmr32 & check_Rmr32_dest  { OF = sborrow(Rmr32,1);   Rmr32 =  Rmr32 - 1; build check_Rmr32_dest; resultflags( Rmr32); }
+@endif
 
 :DIV rm8        is vexMode=0 & byte=0xf6; rm8 & reg_opcode=6 ...            { rm8ext:2 = zext(rm8);
                                                   local quotient = AX / rm8ext;  # DE exception if quotient doesn't fit in AL
@@ -2700,8 +2704,11 @@ enterFrames: low5 is low5 { tmp:1 = low5; export tmp; }
 @ifdef IA64
 :INC  spec_rm64     is vexMode=0 & opsize=2 & byte=0xff; spec_rm64 & reg_opcode=0 ... { OF = scarry(spec_rm64,1); spec_rm64 = spec_rm64 + 1; resultflags(spec_rm64); }
 @endif
-:INC  Rmr16        is vexMode=0 & opsize=0 & row = 4 & page = 0 & Rmr16 & bit64=0   { OF = scarry(Rmr16,1);   Rmr16 =  Rmr16 + 1; resultflags( Rmr16); }
-:INC  Rmr32        is vexMode=0 & opsize=1 & row = 4 & page = 0 & Rmr32 & bit64=0   { OF = scarry(Rmr32,1);   Rmr32 =  Rmr32 + 1; resultflags( Rmr32); }
+
+@ifndef IA64
+:INC  Rmr16        is vexMode=0 & opsize=0 & row = 4 & page = 0 & Rmr16 { OF = scarry(Rmr16,1);   Rmr16 =  Rmr16 + 1; resultflags( Rmr16); }
+:INC  Rmr32        is vexMode=0 & opsize=1 & row = 4 & page = 0 & Rmr32 { OF = scarry(Rmr32,1);   Rmr32 =  Rmr32 + 1; resultflags( Rmr32); }
+@endif
 
 :INSB^rep^reptail eseDI1,DX is vexMode=0 & rep & reptail & byte=0x6c & eseDI1 & DX      { eseDI1 = in(DX); }
 :INSW^rep^reptail eseDI2,DX is vexMode=0 & rep & reptail & opsize=0 & byte=0x6d & eseDI2 & DX   { eseDI2 = in(DX); }
@@ -3420,11 +3427,11 @@ define pcodeop rdtsc;
 @endif
 
 :ROL  rm8,n1        is vexMode=0 & byte=0xD0; rm8 & n1 & reg_opcode=0 ...           { CF = rm8 s< 0; rm8 = (rm8 << 1) | CF; OF = CF ^ (rm8 s< 0); }
-:ROL  rm8,CL        is vexMode=0 & byte=0xD2; CL & rm8 & reg_opcode=0 ...       { local cnt = CL & 0x7; rm8 = (rm8 << cnt) | (rm8 >> (8 - cnt)); rolflags(rm8,cnt);}
-:ROL  rm8,imm8      is vexMode=0 & byte=0xC0; rm8 & reg_opcode=0 ... ; imm8     { local cnt = imm8 & 0x7; rm8 = (rm8 << cnt) | (rm8 >> (8 - cnt)); rolflags(rm8,cnt);}
+:ROL  rm8,CL        is vexMode=0 & byte=0xD2; CL & rm8 & reg_opcode=0 ...       { local cnt = CL & 0x7; local count_and_mask = CL & 0x1f;rm8 = (rm8 << cnt) | (rm8 >> (8 - cnt)); rolflags(rm8, count_and_mask);}
+:ROL  rm8,imm8      is vexMode=0 & byte=0xC0; rm8 & reg_opcode=0 ... ; imm8     { local cnt = imm8 & 0x7; rm8 = (rm8 << cnt) | (rm8 >> (8 - cnt)); rolflags(rm8,imm8 & 0x1f:1);}
 :ROL rm16,"1"       is vexMode=0 & opsize=0 & byte=0xD1; rm16 & reg_opcode=0 ...    { CF = rm16 s< 0; rm16 = (rm16 << 1) | zext(CF); OF = CF ^ (rm16 s< 0); }
-:ROL rm16,CL        is vexMode=0 & opsize=0 & byte=0xD3; CL & rm16 & reg_opcode=0 ...   { local cnt =   CL & 0xf; rm16 = (rm16 << cnt) | (rm16 >> (16 - cnt)); rolflags(rm16,cnt);}
-:ROL rm16,imm8      is vexMode=0 & opsize=0 & byte=0xC1; rm16 & reg_opcode=0 ... ; imm8 { local cnt = imm8 & 0xf; rm16 = (rm16 << cnt) | (rm16 >> (16 - cnt)); rolflags(rm16,cnt);}
+:ROL rm16,CL        is vexMode=0 & opsize=0 & byte=0xD3; CL & rm16 & reg_opcode=0 ...   { local cnt =   CL & 0xf; local count_and_mask = CL & 0x1f;rm16 = (rm16 << cnt) | (rm16 >> (16 - cnt)); rolflags(rm16,count_and_mask);}
+:ROL rm16,imm8      is vexMode=0 & opsize=0 & byte=0xC1; rm16 & reg_opcode=0 ... ; imm8 { local cnt = imm8 & 0xf; rm16 = (rm16 << cnt) | (rm16 >> (16 - cnt)); rolflags(rm16,imm8 & 0x1f:1);}
 :ROL rm32,n1        is vexMode=0 & opsize=1 & byte=0xD1; rm32 & n1 & check_rm32_dest ... & reg_opcode=0 ...   { CF = rm32 s< 0; rm32 = (rm32 << 1) | zext(CF); OF = CF ^ (rm32 s< 0); build check_rm32_dest; }
 :ROL rm32,CL        is vexMode=0 & opsize=1 & byte=0xD3; CL & rm32 & check_rm32_dest ... & reg_opcode=0 ...   { local cnt =   CL & 0x1f; rm32 = (rm32 << cnt) | (rm32 >> (32 - cnt)); rolflags(rm32,cnt); build check_rm32_dest; }
 :ROL rm32,imm8      is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=0 ... ; imm8 { local cnt = imm8 & 0x1f; rm32 = (rm32 << cnt) | (rm32 >> (32 - cnt)); rolflags(rm32,cnt); build check_rm32_dest; }
@@ -3435,11 +3442,11 @@ define pcodeop rdtsc;
 @endif
                     
 :ROR  rm8,n1        is vexMode=0 & byte=0xD0; rm8 & n1 & reg_opcode=1 ...           { CF = rm8 & 1; rm8 = (rm8 >> 1) | (CF << 7); OF = ((rm8 & 0x40) != 0) ^ (rm8 s< 0); }
-:ROR  rm8,CL        is vexMode=0 & byte=0xD2; CL & rm8 & reg_opcode=1 ...       { local cnt = CL & 0x7; rm8 = (rm8 >> cnt) | (rm8 << (8 - cnt)); rorflags(rm8,cnt);}
-:ROR  rm8,imm8      is vexMode=0 & byte=0xC0; rm8 & reg_opcode=1 ... ; imm8     { local cnt = imm8 & 0x7; rm8 = (rm8 >> cnt) | (rm8 << (8 - cnt)); rorflags(rm8,cnt);}
+:ROR  rm8,CL        is vexMode=0 & byte=0xD2; CL & rm8 & reg_opcode=1 ...       { local cnt = CL & 0x7; local count_and_mask = CL & 0x1f;rm8 = (rm8 >> cnt) | (rm8 << (8 - cnt)); rorflags(rm8,count_and_mask);}
+:ROR  rm8,imm8      is vexMode=0 & byte=0xC0; rm8 & reg_opcode=1 ... ; imm8     { local cnt = imm8 & 0x7; rm8 = (rm8 >> cnt) | (rm8 << (8 - cnt)); rorflags(rm8,imm8 & 0x1f:1);}
 :ROR rm16,n1        is vexMode=0 & opsize=0 & byte=0xD1; rm16 & n1 & reg_opcode=1 ...   { CF=(rm16 & 1)!=0; rm16=(rm16>>1)|(zext(CF)<<15); OF=((rm16 & 0x4000) != 0) ^ (rm16 s< 0); }
-:ROR rm16,CL        is vexMode=0 & opsize=0 & byte=0xD3; CL & rm16 & reg_opcode=1 ...   { local cnt =   CL & 0xf; rm16 = (rm16 >> cnt) | (rm16 << (16 - cnt)); rorflags(rm16,cnt);}
-:ROR rm16,imm8      is vexMode=0 & opsize=0 & byte=0xC1; rm16 & reg_opcode=1 ... ; imm8 { local cnt = imm8 & 0xf; rm16 = (rm16 >> cnt) | (rm16 << (16 - cnt)); rorflags(rm16,cnt);}
+:ROR rm16,CL        is vexMode=0 & opsize=0 & byte=0xD3; CL & rm16 & reg_opcode=1 ...   { local cnt = CL & 0xf; local count_and_mask = CL & 0x1f; rm16 = (rm16 >> cnt) | (rm16 << (16 - cnt)); rorflags(rm16,count_and_mask);}
+:ROR rm16,imm8      is vexMode=0 & opsize=0 & byte=0xC1; rm16 & reg_opcode=1 ... ; imm8 { local cnt = imm8 & 0xf; rm16 = (rm16 >> cnt) | (rm16 << (16 - cnt)); rorflags(rm16,imm8 & 0x1f:1);}
 :ROR rm32,n1        is vexMode=0 & opsize=1 & byte=0xD1; rm32 & n1 & check_rm32_dest ... & reg_opcode=1 ...   { CF=(rm32&1)!=0; rm32=(rm32>>1)|(zext(CF)<<31); OF=((rm32&0x40000000)!=0) ^ (rm32 s< 0); build check_rm32_dest; }
 :ROR rm32,CL        is vexMode=0 & opsize=1 & byte=0xD3; CL & rm32 & check_rm32_dest ... & reg_opcode=1 ...   { local cnt =   CL & 0x1f; rm32 = (rm32 >> cnt) | (rm32 << (32 - cnt)); rorflags(rm32,cnt); build check_rm32_dest; }
 :ROR rm32,imm8      is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=1 ... ; imm8 { local cnt = imm8 & 0x1f; rm32 = (rm32 >> cnt) | (rm32 << (32 - cnt)); rorflags(rm32,cnt); build check_rm32_dest; }
