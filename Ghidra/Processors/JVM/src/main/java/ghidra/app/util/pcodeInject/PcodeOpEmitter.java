@@ -2,6 +2,7 @@ package ghidra.app.util.pcodeInject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.symbol.Symbol;
@@ -14,6 +15,8 @@ import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 public class PcodeOpEmitter {
+	static final String RAM = "ram";
+
 	private HashMap<String, Varnode> nameToReg;
 	private ArrayList<PcodeOp> opList;
 	private SleighLanguage language;
@@ -29,6 +32,18 @@ public class PcodeOpEmitter {
 	private Varnode convertRegisterToVarnode(Register reg) {
 		Varnode vn = new Varnode(reg.getAddress(), reg.getBitLength() / 8);
 		return vn;
+	}
+
+	private String findTempName(Address addr) {
+		if (addr.getAddressSpace() != uniqueSpace) {
+			return null;
+		}
+		for (Entry<String, Varnode> entry : nameToReg.entrySet()) {
+			if (entry.getValue().getAddress().equals(addr)) {
+				return entry.getKey();
+			}
+		}
+		return null;
 	}
 
 	private Varnode findRegister(String name) {
@@ -244,12 +259,12 @@ public class PcodeOpEmitter {
 	 * @param offset offset in space
 	 * @param value value to write
 	 */
-	public void emitWriteToMemory(String space, int size, long offset, String value) {
+	public void emitWriteToMemory(String space, int size, String offset, String value) {
 		Varnode[] in = new Varnode[3];
 		AddressSpace spc = language.getAddressFactory().getAddressSpace(space);
 		// TODO: find correct space id
 		in[0] = getConstant(spc.getSpaceID(), 8);
-		in[1] = getConstant(offset, spc.getPointerSize());
+		in[1] = findRegister(offset);
 		in[2] = findVarnode(value, size);
 		PcodeOp op = new PcodeOp(opAddress, seqnum++, PcodeOp.STORE, in);
 		opList.add(op);
@@ -323,4 +338,63 @@ public class PcodeOpEmitter {
 		PcodeOp op = new PcodeOp(opAddress, seqnum++, PcodeOp.LOAD, in, out);
 		opList.add(op);
 	}
+
+	private boolean compareVarnode(Varnode vn1, Varnode vn2, PcodeOpEmitter op2) {
+		if (vn1 == null) {
+			return (vn2 == null);
+		}
+		if (vn2 == null) {
+			return false;
+		}
+		if (vn1.getSize() != vn2.getSize()) {
+			return false;
+		}
+		AddressSpace spc1 = vn1.getAddress().getAddressSpace();
+		AddressSpace spc2 = vn2.getAddress().getAddressSpace();
+		if (spc1 != spc2) {
+			return false;
+		}
+		long offset1 = vn1.getOffset();
+		long offset2 = vn2.getOffset();
+		if (offset1 == offset2) {
+			return true;
+		}
+		String name1 = findTempName(vn1.getAddress());
+		if (name1 == null) {
+			return false;
+		}
+		String name2 = op2.findTempName(vn2.getAddress());
+		if (name2 == null) {
+			return false;
+		}
+		return name1.equals(name2);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		PcodeOpEmitter op2 = (PcodeOpEmitter) obj;
+		if (opList.size() != op2.opList.size()) {
+			return false;
+		}
+		for (int i = 0; i < opList.size(); ++i) {
+			PcodeOp aop = opList.get(i);
+			PcodeOp bop = op2.opList.get(i);
+			if (aop.getOpcode() != bop.getOpcode()) {
+				return false;
+			}
+			if (aop.getNumInputs() != bop.getNumInputs()) {
+				return false;
+			}
+			if (!compareVarnode(aop.getOutput(), bop.getOutput(), op2)) {
+				return false;
+			}
+			for (int j = 0; j < aop.getNumInputs(); ++j) {
+				if (!compareVarnode(aop.getInput(j), bop.getInput(j), op2)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 }
