@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.PcodeEmit;
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.javaclass.format.*;
 import ghidra.javaclass.format.constantpool.ConstantPoolUtf8Info;
 import ghidra.program.model.address.Address;
@@ -35,10 +36,36 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 
 	private InjectParameter[] noParams;
 	private boolean analysisStateRecoverable;
+	private AddressSpace constantSpace;
+	private int paramSpaceID;
+	private int lvaID;
+	private Varnode temp4;
+	private Varnode temp8;
+	private Varnode zero;
+	private Varnode four;
+	private Varnode eight;
+	private Varnode LVA;
 
-	public InjectPayloadJavaParameters() {
+	public InjectPayloadJavaParameters(SleighLanguage language, long uniqBase) {
 		noParams = new InjectParameter[0];
 		analysisStateRecoverable = true;
+		constantSpace = language.getAddressFactory().getConstantSpace();
+		AddressSpace uniqueSpace = language.getAddressFactory().getUniqueSpace();
+		Address temp4Address = uniqueSpace.getAddress(uniqBase);
+		Address temp8Address = uniqueSpace.getAddress(uniqBase + 0x10);
+		AddressSpace paramSpace = language.getAddressFactory().getAddressSpace("parameterSpace");
+		paramSpaceID = paramSpace.getSpaceID();
+		AddressSpace lva = language.getAddressFactory().getAddressSpace("localVariableArray");
+		lvaID = lva.getSpaceID();
+		//create temp storage locations
+		temp4 = new Varnode(temp4Address, 4);
+		temp8 = new Varnode(temp8Address, 8);
+		//create varnodes for incrementing pointer by 4 or 8 bytes
+		zero = new Varnode(constantSpace.getAddress(0), 4);
+		four = new Varnode(constantSpace.getAddress(4), 4);
+		eight = new Varnode(constantSpace.getAddress(8), 4);
+		Address LVAregAddress = language.getRegister("LVA").getAddress();
+		LVA = new Varnode(LVAregAddress, 4);
 	}
 
 	@Override
@@ -110,33 +137,14 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 			return new PcodeOp[0];
 		}
 
-		AddressSpace paramSpace = program.getAddressFactory().getAddressSpace("parameterSpace");
-		int paramSpaceID = paramSpace.getSpaceID();
-		AddressSpace lva = program.getAddressFactory().getAddressSpace("localVariableArray");
-		int lvaID = lva.getSpaceID();
-		AddressSpace constant = program.getAddressFactory().getConstantSpace();
-
 		PcodeOp[] resOps = new PcodeOp[1 + 3*numOps];
 		int seqNum = 0;
-
-		//create varnodes for incrementing pointer by 4 or 8 bytes
-		Varnode zero = new Varnode(constant.getAddress(0),4);
-		Varnode four = new Varnode(constant.getAddress(4),4);
-		Varnode eight = new Varnode(constant.getAddress(8),4);
-		Address LVAregAddress = program.getRegister("LVA").getAddress();
-		Varnode LVA = new Varnode(LVAregAddress,4);
 
 		//initialize LVA to contain 0
 		PcodeOp copy = new PcodeOp(con.baseAddr,seqNum, PcodeOp.COPY);
 		copy.setInput(zero, 0);
 		copy.setOutput(LVA);
 		resOps[seqNum++] = copy;
-
-		//create temp storage locations
-		Address temp4Address = analysisState.getNextUniqueAddress();
-		Varnode temp4 = new Varnode(temp4Address,4);
-		Address temp8Address = analysisState.getNextUniqueAddress();
-		Varnode temp8 = new Varnode(temp8Address,8);
 
 		Varnode tempLocation = null;
 		Varnode increment = null;
@@ -152,13 +160,13 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 			}
 			//copy value from parameterSpace to temporary
 			PcodeOp load = new PcodeOp(con.baseAddr, seqNum, PcodeOp.LOAD);
-			load.setInput(new Varnode(constant.getAddress(paramSpaceID),4), 0);
+			load.setInput(new Varnode(constantSpace.getAddress(paramSpaceID), 4), 0);
 			load.setInput(LVA, 1);
 			load.setOutput(tempLocation);
 			resOps[seqNum++] = load;
 			//copy temporary to LVA
 			PcodeOp store = new PcodeOp(con.baseAddr, seqNum, PcodeOp.STORE);
-			store.setInput(new Varnode(constant.getAddress(lvaID),4), 0);
+			store.setInput(new Varnode(constantSpace.getAddress(lvaID), 4), 0);
 			store.setInput(LVA,1);
 			store.setInput(tempLocation, 2);
 			resOps[seqNum++] = store;			

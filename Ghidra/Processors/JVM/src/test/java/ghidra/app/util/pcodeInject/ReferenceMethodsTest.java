@@ -33,16 +33,14 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 
 	private SleighLanguage language;
 	private Address opAddress;
-
-	public ReferenceMethodsTest() {
-
-	}
+	private long uniqueBase;
 
 	@Before
 	public void setUp() throws Exception {
 		language =
 			(SleighLanguage) getLanguageService().getLanguage(new LanguageID("JVM:BE:32:default"));
 		opAddress = language.getAddressFactory().getDefaultAddressSpace().getAddress(0x10000);
+		uniqueBase = language.getUniqueBase();
 	}
 
 	@Test
@@ -61,10 +59,10 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool =
 			TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		ReferenceMethods.getPcodeForGetStatic(pCode, 1, constantPool);
 
-		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expected.emitAssignVarnodeFromPcodeOpCall(ReferenceMethods.TEMP_1, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_GETSTATIC);
 		expected.emitAssignVarnodeFromDereference(ReferenceMethods.VALUE, 4,
@@ -89,10 +87,10 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool =
 			TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		ReferenceMethods.getPcodeForGetStatic(pCode, 1, constantPool);
 
-		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress, uniqueBase);
 
 		expected.emitAssignVarnodeFromPcodeOpCall(ReferenceMethods.TEMP_1, 8,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_GETSTATIC);
@@ -119,14 +117,14 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool =
 			TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		ReferenceMethods.getPcodeForPutStatic(pCode, 1, constantPool);
 
-		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expected.emitPopCat1Value(ReferenceMethods.NEW_VALUE);
 		expected.emitAssignVarnodeFromPcodeOpCall(ReferenceMethods.STATIC_OFFSET,
 			4, ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_PUTSTATIC);
-		expected.emitWriteToMemory(PcodeTextEmitter.RAM, 4,
+		expected.emitWriteToMemory(PcodeOpEmitter.RAM, 4,
 			ReferenceMethods.STATIC_OFFSET, ReferenceMethods.NEW_VALUE);
 		assertEquals(pCode, expected);
 	}
@@ -147,14 +145,14 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool =
 			TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		ReferenceMethods.getPcodeForPutStatic(pCode, 1, constantPool);
 
-		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expected.emitPopCat2Value(ReferenceMethods.NEW_VALUE);
 		expected.emitAssignVarnodeFromPcodeOpCall(ReferenceMethods.STATIC_OFFSET,
 			4, ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_PUTSTATIC);
-		expected.emitWriteToMemory(PcodeTextEmitter.RAM, 8,
+		expected.emitWriteToMemory(PcodeOpEmitter.RAM, 8,
 			ReferenceMethods.STATIC_OFFSET, ReferenceMethods.NEW_VALUE);
 		assertEquals(pCode, expected);
 	}
@@ -175,10 +173,10 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool =
 			TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		ReferenceMethods.getPcodeForGetField(pCode, 1, constantPool);
 
-		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expected.emitPopCat1Value(ReferenceMethods.OBJECT_REF);
 		expected.emitAssignVarnodeFromPcodeOpCall(ReferenceMethods.TEMP_1, 4,
 			ConstantPoolJava.CPOOL_OP, ReferenceMethods.OBJECT_REF, "1",
@@ -205,10 +203,10 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool =
 			TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		ReferenceMethods.getPcodeForGetField(pCode, 1, constantPool);
 
-		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expected.emitPopCat1Value(ReferenceMethods.OBJECT_REF);
 		expected.emitAssignVarnodeFromPcodeOpCall(ReferenceMethods.TEMP_1, 8,
 			ConstantPoolJava.CPOOL_OP, ReferenceMethods.OBJECT_REF, "1",
@@ -235,16 +233,16 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool =
 			TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		ReferenceMethods.getPcodeForPutField(pCode, 1, constantPool);
 
-		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expected.emitPopCat1Value(ReferenceMethods.NEW_VALUE);
 		expected.emitPopCat1Value(ReferenceMethods.OBJECT_REF);
 		expected.emitAssignVarnodeFromPcodeOpCall(ReferenceMethods.FIELD_OFFSET,
 			4, ConstantPoolJava.CPOOL_OP, ReferenceMethods.OBJECT_REF, "1",
 			ConstantPoolJava.CPOOL_PUTFIELD);
-		expected.emitWriteToMemory(PcodeTextEmitter.RAM, 4,
+		expected.emitWriteToMemory(PcodeOpEmitter.RAM, 4,
 			ReferenceMethods.FIELD_OFFSET, ReferenceMethods.NEW_VALUE);
 
 		assertEquals(pCode, expected);
@@ -266,16 +264,16 @@ public class ReferenceMethodsTest extends AbstractGhidraHeadlessIntegrationTest 
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool =
 			TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		ReferenceMethods.getPcodeForPutField(pCode, 1, constantPool);
 
-		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expected = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expected.emitPopCat2Value(ReferenceMethods.NEW_VALUE);
 		expected.emitPopCat1Value(ReferenceMethods.OBJECT_REF);
 		expected.emitAssignVarnodeFromPcodeOpCall(ReferenceMethods.FIELD_OFFSET,
 			4, ConstantPoolJava.CPOOL_OP, ReferenceMethods.OBJECT_REF, "1",
 			ConstantPoolJava.CPOOL_PUTFIELD);
-		expected.emitWriteToMemory(PcodeTextEmitter.RAM, 8,
+		expected.emitWriteToMemory(PcodeOpEmitter.RAM, 8,
 			ReferenceMethods.FIELD_OFFSET, ReferenceMethods.NEW_VALUE);
 
 		assertEquals(pCode, expected);

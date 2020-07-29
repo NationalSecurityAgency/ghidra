@@ -100,18 +100,24 @@ public class PcodeOpEmitter {
 		return PcodeOp.COPY;
 	}
 
-	public PcodeOpEmitter(SleighLanguage language, Address opAddr) {
+	public PcodeOpEmitter(SleighLanguage language, Address opAddr, long uniqBase) {
 		nameToReg = new HashMap<String, Varnode>();
 		opList = new ArrayList<PcodeOp>();
 		this.language = language;
 		constSpace = language.getAddressFactory().getConstantSpace();
 		defSpace = language.getDefaultSpace();
 		uniqueSpace = language.getAddressFactory().getUniqueSpace();
-		uniqueBase = language.getUniqueBase();
+		uniqueBase = uniqBase;
 		opAddress = opAddr;
 		seqnum = 0;
 		spVarnode = findRegister("SP");
-		defSpaceId = getConstant(defSpace.getSpaceID(), 8);
+		defSpaceId = getConstant(defSpace.getSpaceID(), 4);
+	}
+
+	public PcodeOp[] getPcodeOps() {
+		PcodeOp[] res = new PcodeOp[opList.size()];
+		opList.toArray(res);
+		return res;
 	}
 
 	public void defineTemp(String name, int size) {
@@ -171,7 +177,7 @@ public class PcodeOpEmitter {
 		in = new Varnode[2];
 		in[0] = spVarnode;
 		in[1] = getConstant(8, spVarnode.getSize());
-		op = new PcodeOp(opAddress, seqnum++, PcodeOp.INT_SUB, in, spVarnode);
+		op = new PcodeOp(opAddress, seqnum++, PcodeOp.INT_ADD, in, spVarnode);
 		opList.add(op);
 	}
 
@@ -189,7 +195,7 @@ public class PcodeOpEmitter {
 		in = new Varnode[2];
 		in[0] = spVarnode;
 		in[1] = getConstant(4, spVarnode.getSize());
-		op = new PcodeOp(opAddress, seqnum++, PcodeOp.INT_SUB, in, spVarnode);
+		op = new PcodeOp(opAddress, seqnum++, PcodeOp.INT_ADD, in, spVarnode);
 		opList.add(op);
 	}
 
@@ -295,8 +301,7 @@ public class PcodeOpEmitter {
 	public void emitWriteToMemory(String space, int size, String offset, String value) {
 		Varnode[] in = new Varnode[3];
 		AddressSpace spc = language.getAddressFactory().getAddressSpace(space);
-		// TODO: find correct space id
-		in[0] = getConstant(spc.getSpaceID(), 8);
+		in[0] = getConstant(spc.getSpaceID(), 4);
 		if (offset.charAt(0) <= '9') {
 			String[] piece = offset.split(":");
 			int sz = Integer.parseInt(piece[1]);

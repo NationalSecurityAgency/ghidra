@@ -50,12 +50,14 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 	private static final int COUNT_LOW_BYTE = 9;
 	private SleighLanguage language;
 	private Address opAddress;
+	private long uniqueBase;
 
 	@Before
 	public void setUp() throws Exception {
 		language =
 			(SleighLanguage) getLanguageService().getLanguage(new LanguageID("JVM:BE:32:default"));
 		opAddress = language.getAddressFactory().getDefaultAddressSpace().getAddress(0x10000);
+		uniqueBase = language.getUniqueBase();
 	}
 
 	@Test
@@ -67,9 +69,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendInteger(classFile, 0x12345678);
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
-		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -80,9 +82,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendInteger(classFile, 0x11111111);
 		classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		pCode = new PcodeOpEmitter(language, opAddress);
+		pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 2, constantPool);
-		expectedPcode = new PcodeOpEmitter(language, opAddress);
+		expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "2", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -99,10 +101,10 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
 
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
 		//+1 to skip over the tag
-		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -114,10 +116,10 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
 
-		pCode = new PcodeOpEmitter(language, opAddress);
+		pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 2, constantPool);
 		//+1 for tag of first float, +4 for data of first float, +1 for tag of 2nd float
-		expectedPcode = new PcodeOpEmitter(language, opAddress);
+		expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "2", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -133,10 +135,10 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendDouble(classFile, 2.0);
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
 		//+1 to skip over the tag
-		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 8,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_LDC2_W);
 		expectedPcode.emitPushCat2Value(LdcMethods.VALUE);
@@ -148,9 +150,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendDouble(classFile, 4.0);
 		classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		pCode = new PcodeOpEmitter(language, opAddress);
+		pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 3, constantPool);
-		expectedPcode = new PcodeOpEmitter(language, opAddress);
+		expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 8,
 			ConstantPoolJava.CPOOL_OP, "0", "3", ConstantPoolJava.CPOOL_LDC2_W);
 		expectedPcode.emitPushCat2Value(LdcMethods.VALUE);
@@ -166,9 +168,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendLong(classFile, 0x123456789l);
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
-		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 8,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_LDC2_W);
 		expectedPcode.emitPushCat2Value(LdcMethods.VALUE);
@@ -180,9 +182,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendLong(classFile, 0x1111111111l);
 		classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		pCode = new PcodeOpEmitter(language, opAddress);
+		pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 3, constantPool);
-		expectedPcode = new PcodeOpEmitter(language, opAddress);
+		expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 8,
 			ConstantPoolJava.CPOOL_OP, "0", "3", ConstantPoolJava.CPOOL_LDC2_W);
 		expectedPcode.emitPushCat2Value(LdcMethods.VALUE);
@@ -199,9 +201,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendUtf8(classFile, "input1");
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);	
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
-		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -214,9 +216,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendUtf8(classFile, "input2");
 		classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		pCode = new PcodeOpEmitter(language, opAddress);
+		pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 3, constantPool);
-		expectedPcode = new PcodeOpEmitter(language, opAddress);
+		expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "3", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -233,10 +235,10 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendUtf8(classFile, "Ljava/lang/Integer;");
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);	
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
 
-		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -249,9 +251,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendUtf8(classFile, "Ljava/lang/String;");
 		classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		pCode = new PcodeOpEmitter(language, opAddress);
+		pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 3, constantPool);
-		expectedPcode = new PcodeOpEmitter(language, opAddress);
+		expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "3", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -268,13 +270,13 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendUtf8(classFile, "(I)Ljava/lang/Integer;");
 		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);	
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
 		//+1 to skip over the tag of the MethodType element
 		//+2 to skip over data of MethodType element (2-byte ref to utf8 element)
 		//+1 to skip over tag of utf8 element
 		//+2 to skip over length of utf8 element
-		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress);
+		PcodeOpEmitter expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "1", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
@@ -287,9 +289,9 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendUtf8(classFile, "(I)Ljava/lang/Integer;");
 		classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
-		pCode = new PcodeOpEmitter(language, opAddress);
+		pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 3, constantPool);
-		expectedPcode = new PcodeOpEmitter(language, opAddress);
+		expectedPcode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		expectedPcode.emitAssignVarnodeFromPcodeOpCall(LdcMethods.VALUE, 4,
 			ConstantPoolJava.CPOOL_OP, "0", "3", ConstantPoolJava.CPOOL_LDC);
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
