@@ -2702,7 +2702,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		ElfSectionHeader[] sections = elf.getSections();
 		for (ElfSectionHeader elfSectionToLoad : sections) {
 			monitor.checkCanceled();
-			if (elfSectionToLoad.getType() != ElfSectionHeaderConstants.SHN_UNDEF &&
+			int type = elfSectionToLoad.getType();
+			if (type != ElfSectionHeaderConstants.SHN_UNDEF &&
 				(includeOtherBlocks || elfSectionToLoad.isAlloc())) {
 				long fileOffset = elfSectionToLoad.getOffset();
 				if (fileOffset < 0 || fileOffset >= fileBytes.getSize()) {
@@ -2711,7 +2712,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					continue;
 				}
 				long size = elfSectionToLoad.getSize();
-				if (size <= 0 || size >= fileBytes.getSize()) {
+				if (size <= 0 ||
+					(type != ElfSectionHeaderConstants.SHT_NOBITS && size >= fileBytes.getSize())) {
 					log("Skipping section [" + elfSectionToLoad.getNameAsString() +
 						"] with invalid size");
 					continue;
