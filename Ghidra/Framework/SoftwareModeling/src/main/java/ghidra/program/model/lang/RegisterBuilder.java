@@ -57,7 +57,7 @@ public class RegisterBuilder {
 				reg.getBitLength() == register.getBitLength()) {
 				// define as register alias
 				reg.addAlias(name);
-				addRegisterToNameMap(name, register);
+				addRegisterToNameMap(name, reg);
 				return;
 			}
 		}
