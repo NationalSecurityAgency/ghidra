@@ -4748,6 +4748,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
     }
     return 0;
   }
+  data.getScopeLocal()->applyTypeRecommendations();
   buildLocaltypes(data);	// Set up initial types (based on local info)
   for(iter=data.beginLoc();iter!=data.endLoc();++iter) {
     vn = *iter;
