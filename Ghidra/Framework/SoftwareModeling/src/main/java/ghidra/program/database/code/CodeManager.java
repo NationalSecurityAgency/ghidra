@@ -2923,39 +2923,21 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 					RefType refType =
 						getOperandMemoryReferenceType(inst, opIndex, flowAddrs, refAddr);
 					if (refType != null) {
-						Reference ref = removeOldReference(oldRefList, refAddr, opIndex, refType);
-						if (ref == null) {
-							ref = refManager.addMemoryReference(inst.getMinAddress(), refAddr,
-								refType, SourceType.DEFAULT, opIndex);
-							if (operandPrimaryRef == null) {
-								operandPrimaryRef = ref;
-							}
-						}
-						else if (ref.isPrimary()) {
-							operandPrimaryRef = ref;
-						}
+						operandPrimaryRef = addDefaultMemoryReferenceIfMissing(inst, opIndex,
+							refAddr, refType, oldRefList, operandPrimaryRef);
 						--remainingAddrs;
 					}
 				}
 			}
 			// If there are still more addresses on this operand, see if the whole operand has any
-			if (refCnt == 0 && remainingAddrs != 0) {
+			if (refCnt == 0 && remainingAddrs > 0) {
 				Address refAddr = prototype.getAddress(opIndex, inst);
 				if (refAddr != null) {
 					RefType refType =
 						getOperandMemoryReferenceType(inst, opIndex, flowAddrs, refAddr);
 					if (refType != null) {
-						Reference ref = removeOldReference(oldRefList, refAddr, opIndex, refType);
-						if (ref == null) {
-							ref = refManager.addMemoryReference(inst.getMinAddress(), refAddr,
-								refType, SourceType.DEFAULT, opIndex);
-							if (operandPrimaryRef == null) {
-								operandPrimaryRef = ref;
-							}
-						}
-						else if (ref.isPrimary()) {
-							operandPrimaryRef = ref;
-						}
+						operandPrimaryRef = addDefaultMemoryReferenceIfMissing(inst, opIndex,
+							refAddr, refType, oldRefList, operandPrimaryRef);
 						--remainingAddrs;
 					}
 				}
@@ -2978,18 +2960,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				boolean isFallthrough =
 					(flowType.isJump() && flowAddr.equals(inst.getMaxAddress().next()));
 				if (!isFallthrough) {
-					Reference ref =
-						removeOldReference(oldRefList, flowAddr, Reference.MNEMONIC, flowType);
-					if (ref == null) {
-						ref = refManager.addMemoryReference(inst.getMinAddress(), flowAddr,
-							flowType, SourceType.DEFAULT, Reference.MNEMONIC);
-						if (mnemonicPrimaryRef == null) {
-							mnemonicPrimaryRef = ref;
-						}
-					}
-					else if (ref.isPrimary()) {
-						mnemonicPrimaryRef = ref;
-					}
+					mnemonicPrimaryRef = addDefaultMemoryReferenceIfMissing(inst, Reference.MNEMONIC,
+						flowAddr, flowType, oldRefList, mnemonicPrimaryRef);
 				}
 			}
 		}
@@ -3007,12 +2979,43 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
+	 * Remove the specified reference is from oldRefList if present, otherwise add to instruction as a DEFAULT.
+	 * Return as preferred primary reference if it previously existed as a primary reference in oldRefList or
+	 * the specified operandPrimaryRef was null.
+	 * @param inst instruction to which references apply
+	 * @param opIndex operand to which reference applies
+	 * @param refAddr default reference to-address
+	 * @param refType default reference type
+	 * @param oldRefList list of old references which exist on instruction which have 
+	 * yet to be accounted for (may be null).
+	 * @param operandPrimaryRef current preferred primary reference for operand
+	 * @return updated preferred primary address for operand (i.e., operandPrimaryRef)
+	 */
+	private Reference addDefaultMemoryReferenceIfMissing(Instruction inst,
+			int opIndex, Address refAddr, RefType refType, List<Reference> oldRefList,
+			Reference operandPrimaryRef) {
+
+		Reference ref = removeOldReference(oldRefList, refAddr, opIndex, refType);
+		if (ref == null) {
+			ref = refManager.addMemoryReference(inst.getMinAddress(), refAddr, refType,
+				SourceType.DEFAULT, opIndex);
+			if (operandPrimaryRef == null) {
+				operandPrimaryRef = ref;
+			}
+		}
+		else if (ref.isPrimary()) {
+			operandPrimaryRef = ref;
+		}
+		return operandPrimaryRef;
+	}
+
+	/**
 	 * Remove matching DEFAULT memory reference from oldRefList
-	 * @param oldRefList list of existing DEFAULT memory references
+	 * @param oldRefList list of existing DEFAULT memory references (may be null)
 	 * @param toAddr new reference desination address
 	 * @param opIndex new reference operand
 	 * @param refType new reference type
-	 * @return existing reference if it already exists, else null
+	 * @return existing reference if it already exists in oldRefList, else null
 	 */
 	private Reference removeOldReference(List<Reference> oldRefList, Address toAddr, int opIndex,
 			RefType refType) {
