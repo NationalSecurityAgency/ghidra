@@ -1443,6 +1443,7 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       }
       else
 	data.opInsertInput(op,data.newVarnode(param->getSize(),param->getAddress()),op->numInput());
+      data.segmentizeFarPtr(param->getType(), param->isTypeLocked(), op->getIn(op->numInput() - 1), false);
     }
   }
   if (spacebase != (AddrSpace *)0) {	// If we need it, create the stackplaceholder
@@ -1471,6 +1472,7 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
       int4 sz = outparam->getSize();
       Address addr = outparam->getAddress();
       data.newVarnodeOut(sz,addr,fc->getOp());
+      data.segmentizeFarPtr(outparam->getType(), outparam->isTypeLocked(), fc->getOp()->getOut(), false);
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
       if (res == CPUI_PIECE) {		// Pick an extension based on type
@@ -4738,6 +4740,23 @@ int4 ActionInferTypes::apply(Funcdata &data)
     }
     return 0;
   }
+  if (localcount == 0) {
+	  Datatype* ct;
+	  Varnode* vn;
+	  VarnodeLocSet::const_iterator iter;
+
+	  for (iter = data.beginLoc(); iter != data.endLoc(); ++iter) {
+		  vn = *iter;
+		  if (vn->isAnnotation()) continue;
+		  if ((!vn->isWritten()) && (vn->hasNoDescend())) continue;
+		  ct = vn->getLocalType();
+		  bool bBegin = false;
+		  if (iter == data.beginLoc()) bBegin = true; else iter--;
+		  data.segmentizeFarPtr(ct, vn->isTypeLock(), vn, true);
+		  if (bBegin) iter = data.beginLoc(); else iter++;
+	  }
+  }	
+	
   buildLocaltypes(data);	// Set up initial types (based on local info)
   for(iter=data.beginLoc();iter!=data.endLoc();++iter) {
     vn = *iter;
