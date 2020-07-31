@@ -201,7 +201,7 @@ public:
     warnings_given = 8		///< Set if a warning for this rule has been given before
   };
 private:
-  friend struct ActionPool;
+  friend class ActionPool;
   uint4 flags;			///< Properties enabled with \b this Rule
   uint4 breakpoint;		///< Breakpoint(s) enabled for \b this Rule
   string name;			///< Name of the Rule
