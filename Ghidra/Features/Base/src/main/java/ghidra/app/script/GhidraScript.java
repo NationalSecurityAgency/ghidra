@@ -59,6 +59,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.CodeUnitFormatOptions.ShowBlockName;
@@ -3780,5 +3781,29 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			buffer.insert(0, '0');
 		}
 		return buffer.toString();
+	}
+
+	/**
+	 * Gets the open DataTypeManager with the corresponding name.
+	 * <br><br>
+	 * NOTE: When using a DataTypeManager that is not the currentProgram's
+	 * it may be necessary to handle the transactions.
+	 * @param name the DataTypeManager's name
+	 * @return the DataTypeManager or null if not found
+	 * @see DataTypeManager#startTransaction(String)
+	 * @see DataTypeManager#endTransaction(int,boolean)
+	 */
+	public DataTypeManager getDataTypeManager(String name) {
+		DataTypeManagerService service = state.getTool().getService(DataTypeManagerService.class);
+		if (service == null) {
+			printerr("The DataTypeManagerService is not enabled");
+			return null;
+		}
+		for (DataTypeManager dtm : service.getDataTypeManagers()) {
+			if (dtm.getName().equals(name)) {
+				return dtm;
+			}
+		}
+		return null;
 	}
 }
