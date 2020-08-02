@@ -349,7 +349,13 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 						BigInteger val = context.getValue(reg, false);
 						if (val != null) {
 							long lval = val.longValue();
-							Address refAddr = instr.getMinAddress().getNewAddress(lval);
+							Address refAddr = null;
+							try {
+								refAddr = instr.getMinAddress().getNewAddress(lval);
+							} catch (AddressOutOfBoundsException e) {
+								// invalid reference
+								return;
+							}
 							if ((lval > 4096 || lval < 0) && lval != 0xffff &&
 								program.getMemory().contains(refAddr)) {
 
