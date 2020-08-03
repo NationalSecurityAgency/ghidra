@@ -10,7 +10,7 @@
 
 
 # fadd.d D,S,T,m 02000053 fe00007f SIMPLE (0, 0) 
-:fadd.d frd,frs1D,frs2D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op1214!=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x1
+:fadd.d frd,frs1D,frs2D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x1
 {
 	frd = frs1D f+ frs2D;
 }
@@ -69,7 +69,7 @@
 
 
 # fcvt.s.d D,S,m 40100053 fff0007f SIMPLE (0, 0) 
-:fcvt.s.d frd,frs1D,FRM is RV32 & RVD & frs1D & frd & FRM & op1214!=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x20 & op2024=0x1
+:fcvt.s.d frd,frs1D,FRM is RV32 & RVD & frs1D & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x20 & op2024=0x1
 {
 	local tmp:4 = float2float(frs1D);
 	frd = zext(tmp);
@@ -84,7 +84,7 @@
 
 
 # fcvt.w.d d,S,m c2000053 fff0007f SIMPLE (0, 0) 
-:fcvt.w.d rdW,frs1D,FRM is RV32 & RVD & frs1D & FRM & op1214!=7 & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x0
+:fcvt.w.d rdW,frs1D,FRM is RV32 & RVD & frs1D & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x0
 {
 	rdW = trunc(frs1D);
 }
@@ -99,7 +99,7 @@
 
 
 # fcvt.wu.d d,S,m c2100053 fff0007f SIMPLE (0, 0) 
-:fcvt.wu.d rdW,frs1D,FRM is RV32 & RVD & frs1D & FRM & op1214!=7 & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x1
+:fcvt.wu.d rdW,frs1D,FRM is RV32 & RVD & frs1D & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x1
 {
 	#TODO  unsigned
 	rdW = trunc(frs1D);
@@ -114,7 +114,7 @@
 
 
 # fdiv.d D,S,T,m 1a000053 fe00007f SIMPLE (0, 0) 
-:fdiv.d frd,frs1D,frs2D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op1214!=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0xd
+:fdiv.d frd,frs1D,frs2D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0xd
 {
 	frd = frs1D f/ frs2D;
 }
@@ -158,7 +158,7 @@
 
 
 # fmadd.d D,S,T,R,m 02000043 0600007f SIMPLE (0, 0) 
-:fmadd.d frd,frs1D,frs2D,frs3D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op1214!=7 & frs3D & op0001=0x3 & op0204=0x0 & op0506=0x2 & op2526=0x1
+:fmadd.d frd,frs1D,frs2D,frs3D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & frs3D & op0001=0x3 & op0204=0x0 & op0506=0x2 & op2526=0x1
 {
 	frd = (frs1D f* frs2D) f+ frs3D;
 }
@@ -204,7 +204,7 @@
 
 
 # fmsub.d D,S,T,R,m 02000047 0600007f SIMPLE (0, 0) 
-:fmsub.d frd,frs1D,frs2D,frs3D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op1214!=7 & frs3D & op0001=0x3 & op0204=0x1 & op0506=0x2 & op2526=0x1
+:fmsub.d frd,frs1D,frs2D,frs3D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & frs3D & op0001=0x3 & op0204=0x1 & op0506=0x2 & op2526=0x1
 {
 	frd = (frs1D f* frs2D) f- frs3D;
 }
@@ -218,7 +218,7 @@
 
 
 # fmul.d D,S,T,m 12000053 fe00007f SIMPLE (0, 0) 
-:fmul.d frd,frs1D,frs2D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op1214!=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x9
+:fmul.d frd,frs1D,frs2D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x9
 {
 	frd = frs1D f* frs2D;
 }
@@ -232,7 +232,7 @@
 
 
 # fnmadd.d D,S,T,R,m 0200004f 0600007f SIMPLE (0, 0) 
-:fnmadd.d frd,frs1D,frs2D,frs3D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op1214!=7 & frs3D & op0001=0x3 & op0204=0x3 & op0506=0x2 & op2526=0x1
+:fnmadd.d frd,frs1D,frs2D,frs3D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & frs3D & op0001=0x3 & op0204=0x3 & op0506=0x2 & op2526=0x1
 {
 	frd = (f- (frs1D f* frs2D)) f- frs3D;
 }
@@ -246,7 +246,7 @@
 
 
 # fnmsub.d D,S,T,R,m 0200004b 0600007f SIMPLE (0, 0) 
-:fnmsub.d frd,frs1D,frs2D,frs3D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op1214!=7 & frs3D & op0001=0x3 & op0204=0x2 & op0506=0x2 & op2526=0x1
+:fnmsub.d frd,frs1D,frs2D,frs3D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & frs3D & op0001=0x3 & op0204=0x2 & op0506=0x2 & op2526=0x1
 {
 	frd = (f- (frs1D f* frs2D)) f+ frs3D;
 }
@@ -261,7 +261,7 @@
 
 
 # fsgnj.d D,S,T 22000053 fe00707f SIMPLE (0, 0) 
-:fsgnj.d frd,frs1D,frs2D is RV32 & RVD & frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x11 & op1519!=op2024
+:fsgnj.d frd,frs1D,frs2D is RV32 & RVD & frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x0 & funct7=0x11
 {
 	local tmp:$(DFLEN) = frs1D;
 	tmp[63,1] = frs2D[63,1];
@@ -276,7 +276,7 @@
 
 
 # fsgnjn.d D,S,T 22001053 fe00707f SIMPLE (0, 0) 
-:fsgnjn.d frd,frs1D,frs2D is RV32 & RVD & frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x11 & op1519!=op2024
+:fsgnjn.d frd,frs1D,frs2D is RV32 & RVD & frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x11
 {
 	local tmp:$(DFLEN) = frs1D;
 	tmp[63,1] = !frs2D[63,1];
@@ -291,7 +291,7 @@
 
 
 # fsgnjx.d D,S,T 22002053 fe00707f SIMPLE (0, 0) 
-:fsgnjx.d frd,frs1D,frs2D is RV32 & RVD & frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x11 & op1519!=op2024
+:fsgnjx.d frd,frs1D,frs2D is RV32 & RVD & frs1D & frd & frs2D & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x2 & funct7=0x11
 {
 	local tmp:$(DFLEN) = frs1D;
 	tmp[63,1] = tmp[63,1] ^ frs2D[63,1];
@@ -313,7 +313,7 @@
 
 
 # fsqrt.d D,S,m 5a000053 fff0007f SIMPLE (0, 0) 
-:fsqrt.d frd,frs1D,FRM is RV32 & RVD & frs1D & frd & FRM & op1214!=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x2d & op2024=0x0
+:fsqrt.d frd,frs1D,FRM is RV32 & RVD & frs1D & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x2d & op2024=0x0
 {
 	frd = sqrt(frs1D);
 }
@@ -327,7 +327,7 @@
 
 
 # fsub.d D,S,T,m 0a000053 fe00007f SIMPLE (0, 0) 
-:fsub.d frd,frs1D,frs2D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op1214!=7 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x5
+:fsub.d frd,frs1D,frs2D,FRM is RV32 & RVD & frs1D & frd & frs2D & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x5
 {
 	frd = frs1D f- frs2D;
 }

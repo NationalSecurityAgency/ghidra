@@ -12,7 +12,7 @@
 
 
 # fcvt.l.q d,S,m c6200053 fff0007f SIMPLE (64, 0) 
-:fcvt.l.q rd,frs1,FRM is RV64 & RVQ & frs1 & FRM & op1214!=7 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x63 & op2024=0x2
+:fcvt.l.q rd,frs1,FRM is RV64 & RVQ & frs1 & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x63 & op2024=0x2
 {
 	rd = trunc(frs1);
 }
@@ -26,7 +26,7 @@
 
 
 # fcvt.lu.q d,S,m c6300053 fff0007f SIMPLE (64, 0) 
-:fcvt.lu.q rd,frs1,FRM is RV64 & RVQ & frs1 & FRM & op1214!=7 & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x63 & op2024=0x3
+:fcvt.lu.q rd,frs1,FRM is RV64 & RVQ & frs1 & FRM & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x63 & op2024=0x3
 {
 	rd = trunc(frs1);
 }
@@ -40,7 +40,7 @@
 
 
 # fcvt.q.l D,s,m d6200053 fff0007f SIMPLE (64, 0) 
-:fcvt.q.l frd,rs1,FRM is RV64 & RVQ & frd & FRM & op1214!=7 & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6b & op2024=0x2
+:fcvt.q.l frd,rs1,FRM is RV64 & RVQ & frd & FRM & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6b & op2024=0x2
 {
 	frd = int2float(rs1);
 }
@@ -54,7 +54,7 @@
 
 
 # fcvt.q.lu D,s,m d6300053 fff0007f SIMPLE (64, 0) 
-:fcvt.q.lu frd,rs1,FRM is RV64 & RVQ & frd & FRM & op1214!=7 & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6b & op2024=0x3
+:fcvt.q.lu frd,rs1,FRM is RV64 & RVQ & frd & FRM & rs1 & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x6b & op2024=0x3
 {
 	frd = int2float(rs1);
 }

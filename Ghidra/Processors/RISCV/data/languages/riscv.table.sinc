@@ -16,51 +16,51 @@ define pcodeop trap;
 
 
 # possible tokens:  r0711 r1519 r2024 r2731 cr0206 cr0711 cd0711
-rs1: r1519 is r1519 & op1519!=0 { export r1519; } 
+rs1: r1519 is r1519 { export r1519; } 
 rs1: zero is r1519 & zero & op1519=0 { export 0:$(XLEN); }
 
-rs2: r2024 is r2024 & op2024!=0 { export r2024; }
+rs2: r2024 is r2024 { export r2024; }
 rs2: zero is r2024 & zero & op2024=0 { export 0:$(XLEN); }
 
-rd: r0711 is r0711 & op0711!=0 { export r0711; }
+rd: r0711 is r0711 { export r0711; }
 rd: zero is r0711 & zero & op0711=0 { export 0:$(XLEN); }
 
 @if ADDRSIZE == "32"
 
-rs1W: r1519 is RV32 & r1519 & op1519!=0 { export r1519; }
+rs1W: r1519 is RV32 & r1519 { export r1519; }
 rs1W: zero is RV32 & r1519 & zero & op1519=0 { export 0:$(XLEN); }
 
-rs2W: r2024 is RV32 & r2024 & op2024!=0 { export r2024; }
+rs2W: r2024 is RV32 & r2024 { export r2024; }
 rs2W: zero is RV32 & r2024 & zero & op2024=0 { export 0:$(XLEN); }
 
 #TODO  dest may be bad, might need an assign macro
-rdW: r0711 is RV32 & r0711 & op0711!=0 { export r0711; }
+rdW: r0711 is RV32 & r0711 { export r0711; }
 rdW: zero is RV32 & r0711 & zero & op0711=0 { export 0:$(XLEN); }
 
 @else
 
-rs1W: r1519 is r1519 & op1519!=0 { local tmp:4 = r1519:4; export tmp; } 
+rs1W: r1519 is r1519 { local tmp:4 = r1519:4; export tmp; } 
 rs1W: zero is r1519 & zero & op1519=0 { export 0:4; }
 
-rs2W: r2024 is r2024 & op2024!=0 { local tmp:4 = r2024:4; export tmp; }
+rs2W: r2024 is r2024 { local tmp:4 = r2024:4; export tmp; }
 rs2W: zero is r2024 & zero & op2024=0 { export 0:4; }
 
 #TODO  dest may be bad, might need an assign macro
-rdW: r0711 is r0711 & op0711!=0 { export r0711; }
+rdW: r0711 is r0711 { export r0711; }
 rdW: zero is r0711 & zero & op0711=0 { export 0:8; }
 
 @endif
 
 #TODO  does this need to be in an if/endif
 @if ADDRSIZE == "64"
-rs1L: r1519 is r1519 & op1519!=0 { local tmp:8 = r1519:8; export tmp; } 
+rs1L: r1519 is r1519 { local tmp:8 = r1519:8; export tmp; } 
 rs1L: zero is r1519 & zero & op1519=0 { export 0:8; }
 
-rs2L: r2024 is r2024 & op2024!=0 { local tmp:8 = r2024:8; export tmp; }
+rs2L: r2024 is r2024 { local tmp:8 = r2024:8; export tmp; }
 rs2L: zero is r2024 & zero & op2024=0 { export 0:8; }
 
 #TODO  dest may be bad, might need an assign macro
-rdL: r0711 is r0711 & op0711!=0 { export r0711; }
+rdL: r0711 is r0711 { export r0711; }
 rdL: zero is r0711 & zero & op0711=0 { export 0:8; }
 @endif
 
@@ -173,13 +173,13 @@ aqrl: ".aqrl" is op2526=3 {}
 
 
 
-crs1: cr0711 is cr0711 & cop0711!=0 { export cr0711; }
+crs1: cr0711 is cr0711 { export cr0711; }
 crs1: zero is cr0711 & zero & cop0711=0 { export 0:$(XLEN); }
 
-crd: cd0711 is cd0711 & cop0711!=0 { export cd0711; }
+crd: cd0711 is cd0711 { export cd0711; }
 crd: zero is cd0711 & zero & cop0711=0 { export 0:$(XLEN); }
 
-crs2: cr0206 is cr0206 & cop0206!=0 { export cr0206; }
+crs2: cr0206 is cr0206 { export cr0206; }
 crs2: zero is cr0206 & zero & cop0206=0 { export 0:$(XLEN); }
 
 @if FPSIZE != ""

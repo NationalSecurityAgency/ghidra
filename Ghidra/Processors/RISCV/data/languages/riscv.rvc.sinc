@@ -1,14 +1,20 @@
 # RVC  Standard Extension for Compressed Instructions
 
 
-# c.add d,CV 00009002 0000f003 SIMPLE (0, 0) 
-:c.add crd,crs2 is RVC & crd & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x1 & cop0711!=0 & cop0206!=0
+# c.add d,CV 00009002 0000f003 SIMPLE (0, 0)
+:c.add crd,crs2 is RVC & crd & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x1
 {
 	crd = crd + crs2;
 }
 
-# c.addi d,Co 00000001 0000e003 SIMPLE (0, 0) 
-:c.addi crd,cimmI is RVC & crd & cimmI & cop0001=0x1 & cop1315=0x0 & cop0711!=0 & (cop1212!=0 | cop0206!=0)
+# c.ebreak  00009002 0000ffff SIMPLE (0, 0) 
+:c.ebreak  is RVC & cop0001=0x2 & cop1315=0x4 & cop0212=0x400
+{
+}
+
+# c.addi d,Co 00000001 0000e003 SIMPLE (0, 0)
+# There may be other nop forms here if (cop0711=0) or (cop1212=0 & cop0206=0)
+:c.addi crd,cimmI is RVC & crd & cimmI & cop0001=0x1 & cop1315=0x0
 {
 	crd = crd + cimmI;
 }
@@ -20,20 +26,20 @@
 }
 
 # c.addi16sp Cc,CL 00006101 0000ef83 SIMPLE (0, 0) 
-:c.addi16sp sp,caddi16spimm is RVC & cop0711=0x2 & caddi16spimm & sp & cop0001=0x1 & cop1315=0x3 & cop0512!=0
+:c.addi16sp sp,caddi16spimm is RVC & cop0711=0x2 & caddi16spimm & sp & cop0001=0x1 & cop1315=0x3
 {
 	sp = sp + caddi16spimm;
 }
 
 # c.addi4spn Ct,Cc,CK 00000000 0000e003 SIMPLE (0, 0) 
-:c.addi4spn cr0204s,sp,caddi4spnimm is RVC & caddi4spnimm & cr0204s & sp & cop0001=0x0 & cop1315=0x0 & cop0512!=0
+:c.addi4spn cr0204s,sp,caddi4spnimm is RVC & caddi4spnimm & cr0204s & sp & cop0001=0x0 & cop1315=0x0
 {
 	cr0204s = sp + caddi4spnimm;
 }
 
 @if ADDRSIZE == "64" || ADDRSIZE == "128"
 # c.addiw d,Co 00002001 0000e003 SIMPLE (64, 0) 
-:c.addiw crd,cimmI is RVC & crd & cimmI & cop0001=0x1 & cop1315=0x1 & cop0711!=0
+:c.addiw crd,cimmI is RVC & crd & cimmI & cop0001=0x1 & cop1315=0x1
 {
 	local tmp:8 = crd + cimmI;
 	crd = sext(tmp:4);
@@ -71,11 +77,6 @@
 :c.bnez cr0709s,cbimm is RVC & cbimm & cr0709s & cop0001=0x1 & cop1315=0x7
 {
 	if (cr0709s != 0) goto cbimm;
-}
-
-# c.ebreak  00009002 0000ffff SIMPLE (0, 0) 
-:c.ebreak  is RVC & cop0001=0x2 & cop1315=0x4 & cop0212=0x400
-{
 }
 
 @if (ADDRSIZE == "32" || ADDRSIZE == "64") && FPSIZE == "64"
@@ -166,14 +167,14 @@
 @endif
 
 # c.jalr d 00009002 0000f07f JSR (0, 0) 
-:c.jalr crd is RVC & crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x1 & cop0711!=0
+:c.jalr crd is RVC & crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x1
 {
 	ra = inst_next;
 	call [crd];
 }
 
 # c.jr d 00008002 0000f07f BRANCH (0, 0) 
-:c.jr crd is RVC & crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0 & cop0711>1
+:c.jr crd is RVC & crd & cop0001=0x2 & cop1315=0x4 & cop0206=0x0 & cop1212=0x0
 {
 	goto [crd];
 }
@@ -203,7 +204,7 @@
 
 @if ADDRSIZE == "64" || ADDRSIZE == "128"
 # c.ldsp d,Cn(Cc) 00006002 0000e003 QWORD|DREF (64, 8) 
-:c.ldsp crd,cldspimm(sp) is RVC & crd & sp & cop0001=0x2 & cop1315=0x3 & cldspimm & cop0711!=0
+:c.ldsp crd,cldspimm(sp) is RVC & crd & sp & cop0001=0x2 & cop1315=0x3 & cldspimm
 {
 	local ea:$(XLEN) = cldspimm + sp;
 	zassignD(crd, *[ram]:8 ea);
@@ -211,7 +212,7 @@
 @endif
 
 @if ADDRSIZE == "128"
-:c.lqsp crd,clqspimm(sp) is RVC & crd & sp & cop0001=0x2 & cop1315=0x3 & clqspimm & cop0711!=0
+:c.lqsp crd,clqspimm(sp) is RVC & crd & sp & cop0001=0x2 & cop1315=0x3 & clqspimm
 {
 	local ea:$(XLEN) = clqspimm + sp;
 	crd = *[ram]:16 ea;
@@ -219,13 +220,13 @@
 @endif
 
 # c.li d,Co 00004001 0000e003 SIMPLE (0, 0) 
-:c.li crd,cimmI is RVC & crd & cimmI & cop0001=0x1 & cop1315=0x2 & cop0711!=0
+:c.li crd,cimmI is RVC & crd & cimmI & cop0001=0x1 & cop1315=0x2
 {
 	crd = cimmI;
 }
 
 # c.lui d,Cu 00006001 0000e003 SIMPLE (0, 0) 
-:c.lui crd,cbigimm is RVC & cop0711!=0 & cop0711!=2 & crd & cbigimm & cop0001=0x1 & cop1315=0x3 & cop0711!=0 & cop0711!=2 & (cop1212!=0 | cop0206!=0)
+:c.lui crd,cbigimm is RVC & crd & cbigimm & cop0001=0x1 & cop1315=0x3
 {
 	crd = cbigimm << 12;
 }
@@ -238,14 +239,14 @@
 }
 
 # c.lwsp d,Cm(Cc) 00004002 0000e003 SIMPLE (0, 0) 
-:c.lwsp crd,clwspimm(sp) is RVC & crd & sp & cop0001=0x2 & cop1315=0x2 & clwspimm & cop0711!=0
+:c.lwsp crd,clwspimm(sp) is RVC & crd & sp & cop0001=0x2 & cop1315=0x2 & clwspimm
 {
 	local ea:$(XLEN) = clwspimm + sp;
 	zassignW(crd, *[ram]:4 ea);
 }
 
 # c.mv d,CV 00008002 0000f003 SIMPLE (0, 0) 
-:c.mv crd,crs2 is RVC & crd & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x0 & cop0711!=0 & cop0206!=0
+:c.mv crd,crs2 is RVC & crd & crs2 & cop0001=0x2 & cop1315=0x4 & cop1212=0x0
 {
 	crd = crs2;
 }
@@ -275,14 +276,14 @@
 @endif
 
 # c.slli d,C> 00000002 0000e003 SIMPLE (0, 0) 
-:c.slli crd,c6imm is RVC & crd & c6imm & cop0001=0x2 & cop1315=0x0 & cop0711!=0
+:c.slli crd,c6imm is RVC & crd & c6imm & cop0001=0x2 & cop1315=0x0
 {
 	crd = crd << c6imm;
 }
 
 #TODO  hint?
 # c.slli64 d 00000002 0000f07f SIMPLE (0, 0) 
-:c.slli64 crd is RVC & crd & cop0001=0x2 & cop1315=0x0 & cop0206=0x0 & cop1212=0x0 & cop0711!=0
+:c.slli64 crd is RVC & crd & cop0001=0x2 & cop1315=0x0 & cop0206=0x0 & cop1212=0x0
 {
 	crd = crd << 0;
 }
