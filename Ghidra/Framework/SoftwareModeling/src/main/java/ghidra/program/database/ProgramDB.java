@@ -57,7 +57,6 @@ import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Database implementation for Program. 
@@ -232,12 +231,12 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			int id = startTransaction("create program");
 
 			createDatabase();
-			if (createManagers(CREATE, TaskMonitorAdapter.DUMMY_MONITOR) != null) {
+			if (createManagers(CREATE, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
 			listing = new ListingDB();
 			changeSet = new ProgramDBChangeSet(addrMap, NUM_UNDOS);
-			initManagers(CREATE, TaskMonitorAdapter.DUMMY_MONITOR);
+			initManagers(CREATE, TaskMonitor.DUMMY);
 			propertiesCreate();
 			programUserData = new ProgramUserDataDB(this);
 			endTransaction(id, true);
@@ -281,7 +280,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		super(dbh, "Untitled", 500, 1000, consumer);
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		boolean success = false;

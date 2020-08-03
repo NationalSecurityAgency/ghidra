@@ -29,7 +29,6 @@ import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>ProgramMemoryUtil</CODE> contains some static methods for 
@@ -277,7 +276,7 @@ public class ProgramMemoryUtil {
 			TaskMonitor monitor) throws CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		Memory memory = program.getMemory();
@@ -420,7 +419,7 @@ public class ProgramMemoryUtil {
 			CodeUnit codeUnit, TaskMonitor monitor) {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		AddressSet toAddressSet =
@@ -489,7 +488,7 @@ public class ProgramMemoryUtil {
 			int alignment, Address toAddress, TaskMonitor monitor) throws CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		byte[] addressBytes = getDirectAddressBytes(program, toAddress);
@@ -633,7 +632,7 @@ public class ProgramMemoryUtil {
 			Address toAddress, TaskMonitor monitor) throws CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		Memory memory = program.getMemory();

@@ -50,7 +50,6 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
@@ -191,7 +190,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				if (isZeroedArray(bytes, (int) size)) {
 					Msg.debug(this,
 						"Removing discardable alignment/filler segment at " + block.getStart());
-					memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+					memory.removeBlock(block, TaskMonitor.DUMMY);
 				}
 			}
 		}

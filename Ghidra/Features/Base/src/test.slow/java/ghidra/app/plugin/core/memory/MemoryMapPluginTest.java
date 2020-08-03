@@ -41,7 +41,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Test the MemoryMapPlugin for domain object events.
@@ -305,7 +305,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		MemoryBlock block = memory.getBlock(memory.getMinAddress());
 		int transactionID = program.startTransaction("test");
-		memory.moveBlock(block, getAddr(0x100), TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.moveBlock(block, getAddr(0x100), TaskMonitor.DUMMY);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 

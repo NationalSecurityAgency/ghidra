@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.util;
 
-import static ghidra.util.task.TaskMonitorAdapter.DUMMY_MONITOR;
+import static ghidra.util.task.TaskMonitor.DUMMY;
 
 import java.util.*;
 

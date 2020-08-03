@@ -40,7 +40,6 @@ import ghidra.test.ProjectTestUtils;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Helper class for using Ghidra in a "batch" mode. This class provides methods
@@ -483,7 +482,7 @@ public class GhidraProject {
 					throw new DuplicateFileException("File already exists: " + file);
 				}
 			}
-			program.saveToPackedFile(file, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.saveToPackedFile(file, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e1) {
 			throw new IOException("Cancelled");

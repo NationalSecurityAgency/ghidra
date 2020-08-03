@@ -18,7 +18,6 @@ package generic.io;
 
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 import java.io.*;
 import java.util.jar.JarOutputStream;
@@ -179,7 +178,7 @@ public class JarWriter {
 		try {
 			JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(args[1]));
 			JarWriter writer = new JarWriter(jarOut);
-			writer.outputRecursively(new File(args[0]), "", TaskMonitorAdapter.DUMMY_MONITOR);
+			writer.outputRecursively(new File(args[0]), "", TaskMonitor.DUMMY);
 			jarOut.close();
 		}
 		catch (FileNotFoundException e) {

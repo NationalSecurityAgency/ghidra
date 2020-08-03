@@ -39,7 +39,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest {
 
@@ -455,7 +455,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		// create an overlay block
 		int transactionID = program.startTransaction("test");
 		memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
-			TaskMonitorAdapter.DUMMY_MONITOR, true);
+			TaskMonitor.DUMMY, true);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForPostedSwingRunnables();
@@ -475,7 +475,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		// create an overlay block
 		int transactionID = program.startTransaction("test");
 		memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
-			TaskMonitorAdapter.DUMMY_MONITOR, true);
+			TaskMonitor.DUMMY, true);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForPostedSwingRunnables();

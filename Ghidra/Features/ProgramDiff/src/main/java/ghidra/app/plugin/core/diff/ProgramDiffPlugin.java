@@ -849,7 +849,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 		AddressSetView p1DiffSet = null;
 		try {
-			p1DiffSet = diffControl.getFilteredDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+			p1DiffSet = diffControl.getFilteredDifferences(TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// Shouldn't get this, since using a DUMMY_MONITOR.

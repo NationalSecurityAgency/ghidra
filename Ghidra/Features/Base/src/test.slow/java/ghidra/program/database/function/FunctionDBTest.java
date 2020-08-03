@@ -40,7 +40,7 @@ import ghidra.program.util.ProgramChangeRecord;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -73,7 +73,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		transactionID = program.startTransaction("Test");
 		program.getMemory().createInitializedBlock("test", addr(100), 500, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		functionManager = program.getFunctionManager();
 	}
 
@@ -1257,7 +1257,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		// delete the typedef data type
 		localTransactionID = program.startTransaction("test");
 		try {
-			program.getDataTypeManager().remove(td, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.getDataTypeManager().remove(td, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(localTransactionID, true);

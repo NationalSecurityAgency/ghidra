@@ -32,7 +32,7 @@ import ghidra.program.model.listing.Listing;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -273,7 +273,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 			dataMgr.setLongSettingsValue(a, "someLongValue", i);
 			dataMgr.setByteSettingsValue(a, "bytes", new byte[] { 0, 1, 2 });
 		}
-		dataMgr.moveAddressRange(addr(0), addr(20), 10, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.moveAddressRange(addr(0), addr(20), 10, TaskMonitor.DUMMY);
 		int j = 0;
 		for (int i = 20; i < 30; i++, j++) {
 			Address a = addr(i);
@@ -299,7 +299,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 			dataMgr.setByteSettingsValue(a, "bytes", new byte[] { 0, 1, 2 });
 		}
 		try {
-			dataMgr.moveAddressRange(addr(0), addr(5), 10, TaskMonitorAdapter.DUMMY_MONITOR);
+			dataMgr.moveAddressRange(addr(0), addr(5), 10, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			Assert.fail("Unexpected cancelled exception");
@@ -331,7 +331,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		j = 20;
 		try {
-			dataMgr.moveAddressRange(addr(20), addr(5), 10, TaskMonitorAdapter.DUMMY_MONITOR);
+			dataMgr.moveAddressRange(addr(20), addr(5), 10, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			Assert.fail("Unexpected cancelled exception");
@@ -476,7 +476,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		endTransaction();
 
 		startTransaction();
-		dataMgr.remove(td, TaskMonitorAdapter.DUMMY_MONITOR);
+		dataMgr.remove(td, TaskMonitor.DUMMY);
 		endTransaction();
 		// make sure accessing the settings does not blow up
 		assertTrue(td.isDeleted());
@@ -511,6 +511,6 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Memory memory = program.getMemory();
 		memory.createInitializedBlock("test", addr(0), 100, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 	}
 }

@@ -32,7 +32,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -60,10 +60,10 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY_BE);
 		Program p = builder.getProgram();
-		rootFolder.createFile("notepad", p, TaskMonitorAdapter.DUMMY_MONITOR);
-		rootFolder.createFile("XNotepad", p, TaskMonitorAdapter.DUMMY_MONITOR);
+		rootFolder.createFile("notepad", p, TaskMonitor.DUMMY);
+		rootFolder.createFile("XNotepad", p, TaskMonitor.DUMMY);
 		for (String name : names) {
-			rootFolder.createFile(name, p, TaskMonitorAdapter.DUMMY_MONITOR);
+			rootFolder.createFile(name, p, TaskMonitor.DUMMY);
 		}
 		builder.dispose();
 

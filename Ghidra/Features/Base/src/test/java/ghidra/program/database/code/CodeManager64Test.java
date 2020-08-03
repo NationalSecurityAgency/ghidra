@@ -194,7 +194,7 @@ public class CodeManager64Test extends AbstractGenericTest {
 //			}
 //		}
 //		fis3.close();
-//		TaskMonitor m = TaskMonitorAdapter.DUMMY_MONITOR;
+//		TaskMonitor m = TaskMonitor.DUMMY;
 //		mem.createInitializedBlock("B1", addr(1000), new ByteArrayInputStream(bytesOne),
 //			bytesOne.length, m, false);
 //		mem.createInitializedBlock("B2", addr(10000), new ByteArrayInputStream(bytesTwo),

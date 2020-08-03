@@ -31,7 +31,6 @@ import ghidra.util.Msg;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Database version of the DomainObjectAdapter; this version adds the
@@ -603,7 +602,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		DomainObjectAdapterDB userData = getUserData();
 		if (userData != null && userData.isChanged() && (getDomainFile() instanceof GhidraFile)) {
 			try {
-				userData.save(null, TaskMonitorAdapter.DUMMY_MONITOR);
+				userData.save(null, TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
 			}

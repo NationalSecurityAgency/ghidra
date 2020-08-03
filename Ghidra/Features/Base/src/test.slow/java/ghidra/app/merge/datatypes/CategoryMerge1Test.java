@@ -25,7 +25,7 @@ import ghidra.program.database.ProgramModifierListener;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for the merge data type manager.
@@ -102,7 +102,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					Structure s =
 						new StructureDataType(miscCat.getCategoryPath(), "My structure", 0);
 					s.add(new ByteDataType());
@@ -174,7 +174,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -531,7 +531,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -556,7 +556,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -595,7 +595,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -620,7 +620,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -659,7 +659,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -684,7 +684,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -732,7 +732,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -777,7 +777,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				try {
 					dtm.createCategory(path);
 					dtm.getRootCategory().removeCategory("MyCategory",
-						TaskMonitorAdapter.DUMMY_MONITOR);
+						TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (Exception e) {

@@ -38,7 +38,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for merging memory blocks.
@@ -95,13 +95,13 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		// create 4 blocks: 0-0f, 10-1f, 20-20f, 40-4f.
 		int transactionID = program.startTransaction("test");
 		memory.createInitializedBlock("block1", getAddr(0), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		memory.createInitializedBlock("block2", getAddr(0x10), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		memory.createInitializedBlock("block3", getAddr(0x20), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		memory.createInitializedBlock("block4", getAddr(0x40), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForPostedSwingRunnables();
@@ -129,13 +129,13 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		// create 4 blocks: 0-0f, 10-1f, 20-20f, 40-4f.
 		int transactionID = program.startTransaction("test");
 		memory.createInitializedBlock("block1", getAddr(0), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		memory.createInitializedBlock("block2", getAddr(0x10), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		memory.createInitializedBlock("block3", getAddr(0x20), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		memory.createInitializedBlock("block4", getAddr(0x40), 0x10, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForPostedSwingRunnables();
@@ -169,7 +169,7 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 
 		int transactionID = program.startTransaction("test");
 		memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForPostedSwingRunnables();
@@ -217,7 +217,7 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 
 		int transactionID = program.startTransaction("test");
 		memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForPostedSwingRunnables();

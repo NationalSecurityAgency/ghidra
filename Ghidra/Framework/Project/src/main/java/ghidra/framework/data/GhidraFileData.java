@@ -35,7 +35,6 @@ import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.TranslateIcon;
@@ -1018,7 +1017,7 @@ public class GhidraFileData {
 		}
 		verifyRepoUser("checkin");
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		synchronized (fileSystem) {
 			if (busy) {
@@ -1394,7 +1393,7 @@ public class GhidraFileData {
 		}
 		verifyRepoUser("merge");
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		synchronized (fileSystem) {
 			if (busy) {

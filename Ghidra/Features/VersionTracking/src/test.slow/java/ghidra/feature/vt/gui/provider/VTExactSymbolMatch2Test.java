@@ -29,7 +29,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 import java.util.*;
 
@@ -465,7 +465,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 	protected void addProgramCorrelation(VTProgramCorrelatorFactory correlatorFactory) {
 		try {
 			correlator =
-				vtTestEnv.correlate(correlatorFactory, null, TaskMonitorAdapter.DUMMY_MONITOR);
+				vtTestEnv.correlate(correlatorFactory, null, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			Assert.fail(e.getMessage());

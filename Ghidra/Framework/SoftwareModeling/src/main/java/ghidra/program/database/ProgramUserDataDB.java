@@ -36,7 +36,6 @@ import ghidra.util.Msg;
 import ghidra.util.Saveable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <code>ProgramUserDataDB</code> stores user data associated with a specific program.
@@ -134,10 +133,10 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			int id = startTransaction("create user data");
 
 			createDatabase();
-			if (createManagers(CREATE, program, TaskMonitorAdapter.DUMMY_MONITOR) != null) {
+			if (createManagers(CREATE, program, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
-			//initManagers(CREATE, TaskMonitorAdapter.DUMMY_MONITOR);
+			//initManagers(CREATE, TaskMonitor.DUMMY);
 
 			endTransaction(id, true);
 			changed = false;
@@ -162,7 +161,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		super(dbh, getName(program), 500, 1000, program);
 		this.program = program;
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		setEventsEnabled(false); // events not support
@@ -530,22 +529,22 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 				case PROPERTY_TYPE_STRING:
 					map = new StringPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
 						addressMap, rec.getString(PROPERTY_NAME_COL),
-						TaskMonitorAdapter.DUMMY_MONITOR);
+						TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_LONG:
 					map =
 						new LongPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr, addressMap,
-							rec.getString(PROPERTY_NAME_COL), TaskMonitorAdapter.DUMMY_MONITOR);
+							rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_INT:
 					map =
 						new IntPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr, addressMap,
-							rec.getString(PROPERTY_NAME_COL), TaskMonitorAdapter.DUMMY_MONITOR);
+							rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_BOOLEAN:
 					map =
 						new VoidPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr, addressMap,
-							rec.getString(PROPERTY_NAME_COL), TaskMonitorAdapter.DUMMY_MONITOR);
+							rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_SAVEABLE:
 					String className = rec.getString(PROPERTY_CLASS_COL);
@@ -553,7 +552,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 						ObjectPropertyMapDB.getSaveableClassForName(className);
 					return new ObjectPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
 						addressMap, rec.getString(PROPERTY_NAME_COL), c,
-						TaskMonitorAdapter.DUMMY_MONITOR, true);
+						TaskMonitor.DUMMY, true);
 				default:
 					throw new IllegalArgumentException("Unsupported property type: " + type);
 			}

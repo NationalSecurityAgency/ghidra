@@ -21,7 +21,6 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>ProgramMergeManager</CODE> is a class for merging the differences between two
@@ -428,7 +427,7 @@ public class ProgramMergeManager {
 		AddressSet p1CodeUnitSet = DiffUtility.getCodeUnitSet(p1MergeSet, this.program1);
 		if (monitor == null) {
 			// Create a "do nothing" task monitor that we can pass along.
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		// Check that the needed memory addresses are available in the merge program.

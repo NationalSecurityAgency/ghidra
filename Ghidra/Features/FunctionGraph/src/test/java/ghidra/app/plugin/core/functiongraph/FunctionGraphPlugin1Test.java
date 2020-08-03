@@ -87,7 +87,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 //		long startTime = System.nanoTime();
 //		BasicBlockModel blockModel = new BasicBlockModel(cppProgram, false);
 //		CodeBlockIterator iterator =
-//			blockModel.getCodeBlocksContaining(function.getBody(), TaskMonitorAdapter.DUMMY_MONITOR);
+//			blockModel.getCodeBlocksContaining(function.getBody(), TaskMonitor.DUMMY);
 //		while (iterator.hasNext()) {
 //			iterator.next();
 //		}

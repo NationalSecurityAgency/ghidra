@@ -42,7 +42,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.EquateTable;
 import ghidra.test.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for editing an Enumerated data type.
@@ -612,7 +612,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		DataTypeManager dtm = program.getDataTypeManager();
 		int transactionID = program.startTransaction("Test");
-		dtm.remove(enummDt, TaskMonitorAdapter.DUMMY_MONITOR);
+		dtm.remove(enummDt, TaskMonitor.DUMMY);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 		waitForSwing();
@@ -1026,7 +1026,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			Category newCategory = dtm.createCategory(new CategoryPath("/Test/Category"));
 			category = dtm.getCategory(enummDt.getCategoryPath());
-			newCategory.moveCategory(category, TaskMonitorAdapter.DUMMY_MONITOR);
+			newCategory.moveCategory(category, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(txID, true);
@@ -1046,7 +1046,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			Category category = dtm.getCategory(enummDt.getCategoryPath());
 			Category parentCategory = category.getParent();
 			assertTrue("Did not remove category", parentCategory.removeCategory(category.getName(),
-				TaskMonitorAdapter.DUMMY_MONITOR));
+				TaskMonitor.DUMMY));
 		}
 		finally {
 			program.endTransaction(txID, true);

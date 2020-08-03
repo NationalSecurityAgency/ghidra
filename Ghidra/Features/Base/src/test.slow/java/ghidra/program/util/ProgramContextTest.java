@@ -30,7 +30,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * quick and dirty test of the ProgramContextImpl just to see
@@ -81,7 +81,7 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 			Address start = getAddress(0);
 			try {
 				mem.createInitializedBlock("first", start, 100, (byte) 0,
-					TaskMonitorAdapter.DUMMY_MONITOR, false);
+					TaskMonitor.DUMMY, false);
 			}
 			catch (Exception e) {
 				Assert.fail("TestProgramContext: couldn't add block to memory");

@@ -33,7 +33,6 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 /// \brief A SLEIGH based implementation of the Emulate interface
 ///
 /// This implementation uses a Translate object to translate machine instructions into
@@ -90,7 +89,7 @@ public class Emulate {
 //		emitterContext = new EmulateDisassemblerContext(lang, s);
 
 		pseudoDisassembler =
-			Disassembler.getDisassembler(lang, addrFactory, TaskMonitorAdapter.DUMMY_MONITOR, null);
+			Disassembler.getDisassembler(lang, addrFactory, TaskMonitor.DUMMY, null);
 
 		initInstuctionStateModifier();
 	}

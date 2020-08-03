@@ -22,7 +22,7 @@ import java.util.Random;
 import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class FNV1a64MessageDigestTest {
 
@@ -37,7 +37,7 @@ public class FNV1a64MessageDigestTest {
 	public void testBasicValues() throws Exception {
 		byte[] input = bytearray(0xd5, 0x6b, 0xb9, 0x53, 0x42, 0x87, 0x08, 0x36);
 		byte[] target = bytearray(0, 0, 0, 0, 0, 0, 0, 0);
-		digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+		digest.update(input, TaskMonitor.DUMMY);
 		byte[] actual = digest.digest();
 		assertArrayEquals(target, actual);
 	}
@@ -56,9 +56,9 @@ public class FNV1a64MessageDigestTest {
 		for (int ii = 0; ii < 10; ++ii) {
 			byte[] input = new byte[20];
 			random.nextBytes(input);
-			digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+			digest.update(input, TaskMonitor.DUMMY);
 			byte[] bytes = digest.digest();
-			digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+			digest.update(input, TaskMonitor.DUMMY);
 			long asLong = digest.digestLong();
 
 			long acc = 0;
@@ -73,7 +73,7 @@ public class FNV1a64MessageDigestTest {
 	@Test
 	public void testLongerRequests() throws Exception {
 		byte[] input = bytearray('F', 'o', 'o', 'b', 'a', 'r');
-		digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+		digest.update(input, TaskMonitor.DUMMY);
 		byte[] reference = digest.digest();
 
 		for (int beforeLength = 0; beforeLength < digest.getDigestLength(); ++beforeLength) {
@@ -86,7 +86,7 @@ public class FNV1a64MessageDigestTest {
 					for (int ii = 0; ii < output.length; ++ii) {
 						output[ii] = MARKER;
 					}
-					digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+					digest.update(input, TaskMonitor.DUMMY);
 					digest.digest(output, beforeLength, requestLength);
 					for (int ii = 0; ii < beforeLength; ++ii) {
 						assertEquals(

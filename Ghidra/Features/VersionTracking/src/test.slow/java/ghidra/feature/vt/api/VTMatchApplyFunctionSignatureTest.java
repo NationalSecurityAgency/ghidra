@@ -48,7 +48,6 @@ import ghidra.test.TestEnv;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -105,7 +104,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 //		try {
 //			correlator =
 //				vtTestEnv.correlate(new ExactMatchInstructionsProgramCorrelatorFactory(), null,
-//					TaskMonitorAdapter.DUMMY_MONITOR);
+//					TaskMonitor.DUMMY);
 //		}
 //		catch (Exception e) {
 //			Assert.fail(e.getMessage());
@@ -1637,7 +1636,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	private VTMarkupItem getFunctionSignatureMarkup(VTMatch match) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			if (vtMarkupItem.getMarkupType() instanceof FunctionSignatureMarkupType) {
 				return vtMarkupItem;
@@ -1744,7 +1743,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 				}
 			}
 			assertNotNull(compilerSpecID);
-			program.setLanguage(language, compilerSpecID, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.setLanguage(language, compilerSpecID, true, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(transaction, true);

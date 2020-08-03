@@ -31,7 +31,6 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.model.util.PropertyMap;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Database implementation of Listing.
@@ -438,7 +437,7 @@ class ListingDB implements Listing {
 	public void clearCodeUnits(Address startAddr, Address endAddr, boolean clearContext) {
 		try {
 			codeMgr.clearCodeUnits(startAddr, endAddr, clearContext,
-				TaskMonitorAdapter.DUMMY_MONITOR);
+				TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 		}
@@ -483,7 +482,7 @@ class ListingDB implements Listing {
 	 */
 	@Override
 	public void clearAll(boolean clearContext, TaskMonitor monitor) {
-		codeMgr.clearAll(false, TaskMonitorAdapter.DUMMY_MONITOR);
+		codeMgr.clearAll(false, TaskMonitor.DUMMY);
 	}
 
 	/**

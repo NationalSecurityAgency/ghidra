@@ -96,7 +96,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		session = vtTestEnv.createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
 		try {
 			correlator = vtTestEnv.correlate(new ExactMatchInstructionsProgramCorrelatorFactory(),
-				null, TaskMonitorAdapter.DUMMY_MONITOR);
+				null, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			failWithException("Exceptioin correlating", e);
@@ -308,7 +308,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		controller.runVTTask(task);
 
 		vtTestEnv.correlate(new SymbolNameProgramCorrelatorFactory(), null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		sourceAddress = sourceProgram.getAddressFactory().getAddress("0x00411860");
 		sourceFunction = sourceProgram.getFunctionManager().getFunctionAt(sourceAddress);
@@ -347,7 +347,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 		controller.runVTTask(task);
 
 		vtTestEnv.correlate(new SymbolNameProgramCorrelatorFactory(), null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		sourceAddress = sourceProgram.getAddressFactory().getAddress("0x00411860");
 		sourceFunction = sourceProgram.getFunctionManager().getFunctionAt(sourceAddress);
@@ -580,7 +580,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 	private void replaceMarkup(VTMatch match, String markupSourceAddress, String markupType) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			Address itemSourceAddress = vtMarkupItem.getSourceAddress();
 			VTMarkupType itemMarkupType = vtMarkupItem.getMarkupType();
@@ -599,7 +599,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 	private void addMarkup(VTMatch match, String markupSourceAddress, String markupType) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			Address itemSourceAddress = vtMarkupItem.getSourceAddress();
 			VTMarkupType itemMarkupType = vtMarkupItem.getMarkupType();
@@ -619,7 +619,7 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 			String markupSourceAddress, String markupType) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			Address itemSourceAddress = vtMarkupItem.getSourceAddress();
 			VTMarkupType itemMarkupType = vtMarkupItem.getMarkupType();

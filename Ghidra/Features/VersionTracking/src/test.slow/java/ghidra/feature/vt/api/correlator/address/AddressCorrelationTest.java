@@ -33,7 +33,6 @@ import ghidra.program.util.AddressCorrelation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 import java.util.Collection;
 import java.util.List;
@@ -354,7 +353,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 	protected void addProgramCorrelation(VTProgramCorrelatorFactory correlatorFactory) {
 		try {
 			correlator =
-				vtTestEnv.correlate(correlatorFactory, null, TaskMonitorAdapter.DUMMY_MONITOR);
+				vtTestEnv.correlate(correlatorFactory, null, TaskMonitor.DUMMY);
 		}
 		catch (Exception e) {
 			Assert.fail(e.getMessage());

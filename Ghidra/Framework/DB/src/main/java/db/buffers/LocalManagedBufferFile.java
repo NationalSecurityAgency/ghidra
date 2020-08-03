@@ -21,7 +21,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <code>LocalManagedBufferFile</code> implements a BufferFile as block-oriented
@@ -607,7 +606,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	@Override
 	public synchronized ManagedBufferFile getSaveFile() throws IOException {
 		try {
-			return getSaveFile(TaskMonitorAdapter.DUMMY_MONITOR);
+			return getSaveFile(TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// unexpected

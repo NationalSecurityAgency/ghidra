@@ -28,7 +28,7 @@ import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.test.TestEnv;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * This model is used by the {@link MergeTestFacilitator} to configure programs needed 
@@ -129,7 +129,7 @@ public abstract class AbstractMTFModel {
 		BufferFile bufferFile = item.open();
 		try {
 			fileSystem.createDatabase(parent.getPathname(), newName, FileIDFactory.createFileID(),
-				bufferFile, null, item.getContentType(), false, TaskMonitorAdapter.DUMMY_MONITOR,
+				bufferFile, null, item.getContentType(), false, TaskMonitor.DUMMY,
 				null);
 		}
 		finally {

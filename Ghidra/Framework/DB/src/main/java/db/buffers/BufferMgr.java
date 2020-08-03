@@ -28,7 +28,6 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.ObjectArray;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <code>BufferMgr</code> provides low-level buffer management and caching.
@@ -1755,7 +1754,7 @@ public class BufferMgr {
 				}
 
 				if (monitor == null) {
-					monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+					monitor = TaskMonitor.DUMMY;
 				}
 
 				boolean oldCancelState = monitor.isCancelEnabled();
@@ -1840,7 +1839,7 @@ public class BufferMgr {
 				}
 
 				if (monitor == null) {
-					monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+					monitor = TaskMonitor.DUMMY;
 				}
 
 				int indexCnt = indexProvider.getIndexCount();
@@ -1880,7 +1879,7 @@ public class BufferMgr {
 		int preSaveCnt = outFile.getIndexCount();
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		monitor.initialize(indexCnt);
 		monitor.setMessage("Saving file...");

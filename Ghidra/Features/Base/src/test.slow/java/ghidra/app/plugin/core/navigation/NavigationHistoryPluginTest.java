@@ -37,7 +37,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.test.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for tool state history plugin.
@@ -96,7 +96,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		// go to sscanf
 		QueryData queryData = new QueryData("sscanf", false);
 		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		assertTrue(plugin.hasPrevious(navigatable));
 
@@ -136,7 +136,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 	public void testNext() throws Exception {
 		QueryData queryData = new QueryData("sscanf", false);
 		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		assertTrue(plugin.hasPrevious(navigatable));
 
@@ -228,7 +228,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		QueryData queryData = new QueryData("sscanf", false);
 
 		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		ProgramLocation loc = cb.getCurrentLocation();
 		assertTrue(loc instanceof FunctionSignatureFieldLocation);
@@ -280,7 +280,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 		QueryData queryData = new QueryData("sscanf", false);
 		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		ProgramLocation loc = cb.getCurrentLocation();
 
@@ -304,7 +304,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 
 		QueryData queryData = new QueryData("sscanf", false);
 		goToService.goToQuery(program.getMinAddress(), queryData, null,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		assertTrue(plugin.hasPrevious(navigatable));
 

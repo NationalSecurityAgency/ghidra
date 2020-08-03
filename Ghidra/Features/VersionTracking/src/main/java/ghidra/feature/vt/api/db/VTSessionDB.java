@@ -329,7 +329,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 	@Override
 	public void save() throws IOException {
 		try {
-			save(DESTINATION_PROGRAM_ID_PROPERTY_KEY, TaskMonitorAdapter.DUMMY_MONITOR);
+			save(DESTINATION_PROGRAM_ID_PROPERTY_KEY, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// can't happen because we are using a dummy monitor

@@ -27,7 +27,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ImpliedMatchAssociationHook implements AssociationHook, VTControllerListener {
 	private VTSession session;
@@ -71,7 +71,7 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 			try {
 				Set<VTImpliedMatchInfo> impliedMatches =
 					ImpliedMatchUtils.findImpliedMatches(controller, source, destination, session,
-						correlator, TaskMonitorAdapter.DUMMY_MONITOR);
+						correlator, TaskMonitor.DUMMY);
 				processAssociationAccepted(impliedMatches);
 			}
 			catch (Exception e) {
@@ -116,7 +116,7 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 		try {
 			Set<VTImpliedMatchInfo> impliedMatches =
 				ImpliedMatchUtils.findImpliedMatches(controller, source, destination, session,
-					correlator, TaskMonitorAdapter.DUMMY_MONITOR);
+					correlator, TaskMonitor.DUMMY);
 			processAssociationCleared(impliedMatches);
 		}
 		catch (CancelledException e) {

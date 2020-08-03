@@ -31,7 +31,7 @@ import ghidra.program.database.mem.MemoryMapDB;
 import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -89,7 +89,7 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 
 	private void createPropertyMap(String name) throws Exception {
 		propertyMap = new LongPropertyMapDB(db, DBConstants.CREATE, this, null, addrMap, name,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		propertyMap.setCacheSize(2);
 	}
 

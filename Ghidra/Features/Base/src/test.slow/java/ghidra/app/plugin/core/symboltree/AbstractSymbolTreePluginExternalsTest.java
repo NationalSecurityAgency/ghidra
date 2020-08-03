@@ -55,7 +55,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for the symbol tree plugin.
@@ -468,7 +468,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		Address address = program.getAddressFactory().getAddress(startAddress);
 		Memory memory = program.getMemory();
 		memory.createInitializedBlock(name, address, length, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, true);
+			TaskMonitor.DUMMY, true);
 		program.endTransaction(transactionID, true);
 	}
 

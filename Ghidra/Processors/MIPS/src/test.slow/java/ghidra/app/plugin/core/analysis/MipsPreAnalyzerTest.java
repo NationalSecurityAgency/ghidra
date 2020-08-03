@@ -28,7 +28,6 @@ import ghidra.program.model.listing.ProgramContext;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Analyzer Test for Mips Pre-Analyzer
@@ -320,6 +319,6 @@ public class MipsPreAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	private TaskMonitor getTaskMonitor() {
-		return TaskMonitorAdapter.DUMMY_MONITOR;
+		return TaskMonitor.DUMMY;
 	}
 }

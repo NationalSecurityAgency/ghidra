@@ -32,7 +32,7 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ForceApplyOfExcludedMarkupTest extends AbstractFunctionSignatureMarkupTest {
 
@@ -274,7 +274,7 @@ public class ForceApplyOfExcludedMarkupTest extends AbstractFunctionSignatureMar
 	protected VTMarkupItem getFunctionNameMarkup(VTMatch match) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			if (vtMarkupItem.getMarkupType() instanceof FunctionNameMarkupType) {
 				return vtMarkupItem;
@@ -296,7 +296,7 @@ public class ForceApplyOfExcludedMarkupTest extends AbstractFunctionSignatureMar
 	protected VTMarkupItem getCommentMarkup(VTMatch match, int commentType) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			switch (commentType) {
 				case CodeUnit.PLATE_COMMENT:

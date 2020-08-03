@@ -30,7 +30,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.DataConverter;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractFollowFlowTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -71,7 +71,7 @@ public abstract class AbstractFollowFlowTest extends AbstractGhidraHeadedIntegra
 
 	AddressSetView getFlowsFrom(AddressSet startSet, FlowType[] excludedFlows) {
 		FollowFlow followFlow = new FollowFlow(program, startSet, excludedFlows);
-		return followFlow.getFlowAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		return followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
 	}
 
 	AddressSetView getFlowsTo(int startAddressOffset, FlowType[] excludedFlows) {
@@ -84,7 +84,7 @@ public abstract class AbstractFollowFlowTest extends AbstractGhidraHeadedIntegra
 
 	AddressSetView getFlowsTo(AddressSet startSet, FlowType[] excludedFlows) {
 		FollowFlow followFlow = new FollowFlow(program, startSet, excludedFlows);
-		return followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		return followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 	}
 
 	FlowType[] followAllFlows() {

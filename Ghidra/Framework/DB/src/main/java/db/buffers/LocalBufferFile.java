@@ -1401,7 +1401,7 @@ public class LocalBufferFile implements BufferFile {
 		}
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		int srcBlockCnt;

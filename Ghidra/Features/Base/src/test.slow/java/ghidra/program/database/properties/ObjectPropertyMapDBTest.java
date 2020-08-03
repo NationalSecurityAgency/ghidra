@@ -32,7 +32,7 @@ import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Saveable;
 import ghidra.util.prop.PropertyVisitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -90,7 +90,7 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 
 	private void createPropertyMap(String name) throws Exception {
 		propertyMap = new ObjectPropertyMapDB(db, DBConstants.CREATE, this, null, addrMap, name,
-			TestSaveable.class, TaskMonitorAdapter.DUMMY_MONITOR, true);
+			TestSaveable.class, TaskMonitor.DUMMY, true);
 		propertyMap.setCacheSize(2);
 	}
 

@@ -37,7 +37,6 @@ import ghidra.util.DataConverter;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class OmfLoader extends AbstractLibrarySupportLoader {
 	public final static String OMF_NAME = "Relocatable Object Module Format (OMF)";
@@ -84,7 +83,7 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 			reader.setPointerIndex(0);
 			OmfFileHeader scan;
 			try {
-				scan = OmfFileHeader.scan(reader, TaskMonitorAdapter.DUMMY_MONITOR, true);
+				scan = OmfFileHeader.scan(reader, TaskMonitor.DUMMY, true);
 			}
 			catch (OmfException e) {
 				throw new IOException("Bad header format: " + e.getMessage());

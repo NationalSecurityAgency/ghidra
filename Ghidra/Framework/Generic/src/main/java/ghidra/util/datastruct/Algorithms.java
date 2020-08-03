@@ -18,7 +18,6 @@ package ghidra.util.datastruct;
 
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 import java.util.*;
 
@@ -64,7 +63,7 @@ public class Algorithms {
 
 	public static <T> void bubbleSort(List<T> data, int low, int high, Comparator<T> comparator) {
 		try {
-			doBubbleSort(data, low, high, comparator, TaskMonitorAdapter.DUMMY_MONITOR);
+			doBubbleSort(data, low, high, comparator, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// do nothing--cancelled

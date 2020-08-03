@@ -29,7 +29,6 @@ import ghidra.program.model.data.Composite.AlignmentType;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 
@@ -86,7 +85,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 			init(complexUnion, pgmTestCat, false);
 
 			assertEquals("/aa/bb", getDataType(20).getCategoryPath().getPath());
-			pgmTestCat.moveCategory(pgmBbCat, TaskMonitorAdapter.DUMMY_MONITOR);
+			pgmTestCat.moveCategory(pgmBbCat, TaskMonitor.DUMMY);
 			waitForSwing();
 			assertEquals("/testCat/bb", getDataType(20).getCategoryPath().getPath());
 		}
@@ -101,7 +100,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 			init(simpleUnion, pgmBbCat, false);
 
 			assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
-			pgmTestCat.moveCategory(pgmBbCat, TaskMonitorAdapter.DUMMY_MONITOR);
+			pgmTestCat.moveCategory(pgmBbCat, TaskMonitor.DUMMY);
 			waitForSwing();
 			assertTrue(model.getOriginalCategoryPath().getPath().startsWith(
 				pgmTestCat.getCategoryPathName()));
@@ -142,9 +141,9 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 			DataType dt18 = getDataType(18).clone(programDTM);
 			DataType dt20 = getDataType(20).clone(programDTM);
 			SwingUtilities.invokeLater(() -> {
-				programDTM.remove(complexUnion, TaskMonitorAdapter.DUMMY_MONITOR);
+				programDTM.remove(complexUnion, TaskMonitor.DUMMY);
 				programDTM.getCategory(pgmRootCat.getCategoryPath()).removeCategory("Temp",
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 			});
 
 			waitForSwing();
@@ -374,7 +373,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 
 			assertEquals(21, model.getNumComponents());
 			SwingUtilities.invokeLater(() -> complexUnion.getDataTypeManager().remove(
-				simpleStructure, TaskMonitorAdapter.DUMMY_MONITOR));
+				simpleStructure, TaskMonitor.DUMMY));
 			waitForSwing();
 			assertEquals(15, model.getNumComponents());
 		}
@@ -400,7 +399,7 @@ public class UnionEditorNotifiedTest extends AbstractUnionEditorTest {
 			assertTrue(simpleUnion.isEquivalent(getDataType(0)));
 
 			SwingUtilities.invokeLater(() -> simpleUnion.getDataTypeManager().remove(simpleUnion,
-				TaskMonitorAdapter.DUMMY_MONITOR));
+				TaskMonitor.DUMMY));
 			waitForSwing();
 			assertEquals(0, model.getNumComponents());
 		}

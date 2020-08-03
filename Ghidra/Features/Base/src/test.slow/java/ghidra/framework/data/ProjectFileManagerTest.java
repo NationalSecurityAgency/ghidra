@@ -35,7 +35,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -180,7 +180,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		Language language = getSLEIGH_X86_LANGUAGE();
 		Program p = new ProgramDB(name, language, language.getDefaultCompilerSpec(), this);
 		try {
-			return folder.createFile(name, p, TaskMonitorAdapter.DUMMY_MONITOR);
+			return folder.createFile(name, p, TaskMonitor.DUMMY);
 		}
 		finally {
 			p.release(this);
@@ -215,7 +215,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		assertNotNull(df2);
 		assertEquals("file2", df.getName());
 
-		df1.addToVersionControl("", false, TaskMonitorAdapter.DUMMY_MONITOR);
+		df1.addToVersionControl("", false, TaskMonitor.DUMMY);
 
 		df = fileMgr.getFileByID(fileID1);
 		assertNotNull(df1);
@@ -262,7 +262,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		DomainFile df1 = createFile(folder, "file1");
 		String fileID = df1.getFileID();
 
-		df1.addToVersionControl("", true, TaskMonitorAdapter.DUMMY_MONITOR);
+		df1.addToVersionControl("", true, TaskMonitor.DUMMY);
 		assertEquals(fileID, df1.getFileID());
 
 		df1.undoCheckout(true);
@@ -282,7 +282,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		// create shared file /a/file1 and keep checked-out
 		DomainFile df1 = createFile(folder, "file1");
 		String fileID = df1.getFileID();
-		df1.addToVersionControl("", true, TaskMonitorAdapter.DUMMY_MONITOR);
+		df1.addToVersionControl("", true, TaskMonitor.DUMMY);
 		assertEquals(fileID, df1.getFileID());
 
 		// Force Hijack - terminate checkout at versioned file-system

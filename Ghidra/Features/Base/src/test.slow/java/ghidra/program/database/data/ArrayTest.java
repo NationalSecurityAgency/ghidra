@@ -27,7 +27,7 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 import org.junit.*;
 
@@ -117,7 +117,7 @@ public class ArrayTest extends AbstractGhidraHeadedIntegrationTest {
 		listing.getDataAt(addr(0x100));
 		CategoryPath path = dt.getCategoryPath();
 		assertNotNull(path);
-		dt.getDataTypeManager().remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+		dt.getDataTypeManager().remove(dt, TaskMonitor.DUMMY);
 
 		assertTrue(array.isDeleted());
 		assertNull(dt.getDataTypeManager().getDataType(path, name));
@@ -215,7 +215,7 @@ public class ArrayTest extends AbstractGhidraHeadedIntegrationTest {
 	private void addBlock() throws Exception {
 		Memory mem = program.getMemory();
 		mem.createInitializedBlock("test", addr(0), 0x1000L, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 	}
 
 	private Address addr(int offset) {

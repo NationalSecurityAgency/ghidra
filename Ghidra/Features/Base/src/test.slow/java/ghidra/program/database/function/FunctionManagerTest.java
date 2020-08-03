@@ -34,7 +34,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -54,7 +54,7 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		functionManager = program.getFunctionManager();
 		transactionID = program.startTransaction("Test");
 		program.getMemory().createInitializedBlock("temp", addr(0), 10000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 	}
 
 	@After

@@ -27,7 +27,6 @@ import ghidra.util.graph.*;
 import ghidra.util.graph.attributes.AttributeManager;
 import ghidra.util.graph.attributes.IntegerAttribute;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>PartitionCodeSubModel</CODE> (Model-P) defines subroutines which do not share code with
@@ -286,7 +285,7 @@ public class PartitionCodeSubModel implements SubroutineBlockModel {
 		// Determine if block is terminal
 		try {
 			CodeBlockReferenceIterator iter =
-				new SubroutineDestReferenceIterator(block, TaskMonitorAdapter.DUMMY_MONITOR);
+				new SubroutineDestReferenceIterator(block, TaskMonitor.DUMMY);
 			while (iter.hasNext()) {
 				if (!iter.next().getFlowType().isCall()) {
 					return RefType.FLOW;

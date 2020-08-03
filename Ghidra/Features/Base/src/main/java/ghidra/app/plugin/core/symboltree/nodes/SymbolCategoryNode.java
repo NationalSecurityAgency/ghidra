@@ -25,7 +25,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public abstract class SymbolCategoryNode extends SymbolTreeNode {
 	protected SymbolCategory symbolCategory;
@@ -171,7 +170,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		Namespace parentNamespace = symbol.getParentNamespace();
 		Symbol namespaceSymbol = parentNamespace.getSymbol();
 		SymbolNode key = SymbolNode.createNode(namespaceSymbol, program);
-		parentNode = findSymbolTreeNode(key, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		parentNode = findSymbolTreeNode(key, false, TaskMonitor.DUMMY);
 		if (parentNode == null) {
 			return null;
 		}

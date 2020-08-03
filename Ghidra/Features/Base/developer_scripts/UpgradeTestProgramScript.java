@@ -21,7 +21,7 @@ import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,7 +80,7 @@ public class UpgradeTestProgramScript extends GhidraScript {
 	private boolean upgradeProgramArchive(File gzf) throws IOException, CancelledException,
 			VersionException {
 
-		PackedDatabase db = PackedDatabase.getPackedDatabase(gzf, TaskMonitorAdapter.DUMMY_MONITOR);
+		PackedDatabase db = PackedDatabase.getPackedDatabase(gzf, TaskMonitor.DUMMY);
 		DBHandle dbh = null;
 		ProgramDB p = null;
 		try {

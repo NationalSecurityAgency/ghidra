@@ -27,7 +27,7 @@ import db.DBFileListener;
 import db.Database;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.store.db.PrivateDatabase;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 /**
@@ -103,7 +103,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 				bufferMgr.releaseBuffer(buf);
 			}
 
-			bufferMgr.saveAs(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			bufferMgr.saveAs(bf, true, TaskMonitor.DUMMY);
 
 			// Grow file if requested
 			int modCnt = 0;
@@ -118,7 +118,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 			System.out.println("Added " + modCnt + " buffers");
 			bufferMgr.checkpoint();
 
-			bufferMgr.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR);
+			bufferMgr.takeRecoverySnapshot(null, TaskMonitor.DUMMY);
 
 			assertTrue(RecoveryMgr.canRecover(bf));
 
@@ -140,7 +140,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 			System.out.println("Modified " + modCnt + " buffers");
 			bufferMgr.checkpoint();
 
-			bufferMgr.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR);
+			bufferMgr.takeRecoverySnapshot(null, TaskMonitor.DUMMY);
 
 			assertTrue(RecoveryMgr.canRecover(bf));
 
@@ -154,7 +154,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 			System.out.println("Modified " + modCnt + " buffers");
 			bufferMgr.checkpoint();
 
-			assertTrue(bufferMgr.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(bufferMgr.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 			assertTrue(RecoveryMgr.canRecover(bf));
 
@@ -168,7 +168,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 			System.out.println("Modified " + modCnt + " buffers");
 			bufferMgr.checkpoint();
 
-			assertTrue(bufferMgr.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(bufferMgr.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 			assertTrue(RecoveryMgr.canRecover(bf));
 
@@ -209,7 +209,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 
 			bufferMgr2 = new BufferMgr(bf2);
 
-			assertTrue(bufferMgr2.recover(TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(bufferMgr2.recover(TaskMonitor.DUMMY));
 
 			assertTrue(bufferMgr2.canSave());
 
@@ -271,11 +271,11 @@ public class RecoveryFileTest extends AbstractGenericTest {
 
 			bufferMgr2 = new BufferMgr(bf2);
 
-			assertTrue(bufferMgr2.recover(TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(bufferMgr2.recover(TaskMonitor.DUMMY));
 
 			assertTrue(bufferMgr2.canSave());
 
-			bufferMgr2.save(null, null, TaskMonitorAdapter.DUMMY_MONITOR);
+			bufferMgr2.save(null, null, TaskMonitor.DUMMY);
 
 			// Open saved file and check content
 
@@ -331,7 +331,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 
 			bufferMgr.undo(true);
 
-			assertTrue(bufferMgr.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(bufferMgr.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 			PrivateDatabase pdb = new PrivateDatabase(testDir);
 			pdb.refresh();
@@ -346,7 +346,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 
 			bufferMgr2 = new BufferMgr(bf2);
 
-			assertTrue(bufferMgr2.recover(TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(bufferMgr2.recover(TaskMonitor.DUMMY));
 
 			assertTrue(bufferMgr2.canSave());
 
@@ -402,7 +402,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 			bufferMgr.undo(true);
 			bufferMgr.undo(true);
 
-			assertTrue(bufferMgr.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(bufferMgr.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 			PrivateDatabase pdb = new PrivateDatabase(testDir);
 			pdb.refresh();
@@ -417,7 +417,7 @@ public class RecoveryFileTest extends AbstractGenericTest {
 
 			bufferMgr2 = new BufferMgr(bf2);
 
-			assertTrue(bufferMgr2.recover(TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(bufferMgr2.recover(TaskMonitor.DUMMY));
 
 			assertTrue(bufferMgr2.canSave());
 

@@ -37,7 +37,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class FixLangId extends GhidraScript {
 
@@ -78,7 +78,7 @@ public class FixLangId extends GhidraScript {
 			return;
 		}
 
-		dbh.save("Set Language", null, TaskMonitorAdapter.DUMMY_MONITOR);
+		dbh.save("Set Language", null, TaskMonitor.DUMMY);
 		dbh.close();
 	}
 

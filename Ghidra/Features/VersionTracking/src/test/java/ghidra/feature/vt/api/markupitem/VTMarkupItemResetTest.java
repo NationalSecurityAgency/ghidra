@@ -31,7 +31,6 @@ import ghidra.feature.vt.db.VTBaseTestCase;
 import ghidra.feature.vt.db.VTTestUtils;
 import ghidra.program.model.address.Address;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class VTMarkupItemResetTest extends VTBaseTestCase {
 
@@ -253,7 +252,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 		Object markupItemManager = getInstanceField("markupManager", association);
 		return (Collection<VTMarkupItem>) invokeInstanceMethod("getStoredMarkupItems",
 			markupItemManager, new Class[] { TaskMonitor.class },
-			new Object[] { TaskMonitorAdapter.DUMMY_MONITOR });
+			new Object[] { TaskMonitor.DUMMY });
 	}
 
 	private VTMarkupItemApplyActionType createRandomApplyAction(VTMarkupItem item) {

@@ -28,7 +28,6 @@ import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class ClearCmd extends BackgroundCommand {
 	private static final int EVENT_LIMIT = 1000;
@@ -104,7 +103,7 @@ public class ClearCmd extends BackgroundCommand {
 			throws CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		Program program = (Program) obj;

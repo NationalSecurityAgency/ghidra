@@ -30,7 +30,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import ghidra.util.xml.*;
 import ghidra.xml.*;
 
@@ -682,7 +681,7 @@ public class DataTypesXmlMgr {
 		MessageLog log = new MessageLog();
 		DataTypesXmlMgr mgr = new DataTypesXmlMgr(dataManager, log);
 		try {
-			mgr.write(writer, TaskMonitorAdapter.DUMMY_MONITOR);
+			mgr.write(writer, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 		}

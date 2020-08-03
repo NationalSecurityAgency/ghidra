@@ -27,7 +27,7 @@ import org.junit.Test;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UsrException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
@@ -80,7 +80,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 
 		assertEquals("simpleStructure", getDataType(21).getName());
 		assertEquals("/aa/bb", getDataType(21).getCategoryPath().getPath());
-		pgmTestCat.moveCategory(pgmBbCat, TaskMonitorAdapter.DUMMY_MONITOR);
+		pgmTestCat.moveCategory(pgmBbCat, TaskMonitor.DUMMY);
 		waitForPostedSwingRunnables();
 		assertEquals("/testCat/bb", getDataType(21).getCategoryPath().getPath());
 	}
@@ -90,7 +90,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		init(simpleStructure, pgmBbCat);
 
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
-		pgmTestCat.moveCategory(pgmBbCat, TaskMonitorAdapter.DUMMY_MONITOR);
+		pgmTestCat.moveCategory(pgmBbCat, TaskMonitor.DUMMY);
 		waitForPostedSwingRunnables();
 		assertTrue(
 			model.getOriginalCategoryPath().getPath().startsWith(pgmTestCat.getCategoryPathName()));
@@ -121,9 +121,9 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertEquals(4, dataType10.getLength());
 
 		SwingUtilities.invokeLater(() -> {
-			programDTM.remove(complexStructure, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDTM.remove(complexStructure, TaskMonitor.DUMMY);
 			programDTM.getCategory(pgmRootCat.getCategoryPath()).removeCategory("Temp",
-				TaskMonitorAdapter.DUMMY_MONITOR);
+				TaskMonitor.DUMMY);
 		});
 		waitForPostedSwingRunnables();
 		// complexStructure* gets removed and becomes 4 undefined bytes in this editor.
@@ -576,7 +576,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		DataType dt10 = getDataType(10).clone(programDTM);
 
 		SwingUtilities.invokeLater(() -> complexStructure.getDataTypeManager().remove(simpleUnion,
-			TaskMonitorAdapter.DUMMY_MONITOR));
+			TaskMonitor.DUMMY));
 		waitForPostedSwingRunnables();
 
 		assertEquals(30, model.getNumComponents());
@@ -609,7 +609,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		assertTrue(simpleStructure.isEquivalent(getDataType(0)));
 
 		SwingUtilities.invokeLater(() -> simpleStructure.getDataTypeManager().remove(
-			simpleStructure, TaskMonitorAdapter.DUMMY_MONITOR));
+			simpleStructure, TaskMonitor.DUMMY));
 		waitForPostedSwingRunnables();
 		assertEquals(29, model.getNumComponents());// becomes undefined bytes
 	}

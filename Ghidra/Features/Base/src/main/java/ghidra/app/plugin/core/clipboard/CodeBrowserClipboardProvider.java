@@ -308,7 +308,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 //			AddressSet addressSet = new AddressSet(currentProgram.getAddressFactory(), address);
 //			String byteString =
 //				copyBytesAsString(addressSet.getAddressRanges(), false,
-//					TaskMonitorAdapter.DUMMY_MONITOR);
+//					TaskMonitor.DUMMY);
 //			return new ByteViewerTransferable(byteString);
 			return copyByteString(address);
 		}

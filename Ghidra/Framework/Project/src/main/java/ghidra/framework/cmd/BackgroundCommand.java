@@ -17,7 +17,6 @@ package ghidra.framework.cmd;
 
 import ghidra.framework.model.DomainObject;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Abstract command that will be run in a thread (in the background)
@@ -56,7 +55,7 @@ public abstract class BackgroundCommand implements Command {
 	 */
 	@Override
 	public final boolean applyTo(DomainObject obj) {
-		return applyTo(obj, TaskMonitorAdapter.DUMMY_MONITOR);
+		return applyTo(obj, TaskMonitor.DUMMY);
 	}
 
 	/**

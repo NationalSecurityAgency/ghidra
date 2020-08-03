@@ -33,7 +33,6 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import utilities.util.FileUtilities;
 import utility.module.ModuleUtilities;
 
@@ -1080,10 +1079,10 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				System.out.println("Exclude " + module.getName());
 			}
 
-			builder.buildJar(outputFile, extraBinDir, TaskMonitorAdapter.DUMMY_MONITOR);
+			builder.buildJar(outputFile, extraBinDir, TaskMonitor.DUMMY);
 
 			if (srczip != null) {
-				builder.buildSrcZip(srczip, TaskMonitorAdapter.DUMMY_MONITOR);
+				builder.buildSrcZip(srczip, TaskMonitor.DUMMY);
 			}
 		}
 		catch (Exception e) {

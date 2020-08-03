@@ -37,7 +37,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.test.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -367,7 +366,7 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 			// Association markupItemManger expects all markups to be generated though it.
 			// Call it to put it in a good state.
 			VTAssociation association = addedMatch.getAssociation();
-			association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			association.getMarkupItems(TaskMonitor.DUMMY);
 
 			return addedMatch;
 		}

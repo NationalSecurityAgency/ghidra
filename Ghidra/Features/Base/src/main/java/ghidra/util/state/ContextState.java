@@ -29,7 +29,6 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class ContextState {
 
@@ -492,7 +491,7 @@ public class ContextState {
 	 */
 	public Varnode get(int spaceID, Varnode offsetValue, int size) {
 		try {
-			return get(spaceID, offsetValue, size, TaskMonitorAdapter.DUMMY_MONITOR);
+			return get(spaceID, offsetValue, size, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			throw new AssertException(e); // unexpected
@@ -585,7 +584,7 @@ public class ContextState {
 	 */
 	public Varnode get(Varnode varnode) {
 		try {
-			return get(varnode, TaskMonitorAdapter.DUMMY_MONITOR);
+			return get(varnode, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			throw new AssertException(e); // unexpected

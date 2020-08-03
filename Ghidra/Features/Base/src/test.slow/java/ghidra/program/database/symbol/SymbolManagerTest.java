@@ -38,7 +38,7 @@ import ghidra.test.TestEnv;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /*
  * Tests for the symbol manager that uses database.
@@ -65,7 +65,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Memory memory = program.getMemory();
 		transactionID = program.startTransaction("Test");
 		memory.createInitializedBlock("test", addr(0), 5000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		st = program.getSymbolTable();
 		refMgr = program.getReferenceManager();
 		scopeMgr = program.getNamespaceManager();
@@ -394,7 +394,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testGetDefaultFunctionInOverlaySymbolByName() throws Exception {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.createInitializedBlock("ov_12", addr(0), 5000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, true);
+			TaskMonitor.DUMMY, true);
 		Address ovAddress = block.getStart();
 		assertEquals("ov_12::00000000", ovAddress.toString());
 
@@ -422,7 +422,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		int txID = p.startTransaction("test");
 		Memory memory = p.getMemory();
 		MemoryBlock block = memory.createInitializedBlock("ov12", address, 5000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, true);
+			TaskMonitor.DUMMY, true);
 		Address ovAddress = block.getStart();
 		assertEquals("ov12::00000000", ovAddress.toString());
 		ovAddress = ovAddress.add(2);

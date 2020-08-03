@@ -29,7 +29,6 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class GhidraFile implements DomainFile {
 
@@ -177,21 +176,21 @@ public class GhidraFile implements DomainFile {
 	public DomainObject getDomainObject(Object consumer, boolean okToUpgrade, boolean okToRecover,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		return getFileData().getDomainObject(consumer, okToUpgrade, okToRecover,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public DomainObject getReadOnlyDomainObject(Object consumer, int version, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 		return getFileData().getReadOnlyDomainObject(consumer, version,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public DomainObject getImmutableDomainObject(Object consumer, int version, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 		return getFileData().getImmutableDomainObject(consumer, version,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -206,7 +205,7 @@ public class GhidraFile implements DomainFile {
 		if (isReadOnly()) {
 			throw new ReadOnlyException("Cannot save to read-only file");
 		}
-		dobj.save(null, monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+		dobj.save(null, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -429,21 +428,21 @@ public class GhidraFile implements DomainFile {
 	public boolean checkout(boolean exclusive, TaskMonitor monitor) throws IOException,
 			CancelledException {
 		return getFileData().checkout(exclusive,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		getFileData().checkin(checkinHandler, okToUpgrade,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public void merge(boolean okToUpgrade, TaskMonitor monitor) throws IOException,
 			VersionException, CancelledException {
 		getFileData().merge(okToUpgrade,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -487,7 +486,7 @@ public class GhidraFile implements DomainFile {
 			CancelledException {
 		GhidraFolder newGhidraParent = (GhidraFolder) newParent; // assumes single implementation
 		return getFileData().copyTo(newGhidraParent.getFolderData(),
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -495,7 +494,7 @@ public class GhidraFile implements DomainFile {
 			throws IOException, CancelledException {
 		GhidraFolder destGhidraFolder = (GhidraFolder) destFolder; // assumes single implementation
 		return getFileData().copyVersionTo(version, destGhidraFolder.getFolderData(),
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	/**
@@ -505,7 +504,7 @@ public class GhidraFile implements DomainFile {
 	 */
 	void convertToPrivateFile(TaskMonitor monitor) throws IOException, CancelledException {
 		getFileData().convertToPrivateFile(
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -543,7 +542,7 @@ public class GhidraFile implements DomainFile {
 
 	@Override
 	public void packFile(File file, TaskMonitor monitor) throws IOException, CancelledException {
-		getFileData().packFile(file, monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+		getFileData().packFile(file, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override

@@ -27,7 +27,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -124,7 +124,7 @@ public class FuncRecord implements Comparable<FuncRecord> {
 					}
 
 					digest.reset();
-					digest.update(totalToHash, TaskMonitorAdapter.DUMMY_MONITOR);
+					digest.update(totalToHash, TaskMonitor.DUMMY);
 
 					//Finally, update the hash signature.
 					this.hashValue = digest.digestLong();

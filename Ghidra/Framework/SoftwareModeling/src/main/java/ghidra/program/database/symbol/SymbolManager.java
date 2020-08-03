@@ -40,7 +40,6 @@ import ghidra.program.util.LanguageTranslator;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class SymbolManager implements SymbolTable, ManagerDB {
 
@@ -2184,7 +2183,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	void moveLabelHistory(Address oldAddress, Address address) {
 		try {
 			historyAdapter.moveAddressRange(oldAddress, address, 1, addrMap,
-				TaskMonitorAdapter.DUMMY_MONITOR);
+				TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// can't happen, used dummy monitor

@@ -42,7 +42,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.GroupPath;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
@@ -1174,7 +1174,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		int transactionID = program.startTransaction("Test");
 		Memory mem = program.getMemory();
 		mem.createInitializedBlock(".test", getAddr(0x30), 0x12, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
@@ -1187,7 +1187,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		transactionID = program.startTransaction("test");
 		mem.createInitializedBlock(".test.exp", getAddr(0x42), 4, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
@@ -1204,9 +1204,9 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		transactionID = program.startTransaction("test");
 		MemoryBlock block = mem.getBlock(getAddr(0x30));
-		mem.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		mem.removeBlock(block, TaskMonitor.DUMMY);
 		block = mem.getBlock(getAddr(0x42));
-		mem.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		mem.removeBlock(block, TaskMonitor.DUMMY);
 
 		program.endTransaction(transactionID, true);
 		program.flushEvents();

@@ -29,7 +29,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class MemoryBufferImplTest extends AbstractGhidraHeadedIntegrationTest {
 	private Program program;
@@ -194,7 +194,7 @@ public class MemoryBufferImplTest extends AbstractGhidraHeadedIntegrationTest {
 		int id = program.startTransaction("add block");
 		try {
 			program.getMemory().createInitializedBlock(".test", start, is, 0x30000,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 		}
 		finally {
 			program.endTransaction(id, true);

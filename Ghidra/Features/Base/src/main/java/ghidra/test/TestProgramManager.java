@@ -234,7 +234,7 @@ public class TestProgramManager {
 		int oneUp = 0;
 		while (true) {
 			try {
-				DomainFile df = folder.createFile(name, gzf, TaskMonitorAdapter.DUMMY_MONITOR);
+				DomainFile df = folder.createFile(name, gzf, TaskMonitor.DUMMY);
 				AbstractGenericTest.waitForPostedSwingRunnables();
 				DomainObject dobj = df.getDomainObject(this, true, false, null);
 				try {
@@ -281,7 +281,7 @@ public class TestProgramManager {
 		DBHandle dbh = null;
 		boolean success = false;
 		try {
-			dbh = db.open(TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh = db.open(TaskMonitor.DUMMY);
 			program = new ProgramDB(dbh, DBConstants.UPDATE, null, this);
 			success = true;
 		}
@@ -312,7 +312,7 @@ public class TestProgramManager {
 			}
 
 			Msg.info(this, message + (endTime - startTime));
-			dbh = db.open(TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh = db.open(TaskMonitor.DUMMY);
 			program = new ProgramDB(dbh, DBConstants.UPDATE, null, this);
 			dbh = null;
 			success = true;
@@ -341,7 +341,7 @@ public class TestProgramManager {
 		File gzf = AbstractGenericTest.findTestDataFile(programName + ".gzf");
 		if (gzf != null && gzf.exists()) {
 			Msg.info(this, "Unpacking: " + gzf);
-			db = new PrivateDatabase(dbDir, gzf, TaskMonitorAdapter.DUMMY_MONITOR);
+			db = new PrivateDatabase(dbDir, gzf, TaskMonitor.DUMMY);
 			testPrograms.put(programName, db);
 			return db;
 		}
@@ -451,12 +451,12 @@ public class TestProgramManager {
 
 	private void upgradeDatabase(PrivateDatabase db) throws Exception {
 
-		DBHandle dbh = db.openForUpdate(TaskMonitorAdapter.DUMMY_MONITOR);
+		DBHandle dbh = db.openForUpdate(TaskMonitor.DUMMY);
 		try {
 			ProgramDB program =
-				new ProgramDB(dbh, DBConstants.UPGRADE, TaskMonitorAdapter.DUMMY_MONITOR, this);
+				new ProgramDB(dbh, DBConstants.UPGRADE, TaskMonitor.DUMMY, this);
 			if (dbh != null) {
-				dbh.save(null, null, TaskMonitorAdapter.DUMMY_MONITOR);
+				dbh.save(null, null, TaskMonitor.DUMMY);
 			}
 			dbh = null;
 			program.release(this);

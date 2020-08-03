@@ -55,7 +55,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
@@ -1262,13 +1262,13 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Function entry = getFunction("entry");
 		assertNotNull(entry);
 
-		Set<Function> called = entry.getCalledFunctions(TaskMonitorAdapter.DUMMY_MONITOR);
+		Set<Function> called = entry.getCalledFunctions(TaskMonitor.DUMMY);
 		assertEquals(4, called.size());
-		Set<Function> calling = entry.getCallingFunctions(TaskMonitorAdapter.DUMMY_MONITOR);
+		Set<Function> calling = entry.getCallingFunctions(TaskMonitor.DUMMY);
 		assertEquals(0, calling.size());// nobody calls entry
 
 		for (Function f : called) {
-			Set<Function> calling_f = f.getCallingFunctions(TaskMonitorAdapter.DUMMY_MONITOR);
+			Set<Function> calling_f = f.getCallingFunctions(TaskMonitor.DUMMY);
 			assertTrue(calling_f.contains(entry));
 		}
 	}

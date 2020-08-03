@@ -25,7 +25,7 @@ import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * DataTypeManager for a file. Can import categories from a file, or export
@@ -116,7 +116,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		try {
 			universalID = newUniversalId;
 			packedDB = ((PackedDBHandle) dbHandle).saveAs("DTArchive", saveFile.getParentFile(),
-				saveFile.getName(), newUniversalId.getValue(), TaskMonitorAdapter.DUMMY_MONITOR);
+				saveFile.getName(), newUniversalId.getValue(), TaskMonitor.DUMMY);
 			file = resourceSaveFile;
 			updateRootCategoryName(resourceSaveFile, getRootCategory());
 		}
@@ -134,7 +134,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		validateFilename(resourceSaveFile);
 		try {
 			packedDB = ((PackedDBHandle) dbHandle).saveAs("DTArchive", saveFile.getParentFile(),
-				saveFile.getName(), TaskMonitorAdapter.DUMMY_MONITOR);
+				saveFile.getName(), TaskMonitor.DUMMY);
 			file = resourceSaveFile;
 			updateRootCategoryName(resourceSaveFile, getRootCategory());
 		}
@@ -153,7 +153,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 		}
 
 		try {
-			((PackedDBHandle) dbHandle).save(TaskMonitorAdapter.DUMMY_MONITOR);
+			((PackedDBHandle) dbHandle).save(TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// Cancel can't happen because we are using a dummy monitor

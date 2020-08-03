@@ -99,7 +99,7 @@ public class VTControllerImpl
 		}
 		try {
 			VTSessionDB newSession = (VTSessionDB) domainFile.getDomainObject(this, true, true,
-				TaskMonitorAdapter.DUMMY_MONITOR);
+				TaskMonitor.DUMMY);
 			doOpenSession(newSession);
 		}
 		catch (VersionException e) {
@@ -572,7 +572,7 @@ public class VTControllerImpl
 			Program newProgram;
 			try {
 				newProgram = (Program) file.getDomainObject(this, false, false,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 			}
 			catch (Exception e) {
 				Msg.showError(this, getParentComponent(), "Error opening program " + file, e);

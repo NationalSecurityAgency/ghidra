@@ -33,7 +33,6 @@ import ghidra.feature.vt.api.util.VersionTrackingApplyException;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import mockit.Mocked;
 import mockit.Verifications;
 
@@ -143,7 +142,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 		Object markupItemManager = getInstanceField("markupManager", association);
 		return (Collection<VTMarkupItem>) invokeInstanceMethod("getStoredMarkupItems",
 			markupItemManager, new Class[] { TaskMonitor.class },
-			new Object[] { TaskMonitorAdapter.DUMMY_MONITOR });
+			new Object[] { TaskMonitor.DUMMY });
 	}
 
 	@Test
@@ -598,7 +597,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 
 		VTAssociation association = match.getAssociation();
 		Collection<VTMarkupItem> items =
-			association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			association.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals("Did not find multiple markup items as expected", 2, items.size());
 		VTMarkupItemApplyActionType applyAction = createRandomSuccessfulApplyAction(markupItem);
 
@@ -638,7 +637,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 
 		VTAssociation association = match.getAssociation();
 		Collection<VTMarkupItem> items =
-			association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			association.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals("Did not find multiple markup items as expected", 2, items.size());
 		VTMarkupItemApplyActionType applyAction = createRandomSuccessfulApplyAction(markupItem);
 
@@ -757,7 +756,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 
 		VTMarkupItem markupItem = VTTestUtils.createRandomMarkupItemStub(mainMatch);
 		Collection<VTMarkupItem> items =
-			mainAssociation.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			mainAssociation.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals(1, items.size());
 
 		mainAssociation.setRejected();
@@ -785,7 +784,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 
 		VTMarkupItem markupItem = VTTestUtils.createRandomMarkupItemStub(mainMatch);
 		Collection<VTMarkupItem> items =
-			mainAssociation.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			mainAssociation.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals(1, items.size());
 
 		mainAssociation.setAccepted();

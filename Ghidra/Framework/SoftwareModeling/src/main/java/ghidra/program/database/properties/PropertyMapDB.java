@@ -30,7 +30,6 @@ import ghidra.util.Lock;
 import ghidra.util.datastruct.ObjectCache;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Abstract class which defines a map containing properties over a set of addresses.
@@ -626,7 +625,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 			if (propertyTable != null) {
 				try {
 					DatabaseTableUtils.updateAddressKey(propertyTable, addrMap, start, end,
-						newStart, TaskMonitorAdapter.DUMMY_MONITOR);
+						newStart, TaskMonitor.DUMMY);
 				}
 				catch (CancelledException e) {
 				}

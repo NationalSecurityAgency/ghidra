@@ -32,7 +32,6 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import utilities.util.FileUtilities;
 
 /**
@@ -510,7 +509,7 @@ public class PackedDatabase extends Database {
 	private static void refreshDatabase(BufferFileManager bfMgr, long checkinId,
 			ResourceFile packedFile, TaskMonitor monitor) throws IOException, CancelledException {
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		int version = bfMgr.getCurrentVersion() + 1; // should be 1 in most situations
 		File file = bfMgr.getBufferFile(version);
@@ -668,7 +667,7 @@ public class PackedDatabase extends Database {
 			TaskMonitor monitor) throws IOException, CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		monitor.setMessage("Packing file...");
 
@@ -703,7 +702,7 @@ public class PackedDatabase extends Database {
 			throw new IOException("Update not allowed");
 		}
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		monitor.setMessage("Waiting...");
 		if (packedDbLock != null) {
@@ -780,7 +779,7 @@ public class PackedDatabase extends Database {
 		}
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		if (!refreshUnpacking(monitor)) {
@@ -806,7 +805,7 @@ public class PackedDatabase extends Database {
 		}
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		lock(updateLock, false, true);

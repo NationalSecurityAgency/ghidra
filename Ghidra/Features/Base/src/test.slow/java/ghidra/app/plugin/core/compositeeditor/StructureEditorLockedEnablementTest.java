@@ -23,7 +23,7 @@ import org.junit.Test;
 
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class StructureEditorLockedEnablementTest extends AbstractStructureEditorTest {
 
@@ -69,7 +69,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 		Structure desiredEmptyStructure = emptyStructure;
 		int txID = program.startTransaction("Removing emptyStruct from DTM.");
 		try {
-			programDTM.remove(emptyStructure, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDTM.remove(emptyStructure, TaskMonitor.DUMMY);
 			if (emptyStructure.getDataTypeManager() != catDTM) {
 				desiredEmptyStructure = (Structure) emptyStructure.copy(catDTM);
 				desiredEmptyStructure.setCategoryPath(pgmTestCat.getCategoryPath());

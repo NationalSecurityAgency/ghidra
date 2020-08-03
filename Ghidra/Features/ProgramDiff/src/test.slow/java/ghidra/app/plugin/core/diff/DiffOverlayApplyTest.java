@@ -28,7 +28,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.DiffUtility;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class DiffOverlayApplyTest extends DiffApplyTestAdapter {
 
@@ -50,7 +50,7 @@ public class DiffOverlayApplyTest extends DiffApplyTestAdapter {
 		MemoryBlock dataBlock1 = memory1.getBlock(".data");
 		MemoryBlock overlayBlock1 =
 			memory1.createInitializedBlock("OVL1", dataBlock1.getStart(), 0x20L, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, true);
+				TaskMonitor.DUMMY, true);
 		assertEquals(3, p1.getAddressFactory().getNumAddressSpaces()); // ram, OTHER, OVL1
 
 		AddressSet addressSet1 = new AddressSet(overlayBlock1.getStart(), overlayBlock1.getEnd());
@@ -77,7 +77,7 @@ public class DiffOverlayApplyTest extends DiffApplyTestAdapter {
 		MemoryBlock dataBlock2 = memory2.getBlock(".data");
 		MemoryBlock overlayBlock2 =
 			memory2.createInitializedBlock("OVL1", dataBlock2.getStart(), 0x20L, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, true);
+				TaskMonitor.DUMMY, true);
 		assertEquals(3, p2.getAddressFactory().getNumAddressSpaces());
 
 		AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet1, p2);

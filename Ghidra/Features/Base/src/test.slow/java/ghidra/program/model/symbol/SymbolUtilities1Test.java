@@ -30,7 +30,7 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class SymbolUtilities1Test extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
@@ -56,7 +56,7 @@ public class SymbolUtilities1Test extends AbstractGhidraHeadedIntegrationTest {
 		Memory memory = program.getMemory();
 		transactionID = program.startTransaction("Test");
 		memory.createInitializedBlock("test", addr(0), 5000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		symbolTable = program.getSymbolTable();
 		refMgr = program.getReferenceManager();
 		listing = program.getListing();

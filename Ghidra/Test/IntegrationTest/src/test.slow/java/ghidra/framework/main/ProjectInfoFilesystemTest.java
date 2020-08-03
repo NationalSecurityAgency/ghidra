@@ -40,7 +40,7 @@ import ghidra.program.model.util.StringPropertyMap;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.InvalidNameException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTest {
@@ -239,13 +239,13 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 				programUserData.endTransaction(txId);
 			}
 
-			df = getFolder(folderPath, true).createFile(name, p, TaskMonitorAdapter.DUMMY_MONITOR);
+			df = getFolder(folderPath, true).createFile(name, p, TaskMonitor.DUMMY);
 		}
 		finally {
 			p.release(this);
 		}
 
-		df.addToVersionControl("Initial", true, TaskMonitorAdapter.DUMMY_MONITOR);
+		df.addToVersionControl("Initial", true, TaskMonitor.DUMMY);
 		return df;
 	}
 
@@ -266,7 +266,7 @@ public class ProjectInfoFilesystemTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals("Initial", versionHistory[0].getComment());
 
 		Program p =
-			(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		try {
 			AddressFactory addressFactory = p.getAddressFactory();
 			ProgramUserData programUserData = p.getProgramUserData();

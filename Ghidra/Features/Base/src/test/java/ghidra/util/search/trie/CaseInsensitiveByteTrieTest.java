@@ -22,7 +22,7 @@ import java.util.*;
 import org.junit.*;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class CaseInsensitiveByteTrieTest {
 
@@ -217,7 +217,7 @@ public class CaseInsensitiveByteTrieTest {
 		add(trie, "cAa", true);
 
 		List<SearchResult<Integer, String>> result =
-			trie.search("abccab".getBytes(), TaskMonitorAdapter.DUMMY_MONITOR);
+			trie.search("abccab".getBytes(), TaskMonitor.DUMMY);
 
 		assertEquals("wrong size result list", 7, result.size());
 		expect(result, 0, "a");
@@ -237,7 +237,7 @@ public class CaseInsensitiveByteTrieTest {
 		add(trie, "Hers", true);
 
 		List<SearchResult<Integer, String>> result =
-			trie.search("they shelled this hershey".getBytes(), TaskMonitorAdapter.DUMMY_MONITOR);
+			trie.search("they shelled this hershey".getBytes(), TaskMonitor.DUMMY);
 
 		assertEquals("wrong size result list", 8, result.size());
 		expect(result, 1, "hE");
@@ -261,7 +261,7 @@ public class CaseInsensitiveByteTrieTest {
 		add(trie, "tAblEs", true);
 
 		List<SearchResult<Integer, String>> result =
-			trie.search("unstoppable tables".getBytes(), TaskMonitorAdapter.DUMMY_MONITOR);
+			trie.search("unstoppable tables".getBytes(), TaskMonitor.DUMMY);
 
 		assertEquals("wrong size result list", 8, result.size());
 		expect(result, 0, "unStoppable");
@@ -304,7 +304,7 @@ public class CaseInsensitiveByteTrieTest {
 	 */
 	private static Iterator<String> iterator(ByteTrieIfc<String> trie) throws CancelledException {
 		final ArrayList<String> list = new ArrayList<String>();
-		trie.inorder(TaskMonitorAdapter.DUMMY_MONITOR, new Op<String>() {
+		trie.inorder(TaskMonitor.DUMMY, new Op<String>() {
 			@Override
 			public void op(ByteTrieNodeIfc<String> node) {
 				if (node.isTerminal()) {
@@ -323,7 +323,7 @@ public class CaseInsensitiveByteTrieTest {
 	 */
 	private static Iterator<String> iterator2(ByteTrieIfc<String> trie) throws CancelledException {
 		final ArrayList<String> list = new ArrayList<String>();
-		trie.inorder(TaskMonitorAdapter.DUMMY_MONITOR, new Op<String>() {
+		trie.inorder(TaskMonitor.DUMMY, new Op<String>() {
 			@Override
 			public void op(ByteTrieNodeIfc<String> node) {
 				if (node.isTerminal()) {

@@ -29,7 +29,7 @@ import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class SymbolUtilities2Test extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
@@ -54,7 +54,7 @@ public class SymbolUtilities2Test extends AbstractGhidraHeadedIntegrationTest {
 		Memory memory = program.getMemory();
 		transactionID = program.startTransaction("Test");
 		memory.createInitializedBlock("test", addr(0), 5000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		symbolTable = program.getSymbolTable();
 		refMgr = program.getReferenceManager();
 		listing = program.getListing();

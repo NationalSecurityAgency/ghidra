@@ -56,7 +56,7 @@ import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * An abstract class for Correlator Tests.
@@ -382,7 +382,7 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 	 */
 	protected void runTask(Task task) throws Exception {
 
-		task.run(TaskMonitorAdapter.DUMMY_MONITOR);
+		task.run(TaskMonitor.DUMMY);
 		destProg.flushEvents();
 		waitForSwing();
 		waitForTasks();

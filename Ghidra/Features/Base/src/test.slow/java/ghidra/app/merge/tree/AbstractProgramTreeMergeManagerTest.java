@@ -25,7 +25,7 @@ import javax.swing.*;
 import ghidra.app.merge.*;
 import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractProgramTreeMergeManagerTest extends AbstractMergeTest {
 
@@ -52,7 +52,7 @@ public abstract class AbstractProgramTreeMergeManagerTest extends AbstractMergeT
 		if (option >= 0) {
 			programTreeMergeManager.setConflictResolution(option);
 		}
-		programTreeMergeManager.merge(TaskMonitorAdapter.DUMMY_MONITOR);
+		programTreeMergeManager.merge(TaskMonitor.DUMMY);
 	}
 
 	protected void merge() throws Exception {

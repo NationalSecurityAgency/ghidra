@@ -28,7 +28,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Test the Diff of thunk functions.
@@ -160,11 +160,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 		AddressSet expectedDifferences = new AddressSet();
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -227,12 +227,12 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, "0x1006674"), addr(latestProgram, "0x1006677"));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedRefDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSet expectedFunctionDifferences = new AddressSet();
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedFunctionDifferences, functionDifferences);
 	}
 
@@ -292,11 +292,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 //		expectedDifferences.addRange(addr(latestProgram, ), addr());
 //		// Perform the Diff and check the differences.
 //		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-//		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+//		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 //		assertEquals(expectedDifferences, differences);
 //		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 //		AddressSetView functionDifferences =
-//			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+//			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 //		assertEquals(expectedDifferences, functionDifferences);
 //	}
 
@@ -361,11 +361,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 		AddressSet expectedDifferences = new AddressSet();
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -431,11 +431,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -482,11 +482,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -533,11 +533,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -610,12 +610,12 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter functionFilter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(functionFilter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(functionFilter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -690,12 +690,12 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			addr(latestProgram, "0100199b"));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter functionFilter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(functionFilter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(functionFilter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -783,11 +783,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -857,11 +857,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -931,11 +931,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -1006,12 +1006,12 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 			new AddressSet(addr(latestProgram, THUNK_A_ENTRY), addr(latestProgram, THUNK_A_ENTRY));
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 
 		ProgramDiffFilter functionFilter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(functionFilter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(functionFilter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 
@@ -1086,11 +1086,11 @@ public class ExternalFunctionDiffTest extends AbstractGhidraHeadedIntegrationTes
 		AddressSet expectedDifferences = new AddressSet();
 		// Perform the Diff and check the differences.
 		ProgramDiff programDiff = new ProgramDiff(latestProgram, myProgram);
-		AddressSetView differences = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSetView differences = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, differences);
 		ProgramDiffFilter filter = new ProgramDiffFilter(ProgramDiffFilter.FUNCTION_DIFFS);
 		AddressSetView functionDifferences =
-			programDiff.getDifferences(filter, TaskMonitorAdapter.DUMMY_MONITOR);
+			programDiff.getDifferences(filter, TaskMonitor.DUMMY);
 		assertEquals(expectedDifferences, functionDifferences);
 	}
 

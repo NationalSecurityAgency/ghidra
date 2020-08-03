@@ -35,7 +35,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ProjectTestUtils;
 import ghidra.util.Msg;
 import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
@@ -61,19 +61,19 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ProgramBuilder builder = new ProgramBuilder("Test", ProgramBuilder._TOY);
 		df = project.getProjectData().getRootFolder().createFile("test", builder.getProgram(),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		builder.dispose();
 
 		Program program = null;
 		try {
 			program =
-				(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+				(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		}
 		catch (VersionException e) {
 			assertTrue(e.isUpgradable());
 			program =
-				(Program) df.getDomainObject(this, true, false, TaskMonitorAdapter.DUMMY_MONITOR);
-			program.save("upgrade", TaskMonitorAdapter.DUMMY_MONITOR);
+				(Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
+			program.save("upgrade", TaskMonitor.DUMMY);
 		}
 		finally {
 			program.release(this);
@@ -141,7 +141,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		DomainFile df2;
 
 		Program program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		try {
 			assertTrue(!program.isChanged());
@@ -150,7 +150,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 			// Modify program content - no user data should be saved
 			change(program);
 			assertTrue(program.isChanged());
-			program.save("save", TaskMonitorAdapter.DUMMY_MONITOR);
+			program.save("save", TaskMonitor.DUMMY);
 			assertTrue(!program.isChanged());
 			assertFalse("User data directory should be empty", userDataSubDir.isDirectory());
 
@@ -161,7 +161,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(!program.isChanged());
 
 			String newName = df.getName() + ".1";
-			df2 = df.getParent().createFile(newName, program, TaskMonitorAdapter.DUMMY_MONITOR);
+			df2 = df.getParent().createFile(newName, program, TaskMonitor.DUMMY);
 
 		}
 		finally {
@@ -169,7 +169,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		program =
-			(Program) df2.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df2.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		try {
 			assertTrue(!program.isChanged());
 
@@ -203,7 +203,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		int ver;
 
 		Program program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		try {
 			assertTrue(!program.isChanged());
@@ -212,7 +212,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 			// Modify program content - no user data should be saved
 			change(program);
 			assertTrue(program.isChanged());
-			program.save("save", TaskMonitorAdapter.DUMMY_MONITOR);
+			program.save("save", TaskMonitor.DUMMY);
 			assertTrue(!program.isChanged());
 			assertFalse("User data directory should be empty", userDataSubDir.isDirectory());
 
@@ -234,7 +234,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 			getLatestDbVersion(dbDir));
 
 		program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		try {
 			assertTrue(!program.isChanged());
 
@@ -257,7 +257,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		try {
 			assertTrue(!program.isChanged());
 
@@ -287,7 +287,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		// TODO: Multi-user repository connect case not tested
 
 		Program program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		try {
 			// Create user data content
@@ -307,7 +307,7 @@ public class ProgramUserDataTest extends AbstractGhidraHeadedIntegrationTest {
 		df = project.getProjectData().getFile("/test");
 
 		program =
-			(Program) df.getDomainObject(this, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 		try {
 			assertTrue(!program.isChanged());
 

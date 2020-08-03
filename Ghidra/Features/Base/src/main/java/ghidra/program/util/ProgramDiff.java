@@ -28,7 +28,6 @@ import ghidra.program.model.util.TypeMismatchException;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>ProgramDiff</CODE> is a class for comparing two programs and
@@ -468,7 +467,7 @@ public class ProgramDiff {
 		cancelled = false;
 		if (monitor == null) {
 			// Create a do nothing task monitor that we can pass along.
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		if (!filterChanged && ((filter != null) && (filter.equals(this.pdf)))) {
@@ -531,7 +530,7 @@ public class ProgramDiff {
 			throws CancelledException {
 		if (monitor == null) {
 			// Create a do nothing task monitor that we can pass along.
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		monitor.checkCanceled();
 

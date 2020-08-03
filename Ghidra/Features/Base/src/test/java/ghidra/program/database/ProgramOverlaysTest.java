@@ -27,7 +27,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ProgramOverlaysTest extends AbstractGenericTest {
 
@@ -119,7 +119,7 @@ public class ProgramOverlaysTest extends AbstractGenericTest {
 		assertNotNull(block);
 
 		int id = p.startTransaction("");
-		memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.removeBlock(block, TaskMonitor.DUMMY);
 		p.endTransaction(id, true);
 
 		assertEquals(2, p.getAddressFactory().getNumAddressSpaces()); // ram, OTHER

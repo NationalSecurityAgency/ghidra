@@ -28,7 +28,7 @@ import ghidra.program.model.listing.ProgramModule;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -82,27 +82,27 @@ public class Fragment20BitTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Address start = addr("0000:0000");
 		mem.createInitializedBlock("stdproc.c", start, 0x5EDA, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		start = addr("05ee:0000");
 		mem.createInitializedBlock("scada.c", start, 0x5FAA, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		start = addr("0be9:0000");
 		mem.createInitializedBlock("cseg03", start, 0x2A6, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		start = addr("0c14:0000");
 		mem.createInitializedBlock("cseg04", start, 0xF04, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		start = addr("0d05:0000");
 		mem.createInitializedBlock("cseg05", start, 0x3E0, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		start = addr("0d43:0000");
 		mem.createInitializedBlock("cseg06", start, 0x10E8, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 	}
 

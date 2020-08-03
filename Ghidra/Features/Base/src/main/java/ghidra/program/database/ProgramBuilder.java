@@ -54,7 +54,6 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.Saveable;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 // TODO: Move this class into a different package (i.e., ghidra.test.program)
 public class ProgramBuilder {
@@ -325,7 +324,7 @@ public class ProgramBuilder {
 		MemoryBlock block = null;
 		try {
 			block = memory.createInitializedBlock(name, startAddress, size, initialValue,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 			block.setComment(comment);
 		}
 		catch (CancelledException e) {

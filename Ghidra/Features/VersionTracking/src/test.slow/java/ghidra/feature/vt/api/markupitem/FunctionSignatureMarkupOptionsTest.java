@@ -32,7 +32,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.DefaultLanguageService;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class FunctionSignatureMarkupOptionsTest extends AbstractFunctionSignatureMarkupTest {
 
@@ -795,7 +795,7 @@ private void setLanguage(Program program, String languageID, String compilerSpec
 				}
 			}
 			assertNotNull(compilerSpecID);
-			program.setLanguage(language, compilerSpecID, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.setLanguage(language, compilerSpecID, true, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(transaction, true);

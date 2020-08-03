@@ -22,7 +22,6 @@ import java.util.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * A class used to convert data types into ANSI-C.
@@ -731,7 +730,7 @@ public class DataTypeWriter {
 	private void writeBuiltInDeclarations(DataTypeManager manager) throws IOException {
 
 		try {
-			write(DataType.DEFAULT, TaskMonitorAdapter.DUMMY_MONITOR);
+			write(DataType.DEFAULT, TaskMonitor.DUMMY);
 
 			SourceArchive builtInArchive =
 				manager.getSourceArchive(DataTypeManager.BUILT_IN_ARCHIVE_UNIVERSAL_ID);
@@ -744,7 +743,7 @@ public class DataTypeWriter {
 					(dt instanceof Dynamic)) {
 					continue;
 				}
-				write(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+				write(dt, TaskMonitor.DUMMY);
 			}
 		}
 		catch (CancelledException e) {

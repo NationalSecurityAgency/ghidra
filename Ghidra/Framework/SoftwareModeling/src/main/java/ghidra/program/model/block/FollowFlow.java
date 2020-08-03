@@ -22,7 +22,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * FollowFlow follows the program's code flow either forward or backward from an initial
@@ -143,7 +142,7 @@ public class FollowFlow {
 			boolean forward) {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR; // create dummy monitor
+			monitor = TaskMonitor.DUMMY; // create dummy monitor
 		}
 
 		// Create a new address set to hold the entire flow.

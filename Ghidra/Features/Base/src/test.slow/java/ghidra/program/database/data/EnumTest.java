@@ -29,7 +29,7 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.data.EnumDataType;
 import ghidra.program.util.ChangeManager;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for Enum data types.
@@ -223,7 +223,7 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		Enum enummDT = (Enum) dataMgr.resolve(enumm, null);
 		assertNotNull(enummDT);
 
-		c.remove(enummDT, TaskMonitorAdapter.DUMMY_MONITOR);
+		c.remove(enummDT, TaskMonitor.DUMMY);
 		assertNull(c.getDataType("Color"));
 
 		assertTrue(enummDT.isDeleted());

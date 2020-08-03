@@ -23,7 +23,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class OverlayAddressSpaceTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
@@ -232,7 +232,7 @@ public class OverlayAddressSpaceTest extends AbstractGhidraHeadedIntegrationTest
 		MemoryBlock overlayBlock1 = null;
 		try {
 			overlayBlock1 = program.getMemory().createInitializedBlock(".overlay1",
-				af.getAddress("1000"), 0x100, (byte) 0x11, TaskMonitorAdapter.DUMMY_MONITOR, true);
+				af.getAddress("1000"), 0x100, (byte) 0x11, TaskMonitor.DUMMY, true);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -248,7 +248,7 @@ public class OverlayAddressSpaceTest extends AbstractGhidraHeadedIntegrationTest
 		transactionID = program.startTransaction(testName.getMethodName());
 		try {
 			overlayBlock1 = program.getMemory().getBlock(overlayBlock1.getName());
-			program.getMemory().removeBlock(overlayBlock1, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.getMemory().removeBlock(overlayBlock1, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -267,11 +267,11 @@ public class OverlayAddressSpaceTest extends AbstractGhidraHeadedIntegrationTest
 		MemoryBlock overlayBlock4 = null;
 		try {
 			overlayBlock2 = program.getMemory().createInitializedBlock(".overlay2",
-				af.getAddress("2000"), 0x200, (byte) 0x22, TaskMonitorAdapter.DUMMY_MONITOR, true);
+				af.getAddress("2000"), 0x200, (byte) 0x22, TaskMonitor.DUMMY, true);
 			overlayBlock3 = program.getMemory().createInitializedBlock(".overlay3",
-				af.getAddress("3000"), 0x300, (byte) 0x33, TaskMonitorAdapter.DUMMY_MONITOR, true);
+				af.getAddress("3000"), 0x300, (byte) 0x33, TaskMonitor.DUMMY, true);
 			overlayBlock4 = program.getMemory().createInitializedBlock(".overlay4",
-				af.getAddress("4000"), 0x400, (byte) 0x44, TaskMonitorAdapter.DUMMY_MONITOR, true);
+				af.getAddress("4000"), 0x400, (byte) 0x44, TaskMonitor.DUMMY, true);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -285,8 +285,8 @@ public class OverlayAddressSpaceTest extends AbstractGhidraHeadedIntegrationTest
 
 		transactionID = program.startTransaction(testName.getMethodName());
 		try {
-			program.getMemory().removeBlock(overlayBlock2, TaskMonitorAdapter.DUMMY_MONITOR);
-			program.getMemory().removeBlock(overlayBlock3, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.getMemory().removeBlock(overlayBlock2, TaskMonitor.DUMMY);
+			program.getMemory().removeBlock(overlayBlock3, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
