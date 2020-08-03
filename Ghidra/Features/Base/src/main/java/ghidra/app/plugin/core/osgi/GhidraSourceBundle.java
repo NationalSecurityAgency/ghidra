@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.osgi;
 import static java.util.stream.Collectors.*;
 
 import java.io.*;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
@@ -726,8 +728,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 		final ResourceFileJavaFileManager resourceFileJavaManager = new ResourceFileJavaFileManager(
 			Collections.singletonList(getSourceDirectory()), buildErrors.keySet());
 
-		BundleJavaManager bundleJavaManager =
-			new BundleJavaManager(bundleHost.getHostFramework(), resourceFileJavaManager, options);
+		BundleJavaManager bundleJavaManager = new MyBundleJavaManager(bundleHost.getHostFramework(),
+			resourceFileJavaManager, options);
 
 		// The phidias BundleJavaManager is for compiling from within a bundle -- it makes the
 		// bundle dependencies available to the compiler classpath.  Here, we are compiling in an as-yet 
@@ -937,7 +939,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 		try (StandardJavaFileManager javaFileManager =
 			compiler.getStandardFileManager(null, null, null);
-				BundleJavaManager bundleJavaManager = new BundleJavaManager(
+				BundleJavaManager bundleJavaManager = new MyBundleJavaManager(
 					bundleHost.getHostFramework(), javaFileManager, options);) {
 			Iterable<? extends JavaFileObject> sourceFiles =
 				javaFileManager.getJavaFileObjectsFromPaths(List.of(activatorSourceFileName));
@@ -1023,6 +1025,25 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 			return generateManifest(writer, summary, binaryManifest);
 		}
+	}
+
+	private static class MyBundleJavaManager extends BundleJavaManager {
+		static URL[] EMPTY_URL_ARRAY = new URL[0];
+
+		MyBundleJavaManager(Bundle bundle, JavaFileManager javaFileManager, List<String> options)
+				throws IOException {
+			super(bundle, javaFileManager, options);
+		}
+
+		/**
+		 * since the JavaCompiler tasks can close the class loader returned by this
+		 * method, make sure we're returning a copy.
+		 */
+		@Override
+		public ClassLoader getClassLoader() {
+			return new URLClassLoader(EMPTY_URL_ARRAY, super.getClassLoader());
+		}
+
 	}
 
 	private static class Summary {
