@@ -332,9 +332,9 @@ public class GraphExportTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void printLines(List<String> lines) {
-		Msg.out("\n" + testName.getMethodName());
+		Msg.debug(this, "\n" + testName.getMethodName());
 		for (String line : lines) {
-			Msg.out("\"" + line + "\",");
+			Msg.debug(this, "\"" + line + "\",");
 		}
 	}
 
