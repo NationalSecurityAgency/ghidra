@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.decompile.actions;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.decompiler.*;
@@ -45,6 +46,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class FillOutStructureCmd extends BackgroundCommand {
 
+
 	/**
 	 * Varnode with data-flow traceable to original pointer
 	 */
@@ -61,11 +63,10 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	private static final String DEFAULT_BASENAME = "astruct";
 	private static final String DEFAULT_CATEGORY = "/auto_structs";
 
-	private long maxOffset = 0;
 	private int currentCallDepth = 0;		// Current call depth (from root function)
 	private int maxCallDepth = 1;
 
-	private HashMap<Long, DataType> offsetToDataTypeMap = new HashMap<>();
+	private NoisyStructureBuilder componentMap = new NoisyStructureBuilder();
 	private HashMap<Address, Integer> addressToCallInputMap = new HashMap<>();
 
 	private Program currentProgram;
@@ -136,10 +137,15 @@ public class FillOutStructureCmd extends BackgroundCommand {
 
 			boolean isThisParam =
 				CreateStructureVariableAction.testForAutoParameterThis(var, rootFunction);
+			Structure structDT =
+				CreateStructureVariableAction.getStructureForExtending(var.getDataType());
+			if (structDT != null) {
+				componentMap.populateOriginalStructure(structDT);
+			}
 
 			fillOutStructureDef(var);
 
-			Structure structDT = createStructure(var, rootFunction, isThisParam);
+			structDT = createStructure(structDT, var, rootFunction, isThisParam);
 			populateStructure(structDT);
 
 			pushIntoCalls(structDT);
@@ -364,18 +370,17 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	/**
 	 * Recover the structure associated with the given pointer variable, or if there is no structure,
 	 * create it.  Resize the structure to be at least as large as the maxOffset seen so far.
+	 * @param structDT is the structure data-type to fill in, or null if a new Structure should be created
 	 * @param var is the given pointer variable
 	 * @param f is the function
 	 * @param isThisParam is true if the variable is a 'this' pointer
 	 * @return the Structure object
 	 */
-	private Structure createStructure(HighVariable var, Function f, boolean isThisParam) {
-
-		Structure structDT =
-			CreateStructureVariableAction.getStructureForExtending(var.getDataType());
+	private Structure createStructure(Structure structDT, HighVariable var, Function f,
+			boolean isThisParam) {
 
 		if (structDT == null) {
-			structDT = createNewStruct(var, (int) maxOffset, f, isThisParam);
+			structDT = createNewStruct(var, (int) componentMap.getSize(), f, isThisParam);
 		}
 		else {
 			int len;
@@ -385,8 +390,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 			else {
 				len = structDT.getLength();
 			}
-			if (maxOffset > len) {
-				structDT.growStructure((int) maxOffset - len);
+			if (componentMap.getSize() > len) {
+				structDT.growStructure((int) componentMap.getSize() - len);
 			}
 		}
 		return structDT;
@@ -398,10 +403,11 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	 * @param structDT is the given structure
 	 */
 	private void populateStructure(Structure structDT) {
-		Iterator<Long> iterator = offsetToDataTypeMap.keySet().iterator();
+		Iterator<Entry<Long, DataType>> iterator = componentMap.iterator();
 		while (iterator.hasNext()) {
-			Long key = iterator.next();
-			DataType valDT = offsetToDataTypeMap.get(key);
+			Entry<Long, DataType> entry = iterator.next();
+			Long key = entry.getKey();
+			DataType valDT = entry.getValue();
 			if (key.intValue() < 0) {
 				// println("    BAD OFFSET : " + key.intValue());
 				continue;
@@ -413,7 +419,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 			}
 
 			try {
-				DataTypeComponent existing = structDT.getDataTypeAt(key.intValue());
+				DataTypeComponent existing = structDT.getComponentAt(key.intValue());
 				// try to preserve existing information.
 				String name = null;
 				String comment = null;
@@ -463,7 +469,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		String structName = createUniqueStructName(var, DEFAULT_CATEGORY, DEFAULT_BASENAME);
 
 		StructureDataType dt =
-			new StructureDataType(new CategoryPath(DEFAULT_CATEGORY), structName, size);
+			new StructureDataType(new CategoryPath(DEFAULT_CATEGORY), structName, size,
+				f.getProgram().getDataTypeManager());
 		return dt;
 	}
 
@@ -509,8 +516,40 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	}
 
 	/**
+	 * Get the data-type associated with a Varnode.  If the Varnode is produce by a CAST p-code
+	 * op, take the most specific data-type between what it was cast from and cast to.
+	 * @param vn is the Varnode to get the data-type for
+	 * @return the data-type
+	 */
+	public static DataType getDataTypeTraceBackward(Varnode vn) {
+		DataType res = vn.getHigh().getDataType();
+		PcodeOp op = vn.getDef();
+		if (op != null && op.getOpcode() == PcodeOp.CAST) {
+			Varnode otherVn = op.getInput(0);
+			res = MetaDataType.getMostSpecificDataType(res, otherVn.getHigh().getDataType());
+		}
+		return res;
+	}
+
+	/**
+	 * Get the data-type associated with a Varnode.  If the Varnode is input to a CAST p-code
+	 * op, take the most specific data-type between what it was cast from and cast to.
+	 * @param vn is the Varnode to get the data-type for
+	 * @return the data-type
+	 */
+	public static DataType getDataTypeTraceForward(Varnode vn) {
+		DataType res = vn.getHigh().getDataType();
+		PcodeOp op = vn.getLoneDescend();
+		if (op != null && op.getOpcode() == PcodeOp.CAST) {
+			Varnode otherVn = op.getOutput();
+			res = MetaDataType.getMostSpecificDataType(res, otherVn.getHigh().getDataType());
+		}
+		return res;
+	}
+
+	/**
 	 * Look for Varnode references that are equal to the given variable plus a
-	 * constant offset and store them in the offsetToDataTypeMap. The search is performed
+	 * constant offset and store them in the componentMap. The search is performed
 	 * by following data-flow paths starting at the given variable. If the variable flows
 	 * into a CALL instruction, put it in the addressToCallInputMap if offset is 0.
 	 * @param var is the given variable
@@ -521,6 +560,13 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		HashSet<Varnode> doneList = new HashSet<>();
 
 		todoList.add(new PointerRef(startVN, 0));	// Base Varnode on the todo list
+		Varnode[] instances = var.getInstances();
+		for (Varnode vn : instances) {
+			doneList.add(vn);		// Mark instances as done to avoid recursion issues
+			if (vn != startVN) {
+				todoList.add(new PointerRef(startVN, 0));	// Make sure all instances are on the todo list
+			}
+		}
 
 		// while Todo list not empty
 		while (!todoList.isEmpty()) {
@@ -529,104 +575,102 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				continue;
 			}
 
-			Varnode[] instances = currentRef.varnode.getHigh().getInstances();
-			// println("");
-			for (Varnode iVn : instances) {
-				Iterator<PcodeOp> descendants = iVn.getDescendants();
-				while (descendants.hasNext()) {
-					PcodeOp pcodeOp = descendants.next();
-					Varnode output = pcodeOp.getOutput();
-					Varnode[] inputs = pcodeOp.getInputs();
-					// println("off=" + offset + "     " + pcodeOp.getSeqnum().getTarget().toString() + " : "
-					//		+ pcodeOp.toString());
+			Iterator<PcodeOp> descendants = currentRef.varnode.getDescendants();
+			while (descendants.hasNext()) {
+				PcodeOp pcodeOp = descendants.next();
+				Varnode output = pcodeOp.getOutput();
+				Varnode[] inputs = pcodeOp.getInputs();
+				// println("off=" + offset + "     " + pcodeOp.getSeqnum().getTarget().toString() + " : "
+				//		+ pcodeOp.toString());
 
-					DataType outDt;
-					long newOff;
-					switch (pcodeOp.getOpcode()) {
-						case PcodeOp.INT_SUB:
-						case PcodeOp.INT_ADD:
-							if (!inputs[1].isConstant()) {
-								break;
-							}
-							long value = getSigned(inputs[1]);
-							newOff = currentRef.offset +
-								((pcodeOp.getOpcode() == PcodeOp.INT_ADD) ? value : (-value));
-							if (sanityCheck(newOff)) { // should this offset create a location in the structure?
-								putOnList(output, newOff, todoList, doneList);
-								maxOffset = computeMax(maxOffset, newOff, 0);
-							}
+				DataType outDt;
+				long newOff;
+				switch (pcodeOp.getOpcode()) {
+					case PcodeOp.INT_SUB:
+					case PcodeOp.INT_ADD:
+						if (!inputs[1].isConstant()) {
 							break;
-						case PcodeOp.PTRADD:
-							if (!inputs[1].isConstant() || !inputs[2].isConstant()) {
-								break;
+						}
+						long value = getSigned(inputs[1]);
+						newOff = currentRef.offset +
+							((pcodeOp.getOpcode() == PcodeOp.INT_ADD) ? value : (-value));
+						if (sanityCheck(newOff)) { // should this offset create a location in the structure?
+							putOnList(output, newOff, todoList, doneList);
+							// Don't do componentMap.addDataType() as data-type info here is likely uninformed
+							componentMap.setMinimumSize(newOff);
+						}
+						break;
+					case PcodeOp.PTRADD:
+						if (!inputs[1].isConstant() || !inputs[2].isConstant()) {
+							break;
+						}
+						newOff =
+							currentRef.offset + getSigned(inputs[1]) * inputs[2].getOffset();
+						if (sanityCheck(newOff)) { // should this offset create a location in the structure?
+							putOnList(output, newOff, todoList, doneList);
+							// Don't do componentMap.addReference() as data-type info here is likely uninformed
+							componentMap.setMinimumSize(newOff);
+						}
+						break;
+					case PcodeOp.PTRSUB:
+						if (!inputs[1].isConstant()) {
+							break;
+						}
+						long subOff = currentRef.offset + getSigned(inputs[1]);
+						if (sanityCheck(subOff)) { // should this offset create a location in the structure?
+							putOnList(output, subOff, todoList, doneList);
+							// Don't do componentMap.addReference() as data-type info here is likely uninformed
+							componentMap.setMinimumSize(subOff);
+						}
+						break;
+					case PcodeOp.SEGMENTOP:
+						// treat segment op as if it were a cast to complete the value
+						//   The segment adds in some unknown base value.
+						// get output and add to the Varnode Todo list
+						putOnList(output, currentRef.offset, todoList, doneList);
+						componentMap.setMinimumSize(currentRef.offset);
+						break;
+					case PcodeOp.LOAD:
+						outDt = getDataTypeTraceForward(output);
+						componentMap.addDataType(currentRef.offset, outDt);
+						break;
+					case PcodeOp.STORE:
+						// create a location in the struct
+						//use the type of the varnode being put in to the structure
+						if (pcodeOp.getSlot(currentRef.varnode) != 1) {
+							break; // store must be into the target structure
+						}
+						outDt = getDataTypeTraceBackward(inputs[2]);
+						componentMap.addDataType(currentRef.offset, outDt);
+						break;
+					case PcodeOp.CAST:
+						putOnList(output, currentRef.offset, todoList, doneList);
+						break;
+					case PcodeOp.MULTIEQUAL:
+						putOnList(output, currentRef.offset, todoList, doneList);
+						break;
+					case PcodeOp.COPY:
+						putOnList(output, currentRef.offset, todoList, doneList);
+						break;
+					case PcodeOp.CALL:
+						if (currentRef.offset == 0) {		// If pointer is passed directly (no offset)
+							// find it as an input
+							int slot = pcodeOp.getSlot(currentRef.varnode);
+							if (slot > 0 && slot < pcodeOp.getNumInputs()) {
+								putOnCallParamList(inputs[0].getAddress(), slot - 1);
 							}
-							newOff =
-								currentRef.offset + getSigned(inputs[1]) * inputs[2].getOffset();
-							if (sanityCheck(newOff)) { // should this offset create a location in the structure?
-								putOnList(output, newOff, todoList, doneList);
-								maxOffset = computeMax(maxOffset, newOff, 0);
-							}
-							break;
-						case PcodeOp.PTRSUB:
-							if (!inputs[1].isConstant()) {
-								break;
-							}
-							long subOff = currentRef.offset + getSigned(inputs[1]);
-							if (sanityCheck(subOff)) { // should this offset create a location in the structure?
-								putOnList(output, subOff, todoList, doneList);
-								maxOffset = computeMax(maxOffset, subOff, 0);
-							}
-							break;
-						case PcodeOp.SEGMENTOP:
-							// treat segment op as if it were a cast to complete the value
-							//   The segment adds in some unknown base value.
-							// get output and add to the Varnode Todo list
-							putOnList(output, currentRef.offset, todoList, doneList);
-							break;
-
-						case PcodeOp.LOAD:
-							outDt = output.getHigh().getDataType();
-							if (outDt != null) {
-								offsetToDataTypeMap.put(Long.valueOf(currentRef.offset), outDt);
-							}
-							maxOffset = computeMax(maxOffset, currentRef.offset, output.getSize());
-							break;
-						case PcodeOp.STORE:
-							// create a location in the struct
-							//use the type of the varnode being put in to the structure
-							if (pcodeOp.getSlot(iVn) != 1) {
-								break; // store must be into the target structure
-							}
-							outDt = inputs[2].getHigh().getDataType();
-							int outLen = 1; // Storing at least one byte
-							if (outDt != null) {
-								offsetToDataTypeMap.put(Long.valueOf(currentRef.offset), outDt);
-								outLen = outDt.getLength();
-							}
-
-							maxOffset = computeMax(maxOffset, currentRef.offset, outLen);
-							break;
-						case PcodeOp.CAST:
-							putOnList(output, currentRef.offset, todoList, doneList);
-							break;
-						case PcodeOp.MULTIEQUAL:
-							putOnList(output, currentRef.offset, todoList, doneList);
-							break;
-						case PcodeOp.COPY:
-							putOnList(output, currentRef.offset, todoList, doneList);
-							break;
-						case PcodeOp.CALL:
-							if (currentRef.offset == 0) {		// If pointer is passed directly (no offset)
-								// find it as an input
-								int slot = pcodeOp.getSlot(iVn);
-								if (slot > 0 && slot < pcodeOp.getNumInputs()) {
-									putOnCallParamList(pcodeOp.getInput(0).getAddress(), slot - 1);
-								}
-							}
-							break;
-					}
-
+						}
+						else {
+							outDt = getDataTypeTraceBackward(currentRef.varnode);
+							componentMap.addReference(currentRef.offset, outDt);
+						}
+						break;
+					case PcodeOp.CALLIND:
+						outDt = getDataTypeTraceBackward(currentRef.varnode);
+						componentMap.addReference(currentRef.offset, outDt);
+						break;
 				}
+
 			}
 		}
 	}
@@ -639,13 +683,6 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	 */
 	private void putOnCallParamList(Address address, int j) {
 		addressToCallInputMap.put(address, j);
-	}
-
-	private long computeMax(long max, long newOff, int length) {
-		if (max < (newOff + length)) {
-			max = newOff + length;
-		}
-		return max;
 	}
 
 	private long getSigned(Varnode varnode) {
