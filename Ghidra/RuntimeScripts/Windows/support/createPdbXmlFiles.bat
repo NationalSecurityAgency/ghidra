@@ -26,7 +26,7 @@ set OS_DIR=build\os
 :continue
 
 REM create absolute path
-for /f %%i in ("%GHIDRA_DIR%") do set GHIDRA_DIR=%%~fi
+for /f "delims=" %%i in ("%GHIDRA_DIR%") do set GHIDRA_DIR=%%~fi
 
 REM Determine if 64-bit or 32-bit
 if exist "%PROGRAMFILES(X86)%" (
