@@ -60,6 +60,20 @@ public:
   uint8 getSymbolId(void) const { return symbolId; }		///< Get the original Symbol id
 };
 
+/// \brief Data-type for a storage location when there is no Symbol (yet)
+///
+/// Allow a data-type to be fed into a specific storage location.  Currently
+/// this only applies to input Varnodes.
+class TypeRecommend {
+  Address addr;		///< Storage address of the Varnode
+  Datatype *dataType;	///< Data-type to assign to the Varnode
+public:
+  TypeRecommend(const Address &ad,Datatype *dt) :
+    addr(ad), dataType(dt) {}	///< Constructor
+  const Address &getAddress(void) const { return addr; }	///< Get the storage address
+  Datatype *getType(void) const { return dataType; }		///< Get the data-type
+};
+
 /// \brief Partial data-type information mapped to a specific range of bytes
 ///
 /// This object gives a hint about the data-type for a sequence of bytes
@@ -184,6 +198,7 @@ class ScopeLocal : public ScopeInternal {
   RangeList localRange;		///< The set of addresses that might hold mapped locals (not parameters)
   list<NameRecommend> nameRecommend;	///< Symbol name recommendations for specific addresses
   list<DynamicRecommend> dynRecommend;		///< Symbol name recommendations for dynamic locations
+  list<TypeRecommend> typeRecommend;	///< Data-types for specific storage locations
   bool stackGrowsNegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
   bool rangeLocked;		///< True if the subset of addresses \e mapped to \b this scope has been locked
   bool adjustFit(RangeHint &a) const;	///< Make the given RangeHint fit in the current Symbol map
@@ -220,6 +235,7 @@ public:
   SymbolEntry *remapSymbol(Symbol *sym,const Address &addr,const Address &usepoint);
   SymbolEntry *remapSymbolDynamic(Symbol *sym,uint8 hash,const Address &usepoint);
   void recoverNameRecommendationsForSymbols(void);
+  void applyTypeRecommendations(void);		///< Try to apply recommended data-type information
 };
 
 #endif

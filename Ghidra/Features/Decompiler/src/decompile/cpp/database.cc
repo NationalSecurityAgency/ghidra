@@ -224,6 +224,16 @@ void Symbol::checkSizeTypeLock(void)
     dispflags |= size_typelock;
 }
 
+/// \param val is \b true if we are the "this" pointer
+void Symbol::setThisPointer(bool val)
+
+{
+  if (val)
+    dispflags |= is_this_ptr;
+  else
+    dispflags &= ~((uint4)is_this_ptr);
+}
+
 /// The name for a Symbol can be unspecified.  See ScopeInternal::buildUndefinedName
 /// \return \b true if the name of \b this is undefined
 bool Symbol::isNameUndefined(void) const
@@ -362,6 +372,8 @@ void Symbol::saveXmlHeader(ostream &s) const
     a_v_b(s,"hiddenretparm",true);
   if ((dispflags&isolate)!=0)
     a_v_b(s,"merge",false);
+  if ((dispflags&is_this_ptr)!=0)
+    a_v_b(s,"thisptr",true);
   int4 format = getDisplayFormat();
   if (format != 0) {
     s << " format=\"";
@@ -460,6 +472,10 @@ void Symbol::restoreXmlHeader(const Element *el)
 	if (attName == "typelock") {
 	  if (xml_readbool(el->getAttributeValue(i)))
 	    flags |= Varnode::typelock;
+	}
+	else if (attName == "thisptr") {
+	  if (xml_readbool(el->getAttributeValue(i)))
+	    dispflags |= is_this_ptr;
 	}
 	break;
       case 'v':

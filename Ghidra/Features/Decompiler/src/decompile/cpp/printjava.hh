@@ -56,9 +56,11 @@ class PrintJava : public PrintC {
   static OpToken instanceof;				///< The \b instanceof keyword
   static bool isArrayType(const Datatype *ct);		///< Does the given data-type reference a java array
   static bool needZeroArray(const Varnode *vn);		///< Do we need '[0]' syntax.
+  void resetDefaultsPrintJava(void);			///< Set options that are specific to Java
   virtual void printUnicode(ostream &s,int4 onechar) const;
 public:
   PrintJava(Architecture *g,const string &nm="java-language");	///< Constructor
+  virtual void resetDefaults(void);
   virtual void docFunction(const Funcdata *fd);
   virtual void pushTypeStart(const Datatype *ct,bool noident);
   virtual void pushTypeEnd(const Datatype *ct);

@@ -98,6 +98,7 @@ private:
   uint4 flags;			///< Attributes of the space
   uintb highest;	        ///< Highest (byte) offset into this space
   uintb pointerLowerBound;	///< Offset below which we don't search for pointers
+  uintb pointerUpperBound;	///< Offset above which we don't search for pointers
   char shortcut;		///< Shortcut character for printing
 protected:
   string name;			///< Name of this space
@@ -127,6 +128,7 @@ public:
   uint4 getAddrSize(void) const; ///< Get the size of the space
   uintb getHighest(void) const;  ///< Get the highest byte-scaled address
   uintb getPointerLowerBound(void) const;	///< Get lower bound for assuming an offset is a pointer
+  uintb getPointerUpperBound(void) const;	///< Get upper bound for assuming an offset is a pointer
   int4 getMinimumPtrSize(void) const;	///< Get the minimum pointer size for \b this space
   uintb wrapOffset(uintb off) const; ///< Wrap -off- to the offset that fits into this space
   char getShortcut(void) const; ///< Get the shortcut character
@@ -340,11 +342,18 @@ inline uintb AddrSpace::getHighest(void) const {
   return highest;
 }
 
-/// Constant offsets are tested against \b this bound as a quick filter before
+/// Constant offsets are tested against \b this lower bound as a quick filter before
 /// attempting to lookup symbols.
 /// \return the minimum offset that will be inferred as a pointer
 inline uintb AddrSpace::getPointerLowerBound(void) const {
   return pointerLowerBound;
+}
+
+/// Constant offsets are tested against \b this upper bound as a quick filter before
+/// attempting to lookup symbols.
+/// \return the maximum offset that will be inferred as a pointer
+inline uintb AddrSpace::getPointerUpperBound(void) const {
+  return pointerUpperBound;
 }
 
 /// A value of 0 means the size must match exactly. If the space is truncated, or

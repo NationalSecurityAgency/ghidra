@@ -22,11 +22,14 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.HighCodeSymbol;
 import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
 
@@ -69,18 +72,22 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 		PluginTool tool = context.getTool();
 		final ClangToken tokenAtCursor = context.getTokenAtCursor();
 		HighSymbol highSymbol = findHighSymbolFromToken(tokenAtCursor, context.getHighFunction());
-		Address addr = null;
+		Symbol symbol = null;
 		if (highSymbol instanceof HighCodeSymbol) {
-			addr = ((HighCodeSymbol) highSymbol).getStorage().getMinAddress();
+			symbol = ((HighCodeSymbol) highSymbol).getCodeSymbol();
+			if (symbol == null) {
+				// Try to get the dynamic symbol
+				Address addr = ((HighCodeSymbol) highSymbol).getStorage().getMinAddress();
+				SymbolTable symbolTable = context.getProgram().getSymbolTable();
+				symbol = symbolTable.getPrimarySymbol(addr);
+			}
 		}
-		if (addr == null || !addr.isMemoryAddress()) {
+		if (symbol == null) {
 			Msg.showError(this, tool.getToolFrame(), "Rename Failed",
 				"Memory storage not found for global variable");
 			return;
 		}
-		RenameGlobalVariableTask nameTask =
-			new RenameGlobalVariableTask(tool, context.getProgram(), context.getDecompilerPanel(),
-				tokenAtCursor, addr);
-		nameTask.runTask(true);
+		AddEditDialog dialog = new AddEditDialog("Rename Global", context.getTool());
+		dialog.editLabel(symbol, context.getProgram());
 	}
 }

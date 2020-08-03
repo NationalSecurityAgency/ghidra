@@ -289,6 +289,17 @@ void ScopeLocal::collectNameRecs(void)
     Symbol *sym = *iter++;
     if (sym->isNameLocked()&&(!sym->isTypeLocked())) {
       addRecommendName(sym);
+      if (sym->isThisPointer()) {		// If there is a "this" pointer
+	Datatype *dt = sym->getType();
+	if (dt->getMetatype() == TYPE_PTR) {
+	  if (((TypePointer *)dt)->getPtrTo()->getMetatype() == TYPE_STRUCT) {
+	    // If the "this" pointer points to a class, try to preserve the data-type
+	    // even though the symbol is not preserved.
+	    SymbolEntry *entry = sym->getFirstWholeMap();
+	    typeRecommend.push_back(TypeRecommend(entry->getAddr(),dt));
+	  }
+	}
+      }
     }
   }
 }
@@ -1240,6 +1251,7 @@ SymbolEntry *ScopeLocal::remapSymbolDynamic(Symbol *sym,uint8 hash,const Address
 void ScopeLocal::recoverNameRecommendationsForSymbols(void)
 
 {
+  Address param_usepoint = fd->getAddress() - 1;
   list<NameRecommend>::const_iterator iter;
   for(iter=nameRecommend.begin();iter!=nameRecommend.end();++iter) {
     const Address &addr((*iter).getAddr());
@@ -1258,7 +1270,10 @@ void ScopeLocal::recoverNameRecommendationsForSymbols(void)
       vn = fd->findLinkedVarnode(entry);
     }
     else {
-      vn = fd->findVarnodeWritten(size,addr,usepoint);
+      if (usepoint == param_usepoint)
+	vn = fd->findVarnodeInput(size, addr);
+      else
+	vn = fd->findVarnodeWritten(size,addr,usepoint);
       if (vn == (Varnode *)0) continue;
       sym = vn->getHigh()->getSymbol();
       if (sym == (Symbol *)0) continue;
@@ -1295,6 +1310,20 @@ void ScopeLocal::recoverNameRecommendationsForSymbols(void)
     setAttribute(sym, Varnode::namelock);
     setSymbolId(sym, dynEntry.getSymbolId());
     fd->remapDynamicVarnode(vn, sym, dynEntry.getAddress(), dynEntry.getHash());
+  }
+}
+
+/// Run through the recommended list, search for an input Varnode matching the storage address
+/// and try to apply the data-type to it.  Do not override existing type lock.
+void ScopeLocal::applyTypeRecommendations(void)
+
+{
+  list<TypeRecommend>::const_iterator iter;
+  for(iter=typeRecommend.begin();iter!=typeRecommend.end();++iter) {
+    Datatype *dt = (*iter).getType();
+    Varnode *vn = fd->findVarnodeInput(dt->getSize(), (*iter).getAddress());
+    if (vn != (Varnode *)0)
+      vn->updateType(dt, true, false);
   }
 }
 

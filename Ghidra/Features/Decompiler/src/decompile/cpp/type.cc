@@ -316,6 +316,35 @@ void Datatype::saveXmlRef(ostream &s) const
     saveXml(s);
 }
 
+/// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
+/// Perform this check.
+/// \param is the given offset
+/// \return \b true if \b this is a suitable PTRSUB data-type
+bool Datatype::isPtrsubMatching(uintb offset) const
+
+{
+  if (metatype != TYPE_PTR)
+    return false;
+
+  Datatype *basetype = ((TypePointer *)this)->getPtrTo();
+  uint4 wordsize = ((TypePointer *)this)->getWordSize();
+  if (basetype->metatype==TYPE_SPACEBASE) {
+    uintb newoff = AddrSpace::addressToByte(offset,wordsize);
+    basetype->getSubType(newoff,&newoff);
+    if (newoff != 0)
+      return false;
+  }
+  else {
+    int4 size = offset;
+    int4 typesize = basetype->getSize();
+    if ((basetype->metatype != TYPE_ARRAY)&&(basetype->metatype != TYPE_STRUCT))
+      return false;	// Not a pointer to a structured type
+    else if ((typesize <= AddrSpace::addressToByteInt(size,wordsize))&&(typesize!=0))
+      return false;
+  }
+  return true;
+}
+
 /// Restore the basic properties (name,size,id) of a data-type from an XML element
 /// Properties are read from the attributes of the element
 /// \param el is the XML element
@@ -1124,13 +1153,11 @@ void TypeCode::printRaw(ostream &s) const
 }
 
 /// Assuming \b this has an underlying function prototype, set some of its boolean properties
-/// \param hasThisPtr toggles whether prototype has takes a "this" pointer
 /// \param isConstructor toggles whether the function is a constructor
 /// \param isDestructor toggles whether the function is a destructor
-void TypeCode::setProperties(bool hasThisPtr,bool isConstructor,bool isDestructor)
+void TypeCode::setProperties(bool isConstructor,bool isDestructor)
 
 {
-  proto->setThisPointer(hasThisPtr);
   proto->setConstructor(isConstructor);
   proto->setDestructor(isDestructor);
 }
@@ -2172,11 +2199,10 @@ Datatype *TypeFactory::restoreXmlType(const Element *el)
 ///
 /// Kludge to get flags into code pointer types, when they can't come through XML
 /// \param el is the XML element describing the Datatype
-/// \param hasThisPtr toggles "this" pointer property on "function" datatypes
 /// \param isConstructor toggles "constructor" property on "function" datatypes
 /// \param isDestructor toggles "destructor" property on "function" datatypes
 /// \return the restored Datatype object
-Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool hasThisPtr,bool isConstructor,bool isDestructor)
+Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool isConstructor,bool isDestructor)
 
 {
   TypePointer tp;
@@ -2197,8 +2223,8 @@ Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool hasThi
     throw LowlevelError("Special type restoreXml does not see code");
   TypeCode tc("");
   tc.restoreXml(subel,*this);
-  tc.setProperties(hasThisPtr,isConstructor,isDestructor);	// Add in flags
-  tp.ptrto = findAdd(tc);					// THEN add to container
+  tc.setProperties(isConstructor,isDestructor);		// Add in flags
+  tp.ptrto = findAdd(tc);				// THEN add to container
   return findAdd(tp);
 }
 

@@ -274,6 +274,7 @@ protected:
   void parseLaneSizes(const Element *el);		///< Apply lane size configuration
   void parseStackPointer(const Element *el);		///< Apply stack pointer configuration
   void parseDeadcodeDelay(const Element *el);		///< Apply dead-code delay configuration
+  void parseInferPtrBounds(const Element *el);		///< Apply pointer inference bounds
   void parseFuncPtrAlign(const Element *el);		///< Apply function pointer alignment configuration
   void parseSpacebase(const Element *el);		///< Create an additional indexed space
   void parseNoHighPtr(const Element *el);		///< Apply memory alias configuration

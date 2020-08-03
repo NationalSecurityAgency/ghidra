@@ -984,6 +984,20 @@ void Architecture::parseDeadcodeDelay(const Element *el)
     throw LowlevelError("Bad <deadcodedelay> tag");
 }
 
+/// Alter the range of addresses for which a pointer is allowed to be inferred.
+void Architecture::parseInferPtrBounds(const Element *el)
+
+{
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  for(iter=list.begin();iter!=list.end();++iter) {
+    const Element *subel = *iter;
+    Range range;
+    range.restoreXml(subel,this);
+    setInferPtrBounds(range);
+  }
+}
+
 /// Pull information from a \<funcptr> tag. Turn on alignment analysis of
 /// function pointers, some architectures have aligned function pointers
 /// and encode extra information in the unused bits.
@@ -1109,6 +1123,9 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
         throw LowlevelError("Undefined space: "+spaceName);
       setDefaultDataSpace(spc->getIndex());
     }
+    else if (elname == "inferptrbounds") {
+      parseInferPtrBounds(*iter);
+    }
     else if (elname == "segmented_address") {
     }
     else if (elname == "default_symbols") {
@@ -1183,6 +1200,8 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
       parseFuncPtrAlign(*iter);
     else if (elname == "deadcodedelay")
       parseDeadcodeDelay(*iter);
+    else if (elname == "inferptrbounds")
+      parseInferPtrBounds(*iter);
   }
   // <global> tags instantiate the base symbol table
   // They need to know about all spaces, so it must come

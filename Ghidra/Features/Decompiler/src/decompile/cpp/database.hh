@@ -173,6 +173,7 @@ protected:
   virtual ~Symbol(void) {}	///< Destructor
   void setDisplayFormat(uint4 val);	///< Set the display format for \b this Symbol
   void checkSizeTypeLock(void);	///< Calculate if \b size_typelock property is on
+  void setThisPointer(bool val);	///< Toggle whether \b this is the "this" pointer for a class method
 public:
   /// \brief Possible display (dispflag) properties for a Symbol
   enum {
@@ -183,7 +184,8 @@ public:
     force_char = 5,		///< Force integer to be printed as a character constant
     size_typelock = 8,	        ///< Only the size of the symbol is typelocked
     isolate = 16,		///< Symbol should not speculatively merge automatically
-    merge_problems = 32		///< Set if some SymbolEntrys did not get merged
+    merge_problems = 32,	///< Set if some SymbolEntrys did not get merged
+    is_this_ptr = 64		///< We are the "this" symbol for a class method
   };
 
   Symbol(Scope *sc,const string &nm,Datatype *ct);	///< Construct given a name and data-type
@@ -198,6 +200,7 @@ public:
   bool isTypeLocked(void) const { return ((flags&Varnode::typelock)!=0); }	///< Is the Symbol type-locked
   bool isNameLocked(void) const { return ((flags&Varnode::namelock)!=0); }	///< Is the Symbol name-locked
   bool isSizeTypeLocked(void) const { return ((dispflags & size_typelock)!=0); }	///< Is the Symbol size type-locked
+  bool isThisPointer(void) const { return ((dispflags & is_this_ptr)!=0); }		///< Is \b this the "this" pointer
   bool isIndirectStorage(void) const { return ((flags&Varnode::indirectstorage)!=0); }	///< Is storage really a pointer to the true Symbol
   bool isHiddenReturn(void) const { return ((flags&Varnode::hiddenretparm)!=0); }	///< Is this a reference to the function return value
   bool isNameUndefined(void) const;				///< Does \b this have an undefined name
@@ -699,6 +702,7 @@ public:
   void saveXmlRecursive(ostream &s,bool onlyGlobal) const;		///< Save all contained scopes as an XML stream
   void overrideSizeLockType(Symbol *sym,Datatype *ct);			///< Change the data-type of a Symbol that is \e sizelocked
   void resetSizeLockType(Symbol *sym);				///< Clear a Symbol's \e size-locked data-type
+  void setThisPointer(Symbol *sym,bool val) { sym->setThisPointer(val); }	///< Toggle the given Symbol as the "this" pointer
   bool isSubScope(const Scope *scp) const;			///< Is this a sub-scope of the given Scope
   string getFullName(void) const;				///< Get the full name of \b this Scope
   void getNameSegments(vector<string> &vec) const;		///< Get the fullname of \b this in segments

@@ -84,7 +84,7 @@ public:
     unary = 0x8000,		///< Evaluate as unary expression
     binary = 0x10000,		///< Evaluate as binary expression
     special = 0x20000,		///< Cannot be evaluated (without special processing)
-    floatingpoint = 0x40000,	///< A floating point operation
+    ternary = 0x40000,		///< Evaluate as ternary operator (or higher)
     splittingbranch = 0x80000,	///< Dead edge cannot be removed as it splits
     nonprinting = 0x100000,	///< Op should not be directly printed as source
     halt = 0x200000,		///< instruction causes processor or process to halt
@@ -100,15 +100,12 @@ public:
     indirect_store = 0x80000000	///< CPUI_INDIRECT is caused by CPUI_STORE
   };
   enum {
-    has_thisptr = 0x1,		///< First parameter ( getIn(1) ) is a this pointer
-    is_constructor = 0x2,	///< Op is call to a constructor
-    is_destructor = 0x4,	///< Op is call to a destructor
-    special_prop = 0x8,		///< Does some special form of datatype propagation
-    special_print = 0x10,	///< Op is marked for special printing
-    modified = 0x20,		///< This op has been modified by the current action
-    warning = 0x40,		///< Warning has been generated for this op
-    incidental_copy = 0x80,	///< Treat this as \e incidental for parameter recovery algorithms
-    is_cpool_transformed = 0x100 ///< Have we checked for cpool transforms
+    special_prop = 1,		///< Does some special form of datatype propagation
+    special_print = 2,		///< Op is marked for special printing
+    modified = 4,		///< This op has been modified by the current action
+    warning = 8,		///< Warning has been generated for this op
+    incidental_copy = 0x10,	///< Treat this as \e incidental for parameter recovery algorithms
+    is_cpool_transformed = 0x20 ///< Have we checked for cpool transforms
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -158,7 +155,7 @@ public:
   int4 getSlot(const Varnode *vn) const { int4 i,n; n=inrefs.size(); for(i=0;i<n;++i) if (inrefs[i]==vn) break; return i; }
   int4 getRepeatSlot(const Varnode *vn,int4 firstSlot,list<PcodeOp *>::const_iterator iter) const;
   /// \brief Get the evaluation type of this op
-  uint4 getEvalType(void) const { return (flags&(PcodeOp::unary|PcodeOp::binary|PcodeOp::special)); }
+  uint4 getEvalType(void) const { return (flags&(PcodeOp::unary|PcodeOp::binary|PcodeOp::special|PcodeOp::ternary)); }
   /// \brief Get type which indicates unusual halt in control-flow
   uint4 getHaltType(void) const { return (flags&(PcodeOp::halt|PcodeOp::badinstruction|PcodeOp::unimplemented|
 					      PcodeOp::noreturn|PcodeOp::missing)); }
@@ -199,9 +196,6 @@ public:
   bool isSplitting(void) const { return ((flags&PcodeOp::splittingbranch)!=0); } ///< Return \b true if this branch splits
   bool doesSpecialPropagation(void) const { return ((addlflags&PcodeOp::special_prop)!=0); } ///< Return \b true if this does datatype propagation
   bool doesSpecialPrinting(void) const { return ((addlflags&PcodeOp::special_print)!=0); } ///< Return \b true if this needs to special printing
-  bool hasThisPointer(void) const { return ((addlflags&PcodeOp::has_thisptr)!=0); } ///< Return \b true if this is a call taking 'this' parameter
-  bool isConstructor(void) const { return ((addlflags&PcodeOp::is_constructor)!=0); } ///< Return \b true if this is call to a constructor
-  bool isDestructor(void) const { return ((addlflags&PcodeOp::is_destructor)!=0); } ///< Return \b true if this is call to a destructor
   bool isIncidentalCopy(void) const { return ((addlflags&PcodeOp::incidental_copy)!=0); } ///< Return \b true if \b this COPY is \e incidental
   /// \brief Return \b true if output is 1-bit boolean
   bool isCalculatedBool(void) const { return ((flags&(PcodeOp::calculated_bool|PcodeOp::booloutput))!=0); }
