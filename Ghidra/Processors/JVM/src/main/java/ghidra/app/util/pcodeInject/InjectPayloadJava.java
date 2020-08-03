@@ -17,25 +17,14 @@ package ghidra.app.util.pcodeInject;
 
 import java.io.IOException;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.*;
-
-import ghidra.app.plugin.processors.sleigh.SleighException;
+import ghidra.app.plugin.processors.sleigh.PcodeEmit;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
-import ghidra.app.plugin.processors.sleigh.template.OpTpl;
+import ghidra.javaclass.format.ClassFileAnalysisState;
+import ghidra.javaclass.format.ClassFileJava;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
-import ghidra.pcodeCPort.slgh_compile.PcodeParser;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.InjectContext;
+import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.PcodeXMLException;
-import ghidra.sleigh.grammar.Location;
-import ghidra.util.Msg;
-import ghidra.util.xml.XmlUtilities;
-import ghidra.xml.XmlPullParser;
-import ghidra.xml.XmlPullParserFactory;
 
 /**
  * Subclasses of this class are used to generate pcode to inject for modeling
@@ -43,143 +32,61 @@ import ghidra.xml.XmlPullParserFactory;
  *
  */
 
-public abstract class InjectPayloadJava extends InjectPayloadCallother {
-	private SleighLanguage language;
-	private SAXParser saxParser;
+public abstract class InjectPayloadJava implements InjectPayload {
+	protected SleighLanguage language;
+	protected long uniqueBase;
+	private String sourceName;
 
-	/**
-	 * Subclasses use this method to generate pcode text for a particular java
-	 * bytecode op requiring pcode injection.
-	 * 
-	 * @param program The program containing the op.
-	 * @param context The context associated with the op.
-	 * @return
-	 */
-	abstract String getPcodeText(Program program, String context);
-
-	public InjectPayloadJava(String sourceName, SleighLanguage language) {
-		super(sourceName);
+	public InjectPayloadJava(String sourceName, SleighLanguage language, long uniqBase) {
 		this.language = language;
-		try {
-			saxParser = getSAXParser();
-		}
-		catch (PcodeXMLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		this.sourceName = sourceName;
+		this.uniqueBase = uniqBase;
 	}
 
-	SleighLanguage getLanguage() {
-		return language;
-	}
-
-	InjectContext getInjectContext(Program program, String context) {
-		InjectContext injectContext = new InjectContext();
-		injectContext.language = language;
+	protected static AbstractConstantPoolInfoJava[] getConstantPool(Program program) {
+		ClassFileAnalysisState analysisState;
 		try {
-			injectContext.restoreXml(saxParser, context, program.getAddressFactory());
-			saxParser.reset();
-		}
-		catch (PcodeXMLException e1) {
-			Msg.info(this, e1.getMessage());
-			e1.printStackTrace();
-		}
-		return injectContext;
-	}
-
-	AbstractConstantPoolInfoJava[] getConstantPool(Program program) {
-		ConstantPoolJava cPool = null;
-		try {
-			cPool = new ConstantPoolJava(program);
+			analysisState = ClassFileAnalysisState.getState(program);
 		}
 		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return null;
 		}
-		return cPool.getConstantPool();
+		ClassFileJava classFile = analysisState.getClassFile();
+		return classFile.getConstantPool();
 	}
 
-	//from DecompileCallback.java
-	private static SAXParser getSAXParser() throws PcodeXMLException {
-		try {
-			SAXParserFactory saxParserFactory = XmlUtilities.createSecureSAXParserFactory(false);
-			saxParserFactory.setFeature("http://xml.org/sax/features/namespaces", false);
-			saxParserFactory.setFeature("http://xml.org/sax/features/validation", false);
-			return saxParserFactory.newSAXParser();
-		}
-		catch (Exception e) {
-			Msg.error(PcodeInjectLibraryJava.class, e.getMessage());
-			throw new PcodeXMLException("Failed to instantiate XML parser", e);
-		}
+	@Override
+	public int getType() {
+		return InjectPayload.CALLOTHERFIXUP_TYPE;
 	}
 
-	/**
-	 * This method is used to generate and compile pcode for a given
-	 * callotherfixup.
-	 * 
-	 * @param parser Used to parse pcode.
-	 * @param program The program containing the callotherfixup
-	 * @param context The context of the callotherfixup.
-	 * @return An array of OpTpl (for passing to
-	 *         PcodeInjectLibrary.adjustUniqueBase)
-	 */
-	public OpTpl[] getPcode(PcodeParser parser, Program program, String context) {
-		String sourceName = getSource();
-		Location loc = new Location(sourceName, 1);
+	@Override
+	public String getSource() {
+		return sourceName;
+	}
 
-		InjectParameter[] input = getInput();
-		for (InjectParameter element : input) {
-			parser.addOperand(loc, element.getName(), element.getIndex());
-		}
-		InjectParameter[] output = getOutput();
-		for (InjectParameter element : output) {
-			parser.addOperand(loc, element.getName(), element.getIndex());
-		}
+	@Override
+	public int getParamShift() {
+		return 0;
+	}
 
-		String pcodeText = getPcodeText(program, context);
-		String constructTplXml =
-			PcodeParser.stringifyTemplate(parser.compilePcode(pcodeText, sourceName, 1));
-		if (constructTplXml == null) {
-			throw new SleighException("pcode compile failed " + sourceName);
-		}
-		final SAXParseException[] exception = new SAXParseException[1];
-		XmlPullParser xmlParser = null;
-		try {
-			xmlParser =
-				XmlPullParserFactory.create(constructTplXml, sourceName, new ErrorHandler() {
-					@Override
-					public void warning(SAXParseException e) throws SAXException {
-						Msg.warn(this, e.getMessage());
-					}
+	@Override
+	public void inject(InjectContext context, PcodeEmit emit) {
+		// Not used
+	}
 
-					@Override
-					public void fatalError(SAXParseException e) throws SAXException {
-						exception[0] = e;
-					}
+	@Override
+	public boolean isFallThru() {
+		return true;
+	}
 
-					@Override
-					public void error(SAXParseException e) throws SAXException {
-						exception[0] = e;
-					}
-				}, false);
-		}
-		catch (SAXException e) {
-			e.printStackTrace();
-		}
+	@Override
+	public InjectParameter[] getInput() {
+		return null;
+	}
 
-		ConstructTpl constructTpl = new ConstructTpl();
-		try {
-			constructTpl.restoreXml(xmlParser, language.getAddressFactory());
-		}
-		catch (UnknownInstructionException e) {
-			e.printStackTrace();
-		}
-		if (exception[0] != null) {
-			throw new SleighException("pcode compiler returned invalid xml " + sourceName,
-				exception[0]);
-		}
-		OpTpl[] opTemplates = constructTpl.getOpVec();
-		setTemplate(constructTpl);
-		return opTemplates;
+	@Override
+	public InjectParameter[] getOutput() {
+		return null;
 	}
 }
