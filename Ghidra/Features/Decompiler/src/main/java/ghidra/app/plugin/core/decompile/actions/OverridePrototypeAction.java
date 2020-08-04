@@ -112,8 +112,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		ClangNode parent = tokenAtCursor.Parent();
 		if (parent instanceof ClangStatement) {
 			PcodeOp op = ((ClangStatement) parent).getPcodeOp();
-			int opCode = op.getOpcode();
-			if (opCode == PcodeOp.CALL || opCode == PcodeOp.CALLIND) {
+			if (isCallOp(op)) {
 				return op;
 			}
 		}
@@ -141,13 +140,22 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		Iterator<PcodeOpAST> iter = hfunc.getPcodeOps(addr);
 		while (iter.hasNext()) {
 			PcodeOpAST op = iter.next();
-			int opCode = op.getOpcode();
-			if (opCode == PcodeOp.CALL || opCode == PcodeOp.CALLIND) {
+			if (isCallOp(op)) {
 				return op;
 			}
 		}
 
 		return null;
+	}
+
+	private static boolean isCallOp(PcodeOp op) {
+
+		if (op == null) {
+			return false;
+		}
+
+		int opCode = op.getOpcode();
+		return opCode == PcodeOp.CALL || opCode == PcodeOp.CALLIND;
 	}
 
 	private Function getCalledFunction(Program program, PcodeOp op) {
