@@ -153,10 +153,10 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				.onAction(c -> doRefresh())
 				.buildAndInstallLocal(this);
 
-		addBundlesAction("ActivateBundles", "Enable selected bundle(s)",
+		addBundlesAction("EnableBundles", "Enable selected bundle(s)",
 			ResourceManager.loadImage("images/media-playback-start.png"), this::doEnableBundles);
 
-		addBundlesAction("DeactivateBundles", "Disable selected bundle(s)",
+		addBundlesAction("DisableBundles", "Disable selected bundle(s)",
 			ResourceManager.loadImage("images/media-playback-stop.png"), this::doDisableBundles);
 
 		addBundlesAction("CleanBundles", "Clean selected bundle build cache(s)",
