@@ -31,6 +31,8 @@ dependencies {
 	compile 'biz.aQute.bnd:biz.aQute.bndlib:5.0.0'
 	compile 'org.slf4j:slf4j-api:1.7.25'
 	
+	runtime "org.slf4j:slf4j-nop:1.7.25"
+	
    	compileOnly "junit:junit:4.12"
 	
 	// These have abstract test classes and stubs needed by this module	

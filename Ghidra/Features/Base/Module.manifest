@@ -1,5 +1,6 @@
 MODULE FILE LICENSE: lib/biz.aQute.bndlib-5.0.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/slf4j-api-1.7.25.jar MIT
+MODULE FILE LICENSE: lib/slf4j-nop-1.7.25.jar MIT
 MODULE FILE LICENSE: lib/org.apache.felix.framework-6.0.3.jar Apache License 2.0
 MODULE FILE LICENSE: lib/animal-sniffer-annotations-1.9.jar MIT
 MODULE FILE LICENSE: lib/org.osgi.core-5.0.0.jar Apache License 2.0
