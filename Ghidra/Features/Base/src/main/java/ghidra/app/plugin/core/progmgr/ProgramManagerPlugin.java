@@ -551,8 +551,8 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.enabled(false)
 				.buildAndInstall(tool);
 
-		saveAction = new ActionBuilder("Save File", "&Save")
-				.menuPath(ToolConstants.MENU_FILE, "Close &All")
+		saveAction = new ActionBuilder("Save File", getName())
+				.menuPath(ToolConstants.MENU_FILE, "Save File")
 				.description("Save Program")
 				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
 				.menuIcon(null)
