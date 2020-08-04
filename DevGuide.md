@@ -198,7 +198,7 @@ Download `cdt-8.6.0.zip` from The Eclipse Foundation, and place it in:
 
 ```bash
 cd ~/Downloads   # Or wherever
-curl -OL 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
+curl -OL 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 curl -o 'cdt-8.6.0.zip.sha512' -L --retry 3 'https://www.eclipse.org/downloads/sums.php?type=sha512&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 shasum -a 512 -c 'cdt-8.6.0.zip.sha512'
 mkdir -p ~/git/ghidra/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build/
