@@ -16,6 +16,7 @@
 package docking.widgets.table.constraint;
 
 import java.util.List;
+import java.util.Objects;
 
 import docking.widgets.table.constraint.provider.NumberColumnConstraintProvider;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -60,7 +61,7 @@ public abstract class ColumnTypeMapper<T, M> implements ExtensionPoint {
 
 	@Override
 	public int hashCode() {
-		return sourceType.hashCode() + destinationType.hashCode();
+		return Objects.hash(sourceType, destinationType);
 	}
 
 	@Override
