@@ -5,7 +5,6 @@
 
 @define IO_START "0"
 @define REGISTER_SPACE "register"
-@define RAMP_START "0x38"
 @define EIND "0x3c"
  
 @include "avr8.sinc"

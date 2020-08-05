@@ -17,7 +17,6 @@ define alignment=2;
 #define where the IO space is mapped if not specified
 @ifndef IO_START
 @define IO_START "0x20"
-@define RAMP_START "0x58"
 @define EIND "0x5c"
 @endif
 
@@ -33,12 +32,13 @@ define alignment=2;
 # Ghidra, it's still preferable to see the name of IO locations used,
 # rather than code addresses, so leave mem space as the default.
 define space code type=ram_space size=$(PCBYTESIZE) wordsize=2 default;
-define space register type=ram_space size=2;
+define space register type=register_space size=2;
 define space mem type=ram_space size=2 wordsize=1;
 
 # Using decimal rather than hex to match specs
-# TODO: These general purpose registers should reside with the 'mem' space from 0x00-0x1f
-#define register offset=0 size=1 [
+# General registers start at 0 in the iospace for earlier avr8 processors
+# In the Xmega line, they are not accessible in mem, and are in a register space
+#
 define $(REGISTER_SPACE) offset=0 size=1 [
 	R0  R1  R2  R3  R4  R5  R6  R7  R8  R9
 	R10 R11 R12 R13 R14 R15 R16 R17 R18 R19
@@ -46,7 +46,6 @@ define $(REGISTER_SPACE) offset=0 size=1 [
 	Zlo Zhi
 ];
 
-#define register offset=0 size=2 [
 define $(REGISTER_SPACE) offset=0 size=2 [
 	R1R0   R3R2   R5R4   R7R6   R9R8
 	R11R10 R13R12 R15R14 R17R16 R19R18
@@ -54,7 +53,6 @@ define $(REGISTER_SPACE) offset=0 size=2 [
 	X      Y      Z
 ];
 
-#define register offset=0x10 size=4 [
 define $(REGISTER_SPACE) offset=0x10 size=4 [
 	R19R18R17R16 R23R22R21R20
 ];
@@ -73,13 +71,30 @@ define register offset=0x80 size=1 [
 
 #####################################
 # Some AVR processors may have different io layouts not just different io.
-# This could necessitate modification to this section.
+# 
 # AVR processors with more than 64 KiB of RAM make use of the RAMP- registers
 # to act as the high bits where the X, Y, or Z registers are used, or in direct
 # addressing instructions.
-# TODO: Incorporate the RAMPD register in the LDS instruction.
+#
+# These IO registers need to be accessible to sleigh instruction PCODE
+# so they are defined here.  The bulk of the IO registers are defined
+# as labels in the appropriate .pspec file.
 
-define mem offset=$(RAMP_START) size=1 [ RAMPD RAMPX RAMPY RAMPZ ];
+define mem offset=$(IO_START) size = 1 [
+# IO_START + 0x00
+	                                     _ _ _ _ _ _ _ _
+	                                     _ _ _ _ _ _ _ _
+# IO_START + 0x10
+	                                     _ _ _ _ _ _ _ _
+	                                     _ _ _ _ _ _ _ _
+	                                     
+# IO_START + 0x20
+	                                     _ _ _ _ _ _ _ _
+	                                     _ _ _ _ _ _ _ _
+# IO_START + 0x30	                                     	                                     
+	                                     _ _ _ _ _ _ _ _
+	                                     RAMPD RAMPX RAMPY RAMPZ _ _ _ SREG
+];
 
 
 # If the AVR processor has more than 128 KiB of ROM, the processor will support the EIND
@@ -396,6 +411,23 @@ macro doSubtractWithCarry(pre,sub,res) {
 macro setMulFlags(res) {
 	$(Cflag) = ((res & 0x8000) != 0);
 	$(Zflag) = (res == 0);
+}
+
+macro loadSREG(reg) {
+	reg =  (zext(Cflg==1) << 0) | (zext(Zflg==1) << 1) | (zext(Nflg==1) << 2) | (zext(Vflg==1) << 3) | (zext(Sflg==1) << 4) | (zext(Hflg==1) << 5) | (zext(Tflg==1)<<6) | (zext(Iflg==1) << 7);
+    SREG = reg;
+}
+
+macro storeSREG(val) {
+	Cflg = ((val>> 0) & 1);
+	Zflg = ((val>> 1) & 1);
+	Nflg = ((val>> 2) & 1);
+	Vflg = ((val>> 3) & 1);
+	Sflg = ((val>> 4) & 1);
+	Hflg = ((val>> 5) & 1);
+	Tflg = ((val>> 6) & 1);
+	Iflg = ((val>> 7) & 1);
+	SREG = val;
 }
 
 # Handle possible skip instruction
@@ -782,6 +814,9 @@ ElpmPlus: Z^"+" is Z {}
 :in RdFull,SPH                   is phase=1 & ophi5=0x16 & RdFull & op9to10=3 & oplow4=0xe & SPH {
 	RdFull = SPH;
 }
+:in RdFull,SREG                   is phase=1 & ophi5=0x16 & RdFull & op9to10=3 & oplow4=0xf & SREG {
+	loadSREG(RdFull);
+}
 
 :inc RdFull                      is phase=1 & ophi7=0x4a & oplow4=0x3 & RdFull {
 	# inc doesn't set the C flag.
@@ -962,6 +997,9 @@ LpmPlus: Z^"+" is Z {}
 }
 :out SPH,RdFull                  is phase=1 & ophi5=0x17 & RdFull & op9to10=3 & oplow4=0xe & SPH {
 	SPH = RdFull;
+}
+:out SREG,RdFull                  is phase=1 & ophi5=0x17 & RdFull & op9to10=3 & oplow4=0xf & SREG {
+	storeSREG(RdFull);
 }
 
 :pop RdFull                      is phase=1 & ophi7=0x48 & oplow4=0xf & RdFull {

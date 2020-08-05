@@ -12,8 +12,8 @@
     --> 
     
   <volatile outputop="write_volatile" inputop="read_volatile">
-    <range space="mem" first="0x20" last="0x5b"/>
-    <range space="mem" first="0x5f" last="0xff"/>
+    <range space="mem" first="0x20" last="0x5a"/>
+    <range space="mem" first="0x60" last="0xff"/>
   </volatile>
   
   <default_symbols>
@@ -137,7 +137,7 @@
     <symbol name="EIND" address="mem:0x5c"/>
     <symbol name="_SPL" address="mem:0x5d"/>
     <symbol name="_SPH" address="mem:0x5e"/>
-    <symbol name="SREG" address="mem:0x5f"/>
+
     <symbol name="WDTCSR" address="mem:0x60"/>
     <symbol name="CLKPR" address="mem:0x61"/>
 

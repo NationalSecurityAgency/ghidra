@@ -12,8 +12,8 @@
     --> 
     
   <volatile outputop="write_volatile" inputop="read_volatile">
-    <range space="mem" first="0x00" last="0x3b"/>
-    <range space="mem" first="0x3f" last="0xfff"/>
+    <range space="mem" first="0x00" last="0x37"/>
+    <range space="mem" first="0x40" last="0xfff"/>
   </volatile>
   
   <default_symbols>
@@ -1471,7 +1471,7 @@
 
   <default_memory_blocks>
     <memory_block name="iospace" start_address="mem:0x00" length="0x1000" initialized="false"/>
-    <memory_block name="eeprom" start_address="mem:0x1000" length="0x1f00" initialized="false"/>
+    <memory_block name="eeprom" start_address="mem:0x1000" length="0x1000" initialized="false"/>
   </default_memory_blocks>
 
 
