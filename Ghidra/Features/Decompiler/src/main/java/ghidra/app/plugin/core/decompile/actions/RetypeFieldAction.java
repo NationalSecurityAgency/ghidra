@@ -34,7 +34,7 @@ import ghidra.util.UndefinedFunction;
  * Action triggered from a specific token in the decompiler window to change the data-type of
  * a field within a structure data-type. The field must already exist, except in the case of a
  * completely undefined structure. The data-type of the field is changed according to the user
- * selection.  If the size of the seleted data-type is bigger, this can trigger other fields in
+ * selection.  If the size of the selected data-type is bigger, this can trigger other fields in
  * the structure to be removed and may change the size of the structure.  The modified data-type
  * is permanently committed to the program's database.
  */

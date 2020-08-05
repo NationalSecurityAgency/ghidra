@@ -26,9 +26,8 @@ import ghidra.util.UndefinedFunction;
 public class IsolateVariableAction extends AbstractDecompilerAction {
 
 	public IsolateVariableAction() {
-		super("Split out as New Variable");
-		setPopupMenuData(new MenuData(new String[] { "Split out as New Variable" }, "Decompile"));
-//		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
+		super("Split Out As New Variable");
+		setPopupMenuData(new MenuData(new String[] { "Split Out As New Variable" }, "Decompile"));
 	}
 
 	@Override
