@@ -81,7 +81,7 @@
         sub-functions it calls, provide type information. If the function contains references to
         global memory locations that have a data type applied to them, these will also be used, and
         any local variables of the function can be annotated directly with data types. The user can
-        provide data-type information to the decompiler by annotating all these sources. The more
+        provide data type information to the decompiler by annotating all these sources. The more
         information that can be provided the better the produced C-code will be.</P>
 
         <P>Variables not labeled directly are assigned types by analyzing local type propagation.
@@ -334,7 +334,7 @@
           </LI>
 
           <LI><SPAN style="font-weight: bold;">Infer constant pointers</SPAN> - allows the decompiler
-          to infer a data-type for constants it determines are likely pointers. In the basic heuristic,
+          to infer a data type for constants it determines are likely pointers. In the basic heuristic,
           each constant is treated as an address, and if that address starts a known data or function element
           in the program, the constant is assumed to be a pointer.<BR>
           <BR>
@@ -794,20 +794,74 @@
 	  <BR>
 	  <BR>
 
+
+	  <H3><A name="Rename_Field"></A>Rename Field</H3>
+
+      <BLOCKQUOTE>
+        <P>
+        Action triggered from a specific token in the decompiler window to rename a field within
+		a structure data type. If the field already exists within the specific structure, it is
+		simply renamed. Otherwise, if the decompiler has discovered an undefined structure offset, a new
+		field is added to the structure with this offset and the user selected name. In either case,
+		the altered structure is committed permanently to the program's database.
+        </P>
+      </BLOCKQUOTE>
+
       <H3><A name="Rename_Variable"></A>Rename Variable</H3>
 
       <BLOCKQUOTE>
-        <P><FONT color="#000000">Any parameter or local variable can be renamed. Just place the
+        <P>Any parameter or local variable can be renamed. Just place the
         cursor over a variable definition, or any use of the variable and choose <B>Rename
         Variable</B> from the popup menu. The name will now be saved for this function, so the next
-        time the decompiler displays the code for the function, the same name is used.</FONT></P>
+        time the decompiler displays the code for the function, the same name is used.</P>
+        <P>
+		If a matching variable in the database already exists, it is simply renamed. Otherwise
+		a new variable is added to the database. In this case the new variable is assigned
+		an "undefined" datatype, which leaves it un-typelocked, and the decompiler will take
+		the name but lets the data type continue to "float" and can speculatively merge the
+		variable with others.
+		</P>
+ 		<P>
+		If the selected variable is an input parameter, other input parameters within the decompiler
+		model will need to be committed, if they do not already exist in the database, as any parameters
+		committed to the database are forcing on the decompiler. Any new parameters committed this way
+		inherit their name from the decompiler model, but the parameters will not be type-locked, allowing
+		their data type to "float".
+        </P>
       </BLOCKQUOTE>
+
+
+	  <H3><A name="Rename_Global"></A>Rename Global</H3>
+
+      <BLOCKQUOTE>
+        <P>
+		Action triggered from a specific token in the decompiler window to rename a global variable.
+		The variable is associated with an address. There may already be a symbol in the database
+		there, in which case the symbol is simply renamed. Otherwise a new symbol is added.
+        </P>
+      </BLOCKQUOTE>
+
 
       <H3><A name="Rename_Function"></A>Rename Function</H3>
 
       <BLOCKQUOTE>
         <P>A shortcut for renaming the function from within the decompiler window.</P>
       </BLOCKQUOTE>
+
+
+      <H3><A name="Retype_Field"></A>Retype Field</H3>
+
+      <BLOCKQUOTE>
+	      <P>
+	      Changes the data type of the selected field within a structure data type. The field must 
+	      already exist, except in the case of a completely undefined structure. The data type of the 
+	      field is changed according to the user selection.  If the size of the selected data type 
+	      is bigger, this can trigger other fields in the structure to be removed and may change 
+	      the size of the structure.  The modified data type is permanently committed to the 
+	      program's database.
+	      </P>
+      </BLOCKQUOTE>
+
 
       <H3><A name="Retype_Variable"></A>Retype Variable</H3>
 
@@ -818,7 +872,7 @@
         the type of a parameter variable will affect the display for every place the function is
         called.</P>
 
-        <P>To change a variables data type; place the cursor over the variable definition or use of
+        <P>To change a variable's data type; place the cursor over the variable definition or use of
         the variable, select <B>Retype Variable</B> from the popup menu, and then enter the name of
         the type. The name of any data type known to the program can be used.</P>
 
@@ -826,6 +880,36 @@
         re-type the parameter to be a "char *". Any references to defined memory will now display
         the passed parameter as a character "string".</P>
       </BLOCKQUOTE>
+
+	
+	  <H3><A name="Retype_Return"></A>Retype Return</H3>
+
+      <BLOCKQUOTE>
+        <P>
+        Action triggered from a specific token in the decompiler window to change the return type of
+		the function. The user selected data type is permanently set as the return type. As the
+		return type is part of the function prototype and is forcing on the decompiler,
+		this action may trigger input parameters to be committed to the database as well. This situation
+		currently triggers a confirmation dialog.  If new input parameters need to be committed, their
+		name and data-type are taken from the decompiler model.
+        </P>
+      </BLOCKQUOTE>  
+
+
+	  <H3><A name="Retype_Global"></A>Retype Global</H3>
+
+      <BLOCKQUOTE>
+        <P>
+        Action triggered from a specific token in the decompiler window to change the data type
+		associated with a global variable. If the variable does not already exist in the program 
+		database, it will be created using storage address the decompiler has assigned to the 
+		variable within its model.  In either case, there is a preexisting notion of variable 
+		storage. This action may allow the newly selected data type to be of a different size 
+		relative to this preexisting storage, constrained by other global variables that might 
+		already consume storage.
+        </P>
+      </BLOCKQUOTE>  
+
 
       <H3><A name="Edit_Data_Type"></A>Edit Data Type of Variable<BR>
       </H3>
@@ -907,6 +991,15 @@
 
       <BLOCKQUOTE>
         <P>This action allows you to remove a previously added function signature override.</P>
+      </BLOCKQUOTE>
+
+	  <H3><A name="Split_Out_As_New_Variable"></A>Split Out As High Variable</H3>
+
+      <BLOCKQUOTE>
+        <P>Create multiple variables from the selected variable.  If a 
+        <CODE>HighVariable</CODE> consists of 
+        more than one (forced) merge group, split out the group
+	    that contains <CODE>varnode</CODE> as a separate <CODE>HighVariable</CODE>. </P>
       </BLOCKQUOTE>
 
       <H3><A name="Find"></A>Find...</H3>

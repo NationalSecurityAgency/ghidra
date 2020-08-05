@@ -41,7 +41,6 @@ import ghidra.util.UndefinedFunction;
  * committed to the database are forcing on the decompiler. Any new parameters committed this way
  * inherit their name from the decompiler model, but the parameters will not be type-locked, allowing
  * their data-type to "float".
-
  */
 public class RenameLocalAction extends AbstractDecompilerAction {
 
