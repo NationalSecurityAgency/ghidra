@@ -22,7 +22,6 @@ import java.util.*;
 
 import org.junit.*;
 
-import db.DBHandle;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
@@ -82,23 +81,6 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		}
 	}
 
-	class DummyDomainObject extends DomainObjectAdapterDB {
-
-		protected DummyDomainObject(String name, Object consumer) throws IOException {
-			super(new DBHandle(), name, 10, 1, consumer);
-		}
-
-		@Override
-		public String getDescription() {
-			return "Test object: " + testName.getMethodName();
-		}
-
-		@Override
-		public boolean isChangeable() {
-			return true;
-		}
-	}
-
 	private static String START = "Start";
 	private static String END = "End";
 	private static String UNDO_STATE_CHANGE1 = "UndoRedo1";
@@ -106,7 +88,7 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 	class MyListener implements TransactionListener {
 
-		private List<String> events = new ArrayList<String>();
+		private List<String> events = new ArrayList<>();
 		private Transaction lastTransaction;
 		private DomainObjectAdapterDB obj;
 
@@ -122,7 +104,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		}
 
 		@Override
-		public synchronized void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx) {
+		public synchronized void transactionStarted(DomainObjectAdapterDB domainObj,
+				Transaction tx) {
 			assertEquals(obj, domainObj);
 			events.add(START);
 			lastTransaction = tx;
@@ -176,8 +159,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		assertTrue(obj1.canUndo());
 		assertTrue(obj2.canUndo());
-		assertTrue(!obj1.canRedo());
-		assertTrue(!obj2.canRedo());
+		assertFalse(obj1.canRedo());
+		assertFalse(obj2.canRedo());
 
 		Transaction tx = obj1Listener.getLastTransaction();
 		obj1Listener.getEvents();
@@ -204,15 +187,15 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertEquals(obj1, synchronizedDomainObjects[0]);
 		assertEquals(obj2, synchronizedDomainObjects[1]);
 
-		assertEquals(synchronizedDomainObjects, obj2.getSynchronizedDomainObjects());
+		assertArrayEquals(synchronizedDomainObjects, obj2.getSynchronizedDomainObjects());
 
 		assertEquals(0, obj1.getUndoStackDepth());
 		assertEquals(0, obj2.getUndoStackDepth());
 
-		assertTrue(!obj1.canUndo());
-		assertTrue(!obj2.canUndo());
-		assertTrue(!obj1.canRedo());
-		assertTrue(!obj2.canRedo());
+		assertFalse(obj1.canUndo());
+		assertFalse(obj2.canUndo());
+		assertFalse(obj1.canRedo());
+		assertFalse(obj2.canRedo());
 
 		String[] events1 = obj1Listener.getEvents();
 		assertEquals(UNDO_STATE_CHANGE1, events1[events1.length - 1]);
@@ -269,10 +252,10 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertEquals(0, obj1.getUndoStackDepth());
 		assertEquals(0, obj2.getUndoStackDepth());
 
-		assertTrue(!obj1.canUndo());
-		assertTrue(!obj2.canUndo());
-		assertTrue(!obj1.canRedo());
-		assertTrue(!obj2.canRedo());
+		assertFalse(obj1.canUndo());
+		assertFalse(obj2.canUndo());
+		assertFalse(obj1.canRedo());
+		assertFalse(obj2.canRedo());
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
@@ -329,8 +312,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		assertTrue(obj1.canUndo());
 		assertTrue(obj2.canUndo());
-		assertTrue(!obj1.canRedo());
-		assertTrue(!obj2.canRedo());
+		assertFalse(obj1.canRedo());
+		assertFalse(obj2.canRedo());
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
@@ -344,8 +327,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		obj1.undo();
 
-		assertTrue(!obj1.canUndo());
-		assertTrue(!obj2.canUndo());
+		assertFalse(obj1.canUndo());
+		assertFalse(obj2.canUndo());
 		assertTrue(obj1.canRedo());
 		assertTrue(obj2.canRedo());
 
@@ -366,8 +349,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		assertTrue(obj1.canUndo());
 		assertTrue(obj2.canUndo());
-		assertTrue(!obj1.canRedo());
-		assertTrue(!obj2.canRedo());
+		assertFalse(obj1.canRedo());
+		assertFalse(obj2.canRedo());
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
@@ -388,10 +371,10 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertEquals(0, obj1.getUndoStackDepth());
 		assertEquals(0, obj2.getUndoStackDepth());
 
-		assertTrue(!obj1.canUndo());
-		assertTrue(!obj2.canUndo());
-		assertTrue(!obj1.canRedo());
-		assertTrue(!obj2.canRedo());
+		assertFalse(obj1.canUndo());
+		assertFalse(obj2.canUndo());
+		assertFalse(obj1.canRedo());
+		assertFalse(obj2.canRedo());
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
@@ -449,10 +432,10 @@ public class PairedTransactionTest extends AbstractGenericTest {
 		assertEquals(0, obj1.getUndoStackDepth());
 		assertEquals(1, obj2.getUndoStackDepth());
 
-		assertTrue(!obj1.canUndo());
+		assertFalse(obj1.canUndo());
 		assertTrue(obj2.canUndo());
-		assertTrue(!obj1.canRedo());
-		assertTrue(!obj2.canRedo());
+		assertFalse(obj1.canRedo());
+		assertFalse(obj2.canRedo());
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
