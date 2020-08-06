@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class GoToQuery {
 	 */
 	private static final Pattern ARRAY_COMPONENT_PATTERN =
 		Pattern.compile("\\*?(?:this)?(?:\\[((?:0x)?\\p{XDigit}+)\\])");
-	
+
 	/**
 	 * Matches .field_name or ->field_name plus [index] if present
 	 * Groups: operator: 1, field: 2, index: 3
@@ -361,9 +361,9 @@ public class GoToQuery {
 		if (data == null) {
 			return false;
 		}
-		
+
 		ProgramLocation loc;
-		
+
 		// handle primary dereference '*' if present
 		if (queryInput.charAt(0) == '*') {
 			if (!data.isPointer()) {
@@ -373,13 +373,13 @@ public class GoToQuery {
 		} else {
 			loc = new ProgramLocation(program, data.getAddress());
 		}
-		
+
 		// perform goTo
 		boolean success = goTo(program, loc);
 		notifyListener(success);
 		return true;
 	}
-	
+
 	private static Data getDataAt(Program program, Address address) {
 		Listing listing = program.getListing();
 		Data data = listing.getDataContaining(address);
@@ -388,7 +388,7 @@ public class GoToQuery {
 		}
 		return data;
 	}
-	
+
 	private static Data doProcessComponentExpression(Data data, String queryInput) {
 		Matcher matcher = ARRAY_COMPONENT_PATTERN.matcher(queryInput);
 		boolean followPointers = false;
@@ -397,16 +397,21 @@ public class GoToQuery {
 			followPointers = true;
 		}
 		matcher = COMPONENT_PATTERN.matcher(queryInput);
-		for (MatchResult result : CollectionUtils.asIterable(matcher.results().iterator())) {
+		Iterator<MatchResult> results = matcher.results().iterator();
+		if (!results.hasNext()) {
+			// no match
+			return followPointers ? data : null;
+		}
+		for (MatchResult result : CollectionUtils.asIterable(results)) {
 			if (data == null) {
 				break;
 			}
 			data = processSubComponentExpression(data, result, followPointers);
-			followPointers = true;	
+			followPointers = true;
 		}
 		return data;
 	}
-	
+
 	private static Data processSubComponentExpression(Data data, MatchResult matcher,
 			boolean followPointer) {
 		Listing listing = data.getProgram().getListing();
@@ -430,7 +435,7 @@ public class GoToQuery {
 		}
 		return data;
 	}
-	
+
 	private static Data getArrayComponent(Data data, String index) {
 		if (data == null || !data.isArray()) {
 			return null;
@@ -445,7 +450,7 @@ public class GoToQuery {
 			return null;
 		}
 	}
-	
+
 	private static Data getComponent(Data data, String name) {
 		if (data == null || !data.isStructure()) {
 			return null;
