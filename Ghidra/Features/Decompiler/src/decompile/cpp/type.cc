@@ -328,6 +328,7 @@ bool Datatype::isPtrsubMatching(uintb offset) const
 
   Datatype *basetype = ((TypePointer *)this)->getPtrTo();
   uint4 wordsize = ((TypePointer *)this)->getWordSize();
+  off += AddrSpace::byteToAddressInt(((TypePointer *)this)->getShiftOffset(),wordsize);
   if (basetype->metatype==TYPE_SPACEBASE) {
     uintb newoff = AddrSpace::addressToByte(offset,wordsize);
     basetype->getSubType(newoff,&newoff);
@@ -487,6 +488,7 @@ void TypePointer::printRaw(ostream &s) const
 
 {
   ptrto->printRaw(s);
+  if (shiftOffset != 0) s << "+" << std::hex << shiftOffset << std::dec;
   s << " *";
 }
 
@@ -500,6 +502,7 @@ int4 TypePointer::compare(const Datatype &op,int4 level) const
   // Both must be pointers
   tp = (TypePointer *) &op;
   if (wordsize != tp->wordsize) return (wordsize < tp->wordsize) ? -1 : 1;
+  if (shiftOffset != tp->shiftOffset) return (shiftOffset < tp->shiftOffset) ? -1 : 1;
   level -= 1;
   if (level < 0) {
     if (id == op.getId()) return 0;
@@ -518,6 +521,7 @@ int4 TypePointer::compareDependency(const Datatype &op) const
   // Both must be pointers
   tp = (TypePointer *) &op;
   if (wordsize != tp->wordsize) return (wordsize < tp->wordsize) ? -1 : 1;
+  if (shiftOffset != tp->shiftOffset) return (shiftOffset < tp->shiftOffset) ? -1 : 1;
   if (ptrto == tp->ptrto) return 0;
   return (ptrto < tp->ptrto) ? -1 : 1; // Compare the absolute pointers
 }
@@ -529,6 +533,8 @@ void TypePointer::saveXml(ostream &s) const
   saveXmlBasic(s);
   if (wordsize != 1)
     a_v_i(s,"wordsize",wordsize);
+  if (shiftOffset != 0)
+    a_v_i(s, "shiftOffset", shiftOffset);
   s << '>';
   ptrto->saveXmlRef(s);
   s << "</type>";
@@ -538,12 +544,18 @@ void TypePointer::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
   restoreXmlBasic(el);
-  for(int4 i=0;i<el->getNumAttributes();++i)
+  for(int4 i=0;i<el->getNumAttributes();++i) {
     if (el->getAttributeName(i) == "wordsize") {
       istringstream s(el->getAttributeValue(i));
       s.unsetf(ios::dec | ios::hex | ios::oct);
       s >> wordsize;
     }
+    if (el->getAttributeName(i) == "shiftOffset") {
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> shiftOffset;
+    }
+  }
   ptrto = typegrp.restoreXmlType( *el->getChildren().begin() );
   if (name.size() == 0)		// Inherit only coretype only if no name
     flags = ptrto->getInheritable();
@@ -2006,12 +2018,12 @@ TypeCode *TypeFactory::getTypeCode(const string &nm)
 /// \param pt is the pointed-to data-type
 /// \param ws is the wordsize associated with the pointer
 /// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws)
+TypePointer *TypeFactory::getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws,int4 shift)
 
 {
   if (pt->getMetatype() == TYPE_ARRAY)
     pt = ((TypeArray *)pt)->getBase();		// Strip the first ARRAY type
-  TypePointer tmp(s,pt,ws);
+  TypePointer tmp(s,pt,shift,ws);
   return (TypePointer *) findAdd(tmp);
 }
 
@@ -2020,10 +2032,10 @@ TypePointer *TypeFactory::getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws)
 /// \param pt is the pointed-to data-type
 /// \param ws is the wordsize associated with the pointer
 /// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
+TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws,int4 shift)
 
 {
-  TypePointer tmp(s,pt,ws);
+  TypePointer tmp(s,pt,shift,ws);
   return (TypePointer *) findAdd(tmp);
 }
 
@@ -2032,7 +2044,7 @@ TypePointer *TypeFactory::getTypePointer(int4 s,Datatype *pt,uint4 ws)
 /// \param pt is the pointed-to data-type
 /// \param ws is the wordsize associated with the pointer
 /// \return the TypePointer object
-TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
+TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws,int4 shift)
 
 {
   if (pt->getMetatype()==TYPE_PTR) {
@@ -2047,7 +2059,7 @@ TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
       pt = getBase(pt->getSize(),TYPE_UNKNOWN);	// Otherwise construct pointer to UNKNOWN of size of pointer
     }
   }
-  return getTypePointer(s,pt,ws);
+  return getTypePointer(s,pt,ws,shift);
 }
 
 /// \param as is the number of elements in the desired array
@@ -2141,6 +2153,7 @@ Datatype *TypeFactory::downChain(Datatype *ptrtype,uintb &off)
   Datatype *pt = ptype->ptrto;
   // If we know we have exactly one of an array, strip the array to get pointer to element
   bool doStrip = (pt->getMetatype() != TYPE_ARRAY);
+  if(pt->getSize() > 0) off = (off + ptype->getShiftOffset()) % pt->getSize();
   pt = pt->getSubType(off,&off);
   if (pt == (Datatype *)0)
     return (Datatype *)0;

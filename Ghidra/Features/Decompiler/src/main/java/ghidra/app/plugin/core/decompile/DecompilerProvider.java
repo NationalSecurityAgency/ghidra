@@ -75,6 +75,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private DockingAction retypeGlobalAction;
 	private DockingAction retypeReturnAction;
 	private DockingAction retypeFieldAction;
+	private DockingAction shiftPointerAction;
 	private DockingAction isolateVarAction;
 	private DockingAction specifyCProtoAction;
 	private DockingAction overrideSigAction;
@@ -801,6 +802,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		retypeFieldAction = new RetypeFieldAction();
 		setGroupInfo(retypeFieldAction, variableGroup, subGroupPosition++);
+		
+		shiftPointerAction = new ShiftPointerAction();
+		setGroupInfo(shiftPointerAction, variableGroup, subGroupPosition++);
 
 		isolateVarAction = new IsolateVariableAction();
 		setGroupInfo(isolateVarAction, variableGroup, subGroupPosition++);
@@ -939,6 +943,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(retypeGlobalAction);
 		addLocalAction(retypeReturnAction);
 		addLocalAction(retypeFieldAction);
+		addLocalAction(shiftPointerAction);
 		addLocalAction(isolateVarAction);
 		addLocalAction(decompilerCreateStructureAction);
 		tool.addAction(listingCreateStructureAction);

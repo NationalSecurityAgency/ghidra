@@ -253,7 +253,7 @@ public class DataTypeParser {
 			if (terminalModifier) {
 				throw new InvalidDataTypeException("Invalid data type modifier");
 			}
-			if (piece.startsWith("*")) {
+			if (piece.contains("*")) {
 				modifiers.add(new PointerSpecPiece(piece));
 				arraySequenceStartIndex = -1;
 			}
@@ -283,8 +283,9 @@ public class DataTypeParser {
 		try {
 			for (DtPiece modifier : modifiers) {
 				if (modifier instanceof PointerSpecPiece) {
+					int shiftOffset = ((PointerSpecPiece) modifier).getShiftOffset();
 					int pointerSize = ((PointerSpecPiece) modifier).getPointerSize();
-					dt = new PointerDataType(dt, pointerSize, destinationDataTypeManager);
+					dt = new PointerDataType(dt, shiftOffset, pointerSize, destinationDataTypeManager);
 					elementLength = dt.getLength();
 				}
 				else if (modifier instanceof ElementSizeSpecPiece) {
@@ -454,7 +455,7 @@ public class DataTypeParser {
 				continue;
 			}
 
-			if (c == '*' || c == '[' || c == ':' || c == '{') {
+			if (c == '*' || c == '[' || c == ':' || c == '{' || c == '+' || c == '-') {
 				return dataTypeString.substring(0, nextIndex).trim();
 			}
 			++nextIndex;
@@ -469,12 +470,23 @@ public class DataTypeParser {
 		}
 		List<String> list = new ArrayList<>();
 		int startIndex = 0;
-		int nextIndex = 1;
+		int nextIndex = 0;
+		int shiftStartIndex = -1;
 		while (nextIndex < dataTypeModifiers.length()) {
 			char c = dataTypeModifiers.charAt(nextIndex);
-			if (c == '*' || c == '[' || c == ':' || c == '{') {
+			if (c == '+' || c == '-') {
+				shiftStartIndex = nextIndex;
+			}
+			if (c == '*') {
+				if (shiftStartIndex == -1) shiftStartIndex = nextIndex;
+				list.add(dataTypeModifiers.substring(startIndex, shiftStartIndex));
+				startIndex = shiftStartIndex;
+				shiftStartIndex = -1;
+			}
+			if (c == '[' || c == ':' || c == '{') {
 				list.add(dataTypeModifiers.substring(startIndex, nextIndex));
 				startIndex = nextIndex;
+				shiftStartIndex = -1;
 			}
 			++nextIndex;
 		}
@@ -483,7 +495,7 @@ public class DataTypeParser {
 		list.toArray(pieces);
 		return pieces;
 	}
-
+ 
 	private DataType createArrayDataType(DataType baseDataType, int elementLength, int elementCount)
 			throws InvalidDataTypeException {
 		DataType dt = baseDataType;
@@ -561,28 +573,53 @@ public class DataTypeParser {
 	}
 
 	private static class PointerSpecPiece implements DtPiece {
+		int shiftOffset = 0;
 		int pointerSize = -1;
-
+		
 		PointerSpecPiece(String piece) throws InvalidDataTypeException {
-			if (!piece.startsWith("*")) {
+			if (!piece.contains("*")) {
 				throw new InvalidDataTypeException("invalid pointer specification: " + piece);
 			}
-			if (piece.length() == 1) {
-				return;
+			
+			if (piece.indexOf("*") != 0) {
+				switch(piece.charAt(0)) {
+				case '+': 
+					shiftOffset = 1;
+					break;
+				case '-':
+					shiftOffset = -1;
+					break;
+				default:
+					throw new InvalidDataTypeException("invalid pointer specification: " + piece);
+				}
+				
+				try {
+					shiftOffset *= Integer.decode(piece.substring(1, piece.indexOf("*")));
+				}
+				catch (NumberFormatException e) {
+					throw new InvalidDataTypeException("invalid pointer specification: " + piece);
+				}
 			}
-			try {
-				pointerSize = Integer.parseInt(piece.substring(1));
-			}
-			catch (NumberFormatException e) {
-				throw new InvalidDataTypeException("invalid pointer specification: " + piece);
-			}
-			int mod = pointerSize % 8;
-			pointerSize = pointerSize / 8;
-			if (mod != 0 || pointerSize <= 0 || pointerSize > 8) {
-				throw new InvalidDataTypeException("invalid pointer size: " + piece);
+			
+			if (piece.indexOf("*") != piece.length()-1) {
+				try {
+					pointerSize = Integer.parseInt(piece.substring(piece.indexOf("*")+1));
+				}
+				catch (NumberFormatException e) {
+					throw new InvalidDataTypeException("invalid pointer specification: " + piece);
+				}
+				int mod = pointerSize % 8;
+				pointerSize = pointerSize / 8;
+				if (mod != 0 || pointerSize <= 0 || pointerSize > 8) {
+					throw new InvalidDataTypeException("invalid pointer size: " + piece);
+				}
 			}
 		}
-
+		
+		int getShiftOffset() {
+			return shiftOffset;
+		}
+		
 		int getPointerSize() {
 			return pointerSize;
 		}

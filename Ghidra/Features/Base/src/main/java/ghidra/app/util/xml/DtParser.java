@@ -64,14 +64,14 @@ class DtParser {
 	private DataType adjustPointerDataTypes(int size, DataType dt) {
 		if (dt instanceof Pointer) {
 			Pointer p = (Pointer) dt;
-			dt = new PointerDataType(p.getDataType(), size, dtManager);
+			dt = new PointerDataType(p.getDataType(), p.getShiftOffset(), size, dtManager);
 		}
 		else if (dt instanceof Array && ((Array) dt).getDataType() instanceof Pointer) {
 // TODO: does not handle multi-dimensional pointer arrays
 			Array array = (Array) dt;
 			DataType pointerDt = ((Pointer) array.getDataType()).getDataType();
 			int pointerSize = size / array.getNumElements();
-			DataType pointer = new PointerDataType(pointerDt, pointerSize, dtManager);
+			DataType pointer = new PointerDataType(pointerDt, ((Pointer) array.getDataType()).getShiftOffset(), pointerSize, dtManager);
 			dt = new ArrayDataType(pointer, array.getNumElements(), pointerSize, dtManager);
 		}
 		return dt;

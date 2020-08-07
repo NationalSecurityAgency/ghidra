@@ -47,6 +47,7 @@ class AddTreeState {
   const Datatype *baseType;	///< The base data-type being pointed at
   int4 ptrsize;			///< Size of the pointer
   int4 size;			///< Size of data-type being pointed to (in address units)
+  intb shiftOffset; ///< Shift offset of the pointer (in address units)
   uintb ptrmask;		///< Mask for modulo calculations in ptr space
   uintb offset;			///< Number of bytes we dig into the base data-type
   uintb correct;		///< Number of bytes being double counted
@@ -1027,6 +1028,7 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 class RulePtrArith : public Rule {
+  static bool isShiftOp(const PcodeOp *op);
   static bool verifyAddTreeBottom(PcodeOp *op,int4 slot);
 public:
   RulePtrArith(const string &g) : Rule(g, 0, "ptrarith") {}	///< Constructor

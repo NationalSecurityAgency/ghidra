@@ -71,6 +71,8 @@ OpToken PrintC::xorequal = { "^=", 2, 14, false, OpToken::binary, 1, 5, (OpToken
 OpToken PrintC::type_expr_space = { "", 2, 10, false, OpToken::space, 1, 0, (OpToken *)0 };
 OpToken PrintC::type_expr_nospace = { "", 2, 10, false, OpToken::space, 0, 0, (OpToken *)0 };
 OpToken PrintC::ptr_expr = { "*", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::ptr_shift_pos_expr = { "+", 2, 50, false, OpToken::binary, 0, 0, (OpToken*)0 };
+OpToken PrintC::ptr_shift_neg_expr = { "-", 2, 50, false, OpToken::binary, 0, 0, (OpToken*)0 };
 OpToken PrintC::array_expr = { "[]", 2, 66, false, OpToken::postsurround, 1, 0, (OpToken *)0 };
 OpToken PrintC::enum_cat = { "|", 2, 26, true, OpToken::binary, 0, 0, (OpToken *)0 };
 
@@ -230,6 +232,15 @@ void PrintC::emitSymbolScope(const Symbol *symbol)
   }
 }
 
+/// Push the appropriate pointer shift operation
+/// \param pt is the pointer data type
+void PrintC::pushPtrShiftOp(const TypePointer *pt)
+
+{
+  if(pt->getShiftOffset() > 0) pushOp(&ptr_shift_pos_expr, (const PcodeOp*)0);
+  else if(pt->getShiftOffset() < 0) pushOp(&ptr_shift_neg_expr, (const PcodeOp*)0);
+}
+
 /// Store off array sizes for printing after the identifier
 /// \param ct is the data-type to push
 /// \param noident is \b true if an identifier will not be pushed as part of the declaration
@@ -243,7 +254,9 @@ void PrintC::pushTypeStart(const Datatype *ct,bool noident)
 
   ct = typestack.back();	// The base type
   OpToken *tok;
-  
+
+  int4 tsstart = typestack.size() - 2; //The start typestack index
+
   if (noident && (typestack.size()==1))
     tok = &type_expr_nospace;
   else
@@ -253,16 +266,32 @@ void PrintC::pushTypeStart(const Datatype *ct,bool noident)
     // We could support a struct or enum declaration here
     string name = genericTypeName(ct);
     pushOp(tok,(const PcodeOp *)0);
+    if (tsstart>=0 && typestack[tsstart]->getMetatype()==TYPE_PTR) pushPtrShiftOp((const TypePointer*)typestack[tsstart]);
     pushAtom(Atom(name,typetoken,EmitXml::type_color,ct));
   }
   else {
     pushOp(tok,(const PcodeOp *)0);
+    if (tsstart>=0 && typestack[tsstart]->getMetatype()==TYPE_PTR) pushPtrShiftOp((const TypePointer*)typestack[tsstart]);
     pushAtom(Atom(ct->getName(),typetoken,EmitXml::type_color,ct));
   }
-  for(int4 i=typestack.size()-2;i>=0;--i) {
+  for(int4 i=tsstart;i>=0;--i) {
     ct = typestack[i];
-    if (ct->getMetatype() == TYPE_PTR)
+    if (i>0 && typestack[i-1]->getMetatype()==TYPE_PTR) pushPtrShiftOp((const TypePointer*)typestack[i-1]);
+    if (ct->getMetatype() == TYPE_PTR) {
+      const TypePointer *pt = (const TypePointer*) ct;
+      pushMod();
+      setMod(force_hex); 
+      if (pt->getShiftOffset() > 0) {
+        push_integer(pt->getShiftOffset(),sizeof(intb),true,
+          (const Varnode *)0,(const PcodeOp *)0);
+      }
+      else if(pt->getShiftOffset() < 0) {
+        push_integer(-pt->getShiftOffset(),sizeof(intb),true,
+          (const Varnode *)0,(const PcodeOp *)0);
+      }
       pushOp(&ptr_expr,(const PcodeOp *)0);
+      popMod();
+    }
     else if (ct->getMetatype() == TYPE_ARRAY)
       pushOp(&array_expr,(const PcodeOp *)0);
     else if (ct->getMetatype() == TYPE_CODE)

@@ -111,6 +111,8 @@ class PointerDBAdapterV0 extends PointerDBAdapter {
 		Record rec = PointerDBAdapter.SCHEMA.createRecord(oldRec.getKey());
 		rec.setLongValue(PTR_DT_ID_COL, oldRec.getLongValue(OLD_PTR_DTD_COL));
 		rec.setLongValue(PTR_CATEGORY_COL, 0);
+		rec.setByteValue(PTR_LENGTH_COL, (byte) -1);
+		rec.setLongValue(PTR_SHIFT_OFFSET_COL, 0);
 		return rec;
 	}
 

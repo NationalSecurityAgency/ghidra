@@ -229,16 +229,18 @@ class TypePointer : public Datatype {
 protected:
   friend class TypeFactory;
   Datatype *ptrto;		///< Type being pointed to
+  int4 shiftOffset;		///< The offset by which this pointer is shifted
   uint4 wordsize;               ///< What size unit does the pointer address
   virtual void restoreXml(const Element *el,TypeFactory &typegrp);
   /// Internal constructor for use with restoreXml
-  TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; }
+  TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; shiftOffset=0; wordsize=1; }
 public:
   /// Construct from another TypePointer
-  TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; wordsize=op.wordsize; }
+  TypePointer(const TypePointer &op) : Datatype(op) { ptrto = op.ptrto; shiftOffset=op.shiftOffset; wordsize=op.wordsize; }
   /// Construct from a size, pointed-to type, and wordsize
-  TypePointer(int4 s,Datatype *pt,uint4 ws) : Datatype(s,TYPE_PTR) { ptrto = pt; flags = ptrto->getInheritable(); wordsize=ws; }
+  TypePointer(int4 s,Datatype *pt,int4 shift, uint4 ws) : Datatype(s,TYPE_PTR) { ptrto = pt; shiftOffset = shift; flags = ptrto->getInheritable(); wordsize=ws; }
   Datatype *getPtrTo(void) const { return ptrto; }	///< Get the pointed-to Datatype
+  int4 getShiftOffset(void) const { return shiftOffset; } ///< Get the shift offset
   uint4 getWordSize(void) const { return wordsize; }	///< Get the wordsize of the pointer
   virtual void printRaw(ostream &s) const;
   virtual int4 numDepend(void) const { return 1; }
@@ -438,9 +440,9 @@ public:
   Datatype *getBase(int4 s,type_metatype m);			///< Get atomic type
   Datatype *getBase(int4 s,type_metatype m,const string &n);	///< Get named atomic type
   TypeCode *getTypeCode(void);					///< Get an "anonymous" function data-type
-  TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws);	///< Construct a pointer data-type, stripping an ARRAY level
-  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws);	///< Construct an absolute pointer data-type
-  TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
+  TypePointer *getTypePointerStripArray(int4 s,Datatype *pt,uint4 ws,int4 shift=0);	///< Construct a pointer data-type, stripping an ARRAY level
+  TypePointer *getTypePointer(int4 s,Datatype *pt,uint4 ws,int4 shift=0);	///< Construct an absolute pointer data-type
+  TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws,int4 shift=0);	///< Construct a depth limited pointer data-type
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure
   TypeEnum *getTypeEnum(const string &n);			///< Create an (empty) enumeration
