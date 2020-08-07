@@ -17,9 +17,14 @@ package ghidra.app.cmd.data.rtti;
 
 import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAbsoluteAddress;
 
+import java.io.IOException;
+import java.util.List;
+
 import ghidra.app.cmd.data.TypeDescriptorModel;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.PseudoDisassembler;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.GhidraClass;
@@ -27,15 +32,22 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
+import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * RttiUtil provides constants and static methods for processing RTTI information.
  */
-class RttiUtil {
+public class RttiUtil {
 
 	static final String CONST_PREFIX = "const ";
+	public static final String TYPE_INFO_STRING = ".?AVtype_info@@";
+	public static final String TYPE_INFO_LABEL = "class_type_info_RTTI_Type_Descriptor";
+	private static final String MANGLED_TYPE_INFO_SYMBOL = "??_R0?AVtype_info@@@8";
 
 	private RttiUtil() {
 		// utility class; can't create
@@ -111,7 +123,7 @@ class RttiUtil {
 	 * @param vfTableBaseAddress the base address in the program for the vf table
 	 * @return the number of virtual function addresses in the vf table
 	 */
-	static int getVfTableCount(Program program, Address vfTableBaseAddress) {
+	public static int getVfTableCount(Program program, Address vfTableBaseAddress) {
 
 		Memory memory = program.getMemory();
 		MemoryBlock textBlock = memory.getBlock(".text");
@@ -157,12 +169,72 @@ class RttiUtil {
 	 * @param rtti0Model the model for the type descriptor whose namespace is to be returned.
 	 * @return the namespace or the empty string.
 	 */
-	static String getDescriptorTypeNamespace(TypeDescriptorModel rtti0Model) {
+	public static String getDescriptorTypeNamespace(TypeDescriptorModel rtti0Model) {
 		String descriptorTypeNamespace = rtti0Model.getDescriptorTypeNamespace(); // Can be null.
 		if (descriptorTypeNamespace == null) {
 			descriptorTypeNamespace = ""; // Couldn't get namespace so leave it off.
 		}
 		return descriptorTypeNamespace;
+	}
+
+	/**
+	 * Gets the address of the base type_info structure in the provided program.
+	 * The descriptor will only be manually located if {@value TYPE_INFO_STRING} is present.
+	 * @param program the program
+	 * @return the address of the type_info structure or null if not found
+	 */
+	public static Address getTypeInfoTypeDescriptorAddress(Program program) {
+		SymbolTable table = program.getSymbolTable();
+		List<Symbol> symbols = table.getGlobalSymbols(TYPE_INFO_LABEL);
+		if (symbols.isEmpty()) {
+			symbols = table.getGlobalSymbols(MANGLED_TYPE_INFO_SYMBOL);
+		}
+		if (!symbols.isEmpty()) {
+			for (Symbol symbol : symbols) {
+				if (isTypeInfoTypeDescriptorAddress(program, symbol.getAddress())) {
+					return symbol.getAddress();
+				}
+			}
+		}
+		return locateTypeInfoAddress(program);
+	}
+
+	/**
+	 * Checks if the provided address is a TypeDescriptor containing the
+	 * {@value TYPE_INFO_STRING} component
+	 * @param program the program
+	 * @param address the descriptor address
+	 * @return true if {@value TYPE_INFO_STRING} is present in the descriptor at the address
+	 */
+	public static boolean isTypeInfoTypeDescriptorAddress(Program program, Address address) {
+		MemoryByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
+		try {
+			BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
+			String value = reader.readAsciiString(program.getDefaultPointerSize() * 2);
+			return TYPE_INFO_STRING.equals(value);
+		} catch (IOException e) {
+			return false;
+		}
+	}
+	
+	private static Address locateTypeInfoAddress(Program program) {
+		Memory memory = program.getMemory();
+		try {
+			List<MemoryBlock> dataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(
+				program, program.getMemory(), ".data", TaskMonitor.DUMMY);
+			for (MemoryBlock memoryBlock : dataBlocks) {
+				Address typeInfoAddress =
+					memory.findBytes(memoryBlock.getStart(), memoryBlock.getEnd(),
+						TYPE_INFO_STRING.getBytes(), null, true, TaskMonitor.DUMMY);
+				if (typeInfoAddress != null) {
+					return TypeDescriptorModel.getBaseAddress(program, typeInfoAddress);
+				}
+			}
+		} catch (CancelledException e) {
+			// impossible
+			throw new AssertException(e);
+		}
+		return null;
 	}
 
 }
