@@ -69,7 +69,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return PEUtil.canAnalyze(program);
+		return PEUtil.canAnalyzePeVisualStudioOrClang(program);
 	}
 
 	@Override
@@ -134,7 +134,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		monitor.setMaximum(possibleRtti0Addresses.size());
 		monitor.setMessage("Creating RTTI Data...");
 
-		ArrayList<Address> rtti0Locations = new ArrayList<Address>();
+		ArrayList<Address> rtti0Locations = new ArrayList<>();
 		int count = 0;
 		for (Address rtti0Address : possibleRtti0Addresses) {
 			monitor.checkCanceled();
@@ -277,7 +277,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		}
 
 		// Each time a match for this byte pattern validate as an RTTI4 and add to list
-		GenericMatchAction<Address> action = new GenericMatchAction<Address>(rtti0Address) {
+		GenericMatchAction<Address> action = new GenericMatchAction<>(rtti0Address) {
 			@Override
 			public void apply(Program prog, Address addr, Match match) {
 				Address possibleRtti4Address;
@@ -311,7 +311,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 		// create a Pattern of the bytes and the MatchAction to perform upon a match
 		GenericByteSequencePattern<Address> genericByteMatchPattern =
-			new GenericByteSequencePattern<Address>(bytes, action);
+			new GenericByteSequencePattern<>(bytes, action);
 
 		searcher.addPattern(genericByteMatchPattern);
 	}

@@ -17,11 +17,8 @@ package ghidra.app.cmd.data;
 
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
-import ghidra.app.util.opinion.PeLoader;
-import ghidra.app.util.opinion.PeLoader.CompilerOpinion.CompilerEnum;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 
@@ -111,17 +108,6 @@ public abstract class AbstractCreateDataTypeModel {
 		memBuffer = new DumbMemBufferImpl(memory, address);
 		dataTypeManager = program.getDataTypeManager();
 		imageBaseAddress = getProgram().getImageBase();
-	}
-
-	/**
-	 * Determine if the program in this model is for windows.
-	 * @return true if the program is a windows program.
-	 */
-	final protected boolean isWindows() {
-		CompilerSpecID compilerSpecID = program.getCompilerSpec().getCompilerSpecID();
-		return compilerSpecID.getIdAsString().equals("windows") &&
-			program.getExecutableFormat().equals(PeLoader.PE_NAME) &&
-			program.getCompiler().equals(CompilerEnum.VisualStudio.toString());
 	}
 
 	/**
@@ -293,10 +279,6 @@ public abstract class AbstractCreateDataTypeModel {
 	 * address. The message in the exception indicates why the model isn't valid.
 	 */
 	private void doValidate() throws InvalidDataTypeException {
-		if (!isWindows()) {
-			throw new InvalidDataTypeException(
-				getName() + " data type model is only valid for Visual Studio windows PE.");
-		}
 		if (!isValidAddress()) {
 			throw new InvalidDataTypeException(
 				getName() + " data type isn't at a valid address " + getAddress() + ".");

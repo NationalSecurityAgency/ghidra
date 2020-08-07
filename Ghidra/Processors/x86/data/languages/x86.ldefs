@@ -12,6 +12,7 @@
             id="x86:LE:32:default">
     <description>Intel/AMD 32-bit x86</description>
     <compiler name="Visual Studio" spec="x86win.cspec" id="windows"/>
+    <compiler name="clang" spec="x86win.cspec" id="clangwindows"/>
     <compiler name="gcc" spec="x86gcc.cspec" id="gcc"/>
     <compiler name="Borland C++" spec="x86borland.cspec" id="borlandcpp"/>
     <compiler name="Delphi" spec="x86delphi.cspec" id="borlanddelphi"/>
@@ -83,6 +84,7 @@
             id="x86:LE:64:default">
     <description>Intel/AMD 64-bit x86</description>
     <compiler name="Visual Studio" spec="x86-64-win.cspec" id="windows"/>
+    <compiler name="clang" spec="x86-64-win.cspec" id="clangwindows"/>
     <compiler name="gcc" spec="x86-64-gcc.cspec" id="gcc"/>
     <external_name tool="gnu" name="i386:x86-64:intel"/>
     <external_name tool="IDA-PRO" name="metapc"/>

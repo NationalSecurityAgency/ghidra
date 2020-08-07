@@ -182,7 +182,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null) {
 			for (Option option : options) {
 				String name = option.getName();
@@ -797,16 +798,20 @@ public class PeLoader extends AbstractPeDebugLoader {
 			"This program must be run under Win32\r\n$".toCharArray();
 		static final char[] errString_GCC_VS =
 			"This program cannot be run in DOS mode.\r\r\n$".toCharArray();
+		static final char[] errString_Clang =
+			"This program cannot be run in DOS mode.$".toCharArray();
 		static final int[] asm16_Borland = { 0xBA, 0x10, 0x00, 0x0E, 0x1F, 0xB4, 0x09, 0xCD, 0x21,
 			0xB8, 0x01, 0x4C, 0xCD, 0x21, 0x90, 0x90 };
-		static final int[] asm16_GCC_VS =
+		static final int[] asm16_GCC_VS_Clang =
 			{ 0x0e, 0x1f, 0xba, 0x0e, 0x00, 0xb4, 0x09, 0xcd, 0x21, 0xb8, 0x01, 0x4c, 0xcd, 0x21 };
 
 		public enum CompilerEnum {
 
 			VisualStudio("visualstudio:unknown"),
 			GCC("gcc:unknown"),
+			Clang("clang:unknown"),
 			GCC_VS("visualstudiogcc"),
+			GCC_VS_Clang("visualstudiogccclang"),
 			BorlandPascal("borland:pascal"),
 			BorlandCpp("borland:c++"),
 			BorlandUnk("borland:unknown"),
@@ -892,7 +897,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 			if (dh.e_lfanew() == 0x80) {
 				offsetChoice = CompilerEnum.GCC_VS;
 			}
+			else if (dh.e_lfanew() == 0x78) {
+				offsetChoice = CompilerEnum.Clang;
+			}
 			else if (dh.e_lfanew() < 0x80) {
+				// 0x78 checked for Clang above, but 0x7c fits here too
 				offsetChoice = CompilerEnum.Unknown;
 			}
 			else {
@@ -931,13 +940,13 @@ public class PeLoader extends AbstractPeDebugLoader {
 				asmChoice = CompilerEnum.BorlandUnk;
 			}
 			else {
-				for (counter = 0; counter < asm16_GCC_VS.length; counter++) {
-					if ((asm[counter] & 0xff) != (asm16_GCC_VS[counter] & 0xff)) {
+				for (counter = 0; counter < asm16_GCC_VS_Clang.length; counter++) {
+					if ((asm[counter] & 0xff) != (asm16_GCC_VS_Clang[counter] & 0xff)) {
 						break;
 					}
 				}
-				if (counter == asm16_GCC_VS.length) {
-					asmChoice = CompilerEnum.GCC_VS;
+				if (counter == asm16_GCC_VS_Clang.length) {
+					asmChoice = CompilerEnum.GCC_VS_Clang;
 				}
 				else {
 					asmChoice = CompilerEnum.Unknown;
@@ -948,6 +957,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			for (int i = 10; i < asm.length - 3; i++) {
 				if (asm[i] == 'T' && asm[i + 1] == 'h' && asm[i + 2] == 'i' && asm[i + 3] == 's') {
 					errStringOffset = i;
+					break;
 				}
 			}
 
@@ -965,6 +975,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 				else if (compareBytesToChars(asm, errStringOffset, errString_GCC_VS)) {
 					errStringChoice = CompilerEnum.GCC_VS;
+				}
+				else if (compareBytesToChars(asm, errStringOffset, errString_Clang)) {
+					errStringChoice = CompilerEnum.Clang;
 				}
 				else {
 					errStringChoice = CompilerEnum.Unknown;
@@ -996,6 +1009,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 					compilerType = CompilerEnum.GCC;
 					return compilerType;
 				}
+			}
+			else if ((offsetChoice == CompilerEnum.Clang ||
+				errStringChoice == CompilerEnum.Clang) && asmChoice == CompilerEnum.GCC_VS_Clang) {
+				compilerType = CompilerEnum.Clang;
+				return compilerType;
 			}
 			else if (errStringChoice == CompilerEnum.Unknown || asmChoice == CompilerEnum.Unknown) {
 				compilerType = CompilerEnum.Unknown;
