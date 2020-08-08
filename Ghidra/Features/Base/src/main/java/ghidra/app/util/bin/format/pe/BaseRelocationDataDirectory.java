@@ -110,7 +110,8 @@ public class BaseRelocationDataDirectory extends DataDirectory implements ByteAr
             BaseRelocation br = BaseRelocation.createBaseRelocation(reader, addr);
 
             // Sanity check to make sure the data looks OK.
-            if (br.getVirtualAddress() == 0)
+            // VA of 0 is normal for example for SMM drivers.
+            if (br.getVirtualAddress() < 0)
                 break;
             if (br.getSizeOfBlock() < BaseRelocation.IMAGE_SIZEOF_BASE_RELOCATION)
                 break;
