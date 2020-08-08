@@ -328,7 +328,7 @@ bool Datatype::isPtrsubMatching(uintb offset) const
 
   Datatype *basetype = ((TypePointer *)this)->getPtrTo();
   uint4 wordsize = ((TypePointer *)this)->getWordSize();
-  off += AddrSpace::byteToAddressInt(((TypePointer *)this)->getShiftOffset(),wordsize);
+  offset += AddrSpace::byteToAddressInt(((TypePointer *)this)->getShiftOffset(),wordsize);
   if (basetype->metatype==TYPE_SPACEBASE) {
     uintb newoff = AddrSpace::addressToByte(offset,wordsize);
     basetype->getSubType(newoff,&newoff);
