@@ -581,6 +581,17 @@ public class DataTypeParser {
 				throw new InvalidDataTypeException("invalid pointer specification: " + piece);
 			}
 			
+			// Parse the pointer specification
+			// It's structured in a following way
+			// (+/-offset)*(pointer size)
+			// Examples:
+			//	*
+			//	+0x4*
+			//	*8
+			//	-16*4
+
+
+			// Parse shift offset
 			if (piece.indexOf("*") != 0) {
 				switch(piece.charAt(0)) {
 				case '+': 
@@ -601,6 +612,7 @@ public class DataTypeParser {
 				}
 			}
 			
+			// Parse pointer length
 			if (piece.indexOf("*") != piece.length()-1) {
 				try {
 					pointerSize = Integer.parseInt(piece.substring(piece.indexOf("*")+1));
