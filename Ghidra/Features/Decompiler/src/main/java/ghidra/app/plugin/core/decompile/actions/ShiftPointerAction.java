@@ -173,7 +173,9 @@ public class ShiftPointerAction extends AbstractDecompilerAction {
 
 		ClangToken token = context.getTokenAtCursor();
 		if (token.Parent() instanceof ClangReturnType) {
-			if (((ClangReturnType) token.Parent()).getDataType() instanceof Pointer) return true;
+			if (((ClangReturnType) token.Parent()).getDataType() instanceof Pointer) {
+				return true;
+			}
 		}
 		
 		DataType dt = DecompilerUtils.getDataType(context);
