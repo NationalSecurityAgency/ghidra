@@ -274,7 +274,7 @@ Datatype *CastStrategyC::castStandard(Datatype *reqtype,Datatype *curtype,
       if (isptr && (meta==TYPE_UNKNOWN)) // Don't cast pointers to unknown
 	return (Datatype *)0;
     }
-    if ((!care_ptr_uint)&&(curbase->getMetatype()==TYPE_PTR))
+    if ((!care_ptr_uint)&&(!care_uint_int)&&(curbase->getMetatype()==TYPE_PTR))
       return (Datatype *)0;
     break;
   case TYPE_CODE:
