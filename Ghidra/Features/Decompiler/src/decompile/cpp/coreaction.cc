@@ -2176,9 +2176,27 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   Varnode *vn,*outvn;
   PcodeOp *newop;
   bool force=false;
+  bool isshift=false;
 
   tokenct = op->getOpcode()->getOutputToken(op,castStrategy);
   outvn = op->getOut();
+  // Check if this is a pointer shift node
+  // The following conditions must be true:
+  //  - op is CPUI_INT_ADD
+  //  - the first input is a pointer
+  //  - the second input is a constant offset
+  //  - the constant offset equals -(shift offset of the pointer)
+  if (op->code()==CPUI_INT_ADD && op->getIn(0)->getType()->getMetatype()==TYPE_PTR) {
+    TypePointer *pt = (TypePointer*) op->getIn(0)->getType();
+    if (op->getIn(1)->isConstant()) {
+      intb off = op->getIn(1)->getOffset();
+      sign_extend(off, 8*pt->getSize()-1);
+      if (AddrSpace::addressToByteInt(off, pt->getWordSize())==-pt->getShiftOffset()) {
+        isshift = true;
+        tokenct = outvn->getType(); // tokenct is the shifted pointer type, but the addition actually output the unshifted pointer type
+      }
+    }
+  }    
   if (outvn->isImplied()) {
     // implied varnode must have parse type
     if (outvn->getType()->getMetatype() != TYPE_PTR) // If implied varnode has an atomic (non-pointer) type
@@ -2195,7 +2213,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   }
   if (!force) {
     outct = outvn->getHigh()->getType();	// Type of result
-    ct = castStrategy->castStandard(outct,tokenct,false,true);
+    ct = castStrategy->castStandard(outct,tokenct,false,!isshift);
     if (ct == (Datatype *)0) return 0;
   }
 				// Generate the cast op
