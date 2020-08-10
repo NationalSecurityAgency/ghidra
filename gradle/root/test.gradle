@@ -89,13 +89,19 @@ project.ext.userHome = System.properties.get("user.home")
 // Enable this mode if 'parallelCombinedTestReport' invoked in the command line.
 project.ext.parallelMode = project.gradle.startParameter.taskNames.contains('parallelCombinedTestReport')
 
+project.ext.targetMode = project.gradle.startParameter.taskNames.contains('targetedTestReport')
+
+project.ext.targetFiles = targetMode ? project.getProperty('targetFiles') : null
+
+project.ext.targetProjects = targetMode ? getTestProjects(targetFiles) : null
+
 // 'parallelCombinedTestReport' task will parse a JUnit test report for test duration.
 // Specify the location of the report via cmd line using "-PtestTimeParserInputDir=<location>".
 // If the location is not specified via cmd line, it will look for the latest test report 
 // in <reportDir>/../reportsArchive/reports_<date>
 // If a reportsArchive path does not exist, it will assume all tests have the same duration and 
 // continue with test task creation. 
- project.ext.testTimeParserInputDir = project.hasProperty('testTimeParserInputDir') ?
+project.ext.testTimeParserInputDir = project.hasProperty('testTimeParserInputDir') ?
         project.getProperty('testTimeParserInputDir') + "/reports/classes" : getLastArchivedReport("$reportArchivesDir") + "/classes"
 
 // A port of 0 will allow the kernel to give a free port number in the set of "User"
@@ -130,6 +136,39 @@ def getLogFileUrl() {
 		return logFile.toURI().toString()
 	}
 	throw new GradleException("Cannot find log4j properties file using path '$logFilePath'")
+}
+
+/**
+ * Given a set of files (passed in via the -PtargetFiles command line param), this
+ * will search the project tree for each files' package to see if there is a test
+ * class defined that can be run.
+ * 
+ * The param is a list of file paths created by 'git diff --names-only'
+ */
+def List<Project> getTestProjects(String files) {  
+      
+   List<Project> projects = new ArrayList<>();
+   
+   List paths = files.tokenize('%')
+   
+   for (String path : paths) {
+     File file = new File(path)   // might blow up?
+     
+     // Find the project for this file
+     def ps
+     while (file.parentFile != null) {
+        ps = rootProject.allprojects.findAll { it.projectDir == file }
+        if (ps) {
+           ps.each {
+             projects.add(it)
+           }
+           break;
+        }
+        file = file.parentFile
+     }
+   }
+   
+   return projects
 }
 
 /*********************************************************************************
@@ -343,6 +382,36 @@ task integrationTestReport(type: TestReport) { t ->
     description "Run integration tests and save HTML report."
     destinationDir = file("$reportDir/integrationTests")
 	outputs.upToDateWhen {false}
+}
+
+/*********************************************************************************
+ * TARGETED TEST REPORT
+ *
+ * Summary:	Runs unit tests against a set of projects
+ *
+ * The projects to be run against are stored in the project.ext.targetProjects
+ * var, which is populated at the top of this file. This is currently only
+ * used by the runAllTests.sh script which executes this task on each commit, 
+ * so we can run all the tests for the files contained in that commit.
+ *
+ *********************************************************************************/
+task targetedTestReport(type: TestReport) { t -> 
+    group "test"
+    description "Run unit tests against a specific set of projects."
+    destinationDir = file("$reportDir/unitTests")
+    outputs.upToDateWhen {false}
+    dependsOn ":deleteTestTempAndReportDirs"
+
+	// This is a bit tricky but the tasks for each project are not yet defined
+	// at this point, so we have to put this in an afterEvaluate block before
+	// we can set up the reportOn dependency
+    project.ext.targetProjects.each {
+      it.afterEvaluate { p -> 
+        if (p.tasks.findByName('test')) {
+        	reportOn p.test
+        }
+      }
+    }
 }
 
 
