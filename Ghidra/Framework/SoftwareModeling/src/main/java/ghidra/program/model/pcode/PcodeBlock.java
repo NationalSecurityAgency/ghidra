@@ -91,7 +91,12 @@ public class PcodeBlock {
 
 	public static int nameToType(String name) {
 		switch (name.charAt(0)) {
+			case 'b':
+				return BASIC;
 			case 'c':
+				if (name.equals("condition")) {
+					return CONDITION;
+				}
 				return COPY;
 			case 'd':
 				return DOWHILE;
