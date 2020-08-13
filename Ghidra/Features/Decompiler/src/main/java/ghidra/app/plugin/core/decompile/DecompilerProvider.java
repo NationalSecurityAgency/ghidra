@@ -627,10 +627,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			navigatable = newProvider;
 		}
 
-		Symbol symbol = function.getSymbol();
-		ExternalManager externalManager = program.getExternalManager();
-		ExternalLocation externalLocation = externalManager.getExternalLocation(symbol);
-		if (externalLocation != null) {
+		if (function.isExternal()) {
+			Symbol symbol = function.getSymbol();
+			ExternalManager externalManager = program.getExternalManager();
+			ExternalLocation externalLocation = externalManager.getExternalLocation(symbol);
 			service.goToExternalLocation(navigatable, externalLocation, true);
 		}
 		else {
