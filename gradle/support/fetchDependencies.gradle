@@ -54,7 +54,7 @@ ext.AXML_ZIP = 'https://storage.googleapis.com/google-code-archive-downloads/v2/
 ext.HFS_ZIP = 'https://sourceforge.net/projects/catacombae/files/HFSExplorer/0.21/hfsexplorer-0_21-bin.zip'
 ext.YAJSW_ZIP = 'https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip'
 ext.PYDEV_ZIP = 'https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip'
-ext.CDT_ZIP = 'http://www.eclipse.org/downloads/download.php?r=1&protocol=https&file=/tools/cdt/releases/8.6/cdt-8.6.0.zip'
+ext.CDT_ZIP = 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip'
 
 // The SHA-256s for each of the dependencies
 ext.DEX_SHA_256 = '7907eb4d6e9280b6e17ddce7ee0507eae2ef161ee29f70a10dbc6944fdca75bc'
