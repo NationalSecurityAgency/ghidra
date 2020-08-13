@@ -144,9 +144,7 @@ immS: imm is op0711 & sop2531 [ imm = (sop2531 << 5) | op0711; ] { local tmp:$(X
 immSB: reloc is op0707 & op0811 & op2530 & sop3131 [ reloc = inst_start + ((sop3131 << 12) | (op2530 << 5) | (op0811 << 1) | (op0707 << 11)); ] { export *[ram]:$(XLEN) reloc; }
 #immSB: reloc is op0707 & op0811 & op2530 & sop3131 [ reloc = inst_start + ((sop3131 << 12) | (op2530 << 5) | (op0811 << 1) | (op0707 << 11)); ] { export reloc; }
 
-#NOTES  this reads as '<< 12' but objdump does not
-# immU: imm is sop1231 [ imm = (sop1231 << 12); ] { local tmp:$(XLEN) = imm; export tmp; }
-immU: sop1231 is sop1231 { local tmp:$(XLEN) = sop1231; export tmp; }
+immU: op1231 is op1231 & sop1231 { local tmp:$(XLEN) = sop1231 << 12; export tmp; }
 
 # used for goto
 immUJ: reloc is op1219 & op2020 & op2130 & sop3131 [ reloc = inst_start + ((sop3131 << 20) | (op2130 << 1) | (op2020 << 11) | (op1219 << 12)); ] { export *[ram]:$(XLEN) reloc; }

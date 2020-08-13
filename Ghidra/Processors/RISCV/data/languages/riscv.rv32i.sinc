@@ -55,7 +55,7 @@
 # auipc d,u 00000017 0000007f SIMPLE (0, 0) 
 :auipc rd,immU is RV32 & RVI & immU & rd & op0001=0x3 & op0204=0x5 & op0506=0x0
 {
-	rd = (immU << 12) + inst_start;
+	rd = immU + inst_start;
 }
 
 
@@ -197,7 +197,7 @@
 # lui d,u 00000037 0000007f SIMPLE (0, 0) 
 :lui rd,immU is RV32 & RVI & immU & rd & op0001=0x3 & op0204=0x5 & op0506=0x1
 {
-	rd = immU << 12;
+	rd = immU;
 }
 
 
