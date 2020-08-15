@@ -46,17 +46,11 @@ class PointerDBAdapterV3 extends PointerDBAdapter {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#createRecord(long, long, int)
-	 */
 	@Override
 	Record createRecord(long dataTypeID, long categoryID, int length) throws IOException {
 		return createRecord(dataTypeID, categoryID, length, 0);
 	}
 	
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#createRecord(long, long, int, int)
-	 */
 	@Override
 	Record createRecord(long dataTypeID, long categoryID, int length, int shiftOffset) throws IOException {
 		long tableKey = table.getKey();
@@ -71,49 +65,31 @@ class PointerDBAdapterV3 extends PointerDBAdapter {
 		return record;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#getRecord(long)
-	 */
 	@Override
 	Record getRecord(long pointerID) throws IOException {
 		return table.getRecord(pointerID);
 	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#getRecords()
-	 */
+	
 	@Override
 	RecordIterator getRecords() throws IOException {
 		return table.iterator();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#removeRecord(long)
-	 */
 	@Override
 	boolean removeRecord(long pointerID) throws IOException {
 		return table.deleteRecord(pointerID);
 	}
-
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#updateRecord(ghidra.framework.store.db.Record)
-	 */
+	
 	@Override
 	void updateRecord(Record record) throws IOException {
 		table.putRecord(record);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.database.data.PointerDBAdapter#getRecordIdsInCategory(long)
-	 */
 	@Override
 	long[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return table.findRecords(new LongField(categoryID), PTR_CATEGORY_COL);
 	}
 
-	/**
-	 * @see ghidra.program.database.data.PointerDBAdapter#deleteTable()
-	 */
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
 		handle.deleteTable(POINTER_TABLE_NAME);
