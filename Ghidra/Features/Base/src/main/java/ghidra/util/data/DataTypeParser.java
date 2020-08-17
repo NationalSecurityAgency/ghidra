@@ -590,7 +590,6 @@ public class DataTypeParser {
 			//	*8
 			//	-16*4
 
-
 			// Parse shift offset
 			if (piece.indexOf("*") != 0) {
 				switch(piece.charAt(0)) {
@@ -605,7 +604,7 @@ public class DataTypeParser {
 				}
 				
 				try {
-					shiftOffset *= Integer.decode(piece.substring(1, piece.indexOf("*")));
+					shiftOffset *= Integer.decode(piece.substring(1, piece.indexOf("*")).stripTrailing());
 				}
 				catch (NumberFormatException e) {
 					throw new InvalidDataTypeException("invalid pointer specification: " + piece);
