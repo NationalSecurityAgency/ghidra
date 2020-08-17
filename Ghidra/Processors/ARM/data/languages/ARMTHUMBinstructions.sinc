@@ -213,6 +213,22 @@ macro th_addflags(op1,op2) {
   tmpOV = scarry(op1,op2);
 }
 
+#See Section 2-13, "Overflow Detection", of Hacker's Delight (2nd ed)
+macro th_add_with_carry_flags(op1,op2){
+	tmpCY = ((CY == 0) && carry(op1,op2)) || ((CY == 1) && (op1 >= op1 + op2 + 1:4));
+	local total= op1 + op2 + zext(CY);
+	local sign_total = (total >> 31) != 0;
+	local sign_op1 = (op1 >> 31) != 0;
+	local sign_op2 = (op2 >> 31) != 0;
+	tmpOV = (sign_op1 == sign_op2) && (sign_total != sign_op1);
+}
+
+macro th_test_flags(result){
+  ZR = (result == 0);
+  NG = (result s< 0);
+  CY = shift_carry;
+}
+
 # Note (unlike x86) carry flag is SET if there is NO borrow
 macro th_subflags(op1,op2) {
   tmpCY = op2 <= op1;
@@ -223,10 +239,7 @@ macro th_subflags0(op2) {
   tmpOV = sborrow(0,op2);
 }
 
-macro grabbit(op1,bit) {
-  local tmp = (op1 >> bit) & 1;
-  tmpCY = (tmp != 0);
-}
+
 
 macro resflags(result) {
   tmpNG = result s< 0;
@@ -317,6 +330,8 @@ ByteRotate: "#"^rot		is throt [rot = throt << 3; ] { export *[const]:1 rot; }
 
 thSBIT_CZNO:     is thc0404=0	    { }   # Do nothing to the flag bits
 thSBIT_CZNO: "s" is thc0404=1	    { CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV; }
+thSBIT_CZN:      is thc0404=0   { }  # Do nothing to the flags bits
+thSBIT_CZN:  "s" is thc0404=1   {CY = tmpCY; ZR = tmpZR; NG = tmpNG;}
 thSBIT_ZN:     is thc0404=0	    { }   # Do nothing to the flag bits
 thSBIT_ZN: "s" is thc0404=1	    { ZR = tmpZR; NG = tmpNG; }
 
@@ -417,32 +432,32 @@ PcrelOffset12: [reloc]		is thc0707=0; offset12
 ThumbExpandImm12: "#"^imm32    is   immed12_i=0 ; thc1414=0 & immed12_imm3=0 & immed12_imm8
   [ imm32=immed12_imm8 $and 0xff; ]
 {
-   tmp:4 = imm32; export tmp;
+   tmp:4 = imm32; shift_carry = CY; export tmp;
 }
 ThumbExpandImm12: "#"^imm32           is   immed12_i=0 ; thc1414=0 & immed12_imm3=1 & immed12_imm8
   [ imm32=(immed12_imm8<<16) | (immed12_imm8); ]
 {
-   tmp:4 = imm32; export tmp;
+   tmp:4 = imm32; shift_carry = CY; export tmp;
 }
 ThumbExpandImm12: "#"^imm32           is   immed12_i=0 ; thc1414=0 & immed12_imm3=2 & immed12_imm8
   [ imm32=(immed12_imm8<<24) | (immed12_imm8<<8); ]
 {
-   tmp:4 = imm32; export tmp;
+   tmp:4 = imm32; shift_carry = CY; export tmp;
 }
 ThumbExpandImm12: "#"^imm32           is   immed12_i=0 ; thc1414=0 & immed12_imm3=3 & immed12_imm8
   [ imm32=(immed12_imm8<<24) | (immed12_imm8<<16) | (immed12_imm8<<8) | (immed12_imm8); ]
 {
-   tmp:4 = imm32; export tmp;
+   tmp:4 = imm32; shift_carry = CY; export tmp;
 }
 ThumbExpandImm12: "#"^imm32           is   immed12_i=0 ; immed12_imm3 & thc0707 & immed7
   [ imm32=(((0x80+immed7)<<(32-((immed12_imm3<<1)|thc0707)))|((0x80+immed7)>>(((immed12_imm3<<1)|thc0707)))) $and 0xffffffff; ]
 {
-   tmp:4 = imm32; export tmp;
+   tmp:4 = imm32; local tmp1 = (tmp >> 31); shift_carry = tmp1(0); export tmp;
 }
 ThumbExpandImm12: "#"^imm32           is   immed12_i=1 ; immed12_imm3 & thc0707 & immed7
   [ imm32=(((0x80+immed7)<<(32-(16+((immed12_imm3<<1)|thc0707))))|((0x80+immed7)>>((16+((immed12_imm3<<1)|thc0707))))) $and 0xffffffff; ]
 {
-   tmp:4 = imm32; export tmp;
+   tmp:4 = imm32; local tmp1 = (tmp >> 31); shift_carry = tmp1(0); export tmp;
 }
 
 @endif # defined(VERSION_6T2) || defined(VERSION_7)
@@ -504,7 +519,7 @@ thshift2: Rm0003, "rrx"		is imm3_shft=0 & imm2_shft=0 & thc0405=3 & Rm0003
 thshift2: Rm0003, "ror #"^shftval	is imm3_shft & imm2_shft & thc0405=3 & Rm0003
    [ shftval=(imm3_shft<<2) | (imm2_shft); ]
 {
-  local tmp1=(Rm0003>>shftval)|(Rm0003<<(32-shftval)); local tmp2=tmp1&1; shift_carry=tmp2(0); export tmp1;
+  local tmp1=(Rm0003>>shftval)|(Rm0003<<(32-shftval)); local tmp2=tmp1 >> 31; shift_carry=tmp2(0); export tmp1;
 }
 
 @endif # VERSION_6T2 || VERSION_7
@@ -1010,7 +1025,7 @@ with : ARMcondCk=1 {
 :adc^ItCond	Rd0002,Rm0305 		is TMode=1 & ItCond & op6=0x105 & Rm0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
-  th_addflags(Rd0002,Rm0305);
+  th_add_with_carry_flags(Rd0002,Rm0305);
   Rd0002 = Rd0002 + Rm0305 + zext(CY);
   resflags(Rd0002);
   build CheckInIT_CZNO;
@@ -1022,9 +1037,8 @@ with : ARMcondCk=1 {
 {
   build ItCond;
   build ThumbExpandImm12;
-  local tmp = ThumbExpandImm12+zext(CY);
-  th_addflags(Rn0003,tmp);
-  Rd0811 = Rn0003+tmp;
+  th_add_with_carry_flags(Rn0003,ThumbExpandImm12);
+  Rd0811 = Rn0003 + ThumbExpandImm12 + zext(CY);
   resflags(Rd0811);
   build thSBIT_CZNO;
 }
@@ -1033,8 +1047,8 @@ with : ARMcondCk=1 {
 {
   build ItCond;
   build thshift2;
+  th_add_with_carry_flags(Rn0003,thshift2);
   local tmp = thshift2+zext(CY);
-  th_addflags(Rn0003,tmp);
   Rd0811 = Rn0003+tmp;
   resflags(Rd0811);
   build thSBIT_CZNO;
@@ -1221,10 +1235,16 @@ with : ARMcondCk=1 {
 }
 @endif # VERSION_6T2 || VERSION_7
 
-:asr^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=0x02 & Immed5 & Rm0305 & Rd0002 & immed5=0 & CheckInIT_CZN
+macro th_set_carry_for_asr(op1,shift_count) {
+  local bit = (op1 s>> (shift_count-1)) & 1;
+  tmpCY = ((shift_count == 0) && CY) || ((shift_count != 0) && (bit != 0));
+}
+
+#note that this is a special case where immed5 = 0, which corresponds to a shift amount of 32
+:asr^ItCond	Rd0002,Rm0305,"#0x20"	is TMode=1 & ItCond & op11=0x02 & Immed5 & Rm0305 & Rd0002 & immed5=0 & CheckInIT_CZN
 {
   build ItCond;
-  grabbit(Rm0305,31);
+  th_set_carry_for_asr(Rm0305,32:1);
   Rd0002 = Rm0305 s>> 32;
   resflags(Rd0002);
   build CheckInIT_CZN;
@@ -1233,8 +1253,7 @@ with : ARMcondCk=1 {
 :asr^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=0x02 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
-  local tmp = Immed5 - 1;
-  grabbit(Rm0305,tmp);
+  th_set_carry_for_asr(Rm0305,Immed5);
   Rd0002 = Rm0305 s>> Immed5;
   resflags(Rd0002);
   build CheckInIT_CZN;
@@ -1243,30 +1262,33 @@ with : ARMcondCk=1 {
 :asr^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x104 & Rd0002 & Rs0305 & CheckInIT_CZN
 {
   build ItCond;
-  local tmp = (Rs0305-1) & 0x1f;
-  grabbit(Rd0002,tmp);
-  Rd0002 = Rd0002 s>> Rs0305;
+  local shift_amount = Rs0305 & 0xff;
+  th_set_carry_for_asr(Rd0002,shift_amount);
+  Rd0002 = Rd0002 s>> (shift_amount);
   resflags(Rd0002);
   build CheckInIT_CZN;
 }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:asr^thSBIT_ZN^ItCond^".w"	Rd0811,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_ZN & sop0003=0xf; thc1515=0 & Rd0811 & thc0405=2 & thshift2
+:asr^thSBIT_CZN^ItCond^".w"	Rd0811,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & sop0003=0xf; thc1515=0 & Rd0811 & thc0405=2 & thshift2
 {
   build ItCond;
   build thshift2;
   Rd0811 = thshift2;
+  tmpCY = shift_carry;
   resflags(Rd0811);
-  build thSBIT_ZN;
+  build thSBIT_CZN;
 }
 
-:asr^thSBIT_ZN^ItCond^".w"	Rd0811,Rn0003,Rm0003 		is TMode=1 & ItCond & op11=0x1f & thc0910=1 & sop0508=2 & thSBIT_ZN & Rn0003; op12=0xf & Rd0811 & sop0407=0 & Rm0003
+:asr^thSBIT_CZN^ItCond^".w"	Rd0811,Rn0003,Rm0003 		is TMode=1 & ItCond & op11=0x1f & thc0910=1 & sop0508=2 & thSBIT_CZN & Rn0003; op12=0xf & Rd0811 & sop0407=0 & Rm0003
 {
   build ItCond;
-  Rd0811 = Rn0003 s>> Rm0003;
+  local shift_amount = Rm0003 & 0xff;
+  th_set_carry_for_asr(Rn0003,shift_amount);
+  Rd0811 = Rn0003 s>> (shift_amount);
   resflags(Rd0811);
-  build thSBIT_ZN;
+  build thSBIT_CZN;
 }
 @endif # VERSION_6T2 || VERSION_7
 
@@ -1582,7 +1604,7 @@ define pcodeop IndexCheck;
   Rd0811 = count_leading_zeroes(Rm0003);
 }
 
-:cmn^ItCond	Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=8 & Rn0003; thc1515=0 & thc0811=15) & ThumbExpandImm12
+:cmn^ItCond	Rn0003,ThumbExpandImm12  is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=8 & thc0404=1 & Rn0003; thc1515=0 & thc0811=15) & ThumbExpandImm12
 {
   build ItCond;
   th_addflags(Rn0003,ThumbExpandImm12);
@@ -2323,11 +2345,15 @@ define pcodeop ExclusiveAccess;
 
 @endif # VERSION_6T2 || VERSION_7
 
+macro th_set_carry_for_lsl(op1,shift_count) {
+  local bit = (op1 << (shift_count-1)) & 0x80000000;
+  tmpCY = ((shift_count == 0) && CY) || ((shift_count != 0) && (bit != 0));
+}
+
 :lsl^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=0x0 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
-  local tmp = 32 - Immed5;
-  grabbit(Rm0305,tmp);
+  th_set_carry_for_lsl(Rm0305,Immed5);
   Rd0002 = Rm0305 << Immed5;
   resflags(Rd0002);
   build CheckInIT_CZN;
@@ -2336,17 +2362,23 @@ define pcodeop ExclusiveAccess;
 :lsl^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x102 & Rs0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
-  local tmp = 32 - Rs0305;
-  grabbit(Rd0002,tmp);
-  Rd0002 = Rd0002 << Rs0305;
+  local shift_count = Rs0305 & 0xff;
+  th_set_carry_for_lsl(Rd0002,shift_count);
+  Rd0002 = Rd0002 << shift_count;
   resflags(Rd0002);
   build CheckInIT_CZN;
 }
 
-:lsr^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=1 & Immed5 & Rm0305 & Rd0002 & immed5=0 & CheckInIT_CZN
+macro th_set_carry_for_lsr(op1,shift_count) {
+  local bit = (op1 >> (shift_count-1)) & 1;
+  tmpCY = ((shift_count == 0) && CY) || ((shift_count != 0) && (bit != 0));
+}
+
+#note that this is a special case where immed5 = 0, which corresponds to a shift amount of 32
+:lsr^ItCond	Rd0002,Rm0305,"#0x20"	is TMode=1 & ItCond & op11=1 & Immed5 & Rm0305 & Rd0002 & immed5=0 & CheckInIT_CZN
 {
   build ItCond;
-  grabbit(Rm0305,31);
+  th_set_carry_for_lsr(Rm0305,32:1);
   Rd0002 = Rm0305 >> 32;
   resflags(Rd0002);
   build CheckInIT_CZN;
@@ -2355,8 +2387,8 @@ define pcodeop ExclusiveAccess;
 :lsr^ItCond	Rd0002,Rm0305,Immed5	is TMode=1 & ItCond & op11=1 & Immed5 & Rm0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
-  local tmp = Immed5 - 1;
-  grabbit(Rm0305,tmp);
+  local shift_amount = Immed5;
+  th_set_carry_for_lsr(Rm0305,shift_amount);
   Rd0002 = Rm0305 >> Immed5;
   resflags(Rd0002);
   build CheckInIT_CZN;
@@ -2365,49 +2397,51 @@ define pcodeop ExclusiveAccess;
 :lsr^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x103 & Rd0002 & Rs0305 & CheckInIT_CZN
 {
   build ItCond;
-  local tmp = (Rs0305-1) & 0x1f;
-  grabbit(Rd0002,tmp);
-  Rd0002 = Rd0002 >> Rs0305;
+  local shift_amount = (Rs0305 & 0xff);
+  th_set_carry_for_lsr(Rd0002,shift_amount);
+  Rd0002 = Rd0002 >> (Rs0305 & 0xff);
   resflags(Rd0002);
   build CheckInIT_CZN;
 }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:lsl^thSBIT_CZNO^ItCond^".w"    Rd0811,Rm0003,thLsbImm  is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZNO & sop0003=15; thc1515=0 & Rd0811 & thc0405=0 & Rm0003 & thLsbImm
+:lsl^thSBIT_CZN^ItCond^".w"    Rd0811,Rm0003,thLsbImm  is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & sop0003=15; thc1515=0 & Rd0811 & thc0405=0 & Rm0003 & thLsbImm
 {
   build ItCond;
+  th_set_carry_for_lsl(Rm0003,thLsbImm);
   Rd0811 = Rm0003 << thLsbImm;
-  th_logicflags();
   resflags(Rd0811);
-  build thSBIT_CZNO;
+  build thSBIT_CZN;
 }
 
-:lsl^thSBIT_CZNO^ItCond^".w"  Rd0811,Rn0003,Rm0003 		is TMode=1 & ItCond & op11=0x1f & thc0910=1 & sop0508=0 & thSBIT_CZNO & Rn0003; op12=15 & Rd0811 & sop0407=0 & Rm0003
+:lsl^thSBIT_CZN^ItCond^".w"  Rd0811,Rn0003,Rm0003 		is TMode=1 & ItCond & op11=0x1f & thc0910=1 & sop0508=0 & thSBIT_CZN & Rn0003; op12=15 & Rd0811 & sop0407=0 & Rm0003
 {
   build ItCond;
-  Rd0811 = Rn0003 << Rm0003;
-  th_logicflags();
+  local shift_amount = (Rm0003 & 0xff);
+  th_set_carry_for_lsl(Rn0003,shift_amount);
+  Rd0811 = Rn0003 << (shift_amount);
   resflags(Rd0811);
-  build thSBIT_CZNO;
+  build thSBIT_CZN;
 }
 
-:lsr^thSBIT_CZNO^ItCond^".w"    Rd0811,Rm0003,thLsbImm  is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZNO & sop0003=15; thc1515=0 & Rd0811 & thc0405=1 & Rm0003 & thLsbImm
+:lsr^thSBIT_CZN^ItCond^".w"    Rd0811,Rm0003,thLsbImm  is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & sop0003=15; thc1515=0 & Rd0811 & thc0405=1 & Rm0003 & thLsbImm
 {
   build ItCond;
+  th_set_carry_for_lsr(Rm0003,thLsbImm);
   Rd0811 = Rm0003 >> thLsbImm;
-  th_logicflags();
   resflags(Rd0811);
-  build thSBIT_CZNO;
+  build thSBIT_CZN;
 }
 
-:lsr^thSBIT_CZNO^ItCond^".w"  Rd0811,Rn0003,Rm0003 		is TMode=1 & ItCond & op11=0x1f & thc0910=1 & sop0508=1 & thSBIT_CZNO & Rn0003; op12=15 & Rd0811 & sop0407=0 & Rm0003
+:lsr^thSBIT_CZN^ItCond^".w"  Rd0811,Rn0003,Rm0003 		is TMode=1 & ItCond & op11=0x1f & thc0910=1 & sop0508=1 & thSBIT_CZN & Rn0003; op12=15 & Rd0811 & sop0407=0 & Rm0003
 {
   build ItCond;
-  Rd0811 = Rn0003 >> Rm0003;
-  th_logicflags();
+  local shift_amount = Rm0003 & 0xff;
+  th_set_carry_for_lsr(Rn0003,shift_amount);
+  Rd0811 = Rn0003 >> shift_amount;
   resflags(Rd0811);
-  build thSBIT_CZNO;
+  build thSBIT_CZN;
 }
 
 
@@ -3417,8 +3451,6 @@ macro BitReverse(val) {
   tval = tval >> 1;
   result = (result << 1) | (tval & 1);
   tval = tval >> 1;
-  result = (result << 1) | (tval & 1);
-  tval = tval >> 1;
   val = result;
 }
 
@@ -3540,43 +3572,45 @@ macro BitReverse(val) {
 
 @endif # VERSION_6
 
+macro th_set_carry_for_ror(result, count) {
+  local bit = result & 0x80000000;
+  tmpCY = ((count == 0) && CY) || ((count != 0) && (bit != 0));
+}
+
 :ror^ItCond	Rd0002,Rs0305		is TMode=1 & ItCond & op6=0x107 & Rs0305 & Rd0002 & CheckInIT_CZN
 {
   build ItCond;
-  local tmp = (Rs0305-1) & 0x1f;
-  grabbit(Rd0002,tmp);
-
-  Rd0002 = (Rd0002 >> Rs0305)|(Rd0002 << (32-Rs0305));
+  local shift_amount = Rs0305 & 0x1f;
+  local tmp = (Rd0002 >> shift_amount)|(Rd0002 << (32-shift_amount));
+  th_set_carry_for_ror(tmp,Rs0305 & 0xff);
+  Rd0002 = tmp;
   resflags(Rd0002);
   build CheckInIT_CZN;
 }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:ror^thSBIT_CZNO^ItCond^  Rd0811,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZNO & thc0003=0xf; thc1515=0 & Rd0811 & thc0405=3 & thshift2
+:ror^thSBIT_CZN^ItCond  Rd0811,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & thc0003=0xf; thc1515=0 & Rd0811 & thc0405=3 & thshift2
 {
   build ItCond;
   Rd0811 = thshift2;
-  th_logicflags();
+  tmpCY = shift_carry;
   resflags(Rd0811);
-  build thSBIT_CZNO;
+  build thSBIT_CZN;
 }
 
-:ror^thSBIT_CZNO^ItCond^".w"  Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op8=0xfa & thc0707=0 & thc0506=3 & thSBIT_CZNO & Rn0003; op12=15 & Rd0811 & sop0407=0 & Rm0003
+:ror^thSBIT_CZN^ItCond^".w"  Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op8=0xfa & thc0707=0 & thc0506=3 & thSBIT_CZN & Rn0003; op12=15 & Rd0811 & sop0407=0 & Rm0003
 {
   build ItCond;
-  local tmpRm0003 = Rm0003;
-  local tmpRn0003 = Rn0003;
-  shftval:1 = tmpRm0003(0);
-  local tmp1 = (tmpRn0003>>shftval)|(tmpRn0003<<(32-shftval)); 
-  local tmp2 = tmp1&1; shift_carry=tmp2(0);
-  Rd0811 = tmp1;
-  th_logicflags();
+  local shift_amount = Rm0003 & 0x1f;
+  local tmp = (Rn0003>>shift_amount)|(Rn0003<<(32-shift_amount)); 
+  th_set_carry_for_ror(tmp,Rm0003 & 0xff);
+  Rd0811 = tmp;
   resflags(Rd0811);
-  build thSBIT_CZNO;
+  build thSBIT_CZN;
 }
 
-:rrx^thSBIT_CZNO^ItCond^  Rd0811,Rm0003 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZNO & thc0003=0xf; thc1515=0 & thc1214=0 & Rd0811 & thc0607=0 & thc0405=3 & Rm0003
+:rrx^thSBIT_CZN^ItCond  Rd0811,Rm0003 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=2 & thSBIT_CZN & thc0003=0xf; thc1515=0 & thc1214=0 & Rd0811 & thc0607=0 & thc0405=3 & Rm0003
 {
   build ItCond;
   local tmp1=Rm0003&1;
@@ -3585,7 +3619,7 @@ macro BitReverse(val) {
   Rd0811 = tmp2;
   th_logicflags();
   resflags(Rd0811);
-  build thSBIT_CZNO;
+  build thSBIT_CZN;
 }
 
 @endif # defined(VERSION_6T2) || defined(VERSION_7)
@@ -3646,7 +3680,7 @@ macro BitReverse(val) {
 :sbc^ItCond	Rd0002,Rm0305		is TMode=1 & ItCond & op6=0x106 & Rm0305 & Rd0002 & CheckInIT_CZNO
 {
   build ItCond;
-  th_subflags(Rd0002,Rm0305);
+  th_add_with_carry_flags(Rd0002,~Rm0305);
   Rd0002 = Rd0002 - Rm0305 - zext(!CY);
   resflags(Rd0002);
   build CheckInIT_CZNO;
@@ -3658,9 +3692,8 @@ macro BitReverse(val) {
 {
   build ItCond;
   build ThumbExpandImm12;
-  local tmp = ThumbExpandImm12+zext(!CY);
-  th_subflags(Rn0003,tmp);
-  Rd0811 = Rn0003-tmp;
+  th_add_with_carry_flags(Rn0003,~ThumbExpandImm12);
+  Rd0811 = Rn0003 - ThumbExpandImm12 - zext(!CY);
   resflags(Rd0811);
   build thSBIT_CZNO;
 }
@@ -3669,14 +3702,8 @@ macro BitReverse(val) {
 {
   build ItCond;
   build thshift2;
-  local tov = sborrow(Rn0003, thshift2);
-  local tmp = thshift2+zext(!CY);
-  th_subflags(Rn0003,tmp);
-  Rd0811 = Rn0003-tmp;
-#
-# The OV overflow flag calculation for all sbc insns should be done before the carry flag is subtracted.
-  tmpOV = tov;
-#
+  th_add_with_carry_flags(Rn0003,~thshift2);
+  Rd0811 = Rn0003 - thshift2 - zext(!CY);
   resflags(Rd0811);
   build thSBIT_CZNO;
 }
@@ -3772,19 +3799,18 @@ macro BitReverse(val) {
 
 @endif # defined(VERSION_6T2) || defined(VERSION_7)
 
-thXBIT: "b" is thc0505=0 & Rn0003       { local tmpRn0003 = Rn0003; tmp:2 = tmpRn0003:2;   export tmp; }
-thXBIT: "t" is thc0505=1 & Rn0003       { local tmpRn0003 = Rn0003; tmp:2 = tmpRn0003(2);  export tmp; }
+thXBIT: "b" is Rn0003 ; thc0505=0      { local tmpRn0003 = Rn0003; tmp_x:2 = tmpRn0003:2;   export tmp_x; }
+thXBIT: "t" is Rn0003 ; thc0505=1      { local tmpRn0003 = Rn0003; tmp_x:2 = tmpRn0003(2);  export tmp_x; }
 
-thYBIT: "b" is thc0404=0 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmpRm0003:2;   export tmp; }
-thYBIT: "t" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmpRm0003(2);  export tmp; }
+thYBIT: "b" is thc0404=0 & Rm0003       { local tmpRm0003 = Rm0003; tmp_y:2 = tmpRm0003:2;   export tmp_y; }
+thYBIT: "t" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp_y:2 = tmpRm0003(2);  export tmp_y; }
 
-:smla^thXBIT^thYBIT^ItCond   Rd0811,Rn0003,Rm0003,Rt1215  is TMode=1 & ItCond & op4=0xfb1 & Rn0003; Rt1215 & Rd0811 & thc0607=0 & thXBIT & thYBIT & Rm0003
+:smla^thXBIT^thYBIT^ItCond   Rd0811,Rn0003,Rm0003,Rt1215  is TMode=1 & ItCond & (op4=0xfb1 & Rn0003; Rt1215 & Rd0811 & thc0607=0 & thYBIT & Rm0003) & thXBIT
 {
 	build ItCond;
-	tmp:8 = sext(thXBIT) * sext(thYBIT);
-	OV = carry(tmp,sext(Rt1215));
-	tmp = tmp + sext(Rt1215);
-	Rd0811 = tmp:4;
+	tmp:4 = sext(thXBIT) * sext(thYBIT);
+	Q = scarry(tmp,Rt1215) || Q;  #Q flag is never cleared by this instruction
+	Rd0811 = tmp + Rt1215;
 }
 
 thdXbot: "" is thc0404=0 & Rm0003        { local tmpRm0003 = Rm0003; tmp:2 = tmpRm0003:2;   export tmp; }
@@ -3801,11 +3827,9 @@ thdXtop: "X" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmp
 	rntop:2 = tmpRn0003(2);
 	tmpbot:4 = sext(rnbot) * sext(thdXbot);
 	tmptop:4 = sext(rntop) * sext(thdXtop);
-	accum:8 = sext(Ra1215);
-	tmp:8 = sext(tmpbot) + sext(tmptop);
-	OV = carry(tmp,accum);
-	accum = tmp + accum;
-    Rd0811 = accum:4;
+	tmp:4 = sext(tmpbot) + sext(tmptop);
+	Q = scarry(tmp,Ra1215) || Q; #Q flag is never cleared by this instruction
+    Rd0811 = tmp + Ra1215;
 }
 
 :smlald^thdXbot^ItCond   Rt1215,Rd0811,Rn0003,Rm0003  is TMode=1 & ItCond & op4=0xfbc & Rn0003; Rt1215 & Rd0811 & thc0507=6 & thdXbot & thdXtop & Rm0003
@@ -3818,7 +3842,6 @@ thdXtop: "X" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmp
 	tmptop:4 = sext(rntop) * sext(thdXtop);
 	accum:8 = (sext(Rd0811) << 32) | zext(Rt1215);
 	tmp:8 = sext(tmpbot) + sext(tmptop);
-	OV = carry(tmp,accum);
 	accum = tmp + accum;
     Rt1215 = accum:4;
     Rd0811 = accum(4);
@@ -3833,10 +3856,10 @@ thdXtop: "X" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmp
   Rd0811 = val(4);
 }
 
-:smlal^thXBIT^thYBIT^ItCond   Rt1215,Rd0811,Rn0003,Rm0003  is TMode=1 & ItCond & op4=0xfbc & Rn0003; Rt1215 & Rd0811 & thc0607=2 & thXBIT & thYBIT & Rm0003
+:smlal^thXBIT^thYBIT^ItCond   Rt1215,Rd0811,Rn0003,Rm0003  is TMode=1 & ItCond & (op4=0xfbc & Rn0003; Rt1215 & Rd0811 & thc0607=2 & thYBIT & Rm0003) & thXBIT
 {
   build ItCond;
-  tmp:8 = sext(thXBIT) * sext(thYBIT);
+  tmp:4 = sext(thXBIT) * sext(thYBIT);
   accum:8 = (zext(Rd0811) << 32) | zext(Rt1215);
   val:8 = sext(tmp) + accum;
   Rt1215 = val(0);
@@ -3846,38 +3869,36 @@ thdXtop: "X" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmp
 :smlaw^thYBIT^ItCond   Rd0811,Rn0003,Rm0003,Ra1215  is TMode=1 & ItCond & op4=0xfb3 & Rn0003; Ra1215 & Rd0811 & thc0507=0 & thYBIT & Rm0003
 {
 	build ItCond;
-	tmp:8 = (sext(Rn0003) * sext(thYBIT)) s>> 16;
-	OV = carry(tmp,sext(Ra1215));
-	tmp = tmp + sext(Ra1215);
-	Rd0811 = tmp:4;
+	local tmp:6 = (sext(Rn0003) * sext(thYBIT));
+	local addend:6 = sext(Ra1215) << 16;
+	Q = scarry(tmp,addend) || Q; #this instruction never clears the Q flag
+	tmp = tmp + addend;
+	Rd0811 = tmp(2);
 }
 
 :smlsd^thdXbot^ItCond   Rd0811,Rn0003,Rm0003,Ra1215  is TMode=1 & ItCond & op4=0xfb4 & Rn0003; Ra1215 & Rd0811 & thc0507=0 & thdXbot & thdXtop & Rm0003
 {
 	build ItCond;
 	local tmpRn0003 = Rn0003;
-	rnbot:2 = tmpRn0003:2;
-	rntop:2 = tmpRn0003(2);
-	tmpbot:4 = sext(rnbot) * sext(thdXbot);
-	tmptop:4 = sext(rntop) * sext(thdXtop);
-	accum:8 = sext(Ra1215);
-	tmp:8 = sext(tmpbot) - sext(tmptop);
-	OV = carry(tmp,accum);
-	accum = tmp + accum;
-    Rd0811 = accum:4;
+	local rnbot:2 = tmpRn0003:2;
+	local rntop:2 = tmpRn0003(2);
+	local prod1:4 = sext(rnbot) * sext(thdXbot);
+	local prod2:4 = sext(rntop) * sext(thdXtop);
+	local diff = prod1 - prod2;
+	Q = scarry(diff,Ra1215) || Q; #instruction never clears Q flag
+	Rd0811 = diff + Ra1215;
 }
 
 :smlsld^thdXbot^ItCond   Rt1215,Rd0811,Rn0003,Rm0003  is TMode=1 & ItCond & op4=0xfbd & Rn0003; Rt1215 & Rd0811 & thc0507=6 & thdXbot & thdXtop & Rm0003
 {
 	build ItCond;
 	local tmpRn0003 = Rn0003;
-	rnbot:2 = tmpRn0003:2;
-	rntop:2 = tmpRn0003(2);
-	tmpbot:4 = sext(rnbot) * sext(thdXbot);
-	tmptop:4 = sext(rntop) * sext(thdXtop);
-	accum:8 = (sext(Rd0811) << 32) | zext(Rt1215);
-	tmp:8 = sext(tmpbot) - sext(tmptop);
-	OV = carry(tmp,accum);
+	local rnbot:2 = tmpRn0003:2;
+	local rntop:2 = tmpRn0003(2);
+	local tmpbot:4 = sext(rnbot) * sext(thdXbot);
+	local tmptop:4 = sext(rntop) * sext(thdXtop);
+	local accum:8 = (sext(Rd0811) << 32) | zext(Rt1215);
+	local tmp:8 = sext(tmpbot) - sext(tmptop);
 	accum = tmp + accum;
     Rt1215 = accum:4;
     Rd0811 = accum(4);
@@ -3886,32 +3907,35 @@ thdXtop: "X" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmp
 :smmla^ItCond   Rd0811,Rn0003,Rm0003,Ra1215  is TMode=1 & ItCond & op4=0xfb5 & Rn0003; Ra1215 & Rd0811 & thc0407=0 & Rm0003
 {
 	build ItCond;
-	val:8 = sext(Rn0003) * sext(Rm0003);
-	val = zext(Ra1215 << 32) + val;
+	local val:8 = sext(Rn0003) * sext(Rm0003);
+	local accum:8 = (zext(Ra1215)) << 32;
+	val = val + accum;
 	Rd0811 = val(4);
 }
 
 :smmlar^ItCond   Rd0811,Rn0003,Rm0003,Ra1215  is TMode=1 & ItCond & op4=0xfb5 & Rn0003; Ra1215 & Rd0811 & thc0407=1 & Rm0003
 {
 	build ItCond;
-	val:8 = sext(Rn0003) * sext(Rm0003);
-	val = zext(Ra1215 << 32) + val + 0x80000000;
+	local val:8 = sext(Rn0003) * sext(Rm0003);
+	local accum:8 = (zext(Ra1215)) << 32;
+	val = val + accum + 0x80000000;
 	Rd0811 = val(4);
 }
 
 :smmls^ItCond   Rd0811,Rn0003,Rm0003,Ra1215  is TMode=1 & ItCond & op4=0xfb6 & Rn0003; Ra1215 & Rd0811 & thc0407=0 & Rm0003
 {
 	build ItCond;
-	val:8 = sext(Rn0003) * sext(Rm0003);
-	val = zext(Ra1215 << 32) - val;
+	local val:8 = sext(Rn0003) * sext(Rm0003);
+	val = (zext(Ra1215) << 32) - val;
 	Rd0811 = val(4);
 }
 
 :smmlsr^ItCond   Rd0811,Rn0003,Rm0003,Ra1215  is TMode=1 & ItCond & op4=0xfb6 & Rn0003; Ra1215 & Rd0811 & thc0407=1 & Rm0003
 {
 	build ItCond;
-	val:8 = sext(Rn0003) * sext(Rm0003);
-	val = zext(Ra1215 << 32) - val + 0x80000000;
+	local val:8 = sext(Rn0003) * sext(Rm0003);
+	val = (zext(Ra1215) << 32) - val;
+	val = val + 0x80000000;
 	Rd0811 = val(4);
 }
 
@@ -3934,13 +3958,12 @@ thdXtop: "X" is thc0404=1 & Rm0003       { local tmpRm0003 = Rm0003; tmp:2 = tmp
 {
 	build ItCond;
 	local tmpRn0003 = Rn0003;
-	rnbot:2 = tmpRn0003:2;
-	rntop:2 = tmpRn0003(2);
-	tmpbot:4 = sext(rnbot) * sext(thdXbot);
-	tmptop:4 = sext(rntop) * sext(thdXtop);
-	tmp:8 = sext(tmpbot) + sext(tmptop);
-	OV = carry(tmpbot,tmptop);
-    Rd0811 = tmp:4;
+	local rnbot:2 = tmpRn0003:2;
+	local rntop:2 = tmpRn0003(2);
+	local prod1:4 = sext(rnbot) * sext(thdXbot);
+	local prod2:4 = sext(rntop) * sext(thdXtop);
+	Q = scarry(prod1,prod2) || Q; #instruction does not clear the Q flag
+	Rd0811 = prod1 + prod2;
 }
 
 :smulbb^ItCond Rd0811,Rn0003,Rm0003		is TMode=1 & ItCond & op4=0xfb1 & Rn0003; op12=15 & Rd0811 & sop0407=0 & Rm0003
@@ -4383,7 +4406,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
    *RnIndirect12 = tmpRt1215:2;
 }
 
-:strh^ItCond^  Rt1215,RnIndirectPUW            is TMode=1 & ItCond & (op4=0xf82; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
+:strh^ItCond  Rt1215,RnIndirectPUW            is TMode=1 & ItCond & (op4=0xf82; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
 {
    build ItCond;
    build RnIndirectPUW;
@@ -4756,48 +4779,44 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
 
 :tst^ItCond	Rn0002,Rm0305		is TMode=1 & ItCond & op6=0x108 & Rm0305 & Rn0002
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0002 & Rm0305;
-  resflags(tmp);
-  th_affectflags();
+  ZR = (tmp == 0);
+  NG = (tmp s< 0);
 }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
 :teq^ItCond	Rn0003,ThumbExpandImm12 	is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=4 & thc0404=1 & Rn0003; thc1515=0 & thc0811=0xf) & ThumbExpandImm12
 {
-   build ItCond;
+  build ItCond;
   build ThumbExpandImm12;
   local tmp = Rn0003 ^ ThumbExpandImm12;
-  resflags(tmp);
-  th_affectflags();
+  th_test_flags(tmp);
 }
 
 :teq^ItCond^".w"	Rn0003,thshift2     is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=4 & thc0404=1 & Rn0003; thc1515=0 & thc0811=0xf & thshift2
 {
-   build ItCond;
+  build ItCond;
   build thshift2;
   local tmp = Rn0003 ^ thshift2;
-  resflags(tmp);
-  th_affectflags();
+  th_test_flags(tmp);
 }
 
 :tst^ItCond	Rn0003,ThumbExpandImm12 	is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=0 & thc0404=1 & Rn0003; thc1515=0 & thc0811=0xf) & ThumbExpandImm12
 {
-   build ItCond;
+  build ItCond;
   build ThumbExpandImm12;
   local tmp = Rn0003 & ThumbExpandImm12;
-  resflags(tmp);
-  th_affectflags();
+  th_test_flags(tmp);
 }
 
 :tst^ItCond^".w"	Rn0003,thshift2 		is TMode=1 & ItCond & op11=0x1d & thc0910=1 & sop0508=0 & thc0404=1 & Rn0003; thc1515=0 & thc0811=0xf & thshift2
 {
-   build ItCond;
+  build ItCond;
   build thshift2;
   local tmp = Rn0003 & thshift2;
-  resflags(tmp);
-  th_affectflags();
+  th_test_flags(tmp);
 }
 
 :uadd16^ItCond     Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfa9 & Rn0003; op12=0xf & Rd0811 & thc0407=0x4 & Rm0003
@@ -4805,12 +4824,12 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
   build ItCond;
   sum1:4 = zext(Rn0003[ 0,16]) + zext(Rm0003[ 0,16]);
   sum2:4 = zext(Rn0003[16,16]) + zext(Rm0003[16,16]);
+  GE1 = carry(Rn0003[0,16],Rm0003[0,16]);
+  GE2 = GE1;
+  GE3 = carry(Rn0003[16,16],Rm0003[16,16]);
+  GE4 = GE3;
   Rd0811[ 0,16] = sum1[0,16];
   Rd0811[16,16] = sum2[0,16];
-  GE1 = sum1 s>= 0;
-  GE2 = sum1 s>= 0;
-  GE3 = sum2 s>= 0;
-  GE4 = sum2 s>= 0;
 }
 
 :uadd8^ItCond      Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfa8 & Rn0003; op12=0xf & Rd0811 & thc0407=0x4 & Rm0003
@@ -4820,14 +4839,14 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
   sum2:4 = zext(Rn0003[ 8,8]) + zext(Rm0003[ 8,8]);
   sum3:4 = zext(Rn0003[16,8]) + zext(Rm0003[16,8]);
   sum4:4 = zext(Rn0003[24,8]) + zext(Rm0003[24,8]);
+  GE1 = carry(Rn0003[0,8],Rm0003[0,8]);
+  GE2 = carry(Rn0003[8,8],Rm0003[8,8]);
+  GE3 = carry(Rn0003[16,8],Rm0003[16,8]);
+  GE4 = carry(Rn0003[24,8],Rm0003[24,8]);
   Rd0811[ 0,8] = sum1[0,8];
   Rd0811[ 8,8] = sum2[0,8];
   Rd0811[16,8] = sum3[0,8];
   Rd0811[24,8] = sum4[0,8];
-  GE1 = sum1 s>= 0;
-  GE2 = sum2 s>= 0;
-  GE3 = sum3 s>= 0;
-  GE4 = sum4 s>= 0;
 }
 
 :uasx^ItCond       Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfaa & Rn0003; op12=0xf & Rd0811 & thc0407=0x4 & Rm0003
@@ -4835,13 +4854,13 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
   build ItCond;
   diff:4 = zext(Rn0003[ 0,16]) - zext(Rm0003[16,16]);
   sum:4  = zext(Rn0003[16,16]) + zext(Rm0003[ 0,16]);
+  GE1 = diff s>= 0;
+  GE2 = GE1;
+  GE3 = carry(Rn0003[16,16],Rm0003[0,16]);
+  GE4 = GE3;
   Rd0811[ 0,16] = diff[0,16];
   Rd0811[16,16] =  sum[0,16];
-  GE1 = diff s>= 0;
-  GE2 = diff s>= 0;
-  GE3 = sum s>= 0;
-  GE4 = sum s>= 0;
-}
+  }
 
 :uhadd16^ItCond    Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfa9 & Rn0003; op12=0xf & Rd0811 & thc0407=0x6 & Rm0003
 {
@@ -5179,13 +5198,13 @@ Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
 {
    build ItCond;
   tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
-  Rd0811 = tmp & 0x0f0f;
+  Rd0811 = tmp & 0x00ff00ff;
 }
 
 :uxtb16^ItCond   Rd0811, Rm0003    is  TMode=1 & ItCond & op0=0xfa3f; op12=0xf & Rd0811 & thc0707=1 & throt=0 & Rm0003
 {
-   build ItCond;
-  Rd0811 = Rm0003 & 0x0f0f;
+  build ItCond;
+  Rd0811 = Rm0003 & 0x00ff00ff;
 }
 
 @endif # VERSION_6T2 || VERSION_7
