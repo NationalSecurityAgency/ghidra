@@ -54,7 +54,7 @@ if ("win64".equals(getCurrentPlatformName())) {
 			
 			def platformToolset = 'v' + VISUAL_STUDIO_TOOLS_VERSION_DEFAULT.substring(0, 4).replace('.', '');
 			def windowsTargetPlatformVersion = VISUAL_STUDIO_SDK_VERSION_OVERRIDE ?: VISUAL_STUDIO_SDK_VERSION_DEFAULT		
-			def msbuildCmd = "msbuild ${solutionPathWindows} /p:Configuration=Release /p:PlatformToolset=${platformToolset} /p:WindowsTargetPlatformVersion=${windowsTargetPlatformVersion}"
+			def msbuildCmd = "msbuild \"${solutionPathWindows}\" /p:Configuration=Release /p:PlatformToolset=${platformToolset} /p:WindowsTargetPlatformVersion=${windowsTargetPlatformVersion}"
 			
 			println "Executing: " + msbuildCmd
 			
