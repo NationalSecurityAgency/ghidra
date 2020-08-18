@@ -287,6 +287,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	void dispose() {
+		bundleHost.removeListener(refreshingBundleHostListener);
 		editorMap.clear();
 		scriptCategoryTree.dispose();
 		scriptTable.dispose();

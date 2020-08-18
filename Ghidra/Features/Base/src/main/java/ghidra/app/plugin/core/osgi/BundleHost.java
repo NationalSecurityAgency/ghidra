@@ -886,10 +886,14 @@ public class BundleHost {
 				bundlesToActivate.add(bundle);
 			}
 		}
-		add(newBundles);
+		if (!newBundles.isEmpty()) {
+			add(newBundles);
+		}
 
-		TaskLauncher.launchNonModal("restoring bundle state",
-			(monitor) -> activateInStages(bundlesToActivate, monitor, new NullPrintWriter()));
+		if (!bundlesToActivate.isEmpty()) {
+			TaskLauncher.launchNonModal("restoring bundle state",
+				(monitor) -> activateInStages(bundlesToActivate, monitor, new NullPrintWriter()));
+		}
 	}
 
 	/**
