@@ -74,7 +74,7 @@ public class ShiftPointerAction extends CompositeEditorTableAction {
 	@Override
 	public void adjustEnablement() {
 		if (model.isEditComponentAllowed()) {
-			bool enabled = true;
+			boolean enabled = true;
 			int row = model.getRow();
 			if (row < model.getNumComponents()) {
 				DataTypeComponent comp = model.getComponent(row);
