@@ -473,7 +473,7 @@ public class GTreeNodeTest {
 
 		@Override
 		public boolean acceptsNode(GTreeNode node) {
-			return node.getName().contains(text);
+			return node.getDisplayText().contains(text);
 		}
 
 		@Override
@@ -535,7 +535,6 @@ public class GTreeNodeTest {
 			events.add(new TestEvent(EventType.NODE_REMOVED, this, removedNode, -1));
 		}
 	}
-
 
 	enum EventType {
 		STRUCTURE_CHANGED, NODE_CHANGED, NODE_ADDED, NODE_REMOVED

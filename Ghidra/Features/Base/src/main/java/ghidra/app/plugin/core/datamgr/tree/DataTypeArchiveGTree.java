@@ -333,8 +333,8 @@ public class DataTypeArchiveGTree extends GTree {
 			multiIcon.addIcon(new CenterVerticalIcon(icon, ICON_HEIGHT));
 
 			if (value instanceof DataTypeNode) {
-				String displayName = ((DataTypeNode) value).getDisplayName();
-				label.setText(displayName);
+				String displayText = ((DataTypeNode) value).getDisplayText();
+				label.setText(displayText);
 			}
 			else if (value instanceof DomainFileArchiveNode) {
 				DomainFileArchiveNode node = (DomainFileArchiveNode) value;
