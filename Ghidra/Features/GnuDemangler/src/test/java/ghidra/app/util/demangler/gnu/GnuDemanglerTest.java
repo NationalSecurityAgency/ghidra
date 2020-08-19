@@ -158,23 +158,6 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_False()
-			throws DemangledException {
-
-		String mangled = "_$_10MyFunction";
-
-		GnuDemangler demangler = new GnuDemangler();
-		demangler.canDemangle(program);// this perform initialization
-
-		GnuDemanglerOptions options = new GnuDemanglerOptions();
-		options.setDemangleOnlyKnownPatterns(false);
-		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
-		DemangledObject result = demangler.demangle(mangled, options);
-		assertNotNull(result);
-		assertEquals("undefined MyFunction::~MyFunction(void)", result.getSignature(false));
-	}
-
-	@Test
 	public void testDemangler_Format_EDG_DemangleOnlyKnownPatterns_True()
 			throws DemangledException {
 
@@ -192,16 +175,15 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		GnuDemanglerOptions options = new GnuDemanglerOptions();
-		options.setDemangleOnlyKnownPatterns(true); // do not try
-		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.EDG);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNull(result);
 	}
 
 	@Test
 	public void testDemangler_Format_CodeWarrior_MacOS8or9() throws DemangledException {
-
+		// NOTE: mangled CodeWarrior format symbols with templates will fail
+		// This is because the GNU demangler does not support CodeWarrior
 		// .scroll__10TTextPanelFUcsi
 
 		String mangled = ".scroll__10TTextPanelFUcsi";
@@ -209,9 +191,7 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		GnuDemangler demangler = new GnuDemangler();
 		demangler.canDemangle(program);// this perform initialization
 
-		GnuDemanglerOptions options = new GnuDemanglerOptions();
-		options.setDemangleOnlyKnownPatterns(false);
-		options.setDemanglerName(GnuDemanglerOptions.GNU_DEMANGLER_V2_24);
+		GnuDemanglerOptions options = new GnuDemanglerOptions(GnuDemanglerFormat.AUTO, true);
 		DemangledObject result = demangler.demangle(mangled, options);
 		assertNotNull(result);
 		assertEquals("undefined TTextPanel::scroll(unsigned char,short,int)",

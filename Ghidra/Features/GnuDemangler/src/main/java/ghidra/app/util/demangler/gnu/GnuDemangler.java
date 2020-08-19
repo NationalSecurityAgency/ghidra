@@ -72,11 +72,11 @@ public class GnuDemangler implements Demangler {
 	public DemangledObject demangle(String mangled, DemanglerOptions demanglerOtions)
 			throws DemangledException {
 
-		if (skip(mangled, demanglerOtions)) {
+		GnuDemanglerOptions options = getGnuOptions(demanglerOtions);
+		if (skip(mangled, options)) {
 			return null;
 		}
 
-		GnuDemanglerOptions options = getGnuOptions(demanglerOtions);
 		String originalMangled = mangled;
 		String globalPrefix = null;
 		if (mangled.startsWith(GLOBAL_PREFIX)) {
@@ -163,7 +163,7 @@ public class GnuDemangler implements Demangler {
 			applicationOptions);
 	}
 
-	private boolean skip(String mangled, DemanglerOptions options) {
+	private boolean skip(String mangled, GnuDemanglerOptions options) {
 
 		// Ignore versioned symbols which are generally duplicated at the same address
 		if (mangled.indexOf("@") > 0) { // do not demangle versioned symbols
@@ -179,21 +179,28 @@ public class GnuDemangler implements Demangler {
 			return false; // let it go through
 		}
 
-		// add to this list if we find any other known GNU start patterns
-		if (mangled.startsWith("_Z")) {
+		// TODO provide some checks specific to the other formats
+		GnuDemanglerFormat format = options.getDemanglerFormat();
+		if (format == GnuDemanglerFormat.AUTO) {
 			return false;
 		}
-		else if (mangled.startsWith("__Z")) {
-			return false;
-		}
-		else if (mangled.startsWith("h__")) {
-			return false; // not sure about this one
-		}
-		else if (mangled.startsWith("?")) {
-			return false; // not sure about this one
-		}
-		else if (isGnu2Or3Pattern(mangled)) {
-			return false;
+		if (format == GnuDemanglerFormat.GNUV3) {
+			// add to this list if we find any other known GNU start patterns
+			if (mangled.startsWith("_Z")) {
+				return false;
+			}
+			if (mangled.startsWith("__Z")) {
+				return false;
+			}
+			if (mangled.startsWith("h__")) {
+				return false; // not sure about this one
+			}
+			if (mangled.startsWith("?")) {
+				return false; // not sure about this one
+			}
+			if (isGnu2Or3Pattern(mangled)) {
+				return false;
+			}
 		}
 
 		return true;

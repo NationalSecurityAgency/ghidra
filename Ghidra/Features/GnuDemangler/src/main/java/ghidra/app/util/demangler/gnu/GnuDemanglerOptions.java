@@ -43,11 +43,27 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	 */
 	public static final String GNU_DEMANGLER_DEFAULT = GNU_DEMANGLER_V2_33_1;
 
-	private String demanglerName = GNU_DEMANGLER_DEFAULT;
-	private String demanglerApplicationArguments;
+	private final GnuDemanglerFormat format;
+	private final boolean isDeprecated;
 
 	public GnuDemanglerOptions() {
 		// use default values
+		this(GnuDemanglerFormat.AUTO);
+	}
+
+	public GnuDemanglerOptions(GnuDemanglerFormat format) {
+		this.format = format;
+		// default to the "new" demangler if the format is available in both
+		this.isDeprecated = !format.isModernFormat();
+	}
+
+	public GnuDemanglerOptions(GnuDemanglerFormat format, boolean deprecated) {
+		this.format = format;
+		this.isDeprecated = deprecated;
+		if (!isValidFormat(format, deprecated)) {
+			throw new IllegalArgumentException(
+				format.name() + " is not available in the "+getDemanglerName());
+		}
 	}
 
 	public GnuDemanglerOptions(DemanglerOptions copy) {
@@ -55,9 +71,19 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 
 		if (copy instanceof GnuDemanglerOptions) {
 			GnuDemanglerOptions gCopy = (GnuDemanglerOptions) copy;
-			demanglerName = gCopy.demanglerName;
-			demanglerApplicationArguments = gCopy.demanglerApplicationArguments;
+			format = gCopy.format;
+			isDeprecated = gCopy.isDeprecated;
+		} else {
+			format = GnuDemanglerFormat.AUTO;
+			isDeprecated = false;
 		}
+	}
+
+	private GnuDemanglerOptions(GnuDemanglerOptions copy, GnuDemanglerFormat format,
+			boolean deprecated) {
+		super(copy);
+		this.format = format;
+		this.isDeprecated = deprecated;
 	}
 
 	/**
@@ -66,15 +92,38 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	 * @return the name
 	 */
 	public String getDemanglerName() {
-		return demanglerName;
+		return isDeprecated ? GNU_DEMANGLER_V2_24 : GNU_DEMANGLER_V2_33_1;
 	}
 
 	/**
-	 * Sets the external demangler executable name to be used for demangling
-	 * @param name the name
+	 * A convenience method to copy the state of this options object, changing the 
+	 * demangler executable name and demangler format to the specified values.
+	 * @param format the demangling format to use
+	 * @param isDeprecated true to use the deprecated gnu demangler, else false
+	 * @return the new options
+	 * @throws IllegalArgumentException if the current format is not available in the
+	 * selected demangler.
 	 */
-	public void setDemanglerName(String name) {
-		this.demanglerName = name;
+	public GnuDemanglerOptions withDemanglerFormat(GnuDemanglerFormat format, boolean isDeprecated)
+			throws IllegalArgumentException {
+		if (this.format == format && this.isDeprecated == isDeprecated) {
+			return this;
+		}
+		if (isValidFormat(format, isDeprecated)) {
+			return new GnuDemanglerOptions(this, format, isDeprecated);
+		}
+		throw new IllegalArgumentException(
+			format.name() + " is not available in the "+getDemanglerName());
+	}
+
+	private static boolean isValidFormat(GnuDemanglerFormat format, boolean isDeprecated) {
+		if (isDeprecated && format.isDeprecatedFormat()) {
+			return true;
+		}
+		if (!isDeprecated && format.isModernFormat()) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -82,26 +131,19 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	 * @return the arguments
 	 */
 	public String getDemanglerApplicationArguments() {
-		return demanglerApplicationArguments;
+		if (format == GnuDemanglerFormat.AUTO) {
+			// no format argument
+			return "";
+		}
+		return "-s " + format.getFormat();
 	}
 
 	/**
-	 * Sets the arguments to be passed to the external demangler executable
-	 * @param args the arguments
+	 * Gets the current demangler format
+	 * @return the demangler format
 	 */
-	public void setDemanglerApplicationArguments(String args) {
-		this.demanglerApplicationArguments = args;
-	}
-
-	/**
-	 * A convenience method to copy the state of this options object, changing the 
-	 * demangler executable name to the deprecated demangler
-	 * @return the new options
-	 */
-	public GnuDemanglerOptions withDeprecatedDemangler() {
-		GnuDemanglerOptions newOptions = new GnuDemanglerOptions(this);
-		newOptions.setDemanglerName(GNU_DEMANGLER_V2_24);
-		return newOptions;
+	public GnuDemanglerFormat getDemanglerFormat() {
+		return format;
 	}
 
 	@Override
@@ -111,8 +153,8 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 			"\tdoDisassembly: " + doDisassembly() + ",\n" +
 			"\tapplySignature: " + applySignature() + ",\n" +
 			"\tdemangleOnlyKnownPatterns: " + demangleOnlyKnownPatterns() + ",\n" +
-			"\tdemanglerName: " + demanglerName + ",\n" +
-			"\tdemanglerApplicationArguments: " + demanglerApplicationArguments + ",\n" +
+			"\tdemanglerName: " + getDemanglerName() + ",\n" +
+			"\tdemanglerApplicationArguments: " + getDemanglerApplicationArguments() + ",\n" +
 		"}";
 		//@formatter:on
 	}

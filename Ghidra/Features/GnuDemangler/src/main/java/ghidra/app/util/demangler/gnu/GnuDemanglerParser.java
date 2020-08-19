@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,12 +43,8 @@ public class GnuDemanglerParser {
 	private static final String TYPEINFO_FOR = "typeinfo for ";
 	private static final String COVARIANT_RETURN_THUNK = "covariant return thunk";
 
-	private static final Set<String> ADDRESS_TABLE_PREFIXES = Set.of(
-		CONSTRUCTION_VTABLE_FOR,
-		VTT_FOR,
-		VTABLE_FOR,
-		TYPEINFO_FN_FOR,
-		TYPEINFO_FOR);
+	private static final Set<String> ADDRESS_TABLE_PREFIXES =
+		Set.of(CONSTRUCTION_VTABLE_FOR, VTT_FOR, VTABLE_FOR, TYPEINFO_FN_FOR, TYPEINFO_FOR);
 
 	private static final String OPERATOR = "operator";
 	private static final String LAMBDA = "lambda";
@@ -64,23 +60,23 @@ public class GnuDemanglerParser {
 	 *
 	 * Pattern: name(([const] [params]))
 	 *
-	 * Parts: -optional spaces 
+	 * Parts: -optional spaces
 	 * 		  -optional (const)  (non-capture group)
 	 *        -followed by '()' with optional parameter text (capture group 1)
-	 *          
+	 *
 	 * Note:    this pattern is used for matching the arguments string, in the above examples it
-	 *          would be: 
+	 *          would be:
 	 *          		Rect &, unsigned long
 	 *          	and
 	 *          		Rect &, bool
-	 *       
+	 *
 	 */
 	private static final Pattern UNNECESSARY_PARENS_PATTERN =
 		Pattern.compile("\\s*(?:const){0,1}\\((.*)\\)\\s*");
 
 	/**
 	 * Captures the contents of a varargs parameter that is inside of parentheses.
-	 * 
+	 *
 	 * Sample:  (NS1::type&&)...
 	 *
 	 * Pattern: (namespace::name[modifiers])...
@@ -89,7 +85,7 @@ public class GnuDemanglerParser {
 	 * 		  -contents (capture group 1)
 	 *        -close paren
 	 *        -varargs
-	 *          
+	 *
 	 */
 	private static final Pattern VARARGS_IN_PARENS =
 		Pattern.compile("\\((.*)\\)" + Pattern.quote("..."));
@@ -107,7 +103,7 @@ public class GnuDemanglerParser {
 	 * 				-*optional: any other text (e.g., const[8])   (non-capture group)
 	 * 				-followed by '()' that contain a '&' or a '*' (capture group 2)
 	 * 				-followed by one or more '[]' with optional interior text (capture group 3)
-	 * 
+	 *
 	 * Group Samples:
 	 * 				short (&)[7]
 	 * 				1 short
@@ -118,7 +114,7 @@ public class GnuDemanglerParser {
 	 * 				1 CanRxItem
 	 * 				2 &
 	 * 				3 [2][64u]
-	 * 
+	 *
 	 */
 	private static final Pattern ARRAY_POINTER_REFERENCE_PATTERN =
 		Pattern.compile("([\\w:]+)\\*?\\s(?:.*)\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
@@ -128,8 +124,8 @@ public class GnuDemanglerParser {
 	 *
 	 * Pattern: (*|&)[optional spaces][optional value]
 	 *
-	 * Parts:   
-	 * 			-'()' that contain a '&' or a '*' 
+	 * Parts:
+	 * 			-'()' that contain a '&' or a '*'
 	 *          -followed by '[]' with optional text
 	 * </pre>
 	*/
@@ -159,7 +155,7 @@ public class GnuDemanglerParser {
 	 * 		    std::basic_istream<char, std::char_traits<char> >& std::operator>><char, std::char_traits<char> >(std::basic_istream<char, std::char_traits<char> >&, char&)
 	 *          bool myContainer<int>::operator<< <double>(double)
 	 *          bool operator< <myContainer<int> >(myContainer<int> const&)
-	 *         
+	 *
 	 * Pattern: [return_type] operator operator_character(s) (opeartor_params) [trailing text]
 	 *
 	 * Parts:
@@ -168,7 +164,7 @@ public class GnuDemanglerParser {
 	 *          -optional space
 	 *          -optional templates (capture group 3)
 	 *          -parameters (capture group 4)
-	 *          
+	 *
 	 * Note:     this regex is generated from all known operator patterns and looks like:
 	 * 			(.*operator(generated_text).*)\s*(\(.*\))(.*)
 	 */
@@ -178,9 +174,9 @@ public class GnuDemanglerParser {
 	/*
 	* Sample:  std::integral_constant<bool, false>::operator bool() const
 	*          Magick::Color::operator std::basic_string<char, std::char_traits<char>, std::allocator<char> >() const
-	*         
+	*
 	* Pattern: operator type() [trailing text]
-	* 
+	*
 	* Parts:
 	* 			-operator (capture group 1)
 	* 			-space
@@ -211,13 +207,13 @@ public class GnuDemanglerParser {
 
 	/*
 	 * Pattern for newer C++ lambda syntax:
-	 * 
+	 *
 	 * Sample:  {lambda(void const*, unsigned int)#1}
 	 * 			{lambda(NS1::Class1 const&, int, int)#1} const&
 	 *          {lambda(auto:1&&)#1}<NS1::NS2>&&
-	 * 
+	 *
 	 * Pattern: [optional text] brace lambda([parameters])#digits brace [trailing text]
-	 * 
+	 *
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
 	 *  		-parameters of the lambda function (capture group 2)
@@ -229,9 +225,9 @@ public class GnuDemanglerParser {
 
 	/*
 	 * Sample:  {unnamed type#1}
-	 * 
+	 *
 	 * Pattern: [optional text] brace unnamed type#digits brace
-	 * 
+	 *
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
 	 */
@@ -239,18 +235,18 @@ public class GnuDemanglerParser {
 
 	/*
 	 * Sample:  covariant return thunk to Foo::Bar::copy(Foo::CoolStructure*) const
-	 * 
+	 *
 	 * Pattern: text for|to text
-	 * 
+	 *
 	 * Parts:
 	 * 			-required text (capture group 2)
 	 * 			-a space
 	 * 			-'for' or 'to' (capture group 3)
 	 * 			-a space
 	 * 			-optional text (capture group 4)
-	 * 	
+	 *
 	 * Note:    capture group 1 is the combination of groups 2 and 3
-	 * 
+	 *
 	 * Examples:
 	 *		construction vtable for
 	 *		vtable for
@@ -258,33 +254,33 @@ public class GnuDemanglerParser {
 	 *		typeinfo for
 	 *		guard variable for
 	 *		covariant return thunk to
-	 *		virtual thunk to 
+	 *		virtual thunk to
 	 *		non-virtual thunk to
 	 */
 	private static final Pattern DESCRIPTIVE_PREFIX_PATTERN =
 		Pattern.compile("((.+ )+(for|to) )(.+)");
 
 	/**
-	 * The c 'decltype' keyword pattern 
+	 * The c 'decltype' keyword pattern
 	 */
 	private static final Pattern DECLTYPE_RETURN_TYPE_PATTERN =
 		Pattern.compile("decltype \\(.*\\)");
 
 	private static Pattern createOverloadedOperatorNamePattern() {
 
-		// note: the order of these matters--the single characters must come after the 
+		// note: the order of these matters--the single characters must come after the
 		//       multi-character entries; otherwise, the single characters will match before
 		//       longer matches
 		//@formatter:off
-		List<String> operators = new LinkedList<>(List.of(			
+		List<String> operators = new LinkedList<>(List.of(
 			"++", "--",
 			">>=", "<<=",
 			"->*", "->",
 			"==", "!=", ">=", "<=",
 			"&&", "||", ">>", "<<",
-			"+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", 
+			"+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=",
 			"+", "-", "*", "/", "%",
-			"~", "^", "&", "|", "!", "<", ">", "=",			
+			"~", "^", "&", "|", "!", "<", ">", "=",
 			",", "()"
 		));
 		//@formatter:on
@@ -294,12 +290,12 @@ public class GnuDemanglerParser {
 
 		//
 		// We have some extra 'operator' style constructs to add to the normal operator overloading
-		// 
-		// User Defined Literal 
-		// Sample: operator"" _init(char const*, unsigned long)  
-		//        
+		//
+		// User Defined Literal
+		// Sample: operator"" _init(char const*, unsigned long)
+		//
 		// Pattern: operator"" _someText(opeartor_params)
-		// 
+		//
 		String userDefinedLiteral = "\"\"\\s_.+";
 		String extra = userDefinedLiteral;
 		alternated += '|' + extra;
@@ -319,7 +315,7 @@ public class GnuDemanglerParser {
 
 	/**
 	 * Parses the given demangled string and creates a {@link DemangledObject}
-	 * 
+	 *
 	 * @param mangled the original mangled text
 	 * @param demangled the demangled text
 	 * @return the demangled object
@@ -341,9 +337,9 @@ public class GnuDemanglerParser {
 	private DemangledObjectBuilder getSpecializedBuilder(String demangled) {
 
 		//
-		// Note: we check for the 'special handlers' first, since they are more specific than 
-		//       the other handlers here.  Checking for the operator handler first can produce 
-		//       errors, since some 'special handler' strings actually contain 'operator' 
+		// Note: we check for the 'special handlers' first, since they are more specific than
+		//       the other handlers here.  Checking for the operator handler first can produce
+		//       errors, since some 'special handler' strings actually contain 'operator'
 		//       signatures.  In those cases, the operator handler will incorrectly match on the
 		//       operator text.   Since the 'special handlers' perform more specific checks, it is
 		//       safe to do those first.
@@ -464,7 +460,7 @@ public class GnuDemanglerParser {
 
 		if (DECLTYPE_RETURN_TYPE_PATTERN.matcher(returnType).matches()) {
 			// Not sure yet if there is any information we wish to recover from this pattern.
-			// Sample: decltype (functionName({parm#1}, (float)[42c80000])) 
+			// Sample: decltype (functionName({parm#1}, (float)[42c80000]))
 			return;
 		}
 
@@ -523,10 +519,10 @@ public class GnuDemanglerParser {
 	}
 
 	/**
-	 * Removes spaces from unwanted places.  For example, all spaces internal to templates and 
+	 * Removes spaces from unwanted places.  For example, all spaces internal to templates and
 	 * parameter lists will be removed.   Also, other special cases may be handled, such as when
 	 * the 'unnamed type' construct is found.
-	 * 
+	 *
 	 * @param text the text to fix
 	 * @return the fixed text
 	 */
@@ -735,7 +731,7 @@ public class GnuDemanglerParser {
 				// lambda function
 				//      e.g., {lambda(NS1::Class1 const&, int, int)#1} const&
 				//            {lambda(auto:1&&)#1}<NS1::NS2>>&&
-				// 
+				//
 
 				LambdaName lambdaName = getLambdaName(datatype);
 
@@ -898,30 +894,30 @@ public class GnuDemanglerParser {
 	private boolean isDataTypeNameCharacter(char ch) {
 
 		/*
-			Note: really, this should just be checking a list of known disallowed characters, 
+			Note: really, this should just be checking a list of known disallowed characters,
 				  which is something like:
-				  
+
 				  <,>,(,),&,*,[,]
-		
+
 		 		  It seems like the current code below is unnecessarily restrictive
 		 */
 
 		//@formatter:off
-		return Character.isLetter(ch) || 
-			   Character.isDigit(ch) || 
-			   ch == ':' || 
+		return Character.isLetter(ch) ||
+			   Character.isDigit(ch) ||
+			   ch == ':' ||
 			   ch == '_' ||
 			   ch == '$';
 		//@formatter:on
 	}
 
 	/**
-	 * Scans the given string from the given offset looking for a balanced {@code close} 
-	 * character.   This algorithm will not report a match for the end character until the 
+	 * Scans the given string from the given offset looking for a balanced {@code close}
+	 * character.   This algorithm will not report a match for the end character until the
 	 * {@code open} character has first been found.   This allows clients to scan from anywhere
 	 * in a string to find an open and start character combination, including at or before the
 	 * desired opening character.
-	 *  
+	 *
 	 * @param string the input string
 	 * @param start the start position within the string
 	 * @param open the open character (e.g, '(' or '<')
@@ -952,12 +948,12 @@ public class GnuDemanglerParser {
 	}
 
 	/**
-	 * Scans the given string from the given offset looking for a balanced {@code open} 
-	 * character.   This algorithm will not report a match for the open character until the 
+	 * Scans the given string from the given offset looking for a balanced {@code open}
+	 * character.   This algorithm will not report a match for the open character until the
 	 * {@code end} character has first been found.   This allows clients to scan from anywhere
 	 * in a string to find an open and start character combination, including at or before the
 	 * desired opening character.
-	 *  
+	 *
 	 * @param string the input string
 	 * @param start the start position within the string
 	 * @param open the open character (e.g, '(' or '<')
@@ -998,11 +994,11 @@ public class GnuDemanglerParser {
 	/**
 	 * Walks backward from the given start position to find the next namespace separator.  This
 	 * allows clients to determine if a given position is inside of a namespace.
-	 * 
+	 *
 	 * @param text the text to search
 	 * @param start the start position
 	 * @param stop the stop position
-	 * @return the start index of the namespace entry containing the current {@code start} 
+	 * @return the start index of the namespace entry containing the current {@code start}
 	 *         index; -1 if no namespace start is found
 	 */
 	private int findNamespaceStart(String text, int start, int stop) {
@@ -1191,9 +1187,9 @@ public class GnuDemanglerParser {
 
 		/*
 		 	Examples:
-		 	
+
 		 		NS1::Function<>()::StructureName::StructureConstructor()
-		 	
+
 		 */
 
 		String nameString = removeBadSpaces(demangled).trim();
@@ -1208,10 +1204,10 @@ public class GnuDemanglerParser {
 	 * Given names = { "A", "B", "C" }, which represents "A::B::C".
 	 * The following will be created {@literal "Namespace{A}->Namespace{B}->Namespace{C}"}
 	 * and Namespace{C} will be returned.
-	 * 
+	 *
 	 * <p>This method will also escape spaces separators inside of templates
 	 * (see {@link #removeBadSpaces(String)}).
-	 * 
+	 *
 	 * @param names the names to convert
 	 * @return the newly created type
 	 */
@@ -1374,15 +1370,15 @@ public class GnuDemanglerParser {
 
 			/*
 			 Samples:
-			 	 prefix: construction vtable for 
+			 	 prefix: construction vtable for
 			 	 name:   construction-vtable
-			 	 
-			 	 prefix: vtable for 
+
+			 	 prefix: vtable for
 			 	 name:   vtable
-			 
-			 	 prefix: typeinfo name for 
+
+			 	 prefix: typeinfo name for
 			 	 name:   typeinfo-name
-			 	 
+
 			 	 prefix: covariant return thunk
 			 	 name:   covariant-return
 			*/
@@ -1439,9 +1435,9 @@ public class GnuDemanglerParser {
 			int end = matcher.end(2); // operator chars start
 
 			//
-			// The 'operator' functions have symbols that confuse our default function parsing.  
-			// Specifically, operators that use shift symbols (<, <<, >, >>) will cause our 
-			// template parsing to fail.  To defeat the failure, we will install a temporary 
+			// The 'operator' functions have symbols that confuse our default function parsing.
+			// Specifically, operators that use shift symbols (<, <<, >, >>) will cause our
+			// template parsing to fail.  To defeat the failure, we will install a temporary
 			// function name here and then restore it after parsing is finished.
 			//
 
@@ -1722,7 +1718,7 @@ public class GnuDemanglerParser {
 	}
 
 	/**
-	 * An object that will parse a function signature string into parts: return type, name, 
+	 * An object that will parse a function signature string into parts: return type, name,
 	 * and parameters.  {@link #isValidFunction()} can be called to check if the given sting is
 	 * indeed a function signature.
 	 */
@@ -1791,8 +1787,8 @@ public class GnuDemanglerParser {
 	 * remove bad spaces, which is all whitespace that is not needed to separate distinct objects
 	 * inside of a demangled string.
 	 *
-	 * <p>Generally, this class removes spaces within templates and parameter lists.   It will 
-	 * remove some spaces, while converting some to underscores.   
+	 * <p>Generally, this class removes spaces within templates and parameter lists.   It will
+	 * remove some spaces, while converting some to underscores.
 	 */
 	private class CondensedString {
 
@@ -1862,7 +1858,7 @@ public class GnuDemanglerParser {
 		}
 
 		/**
-		 * Returns the original string value that has been 'condensed', which means to remove 
+		 * Returns the original string value that has been 'condensed', which means to remove
 		 * internal spaces
 		 * @return the condensed string
 		 */

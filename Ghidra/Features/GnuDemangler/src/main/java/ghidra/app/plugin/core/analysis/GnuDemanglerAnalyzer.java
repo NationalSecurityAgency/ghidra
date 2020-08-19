@@ -15,10 +15,6 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.io.IOException;
-
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.gnu.*;
 import ghidra.app.util.importer.MessageLog;
@@ -51,15 +47,14 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		"Signals to use the deprecated demangler when the modern demangler cannot demangle a " +
 			"given string";
 
-	static final String OPTION_NAME_DEMANGLER_PARAMETERS =
-		"Use External Demangler Options";
-	private static final String OPTION_DESCRIPTION_DEMANGLER_PARAMETERS =
-		"Signals to use pass the given parameters to the demangler program";
+	static final String OPTION_NAME_DEMANGLER_FORMAT = "Demangler Format";
+	private static final String OPTION_DESCRIPTION_DEMANGLER_FORMAT =
+		"The demangling format to use";
 
 	private boolean doSignatureEnabled = true;
 	private boolean demangleOnlyKnownPatterns = false;
+	private GnuDemanglerFormat demanglerFormat = GnuDemanglerFormat.AUTO;
 	private boolean useDeprecatedDemangler = false;
-	private String demanglerParameters = "";
 
 	private GnuDemangler demangler = new GnuDemangler();
 
@@ -84,11 +79,11 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 			help,
 			OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
 
+		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, demanglerFormat, help,
+			OPTION_DESCRIPTION_DEMANGLER_FORMAT);
+		
 		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler, help,
 			OPTION_DESCRIPTION_DEPRECATED_DEMANGLER);
-
-		options.registerOption(OPTION_NAME_DEMANGLER_PARAMETERS, demanglerParameters, help,
-			OPTION_DESCRIPTION_DEMANGLER_PARAMETERS);
 	}
 
 	@Override
@@ -96,94 +91,28 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		doSignatureEnabled = options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled);
 		demangleOnlyKnownPatterns =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
-
-		useDeprecatedDemangler =
-			options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
-
-		demanglerParameters =
-			options.getString(OPTION_NAME_DEMANGLER_PARAMETERS, demanglerParameters);
+		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
+		if (demanglerFormat.isDeprecatedFormat() && demanglerFormat.isModernFormat()) {
+			useDeprecatedDemangler =
+				options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
+		} else {
+			useDeprecatedDemangler = demanglerFormat.isDeprecatedFormat();
+		}
 	}
 
 	@Override
 	protected DemanglerOptions getOptions() {
 
-		GnuDemanglerOptions options = new GnuDemanglerOptions();
+		GnuDemanglerOptions options = new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler);
 		options.setDoDisassembly(true);
 		options.setApplySignature(doSignatureEnabled);
 		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
-		options.setDemanglerApplicationArguments(demanglerParameters);
 		return options;
 	}
 
 	@Override
-	protected boolean validateOptions(DemanglerOptions demanglerOtions, MessageLog log) {
-
-		GnuDemanglerOptions options = (GnuDemanglerOptions) demanglerOtions;
-		String applicationArguments = options.getDemanglerApplicationArguments();
-		if (StringUtils.isBlank(applicationArguments)) {
-			return true;
-		}
-
-		// Check that the supplied arguments will work with at least one of the requested
-		// demanglers.  (Different versions of the GNU demangler support different arguments.)
-		String demanglerName = options.getDemanglerName();
-		try {
-			GnuDemanglerNativeProcess.getDemanglerNativeProcess(demanglerName,
-				applicationArguments);
-			return true;
-		}
-		catch (IOException e) {
-			log.appendMsg(getName(), "Invalid options for GNU dangler '" + demanglerName +
-				"': " + applicationArguments);
-			log.appendException(e);
-		}
-
-		if (useDeprecatedDemangler) {
-			// see if the options work in the deprecated demangler
-			GnuDemanglerOptions deprecatedOptions = options.withDeprecatedDemangler();
-			String deprecatedName = deprecatedOptions.getDemanglerName();
-			try {
-				GnuDemanglerNativeProcess.getDemanglerNativeProcess(deprecatedName,
-					applicationArguments);
-				return true;
-			}
-			catch (IOException e) {
-				log.appendMsg(getName(),
-					"Invalid options for GNU dangler '" + deprecatedName + "': " +
-						applicationArguments);
-				log.appendException(e);
-			}
-		}
-
-		return false;
-
-	}
-
-	@Override
 	protected DemangledObject doDemangle(String mangled, DemanglerOptions demanglerOtions,
-			MessageLog log)
-			throws DemangledException {
-
-		GnuDemanglerOptions options = (GnuDemanglerOptions) demanglerOtions;
-		DemangledObject demangled = null;
-		try {
-			demangled = demangler.demangle(mangled, options);
-		}
-		catch (DemangledException e) {
-			if (!useDeprecatedDemangler) {
-				throw e; // let our parent handle this
-			}
-		}
-
-		if (demangled != null) {
-			return demangled;
-		}
-
-		if (useDeprecatedDemangler) {
-			GnuDemanglerOptions newOptions = options.withDeprecatedDemangler();
-			demangled = demangler.demangle(mangled, newOptions);
-		}
-
-		return demangled;
+			MessageLog log) throws DemangledException {
+		return demangler.demangle(mangled, (GnuDemanglerOptions) demanglerOtions);
 	}
 }
