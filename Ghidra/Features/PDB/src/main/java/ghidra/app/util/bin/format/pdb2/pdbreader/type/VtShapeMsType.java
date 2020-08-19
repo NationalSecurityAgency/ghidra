@@ -44,18 +44,23 @@ public class VtShapeMsType extends AbstractMsType {
 		count = reader.parseUnsignedShortVal();
 		int byteVal = 0;
 		int value;
+		VtShapeDescriptorMsProperty descriptor;
 		// It seems that the upper nibble of the the byte is first and the lower nibble is
 		//  second; that is why we process as we do below (shifting for the first and masking
 		//  for the second).
-		for (int i = 0; i < count; i++) {
-			if (i % 2 == 0) {
-				byteVal = reader.parseUnsignedByteVal();
-				value = byteVal >> 4;
-			}
-			else {
-				value = byteVal & 0x0f;
-			}
-			VtShapeDescriptorMsProperty descriptor = VtShapeDescriptorMsProperty.fromValue(value);
+		for (int i = 0; i < count / 2; i++) {
+			byteVal = reader.parseUnsignedByteVal();
+			value = byteVal >> 4;
+			descriptor = VtShapeDescriptorMsProperty.fromValue(value);
+			descriptorList.add(descriptor);
+			value = byteVal & 0x0f;
+			descriptor = VtShapeDescriptorMsProperty.fromValue(value);
+			descriptorList.add(descriptor);
+		}
+		if (count % 2 == 1) {
+			byteVal = reader.parseUnsignedByteVal();
+			value = byteVal >> 4;
+			descriptor = VtShapeDescriptorMsProperty.fromValue(value);
 			descriptorList.add(descriptor);
 		}
 		reader.skipPadding();

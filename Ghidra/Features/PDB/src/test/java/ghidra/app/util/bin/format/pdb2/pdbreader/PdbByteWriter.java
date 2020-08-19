@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
 
 import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.exception.AssertException;
@@ -45,8 +46,8 @@ public class PdbByteWriter {
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
-	private byte[] byteArray = new byte[8];
-	private List<Byte> byteList = new ArrayList<>();
+	private byte[] scratchByteArray = new byte[8];
+	private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
 	//==============================================================================================
 	// API
@@ -56,7 +57,7 @@ public class PdbByteWriter {
 	}
 
 	public void reset() {
-		byteList = new ArrayList<>();
+		outputStream = new ByteArrayOutputStream();
 		// We do not need to reset the bytes variable here.  It is created when access to it is
 		// attempted with the get() method.
 	}
@@ -66,7 +67,7 @@ public class PdbByteWriter {
 	 * @return The integer number of bytes in the ByteWriter.
 	 */
 	public int getSize() {
-		return byteList.size();
+		return outputStream.size();
 	}
 
 	/**
@@ -75,13 +76,7 @@ public class PdbByteWriter {
 	 * @return The byte[] containing the result.
 	 */
 	public byte[] get() {
-		int length = byteList.size();
-		byte[] bytes = new byte[length];
-		int i = 0;
-		for (byte b : byteList) {
-			bytes[i++] = b;
-		}
-		return bytes;
+		return outputStream.toByteArray();
 	}
 
 	/**
@@ -89,7 +84,7 @@ public class PdbByteWriter {
 	 * @param bytes The input byte array to write to the output byte array
 	 */
 	public void putBytes(byte[] bytes) {
-		putBytes(bytes, bytes.length);
+		outputStream.writeBytes(bytes);
 	}
 
 	/**
@@ -98,9 +93,7 @@ public class PdbByteWriter {
 	 * @param num The number of bytes to write from the byte array; must be within size of input.
 	 */
 	public void putBytes(byte[] bytes, int num) {
-		for (int i = 0; i < num; i++) {
-			byteList.add(bytes[i]);
-		}
+		outputStream.write(bytes, 0, num);
 	}
 
 	/**
@@ -112,7 +105,7 @@ public class PdbByteWriter {
 	 * @param disallow The number of bytes to disallow from the calculation.
 	 */
 	public void putPadding(int disallow) {
-		int mod = 4 * ((byteList.size() - disallow + 3) / 4) - (byteList.size() - disallow);
+		int mod = 4 * ((outputStream.size() - disallow + 3) / 4) - (outputStream.size() - disallow);
 		putBytes(Arrays.copyOfRange(paddingBytes, paddingBytes.length - mod, paddingBytes.length),
 			mod);
 	}
@@ -125,7 +118,7 @@ public class PdbByteWriter {
 	 * @param disallow The number of bytes to disallow from the calculation.
 	 */
 	public void putAlign(int disallow) {
-		int mod = 4 * ((byteList.size() - disallow + 3) / 4) - (byteList.size() - disallow);
+		int mod = 4 * ((outputStream.size() - disallow + 3) / 4) - (outputStream.size() - disallow);
 		putBytes(alignBytes, mod);
 	}
 
@@ -134,8 +127,8 @@ public class PdbByteWriter {
 	 * @param value The integer value of the byte to be written.
 	 */
 	public void putUnsignedByte(int value) {
-		byteArray[0] = (byte) (value & 0xff);
-		putBytes(byteArray, 1);
+		scratchByteArray[0] = (byte) (value & 0xff);
+		putBytes(scratchByteArray, 1);
 	}
 
 	/**
@@ -143,8 +136,8 @@ public class PdbByteWriter {
 	 * @param value The short value of the short to be written.
 	 */
 	public void putShort(short value) {
-		LittleEndianDataConverter.INSTANCE.putShort(byteArray, value);
-		putBytes(byteArray, 2);
+		LittleEndianDataConverter.INSTANCE.putShort(scratchByteArray, value);
+		putBytes(scratchByteArray, 2);
 	}
 
 	/**
@@ -152,8 +145,8 @@ public class PdbByteWriter {
 	 * @param value The integer value of the unsigned short to be written.
 	 */
 	public void putUnsignedShort(int value) {
-		LittleEndianDataConverter.INSTANCE.putShort(byteArray, (short) (value & 0xffff));
-		putBytes(byteArray, 2);
+		LittleEndianDataConverter.INSTANCE.putShort(scratchByteArray, (short) (value & 0xffff));
+		putBytes(scratchByteArray, 2);
 	}
 
 	/**
@@ -161,8 +154,8 @@ public class PdbByteWriter {
 	 * @param value The integer value of the integer to be written.
 	 */
 	public void putInt(int value) {
-		LittleEndianDataConverter.INSTANCE.putInt(byteArray, value);
-		putBytes(byteArray, 4);
+		LittleEndianDataConverter.INSTANCE.putInt(scratchByteArray, value);
+		putBytes(scratchByteArray, 4);
 	}
 
 	/**
@@ -170,8 +163,8 @@ public class PdbByteWriter {
 	 * @param value The long value of the unsigned integer to be written.
 	 */
 	public void putUnsignedInt(long value) {
-		LittleEndianDataConverter.INSTANCE.putInt(byteArray, (int) (value & 0xffffffffffL));
-		putBytes(byteArray, 4);
+		LittleEndianDataConverter.INSTANCE.putInt(scratchByteArray, (int) (value & 0xffffffffffL));
+		putBytes(scratchByteArray, 4);
 	}
 
 	/**
@@ -179,8 +172,8 @@ public class PdbByteWriter {
 	 * @param value The long value of the long to be written.
 	 */
 	public void putLong(long value) {
-		LittleEndianDataConverter.INSTANCE.putLong(byteArray, value);
-		putBytes(byteArray, 8);
+		LittleEndianDataConverter.INSTANCE.putLong(scratchByteArray, value);
+		putBytes(scratchByteArray, 8);
 	}
 
 	/**
@@ -189,8 +182,8 @@ public class PdbByteWriter {
 	 */
 	public void putUnsignedLong(BigInteger value) {
 		BigInteger arg = value.and(new BigInteger("ffffffffffffffff", 16));
-		LittleEndianDataConverter.INSTANCE.putLong(byteArray, arg.longValue());
-		putBytes(byteArray, 8);
+		LittleEndianDataConverter.INSTANCE.putLong(scratchByteArray, arg.longValue());
+		putBytes(scratchByteArray, 8);
 	}
 
 	/**

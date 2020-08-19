@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import java.util.Objects;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -86,10 +87,13 @@ public class TypeParser {
 	/**
 	 * Deserialized data type ID and parsable indicated by the ID and returns the type
 	 *  required type expected.  Upon failure, message is logged and BadMsType is returned.
-	 * @param <T> the required type to be returned.
+	 * @param <T> the required type to be returned.  IMPORTANT:  T must only be one of:
+	 *  {@link AbstractMsType} or {@link MsTypeField} or something else in common with
+	 *  {@link BadMsType}, otherwise a Bad Cast Exception might occur.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
 	 * @param requiredClass the required type to be returned. 
-	 * @return an instance of type T or null upon failure.
+	 * @return an instance of type T or type T version of BadMsType. IMPORTANT: See restriction
+	 *  on T.
 	 * @throws PdbException upon error parsing dataTypeId.
 	 * @throws CancelledException Upon user cancellation.
 	 */
