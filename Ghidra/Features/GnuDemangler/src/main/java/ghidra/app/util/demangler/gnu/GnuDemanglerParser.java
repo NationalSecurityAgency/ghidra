@@ -1177,7 +1177,7 @@ public class GnuDemanglerParser {
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledString demangledString = new DemangledString(mangledSource, demangledSource,
 				"typeinfo-name", type, -1/*unknown length*/, false);
-			demangledString.setSpecialPrefix("typeinfo name for ");
+			demangledString.setSpecialPrefix(TYPEINFO_NAME_FOR);
 			String namespaceString = removeBadSpaces(type);
 			setNamespace(demangledString, namespaceString);
 			return demangledString;
