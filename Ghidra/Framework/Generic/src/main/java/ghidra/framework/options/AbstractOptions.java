@@ -116,8 +116,8 @@ public abstract class AbstractOptions implements Options {
 				"Attempted to register an unsupported object: " + defaultValue.getClass());
 		}
 
-		registerOption(optionName, OptionType.getOptionType(defaultValue), defaultValue, help,
-			description);
+		OptionType type = OptionType.getOptionType(defaultValue);
+		registerOption(optionName, type, defaultValue, help, description);
 	}
 
 	@Override
@@ -150,16 +150,41 @@ public abstract class AbstractOptions implements Options {
 			valueMap.put(optionName, option);
 			return;
 		}
-		else if (!currentOption.isRegistered()) {
-			Option option =
+
+		Option newOption = null;
+		if (currentOption.isRegistered()) {
+			// Registered again
+			newOption =
+				copyRegisteredOption(currentOption, type, description, defaultValue, help, editor);
+		}
+		else {
+			// option was accessed, but not registered
+			newOption =
 				createRegisteredOption(optionName, type, description, help, defaultValue, editor);
-			option.setCurrentValue(currentOption.getCurrentValue());
-			valueMap.put(optionName, option);
-			return;
 		}
 
-		// TODO: We probably don't need to do anything special if we are re-registering an
-		// option, which is what the below code handles.
+		copyCurrentValue(currentOption, newOption);
+		valueMap.put(optionName, newOption);
+	}
+
+	private void copyCurrentValue(Option currentOption, Option newOption) {
+
+		Object currentValue = currentOption.getCurrentValue();
+		OptionType type = currentOption.getOptionType();
+		if (!isNullable(type) && currentValue == null) {
+			return; // not allowed to be null
+		}
+
+		// null is allowed; null can represent a valid 'cleared' state
+		newOption.setCurrentValue(currentValue);
+
+	}
+
+	private Option copyRegisteredOption(Option currentOption, OptionType type,
+			String description, Object defaultValue, HelpLocation help, PropertyEditor editor) {
+
+		// We probably don't need to do anything special if we  are re-registering an option, 
+		// which is what the below code handles
 		String oldDescription = currentOption.getDescription();
 		HelpLocation oldHelp = currentOption.getHelpLocation();
 		Object oldDefaultValue = currentOption.getDefaultValue();
@@ -170,13 +195,9 @@ public abstract class AbstractOptions implements Options {
 		Object newDefaultValue = oldDefaultValue == null ? defaultValue : oldDefaultValue;
 		PropertyEditor newEditor = oldEditor == null ? editor : oldEditor;
 
-		Option newOption = createRegisteredOption(optionName, type, newDescripiton, newHelpLocation,
+		String optionName = currentOption.getName();
+		return createRegisteredOption(optionName, type, newDescripiton, newHelpLocation,
 			newDefaultValue, newEditor);
-		Object currentValue = currentOption.getCurrentValue();
-		if (currentValue != null) {
-			newOption.setCurrentValue(currentValue);
-		}
-		valueMap.put(optionName, newOption);
 	}
 
 	@Override
@@ -249,6 +270,10 @@ public abstract class AbstractOptions implements Options {
 		}
 
 		OptionType type = option.getOptionType();
+		return isNullable(type);
+	}
+
+	private boolean isNullable(OptionType type) {
 		switch (type) {
 
 			// objects can be null
@@ -396,8 +421,8 @@ public abstract class AbstractOptions implements Options {
 	public Font getFont(String optionName, Font defaultValue) {
 		Option option = getOption(optionName, OptionType.FONT_TYPE, defaultValue);
 		try {
-		return (Font) option.getValue(defaultValue);
-	}
+			return (Font) option.getValue(defaultValue);
+		}
 		catch (ClassCastException e) {
 			return defaultValue;
 		}
