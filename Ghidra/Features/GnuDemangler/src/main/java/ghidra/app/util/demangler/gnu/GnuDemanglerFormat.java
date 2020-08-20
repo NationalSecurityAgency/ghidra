@@ -69,6 +69,15 @@ public enum GnuDemanglerFormat {
     public boolean isModernFormat() {
         return version >= 0;
     }
+    
+    /**
+     * Checks if this format is available for the specified demangler
+     * @param isDeprecated true for the deprecated demangler, false for the modern demangler.
+     * @return true if the format is available
+     */
+    public boolean isAvailable(boolean isDeprecated) {
+        return isDeprecated ? isDeprecatedFormat() : isModernFormat();
+    }
 
     /**
      * Gets the format option to be passed to the demangler via the <code>-s</code> option

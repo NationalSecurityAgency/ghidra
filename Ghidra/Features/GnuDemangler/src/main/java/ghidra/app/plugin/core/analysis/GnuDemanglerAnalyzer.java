@@ -15,12 +15,18 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Arrays;
+
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.gnu.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.options.Options;
+import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+
+import docking.options.editor.BooleanEditor;
 
 /**
  * A version of the demangler analyzer to handle GNU GCC symbols 
@@ -70,20 +76,23 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
+		BooleanEditor editor = new BooleanEditor();
+		editor.setValue(Boolean.valueOf(useDeprecatedDemangler));
+		FormatEditor formatEditor = new FormatEditor(demanglerFormat, editor);
+		editor.addPropertyChangeListener(formatEditor);
 
 		HelpLocation help = new HelpLocation("AutoAnalysisPlugin", "Demangler_Analyzer");
 		options.registerOption(OPTION_NAME_APPLY_SIGNATURE, doSignatureEnabled, help,
 			OPTION_DESCRIPTION_APPLY_SIGNATURE);
 
 		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
-			help,
-			OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
-
-		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, demanglerFormat, help,
-			OPTION_DESCRIPTION_DEMANGLER_FORMAT);
+			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
 		
-		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler, help,
-			OPTION_DESCRIPTION_DEPRECATED_DEMANGLER);
+		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
+			useDeprecatedDemangler, help, OPTION_DESCRIPTION_DEPRECATED_DEMANGLER, editor);
+		
+		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE,
+			demanglerFormat, help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
 	}
 
 	@Override
@@ -92,18 +101,14 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		demangleOnlyKnownPatterns =
 			options.getBoolean(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns);
 		demanglerFormat = options.getEnum(OPTION_NAME_DEMANGLER_FORMAT, GnuDemanglerFormat.AUTO);
-		if (demanglerFormat.isDeprecatedFormat() && demanglerFormat.isModernFormat()) {
-			useDeprecatedDemangler =
+		useDeprecatedDemangler =
 				options.getBoolean(OPTION_NAME_USE_DEPRECATED_DEMANGLER, useDeprecatedDemangler);
-		} else {
-			useDeprecatedDemangler = demanglerFormat.isDeprecatedFormat();
-		}
 	}
 
 	@Override
 	protected DemanglerOptions getOptions() {
-
-		GnuDemanglerOptions options = new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler);
+		GnuDemanglerOptions options =
+			new GnuDemanglerOptions(demanglerFormat, useDeprecatedDemangler);
 		options.setDoDisassembly(true);
 		options.setApplySignature(doSignatureEnabled);
 		options.setDemangleOnlyKnownPatterns(demangleOnlyKnownPatterns);
@@ -114,5 +119,87 @@ public class GnuDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	protected DemangledObject doDemangle(String mangled, DemanglerOptions demanglerOtions,
 			MessageLog log) throws DemangledException {
 		return demangler.demangle(mangled, (GnuDemanglerOptions) demanglerOtions);
+	}
+
+	private static class FormatEditor extends EnumEditor implements PropertyChangeListener {
+
+		private final FormatSelector selector;
+		private final BooleanEditor isDeprecated;
+
+		FormatEditor(GnuDemanglerFormat value, BooleanEditor isDeprecated) {
+			setValue(value);
+			this.isDeprecated = isDeprecated;
+			this.selector = new FormatSelector(this);
+		}
+
+		@Override
+		public boolean supportsCustomEditor() {
+			return true;
+		}
+
+		@Override
+		public FormatSelector getCustomEditor() {
+			return selector;
+		}
+
+		@Override
+		public GnuDemanglerFormat[] getEnums() {
+			return Arrays.stream(GnuDemanglerFormat.values())
+				.filter(this::filter)
+				.toArray(GnuDemanglerFormat[]::new);
+		}
+
+		@Override
+		public String[] getTags() {
+			return Arrays.stream(GnuDemanglerFormat.values())
+				.filter(this::filter)
+				.map(GnuDemanglerFormat::name)
+				.toArray(String[]::new);
+		}
+
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			GnuDemanglerFormat format = selector.getFormat();
+			selector.reset(getTags());
+			if (format.isAvailable(isDeprecatedDemangler())) {
+				setValue(format);
+				selector.setFormat(format);
+			} else {
+				setValue(GnuDemanglerFormat.AUTO);
+			}
+		}
+
+		private boolean isDeprecatedDemangler() {
+			return (Boolean) isDeprecated.getValue();
+		}
+
+		private boolean filter(GnuDemanglerFormat f) {
+			return f.isAvailable(isDeprecatedDemangler());
+		}
+	}
+
+	@SuppressWarnings("serial")
+	private static class FormatSelector extends PropertySelector {
+
+		public FormatSelector(FormatEditor fe) {
+			super(fe);
+		}
+
+		@SuppressWarnings("unchecked")
+		void reset(String[] tags) {
+			removeAllItems();
+			for (int i = 0; i < tags.length; i++) {
+				addItem(tags[i]);
+			}
+		}
+
+		GnuDemanglerFormat getFormat() {
+			return GnuDemanglerFormat.valueOf((String) getSelectedItem());
+		}
+
+		void setFormat(GnuDemanglerFormat format) {
+			setSelectedItem(format.name());
+		}
+		
 	}
 }

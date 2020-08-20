@@ -57,10 +57,10 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 		this.isDeprecated = !format.isModernFormat();
 	}
 
-	public GnuDemanglerOptions(GnuDemanglerFormat format, boolean deprecated) {
+	public GnuDemanglerOptions(GnuDemanglerFormat format, boolean isDeprecated) {
 		this.format = format;
-		this.isDeprecated = deprecated;
-		if (!isValidFormat(format, deprecated)) {
+		this.isDeprecated = isDeprecated;
+		if (!format.isAvailable(isDeprecated)) {
 			throw new IllegalArgumentException(
 				format.name() + " is not available in the "+getDemanglerName());
 		}
@@ -109,21 +109,11 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 		if (this.format == format && this.isDeprecated == isDeprecated) {
 			return this;
 		}
-		if (isValidFormat(format, isDeprecated)) {
+		if (format.isAvailable(isDeprecated)) {
 			return new GnuDemanglerOptions(this, format, isDeprecated);
 		}
 		throw new IllegalArgumentException(
 			format.name() + " is not available in the "+getDemanglerName());
-	}
-
-	private static boolean isValidFormat(GnuDemanglerFormat format, boolean isDeprecated) {
-		if (isDeprecated && format.isDeprecatedFormat()) {
-			return true;
-		}
-		if (!isDeprecated && format.isModernFormat()) {
-			return true;
-		}
-		return false;
 	}
 
 	/**

@@ -55,7 +55,11 @@ public class GnuDemanglerTest extends AbstractGenericTest {
 		demangler.canDemangle(program);// this perform initialization
 
 		// this throws an exception with the bug in place
-		demangler.demangle(mangled);
+		try {
+			demangler.demangle(mangled);
+		} catch (DemangledException e) {
+			assertTrue(e.isInvalidMangledName());
+		}
 	}
 
 	@Test
