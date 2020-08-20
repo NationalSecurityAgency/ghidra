@@ -29,17 +29,14 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramSelection;
 
 public class DiffApplyIgnoreTest extends DiffApplyTestAdapter {
-	public DiffApplyIgnoreTest() {
-		super();
-	}
-	
+
 	@Test
 	public void testProgramContextIgnore() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -54,10 +51,10 @@ public class DiffApplyIgnoreTest extends DiffApplyTestAdapter {
 	public void testByteIgnore() throws Exception {
 
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -71,10 +68,10 @@ public class DiffApplyIgnoreTest extends DiffApplyTestAdapter {
 	@Test
 	public void testCodeUnitIgnore() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -88,10 +85,10 @@ public class DiffApplyIgnoreTest extends DiffApplyTestAdapter {
 	@Test
 	public void testReferenceIgnore() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		memRefIgnore();
@@ -208,10 +205,10 @@ public class DiffApplyIgnoreTest extends DiffApplyTestAdapter {
 	@Test
 	public void testBookmarkIgnore() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -225,10 +222,10 @@ public class DiffApplyIgnoreTest extends DiffApplyTestAdapter {
 	@Test
 	public void testPropertyIgnore() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -242,10 +239,10 @@ public class DiffApplyIgnoreTest extends DiffApplyTestAdapter {
 	@Test
 	public void testFunctionIgnore() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();

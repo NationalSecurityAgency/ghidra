@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.diff;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -36,14 +35,10 @@ import ghidra.util.exception.InvalidInputException;
 
 public class DiffApplyReplaceTest extends DiffApplyTestAdapter {
 
-	public DiffApplyReplaceTest() {
-		super();
-	}
-
 	@Test
 	public void testProgramContextReplace() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -57,9 +52,9 @@ public class DiffApplyReplaceTest extends DiffApplyTestAdapter {
 	@Test
 	public void testByteReplace() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -73,9 +68,9 @@ public class DiffApplyReplaceTest extends DiffApplyTestAdapter {
 	@Test
 	public void testCodeUnitReplace() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -89,9 +84,9 @@ public class DiffApplyReplaceTest extends DiffApplyTestAdapter {
 	@Test
 	public void testReferenceReplace() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 		memRefReplace();
 		extRefReplace();
@@ -284,9 +279,9 @@ public class DiffApplyReplaceTest extends DiffApplyTestAdapter {
 	@Test
 	public void testBookmarkReplace() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -300,9 +295,9 @@ public class DiffApplyReplaceTest extends DiffApplyTestAdapter {
 	@Test
 	public void testPropertyReplace() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();
@@ -316,9 +311,9 @@ public class DiffApplyReplaceTest extends DiffApplyTestAdapter {
 	@Test
 	public void testFunctionReplace() throws Exception {
 		openDiff(diffTestP1, diffTestP2);
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Memory Differs", 2000);
+		JDialog dialog = waitForJDialog("Memory Differs");
 		pressButtonByText(dialog, "OK");
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		showApplySettings();
 
 		ProgramSelection origDiffs = diffPlugin.getDiffHighlightSelection();

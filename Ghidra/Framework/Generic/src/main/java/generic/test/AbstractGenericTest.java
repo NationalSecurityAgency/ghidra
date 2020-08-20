@@ -1094,8 +1094,24 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		return ref.get();
 	}
 
-	public static void runSwing(Runnable runnable) {
-		runSwing(runnable, true);
+	/**
+	 * Run the given code snippet on the Swing thread and wait for it to finish
+	 * @param r the runnable code snippet
+	 */
+	public static void runSwing(Runnable r) {
+		runSwing(r, true);
+	}
+
+	/**
+	 * Run the given code snippet on the Swing thread later, not blocking the current thread.  Use
+	 * this if the code snippet causes a blocking operation.
+	 * 
+	 * <P>This is a shortcut for <code>runSwing(r, false);</code>.
+	 * 
+	 * @param r the runnable code snippet
+	 */
+	public void runSwingLater(Runnable r) {
+		runSwing(r, false);
 	}
 
 	/**
@@ -1103,7 +1119,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * an exception 
 	 * @param runnable the runnable
 	 * @param wait true signals to wait for the Swing operation to finish
-	 * @throws Throwable any excption that is thrown on the Swing thread
+	 * @throws Throwable any exception that is thrown on the Swing thread
 	 */
 	public static void runSwingWithExceptions(Runnable runnable, boolean wait) throws Throwable {
 

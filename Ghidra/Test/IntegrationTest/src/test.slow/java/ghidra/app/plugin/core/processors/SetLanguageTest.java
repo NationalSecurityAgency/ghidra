@@ -25,6 +25,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
+import docking.AbstractErrDialog;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.widgets.MultiLineLabel;
@@ -102,7 +103,7 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testActionEnablement() throws Exception {
 		assertTrue(setLanguageAction.isEnabled());
-		assertTrue(!setLanguageAction.isEnabledForContext(createProjectDataContext(xyzFolderNode)));
+		assertFalse(setLanguageAction.isEnabledForContext(createProjectDataContext(xyzFolderNode)));
 		assertTrue(setLanguageAction.isEnabledForContext(createProjectDataContext(notepadNode)));
 	}
 
@@ -110,7 +111,7 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 		return addrFactory.getAddress(address);
 	}
 
-	private void startSetLanguage(final LanguageID languageID, final CompilerSpecID compilerSpecID,
+	private void startSetLanguage(LanguageID languageID, CompilerSpecID compilerSpecID,
 			boolean isFailureCase) throws Exception {
 		if (languageID == null) {
 			throw new RuntimeException("languageID == null not allowed");
@@ -135,9 +136,9 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 
 		pressButtonByText(confirmDlg, "Ok");
 
-		final SetLanguageDialog dlg = waitForDialogComponent(SetLanguageDialog.class);
+		SetLanguageDialog dlg = waitForDialogComponent(SetLanguageDialog.class);
 		assertNotNull(dlg);
-		final NewLanguagePanel languagePanel =
+		NewLanguagePanel languagePanel =
 			(NewLanguagePanel) getInstanceField("selectLangPanel", dlg);
 		assertNotNull(languagePanel);
 
@@ -167,16 +168,16 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private ActionContext createProjectDataContext(GTreeNode node) {
 		TreePath[] selectionPaths = { node.getTreePath() };
-		
+
 		List<DomainFile> fileList = new ArrayList<>();
 		List<DomainFolder> folderList = new ArrayList<>();
 		if (node instanceof DomainFileNode) {
 			fileList.add(((DomainFileNode) node).getDomainFile());
 		}
 		else {
-			folderList.add(((DomainFolderNode)node).getDomainFolder());
+			folderList.add(((DomainFolderNode) node).getDomainFolder());
 		}
-		
+
 		return new FrontEndProjectTreeContext(null, null, selectionPaths, folderList, fileList,
 			(DataTree) node.getTree(), true);
 	}
@@ -208,13 +209,9 @@ public class SetLanguageTest extends AbstractGhidraHeadedIntegrationTest {
 
 		startSetLanguage(new LanguageID("8051:BE:16:default"), new CompilerSpecID("default"), true);
 
-		final OptionDialog errDlg = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(errDlg);
-		MultiLineLabel msgLabel = findComponent(errDlg, MultiLineLabel.class);
-		assertNotNull(msgLabel);
-		assertTrue(msgLabel.getLabel().indexOf("Language translation not supported") >= 0);
-
-		pressButtonByText(errDlg, "OK");
+		AbstractErrDialog d = waitForErrorDialog();
+		assertTrue(d.getMessage().contains("Language translation not supported"));
+		close(d);
 		closeAllWindows();
 	}
 

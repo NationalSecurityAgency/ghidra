@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string;
 
-import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
@@ -83,7 +83,7 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 		CodeViewerProvider cbProvider = cb.getProvider();
 		SwingUtilities.invokeLater(
 			() -> searchAction.actionPerformed(cbProvider.getActionContext(null)));
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		return getDialogComponent(SearchStringDialog.class);
 	}
 
@@ -317,7 +317,7 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 		selectRows(address);		// string abcefg is here
 
 		performAction(makeStringAction, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		OptionDialog dialogProvider = getDialogComponent(OptionDialog.class);
 		assertNotNull(dialogProvider);
@@ -435,13 +435,9 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	private void createDataAt(Address addr) throws Exception {
-		int id = program.startTransaction("test");
-		try {
+		tx(program, () -> {
 			program.getListing().createData(addr, new ByteDataType());
-		}
-		finally {
-			program.endTransaction(id, true);
-		}
+		});
 	}
 
 	private void setCheckbox(final JCheckBox checkbox, final boolean selected) {
@@ -526,15 +522,6 @@ public class StringTableProviderTest extends AbstractGhidraHeadedIntegrationTest
 		assertTrue(showUndefinedAction.isSelected());
 
 	}
-
-//	protected void waitForTable() throws Exception {
-//		int nWaits = 0;
-//		while (model.isBusy() && nWaits++ < 500) {
-//			Thread.sleep(50);
-//		}
-//
-//		assertTrue("Timed-out waiting for table model to update.", nWaits < 500);
-//	}
 
 	private void toggleDefinedStateButtons(final boolean defined, final boolean undefined,
 			final boolean partial, final boolean conflicting) {
