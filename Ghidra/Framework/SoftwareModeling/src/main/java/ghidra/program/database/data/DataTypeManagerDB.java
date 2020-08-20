@@ -89,7 +89,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	protected DBHandle dbHandle;
 	private AddressMap addrMap;
-	private ErrorHandler errHandler;
+	private ErrorHandler errHandler = new DbErrorHandler();
 	private DataTypeConflictHandler currentHandler;
 
 	private CategoryDB root;
@@ -168,12 +168,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 */
 	protected DataTypeManagerDB() {
 		this.lock = new Lock("DataTypeManagerDB");
-		errHandler = new ErrorHandler() {
-			@Override
-			public void dbError(IOException e) {
-				Msg.showError(this, null, "IO ERROR", e.getMessage(), e);
-			}
-		};
+
 		try {
 			dbHandle = new DBHandle();
 			int id = startTransaction("");
@@ -212,13 +207,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			throw new IOException("Unsupported mode (" + openMode +
 				") for read-only Datatype Archive: " + packedDBfile.getAbsolutePath());
 		}
-
-		errHandler = new ErrorHandler() {
-			@Override
-			public void dbError(IOException e) {
-				Msg.showError(this, null, "IO ERROR", e.getMessage(), e);
-			}
-		};
 
 		// Open packed database archive
 		boolean openSuccess = false;
@@ -4087,6 +4075,20 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			if (idMap != null) {
 				idMap.remove(dataTypeID);
 			}
+		}
+	}
+
+	private class DbErrorHandler implements ErrorHandler {
+
+		@Override
+		public void dbError(IOException e) {
+
+			String message = e.getMessage();
+			if (e instanceof ClosedException) {
+				message = "Data type archive is closed: " + getName();
+			}
+
+			Msg.showError(this, null, "IO ERROR", message, e);
 		}
 	}
 }
