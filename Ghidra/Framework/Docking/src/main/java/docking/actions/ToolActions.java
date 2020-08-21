@@ -399,17 +399,14 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		}
 
 		KeyBindingData newKeyBindingData = (KeyBindingData) evt.getNewValue();
-		KeyStroke newKeyStroke = null;
+		KeyStroke newKs = null;
 		if (newKeyBindingData != null) {
-			newKeyStroke = newKeyBindingData.getKeyBinding();
+			newKs = newKeyBindingData.getKeyBinding();
 		}
 
-		KeyStroke optKeyStroke = keyBindingOptions.getKeyStroke(action.getFullName(), null);
-		if (newKeyStroke == null) {
-			keyBindingOptions.removeOption(action.getFullName());
-		}
-		else if (!newKeyStroke.equals(optKeyStroke)) {
-			keyBindingOptions.setKeyStroke(action.getFullName(), newKeyStroke);
+		KeyStroke currentKs = keyBindingOptions.getKeyStroke(action.getFullName(), null);
+		if (!Objects.equals(currentKs, newKs)) {
+			keyBindingOptions.setKeyStroke(action.getFullName(), newKs);
 			keyBindingsChanged();
 		}
 	}

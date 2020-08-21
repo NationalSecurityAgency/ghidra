@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,12 @@
  */
 package ghidra.framework.options;
 
+import java.beans.PropertyEditor;
+import java.util.Objects;
+
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
-
-import java.beans.PropertyEditor;
+import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class Option {
 	private final String name;
@@ -68,23 +69,19 @@ public abstract class Option {
 		return helpLocation;
 	}
 
-	public boolean hasValue() {
-		return defaultValue != null || getCurrentValue() != null;
-	}
-
 	public String getDescription() {
 		return description == null ? "Unregistered Option" : description;
 	}
 
 	public Object getValue(Object passedInDefaultValue) {
 		Object value = getCurrentValue();
-		if (value != null) {
-			return value;
+		if (value == null && defaultValue == null) {
+			// Assume that both values being null is an indication that there is no value
+			// to use.  Otherwise, a null current value implies that the user has cleared
+			// the default value.
+			return passedInDefaultValue;
 		}
-		if (defaultValue != null) {
-			return defaultValue;
-		}
-		return passedInDefaultValue;
+		return value;
 	}
 
 	public boolean isRegistered() {
@@ -97,11 +94,7 @@ public abstract class Option {
 
 	public boolean isDefault() {
 		Object value = getCurrentValue();
-		if (value == null) {
-			return true;
-		}
-
-		return value.equals(defaultValue);
+		return Objects.equals(value, defaultValue);
 	}
 
 	@Override
@@ -125,46 +118,12 @@ public abstract class Option {
 		Throwable throwable = new Throwable();
 		StackTraceElement[] stackTrace = throwable.getStackTrace();
 
-		String information = getInceptionInformationFromTheFirstClassThatIsNotUs(stackTrace);
-		inceptionInformation = information;
-	}
-
-	private String getInceptionInformationFromTheFirstClassThatIsNotUs(
-			StackTraceElement[] stackTrace) {
-
-		// To find our creation point we can use a simple algorithm: find the name of our class, 
-		// which is in the first stack trace element and then keep walking backwards until that
-		// name is not ours.
-		//         
-		String myClassName = getClass().getName();
-		int myClassNameStartIndex = -1;
-		for (int i = 1; i < stackTrace.length; i++) { // start at 1, because we are the first item
-			StackTraceElement stackTraceElement = stackTrace[i];
-			String elementClassName = stackTraceElement.getClassName();
-			if (myClassName.equals(elementClassName)) {
-				myClassNameStartIndex = i;
-				break;
-			}
-		}
-
-		// Finally, go backwards until we find a non-options class in the stack, in order
-		// to remove infrastructure code from the client that called the options API.
-		int creatorIndex = myClassNameStartIndex;
-		for (int i = myClassNameStartIndex; i < stackTrace.length; i++) { // start at 1, because we are the first item
-			StackTraceElement stackTraceElement = stackTrace[i];
-			String elementClassName = stackTraceElement.getClassName();
-
-			if (elementClassName.toLowerCase().indexOf("option") == -1) {
-				creatorIndex = i;
-				break;
-			}
-		}
-
-		return stackTrace[creatorIndex].toString();
+		StackTraceElement[] filteredTrace =
+			ReflectionUtilities.filterStackTrace(stackTrace, "option", "OptionsManager");
+		inceptionInformation = filteredTrace[0].toString();
 	}
 
 	public OptionType getOptionType() {
 		return optionType;
 	}
-
 }

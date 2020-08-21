@@ -21,6 +21,8 @@ import java.awt.Color;
 import java.io.File;
 import java.util.*;
 
+import javax.swing.KeyStroke;
+
 import org.junit.*;
 
 import generic.stl.Pair;
@@ -182,11 +184,11 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		options = saveAndLoadOptions();
 		verifyStringOptionsStillChanged_UsingTheOptionsAPI(options, changedOption);
 
-		options.registerOption(NEW_TEST_OPTION_NAME, "default", null, null);
+		options.registerOption(NEW_TEST_OPTION_NAME, "default", null, "description");
 		options = saveAndLoadOptions();
 		verifyStringOptionsStillChanged_UsingTheOptionsAPI(options, changedOption);
 
-		options.registerOption(NEW_TEST_OPTION_NAME, "default", null, null);
+		options.registerOption(NEW_TEST_OPTION_NAME, "default", null, "description");
 		options = saveAndLoadOptions();
 		verifyStringOptionsStillChanged_UsingTheOptionsAPI(options, changedOption);
 
@@ -196,6 +198,28 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		options = saveAndLoadOptions();
 		options = saveAndLoadOptions();
 		verifyUnusedOptionNoLongerHasEntry(options, changedOption.first);
+	}
+
+	@Test
+	public void testClearingKeyBindingOption() {
+
+		Options options = loadKeyBindingOptions();
+
+		String optionName = clearKeyBinding(options);
+
+		options = saveAndLoadOptions();
+		verifyKeyBindingIsStillCleared(options, optionName);
+	}
+
+	@Test
+	public void testAccessingOptionWithoutRegistering() {
+
+		ToolOptions options = loadSearchOptions();
+		String defaultValue = "default";
+		Option option =
+			options.getOption(NEW_TEST_OPTION_NAME, OptionType.STRING_TYPE, defaultValue);
+		assertNotNull("unregistered option was not created on access", option);
+		assertEquals(defaultValue, option.getValue(defaultValue));
 	}
 
 	@Test
@@ -309,10 +333,22 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		return tool.getOptions("Search");
 	}
 
+	private Options loadKeyBindingOptions() {
+		return tool.getOptions("Key Bindings");
+	}
+
 	private Pair<String, String> changeStringTestOption(Options options) {
-		options.registerOption(NEW_TEST_OPTION_NAME, "HEY", null, null);
+		options.registerOption(NEW_TEST_OPTION_NAME, "HEY", null, "description");
 		options.setString(NEW_TEST_OPTION_NAME, TEST_OPTION_STRING_VALUE);
 		return new Pair<>(NEW_TEST_OPTION_NAME, TEST_OPTION_STRING_VALUE);
+	}
+
+	private String clearKeyBinding(Options options) {
+		String keyBindingName = "Go To Next Function (CodeBrowserPlugin)";
+		KeyStroke ks = options.getKeyStroke(keyBindingName, null);
+		assertNotNull(ks);
+		options.setKeyStroke(keyBindingName, null);
+		return keyBindingName;
 	}
 
 	private void verifyStringOptionStillChanged_WithoutUsingOptionsAPI(Options options,
@@ -340,6 +376,11 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
+	private void verifyKeyBindingIsStillCleared(Options options, String optionName) {
+		KeyStroke ksValue = options.getKeyStroke(optionName, null);
+		assertNull(ksValue);
+	}
+
 	private List<String> getDiffs(Map<String, Object> initialValues,
 			Map<String, Object> latestValues) {
 		List<String> diffs = new ArrayList<>();
@@ -353,21 +394,5 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		return diffs;
 	}
-
-	//	private OptionsPanel showSearchOptions() {
-//		List<DockingActionIf> actions = tool.getDockingActionsByFullActionName("Tool Options... (Tool)");
-//		assertEquals(1, actions.size());
-//		
-//		performAction(actions.get(0), false);
-//		
-//		OptionsDialog dialog = waitForDialogComponent(null, OptionsDialog.class, DEFAULT_WINDOW_TIMEOUT);
-//		
-//		OptionsPanel optionsPanel = (OptionsPanel) getInstanceField("panel", dialog);
-//		GTree tree = (GTree) getInstanceField("gTree", optionsPanel);
-//		tree.setSelectedNodeByNamePath(new String[] { "Options", "Search" });
-//		waitForTree(tree);
-//		
-//		return optionsPanel;
-//	}
 
 }

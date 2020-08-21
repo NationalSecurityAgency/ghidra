@@ -123,19 +123,9 @@ public class KeyBindingsPanel extends JPanel {
 			return;
 		}
 
-		if (newKeyStroke != null) {
-			options.setKeyStroke(fullActionName, newKeyStroke);
-		}
-		else {
-			options.removeOption(fullActionName);
-		}
+		options.setKeyStroke(fullActionName, newKeyStroke);
 		originalValues.put(fullActionName, newKeyStroke);
 		keyStrokesByFullName.put(fullActionName, newKeyStroke);
-
-		List<DockingActionIf> actions = actionsByFullName.get(fullActionName);
-		for (DockingActionIf action : actions) {
-			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKeyStroke));
-		}
 	}
 
 	public void cancel() {
