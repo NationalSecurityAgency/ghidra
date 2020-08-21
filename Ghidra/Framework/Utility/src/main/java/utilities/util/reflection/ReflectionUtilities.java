@@ -499,14 +499,31 @@ public class ReflectionUtilities {
 	 * @return the string
 	 */
 	public static String stackTraceToString(Throwable t) {
-		StringBuffer sb = new StringBuffer();
+		return stackTraceToString(t.getMessage(), t);
+	}
+
+	/**
+	 * Turns the given {@link Throwable} into a String version of its 
+	 * {@link Throwable#printStackTrace()} method.
+	 * 
+	 * @param message the preferred message to use.  If null, the throwable message will be used
+	 * @param t the throwable
+	 * @return the string
+	 */
+	public static String stackTraceToString(String message, Throwable t) {
+		StringBuilder sb = new StringBuilder();
 
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		PrintStream ps = new PrintStream(baos);
 
-		String msg = t.getMessage();
-		if (msg != null) {
-			ps.println(msg);
+		if (message != null) {
+			ps.println(message);
+		}
+		else {
+			String throwableMessage = t.getMessage();
+			if (throwableMessage != null) {
+				ps.println(throwableMessage);
+			}
 		}
 
 		t.printStackTrace(ps);
