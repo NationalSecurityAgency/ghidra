@@ -41,7 +41,7 @@ public abstract class GTreeLazyNode extends GTreeNode {
 	 */
 	public void unloadChildren() {
 		if (isLoaded()) {
-			doSetChildrenAndFireEvent(null);
+			setChildren(null);
 		}
 	}
 
