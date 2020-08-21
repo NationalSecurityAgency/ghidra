@@ -1090,11 +1090,16 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	}
 
 	private boolean updateRootNodes(Function function) {
-		CallNode callNode = (CallNode) incomingTree.getModelRoot();
-		Function nodeFunction = callNode.getContainingFunction();
-		if (nodeFunction.equals(function)) {
-			reloadUpdateManager.update();
-			return true;
+		GTreeNode root = incomingTree.getModelRoot();
+		// root might be a "PendingRootNode"
+		//TODO do we need to use a PendingRootNode?
+		if (root instanceof CallNode) {
+			CallNode callNode = (CallNode) root;
+			Function nodeFunction = callNode.getContainingFunction();
+			if (nodeFunction.equals(function)) {
+				reloadUpdateManager.update();
+				return true;
+			}
 		}
 
 		return false;
