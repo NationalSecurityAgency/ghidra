@@ -17,6 +17,8 @@
 package ghidra.util;
 
 import ghidra.framework.options.ToolOptions;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.Platform;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.util.OptionsService;
@@ -167,7 +169,15 @@ public class BrowserLoader {
 			argumentList.add(fileURL.toString());
 		}
 		else {
-			argumentList.add(fileURL.getFile());
+			var filename = fileURL.getFile();
+			// Remove leading slashes on Windows: we are generating paths with leading slashes (see commit 0c30c722),
+			// but this is broken for the ${FILENAME} case.
+			// e.g. fixes \C:\file.pdf to be C:\file.pdf
+			if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS
+					&& filename.startsWith("/")) {
+				filename = filename.substring(1);
+			}
+			argumentList.add(filename);
 		}
 
 		return argumentList.toArray(new String[argumentList.size()]);
