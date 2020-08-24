@@ -55,8 +55,8 @@ public class IntroScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testErr_Dialog() {
 		runSwing(() -> {
-			ErrLogDialog dialog = ErrLogDialog.createExceptionDialog("Unexpected Error",
-				"Oops, this is really bad!", new Throwable());
+			ErrLogDialog dialog = ErrLogDialog.createLogMessageDialog("Unexpected Error",
+				"Oops, this is really bad!", "");
 			DockingWindowManager.showDialog(null, dialog);
 		}, false);
 		waitForSwing();

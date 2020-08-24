@@ -32,12 +32,12 @@ import docking.widgets.label.GHtmlLabel;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import ghidra.util.*;
-import ghidra.util.exception.MultipleCauses;
+import ghidra.util.exception.*;
 import ghidra.util.html.HTMLElement;
 import resources.ResourceManager;
 import util.CollectionUtils;
 
-public class ErrLogExpandableDialog extends AbstractErrDialog {
+public class ErrLogExpandableDialog extends DialogComponentProvider {
 	public static ImageIcon IMG_REPORT = ResourceManager.loadImage("images/report.png");
 	public static ImageIcon IMG_EXCEPTION = ResourceManager.loadImage("images/exception.png");
 	public static ImageIcon IMG_FRAME_ELEMENT =
@@ -53,21 +53,113 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 	private static boolean showingDetails = false;
 
 	protected ReportRootNode root;
-	protected GTree tree;
-	private List<Throwable> errors = new ArrayList<>();
+	protected GTree excTree;
 
 	/** This spacer addresses the optical impression that the message panel changes size when showing details */
 	protected Component horizontalSpacer;
 	protected JButton detailButton;
 	protected JButton sendButton;
+	protected boolean hasConsole = false;
 
 	protected JPopupMenu popup;
 
-	protected ErrLogExpandableDialog(String title, String msg, Throwable throwable) {
-		super(title);
+	protected static class ExcTreeTransferHandler extends TransferHandler
+			implements GTreeDragNDropHandler {
 
-		errors.add(throwable);
+		protected ReportRootNode root;
 
+		public ExcTreeTransferHandler(ReportRootNode root) {
+			this.root = root;
+		}
+
+		@Override
+		public DataFlavor[] getSupportedDataFlavors(List<GTreeNode> transferNodes) {
+			return new DataFlavor[] { DataFlavor.stringFlavor };
+		}
+
+		@Override
+		protected Transferable createTransferable(JComponent c) {
+			ArrayList<GTreeNode> nodes = new ArrayList<>();
+			for (TreePath path : ((JTree) c).getSelectionPaths()) {
+				nodes.add((GTreeNode) path.getLastPathComponent());
+			}
+			try {
+				return new StringSelection(
+					(String) getTransferData(nodes, DataFlavor.stringFlavor));
+			}
+			catch (UnsupportedFlavorException e) {
+				Msg.debug(this, e.getMessage(), e);
+			}
+			return null;
+		}
+
+		@Override
+		public Object getTransferData(List<GTreeNode> transferNodes, DataFlavor flavor)
+				throws UnsupportedFlavorException {
+			if (flavor != DataFlavor.stringFlavor) {
+				throw new UnsupportedFlavorException(flavor);
+			}
+			if (transferNodes.isEmpty()) {
+				return null;
+			}
+			if (transferNodes.size() == 1) {
+				GTreeNode node = transferNodes.get(0);
+				if (node instanceof NodeWithText) {
+					return ((NodeWithText) node).collectReportText(transferNodes, 0).trim();
+				}
+				return null;
+			}
+			return root.collectReportText(transferNodes, 0).trim();
+		}
+
+		@Override
+		public boolean isStartDragOk(List<GTreeNode> dragUserData, int dragAction) {
+			for (GTreeNode node : dragUserData) {
+				if (node instanceof NodeWithText) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public int getSupportedDragActions() {
+			return DnDConstants.ACTION_COPY;
+		}
+
+		@Override
+		public int getSourceActions(JComponent c) {
+			return COPY;
+		}
+
+		@Override
+		public boolean isDropSiteOk(GTreeNode destUserData, DataFlavor[] flavors, int dropAction) {
+			return false;
+		}
+
+		@Override
+		public void drop(GTreeNode destUserData, Transferable transferable, int dropAction) {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	public ErrLogExpandableDialog(String title, String msg, MultipleCauses mc) {
+		this(title, msg, mc.getCauses(), null, true, true);
+	}
+
+	public ErrLogExpandableDialog(String title, String msg, Throwable exc) {
+		this(title, msg, Collections.singletonList(exc), HasConsoleText.Util.get(exc), true, true);
+	}
+
+	public ErrLogExpandableDialog(String title, String msg, Collection<Throwable> report) {
+		this(title, msg, report, null, false, false);
+	}
+
+	protected ErrLogExpandableDialog(String title, String msg, Collection<Throwable> report,
+			String console, boolean modal, boolean hasDismiss) {
+		super(title, modal);
+
+		hasConsole = console != null;
 		popup = new JPopupMenu();
 		JMenuItem menuCopy = new JMenuItem("Copy");
 		menuCopy.setActionCommand((String) TransferHandler.getCopyAction().getValue(Action.NAME));
@@ -81,12 +173,13 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		msgPanel.setLayout(new BorderLayout(16, 16));
 		msgPanel.setBorder(new EmptyBorder(16, 16, 16, 16));
 		{
-			JLabel msgText = new GHtmlLabel(getHTML(msg, CollectionUtils.asSet(throwable))) {
+			JLabel msgText = new GHtmlLabel(getHTML(msg, report)) {
 				@Override
 				public Dimension getPreferredSize() {
-					// rendering HTML the label can expand larger than the screen; keep it reasonable
+					// when rendering HTML the label can expand larger than the screen;
+					// keep it reasonable
 					Dimension size = super.getPreferredSize();
-					size.width = 300;
+					size.width = 500;
 					return size;
 				}
 			};
@@ -113,7 +206,7 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 			msgPanel.add(buttonBox, BorderLayout.EAST);
 
 			horizontalSpacer = Box.createVerticalStrut(10);
-			horizontalSpacer.setVisible(showingDetails);
+			horizontalSpacer.setVisible(showingDetails | hasConsole);
 			msgPanel.add(horizontalSpacer, BorderLayout.SOUTH);
 		}
 		workPanel.add(msgPanel, BorderLayout.NORTH);
@@ -121,8 +214,29 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		Box workBox = Box.createVerticalBox();
 		{
 
-			root = new ReportRootNode(getTitle(), CollectionUtils.asSet(throwable));
-			tree = new GTree(root) {
+			if (hasConsole) {
+				JTextArea consoleText = new JTextArea(console);
+				JScrollPane consoleScroll =
+					new JScrollPane(consoleText, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+						ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
+
+						@Override
+						public Dimension getPreferredSize() {
+							Dimension dim = super.getPreferredSize();
+							dim.height = 400;
+							dim.width = 800; // trial and error?
+							return dim;
+						}
+					};
+				consoleText.setEditable(false);
+				consoleText.setBackground(Color.BLACK);
+				consoleText.setForeground(Color.WHITE);
+				consoleText.setFont(Font.decode("Monospaced"));
+				workBox.add(consoleScroll);
+			}
+
+			root = new ReportRootNode(getTitle(), report);
+			excTree = new GTree(root) {
 
 				@Override
 				public Dimension getPreferredSize() {
@@ -135,19 +249,19 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 
 			for (GTreeNode node : CollectionUtils.asIterable(root.iterator(true))) {
 				if (node instanceof ReportExceptionNode) {
-					tree.expandTree(node);
+					excTree.expandTree(node);
 				}
 			}
 
-			tree.setSelectedNode(root.getChild(0));
-			tree.setVisible(showingDetails);
+			excTree.setSelectedNode(root.getChild(0));
+			excTree.setVisible(showingDetails);
 			ExcTreeTransferHandler handler = new ExcTreeTransferHandler(root);
-			tree.setDragNDropHandler(handler);
-			tree.setTransferHandler(handler);
-			ActionMap map = tree.getActionMap();
+			excTree.setDragNDropHandler(handler);
+			excTree.setTransferHandler(handler);
+			ActionMap map = excTree.getActionMap();
 			map.put(TransferHandler.getCopyAction().getValue(Action.NAME),
 				TransferHandler.getCopyAction());
-			tree.addMouseListener(new MouseAdapter() {
+			excTree.addMouseListener(new MouseAdapter() {
 				@Override
 				public void mousePressed(MouseEvent e) {
 					maybeShowPopup(e);
@@ -165,19 +279,22 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 				}
 			});
 
-			workBox.add(tree);
+			workBox.add(excTree);
 		}
 		workPanel.add(workBox, BorderLayout.CENTER);
 		repack();
 
 		addWorkPanel(workPanel);
 
-		addDismissButton();
+		if (hasDismiss) {
+			addDismissButton();
+		}
 	}
 
 	private String getHTML(String msg, Collection<Throwable> report) {
 
 		// 
+		// TODO
 		// Usage question: The content herein will be escaped unless you call addHTMLContenet().
 		//                 Further, clients can provide messages that contain HTML.  Is there a
 		//                 use case where we want to show escaped HTML content?
@@ -215,6 +332,14 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 
 			String htmlTMsg = addBR(tMsg);
 			body.addElement("p").addHTMLContent(htmlTMsg);
+			if (t instanceof CausesImportant) { // I choose not to recurse
+				HTMLElement ul = body.addElement("ul");
+				for (Throwable ts : MultipleCauses.Util.iterCauses(t)) {
+					String tsMsg = getMessage(ts);
+					String htmlTSMsg = addBR(tsMsg);
+					ul.addElement("li").addHTMLContent(htmlTSMsg);
+				}
+			}
 		}
 		return html.toString();
 	}
@@ -232,15 +357,15 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		return t.getClass().getSimpleName();
 	}
 
-	private void detailCallback() {
+	void detailCallback() {
 		showingDetails = !showingDetails;
-		tree.setVisible(showingDetails);
-		horizontalSpacer.setVisible(showingDetails);
+		excTree.setVisible(showingDetails);
+		horizontalSpacer.setVisible(showingDetails | hasConsole);
 		detailButton.setText(showingDetails ? CLOSE : DETAIL);
 		repack();
 	}
 
-	private void sendCallback() {
+	void sendCallback() {
 		String details = root.collectReportText(null, 0).trim();
 		String title = getTitle();
 		close();
@@ -252,24 +377,6 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		Dimension dim = super.getPreferredSize();
 		dim.width = 600;
 		return dim;
-	}
-
-	@Override
-	public void addException(String message, Throwable t) {
-
-		int n = errors.size();
-		if (n > MAX_EXCEPTIONS) {
-			return;
-		}
-
-		errors.add(t);
-		setTitle(TITLE_TEXT + " (" + n + 1 + ")"); // signal the new error
-		root.addNode(new ReportExceptionNode(t));
-	}
-
-	@Override
-	int getExceptionCount() {
-		return root.getChildCount();
 	}
 
 	static interface NodeWithText {
@@ -421,6 +528,9 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 
 		@Override
 		public String getReportText() {
+			if (exc instanceof HasConsoleText) {
+				return getName() + "\n" + HasConsoleText.Util.get(exc);
+			}
 			return getName();
 		}
 
@@ -551,87 +661,6 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 			return false;
 		}
 	}
-
-	private static class ExcTreeTransferHandler extends TransferHandler
-			implements GTreeDragNDropHandler {
-
-		protected ReportRootNode root;
-
-		public ExcTreeTransferHandler(ReportRootNode root) {
-			this.root = root;
-		}
-
-		@Override
-		public DataFlavor[] getSupportedDataFlavors(List<GTreeNode> transferNodes) {
-			return new DataFlavor[] { DataFlavor.stringFlavor };
-		}
-
-		@Override
-		protected Transferable createTransferable(JComponent c) {
-			ArrayList<GTreeNode> nodes = new ArrayList<>();
-			for (TreePath path : ((JTree) c).getSelectionPaths()) {
-				nodes.add((GTreeNode) path.getLastPathComponent());
-			}
-			try {
-				return new StringSelection(
-					(String) getTransferData(nodes, DataFlavor.stringFlavor));
-			}
-			catch (UnsupportedFlavorException e) {
-				Msg.debug(this, e.getMessage(), e);
-			}
-			return null;
-		}
-
-		@Override
-		public Object getTransferData(List<GTreeNode> transferNodes, DataFlavor flavor)
-				throws UnsupportedFlavorException {
-			if (flavor != DataFlavor.stringFlavor) {
-				throw new UnsupportedFlavorException(flavor);
-			}
-			if (transferNodes.isEmpty()) {
-				return null;
-			}
-			if (transferNodes.size() == 1) {
-				GTreeNode node = transferNodes.get(0);
-				if (node instanceof NodeWithText) {
-					return ((NodeWithText) node).collectReportText(transferNodes, 0).trim();
-				}
-				return null;
-			}
-			return root.collectReportText(transferNodes, 0).trim();
-		}
-
-		@Override
-		public boolean isStartDragOk(List<GTreeNode> dragUserData, int dragAction) {
-			for (GTreeNode node : dragUserData) {
-				if (node instanceof NodeWithText) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		@Override
-		public int getSupportedDragActions() {
-			return DnDConstants.ACTION_COPY;
-		}
-
-		@Override
-		public int getSourceActions(JComponent c) {
-			return COPY;
-		}
-
-		@Override
-		public boolean isDropSiteOk(GTreeNode destUserData, DataFlavor[] flavors, int dropAction) {
-			return false;
-		}
-
-		@Override
-		public void drop(GTreeNode destUserData, Transferable transferable, int dropAction) {
-			throw new UnsupportedOperationException();
-		}
-	}
-
 }
 
 class TransferActionListener implements ActionListener, PropertyChangeListener {

@@ -35,7 +35,7 @@ public class DockingErrorDisplayTest extends AbstractDockingTest {
 		DockingErrorDisplay display = new DockingErrorDisplay();
 		DefaultErrorLogger logger = new DefaultErrorLogger();
 		Exception exception = new Exception("My test exception");
-		reportException(display, logger, exception);
+		doDisplay(display, logger, exception);
 
 		assertErrLogDialog();
 	}
@@ -46,27 +46,9 @@ public class DockingErrorDisplayTest extends AbstractDockingTest {
 		DefaultErrorLogger logger = new DefaultErrorLogger();
 		Exception nestedException = new Exception("My nested test exception");
 		Exception exception = new Exception("My test exception", nestedException);
-		reportException(display, logger, exception);
+		doDisplay(display, logger, exception);
 
 		assertErrLogDialog();
-	}
-
-	@Test
-	public void testDefaultErrorDisplay_MultipleAsynchronousExceptions() {
-
-		DockingErrorDisplay display = new DockingErrorDisplay();
-		DefaultErrorLogger logger = new DefaultErrorLogger();
-		Exception exception = new Exception("My test exception");
-		reportException(display, logger, exception);
-
-		ErrLogDialog dialog = getErrLogDialog();
-
-		assertExceptionCount(dialog, 1);
-
-		reportException(display, logger, new NullPointerException("It is null!"));
-		assertExceptionCount(dialog, 2);
-
-		close(dialog);
 	}
 
 	@Test
@@ -76,51 +58,43 @@ public class DockingErrorDisplayTest extends AbstractDockingTest {
 
 		Throwable firstCause = new Exception("My test exception - first cause");
 		MultipleCauses exception = new MultipleCauses(Collections.singletonList(firstCause));
-		reportException(display, logger, exception);
+		doDisplay(display, logger, exception);
 
-		ErrLogExpandableDialog dialog = assertErrLogExpandableDialog();
-		assertExceptionCount(dialog, 1);
-
-		reportException(display, logger, new NullPointerException("It is null!"));
-		assertExceptionCount(dialog, 2);
-
-		close(dialog);
+		assertErrLogExpandableDialog();
 	}
 
-	private void assertExceptionCount(AbstractErrDialog errDialog, int n) {
+	private void assertErrLogExpandableDialog() {
+		Window w = waitForWindow(TEST_TITLE, 2000);
+		assertNotNull(w);
 
-		int actual = errDialog.getExceptionCount();
-		assertEquals(n, actual);
-	}
-
-	private ErrLogExpandableDialog assertErrLogExpandableDialog() {
-		Window w = waitForWindow(TEST_TITLE);
-
-		ErrLogExpandableDialog errDialog =
+		final ErrLogExpandableDialog errDialog =
 			getDialogComponentProvider(w, ErrLogExpandableDialog.class);
 		assertNotNull(errDialog);
-		return errDialog;
+
+		runSwing(new Runnable() {
+			@Override
+			public void run() {
+				errDialog.close();
+			}
+		});
 	}
 
 	private void assertErrLogDialog() {
-		Window w = waitForWindow(TEST_TITLE);
+		Window w = waitForWindow(TEST_TITLE, 2000);
 		assertNotNull(w);
 
-		ErrLogDialog errDialog = getDialogComponentProvider(w, ErrLogDialog.class);
+		final ErrLogDialog errDialog = getDialogComponentProvider(w, ErrLogDialog.class);
 		assertNotNull(errDialog);
-		close(errDialog);
+
+		runSwing(new Runnable() {
+			@Override
+			public void run() {
+				errDialog.close();
+			}
+		});
 	}
 
-	private ErrLogDialog getErrLogDialog() {
-		Window w = waitForWindow(TEST_TITLE);
-		assertNotNull(w);
-
-		ErrLogDialog errDialog = getDialogComponentProvider(w, ErrLogDialog.class);
-		assertNotNull(errDialog);
-		return errDialog;
-	}
-
-	private void reportException(final DockingErrorDisplay display, final DefaultErrorLogger logger,
+	private void doDisplay(final DockingErrorDisplay display, final DefaultErrorLogger logger,
 			final Throwable throwable) {
 		runSwing(new Runnable() {
 			@Override
