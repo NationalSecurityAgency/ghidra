@@ -113,6 +113,10 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	 */
 	public Class<?> loadClass(ResourceFile sourceFile, PrintWriter writer) throws Exception {
 		GhidraSourceBundle bundle = getBundleForSource(sourceFile);
+		if (bundle == null) {
+			throw new ClassNotFoundException(
+				"Failed to find source bundle containing script: " + sourceFile.toString());
+		}
 		bundleHost.activateAll(Collections.singletonList(bundle), TaskMonitor.DUMMY, writer);
 
 		String classname = bundle.classNameForScript(sourceFile);
