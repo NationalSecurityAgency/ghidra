@@ -38,4 +38,9 @@ public interface GraphDisplayListener {
 	 * @param vertexId the vertex id of the currently "focused" vertex
 	 */
 	public void locationChanged(String vertexId);
+
+	default boolean updateVertexName(String vertexId, String oldName, String newName) {
+		// no op
+		return false;
+	}
 }

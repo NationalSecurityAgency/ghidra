@@ -35,6 +35,7 @@ public class MultiStateActionBuilder<T> extends
 
 	private BiConsumer<ActionState<T>, EventTrigger> actionStateChangedCallback;
 	private boolean performActionOnButtonClick = false;
+	private boolean fireFirstAction = true;
 
 	private List<ActionState<T>> states = new ArrayList<>();
 
@@ -114,6 +115,17 @@ public class MultiStateActionBuilder<T> extends
 		return self();
 	}
 
+	/**
+	 * controls whether the first action added will automatically fire an event or not
+	 *
+	 * @param fireFirstAction do fire an action on the first action. Defaults to {@code true}
+	 * @return this MultiActionDockingActionBuilder (for chaining)
+	 */
+	public MultiStateActionBuilder<T> fireFirstAction(boolean fireFirstAction) {
+		this.fireFirstAction = fireFirstAction;
+		return self();
+	}
+
 	@Override
 	public MultiStateDockingAction<T> build() {
 		validate();
@@ -133,6 +145,7 @@ public class MultiStateActionBuilder<T> extends
 					}
 				}
 			};
+		action.setFireFirstEvent(fireFirstAction);
 
 		for (ActionState<T> actionState : states) {
 			action.addActionState(actionState);

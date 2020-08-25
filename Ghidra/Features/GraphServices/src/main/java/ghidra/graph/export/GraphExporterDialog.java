@@ -59,7 +59,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 	private JTextField filePathTextField;
 	private JButton fileChooserButton;
 	private GhidraComboBox<GraphExportFormat> comboBox;
-	private Graph<AttributedVertex, AttributedEdge> graph;
+	private final Graph<AttributedVertex, AttributedEdge> graph;
 
 	/**
 	 * Construct a new ExporterDialog for exporting a program, optionally only exported a

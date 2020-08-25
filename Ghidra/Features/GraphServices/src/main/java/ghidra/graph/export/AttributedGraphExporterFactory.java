@@ -33,7 +33,7 @@ public class AttributedGraphExporterFactory
 	AttributedGraphExporterFactory() {
 		vertexLabelProvider = AttributedVertex::getName;
 		edgeLabelProvider = Object::toString;
-		edgeIdProvider = e -> e.getId();
+		edgeIdProvider = AttributedEdge::getId;
 		edgeAttributeProvider = AttributedGraphExporterFactory::getComponentAttributes;
 		vertexAttributeProvider = AttributedGraphExporterFactory::getComponentAttributes;
 		vertexIdProvider = AttributedVertex::getId;
@@ -54,7 +54,7 @@ public class AttributedGraphExporterFactory
 				.entrySet()
 				.stream()
 				.map(entry -> new AbstractMap.SimpleEntry<String, Attribute>(entry.getKey(),
-					new DefaultAttribute<String>(entry.getValue(), AttributeType.STRING)))
+					new DefaultAttribute<>(entry.getValue(), AttributeType.STRING)))
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 }

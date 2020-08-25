@@ -28,7 +28,7 @@ public class DefaultGraphDisplayComponentProvider extends ComponentProviderAdapt
 
 	static final String WINDOW_GROUP = "ProgramGraph";
 	private static final String WINDOW_MENU_GROUP_NAME = "Graph";
-	private DefaultGraphDisplay display;
+	private final DefaultGraphDisplay display;
 
 	DefaultGraphDisplayComponentProvider(DefaultGraphDisplay display, PluginTool pluginTool) {
 		super(pluginTool, "Graph", "DefaultGraphDisplay");

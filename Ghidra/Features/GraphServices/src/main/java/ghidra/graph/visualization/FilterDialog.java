@@ -41,7 +41,7 @@ public class FilterDialog extends DialogComponentProvider {
 	/**
 	 * A {@code List} (possibly empty) of filter buttons for vertices
 	 */
-	private List<? extends AbstractButton> vertexButtons;
+	private final List<? extends AbstractButton> vertexButtons;
 
 	/**
 	 * A {@code List} (possibly empty) of filter buttons for edges

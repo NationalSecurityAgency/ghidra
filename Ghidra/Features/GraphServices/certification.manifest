@@ -15,6 +15,7 @@ src/main/help/help/topics/GraphServices/GraphDisplay.htm||GHIDRA||||END|
 src/main/help/help/topics/GraphServices/GraphExport.htm||GHIDRA||||END|
 src/main/help/help/topics/GraphServices/images/DefaultGraphDisplay.png||GHIDRA||||END|
 src/main/help/help/topics/GraphServices/images/ExportDialog.png||GHIDRA||||END|
+src/main/resources/images/Lasso.png||GHIDRA||||END|
 src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/redspheregraph.png||GHIDRA||||END|
 src/main/resources/images/sat2.png||GHIDRA||||END|

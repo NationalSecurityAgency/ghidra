@@ -195,6 +195,11 @@ public abstract class Colors {
      */
     private static Color blue = new Color(100, 100, 255);
 
+	/**
+	 * a yellow that is darker than {@code Color.yellow}
+	 */
+	private static Color darkerYellow = new Color(225, 225, 0);
+
     /**
      * these are vertex or edge types that have defined colors
      * (the keys are the property values for the vertex/edge keys:
@@ -229,7 +234,7 @@ public abstract class Colors {
                     entry("Computed",Color.cyan),
                     entry("Indirection",Color.pink),
                     entry("Unconditional-Jump", Color.green),
-                    entry("Conditional-Jump", Color.yellow),
+                    entry("Conditional-Jump", darkerYellow),
                     entry("Terminator", WEB_COLOR_MAP.get("Purple")),
                     entry("Conditional-Return", WEB_COLOR_MAP.get("Purple"))
             );
