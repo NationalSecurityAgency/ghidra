@@ -91,6 +91,19 @@ public class OptionsDBTest extends AbstractGenericTest {
 		assertEquals(co, retrieved);
 	}
 
+	@Test
+	public void testRegisterTwiceDifferentValuesNoTransaction() {
+		// we want to test registering without a transaction and setup
+		// start one for convenience.
+		builder.getProgram().endTransaction(txID, false);
+
+		options.registerOption("bob", OptionType.FILE_TYPE, null, null, "Help description");
+		options.registerOption("bob", OptionType.FILE_TYPE, new File(""), null, "Help description");
+
+		// open a transaction back again so tear down will be happy
+		txID = builder.getProgram().startTransaction("Test");
+	}
+
 	//-------------------------------
 	@Test
 	public void testGettingDefaultWhenNoOptionsExist() {
@@ -110,7 +123,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testDefaultsNotSaved() {
-		options.registerOption("Foo", 5, null, null);
+		options.registerOption("Foo", 5, null, "description");
 		assertTrue(options.contains("Foo"));
 		assertEquals(5, options.getInt("Foo", 0));
 		saveAndRestoreOptions();
@@ -199,8 +212,6 @@ public class OptionsDBTest extends AbstractGenericTest {
 		Date date = new Date();
 		options.setDate("Foo", date);
 		saveAndRestoreOptions();
-		System.out.println("Date getTime = " + date.getTime());
-		System.out.println("restored getTime = " + options.getDate("Foo", null).getTime());
 		assertEquals(date, options.getDate("Foo", new Date()));
 	}
 
@@ -269,7 +280,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDefaultValue() {
-		options.registerOption("Foo", Color.RED, null, null);
+		options.registerOption("Foo", Color.RED, null, "description");
 		options.setColor("Foo", Color.BLUE);
 		assertEquals(Color.BLUE, options.getColor("Foo", null));
 		assertEquals(Color.RED, options.getDefaultValue("Foo"));
@@ -278,7 +289,8 @@ public class OptionsDBTest extends AbstractGenericTest {
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("color", OptionType.COLOR_TYPE, Color.RED, null, null, editor);
+		options.registerOption("color", OptionType.COLOR_TYPE, Color.RED, null, "description",
+			editor);
 		assertEquals(editor, options.getRegisteredPropertyEditor("color"));
 
 	}
@@ -286,13 +298,13 @@ public class OptionsDBTest extends AbstractGenericTest {
 	@Test
 	public void testGetHelpLocation() {
 		HelpLocation helpLocation = new HelpLocation("topic", "anchor");
-		options.registerOption("Foo", 3, helpLocation, null);
+		options.registerOption("Foo", 3, helpLocation, "description");
 		assertEquals(helpLocation, options.getHelpLocation("Foo"));
 	}
 
 	@Test
 	public void testRestoreOptionValue() {
-		options.registerOption("Foo", Color.RED, null, null);
+		options.registerOption("Foo", Color.RED, null, "description");
 		options.setColor("Foo", Color.BLUE);
 		assertEquals(Color.BLUE, options.getColor("Foo", null));
 		options.restoreDefaultValue("Foo");
@@ -360,16 +372,16 @@ public class OptionsDBTest extends AbstractGenericTest {
 		assertTrue(!options.isRegistered("Bar"));
 
 		assertTrue(!options.isRegistered("aaa"));
-		options.registerOption("aaa", 3, null, null);
+		options.registerOption("aaa", 3, null, "description");
 		assertTrue(options.isRegistered("aaa"));
 
 	}
 
 	@Test
 	public void testRestoreDefaults() {
-		options.registerOption("Foo", 10, null, null);
+		options.registerOption("Foo", 10, null, "description");
 		options.setInt("Foo", 2);
-		options.registerOption("Bar", 100, null, null);
+		options.registerOption("Bar", 100, null, "description");
 		options.setInt("Bar", 1);
 		options.restoreDefaultValues();
 		assertEquals(10, options.getInt("Foo", 0));
@@ -485,7 +497,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDefaultValueAsString() {
-		options.registerOption("foo", 7, null, null);
+		options.registerOption("foo", 7, null, "description");
 		options.setInt("foo", 5);
 		assertEquals("7", options.getDefaultValueAsString("foo"));
 		assertNull(options.getDefaultValueAsString("bar"));
@@ -494,7 +506,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 	@Test
 	public void testResgisteringOptionWithNullValue() {
 		try {
-			options.registerOption("Foo", null, null, null);
+			options.registerOption("Foo", null, null, "description");
 			Assert.fail("Should not be able to register an options with a default value");
 		}
 		catch (IllegalArgumentException e) {
@@ -505,7 +517,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 	@Test
 	public void testRegisteringOptionWithUnsupportedType() {
 		try {
-			options.registerOption("Foo", new ArrayList<String>(), null, null);
+			options.registerOption("Foo", new ArrayList<String>(), null, "description");
 			Assert.fail(
 				"Should not be able to register an options with an ArrayList as a default value");
 		}
@@ -517,7 +529,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 	@Test
 	public void testRegisteringOptionWithTypeNone() {
 		try {
-			options.registerOption("Foo", OptionType.NO_TYPE, null, null, null);
+			options.registerOption("Foo", OptionType.NO_TYPE, null, null, "description");
 			Assert.fail("Should not be able to register an options of type NONE");
 		}
 		catch (IllegalArgumentException e) {
@@ -538,6 +550,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testSettingValueToNull() {
+		options.registerOption("Bar", Color.BLUE, null, "description");
 		options.setColor("Bar", Color.red);
 		options.setColor("Bar", null);
 		assertEquals(null, options.getColor("Bar", null));

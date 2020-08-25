@@ -167,7 +167,10 @@ public abstract class AbstractOptions implements Options {
 		valueMap.put(optionName, newOption);
 	}
 
-	private void copyCurrentValue(Option currentOption, Option newOption) {
+	protected void copyCurrentValue(Option currentOption, Option newOption) {
+		if (currentOption.isDefault()) {
+			return;  // don't copy the current value if it is just the old default.
+		}
 
 		Object currentValue = currentOption.getCurrentValue();
 		OptionType type = currentOption.getOptionType();

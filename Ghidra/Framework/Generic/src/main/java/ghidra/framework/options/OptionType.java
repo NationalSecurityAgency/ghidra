@@ -51,10 +51,16 @@ public enum OptionType {
 	private StringAdapter stringAdapter;
 
 	public Object convertStringToObject(String string) {
+		if (string == null) {
+			return null;
+		}
 		return stringAdapter.stringToObject(string);
 	}
 
 	public String convertObjectToString(Object object) {
+		if (object == null) {
+			return null;
+		}
 		return stringAdapter.objectToString(object);
 	}
 
