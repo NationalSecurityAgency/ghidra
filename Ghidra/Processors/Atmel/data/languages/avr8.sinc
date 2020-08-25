@@ -4,12 +4,12 @@
 #  - 0x20-0xff as IO memory, rather than 0x20-0x5f
 #
 # This is a ATMega64 with a 64k sized memory
-# Other parts avaible have a 4M sized memory so that stack 
+# Other parts available have a 4M sized memory so that stack 
 # pointer would be three bytes instead
 
 define endian=little;
 
-# Declaring space to be wordsized... alternative is to do byte sized
+# Declaring space to be word-sized... alternative is to do byte sized
 define alignment=2;
 
 # Force fusion of two byte operations in a row by decoding as words
@@ -57,7 +57,7 @@ define $(REGISTER_SPACE) offset=0x10 size=4 [
 	R19R18R17R16 R23R22R21R20
 ];
 
-# Techinically, the stack pointer is in the i/o space so should be addressable with the
+# Technically, the stack pointer is in the i/o space so should be addressable with the
 # rest of the i/o registers. However, Ghidra does not react well to the stack pointer
 # being indirectly addressable so we're making an exception.
 define register offset=0x3D size=1 [ SPL SPH ];
