@@ -18,6 +18,7 @@ package ghidra.graph.visualization;
 import com.google.common.base.Splitter;
 import ghidra.service.graph.Attributed;
 import ghidra.service.graph.AttributedEdge;
+import org.apache.commons.text.StringEscapeUtils;
 import org.jungrapht.visualization.util.ShapeFactory;
 
 import java.awt.BasicStroke;
@@ -129,7 +130,7 @@ abstract class ProgramGraphFunctions {
 	public static String getLabel(Attributed attributed) {
 		Map<String, String> map = attributed.getAttributeMap();
 		if (map.get("Code") != null) {
-			String code = map.get("Code");
+			String code = StringEscapeUtils.escapeHtml4(map.get("Code"));
 			return "<html>" + String.join("<p>", Splitter.on('\n').split(code));
 		}
 		return map.get("Name");

@@ -20,7 +20,7 @@ enum GraphExportFormat {
 	DIMACS("col"),
 	DOT("gv"),
 	GML("gml"),
-	GRAPHML("graphhml"),
+	GRAPHML("graphml"),
 	JSON("json"),
 	LEMON("lgf"),
 	MATRIX("g"),

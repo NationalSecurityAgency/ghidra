@@ -19,7 +19,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ghidra.app.cmd.label.AddLabelCmd;
+import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.events.*;
+import ghidra.framework.cmd.Command;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
@@ -159,6 +162,21 @@ public abstract class AddressBasedGraphDisplayListener
 
 	private boolean isMyProgram(Program p) {
 		return p == program;
+	}
+
+	@Override
+	public boolean updateVertexName(String vertexId, String oldName, String newName) {
+		Address address = getAddressForVertexId(vertexId);
+		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
+
+		Command command;
+		if (symbol != null) {
+			command = new RenameLabelCmd(address, oldName, newName, SourceType.USER_DEFINED);
+		}
+		else {
+			command = new AddLabelCmd(address, newName, SourceType.USER_DEFINED);
+		}
+		return tool.execute(command, program);
 	}
 
 	@Override

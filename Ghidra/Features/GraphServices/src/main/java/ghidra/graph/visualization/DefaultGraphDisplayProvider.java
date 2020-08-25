@@ -28,7 +28,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 
-	private Set<DefaultGraphDisplay> displays = new HashSet<>();
+	private final Set<DefaultGraphDisplay> displays = new HashSet<>();
 	private PluginTool pluginTool;
 	private Options options;
 	private int displayCounter;

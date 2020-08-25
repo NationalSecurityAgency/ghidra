@@ -34,7 +34,7 @@ import ghidra.util.task.TaskMonitor;
  */
 class ExportAttributedGraphDisplay implements GraphDisplay {
 
-	private PluginTool pluginTool;
+	private final PluginTool pluginTool;
 	private String description;
 
 	/**

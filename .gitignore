@@ -69,3 +69,16 @@ Release
 */*/*/*/src-gen
 */*/*/*/model/generated
 */*/*/*/test-bin
+
+# Ignore Intellij metadata
+**/*.iml
+**/.idea
+*.iml
+.idea
+
+# Ignore gradle wrapper files
+gradle/wrapper
+gradlew
+gradlew.*
+
+

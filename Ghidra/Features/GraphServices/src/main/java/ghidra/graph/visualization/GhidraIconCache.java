@@ -30,19 +30,18 @@ import ghidra.service.graph.AttributedVertex;
 
 public class GhidraIconCache {
 
-	private static final int DEFAULT_STROKE_THICKNESS = 8;
+	private static final int DEFAULT_STROKE_THICKNESS = 12;
 	private static final int DEFAULT_FONT_SIZE = 12;
 	private static final String DEFAULT_FONT_NAME = "Dialog";
-	private static final int DEFAULT_MARGIN_BORDER_SIZE = 4;
-	private static final float LABEL_TO_ICON_PROPORTION_WAG = 1.4f;
-	private static final double SQRT_2 = Math.sqrt(2.0);
-	private JLabel rendererLabel = new JLabel();
-	private Map<RenderingHints.Key, Object> renderingHints = new HashMap<>();
+	private static final int DEFAULT_MARGIN_BORDER_SIZE = 8;
+	private static final float LABEL_TO_ICON_PROPORTION = 1.1f;
+	private final JLabel rendererLabel = new JLabel();
+	private final Map<RenderingHints.Key, Object> renderingHints = new HashMap<>();
 	private int strokeThickness = DEFAULT_STROKE_THICKNESS;
 
-	private Map<AttributedVertex, Icon> map = new ConcurrentHashMap<>();
+	private final Map<AttributedVertex, Icon> map = new ConcurrentHashMap<>();
 
-	private IconShape.Function iconShapeFunction = new IconShape.Function();
+	private final IconShape.Function iconShapeFunction = new IconShape.Function();
 
 	Icon get(AttributedVertex vertex) {
 
@@ -64,7 +63,6 @@ public class GhidraIconCache {
 
 	private Icon createIcon(AttributedVertex vertex) {
 		rendererLabel.setText(ProgramGraphFunctions.getLabel(vertex));
-
 		rendererLabel.setFont(new Font(DEFAULT_FONT_NAME, Font.BOLD, DEFAULT_FONT_SIZE));
 		rendererLabel.setForeground(Color.black);
 		rendererLabel.setBackground(Color.white);
@@ -102,15 +100,15 @@ public class GhidraIconCache {
 			// triangles have a non-zero +/- yoffset instead of centering the label
 			case TRIANGLE:
 				// scale the vertex shape
-				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth() * LABEL_TO_ICON_PROPORTION_WAG;
-				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * LABEL_TO_ICON_PROPORTION_WAG;
+				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth() * LABEL_TO_ICON_PROPORTION;
+				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * LABEL_TO_ICON_PROPORTION;
 				vertexShape = AffineTransform.getScaleInstance(scalex, scaley)
 					.createTransformedShape(vertexShape);
 				offset = -(int) ((vertexShape.getBounds().getHeight() - labelSize.getHeight()) / 2);
 				break;
 			case INVERTED_TRIANGLE:
-				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth() * LABEL_TO_ICON_PROPORTION_WAG;
-				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * LABEL_TO_ICON_PROPORTION_WAG;
+				scalex = labelSize.getWidth() / vertexShape.getBounds().getWidth() * LABEL_TO_ICON_PROPORTION;
+				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * LABEL_TO_ICON_PROPORTION;
 				vertexShape = AffineTransform.getScaleInstance(scalex, scaley)
 					.createTransformedShape(vertexShape);
 				offset = (int) ((vertexShape.getBounds().getHeight() - labelSize.getHeight()) / 2);
@@ -128,8 +126,8 @@ public class GhidraIconCache {
 			case DIAMOND:
 			default: // ELLIPSE
 				scalex =
-					labelSize.getWidth() / vertexShape.getBounds().getWidth() * SQRT_2;
-				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * 2;
+					labelSize.getWidth() / vertexShape.getBounds().getWidth() * 1.1;
+				scaley = labelSize.getHeight() / vertexShape.getBounds().getHeight() * 1.1;
 				vertexShape = AffineTransform.getScaleInstance(scalex, scaley)
 					.createTransformedShape(vertexShape);
 				break;
@@ -163,6 +161,21 @@ public class GhidraIconCache {
 		graphics.setPaint(Color.black);
 		graphics.setTransform(offsetTransform);
 		label.paint(graphics);
+		// draw the shape again, but lighter (on top of the label)
+		offsetTransform =
+				AffineTransform.getTranslateInstance(strokeThickness + vertexBounds.width / 2.0,
+						strokeThickness + vertexBounds.height / 2.0);
+		offsetTransform.preConcatenate(graphicsTransform);
+		graphics.setTransform(offsetTransform);
+		Paint paint = Colors.getColor(vertex);
+		if (paint instanceof Color) {
+			Color color = (Color)paint;
+			Color transparent = new Color(color.getRed(), color.getGreen(), color.getBlue(), 50);
+			graphics.setPaint(transparent);
+			graphics.setStroke(new BasicStroke(strokeThickness));
+			graphics.draw(vertexShape);
+		}
+
 		graphics.setTransform(graphicsTransform); // restore the original transform
 		graphics.dispose();
 		return new ImageIcon(bufferedImage);
@@ -170,5 +183,14 @@ public class GhidraIconCache {
 
 	public void clear() {
 		map.clear();
+	}
+
+	/**
+	 * evict the passed vertex from the cache so that it will be recomputed
+	 * with presumably changed values
+	 * @param vertex to remove from the cache
+	 */
+	public void evict(AttributedVertex vertex) {
+		map.remove(vertex);
 	}
 }

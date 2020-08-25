@@ -15,6 +15,8 @@
  */
 package ghidra.service.graph;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.util.Map;
 
 /**
@@ -74,6 +76,10 @@ public class AttributedVertex extends Attributed {
 		return getName() + " (" + id + ")";
 	}
 
+	public void clearCache() {
+		this.htmlString = null;
+	}
+
 	/**
 	 * parse (one time) then cache the attributes to html
 	 * @return the html string
@@ -84,7 +90,7 @@ public class AttributedVertex extends Attributed {
 			for (Map.Entry<String, String> entry : entrySet()) {
 				buf.append(entry.getKey());
 				buf.append(":");
-				buf.append(entry.getValue());
+				buf.append(StringEscapeUtils.escapeHtml4(entry.getValue()));
 				buf.append("<br>");
 			}
 			htmlString = buf.toString();

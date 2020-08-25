@@ -26,14 +26,14 @@ import ghidra.graph.job.AbstractAnimatorJob;
 import ghidra.service.graph.AttributedEdge;
 import ghidra.service.graph.AttributedVertex;
 
-public class CenterAnimation extends AbstractAnimatorJob {
+public class CenterAnimation<V, E> extends AbstractAnimatorJob {
 	protected int duration = 1000;
-	private Point2D oldPoint;
-	private Point2D newPoint;
-	private Point2D lastPoint = new Point2D.Double();
-	private VisualizationViewer<AttributedVertex, AttributedEdge> viewer;
+	private final Point2D oldPoint;
+	private final Point2D newPoint;
+	private final Point2D lastPoint = new Point2D.Double();
+	private final VisualizationViewer<V, E> viewer;
 
-	public CenterAnimation(VisualizationViewer<AttributedVertex, AttributedEdge> viewer,
+	public CenterAnimation(VisualizationViewer<V, E> viewer,
 			Point2D oldPoint, Point2D newPoint) {
 		this.viewer = viewer;
 		this.oldPoint = oldPoint;

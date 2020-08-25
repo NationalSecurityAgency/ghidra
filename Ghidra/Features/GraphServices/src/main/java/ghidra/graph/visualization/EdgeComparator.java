@@ -22,7 +22,7 @@ import ghidra.service.graph.AttributedEdge;
 import ghidra.service.graph.AttributedGraph;
 
 public class EdgeComparator implements Comparator<AttributedEdge> {
-	private Set<AttributedEdge> prioritized;
+	private final Set<AttributedEdge> prioritized;
 
 	public EdgeComparator(AttributedGraph graph, String attributeName, String value) {
 		prioritized = graph.edgeSet()
