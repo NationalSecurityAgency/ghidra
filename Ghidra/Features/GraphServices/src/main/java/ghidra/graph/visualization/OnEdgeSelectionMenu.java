@@ -15,15 +15,14 @@
  */
 package ghidra.graph.visualization;
 
-import ghidra.service.graph.GraphDisplayListener;
+import java.util.function.Function;
+
+import javax.swing.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jungrapht.visualization.VisualizationViewer;
 
-import javax.swing.AbstractButton;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
-import java.util.function.Function;
+import ghidra.service.graph.GraphDisplayListener;
 
 /**
  * a Popup menu to allow actions relative to a particular vertex.
@@ -33,36 +32,38 @@ import java.util.function.Function;
  *     <li>select/deselect the vertex
  *     <li>rename the selected vertex (may modify the value in the listing)
  *     <li>re-label the selected vertex locally (affects only the local visual display)
+ * @param <V> vertex
+ * @param <E> edge
  */
-public class OnVertexSelectionMenu<V, E> extends JPopupMenu {
+public class OnEdgeSelectionMenu<V, E> extends JPopupMenu {
 
-    public OnVertexSelectionMenu(VisualizationViewer<V, E> visualizationViewer,
-                                 GraphDisplayListener graphDisplayListener,
-                                 Function<V, String> vertexIdFunction,
-                                 Function<V, String> vertexNameFunction,
-                                 V vertex) {
-        AbstractButton selectButton = new JMenuItem("Select");
-        AbstractButton deselectButton = new JMenuItem("Deselect");
-        AbstractButton renameAttributeButton = new JMenuItem("Rename vertex");
-        renameAttributeButton.addActionListener(evt -> {
-                    String newName = JOptionPane.showInputDialog("New Name Attribute");
-                    if (!StringUtils.isEmpty(newName)) {
-                        graphDisplayListener.updateVertexName(vertexIdFunction.apply(vertex),
-                                vertexNameFunction.apply(vertex), newName);
-                    }
-                }
-        );
-        selectButton.addActionListener(evt -> {
-            if (vertex != null) {
-                visualizationViewer.getSelectedVertexState().select(vertex);
-            }
-        });
-        deselectButton.addActionListener(evt -> {
-            if (vertex != null) {
-                visualizationViewer.getSelectedVertexState().deselect(vertex);
-            }
-        });
-        add(visualizationViewer.getSelectedVertexState().isSelected(vertex) ? deselectButton : selectButton);
-        add(renameAttributeButton);
-    }
+	public OnEdgeSelectionMenu(VisualizationViewer<V, E> visualizationViewer,
+			GraphDisplayListener graphDisplayListener,
+			Function<V, String> vertexIdFunction,
+			Function<V, String> vertexNameFunction,
+			V vertex) {
+		AbstractButton selectButton = new JMenuItem("Select");
+		AbstractButton deselectButton = new JMenuItem("Deselect");
+		AbstractButton renameAttributeButton = new JMenuItem("Rename vertex");
+		renameAttributeButton.addActionListener(evt -> {
+			String newName = JOptionPane.showInputDialog("New Name Attribute");
+			if (!StringUtils.isEmpty(newName)) {
+				graphDisplayListener.updateVertexName(vertexIdFunction.apply(vertex),
+					vertexNameFunction.apply(vertex), newName);
+			}
+		});
+		selectButton.addActionListener(evt -> {
+			if (vertex != null) {
+				visualizationViewer.getSelectedVertexState().select(vertex);
+			}
+		});
+		deselectButton.addActionListener(evt -> {
+			if (vertex != null) {
+				visualizationViewer.getSelectedVertexState().deselect(vertex);
+			}
+		});
+		add(visualizationViewer.getSelectedVertexState().isSelected(vertex) ? deselectButton
+				: selectButton);
+		add(renameAttributeButton);
+	}
 }
