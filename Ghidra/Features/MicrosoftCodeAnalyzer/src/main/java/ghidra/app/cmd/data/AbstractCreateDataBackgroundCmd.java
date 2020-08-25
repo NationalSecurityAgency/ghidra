@@ -167,7 +167,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 				return false;
 			}
 
-			createData();
+			boolean didCreate = createData();
 
 			boolean success = true;
 
@@ -183,7 +183,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			}
 
 			// If following data when applying, create any data referred to by the data just created.
-			if (applyOptions.shouldFollowData() && !createAssociatedData()) {
+			if (didCreate && applyOptions.shouldFollowData() && !createAssociatedData()) {
 				success = false;
 			}
 			setStatusMsg(getName() + " completed successfully!");
@@ -200,10 +200,11 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * Creates data at this command's address using the data type obtained from the model.
 	 * <br>If you need to create data other than by using the data type returned from getDataType(),
 	 * you should override this method.
+	 * @return true if had to create, false otherwise
 	 * @throws CodeUnitInsertionException if the data can't be created.
 	 * @throws CancelledException if the user cancels this task.
 	 */
-	protected void createData() throws CodeUnitInsertionException, CancelledException {
+	protected boolean createData() throws CodeUnitInsertionException, CancelledException {
 
 		Program program = model.getProgram();
 		Memory memory = program.getMemory();
@@ -230,13 +231,15 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 
 		// Is the data type already applied at the address?
 		if (matchingDataExists(dt, program, address)) {
-			return;
+			return false;
 		}
 
 		monitor.checkCanceled();
 
 		// Create data at the address using the datatype.
 		DataUtilities.createData(program, address, dt, dt.getLength(), false, getClearDataMode());
+
+		return true;
 	}
 
 	/**

@@ -90,11 +90,12 @@ public class CreateTypeDescriptorBackgroundCmd
 	 * as its last component ( char[0]  name ).  The string data associated with this flexible char array will
 	 * be applied as a sized character array immediately following the structure whose size does not include
 	 * the char array bytes.
+	 * @return true if the data type needed to be created
 	 * @throws CodeUnitInsertionException
 	 * @throws CancelledException
 	 */
 	@Override
-	protected void createData() throws CodeUnitInsertionException, CancelledException {
+	protected boolean createData() throws CodeUnitInsertionException, CancelledException {
 		super.createData(); // create the TypeDesciptor structure
 
 		// Determine the size of the flexible char array storage and create  properly sized array
@@ -116,6 +117,7 @@ public class CreateTypeDescriptorBackgroundCmd
 			Msg.error(this, "Failed to create TypeDescriptor name at " + arrayAddr);
 		}
 
+		return true;
 	}
 
 	@Override
@@ -138,14 +140,14 @@ public class CreateTypeDescriptorBackgroundCmd
 		String prefix = demangledName + " ";
 
 		// Plate Comment
-		EHDataTypeUtilities.createPlateCommentIfNeeded(program, prefix, RTTI_0_NAME, null, getDataAddress(),
-			applyOptions);
+		EHDataTypeUtilities.createPlateCommentIfNeeded(program, prefix, RTTI_0_NAME, null,
+			getDataAddress(), applyOptions);
 
 		monitor.checkCanceled();
 
 		// Label
-		EHDataTypeUtilities.createSymbolIfNeeded(program, prefix, RTTI_0_NAME, null, getDataAddress(),
-			applyOptions);
+		EHDataTypeUtilities.createSymbolIfNeeded(program, prefix, RTTI_0_NAME, null,
+			getDataAddress(), applyOptions);
 
 		return true;
 	}
