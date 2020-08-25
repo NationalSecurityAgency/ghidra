@@ -76,7 +76,7 @@ public class GhidraScriptUtil {
 			bundleHost.startFramework();
 		}
 		catch (OSGiException | IOException e) {
-			Msg.error(GhidraScript.class, "Failed to initialize BundleHost", e);
+			Msg.error(GhidraScriptUtil.class, "Failed to initialize BundleHost", e);
 		}
 	}
 
@@ -128,11 +128,19 @@ public class GhidraScriptUtil {
 	 * @return the source directory if found, or null if not
 	 */
 	public static ResourceFile findSourceDirectoryContaining(ResourceFile sourceFile) {
-		String sourcePath = sourceFile.getAbsolutePath();
-		for (ResourceFile sourceDir : getScriptSourceDirectories()) {
-			if (sourcePath.startsWith(sourceDir.getAbsolutePath() + File.separatorChar)) {
-				return sourceDir;
+		String sourcePath;
+		try {
+			sourcePath = sourceFile.getCanonicalPath();
+			for (ResourceFile sourceDir : getScriptSourceDirectories()) {
+				if (sourcePath.startsWith(sourceDir.getCanonicalPath() + File.separatorChar)) {
+					return sourceDir;
+				}
 			}
+		}
+		catch (IOException e) {
+			Msg.error(GhidraScriptUtil.class,
+				"Failed to find script in any script directory: " + sourceFile.toString(),
+				e);
 		}
 		return null;
 	}
@@ -219,7 +227,8 @@ public class GhidraScriptUtil {
 			return false;
 		}
 		catch (IOException e) {
-			Msg.error(null, "Unexpected Exception: " + e.getMessage(), e);
+			Msg.error(GhidraScriptUtil.class,
+				"Failed to find file in system directories: " + file.toString(), e);
 			return true;
 		}
 	}
