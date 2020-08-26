@@ -121,7 +121,11 @@ class ScriptAction extends DockingAction {
 	}
 
 	void refresh() {
-		ScriptInfo info = infoManager.getExistingScriptInfo(script);
+		/* this is called during script manager initial config
+		 * before any other access to script info, so we expect to
+		 * create a new ScriptInfo with the next call.
+		 */
+		ScriptInfo info = infoManager.getScriptInfo(script);
 		KeyStroke stroke = info.getKeyBinding();
 		if (!isUserDefinedKeyBinding) {
 			setKeyBindingData(new KeyBindingData(stroke));
