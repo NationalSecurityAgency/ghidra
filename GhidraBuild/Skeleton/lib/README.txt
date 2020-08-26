@@ -1,3 +1,3 @@
 The "lib" directory is intended to hold Jar files which this module
-is dependent upon.  This directory may be eliminated from a specific
-module if no other Jar files are needed.
+is dependent upon. If you use the copyDependencies task, this directory
+is automatically managed by Gradle and should not be modified.
