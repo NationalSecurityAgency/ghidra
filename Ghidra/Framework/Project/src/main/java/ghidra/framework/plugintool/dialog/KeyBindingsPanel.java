@@ -126,6 +126,12 @@ public class KeyBindingsPanel extends JPanel {
 		options.setKeyStroke(fullActionName, newKeyStroke);
 		originalValues.put(fullActionName, newKeyStroke);
 		keyStrokesByFullName.put(fullActionName, newKeyStroke);
+
+		List<DockingActionIf> actions = actionsByFullName.get(fullActionName);
+		for (DockingActionIf action : actions) {
+			action.setUnvalidatedKeyBindingData(new KeyBindingData(newKeyStroke));
+		}
+
 	}
 
 	public void cancel() {

@@ -30,7 +30,6 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.ComponentProvider;
 import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.options.editor.OptionsDialog;
@@ -44,7 +43,6 @@ import generic.io.NullWriter;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.data.DataPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.equate.EquateTablePlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
 import ghidra.app.plugin.core.memory.MemoryMapPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
@@ -113,21 +111,8 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		tool.addPlugin(DataTypeManagerPlugin.class.getName());
 		tool.addPlugin(DataPlugin.class.getName());
 		tool.addPlugin(FunctionPlugin.class.getName());
-		tool.addPlugin(EquateTablePlugin.class.getName());
-
-		// Unusual Code: Some actions don't get created until the table is shown (like GTable
-		// actions). Show a provider that has a table so that the actions will get correctly
-		// loaded into the key bindings panel
-		showTableProvider();
 
 		debug("two");
-	}
-
-	private void showTableProvider() {
-		EquateTablePlugin eqp = env.getPlugin(EquateTablePlugin.class);
-		ComponentProvider provider = (ComponentProvider) getInstanceField("provider", eqp);
-		env.showTool();
-		tool.showComponentProvider(provider, true);
 	}
 
 	private void debug(String message) {
@@ -406,7 +391,6 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void setKeyBindingsUpDialog() throws Exception {
 		env.showTool();
-		showTableProvider();
 		setKeyBindingsUpDialog(tool);
 	}
 
