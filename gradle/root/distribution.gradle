@@ -17,7 +17,19 @@ def PROJECT_DIR = file (rootProject.projectDir.absolutePath)
 ext.DISTRIBUTION_DIR = file("$buildDir/dist")
 ext.ZIP_NAME_PREFIX = "${rootProject.DISTRO_PREFIX}_${rootProject.BUILD_DATE_SHORT}"
 ext.ZIP_DIR_PREFIX = "${rootProject.DISTRO_PREFIX}"
+ext.ALL_REPOS = ['ghidra']
 
+// Add any additional repos to the ALL_REPOS array
+File extensionsList = file("ghidra.repos.config")
+if (extensionsList.isFile()) {
+	extensionsList.eachLine { line ->
+		line = line.trim()
+		if (line == "" || line.startsWith("#")) {
+			return // Skip just this one
+		}
+		ALL_REPOS += "$line"
+	}
+}
 
 FileTree javadocFiles = fileTree (rootProject.projectDir.toString()) {
 	include '**/Framework/**/*.java'
@@ -31,6 +43,56 @@ FileTree javadocFiles = fileTree (rootProject.projectDir.toString()) {
 	exclude '**/pcodeCPort/**'  // not intended for general consumption
 }
 ext.ghidraPath = files()
+
+/********************************************************************************
+ * Local Methods
+ *********************************************************************************/
+ 
+/** 
+ * Returns the git commit version of the given git repository. If the
+ * path is invalid (doesn't exist or isn't in a git repository), an empty
+ * string will be returned.
+ */
+def getGitRev(repoPath) { 
+        
+   println("getting git commit for $repoPath")
+   
+   // If the path doesn't exist, the exec command will fail before it can
+   // even run the 'git' command, so short-circuit the whole thing here.
+   if (!new File(repoPath).exists()) {
+      return ""
+   }
+   
+   // Check to see if the given repo is a git repository. No need to exec
+   // if it isn't.
+   if (!new File(repoPath + "/.git").exists()) {
+      return ""
+   }
+          
+   // Exec the git command to get the commit hash. Note the try/catch - this is
+   // necessary to catch catastrophic errors on the exec command (eg: 
+   // if the git command is not available). This is necessary because the 
+   // 'ignoreExitValue' attribute only applies to the return value of the 
+   // command being executed (eg: git); it doesn't apply to the return value of
+   // the exec command itself.
+   def stdout = new ByteArrayOutputStream()
+   try {
+	   exec {
+	      ignoreExitValue = true
+	      workingDir repoPath
+	      commandLine 'git', 'rev-parse', 'HEAD'
+	      standardOutput = stdout
+	   }
+   }
+   catch (Exception e) {
+      println("ERROR: gradle exec failed to run 'git rev-parse': is git installed on this system?")
+   }
+      
+   // Return the commit hash
+   println(stdout)
+   return stdout.toString().trim()
+}
+
 /*********************************************************************************
  * JAVADOCS - RAW
  *
@@ -155,6 +217,8 @@ task zipJavadocs(type: Zip) {
 	description "Zips javadocs for Ghidra API.  [gradle/root/distribution.gradle]"
 }
 
+
+
 /**********************************************************************************************
  *
  * Copies platform independent files to the distribution staging area in preparation
@@ -167,7 +231,6 @@ task assembleDistribution (type: Copy) {
 	description "Copies core files/folders to the distribution location."
 	destinationDir file(DISTRIBUTION_DIR.getPath() + "/" +  ZIP_DIR_PREFIX)
 
-
 	// Make sure that we don't try to copy the same file with the same path.
 	duplicatesStrategy 'exclude'
 			
@@ -179,7 +242,7 @@ task assembleDistribution (type: Copy) {
 	exclude "**/.vs/**"
 	exclude "**/*.vcxproj.user"
 	exclude "**/.settings/**"
-	
+		
 	/////////////////////////////
 	// COPY all GPL support files
 	// (modules with build.gradle handled separately)
@@ -230,21 +293,36 @@ task assembleDistribution (type: Copy) {
 	/////////////////
 	from (ROOT_PROJECT_DIR + "/Ghidra/application.properties") {
 		def buildDateFile = file("$buildDir/build_date.properties")
+		def gitRevFile = file("$buildDir/git-rev.properties")
 		doFirst {
 			file("$buildDir").mkdirs()
+				
+			// Get the build dates and add to the build file
 			buildDateFile.text = ""
 			if (rootProject.BUILD_DATES_NEEDED) {
 				buildDateFile.text += "application.build.date=" + rootProject.BUILD_DATE + "\n"
 				buildDateFile.text += "application.build.date.short=" + rootProject.BUILD_DATE_SHORT + "\n"
 			}
+				
+			// Get the git revisions and add to the git file
+			gitRevFile.text = ""
+			if (rootProject.GIT_REVS_NEEDED) {
+				ALL_REPOS.each { 
+					def rev = getGitRev(ROOT_PROJECT_DIR + "/../${it}")
+					gitRevFile.text += "application.revision.${it}=" + "$rev" + "\n"
+				}
+			}
 		}
 		doLast {
 			delete buildDateFile
+			delete gitRevFile
 		}
 		into "Ghidra"
+			
+		// Add the build and git info to the application.properties file
 		filter (ConcatFilter, prepend: buildDateFile)
+		filter (ConcatFilter, prepend: gitRevFile)
 	}
-
 	
 	/////////////////
 	// JAVADOCS

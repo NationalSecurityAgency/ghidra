@@ -2,7 +2,7 @@
 /*****************************************************************************************
  *
  * Reads the Ghidra/application.properties file and sets properties for the version, 
- *  		release name, and distro prefix (ghidira_<version>)
+ *  		release name, and distro prefix (ghidra_<version>)
  *
  *****************************************************************************************/
 def ghidraProps = new Properties()
@@ -27,4 +27,13 @@ file("Ghidra/application.properties").withReader { reader ->
 		project.ext.BUILD_DATE_SHORT = getCurrentDate()
 		project.ext.BUILD_DATES_NEEDED = true
 	}
+	
+	// If the properties contain an entry for the git revision, then it
+	// must have been set by the extractor, so don't change it. If not, we will
+	// need to set it in the assembleDistribution task
+	project.ext.GIT_REV = ghidraProps.getProperty('application.revision.ghidra')
+	project.ext.GIT_REVS_NEEDED = false;
+	if (GIT_REV == null) {
+        project.ext.GIT_REVS_NEEDED = true
+    }
 }
