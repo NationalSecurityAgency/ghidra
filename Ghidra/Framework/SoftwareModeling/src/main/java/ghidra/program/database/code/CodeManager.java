@@ -2883,14 +2883,14 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
-	 * Creates the symbol and adds references for the moved instruction.
+	 * Updates the default references for a new or updated instruction.
 	 */
 	private void addReferencesForInstruction(InstructionDB inst) {
 
 		List<Reference> oldRefList = null;
 		if (redisassemblyMode) {
 			for (Reference ref : refManager.getReferencesFrom(inst.getMinAddress())) {
-				if (ref.getSource() != SourceType.DEFAULT) {
+				if (ref.getSource() != SourceType.DEFAULT || !ref.isMemoryReference()) {
 					continue;
 				}
 				if (oldRefList == null) {
@@ -2912,32 +2912,47 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 			//  not any addresses that are added by the user.
 			int refCnt = 0;
 
+			Reference operandPrimaryRef = null;
+
 			// First look through the pieces of the operand to find the addresses
 			ArrayList<Object> opList = prototype.getOpRepresentationList(opIndex, inst);
 			for (Object obj : opList) {
 				if (obj instanceof Address) {
 					Address refAddr = (Address) obj;
 					++refCnt;
-					removeOldReference(oldRefList, refAddr, opIndex);
-					if (addOperandReference(inst, opIndex, flowAddrs, refAddr)) {
+					RefType refType =
+						getOperandMemoryReferenceType(inst, opIndex, flowAddrs, refAddr);
+					if (refType != null) {
+						operandPrimaryRef = addDefaultMemoryReferenceIfMissing(inst, opIndex,
+							refAddr, refType, oldRefList, operandPrimaryRef);
 						--remainingAddrs;
 					}
 				}
 			}
 			// If there are still more addresses on this operand, see if the whole operand has any
-			if (refCnt == 0 && remainingAddrs != 0) {
+			if (refCnt == 0 && remainingAddrs > 0) {
 				Address refAddr = prototype.getAddress(opIndex, inst);
 				if (refAddr != null) {
-					removeOldReference(oldRefList, refAddr, opIndex);
-					if (addOperandReference(inst, opIndex, flowAddrs, refAddr)) {
+					RefType refType =
+						getOperandMemoryReferenceType(inst, opIndex, flowAddrs, refAddr);
+					if (refType != null) {
+						operandPrimaryRef = addDefaultMemoryReferenceIfMissing(inst, opIndex,
+							refAddr, refType, oldRefList, operandPrimaryRef);
 						--remainingAddrs;
 					}
 				}
 			}
+
+			if (operandPrimaryRef != null && !operandPrimaryRef.isPrimary()) {
+				// ensure that we have a primary ref on the operand if one exists
+				refManager.setPrimary(operandPrimaryRef, true);
+			}
 		}
+
+		Reference mnemonicPrimaryRef = null;
+
 		for (Address flowAddr : flowAddrs) {
 			if (flowAddr != null && flowAddr.isMemoryAddress()) {
-				removeOldReference(oldRefList, flowAddr, Reference.MNEMONIC);
 				FlowType flowType = RefTypeFactory.getDefaultFlowType(inst, flowAddr, false);
 				if (flowType == null) {
 					flowType = RefType.INVALID;
@@ -2945,73 +2960,108 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				boolean isFallthrough =
 					(flowType.isJump() && flowAddr.equals(inst.getMaxAddress().next()));
 				if (!isFallthrough) {
-					refManager.addMemoryReference(inst.getMinAddress(), flowAddr, flowType,
-						SourceType.DEFAULT, Reference.MNEMONIC);
+					mnemonicPrimaryRef = addDefaultMemoryReferenceIfMissing(inst, Reference.MNEMONIC,
+						flowAddr, flowType, oldRefList, mnemonicPrimaryRef);
 				}
 			}
 		}
+
+		if (mnemonicPrimaryRef != null && !mnemonicPrimaryRef.isPrimary()) {
+			// ensure that we have a primary ref on the mnemonic if one exists
+			refManager.setPrimary(mnemonicPrimaryRef, true);
+		}
+
 		if (oldRefList != null && !oldRefList.isEmpty()) {
 			for (Reference ref : oldRefList) {
-				SourceType source = ref.getSource();
-				if (!ref.isMemoryReference() || source == SourceType.IMPORTED ||
-					source == SourceType.USER_DEFINED) {
-					continue;
-				}
-				if (source == SourceType.ANALYSIS) {
-					boolean hasReferencesFrom =
-						refManager.hasReferencesFrom(ref.getFromAddress(), ref.getOperandIndex());
-					if (!hasReferencesFrom) {
-						continue;
-					}
-					// TODO: what other kinds of references should we preserve?
-				}
 				refManager.delete(ref);
 			}
 		}
 	}
 
-	private void removeOldReference(List<Reference> oldRefList, Address toAddr, int opIndex) {
+	/**
+	 * Remove the specified reference is from oldRefList if present, otherwise add to instruction as a DEFAULT.
+	 * Return as preferred primary reference if it previously existed as a primary reference in oldRefList or
+	 * the specified operandPrimaryRef was null.
+	 * @param inst instruction to which references apply
+	 * @param opIndex operand to which reference applies
+	 * @param refAddr default reference to-address
+	 * @param refType default reference type
+	 * @param oldRefList list of old references which exist on instruction which have 
+	 * yet to be accounted for (may be null).
+	 * @param operandPrimaryRef current preferred primary reference for operand
+	 * @return updated preferred primary address for operand (i.e., operandPrimaryRef)
+	 */
+	private Reference addDefaultMemoryReferenceIfMissing(Instruction inst,
+			int opIndex, Address refAddr, RefType refType, List<Reference> oldRefList,
+			Reference operandPrimaryRef) {
+
+		Reference ref = removeOldReference(oldRefList, refAddr, opIndex, refType);
+		if (ref == null) {
+			ref = refManager.addMemoryReference(inst.getMinAddress(), refAddr, refType,
+				SourceType.DEFAULT, opIndex);
+			if (operandPrimaryRef == null) {
+				operandPrimaryRef = ref;
+			}
+		}
+		else if (ref.isPrimary()) {
+			operandPrimaryRef = ref;
+		}
+		return operandPrimaryRef;
+	}
+
+	/**
+	 * Remove matching DEFAULT memory reference from oldRefList
+	 * @param oldRefList list of existing DEFAULT memory references (may be null)
+	 * @param toAddr new reference desination address
+	 * @param opIndex new reference operand
+	 * @param refType new reference type
+	 * @return existing reference if it already exists in oldRefList, else null
+	 */
+	private Reference removeOldReference(List<Reference> oldRefList, Address toAddr, int opIndex,
+			RefType refType) {
 		if (oldRefList == null) {
-			return;
+			return null;
 		}
 		Iterator<Reference> iterator = oldRefList.iterator();
 		while (iterator.hasNext()) {
 			Reference ref = iterator.next();
-			if (toAddr.equals(ref.getToAddress()) && opIndex == ref.getOperandIndex()) {
+			if (opIndex == ref.getOperandIndex() && refType == ref.getReferenceType() &&
+				toAddr.equals(ref.getToAddress())) {
 				iterator.remove();
-				return;
+				return ref;
 			}
 		}
+		return null;
 	}
 
 	/**
-	 * Add operand reference
-	 * @param inst
+	 * Get operand reference type for a new default memory reference
+	 * @param inst instruction
 	 * @param opIndex operand index
-	 * @param flowAddrs known set of flow destination addresses
+	 * @param flowAddrs known set of flow destination addresses.  Any address utilized from this
+	 * list to produce an operand reference will be set to null within this array.
 	 * @param refAddr reference to address
-	 * @return true if reference is a flow and corresponds to one of the flowAddrs, otherwise false
+	 * @return reference type or null if refAddr corresponds to defined register
 	 */
-	private boolean addOperandReference(InstructionDB inst, int opIndex, Address[] flowAddrs,
-			Address refAddr) {
-		boolean isFlow = false;
-		if (program.getRegister(refAddr) == null) {
-			RefType refType = RefTypeFactory.getDefaultMemoryRefType(inst, opIndex, refAddr, true);
-			if (refType.isFlow()) {
-				for (int j = 0; j < flowAddrs.length; j++) {
-					if (refAddr.equals(flowAddrs[j])) {
-						flowAddrs[j] = null;
-						isFlow = true;
-					}
-				}
-				if (refType != RefType.INDIRECTION && !isFlow) {
-					refType = RefType.DATA;
+	private RefType getOperandMemoryReferenceType(InstructionDB inst, int opIndex,
+			Address[] flowAddrs, Address refAddr) {
+		if (program.getRegister(refAddr) != null) {
+			return null;
+		}
+
+		RefType refType = RefTypeFactory.getDefaultMemoryRefType(inst, opIndex, refAddr, true);
+		if (refType.isFlow()) {
+			for (int j = 0; j < flowAddrs.length; j++) {
+				if (refAddr.equals(flowAddrs[j])) {
+					flowAddrs[j] = null;
+					return refType;
 				}
 			}
-			refManager.addMemoryReference(inst.getMinAddress(), refAddr, refType,
-				SourceType.DEFAULT, opIndex);
+			if (refType != RefType.INDIRECTION) {
+				refType = RefType.DATA;
+			}
 		}
-		return isFlow;
+		return refType;
 	}
 
 	/**
