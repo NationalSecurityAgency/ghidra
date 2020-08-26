@@ -136,6 +136,21 @@ public class CharsetInfo {
 		return (rec != null) ? rec.charSize : 1;
 	}
 
+	/**
+	 * Returns list of {@link Charset}s that encode with the number of bytes specified.
+	 * @param size the number of bytes for the {@link Charset} encoding.
+	 * @return Charsets that encode one byte characters.
+	 */
+	public List<String> getCharsetNamesWithCharSize(int size) {
+		List<String> names = new ArrayList<>();
+		for (String name : charsetNames) {
+			if (getCharsetCharSize(name) == size) {
+				names.add(name);
+			}
+		}
+		return names;
+	}
+
 	private void addJVMAvailableCharsets() {
 		// Add charsets that can be discovered in the current JVM.
 		for (String csName : Charset.availableCharsets().keySet()) {

@@ -40,6 +40,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.PriorityQueue;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -1048,7 +1049,15 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	public void initializeOptions() {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		initializeOptions(options);
+
+		try {
+			initializeOptions(options);
+		}
+		catch (OptionsVetoException e) {
+			// This will only happen if an Analyzer author makes a mistake 
+			Msg.showError(this, null, "Invalid Analysis Option",
+				"Invalid Analysis option set during initialization", e);
+		}
 	}
 
 	public void initializeOptions(Options options) {
