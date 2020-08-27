@@ -69,7 +69,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return PEUtil.canAnalyzePeVisualStudioOrClang(program);
+		return PEUtil.isVisualStudioOrClangPe(program);
 	}
 
 	@Override

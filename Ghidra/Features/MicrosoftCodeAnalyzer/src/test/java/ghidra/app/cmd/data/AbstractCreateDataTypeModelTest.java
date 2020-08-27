@@ -163,12 +163,30 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 
 	/**
 	 * Creates a 64 bit program builder that can be used for testing.
+	 * @return the program builder for a 64 bit VisualStudio x86 PE program.
+	 * @throws Exception if it fails to create the ProgramBuilder
+	 */
+	protected ProgramBuilder build64BitX86Clang() throws Exception {
+		ProgramBuilder builder =
+			new ProgramBuilder("test64BitX86", ProgramBuilder._X64, "clangwindows", null);
+		setExecFormatAndCompiler(builder, PeLoader.PE_NAME, "clang:unknown");
+		setImageBase(builder, 0x101000000L);
+		builder.createMemory(".text", "0x101001000", 0x2000);
+		builder.createMemory(".rdata", "0x101003000", 0x2000);
+		builder.createMemory(".data", "0x101005000", 0x2000);
+		setupDTMService(builder.getProgram());
+		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		return builder;
+	}
+
+	/**
+	 * Creates a 64 bit program builder that can be used for testing.
 	 * @return the program builder for a 64 bit non-VisualStudio x86 PE program.
 	 * @throws Exception if it fails to create the ProgramBuilder
 	 */
 	protected ProgramBuilder build64BitX86NonVS() throws Exception {
 		ProgramBuilder builder =
-			new ProgramBuilder("test64BitX86", ProgramBuilder._X64, "windows", null);
+			new ProgramBuilder("test64BitX86Unknown", ProgramBuilder._X64, "windows", null);
 		setExecFormatAndCompiler(builder, PeLoader.PE_NAME, null);
 		setImageBase(builder, 0x101000000L);
 		builder.createMemory(".text", "0x101001000", 0x2000);

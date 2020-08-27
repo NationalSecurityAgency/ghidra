@@ -63,7 +63,7 @@ public class PEUtil {
 		return false;
 	}
 
-	static public boolean canAnalyzePeVisualStudioOrClang(Program program) {
+	static public boolean isVisualStudioOrClangPe(Program program) {
 		return program.getExecutableFormat().equals(PeLoader.PE_NAME) &&
 			(program.getCompiler().equals(CompilerEnum.VisualStudio.toString()) ||
 				program.getCompiler().equals(CompilerEnum.Clang.toString()));
