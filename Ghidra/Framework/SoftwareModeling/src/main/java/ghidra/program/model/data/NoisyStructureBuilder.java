@@ -83,6 +83,12 @@ public class NoisyStructureBuilder {
 			computeMax(offset, 1);
 			return;
 		}
+		if (dt instanceof Pointer && ((Pointer) dt).getDataType().equals(structDT)) {
+			// Be careful of taking a pointer to the structure when the structure
+			// is not fully defined
+			DataTypeManager manager = dt.getDataTypeManager();
+			dt = manager.getPointer(DataType.DEFAULT, dt.getLength());
+		}
 		computeMax(offset, dt.getLength());
 		Entry<Long, DataType> firstEntry = checkForOverlap(offset, dt.getLength());
 		if (firstEntry != null) {
