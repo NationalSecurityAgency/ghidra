@@ -167,7 +167,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 				return false;
 			}
 
-			boolean didCreate = createData();
+			boolean dataWasCreated = createData();
 
 			boolean success = true;
 
@@ -182,9 +182,10 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 				success = false;
 			}
 
-			// If following data when applying, create any data referred to by the data just created.
-			if (didCreate && applyOptions.shouldFollowData() && !createAssociatedData()) {
-				success = false;
+			// If data type didn't exist (was created) and following data when applying,
+			if (dataWasCreated && applyOptions.shouldFollowData()) {
+				// create any data referred to by the data just created
+				success = createAssociatedData();
 			}
 			setStatusMsg(getName() + " completed successfully!");
 			return success;
@@ -200,7 +201,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * Creates data at this command's address using the data type obtained from the model.
 	 * <br>If you need to create data other than by using the data type returned from getDataType(),
 	 * you should override this method.
-	 * @return true if had to create, false otherwise
+	 * @return false if the data type was not created because it already exists, true otherwise
 	 * @throws CodeUnitInsertionException if the data can't be created.
 	 * @throws CancelledException if the user cancels this task.
 	 */

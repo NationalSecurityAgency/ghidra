@@ -21,7 +21,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -90,13 +89,15 @@ public class CreateTypeDescriptorBackgroundCmd
 	 * as its last component ( char[0]  name ).  The string data associated with this flexible char array will
 	 * be applied as a sized character array immediately following the structure whose size does not include
 	 * the char array bytes.
-	 * @return true if the data type needed to be created
+	 * @return false if the data type was not created because it already exists, true otherwise
 	 * @throws CodeUnitInsertionException
 	 * @throws CancelledException
 	 */
 	@Override
 	protected boolean createData() throws CodeUnitInsertionException, CancelledException {
-		super.createData(); // create the TypeDesciptor structure
+		if (!super.createData()) { // create the TypeDesciptor structure 
+			return false;
+		}
 
 		// Determine the size of the flexible char array storage and create  properly sized array
 		DataType dataType = model.getDataType();
@@ -110,12 +111,7 @@ public class CreateTypeDescriptorBackgroundCmd
 		Data nameData = DataUtilities.createData(program, arrayAddr, charArray,
 			charArray.getLength(), false, getClearDataMode());
 
-		if (nameData != null) {
-			nameData.setComment(CodeUnit.EOL_COMMENT, "TypeDescriptor.name");
-		}
-		else {
-			Msg.error(this, "Failed to create TypeDescriptor name at " + arrayAddr);
-		}
+		nameData.setComment(CodeUnit.EOL_COMMENT, "TypeDescriptor.name");
 
 		return true;
 	}
