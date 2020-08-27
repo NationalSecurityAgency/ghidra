@@ -79,7 +79,7 @@ public class NoisyStructureBuilder {
 	 * @param dt is the data-type of field if known (null otherwise)
 	 */
 	public void addDataType(long offset, DataType dt) {
-		if (dt == null) {
+		if (dt == null || dt instanceof VoidDataType) {
 			computeMax(offset, 1);
 			return;
 		}
