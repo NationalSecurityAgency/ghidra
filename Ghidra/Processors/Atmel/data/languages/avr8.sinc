@@ -76,9 +76,14 @@ define register offset=0x80 size=1 [
 # to act as the high bits where the X, Y, or Z registers are used, or in direct
 # addressing instructions.
 #
+# TODO: incorporate the use of RAMPX, RAMPY, RAMPZ in the LD, ST instructions
+#       ELPM, and LDS instructions use RAMPZ and RAMPD
+#
 # These IO registers need to be accessible to sleigh instruction PCODE
 # so they are defined here.  The bulk of the IO registers are defined
 # as labels in the appropriate .pspec file.
+
+
 
 define mem offset=$(IO_START) size = 1 [
 # IO_START + 0x00
