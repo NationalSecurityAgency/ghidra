@@ -32,6 +32,7 @@ import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.Analyzer;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -275,6 +276,11 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	}
 
 	private void programActivated(final Program program) {
+		
+		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
+			.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE,
+				null, null, "Cumulative analysis task times",
+				new StoredAnalyzerTimesPropertyEditor());
 
 		// invokeLater() to ensure that all other plugins have been notified of the program
 		// activated.  This makes sure plugins like the Listing have opened and painted the 

@@ -20,6 +20,7 @@ import java.beans.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import ghidra.framework.Application;
 import ghidra.util.SystemUtilities;
 
 public class EditorState implements PropertyChangeListener {
@@ -146,7 +147,9 @@ public class EditorState implements PropertyChangeListener {
 
 		editor.removePropertyChangeListener(this);
 		editor = new ErrorPropertyEditor(
-			"Ghidra does not know how to use PropertyEditor: " + editor.getClass().getName(), null);
+			Application.getName() + " does not know how to use PropertyEditor: " +
+				editor.getClass().getName(),
+			null);
 		return editor.getCustomEditor();
 	}
 

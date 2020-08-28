@@ -144,63 +144,25 @@ public abstract class AbstractOptions implements Options {
 		}
 
 		Option currentOption = valueMap.get(optionName);
-		if (currentOption == null) {
+		if (currentOption == null ||
+			!isCompatibleOption(currentOption, type, defaultValue, editor)) {
 			Option option =
 				createRegisteredOption(optionName, type, description, help, defaultValue, editor);
 			valueMap.put(optionName, option);
-			return;
-		}
-
-		Option newOption = null;
-		if (currentOption.isRegistered()) {
-			// Registered again
-			newOption =
-				copyRegisteredOption(currentOption, type, description, defaultValue, help, editor);
 		}
 		else {
-			// option was accessed, but not registered
-			newOption =
-				createRegisteredOption(optionName, type, description, help, defaultValue, editor);
+			currentOption.updateRegistration(description, help, defaultValue, editor);
 		}
-
-		copyCurrentValue(currentOption, newOption);
-		valueMap.put(optionName, newOption);
 	}
 
-	protected void copyCurrentValue(Option currentOption, Option newOption) {
-		if (currentOption.isDefault()) {
-			return;  // don't copy the current value if it is just the old default.
+	private boolean isCompatibleOption(Option option, OptionType type, Object defaultValue,
+			PropertyEditor editor) {
+		if (option.getOptionType() != type) {
+			return false;
 		}
-
-		Object currentValue = currentOption.getCurrentValue();
-		OptionType type = currentOption.getOptionType();
-		if (!isNullable(type) && currentValue == null) {
-			return; // not allowed to be null
-		}
-
-		// null is allowed; null can represent a valid 'cleared' state
-		newOption.setCurrentValue(currentValue);
-
-	}
-
-	private Option copyRegisteredOption(Option currentOption, OptionType type,
-			String description, Object defaultValue, HelpLocation help, PropertyEditor editor) {
-
-		// We probably don't need to do anything special if we  are re-registering an option, 
-		// which is what the below code handles
-		String oldDescription = currentOption.getDescription();
-		HelpLocation oldHelp = currentOption.getHelpLocation();
-		Object oldDefaultValue = currentOption.getDefaultValue();
-		PropertyEditor oldEditor = currentOption.getPropertyEditor();
-
-		String newDescripiton = oldDescription == null ? description : oldDescription;
-		HelpLocation newHelpLocation = oldHelp == null ? help : oldHelp;
-		Object newDefaultValue = oldDefaultValue == null ? defaultValue : oldDefaultValue;
-		PropertyEditor newEditor = oldEditor == null ? editor : oldEditor;
-
-		String optionName = currentOption.getName();
-		return createRegisteredOption(optionName, type, newDescripiton, newHelpLocation,
-			newDefaultValue, newEditor);
+		Object optionValue = option.getValue(null);
+		return optionValue == null || defaultValue == null ||
+			optionValue.getClass().equals(defaultValue.getClass());
 	}
 
 	@Override
