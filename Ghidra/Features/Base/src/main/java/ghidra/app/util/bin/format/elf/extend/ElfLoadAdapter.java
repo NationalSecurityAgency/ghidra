@@ -252,6 +252,22 @@ public class ElfLoadAdapter {
 	}
 
 	/**
+	 * Perform any required offset adjustment to account for differences between offset 
+	 * values contained within ELF headers and the language modeling of the 
+	 * associated address space.
+	 * <br>
+	 * WARNING: This is an experimental method and is not yet fully supported.
+	 * <br>
+	 * NOTE: This has currently been utilized for symbol address offset adjustment only.
+	 * @param elfOffset memory offset from ELF header
+	 * @param space associated address space
+	 * @return offset appropriate for use in space (does not account for image base alterations)
+	 */
+	public long getAdjustedMemoryOffset(long elfOffset, AddressSpace space) {
+		return elfOffset;
+	}
+
+	/**
 	 * Perform extension specific processing of Elf image during program load.
 	 * The following loading steps will have already been completed:
 	 * <pre>

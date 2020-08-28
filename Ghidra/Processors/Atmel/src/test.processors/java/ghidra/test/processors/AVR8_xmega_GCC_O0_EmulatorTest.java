@@ -21,20 +21,20 @@ import ghidra.test.processors.support.EmulatorTestRunner;
 import ghidra.test.processors.support.ProcessorEmulatorTestAdapter;
 import junit.framework.Test;
 
-public class AVR8_51_GCC_O0_EmulatorTest extends ProcessorEmulatorTestAdapter {
+public class AVR8_xmega_GCC_O0_EmulatorTest extends ProcessorEmulatorTestAdapter {
 
-	private static final String LANGUAGE_ID = "avr8:LE:16:extended";
+	private static final String LANGUAGE_ID = "avr8:LE:24:xmega";
 	private static final String COMPILER_SPEC_ID = "gcc";
 
 	private static final String[] REG_DUMP_SET = new String[] {};
 
-	public AVR8_51_GCC_O0_EmulatorTest(String name) throws Exception {
+	public AVR8_xmega_GCC_O0_EmulatorTest(String name) throws Exception {
 		super(name, LANGUAGE_ID, COMPILER_SPEC_ID, REG_DUMP_SET);
 	}
 
 	@Override
 	protected String getProcessorDesignator() {
-		return "AVR8_51_GCC_O0";
+		return "AVR8_xmega_GCC_O0";
 	}
 
 	@Override
@@ -56,6 +56,6 @@ public class AVR8_51_GCC_O0_EmulatorTest extends ProcessorEmulatorTestAdapter {
 
 	public static Test suite() {
 		return ProcessorEmulatorTestAdapter.buildEmulatorTestSuite(
-			AVR8_51_GCC_O0_EmulatorTest.class);
+			AVR8_xmega_GCC_O0_EmulatorTest.class);
 	}
 }

@@ -9,11 +9,15 @@
      - NOTE: The settings within this file may be specific to a particular 
      - processor variant and will likely need to be changed to reflect 
      - the specific target processor.
+     The RAMPx, EIND, SREG registers are not marked volatile, even though they could be changed
+     indirectly with memory references.  If they are made volatile, then the addressing
+     won't work in decompiler or reference recovery.
+	 Some registers only appear in newer avr8's, or with large memory spaces
     --> 
     
   <volatile outputop="write_volatile" inputop="read_volatile">
-    <range space="mem" first="0x20" last="0x5b"/>
-    <range space="mem" first="0x5f" last="0xff"/>
+    <range space="mem" first="0x20" last="0x57"/>
+    <range space="mem" first="0x60" last="0xff"/>
   </volatile>
   
   <default_symbols>
@@ -137,7 +141,7 @@
     <symbol name="EIND" address="mem:0x5c"/>
     <symbol name="_SPL" address="mem:0x5d"/>
     <symbol name="_SPH" address="mem:0x5e"/>
-    <symbol name="SREG" address="mem:0x5f"/>
+
     <symbol name="WDTCSR" address="mem:0x60"/>
     <symbol name="CLKPR" address="mem:0x61"/>
 

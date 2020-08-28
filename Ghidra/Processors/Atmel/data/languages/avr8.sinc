@@ -4,16 +4,27 @@
 #  - 0x20-0xff as IO memory, rather than 0x20-0x5f
 #
 # This is a ATMega64 with a 64k sized memory
-# Other parts avaible have a 4M sized memory so that stack 
+# Other parts available have a 4M sized memory so that stack 
 # pointer would be three bytes instead
 
 define endian=little;
 
-# Declaring space to be wordsized... alternative is to do byte sized
+# Declaring space to be word-sized... alternative is to do byte sized
 define alignment=2;
 
 # Force fusion of two byte operations in a row by decoding as words
 #@define FUSION ""
+#define where the IO space is mapped if not specified
+@ifndef IO_START
+@define IO_START "0x20"
+@define EIND "0x5c"
+@endif
+
+#define where the registers are located if not specified
+@ifndef REGISTER_SPACE
+@define REGISTER_SPACE "mem"
+@endif
+
 # mem space should really be the default, but the loading scripts will
 # prefer the code space as the default.  By being explicit for every
 # instruction, we can eliminate the ambiguity for at least the
@@ -21,33 +32,32 @@ define alignment=2;
 # Ghidra, it's still preferable to see the name of IO locations used,
 # rather than code addresses, so leave mem space as the default.
 define space code type=ram_space size=$(PCBYTESIZE) wordsize=2 default;
-define space register type=ram_space size=2;
+define space register type=register_space size=2;
 define space mem type=ram_space size=2 wordsize=1;
 
 # Using decimal rather than hex to match specs
-# TODO: These general purpose registers should reside with the 'mem' space from 0x00-0x1f
-#define register offset=0 size=1 [
-define mem offset=0 size=1 [
+# General registers start at 0 in the iospace for earlier avr8 processors
+# In the Xmega line, they are not accessible in mem, and are in a register space
+#
+define $(REGISTER_SPACE) offset=0 size=1 [
 	R0  R1  R2  R3  R4  R5  R6  R7  R8  R9
 	R10 R11 R12 R13 R14 R15 R16 R17 R18 R19
 	R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
 	Zlo Zhi
 ];
 
-#define register offset=0 size=2 [
-define mem offset=0 size=2 [
+define $(REGISTER_SPACE) offset=0 size=2 [
 	R1R0   R3R2   R5R4   R7R6   R9R8
 	R11R10 R13R12 R15R14 R17R16 R19R18
 	R21R20 R23R22 W # Technically, manual has R25R24 instead of W.
 	X      Y      Z
 ];
 
-#define register offset=0x10 size=4 [
-define mem offset=0x10 size=4 [
+define $(REGISTER_SPACE) offset=0x10 size=4 [
 	R19R18R17R16 R23R22R21R20
 ];
 
-# Techinically, the stack pointer is in the i/o space so should be addressable with the
+# Technically, the stack pointer is in the i/o space so should be addressable with the
 # rest of the i/o registers. However, Ghidra does not react well to the stack pointer
 # being indirectly addressable so we're making an exception.
 define register offset=0x3D size=1 [ SPL SPH ];
@@ -61,19 +71,41 @@ define register offset=0x80 size=1 [
 
 #####################################
 # Some AVR processors may have different io layouts not just different io.
-# This could necessitate modification to this section.
+# 
 # AVR processors with more than 64 KiB of RAM make use of the RAMP- registers
 # to act as the high bits where the X, Y, or Z registers are used, or in direct
 # addressing instructions.
-# TODO: Incorporate the RAMPD register in the LDS instruction.
-define mem offset=0x58 size=1 [ RAMPD RAMPX RAMPY RAMPZ ];
-define mem offset=0x5F size=1 [ SREG ];
+#
+# TODO: incorporate the use of RAMPX, RAMPY, RAMPZ in the LD, ST instructions
+#       ELPM, and LDS instructions use RAMPZ and RAMPD
+#
+# These IO registers need to be accessible to sleigh instruction PCODE
+# so they are defined here.  The bulk of the IO registers are defined
+# as labels in the appropriate .pspec file.
+
+
+
+define mem offset=$(IO_START) size = 1 [
+# IO_START + 0x00
+	                                     _ _ _ _ _ _ _ _
+	                                     _ _ _ _ _ _ _ _
+# IO_START + 0x10
+	                                     _ _ _ _ _ _ _ _
+	                                     _ _ _ _ _ _ _ _
+	                                     
+# IO_START + 0x20
+	                                     _ _ _ _ _ _ _ _
+	                                     _ _ _ _ _ _ _ _
+# IO_START + 0x30	                                     	                                     
+	                                     _ _ _ _ _ _ _ _
+	                                     RAMPD RAMPX RAMPY RAMPZ _ _ _ SREG
+];
 
 
 # If the AVR processor has more than 128 KiB of ROM, the processor will support the EIND
 # register along with the EIJMP and EICALL extended instructions.
 @if HASEIND == "1"
-define mem offset=0x5C size=1 [ EIND ];
+define mem offset=$(EIND) size=1 [ EIND ];
 
 @endif
 
@@ -386,6 +418,23 @@ macro setMulFlags(res) {
 	$(Zflag) = (res == 0);
 }
 
+macro loadSREG(reg) {
+	reg =  (zext(Cflg==1) << 0) | (zext(Zflg==1) << 1) | (zext(Nflg==1) << 2) | (zext(Vflg==1) << 3) | (zext(Sflg==1) << 4) | (zext(Hflg==1) << 5) | (zext(Tflg==1)<<6) | (zext(Iflg==1) << 7);
+    SREG = reg;
+}
+
+macro storeSREG(val) {
+	Cflg = ((val>> 0) & 1);
+	Zflg = ((val>> 1) & 1);
+	Nflg = ((val>> 2) & 1);
+	Vflg = ((val>> 3) & 1);
+	Sflg = ((val>> 4) & 1);
+	Hflg = ((val>> 5) & 1);
+	Tflg = ((val>> 6) & 1);
+	Iflg = ((val>> 7) & 1);
+	SREG = val;
+}
+
 # Handle possible skip instruction
 # This next line is a NOP except for the phase, which is never really checked.
 # A better fix may be to use -l, and ensure phase=1 is checked on the base constructors.
@@ -460,8 +509,8 @@ K7addr: val  is oplow4 & op9to10 & opbit8 [ val = ((1 ^ opbit8) << 7) | (opbit8 
 # #####################################################################################
 # COMMENTING OUT BECAUSE "Subtable symbol K7Ioaddr is not allowed in context block"
 #A7Ioaddr: val is K7Ioaddr [ val = (K7Ioaddr | 0x00) + 0x20 ; ] { export *[mem]:1 val; }
-Aio6: val  is oplow4 & op9to10 [ val = ((op9to10 << 4) | oplow4) + 0x20; ] { export *[mem]:1 val; }
-Aio5: val  is op3to7 [ val = (op3to7 | 0x00) + 0x20; ]                     { export *[mem]:1 val; }
+Aio6: val is oplow4 & op9to10 [ val = ((op9to10 << 4) | oplow4) + $(IO_START); ] { export *[mem]:1 val; }
+Aio5: val is op3to7 [ val = (op3to7 | 0x00) + $(IO_START); ] { export *[mem]:1 val; }
 
 q6: val  is oplow3 & op10to11 & opbit13 [ val = (opbit13 << 5) | (op10to11 << 3) | oplow3; ] { tmp:1 = val; export tmp; }
 
@@ -684,7 +733,18 @@ define pcodeop break;
 	RdFull = RdFull - 1;
 	setResultFlags(RdFull);
 }
-:des op4to7                      is phase=1 & ophi8=0x94 & oplow4=0xb & op4to7 { todo(); }
+
+define pcodeop encrypt;
+define pcodeop decrypt;
+
+:des op4to7                      is phase=1 & ophi8=0x94 & oplow4=0xb & op4to7 {
+	val:1  = op4to7;
+	if (Hflg) goto <enc>;
+	decrypt(val);
+	goto inst_next;
+  <enc>
+	encrypt(val);
+}
 
 @if HASEIND == "1"
 :eicall                          is phase=1 & ophi16=0x9519 {
@@ -758,6 +818,9 @@ ElpmPlus: Z^"+" is Z {}
 }
 :in RdFull,SPH                   is phase=1 & ophi5=0x16 & RdFull & op9to10=3 & oplow4=0xe & SPH {
 	RdFull = SPH;
+}
+:in RdFull,SREG                   is phase=1 & ophi5=0x16 & RdFull & op9to10=3 & oplow4=0xf & SREG {
+	loadSREG(RdFull);
 }
 
 :inc RdFull                      is phase=1 & ophi7=0x4a & oplow4=0x3 & RdFull {
@@ -939,6 +1002,9 @@ LpmPlus: Z^"+" is Z {}
 }
 :out SPH,RdFull                  is phase=1 & ophi5=0x17 & RdFull & op9to10=3 & oplow4=0xe & SPH {
 	SPH = RdFull;
+}
+:out SREG,RdFull                  is phase=1 & ophi5=0x17 & RdFull & op9to10=3 & oplow4=0xf & SREG {
+	storeSREG(RdFull);
 }
 
 :pop RdFull                      is phase=1 & ophi7=0x48 & oplow4=0xf & RdFull {
