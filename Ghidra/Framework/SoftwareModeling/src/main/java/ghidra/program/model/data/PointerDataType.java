@@ -385,7 +385,11 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 		// TODO: Which address space should pointer refer to ??
 
-		return getAddressValue(buf, getLength(), buf.getAddress().getAddressSpace());
+		try {
+			return getAddressValue(buf, getLength(), buf.getAddress().getAddressSpace()).subtractNoWrap(shiftOffset);
+		} catch(AddressOverflowException e) {
+			return null;
+		}
 	}
 
 	@Override

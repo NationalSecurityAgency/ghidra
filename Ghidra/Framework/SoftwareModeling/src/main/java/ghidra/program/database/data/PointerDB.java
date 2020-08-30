@@ -22,6 +22,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.InvalidNameException;
@@ -281,10 +282,10 @@ class PointerDB extends DataTypeDB implements Pointer {
 			// TODO: Which address space should pointer refer to ??
 
 			return PointerDataType.getAddressValue(buf, getLength(),
-					buf.getAddress().getAddressSpace());
+					buf.getAddress().getAddressSpace()).subtractNoWrap(getShiftOffset());
 
 		}
-		catch (IllegalArgumentException exc) {
+		catch (IllegalArgumentException | AddressOverflowException exc) {
 			return null;
 		}
 		finally {
