@@ -96,7 +96,7 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static org.jungrapht.visualization.MultiLayerTransformer.Layer.*;
+import static org.jungrapht.visualization.MultiLayerTransformer.Layer.VIEW;
 import static org.jungrapht.visualization.renderers.BiModalRenderer.LIGHTWEIGHT;
 
 /**
@@ -532,11 +532,14 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 		this.listener = listener;
 		DefaultGraphMouse<AttributedVertex, AttributedEdge> graphMouse =
-				new GhidraGraphMouse<>(viewer,
-						subgraphConsumer,
-						listener,
-						AttributedVertex::getId,
-						AttributedVertex::getName);
+				GhidraGraphMouse.<AttributedVertex, AttributedEdge>builder()
+						.viewer(viewer)
+						.subgraphConsumer(subgraphConsumer)
+						.locatedVertexConsumer(this::setLocatedVertex)
+						.graphDisplayListener(listener)
+						.vertexIdFunction(AttributedVertex::getId)
+						.vertexNameFunction(AttributedVertex::getName)
+						.build();
 		viewer.setGraphMouse(graphMouse);
 	}
 
@@ -578,6 +581,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		this.locatedVertex = vertex;
 		if (locatedVertex != null && changed) {
 			notifyLocationChanged(locatedVertex.getId());
+			scrollToSelected(locatedVertex);
+			viewer.repaint();
 		}
 	}
 
@@ -858,7 +863,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		Point2D existingCenter = viewer.getRenderContext()
 				.getMultiLayerTransformer()
 				.inverseTransform(viewer.getCenter());
-
 		jobRunner.schedule(new CenterAnimation<>(viewer, existingCenter, newCenter));
 	}
 

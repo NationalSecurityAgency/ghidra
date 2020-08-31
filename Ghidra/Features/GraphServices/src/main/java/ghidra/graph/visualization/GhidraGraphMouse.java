@@ -22,14 +22,12 @@ import org.jungrapht.visualization.control.AbstractPopupGraphMousePlugin;
 import org.jungrapht.visualization.control.DefaultGraphMouse;
 import org.jungrapht.visualization.control.GraphElementAccessor;
 import org.jungrapht.visualization.control.TransformSupport;
-import org.jungrapht.visualization.control.VertexSelectingGraphMousePlugin;
 import org.jungrapht.visualization.layout.model.LayoutModel;
 import org.jungrapht.visualization.selection.ShapePickSupport;
 
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -57,6 +55,11 @@ public class GhidraGraphMouse<V, E> extends DefaultGraphMouse<V, E> {
      * will accept a {@link Graph} and display it in a new tab or window
      */
     Consumer<Graph<V, E>> subgraphConsumer;
+
+    /**
+     * Accepts a vertex that was 'located'
+     */
+    Consumer<V> locatedVertexConsumer;
     /**
      * a listener for events, notably the event to request change of a vertex name
      */
@@ -71,19 +74,26 @@ public class GhidraGraphMouse<V, E> extends DefaultGraphMouse<V, E> {
     Function<V, String> vertexNameFunction;
 
     /**
+     * create an instance
+     * @param <V> vertex type
+     * @param <E> edge type
+     * @return a configured GhidraGraphMouseBuilder
+     */
+    public static <V, E> GhidraGraphMouseBuilder<V, E, ?, ?> builder() {
+        return new GhidraGraphMouseBuilder<>();
+    }
+
+    /**
      * create an instance with default values
      */
-    public GhidraGraphMouse(VisualizationViewer<V, E> viewer,
-                            Consumer<Graph<V, E>> subgraphConsumer,
-                            GraphDisplayListener graphDisplayListener,
-                            Function<V, String> vertexIdFunction,
-                            Function<V, String> vertexNameFunction) {
-        super(DefaultGraphMouse.<V, E>builder().vertexSelectionOnly(true));
-        this.viewer = viewer;
-        this.subgraphConsumer = subgraphConsumer;
-        this.graphDisplayListener = graphDisplayListener;
-        this.vertexIdFunction = vertexIdFunction;
-        this.vertexNameFunction = vertexNameFunction;
+    GhidraGraphMouse(GhidraGraphMouseBuilder<V, E, ?, ?> builder) {
+        super(builder.vertexSelectionOnly(true));
+        this.viewer = builder.viewer;
+        this.subgraphConsumer = builder.subgraphConsumer;
+        this.locatedVertexConsumer = builder.locatedVertexConsumer;
+        this.graphDisplayListener = builder.graphDisplayListener;
+        this.vertexIdFunction = builder.vertexIdFunction;
+        this.vertexNameFunction = builder.vertexNameFunction;
     }
 
     /**
@@ -91,32 +101,15 @@ public class GhidraGraphMouse<V, E> extends DefaultGraphMouse<V, E> {
      */
     @Override
     public void loadPlugins() {
-        add(new PopupPlugin<>(viewer, subgraphConsumer, graphDisplayListener,
-                vertexIdFunction, vertexNameFunction));
+        add(new PopupPlugin());
         super.loadPlugins();
     }
 
-    static class PopupPlugin<V, E> extends AbstractPopupGraphMousePlugin {
+    class PopupPlugin extends AbstractPopupGraphMousePlugin {
 
-        VisualizationViewer<V, E> viewer;
-        Consumer<Graph<V, E>> subgraphConsumer;
-        GraphDisplayListener graphDisplayListener;
-        Function<V, String> vertexIdFunction;
-        Function<V, String> vertexNameFunction;
         SelectionFilterMenu<V, E> selectionFilterMenu;
 
-        PopupPlugin(VisualizationViewer<V, E> viewer,
-                    Consumer<Graph<V, E>> subgraphConsumer,
-                    GraphDisplayListener graphDisplayListener,
-                    Function<V, String> vertexIdFunction,
-                    Function<V, String> vertexNameFunction
-
-        ) {
-            this.viewer = viewer;
-            this.subgraphConsumer = subgraphConsumer;
-            this.graphDisplayListener = graphDisplayListener;
-            this.vertexIdFunction = vertexIdFunction;
-            this.vertexNameFunction = vertexNameFunction;
+        PopupPlugin() {
             this.selectionFilterMenu = new SelectionFilterMenu<>(viewer, subgraphConsumer);
         }
 
@@ -133,20 +126,31 @@ public class GhidraGraphMouse<V, E> extends DefaultGraphMouse<V, E> {
             LayoutModel<V> layoutModel = viewer.getVisualizationModel().getLayoutModel();
             GraphElementAccessor<V, E> pickSupport = viewer.getPickSupport();
             V pickedVertex;
+            E pickedEdge = null;
             if (pickSupport instanceof ShapePickSupport) {
                 ShapePickSupport<V, E> shapePickSupport =
                         (ShapePickSupport<V, E>) pickSupport;
                 pickedVertex = shapePickSupport.getVertex(layoutModel, footprintRectangle);
+                if (pickedVertex == null) {
+                    pickedEdge = shapePickSupport.getEdge(layoutModel, footprintRectangle);
+                }
             } else {
                 TransformSupport<V, E> transformSupport = viewer.getTransformSupport();
                 Point2D layoutPoint = transformSupport.inverseTransform(viewer, e.getPoint());
                 pickedVertex = pickSupport.getVertex(layoutModel, layoutPoint.getX(), layoutPoint.getY());
+                if (pickedVertex == null) {
+                    pickedEdge = pickSupport.getEdge(layoutModel, layoutPoint.getX(), layoutPoint.getY());
+                }
             }
             if (pickedVertex != null) {
                 OnVertexSelectionMenu<V, E> menu =
                         new OnVertexSelectionMenu<>(viewer, graphDisplayListener,
                                 vertexIdFunction, vertexNameFunction,
                                 pickedVertex);
+                menu.show(viewer.getComponent(), e.getX(), e.getY());
+            } else if (pickedEdge != null) {
+                OnEdgeSelectionMenu<V, E> menu =
+                        new OnEdgeSelectionMenu<>(viewer, locatedVertexConsumer, pickedEdge);
                 menu.show(viewer.getComponent(), e.getX(), e.getY());
             } else {
                 selectionFilterMenu.show(viewer.getComponent(), e.getX(), e.getY());
