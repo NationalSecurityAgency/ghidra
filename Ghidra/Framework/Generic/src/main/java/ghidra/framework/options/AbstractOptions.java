@@ -29,6 +29,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
+import ghidra.util.exception.AssertException;
 import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class AbstractOptions implements Options {
@@ -143,20 +144,45 @@ public abstract class AbstractOptions implements Options {
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 
-		Option currentOption = valueMap.get(optionName);
-		if (currentOption == null ||
-			!isCompatibleOption(currentOption, type, defaultValue, editor)) {
-			Option option =
-				createRegisteredOption(optionName, type, description, help, defaultValue, editor);
-			valueMap.put(optionName, option);
-		}
-		else {
+		Option currentOption = getExistingComptibleOption(optionName, type, defaultValue);
+		if (currentOption != null) {
 			currentOption.updateRegistration(description, help, defaultValue, editor);
+			return;
 		}
+
+		Option option =
+			createRegisteredOption(optionName, type, description, help, defaultValue, editor);
+
+		valueMap.put(optionName, option);
 	}
 
-	private boolean isCompatibleOption(Option option, OptionType type, Object defaultValue,
-			PropertyEditor editor) {
+	private Option getExistingComptibleOption(String optionName, OptionType type,
+			Object defaultValue) {
+
+		// There are several cases where an existing option may exist when registering an option
+		// 1) the option was accessed before it was registered
+		// 2) the option was loaded from a store (database or toolstate)
+		// 3) the option was registered more than once.
+		//
+		// The only time this is a problem is if the exiting option type is not compatible with
+		// the type being registered.  If we encounter an incompatible option, we just log a
+		// warning and return null so that the new option will replace it. Otherwise, we return
+		// the existing option so it can be updated with the data from the registration.
+
+		Option option = valueMap.get(optionName);
+		if (option == null) {
+			return null;
+		}
+
+		if (!isCompatibleOption(option, type, defaultValue)) {
+			Msg.error(this, "Registered option incompatible with existing option: " + optionName,
+				new AssertException());
+			return null;
+		}
+		return option;
+	}
+
+	private boolean isCompatibleOption(Option option, OptionType type, Object defaultValue) {
 		if (option.getOptionType() != type) {
 			return false;
 		}
