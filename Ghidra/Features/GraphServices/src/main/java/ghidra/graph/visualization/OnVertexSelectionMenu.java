@@ -41,8 +41,8 @@ public class OnVertexSelectionMenu<V, E> extends JPopupMenu {
                                  Function<V, String> vertexIdFunction,
                                  Function<V, String> vertexNameFunction,
                                  V vertex) {
-        AbstractButton selectButton = new JMenuItem("Select");
-        AbstractButton deselectButton = new JMenuItem("Deselect");
+        AbstractButton selectButton = new JMenuItem("Select Vertex");
+        AbstractButton deselectButton = new JMenuItem("Deselect Vertex");
         AbstractButton renameAttributeButton = new JMenuItem("Rename vertex");
         renameAttributeButton.addActionListener(evt -> {
                     String newName = JOptionPane.showInputDialog("New Name Attribute");
