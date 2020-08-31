@@ -993,6 +993,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		renderContext.setEdgeDrawPaintFunction(
 			e -> renderContext.getSelectedEdgeState().isSelected(e) ? Color.red
 					: Colors.getColor(e));
+		renderContext.setArrowDrawPaintFunction(
+				e -> renderContext.getSelectedEdgeState().isSelected(e) ? Color.red
+						: Colors.getColor(e));
+		renderContext.setArrowFillPaintFunction(
+				e -> renderContext.getSelectedEdgeState().isSelected(e) ? Color.red
+						: Colors.getColor(e));
 		vv.setToolTipText("");
 
 		// assign the shapes to the modal renderer
