@@ -24,7 +24,7 @@ To get quick replies, users are recommended to create clear question following t
 
 #### What have you tried?
 
-- Have you Googling?
+- Have you searched online for a solution to this question?
 - Have you searched similar issue on this site?
 
 #### Guide to comment
