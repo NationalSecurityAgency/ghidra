@@ -28,6 +28,7 @@ import javax.swing.event.TableModelEvent;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.table.GTable;
 import docking.widgets.table.GTableFilterPanel;
 import generic.jar.ResourceFile;
 import generic.util.Path;
@@ -55,7 +56,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	static final String PREFERENCE_LAST_SELECTED_BUNDLE = "LastGhidraBundle";
 
 	private JPanel panel;
-	private LessFreneticGTable bundleStatusTable;
+	private GTable bundleStatusTable;
 	private final BundleStatusTableModel bundleStatusTableModel;
 	private GTableFilterPanel<BundleStatus> filterPanel;
 
@@ -102,7 +103,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	private void build() {
 		panel = new JPanel(new BorderLayout(5, 5));
 
-		bundleStatusTable = new LessFreneticGTable(bundleStatusTableModel);
+		bundleStatusTable = new GTable(bundleStatusTableModel);
 		bundleStatusTable.setName("BUNDLESTATUS_TABLE");
 		bundleStatusTable.setSelectionBackground(new Color(204, 204, 255));
 		bundleStatusTable.setSelectionForeground(Color.BLACK);
@@ -415,8 +416,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
-			// suppress RowObjectSelectionManager repairs until after we're done
-			bundleStatusTable.chill();
 
 			List<GhidraBundle> bundles = new ArrayList<>();
 			for (BundleStatus status : statuses) {
@@ -450,8 +449,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 			if (anybusy) {
 				notifyTableDataChanged();
 			}
-
-			bundleStatusTable.thaw();
 		}
 	}
 
