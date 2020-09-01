@@ -23,7 +23,8 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
  * Note: we do not necessarily understand each of these symbol type classes.  Refer to the
  *  base class for more information.
  */
-public class SeparatedCodeFromCompilerSupportMsSymbol extends AbstractMsSymbol {
+public class SeparatedCodeFromCompilerSupportMsSymbol extends AbstractMsSymbol
+		implements AddressMsSymbol {
 
 	public static final int PDB_ID = 0x1132;
 
@@ -76,6 +77,72 @@ public class SeparatedCodeFromCompilerSupportMsSymbol extends AbstractMsSymbol {
 	@Override
 	protected String getSymbolTypeName() {
 		return "SEPCODE";
+	}
+
+	/**
+	 * Returns the parent pointer.
+	 * @return Parent pointer.
+	 */
+	public long getParentPointer() {
+		return parentPointer;
+	}
+
+	/**
+	 * Returns the end pointer.
+	 * @return End pointer.
+	 */
+	public long getEndPointer() {
+		return endPointer;
+	}
+
+	/**
+	 * Returns the block length.
+	 * @return Block length.
+	 */
+	public long getBlockLength() {
+		return blockLength;
+	}
+
+	/**
+	 * Returns the indication of if is lexical scope.
+	 * @return {@code true} if is lexical scope.
+	 */
+	public boolean isLexicalScope() {
+		return isLexicalScope;
+	}
+
+	/**
+	 * Returns the indication of if returns to parent.
+	 * @return {@code true} if returns to parent.
+	 */
+	public boolean returnsToParent() {
+		return returnsToParent;
+	}
+
+	@Override
+	public long getOffset() {
+		return offset;
+	}
+
+	/**
+	 * Returns the parent offset.
+	 * @return Parent offset.
+	 */
+	public long getOffsetParent() {
+		return offsetParent;
+	}
+
+	@Override
+	public int getSegment() {
+		return section;
+	}
+
+	/**
+	 * Returns the parent segment.
+	 * @return Parent segment.
+	 */
+	public long getSegmentParent() {
+		return sectionParent;
 	}
 
 	/**

@@ -28,6 +28,7 @@ import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.framework.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
@@ -739,6 +740,7 @@ public class PdbParser {
 
 	EnumDataType createEnum(String name, int length) {
 		SymbolPath path = new SymbolPath(name);
+		// Ghidra does not like size of zero.
 		length = Integer.max(length, 1);
 		return new EnumDataType(getCategory(path.getParent(), true), path.getName(), length,
 			dataMgr);

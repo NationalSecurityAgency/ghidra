@@ -27,11 +27,11 @@ import ghidra.program.model.mem.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-class MyTestMemory extends AddressSet implements Memory {
+public class MyTestMemory extends AddressSet implements Memory {
 	byte[] myMemoryBytes;
 	MemoryBlock myMemoryBlock;
 
-	MyTestMemory(byte[] bytes) {
+	public MyTestMemory(byte[] bytes) {
 		super();
 		this.myMemoryBytes = bytes;
 		AddressSpace space = new GenericAddressSpace("Mem", 32, AddressSpace.TYPE_RAM, 0);
@@ -108,8 +108,7 @@ class MyTestMemory extends AddressSet implements Memory {
 
 	@Override
 	public MemoryBlock createByteMappedBlock(String name, Address start, Address mappedAddress,
-			long length, ByteMappingScheme byteMappingScheme, boolean overlay)
-			throws LockException,
+			long length, ByteMappingScheme byteMappingScheme, boolean overlay) throws LockException,
 			MemoryConflictException, AddressOverflowException, IllegalArgumentException {
 		throw new UnsupportedOperationException();
 	}

@@ -45,7 +45,9 @@ public class SymbolPathParser {
 			throw new IllegalArgumentException(
 				"Symbol list must contain at least one symbol name!");
 		}
-		if (name.indexOf(Namespace.DELIMITER) == -1) {
+//		if (name.indexOf(Namespace.DELIMITER) == -1) {
+		// following is temporary kludge due to struct (blah).  TODO: figure/fix
+		if (name.startsWith("(") || name.indexOf(Namespace.DELIMITER) == -1) {
 			List<String> list = new ArrayList<>();
 			list.add(name);
 			return list;

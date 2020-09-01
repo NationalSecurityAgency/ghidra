@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.pdb;
+package ghidra.app.util.pdb;
 
 import java.util.*;
 
-import ghidra.app.util.bin.format.pdb.PdbParser.PdbFileType;
+import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
 
@@ -37,6 +37,7 @@ public class PdbProgramAttributes {
 	private String guidAgeCombo;
 
 	private String pdbFile;
+	private String pdbVersion;
 	private boolean pdbLoaded;
 	private boolean programAnalyzed;
 	private String executablePath;
@@ -53,6 +54,7 @@ public class PdbProgramAttributes {
 		programAnalyzed = propList.getBoolean(Program.ANALYZED, false);
 		pdbSignature = propList.getString(PdbParserConstants.PDB_SIGNATURE, (String) null);
 		pdbFile = propList.getString(PdbParserConstants.PDB_FILE, (String) null);
+		pdbVersion = propList.getString(PdbParserConstants.PDB_VERSION, (String) null);
 
 		executablePath = program.getExecutablePath();
 
@@ -68,6 +70,7 @@ public class PdbProgramAttributes {
 		programAnalyzed = analyzed;
 		pdbSignature = signature;
 		pdbFile = file;
+		pdbVersion = "RSDS"; // TODO: possibly receive this as argument.
 
 		executablePath = execPath;
 		createGuidAgeString();
@@ -87,6 +90,10 @@ public class PdbProgramAttributes {
 
 	public String getPdbFile() {
 		return pdbFile;
+	}
+
+	public String getPdbVersion() {
+		return pdbVersion;
 	}
 
 	public boolean isPdbLoaded() {
@@ -110,21 +117,22 @@ public class PdbProgramAttributes {
 		if (potentialPdbFilenames == null) {
 
 			// Want to preserve add order while only keeping unique entries
-			Set<String> setOfPotentialFilenames = new LinkedHashSet<String>();
+			Set<String> setOfPotentialFilenames = new LinkedHashSet<>();
 
 			if (pdbFile != null) {
 				setOfPotentialFilenames.add(getFilename(pdbFile).toLowerCase());
+				setOfPotentialFilenames.add(getFilename(pdbFile));
 				setOfPotentialFilenames.add(pdbFile);
 			}
 
 			// getExecutablePath can return "unknown"
 			if (!executablePath.equals("unknown")) {
 				String executableFilename = getFilename(executablePath);
-				setOfPotentialFilenames.add(getBinaryBasename(executableFilename).toLowerCase() +
-					PdbFileType.PDB.toString());
+				setOfPotentialFilenames.add(
+					getBinaryBasename(executableFilename).toLowerCase() + ".pdb");
 			}
 
-			potentialPdbFilenames = new ArrayList<String>(setOfPotentialFilenames);
+			potentialPdbFilenames = new ArrayList<>(setOfPotentialFilenames);
 		}
 
 		return potentialPdbFilenames;
@@ -179,7 +187,7 @@ public class PdbProgramAttributes {
 	 * @param fullPath from which to extract the filename
 	 * @return the name of the file specified by the fullPath
 	 */
-	private static String getFilename(String fullPath) {
+	private String getFilename(String fullPath) {
 		// Remove any trailing slashes
 		String editedPath = fullPath;
 		editedPath = editedPath.replaceAll("[\\/]$", "");
@@ -191,9 +199,8 @@ public class PdbProgramAttributes {
 			return editedPath;
 		}
 
-		int indexToUse =
-			(lastIndexForwardSlash > lastIndexBackSlash) ? lastIndexForwardSlash
-					: lastIndexBackSlash;
+		int indexToUse = (lastIndexForwardSlash > lastIndexBackSlash) ? lastIndexForwardSlash
+				: lastIndexBackSlash;
 
 		return editedPath.substring(indexToUse + 1);
 	}

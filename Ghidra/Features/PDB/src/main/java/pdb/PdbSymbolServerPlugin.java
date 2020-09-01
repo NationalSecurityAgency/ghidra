@@ -33,6 +33,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.*;
 import ghidra.app.util.bin.format.pdb.PdbParser.PdbFileType;
+import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;

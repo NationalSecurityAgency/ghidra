@@ -35,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
  * Container members are characterized by a null data-type name, zero length, and will be 
  * identified as either a structure or union. 
  */
-class DefaultCompositeMember extends CompositeMember {
+public class DefaultCompositeMember extends CompositeMember {
 
 	private static int MAX_CONSTRUCTION_DEPTH = 20;
 
@@ -1150,7 +1150,7 @@ class DefaultCompositeMember extends CompositeMember {
 	 * @return true if members successfully added to composite
 	 * @throws CancelledException if monitor is cancelled
 	 */
-	static boolean applyDataTypeMembers(Composite composite, boolean isClass,
+	public static boolean applyDataTypeMembers(Composite composite, boolean isClass,
 			int preferredCompositeSize, List<? extends PdbMember> members,
 			Consumer<String> errorConsumer, TaskMonitor monitor) throws CancelledException {
 
