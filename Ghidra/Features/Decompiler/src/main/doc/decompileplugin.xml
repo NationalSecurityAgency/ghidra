@@ -1049,6 +1049,69 @@
 	</para>
     </sect3>
   </sect2>
+  <sect2 id="PrototypeModel">
+    <title>Prototype Model</title>
+    <para>
+      Functions in high-level languages manipulate symbols like parameters and return values that
+      are implicitly stored in a way that doesn't collide with other functions and variables.  To
+      actually map these symbols to physical registers and memory locations, compilers establish a
+      <emphasis>calling convention</emphasis> for the function.
+      Loosely, this is a set of memory resources, whether it is registers or stack locations,
+      and a procedure for sequentially assigning resources to parameters based on their properties.
+      A <emphasis role="bold">prototype model</emphasis> is the formal object in Ghidra that represents
+      a calling convention and holds its specific rules and resource details.
+    </para>
+    <para>
+      Prototype models are architecture specific, and depending on the compiler, a single Program may make
+      use of multiple models.  Subsequently, each distinct model has a name like <code>__stdcall</code> or
+      <code>__thiscall</code>. The decompiler makes use of the prototype model, as assigned to the function by the user or
+      discovered in some other way, when performing its analysis of parameters.
+    </para>
+    <para>
+      A prototype model is typically used as a whole and is assigned by name to individual functions.  But some of
+      the sub-concepts of the model may be relevant to reverse engineers.
+    </para>
+    <sect3>
+      <title>Incoming and Outgoing Storage Locations</title>
+      <para>
+	A formal input parameter is always assigned a specific memory location to hold its value coming into the function.
+	The storage location can be a register, a stack location, or other memory location.  The storage
+	location may be reused later by other variables in the function; only the incoming value stored there is guaranteed
+	to be that of input parameter.
+      </para>
+      <para>
+	If the parameter
+	is stored on the stack, the storage location is viewed as a constant offset in the <emphasis role="bold">stack</emphasis>
+	space, where the offset is relative to the incoming value of <emphasis>stack pointer</emphasis>
+	(See the discussion in <xref linkend="addressspace"/>).
+      </para>
+      <para>
+	The <emphasis>return value</emphasis> for the function, similarly, is stored at a single memory location.  It
+	is guaranteed to be at that location only at points where the function is exited.  There may be multiple exit
+	points, but they all share the same return value storage location.
+      </para>
+    </sect3>
+    <sect3>
+      <title>Unaffected</title>
+      <para>
+	Prototype models can specify a set of <emphasis role="bold">unaffected</emphasis>memory locations,
+	whose value must be <emphasis>preserved</emphasis> across the function. I.e. each location 
+	must hold the same value at a function's exit that it held coming into the function.
+	These encompass a calling convention's <emphasis>saved registers</emphasis>, where a calling function
+        can store values it doesn't want to change unexpectedly, but also may include other registers that are
+	known not to change, like the stack pointer.
+	The decompiler uses the information to determine which locations can be safely propagated across
+	a sub-function.
+      </para>
+    </sect3>
+    <sect3>
+      <title>Killed by Call</title>
+      <para>
+	In constrast to <emphasis>unaffected</emphasis> memory locations, a prototype model may specify
+	<emphasis role="bold">killed by call</emphasis> locations that are guaranteed <emphasis>not</emphasis>
+	to be used to hold a value across the function.
+      </para>
+  </sect2>
 </section>
 
 </chapter>
@@ -1726,10 +1789,14 @@
 	For annotations that specifically label a function's formal parameters or return value, 
 	the <emphasis>Signature Source-Type</emphasis> also affects how they're treated by the decompiler.
 	If the Source-Type is set to anything other than <emphasis>DEFAULT</emphasis>, there is a forced
-	one-to-one correspondence between variables annotations and actual parameters in the decompiler's
+	one-to-one correspondence between variables annotation and actual parameters in the decompiler's
 	view of the function.  This is stronger than just forcing the data-type; the existence (or not) of
-	the variable itself is forced by the annotation in this case. A Source-Type other than
-	<emphasis>DEFAULT</emphasis> is set typically if debug symbols for the function are read in during
+	the variable itself is forced by the annotation in this case.  If the Source-Type is forcing and
+	there are no parameter annotations, a <emphasis>void</emphasis> prototype is forced on the function.
+      </para>
+      <para>
+	A forcing Source-Type, with a value other than
+	<emphasis>DEFAULT</emphasis>, is set typically if debug symbols for the function are read in during
 	Program import (<emphasis>IMPORTED</emphasis>), or if the user manually edits the function prototype
 	directly (<emphasis>USER_DEFINED</emphasis>).
       </para>
@@ -1863,6 +1930,129 @@
 	where the temporary register first holds a value for the variable.
       </para>
     </sect3>
+  </sect2>
+</section>
+
+<section id="AnnotePrototype">
+  <title>Function Prototypes</title>
+  <para>
+    Every formal Function in Ghidra is associated with a set of variable annotations and other properties that
+    make up the <emphasis role="bold">function prototype</emphasis>. Due to the nature of reverse engineering,
+    the function prototype may only include partial information and may be built up over time. Individual
+    elements include:
+    <informalexample>
+    <variablelist>
+    <?dbfo list-presentation="blocks"?>
+    <varlistentry>
+      <term><emphasis role="bold">Input Parameters</emphasis></term>
+      <listitem>
+	<para>
+	  Each formal input to the function can have a Variable Annotation that describes its name, data-type,
+	  and storage location, at the moment control-flow enters the function.  If the annotations exist, they are shown
+	  in the Listing Window as part of the Function header, and they usually correspond directly with symbols in the
+	  <emphasis>function declaration</emphasis> produced by the decompiler.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Return Value</emphasis></term>
+      <listitem>
+	<para>
+	  The value returned by a function can have a special Variable Annotation that describes its data-type
+	  and storage location, at the moment control-flow exits the function. If it exists, the annotation is shown
+	  in the Listing Window as part of the Function header with the name <code>&lt;RETURN&gt;</code>, and it usually
+	  corresponds directly with the return value in the <emphasis>function declaration</emphasis> produced by
+	  the decompiler.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Calling Convention</emphasis></term>
+      <listitem>
+	<para>
+	  The calling convention used by the function can be specified as part of the function prototype. The convention
+	  is specified by name, referring to the formal <xref linkend="PrototypeModel/> that describes how storage
+	  locations are selected for individual parameters along with other information about how the compiler treats
+	  the function.
+	</para>
+	<para>
+	  In the absence of parameter and return value annotations, the decompiler will use the prototype model as
+	  part of its analysis to <emphasis>discover</emphasis> the input parameters and the return value of the function.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Variable Arguments</emphasis></term>
+      <listitem>
+	<para>
+	  Functions have a boolean property called <emphasis role="bold">variable argments</emphasis>, which can be turned on
+	  if the function is capable of being passed a variable number of inputs.  This property informs the decompiler that
+	  the function may take additional parameters beyond any with an explicit variable annotation.
+	  This affects decompilation of any function which calls the <emphasis>variable arguments</emphasis> function, allowing
+	  the decompiler to discover unlisted parameters at a given call site.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">No Return</emphasis></term>
+      <listitem>
+	<para>
+	  A function can be marked explicitly as <emphasis role="bold">not returning</emphasis>, meaning that once
+	  a call is made to the function, execution will never return to the caller. The decompiler uses this to
+	  compute the correct control-flow in any calling functions.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">In-Line</emphasis></term>
+      <listitem>
+	<para>
+	  If the boolean property <emphasis role="bold">in-line</emphasis> is turned on for a particular function,
+	  it directs the decompiler to inline the effects of the function into the decompilation of any of its calling functions.
+	  The function will no longer appear as a direct subfunction call in the decompilation, but all of its data-flow
+	  will be incorporated into the calling function.
+	</para>
+	<para>
+	  This is useful for <emphasis>bookkeeping</emphasis> functions, where its important for the decompiler to
+	  <emphasis>see</emphasis> its effects on the calling function.  Functions that set up the stack frame for a caller or
+	  functions that look up or dispatch a switch destination are typical examples that should be marked <emphasis>in-line</emphasis>.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Call-fixup</emphasis></term>
+      <listitem>
+	<para>
+	  This property is similar in spirit to marking a function as <emphasis>in-line</emphasis>.
+	  A <emphasis role="bold">call-fixup</emphasis> directs the decompiler to replace any call to the function with a specific
+	  chunk of raw p-code.  The decompilation of any calling function no longer shows the subfunction call, but the chunk
+	  of p-code incorporates the subfunction's effects.
+	</para>
+	<para>
+	  Call-fixups are more flexible than just inlining a function.  The call-fixup chunk can be tailored to incorporate all of,
+	  just a part of, or something different to the behavior of the function.
+	</para>
+	<para>
+	  Call-fixups are specified by name.  The name and associated p-code chunk are typically defined in the
+	  <emphasis>compiler specification</emphasis> for the Program.
+	</para>
+      </listitem>
+    </varlistentry>
+    </variablelist>
+    </informalexample>
+  </para>
+  <sect2>
+    <title>Discovering Parameters</title>
+    <para>
+      Any parameter annotations in the function prototype are all forcing (as a unit) if the
+      <emphasis>Signature Source-Type</emphasis> is set to anything other than
+      <emphasis>DEFAULT</emphasis>.  See the more complete discussion in <xref linkend="AnnoteForcing"/>.
+    </para>
+    <para>
+      If the function prototype is not forced, the decompiler will attempt to discover the parameters
+      and return value using the calling convention.  The prototype model underlying the calling convention
+      dictates which storage locations can be considered as parameters and their formal ordering.
+    </para>
   </sect2>
 </section>
 
