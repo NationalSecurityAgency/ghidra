@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-To get quick replies, users are recommended to create clear question following the guideline below.
+To get quick replies, users are recommended to create a clear question following the guideline below.
 
 #### Prerequisites
 
