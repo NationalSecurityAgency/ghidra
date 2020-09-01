@@ -1111,6 +1111,7 @@
 	<emphasis role="bold">killed by call</emphasis> locations that are guaranteed <emphasis>not</emphasis>
 	to be used to hold a value across the function.
       </para>
+    </sect3>
   </sect2>
 </section>
 
@@ -1789,7 +1790,7 @@
 	For annotations that specifically label a function's formal parameters or return value, 
 	the <emphasis>Signature Source-Type</emphasis> also affects how they're treated by the decompiler.
 	If the Source-Type is set to anything other than <emphasis>DEFAULT</emphasis>, there is a forced
-	one-to-one correspondence between variables annotation and actual parameters in the decompiler's
+	one-to-one correspondence between variable annotations and actual parameters in the decompiler's
 	view of the function.  This is stronger than just forcing the data-type; the existence (or not) of
 	the variable itself is forced by the annotation in this case.  If the Source-Type is forcing and
 	there are no parameter annotations, a <emphasis>void</emphasis> prototype is forced on the function.
@@ -1948,7 +1949,7 @@
       <listitem>
 	<para>
 	  Each formal input to the function can have a Variable Annotation that describes its name, data-type,
-	  and storage location, at the moment control-flow enters the function.  If the annotations exist, they are shown
+	  and storage location, at the moment control-flow enters the function.  If annotations exist, they are shown
 	  in the Listing Window as part of the Function header, and they usually correspond directly with symbols in the
 	  <emphasis>function declaration</emphasis> produced by the decompiler.
 	</para>
@@ -1971,13 +1972,19 @@
       <listitem>
 	<para>
 	  The calling convention used by the function can be specified as part of the function prototype. The convention
-	  is specified by name, referring to the formal <xref linkend="PrototypeModel/> that describes how storage
+	  is specified by name, referring to the formal <xref linkend="PrototypeModel"/> that describes how storage
 	  locations are selected for individual parameters along with other information about how the compiler treats
 	  the function.
 	</para>
 	<para>
 	  In the absence of parameter and return value annotations, the decompiler will use the prototype model as
 	  part of its analysis to <emphasis>discover</emphasis> the input parameters and the return value of the function.
+	</para>
+	<para>
+	  The name "unknown" is reserved to indicate that nothing is known about the calling convention.  If
+	  set to "unknown", depending on context, the decompiler may assign the calling convention based on
+	  the <emphasis>Prototype Evaluation</emphasis> option (See <xref linkend="Program Options"/>), or it
+	  may use the default calling convention for the architecture.
 	</para>
       </listitem>
     </varlistentry>
@@ -2044,14 +2051,158 @@
   <sect2>
     <title>Discovering Parameters</title>
     <para>
-      Any parameter annotations in the function prototype are all forcing (as a unit) if the
-      <emphasis>Signature Source-Type</emphasis> is set to anything other than
-      <emphasis>DEFAULT</emphasis>.  See the more complete discussion in <xref linkend="AnnoteForcing"/>.
+      The input parameter and return value annotations of the function prototype, like
+      any variable annotations, can be forcing on the decompiler.
+      See the complete discussion in <xref linkend="AnnoteForcing"/>.
+      But keep in mind:
     </para>
+    <note>
+      The input parameters and return value are all forced on the decompiler as a unit based on the
+      <emphasis>Signature Source-Type</emphasis>. They are all forced if the Source-Type is set to anything
+      other than <emphasis>DEFAULT</emphasis>; otherwise none of them are forced.
+    </note>
     <para>
-      If the function prototype is not forced, the decompiler will attempt to discover the parameters
+      If the function prototype's annotations are not forced, the decompiler will attempt to discover the parameters
       and return value using the calling convention.  The prototype model underlying the calling convention
       dictates which storage locations can be considered as parameters and their formal ordering.
+    </para>
+  </sect2>
+  <sect2>
+    <title>Custom Storage</title>
+    <para>
+      If there are parameter or return value annotations that do not agree with the calling convention that
+      has been set, the function prototype is said to be using <emphasis role="bold">custom storage</emphasis>.
+      Using the <link xlink:href="help/topics/FunctionPlugin/Variables.htm#Edit_Function">Function Editor Dialog</link>
+      for instance, any storage location can be specified as a parameter, and a completely custom prototype
+      can be built for the function.
+    </para>
+    <para>
+      The decompiler will disregard the calling convention's rules in this situation and use the custom storage
+      locations for parameters and the return value.  Other aspects of the calling convention, like the
+      <emphasis>unaffected</emphasis> list, will still be used.
+    </para>
+  </sect2>
+</section>
+
+<section id="AnnoteMutability">
+  <title>Data Mutability</title>
+  <para>
+    <emphasis role="bold">Mutability</emphasis> is a description of how values in a specific memory region
+    (either a single variable or a larger block) can change during Program execution, based either on
+    properties or established rules.  Ghidra recognizes the mutability settings:
+    <informalexample>
+    <itemizedlist mark='bullet'>
+      <listitem>Normal</listitem>
+      <listitem>Constant - (read-only)</listitem>
+      <listitem>Volatile</listitem>
+    </itemizedlist>	
+    </informalexample>
+    Mutability affects decompiler analysis and can have a large impact the output.
+  </para>
+  <para>
+    Most memory has <emphasis role="bold">normal</emphasis> mutability, meaning:
+    the value at the memory location may change over the course of executing the Program, but for a given
+    section of code, the value will not change unless an instruction explicitly writes to it.
+  </para>
+  <para>
+    Mutability can be set on an entire block of memory in the Program, typically from the
+    <link xlink:href="help/topics/MemoryMapPlugin/Memory_map.htm#View_Memory_Map">Memory Map</link>.
+    It can also be set as part of a single Variable Annotation.  From the Listing Window for instance,
+    use the <link xlink:href="help/topics/DataPlugin/Data.htm#Data_Settings">Settings</link> dialog.
+  </para>
+  <sect2>
+    <title>Read-only</title>
+    <para>
+      The <emphasis role="bold">constant</emphasis> mutability setting indicates that values within
+      the memory region are read-only and don't change during Program execution.  If a read-only variable is
+      accessed in a function being analyzed by the decompiler, its constant value, if present in the
+      Program's <emphasis>load image</emphasis>, replaces the variable within data-flow for the
+      function.  The decompiler may propagate the constant and fold it in to other operations, which
+      can have a substantial impact on the final output.
+    </para>
+  </sect2>
+  <sect2>
+    <title>Volatile</title>
+    <para>
+      The <emphasis role="bold">volatile</emphasis> mutability setting indicates that values within
+      the memory region may change unexpectedly, even if the code currently executing does not directly
+      write to it.  If a volatile variable is accessed in a function being analyzed by the decompiler,
+      each specific access is replaced with a built-in function call, which prevents constant propagation
+      and other transforms across the access. The built-in functions are named based on
+      whether the access is a <emphasis>read</emphasis> or <emphasis>write</emphasis> and then the size
+      of the access.  Within decompiler output, the first parameter to a built-in function is a symbol
+      indicating the volatile variable.  The function returns a value in the case of a volatile read or
+      takes a second parameter in the case of a volatile write.
+      <informalexample>
+	<programlisting>
+	  write_volatile_1(DAT_mem_002b,0x20);
+	  X = read_volatile_2(SREG);
+	</programlisting>
+      </informalexample>
+    </para>
+  </sect2>
+</section>
+
+<section id="AnnoteConstants">
+  <title>Constant Annotations</title>
+  <para>
+    Ghidra provides some ways to control how specific constants shown in disassembly are formatted or displayed.
+    These annotations are attached to constants as operands of specific machine instructions. To the extent
+    possible, the decompiler applies these annotations to the matching constant in the decompiler output.
+    The constant may be transformed from its value in the original machine instruction during the decompiler's
+    analysis.  The decompiler will follow the constant through simple transformations, but if the transformed
+    is too far from the original value, the annotation will not be applied.  The transforms followed are:
+    <informalexample>
+    <itemizedlist mark='bullet'>
+      <listitem>Signed or zero extension</listitem>
+      <listitem>Bitwise negation</listitem>
+      <listitem>Integer negation - Twos complement</listitem>
+      <listitem>Add or subtract 1</listitem>
+    </itemizedlist>
+    </informalexample>
+  </para>
+  <sect2>
+    <title>Equates</title>
+    <para>
+      Ghidra can create an association between a name and a constant, called an <emphasis role="bold">equate</emphasis>.
+      The constant must be a constant operand of a specific machine instruction, and the equate
+      is applied directly to the operand from the Listing Window using the
+      <link xlink:href="help/topics/EquatePlugin/Equates.htm#Set_Equate">Set Equate</link> menu.
+      Once applied, the equate's name is displayed instead of the numeric representation of the constant.
+      Equates across the entire Program can be viewed from the
+      <link xlink:href="help/topics/EquatePlugin/Equates.htm#Equate_Table">Equate Table</link>.
+    </para>
+    <para>
+      When analyzing a function, the decompiler attempts to follow any constant in the function with an attached
+      equate to the matching constant in the final output.  If successful, the equate's name is printed instead of
+      the numeric form of the matching constant. If the constant was transformed from its original value, the
+      matching constant is printed as an expression, where the transforming operations are applied to the equate
+      symbol (representing the original constant).
+    </para>
+  </sect2>
+  <sect2>
+    <title>Format Conversions</title>
+    <para>
+      Ghidra can apply a <emphasis role="bold">format conversion</emphasis> to override how an integer operand
+      is displayed in a specific machine instruction.  Conversions are generally applied from the Listing Window using the
+      <link xlink:href="help/topics/EquatePlugin/Equates.htm#Convert">Convert</link> menu option. When analyzing a
+      function containing a machine instruction that has a format conversion applied, the decompiler will attempt
+      to trace the constant to a matching constant in the final output. If successful, the format conversion is also
+      applied to the matching constant.
+    </para>
+    <para>
+      Conversions applied by the decompiler are currently limited to:
+      <informalexample>
+      <itemizedlist mark='bullet'>
+	<listitem>Binary - 0b10100111</listitem>
+	<listitem>Decimal- 167</listitem>
+	<listitem>Hexadecimal - 0xa7</listitem>
+	<listitem>Octal - 0247</listitem>
+      </itemizedlist>
+      </informalexample>
+      An appropriate header matching the format is prepended to the representation string, either "0b", "0x" or just
+      "0".  The decompiler will not switch the signedness of the constant but preserves the signed or unsigned data-type
+      as determined by analysis.
     </para>
   </sect2>
 </section>
