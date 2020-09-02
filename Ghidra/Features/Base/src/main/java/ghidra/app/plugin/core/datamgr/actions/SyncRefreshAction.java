@@ -15,6 +15,10 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
+import docking.widgets.tree.GTreeState;
 import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
@@ -23,10 +27,6 @@ import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.SourceArchive;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
-import docking.widgets.tree.GTreeState;
 
 public class SyncRefreshAction extends DockingAction {
 
@@ -92,7 +92,7 @@ public class SyncRefreshAction extends DockingAction {
 			getClass(),
 			plugin.getTool().getToolFrame(),
 			"Refresh Completed",
-			"Sync indicators refresh for " + dtm.getName() + " to archive \"" +
+			"Sync indicators have been refreshed between " + dtm.getName() + " and archive \"" +
 				sourceArchive.getName() + "\".");
 
 		tree.restoreTreeState(treeState);

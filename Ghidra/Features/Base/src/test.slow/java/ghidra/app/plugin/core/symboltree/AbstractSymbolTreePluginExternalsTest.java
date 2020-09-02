@@ -24,9 +24,9 @@ import javax.swing.*;
 import org.junit.After;
 import org.junit.Before;
 
+import docking.AbstractErrDialog;
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
-import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
@@ -55,16 +55,17 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for the symbol tree plugin.
  */
-public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhidraHeadedIntegrationTest {
+public abstract class AbstractSymbolTreePluginExternalsTest
+		extends AbstractGhidraHeadedIntegrationTest {
 
-	protected static final String GZF_NAME = "WinHelloCPP.exe";
-	protected static final String PROGRAM_NAME = "WinHelloCPP";
-	protected static final String EXTERNAL_PROGRAM_PATHNAME = "/" + PROGRAM_NAME;
+	protected static String GZF_NAME = "WinHelloCPP.exe";
+	protected static String PROGRAM_NAME = "WinHelloCPP";
+	protected static String EXTERNAL_PROGRAM_PATHNAME = "/" + PROGRAM_NAME;
 
 	protected TestEnv env;
 	protected PluginTool tool;
@@ -107,9 +108,6 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		env.showTool();
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 		closeProgram();
@@ -120,10 +118,10 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 			throws Exception {
 		selectExternalLocation(libraryName, name);
 		performAction(editExternalLocationAction, util.getProvider(), false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		EditExternalLocationDialog createDialog = AbstractDockingTest.waitForDialogComponent(
-			plugin.getTool().getToolFrame(), EditExternalLocationDialog.class, 2000);
+			EditExternalLocationDialog.class);
 		waitForBusyTool(tool);
 		return createDialog;
 	}
@@ -151,11 +149,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		}
 	}
 
-//==================================================================================================
-// Private Methods
-//==================================================================================================
-
-	protected void changeToFunction(final EditExternalLocationDialog createDialog,
+	protected void changeToFunction(EditExternalLocationDialog createDialog,
 			boolean isFunction) {
 		EditExternalLocationPanel extLocPanel = findComponent(
 			createDialog.getComponent().getRootPane(), EditExternalLocationPanel.class);
@@ -163,8 +157,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		functionCheckBox.setSelected(isFunction);
 	}
 
-	protected ExternalLocation setupExternalLocation(final String library, final String label,
-			final Address address, final SourceType sourceType, boolean isFunction)
+	protected ExternalLocation setupExternalLocation(String library, String label,
+			Address address, SourceType sourceType, boolean isFunction)
 			throws InvalidInputException, DuplicateNameException {
 		boolean success = false;
 		int transactionID =
@@ -187,19 +181,19 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		}
 	}
 
-	protected ExternalLocation setupExternalLocation(final String library, final String label,
-			final Address address, final SourceType sourceType)
+	protected ExternalLocation setupExternalLocation(String library, String label,
+			Address address, SourceType sourceType)
 			throws InvalidInputException, DuplicateNameException {
 		return setupExternalLocation(library, label, address, sourceType, false);
 	}
 
-	protected ExternalLocation setupExternalFunction(final String library, final String label,
-			final Address address, final SourceType sourceType)
+	protected ExternalLocation setupExternalFunction(String library, String label,
+			Address address, SourceType sourceType)
 			throws InvalidInputException, DuplicateNameException {
 		return setupExternalLocation(library, label, address, sourceType, true);
 	}
 
-	protected Namespace addNamespace(final String libraryName, final String namespace)
+	protected Namespace addNamespace(String libraryName, String namespace)
 			throws InvalidInputException {
 		boolean success = false;
 		int transactionID = program.startTransaction(
@@ -217,7 +211,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		}
 	}
 
-	protected Namespace getLibraryScope(final String libaryName) {
+	protected Namespace getLibraryScope(String libaryName) {
 		Symbol s = program.getSymbolTable().getLibrarySymbol(libaryName);
 		if (s instanceof LibrarySymbol) {
 			return (Namespace) s.getObject();
@@ -225,27 +219,27 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		return null;
 	}
 
-	protected void closeExternalLocation(final EditExternalLocationDialog createDialog,
-			final String buttonText) {
+	protected void closeExternalLocation(EditExternalLocationDialog createDialog,
+			String buttonText) {
 		pressButtonByText(createDialog.getComponent(), buttonText);
 		assertFalse(createDialog.isShowing());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
-	protected GTreeNode selectLibraryNode(final String libraryName) throws Exception {
+	protected GTreeNode selectLibraryNode(String libraryName) throws Exception {
 
 		flushAndWaitForTree();
 
 		GTreeNode importsNode = rootNode.getChild("Imports");
 		assertNotNull(importsNode);
 		util.expandNode(importsNode);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		flushAndWaitForTree();
 		GTreeNode advapiNode = importsNode.getChild(libraryName);
 		assertNotNull(advapiNode);
 		tree.expandPath(advapiNode);
 		tree.setSelectedNode(advapiNode);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		flushAndWaitForTree();
 		GTreeNode selectedNode = util.getSelectedNode();
 		assertEquals(advapiNode, selectedNode);
@@ -254,26 +248,26 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		return advapiNode;
 	}
 
-	protected GTreeNode selectExternalLocation(final String libraryName,
-			final String externalLocation) throws Exception {
+	protected GTreeNode selectExternalLocation(String libraryName,
+			String externalLocation) throws Exception {
 		flushAndWaitForTree();
 
 		GTreeNode importsNode = rootNode.getChild("Imports");
 		assertNotNull(importsNode);
 		util.expandNode(importsNode);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		flushAndWaitForTree();
 
 		GTreeNode advapiNode = importsNode.getChild(libraryName);
 		assertNotNull(advapiNode);
 		util.expandNode(advapiNode);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		flushAndWaitForTree();
 
 		GTreeNode locationNode = advapiNode.getChild(externalLocation);
 		assertNotNull(locationNode);
 		tree.setSelectedNode(locationNode);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		flushAndWaitForTree();
 		GTreeNode selectedNode = util.getSelectedNode();
 		assertEquals(locationNode, selectedNode);
@@ -282,8 +276,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		return locationNode;
 	}
 
-	protected void checkExternalLocationPath(final EditExternalLocationDialog createDialog,
-			final String externalProgramPath) {
+	protected void checkExternalLocationPath(EditExternalLocationDialog createDialog,
+			String externalProgramPath) {
 		SystemUtilities.runSwingNow(() -> {
 			EditExternalLocationPanel panel = findComponent(
 				createDialog.getComponent().getRootPane(), EditExternalLocationPanel.class);
@@ -294,8 +288,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		});
 	}
 
-	protected void checkExternalLibraryName(final EditExternalLocationDialog createDialog,
-			final String expectedName) {
+	protected void checkExternalLibraryName(EditExternalLocationDialog createDialog,
+			String expectedName) {
 		SystemUtilities.runSwingNow(() -> {
 			EditExternalLocationPanel panel = findComponent(
 				createDialog.getComponent().getRootPane(), EditExternalLocationPanel.class);
@@ -306,8 +300,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		});
 	}
 
-	protected void chooseExternalLibraryName(final EditExternalLocationDialog createDialog,
-			final String libraryName) {
+	protected void chooseExternalLibraryName(EditExternalLocationDialog createDialog,
+			String libraryName) {
 		SystemUtilities.runSwingNow(() -> {
 			EditExternalLocationPanel panel = findComponent(
 				createDialog.getComponent().getRootPane(), EditExternalLocationPanel.class);
@@ -317,8 +311,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		});
 	}
 
-	protected void typeExternalLibraryName(final EditExternalLocationDialog createDialog,
-			final String libraryName) {
+	protected void typeExternalLibraryName(EditExternalLocationDialog createDialog,
+			String libraryName) {
 
 		runSwing(() -> {
 			EditExternalLocationPanel panel = findComponent(
@@ -335,8 +329,8 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		});
 	}
 
-	protected void checkExternalLocationPathEndsWith(final EditExternalLocationDialog createDialog,
-			final String externalProgramPathEndsWith) {
+	protected void checkExternalLocationPathEndsWith(EditExternalLocationDialog createDialog,
+			String externalProgramPathEndsWith) {
 		EditExternalLocationPanel panel = findComponent(createDialog.getComponent().getRootPane(),
 			EditExternalLocationPanel.class);
 		Object pathTextObj = getInstanceField("extLibPathTextField", panel);
@@ -347,16 +341,16 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 			text.endsWith(externalProgramPathEndsWith));
 	}
 
-	protected void chooseProgram(final Project project, final String programName) {
+	protected void chooseProgram(Project project, String programName) {
 
-		final DataTreeDialog chooseDialog = AbstractDockingTest.waitForDialogComponent(
-			plugin.getTool().getToolFrame(), DataTreeDialog.class, 2000);
+		DataTreeDialog chooseDialog = AbstractDockingTest.waitForDialogComponent(
+			DataTreeDialog.class);
 
 		ProjectData projectData = project.getProjectData();
 		DomainFolder folder = projectData.getFolder("/");
 		assertNotNull(folder);
 
-		final DomainFile file = folder.getFile(programName);
+		DomainFile file = folder.getFile(programName);
 		assertNotNull(file);
 
 		setFileInDataTreeDialog(chooseDialog, file);
@@ -368,15 +362,15 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		flushAndWaitForTree();
 	}
 
-	protected void chooseProgramButCancel(final Project project, final String programName) {
+	protected void chooseProgramButCancel(Project project, String programName) {
 
-		final DataTreeDialog chooseDialog = AbstractDockingTest.waitForDialogComponent(
-			plugin.getTool().getToolFrame(), DataTreeDialog.class, 2000);
+		DataTreeDialog chooseDialog = AbstractDockingTest.waitForDialogComponent(
+			DataTreeDialog.class);
 
 		ProjectData projectData = project.getProjectData();
 		DomainFolder folder = projectData.getFolder("/");
 		assertNotNull(folder);
-		final DomainFile file = folder.getFile(programName);
+		DomainFile file = folder.getFile(programName);
 		assertNotNull(file);
 
 		setFileInDataTreeDialog(chooseDialog, file);
@@ -390,13 +384,9 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 
 	protected void closeErrorDialog(String expectedTitle) {
 
-		final OptionDialog errorDialog = AbstractDockingTest.waitForDialogComponent(
-			plugin.getTool().getToolFrame(), OptionDialog.class, 2000);
-
-		String actualTitle = errorDialog.getTitle();
-
-		pressButtonByText(errorDialog.getComponent().getRootPane(), "OK", false);
-
+		AbstractErrDialog d = waitForErrorDialog();
+		String actualTitle = d.getTitle();
+		close(d);
 		assertEquals(expectedTitle, actualTitle);
 
 		waitForBusyTool(tool);
@@ -404,7 +394,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		flushAndWaitForTree();
 	}
 
-	protected void checkExternalLocationLabel(final EditExternalLocationDialog createDialog,
+	protected void checkExternalLocationLabel(EditExternalLocationDialog createDialog,
 			String label) {
 		EditExternalLocationPanel extLocPanel = findComponent(
 			createDialog.getComponent().getRootPane(), EditExternalLocationPanel.class);
@@ -414,7 +404,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		assertEquals(label, text);
 	}
 
-	protected void setExternalLocationLabel(final EditExternalLocationDialog createDialog,
+	protected void setExternalLocationLabel(EditExternalLocationDialog createDialog,
 			String label) {
 		runSwing(() -> {
 			EditExternalLocationPanel extLocPanel = findComponent(
@@ -425,7 +415,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		});
 	}
 
-	protected void checkExternalLocationAddressInput(final EditExternalLocationDialog createDialog,
+	protected void checkExternalLocationAddressInput(EditExternalLocationDialog createDialog,
 			String space, String address) {
 		EditExternalLocationPanel extLocPanel = findComponent(
 			createDialog.getComponent().getRootPane(), EditExternalLocationPanel.class);
@@ -443,7 +433,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		assertEquals(address, currentAddress);
 	}
 
-	protected void setExternalLocationAddressInput(final EditExternalLocationDialog createDialog,
+	protected void setExternalLocationAddressInput(EditExternalLocationDialog createDialog,
 			AddressSpace addressSpace, String address) {
 		runSwing(() -> {
 			EditExternalLocationPanel extLocPanel = findComponent(
@@ -468,13 +458,13 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		Address address = program.getAddressFactory().getAddress(startAddress);
 		Memory memory = program.getMemory();
 		memory.createInitializedBlock(name, address, length, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, true);
+			TaskMonitor.DUMMY, true);
 		program.endTransaction(transactionID, true);
 	}
 
 	protected void closeProgram() throws Exception {
-		final ProgramManager pm = tool.getService(ProgramManager.class);
-		SwingUtilities.invokeAndWait(() -> pm.closeProgram());
+		ProgramManager pm = tool.getService(ProgramManager.class);
+		runSwing(() -> pm.closeProgram());
 	}
 
 	protected void showSymbolTree() throws Exception {
@@ -514,26 +504,26 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 		assertNotNull(goToExtLocAction);
 	}
 
-	protected void pressDataTreeDialogOK(final DataTreeDialog dialog) {
+	protected void pressDataTreeDialogOK(DataTreeDialog dialog) {
 		pressButtonByText(dialog.getComponent(), "OK");
 		assertFalse(dialog.isShowing());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
-	protected void pressDataTreeDialogCancel(final DataTreeDialog dialog) {
+	protected void pressDataTreeDialogCancel(DataTreeDialog dialog) {
 		pressButtonByText(dialog.getComponent(), "Cancel");
 		assertFalse(dialog.isShowing());
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 
-	protected void setFileInDataTreeDialog(final DataTreeDialog dialog, final DomainFile file) {
+	protected void setFileInDataTreeDialog(DataTreeDialog dialog, DomainFile file) {
 		runSwing(() -> dialog.selectDomainFile(file), true);
 
 		waitForDialogTree(dialog);
 	}
 
 	protected void waitForDialogTree(DataTreeDialog dialog) {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		ProjectDataTreePanel treePanel =
 			(ProjectDataTreePanel) getInstanceField("treePanel", dialog);
 		DataTree dataTree = treePanel.getDataTree();
@@ -542,7 +532,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest extends AbstractGhid
 
 	protected void flushAndWaitForTree() {
 		program.flushEvents();
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		util.waitForTree();
 	}
 }

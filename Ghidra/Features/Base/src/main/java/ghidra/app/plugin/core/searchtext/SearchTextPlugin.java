@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 
 import docking.*;
-import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
@@ -96,8 +95,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private static final String DESCRIPTION = "Search program text for string";
 	private final static int DEFAULT_SEARCH_LIMIT = 500;
 	private final static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
-	private DockingAction searchAction;
-	private DockingAction searchAgainAction;
 
 	private boolean waitingForSearchAll;
 	private SearchTextDialog searchDialog;
@@ -379,7 +376,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private void createActions() {
 		String subGroup = getClass().getName();
 
-		searchAction = new ActionBuilder("Search Text", getName())
+		new ActionBuilder("Search Text", getName())
 				.menuPath("&Search", "Program &Text...")
 				.menuGroup("search", subGroup)
 				.keyBinding("ctrl shift E")
@@ -393,7 +390,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				})
 				.buildAndInstall(tool);
 
-		searchAgainAction = new ActionBuilder("Repeat Text Search", getName())
+		new ActionBuilder("Repeat Text Search", getName())
 				.menuPath("&Search", "Repeat Text Search")
 				.menuGroup("search", subGroup)
 				.keyBinding("ctrl shift F3")

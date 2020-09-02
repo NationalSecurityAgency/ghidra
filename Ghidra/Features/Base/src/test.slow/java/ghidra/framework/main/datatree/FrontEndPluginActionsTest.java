@@ -28,7 +28,7 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.ActionContext;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.test.AbstractDockingTest;
@@ -92,11 +92,11 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testNewFolder() throws Exception {
-		final DockingActionIf newFolderAction = getAction("New Folder");
+		DockingActionIf newFolderAction = getAction("New Folder");
 		setSelectionPaths(new TreePath[] { rootNode.getTreePath() });
 		int count = rootNode.getChildCount();
 		performAction(newFolderAction, getDomainFileActionContext(), true);
-		SwingUtilities.invokeAndWait(() -> tree.stopEditing());
+		runSwing(() -> tree.stopEditing());
 		assertEquals(count + 1, rootNode.getChildCount());
 		assertNotNull(getChild(rootNode, "NewFolder"));
 	}
@@ -104,11 +104,11 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 	@Test
 	public void testNewFolderBlankName() throws Exception {
 		// try entering a blank name
-		final DockingActionIf newFolderAction = getAction("New Folder");
+		DockingActionIf newFolderAction = getAction("New Folder");
 		setSelectionPaths(new TreePath[] { rootNode.getTreePath() });
 		performAction(newFolderAction, getDomainFileActionContext(), true);
 		waitForTree();
-		SwingUtilities.invokeLater(() -> {
+		runSwingLater(() -> {
 			GTreeNode node = rootNode.getChild("NewFolder");
 			int row = tree.getRowForPath(node.getTreePath());
 			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
@@ -123,10 +123,9 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		});
 		waitForSwing();
 
-		OptionDialog d = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(d);
+		AbstractErrDialog d = waitForErrorDialog();
 		assertEquals("Rename Failed", d.getTitle());
-		pressButtonByText(d.getComponent(), "OK");
+		close(d);
 	}
 
 	@Test
@@ -137,7 +136,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 			setSelectionPaths(new TreePath[] { rootNode.getTreePath() });
 			performAction(newFolderAction, getDomainFileActionContext(), true);
 			waitForTree();
-			SwingUtilities.invokeAndWait(() -> tree.stopEditing());
+			runSwing(() -> tree.stopEditing());
 			waitForTree();
 			if (i > 0) {
 				assertNotNull(getChild(rootNode, "NewFolder" + (i + 1)));
@@ -371,9 +370,9 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 		rootFolder.createFolder("otherFolder");
 		waitForSwing();
-		final GTreeNode otherNode = getChild(rootNode, "otherFolder");
+		GTreeNode otherNode = getChild(rootNode, "otherFolder");
 		// drag myFolder to otherFolder
-		final GTreeNode myNode = getChild(rootNode, "myFolder");
+		GTreeNode myNode = getChild(rootNode, "myFolder");
 
 		doDrag(otherNode, DnDConstants.ACTION_MOVE, myNode);
 
@@ -460,10 +459,9 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		doDrag(myNode, DnDConstants.ACTION_MOVE, npNode);
 		waitForTree();
 
-		OptionDialog d = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(d);
+		AbstractErrDialog d = waitForErrorDialog();
 		assertEquals("Cannot Move File", d.getTitle());
-		pressButtonByText(d.getComponent(), "OK");
+		close(d);
 
 		expandTreePath(myNode.getTreePath());
 		assertEquals(0, myNode.getChildCount());
@@ -535,7 +533,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		rootFolder.createFolder("myFolder");
 		waitForSwing();
 
-		final GTreeNode myNode = rootNode.getChild("myFolder");
+		GTreeNode myNode = rootNode.getChild("myFolder");
 		setSelectionPath(myNode.getTreePath());
 
 		DockingActionIf renameAction = getAction("Rename");
@@ -543,7 +541,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		waitForTree();
 
 		// select "Rename" action
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			int row = tree.getRowForPath(myNode.getTreePath());
 			JTree jTree = (JTree) getInstanceField("tree", tree);
 			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
@@ -561,7 +559,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testRenameFile() throws Exception {
-		final GTreeNode npNode = rootNode.getChild("notepad");
+		GTreeNode npNode = rootNode.getChild("notepad");
 		setSelectionPath(npNode.getTreePath());
 
 		DockingActionIf renameAction = getAction("Rename");
@@ -569,7 +567,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		waitForTree();
 
 		// select "Rename" action
-		SwingUtilities.invokeAndWait(() -> {
+		runSwing(() -> {
 			int row = tree.getRowForPath(npNode.getTreePath());
 			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
 			JTree jTree = (JTree) getInstanceField("tree", tree);
@@ -588,7 +586,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testRenameFileInUse() throws Exception {
-		final GTreeNode npNode = rootNode.getChild("notepad");
+		GTreeNode npNode = rootNode.getChild("notepad");
 		DomainFile df = ((DomainFileNode) npNode).getDomainFile();
 
 		setInUse(df);
@@ -599,9 +597,9 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		executeOnSwingWithoutBlocking(
 			() -> performAction(renameAction, getDomainFileActionContext(), true));
 		waitForSwing();
-		OptionDialog dlg = waitForDialogComponent(OptionDialog.class);
-		assertEquals("Rename Not Allowed", dlg.getTitle());
-		pressButtonByText(dlg.getComponent(), "OK");
+
+		DialogComponentProvider d = waitForDialogComponent("Rename Not Allowed");
+		pressButtonByText(d.getComponent(), "OK");
 		assertNotNull(rootNode.getChild("notepad"));
 	}
 
@@ -618,7 +616,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		DomainFile df = f.createFile("notepad", p, TaskMonitor.DUMMY);
 		waitForSwing();
 
-		final GTreeNode myNode = rootNode.getChild("myFolder");
+		GTreeNode myNode = rootNode.getChild("myFolder");
 		((DomainFolderNode) myNode).getDomainFolder().createFile("notepad", p, TaskMonitor.DUMMY);
 		p.release(this);
 
@@ -630,12 +628,12 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 		setSelectionPath(myNode.getTreePath());
 
-		final DockingActionIf renameAction = getAction("Rename");
+		DockingActionIf renameAction = getAction("Rename");
 		performAction(renameAction, getDomainFileActionContext(), true);
 		waitForTree();
 
 		// attempt to rename "myFolder"
-		SwingUtilities.invokeLater(() -> {
+		runSwingLater(() -> {
 			int row = tree.getRowForPath(myNode.getTreePath());
 			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
 			JTree jTree = (JTree) getInstanceField("tree", tree);
@@ -649,10 +647,9 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 
 		waitForSwing();
 
-		OptionDialog d = waitForDialogComponent(OptionDialog.class);
-		assertNotNull(d);
+		AbstractErrDialog d = waitForErrorDialog();
 		assertEquals("Rename Failed", d.getTitle());
-		pressButtonByText(d.getComponent(), "OK");
+		close(d);
 		assertNotNull(rootNode.getChild("myFolder"));
 	}
 
@@ -756,7 +753,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 // Private Methods
 //==================================================================================================
 
-	private void setSelectionPath(final TreePath path) throws Exception {
+	private void setSelectionPath(TreePath path) throws Exception {
 		tree.setSelectionPath(path);
 		waitForTree();
 	}
@@ -802,7 +799,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		setInUse(df, "/notepad");
 	}
 
-	private void setInUse(DomainFile df, final String path) throws Exception {
+	private void setInUse(DomainFile df, String path) throws Exception {
 		ProgramDB program = createDefaultProgram("test1", ProgramBuilder._TOY, this);
 
 		//
