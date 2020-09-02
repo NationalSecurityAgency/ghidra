@@ -36,23 +36,7 @@ class PlaceholderSet {
 	}
 
 	void addRestoredPlaceholder(ComponentPlaceholder restoredPlaceholder) {
-		ComponentPlaceholder existingPlaceholder =
-			getMatchingUnusedPlaceholder(restoredPlaceholder);
-
-		if (existingPlaceholder == null) {
-			unusedPlaceholders.add(restoredPlaceholder);
-			return;
-		}
-
-		if (restoredPlaceholder.wantsToBeShowing()) {
-			// use the new one instead
-			unusedPlaceholders.remove(existingPlaceholder);
-			existingPlaceholder.dispose();
-			unusedPlaceholders.add(restoredPlaceholder);
-		}
-		else {
-			restoredPlaceholder.dispose();
-		}
+		unusedPlaceholders.add(restoredPlaceholder);
 	}
 
 	void placeholderUsed(ComponentProvider provider, ComponentPlaceholder placeholder) {
@@ -151,10 +135,11 @@ class PlaceholderSet {
 			Collection<ComponentPlaceholder> placeholders, ComponentPlaceholder matchee) {
 
 		String name = matchee.getName();
+		String group = matchee.getGroup();
 		Iterator<ComponentPlaceholder> it = placeholders.iterator();
 		while (it.hasNext()) {
 			ComponentPlaceholder placeholder = it.next();
-			if (placeholder.getName().equals(name)) {
+			if (placeholder.getName().equals(name) && placeholder.getGroup().equals(group)) {
 				return placeholder;
 			}
 		}
