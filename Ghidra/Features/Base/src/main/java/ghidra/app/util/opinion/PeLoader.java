@@ -901,7 +901,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 				offsetChoice = CompilerEnum.Clang;
 			}
 			else if (dh.e_lfanew() < 0x80) {
-				// 0x78 checked for Clang above, but 0x7c fits here too
 				offsetChoice = CompilerEnum.Unknown;
 			}
 			else {
@@ -985,7 +984,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			}
 
 			// Check for AddressOfStart and PointerToSymbol
-			if (errStringChoice == CompilerEnum.GCC_VS && asmChoice == CompilerEnum.GCC_VS &&
+			if (errStringChoice == CompilerEnum.GCC_VS && asmChoice == CompilerEnum.GCC_VS_Clang &&
 				dh.e_lfanew() == 0x80) {
 				// Trying to determine if we have gcc or old VS
 
