@@ -4,7 +4,7 @@
 <info>
   <title>Decompiler</title>
 </info>
-<chapter id="Decompiler_Intro">
+<chapter id="DecompilerIntro">
   <title>Decompiler</title>
 <mediaobject>
   <imageobject>
@@ -134,10 +134,10 @@
 </section>
 </chapter>
 
-<chapter id="Decompiler_Concepts">
+<chapter id="DecompilerConcepts">
   <title>Decompiler Concepts</title>
   
-<section id="pcode">
+<section id="ConceptPcode">
   <title>P-code</title>
   <para>
     P-code is Ghidra's Intermediate Representation (IR) language. When analyzing a function,
@@ -146,7 +146,7 @@
     is also best understood in terms of p-code. This section presents the key concepts of
     p-code. For a more detailed discussion see the document "P-Code Reference Manual".
   </para>
-  <sect2 id="addressspace">
+  <sect2 id="ConceptAddressSpace">
     <title>Address Space</title>
     <para>
       P-code defines all data in terms of an address space. An <emphasis role="bold">address space</emphasis>
@@ -238,7 +238,7 @@
     </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="ConceptVarnode">
     <title>Varnodes</title>
     <para>
       A <emphasis role="bold">varnode</emphasis> is defined as a sequence of bytes in
@@ -753,7 +753,7 @@
     </informalexample>
   </sect3>
 
-  <sect3 id="Internal_Decompiler_Functions">
+  <sect3 id="ConceptInternalFunctions">
     <title>Internal Decompiler Functions</title>
     <para>
       Certain p-code operations can show up in decompiler output that cannot be represented
@@ -875,7 +875,7 @@
   </sect2>
 </section>
 
-<section id="HighFunction">
+<section id="ConceptHighFunction">
   <title>The HighFunction</title>
   <para>
     A <emphasis role="bold">HighFunction</emphasis> is the collection of specific information
@@ -943,7 +943,7 @@
     </para>
   </sect2>
 
-  <sect2 id="VarnodeSSA">
+  <sect2 id="ConceptVarnodeSSA">
     <title>Varnodes in the Decompiler</title>
   <para>
     Varnodes are the central <emphasis>variable</emphasis> concept for the decompiler.
@@ -992,7 +992,7 @@
   </para>
   </sect2>
   
-  <sect2 id="HighVariable">
+  <sect2 id="ConceptHighVariable">
     <title>HighVariable</title>
     <para>
 	A <emphasis role="bold">HighVariable</emphasis> is a set varnodes that, taken
@@ -1027,7 +1027,7 @@
 	  <emphasis role="bold">Merging</emphasis> is the part of the analysis process where
 	  the decompiler decides what varnodes get grouped together to create the final
 	  HighVariables in the output.  Each varnode's scope (see the discussion in
-	  <xref linkend="VarnodeSSA"/>) provides the fundamental restriction on this process.
+	  <xref linkend="ConceptVarnodeSSA"/>) provides the fundamental restriction on this process.
 	  Two varnodes cannot be merged if their scopes intersect.  But this leaves a lot of
 	  leeway in what varnodes <emphasis>can</emphasis> be merged.
 	</para>
@@ -1045,11 +1045,11 @@
 	  prioritizes variable pairs that are read and written within the same instruction and
 	  then pairs that are "near" each other in the control-flow of the function.
 	  To a limited extent, users are able to control this kind of merging
-	  (See <xref linkend="IsolateAction"/>).
+	  (See <xref linkend="ActionIsolate"/>).
 	</para>
     </sect3>
   </sect2>
-  <sect2 id="PrototypeModel">
+  <sect2 id="ConceptPrototypeModel">
     <title>Prototype Model</title>
     <para>
       Functions in high-level languages manipulate symbols like parameters and return values that
@@ -1083,7 +1083,7 @@
 	If the parameter
 	is stored on the stack, the storage location is viewed as a constant offset in the <emphasis role="bold">stack</emphasis>
 	space, where the offset is relative to the incoming value of <emphasis>stack pointer</emphasis>
-	(See the discussion in <xref linkend="addressspace"/>).
+	(See the discussion in <xref linkend="ConceptAddressSpace"/>).
       </para>
       <para>
 	The <emphasis>return value</emphasis> for the function, similarly, is stored at a single memory location.  It
@@ -1117,7 +1117,7 @@
 
 </chapter>
 
-<chapter id="Decompiler_Annotations">
+<chapter id="DecompilerAnnotations">
   <title>Program Annotations Affecting the Decompiler</title>
 
 <section id="AnnoteFunctionBody">
@@ -1126,7 +1126,7 @@
     Individual <emphasis role="bold">machine instructions</emphasis>
     make up the biggest source of information when the
     decompiler analyzes a function.  Instructions are translated from their
-    processor specific form into Ghidra's IR language (see <xref linkend="pcode"/>),
+    processor specific form into Ghidra's IR language (see <xref linkend="ConceptPcode"/>),
     which provides both the control-flow behavior of the instruction and the detailed
     semantics describing how the processor and memory state is affected. The translation is controlled by
     the underlying processor model and cannot be directly altered from the tool. Users
@@ -1357,7 +1357,7 @@
     </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="AnnoteWarnings">
     <title>Warning Comments</title>
     <para>
       The decompiler can generate internal warnings during its analysis and will incorporate
@@ -1442,16 +1442,16 @@
     <informalexample>
       <itemizedlist mark='none'>
 	<listitem>
-	  <xref linkend="RenameVariable"/>
+	  <xref linkend="ActionRenameVariable"/>
 	</listitem>
 	<listitem>
-	  <xref linkend="RetypeVariable"/>
+	  <xref linkend="ActionRetypeVariable"/>
 	</listitem>
 	<listitem>
-	  <xref linkend="CommitParams"/>
+	  <xref linkend="ActionCommitParams"/>
 	</listitem>
 	<listitem>
-	  <xref linkend="CommitLocals"/>
+	  <xref linkend="ActionCommitLocals"/>
 	</listitem>
       </itemizedlist>
     </informalexample>
@@ -1677,7 +1677,7 @@
 	  Structured data-types are fully supported. The decompiler does not automatically infer structures
 	  when analyzing a function; it propagates structured data-types into the function from explicitly
 	  annotated sources, like input parameters or global variables.  Decompiler directed creation of
-	  structures can be triggered by the user, see <xref linkend="AutoCreateStructure"/>.
+	  structures can be triggered by the user, see <xref linkend="ActionAutoStructure"/>.
 	</para>
       </sect4>
       <sect4>
@@ -1860,7 +1860,7 @@
 	of a particular function in the Program.  Formally, a stack address is defined as an offset relative to the
 	incoming value of the <emphasis>stack pointer</emphasis> and exists in the
 	<emphasis role="bold">stack</emphasis> address space associated with the function. See the discussion
-	in <xref linkend="addressspace"/>. A <emphasis role="bold">stack annotation</emphasis> then is a variable annotation
+	in <xref linkend="ConceptAddressSpace"/>. A <emphasis role="bold">stack annotation</emphasis> then is a variable annotation
 	with a stack address as its storage location. It exists only in the scope of a
 	single function and the variable must be <emphasis>local</emphasis> to that function. 
       </para>
@@ -1903,7 +1903,7 @@
 	There may be more than one annotation, for different variables, that share the same register
 	storage location.
 	An annotation is associated with a <emphasis>first use point</emphasis> that describes where
-	the register first holds a value for the particular variable.  (See the discussion - <xref linkend="VarnodeSSA"/>)
+	the register first holds a value for the particular variable.  (See the discussion - <xref linkend="ConceptVarnodeSSA"/>)
 	The entire scope of the annotation is limited to the address regions between the first use point
 	and any points where the value is read. The decompiler may extend the scope as part of its
 	<emphasis>merging</emphasis> process, but the full extent is not stored in the annotation.
@@ -1915,7 +1915,7 @@
 	Variable annotations can have a <emphasis>temporary register</emphasis> as a storage location.
 	A temporary register is not specific to a processor but is produced at various stages of
 	the decompilation process. See the discussion of the <emphasis role="bold">unique</emphasis>
-	space in <xref linkend="addressspace"/>. These registers do not have a meaningful name, and
+	space in <xref linkend="ConceptAddressSpace"/>. These registers do not have a meaningful name, and
 	the specific storage address may change on successive decompilations. So within the
 	<emphasis>Listing</emphasis> window, this annotation is displayed as part of the function header,
 	with syntax like:
@@ -1972,7 +1972,7 @@
       <listitem>
 	<para>
 	  The calling convention used by the function can be specified as part of the function prototype. The convention
-	  is specified by name, referring to the formal <xref linkend="PrototypeModel"/> that describes how storage
+	  is specified by name, referring to the formal <xref linkend="ConceptPrototypeModel"/> that describes how storage
 	  locations are selected for individual parameters along with other information about how the compiler treats
 	  the function.
 	</para>
@@ -1983,7 +1983,7 @@
 	<para>
 	  The name "unknown" is reserved to indicate that nothing is known about the calling convention.  If
 	  set to "unknown", depending on context, the decompiler may assign the calling convention based on
-	  the <emphasis>Prototype Evaluation</emphasis> option (See <xref linkend="Program Options"/>), or it
+	  the <emphasis>Prototype Evaluation</emphasis> option (See <xref linkend="OptionProtoEval"/>), or it
 	  may use the default calling convention for the architecture.
 	</para>
       </listitem>
@@ -2207,9 +2207,38 @@
   </sect2>
 </section>
 
+<section id="AnnoteRegister">
+  <title>Register Values</title>
+  <para>
+    A <emphasis role="bold">register value</emphasis> in this context is a region of code in the Program
+    where a specific register holds a known constant value.  Ghidra maintains an explicit list of these values for
+    the Program (see the documentation for <link xlink:href="help/topics/RegisterPlugin/Registers.htm">Register Values</link>),
+    which the decompiler can use when analyzing a function.
+    A register value benefits decompiler analysis, especially if the original compiler was aware
+    of the constant value, as the decompiler can recover address references calculated as offsets relative to the register
+    and otherwise propagate the constant.
+  </para>
+  <para>
+    A <emphasis>register value</emphasis> is set by highlighting the region of code in the Listing Window and then invoking the
+    <link xlink:href="help/topics/RegisterPlugin/Registers.htm#SetRegisterValues">Set Register Values ...</link> command
+    from the pop-up menu.  The beginning and end of a region is indicated in the Listing Window with
+    <code>assume</code> directives, and regions can be generally viewed from the
+    <link xlink:href="help/topics/RegisterPlugin/Registers.htm#Register_Manager">Register Manager</link> window.
+  </para>
+  <para>
+    In order for a particular register value to affect decompilation, the region of code associated with the
+    value must contain the entry point of the function, and of course the function must read from the register.
+    Only the initial reads of the register are replaced with the constant value.
+    The decompiler will continue to respect later instructions that write to the register (even if the
+    instruction is inside the register value's region)
+    If a register value's region starts in the middle of a function, decompilation is <emphasis>not</emphasis>
+    affected at all.
+  </para>
+</section>
+
 </chapter>
 
-<chapter id="Decompiler_Options">
+<chapter id="DecompilerOptions">
   <title>Decompiler Options</title>
 <simplesect>
   <para>
@@ -2393,7 +2422,7 @@
 	   Users can actively set whether specific memory regions are considered read-only through the
 	  <emphasis>Memory Manager</emphasis>, and individual data elements can be marked
 	  as <emphasis>constant</emphasis> via the <emphasis role="bold">Mutability</emphasis> setting
-	  (See <xref linkend="DataMutability"/>). 
+	  (See <xref linkend="AnnoteMutability"/>). 
 	</para>
       </listitem>
     </varlistentry>
@@ -2496,7 +2525,7 @@
       <listitem>
 	<para>
 	  Assign the background color used to highlight characters matching the current <emphasis>Find</emphasis> pattern.
-	  See <xref linkend="FindCommand"/>.
+	  See <xref linkend="ActionFind"/>.
 	</para>
       </listitem>
     </varlistentry>
@@ -2529,7 +2558,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="CommentOptions">
       <term><emphasis role="bold">Display &lt;kind-of&gt; Comments</emphasis></term>
       <listitem>
 	<para>
@@ -2616,7 +2645,7 @@
 	<para>
 	  Toggle whether decompiler generated <emphasis>WARNING</emphasis> comments are displayed as part
 	  of the output. The decompiler generates these comments, independent of those layed down by users, to
-	  indicate unusual conditions or possible errors (See <xref linkend="WarningsErrors"/>). 
+	  indicate unusual conditions or possible errors (See <xref linkend="AnnoteWarnings"/>). 
 	</para>
       </listitem>
     </varlistentry>
@@ -2696,7 +2725,7 @@
 	  declaration in decompiler output. If this option is turned on, the name of the calling convention
 	  is printed just prior to the return value data-type within the function declaration.  All functions
 	  in Ghidra have an associated calling convention (or prototype model) that is used during
-	  decompiler analysis.  See the discussion in <xref linkend="PrototypeModel"/>.
+	  decompiler analysis.  See the discussion in <xref linkend="ConceptPrototypeModel"/>.
 	</para>
       </listitem>
     </varlistentry>
@@ -2714,14 +2743,14 @@
     <informalexample>
     <variablelist>
     <?dbfo list-presentation="blocks"?>
-    <varlistentry>
+    <varlistentry id="OptionProtoEval">
       <term><emphasis role="bold">Prototype Evaluation</emphasis></term>
       <listitem>
 	<para>
 	  Sets the calling convention (prototype model) used when decompiling a function where
 	  the convention is not known (i.e. marked as "unknown").  Many architectures have multiple
 	  calling conventions, <code>__stdcall</code>, <code>__thiscall</code> etc.  See the
-	  discussion in <xref linkend="PrototypeModel"/>.  
+	  discussion in <xref linkend="ConceptPrototypeModel"/>.  
 	</para>
       </listitem>
     </varlistentry>
@@ -2794,7 +2823,7 @@
     one or more warnings during the process.  These warnings are integrated into the output as
     source code comments starting with label <code>WARNING:</code>.  They occur either at the
     beginning of the function as part of the function header or at the point in the code directly
-    associated with the warning. (See <xref linkend="WarningsErrors"/>)
+    associated with the warning. (See <xref linkend="AnnoteWarnings"/>)
   </para>
 </section>
 
@@ -2961,6 +2990,17 @@
   </para>
 </sect2>
 
+<sect2>
+  <title>Graph AST Control Flow</title>
+  <para>
+    Generate a control-flow graph based upon the results in the active Decompiler Window,
+    and render it using the current Graph Service.
+  </para>
+  <note>
+    If no Graph Service is available then this action will no be present.
+  </note>
+</sect2>
+
 </section>
 
 <section id="MouseActions">
@@ -3091,7 +3131,7 @@
     variable or operation affected. 
   </para>
 
-<sect2 id="AutoCreateStructure">
+<sect2 id="ActionAutoStructure">
   <title>Auto Create Structure</title>
   <para>
     Automatically create a <emphasis>structure</emphasis> data-type for a selected variable
@@ -3110,7 +3150,7 @@
     the function is decompiled again and references to new fields in the structure
     should be immediately apparent.  These can be renamed or retyped from the window
     to further refine the new <emphasis>structure</emphasis> definition.
-    (See <xref linkend="RenameVariable"/>)
+    (See <xref linkend="ActionRenameVariable"/>)
   </para>
   <informalexample>
     <variablelist>
@@ -3171,24 +3211,47 @@
   </informalexample>
 </sect2>
 
-<sect2 id="CommitParams">
+<sect2 id="ActionCommitLocals">
+  <title>Commit Local Names></title>
+  <para>
+    Commit the names of any local variables discovered during the decompiler's analysis
+    to the Program database as new Variable Annotations.  The recovered data-type is
+    not committed as part of the annotation, only the name and storage location.
+  </para>
+  <para>
+    Parameters are not affected by this command, see <xref linkend="ActionCommitParams"/>.
+    The purpose of the command is to synchronize the local variables in the
+    decompiler's view of a function with the formal Variable Annotations in the disassembly view,
+    without otherwise affecting the decompilation.  After executing this command, additional changes
+    to local variable can be performed directly on the corresponding annotations in the Listing Window,
+    using various methods (See <xref linkend="AnnoteVariables"/>).
+    Data-types are not forced for new annotations, they are created with
+    an <emphasis>undefined</emphasis> data-type, which allows the decompiler to refine
+    its view of the variable's data-type as new information becomes available
+    (See <xref linkend="AnnoteForcing"/>).
+  </para>
+</sect2>
+
+<sect2 id="ActionCommitParams">
   <title>Commit Params/Return</title>
   <para>
     Commit the decompiler's analysis of the input parameters and return value of the current
-    function to the Program database.
+    function as annotations to the Program database.
   </para>
   <para>
     In the absence of either <emphasis>imported</emphasis> or <emphasis>user defined</emphasis>
     information about a function's prototype, the decompiler performs its own analysis of what
     the prototype is, determining the storage location and data-type of all parameters and the
     return value.  This action commits this analysis permanently for the current function
-    displayed in the window, effectively <emphasis>synching</emphasis> the disassembly's and
-    decompiler's view of the function prototype.
+    displayed in the window, creating a matching <emphasis>Variable Annotation</emphasis> for each input
+    parameter and the return value. The new annotations will be displayed in the
+    Listing Window as part of the function header, and the action effectively
+    <emphasis>synchronizes</emphasis> the disassembly view and decompiler's view of the function prototype.
   </para>
   <para>
     Committed prototype information is used both when decompiling the function itself and when
     decompiling other functions that call it.
-    The committed information is <emphasis>forcing</emphasis> on the decompiler, and it will
+    The committed annotations are <emphasis>forcing</emphasis> on the decompiler, and it will
     no longer perform prototype recovery analysis for that function. The decompiler assumes the committed parameters,
     and only the committed parameters, exist and will not modify their data-types, with the
     exception of parameters that are explicitly marked as having an <emphasis>undefined</emphasis>
@@ -3267,6 +3330,20 @@
     See documentation for the
     <link xlink:href="help/topics/FunctionPlugin/Variables.htm#Edit_Function">Function Editor Dialog</link>.
     The decompiler automatically incorporates any changes into its output.
+  </para>
+</sect2>
+
+<sect2 id="ActionFind">
+  <title>Find ...</title>
+  <para>
+    Search for strings within the active window, in the current decompiler output.
+  </para>
+  <para>
+    The command brings up a dialog where a search pattern can entered as a raw string or regular expression.
+    The search is performed directly on the text of the decompiled function, from the current cursor; forward
+    each time the <emphasis role="bold">Next</emphasis> button is hit, or backward for the
+    <emphasis role="bold">Previous</emphasis> button. Any match is highlighted in the window,
+    and the cursor is set to the start of the match.
   </para>
 </sect2>
 
@@ -3391,6 +3468,96 @@
   </informalexample>
 </sect2>
 
+<sect2 id="ActionOverrideSignature">
+  <title>Override Signature</title>
+  <para>
+    Override the function prototype corresponding to the sub-function under the cursor.
+  </para>
+  <para>
+    This action can be triggered at <emphasis>call sites</emphasis>, where the function
+    being decompiled is calling into another sub-function. Users must select either the token representing
+    the sub-function's name or the tokens representing the function pointer at the call site.
+    A dialog is brought up where the a complete <emphasis>function declaration</emphasis>, specifying
+    the return data-type along with the name and data-type for each input parameter.  Additionally,
+    the "Calling Convention", "In Line", and "No Return" properties of the function prototype
+    can be set (See <xref linkend="AnnotePrototype"/>).
+  </para>
+  <para>
+    Confirming the dialog forces the new function prototype on the decompiler's view of the sub-function,
+    but only for the single selected call site.
+  </para>
+  <para>
+    This action is suitable for either indirect calls or direct calls to functions taking a variable number
+    of arguments; situations where a complete description of all parameters is not available.
+    For direct calls with a fixed number of arguments, it is almost always better to provide
+    parameter information by setting the function's prototype directly.  See the
+    <xref linkend="ActionCommitParams"/> command for instance.  In this situation, the "Override Signature"
+    command is still possible, but it will bring up a confirmation dialog.
+  </para>
+</sect2>
+
+<sect2>
+  <title>Reference ...</title>
+  <sect3>
+    <title>Find Uses of &lt;data-type&gt;</title>
+    <para>
+      Calculate locations in the Program that reference the <emphasis role="bold">data-type</emphasis>
+      of the token under the cursor. Results are collected in a
+      <link xlink:href="help/topics/LocationReferencesPlugin/Location_References.html">Location References Dialog</link>,
+      which displays a row for each reference with its address and other context.
+    </para>
+    <para>
+      Uses (references) specifically are to <emphasis>variables</emphasis> that have been assigned the data-type.
+      References to parameters and global variables are always listed.
+      If the <emphasis>Dynamic Data Type Discovery</emphasis> option is on
+      (see <link xlink:href="help/topics/LocationReferencesPlugin/Location_References.html#Data_Types">To Find Location References to Data Types</link>),
+      the decompiler's propagation analysis is invoked on all functions to discover local
+      variables as well.
+    </para>
+  </sect3>
+  <sect3>
+    <title>Find References to &lt;function&gt;</title>
+    <para>
+      Display locations in the Program that reference the <emphasis role="bold">function</emphasis>
+      associated with the token under the cursor. Results are collected in a
+      <link xlink:href="help/topics/LocationReferencesPlugin/Location_References.html">Location References Dialog</link>,
+      which displays a row for each reference with its address and other context.
+    </para>
+    <para>
+      References include both instructions and data referring to the <emphasis>entry point</emphasis>
+      address of the function.
+    </para>
+  </sect3>
+  <sect3>
+    <title>Show References to Address</title>
+    <para>
+      Display locations in the Program that reference the <emphasis role="bold">address</emphasis>
+      associated with the token under the cursor.  Results are collected in a
+      <link xlink:href="help/topics/LocationReferencesPlugin/Location_References.html">Location References Dialog</link>,
+      which displays a row for each reference with its address and other context.
+    </para>
+    <para>
+      The selected address is of the instruction most closely associated with the
+      variable or operator represented by the token.
+    </para>
+  </sect3>
+</sect2>
+
+<sect2>
+  <title>Remove Signature Override</title>
+  <para>
+    Remove the overriding function prototype applied previously to the sub-function under the cursor.
+  </para>
+  <para>
+    This action can only be triggered at <emphasis>call sites</emphasis>, where an overriding
+    prototype was previously placed by the <xref linkend="ActionOverrideSignature"/> command. As with
+    this command, users must select either the token representing the sub-function's name or the
+    tokens representing the function pointer at the call site.  The action causes the
+    override to be removed immediately. Parameter information will be drawn from the decompiler's
+    normal analysis.
+  </para>
+</sect2>
+
 <sect2>
   <title>Rename Function</title>
   <para>
@@ -3429,7 +3596,12 @@
   <para>
     The action brings up a dialog prepopulated with the
     current name of the field.  Editing and confirming this dialog immediately changes
-    the corresponding data-type definition.  The dialog enforces unique field names.
+    field's name in its corresponding structure definition. The dialog enforces unique field names.
+  </para>
+  <para>
+    If the initial name looks like <code>field_0x..</code>, it may be that the field offset was
+    discovered by the decompiler, and the field does not exist in the structure definition.
+    In this case, a new field is created at that offset, with the new name and a data-type of "undefined".
   </para>
   <para>
     The change to the definition is visible globally
@@ -3439,8 +3611,8 @@
   <para>
     Within a decompiler window, field name tokens are presented <emphasis>in context</emphasis>,
     showing how they are used within the code flow of the current function.
-    Combined with <xref linkend="AutoCreateStructure"/> and
-    <xref linkend="RetypeField"/>, this action allows a
+    Combined with <xref linkend="ActionAutoStructure"/> and
+    <xref linkend="ActionRetypeField"/>, this action allows a
     <emphasis>structure</emphasis> to be created and filled in based on this context.
   </para>
 </sect2>
@@ -3472,7 +3644,7 @@
   </para>
 </sect2>
 
-<sect2 id="RenameVariable">
+<sect2 id="ActionRenameVariable">
   <title>Rename Variable</title>
   <para>
     Rename the local variable or parameter currently under the cursor.
@@ -3504,7 +3676,7 @@
   </para>
 </sect2>
 
-<sect2 id="RetypeField">
+<sect2 id="ActionRetypeField">
   <title>Retype Field</title>
   <para>
     Change the data-type of the field currently under the cursor within its
@@ -3520,7 +3692,7 @@
   </para>
   <para>
     The change to the definition is visible globally throughout the Program,
-    anywhere the data-type is referenced,and is <emphasis>forcing</emphasis>
+    anywhere the data-type is referenced, and is <emphasis>forcing</emphasis>
     on the decompiler (see <xref linkend="AnnoteForcing"/>). Decompilation is triggered
     again, and the new data-type is propagated from the point of the field reference(s).
     Changes to the output may be large and indirect.
@@ -3547,7 +3719,28 @@
   </para>
 </sect2>
 
-<sect2 id="RetypeVariable">
+<sect2>
+  <title>Retype Return</title>
+  <para>
+    Change the data-type of the current function's <emphasis>return value</emphasis>.
+  </para>
+  <para>
+    This action is only available from the data-type token in the function declaration, at the
+    top of the decompiler's output.  It brings up a dialog prepopulated with the current
+    data-type returned by the function.  The user can select any fixed length data-type in the Program.
+    Editing and confirming this dialog immediately changes the data-type. If an annotation for
+    the return value (named <code>&lt;RETURN&gt;</code>) did not exist previously, one is created.
+  </para>
+  <para>
+    As input parameter annotations and the return value annotation must be commited as a whole
+    (see the discussion of function prototype's in <xref linkend="AnnoteForcing"/>), if
+    no prototype existed previously, this action also causes variable annotations for all
+    input parameters to be created as well.  In this situation, the action is equivalent to
+    <xref linkend="ActionCommitParams"/>, and a confirmation dialog comes up to notify the user.
+  </para>
+</sect2>
+
+<sect2 id="ActionRetypeVariable">
   <title>Retype Variable</title>
   <para>
     Change the data-type of the local variable or parameter currently under the cursor.
@@ -3577,6 +3770,27 @@
     of parameters and their memory locations become fixed.  If the annotation of another
     parameter did not exist previously, then its data-type is <emphasis>not</emphasis>
     forced by this action.
+  </para>
+</sect2>
+
+<sect2 id="ActionIsolate">
+  <title>Split Out As New Variable</title>
+  <para>
+    Split a high-level variable so that the selected token becomes a new variable with the smallest
+    possible range.
+  </para>
+  <para>
+    The decompiler defines high-level variables in terms of <link linkend="ConceptVarnode">varnodes</link> that
+    are merged together to produce the final variable.  Some merging is speculative, which reduces the
+    number of variables overall, but is not strictly necessary for valid decompilation.  The merged
+    variable can be represented with two or more variables that have a smaller range. See the
+    documentation on <xref linkend="ConceptHighVariable"/>.
+  </para>
+  <para>
+    This command is only available if the selected token is part of a high-level variable that has
+    been speculatively merged.  The part of the variable that is directly represented by the
+    token is split out as its own variable, retaining the name of the original variable.
+    Any other pieces become a separate variable with a new name.
   </para>
 </sect2>
 
