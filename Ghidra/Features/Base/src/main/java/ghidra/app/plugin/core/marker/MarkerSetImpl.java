@@ -308,7 +308,7 @@ abstract class MarkerSetImpl implements MarkerSet {
 
 			Address end = pixmap.getLayoutEndAddress(i);
 			if (markers.intersects(addr, end)) {
-				newLayouts.add(new Integer(i));
+				newLayouts.add(i);
 			}
 		}
 
@@ -382,9 +382,8 @@ abstract class MarkerSetImpl implements MarkerSet {
 	}
 
 	/**
-	 * Get the tooltip for the marker at the specified index and address.
+	 * Get the tooltip for the marker at the specified index and address
 	 * 
-	 * @param index index of item to navigate to
 	 * @param addr address of item to navigate to
 	 * @param x x location of cursor
 	 * @param y y location of cursor
