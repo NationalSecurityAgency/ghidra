@@ -58,7 +58,7 @@ public class MarkerManager implements MarkerService {
 	private final static String POPUP_WINDOW_NAME = "Bookmark ToolTip Window";
 	private final static int MAX_TOOLTIP_LINES = 10;
 
-	private MarkerPanel markPanel;
+	private MarkerPanel markerPanel;
 	private NavigationPanel navigationPanel;
 	private MarkerActionList actionList;
 	private VerticalPixelAddressMap pixmap;
@@ -69,8 +69,10 @@ public class MarkerManager implements MarkerService {
 	 * mapped to a MarkerSet.   This structure allows for a lookup of the marker set group to
 	 * get a mapping of program->marker set.
 	 */
-	private Map<String, Map<Program, MarkerSetImpl>> groupToProgramMarkerMap;
-	private List<MarkerSetImpl> currentMarkerSets;
+	private Map<String, Map<Program, MarkerSetImpl>> programMarkersByGroup =
+		LazyMap.lazyMap(new HashMap<>(), () -> new HashMap<>());
+
+	private List<MarkerSetImpl> currentMarkerSets = Collections.emptyList();
 
 	/**
 	 * A cache of programs to marker sets so that clients can install marker sets on a
@@ -79,7 +81,8 @@ public class MarkerManager implements MarkerService {
 	private Map<Program, List<MarkerSetImpl>> markerSetCache =
 		LazyMap.lazyMap(new HashMap<>(), () -> new ArrayList<>());
 
-	private SwingUpdateManager updateMgr;
+	/** Buffers requests to repaint and notify of marker changes */
+	private SwingUpdateManager updater;
 	private GoToService goToService;
 	private Navigatable navigatable;
 
@@ -105,10 +108,8 @@ public class MarkerManager implements MarkerService {
 		this.owner = owner;
 		this.tool = tool;
 
-		currentMarkerSets = Collections.emptyList();
-
-		updateMgr = new SwingUpdateManager(100, 60000, () -> {
-			markPanel.repaint();
+		updater = new SwingUpdateManager(100, 60000, () -> {
+			markerPanel.repaint();
 			navigationPanel.repaint();
 			notifyListeners();
 		});
@@ -123,18 +124,17 @@ public class MarkerManager implements MarkerService {
 		});
 		overviewProvider = new MyOverviewProvider();
 
-		markPanel = new MarkerPanel(this);
-		markPanel.setPreferredSize(new Dimension(16, 1));
+		markerPanel = new MarkerPanel(this);
+		markerPanel.setPreferredSize(new Dimension(16, 1));
 		marginProvider = new MyMarginProvider();
 
 		actionList = new MarkerActionList();
-		groupToProgramMarkerMap = new HashMap<>();
 	}
 
 	void programClosed(Program program) {
 		markerSetCache.remove(program);
 
-		Map<String, Map<Program, MarkerSetImpl>> values = groupToProgramMarkerMap;
+		Map<String, Map<Program, MarkerSetImpl>> values = programMarkersByGroup;
 		Collection<Map<Program, MarkerSetImpl>> valueValues = values.values();
 		for (Map<Program, MarkerSetImpl> map : valueValues) {
 			map.remove(program);
@@ -147,7 +147,7 @@ public class MarkerManager implements MarkerService {
 			Color color) {
 		AreaMarkerSet mgr = new AreaMarkerSet(this, name, markerDescription, priority, showMarkers,
 			showNavigation, colorBackground, color, program);
-		insertManager(mgr, program);
+		insertMarkers(mgr, program);
 		return mgr;
 	}
 
@@ -156,8 +156,8 @@ public class MarkerManager implements MarkerService {
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
 			Color color, boolean isPreferred) {
 		AreaMarkerSet mgr = new AreaMarkerSet(this, name, markerDescription, priority, showMarkers,
-			showNavigation, colorBackground, color, isPreferred);
-		insertManager(mgr, program);
+			showNavigation, colorBackground, color, isPreferred, program);
+		insertMarkers(mgr, program);
 		return mgr;
 	}
 
@@ -165,20 +165,22 @@ public class MarkerManager implements MarkerService {
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
 			Color color, ImageIcon icon) {
-		MarkerSetImpl mgr = new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
-			showNavigation, colorBackground, color, icon);
-		insertManager(mgr, program);
-		return mgr;
+		MarkerSetImpl markers =
+			new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
+				showNavigation, colorBackground, color, icon, program);
+		insertMarkers(markers, program);
+		return markers;
 	}
 
 	@Override
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
 			Color color, ImageIcon icon, boolean isPreferred) {
-		MarkerSetImpl mgr = new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
-			showNavigation, colorBackground, color, icon, isPreferred);
-		insertManager(mgr, program);
-		return mgr;
+		MarkerSetImpl markers =
+			new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
+				showNavigation, colorBackground, color, icon, isPreferred, program);
+		insertMarkers(markers, program);
+		return markers;
 	}
 
 	@Override
@@ -201,32 +203,32 @@ public class MarkerManager implements MarkerService {
 	}
 
 	@Override
-	public void removeMarker(MarkerSet markerManager, Program program) {
+	public void removeMarker(MarkerSet markers, Program program) {
 		if (program == null) {
 			throw new NullPointerException("Cannot remove marker set for a null program.");
 		}
 
-		doRemoveMarker(markerManager, program);
+		doRemoveMarker(markers, program);
 		actionList.refresh();
-		update();
+		markersChanged(program);
 	}
 
-	private void doRemoveMarker(MarkerSet markerSet, Program program) {
-		if (markerSet == null || program == null) {
+	private void doRemoveMarker(MarkerSet markers, Program program) {
+		if (markers == null || program == null) {
 			return;
 		}
 
 		// per-program list
 		List<MarkerSetImpl> list = markerSetCache.get(program);
-		list.remove(markerSet);
+		list.remove(markers);
 
 		// per-group list
 		// We need to find the marker by searching through the map of maps (when used in a
 		// group setting the marker manager will be mapped directly to one program)
-		Collection<Map<Program, MarkerSetImpl>> values = groupToProgramMarkerMap.values();
+		Collection<Map<Program, MarkerSetImpl>> values = programMarkersByGroup.values();
 		for (Map<Program, MarkerSetImpl> map : values) {
 			MarkerSetImpl markerSetImpl = map.get(program);
-			if (markerSetImpl == markerSet) {
+			if (markerSetImpl == markers) {
 				map.clear();
 				break;
 			}
@@ -250,7 +252,7 @@ public class MarkerManager implements MarkerService {
 		this.currentProgram = program;
 		if (program == null) {
 			currentMarkerSets = Collections.emptyList();
-			updateMgr.update();
+			updater.update();
 			return;
 		}
 
@@ -258,11 +260,11 @@ public class MarkerManager implements MarkerService {
 		setCurrentMarkerSets(program);
 		actionList.refresh();
 
-		updateMgr.update();
+		updater.update();
 	}
 
 	public void dispose() {
-		updateMgr.dispose();
+		updater.dispose();
 		actionList.dispose();
 		currentMarkerSets.clear();
 		markerSetCache.clear();
@@ -272,10 +274,10 @@ public class MarkerManager implements MarkerService {
 	void navigateTo(int x, int y) {
 		int viewHeight = navigationPanel.getHeight() - MarkerSetImpl.MARKER_HEIGHT;
 		for (int i = currentMarkerSets.size() - 1; i >= 0; i--) {
-			MarkerSetImpl marker = currentMarkerSets.get(i);
-			if (marker.isActive()) {
+			MarkerSetImpl markers = currentMarkerSets.get(i);
+			if (markers.isActive()) {
 				GoToService service = getGoToService();
-				ProgramLocation loc = marker.getProgramLocation(y, viewHeight, addrMap, x);
+				ProgramLocation loc = markers.getProgramLocation(y, viewHeight, addrMap, x);
 				if (loc != null && service != null) {
 					service.goTo(navigatable, loc, loc.getProgram());
 					break;
@@ -285,12 +287,12 @@ public class MarkerManager implements MarkerService {
 	}
 
 	void paintMarkers(Graphics g) {
-		Iterator<MarkerSetImpl> iter = currentMarkerSets.iterator();
+		Iterator<MarkerSetImpl> it = currentMarkerSets.iterator();
 		int count = 0;
-		while (iter.hasNext()) {
-			MarkerSetImpl marker = iter.next();
-			if (marker.isActive()) {
-				marker.paintMarkers(g, count++, pixmap, addrMap);
+		while (it.hasNext()) {
+			MarkerSetImpl markers = it.next();
+			if (markers.isActive()) {
+				markers.paintMarkers(g, count++, pixmap, addrMap);
 			}
 		}
 	}
@@ -299,12 +301,13 @@ public class MarkerManager implements MarkerService {
 		if (addrMap == null) {
 			return;
 		}
+
 		int viewHeight = panel.getHeight() - MarkerSetImpl.MARKER_HEIGHT;
-		Iterator<MarkerSetImpl> iter = currentMarkerSets.iterator();
-		while (iter.hasNext()) {
-			MarkerSetImpl mgr = iter.next();
-			if (mgr.active) {
-				mgr.paintNavigation(g, viewHeight, panel, addrMap);
+		Iterator<MarkerSetImpl> it = currentMarkerSets.iterator();
+		while (it.hasNext()) {
+			MarkerSetImpl markers = it.next();
+			if (markers.active) {
+				markers.paintNavigation(g, viewHeight, panel, addrMap);
 			}
 		}
 	}
@@ -357,17 +360,17 @@ public class MarkerManager implements MarkerService {
 		List<String> lines = new ArrayList<>();
 		for (int i = currentMarkerSets.size() - 1; i >= 0; i--) {
 
-			MarkerSetImpl marker = currentMarkerSets.get(i);
-			if (!marker.displayInMarkerBar()) {
+			MarkerSetImpl markers = currentMarkerSets.get(i);
+			if (!markers.displayInMarkerBar()) {
 				continue;
 			}
 
-			AddressSet set = marker.getAddressSet();
+			AddressSet set = markers.getAddressSet();
 			AddressSet intersection = set.intersect(new AddressSet(layoutAddress, endAddr));
 			for (Address a : intersection.getAddresses(true)) {
-				lines.add(getMarkerToolTip(marker, a, x, y));
+				lines.add(getMarkerToolTip(markers, a, x, y));
 
-				if (marker instanceof AreaMarkerSet) {
+				if (markers instanceof AreaMarkerSet) {
 					break; // no more tooltips from this area
 				}
 				if (lines.size() >= MAX_TOOLTIP_LINES) {
@@ -380,17 +383,18 @@ public class MarkerManager implements MarkerService {
 	}
 
 	private String getMarkerToolTip(MarkerSetImpl marker, Address a, int x, int y) {
-		String markerTip = marker.getTooltip(a, x, y);
-		if (markerTip == null) {
-			markerTip = marker.getName();
+		String tip = marker.getTooltip(a, x, y);
+		if (tip == null) {
+			tip = marker.getName();
 		}
-		return markerTip;
+		return tip;
 	}
 
 	private String toHTML(List<String> lines) {
 		if (lines.isEmpty()) {
 			return null;
 		}
+
 		StringBuilder buffy = new StringBuilder("<html><font size=\"" + 4 + "\">");
 		for (String string : lines) {
 			buffy.append(string).append("<BR>");
@@ -398,41 +402,46 @@ public class MarkerManager implements MarkerService {
 		return buffy.toString();
 	}
 
-	void update() {
-		AddressColorCache addressColorCache = colorCache.get(currentProgram);
-		addressColorCache.clear();
-		updateMgr.update();
+	/**
+	 * Call to signal that the markers for a given program have changed in some way, such as being
+	 * removed, changing colors or the active state being changed
+	 * 
+	 * @param p the program associated with the markers
+	 */
+	void markersChanged(Program p) {
+		colorCache.get(p).clear();
+		updater.update();
 	}
 
-	private void insertManager(MarkerSetImpl mgr, Program program) {
+	private void insertMarkers(MarkerSetImpl markers, Program program) {
 		if (program == null) {
 			throw new AssertException("Program cannot be null");
 		}
 
-		List<MarkerSetImpl> markerSetList = markerSetCache.get(program);
-		if (markerSetList == null) {
+		List<MarkerSetImpl> markerSets = markerSetCache.get(program);
+		if (markerSets == null) {
 			return; // no list means deprecated usage
 		}
 
-		int index = Collections.binarySearch(markerSetList, mgr);
+		int index = Collections.binarySearch(markerSets, markers);
 		if (index < 0) {
 			index = -(index + 1);
 		}
 
-		markerSetList.add(index, mgr);
+		markerSets.add(index, markers);
 		actionList.refresh();
 	}
 
 	private void setCurrentMarkerSets(Program program) {
-		List<MarkerSetImpl> markerSetList = markerSetCache.get(program);
+		List<MarkerSetImpl> markerSets = markerSetCache.get(program);
 
 		// determine if we are switching lists
-		boolean switchingLists = (markerSetList != currentMarkerSets);
+		boolean switchingLists = (markerSets != currentMarkerSets);
 		if (!switchingLists) {
 			return;
 		}
 
-		currentMarkerSets = markerSetList;
+		currentMarkerSets = markerSets;
 		Collections.sort(currentMarkerSets);
 	}
 
@@ -446,17 +455,17 @@ public class MarkerManager implements MarkerService {
 
 	private void updateMarkerSets(boolean updateMarkers, boolean updateNavigation,
 			boolean updateNow) {
-		Iterator<MarkerSetImpl> iter = currentMarkerSets.iterator();
-		while (iter.hasNext()) {
-			MarkerSetImpl marker = iter.next();
+		Iterator<MarkerSetImpl> it = currentMarkerSets.iterator();
+		while (it.hasNext()) {
+			MarkerSetImpl marker = it.next();
 			marker.updateView(updateMarkers, updateNavigation);
 		}
 
 		if (updateNow) {
-			updateMgr.updateNow();
+			updater.updateNow();
 		}
 		else {
-			updateMgr.update();
+			updater.update();
 		}
 	}
 
@@ -479,9 +488,9 @@ public class MarkerManager implements MarkerService {
 
 	private MarkerSetImpl getMarkerSet(Address addr) {
 		for (int i = currentMarkerSets.size() - 1; i >= 0; i--) {
-			MarkerSetImpl marker = currentMarkerSets.get(i);
-			if (marker.displayInMarkerBar() && marker.contains(addr)) {
-				return marker;
+			MarkerSetImpl markers = currentMarkerSets.get(i);
+			if (markers.displayInMarkerBar() && markers.contains(addr)) {
+				return markers;
 			}
 		}
 		return null;
@@ -497,32 +506,26 @@ public class MarkerManager implements MarkerService {
 			throw new IllegalArgumentException("Invalid marker set provided");
 		}
 
-		Map<Program, MarkerSetImpl> programToMarkerMap = groupToProgramMarkerMap.get(groupName);
-		if (programToMarkerMap == null) {
-			programToMarkerMap = new HashMap<>();
-			groupToProgramMarkerMap.put(groupName, programToMarkerMap);
-		}
-
-		MarkerSetImpl previousSet = programToMarkerMap.get(program);
-		MarkerSetImpl markerSet = (MarkerSetImpl) ms;
-
-		if (markerSet == previousSet) {
+		Map<Program, MarkerSetImpl> markersByProgram = programMarkersByGroup.get(groupName);
+		MarkerSetImpl previousMarkers = markersByProgram.get(program);
+		MarkerSetImpl markers = (MarkerSetImpl) ms;
+		if (markers == previousMarkers) {
 			return;
 		}
 
-		removeMarker(previousSet, program);
-		programToMarkerMap.put(program, markerSet);
-		insertManager(markerSet, program);
+		removeMarker(previousMarkers, program);
+		markersByProgram.put(program, markers);
+		insertMarkers(markers, program);
 	}
 
 	@Override
-	public void removeMarkerForGroup(String groupName, MarkerSet markerSet, Program program) {
-		Map<Program, MarkerSetImpl> programToMarkerMap = groupToProgramMarkerMap.get(groupName);
-		MarkerSet currentMarkerSet = programToMarkerMap.get(program);
+	public void removeMarkerForGroup(String groupName, MarkerSet markers, Program program) {
+		Map<Program, MarkerSetImpl> markersByProgram = programMarkersByGroup.get(groupName);
+		MarkerSet previousMarkers = markersByProgram.get(program);
 
-		if (markerSet == currentMarkerSet) {
-			programToMarkerMap.remove(program);
-			removeMarker(currentMarkerSet, program);
+		if (markers == previousMarkers) {
+			markersByProgram.remove(program);
+			removeMarker(previousMarkers, program);
 		}
 	}
 
@@ -531,30 +534,29 @@ public class MarkerManager implements MarkerService {
 		return getBackgroundColor(currentProgram, currentMarkerSets, address);
 	}
 
+	@Override
 	public Color getBackgroundColor(Program program, Address address) {
-		return getBackgroundColor(program, markerSetCache.get(program), address);
+		Program markerProgram = program == null ? currentProgram : program;
+		return getBackgroundColor(markerProgram, markerSetCache.get(markerProgram), address);
 	}
 
 	private Color getBackgroundColor(Program program, List<MarkerSetImpl> markerSets,
 			Address address) {
-		AddressColorCache addressColorCache = colorCache.get(currentProgram);
+
+		AddressColorCache addressColorCache = colorCache.get(program);
 		if (addressColorCache.containsKey(address)) {
 			return addressColorCache.get(address);
 		}
 
-		Color color = null;
 		for (int index = markerSets.size() - 1; index >= 0; index--) {
-			MarkerSet marker = markerSets.get(index);
-			if (marker.isActive() && marker.isColoringBackground() && marker.contains(address)) {
-				color = marker.getMarkerColor();
-				break;
+			MarkerSet markers = markerSets.get(index);
+			if (markers.isActive() && markers.isColoringBackground() && markers.contains(address)) {
+				Color color = markers.getMarkerColor();
+				addressColorCache.put(address, color);
+				return color;
 			}
 		}
-
-		if (color != null) {
-			addressColorCache.put(address, color);
-		}
-		return color;
+		return null;
 	}
 
 	public GoToService getGoToService() {
@@ -591,7 +593,6 @@ public class MarkerManager implements MarkerService {
 
 		private void initOptions() {
 			listOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_NAVIGATION_MARKERS);
-
 			listOptions.removeOptionsChangeListener(this);
 			listOptions.addOptionsChangeListener(this);
 		}
@@ -623,10 +624,7 @@ public class MarkerManager implements MarkerService {
 			}
 			actions.clear();
 
-			ArrayList<MarkerSetImpl> list = new ArrayList<>();
-			for (MarkerSetImpl mgr : currentMarkerSets) {
-				list.add(mgr);
-			}
+			List<MarkerSetImpl> list = new ArrayList<>(currentMarkerSets);
 
 			// separate the marker sets into grouped and non-grouped
 			List<List<MarkerSetImpl>> groupsList = extractManagerGroups(list);
@@ -691,38 +689,36 @@ public class MarkerManager implements MarkerService {
 
 		void dispose() {
 			listOptions.removeOptionsChangeListener(this);
-			Iterator<DockingAction> iter = actions.iterator();
-			while (iter.hasNext()) {
-				DockingAction action = iter.next();
-				tool.removeAction(action);
-			}
-		}
 
+			actions.forEach(a -> tool.removeAction(a));
+		}
 	}
 
 	private static class ActivateMarkerAction extends ToggleDockingAction {
 
-		private MarkerSetImpl mgr;
+		private MarkerSetImpl markers;
 		private NavigationPanel panel;
 		private Options options;
 
-		ActivateMarkerAction(String owner, MarkerSetImpl mgr, NavigationPanel panel,
+		ActivateMarkerAction(String owner, MarkerSetImpl markers, NavigationPanel panel,
 				Options options) {
-			super(mgr.getName(), owner);
-			this.mgr = mgr;
+			super(markers.getName(), owner);
+			this.markers = markers;
 			this.panel = panel;
 			this.options = options;
 			HelpLocation helpLocation = new HelpLocation(HelpTopics.CODE_BROWSER, "Markers");
-			options.registerOption(mgr.getName(), true, helpLocation,
-				"This options enables/disables the display of " + mgr.getName() + " marker types.");
+			options.registerOption(markers.getName(), true, helpLocation,
+				"This options enables/disables the display of " + markers.getName() +
+					" marker types.");
 
 			setEnabled(true);
-			setSelected(mgr.active);
-			setPopupMenuData(new MenuData(new String[] { mgr.getName() }, mgr.getNavIcon(), null));
+			setSelected(markers.active);
+			setPopupMenuData(
+				new MenuData(new String[] { markers.getName() }, markers.getNavIcon(), null));
 
 			boolean isEnabled = isOptionEnabled();
 			setSelected(isEnabled);
-			mgr.setActive(isEnabled);
+			markers.setActive(isEnabled);
 			HelpLocation location = new HelpLocation(HelpTopics.CODE_BROWSER, "Markers");
 			setHelpLocation(location);
 		}
@@ -737,31 +733,31 @@ public class MarkerManager implements MarkerService {
 			boolean selected = isOptionEnabled();
 			if (selected != isSelected()) {
 				setSelected(selected);
-				mgr.setActive(selected);
+				markers.setActive(selected);
 			}
 		}
 
 		private boolean isOptionEnabled() {
-			return options.getBoolean(mgr.getName(), true);
+			return options.getBoolean(markers.getName(), true);
 
 		}
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			options.setBoolean(mgr.getName(), isSelected());
-			mgr.setActive(isSelected());
+			options.setBoolean(markers.getName(), isSelected());
+			markers.setActive(isSelected());
 		}
 	}
 
 	private static class ActivateMarkerGroupAction extends ToggleDockingAction {
-		private List<MarkerSetImpl> managerList;
+		private List<MarkerSetImpl> markerSets;
 		private NavigationPanel panel;
 		private Options options;
 
 		ActivateMarkerGroupAction(String owner, List<MarkerSetImpl> managerList,
 				NavigationPanel panel, Options options) {
 			super(managerList.get(0).getName(), owner);
-			this.managerList = managerList;
+			this.markerSets = managerList;
 			this.panel = panel;
 			this.options = options;
 			HelpLocation helpLocation = new HelpLocation(HelpTopics.CODE_BROWSER, "Markers");
@@ -779,18 +775,13 @@ public class MarkerManager implements MarkerService {
 		}
 
 		private void setActive(boolean active) {
-			for (MarkerSetImpl manager : managerList) {
+			for (MarkerSetImpl manager : markerSets) {
 				manager.setActive(active);
 			}
 		}
 
 		private boolean isActive() {
-			for (MarkerSetImpl manager : managerList) {
-				if (manager.isActive()) {
-					return true;
-				}
-			}
-			return false;
+			return markerSets.stream().anyMatch(markers -> markers.isActive());
 		}
 
 		@Override
@@ -822,7 +813,7 @@ public class MarkerManager implements MarkerService {
 	private class MyMarginProvider implements MarginProvider {
 		@Override
 		public JComponent getComponent() {
-			return markPanel;
+			return markerPanel;
 		}
 
 		@Override
@@ -832,7 +823,7 @@ public class MarkerManager implements MarkerService {
 				return null;
 			}
 			MarkerSet marker = getMarkerSet(addr);
-			return new MarkerLocation(marker, addr, x, y);
+			return new MarkerLocation(marker, currentProgram, addr, x, y);
 		}
 
 		@Override

@@ -25,6 +25,8 @@ import javax.swing.ImageIcon;
 
 import ghidra.app.util.viewer.listingpanel.VerticalPixelAddressMap;
 import ghidra.app.util.viewer.util.AddressIndexMap;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.MarkerLocation;
 import ghidra.util.datastruct.Range;
 import ghidra.util.datastruct.SortedRangeList;
@@ -48,11 +50,13 @@ class PointMarkerSet extends MarkerSetImpl {
 	 * @param markerColor the color of the marker
 	 * @param icon the icon used to represent the cursor in the marker margin
 	 * @param isPreferred true indicates higher priority than all non-preferred MarkerSets
+	 * @param program the program to which the markers apply
 	 */
 	PointMarkerSet(MarkerManager navigationManager, String name, String desc, int priority,
 			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
-			ImageIcon icon, boolean isPreferred) {
-		super(navigationManager, name, desc, priority, showMarkers, showNavigation, colorBackground,
+			ImageIcon icon, boolean isPreferred, Program program) {
+		super(navigationManager, program, name, desc, priority, showMarkers, showNavigation,
+			colorBackground,
 			markerColor, isPreferred);
 		if (icon == null) {
 			icon = ResourceManager.loadImage("images/warning.png");
@@ -76,12 +80,14 @@ class PointMarkerSet extends MarkerSetImpl {
 	 *              If color is null, no results are displayed in the associated marker bar.
 	 * @param markerColor the color of the marker
 	 * @param icon the icon used to represent the cursor in the marker margin
+	 * @param program the program to which the markers apply
 	 */
 	PointMarkerSet(MarkerManager navigationManager, String name, String desc, int priority,
 			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
-			ImageIcon icon) {
-		this(navigationManager, name, desc, priority, showMarkers, showNavigation, colorBackground,
-			markerColor, icon, true);
+			ImageIcon icon, Program program) {
+		this(navigationManager, name, desc, priority, showMarkers, showNavigation,
+			colorBackground,
+			markerColor, icon, true, program);
 	}
 
 	@Override
@@ -97,17 +103,26 @@ class PointMarkerSet extends MarkerSetImpl {
 			int i = it.next().intValue();
 			int yStart = pixmap.getMarkPosition(i);
 
-			Image curImage = image;
-			if (listener != null) {
-				ImageIcon icon = listener.getIcon(
-					new MarkerLocation(this, pixmap.getLayoutAddress(i), 0, yStart));
-				if (icon != null) {
-					curImage = icon.getImage();
-				}
-			}
+			Image curImage = getMarkerImage(pixmap, i, yStart);
 
 			g.drawImage(curImage, 0, yStart, imageObserver);
 		}
+	}
+
+	private Image getMarkerImage(VerticalPixelAddressMap pixmap, int i, int yStart) {
+		if (markerDescriptor == null) {
+			return image;
+		}
+
+		Address address = pixmap.getLayoutAddress(i);
+		Program program = mgr.getProgram();
+		MarkerLocation loc = new MarkerLocation(this, program, address, 0, yStart);
+		ImageIcon icon = markerDescriptor.getIcon(loc);
+		if (icon != null) {
+			return icon.getImage();
+		}
+
+		return image;
 	}
 
 	@Override

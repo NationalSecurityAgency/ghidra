@@ -153,9 +153,9 @@ public interface MarkerSet extends Comparable<MarkerSet> {
 	/**
 	 * Set the marker manager listener to use for user interaction
 	 * with markers owned by this manager.
-	 * @param listener the listener
+	 * @param markerDescriptor the descriptor
 	 */
-	public void setNavigationListener(MarkerListener listener);
+	public void setMarkerDescriptor(MarkerDescriptor markerDescriptor);
 
 	/**
 	 * True if this marker manager displays in the right hand navigation bar
