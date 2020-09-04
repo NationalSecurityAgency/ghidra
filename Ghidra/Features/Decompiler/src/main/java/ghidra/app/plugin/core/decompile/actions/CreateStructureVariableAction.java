@@ -23,12 +23,14 @@ import docking.action.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.decompiler.component.DecompilerController;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighParam;
 import ghidra.program.model.pcode.HighVariable;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
 public abstract class CreateStructureVariableAction extends DockingAction {
@@ -40,6 +42,7 @@ public abstract class CreateStructureVariableAction extends DockingAction {
 		super("Recover Structure Variable", owner);
 		this.tool = tool;
 		this.controller = controller;
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionAutoStructure"));
 		setPopupMenuData(new MenuData(new String[] { "Auto Create Structure" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_OPEN_BRACKET, InputEvent.SHIFT_DOWN_MASK));
 	}

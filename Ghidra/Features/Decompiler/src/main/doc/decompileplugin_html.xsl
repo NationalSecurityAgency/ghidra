@@ -42,7 +42,7 @@
 
 <xsl:param name="use.id.as.filename" select="1"/>  <!-- Split up into files based on id attribute -->
 
-<xsl:param name="html.stylesheet" select="'Frontpage.css'"/>    <!-- Use our custom cascading style sheet -->
+<xsl:param name="html.stylesheet" select="'../../shared/Frontpage.css'"/>    <!-- Use our custom cascading style sheet -->
 
 <xsl:param name="chunk.section.depth" select="0"/>
 

@@ -26,7 +26,7 @@
     and navigation between C language expressions and their
     corresponding assembly instructions.
   </para>
-<sect2>
+<sect2 id="EnablePlugin">
   <title>Enabling the Plug-in</title>
   <para>
     The Decompiler is a full Plug-in within Ghidra and can be configured to be enabled or
@@ -42,7 +42,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ShowWindow">
   <title>Showing the Decompiler Window</title>    
   <para>
     From the Code Browser, either:
@@ -282,7 +282,7 @@
 
   </sect2>
 
-  <sect2>
+  <sect2 id="ConceptPcodeOps">
     <title>P-code Operations</title>
     <para>
       A <emphasis role="bold">p-code operation</emphasis> is defined as a formal operator,
@@ -367,7 +367,7 @@
       </informalexample>
     </para>
     
-    <sect3>
+    <sect3 id="ConceptOperatorTokens">
       <title>Operator Tokens</title>
     <para>
       Most opcodes naturally correspond to a particular C operator token,
@@ -906,7 +906,7 @@
     <emphasis>HighSymbol</emphasis> refer to this decompiler specific view of the function.
   </para>
 
-  <sect2>
+  <sect2 id="ConceptHighSymbol">
     <title>HighSymbol</title>
     <para>
 	A <emphasis role="bold">HighSymbol</emphasis> is one of the explicit symbols recovered by the
@@ -1021,7 +1021,7 @@
 	is no corresponding HighVariable.
     </para>
 
-    <sect3>
+    <sect3 id="ConceptMerging">
 	<title>Merging</title>
 	<para>
 	  <emphasis role="bold">Merging</emphasis> is the part of the analysis process where
@@ -1071,7 +1071,7 @@
       A prototype model is typically used as a whole and is assigned by name to individual functions.  But some of
       the sub-concepts of the model may be relevant to reverse engineers.
     </para>
-    <sect3>
+    <sect3 id="ConceptPrototypeStorage">
       <title>Incoming and Outgoing Storage Locations</title>
       <para>
 	A formal input parameter is always assigned a specific memory location to hold its value coming into the function.
@@ -1091,7 +1091,7 @@
 	points, but they all share the same return value storage location.
       </para>
     </sect3>
-    <sect3>
+    <sect3 id="ConceptPrototypeUnaffected">
       <title>Unaffected</title>
       <para>
 	Prototype models can specify a set of <emphasis role="bold">unaffected</emphasis>memory locations,
@@ -1104,7 +1104,7 @@
 	a sub-function.
       </para>
     </sect3>
-    <sect3>
+    <sect3 id="ConceptPrototypeKilledByCall">
       <title>Killed by Call</title>
       <para>
 	In constrast to <emphasis>unaffected</emphasis> memory locations, a prototype model may specify
@@ -1150,7 +1150,7 @@
     A <emphasis role="bold">function body</emphasis> is the set of addresses reached by control-flow
     analysis (and the machine instructions at those addresses).
   </para>
-  <sect2>
+  <sect2 id="ConceptEntryPoint">
     <title>Entry Point</title>
     <para>
       The <emphasis>entry point</emphasis> address for a function plays a pivotal role for
@@ -1171,7 +1171,7 @@
       (See <link xlink:href="help/topics/FunctionPlugin/Functions.htm#Create_Function">Create Function</link>)
     </para>
   </sect2>
-  <sect2>
+  <sect2 id="ConceptFunctionBody">
     <title>Formal Function Body</title>
     <para>
       When a function is created, Ghidra stores its function body as a set of addresses in the
@@ -1191,7 +1191,7 @@
     </note>
   </sect2>
 
-  <sect2>
+  <sect2 id="ConceptFlowOverride">
     <title>Flow Overrides</title>
     <para>
       Control-flow behavior for machine instructions is generally determined by the underlying
@@ -1307,7 +1307,7 @@
     <link xlink:href="help/topics/CommentsPlugin/Comments.htm">Comments</link>.
   </para>
 
-  <sect2>
+  <sect2 id="CommentDisplay">
     <title>Display</title>
   <para>
     The decompiler collects and displays comments associated with any address in the
@@ -1347,7 +1347,7 @@
   </note>
   </sect2>
 
-  <sect2>
+  <sect2 id="CommentUnreachable">
     <title>Unreachable Blocks</title>
     <para>
       The decompiler may decide as part of its analysis that individual
@@ -1357,7 +1357,7 @@
     </para>
   </sect2>
 
-  <sect2 id="AnnoteWarnings">
+  <sect2 id="CommentWarnings">
     <title>Warning Comments</title>
     <para>
       The decompiler can generate internal warnings during its analysis and will incorporate
@@ -1399,7 +1399,7 @@
     </informalexample>
   </para>
   
-  <sect2>
+  <sect2 id="VariableCreate">
     <title>Creating Variable Annotations</title>
   <para>
     Ghidra provides various ways that a name and other attributes can be ascribed
@@ -1458,7 +1458,7 @@
   </para>
   </sect2>
   
-  <sect2>
+  <sect2 id="VariableSymbol">
     <title>Variable Symbols</title>
     <para>
       Ghidra maintains its own symbol table that supports namespaces and function
@@ -1493,7 +1493,7 @@
       </informalexample>
     </para>
     
-    <sect3>
+    <sect3 id="SymbolScope">
       <title>Variable Scope</title>
     <para>
       All variables belong either to a <emphasis>global</emphasis> or <emphasis>local</emphasis>
@@ -1537,7 +1537,7 @@
       are, to the extent possible, automatically incorporated
       into the decompiler's analysis.
     </para>
-    <sect3>
+    <sect3 id="DecompilerDataTypes">
       <title>Data-types Supported by the Decompiler</title>
       <para>
 	The decompiler understands traditional primitive data-types, in all their various sizes,
@@ -1550,7 +1550,7 @@
 	or simply as an array of bytes.
       </para>
 
-      <sect4>
+      <sect4 id="TypeUndefined">
 	<title>Undefined</title>
 	<para>
 	  The <emphasis>undefined</emphasis> data-types are supported, in their various sizes:
@@ -1565,7 +1565,7 @@
 	  output for the variable (See <xref linkend="AnnoteForcing"/> below).
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeVoid">
 	<title>Void</title>
 	<para>
 	  The <emphasis role="bold">void</emphasis> data-type is supported but treated specially by
@@ -1575,7 +1575,7 @@
 	  is possible; the decompiler treats it as a pointer to an unknown data-type.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeInteger">
 	<title>Integer</title>
 	<para>
 	  Integer data-types, both signed and unsigned, are supported up to a size of 8 bytes. Larger
@@ -1588,13 +1588,13 @@
 	  based on the processor and compiler selected when importing the Program.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeBoolean">
 	<title>Boolean</title>
 	<para>
 	  A 1-byte boolean data-type is supported. 
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeFloat">
 	<title>Floating-point</title>
 	<para>
 	  Floating-point sizes of 4, 8, 10, and 16 are supported, mapping in all cases currently to the
@@ -1604,7 +1604,7 @@
 	  that are bigger than 8 bytes.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeChar">
 	<title>Character</title>
 	<para>
 	  ASCII or unicode encoded character data-types are supported for sizes of 1, 2, and 4.  The size affectively
@@ -1614,7 +1614,7 @@
 	  processor and compiler selected when importing the Program.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeString">
 	<title>String</title>
 	<para>
 	  Terminated strings, encoded either in ASCII or Unicode, are supported.  The decompiler converts
@@ -1641,7 +1641,7 @@
 	  escape sequences like '\xFF'.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypePointer">
 	<title>Pointer</title>
 	<para>
 	  Pointer data-types are fully supported.  A pointer to any other supported data-type is
@@ -1664,14 +1664,14 @@
 	  determine the correct address space from the context of its use within the function.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeArray">
 	<title>Array</title>
 	<para>
 	  Array data-types are fully supported. The array element can be any other supported data-type
 	  with a fixed size.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeStructure">
 	<title>Structure</title>
 	<para>
 	  Structured data-types are fully supported. The decompiler does not automatically infer structures
@@ -1680,7 +1680,7 @@
 	  structures can be triggered by the user, see <xref linkend="ActionAutoStructure"/>.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeEnum">
 	<title>Enumeration</title>
 	<para>
 	  Enumerations are fully supported. The decompiler can propagate enumerations from explicitly
@@ -1692,7 +1692,7 @@
 	  for instance, by labeling individal bit values within an enumeration.
 	</para>
       </sect4>
-      <sect4>
+      <sect4 id="TypeFunction">
 	<title>Function Definition</title>
 	<para>
 	  A <emphasis role="bold">Function Definition</emphasis> in Ghidra is a data-type that encodes
@@ -1830,7 +1830,7 @@
       <emphasis role="bold">scope</emphasis>; this is distinct from (but influenced by) the scope of the
       variable itself. The different types of storage location are listed below.
     </para>
-    <sect3>
+    <sect3 id="VariableStorageImage">
       <title>Load-image Address</title>
       <para>
 	A <emphasis role="bold">load-image address</emphasis> is a concrete address in the load image of the Program,
@@ -1853,7 +1853,7 @@
 	the variable in decompiler output.
       </para>
     </sect3>
-    <sect3>
+    <sect3 id="VariableStorageStack">
       <title>Stack Address</title>
       <para>
 	A <emphasis role="bold">stack address</emphasis> is an address in the <emphasis>stack frame</emphasis>
@@ -1884,7 +1884,7 @@
 	<emphasis>propagated through</emphasis> to another expression.
       </para>
     </sect3>
-    <sect3>
+    <sect3 id="VariableStorageRegister">
       <title>Register</title>
       <para>
 	A variable annotation can refer to a specific <emphasis>register</emphasis> for the processor associated
@@ -1909,7 +1909,7 @@
 	<emphasis>merging</emphasis> process, but the full extent is not stored in the annotation.
       </para>
     </sect3>
-    <sect3>
+    <sect3 id="VariableStorageTemp">
       <title>Temporary Registers</title>
       <para>
 	Variable annotations can have a <emphasis>temporary register</emphasis> as a storage location.
@@ -2048,7 +2048,7 @@
     </variablelist>
     </informalexample>
   </para>
-  <sect2>
+  <sect2 id="PrototypeDiscover">
     <title>Discovering Parameters</title>
     <para>
       The input parameter and return value annotations of the function prototype, like
@@ -2067,7 +2067,7 @@
       dictates which storage locations can be considered as parameters and their formal ordering.
     </para>
   </sect2>
-  <sect2>
+  <sect2 id="PrototypeCustom">
     <title>Custom Storage</title>
     <para>
       If there are parameter or return value annotations that do not agree with the calling convention that
@@ -2106,11 +2106,11 @@
   </para>
   <para>
     Mutability can be set on an entire block of memory in the Program, typically from the
-    <link xlink:href="help/topics/MemoryMapPlugin/Memory_map.htm#View_Memory_Map">Memory Map</link>.
+    <link xlink:href="help/topics/MemoryMapPlugin/Memory_Map.htm#View_Memory_Map">Memory Map</link>.
     It can also be set as part of a single Variable Annotation.  From the Listing Window for instance,
     use the <link xlink:href="help/topics/DataPlugin/Data.htm#Data_Settings">Settings</link> dialog.
   </para>
-  <sect2>
+  <sect2 id="MutabilityReadOnly">
     <title>Read-only</title>
     <para>
       The <emphasis role="bold">constant</emphasis> mutability setting indicates that values within
@@ -2121,7 +2121,7 @@
       can have a substantial impact on the final output.
     </para>
   </sect2>
-  <sect2>
+  <sect2 id="MutabilityVolatile">
     <title>Volatile</title>
     <para>
       The <emphasis role="bold">volatile</emphasis> mutability setting indicates that values within
@@ -2161,7 +2161,7 @@
     </itemizedlist>
     </informalexample>
   </para>
-  <sect2>
+  <sect2 id="ConstantEquates">
     <title>Equates</title>
     <para>
       Ghidra can create an association between a name and a constant, called an <emphasis role="bold">equate</emphasis>.
@@ -2180,7 +2180,7 @@
       symbol (representing the original constant).
     </para>
   </sect2>
-  <sect2>
+  <sect2 id="ConstantConversions">
     <title>Format Conversions</title>
     <para>
       Ghidra can apply a <emphasis role="bold">format conversion</emphasis> to override how an integer operand
@@ -2645,7 +2645,7 @@
 	<para>
 	  Toggle whether decompiler generated <emphasis>WARNING</emphasis> comments are displayed as part
 	  of the output. The decompiler generates these comments, independent of those layed down by users, to
-	  indicate unusual conditions or possible errors (See <xref linkend="AnnoteWarnings"/>). 
+	  indicate unusual conditions or possible errors (See <xref linkend="CommentWarnings"/>). 
 	</para>
       </listitem>
     </varlistentry>
@@ -2823,7 +2823,7 @@
     one or more warnings during the process.  These warnings are integrated into the output as
     source code comments starting with label <code>WARNING:</code>.  They occur either at the
     beginning of the function as part of the function header or at the point in the code directly
-    associated with the warning. (See <xref linkend="AnnoteWarnings"/>)
+    associated with the warning. (See <xref linkend="CommentWarnings"/>)
   </para>
 </section>
 
@@ -2831,7 +2831,7 @@
   <title>Main Window</title>
   <para>
   Initially pushing <guiicon><inlinegraphic fileref="images/decompileFunction.gif"/></guiicon> or selecting
-  <emphasis role="bold">Decompile</emphasis> from <emphasis role="bold">Window</emphasis> menu in the tool
+  <emphasis role="bold">Decompile</emphasis> from the <emphasis role="bold">Window</emphasis> menu in the tool
   brings up the <emphasis>main</emphasis> window.  The main window always displays the function
   at the <emphasis>current address</emphasis> within the Code Browser and follows as the user navigates
   within the Program.  Any mouse click, menu option, or other action causing the cursor to move to a new
@@ -2915,7 +2915,7 @@
     <emphasis>Snapshot</emphasis>.  The action applies to the function and decompiler results
     displayed in that particular window.
   </para>
-<sect2>
+<sect2 id="ToolBarExport">
   <title>Export to C</title>
   <para>
     <guiicon><inlinegraphic fileref="images/page_edit.png"/></guiicon> - button
@@ -2928,7 +2928,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ToolBarSnapshot">
   <title>Snapshot</title>
   <para>
     <guiicon><inlinegraphic fileref="images/camera-photo.png"/></guiicon> - button
@@ -2941,7 +2941,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ToolBarRedecompile">
   <title>Re-decompile</title>
   <para>
     <guiicon><inlinegraphic fileref="images/reload3.png"/></guiicon> - button
@@ -2959,7 +2959,7 @@
   </note>
 </sect2>
 
-<sect2>
+<sect2 id="ToolBarCopy">
   <title>Copy</title>
   <para>
     <guiicon><inlinegraphic fileref="images/page_white_copy.png"/></guiicon> - button
@@ -2969,7 +2969,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ToolBarDebug">
   <title>Debug Function Decompilation</title>
   <para>
     This action is located in the drop-down menu on the right side of the decompiler
@@ -2990,7 +2990,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ToolBarGraph">
   <title>Graph AST Control Flow</title>
   <para>
     Generate a control-flow graph based upon the results in the active Decompiler Window,
@@ -3005,7 +3005,7 @@
 
 <section id="MouseActions">
   <title>Mouse Actions</title>
-<sect2>
+<sect2 id="MouseLeft">
   <title>Left Click</title>
   <para>
     Moves the decompiler window cursor and highlights the token. Within the
@@ -3024,7 +3024,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="MouseRight">
   <title>Right Click</title>
   <para>
     Moves the decompiler window cursor, highlights the token, and brings up the menu of
@@ -3034,7 +3034,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="MouseDouble">
   <title>Double Click</title>
   <para>
     Navigates based on the selected symbol or other token (See below). If the selected token represents a formal symbol,
@@ -3089,7 +3089,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="MouseControlDouble">
   <title>Control Double Click</title>
   <para>
     Opens a new <emphasis>Snapshot</emphasis> window, navigating it to the selected symbol.
@@ -3100,7 +3100,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="MouseControlShift">
   <title>Control Shift Click</title>
   <para>
     Generates a navigation event to the address, within the current function, associated with
@@ -3111,7 +3111,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="MouseMiddle">
   <title>Middle Click</title>
   <para>
     Highlights every occurrence of a variable, constant, or operator under the current
@@ -3177,7 +3177,7 @@
   </informalexample>
 </sect2>
 
-<sect2>
+<sect2 id="ActionComments">
   <title>Comments</title>
   <para>Set or change a comment at the address of the selected token.
   </para>
@@ -3212,7 +3212,7 @@
 </sect2>
 
 <sect2 id="ActionCommitLocals">
-  <title>Commit Local Names></title>
+  <title>Commit Local Names</title>
   <para>
     Commit the names of any local variables discovered during the decompiler's analysis
     to the Program database as new Variable Annotations.  The recovered data-type is
@@ -3260,7 +3260,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionCopy">
   <title>Copy/Copy Special ...</title>
   <para>
     Copy selected code from the decompiler window into the clipboard.
@@ -3272,7 +3272,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionEditDataType">
   <title>Edit Data Type</title>
   <para>
     Bring up a dialog for editing the definition of the data-type under the cursor.
@@ -3291,7 +3291,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionEditSignature">
   <title>Edit Function Signature</title>
   <para>
     Bring up a dialog for editing the <emphasis>prototype</emphasis> of a selected function and other
@@ -3347,7 +3347,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionHighlight">
   <title>Highlight</title>
   <para>
     All these actions highlight a specific set of variable tokens tracing the data-flow
@@ -3420,7 +3420,7 @@
   </informalexample>
 </sect2>
 
-<sect2>
+<sect2 id="ActionSecondaryHighlight">
   <title>Secondary Highlight</title>
   <para>
     A <emphasis>secondary highlight</emphasis> is a semi-permanent token highlight in the decompiler
@@ -3496,9 +3496,9 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionReference">
   <title>Reference ...</title>
-  <sect3>
+  <sect3 id="ActionFindUses">
     <title>Find Uses of &lt;data-type&gt;</title>
     <para>
       Calculate locations in the Program that reference the <emphasis role="bold">data-type</emphasis>
@@ -3515,7 +3515,7 @@
       variables as well.
     </para>
   </sect3>
-  <sect3>
+  <sect3 id="ActionFindReferences">
     <title>Find References to &lt;function&gt;</title>
     <para>
       Display locations in the Program that reference the <emphasis role="bold">function</emphasis>
@@ -3528,7 +3528,7 @@
       address of the function.
     </para>
   </sect3>
-  <sect3>
+  <sect3 id="ActionShowReferences">
     <title>Show References to Address</title>
     <para>
       Display locations in the Program that reference the <emphasis role="bold">address</emphasis>
@@ -3543,7 +3543,7 @@
   </sect3>
 </sect2>
 
-<sect2>
+<sect2 id="ActionRemoveOverride">
   <title>Remove Signature Override</title>
   <para>
     Remove the overriding function prototype applied previously to the sub-function under the cursor.
@@ -3558,7 +3558,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionRenameFunction">
   <title>Rename Function</title>
   <para>
     Rename the function corresponding to the token under the cursor.
@@ -3587,7 +3587,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionRenameField">
   <title>Rename Field</title>
   <para>
     Rename the field currently under the cursor within its <emphasis>structure</emphasis>
@@ -3617,7 +3617,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionRenameGlobal">
   <title>Rename Global</title>
   <para>
     Rename the global variable corresponding to the token under the cursor.
@@ -3699,7 +3699,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionRetypeGlobal">
   <title>Retype Global</title>
   <para>
     Change the data-type of the global variable currently under the cursor.
@@ -3719,7 +3719,7 @@
   </para>
 </sect2>
 
-<sect2>
+<sect2 id="ActionRetypeReturn">
   <title>Retype Return</title>
   <para>
     Change the data-type of the current function's <emphasis>return value</emphasis>.

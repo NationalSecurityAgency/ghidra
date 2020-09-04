@@ -23,6 +23,7 @@ import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.AddEditDialog;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
@@ -30,8 +31,7 @@ import ghidra.program.model.pcode.HighCodeSymbol;
 import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
-import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
+import ghidra.util.*;
 
 /**
  * Action triggered from a specific token in the decompiler window to rename a global variable.
@@ -42,6 +42,7 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 
 	public RenameGlobalAction() {
 		super("Rename Global");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRenameGlobal"));
 		setPopupMenuData(new MenuData(new String[] { "Rename Global" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 	}

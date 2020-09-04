@@ -19,6 +19,7 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
 
 /**
@@ -35,7 +36,7 @@ public class RemoveSecondaryHighlightAction extends AbstractDecompilerAction {
 
 		setPopupMenuData(
 			new MenuData(new String[] { "Secondary Highlight", "Remove Highlight" }, "Decompile"));
-		setHelpLocation(new HelpLocation("DecompilePlugin", getName()));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionSecondaryHighlight"));
 	}
 
 	@Override

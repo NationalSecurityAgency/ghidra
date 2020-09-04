@@ -37,7 +37,12 @@ src/main/help/help/shared/redo.png||GHIDRA||||END|
 src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/help/help/shared/undo.png||GHIDRA||||END|
 src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/help/help/topics/DecompilePlugin/Decompiler.htm||GHIDRA||||END|
+src/main/help/help/topics/DecompilePlugin/Decompiler.html||GHIDRA||||END|
+src/main/help/help/topics/DecompilePlugin/DecompilerAnnotations.html||GHIDRA||||END|
+src/main/help/help/topics/DecompilePlugin/DecompilerConcepts.html||GHIDRA||||END|
+src/main/help/help/topics/DecompilePlugin/DecompilerIntro.html||GHIDRA||||END|
+src/main/help/help/topics/DecompilePlugin/DecompilerOptions.html||GHIDRA||||END|
+src/main/help/help/topics/DecompilePlugin/DecompilerWindow.html||GHIDRA||||END|
 src/main/help/help/topics/DecompilePlugin/images/BackwardSlice.png||GHIDRA||||END|
 src/main/help/help/topics/DecompilePlugin/images/DecompWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DecompilePlugin/images/Defuse.png||GHIDRA||||END|

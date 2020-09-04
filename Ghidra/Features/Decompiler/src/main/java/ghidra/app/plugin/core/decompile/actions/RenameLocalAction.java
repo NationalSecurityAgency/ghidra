@@ -22,10 +22,12 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
 
 /**
@@ -46,6 +48,7 @@ public class RenameLocalAction extends AbstractDecompilerAction {
 
 	public RenameLocalAction() {
 		super("Rename Variable");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRenameVariable"));
 		setPopupMenuData(new MenuData(new String[] { "Rename Variable" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 	}

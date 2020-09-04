@@ -34,6 +34,7 @@ import ghidra.app.decompiler.component.*;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
+import ghidra.app.util.HelpTopics;
 import ghidra.app.util.HighlightProvider;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -740,7 +741,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		};
 		refreshAction.setToolBarData(new ToolBarData(REFRESH_ICON, "A" /* first on toolbar */));
 		refreshAction.setDescription("Push at any time to trigger a re-decompile");
-		refreshAction.setHelpLocation(new HelpLocation(plugin.getName(), "Decompiler")); // just use the default
+		refreshAction
+				.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarRedecompile")); // just use the default
 
 		//
 		// Below are actions along with their groups and subgroup information.  The comments

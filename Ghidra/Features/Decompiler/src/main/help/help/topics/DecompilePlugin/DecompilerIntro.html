@@ -1,0 +1,186 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Decompiler</title>
+<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="Decompiler.html" title="Decompiler">
+<link rel="up" href="Decompiler.html" title="Decompiler">
+<link rel="prev" href="Decompiler.html" title="Decompiler">
+<link rel="next" href="DecompilerConcepts.html" title="Decompiler Concepts">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center">Decompiler</th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="Decompiler.html">Prev</a> </td>
+<th width="60%" align="center"> </th>
+<td width="20%" align="right"> <a accesskey="n" href="DecompilerConcepts.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="chapter">
+<div class="titlepage"><div><div><h1 class="title">
+<a name="DecompilerIntro"></a>Decompiler</h1></div></div></div>
+  
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/DecompWindow.png" align="middle" width="990" height="387"></td></tr></table></div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="Overview"></a>Overview</h2></div></div></div>
+  
+  <p>
+    The Decompiler plug-in is a sophisticated transformation engine
+    which automatically converts the binary representation of
+    individual functions into a high-level C representation. The
+    Decompiler presents a view of a program which is interactive and
+    dynamically updated as the user adds or makes changes to the
+    annotations associated with the program. A Decompiler window
+    maintains the correspondence between the C representation and the
+    assembly representation displayed in the Code Browser window, to
+    the extent possible. The window allows instant visual association
+    and navigation between C language expressions and their
+    corresponding assembly instructions.
+  </p>
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="EnablePlugin"></a>Enabling the Plug-in</h3></div></div></div>
+  
+  <p>
+    The Decompiler is a full Plug-in within Ghidra and can be configured to be enabled or
+    disabled within any particular tool. Default configurations will have the
+    plug-in enabled, but if its disabled for some reason, it can be enabled from within
+    a Code Browser by selecting the menu option
+    </p>
+<div class="informalexample">
+      <span class="bold"><strong>File -&gt; Configure</strong></span>
+    </div>
+<p>
+    Then click on the <span class="emphasis"><em>Configure</em></span> link under the
+    <span class="bold"><strong>Ghidra Core</strong></span> section and check the box next to
+    <span class="bold"><strong>DecompilePlugin</strong></span>.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ShowWindow"></a>Showing the Decompiler Window</h3></div></div></div>
+      
+  <p>
+    From the Code Browser, either:
+    </p>
+<div class="informalexample">
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+	Press the <span class="guiicon"><img src="images/decompileFunction.gif"></span> icon
+	in the tool bar, <span class="emphasis"><em>or</em></span>
+      </li>
+<li class="listitem" style="list-style-type: disc">
+	Select the <span class="bold"><strong>Decompile</strong></span> option from the
+	<span class="bold"><strong>Window</strong></span> menu.
+      </li>
+</ul></div>
+    </div>
+<p>
+  </p>
+  <p>
+    The window automatically decompiles and displays the function at the
+    <span class="emphasis"><em>current address</em></span>. The address is set typically by left-clicking in the Listing window,
+    or invoking the <span class="emphasis"><em>Goto</em></span> command (pressing the 'g' key) and manually entering
+    the address or some other label, but the Decompiler window
+    follows any type of navigation in the Code Browser. Navigating to a new address
+    or making a change to the underlying Program causes the the window to (re)decompile and display
+    the new function.
+  </p>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="Capabilities"></a>Capabilities</h3></div></div></div>
+  
+  <p>
+    Some of the primary capabilities of the decompiler include:
+
+  </p>
+<div class="informalexample">
+  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+      <span class="bold"><strong>Recovers Expressions</strong></span>: The
+      decompiler does full data-flow analysis which allows it to
+      perform slicing on functions. The most tangible benefit to the
+      user is that complicated expressions, which have been split into
+      distinct operations/instructions and then mixed together with
+      other instructions by the compiling/optimizing process, are
+      reconstituted into a single expression again by the decompiler.
+    </li>
+<li class="listitem" style="list-style-type: disc">
+      <span class="bold"><strong>Recovers High-Level Scoped
+      Variables</strong></span>: The decompiler understands how compilers
+      use processor stacks and registers to implement variables with
+      different scopes within a function. Data-flow allows it to
+      follow what was originally a single variable as it moves from
+      the stack, into a register, into a different register, etc. Thus
+      it can effectively recover the original programs concept of a
+      variable, minimizing the need to introduce artificial variables
+      in the output.
+    </li>
+<li class="listitem" style="list-style-type: disc">
+      <span class="bold"><strong>Recovers Function Parameters</strong></span>:
+      The decompiler understands the parameter passing conventions of
+      the compiler and can reconstruct the form of the original
+      function call.
+    </li>
+<li class="listitem" style="list-style-type: disc">
+      <span class="bold"><strong>Uses Data-type, Name, and Signature
+      Annotations</strong></span>: The decompiler automatically pulls in
+      all the different data types and variable names that the user
+      has applied to functions, and the C output is altered to reflect
+      this. High-level variables are appropriately named, structure
+      fields and array indices are calculated and displayed with
+      correct syntax, constant char pointers are replaced with
+      appropriate quoted strings, etc.
+    </li>
+<li class="listitem" style="list-style-type: disc">
+      <span class="bold"><strong>Performs Local Data-type
+      Propagation</strong></span>: In the absence of information, the
+      decompiler does its best to fill in information from what it
+      does know. Variables whose data-type has not been explicitly
+      labeled by the user can often by recovered by seeing how the
+      variable is used or by allowing the known data-types to
+      propagate.
+    </li>
+<li class="listitem" style="list-style-type: disc">
+      <span class="bold"><strong>Can be used to Automatically Recover
+      Structure Fields</strong></span>: The decompiler can be leveraged to
+      recover references to a structure.
+      </li>
+</ul></div>
+    </div>
+<p>
+  </p>
+</div>
+</div>
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="Decompiler.html">Prev</a> </td>
+<td width="20%" align="center"> </td>
+<td width="40%" align="right"> <a accesskey="n" href="DecompilerConcepts.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">Decompiler </td>
+<td width="20%" align="center"><a accesskey="h" href="Decompiler.html">Home</a></td>
+<td width="40%" align="right" valign="top"> Decompiler Concepts</td>
+</tr>
+</table>
+</div>
+</body>
+</html>
