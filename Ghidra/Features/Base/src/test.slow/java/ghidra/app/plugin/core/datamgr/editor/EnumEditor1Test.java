@@ -530,7 +530,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		removeCategory(enummDt);
 
-		close(waitForErrorDialog());
+		close(waitForInfoDialog());
 	}
 
 	@Test
@@ -570,7 +570,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		replaceDataType(enummDt, newEnummDt);
 
-		close(waitForErrorDialog());
+		close(waitForInfoDialog());
 	}
 
 	@Test
@@ -620,7 +620,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		program.flushEvents();
 		waitForSwing();
 
-		close(waitForErrorDialog());
+		close(waitForInfoDialog());
 	}
 
 	@Test

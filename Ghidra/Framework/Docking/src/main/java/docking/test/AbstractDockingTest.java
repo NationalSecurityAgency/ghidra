@@ -44,8 +44,7 @@ import docking.actions.DockingToolActions;
 import docking.dnd.GClipboard;
 import docking.framework.DockingApplicationConfiguration;
 import docking.menu.DialogToolbarButton;
-import docking.widgets.MultiLineLabel;
-import docking.widgets.OptionDialog;
+import docking.widgets.*;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.tree.GTree;
@@ -195,6 +194,14 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 */
 	public static AbstractErrDialog waitForErrorDialog() {
 		return waitForDialogComponent(AbstractErrDialog.class);
+	}
+
+	/**
+	 * Waits for the system info dialog to appear
+	 * @return the dialog
+	 */
+	public static OkDialog waitForInfoDialog() {
+		return waitForDialogComponent(OkDialog.class);
 	}
 
 	public static Window waitForWindow(Class<?> windowClass) {

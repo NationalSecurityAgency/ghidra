@@ -28,10 +28,10 @@ import javax.swing.*;
 
 import org.junit.*;
 
-import docking.AbstractErrDialog;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
+import docking.widgets.OkDialog;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -953,7 +953,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void closeMaxSearchResultsDialog() throws Exception {
-		AbstractErrDialog d = waitForErrorDialog();
+		OkDialog d = waitForInfoDialog();
 		assertTrue(d.getMessage().contains("Stopped search"));
 		close(d);
 		waitForSwing();

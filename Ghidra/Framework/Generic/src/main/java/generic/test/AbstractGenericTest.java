@@ -1135,10 +1135,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	public static void runSwing(Runnable runnable, boolean wait) {
-		if (SwingUtilities.isEventDispatchThread()) {
-			runnable.run();
-			return;
-		}
 
 		if (wait) {
 			runSwingAndWait(runnable);

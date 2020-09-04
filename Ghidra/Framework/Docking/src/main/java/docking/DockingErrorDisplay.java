@@ -96,16 +96,16 @@ public class DockingErrorDisplay implements ErrorDisplay {
 	private void showDialog(final String title, final Throwable throwable,
 			final int dialogType, final String messageString, final Component parent) {
 
-		if (dialogType == OptionDialog.ERROR_MESSAGE) {
-			// Note: all calls to manipulate the error dialog must be on the Swing thread to 
-			//       guarantee thread visibility to our state variables
-			Swing.runIfSwingOrRunLater(
-				() -> showDialogOnSwing(title, throwable, dialogType, messageString, parent));
-		}
-		else {
-			DockingWindowManager.showDialog(parent,
-				new OkDialog(title, messageString, dialogType));
-		}
+		Swing.runIfSwingOrRunLater(() -> {
+
+			if (dialogType == OptionDialog.ERROR_MESSAGE) {
+				showDialogOnSwing(title, throwable, dialogType, messageString, parent);
+			}
+			else {
+				DockingWindowManager.showDialog(parent,
+					new OkDialog(title, messageString, dialogType));
+			}
+		});
 	}
 
 	private void showDialogOnSwing(String title, Throwable throwable,
