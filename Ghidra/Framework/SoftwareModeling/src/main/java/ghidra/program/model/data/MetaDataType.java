@@ -91,10 +91,22 @@ public enum MetaDataType {
 				return aCopy;
 			}
 			if (aMeta == MetaDataType.PTR) {
+				if (a instanceof TypeDef) {
+					a = ((TypeDef) a).getBaseDataType();
+				}
+				if (b instanceof TypeDef) {
+					b = ((TypeDef) b).getBaseDataType();
+				}
 				a = ((Pointer) a).getDataType();
 				b = ((Pointer) b).getDataType();
 			}
 			else if (aMeta == MetaDataType.ARRAY) {
+				if (a instanceof TypeDef) {
+					a = ((TypeDef) a).getBaseDataType();
+				}
+				if (b instanceof TypeDef) {
+					b = ((TypeDef) b).getBaseDataType();
+				}
 				if (!(a instanceof Array) || !(b instanceof Array)) {
 					break;
 				}

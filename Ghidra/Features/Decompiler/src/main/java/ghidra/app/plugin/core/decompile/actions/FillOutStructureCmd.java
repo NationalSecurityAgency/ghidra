@@ -75,6 +75,9 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	private TaskMonitor monitor;
 	private PluginTool tool;
 
+	private List<PcodeOp> storePcodeOps = new ArrayList<PcodeOp>();
+	private List<PcodeOp> loadPcodeOps = new ArrayList<PcodeOp>();
+
 	/**
 	 * Constructor.
 	 * 
@@ -166,6 +169,59 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Method to create a structure data type for a variable in the given function.
+	 * @param var a parameter, local variable, or global variable used in the given function
+	 * @param function the function to process
+	 * @return a filled-in structure or null if one could not be created
+	 */
+	public Structure processStructure(HighVariable var, Function function) {
+
+		if (var == null || var.getSymbol() == null || var.getOffset() >= 0) {
+			return null;
+		}
+
+		Structure structDT;
+
+		try {
+			fillOutStructureDef(var);
+			structDT = createStructure(null, var, function, false);
+			populateStructure(structDT);
+			pushIntoCalls(structDT);
+		}
+		catch (Exception e) {
+			return null;
+		}
+
+		return structDT;
+	}
+
+	/**
+	 * Retrieve the component map that was generated when structure was created using decomiler info
+	 * @return componentMap
+	 */
+	public NoisyStructureBuilder getComponentMap() {
+		return componentMap;
+	}
+
+	/**
+	 * Retrieve the pcodeOps that are used to store data into the variable
+	 * the FillInStructureCmd was trying to create a structure on.
+	 * @return the pcodeOps doing the storing to the associated variable
+	 */
+	public List<PcodeOp> getStorePcodeOps() {
+		return storePcodeOps;
+	}
+
+	/**
+	 * Retrieve the pcodeOps that are used to load data from the variable
+	 * the FillInStructureCmd was trying to create a structure on.
+	 * @return the pcodeOps doing the loading from the associated variable
+	 */
+	public List<PcodeOp> getLoadPcodeOps() {
+		return loadPcodeOps;
 	}
 
 	/**
@@ -633,6 +689,11 @@ public class FillOutStructureCmd extends BackgroundCommand {
 					case PcodeOp.LOAD:
 						outDt = getDataTypeTraceForward(output);
 						componentMap.addDataType(currentRef.offset, outDt);
+
+						if (outDt != null && !loadPcodeOps.contains(pcodeOp)) {
+							loadPcodeOps.add(pcodeOp);
+						}
+
 						break;
 					case PcodeOp.STORE:
 						// create a location in the struct
@@ -642,6 +703,11 @@ public class FillOutStructureCmd extends BackgroundCommand {
 						}
 						outDt = getDataTypeTraceBackward(inputs[2]);
 						componentMap.addDataType(currentRef.offset, outDt);
+
+						if (outDt != null && !storePcodeOps.contains(pcodeOp)) {
+							storePcodeOps.add(pcodeOp);
+						}
+
 						break;
 					case PcodeOp.CAST:
 						putOnList(output, currentRef.offset, todoList, doneList);
