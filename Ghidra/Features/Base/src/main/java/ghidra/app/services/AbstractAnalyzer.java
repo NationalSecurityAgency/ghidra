@@ -36,6 +36,10 @@ public abstract class AbstractAnalyzer implements Analyzer {
 		this.name = name;
 		this.type = type;
 		this.description = description;
+
+		if (type == AnalyzerType.ONE_SHOT_ANALYZER) {
+			this.supportsOneTimeAnalysis = true;
+		}
 	}
 
 	protected void setPriority(AnalysisPriority priority) {
