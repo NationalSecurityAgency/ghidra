@@ -183,7 +183,9 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			else if (type == AnalyzerType.INSTRUCTION_ANALYZER) {
 				instructionTasks.add(analyzer);
 			}
-			else {
+			else if (type == AnalyzerType.ONE_SHOT_ANALYZER) {
+				// ignored
+			} else {
 				Msg.showError(this, null, "Unknown Analysis Type",
 					"Unexpected Analysis type " + type);
 			}
