@@ -212,9 +212,7 @@ c6imm: uimm is cop1212 & cop0206 [ uimm = (cop1212 << 5) | (cop0206); ] { local 
 c6imm: uimm is cop1212 & cop0206 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = uimm + (64 * (uimm == 0)); export tmp; }
 @endif
 
-#NOTES  not shifted
-# cbigimm: imm is scop1212 & cop0206 [ imm = (scop1212 << 17) | (cop0206 << 12); ] { local tmp:$(XLEN) = imm; export tmp; }
-cbigimm: imm is scop1212 & cop0206 [ imm = (scop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = imm; export tmp; }
+cbigimm: imm is cop1212 & scop1212 & cop0206 [ imm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = (scop1212 << 17) | (cop0206 << 12); export tmp; }
 
 caddi4spnimm: uimm is cop1112 & cop0710 & cop0606 & cop0505 [ uimm = (cop0710 << 6) | (cop1112 << 4) | (cop0505 << 3) | (cop0606 << 2); ] { local tmp:$(XLEN) = uimm; export tmp; }
 
