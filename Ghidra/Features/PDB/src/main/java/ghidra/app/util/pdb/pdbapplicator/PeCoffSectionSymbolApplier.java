@@ -25,10 +25,15 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link PeCoffSectionMsSymbol} symbols.
  */
-public class PeCoffSectionSymbolApplier extends AbstractMsSymbolApplier {
+public class PeCoffSectionSymbolApplier extends MsSymbolApplier {
 
 	private PeCoffSectionMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public PeCoffSectionSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -40,7 +45,7 @@ public class PeCoffSectionSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		int sectionNum = symbol.getSectionNumber();
 		long realAddress = symbol.getRva();
 		symbol.getLength();
@@ -52,7 +57,7 @@ public class PeCoffSectionSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing
 	}
 }

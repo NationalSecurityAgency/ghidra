@@ -33,7 +33,6 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Manages virtual base table lookup for PDB classes.
  */
-
 public class PdbVbtManager extends VbtManager {
 
 	Map<String, Address> addressByMangledName;
@@ -75,7 +74,7 @@ public class PdbVbtManager extends VbtManager {
 				AbstractPublicMsSymbol pubSymbol = (AbstractPublicMsSymbol) symbol;
 				String name = pubSymbol.getName();
 				if (name.startsWith("??_8")) {
-					Address address = applicator.reladdr(pubSymbol);
+					Address address = applicator.getAddress(pubSymbol);
 					myAddressByMangledName.put(name, address);
 				}
 			}

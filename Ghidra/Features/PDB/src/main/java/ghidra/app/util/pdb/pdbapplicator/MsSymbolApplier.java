@@ -17,22 +17,45 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import java.util.Objects;
 
+import ghidra.app.plugin.processors.sleigh.symbol.Symbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.util.exception.CancelledException;
 
-public abstract class AbstractMsSymbolApplier {
+/**
+ * Abstract class representing the applier for a specific {@link AbstractMsSymbol}.  The
+ * {@link #apply()} method creates an associated {@link Symbol}, if applicable, or might
+ * apply information to other {@link MsSymbolApplier AbstractMsSymbolAppliers}.
+ * Methods associated with the {@link MsSymbolApplier} or derived class will
+ * make fields available to the user from the {@link AbstractMsSymbol}.
+ */
+public abstract class MsSymbolApplier {
 	protected PdbApplicator applicator;
 	protected AbstractMsSymbolIterator iter;
 	protected long currentOffset;
 
-	public AbstractMsSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
+	public MsSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		Objects.requireNonNull(applicator, "applicator cannot be null");
 		Objects.requireNonNull(iter, "symbolGroup cannot be null");
 		this.applicator = applicator;
 		this.iter = iter;
 		currentOffset = iter.getCurrentOffset();
+	}
+
+	/**
+	 * Puts message to {@link PdbLog} and to Msg.info()
+	 * @param originator a Logger instance, "this", or YourClass.class
+	 * @param message the message to display
+	 */
+	protected void pdbLogAndInfoMessage(Object originator, String message) {
+		applicator.pdbLogAndInfoMessage(originator, message);
 	}
 
 	/**
@@ -49,26 +72,26 @@ public abstract class AbstractMsSymbolApplier {
 	 * @throws PdbException if there was a problem processing the data.
 	 * @throws CancelledException upon user cancellation
 	 */
-	public abstract void apply() throws PdbException, CancelledException;
+	abstract void apply() throws PdbException, CancelledException;
 
 	/**
-	 * Applies logic of this class to another {@link AbstractMsSymbolApplier} instead of to
-	 *  "the program."
+	 * Applies logic of this class to another {@link MsSymbolApplier} instead of to
+	 * "the program."
 	 * @param applyToApplier the applier to which the logic of this class is applied.
 	 * @throws PdbException if there was a problem processing the data.
 	 * @throws CancelledException upon user cancellation.
 	 */
-	public abstract void applyTo(AbstractMsSymbolApplier applyToApplier)
+	abstract void applyTo(MsSymbolApplier applyToApplier)
 			throws PdbException, CancelledException;
 
 	/**
 	 * Manages block nesting for symbols/appliers that represent the beginning or end of blocks.
-	 *  The default is to do nothing.  Otherwise the appliers should implement the appropriate
-	 *  logic.  
+	 * The default is to do nothing.  Otherwise the appliers should implement the appropriate
+	 * logic.  
 	 * @param applierParam the applier which is managing blocks, which is typically
-	 *  {@link FunctionSymbolApplier}.
+	 * {@link FunctionSymbolApplier}.
 	 */
-	public void manageBlockNesting(AbstractMsSymbolApplier applierParam) {
+	void manageBlockNesting(MsSymbolApplier applierParam) {
 		// Do nothing by default.
 	}
 

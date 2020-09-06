@@ -51,9 +51,10 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * PDB Universal Reader/Analyzer.  Uses raw PDB files (not XML-converted PDBs). Attempts to
- *  apply the information to a program.
+ * apply the information to a program.  It has Universal in the name to describe the fact that
+ * it written in java, making it platform independent, unlike a previous PDB analyzer.
  */
-public class Pdb2Analyzer extends AbstractAnalyzer {
+public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 	// Developer turn on/off options that are in still in development.
 	private static final boolean developerMode = false;
@@ -211,7 +212,7 @@ public class Pdb2Analyzer extends AbstractAnalyzer {
 
 	//==============================================================================================
 	//==============================================================================================
-	public Pdb2Analyzer() {
+	public PdbUniversalAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setPrototype();
 		// false for now; after proven... then TODO: true always

@@ -52,8 +52,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private static VbtManager vbtManager32;
 	private static VbtManager vbtManager64;
 	// Note: Currently all test have expected results based on up the COMPLEX layout.
-	private static CompositeLayoutMode layoutOptions =
-		CompositeLayoutMode.COMPLEX;
+	private static CompositeLayoutMode layoutOptions = CompositeLayoutMode.COMPLEX;
 
 	static {
 		BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl();
@@ -277,6 +276,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		preparer32.addIntegers(new int[] { 0, 12 });
 		preparer64.addIntegers(new int[] { 0, 20 });
 
+		// TODO: do not delete... these are for future use.
 //		vbtSymbols.add("??_8GX1@@7B@");
 //		preparer32.addIntegers(new int[] { 0, 4 });
 //		preparer64.addIntegers(new int[] { 0, 8});
@@ -500,8 +500,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 				builder.append('V');
 				break;
 			default:
-				Msg.error(null, "Cannot handle type during testing" + type);
-				assert false;
+				String msg = "Cannot handle type during testing" + type;
+				Msg.error(null, msg);
+				throw new AssertException(msg);
 		}
 		builder.append(className);
 		builder.append("@@");

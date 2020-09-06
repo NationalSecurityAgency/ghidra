@@ -18,7 +18,6 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.Objects;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractRegisterRelativeAddressMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
@@ -26,16 +25,20 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.Msg;
 import ghidra.util.exception.*;
 
 /**
  * Applier for {@link AbstractRegisterRelativeAddressMsSymbol} symbols.
  */
-public class RegisterRelativeSymbolApplier extends AbstractMsSymbolApplier {
+public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
 
 	private AbstractRegisterRelativeAddressMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public RegisterRelativeSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -47,15 +50,13 @@ public class RegisterRelativeSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
-		String message = "Cannot apply " + this.getClass().getSimpleName() + " directly to program";
-		Msg.info(this, message);
-		PdbLog.message(message);
+	void apply() throws PdbException, CancelledException {
+		pdbLogAndInfoMessage(this,
+			"Cannot apply " + this.getClass().getSimpleName() + " directly to program");
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier)
-			throws PdbException, CancelledException {
+	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
 		if (!applicator.getPdbApplicatorOptions().applyFunctionVariables()) {
 			return;
 		}
@@ -103,7 +104,7 @@ public class RegisterRelativeSymbolApplier extends AbstractMsSymbolApplier {
 //		}
 		int offset = (int) (relativeOffset & 0xffffffffL);
 
-		AbstractMsTypeApplier dataTypeApplier =
+		MsTypeApplier dataTypeApplier =
 			applicator.getTypeApplier(symbol.getTypeRecordNumber());
 		DataType dt = dataTypeApplier.getDataType();
 		if (dt != null) {
@@ -144,7 +145,7 @@ public class RegisterRelativeSymbolApplier extends AbstractMsSymbolApplier {
 					}
 				}
 			}
-			catch (Exception e) {
+			catch (InvalidInputException | DuplicateNameException e) {
 				applicator.appendLogMsg("Unable to create stack variable " + symbol.getName() +
 					" at offset " + offset + " in " + function.getName());
 				return false;

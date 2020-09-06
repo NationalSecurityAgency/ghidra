@@ -31,10 +31,11 @@ import ghidra.util.exception.CancelledException;
 /*
  * Non java-doc:
  * Some truths:
- *   For AbstractMsCompositeType: do not count on "count" to be zero when MsProperty is fwdref
- *     (we have seen example of count==0 and not fwdref, though the majority of the time the
- *     two go hand-in-hand.  When these did not equate, it might have been when there was no
- *     need for a fwdref and possibly only one definition--this would require a closer look).
+ *   For AbstractMsCompositeType: do not count on "count" to be zero when MsProperty is forward
+ *     reference (we have seen example of count==0 and not forward reference, though the majority
+ *     of the time the two go hand-in-hand.  When these did not equate, it might have been when
+ *     there was no need for a forward reference and possibly only one definition--this would
+ *     require a closer look).
  */
 /**
  * Applier for {@link AbstractCompositeMsType} types.
@@ -53,33 +54,21 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 //
 	private Map<Integer, String> componentComments;
 
-	private List<Default2PdbMember> members;
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractCompositeMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					CompositeTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+	private List<DefaultPdbUniversalMember> members;
 
 	/**
 	 * Constructor for composite type applier, for transforming a composite into a
-	 *  Ghidra DataType.
+	 * Ghidra DataType.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractCompositeMsType} to process.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public CompositeTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
-		String fullPathName = ((AbstractCompositeMsType) msType).getName();
+	public CompositeTypeApplier(PdbApplicator applicator, AbstractCompositeMsType msType) {
+		super(applicator, msType);
+		String fullPathName = msType.getName();
 		symbolPath = new SymbolPath(SymbolPathParser.parse(fullPathName));
 	}
 
-	public CppCompositeType getClassType() {
+	CppCompositeType getClassType() {
 		if (definitionApplier != null) {
 			return ((CompositeTypeApplier) definitionApplier).getClassTypeInternal();
 		}
@@ -90,33 +79,25 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return classType;
 	}
 
-	List<Default2PdbMember> getMembers() {
+	List<DefaultPdbUniversalMember> getMembers() {
 		return members;
 	}
 
-	// Mapping of fwdRef/def must be done prior to this call.
+	// Mapping of forwardReference/definition must be done prior to this call.
 	private void getOrCreateComposite() {
 		if (dataType != null) {
 			return;
 		}
-		if (isForwardReference()) {
-			if (definitionApplier != null) {
-				dataType = definitionApplier.getDataTypeInternal();
-				classType = ((CompositeTypeApplier) definitionApplier).getClassTypeInternal();
-				if (dataType != null) {
-					return;
-				}
-			}
+
+		AbstractComplexTypeApplier alternativeApplier = getAlternativeTypeApplier();
+		if (alternativeApplier != null) {
+			dataType = alternativeApplier.getDataTypeInternal();
+			classType = ((CompositeTypeApplier) alternativeApplier).getClassTypeInternal();
 		}
-		else {
-			if (fwdRefApplier != null) {
-				dataType = fwdRefApplier.getDataTypeInternal();
-				classType = ((CompositeTypeApplier) fwdRefApplier).getClassTypeInternal();
-				if (dataType != null) {
-					return;
-				}
-			}
+		if (dataType != null) {
+			return;
 		}
+
 		dataType = createEmptyComposite((AbstractCompositeMsType) msType);
 		String mangledName = ((AbstractCompositeMsType) msType).getMangledName();
 		classType = new CppCompositeType((Composite) dataType, mangledName);
@@ -136,7 +117,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 
 		getOrCreateComposite();
 
@@ -154,7 +135,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	@Override
-	public void resolve() {
+	void resolve() {
 		if (!isForwardReference()) {
 			super.resolve();
 		}
@@ -176,10 +157,10 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 		// Currently do not need this dependency, as we currently do not need any contents
 		// of the base class for filling in this class
-		for (AbstractMsTypeApplier baseApplierIterated : fieldListApplier.getBaseClassList()) {
+		for (MsTypeApplier baseApplierIterated : fieldListApplier.getBaseClassList()) {
 			if (baseApplierIterated instanceof BaseClassTypeApplier) {
 				BaseClassTypeApplier baseTypeApplier = (BaseClassTypeApplier) baseApplierIterated;
-				AbstractMsTypeApplier applier =
+				MsTypeApplier applier =
 					applicator.getTypeApplier(baseTypeApplier.getBaseClassRecordNumber());
 				if (applier instanceof CompositeTypeApplier) {
 					CompositeTypeApplier dependencyApplier =
@@ -197,11 +178,11 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				}
 			}
 		}
-		for (AbstractMsTypeApplier memberTypeApplierIterated : fieldListApplier.getMemberList()) {
+		for (MsTypeApplier memberTypeApplierIterated : fieldListApplier.getMemberList()) {
 			applicator.checkCanceled();
 			if (memberTypeApplierIterated instanceof MemberTypeApplier) {
 				MemberTypeApplier memberTypeApplier = (MemberTypeApplier) memberTypeApplierIterated;
-				AbstractMsTypeApplier fieldApplier = memberTypeApplier.getFieldTypeApplier();
+				MsTypeApplier fieldApplier = memberTypeApplier.getFieldTypeApplier();
 				recurseAddDependency(fieldApplier);
 			}
 //			if (memberTypeApplierIterated instanceof NestedTypeApplier) {
@@ -216,8 +197,10 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		}
 	}
 
-	private void recurseAddDependency(AbstractMsTypeApplier dependee)
+	private void recurseAddDependency(MsTypeApplier dependee)
 			throws CancelledException, PdbException {
+		// TODO: evaluate this and make changes... this work might be being taken care of in
+		//  ModifierTypeApplier
 		if (dependee instanceof ModifierTypeApplier) {
 			ModifierTypeApplier modifierApplier = (ModifierTypeApplier) dependee;
 			recurseAddDependency(modifierApplier.getModifiedTypeApplier());
@@ -233,6 +216,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			}
 			setDeferred();
 		}
+		// TODO: evaluate this and make changes... this work might be being taken care of in
+		//  ArrayTypeApplier
 		else if (dependee instanceof ArrayTypeApplier) {
 			applicator.addApplierDependency(this, dependee);
 			setDeferred();
@@ -251,7 +236,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		else if (dependee instanceof BitfieldTypeApplier) {
 			RecordNumber recNum =
 				((AbstractBitfieldMsType) ((BitfieldTypeApplier) dependee).getMsType()).getElementRecordNumber();
-			AbstractMsTypeApplier underlyingApplier = applicator.getTypeApplier(recNum);
+			MsTypeApplier underlyingApplier = applicator.getTypeApplier(recNum);
 			if (underlyingApplier instanceof EnumTypeApplier) {
 				applicator.addApplierDependency(this, underlyingApplier);
 				setDeferred();
@@ -260,7 +245,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		//We are assuming that bitfields on typedefs will not be defined.
 	}
 
-	public void applyInternal() throws CancelledException, PdbException {
+	private void applyInternal() throws CancelledException, PdbException {
 
 		if (isApplied()) {
 			return;
@@ -273,9 +258,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		if (type instanceof AbstractUnionMsType) {
 			applyCpp = false;
 			if (hasBaseClasses()) {
-				String msg = "Unexpected base classes for union type: " + type.getName();
-				PdbLog.message(msg);
-				Msg.info(this, msg);
+				pdbLogAndInfoMessage(this,
+					"Unexpected base classes for union type: " + type.getName());
 			}
 		}
 		if (applyCpp) {
@@ -288,7 +272,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	//==============================================================================================
-	void applyBasic(Composite composite, AbstractCompositeMsType type)
+	private void applyBasic(Composite composite, AbstractCompositeMsType type)
 			throws CancelledException, PdbException {
 
 		//boolean isClass = (type instanceof AbstractClassMsType || actsLikeClass(applicator, type));
@@ -320,10 +304,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			for (Map.Entry<Integer, String> entry : componentComments.entrySet()) {
 				DataTypeComponent component = structure.getComponentAt(entry.getKey());
 				if (component == null) {
-					String message = "Could not set comment for 'missing' componenent " +
-						entry.getKey() + " for: " + structure.getName();
-					PdbLog.message(message);
-					Msg.info(this, message);
+					pdbLogAndInfoMessage(this, "Could not set comment for 'missing' componenent " +
+						entry.getKey() + " for: " + structure.getName());
 					return;
 				}
 				component.setComment(entry.getValue());
@@ -332,7 +314,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	//==============================================================================================
-	void applyCpp(Composite composite, AbstractCompositeMsType type)
+	private void applyCpp(Composite composite, AbstractCompositeMsType type)
 			throws PdbException, CancelledException {
 		// Fill in composite definition details.
 		FieldListTypeApplier fieldListApplier = FieldListTypeApplier.getFieldListApplierSpecial(
@@ -362,15 +344,6 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	//==============================================================================================
-	public void setDeferred() {
-		isDeferred = true;
-	}
-
-	@Override
-	public boolean isDeferred() {
-		return isDeferred;
-	}
-
 	@Override
 	void deferredApply() throws PdbException, CancelledException {
 		if (isDeferred()) {
@@ -381,19 +354,19 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	//==============================================================================================
 	//==============================================================================================
 	@Override
-	public CompositeTypeApplier getDependencyApplier() {
+	CompositeTypeApplier getDependencyApplier() {
 		if (definitionApplier != null && definitionApplier instanceof CompositeTypeApplier) {
 			return (CompositeTypeApplier) definitionApplier;
 		}
 		return this;
 	}
 
-	public String getName() {
+	String getName() {
 		return getMsType().getName();
 	}
 
 	@Override
-	public DataType getDataType() {
+	DataType getDataType() {
 		if (resolved) {
 			return resolvedDataType;
 		}
@@ -409,12 +382,12 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return dataType;
 	}
 
-	public boolean hasUniqueName() {
+	boolean hasUniqueName() {
 		return ((AbstractCompositeMsType) msType).getMsProperty().hasUniqueName();
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return ((AbstractCompositeMsType) getDependencyApplier().getMsType()).getSize();
 	}
 
@@ -472,7 +445,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		else {
 			defType = (AbstractCompositeMsType) definitionApplier.getMsType();
 		}
-		AbstractMsTypeApplier applier =
+		MsTypeApplier applier =
 			applicator.getTypeApplier(defType.getFieldDescriptorListRecordNumber());
 		if (!(applier instanceof FieldListTypeApplier)) {
 			return false;
@@ -504,7 +477,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		//  So... it might not be good to return "true" for just checking if the type is an
 		//  instanceof AbstractClassMsType.
 
-		AbstractMsTypeApplier applier =
+		MsTypeApplier applier =
 			applicator.getTypeApplier(defType.getFieldDescriptorListRecordNumber());
 		if (!(applier instanceof FieldListTypeApplier)) {
 			return false;
@@ -522,14 +495,14 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 		AbstractCompositeMsType type = (AbstractCompositeMsType) msType;
 
-		for (AbstractMsTypeApplier baseApplierIterated : fieldListApplier.getBaseClassList()) {
+		for (MsTypeApplier baseApplierIterated : fieldListApplier.getBaseClassList()) {
 			if (!(baseApplierIterated instanceof BaseClassTypeApplier)) {
 				applicator.appendLogMsg(baseApplierIterated.getClass().getSimpleName() +
 					" seen where BaseClassTypeApplier expected for " + type.getName());
 				continue;
 			}
 			BaseClassTypeApplier baseTypeApplier = (BaseClassTypeApplier) baseApplierIterated;
-			AbstractMsTypeApplier baseClassTypeApplier =
+			MsTypeApplier baseClassTypeApplier =
 				applicator.getTypeApplier(baseTypeApplier.getBaseClassRecordNumber());
 			if (!(baseClassTypeApplier instanceof CompositeTypeApplier)) {
 				applicator.appendLogMsg(baseApplierIterated.getClass().getSimpleName() +
@@ -599,7 +572,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	private CppCompositeType getUnderlyingClassType(RecordNumber recordNumber) {
-		AbstractMsTypeApplier baseUnderlyingApplier = applicator.getTypeApplier(recordNumber);
+		MsTypeApplier baseUnderlyingApplier = applicator.getTypeApplier(recordNumber);
 		if (!(baseUnderlyingApplier instanceof CompositeTypeApplier)) {
 			applicator.appendLogMsg(baseUnderlyingApplier.getClass().getSimpleName() +
 				" seen where CompositeTypeApplier expected for base class.");
@@ -614,7 +587,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	private DataType getVirtualBaseTablePointerDataType(RecordNumber recordNumber) {
-		AbstractMsTypeApplier vbptrApplier = applicator.getTypeApplier(recordNumber);
+		MsTypeApplier vbptrApplier = applicator.getTypeApplier(recordNumber);
 		if (vbptrApplier != null) {
 			if (vbptrApplier instanceof PointerTypeApplier) {
 				return vbptrApplier.getDataType();
@@ -663,7 +636,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 		AbstractCompositeMsType type = (AbstractCompositeMsType) msType;
 
-		for (AbstractMsTypeApplier memberTypeApplierIterated : fieldListApplier.getMemberList()) {
+		for (MsTypeApplier memberTypeApplierIterated : fieldListApplier.getMemberList()) {
 			boolean handled = true;
 			if (memberTypeApplierIterated instanceof MemberTypeApplier) {
 				MemberTypeApplier memberTypeApplier = (MemberTypeApplier) memberTypeApplierIterated;
@@ -673,7 +646,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					PdbApplicator.bigIntegerToInt(applicator, memberTypeApplier.getOffset());
 				ClassFieldMsAttributes memberAttributes = memberTypeApplier.getAttribute();
 				memberAttributes.getAccess(); // TODO: do something with this and other attributes
-				AbstractMsTypeApplier fieldApplier = memberTypeApplier.getFieldTypeApplier();
+				MsTypeApplier fieldApplier = memberTypeApplier.getFieldTypeApplier();
 
 				if (fieldApplier instanceof CompositeTypeApplier) {
 					CompositeTypeApplier defApplier =
@@ -694,8 +667,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				if (fieldDataType == null) {
 					if (fieldApplier instanceof PrimitiveTypeApplier &&
 						((PrimitiveTypeApplier) fieldApplier).isNoType()) {
-						Default2PdbMember member =
-							new Default2PdbMember(applicator, memberName, fieldApplier, offset);
+						DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(applicator,
+							memberName, fieldApplier, offset);
 						members.add(member);
 						componentComments.put(offset, "NO_TYPE");
 					}
@@ -706,8 +679,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					}
 				}
 				else {
-					Default2PdbMember member =
-						new Default2PdbMember(applicator, memberName, fieldApplier, offset);
+					DefaultPdbUniversalMember member =
+						new DefaultPdbUniversalMember(applicator, memberName, fieldApplier, offset);
 					members.add(member);
 					classType.addMember(memberName, fieldDataType, isFlexibleArray,
 						convertAttributes(memberAttributes), offset);
@@ -719,16 +692,17 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				String fieldName = enumerateTypeApplier.getName();
 				Numeric numeric = enumerateTypeApplier.getNumeric();
 				// TODO: some work
-				PdbLog.message("Don't know how to apply EnumerateTypeApplier fieldName " +
-					fieldName + " and value " + numeric + " within " + msType.getName());
+				pdbLogAndInfoMessage(this,
+					"Don't know how to apply EnumerateTypeApplier fieldName " + fieldName +
+						" and value " + numeric + " within " + msType.getName());
 			}
 			else if (memberTypeApplierIterated instanceof VirtualFunctionTablePointerTypeApplier) {
 				VirtualFunctionTablePointerTypeApplier vtPtrApplier =
 					(VirtualFunctionTablePointerTypeApplier) memberTypeApplierIterated;
 				String vftPtrMemberName = vtPtrApplier.getMemberName();
 				int offset = vtPtrApplier.getOffset();
-				Default2PdbMember member =
-					new Default2PdbMember(applicator, vftPtrMemberName, vtPtrApplier, offset);
+				DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(applicator,
+					vftPtrMemberName, vtPtrApplier, offset);
 				members.add(member);
 				//classType.addMember(vftPtrMemberName, vtPtrApplier.getDataType(), false, offset);
 				classType.addVirtualFunctionTablePointer(vftPtrMemberName,
@@ -754,8 +728,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					// We are skipping because we've had issues and do not know what is going on
 					//  at the moment. (I think they were dependency issues... been a while.)
 					//  See not above the "if" condition.
-//					PdbLog.message("Skipping Composite Nested type member: " + memberName +
-//						" within " + type.getName());
+//					pdbLogAndInfoMessage(this, "Skipping Composite Nested type member: " +
+//						memberName + " within " + type.getName());
 					// TODO: Investigate.  What does it mean when the internally defined type
 					//  conficts with the name of the outer type.
 					continue;

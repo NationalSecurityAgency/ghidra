@@ -16,20 +16,23 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractDefinedSingleAddressRangeMsSymbol} symbols.
  */
-public class DefinedSingleAddressRangeSymbolApplier extends AbstractMsSymbolApplier {
+public class DefinedSingleAddressRangeSymbolApplier extends MsSymbolApplier {
 
 	private AbstractDefinedSingleAddressRangeMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public DefinedSingleAddressRangeSymbolApplier(PdbApplicator applicator,
 			AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
@@ -42,15 +45,13 @@ public class DefinedSingleAddressRangeSymbolApplier extends AbstractMsSymbolAppl
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
-		String message = "Cannot apply " + this.getClass().getSimpleName() + " directly to program";
-		Msg.info(this, message);
-		PdbLog.message(message);
+	void apply() throws PdbException, CancelledException {
+		pdbLogAndInfoMessage(this,
+			"Cannot apply " + this.getClass().getSimpleName() + " directly to program");
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier)
-			throws PdbException, CancelledException {
+	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
 		if (applyToApplier instanceof LocalOptimizedSymbolApplier) {
 // TODO: eventually apply.			
 //			LocalOptimizedSymbolApplier localSymbolApplier =

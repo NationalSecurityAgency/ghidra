@@ -25,7 +25,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.pdb.PdbCategoryUtils;
+import ghidra.app.util.pdb.PdbCategories;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
@@ -36,11 +36,29 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.CancelOnlyWrappingTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The main engine for applying an AbstractPdb to Ghidra, whether a Program or DataTypeManager.
+ * The class is to be constructed first.
+ * <p>
+ * The
+ * {@link #applyTo(Program, DataTypeManager, Address, PdbApplicatorOptions, TaskMonitor, MessageLog)}
+ * method is then called with the appropriate {@link PdbApplicatorOptions} along with a
+ * {@link Program} and/or {@link DataTypeManager}.  Either, but not both can be null.
+ * If the Program is not null but the DatatypeManager is null, then the DataTypeManager is gotten
+ * from the Program.  If the Program is null, then data types can be applied to a DataTypeManager.
+ * The validation logic for the parameters is found in
+ * {@link #validateAndSetParameters(Program, DataTypeManager, Address, PdbApplicatorOptions, TaskMonitor, MessageLog)}.
+ * <p>
+ * Once the parameters are validated, appropriate classes and storage containers are constructed.
+ * Then processing commences, first with data types, followed by symbol-related processing.
+ * <p>
+ * {@link PdbApplicatorMetrics} are captured during the processing and status and logging is
+ * reported to various mechanisms including {@link Msg}, {@link MessageLog}, and {@link PdbLog}.
+ */
 public class PdbApplicator {
 
 	/**
@@ -49,7 +67,7 @@ public class PdbApplicator {
 	 * @param big BigInteger value to convert.
 	 * @return the integer value.
 	 */
-	public static long bigIntegerToLong(PdbApplicator myApplicator, BigInteger big) {
+	static long bigIntegerToLong(PdbApplicator myApplicator, BigInteger big) {
 		try {
 			return big.longValueExact();
 		}
@@ -67,7 +85,7 @@ public class PdbApplicator {
 	 * @param big BigInteger value to convert.
 	 * @return the integer value.
 	 */
-	public static int bigIntegerToInt(PdbApplicator myApplicator, BigInteger big) {
+	static int bigIntegerToInt(PdbApplicator myApplicator, BigInteger big) {
 		try {
 			return big.intValueExact();
 		}
@@ -106,11 +124,11 @@ public class PdbApplicator {
 
 	//==============================================================================================
 	private int resolveCount;
-	private PdbCategoryUtils categoryUtils;
+	private PdbCategories categoryUtils;
 	private PdbPrimitiveTypeApplicator pdbPrimitiveTypeApplicator;
-	private TypeApplierParser typeApplierParser;
+	private TypeApplierFactory typeApplierParser;
 	private ComplexTypeApplierMapper complexApplierMapper;
-	private JungDirectedGraph<AbstractMsTypeApplier, GEdge<AbstractMsTypeApplier>> applierDependencyGraph;
+	private JungDirectedGraph<MsTypeApplier, GEdge<MsTypeApplier>> applierDependencyGraph;
 	/**
 	 * This namespace map documents as follows:
 	 * <PRE>
@@ -121,7 +139,7 @@ public class PdbApplicator {
 	private Map<SymbolPath, Boolean> isClassByNamespace;
 
 	//==============================================================================================
-	private SymbolApplierParser symbolApplierParser;
+	private SymbolApplierFactory symbolApplierParser;
 
 	// Investigating... might change from String to AbstractSymbolApplier.
 	private Map<Address, Set<String>> labelsByAddress;
@@ -142,13 +160,13 @@ public class PdbApplicator {
 	//==============================================================================================
 	/**
 	 * Applies the PDB to the {@link Program} or {@link DataTypeManager}. Either, but not both,
-	 *  can be null.
+	 * can be null.
 	 * @param programParam The {@link Program} to which to apply the PDB. Can be null in certain
-	 *  circumstances.
+	 * circumstances.
 	 * @param dataTypeManagerParam The {@link DataTypeManager} to which to apply data types. Can be
-	 *  null in certain circumstances.
+	 * null in certain circumstances.
 	 * @param imageBaseParam Address bases from which symbol addresses are based. If null, uses
-	 *  the image base of the program (both cannot be null).
+	 * the image base of the program (both cannot be null).
 	 * @param applicatorOptionsParam {@link PdbApplicatorOptions} used for applying the PDB.
 	 * @param monitorParam TaskMonitor uses for watching progress and cancellation notices.
 	 * @param logParam The MessageLog to which to output messages.
@@ -187,7 +205,7 @@ public class PdbApplicator {
 	private void processTypes() throws CancelledException, PdbException {
 		setMonitorMessage("PDB: Applying to DTM " + dataTypeManager.getName() + "...");
 
-		PdbResearch.initCheckBreak(); // for developmental debug
+		PdbResearch.initBreakPointRecordNumbers(); // for developmental debug
 
 		resolveCount = 0;
 
@@ -279,7 +297,7 @@ public class PdbApplicator {
 
 		categoryUtils = setPdbCatogoryUtils(pdbFilename);
 		pdbPrimitiveTypeApplicator = new PdbPrimitiveTypeApplicator(dataTypeManager);
-		typeApplierParser = new TypeApplierParser(this);
+		typeApplierParser = new TypeApplierFactory(this);
 		complexApplierMapper = new ComplexTypeApplierMapper(this);
 		applierDependencyGraph = new JungDirectedGraph<>();
 		isClassByNamespace = new TreeMap<>();
@@ -294,7 +312,7 @@ public class PdbApplicator {
 			vbtManager = new VbtManager(getDataTypeManager());
 		}
 
-		symbolApplierParser = new SymbolApplierParser(this);
+		symbolApplierParser = new SymbolApplierFactory(this);
 
 		// Investigations
 		labelsByAddress = new HashMap<>();
@@ -379,6 +397,16 @@ public class PdbApplicator {
 	}
 
 	/**
+	 * Puts message to {@link PdbLog} and to Msg.info()
+	 * @param originator a Logger instance, "this", or YourClass.class
+	 * @param message the message to display
+	 */
+	void pdbLogAndInfoMessage(Object originator, String message) {
+		PdbLog.message(message);
+		Msg.info(originator, message);
+	}
+
+	/**
 	 * Returns the {@link TaskMonitor} to available for this analyzer.
 	 * @return the monitor.
 	 */
@@ -387,7 +415,9 @@ public class PdbApplicator {
 	}
 
 	/**
-	 * Returns the {@link CancelOnlyWrappingTaskMonitor} to available for this analyzer.
+	 * Returns the {@link CancelOnlyWrappingTaskMonitor} to available for this analyzer.  This is
+	 * useful for the user to be able to control the monitor progress bar without called commands
+	 * changing its progress on smaller tasks.
 	 * @return the monitor.
 	 */
 	TaskMonitor getCancelOnlyWrappingMonitor() {
@@ -443,9 +473,9 @@ public class PdbApplicator {
 	//==============================================================================================
 	/**
 	 * Get the {@link CategoryPath} associated with the {@link SymbolPath} specified, rooting
-	 *  it either at the PDB Category.
+	 * it either at the PDB Category.
 	 * @param symbolPath Symbol path to be used to create the CategoryPath. Null represents global
-	 *  namespace.
+	 * namespace.
 	 * @return {@link CategoryPath} created for the input.
 	 */
 	CategoryPath getCategory(SymbolPath symbolPath) {
@@ -476,7 +506,7 @@ public class PdbApplicator {
 	 * Returns the {@link CategoryPath} for Anonymous Types Category for the PDB.
 	 * @return the {@link CategoryPath}
 	 */
-	public CategoryPath getAnonymousTypesCategory() {
+	CategoryPath getAnonymousTypesCategory() {
 		return categoryUtils.getAnonymousTypesCategory();
 	}
 
@@ -498,7 +528,7 @@ public class PdbApplicator {
 		categoryUtils.incrementNextAnonymousFunctionName();
 	}
 
-	private PdbCategoryUtils setPdbCatogoryUtils(String pdbFilename)
+	private PdbCategories setPdbCatogoryUtils(String pdbFilename)
 			throws CancelledException, PdbException {
 
 		List<String> categoryNames = new ArrayList<>();
@@ -514,18 +544,18 @@ public class PdbApplicator {
 		if (index == -1) {
 			index = pdbFilename.lastIndexOf("/");
 		}
-		return new PdbCategoryUtils(pdbFilename.substring(index + 1), categoryNames);
+		return new PdbCategories(pdbFilename.substring(index + 1), categoryNames);
 	}
 
 	//==============================================================================================
 	// Applier-based-DataType-dependency-related methods.
 	//==============================================================================================
-	void addApplierDependency(AbstractMsTypeApplier depender) {
+	void addApplierDependency(MsTypeApplier depender) {
 		Objects.requireNonNull(depender);
 		applierDependencyGraph.addVertex(depender.getDependencyApplier());
 	}
 
-	void addApplierDependency(AbstractMsTypeApplier depender, AbstractMsTypeApplier dependee) {
+	void addApplierDependency(MsTypeApplier depender, MsTypeApplier dependee) {
 		Objects.requireNonNull(depender);
 		Objects.requireNonNull(dependee);
 		// TODO: Possibly do checks on dependee and depender types for actual creation
@@ -541,7 +571,7 @@ public class PdbApplicator {
 			new DefaultGEdge<>(depender.getDependencyApplier(), dependee.getDependencyApplier()));
 	}
 
-	List<AbstractMsTypeApplier> getVerticesInPostOrder() {
+	List<MsTypeApplier> getVerticesInPostOrder() {
 		setMonitorMessage("PDB: Determining data type dependency order...");
 		return GraphAlgorithms.getVerticesInPostOrder(applierDependencyGraph,
 			GraphNavigator.topDownNavigator());
@@ -550,29 +580,28 @@ public class PdbApplicator {
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
-	AbstractMsTypeApplier getApplierSpec(RecordNumber recordNumber,
-			Class<? extends AbstractMsTypeApplier> expected) throws PdbException {
+	MsTypeApplier getApplierSpec(RecordNumber recordNumber, Class<? extends MsTypeApplier> expected)
+			throws PdbException {
 		return typeApplierParser.getApplierSpec(recordNumber, expected);
 	}
 
-	AbstractMsTypeApplier getApplierOrNoTypeSpec(RecordNumber recordNumber,
-			Class<? extends AbstractMsTypeApplier> expected) throws PdbException {
+	MsTypeApplier getApplierOrNoTypeSpec(RecordNumber recordNumber,
+			Class<? extends MsTypeApplier> expected) throws PdbException {
 		return typeApplierParser.getApplierOrNoTypeSpec(recordNumber, expected);
 	}
 
-	AbstractMsTypeApplier getTypeApplier(RecordNumber recordNumber) {
+	MsTypeApplier getTypeApplier(RecordNumber recordNumber) {
 		return typeApplierParser.getTypeApplier(recordNumber);
 	}
 
-	AbstractMsTypeApplier getTypeApplier(AbstractMsType type) {
+	MsTypeApplier getTypeApplier(AbstractMsType type) {
 		return typeApplierParser.getTypeApplier(type);
 	}
 
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
-	public int findModuleNumberBySectionOffsetContribution(int section, long offset)
-			throws PdbException {
+	int findModuleNumberBySectionOffsetContribution(int section, long offset) throws PdbException {
 		for (AbstractSectionContribution sectionContribution : pdb.getDatabaseInterface().getSectionContributionList()) {
 			int sectionContributionOffset = sectionContribution.getOffset();
 			int maxSectionContributionOffset =
@@ -594,8 +623,7 @@ public class PdbApplicator {
 			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			PdbResearch.checkBreak(indexNumber);
-			AbstractMsTypeApplier applier =
-				getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
+			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
 			//PdbResearch.checkBreak(indexNumber, applier);
 			applier.apply();
 			monitor.incrementProgress(1);
@@ -657,8 +685,7 @@ public class PdbApplicator {
 		setMonitorMessage("PDB: Processing " + num + " item type components...");
 		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < num; indexNumber++) {
 			monitor.checkCanceled();
-			AbstractMsTypeApplier applier =
-				getTypeApplier(RecordNumber.itemRecordNumber(indexNumber));
+			MsTypeApplier applier = getTypeApplier(RecordNumber.itemRecordNumber(indexNumber));
 			applier.apply();
 			monitor.incrementProgress(1);
 		}
@@ -672,11 +699,11 @@ public class PdbApplicator {
 
 	//==============================================================================================
 	private void processDeferred() throws CancelledException, PdbException {
-		List<AbstractMsTypeApplier> verticesInPostOrder = getVerticesInPostOrder();
+		List<MsTypeApplier> verticesInPostOrder = getVerticesInPostOrder();
 		monitor.initialize(verticesInPostOrder.size());
 		setMonitorMessage("PDB: Processing " + verticesInPostOrder.size() +
 			" deferred data type dependencies...");
-		for (AbstractMsTypeApplier applier : verticesInPostOrder) {
+		for (MsTypeApplier applier : verticesInPostOrder) {
 			monitor.checkCanceled();
 			PdbResearch.checkBreak(applier.index);
 			//checkBreak(applier.index, applier);
@@ -699,8 +726,7 @@ public class PdbApplicator {
 			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			PdbResearch.checkBreak(indexNumber);
-			AbstractMsTypeApplier applier =
-				getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
+			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
 			PdbResearch.checkBreak(indexNumber, applier);
 			applier.resolve();
 			monitor.incrementProgress(1);
@@ -758,8 +784,8 @@ public class PdbApplicator {
 	 * @param symbol The {@link AddressMsSymbol}
 	 * @return The Address
 	 */
-	Address reladdr(AddressMsSymbol symbol) {
-		return pdbAddressManager.reladdr(symbol);
+	Address getAddress(AddressMsSymbol symbol) {
+		return pdbAddressManager.getAddress(symbol);
 	}
 
 	/**
@@ -768,15 +794,15 @@ public class PdbApplicator {
 	 * @param offset The offset
 	 * @return The Address
 	 */
-	Address reladdr(int segment, long offset) {
-		return pdbAddressManager.reladdr(segment, offset);
+	Address getAddress(int segment, long offset) {
+		return pdbAddressManager.getAddress(segment, offset);
 	}
 
 	/**
 	 * Write the mapped address for a query address, where where the mapping is
-	 *  derived by using a the address of a PDB symbol as the key and finding the address of
-	 *  a symbol in the program of the same "unique" name. This is accomplished using public
-	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
+	 * derived by using a the address of a PDB symbol as the key and finding the address of
+	 * a symbol in the program of the same "unique" name. This is accomplished using public
+	 * mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
 	 * @param address the query address
 	 * @param remapAddress the mapped address
 	 */
@@ -786,9 +812,9 @@ public class PdbApplicator {
 
 	/**
 	 * Returns the Address of an existing symbol for the query address, where the mapping is
-	 *  derived by using a the address of a PDB symbol as the key and finding the address of
-	 *  a symbol in the program of the same "unique" name. This is accomplished using public
-	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
+	 * derived by using a the address of a PDB symbol as the key and finding the address of
+	 * a symbol in the program of the same "unique" name. This is accomplished using public
+	 * mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
 	 * @param address the query address
 	 * @return the remapAddress
 	 */
@@ -1131,15 +1157,14 @@ public class PdbApplicator {
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
-	AbstractMsSymbolApplier getSymbolApplier(AbstractMsSymbolIterator iter)
-			throws CancelledException, NoSuchElementException {
+	MsSymbolApplier getSymbolApplier(AbstractMsSymbolIterator iter) throws CancelledException {
 		return symbolApplierParser.getSymbolApplier(iter);
 	}
 
 	//==============================================================================================
 	void procSym(AbstractMsSymbolIterator iter) throws CancelledException {
 		try {
-			AbstractMsSymbolApplier applier = getSymbolApplier(iter);
+			MsSymbolApplier applier = getSymbolApplier(iter);
 			applier.apply();
 		}
 		catch (PdbException e) {
@@ -1216,7 +1241,7 @@ public class PdbApplicator {
 				symbolTable.createNameSpace(parentNamespace, name, SourceType.IMPORTED);
 			}
 		}
-		catch (Exception e) {
+		catch (InvalidInputException | DuplicateNameException e) {
 			log.appendMsg("Unable to create class namespace: " + parentNamespace.getName(true) +
 				Namespace.DELIMITER + name + " due to exception: " + e.toString());
 		}

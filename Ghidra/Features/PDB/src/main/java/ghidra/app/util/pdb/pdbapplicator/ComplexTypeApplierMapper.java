@@ -24,7 +24,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Two-way Maps forward references with corresponding definitions for composites and enums.
- * Uses the fwdref and definition members of the AbstractComplexTypeApplier.
+ * Uses the forward reference and definition members of the AbstractComplexTypeApplier.
  */
 // We have probably tried 5 or more ways of doing this, all with mixed results.  The current
 //  implementation seems to yield the best results at the moment.  Keeping some of the old code
@@ -57,7 +57,7 @@ public class ComplexTypeApplierMapper {
 		while (indexNumber < indexLimit) {
 			monitor.checkCanceled();
 			PdbResearch.checkBreak(indexNumber);
-			AbstractMsTypeApplier applier =
+			MsTypeApplier applier =
 				applicator.getTypeApplier(RecordNumber.typeRecordNumber(indexNumber++));
 			// From real data, we know that an enum and a composite both had the same SymbolPath,
 			//  so enums and composites must be maintained separately so they do not get matched
@@ -93,13 +93,14 @@ public class ComplexTypeApplierMapper {
 		if (appliers == null) {
 			appliers = new LinkedList<>();
 			applierQueueBySymbolPath.put(symbolPath, appliers);
-			// Putting fwdref or def (doesn't matter which it is)
+			// Putting forward reference or definition (doesn't matter which it is)
 			if (!appliers.add(complexApplier)) {
 				// Error
 			}
 		}
 		else if (appliers.peekFirst().isForwardReference() == complexApplier.isForwardReference()) {
-			// Only need to look at first on list, as all on list are the same fwdref or def.
+			// Only need to look at first on list, as all on list are the same forward reference
+			// of definition.
 			// If same as what is on list, add to the list.
 			if (!appliers.add(complexApplier)) {
 				// Error
@@ -107,14 +108,14 @@ public class ComplexTypeApplierMapper {
 		}
 		else {
 			if (complexApplier.isForwardReference()) {
-				AbstractComplexTypeApplier defApplier = appliers.removeFirst();
-				defApplier.setFwdRefApplier(complexApplier);
-				complexApplier.setDefinitionApplier(defApplier);
+				AbstractComplexTypeApplier definitionApplier = appliers.removeFirst();
+				definitionApplier.setForwardReferenceApplier(complexApplier);
+				complexApplier.setDefinitionApplier(definitionApplier);
 			}
 			else {
-				AbstractComplexTypeApplier fwdApplier = appliers.removeFirst();
-				fwdApplier.setDefinitionApplier(complexApplier);
-				complexApplier.setFwdRefApplier(fwdApplier);
+				AbstractComplexTypeApplier forwardReferenceApplier = appliers.removeFirst();
+				forwardReferenceApplier.setDefinitionApplier(complexApplier);
+				complexApplier.setForwardReferenceApplier(forwardReferenceApplier);
 			}
 			if (appliers.isEmpty()) {
 				// Do not need to keep all of these around.
@@ -164,7 +165,7 @@ public class ComplexTypeApplierMapper {
 //		}
 //	}
 //
-//	// Only caching forward ref and then mapping only following def to fwdref.
+//	// Only caching forward ref and then mapping only following def to forward reference.
 //	//  Clearing cache after that def so next def does not map.
 //	private void mapComplexApplierForwardOnly(AbstractComplexTypeApplier complexApplier) {
 //		SymbolPath symbolPath = complexApplier.getSymbolPath();

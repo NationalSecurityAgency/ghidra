@@ -17,49 +17,36 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import java.math.BigInteger;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.program.model.data.DataType;
 
 /**
  * Applier for {@link PrimitiveMsType} types.
  */
-public class PrimitiveTypeApplier extends AbstractMsTypeApplier {
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof PrimitiveMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					PrimitiveTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+public class PrimitiveTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for primitive type applier, for transforming a primitive into a
-	 *  Ghidra DataType.
+	 * Ghidra DataType.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link PrimitiveMsType} to process.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public PrimitiveTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public PrimitiveTypeApplier(PdbApplicator applicator, PrimitiveMsType msType) {
+		super(applicator, msType);
 		apply(); // Only apply in constructor for primitives
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.valueOf(((PrimitiveMsType) msType).getTypeSize());
 	}
 
 	@Override
-	public void apply() {
+	void apply() {
 		dataType = applyPrimitiveMsType((PrimitiveMsType) msType);
 	}
 
-	public boolean isNoType() {
+	boolean isNoType() {
 		return (((PrimitiveMsType) msType).getNumber() == 0);
 	}
 

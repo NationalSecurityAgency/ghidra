@@ -24,9 +24,9 @@ import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractBaseClassMsType}, {@link AbstractVirtualBaseClassMsType}, and
- *  {@link AbstractIndirectVirtualBaseClassMsType} types.
+ * {@link AbstractIndirectVirtualBaseClassMsType} types.
  */
-public class BaseClassTypeApplier extends AbstractMsTypeApplier {
+public class BaseClassTypeApplier extends MsTypeApplier {
 
 	private static AbstractMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {
@@ -57,7 +57,7 @@ public class BaseClassTypeApplier extends AbstractMsTypeApplier {
 	// For here, we are only reporting what "we" have, not what the underlying sizes are.
 	// ...and a value of zero is our "don't know" and "not represented" value.
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.ZERO;
 	}
 
@@ -66,7 +66,7 @@ public class BaseClassTypeApplier extends AbstractMsTypeApplier {
 	 * @return the offset.
 	 * @throws PdbException if field is not available.
 	 */
-	public BigInteger getOffset() throws PdbException {
+	BigInteger getOffset() throws PdbException {
 		if (msType instanceof AbstractBaseClassMsType) {
 			return ((AbstractBaseClassMsType) msType).getOffset();
 		}
@@ -78,7 +78,7 @@ public class BaseClassTypeApplier extends AbstractMsTypeApplier {
 	 * @return the offset.
 	 * @throws PdbException if field is not available.
 	 */
-	public BigInteger getBasePointerOffset() throws PdbException {
+	BigInteger getBasePointerOffset() throws PdbException {
 		if (msType instanceof AbstractBaseClassMsType) {
 			throw new PdbException("Base Pointer Offset is not valid field");
 		}
@@ -92,7 +92,7 @@ public class BaseClassTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the attributes of the base class within the inheriting class.
 	 * @return the attributes;
 	 */
-	public ClassFieldMsAttributes getAttributes() {
+	ClassFieldMsAttributes getAttributes() {
 		if (msType instanceof AbstractBaseClassMsType) {
 			return ((AbstractBaseClassMsType) msType).getAttributes();
 		}
@@ -106,7 +106,7 @@ public class BaseClassTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the record number of the base class.
 	 * @return the record number;
 	 */
-	public RecordNumber getBaseClassRecordNumber() {
+	RecordNumber getBaseClassRecordNumber() {
 		if (msType instanceof AbstractBaseClassMsType) {
 			return ((AbstractBaseClassMsType) msType).getBaseClassRecordNumber();
 		}
@@ -120,7 +120,7 @@ public class BaseClassTypeApplier extends AbstractMsTypeApplier {
 	 * Returns whether there is a Virtual Base Pointer type index available.
 	 * @return {@code true} if available.
 	 */
-	public boolean hasVirtualBasePointerTypeIndex() {
+	boolean hasVirtualBasePointerTypeIndex() {
 		return (!(msType instanceof AbstractBaseClassMsType));
 	}
 
@@ -129,7 +129,7 @@ public class BaseClassTypeApplier extends AbstractMsTypeApplier {
 	 * @return the record number;
 	 * @throws PdbException if not a virtual base class.
 	 */
-	public RecordNumber getVirtualBasePointerRecordNumber() throws PdbException {
+	RecordNumber getVirtualBasePointerRecordNumber() throws PdbException {
 		if (msType instanceof AbstractVirtualBaseClassMsType) {
 			return ((AbstractVirtualBaseClassMsType) msType).getVirtualBasePointerRecordNumber();
 		}
@@ -140,7 +140,7 @@ public class BaseClassTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		// do nothing at the moment.
 	}
 

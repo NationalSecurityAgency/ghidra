@@ -18,20 +18,19 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.math.BigInteger;
 import java.util.*;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Abstract class representing the applier/wrapper for a specific {@link AbstractMsType}.  The
- *  {link {@link #apply()} method creates an associated {@link DataType}, if
- *  applicable.  Methods associated with the {@link AbstractMsTypeApplier} or derived class will
- *  make fields available to the user, first by trying to get them from the {@link DataType},
- *  otherwise getting them from the {@link AbstractMsType}.
+ * Abstract class representing the applier for a specific {@link AbstractMsType}.  The
+ * {@link #apply()} method creates an associated {@link DataType}, if applicable.
+ * Methods associated with the {@link MsTypeApplier} or derived class will
+ * make fields available to the user, first by trying to get them from the {@link DataType},
+ * otherwise getting them from the {@link AbstractMsType}.
  */
-public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsTypeApplier> {
+public abstract class MsTypeApplier {
 
 	protected PdbApplicator applicator;
 	protected AbstractMsType msType;
@@ -43,19 +42,16 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 	protected boolean resolved = false;
 	protected boolean applied = false;
 
-	protected Set<AbstractMsTypeApplier> waitSet = new HashSet<>();
+	private boolean isDeferred = false;
+
+	protected Set<MsTypeApplier> waitSet = new HashSet<>();
 
 	/**
 	 * Constructor.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMsType} to apply.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public AbstractMsTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		if (msType == null) {
-			throw new IllegalArgumentException("PDB Type Applying null AbstractMsType");
-		}
+	public MsTypeApplier(PdbApplicator applicator, AbstractMsType msType) {
 		this.applicator = applicator;
 		this.msType = msType;
 		RecordNumber recordNumber = msType.getRecordNumber();
@@ -68,30 +64,74 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 		dataType = null;
 	}
 
-	public boolean isApplied() {
+	/**
+	 * Puts message to {@link PdbLog} and to Msg.info()
+	 * @param originator a Logger instance, "this", or YourClass.class
+	 * @param message the message to display
+	 */
+	protected void pdbLogAndInfoMessage(Object originator, String message) {
+		applicator.pdbLogAndInfoMessage(originator, message);
+	}
+
+	/**
+	 * Returns {@code true} if the type has been applied
+	 * @return {@code true} if applied.
+	 */
+	boolean isApplied() {
 		return applied;
 	}
 
-	public void setApplied() {
+	/**
+	 * Sets the {@code applied} flag to {@code true}
+	 */
+	void setApplied() {
 		applied = true;
 	}
 
-	boolean isDeferred() {
-		return false;
+	/**
+	 * Sets the isDeferred flag to indicate that the application of the information should be
+	 * done when the {@link @deferredApply()} method is called
+	 */
+	void setDeferred() {
+		isDeferred = true;
 	}
 
+	/**
+	 * Returns {@code true} if the application as been deferred (during the {@link #apply()}
+	 * method.  The {@link #deferredApply()} method will need to be applied at the appropriate
+	 * place in the processing sequence (depending on data dependency ordering) as determined
+	 * and driven by the {@link PdbApplicator}.
+	 * @return {@code true} if application was deferred
+	 */
+	boolean isDeferred() {
+		return isDeferred;
+	}
+
+	/**
+	 * Performs the work required in a deferred application of the data type.  This method
+	 * is used by the {@link PdbApplicator} in the correct data dependency sequence.
+	 * @throws PdbException on error applying the data type
+	 * @throws CancelledException on user cancellation
+	 */
 	void deferredApply() throws PdbException, CancelledException {
 		// default is to do nothing, as most appliers are not deferrable (or should not be).
 	}
 
-	public AbstractMsTypeApplier getDependencyApplier() {
+	/**
+	 * Returns the applier for this type that needs to be called when the data type is processed
+	 * in dependency order.  This will usually return "this," except in cases where there can be
+	 * forward references and definition appliers for the same type.
+	 * @return the applier to be used for doing the real applier work when dependency order
+	 * matters.
+	 */
+	MsTypeApplier getDependencyApplier() {
 		return this;
 	}
 
 	/**
 	 * Resolves the type through the DataTypeManager and makes the resolved type primary.
 	 */
-	public void resolve() {
+	void resolve() {
 		if (resolved) {
 			return;
 		}
@@ -105,7 +145,7 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 	 * Returns the {@link AbstractMsType} associated with this applier/wrapper.
 	 * @return {@link AbstractMsType} associated with this applier/wrapper.
 	 */
-	public AbstractMsType getMsType() {
+	AbstractMsType getMsType() {
 		return msType;
 	}
 
@@ -113,7 +153,7 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 	 * Returns the {@link DataType} associated with this applier/wrapper.
 	 * @return {@link DataType} associated with this applier/wrapper.
 	 */
-	public DataType getDataType() {
+	DataType getDataType() {
 		if (resolved) {
 			return resolvedDataType;
 		}
@@ -134,19 +174,19 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 	 * @throws PdbException if there was a problem processing the data.
 	 * @throws CancelledException upon user cancellation
 	 */
-	public abstract void apply() throws PdbException, CancelledException;
+	abstract void apply() throws PdbException, CancelledException;
 
 	/**
 	 * Returns the size of the type or 0 if unknown.
 	 * @return the size; zero if unknown.
 	 */
-	public abstract BigInteger getSize();
+	abstract BigInteger getSize();
 
 	/**
 	 * Returns the (long) size of the type or 0 if unknown. Or Long.MAX_VALUE if too large.
 	 * @return the size; zero if unknown.
 	 */
-	public long getSizeLong() {
+	long getSizeLong() {
 		return PdbApplicator.bigIntegerToLong(applicator, getSize());
 	}
 
@@ -154,7 +194,7 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 	 * Returns the (int) size of the type or 0 if unknown. Or Integer.MAX_VALUE if too large.
 	 * @return the size; zero if unknown.
 	 */
-	public int getSizeInt() {
+	int getSizeInt() {
 		return PdbApplicator.bigIntegerToInt(applicator, getSize());
 	}
 
@@ -183,7 +223,7 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		AbstractMsTypeApplier other = (AbstractMsTypeApplier) obj;
+		MsTypeApplier other = (MsTypeApplier) obj;
 		if (index != other.index) {
 			return false;
 		}
@@ -193,17 +233,11 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 		return true;
 	}
 
-	@Override
-	public int compareTo(AbstractMsTypeApplier o) {
-		int val = hashCode() - o.hashCode();
-		return val;
-	}
-
-	protected void waitSetPut(AbstractMsTypeApplier applier) {
+	protected void waitSetPut(MsTypeApplier applier) {
 		waitSet.add(applier);
 	}
 
-	protected boolean waitSetRemove(AbstractMsTypeApplier applier) {
+	protected boolean waitSetRemove(MsTypeApplier applier) {
 		return waitSet.remove(applier);
 	}
 
@@ -211,8 +245,8 @@ public abstract class AbstractMsTypeApplier implements Comparable<AbstractMsType
 		return waitSet.isEmpty();
 	}
 
-	protected AbstractMsTypeApplier waitSetGetNext() {
-		List<AbstractMsTypeApplier> list = new ArrayList<>(waitSet);
+	protected MsTypeApplier waitSetGetNext() {
+		List<MsTypeApplier> list = new ArrayList<>(waitSet);
 		return list.get(0);
 	}
 

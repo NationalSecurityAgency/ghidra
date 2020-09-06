@@ -25,9 +25,9 @@ import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractVirtualFunctionTablePointerMsType} and
- *  {@link AbstractVirtualFunctionTablePointerWithOffsetMsType} types.
+ * {@link AbstractVirtualFunctionTablePointerWithOffsetMsType} types.
  */
-public class VirtualFunctionTablePointerTypeApplier extends AbstractMsTypeApplier {
+public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 
 	DataType vtShape = null;
 
@@ -44,18 +44,19 @@ public class VirtualFunctionTablePointerTypeApplier extends AbstractMsTypeApplie
 
 	/**
 	 * Constructor for enum type applier, for transforming a enum into a
-	 *  Ghidra DataType.
+	 * Ghidra DataType.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractVirtualFunctionTablePointerMsType} or 
 	 * {@link AbstractVirtualFunctionTablePointerWithOffsetMsType} to process.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public VirtualFunctionTablePointerTypeApplier(PdbApplicator applicator, AbstractMsType msType) throws IllegalArgumentException {
+	public VirtualFunctionTablePointerTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+			throws IllegalArgumentException {
 		super(applicator, validateType(msType));
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.valueOf(applicator.getDataOrganization().getPointerSize());
 	}
 
@@ -63,7 +64,7 @@ public class VirtualFunctionTablePointerTypeApplier extends AbstractMsTypeApplie
 	 * Returns the offset of the Virtual Function Table Pointer.
 	 * @return Name of the nested type.
 	 */
-	public int getOffset() {
+	int getOffset() {
 		if (msType instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType) {
 			return ((AbstractVirtualFunctionTablePointerWithOffsetMsType) msType).getOffset();
 		}
@@ -74,12 +75,12 @@ public class VirtualFunctionTablePointerTypeApplier extends AbstractMsTypeApplie
 	 * Returns the name to use.
 	 * @return Name of the pointer type.
 	 */
-	public String getMemberName() {
+	String getMemberName() {
 		return "VFTablePtr" + getOffset();
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		if (msType instanceof AbstractVirtualFunctionTablePointerMsType) {
 			dataType = applyPointer(
 				((AbstractVirtualFunctionTablePointerMsType) msType).getPointerTypeRecordNumber());
@@ -90,9 +91,8 @@ public class VirtualFunctionTablePointerTypeApplier extends AbstractMsTypeApplie
 		}
 	}
 
-//	private DataType applyPointer(int pointerTypeIndex) throws PdbException {
 	private DataType applyPointer(RecordNumber pointerTypeRecordNumber) {
-		AbstractMsTypeApplier rawApplier = applicator.getTypeApplier(pointerTypeRecordNumber);
+		MsTypeApplier rawApplier = applicator.getTypeApplier(pointerTypeRecordNumber);
 		if (rawApplier instanceof PointerTypeApplier) {
 			return rawApplier.getDataType();
 		}

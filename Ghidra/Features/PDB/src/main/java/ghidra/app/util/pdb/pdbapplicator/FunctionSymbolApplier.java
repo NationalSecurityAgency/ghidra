@@ -37,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Applier for {@link AbstractProcedureStartMsSymbol} and  {@link AbstractThunkMsSymbol} symbols.
  */
-public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
+public class FunctionSymbolApplier extends MsSymbolApplier {
 
 	private static final String BLOCK_INDENT = "   ";
 
@@ -58,11 +58,17 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 
 //	private List<RegisterRelativeSymbolApplier> stackVariableAppliers = new ArrayList<>();
 
-	private List<AbstractMsSymbolApplier> allAppliers = new ArrayList<>();
+	private List<MsSymbolApplier> allAppliers = new ArrayList<>();
 	private RegisterChangeCalculator registerChangeCalculator;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @throws CancelledException upon user cancellation
+	 */
 	public FunctionSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter)
-			throws CancelledException, NoSuchElementException {
+			throws CancelledException {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		symbolBlockNestingLevel = 0;
@@ -71,11 +77,11 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 
 		if (abstractSymbol instanceof AbstractProcedureMsSymbol) {
 			procedureSymbol = (AbstractProcedureMsSymbol) abstractSymbol;
-			specifiedAddress = applicator.reladdr(procedureSymbol);
+			specifiedAddress = applicator.getAddress(procedureSymbol);
 		}
 		else if (abstractSymbol instanceof AbstractThunkMsSymbol) {
 			thunkSymbol = (AbstractThunkMsSymbol) abstractSymbol;
-			specifiedAddress = applicator.reladdr(thunkSymbol);
+			specifiedAddress = applicator.getAddress(thunkSymbol);
 		}
 		else {
 			throw new AssertException(
@@ -86,14 +92,14 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 
 		while (notDone()) {
 			applicator.checkCanceled();
-			AbstractMsSymbolApplier applier = applicator.getSymbolApplier(iter);
+			MsSymbolApplier applier = applicator.getSymbolApplier(iter);
 			allAppliers.add(applier);
 			applier.manageBlockNesting(this);
 		}
 	}
 
 	@Override
-	public void manageBlockNesting(AbstractMsSymbolApplier applierParam) {
+	void manageBlockNesting(MsSymbolApplier applierParam) {
 		if (applierParam instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
 			if (procedureSymbol != null) {
@@ -114,7 +120,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 	 * Returns the {@link Function} for this applier.
 	 * @return the Function
 	 */
-	public Function getFunction() {
+	Function getFunction() {
 		return function;
 	}
 
@@ -122,7 +128,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 	 * Returns the current frame size.
 	 * @return the current frame size.
 	 */
-	public long getCurrentFrameSize() {
+	long getCurrentFrameSize() {
 		return currentFrameSize;
 	}
 
@@ -130,7 +136,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 	 * Returns the frame size as specified by the PDB
 	 * @return the frame size.
 	 */
-	public long getSpecifiedFrameSize() {
+	long getSpecifiedFrameSize() {
 		return specifiedFrameSize;
 	}
 
@@ -147,7 +153,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 	 * Get the function name
 	 * @return the function name
 	 */
-	public String getName() {
+	String getName() {
 		if (procedureSymbol != null) {
 			return procedureSymbol.getName();
 		}
@@ -158,12 +164,12 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing.
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		boolean result = applyTo(applicator.getCancelOnlyWrappingMonitor());
 		if (result == false) {
 			throw new PdbException("failure in applying " + this.getClass().getSimpleName() +
@@ -171,11 +177,11 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 		}
 	}
 
-	public boolean applyTo(TaskMonitor monitor) throws PdbException, CancelledException {
+	boolean applyTo(TaskMonitor monitor) throws PdbException, CancelledException {
 		return applyTo(applicator.getProgram(), remapAddress, monitor);
 	}
 
-	public boolean applyTo(Program program, Address address, TaskMonitor monitor)
+	boolean applyTo(Program program, Address address, TaskMonitor monitor)
 			throws PdbException, CancelledException {
 
 		boolean functionSuccess = applyFunction(program, address, monitor);
@@ -186,7 +192,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 
 		baseParamOffset = VariableUtilities.getBaseStackParamOffset(function);
 
-		for (AbstractMsSymbolApplier applier : allAppliers) {
+		for (MsSymbolApplier applier : allAppliers) {
 			applier.applyTo(this);
 		}
 
@@ -202,11 +208,11 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 		return true;
 	}
 
-	public Integer getRegisterPrologChange(Register register) {
+	Integer getRegisterPrologChange(Register register) {
 		return registerChangeCalculator.getRegChange(applicator, register);
 	}
 
-	public int getBaseParamOffset() {
+	int getBaseParamOffset() {
 		return baseParamOffset;
 	}
 
@@ -281,7 +287,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 		}
 		// Rest presumes procedureSymbol.
 		RecordNumber typeRecordNumber = procedureSymbol.getTypeRecordNumber();
-		AbstractMsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
+		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
 		if (applier == null) {
 			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
 				typeRecordNumber + " at " + address);
@@ -327,7 +333,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 		return (symbolBlockNestingLevel > 0) && iter.hasNext();
 	}
 
-	public int endBlock() {
+	int endBlock() {
 		if (--symbolBlockNestingLevel < 0) {
 			applicator.appendLogMsg(
 				"Block Nesting went negative for " + getName() + " at " + remapAddress);
@@ -338,7 +344,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 		return symbolBlockNestingLevel;
 	}
 
-	public void beginBlock(Address startAddress, String name, long length) {
+	void beginBlock(Address startAddress, String name, long length) {
 
 		int nestingLevel = beginBlock(startAddress);
 		if (!applicator.getPdbApplicatorOptions().applyCodeScopeBlockComments()) {
@@ -439,7 +445,7 @@ public class FunctionSymbolApplier extends AbstractMsSymbolApplier {
 			return new CallDepthChangeInfo(function, scopeSet, frameReg, monitor);
 		}
 
-		public Integer getRegChange(PdbApplicator applicator, Register register) {
+		Integer getRegChange(PdbApplicator applicator, Register register) {
 			if (callDepthChangeInfo == null || register == null) {
 				return null;
 			}

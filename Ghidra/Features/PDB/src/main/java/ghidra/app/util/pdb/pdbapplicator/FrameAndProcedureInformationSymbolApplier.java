@@ -25,10 +25,15 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link ExtraFrameAndProcedureInformationMsSymbol} symbols.
  */
-public class FrameAndProcedureInformationSymbolApplier extends AbstractMsSymbolApplier {
+public class FrameAndProcedureInformationSymbolApplier extends MsSymbolApplier {
 
 	private ExtraFrameAndProcedureInformationMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public FrameAndProcedureInformationSymbolApplier(PdbApplicator applicator,
 			AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
@@ -41,17 +46,15 @@ public class FrameAndProcedureInformationSymbolApplier extends AbstractMsSymbolA
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier)
-			throws PdbException, CancelledException {
+	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
 		if (applyToApplier instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
-//	public void applyTo(FunctionSymbolApplier functionSymbolApplier) {
 			functionSymbolApplier.setSpecifiedFrameSize(symbol.getProcedureFrameTotalLength());
 		}
 	}
 
 	@Override
-	public void apply() {
+	void apply() {
 		// Quietly do nothing
 	}
 }

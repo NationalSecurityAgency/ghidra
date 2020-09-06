@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-//----------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------
+/**
+ * Mode for {@link CppCompositeType} class layout.
+ */
 enum OoComponentLayoutMode {
 	UNKNOWN, MEMBERS_ONLY, BASIC, SIMPLE, COMPLEX
 }

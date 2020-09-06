@@ -15,17 +15,19 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.util.NoSuchElementException;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.util.exception.CancelledException;
 
-public class SymbolApplierParser {
+/**
+ * Pseudo-factory for creating the {@link MsSymbolApplier} for the {@link AbstractMsSymbol}
+ * indicated by the {@link AbstractMsSymbolIterator}.
+ */
+public class SymbolApplierFactory {
 
 	private PdbApplicator applicator;
 
-	SymbolApplierParser(PdbApplicator applicator) {
+	SymbolApplierFactory(PdbApplicator applicator) {
 		this.applicator = applicator;
 	}
 
@@ -34,15 +36,14 @@ public class SymbolApplierParser {
 	//  the AbstractMsSymbol (do one for AbstractMsType as well)? Symbols are different in that
 	//  we are using SymbolGroup as a member instead of MsType.
 
-	AbstractMsSymbolApplier getSymbolApplier(AbstractMsSymbolIterator iter)
-			throws CancelledException, NoSuchElementException {
+	MsSymbolApplier getSymbolApplier(AbstractMsSymbolIterator iter) throws CancelledException {
 
 		AbstractMsSymbol symbol = iter.peek();
 		if (symbol == null) {
 			applicator.appendLogMsg("PDB Warning: No AbstractMsSymbol");
 			return null;
 		}
-		AbstractMsSymbolApplier applier = null;
+		MsSymbolApplier applier = null;
 
 		switch (symbol.getPdbId()) {
 //				// 0x0000 block

@@ -47,6 +47,8 @@ public class SymbolPathParser {
 		}
 //		if (name.indexOf(Namespace.DELIMITER) == -1) {
 		// following is temporary kludge due to struct (blah).  TODO: figure/fix
+		// This particular test for starting with the open parenthesis is to work around a type
+		// seen in "Rust."
 		if (name.startsWith("(") || name.indexOf(Namespace.DELIMITER) == -1) {
 			List<String> list = new ArrayList<>();
 			list.add(name);

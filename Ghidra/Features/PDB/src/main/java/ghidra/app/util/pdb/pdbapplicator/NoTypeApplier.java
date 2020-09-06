@@ -21,9 +21,9 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 
 /**
  * Used for creating a wrapper for when there is not associated type to the PDB type (or if we
- *  have not yet created the association).
+ * have not yet created the association).
  */
-public class NoTypeApplier extends AbstractMsTypeApplier {
+public class NoTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for nested type applier.
@@ -37,12 +37,12 @@ public class NoTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.ZERO;
 	}
 
 	@Override
-	public void apply() {
+	void apply() {
 		// Do nothing (maybe should log something... not sure)
 		// applicator.getLog().appendMsg("");
 	}

@@ -18,42 +18,32 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.math.BigInteger;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMemberMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.ClassFieldMsAttributes;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractMemberMsType} types.
  */
-public class MemberTypeApplier extends AbstractMsTypeApplier {
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractMemberMsType)) {
-			throw new IllegalArgumentException("PDB Incorrectly applying " +
-				type.getClass().getSimpleName() + " to " + MemberTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+public class MemberTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for member type applier.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMemberMsType} to process.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public MemberTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public MemberTypeApplier(PdbApplicator applicator, AbstractMemberMsType msType) {
+		super(applicator, msType);
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.ZERO;
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		dataType = applyMemberMsType((AbstractMemberMsType) msType);
 //		DataType dataType = applyMemberMsType((AbstractMemberMsType) msType);
 //		ghDataType = dataType; // temporary while below is commented-out
@@ -61,20 +51,21 @@ public class MemberTypeApplier extends AbstractMsTypeApplier {
 //		ghDataTypeDB = applicator.resolve(dataType);
 	}
 
-	public String getName() {
+	String getName() {
 		return ((AbstractMemberMsType) msType).getName();
 	}
 
-	public BigInteger getOffset() {
+	BigInteger getOffset() {
 		return ((AbstractMemberMsType) msType).getOffset();
 	}
 
-	public ClassFieldMsAttributes getAttribute() {
+	ClassFieldMsAttributes getAttribute() {
 		return ((AbstractMemberMsType) msType).getAttribute();
 	}
 
-	public AbstractMsTypeApplier getFieldTypeApplier() {
-		return applicator.getTypeApplier(((AbstractMemberMsType) msType).getFieldTypeRecordNumber());
+	MsTypeApplier getFieldTypeApplier() {
+		return applicator.getTypeApplier(
+			((AbstractMemberMsType) msType).getFieldTypeRecordNumber());
 	}
 
 	private DataType applyMemberMsType(AbstractMemberMsType type) {
@@ -91,7 +82,6 @@ public class MemberTypeApplier extends AbstractMsTypeApplier {
 ////		DataType fieldDataType = getConvertedDataType(applicator, fieldTypeIndex);
 
 		return null;
-
 	}
 
 }

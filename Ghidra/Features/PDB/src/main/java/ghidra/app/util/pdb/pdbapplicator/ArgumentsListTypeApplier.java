@@ -22,26 +22,13 @@ import java.util.List;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractArgumentsListMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractArgumentsListMsType} types.
  */
-public class ArgumentsListTypeApplier extends AbstractMsTypeApplier {
-
-	private boolean isDeferred = false;
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractArgumentsListMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					ArgumentsListTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+public class ArgumentsListTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for the applicator that applies a arguments list.
@@ -49,21 +36,12 @@ public class ArgumentsListTypeApplier extends AbstractMsTypeApplier {
 	 * @param msType {@link AbstractArgumentsListMsType} to processes.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public ArgumentsListTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+	public ArgumentsListTypeApplier(PdbApplicator applicator, AbstractArgumentsListMsType msType)
 			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+		super(applicator, msType);
 	}
 
 	//==============================================================================================
-	public void setDeferred() {
-		isDeferred = true;
-	}
-
-	@Override
-	public boolean isDeferred() {
-		return isDeferred;
-	}
-
 	@Override
 	void deferredApply() throws PdbException, CancelledException {
 		// Do nothing... Just need dependency tie of each argument to function.
@@ -72,13 +50,13 @@ public class ArgumentsListTypeApplier extends AbstractMsTypeApplier {
 	//==============================================================================================
 	// TODO: would be nice if we did not have to implement this method.  Want the applyTo() below.
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 //		addMyDependenciesOnly();
 //		// Silently do nothing.
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.ZERO;
 	}
 
@@ -104,13 +82,13 @@ public class ArgumentsListTypeApplier extends AbstractMsTypeApplier {
 //		}
 //	}
 //
-	public void checkForDependencies(AbstractFunctionTypeApplier functionApplier)
+	void checkForDependencies(AbstractFunctionTypeApplier functionApplier)
 			throws CancelledException {
 		AbstractArgumentsListMsType argsList = (AbstractArgumentsListMsType) msType;
 		List<RecordNumber> args = argsList.getArgRecordNumbers();
 		for (RecordNumber arg : args) {
 			applicator.checkCanceled();
-			AbstractMsTypeApplier argApplier = applicator.getTypeApplier(arg);
+			MsTypeApplier argApplier = applicator.getTypeApplier(arg);
 
 			if (argApplier instanceof PrimitiveTypeApplier &&
 				((PrimitiveTypeApplier) argApplier).isNoType()) {
@@ -137,7 +115,7 @@ public class ArgumentsListTypeApplier extends AbstractMsTypeApplier {
 	 * arguments.
 	 * @throws CancelledException Upon user cancellation
 	 */
-	public void applyTo(AbstractFunctionTypeApplier functionApplier) throws CancelledException {
+	void applyTo(AbstractFunctionTypeApplier functionApplier) throws CancelledException {
 		FunctionDefinitionDataType functionDefinition = functionApplier.getFunctionDefinition();
 
 		AbstractArgumentsListMsType argsList = (AbstractArgumentsListMsType) msType;
@@ -146,7 +124,7 @@ public class ArgumentsListTypeApplier extends AbstractMsTypeApplier {
 		int parameterCount = 0;
 		for (RecordNumber arg : args) {
 			applicator.checkCanceled();
-			AbstractMsTypeApplier argApplier = applicator.getTypeApplier(arg);
+			MsTypeApplier argApplier = applicator.getTypeApplier(arg);
 
 			if (argApplier instanceof PrimitiveTypeApplier &&
 				((PrimitiveTypeApplier) argApplier).isNoType()) {

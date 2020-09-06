@@ -19,26 +19,31 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 
 /**
- * A dummy {@link AbstractMsSymbolApplier}, which, at a minimum, reads the symbol from the
- *  {@link SymbolGroup}, allowing proper sequencing of other symbols within the
- *  {@link SymbolGroup}.
+ * A dummy {@link MsSymbolApplier}, which, at a minimum, reads the symbol from the
+ * {@link SymbolGroup}, allowing proper sequencing of other symbols within the
+ * {@link SymbolGroup}.
  */
-public class NoSymbolApplier extends AbstractMsSymbolApplier {
+public class NoSymbolApplier extends MsSymbolApplier {
 
 	AbstractMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public NoSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		symbol = iter.next();
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing.
 	}
 
 	@Override
-	public void apply() {
+	void apply() {
 		// Do nothing.
 	}
 

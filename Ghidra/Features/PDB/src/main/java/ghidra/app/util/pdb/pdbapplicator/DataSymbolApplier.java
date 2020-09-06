@@ -24,16 +24,23 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.DumbMemBufferImpl;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractDataMsSymbol} symbols.
  */
-public class DataSymbolApplier extends AbstractMsSymbolApplier {
+public class DataSymbolApplier extends MsSymbolApplier {
 
 	private AbstractDataMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @throws CancelledException upon user cancellation
+	 */
 	public DataSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -45,47 +52,46 @@ public class DataSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier)
-			throws PdbException, CancelledException {
+	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
 		if (applyToApplier instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
 			if (symbol.getSegment() == 0 && symbol.getOffset() == 0L) {
 				return; // silently return.
 			}
-			AbstractMsTypeApplier applier = getTypeApplier();
+			MsTypeApplier applier = getTypeApplier();
 			DataType dataType = applier.getDataType();
 			if (dataType == null) { // TODO: check that we can have null here.
 				return; // silently return.
 			}
 			String name = symbol.getName();
-			Address address = applicator.reladdr(symbol);
+			Address address = applicator.getAddress(symbol);
 
 			functionSymbolApplier.setLocalVariable(address, name, dataType);
 		}
 	}
 
 	@Override
-	public void apply() throws CancelledException, PdbException {
+	void apply() throws CancelledException, PdbException {
 		// skip if both zero (i.e,. process if either is not zero)
 		if (symbol.getSegment() != 0 || symbol.getOffset() != 0L) {
-			Address symbolAddress = applicator.reladdr(symbol);
+			Address symbolAddress = applicator.getAddress(symbol);
 			Address remapAddress = applicator.getRemapAddressByAddress(symbolAddress);
 			RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
-			boolean forcePrimary = applicator.shouldForcePrimarySymbol(symbolAddress, true);
+			boolean forcePrimary = applicator.shouldForcePrimarySymbol(remapAddress, true);
 			String name = symbol.getName();
-			if (!applicator.createSymbol(symbolAddress, name, forcePrimary)) {
-				applicator.appendLogMsg("Unable to create symbol " + name + " at " + symbolAddress);
+			if (!applicator.createSymbol(remapAddress, name, forcePrimary)) {
+				applicator.appendLogMsg("Unable to create symbol " + name + " at " + remapAddress);
 			}
-			createData(symbolAddress, typeRecordNumber);
+			createData(remapAddress, typeRecordNumber);
 		}
 	}
 
-	AbstractMsTypeApplier getTypeApplier() {
+	MsTypeApplier getTypeApplier() {
 		return applicator.getTypeApplier(symbol.getTypeRecordNumber());
 	}
 
 	void createData(Address address, RecordNumber typeRecordNumber) {
-		AbstractMsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
+		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
 		if (applier == null) {
 			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
 				typeRecordNumber + " at " + address);
@@ -168,7 +174,7 @@ public class DataSymbolApplier extends AbstractMsSymbolApplier {
 					applicator.getProgram().getListing().createData(address, dataType);
 				}
 			}
-			catch (Exception e) {
+			catch (CodeUnitInsertionException | DataTypeConflictException e) {
 				applicator.appendLogMsg("Unable to create " + dataType.getDisplayName() + " at 0x" +
 					address + ": " + e.getMessage());
 			}
@@ -179,7 +185,7 @@ public class DataSymbolApplier extends AbstractMsSymbolApplier {
 					address.add(dataTypeLength - 1), false);
 				applicator.getProgram().getListing().createData(address, dataType, dataTypeLength);
 			}
-			catch (Exception e) {
+			catch (CodeUnitInsertionException | DataTypeConflictException e) {
 				applicator.appendLogMsg("Unable to replace " + dataType.getDisplayName() +
 					" at 0x" + address + ": " + e.getMessage());
 			}

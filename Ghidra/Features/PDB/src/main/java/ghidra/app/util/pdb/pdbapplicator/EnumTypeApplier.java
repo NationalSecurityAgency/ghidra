@@ -20,7 +20,8 @@ import java.util.List;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractEnumMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.MsProperty;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -35,30 +36,20 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 //	private int length = 0;
 //	private boolean isSigned = false;
 //
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractEnumMsType)) {
-			throw new IllegalArgumentException("PDB Incorrectly applying " +
-				type.getClass().getSimpleName() + " to " + EnumTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
 
 	/**
 	 * Constructor for enum type applier, for transforming a enum into a
-	 *  Ghidra DataType.
+	 * Ghidra DataType.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractEnumMsType} to process.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public EnumTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public EnumTypeApplier(PdbApplicator applicator, AbstractEnumMsType msType) {
+		super(applicator, msType);
 	}
 
 	@Override
-	public BigInteger getSize() {
-		AbstractMsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
+	BigInteger getSize() {
+		MsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
 		if (underlyingApplier == null) {
 			return BigInteger.ZERO;
 		}
@@ -80,7 +71,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 
 	private int getLength() {
 		// Minimum length allowed by Ghidra is 1 for enum, so all returns are min 1.
-		AbstractMsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
+		MsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
 		if (underlyingApplier == null) {
 			return 1;
 		}
@@ -91,8 +82,8 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 		return Integer.max(underlyingType.getLength(), 1);
 	}
 
-	public boolean isSigned() {
-		AbstractMsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
+	boolean isSigned() {
+		MsTypeApplier underlyingApplier = getUnderlyingTypeApplier();
 		if (underlyingApplier == null) {
 			return false;
 		}
@@ -107,20 +98,20 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	@Override
-	public EnumTypeApplier getDependencyApplier() {
+	EnumTypeApplier getDependencyApplier() {
 		if (definitionApplier != null && definitionApplier instanceof EnumTypeApplier) {
 			return (EnumTypeApplier) definitionApplier;
 		}
 		return this;
 	}
 
-	public String getName() {
+	String getName() {
 		return getMsType().getName();
 	}
 
-	private AbstractMsTypeApplier getUnderlyingTypeApplier() {
-		AbstractMsTypeApplier under = null;
-		AbstractMsTypeApplier applier = (definitionApplier != null) ? definitionApplier : this;
+	private MsTypeApplier getUnderlyingTypeApplier() {
+		MsTypeApplier under = null;
+		MsTypeApplier applier = (definitionApplier != null) ? definitionApplier : this;
 		RecordNumber underlyingRecordNumber =
 			((AbstractEnumMsType) applier.getMsType()).getUnderlyingRecordNumber();
 		under = applicator.getTypeApplier(underlyingRecordNumber);
@@ -131,7 +122,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 		return under;
 	}
 
-	private EnumDataType createEmptyEnum(AbstractEnumMsType type) throws PdbException {
+	private EnumDataType createEmptyEnum(AbstractEnumMsType type) {
 
 		SymbolPath fixedPath = getFixedSymbolPath();
 		CategoryPath categoryPath = applicator.getCategory(fixedPath.getParent());
@@ -155,10 +146,8 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 //				isSigned = ((AbstractIntegerDataType) underlyingType).isSigned();
 //			}
 //			else if (!(underlyingType instanceof VoidDataType)) {
-//				String msg = "Cannot processes enum with underlying type: " +
-//					underlyingType.getClass().getSimpleName();
-//				Msg.info(this, msg);
-//				PdbLog.message(msg);
+//			pdbLogAndInfoMessage(this, "Cannot processes enum with underlying type: " +
+//					underlyingType.getClass().getSimpleName());
 //				throw new PdbException(msg);
 //			}
 //		}
@@ -182,7 +171,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		getOrCreateEnum();
 
 		AbstractEnumMsType type = (AbstractEnumMsType) msType;
@@ -196,14 +185,14 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	@Override
-	public void resolve() {
+	void resolve() {
 		if (!isForwardReference()) {
 			super.resolve();
 		}
 	}
 
 	// Mapping of fwdRef/def must be done prior to this call.
-	private void getOrCreateEnum() throws PdbException {
+	private void getOrCreateEnum() {
 		AbstractEnumMsType neededType = (AbstractEnumMsType) msType;
 		if (dataType != null) {
 			return;
@@ -218,8 +207,8 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 			}
 		}
 		else {
-			if (fwdRefApplier != null) {
-				dataType = fwdRefApplier.getDataTypeInternal();
+			if (forwardReferenceApplier != null) {
+				dataType = forwardReferenceApplier.getDataTypeInternal();
 				if (dataType != null) {
 					return;
 				}
@@ -275,19 +264,17 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 			FieldListTypeApplier.getFieldListApplierSpecial(applicator, fieldListRecordNumber);
 
 		// Note: not doing anything with getNamespaceList() or getMethodsList() at this time.
-		List<AbstractMsTypeApplier> memberList = fieldListApplier.getMemberList();
+		List<MsTypeApplier> memberList = fieldListApplier.getMemberList();
 
 		int numElements = type.getNumElements();
 		if (memberList.size() != numElements) {
-			String message = "Enum expecting " + numElements + " elements, but only " +
-				memberList.size() + " available for " + fullPathName;
-			Msg.info(this, message);
-			PdbLog.message(message);
+			pdbLogAndInfoMessage(this, "Enum expecting " + numElements + " elements, but only " +
+				memberList.size() + " available for " + fullPathName);
 		}
 		EnumDataType enumDataType = (EnumDataType) dataType;
 		int length = getLength();
 		boolean isSigned = isSigned();
-		for (AbstractMsTypeApplier memberApplier : memberList) {
+		for (MsTypeApplier memberApplier : memberList) {
 			if (memberApplier instanceof EnumerateTypeApplier) {
 				EnumerateTypeApplier enumerateApplier = (EnumerateTypeApplier) memberApplier;
 				SymbolPath memberSymbolPath = new SymbolPath(enumerateApplier.getName());
@@ -297,7 +284,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 			else { // (member instanceof AbstractMemberMsType)
 					// I do not believe (until proven otherwise) that an Enum will have members of
 					//  type AbstractMemberMsType.
-				PdbLog.message(getClass().getSimpleName() + ": unexpected " +
+				pdbLogAndInfoMessage(this, getClass().getSimpleName() + ": unexpected " +
 					memberApplier.getClass().getSimpleName());
 			}
 		}
@@ -310,7 +297,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 			return 0;
 		}
 		if (!numeric.isIntegral()) {
-			PdbLog.message("Using zero in place of non-integral enumerate: " + numeric);
+			pdbLogAndInfoMessage(this, "Using zero in place of non-integral enumerate: " + numeric);
 			return 0L; //
 		}
 		return numeric.getIntegral().longValue() & getMask();

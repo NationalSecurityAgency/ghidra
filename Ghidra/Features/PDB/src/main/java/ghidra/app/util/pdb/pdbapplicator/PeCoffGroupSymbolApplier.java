@@ -26,10 +26,15 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link PeCoffGroupMsSymbol} symbols.
  */
-public class PeCoffGroupSymbolApplier extends AbstractMsSymbolApplier {
+public class PeCoffGroupSymbolApplier extends MsSymbolApplier {
 
 	private PeCoffGroupMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public PeCoffGroupSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -41,9 +46,9 @@ public class PeCoffGroupSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		applicator.addMemoryGroupRefinement(symbol);
-		Address symbolAddress = applicator.reladdr(symbol);
+		Address symbolAddress = applicator.getAddress(symbol);
 		if (!Address.NO_ADDRESS.equals(symbolAddress)) {
 			boolean forcePrimary = applicator.shouldForcePrimarySymbol(symbolAddress, false);
 			String name = symbol.getName();
@@ -59,7 +64,7 @@ public class PeCoffGroupSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing
 	}
 

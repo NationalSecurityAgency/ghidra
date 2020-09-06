@@ -30,10 +30,15 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link TrampolineMsSymbol} symbols.
  */
-public class TrampolineSymbolApplier extends AbstractMsSymbolApplier {
+public class TrampolineSymbolApplier extends MsSymbolApplier {
 
 	private TrampolineMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public TrampolineSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -45,16 +50,16 @@ public class TrampolineSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing.
 	}
 
 	@Override
-	public void apply() throws CancelledException, PdbException {
+	void apply() throws CancelledException, PdbException {
 		// We know the size of this trampoline, so use it to restrict the disassembly.
-		Address symbolAddress = applicator.reladdr(symbol);
+		Address symbolAddress = applicator.getAddress(symbol);
 		Address targetAddress =
-			applicator.reladdr(symbol.getSegmentTarget(), symbol.getOffsetTarget());
+			applicator.getAddress(symbol.getSegmentTarget(), symbol.getOffsetTarget());
 
 		Function target = createNewFunction(targetAddress, 1);
 		Function thunk = createNewFunction(symbolAddress, symbol.getSizeOfThunk());

@@ -25,26 +25,22 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for certain function types.
  */
-public abstract class AbstractFunctionTypeApplier extends AbstractMsTypeApplier {
-
-	private boolean isDeferred = false;
+public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 
 	private FunctionDefinitionDataType functionDefinition;
 
-	private AbstractMsTypeApplier returnApplier;
+	private MsTypeApplier returnApplier;
 	ArgumentsListTypeApplier argsListApplier;
 	CallingConvention callingConvention;
 	boolean hasThisPointer;
 
 	/**
 	 * Constructor for the applicator that applies a "function" type, transforming it into a
-	 *  Ghidra DataType.
+	 * Ghidra DataType.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMsType} to processes
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public AbstractFunctionTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
+	public AbstractFunctionTypeApplier(PdbApplicator applicator, AbstractMsType msType) {
 		super(applicator, msType);
 		String funcName = applicator.getNextAnonymousFunctionName();
 		functionDefinition = new FunctionDefinitionDataType(
@@ -56,15 +52,6 @@ public abstract class AbstractFunctionTypeApplier extends AbstractMsTypeApplier 
 	}
 
 	//==============================================================================================
-	public void setDeferred() {
-		isDeferred = true;
-	}
-
-	@Override
-	public boolean isDeferred() {
-		return isDeferred;
-	}
-
 	@Override
 	void deferredApply() throws PdbException, CancelledException {
 		if (isDeferred()) {
@@ -77,7 +64,7 @@ public abstract class AbstractFunctionTypeApplier extends AbstractMsTypeApplier 
 	 * Returns the function definition being created by this applier.
 	 * @return the function definition.
 	 */
-	public FunctionDefinitionDataType getFunctionDefinition() {
+	FunctionDefinitionDataType getFunctionDefinition() {
 		return functionDefinition;
 	}
 
@@ -89,31 +76,55 @@ public abstract class AbstractFunctionTypeApplier extends AbstractMsTypeApplier 
 		return functionDefinition;
 	}
 
-	AbstractMsTypeApplier getReturnTypeApplier() {
+	/**
+	 * Returns the type applier of the return type
+	 * @return the type applier
+	 */
+	MsTypeApplier getReturnTypeApplier() {
 		return applicator.getTypeApplier(getReturnRecordNumber());
 	}
 
+	/**
+	 * Returns the {@link ArgumentsListTypeApplier}
+	 * @return the type applier
+	 */
 	ArgumentsListTypeApplier getArgsListApplier() {
-		AbstractMsTypeApplier argsApplier = applicator.getTypeApplier(getArgListRecordNumber());
+		MsTypeApplier argsApplier = applicator.getTypeApplier(getArgListRecordNumber());
 		if (argsApplier instanceof ArgumentsListTypeApplier) {
 			return (ArgumentsListTypeApplier) applicator.getTypeApplier(getArgListRecordNumber());
 		}
 		return null;
 	}
 
+	/**
+	 * Returns the {@link CallingConvention}
+	 * @return the calling convention
+	 */
 	protected abstract CallingConvention getCallingConvention();
 
-	protected abstract boolean hasThisPointer() throws CancelledException, PdbException;
+	/**
+	 * Returns whether the function has a "this" pointer
+	 * @return {@code true} if it has a "this" pointer 
+	 */
+	protected abstract boolean hasThisPointer();
 
+	/**
+	 * Returns the {@link RecordNumber} of the function return type
+	 * @return the record number
+	 */
 	protected abstract RecordNumber getReturnRecordNumber();
 
+	/**
+	 * Returns the {@link RecordNumber} of the function arguments list
+	 * @return the record number
+	 */
 	protected abstract RecordNumber getArgListRecordNumber();
 
 	/**
 	 * Method to create the {@link DataType} based upon the type indices of the calling
-	 *  convention, return type, and arguments list. 
+	 * convention, return type, and arguments list. 
 	 * @param callingConventionParam Identification of the {@link AbstractMsType} record of the
-	 *  {@link CallingConvention}.
+	 * {@link CallingConvention}.
 	 * @param hasThisPointerParam true if has a this pointer
 	 * @return {@link DataType} created or null upon issue.
 	 * @throws PdbException when unexpected function internals are found.
@@ -169,7 +180,7 @@ public abstract class AbstractFunctionTypeApplier extends AbstractMsTypeApplier 
 		}
 	}
 
-	public void applyInternal() throws CancelledException {
+	private void applyInternal() throws CancelledException {
 		if (isApplied()) {
 			return;
 		}

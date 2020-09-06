@@ -29,7 +29,7 @@ import ghidra.program.model.data.CategoryPath;
  * while parsing a PDB and the count (state) of anonymous functions for their creation within
  * the particular PDB's {@link Category}.
  */
-public class PdbCategoryUtils {
+public class PdbCategories {
 
 	private CategoryPath pdbRootCategory;
 	private CategoryPath pdbUncategorizedCategory;
@@ -49,7 +49,7 @@ public class PdbCategoryUtils {
 	 * @param pdbCategoryName pathname of the PDB file that this category represents.
 	 * @param moduleNames module names
 	 */
-	public PdbCategoryUtils(String pdbCategoryName, List<String> moduleNames) {
+	public PdbCategories(String pdbCategoryName, List<String> moduleNames) {
 		Objects.requireNonNull(pdbCategoryName, "pdbCategoryName cannot be null");
 
 		pdbRootCategory = new CategoryPath(CategoryPath.ROOT, pdbCategoryName);

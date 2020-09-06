@@ -24,7 +24,7 @@ import ghidra.util.exception.AssertException;
 
 /**
  * Takes care of allocating unique instances of primitive data types for the {@link PdbApplicator},
- *  and is used principally by the many instances of {@link PrimitiveTypeApplier}.
+ * and is used principally by the many instances of {@link PrimitiveTypeApplier}.
  */
 public class PdbPrimitiveTypeApplicator {
 

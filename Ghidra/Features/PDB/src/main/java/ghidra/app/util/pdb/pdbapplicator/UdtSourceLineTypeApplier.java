@@ -24,9 +24,9 @@ import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractBaseClassMsType}, {@link AbstractVirtualBaseClassMsType}, and
- *  {@link AbstractIndirectVirtualBaseClassMsType} types.
+ * {@link AbstractIndirectVirtualBaseClassMsType} types.
  */
-public class UdtSourceLineTypeApplier extends AbstractMsTypeApplier {
+public class UdtSourceLineTypeApplier extends MsTypeApplier {
 
 	private static AbstractMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {
@@ -56,7 +56,7 @@ public class UdtSourceLineTypeApplier extends AbstractMsTypeApplier {
 	// For here, we are only reporting what "we" have, not what the underlying sizes are.
 	// ...and a value of zero is our "don't know" and "not represented" value.
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.ZERO;
 	}
 
@@ -64,7 +64,7 @@ public class UdtSourceLineTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the offset of the Base Class within the inheriting class.
 	 * @return the offset.
 	 */
-	public int getLineNumber() {
+	int getLineNumber() {
 		if (msType instanceof UserDefinedTypeSourceAndLineMsType) {
 			return ((UserDefinedTypeSourceAndLineMsType) msType).getLineNumber();
 		}
@@ -75,7 +75,7 @@ public class UdtSourceLineTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the source file name.
 	 * @return the source file name.  null if problem recovering name.
 	 */
-	public String getSourceFileName() {
+	String getSourceFileName() {
 		if (msType instanceof UserDefinedTypeSourceAndLineMsType) {
 			return ((UserDefinedTypeSourceAndLineMsType) msType).getSourceFileName();
 		}
@@ -86,7 +86,7 @@ public class UdtSourceLineTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the record number of the UDT.
 	 * @return the record number of the UDT.
 	 */
-	public RecordNumber getUdtRecordNumber() {
+	RecordNumber getUdtRecordNumber() {
 		if (msType instanceof UserDefinedTypeSourceAndLineMsType) {
 			return ((UserDefinedTypeSourceAndLineMsType) msType).getUdtRecordNumber();
 		}
@@ -94,11 +94,11 @@ public class UdtSourceLineTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		String filename = getSourceFileName();
 		int lineNumber = getLineNumber();
 		RecordNumber udtRecordNumber = getUdtRecordNumber();
-		AbstractMsTypeApplier typeApplier = applicator.getTypeApplier(udtRecordNumber);
+		MsTypeApplier typeApplier = applicator.getTypeApplier(udtRecordNumber);
 
 		// do nothing at the moment.
 		applicator.putRecordNumberByFileName(udtRecordNumber, filename);

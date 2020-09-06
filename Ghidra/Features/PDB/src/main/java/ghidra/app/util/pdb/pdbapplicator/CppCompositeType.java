@@ -31,7 +31,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Notional C++ Class Type.
+ * Notional C++ Class Type. Much work has yet to be done with this class.  For instance, the plan
+ * is to continue to break this class up into smaller self-contained classes.
  */
 public class CppCompositeType {
 
@@ -305,7 +306,7 @@ public class CppCompositeType {
 
 	//==============================================================================================
 	/*
-	 *  These "insert" methods should be used judiciously.  You need to know what/why you are doing
+	 * These "insert" methods should be used judiciously.  You need to know what/why you are doing
 	 * this.  Changing the order of "normal" members can mess up the layout algorithms from
 	 * {@link DefaultCompositeMember}.  The only place we currently think we can use these is
 	 * when trying to place vbptr members.  Not all of these methods are used too. 

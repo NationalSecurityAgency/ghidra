@@ -31,13 +31,24 @@ import ghidra.util.task.TaskMonitor;
 import mdemangler.*;
 import mdemangler.object.MDObjectCPP;
 
+/**
+ * This is a class for develop research into various areas.  Anything in this class that needs to
+ * end up as part of any usable output should be moved into another class.  This class just
+ * aggregates various items being investigated, and will eventually be eliminated from the code
+ * base.
+ */
 public class PdbResearch {
 
 	//==============================================================================================
 	private static Set<Integer> debugIndexNumbers;
 
 	//==============================================================================================
-	static void initCheckBreak() {
+	/**
+	 * This method is used to populate debugIndexNumbers set that gets used by
+	 * {@link #checkBreak(int recordNumber)} in which we set a breakpoint on {@code int a = 1;} to
+	 * then allow us to debug into other code.
+	 */
+	static void initBreakPointRecordNumbers() {
 		debugIndexNumbers = new TreeSet<>();
 
 		debugIndexNumbers.add(12527);
@@ -278,7 +289,14 @@ public class PdbResearch {
 
 	/**
 	 * Developmental method for breakpoints.  TODO: will delete this from production.
-	 * @param recordNumber tmp (set negative to ignore)
+	 * Set breakpoint on {@code int a = 1;}
+	 * @param recordNumber the record number tha is being processed (set negative to ignore)
+	 * <p>
+	 * This code is useful for developer debugging because the PDB is records-based and we often
+	 * need to set breakpoints elsewhere, determine what RecordNumber we are interested in, and
+	 * then use this method to set a breakpoint to catch when the record number is being seen
+	 * earlier in the state of processing.  The numbers in {@link #debugIndexNumbers} is set
+	 * by {@link #initBreakPointRecordNumbers()}.
 	 */
 	static void checkBreak(int recordNumber) {
 		if (debugIndexNumbers.contains(recordNumber)) {
@@ -289,10 +307,11 @@ public class PdbResearch {
 
 	/**
 	 * Developmental method for breakpoints.  TODO: will delete this from production.
-	 * @param recordNumber tmp (set negative to ignore)
-	 * @param applier tmp
+	 * @param recordNumber the record number tha is being processed (set negative to ignore)
+	 * @param applier the applier that might have additional, such as the name of the type of
+	 * interest
 	 */
-	static void checkBreak(int recordNumber, AbstractMsTypeApplier applier) {
+	static void checkBreak(int recordNumber, MsTypeApplier applier) {
 
 		String nn = applier.getMsType().getName();
 		if ("std::__1::__map_value_compare<std::__1::basic_string<char>,std::__1::__value_type<std::__1::basic_string<char>,std::__1::basic_string<wchar_t> >,std::__1::less<void>,1>".equals(
@@ -341,7 +360,7 @@ public class PdbResearch {
 		initDeveloperOrderRecordNumbers();
 		for (int indexNumber : developerDebugOrderIndexNumbers) {
 			monitor.checkCanceled();
-			AbstractMsTypeApplier applier =
+			MsTypeApplier applier =
 				applicator.getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
 			applier.apply();
 		}
@@ -376,10 +395,10 @@ public class PdbResearch {
 			return false;
 		}
 		AbstractMsSymbol symbol = iter.peek(); //temporary during development
-		AbstractMsSymbolApplier applier = applicator.getSymbolApplier(iter);
+		MsSymbolApplier applier = applicator.getSymbolApplier(iter);
 		if (applier instanceof TypedefSymbolApplier) {
 			TypedefSymbolApplier typedefApplier = (TypedefSymbolApplier) applier;
-			AbstractMsTypeApplier typeApplier =
+			MsTypeApplier typeApplier =
 				applicator.getTypeApplier(typedefApplier.getTypeRecordNumber());
 			System.out.println("UDT " + typedefApplier.getName() + " depends on " +
 				typeApplier.getMsType().toString());
@@ -394,7 +413,7 @@ public class PdbResearch {
 		}
 		else if (applier instanceof DataSymbolApplier) {
 			DataSymbolApplier dataSymbolApplier = (DataSymbolApplier) applier;
-			AbstractMsTypeApplier typeApplier = dataSymbolApplier.getTypeApplier();
+			MsTypeApplier typeApplier = dataSymbolApplier.getTypeApplier();
 			childWalkType(moduleNumber, typeApplier);
 		}
 		else if (applier instanceof FunctionSymbolApplier) {
@@ -414,7 +433,7 @@ public class PdbResearch {
 	}
 
 	//==============================================================================================
-	static private boolean childWalkType(int moduleNumber, AbstractMsTypeApplier applier) {
+	static private boolean childWalkType(int moduleNumber, MsTypeApplier applier) {
 		int b = 1;
 		b = b + 1;
 		if (applier instanceof AbstractFunctionTypeApplier) {
@@ -427,7 +446,8 @@ public class PdbResearch {
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
-	static void studyDataTypeConflicts(PdbApplicator applicator, TaskMonitor monitor) {
+	static void studyDataTypeConflicts(PdbApplicator applicator, TaskMonitor monitor)
+			throws CancelledException {
 		DataTypeConflictHandler handler =
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER;
 		DataTypeManager dtm = applicator.getDataTypeManager();
@@ -482,7 +502,8 @@ public class PdbResearch {
 		return composite;
 	}
 
-	private static void fillComposite(Composite composite, TaskMonitor monitor, DataType extra) {
+	private static void fillComposite(Composite composite, TaskMonitor monitor, DataType extra)
+			throws CancelledException {
 		List<DefaultTestPdbMember> members = new ArrayList<>();
 		DefaultTestPdbMember member;
 		int size = 8;
@@ -496,14 +517,9 @@ public class PdbResearch {
 			members.add(member);
 			size += extra.getLength();
 		}
-		try {
-			if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, size, members,
-				msg -> reconstructionWarn(msg), monitor)) {
-				((Structure) composite).deleteAll();
-			}
-		}
-		catch (Exception e) {
-			Msg.info(null, "Research exception thrown");
+		if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, size, members,
+			msg -> reconstructionWarn(msg), monitor)) {
+			((Structure) composite).deleteAll();
 		}
 	}
 
@@ -674,7 +690,7 @@ public class PdbResearch {
 			!((AbstractPublic32MsSymbol) symbol).isFunction()) {
 			return;
 		}
-		Address address = applicator.reladdr((AbstractPublicMsSymbol) symbol);
+		Address address = applicator.getAddress((AbstractPublicMsSymbol) symbol);
 		String name = ((AbstractPublicMsSymbol) symbol).getName();
 		String demangledName = getDemangledQualifiedName(name);
 		if (demangledName != null) {
@@ -689,7 +705,7 @@ public class PdbResearch {
 	private static void processProcedureSymbol(PdbApplicator applicator,
 			Map<Address, List<Stuff>> map, AbstractMsSymbol symbol) {
 		if (symbol instanceof AbstractProcedureMsSymbol) {
-			Address address = applicator.reladdr((AbstractProcedureMsSymbol) symbol);
+			Address address = applicator.getAddress((AbstractProcedureMsSymbol) symbol);
 			String name = ((AbstractProcedureMsSymbol) symbol).getName();
 			Stuff stuff = new Stuff(symbol, name, What.GLOBAL);
 			addStuff(map, address, stuff);
@@ -717,7 +733,7 @@ public class PdbResearch {
 
 	/**
 	 * Gets a demangles the name and returns the qualified name. Returns null if not mangled
-	 *  or if error in demangling.
+	 * or if error in demangling.
 	 * @param mangledString the mangled string to be decoded
 	 * @return the qualified name of the demangled string or null if not mangled or error.
 	 */
@@ -772,7 +788,7 @@ public class PdbResearch {
 
 	//==============================================================================================
 	//==============================================================================================
-	static void studyCompositeFwdRefDef(AbstractPdb pdb, TaskMonitor monitor)
+	static void studyCompositeForwardReferenceAndDefinition(AbstractPdb pdb, TaskMonitor monitor)
 			throws CancelledException {
 		int indexNumber = pdb.getTypeProgramInterface().getTypeIndexMin();
 		int indexLimit = pdb.getTypeProgramInterface().getTypeIndexMaxExclusive();
@@ -793,27 +809,27 @@ public class PdbResearch {
 					MsProperty p;
 					String ps;
 					int c;
-					boolean isFwdRef = false;
+					boolean isForwardReference = false;
 					Map<Integer, Set<String>> map = new HashMap<>();
 					if (type instanceof AbstractCompositeMsType) {
 						AbstractCompositeMsType compType = (AbstractCompositeMsType) type;
 						c = compType.getNumElements();
 						p = compType.getMsProperty();
-						isFwdRef = p.isForwardReference();
-						if (c == 0 && !isFwdRef) {
+						isForwardReference = p.isForwardReference();
+						if (c == 0 && !isForwardReference) {
 							int a = 1;
 							a = a + 1;
 							// For PDBs that we have looked at, if count is zero
-							// for a fwdref, then the field list record number is zero;
-							// if count is zero for a def, then, the field list record
+							// for a forward reference, then the field list record number is zero;
+							// if count is zero for a definition, then, the field list record
 							// number refers to an actual field list.
-							// So... seems we can trust fwdref and ignore count.
+							// So... seems we can trust forward reference and ignore count.
 							if (compType.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
 								int b = 1;
 								b = b + 1;
 							}
 						}
-						else if (c != 0 && isFwdRef) {
+						else if (c != 0 && isForwardReference) {
 							int a = 1;
 							a = a + 1;
 						}
@@ -829,7 +845,8 @@ public class PdbResearch {
 					Set<String> set = new HashSet<>();
 					set.add(ps);
 					map.put(c, set);
-					PdbLog.message("----------\n" + name + "\n" + c + (isFwdRef ? " fwdref" : ""));
+					PdbLog.message(
+						"----------\n" + name + "\n" + c + (isForwardReference ? " fwdref" : ""));
 					//System.out.println("----------\n" + name + "\n" + c);
 					int innerIndexNumber = indexNumber + 1;
 					while (innerIndexNumber < indexLimit) {
@@ -840,25 +857,26 @@ public class PdbResearch {
 							String innerName = getSpecialRecordStart(innerType);
 							if (name.equals(innerName)) {
 								covered[innerIndexNumber] = true;
-								isFwdRef = false;
+								isForwardReference = false;
 								if (type instanceof AbstractCompositeMsType) {
 									AbstractCompositeMsType compType =
 										(AbstractCompositeMsType) innerType;
 									c = compType.getNumElements();
 									p = compType.getMsProperty();
-									isFwdRef = p.isForwardReference();
-									if (c == 0 && !isFwdRef) {
+									isForwardReference = p.isForwardReference();
+									if (c == 0 && !isForwardReference) {
 										// For PDBs that we have looked at, if count is zero
-										// for a fwdref, then the field list record number is zero;
-										// if count is zero for a def, then, the field list record
-										// number refers to an actual field list.
-										// So... seems we can trust fwdref and ignore count.
+										// for a forward reference, then the field list record
+										// number is zero; if count is zero for a definition, then,
+										// the field list record number refers to an actual field
+										// list. So... seems we can trust forward reference and
+										// ignore count.
 										if (compType.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
 											int a = 1;
 											a = a + 1;
 										}
 									}
-									else if (c != 0 && isFwdRef) {
+									else if (c != 0 && isForwardReference) {
 										int a = 1;
 										a = a + 1;
 									}
@@ -885,8 +903,8 @@ public class PdbResearch {
 								else {
 									message = " <-- repeat";
 								}
-								PdbLog.message(c + (isFwdRef ? " fwdref" : "") + message);
-								if (c == 0 && isFwdRef) {
+								PdbLog.message(c + (isForwardReference ? " fwdref" : "") + message);
+								if (c == 0 && isForwardReference) {
 									PdbLog.message("Orig: " + ps + "\nNew: " + psi);
 								}
 								//System.out.println(c + message);

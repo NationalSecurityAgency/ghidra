@@ -20,7 +20,6 @@ import java.math.BigInteger;
 import ghidra.app.util.bin.format.pdb.PdbBitField;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractBitfieldMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.util.exception.CancelledException;
@@ -28,32 +27,20 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractBitfieldMsType} types.
  */
-public class BitfieldTypeApplier extends AbstractMsTypeApplier {
-	private AbstractMsTypeApplier elementTypeApplier = null;
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractBitfieldMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					BitfieldTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+public class BitfieldTypeApplier extends MsTypeApplier {
+	private MsTypeApplier elementTypeApplier = null;
 
 	/**
 	 * Constructor for bitfield applier.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractBitfieldMsType} to processes
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public BitfieldTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public BitfieldTypeApplier(PdbApplicator applicator, AbstractBitfieldMsType msType) {
+		super(applicator, msType);
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		if (elementTypeApplier == null) {
 			return BigInteger.ZERO;
 		}
@@ -61,7 +48,7 @@ public class BitfieldTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		// The bitfield does not get resolved/commited to the DataTypeManager.
 		dataType = applyBitfieldMsType((AbstractBitfieldMsType) msType);
 	}
@@ -94,7 +81,7 @@ public class BitfieldTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public void resolve() {
+	void resolve() {
 		// Do not resolve Bitfield Types... will be resolved with composite!!!
 	}
 

@@ -21,7 +21,8 @@ import java.util.List;
 
 import ghidra.app.util.bin.format.pdb.DefaultCompositeMember;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.VtShapeDescriptorMsProperty;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.VtShapeMsType;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -29,31 +30,19 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link VtShapeMsType} types.
  */
-public class VtShapeTypeApplier extends AbstractMsTypeApplier {
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof VtShapeMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					VtShapeTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+public class VtShapeTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for vtshape type applier.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link VtShapeMsType} to process.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public VtShapeTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public VtShapeTypeApplier(PdbApplicator applicator, VtShapeMsType msType) {
+		super(applicator, msType);
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.valueOf(applicator.getDataOrganization().getPointerSize() *
 			((VtShapeMsType) msType).getCount());
 	}
@@ -62,12 +51,12 @@ public class VtShapeTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the name.
 	 * @return the name.
 	 */
-	public String getName() {
+	String getName() {
 		return "vtshape_" + index;
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		dataType = createVtShape((VtShapeMsType) msType);
 	}
 
@@ -78,7 +67,7 @@ public class VtShapeTypeApplier extends AbstractMsTypeApplier {
 		// TODO: what are correct/appropriate CategoryPath and name
 		StructureDataType shape = new StructureDataType(applicator.getAnonymousTypesCategory(),
 			"vtshape" + index, 0, applicator.getDataTypeManager());
-		List<Default2PdbMember> members = new ArrayList<>();
+		List<DefaultPdbUniversalMember> members = new ArrayList<>();
 		int offset = 0;
 		for (VtShapeDescriptorMsProperty descriptor : list) {
 			switch (descriptor) {
@@ -90,8 +79,8 @@ public class VtShapeTypeApplier extends AbstractMsTypeApplier {
 				case NEAR32:
 				case FAR32:
 					Pointer pointer = new PointerDataType(applicator.getDataTypeManager());
-					Default2PdbMember member =
-						new Default2PdbMember(applicator, "", pointer, offset);
+					DefaultPdbUniversalMember member =
+						new DefaultPdbUniversalMember(applicator, "", pointer, offset);
 					offset += pointer.getLength();
 					members.add(member);
 					break;

@@ -19,51 +19,26 @@ import java.math.BigInteger;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractModifierMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractModifierMsType} types.
  */
-//public class ModifierTypeApplier extends AbstractMsTypeApplier {
-public class ModifierTypeApplier extends AbstractMsTypeApplier {
+public class ModifierTypeApplier extends MsTypeApplier {
 
-	private boolean isDeferred = false;
-
-	private AbstractMsTypeApplier modifiedTypeApplier = null;
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractModifierMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					ModifierTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+	private MsTypeApplier modifiedTypeApplier = null;
 
 	/**
 	 * Constructor for modifier type applier.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractModifierMsType} to processes.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public ModifierTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public ModifierTypeApplier(PdbApplicator applicator, AbstractModifierMsType msType) {
+		super(applicator, msType);
 	}
 
 	//==============================================================================================
-	public void setDeferred() {
-		isDeferred = true;
-	}
-
-	@Override
-	public boolean isDeferred() {
-		return isDeferred;
-	}
-
 	@Override
 	void deferredApply() throws PdbException, CancelledException {
 		// Do nothing.  Already applied.  Just needs late resolve
@@ -71,7 +46,7 @@ public class ModifierTypeApplier extends AbstractMsTypeApplier {
 
 	//==============================================================================================
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		if (modifiedTypeApplier == null) {
 			return BigInteger.ZERO;
 		}
@@ -79,7 +54,7 @@ public class ModifierTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 //		dataType = applyModifierMsType((AbstractModifierMsType) msType);
 		applyOrDeferForDependencies();
 	}
@@ -87,8 +62,7 @@ public class ModifierTypeApplier extends AbstractMsTypeApplier {
 	private void applyOrDeferForDependencies() {
 		AbstractModifierMsType type = (AbstractModifierMsType) msType;
 		applyModifierMsType(type);
-		AbstractMsTypeApplier modifiedApplier =
-			applicator.getTypeApplier(type.getModifiedRecordNumber());
+		MsTypeApplier modifiedApplier = applicator.getTypeApplier(type.getModifiedRecordNumber());
 		if (modifiedApplier.isDeferred()) {
 			applicator.addApplierDependency(this, modifiedApplier);
 			setDeferred();
@@ -100,7 +74,7 @@ public class ModifierTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public DataType getDataType() {
+	DataType getDataType() {
 		return modifiedTypeApplier.getDataType();
 	}
 
@@ -130,7 +104,7 @@ public class ModifierTypeApplier extends AbstractMsTypeApplier {
 		return modifiedTypeApplier.getCycleBreakType();
 	}
 
-	public AbstractMsTypeApplier getModifiedTypeApplier() {
+	MsTypeApplier getModifiedTypeApplier() {
 		return modifiedTypeApplier;
 	}
 }

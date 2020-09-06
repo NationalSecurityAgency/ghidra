@@ -16,18 +16,23 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.EndMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link EndMsSymbol} symbols.
  */
-public class EndSymbolApplier extends AbstractMsSymbolApplier {
+public class EndSymbolApplier extends MsSymbolApplier {
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @throws CancelledException upon user cancellation
+	 */
 	public EndSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -38,25 +43,23 @@ public class EndSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException {
-		String message =
+	void apply() throws PdbException {
+		pdbLogAndInfoMessage(this,
 			String.format("Cannot apply %s directly to program (module:0X%04X, offset:0X%08X)",
-				this.getClass().getSimpleName(), iter.getModuleNumber(), iter.getCurrentOffset());
-		Msg.info(this, message);
-		PdbLog.message(message);
+				this.getClass().getSimpleName(), iter.getModuleNumber(), iter.getCurrentOffset()));
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		if (!(applyToApplier instanceof FunctionSymbolApplier)) {
 			return;
 		}
-		FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
+//		FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
 //		functionSymbolApplier.endBlock();
 	}
 
 	@Override
-	public void manageBlockNesting(AbstractMsSymbolApplier applierParam) {
+	void manageBlockNesting(MsSymbolApplier applierParam) {
 		if (applierParam instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
 			functionSymbolApplier.endBlock();

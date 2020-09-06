@@ -16,20 +16,23 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractLocalSymbolInOptimizedCodeMsSymbol} symbols.
  */
-public class LocalOptimizedSymbolApplier extends AbstractMsSymbolApplier {
+public class LocalOptimizedSymbolApplier extends MsSymbolApplier {
 
 	private AbstractLocalSymbolInOptimizedCodeMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public LocalOptimizedSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -41,15 +44,13 @@ public class LocalOptimizedSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
-		String message = "Cannot apply " + this.getClass().getSimpleName() + " directly to program";
-		Msg.info(this, message);
-		PdbLog.message(message);
+	void apply() throws PdbException, CancelledException {
+		pdbLogAndInfoMessage(this,
+			"Cannot apply " + this.getClass().getSimpleName() + " directly to program");
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier)
-			throws PdbException, CancelledException {
+	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
 		if (!applicator.getPdbApplicatorOptions().applyFunctionVariables()) {
 			return;
 		}

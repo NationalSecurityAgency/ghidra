@@ -28,11 +28,16 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractUserDefinedTypeMsSymbol} symbols.
  */
-public class TypedefSymbolApplier extends AbstractMsSymbolApplier {
+public class TypedefSymbolApplier extends MsSymbolApplier {
 
 	DataType resolvedDataType = null;
 	AbstractUserDefinedTypeMsSymbol udtSymbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public TypedefSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -44,12 +49,12 @@ public class TypedefSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		resolvedDataType = applyUserDefinedTypeMsSymbol(udtSymbol);
 	}
 
@@ -57,7 +62,7 @@ public class TypedefSymbolApplier extends AbstractMsSymbolApplier {
 	 * Returns the name.
 	 * @return Name.
 	 */
-	public String getName() {
+	String getName() {
 		return udtSymbol.getName();
 	}
 
@@ -65,11 +70,11 @@ public class TypedefSymbolApplier extends AbstractMsSymbolApplier {
 	 * Returns the type record number.
 	 * @return Type record number.
 	 */
-	public RecordNumber getTypeRecordNumber() {
+	RecordNumber getTypeRecordNumber() {
 		return udtSymbol.getTypeRecordNumber();
 	}
 
-	public DataType getResolvedDataType() throws PdbException {
+	DataType getResolvedDataType() throws PdbException {
 		if (resolvedDataType == null) {
 			throw new PdbException("Data type not resolved");
 		}
@@ -81,7 +86,7 @@ public class TypedefSymbolApplier extends AbstractMsSymbolApplier {
 
 		String name = symbol.getName();
 
-		AbstractMsTypeApplier applier = applicator.getTypeApplier(symbol.getTypeRecordNumber());
+		MsTypeApplier applier = applicator.getTypeApplier(symbol.getTypeRecordNumber());
 		// TODO:... NOT SURE IF WILL ALWAYS BE A DATATYPE OR WILL BE A VARIABLE OR ????
 		if (applier == null) {
 			return null;

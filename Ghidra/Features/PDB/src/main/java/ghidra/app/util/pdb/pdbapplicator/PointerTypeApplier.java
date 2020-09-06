@@ -26,43 +26,33 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractPointerMsType} types.
  */
-public class PointerTypeApplier extends AbstractMsTypeApplier {
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractPointerMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					PointerTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+public class PointerTypeApplier extends MsTypeApplier {
 
 	private boolean isFunctionPointer = false;
 
 	/**
 	 * Constructor for pointer type applier, for transforming a enum into a
-	 *  Ghidra DataType.
+	 * Ghidra DataType.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractPointerMsType} to process
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public PointerTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+	public PointerTypeApplier(PdbApplicator applicator, AbstractPointerMsType msType)
 			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+		super(applicator, msType);
 	}
 
-	public boolean isFunctionPointer() {
+	boolean isFunctionPointer() {
 		return isFunctionPointer;
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return ((AbstractPointerMsType) msType).getSize();
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		if (msType instanceof DummyMsType) {
 			dataType = new PointerDataType(applicator.getDataTypeManager());
 		}
@@ -72,12 +62,12 @@ public class PointerTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public void resolve() {
+	void resolve() {
 		// Do not resolve pointer types... will be resolved naturally, as needed
 	}
 
-	public AbstractMsTypeApplier getUnmodifiedUnderlyingTypeApplier() {
-		AbstractMsTypeApplier thisUnderlyingTypeApplier =
+	MsTypeApplier getUnmodifiedUnderlyingTypeApplier() {
+		MsTypeApplier thisUnderlyingTypeApplier =
 			applicator.getTypeApplier(((AbstractPointerMsType) msType).getUnderlyingRecordNumber());
 
 		// TODO: does not recurse below one level of modifiers... consider doing a recursion.
@@ -91,7 +81,7 @@ public class PointerTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	private DataType applyAbstractPointerMsType(AbstractPointerMsType type) {
-		AbstractMsTypeApplier underlyingApplier =
+		MsTypeApplier underlyingApplier =
 			applicator.getTypeApplier(type.getUnderlyingRecordNumber());
 
 		if (underlyingApplier instanceof ProcedureTypeApplier) {

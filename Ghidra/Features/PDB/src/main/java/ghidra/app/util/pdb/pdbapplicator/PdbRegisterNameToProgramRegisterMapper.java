@@ -28,12 +28,13 @@ import ghidra.util.Msg;
 public class PdbRegisterNameToProgramRegisterMapper {
 
 	// Only need to map names that are different (probably not counting case, as rsp and RSP
-	//  are equivalent.
-	private static Map<String, String> registerNameMap = new HashMap<>();
-	static {
-		//registerNameMap.put("rsp", "RSP");
-		registerNameMap.put("fbp", "RBP");
-	}
+	// are equivalent.
+	//@formatter:off
+	private static Map<String, String> registerNameMap = Map.of(
+		//"rsp", "RSP",
+		"fbp", "RBP"
+	);
+	//@formatter:on
 
 	private Program program;
 	private Map<String, Register> pdbRegisterNameToRegisterMap;

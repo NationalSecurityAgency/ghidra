@@ -23,8 +23,8 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 
 /**
  * This class represents a particular group of Symbols that came from the same PDB stream.  This
- *  wraps the internal structure and offers mechanisms for accessing records.  It does not map
- *  directly to an MSFT structure.
+ * wraps the internal structure and offers mechanisms for accessing records.  It does not map
+ * directly to an MSFT structure.
  */
 public class SymbolGroup {
 
@@ -37,7 +37,7 @@ public class SymbolGroup {
 	 * Constructor. The starting offset is set to zero.
 	 * @param symbolsByOffset the Map used to initialize the constructor.
 	 * @param moduleNumber The Module number corresponding to the initializing Map
-	 *  (0 for public/global Map).
+	 * (0 for public/global Map).
 	 */
 	public SymbolGroup(Map<Long, AbstractMsSymbol> symbolsByOffset, int moduleNumber) {
 		this(symbolsByOffset, moduleNumber, 0);
@@ -47,7 +47,7 @@ public class SymbolGroup {
 	 * Constructor.
 	 * @param symbolsByOffset the Map used to initialize the constructor.
 	 * @param moduleNumber The Module number corresponding to the initializing Map
-	 *  (0 for public/global Map).
+	 * (0 for public/global Map).
 	 * @param offset the offset location to start.
 	 */
 	public SymbolGroup(Map<Long, AbstractMsSymbol> symbolsByOffset, int moduleNumber, long offset) {
@@ -60,7 +60,7 @@ public class SymbolGroup {
 	 * Returns the list of symbols.  These may not be in the order that they were seen.
 	 * @return the list of symbols.
 	 */
-	public List<AbstractMsSymbol> getSymbols() {
+	List<AbstractMsSymbol> getSymbols() {
 		return new ArrayList<>(symbolsByOffset.values());
 	}
 
@@ -68,7 +68,7 @@ public class SymbolGroup {
 	 * Returns the module number.
 	 * @return the module number.
 	 */
-	public int getModuleNumber() {
+	int getModuleNumber() {
 		return moduleNumber;
 
 	}
@@ -77,7 +77,7 @@ public class SymbolGroup {
 	 * Returns the number of symbols.
 	 * @return the number of symbols.
 	 */
-	public int size() {
+	int size() {
 		return symbolsByOffset.size();
 	}
 
@@ -85,7 +85,7 @@ public class SymbolGroup {
 	 * Returns the list of symbol offsets in the order they were seen.
 	 * @return the list of symbol offsets.
 	 */
-	public List<Long> getOrderedOffsets() {
+	List<Long> getOrderedOffsets() {
 		return new ArrayList<>(symbolsByOffset.keySet());
 	}
 
@@ -93,7 +93,7 @@ public class SymbolGroup {
 	 * Returns the set of symbol offsets.
 	 * @return the set of symbol offsets.
 	 */
-	public Set<Long> getOffsets() {
+	Set<Long> getOffsets() {
 		return symbolsByOffset.keySet();
 	}
 
@@ -101,7 +101,7 @@ public class SymbolGroup {
 	 * Returns the list of symbols in the order they were seen.
 	 * @return the list of symbols.
 	 */
-	public List<AbstractMsSymbol> getOrderedSymbols() {
+	List<AbstractMsSymbol> getOrderedSymbols() {
 		List<AbstractMsSymbol> symbols = new ArrayList<>();
 		for (long offset : offsets) {
 			symbols.add(symbolsByOffset.get(offset));
@@ -144,6 +144,10 @@ public class SymbolGroup {
 	}
 
 	//==============================================================================================
+	/**
+	 * Iterator for {@link SymbolGroup} that iterates through {@link AbstractMsSymbol
+	 * AbstractMsSymbols}
+	 */
 	class AbstractMsSymbolIterator implements Iterator<AbstractMsSymbol> {
 
 		private int currentIndex;
@@ -163,9 +167,10 @@ public class SymbolGroup {
 		}
 
 		/**
-		 * Peeks at and returns the next symbol without incrementing to the next.  If none are left, then throws NoSuchElementException and
-		 *  reinitializes the state for a new iteration.
-		 *  @see #initGet()
+		 * Peeks at and returns the next symbol without incrementing to the next.  If none are
+		 * left, then throws NoSuchElementException and reinitializes the state for a new
+		 * iteration.
+		 * @see #initGet()
 		 * @return the next symbol
 		 * @throws NoSuchElementException if there are no more elements
 		 */
@@ -192,12 +197,12 @@ public class SymbolGroup {
 
 		/**
 		 * Returns the next symbol.  If none are left, then throws NoSuchElementException and
-		 *  reinitializes the state for a new iteration.
-		 *  @see #initGet()
+		 * reinitializes the state for a new iteration.
+		 * @see #initGet()
 		 * @return the next symbol
 		 * @throws NoSuchElementException if there are no more elements
 		 */
-		public long getCurrentOffset() {
+		long getCurrentOffset() {
 			return currentOffset;
 		}
 
@@ -205,7 +210,7 @@ public class SymbolGroup {
 		 * Initialized the mechanism for requesting the symbols in sequence.
 		 * @see #hasNext()
 		 */
-		public void initGet() {
+		void initGet() {
 			currentIndex = 0;
 		}
 
@@ -214,7 +219,7 @@ public class SymbolGroup {
 		 * @param offset the offset to which to initialize the mechanism.
 		 * @see #hasNext()
 		 */
-		public void initGetByOffset(long offset) {
+		void initGetByOffset(long offset) {
 			int index = indexByOffset.get(offset);
 			if (index < 0) {
 				index = 0;
@@ -228,7 +233,7 @@ public class SymbolGroup {
 		 * Returns the module number.
 		 * @return the module number.
 		 */
-		public int getModuleNumber() {
+		int getModuleNumber() {
 			return moduleNumber;
 		}
 

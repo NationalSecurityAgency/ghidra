@@ -26,8 +26,8 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractNestedTypeMsType} and {@link AbstractNestedTypeExtMsType} types.
  */
-public class NestedTypeApplier extends AbstractMsTypeApplier {
-	private AbstractMsTypeApplier nestedTypeDefinitionApplier = null;
+public class NestedTypeApplier extends MsTypeApplier {
+	private MsTypeApplier nestedTypeDefinitionApplier = null;
 
 	private static AbstractMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {
@@ -52,7 +52,7 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		if (nestedTypeDefinitionApplier == null) {
 			return BigInteger.ZERO;
 		}
@@ -63,7 +63,7 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the name of this nested type.
 	 * @return Name of the nested type.
 	 */
-	public String getTypeName() {
+	String getTypeName() {
 		if (nestedTypeDefinitionApplier == null) {
 			return "";
 		}
@@ -74,7 +74,7 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the nested (member?) name for this nested type.
 	 * @return (Member?) Name for the nested type.
 	 */
-	public String getMemberName() {
+	String getMemberName() {
 		if (nestedTypeDefinitionApplier == null) {
 			return "";
 		}
@@ -84,7 +84,7 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 		return ((AbstractNestedTypeExtMsType) msType).getName();
 	}
 
-	AbstractMsTypeApplier getNestedTypeDefinitionApplier() {
+	MsTypeApplier getNestedTypeDefinitionApplier() {
 		return applicator.getTypeApplier(getNestedTypeDefinitionRecordNumber());
 	}
 
@@ -99,7 +99,7 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 	 * Indicates if there are attributes. Returns false if not "applied" yet.
 	 * @return [@code true} if there are attributes.
 	 */
-	public boolean hasAttributes() {
+	boolean hasAttributes() {
 		if (nestedTypeDefinitionApplier == null) {
 			return false;
 		}
@@ -113,7 +113,7 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 	 * Returns the attributes if they exist.
 	 * @return the attributes or null if they do not exist.
 	 */
-	public ClassFieldMsAttributes getAttributes() {
+	ClassFieldMsAttributes getAttributes() {
 		AbstractMsType type = nestedTypeDefinitionApplier.getMsType();
 		if (type instanceof AbstractNestedTypeExtMsType) {
 			return ((AbstractNestedTypeExtMsType) type).getClassFieldAttributes();
@@ -122,7 +122,7 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		if (msType instanceof AbstractNestedTypeMsType) {
 			dataType = applyNestedTypeMsType((AbstractNestedTypeMsType) msType);
 		}
@@ -132,12 +132,14 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 	}
 
 	private DataType applyNestedTypeMsType(AbstractNestedTypeMsType type) {
-		nestedTypeDefinitionApplier = applicator.getTypeApplier(type.getNestedTypeDefinitionRecordNumber());
+		nestedTypeDefinitionApplier =
+			applicator.getTypeApplier(type.getNestedTypeDefinitionRecordNumber());
 		return nestedTypeDefinitionApplier.getDataType();
 	}
 
 	private DataType applyNestedTypeExtMsType(AbstractNestedTypeExtMsType type) {
-		nestedTypeDefinitionApplier = applicator.getTypeApplier(type.getNestedTypeDefinitionRecordNumber());
+		nestedTypeDefinitionApplier =
+			applicator.getTypeApplier(type.getNestedTypeDefinitionRecordNumber());
 		return nestedTypeDefinitionApplier.getDataType();
 	}
 
@@ -163,7 +165,7 @@ public class NestedTypeApplier extends AbstractMsTypeApplier {
 //		return modifiedTypeApplier.getCycleBreakType(applicator);
 	}
 
-	public AbstractMsTypeApplier getNestedTypeApplier() {
+	MsTypeApplier getNestedTypeApplier() {
 		return nestedTypeDefinitionApplier;
 	}
 }

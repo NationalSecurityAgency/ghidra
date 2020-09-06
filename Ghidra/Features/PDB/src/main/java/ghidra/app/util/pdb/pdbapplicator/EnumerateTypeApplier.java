@@ -19,47 +19,34 @@ import java.math.BigInteger;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.Numeric;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractEnumerateMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.pdb.PdbNamespaceUtils;
 import ghidra.program.model.data.DataType;
 
 /**
  * Applier for {@link AbstractEnumerateMsType} types.
  */
-public class EnumerateTypeApplier extends AbstractMsTypeApplier {
+public class EnumerateTypeApplier extends MsTypeApplier {
 
 	private String fieldName;
 	private Numeric numeric;
 
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractEnumerateMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					EnumerateTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
-
 	/**
 	 * Constructor for enumerate type applier, for transforming a enumerate into a
-	 *  Ghidra DataType.
+	 * Ghidra DataType.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractEnumerateMsType} to process.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public EnumerateTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public EnumerateTypeApplier(PdbApplicator applicator, AbstractEnumerateMsType msType) {
+		super(applicator, msType);
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.ZERO;
 	}
 
 	@Override
-	public void apply() {
+	void apply() {
 		dataType = applyEnumerateMsType((AbstractEnumerateMsType) msType);
 //		DataType dataType = applyEnumerateMsType((AbstractEnumerateMsType) msType);
 //		ghDataType = dataType; // temporary while below is commented-out
@@ -67,11 +54,11 @@ public class EnumerateTypeApplier extends AbstractMsTypeApplier {
 //		ghDataTypeDB = applicator.resolve(dataType);
 	}
 
-	public String getName() {
+	String getName() {
 		return fieldName;
 	}
 
-	public Numeric getNumeric() {
+	Numeric getNumeric() {
 		return numeric;
 	}
 

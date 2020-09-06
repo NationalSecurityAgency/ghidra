@@ -18,6 +18,9 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * PDB Analyzer Options Mode for performing object-oriented structure layout.
+ */
 public enum CompositeLayoutMode {
 	MEMBERS_ONLY("Legacy", 0, OoComponentLayoutMode.MEMBERS_ONLY),
 	BASIC_SIMPLE_COMPLEX("Complex with Basic Fallback", 1, OoComponentLayoutMode.BASIC),
@@ -31,7 +34,7 @@ public enum CompositeLayoutMode {
 		}
 	}
 
-	public final String label;
+	private final String label;
 	private final int value;
 	private OoComponentLayoutMode layoutMode;
 
@@ -46,7 +49,7 @@ public enum CompositeLayoutMode {
 		this.layoutMode = layoutMode;
 	}
 
-	public OoComponentLayoutMode getLayoutMode() {
+	OoComponentLayoutMode getLayoutMode() {
 		return layoutMode;
 	}
 }

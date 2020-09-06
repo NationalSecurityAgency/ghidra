@@ -23,6 +23,9 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 
+/**
+ * Manages the nesting of scoping blocks for functions and scoped variables.
+ */
 public class BlockCommentsManager {
 
 	private static final String BLOCK_INDENT = "   ";

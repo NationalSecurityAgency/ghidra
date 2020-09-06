@@ -25,10 +25,15 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractReferenceMsSymbol} symbols.
  */
-public class ReferenceSymbolApplier extends AbstractMsSymbolApplier {
+public class ReferenceSymbolApplier extends MsSymbolApplier {
 
 	private AbstractReferenceMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public ReferenceSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -40,12 +45,12 @@ public class ReferenceSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing.
 	}
 
 	@Override
-	public void apply() throws CancelledException, PdbException {
+	void apply() throws CancelledException, PdbException {
 		// Potential recursive call via applicator.procSym().
 		AbstractMsSymbolIterator refIter = getInitializedReferencedSymbolGroup().iterator();
 		applicator.procSym(refIter);

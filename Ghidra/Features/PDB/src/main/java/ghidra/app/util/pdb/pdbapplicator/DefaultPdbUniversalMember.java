@@ -25,9 +25,9 @@ import ghidra.util.exception.CancelledException;
  * <code>PdbMember</code> convey PDB member information used for datatype
  * reconstruction.
  */
-public class Default2PdbMember extends PdbMember {
+public class DefaultPdbUniversalMember extends PdbMember {
 
-	private AbstractMsTypeApplier applier;
+	private MsTypeApplier applier;
 	private DataType dataType;
 
 	/**
@@ -36,10 +36,10 @@ public class Default2PdbMember extends PdbMember {
 	 * @param name member field name.  For bitfields this also conveys the bit-size
 	 * and optionally the bit-offset.
 	 * @param applier fieldApplier for the field datatype or base datatype associated with the
-	 *  bitfield.
+	 * bitfield.
 	 * @param offset member's byte offset within the root composite.
 	 */
-	Default2PdbMember(PdbApplicator applicator, String name, AbstractMsTypeApplier applier,
+	DefaultPdbUniversalMember(PdbApplicator applicator, String name, MsTypeApplier applier,
 			int offset) {
 		super(name, (applier.getDataType()).getName(), offset, null);
 		this.applier = applier;
@@ -54,13 +54,14 @@ public class Default2PdbMember extends PdbMember {
 	 * @param dataType for the field.
 	 * @param offset member's byte offset within the root composite.
 	 */
-	Default2PdbMember(PdbApplicator applicator, String name, DataType dataType, int offset) {
+	DefaultPdbUniversalMember(PdbApplicator applicator, String name, DataType dataType,
+			int offset) {
 		super(name, dataType.getName(), offset, null);
 		this.applier = null;
 		this.dataType = dataType;
 	}
 
-	AbstractMsTypeApplier getApplier() {
+	MsTypeApplier getApplier() {
 		return applier;
 	}
 

@@ -20,7 +20,8 @@ import java.math.BigInteger;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMemberFunctionMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.CallingConvention;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
@@ -29,34 +30,22 @@ import ghidra.util.exception.CancelledException;
  */
 public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 
-//	private boolean hasThisPointer = false;
-	private AbstractMsTypeApplier thisPointerApplier = null;
-	private CompositeTypeApplier containingCompositeApplier = null;
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractMemberFunctionMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					MemberFunctionTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+	private MsTypeApplier thisPointerApplier = null;
 
 	/**
 	 * Constructor for the applicator that applies {@link AbstractMemberFunctionMsType},
-	 *  transforming it into a Ghidra {@link DataType}.
+	 * transforming it into a Ghidra {@link DataType}.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMemberFunctionMsType} to processes.
 	 * @throws IllegalArgumentException Upon type mismatch.
 	 */
-	public MemberFunctionTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+	public MemberFunctionTypeApplier(PdbApplicator applicator, AbstractMemberFunctionMsType msType)
 			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+		super(applicator, msType);
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.ZERO;
 	}
 
@@ -66,8 +55,8 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 	}
 
 	@Override
-	protected boolean hasThisPointer() throws CancelledException, PdbException {
-		AbstractMsTypeApplier applier = applicator.getTypeApplier(
+	protected boolean hasThisPointer() {
+		MsTypeApplier applier = applicator.getTypeApplier(
 			((AbstractMemberFunctionMsType) msType).getThisPointerRecordNumber());
 		if ((applier instanceof PrimitiveTypeApplier &&
 			((PrimitiveTypeApplier) applier).isNoType())) {
@@ -87,7 +76,7 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		predefineClasses();
 		applyFunction(getCallingConvention(), hasThisPointer());
 	}
@@ -99,7 +88,7 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 			applicator.getPdbApplicatorMetrics().witnessMemberFunctionThisPointer(
 				thisPointerApplier);
 			if (thisPointerApplier instanceof PointerTypeApplier) {
-				AbstractMsTypeApplier underlyingApplier =
+				MsTypeApplier underlyingApplier =
 					getThisUnderlyingApplier((PointerTypeApplier) thisPointerApplier);
 				applicator.getPdbApplicatorMetrics().witnessMemberFunctionThisPointerUnderlyingType(
 					underlyingApplier);
@@ -185,8 +174,8 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 //		return true;
 //	}
 
-	private AbstractMsTypeApplier getThisPointerApplier(AbstractMemberFunctionMsType procType) {
-		AbstractMsTypeApplier applier =
+	private MsTypeApplier getThisPointerApplier(AbstractMemberFunctionMsType procType) {
+		MsTypeApplier applier =
 			applicator.getTypeApplier(procType.getThisPointerRecordNumber());
 
 //		if ((applier instanceof PrimitiveTypeApplier &&
@@ -204,7 +193,7 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 		return applier;
 	}
 
-	private AbstractMsTypeApplier getThisUnderlyingApplier(PointerTypeApplier thisApplier) {
+	private MsTypeApplier getThisUnderlyingApplier(PointerTypeApplier thisApplier) {
 		return thisApplier.getUnmodifiedUnderlyingTypeApplier();
 	}
 

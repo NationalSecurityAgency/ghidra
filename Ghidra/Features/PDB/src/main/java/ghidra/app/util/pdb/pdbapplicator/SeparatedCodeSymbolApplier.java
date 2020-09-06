@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
@@ -31,7 +32,7 @@ import ghidra.util.exception.CancelledException;
  */
 // TODO: Need to evaluate relationship to function symbols.
 // TODO: Need to create anonymous name for this as a function?
-public class SeparatedCodeSymbolApplier extends AbstractMsSymbolApplier {
+public class SeparatedCodeSymbolApplier extends MsSymbolApplier {
 
 	private SeparatedCodeFromCompilerSupportMsSymbol symbol;
 
@@ -43,7 +44,7 @@ public class SeparatedCodeSymbolApplier extends AbstractMsSymbolApplier {
 	private int symbolBlockNestingLevel;
 	private Address currentBlockAddress;
 
-	private List<AbstractMsSymbolApplier> allAppliers = new ArrayList<>();
+	private List<MsSymbolApplier> allAppliers = new ArrayList<>();
 
 	private static AbstractMsSymbolIterator validateSymbol(AbstractMsSymbolIterator iter) {
 		if (!(iter.peek() instanceof SeparatedCodeFromCompilerSupportMsSymbol)) {
@@ -52,13 +53,19 @@ public class SeparatedCodeSymbolApplier extends AbstractMsSymbolApplier {
 		return iter;
 	}
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @throws CancelledException upon user cancellation
+	 */
 	public SeparatedCodeSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter)
-			throws CancelledException, NoSuchElementException {
+			throws CancelledException {
 		super(applicator, validateSymbol(iter));
 
 		symbol = (SeparatedCodeFromCompilerSupportMsSymbol) iter.next();
 
-		specifiedAddress = applicator.reladdr(symbol);
+		specifiedAddress = applicator.getAddress(symbol);
 
 		// Make up name.  TODO: decide if need better anonymous name
 		craftedName = String.format("CompilerSeparatedCode%s", specifiedAddress);
@@ -72,7 +79,7 @@ public class SeparatedCodeSymbolApplier extends AbstractMsSymbolApplier {
 
 		while (notDone()) {
 			applicator.checkCanceled();
-			AbstractMsSymbolApplier applier = applicator.getSymbolApplier(iter);
+			MsSymbolApplier applier = applicator.getSymbolApplier(iter);
 			if (!(applier instanceof EndSymbolApplier)) {
 				Msg.info(this, "Unexpected applier in " + getClass().getSimpleName() + ": " +
 					applier.getClass().getSimpleName());
@@ -83,17 +90,17 @@ public class SeparatedCodeSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void manageBlockNesting(AbstractMsSymbolApplier applierParam) {
+	void manageBlockNesting(MsSymbolApplier applierParam) {
 		beginBlock(specifiedAddress);
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing.
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		// DO NOTHING FOR NOW.  TODO: should we have a configuration option?
 		//  Note: these comments can be noise in the decompiler an code browser
 		setComments(false);
@@ -119,7 +126,7 @@ public class SeparatedCodeSymbolApplier extends AbstractMsSymbolApplier {
 		return (symbolBlockNestingLevel > 0) && iter.hasNext();
 	}
 
-	public int endBlock() {
+	int endBlock() {
 		if (--symbolBlockNestingLevel < 0) {
 			applicator.appendLogMsg("Block Nesting went negative at " + specifiedAddress);
 		}

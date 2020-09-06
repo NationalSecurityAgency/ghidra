@@ -19,7 +19,8 @@ import java.math.BigInteger;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractProcedureMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.CallingConvention;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
@@ -28,30 +29,20 @@ import ghidra.util.exception.CancelledException;
  */
 public class ProcedureTypeApplier extends AbstractFunctionTypeApplier {
 
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractProcedureMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					ProcedureTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
-
 	/**
 	 * Constructor for the applicator that applies {@link AbstractProcedureMsType},
-	 *  transforming it into a Ghidra {@link DataType}.
+	 * transforming it into a Ghidra {@link DataType}.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractProcedureMsType} to processes.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public ProcedureTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+	public ProcedureTypeApplier(PdbApplicator applicator, AbstractProcedureMsType msType)
 			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+		super(applicator, msType);
 	}
 
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return BigInteger.ZERO;
 	}
 
@@ -76,7 +67,7 @@ public class ProcedureTypeApplier extends AbstractFunctionTypeApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		applyFunction(getCallingConvention(), hasThisPointer());
 
 //		AbstractProcedureMsType procType = (AbstractProcedureMsType) msType;

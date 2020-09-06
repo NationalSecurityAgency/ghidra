@@ -19,7 +19,6 @@ import java.math.BigInteger;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractArrayMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -27,45 +26,23 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractArrayMsType} types.
  */
-public class ArrayTypeApplier extends AbstractMsTypeApplier {
+public class ArrayTypeApplier extends MsTypeApplier {
 
-	private boolean isDeferred = false;
-
-	private AbstractMsTypeApplier underlyingTypeApplier = null;
+	private MsTypeApplier underlyingTypeApplier = null;
 	private boolean isFlexibleArray = false;
-
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractArrayMsType)) {
-			throw new IllegalArgumentException("PDB Incorrectly applying " +
-				type.getClass().getSimpleName() + " to " + ArrayTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
 
 	/**
 	 * Constructor for the applicator that applies a "array" type, transforming it into a
-	 *  Ghidra DataType.
+	 * Ghidra DataType.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractArrayMsType} to processes.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public ArrayTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public ArrayTypeApplier(PdbApplicator applicator, AbstractArrayMsType msType) {
+		super(applicator, msType);
 	}
 
 	//==============================================================================================
-	public void setDeferred() {
-		isDeferred = true;
-	}
-
-	@Override
-	public boolean isDeferred() {
-		return isDeferred;
-	}
-
-	public boolean isFlexibleArray() {
+	boolean isFlexibleArray() {
 		return isFlexibleArray;
 	}
 
@@ -76,12 +53,12 @@ public class ArrayTypeApplier extends AbstractMsTypeApplier {
 
 	//==============================================================================================
 	@Override
-	public BigInteger getSize() {
+	BigInteger getSize() {
 		return ((AbstractArrayMsType) msType).getSize();
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		applyOrDeferForDependencies();
 	}
 

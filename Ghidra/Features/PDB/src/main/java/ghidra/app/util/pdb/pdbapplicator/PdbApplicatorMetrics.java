@@ -25,68 +25,70 @@ import ghidra.program.model.listing.Program;
 
 /**
  * Metrics captured during the application of a PDB.  This is a Ghidra class separate from the
- *  PDB API that we have crafted to help us quantify and qualify the ability apply the PDB
- *  to a {@link DataTypeManager} and/or {@link Program}. 
+ * PDB API that we have crafted to help us quantify and qualify the ability apply the PDB
+ * to a {@link DataTypeManager} and/or {@link Program}. 
  */
 public class PdbApplicatorMetrics {
 
 	/**
 	 * List of symbols seen (by their ID) as Global symbols.
 	 */
-	private static Set<Integer> expectedGlobalSymbols = new HashSet<>();
-	static {
+	//@formatter:off
+	private static final Set<Integer> expectedGlobalSymbols = Set.of(
 		// AbstractReferenceMsSymbol
-		expectedGlobalSymbols.add(DataReferenceStMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(DataReferenceMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(LocalProcedureReferenceMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(LocalProcedureReferenceStMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(ProcedureReferenceMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(ProcedureReferenceStMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(AnnotationReferenceMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(TokenReferenceToManagedProcedureMsSymbol.PDB_ID);
+		DataReferenceStMsSymbol.PDB_ID,
+		DataReferenceMsSymbol.PDB_ID,
+		LocalProcedureReferenceMsSymbol.PDB_ID,
+		LocalProcedureReferenceStMsSymbol.PDB_ID,
+		ProcedureReferenceMsSymbol.PDB_ID,
+		ProcedureReferenceStMsSymbol.PDB_ID,
+		AnnotationReferenceMsSymbol.PDB_ID,
+		TokenReferenceToManagedProcedureMsSymbol.PDB_ID,
 
 		// AbstractDataMsSymbol
-		expectedGlobalSymbols.add(GlobalData16MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(GlobalData3216MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(GlobalData32MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(GlobalData32StMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(LocalData16MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(LocalData3216MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(LocalData32MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(LocalData32StMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(GlobalManagedDataMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(GlobalManagedDataStMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(LocalManagedDataMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(LocalManagedDataStMsSymbol.PDB_ID);
+		GlobalData16MsSymbol.PDB_ID,
+		GlobalData3216MsSymbol.PDB_ID,
+		GlobalData32MsSymbol.PDB_ID,
+		GlobalData32StMsSymbol.PDB_ID,
+		LocalData16MsSymbol.PDB_ID,
+		LocalData3216MsSymbol.PDB_ID,
+		LocalData32MsSymbol.PDB_ID,
+		LocalData32StMsSymbol.PDB_ID,
+		GlobalManagedDataMsSymbol.PDB_ID,
+		GlobalManagedDataStMsSymbol.PDB_ID,
+		LocalManagedDataMsSymbol.PDB_ID,
+		LocalManagedDataStMsSymbol.PDB_ID,
 
 		// AbstractUserDefinedTypeMsSymbol
-		expectedGlobalSymbols.add(CobolUserDefinedType16MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(CobolUserDefinedTypeMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(CobolUserDefinedTypeStMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(UserDefinedType16MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(UserDefinedTypeMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(UserDefinedTypeStMsSymbol.PDB_ID);
+		CobolUserDefinedType16MsSymbol.PDB_ID,
+		CobolUserDefinedTypeMsSymbol.PDB_ID,
+		CobolUserDefinedTypeStMsSymbol.PDB_ID,
+		UserDefinedType16MsSymbol.PDB_ID,
+		UserDefinedTypeMsSymbol.PDB_ID,
+		UserDefinedTypeStMsSymbol.PDB_ID,
 
 		// AbstractConstantMsSymbol
-		expectedGlobalSymbols.add(Constant16MsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(ConstantMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(ConstantStMsSymbol.PDB_ID);
-		expectedGlobalSymbols.add(ManagedConstantMsSymbol.PDB_ID);
-	}
+		Constant16MsSymbol.PDB_ID,
+		ConstantMsSymbol.PDB_ID,
+		ConstantStMsSymbol.PDB_ID,
+		ManagedConstantMsSymbol.PDB_ID
+	);
+	//@formatter:on
 
 	/**
 	 * List of symbols seen (by their ID) as Public symbols.
 	 */
-	private static Set<Integer> expectedLinkerSymbols = new HashSet<>();
-	static {
-		expectedLinkerSymbols.add(PeCoffSectionMsSymbol.PDB_ID);
-		expectedLinkerSymbols.add(TrampolineMsSymbol.PDB_ID);
-		expectedLinkerSymbols.add(ObjectNameMsSymbol.PDB_ID);
-		expectedLinkerSymbols.add(Compile3MsSymbol.PDB_ID);
-		expectedLinkerSymbols.add(Compile2MsSymbol.PDB_ID);
-		expectedLinkerSymbols.add(Compile2StMsSymbol.PDB_ID);
-		expectedLinkerSymbols.add(EnvironmentBlockMsSymbol.PDB_ID);
-	}
+	//@formatter:off
+	private static final Set<Integer> expectedLinkerSymbols = Set.of(	
+		PeCoffSectionMsSymbol.PDB_ID,
+		TrampolineMsSymbol.PDB_ID,
+		ObjectNameMsSymbol.PDB_ID,
+		Compile3MsSymbol.PDB_ID,
+		Compile2MsSymbol.PDB_ID,
+		Compile2StMsSymbol.PDB_ID,
+		EnvironmentBlockMsSymbol.PDB_ID
+	);
+	//@formatter:on
 
 	private Set<Class<? extends AbstractMsType>> cannotApplyTypes = new HashSet<>();
 	private Set<Class<? extends AbstractMsType>> unexpectedMemberFunctionThisPointerTypes =
@@ -104,7 +106,7 @@ public class PdbApplicatorMetrics {
 	 * Method to capture data/item type that cannot be applied.
 	 * @param type The data/item type witnessed.
 	 */
-	public void witnessCannotApplyDataType(AbstractMsType type) {
+	void witnessCannotApplyDataType(AbstractMsType type) {
 		cannotApplyTypes.add(type.getClass());
 	}
 
@@ -112,7 +114,7 @@ public class PdbApplicatorMetrics {
 	 * Method to capture symbol type that cannot be applied.
 	 * @param symbol The symbol type witnessed.
 	 */
-	public void witnessCannotApplySymbolType(AbstractMsSymbol symbol) {
+	void witnessCannotApplySymbolType(AbstractMsSymbol symbol) {
 		cannotApplySymbols.add(symbol.getClass());
 	}
 
@@ -120,7 +122,7 @@ public class PdbApplicatorMetrics {
 	 * Method to capture symbol type that was unexpected as a Global symbol.
 	 * @param symbol The symbol type witnessed.
 	 */
-	public void witnessGlobalSymbolType(AbstractMsSymbol symbol) {
+	void witnessGlobalSymbolType(AbstractMsSymbol symbol) {
 		if (!expectedGlobalSymbols.contains(symbol.getPdbId())) {
 			unexpectedGlobalSymbols.add(symbol.getClass());
 		}
@@ -130,7 +132,7 @@ public class PdbApplicatorMetrics {
 	 * Method to capture symbol type that was unexpected as a Public symbol.
 	 * @param symbol The symbol type witnessed.
 	 */
-	public void witnessPublicSymbolType(AbstractMsSymbol symbol) {
+	void witnessPublicSymbolType(AbstractMsSymbol symbol) {
 		if (!(symbol instanceof AbstractPublicMsSymbol)) {
 			unexpectedPublicSymbols.add(symbol.getClass());
 		}
@@ -140,7 +142,7 @@ public class PdbApplicatorMetrics {
 	 * Method to capture symbol type that was unexpected as a Linker symbol.
 	 * @param symbol The symbol type witnessed.
 	 */
-	public void witnessLinkerSymbolType(AbstractMsSymbol symbol) {
+	void witnessLinkerSymbolType(AbstractMsSymbol symbol) {
 		if (!expectedLinkerSymbols.contains(symbol.getPdbId())) {
 			// do nothing for now
 		}
@@ -149,7 +151,7 @@ public class PdbApplicatorMetrics {
 	/**
 	 * Method to capture witnessing of Enumerate narrowing.
 	 */
-	public void witnessEnumerateNarrowing() {
+	void witnessEnumerateNarrowing() {
 		witnessEnumerateNarrowing = true;
 	}
 
@@ -157,7 +159,7 @@ public class PdbApplicatorMetrics {
 	 * Method to capture unusual this pointer types.
 	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
 	 */
-	public void witnessMemberFunctionThisPointer(AbstractMsTypeApplier applier) {
+	void witnessMemberFunctionThisPointer(MsTypeApplier applier) {
 		// We know that we have seen PrimitiveMsTypes that are pointer types.
 		if (applier instanceof PointerTypeApplier) {
 			return;
@@ -169,7 +171,7 @@ public class PdbApplicatorMetrics {
 	 * Method to capture unusual underlying types for a normal pointer for this pointer.
 	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
 	 */
-	public void witnessMemberFunctionThisPointerUnderlyingType(AbstractMsTypeApplier applier) {
+	void witnessMemberFunctionThisPointerUnderlyingType(MsTypeApplier applier) {
 		if (applier instanceof CompositeTypeApplier) {
 			return;
 		}
@@ -180,7 +182,7 @@ public class PdbApplicatorMetrics {
 	 * Method to capture unusual containing types for a member function.
 	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
 	 */
-	public void witnessMemberFunctionContainingType(AbstractMsTypeApplier applier) {
+	void witnessMemberFunctionContainingType(MsTypeApplier applier) {
 		if (applier instanceof CompositeTypeApplier) {
 			return;
 		}
@@ -193,7 +195,7 @@ public class PdbApplicatorMetrics {
 	 * Return some post-processing metrics for applying the PDB
 	 * @return {@link String} of pretty output.
 	 */
-	public String getPostProcessingReport() {
+	String getPostProcessingReport() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("===Begin PdbApplicatorMetrics Report===\n");
 		builder.append(reportNonappliableTypes());

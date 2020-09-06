@@ -19,17 +19,20 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.SymbolPathParser;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractComplexMsType;
 import ghidra.app.util.pdb.PdbNamespaceUtils;
 import ghidra.program.model.data.DataType;
 
-public abstract class AbstractComplexTypeApplier extends AbstractMsTypeApplier {
+/**
+ * Applier for {@link AbstractComplexMsType} types.
+ */
+public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
 
 	protected SymbolPath symbolPath;
 	protected SymbolPath fixedSymbolPath;
 
 	protected AbstractComplexTypeApplier definitionApplier = null;
-	protected AbstractComplexTypeApplier fwdRefApplier = null;
+	protected AbstractComplexTypeApplier forwardReferenceApplier = null;
 
 	public static AbstractComplexTypeApplier getComplexApplier(PdbApplicator applicator,
 			RecordNumber recordNumber) throws PdbException {
@@ -40,40 +43,31 @@ public abstract class AbstractComplexTypeApplier extends AbstractMsTypeApplier {
 	/**
 	 * Constructor for complex type applier.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractEnumMsType} to process.
-	 * @throws IllegalArgumentException Upon invalid arguments.
+	 * @param msType {@link AbstractComplexMsType} to process.
 	 */
-	public AbstractComplexTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
+	public AbstractComplexTypeApplier(PdbApplicator applicator, AbstractComplexMsType msType) {
 		super(applicator, msType);
 		String fullPathName = msType.getName();
 		symbolPath = new SymbolPath(SymbolPathParser.parse(fullPathName));
 	}
 
-	public SymbolPath getSymbolPath() {
+	SymbolPath getSymbolPath() {
 		return symbolPath;
 	}
 
-	public boolean isForwardReference() {
+	boolean isForwardReference() {
 		return ((AbstractComplexMsType) msType).getMsProperty().isForwardReference();
 	}
 
-	public boolean isFinal() {
+	boolean isFinal() {
 		return ((AbstractComplexMsType) msType).getMsProperty().isSealed();
 	}
 
-	public void setFwdRefApplier(AbstractComplexTypeApplier fwdRefApplier) {
-		this.fwdRefApplier = fwdRefApplier;
+	void setForwardReferenceApplier(AbstractComplexTypeApplier forwardReferenceApplier) {
+		this.forwardReferenceApplier = forwardReferenceApplier;
 	}
 
-	<T extends AbstractComplexTypeApplier> T getFwdRefApplier(Class<T> typeClass) {
-		if (!typeClass.isInstance(fwdRefApplier)) {
-			return null;
-		}
-		return typeClass.cast(fwdRefApplier);
-	}
-
-	public void setDefinitionApplier(AbstractComplexTypeApplier definitionApplier) {
+	void setDefinitionApplier(AbstractComplexTypeApplier definitionApplier) {
 		this.definitionApplier = definitionApplier;
 	}
 
@@ -82,6 +76,13 @@ public abstract class AbstractComplexTypeApplier extends AbstractMsTypeApplier {
 			return null;
 		}
 		return typeClass.cast(definitionApplier);
+	}
+
+	protected AbstractComplexTypeApplier getAlternativeTypeApplier() {
+		if (isForwardReference()) {
+			return definitionApplier;
+		}
+		return forwardReferenceApplier;
 	}
 
 	protected SymbolPath getFixedSymbolPath() { //return mine or my def's (and set mine)

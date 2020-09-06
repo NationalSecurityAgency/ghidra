@@ -30,10 +30,16 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractLabelMsSymbol} symbols.
  */
-public class LabelSymbolApplier extends AbstractMsSymbolApplier {
+public class LabelSymbolApplier extends MsSymbolApplier {
 
 	private AbstractLabelMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @throws CancelledException upon user cancellation
+	 */
 	public LabelSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -45,13 +51,13 @@ public class LabelSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		if (!applicator.getPdbApplicatorOptions().applyInstructionLabels()) {
 			return;
 		}
 		// Place compiler generated symbols (e.g., $LN9) within containing function when possible
 		String name = symbol.getName();
-		Address symbolAddress = applicator.reladdr(symbol);
+		Address symbolAddress = applicator.getAddress(symbol);
 		FunctionManager functionManager = applicator.getProgram().getFunctionManager();
 		// TODO: What do we do with labels such as this?... "__catch$?test_eh1@@YAHXZ$7"
 		if (name.startsWith("$") && !name.contains(Namespace.DELIMITER)) {
@@ -67,7 +73,7 @@ public class LabelSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing
 	}
 }

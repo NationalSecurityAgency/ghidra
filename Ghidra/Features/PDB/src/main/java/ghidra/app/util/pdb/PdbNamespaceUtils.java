@@ -85,6 +85,10 @@ public class PdbNamespaceUtils {
 	 * @param index the index number used be used as part of a unique tag name.
 	 * @return the resulting name.
 	 */
+	// TODO: investigate if we can work a solution that no longer needs/has the index attached.
+	// I don't believe we are handling all of these correctly... someone else suggests regex, but
+	// that makes work in this area less clear until we know what we are doing...
+	// so, for now... DO NOT DO REGEX.
 	public static String fixUnnamed(String name, int index) {
 		if ("<unnamed-tag>".equals(name)) {
 			return String.format("<unnamed-tag_%08X>", index);

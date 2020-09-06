@@ -16,24 +16,27 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractWithMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractWithMsSymbol} symbols.  This is not fully implemented
- *  because we do not know its usage or have examples, but we have implemented
- *  the block management portion.
+ * because we do not know its usage or have examples, but we have implemented
+ * the block management portion.
  */
-public class WithSymbolApplier extends AbstractMsSymbolApplier {
+public class WithSymbolApplier extends MsSymbolApplier {
 
 	private AbstractWithMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public WithSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -45,23 +48,22 @@ public class WithSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
+	void apply() throws PdbException, CancelledException {
 		// TODO: We do not know if this can be applied to a program or not.  We have no examples.
-		String message = "Cannot apply " + this.getClass().getSimpleName() + " directly to program";
-		Msg.info(this, message);
-		PdbLog.message(message);
+		pdbLogAndInfoMessage(this,
+			"Cannot apply " + this.getClass().getSimpleName() + " directly to program");
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing
 	}
 
 	@Override
-	public void manageBlockNesting(AbstractMsSymbolApplier applierParam) {
+	void manageBlockNesting(MsSymbolApplier applierParam) {
 		if (applierParam instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
-			Address address = applicator.reladdr(symbol);
+			Address address = applicator.getAddress(symbol);
 			// TODO: not sure if getExpression() is correct, but there is no "name."
 			functionSymbolApplier.beginBlock(address, symbol.getExpression(), symbol.getLength());
 		}

@@ -18,25 +18,28 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.List;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractPublicMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractPublicMsSymbol} symbols.
  */
-public class PublicSymbolApplier extends AbstractMsSymbolApplier {
+public class PublicSymbolApplier extends MsSymbolApplier {
 
 	private AbstractPublicMsSymbol symbol;
 	private Address symbolAddress = null;
 	private Address existingSymbolAddress = null;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public PublicSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -48,14 +51,14 @@ public class PublicSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing.
 	}
 
 	@Override
-	public void apply() throws CancelledException, PdbException {
+	void apply() throws CancelledException, PdbException {
 
-		symbolAddress = applicator.reladdr(symbol);
+		symbolAddress = applicator.getAddress(symbol);
 		if (!Address.NO_ADDRESS.equals(symbolAddress)) {
 
 			if (getName().startsWith("?")) { // mangled... should be unique
@@ -79,9 +82,7 @@ public class PublicSymbolApplier extends AbstractMsSymbolApplier {
 			}
 		}
 		else {
-			String message = "Could not apply symbol at NO_ADDRESS: " + symbol.getName();
-			Msg.info(this, message);
-			PdbLog.message(message);
+			pdbLogAndInfoMessage(this, "Could not apply symbol at NO_ADDRESS: " + symbol.getName());
 		}
 	}
 

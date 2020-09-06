@@ -22,7 +22,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
  * Ghidra program.  These can be optional values used during our development of this PdbApplicator,
  * and thus might not be found in the finished product.
  */
-public class PdbApplicatorOptions extends Exception {
+public class PdbApplicatorOptions {
 
 	private static final boolean defaultApplyCodeScopeBlockComments = false;
 	private static final boolean defaultApplyInstructionLabels = false;
@@ -110,7 +110,7 @@ public class PdbApplicatorOptions extends Exception {
 
 	/**
 	 * Enable/disable the option to only apply data types (skipping symbol information).
-	 *  In other words, the default is to apply symbols.
+	 * In other words, the default is to apply symbols.
 	 * @param applyDataTypesOnly {@code true} to turn applyDataTypesOnly on
 	 */
 	public void setApplyDataTypesOnly(boolean applyDataTypesOnly) {
@@ -143,7 +143,7 @@ public class PdbApplicatorOptions extends Exception {
 
 	/**
 	 * Enable/disable the option to attempt to map addresses using existing mangled symbols
-	 *  (typically public symbols).
+	 * (typically public symbols).
 	 * @param enable {@code true} to turn remapAddressesUsingExistingPublicSymbols on
 	 */
 	public void setRemapAddressUsingExistingPublicMangledSymbols(boolean enable) {
@@ -160,9 +160,9 @@ public class PdbApplicatorOptions extends Exception {
 
 	/**
 	 * Enable/disable the option to allow another symbol be set to primary when the existing
-	 *  primary symbol is a mangled symbol, regardless of the Symbol SourceType.  This is
-	 *  typically used when we can get better data type information from the PDB record than
-	 *  we can from the demangler.
+	 * primary symbol is a mangled symbol, regardless of the Symbol SourceType.  This is
+	 * typically used when we can get better data type information from the PDB record than
+	 * we can from the demangler.
 	 * @param enable {@code true} to turn allowDemotePrimaryMangledSymbol on
 	 */
 	public void setAllowDemotePrimaryMangledSymbol(boolean enable) {
@@ -179,7 +179,7 @@ public class PdbApplicatorOptions extends Exception {
 
 	/**
 	 * Enable/disable the option to apply function params and locals, which might produce improper
-	 *  results.
+	 * results.
 	 * @param applyFunctionVariables {@code true} to turn applyPublicSymbolsOnly on
 	 */
 	public void setApplyFunctionVariables(boolean applyFunctionVariables) {

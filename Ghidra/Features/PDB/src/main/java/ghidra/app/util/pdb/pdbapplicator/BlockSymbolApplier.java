@@ -16,22 +16,25 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractBlockMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
-import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractBlockMsSymbol} symbols.
  */
-public class BlockSymbolApplier extends AbstractMsSymbolApplier {
+public class BlockSymbolApplier extends MsSymbolApplier {
 
 	private AbstractBlockMsSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param iter the Iterator containing the symbol sequence being processed
+	 */
 	public BlockSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -43,22 +46,21 @@ public class BlockSymbolApplier extends AbstractMsSymbolApplier {
 	}
 
 	@Override
-	public void apply() throws PdbException, CancelledException {
-		String message = "Cannot apply " + this.getClass().getSimpleName() + " directly to program";
-		Msg.info(this, message);
-		PdbLog.message(message);
+	void apply() throws PdbException, CancelledException {
+		pdbLogAndInfoMessage(this,
+			"Cannot apply " + this.getClass().getSimpleName() + " directly to program");
 	}
 
 	@Override
-	public void applyTo(AbstractMsSymbolApplier applyToApplier) {
+	void applyTo(MsSymbolApplier applyToApplier) {
 		// Do nothing
 	}
 
 	@Override
-	public void manageBlockNesting(AbstractMsSymbolApplier applierParam) {
+	void manageBlockNesting(MsSymbolApplier applierParam) {
 		if (applierParam instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
-			Address address = applicator.reladdr(symbol);
+			Address address = applicator.getAddress(symbol);
 			functionSymbolApplier.beginBlock(address, symbol.getName(), symbol.getLength());
 		}
 	}

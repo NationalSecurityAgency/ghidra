@@ -27,7 +27,7 @@ import ghidra.util.exception.CancelledException;
 
 /**
  * Manages Address/Section/Segment-related PDB items.
- *  Has method for providing real addresses.
+ * Has method for providing real addresses.
  */
 public class PdbAddressManager {
 
@@ -72,19 +72,19 @@ public class PdbAddressManager {
 	 * @return The Address
 	 */
 	// Returns an address using the section and offset.
-	Address reladdr(AddressMsSymbol symbol) {
-		return reladdr(symbol.getSegment(), symbol.getOffset());
+	Address getAddress(AddressMsSymbol symbol) {
+		return getAddress(symbol.getSegment(), symbol.getOffset());
 	}
 
 	/**
 	 * Returns the Address for the given section and offset.  Will attempt to map the address
-	 *  to a new address if the {@link PdbApplicatorOptions}
+	 * to a new address if the {@link PdbApplicatorOptions}
 	 * @param segment The segment
 	 * @param offset The offset
 	 * @return The Address, which can be {@code Address.NO_ADDRESS} if it was the original address.
 	 */
 	// Returns an address using the section and offset.
-	Address reladdr(int segment, long offset) {
+	Address getAddress(int segment, long offset) {
 		if (segment < 0 || segment > allSegmentsInfo.size()) {
 			return Address.NO_ADDRESS;
 		}
@@ -102,9 +102,9 @@ public class PdbAddressManager {
 
 	/**
 	 * Write the mapped address for a query address, where where the mapping is
-	 *  derived by using a the address of a PDB symbol as the key and finding the address of
-	 *  a symbol in the program of the same "unique" name. This is accomplished using public
-	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
+	 * derived by using a the address of a PDB symbol as the key and finding the address of
+	 * a symbol in the program of the same "unique" name. This is accomplished using public
+	 * mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
 	 * @param address the query address
 	 * @param remapAddress the mapped address
 	 */
@@ -122,9 +122,9 @@ public class PdbAddressManager {
 
 	/**
 	 * Returns the Address of an existing symbol for the query address, where the mapping is
-	 *  derived by using a the address of a PDB symbol as the key and finding the address of
-	 *  a symbol in the program of the same "unique" name. This is accomplished using public
-	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
+	 * derived by using a the address of a PDB symbol as the key and finding the address of
+	 * a symbol in the program of the same "unique" name. This is accomplished using public
+	 * mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
 	 * @param address the query address
 	 * @return the remapAddress
 	 */
@@ -270,7 +270,7 @@ public class PdbAddressManager {
 			long offset = sym.getOffset();
 			int length = sym.getLength();
 			int characteristics = sym.getCharacteristics();
-			Address address = reladdr(sym);
+			Address address = getAddress(sym);
 			PdbLog.message(String.format("%s: [%04X:%08X](%s) Len:%08X, Characteristics:%08X", name,
 				segment, offset, address.toString(), length, characteristics));
 		}
@@ -307,7 +307,7 @@ public class PdbAddressManager {
 		MemoryBlock[] blocks = mem.getBlocks();
 		List<SegmentMapDescription> segmentMapList = pdb.getDatabaseInterface().getSegmentMapList();
 		/**
-		 *  Program has additional "Headers" block set up by the {@link PeLoader}.
+		 * Program has additional "Headers" block set up by the {@link PeLoader}.
 		 */
 		int progIndexLimit = blocks.length;
 		int pdbIndexLimit = segmentMapList.size();
