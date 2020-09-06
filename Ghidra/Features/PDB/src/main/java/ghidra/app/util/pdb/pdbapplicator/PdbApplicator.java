@@ -97,6 +97,8 @@ public class PdbApplicator {
 		}
 	}
 
+	long primarySymbolCallCount;
+
 	//==============================================================================================
 	private String pdbFilename;
 	private AbstractPdb pdb;
@@ -177,6 +179,8 @@ public class PdbApplicator {
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
 			TaskMonitor monitorParam, MessageLog logParam) throws PdbException, CancelledException {
 
+		primarySymbolCallCount = 0;
+
 		initializeApplyTo(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, monitorParam, logParam);
 
@@ -198,6 +202,7 @@ public class PdbApplicator {
 		String applicatorMetrics = pdbApplicatorMetrics.getPostProcessingReport();
 		Msg.info(this, applicatorMetrics);
 		PdbLog.message(applicatorMetrics);
+		Msg.info(this, "Primary Symbol Call Count: " + primarySymbolCallCount);
 		Msg.info(this, "PDB Terminated Normally");
 	}
 
@@ -798,16 +803,30 @@ public class PdbApplicator {
 		return pdbAddressManager.getAddress(segment, offset);
 	}
 
+//	/**
+//	 * Write the mapped address for a query address, where where the mapping is
+//	 *  derived by using a the address of a PDB symbol as the key and finding the address of
+//	 *  a symbol in the program of the same "unique" name. This is accomplished using public
+//	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
+//	 * @param address the query address
+//	 * @param remapAddress the mapped address
+//	 */
+//	void putRemapAddressByAddress(Address address, Address remapAddress) {
+//		pdbAddressManager.putRemapAddressByAddress(address, remapAddress);
+//	}
+//
 	/**
-	 * Write the mapped address for a query address, where where the mapping is
-	 * derived by using a the address of a PDB symbol as the key and finding the address of
-	 * a symbol in the program of the same "unique" name. This is accomplished using public
-	 * mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
-	 * @param address the query address
-	 * @param remapAddress the mapped address
+	 * Indicate to the {@link PdbAddressManager} that a new symbol with the given name has the
+	 * associated address.  This allows the PdbAddressManager to create and organize the
+	 * re-mapped address and supply them.  Also returns the address of the pre-existing symbol
+	 * of the same name if the name was unique, otherwise null if it didn't exist or wasn't
+	 * unique.
+	 * @param name the symbol name
+	 * @param address its associated address
+	 * @return the {@link Address} of existing symbol or null
 	 */
-	void putRemapAddressByAddress(Address address, Address remapAddress) {
-		pdbAddressManager.putRemapAddressByAddress(address, remapAddress);
+	Address witnessSymbolNameAtAddress(String name, Address address) {
+		return pdbAddressManager.witnessSymbolNameAtAddress(name, address);
 	}
 
 	/**
@@ -1294,6 +1313,7 @@ public class PdbApplicator {
 	//==============================================================================================
 	boolean shouldForcePrimarySymbol(Address address, boolean forceIfMangled) {
 		Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(address);
+		primarySymbolCallCount++;
 		if (primarySymbol != null) {
 
 			if (primarySymbol.getName().startsWith("?") && forceIfMangled &&
@@ -1348,6 +1368,142 @@ public class PdbApplicator {
 			log.appendMsg("Unable to create symbol: " + e.getMessage());
 		}
 		return false;
+	}
+
+	//==============================================================================================
+	private static class PrimarySymbolInfo {
+		private Symbol symbol;
+		private boolean isNewSymbol;
+
+		private PrimarySymbolInfo(Symbol symbol, boolean isNewSymbol) {
+			this.symbol = symbol;
+			this.isNewSymbol = isNewSymbol;
+		}
+
+		private Symbol getSymbol() {
+			return symbol;
+		}
+
+		private boolean canBePrimaryForceOverriddenBy(String newName) {
+			if (getSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+				return true;
+			}
+			if (isMangled() && !PdbApplicator.isMangled(newName)) {
+				return true;
+			}
+			if (isNewSymbol()) {
+				return false;
+			}
+			return false;
+		}
+
+		private SourceType getSource() {
+			return symbol.getSource();
+		}
+
+		private boolean isMangled() {
+			return symbol.getName().startsWith("?");
+		}
+
+		private boolean isNewSymbol() {
+			return isNewSymbol;
+		}
+
+//		private PrimarySymbolType getPrimaryType() {
+//			return primaryType;
+//		}
+	}
+
+	private Map<Address, PrimarySymbolInfo> primarySymbolInfoByAddress = new HashMap<>();
+
+	//==============================================================================================
+	Symbol createSymbolNew(Address address, String symbolPathString,
+			boolean forcePrimaryIfExistingIsMangled) {
+
+		// Must get existing info before creating new symbol, as we do not want "existing"
+		//  to include the new one
+		PrimarySymbolInfo existingPrimarySymbolInfo = getExistingPrimarySymbolInfo(address);
+		Symbol newSymbol = createSymbol(address, symbolPathString);
+		if (newSymbol == null) {
+			return null;
+		}
+
+		boolean forcePrimary = false;
+		if (existingPrimarySymbolInfo != null) {
+			if (existingPrimarySymbolInfo.canBePrimaryForceOverriddenBy(symbolPathString) &&
+				forcePrimaryIfExistingIsMangled &&
+				applicatorOptions.allowDemotePrimaryMangledSymbol()) {
+				forcePrimary = true;
+			}
+		}
+
+		boolean forcePrimarySucceeded = false;
+		if (forcePrimary) {
+			SetLabelPrimaryCmd cmd = new SetLabelPrimaryCmd(address, newSymbol.getName(),
+				newSymbol.getParentNamespace());
+			if (cmd.applyTo(program)) {
+				forcePrimarySucceeded = true;
+			}
+		}
+
+		if (existingPrimarySymbolInfo == null || forcePrimarySucceeded) {
+			PrimarySymbolInfo primarySymbolInfo = new PrimarySymbolInfo(newSymbol, true);
+			setExistingPrimarySymbolInfo(address, primarySymbolInfo);
+		}
+
+		return newSymbol;
+	}
+
+	private static boolean isMangled(String name) {
+		return name.startsWith("?");
+	}
+
+	private void setExistingPrimarySymbolInfo(Address address, PrimarySymbolInfo info) {
+		primarySymbolInfoByAddress.put(address, info);
+	}
+
+	private PrimarySymbolInfo getExistingPrimarySymbolInfo(Address address) {
+		PrimarySymbolInfo info = primarySymbolInfoByAddress.get(address);
+		if (info != null) {
+			return info;
+		}
+		//Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(address);
+		Symbol primarySymbol = pdbAddressManager.getPrimarySymbol(address);
+
+		primarySymbolCallCount++;
+		if (primarySymbol == null ||
+			primarySymbol.getSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+			return null;
+		}
+		info = new PrimarySymbolInfo(primarySymbol, false);
+		primarySymbolInfoByAddress.put(address, info);
+		return info;
+	}
+
+	private Symbol createSymbol(Address address, String symbolPathString) {
+		Symbol symbol = null;
+		try {
+			Namespace namespace = program.getGlobalNamespace();
+			if (symbolPathString.startsWith(THUNK_NAME_PREFIX)) {
+				symbolPathString = symbolPathString.substring(THUNK_NAME_PREFIX.length(),
+					symbolPathString.length());
+			}
+			SymbolPath symbolPath = new SymbolPath(symbolPathString);
+			symbolPath = symbolPath.replaceInvalidChars();
+			String name = symbolPath.getName();
+			String namespacePath = symbolPath.getParentPath();
+			if (namespacePath != null) {
+				namespace = NamespaceUtils.createNamespaceHierarchy(namespacePath, namespace,
+					program, address, SourceType.IMPORTED);
+			}
+
+			symbol = SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, address,
+				namespace, name, SourceType.IMPORTED);
+		}
+		catch (InvalidInputException e) {
+			appendLogMsg("Unable to create symbol " + symbolPathString + " at " + address);
+		}
+		return symbol;
 	}
 
 }

@@ -50,13 +50,14 @@ public class PeCoffGroupSymbolApplier extends MsSymbolApplier {
 		applicator.addMemoryGroupRefinement(symbol);
 		Address symbolAddress = applicator.getAddress(symbol);
 		if (!Address.NO_ADDRESS.equals(symbolAddress)) {
-			boolean forcePrimary = applicator.shouldForcePrimarySymbol(symbolAddress, false);
-			String name = symbol.getName();
-			symbol.getLength();
-			symbol.getCharacteristics();
-			if (!applicator.createSymbol(symbolAddress, name, forcePrimary)) {
-				applicator.appendLogMsg("Unable to create symbol " + name + " at " + symbolAddress);
-			}
+//			boolean forcePrimary = applicator.shouldForcePrimarySymbol(symbolAddress, false);
+//			String name = symbol.getName();
+//			symbol.getLength();
+//			symbol.getCharacteristics();
+//			if (!applicator.createSymbol(symbolAddress, name, forcePrimary)) {
+//				applicator.appendLogMsg("Unable to create symbol " + name + " at " + symbolAddress);
+//			}
+			applicator.createSymbolNew(symbolAddress, symbol.getName(), false);
 		}
 		else {
 //			monitor.setMessage("Skipping NO_ADDRESS symbol " + symb.getName() + "...");

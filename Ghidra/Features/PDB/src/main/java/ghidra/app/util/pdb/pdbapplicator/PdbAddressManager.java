@@ -23,6 +23,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -38,6 +40,20 @@ public class PdbAddressManager {
 	private List<PeCoffGroupMsSymbol> memoryGroupRefinement;
 	private List<PeCoffSectionMsSymbol> memorySectionRefinement;
 	private List<SegmentInfo> allSegmentsInfo;
+
+	// Map of Address by symbol name... if a name has appeared more than once, then the Address
+	//  is written with Address.NO_ADDRESS to indicate that the name is found at more than one
+	//  address (not unique from the perspective we need of being able to map PDB addresses to
+	//  possibly different addresses (possibly from an application of another PDB with accurate
+	//  public or "unique" symbols).  Originally, we were only going to use symbols with mangled
+	//  names, but opened this up to a wider field of symbol names.
+	private Map<String, Address> addressByPreExistingSymbolName;
+	// Since we are already visiting all existing symbols, and since it will be quicker to do in
+	//  one pass than to continually request the primary symbol at a particular address (as we
+	//  are also adding more symbols), we will get an initial snapshot of what symbol is primary
+	//  at any particular address before we start adding more.
+	private Map<Address, Symbol> primarySymbolByAddress;
+
 	private Map<Address, Address> remapAddressByAddress;
 
 	private PdbApplicator applicator;
@@ -61,9 +77,12 @@ public class PdbAddressManager {
 		memoryGroupRefinement = new ArrayList<>();
 		memorySectionRefinement = new ArrayList<>();
 		allSegmentsInfo = new ArrayList<>();
+		addressByPreExistingSymbolName = new HashMap<>();
+		primarySymbolByAddress = new HashMap<>();
 		remapAddressByAddress = new HashMap<>();
 
 		determineMemoryBlocks();
+		mapPreExistingSymbols();
 	}
 
 	/**
@@ -101,23 +120,29 @@ public class PdbAddressManager {
 	}
 
 	/**
-	 * Write the mapped address for a query address, where where the mapping is
-	 * derived by using a the address of a PDB symbol as the key and finding the address of
-	 * a symbol in the program of the same "unique" name. This is accomplished using public
-	 * mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
-	 * @param address the query address
-	 * @param remapAddress the mapped address
+	 * Returns the primary symbol for the address, as determined at the start of PDB processing
+	 * before apply any PDB symbols.
+	 * @param address the {@link Address}
+	 * @return the primary symbol
 	 */
-	void putRemapAddressByAddress(Address address, Address remapAddress) {
-		Address lookup = remapAddressByAddress.get(address);
-		if (lookup == null) {
-			remapAddressByAddress.put(address, remapAddress);
-		}
-		else if (!lookup.equals(remapAddress) && lookup != badAddress) {
-			applicator.appendLogMsg("Trying to map a mapped address to a new address... key: " +
-				address + ", currentMap: " + lookup + ", newMap: " + remapAddress);
-			remapAddressByAddress.put(address, badAddress);
-		}
+	Symbol getPrimarySymbol(Address address) {
+		return primarySymbolByAddress.get(address);
+	}
+
+	/**
+	 * Indicate to the {@link PdbAddressManager} that a new symbol with the given name has the
+	 * associated address.  This allows the PdbAddressManager to create and organize the
+	 * re-mapped address and supply them.  Also returns the address of the pre-existing symbol
+	 * of the same name if the name was unique, otherwise null if it didn't exist or wasn't
+	 * unique.
+	 * @param name the symbol name
+	 * @param address its associated address
+	 * @return the {@link Address} of existing symbol or null
+	 */
+	Address witnessSymbolNameAtAddress(String name, Address address) {
+		Address existingAddress = getAddressByPreExistingSymbolName(name);
+		putRemapAddressByAddress(address, existingAddress);
+		return existingAddress;
 	}
 
 	/**
@@ -216,6 +241,75 @@ public class PdbAddressManager {
 		for (SegmentMapDescription segmentMapDescription : segmentMapList) {
 			segmentMapDescription.getSegmentOffset();
 			segmentMapDescription.getLength();
+		}
+	}
+
+	//==============================================================================================
+	//==============================================================================================
+	/**
+	 * Filling in the maps as indicated by their descriptions.
+	 * @throws PdbException If Program is null;
+	 */
+	private void mapPreExistingSymbols() throws PdbException {
+		Program program = applicator.getProgram();
+		if (program == null) {
+			throw new PdbException("Program may not be null");
+		}
+		SymbolIterator iter = program.getSymbolTable().getAllSymbols(false);
+		while (iter.hasNext()) {
+			Symbol symbol = iter.next();
+			String name = symbol.getName();
+			Address address = symbol.getAddress();
+			Address existingAddress = addressByPreExistingSymbolName.get(name);
+			if (existingAddress == null) {
+				addressByPreExistingSymbolName.put(name, address);
+			}
+			else if (!existingAddress.equals(address)) {
+				addressByPreExistingSymbolName.put(name, Address.NO_ADDRESS);
+			}
+			if (symbol.isPrimary()) {
+				primarySymbolByAddress.put(address, symbol);
+			}
+		}
+	}
+
+	/**
+	 * Returns the address for the symbol name.  If the symbol name did not exist within the
+	 * program when the list was being populated or if the name was seen at more than one address,
+	 * then null is returned
+	 * @param name the name of the symbol
+	 * @return the address for that name or null
+	 */
+	private Address getAddressByPreExistingSymbolName(String name) {
+		Address address = addressByPreExistingSymbolName.get(name);
+		// Thin the list of map values we no longer need.  This method should only be
+		//  used after the list has been completely populated, and the NO_ADDRESS marker
+		//  was only being used during the method that populated the list to indicate that a
+		//  name was not unique for our needs.
+		if (address != null && address.equals(Address.NO_ADDRESS)) {
+			addressByPreExistingSymbolName.remove(name);
+			return null;
+		}
+		return address;
+	}
+
+	/**
+	 * Write the mapped address for a query address, where where the mapping is
+	 *  derived by using a the address of a PDB symbol as the key and finding the address of
+	 *  a symbol in the program of the same "unique" name. This is accomplished using public
+	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
+	 * @param address the query address
+	 * @param remapAddress the mapped address
+	 */
+	private void putRemapAddressByAddress(Address address, Address remapAddress) {
+		Address lookup = remapAddressByAddress.get(address);
+		if (lookup == null) {
+			remapAddressByAddress.put(address, remapAddress);
+		}
+		else if (!lookup.equals(remapAddress) && lookup != badAddress) {
+			applicator.appendLogMsg("Trying to map a mapped address to a new address... key: " +
+				address + ", currentMap: " + lookup + ", newMap: " + remapAddress);
+			remapAddressByAddress.put(address, badAddress);
 		}
 	}
 

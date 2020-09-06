@@ -77,11 +77,12 @@ public class DataSymbolApplier extends MsSymbolApplier {
 			Address symbolAddress = applicator.getAddress(symbol);
 			Address remapAddress = applicator.getRemapAddressByAddress(symbolAddress);
 			RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
-			boolean forcePrimary = applicator.shouldForcePrimarySymbol(remapAddress, true);
-			String name = symbol.getName();
-			if (!applicator.createSymbol(remapAddress, name, forcePrimary)) {
-				applicator.appendLogMsg("Unable to create symbol " + name + " at " + remapAddress);
-			}
+//			boolean forcePrimary = applicator.shouldForcePrimarySymbol(symbolAddress, true);
+//			String name = symbol.getName();
+//			if (!applicator.createSymbol(symbolAddress, name, forcePrimary)) {
+//				applicator.appendLogMsg("Unable to create symbol " + name + " at " + symbolAddress);
+//			}
+			applicator.createSymbolNew(symbolAddress, symbol.getName(), true);
 			createData(remapAddress, typeRecordNumber);
 		}
 	}

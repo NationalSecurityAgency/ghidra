@@ -15,14 +15,11 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.util.List;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractPublicMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
@@ -60,26 +57,50 @@ public class PublicSymbolApplier extends MsSymbolApplier {
 
 		symbolAddress = applicator.getAddress(symbol);
 		if (!Address.NO_ADDRESS.equals(symbolAddress)) {
-
-			if (getName().startsWith("?")) { // mangled... should be unique
-				List<Symbol> existingSymbols =
-					applicator.getProgram().getSymbolTable().getGlobalSymbols(getName());
-				if (existingSymbols.size() == 1) {
-					existingSymbolAddress = existingSymbols.get(0).getAddress();
-					applicator.putRemapAddressByAddress(symbolAddress, existingSymbolAddress);
-				}
-				else if (existingSymbols.size() == 0) {
-					String name = symbol.getName();
-					if (!applicator.createSymbol(symbolAddress, name, true)) {
-						applicator.appendLogMsg(
-							"Unable to create symbol " + name + " at " + symbolAddress);
-					}
-				}
-				else {
-					applicator.appendLogMsg(
-						"Unexpected multiple mangled symbols of same name: " + getName());
-				}
+			String name = symbol.getName();
+			existingSymbolAddress = applicator.witnessSymbolNameAtAddress(getName(), symbolAddress);
+			// TODO: Consider... could add restriction of not putting down symbol if it is mangled,
+			//  as this would violate the uniqueness of the symbol... but we would also want to
+			//  know that this situation was being presented.
+			if (!symbolAddress.equals(existingSymbolAddress)) {
+//				if (!applicator.createSymbol(symbolAddress, name, true)) {
+//					applicator.appendLogMsg(
+//						"Unable to create symbol " + name + " at " + symbolAddress);
+//				}
+				// Note: the following does not work because thunks and thunked functions
+				//  end up getting the same name with the way names are currently propagated.
+				// TODO; consider putting this back in if thunks take into account the fact
+				//  that mangled names should be unique.
+//				if (name.startsWith("?") && existingSymbolAddress != null) {
+//					applicator.appendLogMsg("Mangled symbol exists elsewhere. Not placing: " +
+//						symbolAddress + " " + name);
+//				}
+//				else {
+//					applicator.createSymbolNew(symbolAddress, symbol.getName(), true);
+//				}
+				// Just do this instead of the commented-out code trying to avoid duplicate
+				// mangled names
+				applicator.createSymbolNew(symbolAddress, symbol.getName(), true);
 			}
+//			if (name.startsWith("?")) { // mangled... should be unique
+//				List<Symbol> existingSymbols =
+//					applicator.getProgram().getSymbolTable().getGlobalSymbols(getName());
+//				if (existingSymbols.size() == 1) {
+//					existingSymbolAddress = existingSymbols.get(0).getAddress();
+//					applicator.putRemapAddressByAddress(symbolAddress, existingSymbolAddress);
+//				}
+//				else if (existingSymbols.size() == 0) {
+//					if (!applicator.createSymbol(symbolAddress, name, true)) {
+//						applicator.appendLogMsg(
+//							"Unable to create symbol " + name + " at " + symbolAddress);
+//					}
+////					applicator.createSymbolNew(symbolAddress, symbol.getName(), true);
+//				}
+//				else {
+//					applicator.appendLogMsg(
+//						"Unexpected multiple mangled symbols of same name: " + getName());
+//				}
+//			}
 		}
 		else {
 			pdbLogAndInfoMessage(this, "Could not apply symbol at NO_ADDRESS: " + symbol.getName());

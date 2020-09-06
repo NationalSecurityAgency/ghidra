@@ -66,10 +66,11 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 				name = NamespaceUtils.getNamespaceQualifiedName(f, name, true);
 			}
 		}
-		boolean forcePrimary = applicator.shouldForcePrimarySymbol(symbolAddress, false);
-		if (!applicator.createSymbol(symbolAddress, name, forcePrimary)) {
-			applicator.appendLogMsg("Unable to create symbol " + name + " at " + symbolAddress);
-		}
+//		boolean forcePrimary = applicator.shouldForcePrimarySymbol(symbolAddress, false);
+//		if (!applicator.createSymbol(symbolAddress, name, forcePrimary)) {
+//			applicator.appendLogMsg("Unable to create symbol " + name + " at " + symbolAddress);
+//		}
+		applicator.createSymbolNew(symbolAddress, symbol.getName(), false);
 	}
 
 	@Override
