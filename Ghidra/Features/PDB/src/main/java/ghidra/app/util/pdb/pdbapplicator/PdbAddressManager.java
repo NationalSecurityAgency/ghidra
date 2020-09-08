@@ -267,7 +267,7 @@ public class PdbAddressManager {
 			else if (!existingAddress.equals(address)) {
 				addressByPreExistingSymbolName.put(name, Address.NO_ADDRESS);
 			}
-			if (symbol.isPrimary()) {
+			if (primarySymbolByAddress.get(address) == null && symbol.isPrimary()) {
 				primarySymbolByAddress.put(address, symbol);
 			}
 		}

@@ -235,9 +235,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	private boolean applyFunction(Program program, Address address, TaskMonitor monitor) {
 		Listing listing = program.getListing();
 
-//		boolean forcePrimary = applicator.shouldForcePrimarySymbol(address, true);
-//		applicator.createSymbol(address, getName(), forcePrimary);
-		applicator.createSymbolNew(address, getName(), true);
+		applicator.createSymbol(address, getName(), true);
 
 		function = listing.getFunctionAt(address);
 		if (function == null) {

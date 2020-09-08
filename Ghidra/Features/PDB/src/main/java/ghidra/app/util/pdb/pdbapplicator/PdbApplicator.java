@@ -61,6 +61,9 @@ import ghidra.util.task.TaskMonitor;
  */
 public class PdbApplicator {
 
+	private static final String THUNK_NAME_PREFIX = "[thunk]:";
+
+	//==============================================================================================
 	/**
 	 * Returns integer value of BigInteger or Integer.MAX_VALUE if does not fit.
 	 * @param myApplicator PdbApplicator for which we are working.
@@ -96,8 +99,6 @@ public class PdbApplicator {
 			return Integer.MAX_VALUE;
 		}
 	}
-
-	long primarySymbolCallCount;
 
 	//==============================================================================================
 	private String pdbFilename;
@@ -179,8 +180,6 @@ public class PdbApplicator {
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
 			TaskMonitor monitorParam, MessageLog logParam) throws PdbException, CancelledException {
 
-		primarySymbolCallCount = 0;
-
 		initializeApplyTo(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, monitorParam, logParam);
 
@@ -202,7 +201,6 @@ public class PdbApplicator {
 		String applicatorMetrics = pdbApplicatorMetrics.getPostProcessingReport();
 		Msg.info(this, applicatorMetrics);
 		PdbLog.message(applicatorMetrics);
-		Msg.info(this, "Primary Symbol Call Count: " + primarySymbolCallCount);
 		Msg.info(this, "PDB Terminated Normally");
 	}
 
@@ -746,15 +744,6 @@ public class PdbApplicator {
 	//==============================================================================================
 	//==============================================================================================
 	DataType resolve(DataType dataType) {
-		if ("Cr_z_internal_state".equals(dataType.getName())) {
-			int a = 1;
-			a = a + 1;
-		}
-		if ("z_stream_s".equals(dataType.getName())) {
-			int a = 1;
-			a = a + 1;
-		}
-
 		DataType resolved = getDataTypeManager().resolve(dataType,
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
 		resolveCount++;
@@ -803,18 +792,6 @@ public class PdbApplicator {
 		return pdbAddressManager.getAddress(segment, offset);
 	}
 
-//	/**
-//	 * Write the mapped address for a query address, where where the mapping is
-//	 *  derived by using a the address of a PDB symbol as the key and finding the address of
-//	 *  a symbol in the program of the same "unique" name. This is accomplished using public
-//	 *  mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
-//	 * @param address the query address
-//	 * @param remapAddress the mapped address
-//	 */
-//	void putRemapAddressByAddress(Address address, Address remapAddress) {
-//		pdbAddressManager.putRemapAddressByAddress(address, remapAddress);
-//	}
-//
 	/**
 	 * Indicate to the {@link PdbAddressManager} that a new symbol with the given name has the
 	 * associated address.  This allows the PdbAddressManager to create and organize the
@@ -1313,7 +1290,6 @@ public class PdbApplicator {
 	//==============================================================================================
 	boolean shouldForcePrimarySymbol(Address address, boolean forceIfMangled) {
 		Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(address);
-		primarySymbolCallCount++;
 		if (primarySymbol != null) {
 
 			if (primarySymbol.getName().startsWith("?") && forceIfMangled &&
@@ -1331,9 +1307,8 @@ public class PdbApplicator {
 	}
 
 	//==============================================================================================
-	private static final String THUNK_NAME_PREFIX = "[thunk]:";
-
-	boolean createSymbol(Address address, String symbolPathString, boolean forcePrimary) {
+	@SuppressWarnings("unused") // For method not being called. In process of removing this version
+	boolean createSymbolOld(Address address, String symbolPathString, boolean forcePrimary) {
 
 //		storeLabelByAddress(address, symbolPathString);
 
@@ -1380,10 +1355,6 @@ public class PdbApplicator {
 			this.isNewSymbol = isNewSymbol;
 		}
 
-		private Symbol getSymbol() {
-			return symbol;
-		}
-
 		private boolean canBePrimaryForceOverriddenBy(String newName) {
 			if (getSource().isLowerPriorityThan(SourceType.IMPORTED)) {
 				return true;
@@ -1408,16 +1379,12 @@ public class PdbApplicator {
 		private boolean isNewSymbol() {
 			return isNewSymbol;
 		}
-
-//		private PrimarySymbolType getPrimaryType() {
-//			return primaryType;
-//		}
 	}
 
 	private Map<Address, PrimarySymbolInfo> primarySymbolInfoByAddress = new HashMap<>();
 
 	//==============================================================================================
-	Symbol createSymbolNew(Address address, String symbolPathString,
+	Symbol createSymbol(Address address, String symbolPathString,
 			boolean forcePrimaryIfExistingIsMangled) {
 
 		// Must get existing info before creating new symbol, as we do not want "existing"
@@ -1467,10 +1434,7 @@ public class PdbApplicator {
 		if (info != null) {
 			return info;
 		}
-		//Symbol primarySymbol = program.getSymbolTable().getPrimarySymbol(address);
 		Symbol primarySymbol = pdbAddressManager.getPrimarySymbol(address);
-
-		primarySymbolCallCount++;
 		if (primarySymbol == null ||
 			primarySymbol.getSource().isLowerPriorityThan(SourceType.IMPORTED)) {
 			return null;
