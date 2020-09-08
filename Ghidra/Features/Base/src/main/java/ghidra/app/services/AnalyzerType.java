@@ -49,10 +49,9 @@ public enum AnalyzerType {
 	FUNCTION_ANALYZER("Function Analyzer", "Triggered when functions are created."),
 	FUNCTION_MODIFIERS_ANALYZER("Function-modifiers Analyzer", "Triggered when a function's modifier changes"),
 	FUNCTION_SIGNATURES_ANALYZER("Function-Signatures Analyzer", "Triggered when a function's signature changes."),
-	DATA_ANALYZER("Data Analyzer", "Triggered when data is created."),
+	DATA_ANALYZER("Data Analyzer", "Triggered when data is created.");
 	// TODO: Add Symbol analyzer type
 	// SYMBOL_ANALYZER("Symbol Analyzer", "Triggered when non-default primary symbol is added or changed"),
-	ONE_SHOT_ANALYZER("One Shot Analzyer", "Not triggered by any event, only executed when analysis is run manually (One shots run before all others)");
 
 	private String name;
 	private String description;
