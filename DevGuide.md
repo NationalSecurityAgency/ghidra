@@ -349,7 +349,7 @@ this is required to make AWT happy.
 Some features of Ghidra require the curation of rather extensive databases.
 These include the Data Type Archives and Function ID Databases, both of which require collecting header files and libraries for the relevant SDKs and platforms.
 Much of this work is done by hand.
-The archives included in our official builds can be found in the __[ghidra-data]__ repository.
+The archives included in our official builds can be found in the [ghidra-data] repository.
 
 ### Building Data Type Archives
 
@@ -374,3 +374,5 @@ Now, select __Tools -> Function ID -> Populate FidDb__ from programs.
 Fill out the options appropriately and click OK.
 
 If you'd like some details of our fine tuning, take a look at `~/git/ghidra/Ghidra/Features/FunctionID/data/building_fid.txt`.
+
+[ghidra-data]: https://github.com/NationalSecurityAgency/ghidra-data
