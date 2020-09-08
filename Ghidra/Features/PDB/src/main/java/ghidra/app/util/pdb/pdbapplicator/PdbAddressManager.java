@@ -155,7 +155,7 @@ public class PdbAddressManager {
 	 */
 	Address getRemapAddressByAddress(Address address) {
 		if (!Address.NO_ADDRESS.equals(address) &&
-			applicator.getPdbApplicatorOptions().remapAddressUsingExistingPublicMangledSymbols()) {
+			applicator.getPdbApplicatorOptions().remapAddressUsingExistingPublicSymbols()) {
 			return remapAddressByAddress.getOrDefault(address, address);
 		}
 		return address;

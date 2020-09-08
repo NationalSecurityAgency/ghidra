@@ -16,8 +16,10 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 /**
- * Mode for {@link CppCompositeType} class layout.
+ * Algorithm layout mechanism being used for a particular {@link CppCompositeType}. An initial
+ * value gets passed in to the algorithm but can be changed by the algorithm, based on class
+ * internal data.
  */
-enum OoComponentLayoutMode {
+enum ObjectOrientedClassLayout {
 	UNKNOWN, MEMBERS_ONLY, BASIC, SIMPLE, COMPLEX
 }

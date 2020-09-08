@@ -29,8 +29,6 @@ import ghidra.util.exception.CancelledException;
  */
 public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 
-	DataType vtShape = null;
-
 	private static AbstractMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {
 		if (!(type instanceof AbstractVirtualFunctionTablePointerMsType) &&

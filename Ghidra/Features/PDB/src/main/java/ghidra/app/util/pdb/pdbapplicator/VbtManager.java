@@ -29,9 +29,9 @@ import ghidra.util.Msg;
  */
 public class VbtManager {
 
-	DataTypeManager dtm;
-	PointerDataType fallbackVbptr;
-	Map<Address, VirtualBaseTable> vbtByAddress;
+	private DataTypeManager dtm;
+	private PointerDataType fallbackVbptr;
+	protected Map<Address, VirtualBaseTable> vbtByAddress;
 
 	/**
 	 * Virtual Base Table Lookup Manager

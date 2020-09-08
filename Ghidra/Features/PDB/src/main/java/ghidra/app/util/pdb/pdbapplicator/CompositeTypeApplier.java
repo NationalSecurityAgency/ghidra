@@ -330,7 +330,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			// TODO: Investigate.  We should do this check for some classes somewhere.  Should
 			// we do it here.  Set breakpoint here to investigate.
 		}
-		classType.createLayout(applicator.getPdbApplicatorOptions().getCompositeLayoutMode(),
+		classType.createLayout(applicator.getPdbApplicatorOptions().getClassLayoutChoice(),
 			applicator.getVbtManager(), applicator.getCancelOnlyWrappingMonitor());
 	}
 

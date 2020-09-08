@@ -30,8 +30,8 @@ import ghidra.util.exception.CancelledException;
  */
 public class TypedefSymbolApplier extends MsSymbolApplier {
 
-	DataType resolvedDataType = null;
-	AbstractUserDefinedTypeMsSymbol udtSymbol;
+	private DataType resolvedDataType = null;
+	private AbstractUserDefinedTypeMsSymbol udtSymbol;
 
 	/**
 	 * Constructor

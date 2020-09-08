@@ -19,37 +19,38 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * PDB Analyzer Options Mode for performing object-oriented structure layout.
+ * PDB Analyzer user algorithmic choice for performing object oriented class layout.
  */
-public enum CompositeLayoutMode {
-	MEMBERS_ONLY("Legacy", 0, OoComponentLayoutMode.MEMBERS_ONLY),
-	BASIC_SIMPLE_COMPLEX("Complex with Basic Fallback", 1, OoComponentLayoutMode.BASIC),
-	SIMPLE_COMPLEX("Complex with Simple Fallback", 2, OoComponentLayoutMode.SIMPLE),
-	COMPLEX("Complex Always", 3, OoComponentLayoutMode.COMPLEX);
+public enum ObjectOrientedClassLayoutChoice {
+	MEMBERS_ONLY("Legacy", 0, ObjectOrientedClassLayout.MEMBERS_ONLY),
+	BASIC_SIMPLE_COMPLEX("Complex with Basic Fallback", 1, ObjectOrientedClassLayout.BASIC),
+	SIMPLE_COMPLEX("Complex with Simple Fallback", 2, ObjectOrientedClassLayout.SIMPLE),
+	COMPLEX("Complex Always", 3, ObjectOrientedClassLayout.COMPLEX);
 
-	private static final Map<Integer, CompositeLayoutMode> BY_VALUE = new HashMap<>();
+	private static final Map<Integer, ObjectOrientedClassLayoutChoice> BY_VALUE = new HashMap<>();
 	static {
-		for (CompositeLayoutMode val : values()) {
+		for (ObjectOrientedClassLayoutChoice val : values()) {
 			BY_VALUE.put(val.value, val);
 		}
 	}
 
 	private final String label;
 	private final int value;
-	private OoComponentLayoutMode layoutMode;
+	private ObjectOrientedClassLayout classLayout;
 
 	@Override
 	public String toString() {
 		return label;
 	}
 
-	private CompositeLayoutMode(String label, int value, OoComponentLayoutMode layoutMode) {
+	private ObjectOrientedClassLayoutChoice(String label, int value,
+			ObjectOrientedClassLayout classLayout) {
 		this.label = label;
 		this.value = value;
-		this.layoutMode = layoutMode;
+		this.classLayout = classLayout;
 	}
 
-	OoComponentLayoutMode getLayoutMode() {
-		return layoutMode;
+	ObjectOrientedClassLayout getClassLayout() {
+		return classLayout;
 	}
 }

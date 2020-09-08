@@ -30,9 +30,9 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 	private FunctionDefinitionDataType functionDefinition;
 
 	private MsTypeApplier returnApplier;
-	ArgumentsListTypeApplier argsListApplier;
-	CallingConvention callingConvention;
-	boolean hasThisPointer;
+	private ArgumentsListTypeApplier argsListApplier;
+	private CallingConvention callingConvention;
+	private boolean hasThisPointer;
 
 	/**
 	 * Constructor for the applicator that applies a "function" type, transforming it into a

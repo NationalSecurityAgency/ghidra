@@ -24,24 +24,24 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
  */
 public class PdbApplicatorOptions {
 
-	private static final boolean defaultApplyCodeScopeBlockComments = false;
-	private static final boolean defaultApplyInstructionLabels = false;
-	private static final boolean defaultApplyDataTypesOnly = false;
-	private static final boolean defaultApplyPublicSymbolsOnly = false;
-	private static final boolean defaultRemapAddressesUsingExistingPublicSymbols = false;
-	private static final boolean defaultAllowDemotePrimaryMangledSymbol = true;
+	public static final boolean DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS = false;
+	public static final boolean DEFAULT_APPLY_INSTRUCTION_LABELS = false;
+	public static final boolean DEFAULT_APPLY_DATA_TYPES_ONLY = false;
+	public static final boolean DEFAULT_APPLY_PUBLIC_SYMBOLS_ONLY = false;
+	public static final boolean DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS = false;
+	public static final boolean DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS = true;
 
 	// TODO: set the following to true if we come up with a reasonably good solution
-	private static final boolean defaultApplyFunctionVariables = false;
+	public static final boolean DEFAULT_APPLY_FUNCTION_VARIABLES = false;
 
-	private static final CompositeLayoutMode defaultCompositeLayoutMode =
-		CompositeLayoutMode.MEMBERS_ONLY;
-//	private static final CompositeLayoutMode defaultCompositeLayoutMode =
-//		CompositeLayoutMode.BASIC_SIMPLE_COMPLEX;
-//	private static final CompositeLayoutMode defaultCompositeLayoutMode =
-//		CompositeLayoutMode.SIMPLE_COMPLEX;
-//	private static final CompositeLayoutMode defaultCompositeLayoutMode =
-//		CompositeLayoutMode.COMPLEX;
+	public static final ObjectOrientedClassLayoutChoice DEFAULT_CLASS_LAYOUT_CHOICE =
+		ObjectOrientedClassLayoutChoice.MEMBERS_ONLY;
+//	public static final OjbectOrientedClassLayoutChoice DEFAULT_CLASS_LAYOUT_CHOICE =
+//		OjbectOrientedClassLayoutChoice.BASIC_SIMPLE_COMPLEX;
+//	public static final OjbectOrientedClassLayoutChoice DEFAULT_CLASS_LAYOUT_CHOICE =
+//		OjbectOrientedClassLayoutChoice.SIMPLE_COMPLEX;
+//	public static final OjbectOrientedClassLayoutChoice DEFAULT_CLASS_LAYOUT_CHOICE =
+//		OjbectOrientedClassLayoutChoice.COMPLEX;
 
 	//==============================================================================================
 	private boolean applyCodeScopeBlockComments;
@@ -49,11 +49,11 @@ public class PdbApplicatorOptions {
 	private boolean applyDataTypesOnly;
 	private boolean applyPublicSymbolsOnly;
 	private boolean remapAddressesUsingExistingPublicSymbols;
-	private boolean allowDemotePrimaryMangledSymbol;
+	private boolean allowDemotePrimaryMangledSymbols;
 
 	private boolean applyFunctionVariables; // investigation. might produce bad results.
 
-	private CompositeLayoutMode compositeLayoutMode;
+	private ObjectOrientedClassLayoutChoice classLayoutChoice;
 
 	/**
 	 * Constructor
@@ -66,14 +66,14 @@ public class PdbApplicatorOptions {
 	 * Set the options back to their default values
 	 */
 	public void setDefaults() {
-		applyCodeScopeBlockComments = defaultApplyCodeScopeBlockComments;
-		applyInstructionLabels = defaultApplyInstructionLabels;
-		applyDataTypesOnly = defaultApplyDataTypesOnly;
-		applyPublicSymbolsOnly = defaultApplyPublicSymbolsOnly;
-		remapAddressesUsingExistingPublicSymbols = defaultRemapAddressesUsingExistingPublicSymbols;
-		allowDemotePrimaryMangledSymbol = defaultAllowDemotePrimaryMangledSymbol;
-		applyFunctionVariables = defaultApplyFunctionVariables;
-		compositeLayoutMode = defaultCompositeLayoutMode;
+		applyCodeScopeBlockComments = DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
+		applyInstructionLabels = DEFAULT_APPLY_INSTRUCTION_LABELS;
+		applyDataTypesOnly = DEFAULT_APPLY_DATA_TYPES_ONLY;
+		applyPublicSymbolsOnly = DEFAULT_APPLY_PUBLIC_SYMBOLS_ONLY;
+		remapAddressesUsingExistingPublicSymbols = DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS;
+		allowDemotePrimaryMangledSymbols = DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS;
+		applyFunctionVariables = DEFAULT_APPLY_FUNCTION_VARIABLES;
+		classLayoutChoice = DEFAULT_CLASS_LAYOUT_CHOICE;
 	}
 
 	/**
@@ -146,7 +146,7 @@ public class PdbApplicatorOptions {
 	 * (typically public symbols).
 	 * @param enable {@code true} to turn remapAddressesUsingExistingPublicSymbols on
 	 */
-	public void setRemapAddressUsingExistingPublicMangledSymbols(boolean enable) {
+	public void setRemapAddressUsingExistingPublicSymbols(boolean enable) {
 		this.remapAddressesUsingExistingPublicSymbols = enable;
 	}
 
@@ -154,7 +154,7 @@ public class PdbApplicatorOptions {
 	 * Returns {@code true} if remapAddressesUsingExistingPublicSymbols is "on."
 	 * @return {@code true} if remapAddressesUsingExistingPublicSymbols is "on."
 	 */
-	public boolean remapAddressUsingExistingPublicMangledSymbols() {
+	public boolean remapAddressUsingExistingPublicSymbols() {
 		return remapAddressesUsingExistingPublicSymbols;
 	}
 
@@ -163,18 +163,18 @@ public class PdbApplicatorOptions {
 	 * primary symbol is a mangled symbol, regardless of the Symbol SourceType.  This is
 	 * typically used when we can get better data type information from the PDB record than
 	 * we can from the demangler.
-	 * @param enable {@code true} to turn allowDemotePrimaryMangledSymbol on
+	 * @param enable {@code true} to turn allowDemotePrimaryMangledSymbols on
 	 */
-	public void setAllowDemotePrimaryMangledSymbol(boolean enable) {
-		this.allowDemotePrimaryMangledSymbol = enable;
+	public void setAllowDemotePrimaryMangledSymbols(boolean enable) {
+		this.allowDemotePrimaryMangledSymbols = enable;
 	}
 
 	/**
-	 * Returns {@code true} if allowDemotePrimaryMangledSymbol is "on."
-	 * @return {@code true} if allowDemotePrimaryMangledSymbol is "on."
+	 * Returns {@code true} if allowDemotePrimaryMangledSymbols is "on."
+	 * @return {@code true} if allowDemotePrimaryMangledSymbols is "on."
 	 */
-	public boolean allowDemotePrimaryMangledSymbol() {
-		return allowDemotePrimaryMangledSymbol;
+	public boolean allowDemotePrimaryMangledSymbols() {
+		return allowDemotePrimaryMangledSymbols;
 	}
 
 	/**
@@ -195,19 +195,19 @@ public class PdbApplicatorOptions {
 	}
 
 	/**
-	 * Set the CompositeLayoutMode.
-	 * @param compositeLayoutMode composite layout mode
+	 * Set the class layout.
+	 * @param classLayoutChoice composite layout choice
 	 */
-	public void setCompositeLayoutMode(CompositeLayoutMode compositeLayoutMode) {
-		this.compositeLayoutMode = compositeLayoutMode;
+	public void setClassLayoutChoice(ObjectOrientedClassLayoutChoice classLayoutChoice) {
+		this.classLayoutChoice = classLayoutChoice;
 	}
 
 	/**
-	 * Returns the mode for physically layout out composites.
-	 * @return the layout mode.
+	 * Returns the choice for physically layout out classes.
+	 * @return the class layout.
 	 */
-	public CompositeLayoutMode getCompositeLayoutMode() {
-		return compositeLayoutMode;
+	public ObjectOrientedClassLayoutChoice getClassLayoutChoice() {
+		return classLayoutChoice;
 	}
 
 }

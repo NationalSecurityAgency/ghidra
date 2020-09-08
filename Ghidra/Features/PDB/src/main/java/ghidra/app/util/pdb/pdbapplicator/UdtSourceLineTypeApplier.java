@@ -28,17 +28,6 @@ import ghidra.util.exception.CancelledException;
  */
 public class UdtSourceLineTypeApplier extends MsTypeApplier {
 
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof UserDefinedTypeSourceAndLineMsType) &&
-			!(type instanceof UserDefinedTypeModuleSourceAndLineMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					UdtSourceLineTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
-
 	/**
 	 * Constructor for base class applier.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
@@ -107,6 +96,17 @@ public class UdtSourceLineTypeApplier extends MsTypeApplier {
 				((UserDefinedTypeModuleSourceAndLineMsType) msType).getModuleNumber();
 			applicator.putRecordNumberByModuleNumber(udtRecordNumber, moduleNumber);
 		}
+	}
+
+	private static AbstractMsType validateType(AbstractMsType type)
+			throws IllegalArgumentException {
+		if (!(type instanceof UserDefinedTypeSourceAndLineMsType) &&
+			!(type instanceof UserDefinedTypeModuleSourceAndLineMsType)) {
+			throw new IllegalArgumentException(
+				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
+					UdtSourceLineTypeApplier.class.getSimpleName());
+		}
+		return type;
 	}
 
 }

@@ -51,7 +51,7 @@ public class CppCompositeType {
 	private Composite composite;
 	private CategoryPath categoryPath;
 
-	private OoComponentLayoutMode layoutMode = OoComponentLayoutMode.UNKNOWN;
+	private ObjectOrientedClassLayout classLayout = ObjectOrientedClassLayout.UNKNOWN;
 
 	private List<ClassPdbMember> memberData;
 
@@ -583,30 +583,31 @@ public class CppCompositeType {
 		return builder.toString();
 	}
 
-	public OoComponentLayoutMode getLayoutMode(CompositeLayoutMode layoutOptions) {
-		if (layoutMode == OoComponentLayoutMode.UNKNOWN) {
-			layoutMode = determineLayoutMode(layoutOptions);
+	public ObjectOrientedClassLayout getLayout(ObjectOrientedClassLayoutChoice layoutOptions) {
+		if (classLayout == ObjectOrientedClassLayout.UNKNOWN) {
+			classLayout = determineClassLayout(layoutOptions);
 		}
-		return layoutMode;
+		return classLayout;
 	}
 
-	private OoComponentLayoutMode determineLayoutMode(CompositeLayoutMode layoutOptions) {
-		OoComponentLayoutMode initialModeDetermination;
-		if (layoutOptions.getLayoutMode() == OoComponentLayoutMode.MEMBERS_ONLY) {
-			return OoComponentLayoutMode.MEMBERS_ONLY;
+	private ObjectOrientedClassLayout determineClassLayout(
+			ObjectOrientedClassLayoutChoice layoutOptions) {
+		ObjectOrientedClassLayout initialLayoutDetermination;
+		if (layoutOptions.getClassLayout() == ObjectOrientedClassLayout.MEMBERS_ONLY) {
+			return ObjectOrientedClassLayout.MEMBERS_ONLY;
 		}
 		else if (getNumLayoutBaseClasses() == 0) {
-			initialModeDetermination = OoComponentLayoutMode.BASIC;
+			initialLayoutDetermination = ObjectOrientedClassLayout.BASIC;
 		}
 		else if (getNumLayoutVirtualBaseClasses() == 0) {
-			initialModeDetermination = OoComponentLayoutMode.SIMPLE;
+			initialLayoutDetermination = ObjectOrientedClassLayout.SIMPLE;
 		}
 		else {
-			initialModeDetermination = OoComponentLayoutMode.COMPLEX;
+			initialLayoutDetermination = ObjectOrientedClassLayout.COMPLEX;
 		}
-		OoComponentLayoutMode optionsMode = layoutOptions.getLayoutMode();
-		return optionsMode.compareTo(initialModeDetermination) >= 0 ? optionsMode
-				: initialModeDetermination;
+		ObjectOrientedClassLayout classLyoutOption = layoutOptions.getClassLayout();
+		return classLyoutOption.compareTo(initialLayoutDetermination) >= 0 ? classLyoutOption
+				: initialLayoutDetermination;
 	}
 
 	boolean isZeroSize() {
@@ -628,7 +629,7 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createLayout(CompositeLayoutMode layoutOptions, VbtManager vbtManager,
+	public void createLayout(ObjectOrientedClassLayoutChoice layoutOptions, VbtManager vbtManager,
 			TaskMonitor monitor) throws PdbException, CancelledException {
 		if (vbtManager instanceof PdbVbtManager) { // Information from PDB/program symbols
 			// TODO: both same for now
@@ -642,11 +643,11 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createVbtBasedLayout(CompositeLayoutMode layoutOptions, VbtManager vbtManager,
-			TaskMonitor monitor) throws PdbException, CancelledException {
+	public void createVbtBasedLayout(ObjectOrientedClassLayoutChoice layoutOptions,
+			VbtManager vbtManager, TaskMonitor monitor) throws PdbException, CancelledException {
 		CategoryPath cn;
 		hasDirect = false;
-		switch (getLayoutMode(layoutOptions)) {
+		switch (getLayout(layoutOptions)) {
 			case MEMBERS_ONLY:
 				addLayoutPdbMembers(memberData, layoutMembers);
 				break;
@@ -697,7 +698,7 @@ public class CppCompositeType {
 						}
 						directClassLength = getCompositeLength(directDataType);
 					}
-					if (getLayoutMode(layoutOptions) == OoComponentLayoutMode.SIMPLE) {
+					if (getLayout(layoutOptions) == ObjectOrientedClassLayout.SIMPLE) {
 						// Not using the dummy/direct type (only used it to get the
 						//  directClassLength), so remove it and add the members to the main
 						//  type instead.
@@ -767,8 +768,8 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createSpeculativeLayout(CompositeLayoutMode layoutOptions, VbtManager vbtManager,
-			TaskMonitor monitor) throws PdbException, CancelledException {
+	public void createSpeculativeLayout(ObjectOrientedClassLayoutChoice layoutOptions,
+			VbtManager vbtManager, TaskMonitor monitor) throws PdbException, CancelledException {
 		// Speculative Layout uses recursion to try to know the order of members.  However, MSFT
 		//  rearranges the order of the Base Class records such that they are not necessarily in
 		//  the order that the class was declared, and it seems that the member order follows the
@@ -778,7 +779,7 @@ public class CppCompositeType {
 		//  get moved.
 		CategoryPath cn;
 		hasDirect = false;
-		switch (getLayoutMode(layoutOptions)) {
+		switch (getLayout(layoutOptions)) {
 			case MEMBERS_ONLY:
 				addLayoutPdbMembers(memberData, layoutMembers);
 				break;
@@ -833,7 +834,7 @@ public class CppCompositeType {
 						}
 						directClassLength = getCompositeLength(directDataType);
 					}
-					if (getLayoutMode(layoutOptions) == OoComponentLayoutMode.SIMPLE) {
+					if (getLayout(layoutOptions) == ObjectOrientedClassLayout.SIMPLE) {
 						// Not using the dummy/direct type (only used it to get the
 						//  directClassLength), so remove it and add the members to the main
 						//  type instead.
@@ -1348,8 +1349,8 @@ public class CppCompositeType {
 			return attributes;
 		}
 
-		OoComponentLayoutMode getLayoutMode(CompositeLayoutMode layoutOptions) {
-			return baseClassType.getLayoutMode(layoutOptions);
+		ObjectOrientedClassLayout getLayoutMode(ObjectOrientedClassLayoutChoice layoutOptions) {
+			return baseClassType.getLayout(layoutOptions);
 		}
 
 		DataTypePath getDataTypePath() {

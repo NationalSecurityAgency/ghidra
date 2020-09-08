@@ -52,7 +52,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private static VbtManager vbtManager32;
 	private static VbtManager vbtManager64;
 	// Note: Currently all test have expected results based on up the COMPLEX layout.
-	private static CompositeLayoutMode layoutOptions = CompositeLayoutMode.COMPLEX;
+	private static ObjectOrientedClassLayoutChoice classLayoutChoice =
+		ObjectOrientedClassLayoutChoice.COMPLEX;
 
 	static {
 		BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl();
@@ -745,14 +746,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			D_struct.addDirectBaseClass(C_struct, 0);
 			D_struct.addMember("d1", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return D_struct;
 	}
@@ -773,14 +775,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			D_struct.addDirectBaseClass(C_struct, 0);
 			D_struct.addMember("d1", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return D_struct;
 	}
@@ -834,19 +837,20 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			F_struct.addDirectBaseClass(C_struct, 0);
 			F_struct.addDirectBaseClass(E_struct, 4);
 			F_struct.addMember("f1", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return F_struct;
 	}
@@ -868,19 +872,20 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			F_struct.addDirectBaseClass(C_struct, 0);
 			F_struct.addDirectBaseClass(E_struct, 4);
 			F_struct.addMember("f1", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return F_struct;
 	}
@@ -907,8 +912,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			G_struct.addMember("g1", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return G_struct;
 	}
@@ -922,14 +928,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			G_struct.addDirectVirtualBaseClass(C_struct, 0, vbptr32, 1);
 			G_struct.addMember("g1", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return G_struct;
 	}
@@ -950,14 +957,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			G_struct.addDirectVirtualBaseClass(C_struct, 0, vbptr64, 1);
 			G_struct.addMember("g1", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return G_struct;
 	}
@@ -984,8 +992,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			H_struct.addMember("h1", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return H_struct;
 	}
@@ -999,14 +1008,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			H_struct.addDirectVirtualBaseClass(C_struct, 0, vbptr32, 1);
 			H_struct.addMember("h1", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return H_struct;
 	}
@@ -1027,14 +1037,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			H_struct.addDirectVirtualBaseClass(C_struct, 0, vbptr64, 1);
 			H_struct.addMember("h1", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return H_struct;
 	}
@@ -1065,8 +1076,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			G1_struct.addMember("g11", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return G1_struct;
 	}
@@ -1081,19 +1093,20 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			G1_struct.addDirectVirtualBaseClass(C_struct, 0, vbptr32, 1);
 			G1_struct.addDirectVirtualBaseClass(E_struct, 0, vbptr32, 2);
 			G1_struct.addMember("g11", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return G1_struct;
 	}
@@ -1115,19 +1128,20 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			G1_struct.addDirectVirtualBaseClass(C_struct, 0, vbptr64, 1);
 			G1_struct.addDirectVirtualBaseClass(E_struct, 0, vbptr64, 2);
 			G1_struct.addMember("g11", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return G1_struct;
 	}
@@ -1158,8 +1172,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			H1_struct.addMember("h11", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return H1_struct;
 	}
@@ -1174,19 +1189,20 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			H1_struct.addDirectVirtualBaseClass(E_struct, 0, vbptr32, 1);
 			H1_struct.addDirectVirtualBaseClass(C_struct, 0, vbptr32, 2);
 			H1_struct.addMember("h11", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return H1_struct;
 	}
@@ -1208,19 +1224,20 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			H1_struct.addDirectVirtualBaseClass(E_struct, 0, vbptr64, 1);
 			H1_struct.addDirectVirtualBaseClass(C_struct, 0, vbptr64, 2);
 			H1_struct.addMember("h11", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return H1_struct;
 	}
@@ -1247,8 +1264,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG1_struct.addMember("gg11", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG1_struct;
 	}
@@ -1262,14 +1280,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (CC1_struct == null) {
 				CC1_struct = createCC1_struct32(vbtManager);
-				CC1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			GG1_struct.addDirectVirtualBaseClass(CC1_struct, 0, vbptr32, 1);
 			GG1_struct.addMember("gg11", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG1_struct;
 	}
@@ -1290,14 +1309,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (CC1_struct == null) {
 				CC1_struct = createCC1_struct64(vbtManager);
-				CC1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			GG1_struct.addDirectVirtualBaseClass(CC1_struct, 0, vbptr64, 1);
 			GG1_struct.addMember("gg11", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG1_struct;
 	}
@@ -1324,8 +1344,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG2_struct.addMember("gg21", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG2_struct;
 	}
@@ -1339,14 +1360,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct32(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			GG2_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbptr32, 1);
 			GG2_struct.addMember("gg21", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG2_struct;
 	}
@@ -1367,14 +1389,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct64(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			GG2_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbptr64, 1);
 			GG2_struct.addMember("gg21", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG2_struct;
 	}
@@ -1401,8 +1424,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			GG3_struct.addMember("gg31", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG3_struct;
 	}
@@ -1416,14 +1440,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct32(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			GG3_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbptr32, 1);
 			GG3_struct.addMember("gg31", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG3_struct;
 	}
@@ -1444,14 +1469,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct64(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			GG3_struct.addDirectVirtualBaseClass(CC2_struct, 0, vbptr64, 1);
 			GG3_struct.addMember("gg31", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG3_struct;
 	}
@@ -1472,14 +1498,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (CC3_struct == null) {
 				CC3_struct = createCC3_struct32(vbtManager);
-				CC3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			GG4_struct.addDirectVirtualBaseClass(CC3_struct, 0, vbptr32, 1);
 			GG4_struct.addMember("gg41", u4, false, 4);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG4_struct;
 	}
@@ -1500,14 +1527,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (CC3_struct == null) {
 				CC3_struct = createCC3_struct64(vbtManager);
-				CC3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			GG4_struct.addDirectVirtualBaseClass(CC3_struct, 0, vbptr64, 1);
 			GG4_struct.addMember("gg41", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return GG4_struct;
 	}
@@ -1542,8 +1570,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I_struct.addMember("i1", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I_struct;
 	}
@@ -1558,16 +1587,16 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			// Could be problem if only one of G or H is null: won't have same C.
 			if (G_struct == null) {
 				G_struct = createG_struct32(vbtManager, C_struct);
-				G_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (H_struct == null) {
 				H_struct = createH_struct32(vbtManager, C_struct);
-				H_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			I_struct.addDirectBaseClass(G_struct, 0);
 			I_struct.addDirectBaseClass(H_struct, 8);
@@ -1575,8 +1604,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I_struct.addMember("i1", u4, false, 16);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I_struct;
 	}
@@ -1598,16 +1628,16 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			// Could be problem if only one of G or H is null: won't have same C.
 			if (G_struct == null) {
 				G_struct = createG_struct64(vbtManager, C_struct);
-				G_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (H_struct == null) {
 				H_struct = createH_struct64(vbtManager, C_struct);
-				H_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			I_struct.addDirectBaseClass(G_struct, 0);
 			I_struct.addDirectBaseClass(H_struct, 16);
@@ -1615,8 +1645,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I_struct.addMember("i1", u4, false, 32);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I_struct;
 	}
@@ -1638,19 +1669,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (G1_struct == null) {
 				G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (H_struct == null) {
 				H_struct = createH_struct32(vbtManager, C_struct);
-				H_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			I1_struct.addDirectBaseClass(G1_struct, 0);
 			I1_struct.addDirectBaseClass(H_struct, 8);
@@ -1659,8 +1690,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I1_struct.addMember("i11", u4, false, 16);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I1_struct;
 	}
@@ -1682,19 +1714,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (G1_struct == null) {
 				G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (H_struct == null) {
 				H_struct = createH_struct64(vbtManager, C_struct);
-				H_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			I1_struct.addDirectBaseClass(G1_struct, 0);
 			I1_struct.addDirectBaseClass(H_struct, 16);
@@ -1703,8 +1735,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I1_struct.addMember("i11", u4, false, 32);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I1_struct;
 	}
@@ -1726,19 +1759,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (G_struct == null) {
 				G_struct = createG_struct32(vbtManager, C_struct);
-				G_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (H1_struct == null) {
 				H1_struct = createH1_struct32(vbtManager, E_struct, C_struct);
-				H1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			I2_struct.addDirectBaseClass(G_struct, 0);
 			I2_struct.addDirectBaseClass(H1_struct, 8);
@@ -1747,8 +1780,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I2_struct.addMember("i21", u4, false, 16);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I2_struct;
 	}
@@ -1770,19 +1804,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (G_struct == null) {
 				G_struct = createG_struct64(vbtManager, C_struct);
-				G_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (H1_struct == null) {
 				H1_struct = createH1_struct64(vbtManager, E_struct, C_struct);
-				H1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			I2_struct.addDirectBaseClass(G_struct, 0);
 			I2_struct.addDirectBaseClass(H1_struct, 16);
@@ -1791,8 +1825,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I2_struct.addMember("i21", u4, false, 32);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I2_struct;
 	}
@@ -1830,8 +1865,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I3_struct.addMember("i31", u4, false, 0);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I3_struct;
 	}
@@ -1846,19 +1882,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (G1_struct == null) {
 				G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (H1_struct == null) {
 				H1_struct = createH1_struct32(vbtManager, E_struct, C_struct);
-				H1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			I3_struct.addDirectBaseClass(G1_struct, 0);
 			I3_struct.addDirectBaseClass(H1_struct, 8);
@@ -1867,8 +1903,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I3_struct.addMember("i31", u4, false, 16);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I3_struct;
 	}
@@ -1890,19 +1927,19 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (G1_struct == null) {
 				G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (H1_struct == null) {
 				H1_struct = createH1_struct64(vbtManager, E_struct, C_struct);
-				H1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			I3_struct.addDirectBaseClass(G1_struct, 0);
 			I3_struct.addDirectBaseClass(H1_struct, 16);
@@ -1911,8 +1948,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I3_struct.addMember("i31", u4, false, 32);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I3_struct;
 	}
@@ -1934,15 +1972,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (G1_struct == null) {
 				G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			I4_struct.addDirectBaseClass(G1_struct, 0);
 			I4_struct.addDirectVirtualBaseClass(E_struct, 0, vbptr32, 2);
@@ -1950,8 +1988,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I4_struct.addMember("i41", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I4_struct;
 	}
@@ -1973,15 +2012,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (G1_struct == null) {
 				G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			I4_struct.addDirectBaseClass(G1_struct, 0);
 			I4_struct.addDirectVirtualBaseClass(E_struct, 0, vbptr64, 2);
@@ -1989,8 +2028,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I4_struct.addMember("i41", u4, false, 16);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I4_struct;
 	}
@@ -2012,15 +2052,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (G1_struct == null) {
 				G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			I5_struct.addDirectBaseClass(G1_struct, 0);
 			I5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbptr32, 2); // check this and I4...TODO
@@ -2028,8 +2068,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I5_struct.addMember("i51", u4, false, 8);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I5_struct;
 	}
@@ -2051,15 +2092,15 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (G1_struct == null) {
 				G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			I5_struct.addDirectBaseClass(G1_struct, 0);
 			I5_struct.addIndirectVirtualBaseClass(E_struct, 0, vbptr64, 2); // check this and I4...TODO
@@ -2067,8 +2108,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			I5_struct.addMember("i51", u4, false, 16);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return I5_struct;
 	}
@@ -2090,27 +2132,27 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I1_struct == null) {
 				CppCompositeType G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
 				CppCompositeType H_struct = createH_struct32(vbtManager, C_struct);
 				I1_struct = createI1_struct32(vbtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I2_struct == null) {
 				CppCompositeType G_struct = createG_struct32(vbtManager, C_struct);
 				CppCompositeType H1_struct = createH1_struct32(vbtManager, E_struct, C_struct);
 				I2_struct = createI2_struct32(vbtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			J1_struct.addDirectBaseClass(I1_struct, 0);
 			J1_struct.addDirectBaseClass(I2_struct, 20);
@@ -2119,8 +2161,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J1_struct.addMember("j11", u4, false, 40);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J1_struct;
 	}
@@ -2143,27 +2186,27 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I1_struct == null) {
 				CppCompositeType G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
 				CppCompositeType H_struct = createH_struct64(vbtManager, C_struct);
 				I1_struct = createI1_struct64(vbtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I2_struct == null) {
 				CppCompositeType G_struct = createG_struct64(vbtManager, C_struct);
 				CppCompositeType H1_struct = createH1_struct64(vbtManager, E_struct, C_struct);
 				I2_struct = createI2_struct64(vbtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			J1_struct.addDirectBaseClass(I1_struct, 0);
 			J1_struct.addDirectBaseClass(I2_struct, 40);
@@ -2172,8 +2215,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J1_struct.addMember("j11", u4, false, 80);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J1_struct;
 	}
@@ -2195,27 +2239,27 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I2_struct == null) {
 				CppCompositeType G_struct = createG_struct32(vbtManager, C_struct);
 				CppCompositeType H1_struct = createH1_struct32(vbtManager, E_struct, C_struct);
 				I2_struct = createI2_struct32(vbtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I1_struct == null) {
 				CppCompositeType G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
 				CppCompositeType H_struct = createH_struct32(vbtManager, C_struct);
 				I1_struct = createI1_struct32(vbtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			J2_struct.addDirectBaseClass(I2_struct, 0);
 			J2_struct.addDirectBaseClass(I1_struct, 20);
@@ -2224,8 +2268,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J2_struct.addMember("j21", u4, false, 40);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J2_struct;
 	}
@@ -2247,27 +2292,27 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I2_struct == null) {
 				CppCompositeType G_struct = createG_struct64(vbtManager, C_struct);
 				CppCompositeType H1_struct = createH1_struct64(vbtManager, E_struct, C_struct);
 				I2_struct = createI2_struct64(vbtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I1_struct == null) {
 				CppCompositeType G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
 				CppCompositeType H_struct = createH_struct64(vbtManager, C_struct);
 				I1_struct = createI1_struct64(vbtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			J2_struct.addDirectBaseClass(I2_struct, 0);
 			J2_struct.addDirectBaseClass(I1_struct, 40);
@@ -2276,8 +2321,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J2_struct.addMember("j21", u4, false, 80);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J2_struct;
 	}
@@ -2300,31 +2346,31 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I2_struct == null) {
 				CppCompositeType G_struct = createG_struct32(vbtManager, C_struct);
 				CppCompositeType H1_struct = createH1_struct32(vbtManager, E_struct, C_struct);
 				I2_struct = createI2_struct32(vbtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I1_struct == null) {
 				CppCompositeType G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
 				CppCompositeType H_struct = createH_struct32(vbtManager, C_struct);
 				I1_struct = createI1_struct32(vbtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (A_struct == null) {
 				A_struct = createA_struct32(vbtManager);
-				A_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				A_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			J3_struct.addDirectBaseClass(I2_struct, 0);
 			J3_struct.addDirectBaseClass(I1_struct, 20);
@@ -2334,8 +2380,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J3_struct.addMember("j31", u4, false, 48);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J3_struct;
 	}
@@ -2358,31 +2405,31 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I2_struct == null) {
 				CppCompositeType G_struct = createG_struct64(vbtManager, C_struct);
 				CppCompositeType H1_struct = createH1_struct64(vbtManager, E_struct, C_struct);
 				I2_struct = createI2_struct64(vbtManager, G_struct, H1_struct, C_struct, E_struct);
-				G_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I1_struct == null) {
 				CppCompositeType G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
 				CppCompositeType H_struct = createH_struct64(vbtManager, C_struct);
 				I1_struct = createI1_struct32(vbtManager, G1_struct, H_struct, C_struct, E_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (A_struct == null) {
 				A_struct = createA_struct64(vbtManager);
-				A_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				A_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			J3_struct.addDirectBaseClass(I2_struct, 0);
 			J3_struct.addDirectBaseClass(I1_struct, 40);
@@ -2392,8 +2439,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J3_struct.addMember("j31", u4, false, 88);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J3_struct;
 	}
@@ -2418,51 +2466,51 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (A_struct == null) {
 				A_struct = createA_struct32(vbtManager);
-				A_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				A_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (CC1_struct == null) {
 				CC1_struct = createCC1_struct32(vbtManager);
-				CC1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct32(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I3_struct == null) {
 				CppCompositeType G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
 				CppCompositeType H1_struct = createH1_struct32(vbtManager, E_struct, C_struct);
 				I3_struct = createI3_struct32(vbtManager, G1_struct, H1_struct, E_struct, C_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (GG1_struct == null) {
 				GG1_struct = createGG1_struct32(vbtManager, CC1_struct);
-				GG1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				GG1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I_struct == null) {
 				CppCompositeType G_struct = createG_struct32(vbtManager, C_struct);
 				CppCompositeType H_struct = createH_struct32(vbtManager, C_struct);
 				I_struct = createI_struct32(vbtManager, G_struct, H_struct, C_struct);
-				G_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (GG2_struct == null) {
 				GG2_struct = createGG2_struct32(vbtManager, CC2_struct);
-				GG2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				GG2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (GG3_struct == null) {
 				GG3_struct = createGG3_struct32(vbtManager, CC2_struct);
-				GG3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				GG3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			J4_struct.addDirectBaseClass(I3_struct, 0);
 			J4_struct.addDirectBaseClass(GG1_struct, 20);
@@ -2477,8 +2525,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J4_struct.addMember("j41", u4, false, 56);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J4_struct;
 	}
@@ -2503,51 +2552,51 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (A_struct == null) {
 				A_struct = createA_struct64(vbtManager);
-				A_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				A_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (CC1_struct == null) {
 				CC1_struct = createCC1_struct64(vbtManager);
-				CC1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct64(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I3_struct == null) {
 				CppCompositeType G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
 				CppCompositeType H1_struct = createH1_struct64(vbtManager, E_struct, C_struct);
 				I3_struct = createI3_struct32(vbtManager, G1_struct, H1_struct, E_struct, C_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (GG1_struct == null) {
 				GG1_struct = createGG1_struct64(vbtManager, CC1_struct);
-				GG1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				GG1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I_struct == null) {
 				CppCompositeType G_struct = createG_struct64(vbtManager, C_struct);
 				CppCompositeType H_struct = createH_struct64(vbtManager, C_struct);
 				I_struct = createI_struct32(vbtManager, G_struct, H_struct, C_struct);
-				G_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (GG2_struct == null) {
 				GG2_struct = createGG2_struct64(vbtManager, CC2_struct);
-				GG2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				GG2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (GG3_struct == null) {
 				GG3_struct = createGG3_struct64(vbtManager, CC2_struct);
-				GG3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				GG3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			J4_struct.addDirectBaseClass(I3_struct, 0);
 			J4_struct.addDirectBaseClass(GG1_struct, 40);
@@ -2562,8 +2611,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J4_struct.addMember("j41", u4, false, 104);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J4_struct;
 	}
@@ -2633,8 +2683,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J5_struct.addMember("j51", u4, false, 0); // TODO nned syntactic without index
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J5_struct;
 	}
@@ -2659,51 +2710,51 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (A_struct == null) {
 				A_struct = createA_struct32(vbtManager);
-				A_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				A_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct32(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct32(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (CC1_struct == null) {
 				CC1_struct = createCC1_struct32(vbtManager);
-				CC1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct32(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I3_struct == null) {
 				CppCompositeType G1_struct = createG1_struct32(vbtManager, C_struct, E_struct);
 				CppCompositeType H1_struct = createH1_struct32(vbtManager, E_struct, C_struct);
 				I3_struct = createI3_struct32(vbtManager, G1_struct, H1_struct, E_struct, C_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (GG1_struct == null) {
 				GG1_struct = createGG1_struct32(vbtManager, CC1_struct);
-				GG1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				GG1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (I_struct == null) {
 				CppCompositeType G_struct = createG_struct32(vbtManager, C_struct);
 				CppCompositeType H_struct = createH_struct32(vbtManager, C_struct);
 				I_struct = createI_struct32(vbtManager, G_struct, H_struct, C_struct);
-				G_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
-				I_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
+				I_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (GG2_struct == null) {
 				GG2_struct = createGG2_struct32(vbtManager, CC2_struct);
-				GG2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				GG2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (GG3_struct == null) {
 				GG3_struct = createGG3_struct32(vbtManager, CC2_struct);
-				GG3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				GG3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			J5_struct.addDirectBaseClass(I3_struct, 0);
 			J5_struct.addDirectBaseClass(GG1_struct, 20);
@@ -2718,8 +2769,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J5_struct.addMember("j51", u4, false, 56);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J5_struct;
 	}
@@ -2744,51 +2796,51 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (A_struct == null) {
 				A_struct = createA_struct64(vbtManager);
-				A_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				A_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (C_struct == null) {
 				C_struct = createC_struct64(vbtManager);
-				C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (E_struct == null) {
 				E_struct = createE_struct64(vbtManager);
-				E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (CC1_struct == null) {
 				CC1_struct = createCC1_struct64(vbtManager);
-				CC1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct64(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I3_struct == null) {
 				CppCompositeType G1_struct = createG1_struct64(vbtManager, C_struct, E_struct);
 				CppCompositeType H1_struct = createH1_struct64(vbtManager, E_struct, C_struct);
 				I3_struct = createI3_struct32(vbtManager, G1_struct, H1_struct, E_struct, C_struct);
-				G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (GG1_struct == null) {
 				GG1_struct = createGG1_struct32(vbtManager, CC1_struct);
-				GG1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				GG1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (I_struct == null) {
 				CppCompositeType G_struct = createG_struct64(vbtManager, C_struct);
 				CppCompositeType H_struct = createH_struct64(vbtManager, C_struct);
 				I_struct = createI_struct32(vbtManager, G_struct, H_struct, C_struct);
-				G_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				H_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
-				I_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				G_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				H_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
+				I_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (GG2_struct == null) {
 				GG2_struct = createGG2_struct64(vbtManager, CC2_struct);
-				GG2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				GG2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (GG3_struct == null) {
 				GG3_struct = createGG3_struct64(vbtManager, CC2_struct);
-				GG3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				GG3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			J5_struct.addDirectBaseClass(I3_struct, 0);
 			J5_struct.addDirectBaseClass(GG1_struct, 40);
@@ -2803,8 +2855,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J5_struct.addMember("j51", u4, false, 104);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J5_struct;
 	}
@@ -2827,23 +2880,23 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (A_struct == null) {
 				A_struct = createA_struct32(vbtManager);
-				A_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				A_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct32(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (CC3_struct == null) {
 				CC3_struct = createCC3_struct32(vbtManager);
-				CC3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				CC3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (GG4_struct == null) {
 				GG4_struct = createGG4_struct32(vbtManager, CC3_struct);
-				GG4_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				GG4_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			if (GG3_struct == null) {
 				GG3_struct = createGG3_struct32(vbtManager, CC2_struct);
-				GG3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+				GG3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 			}
 			J6_struct.addDirectBaseClass(A_struct, 0);
 			J6_struct.addDirectVirtualBaseClass(GG4_struct, 8, vbptr32, 2);
@@ -2853,8 +2906,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J6_struct.addMember("j61", u4, false, 12);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J6_struct;
 	}
@@ -2877,23 +2931,23 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 		try {
 			if (A_struct == null) {
 				A_struct = createA_struct64(vbtManager);
-				A_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				A_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (CC2_struct == null) {
 				CC2_struct = createCC2_struct64(vbtManager);
-				CC2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (CC3_struct == null) {
 				CC3_struct = createCC3_struct64(vbtManager);
-				CC3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				CC3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (GG4_struct == null) {
 				GG4_struct = createGG4_struct64(vbtManager, CC3_struct);
-				GG4_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				GG4_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			if (GG3_struct == null) {
 				GG3_struct = createGG3_struct64(vbtManager, CC2_struct);
-				GG3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+				GG3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 			}
 			J6_struct.addDirectBaseClass(A_struct, 0);
 			J6_struct.addDirectVirtualBaseClass(GG4_struct, 8, vbptr64, 2);
@@ -2903,8 +2957,9 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 			J6_struct.addMember("j61", u4, false, 16);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 		return J6_struct;
 	}
@@ -2930,7 +2985,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testA_32_vbt() throws Exception {
 		CppCompositeType A_struct = createA_struct32(pdbVbtManager32);
-		A_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		A_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = A_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedA_32(), composite, true);
 	}
@@ -2938,7 +2993,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testA_32_speculative() throws Exception {
 		CppCompositeType A_struct = createA_struct32(vbtManager32);
-		A_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		A_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = A_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedA_32(), composite, true);
 	}
@@ -2986,7 +3041,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testA_64_vbt() throws Exception {
 		CppCompositeType A_struct = createA_struct64(pdbVbtManager64);
-		A_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		A_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = A_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedA_64(), composite, true);
 	}
@@ -2994,7 +3049,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testA_64_speculative() throws Exception {
 		CppCompositeType A_struct = createA_struct64(vbtManager64);
-		A_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		A_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = A_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedA_64(), composite, true);
 	}
@@ -3040,7 +3095,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testC_32_vbt() throws Exception {
 		CppCompositeType C_struct = createC_struct32(pdbVbtManager32);
-		C_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		C_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = C_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedC_32(), composite, true);
 	}
@@ -3048,7 +3103,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testC_32_speculative() throws Exception {
 		CppCompositeType C_struct = createC_struct32(vbtManager32);
-		C_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		C_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = C_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedC_32(), composite, true);
 	}
@@ -3093,7 +3148,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testC_64_vbt() throws Exception {
 		CppCompositeType C_struct = createC_struct64(pdbVbtManager64);
-		C_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		C_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = C_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedC_64(), composite, true);
 	}
@@ -3101,7 +3156,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testC_64_speculative() throws Exception {
 		CppCompositeType C_struct = createC_struct64(vbtManager64);
-		C_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		C_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = C_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedC_64(), composite, true);
 	}
@@ -3146,7 +3201,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC1_32_vbt() throws Exception {
 		CppCompositeType CC1_struct = createCC1_struct32(pdbVbtManager32);
-		CC1_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		CC1_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = CC1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC1_32(), composite, true);
 	}
@@ -3154,7 +3209,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC1_32_speculative() throws Exception {
 		CppCompositeType CC1_struct = createCC1_struct32(vbtManager32);
-		CC1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		CC1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = CC1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC1_32(), composite, true);
 	}
@@ -3199,7 +3254,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC1_64_vbt() throws Exception {
 		CppCompositeType CC1_struct = createCC1_struct64(pdbVbtManager64);
-		CC1_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		CC1_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = CC1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC1_64(), composite, true);
 	}
@@ -3207,7 +3262,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC1_64_speculative() throws Exception {
 		CppCompositeType CC1_struct = createCC1_struct64(vbtManager64);
-		CC1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		CC1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = CC1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC1_64(), composite, true);
 	}
@@ -3252,7 +3307,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC2_32_vbt() throws Exception {
 		CppCompositeType CC2_struct = createCC2_struct32(pdbVbtManager32);
-		CC2_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		CC2_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = CC2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC2_32(), composite, true);
 	}
@@ -3260,7 +3315,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC2_32_speculative() throws Exception {
 		CppCompositeType CC2_struct = createCC2_struct32(vbtManager32);
-		CC2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		CC2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = CC2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC2_32(), composite, true);
 	}
@@ -3305,7 +3360,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC2_64_vbt() throws Exception {
 		CppCompositeType CC2_struct = createCC2_struct64(pdbVbtManager64);
-		CC2_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		CC2_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = CC2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC2_64(), composite, true);
 	}
@@ -3313,7 +3368,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC2_64_speculative() throws Exception {
 		CppCompositeType CC2_struct = createCC2_struct64(vbtManager64);
-		CC2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		CC2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = CC2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC2_64(), composite, true);
 	}
@@ -3356,7 +3411,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC3_32_vbt() throws Exception {
 		CppCompositeType CC3_struct = createCC3_struct32(pdbVbtManager32);
-		CC3_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		CC3_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = CC3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC3_32(), composite, true);
 	}
@@ -3364,7 +3419,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC3_32_speculative() throws Exception {
 		CppCompositeType CC3_struct = createCC3_struct32(vbtManager32);
-		CC3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		CC3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = CC3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC3_32(), composite, true);
 	}
@@ -3400,7 +3455,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC3_64_vbt() throws Exception {
 		CppCompositeType CC3_struct = createCC3_struct64(pdbVbtManager64);
-		CC3_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		CC3_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = CC3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedCC3_64(), composite, true);
 	}
@@ -3408,7 +3463,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testCC3_64_speculative() throws Exception {
 		CppCompositeType CC3_struct = createCC3_struct64(vbtManager64);
-		CC3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		CC3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = CC3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedCC3_64(), composite, true);
 	}
@@ -3449,7 +3504,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testD_32_vbt() throws Exception {
 		CppCompositeType D_struct = createD_struct32(pdbVbtManager32);
-		D_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		D_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = D_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedD_32(), composite, true);
 	}
@@ -3457,7 +3512,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testD_32_speculative() throws Exception {
 		CppCompositeType D_struct = createD_struct32(vbtManager32);
-		D_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		D_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = D_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedD_32(), composite, true);
 	}
@@ -3512,7 +3567,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testD_64_vbt() throws Exception {
 		CppCompositeType D_struct = createD_struct64(pdbVbtManager64);
-		D_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		D_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = D_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedD_64(), composite, true);
 	}
@@ -3520,7 +3575,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testD_64_speculative() throws Exception {
 		CppCompositeType D_struct = createD_struct64(vbtManager64);
-		D_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		D_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = D_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedD_64(), composite, true);
 	}
@@ -3572,7 +3627,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testE_32_vbt() throws Exception {
 		CppCompositeType E_struct = createE_struct32(pdbVbtManager32);
-		E_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		E_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = E_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedE_32(), composite, true);
 	}
@@ -3580,7 +3635,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testE_32_speculative() throws Exception {
 		CppCompositeType E_struct = createE_struct32(vbtManager32);
-		E_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		E_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = E_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedE_32(), composite, true);
 	}
@@ -3625,7 +3680,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testE_64_vbt() throws Exception {
 		CppCompositeType E_struct = createE_struct64(pdbVbtManager64);
-		E_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		E_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = E_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedE_64(), composite, true);
 	}
@@ -3633,7 +3688,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testE_64_speculative() throws Exception {
 		CppCompositeType E_struct = createE_struct64(vbtManager64);
-		E_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		E_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = E_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedE_64(), composite, true);
 	}
@@ -3684,7 +3739,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testF_32_vbt() throws Exception {
 		CppCompositeType F_struct = createF_struct32(pdbVbtManager32);
-		F_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		F_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = F_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedF_32(), composite, true);
 	}
@@ -3692,7 +3747,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testF_32_speculative() throws Exception {
 		CppCompositeType F_struct = createF_struct32(vbtManager32);
-		F_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		F_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = F_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedF_32(), composite, true);
 	}
@@ -3757,7 +3812,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testF_64_vbt() throws Exception {
 		CppCompositeType F_struct = createF_struct64(pdbVbtManager64);
-		F_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		F_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = F_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedF_64(), composite, true);
 	}
@@ -3765,7 +3820,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testF_64_speculative() throws Exception {
 		CppCompositeType F_struct = createF_struct64(vbtManager64);
-		F_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		F_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = F_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedF_64(), composite, true);
 	}
@@ -3834,7 +3889,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testG_32_vbt() throws Exception {
 		CppCompositeType G_struct = createG_struct32(pdbVbtManager32);
-		G_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		G_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = G_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedG_32(), composite, true);
 	}
@@ -3842,7 +3897,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testG_32_speculative() throws Exception {
 		CppCompositeType G_struct = createG_struct32(vbtManager32);
-		G_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		G_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = G_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedG_32(), composite, true);
 	}
@@ -3906,7 +3961,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testG_64_vbt() throws Exception {
 		CppCompositeType G_struct = createG_struct64(pdbVbtManager64);
-		G_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		G_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = G_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedG_64(), composite, true);
 	}
@@ -3914,7 +3969,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testG_64_speculative() throws Exception {
 		CppCompositeType G_struct = createG_struct64(vbtManager64);
-		G_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		G_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = G_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedG_64(), composite, true);
 	}
@@ -3977,7 +4032,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testH_32_vbt() throws Exception {
 		CppCompositeType H_struct = createH_struct32(pdbVbtManager32);
-		H_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		H_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = H_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedH_32(), composite, true);
 	}
@@ -3985,7 +4040,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testH_32_speculative() throws Exception {
 		CppCompositeType H_struct = createH_struct32(vbtManager32);
-		H_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		H_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = H_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedH_32(), composite, true);
 	}
@@ -4049,7 +4104,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testH_64_vbt() throws Exception {
 		CppCompositeType H_struct = createH_struct64(pdbVbtManager64);
-		H_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		H_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = H_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedH_64(), composite, true);
 	}
@@ -4057,7 +4112,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testH_64_speculative() throws Exception {
 		CppCompositeType H_struct = createH_struct64(vbtManager64);
-		H_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		H_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = H_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedH_64(), composite, true);
 	}
@@ -4125,7 +4180,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testG1_32_vbt() throws Exception {
 		CppCompositeType G1_struct = createG1_struct32(pdbVbtManager32);
-		G1_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		G1_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = G1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedG1_32(), composite, true);
 	}
@@ -4133,7 +4188,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testG1_32_speculative() throws Exception {
 		CppCompositeType G1_struct = createG1_struct32(vbtManager32);
-		G1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		G1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = G1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedG1_32(), composite, true);
 	}
@@ -4209,7 +4264,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testG1_64_vbt() throws Exception {
 		CppCompositeType G1_struct = createG1_struct64(pdbVbtManager64);
-		G1_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		G1_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = G1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedG1_64(), composite, true);
 	}
@@ -4217,7 +4272,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testG1_64_speculative() throws Exception {
 		CppCompositeType G1_struct = createG1_struct64(vbtManager64);
-		G1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		G1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = G1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedG1_64(), composite, true);
 	}
@@ -4292,7 +4347,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testH1_32_vbt() throws Exception {
 		CppCompositeType H1_struct = createH1_struct32(pdbVbtManager32);
-		H1_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		H1_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = H1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedH1_32(), composite, true);
 	}
@@ -4300,7 +4355,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testH1_32_speculative() throws Exception {
 		CppCompositeType H1_struct = createH1_struct32(vbtManager32);
-		H1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		H1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = H1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedH1_32(), composite, true);
 	}
@@ -4376,7 +4431,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testH1_64_vbt() throws Exception {
 		CppCompositeType H1_struct = createH1_struct64(pdbVbtManager64);
-		H1_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		H1_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = H1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedH1_64(), composite, true);
 	}
@@ -4384,7 +4439,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testH1_64_speculative() throws Exception {
 		CppCompositeType H1_struct = createH1_struct64(vbtManager64);
-		H1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		H1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = H1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedH1_64(), composite, true);
 	}
@@ -4454,7 +4509,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG1_32_vbt() throws Exception {
 		CppCompositeType GG1_struct = createGG1_struct32(pdbVbtManager32);
-		GG1_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		GG1_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = GG1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG1_32(), composite, true);
 	}
@@ -4462,7 +4517,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG1_32_speculative() throws Exception {
 		CppCompositeType GG1_struct = createGG1_struct32(vbtManager32);
-		GG1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		GG1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = GG1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG1_32(), composite, true);
 	}
@@ -4526,7 +4581,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG1_64_vbt() throws Exception {
 		CppCompositeType GG1_struct = createGG1_struct64(pdbVbtManager64);
-		GG1_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		GG1_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = GG1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG1_64(), composite, true);
 	}
@@ -4534,7 +4589,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG1_64_speculative() throws Exception {
 		CppCompositeType GG1_struct = createGG1_struct64(vbtManager64);
-		GG1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		GG1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = GG1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG1_64(), composite, true);
 	}
@@ -4597,7 +4652,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG2_32_vbt() throws Exception {
 		CppCompositeType GG2_struct = createGG2_struct32(pdbVbtManager32);
-		GG2_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		GG2_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = GG2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG2_32(), composite, true);
 	}
@@ -4605,7 +4660,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG2_32_speculative() throws Exception {
 		CppCompositeType GG2_struct = createGG2_struct32(vbtManager32);
-		GG2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		GG2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = GG2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG2_32(), composite, true);
 	}
@@ -4669,7 +4724,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG2_64_vbt() throws Exception {
 		CppCompositeType GG2_struct = createGG2_struct64(pdbVbtManager64);
-		GG2_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		GG2_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = GG2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG2_64(), composite, true);
 	}
@@ -4677,7 +4732,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG2_64_speculative() throws Exception {
 		CppCompositeType GG2_struct = createGG2_struct64(vbtManager64);
-		GG2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		GG2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = GG2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG2_64(), composite, true);
 	}
@@ -4740,7 +4795,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG3_32_vbt() throws Exception {
 		CppCompositeType GG3_struct = createGG3_struct32(pdbVbtManager32);
-		GG3_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		GG3_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = GG3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG3_32(), composite, true);
 	}
@@ -4748,7 +4803,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG3_32_speculative() throws Exception {
 		CppCompositeType GG3_struct = createGG3_struct32(vbtManager32);
-		GG3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		GG3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = GG3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG3_32(), composite, true);
 	}
@@ -4812,7 +4867,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG3_64_vbt() throws Exception {
 		CppCompositeType GG3_struct = createGG3_struct64(pdbVbtManager64);
-		GG3_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		GG3_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = GG3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG3_64(), composite, true);
 	}
@@ -4820,7 +4875,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG3_64_speculative() throws Exception {
 		CppCompositeType GG3_struct = createGG3_struct64(vbtManager64);
-		GG3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		GG3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = GG3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG3_64(), composite, true);
 	}
@@ -4886,7 +4941,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG4_32_vbt() throws Exception {
 		CppCompositeType GG4_struct = createGG4_struct32(pdbVbtManager32);
-		GG4_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		GG4_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = GG4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG4_32(), composite, true);
 	}
@@ -4894,7 +4949,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG4_32_speculative() throws Exception {
 		CppCompositeType GG4_struct = createGG4_struct32(vbtManager32);
-		GG4_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		GG4_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = GG4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG4_32(), composite, true);
 	}
@@ -4954,7 +5009,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG4_64_vbt() throws Exception {
 		CppCompositeType GG4_struct = createGG4_struct64(pdbVbtManager64);
-		GG4_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		GG4_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = GG4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedGG4_64(), composite, true);
 	}
@@ -4962,7 +5017,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testGG4_64_speculative() throws Exception {
 		CppCompositeType GG4_struct = createGG4_struct64(vbtManager64);
-		GG4_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		GG4_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = GG4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedGG4_64(), composite, true);
 	}
@@ -5030,7 +5085,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI_32_vbt() throws Exception {
 		CppCompositeType I_struct = createI_struct32(pdbVbtManager32);
-		I_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		I_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI_32(), composite, true);
 	}
@@ -5038,7 +5093,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI_32_speculative() throws Exception {
 		CppCompositeType I_struct = createI_struct32(vbtManager32);
-		I_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		I_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI_32(), composite, true);
 	}
@@ -5132,7 +5187,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI_64_vbt() throws Exception {
 		CppCompositeType I_struct = createI_struct64(pdbVbtManager64);
-		I_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		I_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI_64(), composite, true);
 	}
@@ -5140,7 +5195,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI_64_speculative() throws Exception {
 		CppCompositeType I_struct = createI_struct64(vbtManager64);
-		I_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		I_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI_64(), composite, true);
 	}
@@ -5234,7 +5289,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI1_32_vbt() throws Exception {
 		CppCompositeType I1_struct = createI1_struct32(pdbVbtManager32);
-		I1_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		I1_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI1_32(), composite, true);
 	}
@@ -5242,7 +5297,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI1_32_speculative() throws Exception {
 		CppCompositeType I1_struct = createI1_struct32(vbtManager32);
-		I1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		I1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI1_32(), composite, true);
 	}
@@ -5347,7 +5402,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI1_64_vbt() throws Exception {
 		CppCompositeType I1_struct = createI1_struct64(pdbVbtManager64);
-		I1_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		I1_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI1_64(), composite, true);
 	}
@@ -5355,7 +5410,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI1_64_speculative() throws Exception {
 		CppCompositeType I1_struct = createI1_struct64(vbtManager64);
-		I1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		I1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI1_64(), composite, true);
 	}
@@ -5457,7 +5512,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI2_32_vbt() throws Exception {
 		CppCompositeType I2_struct = createI2_struct32(pdbVbtManager32);
-		I2_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		I2_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI2_32(), composite, true);
 	}
@@ -5465,7 +5520,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI2_32_speculative() throws Exception {
 		CppCompositeType I2_struct = createI2_struct32(vbtManager32);
-		I2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		I2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI2_32(), composite, true);
 	}
@@ -5571,7 +5626,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI2_64_vbt() throws Exception {
 		CppCompositeType I2_struct = createI2_struct64(pdbVbtManager64);
-		I2_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		I2_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI2_64(), composite, true);
 	}
@@ -5579,7 +5634,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI2_64_speculative() throws Exception {
 		CppCompositeType I2_struct = createI2_struct64(vbtManager64);
-		I2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		I2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI2_64(), composite, true);
 	}
@@ -5681,7 +5736,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI3_32_vbt() throws Exception {
 		CppCompositeType I3_struct = createI3_struct32(pdbVbtManager32);
-		I3_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		I3_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI3_32(), composite, true);
 	}
@@ -5689,7 +5744,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI3_32_speculative() throws Exception {
 		CppCompositeType I3_struct = createI3_struct32(vbtManager32);
-		I3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		I3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI3_32(), composite, true);
 	}
@@ -5794,7 +5849,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI3_64_vbt() throws Exception {
 		CppCompositeType I3_struct = createI3_struct64(pdbVbtManager64);
-		I3_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		I3_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI3_64(), composite, true);
 	}
@@ -5802,7 +5857,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI3_64_speculative() throws Exception {
 		CppCompositeType I3_struct = createI3_struct64(vbtManager64);
-		I3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		I3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI3_64(), composite, true);
 	}
@@ -5895,7 +5950,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI4_32_vbt() throws Exception {
 		CppCompositeType I4_struct = createI4_struct32(pdbVbtManager32);
-		I4_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		I4_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI4_32(), composite, true);
 	}
@@ -5903,7 +5958,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI4_32_speculative() throws Exception {
 		CppCompositeType I4_struct = createI4_struct32(vbtManager32);
-		I4_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		I4_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI4_32(), composite, true);
 	}
@@ -5990,7 +6045,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI4_64_vbt() throws Exception {
 		CppCompositeType I4_struct = createI4_struct64(pdbVbtManager64);
-		I4_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		I4_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI4_64(), composite, true);
 	}
@@ -5998,7 +6053,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI4_64_speculative() throws Exception {
 		CppCompositeType I4_struct = createI4_struct64(vbtManager64);
-		I4_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		I4_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI4_64(), composite, true);
 	}
@@ -6083,7 +6138,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI5_32_vbt() throws Exception {
 		CppCompositeType I5_struct = createI5_struct32(pdbVbtManager32);
-		I5_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		I5_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I5_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedtI5_32(), composite, true);
 	}
@@ -6091,7 +6146,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI5_32_speculative() throws Exception {
 		CppCompositeType I5_struct = createI5_struct32(vbtManager32);
-		I5_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		I5_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = I5_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedtI5_32(), composite, true);
 	}
@@ -6220,7 +6275,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI5_64_vbt() throws Exception {
 		CppCompositeType I5_struct = createI5_struct64(pdbVbtManager64);
-		I5_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		I5_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I5_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedI5_64(), composite, true);
 	}
@@ -6228,7 +6283,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testI5_64_speculative() throws Exception {
 		CppCompositeType I5_struct = createI5_struct64(vbtManager64);
-		I5_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		I5_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = I5_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedI5_64(), composite, true);
 	}
@@ -6387,7 +6442,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ1_32_vbt() throws Exception {
 		CppCompositeType J1_struct = createJ1_struct32(pdbVbtManager32);
-		J1_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		J1_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ1_32(), composite, true);
 	}
@@ -6395,7 +6450,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ1_32_speculative() throws Exception {
 		CppCompositeType J1_struct = createJ1_struct32(vbtManager32);
-		J1_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		J1_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ1_32(), composite, true);
 	}
@@ -6559,7 +6614,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ1_64_vbt() throws Exception {
 		CppCompositeType J1_struct = createJ1_struct64(pdbVbtManager64);
-		J1_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		J1_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ1_64(), composite, true);
 	}
@@ -6567,7 +6622,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ1_64_speculative() throws Exception {
 		CppCompositeType J1_struct = createJ1_struct64(vbtManager64);
-		J1_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		J1_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J1_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ1_64(), composite, true);
 	}
@@ -6722,7 +6777,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ2_32_vbt() throws Exception {
 		CppCompositeType J2_struct = createJ2_struct32(pdbVbtManager32);
-		J2_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		J2_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ2_32(), composite, true);
 	}
@@ -6730,7 +6785,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ2_32_speculative() throws Exception {
 		CppCompositeType J2_struct = createJ2_struct32(vbtManager32);
-		J2_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		J2_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ2_32(), composite, true);
 	}
@@ -6894,7 +6949,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ2_64_vbt() throws Exception {
 		CppCompositeType J2_struct = createJ2_struct64(pdbVbtManager64);
-		J2_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		J2_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ2_64(), composite, true);
 	}
@@ -6902,7 +6957,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ2_64_speculative() throws Exception {
 		CppCompositeType J2_struct = createJ2_struct64(vbtManager64);
-		J2_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		J2_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J2_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ2_64(), composite, true);
 	}
@@ -7062,7 +7117,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ3_32_vbt() throws Exception {
 		CppCompositeType J3_struct = createJ3_struct32(pdbVbtManager32);
-		J3_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		J3_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ3_32(), composite, true);
 	}
@@ -7070,7 +7125,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ3_32_speculative() throws Exception {
 		CppCompositeType J3_struct = createJ3_struct32(vbtManager32);
-		J3_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		J3_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ3_32(), composite, true);
 	}
@@ -7247,7 +7302,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ3_64_vbt() throws Exception {
 		CppCompositeType J3_struct = createJ3_struct64(pdbVbtManager64);
-		J3_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		J3_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ3_64(), composite, true);
 	}
@@ -7255,7 +7310,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ3_64_speculative() throws Exception {
 		CppCompositeType J3_struct = createJ3_struct64(vbtManager64);
-		J3_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		J3_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J3_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ3_64(), composite, true);
 	}
@@ -7460,7 +7515,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ4_32_vbt() throws Exception {
 		CppCompositeType J4_struct = createJ4_struct32(pdbVbtManager32);
-		J4_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		J4_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ4_32(), composite, true);
 	}
@@ -7468,7 +7523,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ4_32_speculative() throws Exception {
 		CppCompositeType J4_struct = createJ4_struct32(vbtManager32);
-		J4_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		J4_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ4_32(), composite, true);
 	}
@@ -7727,7 +7782,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ4_64_vbt() throws Exception {
 		CppCompositeType J4_struct = createJ4_struct64(pdbVbtManager64);
-		J4_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		J4_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ4_64(), composite, true);
 	}
@@ -7735,7 +7790,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ4_64_speculative() throws Exception {
 		CppCompositeType J4_struct = createJ4_struct64(vbtManager64);
-		J4_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		J4_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J4_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ4_64(), composite, true);
 	}
@@ -7978,7 +8033,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ5_32_vbt() throws Exception {
 		CppCompositeType J5_struct = createJ5_struct32(pdbVbtManager32);
-		J5_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		J5_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J5_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ5_32(), composite, true);
 	}
@@ -7988,7 +8043,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 //	@Test
 	public void testJ5_32_speculative() throws Exception {
 		CppCompositeType J5_struct = createJ5_struct32(vbtManager32);
-		J5_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		J5_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J5_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ5_32(), composite, true);
 	}
@@ -8253,7 +8308,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ5_64_vbt() throws Exception {
 		CppCompositeType J5_struct = createJ5_struct64(pdbVbtManager64);
-		J5_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		J5_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J5_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ5_64(), composite, true);
 	}
@@ -8263,7 +8318,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 //	@Test
 	public void testJ5_64_speculative() throws Exception {
 		CppCompositeType J5_struct = createJ5_struct64(vbtManager64);
-		J5_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		J5_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J5_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ5_64(), composite, true);
 	}
@@ -8458,7 +8513,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ6_32_vbt() throws Exception {
 		CppCompositeType J6_struct = createJ6_struct32(pdbVbtManager32);
-		J6_struct.createLayout(layoutOptions, pdbVbtManager32, TaskMonitor.DUMMY);
+		J6_struct.createLayout(classLayoutChoice, pdbVbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J6_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ6_32(), composite, true);
 	}
@@ -8468,7 +8523,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 //	@Test
 	public void testJ6_32_speculative() throws Exception {
 		CppCompositeType J6_struct = createJ6_struct32(vbtManager32);
-		J6_struct.createLayout(layoutOptions, vbtManager32, TaskMonitor.DUMMY);
+		J6_struct.createLayout(classLayoutChoice, vbtManager32, TaskMonitor.DUMMY);
 		Composite composite = J6_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ6_32(), composite, true);
 	}
@@ -8594,7 +8649,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	@Test
 	public void testJ6_64_vbt() throws Exception {
 		CppCompositeType J6_struct = createJ6_struct64(pdbVbtManager64);
-		J6_struct.createLayout(layoutOptions, pdbVbtManager64, TaskMonitor.DUMMY);
+		J6_struct.createLayout(classLayoutChoice, pdbVbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J6_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getExpectedJ6_64(), composite, true);
 	}
@@ -8604,7 +8659,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 //	@Test
 	public void testJ6_64_speculative() throws Exception {
 		CppCompositeType J6_struct = createJ6_struct64(vbtManager64);
-		J6_struct.createLayout(layoutOptions, vbtManager64, TaskMonitor.DUMMY);
+		J6_struct.createLayout(classLayoutChoice, vbtManager64, TaskMonitor.DUMMY);
 		Composite composite = J6_struct.getComposite();
 		CompositeTestUtils.assertExpectedComposite(this, getSpeculatedJ6_64(), composite, true);
 	}

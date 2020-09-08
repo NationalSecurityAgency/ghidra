@@ -1293,7 +1293,7 @@ public class PdbApplicator {
 		if (primarySymbol != null) {
 
 			if (primarySymbol.getName().startsWith("?") && forceIfMangled &&
-				applicatorOptions.allowDemotePrimaryMangledSymbol()) {
+				applicatorOptions.allowDemotePrimaryMangledSymbols()) {
 				return true;
 			}
 
@@ -1399,7 +1399,7 @@ public class PdbApplicator {
 		if (existingPrimarySymbolInfo != null) {
 			if (existingPrimarySymbolInfo.canBePrimaryForceOverriddenBy(symbolPathString) &&
 				forcePrimaryIfExistingIsMangled &&
-				applicatorOptions.allowDemotePrimaryMangledSymbol()) {
+				applicatorOptions.allowDemotePrimaryMangledSymbols()) {
 				forcePrimary = true;
 			}
 		}

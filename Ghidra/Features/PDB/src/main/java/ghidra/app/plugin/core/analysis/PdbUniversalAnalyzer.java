@@ -181,11 +181,11 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		"If checked, attempts to apply function parameters and local variables for program functions.";
 	private boolean applyFunctionVariables;
 
-	// Sets the composite layout mode.
+	// Sets the composite layout choice.
 	// Legacy
 	//   - similar to existing DIA-based PDB Analyzer, only placing current composite direct
 	//     members (none from parent classes.
-	// Warning: the remaining experimental layout modes may not be kept and are not guaranteed
+	// Warning: the remaining experimental layout choices may not be kept and are not guaranteed
 	//          to result in data types that will be compatible with future Ghidra releases: 
 	// Complex with Basic Fallback
 	//   - Performs Complex layout, but if the current class has no parent classes, it will not
@@ -196,11 +196,11 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	// Complex
 	//   - Puts all current class members and 'direct' parents' 'direct' components into an
 	//     encapsulating 'direct' container
-	private static final String OPTION_NAME_COMPOSITE_LAYOUT_MODE = "Composite Layout Mode";
-	private static final String OPTION_DESCRIPTION_COMPOSITE_LAYOUT_MODE =
-		"Legacy mode like original PDB Analyzer. Warning: other modes have no compatibility" +
+	private static final String OPTION_NAME_COMPOSITE_LAYOUT_CHOICE = "Composite Layout Choice";
+	private static final String OPTION_DESCRIPTION_COMPOSITE_LAYOUT_CHOICE =
+		"Legacy layout like original PDB Analyzer. Warning: other choices have no compatibility" +
 			" guarantee with future Ghidra releases or minor PDB Analyzer changes";
-	private CompositeLayoutMode compositeLayoutMode;
+	private ObjectOrientedClassLayoutChoice compositeLayoutChoice;
 
 	//==============================================================================================
 	// Additional instance data
@@ -397,8 +397,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 				OPTION_DESCRIPTION_ALLOW_DEMOTE_MANGLED_PRIMARY);
 			options.registerOption(OPTION_NAME_APPLY_FUNCTION_VARIABLES, applyFunctionVariables,
 				null, OPTION_DESCRIPTION_APPLY_FUNCTION_VARIABLES);
-			options.registerOption(OPTION_NAME_COMPOSITE_LAYOUT_MODE, compositeLayoutMode, null,
-				OPTION_DESCRIPTION_COMPOSITE_LAYOUT_MODE);
+			options.registerOption(OPTION_NAME_COMPOSITE_LAYOUT_CHOICE, compositeLayoutChoice, null,
+				OPTION_DESCRIPTION_COMPOSITE_LAYOUT_CHOICE);
 		}
 	}
 
@@ -464,8 +464,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 				OPTION_NAME_ALLOW_DEMOTE_MANGLED_PRIMARY, allowDemotePrimaryMangledSymbol);
 			applyFunctionVariables =
 				options.getBoolean(OPTION_NAME_APPLY_FUNCTION_VARIABLES, applyFunctionVariables);
-			compositeLayoutMode =
-				options.getEnum(OPTION_NAME_COMPOSITE_LAYOUT_MODE, compositeLayoutMode);
+			compositeLayoutChoice =
+				options.getEnum(OPTION_NAME_COMPOSITE_LAYOUT_CHOICE, compositeLayoutChoice);
 		}
 		setPdbApplicatorOptions();
 	}
@@ -555,16 +555,17 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void getPdbApplicatorOptions() {
-		applyCodeScopeBlockComments = pdbApplicatorOptions.applyCodeScopeBlockComments();
-		applyDataTypesOnly = pdbApplicatorOptions.applyDataTypesOnly();
-		applyPublicSymbolsOnly = pdbApplicatorOptions.applyPublicSymbolsOnly();
+		applyCodeScopeBlockComments = PdbApplicatorOptions.DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
+		applyDataTypesOnly = PdbApplicatorOptions.DEFAULT_APPLY_DATA_TYPES_ONLY;
+		applyPublicSymbolsOnly = PdbApplicatorOptions.DEFAULT_APPLY_PUBLIC_SYMBOLS_ONLY;
 
-		applyInstructionLabels = pdbApplicatorOptions.applyInstructionLabels();
+		applyInstructionLabels = PdbApplicatorOptions.DEFAULT_APPLY_INSTRUCTION_LABELS;
 		remapAddressUsingExistingPublicMangledSymbols =
-			pdbApplicatorOptions.remapAddressUsingExistingPublicMangledSymbols();
-		allowDemotePrimaryMangledSymbol = pdbApplicatorOptions.allowDemotePrimaryMangledSymbol();
-		applyFunctionVariables = pdbApplicatorOptions.applyFunctionVariables();
-		compositeLayoutMode = pdbApplicatorOptions.getCompositeLayoutMode();
+			PdbApplicatorOptions.DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS;
+		allowDemotePrimaryMangledSymbol =
+			PdbApplicatorOptions.DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS;
+		applyFunctionVariables = PdbApplicatorOptions.DEFAULT_APPLY_FUNCTION_VARIABLES;
+		compositeLayoutChoice = PdbApplicatorOptions.DEFAULT_CLASS_LAYOUT_CHOICE;
 	}
 
 	private void setPdbApplicatorOptions() {
@@ -573,11 +574,11 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 		pdbApplicatorOptions.setApplyCodeScopeBlockComments(applyCodeScopeBlockComments);
 		pdbApplicatorOptions.setApplyInstructionLabels(applyInstructionLabels);
-		pdbApplicatorOptions.setRemapAddressUsingExistingPublicMangledSymbols(
+		pdbApplicatorOptions.setRemapAddressUsingExistingPublicSymbols(
 			remapAddressUsingExistingPublicMangledSymbols);
-		pdbApplicatorOptions.setAllowDemotePrimaryMangledSymbol(allowDemotePrimaryMangledSymbol);
+		pdbApplicatorOptions.setAllowDemotePrimaryMangledSymbols(allowDemotePrimaryMangledSymbol);
 		pdbApplicatorOptions.setApplyFunctionVariables(applyFunctionVariables);
-		pdbApplicatorOptions.setCompositeLayoutMode(compositeLayoutMode);
+		pdbApplicatorOptions.setClassLayoutChoice(compositeLayoutChoice);
 	}
 
 	private boolean confirmDirectory(File path) {

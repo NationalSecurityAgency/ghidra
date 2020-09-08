@@ -27,6 +27,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.DummyMsType;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 public class SymbolsTest extends AbstractGenericTest {
 
@@ -62,8 +63,9 @@ public class SymbolsTest extends AbstractGenericTest {
 			dummyPdb700.setItemRecord(4096, item);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 	}
 

@@ -25,7 +25,7 @@ import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
  */
 public class NoSymbolApplier extends MsSymbolApplier {
 
-	AbstractMsSymbol symbol;
+	private AbstractMsSymbol symbol;
 
 	/**
 	 * Constructor

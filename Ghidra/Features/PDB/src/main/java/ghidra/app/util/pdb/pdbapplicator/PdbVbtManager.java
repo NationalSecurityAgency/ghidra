@@ -35,8 +35,8 @@ import ghidra.util.task.TaskMonitor;
  */
 public class PdbVbtManager extends VbtManager {
 
-	Map<String, Address> addressByMangledName;
-	Memory memory;
+	private Map<String, Address> addressByMangledName;
+	private Memory memory;
 
 	private static Memory getMemory(PdbApplicator applicator) throws PdbException {
 		Program program = applicator.getProgram();
