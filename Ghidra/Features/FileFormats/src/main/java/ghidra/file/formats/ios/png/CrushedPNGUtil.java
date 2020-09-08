@@ -104,7 +104,7 @@ public class CrushedPNGUtil {
 			try (ByteArrayOutputStream decompressedOutput = new ByteArrayOutputStream(expectedSize);
 				InflaterOutputStream inflaterStream = new InflaterOutputStream(decompressedOutput)) {
 
-				inflaterStream.write(ZLIB_COMPRESSION_DEFAULT);
+				inflaterStream.write(ZLIB.ZLIB_COMPRESSION_DEFAULT);
 				idatStream.writeTo(inflaterStream);
 				inflaterStream.finish();
 				results = decompressedOutput.toByteArray();
