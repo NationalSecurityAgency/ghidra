@@ -3893,6 +3893,13 @@ macro addflags(op1, op2)
 	tmpOV = scarry(op1, op2);
 }
 
+macro add_with_carry_flags(op1,op2){
+	local carry_in = zext(CY);
+	local tempResult = op1 + op2;
+	tmpCY = carry(op1,op2) || carry(tempResult, carry_in);
+    tmpOV = scarry(op1,op2) ^^ scarry(tempResult, carry_in);
+}
+
 macro affectflags()
 {
 	NG = tmpNG; ZR = tmpZR; CY = tmpCY; OV = tmpOV;

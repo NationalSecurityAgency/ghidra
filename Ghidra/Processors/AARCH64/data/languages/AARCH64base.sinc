@@ -8,9 +8,8 @@
 :adc^SBIT_CZNO Rd_GPR32, Rn_GPR32, Rm_GPR32
 is sf=0 & b_30=0 & S & SBIT_CZNO & b_2428=0x1a & b_2123=0 & Rm_GPR32 & b_1015=0 & Rd_GPR32 & Rd_GPR64 & Rn_GPR32
 {
-	tmp:4 = Rm_GPR32 + zext(CY);
-	addflags(Rn_GPR32, tmp);
-	tmp = Rn_GPR32 + tmp;
+	add_with_carry_flags(Rn_GPR32, Rm_GPR32);
+	tmp:4 = Rm_GPR32 + Rn_GPR32 + zext(CY);
 	Rd_GPR64 = zext(tmp);
 	resultflags(tmp);
 	build SBIT_CZNO;
@@ -24,9 +23,8 @@ is sf=0 & b_30=0 & S & SBIT_CZNO & b_2428=0x1a & b_2123=0 & Rm_GPR32 & b_1015=0 
 :adc^SBIT_CZNO Rd_GPR64, Rn_GPR64, Rm_GPR64
 is sf=1 & b_30=0 & S & SBIT_CZNO & b_2428=0x1a & b_2123=0 & Rm_GPR64 & b_1015=0 & Rd_GPR64 & Rn_GPR64
 {
-	tmp:8 = Rm_GPR64 + zext(CY);
-	addflags(Rn_GPR64, tmp);
-	Rd_GPR64 = Rn_GPR64 + tmp;
+	add_with_carry_flags(Rn_GPR64, Rm_GPR64);
+	Rd_GPR64 = Rn_GPR64 + Rm_GPR64 + zext(CY);
 	resultflags(Rd_GPR64);
 	build SBIT_CZNO;
 }
@@ -4285,8 +4283,7 @@ is sf=1 & op=1 & s=1 & b_2428=0xb & b_2121=0 & Rm_GPR64 & RegShift64 & Rn=0x1f &
 :ngc Rd_GPR32, Rm_GPR32
 is sf=0 & op=1 & s=0 & b_2428=0x1a & b_2123=0 & Rm_GPR32 & opcode2=0x0 & Rn=0x1f & Rd_GPR32 & Rd_GPR64
 {
-	tmp:4 = Rm_GPR32 - 1:4 + zext(CY);
-	subflags0(tmp);
+	tmp:4 = Rm_GPR32 + zext(!CY);
 	Rd_GPR64 = zext(-tmp);
 }
 
@@ -4298,8 +4295,7 @@ is sf=0 & op=1 & s=0 & b_2428=0x1a & b_2123=0 & Rm_GPR32 & opcode2=0x0 & Rn=0x1f
 :ngc Rd_GPR64, Rm_GPR64
 is sf=1 & op=1 & s=0 & b_2428=0x1a & b_2123=0 & Rm_GPR64 & opcode2=0x0 & Rn=0x1f & Rd_GPR64
 {
-	tmp:8 = Rm_GPR64 - 1:8 + zext(CY);
-	subflags0(tmp);
+	tmp:8 = Rm_GPR64 + zext(!CY);
 	Rd_GPR64 = -tmp;
 }
 
@@ -4311,8 +4307,8 @@ is sf=1 & op=1 & s=0 & b_2428=0x1a & b_2123=0 & Rm_GPR64 & opcode2=0x0 & Rn=0x1f
 :ngcs Rd_GPR32, Rm_GPR32
 is sf=0 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rn=0x1f & opcode2=0x0 & Rm_GPR32 & Rd_GPR32 & Rd_GPR64
 {
-	tmp:4 = Rm_GPR32 - 1:4 + zext(CY);
-	subflags0(tmp);
+	tmp:4 = Rm_GPR32 + zext(!CY);
+	add_with_carry_flags(0,~tmp);
 	Rd_GPR64 = zext(-tmp);
 	resultflags(Rd_GPR32);
 	affectflags();
@@ -4326,8 +4322,8 @@ is sf=0 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rn=0x1f & opcode2=0x0 & Rm_GPR32
 :ngcs Rd_GPR64, Rm_GPR64
 is sf=1 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rn=0x1f & opcode2=0x0 & Rm_GPR64 & Rd_GPR64
 {
-	tmp:8 = Rm_GPR64 - 1:8 + zext(CY);
-	subflags0(tmp);
+	tmp:8 = Rm_GPR64 + zext(!CY);
+	add_with_carry_flags(0,~tmp);
 	Rd_GPR64 = -tmp;
 	resultflags(Rd_GPR64);
 	affectflags();
@@ -4882,8 +4878,7 @@ is b_1231=0xd5033 & b_0007=0xff
 :sbc Rd_GPR32, Rn_GPR32, Rm_GPR32
 is sf=0 & op=1 & s=0 & b_2428=0x1a & b_2123=0 & Rm_GPR32 & opcode2=0x0 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
-	tmp:4 = Rm_GPR32 - 1:4 + zext(CY);
-	subflags(Rn_GPR32, tmp);
+	tmp:4 = Rm_GPR32 + zext(!CY);
 	Rd_GPR64 = zext(Rn_GPR32 - tmp);
 }
 
@@ -4895,8 +4890,7 @@ is sf=0 & op=1 & s=0 & b_2428=0x1a & b_2123=0 & Rm_GPR32 & opcode2=0x0 & Rn_GPR3
 :sbc Rd_GPR64, Rn_GPR64, Rm_GPR64
 is sf=1 & op=1 & s=0 & b_2428=0x1a & b_2123=0 & Rm_GPR64 & opcode2=0x0 & Rn_GPR64 & Rd_GPR64
 {
-	tmp:8 = Rm_GPR64 - 1:8 + zext(CY);
-	subflags(Rn_GPR64, tmp);
+	tmp:8 = Rm_GPR64 + zext(!CY);
 	Rd_GPR64 = Rn_GPR64 - tmp;
 }
 
@@ -4908,8 +4902,8 @@ is sf=1 & op=1 & s=0 & b_2428=0x1a & b_2123=0 & Rm_GPR64 & opcode2=0x0 & Rn_GPR6
 :sbcs Rd_GPR32, Rn_GPR32, Rm_GPR32
 is sf=0 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rm_GPR32 & opcode2=0x0 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
-	tmp:4 = Rm_GPR32 - 1:4 + zext(CY);
-	subflags(Rn_GPR32, tmp);
+	tmp:4 = Rm_GPR32 + zext(!CY);
+	add_with_carry_flags(Rn_GPR32, ~Rm_GPR32);
 	Rd_GPR64 = zext(Rn_GPR32 - tmp);
 	resultflags(Rd_GPR32);
 	affectflags();
@@ -4923,8 +4917,8 @@ is sf=0 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rm_GPR32 & opcode2=0x0 & Rn_GPR3
 :sbcs Rd_GPR64, Rn_GPR64, Rm_GPR64
 is sf=1 & op=1 & s=1 & b_2428=0x1a & b_2123=0 & Rm_GPR64 & opcode2=0x0 & Rn_GPR64 & Rd_GPR64
 {
-	tmp:8 = Rm_GPR64 - 1:8 + zext(CY);
-	subflags(Rn_GPR64, tmp);
+	tmp:8 = Rm_GPR64 + zext(!CY);
+	add_with_carry_flags(Rn_GPR64, ~Rm_GPR64);
 	Rd_GPR64 = Rn_GPR64 - tmp;
 	resultflags(Rd_GPR64);
 	affectflags();
