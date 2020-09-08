@@ -223,8 +223,13 @@ public enum OptionType {
 				option.readState(saveState);
 				return option;
 			}
+			catch (ClassNotFoundException e) {
+				Msg.warn(this,
+					"Ignoring unsupported customOption instance for: " + customOptionClassName);
+			}
 			catch (Exception e) {
-				Msg.error(this, "Can't create customOption instance for: " + customOptionClassName,
+				Msg.error(this,
+					"Can't create customOption instance for: " + customOptionClassName + 
 					e);
 			}
 			return null;

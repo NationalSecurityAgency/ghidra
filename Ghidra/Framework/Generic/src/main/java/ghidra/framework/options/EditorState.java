@@ -120,10 +120,16 @@ public class EditorState implements PropertyChangeListener {
 	 * directly, as opposed to using the generic framework.
 	 */
 	public boolean supportsCustomOptionsEditor() {
-		return (editor instanceof CustomOptionsEditor);
+		return editor == null || (editor instanceof CustomOptionsEditor);
 	}
 
 	public Component getEditorComponent() {
+		if (editor == null) {
+			// can occur if support has been dropped for custom state/option
+			editor = new ErrorPropertyEditor(
+				"Ghidra does not know how to render state: " + name, null);
+			return editor.getCustomEditor();
+		}
 		if (editor.supportsCustomEditor()) {
 			return editor.getCustomEditor();
 		}
