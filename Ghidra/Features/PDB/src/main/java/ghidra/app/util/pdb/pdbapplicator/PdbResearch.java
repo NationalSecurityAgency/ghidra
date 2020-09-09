@@ -32,7 +32,7 @@ import mdemangler.*;
 import mdemangler.object.MDObjectCPP;
 
 /**
- * This is a class for develop research into various areas.  Anything in this class that needs to
+ * This class is for developer research into various areas.  Anything in this class that needs to
  * end up as part of any usable output should be moved into another class.  This class just
  * aggregates various items being investigated, and will eventually be eliminated from the code
  * base.

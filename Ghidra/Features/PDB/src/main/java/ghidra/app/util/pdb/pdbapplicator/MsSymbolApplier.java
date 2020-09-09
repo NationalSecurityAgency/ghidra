@@ -43,7 +43,7 @@ public abstract class MsSymbolApplier {
 	 */
 	public MsSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		Objects.requireNonNull(applicator, "applicator cannot be null");
-		Objects.requireNonNull(iter, "symbolGroup cannot be null");
+		Objects.requireNonNull(iter, "iter cannot be null");
 		this.applicator = applicator;
 		this.iter = iter;
 		currentOffset = iter.getCurrentOffset();
@@ -76,13 +76,12 @@ public abstract class MsSymbolApplier {
 
 	/**
 	 * Applies logic of this class to another {@link MsSymbolApplier} instead of to
-	 * "the program."
+	 * the program.
 	 * @param applyToApplier the applier to which the logic of this class is applied.
 	 * @throws PdbException if there was a problem processing the data.
 	 * @throws CancelledException upon user cancellation.
 	 */
-	abstract void applyTo(MsSymbolApplier applyToApplier)
-			throws PdbException, CancelledException;
+	abstract void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException;
 
 	/**
 	 * Manages block nesting for symbols/appliers that represent the beginning or end of blocks.

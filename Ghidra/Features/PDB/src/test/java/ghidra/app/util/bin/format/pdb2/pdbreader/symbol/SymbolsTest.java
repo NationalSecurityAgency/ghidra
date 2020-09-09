@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader.symbol;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 
@@ -26,8 +27,6 @@ import generic.test.AbstractGenericTest;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.DummyMsType;
-import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
 
 public class SymbolsTest extends AbstractGenericTest {
 
@@ -63,9 +62,7 @@ public class SymbolsTest extends AbstractGenericTest {
 			dummyPdb700.setItemRecord(4096, item);
 		}
 		catch (Exception e) {
-			String msg = "Error in static initialization of testt: " + e;
-			Msg.error(null, msg);
-			throw new AssertException(msg);
+			fail("Error in static initialization of test: " + e);
 		}
 	}
 

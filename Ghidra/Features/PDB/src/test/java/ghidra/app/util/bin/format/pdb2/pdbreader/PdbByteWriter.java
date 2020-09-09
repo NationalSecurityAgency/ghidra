@@ -253,7 +253,7 @@ public class PdbByteWriter {
 	public void putGUID(int data1, short data2, short data3, byte[] data4) {
 		if (data4.length != 8) {
 			String msg = "GUID invalid byte[] size... terminating";
-			Msg.error(null, msg);
+			Msg.error(this, msg);
 			throw new AssertException(msg);
 		}
 		putInt(data1);
