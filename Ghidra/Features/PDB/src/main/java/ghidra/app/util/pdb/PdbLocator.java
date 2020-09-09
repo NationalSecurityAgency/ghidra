@@ -34,7 +34,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Searches for and presents PDB path information if order specified by
+ * Searches for and presents PDB path information in order specified by
  * <a href="https://docs.microsoft.com/en-us/windows/desktop/debug/symbol-paths">
  * Symbol Paths</a>.
  * <P>
@@ -68,7 +68,7 @@ import ghidra.util.task.TaskMonitor;
  *   
  * </PRE>
  */
-public class PdbLocatorSelector {
+public class PdbLocator {
 
 	public static final File SPECIAL_PDB_LOCATION = new File("C:/WINDOWS/Symbols");
 	public static final boolean onWindows =
@@ -80,7 +80,7 @@ public class PdbLocatorSelector {
 	 */
 	private Map<String, PdbIdentifiers> identifiersByFilePath = new HashMap<>();
 
-	public PdbLocatorSelector(File symbolsRepositoryPath) {
+	public PdbLocator(File symbolsRepositoryPath) {
 		this.symbolsRepositoryPath = symbolsRepositoryPath;
 	}
 

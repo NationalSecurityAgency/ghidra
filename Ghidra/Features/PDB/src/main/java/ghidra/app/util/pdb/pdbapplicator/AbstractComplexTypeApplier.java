@@ -95,7 +95,7 @@ public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
 			return fixedSymbolPath;
 		}
 
-		SymbolPath fixed = PdbNamespaceUtils.getFixUpSymbolPathNameOnly(symbolPath, index);
+		SymbolPath fixed = PdbNamespaceUtils.convertToGhidraPathName(symbolPath, index);
 		if (symbolPath.equals(fixed)) {
 			fixedSymbolPath = symbolPath;
 		}

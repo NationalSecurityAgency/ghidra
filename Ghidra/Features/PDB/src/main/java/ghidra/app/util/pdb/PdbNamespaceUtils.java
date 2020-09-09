@@ -33,9 +33,9 @@ public class PdbNamespaceUtils {
 	 * </pre> 
 	 * @param symbolPath the source {@link SymbolPath}
 	 * @param index the index number used be used as part of a unique tag name.
-	 * @return the resulting ({@link SymbolPath}
+	 * @return the resulting {@link SymbolPath}
 	 */
-	public static SymbolPath getFixUpSymbolPathNameOnly(SymbolPath symbolPath, int index) {
+	public static SymbolPath convertToGhidraPathName(SymbolPath symbolPath, int index) {
 		symbolPath = symbolPath.replaceInvalidChars();
 		return new SymbolPath(symbolPath.getParent(), fixUnnamed(symbolPath.getName(), index));
 	}
@@ -43,9 +43,9 @@ public class PdbNamespaceUtils {
 	/**
 	 * Fixes {@link SymbolPath} name, eliminating invalid characters
 	 * @param symbolPath the source {@link SymbolPath}
-	 * @return the resulting ({@link SymbolPath}
+	 * @return the resulting {@link SymbolPath}
 	 */
-	public static SymbolPath getFixUpSymbolPathNameOnly(SymbolPath symbolPath) {
+	public static SymbolPath convertToGhidraPathName(SymbolPath symbolPath) {
 		symbolPath = symbolPath.replaceInvalidChars();
 		return symbolPath;
 	}
@@ -59,9 +59,9 @@ public class PdbNamespaceUtils {
 	 * </pre> 
 	 * @param symbolPath the source {@link SymbolPath}
 	 * @param index the index number used be used as part of a unique tag name.
-	 * @return the resulting ({@link SymbolPath}
+	 * @return the resulting {@link SymbolPath}
 	 */
-	public static SymbolPath getFixUpSymbolPath(SymbolPath symbolPath, int index) {
+	public static SymbolPath convertToGhidraPath(SymbolPath symbolPath, int index) {
 		symbolPath = symbolPath.replaceInvalidChars();
 		List<String> modList = new ArrayList<>();
 		for (String str : symbolPath.asList()) {

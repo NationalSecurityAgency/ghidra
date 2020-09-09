@@ -117,22 +117,22 @@ public class PdbProgramAttributes {
 		if (potentialPdbFilenames == null) {
 
 			// Want to preserve add order while only keeping unique entries
-			Set<String> setOfPotentialFilenames = new LinkedHashSet<>();
+			Set<String> set = new LinkedHashSet<>();
 
 			if (pdbFile != null) {
-				setOfPotentialFilenames.add(getFilename(pdbFile).toLowerCase());
-				setOfPotentialFilenames.add(getFilename(pdbFile));
-				setOfPotentialFilenames.add(pdbFile);
+				set.add(getFilename(pdbFile).toLowerCase());
+				set.add(getFilename(pdbFile));
+				set.add(pdbFile);
 			}
 
 			// getExecutablePath can return "unknown"
 			if (!executablePath.equals("unknown")) {
 				String executableFilename = getFilename(executablePath);
-				setOfPotentialFilenames.add(
+				set.add(
 					getBinaryBasename(executableFilename).toLowerCase() + ".pdb");
 			}
 
-			potentialPdbFilenames = new ArrayList<>(setOfPotentialFilenames);
+			potentialPdbFilenames = new ArrayList<>(set);
 		}
 
 		return potentialPdbFilenames;

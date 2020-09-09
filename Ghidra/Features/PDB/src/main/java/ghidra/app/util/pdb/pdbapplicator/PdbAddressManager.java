@@ -42,16 +42,16 @@ public class PdbAddressManager {
 	private List<SegmentInfo> allSegmentsInfo;
 
 	// Map of Address by symbol name... if a name has appeared more than once, then the Address
-	//  is written with Address.NO_ADDRESS to indicate that the name is found at more than one
-	//  address (not unique from the perspective we need of being able to map PDB addresses to
-	//  possibly different addresses (possibly from an application of another PDB with accurate
-	//  public or "unique" symbols).  Originally, we were only going to use symbols with mangled
-	//  names, but opened this up to a wider field of symbol names.
+	// is written with Address.NO_ADDRESS to indicate that the name is found at more than one
+	// address (not unique from the perspective we need of being able to map PDB addresses to
+	// possibly different addresses (possibly from an application of another PDB with accurate
+	// public or "unique" symbols).  Originally, we were only going to use symbols with mangled
+	// names, but opened this up to a wider field of symbol names.
 	private Map<String, Address> addressByPreExistingSymbolName;
 	// Since we are already visiting all existing symbols, and since it will be quicker to do in
-	//  one pass than to continually request the primary symbol at a particular address (as we
-	//  are also adding more symbols), we will get an initial snapshot of what symbol is primary
-	//  at any particular address before we start adding more.
+	// one pass than to continually request the primary symbol at a particular address (as we
+	// are also adding more symbols), we will get an initial snapshot of what symbol is primary
+	// at any particular address before we start adding more.
 	private Map<Address, Symbol> primarySymbolByAddress;
 
 	private Map<Address, Address> remapAddressByAddress;

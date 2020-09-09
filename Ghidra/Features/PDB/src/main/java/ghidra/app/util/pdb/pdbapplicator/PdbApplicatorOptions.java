@@ -36,11 +36,11 @@ public class PdbApplicatorOptions {
 
 	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
 		ObjectOrientedClassLayout.MEMBERS_ONLY;
-//	public static final OjbectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
 //		ObjectOrientedClassLayout.BASIC_SIMPLE_COMPLEX;
-//	public static final OjbectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
 //		ObjectOrientedClassLayout.SIMPLE_COMPLEX;
-//	public static final OjbectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
 //		ObjectOrientedClassLayout.COMPLEX;
 
 	//==============================================================================================
@@ -59,13 +59,13 @@ public class PdbApplicatorOptions {
 	 * Constructor
 	 */
 	public PdbApplicatorOptions() {
-		setDefaults();
+		restoreDefaults();
 	}
 
 	/**
 	 * Set the options back to their default values
 	 */
-	public void setDefaults() {
+	public void restoreDefaults() {
 		applyCodeScopeBlockComments = DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
 		applyInstructionLabels = DEFAULT_APPLY_INSTRUCTION_LABELS;
 		applyDataTypesOnly = DEFAULT_APPLY_DATA_TYPES_ONLY;

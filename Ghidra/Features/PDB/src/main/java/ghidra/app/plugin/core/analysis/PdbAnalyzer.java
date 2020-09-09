@@ -75,7 +75,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 		if (pdb == null) {
 			return false;
 		}
-		Msg.info(this, "Using PDB: " + pdb.getAbsolutePath());
+		Msg.info(this, getClass().getSimpleName() + " configured to use: " + pdb.getAbsolutePath());
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		return parsePdb(pdb, program, mgr, monitor, log);

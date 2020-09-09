@@ -25,7 +25,7 @@ import ghidra.app.services.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
-import ghidra.app.util.pdb.PdbLocatorSelector;
+import ghidra.app.util.pdb.PdbLocator;
 import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.app.util.pdb.pdbapplicator.*;
 import ghidra.framework.Application;
@@ -38,6 +38,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.bean.opteditor.OptionsVetoException;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -257,7 +258,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		//  against the "main" category data types.
 
 		if (oldPdbAnalyzerEnabled(program)) {
-			log.appendMsg(getName(), "Stopped: Cannot run with other PDB Analyzer enabled");
+			log.appendMsg(getName(), "Stopped: Cannot run with DIA-based PDB Analyzer enabled");
 			return false;
 		}
 
@@ -272,7 +273,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			pdbFilename = forceLoadFile.getAbsolutePath();
 		}
 		else {
-			PdbLocatorSelector locator = new PdbLocatorSelector(symbolsRepositoryPath);
+			PdbLocator locator = new PdbLocator(symbolsRepositoryPath);
 			pdbFilename =
 				locator.findPdb(program, programAttributes, !SystemUtilities.isInHeadlessMode(),
 					includePeSpecifiedPdbPath, monitor, log, getName());
@@ -280,7 +281,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 				return false;
 			}
 		}
-		Msg.info(this, "Using PDB: " + pdbFilename);
+		Msg.info(this, getClass().getSimpleName() + " configured to use: " + pdbFilename);
 
 		PdbLog.message(
 			"================================================================================");
@@ -474,7 +475,10 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		String oldPdbNAME = "PDB";
 		// This assert is just to catch us if we change the new NAME to what the old name is
 		//  without first eliminating the call to this method and this method altogether.
-		assert !NAME.contentEquals(oldPdbNAME);
+		if (NAME.contentEquals(oldPdbNAME)) {
+			throw new AssertException(
+				"Developer error: old and new PDB analyzers were not renamed correctly");
+		}
 		Options analysisOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
 		// Don't have access to ghidra.app.plugin.core.analysis.PdbAnalyzer.NAME so using string.
 		boolean isPdbEnabled = analysisOptions.getBoolean(oldPdbNAME, false);
@@ -538,6 +542,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		catch (IOException e) {
 			// Probably could not open the file.
 			if (messageLog != null) {
+				messageLog.appendMsg(getClass().getSimpleName(),
+					"IOException when trying to open PdbLog file: ");
 				messageLog.appendException(e);
 			}
 		}

@@ -79,20 +79,29 @@ public class DefaultPdbUniversalMember extends PdbMember {
 
 	@Override
 	public String toString() {
-		String str = "name=" + getName();
+		StringBuilder builder = new StringBuilder();
+		builder.append("name=");
+		builder.append(getName());
+
 		DataType dt = getDataTypeInternal();
 		if (dt instanceof PdbBitField) {
 			PdbBitField bfDt = (PdbBitField) dataType;
-			str += ", type=" + bfDt.getBaseDataType().getName();
-			str += ", offset=" + getOffset();
-			str += ", bitSize=" + bfDt.getDeclaredBitSize() + ", bitOffset=" +
-				bfDt.getBitOffsetWithinBase();
+			builder.append(", type=");
+			builder.append(bfDt.getBaseDataType().getName());
+			builder.append(", offset=");
+			builder.append(getOffset());
+			builder.append(", bitSize=");
+			builder.append(bfDt.getDeclaredBitSize());
+			builder.append(", bitOffset=");
+			builder.append(bfDt.getBitOffsetWithinBase());
 		}
 		else {
-			str += ", type=" + dataType.getName();
-			str += ", offset=" + getOffset();
+			builder.append(", type=");
+			builder.append(dataType.getName());
+			builder.append(", offset=");
+			builder.append(getOffset());
 		}
-		return str;
+		return builder.toString();
 	}
 
 	@Override
