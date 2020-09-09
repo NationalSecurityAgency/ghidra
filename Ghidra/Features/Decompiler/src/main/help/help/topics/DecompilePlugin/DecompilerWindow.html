@@ -9,20 +9,7 @@
 <link rel="up" href="Decompiler.html" title="Decompiler">
 <link rel="prev" href="DecompilerOptions.html" title="Decompiler Options">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<div class="navheader">
-<table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">Decompiler Window</th></tr>
-<tr>
-<td width="20%" align="left">
-<a accesskey="p" href="DecompilerOptions.html">Prev</a> </td>
-<th width="60%" align="center"> </th>
-<td width="20%" align="right"> </td>
-</tr>
-</table>
-<hr>
-</div>
-<div class="chapter">
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="DecompilerWindow"></a>Decompiler Window</h1></div></div></div>
   
@@ -100,7 +87,7 @@
   
   <p>
   Initially pushing <span class="guiicon"><img src="images/decompileFunction.gif"></span> or selecting
-  <span class="bold"><strong>Decompile</strong></span> from <span class="bold"><strong>Window</strong></span> menu in the tool
+  <span class="bold"><strong>Decompile</strong></span> from the <span class="bold"><strong>Window</strong></span> menu in the tool
   brings up the <span class="emphasis"><em>main</em></span> window.  The main window always displays the function
   at the <span class="emphasis"><em>current address</em></span> within the Code Browser and follows as the user navigates
   within the Program.  Any mouse click, menu option, or other action causing the cursor to move to a new
@@ -137,9 +124,9 @@
     <p>
       <span class="emphasis"><em>Comment</em></span> tokens map to the machine address associated with the comment.
     </p>
-    <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+    <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -242,9 +229,9 @@
     Triggers a re-decompilation of the current function displayed in the window.
     Any cached results are discarded, and a full decompile is performed.
   </p>
-  <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+  <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="../../shared/tip.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -300,9 +287,9 @@
     Generate a control-flow graph based upon the results in the active Decompiler Window,
     and render it using the current Graph Service.
   </p>
-  <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+  <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -684,13 +671,22 @@
   <div class="informalexample">
     <div class="variablelist"><dl class="variablelist">
 <dt><span class="term"><span class="bold"><strong>Def-Use</strong></span></span></dt>
-<dd><p>
+<dd>
+<p>
       Highlight the single token where the selected variable was last written (def),
       and highlight all the tokens where that single value is read (use). The written token,
       generally where the variable is on the left-hand side of an assignment expression,
       is highlighted in a different color.  If the variable is written on multiple merging
       control-flow paths, no written token is highlighted.
-      </p></dd>
+      </p>
+      <p>
+	In the following example, the token representing the first write to the
+	variable <span class="emphasis"><em>a</em></span> is selected when Def-Use is chosen.
+	</p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/Defuse.png" align="middle" width="346" height="257"></td></tr></table></div>
+<p>
+      </p>
+</dd>
 <dt><span class="term"><span class="bold"><strong>Forward Slice</strong></span></span></dt>
 <dd>
 <p>
@@ -898,7 +894,7 @@
     A new or child namespace can
     be specified by prepending the base name with the namespace using the C++ '::'
     separator characters. Any namespace path entered this way is considered relative
-    to the namespace set in the drop-down meu, so the <span class="bold"><strong>Global</strong></span>
+    to the namespace set in the drop-down menu, so the <span class="bold"><strong>Global</strong></span>
     namespace may need to be selected if the user wants to specify an absolute path. If
     any path element of the namespace does not exist, it is created.
   </p>
@@ -958,7 +954,7 @@
     A new or child namespace can
     be specified by prepending the base name with the namespace using the C++ '::'
     separator characters. Any namespace path entered this way is considered relative
-    to the namespace set in the drop-down meu, so the <span class="bold"><strong>Global</strong></span>
+    to the namespace set in the drop-down menu, so the <span class="bold"><strong>Global</strong></span>
     namespace may need to be selected if the user wants to specify an absolute path. If
     any path element of the namespace does not exist, it is created.
   </p>
@@ -1065,7 +1061,7 @@
     the return value (named <code class="code">&lt;RETURN&gt;</code>) did not exist previously, one is created.
   </p>
   <p>
-    As input parameter annotations and the return value annotation must be commited as a whole
+    As input parameter annotations and the return value annotation must be committed as a whole
     (see the discussion of function prototype's in <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>), if
     no prototype existed previously, this action also causes variable annotations for all
     input parameters to be created as well.  In this situation, the action is equivalent to
@@ -1133,22 +1129,5 @@
 
 </div>
 
-</div>
-<div class="navfooter">
-<hr>
-<table width="100%" summary="Navigation footer">
-<tr>
-<td width="40%" align="left">
-<a accesskey="p" href="DecompilerOptions.html">Prev</a> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right"> </td>
-</tr>
-<tr>
-<td width="40%" align="left" valign="top">Decompiler Options </td>
-<td width="20%" align="center"><a accesskey="h" href="Decompiler.html">Home</a></td>
-<td width="40%" align="right" valign="top"> </td>
-</tr>
-</table>
-</div>
-</body>
+</div></body>
 </html>

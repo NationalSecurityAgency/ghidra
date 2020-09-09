@@ -10,21 +10,7 @@
 <link rel="prev" href="DecompilerIntro.html" title="Decompiler">
 <link rel="next" href="DecompilerAnnotations.html" title="Program Annotations Affecting the Decompiler">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<div class="navheader">
-<table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">Decompiler Concepts</th></tr>
-<tr>
-<td width="20%" align="left">
-<a accesskey="p" href="DecompilerIntro.html">Prev</a> </td>
-<th width="60%" align="center"> </th>
-<td width="20%" align="right"> <a accesskey="n" href="DecompilerAnnotations.html">Next</a>
-</td>
-</tr>
-</table>
-<hr>
-</div>
-<div class="chapter">
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="DecompilerConcepts"></a>Decompiler Concepts</h1></div></div></div>
   
@@ -911,7 +897,7 @@
     </div>
 <p>
     The scope extends via control-flow to each p-code operation that <span class="emphasis"><em>reads</em></span> the
-    specific varnode as an operand.  The value of the varnode between the definining p-code operation
+    specific varnode as an operand.  The value of the varnode between the defining p-code operation
     and the reading operations does not change. The scope of a varnode can be thought of as a set
     of addresses within the function's body connected by control-flow.  The address of the defining
     p-code operation is referred to as the varnode's <span class="bold"><strong>first use point</strong></span>
@@ -1054,7 +1040,7 @@
 <a name="ConceptPrototypeKilledByCall"></a>Killed by Call</h4></div></div></div>
       
       <p>
-	In constrast to <span class="emphasis"><em>unaffected</em></span> memory locations, a prototype model may specify
+	In contrast to <span class="emphasis"><em>unaffected</em></span> memory locations, a prototype model may specify
 	<span class="bold"><strong>killed by call</strong></span> locations that are guaranteed <span class="emphasis"><em>not</em></span>
 	to be used to hold a value across the function.
       </p>
@@ -1062,23 +1048,5 @@
   </div>
 </div>
 
-</div>
-<div class="navfooter">
-<hr>
-<table width="100%" summary="Navigation footer">
-<tr>
-<td width="40%" align="left">
-<a accesskey="p" href="DecompilerIntro.html">Prev</a> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right"> <a accesskey="n" href="DecompilerAnnotations.html">Next</a>
-</td>
-</tr>
-<tr>
-<td width="40%" align="left" valign="top">Decompiler </td>
-<td width="20%" align="center"><a accesskey="h" href="Decompiler.html">Home</a></td>
-<td width="40%" align="right" valign="top"> Program Annotations Affecting the Decompiler</td>
-</tr>
-</table>
-</div>
-</body>
+</div></body>
 </html>

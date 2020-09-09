@@ -10,21 +10,7 @@
 <link rel="prev" href="DecompilerConcepts.html" title="Decompiler Concepts">
 <link rel="next" href="DecompilerOptions.html" title="Decompiler Options">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<div class="navheader">
-<table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">Program Annotations Affecting the Decompiler</th></tr>
-<tr>
-<td width="20%" align="left">
-<a accesskey="p" href="DecompilerConcepts.html">Prev</a> </td>
-<th width="60%" align="center"> </th>
-<td width="20%" align="right"> <a accesskey="n" href="DecompilerOptions.html">Next</a>
-</td>
-</tr>
-</table>
-<hr>
-</div>
-<div class="chapter">
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="DecompilerAnnotations"></a>Program Annotations Affecting the Decompiler</h1></div></div></div>
   
@@ -63,7 +49,7 @@
   </p>
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="ConceptEntryPoint"></a>Entry Point</h3></div></div></div>
+<a name="AnnoteEntryPoint"></a>Entry Point</h3></div></div></div>
     
     <p>
       The <span class="emphasis"><em>entry point</em></span> address for a function plays a pivotal role for
@@ -86,7 +72,7 @@
   </div>
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="ConceptFunctionBody"></a>Formal Function Body</h3></div></div></div>
+<a name="AnnoteFormalFunctionBody"></a>Formal Function Body</h3></div></div></div>
     
     <p>
       When a function is created, Ghidra stores its function body as a set of addresses in the
@@ -96,9 +82,9 @@
       in particular use the formal function body to know which function to decompile in response
       to a navigation event to an arbitrary address.
     </p>
-    <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+    <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -114,7 +100,7 @@
 
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="ConceptFlowOverride"></a>Flow Overrides</h3></div></div></div>
+<a name="AnnoteFlowOverride"></a>Flow Overrides</h3></div></div></div>
     
     <p>
       Control-flow behavior for machine instructions is generally determined by the underlying
@@ -261,9 +247,9 @@
     types can be configured to display in decompiler output, by changing the
     decompiler Display options (See <a class="xref" href="DecompilerOptions.html#CommentOptions"><span class="bold"><strong>Display &lt;kind-of&gt; Comments</strong></span></a>).
   </p>
-  <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+  <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -459,7 +445,7 @@
     </p>
     <p>
       Local variables,
-      in constrast, do not generally exist across the whole function, but come into scope
+      in contrast, do not generally exist across the whole function, but come into scope
       at the instruction that first writes to them, and then exist only up to the last
       instruction that reads them.  The memory location storing a local variable
       at one point of the function may be reused for different variables at other points.
@@ -568,7 +554,7 @@
 <a name="TypeChar"></a>Character</h5></div></div></div>
 	
 	<p>
-	  ASCII or unicode encoded character data-types are supported for sizes of 1, 2, and 4.  The size affectively
+	  ASCII or Unicode encoded character data-types are supported for sizes of 1, 2, and 4.  The size effectively
 	  chooses between the UTF8, UTF16, and UTF32 character encodings respectively. The standard
 	  C data-type names <span class="bold"><strong>char</strong></span> and <span class="bold"><strong>wchar_t</strong></span> are
 	  mapped to one of these sizes based on the
@@ -602,7 +588,7 @@
 	</p>
 	<p>
 	  Strings should be fully rendered in decompiler output,
-	  with non-printable characters escaped using either traditional sequences like '\r', '\n' or using unicode
+	  with non-printable characters escaped using either traditional sequences like '\r', '\n' or using Unicode
 	  escape sequences like '\xFF'.
 	</p>
       </div>
@@ -662,7 +648,7 @@
 	  single value in the enumeration definition, the decompiler attempts to build a matching
 	  value by <span class="emphasis"><em>or</em></span>-ing together multiple labels.  
 	  The decompiler can be made to break out constants representing packed <span class="emphasis"><em>flags</em></span>,
-	  for instance, by labeling individal bit values within an enumeration.
+	  for instance, by labeling individual bit values within an enumeration.
 	</p>
       </div>
       <div class="sect4">
@@ -741,9 +727,9 @@
 	but the variable representing the storage location being annotated is guaranteed to have
 	the given name and that data-type; it will not be overridden.
       </p>
-      <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+      <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -799,7 +785,7 @@
       </p>
       <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../shared/note.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -998,7 +984,7 @@
 <dt><span class="term"><span class="bold"><strong>Variable Arguments</strong></span></span></dt>
 <dd>
 	<p>
-	  Functions have a boolean property called <span class="bold"><strong>variable argments</strong></span>, which can be turned on
+	  Functions have a boolean property called <span class="bold"><strong>variable arguments</strong></span>, which can be turned on
 	  if the function is capable of being passed a variable number of inputs.  This property informs the decompiler that
 	  the function may take additional parameters beyond any with an explicit variable annotation.
 	  This affects decompilation of any function which calls the <span class="emphasis"><em>variable arguments</em></span> function, allowing
@@ -1058,9 +1044,9 @@
       See the complete discussion in <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>.
       But keep in mind:
     </p>
-    <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+    <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="images/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -1268,23 +1254,5 @@
   </p>
 </div>
 
-</div>
-<div class="navfooter">
-<hr>
-<table width="100%" summary="Navigation footer">
-<tr>
-<td width="40%" align="left">
-<a accesskey="p" href="DecompilerConcepts.html">Prev</a> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right"> <a accesskey="n" href="DecompilerOptions.html">Next</a>
-</td>
-</tr>
-<tr>
-<td width="40%" align="left" valign="top">Decompiler Concepts </td>
-<td width="20%" align="center"><a accesskey="h" href="Decompiler.html">Home</a></td>
-<td width="40%" align="right" valign="top"> Decompiler Options</td>
-</tr>
-</table>
-</div>
-</body>
+</div></body>
 </html>

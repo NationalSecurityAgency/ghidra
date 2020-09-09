@@ -40,6 +40,8 @@
   </xsl:element>
 </xsl:template>
 
+<xsl:param name="suppress.navigation" select="1"/>  <!-- Turn off header/footer navigation links -->
+
 <xsl:param name="use.id.as.filename" select="1"/>  <!-- Split up into files based on id attribute -->
 
 <xsl:param name="html.stylesheet" select="'../../shared/Frontpage.css'"/>    <!-- Use our custom cascading style sheet -->

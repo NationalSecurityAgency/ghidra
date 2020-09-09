@@ -93,7 +93,8 @@ task buildDecompilerHelpHtml(type: Exec) {
 		echo '** Building html files **'
 		xsltproc --output $buildDir/decomp_noscaling.xml --stringparam profile.condition "noscaling" /usr/share/sgml/docbook/xsl-stylesheets/profiling/profile.xsl decompileplugin.xml 2>&1
 		xsltproc --stringparam base.dir ${installHelpPoint}/topics/DecompilePlugin/ --stringparam root.filename Decompiler decompileplugin_html.xsl $buildDir/decomp_noscaling.xml 2>&1
-		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' ${installHelpPoint}/topics/DecompilePlugin/*.html
+		rm ${installHelpPoint}/topics/DecompilePlugin/Decompiler.html
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' ${installHelpPoint}/topics/DecompilePlugin/*.html 2>&1
 
 		echo '** Done. **'
 		"""

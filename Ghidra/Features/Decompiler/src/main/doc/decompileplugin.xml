@@ -976,7 +976,7 @@
 	</itemizedlist>
     </informalexample>
     The scope extends via control-flow to each p-code operation that <emphasis>reads</emphasis> the
-    specific varnode as an operand.  The value of the varnode between the definining p-code operation
+    specific varnode as an operand.  The value of the varnode between the defining p-code operation
     and the reading operations does not change. The scope of a varnode can be thought of as a set
     of addresses within the function's body connected by control-flow.  The address of the defining
     p-code operation is referred to as the varnode's <emphasis role="bold">first use point</emphasis>
@@ -1107,7 +1107,7 @@
     <sect3 id="ConceptPrototypeKilledByCall">
       <title>Killed by Call</title>
       <para>
-	In constrast to <emphasis>unaffected</emphasis> memory locations, a prototype model may specify
+	In contrast to <emphasis>unaffected</emphasis> memory locations, a prototype model may specify
 	<emphasis role="bold">killed by call</emphasis> locations that are guaranteed <emphasis>not</emphasis>
 	to be used to hold a value across the function.
       </para>
@@ -1150,7 +1150,7 @@
     A <emphasis role="bold">function body</emphasis> is the set of addresses reached by control-flow
     analysis (and the machine instructions at those addresses).
   </para>
-  <sect2 id="ConceptEntryPoint">
+  <sect2 id="AnnoteEntryPoint">
     <title>Entry Point</title>
     <para>
       The <emphasis>entry point</emphasis> address for a function plays a pivotal role for
@@ -1171,7 +1171,7 @@
       (See <link xlink:href="help/topics/FunctionPlugin/Functions.htm#Create_Function">Create Function</link>)
     </para>
   </sect2>
-  <sect2 id="ConceptFunctionBody">
+  <sect2 id="AnnoteFormalFunctionBody">
     <title>Formal Function Body</title>
     <para>
       When a function is created, Ghidra stores its function body as a set of addresses in the
@@ -1181,17 +1181,17 @@
       in particular use the formal function body to know which function to decompile in response
       to a navigation event to an arbitrary address.
     </para>
-    <note>
+    <warning>
       The decompiler does <emphasis>not</emphasis> use the formal function body when it computes
       control-flow; it recomputes its own idea of the function body starting from the entry point
       it is handed.  If the formal function body was created manually, using a selection for instance,
       or in other extreme circumstances, the decompiler's view of the function body may not match
       the formal view. This can lead to confusing behavior, where clicking in a decompiler window
       may unexpectedly navigate the window away from the function.
-    </note>
+    </warning>
   </sect2>
 
-  <sect2 id="ConceptFlowOverride">
+  <sect2 id="AnnoteFlowOverride">
     <title>Flow Overrides</title>
     <para>
       Control-flow behavior for machine instructions is generally determined by the underlying
@@ -1339,12 +1339,12 @@
     types can be configured to display in decompiler output, by changing the
     decompiler Display options (See <xref linkend="CommentOptions"/>).
   </para>
-  <note>
+  <warning>
     Unlike the Listing window, the decompiler does not alter how a comment is
     displayed based on its type.
     All enabled types of comment are displayed in the same way, on
     a separate line before the line of code associated with the address.
-  </note>
+  </warning>
   </sect2>
 
   <sect2 id="CommentUnreachable">
@@ -1514,7 +1514,7 @@
     </para>
     <para>
       Local variables,
-      in constrast, do not generally exist across the whole function, but come into scope
+      in contrast, do not generally exist across the whole function, but come into scope
       at the instruction that first writes to them, and then exist only up to the last
       instruction that reads them.  The memory location storing a local variable
       at one point of the function may be reused for different variables at other points.
@@ -1607,7 +1607,7 @@
       <sect4 id="TypeChar">
 	<title>Character</title>
 	<para>
-	  ASCII or unicode encoded character data-types are supported for sizes of 1, 2, and 4.  The size affectively
+	  ASCII or Unicode encoded character data-types are supported for sizes of 1, 2, and 4.  The size effectively
 	  chooses between the UTF8, UTF16, and UTF32 character encodings respectively. The standard
 	  C data-type names <emphasis role="bold">char</emphasis> and <emphasis role="bold">wchar_t</emphasis> are
 	  mapped to one of these sizes based on the
@@ -1637,7 +1637,7 @@
 	</para>
 	<para>
 	  Strings should be fully rendered in decompiler output,
-	  with non-printable characters escaped using either traditional sequences like '\r', '\n' or using unicode
+	  with non-printable characters escaped using either traditional sequences like '\r', '\n' or using Unicode
 	  escape sequences like '\xFF'.
 	</para>
       </sect4>
@@ -1689,7 +1689,7 @@
 	  single value in the enumeration definition, the decompiler attempts to build a matching
 	  value by <emphasis>or</emphasis>-ing together multiple labels.  
 	  The decompiler can be made to break out constants representing packed <emphasis>flags</emphasis>,
-	  for instance, by labeling individal bit values within an enumeration.
+	  for instance, by labeling individual bit values within an enumeration.
 	</para>
       </sect4>
       <sect4 id="TypeFunction">
@@ -1760,12 +1760,12 @@
 	but the variable representing the storage location being annotated is guaranteed to have
 	the given name and that data-type; it will not be overridden.
       </para>
-      <note>
+      <warning>
 	Users should be aware that variable annotations are forcing on the decompiler and may directly
 	override aspects of its analysis.  Because of this, variable annotations are the most powerful way
 	for the user to affect decompiler output, but setting an incomplete (or incorrect) data-type as
 	part of an annotation may produce poorer decompiler output.
-      </note>
+      </warning>
       <para>
 	The major exception to forcing annotations is if the data-type in the annotation is <emphasis>undefined</emphasis>.
 	Ghidra reserves the following names to represent formally undefined data-types:
@@ -1992,7 +1992,7 @@
       <term><emphasis role="bold">Variable Arguments</emphasis></term>
       <listitem>
 	<para>
-	  Functions have a boolean property called <emphasis role="bold">variable argments</emphasis>, which can be turned on
+	  Functions have a boolean property called <emphasis role="bold">variable arguments</emphasis>, which can be turned on
 	  if the function is capable of being passed a variable number of inputs.  This property informs the decompiler that
 	  the function may take additional parameters beyond any with an explicit variable annotation.
 	  This affects decompilation of any function which calls the <emphasis>variable arguments</emphasis> function, allowing
@@ -2056,11 +2056,11 @@
       See the complete discussion in <xref linkend="AnnoteForcing"/>.
       But keep in mind:
     </para>
-    <note>
+    <warning>
       The input parameters and return value are all forced on the decompiler as a unit based on the
       <emphasis>Signature Source-Type</emphasis>. They are all forced if the Source-Type is set to anything
       other than <emphasis>DEFAULT</emphasis>; otherwise none of them are forced.
-    </note>
+    </warning>
     <para>
       If the function prototype's annotations are not forced, the decompiler will attempt to discover the parameters
       and return value using the calling convention.  The prototype model underlying the calling convention
@@ -2507,7 +2507,7 @@
       <listitem>
 	<para>
 	  Assign the color to any characters emitted by the decompiler that do not fall into one of token types
-	  listed above. This includes delimiter characters like commas and parantheses as well as various <emphasis>operator</emphasis>
+	  listed above. This includes delimiter characters like commas and parentheses as well as various <emphasis>operator</emphasis>
 	  characters.
 	</para>
       </listitem>
@@ -2644,7 +2644,7 @@
       <listitem>
 	<para>
 	  Toggle whether decompiler generated <emphasis>WARNING</emphasis> comments are displayed as part
-	  of the output. The decompiler generates these comments, independent of those layed down by users, to
+	  of the output. The decompiler generates these comments, independent of those laid down by users, to
 	  indicate unusual conditions or possible errors (See <xref linkend="CommentWarnings"/>). 
 	</para>
       </listitem>
@@ -2866,13 +2866,13 @@
     <para>
       <emphasis>Comment</emphasis> tokens map to the machine address associated with the comment.
     </para>
-    <note>
+    <warning>
       In general, the map between machine instructions and tokens is not one to one because the decompiler
       transforms its underlying representation of the function.
       An instruction may no longer have any operator that corresponds to it in the decompiled result.
       Tokens may be transformed from the natural operation of the machine instruction they are associated
       with or may represent the effect of multiple instructions.
-    </note>
+    </warning>
   </sect2>
 </section>
 
@@ -2950,13 +2950,13 @@
     Triggers a re-decompilation of the current function displayed in the window.
     Any cached results are discarded, and a full decompile is performed.
   </para>
-  <note>
+  <tip>
     This action is <emphasis role="bold">not</emphasis> necessary for normal reverse
     engineering tasks. Re-decompilation is <emphasis>automatically</emphasis> triggered for all
     decompiler windows by any change to the Program, so the most up-to-date decompilation is
     always available to the user without this action. This action is a primarily a debugging
     aid for plug-in developers.
-  </note>
+  </tip>
 </sect2>
 
 <sect2 id="ToolBarCopy">
@@ -2996,9 +2996,9 @@
     Generate a control-flow graph based upon the results in the active Decompiler Window,
     and render it using the current Graph Service.
   </para>
-  <note>
+  <warning>
     If no Graph Service is available then this action will no be present.
-  </note>
+  </warning>
 </sect2>
 
 </section>
@@ -3586,7 +3586,7 @@
     A new or child namespace can
     be specified by prepending the base name with the namespace using the C++ '::'
     separator characters. Any namespace path entered this way is considered relative
-    to the namespace set in the drop-down meu, so the <emphasis role="bold">Global</emphasis>
+    to the namespace set in the drop-down menu, so the <emphasis role="bold">Global</emphasis>
     namespace may need to be selected if the user wants to specify an absolute path. If
     any path element of the namespace does not exist, it is created.
   </para>
@@ -3642,7 +3642,7 @@
     A new or child namespace can
     be specified by prepending the base name with the namespace using the C++ '::'
     separator characters. Any namespace path entered this way is considered relative
-    to the namespace set in the drop-down meu, so the <emphasis role="bold">Global</emphasis>
+    to the namespace set in the drop-down menu, so the <emphasis role="bold">Global</emphasis>
     namespace may need to be selected if the user wants to specify an absolute path. If
     any path element of the namespace does not exist, it is created.
   </para>
@@ -3741,7 +3741,7 @@
     the return value (named <code>&lt;RETURN&gt;</code>) did not exist previously, one is created.
   </para>
   <para>
-    As input parameter annotations and the return value annotation must be commited as a whole
+    As input parameter annotations and the return value annotation must be committed as a whole
     (see the discussion of function prototype's in <xref linkend="AnnoteForcing"/>), if
     no prototype existed previously, this action also causes variable annotations for all
     input parameters to be created as well.  In this situation, the action is equivalent to
