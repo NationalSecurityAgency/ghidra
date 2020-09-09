@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.*;
 import java.util.*;
@@ -273,9 +274,7 @@ public class MsfReaderUnitTest extends AbstractGenericTest {
 
 		void reservePage(int pageNumber) {
 			if (!freePage[pageNumber]) {
-				String msg = "Page already free... terminating";
-				Msg.error(null, msg);
-				throw new AssertException(msg);
+				fail("Page already free... terminating");
 			}
 			freePage[pageNumber] = false;
 		}
