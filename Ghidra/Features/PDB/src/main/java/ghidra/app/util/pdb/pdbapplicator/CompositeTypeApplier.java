@@ -46,7 +46,6 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	private static boolean applyBaseClasses = true;
 	//private static boolean applyBaseClasses = false;
 
-	private boolean isDeferred = false;
 	private CppCompositeType classType;
 
 //	private final static DataType NO_TYPE_DATATYPE =
@@ -330,7 +329,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			// TODO: Investigate.  We should do this check for some classes somewhere.  Should
 			// we do it here.  Set breakpoint here to investigate.
 		}
-		classType.createLayout(applicator.getPdbApplicatorOptions().getClassLayoutChoice(),
+		classType.createLayout(applicator.getPdbApplicatorOptions().getClassLayout(),
 			applicator.getVbtManager(), applicator.getCancelOnlyWrappingMonitor());
 	}
 

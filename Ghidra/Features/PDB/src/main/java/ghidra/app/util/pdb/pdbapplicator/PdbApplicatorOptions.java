@@ -34,14 +34,14 @@ public class PdbApplicatorOptions {
 	// TODO: set the following to true if we come up with a reasonably good solution
 	public static final boolean DEFAULT_APPLY_FUNCTION_VARIABLES = false;
 
-	public static final ObjectOrientedClassLayoutChoice DEFAULT_CLASS_LAYOUT_CHOICE =
-		ObjectOrientedClassLayoutChoice.MEMBERS_ONLY;
-//	public static final OjbectOrientedClassLayoutChoice DEFAULT_CLASS_LAYOUT_CHOICE =
-//		OjbectOrientedClassLayoutChoice.BASIC_SIMPLE_COMPLEX;
-//	public static final OjbectOrientedClassLayoutChoice DEFAULT_CLASS_LAYOUT_CHOICE =
-//		OjbectOrientedClassLayoutChoice.SIMPLE_COMPLEX;
-//	public static final OjbectOrientedClassLayoutChoice DEFAULT_CLASS_LAYOUT_CHOICE =
-//		OjbectOrientedClassLayoutChoice.COMPLEX;
+	public static final ObjectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+		ObjectOrientedClassLayout.MEMBERS_ONLY;
+//	public static final OjbectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//		ObjectOrientedClassLayout.BASIC_SIMPLE_COMPLEX;
+//	public static final OjbectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//		ObjectOrientedClassLayout.SIMPLE_COMPLEX;
+//	public static final OjbectOrientedClassLayout DEFAULT_CLASS_LAYOUT =
+//		ObjectOrientedClassLayout.COMPLEX;
 
 	//==============================================================================================
 	private boolean applyCodeScopeBlockComments;
@@ -53,7 +53,7 @@ public class PdbApplicatorOptions {
 
 	private boolean applyFunctionVariables; // investigation. might produce bad results.
 
-	private ObjectOrientedClassLayoutChoice classLayoutChoice;
+	private ObjectOrientedClassLayout classLayout;
 
 	/**
 	 * Constructor
@@ -73,7 +73,7 @@ public class PdbApplicatorOptions {
 		remapAddressesUsingExistingPublicSymbols = DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS;
 		allowDemotePrimaryMangledSymbols = DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS;
 		applyFunctionVariables = DEFAULT_APPLY_FUNCTION_VARIABLES;
-		classLayoutChoice = DEFAULT_CLASS_LAYOUT_CHOICE;
+		classLayout = DEFAULT_CLASS_LAYOUT;
 	}
 
 	/**
@@ -196,18 +196,18 @@ public class PdbApplicatorOptions {
 
 	/**
 	 * Set the class layout.
-	 * @param classLayoutChoice composite layout choice
+	 * @param classLayout composite layout
 	 */
-	public void setClassLayoutChoice(ObjectOrientedClassLayoutChoice classLayoutChoice) {
-		this.classLayoutChoice = classLayoutChoice;
+	public void setClassLayout(ObjectOrientedClassLayout classLayout) {
+		this.classLayout = classLayout;
 	}
 
 	/**
-	 * Returns the choice for physically layout out classes.
+	 * Returns the physical layout out classes.
 	 * @return the class layout.
 	 */
-	public ObjectOrientedClassLayoutChoice getClassLayoutChoice() {
-		return classLayoutChoice;
+	public ObjectOrientedClassLayout getClassLayout() {
+		return classLayout;
 	}
 
 }

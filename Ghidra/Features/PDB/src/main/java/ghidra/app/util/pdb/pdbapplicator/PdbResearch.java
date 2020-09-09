@@ -41,6 +41,7 @@ public class PdbResearch {
 
 	//==============================================================================================
 	private static Set<Integer> debugIndexNumbers;
+	private Set<Integer> developerDebugOrderIndexNumbers;
 
 	//==============================================================================================
 	/**
@@ -333,8 +334,6 @@ public class PdbResearch {
 
 	//==============================================================================================
 	//==============================================================================================
-	private Set<Integer> developerDebugOrderIndexNumbers;
-
 	private void initDeveloperOrderRecordNumbers() {
 		developerDebugOrderIndexNumbers = new TreeSet<>();
 

@@ -33,7 +33,7 @@ import ghidra.util.exception.CancelledException;
  */
 public class PdbAddressManager {
 
-	private static final Address badAddress = Address.NO_ADDRESS; // using NO_ADDRESS as a marker
+	private static final Address BAD_ADDRESS = Address.NO_ADDRESS; // using NO_ADDRESS as a marker
 
 	//==============================================================================================
 	private Map<Integer, Long> realAddressesBySection;
@@ -306,10 +306,10 @@ public class PdbAddressManager {
 		if (lookup == null) {
 			remapAddressByAddress.put(address, remapAddress);
 		}
-		else if (!lookup.equals(remapAddress) && lookup != badAddress) {
+		else if (!lookup.equals(remapAddress) && lookup != BAD_ADDRESS) {
 			applicator.appendLogMsg("Trying to map a mapped address to a new address... key: " +
 				address + ", currentMap: " + lookup + ", newMap: " + remapAddress);
-			remapAddressByAddress.put(address, badAddress);
+			remapAddressByAddress.put(address, BAD_ADDRESS);
 		}
 	}
 

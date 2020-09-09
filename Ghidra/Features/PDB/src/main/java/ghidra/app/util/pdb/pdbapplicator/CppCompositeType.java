@@ -51,7 +51,7 @@ public class CppCompositeType {
 	private Composite composite;
 	private CategoryPath categoryPath;
 
-	private ObjectOrientedClassLayout classLayout = ObjectOrientedClassLayout.UNKNOWN;
+	private ObjectOrientedClassLayout classLayout = null;
 
 	private List<ClassPdbMember> memberData;
 
@@ -583,30 +583,31 @@ public class CppCompositeType {
 		return builder.toString();
 	}
 
-	public ObjectOrientedClassLayout getLayout(ObjectOrientedClassLayoutChoice layoutOptions) {
-		if (classLayout == ObjectOrientedClassLayout.UNKNOWN) {
+	public ObjectOrientedClassLayout getLayout(
+			ObjectOrientedClassLayout layoutOptions) {
+		if (classLayout == null) {
 			classLayout = determineClassLayout(layoutOptions);
 		}
 		return classLayout;
 	}
 
 	private ObjectOrientedClassLayout determineClassLayout(
-			ObjectOrientedClassLayoutChoice layoutOptions) {
+			ObjectOrientedClassLayout layoutOptions) {
 		ObjectOrientedClassLayout initialLayoutDetermination;
-		if (layoutOptions.getClassLayout() == ObjectOrientedClassLayout.MEMBERS_ONLY) {
+		if (layoutOptions == ObjectOrientedClassLayout.MEMBERS_ONLY) {
 			return ObjectOrientedClassLayout.MEMBERS_ONLY;
 		}
 		else if (getNumLayoutBaseClasses() == 0) {
-			initialLayoutDetermination = ObjectOrientedClassLayout.BASIC;
+			initialLayoutDetermination = ObjectOrientedClassLayout.BASIC_SIMPLE_COMPLEX;
 		}
 		else if (getNumLayoutVirtualBaseClasses() == 0) {
-			initialLayoutDetermination = ObjectOrientedClassLayout.SIMPLE;
+			initialLayoutDetermination = ObjectOrientedClassLayout.SIMPLE_COMPLEX;
 		}
 		else {
 			initialLayoutDetermination = ObjectOrientedClassLayout.COMPLEX;
 		}
-		ObjectOrientedClassLayout classLyoutOption = layoutOptions.getClassLayout();
-		return classLyoutOption.compareTo(initialLayoutDetermination) >= 0 ? classLyoutOption
+		ObjectOrientedClassLayout classLayoutOption = layoutOptions;
+		return classLayoutOption.compareTo(initialLayoutDetermination) >= 0 ? classLayoutOption
 				: initialLayoutDetermination;
 	}
 
@@ -629,7 +630,7 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createLayout(ObjectOrientedClassLayoutChoice layoutOptions, VbtManager vbtManager,
+	public void createLayout(ObjectOrientedClassLayout layoutOptions, VbtManager vbtManager,
 			TaskMonitor monitor) throws PdbException, CancelledException {
 		if (vbtManager instanceof PdbVbtManager) { // Information from PDB/program symbols
 			// TODO: both same for now
@@ -643,7 +644,7 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createVbtBasedLayout(ObjectOrientedClassLayoutChoice layoutOptions,
+	public void createVbtBasedLayout(ObjectOrientedClassLayout layoutOptions,
 			VbtManager vbtManager, TaskMonitor monitor) throws PdbException, CancelledException {
 		CategoryPath cn;
 		hasDirect = false;
@@ -651,13 +652,13 @@ public class CppCompositeType {
 			case MEMBERS_ONLY:
 				addLayoutPdbMembers(memberData, layoutMembers);
 				break;
-			case BASIC:
+			case BASIC_SIMPLE_COMPLEX:
 				addLayoutPdbMembers(memberData, layoutMembers);
 				insertVirtualFunctionTablePointers(memberData);
 				break;
 			// TODO: evaluate... not really getting difference I thought we could get... so far
 			//  BASIC and SIMPLE seem to yield the same results.  I might be doing something wrong.
-			case SIMPLE:
+			case SIMPLE_COMPLEX:
 			case COMPLEX:
 				cn = createDirectCategoryPath(this);
 				Composite directDataType = new StructureDataType(cn.getParent(), cn.getName(), 0,
@@ -698,7 +699,8 @@ public class CppCompositeType {
 						}
 						directClassLength = getCompositeLength(directDataType);
 					}
-					if (getLayout(layoutOptions) == ObjectOrientedClassLayout.SIMPLE) {
+					if (getLayout(
+						layoutOptions) == ObjectOrientedClassLayout.SIMPLE_COMPLEX) {
 						// Not using the dummy/direct type (only used it to get the
 						//  directClassLength), so remove it and add the members to the main
 						//  type instead.
@@ -768,7 +770,7 @@ public class CppCompositeType {
 
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	public void createSpeculativeLayout(ObjectOrientedClassLayoutChoice layoutOptions,
+	public void createSpeculativeLayout(ObjectOrientedClassLayout layoutOptions,
 			VbtManager vbtManager, TaskMonitor monitor) throws PdbException, CancelledException {
 		// Speculative Layout uses recursion to try to know the order of members.  However, MSFT
 		//  rearranges the order of the Base Class records such that they are not necessarily in
@@ -783,14 +785,14 @@ public class CppCompositeType {
 			case MEMBERS_ONLY:
 				addLayoutPdbMembers(memberData, layoutMembers);
 				break;
-			case BASIC:
+			case BASIC_SIMPLE_COMPLEX:
 				cn = composite.getCategoryPath();
 				addLayoutPdbMembers(memberData, layoutMembers);
 				insertVirtualFunctionTablePointers(memberData);
 				break;
 			// TODO: evaluate... not really getting difference I thought we could get... so far
 			//  BASIC and SIMPLE seem to yield the same results.  I might be doing something wrong.
-			case SIMPLE:
+			case SIMPLE_COMPLEX:
 			case COMPLEX:
 				cn = createDirectCategoryPath(this);
 				Composite directDataType = new StructureDataType(cn.getParent(), cn.getName(), 0,
@@ -834,7 +836,8 @@ public class CppCompositeType {
 						}
 						directClassLength = getCompositeLength(directDataType);
 					}
-					if (getLayout(layoutOptions) == ObjectOrientedClassLayout.SIMPLE) {
+					if (getLayout(
+						layoutOptions) == ObjectOrientedClassLayout.SIMPLE_COMPLEX) {
 						// Not using the dummy/direct type (only used it to get the
 						//  directClassLength), so remove it and add the members to the main
 						//  type instead.
@@ -1349,7 +1352,8 @@ public class CppCompositeType {
 			return attributes;
 		}
 
-		ObjectOrientedClassLayout getLayoutMode(ObjectOrientedClassLayoutChoice layoutOptions) {
+		ObjectOrientedClassLayout getLayoutMode(
+				ObjectOrientedClassLayout layoutOptions) {
 			return baseClassType.getLayout(layoutOptions);
 		}
 

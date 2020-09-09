@@ -30,7 +30,7 @@ public class PdbRegisterNameToProgramRegisterMapper {
 	// Only need to map names that are different (probably not counting case, as rsp and RSP
 	// are equivalent.
 	//@formatter:off
-	private static Map<String, String> registerNameMap = Map.of(
+	private static final Map<String, String> REGISTER_NAME_MAP = Map.of(
 		//"rsp", "RSP",
 		"fbp", "RBP"
 	);
@@ -49,7 +49,7 @@ public class PdbRegisterNameToProgramRegisterMapper {
 		if (register != null) {
 			return register;
 		}
-		String registerName = registerNameMap.get(pdbRegisterName);
+		String registerName = REGISTER_NAME_MAP.get(pdbRegisterName);
 		if (registerName == null) {
 			registerName = pdbRegisterName;
 		}

@@ -34,7 +34,7 @@ public class PdbApplicatorMetrics {
 	 * List of symbols seen (by their ID) as Global symbols.
 	 */
 	//@formatter:off
-	private static final Set<Integer> expectedGlobalSymbols = Set.of(
+	private static final Set<Integer> EXPECTED_GLOBAL_SYMBOLS = Set.of(
 		// AbstractReferenceMsSymbol
 		DataReferenceStMsSymbol.PDB_ID,
 		DataReferenceMsSymbol.PDB_ID,
@@ -79,7 +79,7 @@ public class PdbApplicatorMetrics {
 	 * List of symbols seen (by their ID) as Public symbols.
 	 */
 	//@formatter:off
-	private static final Set<Integer> expectedLinkerSymbols = Set.of(	
+	private static final Set<Integer> EXPECTED_LINKER_SYMBOLS = Set.of(	
 		PeCoffSectionMsSymbol.PDB_ID,
 		TrampolineMsSymbol.PDB_ID,
 		ObjectNameMsSymbol.PDB_ID,
@@ -123,7 +123,7 @@ public class PdbApplicatorMetrics {
 	 * @param symbol The symbol type witnessed.
 	 */
 	void witnessGlobalSymbolType(AbstractMsSymbol symbol) {
-		if (!expectedGlobalSymbols.contains(symbol.getPdbId())) {
+		if (!EXPECTED_GLOBAL_SYMBOLS.contains(symbol.getPdbId())) {
 			unexpectedGlobalSymbols.add(symbol.getClass());
 		}
 	}
@@ -143,7 +143,7 @@ public class PdbApplicatorMetrics {
 	 * @param symbol The symbol type witnessed.
 	 */
 	void witnessLinkerSymbolType(AbstractMsSymbol symbol) {
-		if (!expectedLinkerSymbols.contains(symbol.getPdbId())) {
+		if (!EXPECTED_LINKER_SYMBOLS.contains(symbol.getPdbId())) {
 			// do nothing for now
 		}
 	}

@@ -29,17 +29,6 @@ import ghidra.util.exception.CancelledException;
  */
 public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractVirtualFunctionTablePointerMsType) &&
-			!(type instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					VirtualFunctionTablePointerTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
-
 	/**
 	 * Constructor for enum type applier, for transforming a enum into a
 	 * Ghidra DataType.
@@ -97,6 +86,17 @@ public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 		applicator.appendLogMsg("cannot process " + rawApplier.getClass().getSimpleName() + "for " +
 			getClass().getSimpleName());
 		return null;
+	}
+
+	private static AbstractMsType validateType(AbstractMsType type)
+			throws IllegalArgumentException {
+		if (!(type instanceof AbstractVirtualFunctionTablePointerMsType) &&
+			!(type instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType)) {
+			throw new IllegalArgumentException(
+				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
+					VirtualFunctionTablePointerTypeApplier.class.getSimpleName());
+		}
+		return type;
 	}
 
 }

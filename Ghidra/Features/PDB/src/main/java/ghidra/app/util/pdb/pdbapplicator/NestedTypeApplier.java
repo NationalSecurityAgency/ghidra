@@ -27,17 +27,8 @@ import ghidra.util.exception.CancelledException;
  * Applier for {@link AbstractNestedTypeMsType} and {@link AbstractNestedTypeExtMsType} types.
  */
 public class NestedTypeApplier extends MsTypeApplier {
-	private MsTypeApplier nestedTypeDefinitionApplier = null;
 
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractNestedTypeMsType) &&
-			!(type instanceof AbstractNestedTypeExtMsType)) {
-			throw new IllegalArgumentException("PDB Incorrectly applying " +
-				type.getClass().getSimpleName() + " to " + NestedTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
+	private MsTypeApplier nestedTypeDefinitionApplier = null;
 
 	/**
 	 * Constructor for nested type applier.
@@ -168,4 +159,15 @@ public class NestedTypeApplier extends MsTypeApplier {
 	MsTypeApplier getNestedTypeApplier() {
 		return nestedTypeDefinitionApplier;
 	}
+
+	private static AbstractMsType validateType(AbstractMsType type)
+			throws IllegalArgumentException {
+		if (!(type instanceof AbstractNestedTypeMsType) &&
+			!(type instanceof AbstractNestedTypeExtMsType)) {
+			throw new IllegalArgumentException("PDB Incorrectly applying " +
+				type.getClass().getSimpleName() + " to " + NestedTypeApplier.class.getSimpleName());
+		}
+		return type;
+	}
+
 }

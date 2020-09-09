@@ -52,8 +52,8 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 	private static VbtManager vbtManager32;
 	private static VbtManager vbtManager64;
 	// Note: Currently all test have expected results based on up the COMPLEX layout.
-	private static ObjectOrientedClassLayoutChoice classLayoutChoice =
-		ObjectOrientedClassLayoutChoice.COMPLEX;
+	private static ObjectOrientedClassLayout classLayoutChoice =
+		ObjectOrientedClassLayout.COMPLEX;
 
 	static {
 		BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl();

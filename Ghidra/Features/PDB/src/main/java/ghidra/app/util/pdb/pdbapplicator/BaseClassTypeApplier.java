@@ -28,18 +28,6 @@ import ghidra.util.exception.CancelledException;
  */
 public class BaseClassTypeApplier extends MsTypeApplier {
 
-	private static AbstractMsType validateType(AbstractMsType type)
-			throws IllegalArgumentException {
-		if (!(type instanceof AbstractBaseClassMsType) &&
-			!(type instanceof AbstractVirtualBaseClassMsType) &&
-			!(type instanceof AbstractIndirectVirtualBaseClassMsType)) {
-			throw new IllegalArgumentException(
-				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
-					BaseClassTypeApplier.class.getSimpleName());
-		}
-		return type;
-	}
-
 	/**
 	 * Constructor for base class applier.
 	 * @param applicator {@link PdbApplicator} for which this class is working.
@@ -142,6 +130,18 @@ public class BaseClassTypeApplier extends MsTypeApplier {
 	@Override
 	void apply() throws PdbException, CancelledException {
 		// do nothing at the moment.
+	}
+
+	private static AbstractMsType validateType(AbstractMsType type)
+			throws IllegalArgumentException {
+		if (!(type instanceof AbstractBaseClassMsType) &&
+			!(type instanceof AbstractVirtualBaseClassMsType) &&
+			!(type instanceof AbstractIndirectVirtualBaseClassMsType)) {
+			throw new IllegalArgumentException(
+				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
+					BaseClassTypeApplier.class.getSimpleName());
+		}
+		return type;
 	}
 
 }

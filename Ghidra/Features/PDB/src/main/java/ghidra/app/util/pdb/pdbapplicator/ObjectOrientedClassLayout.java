@@ -16,10 +16,30 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 /**
- * Algorithm layout mechanism being used for a particular {@link CppCompositeType}. An initial
- * value gets passed in to the algorithm but can be changed by the algorithm, based on class
- * internal data.
+ * PDB Analyzer user algorithmic choice for performing object oriented class layout.
+ * <p>
+ * Actual algorithms determination is as follows:
+ * {@link #MEMBERS_ONLY} is a fixed setting.  The others weigh the setting against the data
+ * available in the class records.  They all start out as {@link #COMPLEX} but fall back to a
+ * more simplistic layout when the data permits:
+ * <p> {@link #SIMPLE_COMPLEX} can fall back to "simple" and
+ * <p> {@link #BASIC_SIMPLE_COMPLEX} can fall back to "simple" or "basic"
  */
-enum ObjectOrientedClassLayout {
-	UNKNOWN, MEMBERS_ONLY, BASIC, SIMPLE, COMPLEX
+public enum ObjectOrientedClassLayout {
+	MEMBERS_ONLY("Legacy"),
+	BASIC_SIMPLE_COMPLEX("Complex with Basic Fallback"),
+	SIMPLE_COMPLEX("Complex with Simple Fallback"),
+	COMPLEX("Complex Always");
+
+	private final String label;
+
+	@Override
+	public String toString() {
+		return label;
+	}
+
+	private ObjectOrientedClassLayout(String label) {
+		this.label = label;
+	}
+
 }
