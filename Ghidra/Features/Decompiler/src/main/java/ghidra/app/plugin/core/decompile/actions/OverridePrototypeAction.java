@@ -260,7 +260,6 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		String signature = generateSignature(op, name);
 		PluginTool tool = context.getTool();
 		ProtoOverrideDialog dialog = new ProtoOverrideDialog(tool, func, signature, conv);
-		//     dialog.setHelpLocation( new HelpLocation( getOwner(), "Edit_Function_Signature" ) );
 		tool.showDialog(dialog);
 		FunctionDefinition fdef = dialog.getFunctionDefinition();
 		if (fdef == null) {

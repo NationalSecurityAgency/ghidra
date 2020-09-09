@@ -52,5 +52,5 @@
 
 <xsl:param name="admon.textlabel" select="0"/>  <!-- Don't display title for important/note tags -->
 
-<!-- <xsl:param name="admon.graphics.path" select="shared/"/>  -->
+<xsl:param name="admon.graphics.path" select="'../../shared/'"/>
 </xsl:stylesheet>

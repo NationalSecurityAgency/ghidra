@@ -1,4 +1,5 @@
 ##VERSION: 2.0
+##MODULE IP: Crystal Clear Icons - LGPL 2.1
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
@@ -53,4 +54,6 @@ src/main/help/help/topics/DecompilePlugin/images/Structnotapplied.png||GHIDRA|||
 src/main/help/help/topics/DecompilePlugin/images/camera-photo.png||Tango Icons - Public Domain|||Tango|END|
 src/main/help/help/topics/DecompilePlugin/images/decompileFunction.gif||GHIDRA||reviewed||END|
 src/main/help/help/topics/DecompilePlugin/images/page_edit.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/help/help/topics/DecompilePlugin/images/page_white_copy.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/help/help/topics/DecompilePlugin/images/reload3.png||Crystal Clear Icons - LGPL 2.1||||END|
 src/main/resources/images/decompileFunction.gif||GHIDRA||reviewed||END|

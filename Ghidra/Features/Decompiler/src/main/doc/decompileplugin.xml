@@ -3367,6 +3367,15 @@
       generally where the variable is on the left-hand side of an assignment expression,
       is highlighted in a different color.  If the variable is written on multiple merging
       control-flow paths, no written token is highlighted.
+      </para>
+      <para>
+	In the following example, the token representing the first write to the
+	variable <emphasis>a</emphasis> is selected when Def-Use is chosen.
+	<mediaobject>
+	  <imageobject>
+	    <imagedata fileref="images/Defuse.png" width="100%" contentwidth="3.8462in" contentdepth="2.8558in" align="center"/>
+	  </imageobject>
+	</mediaobject>
       </para></listitem>
     </varlistentry>
     <varlistentry>

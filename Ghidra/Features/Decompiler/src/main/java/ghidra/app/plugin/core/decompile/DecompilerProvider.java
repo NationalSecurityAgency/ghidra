@@ -172,7 +172,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		setWindowMenuGroup("Decompile");
 		setDefaultWindowPosition(WindowPosition.RIGHT);
 		createActions(isConnected);
-		setHelpLocation(new HelpLocation(plugin.getName(), "Decompiler"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "DecompilerIntro"));
 		addToTool();
 
 		redecompileUpdater = new SwingUpdateManager(500, 5000, () -> doRefresh());
