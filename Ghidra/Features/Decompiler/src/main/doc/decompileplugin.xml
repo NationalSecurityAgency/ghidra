@@ -76,7 +76,7 @@
     Some of the primary capabilities of the decompiler include:
 
   <informalexample>
-  <itemizedlist mark='bullet' spacing='compact'>
+  <itemizedlist mark='bullet'>
     <listitem>
       <emphasis role="bold">Recovers Expressions</emphasis>: The
       decompiler does full data-flow analysis which allows it to
@@ -154,7 +154,7 @@
       For a specific byte, the unique index that labels it is called the byte's <emphasis role="bold">address</emphasis>.
       Each address space has a:
       <informalexample>
-      <itemizedlist mark='bullet' spacing='compact'>
+      <itemizedlist mark='bullet'>
 	<listitem>
 	    <emphasis role="bold">name</emphasis> - a formal name for the space
 	</listitem>
@@ -260,7 +260,7 @@
       varnodes inherit one the building block data-types from the p-code operations that
       act on them:
       <informalexample>
-	<itemizedlist mark='bullet' spacing='compact'>
+	<itemizedlist mark='bullet'>
 	  <listitem>
 	    <emphasis role="bold">Integer</emphasis>
 	  </listitem>
@@ -2799,7 +2799,7 @@
     high-level programming language.  The output is tokenized following conventions of the language. Possible
     token types include:
     <informalexample>
-      <itemizedlist mark='bullet' spacing='compact'>
+      <itemizedlist mark='bullet'>
 	<listitem><emphasis role="bold">Data-type Name</emphasis></listitem>
 	<listitem><emphasis role="bold">Variable Name</emphasis></listitem>
 	<listitem><emphasis role="bold">Variable Sub-field Name</emphasis></listitem>
