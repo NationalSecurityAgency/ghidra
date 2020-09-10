@@ -393,7 +393,8 @@ public interface Language {
 	 * 
 	 * @param instructionMnemonic
 	 *            the instruction mnemonic
-	 * @return the ManualEntry or null if instruction mnemonic not found
+	 * @return the ManualEntry or null.  A default manual entry will be returned if 
+	 * an instruction can not be found within the index and a manual exists.
 	 */
 	public ManualEntry getManualEntry(String instructionMnemonic);
 

@@ -197,8 +197,8 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 			pw.println("<html lang=\"en\">");
 			pw.println("<head><meta charset=\"utf-8\"></head>");
 			pw.println("<body style=\"height:100vh;\">");
-			String path = fileURL.getPath() + "#" + fileURL.getRef();
-			pw.println("<embed src=\"" + path + "\" width=\"100%\" height=\"100%\">");
+			pw.println(
+				"<embed src=\"" + fileURL.toExternalForm() + "\" width=\"100%\" height=\"100%\">");
 			pw.println("</body>");
 			pw.println("</html>");
 		}
@@ -220,15 +220,16 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 			return null;
 		}
 
-		String fixedFilename = filename.replace(File.separatorChar, '/');
+		URL url = new File(filename).toURI().toURL();
 
 		String pageNumber = entry.getPageNumber();
 		if (pageNumber != null) {
 			// include manual page as query string (respected by PDF readers)
-			fixedFilename += "#page=" + pageNumber;
+			String fileNameAndPage = url.getFile() + "#page=" + pageNumber;
+			url = new URL(url.getProtocol(), null, fileNameAndPage);
 		}
 
-		return new URL("file", null, fixedFilename);
+		return url;
 	}
 
 	ManualEntry locateManualEntry(ProgramActionContext context, Language language) {
