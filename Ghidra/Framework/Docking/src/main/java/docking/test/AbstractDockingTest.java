@@ -384,6 +384,9 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	public void close(DialogComponentProvider dialog) {
+		if (dialog == null) {
+			return;
+		}
 		runSwing(() -> dialog.close());
 	}
 
