@@ -83,8 +83,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_ABS32: { // Target class: Data
-				int oldValue = memory.getInt(relocationAddress);
-				newValue = (int) (symbolValue + addend + oldValue);
+				newValue = (int) (symbolValue + addend);
 				if (isThumb) {
 					newValue |= 1;
 				}
