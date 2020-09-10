@@ -23,7 +23,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
 import docking.action.MenuData;
-import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
 import docking.widgets.tree.GTreeNode;
 import ghidra.framework.main.datatable.*;
@@ -69,16 +68,15 @@ public class ProjectDataRenameAction extends FrontendProjectTreeAction {
 			tree.setEditable(true);
 			tree.startEditing(node.getParent(), node.getName());
 		}
-		else if (component instanceof GFilterTable<?>) {
-			@SuppressWarnings("unchecked")
-			GFilterTable<DomainFileInfo> filterTable = (GFilterTable<DomainFileInfo>) component;
+		else if (component instanceof GTable) {
+			GTable table = (GTable) component;
 			DomainFileInfo info = (DomainFileInfo) context.getContextObject();
-			ProjectDataTableModel model = (ProjectDataTableModel) filterTable.getModel();
+			ProjectDataTableModel model = (ProjectDataTableModel) table.getModel();
 			List<DomainFileInfo> modelData = model.getModelData();
 			int indexOf = modelData.indexOf(info);
 			if (indexOf >= 0) {
 				model.setEditing(true);
-				filterTable.getTable().editCellAt(indexOf, findNameColumn(filterTable.getTable()));
+				table.editCellAt(indexOf, findNameColumn(table));
 				model.setEditing(false);
 			}
 		}
