@@ -1136,6 +1136,20 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	public static void runSwing(Runnable runnable, boolean wait) {
 
+		// 
+		// Special Case: this check handled re-entrant test code.  That is, an calls to runSwing()
+		//               that are made from within a runSwing() call.  Most clients do not do
+		//               this, but it can happen when a client makes a test API call (which itself
+		//               calls runSwing()) from within a runSwing() call. 
+		//               
+		//               Calling the run method directly here ensures that the order of client 
+		//               requests is preserved.
+		//
+		if (SwingUtilities.isEventDispatchThread()) {
+			runnable.run();
+			return;
+		}
+
 		if (wait) {
 			runSwingAndWait(runnable);
 			return;
