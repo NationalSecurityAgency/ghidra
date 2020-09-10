@@ -9081,3 +9081,35 @@ int4 RulePiecePathology::applyOp(PcodeOp *op,Funcdata &data)
   return tracePathologyForward(op, data);
 }
 
+void RuleXorSwap::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_XOR);
+}
+
+int4 RuleXorSwap::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  for(int4 i=0;i<2;++i) {
+    Varnode *vn = op->getIn(i);
+    if (!vn->isWritten()) continue;
+    PcodeOp *op2 = vn->getDef();
+    if (op2->code() != CPUI_INT_XOR) continue;
+    Varnode *othervn = op->getIn(1-i);
+    Varnode *vn0 = op2->getIn(0);
+    Varnode *vn1 = op2->getIn(1);
+    if (othervn == vn0 && !vn1->isFree()) {
+      data.opRemoveInput(op, 1);
+      data.opSetOpcode(op, CPUI_COPY);
+      data.opSetInput(op, vn1, 0);
+      return 1;
+    }
+    else if (othervn == vn1 && !vn0->isFree()) {
+      data.opRemoveInput(op, 1);
+      data.opSetOpcode(op, CPUI_COPY);
+      data.opSetInput(op, vn0, 0);
+      return 1;
+    }
+  }
+  return 0;
+}
