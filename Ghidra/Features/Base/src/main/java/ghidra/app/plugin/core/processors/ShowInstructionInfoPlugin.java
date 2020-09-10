@@ -220,14 +220,15 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 			return null;
 		}
 
-		String pageNumber = entry.getPageNumber();
 		String fixedFilename = filename.replace(File.separatorChar, '/');
-		if (!fixedFilename.startsWith("/")) {
-			// fix absolute windows paths which start with drive letter
-			fixedFilename = "/" + fixedFilename;
+
+		String pageNumber = entry.getPageNumber();
+		if (pageNumber != null) {
+			// include manual page as query string (respected by PDF readers)
+			fixedFilename += "#page=" + pageNumber;
 		}
-		return new URL(
-			"file://" + fixedFilename + (pageNumber == null ? "" : "#page=" + pageNumber));
+
+		return new URL("file", null, fixedFilename);
 	}
 
 	ManualEntry locateManualEntry(ProgramActionContext context, Language language) {
