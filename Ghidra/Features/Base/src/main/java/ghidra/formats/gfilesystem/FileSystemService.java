@@ -233,6 +233,12 @@ public class FileSystemService {
 			throw new IOException("Invalid FSRL specified: " + fsrl);
 		}
 		String md5 = fsrl.getMD5();
+		if (md5 == null && fsrl.getNestingDepth() == 1) {
+			File f = localFS.getLocalFile(fsrl);
+			if (f.isFile()) {
+				md5 = fileFingerprintCache.getMD5(f.getPath(), f.lastModified(), f.length());
+			}
+		}
 		FSRLRoot fsRoot = fsrl.getFS();
 
 		FileCacheEntry result = (md5 != null) ? fileCache.getFile(md5) : null;
@@ -267,6 +273,14 @@ public class FileSystemService {
 							", md5 now " + result.md5);
 					}
 				}
+				if (fsrl.getNestingDepth() == 1) {
+					File f = localFS.getLocalFile(fsrl);
+					if (f.isFile()) {
+						fileFingerprintCache.add(f.getPath(), result.md5, f.lastModified(),
+							f.length());
+					}
+				}
+
 			}
 		}
 
