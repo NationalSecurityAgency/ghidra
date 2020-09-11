@@ -6,6 +6,12 @@
         <constraint primary="334"   processor="x86"     endian="little" size="32" />
         <constraint primary="34404" processor="x86"     endian="little" size="64" />
       </constraint>
+      <constraint compilerSpecID="clangwindows">
+        <constraint primary="332"   secondary="clang" processor="x86" endian="little" size="32" />
+        <constraint primary="333"   secondary="clang" processor="x86" endian="little" size="32" />
+        <constraint primary="334"   secondary="clang" processor="x86" endian="little" size="32" />
+        <constraint primary="34404" secondary="clang" processor="x86" endian="little" size="64" />
+      </constraint>
       <constraint compilerSpecID="borlandcpp">
         <constraint primary="332"  secondary="borlandcpp" processor="x86" endian="little" size="32" />
         <constraint primary="333"  secondary="borlandcpp" processor="x86" endian="little" size="32" />

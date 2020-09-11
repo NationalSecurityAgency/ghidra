@@ -26,6 +26,7 @@ import ghidra.app.util.datatype.microsoft.GuidInfo;
 import ghidra.app.util.datatype.microsoft.GuidUtil;
 import ghidra.app.util.opinion.BinaryLoader;
 import ghidra.app.util.opinion.PeLoader;
+import ghidra.app.util.opinion.PeLoader.CompilerOpinion.CompilerEnum;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.TypeDef;
@@ -42,12 +43,11 @@ public class PEUtil {
 			return true;
 		}
 		if (format.equals(BinaryLoader.BINARY_NAME)) {
-			MemoryByteProvider mbp =
-				new MemoryByteProvider(program.getMemory(),
-					program.getAddressFactory().getDefaultAddressSpace());
+			MemoryByteProvider mbp = new MemoryByteProvider(program.getMemory(),
+				program.getAddressFactory().getDefaultAddressSpace());
 			try {
-				FactoryBundledWithBinaryReader reader =
-					new FactoryBundledWithBinaryReader(RethrowContinuesFactory.INSTANCE, mbp, true/*LittleEndian*/);
+				FactoryBundledWithBinaryReader reader = new FactoryBundledWithBinaryReader(
+					RethrowContinuesFactory.INSTANCE, mbp, true/*LittleEndian*/);
 				DOSHeader dosHeader = DOSHeader.createDOSHeader(reader);
 				if (dosHeader.e_magic() == DOSHeader.IMAGE_DOS_SIGNATURE) {
 					int peHeaderStartIndex = dosHeader.e_lfanew();
@@ -63,6 +63,12 @@ public class PEUtil {
 		return false;
 	}
 
+	static public boolean isVisualStudioOrClangPe(Program program) {
+		return program.getExecutableFormat().equals(PeLoader.PE_NAME) &&
+			(program.getCompiler().equals(CompilerEnum.VisualStudio.toString()) ||
+				program.getCompiler().equals(CompilerEnum.Clang.toString()));
+	}
+
 	static DataType getActualType(DataType dataType) {
 		if (dataType instanceof TypeDef) {
 			return getActualType(((TypeDef) dataType).getDataType());
@@ -76,8 +82,7 @@ public class PEUtil {
 		AddressSpace defaultSpace = addressFactory.getDefaultAddressSpace();
 		try {
 			int addrAsInt = memory.getInt(addr);
-			Address pointedToAddr =
-				addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
+			Address pointedToAddr = addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
 			return memory.contains(pointedToAddr);
 		}
 		catch (MemoryAccessException e) {
@@ -91,8 +96,7 @@ public class PEUtil {
 		AddressSpace defaultSpace = addressFactory.getDefaultAddressSpace();
 		try {
 			int addrAsInt = memory.getInt(addr);
-			Address pointedToAddr =
-				addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
+			Address pointedToAddr = addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
 			if (memory.contains(pointedToAddr)) {
 				GuidInfo guidInfo = GuidUtil.getKnownGuid(program, pointedToAddr);
 				if (guidInfo != null) {
