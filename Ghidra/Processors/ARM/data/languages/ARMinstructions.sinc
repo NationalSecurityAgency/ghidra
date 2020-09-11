@@ -56,7 +56,9 @@ define token instrArm (32)
     RdHi=(16,19)
     RdLo=(12,15)
     smRd=(16,19)
-    smRn=(12,15)
+    smRa=(12,15)
+    smRm=(8,11)
+    smRn=(0,3)
     immed12=(8,19)
     Rs=(8,11)
     rotate=(8,11)
@@ -564,7 +566,7 @@ define token instrArm (32)
 
 ;
 
-attach variables [ Rn Rd Rs Rm RdHi RdLo smRd smRn RmHi RnLo ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
+attach variables [ Rn Rd Rs Rm RdHi RdLo smRd smRn smRm smRa RmHi RnLo ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
 attach variables [ Rd2 Rm2 ] [ r1 _ r3 _ r5 _ r7 _ r9 _ r11 _ sp _ _ _ ]; # see LDREXD
 attach variables [ CRd CRn CRm ] [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 ]; 										
 attach variables [ thv_Rd thv_Rn thv_Rt thv_Rt2 ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
@@ -648,11 +650,11 @@ HAddr24: reloc is addr24 & H24
 
 @if defined(VERSION_5E)
 
-XBIT: "b" is x=0 & Rm       { local tmpRm = Rm; tmp:2 = tmpRm:2;   export tmp; }
-XBIT: "t" is x=1 & Rm       { local tmpRm = Rm; tmp:2 = tmpRm(2);  export tmp; }
+XBIT: "b" is x=0 & smRn       { local tmpRn = smRn; tmp:2 = tmpRn:2;   export tmp; }
+XBIT: "t" is x=1 & smRn       { local tmpRn = smRn; tmp:2 = tmpRn(2);  export tmp; }
 
-YBIT: "b" is y=0 & Rs       { local tmpRs = Rs; tmp:2 = tmpRs:2;   export tmp; }
-YBIT: "t" is y=1 & Rs       { local tmpRs = Rs; tmp:2 = tmpRs(2);  export tmp; }
+YBIT: "b" is y=0 & smRm       { local tmpRm = smRm; tmp:2 = tmpRm:2;   export tmp; }
+YBIT: "t" is y=1 & smRm       { local tmpRm = smRm; tmp:2 = tmpRm(2);  export tmp; }
 
 @endif # VERSION_5E
 
@@ -665,7 +667,7 @@ YBIT: "t" is y=1 & Rs       { local tmpRs = Rs; tmp:2 = tmpRs(2);  export tmp; }
 shift1: "#"^value 		is I25=1 & immed & rotate
   [ value=((immed<<(32-rotate*2))|(immed>>(rotate*2))) $and 0xffffffff; ]
 {
-  export *[const]:4 value;
+  local tmp:4 = (value >> 31); shift_carry = ((rotate == 0:1) && CY) || ((rotate != 0:1) && tmp(0)); export *[const]:4 value;
 }
 
 ####################
@@ -812,7 +814,7 @@ shift2: rm, "rrx"		is I25=0 & c0411=6 & rm
 
 shift2: rm, "ror #"^sftimm	is I25=0 & sftimm & c0406=6 & rm
 {
-  local tmp1=(rm>>sftimm)|(rm<<(32-sftimm)); local tmp2=tmp1&1; shift_carry=tmp2(0); export tmp1;
+  local tmp1=(rm>>sftimm)|(rm<<(32-sftimm)); local tmp2=(tmp1>>31)&1; shift_carry=tmp2(0); export tmp1;
 }
 
 #####################
@@ -821,22 +823,22 @@ shift2: rm, "ror #"^sftimm	is I25=0 & sftimm & c0406=6 & rm
 
 shift3: rm, "lsl "^rs 		is I25=0 & rs & c0407=1 & rm
 {
-  local sa=rs&0xff; local tmp1=(rm>>(32-sa))&1; shift_carry=tmp1(0); local tmp2=rm<<sa; export tmp2;
+  local sa=rs&0xff; local tmp1=(rm>>(32-sa))&1; shift_carry=((sa==0:4)&&CY) || ((sa!=0:4)&&tmp1(0)); local tmp2=rm<<sa; export tmp2;
 }
 
 shift3: rm, "lsr "^rs		is I25=0 & rs & c0407=3 & rm
 {
-  local sa=rs&0xff; local tmp1=(rm>>(sa-1))&1; shift_carry=tmp1(0); local tmp2=rm>>sa; export tmp2;
+  local sa=rs&0xff; local tmp1=(rm>>(sa-1))&1; shift_carry=((sa==0:4)&&CY) || ((sa!=0:4)&&tmp1(0)); local tmp2=rm>>sa; export tmp2;
 }
 
 shift3: rm, "asr "^rs		is I25=0 & rs & c0407=5 & rm
 {
-  local sa=rs&0xff; local tmp1=(rm s>>(sa-1))&1; shift_carry=tmp1(0); local tmp2=rm s>> sa; export tmp2;
+  local sa=rs&0xff; local tmp1=(rm s>>(sa-1))&1; shift_carry=((sa==0:4)&&CY) || ((sa!=0:4)&&tmp1(0)); local tmp2=rm s>> sa; export tmp2;
 }
 
 shift3: rm, "ror "^rs		is I25=0 & rs & c0407=7 & rm
 {
-  local sa=rs&0x1f; local tmp1=(rm>>sa)|(rm<<(32-sa)); local tmp2=tmp1&1; shift_carry=tmp2(0); export tmp1;
+  local sa=rs&0x1f; local tmp1=(rm>>sa)|(rm<<(32-sa)); local tmp2=tmp1>>31; shift_carry=(((rs&0xff)==0:4)&&CY) || (((rs&0xff)!=0:4)&&tmp2(0)); export tmp1;
 }
 
 
@@ -872,27 +874,27 @@ shift4: rm, "asr #"^sftimm	is sftimm & sh=1 & rm
 #####################
 @if defined(VERSION_6)
 
-ror1: rm 		is rotate=0 & rm
+ror1: rm 		is c1011=0 & rm
 {
   local tmp = rm;
   export tmp;
 }
 
-ror1: rm, "ror #8"		is rotate=4 & rm
+ror1: rm, "ror #8"		is c1011=1 & rm
 {
-  local tmp = rm >> 8;
+  local tmp =  (rm <<24)| (rm >> 8);
   export tmp;
 }
 
-ror1: rm, "ror #16"		is rotate=8 & rm
+ror1: rm, "ror #16"		is c1011=2 & rm
 {
-  local tmp = rm >> 16;
+  local tmp = (rm << 16) | (rm >> 16);
   export tmp;
 }
 
-ror1: rm, "ror #24"		is rotate=12 & rm
+ror1: rm, "ror #24"		is c1011=3 & rm
 {
-  local tmp = rm >> 24;
+  local tmp = (rm << 8) | (rm >> 24);
   export tmp;
 }
 
@@ -1866,14 +1868,23 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 #
 #################################################
 
+#See Section 2-13, "Overflow Detection", of Hacker's Delight (2nd ed)
+macro add_with_carry_flags(op1,op2){
+	tmpCY = ((CY == 0) && carry(op1,op2)) || ((CY == 1) && (op1 >= op1 + op2 + 1:4));
+	local total= op1 + op2 + zext(CY);
+	local sign_total = (total >> 31) != 0;
+	local sign_op1 = (op1 >> 31) != 0;
+	local sign_op2 = (op2 >> 31) != 0;
+	tmpOV = (sign_op1 == sign_op2) && (sign_total != sign_op1);
+}
+
 :adc^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
   build shift1;
-  local tmp = shift1+zext(CY);
-  addflags(rn,tmp);
-  Rd = rn+tmp;
+  add_with_carry_flags(rn,shift1);
+  Rd = rn+shift1+zext(CY);
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -1883,9 +1894,8 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   build COND;
   build rn;
   build shift2;
-  local tmp = shift2+zext(CY);
-  addflags(rn,tmp);
-  Rd = rn+tmp;
+  add_with_carry_flags(rn,shift2);
+  Rd = rn+shift2+zext(CY);
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -1895,9 +1905,8 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   build COND;
   build rn;
   build shift3;
-  local tmp = shift3+zext(CY);
-  addflags(rn,tmp);
-  Rd = rn+tmp;
+  add_with_carry_flags(rn,shift3);
+  Rd = rn+shift3+zext(CY);
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -1907,9 +1916,8 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   build COND;
   build rn;
   build shift1;
-  local tmp = shift1+zext(CY);
-  addflags(rn,tmp);
-  dest:4 = rn + tmp;
+  add_with_carry_flags(rn,shift1);
+  dest:4 = rn + shift1 + zext(CY);
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -1921,9 +1929,8 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   build COND;
   build rn;
   build shift2;
-  local tmp = shift2+zext(CY);
-  addflags(rn,tmp);
-  dest:4 = rn + tmp;
+  add_with_carry_flags(rn,shift2);
+  dest:4 = rn + shift2 + zext(CY);
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -1935,9 +1942,8 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   build COND;
   build rn;
   build shift3;
-  local tmp = shift3+zext(CY);
-  addflags(rn,tmp);
-  dest:4 = rn + tmp;
+  add_with_carry_flags(rn,shift3);
+  dest:4 = rn + shift3 + zext(CY);
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -4425,11 +4431,46 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6T2)
 
+macro BitReverse_arm(val) {
+  tval:1 = val;
+  result:1 = 0;
+  result = (result << 1) | (tval & 1);
+  tval = tval >> 1;
+  result = (result << 1) | (tval & 1);
+  tval = tval >> 1;
+  result = (result << 1) | (tval & 1);
+  tval = tval >> 1;
+  result = (result << 1) | (tval & 1);
+  tval = tval >> 1;
+  result = (result << 1) | (tval & 1);
+  tval = tval >> 1;
+  result = (result << 1) | (tval & 1);
+  tval = tval >> 1;
+  result = (result << 1) | (tval & 1);
+  tval = tval >> 1;
+  result = (result << 1) | (tval & 1);
+  tval = tval >> 1;
+  val = result;
+}
+
+
 :rbit^COND Rd, rm	is $(AMODE) &  COND & c2327=13 & c2022=7 & c0407=3 & c1619=15 & c0811=15 & Rd & rm
 {
 	build COND;
   	build rm;
-	Rd = ReverseBitOrder(rm);
+	local t:4 = rm & 0xff;
+    local b1:1 = t:1;
+    t = (rm >> 8) & 0xff;
+    local b2:1 = t:1;
+    t =  (rm >> 16) & 0xff;
+    local b3:1 = t:1;
+    t = (rm >> 24) & 0xff;
+    local b4:1 = t:1;
+    BitReverse_arm(b1);
+    BitReverse_arm(b2);
+    BitReverse_arm(b3);
+    BitReverse_arm(b4);
+    Rd = (zext(b1) << 24) | (zext(b2) << 16) | (zext(b3) << 8) | zext(b4);
 }
 
 @endif # VERSION_6T2
@@ -4547,9 +4588,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift1;
-  local tmp = rn+zext(!CY);
-  subflags(shift1,tmp);
-  Rd=shift1-tmp;
+  add_with_carry_flags(~rn,shift1);
+  Rd=shift1-(rn+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -4559,9 +4599,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift2;
-  local tmp = rn+zext(!CY);
-  subflags(shift2,tmp);
-  Rd=shift2-tmp;
+  add_with_carry_flags(~rn,shift2);
+  Rd=shift2-(rn+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -4571,9 +4610,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift3;
-  local tmp = rn+zext(!CY);
-  subflags(shift3,tmp);
-  Rd=shift3-tmp;
+  add_with_carry_flags(~rn,shift3);
+  Rd=shift3-(rn+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -4583,9 +4621,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift1;
-  local tmp = rn+zext(!CY);
-  subflags(shift1,tmp);
-  dest:4=shift1-tmp;
+  add_with_carry_flags(~rn,shift1);
+  local dest:4=shift1-(rn+zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -4597,9 +4634,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift2;
-  local tmp = rn+zext(!CY);
-  subflags(shift2,tmp);
-  dest:4=shift2-tmp;
+  add_with_carry_flags(~rn,shift2);
+  local dest:4=shift2-(rn + zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -4611,9 +4647,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift3;
-  local tmp = rn+zext(!CY);
-  subflags(shift3,tmp);
-  dest:4=shift3-tmp;
+  add_with_carry_flags(~rn,shift3);
+  local dest:4=shift3-(rn + zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -4685,12 +4720,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift1;
-  local tmp = shift1+zext(!CY);
-  subflags(rn,tmp);
-# The OV overflow flag calculation for all sbc insns should be done before the carry flag is subtracted.
-# Ie, Overflow_Flag = sborrow(op1, op2) rather than = sborrow(op1, op2 + Carry_Flag)
-  tmpOV = sborrow(rn, shift1);
-  Rd = rn-tmp;
+  add_with_carry_flags(rn,~shift1);
+  Rd = rn-(shift1+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -4700,10 +4731,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift2;
-  local tmp = shift2+zext(!CY);
-  subflags(rn,tmp);
-  tmpOV = sborrow(rn, shift2);
-  Rd = rn-tmp;
+  add_with_carry_flags(rn,~shift2);
+  Rd = rn-(shift2 + zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -4713,10 +4742,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift3;
-  local tmp = shift3+zext(!CY);
-  subflags(rn,tmp);
-  tmpOV = sborrow(rn, shift3);
-  Rd = rn-tmp;
+  add_with_carry_flags(rn,~shift3);
+  Rd = rn-(shift3+zext(!CY));
   resultflags(Rd);
   build SBIT_CZNO;
 }
@@ -4726,10 +4753,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift1;
-  local tmp = shift1+zext(!CY);
-  subflags(rn,tmp);
-  tmpOV = sborrow(rn, shift1);
-  dest:4 = rn-tmp;
+  add_with_carry_flags(rn,~shift1);
+  local dest:4 = rn-(shift1 + zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -4741,10 +4766,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift2;
-  local tmp = shift2+zext(!CY);
-  subflags(rn,tmp);
-  tmpOV = sborrow(rn, shift2);
-  dest:4 = rn-tmp;
+  add_with_carry_flags(rn,~shift2);
+  local dest:4 = rn-(shift2+zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -4756,10 +4779,8 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build COND;
   build rn;
   build shift3;
-  local tmp = shift3+zext(!CY);
-  subflags(rn,tmp);
-  tmpOV = sborrow(rn, shift3);
-  dest:4 = rn-tmp;
+  add_with_carry_flags(rn,~shift3);
+  local dest:4 = rn-(shift3 + zext(!CY));
   resultflags(dest);
   build SBIT_CZNO;
   ALUWritePC(dest);
@@ -4856,9 +4877,10 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build COND;
   local tmpRn = Rn;
   local tmpRm = Rm;
-  sum1:4 = (sext(tmpRn:2) + sext(tmpRm:2)) >> 1;
-  sum2:4 = ((tmpRn s>> 16) - (tmpRm s>> 16)) >> 1;
-  Rd = (sum2 << 16) + (sum1 & 0xffff);
+  local diff:4 = sext(tmpRn[ 0,16]) - sext(tmpRm[16,16]);
+  local sum:4  = sext(tmpRn[16,16]) + sext(tmpRm[ 0,16]);
+  Rd[0,16] = diff[1,16];
+  Rd[16,16] =  sum[1,16];
 }
 
 # shsubbaddx
@@ -4867,9 +4889,10 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build COND;
   local tmpRn = Rn;
   local tmpRm = Rm;
-  sum1:4 = (sext(tmpRn:2) - sext(tmpRm:2)) >> 1;
-  sum2:4 = ((tmpRn s>> 16) + (tmpRm s>> 16)) >> 1;
-  Rd = (sum2 << 16) + (sum1 & 0xffff);
+  local sum:4  = sext(tmpRn[ 0,16]) + sext(tmpRm[16,16]);
+  local diff:4 = sext(tmpRn[16,16]) - sext(tmpRm[ 0,16]);
+  Rd[ 0,16] =  sum[1,16];
+  Rd[16,16] = diff[1,16];
 }
 
 :shsub16^COND Rd, Rn, Rm  is $(AMODE) &  COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=7 & Rm 
@@ -4904,61 +4927,58 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:smla^XBIT^YBIT^COND   smRd,Rm,Rs,smRn  is $(AMODE) &  COND & c2027=0x10 & smRd & smRn & Rs & c0707=1 & XBIT & YBIT & c0404=0 & Rm
+:smla^XBIT^YBIT^COND   smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x10 & smRd & smRn & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRa
 {
 	build COND;
-	tmp:8 = sext(XBIT) * sext(YBIT);
-	OV = carry(tmp,sext(smRn));
-	tmp = tmp + sext(smRn);
-	smRd = tmp:4;
+	local tmp:4 = sext(XBIT) * sext(YBIT);
+	Q = scarry(tmp,smRa) || Q; #Q flag is sticky
+	smRd = tmp+smRa;
 }
 
 @endif
 
 @if defined(VERSION_6)
 
-:smlad^COND Rd, Rm, Rs, Rn  is $(AMODE) &  COND & c2027=0x70 & c0407=1 & Rd & Rm & Rs & Rn
+:smlad^COND smRd,smRn,smRm,smRa   is $(AMODE) &  COND & c2027=0x70 & c0407=1 & smRd & smRa & smRm & smRn
 {
   build COND;
-  local tmpRm = Rm;
-  local tmpRs = Rs;
+  local tmpRn = smRn;
+  local tmpRm = smRm;
+  local tmpLRn = tmpRn:2;
+  local tmpURn = tmpRn >> 16;
   local tmpLRm = tmpRm:2;
   local tmpURm = tmpRm >> 16;
-  local tmpLRs = tmpRs:2;
-  local tmpURs = tmpRs >> 16;
-  local product1 = sext(tmpLRm) * sext(tmpLRs);
-  local product2 = sext(tmpURm:2) * sext(tmpURs:2);
+  local product1 = sext(tmpLRn) * sext(tmpLRm);
+  local product2 = sext(tmpURn:2) * sext(tmpURm:2);
   local tmpprod = product1 + product2;
-  Q = scarry(Rn, tmpprod) | scarry(product1, product2);
-  Rd = Rn + tmpprod;
+  Q = scarry(smRa, tmpprod) || Q; #Q is sticky 
+  smRd = smRa + tmpprod;
 }
 
-:smladx^COND Rd, Rm, Rs, Rn  is $(AMODE) &  COND & c2027=0x70 & c0407=3 & Rd & Rm & Rs & Rn
+:smladx^COND smRd, smRn, smRm, smRa  is $(AMODE) &  COND & c2027=0x70 & c0407=3 & smRd & smRn & smRm & smRa  
 {
   build COND;
-  local tmpRm = Rm;
-  local tmpRs = Rs;
+  local tmpRn = smRn;
+  local tmpRm = smRm;
+  local tmpLRn = tmpRn:2;
+  local tmpURn = tmpRn >> 16;
   local tmpLRm = tmpRm:2;
   local tmpURm = tmpRm >> 16;
-  local tmpLRs = tmpRs:2;
-  local tmpURs = tmpRs >> 16;
-  local product1 = sext(tmpLRm) * sext(tmpURs:2);
-  local product2 = sext(tmpURm:2) * sext(tmpLRs);
+  local product1 = sext(tmpLRn) * sext(tmpURm:2);
+  local product2 = sext(tmpURn:2) * sext(tmpLRm);
   local tmpprod = product1 + product2;
-  Q = scarry(Rn, tmpprod) | scarry(product1, product2);
-  Rd = Rn + tmpprod;
+  Q = scarry(smRa, tmpprod) || Q; #Q is sticky
+  smRd = smRa + tmpprod;
 }
 
 @endif # VERSION_6
 
-:smlal^COND^SBIT_ZN  RdLo,RdHi,rm,rs 	is $(AMODE) &  COND & c2527=0 & c2124=7 & SBIT_ZN & RdLo & RdHi & rs & c0407=9 & rm
+:smlal^COND^SBIT_ZN  RdLo,RdHi,smRn,smRm 	is $(AMODE) &  COND & c2527=0 & c2124=7 & SBIT_ZN & RdLo & RdHi & smRn & c0407=9 & smRm
 {
   build COND;
-  build rm;
-  build rs;
   tmp:8 = (zext(RdHi) << 32) | zext(RdLo);
-  rs64:8 = sext(rs);
-  rm64:8 = sext(rm);
+  rs64:8 = sext(smRm);
+  rm64:8 = sext(smRn);
   tmp = rs64 * rm64 + tmp;
   resultflags(tmp);
   RdLo = tmp(0);
@@ -4968,43 +4988,43 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:smlal^XBIT^YBIT^COND   RdLo,RdHi,Rm,Rs  is $(AMODE) &  COND & c2027=0x14 & RdLo & RdHi & Rs & c0707=1 & XBIT & YBIT & c0404=0 & Rm
+:smlal^XBIT^YBIT^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x14 & RdLo & RdHi & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRn
 {
 	build COND;
-	tmp:8 = sext(XBIT) * sext(YBIT);
-	local dTmp = (zext(RdHi) << 32) | zext(RdLo);
-	dTmp = dTmp + tmp;
-	RdLo = RdLo + dTmp(0);
-	RdHi = RdHi  + dTmp(4);
+	local prod:8 = sext(XBIT) * sext(YBIT);
+	local result:8 = (zext(RdHi) << 32) | zext(RdLo);
+	result = result + prod;
+	RdLo = result(0);
+	RdHi = result(4);
 }
 
 @endif # VERSION_5E
 
 @if defined(VERSION_6)
 
-:smlald^COND   RdLo,RdHi,Rm,Rs  is $(AMODE) &  COND & c2027=0x74 & RdLo & RdHi & c0607=0 & c0405=1 & Rm & Rs
+:smlald^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x74 & RdLo & RdHi & c0607=0 & c0405=1 & smRn & smRm
 {
 	build COND;
-	local tmpRm = Rm;
-	local tmpRs = Rs;
-	prod1:8 = sext(tmpRm:2) * sext(tmpRs:2);
+	local tmpRn = smRn;
+	local tmpRm = smRm;
+	prod1:8 = sext(tmpRn:2) * sext(tmpRm:2);
 	rmHi:2 = tmpRm(2);
-	rsHi:2 = tmpRs(2);
-	prod2:8 = sext(rmHi) * sext(rsHi);
+	rnHi:2 = tmpRn(2);
+	prod2:8 = sext(rmHi) * sext(rnHi);
 	result:8 = zext(RdLo) + (zext(RdHi) << 32) + prod1 + prod2;
 	RdLo = result:4;
 	RdHi = result(4);
 }
 
-:smlaldx^COND   RdLo,RdHi,Rm,Rs  is $(AMODE) &  COND & c2027=0x74 & RdLo & RdHi & c0607=0 & c0405=3 & Rm & Rs
+:smlaldx^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x74 & RdLo & RdHi & c0607=0 & c0405=3 & smRn & smRm
 {
 	build COND;
-	local tmpRm = Rm;
-	local tmpRs = Rs;
-	rsHi:2 = tmpRs(2);
-	prod1:8 = sext(tmpRm:2) * sext(rsHi);
+	local tmpRn = smRn;
+	local tmpRm = smRm;
 	rmHi:2 = tmpRm(2);
-	prod2:8 = sext(rmHi) * sext(tmpRs:2);
+	rnHi:2 = tmpRn(2);
+	prod1:8 = sext(tmpRn:2) * sext(rmHi);
+	prod2:8 = sext(rnHi) * sext(tmpRm:2);
 	result:8 = zext(RdLo) + (zext(RdHi) << 32) + prod1 + prod2;
 	RdLo = result:4;
 	RdHi = result(4);
@@ -5014,158 +5034,158 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:smlaw^YBIT^COND   smRd,Rm,Rs,smRn  is $(AMODE) &  COND & c2027=0x12 & smRd & smRn & Rs & c0707=1 & YBIT & x=0 & c0404=0 & Rm
+:smlaw^YBIT^COND   smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x12 & smRd & smRn & smRm & c0707=1 & YBIT & x=0 & c0404=0 & smRa
 {
 	build COND;
-	tmp64:8 = sext(Rm) * sext(YBIT);
-	tmp32:4 = tmp64(2);
-	smRd = tmp32 + smRn;
-	Q = scarry(tmp32, smRn);
+	local tmp64:6 = sext(smRn) * sext(YBIT);
+	local tmp32:4 = tmp64(2);
+	Q = scarry(tmp32, smRa) || Q; #Q flag is sticky
+	smRd = tmp32 + smRa;
 }
 
 @endif # VERSION_5E
 
 @if defined(VERSION_6)
 
-:smlsd^COND smRd,Rm,Rs,smRn  is $(AMODE) &  COND & c2027=0x70 & smRd & smRn & Rs & c0607=1 & x=0 & c0404=1 & Rm
+:smlsd^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x70 & smRd & smRn & c0607=1 & x=0 & c0404=1 & smRm & smRa
 {
 	build COND;
-	local tmpRm = Rm;
-	local tmpRs = Rs;
-	prod1:8 = sext(tmpRm:2) * sext(tmpRs:2);
+	local tmpRn = smRn;
+	local tmpRm = smRm;
+	prod1:4 = sext(tmpRn:2) * sext(tmpRm:2);
+	rnHi:2 = tmpRn(2);
 	rmHi:2 = tmpRm(2);
-	rsHi:2 = tmpRs(2);
-	prod2:8 = sext(rmHi) * sext(rsHi);
-	diff:4 = trunc(prod1 - prod2);
-	smRd = smRn + diff;
-	Q = scarry(diff, smRn);
+	prod2:4 = sext(rnHi) * sext(rmHi);
+	diff:4 = prod1 - prod2;
+	Q = scarry(diff, smRa) || Q; #Q is sticky
+	smRd = smRa + diff;	
 }
 
-:smlsdx^COND smRd,Rm,Rs,smRn  is $(AMODE) &  COND & c2027=0x70 & smRd & smRn & Rs & c0607=1 & x=1 & c0404=1 & Rm
+:smlsdx^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x70 & smRd & smRn & c0607=1 & x=1 & c0404=1 & smRm & smRa
 {
 	build COND;
-	local tmpRm = Rm;
-	local tmpRs = Rs;
-	rsHi:2 = tmpRs(2);
-	prod1:8 = sext(tmpRm:2) * sext(rsHi);
+	local tmpRn = smRn;
+	local tmpRm = smRm;
+	rnHi:2 = tmpRn(2);
 	rmHi:2 = tmpRm(2);
-	prod2:8 = sext(rmHi) * sext(tmpRs:2);
-	diff:4 = trunc(prod1 - prod2);
-	smRd = smRn + diff;
-	Q = scarry(diff, smRn);
+	prod1:4 = sext(tmpRn:2) * sext(rmHi);
+	prod2:4 = sext(rnHi) * sext(tmpRm:2);
+	diff:4 = prod1 - prod2;
+	Q = scarry(diff, smRa) || Q; #Q is sticky
+	smRd = smRa + diff;	
 }
 
-:smlsld^COND RdLo,RdHi,Rm,Rs  is $(AMODE) &  COND & c2027=0x74 & RdHi & RdLo & Rs & c0607=1 & x=0 & c0404=1 & Rm
+:smlsld^COND RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x74 & RdHi & RdLo & smRm & c0607=1 & x=0 & c0404=1 & smRn
 {
 	build COND;
-	local tmpRm = Rm;
-	local tmpRs = Rs;
-	prod1:8 = sext(tmpRm:2) * sext(tmpRs:2);
+	local tmpRn = smRn;
+	local tmpRm = smRm;
+	prod1:8 = sext(tmpRn:2) * sext(tmpRm:2);
+	rnHi:2 = tmpRn(2);
 	rmHi:2 = tmpRm(2);
-	rsHi:2 = tmpRs(2);
-	prod2:8 = sext(rmHi) * sext(rsHi);
+	prod2:8 = sext(rnHi) * sext(rmHi);
 	result:8 = zext(RdLo) + (zext(RdHi) << 32) + (prod1 - prod2);
 	RdLo = result:4;
 	RdHi = result(4);
 }
 
-:smlsldx^COND RdLo,RdHi,Rm,Rs  is $(AMODE) &  COND & c2027=0x74 & RdHi & RdLo & Rs & c0607=1 & x=1 & c0404=1 & Rm
+:smlsldx^COND RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x74 & RdHi & RdLo & smRm & c0607=1 & x=1 & c0404=1 & smRn
 {
 	build COND;
-	local tmpRm = Rm;
-	local tmpRs = Rs;
-	rsHi:2 = tmpRs(2);
-	prod1:8 = sext(tmpRm:2) * sext(rsHi);
+	local tmpRn = smRn;
+	local tmpRm = smRm;
+	rnHi:2 = tmpRn(2);
 	rmHi:2 = tmpRm(2);
-	prod2:8 = sext(rmHi) * sext(tmpRs:2);
+	prod1:8 = sext(tmpRn:2) * sext(rmHi);
+	prod2:8 = sext(rnHi) * sext(tmpRm:2);
 	result:8 = zext(RdLo) + (zext(RdHi) << 32) + (prod1 - prod2);
 	RdLo = result:4;
 	RdHi = result(4);
 }
 
-:smmla^COND smRd,Rm,Rs,smRn  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & Rs & c0607=0 & r=0 & c0404=1 & Rm
+:smmla^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & smRm & c0607=0 & r=0 & c0404=1 & smRa
 {
 	build COND;
-	val:8 = sext(Rm) * sext(Rs);
-	val = zext(smRn << 32) + val;
+	val:8 = sext(smRn) * sext(smRm);
+	val = (zext(smRa) << 32) + val;
 	smRd = val(4);
 }
 
-:smmlar^COND smRd,Rm,Rs,smRn  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & Rs & c0607=0 & r=1 & c0404=1 & Rm
+:smmlar^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & smRm & c0607=0 & r=1 & c0404=1 & smRa
 {
 	build COND;
-	val:8 = sext(Rm) * sext(Rs);
-	val = zext(smRn << 32) + val + 0x080000000;
+	val:8 = sext(smRn) * sext(smRm);
+	val = (zext(smRa) << 32) + val + 0x80000000;
 	smRd = val(4);
 }
 
-:smmls^COND smRd,Rm,Rs,smRn  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & Rs & c0607=3 & r=0 & c0404=1 & Rm
+:smmls^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & smRm & c0607=3 & r=0 & c0404=1 & smRa
 {
 	build COND;
-	val:8 = sext(Rm) * sext(Rs);
-	val = zext(smRn << 32) - val;
+	val:8 = sext(smRn) * sext(smRm);
+	val = (zext(smRa) << 32) - val;
 	smRd = val(4);
 }
 
-:smmlsr^COND smRd,Rm,Rs,smRn  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & Rs & c0607=3 & r=1 & c0404=1 & Rm
+:smmlsr^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & smRm & c0607=3 & r=1 & c0404=1 & smRa
 {
 	build COND;
-	val:8 = sext(Rm) * sext(Rs);
-	val = zext(smRn << 32) - val + 0x080000000;
+	val:8 = sext(smRn) * sext(smRm);
+	val = (zext(smRa) << 32) - val + 0x80000000;
 	smRd = val(4);
 }
 
-:smmul^COND smRd,Rm,Rs  is $(AMODE) &  COND & c2027=0x75 & smRd & c1215=15 & Rs & c0607=0 & r=0 & c0404=1 & Rm
+:smmul^COND smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x75 & smRd & c1215=15 & smRn & c0607=0 & r=0 & c0404=1 & smRm
 {
 	build COND;
-	val:8 = sext(Rm) * sext(Rs);
+	val:8 = sext(smRn) * sext(smRm);
 	smRd = val(4);
 }
 
-:smmulr^COND smRd,Rm,Rs  is $(AMODE) &  COND & c2027=0x75 & smRd & c1215=15 & Rs & c0607=0 & r=1 & c0404=1 & Rm
+:smmulr^COND smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x75 & smRd & c1215=15 & smRn & c0607=0 & r=1 & c0404=1 & smRm
 {
 	build COND;
-	val:8 = (sext(Rm) * sext(Rs)) + 0x080000000;
+	val:8 = (sext(smRn) * sext(smRm)) + 0x080000000;
 	smRd = val(4);
 }
 
-:smuad^COND Rd, Rs, Rm  is $(AMODE) &  COND & c2027=0x70 & c0407=1 & Rd & c1619=15 & Rs & Rm
+:smuad^COND smRd, smRn, smRm  is $(AMODE) &  COND & c2027=0x70 & c0407=1 & smRd & c1619=15 & smRn & smRm
 {
   build COND;
-  local tmpRm = Rm;
-  local tmpRs = Rs;
+  local tmpRm = smRm;
+  local tmpRn = smRn;
   local tmpLRm = tmpRm:2;
   local tmpURm = tmpRm >> 16;
-  local tmpLRs = tmpRs:2;
-  local tmpURs = tmpRs >> 16;
-  local product1 = sext(tmpLRm) * sext(tmpLRs);
-  local product2 = sext(tmpURm:2) * sext(tmpURs:2);
+  local tmpLRn = tmpRn:2;
+  local tmpURn = tmpRn >> 16;
+  local product1 = sext(tmpLRm) * sext(tmpLRn);
+  local product2 = sext(tmpURm:2) * sext(tmpURn:2);
   local tmpprod = product1 + product2;
   Q = scarry(product1, product2);
-  Rd = tmpprod;
+  smRd = tmpprod;
 }
 
-:smuadx^COND Rd, Rs, Rm  is $(AMODE) &  COND & c2027=0x70 & c0407=3 & Rd & c1619=15 & Rs & Rm
+:smuadx^COND smRd, smRn, smRm  is $(AMODE) &  COND & c2027=0x70 & c0407=3 & smRd & c1619=15 & smRn & smRm
 {
   build COND;
-  local tmpRm = Rm;
-  local tmpRs = Rs;
+  local tmpRm = smRm;
+  local tmpRn = smRn;
   local tmpLRm = tmpRm:2;
   local tmpURm = tmpRm >> 16;
-  local tmpLRs = tmpRs:2;
-  local tmpURs = tmpRs >> 16;
-  local product1 = sext(tmpLRm) * sext(tmpURs:2);
-  local product2 = sext(tmpURm:2) * sext(tmpLRs);
+  local tmpLRn = tmpRn:2;
+  local tmpURn = tmpRn >> 16;
+  local product1 = sext(tmpLRm) * sext(tmpURn:2);
+  local product2 = sext(tmpURm:2) * sext(tmpLRn);
   local tmpprod = product1 + product2;
   Q = scarry(product1, product2);
-  Rd = tmpprod;
+  smRd = tmpprod;
 }
 
 @endif # VERSION_6
 
 @if defined(VERSION_5E)
 
-:smul^XBIT^YBIT^COND   smRd,Rm,Rs  is $(AMODE) &  COND & c2027=0x16 & smRd & c1215=0 & Rs & c0707=1 & XBIT & YBIT & c0404=0 & Rm
+:smul^XBIT^YBIT^COND   smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x16 & smRd & c1215=0 & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRn
 {
 	build COND;
 	tmp:8 = sext(XBIT) * sext(YBIT);
@@ -5174,26 +5194,24 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @endif # VERSION_5E
 
-:smull^COND^SBIT_ZN Rd,Rn,rm,rs 	is $(AMODE) &  COND & c2527=0 & c2124=6 & SBIT_ZN & Rn & Rd & rs & c0407=9 & rm
+:smull^COND^SBIT_ZN RdLo,RdHi,smRn,smRm 	is $(AMODE) &  COND & c2527=0 & c2124=6 & SBIT_ZN & RdHi & RdLo & smRn & c0407=9 & smRm
 {
   build COND;
-  build rm;
-  build rs;
-  rs64:8 = sext(rs);
-  rm64:8 = sext(rm);
-  local tmp = rs64 * rm64;
+  rn64:8 = sext(smRn);
+  rm64:8 = sext(smRm);
+  local tmp = rn64 * rm64;
   resultflags(tmp);
-  Rd = tmp(0);
-  Rn = tmp(4);
+  RdLo = tmp(0);
+  RdHi = tmp(4);
   build SBIT_ZN;
 }
 
 @if defined(VERSION_5E)
 
-:smulw^YBIT^COND   smRd,Rm,Rs  is $(AMODE) &  COND & c2027=0x12 & smRd & c1215=0 & Rs & c0707=1 & YBIT & x=1 & c0404=0 & Rm
+:smulw^YBIT^COND   smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x12 & smRd & c1215=0 & smRn & c0707=1 & YBIT & x=1 & c0404=0 & smRm
 {
 	build COND;
-	tmp:6 = sext(Rm) * sext(YBIT);
+	tmp:6 = sext(smRn) * sext(YBIT);
 	tmp = tmp >> 16;
 	smRd = tmp:4;
 }
@@ -5202,27 +5220,27 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:smusd^COND smRd,Rm,Rs  is $(AMODE) &  COND & c2027=0x70 & smRd & c1215=15 & Rs & c0607=1 & x=0 & c0404=1 & Rm
+:smusd^COND smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x70 & smRd & c1215=15 & smRm & c0607=1 & x=0 & c0404=1 & smRn
 {
 	build COND;
-    local tmpRm = Rm;
-    local tmpRs = Rs;
-	prod1:4 = sext(tmpRm:2) * sext(tmpRs:2);
+	local tmpRn = smRn;
+    local tmpRm = smRm;
 	rmHi:2 = tmpRm(2);
-	rsHi:2 = tmpRs(2);
-	prod2:4 = sext(rmHi) * sext(rsHi);
+	prod1:4 = sext(tmpRn:2) * sext(tmpRm:2);
+	rnHi:2 = tmpRn(2);
+	prod2:4 = sext(rnHi) * sext(rmHi);
 	smRd = prod1 - prod2;
 }
 
-:smusd^COND smRd,Rm,Rs  is $(AMODE) &  COND & c2027=0x70 & smRd & c1215=15 & Rs & c0607=1 & x=1 & c0404=1 & Rm
+:smusdx^COND smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x70 & smRd & c1215=15 & smRm & c0607=1 & x=1 & c0404=1 & smRn
 {
 	build COND;
-	local tmpRm = Rm;
-    local tmpRs = Rs;
-	rsHi:2 = tmpRs(2);
-	prod1:4 = sext(tmpRm:2) * sext(rsHi);
+	local tmpRn = smRn;
+    local tmpRm = smRm;
 	rmHi:2 = tmpRm(2);
-	prod2:4 = sext(rmHi) * sext(tmpRs:2);
+	rnHi:2 = tmpRn(2);
+	prod1:4 = sext(tmpRn:2) * sext(rmHi);
+	prod2:4 = sext(rnHi) * sext(tmpRm:2);
 	smRd = prod1 - prod2;
 }
 
@@ -5624,9 +5642,11 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 {
   build COND;
   build ror1;
-  local tmp1 = ror1 & 0xff;
-  local tmp2 = (ror1 >> 16) & 0xff;
-  Rd = (sext(tmp2:1) << 16) | sext(tmp1:1);
+  local tmp1:1 = ror1:1;
+  local low:2 = sext(tmp1);
+  local tmp2:1 = ror1(2);
+  local high:2 = sext(tmp2);
+  Rd = (zext(high) << 16) | zext(low);
 }
 
 :sxth^COND   Rd,ror1  is $(AMODE) &  COND & c2327=13 & c2022=3 & c0407=7 & Rd & c1619=15 & ror1
@@ -5798,18 +5818,18 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   local tmpRm = rm;
   tmp1:2 = tmpRn:2;
   tmp2:2 = tmpRm(2);
-  tcarry:1 = (tmp1 < tmp2);
-  GE1 = tcarry;
-  GE2 = tcarry;
-  local tmpLow = tmp1 - tmp2;
+  local tmpLow:4 = zext(tmp1) - zext(tmp2);
+  GE1 = tmpLow s>= 0;
+  GE2 = tmpLow s>= 0;
   tmp1 = tmpRn(2);
   tmp2 = tmpRm:2;
-  tcarry = carry(tmp1,tmp2);
+  tcarry:1 = carry(tmp1,tmp2);
   GE3 = tcarry;
   GE4 = tcarry;
   local tmpHigh = tmp1 + tmp2;
-  Rd = (zext(tmpHigh) << 16) | zext(tmpLow);
-}
+  Rd[0,16] = tmpLow[0,16];
+  Rd[16,16] = tmpHigh;
+  }
 
 @endif # VERSION_6
 
@@ -5848,13 +5868,12 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build rm;
   local tmpRn = rn;
   local tmpRm = rm;
-  tmp1:2 = tmpRn:2;
-  tmp2:2 = tmpRm:2;
+  tmp1:4 = tmpRn & 0xffff;
+  tmp2:4 = tmpRm & 0xffff;
   local tmpLow = tmp1 + tmp2;
-  tmp1 = tmpRn(2);
-  tmp2 = tmpRm(2);
-  local tmpHigh = tmp1 + tmp2;
-  Rd = zext(tmpHigh) << 16 | zext(tmpLow);
+  local tmpHigh = (tmpRn >> 16) + (tmpRm >> 16);
+  Rd[0,16] = tmpLow[1,16];
+  Rd[16,16] = tmpHigh[1,16];
 }
 
 :uhadd8^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=7 & c0811=15 & c0407=9 & Rd & rn & rm
@@ -6168,7 +6187,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   local tmpLow = tmp1 + tmp2;
   tmp1 = tmpRn(2);
   tmp2 = tmpRm:2;
-  tcarry = tmp2 > tmp1;
+  tcarry = tmp2 <= tmp1;
   GE3 = tcarry;
   GE4 = tcarry;
   local tmpHigh = tmp1 - tmp2;
@@ -6184,13 +6203,13 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   local tmpRm = rm;
   tmp1:2 = tmpRn:2;
   tmp2:2 = tmpRm:2;
-  local tcarry = tmp2 > tmp1;
+  local tcarry = tmp2 <= tmp1;
   GE1 = tcarry;
   GE2 = tcarry;
   local tmpLow = tmp1 - tmp2;
   tmp1 = tmpRn(2);
   tmp2 = tmpRm(2);
-  tcarry = tmp2 > tmp1;
+  tcarry = tmp2 <= tmp1;
   GE3 = tcarry;
   GE4 = tcarry;
   local tmpHigh = tmp1 - tmp2;
@@ -6206,19 +6225,19 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   local tmpRm = rm;
   tmp1:1 = tmpRn:1;
   tmp2:1 = tmpRm:1;
-  GE1 = tmp2 > tmp1;
+  GE1 = tmp2 <= tmp1;
   b1:1 = tmp1 - tmp2;
   tmp1 = tmpRn(1);
   tmp2 = tmpRm(1);
-  GE2 = tmp2 > tmp1;
+  GE2 = tmp2 <= tmp1;
   b2:1 = tmp1 - tmp2;
   tmp1 = tmpRn(2);
   tmp2 = tmpRm(2);
-  GE3 = tmp2 > tmp1;
+  GE3 = tmp2 <= tmp1;
   b3:1 = tmp1 - tmp2;
   tmp1 = tmpRn(3);
   tmp2 = tmpRm(3);
-  GE4 = tmp2 > tmp1;
+  GE4 = tmp2 <= tmp1;
   b4:1 = tmp1 - tmp2;
   Rd = (zext(b4) << 24) | (zext(b3) << 16) | (zext(b2) << 8) | zext(b1);
 }
@@ -6236,8 +6255,8 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build ror1;
   local tmp1 = ror1 & 0xff;
   local tmp2 = (ror1 >> 16) & 0xff;
-  local tmp1n = Rn & 0xffff + tmp1;
-  local tmp2n = (Rn >> 16) & 0xffff + tmp2;
+  local tmp1n = (Rn + tmp1) & 0xffff;
+  local tmp2n = (Rn >> 16) + tmp2;
   Rd = (tmp2n << 16) | tmp1n;
 }
 
