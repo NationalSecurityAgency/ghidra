@@ -184,6 +184,11 @@ public abstract class PCodeTestAbstractControlBlock {
 	protected Address readCodePointer(MemBuffer buffer, int bufferOffset, boolean updateReference) throws MemoryAccessException {
 		Address codePtr = readPointer(buffer, bufferOffset, codeSpace, updateReference);
 
+		// treat null pointer as special case - just return it
+		if (codePtr.getOffset() == 0) {
+			return codePtr;
+		}
+
 		// shift the pointer if code pointers are stored in memory shifted.
 		int ptrShift = program.getDataTypeManager().getDataOrganization().getPointerShift();
 		if (ptrShift != 0) {
