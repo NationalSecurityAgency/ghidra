@@ -2417,8 +2417,10 @@ vld4DdList: "{"^buildVld4DdList^"}"	is  TMode=1 & thv_c0808=1 & thv_D22 & thv_c1
 # VLDM (A1)
 #
 
-vldmRn: Rn		is Rn & c2121=0		{ export Rn; }
-vldmRn: Rn^"!"	is Rn & c2121=1		{ export Rn; }
+vldmRn: Rn		is TMode=0 & Rn & c2121=0		{ export Rn; }
+vldmRn: Rn^"!"	is TMode=0 & Rn & c2121=1		{ export Rn; }
+vldmRn: thv_Rn		is TMode=1 & thv_Rn & thv_c2121=0		{ export thv_Rn; }
+vldmRn: thv_Rn^"!"	is TMode=1 & thv_Rn & thv_c2121=1		{ export thv_Rn; }
 vldmOffset: value is $(AMODE) & immed     [ value= immed << 2; ]		{ export *[const]:4 value; }
 vldmOffset: value is TMode=1 & thv_immed  [ value= thv_immed << 2; ]	{ export *[const]:4 value; }
 
