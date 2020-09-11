@@ -1252,6 +1252,7 @@ define token instrAARCH64 (32)
 	b_1431 = (14,31)
 	b_1515 = (15,15)
 	b_1517 = (15,17)
+	b_1520 = (15,20)
 	b_1531 = (15,31)
 	b_1616 = (16,16)
 	b_1617 = (16,17)
@@ -1948,6 +1949,7 @@ Rm_fpz64: "#0.0" is Rm { tmp:8 = int2float(0:8); export tmp; }
 Rd_VPR128.16B: vRd_VPR128^".16B" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 Rd_VPR128.8H: vRd_VPR128^".8H" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 Rd_VPR128.4S: vRd_VPR128^".4S" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.2S: vRd_VPR128^".2S" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 Rd_VPR128.2D: vRd_VPR128^".2D" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 Rd_VPR128.1Q: vRd_VPR128^".1Q" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 
@@ -1955,13 +1957,18 @@ Rn_VPR128.16B: vRn_VPR128^".16B" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 Rnn_VPR128.16B: vRnn_VPR128^".16B" is Rnn_VPR128 & vRnn_VPR128 { export Rnn_VPR128; }
 Rnnn_VPR128.16B: vRnnn_VPR128^".16B" is Rnnn_VPR128 & vRnnn_VPR128 { export Rnnn_VPR128; }
 Rnnnn_VPR128.16B: vRnnnn_VPR128^".16B" is Rnnnn_VPR128 & vRnnnn_VPR128 { export Rnnnn_VPR128; }
+
+Rn_VPR128.8B: vRn_VPR128^".8B" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 Rn_VPR128.8H: vRn_VPR128^".8H" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 Rn_VPR128.4S: vRn_VPR128^".4S" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+Rn_VPR128.4H: vRn_VPR128^".4H" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 Rn_VPR128.2D: vRn_VPR128^".2D" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 
+Rm_VPR128.8B: vRm_VPR128^".8B" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 Rm_VPR128.16B: vRm_VPR128^".16B" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 Rm_VPR128.8H: vRm_VPR128^".8H" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 Rm_VPR128.4S: vRm_VPR128^".4S" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
+Rm_VPR128.4H: vRm_VPR128^".4H" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 Rm_VPR128.2D: vRm_VPR128^".2D" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 
 Ra_VPR128.16B: vRa_VPR128^".16B" is Ra_VPR128 & vRa_VPR128 { export Ra_VPR128; }
@@ -2073,6 +2080,7 @@ Imm_shr_imm64: "#"^val is b_1922 & b_1618 [ val = (64*2) - (b_1922 << 3 | b_1618
 
 NZCVImm_uimm4: "#"^b_0003 is b_0003 { export *[const]:1 b_0003; }
 UImm5: "#"^b_1620 is b_1620 { export *[const]:4 b_1620; }
+UImm6: "#"^b_1520 is b_1520 { export *[const]:4 b_1520; }
 
 CRm_uimm4: "#"^b_0811 is b_0811 { export *[const]:1 b_0811; }
 
@@ -2213,13 +2221,9 @@ addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=2 & b_2729=7 & v & b_2425=1 & b_2323
 addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=3 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
 addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=0 & b_2729=7 & v=1 & b_2425=1 & b_2323=1 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
 
-# unsigned Immediate
-addr_unscUIMM: "["^Rn_GPR64xsp, "#"^simm9^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9 & b_1011=0 { tmp:8 = Rn_GPR64xsp + simm9; export tmp; }
-addr_unscUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9=0 & b_1011=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
-
-# unsigned Immediate Unpriv
-addr_unscUIMM: "["^Rn_GPR64xsp, "#"^simm9^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9 & b_1011=2 { tmp:8 = Rn_GPR64xsp + simm9; export tmp; }
-addr_unscUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9=0 & b_1011=2 { tmp:8 = Rn_GPR64xsp; export tmp; }
+# Address Reg + signed offset -256 to 255
+addr_SIMM9: "["^Rn_GPR64xsp, "#"^simm9^"]" is Rn_GPR64xsp & simm9 { tmp:8 = Rn_GPR64xsp + simm9; export tmp; }
+addr_SIMM9: "["^Rn_GPR64xsp^"]" is Rn_GPR64xsp & simm9=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
 
 addrRegShift64: "#"^val is size.ldstr=0 & v=0 & opt & b_1212=1 [ val = 0 & 0xff; ] { export *[const]:8 val; }
 addrRegShift64: "" is size.ldstr=0 & v=0 & opt & b_1212=0 { export 0:8; }
@@ -2251,10 +2255,10 @@ addrExtendRegShift64: Rm_GPR64 is Rm_GPR64 & aa_extreg_option=7 & aa_extreg_imm3
 addrIndexed: addrUIMM is size.ldstr & b_2729=7 & b_2425=1 & addrUIMM { export addrUIMM; }
 
 # unsinged offset unscaled immediate
-addrIndexed: addr_unscUIMM is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=0 & addr_unscUIMM { export addr_unscUIMM; }
+addrIndexed: addr_SIMM9 is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=0 & addr_SIMM9 { export addr_SIMM9; }
 
 # register unpriviledged
-addrIndexed: addr_unscUIMM is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=2 & addr_unscUIMM { export addr_unscUIMM; }
+addrIndexed: addr_SIMM9 is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=2 & addr_SIMM9 { export addr_SIMM9; }
 
 # post indexed wback
 addrIndexed: "["^Rn_GPR64xsp^"]", "#"^simm9
@@ -3230,6 +3234,13 @@ define pcodeop NEON_aesimc;
 define pcodeop NEON_aesmc;
 define pcodeop NEON_and;
 define pcodeop NEON_bcax;
+define pcodeop NEON_bfcvt;
+define pcodeop NEON_bfcvtn;
+define pcodeop NEON_bfcvtn2;
+define pcodeop NEON_bfdot;
+define pcodeop NEON_bfmlalb;
+define pcodeop NEON_bfmlalt;
+define pcodeop NEON_bfmmla;
 define pcodeop NEON_bic;
 define pcodeop NEON_bif;
 define pcodeop NEON_bit;
@@ -3401,6 +3412,7 @@ define pcodeop NEON_smlal2;
 define pcodeop NEON_smlsl;
 define pcodeop NEON_smlsl2;
 define pcodeop NEON_smov;
+define pcodeop NEON_smmla;
 define pcodeop NEON_smull;
 define pcodeop NEON_smull2;
 define pcodeop NEON_sqabs;
@@ -3454,6 +3466,7 @@ define pcodeop NEON_stur;
 define pcodeop NEON_sub;
 define pcodeop NEON_subhn;
 define pcodeop NEON_subhn2;
+define pcodeop NEON_sudot;
 define pcodeop NEON_suqadd;
 define pcodeop NEON_sxtl;
 define pcodeop NEON_sxtl2;
@@ -3487,6 +3500,7 @@ define pcodeop NEON_umlal;
 define pcodeop NEON_umlal2;
 define pcodeop NEON_umlsl;
 define pcodeop NEON_umlsl2;
+define pcodeop NEON_ummla;
 define pcodeop NEON_umov;
 define pcodeop NEON_umull;
 define pcodeop NEON_umull2;
@@ -3506,10 +3520,12 @@ define pcodeop NEON_urshl;
 define pcodeop NEON_urshr;
 define pcodeop NEON_ursqrte;
 define pcodeop NEON_ursra;
+define pcodeop NEON_usdot;
 define pcodeop NEON_ushl;
 define pcodeop NEON_ushll;
 define pcodeop NEON_ushll2;
 define pcodeop NEON_ushr;
+define pcodeop NEON_usmmla;
 define pcodeop NEON_usqadd;
 define pcodeop NEON_usra;
 define pcodeop NEON_usubl;
@@ -3983,6 +3999,18 @@ macro setCC_NZCV(condMask)
 	OV = (condMask & 0x1) == 0x1;
 }
 
+macro set_NZCV(value, condMask)
+{
+    setNG:1 = (condMask & 0x8) == 0x8;
+	NG = ((setNG==0) * NG) | ((setNG==1) * (((value >> 3) & 1) ==1));
+	setZR:1 = (condMask & 0x4) == 0x4;
+	ZR = ((setZR==0) * NG) | ((setZR==1) * (((value >> 2) & 1) ==1));
+	setCY:1 = (condMask & 0x2) == 0x2;
+	CY = ((setCY==0) * NG) | ((setCY==1) * (((value >> 1) & 1) == 1));
+	setOV:1 = (condMask & 0x1) == 0x1;
+	OV = ((setOV==0) * NG) | ((setOV==1) * (((value >> 0) & 1) == 1));
+}
+
 # Macro to access simd lanes
 
 macro simd_address_at(dest, reg, elem, esize, vsize)
@@ -4065,6 +4093,8 @@ is ImmS_ImmR_TestSet=0 & ImmR & ImmS & instruction
 ]{}
 
 with : ImmS_ImmR_TestSet=1 {
+	
+@include "AARCH64_base_PACoptions.sinc"
 
 @include "AARCH64base.sinc"
 @include "AARCH64neon.sinc"

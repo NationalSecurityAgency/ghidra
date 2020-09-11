@@ -1,5 +1,3 @@
-@include "AARCH64_base_PACoptions.sinc"
-
 # C6.2.1 ADC page C6-776 line 43692 MATCH x1a000000/mask=x7fe0fc00
 # C6.2.2 ADCS page C6-778 line 43778 MATCH x3a000000/mask=x7fe0fc00
 # CONSTRUCT x1a000000/mask=xdfe0fc00 MATCHED 2 DOCUMENTED OPCODES
@@ -803,7 +801,7 @@ is ImmS_LT_ImmR=0 & sf=1 & opc=1 & b_2428=0x13 & b_2323=0 & n=1 & ImmRConst64 & 
 # AUNIT --inst x0a200000/mask=xff200000 --status pass
 
 :bic Rd_GPR32, Rn_GPR32, RegShift32Log
-is sf=0 & opc=0 & b_2428=0xa & N=1 & Rm_GPR32 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
+is sf=0 & opc=0 & b_2428=0xa & N=1 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
 	tmp_3:4 = RegShift32Log;
 	tmp_2:4 = tmp_3 ^ -1:4;
@@ -816,7 +814,7 @@ is sf=0 & opc=0 & b_2428=0xa & N=1 & Rm_GPR32 & RegShift32Log & Rn_GPR32 & Rd_GP
 # AUNIT --inst x8a200000/mask=xff200000 --status pass
 
 :bic Rd_GPR64, Rn_GPR64, RegShift64Log
-is sf=1 & opc=0 & b_2428=0xa & N=1 & Rm_GPR64 & RegShift64Log & Rn_GPR64 & Rd_GPR64
+is sf=1 & opc=0 & b_2428=0xa & N=1 & RegShift64Log & Rn_GPR64 & Rd_GPR64
 {
 	tmp_3:8= RegShift64Log;
 	tmp_2:8 = tmp_3 ^ -1:8;
@@ -1632,7 +1630,7 @@ is sf=1 & op=0 & S=1 & b_2428=0x11 & shift=1 & Imm12_addsubimm_operand_i64_posim
 # if shift == '11' then ReservedValue();
 
 :cmn Rn_GPR32, RegShift32
-is sf=0 & op=0 & S=1 & SBIT_CZNO & b_2428=0xb & b_2121=0 & b_15=0 & Rm_GPR32 & RegShift32 & Rn_GPR32 & Rd=0x1f
+is sf=0 & op=0 & S=1 & SBIT_CZNO & b_2428=0xb & b_2121=0 & b_15=0 & RegShift32 & Rn_GPR32 & Rd=0x1f
 {
 	tmp_1:4 = RegShift32;
 	addflags(Rn_GPR32, tmp_1);
@@ -1647,7 +1645,7 @@ is sf=0 & op=0 & S=1 & SBIT_CZNO & b_2428=0xb & b_2121=0 & b_15=0 & Rm_GPR32 & R
 # AUNIT --inst xab00001f/mask=xff20001f --status pass --comment "flags"
 
 :cmn Rn_GPR64, RegShift64
-is sf=1 & op=0 & S=1 & SBIT_CZNO & b_2428=0xb & b_2121=0 & Rm_GPR64 & RegShift64 & Rn_GPR64 & Rd=0x1f
+is sf=1 & op=0 & S=1 & SBIT_CZNO & b_2428=0xb & b_2121=0 & RegShift64 & Rn_GPR64 & Rd=0x1f
 {
 	tmp_1:8 = RegShift64;
 	addflags(Rn_GPR64, tmp_1);
@@ -1779,7 +1777,7 @@ is sf=1 & op=1 & S=1 & b_2428=0x11 & shift=1 & Imm12_addsubimm_operand_i64_negim
 # AUNIT --inst x6b00001f/mask=xff20001f --status pass --comment "flags"
 
 :cmp Rn_GPR32, RegShift32
-is sf=0 & op=1 & S=1 & b_2428=0xb & b_2121=0 & Rm_GPR32 & RegShift32 & Rn!=0x1f & Rn_GPR32 & Rd=0x1f
+is sf=0 & op=1 & S=1 & b_2428=0xb & b_2121=0 & RegShift32 & Rn!=0x1f & Rn_GPR32 & Rd=0x1f
 {
 	subflags(Rn_GPR32, RegShift32);
 	tmp:4 = Rn_GPR32 - RegShift32;
@@ -2260,7 +2258,7 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x3 & CRm_dbarrier_op & CR
 # AUNIT --inst x4a200000/mask=xff200000 --status pass
 
 :eon Rd_GPR32, Rn_GPR32, RegShift32Log
-is sf=0 & opc=2 & b_2428=0xa & N=1 & Rm_GPR32 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
+is sf=0 & opc=2 & b_2428=0xa & N=1 & RegShift32Log & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
 	tmp_3:4 = RegShift32Log;
 	tmp_2:4 = tmp_3 ^ -1:4;
@@ -2683,6 +2681,100 @@ is b_3031=0b01 & b_2129=0b111000101 & b_1015=0b110000 & Rn_GPR64xsp & aa_Wt & ls
 	aa_Wt = tmp_ldWn;
 }
 
+
+# C6.2.104 LDAPUR page C6-950 line 52699 MATCH x99400000/mask=xbfe00c00
+# CONSTRUCT x99400000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+# The following commands are not yet implemented.
+
+
+# x99400000/mask=xbfe00c00 NOT MATCHED BY ANY CONSTRUCTOR
+
+:ldapur aa_Wt, addr_SIMM9
+is b_3031=0b10 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
+{
+	aa_Xt = zext(*:4 addr_SIMM9);
+}
+
+# C6.2.104 LDAPUR page C6-950 line 52699 MATCH x99400000/mask=xbfe00c00
+# CONSTRUCT xd9400000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+
+:ldapur aa_Xt, addr_SIMM9
+is b_3031=0b11 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Xt
+{
+	aa_Xt = *addr_SIMM9;
+}
+
+# C6.2.105 LDAPURB page C6-952 line 52805 MATCH x19400000/mask=xffe00c00
+# CONSTRUCT x19400000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+# x19400000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
+
+:ldapurb aa_Wt, addr_SIMM9
+is b_3031=0b00 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
+{
+	aa_Xt = zext(*:1 addr_SIMM9);
+}
+
+# C6.2.106 LDAPURH page C6-954 line 52899 MATCH x59400000/mask=xffe00c00
+# CONSTRUCT x59400000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+# x59400000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
+
+:ldapurh aa_Wt, addr_SIMM9
+is b_3031=0b01 & b_2129=0b011001010 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
+{
+	aa_Xt = zext(*:2 addr_SIMM9);
+}
+
+
+# C6.2.107 LDAPURSB page C6-956 line 52993 MATCH x19800000/mask=xffa00c00
+# CONSTRUCT x19c00000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+# x19800000/mask=xffa00c00 NOT MATCHED BY ANY CONSTRUCTOR
+
+:ldapursb aa_Wt, addr_SIMM9
+is b_3031=0b00 & b_2329=0b0110011 & b_22=1 & b_2121=0b0 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
+{
+	aa_Xt = 0;
+	aa_Wt = sext(*:1 addr_SIMM9);
+}
+
+# C6.2.107 LDAPURSB page C6-956 line 52993 MATCH x19800000/mask=xffa00c00
+# CONSTRUCT x19800000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+
+:ldapursb aa_Xt, addr_SIMM9
+is b_3031=0b00 & b_2329=0b0110011 & b_22=0 & b_2121=0b0 & b_1011=0b00 & addr_SIMM9 & aa_Xt
+{
+	aa_Xt = sext(*:1 addr_SIMM9);
+}
+
+# C6.2.108 LDAPURSH page C6-958 line 53123 MATCH x59800000/mask=xffa00c00
+# CONSTRUCT x59c00000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+# x59800000/mask=xffa00c00 NOT MATCHED BY ANY CONSTRUCTOR
+
+:ldapursh aa_Wt, addr_SIMM9
+is b_3031=0b01 & b_2329=0b0110011 & b_22=1 & b_2121=0b0 & b_1011=0b00 & addr_SIMM9 & aa_Wt & aa_Xt
+{
+	aa_Xt = 0;
+	aa_Wt = sext(*:2 addr_SIMM9);
+}
+
+# C6.2.108 LDAPURSH page C6-958 line 53123 MATCH x59800000/mask=xffa00c00
+# CONSTRUCT x59800000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+
+:ldapursh aa_Xt, addr_SIMM9
+is b_3031=0b01 & b_2329=0b0110011 & b_22=0 & b_2121=0b0 & b_1011=0b00 & addr_SIMM9 & aa_Xt
+{
+	aa_Xt = sext(*:2 addr_SIMM9);
+}
+
+# C6.2.109 LDAPURSW page C6-960 line 53253 MATCH x99800000/mask=xffe00c00
+# CONSTRUCT x99800000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+# x99800000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
+
+:ldapursw aa_Xt, addr_SIMM9
+is b_3031=0b10 & b_2129=0b011001100 & b_1011=0b00 & addr_SIMM9 & aa_Xt
+{
+	aa_Xt = sext(*:4 addr_SIMM9);
+}
+
 # C6.2.110 LDAR page C6-962 line 53347 MATCH x88c08000/mask=xbfe08000
 # CONSTRUCT xc8c08000/mask=xffe08000 MATCHED 1 DOCUMENTED OPCODES
 # AUNIT --inst xc8c08000/mask=xffe08000 --status nomem
@@ -2997,7 +3089,6 @@ is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_23=0 & b_2222=1 & b_2121=1 & b_1
 {
 	Rt_GPR64 = *addrIndexed;
 }
-#is size.ldstr & b_2729=7 & b_2425=0 & b_22 & b_2121=1 & Rn_GPR64xsp & simm9 & opc.indexmode=1
 
 
 # C6.2.134 LDRAA, LDRAB page C6-1007 line 56057 MATCH xf8200400/mask=xff200400
@@ -4248,7 +4339,7 @@ is sf=1 & op=1 & s=0 & b_2428=0xb & b_2121=0 & RegShift64 & Rn=0x1f & Rd_GPR64
 # AUNIT --inst x6b0003e0/mask=xff2003e0 --status pass --comment "flags"
 
 :negs Rd_GPR32, RegShift32
-is sf=0 & op=1 & s=1 & b_2428=0xb & b_2121=0 & Rm_GPR32 & RegShift32 & Rn=0x1f & Rd_GPR32 & Rd & Rd_GPR64
+is sf=0 & op=1 & s=1 & b_2428=0xb & b_2121=0 & RegShift32 & Rn=0x1f & Rd_GPR32 & Rd & Rd_GPR64
 {
 	tmp_2:4 = RegShift32;
 	subflags0(tmp_2);
@@ -4265,7 +4356,7 @@ is sf=0 & op=1 & s=1 & b_2428=0xb & b_2121=0 & Rm_GPR32 & RegShift32 & Rn=0x1f &
 # AUNIT --inst xeb0003e0/mask=xff2003e0 --status pass --comment "flags"
 
 :negs Rd_GPR64, RegShift64
-is sf=1 & op=1 & s=1 & b_2428=0xb & b_2121=0 & Rm_GPR64 & RegShift64 & Rn=0x1f & Rd_GPR64 & Rd
+is sf=1 & op=1 & s=1 & b_2428=0xb & b_2121=0 & RegShift64 & Rn=0x1f & Rd_GPR64 & Rd
 {
 	tmp_2:8 = RegShift64;
 	subflags0(tmp_2);
@@ -4636,10 +4727,10 @@ is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=1 & addrIndexed 
 # CONSTRUCT xf8800000/mask=xfffffc00 MATCHED 1 DOCUMENTED OPCODES
 # AUNIT --inst xf8800000/mask=xfffffc00 --status nomem
 
-:prfum aa_prefetch, addr_unscUIMM
-is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=0 & addr_unscUIMM & simm9=0 & b_1011=0 & b_0304 & b_0102 & b_00 & aa_prefetch
+:prfum aa_prefetch, addr_SIMM9
+is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=0 & addr_SIMM9 & simm9=0 & b_1011=0 & b_0304 & b_0102 & b_00 & aa_prefetch
 {
-	addr:8 = addr_unscUIMM;
+	addr:8 = addr_SIMM9;
 	hint:1 = b_0304;
 	target:1 = b_0102;
 	stream:1 = b_00;
@@ -4650,10 +4741,10 @@ is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=0 & addr_unscUIM
 # CONSTRUCT xf8800000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
 # AUNIT --inst xf8800000/mask=xffe00c00 --status nomem
 
-:prfum aa_prefetch, addr_unscUIMM
-is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=0 & addr_unscUIMM & b_1011=0 & b_0304 & b_0102 & b_00 & aa_prefetch
+:prfum aa_prefetch, addr_SIMM9
+is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_2223=2 & b_2121=0 & addr_SIMM9 & b_1011=0 & b_0304 & b_0102 & b_00 & aa_prefetch
 {
-	addr:8 = addr_unscUIMM;
+	addr:8 = addr_SIMM9;
 	hint:1 = b_0304;
 	target:1 = b_0102;
 	stream:1 = b_00;
@@ -4809,6 +4900,17 @@ is b_1230=0b1011010110000000000 & b_31=1 & b_1011=0b10 & Rn_GPR64 & Rd_GPR64
 	local tmp:8 = Rn_GPR64;
 	tmp = (((tmp & 0xff00ff00ff00ff00) >> 8) | ((tmp & 0x00ff00ff00ff00ff) << 8));
 	Rd_GPR64 = (((tmp & 0xffff0000ffff0000) >> 16) | ((tmp & 0x0000ffff0000ffff) << 16));
+}
+
+# C6.2.225 RMIF page C6-1181 line 65703 MATCH xba000400/mask=xffe07c10
+# CONSTRUCT xba000400/mask=xffe07c10 MATCHED 1 DOCUMENTED OPCODES
+
+:rmif Rn_GPR64, UImm6, NZCVImm_uimm4
+is b_2131=0b10111010000 & b_1014=0b00001 & b_04=0b0 & Rn_GPR64 & UImm6 & NZCVImm_uimm4
+{
+	tmp:8 = Rn_GPR64 >> UImm6;
+	condMask:1 = NZCVImm_uimm4;
+	set_NZCV(tmp,condMask);
 }
 
 # C6.2.226 ROR (immediate) page C6-1182 line 65769 MATCH x13800000/mask=x7fa00000
@@ -5125,6 +5227,29 @@ is sf=1 & b_3030=0 & S=0 & b_2428=0x1a & b_2123=6 & Rm_GPR64 & b_1015=0x3 & Rn_G
 	Rd_GPR64 = tmp_1;
 }
 
+# C6.2.236 SETF8, SETF16 page C6-1200 line 66699 MATCH x3a00080d/mask=xffffbc1f
+# CONSTRUCT x3a00080d/mask=xfffffc1f MATCHED 1 DOCUMENTED OPCODES
+
+:setf8 aa_Wn
+is b_1531=0b00111010000000000 & b_14=0 & b_1013=0b0010 & b_0004=0b01101 & aa_Wn
+{
+	NG = ((aa_Wn:1 >> 7) & 1) == 1;
+	ZR = (aa_Wn:1 == 0);
+	OV = (((aa_Wn >> 7) & 1) ^ ((aa_Wn >>8) & 1)) == 1;
+}
+
+
+# C6.2.236 SETF8, SETF16 page C6-1200 line 66699 MATCH x3a00080d/mask=xffffbc1f
+# CONSTRUCT x3a00480d/mask=xfffffc1f MATCHED 1 DOCUMENTED OPCODES
+
+:setf16 aa_Wn
+is b_1531=0b00111010000000000 & b_14=1 & b_1013=0b0010 & b_0004=0b01101 & aa_Wn
+{
+	NG = ((aa_Wn:2 >> 15) & 1) == 1;
+	ZR = (aa_Wn:2 == 0);
+	OV = (((aa_Wn >> 15) & 1) ^ ((aa_Wn >>16) & 1)) == 1;
+}
+
 # C6.2.237 SEV page C6-1201 line 66766 MATCH xd503209f/mask=xffffffff
 # C6.2.92 HINT page C6-929 line 51562 MATCH xd503201f/mask=xfffff01f
 # CONSTRUCT xd503209f/mask=xffffffff MATCHED 2 DOCUMENTED OPCODES
@@ -5409,6 +5534,44 @@ is size.ldstr=0 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 is size.ldstr=1 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR32
 {
 	*addrReg = Rt_GPR32;
+}
+
+# C6.2.265 STLUR page C6-1244 line 69049 MATCH x99000000/mask=xbfe00c00
+# CONSTRUCT x99000000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+
+:stlur  aa_Wt, addr_SIMM9
+is b_3031=0b10 & b_2129=0b011001000 & b_1011=0b00 & addr_SIMM9 & aa_Wt
+{
+	*addr_SIMM9 = aa_Wt;
+}
+
+# C6.2.265 STLUR page C6-1244 line 69049 MATCH x99000000/mask=xbfe00c00
+# CONSTRUCT xd9000000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+
+:stlur aa_Xt, addr_SIMM9
+is b_3031=0b11 & b_2129=0b011001000 & b_1011=0b00 & addr_SIMM9 & aa_Xt
+{
+	*addr_SIMM9 = aa_Xt;
+}
+
+# C6.2.266 STLURB page C6-1246 line 69146 MATCH x19000000/mask=xffe00c00
+# CONSTRUCT x19000000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+# x19000000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
+
+:stlurb aa_Wt, addr_SIMM9
+is b_2131=0b00011001000 & b_1011=0b00 & addr_SIMM9 & aa_Wt
+{
+	*addr_SIMM9 = aa_Wt:1;
+}
+
+# C6.2.267 STLURH page C6-1248 line 69231 MATCH x59000000/mask=xffe00c00
+# CONSTRUCT x59000000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
+# x59000000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
+
+:stlurh aa_Wt, addr_SIMM9
+is b_2131=0b01011001000 & b_1011=0b00 & addr_SIMM9 & aa_Wt
+{
+	*addr_SIMM9 = aa_Wt:2;
 }
 
 # C6.2.268 STLXP page C6-1250 line 69316 MATCH x88208000/mask=xbfe08000
@@ -6136,7 +6299,7 @@ is sf=1 & op=1 & S=1 & b_2428=0x11 & shift=1 & Imm12_addsubimm_operand_i64_negim
 # AUNIT --inst x6b000000/mask=xff200000 --status pass
 
 :subs Rd_GPR32, Rn_GPR32, RegShift32
-is sf=0 & op=1 & s=1 & b_2428=0xb & b_2121=0 & Rm_GPR32 & RegShift32 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
+is sf=0 & op=1 & s=1 & b_2428=0xb & b_2121=0 & RegShift32 & Rn_GPR32 & Rd_GPR32 & Rd_GPR64
 {
 	tmp_2:4 = RegShift32;
 	subflags(Rn_GPR32, tmp_2);
@@ -6153,7 +6316,7 @@ is sf=0 & op=1 & s=1 & b_2428=0xb & b_2121=0 & Rm_GPR32 & RegShift32 & Rn_GPR32 
 # AUNIT --inst xeb000000/mask=xff200000 --status pass
 
 :subs Rd_GPR64, Rn_GPR64, RegShift64
-is sf=1 & op=1 & s=1 & b_2428=0xb & b_2121=0 & Rm_GPR64 & RegShift64 & Rn_GPR64 & Rd_GPR64 & Rd
+is sf=1 & op=1 & s=1 & b_2428=0xb & b_2121=0 & RegShift64 & Rn_GPR64 & Rd_GPR64 & Rd
 {
 	tmp_2:8 = RegShift64;
 	subflags(Rn_GPR64, tmp_2);
@@ -7046,8 +7209,7 @@ is b_2431=0xd5 & b_2223=0 & l=0 & Op0=0 & Op1=3 & CRn=0x2 & imm7Low=1 & Rt=0x1f
 	Yield();
 }
 
-
-# To enforce SHOULD BE ZERO fields add: b_1415=0b00
+# C6.2.6 ADDG page C6-787 line 46877 MATCH KEEPWITH
 
 with : ShowMemTag=1 {
 
@@ -7070,6 +7232,8 @@ is sf=1 & op=0 & S=0 & b_2328=0b100011 & b_22=0 & b_1621 & b_1013 & Rd_GPR64xsp 
 }
 
 }
+
+# C6.2.6 ADDG page C6-787 line 44223 KEEPWITH
 with : ShowMemTag=0 {
 
 # C6.2.6 ADDG page C6-787 line 44223 MATCH x91800000/mask=xffc00000
@@ -7085,12 +7249,11 @@ is sf=1 & op=0 & S=0 & b_2328=0b100011 & b_22=0 & b_1621 & b_1013 & Rd_GPR64xsp 
 
 }
 
-# To enforce SHOULD BE ZERO fields add: b_0811=0b0000
 
 # C6.2.24 AXFLAG page C6-819 line 45960 MATCH xd500405f/mask=xfffff0ff
 # C6.2.194 MSR (immediate) page C6-1129 line 62929 MATCH xd500401f/mask=xfff8f01f
 # CONSTRUCT xd500405f/mask=xfffff0ff MATCHED 2 DOCUMENTED OPCODES
-
+# To enforce SHOULD BE ZERO fields add: b_0811=0b0000
 :axflag
 is b_1231=0b11010101000000000100 & b_0007=0b01011111
 {
@@ -7933,7 +8096,6 @@ is sf=1 & b_30=0 & S & SBIT_CZNO & b_2128=0b11010110 & b_1015=0b000000 & Rd_GPR6
 # Undefined instruction
 :udf b_0015
 is b_1631=0b0000000000000000 & b_0015
-#is b_0031=0b0000000000000000................ & b_1631=0b0000000000000000 & imm16
 {
 	# putting a loop here stops disassembly from proceeding
 <start>
@@ -7945,7 +8107,6 @@ is b_1631=0b0000000000000000 & b_0015
 # C6.2.346 XAFLAG page C6-1393 line 77141 MATCH xd500403f/mask=xfffff0ff
 # C6.2.194 MSR (immediate) page C6-1129 line 62929 MATCH xd500401f/mask=xfff8f01f
 # CONSTRUCT xd500403f/mask=xfffff0ff MATCHED 2 DOCUMENTED OPCODES
-# To enforce SHOULD BE ZERO fields add: b_0811=0b0000
 
 :xaflag
 is b_1231=0b11010101000000000100 & b_0007=0b00111111
@@ -7960,107 +8121,3 @@ is b_1231=0b11010101000000000100 & b_0007=0b00111111
 	CY = tmpCY;
 	OV = tmpOV;
 }
-
-
-# C6.2.104 LDAPUR page C6-950 line 52699 MATCH x99400000/mask=xbfe00c00
-# CONSTRUCT x99400000/mask=xbfe00c00 MATCHED 1 DOCUMENTED OPCODES
-# The following commands are not yet implemented.
-
-
-# x99400000/mask=xbfe00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:ldapur
-is b_3131=0b1 & b_2129=0b011001010 & b_1011=0b00
-#is b_0031=0b1.011001010.........00.......... & b_3131=0b1 & x & b_2129=0b011001010 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
-# C6.2.105 LDAPURB page C6-952 line 52805 MATCH x19400000/mask=xffe00c00
-# CONSTRUCT x19400000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
-# x19400000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:ldapurb
-is b_2131=0b00011001010 & b_1011=0b00
-#is b_0031=0b00011001010.........00.......... & b_2131=0b00011001010 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
-# C6.2.106 LDAPURH page C6-954 line 52899 MATCH x59400000/mask=xffe00c00
-# CONSTRUCT x59400000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
-# x59400000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:ldapurh
-is b_2131=0b01011001010 & b_1011=0b00
-#is b_0031=0b01011001010.........00.......... & b_2131=0b01011001010 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
-# C6.2.107 LDAPURSB page C6-956 line 52993 MATCH x19800000/mask=xffa00c00
-# CONSTRUCT x19800000/mask=xffa00c00 MATCHED 1 DOCUMENTED OPCODES
-# x19800000/mask=xffa00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:ldapursb
-is b_2331=0b000110011 & b_2121=0b0 & b_1011=0b00
-#is b_0031=0b000110011.0.........00.......... & b_2331=0b000110011 & x & b_2121=0b0 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
-# C6.2.108 LDAPURSH page C6-958 line 53123 MATCH x59800000/mask=xffa00c00
-# CONSTRUCT x59800000/mask=xffa00c00 MATCHED 1 DOCUMENTED OPCODES
-# x59800000/mask=xffa00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:ldapursh
-is b_2331=0b010110011 & b_2121=0b0 & b_1011=0b00
-#is b_0031=0b010110011.0.........00.......... & b_2331=0b010110011 & x & b_2121=0b0 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
-# C6.2.109 LDAPURSW page C6-960 line 53253 MATCH x99800000/mask=xffe00c00
-# CONSTRUCT x99800000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
-# x99800000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:ldapursw
-is b_2131=0b10011001100 & b_1011=0b00
-#is b_0031=0b10011001100.........00.......... & b_2131=0b10011001100 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
-# C6.2.225 RMIF page C6-1181 line 65703 MATCH xba000400/mask=xffe07c10
-# CONSTRUCT xba000400/mask=xffe07c10 MATCHED 1 DOCUMENTED OPCODES
-# xba000400/mask=xffe07c10 NOT MATCHED BY ANY CONSTRUCTOR
-
-:rmif
-is b_2131=0b10111010000 & b_1014=0b00001 & b_04=0b0
-#is b_0031=0b10111010000......00001.....0.... & b_2131=0b10111010000 & imm6 & b_1014=0b00001 & Rn & b_ 4 4=0b0 & mask
-unimpl
-
-# C6.2.236 SETF8, SETF16 page C6-1200 line 66699 MATCH x3a00080d/mask=xffffbc1f
-# CONSTRUCT x3a00080d/mask=xffffbc1f MATCHED 1 DOCUMENTED OPCODES
-# x3a00080d/mask=xffffbc1f NOT MATCHED BY ANY CONSTRUCTOR
-
-:setf8
-is b_1531=0b00111010000000000 & b_1013=0b0010 & b_0004=0b01101
-#is b_0031=0b00111010000000000.0010.....01101 & b_1531=0b00111010000000000 & sz & b_1013=0b0010 & Rn & b_ 0 4=0b01101
-unimpl
-
-# C6.2.265 STLUR page C6-1244 line 69049 MATCH x99000000/mask=xbfe00c00
-# CONSTRUCT x99000000/mask=xbfe00c00 MATCHED 1 DOCUMENTED OPCODES
-# x99000000/mask=xbfe00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:stlur
-is b_3131=0b1 & b_2129=0b011001000 & b_1011=0b00
-#is b_0031=0b1.011001000.........00.......... & b_3131=0b1 & x & b_2129=0b011001000 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
-# C6.2.266 STLURB page C6-1246 line 69146 MATCH x19000000/mask=xffe00c00
-# CONSTRUCT x19000000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
-# x19000000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:stlurb
-is b_2131=0b00011001000 & b_1011=0b00
-#is b_0031=0b00011001000.........00.......... & b_2131=0b00011001000 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
-# C6.2.267 STLURH page C6-1248 line 69231 MATCH x59000000/mask=xffe00c00
-# CONSTRUCT x59000000/mask=xffe00c00 MATCHED 1 DOCUMENTED OPCODES
-# x59000000/mask=xffe00c00 NOT MATCHED BY ANY CONSTRUCTOR
-
-:stlurh
-is b_2131=0b01011001000 & b_1011=0b00
-#is b_0031=0b01011001000.........00.......... & b_2131=0b01011001000 & imm9 & b_1011=0b00 & Rn & Rt
-unimpl
-
