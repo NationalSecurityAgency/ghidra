@@ -18,6 +18,7 @@ package ghidra.test.processors.support;
 import java.util.*;
 
 import ghidra.app.emulator.EmulatorHelper;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.pcode.utils.Utils;
@@ -207,13 +208,14 @@ public abstract class PCodeTestAbstractControlBlock {
 		}
 		else {
 			// if pointer refers to simple jump/thunk - follow it
-			InstructionBlock codeBlock = disassembler.pseudoDisassembleBlock(codePtr, null, 1);
+			Address addr = PseudoDisassembler.getNormalizedDisassemblyAddress(program, codePtr);
+			InstructionBlock codeBlock = disassembler.pseudoDisassembleBlock(addr, null, 1);
 			if (codeBlock.isEmpty() || codeBlock.hasInstructionError()) {
 				throw new MemoryAccessException(
 					"Code pointer " + codePtr.toString(true) + " does not refer to valid code");
 			}
 			// TODO: may need to handle more complex thunks
-			Instruction instr = codeBlock.getInstructionAt(codePtr);
+			Instruction instr = codeBlock.getInstructionAt(addr);
 			FlowType flowType = instr.getFlowType();
 			if (flowType.isJump()) {
 				Address[] flows = instr.getFlows();
