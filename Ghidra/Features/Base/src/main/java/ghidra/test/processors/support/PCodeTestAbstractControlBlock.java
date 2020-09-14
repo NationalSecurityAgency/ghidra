@@ -210,7 +210,7 @@ public abstract class PCodeTestAbstractControlBlock {
 			// if pointer refers to simple jump/thunk - follow it
 			Address addr = PseudoDisassembler.getNormalizedDisassemblyAddress(program, codePtr);
 			InstructionBlock codeBlock = disassembler.pseudoDisassembleBlock(addr, null, 1);
-			if (codeBlock.isEmpty() || codeBlock.hasInstructionError()) {
+			if (codeBlock == null || codeBlock.isEmpty() || codeBlock.hasInstructionError()) {
 				throw new MemoryAccessException(
 					"Code pointer " + codePtr.toString(true) + " does not refer to valid code");
 			}
