@@ -533,7 +533,7 @@ public class TestEnv {
 			Workspace workspace = toolManager.getActiveWorkspace();
 
 			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
-			return (PluginTool) workspace.runTool(toolTemplate);
+			return workspace.runTool(toolTemplate);
 		});
 	}
 
@@ -556,23 +556,22 @@ public class TestEnv {
 			lazyTool().addPlugin(GhidraScriptMgrPlugin.class.getName());
 			scriptManagerPlugin = getPlugin(GhidraScriptMgrPlugin.class);
 		}
-		
+
 		JavaScriptProvider scriptProvider = new JavaScriptProvider();
 		PrintWriter writer = new PrintWriter(System.out);
 		ResourceFile resourceFile = new ResourceFile(scriptFile);
-		GhidraScript script=null;
+		GhidraScript script = null;
 		try {
-			script=scriptProvider.getScriptInstance(resourceFile, writer);
+			script = scriptProvider.getScriptInstance(resourceFile, writer);
 		}
 		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
-			
+
 		}
-		if (script==null) {
+		if (script == null) {
 			writer.flush();
 			throw new RuntimeException("Failed to compile script " + scriptFile.getAbsolutePath());
 		}
-
 
 		String scriptName = scriptFile.getName();
 		ScriptTaskListener listener = new ScriptTaskListener(scriptName);
@@ -927,19 +926,6 @@ public class TestEnv {
 		});
 	}
 
-	/**
-	 * Import a program as binary.
-	 * @param programName resource name that is the name of the program
-	 * @param language language
-	 * @param compilerSpec compiler spec
-	 * @return program
-	 * @throws IOException
-	 * @throws LanguageNotFoundException
-	 * @throws VersionException
-	 * @throws InvalidNameException
-	 * @throws DuplicateNameException
-	 * @throws CancelledException
-	 */
 	public Program loadResourceProgramAsBinary(String programName, Language language,
 			CompilerSpec compilerSpec) throws LanguageNotFoundException, IOException,
 			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
@@ -950,18 +936,6 @@ public class TestEnv {
 		return gp.importProgram(file, language, compilerSpec);
 	}
 
-	/**
-	 * Import a program as binary.
-	 * @param programName resource name that is the name of the program
-	 * @param processor processor
-	 * @return program
-	 * @throws IOException
-	 * @throws LanguageNotFoundException
-	 * @throws VersionException
-	 * @throws InvalidNameException
-	 * @throws DuplicateNameException
-	 * @throws CancelledException
-	 */
 	public Program loadResourceProgramAsBinary(String programName, Processor processor)
 			throws CancelledException, DuplicateNameException, InvalidNameException,
 			VersionException, IOException {
