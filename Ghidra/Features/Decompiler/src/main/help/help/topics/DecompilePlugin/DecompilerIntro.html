@@ -14,7 +14,7 @@
 <div class="titlepage"><div><div><h1 class="title">
 <a name="DecompilerIntro"></a>Decompiler</h1></div></div></div>
   
-<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/DecompWindow.png" align="middle" width="990" height="387"></td></tr></table></div>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/DecompWindow.png" align="middle" width="1000" height="391"></td></tr></table></div>
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="Overview"></a>Overview</h2></div></div></div>
@@ -54,10 +54,10 @@
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="ShowWindow"></a>Showing the Decompiler Window</h3></div></div></div>
+<a name="TriggerDecompilation"></a>Decompiling a Function</h3></div></div></div>
       
   <p>
-    From the Code Browser, either:
+    From the Code Browser, to open a Decompiler window, either:
     </p>
 <div class="informalexample">
     <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
@@ -78,10 +78,27 @@
     <span class="emphasis"><em>current address</em></span>. The address is set typically by left-clicking in the Listing window,
     or invoking the <span class="emphasis"><em>Goto</em></span> command (pressing the 'g' key) and manually entering
     the address or some other label, but the Decompiler window
-    follows any type of navigation in the Code Browser. Navigating to a new address
-    or making a change to the underlying Program causes the the window to (re)decompile and display
-    the new function.
+    follows any type of navigation in the Code Browser, triggering decompilation of the new function
+    being displayed.
   </p>
+  <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="../../shared/tip.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+    Any change to the function or Program made while using Ghidra causes the window to automatically
+    redecompile the function it is displaying, to incorporate the new information. Changes include (but
+    aren't limited to):
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none"><a class="link" href="DecompilerWindow.html#ActionRenameVariable" title="Rename Variable">Renaming Variables</a></li>
+<li class="listitem" style="list-style-type: none"><a class="link" href="DecompilerWindow.html#ActionRetypeVariable" title="Retype Variable">Setting Data-types</a></li>
+<li class="listitem" style="list-style-type: none"><a class="link" href="DecompilerWindow.html#ActionComments" title="Comments">Commenting</a></li>
+<li class="listitem" style="list-style-type: none"><a class="link" href="DecompilerWindow.html#ActionEditSignature" title="Edit Function Signature">Setting a Function's Prototype</a></li>
+</ul></div>
+    Users can control decompilation in a wide variety of ways, see <a class="xref" href="DecompilerAnnotations.html" title="Program Annotations Affecting the Decompiler"><i>Program Annotations Affecting the Decompiler</i></a>.
+  </td></tr>
+</table></div>
 </div>
 
 <div class="sect2">
@@ -95,19 +112,18 @@
 <div class="informalexample">
   <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Recovers Expressions</strong></span>: The
+      <span class="bold"><strong>Recovering Expressions</strong></span>: The
       decompiler does full data-flow analysis which allows it to
-      perform slicing on functions. The most tangible benefit to the
-      user is that complicated expressions, which have been split into
+      perform slicing on functions: complicated expressions, which have been split into
       distinct operations/instructions and then mixed together with
       other instructions by the compiling/optimizing process, are
-      reconstituted into a single expression again by the decompiler.
+      reconstituted back into a single line.
     </li>
 <li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Recovers High-Level Scoped
+      <span class="bold"><strong>Recovering High-Level Scoped
       Variables</strong></span>: The decompiler understands how compilers
       use processor stacks and registers to implement variables with
-      different scopes within a function. Data-flow allows it to
+      different scopes within a function. Data-flow analysis allows it to
       follow what was originally a single variable as it moves from
       the stack, into a register, into a different register, etc. Thus
       it can effectively recover the original programs concept of a
@@ -115,13 +131,13 @@
       in the output.
     </li>
 <li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Recovers Function Parameters</strong></span>:
+      <span class="bold"><strong>Recovering Function Parameters</strong></span>:
       The decompiler understands the parameter passing conventions of
-      the compiler and can reconstruct the form of the original
-      function call.
+      the compiler and can reconstruct the original form of
+      function calls.
     </li>
 <li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Uses Data-type, Name, and Signature
+      <span class="bold"><strong>Using Data-type, Name, and Signature
       Annotations</strong></span>: The decompiler automatically pulls in
       all the different data types and variable names that the user
       has applied to functions, and the C output is altered to reflect
@@ -131,18 +147,15 @@
       appropriate quoted strings, etc.
     </li>
 <li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Performs Local Data-type
-      Propagation</strong></span>: In the absence of information, the
-      decompiler does its best to fill in information from what it
-      does know. Variables whose data-type has not been explicitly
-      labeled by the user can often by recovered by seeing how the
-      variable is used or by allowing the known data-types to
-      propagate.
+      <span class="bold"><strong>Propagating Local Data-types</strong></span>:
+      The decompiler infers the data-type of unlabeled variables
+      by propagating information from other sources throughout a function.
     </li>
 <li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Can be used to Automatically Recover
-      Structure Fields</strong></span>: The decompiler can be leveraged to
-      recover references to a structure.
+      <span class="bold"><strong>Recovering Structure Definitions</strong></span>:
+      The decompiler can be used to create structures that match the usage
+      pattern of particular functions and variables, automatically discovering
+      component offsets and data-types.
       </li>
 </ul></div>
     </div>

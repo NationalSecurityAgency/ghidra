@@ -146,7 +146,7 @@ task buildDecompilerHelpPdf(type: Exec) {
 		echo '** Checking if required executables are installed. **'
 		which fop 2>&1
 		which xsltproc 2>&1
-		rm -f decompileplugin.fo decompileplugin.pdf 2>&1
+		rm -f decompileplugin.fo decompileplugin.pdf decompileplugin_withscaling.xml 2>&1
 		rm -rf ./images 2>&1
 		mkdir -p ./images 2>&1
 		cp $installHelpPoint/topics/DecompilePlugin/images/*.png ./images 2>&1
@@ -154,7 +154,8 @@ task buildDecompilerHelpPdf(type: Exec) {
 		cp $installHelpPoint/shared/*.png ./images 2>&1
 
 		echo '** Building decompileplugin.fo **'
-		xsltproc --output ./decompileplugin.fo decompileplugin_pdf.xsl decompileplugin.xml 2>&1
+		xsltproc --output ./decompileplugin_withscaling.xml --stringparam profile.condition "withscaling" /usr/share/sgml/docbook/xsl-stylesheets/profiling/profile.xsl decompileplugin.xml 2>&1
+		xsltproc --output ./decompileplugin.fo decompileplugin_pdf.xsl decompileplugin_withscaling.xml 2>&1
 
 		echo '** Building decompileplugin.pdf **'
 		fop decompileplugin.fo decompileplugin.pdf 2>&1

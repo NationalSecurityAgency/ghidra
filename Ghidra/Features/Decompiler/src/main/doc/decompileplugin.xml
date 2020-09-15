@@ -8,7 +8,8 @@
   <title>Decompiler</title>
 <mediaobject>
   <imageobject>
-  <imagedata fileref="images/DecompWindow.png" width="100%" contentwidth="11.0in" contentdepth="4.301in" align="center"/>
+  <imagedata condition="noscaling" fileref="images/DecompWindow.png" width="100%" contentwidth="1000px" contentdepth="391px" align="center"/>
+  <imagedata condition="withscaling" fileref="images/DecompWindow.png" width="100%" contentwidth="6.0in" contentdepth="2.346in" align="center"/>
   </imageobject>
 </mediaobject>
 <section id="Overview">
@@ -42,10 +43,10 @@
   </para>
 </sect2>
 
-<sect2 id="ShowWindow">
-  <title>Showing the Decompiler Window</title>    
+<sect2 id="TriggerDecompilation">
+  <title>Decompiling a Function</title>    
   <para>
-    From the Code Browser, either:
+    From the Code Browser, to open a Decompiler window, either:
     <informalexample>
     <itemizedlist mark='bullet'>
       <listitem>
@@ -64,10 +65,21 @@
     <emphasis>current address</emphasis>. The address is set typically by left-clicking in the Listing window,
     or invoking the <emphasis>Goto</emphasis> command (pressing the 'g' key) and manually entering
     the address or some other label, but the Decompiler window
-    follows any type of navigation in the Code Browser. Navigating to a new address
-    or making a change to the underlying Program causes the the window to (re)decompile and display
-    the new function.
+    follows any type of navigation in the Code Browser, triggering decompilation of the new function
+    being displayed.
   </para>
+  <tip>
+    Any change to the function or Program made while using Ghidra causes the window to automatically
+    redecompile the function it is displaying, to incorporate the new information. Changes include (but
+    aren't limited to):
+    <itemizedlist mark='none'>
+      <listitem><link linkend="ActionRenameVariable">Renaming Variables</link></listitem>
+      <listitem><link linkend="ActionRetypeVariable">Setting Data-types</link></listitem>
+      <listitem><link linkend="ActionComments">Commenting</link></listitem>
+      <listitem><link linkend="ActionEditSignature">Setting a Function's Prototype</link></listitem>
+    </itemizedlist>
+    Users can control decompilation in a wide variety of ways, see <xref linkend="DecompilerAnnotations"/>.
+  </tip>
 </sect2>
 
 <sect2 id="Capabilities">
@@ -78,19 +90,18 @@
   <informalexample>
   <itemizedlist mark='bullet'>
     <listitem>
-      <emphasis role="bold">Recovers Expressions</emphasis>: The
+      <emphasis role="bold">Recovering Expressions</emphasis>: The
       decompiler does full data-flow analysis which allows it to
-      perform slicing on functions. The most tangible benefit to the
-      user is that complicated expressions, which have been split into
+      perform slicing on functions: complicated expressions, which have been split into
       distinct operations/instructions and then mixed together with
       other instructions by the compiling/optimizing process, are
-      reconstituted into a single expression again by the decompiler.
+      reconstituted back into a single line.
     </listitem>
     <listitem>
-      <emphasis role="bold">Recovers High-Level Scoped
+      <emphasis role="bold">Recovering High-Level Scoped
       Variables</emphasis>: The decompiler understands how compilers
       use processor stacks and registers to implement variables with
-      different scopes within a function. Data-flow allows it to
+      different scopes within a function. Data-flow analysis allows it to
       follow what was originally a single variable as it moves from
       the stack, into a register, into a different register, etc. Thus
       it can effectively recover the original programs concept of a
@@ -98,13 +109,13 @@
       in the output.
     </listitem>
     <listitem>
-      <emphasis role="bold">Recovers Function Parameters</emphasis>:
+      <emphasis role="bold">Recovering Function Parameters</emphasis>:
       The decompiler understands the parameter passing conventions of
-      the compiler and can reconstruct the form of the original
-      function call.
+      the compiler and can reconstruct the original form of
+      function calls.
     </listitem>
     <listitem>
-      <emphasis role="bold">Uses Data-type, Name, and Signature
+      <emphasis role="bold">Using Data-type, Name, and Signature
       Annotations</emphasis>: The decompiler automatically pulls in
       all the different data types and variable names that the user
       has applied to functions, and the C output is altered to reflect
@@ -114,18 +125,15 @@
       appropriate quoted strings, etc.
     </listitem>
     <listitem>
-      <emphasis role="bold">Performs Local Data-type
-      Propagation</emphasis>: In the absence of information, the
-      decompiler does its best to fill in information from what it
-      does know. Variables whose data-type has not been explicitly
-      labeled by the user can often by recovered by seeing how the
-      variable is used or by allowing the known data-types to
-      propagate.
+      <emphasis role="bold">Propagating Local Data-types</emphasis>:
+      The decompiler infers the data-type of unlabeled variables
+      by propagating information from other sources throughout a function.
     </listitem>
     <listitem>
-      <emphasis role="bold">Can be used to Automatically Recover
-      Structure Fields</emphasis>: The decompiler can be leveraged to
-      recover references to a structure.
+      <emphasis role="bold">Recovering Structure Definitions</emphasis>:
+      The decompiler can be used to create structures that match the usage
+      pattern of particular functions and variables, automatically discovering
+      component offsets and data-types.
       </listitem>
     </itemizedlist>
     </informalexample>
@@ -3305,7 +3313,8 @@
   <para>
     <mediaobject>
       <imageobject>
-	<imagedata fileref="images/EditFunctionSignature.png" width="100%" contentwidth="7.568in" contentdepth="5.874in" align="center"/>
+        <imagedata condition="noscaling" fileref="images/EditFunctionSignature.png" width="100%" contentwidth="688px" contentdepth="534px" align="center"/>
+	    <imagedata condition="withscaling" fileref="images/EditFunctionSignature.png" width="100%" contentwidth="5.375in" contentdepth="4.172in" align="center"/>
       </imageobject>
     </mediaobject>
     The dialog provides detailed control over elements like
@@ -3373,7 +3382,8 @@
 	variable <emphasis>a</emphasis> is selected when Def-Use is chosen.
 	<mediaobject>
 	  <imageobject>
-	    <imagedata fileref="images/Defuse.png" width="100%" contentwidth="3.8462in" contentdepth="2.8558in" align="center"/>
+	    <imagedata condition="noscaling" fileref="images/Defuse.png" width="100%" contentwidth="400px" contentdepth="297px" align="center"/>
+	    <imagedata condition="withscaling" fileref="images/Defuse.png" width="100%" contentwidth="3.125in" contentdepth="2.320in" align="center"/>
 	  </imageobject>
 	</mediaobject>
       </para></listitem>
@@ -3391,7 +3401,8 @@
       <emphasis>max_alpha</emphasis>, is selected when Forward Slice is chosen.
       <mediaobject>
 	<imageobject>
-	  <imagedata fileref="images/ForwardSlice.png" width="100%" contentwidth="4.8077in" contentdepth="2.6923in" align="center"/>
+	  <imagedata condition="noscaling" fileref="images/ForwardSlice.png" width="100%" contentwidth="500px" contentdepth="280px" align="center"/>
+	  <imagedata condition="withscaling" fileref="images/ForwardSlice.png" width="100%" contentwidth="3.906in" contentdepth="2.187in" align="center"/>
 	</imageobject>
       </mediaobject>
       </para></listitem>
@@ -3604,7 +3615,7 @@
   </para>
   <para>
     The action brings up a dialog prepopulated with the
-    current name of the field.  Editing and confirming this dialog immediately changes
+    current name of the field.  Editing and confirming this dialog immediately changes the
     field's name in its corresponding structure definition. The dialog enforces unique field names.
   </para>
   <para>
