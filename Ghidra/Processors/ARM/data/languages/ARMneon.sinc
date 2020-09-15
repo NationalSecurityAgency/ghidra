@@ -3547,6 +3547,8 @@ define pcodeop vrev;
 define pcodeop VectorShiftLeft;
 define pcodeop VectorRoundShiftLeft;
 define pcodeop VectorShiftRight;
+define pcodeop VectorShiftLeftInsert;
+define pcodeop VectorShiftRightInsert;
 define pcodeop VectorShiftRightNarrow;
 define pcodeop VectorShiftRightAccumulate;
 define pcodeop VectorRoundShiftRight;
@@ -3563,66 +3565,75 @@ ShiftSize: "32" is  TMode=1 & thv_c2121=1 & thv_L7=0 { export 32:8; }
 ShiftSize: "64" is  TMode=1 &               thv_L7=1 { export 64:8; }
 
 
-ShiftImm: "#"^c1618 is  TMode=0 & c1921=1 & L7=0 & c1618  { tmp:8 = c1618; export tmp; }
-ShiftImm: "#"^c1619 is  TMode=0 & c2021=1 & L7=0 & c1619  { tmp:8 = c1619; export tmp; }
-ShiftImm: "#"^c1620 is  TMode=0 & c2121=1 & L7=0 & c1620  { tmp:8 = c1620; export tmp; }
-ShiftImm: "#"^c1621 is  TMode=0 &           L7=1 & c1621  { tmp:8 = c1621; export tmp; }
-ShiftImm: "#"^thv_c1618 is  TMode=1 & thv_c1921=1 & thv_L7=0 & thv_c1618  { tmp:8 = thv_c1618; export tmp; }
-ShiftImm: "#"^thv_c1619 is  TMode=1 & thv_c2021=1 & thv_L7=0 & thv_c1619  { tmp:8 = thv_c1619; export tmp; }
-ShiftImm: "#"^thv_c1620 is  TMode=1 & thv_c2121=1 & thv_L7=0 & thv_c1620  { tmp:8 = thv_c1620; export tmp; }
-ShiftImm: "#"^thv_c1621 is  TMode=1 &               thv_L7=1 & thv_c1621  { tmp:8 = thv_c1621; export tmp; }
+ShiftImmRLI: "#"^shift_amt is  TMode=0 & c1921=1 & L7=0 & c1621  [ shift_amt = 16 - c1621; ] { export *[const]:8 shift_amt; }
+ShiftImmRLI: "#"^shift_amt is  TMode=0 & c2021=1 & L7=0 & c1621  [ shift_amt = 32 - c1621; ] { export *[const]:8 shift_amt; }
+ShiftImmRLI: "#"^shift_amt is  TMode=0 & c2121=1 & L7=0 & c1621  [ shift_amt = 64 - c1621; ] { export *[const]:8 shift_amt; }
+ShiftImmRLI: "#"^shift_amt is  TMode=0 &           L7=1 & c1621  [ shift_amt = 64 - c1621; ] { export *[const]:8 shift_amt; }
+ShiftImmRLI: "#"^shift_amt is  TMode=1 & thv_c1921=1 & thv_L7=0 & thv_c1621  [ shift_amt = 16 - thv_c1621; ] { export *[const]:8 shift_amt; }
+ShiftImmRLI: "#"^shift_amt is  TMode=1 & thv_c2021=1 & thv_L7=0 & thv_c1621  [ shift_amt = 32 - thv_c1621; ] { export *[const]:8 shift_amt; }
+ShiftImmRLI: "#"^shift_amt is  TMode=1 & thv_c2121=1 & thv_L7=0 & thv_c1621  [ shift_amt = 64 - thv_c1621; ] { export *[const]:8 shift_amt; }
+ShiftImmRLI: "#"^shift_amt is  TMode=1 &               thv_L7=1 & thv_c1621  [ shift_amt = 64 - thv_c1621; ] { export *[const]:8 shift_amt; }
 
-:vqshrn.^udt^esize2021 Dd,Qm, ShiftImm		is ( ($(AMODE) &  cond=15 & c2527=1 & c2323=1 &  (c1919=1 | c2020=1 | c2121=1) &     c0611=0x24  &     c0404=1) |
-                                                 ($(TMODE_EorF) & thv_c2327=0x1f & (thv_c1919=1 | thv_c2020=1 | thv_c2121=1) & thv_c0611=0x24 & thv_c0404=1) ) & udt & esize2021 & ShiftSize & ShiftImm & Dd & Qm
+ShiftImmLLI: "#"^shift_amt is  TMode=0 & c1921=1 & L7=0 & c1621  [ shift_amt = c1621 - 8; ] { export *[const]:8 shift_amt; }
+ShiftImmLLI: "#"^shift_amt is  TMode=0 & c2021=1 & L7=0 & c1621  [ shift_amt = c1621 - 16; ] { export *[const]:8 shift_amt; }
+ShiftImmLLI: "#"^shift_amt is  TMode=0 & c2121=1 & L7=0 & c1621  [ shift_amt = c1621 - 32; ] { export *[const]:8 shift_amt; }
+ShiftImmLLI: "#"^shift_amt is  TMode=0 &           L7=1 & c1621  [ shift_amt = c1621 - 0; ] { export *[const]:8 shift_amt; }
+ShiftImmLLI: "#"^shift_amt is  TMode=1 & thv_c1921=1 & thv_L7=0 & thv_c1621  [ shift_amt = thv_c1621 - 8; ] { export *[const]:8 shift_amt; }
+ShiftImmLLI: "#"^shift_amt is  TMode=1 & thv_c2021=1 & thv_L7=0 & thv_c1621  [ shift_amt = thv_c1621 - 16; ] { export *[const]:8 shift_amt; }
+ShiftImmLLI: "#"^shift_amt is  TMode=1 & thv_c2121=1 & thv_L7=0 & thv_c1621  [ shift_amt = thv_c1621 - 32; ] { export *[const]:8 shift_amt; }
+ShiftImmLLI: "#"^shift_amt is  TMode=1 &               thv_L7=1 & thv_c1621  [ shift_amt = thv_c1621 - 0; ] { export *[const]:8 shift_amt; }
+
+:vqshrn.^udt^esize2021 Dd,Qm, ShiftImmRLI		is ( ($(AMODE) &  cond=15 & c2527=1 & c2323=1 &  (c1919=1 | c2020=1 | c2121=1) &     c0611=0x24  &     c0404=1) |
+                                                 ($(TMODE_EorF) & thv_c2327=0x1f & (thv_c1919=1 | thv_c2020=1 | thv_c2121=1) & thv_c0611=0x24 & thv_c0404=1) ) & udt & esize2021 & ShiftSize & ShiftImmRLI & Dd & Qm
 {
-	Dd = VectorShiftRightNarrow(Qm,ShiftImm,esize2021,udt);
+	Dd = VectorShiftRightNarrow(Qm,ShiftImmRLI,esize2021,udt);
 	Dd = SatQ(Dd,esize2021,udt);
 }
 
-:vqshrun.^udt^esize2021 Dd,Qm, ShiftImm		is ( ($(AMODE) &  cond=15 & c2527=1 & c2424=1 & c2323=1 &  (c1919=1 | c2020=1 | c2121=1) &   c0611=0x20 &     c0404=1) |
-                                                 ($(TMODE_F) & thv_c2327=0x1f & (thv_c1919=1 | thv_c2020=1 | thv_c2121=1) & thv_c0611=0x20 & thv_c0404=1) ) & udt & esize2021 & ShiftSize & ShiftImm & Dd & Qm
+:vqshrun.^udt^esize2021 Dd,Qm, ShiftImmRLI		is ( ($(AMODE) &  cond=15 & c2527=1 & c2424=1 & c2323=1 &  (c1919=1 | c2020=1 | c2121=1) &   c0611=0x20 &     c0404=1) |
+                                                 ($(TMODE_F) & thv_c2327=0x1f & (thv_c1919=1 | thv_c2020=1 | thv_c2121=1) & thv_c0611=0x20 & thv_c0404=1) ) & udt & esize2021 & ShiftSize & ShiftImmRLI & Dd & Qm
 {
-	Dd = VectorShiftRightNarrow(Qm,ShiftImm,esize2021,udt);
+	Dd = VectorShiftRightNarrow(Qm,ShiftImmRLI,esize2021,udt);
 	Dd = SatQ(Dd,esize2021,udt);
 }
 
-:vqrshrn.^udt^esize2021 Dd,Qm, ShiftImm		is ( ($(AMODE) &  cond=15 & c2527=1 & c2323=1 &  (c1919=1 | c2020=1 | c2121=1) &     c0611=0x25  &     c0404=1) |
-                                                 ($(TMODE_EorF) & thv_c2327=0x1f & (thv_c1919=1 | thv_c2020=1 | thv_c2121=1) & thv_c0611=0x25 & thv_c0404=1) ) & udt & esize2021 & ShiftSize & ShiftImm & Dd & Qm
+:vqrshrn.^udt^esize2021 Dd,Qm, ShiftImmRLI		is ( ($(AMODE) &  cond=15 & c2527=1 & c2323=1 &  (c1919=1 | c2020=1 | c2121=1) &     c0611=0x25  &     c0404=1) |
+                                                 ($(TMODE_EorF) & thv_c2327=0x1f & (thv_c1919=1 | thv_c2020=1 | thv_c2121=1) & thv_c0611=0x25 & thv_c0404=1) ) & udt & esize2021 & ShiftSize & ShiftImmRLI & Dd & Qm
 {
-	Dd = VectorRoundShiftRightNarrow(Qm,ShiftImm,esize2021,udt);
+	Dd = VectorRoundShiftRightNarrow(Qm,ShiftImmRLI,esize2021,udt);
 	Dd = SatQ(Dd,esize2021,udt);
 }
 
-:vqrshrun.^udt^esize2021 Dd,Qm, ShiftImm	is ( ($(AMODE) &  cond=15 & c2527=1 & c2424=1 & c2323=1 &  (c1919=1 | c2020=1 | c2121=1) &   c0611=0x21 &     c0404=1) |
-                                                 ($(TMODE_F) & thv_c2327=0x1f & (thv_c1919=1 | thv_c2020=1 | thv_c2121=1) & thv_c0611=0x21 & thv_c0404=1) ) & udt & esize2021 & ShiftImm & Dd & Qm
+:vqrshrun.^udt^esize2021 Dd,Qm, ShiftImmRLI	is ( ($(AMODE) &  cond=15 & c2527=1 & c2424=1 & c2323=1 &  (c1919=1 | c2020=1 | c2121=1) &   c0611=0x21 &     c0404=1) |
+                                                 ($(TMODE_F) & thv_c2327=0x1f & (thv_c1919=1 | thv_c2020=1 | thv_c2121=1) & thv_c0611=0x21 & thv_c0404=1) ) & udt & esize2021 & ShiftImmRLI & Dd & Qm
 {
-	Dd = VectorRoundShiftRightNarrow(Qm,ShiftImm,esize2021,udt);
+	Dd = VectorRoundShiftRightNarrow(Qm,ShiftImmRLI,esize2021,udt);
 	Dd = SatQ(Dd,esize2021,udt);
 }
 
 
-:vqshl.^udt^ShiftSize Qd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 &    c2527=1 &  c2323=1 & c1621 &   c0811=7 &  c0606=1     & c0404=1) |
-                                       ($(TMODE_EorF) &       thv_c2327=0x1f & thv_c1621 &  thv_c0811=7 &  thv_c0606=1 & thv_c0404=1) ) & udt & ShiftSize & ShiftImm & Qd & Qm
+:vqshl.^udt^ShiftSize Qd, Qm, ShiftImmLLI is  ( ($(AMODE) & cond=15 &    c2527=1 &  c2323=1 & c1621 &   c0811=7 &  c0606=1     & c0404=1) |
+                                       ($(TMODE_EorF) &       thv_c2327=0x1f & thv_c1621 &  thv_c0811=7 &  thv_c0606=1 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmLLI & Qd & Qm
 {
-	Qd = VectorShiftLeft(Qm,ShiftImm,ShiftSize,udt);
+	Qd = VectorShiftLeft(Qm,ShiftImmLLI,ShiftSize,udt);
 }
 
-:vqshl.^udt^ShiftSize Dd, Dm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 & c1621 &  c0811=7 &      c0606=0     & c0404=1) |
-                                       ($(TMODE_EorF) &       thv_c2327=0x1f & thv_c1621 &  thv_c0811=7 &  thv_c0606=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImm & Dd & Dm
+:vqshl.^udt^ShiftSize Dd, Dm, ShiftImmLLI is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 & c1621 &  c0811=7 &      c0606=0     & c0404=1) |
+                                       ($(TMODE_EorF) &       thv_c2327=0x1f & thv_c1621 &  thv_c0811=7 &  thv_c0606=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmLLI & Dd & Dm
 {
-	Dd = VectorShiftLeft(Dm,ShiftImm,ShiftSize,udt);
+	Dd = VectorShiftLeft(Dm,ShiftImmLLI,ShiftSize,udt);
 }
 
-:vqshlu.^udt^ShiftSize Qd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 &    c2527=1 &  c2323=1  &  c1621 & c0811=6 &  c0606=1     & c0404=1) |
-                                       ($(TMODE_EorF) &   thv_c2828=1 & thv_c2327=0x1f & thv_c1621 &  thv_c0811=6 &  thv_c0606=1 & thv_c0404=1) ) & udt & ShiftSize & ShiftImm & Qd & Qm
+:vqshlu.^udt^ShiftSize Qd, Qm, ShiftImmLLI is  ( ($(AMODE) & cond=15 &    c2527=1 &  c2323=1  &  c1621 & c0811=6 &  c0606=1     & c0404=1) |
+                                       ($(TMODE_EorF) &   thv_c2828=1 & thv_c2327=0x1f & thv_c1621 &  thv_c0811=6 &  thv_c0606=1 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmLLI & Qd & Qm
 {
-	Qd = VectorShiftLeft(Qm,ShiftImm,ShiftSize,udt);
+	Qd = VectorShiftLeft(Qm,ShiftImmLLI,ShiftSize,udt);
 }
 
-:vqshlu.^udt^ShiftSize Dd, Dm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 & c1621 &  c0811=6 &      c0606=0     & c0404=1) |
-                                       ($(TMODE_EorF) &  thv_c2828=1 & thv_c2327=0x1f & thv_c1621 & thv_c0811=6 &  thv_c0606=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImm & Dd & Dm
+:vqshlu.^udt^ShiftSize Dd, Dm, ShiftImmLLI is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 & c1621 &  c0811=6 &      c0606=0     & c0404=1) |
+                                       ($(TMODE_EorF) &  thv_c2828=1 & thv_c2327=0x1f & thv_c1621 & thv_c0811=6 &  thv_c0606=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmLLI & Dd & Dm
 {
-	Dd = VectorShiftLeft(Dm,ShiftImm,ShiftSize,udt);
+	Dd = VectorShiftLeft(Dm,ShiftImmLLI,ShiftSize,udt);
 }
 
 
@@ -3639,16 +3650,16 @@ ShiftImm: "#"^thv_c1621 is  TMode=1 &               thv_L7=1 & thv_c1621  { tmp:
 }
 
 
-:vshl.I^ShiftSize Qd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2327=5 &       c0811=5 &      c0606=1     & c0404=1) |
-                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=5 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImm & Qd & Qm
+:vshl.I^ShiftSize Qd, Qm, ShiftImmLLI is  ( ($(AMODE) & cond=15 &     c2327=5 &       c0811=5 &      c0606=1     & c0404=1) |
+                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=5 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImmLLI & Qd & Qm
 {
-	Qd = VectorShiftLeft(Qm,ShiftImm,ShiftSize,0:1);
+	Qd = VectorShiftLeft(Qm,ShiftImmLLI,ShiftSize,0:1);
 }
 
-:vshl.I^ShiftSize Dd, Dm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2327=5 &       c0811=5 &      c0606=0     & c0404=1) |
-                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=5 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImm & Dd & Dm
+:vshl.I^ShiftSize Dd, Dm, ShiftImmLLI is  ( ($(AMODE) & cond=15 &     c2327=5 &       c0811=5 &      c0606=0     & c0404=1) |
+                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=5 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImmLLI & Dd & Dm
 {
-	Dd = VectorShiftLeft(Dm,ShiftImm,ShiftSize,0:1);
+	Dd = VectorShiftLeft(Dm,ShiftImmLLI,ShiftSize,0:1);
 }
 
 
@@ -3666,10 +3677,10 @@ ShiftImm: "#"^thv_c1621 is  TMode=1 &               thv_L7=1 & thv_c1621  { tmp:
 
 define pcodeop VectorShiftLongLeft;
 
-:vshll.^udt^ShiftSize Qd, Dm, ShiftImm is  ( ($(AMODE) & cond=15 & c2527=1 & c2323=1 &      c0811=10 &      c0607=0     & c0404=1) |
-                                       ($(TMODE_EorF) &        thv_c2327=0x1f &         thv_c0811=10 &  thv_c0607=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImm & Qd & Dm
+:vshll.^udt^ShiftSize Qd, Dm, ShiftImmLLI is  ( ($(AMODE) & cond=15 & c2527=1 & c2323=1 &      c0811=10 &      c0607=0     & c0404=1) |
+                                       ($(TMODE_EorF) &        thv_c2327=0x1f &         thv_c0811=10 &  thv_c0607=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmLLI & Qd & Dm
 {
-	Qd = VectorShiftLongLeft(Dm,ShiftImm);
+	Qd = VectorShiftLongLeft(Dm,ShiftImmLLI);
 }
 
 :vshll.^udt^esize1819 Qd, Dm, "#"^esize1819x3 is  ( ($(AMODE) & cond=15 & c2327=7 & c2021=3 & c1617=2 &     c0811=3 &      c0607=0     & c0404=0) |
@@ -3690,34 +3701,34 @@ define pcodeop VectorShiftLongLeft;
 	Dd = VectorRoundShiftLeft(Dm,esize2021,Dn);
 }
 
-:vrshr.^ShiftSize Qd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=2 &      c0606=1     & c0404=1) |
-                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=2 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImm & Qd & Qm
+:vrshr.^ShiftSize Qd, Qm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=2 &      c0606=1     & c0404=1) |
+                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=2 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Qd & Qm
 {
-	Qd = VectorRoundShiftRight(Qm,ShiftImm);
+	Qd = VectorRoundShiftRight(Qm,ShiftImmRLI);
 }
 
-:vrshr.^ShiftSize Dd, Dm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=2 &      c0606=0     & c0404=1) |
-                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=2 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImm & Dd & Dm
+:vrshr.^ShiftSize Dd, Dm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=2 &      c0606=0     & c0404=1) |
+                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=2 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Dd & Dm
 {
-	Dd = VectorRoundShiftRight(Dm,ShiftImm);
+	Dd = VectorRoundShiftRight(Dm,ShiftImmRLI);
 }
 
-:vrshrn.^ShiftSize Dd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2327=5 &     c0811=8 & c0707=0 & c0606=1     & c0404=1) |
-                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=8 & thv_c0707=0 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImm & Dd & Qm
+:vrshrn.^ShiftSize Dd, Qm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2327=5 &     c0811=8 & c0707=0 & c0606=1     & c0404=1) |
+                                       ($(TMODE_E) &       thv_c2327=0x1f &  thv_c0811=8 & thv_c0707=0 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Dd & Qm
 {
-	Dd = VectorRoundShiftRightNarrow(Qm,ShiftImm);
+	Dd = VectorRoundShiftRightNarrow(Qm,ShiftImmRLI);
 }
 
-:vrsra.^ShiftSize Qd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=3 &      c0606=1     & c0404=1) |
-                                       ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=3 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImm & Qd & Qm
+:vrsra.^ShiftSize Qd, Qm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=3 &      c0606=1     & c0404=1) |
+                                       ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=3 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Qd & Qm
 {
-	Qd = VectorRoundShiftRightAccumulate(Qd, Qm,ShiftImm);
+	Qd = VectorRoundShiftRightAccumulate(Qd, Qm,ShiftImmRLI);
 }
 
-:vrsra.^ShiftSize Dd, Dm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=3 &      c0606=0     & c0404=1) |
-                                       ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=3 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImm & Dd & Dm
+:vrsra.^ShiftSize Dd, Dm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=3 &      c0606=0     & c0404=1) |
+                                       ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=3 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Dd & Dm
 {
-	Dd = VectorRoundShiftRightAccumulate(Dd, Dm,ShiftImm);
+	Dd = VectorRoundShiftRightAccumulate(Dd, Dm,ShiftImmRLI);
 }
 
 :vsqrt^COND^".f32" Sd,Sm		is COND & ( ($(AMODE) & c2327=0x1d & c2021=3 & c1619=1 & c0811=10 & c0607=3 & c0404=0) |
@@ -3738,40 +3749,64 @@ define pcodeop VectorShiftLongLeft;
 	Dd = sqrt(Dm);
 }
 
-:vsra.^ShiftSize Qd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=1 &      c0606=1     & c0404=1) |
-                                       ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=1 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImm & Qd & Qm
+:vsli.^ShiftSize Qd, Qm, ShiftImmLLI is  ( ($(AMODE) & cond=15 &     c2527=1 & c2424=1 & c2323=1 &     c0811=5 &      c0606=1     & c0404=1) |
+                                       ($(TMODE_F) &       thv_c2327=0x1f &  thv_c0811=5 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImmLLI & Qd & Qm
 {
-	Qd = VectorShiftRightAccumulate(Qd, Qm,ShiftImm);
+	Qd = VectorShiftLeftInsert(Qd, Qm,ShiftImmLLI);
 }
 
-:vsra.^ShiftSize Dd, Dm, ShiftImm is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=1 &      c0606=0     & c0404=1) |
-                                       ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=1 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImm & Dd & Dm
+:vsli.^ShiftSize Dd, Dm, ShiftImmLLI is  ( ($(AMODE) & cond=15 &     c2527=1 & c2424=1 &  c2323=1 &     c0811=5 &      c0606=0     & c0404=1) |
+                                       ($(TMODE_F) &       thv_c2327=0x1f &  thv_c0811=5 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImmLLI & Dd & Dm
 {
-	Dd = VectorShiftRightAccumulate(Dd, Dm,ShiftImm);
+	Dd = VectorShiftLeftInsert(Dd, Dm,ShiftImmLLI);
+}
+
+:vsra.^ShiftSize Qd, Qm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=1 &      c0606=1     & c0404=1) |
+                                       ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=1 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Qd & Qm
+{
+	Qd = VectorShiftRightAccumulate(Qd, Qm,ShiftImmRLI);
+}
+
+:vsra.^ShiftSize Dd, Dm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2527=1 &  c2323=1 &     c0811=1 &      c0606=0     & c0404=1) |
+                                       ($(TMODE_EorF) &       thv_c2327=0x1f &  thv_c0811=1 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Dd & Dm
+{
+	Dd = VectorShiftRightAccumulate(Dd, Dm,ShiftImmRLI);
+}
+
+:vsri.^ShiftSize Qd, Qm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2527=1 & c2424=1 & c2323=1 &     c0811=4 &      c0606=1     & c0404=1) |
+                                       ($(TMODE_F) &       thv_c2327=0x1f &  thv_c0811=4 &  thv_c0606=1 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Qd & Qm
+{
+	Qd = VectorShiftRightInsert(Qd, Qm,ShiftImmRLI);
+}
+
+:vsri.^ShiftSize Dd, Dm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &     c2527=1 & c2424=1 &  c2323=1 &     c0811=4 &      c0606=0     & c0404=1) |
+                                       ($(TMODE_F) &       thv_c2327=0x1f &  thv_c0811=4 &  thv_c0606=0 & thv_c0404=1) ) & ShiftSize & ShiftImmRLI & Dd & Dm
+{
+	Dd = VectorShiftRightInsert(Dd, Dm,ShiftImmRLI);
 }
 
 #######
 # VSHR
 #
 
-:vshr.^udt^ShiftSize Qd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 &   c2527=1 & c2323=1 & c0811=0 &      c0606=1     & c0404=1) |
-                                            ($(TMODE_EorF) &    thv_c2327=0x1f  &   thv_c0811=0 &  thv_c0606=1 & thv_c0404=1) ) & udt & ShiftSize & ShiftImm & Qd & Qm
+:vshr.^udt^ShiftSize Qd, Qm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &   c2527=1 & c2323=1 & c0811=0 &      c0606=1     & c0404=1) |
+                                            ($(TMODE_EorF) &    thv_c2327=0x1f  &   thv_c0811=0 &  thv_c0606=1 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmRLI & Qd & Qm
 {
-	Qd = VectorShiftRight(Qm,ShiftImm);
+	Qd = VectorShiftRight(Qm,ShiftImmRLI);
 }
 
-:vshr.^udt^ShiftSize Dd, Dm, ShiftImm is  ( ($(AMODE) & cond=15 &   c2527=1 & c2323=1 & c0811=0 &      c0606=0     & c0404=1) |
-                                            ($(TMODE_EorF) &    thv_c2327=0x1f  &   thv_c0811=0 &  thv_c0606=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImm & Dd & Dm
+:vshr.^udt^ShiftSize Dd, Dm, ShiftImmRLI is  ( ($(AMODE) & cond=15 &   c2527=1 & c2323=1 & c0811=0 &      c0606=0     & c0404=1) |
+                                            ($(TMODE_EorF) &    thv_c2327=0x1f  &   thv_c0811=0 &  thv_c0606=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmRLI & Dd & Dm
 {
-	Dd = VectorShiftRight(Dm,ShiftImm);
+	Dd = VectorShiftRight(Dm,ShiftImmRLI);
 }
 
 define pcodeop VectorShiftNarrowRight;
 
-:vshrn.^ShiftSize Dd, Qm, ShiftImm is  ( ($(AMODE) & cond=15 & c2327=5 &        c0811=8 &      c0607=0     & c0404=1) |
-                                         ($(TMODE_E) &     thv_c2327=0x1f & thv_c0811=8 &  thv_c0607=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImm & Dd & Qm
+:vshrn.^ShiftSize Dd, Qm, ShiftImmRLI is  ( ($(AMODE) & cond=15 & c2327=5 &        c0811=8 &      c0607=0     & c0404=1) |
+                                         ($(TMODE_E) &     thv_c2327=0x1f & thv_c0811=8 &  thv_c0607=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmRLI & Dd & Qm
 { 
-	Dd = VectorShiftNarrowRight(Qm,ShiftImm);
+	Dd = VectorShiftNarrowRight(Qm,ShiftImmRLI);
 }
 
 
