@@ -26,8 +26,8 @@ public class PdbApplicatorOptions {
 
 	public static final boolean DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS = false;
 	public static final boolean DEFAULT_APPLY_INSTRUCTION_LABELS = false;
-	public static final boolean DEFAULT_APPLY_DATA_TYPES_ONLY = false;
-	public static final boolean DEFAULT_APPLY_PUBLIC_SYMBOLS_ONLY = false;
+	public static final PdbApplicatorRestrictions DEFAULT_RESTRICTIONS =
+		PdbApplicatorRestrictions.NONE;
 	public static final boolean DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS = false;
 	public static final boolean DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS = true;
 
@@ -46,8 +46,7 @@ public class PdbApplicatorOptions {
 	//==============================================================================================
 	private boolean applyCodeScopeBlockComments;
 	private boolean applyInstructionLabels;
-	private boolean applyDataTypesOnly;
-	private boolean applyPublicSymbolsOnly;
+	private PdbApplicatorRestrictions restrictions;
 	private boolean remapAddressesUsingExistingPublicSymbols;
 	private boolean allowDemotePrimaryMangledSymbols;
 
@@ -68,8 +67,7 @@ public class PdbApplicatorOptions {
 	public void restoreDefaults() {
 		applyCodeScopeBlockComments = DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
 		applyInstructionLabels = DEFAULT_APPLY_INSTRUCTION_LABELS;
-		applyDataTypesOnly = DEFAULT_APPLY_DATA_TYPES_ONLY;
-		applyPublicSymbolsOnly = DEFAULT_APPLY_PUBLIC_SYMBOLS_ONLY;
+		restrictions = DEFAULT_RESTRICTIONS;
 		remapAddressesUsingExistingPublicSymbols = DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS;
 		allowDemotePrimaryMangledSymbols = DEFAULT_ALLOW_DEMOTE_PRIMARY_MANGLED_SYMBOLS;
 		applyFunctionVariables = DEFAULT_APPLY_FUNCTION_VARIABLES;
@@ -109,36 +107,19 @@ public class PdbApplicatorOptions {
 	}
 
 	/**
-	 * Enable/disable the option to only apply data types (skipping symbol information).
-	 * In other words, the default is to apply symbols.
-	 * @param applyDataTypesOnly {@code true} to turn applyDataTypesOnly on
+	 * Set processing restrictions for PdbApplicator
+	 * @param restrictions the restrictions
 	 */
-	public void setApplyDataTypesOnly(boolean applyDataTypesOnly) {
-		this.applyDataTypesOnly = applyDataTypesOnly;
+	public void setRestrictions(PdbApplicatorRestrictions restrictions) {
+		this.restrictions = restrictions;
 	}
 
 	/**
-	 * Returns {@code true} if applyDataTypesOnly is "on."
-	 * @return {@code true} if applyDataTypesOnly is "on."
+	 * Returns the current restrictions on PdbApplicator processing
+	 * @return the restrictions
 	 */
-	public boolean applyDataTypesOnly() {
-		return applyDataTypesOnly;
-	}
-
-	/**
-	 * Enable/disable the option to only apply public symbols.
-	 * @param applyPublicSymbolsOnly {@code true} to turn applyPublicSymbolsOnly on
-	 */
-	public void setApplyPublicSymbolsOnly(boolean applyPublicSymbolsOnly) {
-		this.applyPublicSymbolsOnly = applyPublicSymbolsOnly;
-	}
-
-	/**
-	 * Returns {@code true} if applyPublicSymbolsOnly is "on."
-	 * @return {@code true} if applyPublicSymbolsOnly is "on."
-	 */
-	public boolean applyPublicSymbolsOnly() {
-		return applyPublicSymbolsOnly;
+	public PdbApplicatorRestrictions getRestrictions() {
+		return restrictions;
 	}
 
 	/**

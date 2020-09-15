@@ -20,6 +20,7 @@ import java.util.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -33,7 +34,11 @@ import ghidra.util.exception.CancelledException;
  */
 public class PdbAddressManager {
 
-	private static final Address BAD_ADDRESS = Address.NO_ADDRESS; // using NO_ADDRESS as a marker
+	// This could be a valid address for the program, but we are using it as a flag.  We return
+	// it to designate that an address is an external address, and we use it outside of this class
+	// to test for it being an external address.
+	static final Address EXTERNAL_ADDRESS = AddressSpace.EXTERNAL_SPACE.getAddress(0);
+	static final Address BAD_ADDRESS = Address.NO_ADDRESS; // using NO_ADDRESS as a marker
 
 	//==============================================================================================
 	private Map<Integer, Long> realAddressesBySection;
@@ -79,20 +84,51 @@ public class PdbAddressManager {
 		allSegmentsInfo = new ArrayList<>();
 		addressByPreExistingSymbolName = new HashMap<>();
 		primarySymbolByAddress = new HashMap<>();
-		remapAddressByAddress = new HashMap<>();
 
 		determineMemoryBlocks();
 		mapPreExistingSymbols();
+		createAddressRemap();
 	}
 
 	/**
-	 * Returns the Address for the given section and offset.
+	 * Returns the Address for the given symbol.  If the {@link PdbApplicatorOptions}
+	 * Address Remap option is turned on is turned on, it will attempt to map the address to a
+	 * new address in the current program. 
 	 * @param symbol The {@link AddressMsSymbol}
-	 * @return The Address
+	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
+	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
 	 */
-	// Returns an address using the section and offset.
 	Address getAddress(AddressMsSymbol symbol) {
 		return getAddress(symbol.getSegment(), symbol.getOffset());
+	}
+
+	/**
+	 * Returns the Address for the given section and offset.  If the {@link PdbApplicatorOptions}
+	 * Address Remap option is turned on is turned on, it will attempt to map the address to a
+	 * new address in the current program. 
+	 * @param segment The segment
+	 * @param offset The offset
+	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
+	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
+	 */
+	Address getAddress(int segment, long offset) {
+		Address address = getRawAddress(segment, offset);
+		if (applicator.getPdbApplicatorOptions().remapAddressUsingExistingPublicSymbols()) {
+			return getRemapAddressByAddress(address);
+		}
+		return address;
+	}
+
+	/**
+	 * Returns the Address for the given section and offset.  If the {@link PdbApplicatorOptions}
+	 * Address Remap option is turned on is turned on, it will attempt to map the address to a
+	 * new address in the current program. 
+	 * @param symbol The {@link AddressMsSymbol}
+	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
+	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
+	 */
+	Address getRawAddress(AddressMsSymbol symbol) {
+		return getRawAddress(symbol.getSegment(), symbol.getOffset());
 	}
 
 	/**
@@ -100,23 +136,36 @@ public class PdbAddressManager {
 	 * to a new address if the {@link PdbApplicatorOptions}
 	 * @param segment The segment
 	 * @param offset The offset
-	 * @return The Address, which can be {@code Address.NO_ADDRESS} if it was the original address.
+	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
+	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
 	 */
-	// Returns an address using the section and offset.
-	Address getAddress(int segment, long offset) {
+	Address getRawAddress(int segment, long offset) {
 		if (segment < 0 || segment > allSegmentsInfo.size()) {
-			return Address.NO_ADDRESS;
+			return BAD_ADDRESS;
 		}
 		else if (segment == allSegmentsInfo.size()) {
-			// Was getting issues of _IMAGE_DOSHEADER showing up with a segemnt index one
-			//  beyond the end.
-			segment = 0; // The anomaly of last segment meaning the first.
+			// External address.
+			// Was getting issues of _IMAGE_DOSHEADER showing up with a segment index one
+			// beyond the end.
+			return EXTERNAL_ADDRESS;
 		}
 		SegmentInfo segmentInfo = allSegmentsInfo.get(segment);
 		if (offset >= segmentInfo.getLength()) {
-			return Address.NO_ADDRESS;
+			return BAD_ADDRESS;
 		}
 		return segmentInfo.getStartAddress().add(offset);
+	}
+
+	/**
+	 * Returns the Address of an existing symbol for the query address, where the mapping is
+	 * derived by using a the address of a PDB symbol as the key and finding the address of
+	 * a symbol in the program of the same "unique" name. This is accomplished using public
+	 * mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
+	 * @param address the query address
+	 * @return the remapAddress
+	 */
+	Address getRemapAddressByAddress(Address address) {
+		return remapAddressByAddress.getOrDefault(address, address);
 	}
 
 	/**
@@ -143,22 +192,6 @@ public class PdbAddressManager {
 		Address existingAddress = getAddressByPreExistingSymbolName(name);
 		putRemapAddressByAddress(address, existingAddress);
 		return existingAddress;
-	}
-
-	/**
-	 * Returns the Address of an existing symbol for the query address, where the mapping is
-	 * derived by using a the address of a PDB symbol as the key and finding the address of
-	 * a symbol in the program of the same "unique" name. This is accomplished using public
-	 * mangled symbols.  If the program symbol came from the PDB, then it maps to itself.
-	 * @param address the query address
-	 * @return the remapAddress
-	 */
-	Address getRemapAddressByAddress(Address address) {
-		if (!Address.NO_ADDRESS.equals(address) &&
-			applicator.getPdbApplicatorOptions().remapAddressUsingExistingPublicSymbols()) {
-			return remapAddressByAddress.getOrDefault(address, address);
-		}
-		return address;
 	}
 
 	/**
@@ -217,7 +250,7 @@ public class PdbAddressManager {
 
 	private void determineMemoryBlocks() {
 		// Set section/segment 0 to image base. (should be what is header), but what is its size?
-		//  TODO... made up size for now... is there something else?  We could 
+		// TODO... made up size for now... is there something else?  We could 
 		long segmentZeroLength = 0x7fffffff;
 		allSegmentsInfo.add(new SegmentInfo(imageBase, segmentZeroLength));
 		AbstractDatabaseInterface dbi = applicator.getPdb().getDatabaseInterface();
@@ -227,13 +260,14 @@ public class PdbAddressManager {
 			for (ImageSectionHeader imageSectionHeader : imageSectionHeaders) {
 				long virtualAddress = imageSectionHeader.getVirtualAddress();
 				// TODO: not sure when unionPAVS is physical address vs. virtual size.  Perhaps
-				//  it keys off whether virtualAddress is not some special value such as
-				//  0x00000000 or 0xffffffff.
+				// it keys off whether virtualAddress is not some special value such as
+				// 0x00000000 or 0xffffffff.
 				long size = imageSectionHeader.getUnionPAVS();
 				allSegmentsInfo.add(new SegmentInfo(imageBase.add(virtualAddress), size));
 			}
 		}
 		// else instance of DatabaseInterface; TODO: what can we do here?
+		// Maybe get information from the program itself.
 
 		// TODO: what should we do with these? Not doing anything at the moment
 		AbstractPdb pdb = applicator.getPdb();
@@ -251,6 +285,11 @@ public class PdbAddressManager {
 	 * @throws PdbException If Program is null;
 	 */
 	private void mapPreExistingSymbols() throws PdbException {
+		// Cannot do this commented-out code here... as we are relying on the primary symbol
+		// map, regardless of the remap... so might need to separate the two. TODO: later thoughts
+//		if (!applicator.getPdbApplicatorOptions().remapAddressUsingExistingPublicSymbols()) {
+//			return;
+//		}
 		Program program = applicator.getProgram();
 		if (program == null) {
 			throw new PdbException("Program may not be null");
@@ -258,7 +297,7 @@ public class PdbAddressManager {
 		SymbolIterator iter = program.getSymbolTable().getAllSymbols(false);
 		while (iter.hasNext()) {
 			Symbol symbol = iter.next();
-			String name = symbol.getName();
+			String name = symbol.getPath().toString();
 			Address address = symbol.getAddress();
 			Address existingAddress = addressByPreExistingSymbolName.get(name);
 			if (existingAddress == null) {
@@ -283,14 +322,23 @@ public class PdbAddressManager {
 	private Address getAddressByPreExistingSymbolName(String name) {
 		Address address = addressByPreExistingSymbolName.get(name);
 		// Thin the list of map values we no longer need.  This method should only be
-		//  used after the list has been completely populated, and the NO_ADDRESS marker
-		//  was only being used during the method that populated the list to indicate that a
-		//  name was not unique for our needs.
+		// used after the list has been completely populated, and the NO_ADDRESS marker
+		// was only being used during the method that populated the list to indicate that a
+		// name was not unique for our needs.
 		if (address != null && address.equals(Address.NO_ADDRESS)) {
 			addressByPreExistingSymbolName.remove(name);
 			return null;
 		}
 		return address;
+	}
+
+	private void createAddressRemap() {
+		remapAddressByAddress = new HashMap<>();
+
+		// Put in two basic entries so we do not have to do conditional tests before looking
+		// up values in the table.
+		remapAddressByAddress.put(BAD_ADDRESS, BAD_ADDRESS);
+		remapAddressByAddress.put(EXTERNAL_ADDRESS, EXTERNAL_ADDRESS);
 	}
 
 	/**
@@ -321,8 +369,8 @@ public class PdbAddressManager {
 	 */
 	private void logMemorySectionRefinement() throws CancelledException {
 		// Offer memory refinement (could have done it as symbols came in;  we just collected
-		//  them and are dealing with them now... ultimately not sure if we will want to use
-		//  this refinement.
+		// them and are dealing with them now... ultimately not sure if we will want to use
+		// this refinement.
 		// Look at SectionFlags.java for characteristics information.
 		// TODO: should we perform refinement of program memory blocks?
 		PdbLog.message("\nMemorySectionRefinement");
@@ -347,14 +395,14 @@ public class PdbAddressManager {
 	 */
 	private void logMemoryGroupRefinement() throws CancelledException {
 		// Note that I've seen example where PE header has two .data sections (one for initialized
-		//  and the other for uninitialized, 0x2800 and 0x250 in size, respectively), but the PDB
-		//  information shows two sections totally 0x2a50 size, but sizes of 0x2750 and 0x0300,
-		//  the latter of which is marked as ".bss" in name.  This suggests that the PE header is
-		//  more focused on what needs initialized, which includes 0x2750 of .data and 0xa0 of
-		//  .bss, the remaining 0x250 of .bss is not initialized.  These .bss portion that needs
-		//  initialized is lumped with the .data section in the PE header... only my opinion...
-		//  however, this leaves us with question of what we do here.  Do believe the PDB over
-		//  the PE? (See vcamp110.arm.pdb and (arm) vcamp110.dll).
+		// and the other for uninitialized, 0x2800 and 0x250 in size, respectively), but the PDB
+		// information shows two sections totally 0x2a50 size, but sizes of 0x2750 and 0x0300,
+		// the latter of which is marked as ".bss" in name.  This suggests that the PE header is
+		// more focused on what needs initialized, which includes 0x2750 of .data and 0xa0 of
+		// .bss, the remaining 0x250 of .bss is not initialized.  These .bss portion that needs
+		// initialized is lumped with the .data section in the PE header... only my opinion...
+		// however, this leaves us with question of what we do here.  Do believe the PDB over
+		// the PE? (See vcamp110.arm.pdb and (arm) vcamp110.dll).
 		// TODO: should we perform refinement of program memory blocks?
 		PdbLog.message("\nMemoryGroupRefinement");
 		for (PeCoffGroupMsSymbol sym : memoryGroupRefinement) {
@@ -373,7 +421,7 @@ public class PdbAddressManager {
 	//==============================================================================================
 	//==============================================================================================
 	// TODO: This is not complete... It was a research thought, which might get looked at in the
-	//  future.
+	// future.
 	/**
 	 * Tries to align section/segment information of the PDB in {@link SegmentMapDescription} from
 	 * the {@link AbstractDatabaseInterface} header substream with the memory blocks of the
@@ -412,7 +460,7 @@ public class PdbAddressManager {
 
 		List<SegmentInfo> myAllSegmentsInfo = new ArrayList<>(); // Contender set of segment info (vs what is in class)
 
-		allSegmentsInfo.add(new SegmentInfo(blocks[0].getStart(), blocks[0].getSize()));
+		myAllSegmentsInfo.add(new SegmentInfo(blocks[0].getStart(), blocks[0].getSize()));
 		// Try to match memory in order, grouping as needed.
 		long blockAccum = 0;
 		while (progIndex < progIndexLimit && pdbIndex < pdbIndexLimit) {
@@ -454,7 +502,7 @@ public class PdbAddressManager {
 
 	//==============================================================================================
 	// TODO: This is not complete... It was a research thought, which might get looked at in the
-	//  future.
+	// future.
 	@SuppressWarnings("unused") // for method not being called.
 	private boolean garnerSectionSegmentInformation() throws PdbException {
 		AbstractPdb pdb = applicator.getPdb();

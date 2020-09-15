@@ -213,8 +213,9 @@ public class PdbApplicatorMetrics {
 	private String reportNonappliableTypes() {
 		StringBuilder builder = new StringBuilder();
 		for (Class<? extends AbstractMsType> clazz : cannotApplyTypes) {
-			builder.append("Could not apply one or more instances of PDB data type: " +
-				clazz.getSimpleName() + "\n");
+			builder.append(
+				"Could not apply one or more instances of an unsupported PDB data type: " +
+					clazz.getSimpleName() + "\n");
 		}
 		return builder.toString();
 	}
@@ -246,8 +247,9 @@ public class PdbApplicatorMetrics {
 	private String reportNonappliableSymbols() {
 		StringBuilder builder = new StringBuilder();
 		for (Class<? extends AbstractMsSymbol> clazz : cannotApplySymbols) {
-			builder.append("Could not apply one or more instances of PDB symbol type: " +
-				clazz.getSimpleName() + "\n");
+			builder.append(
+				"Could not apply one or more instances of an unsupported PDB symbol type: " +
+					clazz.getSimpleName() + "\n");
 		}
 		return builder.toString();
 	}

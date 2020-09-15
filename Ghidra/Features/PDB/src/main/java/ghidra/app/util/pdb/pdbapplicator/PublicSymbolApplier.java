@@ -56,20 +56,18 @@ public class PublicSymbolApplier extends MsSymbolApplier {
 	void apply() throws CancelledException, PdbException {
 
 		symbolAddress = applicator.getAddress(symbol);
-		if (!Address.NO_ADDRESS.equals(symbolAddress)) {
-			existingSymbolAddress = applicator.witnessSymbolNameAtAddress(getName(), symbolAddress);
-			// TODO: Consider... could add restriction of not putting down symbol if it is mangled,
-			//  as this would violate the uniqueness of the symbol... but we would also want to
-			//  know that this situation was being presented.
-			if (!symbolAddress.equals(existingSymbolAddress)) {
-				// Note: there might be issues of thunk functions getting the same mangled name
-				// as thunked functions, which violates the thesis of their being unique.
-				// TODO: investigate this.
-				applicator.createSymbol(symbolAddress, symbol.getName(), true);
-			}
+		if (applicator.isInvalidAddress(symbolAddress, symbol.getName())) {
+			return;
 		}
-		else {
-			pdbLogAndInfoMessage(this, "Could not apply symbol at NO_ADDRESS: " + symbol.getName());
+		existingSymbolAddress = applicator.witnessSymbolNameAtAddress(getName(), symbolAddress);
+		// TODO: Consider... could add restriction of not putting down symbol if it is mangled,
+		//  as this would violate the uniqueness of the symbol... but we would also want to
+		//  know that this situation was being presented.
+		if (!symbolAddress.equals(existingSymbolAddress)) {
+			// Note: there might be issues of thunk functions getting the same mangled name
+			// as thunked functions, which violates the thesis of their being unique.
+			// TODO: investigate this.
+			applicator.createSymbol(symbolAddress, symbol.getName(), true);
 		}
 	}
 

@@ -58,6 +58,9 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 		// Place compiler generated symbols (e.g., $LN9) within containing function when possible
 		String name = symbol.getName();
 		Address symbolAddress = applicator.getAddress(symbol);
+		if (applicator.isInvalidAddress(symbolAddress, name)) {
+			return;
+		}
 		FunctionManager functionManager = applicator.getProgram().getFunctionManager();
 		// TODO: What do we do with labels such as this?... "__catch$?test_eh1@@YAHXZ$7"
 		if (name.startsWith("$") && !name.contains(Namespace.DELIMITER)) {

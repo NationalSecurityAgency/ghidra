@@ -75,7 +75,9 @@ public class PdbVbtManager extends VbtManager {
 				String name = pubSymbol.getName();
 				if (name.startsWith("??_8")) {
 					Address address = applicator.getAddress(pubSymbol);
-					myAddressByMangledName.put(name, address);
+					if (!applicator.isInvalidAddress(address, name)) {
+						myAddressByMangledName.put(name, address);
+					}
 				}
 			}
 			monitor.incrementProgress(1);

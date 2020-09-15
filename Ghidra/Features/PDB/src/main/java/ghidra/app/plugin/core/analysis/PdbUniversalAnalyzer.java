@@ -134,17 +134,11 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	//==============================================================================================
 	// PdbApplicator options
 	//==============================================================================================
-	// Apply Data Types Only.
-	private static final String OPTION_NAME_APPLY_DATA_TYPES_ONLY = "Apply Data Types Only";
-	private static final String OPTION_DESCRIPTION_APPLY_DATA_TYPES_ONLY =
-		"If checked, only applies data types to program.";
-	private boolean applyDataTypesOnly;
-
-	// Apply Public Symbols Only.
-	private static final String OPTION_NAME_PUBLIC_SYMBOLS_ONLY = "Apply Public Symbols Only";
-	private static final String OPTION_DESCRIPTION_PUBLIC_SYMBOLS_ONLY =
-		"If checked, only applies public symbols to program. Does not apply data types.";
-	private boolean applyPublicSymbolsOnly;
+	// Applicator Restrictions.
+	private static final String OPTION_NAME_PROCESSING_RESTRICTIONS = "Processing Restrictions";
+	private static final String OPTION_DESCRIPTION_PROCESSING_RESTRICTIONS =
+		"Restrictions on applicator processing.";
+	private static PdbApplicatorRestrictions restrictions;
 
 	// Apply Code Block Comments.
 	private static final String OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS =
@@ -206,10 +200,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	//==============================================================================================
 	// Additional instance data
 	//==============================================================================================
-	private AbstractPdb myPdb = null;
 	private PdbReaderOptions pdbReaderOptions;
 	private PdbApplicatorOptions pdbApplicatorOptions;
-	private MessageLog messageLog = null;
 
 	//==============================================================================================
 	//==============================================================================================
@@ -245,7 +237,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		messageLog = log;
 		// TODO:
 		// Work on use cases...
 		// Code for checking if the PDB is already loaded (... assumes it was analyzed as well).
@@ -267,6 +258,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			failMissingAttributes(programAttributes, log)) {
 			return true;
 		}
+
+		setPdbLogging(log);
 
 		String pdbFilename;
 		if (doForceLoad) {
@@ -292,10 +285,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		PdbLog.message("PDB Filename: " + pdbFilename + "\n");
 
 		try (AbstractPdb pdb = PdbParser.parse(pdbFilename, pdbReaderOptions, monitor)) {
-			myPdb = pdb;
 			monitor.setMessage("PDB: Parsing " + pdbFilename + "...");
 			pdb.deserialize(monitor);
-			PdbApplicator applicator = new PdbApplicator(pdbFilename, myPdb);
+			PdbApplicator applicator = new PdbApplicator(pdbFilename, pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
 				pdbApplicatorOptions, monitor, log);
 		}
@@ -348,17 +340,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
-		// TODO: keeping around while still developing, but eventually delete these.
-//		options.removeOption(OPTION_NAME_DO_FORCELOAD);
-//		options.removeOption(OPTION_NAME_FORCELOAD_FILE);
-//		options.removeOption(OPTION_NAME_INCLUDE_PE_PDB_PATH);
-//		options.removeOption(OPTION_NAME_PDB_READER_ANALYZER_LOGGING);
-//		options.removeOption(OPTION_NAME_APPLY_INSTRUCTION_LABELS);
-//		options.removeOption(OPTION_NAME_SYMBOLPATH);
-//		options.removeOption(OPTION_NAME_ONE_BYTE_CHARSET_NAME);
-//		options.removeOption(OPTION_NAME_WCHAR_CHARSET_NAME);
-//		options.removeOption("Analyzers.PDB Universal Reader/Analyzer.Symbol Repository Path");
-
 		// PDB file location information
 		options.registerOption(OPTION_NAME_DO_FORCELOAD, doForceLoad, null,
 			OPTION_DESCRIPTION_DO_FORCELOAD);
@@ -373,31 +354,40 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		getPdbReaderOptions();
 		options.registerOption(OPTION_NAME_PDB_READER_ANALYZER_LOGGING, pdbLogging, null,
 			OPTION_DESCRIPTION_PDB_READER_ANALYZER_LOGGING);
-		options.registerOption(OPTION_NAME_ONE_BYTE_CHARSET_NAME, oneByteCharsetName, null,
-			OPTION_DESCRIPTION_ONE_BYTE_CHARSET_NAME);
-		options.registerOption(OPTION_NAME_WCHAR_CHARSET_NAME, wideCharCharsetName, null,
-			OPTION_DESCRIPTION_WCHAR_CHARSET_NAME);
+		if (developerMode) {
+			options.registerOption(OPTION_NAME_ONE_BYTE_CHARSET_NAME, oneByteCharsetName, null,
+				OPTION_DESCRIPTION_ONE_BYTE_CHARSET_NAME);
+			options.registerOption(OPTION_NAME_WCHAR_CHARSET_NAME, wideCharCharsetName, null,
+				OPTION_DESCRIPTION_WCHAR_CHARSET_NAME);
+		}
 
 		// PdbApplicatorOptions
 		getPdbApplicatorOptions();
-		options.registerOption(OPTION_NAME_APPLY_DATA_TYPES_ONLY, applyDataTypesOnly, null,
-			OPTION_DESCRIPTION_APPLY_DATA_TYPES_ONLY);
-		options.registerOption(OPTION_NAME_PUBLIC_SYMBOLS_ONLY, applyPublicSymbolsOnly, null,
-			OPTION_DESCRIPTION_PUBLIC_SYMBOLS_ONLY);
+		options.registerOption(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions, null,
+			OPTION_DESCRIPTION_PROCESSING_RESTRICTIONS);
 		options.registerOption(OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS,
 			applyCodeScopeBlockComments, null, OPTION_DESCRIPTION_APPLY_CODE_SCOPE_BLOCK_COMMENTS);
 		if (developerMode) {
 			// Mechanism to apply instruction labels is not yet implemented-> does nothing
 			options.registerOption(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels,
 				null, OPTION_DESCRIPTION_APPLY_INSTRUCTION_LABELS);
+			// The remap capability is not completely implemented... do not turn on.
 			options.registerOption(OPTION_NAME_ADDRESS_REMAP,
 				remapAddressUsingExistingPublicMangledSymbols, null,
 				OPTION_DESCRIPTION_ADDRESS_REMAP);
 			options.registerOption(OPTION_NAME_ALLOW_DEMOTE_MANGLED_PRIMARY,
 				allowDemotePrimaryMangledSymbol, null,
 				OPTION_DESCRIPTION_ALLOW_DEMOTE_MANGLED_PRIMARY);
+			// Function params and local implementation is not complete... do not turn on.
 			options.registerOption(OPTION_NAME_APPLY_FUNCTION_VARIABLES, applyFunctionVariables,
 				null, OPTION_DESCRIPTION_APPLY_FUNCTION_VARIABLES);
+			// Object-oriented composite layout is fairly far along, but its use will likely not
+			// be forward compatible with future Ghidra work in this area; i.e., it might leave
+			// the data type manager in a bad state for future revisions.  While the current
+			// layout mechanism might work, I will likely change it to, instead, create a
+			// syntactic intermediate representation before creating the final layout.  This will
+			// aid portability between tool chains and versions and yield a standard way of
+			// data-basing and presenting the information to a user.
 			options.registerOption(OPTION_NAME_COMPOSITE_LAYOUT, compositeLayout, null,
 				OPTION_DESCRIPTION_COMPOSITE_LAYOUT);
 		}
@@ -438,21 +428,18 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		includePeSpecifiedPdbPath =
 			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
 
-		pdbLogging = options.getBoolean(OPTION_NAME_PDB_READER_ANALYZER_LOGGING, pdbLogging);
-		setPdbLogging();
-
 		// PdbReaderOptions
-		oneByteCharsetName =
-			options.getString(OPTION_NAME_ONE_BYTE_CHARSET_NAME, oneByteCharsetName);
-		wideCharCharsetName =
-			options.getString(OPTION_NAME_WCHAR_CHARSET_NAME, wideCharCharsetName);
+		pdbLogging = options.getBoolean(OPTION_NAME_PDB_READER_ANALYZER_LOGGING, pdbLogging);
+		if (developerMode) {
+			oneByteCharsetName =
+				options.getString(OPTION_NAME_ONE_BYTE_CHARSET_NAME, oneByteCharsetName);
+			wideCharCharsetName =
+				options.getString(OPTION_NAME_WCHAR_CHARSET_NAME, wideCharCharsetName);
+		}
 		setPdbReaderOptions();
 
 		// PdbApplicatorOptions
-		applyDataTypesOnly =
-			options.getBoolean(OPTION_NAME_APPLY_DATA_TYPES_ONLY, applyDataTypesOnly);
-		applyPublicSymbolsOnly =
-			options.getBoolean(OPTION_NAME_PUBLIC_SYMBOLS_ONLY, applyPublicSymbolsOnly);
+		restrictions = options.getEnum(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions);
 		applyCodeScopeBlockComments = options.getBoolean(
 			OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);
 		if (developerMode) {
@@ -535,16 +522,16 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		return true;
 	}
 
-	private void setPdbLogging() {
+	private void setPdbLogging(MessageLog log) {
 		try {
 			PdbLog.setEnabled(pdbLogging);
 		}
 		catch (IOException e) {
 			// Probably could not open the file.
-			if (messageLog != null) {
-				messageLog.appendMsg(getClass().getSimpleName(),
+			if (log != null) {
+				log.appendMsg(getClass().getSimpleName(),
 					"IOException when trying to open PdbLog file: ");
-				messageLog.appendException(e);
+				log.appendException(e);
 			}
 		}
 	}
@@ -561,8 +548,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 	private void getPdbApplicatorOptions() {
 		applyCodeScopeBlockComments = PdbApplicatorOptions.DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
-		applyDataTypesOnly = PdbApplicatorOptions.DEFAULT_APPLY_DATA_TYPES_ONLY;
-		applyPublicSymbolsOnly = PdbApplicatorOptions.DEFAULT_APPLY_PUBLIC_SYMBOLS_ONLY;
+		restrictions = PdbApplicatorOptions.DEFAULT_RESTRICTIONS;
 
 		applyInstructionLabels = PdbApplicatorOptions.DEFAULT_APPLY_INSTRUCTION_LABELS;
 		remapAddressUsingExistingPublicMangledSymbols =
@@ -574,8 +560,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void setPdbApplicatorOptions() {
-		pdbApplicatorOptions.setApplyDataTypesOnly(applyDataTypesOnly);
-		pdbApplicatorOptions.setApplyPublicSymbolsOnly(applyPublicSymbolsOnly);
+		pdbApplicatorOptions.setRestrictions(restrictions);
 
 		pdbApplicatorOptions.setApplyCodeScopeBlockComments(applyCodeScopeBlockComments);
 		pdbApplicatorOptions.setApplyInstructionLabels(applyInstructionLabels);

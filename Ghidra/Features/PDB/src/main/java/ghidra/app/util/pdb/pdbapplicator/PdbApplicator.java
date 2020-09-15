@@ -183,17 +183,19 @@ public class PdbApplicator {
 		initializeApplyTo(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, monitorParam, logParam);
 
-		if (!applicatorOptions.applyPublicSymbolsOnly()) {
-			processTypes();
-		}
-
-		if (program != null && !applicatorOptions.applyDataTypesOnly()) {
-			if (applicatorOptions.applyPublicSymbolsOnly()) {
+		switch (applicatorOptions.getRestrictions()) {
+			case DATA_TYPES_ONLY:
+				processTypes();
+				break;
+			case PUBLIC_SYMBOLS_ONLY:
 				processPublicSymbols();
-			}
-			else {
+				break;
+			case NONE:
+				processTypes();
 				processSymbols();
-			}
+				break;
+			default:
+				throw new PdbException("Invalid Restriction");
 		}
 
 		pdbAddressManager.logReport();
@@ -328,6 +330,8 @@ public class PdbApplicator {
 			DataTypeManager dataTypeManagerParam, Address imageBaseParam,
 			PdbApplicatorOptions applicatorOptionsParam, TaskMonitor monitorParam,
 			MessageLog logParam) throws PdbException {
+		applicatorOptions =
+			(applicatorOptionsParam != null) ? applicatorOptionsParam : new PdbApplicatorOptions();
 		if (programParam == null) {
 			if (dataTypeManagerParam == null) {
 				throw new PdbException(
@@ -336,11 +340,11 @@ public class PdbApplicator {
 			if (imageBaseParam == null) {
 				throw new PdbException("programParam and imageBaseParam may not both be null.");
 			}
-		}
-		applicatorOptions =
-			(applicatorOptionsParam != null) ? applicatorOptionsParam : new PdbApplicatorOptions();
-		if (applicatorOptions.applyDataTypesOnly() && applicatorOptions.applyPublicSymbolsOnly()) {
-			throw new PdbException("Cannot have both: applyDataTypesOnly, applyPublicSymbolOnly.");
+			if (applicatorOptions.getRestrictions() != PdbApplicatorRestrictions.DATA_TYPES_ONLY) {
+				throw new PdbException(
+					"programParam may not be null for the chosen PdbApplicatorRestrictions: " +
+						applicatorOptions.getRestrictions());
+			}
 		}
 		monitor = (monitorParam != null) ? monitorParam : TaskMonitor.DUMMY;
 		log = (logParam != null) ? logParam : new MessageLog();
@@ -774,9 +778,38 @@ public class PdbApplicator {
 	// Address-related methods.
 	//==============================================================================================
 	/**
+	 * Returns true if the {@link Address} is an invalid address for continuing application of
+	 * information to the program.  Will report Error or message for an invalid address and will
+	 * report a "External address" message for the name when the address is external.
+	 * @param address the address to test
+	 * @param name name associated with the address used for reporting error/info situations.
+	 * @return {@code true} if the address should be processed.
+	 */
+	boolean isInvalidAddress(Address address, String name) {
+		if (address == PdbAddressManager.BAD_ADDRESS) {
+			appendLogMsg("Invalid address encountered for: " + name);
+			return true;
+		}
+		if (address == PdbAddressManager.EXTERNAL_ADDRESS) {
+			appendLogMsg("External address not known for: " + name);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns the image base Address being used by the applicator.
+	 * @return The Address
+	 */
+	Address getImageBase() {
+		return imageBase;
+	}
+
+	/**
 	 * Returns the Address for the given section and offset.
 	 * @param symbol The {@link AddressMsSymbol}
-	 * @return The Address
+	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
+	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
 	 */
 	Address getAddress(AddressMsSymbol symbol) {
 		return pdbAddressManager.getAddress(symbol);
@@ -789,7 +822,17 @@ public class PdbApplicator {
 	 * @return The Address
 	 */
 	Address getAddress(int segment, long offset) {
-		return pdbAddressManager.getAddress(segment, offset);
+		return pdbAddressManager.getRawAddress(segment, offset);
+	}
+
+	/**
+	 * Returns the Address for the given section and offset.
+	 * @param symbol The {@link AddressMsSymbol}
+	 * @return The Address, which can be {@code Address.NO_ADDRESS} if invalid or
+	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
+	 */
+	Address getRawAddress(AddressMsSymbol symbol) {
+		return pdbAddressManager.getRawAddress(symbol);
 	}
 
 	/**

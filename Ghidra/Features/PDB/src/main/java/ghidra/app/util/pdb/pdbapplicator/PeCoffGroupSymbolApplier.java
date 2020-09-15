@@ -49,12 +49,10 @@ public class PeCoffGroupSymbolApplier extends MsSymbolApplier {
 	void apply() throws PdbException, CancelledException {
 		applicator.addMemoryGroupRefinement(symbol);
 		Address symbolAddress = applicator.getAddress(symbol);
-		if (!Address.NO_ADDRESS.equals(symbolAddress)) {
-			applicator.createSymbol(symbolAddress, symbol.getName(), false);
+		if (applicator.isInvalidAddress(symbolAddress, symbol.getName())) {
+			return;
 		}
-		else {
-//			monitor.setMessage("Skipping NO_ADDRESS symbol " + symb.getName() + "...");
-		}
+		applicator.createSymbol(symbolAddress, symbol.getName(), false);
 	}
 
 	@Override

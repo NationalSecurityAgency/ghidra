@@ -689,8 +689,11 @@ public class PdbResearch {
 			!((AbstractPublic32MsSymbol) symbol).isFunction()) {
 			return;
 		}
-		Address address = applicator.getAddress((AbstractPublicMsSymbol) symbol);
 		String name = ((AbstractPublicMsSymbol) symbol).getName();
+		Address address = applicator.getAddress((AbstractPublicMsSymbol) symbol);
+		if (applicator.isInvalidAddress(address, name)) {
+			return;
+		}
 		String demangledName = getDemangledQualifiedName(name);
 		if (demangledName != null) {
 			stuff = new Stuff(symbol, demangledName, What.PUBLIC_QUAL_FROM_MANGLED);
@@ -704,8 +707,11 @@ public class PdbResearch {
 	private static void processProcedureSymbol(PdbApplicator applicator,
 			Map<Address, List<Stuff>> map, AbstractMsSymbol symbol) {
 		if (symbol instanceof AbstractProcedureMsSymbol) {
-			Address address = applicator.getAddress((AbstractProcedureMsSymbol) symbol);
 			String name = ((AbstractProcedureMsSymbol) symbol).getName();
+			Address address = applicator.getAddress((AbstractProcedureMsSymbol) symbol);
+			if (applicator.isInvalidAddress(address, name)) {
+				return;
+			}
 			Stuff stuff = new Stuff(symbol, name, What.GLOBAL);
 			addStuff(map, address, stuff);
 		}

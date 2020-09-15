@@ -41,10 +41,9 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 	private static final String BLOCK_INDENT = "   ";
 
-	private AbstractProcedureMsSymbol procedureSymbol;
-	private AbstractThunkMsSymbol thunkSymbol;
+	private AddressMsSymbol symbol;
 	private Address specifiedAddress;
-	private Address remapAddress;
+	private Address address;
 	private Function function = null;
 	private long specifiedFrameSize = 0;
 	private long currentFrameSize = 0;
@@ -75,19 +74,16 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		comments = new BlockCommentsManager();
 		currentBlockAddress = null;
 
-		if (abstractSymbol instanceof AbstractProcedureMsSymbol) {
-			procedureSymbol = (AbstractProcedureMsSymbol) abstractSymbol;
-			specifiedAddress = applicator.getAddress(procedureSymbol);
-		}
-		else if (abstractSymbol instanceof AbstractThunkMsSymbol) {
-			thunkSymbol = (AbstractThunkMsSymbol) abstractSymbol;
-			specifiedAddress = applicator.getAddress(thunkSymbol);
+		if (abstractSymbol instanceof AbstractProcedureMsSymbol ||
+			abstractSymbol instanceof AbstractThunkMsSymbol) {
+			symbol = (AddressMsSymbol) abstractSymbol;
+			specifiedAddress = applicator.getRawAddress(symbol);
+			address = applicator.getAddress(symbol);
 		}
 		else {
 			throw new AssertException(
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
-		remapAddress = applicator.getRemapAddressByAddress(specifiedAddress);
 		manageBlockNesting(this);
 
 		while (notDone()) {
@@ -102,16 +98,17 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	void manageBlockNesting(MsSymbolApplier applierParam) {
 		if (applierParam instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
-			if (procedureSymbol != null) {
-				long start = procedureSymbol.getDebugStartOffset();
-				long end = procedureSymbol.getDebugEndOffset();
-				Address blockAddress = remapAddress.add(start);
+			if (symbol instanceof AbstractProcedureMsSymbol) {
+				AbstractProcedureMsSymbol sym = (AbstractProcedureMsSymbol) symbol;
+				long start = sym.getDebugStartOffset();
+				long end = sym.getDebugEndOffset();
+				Address blockAddress = address.add(start);
 				long length = end - start;
-				functionSymbolApplier.beginBlock(blockAddress, procedureSymbol.getName(), length);
+				functionSymbolApplier.beginBlock(blockAddress, sym.getName(), length);
 			}
-			else if (thunkSymbol != null) {
-				functionSymbolApplier.beginBlock(remapAddress, thunkSymbol.getName(),
-					thunkSymbol.getLength());
+			else {
+				AbstractThunkMsSymbol sym = (AbstractThunkMsSymbol) symbol;
+				functionSymbolApplier.beginBlock(address, sym.getName(), sym.getLength());
 			}
 		}
 	}
@@ -154,11 +151,8 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	 * @return the function name
 	 */
 	String getName() {
-		if (procedureSymbol != null) {
-			return procedureSymbol.getName();
-		}
-		else if (thunkSymbol != null) {
-			return thunkSymbol.getName();
+		if (symbol != null) {
+			return ((NameMsSymbol) symbol).getName();
 		}
 		return "";
 	}
@@ -178,13 +172,15 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	}
 
 	boolean applyTo(TaskMonitor monitor) throws PdbException, CancelledException {
-		return applyTo(applicator.getProgram(), remapAddress, monitor);
-	}
+		if (applicator.isInvalidAddress(specifiedAddress, getName())) {
+			return false;
+		}
+		if (!(symbol instanceof AbstractProcedureMsSymbol)) {
+			return false;
+		}
+		AbstractProcedureMsSymbol procedureSymbol = (AbstractProcedureMsSymbol) symbol;
 
-	boolean applyTo(Program program, Address address, TaskMonitor monitor)
-			throws PdbException, CancelledException {
-
-		boolean functionSuccess = applyFunction(program, address, monitor);
+		boolean functionSuccess = applyFunction(monitor);
 		if (functionSuccess == false) {
 			return false;
 		}
@@ -198,7 +194,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 		// comments
 		long addressDelta = address.subtract(specifiedAddress);
-		comments.applyTo(program, addressDelta);
+		comments.applyTo(applicator.getProgram(), addressDelta);
 
 		// line numbers
 		// TODO: not done yet
@@ -232,20 +228,20 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		comments.addPreComment(currentBlockAddress, comment);
 	}
 
-	private boolean applyFunction(Program program, Address address, TaskMonitor monitor) {
-		Listing listing = program.getListing();
+	private boolean applyFunction(TaskMonitor monitor) {
+		Listing listing = applicator.getProgram().getListing();
 
 		applicator.createSymbol(address, getName(), true);
 
 		function = listing.getFunctionAt(address);
 		if (function == null) {
-			function = createFunction(program, address, monitor);
+			function = createFunction(monitor);
 		}
 		if (function != null && !function.isThunk() &&
 			(function.getSignatureSource() == SourceType.DEFAULT ||
 				function.getSignatureSource() == SourceType.ANALYSIS)) {
 			// Set the function definition
-			setFunctionDefinition(program, address, monitor);
+			setFunctionDefinition(monitor);
 
 		}
 		if (function == null) {
@@ -256,10 +252,10 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		return true;
 	}
 
-	private Function createFunction(Program program, Address address, TaskMonitor monitor) {
+	private Function createFunction(TaskMonitor monitor) {
 
 		// Does function already exist?
-		Function myFunction = program.getListing().getFunctionAt(address);
+		Function myFunction = applicator.getProgram().getListing().getFunctionAt(address);
 		if (myFunction != null) {
 			// Actually not sure if we should set to 0 or calculate from the function here.
 			// Need to investigate more, so at least keeping it as a separate 'else' for now.
@@ -267,25 +263,25 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		}
 
 		// Disassemble
-		Instruction instr = program.getListing().getInstructionAt(address);
+		Instruction instr = applicator.getProgram().getListing().getInstructionAt(address);
 		if (instr == null) {
 			DisassembleCommand cmd = new DisassembleCommand(address, null, true);
-			cmd.applyTo(program, monitor);
+			cmd.applyTo(applicator.getProgram(), monitor);
 		}
 
-		myFunction = createFunctionCommand(program, address, monitor);
+		myFunction = createFunctionCommand(monitor);
 
 		return myFunction;
 	}
 
-	private boolean setFunctionDefinition(Program program, Address address, TaskMonitor monitor) {
-		if (procedureSymbol == null) {
+	private boolean setFunctionDefinition(TaskMonitor monitor) {
+		if (!(symbol instanceof AbstractProcedureMsSymbol)) {
 			// TODO: is there anything we can do with thunkSymbol?
 			// long x = thunkSymbol.getParentPointer();
 			return true;
 		}
 		// Rest presumes procedureSymbol.
-		RecordNumber typeRecordNumber = procedureSymbol.getTypeRecordNumber();
+		RecordNumber typeRecordNumber = ((AbstractProcedureMsSymbol) symbol).getTypeRecordNumber();
 		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
 		if (applier == null) {
 			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
@@ -308,7 +304,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			FunctionDefinition def = (FunctionDefinition) dataType;
 			ApplyFunctionSignatureCmd sigCmd =
 				new ApplyFunctionSignatureCmd(address, def, SourceType.IMPORTED);
-			if (!sigCmd.applyTo(program, monitor)) {
+			if (!sigCmd.applyTo(applicator.getProgram(), monitor)) {
 				applicator.appendLogMsg(
 					"failed to apply signature to function at address " + address.toString());
 				return false;
@@ -317,13 +313,12 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		return true;
 	}
 
-	private Function createFunctionCommand(Program program, Address entryPoint,
-			TaskMonitor monitor) {
-		CreateFunctionCmd funCmd = new CreateFunctionCmd(entryPoint);
-		if (!funCmd.applyTo(program, monitor)) {
-			applicator.appendLogMsg("Failed to apply function at address " + entryPoint.toString() +
+	private Function createFunctionCommand(TaskMonitor monitor) {
+		CreateFunctionCmd funCmd = new CreateFunctionCmd(address);
+		if (!funCmd.applyTo(applicator.getProgram(), monitor)) {
+			applicator.appendLogMsg("Failed to apply function at address " + address.toString() +
 				"; attempting to use possible existing function");
-			return program.getListing().getFunctionAt(entryPoint);
+			return applicator.getProgram().getListing().getFunctionAt(address);
 		}
 		return funCmd.getFunction();
 	}
@@ -335,7 +330,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	int endBlock() {
 		if (--symbolBlockNestingLevel < 0) {
 			applicator.appendLogMsg(
-				"Block Nesting went negative for " + getName() + " at " + remapAddress);
+				"Block Nesting went negative for " + getName() + " at " + address);
 		}
 		if (symbolBlockNestingLevel == 0) {
 			//currentFunctionSymbolApplier = null;
@@ -347,6 +342,9 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 		int nestingLevel = beginBlock(startAddress);
 		if (!applicator.getPdbApplicatorOptions().applyCodeScopeBlockComments()) {
+			return;
+		}
+		if (applicator.isInvalidAddress(startAddress, name)) {
 			return;
 		}
 

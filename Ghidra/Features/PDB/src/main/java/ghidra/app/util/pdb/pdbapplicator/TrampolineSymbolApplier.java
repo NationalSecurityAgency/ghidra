@@ -61,8 +61,14 @@ public class TrampolineSymbolApplier extends MsSymbolApplier {
 		Address targetAddress =
 			applicator.getAddress(symbol.getSegmentTarget(), symbol.getOffsetTarget());
 
-		Function target = createNewFunction(targetAddress, 1);
-		Function thunk = createNewFunction(symbolAddress, symbol.getSizeOfThunk());
+		Function target = null;
+		Function thunk = null;
+		if (!applicator.isInvalidAddress(targetAddress, "thunk target")) {
+			target = createNewFunction(targetAddress, 1);
+		}
+		if (!applicator.isInvalidAddress(symbolAddress, "thunk symbol")) {
+			thunk = createNewFunction(symbolAddress, symbol.getSizeOfThunk());
+		}
 		if (target != null && thunk != null) {
 			thunk.setThunkedFunction(target);
 		}

@@ -39,7 +39,6 @@ public class DataSymbolApplier extends MsSymbolApplier {
 	 * Constructor
 	 * @param applicator the {@link PdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
-	 * @throws CancelledException upon user cancellation
 	 */
 	public DataSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
@@ -55,9 +54,6 @@ public class DataSymbolApplier extends MsSymbolApplier {
 	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
 		if (applyToApplier instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
-			if (symbol.getSegment() == 0 && symbol.getOffset() == 0L) {
-				return; // silently return.
-			}
 			MsTypeApplier applier = getTypeApplier();
 			DataType dataType = applier.getDataType();
 			if (dataType == null) { // TODO: check that we can have null here.
@@ -65,21 +61,22 @@ public class DataSymbolApplier extends MsSymbolApplier {
 			}
 			String name = symbol.getName();
 			Address address = applicator.getAddress(symbol);
-
+			if (applicator.isInvalidAddress(address, symbol.getName())) {
+				return;
+			}
 			functionSymbolApplier.setLocalVariable(address, name, dataType);
 		}
 	}
 
 	@Override
 	void apply() throws CancelledException, PdbException {
-		// skip if both zero (i.e,. process if either is not zero)
-		if (symbol.getSegment() != 0 || symbol.getOffset() != 0L) {
-			Address symbolAddress = applicator.getAddress(symbol);
-			Address remapAddress = applicator.getRemapAddressByAddress(symbolAddress);
-			RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
-			applicator.createSymbol(symbolAddress, symbol.getName(), true);
-			createData(remapAddress, typeRecordNumber);
+		Address symbolAddress = applicator.getAddress(symbol);
+		if (applicator.isInvalidAddress(symbolAddress, symbol.getName())) {
+			return;
 		}
+		RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
+		applicator.createSymbol(symbolAddress, symbol.getName(), true);
+		createData(symbolAddress, typeRecordNumber);
 	}
 
 	MsTypeApplier getTypeApplier() {
@@ -101,6 +98,10 @@ public class DataSymbolApplier extends MsSymbolApplier {
 					applier.getMsType().getName() + " at " + address);
 			}
 			return;
+		}
+		if (applicator.getImageBase().equals(address) &&
+			!"_IMAGE_DOS_HEADER".equals(dataType.getName())) {
+			return; // Squash some noise
 		}
 		if (!(dataType instanceof FunctionDefinition)) {
 			//TODO: might want to do an ApplyDatatypeCmd here!!!

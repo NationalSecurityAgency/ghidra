@@ -101,6 +101,9 @@ public class SeparatedCodeSymbolApplier extends MsSymbolApplier {
 
 	@Override
 	void apply() throws PdbException, CancelledException {
+		if (applicator.isInvalidAddress(currentBlockAddress, craftedName)) {
+			return;
+		}
 		// DO NOTHING FOR NOW.  TODO: should we have a configuration option?
 		//  Note: these comments can be noise in the decompiler an code browser
 		setComments(false);
