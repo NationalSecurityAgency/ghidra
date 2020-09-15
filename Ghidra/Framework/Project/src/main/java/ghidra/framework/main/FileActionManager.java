@@ -556,6 +556,13 @@ class FileActionManager {
 		if (project == null) {
 			return;
 		}
+
+		if (!project.saveSessionTools()) {
+			// if tools have conflicting options, user is presented with a dialog that can
+			// be cancelled. If they press the cancel button, abort the entire save project action.
+			return;
+		}
+
 		doSaveProject(project);
 		Msg.info(this, "Saved project: " + project.getName());
 	}
@@ -684,8 +691,7 @@ class FileActionManager {
 		sb.append("The following files are Read-Only and cannot be\n" +
 			" saved 'As Is.' You must do a manual 'Save As' for these\n" + " files: \n \n");
 
-		for (int i = 0; i < list.size(); i++) {
-			DomainObject obj = list.get(i);
+		for (DomainObject obj : list) {
 			sb.append(obj.getDomainFile().getPathname());
 			sb.append("\n");
 		}
