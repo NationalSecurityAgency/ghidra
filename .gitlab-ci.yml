@@ -4,7 +4,7 @@ stages:
 trigger-ext-u:
   stage: test
   script:
-    - "curl --with-ca-bundle=$CI_SERVER_TLS_CA_FILE -X POST -F token=$REPO_TOKEN -F ref=master -F variables[JOB_TYPE]=$JOB_TYPE -F variables[INITIATOR]=$GITLAB_USER_LOGIN -F variables[COMMIT]=$CI_COMMIT_SHORT_SHA -F variables[BRANCH]=$CI_COMMIT_REF_NAME $REPO_URL"
+    - "curl -cacert $CI_SERVER_TLS_CA_FILE -X POST -F token=$REPO_TOKEN -F ref=master -F variables[JOB_TYPE]=$JOB_TYPE -F variables[INITIATOR]=$GITLAB_USER_LOGIN -F variables[COMMIT]=$CI_COMMIT_SHORT_SHA -F variables[BRANCH]=$CI_COMMIT_REF_NAME $REPO_URL"
   tags:
     - docker
     - ghidratest
