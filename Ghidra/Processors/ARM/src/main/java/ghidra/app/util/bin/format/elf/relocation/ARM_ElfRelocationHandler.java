@@ -83,20 +83,39 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 			case ARM_ElfRelocationConstants.R_ARM_ABS32: { // Target class: Data
-				int oldValue = memory.getInt(relocationAddress);
-				newValue = (int) (symbolValue + addend + oldValue);
+				if (elfRelocationContext.extractAddend()) {
+					addend = memory.getInt(relocationAddress);
+				}
+				newValue = (int) (symbolValue + addend);
 				if (isThumb) {
 					newValue |= 1;
 				}
 				memory.setInt(relocationAddress, newValue);
 				break;
 			}
-			case ARM_ElfRelocationConstants.R_ARM_REL32: { // // Target class: Data
+			case ARM_ElfRelocationConstants.R_ARM_REL32: { // Target class: Data
+				if (elfRelocationContext.extractAddend()) {
+					addend = memory.getInt(relocationAddress);
+				}
 				newValue = (int) (symbolValue + addend);
-				newValue -= (offset + 8);  // PC relative, PC will be 8 bytes after inst start
+				newValue -= offset;  // PC relative
 				if (isThumb) {
 					newValue |= 1;
 				}
+				memory.setInt(relocationAddress, newValue);
+				break;
+			}
+			case ARM_ElfRelocationConstants.R_ARM_PREL31: { // Target class: Data
+				int oldValue = memory.getInt(relocationAddress);
+				if (elfRelocationContext.extractAddend()) {
+					addend = (oldValue << 1) >> 1;
+				}
+				newValue = (int) (symbolValue + addend);
+				newValue -= offset;  // PC relative
+				if (isThumb) {
+					newValue |= 1;
+				}
+				newValue = (newValue & 0x7fffffff) + (oldValue & 0x80000000);
 				memory.setInt(relocationAddress, newValue);
 				break;
 			}
