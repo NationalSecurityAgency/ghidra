@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,19 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import docking.action.MenuData;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.task.CreateManualMatchTask;
 import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
-import docking.action.MenuData;
 
 public class CreateManualMatchFromToolsAction extends AbstractManualMatchFromToolsAction {
 
+	public static final String NAME = "Create Manual Match From Tool";
+
 	public CreateManualMatchFromToolsAction(VTPlugin plugin) {
-		super(plugin, "Create Manual Match From Tool");
+		super(plugin, NAME);
 		String menuGroup = "1"; // first group in the popup
 		setPopupMenuData(new MenuData(new String[] { VTPlugin.MATCH_POPUP_MENU_NAME,
 			"Create Manual Match" }, CreateManualMatchAction.ICON, menuGroup));
