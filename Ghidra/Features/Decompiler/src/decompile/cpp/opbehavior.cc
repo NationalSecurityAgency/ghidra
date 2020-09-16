@@ -507,7 +507,7 @@ uintb OpBehaviorIntSrem::evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb
   intb mod = in2;
   sign_extend(val,8*sizein-1);	// Convert inputs to signed values
   sign_extend(mod,8*sizein-1);
-  intb sres = in1 % in2;	// Do the remainder
+  intb sres = val % mod;	// Do the remainder
   zero_extend(sres,8*sizeout-1); // Convert back to unsigned
   return (uintb)sres;
 }
