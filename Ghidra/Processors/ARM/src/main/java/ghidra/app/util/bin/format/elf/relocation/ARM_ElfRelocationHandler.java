@@ -91,9 +91,10 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setInt(relocationAddress, newValue);
 				break;
 			}
-			case ARM_ElfRelocationConstants.R_ARM_REL32: { // // Target class: Data
-				newValue = (int) (symbolValue + addend);
-				newValue -= (offset + 8);  // PC relative, PC will be 8 bytes after inst start
+			case ARM_ElfRelocationConstants.R_ARM_REL32: { // Target class: Data
+				int oldValue = memory.getInt(relocationAddress);
+				newValue = (int) (symbolValue + addend + oldValue);
+				newValue -= offset;  // PC relative
 				if (isThumb) {
 					newValue |= 1;
 				}
