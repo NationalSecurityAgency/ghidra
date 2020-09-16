@@ -143,7 +143,9 @@ public class PdbAddressManager {
 		if (segment < 0 || segment > allSegmentsInfo.size()) {
 			return BAD_ADDRESS;
 		}
-		else if (segment == allSegmentsInfo.size()) {
+		// We are lumping 0 and size as EXTERNAL... one or other could be image base... but not
+		// necessarily consistent... but that's OK... it is still "EXTERNAL" from the program.
+		else if (segment == 0 || segment == allSegmentsInfo.size()) {
 			// External address.
 			// Was getting issues of _IMAGE_DOSHEADER showing up with a segment index one
 			// beyond the end.
@@ -250,7 +252,9 @@ public class PdbAddressManager {
 
 	private void determineMemoryBlocks() {
 		// Set section/segment 0 to image base. (should be what is header), but what is its size?
-		// TODO... made up size for now... is there something else?  We could 
+		// TODO... made up size for now... is there something else?  We could put null instead.
+		// For now, the method that reads this information might report EXTERNAL instead of
+		// trying to use this. 
 		long segmentZeroLength = 0x7fffffff;
 		allSegmentsInfo.add(new SegmentInfo(imageBase, segmentZeroLength));
 		AbstractDatabaseInterface dbi = applicator.getPdb().getDatabaseInterface();

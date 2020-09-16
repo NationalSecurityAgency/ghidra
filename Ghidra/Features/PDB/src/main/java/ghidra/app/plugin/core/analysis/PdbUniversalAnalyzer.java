@@ -365,9 +365,10 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		getPdbApplicatorOptions();
 		options.registerOption(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions, null,
 			OPTION_DESCRIPTION_PROCESSING_RESTRICTIONS);
-		options.registerOption(OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS,
-			applyCodeScopeBlockComments, null, OPTION_DESCRIPTION_APPLY_CODE_SCOPE_BLOCK_COMMENTS);
 		if (developerMode) {
+			options.registerOption(OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS,
+				applyCodeScopeBlockComments, null,
+				OPTION_DESCRIPTION_APPLY_CODE_SCOPE_BLOCK_COMMENTS);
 			// Mechanism to apply instruction labels is not yet implemented-> does nothing
 			options.registerOption(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels,
 				null, OPTION_DESCRIPTION_APPLY_INSTRUCTION_LABELS);
@@ -440,9 +441,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 		// PdbApplicatorOptions
 		restrictions = options.getEnum(OPTION_NAME_PROCESSING_RESTRICTIONS, restrictions);
-		applyCodeScopeBlockComments = options.getBoolean(
-			OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);
 		if (developerMode) {
+			applyCodeScopeBlockComments = options.getBoolean(
+				OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);
 			// Mechanism to apply instruction labels is not yet implemented-> does nothing
 			applyInstructionLabels =
 				options.getBoolean(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels);

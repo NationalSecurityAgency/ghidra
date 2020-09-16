@@ -598,6 +598,7 @@ public class PdbApplicator {
 	}
 
 	MsTypeApplier getTypeApplier(RecordNumber recordNumber) {
+		//PdbResearch.checkBreak(recordNumber.getNumber());
 		return typeApplierParser.getTypeApplier(recordNumber);
 	}
 
@@ -629,7 +630,7 @@ public class PdbApplicator {
 		for (int indexNumber =
 			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
-			PdbResearch.checkBreak(indexNumber);
+			//PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
 			//PdbResearch.checkBreak(indexNumber, applier);
 			applier.apply();
@@ -712,7 +713,7 @@ public class PdbApplicator {
 			" deferred data type dependencies...");
 		for (MsTypeApplier applier : verticesInPostOrder) {
 			monitor.checkCanceled();
-			PdbResearch.checkBreak(applier.index);
+			//PdbResearch.checkBreak(applier.index);
 			//checkBreak(applier.index, applier);
 			if (applier.isDeferred()) {
 				applier.deferredApply();
@@ -732,9 +733,9 @@ public class PdbApplicator {
 		for (int indexNumber =
 			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
-			PdbResearch.checkBreak(indexNumber);
+			//PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
-			PdbResearch.checkBreak(indexNumber, applier);
+			//PdbResearch.checkBreak(indexNumber, applier);
 			applier.resolve();
 			monitor.incrementProgress(1);
 		}
@@ -791,7 +792,7 @@ public class PdbApplicator {
 			return true;
 		}
 		if (address == PdbAddressManager.EXTERNAL_ADDRESS) {
-			appendLogMsg("External address not known for: " + name);
+			//Msg.info(this, "External address not known for: " + name);
 			return true;
 		}
 		return false;

@@ -41,7 +41,7 @@ public class PdbResearch {
 
 	//==============================================================================================
 	private static Set<Integer> debugIndexNumbers;
-	private Set<Integer> developerDebugOrderIndexNumbers;
+	private static Set<Integer> developerDebugOrderIndexNumbers;
 
 	//==============================================================================================
 	/**
@@ -52,7 +52,21 @@ public class PdbResearch {
 	static void initBreakPointRecordNumbers() {
 		debugIndexNumbers = new TreeSet<>();
 
-		debugIndexNumbers.add(12527);
+		debugIndexNumbers.add(9715);
+
+//		debugIndexNumbers.add(9696);
+//		debugIndexNumbers.add(9700);
+//		debugIndexNumbers.add(9709);
+//		debugIndexNumbers.add(9783);
+//		debugIndexNumbers.add(216012);
+//		debugIndexNumbers.add(216055);
+//		debugIndexNumbers.add(216058);
+
+//		debugIndexNumbers.add(9703);
+//		debugIndexNumbers.add(9709);
+//		debugIndexNumbers.add(9782);
+
+//		debugIndexNumbers.add(12527);
 
 //		debugIndexNumbers.add(180462);
 
@@ -334,31 +348,56 @@ public class PdbResearch {
 
 	//==============================================================================================
 	//==============================================================================================
-	private void initDeveloperOrderRecordNumbers() {
+	static private void initDeveloperOrderRecordNumbers() {
 		developerDebugOrderIndexNumbers = new TreeSet<>();
 
-		// big class
-		developerDebugOrderIndexNumbers.add(105212);
+		developerDebugOrderIndexNumbers.add(9696);
+		developerDebugOrderIndexNumbers.add(9697);
+		developerDebugOrderIndexNumbers.add(9700);
+		developerDebugOrderIndexNumbers.add(9701);
+		developerDebugOrderIndexNumbers.add(9704);
+		developerDebugOrderIndexNumbers.add(9707);
+		developerDebugOrderIndexNumbers.add(9709);
+		developerDebugOrderIndexNumbers.add(9714);
+		developerDebugOrderIndexNumbers.add(9715);
+		developerDebugOrderIndexNumbers.add(9773);
+		developerDebugOrderIndexNumbers.add(9774);
+		developerDebugOrderIndexNumbers.add(9775);
+		developerDebugOrderIndexNumbers.add(9776);
+		developerDebugOrderIndexNumbers.add(9777);
+		developerDebugOrderIndexNumbers.add(9778);
+		developerDebugOrderIndexNumbers.add(9779);
+		developerDebugOrderIndexNumbers.add(9780);
+		developerDebugOrderIndexNumbers.add(9781);
+		developerDebugOrderIndexNumbers.add(9782);
+		developerDebugOrderIndexNumbers.add(9783);
+		developerDebugOrderIndexNumbers.add(216012);
+		developerDebugOrderIndexNumbers.add(216055);
+		developerDebugOrderIndexNumbers.add(216058);
 
-		// member 2 (def) of big class (fwdref 105103)
-		developerDebugOrderIndexNumbers.add(105444);
-
-		// member 3 (def) of big class (fwdref 105104)
-		developerDebugOrderIndexNumbers.add(105594);
-
-		// base classes of 105444 (field list 105443)
-		developerDebugOrderIndexNumbers.add(5251); // fwdref is 5072
-		developerDebugOrderIndexNumbers.add(105594); // fwdref is 105430
-
-		// first and only member of 5251
-		developerDebugOrderIndexNumbers.add(5051); // fwdref is 4505
+//		// big class
+//		developerDebugOrderIndexNumbers.add(105212);
+//
+//		// member 2 (def) of big class (fwdref 105103)
+//		developerDebugOrderIndexNumbers.add(105444);
+//
+//		// member 3 (def) of big class (fwdref 105104)
+//		developerDebugOrderIndexNumbers.add(105594);
+//
+//		// base classes of 105444 (field list 105443)
+//		developerDebugOrderIndexNumbers.add(5251); // fwdref is 5072
+//		developerDebugOrderIndexNumbers.add(105594); // fwdref is 105430
+//
+//		// first and only member of 5251
+//		developerDebugOrderIndexNumbers.add(5051); // fwdref is 4505
 	}
 
-	void developerDebugOrder(PdbApplicator applicator, TaskMonitor monitor)
+	static void developerDebugOrder(PdbApplicator applicator, TaskMonitor monitor)
 			throws CancelledException, PdbException {
 		initDeveloperOrderRecordNumbers();
 		for (int indexNumber : developerDebugOrderIndexNumbers) {
 			monitor.checkCanceled();
+			PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier =
 				applicator.getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
 			applier.apply();

@@ -56,7 +56,7 @@ public class ComplexTypeApplierMapper {
 		applicator.setMonitorMessage("PDB: Mapping Composites...");
 		while (indexNumber < indexLimit) {
 			monitor.checkCanceled();
-			PdbResearch.checkBreak(indexNumber);
+			//PdbResearch.checkBreak(indexNumber);
 			MsTypeApplier applier =
 				applicator.getTypeApplier(RecordNumber.typeRecordNumber(indexNumber++));
 			// From real data, we know that an enum and a composite both had the same SymbolPath,

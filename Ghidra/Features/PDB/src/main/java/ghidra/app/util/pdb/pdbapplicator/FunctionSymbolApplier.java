@@ -41,7 +41,8 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 	private static final String BLOCK_INDENT = "   ";
 
-	private AddressMsSymbol symbol;
+	private AbstractProcedureMsSymbol procedureSymbol;
+	private AbstractThunkMsSymbol thunkSymbol;
 	private Address specifiedAddress;
 	private Address address;
 	private Function function = null;
@@ -74,11 +75,15 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		comments = new BlockCommentsManager();
 		currentBlockAddress = null;
 
-		if (abstractSymbol instanceof AbstractProcedureMsSymbol ||
-			abstractSymbol instanceof AbstractThunkMsSymbol) {
-			symbol = (AddressMsSymbol) abstractSymbol;
-			specifiedAddress = applicator.getRawAddress(symbol);
-			address = applicator.getAddress(symbol);
+		if (abstractSymbol instanceof AbstractProcedureMsSymbol) {
+			procedureSymbol = (AbstractProcedureMsSymbol) abstractSymbol;
+			specifiedAddress = applicator.getRawAddress(procedureSymbol);
+			address = applicator.getAddress(procedureSymbol);
+		}
+		else if (abstractSymbol instanceof AbstractThunkMsSymbol) {
+			thunkSymbol = (AbstractThunkMsSymbol) abstractSymbol;
+			specifiedAddress = applicator.getRawAddress(thunkSymbol);
+			address = applicator.getAddress(thunkSymbol);
 		}
 		else {
 			throw new AssertException(
@@ -98,17 +103,16 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	void manageBlockNesting(MsSymbolApplier applierParam) {
 		if (applierParam instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
-			if (symbol instanceof AbstractProcedureMsSymbol) {
-				AbstractProcedureMsSymbol sym = (AbstractProcedureMsSymbol) symbol;
-				long start = sym.getDebugStartOffset();
-				long end = sym.getDebugEndOffset();
+			if (procedureSymbol != null) {
+				long start = procedureSymbol.getDebugStartOffset();
+				long end = procedureSymbol.getDebugEndOffset();
 				Address blockAddress = address.add(start);
 				long length = end - start;
-				functionSymbolApplier.beginBlock(blockAddress, sym.getName(), length);
+				functionSymbolApplier.beginBlock(blockAddress, procedureSymbol.getName(), length);
 			}
-			else {
-				AbstractThunkMsSymbol sym = (AbstractThunkMsSymbol) symbol;
-				functionSymbolApplier.beginBlock(address, sym.getName(), sym.getLength());
+			else if (thunkSymbol != null) {
+				functionSymbolApplier.beginBlock(address, thunkSymbol.getName(),
+					thunkSymbol.getLength());
 			}
 		}
 	}
@@ -151,8 +155,11 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	 * @return the function name
 	 */
 	String getName() {
-		if (symbol != null) {
-			return ((NameMsSymbol) symbol).getName();
+		if (procedureSymbol != null) {
+			return procedureSymbol.getName();
+		}
+		else if (thunkSymbol != null) {
+			return thunkSymbol.getName();
 		}
 		return "";
 	}
@@ -175,10 +182,6 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		if (applicator.isInvalidAddress(specifiedAddress, getName())) {
 			return false;
 		}
-		if (!(symbol instanceof AbstractProcedureMsSymbol)) {
-			return false;
-		}
-		AbstractProcedureMsSymbol procedureSymbol = (AbstractProcedureMsSymbol) symbol;
 
 		boolean functionSuccess = applyFunction(monitor);
 		if (functionSuccess == false) {
@@ -275,13 +278,13 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	}
 
 	private boolean setFunctionDefinition(TaskMonitor monitor) {
-		if (!(symbol instanceof AbstractProcedureMsSymbol)) {
+		if (procedureSymbol == null) {
 			// TODO: is there anything we can do with thunkSymbol?
 			// long x = thunkSymbol.getParentPointer();
 			return true;
 		}
 		// Rest presumes procedureSymbol.
-		RecordNumber typeRecordNumber = ((AbstractProcedureMsSymbol) symbol).getTypeRecordNumber();
+		RecordNumber typeRecordNumber = procedureSymbol.getTypeRecordNumber();
 		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
 		if (applier == null) {
 			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
