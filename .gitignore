@@ -53,6 +53,8 @@ Release
 *.aps
 *.vcproj.*
 *.vcxproj.*
+# dump files
+*.mdmp
 .vs/
 
 # Ignore UNIX backup files

@@ -13,38 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.model.symbol;
+package ghidra.graph.algo;
 
-import java.util.Iterator;
-
-public class SymbolIteratorAdapter implements SymbolIterator {
-
-	private final Iterator<? extends Symbol> iterator;
-
-	public SymbolIteratorAdapter(Iterator<? extends Symbol> iterator) {
-		this.iterator = iterator;
+/**
+ * Occurs when a graph cannot be sorted
+ */
+public class SorterException extends Exception {
+	public SorterException(String desc, Object v1, Object v2) {
+		super(desc + ": " + v1 + " ?? " + v2);
 	}
 
-	@Override
-	public boolean hasNext() {
-		return iterator.hasNext();
+	public SorterException(String desc, Iterable<?> vs) {
+		super(desc + ": " + vs);
 	}
-
-	@Override
-	public Symbol next() {
-		if (!iterator.hasNext())
-			return null;
-		return iterator.next();
-	}
-
-	@Override
-	public void remove() {
-		iterator.remove();
-	}
-
-	@Override
-	public Iterator<Symbol> iterator() {
-		return this;
-	}
-
 }

@@ -22,36 +22,43 @@ import org.apache.commons.collections4.comparators.ComparableComparator;
 import ghidra.util.ReversedListIterator;
 
 /**
- * A map that is sorted by value.
- * 
- * This is an implementation of {@link Map} where entries are sorted by value, rather than by key.
- * Such a tree may be useful as a priority queue where the cost of an entry may change over time.
- * As such, the collections returned by {@link #entrySet()}, {@link #keySet()}, and
- * {@link #values()} all implement {@link Deque}. The order of the entries will be updated on any
- * call to {@link #put(Object, Object)}, or a call to {@link Collection#add(Object)} on the entry
- * set. Additionally, if the values are mutable objects, whose costs may change, there is an
- * {@link #update(Object)} method, which notifies the map that the given key may need to be
- * repositioned. The associated collections also implement the {@link List} interface, providing
- * fairly efficient implementations of {@link List#get(int)} and {@link List#indexOf(Object)}.
- * Sequential access is best performed via {@link Collection#iterator()}, since this will use a
- * linked list.
- * 
+ * A tree-based implementation of a value-sorted map
+ *
  * The underlying implementation is currently an unbalanced binary tree whose nodes also comprise a
  * doubly-linked list. Currently, it is not thread safe.
- * TODO Consider changing to an AVL tree implementation
- * TODO Consider implementing the {@link NavigableMap} interface
- * TODO Consider making the implementation thread-safe
+ *
+ * Note this implementation isn't terribly smart, as it makes no efforts to balance the tree. It is
+ * also not thread safe.
  * 
  * @param <K> the type of the keys
  * @param <V> the type of the values
  */
-public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
+public class TreeValueSortedMap<K, V> extends AbstractMap<K, V> implements ValueSortedMap<K, V> {
+
+	/**
+	 * Create a tree using the values' natural ordering
+	 */
+	public static <K, V extends Comparable<V>> TreeValueSortedMap<K, V> createWithNaturalOrder() {
+		Comparator<V> natural = Comparator.naturalOrder();
+		return new TreeValueSortedMap<>(natural);
+	}
+
+	/**
+	 * Create a tree using a custom comparator to order the values
+	 * 
+	 * @param comparator the comparator, providing a total ordering of the values
+	 */
+	public static <K, V> TreeValueSortedMap<K, V> createWithComparator(Comparator<V> comparator) {
+		return new TreeValueSortedMap<>(comparator);
+	}
+
 	/**
 	 * An iterator of the entries
 	 */
 	protected class EntryListIterator implements ListIterator<Entry<K, V>> {
 		private boolean atEnd = false;
 		private Node next;
+		private Node cur;
 
 		/**
 		 * Construct a list iterator over the entries
@@ -88,7 +95,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			Node cur = next;
+			cur = next;
 			next = next.next;
 			atEnd = next == null;
 			return cur;
@@ -109,9 +116,9 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 				atEnd = tail == null;
 			}
 			else {
-				next = next.prev;
+				cur = next = next.prev;
 			}
-			return next;
+			return cur;
 		}
 
 		@Override
@@ -124,8 +131,12 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public void remove() {
-			nodeMap.remove(next.key);
-			next.remove();
+			if (cur == null) {
+				throw new IllegalStateException();
+			}
+			nodeMap.remove(cur.key);
+			cur.remove();
+			cur = null;
 		}
 
 		@Override
@@ -204,18 +215,18 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 	 */
 	protected class Node implements Entry<K, V> {
 		// Node key and data 
-		private final K key;
-		private V val;
+		protected final K key;
+		protected V val;
 
 		// Tree-related fields
-		private Node parent;
-		private Node lChild;
-		private Node rChild;
-		private int sizeLeft;
+		protected Node parent;
+		protected Node lChild;
+		protected Node rChild;
+		protected int sizeLeft;
 
 		// Linked list-related fields
-		private Node next;
-		private Node prev;
+		protected Node next;
+		protected Node prev;
 
 		@Override
 		public String toString() {
@@ -224,10 +235,11 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		/**
 		 * Construct a new node
+		 * 
 		 * @param key the key
 		 * @param val the data
 		 */
-		private Node(K key, V val) {
+		protected Node(K key, V val) {
 			this.key = key;
 			this.val = val;
 		}
@@ -237,17 +249,24 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 			try {
 				@SuppressWarnings("unchecked")
 				Entry<K, V> that = (Entry<K, V>) obj;
-				return eq(this.key, that.getKey()) && eq(this.val, that.getValue());
+				return Objects.equals(this.key, that.getKey()) &&
+					Objects.equals(this.val, that.getValue());
 			}
 			catch (ClassCastException e) {
 				return false;
 			}
 		}
 
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.key, this.val);
+		}
+
 		/**
 		 * Compute this node's index.
 		 * 
 		 * This uses the {@link #sizeLeft} field to compute the index in O(log n) on average.
+		 * 
 		 * @return the index
 		 */
 		public int computeIndex() {
@@ -268,7 +287,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		 * 
 		 * This really only makes sense at the root
 		 * 
-		 * @param index the index 
+		 * @param index the index
 		 * @return the node at the given index
 		 */
 		private Node getByIndex(int index) {
@@ -310,6 +329,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		/**
 		 * Insert a node into this subtree and the linked list
+		 * 
 		 * @param item the node to insert
 		 */
 		void insert(Node item) {
@@ -340,6 +360,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		/**
 		 * Insert a node as a successor to this node in the linked list
+		 * 
 		 * NOTE: Called only after the node is inserted into the tree
 		 */
 		private void insertAfter(Node item) {
@@ -357,6 +378,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		/**
 		 * Insert a node as a predecessor to this node in the linked list
+		 * 
 		 * NOTE: Called only after the node is inserted into the tree
 		 */
 		private void insertBefore(Node item) {
@@ -456,34 +478,57 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		/**
 		 * Find the given value in this subtree
 		 * 
-		 * @param val the value to find
+		 * @param value the value to find
 		 * @param mode when the value occurs multiple times, identifies which instance to find
 		 * @return the node containing the given value, or null if not found
 		 */
-		private Node searchValue(V val, SearchMode mode) {
+		private Node searchValue(V value, SearchMode mode) {
 			Node cur = this;
 			Node eq = null;
+			int c;
 			while (true) {
-				int c = comparator.compare(val, cur.val);
+				c = comparator.compare(value, cur.val);
 				if (c == 0) {
 					eq = cur;
 				}
-				if (c < 0 || (c == 0 && mode == SearchMode.FIRST)) {
+				if (c < 0 || (c == 0 && mode.inEq == Comp.LT)) {
 					if (cur.lChild == null) {
-						return eq;
+						break;
 					}
 					cur = cur.lChild;
 				}
-				else if (c > 0 || (c == 0 && mode == SearchMode.LAST)) {
+				else if (c > 0 || (c == 0 && mode.inEq == Comp.GT)) {
 					if (cur.rChild == null) {
-						return eq;
+						break;
 					}
 					cur = cur.rChild;
 				}
-				else { // c == 0 && mode == SearchMode.ANY
-					return eq;
+				else {
+					break;
 				}
 			}
+			if (eq != null) {
+				if (mode.allowEq == BoundType.CLOSED) {
+					return eq;
+				}
+				if (mode.comp == Comp.LT) {
+					return eq.prev;
+				}
+				return eq.next;
+			}
+			if (mode.comp == Comp.LT) {
+				if (c < 0) {
+					return cur.prev; // May be null;
+				}
+				return cur; // c != 0 here, so c > 0
+			}
+			if (mode.comp == Comp.GT) {
+				if (c < 0) {
+					return cur;
+				}
+				return cur.next;
+			}
+			return null; // Other search modes require exact match
 		}
 
 		@Override
@@ -495,19 +540,42 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 	}
 
+	private enum BoundType {
+		CLOSED, OPEN
+	}
+
+	private enum Comp {
+		NONE, LT, GT
+	}
+
 	/**
 	 * When searching for values, identifies which instance to find
-	 * 
-	 * TODO When/if implementing {@link NavigableMap}, this seems an appropriate place to put
-	 * FLOOR, CEILING, etc.
 	 */
 	private enum SearchMode {
 		/** Find any occurrence */
-		ANY,
+		ANY(BoundType.CLOSED, Comp.NONE, Comp.NONE),
 		/** Find the first occurrence */
-		FIRST,
+		FIRST(BoundType.CLOSED, Comp.LT, Comp.NONE),
 		/** Find the last occurrence */
-		LAST;
+		LAST(BoundType.CLOSED, Comp.GT, Comp.NONE),
+		/** Find the nearest match less than */
+		LOWER(BoundType.OPEN, Comp.NONE, Comp.LT),
+		/** Find the nearest match less than or equal */
+		FLOOR(BoundType.CLOSED, Comp.LT, Comp.LT),
+		/** Find the nearest match greater than or equal */
+		CEILING(BoundType.CLOSED, Comp.GT, Comp.GT),
+		/** Find the nearest match greater than */
+		HIGHER(BoundType.OPEN, Comp.NONE, Comp.GT);
+
+		final BoundType allowEq;
+		final Comp inEq;
+		final Comp comp;
+
+		SearchMode(BoundType allowEq, Comp inEq, Comp comp) {
+			this.allowEq = allowEq;
+			this.inEq = inEq;
+			this.comp = comp;
+		}
 	}
 
 	/**
@@ -577,13 +645,13 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 	 * A public view of the map as a set of entries
 	 * 
 	 * In addition to {@link Set}, this view implements {@link List} and {@link Deque}, since an
-	 * ordered set ought to behave like a list, and since this implementation is meant to be used
-	 * as a dynamic-cost priority queue.
+	 * ordered set ought to behave like a list, and since this implementation is meant to be used as
+	 * a dynamic-cost priority queue.
 	 * 
 	 * Generally, all of the mutation methods are supported.
 	 */
-	public class ValueSortedTreeMapEntrySet extends AbstractSet<Entry<K, V>>
-			implements List<Entry<K, V>>, Deque<Entry<K, V>> {
+	protected class ValueSortedTreeMapEntrySet extends AbstractSet<Entry<K, V>>
+			implements ValueSortedMapEntryList<K, V> {
 		private ValueSortedTreeMapEntrySet() {
 		}
 
@@ -633,7 +701,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public void clear() {
-			DynamicValueSortedTreeMap.this.clear();
+			TreeValueSortedMap.this.clear();
 		}
 
 		@Override
@@ -645,7 +713,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 				@SuppressWarnings("unchecked")
 				Node n = (Node) o;
 				Node m = nodeMap.get(n.key);
-				return eq(n.val, m.val);
+				return Objects.equals(n.val, m.val);
 			}
 			catch (ClassCastException e) {
 				return false;
@@ -658,18 +726,18 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 
 		@Override
-		public Node element() {
+		public Entry<K, V> element() {
 			return getFirst();
 		}
 
 		@Override
-		public Node get(int index) {
+		public Entry<K, V> get(int index) {
 			return root.getByIndex(index);
 		}
 
 		@Override
-		public Node getFirst() {
-			Node ret = peekFirst();
+		public Entry<K, V> getFirst() {
+			Entry<K, V> ret = peekFirst();
 			if (ret == null) {
 				throw new NoSuchElementException();
 			}
@@ -677,8 +745,8 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 
 		@Override
-		public Node getLast() {
-			Node ret = peekLast();
+		public Entry<K, V> getLast() {
+			Entry<K, V> ret = peekLast();
 			if (ret == null) {
 				throw new NoSuchElementException();
 			}
@@ -722,6 +790,9 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public ListIterator<Entry<K, V>> listIterator(int index) {
+			if (root == null) {
+				return Collections.emptyListIterator();
+			}
 			return new EntryListIterator(root.getByIndex(index));
 		}
 
@@ -747,27 +818,27 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 
 		@Override
-		public Node peek() {
+		public Entry<K, V> peek() {
 			return peekFirst();
 		}
 
 		@Override
-		public Node peekFirst() {
+		public Entry<K, V> peekFirst() {
 			return head;
 		}
 
 		@Override
-		public Node peekLast() {
+		public Entry<K, V> peekLast() {
 			return tail;
 		}
 
 		@Override
-		public Node poll() {
+		public Entry<K, V> poll() {
 			return pollFirst();
 		}
 
 		@Override
-		public Node pollFirst() {
+		public Entry<K, V> pollFirst() {
 			if (head == null) {
 				return null;
 			}
@@ -778,7 +849,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 
 		@Override
-		public Node pollLast() {
+		public Entry<K, V> pollLast() {
 			if (tail == null) {
 				return tail;
 			}
@@ -789,7 +860,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 
 		@Override
-		public Node pop() {
+		public Entry<K, V> pop() {
 			return removeFirst();
 		}
 
@@ -799,12 +870,12 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 
 		@Override
-		public Node remove() {
+		public Entry<K, V> remove() {
 			return removeFirst();
 		}
 
 		@Override
-		public Node remove(int index) {
+		public Entry<K, V> remove(int index) {
 			Node n = root.getByIndex(index);
 			n.remove();
 			nodeMap.remove(n.key);
@@ -822,7 +893,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 					nodeMap.remove(n.key);
 					return true;
 				}
-				if (eq(n.val, rm.val)) {
+				if (Objects.equals(n.val, rm.val)) {
 					nodeMap.remove(rm.key);
 					rm.remove();
 					return true;
@@ -835,8 +906,8 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 
 		@Override
-		public Node removeFirst() {
-			Node ret = pollFirst();
+		public Entry<K, V> removeFirst() {
+			Entry<K, V> ret = pollFirst();
 			if (ret == null) {
 				throw new NoSuchElementException();
 			}
@@ -849,8 +920,8 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 
 		@Override
-		public Node removeLast() {
-			Node ret = pollLast();
+		public Entry<K, V> removeLast() {
+			Entry<K, V> ret = pollLast();
 			if (ret == null) {
 				throw new NoSuchElementException();
 			}
@@ -865,13 +936,13 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		/**
 		 * Modify the entry (key and value) at index
 		 * 
-		 * Because the map is sorted by value, the index of the given entry may not remain the
-		 * same after it is modified. In fact, this is equivalent to removing the entry at the
-		 * given index, and then inserting the given entry at its sorted position.
+		 * Because the map is sorted by value, the index of the given entry may not remain the same
+		 * after it is modified. In fact, this is equivalent to removing the entry at the given
+		 * index, and then inserting the given entry at its sorted position.
 		 */
 		@Override
-		public Node set(int index, Entry<K, V> element) {
-			Node result = remove(index);
+		public Entry<K, V> set(int index, Entry<K, V> element) {
+			Entry<K, V> result = remove(index);
 			add(element);
 			return result;
 		}
@@ -879,11 +950,6 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		@Override
 		public int size() {
 			return nodeMap.size();
-		}
-
-		@Override
-		public Spliterator<Entry<K, V>> spliterator() {
-			return Spliterators.spliterator(this, Spliterator.ORDERED | Spliterator.DISTINCT);
 		}
 
 		/**
@@ -899,12 +965,13 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 	 * A public view of the map as a set of keys
 	 * 
 	 * In addition to {@link Set}, this view implements {@link List} and {@link Deque}, since an
-	 * ordered set ought to behave like a list, and since this implementation is meant to be used
-	 * as a dynamic-cost priority queue.
+	 * ordered set ought to behave like a list, and since this implementation is meant to be used as
+	 * a dynamic-cost priority queue.
 	 * 
 	 * Generally, only the removal mutation methods are supported, all others are not supported.
 	 */
-	public class ValueSortedTreeMapKeySet extends AbstractSet<K> implements List<K>, Deque<K> {
+	protected class ValueSortedTreeMapKeySet extends AbstractSet<K>
+			implements ValueSortedMapKeyList<K> {
 		private ValueSortedTreeMapKeySet() {
 		}
 
@@ -940,7 +1007,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public void clear() {
-			DynamicValueSortedTreeMap.this.clear();
+			TreeValueSortedMap.this.clear();
 		}
 
 		@Override
@@ -960,17 +1027,17 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public K get(int index) {
-			return entrySet.get(index).key;
+			return entrySet.get(index).getKey();
 		}
 
 		@Override
 		public K getFirst() {
-			return entrySet.getFirst().key;
+			return entrySet.getFirst().getKey();
 		}
 
 		@Override
 		public K getLast() {
-			return entrySet.getLast().key;
+			return entrySet.getLast().getKey();
 		}
 
 		@Override
@@ -1029,20 +1096,20 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public K peekFirst() {
-			Node n = entrySet.peekFirst();
+			Entry<K, V> n = entrySet.peekFirst();
 			if (n == null) {
 				return null;
 			}
-			return n.key;
+			return n.getKey();
 		}
 
 		@Override
 		public K peekLast() {
-			Node n = entrySet.peekLast();
+			Entry<K, V> n = entrySet.peekLast();
 			if (n == null) {
 				return null;
 			}
-			return n.key;
+			return n.getKey();
 		}
 
 		@Override
@@ -1052,20 +1119,20 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public K pollFirst() {
-			Node n = entrySet.pollFirst();
+			Entry<K, V> n = entrySet.pollFirst();
 			if (n == null) {
 				return null;
 			}
-			return n.key;
+			return n.getKey();
 		}
 
 		@Override
 		public K pollLast() {
-			Node n = entrySet.pollLast();
+			Entry<K, V> n = entrySet.pollLast();
 			if (n == null) {
 				return null;
 			}
-			return n.key;
+			return n.getKey();
 		}
 
 		@Override
@@ -1085,32 +1152,32 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public K remove(int index) {
-			return entrySet.remove(index).key;
+			return entrySet.remove(index).getKey();
 		}
 
 		@Override
 		public boolean remove(Object o) {
-			return DynamicValueSortedTreeMap.this.remove(o) != null;
+			return TreeValueSortedMap.this.remove(o) != null;
 		}
 
 		@Override
 		public K removeFirst() {
-			return entrySet.removeFirst().key;
+			return entrySet.removeFirst().getKey();
 		}
 
 		@Override
 		public boolean removeFirstOccurrence(Object o) {
-			return DynamicValueSortedTreeMap.this.remove(o) != null;
+			return TreeValueSortedMap.this.remove(o) != null;
 		}
 
 		@Override
 		public K removeLast() {
-			return entrySet.removeLast().key;
+			return entrySet.removeLast().getKey();
 		}
 
 		@Override
 		public boolean removeLastOccurrence(Object o) {
-			return DynamicValueSortedTreeMap.this.remove(o) != null;
+			return TreeValueSortedMap.this.remove(o) != null;
 		}
 
 		@Override
@@ -1121,11 +1188,6 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		@Override
 		public int size() {
 			return nodeMap.size();
-		}
-
-		@Override
-		public Spliterator<K> spliterator() {
-			return Spliterators.spliterator(this, Spliterator.ORDERED | Spliterator.DISTINCT);
 		}
 
 		/**
@@ -1140,14 +1202,14 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 	/**
 	 * A public view of the map as a list of values
 	 * 
-	 * This view implements {@link List} and {@link Deque}, since an ordered collection ought to
-	 * behave like a list, and since this implementation is meant to be used as a dynamic-cost
+	 * This view implements {@link SortedList} and {@link Deque}, since an ordered collection ought
+	 * to behave like a list, and since this implementation is meant to be used as a dynamic-cost
 	 * priority queue.
 	 * 
 	 * Generally, only the removal mutation methods are supported, all others are not supported.
 	 */
-	public class ValueSortedTreeMapValues extends AbstractCollection<V>
-			implements List<V>, Deque<V> {
+	protected class ValueSortedTreeMapValues extends AbstractCollection<V>
+			implements SortedList<V>, Deque<V> {
 		private ValueSortedTreeMapValues() {
 		}
 
@@ -1183,7 +1245,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public void clear() {
-			DynamicValueSortedTreeMap.this.clear();
+			TreeValueSortedMap.this.clear();
 		}
 
 		@Override
@@ -1210,17 +1272,17 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public V get(int index) {
-			return entrySet.get(index).val;
+			return entrySet.get(index).getValue();
 		}
 
 		@Override
 		public V getFirst() {
-			return entrySet.getFirst().val;
+			return entrySet.getFirst().getValue();
 		}
 
 		@Override
 		public V getLast() {
-			return entrySet.getLast().val;
+			return entrySet.getLast().getValue();
 		}
 
 		@Override
@@ -1228,7 +1290,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 			try {
 				@SuppressWarnings("unchecked")
 				V val = (V) o;
-				Node n = root.searchValue(val, SearchMode.FIRST);
+				Node n = searchValue(val, SearchMode.FIRST);
 				if (n == null) {
 					return -1;
 				}
@@ -1237,6 +1299,45 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 			catch (ClassCastException e) {
 				return -1;
 			}
+		}
+
+		@Override
+		public int lowerIndex(V element) {
+			if (root == null) {
+				return -1;
+			}
+			Node n = searchValue(element, SearchMode.LOWER);
+			if (n == null) {
+				return -1;
+			}
+			return n.computeIndex();
+		}
+
+		@Override
+		public int floorIndex(V element) {
+			Node n = searchValue(element, SearchMode.FLOOR);
+			if (n == null) {
+				return -1;
+			}
+			return n.computeIndex();
+		}
+
+		@Override
+		public int ceilingIndex(V element) {
+			Node n = searchValue(element, SearchMode.CEILING);
+			if (n == null) {
+				return -1;
+			}
+			return n.computeIndex();
+		}
+
+		@Override
+		public int higherIndex(V element) {
+			Node n = searchValue(element, SearchMode.HIGHER);
+			if (n == null) {
+				return -1;
+			}
+			return n.computeIndex();
 		}
 
 		@Override
@@ -1297,20 +1398,20 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public V peekFirst() {
-			Node n = entrySet.peekFirst();
+			Entry<K, V> n = entrySet.peekFirst();
 			if (n == null) {
 				return null;
 			}
-			return n.val;
+			return n.getValue();
 		}
 
 		@Override
 		public V peekLast() {
-			Node n = entrySet.peekLast();
+			Entry<K, V> n = entrySet.peekLast();
 			if (n == null) {
 				return null;
 			}
-			return n.val;
+			return n.getValue();
 		}
 
 		@Override
@@ -1320,20 +1421,20 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public V pollFirst() {
-			Node n = entrySet.pollFirst();
+			Entry<K, V> n = entrySet.pollFirst();
 			if (n == null) {
 				return null;
 			}
-			return n.val;
+			return n.getValue();
 		}
 
 		@Override
 		public V pollLast() {
-			Node n = entrySet.pollLast();
+			Entry<K, V> n = entrySet.pollLast();
 			if (n == null) {
 				return null;
 			}
-			return n.val;
+			return n.getValue();
 		}
 
 		@Override
@@ -1353,7 +1454,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public V remove(int index) {
-			return entrySet.remove(index).val;
+			return entrySet.remove(index).getValue();
 		}
 
 		@Override
@@ -1363,7 +1464,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public V removeFirst() {
-			return entrySet.removeFirst().val;
+			return entrySet.removeFirst().getValue();
 		}
 
 		@Override
@@ -1386,7 +1487,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 
 		@Override
 		public V removeLast() {
-			return entrySet.removeLast().val;
+			return entrySet.removeLast().getValue();
 		}
 
 		@Override
@@ -1426,51 +1527,59 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		}
 	}
 
-	/**
-	 * A convenience for null-safe comparison
-	 */
-	protected static boolean eq(Object o1, Object o2) {
-		return o1 == null ? o2 == null : o1.equals(o2);
-	}
-
 	// The user-provided comparator
-	private final Comparator<V> comparator;
+	protected final Comparator<V> comparator;
 	// A hash map to locate entries by key
-	private final Map<K, Node> nodeMap = new HashMap<>();
-	/* Remember, the tree is indexed by *value*, not by key, and more specifically, they are
-	 * indexed by the comparator, so an entry's cost may change at any time. Thus, this map
-	 * provides an index by key. This is especially important during an update, since we need to
-	 * locate the affected node, given that it's most likely not in its correct position at the
-	 * moment. We also use it to ensure each key occurs at most once. */
+	protected final Map<K, Node> nodeMap = new HashMap<>();
+	/*
+	 * Remember, the tree is indexed by *value*, not by key, and more specifically, they are indexed
+	 * by the comparator, so an entry's cost may change at any time. Thus, this map provides an
+	 * index by key. This is especially important during an update, since we need to locate the
+	 * affected node, given that it's most likely not in its correct position at the moment. We also
+	 * use it to ensure each key occurs at most once.
+	 */
 
 	// Pre-constructed views. Unlike Java's stock collections, I create these outright
 	// At least one ought to be accessed for this implementation to be useful
-	private transient final ValueSortedTreeMapEntrySet entrySet = new ValueSortedTreeMapEntrySet();
-	private transient final ValueSortedTreeMapKeySet keySet = new ValueSortedTreeMapKeySet();
-	private transient final ValueSortedTreeMapValues values = new ValueSortedTreeMapValues();
+	private transient final ValueSortedTreeMapEntrySet entrySet = createEntrySet();
+	private transient final ValueSortedTreeMapKeySet keySet = createKeySet();
+	private transient final ValueSortedTreeMapValues values = createValues();
 
 	// Pointers into the data structure
-	private Node root; // The root of the binary tree
-	private Node head; // The node with the least value
-	private Node tail; // The node with the greatest value
+	protected Node root; // The root of the binary tree
+	protected Node head; // The node with the least value
+	protected Node tail; // The node with the greatest value
 
-	/**
-	 * Construct a dynamic value-sorted tree map using the values' natural ordering
-	 * 
-	 * If the values do not have a natural ordering, you will eventually encounter a
-	 * {@link ClassCastException}. This condition is not checked at construction.
-	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public DynamicValueSortedTreeMap() {
+	protected TreeValueSortedMap() {
 		this(new ComparableComparator());
 	}
 
-	/**
-	 * Construct a dynamic value-sorted tree map using a custom comparator to order the values
-	 * @param comparator the comparator, providing a total ordering of the values
-	 */
-	public DynamicValueSortedTreeMap(Comparator<V> comparator) {
+	protected TreeValueSortedMap(Comparator<V> comparator) {
 		this.comparator = comparator;
+	}
+
+	protected ValueSortedTreeMapEntrySet createEntrySet() {
+		return new ValueSortedTreeMapEntrySet();
+	}
+
+	protected ValueSortedTreeMapKeySet createKeySet() {
+		return new ValueSortedTreeMapKeySet();
+	}
+
+	protected ValueSortedTreeMapValues createValues() {
+		return new ValueSortedTreeMapValues();
+	}
+
+	protected Node createNode(K key, V value) {
+		return new Node(key, value);
+	}
+
+	protected Node searchValue(V value, SearchMode mode) {
+		if (root == null) {
+			return null;
+		}
+		return root.searchValue(value, mode);
 	}
 
 	@Override
@@ -1491,7 +1600,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		try {
 			@SuppressWarnings("unchecked")
 			V val = (V) value;
-			return root.searchValue(val, SearchMode.ANY) != null;
+			return searchValue(val, SearchMode.ANY) != null;
 		}
 		catch (ClassCastException e) {
 			return false;
@@ -1518,12 +1627,33 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 	}
 
 	@Override
+	public Entry<K, V> lowerEntryByValue(V value) {
+		return searchValue(value, SearchMode.LOWER);
+	}
+
+	@Override
+	public Entry<K, V> floorEntryByValue(V value) {
+		return searchValue(value, SearchMode.FLOOR);
+	}
+
+	@Override
+	public Entry<K, V> ceilingEntryByValue(V value) {
+		return searchValue(value, SearchMode.CEILING);
+	}
+
+	@Override
+	public Entry<K, V> higherEntryByValue(V value) {
+		return searchValue(value, SearchMode.HIGHER);
+	}
+
+	@Override
 	public boolean isEmpty() {
 		return root == null;
 	}
 
 	/**
 	 * Check if a node is correctly positioned relative to its immediate neighbors
+	 * 
 	 * @param n the node
 	 * @return true if the node need not be moved
 	 */
@@ -1557,7 +1687,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		if (n != null) {
 			return n.setValue(value);
 		}
-		n = new Node(key, value);
+		n = createNode(key, value);
 		nodeMap.put(key, n);
 		if (root == null) {
 			root = n;
@@ -1592,15 +1722,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 		return nodeMap.size();
 	}
 
-	/**
-	 * Notify the map of an external change to the cost of a key's associated value
-	 * 
-	 * This is meant to update the entry's position after a change in cost. The position may not
-	 * necessarily change, however, if the cost did not change significantly.
-	 * 
-	 * @param key the key whose associated value has changed in cost
-	 * @return true if the entry's position changed
-	 */
+	@Override
 	public boolean update(K key) {
 		Node n = nodeMap.get(key);
 		if (n == null) {
@@ -1615,6 +1737,7 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 	 * This ought to be called any time the value of a node is modified, whether internall or
 	 * externally. The only way we know of external changes is if the user calls
 	 * {@link #update(Object)}.
+	 * 
 	 * @param n the node whose position to check and update
 	 * @return true if the node's position changed
 	 */
@@ -1635,5 +1758,25 @@ public class DynamicValueSortedTreeMap<K, V> extends AbstractMap<K, V> {
 	@Override
 	public ValueSortedTreeMapValues values() {
 		return values;
+	}
+
+	@Override
+	public ValueSortedMap<K, V> subMapByValue(V fromValue, boolean fromInclusive, V toValue,
+			boolean toInclusive) {
+		return new RestrictedValueSortedMap<>(this, comparator, true, fromValue, fromInclusive,
+			true, toValue, toInclusive);
+	}
+
+	@Override
+	// TODO: Test this implementation and related others
+	public ValueSortedMap<K, V> headMapByValue(V toValue, boolean inclusive) {
+		return new RestrictedValueSortedMap<>(this, comparator, false, null, false, true, toValue,
+			inclusive);
+	}
+
+	@Override
+	public ValueSortedMap<K, V> tailMapByValue(V fromValue, boolean inclusive) {
+		return new RestrictedValueSortedMap<>(this, comparator, true, fromValue, inclusive, false,
+			null, false);
 	}
 }

@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.stackeditor;
 
+import java.util.Collections;
+import java.util.Iterator;
+
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -25,10 +28,7 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
 
-import java.util.Collections;
-import java.util.Iterator;
-
-/** 
+/**
  * StackFrameDataType provides an editable copy of a function stack frame.
  */
 public class StackFrameDataType extends BiDirectionDataType {
@@ -43,17 +43,20 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
+	 * 
 	 * @param stack the function stack frame to be edited.
 	 */
 	public StackFrameDataType(StackFrame stack, DataTypeManager dtm) {
-		super((stack.getFunction() != null) ? stack.getFunction().getName()
-				: "StackWithoutFunction", 0, 0, stack.getParameterOffset(), dtm);
+		super(
+			(stack.getFunction() != null) ? stack.getFunction().getName() : "StackWithoutFunction",
+			0, 0, stack.getParameterOffset(), dtm);
 		this.stack = stack;
 		initialize();
 	}
 
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
+	 * 
 	 * @param stack the function stack frame to be edited.
 	 */
 	public StackFrameDataType(StackFrameDataType stackDt, DataTypeManager dtm) {
@@ -67,8 +70,8 @@ public class StackFrameDataType extends BiDirectionDataType {
 		this.defaultSettings = stackDt.defaultSettings;
 		for (int i = 0; i < stackDt.components.size(); i++) {
 			DataTypeComponent dtc = stackDt.components.get(i);
-			replaceAtOffset(dtc.getOffset(), dtc.getDataType(), dtc.getLength(),
-				dtc.getFieldName(), dtc.getComment());
+			replaceAtOffset(dtc.getOffset(), dtc.getDataType(), dtc.getLength(), dtc.getFieldName(),
+				dtc.getComment());
 		}
 	}
 
@@ -132,6 +135,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.data.DataType#getRepresentation(ghidra.program.model.mem.MemBuffer, ghidra.util.settings.Settings, int)
 	 */
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		return "";
 	}
@@ -145,7 +149,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	}
 
 	@Override
-	public DataType clone(DataTypeManager dtm) {
+	public StackFrameDataType clone(DataTypeManager dtm) {
 		return new StackFrameDataType(this, dtm);
 	}
 
@@ -164,10 +168,10 @@ public class StackFrameDataType extends BiDirectionDataType {
 	}
 
 	/**
-	 * If a stack variable is defined in the editor at the specified offset,
-	 * this retrieves the editor element containing that stack variable
-	 * <BR>Note: if a stack variable isn't defined at the indicated offset
-	 * then null is returned.
+	 * If a stack variable is defined in the editor at the specified offset, this retrieves the
+	 * editor element containing that stack variable <BR>
+	 * Note: if a stack variable isn't defined at the indicated offset then null is returned.
+	 * 
 	 * @param offset the offset
 	 * @return the stack editor's element at the offset. Otherwise, null.
 	 */
@@ -183,11 +187,11 @@ public class StackFrameDataType extends BiDirectionDataType {
 	}
 
 	/**
-	 * If a stack variable is defined in the editor at the specified ordinal,
-	 * this retrieves the editor element containing that stack variable.
-	 * <BR>Note: if a stack variable isn't defined for the indicated ordinal
-	 * then null is returned.
-	 * @param ordinal the ordinal 
+	 * If a stack variable is defined in the editor at the specified ordinal, this retrieves the
+	 * editor element containing that stack variable. <BR>
+	 * Note: if a stack variable isn't defined for the indicated ordinal then null is returned.
+	 * 
+	 * @param ordinal the ordinal
 	 * @return the stack editor's element at the ordinal. Otherwise, null.
 	 */
 	public DataTypeComponent getDefinedComponentAtOrdinal(int ordinal) {
@@ -315,6 +319,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Undefines any defined stack variables in the indicated offset range.
+	 * 
 	 * @param minOffset the range's minimum offset on the stack frame
 	 * @param maxOffset the range's maximum offset on the stack frame
 	 */
@@ -335,6 +340,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Deletes the indicated range of bytes from this stack frame data type.
+	 * 
 	 * @param minOffset the range's minimum offset on the stack frame
 	 * @param maxOffset the range's maximum offset on the stack frame
 	 */
@@ -379,9 +385,8 @@ public class StackFrameDataType extends BiDirectionDataType {
 			String fieldName = dtc.getFieldName();
 			int offset = dtc.getOffset();
 			try {
-				vars[i] =
-					new LocalVariableImpl(fieldName, dtc.getDataType(), offset,
-						function.getProgram());
+				vars[i] = new LocalVariableImpl(fieldName, dtc.getDataType(), offset,
+					function.getProgram());
 			}
 			catch (InvalidInputException e) {
 				try {
@@ -402,6 +407,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Sets the name of the component at the specified ordinal.
+	 * 
 	 * @param ordinal the ordinal
 	 * @param name the new name. Null indicates the default name.
 	 */
@@ -433,6 +439,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Sets the comment at the specified ordinal.
+	 * 
 	 * @param ordinal the ordinal
 	 * @param comment the new comment.
 	 */
@@ -483,6 +490,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Currently no validation is done on the name.
+	 * 
 	 * @param ordinal
 	 * @param newName
 	 * @throws InvalidNameException
@@ -509,8 +517,9 @@ public class StackFrameDataType extends BiDirectionDataType {
 	}
 
 	/**
-	 * Effectively moves a component for a defined stack variable if it will fit
-	 * where it is being moved to in the stack frame.
+	 * Effectively moves a component for a defined stack variable if it will fit where it is being
+	 * moved to in the stack frame.
+	 * 
 	 * @param ordinal the ordinal of the component to move by changing its offset.
 	 * @param newOffset the offset to move the variable to.
 	 * @return the component representing the stack variable at the new offset.
@@ -523,8 +532,8 @@ public class StackFrameDataType extends BiDirectionDataType {
 		if (newOffset == oldOffset) {
 			return comp;
 		}
-		if ((oldOffset >= splitOffset) && (newOffset < splitOffset) || (oldOffset < splitOffset) &&
-			(newOffset >= splitOffset)) {
+		if ((oldOffset >= splitOffset) && (newOffset < splitOffset) ||
+			(oldOffset < splitOffset) && (newOffset >= splitOffset)) {
 			throw new InvalidInputException(
 				"Cannot move a stack variable/parameter across the parameter offset.");
 		}
@@ -548,17 +557,17 @@ public class StackFrameDataType extends BiDirectionDataType {
 		String defaultName = getDefaultName(comp);
 		String oldName = comp.getFieldName();
 		boolean isDefault = (oldName == null) || (oldName.equals(defaultName));
-		DataTypeComponent newComp =
-			replaceAtOffset(newOffset, comp.getDataType(), comp.getLength(), isDefault ? null
-					: oldName, comp.getComment());
+		DataTypeComponent newComp = replaceAtOffset(newOffset, comp.getDataType(), comp.getLength(),
+			isDefault ? null : oldName, comp.getComment());
 		return newComp;
 	}
 
 	/**
-	 * Sets a component representing the defined stack variable at the indicated 
-	 * ordinal to have the specified data type and length.
+	 * Sets a component representing the defined stack variable at the indicated ordinal to have the
+	 * specified data type and length.
+	 * 
 	 * @param ordinal the ordinal
-	 * @param type	the data type
+	 * @param type the data type
 	 * @param length the length or size of this variable.
 	 * @return the component representing this stack variable.
 	 */
@@ -569,6 +578,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Get the maximum variable size that will fit at the indicated offset if a replace is done.
+	 * 
 	 * @param offset
 	 * @return the maximum size
 	 */
@@ -604,6 +614,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Returns the default name for the indicated stack offset.
+	 * 
 	 * @param offset
 	 * @return the default stack variable name.
 	 */
@@ -623,9 +634,8 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * @param element
-	 * @return the index number for this parameter
-	 * (starting at 1 for the first parameter.)
-	 * 0 if the element is not a parameter.
+	 * @return the index number for this parameter (starting at 1 for the first parameter.) 0 if the
+	 *         element is not a parameter.
 	 */
 	private int getParameterIndex(DataTypeComponent element) {
 		int numComps = components.size();
@@ -668,6 +678,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Returns true if a stack variable is defined at the specified ordinal.
+	 * 
 	 * @param ordinal
 	 * @return true if variable is defined at ordinal or false if undefined.
 	 */

@@ -1,4 +1,4 @@
-define endian=little;
+@define ENDIAN "little"
 define alignment=2;
 
 @define SIZE "4"

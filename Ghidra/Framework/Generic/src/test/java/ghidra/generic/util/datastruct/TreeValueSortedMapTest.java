@@ -13,35 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util;
+package ghidra.generic.util.datastruct;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
 
 import org.apache.commons.collections4.comparators.ReverseComparator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
-import ghidra.generic.util.datastruct.DynamicValueSortedTreeMap;
+import ghidra.generic.util.datastruct.TreeValueSortedMap;
+import ghidra.generic.util.datastruct.ValueSortedMap;
 
-public class DynamicValueSortedTreeMapTest {
-	public static class NonComparable {
-	}
-
+public class TreeValueSortedMapTest {
 	@Test
 	public void testNaturalOrder() {
-		DynamicValueSortedTreeMap<String, Integer> queue = new DynamicValueSortedTreeMap<>();
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
 		queue.put("2nd", 2);
 		queue.put("1st", 1);
 		queue.put("3rd", 3);
@@ -49,17 +38,10 @@ public class DynamicValueSortedTreeMapTest {
 		assertEquals(Arrays.asList(new String[] { "1st", "2nd", "3rd" }), ordered);
 	}
 
-	@Test(expected = ClassCastException.class)
-	public void testUnorderedError() {
-		DynamicValueSortedTreeMap<String, NonComparable> queue = new DynamicValueSortedTreeMap<>();
-		queue.put("2nd", new NonComparable());
-		queue.put("1st", new NonComparable());
-	}
-
 	@Test
 	public void testExplicitOrdered() {
-		DynamicValueSortedTreeMap<String, Integer> queue =
-			new DynamicValueSortedTreeMap<>(new ReverseComparator<>());
+		ValueSortedMap<String, Integer> queue =
+			TreeValueSortedMap.createWithComparator(new ReverseComparator<>());
 		queue.put("2nd", 2);
 		queue.put("1st", 1);
 		queue.put("3rd", 3);
@@ -68,14 +50,100 @@ public class DynamicValueSortedTreeMapTest {
 	}
 
 	@Test
+	public void testBoundsSearches() {
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
+
+		assertNull(queue.lowerEntryByValue(4));
+		assertNull(queue.floorEntryByValue(4));
+		assertNull(queue.ceilingEntryByValue(4));
+		assertNull(queue.higherEntryByValue(4));
+
+		assertEquals(-1, queue.values().lowerIndex(4));
+		assertEquals(-1, queue.values().floorIndex(4));
+		assertEquals(-1, queue.values().ceilingIndex(4));
+		assertEquals(-1, queue.values().higherIndex(4));
+
+		queue.put("4th", 4);
+
+		assertNull(queue.lowerEntryByValue(3));
+		assertEquals(-1, queue.values().lowerIndex(3));
+		assertNull(queue.lowerEntryByValue(4));
+		assertEquals(-1, queue.values().lowerIndex(4));
+		assertEquals("4th", queue.lowerEntryByValue(5).getKey());
+		assertEquals(0, queue.values().lowerIndex(5));
+
+		assertNull(queue.floorEntryByValue(3));
+		assertEquals(-1, queue.values().floorIndex(3));
+		assertEquals("4th", queue.floorEntryByValue(4).getKey());
+		assertEquals(0, queue.values().floorIndex(4));
+		assertEquals("4th", queue.floorEntryByValue(5).getKey());
+		assertEquals(0, queue.values().floorIndex(5));
+
+		assertEquals("4th", queue.ceilingEntryByValue(3).getKey());
+		assertEquals(0, queue.values().ceilingIndex(3));
+		assertEquals("4th", queue.ceilingEntryByValue(4).getKey());
+		assertEquals(0, queue.values().ceilingIndex(4));
+		assertNull(queue.ceilingEntryByValue(5));
+		assertEquals(-1, queue.values().ceilingIndex(5));
+
+		assertEquals("4th", queue.higherEntryByValue(3).getKey());
+		assertEquals(0, queue.values().higherIndex(3));
+		assertNull(queue.higherEntryByValue(4));
+		assertEquals(-1, queue.values().higherIndex(4));
+		assertNull(queue.higherEntryByValue(5));
+		assertEquals(-1, queue.values().higherIndex(5));
+
+		queue.put("2nd", 2);
+		queue.put("6th", 6);
+
+		assertNull(queue.lowerEntryByValue(1));
+		assertNull(queue.lowerEntryByValue(2));
+		assertEquals("2nd", queue.lowerEntryByValue(3).getKey());
+		assertEquals("2nd", queue.lowerEntryByValue(4).getKey());
+		assertEquals("4th", queue.lowerEntryByValue(5).getKey());
+		assertEquals("4th", queue.lowerEntryByValue(6).getKey());
+		assertEquals("6th", queue.lowerEntryByValue(7).getKey());
+		assertEquals(2, queue.values().lowerIndex(7)); // Only this once
+
+		assertNull(queue.floorEntryByValue(1));
+		assertEquals("2nd", queue.floorEntryByValue(2).getKey());
+		assertEquals("2nd", queue.floorEntryByValue(3).getKey());
+		assertEquals("4th", queue.floorEntryByValue(4).getKey());
+		assertEquals("4th", queue.floorEntryByValue(5).getKey());
+		assertEquals("6th", queue.floorEntryByValue(6).getKey());
+		assertEquals("6th", queue.floorEntryByValue(7).getKey());
+
+		assertEquals("2nd", queue.ceilingEntryByValue(1).getKey());
+		assertEquals("2nd", queue.ceilingEntryByValue(2).getKey());
+		assertEquals("4th", queue.ceilingEntryByValue(3).getKey());
+		assertEquals("4th", queue.ceilingEntryByValue(4).getKey());
+		assertEquals("6th", queue.ceilingEntryByValue(5).getKey());
+		assertEquals("6th", queue.ceilingEntryByValue(6).getKey());
+		assertNull(queue.ceilingEntryByValue(7));
+
+		assertEquals("2nd", queue.higherEntryByValue(1).getKey());
+		assertEquals("4th", queue.higherEntryByValue(2).getKey());
+		assertEquals("4th", queue.higherEntryByValue(3).getKey());
+		assertEquals("6th", queue.higherEntryByValue(4).getKey());
+		assertEquals("6th", queue.higherEntryByValue(5).getKey());
+		assertNull(queue.higherEntryByValue(6));
+		assertNull(queue.higherEntryByValue(7));
+	}
+
+	@Test
 	public void testIsEmpty() {
-		DynamicValueSortedTreeMap<String, Integer> queue = new DynamicValueSortedTreeMap<>();
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
 		assertTrue(queue.isEmpty());
+
+		assertFalse(queue.containsKey("1st"));
+		assertFalse(queue.containsValue(1));
+		assertEquals(-1, queue.values().indexOf(1));
+
 		queue.put("1st", 1);
 		assertFalse(queue.isEmpty());
 	}
 
-	protected <K, V> void checkConsistent(DynamicValueSortedTreeMap<K, V> queue) {
+	protected <K, V> void checkConsistent(ValueSortedMap<K, V> queue) {
 		Iterator<Entry<K, V>> it = queue.entrySet().iterator();
 		V last = null;
 		Set<K> seen = new HashSet<>();
@@ -119,7 +187,7 @@ public class DynamicValueSortedTreeMapTest {
 		final int COUNT = 1000;
 		final int ROUNDS = 5;
 		Random rand = new Random();
-		DynamicValueSortedTreeMap<String, Integer> queue = new DynamicValueSortedTreeMap<>();
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
 		for (int r = 0; r < ROUNDS; r++) {
 			for (int i = 0; i < COUNT; i++) {
 				queue.put("Element" + i, rand.nextInt(50));
@@ -133,7 +201,7 @@ public class DynamicValueSortedTreeMapTest {
 	public void testRemoveRandomly() {
 		final int COUNT = 100;
 		Random rand = new Random();
-		DynamicValueSortedTreeMap<String, Integer> queue = new DynamicValueSortedTreeMap<>();
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
 		HashSet<String> all = new HashSet<>();
 		for (int i = 0; i < COUNT; i++) {
 			queue.put("Element" + i, rand.nextInt(50));
@@ -157,7 +225,7 @@ public class DynamicValueSortedTreeMapTest {
 	public void testUpdateRandomly() {
 		final int COUNT = 100;
 		Random rand = new Random();
-		DynamicValueSortedTreeMap<String, Integer> queue = new DynamicValueSortedTreeMap<>();
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
 		for (int i = 0; i < COUNT; i++) {
 			queue.put("Element" + i, rand.nextInt(50));
 		}
@@ -176,7 +244,7 @@ public class DynamicValueSortedTreeMapTest {
 	public void testValueIndices() {
 		final int ROUNDS = 1000;
 		Random rand = new Random();
-		DynamicValueSortedTreeMap<String, Integer> queue = new DynamicValueSortedTreeMap<>();
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
 		int[] vals = // 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22
 			new int[] { 0, 0, 1, 1, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 8, 8, 10 };
 		for (int r = 0; r < ROUNDS; r++) {
@@ -216,7 +284,7 @@ public class DynamicValueSortedTreeMapTest {
 	public void testAsMonotonicQueue() {
 		final int COUNT = 1000;
 		Random rand = new Random();
-		DynamicValueSortedTreeMap<String, Integer> queue = new DynamicValueSortedTreeMap<>();
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
 		for (int i = 0; i < COUNT; i++) {
 			queue.put("ElementA" + i, rand.nextInt(50));
 		}
@@ -237,5 +305,47 @@ public class DynamicValueSortedTreeMapTest {
 		checkConsistent(queue);
 		assertEquals(0, queue.size());
 		assertTrue(queue.isEmpty());
+	}
+
+	@Test
+	public void testClearViaKeyIterator() {
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
+		for (int i = 0; i < 10; i++) {
+			queue.put("Element" + i, i);
+		}
+		Iterator<String> kit = queue.keySet().iterator();
+		while (kit.hasNext()) {
+			kit.next();
+			kit.remove();
+		}
+
+		assertTrue(queue.isEmpty());
+	}
+
+	@Test
+	public void testRemoveOddsViaValueIterator() {
+		ValueSortedMap<String, Integer> queue = TreeValueSortedMap.createWithNaturalOrder();
+		for (int i = 0; i < 10; i++) {
+			queue.put("Element" + i, i);
+		}
+		Iterator<Integer> vit = queue.values().iterator();
+		while (vit.hasNext()) {
+			int val = vit.next();
+			if (val % 2 == 1) {
+				vit.remove();
+			}
+		}
+
+		for (int val : queue.values()) {
+			assertEquals(0, val % 2);
+		}
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void testNominalBehaviorIteratorRemoveBeforeNext() {
+		Set<Integer> set = new HashSet<>();
+		set.add(5);
+		Iterator<Integer> it = set.iterator();
+		it.remove();
 	}
 }

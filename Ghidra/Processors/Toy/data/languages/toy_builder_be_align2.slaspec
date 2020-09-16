@@ -1,4 +1,4 @@
-define endian=big;
+@define ENDIAN "big"
 define alignment=2;
 
 @define SIZE "4"

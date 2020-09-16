@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +19,9 @@ import java.util.Iterator;
 
 public class ReferenceIteratorAdapter implements ReferenceIterator {
 
-	private final Iterator<Reference> iterator;
+	private final Iterator<? extends Reference> iterator;
 
-	public ReferenceIteratorAdapter(Iterator<Reference> iterator) {
+	public ReferenceIteratorAdapter(Iterator<? extends Reference> iterator) {
 		this.iterator = iterator;
 	}
 
