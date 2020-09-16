@@ -59,6 +59,14 @@ public class PdbApplicatorMetrics {
 		LocalManagedDataMsSymbol.PDB_ID,
 		LocalManagedDataStMsSymbol.PDB_ID,
 
+		// AbstractThreadStorageMsSymbol
+		GlobalThreadStorage3216MsSymbol.PDB_ID,
+		GlobalThreadStorage32MsSymbol.PDB_ID,
+		GlobalThreadStorage32StMsSymbol.PDB_ID,
+		LocalThreadStorage3216MsSymbol.PDB_ID,
+		LocalThreadStorage32MsSymbol.PDB_ID,
+		LocalThreadStorage32StMsSymbol.PDB_ID,
+		
 		// AbstractUserDefinedTypeMsSymbol
 		CobolUserDefinedType16MsSymbol.PDB_ID,
 		CobolUserDefinedTypeMsSymbol.PDB_ID,

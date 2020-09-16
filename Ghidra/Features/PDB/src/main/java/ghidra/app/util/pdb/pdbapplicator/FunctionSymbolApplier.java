@@ -173,13 +173,13 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	void apply() throws PdbException, CancelledException {
 		boolean result = applyTo(applicator.getCancelOnlyWrappingMonitor());
 		if (result == false) {
-			throw new PdbException("failure in applying " + this.getClass().getSimpleName() +
-				" to program: " + getName());
+			throw new PdbException(this.getClass().getSimpleName() + ": failure at " + address +
+				" applying " + getName());
 		}
 	}
 
 	boolean applyTo(TaskMonitor monitor) throws PdbException, CancelledException {
-		if (applicator.isInvalidAddress(specifiedAddress, getName())) {
+		if (applicator.isInvalidAddress(address, getName())) {
 			return false;
 		}
 
