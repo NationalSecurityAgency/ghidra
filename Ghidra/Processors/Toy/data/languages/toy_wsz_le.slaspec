@@ -1,6 +1,5 @@
 @define ENDIAN "little"
-define alignment=2;
-
+@define ALIGN "2"
 @define SIZE "4"
 @define WORDSIZE "2"
 

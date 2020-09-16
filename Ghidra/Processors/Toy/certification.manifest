@@ -5,12 +5,6 @@ data/languages/old/ToyV00BE64.lang||GHIDRA||||END|
 data/languages/old/ToyV0BE64.trans||GHIDRA||||END|
 data/languages/old/ToyV0LE64.lang||GHIDRA||||END|
 data/languages/old/ToyV0LE64.trans||GHIDRA||||END|
-data/languages/old/v01stuff/toy.cspec||GHIDRA|exclude|||END|
-data/languages/old/v01stuff/toy.ldefs_v01||GHIDRA|exclude|||END|
-data/languages/old/v01stuff/toy.sinc||GHIDRA|exclude|||END|
-data/languages/old/v01stuff/toy64.cspec||GHIDRA|exclude|||END|
-data/languages/old/v01stuff/toyInstructions.sinc||GHIDRA|exclude|||END|
-data/languages/old/v01stuff/toyPosStack.cspec||GHIDRA|exclude|||END|
 data/languages/toy.cspec||GHIDRA||||END|
 data/languages/toy.ldefs||GHIDRA||||END|
 data/languages/toy.pspec||GHIDRA||reviewed||END|
