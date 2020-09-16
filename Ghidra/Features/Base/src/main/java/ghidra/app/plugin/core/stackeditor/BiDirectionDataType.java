@@ -22,7 +22,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 
 /**
- * BiDirectionDataType is a special structure data type that allows both positive and negative 
+ * BiDirectionDataType is a special structure data type that allows both positive and negative
  * offset values.
  */
 public abstract class BiDirectionDataType extends StructureDataType
@@ -346,12 +346,12 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	/**
-	 * Increases the size of the bidirectional data type
-	 * If amount is positive then the positive offset side will grow by the 
-	 * indicated amount. If amount is negative, the data type grows on the 
-	 * negative offsets side.
-	 * @param amount Positive value indicates number of bytes to add to positive side.
-	 * Negative value indicates number of bytes to add to negative side.
+	 * Increases the size of the bidirectional data type If amount is positive then the positive
+	 * offset side will grow by the indicated amount. If amount is negative, the data type grows on
+	 * the negative offsets side.
+	 * 
+	 * @param amount Positive value indicates number of bytes to add to positive side. Negative
+	 *            value indicates number of bytes to add to negative side.
 	 */
 	@Override
 	public void growStructure(int amount) {
@@ -567,7 +567,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 //	}
 
 	@Override
-	public abstract DataType clone(DataTypeManager dtm);
+	public abstract BiDirectionDataType clone(DataTypeManager dtm);
 
 	@Override
 	public void clearComponent(int index) {
@@ -709,21 +709,20 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	/**
-	 * Replace the indicated component with a new component containing the 
-	 * specified data type.
+	 * Replace the indicated component with a new component containing the specified data type.
+	 * 
 	 * @param origDtc the original data type component in this structure.
 	 * @param dataType the data type of the new component
 	 * @param length the length of the new component
 	 * @param newName the field name of the new component
 	 * @param comment the comment for the new component
 	 * @return the new component or null if the new component couldn't fit.
-	 * @throws IllegalArgumentException if the dataType.getLength() is positive 
-	 * and does not match the given length parameter.
-	 * @throws IllegalArgumentException if the specified data type is not 
-	 * allowed to replace a component in this composite data type.
-	 * For example, suppose dt1 contains dt2. Therefore it is not valid
-	 * to replace a dt2 component with dt1 since this would cause a cyclic 
-	 * dependency.
+	 * @throws IllegalArgumentException if the dataType.getLength() is positive and does not match
+	 *             the given length parameter.
+	 * @throws IllegalArgumentException if the specified data type is not allowed to replace a
+	 *             component in this composite data type. For example, suppose dt1 contains dt2.
+	 *             Therefore it is not valid to replace a dt2 component with dt1 since this would
+	 *             cause a cyclic dependency.
 	 */
 	private DataTypeComponent replace(DataTypeComponent origDtc, DataType dataType, int length,
 			String newName, String comment) {

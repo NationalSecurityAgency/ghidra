@@ -417,7 +417,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		contextChanged();
 	}
 
-	void updateTitle() {
+	protected void updateTitle() {
 		String subTitle = program == null ? "" : ' ' + program.getDomainFile().getName();
 		String newTitle = TITLE + subTitle;
 		if (!isConnected()) {
@@ -1004,8 +1004,8 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	/**
-	 * A class that allows clients to install transient highlighters while keeping the
-	 * middle-mouse highlighting on at the same time.
+	 * A class that allows clients to install transient highlighters while keeping the middle-mouse
+	 * highlighting on at the same time.
 	 */
 	private class ProgramHighlighterProvider implements HighlightProvider {
 
@@ -1043,6 +1043,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	/**
 	 * Add the ListingDisplayListener to the listing panel
+	 * 
 	 * @param listener the listener to add
 	 */
 	public void addListingDisplayListener(ListingDisplayListener listener) {
@@ -1051,6 +1052,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	/**
 	 * Remove the ListingDisplayListener from the listing panel
+	 * 
 	 * @param listener the listener to remove
 	 */
 	public void removeListingDisplayListener(ListingDisplayListener listener) {

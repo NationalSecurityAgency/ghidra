@@ -564,6 +564,10 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		outputTextPane.setText("");
 	}
 
+	public String getOutputText() {
+		return outputTextPane.getText();
+	}
+
 	public InputStream getStdin() {
 		return stdin;
 	}
@@ -582,6 +586,10 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	public PrintWriter getErrWriter() {
 		return errWriter;
+	}
+
+	public String getPrompt() {
+		return promptTextPane.getText();
 	}
 
 	public void setPrompt(String prompt) {
@@ -652,6 +660,14 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		MutableAttributeSet inputAttributes = textPane.getInputAttributes();
 		inputAttributes.removeAttribute(attributes);
 		inputAttributes.addAttributes(attributes);
+	}
+
+	public boolean isInputPermitted() {
+		return inputTextPane.isEditable();
+	}
+
+	public void setInputPermitted(boolean permitted) {
+		inputTextPane.setEditable(permitted);
 	}
 
 //==================================================================================================
@@ -735,6 +751,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 		/**
 		 * Overridden to stop this stream from blocking.
+		 * 
 		 * @throws IOException not
 		 */
 		@Override
@@ -760,5 +777,4 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			this.notify();
 		}
 	}
-
 }

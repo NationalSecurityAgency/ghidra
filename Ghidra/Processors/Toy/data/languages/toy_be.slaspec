@@ -1,4 +1,4 @@
-define endian=big;
+@define ENDIAN "big"
 
 @define SIZE "4"
 

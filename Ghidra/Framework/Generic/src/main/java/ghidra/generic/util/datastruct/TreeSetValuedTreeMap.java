@@ -15,14 +15,13 @@
  */
 package ghidra.generic.util.datastruct;
 
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.apache.commons.collections4.multimap.AbstractSetValuedMap;
 
 /**
- * A multi-valued dictionary using a tree map of tree sets
+ * A multi-valued map using a tree map of tree sets
+ * 
  * @param <K> the type of key
  * @param <V> the type of value
  */

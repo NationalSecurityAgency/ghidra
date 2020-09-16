@@ -15,36 +15,34 @@
  */
 package ghidra.util.datastruct;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
- * Class to provide a hash map with weak values.
+ * Class to provide a tree map with weak values.
  */
-
-public class WeakValueHashMap<K, V> extends AbstractWeakValueMap<K, V> {
-	private Map<K, WeakValueRef<K, V>> refMap;
+public class WeakValueTreeMap<K, V> extends AbstractWeakValueNavigableMap<K, V> {
+	protected final NavigableMap<K, WeakValueRef<K, V>> refMap;
 
 	/**
 	 * Constructs a new weak map
 	 */
-	public WeakValueHashMap() {
+	public WeakValueTreeMap() {
 		super();
-		refMap = new HashMap<>();
+		refMap = new TreeMap<>();
 	}
 
 	/**
-	 * Constructs a new weak map with the given initial size
+	 * Constructs a new weak map with keys ordered according to the given comparator
 	 * 
-	 * @param initialSize the initial size of the backing map
+	 * @param comparator the comparator, or {@code null} for the natural ordering
 	 */
-	public WeakValueHashMap(int initialSize) {
+	public WeakValueTreeMap(Comparator<K> comparator) {
 		super();
-		refMap = new HashMap<>(initialSize);
+		refMap = new TreeMap<>(comparator);
 	}
 
 	@Override
-	protected Map<K, WeakValueRef<K, V>> getRefMap() {
+	protected NavigableMap<K, WeakValueRef<K, V>> getRefMap() {
 		return refMap;
 	}
 }

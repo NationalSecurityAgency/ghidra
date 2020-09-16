@@ -15,33 +15,24 @@
  */
 package ghidra.graph.algo;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.collections4.map.LazyMap;
 
 import generic.util.DequePush;
-import ghidra.generic.util.datastruct.DynamicValueSortedTreeMap;
-import ghidra.graph.GEdge;
-import ghidra.graph.GEdgeWeightMetric;
-import ghidra.graph.GImplicitDirectedGraph;
-import ghidra.graph.GWeightedEdge;
+import ghidra.generic.util.datastruct.TreeValueSortedMap;
+import ghidra.generic.util.datastruct.ValueSortedMap;
+import ghidra.graph.*;
 
 /**
  * Dijkstra's shortest-path algorithm
  * 
+ * <p>
  * This implementation computes the shortest paths between two vertices using Dijkstra's
- * single-source shortest path finding algorithm. Any time a new source is given, it explores
- * all destinations in the graph up to a maximum distance from the source. Thus, this
- * implementation is best applied when many queries are anticipated from relatively few sources.
+ * single-source shortest path finding algorithm. Any time a new source is given, it explores all
+ * destinations in the graph up to a maximum distance from the source. Thus, this implementation is
+ * best applied when many queries are anticipated from relatively few sources.
  *
  * @param <V> the type of vertices
  * @param <E> the type of edges
@@ -56,6 +47,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	/**
 	 * Use Dijkstra's algorithm on the given graph
 	 * 
+	 * <p>
 	 * This constructor assumes the graph's edges are {@link GWeightedEdge}s. If not, you will
 	 * likely encounter a {@link ClassCastException}.
 	 * 
@@ -70,6 +62,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	/**
 	 * Use Dijkstra's algorithm on the given graph with the given maximum distance
 	 * 
+	 * <p>
 	 * This constructor assumes the graph's edges are {@link GWeightedEdge}s. If not, you will
 	 * likely encounter a {@link ClassCastException}.
 	 * 
@@ -96,8 +89,8 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	}
 
 	/**
-	 * Use Dijstra's algorithm on the given graph with the given maximum distance and a custom
-	 * edge weight metric
+	 * Use Dijstra's algorithm on the given graph with the given maximum distance and a custom edge
+	 * weight metric
 	 * 
 	 * @param graph the graph
 	 * @param maxDistance the maximum distance, or null for no maximum
@@ -124,6 +117,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	/**
 	 * Compute the shortest paths from the given source to the given destination
 	 * 
+	 * <p>
 	 * This implementation differs from typical implementations in that paths tied for the shortest
 	 * distance are all returned. Others tend to choose one arbitrarily.
 	 * 
@@ -139,16 +133,17 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	 * A class representing all optimal paths from a given source to every other (reachable) vertex
 	 * in the graph
 	 * 
+	 * <p>
 	 * This is the workhorse of path computation, and implements Dijkstra's Shortest Path algorithm
 	 * from one source to all destinations. We considered using JUNG to store the graph and compute
-	 * the paths, but we could not, because we would like to find all paths having the
-	 * optimal distance. If there are ties, JUNG's implementation chooses one arbitrarily; we would
-	 * like all tied paths.
+	 * the paths, but we could not, because we would like to find all paths having the optimal
+	 * distance. If there are ties, JUNG's implementation chooses one arbitrarily; we would like all
+	 * tied paths.
 	 */
 	protected class OneSourceToAll {
 		// For explored, but unvisited nodes
-		protected final DynamicValueSortedTreeMap<V, Double> queueByDistance =
-			new DynamicValueSortedTreeMap<>();
+		protected final ValueSortedMap<V, Double> queueByDistance =
+			TreeValueSortedMap.createWithNaturalOrder();
 		// For visited nodes, i.e., their optimal distance is known
 		protected final Map<V, Double> visitedDistance = new LinkedHashMap<>();
 		protected final Map<V, Set<E>> bestIns =
@@ -159,6 +154,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 		/**
 		 * Compute the shortest paths from a given vertex to all other reachable vertices in the
 		 * graph
+		 * 
 		 * @param src the source (seed) vertex
 		 */
 		protected OneSourceToAll(V src) {
@@ -169,6 +165,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 		/**
 		 * Recover the shortest paths from the source to the given destination, if it is reachable
+		 * 
 		 * @param dst the destination
 		 * @return a collection of the shortest paths from source to destination, or the empty set
 		 */
@@ -179,10 +176,11 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 		}
 
 		/**
-		 * Add the shortest paths from the source to the given destination into the given
-		 * collection
+		 * Add the shortest paths from the source to the given destination into the given collection
 		 * 
+		 * <p>
 		 * This is used internally to recover the shortest paths
+		 * 
 		 * @param paths a place to store the recovered paths
 		 * @param dst the destination
 		 */
@@ -191,12 +189,14 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 		}
 
 		/**
-		 * Add the shortest paths from source to a given intermediate, continuing along a given
-		 * path to the final destination, into the given collection
+		 * Add the shortest paths from source to a given intermediate, continuing along a given path
+		 * to the final destination, into the given collection
 		 * 
+		 * <p>
 		 * This is a recursive method for constructing the shortest paths overall. Assuming the
 		 * given path from intermediate to final destination is the shortest, we can show by
 		 * induction, the computed paths from source to destination are the shortest.
+		 * 
 		 * @param paths a place to store the recovered paths
 		 * @param prev the intermediate destination
 		 * @param soFar a (shortest) path from intermediate to final destination
@@ -208,10 +208,11 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 				paths.add(new LinkedList<>(soFar));
 			}
 			else { // inductive case:
-				/* Dijkstra has computed the best inbound edges. Consider each as a prefix to the
-				 * current path from intermediate to final destination. Since we assume that path
-				 * is an optimal path, and we prefix an optimal inbound edge, the prefixed path is
-				 * an optimal path from a new intermediate source (inbound neighbor) to the final
+				/*
+				 * Dijkstra has computed the best inbound edges. Consider each as a prefix to the
+				 * current path from intermediate to final destination. Since we assume that path is
+				 * an optimal path, and we prefix an optimal inbound edge, the prefixed path is an
+				 * optimal path from a new intermediate source (inbound neighbor) to the final
 				 * destination. So, just recurse, using the new intermediates.
 				 */
 				for (E e : bestIns.get(prev)) {
@@ -226,14 +227,17 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 		/**
 		 * Update the record for the given destination with a new offer of shortest distance
 		 * 
-		 * If either the record doesn't exist yet, or the new offer beats the current best, then
-		 * a new record is created and replaces the current record. If present, the list of best
+		 * <p>
+		 * If either the record doesn't exist yet, or the new offer beats the current best, then a
+		 * new record is created and replaces the current record. If present, the list of best
 		 * inbound edges is cleared -- because they all correspond to a distance that has just been
 		 * beat. The node is also added and/or moved forward in the queue of unvisited vertices.
 		 * 
-		 * If the record exists, and the new offer ties the current offer, nothing happens, but
-		 * the method still returns true, since the corresponding inbound edge could be optimal.
+		 * <p>
+		 * If the record exists, and the new offer ties the current offer, nothing happens, but the
+		 * method still returns true, since the corresponding inbound edge could be optimal.
 		 * 
+		 * <p>
 		 * If the record's current best beats the offer, nothing happens, and the method returns
 		 * false, indicating the inbound edge is definitely not optimal.
 		 * 
@@ -278,6 +282,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 		/**
 		 * Perform one iteration of Dijskstra's path finding algorithm
+		 * 
 		 * @param from the vertex to visit for this iteration
 		 */
 		protected void fillStep(V from, double dist) {
