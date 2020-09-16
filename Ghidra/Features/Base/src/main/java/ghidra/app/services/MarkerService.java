@@ -26,24 +26,24 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
 /**
- * <p>Service to manage navigation markers displayed around a scrollable window
- * like the Listing.  The navigation bar displays the general location of
- * markers for the entire view.  The marker bar displays a marker at each marked
- * address visible within the view. </p>
  * <p>
- * The interface defines priorities for display of markers in Marker Margin and
- * colored bars in Navigation Margin. The higher the priority, the more likely
- * the marker/bar will be displayed on the top. Areas will always be lower than
- * marker priorities.
+ * Service to manage navigation markers displayed around a scrollable window like the Listing.
+ * The navigation bar displays the general location of markers for the entire view. The marker bar
+ * displays a marker at each marked address visible within the view.
  * </p>
- * <a id="usage"></a>
+ * <p>
+ * The interface defines priorities for display of markers in Marker Margin and colored bars in
+ * Navigation Margin. The higher the priority, the more likely the marker/bar will be displayed on
+ * the top. Areas will always be lower than marker priorities.
+ * </p>
+ * <a name="usage"></a> <u>Recommended Usage</u><br>
  * <u>Recommended Usage</u><br>
- * The service used to work independent of {@link Program}s.  In order to work effectively this
+ * The service used to work independently of {@link Program}s.  In order to work effectively this
  * service has been changed to associate created markers with individual programs.  Thus, it is
  * up to the clients of this class perform lifecycle management of markers created by this
  * service.  For example, a client that creates a marker from
- * {@link #createAreaMarker(String, String, Program, int, boolean, boolean, boolean, Color)} should call
- * {@link #removeMarker(MarkerSet, Program)} when the markers are no longer used, such as when
+ * {@link #createAreaMarker(String, String, Program, int, boolean, boolean, boolean, Color)} should 
+ * call {@link #removeMarker(MarkerSet, Program)} when the markers are no longer used, such as when
  * a program has become deactivated.  In this example usage markers are added and removed as the
  * user tabs through open programs.
  */
@@ -182,15 +182,15 @@ public interface MarkerService {
 			Color color, ImageIcon icon, boolean isPreferred);
 
 	/**
-	 * Remove the marker manager
+	 * Remove the marker set
 	 *
-	 * @param markerManager marker manager to be removed from navigation bars.
+	 * @param markerSet marker set to be removed from navigation bars.
 	 * @param program The program with which the markers are associated.
 	 */
-	public void removeMarker(MarkerSet markerManager, Program program);
+	public void removeMarker(MarkerSet markerSet, Program program);
 
 	/**
-	 * Return the markerset with the given name;
+	 * Return the marker set with the given name;
 	 *
 	 * @param name The name of the marker set for which to search
 	 * @param program The program with which the created markers will be associated.
@@ -230,14 +230,31 @@ public interface MarkerService {
 	public Color getBackgroundColor(Address address);
 
 	/**
-	 * Adds a change listener to be notified when markers are added/removed or the addresses in
-	 * any current markerSets are changed.
-	 * @param listener the listener to be notified.
+	 * Returns the background color associated with the given program and address. Each markerSet
+	 * that supports background coloring is checked in priority order to see if it wants to specify
+	 * a background color for the given address.
+	 * 
+	 * If {@code program} is the current program, this is equivalent to
+	 *  {@link #getBackgroundColor(Address)}.
+	 * 
+	 * @param program the program to check for a background color.
+	 * @param address the address to check for a background color.
+	 * @return the background color to use for that address or null if no markers contain that
+	 *         address.
+	 */
+	public Color getBackgroundColor(Program program, Address address);
+
+	/**
+	 * Adds a change listener to be notified when markers are added/removed or the addresses in any
+	 * current markerSets are changed
+	 * 
+	 * @param listener the listener
 	 */
 	public void addChangeListener(ChangeListener listener);
 
 	/**
-	 * Removes the given change listener from the list of listeners to be notified of changes.
+	 * Removes the given change listener from the list of listeners to be notified of changes
+	 * 
 	 * @param listener the listener
 	 */
 	public void removeChangeListener(ChangeListener listener);

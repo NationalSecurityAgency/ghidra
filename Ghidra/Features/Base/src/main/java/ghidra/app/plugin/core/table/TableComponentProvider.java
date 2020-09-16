@@ -104,20 +104,10 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		if (markerService != null) {
 			markerSet = markerService.createPointMarker(name, title, program,
 				MarkerService.SEARCH_PRIORITY, true, true, false, markerColor, markerIcon);
-			markerSet.setNavigationListener(new MarkerListener() {
+			markerSet.setMarkerDescriptor(new MarkerDescriptor() {
 				@Override
 				public ProgramLocation getProgramLocation(MarkerLocation loc) {
 					return new BytesFieldLocation(program, loc.getAddr());
-				}
-
-				@Override
-				public String getTooltip(MarkerLocation loc) {
-					return null;
-				}
-
-				@Override
-				public ImageIcon getIcon(MarkerLocation loc) {
-					return null;
 				}
 			});
 
