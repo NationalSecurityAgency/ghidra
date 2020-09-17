@@ -30,8 +30,6 @@ import ghidra.program.model.listing.Program;
  * two locations are definitely of the same class.
  */
 public class ProgramLocationComparator implements Comparator<ProgramLocation> {
-	/** The singleton instance */
-	public static final ProgramLocationComparator INSTANCE = new ProgramLocationComparator();
 	private static final Class<?>[] PROGRAM_LOCATION_CLASSES = {
 
 		DividerLocation.class, ProgramLocation.class, PlateFieldLocation.class,
@@ -58,6 +56,10 @@ public class ProgramLocationComparator implements Comparator<ProgramLocation> {
 		RegisterFieldLocation.class,
 
 	};
+	// Note, because this calls the constructor, which in turn refers to PROGRAM_LOCATION_CLASSES
+	// This must be declared/initialized after PROGRAM_LOCATION_CLASSES
+	/** The singleton instance */
+	public static final ProgramLocationComparator INSTANCE = new ProgramLocationComparator();
 
 	private Map<Class<?>, Integer> priorityMap;
 
