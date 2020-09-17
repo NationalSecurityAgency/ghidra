@@ -1411,14 +1411,18 @@ macro th_set_carry_for_asr(op1,shift_count) {
 :udf^ItCond "#"thc0007			is TMode=1 & ItCond & op8 = 0xde & thc0007
 {
 	build ItCond;
-	software_udf(thc0007:4);
+	local excaddr:4 = inst_start;
+	local target:4 = software_udf(thc0007:4, excaddr);
+	goto [target];
 }
 @endif
 
 :udf^ItCond "#"tmp			is TMode=1 & ItCond & op4=0xf7f & thc0003; op12=0xa & thc0011 [tmp = thc0003 << 12 | thc0011;]
 {
 	build ItCond;
-	software_udf(tmp:4);
+	local excaddr:4 = inst_start;
+	local target:4 = software_udf(tmp:4, excaddr);
+	goto [target];
 }
 
 @endif # VERSION_5

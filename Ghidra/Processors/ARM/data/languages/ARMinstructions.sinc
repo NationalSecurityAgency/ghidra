@@ -1612,7 +1612,9 @@ define pcodeop TTT;
 
 :udf immed12_4			is $(AMODE) &  cond=0xe & c2027=0x7f & c0407=0xf & immed12_4
 {
-	software_udf(immed12_4);
+	local excaddr:4 = inst_start;
+	local target:4 = software_udf(immed12_4:4, excaddr);
+	goto [target];
 }
 
 @endif # VERSION_5
