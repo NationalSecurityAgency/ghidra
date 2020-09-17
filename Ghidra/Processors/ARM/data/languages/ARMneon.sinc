@@ -2423,32 +2423,43 @@ vldmRn: thv_Rn		is TMode=1 & thv_Rn & thv_c2121=0		{ export thv_Rn; }
 vldmRn: thv_Rn^"!"	is TMode=1 & thv_Rn & thv_c2121=1		{ export thv_Rn; }
 vldmOffset: value is $(AMODE) & immed     [ value= immed << 2; ]		{ export *[const]:4 value; }
 vldmOffset: value is TMode=1 & thv_immed  [ value= thv_immed << 2; ]	{ export *[const]:4 value; }
+vldmUpdate: immed is TMode=0 & vldmRn & c2121=0 & immed { }
+vldmUpdate: immed is TMode=0 & vldmRn & c2121=1 & immed { vldmRn = vldmRn + (immed << 2); }
+vldmUpdate: thv_immed is TMode=1 & vldmRn & thv_c2121=0 & thv_immed { }
+vldmUpdate: thv_immed is TMode=1 & vldmRn & thv_c2121=1 & thv_immed { vldmRn = vldmRn + (thv_immed << 2); }
 
-vldmDdAddr: addr_offset is vldmRn [ addr_offset = maxCounter - counter; ] {local addr = vldmRn + (8*addr_offset); export *:8 addr; }
 
 buildVldmDdList:						is counter=0				{ }
-buildVldmDdList: Dreg					is counter=1 & Dreg & vldmDdAddr		[ counter=0; regNum=regNum+1; ]
+buildVldmDdList: Dreg					is counter=1 & Dreg		[ counter=0; regNum=regNum+1; ]
 {
-	Dreg = vldmDdAddr;
+	Dreg = *mult_addr;
+	mult_addr = mult_addr + 8;
 }
 
-buildVldmDdList: Dreg,buildVldmDdList	is Dreg & vldmDdAddr & buildVldmDdList	[ counter=counter-1; regNum=regNum+1; ]
+buildVldmDdList: Dreg,buildVldmDdList	is Dreg & buildVldmDdList	[ counter=counter-1; regNum=regNum+1; ]
 {
-	Dreg = vldmDdAddr;
+	Dreg = *mult_addr;
+	mult_addr = mult_addr + 8;
+	build buildVldmDdList;
 }
 
-vldmDdList: "{"^buildVldmDdList^"}"	is D22 & c1215 & c0007 & buildVldmDdList [ regNum=(D22<<4)+c1215-1; counter=c0007>>1; maxCounter=counter;] { }
+vldmDdList: "{"^buildVldmDdList^"}"	is D22 & c1215 & c0007 & buildVldmDdList [ regNum=(D22<<4)+c1215-1; counter=c0007>>1; ] { }
 
-:vldmia^COND vldmRn,vldmDdList	is $(AMODE) & COND & c2327=0x19 & c2121 & c2020=1 & vldmRn & c0811=11 &  vldmDdList & c0000=0 & vldmOffset
+:vldmia^COND vldmRn,vldmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=1 & c0811=11 & c0000=0) | 
+                                     ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=1 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vldmDdList & vldmOffset & vldmUpdate
 {
+	mult_addr = vldmRn;
 	build vldmDdList;
-	vldmRn = (~(c2121) * vldmRn) + ((c2121) * (vldmRn + vldmOffset));
+	build vldmUpdate;
 }
 
-:vldmdb^COND vldmRn,vldmDdList	is $(AMODE) & COND & c2327=0x1a & c2121=1 & c2020=1 & vldmRn & c0811=11 &  vldmDdList & c0000=0 & vldmOffset
+:vldmdb^COND vldmRn,vldmDdList	is ( ($(AMODE) & COND & c2327=0x1a & c2121=1 & c2020=1 & c0811=11 & c0000=0) |
+                                     ($(TMODE_E) & thv_c2327=0x1a & thv_c2121=1 & thv_c2020=1 & thv_c0811=11  & thv_c0000=0 ) ) & vldmRn & vldmDdList & vldmOffset
 {
-	vldmRn = vldmRn - vldmOffset;
+	local start_addr = vldmRn - vldmOffset;
+	mult_addr = start_addr;
 	build vldmDdList;
+	vldmRn = start_addr;
 }
 
 @endif # VFPv2 | VFPv3 | SIMD
@@ -2513,33 +2524,37 @@ fldmWback: thv_Rn is thv_bit21=0 & thv_Rn { }
 # VLDM (A2)
 #
 
-vldmSdAddr: addr_offset is vldmRn [ addr_offset = maxCounter - counter; ] {local addr = vldmRn + (4*addr_offset); export *:4 addr; }
-
 buildVldmSdList:						is counter=0 { }
-buildVldmSdList: Sreg					is counter=1 & Sreg	& vldmSdAddr [ counter=0; regNum=regNum+1; ]
+buildVldmSdList: Sreg					is counter=1 & Sreg [ counter=0; regNum=regNum+1; ]
 {
-	Sreg = vldmSdAddr;
+	Sreg = *mult_addr;
+	mult_addr = mult_addr + 4;
 }
-buildVldmSdList: Sreg,buildVldmSdList	is Sreg & vldmSdAddr & buildVldmSdList [ counter=counter-1; regNum=regNum+1; ]
+buildVldmSdList: Sreg,buildVldmSdList	is Sreg & buildVldmSdList [ counter=counter-1; regNum=regNum+1; ]
 {
-	Sreg = vldmSdAddr;
+	Sreg = *mult_addr;
+	mult_addr = mult_addr + 4;
+	build buildVldmSdList;
 }
 
 vldmSdList: "{"^buildVldmSdList^"}"	is TMode=0   & D22 & c1215 & c0007 & buildVldmSdList [ regNum=(c1215<<1) + D22 - 1; counter=c0007; ] { }
 vldmSdList: "{"^buildVldmSdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVldmSdList [ regNum=(thv_c1215<<1) + thv_D22 - 1; counter=thv_c0007; ] { }
 
 :vldmia^COND vldmRn,vldmSdList	is ( ( $(AMODE) & COND & c2327=0x19 & c2121 & c2020=1 & c0811=10 ) |
-                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=1 & thv_c0811=10 ) ) & vldmRn & vldmSdList & vldmOffset
+                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=1 & thv_c0811=10 ) ) & vldmRn & vldmSdList & vldmOffset & vldmUpdate
 {
+	mult_addr = vldmRn;
 	build vldmSdList;
-	vldmRn = (~(c2121) * vldmRn) + ((c2121) * (vldmRn + vldmOffset));
+	build vldmUpdate;
 }
 
 :vldmdb^COND vldmRn,vldmSdList	is ( ( $(AMODE) & COND & c2327=0x1a & c2121=1 & c2020=1 & c0811=10 ) |
                                       ($(TMODE_E) & thv_c2327=0x1a & thv_c2121=1 & thv_c2020=1 & thv_c0811=10 ) ) & vldmRn & vldmSdList & vldmOffset
 {
-	vldmRn = vldmRn - vldmOffset;
+	local start_addr = vldmRn - vldmOffset;
+	mult_addr = start_addr;
 	build vldmSdList;
+	vldmRn = start_addr;
 }
 
 #######
@@ -4280,27 +4295,35 @@ vst4DdList3: "{"^buildVst4DdList3^"}"	is  c0505=1 & D22 & c1215 & buildVst4DdLis
 #
 
 buildVstmDdList:						is counter=0				{ }
-buildVstmDdList: Dreg					is counter=1 & Dreg & vldmDdAddr		[ counter=0; regNum=regNum+1; ]
+buildVstmDdList: Dreg					is counter=1 & Dreg		[ counter=0; regNum=regNum+1; ]
 {
-	vldmDdAddr = Dreg;
+	*mult_addr = Dreg;
+	mult_addr = mult_addr + 8;
 }
-buildVstmDdList: Dreg,buildVstmDdList	is Dreg & vldmDdAddr & buildVstmDdList	[ counter=counter-1; regNum=regNum+1; ]
+buildVstmDdList: Dreg,buildVstmDdList	is Dreg & buildVstmDdList	[ counter=counter-1; regNum=regNum+1; ]
 {
-	vldmDdAddr = Dreg;
+	*mult_addr = Dreg;
+	mult_addr = mult_addr + 8;
+	build buildVstmDdList;
 }
 
-vstmDdList: "{"^buildVstmDdList^"}"	is D22 & c1215 & c0007 & buildVstmDdList [ regNum=(D22<<4)+c1215-1; counter=c0007>>1; maxCounter=counter;] { }
+vstmDdList: "{"^buildVstmDdList^"}"	is D22 & c1215 & c0007 & buildVstmDdList [ regNum=(D22<<4)+c1215-1; counter=c0007>>1; ] { }
 
-:vstmia^COND vldmRn,vstmDdList	is $(AMODE) & COND & c2327=0x19 & c2121 & c2020=0 & vldmRn & c0811=11 &  vstmDdList & c0000=0 & vldmOffset
+:vstmia^COND vldmRn,vstmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=0 & c0811=11 & c0000=0) | 
+                                     ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=0 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vstmDdList & vldmOffset & vldmUpdate
 {
+	mult_addr = vldmRn;
 	build vstmDdList;
-	vldmRn = (~(c2121) * vldmRn) + ((c2121) * (vldmRn + vldmOffset));
+	build vldmUpdate;
 }
 
-:vstmdb^COND vldmRn,vstmDdList	is $(AMODE) & COND & c2327=0x1a & c2121=1 & c2020=0 & vldmRn & c0811=11 &  vstmDdList & c0000=0 & vldmOffset
+:vstmdb^COND vldmRn,vstmDdList	is ( ($(AMODE) & COND & c2327=0x1a & c2121=1 & c2020=0 & c0811=11 & c0000=0) | 
+                                     ($(TMODE_E) & thv_c2327=0x1a & thv_c2121=1 & thv_c2020=0 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vstmDdList & vldmOffset
 {
-	vldmRn = vldmRn - vldmOffset;
+	local start_addr = vldmRn - vldmOffset;
+	mult_addr = start_addr;
 	build vstmDdList;
+	vldmRn = start_addr;
 }
 
 @endif # VFPv2 | VFPv3 | SIMD
@@ -4312,30 +4335,36 @@ vstmDdList: "{"^buildVstmDdList^"}"	is D22 & c1215 & c0007 & buildVstmDdList [ r
 #
 
 buildVstmSdList:						is counter=0				{ }
-buildVstmSdList: Sreg					is counter=1 & Sreg	& vldmSdAddr		[ counter=0; regNum=regNum+1; ]
+buildVstmSdList: Sreg					is counter=1 & Sreg		[ counter=0; regNum=regNum+1; ]
 {
-	vldmSdAddr = Sreg;
+	*mult_addr = Sreg;
+	mult_addr = mult_addr + 4;
 }
-buildVstmSdList: Sreg,buildVstmSdList	is Sreg & vldmSdAddr & buildVstmSdList	[ counter=counter-1; regNum=regNum+1; ]
+buildVstmSdList: Sreg,buildVstmSdList	is Sreg & buildVstmSdList	[ counter=counter-1; regNum=regNum+1; ]
 {
-	vldmSdAddr = Sreg;
+	*mult_addr = Sreg;
+	mult_addr = mult_addr + 4;
+	build buildVstmSdList;
 }
 
 vstmSdList: "{"^buildVstmSdList^"}"	is TMode=0 & D22 & c1215 & c0007 & buildVstmSdList [ regNum=(c1215<<1) + D22 -1; counter=c0007; ] { }
 vstmSdList: "{"^buildVstmSdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVstmSdList [ regNum=(thv_c1215<<1) + thv_D22 -1; counter=thv_c0007; ] { }
 
-:vstmia^COND vldmRn,vstmSdList	is ( ( $(AMODE) & COND & c2327=0x19 & c2121 & c2020=0 & c0811=10 & c0000 ) |
-                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=0 & thv_c0811=10 ) ) & vldmRn & vstmSdList & vldmOffset
+:vstmia^COND vldmRn,vstmSdList	is ( ( $(AMODE) & COND & c2327=0x19 & c2121 & c2020=0 & c0811=10 ) |
+                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=0 & thv_c0811=10 ) ) & vldmRn & vstmSdList & vldmOffset & vldmUpdate
 {
+	mult_addr = vldmRn;
 	build vstmSdList;
-	vldmRn = (~(c2121) * vldmRn) + ((c2121) * (vldmRn + vldmOffset));
+	build vldmUpdate;
 }
 
 :vstmdb^COND vldmRn,vstmSdList	is ( ($(AMODE) & COND & c2327=0x1a & c2121=1 & c2020=0 & c0811=10 ) |
                                       ($(TMODE_E) &  thv_c2327=0x1a & thv_c2121=1 & thv_c2020=0 & thv_c0811=10) ) & vldmRn & vstmSdList & vldmOffset
 {
-	vldmRn = vldmRn - vldmOffset;
+	local start_addr = vldmRn - vldmOffset;
+	mult_addr = start_addr;
 	build vstmSdList;
+	vldmRn = start_addr;
 }
 
 
