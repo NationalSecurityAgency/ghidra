@@ -286,6 +286,7 @@ public class GTable extends JTable {
 		if (columnModel instanceof GTableColumnModel) {
 			((GTableColumnModel) columnModel).dispose();
 		}
+		columnRenderingDataMap.clear();
 	}
 
 	/**
@@ -1221,8 +1222,7 @@ public class GTable extends JTable {
 		GTableToCSV.writeCSVUsingColunns(file, GTable.this, columnList);
 	}
 
-	public static void createSharedActions(Tool tool, ToolActions toolActions,
-			String owner) {
+	public static void createSharedActions(Tool tool, ToolActions toolActions, String owner) {
 
 		String actionMenuGroup = "zzzTableGroup";
 		tool.setMenuGroup(new String[] { "Copy" }, actionMenuGroup, "1");
