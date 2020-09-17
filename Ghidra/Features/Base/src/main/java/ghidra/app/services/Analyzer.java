@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,9 +103,17 @@ public interface Analyzer extends ExtensionPoint {
 			throws CancelledException;
 
 	/**
+	 * Analyzers should register their options with associated default value, help content and
+	 * description
+	 * @param options the program options/property list that contains the options
+	 * @param program program to be analyzed
+	 */
+	public void registerOptions(Options options, Program program);
+
+	/**
 	 * Analyzers should initialize their options from the values in the given Options, 
 	 * providing appropriate default values.
-	 * @param options the property list that contains the options
+	 * @param options the program options/property list that contains the options
 	 * @param program program to be analyzed
 	 */
 	public void optionsChanged(Options options, Program program);
@@ -124,6 +131,13 @@ public interface Analyzer extends ExtensionPoint {
 	 */
 	public boolean isPrototype();
 
-	public void registerOptions(Options options, Program program);
+	/**
+	 * Returns true if a change to the analyzer enablement should be saved as a user preference
+	 * so that it may be establish the default enablement for analysis in other programs. 
+	 * NOTE: This feature is ignored while operating in test mode or headless mode where
+	 * it is expected that explicit enablement/disablement will be utilized.
+	 * @return true if an enablement change should be remembered as the new default
+	 */
+	public boolean rememberEnablementChangeAsUserPreference();
 
 }
