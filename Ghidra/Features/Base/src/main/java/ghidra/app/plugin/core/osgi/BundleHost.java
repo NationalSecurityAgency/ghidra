@@ -871,7 +871,7 @@ public class BundleHost {
 				}
 				if (isSystem != bundle.isSystemBundle()) {
 					bundle.systemBundle = isSystem;
-					Msg.error(this, String.format("Error, bundle %s went from %system to %system",
+					Msg.error(this, String.format("Error, bundle %s went from %ssystem to %ssystem",
 						bundleFile, isSystem ? "not " : "", isSystem ? "" : "not "));
 				}
 			}
