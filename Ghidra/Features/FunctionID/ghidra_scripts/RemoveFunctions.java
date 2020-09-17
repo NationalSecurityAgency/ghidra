@@ -163,6 +163,7 @@ public class RemoveFunctions extends GhidraScript {
 		REMOVE_HASHES.add(fh(8, 0x3d7242fc6eb079a7L));		// ??1<lambda_61f7764e5b8087545c74b0c2f4f68b12>@@QAE@XZ
 		REMOVE_HASHES.add(fh(7, 0x690dec263cb912aaL));		// ?OnDrawTasksGroupAreaBorder@CMFCVisualManagerOfficeXP@@MAEXPAVCDC@@VCRect@@HH@Z
 		REMOVE_HASHES.add(fh(7, 0x6b745608ae7e77fbL));		// ??1?$CArray@...  destructors based on CArray
+		REMOVE_HASHES.add(fh(3, 0xfcc148b0692f6a69L));		// thunk
 
 		FORCE_SPECIFIC.add(fh(2, 0x5ef2f47ee7151243L));		// __SEH_epilog4_GS, __EH_epilog3_GS, and __EH_epilog3_catch_GS
 		FORCE_RELATION.add(fh(2, 0x5ef2f47ee7151243L));
@@ -304,6 +305,11 @@ public class RemoveFunctions extends GhidraScript {
 		REMOVE_HASHES.add(fh(13, 0xac7036a5a6a27973L));		// destructor
 		REMOVE_HASHES.add(fh(6, 0x561ffc1c6cdb8a09L));		// Mysize
 		REMOVE_HASHES.add(fh(8, 0x6838c16db21b0fcdL));		// ??1_AsyncTaskCollection@details@Concurrency@@UEAA@XZ
+		REMOVE_HASHES.add(fh(6, 0x69e6a6ae661a1d17L));		// Generic size()
+		REMOVE_HASHES.add(fh(4, 0xd4c0bfb00c09e33dL));		// Access field
+		REMOVE_HASHES.add(fh(4, 0xdcfb1bce9467ae7fL));		// Save registers
+		REMOVE_HASHES.add(fh(6, 0xef1dcb79b04b45a7L));		// 2 calls
+		REMOVE_HASHES.add(fh(10, 0xa234bc1264c50f3eL));		// vector destructor
 
 		FORCE_RELATION.add(fh(6, 0x508d431b82512d5bL));		// Generic wrapper, one obvious child
 		FORCE_RELATION.add(fh(19, 0x1e68c4d4d83e7585L));	// A little too generic stream thing, force parent
@@ -321,6 +327,23 @@ public class RemoveFunctions extends GhidraScript {
 		FORCE_RELATION.add(fh(15, 0x51980975b49f9f73L));	// ??1SchedulingNode@details@Concurrency@@QEAA@XZ
 		FORCE_RELATION.add(fh(18, 0xcf323a39c909432bL));	// ?_Future_error_map@std@@YAPEBDH@Z
 		FORCE_RELATION.add(fh(14, 0x41110421841870bdL));	// iterator::operator=
+		FORCE_RELATION.add(fh(15, 0x4750629cadd994f2L));	// Uninitialized_move
+		FORCE_RELATION.add(fh(17, 0x4b561bb90906f120L));	// pair constructor
+		FORCE_RELATION.add(fh(12, 0x5bd6de97fe12c3deL));	// ??0_WDI_RECEIVE_COALESCING_CAPABILITIES@@QEAA@XZ
+		FORCE_RELATION.add(fh(15, 0x708244492155654L));		// _Ucopy
+		FORCE_RELATION.add(fh(11, 0x809e950df92527a5L));	// Emplace
+		FORCE_RELATION.add(fh(17, 0xb33a994d051dd9a0L));	// ??_G_AsyncTaskCollection@details@Concurrency@@UEAAPEAXI@Z
+		FORCE_RELATION.add(fh(14, 0xee6fd3046cf7ee06L));	// ??0_WDI_CHECKSUM_OFFLOAD_CAPABILITIES_CONTAINER@@QEAA@XZ
+		FORCE_RELATION.add(fh(16, 0xfb2a575f03442e59L));	// ?Equals@Guid@Platform@@QEAA_NAEBU_GUID@@@Z
+		FORCE_RELATION.add(fh(17, 0x2d294fe5f48b3f3fL));	// Find_unchecked
+		FORCE_RELATION.add(fh(13, 0x64bd12c74e7fa730L));	// boolean check on field
+		FORCE_RELATION.add(fh(17, 0xa9e139912ed9207aL));	// Generic initializer
+		FORCE_RELATION.add(fh(13, 0xe624a060e19a0c64L));	// copy
+		FORCE_RELATION.add(fh(35, 0x4423b59693bfd81L));		// Generic destructor
+		FORCE_RELATION.add(fh(19, 0x637ebec60980e058L));	// operator=
+		FORCE_RELATION.add(fh(25, 0xa6ea183912b2677dL));	// Generic copy
+		FORCE_RELATION.add(fh(11, 0xb7e0a1d58b88d05cL));	// Generic constructor
+		FORCE_RELATION.add(fh(12, 0xceece41b9d9525cbL));	// Generic constructor
 
 		FORCE_SPECIFIC.add(fh(26, 0xf0f7f2439683bfeaL));	// Variants with specialized constants
 		FORCE_SPECIFIC.add(fh(17, 0xf468f6c40495d8caL));	// Dispatcher form with lots of specific constants
@@ -330,6 +353,8 @@ public class RemoveFunctions extends GhidraScript {
 		FORCE_SPECIFIC.add(fh(15, 0x4389c3585fa0606aL));	// has_flag
 		FORCE_SPECIFIC.add(fh(15, 0xcc72f3219032eacfL));	// ?__acrt_stdio_parse_mode_D@@YA_NAEAU__acrt_stdio_stream_mode@@@Z
 		FORCE_SPECIFIC.add(fh(36, 0xa07803de9bbbebbbL));	// vector deleting destructor
+		FORCE_SPECIFIC.add(fh(20, 0x4af9f6ef9467bbcaL));	// ??_GFileLCRec@@QEAAPEAXI@Z
+		FORCE_SPECIFIC.add(fh(11, 0x17c3832d5e7abe3L));		// isnan, isinf
 
 		FORCE_SPECIFIC.add(fh(12, 0x1997c3c57f1359d6L));	// ?dtor$9@?0??AddMenuCommands@CMFCToolBarsCustomizeDialog@@QEAAXPEBVCMenu@@HPEB_W1@Z@4HA
 		FORCE_RELATION.add(fh(12, 0x1997c3c57f1359d6L));
@@ -371,6 +396,12 @@ public class RemoveFunctions extends GhidraScript {
 		FORCE_RELATION.add(fh(12, 0x892067d7b5484452L));
 		FORCE_SPECIFIC.add(fh(12, 0x2155a28b83bb2704L));	// destructor
 		FORCE_RELATION.add(fh(12, 0x2155a28b83bb2704L));
+		FORCE_SPECIFIC.add(fh(14, 0x205bb2f03257b770L));	// destructor
+		FORCE_RELATION.add(fh(14, 0x205bb2f03257b770L));
+		FORCE_SPECIFIC.add(fh(12, 0xbdcafd32892d723L));		// ??1_Locimp@locale@std@@MEAA@XZ
+		FORCE_RELATION.add(fh(12, 0xbdcafd32892d723L));
+		FORCE_SPECIFIC.add(fh(12, 0xcd7e1f68717240f8L));	// destructor
+		FORCE_RELATION.add(fh(12, 0xcd7e1f68717240f8L));
 
 		FORCE_SPECIFIC.add(fh(10, 0x5c4a91ec77ecc3d2L));	// strnlen
 		AUTO_PASS.add(fh(10, 0x5c4a91ec77ecc3d2L));
