@@ -39,23 +39,9 @@ import ghidra.util.bean.GGlassPanePainter;
 
 public class ProjectDataTablePanel extends JPanel {
 
-	private static int maxFileCount = 2000;
-	static {
-		String valStr = System.getProperty("ProjectDataTable.maxFileCount");
-		if (valStr != null) {
-			try {
-				int val = Integer.parseInt(valStr);
-				if (val <= 0) {
-					throw new NumberFormatException("Positive value required");
-				}
-				maxFileCount = val;
-			}
-			catch (NumberFormatException e) {
-				System.out.println(
-					"ERROR Invalid ProjectDataTable.maxFileCount property value: " + valStr);
-			}
-		}
-	}
+	private static final String MAX_FILE_COUNT_PROPERTY = "ProjectDataTable.maxFileCount";
+	private static final int MAX_FILE_COUNT_DEFAULT = 2000;
+	private static int maxFileCount = loadMaxFileCount();
 
 	private FrontEndPlugin plugin;
 	private PluginTool tool;
@@ -66,6 +52,13 @@ public class ProjectDataTablePanel extends JPanel {
 	private GTable gTable;
 	private DomainFolderChangeListener changeListener;
 	public Set<DomainFile> filesPendingSelection;
+
+	private GHtmlLabel capacityExceededText =
+		new GHtmlLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
+			"if an older project/repository filesystem is in use.<BR>" +
+			"View will remain disabled until project is closed.</I></CENTER></HTML>");
+
+	private GGlassPanePainter painter = new TableGlassPanePainter();
 
 	public ProjectDataTablePanel(FrontEndPlugin plugin) {
 		this.plugin = plugin;
@@ -102,9 +95,8 @@ public class ProjectDataTablePanel extends JPanel {
 				checkOpen(e);
 			}
 		});
-		gTable.getSelectionModel()
-				.addListSelectionListener(
-					e -> plugin.getTool().contextChanged(null));
+		gTable.getSelectionModel().addListSelectionListener(
+			e -> plugin.getTool().contextChanged(null));
 		gTable.setDefaultRenderer(Date.class, new DateCellRenderer());
 		gTable.setDefaultRenderer(DomainFileType.class, new TypeCellRenderer());
 
@@ -118,45 +110,6 @@ public class ProjectDataTablePanel extends JPanel {
 	public void setHelpLocation(HelpLocation helpLocation) {
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, helpLocation);
-	}
-
-	private class DateCellRenderer extends GTableCellRenderer {
-
-		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-
-			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
-
-			Object value = data.getValue();
-
-			if (value != null) {
-				renderer.setText(DateUtils.formatDateTimestamp((Date) value));
-			}
-			else {
-				renderer.setText("");
-			}
-			return renderer;
-		}
-	}
-
-	private class TypeCellRenderer extends GTableCellRenderer {
-
-		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-
-			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
-
-			Object value = data.getValue();
-
-			renderer.setText("");
-			if (value != null) {
-				DomainFileType type = (DomainFileType) value;
-				setToolTipText(type.getContentType());
-				setText("");
-				setIcon(type.getIcon());
-			}
-			return renderer;
-		}
 	}
 
 	public void setSelectedDomainFiles(Set<DomainFile> files) {
@@ -216,40 +169,6 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 	}
 
-	private GHtmlLabel capacityExceededText =
-		new GHtmlLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
-			"if an older project/repository filesystem is in use.<BR>" +
-			"View will remain disabled until project is closed.</I></CENTER></HTML>");
-
-	GGlassPanePainter painter = new GGlassPanePainter() {
-
-		CellRendererPane renderer = new CellRendererPane();
-
-		@Override
-		public void paint(GGlassPane glassPane, Graphics graphics) {
-
-			if (!capacityExceeded || !gTable.isShowing()) {
-				return;
-			}
-
-			Container container = gTable.getParent();
-			Rectangle bounds = container.getBounds();
-
-			bounds =
-				SwingUtilities.convertRectangle(container, bounds, getRootPane().getContentPane());
-
-			Dimension preferredSize = capacityExceededText.getPreferredSize();
-
-			int width = Math.min(preferredSize.width, bounds.width);
-			int height = Math.min(preferredSize.height, bounds.height);
-
-			int x = bounds.x + (bounds.width / 2 - width / 2);
-			int y = bounds.y + (bounds.height / 2 - height / 2);
-
-			renderer.paintComponent(graphics, capacityExceededText, container, x, y, width, height);
-		}
-	};
-
 	private void checkCapacity() {
 
 		if (projectData == null) {
@@ -282,8 +201,8 @@ public class ProjectDataTablePanel extends JPanel {
 			list.add(info.getDomainFile());
 		}
 
-		return new ProjectDataContext(provider, projectData,
-			model.getRowObject(selectedRows[0]), null, list, gTable, true);
+		return new ProjectDataContext(provider, projectData, model.getRowObject(selectedRows[0]),
+			null, list, gTable, true);
 	}
 
 	private void checkOpen(MouseEvent e) {
@@ -323,6 +242,32 @@ public class ProjectDataTablePanel extends JPanel {
 			model.reload();
 		}
 
+	}
+
+	// load the max file count system property
+	private static int loadMaxFileCount() {
+
+		String property =
+			System.getProperty(MAX_FILE_COUNT_PROPERTY, Integer.toString(MAX_FILE_COUNT_DEFAULT));
+
+		Integer intValue = null;
+		try {
+			intValue = Integer.parseInt(property);
+			if (intValue <= 0) {
+				intValue = null;
+			}
+		}
+		catch (NumberFormatException e) {
+			// handled below
+		}
+
+		if (intValue == null) {
+			Msg.error(ProjectDataTablePanel.class,
+				"Invalid ProjectDataTable.maxFileCount property value: " + property);
+			return MAX_FILE_COUNT_DEFAULT;
+		}
+
+		return intValue;
 	}
 
 //==================================================================================================
@@ -488,4 +433,73 @@ public class ProjectDataTablePanel extends JPanel {
 			return false;
 		}
 	}
+
+	private class TableGlassPanePainter implements GGlassPanePainter {
+
+		CellRendererPane renderer = new CellRendererPane();
+
+		@Override
+		public void paint(GGlassPane glassPane, Graphics graphics) {
+
+			if (!capacityExceeded || !gTable.isShowing()) {
+				return;
+			}
+
+			Container container = gTable.getParent();
+			Rectangle bounds = container.getBounds();
+
+			bounds =
+				SwingUtilities.convertRectangle(container, bounds, getRootPane().getContentPane());
+
+			Dimension preferredSize = capacityExceededText.getPreferredSize();
+
+			int width = Math.min(preferredSize.width, bounds.width);
+			int height = Math.min(preferredSize.height, bounds.height);
+
+			int x = bounds.x + (bounds.width / 2 - width / 2);
+			int y = bounds.y + (bounds.height / 2 - height / 2);
+
+			renderer.paintComponent(graphics, capacityExceededText, container, x, y, width, height);
+		}
+	}
+
+	private class DateCellRenderer extends GTableCellRenderer {
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
+
+			Object value = data.getValue();
+
+			if (value != null) {
+				renderer.setText(DateUtils.formatDateTimestamp((Date) value));
+			}
+			else {
+				renderer.setText("");
+			}
+			return renderer;
+		}
+	}
+
+	private class TypeCellRenderer extends GTableCellRenderer {
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+			JLabel renderer = (JLabel) super.getTableCellRendererComponent(data);
+
+			Object value = data.getValue();
+
+			renderer.setText("");
+			if (value != null) {
+				DomainFileType type = (DomainFileType) value;
+				setToolTipText(type.getContentType());
+				setText("");
+				setIcon(type.getIcon());
+			}
+			return renderer;
+		}
+	}
+
 }
