@@ -4027,54 +4027,98 @@ macro simd_address_at(dest, reg, elem, esize, vsize)
 
 macro zext_zb(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[8,56] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[192,56] = 0;
+	reg[128,64] = 0;
+	reg[64,64] = 0;
+	reg[0,64] = 0;
+@endif
 }
 
 macro zext_zh(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[16,48] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[192,48] = 0;
+	reg[128,64] = 0;
+	reg[64,64] = 0;
+	reg[0,64] = 0;
+@endif
 }
 
 macro zext_zs(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[32,32] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[192,32] = 0;
+	reg[128,64] = 0;
+	reg[64,64] = 0;
+	reg[0,64] = 0;
+@endif
 }
 
 macro zext_zd(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[0,64] = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+@endif
 }
 
 macro zext_zq(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[0,64] = 0;
+	reg[64,64] = 0;
+@endif
 }
 
 macro zext_rb(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[8,56] = 0;
+@else
+	reg[0,56] = 0;
+@endif
 }
 
 macro zext_rh(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[16,48] = 0;
+@else
+	reg[0,48] = 0;
+@endif
 }
 
 macro zext_rs(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[32,32] = 0;
+@else
+	reg[0,32] = 0;
+@endif
 }
 
 # SECTION instructions
