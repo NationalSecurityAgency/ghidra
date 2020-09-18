@@ -2787,6 +2787,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 	/**
 	 * Remove a register parameter vs change the register on a register parameter.
+	 * 
 	 * @throws Exception
 	 */
 	@Test
@@ -2900,7 +2901,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 	}
 
 	/**
-	 * Remove a register parameter vs change an attribute (name, dt, comment) of a register parameter.
+	 * Remove a register parameter vs change an attribute (name, dt, comment) of a register
+	 * parameter.
+	 * 
 	 * @throws Exception
 	 */
 	@Test
@@ -3009,7 +3012,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 	}
 
 	/**
-	 * Remove a register parameter vs change an attribute (name, dt, comment) of a register parameter.
+	 * Remove a register parameter vs change an attribute (name, dt, comment) of a register
+	 * parameter.
+	 * 
 	 * @throws Exception
 	 */
 	@Test
@@ -3118,7 +3123,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 	}
 
 	/**
-	 * Remove a register parameter vs change an attribute (name, dt, comment) of a register parameter.
+	 * Remove a register parameter vs change an attribute (name, dt, comment) of a register
+	 * parameter.
+	 * 
 	 * @throws Exception
 	 */
 	@Test
@@ -3229,6 +3236,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 
 	/**
 	 * Remove a register parameter vs change the register on a register parameter.
+	 * 
 	 * @throws Exception
 	 */
 	@Test
@@ -3567,8 +3575,9 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 					func.getParameter(0).setName("NewName_0", SourceType.USER_DEFINED);
 
 					func = getExternalFunction(program, new String[] { "user32.dll", "grapes" });
-					func.getParameter(1).setDataType(new ArrayDataType(new ByteDataType(), 2, 1),
-						SourceType.USER_DEFINED);
+					func.getParameter(1)
+							.setDataType(new ArrayDataType(new ByteDataType(), 2, 1),
+								SourceType.USER_DEFINED);
 
 					func = getExternalFunction(program, new String[] { "user32.dll", "berries" });
 					func.getParameter(0).setComment("My sample comment.");
@@ -3633,7 +3642,7 @@ public class ExternalFunctionMergeManagerTest extends AbstractExternalMergerTest
 		assertEquals("r12", parameters[0].getRegister().getName());
 		assertTrue(new DWordDataType().isEquivalent(parameters[0].getDataType()));
 		assertEquals("C2", parameters[1].getName());
-		assertEquals("r11", parameters[1].getRegister().getName());
+		assertEquals("r11l", parameters[1].getRegister().getName());
 		assertTrue(
 			new ArrayDataType(new ByteDataType(), 2, 1).isEquivalent(parameters[1].getDataType()));
 		localVariables = func.getLocalVariables();
