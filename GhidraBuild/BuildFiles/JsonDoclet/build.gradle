@@ -4,9 +4,7 @@ eclipse.project.name = '_JsonDoclet'
 apply plugin: 'java'
 
 dependencies {
-	compile('com.googlecode.json-simple:json-simple:1.1.1') {
-		exclude group: 'junit', module: 'junit'
-	}
+	compile "com.google.code.gson:gson:2.8.6"
 }
 
 rootProject.createJsondocs.dependsOn jar
