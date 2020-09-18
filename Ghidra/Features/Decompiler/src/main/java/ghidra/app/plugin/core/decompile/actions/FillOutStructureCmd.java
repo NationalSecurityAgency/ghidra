@@ -75,8 +75,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	private TaskMonitor monitor;
 	private PluginTool tool;
 
-	private List<PcodeOp> storePcodeOps = new ArrayList<PcodeOp>();
-	private List<PcodeOp> loadPcodeOps = new ArrayList<PcodeOp>();
+	private List<OffsetPcodeOpPair> storePcodeOps = new ArrayList<OffsetPcodeOpPair>();
+	private List<OffsetPcodeOpPair> loadPcodeOps = new ArrayList<OffsetPcodeOpPair>();
 
 	/**
 	 * Constructor.
@@ -207,22 +207,23 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Retrieve the pcodeOps that are used to store data into the variable
+	 * Retrieve the offset/pcodeOp pairs that are used to store data into the variable
 	 * the FillInStructureCmd was trying to create a structure on.
 	 * @return the pcodeOps doing the storing to the associated variable
 	 */
-	public List<PcodeOp> getStorePcodeOps() {
+	public List<OffsetPcodeOpPair> getStorePcodeOps() {
 		return storePcodeOps;
 	}
 
 	/**
-	 * Retrieve the pcodeOps that are used to load data from the variable
+	 * Retrieve the offset/pcodeOp pairs that are used to load data from the variable
 	 * the FillInStructureCmd was trying to create a structure on.
 	 * @return the pcodeOps doing the loading from the associated variable
 	 */
-	public List<PcodeOp> getLoadPcodeOps() {
+	public List<OffsetPcodeOpPair> getLoadPcodeOps() {
 		return loadPcodeOps;
 	}
+
 
 	/**
 	 * Retrieve the (likely) storage address for a function parameter given its index
@@ -690,8 +691,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 						outDt = getDataTypeTraceForward(output);
 						componentMap.addDataType(currentRef.offset, outDt);
 
-						if (outDt != null && !loadPcodeOps.contains(pcodeOp)) {
-							loadPcodeOps.add(pcodeOp);
+						if (outDt != null) {
+							loadPcodeOps.add(new OffsetPcodeOpPair(currentRef.offset, pcodeOp));
 						}
 
 						break;
@@ -704,8 +705,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 						outDt = getDataTypeTraceBackward(inputs[2]);
 						componentMap.addDataType(currentRef.offset, outDt);
 
-						if (outDt != null && !storePcodeOps.contains(pcodeOp)) {
-							storePcodeOps.add(pcodeOp);
+						if (outDt != null) {
+							storePcodeOps.add(new OffsetPcodeOpPair(currentRef.offset, pcodeOp));
 						}
 
 						break;
@@ -775,5 +776,27 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		}
 		todoList.add(new PointerRef(output, offset));
 		doneList.add(output);
+	}
+
+	/**
+	 * Class to create pair between an offset and its related PcodeOp
+	 */
+	static public class OffsetPcodeOpPair {
+
+		private Long offset;
+		private PcodeOp pcodeOp;
+
+		public OffsetPcodeOpPair(Long offset, PcodeOp pcodeOp) {
+			this.offset = offset;
+			this.pcodeOp = pcodeOp;
+		}
+
+		public Long getOffset() {
+			return offset;
+		}
+
+		public PcodeOp getPcodeOp() {
+			return pcodeOp;
+		}
 	}
 }
