@@ -1191,12 +1191,12 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		Parameter parameter1 = orangesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameter1.getDataType());
 		assertEquals("junk", parameter1.getName());
-		assertEquals("r0", parameter1.getRegister().getName());
+		assertEquals("r0l", parameter1.getRegister().getName());
 
 		Parameter parameter2 = orangesFunction.getParameter(1);
 		checkDataType(new WordDataType(), parameter2.getDataType());
 		assertEquals("punk", parameter2.getName());
-		assertEquals("r1", parameter2.getRegister().getName());
+		assertEquals("r1l", parameter2.getRegister().getName());
 	}
 
 	@Test
@@ -1311,12 +1311,12 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		Parameter parameter1 = orangesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameter1.getDataType());
 		assertEquals("junk", parameter1.getName());
-		assertEquals("r1", parameter1.getRegister().getName());
+		assertEquals("r1l", parameter1.getRegister().getName());
 
 		Parameter parameter2 = orangesFunction.getParameter(1);
 		checkDataType(new WordDataType(), parameter2.getDataType());
 		assertEquals("punk", parameter2.getName());
-		assertEquals("r0", parameter2.getRegister().getName());
+		assertEquals("r0l", parameter2.getRegister().getName());
 	}
 
 	@Test
@@ -1430,12 +1430,12 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		Parameter parameter1 = orangesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameter1.getDataType());
 		assertEquals("junk", parameter1.getName());
-		assertEquals("r0", parameter1.getRegister().getName());
+		assertEquals("r0l", parameter1.getRegister().getName());
 
 		Parameter parameter2 = orangesFunction.getParameter(1);
 		checkDataType(new WordDataType(), parameter2.getDataType());
 		assertEquals("punk", parameter2.getName());
-		assertEquals("r1", parameter2.getRegister().getName());
+		assertEquals("r1l", parameter2.getRegister().getName());
 	}
 
 	@Test
@@ -1900,12 +1900,12 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		Parameter parameter1 = orangesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameter1.getDataType());
 		assertEquals("junk", parameter1.getName());
-		assertEquals(resultProgram.getRegister("r0"), parameter1.getRegister());
+		assertEquals(resultProgram.getRegister("r0l"), parameter1.getRegister());
 
 		Parameter parameter2 = orangesFunction.getParameter(1);
 		checkDataType(new WordDataType(), parameter2.getDataType());
 		assertEquals("punk", parameter2.getName());
-		assertEquals(resultProgram.getRegister("r1"), parameter2.getRegister());
+		assertEquals(resultProgram.getRegister("r1l"), parameter2.getRegister());
 
 	}
 
@@ -2144,12 +2144,12 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 		Parameter parameter1 = orangesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameter1.getDataType());
 		assertEquals("junk", parameter1.getName());
-		assertEquals("r0", parameter1.getRegister().getName());
+		assertEquals("r0l", parameter1.getRegister().getName());
 
 		Parameter parameter2 = orangesFunction.getParameter(1);
 		checkDataType(new WordDataType(), parameter2.getDataType());
 		assertEquals("punk", parameter2.getName());
-		assertEquals("r1", parameter2.getRegister().getName());
+		assertEquals("r1l", parameter2.getRegister().getName());
 	}
 
 	@Test
