@@ -20,8 +20,9 @@ import static org.junit.Assert.*;
 import org.junit.Assert;
 
 import generic.test.AbstractGenericTest;
+
+import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.plugin.prototype.MicrosoftCodeAnalyzerPlugin.RttiAnalyzer;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.microsoft.DataApplyOptions;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
@@ -139,7 +140,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".rdata", "0x01003000", 0x2000);
 		builder.createMemory(".data", "0x01005000", 0x2000);
 		setupDTMService(builder.getProgram());
-		builder.setBytes("0x01005008", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
 		return builder;
 	}
 
@@ -157,7 +158,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".rdata", "0x101003000", 0x2000);
 		builder.createMemory(".data", "0x101005000", 0x2000);
 		setupDTMService(builder.getProgram());
-		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
 		return builder;
 	}
 
@@ -192,7 +193,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		builder.createMemory(".text", "0x101001000", 0x2000);
 		builder.createMemory(".rdata", "0x101003000", 0x2000);
 		builder.createMemory(".data", "0x101005000", 0x2000);
-		builder.setBytes("0x101005010", RttiAnalyzer.TYPE_INFO_STRING.getBytes());
+		builder.setBytes("0x101005010", RttiUtil.TYPE_INFO_STRING.getBytes());
 		return builder;
 	}
 

@@ -15,9 +15,7 @@
  */
 package ghidra.app.cmd.data;
 
-import java.util.List;
-
-import ghidra.app.plugin.prototype.MicrosoftCodeAnalyzerPlugin.RttiAnalyzer;
+import ghidra.app.cmd.data.rtti.RttiUtil;
 import ghidra.app.util.datatype.microsoft.DataValidationOptions;
 import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.app.util.demangler.DemangledObject;
@@ -31,9 +29,6 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.ProgramMemoryUtil;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 import mdemangler.*;
 import mdemangler.datatype.MDDataType;
 import mdemangler.datatype.complex.MDComplexType;
@@ -257,23 +252,11 @@ public class TypeDescriptorModel extends AbstractCreateDataTypeModel {
 		if (MSDataTypeUtils.is64Bit(program)) {
 			return true;
 		}
-		Memory memory = program.getMemory();
-		try {
-			List<MemoryBlock> dataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(
-				program, program.getMemory(), ".data", TaskMonitor.DUMMY);
-			for (MemoryBlock memoryBlock : dataBlocks) {
-				Address typeInfoAddress =
-					memory.findBytes(memoryBlock.getStart(), memoryBlock.getEnd(),
-						RttiAnalyzer.TYPE_INFO_STRING.getBytes(), null, true, TaskMonitor.DUMMY);
-				if (typeInfoAddress != null) {
-					return true; // RTTI has type info string in the data section.
-				}
-			}
+		Address address = RttiUtil.getTypeInfoTypeDescriptorAddress(program);
+		if (address == null) {
+			return false;
 		}
-		catch (CancelledException e) {
-			// Shouldn't happen since using dummy monitor. Do nothing.
-		}
-		return false;
+		return RttiUtil.isTypeInfoTypeDescriptorAddress(program, address);
 	}
 
 	/**
