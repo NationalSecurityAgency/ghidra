@@ -6,7 +6,7 @@
             endian="little"
             size="64"
             variant="RV64I"
-            version="1.0"
+            version="1.1"
             slafile="riscv.lp64.sla"
             processorspec="RV64I.pspec"
             id="RISCV:LE:64:RV64I">
@@ -18,7 +18,7 @@
             endian="little"
             size="64"
             variant="RV64IC"
-            version="1.0"
+            version="1.1"
             slafile="riscv.lp64.sla"
             processorspec="RV64IC.pspec"
             id="RISCV:LE:64:RV64IC">
@@ -30,7 +30,7 @@
             endian="little"
             size="64"
             variant="RV64G"
-            version="1.0"
+            version="1.1"
             slafile="riscv.lp64d.sla"
             processorspec="RV64G.pspec"
             id="RISCV:LE:64:RV64G">
@@ -42,7 +42,7 @@
             endian="little"
             size="64"
             variant="RV64GC"
-            version="1.0"
+            version="1.1"
             slafile="riscv.lp64d.sla"
             processorspec="RV64GC.pspec"
             id="RISCV:LE:64:RV64GC">
@@ -54,7 +54,7 @@
             endian="little"
             size="64"
             variant="default"
-            version="1.0"
+            version="1.1"
             slafile="riscv.lp64d.sla"
             processorspec="RV64GC.pspec"
             id="RISCV:LE:64:default">
@@ -66,7 +66,7 @@
             endian="little"
             size="32"
             variant="RV32I"
-            version="1.0"
+            version="1.1"
             slafile="riscv.ilp32.sla"
             processorspec="RV32I.pspec"
             id="RISCV:LE:32:RV32I">
@@ -78,7 +78,7 @@
             endian="little"
             size="32"
             variant="RV32IC"
-            version="1.0"
+            version="1.1"
             slafile="riscv.ilp32.sla"
             processorspec="RV32IC.pspec"
             id="RISCV:LE:32:RV32IC">
@@ -90,7 +90,7 @@
             endian="little"
             size="32"
             variant="RV32IMC"
-            version="1.0"
+            version="1.1"
             slafile="riscv.ilp32.sla"
             processorspec="RV32IMC.pspec"
             id="RISCV:LE:32:RV32IMC">
@@ -102,7 +102,7 @@
             endian="little"
             size="32"
             variant="RV32G"
-            version="1.0"
+            version="1.1"
             slafile="riscv.ilp32d.sla"
             processorspec="RV32G.pspec"
             id="RISCV:LE:32:RV32G">
@@ -114,7 +114,7 @@
             endian="little"
             size="32"
             variant="RV32GC"
-            version="1.0"
+            version="1.1"
             slafile="riscv.ilp32d.sla"
             processorspec="RV32GC.pspec"
             id="RISCV:LE:32:RV32GC">
@@ -126,7 +126,7 @@
             endian="little"
             size="32"
             variant="default"
-            version="1.0"
+            version="1.1"
             slafile="riscv.ilp32d.sla"
             processorspec="RV32GC.pspec"
             id="RISCV:LE:32:default">

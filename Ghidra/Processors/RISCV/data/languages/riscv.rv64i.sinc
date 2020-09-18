@@ -108,7 +108,7 @@
 
 
 # subw d,s,t 4000003b fe00707f SIMPLE (64, 0) 
-:subw rd,rs1W,rs2W is RV64 & RVI & rs1W & rs2W & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x20 & op1519!=0
+:subw rd,rs1W,rs2W is RV64 & RVI & rs1W & rs2W & rd & op0001=0x3 & op0204=0x6 & op0506=0x1 & funct3=0x0 & funct7=0x20
 {
 	local result = rs1W - rs2W;
 	rd = sext(result);

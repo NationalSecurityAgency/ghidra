@@ -9,7 +9,7 @@
 
 
 # addi d,s,j 00000013 0000707f SIMPLE (0, 0) 
-:addi rd,rs1,immI is RV32 & RVI & rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op2031!=0 & op1519!=0
+:addi rd,rs1,immI is RV32 & RVI & rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0
 {
 	rd = rs1 + immI;
 }
@@ -28,15 +28,18 @@
 }
 
 # li d,j 00000013 000ff07f ALIAS (0, 0)
-:li rd,immI is RV32 & RVI & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op1519=0x0 & op2031!=0
+:li rd,immI is RV32 & RVI & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op1519=0x0
 {
 	#TODO  alias of addi rd,zero,0x0 is an issue
-	#      choosing between: mv rd,zero  and  li rd,0x0
-	#ATTN  this implementation uses mv rd,zero
 	rd = immI;
 }
 
-
+# Resolve conflict between: mv rd,zero  and  li rd,0x0
+# ATTN  this implementation uses mv rd,zero
+:mv rd,rs1 is RV32 & RVI & rs1 & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x0 & op1531=0x0
+{
+	rd = rs1;
+}
 
 # and d,s,t 00007033 fe00707f SIMPLE (0, 0) 
 :and rd,rs1,rs2 is RV32 & RVI & rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x7 & funct7=0x0
@@ -119,7 +122,7 @@
 }
 
 # jal d,a 0000006f 0000007f JSR (0, 0) 
-:jal rd,immUJ is RV32 & RVI & immUJ & rd & op0711!=0 & op0001=0x3 & op0204=0x3 & op0506=0x3
+:jal rd,immUJ is RV32 & RVI & immUJ & rd & op0001=0x3 & op0204=0x3 & op0506=0x3
 {
 	rd = inst_next;
 	call immUJ;
@@ -133,7 +136,7 @@
 
 
 # jalr d,s,j 00000067 0000707f JSR (0, 0)
-:jalr rd,rs1,immI is RV32 & RVI & rs1 & immI & rd & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711!=0
+:jalr rd,rs1,immI is RV32 & RVI & rs1 & immI & rd & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
 {
 	local ea:$(XLEN) = (rs1 + immI) & ~1;
 	rd = inst_next;
@@ -141,14 +144,14 @@
 }
 
 # jr o(s) 00000067 00007fff BRANCH|ALIAS (0, 0)
-:jr immI(rs1) is RV32 & RVI & immI & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2031!=0
+:jr immI(rs1) is RV32 & RVI & immI & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x0
 {
 	local ea:$(XLEN) = (rs1 + immI) & ~1;
 	goto [ea];
 }
 
 # jr s 00000067 fff07fff BRANCH|ALIAS (0, 0)
-:jr rs1 is RV32 & RVI & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2031=0x0 & op1519>1
+:jr rs1 is RV32 & RVI & rs1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op2031=0x0
 {
 	local ea:$(XLEN) = rs1 & ~1;
 	goto [ea];
@@ -313,7 +316,7 @@
 
 
 # sub d,s,t 40000033 fe00707f SIMPLE (0, 0) 
-:sub rd,rs1,rs2 is RV32 & RVI & rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x0 & funct7=0x20 & op1519!=0
+:sub rd,rs1,rs2 is RV32 & RVI & rs1 & rs2 & rd & op0001=0x3 & op0204=0x4 & op0506=0x1 & funct3=0x0 & funct7=0x20
 {
 	rd = rs1 - rs2;
 }
@@ -347,7 +350,7 @@
 
 
 # xori d,s,j 00004013 0000707f SIMPLE (0, 0) 
-:xori rd,rs1,immI is RV32 & RVI & rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x4 & op2031!=0xfff
+:xori rd,rs1,immI is RV32 & RVI & rs1 & immI & rd & op0001=0x3 & op0204=0x4 & op0506=0x0 & funct3=0x4
 {
 	rd = rs1 ^ immI;
 }
