@@ -997,11 +997,11 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 		assertTrue(func.hasCustomVariableStorage());
 		assertTrue(new WordDataType().isEquivalent(func.getReturnType()));
 		// Calling convention will cause the storage to allocate 10 bytes.
-		assertEquals("r0:2", func.getReturn().getVariableStorage().toString()); // reflects dynamic storage 
+		assertEquals("r0l:2", func.getReturn().getVariableStorage().toString()); // reflects dynamic storage 
 
 		func = getFunction(resultProgram, "0x10029a1");
 		assertSameDataType(new Undefined2DataType(), func.getReturnType());
-		assertEquals("r1:2", func.getReturn().getVariableStorage().toString());
+		assertEquals("r1l:2", func.getReturn().getVariableStorage().toString());
 	}
 
 	@Test
@@ -1092,11 +1092,11 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 		Function func = getFunction(resultProgram, "0x1001979");
 		assertFalse(func.hasCustomVariableStorage());
 		assertTrue(new Undefined2DataType().isEquivalent(func.getReturnType()));
-		assertEquals("r12:2", func.getReturn().getVariableStorage().toString());
+		assertEquals("r12l:2", func.getReturn().getVariableStorage().toString());
 
 		func = getFunction(resultProgram, "0x10029a1");
 		assertSameDataType(new Undefined2DataType(), func.getReturnType());
-		assertEquals("r0:2", func.getReturn().getVariableStorage().toString());
+		assertEquals("r0l:2", func.getReturn().getVariableStorage().toString());
 	}
 
 	@Test
