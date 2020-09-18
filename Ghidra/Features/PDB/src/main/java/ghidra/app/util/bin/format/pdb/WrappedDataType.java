@@ -40,7 +40,7 @@ public class WrappedDataType {
 	 * @param isNoType if true wrapped type corresponds to NoType as
 	 * used by PDB forced to have a size of 1-byte.
 	 */
-	protected WrappedDataType(DataType dataType, boolean isZeroLengthArray, boolean isNoType) {
+	public WrappedDataType(DataType dataType, boolean isZeroLengthArray, boolean isNoType) {
 		this.dataType = dataType;
 		this.isZeroLengthArray = isZeroLengthArray;
 		this.isNoType = isNoType;

@@ -41,6 +41,12 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 		setSupportsOneTimeAnalysis();
 	}
 
+	@Override
+	public boolean rememberEnablementChangeAsUserPreference() {
+		return true;
+	}
+
+	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) {
 		BackgroundCommand cmd;
 
@@ -79,6 +85,7 @@ public class StackVariableAnalyzer extends AbstractAnalyzer {
 			"Create Function Parameter stack variables and references");
 	}
 
+	@Override
 	public void optionsChanged(Options options, Program program) {
 		doNewStackAnalysis =
 			options.getBoolean(GhidraLanguagePropertyKeys.USE_NEW_FUNCTION_STACK_ANALYSIS,

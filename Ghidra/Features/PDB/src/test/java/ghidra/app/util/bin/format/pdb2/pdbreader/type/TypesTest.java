@@ -26,6 +26,7 @@ import generic.test.AbstractGenericTest;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.RegisterMsSymbol;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 //TODO: not sure if ST variety should get putPadding() or putAlign()
 
@@ -99,8 +100,9 @@ public class TypesTest extends AbstractGenericTest {
 			substringListMsType1 = dummyPdb700.addItemRecord(item);
 		}
 		catch (Exception e) {
-			Msg.error(null, "Error in static initialization of test", e);
-			assert false;
+			String msg = "Error in static initialization of testt: " + e;
+			Msg.error(null, msg);
+			throw new AssertException(msg);
 		}
 	}
 

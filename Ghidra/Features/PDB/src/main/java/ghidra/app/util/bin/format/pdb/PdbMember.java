@@ -21,7 +21,7 @@ import ghidra.util.exception.CancelledException;
  * <code>PdbMember</code> convey PDB member information used for datatype
  * reconstruction.
  */
-abstract class PdbMember {
+public abstract class PdbMember {
 
 	final String memberName;
 	final String memberDataTypeName;

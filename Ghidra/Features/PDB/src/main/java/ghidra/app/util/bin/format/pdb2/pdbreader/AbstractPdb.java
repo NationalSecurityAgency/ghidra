@@ -619,7 +619,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		builder.append("\nversionNumber: ");
 		builder.append(versionNumber);
 		builder.append("\nsignature: ");
-		builder.append(signature);
+		builder.append(Integer.toHexString(signature));
 		builder.append("\nage: ");
 		builder.append(age);
 		return builder.toString();

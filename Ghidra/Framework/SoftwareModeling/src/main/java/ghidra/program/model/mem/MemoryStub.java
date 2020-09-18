@@ -32,21 +32,22 @@ import ghidra.util.task.TaskMonitor;
  * for all methods in the Memory interface. Any method that is needed for your test can then
  * be overridden so it can provide its own test implementation and return value.
  */
-public class MemoryStub implements Memory {
+public class MemoryStub extends AddressSet implements Memory {
+	byte[] myMemoryBytes;
+	MemoryBlock myMemoryBlock;
 
-	@Override
-	public boolean contains(Address addr) {
-		throw new UnsupportedOperationException();
+	public MemoryStub() {
+		this(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 });
 	}
 
-	@Override
-	public boolean contains(Address start, Address end) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean contains(AddressSetView rangeSet) {
-		throw new UnsupportedOperationException();
+	public MemoryStub(byte[] bytes) {
+		super();
+		this.myMemoryBytes = bytes;
+		AddressSpace space = new GenericAddressSpace("Mem", 32, AddressSpace.TYPE_RAM, 0);
+		Address start = space.getAddress(0);
+		Address end = space.getAddress(bytes.length - 1);
+		addRange(start, end);
+		myMemoryBlock = new MemoryBlockStub(start, end);
 	}
 
 	@Override
@@ -125,32 +126,7 @@ public class MemoryStub implements Memory {
 	}
 
 	@Override
-	public AddressSet intersect(AddressSetView view) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public AddressSet intersectRange(Address start, Address end) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public AddressSet union(AddressSetView addrSet) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public AddressSet subtract(AddressSetView addrSet) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public AddressSet xor(AddressSetView addrSet) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean hasSameAddresses(AddressSetView view) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -241,9 +217,8 @@ public class MemoryStub implements Memory {
 
 	@Override
 	public MemoryBlock createByteMappedBlock(String name, Address start, Address mappedAddress,
-			long length, ByteMappingScheme byteMappingScheme, boolean overlay)
-			throws LockException, MemoryConflictException, AddressOverflowException,
-			IllegalArgumentException {
+			long length, ByteMappingScheme byteMappingScheme, boolean overlay) throws LockException,
+			MemoryConflictException, AddressOverflowException, IllegalArgumentException {
 		throw new UnsupportedOperationException();
 	}
 

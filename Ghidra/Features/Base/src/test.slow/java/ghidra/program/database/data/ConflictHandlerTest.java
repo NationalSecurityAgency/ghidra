@@ -395,6 +395,122 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 			struct1a_pathname, struct1b_pathname);
 	}
 
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the aligned version is chosen
+	 * over the unaligned version.
+	 * <p>
+	 * Success is the aligned version is chosen over the unaligned version.
+	 */
+	@Test
+	public void testChooseNewAlignedOverExistingUnalignedWhenAllElseIsEqualForEmptyStructures() {
+		// Unaligned exists first.
+		Structure empty1Unaligned = new StructureDataType(root, "empty1", 0, dataMgr);
+		Composite empty1AlignedToAdd = (Composite) empty1Unaligned.copy(dataMgr);
+		empty1AlignedToAdd.setInternallyAligned(true);
+
+		String empty1UnalignedString = empty1Unaligned.toString();
+		String empty1AlignedToAddString = empty1AlignedToAdd.toString();
+
+		Structure empty1AddResult = (Structure) dataMgr.addDataType(empty1AlignedToAdd,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		String empty1AddResultString = empty1AddResult.toString();
+		assertEquals(empty1AlignedToAddString, empty1AddResultString);
+		assertNotEquals(empty1UnalignedString, empty1AddResultString);
+	}
+
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the aligned version is chosen
+	 * over the unaligned version.
+	 * <p>
+	 * Success is the aligned version is chosen over the unaligned version.
+	 */
+	@Test
+	public void testChooseNewAlignedOverExistingUnalignedWhenAllElseIsEqualForNonEmptyStructures() {
+		// Unaligned exists first.
+		StructureDataType struct1Unaligned = createPopulated(dataMgr);
+		Composite struct1AlignedToAdd = (Composite) struct1Unaligned.copy(dataMgr);
+		struct1AlignedToAdd.setInternallyAligned(true);
+
+		String struct1UnalignedString = struct1Unaligned.toString();
+		String struct1AlignedToAddString = struct1AlignedToAdd.toString();
+
+		Structure struct1AddResult = (Structure) dataMgr.addDataType(struct1AlignedToAdd,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		String struct1AddResultString = struct1AddResult.toString();
+		assertEquals(struct1AlignedToAddString, struct1AddResultString);
+		assertNotEquals(struct1UnalignedString, struct1AddResultString);
+	}
+
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the new unaligned version is
+	 * chosen over the existing unaligned version.
+	 * <p>
+	 * Success is the new unaligned version is chosen over the existing aligned version.
+	 */
+	// TODO: consider whether we want to change the logic of the conflict handler to favor
+	//  aligned over unaligned.
+	@Test
+	public void testChooseNewUnalignedOverExistingAlignedWhenAllElseIsEqualForEmptyStructures() {
+
+		// Aligned exists first.
+		Structure empty2Aligned = new StructureDataType(root, "empty2", 0, dataMgr);
+		Composite empty2UnalignedToAdd = (Composite) empty2Aligned.copy(dataMgr);
+		// aligning only after making unaligned copy.
+		empty2Aligned.setInternallyAligned(true);
+
+		String empty2AlignedString = empty2Aligned.toString();
+		String empty2UnalignedToAddString = empty2UnalignedToAdd.toString();
+
+		Structure empty2AddResult = (Structure) dataMgr.addDataType(empty2UnalignedToAdd,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		String empty2AddResultString = empty2AddResult.toString();
+		assertEquals(empty2UnalignedToAddString, empty2AddResultString);
+		assertNotEquals(empty2AlignedString, empty2AddResultString);
+	}
+
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the new unaligned version is
+	 * chosen over the existing aligned version.
+	 * <p>
+	 * Success is the new unaligned version is chosen over the existing aligned version.
+	 */
+	// TODO: consider whether we want to change the logic of the conflict handler to favor
+	//  aligned over unaligned.
+	@Test
+	public void testChooseNewUnalignedOverExistingAlignedWhenAllElseIsEqualForNonEmptyStructures() {
+
+		// Aligned exists first.
+		StructureDataType struct2Aligned = createPopulated(dataMgr);
+		Composite struct2UnalignedToAdd = (Composite) struct2Aligned.copy(dataMgr);
+		// aligning only after making unaligned copy.
+		struct2Aligned.setInternallyAligned(true);
+
+		String struct2AlignedString = struct2Aligned.toString();
+		String struct2UnalignedToAddString = struct2UnalignedToAdd.toString();
+
+		Structure struct2AddResult = (Structure) dataMgr.addDataType(struct2UnalignedToAdd,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+		String struct2AddResultString = struct2AddResult.toString();
+		assertEquals(struct2UnalignedToAddString, struct2AddResultString);
+		assertNotEquals(struct2AlignedString, struct2AddResultString);
+	}
+
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * conflict handler to be sure that, if all else is the same, the aligned version is chosen
+	 * over the unaligned version.
+	 * <p>
+	 * Success is the aligned version is chosen over the unaligned version.
+	 */
 	@Test
 	public void testResolveDataTypeNonStructConflict() throws Exception {
 		DataTypeManager dtm = new StandAloneDataTypeManager("Test");

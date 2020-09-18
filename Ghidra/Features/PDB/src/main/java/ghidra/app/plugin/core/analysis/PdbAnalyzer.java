@@ -64,6 +64,11 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	}
 
 	@Override
+	public boolean rememberEnablementChangeAsUserPreference() {
+		return true;
+	}
+
+	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) {
 
 		if (PdbParser.isAlreadyLoaded(program)) {
@@ -75,6 +80,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 		if (pdb == null) {
 			return false;
 		}
+		Msg.info(this, getClass().getSimpleName() + " configured to use: " + pdb.getAbsolutePath());
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		return parsePdb(pdb, program, mgr, monitor, log);

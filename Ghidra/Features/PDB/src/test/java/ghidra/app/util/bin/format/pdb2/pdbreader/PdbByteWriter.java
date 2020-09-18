@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import ghidra.util.LittleEndianDataConverter;
+import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -250,7 +251,11 @@ public class PdbByteWriter {
 	 * @param data4 A byte[8], as fourth constituent piece.
 	 */
 	public void putGUID(int data1, short data2, short data3, byte[] data4) {
-		assert data4.length == 8;
+		if (data4.length != 8) {
+			String msg = "GUID invalid byte[] size... terminating";
+			Msg.error(this, msg);
+			throw new AssertException(msg);
+		}
 		putInt(data1);
 		putShort(data2);
 		putShort(data3);

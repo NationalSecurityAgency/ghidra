@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import java.util.Objects;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**

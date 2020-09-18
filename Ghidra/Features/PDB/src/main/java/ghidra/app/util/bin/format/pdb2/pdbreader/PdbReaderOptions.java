@@ -41,8 +41,6 @@ public class PdbReaderOptions extends Exception {
 	private Charset oneByteCharset;
 	private Charset twoByteCharset;
 
-	private boolean debug;
-
 	/**
 	 * Constructor.
 	 */
@@ -114,6 +112,14 @@ public class PdbReaderOptions extends Exception {
 	}
 
 	/**
+	 * Returns the name of the Wchar Charset in use for PDB processing.
+	 * @return the name of the Wchar Charset.
+	 */
+	public String getWideCharCharsetName() {
+		return twoByteCharsetName;
+	}
+
+	/**
 	 * Returns the one-byte Charset in use for PDB processing.
 	 * @return the Charset.
 	 */
@@ -130,21 +136,11 @@ public class PdbReaderOptions extends Exception {
 	}
 
 	/**
-	 * Enable/disable developmental debug.
-	 * @param debug {@code true} to turn debug on; default is {@code false}.
-	 * @return this, so options can be daisy-chained.
+	 * Returns the Wchar Charset in use for PDB processing.
+	 * @return the Wchar Charset.
 	 */
-	public PdbReaderOptions setDebug(boolean debug) {
-		this.debug = debug;
-		return this;
-	}
-
-	/**
-	 * Returns true if debug is "on."
-	 * @return {@code true} if debug is "on."
-	 */
-	public boolean isDebug() {
-		return debug;
+	public Charset getWideCharCharset() {
+		return twoByteCharset;
 	}
 
 }
