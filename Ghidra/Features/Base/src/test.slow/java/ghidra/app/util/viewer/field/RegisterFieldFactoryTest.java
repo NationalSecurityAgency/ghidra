@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -79,7 +80,7 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 		Address end = function.getBody().getMaxAddress();
 
 		ProgramContext pc = program.getProgramContext();
-		List<Register> nonContextRegs = getNonContextRegisters(pc);
+		List<Register> nonContextRegs = getNonContextBaseRegisters(pc);
 
 		int transactionID = program.startTransaction("test");
 		int count = 0;
@@ -104,10 +105,10 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(count, tf.getNumRows());
 	}
 
-	private List<Register> getNonContextRegisters(ProgramContext pc) {
+	private List<Register> getNonContextBaseRegisters(ProgramContext pc) {
 		List<Register> nonContextRegs = new ArrayList<Register>();
 		for (Register reg : pc.getRegisters()) {
-			if (!reg.isProcessorContext()) {
+			if (!reg.isProcessorContext() && reg.isBaseRegister()) {
 				nonContextRegs.add(reg);
 			}
 		}
@@ -122,7 +123,7 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 		Address entry = function.getEntryPoint();
 
 		ProgramContext pc = program.getProgramContext();
-		List<Register> regs = getNonContextRegisters(pc);
+		List<Register> regs = getNonContextBaseRegisters(pc);
 
 		int count = 0;
 		int transactionID = program.startTransaction("test");
@@ -164,7 +165,7 @@ public class RegisterFieldFactoryTest extends AbstractGhidraHeadedIntegrationTes
 		Address entry = function.getEntryPoint();
 
 		ProgramContext pc = program.getProgramContext();
-		List<Register> regs = getNonContextRegisters(pc);
+		List<Register> regs = getNonContextBaseRegisters(pc);
 		Collections.sort(regs, new RegComparator());
 		int transactionID = program.startTransaction("test");
 		try {
