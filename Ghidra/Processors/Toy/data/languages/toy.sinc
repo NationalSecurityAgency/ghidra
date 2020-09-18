@@ -48,4 +48,4 @@ define register offset=0x1000 size=$(HALFSIZE) [
        r0h  r0l  r1h  r1l  r2h  r2l  r3h  r3l  r4h  r4l  r5h  r5l  r6h  r6l  r7h  r7l
        r8h  r8l  r9h  r9l r10h r10l r11h r11l r12h r12l  sph  spl  lrh  lrl  pch  pcl
 ];
-#endif # ENDIAN
+@endif # ENDIAN
