@@ -24,13 +24,13 @@ import utilities.util.reflection.ReflectionUtilities;
 
 public abstract class Option {
 	private final String name;
-	private final Object defaultValue;
+	private Object defaultValue;
 	private boolean isRegistered;
-	private final String description;
-	private final HelpLocation helpLocation;
-	private final OptionType optionType;
+	private String description;
+	private HelpLocation helpLocation;
+	private OptionType optionType;
 
-	private final PropertyEditor propertyEditor;
+	private PropertyEditor propertyEditor;
 	private String inceptionInformation;
 
 	protected Option(String name, OptionType optionType, String description,
@@ -46,6 +46,25 @@ public abstract class Option {
 		if (!isRegistered) {
 			recordInception();
 		}
+	}
+
+	/**
+	 * Update any null registration information using the specified updated information.
+	 * This assumption is that multiple registrations for the same option may be partial
+	 * but will be compatible.  No compatibility checks are performed between existing
+	 * registration and update registration info.
+	 * @param updatedDescription updated option description (will be ignored if description previously set)
+	 * @param updatedHelp updated option help location (will be ignored if help location previously set)
+	 * @param updatedDefaultValue updated option default-value (will be ignored if default-value previously set)
+	 * @param updatedEditor updated option editor (will be ignored if editor previously set)
+	 */
+	final void updateRegistration(String updatedDescription, HelpLocation updatedHelp,
+			Object updatedDefaultValue, PropertyEditor updatedEditor) {
+		description = description != null ? description : updatedDescription;
+		helpLocation = helpLocation != null ? helpLocation : updatedHelp;
+		defaultValue = defaultValue != null ? defaultValue : updatedDefaultValue;
+		propertyEditor = propertyEditor != null ? propertyEditor : updatedEditor;
+		isRegistered = true;
 	}
 
 	public abstract Object getCurrentValue();
