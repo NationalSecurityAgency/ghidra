@@ -35,6 +35,10 @@
 define endian=little;
 define alignment=4;
 
+# Unlike the above, these are preprocessor macros.  Use them with e.g. $(TAG_GRANULE) in SLEIGH statements.
+@define LOG2_TAG_GRANULE "4"
+@define TAG_GRANULE "16"
+
 # SECTION registers
 
 define space ram type=ram_space size=8 default;
@@ -51,8 +55,6 @@ define register offset=0x0000 size=8 [ pc sp ];
 define register offset=0x0000 size=4 [ _ _ _ wsp ];
 @endif
 
-define register offset=0x0010 size=8 [ NZCV ];
-
 define register offset=0x0100 size=1 [ NG ZR CY OV shift_carry tmpCY tmpOV tmpNG tmpZR ];
 
 define register offset=0x0200 size=4 [ glob_mask32 ];
@@ -65,8 +67,9 @@ define register offset=0x0300 size=8 [ VecMemAddr VectorSelem ];
 define register offset=0x0310 size=4 [ VecRegAddr ];
 
 # Special Purpose Registers - most of these are really 1 bit and part
-# of a status register, however they all need to be consistent 23
-# registers 0xb8 bytes
+# of a status register, however they all need to be consistent
+
+# 26 registers 0xd0 bytes
 
 define register offset=0x1000 size=8
 [
@@ -95,11 +98,12 @@ define register offset=0x1000 size=8
 	spsr_hyp
 	uao
 	pan
+	tco
 ];
 
 # System Registers
 
-# 200 registers 0x320 bytes
+# 202 registers 0x330 bytes
 define register offset=0x1100 size=8
 [
 	midr_el1
@@ -302,7 +306,14 @@ define register offset=0x1100 size=8
 	ifsr32_el2
 	teehbr32_el1
 	sder32_el3
+	gmid_el1
+	gcr_el1
+	ssbs
 ];
+
+# bitrange definitions are [<least significant bit>,<size>]
+
+define bitrange gcr_el1.exclude=gcr_el1[0,16];
 
 # Debug Registers
 # 82 registers 0x290 bytes
@@ -981,6 +992,9 @@ define register offset=0x5000 size=1
 
 # SECTION token fields and context variables
 
+# "noflow" limits register changes to a single instruction (or a highlighted region) rather than following control flow.
+# This allows the select-clear-SetRegister-disassemble procedure to be done without affecting
+# any instructions other than those that are selected.
 define context contextreg
 	ImmS_ImmR_TestSet = (0,0)
 	ImmS_LT_ImmR = (1,1)
@@ -988,6 +1002,10 @@ define context contextreg
 	ImmS_LT_ImmR_minus_1 = (3,3)
 	ImmS_ne_1f = (4,4)
 	ImmS_ne_3f = (5,5)
+	ShowPAC = (21,21) noflow
+	PAC_clobber = (22,22) noflow
+	ShowBTI = (23,23) noflow
+	ShowMemTag = (24,24) noflow
 ;
 
 define token instrAARCH64 (32)
@@ -1159,6 +1177,7 @@ define token instrAARCH64 (32)
 	b_0007 = (0,7)
 	b_0009 = (0,9)
 	b_0011 = (0,11)
+	b_0015 = (0,15)
 	b_0027 = (0,27)
 	b_0031 = (0,31)
 	b_0102 = (1,2)
@@ -1218,6 +1237,7 @@ define token instrAARCH64 (32)
 	b_1217 = (12,17)
 	b_1220 = (12,20)
 	b_1223 = (12,23)
+	b_1229 = (12,29)
 	b_1230 = (12,30)
 	b_1231 = (12,31)
 	b_1313 = (13,13)
@@ -1232,6 +1252,8 @@ define token instrAARCH64 (32)
 	b_1431 = (14,31)
 	b_1515 = (15,15)
 	b_1517 = (15,17)
+	b_1520 = (15,20)
+	b_1531 = (15,31)
 	b_1616 = (16,16)
 	b_1617 = (16,17)
 	b_1618 = (16,18)
@@ -1239,6 +1261,8 @@ define token instrAARCH64 (32)
 	b_1620 = (16,20)
 	b_1621 = (16,21)
 	b_1627 = (16,27)
+	b_1629 = (16,29)
+	b_1631 = (16,31)
 	b_1718 = (17,18)
 	b_1719 = (17,19)
 	b_1720 = (17,20)
@@ -1912,6 +1936,9 @@ Rn_GPR64xsp: sp is aa_Xn=31 & sp { export sp; }
 Rm_GPR64xsp: aa_Xm is aa_Xm { export aa_Xm; }
 Rm_GPR64xsp: sp is aa_Xm=31 & sp { export sp; }
 
+Rt_GPR64xsp: aa_Xt is aa_Xt { export aa_Xt; }
+Rt_GPR64xsp: sp is aa_Xt=31 & sp { export sp; }
+
 Rs_GPR32: Rm_GPR32 is Rm_GPR32 { export Rm_GPR32; }
 Rs_GPR64: Rm_GPR64 is Rm_GPR64 { export Rm_GPR64; }
 
@@ -1922,6 +1949,7 @@ Rm_fpz64: "#0.0" is Rm { tmp:8 = int2float(0:8); export tmp; }
 Rd_VPR128.16B: vRd_VPR128^".16B" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 Rd_VPR128.8H: vRd_VPR128^".8H" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 Rd_VPR128.4S: vRd_VPR128^".4S" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
+Rd_VPR128.2S: vRd_VPR128^".2S" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 Rd_VPR128.2D: vRd_VPR128^".2D" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 Rd_VPR128.1Q: vRd_VPR128^".1Q" is Rd_VPR128 & vRd_VPR128 { export Rd_VPR128; }
 
@@ -1929,13 +1957,18 @@ Rn_VPR128.16B: vRn_VPR128^".16B" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 Rnn_VPR128.16B: vRnn_VPR128^".16B" is Rnn_VPR128 & vRnn_VPR128 { export Rnn_VPR128; }
 Rnnn_VPR128.16B: vRnnn_VPR128^".16B" is Rnnn_VPR128 & vRnnn_VPR128 { export Rnnn_VPR128; }
 Rnnnn_VPR128.16B: vRnnnn_VPR128^".16B" is Rnnnn_VPR128 & vRnnnn_VPR128 { export Rnnnn_VPR128; }
+
+Rn_VPR128.8B: vRn_VPR128^".8B" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 Rn_VPR128.8H: vRn_VPR128^".8H" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 Rn_VPR128.4S: vRn_VPR128^".4S" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
+Rn_VPR128.4H: vRn_VPR128^".4H" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 Rn_VPR128.2D: vRn_VPR128^".2D" is Rn_VPR128 & vRn_VPR128 { export Rn_VPR128; }
 
+Rm_VPR128.8B: vRm_VPR128^".8B" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 Rm_VPR128.16B: vRm_VPR128^".16B" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 Rm_VPR128.8H: vRm_VPR128^".8H" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 Rm_VPR128.4S: vRm_VPR128^".4S" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
+Rm_VPR128.4H: vRm_VPR128^".4H" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 Rm_VPR128.2D: vRm_VPR128^".2D" is Rm_VPR128 & vRm_VPR128 { export Rm_VPR128; }
 
 Ra_VPR128.16B: vRa_VPR128^".16B" is Ra_VPR128 & vRa_VPR128 { export Ra_VPR128; }
@@ -2047,6 +2080,7 @@ Imm_shr_imm64: "#"^val is b_1922 & b_1618 [ val = (64*2) - (b_1922 << 3 | b_1618
 
 NZCVImm_uimm4: "#"^b_0003 is b_0003 { export *[const]:1 b_0003; }
 UImm5: "#"^b_1620 is b_1620 { export *[const]:4 b_1620; }
+UImm6: "#"^b_1520 is b_1520 { export *[const]:4 b_1520; }
 
 CRm_uimm4: "#"^b_0811 is b_0811 { export *[const]:1 b_0811; }
 
@@ -2187,13 +2221,9 @@ addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=2 & b_2729=7 & v & b_2425=1 & b_2323
 addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=3 & b_2729=7 & v & b_2425=1 & b_2323 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
 addrUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr=0 & b_2729=7 & v=1 & b_2425=1 & b_2323=1 & Rn_GPR64xsp & imm12=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
 
-# unsigned Immediate
-addr_unscUIMM: "["^Rn_GPR64xsp, "#"^simm9^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9 & b_1011=0 { tmp:8 = Rn_GPR64xsp + simm9; export tmp; }
-addr_unscUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9=0 & b_1011=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
-
-# unsigned Immediate Unpriv
-addr_unscUIMM: "["^Rn_GPR64xsp, "#"^simm9^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9 & b_1011=2 { tmp:8 = Rn_GPR64xsp + simm9; export tmp; }
-addr_unscUIMM: "["^Rn_GPR64xsp^"]" is size.ldstr & b_2729=7 & b_2425=0 & Rn_GPR64xsp & b_2121=0 & simm9=0 & b_1011=2 { tmp:8 = Rn_GPR64xsp; export tmp; }
+# Address Reg + signed offset -256 to 255
+addr_SIMM9: "["^Rn_GPR64xsp, "#"^simm9^"]" is Rn_GPR64xsp & simm9 { tmp:8 = Rn_GPR64xsp + simm9; export tmp; }
+addr_SIMM9: "["^Rn_GPR64xsp^"]" is Rn_GPR64xsp & simm9=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
 
 addrRegShift64: "#"^val is size.ldstr=0 & v=0 & opt & b_1212=1 [ val = 0 & 0xff; ] { export *[const]:8 val; }
 addrRegShift64: "" is size.ldstr=0 & v=0 & opt & b_1212=0 { export 0:8; }
@@ -2225,10 +2255,10 @@ addrExtendRegShift64: Rm_GPR64 is Rm_GPR64 & aa_extreg_option=7 & aa_extreg_imm3
 addrIndexed: addrUIMM is size.ldstr & b_2729=7 & b_2425=1 & addrUIMM { export addrUIMM; }
 
 # unsinged offset unscaled immediate
-addrIndexed: addr_unscUIMM is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=0 & addr_unscUIMM { export addr_unscUIMM; }
+addrIndexed: addr_SIMM9 is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=0 & addr_SIMM9 { export addr_SIMM9; }
 
 # register unpriviledged
-addrIndexed: addr_unscUIMM is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=2 & addr_unscUIMM { export addr_unscUIMM; }
+addrIndexed: addr_SIMM9 is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & opc.indexmode=2 & addr_SIMM9 { export addr_SIMM9; }
 
 # post indexed wback
 addrIndexed: "["^Rn_GPR64xsp^"]", "#"^simm9
@@ -2255,14 +2285,29 @@ is size.ldstr & b_2729=7 & b_2425=0 & b_2121=0 & Rn_GPR64xsp & simm9 & opc.index
 	export Rn_GPR64xsp;
 }
 
-# post indexed wback (with S)
+# For LDRAA/LDRAB
+
+# no offset (with S)
+addrIndexed: "["^Rn_GPR64xsp^"]"
+is size.ldstr & b_2729=7 & b_2425=0 & b_22=0 & b_2121=1 & Rn_GPR64xsp & simm9=0 & opc.indexmode=1
+{
+	export Rn_GPR64xsp;
+}
+
+# offset (with S)
 addrIndexed: "["^Rn_GPR64xsp, "#"^sim^"]"
 is size.ldstr & b_2729=7 & b_2425=0 & b_22 & b_2121=1 & Rn_GPR64xsp & simm9 & opc.indexmode=1
 [ sim = (b_22 * (-1<<9) | (simm9 & 0x1ff)) << 3; ]
 {
-	tmp:8 = Rn_GPR64xsp;
-	Rn_GPR64xsp = Rn_GPR64xsp + simm9;
+	tmp:8 = Rn_GPR64xsp + sim;
 	export tmp;
+}
+
+# no offset writeback (with S)
+addrIndexed: "["^Rn_GPR64xsp^"]!"
+is size.ldstr & b_2729=7 & b_2425=0 & b_22=0 & b_2121=1 & Rn_GPR64xsp & simm9=0 & opc.indexmode=3
+{
+	export Rn_GPR64xsp;
 }
 
 # pre indexed wback (with S)
@@ -2320,6 +2365,97 @@ addrPairIndexed: "["^Rn_GPR64xsp, "#"^addrPairScale^"]!"
 is b_2729=0b101 & b_2325=0b011 & Rn_GPR64xsp & addrPairScale
 {
 	Rn_GPR64xsp = Rn_GPR64xsp + addrPairScale;
+	export Rn_GPR64xsp;
+}
+
+#### Undefined behavior on writeback ####
+#
+# Most instructions with writeback have unpredictable behavior when their address input register Rn
+#  is the same register as another input, e.g. Rt.  For example, LDR x1, [x1, 0x8]! has unpredictable
+#  behavior in the ARM spec.  Similarly, STR x5, [x5], 0x28 has unpredictable behavior in the spec
+#  (but with slightly different possibilities for what forms that unpredictable behavior might take!).
+#
+# One of the few exceptions is STGP, which has no mention of unpredictable behavior.  In such cases,
+#  it's important to read all registers before addrGranuleIndexed or addrPairGranuleIndexed takes effect,
+#  or pre-index writeback will modify the register values used if Rn is the same register as another R.
+#
+# This is an example of how to code a definition for an instruction with no unpredictable behavior:
+#{
+#	# save the initial register values
+#	data1:8 = Rt_GPR64;
+#	data2:8 = Rt2_GPR64;
+#
+#	build addrPairGranuleIndexed;  # may modify Rt or Rt2, so use data1/data2 instead afterward
+#
+#	...etc...
+#}
+
+OPTIONAL_XM: is Rm=0b11111 { export 0:8; }  # default to XZR if Xm is absent
+OPTIONAL_XM: ,Rm_GPR64 is Rm_GPR64 { export Rm_GPR64; }
+
+addr_granuleSIMM: "["^Rn_GPR64xsp, "#"^pimm^"]" is Rn_GPR64xsp & simm9 [ pimm = simm9 << $(LOG2_TAG_GRANULE); ] { tmp:8 = Rn_GPR64xsp + ( simm9 << $(LOG2_TAG_GRANULE) ); export tmp; }
+addr_granuleSIMM: "["^Rn_GPR64xsp^"]" is Rn_GPR64xsp & simm9=0 { tmp:8 = Rn_GPR64xsp; export tmp; }
+
+# signed offset
+addrGranuleIndexed: addr_granuleSIMM is opc.indexmode=2 & addr_granuleSIMM { export addr_granuleSIMM; }
+
+# post indexed wback
+addrGranuleIndexed: "["^Rn_GPR64xsp^"]", "#"^pimm
+is Rn_GPR64xsp & simm9 & opc.indexmode=1
+[ pimm = simm9 << $(LOG2_TAG_GRANULE); ] 
+{
+	tmp:8 = Rn_GPR64xsp;
+	Rn_GPR64xsp = Rn_GPR64xsp + pimm;
+	export tmp;
+}
+
+# pre indexed wback
+addrGranuleIndexed: "["^Rn_GPR64xsp, "#"^pimm^"]!"
+is Rn_GPR64xsp & simm9 & opc.indexmode=3
+[ pimm = simm9 << $(LOG2_TAG_GRANULE); ]
+{
+	Rn_GPR64xsp = Rn_GPR64xsp + pimm;
+	tmp:8 = Rn_GPR64xsp;
+	export tmp;
+}
+
+addrPairGranuleScale: pimm is simm7 [ pimm = simm7 << $(LOG2_TAG_GRANULE); ] { export *[const]:8 pimm; }
+
+# Scaled Offset
+addrPairGranuleSIMM: "["^Rn_GPR64xsp, "#"^addrPairGranuleScale^"]"
+is sf & Rn_GPR64xsp & addrPairGranuleScale & simm7
+{
+	tmp:8 = Rn_GPR64xsp + addrPairGranuleScale;
+	export tmp;
+}
+
+addrPairGranuleSIMM: "["^Rn_GPR64xsp^"]"
+is sf & Rn_GPR64xsp & addrPairGranuleScale & simm7=0
+{
+	tmp:8 = Rn_GPR64xsp;
+	export tmp;
+}
+
+
+# signed offset
+addrPairGranuleIndexed: addrPairGranuleSIMM
+is b_2729=0b101 & b_2325=0b010 & addrPairGranuleSIMM
+{ export addrPairGranuleSIMM; }
+
+# post indexed wback
+addrPairGranuleIndexed: "["^Rn_GPR64xsp^"]", "#"^addrPairGranuleScale
+is b_2729=0b101 & b_2325=0b001 & Rn_GPR64xsp & addrPairGranuleScale
+{
+	tmp:8 = Rn_GPR64xsp;
+	Rn_GPR64xsp = Rn_GPR64xsp + addrPairGranuleScale;
+	export tmp;
+}
+
+# pre indexed wback
+addrPairGranuleIndexed: "["^Rn_GPR64xsp, "#"^addrPairGranuleScale^"]!"
+is b_2729=0b101 & b_2325=0b011 & Rn_GPR64xsp & addrPairGranuleScale
+{
+	Rn_GPR64xsp = Rn_GPR64xsp + addrPairGranuleScale;
 	export Rn_GPR64xsp;
 }
 
@@ -2924,6 +3060,24 @@ define pcodeop DC_CVAP;
 define pcodeop DC_CVAU;
 define pcodeop DC_ISW;
 define pcodeop DC_IVAC;
+define pcodeop DC_IGVAC;
+define pcodeop DC_IGSW;
+define pcodeop DC_IGDVAC;
+define pcodeop DC_IGDSW;
+define pcodeop DC_CGSW;
+define pcodeop DC_CGDSW;
+define pcodeop DC_CIGSW;
+define pcodeop DC_CIGDSW;
+define pcodeop DC_GVA;
+define pcodeop DC_GZVA;
+define pcodeop DC_CGVAC;
+define pcodeop DC_CGDVAC;
+define pcodeop DC_CGVAP;
+define pcodeop DC_CGDVAP;
+define pcodeop DC_CGVADP;
+define pcodeop DC_CGDVADP;
+define pcodeop DC_CIGVAC;
+define pcodeop DC_CIGDVAC;
 define pcodeop DCPSInstruction;
 define pcodeop DC_ZVA;
 define pcodeop DRPSInstruction;
@@ -2950,6 +3104,7 @@ define pcodeop pacizb;
 define pcodeop SendEvent;
 define pcodeop SendEventLocally;
 define pcodeop SoftwareBreakpoint;
+define pcodeop SpeculationBarrier;
 define pcodeop SysOp_R;
 define pcodeop SysOp_W;
 define pcodeop TLBI_ALLE1;
@@ -2984,12 +3139,57 @@ define pcodeop TLBI_VMALLE1;
 define pcodeop TLBI_VMALLE1IS;
 define pcodeop TLBI_VMALLS12E1;
 define pcodeop TLBI_VMALLS12E1IS;
+define pcodeop UndefinedInstructionException;
 define pcodeop UnkSytemRegRead;
 define pcodeop UnkSytemRegWrite;
 define pcodeop WaitForEvent;
 define pcodeop WaitForInterrupt;
 define pcodeop xpac;
 define pcodeop Yield;
+
+# BTI and MemTag pseudo ops
+
+define pcodeop CopyPtrTag_AddToPtrTag_Exclude;  # a combination of the ARM spec's ChooseNonExcludedTag and AddressWithAllocationTag
+define pcodeop ValidCallTarget;
+define pcodeop ValidJumpTarget;  # jumps are valid regardless of the register holding the target
+define pcodeop ValidJumpTargetWhenDestIsX16OrX17;  # jumps are valid if the register holding the target is x16 or x17, e.g. "br x16"
+define pcodeop ValidJumpTargetIfPermittedBySCTLR;  # depending on EL and SCTLR[35,36], jumps using arbitrary registers may or may not be valid.
+define pcodeop ControlFlowPredictionRestrictionByContext;
+define pcodeop CachePrefetchPredictionRestrictionByContext;
+define pcodeop DataValuePredictionRestrictionByContext;
+define pcodeop RandomizePtrTag_Exclude;
+define pcodeop SetPtrTag;  # this could be implemented in pcode, but it would break the data flow of the original ptr value
+define pcodeop LoadMemTag;
+define pcodeop StoreMemTag;
+define pcodeop AlignmentFault;
+
+# BTI show/hide operations, which use pcodeops defined above
+
+# for BTI
+BTI_BTITARGETS: is b_0607=0 { }  # Not a valid target for jumps or calls
+BTI_BTITARGETS: "c" is ShowBTI=1 & b_0607=1 { ValidCallTarget(); ValidJumpTargetWhenDestIsX16OrX17(); }  # BR x16 is valid, BR x5 isn't
+BTI_BTITARGETS: "j" is ShowBTI=1 & b_0607=2 { ValidJumpTarget(); }
+BTI_BTITARGETS: "jc" is ShowBTI=1 & b_0607=3 { ValidJumpTarget(); ValidCallTarget(); }
+# hidden versions of the above; use to prevent ValidXXXXTarget calls from cluttering decompiled code in switch statements etc.
+BTI_BTITARGETS: "c" is ShowBTI=0 & b_0607=1 { }
+BTI_BTITARGETS: "j" is ShowBTI=0 & b_0607=2 { }
+BTI_BTITARGETS: "jc" is ShowBTI=0 & b_0607=3 { }
+
+# for BRK and HLT
+ALL_BTITARGETS: is ShowBTI=1 { ValidJumpTarget(); ValidCallTarget(); }
+ALL_BTITARGETS: is ShowBTI=0 { }
+
+# for PACIASP and PACIBSP
+PACIXSP_BTITARGETS: is ShowBTI=1 {
+	ValidCallTarget();
+	ValidJumpTargetWhenDestIsX16OrX17();
+	# global jump target in the following cases:
+	#  EL == 0 and SCTLR[35] == 0
+	#  EL != 0 and SCTLR[36] == 0
+	ValidJumpTargetIfPermittedBySCTLR();  # this doesn't seem important enough to clutter decompilations with a decision tree
+}
+PACIXSP_BTITARGETS: is ShowBTI=0 { }
+
 
 # These pseudo ops are used in neon
 
@@ -3034,6 +3234,13 @@ define pcodeop NEON_aesimc;
 define pcodeop NEON_aesmc;
 define pcodeop NEON_and;
 define pcodeop NEON_bcax;
+define pcodeop NEON_bfcvt;
+define pcodeop NEON_bfcvtn;
+define pcodeop NEON_bfcvtn2;
+define pcodeop NEON_bfdot;
+define pcodeop NEON_bfmlalb;
+define pcodeop NEON_bfmlalt;
+define pcodeop NEON_bfmmla;
 define pcodeop NEON_bic;
 define pcodeop NEON_bif;
 define pcodeop NEON_bit;
@@ -3205,6 +3412,7 @@ define pcodeop NEON_smlal2;
 define pcodeop NEON_smlsl;
 define pcodeop NEON_smlsl2;
 define pcodeop NEON_smov;
+define pcodeop NEON_smmla;
 define pcodeop NEON_smull;
 define pcodeop NEON_smull2;
 define pcodeop NEON_sqabs;
@@ -3258,6 +3466,7 @@ define pcodeop NEON_stur;
 define pcodeop NEON_sub;
 define pcodeop NEON_subhn;
 define pcodeop NEON_subhn2;
+define pcodeop NEON_sudot;
 define pcodeop NEON_suqadd;
 define pcodeop NEON_sxtl;
 define pcodeop NEON_sxtl2;
@@ -3291,6 +3500,7 @@ define pcodeop NEON_umlal;
 define pcodeop NEON_umlal2;
 define pcodeop NEON_umlsl;
 define pcodeop NEON_umlsl2;
+define pcodeop NEON_ummla;
 define pcodeop NEON_umov;
 define pcodeop NEON_umull;
 define pcodeop NEON_umull2;
@@ -3310,10 +3520,12 @@ define pcodeop NEON_urshl;
 define pcodeop NEON_urshr;
 define pcodeop NEON_ursqrte;
 define pcodeop NEON_ursra;
+define pcodeop NEON_usdot;
 define pcodeop NEON_ushl;
 define pcodeop NEON_ushll;
 define pcodeop NEON_ushll2;
 define pcodeop NEON_ushr;
+define pcodeop NEON_usmmla;
 define pcodeop NEON_usqadd;
 define pcodeop NEON_usra;
 define pcodeop NEON_usubl;
@@ -3650,10 +3862,58 @@ define pcodeop SVE_zip2;
 
 # SECTION macros
 
+# begin macros related to memory-tagging
+
+macro AllocationTagFromAddress(result, op)
+{
+	# Summary: Sometimes the decompiler won't show this, but that's usually okay.
+	#
+	# A potential downside to actually implementing this, rather than using a pseudo-op,
+	# is that the whole operation can get optimized out to zero by the decompiler when
+	# tags are being ignored/non-populated by the user.  (This zero-tagging is helped along by
+	# SetPtrTag being a pseudo-op rather than a macro, which is done to preserve data-flow.)
+	# The optimization makes it harder to tell that tag-related things are happening;
+	# however, it's arguably convenient to omit a bunch of tag-related stuff when tags
+	# are being ignored by the user.
+
+	result = (op >> 56) & 0xf;
+	  # decompiler output: return unaff_x30 | 1 << ((ulonglong)register0x00000008 >> 0x38 & 0xf);
+	# An alternate implementation is the following, which has the downside of adding at least one extra length conversion:
+	# result = zext(op[56,4]);
+	  # decompiler output: return unaff_x30 | 1 << (ulonglong)((byte)((ulonglong)register0x00000008 >> 0x38) & 0xf);
+}
+
+macro Align(value, sze)
+{
+	value = value & ~(sze - 1);
+}
+
+macro RequireGranuleAlignment(addr)
+{
+	misalignment:8 = addr & ($(TAG_GRANULE) - 1);
+	if (misalignment == 0) goto <addr_ok>;
+	AlignmentFault();
+<addr_ok>
+}
+
+macro Or2BytesWithExcludedTags(tmp)
+{
+	tmp = (tmp | gcr_el1.exclude) & 0xffff;
+}
+
+# end of memory-tagging macros
+
 macro addflags(op1, op2)
 {
 	tmpCY = carry(op1, op2);
 	tmpOV = scarry(op1, op2);
+}
+
+macro add_with_carry_flags(op1,op2){
+	local carry_in = zext(CY);
+	local tempResult = op1 + op2;
+	tmpCY = carry(op1,op2) || carry(tempResult, carry_in);
+    tmpOV = scarry(op1,op2) ^^ scarry(tempResult, carry_in);
 }
 
 macro affectflags()
@@ -3739,6 +3999,18 @@ macro setCC_NZCV(condMask)
 	OV = (condMask & 0x1) == 0x1;
 }
 
+macro set_NZCV(value, condMask)
+{
+    setNG:1 = (condMask & 0x8) == 0x8;
+	NG = ((setNG==0) * NG) | ((setNG==1) * (((value >> 3) & 1) ==1));
+	setZR:1 = (condMask & 0x4) == 0x4;
+	ZR = ((setZR==0) * NG) | ((setZR==1) * (((value >> 2) & 1) ==1));
+	setCY:1 = (condMask & 0x2) == 0x2;
+	CY = ((setCY==0) * NG) | ((setCY==1) * (((value >> 1) & 1) == 1));
+	setOV:1 = (condMask & 0x1) == 0x1;
+	OV = ((setOV==0) * NG) | ((setOV==1) * (((value >> 0) & 1) == 1));
+}
+
 # Macro to access simd lanes
 
 macro simd_address_at(dest, reg, elem, esize, vsize)
@@ -3755,54 +4027,98 @@ macro simd_address_at(dest, reg, elem, esize, vsize)
 
 macro zext_zb(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[8,56] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[192,56] = 0;
+	reg[128,64] = 0;
+	reg[64,64] = 0;
+	reg[0,64] = 0;
+@endif
 }
 
 macro zext_zh(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[16,48] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[192,48] = 0;
+	reg[128,64] = 0;
+	reg[64,64] = 0;
+	reg[0,64] = 0;
+@endif
 }
 
 macro zext_zs(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[32,32] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[192,32] = 0;
+	reg[128,64] = 0;
+	reg[64,64] = 0;
+	reg[0,64] = 0;
+@endif
 }
 
 macro zext_zd(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[0,64] = 0;
+	reg[64,64] = 0;
+	reg[128,64] = 0;
+@endif
 }
 
 macro zext_zq(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[128,64] = 0;
 	reg[192,64] = 0;
+@else
+	reg[0,64] = 0;
+	reg[64,64] = 0;
+@endif
 }
 
 macro zext_rb(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[8,56] = 0;
+@else
+	reg[0,56] = 0;
+@endif
 }
 
 macro zext_rh(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[16,48] = 0;
+@else
+	reg[0,48] = 0;
+@endif
 }
 
 macro zext_rs(reg)
 {
+@if DATA_ENDIAN == "little"
 	reg[32,32] = 0;
+@else
+	reg[0,32] = 0;
+@endif
 }
 
 # SECTION instructions
@@ -3821,6 +4137,8 @@ is ImmS_ImmR_TestSet=0 & ImmR & ImmS & instruction
 ]{}
 
 with : ImmS_ImmR_TestSet=1 {
+	
+@include "AARCH64_base_PACoptions.sinc"
 
 @include "AARCH64base.sinc"
 @include "AARCH64neon.sinc"
