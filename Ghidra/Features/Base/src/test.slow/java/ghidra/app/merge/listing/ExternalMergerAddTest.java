@@ -2659,7 +2659,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				assertNotNull(function);
 
 				Program program = mergeProgram.getProgram();
-				Register register = program.getRegister("r0");
+				Register register = program.getRegister("r0l");
 				Parameter parameter1 =
 					new ParameterImpl(param2, new CharDataType(), register, program);
 				parameter1.setComment(comment2);
@@ -2847,7 +2847,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				assertNotNull(function);
 
 				Program program = mergeProgram.getProgram();
-				Register register = program.getRegister("r12");
+				Register register = program.getRegister("r12l");
 				Parameter parameter1 =
 					new ParameterImpl(param2, new CharDataType(), register, program);
 				parameter1.setComment(comment2);
@@ -2931,7 +2931,7 @@ public class ExternalMergerAddTest extends AbstractExternalMergerTest {
 				assertNotNull(function);
 
 				Program program = mergeProgram.getProgram();
-				Register register = program.getRegister("r12");
+				Register register = program.getRegister("r12l");
 				Parameter parameter1 =
 					new ParameterImpl(param2, new CharDataType(), register, program);
 				parameter1.setComment(comment2);

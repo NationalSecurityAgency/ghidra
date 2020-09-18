@@ -1118,11 +1118,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1153,11 +1153,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1238,11 +1238,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1273,11 +1273,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1358,11 +1358,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1392,11 +1392,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1477,11 +1477,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1511,11 +1511,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1593,11 +1593,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1627,11 +1627,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					Function orangesFunction = getExternalFunction(program, orangesPath);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1709,11 +1709,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(false);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1744,11 +1744,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1827,11 +1827,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(false);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1862,11 +1862,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -2072,11 +2072,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;
@@ -2107,11 +2107,11 @@ public class ExternalFunctionMerger1Test extends AbstractExternalMergerTest {
 					orangesFunction.setCustomVariableStorage(true);
 
 					Parameter parameter1 = new ParameterImpl("junk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")), program);
+						new VariableStorage(program, program.getRegister("r0l")), program);
 					orangesFunction.addParameter(parameter1, SourceType.USER_DEFINED);
 
 					Parameter parameter2 = new ParameterImpl("punk", new WordDataType(),
-						new VariableStorage(program, program.getRegister("r1")), program);
+						new VariableStorage(program, program.getRegister("r1l")), program);
 					orangesFunction.addParameter(parameter2, SourceType.USER_DEFINED);
 
 					commit = true;

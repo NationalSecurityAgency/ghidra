@@ -940,7 +940,7 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func = getFunction(program, "0x10029a1");
 					func.setCustomVariableStorage(true);
 					func.setReturn(new Undefined2DataType(),
-						new VariableStorage(program, program.getRegister("r0")),
+						new VariableStorage(program, program.getRegister("r0l")),
 						SourceType.USER_DEFINED);
 
 					commit = true;
@@ -964,7 +964,7 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					Function func = getFunction(program, "0x1001979");
 					func.setCustomVariableStorage(true);
 					func.setReturn(new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")),
+						new VariableStorage(program, program.getRegister("r0l")),
 						SourceType.USER_DEFINED);
 
 					AddressSet body10029a1 =
@@ -973,7 +973,7 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func = getFunction(program, "0x10029a1");
 					func.setCustomVariableStorage(true);
 					func.setReturn(new Undefined2DataType(),
-						new VariableStorage(program, program.getRegister("r1")),
+						new VariableStorage(program, program.getRegister("r1l")),
 						SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1036,7 +1036,7 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func = getFunction(program, "0x10029a1");
 					func.setCustomVariableStorage(true);
 					func.setReturn(new Undefined2DataType(),
-						new VariableStorage(program, program.getRegister("r0")),
+						new VariableStorage(program, program.getRegister("r0l")),
 						SourceType.USER_DEFINED);
 
 					commit = true;
@@ -1060,7 +1060,7 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					Function func = getFunction(program, "0x1001979");
 					func.setCustomVariableStorage(true);
 					func.setReturn(new WordDataType(),
-						new VariableStorage(program, program.getRegister("r0")),
+						new VariableStorage(program, program.getRegister("r0l")),
 						SourceType.USER_DEFINED);
 
 					AddressSet body10029a1 =
@@ -1069,7 +1069,7 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 					func = getFunction(program, "0x10029a1");
 					func.setCustomVariableStorage(true);
 					func.setReturn(new Undefined2DataType(),
-						new VariableStorage(program, program.getRegister("r1")),
+						new VariableStorage(program, program.getRegister("r1l")),
 						SourceType.USER_DEFINED);
 
 					commit = true;
