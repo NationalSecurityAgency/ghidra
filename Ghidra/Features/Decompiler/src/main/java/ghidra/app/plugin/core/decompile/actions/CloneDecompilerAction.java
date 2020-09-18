@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 import docking.action.KeyBindingData;
 import docking.action.ToolBarData;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
 
@@ -33,7 +34,7 @@ public class CloneDecompilerAction extends AbstractDecompilerAction {
 		ImageIcon image = ResourceManager.loadImage("images/camera-photo.png");
 		setToolBarData(new ToolBarData(image, "ZZZ"));
 		setDescription("Create a snapshot (disconnected) copy of this Decompiler window ");
-		setHelpLocation(new HelpLocation("Snapshots", "Snapshots_Start"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarSnapshot"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_T,
 			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 	}

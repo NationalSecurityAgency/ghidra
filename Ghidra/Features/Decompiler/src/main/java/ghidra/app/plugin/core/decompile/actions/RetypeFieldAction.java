@@ -23,12 +23,12 @@ import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
+import ghidra.util.*;
 
 /**
  * Action triggered from a specific token in the decompiler window to change the data-type of
@@ -42,6 +42,7 @@ public class RetypeFieldAction extends AbstractDecompilerAction {
 
 	public RetypeFieldAction() {
 		super("Retype Field");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRetypeField"));
 		setPopupMenuData(new MenuData(new String[] { "Retype Field" }, "Decompile"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
 	}

@@ -24,18 +24,21 @@ import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.function.editor.*;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
 
 public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 
 	public SpecifyCPrototypeAction() {
 		super("Edit Function Signature");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionEditSignature"));
 		setPopupMenuData(new MenuData(new String[] { "Edit Function Signature" }, "Decompile"));
 	}
 

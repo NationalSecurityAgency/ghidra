@@ -68,6 +68,119 @@ def buildDir = "../../../build" // Relative to the 'workingDir' Exec task proper
 
 def installPoint = "$rootDir/GhidraDocs/languages/html"
 
+def installHelpPoint = "../help/help"
+
+task buildDecompilerHelpHtml(type: Exec) {
+
+	workingDir 'src/main/doc'
+
+	// 'which' returns the number of failed arguments
+	// Using the 'which' command first will allow the task to fail if the required
+	// executables are not installed.
+	//
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all
+	// messages print in sequence
+	//
+	// 'commandLine' takes one command, so wrap multiple commands in bash.
+	commandLine 'bash', '-e', '-c', """
+		echo '** Checking if required executables are installed. **'
+		which xsltproc
+		which sed
+
+		echo '** Removing older html files installed under '$installHelpPoint' **'
+		rm -f $installHelpPoint/topics/DecompilePlugin/*.html
+
+		echo '** Building html files **'
+		xsltproc --output $buildDir/decomp_noscaling.xml --stringparam profile.condition "noscaling" /usr/share/sgml/docbook/xsl-stylesheets/profiling/profile.xsl decompileplugin.xml 2>&1
+		xsltproc --stringparam base.dir ${installHelpPoint}/topics/DecompilePlugin/ --stringparam root.filename Decompiler decompileplugin_html.xsl $buildDir/decomp_noscaling.xml 2>&1
+		rm ${installHelpPoint}/topics/DecompilePlugin/Decompiler.html
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' ${installHelpPoint}/topics/DecompilePlugin/*.html 2>&1
+
+		echo '** Done. **'
+		"""
+
+	// Allows doLast block regardless of exit value.
+	ignoreExitValue true
+
+	// Store the output instead of printing to the console.
+	standardOutput = new ByteArrayOutputStream()
+	ext.output = { standardOutput.toString() }
+	ext.errorOutput = { standardOutput.toString() }
+
+	// Check the OS before executing command.
+	doFirst {
+		if (!getCurrentPlatformName().startsWith("linux")) {
+			throw new TaskExecutionException( it, new Exception("The '$it.name' task only works on Linux."))
+		}
+	}
+
+	// Print the output of the commands and check the return value.
+	doLast {
+		println output()
+		if (execResult.exitValue) {
+			logger.error("$it.name: An error occurred. Here is the output:\n" + output())
+			throw new TaskExecutionException( it, new Exception("'$it.name': The command: '${commandLine.join(' ')}'" +
+				" task \nfailed with exit code $execResult.exitValue; see task output for details."))
+		}
+	}
+}
+
+task buildDecompilerHelpPdf(type: Exec) {
+	// Check the OS before enabling task.
+	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+		|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
+			it.enabled = false
+	}
+
+	workingDir 'src/main/doc'
+
+	// 'which' returns the number of failed arguments
+	// Using 'which' first will allow the entire command to fail if the required 
+	// executables are not installed.
+	//
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// messages print in sequence
+	//
+	// 'commandLine' takes one command, so wrap multiple commands in bash.
+	commandLine 'bash', '-e', '-c', """
+		echo '** Checking if required executables are installed. **'
+		which fop 2>&1
+		which xsltproc 2>&1
+		rm -f decompileplugin.fo decompileplugin.pdf decompileplugin_withscaling.xml 2>&1
+		rm -rf ./images 2>&1
+		mkdir -p ./images 2>&1
+		cp $installHelpPoint/topics/DecompilePlugin/images/*.png ./images 2>&1
+		cp $installHelpPoint/topics/DecompilePlugin/images/*.gif ./images 2>&1
+		cp $installHelpPoint/shared/*.png ./images 2>&1
+
+		echo '** Building decompileplugin.fo **'
+		xsltproc --output ./decompileplugin_withscaling.xml --stringparam profile.condition "withscaling" /usr/share/sgml/docbook/xsl-stylesheets/profiling/profile.xsl decompileplugin.xml 2>&1
+		xsltproc --output ./decompileplugin.fo decompileplugin_pdf.xsl decompileplugin_withscaling.xml 2>&1
+
+		echo '** Building decompileplugin.pdf **'
+		fop decompileplugin.fo decompileplugin.pdf 2>&1
+
+		echo '** Done. **'
+		"""
+
+	// Allows doLast block regardless of exit value. Task does not fail if bash command fails. 
+	ignoreExitValue true
+
+	// Store the output instead of printing to the console.
+	standardOutput = new ByteArrayOutputStream()
+	ext.output = { standardOutput.toString() }
+	ext.errorOutput = { standardOutput.toString() }
+
+	// Print the output of the commands and check the return value.
+	doLast {
+		println output()
+		if (execResult.exitValue) {
+			println "$it.name: An error occurred with this task. Here is the output:\n" + output()
+			println "Skipping task $it.name\n"
+		}
+	}
+}
+
 /**
  * Build the pdfs docs for the decompiler and place them in the '$buildDir' directory.
  * A build (ex: 'gradle buildGhidra') will place the pdfs in the distribution zip file.

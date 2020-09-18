@@ -18,19 +18,20 @@ package ghidra.app.plugin.core.decompile.actions;
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.symbol.*;
-import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
+import ghidra.util.*;
 
 public class DeletePrototypeOverrideAction extends AbstractDecompilerAction {
 
 	public DeletePrototypeOverrideAction() {
 		super("Remove Signature Override");
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRemoveOverride"));
 		setPopupMenuData(new MenuData(new String[] { "Remove Signature Override" }, "Decompile"));
 	}
 
