@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.functioncompare;
 
 import java.util.Set;
+import java.util.function.Supplier;
 
 import docking.ComponentProviderActivationListener;
 import ghidra.app.CorePluginPackage;
@@ -33,6 +34,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.util.Swing;
 
 /**
  * Allows users to create function comparisons that are displayed
@@ -125,46 +127,68 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		}
 	}
 
+	private void runOnSwingNonBlocking(Runnable r) {
+		Swing.runIfSwingOrRunLater(r);
+	}
+
+	private FunctionComparisonProvider getFromSwingBlocking(
+			Supplier<FunctionComparisonProvider> comparer) {
+
+		if (Swing.isSwingThread()) {
+			return comparer.get();
+		}
+
+		return Swing.runNow(comparer);
+	}
+
+//==================================================================================================
+// Service Methods
+//==================================================================================================	
+
 	@Override
 	public void addFunctionComparisonProviderListener(
 			ComponentProviderActivationListener listener) {
-		functionComparisonManager.addProviderListener(listener);
+		runOnSwingNonBlocking(() -> functionComparisonManager.addProviderListener(listener));
 	}
 
 	@Override
 	public void removeFunctionComparisonProviderListener(
 			ComponentProviderActivationListener listener) {
-		functionComparisonManager.removeProviderListener(listener);
+		runOnSwingNonBlocking(() -> functionComparisonManager.removeProviderListener(listener));
 	}
 
 	@Override
 	public void removeFunction(Function function) {
-		functionComparisonManager.removeFunction(function);
+		runOnSwingNonBlocking(() -> functionComparisonManager.removeFunction(function));
 	}
 
 	@Override
 	public void removeFunction(Function function, FunctionComparisonProvider provider) {
-		functionComparisonManager.removeFunction(function, provider);
+		runOnSwingNonBlocking(() -> functionComparisonManager.removeFunction(function, provider));
 	}
 
 	@Override
-	public FunctionComparisonProvider compareFunctions(Function source, Function target) {
-		return functionComparisonManager.compareFunctions(source, target);
-	}
-
-	@Override
-	public void compareFunctions(Set<Function> functions, FunctionComparisonProvider provider) {
-		functionComparisonManager.compareFunctions(functions, provider);
+	public FunctionComparisonProvider compareFunctions(Function source,
+			Function target) {
+		return getFromSwingBlocking(
+			() -> functionComparisonManager.compareFunctions(source, target));
 	}
 
 	@Override
 	public FunctionComparisonProvider compareFunctions(Set<Function> functions) {
-		return functionComparisonManager.compareFunctions(functions);
+		return getFromSwingBlocking(() -> functionComparisonManager.compareFunctions(functions));
+	}
+
+	@Override
+	public void compareFunctions(Set<Function> functions, FunctionComparisonProvider provider) {
+		runOnSwingNonBlocking(
+			() -> functionComparisonManager.compareFunctions(functions, provider));
 	}
 
 	@Override
 	public void compareFunctions(Function source, Function target,
 			FunctionComparisonProvider provider) {
-		functionComparisonManager.compareFunctions(source, target, provider);
+		runOnSwingNonBlocking(
+			() -> functionComparisonManager.compareFunctions(source, target, provider));
 	}
 }

@@ -122,15 +122,15 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public void modelChanged(List<FunctionComparison> model) {
-		this.model.setComparisons(model);
+	public void modelChanged(List<FunctionComparison> data) {
+		this.model.setComparisons(data);
 		functionComparisonPanel.reload();
 		setTabText(functionComparisonPanel.getDescription());
 		closeIfEmpty();
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(Tool t, ActionContext context) {
 		if (context.getComponentProvider() == this) {
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();
