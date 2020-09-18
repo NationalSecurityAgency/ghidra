@@ -529,7 +529,22 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
     break;
   case CPUI_SUBPIECE:
     resmask = getIn(0)->getNZMask();
-    resmask >>= 8*getIn(1)->getOffset();
+    sz1 = (int4)getIn(1)->getOffset();
+    if ((int4)getIn(0)->getSize() <= sizeof(uintb)) {
+      if (sz1 < sizeof(uintb))
+	resmask >>= 8*sz1;
+      else
+	resmask = 0;
+    }
+    else {			// Extended precision
+      if (sz1 < sizeof(uintb)) {
+	resmask >>= 8*sz1;
+	if (sz1 > 0)
+	  resmask |= fullmask << (8*(sizeof(uintb)-sz1));
+      }
+      else
+	resmask = fullmask;
+    }
     resmask &= fullmask;
     break;
   case CPUI_PIECE:
@@ -540,11 +555,11 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
   case CPUI_INT_MULT:
     val = getIn(0)->getNZMask();
     resmask = getIn(1)->getNZMask();
-    sz1 = mostsigbit_set(val);
+    sz1 = (size > sizeof(uintb)) ? 8*size-1 : mostsigbit_set(val);
     if (sz1 == -1)
       resmask = 0;
     else {
-      sz2 = mostsigbit_set(resmask);
+      sz2 = (size > sizeof(uintb)) ? 8*size-1 : mostsigbit_set(resmask);
       if (sz2 == -1)
 	resmask = 0;
       else {

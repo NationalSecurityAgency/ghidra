@@ -1194,6 +1194,7 @@ public:
 class RuleDivOpt : public Rule {
   static uintb calcDivisor(uintb n,uint8 y,int4 xsize);		///< Calculate the divisor
   static void moveSignBitExtraction(Varnode *firstVn,Varnode *replaceVn,Funcdata &data);
+  static bool checkFormOverlap(PcodeOp *op);	///< If form rooted at given PcodeOp is superseded by an overlapping form
 public:
   RuleDivOpt(const string &g) : Rule( g, 0, "divopt") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
@@ -1476,4 +1477,16 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
+
+class RuleXorSwap : public Rule {
+public:
+  RuleXorSwap(const string &g) : Rule(g,0,"xorswap") {}		///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleXorSwap(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 #endif

@@ -577,12 +577,17 @@ Datatype *TypeOpCall::getInputLocal(const PcodeOp *op,int4 slot) const
   // Its false to assume that the parameter symbol corresponds
   // to the varnode in the same slot, but this is easiest until
   // we get giant sized parameters working properly
-  if ((fc->numParams() == op->numInput()-1)||(fc->isDotdotdot())) {
-    ProtoParameter *param = fc->getParam(slot-1);
-    if ((param != (ProtoParameter *)0)&&(param->isTypeLocked())) {
+  ProtoParameter *param = fc->getParam(slot - 1);
+  if (param != (ProtoParameter*) 0) {
+    if (param->isTypeLocked()) {
       ct = param->getType();
-      if ((ct->getMetatype() != TYPE_VOID)&&
-	  (ct->getSize() <= op->getIn(slot)->getSize())) // parameter may not match varnode
+      if ((ct->getMetatype() != TYPE_VOID) && (ct->getSize() <= op->getIn(slot)->getSize())) // parameter may not match varnode
+	return ct;
+    }
+    else if (param->isThisPointer()) {
+      // Known "this" pointer is effectively typelocked even if the prototype as a whole isn't
+      ct = param->getType();
+      if (ct->getMetatype() == TYPE_PTR && ((TypePointer*) ct)->getPtrTo()->getMetatype() == TYPE_STRUCT)
 	return ct;
     }
   }
@@ -630,10 +635,17 @@ Datatype *TypeOpCallind::getInputLocal(const PcodeOp *op,int4 slot) const
   if (fc == (const FuncCallSpecs *)0)
     return TypeOp::getInputLocal(op,slot);
   ProtoParameter *param = fc->getParam(slot-1);
-  if ((param != (ProtoParameter *)0)&&(param->isTypeLocked())) {
-    ct = param->getType();
-    if (ct->getMetatype() != TYPE_VOID)
-      return ct;
+  if (param != (ProtoParameter *)0) {
+    if (param->isTypeLocked()) {
+      ct = param->getType();
+      if (ct->getMetatype() != TYPE_VOID)
+	return ct;
+    }
+    else if (param->isThisPointer()) {
+      ct = param->getType();
+      if (ct->getMetatype() == TYPE_PTR && ((TypePointer *)ct)->getPtrTo()->getMetatype() == TYPE_STRUCT)
+	return ct;
+    }
   }
   return TypeOp::getInputLocal(op,slot);
 }
