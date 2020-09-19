@@ -83,14 +83,14 @@ public class ObjectiveC2_InstanceVariable implements StructConverter {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType("ivar_t", 0);
 		if (_state.is32bit) {
-			struct.add(new PointerDataType(DWORD), _state.pointerSize, "offset", null);
-			struct.add(new PointerDataType(STRING), _state.pointerSize, "name", null);
-			struct.add(new PointerDataType(STRING), _state.pointerSize, "type", null);
+			struct.add(new PointerDataType(DWORD, _state.pointerSize), _state.pointerSize, "offset", null);
+			struct.add(new PointerDataType(STRING, _state.pointerSize), _state.pointerSize, "name", null);
+			struct.add(new PointerDataType(STRING, _state.pointerSize), _state.pointerSize, "type", null);
 		}
 		else {
-			struct.add(new PointerDataType(QWORD), _state.pointerSize, "offset", null);
-			struct.add(new PointerDataType(STRING), _state.pointerSize, "name", null);
-			struct.add(new PointerDataType(STRING), _state.pointerSize, "type", null);
+			struct.add(new PointerDataType(QWORD, _state.pointerSize), _state.pointerSize, "offset", null);
+			struct.add(new PointerDataType(STRING, _state.pointerSize), _state.pointerSize, "name", null);
+			struct.add(new PointerDataType(STRING, _state.pointerSize), _state.pointerSize, "type", null);
 		}
 		struct.add(DWORD, "alignment", null);
 		struct.add(DWORD, "size", null);

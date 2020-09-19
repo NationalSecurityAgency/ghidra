@@ -178,17 +178,17 @@ public class ObjectiveC2_Class implements StructConverter {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(NAME, 0);
 
-		struct.add(new PointerDataType(struct), _state.pointerSize, "isa", null);
-		struct.add(new PointerDataType(struct), _state.pointerSize, "superclass", null);
+		struct.add(new PointerDataType(struct, _state.pointerSize), _state.pointerSize, "isa", null);
+		struct.add(new PointerDataType(struct, _state.pointerSize), _state.pointerSize, "superclass", null);
 		struct.add(cache.toDataType(), "cache", null);
 		struct.add(vtable.toDataType(), "vtable", null);
 
 		if (data == null) {
 			ObjectiveC2_ClassRW fakeData = new ObjectiveC2_ClassRW();
-			struct.add(new PointerDataType(fakeData.toDataType()), _state.pointerSize, "data", null);
+			struct.add(new PointerDataType(fakeData.toDataType(), _state.pointerSize), _state.pointerSize, "data", null);
 		}
 		else {
-			struct.add(new PointerDataType(data.toDataType()), _state.pointerSize, "data", null);
+			struct.add(new PointerDataType(data.toDataType(), _state.pointerSize), _state.pointerSize, "data", null);
 		}
 
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);

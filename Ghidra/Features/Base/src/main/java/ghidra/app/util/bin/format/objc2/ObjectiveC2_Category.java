@@ -152,19 +152,19 @@ public class ObjectiveC2_Category implements StructConverter {
 
 		Structure struct = new StructureDataType(buffer.toString(), 0);
 
-		struct.add(new PointerDataType(STRING), _state.pointerSize, "name", null);
+		struct.add(new PointerDataType(STRING, _state.pointerSize), _state.pointerSize, "name", null);
 
 		if (cls == null) {
-			struct.add(new PointerDataType(VOID), _state.pointerSize, "cls", null);
+			struct.add(new PointerDataType(VOID, _state.pointerSize), _state.pointerSize, "cls", null);
 		}
 		else {
-			struct.add(new PointerDataType(cls.toDataType()), _state.pointerSize, "cls", null);
+			struct.add(new PointerDataType(cls.toDataType(), _state.pointerSize), _state.pointerSize, "cls", null);
 		}
 
-		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType()),         _state.pointerSize, "instanceMethods", null);
-		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType()),         _state.pointerSize, "classMethods", null);
-		struct.add(new PointerDataType(ObjectiveC2_ProtocolList.toGenericDataType(_state)), _state.pointerSize, "protocols", null);
-		struct.add(new PointerDataType(ObjectiveC2_PropertyList.toGenericDataType()),       _state.pointerSize, "instanceProperties", null);
+		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType(), _state.pointerSize), _state.pointerSize, "instanceMethods", null);
+		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType(), _state.pointerSize), _state.pointerSize, "classMethods", null);
+		struct.add(new PointerDataType(ObjectiveC2_ProtocolList.toGenericDataType(_state), _state.pointerSize), _state.pointerSize, "protocols", null);
+		struct.add(new PointerDataType(ObjectiveC2_PropertyList.toGenericDataType(), _state.pointerSize), _state.pointerSize, "instanceProperties", null);
 
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
 		return struct;

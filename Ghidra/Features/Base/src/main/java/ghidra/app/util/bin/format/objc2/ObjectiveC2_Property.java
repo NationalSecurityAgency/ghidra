@@ -52,8 +52,8 @@ public class ObjectiveC2_Property implements StructConverter {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType("objc_property", 0);
 
-		struct.add(new PointerDataType(ASCII), _state.pointerSize, "name", null);
-		struct.add(new PointerDataType(ASCII), _state.pointerSize, "name", null);
+		struct.add(new PointerDataType(ASCII, _state.pointerSize), _state.pointerSize, "name", null);
+		struct.add(new PointerDataType(ASCII, _state.pointerSize), _state.pointerSize, "name", null);
 
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
 		return struct;

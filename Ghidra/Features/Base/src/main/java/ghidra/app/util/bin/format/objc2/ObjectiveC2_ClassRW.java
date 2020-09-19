@@ -176,10 +176,10 @@ public class ObjectiveC2_ClassRW implements StructConverter {
 			struct.add(QWORD, "instanceSize", null);
 		}
 
-		struct.add(new PointerDataType(ASCII),                                                _state.pointerSize, "name", null);
-		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType()),           _state.pointerSize, "baseMethods", null);
-		struct.add(new PointerDataType(ObjectiveC2_ProtocolList.toGenericDataType(_state)),   _state.pointerSize, "baseProtocols", null);
-		struct.add(new PointerDataType(ObjectiveC2_InstanceVariableList.toGenericDataType()), _state.pointerSize, "ivars", null);
+		struct.add(new PointerDataType(ASCII, _state.pointerSize), _state.pointerSize, "name", null);
+		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType(), _state.pointerSize), _state.pointerSize, "baseMethods", null);
+		struct.add(new PointerDataType(ObjectiveC2_ProtocolList.toGenericDataType(_state), _state.pointerSize), _state.pointerSize, "baseProtocols", null);
+		struct.add(new PointerDataType(ObjectiveC2_InstanceVariableList.toGenericDataType(), _state.pointerSize), _state.pointerSize, "ivars", null);
 
 		if (_state.is32bit) {
 			struct.add(DWORD, "weakIvarLayout", null);
@@ -188,7 +188,7 @@ public class ObjectiveC2_ClassRW implements StructConverter {
 			struct.add(QWORD, "weakIvarLayout", null);
 		}
 
-		struct.add(new PointerDataType(ObjectiveC2_PropertyList.toGenericDataType()), _state.pointerSize, "baseProperties", null);
+		struct.add(new PointerDataType(ObjectiveC2_PropertyList.toGenericDataType(), _state.pointerSize), _state.pointerSize, "baseProperties", null);
 
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
 		return struct;

@@ -485,31 +485,35 @@ public class ObjectiveC2_DecompilerMessageAnalyzer extends AbstractAnalyzer {
 
 	private String getNameFromData(Program program, Varnode input, boolean isClass,
 			boolean isMethod, Address address, Data nameData) {
-		long offset;
-		String name;
+//		String name;
 		if (!nameData.isDefined()) {
-			name = getLabelFromUndefinedData(program, address);
+			return getLabelFromUndefinedData(program, address);
 		}
 		else {
 			Object dataValue = nameData.getValue();
 			if (dataValue instanceof String) {
-				name = (String) dataValue;
+				String name = (String) dataValue;
 				if (!isClass && !isMethod) {
-					name = "\"" + name + "\"";
+					return "\"" + name + "\"";
+				}
+				else {
+					return name;
 				}
 			}
 			else if (dataValue instanceof Address) {
-				offset = ((Address) dataValue).getOffset();
-				name = getNameFromOffset(program, offset, input, isClass, isMethod);
+				long offset = ((Address) dataValue).getOffset();
+				return getNameFromOffset(program, offset, input, isClass, isMethod);
 			}
 			else {
-				name = getClassName(program, address);
+				String name = getClassName(program, address);
 				if (name == null) {
-					name = getValueAtAddress(program, address);
+					return getValueAtAddress(program, address);
+				}
+				else {
+					return name;
 				}
 			}
 		}
-		return name;
 	}
 
 	private String getDataName(Program program, Address address) {

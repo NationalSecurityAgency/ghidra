@@ -63,8 +63,8 @@ public class ObjectiveC2_MessageReference implements StructConverter {
 
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(NAME, 0);
-		struct.add(new PointerDataType(VOID),  _state.pointerSize, "imp", null);
-		struct.add(new PointerDataType(ASCII), _state.pointerSize, "sel", null);
+		struct.add(new PointerDataType(VOID, _state.pointerSize), _state.pointerSize, "imp", null);
+		struct.add(new PointerDataType(ASCII, _state.pointerSize), _state.pointerSize, "sel", null);
 		return struct;
 	}
 }

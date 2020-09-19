@@ -191,18 +191,18 @@ public class ObjectiveC2_Protocol implements StructConverter {
 			struct.add(QWORD, "isa", null);
 		}
 
-		struct.add(new PointerDataType(STRING), _state.pointerSize, "name", null);
-		struct.add(new PointerDataType(ObjectiveC2_ProtocolList.toGenericDataType(_state)),
+		struct.add(new PointerDataType(STRING, _state.pointerSize), _state.pointerSize, "name", null);
+		struct.add(new PointerDataType(ObjectiveC2_ProtocolList.toGenericDataType(_state), _state.pointerSize),
 			_state.pointerSize, "protocols", null);
-		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType()),
+		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType(), _state.pointerSize),
 			_state.pointerSize, "instanceMethods", null);
-		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType()),
+		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType(), _state.pointerSize),
 			_state.pointerSize, "classMethods", null);
-		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType()),
+		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType(), _state.pointerSize),
 			_state.pointerSize, "optionalInstanceMethods", null);
-		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType()),
+		struct.add(new PointerDataType(ObjectiveC2_MethodList.toGenericDataType(), _state.pointerSize),
 			_state.pointerSize, "optionalClassMethods", null);
-		struct.add(new PointerDataType(ObjectiveC2_PropertyList.toGenericDataType()),
+		struct.add(new PointerDataType(ObjectiveC2_PropertyList.toGenericDataType(), _state.pointerSize),
 			_state.pointerSize, "instanceProperties", null);
 
 		if (_state.is32bit) {

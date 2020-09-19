@@ -55,9 +55,9 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType("method_t", 0);
-		struct.add(new PointerDataType(STRING), _state.pointerSize, "name",  null);
-		struct.add(new PointerDataType(STRING), _state.pointerSize, "types", null);
-		struct.add(new PointerDataType(VOID),   _state.pointerSize, "imp",   null);
+		struct.add(new PointerDataType(STRING, _state.pointerSize), _state.pointerSize, "name",  null);
+		struct.add(new PointerDataType(STRING, _state.pointerSize), _state.pointerSize, "types", null);
+		struct.add(new PointerDataType(VOID, _state.pointerSize), _state.pointerSize, "imp",   null);
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
 		return struct;
 	}

@@ -89,7 +89,7 @@ public class ObjectiveC2_ProtocolList implements StructConverter {
 
 		for (int i = 0 ; i < protocols.size() ; ++i) {
 			DataType dataType = protocols.get(i).toDataType();
-			struct.add(new PointerDataType(dataType), _state.pointerSize, "protocol"+i, null);
+			struct.add(new PointerDataType(dataType, _state.pointerSize), _state.pointerSize, "protocol"+i, null);
 		}
 
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
