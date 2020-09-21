@@ -234,6 +234,9 @@ public class FileSystemService {
 		}
 		String md5 = fsrl.getMD5();
 		if (md5 == null && fsrl.getNestingDepth() == 1) {
+			// if this is a real file on the local file system, and the FSRL doesn't specify
+			// its MD5, try to fetch the MD5 from the fingerprint cache based on its
+			// size and lastmod time, which will help us locate the file in the cache
 			File f = localFS.getLocalFile(fsrl);
 			if (f.isFile()) {
 				md5 = fileFingerprintCache.getMD5(f.getPath(), f.lastModified(), f.length());
@@ -274,6 +277,8 @@ public class FileSystemService {
 					}
 				}
 				if (fsrl.getNestingDepth() == 1) {
+					// if this is a real file on the local filesystem, now that we have its
+					// MD5, save it in the fingerprint cache so it can be found later
 					File f = localFS.getLocalFile(fsrl);
 					if (f.isFile()) {
 						fileFingerprintCache.add(f.getPath(), result.md5, f.lastModified(),
@@ -375,6 +380,9 @@ public class FileSystemService {
 	 */
 	public File getFile(FSRL fsrl, TaskMonitor monitor) throws CancelledException, IOException {
 		if (fsrl.getNestingDepth() == 1) {
+			// If this is a real files on the local filesystem, verify any
+			// MD5 embedded in the FSRL before returning the live local file
+			// as the result.
 			File f = localFS.getLocalFile(fsrl);
 			if (f.isFile() && fsrl.getMD5() != null) {
 				if (!fileFingerprintCache.contains(f.getPath(), fsrl.getMD5(), f.lastModified(),
