@@ -168,7 +168,7 @@
             variant="v6"
             version="1.103"
             slafile="ARM6_le.sla"
-            processorspec="ARMt.pspec"
+            processorspec="ARMt_v6.pspec"
             manualindexfile="../manuals/ARM.idx"
             id="ARM:LE:32:v6">
     <description>Generic ARM/Thumb v6 little endian</description>
@@ -186,7 +186,7 @@
             variant="v6"
             version="1.103"
             slafile="ARM6_be.sla"
-            processorspec="ARMt.pspec"
+            processorspec="ARMt_v6.pspec"
             manualindexfile="../manuals/ARM.idx"
             id="ARM:BE:32:v6">
     <description>Generic ARM/Thumb v6 big endian</description>

@@ -1612,7 +1612,9 @@ define pcodeop TTT;
 
 :udf immed12_4			is $(AMODE) &  cond=0xe & c2027=0x7f & c0407=0xf & immed12_4
 {
-	software_udf(immed12_4);
+	local excaddr:4 = inst_start;
+	local target:4 = software_udf(immed12_4:4, excaddr);
+	goto [target];
 }
 
 @endif # VERSION_5
@@ -2683,13 +2685,13 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   coprocessor_loadlong(t_cpn,CRd,addrmode5);
 }
 
-:ldm^COND^mdir reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=1 & c1515=0 & reglist
+:ldm^mdir^COND reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=1 & c1515=0 & reglist
 {
   build COND;
   build reglist;
 }
 
-:ldm^COND^mdir reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=1 & c1515=1 & reglist
+:ldm^mdir^COND reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=1 & c1515=1 & reglist
 {
   build COND;
   build reglist;
@@ -5339,7 +5341,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   coprocessor_storelong(t_cpn,CRd,addrmode5);
 }
 
-:stm^COND^mdir reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=0 & reglist
+:stm^mdir^COND reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=0 & reglist
 {
   build COND;
   build reglist;
@@ -5387,7 +5389,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:strd^COND Rd,Rd2,addrmode3   is $(AMODE) &  COND & c2527=0 & c0407=0xf & c1212=0 & L20=0 & Rd & Rd2 & addrmode3
+:strd^COND Rd,Rd2,addrmode3   is $(AMODE) &  COND & c2527=0 & c0407=0xf & L20=0 & Rd & Rd2 & addrmode3
 {
   build COND;
   build addrmode3;

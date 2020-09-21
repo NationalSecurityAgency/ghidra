@@ -31,6 +31,7 @@ data/languages/ARMneon.sinc||GHIDRA||||END|
 data/languages/ARMt.pspec||GHIDRA||||END|
 data/languages/ARMtTHUMB.pspec||GHIDRA||||END|
 data/languages/ARMt_v45.pspec||GHIDRA||||END|
+data/languages/ARMt_v6.pspec||GHIDRA||||END|
 data/languages/ARMv8.sinc||GHIDRA||||END|
 data/languages/old/ARMv5.lang||GHIDRA||||END|
 data/languages/old/ARMv5.trans||GHIDRA||||END|

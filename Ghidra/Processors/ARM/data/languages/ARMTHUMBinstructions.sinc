@@ -1385,8 +1385,7 @@ macro th_set_carry_for_asr(op1,shift_count) {
 
 :hlt immed6				is TMode=1 & op6=0b1011101010 & immed6
 {
-	pc = software_hlt(immed6:4);
-	goto [pc];
+	software_hlt(immed6:4);
 }
 
 :bkpt immed8				is TMode=1 & ItCond & op8=0xbe & immed8
@@ -1412,16 +1411,18 @@ macro th_set_carry_for_asr(op1,shift_count) {
 :udf^ItCond "#"thc0007			is TMode=1 & ItCond & op8 = 0xde & thc0007
 {
 	build ItCond;
-	pc = software_udf(thc0007:4);
-	goto [pc];
+	local excaddr:4 = inst_start;
+	local target:4 = software_udf(thc0007:4, excaddr);
+	goto [target];
 }
 @endif
 
 :udf^ItCond "#"tmp			is TMode=1 & ItCond & op4=0xf7f & thc0003; op12=0xa & thc0011 [tmp = thc0003 << 12 | thc0011;]
 {
 	build ItCond;
-	pc = software_udf(tmp:4);
-	goto [pc];
+	local excaddr:4 = inst_start;
+	local target:4 = software_udf(tmp:4, excaddr);
+	goto [target];
 }
 
 @endif # VERSION_5
