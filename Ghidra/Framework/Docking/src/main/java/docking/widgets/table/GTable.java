@@ -1013,15 +1013,16 @@ public class GTable extends JTable {
 		return updated;
 	}
 
-	private Object getCellValue(int row, int column) {
+	private Object getCellValue(int row, int viewColumn) {
 		RowObjectTableModel<Object> rowModel = getRowObjectTableModel();
 		if (rowModel == null) {
-			Object value = super.getValueAt(row, column);
+			Object value = super.getValueAt(row, viewColumn);
 			return maybeConvertValue(value);
 		}
 
 		Object rowObject = rowModel.getRowObject(row);
-		String stringValue = TableUtils.getTableCellStringValue(rowModel, rowObject, column);
+		int modelColumn = convertColumnIndexToModel(viewColumn);
+		String stringValue = TableUtils.getTableCellStringValue(rowModel, rowObject, modelColumn);
 		return maybeConvertValue(stringValue);
 	}
 

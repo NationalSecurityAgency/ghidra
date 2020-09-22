@@ -37,7 +37,7 @@ public class TableUtils {
 	 * @param <ROW_OBJECT> The model's row object type
 	 * @param model the model
 	 * @param rowObject the row object for the row being queried
-	 * @param column the column index
+	 * @param column the column index <b>in the table model</b> 
 	 * @return the string value; null if no value can be fabricated
 	 */
 	public static <ROW_OBJECT> String getTableCellStringValue(RowObjectTableModel<ROW_OBJECT> model,
