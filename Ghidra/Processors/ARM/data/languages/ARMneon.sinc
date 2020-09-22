@@ -96,7 +96,7 @@ attach variables [ Sm1next thv_Sm1next ] [ s2 s4 s6 s8 s10 s12 s14 s16 s18 s20 s
 
 # We need to create separate constructors for each register rather than attaching
 # directly to a context variable
-@if defined (VFPv2) || defined(SIMD) || defined(VFPv2)
+@if defined (VFPv2) || defined(SIMD)
 Sreg: s0 is s0 & regNum=0 { export s0; }
 Sreg: s1 is s1 & regNum=1 { export s1; }
 Sreg: s2 is s2 & regNum=2 { export s2; }
@@ -195,7 +195,6 @@ Dreg2: d12 is d12 & reg2Num=12 { export d12; }
 Dreg2: d13 is d13 & reg2Num=13 { export d13; }
 Dreg2: d14 is d14 & reg2Num=14 { export d14; }
 Dreg2: d15 is d15 & reg2Num=15 { export d15; }
-@endif
 @if defined(SIMD) || defined(VFPv3)
 Dreg: d16 is d16 & regNum=16 { export d16; }
 Dreg: d17 is d17 & regNum=17 { export d17; }
@@ -229,6 +228,13 @@ Dreg2: d28 is d28 & reg2Num=28 { export d28; }
 Dreg2: d29 is d29 & reg2Num=29 { export d29; }
 Dreg2: d30 is d30 & reg2Num=30 { export d30; }
 Dreg2: d31 is d31 & reg2Num=31 { export d31; }
+@else
+# this is just a placeholder so the parse patterns will match correctly.
+# regNum is 31 when the base pattern matches, and incremented when
+# this constructor actually matches
+Dreg: d0 is d0 & regNum=31 { export d0; }
+Dreg2: d0 is d0 & reg2Num=31 { export d0; }
+@endif
 @endif
 
 VRm: Rm     is TMode=0 & Rm     { export Rm; }
@@ -2482,7 +2488,7 @@ buildVldmDdList: Dreg,buildVldmDdList	is Dreg & buildVldmDdList	[ counter=counte
 	build buildVldmDdList;
 }
 
-vldmDdList: "{"^buildVldmDdList^"}"	is D22 & c1215 & c0007 & buildVldmDdList [ regNum=(D22<<4)+c1215-1; counter=c0007>>1; ] { }
+vldmDdList: "{"^buildVldmDdList^"}"	is D22 & c1215 & c0007 & buildVldmDdList [ regNum=(D22<<4)+c1215 - 1; counter=c0007>>1; ] { }
 
 :vldmia^COND vldmRn,vldmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=1 & c0811=11 & c0000=0) | 
                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=1 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vldmDdList & vldmOffset & vldmUpdate
