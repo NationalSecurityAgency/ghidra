@@ -15,6 +15,7 @@
  */
 package ghidra.util;
 
+import static ghidra.util.StringUtilities.*;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class StringUtilitiesTest {
 
 	@Test
 	public void testCountOccurrencesOfCharacter() {
-		int count = StringUtilities.countOccurrences("AxBxCxDxxX", 'x');
+		int count = countOccurrences("AxBxCxDxxX", 'x');
 		assertEquals(5, count);
 	}
 
@@ -31,40 +32,40 @@ public class StringUtilitiesTest {
 	public void testToQuotedString() {
 
 		// single char
-		assertEquals("'\\''", StringUtilities.toQuotedString(new byte[] { '\'' }));
-		assertEquals("'\"'", StringUtilities.toQuotedString(new byte[] { '"' }));
-		assertEquals("'\\n'", StringUtilities.toQuotedString(new byte[] { '\n' }));
-		assertEquals("'\\t'", StringUtilities.toQuotedString(new byte[] { '\t' }));
-		assertEquals("'a'", StringUtilities.toQuotedString(new byte[] { 'a' }));
-		assertEquals("'\\x04'", StringUtilities.toQuotedString(new byte[] { (byte) '\u0004' }));
-		assertEquals("'\\u0004'", StringUtilities.toQuotedString(new byte[] { 0, 4 }, 2));
-		assertEquals("'\\U00000004'", StringUtilities.toQuotedString(new byte[] { 0, 0, 0, 4 }, 4));
+		assertEquals("'\\''", toQuotedString(new byte[] { '\'' }));
+		assertEquals("'\"'", toQuotedString(new byte[] { '"' }));
+		assertEquals("'\\n'", toQuotedString(new byte[] { '\n' }));
+		assertEquals("'\\t'", toQuotedString(new byte[] { '\t' }));
+		assertEquals("'a'", toQuotedString(new byte[] { 'a' }));
+		assertEquals("'\\x04'", toQuotedString(new byte[] { (byte) '\u0004' }));
+		assertEquals("'\\u0004'", toQuotedString(new byte[] { 0, 4 }, 2));
+		assertEquals("'\\U00000004'", toQuotedString(new byte[] { 0, 0, 0, 4 }, 4));
 
 		// string
-		assertEquals("\"'a'\"", StringUtilities.toQuotedString("'a'".getBytes()));
-		assertEquals("\"\\\"a\\\"\"", StringUtilities.toQuotedString("\"a\"".getBytes()));
+		assertEquals("\"'a'\"", toQuotedString("'a'".getBytes()));
+		assertEquals("\"\\\"a\\\"\"", toQuotedString("\"a\"".getBytes()));
 		assertEquals("\"a\\nb\\tc\\x04d\"",
-			StringUtilities.toQuotedString("a\nb\tc\u0004d".getBytes()));
+			toQuotedString("a\nb\tc\u0004d".getBytes()));
 	}
 
 	@Test
 	public void testConvertControlCharsToEscapeSequenes() throws Exception {
-		assertEquals("'a'", StringUtilities.convertControlCharsToEscapeSequences("'a'"));
-		assertEquals("\"a\"", StringUtilities.convertControlCharsToEscapeSequences("\"a\""));
+		assertEquals("'a'", convertControlCharsToEscapeSequences("'a'"));
+		assertEquals("\"a\"", convertControlCharsToEscapeSequences("\"a\""));
 		assertEquals("a\\nb\\tc\u0004d",
-			StringUtilities.convertControlCharsToEscapeSequences("a\nb\tc\u0004d"));
+			convertControlCharsToEscapeSequences("a\nb\tc\u0004d"));
 		assertEquals("a\\nb\\tc\ud852\udf62d",
-			StringUtilities.convertControlCharsToEscapeSequences("a\nb\tc\ud852\udf62d"));
+			convertControlCharsToEscapeSequences("a\nb\tc\ud852\udf62d"));
 	}
 
 	@Test
 	public void testConvertEscapeSequecesToControlChars() {
-		assertEquals("'a'", StringUtilities.convertEscapeSequences("'a'"));
-		assertEquals("\"a\"", StringUtilities.convertEscapeSequences("\"a\""));
-		assertEquals("a\nb\tc\u0004d", StringUtilities.convertEscapeSequences("a\\nb\\tc\\x04d"));
-		assertEquals("a\nb\tc\u0004d", StringUtilities.convertEscapeSequences("a\\nb\\tc\\u0004d"));
+		assertEquals("'a'", convertEscapeSequences("'a'"));
+		assertEquals("\"a\"", convertEscapeSequences("\"a\""));
+		assertEquals("a\nb\tc\u0004d", convertEscapeSequences("a\\nb\\tc\\x04d"));
+		assertEquals("a\nb\tc\u0004d", convertEscapeSequences("a\\nb\\tc\\u0004d"));
 		assertEquals("a\nb\tc\u0004d",
-			StringUtilities.convertEscapeSequences("a\\nb\\tc\\U00000004d"));
+			convertEscapeSequences("a\\nb\\tc\\U00000004d"));
 	}
 
 	@Test
@@ -72,16 +73,16 @@ public class StringUtilitiesTest {
 		String bob = "bob";
 		String endsWithBob = "endsWithBob";
 
-		assertTrue(StringUtilities.endsWithIgnoreCase(endsWithBob, bob));
+		assertTrue(endsWithIgnoreCase(endsWithBob, bob));
 
 		String endsWithBobUpperCase = "endsWithBOB";
-		assertTrue(StringUtilities.endsWithIgnoreCase(endsWithBobUpperCase, bob));
+		assertTrue(endsWithIgnoreCase(endsWithBobUpperCase, bob));
 
 		String startsWithBob = "bobWithTrailingText";
-		assertFalse(StringUtilities.endsWithIgnoreCase(startsWithBob, bob));
+		assertFalse(endsWithIgnoreCase(startsWithBob, bob));
 
 		String justBob = "bOb";
-		assertTrue(StringUtilities.endsWithIgnoreCase(justBob, bob));
+		assertTrue(endsWithIgnoreCase(justBob, bob));
 	}
 
 	@Test
@@ -90,71 +91,71 @@ public class StringUtilitiesTest {
 		String sentenceWithTest = "This is a test sentence";
 		String sentenceWithTestNotAsAWord = "Thisisatestsentence";
 
-		assertEquals(10, StringUtilities.indexOfWord(sentenceWithTest, word));
-		assertEquals(-1, StringUtilities.indexOfWord(sentenceWithTestNotAsAWord, word));
+		assertEquals(10, indexOfWord(sentenceWithTest, word));
+		assertEquals(-1, indexOfWord(sentenceWithTestNotAsAWord, word));
 	}
 
 	@Test
 	public void testIsAllBlank() {
 
 		String[] input = null;
-		assertTrue(StringUtilities.isAllBlank(input));
-		assertTrue(StringUtilities.isAllBlank(null, null));
-		assertTrue(StringUtilities.isAllBlank(""));
-		assertTrue(StringUtilities.isAllBlank("", ""));
-		assertFalse(StringUtilities.isAllBlank("Hi"));
-		assertFalse(StringUtilities.isAllBlank("Hi", null));
-		assertFalse(StringUtilities.isAllBlank("Hi", "Hey"));
+		assertTrue(isAllBlank(input));
+		assertTrue(isAllBlank(null, null));
+		assertTrue(isAllBlank(""));
+		assertTrue(isAllBlank("", ""));
+		assertFalse(isAllBlank("Hi"));
+		assertFalse(isAllBlank("Hi", null));
+		assertFalse(isAllBlank("Hi", "Hey"));
 	}
 
 	@Test
 	public void testFindWord() {
 		String foundWord = "word";
 		String sentence = "This string has a word that we should find";
-		assertEquals(foundWord, StringUtilities.findWord(sentence, 18));
-		assertEquals(foundWord, StringUtilities.findWord(sentence, 19));
-		assertEquals(foundWord, StringUtilities.findWord(sentence, 21));
+		assertEquals(foundWord, findWord(sentence, 18));
+		assertEquals(foundWord, findWord(sentence, 19));
+		assertEquals(foundWord, findWord(sentence, 21));
 
 		String embeddedFoundWord = "word1";
 		String sentenceWithInvalidChars = "This string has *word1!word2 with invalid chars";
-		assertEquals(embeddedFoundWord, StringUtilities.findWord(sentenceWithInvalidChars, 18));
+		assertEquals(embeddedFoundWord, findWord(sentenceWithInvalidChars, 18));
 
 		char[] allowedChars = new char[] { '!' };
 		String foundWordWithAllowedChars = "word1!word2";
 		assertEquals(foundWordWithAllowedChars,
-			StringUtilities.findWord(sentenceWithInvalidChars, 18, allowedChars));
+			findWord(sentenceWithInvalidChars, 18, allowedChars));
 	}
 
 	@Test
 	public void testFindWord_ProgrammingWord() {
 		String code = "String var_with_underbar = foo.getBar().getName(defaultValue);";
-		assertEquals("String", StringUtilities.findWord(code, 3));
+		assertEquals("String", findWord(code, 3));
 
-		assertEquals("var_with_underbar", StringUtilities.findWord(code, 7));
-		assertEquals("var_with_underbar", StringUtilities.findWord(code, 12));
-		assertEquals("var_with_underbar", StringUtilities.findWord(code, 23));
+		assertEquals("var_with_underbar", findWord(code, 7));
+		assertEquals("var_with_underbar", findWord(code, 12));
+		assertEquals("var_with_underbar", findWord(code, 23));
 
-		assertEquals("", StringUtilities.findWord(code, 24));
-		assertEquals("=", StringUtilities.findWord(code, 25));
-		assertEquals("", StringUtilities.findWord(code, 26));
+		assertEquals("", findWord(code, 24));
+		assertEquals("=", findWord(code, 25));
+		assertEquals("", findWord(code, 26));
 
-		assertEquals("foo", StringUtilities.findWord(code, 27));
-		assertEquals(".", StringUtilities.findWord(code, 30));
-		assertEquals("getBar", StringUtilities.findWord(code, 31));
+		assertEquals("foo", findWord(code, 27));
+		assertEquals(".", findWord(code, 30));
+		assertEquals("getBar", findWord(code, 31));
 
-		assertEquals("getName", StringUtilities.findWord(code, 40));
-		assertEquals("(", StringUtilities.findWord(code, 47));
-		assertEquals("defaultValue", StringUtilities.findWord(code, 50));
+		assertEquals("getName", findWord(code, 40));
+		assertEquals("(", findWord(code, 47));
+		assertEquals("defaultValue", findWord(code, 50));
 
-		assertEquals("", StringUtilities.findWord(code, code.length()));
-		assertEquals(";", StringUtilities.findWord(code, code.length() - 1));
-		assertEquals(")", StringUtilities.findWord(code, code.length() - 2));
+		assertEquals("", findWord(code, code.length()));
+		assertEquals(";", findWord(code, code.length() - 1));
+		assertEquals(")", findWord(code, code.length() - 2));
 	}
 
 	@Test
 	public void testFindLastWordPosition() {
 		String testString = "This is a test String";
-		assertEquals(15, StringUtilities.findLastWordPosition(testString));
+		assertEquals(15, findLastWordPosition(testString));
 	}
 
 	@Test
@@ -167,25 +168,25 @@ public class StringUtilitiesTest {
 		// test that a length smaller than max will not be altered
 		int max = 15;
 		String underString = "UnderMaxString";
-		String result = StringUtilities.trim(underString, max);
+		String result = trim(underString, max);
 		assertSame(underString, result);
 
 		// test that a length equal to max will not be altered
 		max = 17;
 		String equalToMaxString = "AtMaxLengthString";
-		result = StringUtilities.trim(equalToMaxString, max);
+		result = trim(equalToMaxString, max);
 		assertSame(equalToMaxString, result);
 
 		// test that a length greater than max will be trimmed (with various overages)
 		max = 6;
 		String overString = "OverBy1";
-		result = StringUtilities.trim(overString, max);
+		result = trim(overString, max);
 		assertEquals(max, result.length());
 		assertEquals("Ove...", result);
 
 		max = 5;
 		overString = "OverBy2";
-		result = StringUtilities.trim(overString, max);
+		result = trim(overString, max);
 		assertEquals(max, result.length());
 		assertEquals("Ov...", result);
 	}
@@ -194,7 +195,7 @@ public class StringUtilitiesTest {
 	public void testTrim_MaxTooShortForEllipses() {
 		int max = 1;
 		String underString = "UnderMaxString";
-		StringUtilities.trim(underString, max);
+		trim(underString, max);
 	}
 
 	@Test
@@ -203,13 +204,13 @@ public class StringUtilitiesTest {
 		// test that a length smaller than max will not be altered
 		String underString = "Under Max String";
 		int max = underString.length() + 1;
-		String result = StringUtilities.trimMiddle(underString, max);
+		String result = trimMiddle(underString, max);
 		assertSame(underString, result);
 
 		// test that a length equal to max will not be altered
 		String equalToMaxString = "At Max Length String";
 		max = equalToMaxString.length();
-		result = StringUtilities.trimMiddle(equalToMaxString, max);
+		result = trimMiddle(equalToMaxString, max);
 		assertSame(equalToMaxString, result);
 	}
 
@@ -217,13 +218,13 @@ public class StringUtilitiesTest {
 	public void testTrimMiddle_OddLengthStrings() {
 		String overString = "Over By 1";
 		int max = overString.length() - 1;
-		String result = StringUtilities.trimMiddle(overString, max);
+		String result = trimMiddle(overString, max);
 		assertEquals(max, result.length());
 		assertEquals("Ov...y 1", result);
 
 		overString = "Over By 2";
 		max = overString.length() - 2;
-		result = StringUtilities.trimMiddle(overString, max);
+		result = trimMiddle(overString, max);
 		assertEquals(max, result.length());
 		assertEquals("Ov... 2", result);
 	}
@@ -232,11 +233,11 @@ public class StringUtilitiesTest {
 	public void testTrimMiddle_EvenLengthStrings() {
 		String overString = "Over By 12";
 		int max = overString.length() - 1;
-		String result = StringUtilities.trimMiddle(overString, max);
+		String result = trimMiddle(overString, max);
 		assertEquals("Ove... 12", result);
 
 		max = overString.length() - 2;
-		result = StringUtilities.trimMiddle(overString, max);
+		result = trimMiddle(overString, max);
 		assertEquals(max, result.length());
 		assertEquals("Ov... 12", result);
 	}
@@ -245,35 +246,35 @@ public class StringUtilitiesTest {
 	public void testTrimMiddle_MaxTooShortForEllipses() {
 		String overString = "My String to trim";
 		int max = 1;
-		StringUtilities.trimMiddle(overString, max);
+		trimMiddle(overString, max);
 	}
 
 	@Test
 	public void testGetLastWord() {
-		assertEquals("word", StringUtilities.getLastWord("/This/is/my/last/word", "/"));
-		assertEquals("word", StringUtilities.getLastWord("This/is/my/last/word", "/"));
-		assertEquals("word", StringUtilities.getLastWord("/This/is/my/last/word/", "/"));
-		assertEquals("word", StringUtilities.getLastWord("This.is.my.last.word", "."));
+		assertEquals("word", getLastWord("/This/is/my/last/word", "/"));
+		assertEquals("word", getLastWord("This/is/my/last/word", "/"));
+		assertEquals("word", getLastWord("/This/is/my/last/word/", "/"));
+		assertEquals("word", getLastWord("This.is.my.last.word", "."));
 		assertEquals("MyFile.java",
-			StringUtilities.getLastWord("/This/is/my/last/word/MyFile.java", "/"));
-		assertEquals("java", StringUtilities.getLastWord("/This/is/my/last/word/MyFile.java", "."));
+			getLastWord("/This/is/my/last/word/MyFile.java", "/"));
+		assertEquals("java", getLastWord("/This/is/my/last/word/MyFile.java", "."));
 	}
 
 	@Test
 	public void testTrimTrailingNulls() {
-		assertEquals("", StringUtilities.trimTrailingNulls(""));
-		assertEquals("", StringUtilities.trimTrailingNulls("\0"));
-		assertEquals("", StringUtilities.trimTrailingNulls("\0\0"));
-		assertEquals("x", StringUtilities.trimTrailingNulls("x\0"));
-		assertEquals("x", StringUtilities.trimTrailingNulls("x\0\0"));
-		assertEquals("x", StringUtilities.trimTrailingNulls("x"));
-		assertEquals("\0x", StringUtilities.trimTrailingNulls("\0x\0"));
+		assertEquals("", trimTrailingNulls(""));
+		assertEquals("", trimTrailingNulls("\0"));
+		assertEquals("", trimTrailingNulls("\0\0"));
+		assertEquals("x", trimTrailingNulls("x\0"));
+		assertEquals("x", trimTrailingNulls("x\0\0"));
+		assertEquals("x", trimTrailingNulls("x"));
+		assertEquals("\0x", trimTrailingNulls("\0x\0"));
 	}
 
 	@Test
 	public void testToLines() {
 		String s = "This\nis\nmy\nString";
-		String[] lines = StringUtilities.toLines(s);
+		String[] lines = toLines(s);
 		assertEquals(4, lines.length);
 
 		assertEquals("This", lines[0]);
@@ -285,7 +286,7 @@ public class StringUtilitiesTest {
 	@Test
 	public void testToLinesNewlineAtBeginningMiddleAndEnd() {
 		String s = "\nThis\nis\nmy\nString\n";
-		String[] lines = StringUtilities.toLines(s);
+		String[] lines = toLines(s);
 		assertEquals(6, lines.length);
 
 		assertEquals("", lines[0]);
@@ -299,7 +300,7 @@ public class StringUtilitiesTest {
 	@Test
 	public void testToLinesPreserveTokens() {
 		String s = "My\n\nString";
-		String[] lines = StringUtilities.toLines(s, true);
+		String[] lines = toLines(s, true);
 		assertEquals(3, lines.length);
 
 		assertEquals("My", lines[0]);
@@ -310,10 +311,34 @@ public class StringUtilitiesTest {
 	@Test
 	public void testToLinesDontPreserveTokens() {
 		String s = "My\n\nString";
-		String[] lines = StringUtilities.toLines(s, false);
+		String[] lines = toLines(s, false);
 		assertEquals(2, lines.length);
 
 		assertEquals("My", lines[0]);
 		assertEquals("String", lines[1]);
+	}
+
+	@Test
+	public void testContainsAllIgnoreCase() {
+
+		String source = "This is my source String";
+		assertTrue(containsAllIgnoreCase(source, "This"));
+		assertTrue(containsAllIgnoreCase(source, "this"));
+		assertTrue(containsAllIgnoreCase(source, "string", "source", "my", "is"));
+
+		assertFalse(containsAllIgnoreCase(source, "missing"));
+		assertFalse(containsAllIgnoreCase(source, "string", "missing"));
+	}
+
+	@Test
+	public void testContainsAnyIgnoreCase() {
+
+		String source = "This is my source String";
+		assertTrue(containsAnyIgnoreCase(source, "This"));
+		assertTrue(containsAnyIgnoreCase(source, "this"));
+		assertTrue(containsAnyIgnoreCase(source, "string", "source", "my", "is"));
+
+		assertFalse(containsAnyIgnoreCase(source, "missing"));
+		assertTrue(containsAnyIgnoreCase(source, "string", "missing"));
 	}
 }

@@ -15,6 +15,8 @@
  */
 package ghidra.util.classfinder;
 
+import static ghidra.util.StringUtilities.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -95,9 +97,8 @@ class ClassJar extends ClassLocation {
 
 		//
 		// Dev Mode - don't scan 3rd-party jar files
-		// 
-		if (pathName.contains("ExternalLibraries") || pathName.contains("caches") ||
-			pathName.contains("flatrepo")) {
+		//
+		if (containsAnyIgnoreCase(pathName, "ExternalLibraries", "caches", "flatrepo")) {
 			return true;
 		}
 
