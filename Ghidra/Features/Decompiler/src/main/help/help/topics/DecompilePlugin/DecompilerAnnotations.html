@@ -26,8 +26,12 @@
     processor specific form into Ghidra's IR language (see <a class="xref" href="DecompilerConcepts.html#ConceptPcode" title="P-code">&#8220;P-code&#8221;</a>),
     which provides both the control-flow behavior of the instruction and the detailed
     semantics describing how the processor and memory state is affected. The translation is controlled by
-    the underlying processor model and cannot be directly altered from the tool. Users
-    <span class="emphasis"><em>can</em></span> modify the model specification itself, however.
+    the underlying processor model and, except in limited circumstances, cannot be directly altered
+    from the tool. Flow Overrides (see below) can change how certain control-flow is translated,
+    and, depending on the processor, context registers may affect p-code (see <a class="xref" href="DecompilerAnnotations.html#AnnoteContextRegister" title="Context Registers">&#8220;Context Registers&#8221;</a>).
+  </p>
+  <p>
+    Outside of the tool, users <span class="emphasis"><em>can</em></span> modify the model specification itself.
     See the document "SLEIGH: A Language for Rapid Processor Specification".
   </p>
   <p>
@@ -37,7 +41,7 @@
     <span class="emphasis"><em>fall through</em></span>, <span class="emphasis"><em>conditional jump</em></span>, and other
     semantics until an instruction with <span class="emphasis"><em>terminator</em></span> semantics is
     reached, which is usually a "return from subroutine"
-    instruction.  Flow is not traced into subfunctions, in this situation.  Instructions
+    instruction.  Flow is not traced into called functions, in this situation.  Instructions
     with <span class="emphasis"><em>call</em></span> semantics are treated only as if they fall through.
   </p>
   <p>
@@ -103,11 +107,17 @@
 <a name="AnnoteFlowOverride"></a>Flow Overrides</h3></div></div></div>
     
     <p>
-      Control-flow behavior for machine instructions is generally determined by the underlying
-      Processor model. But this flow can be overridden for individual instructions by various
-      Analyzers or manually by the user. The decompiler incorporates these overrides into its
-      analysis, and they can have a significant impact on results. Current
-      <span class="emphasis"><em>flow overrides</em></span> include:
+      Control-flow behavior for a machine instruction is generally determined by its underlying
+      p-code (see <a class="xref" href="DecompilerConcepts.html#ConceptControlFlow" title="P-code Control Flow">&#8220;P-code Control Flow&#8221;</a>), but this can be changed by applying a Flow Override.
+      A <span class="bold"><strong>Flow Override</strong></span> maintains the overall semantics of a branching instruction
+      but changes how the branch is interpreted.  For instance, a <code class="code">JMP</code> instruction, which traditionally
+      represents a branch within a single function, can be overridden to represent a call to a new function.
+      Flow Overrides are applied by Analyzers or manually by the user.
+    </p>
+    <p>
+      The decompiler automatically incorporates any relevant Flow Overrides into its
+      analysis of a function. This can have a significant impact on results. The
+      types of possible Flow Overrides include:
       </p>
 <div class="informalexample">
       <div class="variablelist"><dl class="variablelist">
@@ -413,8 +423,11 @@
 <dt><span class="term">Duplicate Symbols</span></dt>
 <dd>
 	    <p>
-	      Ghidra allows duplicate symbols, including duplicate function names, in
-	      any scope higher than a function.
+	      Ghidra allows different functions to have the same name, even within the same
+	      namespace, in order to model languages that support <span class="emphasis"><em>function overloading</em></span>.
+	      In most languages, such functions would be expected to have distinct prototypes to allow
+	      the symbols to be distinguished in context.   Ghidra and the decompiler however do not check
+	      for this, as prototypes may not be known.
 	    </p>
 	  </dd>
 </dl></div>
@@ -763,21 +776,20 @@
       </p>
       <p>
 	For annotations that specifically label a function's formal parameters or return value, 
-	the <span class="emphasis"><em>Signature Source-Type</em></span> also affects how they're treated by the decompiler.
-	If the Source-Type is set to anything other than <span class="emphasis"><em>DEFAULT</em></span>, there is a forced
+	the <a class="link" href="DecompilerAnnotations.html#PrototypeSignatureSource" title="Signature Source">Signature Source</a> also affects how they're treated by the decompiler.
+	If the Signature Source is set to anything other than <span class="emphasis"><em>DEFAULT</em></span>, there is a forced
 	one-to-one correspondence between variable annotations and actual parameters in the decompiler's
 	view of the function.  This is stronger than just forcing the data-type; the existence (or not) of
-	the variable itself is forced by the annotation in this case.  If the Source-Type is forcing and
+	the variable itself is forced by the annotation in this case.  If the Signature Source is forcing and
 	there are no parameter annotations, a <span class="emphasis"><em>void</em></span> prototype is forced on the function.
       </p>
       <p>
-	A forcing Source-Type, with a value other than
-	<span class="emphasis"><em>DEFAULT</em></span>, is set typically if debug symbols for the function are read in during
+	A forcing Signature Source is set typically if debug symbols for the function are read in during
 	Program import (<span class="emphasis"><em>IMPORTED</em></span>), or if the user manually edits the function prototype
 	directly (<span class="emphasis"><em>USER_DEFINED</em></span>).
       </p>
       <p>
-	If an annotation and the Signature Source-Type force a parameter to exist, specifying an
+	If an annotation and the Signature Source force a parameter to exist, specifying an
 	<span class="emphasis"><em>undefined</em></span> data-type in the annotation still directs the decompiler to fill in
 	the variable's data-type using type propagation.  The same holds true for the return value; an
 	<span class="emphasis"><em>undefined</em></span> annotation fixes the size of the return value, but the decompiler
@@ -867,10 +879,13 @@
 	Currently, the entire body of the function is included
 	in the scope of any stack annotation, and the decompiler will allow only a single variable to exist
 	at the stack address. A stack annotation can be a formal parameter to the function, but otherwise the
-	decompiler does not expect to see a value that exists before the start of the function.  Similarly,
-	because the value is not expected to persist after the function executes, a write to the stack
-	address may not show up as an explicit assignment to the variable if the value is simply
-	<span class="emphasis"><em>propagated through</em></span> to another expression.
+	decompiler does not expect to see a value that exists before the start of the function.
+      </p>
+      <p>
+	The decompiler will continue to perform <span class="emphasis"><em>copy propagation</em></span> and other transforms on
+	stack locations associated with a variable annotation. In particular, within decompiler output,
+	a specific write operation to a stack address may not show up as an explicit assignment to its variable,
+	if the value is simply copied to another location.
       </p>
     </div>
     <div class="sect3">
@@ -1004,7 +1019,7 @@
 	<p>
 	  If the boolean property <span class="bold"><strong>in-line</strong></span> is turned on for a particular function,
 	  it directs the decompiler to inline the effects of the function into the decompilation of any of its calling functions.
-	  The function will no longer appear as a direct subfunction call in the decompilation, but all of its data-flow
+	  The function will no longer appear as a direct function call in the decompilation, but all of its data-flow
 	  will be incorporated into the calling function.
 	</p>
 	<p>
@@ -1018,8 +1033,8 @@
 	<p>
 	  This property is similar in spirit to marking a function as <span class="emphasis"><em>in-line</em></span>.
 	  A <span class="bold"><strong>call-fixup</strong></span> directs the decompiler to replace any call to the function with a specific
-	  chunk of raw p-code.  The decompilation of any calling function no longer shows the subfunction call, but the chunk
-	  of p-code incorporates the subfunction's effects.
+	  chunk of raw p-code.  The decompilation of any calling function no longer shows the function call, but the chunk
+	  of p-code incorporates the called function's effects.
 	</p>
 	<p>
 	  Call-fixups are more flexible than just inlining a function.  The call-fixup chunk can be tailored to incorporate all of,
@@ -1034,6 +1049,49 @@
     </div>
 <p>
   </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="PrototypeSignatureSource"></a>Signature Source</h3></div></div></div>
+    
+    <p>
+      Ghidra records a <span class="bold"><strong>Signature Source</strong></span> for every function,
+      indicating the origin of its prototype information.  This is
+      similar to the <span class="emphasis"><em>Symbol Source</em></span> attached to Ghidra's symbol annotations
+      (See the documentation for
+      <a class="ulink" href="help/topics/SymbolTablePlugin/symbol_table.htm#Set_Filter" target="_top">Filtering</a>
+      in the Symbol Table).  The possible types are:
+      </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+<span class="emphasis"><em>DEFAULT</em></span> - for basic or no information</li>
+<li class="listitem" style="list-style-type: none">
+<span class="emphasis"><em>ANALYSIS</em></span> - for information derived by an Analyzer</li>
+<li class="listitem" style="list-style-type: none">
+<span class="emphasis"><em>IMPORTED</em></span> - for information imported from an external source</li>
+<li class="listitem" style="list-style-type: none">
+<span class="emphasis"><em>USER_DEFINED</em></span> - for information set by the user</li>
+</ul></div>
+      </div>
+<p>
+    </p>
+    <p>
+      Upon import of the Program, if there are debugging symbols available, Ghidra will build
+      annotations of the function's parameters and set the Symbol Source type to <span class="emphasis"><em>IMPORTED</em></span>.
+      Otherwise, it will generally be set to <span class="emphasis"><em>DEFAULT</em></span>.
+    </p>
+    <p>
+      However, Ghidra adjusts the Signature Source for a function if there is any change to the
+      prototype.  In particular, if the user adds, removes, or edits variable annotations
+      for the function's parameters or return value, Ghidra automatically converts the Signature
+      Source to be <span class="emphasis"><em>USER_DEFINED</em></span>.
+    </p>
+    <p>
+      If the Signature Source is set to anything other than <span class="emphasis"><em>DEFAULT</em></span>, the
+      function's prototype information is forcing on the decompiler.  See the discussion
+      in <a class="xref" href="DecompilerAnnotations.html#AnnoteForcing" title="Forcing Data-types">&#8220;Forcing Data-types&#8221;</a>
+    </p>
+  </div>
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="PrototypeDiscover"></a>Discovering Parameters</h3></div></div></div>
@@ -1051,7 +1109,7 @@
 </tr>
 <tr><td align="left" valign="top">
       The input parameters and return value are all forced on the decompiler as a unit based on the
-      <span class="emphasis"><em>Signature Source-Type</em></span>. They are all forced if the Source-Type is set to anything
+      <span class="emphasis"><em>Signature Source</em></span>. They are all forced if the type is set to anything
       other than <span class="emphasis"><em>DEFAULT</em></span>; otherwise none of them are forced.
     </td></tr>
 </table></div>
@@ -1165,7 +1223,7 @@
     <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">Signed or zero extension</li>
 <li class="listitem" style="list-style-type: disc">Bitwise negation</li>
-<li class="listitem" style="list-style-type: disc">Integer negation - Twos complement</li>
+<li class="listitem" style="list-style-type: disc">Integer negation - Two's complement</li>
 <li class="listitem" style="list-style-type: disc">Add or subtract 1</li>
 </ul></div>
     </div>
@@ -1252,6 +1310,61 @@
     If a register value's region starts in the middle of a function, decompilation is <span class="emphasis"><em>not</em></span>
     affected at all.
   </p>
+  <div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="AnnoteContextRegister"></a>Context Registers</h3></div></div></div>
+    
+    <p>
+      There is a special class of registers, called <span class="bold"><strong>context registers</strong></span> whose
+      values have a different affect on analysis and decompilation than described above.
+    </p>
+    <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="../../shared/tip.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+      <span class="emphasis"><em>Context registers</em></span> are inputs to the disassembly decoding process and directly affect which
+      machine instructions are created.
+    </td></tr>
+</table></div>
+    <p>
+      The value in a context register is examined when Ghidra decodes machine instructions from the underlying
+      bytes in the Program. A specific value generally corresponds to a specific <span class="emphasis"><em>execution mode</em></span>
+      of the processor. The ARM processor <span class="emphasis"><em>T bit</em></span> for instance, which selects whether the
+      processor is executing ARM or THUMB instructions, is modeled as a context register in Ghidra.
+      The same set of bytes in the Program can be decoded to machine instructions in more than one way,
+      depending on context register values.
+    </p>
+    <p>
+      Bytes are typically decoded once using context register values
+      established at the time of disassembly. From Ghidra's more static view of execution, a context register holds
+      only a single value at any point in the code, but the same context register can hold different values for
+      different regions of code. Setting a new value on a region of the Program will affect any subsequent disassembly
+      of code within that region.  
+    </p>
+    <p>
+      If a context register value is changed for a region that has already been disassembled, in order to see
+      the affect of the change, the machine instructions in the region need to be cleared, and disassembly needs
+      to be triggered again.  See the documentation on the
+      <a class="ulink" href="help/topics/ClearPlugin/Clear.htm#Clear_Code_Bytes" target="_top">Clear Plugin</a>.
+    </p>
+    <p>
+      Values for a context register are set in the same way as any other register, using the
+      <a class="ulink" href="help/topics/RegisterPlugin/Registers.htm#SetRegisterValues" target="_top">Set Register Values ...</a> command
+      described above.  Within the
+      <a class="ulink" href="help/topics/RegisterPlugin/Registers.htm#Register_Manager" target="_top">Register Manager</a> window,
+      context registers are generally grouped together under the (pseudo-register) heading, <span class="emphasis"><em>contextreg</em></span>.
+      For details about how context registers are used in processor modeling, see
+      the document "SLEIGH: A Language for Rapid Processor Specification".
+    </p>
+    <p>
+      Because context registers affect machine instructions, they also affect the underlying p-code and
+      have a substantial impact on decompilation.  Although details vary by processor, context register
+      values are typically established during the initial import and analysis of a Program and aren't changed
+      frequently.
+    </p>
+  </div>
 </div>
 
 </div></body>

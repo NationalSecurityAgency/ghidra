@@ -30,10 +30,10 @@ import ghidra.util.HelpLocation;
 public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 
 	public BackwardsSliceToPCodeOpsAction() {
-		super("Highlight Backward Inst Slice");
+		super("Highlight Backward Operator Slice");
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionHighlight"));
 		setPopupMenuData(
-			new MenuData(new String[] { "Highlight", "Backward Inst Slice" }, "Decompile"));
+			new MenuData(new String[] { "Highlight", "Backward Operator Slice" }, "Decompile"));
 	}
 
 	@Override
@@ -50,7 +50,9 @@ public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 		if (varnode != null) {
 			PcodeOp op = tokenAtCursor.getPcodeOp();
 			Set<PcodeOp> backwardSlice = DecompilerUtils.getBackwardSliceToPCodeOps(varnode);
-			backwardSlice.add(op);
+			if (op != null) {
+				backwardSlice.add(op);
+			}
 			DecompilerPanel decompilerPanel = context.getDecompilerPanel();
 			decompilerPanel.clearPrimaryHighlights();
 			decompilerPanel.addPcodeOpHighlights(backwardSlice,

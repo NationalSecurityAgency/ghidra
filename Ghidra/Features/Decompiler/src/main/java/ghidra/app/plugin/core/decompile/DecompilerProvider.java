@@ -709,10 +709,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	private void initializeDecompilerOptions() {
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
-		HelpLocation helpLocation = new HelpLocation(plugin.getName(), "DecompileOptions");
-		decompilerOptions.registerOptions(plugin, opt, program, helpLocation);
-
+		HelpLocation helpLocation = new HelpLocation(HelpTopics.DECOMPILER, "GeneralOptions");
 		opt.setOptionsHelpLocation(helpLocation);
+		opt.getOptions("Analysis")
+				.setOptionsHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "AnalysisOptions"));
+		opt.getOptions("Display")
+				.setOptionsHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "DisplayOptions"));
+		decompilerOptions.registerOptions(plugin, opt, program);
+
 		opt.addOptionsChangeListener(this);
 
 		ToolOptions codeBrowserOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);

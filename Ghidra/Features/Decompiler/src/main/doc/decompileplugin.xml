@@ -50,7 +50,14 @@
     <informalexample>
     <itemizedlist mark='bullet'>
       <listitem>
-	Press the <guiicon><inlinegraphic fileref="images/decompileFunction.gif"/></guiicon> icon
+	Press the <guiicon>
+	<inlinemediaobject>
+	  <imageobject>
+	    <imagedata condition="noscaling" fileref="images/decompileFunction.gif" contentwidth="16px" contentdepth="16px"/>
+	    <imagedata condition="withscaling" fileref="images/decompileFunction.gif" contentwidth="0.15in" contentdepth="0.15in"/>
+	  </imageobject>
+	</inlinemediaobject>
+	</guiicon>&#xA0;icon
 	in the tool bar, <emphasis>or</emphasis>
       </listitem>
       <listitem>
@@ -88,54 +95,79 @@
     Some of the primary capabilities of the decompiler include:
 
   <informalexample>
-  <itemizedlist mark='bullet'>
-    <listitem>
-      <emphasis role="bold">Recovering Expressions</emphasis>: The
-      decompiler does full data-flow analysis which allows it to
-      perform slicing on functions: complicated expressions, which have been split into
-      distinct operations/instructions and then mixed together with
-      other instructions by the compiling/optimizing process, are
-      reconstituted back into a single line.
-    </listitem>
-    <listitem>
-      <emphasis role="bold">Recovering High-Level Scoped
-      Variables</emphasis>: The decompiler understands how compilers
-      use processor stacks and registers to implement variables with
-      different scopes within a function. Data-flow analysis allows it to
-      follow what was originally a single variable as it moves from
-      the stack, into a register, into a different register, etc. Thus
-      it can effectively recover the original programs concept of a
-      variable, minimizing the need to introduce artificial variables
-      in the output.
-    </listitem>
-    <listitem>
-      <emphasis role="bold">Recovering Function Parameters</emphasis>:
-      The decompiler understands the parameter passing conventions of
-      the compiler and can reconstruct the original form of
-      function calls.
-    </listitem>
-    <listitem>
-      <emphasis role="bold">Using Data-type, Name, and Signature
-      Annotations</emphasis>: The decompiler automatically pulls in
-      all the different data types and variable names that the user
-      has applied to functions, and the C output is altered to reflect
-      this. High-level variables are appropriately named, structure
-      fields and array indices are calculated and displayed with
-      correct syntax, constant char pointers are replaced with
-      appropriate quoted strings, etc.
-    </listitem>
-    <listitem>
-      <emphasis role="bold">Propagating Local Data-types</emphasis>:
-      The decompiler infers the data-type of unlabeled variables
-      by propagating information from other sources throughout a function.
-    </listitem>
-    <listitem>
-      <emphasis role="bold">Recovering Structure Definitions</emphasis>:
-      The decompiler can be used to create structures that match the usage
-      pattern of particular functions and variables, automatically discovering
-      component offsets and data-types.
+    <variablelist>
+    <?dbfo list-presentation="blocks"?>
+    <varlistentry>
+      <term><emphasis role="bold">Recovering Expressions</emphasis></term>
+      <listitem>
+	<para>
+	  The decompiler does full data-flow analysis which allows it to
+	  perform slicing on functions: complicated expressions, which have been split into
+	  distinct operations/instructions and then mixed together with
+	  other instructions by the compiling/optimizing process, are
+	  reconstituted back into a single line.
+	</para>
       </listitem>
-    </itemizedlist>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Recovering High-Level Scoped Variables</emphasis></term>
+      <listitem>
+	<para>
+	  The decompiler understands how compilers
+	  use processor stacks and registers to implement variables with
+	  different scopes within a function. Data-flow analysis allows it to
+	  follow what was originally a single variable as it moves from
+	  the stack, into a register, into a different register, etc. Thus
+	  it can effectively recover the original program's concept of a
+	  variable, minimizing the need to introduce artificial variables
+	  in the output.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Recovering Function Parameters</emphasis></term>
+      <listitem>
+	<para>
+	  The decompiler understands the parameter passing conventions of
+	  the compiler and can reconstruct the original form of
+	  function calls.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Using Data-type, Name, and Signature Annotations</emphasis></term>
+      <listitem>
+	<para>
+	  The decompiler automatically pulls in
+	  all the different data types and variable names that the user
+	  has applied to functions, and the C output is altered to reflect
+	  this. High-level variables are appropriately named, structure
+	  fields and array indices are calculated and displayed with
+	  correct syntax, constant char pointers are replaced with
+	  appropriate quoted strings, etc.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Propagating Local Data-types</emphasis></term>
+      <listitem>
+	<para>
+	  The decompiler infers the data-type of unlabeled variables
+	  by propagating information from other sources throughout a function.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis role="bold">Recovering Structure Definitions</emphasis></term>
+      <listitem>
+	<para>
+	  The decompiler can be used to create structures that match the usage
+	  pattern of particular functions and variables, automatically discovering
+	  component offsets and data-types.
+	</para>
+      </listitem>
+    </varlistentry>
+    </variablelist>
     </informalexample>
   </para>
 </sect2>
@@ -170,7 +202,7 @@
 	    <emphasis role="bold">size</emphasis> - the maximum number of bytes that can be addressed
 	</listitem>
 	<listitem>
-	    <emphasis role="bold">endianess</emphasis> - how groups of bytes are interpreted as integers
+	    <emphasis role="bold">endianness</emphasis> - how groups of bytes are interpreted as integers
 	</listitem>
       </itemizedlist>
       </informalexample>
@@ -187,7 +219,7 @@
 	  <term><emphasis role="bold">ram</emphasis></term>
 	  <listitem>
 	    <para>
-	      A space that models memory accessible via the processors's main data bus. Depending on
+	      A space that models memory accessible via the processor's main data bus. Depending on
 	      the architecture, different spaces might be substituted for <emphasis>ram</emphasis>,
 	      such as separate <emphasis>code</emphasis> and <emphasis>data</emphasis> spaces.
 	    </para>
@@ -280,7 +312,7 @@
 	  </listitem>
 	</itemizedlist>
       </informalexample>
-      The integer data-type assumes a twos complement encoding in the endianness of the
+      The integer data-type assumes a two's complement encoding in the endianness of the
       address space containing the varnode.  Similarly, the floating point data-type assumes
       an IEEE 754 standard encoding.  The precision of the integer or floating point value is
       determined by the varnode's size.  A boolean data-type assumes the varnode has a size
@@ -444,12 +476,12 @@
 	  <tr>
 	    <td>CALL</td>
 	    <td><code>funcname(...)</code></td>
-	    <td>Branch to a subfunction.</td>
+	    <td>Branch to a function, as a call.</td>
 	  </tr>
 	  <tr>
 	    <td>CALLIND</td>
 	    <td><code>(*funcptr)(...)</code></td>
-	    <td>Branch through a pointer to a subfunction.</td>
+	    <td>Branch through a pointer to a function, as a call.</td>
 	  </tr>
 	  <tr>
 	    <td>RETURN</td>
@@ -539,7 +571,7 @@
 	  <tr>
 	    <td>INT_2COMP</td>
 	    <td><code>-</code></td>
-	    <td>Twos complement.</td>
+	    <td>Two's complement.</td>
 	  </tr>
 	  <tr>
 	    <td>INT_NEGATE</td>
@@ -761,6 +793,47 @@
     </informalexample>
   </sect3>
 
+  <sect3 id="ConceptControlFlow">
+    <title>P-code Control Flow</title>
+    <para>
+      P-code has natural <emphasis role="bold">control-flow</emphasis>, with the subtlety that flow
+      happens both within and across machine instructions.  Most p-code operators have
+      <emphasis role="bold">fall-through</emphasis> semantics, meaning that flow moves to the
+      next operator in the sequence associated with the instruction, or, if the operator is the
+      last in the sequence, flow moves to the first operator in the p-code associated with the next instruction.
+      The p-code operators with <emphasis role="bold">branching</emphasis> semantics, such as
+      CBRANCH and BRANCH, can jump to a target operator which is internal to the current instruction, or they can
+      jump to the first p-code operator corresponding to a new instruction at a different address.
+    </para>
+    <para>
+      Ghidra labels a machine instruction with one of the following <emphasis role="bold">Flow Types</emphasis> that describe
+      its overall control-flow.  The Flow Type is derived directly from the control-flow of the p-code for the instruction,
+      with the basic types corresponding directly with a specific branching p-code operator.
+      <informalexample>
+	<itemizedlist mark='none'>
+	  <listitem><emphasis role="bold">FALL_THROUGH</emphasis></listitem>
+	  <listitem><emphasis role="bold">UNCONDITIONAL_CALL</emphasis> - CALL</listitem>
+	  <listitem><emphasis role="bold">UNCONDITIONAL_JUMP</emphasis> - BRANCH</listitem>
+	  <listitem><emphasis role="bold">CONDITIONAL_JUMP</emphasis> - CBRANCH</listitem>
+	  <listitem><emphasis role="bold">COMPUTED_JUMP</emphasis> - BRANCHIND</listitem>
+	  <listitem><emphasis role="bold">COMPUTED_CALL</emphasis> - CALLIND</listitem>
+	  <listitem><emphasis role="bold">TERMINATOR</emphasis> - RETURN</listitem>
+	</itemizedlist>
+      </informalexample>
+      Other Flow Types occur due to a combination of multiple p-code branching operators within the same instruction.
+      <informalexample>
+	<itemizedlist mark='none'>
+	  <listitem><emphasis role="bold">CONDITIONAL_CALL</emphasis> - CALL with CBRANCH</listitem>
+	  <listitem><emphasis role="bold">CONDITIONAL_TERMINATOR</emphasis> - RETURN with CBRANCH</listitem>
+	  <listitem><emphasis role="bold">COMPUTED_CALL_TERMINATOR</emphasis> - CALLIND with RETURN</listitem>
+	  <listitem><emphasis role="bold">CONDITIONAL_COMPUTED_JUMP</emphasis> - CBRANCH with BRANCHIND</listitem>
+	  <listitem><emphasis role="bold">CONDITIONAL_COMPUTED_CALL</emphasis> - CBRANCH with CALLIND</listitem>
+	  <listitem><emphasis role="bold">JUMP_TERMINATOR</emphasis> - BRANCH with RETURN</listitem>
+	</itemizedlist>
+      </informalexample>
+    </para>
+  </sect3>
+
   <sect3 id="ConceptInternalFunctions">
     <title>Internal Decompiler Functions</title>
     <para>
@@ -771,9 +844,11 @@
       of p-code operations, displaying them as if they were built-in functions for the language.
     </para>
     <informalexample>
-      <itemizedlist mark='none'>
+      <variablelist>
+      <?dbfo list-presentation="blocks"?>
+      <varlistentry>
+	<term><code>SUB41(x,c)</code> - Truncation operation - SUBPIECE</term>
 	<listitem>
-	  <code>SUB41(x,c)</code> - Truncation operation - SUBPIECE
 	  <itemizedlist mark='bullet' spacing='compact'>
 	    <listitem>The digit '4' indicates the size of the input operand 'x' in bytes.</listitem>
 	    <listitem>The digit '1' indicates the size of the output value in bytes.</listitem>
@@ -804,8 +879,10 @@
 	  </itemizedlist>
 	  </para>
 	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><code>CONCAT31(x,y)</code> - Concatenation operator - PIECE</term>
 	<listitem>
-	  <code>CONCAT31(x,y)</code> - Concatenation operator - PIECE
 	  <itemizedlist mark='bullet' spacing='compact'>
 	    <listitem>The digit '3' indicates the size of the input operand 'x' in bytes.</listitem>
 	    <listitem>The digit '1' indicates the size of the input operand 'y' in bytes.</listitem>
@@ -819,8 +896,10 @@
 	    bytes, and 'y' the least significant bytes, in the result.
 	  </para>
 	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><code>ZEXT14(x)</code> - Zero-extension operator - INT_ZEXT</term>
 	<listitem>
-	  <code>ZEXT14(x)</code> - Zero-extension operator - INT_ZEXT
 	  <itemizedlist mark='bullet' spacing='compact'>
 	    <listitem>The digit '1' indicates the size of the input operand 'x' in bytes.</listitem>
 	    <listitem>The digit '4' indicates the size of the output in bytes.</listitem>
@@ -833,8 +912,10 @@
 	    significant bytes of the result.
 	  </para>
 	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><code>SEXT14(x)</code> - Sign-extension operator - INT_SEXT</term>
 	<listitem>
-	  <code>SEXT14(x)</code> - Sign-extension operator - INT_SEXT
 	  <itemizedlist mark='bullet' spacing='compact'>
 	    <listitem>The digit '1' indicates the size of the input operand 'x' in bytes.</listitem>
 	    <listitem>The digit '4' indicates the size of the output in bytes.</listitem>
@@ -847,8 +928,10 @@
 	    bit of 'x' into the most significant bytes of the result.
 	  </para>
 	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><code>SBORROW4(x,y)</code> - Test for signed borrow operator - INT_SBORROW</term>
 	<listitem>
-	  <code>SBORROW4(x,y)</code> - Test for signed borrow operator - INT_SBORROW
 	  <itemizedlist mark='bullet' spacing='compact'>
 	    <listitem>The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</listitem>
 	  </itemizedlist>
@@ -857,8 +940,10 @@
 	    as signed integers.
 	  </para>
 	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><code>CARRY4(x,y)</code> - Test for unsigned overflow operator - INT_CARRY</term>
 	<listitem>
-	  <code>CARRY4(x,y)</code> - Test for unsigned overflow operator - INT_CARRY
 	  <itemizedlist mark='bullet' spacing='compact'>
 	    <listitem>The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</listitem>
 	  </itemizedlist>
@@ -867,8 +952,10 @@
 	    as unsigned integers.
 	  </para>
 	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><code>SCARRY4(x,y)</code> - Test for signed overflow operator - INT_SCARRY</term>
 	<listitem>
-	  <code>SCARRY4(x,y)</code> - Test for signed overflow operator - INT_SCARRY
 	  <itemizedlist mark='bullet' spacing='compact'>
 	    <listitem>The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</listitem>
 	  </itemizedlist>
@@ -877,7 +964,8 @@
 	    as signed integers.
 	  </para>
 	</listitem>
-      </itemizedlist>
+      </varlistentry>
+      </variablelist>
     </informalexample>
   </sect3>
   </sect2>
@@ -1102,14 +1190,14 @@
     <sect3 id="ConceptPrototypeUnaffected">
       <title>Unaffected</title>
       <para>
-	Prototype models can specify a set of <emphasis role="bold">unaffected</emphasis>memory locations,
+	Prototype models can specify a set of <emphasis role="bold">unaffected</emphasis> memory locations,
 	whose value must be <emphasis>preserved</emphasis> across the function. I.e. each location 
 	must hold the same value at a function's exit that it held coming into the function.
 	These encompass a calling convention's <emphasis>saved registers</emphasis>, where a calling function
         can store values it doesn't want to change unexpectedly, but also may include other registers that are
 	known not to change, like the stack pointer.
 	The decompiler uses the information to determine which locations can be safely propagated across
-	a sub-function.
+	a called function.
       </para>
     </sect3>
     <sect3 id="ConceptPrototypeKilledByCall">
@@ -1137,8 +1225,12 @@
     processor specific form into Ghidra's IR language (see <xref linkend="ConceptPcode"/>),
     which provides both the control-flow behavior of the instruction and the detailed
     semantics describing how the processor and memory state is affected. The translation is controlled by
-    the underlying processor model and cannot be directly altered from the tool. Users
-    <emphasis>can</emphasis> modify the model specification itself, however.
+    the underlying processor model and, except in limited circumstances, cannot be directly altered
+    from the tool. Flow Overrides (see below) can change how certain control-flow is translated,
+    and, depending on the processor, context registers may affect p-code (see <xref linkend="AnnoteContextRegister"/>).
+  </para>
+  <para>
+    Outside of the tool, users <emphasis>can</emphasis> modify the model specification itself.
     See the document "SLEIGH: A Language for Rapid Processor Specification".
   </para>
   <para>
@@ -1148,7 +1240,7 @@
     <emphasis>fall through</emphasis>, <emphasis>conditional jump</emphasis>, and other
     semantics until an instruction with <emphasis>terminator</emphasis> semantics is
     reached, which is usually a "return from subroutine"
-    instruction.  Flow is not traced into subfunctions, in this situation.  Instructions
+    instruction.  Flow is not traced into called functions, in this situation.  Instructions
     with <emphasis>call</emphasis> semantics are treated only as if they fall through.
   </para>
   <para>
@@ -1202,11 +1294,17 @@
   <sect2 id="AnnoteFlowOverride">
     <title>Flow Overrides</title>
     <para>
-      Control-flow behavior for machine instructions is generally determined by the underlying
-      Processor model. But this flow can be overridden for individual instructions by various
-      Analyzers or manually by the user. The decompiler incorporates these overrides into its
-      analysis, and they can have a significant impact on results. Current
-      <emphasis>flow overrides</emphasis> include:
+      Control-flow behavior for a machine instruction is generally determined by its underlying
+      p-code (see <xref linkend="ConceptControlFlow"/>), but this can be changed by applying a Flow Override.
+      A <emphasis role="bold">Flow Override</emphasis> maintains the overall semantics of a branching instruction
+      but changes how the branch is interpreted.  For instance, a <code>JMP</code> instruction, which traditionally
+      represents a branch within a single function, can be overridden to represent a call to a new function.
+      Flow Overrides are applied by Analyzers or manually by the user.
+    </para>
+    <para>
+      The decompiler automatically incorporates any relevant Flow Overrides into its
+      analysis of a function. This can have a significant impact on results. The
+      types of possible Flow Overrides include:
       <informalexample>
       <variablelist>
       <?dbfo list-presentation="blocks"?>
@@ -1492,8 +1590,11 @@
 	  <term>Duplicate Symbols</term>
 	  <listitem>
 	    <para>
-	      Ghidra allows duplicate symbols, including duplicate function names, in
-	      any scope higher than a function.
+	      Ghidra allows different functions to have the same name, even within the same
+	      namespace, in order to model languages that support <emphasis>function overloading</emphasis>.
+	      In most languages, such functions would be expected to have distinct prototypes to allow
+	      the symbols to be distinguished in context.   Ghidra and the decompiler however do not check
+	      for this, as prototypes may not be known.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -1796,21 +1897,20 @@
       </para>
       <para>
 	For annotations that specifically label a function's formal parameters or return value, 
-	the <emphasis>Signature Source-Type</emphasis> also affects how they're treated by the decompiler.
-	If the Source-Type is set to anything other than <emphasis>DEFAULT</emphasis>, there is a forced
+	the <link linkend="PrototypeSignatureSource">Signature Source</link> also affects how they're treated by the decompiler.
+	If the Signature Source is set to anything other than <emphasis>DEFAULT</emphasis>, there is a forced
 	one-to-one correspondence between variable annotations and actual parameters in the decompiler's
 	view of the function.  This is stronger than just forcing the data-type; the existence (or not) of
-	the variable itself is forced by the annotation in this case.  If the Source-Type is forcing and
+	the variable itself is forced by the annotation in this case.  If the Signature Source is forcing and
 	there are no parameter annotations, a <emphasis>void</emphasis> prototype is forced on the function.
       </para>
       <para>
-	A forcing Source-Type, with a value other than
-	<emphasis>DEFAULT</emphasis>, is set typically if debug symbols for the function are read in during
+	A forcing Signature Source is set typically if debug symbols for the function are read in during
 	Program import (<emphasis>IMPORTED</emphasis>), or if the user manually edits the function prototype
 	directly (<emphasis>USER_DEFINED</emphasis>).
       </para>
       <para>
-	If an annotation and the Signature Source-Type force a parameter to exist, specifying an
+	If an annotation and the Signature Source force a parameter to exist, specifying an
 	<emphasis>undefined</emphasis> data-type in the annotation still directs the decompiler to fill in
 	the variable's data-type using type propagation.  The same holds true for the return value; an
 	<emphasis>undefined</emphasis> annotation fixes the size of the return value, but the decompiler
@@ -1886,10 +1986,13 @@
 	Currently, the entire body of the function is included
 	in the scope of any stack annotation, and the decompiler will allow only a single variable to exist
 	at the stack address. A stack annotation can be a formal parameter to the function, but otherwise the
-	decompiler does not expect to see a value that exists before the start of the function.  Similarly,
-	because the value is not expected to persist after the function executes, a write to the stack
-	address may not show up as an explicit assignment to the variable if the value is simply
-	<emphasis>propagated through</emphasis> to another expression.
+	decompiler does not expect to see a value that exists before the start of the function.
+      </para>
+      <para>
+	The decompiler will continue to perform <emphasis>copy propagation</emphasis> and other transforms on
+	stack locations associated with a variable annotation. In particular, within decompiler output,
+	a specific write operation to a stack address may not show up as an explicit assignment to its variable,
+	if the value is simply copied to another location.
       </para>
     </sect3>
     <sect3 id="VariableStorageRegister">
@@ -2024,7 +2127,7 @@
 	<para>
 	  If the boolean property <emphasis role="bold">in-line</emphasis> is turned on for a particular function,
 	  it directs the decompiler to inline the effects of the function into the decompilation of any of its calling functions.
-	  The function will no longer appear as a direct subfunction call in the decompilation, but all of its data-flow
+	  The function will no longer appear as a direct function call in the decompilation, but all of its data-flow
 	  will be incorporated into the calling function.
 	</para>
 	<para>
@@ -2040,8 +2143,8 @@
 	<para>
 	  This property is similar in spirit to marking a function as <emphasis>in-line</emphasis>.
 	  A <emphasis role="bold">call-fixup</emphasis> directs the decompiler to replace any call to the function with a specific
-	  chunk of raw p-code.  The decompilation of any calling function no longer shows the subfunction call, but the chunk
-	  of p-code incorporates the subfunction's effects.
+	  chunk of raw p-code.  The decompilation of any calling function no longer shows the function call, but the chunk
+	  of p-code incorporates the called function's effects.
 	</para>
 	<para>
 	  Call-fixups are more flexible than just inlining a function.  The call-fixup chunk can be tailored to incorporate all of,
@@ -2056,6 +2159,41 @@
     </variablelist>
     </informalexample>
   </para>
+  <sect2 id="PrototypeSignatureSource">
+    <title>Signature Source</title>
+    <para>
+      Ghidra records a <emphasis role="bold">Signature Source</emphasis> for every function,
+      indicating the origin of its prototype information.  This is
+      similar to the <emphasis>Symbol Source</emphasis> attached to Ghidra's symbol annotations
+      (See the documentation for
+      <link xlink:href="help/topics/SymbolTablePlugin/symbol_table.htm#Set_Filter">Filtering</link>
+      in the Symbol Table).  The possible types are:
+      <informalexample>
+	<itemizedlist mark='none'>
+	  <listitem><emphasis>DEFAULT</emphasis> - for basic or no information</listitem>
+	  <listitem><emphasis>ANALYSIS</emphasis> - for information derived by an Analyzer</listitem>
+	  <listitem><emphasis>IMPORTED</emphasis> - for information imported from an external source</listitem>
+	  <listitem><emphasis>USER_DEFINED</emphasis> - for information set by the user</listitem>
+	</itemizedlist>
+      </informalexample>
+    </para>
+    <para>
+      Upon import of the Program, if there are debugging symbols available, Ghidra will build
+      annotations of the function's parameters and set the Symbol Source type to <emphasis>IMPORTED</emphasis>.
+      Otherwise, it will generally be set to <emphasis>DEFAULT</emphasis>.
+    </para>
+    <para>
+      However, Ghidra adjusts the Signature Source for a function if there is any change to the
+      prototype.  In particular, if the user adds, removes, or edits variable annotations
+      for the function's parameters or return value, Ghidra automatically converts the Signature
+      Source to be <emphasis>USER_DEFINED</emphasis>.
+    </para>
+    <para>
+      If the Signature Source is set to anything other than <emphasis>DEFAULT</emphasis>, the
+      function's prototype information is forcing on the decompiler.  See the discussion
+      in <xref linkend="AnnoteForcing"/>
+    </para>
+  </sect2>
   <sect2 id="PrototypeDiscover">
     <title>Discovering Parameters</title>
     <para>
@@ -2066,7 +2204,7 @@
     </para>
     <warning>
       The input parameters and return value are all forced on the decompiler as a unit based on the
-      <emphasis>Signature Source-Type</emphasis>. They are all forced if the Source-Type is set to anything
+      <emphasis>Signature Source</emphasis>. They are all forced if the type is set to anything
       other than <emphasis>DEFAULT</emphasis>; otherwise none of them are forced.
     </warning>
     <para>
@@ -2164,7 +2302,7 @@
     <itemizedlist mark='bullet'>
       <listitem>Signed or zero extension</listitem>
       <listitem>Bitwise negation</listitem>
-      <listitem>Integer negation - Twos complement</listitem>
+      <listitem>Integer negation - Two's complement</listitem>
       <listitem>Add or subtract 1</listitem>
     </itemizedlist>
     </informalexample>
@@ -2242,6 +2380,53 @@
     If a register value's region starts in the middle of a function, decompilation is <emphasis>not</emphasis>
     affected at all.
   </para>
+  <sect2 id="AnnoteContextRegister">
+    <title>Context Registers</title>
+    <para>
+      There is a special class of registers, called <emphasis role="bold">context registers</emphasis> whose
+      values have a different affect on analysis and decompilation than described above.
+    </para>
+    <tip>
+      <emphasis>Context registers</emphasis> are inputs to the disassembly decoding process and directly affect which
+      machine instructions are created.
+    </tip>
+    <para>
+      The value in a context register is examined when Ghidra decodes machine instructions from the underlying
+      bytes in the Program. A specific value generally corresponds to a specific <emphasis>execution mode</emphasis>
+      of the processor. The ARM processor <emphasis>T bit</emphasis> for instance, which selects whether the
+      processor is executing ARM or THUMB instructions, is modeled as a context register in Ghidra.
+      The same set of bytes in the Program can be decoded to machine instructions in more than one way,
+      depending on context register values.
+    </para>
+    <para>
+      Bytes are typically decoded once using context register values
+      established at the time of disassembly. From Ghidra's more static view of execution, a context register holds
+      only a single value at any point in the code, but the same context register can hold different values for
+      different regions of code. Setting a new value on a region of the Program will affect any subsequent disassembly
+      of code within that region.  
+    </para>
+    <para>
+      If a context register value is changed for a region that has already been disassembled, in order to see
+      the affect of the change, the machine instructions in the region need to be cleared, and disassembly needs
+      to be triggered again.  See the documentation on the
+      <link xlink:href="help/topics/ClearPlugin/Clear.htm#Clear_Code_Bytes">Clear Plugin</link>.
+    </para>
+    <para>
+      Values for a context register are set in the same way as any other register, using the
+      <link xlink:href="help/topics/RegisterPlugin/Registers.htm#SetRegisterValues">Set Register Values ...</link> command
+      described above.  Within the
+      <link xlink:href="help/topics/RegisterPlugin/Registers.htm#Register_Manager">Register Manager</link> window,
+      context registers are generally grouped together under the (pseudo-register) heading, <emphasis>contextreg</emphasis>.
+      For details about how context registers are used in processor modeling, see
+      the document "SLEIGH: A Language for Rapid Processor Specification".
+    </para>
+    <para>
+      Because context registers affect machine instructions, they also affect the underlying p-code and
+      have a substantial impact on decompilation.  Although details vary by processor, context register
+      values are typically established during the initial import and analysis of a Program and aren't changed
+      frequently.
+    </para>
+  </sect2>
 </section>
 
 </chapter>
@@ -2286,7 +2471,7 @@
     <informalexample>
     <variablelist>
     <?dbfo list-presentation="blocks"?>
-    <varlistentry>
+    <varlistentry id="GeneralCacheSize">
       <term><emphasis role="bold">Cache Size (Functions)</emphasis></term>
       <listitem>
 	<para>
@@ -2298,7 +2483,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="GeneralMaxPayload">
       <term><emphasis role="bold">Decompiler Max-Payload (MBytes)</emphasis></term>
       <listitem>
 	<para>
@@ -2311,7 +2496,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="GeneralTimeout">
       <term><emphasis role="bold">Decompiler Timeout (seconds)</emphasis></term>
       <listitem>
 	<para>
@@ -2338,13 +2523,13 @@
     <informalexample>
     <variablelist>
     <?dbfo list-presentation="blocks"?>
-    <varlistentry>
+    <varlistentry id="AnalysisAliasBlocking">
       <term><emphasis role="bold">Alias Blocking</emphasis></term>
       <listitem>
 	<para>
 	  When deciding if an individual stack location has become dead, the decompiler
 	  must consider <emphasis>aliases</emphasis>, pointers onto the stack that could
-	  be used to modify the location within a sub-function.  One strong heuristic the decompiler
+	  be used to modify the location within a called function.  One strong heuristic the decompiler
 	  uses is; if the user has explicitly created a variable on the stack between the
 	  base location referenced by the pointer and the individual stack location, then
 	  the decompiler can assume that the pointer is not an alias of the stack location.
@@ -2371,7 +2556,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="AnalysisUnreachable">
       <term><emphasis role="bold">Eliminate unreachable code</emphasis></term>
       <listitem>
 	<para>
@@ -2384,7 +2569,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="AnalysisIgnoreUnimplemented">
       <term><emphasis role="bold">Ignore unimplemented instructions</emphasis></term>
       <listitem>
 	<para>
@@ -2400,7 +2585,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="AnalysisInferConstants">
       <term><emphasis role="bold">Infer constant pointers</emphasis></term>
       <listitem>
 	<para>
@@ -2413,7 +2598,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="AnalysisReadOnly">
       <term><emphasis role="bold">Respect read-only flags</emphasis></term>
       <listitem>
 	<para>
@@ -2434,7 +2619,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="AnalysisExtendedPrecision">
       <term><emphasis role="bold">Simplify extended integer operations</emphasis></term>
       <listitem>
 	<para>
@@ -2445,7 +2630,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="AnalysisPredicate">
       <term><emphasis role="bold">Simplify predication</emphasis></term>
       <listitem>
 	<para>
@@ -2458,7 +2643,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="AnalysisInPlace">
       <term><emphasis role="bold">Use in-place assignment operators</emphasis></term>
       <listitem>
 	<para>
@@ -2481,7 +2666,7 @@
     <informalexample>
     <variablelist>
     <?dbfo list-presentation="blocks"?>
-    <varlistentry>
+    <varlistentry id="DisplayBackgroundColor">
       <term><emphasis role="bold">Background Color</emphasis></term>
       <listitem>
 	<para>
@@ -2489,7 +2674,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayTokenColor">
       <term><emphasis role="bold">Color for &lt;token&gt;</emphasis></term>
       <listitem>
 	<para>
@@ -2510,7 +2695,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayColorDefault">
       <term><emphasis role="bold">Color Default</emphasis></term>
       <listitem>
 	<para>
@@ -2520,7 +2705,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayCurrentHighlight">
       <term><emphasis role="bold">Color for Current Variable Highlight</emphasis></term>
       <listitem>
 	<para>
@@ -2528,7 +2713,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayFindHighlight">
       <term><emphasis role="bold">Color for Highlighting Find Matches</emphasis></term>
       <listitem>
 	<para>
@@ -2537,7 +2722,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayCommentIndent">
       <term><emphasis role="bold">Comment line indent level</emphasis></term>
       <listitem>
 	<para>
@@ -2547,7 +2732,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayCommentStyle">
       <term><emphasis role="bold">Comment style</emphasis></term>
       <listitem>
 	<para>
@@ -2556,7 +2741,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayDisableCasts">
       <term><emphasis role="bold">Disable printing of type casts</emphasis></term>
       <listitem>
 	<para>
@@ -2593,7 +2778,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayHeaderComment">
       <term><emphasis role="bold">Display Header comment</emphasis></term>
       <listitem>
 	<para>
@@ -2604,7 +2789,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayLineNumbers">
       <term><emphasis role="bold">Display Line Numbers</emphasis></term>
       <listitem>
 	<para>
@@ -2616,7 +2801,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayNamespaces">
       <term><emphasis role="bold">Display Namespaces</emphasis></term>
       <listitem>
 	<para>
@@ -2647,7 +2832,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayWarningComments">
       <term><emphasis role="bold">Display Warning comments</emphasis></term>
       <listitem>
 	<para>
@@ -2657,7 +2842,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayFont">
       <term><emphasis role="bold">Font</emphasis></term>
       <listitem>
 	<para>
@@ -2667,7 +2852,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayIntegerFormat">
       <term><emphasis role="bold">Integer format</emphasis></term>
       <listitem>
 	<para>
@@ -2692,7 +2877,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayMaxChar">
       <term><emphasis role="bold">Maximum characters in a code line</emphasis></term>
       <listitem>
 	<para>
@@ -2703,7 +2888,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayIndentLevel">
       <term><emphasis role="bold">Number of characters per indent level</emphasis></term>
       <listitem>
 	<para>
@@ -2714,7 +2899,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayNull">
       <term><emphasis role="bold">Print 'NULL' for null pointers</emphasis></term>
       <listitem>
 	<para>
@@ -2725,7 +2910,7 @@
 	</para>
       </listitem>
     </varlistentry>
-    <varlistentry>
+    <varlistentry id="DisplayConvention">
       <term><emphasis role="bold">Print calling convention name</emphasis></term>
       <listitem>
 	<para>
@@ -2774,7 +2959,14 @@
   <para>
     To display the decompiler window, position the cursor on a
     function in the Code Browser, then select the
-    <guiicon><inlinegraphic fileref="images/decompileFunction.gif"/></guiicon> icon from the tool bar, or the
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="images/decompileFunction.gif" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/decompileFunction.gif" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&#xA0;icon from the tool bar, or the
     <emphasis role="bold">Decompile</emphasis> option from the
     <emphasis role="bold">Window</emphasis> menu in the tool.
   </para>
@@ -2838,14 +3030,22 @@
 <section id="MainWindow">
   <title>Main Window</title>
   <para>
-  Initially pushing <guiicon><inlinegraphic fileref="images/decompileFunction.gif"/></guiicon> or selecting
-  <emphasis role="bold">Decompile</emphasis> from the <emphasis role="bold">Window</emphasis> menu in the tool
-  brings up the <emphasis>main</emphasis> window.  The main window always displays the function
-  at the <emphasis>current address</emphasis> within the Code Browser and follows as the user navigates
-  within the Program.  Any mouse click, menu option, or other action causing the cursor to move to a new
-  address in the Listing also causes the main window to display the function containing that address.
-  Navigation to new functions is also possible from within the window by double-clicking on function
-  tokens (See <xref linkend="MouseActions"/>).
+    Initially pushing
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="images/decompileFunction.gif" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/decompileFunction.gif" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&#xA0;or selecting
+    <emphasis role="bold">Decompile</emphasis> from the <emphasis role="bold">Window</emphasis> menu in the tool
+    brings up the <emphasis>main</emphasis> window.  The main window always displays the function
+    at the <emphasis>current address</emphasis> within the Code Browser and follows as the user navigates
+    within the Program.  Any mouse click, menu option, or other action causing the cursor to move to a new
+    address in the Listing also causes the main window to display the function containing that address.
+    Navigation to new functions is also possible from within the window by double-clicking on function
+    tokens (See <xref linkend="MouseActions"/>).
   </para>
 
   <sect2 id="CrossHighlighting">
@@ -2868,7 +3068,7 @@
       <emphasis>Operator</emphasis> tokens map to the machine instruction which performed that operation.
     </para>
     <para>
-      <emphasis>Function Name</emphasis> tokens, if they represent a call to a sub-function, map to the
+      <emphasis>Function Name</emphasis> tokens, if they represent a call to another function, map to the
       machine instruction executing the call.
     </para>
     <para>
@@ -2887,8 +3087,16 @@
 <section id="Snapshot">
   <title>Snapshot Windows</title>
   <para>
-    Pressing the <guiicon><inlinegraphic fileref="images/camera-photo.png"/></guiicon>
-    icon in another Decompiler window's toolbar causes a <emphasis>Snapshot</emphasis> window
+    Pressing the
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="images/camera-photo.png" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/camera-photo.png" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+    </guiicon>&#xA0;icon
+    in another Decompiler window's toolbar causes a <emphasis>Snapshot</emphasis> window
     to be created, which initially shows decompilation of the same function. Multiple
     Snapshot windows can be brought up to show decompilation of different functions
     simultaneously. Snapshot
@@ -2915,6 +3123,41 @@
   </para>
 </section>
 
+<section id="UndefinedFunction">
+  <title>Undefined Functions</title>
+  <para>
+    If the current location within the Code Browser is in disassembled code, but that code
+    is not contained in a <link linkend="AnnoteFormalFunctionBody">Formal Function Body</link>,
+    then the decompiler window invents a function body on the fly called an
+    <emphasis role="bold">Undefined Function</emphasis>.  The background color of the window
+    is changed to gray to indicate this special state.
+    <mediaobject>
+      <imageobject>
+        <imagedata condition="noscaling" fileref="images/Undefined.png" width="100%" contentwidth="579px" contentdepth="143px" align="center"/>
+	<imagedata condition="withscaling" fileref="images/Undefined.png" width="100%" contentwidth="4.523in" contentdepth="1.117in" align="center"/>
+      </imageobject>
+    </mediaobject>
+  </para>
+  <para>
+    The <emphasis>entry point</emphasis> address of the Undefined Function is chosen by
+    backtracking through the code's control-flow from the current location to the start of
+    a basic block that has no flow coming in except possibly from <emphasis>call</emphasis> instructions.
+    During decompilation, a function body is computed from the selected entry point (as with any function)
+    based on control-flow up to instructions with <emphasis>terminator</emphasis> semantics.
+  </para>
+  <para>
+    The current address, as indicated by the cursor in the Listing Window for instance, is
+    generally <emphasis>not</emphasis> the entry of the invented function, but the current address will be
+    contained somewhere in the body.
+  </para>
+  <para>
+    For display purposes in the window, the invented function is given a name based on the
+    computed entry point address with the prefix <code>UndefinedFunction</code>. The function
+    is assigned the default calling convention, and parameters are discovered as part of
+    the decompiler's analysis.
+  </para>
+</section>
+
 <section id="ToolBar">
   <title>Tool Bar</title>
   <para>
@@ -2926,7 +3169,14 @@
 <sect2 id="ToolBarExport">
   <title>Export to C</title>
   <para>
-    <guiicon><inlinegraphic fileref="images/page_edit.png"/></guiicon> - button
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="images/page_edit.png" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/page_edit.png" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&#xA0;- button
   </para>
   <para>
     Exports the decompiled result of the current function to a file. A file chooser
@@ -2934,12 +3184,27 @@
     is not specified, a ".c" is appended to the filename.  If the file already exists,
     a final dialog is presented to confirm that the file should be overwritten.
   </para>
+  <para>
+    This action exports a single function at a time.  The user can export all functions
+    simultaneously from the Code Browser, by selecting the menu
+    <emphasis role="bold">File -> Export Program ...</emphasis> and then choosing
+    <link xlink:href="help/topics/ExporterPlugin/exporter.htm#c_cpp">C/C++</link>
+    from the drop-down menu. See the full documentation for
+    the <link xlink:href="help/topics/ExporterPlugin/exporter.htm">Export</link> dialog.
+  </para>
 </sect2>
 
 <sect2 id="ToolBarSnapshot">
   <title>Snapshot</title>
   <para>
-    <guiicon><inlinegraphic fileref="images/camera-photo.png"/></guiicon> - button
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="images/camera-photo.png" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/camera-photo.png" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&#xA0;- button
   </para>
   <para>
     Creates a new <emphasis>Snapshot</emphasis> window.  The <emphasis>Snapshot</emphasis> window
@@ -2952,7 +3217,14 @@
 <sect2 id="ToolBarRedecompile">
   <title>Re-decompile</title>
   <para>
-    <guiicon><inlinegraphic fileref="images/reload3.png"/></guiicon> - button
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="images/reload3.png" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/reload3.png" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&#xA0;- button
   </para>
   <para>
     Triggers a re-decompilation of the current function displayed in the window.
@@ -2970,7 +3242,14 @@
 <sect2 id="ToolBarCopy">
   <title>Copy</title>
   <para>
-    <guiicon><inlinegraphic fileref="images/page_white_copy.png"/></guiicon> - button
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="images/page_white_copy.png" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="images/page_white_copy.png" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&#xA0;- button
   </para>
   <para>
     Copies the currently selected text in the decompiler window to the clipboard.
@@ -3005,7 +3284,7 @@
     and render it using the current Graph Service.
   </para>
   <warning>
-    If no Graph Service is available then this action will no be present.
+    If no Graph Service is available then this action will not be present.
   </warning>
 </sect2>
 
@@ -3052,10 +3331,10 @@
     <variablelist>
     <?dbfo list-presentation="blocks"?>
     <varlistentry>
-      <term><emphasis role="bold">Sub-function Symbols</emphasis></term>
+      <term><emphasis role="bold">Function Symbols</emphasis></term>
       <listitem><para>
-	Double clicking a sub-function name causes the
-	window itself to navigate away from its current function to the sub-function, triggering
+	Double clicking a called function name causes the
+	window itself to navigate away from its current function to the called function, triggering
 	a new decompilation if necessary and changing its display.
       </para></listitem>
     </varlistentry>
@@ -3101,7 +3380,7 @@
   <title>Control Double Click</title>
   <para>
     Opens a new <emphasis>Snapshot</emphasis> window, navigating it to the selected symbol.
-    This is a convenience for immediately decompiling and displaying a sub-function in a
+    This is a convenience for immediately decompiling and displaying a called function in a
     new window, without disturbing the active window.  The behavior is similar to the
     Double Click action, the selected token must represent a function name symbol or possibly
     a constant address, but the navigation occurs in the new Snapshot window.
@@ -3307,7 +3586,7 @@
   </para>
   <para>
     The action is available from any token in the decompiler window.  Most tokens trigger editing
-    of the current function itself, but a subfunction can be edited by putting the cursor on
+    of the current function itself, but a called function can be edited by putting the cursor on
     its name specifically.
   </para>
   <para>
@@ -3394,7 +3673,8 @@
       Highlight all variable tokens where the value at that point in the function is
       directly affected by the value at the selected variable token.
       A token is highlighted if there is a direct data-flow path
-      starting from the selected point and ending at the token.
+      starting from the selected point and ending at the token. A call operation is not
+      considered a direct data-flow path from its input parameters to its output value.
       </para>
       <para>
       In the following example, the token <emphasis>b</emphasis>, the output of
@@ -3414,26 +3694,32 @@
       directly affects the value at the selected variable token.
       A token is highlighted if there is a direct data-flow path
       starting from the token and ending at the selected point.
+      A call operation is not considered a direct data-flow path from its input parameters
+      to its output value.
       </para></listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis role="bold">Forward Inst Slice</emphasis></term>
+      <term><emphasis role="bold">Forward Operator Slice</emphasis></term>
       <listitem><para>
 	Highlight every operator token that manipulates a value directly affected by the
 	value at the selected variable token.  Along each direct data-flow path that
 	<emphasis>starts</emphasis>
 	at the selected point, each token representing an operation is highlighted, along with
-	any explicit variable it writes to.
+	any explicit variable read or written by the operation.  A call operation is not
+	considered a direct data-flow path from its input parameters to its output value.
+	This is an alternate presentation of the slice displayed by the Forward Slice action.
       </para></listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis role="bold">Backward Inst Slice</emphasis></term>
+      <term><emphasis role="bold">Backward Operator Slice</emphasis></term>
       <listitem><para>
 	Highlight every operator token that manipulates a value that directly affects the
 	value at the selected variable token.  Along each direct data-flow path that
 	<emphasis>ends</emphasis>
 	at the selected point, each token representing an operation is highlighted, along with
-	any explicit variable it writes to.
+	any explicit variable read or written by the operation. A call operation is not
+	considered a direct data-flow path from its input parameters to its output value.
+	This is an alternate presentation of the slice displayed by the Backward Slice action.
       </para></listitem>
     </varlistentry>
     </variablelist>
@@ -3491,19 +3777,19 @@
 <sect2 id="ActionOverrideSignature">
   <title>Override Signature</title>
   <para>
-    Override the function prototype corresponding to the sub-function under the cursor.
+    Override the function prototype corresponding to the function under the cursor.
   </para>
   <para>
     This action can be triggered at <emphasis>call sites</emphasis>, where the function
-    being decompiled is calling into another sub-function. Users must select either the token representing
-    the sub-function's name or the tokens representing the function pointer at the call site.
+    being decompiled is calling into another function. Users must select either the token representing
+    the called function's name or the tokens representing the function pointer at the call site.
     A dialog is brought up where the a complete <emphasis>function declaration</emphasis>, specifying
     the return data-type along with the name and data-type for each input parameter.  Additionally,
     the "Calling Convention", "In Line", and "No Return" properties of the function prototype
     can be set (See <xref linkend="AnnotePrototype"/>).
   </para>
   <para>
-    Confirming the dialog forces the new function prototype on the decompiler's view of the sub-function,
+    Confirming the dialog forces the new function prototype on the decompiler's view of the called function,
     but only for the single selected call site.
   </para>
   <para>
@@ -3566,12 +3852,12 @@
 <sect2 id="ActionRemoveOverride">
   <title>Remove Signature Override</title>
   <para>
-    Remove the overriding function prototype applied previously to the sub-function under the cursor.
+    Remove the overriding function prototype applied previously to the called function under the cursor.
   </para>
   <para>
     This action can only be triggered at <emphasis>call sites</emphasis>, where an overriding
     prototype was previously placed by the <xref linkend="ActionOverrideSignature"/> command. As with
-    this command, users must select either the token representing the sub-function's name or the
+    this command, users must select either the token representing the called function's name or the
     tokens representing the function pointer at the call site.  The action causes the
     override to be removed immediately. Parameter information will be drawn from the decompiler's
     normal analysis.
@@ -3585,7 +3871,7 @@
   </para>
   <para>
     The current function can be renamed by selecting the name token within the function's
-    declaration at the top of the decompiler window, or individual subfunctions
+    declaration at the top of the decompiler window, or individual called functions
     can be renamed by selecting their name token within a call expression.  
     This action brings up a dialog containing a text field prepopulated with the
     name to be changed. The current namespace (and any parent namespaces) is
@@ -3758,6 +4044,12 @@
     input parameters to be created as well.  In this situation, the action is equivalent to
     <xref linkend="ActionCommitParams"/>, and a confirmation dialog comes up to notify the user.
   </para>
+  <para>
+    Setting a data-type on the return value using this action affects decompilation for the
+    function itself and, additionally, any function that calls this function.  Within a calling
+    function, the decompiler propagates the data-type into the variable or expression incorporating
+    the return value at each call site.
+  </para>
 </sect2>
 
 <sect2 id="ActionRetypeVariable">
@@ -3790,6 +4082,11 @@
     of parameters and their memory locations become fixed.  If the annotation of another
     parameter did not exist previously, then its data-type is <emphasis>not</emphasis>
     forced by this action.
+  </para>
+  <para>
+    Data-type information applied to parameters using this action is especially impactful
+    because it affects decompilation for the function owning the parameter and, additionally,
+    any function that calls this owning function.
   </para>
 </sect2>
 

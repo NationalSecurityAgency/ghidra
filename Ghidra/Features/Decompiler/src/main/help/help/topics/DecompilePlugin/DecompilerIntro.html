@@ -62,7 +62,9 @@
 <div class="informalexample">
     <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
-	Press the <span class="guiicon"><img src="images/decompileFunction.gif"></span> icon
+	Press the <span class="guiicon">
+	<span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
+	</span> icon
 	in the tool bar, <span class="emphasis"><em>or</em></span>
       </li>
 <li class="listitem" style="list-style-type: disc">
@@ -110,54 +112,66 @@
 
   </p>
 <div class="informalexample">
-  <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
-<li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Recovering Expressions</strong></span>: The
-      decompiler does full data-flow analysis which allows it to
-      perform slicing on functions: complicated expressions, which have been split into
-      distinct operations/instructions and then mixed together with
-      other instructions by the compiling/optimizing process, are
-      reconstituted back into a single line.
-    </li>
-<li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Recovering High-Level Scoped
-      Variables</strong></span>: The decompiler understands how compilers
-      use processor stacks and registers to implement variables with
-      different scopes within a function. Data-flow analysis allows it to
-      follow what was originally a single variable as it moves from
-      the stack, into a register, into a different register, etc. Thus
-      it can effectively recover the original programs concept of a
-      variable, minimizing the need to introduce artificial variables
-      in the output.
-    </li>
-<li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Recovering Function Parameters</strong></span>:
-      The decompiler understands the parameter passing conventions of
-      the compiler and can reconstruct the original form of
-      function calls.
-    </li>
-<li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Using Data-type, Name, and Signature
-      Annotations</strong></span>: The decompiler automatically pulls in
-      all the different data types and variable names that the user
-      has applied to functions, and the C output is altered to reflect
-      this. High-level variables are appropriately named, structure
-      fields and array indices are calculated and displayed with
-      correct syntax, constant char pointers are replaced with
-      appropriate quoted strings, etc.
-    </li>
-<li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Propagating Local Data-types</strong></span>:
-      The decompiler infers the data-type of unlabeled variables
-      by propagating information from other sources throughout a function.
-    </li>
-<li class="listitem" style="list-style-type: disc">
-      <span class="bold"><strong>Recovering Structure Definitions</strong></span>:
-      The decompiler can be used to create structures that match the usage
-      pattern of particular functions and variables, automatically discovering
-      component offsets and data-types.
-      </li>
-</ul></div>
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="bold"><strong>Recovering Expressions</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler does full data-flow analysis which allows it to
+	  perform slicing on functions: complicated expressions, which have been split into
+	  distinct operations/instructions and then mixed together with
+	  other instructions by the compiling/optimizing process, are
+	  reconstituted back into a single line.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Recovering High-Level Scoped Variables</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler understands how compilers
+	  use processor stacks and registers to implement variables with
+	  different scopes within a function. Data-flow analysis allows it to
+	  follow what was originally a single variable as it moves from
+	  the stack, into a register, into a different register, etc. Thus
+	  it can effectively recover the original program's concept of a
+	  variable, minimizing the need to introduce artificial variables
+	  in the output.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Recovering Function Parameters</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler understands the parameter passing conventions of
+	  the compiler and can reconstruct the original form of
+	  function calls.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Using Data-type, Name, and Signature Annotations</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler automatically pulls in
+	  all the different data types and variable names that the user
+	  has applied to functions, and the C output is altered to reflect
+	  this. High-level variables are appropriately named, structure
+	  fields and array indices are calculated and displayed with
+	  correct syntax, constant char pointers are replaced with
+	  appropriate quoted strings, etc.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Propagating Local Data-types</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler infers the data-type of unlabeled variables
+	  by propagating information from other sources throughout a function.
+	</p>
+      </dd>
+<dt><span class="term"><span class="bold"><strong>Recovering Structure Definitions</strong></span></span></dt>
+<dd>
+	<p>
+	  The decompiler can be used to create structures that match the usage
+	  pattern of particular functions and variables, automatically discovering
+	  component offsets and data-types.
+	</p>
+      </dd>
+</dl></div>
     </div>
 <p>
   </p>
