@@ -1651,13 +1651,13 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 
 @if defined(VERSION_5E)
 
-:pld addrmode2         is $(AMODE) &  cond=0xf & c2627=1 & c2424=1 & c2022=5 & c1215=0xf & addrmode2
+:pld addrmode2         is $(AMODE) &  cond=0xf & c2627=1 & c2424=1 & c2022=5 & c1215=0xf & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
 	HintPreloadData(addrmode2);
 }
 
 # prevent literal form getting matched by pldw
-:pld addrmode2         is $(AMODE) &  cond=0xf & c2627=1 & c2424=1 & c2022=5 & c1619=0xf & c1215=0xf & addrmode2
+:pld addrmode2         is $(AMODE) &  cond=0xf & c2627=1 & c2424=1 & c2022=5 & c1619=0xf & c1215=0xf & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
 	HintPreloadData(addrmode2);
 }
@@ -1666,12 +1666,12 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 
 @if defined(VERSION_7)
 
-:pldw addrmode2         is $(AMODE) &  cond=0xf & c2627=1 & c2424=1 & c2022=1 & c1215=0xf & addrmode2
+:pldw addrmode2         is $(AMODE) &  cond=0xf & c2627=1 & c2424=1 & c2022=1 & c1215=0xf & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
 	HintPreloadDataForWrite(addrmode2);
 }
 
-:pli addrmode2			is $(AMODE) &  cond=0xf & c2627=1 & c2424=0 & c2022=5 & c1215=0xf & addrmode2
+:pli addrmode2			is $(AMODE) &  cond=0xf & c2627=1 & c2424=0 & c2022=5 & c1215=0xf & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
 	HintPreloadInstruction(addrmode2);
 }
@@ -2872,7 +2872,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @endif # VERSION_6T2
 
 # The following form of ldr assumes alignment checking is on
-:ldrt^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 & B22=0 & L20=1 & P24=0 & W21=1 & Rd & addrmode2
+:ldrt^COND Rd,addrmode2 	is $(AMODE) & COND & c2627=1 & B22=0 & L20=1 & P24=0 & W21=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
