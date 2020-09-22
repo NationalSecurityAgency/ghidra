@@ -20,13 +20,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.naming.OperationNotSupportedException;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 
@@ -154,10 +159,12 @@ public class PyDevUtils {
 	 */
 	public static File getPyDevSrcDir() throws CoreException {
 		String eclipsePath = Platform.getInstallLocation().getURL().getFile();
-		File pluginsDir = new File(eclipsePath, "plugins");
-		File dropinsDir = new File(eclipsePath, "dropins");
 		
-		for (File searchRoot : List.of(pluginsDir, dropinsDir)) {
+		List<File> searchDirs = new ArrayList<>();
+		searchDirs.add(new File(eclipsePath, "plugins"));
+		searchDirs.add(new File(eclipsePath, "dropins"));
+		
+		for (File searchRoot : searchDirs) {
 			try (Stream<Path> paths = Files.walk(Paths.get(searchRoot.toURI()))) {
 				Optional<File> pysrcDir = paths.filter(
 					Files::isDirectory)
