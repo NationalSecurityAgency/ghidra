@@ -160,7 +160,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Predicate for determining if an action is enabled for a given context
 	 */
-	private Predicate<C> enabledPredicate = ALWAYS_TRUE;
+	private Predicate<C> enabledPredicate = null;
 
 	/**
 	 * Predicate for determining if an action should be included on the pop-up menu
@@ -664,7 +664,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 			action.setHelpLocation(helpLocation);
 		}
 
-		action.enabledWhen(adaptPredicate(enabledPredicate));
+		if (enabledPredicate != null) {
+			action.enabledWhen(adaptPredicate(enabledPredicate));
+		}
+
 		action.validContextWhen(adaptPredicate(validContextPredicate));
 		action.popupWhen(adaptPredicate(popupPredicate));
 	}
