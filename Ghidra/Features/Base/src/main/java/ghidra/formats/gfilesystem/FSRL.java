@@ -477,21 +477,12 @@ public class FSRL {
 				return false;
 			}
 		}
-		else if (!parent.equals(other.parent)) {
+		else if (!parent.isEquivalent(other.parent)) {
 			return false;
 		}
 
 		// Path
-		if (path == null) {
-			if (other.path != null) {
-				return false;
-			}
-		}
-		else if (!path.equals(other.path)) {
-			return false;
-		}
-
-		return true;
+		return Objects.equals(path, other.path);
 	}
 
 	/**
