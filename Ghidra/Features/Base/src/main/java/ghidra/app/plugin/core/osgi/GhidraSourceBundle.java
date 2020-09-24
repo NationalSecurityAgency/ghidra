@@ -713,6 +713,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			}
 		}
 		catch (Throwable e) {
+			Msg.error(this, "Exception searching ", e);
 			e.printStackTrace();
 		}
 	}
@@ -1090,46 +1091,51 @@ public class GhidraSourceBundle extends GhidraBundle {
 		 * @throws IOException if there's a problem listing files
 		 */
 		ClassMapper(Path directory) throws IOException {
-			if (Files.exists(directory)) {
-				try (Stream<Path> pathStream = Files.list(directory)) {
-					classToClassFilesMap = pathStream
-							.filter(f -> Files.isRegularFile(f) &&
-								f.getFileName().toString().endsWith(".class"))
-							.collect(groupingBy(f -> {
-								String fileName = f.getFileName().toString();
-								// if f is the class file of an inner class, use the class name
-								int money = fileName.indexOf('$');
-								if (money >= 0) {
-									return fileName.substring(0, money);
-								}
-								// drop ".class"
-								return fileName.substring(0, fileName.length() - 6);
-							}));
-				}
-			}
-			else {
+			if (!Files.exists(directory)) {
 				classToClassFilesMap = Collections.emptyMap();
+				return;
 			}
+
+			try (Stream<Path> paths = Files.list(directory)) {
+				classToClassFilesMap = paths
+						.filter(p -> Files.isRegularFile(p))
+						.filter(p -> p.getFileName().toString().endsWith(".class"))
+						.collect(groupingBy(this::getClassName));
+			}
+		}
+
+		private String getClassName(Path p) {
+			String fileName = p.getFileName().toString();
+			// if f is the class file of an inner class, use the class name
+			int money = fileName.indexOf('$');
+			if (money >= 0) {
+				return fileName.substring(0, money);
+			}
+			// drop ".class"
+			return fileName.substring(0, fileName.length() - 6);
 		}
 
 		List<Path> findAndRemove(ResourceFile sourceFile) {
 			String className = sourceFile.getName();
-			if (className.endsWith(".java")) {
-				className = className.substring(0, className.length() - 5);
-				long lastModifiedSource = sourceFile.lastModified();
-				List<Path> classFiles = classToClassFilesMap.remove(className);
-				if (classFiles == null) {
-					classFiles = Collections.emptyList();
-				}
-				long lastModifiedClassFile = classFiles.isEmpty() ? -1
-						: classFiles.stream()
-								.mapToLong(p -> p.toFile().lastModified())
-								.min()
-								.getAsLong();
-				// if source is newer than the oldest binary, report
-				if (lastModifiedSource > lastModifiedClassFile) {
-					return classFiles;
-				}
+			if (!className.endsWith(".java")) {
+				return null;
+			}
+
+			className = className.substring(0, className.length() - 5);
+			long lastModifiedSource = sourceFile.lastModified();
+			List<Path> classFiles = classToClassFilesMap.remove(className);
+			if (classFiles == null) {
+				classFiles = Collections.emptyList();
+			}
+
+			long lastModifiedClassFile = classFiles.isEmpty() ? -1
+					: classFiles.stream()
+							.mapToLong(p -> p.toFile().lastModified())
+							.min()
+							.getAsLong();
+			// if source is newer than the oldest binary, report
+			if (lastModifiedSource > lastModifiedClassFile) {
+				return classFiles;
 			}
 			return null;
 		}

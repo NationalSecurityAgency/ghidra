@@ -26,6 +26,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import generic.jar.ResourceFile;
 import ghidra.util.*;
@@ -95,6 +96,8 @@ public final class FileUtilities {
 
 	/**
 	 * Return an array of bytes read from the given file.
+	 * @param sourceFile the source file
+	 * @return the bytes
 	 * @throws IOException if the file could not be accessed
 	 */
 	public final static byte[] getBytesFromFile(File sourceFile) throws IOException {
@@ -118,6 +121,8 @@ public final class FileUtilities {
 
 	/**
 	 * Return an array of bytes read from the given file.
+	 * @param sourceFile the source file
+	 * @return the bytes
 	 * @throws IOException if the file could not be accessed
 	 */
 	public final static byte[] getBytesFromFile(ResourceFile sourceFile) throws IOException {
@@ -160,7 +165,6 @@ public final class FileUtilities {
 				"offset[" + offset + "] and length[" + length + "] must be greater than 0");
 		}
 		byte[] data = new byte[(int) length];
-
 
 		try (InputStream fis = sourceFile.getInputStream()) {
 			if (fis.skip(offset) != offset) {
@@ -383,9 +387,20 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Delete a directory and all of its contents.
+	 * Delete a file or directory and all of its contents
+	 * 
+	 * @param dir the directory to delete
+	 * @return true if delete was successful. If false is returned, a partial
+	 *         delete may have occurred.
+	 */
+	public static boolean deleteDir(Path dir) {
+		return deleteDir(dir.toFile());
+	}
+
+	/**
+	 * Delete a file or directory and all of its contents
 	 *
-	 * @param dir
+	 * @param dir the dir to delete
 	 * @return true if delete was successful. If false is returned, a partial
 	 *         delete may have occurred.
 	 */
@@ -400,11 +415,13 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Delete a directory and all of its contents.
+	 * Delete a directory and all of its contents
 	 *
-	 * @param dir
+	 * @param dir the dir to delete
+	 * @param monitor the task monitor
 	 * @return true if delete was successful. If false is returned, a partial
 	 *         delete may have occurred.
+	 * @throws CancelledException if the operation is cancelled
 	 */
 	public final static boolean deleteDir(File dir, TaskMonitor monitor) throws CancelledException {
 		File[] files = dir.listFiles();
@@ -472,6 +489,12 @@ public final class FileUtilities {
 	/**
 	 * This is the same as calling {@link #copyDir(File, File, FileFilter, TaskMonitor)} with
 	 * a {@link FileFilter} that accepts all files.
+	 * @param originalDir the source dir
+	 * @param copyDir the destination dir
+	 * @param monitor the task monitor
+	 * @return the number of filed copied
+	 * @throws IOException if there is an issue copying the files
+	 * @throws CancelledException if the operation is cancelled
 	 */
 	public final static int copyDir(File originalDir, File copyDir, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -487,6 +510,7 @@ public final class FileUtilities {
 	 * @param copyDir The directory in which the extracted contents will be placed
 	 * @param filter a filter to apply against the directory's contents
 	 * @param monitor the task monitor
+	 * @return the number of filed copied
 	 * @throws IOException if there was a problem accessing the files
 	 * @throws CancelledException if the copy is cancelled
 	 */
@@ -572,7 +596,7 @@ public final class FileUtilities {
 			return;// squash during production mode
 		}
 
-		Msg.debug(SystemUtilities.class, text);
+		Msg.debug(FileUtilities.class, text);
 	}
 
 	/**
@@ -644,10 +668,10 @@ public final class FileUtilities {
 	}
 
 	/**
-	 * Returns all of the lines in the file without any newline characters.
+	 * Returns all of the lines in the file without any newline characters
 	 * @param file The file to read in
 	 * @return a list of file lines
-	 * @throws IOException
+	 * @throws IOException if an error occurs reading the file
 	 */
 	public static List<String> getLines(File file) throws IOException {
 		return getLines(new ResourceFile(file));
@@ -660,7 +684,7 @@ public final class FileUtilities {
 	 * <p>
 	 * @param file The text file to read in
 	 * @return a list of file lines
-	 * @throws IOException if an error occurs trying to read the file.
+	 * @throws IOException if an error occurs reading the file
 	 */
 	public static List<String> getLines(ResourceFile file) throws IOException {
 		try (InputStream is = file.getInputStream()) {
@@ -857,7 +881,7 @@ public final class FileUtilities {
 	 * @param f1 the parent file
 	 * @param f2 the child file
 	 * @return the portion of the second file that trails the full path of the first file.
-	 * @throws IOException
+	 * @throws IOException if there is an error canonicalizing the path
 	 */
 	public static String relativizePath(File f1, File f2) throws IOException {
 		String parentPath = f1.getCanonicalPath().replace('\\', '/');
@@ -1108,7 +1132,7 @@ public final class FileUtilities {
 	 * <p>
 	 * TODO: why is the method using 1000 vs. 1024 for K?
 	 *
-	 * @param length
+	 * @param length the length to format
 	 * @return pretty string - "1.1KB", "5.0MB"
 	 */
 	public static String formatLength(long length) {
@@ -1123,6 +1147,11 @@ public final class FileUtilities {
 		return formatter.format((length / 1000000f)) + "MB";
 	}
 
+	/**
+	 * Creates a temporary directory using the given prefix
+	 * @param prefix the prefix
+	 * @return the temp file
+	 */
 	public static File createTempDirectory(String prefix) {
 		try {
 			File temp = File.createTempFile(prefix, Long.toString(System.currentTimeMillis()));
@@ -1175,51 +1204,32 @@ public final class FileUtilities {
 	public static void openNative(File file) throws IOException {
 		if (!Desktop.isDesktopSupported()) {
 			Msg.showError(FileUtilities.class, null, "Native Desktop Unsupported",
-				"Access to the user's native desktop is not supported in the current environment.");
+				"Access to the user's native desktop is not supported in the current environment." +
+					"\nUnable to open file: " + file);
 			return;
 		}
 		Desktop.getDesktop().open(file);
 	}
 
 	/**
-	 * Processes each text line in a text file, in a separate thread.
-	 * <p>
-	 * Thread exits when EOF is reached.
-	 *
-	 * @param is {@link InputStream} to read
-	 * @param consumer code that will process each text of the text file.
+	 * A convenience method to list the contents of the given directory path and pass each to the
+	 * given consumer.  If the given path does not represent a directory, nothing will happen.
+	 * 
+	 * <p>This method handles closing resources by using the try-with-resources construct on 
+	 * {@link Files#list(Path)}
+	 * 
+	 * @param path the directory
+	 * @param consumer the consumer of each child in the given directory
+	 * @throws IOException if there is any problem reading the directory contents
 	 */
-	public static void asyncForEachLine(InputStream is, Consumer<String> consumer) {
-		asyncForEachLine(new BufferedReader(new InputStreamReader(is)), consumer);
+	public static void forEachFile(Path path, Consumer<Stream<Path>> consumer) throws IOException {
+
+		if (!Files.isDirectory(path)) {
+			return;
+		}
+
+		try (Stream<Path> pathStream = Files.list(path)) {
+			consumer.accept(pathStream);
+		}
 	}
-
-	/**
-	 * Processes each text line in a text file, in a separate thread.
-	 * <p>
-	 * Thread exits when EOF is reached.
-	 *
-	 * @param reader {@link BufferedReader} to read
-	 * @param consumer code that will process each text of the text file.
-	 */
-	public static void asyncForEachLine(BufferedReader reader, Consumer<String> consumer) {
-		new Thread(() -> {
-			try {
-				while (true) {
-					String line = reader.readLine();
-					if (line == null) {
-						break;
-					}
-					consumer.accept(line);
-				}
-			}
-			catch (IOException ioe) {
-				// ignore io errors while reading because thats normal when hitting EOF
-			}
-			catch (Exception e) {
-				Msg.error(FileUtilities.class, "Exception while reading", e);
-			}
-
-		}, "Threaded Stream Reader Thread").start();
-	}
-
 }

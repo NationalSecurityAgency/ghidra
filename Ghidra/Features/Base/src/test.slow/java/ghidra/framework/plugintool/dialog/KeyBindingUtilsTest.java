@@ -112,6 +112,8 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		tool.addPlugin(DataPlugin.class.getName());
 		tool.addPlugin(FunctionPlugin.class.getName());
 
+		env.showTool();
+
 		debug("two");
 	}
 

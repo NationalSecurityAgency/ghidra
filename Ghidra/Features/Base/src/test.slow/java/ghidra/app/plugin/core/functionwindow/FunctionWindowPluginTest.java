@@ -24,6 +24,7 @@ import javax.swing.table.*;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
@@ -45,6 +46,7 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 	private Program program;
 	private FunctionWindowPlugin plugin;
 	private GTable functionTable;
+	private ComponentProvider provider;
 
 	@Before
 	public void setUp() throws Exception {
@@ -56,7 +58,7 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 		plugin.showFunctions();
 		waitForSwing();
-		ComponentProvider provider = tool.getComponentProvider("Functions Window");
+		provider = tool.getComponentProvider("Functions Window");
 		functionTable = (GTable) findComponentByName(provider.getComponent(), "FunctionTable");
 	}
 
@@ -74,6 +76,8 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 	private void closeProgram() {
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.closeProgram(program, true);
+		waitForSwing();
+		waitForNotBusy(functionTable);
 	}
 
 	@Test
@@ -96,16 +100,13 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 		waitForNotBusy(functionTable);
 
 		assertEquals(numData, functionTable.getRowCount());
-
 	}
 
 	@Test
 	public void testProgramClose() throws Exception {
 		closeProgram();
 		waitForNotBusy(functionTable);
-
 		assertEquals(functionTable.getRowCount(), 0);
-		loadProgram("notepad");
 	}
 
 	@Test
@@ -147,7 +148,8 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 		String signatureText = getRenderedTableCellValue(functionTable, row, column);
 
 		DockingActionIf copyAction = getAction(tool, ToolConstants.SHARED_OWNER, "Table Data Copy");
-		performAction(copyAction);
+		ActionContext context = new ActionContext(provider, functionTable);
+		performAction(copyAction, context, true);
 
 		// 
 		// Note: we cannot make this call:

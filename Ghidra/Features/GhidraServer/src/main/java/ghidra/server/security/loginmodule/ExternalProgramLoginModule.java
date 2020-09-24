@@ -29,10 +29,10 @@ import javax.security.auth.spi.LoginModule;
 
 import com.sun.security.auth.UserPrincipal;
 
+import generic.concurrent.io.ProcessConsumer;
 import ghidra.server.RepositoryManager;
 import ghidra.util.DateUtils;
 import ghidra.util.timer.Watchdog;
-import utilities.util.FileUtilities;
 
 /**
  * A JAAS {@link LoginModule} that executes an external program that decides if the username
@@ -208,10 +208,11 @@ public class ExternalProgramLoginModule implements LoginModule {
 			Process p = Runtime.getRuntime().exec(cmdArray);
 			process.set(p);
 
-			FileUtilities.asyncForEachLine(p.getInputStream(), (stdOutStr) -> {
+			ProcessConsumer.consume(p.getInputStream(), stdOutStr -> {
 				RepositoryManager.log(null, null, extProgramName + " STDOUT: " + stdOutStr, null);
 			});
-			FileUtilities.asyncForEachLine(p.getErrorStream(), (errStr) -> {
+
+			ProcessConsumer.consume(p.getErrorStream(), errStr -> {
 				RepositoryManager.log(null, null, extProgramName + " STDERR: " + errStr, null);
 			});
 
@@ -266,8 +267,12 @@ public class ExternalProgramLoginModule implements LoginModule {
 		}
 		extProgramName = extProFile.getName();
 
-		List<String> argKeys = options.keySet().stream().filter(
-			key -> key.startsWith(ARG_OPTION_NAME)).sorted().collect(Collectors.toList());
+		List<String> argKeys = options.keySet()
+				.stream()
+				.filter(
+					key -> key.startsWith(ARG_OPTION_NAME))
+				.sorted()
+				.collect(Collectors.toList());
 		List<String> cmdArrayValues = new ArrayList<>();
 		cmdArrayValues.add(externalProgram.toString());
 		for (String argKey : argKeys) {

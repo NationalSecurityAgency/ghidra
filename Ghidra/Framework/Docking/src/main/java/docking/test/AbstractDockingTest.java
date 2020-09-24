@@ -2102,40 +2102,34 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	public static boolean isEnabled(DockingActionIf action) {
-		AtomicBoolean ref = new AtomicBoolean();
-		runSwing(() -> ref.set(action.isEnabledForContext(new ActionContext())));
-		return ref.get();
+		return runSwing(() -> action.isEnabledForContext(new ActionContext()));
 	}
 
 	public static boolean isEnabled(AbstractButton button) {
-		AtomicBoolean ref = new AtomicBoolean();
-		runSwing(() -> ref.set(button.isEnabled()));
-		return ref.get();
+		return runSwing(() -> button.isEnabled());
 	}
 
 	public static boolean isSelected(AbstractButton button) {
-		AtomicBoolean ref = new AtomicBoolean();
-		runSwing(() -> ref.set(button.isSelected()));
-		return ref.get();
+		return runSwing(() -> button.isSelected());
 	}
 
 	/**
-	 * Creates a generic action context with no provider, with the given payload
-	 * @param payload the generic object to put in the context
+	 * Creates a generic action context with no provider, with the given context object
+	 * @param contextObject the generic object to put in the context
 	 * @return the new context
 	 */
-	public ActionContext createContext(Object payload) {
-		return new ActionContext().setContextObject(payload);
+	public ActionContext createContext(Object contextObject) {
+		return new ActionContext().setContextObject(contextObject);
 	}
 
 	/**
-	 * Creates a generic action context with the given provider, with the given payload
+	 * Creates a generic action context with the given provider, with the given context object
 	 * @param provider the provider
-	 * @param payload the generic object to put in the context
+	 * @param contextObject the generic object to put in the context
 	 * @return the new context
 	 */
-	public ActionContext createContext(ComponentProvider provider, Object payload) {
-		return new ActionContext(provider).setContextObject(payload);
+	public ActionContext createContext(ComponentProvider provider, Object contextObject) {
+		return new ActionContext(provider).setContextObject(contextObject);
 	}
 
 //==================================================================================================

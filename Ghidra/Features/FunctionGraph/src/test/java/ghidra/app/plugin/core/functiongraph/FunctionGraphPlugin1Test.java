@@ -734,6 +734,8 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 		setNavigationHistoryOption(NavigationHistoryChoices.NAVIGATION_EVENTS);
 
+		clearHistory();
+
 		FGVertex v1 = vertex("01004178");
 		pickVertex(v1);
 
@@ -743,17 +745,18 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		FGVertex v3 = vertex("010041a4");
 		pickVertex(v3);
 
+		// in this navigation mode, merely selecting nodes does *not* put previous nodes in history
 		assertNotInHistory(v1, v2);
 
 		//
-		// Now leave the function and verify the old function is in the history
+		// Perform a navigation action (e.g., goTo()) and verify the old function is in the history
 		//
 		Address ghidra = getAddress("0x01002cf5");
 		goTo(ghidra);
+		assertInHistory(v3.getVertexAddress());
 
 		Address foo = getAddress("0x01002339");
 		goTo(foo);
-
 		assertInHistory(v3.getVertexAddress(), ghidra);
 	}
 
@@ -783,6 +786,14 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 				actualAddresses + "\nNavigated vertices: " + Arrays.asList(addresses),
 				actualAddresses.contains(a));
 		}
+	}
+
+	private void clearHistory() {
+		GoToService goTo = tool.getService(GoToService.class);
+		Navigatable navigatable = goTo.getDefaultNavigatable();
+
+		NavigationHistoryService service = tool.getService(NavigationHistoryService.class);
+		service.clear(navigatable);
 	}
 
 	private List<LocationMemento> getNavigationHistory() {
@@ -823,8 +834,8 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 		for (Address a : expectedAddresses) {
 
-			assertTrue("Vertex address should be in the history list: " + a + ".\nHistory: " +
-				actualAddresses + "\nNavigated vertices: " + expectedAddresses,
+			assertTrue("Vertex address should be in the history list: " + a + ".\nActual: " +
+				actualAddresses + "\nExpected: " + expectedAddresses,
 				actualAddresses.contains(a));
 		}
 	}

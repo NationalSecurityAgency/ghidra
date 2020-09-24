@@ -241,6 +241,7 @@ public class GhidraScriptUtil {
 	 */
 	@Deprecated
 	public static List<ResourceFile> getExplodedCompiledSourceBundlePaths() {
+
 		try (Stream<Path> pathStream = Files.list(BundleHost.getOsgiDir())) {
 			return pathStream.filter(Files::isDirectory)
 					.map(x -> new ResourceFile(x.toFile()))

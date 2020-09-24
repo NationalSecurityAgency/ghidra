@@ -2245,12 +2245,25 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 				// Unable to find the manager.  This can happen during testing; only report if 
 				// it is unexpected
-				if (!instances.isEmpty()) {
-					Msg.debug(DockingWindowManager.class,
-						"Unable to find Docking Window Manager for " +
-							component.getClass().getSimpleName(),
-						ReflectionUtilities.createJavaFilteredThrowable());
+				maybeReportMissingManager();
+			}
+
+			private void maybeReportMissingManager() {
+				if (instances.isEmpty()) {
+					return; // not manager means no tool; assume testing
 				}
+
+				if (instances.size() == 1) {
+					DockingWindowManager dwm = instances.get(0);
+					if (!dwm.isVisible()) {
+						return; // not showing; assume testing with tool not shown
+					}
+				}
+
+				Msg.debug(DockingWindowManager.class,
+					"Unable to find Docking Window Manager for " +
+						component.getClass().getSimpleName(),
+					ReflectionUtilities.createJavaFilteredThrowable());
 			}
 		});
 

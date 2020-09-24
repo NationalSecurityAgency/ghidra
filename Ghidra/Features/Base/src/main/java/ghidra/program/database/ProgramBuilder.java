@@ -50,11 +50,9 @@ import ghidra.program.model.util.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.NumericUtilities;
-import ghidra.util.Saveable;
+import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 // TODO: Move this class into a different package (i.e., ghidra.test.program)
 public class ProgramBuilder {
@@ -97,7 +95,7 @@ public class ProgramBuilder {
 	 * Construct program builder using the big-endian Toy language and default compiler spec.
 	 * This builder object will be the program consumer and must be disposed to properly
 	 * release the program.
-	 * @throws Exception
+	 * @throws Exception if there is an exception creating the program 
 	 */
 	public ProgramBuilder() throws Exception {
 		this("Test Program", _TOY);
@@ -109,7 +107,7 @@ public class ProgramBuilder {
 	 * release the program.
 	 * @param name program name
 	 * @param languageName supported language ID (includes all Toy language IDs)
-	 * @throws Exception
+	 * @throws Exception if there is an exception creating the program
 	 */
 	public ProgramBuilder(String name, String languageName) throws Exception {
 		this(name, languageName, null, null);
@@ -120,7 +118,7 @@ public class ProgramBuilder {
 	 * @param name program name
 	 * @param languageName supported language ID (includes all Toy language IDs)
 	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
-	 * @throws Exception
+	 * @throws Exception if there is an exception creating the program
 	 */
 	public ProgramBuilder(String name, String languageName, Object consumer) throws Exception {
 		this(name, languageName, null, consumer);
@@ -132,7 +130,7 @@ public class ProgramBuilder {
 	 * @param languageName supported language ID (includes all Toy language IDs)
 	 * @param compilerSpecID compiler specification ID (if null default spec will be used)
 	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
-	 * @throws Exception
+	 * @throws Exception if there is an exception creating the program
 	 */
 	public ProgramBuilder(String name, String languageName, String compilerSpecID, Object consumer)
 			throws Exception {
@@ -205,7 +203,19 @@ public class ProgramBuilder {
 
 	public void dispose() {
 		if (program.isUsedBy(this)) {
+
+			// Make sure any buffered events are processed before we release.  This fixes a timing
+			// issue that can  happen when the test thread disposes the program while the Swing
+			// thread is processing events.
+			flushEvents();
 			program.release(this);
+		}
+	}
+
+	private void flushEvents() {
+		program.flushEvents();
+		if (!SystemUtilities.isInHeadlessMode()) {
+			AbstractGenericTest.waitForSwing();
 		}
 	}
 
@@ -286,7 +296,8 @@ public class ProgramBuilder {
 			LanguageService languageService = DefaultLanguageService.getLanguageService(ldefFile);
 			try {
 				language = languageService.getLanguage(new LanguageID(languageName));
-			} catch (LanguageNotFoundException e) {
+			}
+			catch (LanguageNotFoundException e) {
 				throw new LanguageNotFoundException("Unsupported test language: " + languageName);
 			}
 			LANGUAGE_CACHE.put(languageName, language);
@@ -303,7 +314,10 @@ public class ProgramBuilder {
 		AbstractGenericTest.setInstanceField("recordChanges", program, Boolean.valueOf(enabled));
 	}
 
-	/** Don't show the 'ask to analyze' dialog by default */
+	/** 
+	 * This prevents the 'ask to analyze' dialog from showing when called with {@code true}
+	 * @param analyzed true to mark the program as analyzed
+	 */
 	public void setAnalyzed(boolean analyzed) {
 		GhidraProgramUtilities.setAnalyzedFlag(program, analyzed);
 	}
@@ -325,7 +339,7 @@ public class ProgramBuilder {
 		MemoryBlock block = null;
 		try {
 			block = memory.createInitializedBlock(name, startAddress, size, initialValue,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 			block.setComment(comment);
 		}
 		catch (CancelledException e) {
@@ -359,8 +373,9 @@ public class ProgramBuilder {
 
 		startTransaction();
 		try {
-			return program.getMemory().createInitializedBlock(name, addr(address), size, (byte) 0,
-				TaskMonitor.DUMMY, true);
+			return program.getMemory()
+					.createInitializedBlock(name, addr(address), size, (byte) 0,
+						TaskMonitor.DUMMY, true);
 		}
 		catch (Exception e) {
 			throw new RuntimeException("Exception building memory", e);
@@ -378,7 +393,7 @@ public class ProgramBuilder {
 	 * @param address String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
 	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
-	 * @throws Exception
+	 * @throws Exception if there is an exception applying the bytes
 	 */
 	public void setBytes(String address, String byteString) throws Exception {
 		byte[] bytes = NumericUtilities.convertStringToBytes(byteString);
@@ -395,7 +410,7 @@ public class ProgramBuilder {
 	 * @param byteString String containing 2 digit hex values, separated by ' ' space chars
 	 * or by comma ',' chars: "12 05 ff".  See {@link NumericUtilities#parseHexLong(String)}.
 	 * @param disassemble boolean flag.
-	 * @throws Exception
+	 * @throws Exception if there is an exception applying the bytes
 	 */
 	public void setBytes(String address, String byteString, boolean disassemble) throws Exception {
 		byte[] bytes = NumericUtilities.convertStringToBytes(byteString);
@@ -413,7 +428,7 @@ public class ProgramBuilder {
 	 * @param stringAddress String containing numeric value, preferably hex encoded: "0x1004000"
 	 * @param bytes array of bytes to copy into the memory buffer at the addresss.
 	 * @param disassemble boolean flag.  See {@link #disassemble(String, int)}
-	 * @throws Exception
+	 * @throws Exception if there is an exception applying the bytes
 	 */
 	public void setBytes(String stringAddress, byte[] bytes, boolean disassemble) throws Exception {
 		Address address = addr(stringAddress);
@@ -547,9 +562,6 @@ public class ProgramBuilder {
 		}
 	}
 
-	/**
-	 * This creates a function as big as you say.
-	 */
 	public Function createEmptyFunction(String name, String address, int size, DataType returnType,
 			Parameter... params) throws Exception, OverlappingFunctionException {
 

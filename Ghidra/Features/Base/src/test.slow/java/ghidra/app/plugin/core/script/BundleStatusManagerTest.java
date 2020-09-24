@@ -65,155 +65,13 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		provider.getBundleHost().removeListener(testBundleHostListener);
 	}
 
-	protected static String translateSeperators(String path) {
-		if (!File.separator.equals("/")) {
-			return path.replace("/", File.separator);
-		}
-		return path;
-	}
-
-	void enableViaGUI(int viewRow) throws InterruptedException {
-		testBundleHostListener.reset();
-		runSwing(() -> {
-			bundleStatusTable.setValueAt(true, viewRow, 0);
-		});
-		waitForSwing();
-		// we wait for the last event, the activation of the bundle.
-		testBundleHostListener.awaitActivation();
-	}
-
-	void disableViaGUI(int viewRow) throws InterruptedException {
-		testBundleHostListener.reset();
-		runSwing(() -> {
-			bundleStatusTable.setValueAt(false, viewRow, 0);
-		});
-		waitForSwing();
-		testBundleHostListener.awaitDisablement();
-	}
-
-	List<BundleStatus> selectRows(int... viewRows) {
-		List<BundleStatus> statuses = Arrays.stream(viewRows)
-				.mapToObj(bundleStatusTableModel::getRowObject)
-				.collect(Collectors.toList());
-		for (BundleStatus status : statuses) {
-			assertNotNull(status);
-		}
-
-		runSwing(() -> {
-			bundleStatusTable.clearSelection();
-			for (int viewRow : viewRows) {
-				bundleStatusTable.addRowSelectionInterval(viewRow, viewRow);
-			}
-		});
-
-		return statuses;
-	}
-
-	void removeViaGUI(int... viewRows) throws InterruptedException {
-		assertTrue("removeViaGUI called with no arguments", viewRows.length > 0);
-		selectRows(viewRows);
-
-		List<BundleStatus> statuses = bundleStatusTableModel.getModelData();
-		int initialSize = statuses.size();
-
-		DockingActionIf removeBundlesAction =
-			getActionByName(bundleStatusProvider, "RemoveBundles");
-		performAction(removeBundlesAction);
-		waitForSwing();
-
-		int count = 0;
-		do {
-			if (statuses.size() <= initialSize - viewRows.length) {
-				break;
-			}
-			Thread.sleep(250);
-		}
-		while (++count < 8);
-		assertTrue("Failure, clean took too long", count < 8);
-
-	}
-
-	void cleanViaGUI(int... viewRows) throws InterruptedException {
-		assertTrue("cleanViaGUI called with no arguments", viewRows.length > 0);
-
-		List<BundleStatus> statuses = selectRows(viewRows);
-
-		List<File> binaryDirs = statuses.stream().map((status) -> {
-			status.setSummary("no summary"); // we use the summary later to test that the bundle's been cleaned
-			GhidraSourceBundle bundle = (GhidraSourceBundle) provider.getBundleHost()
-					.getExistingGhidraBundle(status.getFile());
-			assertNotNull(bundle);
-			File binaryDir = ((Path) getInstanceField("binaryDir", bundle)).toFile();
-			assertTrue("Clean of bundle that doesn't exist", binaryDir.exists());
-			return binaryDir;
-		}).collect(Collectors.toList());
-
-		DockingActionIf cleanBundlesAction = getActionByName(bundleStatusProvider, "CleanBundles");
-		performAction(cleanBundlesAction);
-		waitForSwing();
-
-		// after cleaning, status is cleared, test for a clear status to know we're done cleaning.
-		int count = 0;
-		do {
-			if (statuses.stream().allMatch(status -> status.getSummary().isEmpty())) {
-				break;
-			}
-			Thread.sleep(250);
-		}
-		while (++count < 8);
-		assertTrue("Failure, clean took too long", count < 8);
-		for (File binaryDir : binaryDirs) {
-			assertFalse("Clean of bundle didn't remove directory", binaryDir.exists());
-		}
-	}
-
-	/**
-	 * Find the view row index in the BundleStatusTableModel of the status with the given bundle path, or
-	 * -1 if it's not found. 
-	 * 
-	 * @param bundlePath bundle path to find
-	 * @return view row index or -1 if not found
-	 */
-	protected int getBundleRow(String bundlePath) {
-		AtomicInteger rowref = new AtomicInteger(-1);
-		runSwing(() -> {
-			for (int i = 0; i < bundleStatusTableModel.getRowCount(); i++) {
-				BundleStatus status = bundleStatusTableModel.getRowObject(i);
-				if (bundlePath.equals(status.getPathAsString())) {
-					rowref.set(i);
-					break;
-				}
-			}
-		});
-		return rowref.get();
-	}
-
-	@SuppressWarnings("unchecked")
-	DockingActionIf getActionByName(ComponentProvider componentProvider, String actionName) {
-		Set<DockingActionIf> actionSet =
-			(Set<DockingActionIf>) getInstanceField("actionSet", bundleStatusProvider);
-		for (DockingActionIf action : actionSet) {
-			if (action.getName().equals(actionName)) {
-				return action;
-			}
-		}
-		return null;
-	}
-
 	@Test
 	public void testDisableEnableScriptDirectory() throws Exception {
 		//
 		// Tests that the user can disable then enable a script directory
 		//
 		int viewRow = getBundleRow(BUNDLE_PATH);
-
-		assertTrue(viewRow != -1);
-
-		runSwing(() -> {
-			bundleStatusTable.selectRow(viewRow);
-			bundleStatusTable.scrollToSelectedRow();
-		});
-		waitForSwing();
+		selectRow(viewRow);
 
 		BundleStatus status = bundleStatusTableModel.getRowObject(viewRow);
 
@@ -222,78 +80,22 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		assertTrue(status.isEnabled());
 		assertScriptInTable(scriptFile);
 
-		// disable it
 		disableViaGUI(viewRow);
 		assertTrue(!status.isEnabled());
 		assertScriptNotInTable(scriptFile);
 
-		// re-enable it
 		enableViaGUI(viewRow);
 		assertTrue(status.isEnabled());
 		assertScriptInTable(scriptFile);
 	}
 
-	/**
-	 * Add a list of bundles with the addBundles dialogue.
-	 * 
-	 * <p>All bundles should reside in a common directory.
-	 * 
-	 * @param bundleFiles the bundle files
-	 * @throws Exception if waitForUpdateOnChooser fails
-	 */
-	void addBundlesViaGUI(File... bundleFiles) throws Exception {
-		assertTrue("addBundlesViaGUI called with no arguments", bundleFiles.length > 0);
-
-		DockingActionIf addBundlesAction = getActionByName(bundleStatusProvider, "AddBundles");
-		performAction(addBundlesAction, false);
-		waitForSwing();
-
-		List<File> files = List.of(bundleFiles);
-
-		GhidraFileChooser chooser = waitForDialogComponent(GhidraFileChooser.class);
-		assertNotNull(chooser);
-
-		runSwing(() -> {
-			chooser.setCurrentDirectory(bundleFiles[0]);
-		}, true);
-		waitForUpdateOnChooser(chooser);
-
-		runSwing(() -> {
-			// there is no setFiles method of GhidraFileChooser
-			Object selectedFiles = getInstanceField("selectedFiles", chooser);
-			invokeInstanceMethod("setFiles", selectedFiles, new Class[] { List.class },
-				new Object[] { files });
-			Object validatedFiles = getInstanceField("validatedFiles", chooser);
-			invokeInstanceMethod("setFiles", validatedFiles, new Class[] { List.class },
-				new Object[] { files });
-		});
-		waitForUpdateOnChooser(chooser);
-		testBundleHostListener.reset(bundleFiles.length);
-		pressButtonByText(chooser, "OK");
-		waitForSwing();
-		testBundleHostListener.awaitActivation();
-	}
-
-	@Override
-	protected String runScript(String scriptName) throws Exception {
-		env.getTool().showComponentProvider(provider, true);
-		selectScript(scriptName);
-		String output = super.runScript(scriptName);
-		env.getTool().showComponentProvider(bundleStatusProvider, true);
-		return output;
-	}
-
 	@Test
 	public void testRunCleanRun() throws Exception {
+
 		int viewRow = getBundleRow(BUNDLE_PATH);
+		assertNotEquals(viewRow, -1);
 
-		assertTrue(viewRow != -1);
-
-		runSwing(() -> {
-			bundleStatusTable.selectRow(viewRow);
-			bundleStatusTable.scrollToSelectedRow();
-		});
-		waitForSwing();
+		selectRows(viewRow);
 
 		BundleStatus status = bundleStatusTableModel.getRowObject(viewRow);
 
@@ -302,18 +104,15 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		assertTrue(status.isEnabled());
 		assertScriptInTable(scriptFile);
 
-		// run
 		runScript(SCRIPT_NAME);
 
-		// clean
 		cleanViaGUI(viewRow);
 
-		// run
 		runScript(SCRIPT_NAME);
 	}
 
 	@Test
-	public void addRunCleanRemoveTwoBundles() throws Exception {
+	public void testAddRunCleanRemoveTwoBundles() throws Exception {
 		final String TEST_SCRIPT_NAME = testName.getMethodName();
 
 		//@formatter:off
@@ -385,30 +184,227 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 			String output = runScript(TEST_SCRIPT_NAME + ".java");
 			assertEquals(EXPECTED_OUTPUT, output);
 
-			int row1 = getBundleRow(generic.util.Path.toPathString(new ResourceFile(dir1)));
-			int row2 = getBundleRow(generic.util.Path.toPathString(new ResourceFile(dir2)));
-			assertFalse(row1 == -1);
-			assertFalse(row2 == -1);
+			int row1 = getBundleRow(dir1);
+			int row2 = getBundleRow(dir2);
+			assertNotEquals(row1, -1);
+			assertNotEquals(row2, -1);
 
 			cleanViaGUI(row1, row2);
-			
+
 			removeViaGUI(row1, row2);
 
-			row1 = getBundleRow(generic.util.Path.toPathString(new ResourceFile(dir1)));
-			row2 = getBundleRow(generic.util.Path.toPathString(new ResourceFile(dir2)));
-			assertTrue(row1 == -1);
-			assertTrue(row2 == -1);
+			row1 = getBundleRow(dir1);
+			row2 = getBundleRow(dir2);
+			assertEquals(row1, -1);
+			assertEquals(row2, -1);
 		}
 		finally {
-			wipe(dir1.toPath());
-			wipe(dir2.toPath());
+			delete(dir1.toPath());
+			delete(dir2.toPath());
 		}
+	}
+
+	private static String translateSeperators(String path) {
+		if (!File.separator.equals("/")) {
+			return path.replace("/", File.separator);
+		}
+		return path;
+	}
+
+	private void enableViaGUI(int viewRow) throws InterruptedException {
+		testBundleHostListener.reset();
+		runSwing(() -> {
+			bundleStatusTable.setValueAt(true, viewRow, 0);
+		});
+		waitForSwing();
+		// we wait for the last event, the activation of the bundle.
+		testBundleHostListener.awaitActivation();
+	}
+
+	private void disableViaGUI(int viewRow) throws InterruptedException {
+		testBundleHostListener.reset();
+		runSwing(() -> {
+			bundleStatusTable.setValueAt(false, viewRow, 0);
+		});
+		waitForSwing();
+		testBundleHostListener.awaitDisablement();
+	}
+
+	private void selectRow(int viewRow) {
+		assertNotEquals(viewRow, -1);
+		runSwing(() -> {
+			bundleStatusTable.selectRow(viewRow);
+			bundleStatusTable.scrollToSelectedRow();
+		});
+		waitForSwing();
+	}
+
+	private List<BundleStatus> selectRows(int... viewRows) {
+		List<BundleStatus> statuses = Arrays.stream(viewRows)
+				.mapToObj(bundleStatusTableModel::getRowObject)
+				.collect(Collectors.toList());
+		for (BundleStatus status : statuses) {
+			assertNotNull(status);
+		}
+
+		runSwing(() -> {
+			bundleStatusTable.clearSelection();
+			for (int viewRow : viewRows) {
+				bundleStatusTable.addRowSelectionInterval(viewRow, viewRow);
+			}
+		});
+
+		return statuses;
+	}
+
+	private void removeViaGUI(int... viewRows) throws InterruptedException {
+		assertTrue("removeViaGUI called with no arguments", viewRows.length > 0);
+		selectRows(viewRows);
+
+		List<BundleStatus> statuses = bundleStatusTableModel.getModelData();
+		int initialSize = statuses.size();
+
+		DockingActionIf removeBundlesAction =
+			getActionByName(bundleStatusProvider, "RemoveBundles");
+		performAction(removeBundlesAction);
+		waitForSwing();
+
+		int count = 0;
+		do {
+			if (statuses.size() <= initialSize - viewRows.length) {
+				break;
+			}
+			Thread.sleep(250);
+		}
+		while (++count < 8);
+		assertTrue("Failure, clean took too long", count < 8);
+
+	}
+
+	private void cleanViaGUI(int... viewRows) throws InterruptedException {
+		assertTrue("cleanViaGUI called with no arguments", viewRows.length > 0);
+
+		List<BundleStatus> statuses = selectRows(viewRows);
+
+		List<File> binaryDirs = statuses.stream().map((status) -> {
+			status.setSummary("no summary"); // we use the summary later to test that the bundle's been cleaned
+			GhidraSourceBundle bundle = (GhidraSourceBundle) provider.getBundleHost()
+					.getExistingGhidraBundle(status.getFile());
+			assertNotNull(bundle);
+			File binaryDir = ((Path) getInstanceField("binaryDir", bundle)).toFile();
+			assertTrue("Clean of bundle that doesn't exist", binaryDir.exists());
+			return binaryDir;
+		}).collect(Collectors.toList());
+
+		DockingActionIf cleanBundlesAction = getActionByName(bundleStatusProvider, "CleanBundles");
+		performAction(cleanBundlesAction);
+		waitForSwing();
+
+		// after cleaning, status is cleared, test for a clear status to know we're done cleaning.
+		int count = 0;
+		do {
+			if (statuses.stream().allMatch(status -> status.getSummary().isEmpty())) {
+				break;
+			}
+			Thread.sleep(250);
+		}
+		while (++count < 8);
+		assertTrue("Failure, clean took too long", count < 8);
+		for (File binaryDir : binaryDirs) {
+			assertFalse("Clean of bundle didn't remove directory", binaryDir.exists());
+		}
+	}
+
+	private int getBundleRow(File dir) {
+		return getBundleRow(generic.util.Path.toPathString(new ResourceFile(dir)));
+	}
+
+	/**
+	 * Find the view row index in the BundleStatusTableModel of the status with the given bundle path, or
+	 * -1 if it's not found. 
+	 * 
+	 * @param bundlePath bundle path to find
+	 * @return view row index or -1 if not found
+	 */
+	private int getBundleRow(String bundlePath) {
+		AtomicInteger rowref = new AtomicInteger(-1);
+		runSwing(() -> {
+			for (int i = 0; i < bundleStatusTableModel.getRowCount(); i++) {
+				BundleStatus status = bundleStatusTableModel.getRowObject(i);
+				if (bundlePath.equals(status.getPathAsString())) {
+					rowref.set(i);
+					break;
+				}
+			}
+		});
+		return rowref.get();
+	}
+
+	@SuppressWarnings("unchecked")
+	private DockingActionIf getActionByName(ComponentProvider componentProvider,
+			String actionName) {
+		Set<DockingActionIf> actionSet =
+			(Set<DockingActionIf>) getInstanceField("actionSet", bundleStatusProvider);
+		for (DockingActionIf action : actionSet) {
+			if (action.getName().equals(actionName)) {
+				return action;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Add a list of bundles with the addBundles dialogue.
+	 * 
+	 * <p>All bundles should reside in a common directory.
+	 * 
+	 * @param bundleFiles the bundle files
+	 * @throws Exception if waitForUpdateOnChooser fails
+	 */
+	private void addBundlesViaGUI(File... bundleFiles) throws Exception {
+		assertTrue("addBundlesViaGUI called with no arguments", bundleFiles.length > 0);
+
+		DockingActionIf addBundlesAction = getActionByName(bundleStatusProvider, "AddBundles");
+		performAction(addBundlesAction, false);
+		waitForSwing();
+
+		List<File> files = List.of(bundleFiles);
+
+		GhidraFileChooser chooser = waitForDialogComponent(GhidraFileChooser.class);
+		assertNotNull(chooser);
+
+		runSwing(() -> chooser.setCurrentDirectory(bundleFiles[0]));
+		waitForUpdateOnChooser(chooser);
+
+		runSwing(() -> {
+			// there is no setFiles method of GhidraFileChooser
+			Object selectedFiles = getInstanceField("selectedFiles", chooser);
+			invokeInstanceMethod("setFiles", selectedFiles, new Class[] { List.class },
+				new Object[] { files });
+			Object validatedFiles = getInstanceField("validatedFiles", chooser);
+			invokeInstanceMethod("setFiles", validatedFiles, new Class[] { List.class },
+				new Object[] { files });
+		});
+		waitForUpdateOnChooser(chooser);
+		testBundleHostListener.reset(bundleFiles.length);
+		pressButtonByText(chooser, "OK");
+		waitForSwing();
+		testBundleHostListener.awaitActivation();
+	}
+
+	@Override
+	public String runScript(String scriptName) throws Exception {
+		env.getTool().showComponentProvider(provider, true);
+		selectScript(scriptName);
+		String output = super.runScript(scriptName);
+		env.getTool().showComponentProvider(bundleStatusProvider, true);
+		return output;
 	}
 
 	/**
 	 * A {@link BundleHostListener} to help serialize bundle operations. 
 	 */
-	protected class TestBundleHostListener implements BundleHostListener {
+	private class TestBundleHostListener implements BundleHostListener {
 		CountDownLatch activationLatch;
 		CountDownLatch disablementLatch;
 

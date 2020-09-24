@@ -23,7 +23,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import org.junit.*;
 import org.osgi.framework.Bundle;
@@ -31,27 +30,23 @@ import org.osgi.framework.Bundle;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.osgi.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
+import utilities.util.FileUtilities;
 
 public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
-	BundleHost bundleHost;
-	CapturingBundleHostListener capturingBundleHostListener;
+	private static final String TEMP_NAME_PREFIX = "sourcebundle";
+	private BundleHost bundleHost;
+	private CapturingBundleHostListener capturingBundleHostListener;
 
-	Set<Path> tempDirs = new HashSet<>();
-	LinkedList<GhidraBundle> bundleStack = new LinkedList<>();
-	GhidraBundle currentBundle;
+	private Set<Path> tempDirs = new HashSet<>();
+	private LinkedList<GhidraBundle> bundleStack = new LinkedList<>();
+	private GhidraBundle currentBundle;
 
-	protected static void wipe(Path path) throws IOException {
-		if (Files.exists(path)) {
-			try (Stream<Path> walk = Files.walk(path)) {
-				for (Path p : (Iterable<Path>) walk.sorted(Comparator.reverseOrder())::iterator) {
-					Files.deleteIfExists(p);
-				}
-			}
-		}
+	private static void wipe(Path path) {
+		FileUtilities.deleteDir(path);
 	}
 
-	protected GhidraBundle pushNewBundle() throws IOException {
-		String dir = String.format("sourcebundle%03d", tempDirs.size());
+	private GhidraBundle pushNewBundle() throws IOException {
+		String dir = String.format(TEMP_NAME_PREFIX + "%03d", tempDirs.size());
 		Path tmpDir = new File(getTestDirectoryPath(), dir).toPath();
 		Files.createDirectories(tmpDir);
 		tempDirs.add(tmpDir);
@@ -62,7 +57,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		return currentBundle;
 	}
 
-	static class CapturingBundleHostListener implements BundleHostListener {
+	private static class CapturingBundleHostListener implements BundleHostListener {
 		String lastBuildSummary;
 
 		@Override
@@ -76,6 +71,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Before
 	public void setup() throws OSGiException, IOException {
 		wipe(GhidraSourceBundle.getCompiledBundlesDir());
+		deleteSimilarTempFiles(TEMP_NAME_PREFIX);
 
 		bundleHost = new BundleHost();
 		bundleHost.startFramework();
@@ -86,7 +82,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	@After
-	public void tearDown() throws IOException {
+	public void tearDown() {
 		bundleHost.dispose();
 		capturingBundleHostListener = null;
 		bundleHost = null;
@@ -96,7 +92,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 	}
 
-	protected void buildWithExpectations(String expectedCompilerOutput, String expectedSummary)
+	private void buildWithExpectations(String expectedCompilerOutput, String expectedSummary)
 			throws Exception {
 		StringWriter stringWriter = new StringWriter();
 
@@ -110,32 +106,32 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			capturingBundleHostListener.lastBuildSummary);
 	}
 
-	protected void activate() throws Exception {
+	private void activate() throws Exception {
 		Bundle bundle = bundleHost.install(currentBundle);
 		assertNotNull("failed to install bundle", bundle);
 		bundle.start();
 	}
 
-	protected void buildAndActivate() throws Exception {
+	private void buildAndActivate() throws Exception {
 		buildWithExpectations("", "");
 		activate();
 	}
 
-	protected Class<?> loadClass(String classname) throws ClassNotFoundException {
+	private Class<?> loadClass(String classname) throws ClassNotFoundException {
 		Class<?> clazz = currentBundle.getOSGiBundle().loadClass(classname);
 		assertNotNull("failed to load class", clazz);
 		return clazz;
 	}
 
-	protected void addClass(String fullclassname, String body) throws IOException {
+	private void addClass(String fullclassname, String body) throws IOException {
 		addClass("", fullclassname, body);
 	}
 
-	protected void addClass(String imports, String fullclassname, String body) throws IOException {
+	private void addClass(String imports, String fullclassname, String body) throws IOException {
 		addClass("", imports, fullclassname, body);
 	}
 
-	protected void addClass(String meta, String imports, String fullclassname, String body)
+	private void addClass(String meta, String imports, String fullclassname, String body)
 			throws IOException {
 		String simplename;
 		Path tmpsource = currentBundle.getFile().getFile(false).toPath();
@@ -172,7 +168,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	}
 
-	protected Object getInstance(String classname) throws Exception {
+	private Object getInstance(String classname) throws Exception {
 		Class<?> clazz = loadClass(classname);
 		Object object = clazz.getDeclaredConstructor().newInstance();
 		assertNotNull("failed to create instance", object);

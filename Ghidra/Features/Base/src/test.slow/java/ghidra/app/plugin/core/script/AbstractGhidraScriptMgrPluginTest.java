@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -64,6 +63,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 import util.CollectionUtils;
+import utilities.util.FileUtilities;
 
 public abstract class AbstractGhidraScriptMgrPluginTest
 		extends AbstractGhidraHeadedIntegrationTest {
@@ -170,32 +170,19 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 			deleteFile(testScriptFile);
 			testScriptFile = null;
 		}
-		wipeUserScripts();
+		deleteUserScripts();
 
 		env.dispose();
 	}
 
-	protected static void wipe(ResourceFile path) throws IOException {
-		wipe(Paths.get(path.getAbsolutePath()));
+	protected static void delete(Path path) {
+		FileUtilities.deleteDir(path);
 	}
 
-	protected static void wipe(Path path) throws IOException {
-		if (Files.exists(path)) {
-			try (Stream<Path> walk = Files.walk(path)) {
-				for (Path p : (Iterable<Path>) walk.sorted(Comparator.reverseOrder())::iterator) {
-					Files.deleteIfExists(p);
-				}
-			}
-		}
-	}
+	protected void deleteUserScripts() throws IOException {
 
-	protected void wipeUserScripts() throws IOException {
-		Path userScriptDir = java.nio.file.Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
-		try (Stream<Path> pathStream = Files.list(userScriptDir)) {
-			for (Path p : (Iterable<Path>) pathStream::iterator) {
-				wipe(p);
-			}
-		}
+		Path userScriptDir = Paths.get(GhidraScriptUtil.USER_SCRIPTS_DIR);
+		FileUtilities.forEachFile(userScriptDir, paths -> paths.forEach(p -> delete(p)));
 	}
 
 //==================================================================================================
@@ -983,9 +970,9 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	}
 
-	protected void cleanupOldTestFiles() throws IOException {
+	protected void cleanupOldTestFiles() {
 		// remove the compiled bundles directory so that any scripts we use will be recompiled
-		wipe(GhidraSourceBundle.getCompiledBundlesDir());
+		delete(GhidraSourceBundle.getCompiledBundlesDir());
 
 		String myTestName = super.testName.getMethodName();
 
@@ -1559,12 +1546,12 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 		@Override
 		public void taskAdded(Task task) {
-			Msg.debug(this, "taskAdded(): " + task.getTaskTitle());
+			Msg.trace(this, "taskAdded(): " + task.getTaskTitle());
 		}
 
 		@Override
 		public void taskRemoved(Task task) {
-			Msg.debug(this, "taskRemoved(): " + task.getTaskTitle());
+			Msg.trace(this, "taskRemoved(): " + task.getTaskTitle());
 			if (taskName.equals(task.getTaskTitle())) {
 				ended = true;
 			}
@@ -1657,13 +1644,13 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		@Override
 		public void println(String msg) {
 			apiBuffer.append(msg).append('\n');
-			Msg.debug(this, "Spy Script Console - println(): " + msg);
+			Msg.trace(this, "Spy Script Console - println(): " + msg);
 		}
 
 		@Override
 		public void addMessage(String originator, String msg) {
 			apiBuffer.append(msg).append('\n');
-			Msg.debug(this, "Spy Script Console - addMessage(): " + msg);
+			Msg.trace(this, "Spy Script Console - addMessage(): " + msg);
 		}
 
 		String getApiOutput() {
