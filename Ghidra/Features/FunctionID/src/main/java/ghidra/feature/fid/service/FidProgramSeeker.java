@@ -342,6 +342,10 @@ public class FidProgramSeeker {
 			}
 		}
 
+		if (functionRecord.isForceRelation() && childCodeUnits == 0) {
+			return null;
+		}
+
 		int parentCodeUnits = 0;
 
 		if (family.getParents().size() < MAX_NUM_PARENTS_FOR_SCORE) {
@@ -355,12 +359,6 @@ public class FidProgramSeeker {
 
 		float functionScore = functionCodeUnits;
 		functionScore += 0.67 * specificCodeUnits; // Each specific constant count is worth 2/3 of a whole code unit
-		if (functionRecord.isForceRelation()) {
-			// If both auto-pass and force-relation are on, do not ding score if some children match
-			if (!functionRecord.autoPass() || (childCodeUnits == 0)) {
-				functionScore = 0;
-			}
-		}
 		float childScore = childCodeUnits;
 		float parentScore = parentCodeUnits;
 		if (functionScore + childScore + parentScore < scoreThreshold) {

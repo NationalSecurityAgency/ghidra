@@ -47,6 +47,10 @@ public class MatchNameAnalysis {
 		return rawNames.iterator();
 	}
 
+	public boolean containsRawName(String name) {
+		return rawNames.contains(name);
+	}
+
 	public Iterator<String> getNameIterator() {
 		return finalNameList.iterator();
 	}
@@ -89,10 +93,12 @@ public class MatchNameAnalysis {
 			if (nameVersions.rawName != null) {
 				rawNames.add(nameVersions.rawName);				// Dedup the raw names
 				similarBaseNames.add(nameVersions.similarName);	// Dedup names with underscores removed
-				if (nameVersions.demangledBaseName != null)		// If we can demangle
+				if (nameVersions.demangledBaseName != null) {
 					exactDemangledBaseNames.add(nameVersions.demangledBaseName);		// Dedup demangled base name
-				else
+				}
+				else {
 					cannotDemangle += 1;
+				}
 			}
 		}
 
@@ -117,6 +123,12 @@ public class MatchNameAnalysis {
 			mostOptimisticCount = 1;
 			finalNameList = Collections.singleton(singleName);
 		}
+		else if (rawNames.size() > similarBaseNames.size()) {
+			// if names are the same except for underscores use the similar name
+			// list to remove dupes
+			finalNameList = similarBaseNames;
+		}
+
 		if (matches.size() > 0) {
 			overallScore = matches.get(0).getOverallScore();
 		}
@@ -132,8 +144,9 @@ public class MatchNameAnalysis {
 			if (library != null) {
 				libraries.add(library);
 			}
-			if (libraries.size() >= libraryLimit)
+			if (libraries.size() >= libraryLimit) {
 				break;
+			}
 		}
 		if (libraries.size() >= libraryLimit) {		// Too many libraries to directly display
 			// Try getting rid of the variant field, to see if we can reduce the count
@@ -164,8 +177,9 @@ public class MatchNameAnalysis {
 	}
 
 	private String findCommonBaseName() {
-		if (similarBaseNames.size() == 1)
+		if (similarBaseNames.size() == 1) {
 			return rawNames.iterator().next();
+		}
 		return null;
 	}
 
@@ -222,26 +236,5 @@ public class MatchNameAnalysis {
 			}
 		}
 		return finalName;
-	}
-
-	/**
-	 * returns the appropriate set of names to use for laying down fid symbols
-	 */
-	public Set<String> getAppriateNamesSet() {
-		// if the names were originally mangled and they demangle to more than
-		// one base name use the demangled base names
-		if (exactDemangledBaseNames.size() > 1 && rawNames.size() > 1) {
-			return exactDemangledBaseNames;
-		}
-
-		// if names are the same except for underscores use the similar name
-		// list to remove dupes
-		if (rawNames.size() == similarBaseNames.size() * 2) {
-			return similarBaseNames;
-		}
-
-		// else the names are not the same or similar so use the list of exact
-		// names
-		return rawNames;
 	}
 }

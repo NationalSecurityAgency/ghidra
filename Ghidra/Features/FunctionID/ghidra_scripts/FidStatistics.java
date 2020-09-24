@@ -27,6 +27,7 @@ import ghidra.program.database.ProgramContentHandler;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 
@@ -64,7 +65,9 @@ public class FidStatistics extends GhidraScript {
 		@Override
 		public int compareTo(SymbolPair o) {
 			int val = sym1.compareTo(o.sym1);
-			if (val != 0) return val;
+			if (val != 0) {
+				return val;
+			}
 			return sym2.compareTo(o.sym2);
 		}
 		
@@ -118,6 +121,7 @@ public class FidStatistics extends GhidraScript {
 		public int totalFunction;
 		public int matchUniquely;
 		public int matchMultiply;
+		public int hitCount;
 		public int noMatch;
 		public int nameMatched;
 		public int falsePositive;
@@ -126,14 +130,16 @@ public class FidStatistics extends GhidraScript {
 			totalFunction = 0;
 			matchUniquely = 0;
 			matchMultiply = 0;
+			hitCount = 0;
 			noMatch = 0;
 			nameMatched = 0;
 			falsePositive = 0;
 		}
 
 		public static void indent(StringBuilder buf,String last) {
-			for(int i=last.length();i<10;++i)
+			for(int i=last.length();i<10;++i) {
 				buf.append(' ');
+			}
 		}
 
 		public void print(StringBuilder buf) {
@@ -143,9 +149,12 @@ public class FidStatistics extends GhidraScript {
 			str = Integer.toString(noMatch);
 			buf.append(str);
 			indent(buf,str);
-			str = Integer.toString(matchUniquely+matchMultiply);
+			str = Integer.toString(matchUniquely + matchMultiply);
 			buf.append(str);
-			indent(buf,str);
+			indent(buf, str);
+			str = Integer.toString(hitCount);
+			buf.append(str);
+			indent(buf, str);
 			str = '(' + Integer.toString(matchUniquely) + ',' + Integer.toString(matchMultiply) + ')';
 			buf.append(str);
 			indent(buf,str);
@@ -157,7 +166,7 @@ public class FidStatistics extends GhidraScript {
 		}
 		
 		public static String getColumns() {
-			return "Total     No Match  Hits      uniq/mult N-Match   False";
+			return "Total     No Match  Possible  Hits      uniq/mult N-Match   False";
 		}
 	}
 
@@ -331,6 +340,8 @@ public class FidStatistics extends GhidraScript {
 		addEquivSymbols("WPP_SF_qqDD","WPP_SF_qqdd");
 		addEquivSymbols("WPP_SF_DqD","WPP_SF_dqd");
 		addEquivSymbols("WPP_SF_Dq","WPP_SF_dq");
+		addEquivSymbols("std::vector<>::_Assign_rv", "std::vector<>::_Move_assign_from");
+		addEquivSymbols("std::vector<>::_Assign_rv", "std::vector<>::_Move_from");
 	}
 
 	private void findDomainFiles(LinkedList<DomainFile> programs, DomainFolder folder)
@@ -350,9 +361,23 @@ public class FidStatistics extends GhidraScript {
 	}
 
 	private boolean checkNames(String a,String b) {
-		if (a.equals(b))
+		if (a.equals(b)) {
 			return true;
+		}
 		return equivSymbols.contains(new SymbolPair(a,b));
+	}
+
+	private String chooseFunctionName(FidSearchResult result) {
+		Program program = result.function.getProgram();
+		Symbol[] symbols = program.getSymbolTable().getSymbols(result.function.getEntryPoint());
+		if (symbols.length > 1) {
+			for (Symbol symbol : symbols) {
+				if (matchAnalysis.containsRawName(symbol.getName())) {
+					return symbol.getName();
+				}
+			}
+		}
+		return result.function.getName();
 	}
 
 	private void processFunctionResult(FidSearchResult result)
@@ -378,7 +403,8 @@ public class FidStatistics extends GhidraScript {
 				matchHappened = true;			// FID will put down a single match
 				finalMatchName = matchAnalysis.getNameIterator().next();
 			}
-			NameVersions nameVersions = NameVersions.generate(result.function.getName(), program);
+			String funcName = chooseFunctionName(result);
+			NameVersions nameVersions = NameVersions.generate(funcName, program);
 			String strippedTemplateName = null;
 			if (nameVersions.demangledBaseName != null) {
 				strippedTemplateName =
@@ -389,7 +415,9 @@ public class FidStatistics extends GhidraScript {
 			while(iter.hasNext()) {
 				String raw = iter.next();
 				NameVersions matchNames = NameVersions.generate(raw, program);
-				if (matchNames.rawName == null) continue;
+				if (matchNames.rawName == null) {
+					continue;
+				}
 				if (checkNames(nameVersions.rawName,matchNames.rawName)) {
 					exactNameMatch = true;
 					break;
@@ -398,8 +426,26 @@ public class FidStatistics extends GhidraScript {
 					exactNameMatch = true;
 					break;
 				}
-				if (nameVersions.demangledBaseName == null) continue;
-				if (matchNames.demangledBaseName == null) continue;
+				if (nameVersions.demangledBaseName != null) {
+					if (checkNames(nameVersions.demangledBaseName, matchNames.rawName) ||
+						checkNames(nameVersions.demangledBaseName, matchNames.similarName)) {
+						exactNameMatch = true;
+						break;
+					}
+				}
+				if (matchNames.demangledBaseName != null) {
+					if (checkNames(nameVersions.rawName, matchNames.demangledBaseName) ||
+						checkNames(nameVersions.similarName, matchNames.demangledBaseName)) {
+						exactNameMatch = true;
+						break;
+					}
+				}
+				if (nameVersions.demangledBaseName == null) {
+					continue;
+				}
+				if (matchNames.demangledBaseName == null) {
+					continue;
+				}
 				if (checkNames(nameVersions.demangledBaseName,matchNames.demangledBaseName)) {
 					exactNameMatch = true;
 					break;
@@ -408,17 +454,21 @@ public class FidStatistics extends GhidraScript {
 					String strippedName =
 						MatchNameAnalysis.removeTemplateParams(matchNames.demangledBaseName);
 					if (strippedName != null) {
-						if (strippedName.equals(strippedTemplateName)) {
+						if (checkNames(strippedName, strippedTemplateName)) {
 							exactNameMatch = true;
 							break;
 						}
 					}
 				}
 			}
-			if (exactNameMatch)
+			if (exactNameMatch) {
 				record.nameMatched += 1;
+			}
 
 			float score = result.matches.get(0).getOverallScore();
+			if (score >= scoreThreshold && matchHappened) {
+				record.hitCount += 1;
+			}
 			if (exactNameMatch && ((score < scoreThreshold) || !matchHappened)) {
 				MatchRecord matchRecord = new MatchRecord(result,null,false);
 				StringBuilder buffer = new StringBuilder();
@@ -440,13 +490,19 @@ public class FidStatistics extends GhidraScript {
 
 	private void processProgram(Program program,FidQueryService queryService) throws MemoryAccessException, CancelledException, VersionException, IOException {
 		FidProgramSeeker programSeeker = service.getProgramSeeker(program,queryService, 10.0f);
+		monitor.setMessage("Processing " + program.getName());
+		monitor.initialize(program.getFunctionManager().getFunctionCount());
 		FunctionIterator iter = program.getFunctionManager().getFunctionsNoStubs(true);
 		while(iter.hasNext()) {
 			Function func = iter.next();
-			if (func.getName().startsWith("FUN_") || func.getName().startsWith("Ordinal_"))
+			monitor.incrementProgress(1);
+			if (func.getName().startsWith("FUN_") || func.getName().startsWith("Ordinal_")) {
 				continue;
+			}
 			FidSearchResult searchResult = programSeeker.searchFunction(func, monitor);
-			if (searchResult == null) continue;		// Could not hash function
+			if (searchResult == null) {
+				continue;		// Could not hash function
+			}
 			processFunctionResult(searchResult);
 		}
 	}
@@ -496,8 +552,9 @@ public class FidStatistics extends GhidraScript {
 				try {
 					program = (Program) domainFile.getDomainObject(this, false, false, monitor);
 					if (queryService == null || !lastLanguage.equals(program.getLanguage())) {
-						if (queryService != null)
+						if (queryService != null) {
 							queryService.close();
+						}
 						lastLanguage = program.getLanguage();
 						queryService = service.openFidQueryService(lastLanguage, false);
 					}
@@ -508,8 +565,9 @@ public class FidStatistics extends GhidraScript {
 					monitor.setProgress(counter);
 				}
 				finally {
-					if (program != null)
+					if (program != null) {
 						program.release(this);
+					}
 				}
 			}
 		} catch(CancelledException ex) {
