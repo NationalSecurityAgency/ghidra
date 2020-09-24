@@ -22,6 +22,7 @@ import java.awt.Font;
 import java.awt.event.MouseEvent;
 
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
+import ghidra.app.util.HelpTopics;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.Plugin;
@@ -520,92 +521,169 @@ public class DecompileOptions {
 	 * @param ownerPlugin  the plugin to which the options should be registered
 	 * @param opt          the options object to register with
 	 * @param program      the program
-	 * @param help         the help
 	 */
-	public void registerOptions(Plugin ownerPlugin, ToolOptions opt, Program program,
-			HelpLocation help) {
-		opt.registerOption(PREDICATE_OPTIONSTRING, PREDICATE_OPTIONDEFAULT, help,
+	public void registerOptions(Plugin ownerPlugin, ToolOptions opt, Program program) {
+		opt.registerOption(PREDICATE_OPTIONSTRING,
+			PREDICATE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisPredicate"),
 			PREDICATE_OPTIONDESCRIPTION);
-		opt.registerOption(READONLY_OPTIONSTRING, READONLY_OPTIONDEFAULT, help,
+		opt.registerOption(READONLY_OPTIONSTRING,
+			READONLY_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisReadOnly"),
 			READONLY_OPTIONDESCRIPTION);
-		opt.registerOption(ELIMINATE_UNREACHABLE_OPTIONSTRING, ELIMINATE_UNREACHABLE_OPTIONDEFAULT,
-			help, ELIMINATE_UNREACHABLE_OPTIONDESCRIPTION);
+		opt.registerOption(ELIMINATE_UNREACHABLE_OPTIONSTRING,
+			ELIMINATE_UNREACHABLE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisUnreachable"),
+			ELIMINATE_UNREACHABLE_OPTIONDESCRIPTION);
 		opt.registerOption(SIMPLIFY_DOUBLEPRECISION_OPTIONSTRING,
-			SIMPLIFY_DOUBLEPRECISION_OPTIONDEFAULT, help,
+			SIMPLIFY_DOUBLEPRECISION_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisExtendedPrecision"),
 			SIMPLIFY_DOUBLEPRECISION_OPTIONDESCRIPTION);
-		opt.registerOption(IGNOREUNIMPL_OPTIONSTRING, IGNOREUNIMPL_OPTIONDEFAULT, help,
+		opt.registerOption(IGNOREUNIMPL_OPTIONSTRING,
+			IGNOREUNIMPL_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisIgnoreUnimplemented"),
 			IGNOREUNIMPL_OPTIONDESCRIPTION);
-		opt.registerOption(INFERCONSTPTR_OPTIONSTRING, INFERCONSTPTR_OPTIONDEFAULT, help,
+		opt.registerOption(INFERCONSTPTR_OPTIONSTRING,
+			INFERCONSTPTR_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisInferConstants"),
 			INFERCONSTPTR_OPTIONDESCRIPTION);
-		opt.registerOption(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT, help,
+		opt.registerOption(NULLTOKEN_OPTIONSTRING,
+			NULLTOKEN_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayNull"),
 			NULLTOKEN_OPTIONDESCRIPTION);
-		opt.registerOption(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT, help,
+		opt.registerOption(INPLACEOP_OPTIONSTRING,
+			INPLACEOP_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisInPlace"),
 			INPLACEOP_OPTIONDESCRIPTION);
-		opt.registerOption(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT, help,
+		opt.registerOption(ALIASBLOCK_OPTIONSTRING,
+			ALIASBLOCK_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisAliasBlocking"),
 			ALIASBLOCK_OPTIONDESCRIPTION);
-		opt.registerOption(CONVENTION_OPTIONSTRING, CONVENTION_OPTIONDEFAULT, help,
+		opt.registerOption(CONVENTION_OPTIONSTRING,
+			CONVENTION_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayConvention"),
 			CONVENTION_OPTIONDESCRIPTION);
-		opt.registerOption(NOCAST_OPTIONSTRING, NOCAST_OPTIONDEFAULT, help,
+		opt.registerOption(NOCAST_OPTIONSTRING,
+			NOCAST_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayDisableCasts"),
 			NOCAST_OPTIONDESCRIPTION);
-		opt.registerOption(MAXWIDTH_OPTIONSTRING, MAXWIDTH_OPTIONDEFAULT, help,
+		opt.registerOption(MAXWIDTH_OPTIONSTRING,
+			MAXWIDTH_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayMaxChar"),
 			MAXWIDTH_OPTIONDESCRIPTION);
-		opt.registerOption(INDENTWIDTH_OPTIONSTRING, INDENTWIDTH_OPTIONDEFAULT, help,
+		opt.registerOption(INDENTWIDTH_OPTIONSTRING,
+			INDENTWIDTH_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayIndentLevel"),
 			INDENTWIDTH_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTINDENT_OPTIONSTRING, COMMENTINDENT_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTINDENT_OPTIONSTRING,
+			COMMENTINDENT_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCommentIndent"),
 			COMMENTINDENT_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTSTYLE_OPTIONSTRING, COMMENTSTYLE_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTSTYLE_OPTIONSTRING,
+			COMMENTSTYLE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCommentStyle"),
 			COMMENTSTYLE_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTEOL_OPTIONSTRING, COMMENTEOL_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTEOL_OPTIONSTRING,
+			COMMENTEOL_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "CommentOptions"),
 			COMMENTEOL_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTPRE_OPTIONSTRING, COMMENTPRE_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTPRE_OPTIONSTRING,
+			COMMENTPRE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "CommentOptions"),
 			COMMENTPRE_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTPOST_OPTIONSTRING, COMMENTPOST_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTPOST_OPTIONSTRING,
+			COMMENTPOST_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "CommentOptions"),
 			COMMENTPOST_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTPLATE_OPTIONSTRING, COMMENTPLATE_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTPLATE_OPTIONSTRING,
+			COMMENTPLATE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "CommentOptions"),
 			COMMENTPLATE_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTWARN_OPTIONSTRING, COMMENTWARN_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTWARN_OPTIONSTRING,
+			COMMENTWARN_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayWarningComments"),
 			COMMENTWARN_OPTIONDESCRIPTION);
-		opt.registerOption(COMMENTHEAD_OPTIONSTRING, COMMENTHEAD_OPTIONDEFAULT, help,
+		opt.registerOption(COMMENTHEAD_OPTIONSTRING,
+			COMMENTHEAD_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayHeaderComment"),
 			COMMENTHEAD_OPTIONDESCRIPTION);
-		opt.registerOption(NAMESPACE_OPTIONSTRING, NAMESPACE_OPTIONDEFAULT, help,
+		opt.registerOption(NAMESPACE_OPTIONSTRING,
+			NAMESPACE_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayNamespaces"),
 			NAMESPACE_OPTIONDESCRIPTION);
-		opt.registerOption(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT, help,
+		opt.registerOption(INTEGERFORMAT_OPTIONSTRING,
+			INTEGERFORMAT_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayIntegerFormat"),
 			INTEGERFORMAT_OPTIONDESCRIPTION);
-		opt.registerOption(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_DEF, help,
+		opt.registerOption(HIGHLIGHT_KEYWORD_MSG,
+			HIGHLIGHT_KEYWORD_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting keywords.");
-		opt.registerOption(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_DEF, help,
+		opt.registerOption(HIGHLIGHT_TYPE_MSG,
+			HIGHLIGHT_TYPE_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting types.");
-		opt.registerOption(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_DEF, help,
+		opt.registerOption(HIGHLIGHT_FUNCTION_MSG,
+			HIGHLIGHT_FUNCTION_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting function names.");
-		opt.registerOption(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_DEF, help,
+		opt.registerOption(HIGHLIGHT_COMMENT_MSG,
+			HIGHLIGHT_COMMENT_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting comments.");
-		opt.registerOption(HIGHLIGHT_VARIABLE_MSG, HIGHLIGHT_VARIABLE_DEF, help,
+		opt.registerOption(HIGHLIGHT_VARIABLE_MSG,
+			HIGHLIGHT_VARIABLE_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting variables.");
-		opt.registerOption(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_DEF, help,
+		opt.registerOption(HIGHLIGHT_CONST_MSG,
+			HIGHLIGHT_CONST_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting constants.");
-		opt.registerOption(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_DEF, help,
+		opt.registerOption(HIGHLIGHT_PARAMETER_MSG,
+			HIGHLIGHT_PARAMETER_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting parameters.");
-		opt.registerOption(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF, help,
+		opt.registerOption(HIGHLIGHT_GLOBAL_MSG,
+			HIGHLIGHT_GLOBAL_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting global variables.");
-		opt.registerOption(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF, help,
+		opt.registerOption(HIGHLIGHT_DEFAULT_MSG,
+			HIGHLIGHT_DEFAULT_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayColorDefault"),
 			"The color used when a specific color is not specified.");
-		opt.registerOption(CODE_VIEWER_BACKGROUND_COLOR_MSG, CODE_VIEWER_BACKGROUND_COLOR, help,
+		opt.registerOption(CODE_VIEWER_BACKGROUND_COLOR_MSG,
+			CODE_VIEWER_BACKGROUND_COLOR,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayBackgroundColor"),
 			"The background color of the decompiler window.");
-		opt.registerOption(FONT_MSG, DEFAULT_FONT, help,
+		opt.registerOption(FONT_MSG,
+			DEFAULT_FONT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayFont"),
 			"The font used to render text in the decompiler.");
-		opt.registerOption(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_DEF, help,
+		opt.registerOption(SEARCH_HIGHLIGHT_MSG,
+			SEARCH_HIGHLIGHT_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayFindHighlight"),
 			"The color used to highlight matches using the Find Dialog.");
-		opt.registerOption(LINE_NUMBER_MSG, LINE_NUMBER_DEF, help,
+		opt.registerOption(LINE_NUMBER_MSG,
+			LINE_NUMBER_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayLineNumbers"),
 			"Toggle for displaying line numbers in the decompiler.");
-		opt.registerOption(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS, help,
+		opt.registerOption(DECOMPILE_TIMEOUT,
+			SUGGESTED_DECOMPILE_TIMEOUT_SECS,
+			new HelpLocation(HelpTopics.DECOMPILER, "GeneralTimeout"),
 			"The number of seconds to allow the decompiler to run before terminating the " +
 				"decompiler.\nCurrently this does not affect the UI, which will run indefinitely. " +
 				"This setting currently only affects background analysis that uses the decompiler.");
-		opt.registerOption(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES, help,
+		opt.registerOption(PAYLOAD_LIMIT,
+			SUGGESTED_MAX_PAYLOAD_BYTES,
+			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxPayload"),
 			"The maximum size of the decompiler result payload in MBYtes (Suggested value: 50).");
-		opt.registerOption(HIGHLIGHT_CURRENT_VARIABLE_MSG, HIGHLIGHT_CURRENT_VARIABLE_DEF, help,
+		opt.registerOption(HIGHLIGHT_CURRENT_VARIABLE_MSG,
+			HIGHLIGHT_CURRENT_VARIABLE_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCurrentHighlight"),
 			"Current variable highlight");
-		opt.registerOption(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE, help,
+		opt.registerOption(CACHED_RESULTS_SIZE_MSG,
+			SUGGESTED_CACHED_RESULTS_SIZE,
+			new HelpLocation(HelpTopics.DECOMPILER, "GeneralCacheSize"),
 			CACHE_RESULTS_DESCRIPTION);
 		grabFromToolAndProgram(ownerPlugin, opt, program);
 	}

@@ -16,7 +16,9 @@
   <p>
     To display the decompiler window, position the cursor on a
     function in the Code Browser, then select the
-    <span class="guiicon"><img src="images/decompileFunction.gif"></span> icon from the tool bar, or the
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
+      </span> icon from the tool bar, or the
     <span class="bold"><strong>Decompile</strong></span> option from the
     <span class="bold"><strong>Window</strong></span> menu in the tool.
   </p>
@@ -86,14 +88,17 @@
 <a name="MainWindow"></a>Main Window</h2></div></div></div>
   
   <p>
-  Initially pushing <span class="guiicon"><img src="images/decompileFunction.gif"></span> or selecting
-  <span class="bold"><strong>Decompile</strong></span> from the <span class="bold"><strong>Window</strong></span> menu in the tool
-  brings up the <span class="emphasis"><em>main</em></span> window.  The main window always displays the function
-  at the <span class="emphasis"><em>current address</em></span> within the Code Browser and follows as the user navigates
-  within the Program.  Any mouse click, menu option, or other action causing the cursor to move to a new
-  address in the Listing also causes the main window to display the function containing that address.
-  Navigation to new functions is also possible from within the window by double-clicking on function
-  tokens (See <a class="xref" href="DecompilerWindow.html#MouseActions" title="Mouse Actions">&#8220;Mouse Actions&#8221;</a>).
+    Initially pushing
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
+      </span> or selecting
+    <span class="bold"><strong>Decompile</strong></span> from the <span class="bold"><strong>Window</strong></span> menu in the tool
+    brings up the <span class="emphasis"><em>main</em></span> window.  The main window always displays the function
+    at the <span class="emphasis"><em>current address</em></span> within the Code Browser and follows as the user navigates
+    within the Program.  Any mouse click, menu option, or other action causing the cursor to move to a new
+    address in the Listing also causes the main window to display the function containing that address.
+    Navigation to new functions is also possible from within the window by double-clicking on function
+    tokens (See <a class="xref" href="DecompilerWindow.html#MouseActions" title="Mouse Actions">&#8220;Mouse Actions&#8221;</a>).
   </p>
 
   <div class="sect2">
@@ -118,7 +123,7 @@
       <span class="emphasis"><em>Operator</em></span> tokens map to the machine instruction which performed that operation.
     </p>
     <p>
-      <span class="emphasis"><em>Function Name</em></span> tokens, if they represent a call to a sub-function, map to the
+      <span class="emphasis"><em>Function Name</em></span> tokens, if they represent a call to another function, map to the
       machine instruction executing the call.
     </p>
     <p>
@@ -145,8 +150,11 @@
 <a name="Snapshot"></a>Snapshot Windows</h2></div></div></div>
   
   <p>
-    Pressing the <span class="guiicon"><img src="images/camera-photo.png"></span>
-    icon in another Decompiler window's toolbar causes a <span class="emphasis"><em>Snapshot</em></span> window
+    Pressing the
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/camera-photo.png" width="16" height="16"></span>
+    </span> icon
+    in another Decompiler window's toolbar causes a <span class="emphasis"><em>Snapshot</em></span> window
     to be created, which initially shows decompilation of the same function. Multiple
     Snapshot windows can be brought up to show decompilation of different functions
     simultaneously. Snapshot
@@ -180,6 +188,40 @@
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="UndefinedFunction"></a>Undefined Functions</h2></div></div></div>
+  
+  <p>
+    If the current location within the Code Browser is in disassembled code, but that code
+    is not contained in a <a class="link" href="DecompilerAnnotations.html#AnnoteFormalFunctionBody" title="Formal Function Body">Formal Function Body</a>,
+    then the decompiler window invents a function body on the fly called an
+    <span class="bold"><strong>Undefined Function</strong></span>.  The background color of the window
+    is changed to gray to indicate this special state.
+    </p>
+<div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/Undefined.png" align="middle" width="579" height="143"></td></tr></table></div>
+<p>
+  </p>
+  <p>
+    The <span class="emphasis"><em>entry point</em></span> address of the Undefined Function is chosen by
+    backtracking through the code's control-flow from the current location to the start of
+    a basic block that has no flow coming in except possibly from <span class="emphasis"><em>call</em></span> instructions.
+    During decompilation, a function body is computed from the selected entry point (as with any function)
+    based on control-flow up to instructions with <span class="emphasis"><em>terminator</em></span> semantics.
+  </p>
+  <p>
+    The current address, as indicated by the cursor in the Listing Window for instance, is
+    generally <span class="emphasis"><em>not</em></span> the entry of the invented function, but the current address will be
+    contained somewhere in the body.
+  </p>
+  <p>
+    For display purposes in the window, the invented function is given a name based on the
+    computed entry point address with the prefix <code class="code">UndefinedFunction</code>. The function
+    is assigned the default calling convention, and parameters are discovered as part of
+    the decompiler's analysis.
+  </p>
+</div>
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="ToolBar"></a>Tool Bar</h2></div></div></div>
   
   <p>
@@ -193,13 +235,23 @@
 <a name="ToolBarExport"></a>Export to C</h3></div></div></div>
   
   <p>
-    <span class="guiicon"><img src="images/page_edit.png"></span> - button
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/page_edit.png" width="16" height="16"></span>
+      </span> - button
   </p>
   <p>
     Exports the decompiled result of the current function to a file. A file chooser
     dialog is displayed to select the name of the output file. If a file extension
     is not specified, a ".c" is appended to the filename.  If the file already exists,
     a final dialog is presented to confirm that the file should be overwritten.
+  </p>
+  <p>
+    This action exports a single function at a time.  The user can export all functions
+    simultaneously from the Code Browser, by selecting the menu
+    <span class="bold"><strong>File -&gt; Export Program ...</strong></span> and then choosing
+    <a class="ulink" href="help/topics/ExporterPlugin/exporter.htm#c_cpp" target="_top">C/C++</a>
+    from the drop-down menu. See the full documentation for
+    the <a class="ulink" href="help/topics/ExporterPlugin/exporter.htm" target="_top">Export</a> dialog.
   </p>
 </div>
 
@@ -208,7 +260,9 @@
 <a name="ToolBarSnapshot"></a>Snapshot</h3></div></div></div>
   
   <p>
-    <span class="guiicon"><img src="images/camera-photo.png"></span> - button
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/camera-photo.png" width="16" height="16"></span>
+      </span> - button
   </p>
   <p>
     Creates a new <span class="emphasis"><em>Snapshot</em></span> window.  The <span class="emphasis"><em>Snapshot</em></span> window
@@ -223,7 +277,9 @@
 <a name="ToolBarRedecompile"></a>Re-decompile</h3></div></div></div>
   
   <p>
-    <span class="guiicon"><img src="images/reload3.png"></span> - button
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/reload3.png" width="16" height="16"></span>
+      </span> - button
   </p>
   <p>
     Triggers a re-decompilation of the current function displayed in the window.
@@ -249,7 +305,9 @@
 <a name="ToolBarCopy"></a>Copy</h3></div></div></div>
   
   <p>
-    <span class="guiicon"><img src="images/page_white_copy.png"></span> - button
+    <span class="guiicon">
+      <span class="inlinemediaobject"><img src="images/page_white_copy.png" width="16" height="16"></span>
+      </span> - button
   </p>
   <p>
     Copies the currently selected text in the decompiler window to the clipboard.
@@ -293,7 +351,7 @@
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
-    If no Graph Service is available then this action will no be present.
+    If no Graph Service is available then this action will not be present.
   </td></tr>
 </table></div>
 </div>
@@ -348,10 +406,10 @@
     </p>
 <div class="informalexample">
     <div class="variablelist"><dl class="variablelist">
-<dt><span class="term"><span class="bold"><strong>Sub-function Symbols</strong></span></span></dt>
+<dt><span class="term"><span class="bold"><strong>Function Symbols</strong></span></span></dt>
 <dd><p>
-	Double clicking a sub-function name causes the
-	window itself to navigate away from its current function to the sub-function, triggering
+	Double clicking a called function name causes the
+	window itself to navigate away from its current function to the called function, triggering
 	a new decompilation if necessary and changing its display.
       </p></dd>
 <dt><span class="term"><span class="bold"><strong>Global Variables</strong></span></span></dt>
@@ -391,7 +449,7 @@
   
   <p>
     Opens a new <span class="emphasis"><em>Snapshot</em></span> window, navigating it to the selected symbol.
-    This is a convenience for immediately decompiling and displaying a sub-function in a
+    This is a convenience for immediately decompiling and displaying a called function in a
     new window, without disturbing the active window.  The behavior is similar to the
     Double Click action, the selected token must represent a function name symbol or possibly
     a constant address, but the navigation occurs in the new Snapshot window.
@@ -607,7 +665,7 @@
   </p>
   <p>
     The action is available from any token in the decompiler window.  Most tokens trigger editing
-    of the current function itself, but a subfunction can be edited by putting the cursor on
+    of the current function itself, but a called function can be edited by putting the cursor on
     its name specifically.
   </p>
   <p>
@@ -693,7 +751,8 @@
       Highlight all variable tokens where the value at that point in the function is
       directly affected by the value at the selected variable token.
       A token is highlighted if there is a direct data-flow path
-      starting from the selected point and ending at the token.
+      starting from the selected point and ending at the token. A call operation is not
+      considered a direct data-flow path from its input parameters to its output value.
       </p>
       <p>
       In the following example, the token <span class="emphasis"><em>b</em></span>, the output of
@@ -709,22 +768,28 @@
       directly affects the value at the selected variable token.
       A token is highlighted if there is a direct data-flow path
       starting from the token and ending at the selected point.
+      A call operation is not considered a direct data-flow path from its input parameters
+      to its output value.
       </p></dd>
-<dt><span class="term"><span class="bold"><strong>Forward Inst Slice</strong></span></span></dt>
+<dt><span class="term"><span class="bold"><strong>Forward Operator Slice</strong></span></span></dt>
 <dd><p>
 	Highlight every operator token that manipulates a value directly affected by the
 	value at the selected variable token.  Along each direct data-flow path that
 	<span class="emphasis"><em>starts</em></span>
 	at the selected point, each token representing an operation is highlighted, along with
-	any explicit variable it writes to.
+	any explicit variable read or written by the operation.  A call operation is not
+	considered a direct data-flow path from its input parameters to its output value.
+	This is an alternate presentation of the slice displayed by the Forward Slice action.
       </p></dd>
-<dt><span class="term"><span class="bold"><strong>Backward Inst Slice</strong></span></span></dt>
+<dt><span class="term"><span class="bold"><strong>Backward Operator Slice</strong></span></span></dt>
 <dd><p>
 	Highlight every operator token that manipulates a value that directly affects the
 	value at the selected variable token.  Along each direct data-flow path that
 	<span class="emphasis"><em>ends</em></span>
 	at the selected point, each token representing an operation is highlighted, along with
-	any explicit variable it writes to.
+	any explicit variable read or written by the operation. A call operation is not
+	considered a direct data-flow path from its input parameters to its output value.
+	This is an alternate presentation of the slice displayed by the Backward Slice action.
       </p></dd>
 </dl></div>
   </div>
@@ -776,19 +841,19 @@
 <a name="ActionOverrideSignature"></a>Override Signature</h3></div></div></div>
   
   <p>
-    Override the function prototype corresponding to the sub-function under the cursor.
+    Override the function prototype corresponding to the function under the cursor.
   </p>
   <p>
     This action can be triggered at <span class="emphasis"><em>call sites</em></span>, where the function
-    being decompiled is calling into another sub-function. Users must select either the token representing
-    the sub-function's name or the tokens representing the function pointer at the call site.
+    being decompiled is calling into another function. Users must select either the token representing
+    the called function's name or the tokens representing the function pointer at the call site.
     A dialog is brought up where the a complete <span class="emphasis"><em>function declaration</em></span>, specifying
     the return data-type along with the name and data-type for each input parameter.  Additionally,
     the "Calling Convention", "In Line", and "No Return" properties of the function prototype
     can be set (See <a class="xref" href="DecompilerAnnotations.html#AnnotePrototype" title="Function Prototypes">&#8220;Function Prototypes&#8221;</a>).
   </p>
   <p>
-    Confirming the dialog forces the new function prototype on the decompiler's view of the sub-function,
+    Confirming the dialog forces the new function prototype on the decompiler's view of the called function,
     but only for the single selected call site.
   </p>
   <p>
@@ -861,12 +926,12 @@
 <a name="ActionRemoveOverride"></a>Remove Signature Override</h3></div></div></div>
   
   <p>
-    Remove the overriding function prototype applied previously to the sub-function under the cursor.
+    Remove the overriding function prototype applied previously to the called function under the cursor.
   </p>
   <p>
     This action can only be triggered at <span class="emphasis"><em>call sites</em></span>, where an overriding
     prototype was previously placed by the <a class="xref" href="DecompilerWindow.html#ActionOverrideSignature" title="Override Signature">&#8220;Override Signature&#8221;</a> command. As with
-    this command, users must select either the token representing the sub-function's name or the
+    this command, users must select either the token representing the called function's name or the
     tokens representing the function pointer at the call site.  The action causes the
     override to be removed immediately. Parameter information will be drawn from the decompiler's
     normal analysis.
@@ -882,7 +947,7 @@
   </p>
   <p>
     The current function can be renamed by selecting the name token within the function's
-    declaration at the top of the decompiler window, or individual subfunctions
+    declaration at the top of the decompiler window, or individual called functions
     can be renamed by selecting their name token within a call expression.  
     This action brings up a dialog containing a text field prepopulated with the
     name to be changed. The current namespace (and any parent namespaces) is
@@ -1067,6 +1132,12 @@
     input parameters to be created as well.  In this situation, the action is equivalent to
     <a class="xref" href="DecompilerWindow.html#ActionCommitParams" title="Commit Params/Return">&#8220;Commit Params/Return&#8221;</a>, and a confirmation dialog comes up to notify the user.
   </p>
+  <p>
+    Setting a data-type on the return value using this action affects decompilation for the
+    function itself and, additionally, any function that calls this function.  Within a calling
+    function, the decompiler propagates the data-type into the variable or expression incorporating
+    the return value at each call site.
+  </p>
 </div>
 
 <div class="sect2">
@@ -1101,6 +1172,11 @@
     of parameters and their memory locations become fixed.  If the annotation of another
     parameter did not exist previously, then its data-type is <span class="emphasis"><em>not</em></span>
     forced by this action.
+  </p>
+  <p>
+    Data-type information applied to parameters using this action is especially impactful
+    because it affects decompilation for the function owning the parameter and, additionally,
+    any function that calls this owning function.
   </p>
 </div>
 

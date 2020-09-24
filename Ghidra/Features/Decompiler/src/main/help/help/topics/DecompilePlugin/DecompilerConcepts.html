@@ -45,7 +45,7 @@
 	    <span class="bold"><strong>size</strong></span> - the maximum number of bytes that can be addressed
 	</li>
 <li class="listitem" style="list-style-type: disc">
-	    <span class="bold"><strong>endianess</strong></span> - how groups of bytes are interpreted as integers
+	    <span class="bold"><strong>endianness</strong></span> - how groups of bytes are interpreted as integers
 	</li>
 </ul></div>
       </div>
@@ -62,7 +62,7 @@
 <dt><span class="term"><span class="bold"><strong>ram</strong></span></span></dt>
 <dd>
 	    <p>
-	      A space that models memory accessible via the processors's main data bus. Depending on
+	      A space that models memory accessible via the processor's main data bus. Depending on
 	      the architecture, different spaces might be substituted for <span class="emphasis"><em>ram</em></span>,
 	      such as separate <span class="emphasis"><em>code</em></span> and <span class="emphasis"><em>data</em></span> spaces.
 	    </p>
@@ -153,7 +153,7 @@
 </ul></div>
       </div>
 <p>
-      The integer data-type assumes a twos complement encoding in the endianness of the
+      The integer data-type assumes a two's complement encoding in the endianness of the
       address space containing the varnode.  Similarly, the floating point data-type assumes
       an IEEE 754 standard encoding.  The precision of the integer or floating point value is
       determined by the varnode's size.  A boolean data-type assumes the varnode has a size
@@ -332,12 +332,12 @@
 	  <tr>
 	    <td>CALL</td>
 	    <td><code class="code">funcname(...)</code></td>
-	    <td>Branch to a subfunction.</td>
+	    <td>Branch to a function, as a call.</td>
 	  </tr>
 	  <tr>
 	    <td>CALLIND</td>
 	    <td><code class="code">(*funcptr)(...)</code></td>
-	    <td>Branch through a pointer to a subfunction.</td>
+	    <td>Branch through a pointer to a function, as a call.</td>
 	  </tr>
 	  <tr>
 	    <td>RETURN</td>
@@ -435,7 +435,7 @@
 	  <tr>
 	    <td>INT_2COMP</td>
 	    <td><code class="code">-</code></td>
-	    <td>Twos complement.</td>
+	    <td>Two's complement.</td>
 	  </tr>
 	  <tr>
 	    <td>INT_NEGATE</td>
@@ -666,6 +666,65 @@
 
   <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
+<a name="ConceptControlFlow"></a>P-code Control Flow</h4></div></div></div>
+    
+    <p>
+      P-code has natural <span class="bold"><strong>control-flow</strong></span>, with the subtlety that flow
+      happens both within and across machine instructions.  Most p-code operators have
+      <span class="bold"><strong>fall-through</strong></span> semantics, meaning that flow moves to the
+      next operator in the sequence associated with the instruction, or, if the operator is the
+      last in the sequence, flow moves to the first operator in the p-code associated with the next instruction.
+      The p-code operators with <span class="bold"><strong>branching</strong></span> semantics, such as
+      CBRANCH and BRANCH, can jump to a target operator which is internal to the current instruction, or they can
+      jump to the first p-code operator corresponding to a new instruction at a different address.
+    </p>
+    <p>
+      Ghidra labels a machine instruction with one of the following <span class="bold"><strong>Flow Types</strong></span> that describe
+      its overall control-flow.  The Flow Type is derived directly from the control-flow of the p-code for the instruction,
+      with the basic types corresponding directly with a specific branching p-code operator.
+      </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none"><span class="bold"><strong>FALL_THROUGH</strong></span></li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>UNCONDITIONAL_CALL</strong></span> - CALL</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>UNCONDITIONAL_JUMP</strong></span> - BRANCH</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_JUMP</strong></span> - CBRANCH</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>COMPUTED_JUMP</strong></span> - BRANCHIND</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>COMPUTED_CALL</strong></span> - CALLIND</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>TERMINATOR</strong></span> - RETURN</li>
+</ul></div>
+      </div>
+<p>
+      Other Flow Types occur due to a combination of multiple p-code branching operators within the same instruction.
+      </p>
+<div class="informalexample">
+	<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_CALL</strong></span> - CALL with CBRANCH</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_TERMINATOR</strong></span> - RETURN with CBRANCH</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>COMPUTED_CALL_TERMINATOR</strong></span> - CALLIND with RETURN</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_COMPUTED_JUMP</strong></span> - CBRANCH with BRANCHIND</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>CONDITIONAL_COMPUTED_CALL</strong></span> - CBRANCH with CALLIND</li>
+<li class="listitem" style="list-style-type: none">
+<span class="bold"><strong>JUMP_TERMINATOR</strong></span> - BRANCH with RETURN</li>
+</ul></div>
+      </div>
+<p>
+    </p>
+  </div>
+
+  <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptInternalFunctions"></a>Internal Decompiler Functions</h4></div></div></div>
     
     <p>
@@ -676,9 +735,9 @@
       of p-code operations, displaying them as if they were built-in functions for the language.
     </p>
     <div class="informalexample">
-      <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
-<li class="listitem" style="list-style-type: none">
-	  <code class="code">SUB41(x,c)</code> - Truncation operation - SUBPIECE
+      <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><code class="code">SUB41(x,c)</code> - Truncation operation - SUBPIECE</span></dt>
+<dd>
 	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of the input operand 'x' in bytes.</li>
 <li class="listitem" style="list-style-type: disc">The digit '1' indicates the size of the output value in bytes.</li>
@@ -710,9 +769,9 @@
 </ul></div>
 <p>
 	  </p>
-	</li>
-<li class="listitem" style="list-style-type: none">
-	  <code class="code">CONCAT31(x,y)</code> - Concatenation operator - PIECE
+	</dd>
+<dt><span class="term"><code class="code">CONCAT31(x,y)</code> - Concatenation operator - PIECE</span></dt>
+<dd>
 	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">The digit '3' indicates the size of the input operand 'x' in bytes.</li>
 <li class="listitem" style="list-style-type: disc">The digit '1' indicates the size of the input operand 'y' in bytes.</li>
@@ -725,9 +784,9 @@
 	    Concatenate the bytes in 'x' with the bytes in 'y'.  'x' becomes the most significant
 	    bytes, and 'y' the least significant bytes, in the result.
 	  </p>
-	</li>
-<li class="listitem" style="list-style-type: none">
-	  <code class="code">ZEXT14(x)</code> - Zero-extension operator - INT_ZEXT
+	</dd>
+<dt><span class="term"><code class="code">ZEXT14(x)</code> - Zero-extension operator - INT_ZEXT</span></dt>
+<dd>
 	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">The digit '1' indicates the size of the input operand 'x' in bytes.</li>
 <li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of the output in bytes.</li>
@@ -739,9 +798,9 @@
 	    Extend the operand 'x' to a larger size by appending zero bytes, which become the most
 	    significant bytes of the result.
 	  </p>
-	</li>
-<li class="listitem" style="list-style-type: none">
-	  <code class="code">SEXT14(x)</code> - Sign-extension operator - INT_SEXT
+	</dd>
+<dt><span class="term"><code class="code">SEXT14(x)</code> - Sign-extension operator - INT_SEXT</span></dt>
+<dd>
 	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">The digit '1' indicates the size of the input operand 'x' in bytes.</li>
 <li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of the output in bytes.</li>
@@ -753,32 +812,32 @@
 	    Extend the operand 'x' to a larger size by duplicating the <span class="emphasis"><em>sign</em></span>
 	    bit of 'x' into the most significant bytes of the result.
 	  </p>
-	</li>
-<li class="listitem" style="list-style-type: none">
-	  <code class="code">SBORROW4(x,y)</code> - Test for signed borrow operator - INT_SBORROW
+	</dd>
+<dt><span class="term"><code class="code">SBORROW4(x,y)</code> - Test for signed borrow operator - INT_SBORROW</span></dt>
+<dd>
 	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</li></ul></div>
 	  <p>
 	    Return <span class="emphasis"><em>true</em></span> if there is an arithmetic overflow when subtracting 'y' from 'x'
 	    as signed integers.
 	  </p>
-	</li>
-<li class="listitem" style="list-style-type: none">
-	  <code class="code">CARRY4(x,y)</code> - Test for unsigned overflow operator - INT_CARRY
+	</dd>
+<dt><span class="term"><code class="code">CARRY4(x,y)</code> - Test for unsigned overflow operator - INT_CARRY</span></dt>
+<dd>
 	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</li></ul></div>
 	  <p>
 	    Return <span class="emphasis"><em>true</em></span> if there is an arithmetic overflow when adding 'x' and 'y'
 	    as unsigned integers.
 	  </p>
-	</li>
-<li class="listitem" style="list-style-type: none">
-	  <code class="code">SCARRY4(x,y)</code> - Test for signed overflow operator - INT_SCARRY
+	</dd>
+<dt><span class="term"><code class="code">SCARRY4(x,y)</code> - Test for signed overflow operator - INT_SCARRY</span></dt>
+<dd>
 	  <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc">The digit '4' indicates the size of both input operands 'x' and 'y' in bytes.</li></ul></div>
 	  <p>
 	    Return <span class="emphasis"><em>true</em></span> if there is an arithmetic overflow when adding 'x' and 'y'
 	    as signed integers.
 	  </p>
-	</li>
-</ul></div>
+	</dd>
+</dl></div>
     </div>
   </div>
   </div>
@@ -1025,14 +1084,14 @@
 <a name="ConceptPrototypeUnaffected"></a>Unaffected</h4></div></div></div>
       
       <p>
-	Prototype models can specify a set of <span class="bold"><strong>unaffected</strong></span>memory locations,
+	Prototype models can specify a set of <span class="bold"><strong>unaffected</strong></span> memory locations,
 	whose value must be <span class="emphasis"><em>preserved</em></span> across the function. I.e. each location 
 	must hold the same value at a function's exit that it held coming into the function.
 	These encompass a calling convention's <span class="emphasis"><em>saved registers</em></span>, where a calling function
         can store values it doesn't want to change unexpectedly, but also may include other registers that are
 	known not to change, like the stack pointer.
 	The decompiler uses the information to determine which locations can be safely propagated across
-	a sub-function.
+	a called function.
       </p>
     </div>
     <div class="sect3">

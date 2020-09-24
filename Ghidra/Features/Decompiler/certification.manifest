@@ -47,6 +47,7 @@ src/main/help/help/topics/DecompilePlugin/images/DecompWindow.png||GHIDRA||||END
 src/main/help/help/topics/DecompilePlugin/images/Defuse.png||GHIDRA||||END|
 src/main/help/help/topics/DecompilePlugin/images/EditFunctionSignature.png||GHIDRA||||END|
 src/main/help/help/topics/DecompilePlugin/images/ForwardSlice.png||GHIDRA||||END|
+src/main/help/help/topics/DecompilePlugin/images/Undefined.png||GHIDRA||||END|
 src/main/help/help/topics/DecompilePlugin/images/camera-photo.png||Tango Icons - Public Domain|||Tango|END|
 src/main/help/help/topics/DecompilePlugin/images/decompileFunction.gif||GHIDRA||reviewed||END|
 src/main/help/help/topics/DecompilePlugin/images/page_edit.png||FAMFAMFAM Icons - CC 2.5||||END|
