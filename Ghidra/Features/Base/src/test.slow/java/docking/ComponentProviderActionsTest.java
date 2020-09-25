@@ -271,7 +271,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 		try {
 			setErrorsExpected(true);
-			runSwingWithExceptions(this::showProvider, true);
+			runSwingWithException(this::showProvider);
 			setErrorsExpected(false);
 			fail();
 		}
@@ -289,7 +289,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 		try {
 			setErrorsExpected(true);
-			runSwingWithExceptions(() -> provider.setIcon(null), true);
+			runSwingWithException(() -> provider.setIcon(null));
 			setErrorsExpected(false);
 			fail("Expected an exception passing a null icon when specifying a toolbar action");
 		}
