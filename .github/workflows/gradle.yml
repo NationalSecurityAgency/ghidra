@@ -34,7 +34,7 @@ jobs:
         run: gradle --init-script gradle/support/fetchDependencies.gradle init
 
       - name: Build with Gradle
-        run: gradle buildGhidra
+        run: gradle buildGhidra -x ip
 
       - uses: actions/upload-artifact@v2
         if: matrix.platform == 'ubuntu-latest'
