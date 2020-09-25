@@ -29,7 +29,7 @@ def configureVisualStudio() {
 			println "Visual Studio not found!"
 			return
 		}
-		def vswhereOutput = "${vswherePath} -latest -format json".execute().text.trim()
+		def vswhereOutput = "${vswherePath} -latest -prerelease -format json".execute().text.trim()
 		def vswhereJson = new groovy.json.JsonSlurper().parseText(vswhereOutput);
 		if (vswhereJson.isEmpty()) {
 			println "Visual Studio not found!"
