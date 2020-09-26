@@ -15,18 +15,13 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
 import ghidra.app.services.Analyzer;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
-import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -36,6 +31,7 @@ public class AnalysisScheduler {
 	private AddressSet removeSet;
 	private AddressSet addSet;
 
+	private boolean defaultEnablement;
 	private boolean enabled;
 	private boolean scheduled;
 
@@ -47,42 +43,23 @@ public class AnalysisScheduler {
 			throw new IllegalArgumentException("Analyzer name may not contain a period: " +
 				analyzer.getName());
 		}
-		boolean defaultEnable = analyzer.getDefaultEnablement(analysisMgr.getProgram());
-		enabled = getEnableOverride(defaultEnable);
-		if (rememberEnablementChangeAsUserPreference()) {
-			String val =
-				Preferences.getProperty(getAnalyzerPreferenceName(), Boolean.toString(enabled));
-			enabled = Boolean.valueOf(val);
-		}
-		else if (defaultEnable != enabled) {
-			Msg.warn(this,
-				"Analyzer \'" + analyzer.getName() + "\' for " +
-					analysisMgr.getProgram().getName() + " " + (enabled ? "enabled" : "disabled") +
-					" by PSPEC file override");
-		}
+		defaultEnablement = getDefaultEnablement();
+		enabled = defaultEnablement;
 		removeSet = new AddressSet();
 		addSet = new AddressSet();
 	}
 
-	private boolean rememberEnablementChangeAsUserPreference() {
-		if (!analyzer.rememberEnablementChangeAsUserPreference()) {
-			return false;
+	private boolean getDefaultEnablement() {
+		Program program = analysisMgr.getProgram();
+		boolean defaultEnable = analyzer.getDefaultEnablement(program);
+		boolean override = getEnableOverride(defaultEnable);
+		if (defaultEnable != override) {
+			Msg.warn(AnalysisScheduler.class,
+				"Analyzer \'" + analyzer.getName() + "\' for " + program.getName() + " " +
+					(override ? "enabled" : "disabled") + " by PSPEC file override");
+			defaultEnable = override;
 		}
-		if (SystemUtilities.isInTestingMode() || SystemUtilities.isInHeadlessMode()) {
-			return false;
-		}
-		return true;
-	}
-
-	private String getAnalyzerPreferenceName() {
-		String str = analyzer.getName();
-		try {
-			str = URLEncoder.encode(str, "UTF8");
-		}
-		catch (UnsupportedEncodingException e) {
-			// ignore
-		}
-		return "Analyzers." + str;
+		return defaultEnable;
 	}
 
 	synchronized void schedule() {
@@ -151,24 +128,14 @@ public class AnalysisScheduler {
 	}
 
 	public void optionsChanged(Options options) {
-
-		boolean defaultEnable = analyzer.getDefaultEnablement(analysisMgr.getProgram());
-		defaultEnable = getEnableOverride(defaultEnable);
-		
-		boolean state = options.getBoolean(analyzer.getName(), defaultEnable);
-		if (state != enabled && rememberEnablementChangeAsUserPreference()) {
-			Preferences.setProperty(getAnalyzerPreferenceName(), Boolean.toString(state));
-		}
-		enabled = state;
-
+		enabled = options.getBoolean(analyzer.getName(), defaultEnablement);
 		analyzer.optionsChanged(options.getOptions(analyzer.getName()), analysisMgr.getProgram());
 	}
 
 	public void registerOptions(Options options) {
 		Options analyzerOptions = options.getOptions(analyzer.getName());
-		options.registerOption(analyzer.getName(),
-			enabled, null, analyzer.getDescription());
-
+		options.registerOption(analyzer.getName(), defaultEnablement, null,
+			analyzer.getDescription());
 		analyzer.registerOptions(analyzerOptions, analysisMgr.getProgram());
 	}
 

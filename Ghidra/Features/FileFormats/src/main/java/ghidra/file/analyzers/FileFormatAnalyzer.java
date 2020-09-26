@@ -229,8 +229,4 @@ public abstract class FileFormatAnalyzer implements Analyzer {
 		return program.getMemory().findBytes(start, values, null, true, monitor);
 	}
 
-	@Override
-	public boolean rememberEnablementChangeAsUserPreference() {
-		return false;
-	}
 }

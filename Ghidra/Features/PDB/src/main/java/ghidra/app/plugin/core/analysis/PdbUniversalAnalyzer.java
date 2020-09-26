@@ -234,11 +234,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	}
 
 	@Override
-	public boolean rememberEnablementChangeAsUserPreference() {
-		return true;
-	}
-
-	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 

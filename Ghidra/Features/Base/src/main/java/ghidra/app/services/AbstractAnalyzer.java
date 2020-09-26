@@ -73,11 +73,6 @@ public abstract class AbstractAnalyzer implements Analyzer {
 	}
 
 	@Override
-	public boolean rememberEnablementChangeAsUserPreference() {
-		return false;
-	}
-
-	@Override
 	public final boolean supportsOneTimeAnalysis() {
 		return supportsOneTimeAnalysis;
 	}
