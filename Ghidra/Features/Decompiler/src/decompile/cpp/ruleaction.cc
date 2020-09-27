@@ -9113,3 +9113,128 @@ int4 RuleXorSwap::applyOp(PcodeOp *op,Funcdata &data)
   }
   return 0;
 }
+static const std::string g_lzcnt_userops_names[] = {
+    "countLeadingZeros",
+    "count_leading_zeroes"
+};
+void RuleLzcntZeroTest::getOpList(vector<uint4> &oplist) const {
+    oplist.push_back(CPUI_INT_RIGHT);
+    oplist.push_back(CPUI_INT_SRIGHT);
+}
+
+int4 RuleLzcntZeroTest::applyOp(PcodeOp *op,Funcdata &data) {
+    Varnode* bitop_constant_term, *bitop_variable_term;
+    if(op->numInput() != 2)
+        return 0;
+
+ 
+    bitop_constant_term = op->getIn(1);
+    //require a constant to determine if a zero test
+    if(!bitop_constant_term || !bitop_constant_term->isConstant()) {
+        return 0;
+    }
+
+    bitop_variable_term = op->getIn(0);
+    //do not apply for constants, wait for folding
+    if(!bitop_variable_term || bitop_variable_term->isConstant())
+        return 0;
+    
+    PcodeOp* bitop_definition = bitop_variable_term->getDef();
+
+    if(!bitop_definition)
+        return 0;
+
+    while(bitop_definition->code() == CPUI_COPY || bitop_definition->code() == CPUI_CAST) {
+        Varnode* copy_source = bitop_definition->getIn(0);
+        if(!copy_source)
+            return 0;
+
+        Varnode* destination = bitop_definition->getOut();
+        //only permit casts to the same size
+        if(!destination || destination->getSize() != copy_source->getSize())
+            return 0;
+
+        PcodeOp* next_definition = copy_source->getDef();
+        if(!next_definition)
+            return 0;
+        if(next_definition == bitop_definition) //this doesnt seem possible, unless the pcode is malformed from a bad transformation
+            return 0; //might be better to raise an error here?
+        bitop_definition = next_definition;
+    }
+
+    /*
+        done tunneling through copy definitions, verify it is a count leading zeroes operation
+    */
+    if(bitop_definition->code() != CPUI_CALLOTHER)
+        return 0;
+
+    //expect first arg as userOp idx, second arg as zcounted value
+    if(bitop_definition->numInput() != 2)
+        return 0;
+    Varnode* userop_index = bitop_definition->getIn(0);
+    Varnode* lz_arg = bitop_definition->getIn(1);
+    
+    if(!userop_index || !lz_arg)
+        return 0;
+    UserOpManage& userops_table = data.getArch()->userops;
+    
+    UserPcodeOp* uop = userops_table.getOp(userop_index->getOffset());
+
+    if(!uop)
+        return 0;
+    const std::string& uop_name = uop->getName();
+
+    bool name_is_a_lzcnt_op = false;
+
+    for(unsigned i = 0; i < sizeof(g_lzcnt_userops_names) / sizeof(g_lzcnt_userops_names[0]); ++i) {
+        if(g_lzcnt_userops_names[i] == uop_name) {
+            name_is_a_lzcnt_op = true;
+            break;
+        }
+    }
+    if(!name_is_a_lzcnt_op)
+        return 0;
+
+    int4 variable_input_size = lz_arg->getSize();
+    if(variable_input_size < 1)
+        return 0;
+
+    int4 nbits_for_arg = variable_input_size*CHAR_BIT;
+
+    int4 expected_shift = leastsigbit_set(nbits_for_arg);
+
+    if(bitop_constant_term->getOffset() != expected_shift) 
+        return 0;
+
+    /*
+        we've verified that the lzcnt/shift is testing whether the lzcnt input arg is zero
+        now we just perform the transformation
+    */
+
+	PcodeOp* ztest_op = data.newOpBefore(op, CPUI_INT_EQUAL, lz_arg, data.newConstant(lz_arg->getSize(), 0));
+
+
+
+	Varnode* repl = ztest_op->getOut();
+
+
+    /*
+        result of INT_EQUAL should be sizeof bool
+        if the result of the pcode op we're replacing is equal to sizeof bool, make it a copy of our INT_EQUAL
+        else, make the current op a zero extension of the lzcnt result
+    */
+	if (op->getOut()->getSize() > repl->getSize()) {
+
+
+
+		data.opSetOpcode(op, CPUI_INT_ZEXT);
+		data.opRemoveInput(op, 1);
+		data.opSetInput(op, repl, 0);
+	}
+	else {
+		data.opSetOpcode(op, CPUI_COPY);
+		data.opRemoveInput(op, 1);
+		data.opSetInput(op, repl, 0);
+	}
+    return 1;
+}
