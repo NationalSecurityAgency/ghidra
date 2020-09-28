@@ -1092,15 +1092,18 @@ void TypeStruct::restoreXml(const Element *el,TypeFactory &typegrp)
 }
 
 /// Turn on the data-type's function prototype
+/// \param tfact is the factory that owns \b this
 /// \param model is the prototype model
 /// \param outtype is the return type of the prototype
 /// \param intypes is the list of input parameters
 /// \param dotdotdot is true if the prototype takes variable arguments
 /// \param voidtype is the reference "void" data-type
-void TypeCode::set(ProtoModel *model,
+void TypeCode::set(TypeFactory *tfact,ProtoModel *model,
 		    Datatype *outtype,const vector<Datatype *> &intypes,
 		    bool dotdotdot,Datatype *voidtype)
 {
+  factory = tfact;
+  flags |= variable_length;
   if (proto != (FuncProto *)0)
     delete proto;
   proto = new FuncProto();
@@ -1123,6 +1126,7 @@ TypeCode::TypeCode(const TypeCode &op) : Datatype(op)
 
 {
   proto = (FuncProto *)0;
+  factory = op.factory;
   if (op.proto != (FuncProto *)0) {
     proto = new FuncProto();
     proto->copy(*op.proto);
@@ -1133,6 +1137,7 @@ TypeCode::TypeCode(const string &nm) : Datatype(1,TYPE_CODE,nm)
 
 {
   proto = (FuncProto *)0;
+  factory = (TypeFactory *)0;
 }
 
 TypeCode::~TypeCode(void)
@@ -1202,6 +1207,14 @@ int4 TypeCode::compareBasic(const TypeCode *op) const
     return (flags < opflags) ? -1 : 1;
 
   return 2;			// Carry on with comparison of parameters
+}
+
+Datatype *TypeCode::getSubType(uintb off,uintb *newoff) const
+
+{
+  if (factory == (TypeFactory *)0) return (Datatype *)0;
+  *newoff = 0;
+  return factory->getBase(1, TYPE_CODE);	// Return code byte unattached to function prototype
 }
 
 int4 TypeCode::compare(const Datatype &op,int4 level) const
@@ -1284,6 +1297,8 @@ void TypeCode::restoreXml(const Element *el,TypeFactory &typegrp)
   iter = list.begin();
   if (iter == list.end()) return; // No underlying prototype
   Architecture *glb = typegrp.getArch();
+  factory = &typegrp;
+  flags |= variable_length;
   proto = new FuncProto();
   proto->setInternal( glb->defaultfp, typegrp.getTypeVoid() );
   proto->restoreXml(*iter,glb);
@@ -2107,7 +2122,7 @@ TypeCode *TypeFactory::getTypeCode(ProtoModel *model,Datatype *outtype,
 				   bool dotdotdot)
 {
   TypeCode tc("");		// getFuncdata type with no name
-  tc.set(model,outtype,intypes,dotdotdot,getTypeVoid());
+  tc.set(this,model,outtype,intypes,dotdotdot,getTypeVoid());
   return (TypeCode *) findAdd(tc);
 }
 

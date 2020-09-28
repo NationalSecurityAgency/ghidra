@@ -4244,7 +4244,7 @@ Datatype *ActionInferTypes::propagateAddIn2Out(TypeFactory *typegrp,PcodeOp *op,
   int4 offset = propagateAddPointer(op,inslot);
   if (offset==-1) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
   uintb uoffset = AddrSpace::addressToByte(offset,((TypePointer *)rettype)->getWordSize());
-  if (tstruct->getSize() > 0)
+  if (tstruct->getSize() > 0 && !tstruct->isVariableLength())
     uoffset = uoffset % tstruct->getSize();
   if (uoffset==0) {
     if (op->code() == CPUI_PTRSUB) // Go down at least one level
@@ -4419,7 +4419,7 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
     }
     else if (alttype->getMetatype()==TYPE_PTR) {
       newtype = ((TypePointer *)alttype)->getPtrTo();
-      if (newtype->getSize() != outvn->getTempType()->getSize()) // Size must be appropriate
+      if (newtype->getSize() != outvn->getTempType()->getSize() || newtype->isVariableLength()) // Size must be appropriate
 	newtype = outvn->getTempType();
     }
     else
@@ -4432,7 +4432,7 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
     }
     else if (alttype->getMetatype()==TYPE_PTR) {
       newtype = ((TypePointer *)alttype)->getPtrTo();
-      if (newtype->getSize() != outvn->getTempType()->getSize())
+      if (newtype->getSize() != outvn->getTempType()->getSize() || newtype->isVariableLength())
 	newtype = outvn->getTempType();
     }
     else

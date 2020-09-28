@@ -1670,21 +1670,7 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
 void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
 
 {
-  Datatype *ct = sym->getType();
   EmitXml::syntax_highlight tokenColor;
-  if (((sym->getFlags()&Varnode::readonly)!=0)&&(ct->getMetatype()==TYPE_ARRAY)) {
-    Datatype *subct = ((TypeArray *)ct)->getBase();
-    if (subct->isCharPrint()) {
-      SymbolEntry *entry = sym->getFirstWholeMap();
-      if (entry != (SymbolEntry *)0) {
-	ostringstream s;
-	if (printCharacterConstant(s,entry->getAddr(),subct)) {
-	  pushAtom(Atom(s.str(),vartoken,EmitXml::const_color,op,vn));
-	  return;
-	}
-      }
-    }
-  }
   if (sym->getScope()->isGlobal())
     tokenColor = EmitXml::global_color;
   else if (sym->getCategory() == 0)

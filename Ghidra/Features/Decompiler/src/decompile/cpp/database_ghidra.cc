@@ -38,7 +38,7 @@ ScopeGhidra::~ScopeGhidra(void)
 }
 
 /// The Ghidra client reports a \e namespace id associated with
-/// Symbol. Determine if a matching \e namespac Scope already exists in the cache and build
+/// Symbol. Determine if a matching \e namespace Scope already exists in the cache and build
 /// it if it isn't. This may mean creating a new \e namespace Scope.
 /// \param id is the ID associated with the Ghidra namespace
 /// \return the Scope matching the id.
