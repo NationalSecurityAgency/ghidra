@@ -53,6 +53,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
+import utility.function.ExceptionalCallback;
 
 // TODO: Move this class into a different package (i.e., ghidra.test.program)
 public class ProgramBuilder {
@@ -150,10 +151,10 @@ public class ProgramBuilder {
 	public void analyze() {
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 
-		startTransaction();
-		mgr.reAnalyzeAll(program.getMemory().getLoadedAndInitializedAddressSet());
-		mgr.startAnalysis(TaskMonitor.DUMMY, false);
-		endTransaction();
+		tx(() -> {
+			mgr.reAnalyzeAll(program.getMemory().getLoadedAndInitializedAddressSet());
+			mgr.startAnalysis(TaskMonitor.DUMMY, false);
+		});
 
 		PluginTool analysisTool = mgr.getAnalysisTool();
 		if (analysisTool != null) {
@@ -220,23 +221,13 @@ public class ProgramBuilder {
 	}
 
 	public void setName(String name) {
-		startTransaction();
-		try {
+		tx(() -> {
 			program.setName(name);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void withTransaction(Runnable r) {
-		startTransaction();
-		try {
-			r.run();
-		}
-		finally {
-			endTransaction();
-		}
+		tx(() -> r.run());
 	}
 
 //==================================================================================================
@@ -250,6 +241,10 @@ public class ProgramBuilder {
 	}
 
 	protected void endTransaction() {
+		endTransaction(true);
+	}
+
+	protected void endTransaction(boolean commit) {
 		if (--transactionCount == 0) {
 			program.endTransaction(transactionID, true);
 		}
@@ -333,56 +328,32 @@ public class ProgramBuilder {
 	public MemoryBlock createMemory(String name, String address, int size, String comment,
 			byte initialValue) {
 
-		startTransaction();
-		Address startAddress = addr(address);
-		Memory memory = program.getMemory();
-		MemoryBlock block = null;
-		try {
-			block = memory.createInitializedBlock(name, startAddress, size, initialValue,
-				TaskMonitor.DUMMY, false);
+		return tx(() -> {
+			Address startAddress = addr(address);
+			Memory memory = program.getMemory();
+			MemoryBlock block = memory.createInitializedBlock(name, startAddress, size,
+				initialValue, TaskMonitor.DUMMY, false);
 			block.setComment(comment);
-		}
-		catch (CancelledException e) {
-			// can't happen
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("Exception building memory", e);
-		}
-		endTransaction();
-		return block;
+			return block;
+		});
 	}
 
 	public MemoryBlock createUninitializedMemory(String name, String address, int size) {
 
-		startTransaction();
-		Address startAddress = addr(address);
-		Memory memory = program.getMemory();
-		MemoryBlock block = null;
-		try {
-			block = memory.createUninitializedBlock(name, startAddress, size, false);
-		}
-		catch (Exception e) {
-			throw new RuntimeException("Exception building memory", e);
-		}
-		endTransaction();
-		return block;
+		return tx(() -> {
+			Address startAddress = addr(address);
+			Memory memory = program.getMemory();
+			return memory.createUninitializedBlock(name, startAddress, size, false);
+		});
 	}
 
 	public MemoryBlock createOverlayMemory(String name, String address, int size) {
 
-		startTransaction();
-		try {
+		return tx(() -> {
 			return program.getMemory()
 					.createInitializedBlock(name, addr(address), size, (byte) 0,
 						TaskMonitor.DUMMY, true);
-		}
-		catch (Exception e) {
-			throw new RuntimeException("Exception building memory", e);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	/**
@@ -432,34 +403,32 @@ public class ProgramBuilder {
 	 */
 	public void setBytes(String stringAddress, byte[] bytes, boolean disassemble) throws Exception {
 		Address address = addr(stringAddress);
-		startTransaction();
-		MemoryBlock block = program.getMemory().getBlock(address);
-		if (block == null) {
-			createMemory("Block_" + stringAddress.toString().replace(':', '_'), stringAddress,
-				bytes.length);
-		}
+		tx(() -> {
+			MemoryBlock block = program.getMemory().getBlock(address);
+			if (block == null) {
+				createMemory("Block_" + stringAddress.toString().replace(':', '_'), stringAddress,
+					bytes.length);
+			}
 
-		Memory memory = program.getMemory();
-		memory.setBytes(address, bytes);
-		endTransaction();
+			Memory memory = program.getMemory();
+			memory.setBytes(address, bytes);
+		});
+
 		if (disassemble) {
 			disassemble(stringAddress, bytes.length);
 		}
 	}
 
 	public void setRead(MemoryBlock block, boolean r) {
-		startTransaction();
-		block.setRead(r);
+		tx(() -> block.setRead(r));
 	}
 
 	public void setWrite(MemoryBlock block, boolean w) {
-		startTransaction();
-		block.setWrite(w);
+		tx(() -> block.setWrite(w));
 	}
 
 	public void setExecute(MemoryBlock block, boolean e) {
-		startTransaction();
-		block.setExecute(e);
+		tx(() -> block.setExecute(e));
 	}
 
 	public void disassemble(String addressString, int length) {
@@ -467,72 +436,69 @@ public class ProgramBuilder {
 	}
 
 	public void disassemble(String addressString, int length, boolean followFlows) {
-		startTransaction();
-		Address address = addr(addressString);
-		AddressSet addresses = new AddressSet(address, address.add(length - 1));
-		DisassembleCommand cmd = new DisassembleCommand(addresses, addresses, followFlows);
+		tx(() -> {
+			Address address = addr(addressString);
+			AddressSet addresses = new AddressSet(address, address.add(length - 1));
+			DisassembleCommand cmd = new DisassembleCommand(addresses, addresses, followFlows);
 
-		cmd.applyTo(program);
-		AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
-		endTransaction();
+			cmd.applyTo(program);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+		});
 	}
 
 	public void disassemble(AddressSetView set) {
-		startTransaction();
-		DisassembleCommand cmd = new DisassembleCommand(set, set, true);
-		cmd.applyTo(program);
-		AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
-		endTransaction();
+		tx(() -> {
+			DisassembleCommand cmd = new DisassembleCommand(set, set, true);
+			cmd.applyTo(program);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+		});
 	}
 
 	public void disassemble(AddressSetView set, boolean followFlows) {
-		startTransaction();
-		DisassembleCommand cmd = new DisassembleCommand(set, set, followFlows);
-		cmd.applyTo(program);
-		AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
-		endTransaction();
+		tx(() -> {
+			DisassembleCommand cmd = new DisassembleCommand(set, set, followFlows);
+			cmd.applyTo(program);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+		});
 	}
 
 	public void disassembleArm(String addressString, int length, boolean thumb) {
-		startTransaction();
-		Address address = addr(addressString);
-		DisassembleCommand cmd = new ArmDisassembleCommand(address,
-			new AddressSet(address, address.add(length - 1)), true);
-		cmd.applyTo(program);
-		AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
-		endTransaction();
-
+		tx(() -> {
+			Address address = addr(addressString);
+			DisassembleCommand cmd = new ArmDisassembleCommand(address,
+				new AddressSet(address, address.add(length - 1)), true);
+			cmd.applyTo(program);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+		});
 	}
 
 	public void clearCodeUnits(String startAddressString, String endAddressString,
 			boolean clearContext) throws Exception {
-		startTransaction();
-		Address startAddress = addr(startAddressString);
-		Address endAddress = addr(endAddressString);
-		Listing listing = program.getListing();
-		listing.clearCodeUnits(startAddress, endAddress, clearContext);
-		endTransaction();
+		tx(() -> {
+			Address startAddress = addr(startAddressString);
+			Address endAddress = addr(endAddressString);
+			Listing listing = program.getListing();
+			listing.clearCodeUnits(startAddress, endAddress, clearContext);
+		});
 	}
 
 	public Symbol createLabel(String addressString, String name) {
-		startTransaction();
-		Address address = addr(addressString);
-		AddLabelCmd cmd = new AddLabelCmd(address, name, SourceType.USER_DEFINED);
-		cmd.applyTo(program);
-		endTransaction();
-
-		return cmd.getSymbol();
+		return tx(() -> {
+			Address address = addr(addressString);
+			AddLabelCmd cmd = new AddLabelCmd(address, name, SourceType.USER_DEFINED);
+			cmd.applyTo(program);
+			return cmd.getSymbol();
+		});
 	}
 
 	public Symbol createLabel(String addressString, String name, String namespace) {
-		startTransaction();
-		Address address = addr(addressString);
-		Namespace ns = getNamespace(namespace, address);
-		AddLabelCmd cmd = new AddLabelCmd(address, name, ns, SourceType.USER_DEFINED);
-		cmd.applyTo(program);
-		endTransaction();
-
-		return cmd.getSymbol();
+		return tx(() -> {
+			Address address = addr(addressString);
+			Namespace ns = getNamespace(namespace, address);
+			AddLabelCmd cmd = new AddLabelCmd(address, name, ns, SourceType.USER_DEFINED);
+			cmd.applyTo(program);
+			return cmd.getSymbol();
+		});
 	}
 
 	/**
@@ -542,24 +508,17 @@ public class ProgramBuilder {
 	 * @return the function
 	 */
 	public Function createFunction(String addressString) {
-		startTransaction();
-		Address address = addr(addressString);
-		CreateFunctionCmd cmd = new CreateFunctionCmd(address);
-		cmd.applyTo(program);
-		endTransaction();
-
-		return cmd.getFunction();
+		return tx(() -> {
+			Address address = addr(addressString);
+			CreateFunctionCmd cmd = new CreateFunctionCmd(address);
+			cmd.applyTo(program);
+			return cmd.getFunction();
+		});
 	}
 
 	public void addFunctionVariable(Function f, Variable v)
-			throws DuplicateNameException, InvalidInputException {
-		startTransaction();
-		try {
-			f.addLocalVariable(v, SourceType.USER_DEFINED);
-		}
-		finally {
-			endTransaction();
-		}
+			throws Exception {
+		tx(() -> f.addLocalVariable(v, SourceType.USER_DEFINED));
 	}
 
 	public Function createEmptyFunction(String name, String address, int size, DataType returnType,
@@ -570,19 +529,15 @@ public class ProgramBuilder {
 
 	public Function createEmptyFunction(String name, String address, int size, DataType returnType,
 			boolean varargs, boolean inline, boolean noReturn, Parameter... params)
-			throws Exception, OverlappingFunctionException {
-		startTransaction();
-		try {
+			throws Exception {
+		return tx(() -> {
 			Function fun =
 				createEmptyFunction(name, null, null, false, address, size, returnType, params);
 			fun.setVarArgs(varargs);
 			fun.setInline(inline);
 			fun.setNoReturn(noReturn);
 			return fun;
-		}
-		finally {
-			endTransaction();
-		}
+		});
 
 	}
 
@@ -597,36 +552,37 @@ public class ProgramBuilder {
 			boolean customStorage, String address, int bodySize, DataType returnType,
 			Parameter... params) throws Exception {
 
-		startTransaction();
-		Address entryPoint = addr(address);
-		Address endAddress = entryPoint.add(bodySize - 1);
-		AddressSet body = new AddressSet(entryPoint, endAddress);
-		FunctionManager functionManager = program.getFunctionManager();
+		return tx(() -> {
+			Address entryPoint = addr(address);
+			Address endAddress = entryPoint.add(bodySize - 1);
+			AddressSet body = new AddressSet(entryPoint, endAddress);
+			FunctionManager functionManager = program.getFunctionManager();
 
-		Function function = null;
-		if (namespace == null) {
-			function =
-				functionManager.createFunction(name, entryPoint, body, SourceType.USER_DEFINED);
-		}
-		else {
-			Namespace ns = getNamespace(namespace);
-			function =
-				functionManager.createFunction(name, ns, entryPoint, body, SourceType.USER_DEFINED);
-		}
+			Function function = null;
+			if (namespace == null) {
+				function = functionManager.createFunction(
+					name, entryPoint, body, SourceType.USER_DEFINED);
+			}
+			else {
+				Namespace ns = getNamespace(namespace);
+				function = functionManager.createFunction(
+					name, ns, entryPoint, body, SourceType.USER_DEFINED);
+			}
 
-		if (params == null) {
-			params = new Parameter[0];
-		}
+			Parameter[] myParams = params;
+			if (myParams == null) {
+				myParams = new Parameter[0];
+			}
 
-		Variable returnVar = returnType != null ? new ReturnParameterImpl(returnType, program)
-				: function.getReturn();
-		function.updateFunction(callingConventionName, returnVar,
-			customStorage ? FunctionUpdateType.CUSTOM_STORAGE
-					: FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS,
-			false, SourceType.USER_DEFINED, params);
+			Variable returnVar = returnType != null ? new ReturnParameterImpl(returnType, program)
+					: function.getReturn();
+			function.updateFunction(callingConventionName, returnVar,
+				customStorage ? FunctionUpdateType.CUSTOM_STORAGE
+						: FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS,
+				false, SourceType.USER_DEFINED, myParams);
 
-		endTransaction();
-		return function;
+			return function;
+		});
 	}
 
 	public Function createEmptyFunction(String name, String namespace, String callingConventionName,
@@ -689,32 +645,29 @@ public class ProgramBuilder {
 	}
 
 	public Namespace createNamespace(String namespace, String parentNamespace, SourceType type) {
-		startTransaction();
-		Namespace ns = getNamespace(parentNamespace);
-		CreateNamespacesCmd cmd = new CreateNamespacesCmd(namespace, ns, type);
-		cmd.applyTo(program);
-		endTransaction();
-
-		return cmd.getNamespace();
+		return tx(() -> {
+			Namespace ns = getNamespace(parentNamespace);
+			CreateNamespacesCmd cmd = new CreateNamespacesCmd(namespace, ns, type);
+			cmd.applyTo(program);
+			return cmd.getNamespace();
+		});
 	}
 
 	public Namespace createClassNamespace(String name, String parentNamespace, SourceType type)
 			throws Exception {
-		startTransaction();
-		Namespace ns = getNamespace(parentNamespace);
-		SymbolTable symbolTable = program.getSymbolTable();
-		GhidraClass c = symbolTable.createClass(ns, name, SourceType.USER_DEFINED);
-		endTransaction();
-
-		return c;
+		return tx(() -> {
+			Namespace ns = getNamespace(parentNamespace);
+			SymbolTable symbolTable = program.getSymbolTable();
+			GhidraClass c = symbolTable.createClass(ns, name, SourceType.USER_DEFINED);
+			return c;
+		});
 	}
 
-	public void applyFixedLengthDataType(String addressString, DataType dt, int length)
-			throws CodeUnitInsertionException {
-		startTransaction();
-		DataUtilities.createData(program, addr(addressString), dt, length, false,
-			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-		endTransaction();
+	public void applyFixedLengthDataType(String addressString, DataType dt, int length) {
+		tx(() -> {
+			DataUtilities.createData(program, addr(addressString), dt, length, false,
+				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+		});
 	}
 
 	public void applyDataType(String addressString, DataType dt) {
@@ -729,17 +682,17 @@ public class ProgramBuilder {
 	 * @param n repeat count.
 	 */
 	public void applyDataType(String addressString, DataType dt, int n) {
-		startTransaction();
-		Address address = addr(addressString);
-		for (int i = 0; i < n; i++) {
-			CreateDataCmd cmd = new CreateDataCmd(address, dt);
-			if (!cmd.applyTo(program)) {
-				throw new AssertException(
-					"Could not apply data at address " + address + ". " + cmd.getStatusMsg());
+		tx(() -> {
+			Address address = addr(addressString);
+			for (int i = 0; i < n; i++) {
+				CreateDataCmd cmd = new CreateDataCmd(address, dt);
+				if (!cmd.applyTo(program)) {
+					throw new AssertException(
+						"Could not apply data at address " + address + ". " + cmd.getStatusMsg());
+				}
+				address = address.add(dt.getLength());// advance address after cmd succeeds
 			}
-			address = address.add(dt.getLength());// advance address after cmd succeeds
-		}
-		endTransaction();
+		});
 	}
 
 	/**
@@ -750,37 +703,25 @@ public class ProgramBuilder {
 	 * @param n repeat count.
 	 */
 	public void applyStringDataType(String addressString, AbstractStringDataType dt, int n) {
-		Address address = addr(addressString);
-		int previousDataLength = 0;
-		startTransaction();
-		try {
+
+		tx(() -> {
+
+			Address address = addr(addressString);
+			int previousDataLength = 0;
 			for (int i = 0; i < n; i++) {
 				address = address.addNoWrap(previousDataLength);
 				Data newStringInstance = DataUtilities.createData(program, address, dt, -1, false,
 					ClearDataMode.CLEAR_SINGLE_DATA);
 				previousDataLength = newStringInstance.getLength();
 			}
-		}
-		catch (CodeUnitInsertionException e) {
-			throw new AssertException("Could not apply string data type at address " + address, e);
-		}
-		catch (AddressOverflowException e) {
-			throw new AssertException(e.getMessage());
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void deleteReference(Reference reference) {
-		startTransaction();
-		try {
+		tx(() -> {
 			ReferenceManager refMgr = program.getReferenceManager();
 			refMgr.delete(reference);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public Reference createMemoryReadReference(String fromAddress, String toAddress) {
@@ -804,32 +745,32 @@ public class ProgramBuilder {
 
 	public Reference createMemoryReference(String fromAddress, String toAddress, RefType refType,
 			SourceType sourceType, int opIndex) {
-		startTransaction();
-		ReferenceManager refManager = program.getReferenceManager();
-		Reference ref = refManager.addMemoryReference(addr(fromAddress), addr(toAddress), refType,
-			sourceType, opIndex);
-		endTransaction();
-		return ref;
+		return tx(() -> {
+			ReferenceManager refManager = program.getReferenceManager();
+			Reference ref = refManager.addMemoryReference(addr(fromAddress), addr(toAddress),
+				refType, sourceType, opIndex);
+			return ref;
+		});
 	}
 
 	public Reference createOffsetMemReference(String fromAddress, String toAddress, int offset,
 			RefType refType, SourceType sourceType, int opIndex) {
-		startTransaction();
-		ReferenceManager refManager = program.getReferenceManager();
-		Reference ref = refManager.addOffsetMemReference(addr(fromAddress), addr(toAddress), offset,
-			refType, sourceType, opIndex);
-		endTransaction();
-		return ref;
+		return tx(() -> {
+			ReferenceManager refManager = program.getReferenceManager();
+			Reference ref = refManager.addOffsetMemReference(addr(fromAddress), addr(toAddress),
+				offset, refType, sourceType, opIndex);
+			return ref;
+		});
 	}
 
 	public Reference createStackReference(String fromAddress, RefType refType, int stackOffset,
 			SourceType sourceType, int opIndex) {
-		startTransaction();
-		ReferenceManager refManager = program.getReferenceManager();
-		Reference ref = refManager.addStackReference(addr(fromAddress), opIndex, stackOffset,
-			refType, sourceType);
-		endTransaction();
-		return ref;
+		return tx(() -> {
+			ReferenceManager refManager = program.getReferenceManager();
+			Reference ref = refManager.addStackReference(addr(fromAddress), opIndex, stackOffset,
+				refType, sourceType);
+			return ref;
+		});
 	}
 
 	public Reference createRegisterReference(String fromAddress, String registerName, int opIndex) {
@@ -839,34 +780,33 @@ public class ProgramBuilder {
 
 	public Reference createRegisterReference(String fromAddress, RefType refType,
 			String registerName, SourceType sourceType, int opIndex) {
-		startTransaction();
-		ReferenceManager refManager = program.getReferenceManager();
-		Register register = program.getRegister(registerName);
-		Reference ref = refManager.addRegisterReference(addr(fromAddress), opIndex, register,
-			refType, sourceType);
-		endTransaction();
-		return ref;
+		return tx(() -> {
+			ReferenceManager refManager = program.getReferenceManager();
+			Register register = program.getRegister(registerName);
+			Reference ref = refManager.addRegisterReference(addr(fromAddress), opIndex, register,
+				refType, sourceType);
+			return ref;
+		});
 	}
 
-	public Symbol createEntryPoint(String addressString, String name)
-			throws DuplicateNameException, InvalidInputException {
-		startTransaction();
-		SymbolTable symbolTable = program.getSymbolTable();
-		symbolTable.addExternalEntryPoint(addr(addressString));
-		Symbol[] symbols = symbolTable.getSymbols(addr(addressString));
-		symbols[0].setName(name, SourceType.ANALYSIS);
-		endTransaction();
-		return symbols[0];
+	public Symbol createEntryPoint(String addressString, String name) {
+		return tx(() -> {
+			SymbolTable symbolTable = program.getSymbolTable();
+			symbolTable.addExternalEntryPoint(addr(addressString));
+			Symbol[] symbols = symbolTable.getSymbols(addr(addressString));
+			symbols[0].setName(name, SourceType.ANALYSIS);
+			return symbols[0];
+		});
 	}
 
 	public Bookmark createBookmark(String address, String bookmarkType, String category,
 			String comment) {
-		startTransaction();
-		BookmarkManager bookMgr = program.getBookmarkManager();
-		Address addr = addr(address);
-		Bookmark bm = bookMgr.setBookmark(addr, bookmarkType, category, comment);
-		endTransaction();
-		return bm;
+		return tx(() -> {
+			BookmarkManager bookMgr = program.getBookmarkManager();
+			Address addr = addr(address);
+			Bookmark bm = bookMgr.setBookmark(addr, bookmarkType, category, comment);
+			return bm;
+		});
 	}
 
 	public void createEncodedString(String address, String string, Charset encoding,
@@ -910,56 +850,60 @@ public class ProgramBuilder {
 		setBytes(address, stringBytes);
 		if (dataType != null) {
 			startTransaction();
-			Data data = DataUtilities.createData(program, addr, dataType, stringBytes.length, false,
-				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-			CharsetSettingsDefinition.CHARSET.setCharset(data, charset.name());
-			endTransaction();
-			return data;
+			try {
+				Data data = DataUtilities.createData(program, addr, dataType, stringBytes.length,
+					false, ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+				CharsetSettingsDefinition.CHARSET.setCharset(data, charset.name());
+				return data;
+			}
+			finally {
+				endTransaction();
+			}
 		}
 		return null;
 	}
 
 	public void setProperty(String name, Object value) {
-		startTransaction();
-		Options options = program.getOptions(Program.PROGRAM_INFO);
-		options.putObject(name, value);
-		endTransaction();
+		tx(() -> {
+			Options options = program.getOptions(Program.PROGRAM_INFO);
+			options.putObject(name, value);
+		});
 	}
 
 	public void setAnalysisEnabled(String name, boolean enabled) {
-		startTransaction();
-		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		options.setBoolean(name, enabled);
-		endTransaction();
+		tx(() -> {
+			Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
+			options.setBoolean(name, enabled);
+		});
 	}
 
 	public void addDataType(DataType dt) {
-		startTransaction();
-		ProgramDataTypeManager dtm = program.getDataTypeManager();
-		dtm.addDataType(dt, DataTypeConflictHandler.REPLACE_HANDLER);
-		endTransaction();
+		tx(() -> {
+			ProgramDataTypeManager dtm = program.getDataTypeManager();
+			dtm.addDataType(dt, DataTypeConflictHandler.REPLACE_HANDLER);
+		});
 	}
 
 	public void addCategory(CategoryPath path) {
-		startTransaction();
-		ProgramDataTypeManager dtm = program.getDataTypeManager();
-		dtm.createCategory(path);
-		endTransaction();
+		tx(() -> {
+			ProgramDataTypeManager dtm = program.getDataTypeManager();
+			dtm.createCategory(path);
+		});
 	}
 
 	public void createProgramTree(String treeName) throws Exception {
-		startTransaction();
-		program.getListing().createRootModule(treeName);
-		endTransaction();
+		tx(() -> {
+			program.getListing().createRootModule(treeName);
+		});
 	}
 
 	public void createFragment(String treeName, String modulePath, String fragmentName,
 			String startAddr, String endAddr) throws Exception {
-		startTransaction();
-		ProgramModule module = getOrCreateModule(treeName, modulePath);
-		ProgramFragment fragment = module.createFragment(fragmentName);
-		fragment.move(addr(startAddr), addr(endAddr));
-		endTransaction();
+		tx(() -> {
+			ProgramModule module = getOrCreateModule(treeName, modulePath);
+			ProgramFragment fragment = module.createFragment(fragmentName);
+			fragment.move(addr(startAddr), addr(endAddr));
+		});
 	}
 
 	public ProgramModule getOrCreateModule(String treeName, String modulePath) throws Exception {
@@ -995,64 +939,50 @@ public class ProgramBuilder {
 	}
 
 	public Equate createEquate(String address, String name, long value, int opIndex) {
-		startTransaction();
-		SetEquateCmd cmd = new SetEquateCmd(name, addr(address), opIndex, value);
-		cmd.applyTo(program);
-		Equate equate = cmd.getEquate();
-		endTransaction();
-		return equate;
+		return tx(() -> {
+			SetEquateCmd cmd = new SetEquateCmd(name, addr(address), opIndex, value);
+			cmd.applyTo(program);
+			return cmd.getEquate();
+		});
 	}
 
 	public void createComment(String address, String comment, int commentType) {
-		startTransaction();
-
-		Listing listing = program.getListing();
-		listing.setComment(addr(address), commentType, comment);
-		endTransaction();
+		tx(() -> {
+			Listing listing = program.getListing();
+			listing.setComment(addr(address), commentType, comment);
+		});
 	}
 
 	public void createFunctionComment(String entryPointAddress, String comment) {
-		startTransaction();
-
-		FunctionManager functionManager = program.getFunctionManager();
-		Address addr = addr(entryPointAddress);
-		Function function = functionManager.getFunctionAt(addr);
-		function.setComment(comment);
-
-		endTransaction();
+		tx(() -> {
+			FunctionManager functionManager = program.getFunctionManager();
+			Address addr = addr(entryPointAddress);
+			Function function = functionManager.getFunctionAt(addr);
+			function.setComment(comment);
+		});
 	}
 
 	public void setFallthrough(String from, String to) {
-		startTransaction();
-
-		Listing listing = program.getListing();
-		Instruction inst = listing.getInstructionAt(addr(from));
-		inst.setFallThrough(addr(to));
-
-		endTransaction();
+		tx(() -> {
+			Listing listing = program.getListing();
+			Instruction inst = listing.getInstructionAt(addr(from));
+			inst.setFallThrough(addr(to));
+		});
 	}
 
 	public void createExternalLibraries(String... libraryNames) throws Exception {
-		startTransaction();
-		try {
+		tx(() -> {
 			SymbolTable symbolTable = program.getSymbolTable();
 			for (String libraryName : libraryNames) {
 				symbolTable.createExternalLibrary(libraryName, SourceType.IMPORTED);
 			}
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void bindExternalLibrary(String libraryName, String pathname) throws Exception {
-		startTransaction();
-		try {
+		tx(() -> {
 			program.getExternalManager().setExternalPath(libraryName, pathname, true);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void createExternalReference(String fromAddress, String libraryName,
@@ -1070,8 +1000,7 @@ public class ProgramBuilder {
 	public void createExternalReference(String fromAddress, String libraryName,
 			String externalLabel, String extAddress, int opIndex, RefType refType,
 			SourceType sourceType) throws Exception {
-		startTransaction();
-		try {
+		tx(() -> {
 			ReferenceManager refMgr = program.getReferenceManager();
 			Address eAddress = extAddress == null ? null : addr(extAddress);
 
@@ -1079,45 +1008,38 @@ public class ProgramBuilder {
 			ExternalManager extMgr = program.getExternalManager();
 			Namespace namespace = extMgr.addExternalLibraryName(libraryName, sourceType);
 
-			if (externalLabel != null && externalLabel.indexOf(Namespace.DELIMITER) > 0) {
+			String myExternalLabel = externalLabel;
+			if (myExternalLabel != null && myExternalLabel.indexOf(Namespace.DELIMITER) > 0) {
 				// External manager API does not yet support creation of namespaces within
 				// library so we handle that here
-				SymbolPath symPath = new SymbolPath(externalLabel);
-				externalLabel = symPath.getName();
+				SymbolPath symPath = new SymbolPath(myExternalLabel);
+				myExternalLabel = symPath.getName();
 				namespace = NamespaceUtils.createNamespaceHierarchy(symPath.getParentPath(),
 					namespace, program, null, sourceType);
 			}
 
 			Reference ref = refMgr.addExternalReference(addr(fromAddress), libraryName,
-				externalLabel, eAddress, sourceType, opIndex, refType);
+				myExternalLabel, eAddress, sourceType, opIndex, refType);
 
 			if (!(namespace instanceof Library)) {
 				Symbol s = symTable.getSymbol(ref);
 				s.setNamespace(namespace);
 			}
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public ExternalLocation createExternalFunction(String extAddress, String libName,
 			String functionName) throws Exception {
-		startTransaction();
-		try {
+		return tx(() -> {
 			ExternalManager em = program.getExternalManager();
 			Address eAddress = extAddress == null ? null : addr(extAddress);
 			return em.addExtFunction(libName, functionName, eAddress, SourceType.IMPORTED);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public ExternalLocation createExternalFunction(String extAddress, String libName,
 			String functionName, String originalName) throws Exception {
-		startTransaction();
-		try {
+		return tx(() -> {
 			ExternalManager em = program.getExternalManager();
 			Address eAddress = extAddress == null ? null : addr(extAddress);
 			ExternalLocation extLoc =
@@ -1125,87 +1047,99 @@ public class ProgramBuilder {
 			Library lib = em.addExternalLibraryName(libName, SourceType.IMPORTED);
 			extLoc.setName(lib, functionName, SourceType.IMPORTED);
 			return extLoc;
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void createLocalVariable(Function function, String name, DataType dt, int stackOffset)
 			throws Exception {
-		startTransaction();
-		try {
+		tx(() -> {
 			Variable variable = new LocalVariableImpl(name, dt, stackOffset, program);
 			function.addLocalVariable(variable, SourceType.USER_DEFINED);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void setRegisterValue(String registerName, String startAddress, String endAddress,
 			long value) throws Exception {
-		startTransaction();
-		try {
+		tx(() -> {
 			Register register = program.getRegister(registerName);
 			ProgramContext programContext = program.getProgramContext();
 			programContext.setValue(register, addr(startAddress), addr(endAddress),
 				BigInteger.valueOf(value));
-		}
-		finally {
-			endTransaction();
-		}
+		});
 
 	}
 
 	public void setIntProperty(String address, String propertyName, int value) throws Exception {
-		startTransaction();
-		try {
+		tx(() -> {
 			PropertyMapManager pm = program.getUsrPropertyManager();
 			IntPropertyMap propertyMap = pm.getIntPropertyMap(propertyName);
 			if (propertyMap == null) {
 				propertyMap = pm.createIntPropertyMap(propertyName);
 			}
 			propertyMap.add(addr(address), value);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void setStringProperty(String address, String propertyName, String value)
 			throws Exception {
-		startTransaction();
-		try {
+		tx(() -> {
 			PropertyMapManager pm = program.getUsrPropertyManager();
 			StringPropertyMap propertyMap = pm.getStringPropertyMap(propertyName);
 			if (propertyMap == null) {
 				propertyMap = pm.createStringPropertyMap(propertyName);
 			}
 			propertyMap.add(addr(address), value);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void setObjectProperty(String address, String propertyName, Saveable value)
 			throws Exception {
-		startTransaction();
-		try {
+
+		tx(() -> {
 			PropertyMapManager pm = program.getUsrPropertyManager();
 			ObjectPropertyMap propertyMap = pm.getObjectPropertyMap(propertyName);
 			if (propertyMap == null) {
 				propertyMap = pm.createObjectPropertyMap(propertyName, value.getClass());
 			}
 			propertyMap.add(addr(address), value);
-		}
-		finally {
-			endTransaction();
-		}
+		});
 	}
 
 	public void setChanged(boolean changed) {
 		program.setChanged(changed);
+	}
+
+	private <E extends Exception> void tx(ExceptionalCallback<E> c) {
+		startTransaction();
+		boolean commit = true;
+		try {
+			c.call();
+		}
+		catch (Exception e) {
+			commit = false;
+			throw new AssertException(e);
+		}
+		finally {
+			endTransaction(commit);
+		}
+	}
+
+	private <R, E extends Exception> R tx(ExceptionalSupplier<R, E> s) {
+		startTransaction();
+		boolean commit = true;
+		try {
+			return s.get();
+		}
+		catch (Exception e) {
+			commit = false;
+			throw new AssertException(e);
+		}
+		finally {
+			endTransaction(commit);
+		}
+	}
+
+	private interface ExceptionalSupplier<R, E extends Exception> {
+		public R get() throws E;
 	}
 }
