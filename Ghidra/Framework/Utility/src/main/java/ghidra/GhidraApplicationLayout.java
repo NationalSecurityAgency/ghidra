@@ -145,7 +145,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 
 		// Find standard module root directories from within the application root directories
 		Collection<ResourceFile> moduleRootDirectories =
-			ModuleUtilities.findModuleRootDirectories(applicationRootDirs, new ArrayList<>());
+			ModuleUtilities.findModuleRootDirectories(applicationRootDirs, new LinkedHashSet<>());
 
 		// Find installed extension modules
 		for (ResourceFile extensionInstallDir : extensionInstallationDirs) {
