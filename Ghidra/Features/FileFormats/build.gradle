@@ -7,8 +7,6 @@ apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features FileFormats'
 
-
-
 dependencies {
 	compile project(':Base')
 	compile project(':Recognizers')
