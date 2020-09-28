@@ -7,8 +7,8 @@ following instructions assume that you are using this version of Eclipse.
 
 Importing GhidraDev Eclipse projects (they are deactivated by default):
   1) Run gradle eclipse -PeclipsePDE
-  3) From Eclipse, File --> Import --> General --> Existing Projects into Workspace
-  4) From the ghidra repo, import "Eclipse GhidraDevFeature" and "Eclipse GhidraDevPlugin".
+  2) From Eclipse, File --> Import --> General --> Existing Projects into Workspace
+  3) From the ghidra repo, import "Eclipse GhidraDevFeature" and "Eclipse GhidraDevPlugin".
 
 Changing version number (GhidraDev is versioned independently of Ghidra):
   1) Open plugin.xml in the GhidraDevPlugin project.
