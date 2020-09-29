@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -144,7 +145,7 @@ public class FileHeader implements StructConverter {
     private short characteristics;
 
     private SectionHeader [] sectionHeaders;
-    private List<DebugCOFFSymbol>symbols = new ArrayList<DebugCOFFSymbol>();
+    private List<DebugCOFFSymbol>symbols = new ArrayList<>();
 
     private FactoryBundledWithBinaryReader reader;
     private int startIndex;
@@ -560,8 +561,4 @@ public class FileHeader implements StructConverter {
 		}
 		return PortableExecutable.computeAlignment( lastPos, optionalHeader.getFileAlignment( ) );
 	}
-
-    public InputStream getDataStream() throws IOException {
-        return reader.getByteProvider().getInputStream(0);
-    }
 }
