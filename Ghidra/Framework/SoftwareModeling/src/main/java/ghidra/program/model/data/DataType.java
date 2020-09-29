@@ -36,6 +36,12 @@ public interface DataType {
 
 	static final long NO_SOURCE_SYNC_TIME = 0L;
 	static final long NO_LAST_CHANGE_TIME = 0L;
+	
+	static enum AddressModel {near, far, huge};
+	
+	public AddressModel getAddressModel();
+	
+	public void setAddressModel(AddressModel addressModel);
 
 	/**
 	 * Indicates if the length of this data-type is determined based

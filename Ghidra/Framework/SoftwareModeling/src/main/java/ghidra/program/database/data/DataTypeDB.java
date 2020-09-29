@@ -25,6 +25,7 @@ import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.DatabaseObject;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType.AddressModel;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -46,6 +47,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	protected Lock lock;
 	private volatile String name;
 	private volatile Category category;
+	protected AddressModel addressModel;
 
 	protected DataTypeDB(DataTypeManagerDB dataMgr, DBObjectCache<DataTypeDB> cache,
 			DBRecord record) {
@@ -555,6 +557,16 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		return otherDt.getDataTypeManager() == getDataTypeManager() &&
 			getCategoryPath().equals(otherDt.getCategoryPath()) &&
 			getName().equals(otherDt.getName()) && isEquivalent(otherDt);
+	}
+
+	@Override
+	public AddressModel getAddressModel() {
+		return addressModel;
+	}
+
+	@Override
+	public void setAddressModel(AddressModel addressModel) {
+		this.addressModel = addressModel;
 	}
 
 }
