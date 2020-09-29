@@ -3,6 +3,7 @@ Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 data/languages/ARM.cspec||GHIDRA||||END|
 data/languages/ARM.dwarf||GHIDRA||||END|
+data/languages/ARM.gdis||GHIDRA||||END|
 data/languages/ARM.ldefs||GHIDRA||||END|
 data/languages/ARM.opinion||GHIDRA||||END|
 data/languages/ARM.sinc||GHIDRA||||END|
