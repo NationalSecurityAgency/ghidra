@@ -76,7 +76,8 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
 		try {
-			return !MachoPrelinkUtils.parsePrelinkXml(provider, monitor).isEmpty();
+			return MachHeader.isMachHeader(provider) &&
+				!MachoPrelinkUtils.parsePrelinkXml(provider, monitor).isEmpty();
 		}
 		catch (JDOMException e) {
 			Msg.warn(this, e.getMessage());

@@ -314,7 +314,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readNextNullTerminatedAsciiString() throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		while (currentIndex < provider.length()) {
 			byte b = provider.readByte(currentIndex++);
 			if (b == 0) {
@@ -430,7 +430,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readAsciiString(long index) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		long len = provider.length();
 		while (true) {
 			if (index == len) {
@@ -459,7 +459,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readAsciiString(long index, int length) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < length; ++i) {
 			byte b = provider.readByte(index++);
 			buffer.append((char) (b & 0x00FF));
@@ -479,7 +479,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readTerminatedString(long index, char termChar) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		long len = provider.length();
 		while (index < len) {
 			char c = (char) provider.readByte(index++);
@@ -503,7 +503,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readTerminatedString(long index, String termChars) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		long len = provider.length();
 		while (index < len) {
 			char c = (char) provider.readByte(index++);
@@ -544,7 +544,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readUnicodeString(long index) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		while (index < length()) {
 			int ch = readUnsignedShort(index);
 			if (ch == 0) {
@@ -571,7 +571,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readUnicodeString(long index, int length) throws IOException {
-		StringBuffer buffer = new StringBuffer(length);
+		StringBuilder buffer = new StringBuilder(length);
 		long endOffset = index + (length * 2);
 		while (index < endOffset) {
 			int ch = readUnsignedShort(index);
