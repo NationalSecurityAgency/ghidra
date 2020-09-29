@@ -96,14 +96,21 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		// Application properties
 		applicationProperties = new ApplicationProperties(applicationRootDirs);
 
-		// Modules
-		modules = findGhidraModules();
-
 		// User directories
 		userTempDir = ApplicationUtilities.getDefaultUserTempDir(getApplicationProperties());
 		userCacheDir = ApplicationUtilities.getDefaultUserCacheDir(getApplicationProperties());
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(getApplicationProperties(),
 			getApplicationInstallationDir());
+		
+		// Extensions
+		extensionInstallationDirs = findExtensionInstallationDirectories();
+		extensionArchiveDir = findExtensionArchiveDirectory();
+
+		// Patch directory
+		patchDir = findPatchDirectory();
+		
+		// Modules
+		modules = findGhidraModules();
 	}
 
 	/**
@@ -145,7 +152,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 
 		// Find standard module root directories from within the application root directories
 		Collection<ResourceFile> moduleRootDirectories =
-			ModuleUtilities.findModuleRootDirectories(applicationRootDirs, new ArrayList<>());
+			ModuleUtilities.findModuleRootDirectories(applicationRootDirs, new LinkedHashSet<>());
 
 		// Find installed extension modules
 		for (ResourceFile extensionInstallDir : extensionInstallationDirs) {

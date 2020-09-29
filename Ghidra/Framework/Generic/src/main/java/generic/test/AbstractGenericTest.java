@@ -55,6 +55,7 @@ import sun.awt.AppContext;
 import utilities.util.FileUtilities;
 import utilities.util.reflection.ReflectionUtilities;
 import utility.application.ApplicationLayout;
+import utility.function.ExceptionalCallback;
 
 public abstract class AbstractGenericTest extends AbstractGTest {
 
@@ -1115,23 +1116,32 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable to throw
-	 * an exception 
-	 * @param runnable the runnable
-	 * @param wait true signals to wait for the Swing operation to finish
-	 * @throws Throwable any exception that is thrown on the Swing thread
+	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable <b>may</b> 
+	 * throw exceptions
+	 * 
+	 * @param callback the runnable code snippet to call
+	 * @throws Exception any exception that is thrown on the Swing thread
 	 */
-	public static void runSwingWithExceptions(Runnable runnable, boolean wait) throws Throwable {
+	public static <E extends Exception> void runSwingWithException(ExceptionalCallback<E> callback)
+			throws Exception {
 
 		if (Swing.isSwingThread()) {
 			throw new AssertException("Unexpectedly called from the Swing thread");
 		}
 
-		ExceptionHandlingRunner exceptionHandlingRunner = new ExceptionHandlingRunner(runnable);
+		ExceptionHandlingRunner exceptionHandlingRunner = new ExceptionHandlingRunner(callback);
 		Throwable throwable = exceptionHandlingRunner.getException();
-		if (throwable != null) {
-			throw throwable;
+		if (throwable == null) {
+			return;
 		}
+
+		if (throwable instanceof Exception) {
+			// this is what the client expected
+			throw (Exception) throwable;
+		}
+
+		// a runtime exception; re-throw
+		throw new AssertException(throwable);
 	}
 
 	public static void runSwing(Runnable runnable, boolean wait) {
@@ -1170,11 +1180,18 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	protected static class ExceptionHandlingRunner {
-		private final Runnable delegateRunnable;
+		private final ExceptionalCallback<? extends Exception> delegateCallback;
 		private Throwable exception;
 
 		ExceptionHandlingRunner(Runnable delegateRunnable) {
-			this.delegateRunnable = delegateRunnable;
+			this.delegateCallback = () -> {
+				delegateRunnable.run();
+			};
+			run();
+		}
+
+		ExceptionHandlingRunner(ExceptionalCallback<? extends Exception> delegateCallback) {
+			this.delegateCallback = delegateCallback;
 			run();
 		}
 
@@ -1213,7 +1230,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 			Runnable swingExceptionCatcher = () -> {
 				try {
-					delegateRunnable.run();
+					delegateCallback.call();
 				}
 				catch (Throwable t) {
 					exception = t;

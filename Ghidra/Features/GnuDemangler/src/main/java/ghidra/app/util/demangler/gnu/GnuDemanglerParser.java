@@ -1109,8 +1109,11 @@ public class GnuDemanglerParser {
 		@Override
 		public String toString() {
 			ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.JSON_STYLE);
-			return builder.append("name", name).append("prefix", prefix).append("type",
-				type).append("demangled", demangled).toString();
+			return builder.append("name", name)
+					.append("prefix", prefix)
+					.append("type", type)
+					.append("demangled", demangled)
+					.toString();
 		}
 	}
 
@@ -1246,31 +1249,36 @@ public class GnuDemanglerParser {
 			//
 			String operatorChars = matcher.group(2);
 			String templates = matcher.group(3);
-			templates = templates == null ? "" : templates;
+			int start = matcher.start(2); // operator chars start
+			int end = matcher.end(3); // templates end
+
+			if (templates == null) {
+				templates = "";
+				end = matcher.end(2); // no templates; end of the operator chars
+			}
 
 			//
 			// The 'operator' functions have symbols that confuse our default function parsing.  
 			// Specifically, operators that use shift symbols (<, <<, >, >>) will cause our 
-			// template parsing to fail.  To default the failure, we will install a temporary 
+			// template parsing to fail.  To defeat the failure, we will install a temporary 
 			// function name here and then restore it after parsing is finished.
 			//
-			String originalPrefix = OPERATOR + operatorChars + templates;
+			String rawPrefix = OPERATOR + demangled.substring(start, end);
 			String placeholder = "TEMPNAMEPLACEHOLDERVALUE";
-			String tempName = demangled.replace(originalPrefix, placeholder);
+			String tempName = demangled.replace(rawPrefix, placeholder);
 
 			DemangledFunction function = (DemangledFunction) parseFunctionOrVariable(tempName);
 			function.setOverloadedOperator(true);
-			function.setName(originalPrefix);
 
-			if (!StringUtils.isBlank(templates)) {
-				String escapedPrefix = removeBadSpaces(originalPrefix);
+			String simpleName = OPERATOR + operatorChars;
+			if (StringUtils.isBlank(templates)) {
+				function.setName(simpleName);
+			}
+			else {
 				String escapedTemplates = removeBadSpaces(templates);
-				int templateIndex = escapedPrefix.indexOf(escapedTemplates);
-				String operatorName = escapedPrefix.substring(0, templateIndex);
 				DemangledTemplate demangledTemplate = parseTemplate(escapedTemplates);
-
 				function.setTemplate(demangledTemplate);
-				function.setName(operatorName);
+				function.setName(simpleName);
 			}
 
 			return function;
@@ -1431,8 +1439,10 @@ public class GnuDemanglerParser {
 		@Override
 		public String toString() {
 			ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.JSON_STYLE);
-			return builder.append("text", text).append("paramStart", paramStart).append("paramEnd",
-				paramEnd).toString();
+			return builder.append("text", text)
+					.append("paramStart", paramStart)
+					.append("paramEnd", paramEnd)
+					.toString();
 		}
 
 		private boolean isContainedWithinNamespace() {
@@ -1490,8 +1500,10 @@ public class GnuDemanglerParser {
 		@Override
 		public String toString() {
 			ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.JSON_STYLE);
-			return builder.append("fullText", fullText).append("params", params).append("trailing",
-				trailing).toString();
+			return builder.append("fullText", fullText)
+					.append("params", params)
+					.append("trailing", trailing)
+					.toString();
 		}
 	}
 
