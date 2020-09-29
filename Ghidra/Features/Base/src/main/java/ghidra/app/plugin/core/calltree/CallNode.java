@@ -141,4 +141,28 @@ public abstract class CallNode extends GTreeSlowLoadingNode {
 		}
 		return false;
 	}
+
+	// overridden since we may have multiple children with the same function name, but in 
+	// different namespaces
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		CallNode other = (CallNode) obj;
+		return getSourceAddress().equals(other.getSourceAddress());
+	}
+
+	@Override
+	public int hashCode() {
+		return getSourceAddress().hashCode();
+	}
+
 }
