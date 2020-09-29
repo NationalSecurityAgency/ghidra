@@ -843,7 +843,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testOverloadedShiftOperatorParsingBug() {
+	public void testOverloadedShiftOperatorTemplated_RightShift() {
 		parser = new GnuDemanglerParser();
 		DemangledObject object = parser.parse("fakemangled",
 			"std::basic_istream<char, std::char_traits<char> >& " +
@@ -856,6 +856,24 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 				"std::operator>><char,std::char_traits<char>>" +
 				"(std::basic_istream<char,std::char_traits<char>> &,char &)",
 			object.getSignature());
+	}
+
+	@Test
+	public void testOverloadedShiftOperatorTemplated_LeftShift() {
+
+		String raw =
+			"std::basic_ostream<char, std::char_traits<char> >& " +
+				"std::operator<< <std::char_traits<char> >" +
+				"(std::basic_ostream<char, std::char_traits<char> >&, char const*)";
+		String formatted = "std::basic_ostream<char,std::char_traits<char>> & " +
+			"std::operator<<<std::char_traits<char>>" +
+			"(std::basic_ostream<char,std::char_traits<char>> &,char const *)";
+		DemangledObject object = parser.parse(
+			"_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc",
+			raw);
+		String name = object.getName();
+		assertEquals("operator<<", name);
+		assertEquals(formatted, object.getSignature());
 	}
 
 	@Test
