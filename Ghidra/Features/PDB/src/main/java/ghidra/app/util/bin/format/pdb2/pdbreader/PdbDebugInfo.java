@@ -24,13 +24,13 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class represents Database Interface component of a PDB file.  This class is only
- *  suitable for reading; not for writing or modifying a PDB.
+ * This class represents DebugInfo (DBI) component of a PDB file.
+ * This class is only suitable for reading; not for writing or modifying a PDB.
  *  <P>
  *  We have intended to implement according to the Microsoft PDB API (source); see the API for
  *   truth.
  */
-public abstract class AbstractDatabaseInterface {
+public abstract class PdbDebugInfo {
 
 	protected static final int VERSION_NUMBER_SIZE = 4;
 
@@ -81,7 +81,7 @@ public abstract class AbstractDatabaseInterface {
 	 * @param pdb {@link AbstractPdb} that owns this Database Interface.
 	 * @param streamNumber The stream number of the stream containing the Database Interface.
 	 */
-	public AbstractDatabaseInterface(AbstractPdb pdb, int streamNumber) {
+	public PdbDebugInfo(AbstractPdb pdb, int streamNumber) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.streamNumber = streamNumber;
@@ -99,7 +99,10 @@ public abstract class AbstractDatabaseInterface {
 	}
 
 	/**
-	 * Deserializes the {@link AbstractDatabaseInterface}-based instance.
+	 * Deserializes the {@link PdbDebugInfo}-based instance.
+	 * The pdb is updated with dbiAge and targetProcessor during deserialization 
+	 * of new DBI header.
+	 * @param headerOnly if true only the DBI header fields will be parsed
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @return The version number of the Database Interface.
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
@@ -107,13 +110,19 @@ public abstract class AbstractDatabaseInterface {
 	 * @throws PdbException upon error parsing a field.
 	 * @throws CancelledException Upon user cancellation.
 	 */
-	public long deserialize(TaskMonitor monitor)
+	public long deserialize(boolean headerOnly, TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
-		deserializeHeader(reader);
-		deserializeInternalSubstreams(reader, monitor);
-		deserializeAdditionalSubstreams(monitor);
-
+		if (headerOnly) {
+			PdbByteReader reader =
+				pdb.getReaderForStreamNumber(streamNumber, 0, getHeaderLength(), monitor);
+			deserializeHeader(reader);
+		}
+		else {
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+			deserializeHeader(reader);
+			deserializeInternalSubstreams(reader, monitor);
+			deserializeAdditionalSubstreams(monitor);
+		}
 		return versionNumber;
 	}
 
@@ -286,6 +295,12 @@ public abstract class AbstractDatabaseInterface {
 	protected abstract void deserializeHeader(PdbByteReader reader) throws PdbException;
 
 	/**
+	 * Get the header length in bytes as it appears at offset 0 within the DBI stream
+	 * @return DBI header length
+	 */
+	protected abstract int getHeaderLength();
+
+	/**
 	 * Deserializes the SubStreams internal to the Database Interface stream.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
@@ -375,7 +390,7 @@ public abstract class AbstractDatabaseInterface {
 		}
 		//TODO: Don't know when SectionContribution200 is the type to use.  Don't know if
 		// this part could be the default of processSectionContribs within
-		// DatabaseInterface and if the above part (test for SVC600 and SVC1400 would
+		// DebugInfo and if the above part (test for SVC600 and SVC1400 would
 		// be the override method for DatabaseInformationNew.
 		else {
 			while (substreamReader.hasMore()) {
@@ -507,26 +522,26 @@ public abstract class AbstractDatabaseInterface {
 	protected abstract String parseFileInfoName(PdbByteReader reader) throws PdbException;
 
 	/**
-	 * Debug method for dumping information from this {@link AbstractDatabaseInterface}-based
+	 * Debug method for dumping information from this {@link PdbDebugInfo}-based
 	 *  instance.
 	 * @param writer {@link Writer} to which to dump the information.
 	 * @throws IOException Upon IOException writing to the {@link Writer}.
 	 */
 	protected void dump(Writer writer) throws IOException {
-		writer.write("DatabaseInterfaceHeader-------------------------------------\n");
+		writer.write("DebugInfoHeader-------------------------------------\n");
 		dumpHeader(writer);
-		writer.write("\nEnd DatabaseInterfaceHeader---------------------------------\n");
-		writer.write("DatabaseInterfaceInternalSubstreams-------------------------\n");
+		writer.write("\nEnd DebugInfoHeader---------------------------------\n");
+		writer.write("DebugInfoInternalSubstreams-------------------------\n");
 		dumpInternalSubstreams(writer);
-		writer.write("\nEnd DatabaseInterfaceInternalSubstreams---------------------\n");
-		writer.write("DatabaseInterfaceAdditionalSubstreams-----------------------\n");
+		writer.write("\nEnd DebugInfoInternalSubstreams---------------------\n");
+		writer.write("DebugInfoAdditionalSubstreams-----------------------\n");
 		dumpAdditionalSubstreams(writer);
-		writer.write("\nEnd DatabaseInterfaceAdditionalSubstreams-------------------\n");
+		writer.write("\nEnd DebugInfoAdditionalSubstreams-------------------\n");
 	}
 
 	/**
 	 * Debug method for dumping additional substreams from this
-	 *  {@link AbstractDatabaseInterface}-based instance.
+	 *  {@link PdbDebugInfo}-based instance.
 	 * @param writer {@link Writer} to which to dump the information.
 	 * @throws IOException Upon IOException writing to the {@link Writer}.
 	 */
@@ -540,7 +555,7 @@ public abstract class AbstractDatabaseInterface {
 
 	/**
 	 * Debug method for dumping module information for all of the {@link AbstractModuleInformation}
-	 *  modules from this {@link AbstractDatabaseInterface}-based instance.
+	 *  modules from this {@link PdbDebugInfo}-based instance.
 	 * @param writer {@link Writer} to which to dump the information.
 	 * @throws IOException Upon IOException writing to the {@link Writer}.
 	 */
@@ -554,7 +569,7 @@ public abstract class AbstractDatabaseInterface {
 	/**
 	 * Debug method for dumping section contribution for all of the
 	 *  {@link AbstractSectionContribution} components from this
-	 * {@link AbstractDatabaseInterface}-based instance.
+	 * {@link PdbDebugInfo}-based instance.
 	 * @param writer {@link Writer} to which to dump the information.
 	 * @throws IOException Upon IOException writing to the {@link Writer}.
 	 */
@@ -567,7 +582,7 @@ public abstract class AbstractDatabaseInterface {
 
 	/**
 	 * Debug method for dumping segment map information for all of the
-	 *  {@link SegmentMapDescription} components from this {@link AbstractDatabaseInterface}-based
+	 *  {@link SegmentMapDescription} components from this {@link PdbDebugInfo}-based
 	 *  instance.
 	 * @param writer {@link Writer} to which to dump the information.
 	 * @throws IOException Upon IOException writing to the {@link Writer}.

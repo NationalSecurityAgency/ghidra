@@ -17,14 +17,15 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.io.IOException;
 
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Parser for detecting the appropriate {@link AbstractDatabaseInterface} format for the filename
- *  given.  It then creates and returns the appropriate {@link AbstractDatabaseInterface} object.
+ * Parser for detecting the appropriate {@link PdbDebugInfo} format for the filename
+ *  given.  It then creates and returns the appropriate {@link PdbDebugInfo} object.
  */
-public class DatabaseInterfaceParser {
+public class PdbDebugInfoParser {
 
 	private static final int DATABASE_INTERFACE_STREAM_NUMBER = 3;
 
@@ -45,53 +46,55 @@ public class DatabaseInterfaceParser {
 	/**
 	 * Parses information to determine the version of Database Interface to create.
 	 * @param pdb {@link AbstractPdb} that owns this Database Interface.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return {@link AbstractDatabaseInterface} of the appropriate Database Interface or null if
+	 * @return {@link PdbDebugInfo} of the appropriate Database Interface or null if
 	 *  the stream does not have enough information to be parsed.  
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
 	 * @throws PdbException Upon error in processing components.
-	 * @throws CancelledException Upon user cancellation.
 	 */
-	public AbstractDatabaseInterface parse(AbstractPdb pdb, TaskMonitor monitor)
-			throws IOException, PdbException, CancelledException {
-		AbstractDatabaseInterface databaseInterface;
+	public PdbDebugInfo parse(AbstractPdb pdb) throws IOException, PdbException {
+		PdbDebugInfo debugInfo;
+		try {
+			int streamNumber = getStreamNumber();
+			// Only reading 8-bytes - no need for monitor
+			PdbByteReader reader =
+				pdb.getReaderForStreamNumber(streamNumber, 0, 8, TaskMonitor.DUMMY);
+			if (reader.getLimit() == 0) {
+				return null;
+			}
 
-		int streamNumber = getStreamNumber();
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, 8, monitor);
-		if (reader.getLimit() == 0) {
-			return null;
-		}
+			// In support of debug.
+			debugReader = reader;
+			PdbLog.message(this::debugDump);
 
-		// In support of debug.
-		debugReader = reader;
-		PdbLog.message(this::debugDump);
+			int headerSignature = reader.parseInt();
+			int versionNumber = reader.parseInt();
 
-		int headerSignature = reader.parseInt();
-		int versionNumber = reader.parseInt();
-
-		if (headerSignature == DBIHDR700_SIG) {
-			switch (versionNumber) {
-				case DBI41_ID:
-				case DBI50_ID:
-				case DBI60_ID:
-				case DBI70_ID:
-				case DBI110_ID:
-					databaseInterface = new DatabaseInterfaceNew(pdb, streamNumber);
-					break;
-				default:
-					throw new PdbException("Unknown DBI Version");
+			if (headerSignature == DBIHDR700_SIG) {
+				switch (versionNumber) {
+					case DBI41_ID:
+					case DBI50_ID:
+					case DBI60_ID:
+					case DBI70_ID:
+					case DBI110_ID:
+						debugInfo = new PdbNewDebugInfo(pdb, streamNumber);
+						break;
+					default:
+						throw new PdbException("Unknown DBI Version");
+				}
+			}
+			else {
+				debugInfo = new PdbOldDebugInfo(pdb, streamNumber);
 			}
 		}
-		else {
-			databaseInterface = new DatabaseInterface(pdb, streamNumber);
+		catch (CancelledException e) {
+			throw new AssertException();
 		}
-
-		return databaseInterface;
+		return debugInfo;
 	}
 
 	private String debugDump() {
-		return "DatabaseInterfaceParser data on stream " + getStreamNumber() + ":\n" +
+		return "DebugInfoParser data on stream " + getStreamNumber() + ":\n" +
 			debugReader.dump() + "\n";
 	}
 

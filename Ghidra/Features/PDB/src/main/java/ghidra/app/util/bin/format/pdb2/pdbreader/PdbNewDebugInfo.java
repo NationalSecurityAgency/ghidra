@@ -24,23 +24,24 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class is the version of {@link AbstractDatabaseInterface} for newer PDB files.
+ * This class is the version of {@link PdbDebugInfo} for newer PDB files.
  * <P>
  * This class uses {@link ModuleInformation600}.
  */
-public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
+public class PdbNewDebugInfo extends PdbDebugInfo {
 
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
 	private static final long HEADER_MAGIC = 0xeffeeffeL;
+	private static final int DBI_HEADER_LENGTH = 64;
 
 	protected Hasher hasher; //Might belong in parent?  Used in parent (even older Hasher?)
 
 	// The source of these values can overlay other fields in older versions of this type.
 	protected long versionSignature = 0; // unsigned 32-bit 
 
-	protected long age = 0; // unsigned 32-bit
+	protected long dbiAge = 0; // unsigned 32-bit
 	protected int universalVersion = 0; // unsigned 16-bit
 	protected int pdbDllBuildVersion = 0; // unsigned 16-bit
 	protected int pdbDllReleaseBuildVersion = 0; // unsigned 16-bit
@@ -63,10 +64,10 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	//==============================================================================================
 	/**
 	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns this {@link DatabaseInterfaceNew}.
-	 * @param streamNumber The stream number that contains the {@link DatabaseInterfaceNew} data.
+	 * @param pdb {@link AbstractPdb} that owns this {@link PdbNewDebugInfo}.
+	 * @param streamNumber The stream number that contains the {@link PdbNewDebugInfo} data.
 	 */
-	public DatabaseInterfaceNew(AbstractPdb pdb, int streamNumber) {
+	public PdbNewDebugInfo(AbstractPdb pdb, int streamNumber) {
 		super(pdb, streamNumber);
 		debugData = new DebugData(pdb);
 	}
@@ -80,7 +81,7 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 	}
 
 	/**
-	 * Returns the {@link DebugData} for this {@link DatabaseInterfaceNew}.
+	 * Returns the {@link DebugData} for this {@link PdbNewDebugInfo}.
 	 * @return the {@link DebugData}.
 	 */
 	public DebugData getDebugData() {
@@ -95,7 +96,7 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		//System.out.println(reader.dump(0x200));
 		versionSignature = reader.parseUnsignedIntVal();
 		versionNumber = reader.parseUnsignedIntVal();
-		age = reader.parseUnsignedIntVal();
+		dbiAge = reader.parseUnsignedIntVal();
 
 		streamNumberGlobalStaticSymbolsHashMaybe = reader.parseUnsignedShortVal();
 
@@ -119,10 +120,16 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 
 		flags = reader.parseUnsignedShortVal();
 		machineType = ImageFileMachine.fromValue(reader.parseUnsignedShortVal());
-		pdb.setTargetProcessor(machineType.getProcessor());
-
 		padReserve = reader.parseUnsignedIntVal();
 
+		// update PDB with age and processor
+		pdb.setTargetProcessor(machineType.getProcessor());
+		pdb.setDbiAge((int) dbiAge);
+	}
+
+	@Override
+	protected int getHeaderLength() {
+		return DBI_HEADER_LENGTH;
 	}
 
 	@Override
@@ -187,7 +194,7 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		builder.append("\nversionNumber: ");
 		builder.append(versionNumber);
 		builder.append("\nage: ");
-		builder.append(age);
+		builder.append(dbiAge);
 		builder.append("\nstreamNumberGlobalStaticSymbols: ");
 		builder.append(streamNumberGlobalStaticSymbolsHashMaybe);
 		builder.append(String.format("\nuniversalVersion: 0x%04x", universalVersion));
@@ -336,6 +343,14 @@ public class DatabaseInterfaceNew extends AbstractDatabaseInterface {
 		for (String name : editAndContinueNameList) {
 			writer.write(String.format("Name: %s\n", name));
 		}
+	}
+
+	/**
+	 * Get age from deserialized DBI header
+	 * @return age from deserialized DBI header
+	 */
+	long getAge() {
+		return dbiAge;
 	}
 
 }

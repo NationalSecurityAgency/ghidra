@@ -358,17 +358,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb2() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SYMBOLS_SUBDIR, PdbXmlLocation.NONE);
+		createdFiles = createFiles(PdbLocation.SYMBOLS_SUBDIR, PdbXmlLocation.NONE);
 
-			File pdb = PdbParser.findPDB(testProgram, false, symbolsFolder.getAbsolutePath());
+		File pdb = PdbParser.findPDB(testProgram, false, symbolsFolder.getAbsolutePath());
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -411,17 +407,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb4() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SYMBOLS_SUBDIR, PdbXmlLocation.OWN_DIR);
+		createdFiles = createFiles(PdbLocation.SYMBOLS_SUBDIR, PdbXmlLocation.OWN_DIR);
 
-			File pdb = PdbParser.findPDB(testProgram, false, symbolsFolder.getAbsolutePath());
+		File pdb = PdbParser.findPDB(testProgram, false, symbolsFolder.getAbsolutePath());
 
-			assertNotNull(pdb);
-			assertEquals(pdb.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdb.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -464,17 +456,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb6() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SYMBOLS_NO_SUBDIR, PdbXmlLocation.NONE);
+		createdFiles = createFiles(PdbLocation.SYMBOLS_NO_SUBDIR, PdbXmlLocation.NONE);
 
-			File pdb = PdbParser.findPDB(testProgram, false, symbolsFolder.getAbsolutePath());
+		File pdb = PdbParser.findPDB(testProgram, false, symbolsFolder.getAbsolutePath());
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -537,17 +525,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb9() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SYMBOLS_NO_SUBDIR, PdbXmlLocation.OWN_DIR);
+		createdFiles = createFiles(PdbLocation.SYMBOLS_NO_SUBDIR, PdbXmlLocation.OWN_DIR);
 
-			File pdb = PdbParser.findPDB(testProgram, false, symbolsFolder.getAbsolutePath());
+		File pdb = PdbParser.findPDB(testProgram, false, symbolsFolder.getAbsolutePath());
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -590,17 +574,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb11() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SAME_AS_EXE_SUBDIR, PdbXmlLocation.NONE);
+		createdFiles = createFiles(PdbLocation.SAME_AS_EXE_SUBDIR, PdbXmlLocation.NONE);
 
-			File pdb = PdbParser.findPDB(testProgram, false, pdbFile.getParent());
+		File pdb = PdbParser.findPDB(testProgram, false, pdbFile.getParent());
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -663,17 +643,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb14() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SAME_AS_EXE_SUBDIR, PdbXmlLocation.OWN_DIR);
+		createdFiles = createFiles(PdbLocation.SAME_AS_EXE_SUBDIR, PdbXmlLocation.OWN_DIR);
 
-			File pdb = PdbParser.findPDB(testProgram, false, pdbFile.getParent());
+		File pdb = PdbParser.findPDB(testProgram, false, pdbFile.getParent());
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -719,17 +695,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb16() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.NONE);
+		createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.NONE);
 
-			File pdb = PdbParser.findPDB(testProgram, false, defaultSymbolsRepoPath);
+		File pdb = PdbParser.findPDB(testProgram, false, defaultSymbolsRepoPath);
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -745,17 +717,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb17() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.NONE);
+		createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.NONE);
 
-			File pdb = PdbParser.findPDB(testProgram, false, pdbFile.getParent());
+		File pdb = PdbParser.findPDB(testProgram, false, pdbFile.getParent());
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -774,17 +742,13 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb18() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.NONE);
+		createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.NONE);
 
-			File pdb = PdbParser.findPDB(testProgram, false, pdbXmlDir.getAbsolutePath());
+		File pdb = PdbParser.findPDB(testProgram, false, pdbXmlDir.getAbsolutePath());
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
+
 	}
 
 	/**
@@ -857,17 +821,12 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb21() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.OWN_DIR);
+		createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.OWN_DIR);
 
-			File pdb = PdbParser.findPDB(testProgram, false, defaultSymbolsRepoPath);
+		File pdb = PdbParser.findPDB(testProgram, false, defaultSymbolsRepoPath);
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
 	}
 
 	/**
@@ -883,18 +842,12 @@ public class PdbParserTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testFindPdb22() throws Exception {
 
-		try {
-			createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.OWN_DIR);
+		createdFiles = createFiles(PdbLocation.SAME_AS_EXE_NO_SUBDIR, PdbXmlLocation.OWN_DIR);
 
-			File pdb =
-				PdbParser.findPDB(testProgram, false, pdbFile.getParentFile().getAbsolutePath());
+		File pdb = PdbParser.findPDB(testProgram, false, pdbFile.getParentFile().getAbsolutePath());
 
-			assertNotNull(pdb);
-			assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
-		}
-		catch (PdbException pdbe) {
-			fail("Unexpected PdbException!");
-		}
+		assertNotNull(pdb);
+		assertEquals(pdbFile.getAbsolutePath(), pdb.getAbsolutePath());
 	}
 
 	/**

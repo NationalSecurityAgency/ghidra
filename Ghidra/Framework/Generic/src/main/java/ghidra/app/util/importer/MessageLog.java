@@ -165,10 +165,9 @@ public class MessageLog {
 	private String toStringWithWarning() {
 		StringBuilder output = new StringBuilder();
 		if (count > maxSize) {
-			output.append('\n').append('\n');
 			output.append("There were too many messages to display.\n");
-			output.append((count - maxSize)).append(" messages have been truncated.");
-			output.append('\n').append('\n');
+			output.append((count - maxSize)).append(" messages have been truncated.\n");
+			output.append('\n');
 		}
 
 		for (String s : messages) {

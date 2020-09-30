@@ -57,7 +57,7 @@ public class PdbVbtManager extends VbtManager {
 		Map<String, Address> myAddressByMangledName = new HashMap<>();
 
 		PublicSymbolInformation publicSymbolInformation =
-			applicator.getPdb().getDatabaseInterface().getPublicSymbolInformation();
+			applicator.getPdb().getDebugInfo().getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		applicator.setMonitorMessage("PDB: Searching for virtual base table symbols...");
 		monitor.initialize(offsets.size());

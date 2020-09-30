@@ -22,21 +22,23 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class is the version of {@link AbstractDatabaseInterface} for older PDB files.
+ * This class is the version of {@link PdbDebugInfo} for older PDB files.
  * <P>
  * This class uses {@link ModuleInformation500}.
  */
-class DatabaseInterface extends AbstractDatabaseInterface {
+class PdbOldDebugInfo extends PdbDebugInfo {
+
+	private static final int OLD_DBI_HEADER_LENGTH = 22;
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
 	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns this {@link DatabaseInterface}.
-	 * @param streamNumber The number of the stream that contains the {@link DatabaseInterface}.
+	 * @param pdb {@link AbstractPdb} that owns this {@link PdbOldDebugInfo}.
+	 * @param streamNumber The number of the stream that contains the {@link PdbOldDebugInfo}.
 	 */
-	public DatabaseInterface(AbstractPdb pdb, int streamNumber) {
+	public PdbOldDebugInfo(AbstractPdb pdb, int streamNumber) {
 		super(pdb, streamNumber);
 	}
 
@@ -52,6 +54,11 @@ class DatabaseInterface extends AbstractDatabaseInterface {
 		lengthSectionContributionSubstream = reader.parseInt();
 		lengthSectionMap = reader.parseInt();
 		lengthFileInformation = reader.parseInt();
+	}
+
+	@Override
+	protected int getHeaderLength() {
+		return OLD_DBI_HEADER_LENGTH;
 	}
 
 	@Override

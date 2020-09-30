@@ -257,9 +257,9 @@ public class PdbAddressManager {
 		// trying to use this. 
 		long segmentZeroLength = 0x7fffffff;
 		allSegmentsInfo.add(new SegmentInfo(imageBase, segmentZeroLength));
-		AbstractDatabaseInterface dbi = applicator.getPdb().getDatabaseInterface();
-		if (dbi instanceof DatabaseInterfaceNew) {
-			DebugData debugData = ((DatabaseInterfaceNew) dbi).getDebugData();
+		PdbDebugInfo dbi = applicator.getPdb().getDebugInfo();
+		if (dbi instanceof PdbNewDebugInfo) {
+			DebugData debugData = ((PdbNewDebugInfo) dbi).getDebugData();
 			List<ImageSectionHeader> imageSectionHeaders = debugData.getImageSectionHeaders();
 			for (ImageSectionHeader imageSectionHeader : imageSectionHeaders) {
 				long virtualAddress = imageSectionHeader.getVirtualAddress();
@@ -270,12 +270,12 @@ public class PdbAddressManager {
 				allSegmentsInfo.add(new SegmentInfo(imageBase.add(virtualAddress), size));
 			}
 		}
-		// else instance of DatabaseInterface; TODO: what can we do here?
+		// else instance of PdbDebugInfo; TODO: what can we do here?
 		// Maybe get information from the program itself.
 
 		// TODO: what should we do with these? Not doing anything at the moment
 		AbstractPdb pdb = applicator.getPdb();
-		List<SegmentMapDescription> segmentMapList = pdb.getDatabaseInterface().getSegmentMapList();
+		List<SegmentMapDescription> segmentMapList = pdb.getDebugInfo().getSegmentMapList();
 		for (SegmentMapDescription segmentMapDescription : segmentMapList) {
 			segmentMapDescription.getSegmentOffset();
 			segmentMapDescription.getLength();
@@ -428,7 +428,7 @@ public class PdbAddressManager {
 	// future.
 	/**
 	 * Tries to align section/segment information of the PDB in {@link SegmentMapDescription} from
-	 * the {@link AbstractDatabaseInterface} header substream with the memory blocks of the
+	 * the {@link PdbDebugInfo} header substream with the memory blocks of the
 	 * {@link Program}.  Initializes the lookup table to be used for processing the PDB.
 	 * <P>
 	 * We have seen cases where blocks of the program are combined into a single block representing
@@ -441,7 +441,7 @@ public class PdbAddressManager {
 	@SuppressWarnings("unused") // for method not being called and local variables ununsed.
 	private void reconcileMemoryBlocks() throws PdbException {
 //		ImageSectionHeader imageSectionHeader =
-//		pdb.getDatabaseInterface().getDebugData().getImageSectionHeader();
+//		pdb.getDebugInfo().getDebugData().getImageSectionHeader();
 
 		AbstractPdb pdb = applicator.getPdb();
 		Program program = applicator.getProgram();
@@ -451,7 +451,7 @@ public class PdbAddressManager {
 
 		Memory mem = program.getMemory();
 		MemoryBlock[] blocks = mem.getBlocks();
-		List<SegmentMapDescription> segmentMapList = pdb.getDatabaseInterface().getSegmentMapList();
+		List<SegmentMapDescription> segmentMapList = pdb.getDebugInfo().getSegmentMapList();
 		/**
 		 * Program has additional "Headers" block set up by the {@link PeLoader}.
 		 */
@@ -510,15 +510,15 @@ public class PdbAddressManager {
 	@SuppressWarnings("unused") // for method not being called.
 	private boolean garnerSectionSegmentInformation() throws PdbException {
 		AbstractPdb pdb = applicator.getPdb();
-		if (pdb.getDatabaseInterface() == null) {
+		if (pdb.getDebugInfo() == null) {
 			return false;
 		}
 
 //		ImageSectionHeader imageSectionHeader =
-//		pdb.getDatabaseInterface().getDebugData().getImageSectionHeader();
+//		pdb.getDebugInfo().getDebugData().getImageSectionHeader();
 
 		int num = 1;
-		for (AbstractModuleInformation module : pdb.getDatabaseInterface().getModuleInformationList()) {
+		for (AbstractModuleInformation module : pdb.getDebugInfo().getModuleInformationList()) {
 			if ("* Linker *".equals(module.getModuleName())) {
 				List<AbstractMsSymbol> linkerSymbolList =
 					applicator.getSymbolGroupForModule(num).getSymbols();

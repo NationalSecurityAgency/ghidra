@@ -18,7 +18,7 @@ package ghidra.app.util.pdb;
 import java.util.*;
 
 import ghidra.app.util.SymbolPath;
-import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractDatabaseInterface;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbDebugInfo;
 import ghidra.program.model.data.Category;
 import ghidra.program.model.data.CategoryPath;
 
@@ -134,7 +134,7 @@ public class PdbCategories {
 
 	/**
 	 * Returns the {@link CategoryPath} for a typedef with the give {@link SymbolPath} and
-	 * module number; 1 <= moduleNumber <= {@link AbstractDatabaseInterface#getNumModules()},
+	 * module number; 1 <= moduleNumber <= {@link PdbDebugInfo#getNumModules()},
 	 * except that modeleNumber of 0 represents publics/globals.
 	 * @param moduleNumber module number
 	 * @param symbolPath SymbolPath of the symbol

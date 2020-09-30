@@ -17,8 +17,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -50,6 +49,8 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 
 	// These should correspond with symbolOffsets that come from HashRecords.
 	private List<Long> addressMapSymbolOffsets = new ArrayList<>();
+	private Map<Integer, Integer> thunkTargetOffsetsByTableOffset = new HashMap<>();
+	private Map<Integer, Integer> absoluteOffsetsBySectionNumber = new HashMap<>();
 
 	//==============================================================================================
 	// API
@@ -180,12 +181,9 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 		dumpHashBasics(builder);
 		dumpHashRecords(builder);
 
-//		deserializeAddressMap(addressMapReader, monitor);
-//		deserializeThunkMap(thunkMapReader, monitor);
-//		sectionMapLength = reader.numRemaining();
-//		numSections = sectionMapLength / 8;
-//		deserializeSectionMap(sectionMapReader, monitor);
-//		
+		dumpAddressMap(builder);
+		dumpThunkMap(builder);
+		dumpSectionMap(builder);
 
 		builder.append("\nEnd PublicSymbolInformation---------------------------------\n");
 		writer.write(builder.toString());
@@ -210,6 +208,20 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	}
 
 	/**
+	 * Debug method for dumping Address Map information from this {@link AbstractSymbolInformation}.
+	 * @param builder {@link StringBuilder} to which to dump the information.
+	 */
+	private void dumpAddressMap(StringBuilder builder) {
+		builder.append("AddressMapSymbolOffsets-------------------------------------\n");
+		builder.append("numAddressMapSymbolOffsets: " + addressMapSymbolOffsets.size() + "\n");
+		int num = 0;
+		for (Long val : addressMapSymbolOffsets) {
+			builder.append(String.format("0X%08X: 0X%012X\n", num++, val));
+		}
+		builder.append("\nEnd AddressMapSymbolOffsets---------------------------------\n");
+	}
+
+	/**
 	 * Deserializes the Thunk Map for these public symbols.
 	 * @param reader {@link PdbByteReader} containing the data buffer to process.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
@@ -228,6 +240,20 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	}
 
 	/**
+	 * Debug method for dumping Thunk Map information from this {@link AbstractSymbolInformation}.
+	 * @param builder {@link StringBuilder} to which to dump the information.
+	 */
+	private void dumpThunkMap(StringBuilder builder) {
+		builder.append("ThunkMap----------------------------------------------------\n");
+		builder.append(
+			"numThunkTargetOffsetsByTableOffset: " + thunkTargetOffsetsByTableOffset.size() + "\n");
+		for (Map.Entry<Integer, Integer> entry : thunkTargetOffsetsByTableOffset.entrySet()) {
+			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
+		}
+		builder.append("\nEnd ThunkMap------------------------------------------------\n");
+	}
+
+	/**
 	 * Deserializes the Section Map for these public symbols.
 	 * @param reader {@link PdbByteReader} containing the data buffer to process.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
@@ -243,6 +269,20 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 			reader.skip(2); // padding
 			absoluteOffsetsBySectionNumber.put(section, offset);
 		}
+	}
+
+	/**
+	 * Debug method for dumping Section Map information from this {@link AbstractSymbolInformation}.
+	 * @param builder {@link StringBuilder} to which to dump the information.
+	 */
+	private void dumpSectionMap(StringBuilder builder) {
+		builder.append("SectionMap--------------------------------------------------\n");
+		builder.append(
+			"numAbsoluteOffsetsBySectionNumber: " + absoluteOffsetsBySectionNumber.size() + "\n");
+		for (Map.Entry<Integer, Integer> entry : absoluteOffsetsBySectionNumber.entrySet()) {
+			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
+		}
+		builder.append("\nEnd SectionMap----------------------------------------------\n");
 	}
 
 	/**
@@ -269,7 +309,7 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 		builder.append(thunkMapLength);
 		builder.append("\nthunkTableLength: ");
 		builder.append(thunkTableLength);
-		builder.append("\nEnd PublicSymbolInformationHeader--------------------------\n");
+		builder.append("\nEnd PublicSymbolInformationHeader---------------------------\n");
 	}
 
 	// Issue: MSFT does not initialize PSGSIHDR with nSects(0) (our numSections), so spurious

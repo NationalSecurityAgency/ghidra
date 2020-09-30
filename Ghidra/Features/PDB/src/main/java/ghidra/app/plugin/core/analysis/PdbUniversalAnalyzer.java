@@ -19,9 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import docking.widgets.OkDialog;
-import docking.widgets.OptionDialog;
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.services.*;
+import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
@@ -31,14 +32,11 @@ import ghidra.app.util.pdb.pdbapplicator.*;
 import ghidra.framework.Application;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
-import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.CharsetInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
-import ghidra.util.bean.opteditor.OptionsVetoException;
-import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -61,15 +59,12 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private static final boolean developerMode = false;
 
 	//==============================================================================================
-	private static final String NAME = "PDB Universal Reader/Analyzer";
+	static final String NAME = "PDB Universal";
+	// TODO: decide which PDB Analyzer should be enabled by default for release
+	static final boolean DEFAULT_ENABLEMENT = false;
 	private static final String DESCRIPTION =
-		"[PDB EVOLUTIONARY PROTOTYPE V1] [OPTIONS MAY CHANGE]\n" +
-			"Platform-indepent PDB analysis\n" +
-			"(No XML.  Will not run with DIA-based PDB Analyzer.)";
-
-	private final static String PDB_STORAGE_PROPERTY = "PDB Storage Directory";
-	// TODO; look into what we can do with the following (old analyzer says this is a "thing")
-	//public final static File SPECIAL_PDB_LOCATION = new File("C:/WINDOWS/Symbols");
+		"[Prototype V1] Platform-indepent PDB analyzer (No XML support).\n" +
+			"NOTE: still undergoing development, so options may change.";
 
 	//==============================================================================================
 	// Force-load a PDB file.
@@ -82,14 +77,15 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private static final String OPTION_NAME_FORCELOAD_FILE = "Force-Load FilePath";
 	private static final String OPTION_DESCRIPTION_FORCELOAD_FILE =
 		"This file is force-loaded if the '" + OPTION_NAME_DO_FORCELOAD + "' option is checked";
-	private File forceLoadFile = null;
+	private File DEFAULT_FORCE_LOAD_FILE = new File(PdbLocator.DEFAULT_SYMBOLS_DIR, "sample.pdb");
+	private File forceLoadFile;
 
 	// Symbol Repository Path.
 	private static final String OPTION_NAME_SYMBOLPATH = "Symbol Repository Path";
 	private static final String OPTION_DESCRIPTION_SYMBOLPATH =
 		"Directory path to root of Microsoft Symbol Repository Directory";
-	private File symbolsRepositoryPath = null; // value set in constructor
-	private File defaultSymbolsRepositoryPath = Application.getUserTempDirectory();
+	private File DEFAULT_SYMBOLS_DIR = PdbLocator.DEFAULT_SYMBOLS_DIR;
+	private File symbolsRepositoryDir;
 
 	// Include the PE-Header-Specified PDB path for searching for appropriate PDB file.
 	private static final String OPTION_NAME_INCLUDE_PE_PDB_PATH =
@@ -208,53 +204,51 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	public PdbUniversalAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setPrototype();
-		// false for now; after proven... then TODO: true always
-		setDefaultEnablement(false);
-		// or...
-		// false for now if on Windows; after proven... then TODO: true always
-		// setDefaultEnablement(!onWindows);
+		setDefaultEnablement(DEFAULT_ENABLEMENT);
 		setPriority(AnalysisPriority.FORMAT_ANALYSIS.after());
 		setSupportsOneTimeAnalysis();
 
-		String pdbStorageLocation = Preferences.getProperty(PDB_STORAGE_PROPERTY, null, true);
-		if (pdbStorageLocation != null) {
-			symbolsRepositoryPath = new File(pdbStorageLocation);
-		}
-		else {
-			symbolsRepositoryPath = defaultSymbolsRepositoryPath;
-		}
-		if (!symbolsRepositoryPath.isDirectory()) {
-			symbolsRepositoryPath = new File(File.separator);
-		}
-		pdbStorageLocation = symbolsRepositoryPath.getAbsolutePath();
-		forceLoadFile = new File(pdbStorageLocation + File.separator + "sample.pdb");
-
 		pdbReaderOptions = new PdbReaderOptions();
 		pdbApplicatorOptions = new PdbApplicatorOptions();
+	}
+
+	static boolean isEnabled(Program program) {
+		Options analysisOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
+		return analysisOptions.getBoolean(NAME, DEFAULT_ENABLEMENT);
 	}
 
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
+// NOTE: Legacy PDB Analyzer currently yields to this analyzer if both are enabled
+//		if (PdbAnalyzer.isEnabled(program)) {
+//			log.appendMsg(getName(),
+//				"Stopped: Cannot run with Legacy PDB Analyzer enabled");
+//			return false;
+//		}
+
 		// TODO:
 		// Work on use cases...
 		// Code for checking if the PDB is already loaded (... assumes it was analyzed as well).
 		//  Need different logic... perhaps we could have multiple PDBs loaded already and need
 		//  to decide if any of those is the "correct" one or even look for another one.
+		//  NOTE: if PDB previously applied the PDB load should be used instead of analyzer.
 		// Probably still need to have a loader separate from the loader/analyzer, but then have
 		//  the ability to analyze (apply) any given already-loaded PDB to the program.  A PDB
 		//  loader should probably be able to load an optionally apply data types to its own
 		//  category manager.  Question would be if/how we "might" try to resolve any of these
 		//  against the "main" category data types.
 
-		if (oldPdbAnalyzerEnabled(program)) {
-			log.appendMsg(getName(), "Stopped: Cannot run with DIA-based PDB Analyzer enabled");
-			return false;
-		}
-
 		PdbProgramAttributes programAttributes = new PdbProgramAttributes(program);
-		if (failMissingFilename(programAttributes, log) ||
+		if (programAttributes.isPdbLoaded()) {
+			Msg.info(this, "Skipping PDB analysis since it has previouslu run.");
+			Msg.info(this,
+				">> Clear 'PDB Loaded' program property or use Load PDB action if " +
+					"additional PDB processing required.");
+		}
+		if (programAttributes.isPdbLoaded() ||
+			failMissingFilename(programAttributes, log) ||
 			failMissingAttributes(programAttributes, log)) {
 			return true;
 		}
@@ -263,18 +257,27 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 		String pdbFilename;
 		if (doForceLoad) {
+			if (!confirmFile(forceLoadFile)) {
+				logFailure("Force-load PDB file does not exist: " + forceLoadFile, log);
+				return false;
+			}
 			pdbFilename = forceLoadFile.getAbsolutePath();
 		}
 		else {
-			PdbLocator locator = new PdbLocator(symbolsRepositoryPath);
+			PdbLocator locator = new PdbLocator(symbolsRepositoryDir);
 			pdbFilename =
 				locator.findPdb(program, programAttributes, !SystemUtilities.isInHeadlessMode(),
 					includePeSpecifiedPdbPath, monitor, log, getName());
 			if (pdbFilename == null) {
+				if (!confirmDirectory(symbolsRepositoryDir)) {
+					logFailure("PDB symbol repository directory not found: " + symbolsRepositoryDir,
+						log);
+				}
+				Msg.info(this, "PDB analyzer failed to locate PDB file");
 				return false;
 			}
 		}
-		Msg.info(this, getClass().getSimpleName() + " configured to use: " + pdbFilename);
+		Msg.info(this, "PDB analyzer parsing file: " + pdbFilename);
 
 		PdbLog.message(
 			"================================================================================");
@@ -290,17 +293,14 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			PdbApplicator applicator = new PdbApplicator(pdbFilename, pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
 				pdbApplicatorOptions, monitor, log);
+
+			Options options = program.getOptions(Program.PROGRAM_INFO);
+			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
+
 		}
-		catch (PdbException e) {
-			String message = "Issue processing PDB file:  " + pdbFilename +
-				". Detailed issues may follow:\n" + e.toString();
-			log.appendMsg(getName(), message);
-			return false;
-		}
-		catch (IOException e) {
-			String message = "Issue processing PDB file:  " + pdbFilename +
-				". Detailed issues may follow:\n" + e.toString();
-			log.appendMsg(getName(), message);
+		catch (PdbException | IOException e) {
+			log.appendMsg(getName(),
+				"Issue processing PDB file:  " + pdbFilename + ":\n   " + e.toString());
 			return false;
 		}
 
@@ -341,11 +341,12 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void registerOptions(Options options, Program program) {
 		// PDB file location information
-		options.registerOption(OPTION_NAME_DO_FORCELOAD, doForceLoad, null,
+		options.registerOption(OPTION_NAME_DO_FORCELOAD, Boolean.FALSE, null,
 			OPTION_DESCRIPTION_DO_FORCELOAD);
-		options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE, forceLoadFile,
+		options.registerOption(OPTION_NAME_FORCELOAD_FILE, OptionType.FILE_TYPE,
+			DEFAULT_FORCE_LOAD_FILE,
 			null, OPTION_DESCRIPTION_FORCELOAD_FILE);
-		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE, symbolsRepositoryPath,
+		options.registerOption(OPTION_NAME_SYMBOLPATH, OptionType.FILE_TYPE, DEFAULT_SYMBOLS_DIR,
 			null, OPTION_DESCRIPTION_SYMBOLPATH);
 		options.registerOption(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath, null,
 			OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH);
@@ -397,34 +398,11 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void optionsChanged(Options options, Program program) {
 
-		// This test can go away once this new analyzer completely replaces the old analyzer.
-		if (!SystemUtilities.isInHeadlessMode() && oldPdbAnalyzerEnabled(program) &&
-			thisPdbAnalyzerEnabled(program)) {
-			OkDialog.show("Warning",
-				"Cannot use PDB Universal Analyzer and DIA-based PDB Analyzer at the same time");
-		}
-
 		doForceLoad = options.getBoolean(OPTION_NAME_DO_FORCELOAD, doForceLoad);
 
-		File pdbFile = options.getFile(OPTION_NAME_FORCELOAD_FILE, forceLoadFile);
-		if (doForceLoad) {
-			if (pdbFile == null) {
-				throw new OptionsVetoException("Force-load file field is missing");
-			}
-			else if (!confirmFile(pdbFile)) {
-				throw new OptionsVetoException(pdbFile + " force-load file does not exist");
-			}
-		}
-		forceLoadFile = pdbFile;
+		forceLoadFile = options.getFile(OPTION_NAME_FORCELOAD_FILE, forceLoadFile);
 
-		File path = options.getFile(OPTION_NAME_SYMBOLPATH, symbolsRepositoryPath);
-		if (path == null) {
-			throw new OptionsVetoException("Symbol Path field is missing");
-		}
-		else if (!confirmDirectory(path)) {
-			throw new OptionsVetoException(path + " is not a valid directory");
-		}
-		symbolsRepositoryPath = path;
+		symbolsRepositoryDir = options.getFile(OPTION_NAME_SYMBOLPATH, DEFAULT_SYMBOLS_DIR);
 
 		includePeSpecifiedPdbPath =
 			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
@@ -459,67 +437,43 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	}
 
 	//==============================================================================================
-	private boolean oldPdbAnalyzerEnabled(Program program) {
-		String oldPdbNAME = "PDB";
-		// This assert is just to catch us if we change the new NAME to what the old name is
-		//  without first eliminating the call to this method and this method altogether.
-		if (NAME.contentEquals(oldPdbNAME)) {
-			throw new AssertException(
-				"Developer error: old and new PDB analyzers were not renamed correctly");
-		}
-		Options analysisOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		// Don't have access to ghidra.app.plugin.core.analysis.PdbAnalyzer.NAME so using string.
-		boolean isPdbEnabled = analysisOptions.getBoolean(oldPdbNAME, false);
-		return isPdbEnabled;
-	}
-
-	private boolean thisPdbAnalyzerEnabled(Program program) {
-		Options analysisOptions = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		// Don't have access to ghidra.app.plugin.core.analysis.PdbAnalyzer.NAME so using string.
-		boolean isPdbEnabled = analysisOptions.getBoolean(NAME, false);
-		return isPdbEnabled;
-	}
 
 	private boolean failMissingFilename(PdbProgramAttributes attributes, MessageLog log) {
-		if (attributes.getPdbFile() == null || attributes.getPdbFile().isEmpty()) {
-			String message = "No PdbFile specified in program... Skipping PDB processing.";
-			log.appendMsg(getName(), message);
-			log.setStatus(message);
+		if (doForceLoad) {
+			return false; // PDB File property not used for forced load
+		}
+		if (StringUtils.isEmpty(attributes.getPdbFile())) {
+			logFailure("Missing 'PDB File' program property, unable to locate PDB", log);
 			return true;
 		}
 		return false;
 	}
 
+	private void logFailure(String msg, MessageLog log) {
+		log.appendMsg(getName(), msg);
+		log.appendMsg(getName(), "Skipping PDB processing");
+		log.setStatus(msg);
+	}
+
 	private boolean failMissingAttributes(PdbProgramAttributes attributes, MessageLog log) {
+		if (doForceLoad) {
+			return false; // Attributes not used for forced load
+		}
 		// RSDS version should only have GUID; non-RSDS version should only have Signature.
-		String warning;
+		String error;
 		if ("RSDS".equals(attributes.getPdbVersion())) {
-			if (attributes.getPdbGuid() != null) {
+			if (!StringUtils.isEmpty(attributes.getPdbGuid())) {
 				return false; // Don't fail.
 			}
-			warning = "No Program GUID to match with PDB.";
+			error = "Missing 'PDB GUID' program property, unable to locate PDB.";
 		}
 		else {
-			if (attributes.getPdbSignature() != null) {
+			if (!StringUtils.isEmpty(attributes.getPdbSignature())) {
 				return false; // Don't fail.
 			}
-			warning = "No Program Signature to match with PDB.";
+			error = "Missing 'PDB Signature' program property, unable to locate PDB.";
 		}
-		String message;
-		if (!SystemUtilities.isInHeadlessMode()) {
-			int option = OptionDialog.showYesNoDialog(null, "Continue Loading PDB?",
-				warning + "\n " + "\nContinue anyway?" + "\n " +
-					"\nPlease note: Invalid disassembly may be produced!");
-			if (option == OptionDialog.OPTION_ONE) {
-				message = warning + ".. Continuing PDB processing.";
-				log.appendMsg(getName(), message);
-				log.setStatus(message);
-				return false;
-			}
-		}
-		message = warning + ".. Skipping PDB processing.";
-		log.appendMsg(getName(), message);
-		log.setStatus(message);
+		logFailure(error, log);
 		return true;
 	}
 
@@ -530,8 +484,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		catch (IOException e) {
 			// Probably could not open the file.
 			if (log != null) {
-				log.appendMsg(getClass().getSimpleName(),
-					"IOException when trying to open PdbLog file: ");
+				log.appendMsg(getName(), "IOException when trying to open PDB log file: ");
 				log.appendException(e);
 			}
 		}

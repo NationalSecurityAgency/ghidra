@@ -55,8 +55,6 @@ public abstract class AbstractSymbolInformation {
 	protected List<Integer> hashBucketOffsets = new ArrayList<>();
 	protected Set<SymbolHashRecord> hashRecords = new TreeSet<>();
 	protected List<Long> modifiedHashRecordSymbolOffsets = new ArrayList<>();
-	protected Map<Integer, Integer> thunkTargetOffsetsByTableOffset = new HashMap<>();
-	protected Map<Integer, Integer> absoluteOffsetsBySectionNumber = new HashMap<>();
 
 	protected List<AbstractMsSymbol> symbols = new ArrayList<>();
 
@@ -170,8 +168,7 @@ public abstract class AbstractSymbolInformation {
 	protected void generateSymbolsList(TaskMonitor monitor)
 			throws PdbException, CancelledException {
 		symbols = new ArrayList<>();
-		Map<Long, AbstractMsSymbol> symbolsByOffset =
-			pdb.getDatabaseInterface().getSymbolsByOffset();
+		Map<Long, AbstractMsSymbol> symbolsByOffset = pdb.getDebugInfo().getSymbolsByOffset();
 		for (SymbolHashRecord record : hashRecords) {
 			monitor.checkCanceled();
 			long offset = record.getOffset() - 2; // Modified offset
@@ -190,10 +187,10 @@ public abstract class AbstractSymbolInformation {
 	 */
 	protected void dumpHashRecords(StringBuilder builder) {
 		builder.append("HashRecords-------------------------------------------------\n");
-		builder.append("numHashRecords: " + hashRecords.size());
+		builder.append("numHashRecords: " + hashRecords.size() + "\n");
 		for (SymbolHashRecord record : hashRecords) {
 			builder.append(
-				String.format("0X%08X  0X%04X", record.getOffset(), record.getReferenceCount()));
+				String.format("0X%08X  0X%04X\n", record.getOffset(), record.getReferenceCount()));
 		}
 		builder.append("\nEnd HashRecords--------------------------------------------\n");
 	}

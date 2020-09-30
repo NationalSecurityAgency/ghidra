@@ -30,10 +30,13 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.util.bin.format.pdb.*;
+import ghidra.app.util.bin.format.pdb.PdbException;
+import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.bin.format.pdb.PdbParser.PdbFileType;
 import ghidra.app.util.pdb.PdbProgramAttributes;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorRestrictions;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -193,6 +196,12 @@ public class PdbSymbolServerPlugin extends Plugin {
 		try {
 			PdbProgramAttributes pdbAttributes = PdbParser.getPdbAttributes(program);
 
+			if (pdbAttributes.getGuidAgeCombo() == null) {
+				throw new PdbException(
+					"Incomplete PDB information (GUID/Signature and/or age) associated with this program.\n" +
+						"Either the program is not a PE, or it was not compiled with debug information.");
+			}
+
 			// 1. Ask if user wants .pdb or .pdb.xml file
 			fileType = askForFileExtension();
 
@@ -298,7 +307,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 		int choice = OptionDialog.showOptionDialog(
 			null,
 			"pdb or pdb.xml",
-			"Download a .pdb or .pdb.xml file? (.pdb.xml can be processed on non-Windows systems)",
+			"Download a .pdb or .pdb.xml file?",
 			"PDB",
 			"XML");
 		//@formatter:on
@@ -697,6 +706,8 @@ public class PdbSymbolServerPlugin extends Plugin {
 			File tempSaveDirectory, File finalSaveDirectory, RetrieveFileType retrieveFileType)
 			throws IOException, PdbException {
 
+		// TODO: This should be performed by a monitored Task with ability to cancel
+
 		String guidAgeString = pdbAttributes.getGuidAgeCombo();
 		List<String> potentialPdbFilenames = pdbAttributes.getPotentialPdbFilenames();
 		File tempFile = null;
@@ -775,33 +786,38 @@ public class PdbSymbolServerPlugin extends Plugin {
 
 	private void tryToLoadPdb(File downloadedPdb, Program currentProgram) {
 
-		// Only ask to load PDB if file type is applicable for current OS
-		if (fileType == PdbFileType.PDB && !PdbParser.onWindows) {
+		AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(currentProgram);
+		if (aam.isAnalyzing()) {
+			Msg.showWarn(getClass(), null, "Load PDB",
+				"Unable to load PDB file while analysis is running.");
 			return;
 		}
 
-		String htmlString =
-			HTMLUtilities.toWrappedHTML("Would you like to apply the following PDB:\n\n" +
-				downloadedPdb.getAbsolutePath() + "\n\n to " + currentProgram.getName() + "?");
+		boolean analyzed =
+			currentProgram.getOptions(Program.PROGRAM_INFO).getBoolean(Program.ANALYZED, false);
 
-		int response = OptionDialog.showYesNoDialog(null, "Load PDB?", htmlString);
-
-		switch (response) {
-			case 0:
-				// User cancelled
-				return;
-
-			case 1:
-				// Yes -- do nothing here
-				break;
-
-			case 2:
-				// No
-				return;
-
-			default:
-				// do nothing
+		String message = "Would you like to apply the following PDB:\n\n" +
+			downloadedPdb.getAbsolutePath() + "\n\n to " + currentProgram.getName() + "?";
+		if (analyzed) {
+			message += "\n \nWARNING: Loading PDB after analysis has been performed may produce" +
+				"\npoor results.  PDBs should generally be loaded prior to analysis or" +
+				"\nautomatically during auto-analysis.";
 		}
+
+		String htmlString = HTMLUtilities.toWrappedHTML(message);
+		int response = OptionDialog.showYesNoDialog(null, "Load PDB?", htmlString);
+		if (response != OptionDialog.YES_OPTION) {
+			return;
+		}
+
+		AskPdbOptionsDialog optionsDialog =
+			new AskPdbOptionsDialog(null, fileType == PdbFileType.PDB);
+		if (optionsDialog.isCanceled()) {
+			return;
+		}
+
+		boolean useMsDiaParser = optionsDialog.useMsDiaParser();
+		PdbApplicatorRestrictions restrictions = optionsDialog.getApplicatorRestrictions();
 
 		tool.setStatusInfo("");
 
@@ -813,7 +829,10 @@ public class PdbSymbolServerPlugin extends Plugin {
 				return;
 			}
 
-			TaskLauncher.launch(new LoadPdbTask(currentProgram, downloadedPdb, service));
+			TaskLauncher
+				.launch(
+						new LoadPdbTask(currentProgram, downloadedPdb, useMsDiaParser, restrictions,
+						service));
 		}
 		catch (Exception pe) {
 			Msg.showError(getClass(), null, "Error", pe.getMessage());

@@ -76,11 +76,11 @@ public class SymbolRecords {
 		int streamNumber;
 		PdbByteReader reader;
 
-		streamNumber = pdb.getDatabaseInterface().getSymbolRecordsStreamNumber();
+		streamNumber = pdb.getDebugInfo().getSymbolRecordsStreamNumber();
 		reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 		symbolsByOffset = deserializeSymbolRecords(reader, monitor);
 
-		for (AbstractModuleInformation module : pdb.getDatabaseInterface().moduleInformationList) {
+		for (AbstractModuleInformation module : pdb.getDebugInfo().moduleInformationList) {
 			streamNumber = module.getStreamNumberDebugInformation();
 			if (streamNumber != 0xffff) {
 //				System.out.println("\n\nStreamNumber: " + streamNumber);

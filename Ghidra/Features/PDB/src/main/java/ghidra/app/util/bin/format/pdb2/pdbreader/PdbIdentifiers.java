@@ -25,23 +25,25 @@ import ghidra.app.util.datatype.microsoft.GUID;
  */
 public class PdbIdentifiers {
 
-	private int version;
-	private int signature;
-	private int age;
-	private GUID guid;
+	private final int version;
+	private final int signature;
+	private final int age;
+	private final GUID guid;
+	private final Processor processor;
 
 	/**
 	 * Constructor.
 	 * @param version The version number.
 	 * @param signature The signature.
-	 * @param age The age.
+	 * @param age age used to verify PDB against age stored in program
 	 * @param guid The GUID (can be null for older PDBs).
 	 */
-	PdbIdentifiers(int version, int signature, int age, GUID guid) {
+	PdbIdentifiers(int version, int signature, int age, GUID guid, Processor processor) {
 		this.version = version;
 		this.signature = signature;
 		this.age = age;
 		this.guid = guid;
+		this.processor = processor == null ? Processor.UNKNOWN : processor;
 	}
 
 	/**

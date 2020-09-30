@@ -21,9 +21,9 @@ import java.util.Objects;
 
 /**
  * Image Section Header information, as part of {@link DebugData} structures within
- *  {@link DatabaseInterfaceNew} of {@link AbstractPdb} types.  Contains section information;
+ *  {@link PdbNewDebugInfo} of {@link AbstractPdb} types.  Contains section information;
  *  an older set of section information seems to be located in {@link SegmentMapDescription},
- *  which might be used for {@link DatabaseInterface} types, but we do not yet have data to
+ *  which might be used for {@link PdbOldDebugInfo} types, but we do not yet have data to
  *  confirm this.
  */
 public class ImageSectionHeader {
@@ -167,7 +167,7 @@ public class ImageSectionHeader {
 		// TODO:  See the to-do above regarding unionPAVS.
 		writer.write(String.format("unionPAVS: 0X%08X\n", unionPAVS));
 		writer.write(String.format("virtualAddress: 0X%08X\n", virtualAddress));
-		writer.write(String.format("rawDataSize: 0X%08XX\n", rawDataSize));
+		writer.write(String.format("rawDataSize: 0X%08X\n", rawDataSize));
 		writer.write(String.format("rawDataPointer: 0X%08X\n", rawDataPointer));
 		writer.write(String.format("relocationsPointer: 0X%08X\n", relocationsPointer));
 		writer.write(String.format("lineNumbersPointer: 0X%08X\n", lineNumbersPointer));

@@ -15,15 +15,12 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
-import ghidra.app.util.bin.format.pdb2.pdbreader.DatabaseInterface;
-
 /**
- * This class is an extension of {@link DatabaseInterface}, whose sole purpose
+ * This class is an extension of {@link PdbOldDebugInfo}, whose sole purpose
  *  is to allow for testing of internal components of {@link AbstractPdb} classes.  It is not
  *  part of the production PDB Reader.
  */
-class DummyDatabaseInterface extends DatabaseInterface {
+class DummyDebugInfo extends PdbOldDebugInfo {
 
 	//==============================================================================================
 	// Package-Protected Internals
@@ -31,9 +28,9 @@ class DummyDatabaseInterface extends DatabaseInterface {
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a basic object.
 	 *  Note: not all values are initialized.  
-	 * @param pdb The AbstractPdb foundation for the DatabaseInterface.
+	 * @param pdb The AbstractPdb foundation for the {@link PdbOldDebugInfo}.
 	 */
-	DummyDatabaseInterface(AbstractPdb pdb) {
+	DummyDebugInfo(AbstractPdb pdb) {
 		super(pdb, 0);
 	}
 

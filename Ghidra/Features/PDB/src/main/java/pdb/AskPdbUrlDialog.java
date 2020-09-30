@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -98,18 +97,8 @@ public class AskPdbUrlDialog extends DialogComponentProvider {
 
 		setDefaultButton(okButton);
 		setRememberSize(false);
-		if (SwingUtilities.isEventDispatchThread()) {
-			DockingWindowManager.showDialog(parent, this);
-		}
-		else {
-			try {
-				SwingUtilities.invokeAndWait(
-					() -> DockingWindowManager.showDialog(parent, AskPdbUrlDialog.this));
-			}
-			catch (InvocationTargetException | InterruptedException e) {
-				// TODO: handle this?
-			}
-		}
+
+		DockingWindowManager.showDialog(parent, AskPdbUrlDialog.this);
 	}
 
 	@Override
