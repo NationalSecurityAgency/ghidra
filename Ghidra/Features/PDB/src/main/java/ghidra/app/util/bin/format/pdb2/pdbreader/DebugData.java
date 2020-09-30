@@ -269,9 +269,9 @@ public class DebugData {
 //		}
 		// TODO: More work possible.  See XData processing and notes there.  This is very
 		//  incomplete.
-		if (pdb.getDatabaseInterface() instanceof DatabaseInterfaceNew) {
+		if (pdb.getDebugInfo() instanceof PdbNewDebugInfo) {
 			//Processor target = pdb.getTargetProcessor();
-			DatabaseInterfaceNew dbi = (DatabaseInterfaceNew) pdb.getDatabaseInterface();
+			PdbNewDebugInfo dbi = (PdbNewDebugInfo) pdb.getDebugInfo();
 			ImageFileMachine machine = dbi.getMachineType();
 			switch (machine) {
 				case IA64:

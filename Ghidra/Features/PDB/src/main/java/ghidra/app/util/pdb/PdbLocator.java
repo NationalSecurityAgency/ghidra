@@ -70,9 +70,12 @@ import ghidra.util.task.TaskMonitor;
  */
 public class PdbLocator {
 
-	public static final File SPECIAL_PDB_LOCATION = new File("C:/WINDOWS/Symbols");
 	public static final boolean onWindows =
 		(Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS);
+
+	private static final File USER_HOME = new File(System.getProperty("user.home"));
+	public static final File DEFAULT_SYMBOLS_DIR =
+		onWindows ? new File("C:\\Symbols") : new File(USER_HOME, "Symbols");
 
 	private File symbolsRepositoryPath;
 	/**
@@ -219,8 +222,8 @@ public class PdbLocator {
 				includePeSpecifiedPdbPath, symbolsRepositoryPath.getAbsolutePath());
 			if (orderedListOfExistingFileNames.isEmpty()) {
 
-				String pdbName = program.getOptions(Program.PROGRAM_INFO).getString(
-					PdbParserConstants.PDB_FILE, (String) null);
+				String pdbName = program.getOptions(Program.PROGRAM_INFO)
+						.getString(PdbParserConstants.PDB_FILE, (String) null);
 				if (pdbName == null) {
 					message = "Program has no associated PDB file.";
 				}
@@ -452,6 +455,9 @@ public class PdbLocator {
 	 * 							a matching PDB
 	 * @param potentialPdbNames  all potential filenames for the PDB file(s) that match the program
 	 * @param pdbAttributes    PDB attributes associated with the program
+	 * @param includePeSpecifiedPdbPath if true include paths derived from the PDB file path 
+	 * determined at time of import.  NOTE: This option is considered unsafe and should not be
+	 * enabled unless binary source is trusted and PDB file path is reasonable for this system.
 	 * @return  matching PDB file, if found (else null)
 	 */
 	private static List<String> checkPathsForPdb(String symbolsRepositoryPath,
@@ -467,12 +473,12 @@ public class PdbLocator {
 
 		List<String> orderedListOfExistingFileNames = new ArrayList<>();
 		if (symbolsRepositoryPath != null) {
-			orderedListOfExistingFileNames.addAll(
-				checkSpecificPathsForPdb(symbolsRepoPaths, potentialPdbNames));
+			orderedListOfExistingFileNames
+					.addAll(checkSpecificPathsForPdb(symbolsRepoPaths, potentialPdbNames));
 		}
 
-		orderedListOfExistingFileNames.addAll(
-			checkSpecificPathsForPdb(predefinedPaths, potentialPdbNames));
+		orderedListOfExistingFileNames
+				.addAll(checkSpecificPathsForPdb(predefinedPaths, potentialPdbNames));
 
 		return orderedListOfExistingFileNames;
 
@@ -561,12 +567,13 @@ public class PdbLocator {
 	 * <P>
 	 */
 	private static void getWindowsPaths(Set<String> guidSubdirPaths, Set<File> predefinedPaths) {
-		// Don't have to call .exists(), since .isDirectory() does that already
-		if (onWindows && SPECIAL_PDB_LOCATION.isDirectory()) {
-			predefinedPaths.add(SPECIAL_PDB_LOCATION);
+		// TODO: Need to provide better control of symbol directory preference
+		// instead of only using default
+		if (DEFAULT_SYMBOLS_DIR.isDirectory()) {
+			predefinedPaths.add(DEFAULT_SYMBOLS_DIR);
 
 			// Check alternate locations
-			String specialPdbPath = SPECIAL_PDB_LOCATION.getAbsolutePath();
+			String specialPdbPath = DEFAULT_SYMBOLS_DIR.getAbsolutePath();
 
 			for (String guidSubdir : guidSubdirPaths) {
 				File testDir = new File(specialPdbPath + guidSubdir);

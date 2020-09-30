@@ -25,6 +25,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.datatype.microsoft.GUID;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -59,10 +60,11 @@ public abstract class AbstractPdb implements AutoCloseable {
 	protected int versionNumber = 0;
 	protected int signature = 0;
 	//Number of times PDB updated.
-	protected int age = 0;
+	protected int pdbAge = 0;
+	protected int dbiAge = 0;
 
 	protected AbstractTypeProgramInterface typeProgramInterface;
-	protected AbstractDatabaseInterface databaseInterface;
+	protected PdbDebugInfo debugInfo;
 
 	protected Processor targetProcessor = Processor.UNKNOWN;
 
@@ -141,9 +143,26 @@ public abstract class AbstractPdb implements AutoCloseable {
 	/**
 	 * Returns the main {@link PdbIdentifiers} found in the PDB Directory. 
 	 * @return {@link PdbIdentifiers} of information.
+	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes.
+	 * @throws PdbException Upon error in processing components.
 	 */
-	public PdbIdentifiers getIdentifiers() {
-		return new PdbIdentifiers(versionNumber, signature, age, guid);
+	public PdbIdentifiers getIdentifiers() throws IOException, PdbException {
+		parseDBI();
+		if (debugInfo != null) {
+			try {
+				// dbiAge and targetProcessor set during deserialization of new DBI header 
+				debugInfo.deserialize(true, TaskMonitor.DUMMY);
+			}
+			catch (CancelledException e) {
+				throw new AssertException(e); // unexpected
+			}
+		}
+		int age = pdbAge;
+		if (dbiAge > 0) {
+			age = dbiAge;
+		}
+		return new PdbIdentifiers(versionNumber, signature, age, guid, targetProcessor);
 	}
 
 	/**
@@ -216,7 +235,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * @return Age of the PDB.
 	 */
 	public int getAge() {
-		return age;
+		return pdbAge;
 	}
 
 	/**
@@ -259,12 +278,13 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * @see Processor
 	 * @see RegisterName
 	 */
+	// TODO: this method should be package protected
 	public void setTargetProcessor(Processor targetProcessorIn) {
 		/**
-		 * Should we allow an overwrite?  The {@link DatabaseInterfaceNew} value (mapped from 
+		 * Should we allow an overwrite?  The {@link PdbNewDebugInfo} value (mapped from 
 		 * {@link ImageFileMachine}) should be processed and laid down first.  Subsequent values
 		 * can come from {@link AbstractCompile2MsSymbol} and {@link Compile3MsSymbol}.  Note:
-		 * {@link DatabaseInterface} does not carry {@link ImageFileMachine}, and thus no mapping
+		 * {@link PdbDebugInfo} does not carry {@link ImageFileMachine}, and thus no mapping
 		 * is applied.
 		 */
 		if (targetProcessor == Processor.UNKNOWN) {
@@ -273,8 +293,17 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
+	 * Set the age as specified by the new DBI header.  A value of 0 corresponds
+	 * to the old DBI header.
+	 * @param dbiAge age as specified by the new DBI header
+	 */
+	void setDbiAge(int dbiAge) {
+		this.dbiAge = dbiAge;
+	}
+
+	/**
 	 * Returns the {@link AbstractTypeProgramInterface} component.
-	 * @return {@link AbstractTypeProgramInterface} component.
+	 * @return {@link AbstractTypeProgramInterface} component or null if not available.
 	 */
 	public AbstractTypeProgramInterface getTypeProgramInterface() {
 		return typeProgramInterface;
@@ -283,18 +312,19 @@ public abstract class AbstractPdb implements AutoCloseable {
 	/**
 	 * Returns the ItemProgramInterface (of type {@link AbstractTypeProgramInterface})
 	 *  component.
-	 * @return ItemProgramInterface (of type {@link AbstractTypeProgramInterface}) component.
+	 * @return ItemProgramInterface (of type {@link AbstractTypeProgramInterface}) component 
+	 * or null if not available.
 	 */
 	public AbstractTypeProgramInterface getItemProgramInterface() {
 		return itemProgramInterface;
 	}
 
 	/**
-	 * Returns the {@link AbstractDatabaseInterface} component.
-	 * @return {@link AbstractDatabaseInterface} component.
+	 * Returns the {@link PdbDebugInfo} component.
+	 * @return {@link PdbDebugInfo} component or null if not available.
 	 */
-	public AbstractDatabaseInterface getDatabaseInterface() {
-		return databaseInterface;
+	public PdbDebugInfo getDebugInfo() {
+		return debugInfo;
 	}
 
 	/**
@@ -302,7 +332,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * @return {@link SymbolRecords} component.
 	 */
 	public SymbolRecords getSymbolRecords() {
-		return databaseInterface.getSymbolRecords();
+		return debugInfo.getSymbolRecords();
 	}
 
 	/**
@@ -481,7 +511,6 @@ public abstract class AbstractPdb implements AutoCloseable {
 		}
 
 		TypeProgramInterfaceParser tpiParser = new TypeProgramInterfaceParser();
-		DatabaseInterfaceParser dbiParser = new DatabaseInterfaceParser();
 
 		typeProgramInterface = tpiParser.parse(this, monitor);
 		if (typeProgramInterface != null) {
@@ -500,12 +529,20 @@ public abstract class AbstractPdb implements AutoCloseable {
 			//dumpDependencyGraph();
 		}
 
-		databaseInterface = dbiParser.parse(this, monitor);
-		if (databaseInterface != null) {
-			databaseInterface.deserialize(monitor);
+		parseDBI();
+		if (debugInfo != null) {
+			debugInfo.deserialize(false, monitor);
 		}
 
 		substreamsDeserialized = true;
+	}
+
+	private PdbDebugInfo parseDBI() throws IOException, PdbException {
+		if (debugInfo == null) {
+			PdbDebugInfoParser dbiParser = new PdbDebugInfoParser();
+			debugInfo = dbiParser.parse(this);
+		}
+		return debugInfo;
 	}
 
 	/**
@@ -606,7 +643,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	protected void deserializeVersionSignatureAge(PdbByteReader reader) throws PdbException {
 		versionNumber = reader.parseInt();
 		signature = reader.parseInt();
-		age = reader.parseInt();
+		pdbAge = reader.parseInt();
 	}
 
 	/**
@@ -621,7 +658,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		builder.append("\nsignature: ");
 		builder.append(Integer.toHexString(signature));
 		builder.append("\nage: ");
-		builder.append(age);
+		builder.append(pdbAge);
 		return builder.toString();
 	}
 
@@ -704,10 +741,10 @@ public abstract class AbstractPdb implements AutoCloseable {
 			itemProgramInterface.dump(writer);
 			writer.write("End ItemProgramInterface------------------------------------\n");
 		}
-		if (databaseInterface != null) {
-			writer.write("DatabaseInterface-------------------------------------------\n");
-			databaseInterface.dump(writer);
-			writer.write("End DatabaseInterface---------------------------------------\n");
+		if (debugInfo != null) {
+			writer.write("DebugInfo---------------------------------------------------\n");
+			debugInfo.dump(writer);
+			writer.write("End DebugInfo-----------------------------------------------\n");
 		}
 	}
 

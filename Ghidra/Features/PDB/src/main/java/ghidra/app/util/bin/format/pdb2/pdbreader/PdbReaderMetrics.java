@@ -878,7 +878,7 @@ public class PdbReaderMetrics {
 
 	public void witnessedSectionSegmentNumber(int segment) {
 		if (numSegments == -1) {
-			numSegments = pdb.getDatabaseInterface().getSegmentMapList().size();
+			numSegments = pdb.getDebugInfo().getSegmentMapList().size();
 		}
 		if (segment < 0 || segment > numSegments) {
 			PdbLog.message("segment " + segment + " out of range [0," + numSegments + ")");

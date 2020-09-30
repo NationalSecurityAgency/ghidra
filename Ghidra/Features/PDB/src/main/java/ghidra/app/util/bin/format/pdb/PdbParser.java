@@ -22,6 +22,7 @@ import org.xml.sax.SAXException;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
+import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.NamespaceUtils;
@@ -229,11 +230,10 @@ public class PdbParser {
 
 	/**
 	 * Open Windows Data Type Archives
-	 *
 	 * @throws IOException  if an i/o error occurs opening the data type archive
-	 * @throws Exception  if any other error occurs
+	 * @throws DuplicateIdException  unexpected archive error
 	 */
-	public void openDataTypeArchives() throws IOException, Exception {
+	public void openDataTypeArchives() throws IOException, DuplicateIdException {
 
 		if (program != null) {
 			List<String> archiveList = DataTypeArchiveUtility.getArchiveList(program);
@@ -315,7 +315,7 @@ public class PdbParser {
 		checkPdbLoaded();
 
 		errHandler.setMessageLog(log);
-		Msg.debug(this, "Found PDB for " + program.getName());
+		Msg.debug(this, "Found PDB for " + program.getName() + ": " + pdbFile);
 		try {
 
 			ApplyDataTypes applyDataTypes = null;
@@ -391,7 +391,7 @@ public class PdbParser {
 			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 
 			if (dataTypeParser != null && dataTypeParser.hasMissingBitOffsetError()) {
-				log.error("PDB",
+				log.appendMsg("PDB",
 					"One or more bitfields were specified without bit-offset data.\nThe use of old pdb.xml data could be the cause.");
 			}
 		}
@@ -619,8 +619,8 @@ public class PdbParser {
 			pdbGuid = "{" + pdbGuid + "}";
 
 			if (!xmlGuid.equals(pdbGuid)) {
-				warning = "PDB signature does not match.";
-			}
+				warning = "PDB signature does not match.\n" + "Program GUID: " + pdbGuid +
+						"\nXML GUID: " + xmlGuid;			}
 			else {
 				// Also check that PDB ages match, if they are both available
 				if ((xmlAge != null) && (pdbAge != null)) {
@@ -1045,13 +1045,13 @@ public class PdbParser {
 	}
 
 	/**
-	 * Find the PDB associated with the given program using its attributes
+	 * Find the PDB associated with the given program using its attributes.
+	 * The PDB path information within the program information will not be used.
 	 *
 	 * @param program  program for which to find a matching PDB
 	 * @return  matching PDB for program, or null
-	 * @throws PdbException if there was a problem with the PDB attributes
 	 */
-	public static File findPDB(Program program) throws PdbException {
+	public static File findPDB(Program program) {
 		return findPDB(getPdbAttributes(program), false, null, null);
 	}
 
@@ -1072,10 +1072,9 @@ public class PdbParser {
 	 * @param includePeSpecifiedPdbPath to also check the PE-header-specified PDB path
 	 * @param symbolsRepositoryPath  location where downloaded symbols are stored
 	 * @return  matching PDB for program, or null
-	 * @throws PdbException if there was a problem with the PDB attributes
 	 */
 	public static File findPDB(Program program, boolean includePeSpecifiedPdbPath,
-			String symbolsRepositoryPath) throws PdbException {
+			String symbolsRepositoryPath) {
 		return findPDB(getPdbAttributes(program), includePeSpecifiedPdbPath, symbolsRepositoryPath,
 			null);
 	}
@@ -1089,11 +1088,9 @@ public class PdbParser {
 	 * @param symbolsRepositoryPath  location of the local symbols repository (can be null)
 	 * @param fileType  type of file to search for (can be null)
 	 * @return matching PDB file (or null, if not found)
-	 * @throws PdbException  if there was a problem with the PDB attributes
 	 */
 	public static File findPDB(PdbProgramAttributes pdbAttributes,
-			boolean includePeSpecifiedPdbPath, String symbolsRepositoryPath, PdbFileType fileType)
-			throws PdbException {
+			boolean includePeSpecifiedPdbPath, String symbolsRepositoryPath, PdbFileType fileType) {
 
 		// Store potential names of PDB files and potential locations of those files,
 		// so that all possible combinations can be searched.
@@ -1102,9 +1099,7 @@ public class PdbParser {
 
 		String guidAgeString = pdbAttributes.getGuidAgeCombo();
 		if (guidAgeString == null) {
-			throw new PdbException(
-				"Incomplete PDB information (GUID/Signature and/or age) associated with this program.\n" +
-					"Either the program is not a PE, or it was not compiled with debug information.");
+			return null;
 		}
 
 		List<String> potentialPdbNames = pdbAttributes.getPotentialPdbFilenames();
@@ -1150,7 +1145,8 @@ public class PdbParser {
 			getSymbolsRepositoryPaths(symbolsRepositoryPath, guidSubdirPaths);
 		Set<File> predefinedPaths =
 			getPredefinedPaths(guidSubdirPaths, pdbAttributes, includePeSpecifiedPdbPath);
-		boolean fileTypeSpecified = (fileType != null), checkForXml;
+		boolean fileTypeSpecified = (fileType != null);
+		boolean checkForXml;
 
 		// If the file type is specified, look for that type of file only.
 		if (fileTypeSpecified) {

@@ -17,10 +17,13 @@ package ghidra.app.plugin.core.analysis;
 
 import java.io.File;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.pdb.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
+import ghidra.app.util.pdb.PdbLocator;
 import ghidra.framework.options.Options;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.AddressSetView;
@@ -34,15 +37,19 @@ import ghidra.util.task.TaskMonitor;
  * Finds and applies PDB debug information to the given Windows executable.
  */
 public class PdbAnalyzer extends AbstractAnalyzer {
-	private static final String NAME = "PDB";
-	private static final String DESCRIPTION = "Automatically loads a PDB file if found.";
+	static final String NAME = "PDB";
+	static final boolean DEFAULT_ENABLEMENT = !PdbUniversalAnalyzer.DEFAULT_ENABLEMENT;
+	private static final String DESCRIPTION =
+		"PDB Analyzer.\n" + "Requires MS DIA-SDK for raw PDB processing (Windows only).\n" +
+			"Also supports pre-processed XML files.";
 
 	private static final String ERROR_TITLE = "Error in PDB Analyzer";
 
 	private static final String SYMBOLPATH_OPTION_NAME = "Symbol Repository Path";
 	private static final String SYMBOLPATH_OPTION_DESCRIPTION =
 		"Directory path to root of Microsoft Symbol Repository Directory";
-	private static final String SYMBOLPATH_OPTION_DEFAULT_VALUE = "C:\\Symbols";
+	private static final String SYMBOLPATH_OPTION_DEFAULT_VALUE =
+		PdbLocator.DEFAULT_SYMBOLS_DIR.getAbsolutePath();
 
 	private String symbolsRepositoryPath = SYMBOLPATH_OPTION_DEFAULT_VALUE;
 
@@ -58,7 +65,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	//==============================================================================================
 	public PdbAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
-		setDefaultEnablement(true);
+		setDefaultEnablement(DEFAULT_ENABLEMENT);
 		setPriority(AnalysisPriority.FORMAT_ANALYSIS.after());
 		setSupportsOneTimeAnalysis();
 	}
@@ -70,12 +77,19 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			return true;
 		}
 
-		File pdb = lookForPdb(program, includePeSpecifiedPdbPath, log);
-
-		if (pdb == null) {
+		if (PdbUniversalAnalyzer.isEnabled(program)) {
+			log.appendMsg(getName(),
+				"Stopped: Cannot run with " + PdbUniversalAnalyzer.NAME + " Analyzer enabled");
 			return false;
 		}
-		Msg.info(this, getClass().getSimpleName() + " configured to use: " + pdb.getAbsolutePath());
+
+		File pdb = lookForPdb(program, log);
+
+		if (pdb == null) {
+			Msg.info(this, "PDB analyzer failed to locate PDB file");
+			return false;
+		}
+		Msg.info(this, "PDB analyzer parsing file: " + pdb.getAbsolutePath());
 
 		AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 		return parsePdb(pdb, program, mgr, monitor, log);
@@ -85,7 +99,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 		// object existence indicates missing PDB has already been reported
 	}
 
-	File lookForPdb(Program program, boolean includePeSpecifiedPdbPath, MessageLog log) {
+	File lookForPdb(Program program, MessageLog log) {
 		String message = "";
 		File pdb;
 
@@ -104,7 +118,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 				String pdbName = program.getOptions(Program.PROGRAM_INFO).getString(
 					PdbParserConstants.PDB_FILE, (String) null);
-				if (pdbName == null) {
+				if (StringUtils.isBlank(pdbName)) {
 					message = "Program has no associated PDB file.";
 				}
 				else {
@@ -125,9 +139,6 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 			return pdb;
 		}
-		catch (PdbException pe) {
-			message += pe.getMessage();
-		}
 		finally {
 			if (message.length() > 0) {
 				log.appendMsg(getName(), message);
@@ -135,7 +146,6 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 			}
 		}
 
-		return null;
 	}
 
 	boolean parsePdb(File pdb, Program program, AutoAnalysisManager mgr, TaskMonitor monitor,

@@ -18,6 +18,7 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.*;
 
 import ghidra.app.util.SymbolPath;
+import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractTypeProgramInterface;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -50,8 +51,13 @@ public class ComplexTypeApplierMapper {
 	//==============================================================================================
 	//==============================================================================================
 	void mapAppliers(TaskMonitor monitor) throws CancelledException {
-		int indexLimit = applicator.getPdb().getTypeProgramInterface().getTypeIndexMaxExclusive();
-		int indexNumber = applicator.getPdb().getTypeProgramInterface().getTypeIndexMin();
+		AbstractTypeProgramInterface typeProgramInterface =
+			applicator.getPdb().getTypeProgramInterface();
+		if (typeProgramInterface == null) {
+			return;
+		}
+		int indexLimit = typeProgramInterface.getTypeIndexMaxExclusive();
+		int indexNumber = typeProgramInterface.getTypeIndexMin();
 		monitor.initialize(indexLimit - indexNumber);
 		applicator.setMonitorMessage("PDB: Mapping Composites...");
 		while (indexNumber < indexLimit) {

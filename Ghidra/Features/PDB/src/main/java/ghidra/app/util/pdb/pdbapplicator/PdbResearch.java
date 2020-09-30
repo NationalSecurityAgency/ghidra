@@ -411,7 +411,7 @@ public class PdbResearch {
 			throws CancelledException, PdbException {
 		SymbolGroup symbolGroup = applicator.getSymbolGroup();
 		GlobalSymbolInformation globalSymbolInformation =
-			applicator.getPdb().getDatabaseInterface().getGlobalSymbolInformation();
+			applicator.getPdb().getDebugInfo().getGlobalSymbolInformation();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		applicator.setMonitorMessage("PDB: Applying typedefs...");
 		monitor.initialize(offsets.size());
@@ -619,7 +619,7 @@ public class PdbResearch {
 		SymbolGroup symbolGroup = applicator.getSymbolGroup();
 
 		PublicSymbolInformation publicSymbolInformation =
-			pdb.getDatabaseInterface().getPublicSymbolInformation();
+			pdb.getDebugInfo().getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		applicator.setMonitorMessage(
 			"PDB: Applying " + offsets.size() + " public symbol components...");
@@ -646,7 +646,7 @@ public class PdbResearch {
 		SymbolGroup symbolGroup = applicator.getSymbolGroup();
 
 		GlobalSymbolInformation globalSymbolInformation =
-			pdb.getDatabaseInterface().getGlobalSymbolInformation();
+			pdb.getDebugInfo().getGlobalSymbolInformation();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		applicator.setMonitorMessage("PDB: Applying global symbols...");
 		monitor.initialize(offsets.size());
@@ -670,7 +670,7 @@ public class PdbResearch {
 			Map<Address, List<Stuff>> map, TaskMonitor monitor) throws CancelledException {
 		AbstractPdb pdb = applicator.getPdb();
 		int totalCount = 0;
-		int num = pdb.getDatabaseInterface().getNumModules();
+		int num = pdb.getDebugInfo().getNumModules();
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
 			monitor.checkCanceled();
 			SymbolGroup symbolGroup = applicator.getSymbolGroupForModule(moduleNumber);
@@ -688,7 +688,7 @@ public class PdbResearch {
 			monitor.checkCanceled();
 
 //			String moduleName =
-//				pdb.getDatabaseInterface().getModuleInformation(index).getModuleName();
+//				pdb.getDebugInfo().getModuleInformation(index).getModuleName();
 
 			// Process module symbols list
 			SymbolGroup symbolGroup = applicator.getSymbolGroupForModule(moduleNumber);

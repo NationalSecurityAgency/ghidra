@@ -48,7 +48,7 @@ public class DummyPdb700 extends Pdb700 {
 		super(null, new PdbReaderOptions());
 		typeProgramInterface =
 			new DummyTypeProgramInterface800(this, tpiIndexMin, tpiIndexMaxExclusive);
-		databaseInterface = new DummyDatabaseInterfaceNew(this);
+		debugInfo = new DummyDebugInfoNew(this);
 		hasIdStream = true;
 		itemProgramInterface =
 			new DummyTypeProgramInterface800(this, ipiIndexMin, ipiIndexMaxExclusive);

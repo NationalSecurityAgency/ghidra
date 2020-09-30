@@ -28,7 +28,7 @@ public class DummyTypeProgramInterface800 extends TypeProgramInterface800 {
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a basic object.
 	 *  Note: not all values are initialized.  
-	 * @param pdb The AbstractPdb foundation for the DatabaseInterface.
+	 * @param pdb The AbstractPdb foundation for the {@link TypeProgramInterface800}.
 	 * @param typeIndexMin int. The IndexMin to set/use.
 	 * @param typeIndexMaxExclusive int. One greater than the MaxIndex to set/use
 	 */

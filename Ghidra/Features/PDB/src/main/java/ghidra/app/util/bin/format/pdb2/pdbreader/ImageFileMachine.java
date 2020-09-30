@@ -22,11 +22,11 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractCompile2MsSymbol
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.Compile3MsSymbol;
 
 /**
- * Machine Type seen in the {@link DatabaseInterfaceNew} header.  We also map in the Processor.
+ * Machine Type seen in the {@link PdbNewDebugInfo} header.  We also map in the Processor.
  * We are not exactly sure about why there are different but similar items: Machine Type and
  * Processor.  The {@link Processor} is what is specified in {@link AbstractCompile2MsSymbol} and
  * {@link Compile3MsSymbol} and what we save off in {@link AbstractPdb}, but
- * {@link ImageFileMachine} is what we see in the header of {@link DatabaseInterfaceNew}.
+ * {@link ImageFileMachine} is what we see in the header of {@link PdbNewDebugInfo}.
  * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/sysinfo/image-file-machine-constants">
  * Image File Machine Constants</a>
  * @see <a href="http://metadataconsulting.blogspot.com/2014/06/imagefilemachine-extensive-machine-type.html">

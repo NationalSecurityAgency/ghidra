@@ -17,6 +17,8 @@ package ghidra.app.util.pdb;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
@@ -119,10 +121,9 @@ public class PdbProgramAttributes {
 			// Want to preserve add order while only keeping unique entries
 			Set<String> set = new LinkedHashSet<>();
 
-			if (pdbFile != null) {
+			if (!StringUtils.isBlank(pdbFile)) {
 				set.add(getFilename(pdbFile).toLowerCase());
 				set.add(getFilename(pdbFile));
-				set.add(pdbFile);
 			}
 
 			// getExecutablePath can return "unknown"
@@ -162,17 +163,22 @@ public class PdbProgramAttributes {
 	 */
 	private void createGuidAgeString() {
 
-		if ((pdbGuid == null && pdbSignature == null) || pdbAge == null) {
+		if ((StringUtils.isBlank(pdbGuid) && StringUtils.isBlank(pdbSignature)) ||
+			StringUtils.isBlank(pdbAge)) {
 			guidAgeCombo = null;
 			return;
 		}
 
-		guidAgeCombo = (pdbGuid == null) ? pdbSignature : pdbGuid;
-		guidAgeCombo = guidAgeCombo.replaceAll("-", "");
-		guidAgeCombo = guidAgeCombo.toUpperCase();
-
-		int pdbAgeDecimal = Integer.parseInt(pdbAge, 16);
-		guidAgeCombo += pdbAgeDecimal;
+		try {
+			int pdbAgeDecimal = Integer.parseInt(pdbAge, 16);
+			guidAgeCombo = (pdbGuid == null) ? pdbSignature : pdbGuid;
+			guidAgeCombo = guidAgeCombo.replaceAll("-", "");
+			guidAgeCombo = guidAgeCombo.toUpperCase();
+			guidAgeCombo += pdbAgeDecimal;
+		}
+		catch (NumberFormatException e) {
+			return;
+		}
 	}
 
 	/**
