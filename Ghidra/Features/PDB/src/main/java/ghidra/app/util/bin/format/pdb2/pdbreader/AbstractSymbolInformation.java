@@ -139,7 +139,7 @@ public abstract class AbstractSymbolInformation {
 		builder.append(numExtraBytes);
 		builder.append("\nnumHashRecords: ");
 		builder.append(numHashRecords);
-		builder.append("\nEnd HashBasics---------------------------------------------\n");
+		builder.append("\nEnd HashBasics----------------------------------------------\n");
 	}
 
 	/**
@@ -156,7 +156,7 @@ public abstract class AbstractSymbolInformation {
 		builder.append(hashRecordsLength);
 		builder.append("\nlengthBuckets: ");
 		builder.append(bucketsLength);
-		builder.append("\nEnd HashHeader---------------------------------------------\n");
+		builder.append("\nEnd HashHeader----------------------------------------------\n");
 	}
 
 	/**
@@ -192,7 +192,7 @@ public abstract class AbstractSymbolInformation {
 			builder.append(
 				String.format("0X%08X  0X%04X\n", record.getOffset(), record.getReferenceCount()));
 		}
-		builder.append("\nEnd HashRecords--------------------------------------------\n");
+		builder.append("\nEnd HashRecords---------------------------------------------\n");
 	}
 
 	/**
