@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.jgrapht.Graph;
 
+import docking.widgets.EventTrigger;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
 import ghidra.util.Swing;
@@ -56,12 +57,12 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void selectVertices(List<String> vertexList) {
+	public void selectVertices(List<String> vertexList, EventTrigger eventTrigger) {
 		// This display is not interactive, so N/A
 	}
 
 	@Override
-	public void setLocation(String vertexID) {
+	public void setLocationFocus(String vertexID, EventTrigger eventTrigger) {
 		// This display is not interactive, so N/A
 	}
 

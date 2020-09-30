@@ -23,17 +23,15 @@ import org.jungrapht.visualization.MultiLayerTransformer;
 import org.jungrapht.visualization.VisualizationViewer;
 
 import ghidra.graph.job.AbstractAnimatorJob;
-import ghidra.service.graph.AttributedEdge;
-import ghidra.service.graph.AttributedVertex;
 
-public class CenterAnimation<V, E> extends AbstractAnimatorJob {
+public class CenterAnimationJob extends AbstractAnimatorJob {
 	protected int duration = 1000;
 	private final Point2D oldPoint;
 	private final Point2D newPoint;
 	private final Point2D lastPoint = new Point2D.Double();
-	private final VisualizationViewer<V, E> viewer;
+	private final VisualizationViewer<?, ?> viewer;
 
-	public CenterAnimation(VisualizationViewer<V, E> viewer,
+	public CenterAnimationJob(VisualizationViewer<?, ?> viewer,
 			Point2D oldPoint, Point2D newPoint) {
 		this.viewer = viewer;
 		this.oldPoint = oldPoint;

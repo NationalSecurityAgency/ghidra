@@ -37,7 +37,7 @@ public interface GraphDisplayListener {
 	 * Notification that the "focused" (active) vertex has changed.
 	 * @param vertexId the vertex id of the currently "focused" vertex
 	 */
-	public void locationChanged(String vertexId);
+	public void locationFocusChanged(String vertexId);
 
 	default boolean updateVertexName(String vertexId, String oldName, String newName) {
 		// no op
