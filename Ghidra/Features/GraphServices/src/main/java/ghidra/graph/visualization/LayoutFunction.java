@@ -15,21 +15,14 @@
  */
 package ghidra.graph.visualization;
 
-import org.jungrapht.visualization.layout.algorithms.BalloonLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.CircleLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.EiglspergerLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.FRLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.GEMLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.KKLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.LayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.RadialTreeLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.TidierRadialTreeLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.TidierTreeLayoutAlgorithm;
-import org.jungrapht.visualization.layout.algorithms.TreeLayoutAlgorithm;
+import java.util.function.Function;
+
+import org.jungrapht.visualization.layout.algorithms.*;
 import org.jungrapht.visualization.layout.algorithms.repulsion.BarnesHutFRRepulsion;
 import org.jungrapht.visualization.layout.algorithms.sugiyama.Layering;
 
-import java.util.function.Function;
+import ghidra.service.graph.AttributedEdge;
+import ghidra.service.graph.AttributedVertex;
 
 /**
  * A central location to list and provide all layout algorithms, their names, and their builders
@@ -38,8 +31,8 @@ import java.util.function.Function;
  * This class provides LayoutAlgorithm builders instead of LayoutAlgorithms because some LayoutAlgorithms
  * accumulate state information (so are used only one time).
  */
-class LayoutFunction<V, E>
-		implements Function<String, LayoutAlgorithm.Builder<V, ?, ?>> {
+class LayoutFunction
+		implements Function<String, LayoutAlgorithm.Builder<AttributedVertex, ?, ?>> {
 
 	static final String KAMADA_KAWAI = "Force Balanced";
 	static final String FRUCTERMAN_REINGOLD = "Force Directed";
@@ -64,51 +57,53 @@ class LayoutFunction<V, E>
 	}
 
 	@Override
-	public LayoutAlgorithm.Builder<V, ?, ?> apply(String name) {
+	public LayoutAlgorithm.Builder<AttributedVertex, ?, ?> apply(String name) {
 		switch(name) {
 			case GEM:
 				return GEMLayoutAlgorithm.edgeAwareBuilder();
 			case KAMADA_KAWAI:
-				return KKLayoutAlgorithm.<V> builder()
+				return KKLayoutAlgorithm.<AttributedVertex> builder()
 						.preRelaxDuration(1000);
 			case FRUCTERMAN_REINGOLD:
-				return FRLayoutAlgorithm.<V> builder()
+				return FRLayoutAlgorithm.<AttributedVertex> builder()
 					.repulsionContractBuilder(BarnesHutFRRepulsion.builder());
 			case CIRCLE_MINCROSS:
-				return CircleLayoutAlgorithm.<V> builder()
+				return CircleLayoutAlgorithm.<AttributedVertex> builder()
 					.reduceEdgeCrossing(true);
 			case TIDIER_RADIAL_TREE:
-				return TidierRadialTreeLayoutAlgorithm.<V, E> edgeAwareBuilder();
+				return TidierRadialTreeLayoutAlgorithm
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder();
 			case MIN_CROSS_TOP_DOWN:
 				return EiglspergerLayoutAlgorithm
-					.<V, E> edgeAwareBuilder()
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
 						.layering(Layering.TOP_DOWN);
 			case MIN_CROSS_LONGEST_PATH:
 				return EiglspergerLayoutAlgorithm
-						.<V, E> edgeAwareBuilder()
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
 						.layering(Layering.LONGEST_PATH);
 			case MIN_CROSS_NETWORK_SIMPLEX:
 				return EiglspergerLayoutAlgorithm
-						.<V, E> edgeAwareBuilder()
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
 						.layering(Layering.NETWORK_SIMPLEX);
 			case MIN_CROSS_COFFMAN_GRAHAM:
 				return EiglspergerLayoutAlgorithm
-						.<V, E> edgeAwareBuilder()
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder()
 						.layering(Layering.COFFMAN_GRAHAM);
 			case RADIAL:
 				return RadialTreeLayoutAlgorithm
-					.<V> builder()
+						.<AttributedVertex> builder()
 					.verticalVertexSpacing(300);
 			case BALLOON:
 				return BalloonLayoutAlgorithm
-						.<V> builder()
+						.<AttributedVertex> builder()
 						.verticalVertexSpacing(300);
 			case TREE:
 				return TreeLayoutAlgorithm
 						.builder();
 			case TIDIER_TREE:
 			default:
-				return TidierTreeLayoutAlgorithm.<V, E> edgeAwareBuilder();
+				return TidierTreeLayoutAlgorithm
+						.<AttributedVertex, AttributedEdge> edgeAwareBuilder();
 		}
 	}
 }
