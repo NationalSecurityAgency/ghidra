@@ -17,6 +17,7 @@ package ghidra.graph.program;
 
 import java.util.*;
 
+import docking.widgets.EventTrigger;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -37,7 +38,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setLocation(String vertexID) {
+	public void setLocationFocus(String vertexID, EventTrigger eventTrigger) {
 		currentFocusedVertex = vertexID;
 	}
 
@@ -46,7 +47,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void selectVertices(List<String> vertexList) {
+	public void selectVertices(List<String> vertexList, EventTrigger eventTrigger) {
 		currentSelection = vertexList;
 	}
 
@@ -103,7 +104,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	public void focusChanged(String vertexId) {
-		listener.locationChanged(vertexId);
+		listener.locationFocusChanged(vertexId);
 	}
 
 	public void selectionChanged(List<String> vertexIds) {

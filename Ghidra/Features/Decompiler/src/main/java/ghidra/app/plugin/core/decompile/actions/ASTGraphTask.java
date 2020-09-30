@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import java.util.Iterator;
 
+import docking.widgets.EventTrigger;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -122,7 +123,9 @@ public class ASTGraphTask extends Task {
 			display.setGraph(graph, description, false, monitor);
 			// set the graph location
 			if (location != null) {
-				display.setLocation(displayListener.getVertexIdForAddress(location));
+				String id = displayListener.getVertexIdForAddress(location);
+				// update graph location, but don't have it send out event
+				display.setLocationFocus(id, EventTrigger.INTERNAL_ONLY);
 			}
 
 		}

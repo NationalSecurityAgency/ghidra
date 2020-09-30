@@ -18,6 +18,7 @@ package ghidra.graph.program;
 import java.awt.Color;
 import java.util.*;
 
+import docking.widgets.EventTrigger;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -156,12 +157,15 @@ public class BlockGraphTask extends Task {
 			display.setGraph(graph, actionName, appendGraph, monitor);
 
 			if (location != null) {
-				display.setLocation(listener.getVertexIdForAddress(location.getAddress()));
+				// initialize the graph location, but don't have the graph send an event
+				String id = listener.getVertexIdForAddress(location.getAddress());
+				display.setLocationFocus(id, EventTrigger.INTERNAL_ONLY);
 			}
 			if (selection != null && !selection.isEmpty()) {
 				List<String> selectedVertices = listener.getVertices(selection);
 				if (selectedVertices != null) {
-					display.selectVertices(selectedVertices);
+					// intialize the graph selection, but don't have the graph send an event
+					display.selectVertices(selectedVertices, EventTrigger.INTERNAL_ONLY);
 				}
 			}
 		}
