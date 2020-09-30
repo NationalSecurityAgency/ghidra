@@ -17,6 +17,7 @@ package ghidra.app.decompiler;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 import ghidra.app.decompiler.DecompileCallback.StringData;
 import ghidra.app.plugin.processors.sleigh.ContextCache;
@@ -49,7 +50,6 @@ public class DecompileDebug {
 	private ArrayList<Namespace> dbscope;	// Symbol query:  scope
 	private ArrayList<String> database;		//                description of the symbol
 	private ArrayList<DataType> dtypes;		// Data-types queried
-	private ArrayList<String> symbol;		// Names of code labels
 	private ArrayList<String> context;		// Tracked register values associated with an address
 	private ArrayList<String> cpool;		// Constant pool results
 	private ArrayList<String> flowoverride;	// Flow overrides associated with an address
@@ -111,7 +111,6 @@ public class DecompileDebug {
 		dbscope = new ArrayList<Namespace>();
 		database = new ArrayList<String>();
 		dtypes = new ArrayList<DataType>();
-		symbol = new ArrayList<String>();
 		context = new ArrayList<String>();
 		cpool = new ArrayList<String>();
 		byteset = new TreeSet<ByteChunk>();
@@ -192,9 +191,6 @@ public class DecompileDebug {
 		binimage += "\">\n";
 		debugStream.write(binimage.getBytes());
 		dumpBytes(debugStream);
-		for (String element : symbol) {
-			debugStream.write((element).getBytes());
-		}
 		debugStream.write("</binaryimage>\n".getBytes());
 	}
 
@@ -511,50 +507,87 @@ public class DecompileDebug {
 		debugStream.write("</injectdebug>\n".getBytes());
 	}
 
+	private ArrayList<Namespace> orderNamespaces() {
+		TreeMap<Long, Namespace> namespaceMap = new TreeMap<Long, Namespace>();
+		for (Namespace namespace : dbscope) {
+			namespaceMap.put(namespace.getID(), namespace);
+		}
+		ArrayList<Namespace> res = new ArrayList<Namespace>();
+		while (!namespaceMap.isEmpty()) {
+			Entry<Long, Namespace> entry = namespaceMap.firstEntry();
+			Long curKey = entry.getKey();
+			Namespace curSpace = entry.getValue();
+			for (;;) {
+				Long key;
+				Namespace parent = curSpace.getParentNamespace();
+				if (parent == null) {
+					break;
+				}
+				if (HighFunction.collapseToGlobal(parent)) {
+					key = Long.valueOf(Namespace.GLOBAL_NAMESPACE_ID);
+				}
+				else {
+					key = Long.valueOf(parent.getID());
+				}
+				parent = namespaceMap.get(key);
+				if (parent == null) {
+					break;
+				}
+				curKey = key;
+				curSpace = parent;
+			}
+			res.add(curSpace);
+			namespaceMap.remove(curKey);
+		}
+		return res;
+	}
+
 	private void dumpDatabases(OutputStream debugStream) throws IOException {
 		Namespace scopename = null;
-		debugStream.write("<db>\n".getBytes());
-		for (int i = 0; i < database.size(); ++i) {
-			scopename = dbscope.get(i);
-			if (scopename != null) {
-				break;
-			}
-		}
-		while (scopename != null) {
+		ArrayList<Namespace> spaceList = orderNamespaces();
+		debugStream.write("<db scodeidbyname=\"false\">\n".getBytes());
+		for (Namespace element : spaceList) {
+			scopename = element;
 			StringBuilder datahead = new StringBuilder();
 			Namespace parentNamespace;
 			datahead.append("<scope");
 			// Force globalnamespace to have blank name
-			if (scopename != globalnamespace && !(scopename instanceof Library)) {
+			if (scopename != globalnamespace) {
 				SpecXmlUtils.xmlEscapeAttribute(datahead, "name", scopename.getName());
 				parentNamespace = scopename.getParentNamespace();
+				SpecXmlUtils.encodeUnsignedIntegerAttribute(datahead, "id", scopename.getID());
 			}
 			else {
 				SpecXmlUtils.encodeStringAttribute(datahead, "name", "");
+				SpecXmlUtils.encodeUnsignedIntegerAttribute(datahead, "id",
+					Namespace.GLOBAL_NAMESPACE_ID);
 				parentNamespace = null;
 			}
 			datahead.append(">\n");
-			HighFunction.createNamespaceTag(datahead, parentNamespace, false);
+			if (parentNamespace != null) {
+				long parentId =
+					HighFunction.collapseToGlobal(parentNamespace) ? Namespace.GLOBAL_NAMESPACE_ID
+							: parentNamespace.getID();
+				datahead.append("<parent");
+				SpecXmlUtils.encodeUnsignedIntegerAttribute(datahead, "id", parentId);
+				datahead.append("/>\n");
+			}
 			if (scopename != globalnamespace) {
 				datahead.append("<rangeequalssymbols/>\n");
 			}
 			datahead.append("<symbollist>\n");
 			debugStream.write(datahead.toString().getBytes());
-			for (int i = 0; i < database.size(); ++i) {
-				Namespace namespc = dbscope.get(i);
+			for (int j = 0; j < database.size(); ++j) {
+				Namespace namespc = dbscope.get(j);
 				if (namespc == scopename) {
-					debugStream.write((database.get(i)).getBytes());
-					dbscope.set(i, null);
+					String entry = database.get(j);
+					if (entry == null) {
+						continue;			// String may be null
+					}
+					debugStream.write(entry.getBytes());
 				}
 			}
 			debugStream.write("</symbollist>\n</scope>\n".getBytes());
-			scopename = null;
-			for (Namespace element : dbscope) {
-				scopename = element;
-				if (scopename != null) {
-					break;
-				}
-			}
 		}
 		debugStream.write("</db>\n".getBytes());
 	}
@@ -627,19 +660,34 @@ public class DecompileDebug {
 		comments = comm;	// Already in XML form
 	}
 
-	public void getSymbol(Address addr, String name) {
+	public void getCodeSymbol(Address addr, long id, String name, Namespace namespace) {
 		StringBuilder buf = new StringBuilder();
-		buf.append("<symbol");
-		AddressSpace space = addr.getAddressSpace();
-		SpecXmlUtils.encodeStringAttribute(buf, "space", space.getPhysicalSpace().getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "offset", addr.getOffset());
+		buf.append("<mapsym>\n");
+		buf.append(" <labelsym");
 		SpecXmlUtils.xmlEscapeAttribute(buf, "name", name);
+		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", id);
 		buf.append("/>\n");
-		symbol.add(buf.toString());
+		buf.append(" <addr");
+		Varnode.appendSpaceOffset(buf, addr);
+		buf.append("/>\n");
+		buf.append(" <rangelist/>\n");
+		buf.append("</mapsym>\n");
+		getMapped(namespace, buf.toString());
+	}
+
+	public void getNamespacePath(Namespace namespace) {
+		while (namespace != null) {
+			if (HighFunction.collapseToGlobal(namespace)) {
+				break;		// Treat library namespace as root
+			}
+			dbscope.add(namespace);		// Add namespace to guarantee <scope> tag
+			database.add(null);			// Even if there isn't necessarily any symbols
+			namespace = namespace.getParentNamespace();
+		}
 	}
 
 	public void getMapped(Namespace namespc, String res) {
-		if (namespc == null) {
+		if (namespc == null || HighFunction.collapseToGlobal(namespc)) {
 			dbscope.add(globalnamespace);
 		}
 		else {

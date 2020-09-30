@@ -209,7 +209,7 @@ class ScopeLocal : public ScopeInternal {
   void addRecommendName(Symbol *sym);	///< Convert the given symbol to a name recommendation
   void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
 public:
-  ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
+  ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
   virtual ~ScopeLocal(void) {}	///< Destructor
 
   AddrSpace *getSpaceId(void) const { return space; }		///< Get the associated (stack) address space

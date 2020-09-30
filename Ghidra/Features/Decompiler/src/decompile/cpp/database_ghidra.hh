@@ -36,7 +36,6 @@ class ScopeGhidra : public Scope {
   ArchitectureGhidra *ghidra;		///< Architecture and connection to the Ghidra client
   mutable ScopeInternal *cache;		///< An internal cache of previously fetched Symbol objects
   mutable RangeList holes;		///< List of (queried) memory ranges with no Symbol in them
-  mutable map<uint8,Scope *> namespaceMap;	///< Map from id to formal global namespace objects
   vector<int4> spacerange;		///< List of address spaces that are in the global range
   partmap<Address,uint4> flagbaseDefault;	///< Default boolean properties on memory
   mutable bool cacheDirty;		///< Is flagbaseDefault different from cache
@@ -48,7 +47,7 @@ class ScopeGhidra : public Scope {
   virtual void removeRange(AddrSpace *spc,uintb first,uintb last) {
     throw LowlevelError("remove_range should not be performed on ghidra scope");
   }
-  virtual Scope *buildSubScope(const string &nm);
+  virtual Scope *buildSubScope(uint8 id,const string &nm);
   virtual void addSymbolInternal(Symbol *sym) { throw LowlevelError("add_symbol_internal unimplemented"); }
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
 				      const RangeList &uselim) { throw LowlevelError("addMap unimplemented"); }
@@ -77,6 +76,7 @@ public:
   virtual void clearAttribute(Symbol *sym,uint4 attr) { cache->clearAttribute(sym,attr); }
   virtual void setDisplayFormat(Symbol *sym,uint4 attr) { cache->setDisplayFormat(sym,attr); }
 
+  virtual void adjustCaches(void) { cache->adjustCaches(); }
   virtual SymbolEntry *findAddr(const Address &addr,const Address &usepoint) const;
   virtual SymbolEntry *findContainer(const Address &addr,int4 size,
 					const Address &usepoint) const;
@@ -127,16 +127,13 @@ public:
 class ScopeGhidraNamespace : public ScopeInternal {
   friend class ScopeGhidra;
   ArchitectureGhidra *ghidra;		///< Connection to the Ghidra client
-  uint8 scopeId;			///< Internal id allowing Ghidra client to reference formal namespaces
-  void setClientId(uint8 id) { scopeId = id; }
 protected:
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
 				      const RangeList &uselim);
 public:
-  ScopeGhidraNamespace(const string &nm,ArchitectureGhidra *g)
-    : ScopeInternal(nm,g) { ghidra = g; scopeId = 0; }		///< Constructor
+  ScopeGhidraNamespace(uint8 id,const string &nm,ArchitectureGhidra *g)
+    : ScopeInternal(id,nm,g) { ghidra = g; }		///< Constructor
 
-  uint8 getClientId(void) const { return scopeId; }		///< Get the Ghidra specific id
   virtual bool isNameUsed(const string &nm,const Scope *op2) const;
 };
 

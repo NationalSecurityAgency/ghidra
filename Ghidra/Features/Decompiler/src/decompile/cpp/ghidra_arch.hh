@@ -68,7 +68,7 @@ class ArchitectureGhidra : public Architecture {
   bool sendsyntaxtree;		///< True if the syntax tree should be sent with function output
   bool sendCcode;		///< True if C code should be sent with function output
   bool sendParamMeasures;       ///< True if measurements for argument and return parameters should be sent
-  virtual Scope *buildGlobalScope(void);
+  virtual Scope *buildDatabase(DocumentStorage &store);
   virtual Translate *buildTranslator(DocumentStorage &store);
   virtual void buildLoader(DocumentStorage &store);
   virtual PcodeInjectLibrary *buildPcodeInjectLibrary(void);

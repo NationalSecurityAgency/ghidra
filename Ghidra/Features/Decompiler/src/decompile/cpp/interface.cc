@@ -343,16 +343,8 @@ static bool maxmatch(string &res,const string &op1,const string &op2)
 {				// Set res to maximum characters in common
 				// at the beginning of op1 and op2
   int4 len;
-  bool equal;
 
-  if (op1.size() == op2.size()) {
-    len = op1.size();
-    equal = true;
-  }
-  else {
-    equal = false;
-    len = ( op1.size() < op2.size() ) ? op1.size() : op2.size();
-  }
+  len = ( op1.size() < op2.size() ) ? op1.size() : op2.size();
 
   res.erase();
   for(int4 i=0;i<len;++i) {
@@ -361,7 +353,7 @@ static bool maxmatch(string &res,const string &op1,const string &op2)
     else
       return false;
   }
-  return equal;
+  return true;
 }
 
 int4 IfaceStatus::expandCom(vector<string> &expand,istream &s,

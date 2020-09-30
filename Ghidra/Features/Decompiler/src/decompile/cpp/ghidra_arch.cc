@@ -325,14 +325,12 @@ Translate *ArchitectureGhidra::buildTranslator(DocumentStorage &store)
   return new GhidraTranslate(this);
 }
 
-Scope *ArchitectureGhidra::buildGlobalScope(void)
+Scope *ArchitectureGhidra::buildDatabase(DocumentStorage &store)
 
 {
-  Scope *globalscope = symboltab->getGlobalScope();
-  if (globalscope == (Scope *)0) {	// Make sure global scope exists
-    globalscope = new ScopeGhidra(this);
-    symboltab->attachScope(globalscope,(Scope *)0);
-  }
+  symboltab = new Database(this,false);
+  Scope *globalscope = new ScopeGhidra(this);
+  symboltab->attachScope(globalscope,(Scope *)0);
   return globalscope;
 }
 
