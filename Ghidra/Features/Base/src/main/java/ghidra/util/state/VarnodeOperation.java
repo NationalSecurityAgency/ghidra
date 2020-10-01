@@ -170,7 +170,7 @@ public class VarnodeOperation extends Varnode {
 	}
 
 	@Override
-	public boolean isPersistant() {
+	public boolean isPersistent() {
 		return false;
 	}
 
