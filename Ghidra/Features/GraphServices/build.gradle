@@ -22,7 +22,7 @@ dependencies {
 	runtime "org.slf4j:slf4j-nop:1.7.25"
 	// use this if you want slf4j log messages sent to log4j
 //	runtime "org.apache.logging.log4j:log4j-slf4j-impl:2.12.1"
-	runtime "org.jheaps:jheaps:0.11"
+	runtime "org.jheaps:jheaps:0.13"
       
 	helpPath project(path: ":Base", configuration: 'helpPath')
 	
