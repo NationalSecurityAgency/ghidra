@@ -1,7 +1,6 @@
 /* ###
  * IP: GHIDRA
- * EXCLUDE: YES
- * NOTE: Interface to GNU BFD library which is GPL 3
+ * NOTE: Excluded from Build.  Used for development only in support of console mode - Links to GNU BFD library which is GPL 3
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
