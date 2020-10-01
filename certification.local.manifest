@@ -1,6 +1,6 @@
 ##VERSION: 2.0
-.gitattributes||GHIDRA|exclude|||END|
-.gitignore||GHIDRA|exclude|||END|
+.gitattributes||GHIDRA||||END|
+.gitignore||GHIDRA||||END|
 .gitlab-ci.yml||GHIDRA||||END|
 CONTRIBUTING.md||GHIDRA||||END|
 DISCLAIMER.md||GHIDRA||||END|

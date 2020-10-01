@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * EXCLUDE: YES
  * NOTE: Target command uses BFD stuff which is GPL 3
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
