@@ -7972,8 +7972,10 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # ST.T off18, bpos3, b (ABSB)
 :st.t off18,const0810Z,const1111Z is PCPMode=0 & ( const0810Z & const1111Z & op0007=0xd5 ; op2627=0x0 ) & off18
 {
-	local tmp:4 = *[ram]:1 off18;
-	tmp = (tmp & ~(1 << const0810Z)) | (const1111Z << const0810Z);
+	local tmp:1 = *[ram]:1 off18;
+	ternary(tmp, const1111Z,
+		tmp |  (1 << const0810Z),
+		tmp & ~(1 << const0810Z));
 	*[ram]:1 off18 = tmp;
 }
 
