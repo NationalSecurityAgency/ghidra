@@ -2488,7 +2488,8 @@ buildVldmDdList: Dreg,buildVldmDdList	is Dreg & buildVldmDdList	[ counter=counte
 	build buildVldmDdList;
 }
 
-vldmDdList: "{"^buildVldmDdList^"}"	is D22 & c1215 & c0007 & buildVldmDdList [ regNum=(D22<<4)+c1215 - 1; counter=c0007>>1; ] { }
+vldmDdList: "{"^buildVldmDdList^"}"	is TMode=0 & D22 & c1215 & c0007 & buildVldmDdList [ regNum=(D22<<4)+c1215 - 1; counter=c0007>>1; ] { }
+vldmDdList: "{"^buildVldmDdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVldmDdList [ regNum=(thv_D22<<4)+thv_c1215 - 1; counter=thv_c0007>>1; ] { }
 
 :vldmia^COND vldmRn,vldmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=1 & c0811=11 & c0000=0) | 
                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=1 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vldmDdList & vldmOffset & vldmUpdate
@@ -4540,7 +4541,8 @@ buildVstmDdList: Dreg,buildVstmDdList	is Dreg & buildVstmDdList	[ counter=counte
 	build buildVstmDdList;
 }
 
-vstmDdList: "{"^buildVstmDdList^"}"	is D22 & c1215 & c0007 & buildVstmDdList [ regNum=(D22<<4)+c1215-1; counter=c0007>>1; ] { }
+vstmDdList: "{"^buildVstmDdList^"}"	is TMode=0 & D22 & c1215 & c0007 & buildVstmDdList [ regNum=(D22<<4)+c1215-1; counter=c0007>>1; ] { }
+vstmDdList: "{"^buildVstmDdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVstmDdList [ regNum=(thv_D22<<4)+thv_c1215-1; counter=thv_c0007>>1; ] { }
 
 :vstmia^COND vldmRn,vstmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=0 & c0811=11 & c0000=0) | 
                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=0 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vstmDdList & vldmOffset & vldmUpdate
