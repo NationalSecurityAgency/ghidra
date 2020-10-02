@@ -655,9 +655,12 @@ public class PeLoader extends AbstractPeDebugLoader {
 								sections[i].getName() + " section");
 						}
 						long offset = sections[i].getPointerToRawData();
-						MemoryBlockUtils.createInitializedBlock(prog, false,
-							sections[i].getReadableName(), address, fileBytes, offset, dataSize, "",
-							"", r, w, x, log);
+						String sectionName = sections[i].getReadableName();
+						if (sectionName.isBlank()) {
+							sectionName = "SECTION." + i;
+						}
+						MemoryBlockUtils.createInitializedBlock(prog, false, sectionName, address,
+							fileBytes, offset, dataSize, "", "", r, w, x, log);
 						sectionToAddress.put(sections[i], address);
 					}
 					if (rawDataSize == virtualSize) {
