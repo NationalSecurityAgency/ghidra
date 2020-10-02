@@ -36,7 +36,7 @@ import ghidra.util.timer.GTimer;
  * Swing Thread.
  * 
  * <p>Implementation note: 
- * if this class is constructed with a {@code hasProgrees} value of {@code false},
+ * if this class is constructed with a {@code hasProgress} value of {@code false},
  * then an activity component will be shown, not a progress monitor.   Any calls to update 
  * progress will not affect the display.   However, the display can be converted to use progress
  * by first calling {@link #setIndeterminate(boolean)} with a {@code false} value and then calling

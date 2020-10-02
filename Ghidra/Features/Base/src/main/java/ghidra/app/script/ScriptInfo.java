@@ -518,7 +518,7 @@ public class ScriptInfo {
 	 */
 	public String getErrorMessage() {
 		if (isCompileErrors()) {
-			return "Script contains compiler errors";
+			return "Error compiling script (see console)";
 		}
 
 		if (isDuplicate()) {

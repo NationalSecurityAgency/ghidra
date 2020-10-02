@@ -255,15 +255,17 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 
 				label.setText(null);
 				label.setToolTipText(null);
-				if (info.hasErrors()) {
-					label.setToolTipText("Status: " + info.getErrorMessage());
-				}
 
 				ImageIcon icon = (ImageIcon) data.getValue();
 				label.setIcon(null);
 				if (icon != null) {
-					label.setToolTipText("Status: Script has toolbar icon");
 					label.setIcon(icon);
+					if (info.hasErrors()) {
+						label.setToolTipText("Status: " + info.getErrorMessage());
+					}
+					else {
+						label.setToolTipText("Status: Script has toolbar icon");
+					}
 				}
 				else {
 					label.setToolTipText("Status: No script toolbar icon has been set");

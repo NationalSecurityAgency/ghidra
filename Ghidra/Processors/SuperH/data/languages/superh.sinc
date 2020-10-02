@@ -2228,7 +2228,7 @@ define pcodeop Sleep_Standby;
 # FSUB FRm, FRn               1111nnnnmmmm0001 FRn - FRm → FRn
 :fsub ffrm_04_07, ffrn_08_11        is fop_12_15=0b1111 & ffrn_08_11 & ffrm_04_07 & fop_00_03=0b0001
 {
-    ffrn_08_11 = ffrn_08_11 - ffrm_04_07;
+    ffrn_08_11 = ffrn_08_11 f- ffrm_04_07;
 }
 
 # TODO: FSUB DRm, DRn               1111nnn0mmm00001 DRn - DRm → DRn
