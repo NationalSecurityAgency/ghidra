@@ -27,7 +27,7 @@ macro lzcntflags(input, output) {
  
 }
 
-:LZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBD; Reg32 ... & rm32 {
+:LZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBD; Reg32 ... & check_Reg32_dest ... & rm32 {
 
   countTmp:4 = 0;
   inputTmp:4 = rm32;
@@ -42,7 +42,7 @@ macro lzcntflags(input, output) {
  <loopend>
   lzcntflags(rm32, countTmp);
   Reg32 = countTmp;
-
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
