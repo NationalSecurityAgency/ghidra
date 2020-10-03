@@ -31,6 +31,11 @@ public interface Pointer extends DataType {
 	DataType getDataType();
 
 	/**
+	 * Gets the offset by which this pointer is shifted
+	 */
+	int getShiftOffset();
+	
+	/**
 	 * Creates a pointer to the indicated data type.
 	 * @param dataType the data type to point to.
 	 * @return the newly created pointer.

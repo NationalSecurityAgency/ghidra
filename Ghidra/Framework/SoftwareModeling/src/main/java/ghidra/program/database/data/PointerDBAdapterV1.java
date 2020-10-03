@@ -58,6 +58,7 @@ class PointerDBAdapterV1 extends PointerDBAdapter {
 		rec.setLongValue(PTR_DT_ID_COL, oldRec.getLongValue(OLD_PTR_DT_ID_COL));
 		rec.setLongValue(PTR_CATEGORY_COL, oldRec.getLongValue(OLD_PTR_CATEGORY_COL));
 		rec.setByteValue(PTR_LENGTH_COL, (byte) -1);
+		rec.setLongValue(PTR_SHIFT_OFFSET_COL, 0);
 		return rec;
 	}
 

@@ -60,6 +60,7 @@ public class UnionEditorProvider extends CompositeEditorProvider {
 			new DeleteAction(this), 
 			new PointerAction(this), 
 			new ArrayAction(this),
+			new ShiftPointerAction(this),
 			new ShowComponentPathAction(this), 
 			new EditComponentAction(this),
 			new EditFieldAction(this), 

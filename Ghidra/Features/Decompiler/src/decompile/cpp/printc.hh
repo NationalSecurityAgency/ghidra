@@ -111,6 +111,8 @@ protected:
   static OpToken type_expr_space;	///< Type declaration involving a space (identifier or adornment)
   static OpToken type_expr_nospace;	///< Type declaration with no space
   static OpToken ptr_expr;		///< Pointer adornment for a type declaration
+  static OpToken ptr_shift_pos_expr; ///< The positive pointer shift operator
+  static OpToken ptr_shift_neg_expr; ///< The negative pointer shift operator
   static OpToken array_expr;		///< Array adornment for a type declaration
   static OpToken enum_cat;		///< The \e concatenation operator for enumerated values
   bool option_NULL;		///< Set to \b true if we should emit NULL keyword
@@ -127,6 +129,7 @@ protected:
   void pushPrototypeInputs(const FuncProto *proto);				///< Push input parameters
   void pushSymbolScope(const Symbol *symbol);			///< Push tokens resolving a symbol's scope
   void emitSymbolScope(const Symbol *symbol);			///< Emit tokens resolving a symbol's scope
+  void pushPtrShiftOp(const TypePointer *ct); ///< Push the appropriate pointer shift operator
   virtual void pushTypeStart(const Datatype *ct,bool noident);	///< Push part of a data-type declaration onto the RPN stack, up to the identifier
   virtual void pushTypeEnd(const Datatype *ct);			///< Push the tail ends of a data-type declaration onto the RPN stack
   void pushBoolConstant(uintb val,const TypeBase *ct,const Varnode *vn,

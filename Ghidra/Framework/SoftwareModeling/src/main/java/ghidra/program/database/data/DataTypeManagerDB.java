@@ -2287,7 +2287,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			else if (dt instanceof Pointer) {
 				Pointer ptr = (Pointer) dt;
 				int len = ptr.isDynamicallySized() ? -1 : ptr.getLength();
-				newDataType = createPointer(ptr.getDataType(), cat, (byte) len, handler);
+				newDataType = createPointer(ptr.getDataType(), cat, (byte) len, ptr.getShiftOffset(), handler);
 			}
 			else if (dt instanceof Structure) {
 				Structure structure = (Structure) dt;
@@ -2469,7 +2469,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return enumDB;
 	}
 
-	private Pointer createPointer(DataType dt, Category cat, byte length,
+	private Pointer createPointer(DataType dt, Category cat, byte length, int shiftOffset,
 			DataTypeConflictHandler handler) throws IOException {
 
 		if (dt != null) {
@@ -2477,7 +2477,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		long dataTypeID = getResolvedID(dt);
 
-		Record record = pointerAdapter.createRecord(dataTypeID, cat.getID(), length);
+		Record record = pointerAdapter.createRecord(dataTypeID, cat.getID(), length, shiftOffset);
 		PointerDB ptrDB = new PointerDB(this, dtCache, pointerAdapter, record);
 		if (dt != null) {
 			dt.addParent(ptrDB);

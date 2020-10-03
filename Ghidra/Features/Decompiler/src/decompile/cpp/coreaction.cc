@@ -2176,9 +2176,27 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   Varnode *vn,*outvn;
   PcodeOp *newop;
   bool force=false;
+  bool isshift=false;
 
   tokenct = op->getOpcode()->getOutputToken(op,castStrategy);
   outvn = op->getOut();
+  // Check if this is a pointer shift node
+  // The following conditions must be true:
+  //  - op is CPUI_INT_ADD
+  //  - the first input is a pointer
+  //  - the second input is a constant offset
+  //  - the constant offset equals -(shift offset of the pointer)
+  if (op->code()==CPUI_INT_ADD && op->getIn(0)->getType()->getMetatype()==TYPE_PTR) {
+    TypePointer *pt = (TypePointer*) op->getIn(0)->getType();
+    if (op->getIn(1)->isConstant()) {
+      intb off = op->getIn(1)->getOffset();
+      sign_extend(off, 8*pt->getSize()-1);
+      if (AddrSpace::addressToByteInt(off, pt->getWordSize())==-pt->getShiftOffset()) {
+        isshift = true;
+        tokenct = outvn->getType(); // tokenct is the shifted pointer type, but the addition actually output the unshifted pointer type
+      }
+    }
+  }    
   if (outvn->isImplied()) {
     // implied varnode must have parse type
     if (outvn->getType()->getMetatype() != TYPE_PTR) // If implied varnode has an atomic (non-pointer) type
@@ -2195,7 +2213,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   }
   if (!force) {
     outct = outvn->getHigh()->getType();	// Type of result
-    ct = castStrategy->castStandard(outct,tokenct,false,true);
+    ct = castStrategy->castStandard(outct,tokenct,false,!isshift);
     if (ct == (Datatype *)0) return 0;
   }
 				// Generate the cast op
@@ -4240,10 +4258,15 @@ Datatype *ActionInferTypes::propagateAddIn2Out(TypeFactory *typegrp,PcodeOp *op,
   
 {
   Datatype *rettype = op->getIn(inslot)->getTempType(); // We know this is a pointer type
-  Datatype *tstruct = ((TypePointer *)rettype)->getPtrTo();
+  TypePointer *pt = (TypePointer*) rettype;
+  Datatype *tstruct = pt->getPtrTo();
   int4 offset = propagateAddPointer(op,inslot);
   if (offset==-1) return op->getOut()->getTempType(); // Doesn't look like a good pointer add
-  uintb uoffset = AddrSpace::addressToByte(offset,((TypePointer *)rettype)->getWordSize());
+  uintb uoffset = AddrSpace::addressToByte(offset,pt->getWordSize());
+  intb soffset = (intb) uoffset;
+  sign_extend(soffset, pt->getSize()*8-1);
+  if(pt->getShiftOffset() != 0 && soffset == -pt->getShiftOffset()) // Do we create an unshifted pointer?
+    return typegrp->getTypePointer(pt->getSize(),pt->getPtrTo(),pt->getWordSize());
   if (tstruct->getSize() > 0)
     uoffset = uoffset % tstruct->getSize();
   if (uoffset==0) {

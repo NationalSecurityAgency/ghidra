@@ -5628,6 +5628,7 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   ptrmask = calc_mask(ptrsize);
   baseType = ct->getPtrTo();
   size = AddrSpace::byteToAddressInt(baseType->getSize(),ct->getWordSize());
+  shiftOffset = AddrSpace::byteToAddressInt(ct->getShiftOffset(), ct->getWordSize());
   multsum = 0;		// Sums start out as zero
   nonmultsum = 0;
   correct = 0;
@@ -5861,14 +5862,14 @@ void AddTreeState::calcSubtype(void)
 {
   nonmultsum &= ptrmask;	// Make sure we are modulo ptr's space
   multsum &= ptrmask;
-  if (size == 0 || nonmultsum < size)
-    offset = nonmultsum;
+  if (size == 0 || nonmultsum + shiftOffset < size)
+    offset = nonmultsum + shiftOffset;
   else {
     // For a sum that falls completely outside the data-type, there is presumably some
     // type of constant term added to an array index either at the current level or lower.
     // If we knew here whether an array of the baseType was possible we could make a slightly
     // better decision.
-    intb snonmult = (intb)nonmultsum;
+    intb snonmult = (intb)nonmultsum + shiftOffset;
     sign_extend(snonmult,ptrsize*8-1);
     snonmult = snonmult % size;
     if (snonmult >= 0)
@@ -5878,12 +5879,12 @@ void AddTreeState::calcSubtype(void)
       // For a negative sum, if the baseType is a structure and there is array hints,
       // we assume the sum is an array index at a lower level
       if (baseType->getMetatype() == TYPE_STRUCT && findArrayHint() != 0)
-	offset = nonmultsum;
+	offset = nonmultsum + shiftOffset;
       else
 	offset = (uintb)(snonmult + size);
     }
   }
-  correct = nonmultsum - offset;
+  correct = nonmultsum - (offset - shiftOffset);
   nonmultsum = offset;
   multsum = (multsum + correct) & ptrmask;	// Some extra multiples of size
   if (nonmult.empty()) {
@@ -5974,7 +5975,7 @@ Varnode *AddTreeState::buildMultiples(void)
 Varnode *AddTreeState::buildExtra(void)
 
 {
-  correct = (correct+offset) & ptrmask; // Total correction that needs to be made
+  correct = (correct+offset-shiftOffset) & ptrmask; // Total correction that needs to be made
   bool offset_corrected= (correct==0);
   Varnode *resNode = (Varnode *)0;
   for(int4 i=0;i<nonmult.size();++i) {
@@ -6056,6 +6057,12 @@ void AddTreeState::buildTree(void)
   Varnode *extraNode = buildExtra();
   PcodeOp *newop = (PcodeOp *)0;
 
+  if (ct->getShiftOffset() != 0) {
+    // Create a new CPUI_INT_ADD node to shift the poiner to the orginal structure
+    newop = data.newOpBefore(baseOp,CPUI_INT_ADD,ptr,data.newConstant(ptr->getSize(), uintb_negate(shiftOffset - 1, ptrsize)));
+    ptr = newop->getOut();
+  }
+
   // Create PTRADD portion of operation
   if (multNode != (Varnode *)0) {
     newop = data.newOpBefore(baseOp,CPUI_PTRADD,ptr,multNode,data.newConstant(ptrsize,size));
@@ -6083,6 +6090,24 @@ void AddTreeState::buildTree(void)
   data.opDestroy(baseOp);
 }
 
+bool RulePtrArith::isShiftOp(const PcodeOp *op) {
+  if (op == (const PcodeOp*)0) return false;
+  if (op->code()!=CPUI_INT_ADD) return false;
+  const Datatype *ct = (const Datatype *)0;
+  int slot;
+  for(slot=0;slot<op->numInput();++slot) { // Search for pointer type
+    ct = op->getIn(slot)->getType();
+    if (ct->getMetatype() == TYPE_PTR) break;
+  }
+  if (slot == op->numInput()) return 0;
+  TypePointer *pt = (TypePointer*) op->getIn(slot)->getType();
+  if (pt->getShiftOffset()==0) return false;
+  intb off = AddrSpace::addressToByteInt(op->getIn(1-slot)->getOffset(),pt->getWordSize());
+  sign_extend(off,pt->getSize()*8-1);
+  if (off!=-pt->getShiftOffset()) return false;
+  return true;
+}
+
 /// \brief Verify that given PcodeOp occurs at the bottom of the CPUI_INT_ADD tree
 ///
 /// The main RulePtrArith algorithm assumes that the pointer Varnode is at the bottom
@@ -6098,14 +6123,14 @@ bool RulePtrArith::verifyAddTreeBottom(PcodeOp *op,int4 slot)
   Varnode *ptrbase = op->getIn(slot);
   list<PcodeOp *>::const_iterator iter=vn->beginDescend();
   OpCode opc;
-  if (iter == vn->endDescend()) return false; // Don't bother if no descendants
+  if (iter == vn->endDescend()||isShiftOp(*iter)) return false; // Don't bother if no descendants
   PcodeOp *lowerop = *iter++;
   opc = lowerop->code();
   if (vn->isSpacebase())		// For the RESULT to be a spacebase pointer
     if (iter!=vn->endDescend())		// It must have only 1 descendant
       return false;
   if (opc == CPUI_INT_ADD)		// Check for lone descendant which is an ADD
-    if (iter==vn->endDescend())
+    if (iter==vn->endDescend()||isShiftOp(*iter))
       return false;			 // this is not bottom of add tree
   if (ptrbase->isSpacebase() && (ptrbase->isInput()||(ptrbase->isConstant())) &&
       (op->getIn(1-slot)->isConstant())) {
@@ -6165,6 +6190,7 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
   }
   if (slot == op->numInput()) return 0;
   if (!verifyAddTreeBottom(op, slot)) return 0;
+  if (isShiftOp(op)) return 0;
 
   const TypePointer *tp = (const TypePointer *) ct;
   ct = tp->getPtrTo();		// Type being pointed to
@@ -6208,9 +6234,11 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   Datatype *ct,*sub_ct;
+  TypePointer *pt;
   PcodeOp *newop;
   int4 movesize;			// Number of bytes being moved by load or store
   uintb offset;
+  Varnode *ptr;
 
   if (!data.isTypeRecoveryOn()) return 0;
   if (op->code()==CPUI_LOAD) {
@@ -6224,11 +6252,12 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
 
   ct = op->getIn(1)->getType();
   if (ct->getMetatype() != TYPE_PTR) return 0;
-  ct = ((TypePointer *)ct)->getPtrTo();
+  pt = (TypePointer*) ct;
+  ct = pt->getPtrTo();
   if (ct->getMetatype() == TYPE_STRUCT) {
     if (ct->getSize() < movesize)
       return 0;				// Moving something bigger than entire structure
-    sub_ct = ct->getSubType(0,&offset); // Get field at offset 0
+    sub_ct = ct->getSubType(pt->getShiftOffset(),&offset); // Get field at unshifted offset 0
     if (sub_ct==(Datatype *)0) return 0;
     if (sub_ct->getSize() < movesize) return 0;	// Subtype is too small to handle LOAD/STORE
 //    if (ct->getSize() == movesize) {
@@ -6248,7 +6277,15 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   else
     return 0;
 
-  newop = data.newOpBefore(op,CPUI_PTRSUB,op->getIn(1),data.newConstant(op->getIn(1)->getSize(),0));
+  ptr = op->getIn(1);
+  if (pt->getShiftOffset() != 0) {
+    // Create a new CPUI_INT_ADD node to shift the poiner to the orginal structure
+    intb shiftoff = AddrSpace::byteToAddressInt(pt->getShiftOffset(),pt->getWordSize());
+    newop = data.newOpBefore(op, CPUI_INT_ADD,ptr,data.newConstant(ptr->getSize(), AddrSpace::byteToAddress(uintb_negate(shiftoff,pt->getSize()),pt->getWordSize())));
+    ptr = newop->getOut();
+  }
+
+  newop = data.newOpBefore(op,CPUI_PTRSUB,ptr,data.newConstant(ptr->getSize(),pt->getShiftOffset()));
   data.opSetInput(op,newop->getOut(),1);
   return 1;
 }

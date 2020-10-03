@@ -31,28 +31,29 @@ import db.*;
 abstract class PointerDBAdapter {
 	static final String POINTER_TABLE_NAME = "Pointers";
 
-	static final Schema SCHEMA = new Schema(PointerDBAdapterV2.VERSION, "Pointer ID", new Class[] {
-		LongField.class, LongField.class, ByteField.class }, new String[] { "Data Type ID",
-		"Category ID", "Length" });
+	static final Schema SCHEMA = new Schema(PointerDBAdapterV3.VERSION, "Pointer ID", new Class[] {
+		LongField.class, LongField.class, ByteField.class, IntField.class }, new String[] { "Data Type ID",
+		"Category ID", "Length", "Shift Offset" });
 
 	static final int PTR_DT_ID_COL = 0;
 	static final int PTR_CATEGORY_COL = 1;
 	static final int PTR_LENGTH_COL = 2;
+	static final int PTR_SHIFT_OFFSET_COL = 3;
 
 	static PointerDBAdapter getAdapter(DBHandle handle, int openMode, TaskMonitor monitor,
 			AddressMap addrMap) throws VersionException, IOException {
 
 		if (openMode == DBConstants.CREATE) {
-			return new PointerDBAdapterV2(handle, true);
+			return new PointerDBAdapterV3(handle, true);
 		}
 		try {
-			return new PointerDBAdapterV2(handle, false);
+			return new PointerDBAdapterV3(handle, false);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
 				throw e;
 			}
-			PointerDBAdapter adapter = findReadOnlyAdapter(handle);
+			PointerDBAdapter adapter = findOldAdapter(handle);
 			if (openMode == DBConstants.UPGRADE) {
 				adapter = upgrade(handle, adapter, monitor);
 			}
@@ -60,12 +61,25 @@ abstract class PointerDBAdapter {
 		}
 	}
 
-	static PointerDBAdapter findReadOnlyAdapter(DBHandle handle) throws VersionException {
-		try {
-			return new PointerDBAdapterV1(handle);
-		}
-		catch (VersionException e) {
-			return new PointerDBAdapterV0(handle);
+	private static PointerDBAdapter findOldAdapter(DBHandle handle) throws VersionException {
+		Table table = handle.getTable(POINTER_TABLE_NAME);
+		if (table == null) {
+			throw new VersionException("Missing Table: " + POINTER_TABLE_NAME);
+		} else {
+			switch(table.getSchema().getVersion()) {
+			case(PointerDBAdapterV2.VERSION): {
+				return new PointerDBAdapterV2(handle);
+			}
+			case(PointerDBAdapterV1.VERSION): {
+				return new PointerDBAdapterV1(handle);
+			}
+			case(PointerDBAdapterV0.VERSION): {
+				return new PointerDBAdapterV0(handle);
+			}
+			default: {
+				throw new VersionException(VersionException.UNKNOWN_VERSION, false);
+			}
+			}
 		}
 	}
 
@@ -76,14 +90,14 @@ abstract class PointerDBAdapter {
 		long id = tmpHandle.startTransaction();
 		PointerDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new PointerDBAdapterV2(tmpHandle, true);
+			tmpAdapter = new PointerDBAdapterV3(tmpHandle, true);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
 				Record rec = it.next();
 				tmpAdapter.updateRecord(rec);
 			}
 			oldAdapter.deleteTable(handle);
-			PointerDBAdapter newAdapter = new PointerDBAdapterV2(handle, true);
+			PointerDBAdapter newAdapter = new PointerDBAdapterV3(handle, true);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
 				Record rec = it.next();
@@ -108,9 +122,24 @@ abstract class PointerDBAdapter {
 	 * @param categoryID the category ID of the datatype
 	 * @param length pointer size in bytes
 	 * @throws IOException if there was a problem accessing the database
+	 * @deprecated This method doesn't allow for shifted pointers. Use 
+	 * {@link PointerDBAdapter#createRecord(long, long, int, int)} instead
 	 */
 	abstract Record createRecord(long dataTypeID, long categoryID, int length) throws IOException;
 
+	/**
+	 * Create a pointer record.
+	 * @param dataTypeID data type ID of the date type being pointed to
+	 * @param categoryID the category ID of the datatype
+	 * @param length pointer size in bytes
+	 * @param shiftOffset offset by which the pointer is shifted
+	 * @throws IOException if there was a problem accessing the database
+	 */
+	Record createRecord(long dataTypeID, long categoryID, int length, int shiftOffset) throws IOException {
+		// Old adapters will only override the old method, so ignore the shift offset
+		return createRecord(dataTypeID, categoryID, length);
+	}
+	
 	/**
 	 * Get the record with the given pointerID.
 	 * @param pointerID database key

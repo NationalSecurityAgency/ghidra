@@ -184,11 +184,12 @@ public class PcodeDataTypeManager {
 			DataType restype = null;
 			if (meta.equals("ptr")) {
 				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
+				int shiftOffset = SpecXmlUtils.decodeInt(el.getAttribute("shiftOffset"));
 				if (parser.peek().isStart()) {
 					DataType dt = readXMLDataType(parser);
 					boolean useDefaultSize = (size == dataOrganization.getPointerSize() ||
 						size > PointerDataType.MAX_POINTER_SIZE_BYTES);
-					restype = new PointerDataType(dt, useDefaultSize ? -1 : size, progDataTypes);
+					restype = new PointerDataType(dt, shiftOffset, useDefaultSize ? -1 : size, progDataTypes);
 				}
 			}
 			else if (meta.equals("array")) {
@@ -356,6 +357,7 @@ public class PcodeDataTypeManager {
 				appendNameIdAttributes(resBuf, origType);
 			}
 			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "ptr");
+			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "shiftOffset", ((Pointer) type).getShiftOffset());
 			int ptrLen = type.getLength();
 			if (ptrLen <= 0) {
 				ptrLen = size;

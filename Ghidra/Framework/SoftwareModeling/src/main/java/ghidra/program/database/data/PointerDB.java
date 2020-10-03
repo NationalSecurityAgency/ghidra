@@ -22,6 +22,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.InvalidNameException;
@@ -74,7 +75,14 @@ class PointerDB extends DataTypeDB implements Pointer {
 		if (dt == null) {
 			return PointerDataType.POINTER_NAME + lenStr;
 		}
-		return dt.getName() + " *" + lenStr;
+		long shiftOffset = getShiftOffset();
+		String shiftSuffix = "";
+		if (shiftOffset < 0) {
+			shiftSuffix = "-0x" + Long.toHexString(-shiftOffset);
+		} else if (shiftOffset > 0) {
+			shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
+		}
+		return dt.getName() + shiftSuffix + " *" + lenStr;
 	}
 
 	@Override
@@ -94,6 +102,18 @@ class PointerDB extends DataTypeDB implements Pointer {
 		}
 	}
 
+	@Override
+	public int getShiftOffset() {
+		lock.acquire();
+		try {
+			checkIsValid();
+			return record.getIntValue(PointerDBAdapter.PTR_SHIFT_OFFSET_COL);
+		}
+		finally {
+			lock.release();
+		}
+	}
+	
 	@Override
 	public SettingsDefinition[] getSettingsDefinitions() {
 		return POINTER_SETTINGS_DEFINITIONS;
@@ -126,7 +146,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return this;
 		}
 		// don't clone referenced data-type to avoid potential circular reference
-		return new PointerDataType(getDataType(), isDynamicallySized() ? -1 : getLength(), dtm);
+		return new PointerDataType(getDataType(), getShiftOffset(), isDynamicallySized() ? -1 : getLength(), dtm);
 	}
 
 	@Override
@@ -148,7 +168,14 @@ class PointerDB extends DataTypeDB implements Pointer {
 				}
 			}
 			else {
-				localDisplayName = dt.getDisplayName() + " *";
+				long shiftOffset = getShiftOffset();
+				String shiftSuffix = "";
+				if (shiftOffset < 0) {
+					shiftSuffix = "-0x" + Long.toHexString(-shiftOffset);
+				} else if (shiftOffset > 0) {
+					shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
+				}
+				localDisplayName = dt.getDisplayName() + shiftSuffix + " *";
 			}
 			displayName = localDisplayName;
 		}
@@ -164,7 +191,14 @@ class PointerDB extends DataTypeDB implements Pointer {
 			if (dataType == null || dataType == DataType.DEFAULT) {
 				return "addr";
 			}
-			return dataType.getMnemonic(settings) + " *";
+			long shiftOffset = getShiftOffset();
+			String shiftSuffix = "";
+			if (shiftOffset < 0) {
+				shiftSuffix = "-0x" + Long.toHexString(-shiftOffset);
+			} else if (shiftOffset > 0) {
+				shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
+			}
+			return dataType.getMnemonic(settings) + shiftSuffix + " *";
 		}
 		finally {
 			lock.release();
@@ -220,6 +254,18 @@ class PointerDB extends DataTypeDB implements Pointer {
 					sbuf.append(getDataType().getName());
 				}
 			}
+			long shiftOffset = getShiftOffset();
+			if (shiftOffset != 0) {
+				sbuf.append(" shifted by ");
+				if (shiftOffset < 0) {
+					sbuf.append("-0x");
+					sbuf.append(Long.toHexString(-shiftOffset));
+				} else if (shiftOffset > 0) {
+					sbuf.append("0x");
+					sbuf.append(Long.toHexString(shiftOffset));
+					
+				}
+			}
 			return sbuf.toString();
 		}
 		finally {
@@ -236,10 +282,10 @@ class PointerDB extends DataTypeDB implements Pointer {
 			// TODO: Which address space should pointer refer to ??
 
 			return PointerDataType.getAddressValue(buf, getLength(),
-				buf.getAddress().getAddressSpace());
+					buf.getAddress().getAddressSpace()).subtractNoWrap(getShiftOffset());
 
 		}
-		catch (IllegalArgumentException exc) {
+		catch (IllegalArgumentException | AddressOverflowException exc) {
 			return null;
 		}
 		finally {
@@ -298,6 +344,11 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return false;
 		}
 
+		// if we have different shift offsets, we're not equivalent
+		if (getShiftOffset() != p.getShiftOffset()) {
+			return false;
+		}
+		
 		// if they contain datatypes that have same ids, then we are essentially equivalent.
 		if (DataTypeUtilities.isSameDataType(referencedDataType, otherDataType)) {
 			return true;

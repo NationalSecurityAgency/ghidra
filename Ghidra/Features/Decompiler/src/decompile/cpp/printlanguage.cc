@@ -543,16 +543,36 @@ void PrintLanguage::recurse(void)
 void PrintLanguage::opBinary(const OpToken *tok,const PcodeOp *op)
 
 {
-  if (isSet(negatetoken)) {
-    tok = tok->negate;
-    unsetMod(negatetoken);
-    if (tok == (const OpToken *)0)
-      throw LowlevelError("Could not find fliptoken");
+  bool isshift = false; // Is this a pointer shift node (which wont be emitted)
+
+  // Check if this is a pointer shift node
+  // The following conditions must be true:
+  //  - op is CPUI_INT_ADD
+  //  - the first input is a pointer
+  //  - the second input is a constant offset
+  //  - the constant offset equals -(shift offset of the pointer)
+  if (op->code()==CPUI_INT_ADD && op->getIn(0)->getType()->getMetatype()==TYPE_PTR) {
+    TypePointer *pt = (TypePointer*) op->getIn(0)->getType();
+    if (op->getIn(1)->isConstant()) {
+      intb off = op->getIn(1)->getOffset();
+      sign_extend(off, 8*pt->getSize()-1);
+      if (AddrSpace::addressToByteInt(off, pt->getWordSize())==-pt->getShiftOffset())
+        isshift = true;
+    }
   }
-  pushOp(tok,op);		// Push on reverse polish notation
-  // implied vn's pushed on in reverse order for efficiency
-  // see PrintLanguage::pushVnImplied
-  pushVnImplied(op->getIn(1),op,mods);
+
+  if (!isshift) {
+    if (isSet(negatetoken)) {
+      tok = tok->negate;
+      unsetMod(negatetoken);
+      if (tok == (const OpToken *)0)
+        throw LowlevelError("Could not find fliptoken");
+    }
+    pushOp(tok,op);		// Push on reverse polish notation
+    // implied vn's pushed on in reverse order for efficiency
+    // see PrintLanguage::pushVnImplied
+    pushVnImplied(op->getIn(1),op,mods);
+  }
   pushVnImplied(op->getIn(0),op,mods);
 }
 

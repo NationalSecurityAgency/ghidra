@@ -212,11 +212,27 @@ Datatype *TypeOp::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) c
 Datatype *TypeOp::getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const
 
 {
+  bool isshift=false;
+  // Check if this is a pointer shift node
+  // The following conditions must be true:
+  //  - op is CPUI_INT_ADD
+  //  - the first input is a pointer
+  //  - the second input is a constant offset
+  //  - the constant offset equals -(shift offset of the pointer)
+  if (op->code()==CPUI_INT_ADD && op->getIn(0)->getType()->getMetatype()==TYPE_PTR) {
+    TypePointer *pt = (TypePointer*) op->getIn(0)->getType();
+    if (op->getIn(1)->isConstant()) {
+      intb off = op->getIn(1)->getOffset();
+      sign_extend(off, 8*pt->getSize()-1);
+      if (AddrSpace::addressToByteInt(off, pt->getWordSize())==-pt->getShiftOffset())
+        isshift = true;
+    }
+  }
   const Varnode *vn = op->getIn(slot);
   if (vn->isAnnotation()) return (Datatype *)0;
   Datatype *reqtype = op->inputTypeLocal(slot);
   Datatype *curtype = vn->getHigh()->getType();
-  return castStrategy->castStandard(reqtype,curtype,false,true);
+  return castStrategy->castStandard(reqtype,curtype,false,!isshift);
 }
 
 /// Many languages can mark an integer constant as explicitly \e unsigned. When
