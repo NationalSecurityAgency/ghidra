@@ -62,6 +62,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	private DockingActionIf selectionAction;
 	private DockingActionIf createNamespaceAction;
 	private DockingActionIf createClassAction;
+	private DockingActionIf convertToClassAction;
 	private ToggleDockingAction goToToggleAction;
 	private SymbolTreeTestUtils util;
 	private SymbolGTree tree;
@@ -295,6 +296,22 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
+	@Test
+	public void testConvertToClass() throws Exception {
+		String classNodeName = "MyClass";
+		GTreeNode nsParentNode = rootNode.getChild(5);
+		GTreeNode classNode = util.createObject(
+			nsParentNode, classNodeName, createNamespaceAction);
+
+		util.selectNode(classNode);
+		ActionContext context = util.getSymbolTreeContext();
+		performTreeAction(convertToClassAction, context);
+
+		nsParentNode = rootNode.getChild(4);
+		classNode = nsParentNode.getChild(classNodeName);
+		assertNotNull(classNode);
+	}
+
 	private void performTreeAction(DockingActionIf action, ActionContext context) {
 		assertTrue(action.isEnabledForContext(context));
 		performAction(action, context, true);
@@ -421,6 +438,8 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(createClassAction);
 		createNamespaceAction = getAction(plugin, "Create Namespace");
 		assertNotNull(createNamespaceAction);
+		convertToClassAction = getAction(plugin, "Convert To Class");
+		assertNotNull(convertToClassAction);
 
 		goToToggleAction = (ToggleDockingAction) getAction(plugin, "Navigation");
 		assertNotNull(goToToggleAction);

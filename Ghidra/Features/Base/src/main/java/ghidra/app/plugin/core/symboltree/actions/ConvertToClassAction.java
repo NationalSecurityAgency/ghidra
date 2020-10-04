@@ -16,11 +16,16 @@ import ghidra.util.exception.InvalidInputException;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
 
+/**
+ * Symbol tree action for converting a namespace to a class
+ */
 public class ConvertToClassAction extends SymbolTreeContextAction {
 
+	private static final String NAME = "Convert To Class";
+
 	public ConvertToClassAction(SymbolTreePlugin plugin) {
-		super("Convert To Class", plugin.getName());
-		setPopupMenuData(new MenuData(new String[] { "Convert To Class" }, "0Create"));
+		super(NAME, plugin.getName());
+		setPopupMenuData(new MenuData(new String[] { NAME }, "1Convert"));
 		setEnabled(false);
 	}
 
@@ -47,25 +52,24 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 		Program program = context.getProgram();
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
 
-		if (node instanceof SymbolNode) {
-			Symbol symbol = ((SymbolNode) node).getSymbol();
-			Namespace parent = (Namespace) symbol.getObject();
-			if (parent != null) {
-				convertToClass(program, parent);
-				program.flushEvents();
-				context.getSymbolTree().startEditing(node, parent.getName());
-			}
+		Symbol symbol = ((SymbolNode) node).getSymbol();
+		Namespace parent = (Namespace) symbol.getObject();
+		if (parent != null) {
+			convertToClass(program, parent);
+			program.flushEvents();
+			context.getSymbolTree().startEditing(node, parent.getName());
 		}
 	}
 
 	private static void convertToClass(Program program, Namespace ns) {
-		int id = program.startTransaction("Convert To Class");
+		int id = program.startTransaction(NAME);
 		boolean success = false;
 		try {
 			NamespaceUtils.convertNamespaceToClass(ns);
 			success = true;
 		} catch (InvalidInputException e) {
-			// can't occur, checked in isEnabledForContext
+			// This is thrown when the provided namespace is a function
+			// It was checked in isEnabledForContext and thus cannot occur
 			throw new AssertException(e);
 		} finally {
 			program.endTransaction(id, success);
