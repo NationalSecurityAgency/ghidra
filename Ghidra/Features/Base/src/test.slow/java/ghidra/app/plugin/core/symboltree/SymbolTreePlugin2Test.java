@@ -226,7 +226,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		for (int i = 0; i < count - 1; i++) {
 			GTreeNode n = ghidraNode.getChild(i);
 			Symbol s = ((SymbolNode) n).getSymbol();
-			assertTrue(!s.getName().equals("AnotherLocal"));
+			assertFalse(s.getName().equals("AnotherLocal"));
 		}
 
 		// test undo/redo
@@ -255,7 +255,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		for (int i = 0; i < count - 1; i++) {
 			GTreeNode n = ghidraNode.getChild(i);
 			Symbol s = ((SymbolNode) n).getSymbol();
-			assertTrue(!s.getName().equals("AnotherLocal"));
+			assertNotEquals("AnotherLocal", s.getName());
 		}
 	}
 
@@ -297,26 +297,20 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testConvertToClass() throws Exception {
+	public void testConvertNamespaceToClass() throws Exception {
 		String classNodeName = "MyClass";
-		GTreeNode nsParentNode = rootNode.getChild(5);
+		GTreeNode nsNode = rootNode.getChild(SymbolCategory.NAMESPACE_CATEGORY.getName());
 		GTreeNode classNode = util.createObject(
-			nsParentNode, classNodeName, createNamespaceAction);
+			nsNode, classNodeName, createNamespaceAction);
 
 		util.selectNode(classNode);
 		ActionContext context = util.getSymbolTreeContext();
 		performTreeAction(convertToClassAction, context);
 
-		nsParentNode = rootNode.getChild(4);
-		classNode = nsParentNode.getChild(classNodeName);
+		GTreeNode classRootNode = rootNode.getChild(SymbolCategory.CLASS_CATEGORY.getName());
+		classNode = classRootNode.getChild(classNodeName);
 		assertNotNull(classNode);
-	}
-
-	private void performTreeAction(DockingActionIf action, ActionContext context) {
-		assertTrue(action.isEnabledForContext(context));
-		performAction(action, context, true);
-		program.flushEvents();
-		util.waitForTree();
+		waitForCondition(tree::isEditing);
 	}
 
 	@Test
@@ -330,13 +324,13 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(lNode);
 
 		ActionContext context = util.getSymbolTreeContext();
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
-		assertTrue(!createNamespaceAction.isEnabledForContext(context));
-		assertTrue(!createClassAction.isEnabledForContext(context));
+		assertFalse(renameAction.isEnabledForContext(context));
+		assertFalse(cutAction.isEnabledForContext(context));
+		assertFalse(pasteAction.isEnabledForContext(context));
+		assertFalse(deleteAction.isEnabledForContext(context));
+		assertFalse(selectionAction.isEnabledForContext(context));
+		assertFalse(createNamespaceAction.isEnabledForContext(context));
+		assertFalse(createClassAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -346,16 +340,11 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		util.expandNode(lNode);
 
 		// add a label
-		SymbolTable symTable = program.getSymbolTable();
-		int transactionID = program.startTransaction("test");
-		try {
+		tx(program, () -> {
+			SymbolTable symTable = program.getSymbolTable();
 			symTable.createLabel(util.addr(0x010048a1L), "abcdefg", SourceType.USER_DEFINED);
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		});
 
-		program.flushEvents();
 		util.waitForTree();
 
 		lNode = rootNode.getChild(3);
@@ -372,18 +361,13 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		// verify that the tree updates
 
 		Function f = program.getFunctionManager().getFunctionAt(util.addr(0x01002cf5L));
-
 		Symbol s = getUniqueSymbol(program, "AnotherLocal", f);
 		assertNotNull(s);
-		int transactionID = program.startTransaction("test");
-		try {
+
+		tx(program, () -> {
 			s.setName("MyAnotherLocal", SourceType.USER_DEFINED);
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
-		program.flushEvents();
-		waitForSwing();
+		});
+
 		util.waitForTree();
 
 		GTreeNode fNode = getFunctionsNode();
@@ -443,6 +427,13 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		goToToggleAction = (ToggleDockingAction) getAction(plugin, "Navigation");
 		assertNotNull(goToToggleAction);
+	}
+
+	private void performTreeAction(DockingActionIf action, ActionContext context) {
+		assertTrue(action.isEnabledForContext(context));
+		performAction(action, context, true);
+		program.flushEvents();
+		util.waitForTree();
 	}
 
 	private void clickOnNode(GTreeNode node) throws Exception {

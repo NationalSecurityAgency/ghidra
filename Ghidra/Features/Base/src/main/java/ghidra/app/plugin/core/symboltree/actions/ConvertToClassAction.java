@@ -1,31 +1,44 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package ghidra.app.plugin.core.symboltree.actions;
 
 import javax.swing.tree.TreePath;
 
-import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
-import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
+import docking.action.MenuData;
+import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.symboltree.*;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
-
-import docking.action.MenuData;
-import docking.widgets.tree.GTreeNode;
 
 /**
  * Symbol tree action for converting a namespace to a class
  */
 public class ConvertToClassAction extends SymbolTreeContextAction {
 
-	private static final String NAME = "Convert To Class";
+	private static final String NAME = "Convert to Class";
 
-	public ConvertToClassAction(SymbolTreePlugin plugin) {
+	public ConvertToClassAction(SymbolTreePlugin plugin, String group, String subGroup) {
 		super(NAME, plugin.getName());
-		setPopupMenuData(new MenuData(new String[] { NAME }, "1Convert"));
+		MenuData menuData = new MenuData(new String[] { NAME }, group);
+		menuData.setMenuSubGroup(subGroup);
+		setPopupMenuData(menuData);
 		setEnabled(false);
 	}
 
@@ -52,12 +65,17 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 		Program program = context.getProgram();
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
 
+		SymbolGTree tree = context.getSymbolTree();
+		GTreeNode root = tree.getViewRoot();
+		GTreeNode classesNode = root.getChild(SymbolCategory.CLASS_CATEGORY.getName());
+
 		Symbol symbol = ((SymbolNode) node).getSymbol();
-		Namespace parent = (Namespace) symbol.getObject();
-		if (parent != null) {
-			convertToClass(program, parent);
+		Namespace namespace = (Namespace) symbol.getObject();
+		if (namespace != null) {
+			String name = namespace.getName();
+			convertToClass(program, namespace);
 			program.flushEvents();
-			context.getSymbolTree().startEditing(node, parent.getName());
+			context.getSymbolTree().startEditing(classesNode, name);
 		}
 	}
 
@@ -67,11 +85,13 @@ public class ConvertToClassAction extends SymbolTreeContextAction {
 		try {
 			NamespaceUtils.convertNamespaceToClass(ns);
 			success = true;
-		} catch (InvalidInputException e) {
+		}
+		catch (InvalidInputException e) {
 			// This is thrown when the provided namespace is a function
 			// It was checked in isEnabledForContext and thus cannot occur
 			throw new AssertException(e);
-		} finally {
+		}
+		finally {
 			program.endTransaction(id, success);
 		}
 	}
