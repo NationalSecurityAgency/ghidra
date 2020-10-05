@@ -21,3 +21,4 @@ fortify_fail
 ZSt9terminatev
 ZN10__cxxabiv111__terminateEPFvvE
 pthread_exit
+__stack_chk_fail
