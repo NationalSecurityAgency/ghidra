@@ -1,0 +1,35 @@
+# RV64 Crypto Extension
+# NOTE  0.6.2
+
+# 0001010 rs2 rs1 010 rd 0101011 saes64.decs
+:saes64.decs   rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x5b & op1214=0x2 & op2531=0x0a  unimpl
+
+# 0001001 rs2 rs1 010 rd 0101011 saes64.decsm
+:saes64.decsm  rd, rs1, rs2  is rd & rs1 & rs2 & op0006=0x5b & op1214=0x2 & op2531=0x09  unimpl
+
+# 0001000 rs2 rs1 010 rd 0101011 saes64.encs
+:saes64.encs   rd, rs1, rs2 is rd & rs1 & rs2 & op0006=0x5b & op1214=0x2 & op2531=0x08  unimpl
+
+# 0000111 rs2 rs1 010 rd 0101011 saes64.encsm
+:saes64.encsm  rd, rs1, rs2 is rd & rs1 & rs2 & op0006=0x5b & op1214=0x2 & op2531=0x07  unimpl
+
+# 0000110 00001 rs1 010 rd 0101011 saes64.imix
+:saes64.imix   rd, rs1  is rd & rs1 & op0006=0x5b & op1214=0x2 & op2024=0x01 & op2531=0x06  unimpl
+
+# 0000100 0 rcon rs1 010 rd 0101011 saes64.ks1
+:saes64.ks1    rd, rs1, rcon is rd & rs1 & rcon & op0006=0x5b & op1214=0x2 & op2424=0x0 & op2531=0x04  unimpl
+
+# 0000101 rs2 rs1 010 rd 0101011 saes64.ks2
+:saes64.ks2    rd, rs1, rs2 is rd & rs1 & rs2 & op0006=0x5b & op1214=0x2 & op2531=0x05  unimpl
+
+# 0000111 00100 rs1 111 rd 0101011 ssha512.sig0
+:ssha512.sig0  rd, rs1  is rd & rs1 & op0006=0x5b & op1214=0x7 & op2024=0x04 & op2531=0x07  unimpl
+
+# 0000111 00101 rs1 111 rd 0101011 ssha512.sig1
+:ssha512.sig1  rd, rs1  is rd & rs1 & op0006=0x5b & op1214=0x7 & op2024=0x05 & op2531=0x07  unimpl
+
+# 0000111 00110 rs1 111 rd 0101011 ssha512.sum0
+:ssha512.sum0  rd, rs1  is rd & rs1 & op0006=0x5b & op1214=0x7 & op2024=0x06 & op2531=0x07  unimpl
+
+# 0000111 00111 rs1 111 rd 0101011 ssha512.sum1
+:ssha512.sum1  rd, rs1  is rd & rs1 & op0006=0x5b & op1214=0x7 & op2024=0x07 & op2531=0x07  unimpl
