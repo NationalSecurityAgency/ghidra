@@ -316,8 +316,6 @@ public class StringTableProvider extends ComponentProviderAdapter implements Dom
 		};
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
-		selectionNavigationAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Strings_Selection_Navigation"));
 
 		addLocalAction(selectionNavigationAction);
 		addLocalAction(selectAction);
