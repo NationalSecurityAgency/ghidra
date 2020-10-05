@@ -457,6 +457,24 @@ public class GTreeNodeTest {
 	}
 
 	@Test
+	public void testCantAddNodeTwice() {
+		node0 = new TestNode("No Dups");
+
+		int childCount = root.getChildCount();
+		root.addNode(node0);
+		assertEquals(childCount + 1, root.getChildCount());
+
+		// now make sure the count doesn't grow again
+		root.addNode(node0);
+		assertEquals(childCount + 1, root.getChildCount());
+
+		// try adding it with an index, still shouldn't get added
+		root.addNode(0, node0);
+		assertEquals(childCount + 1, root.getChildCount());
+
+	}
+
+	@Test
 	public void testCloneEquals() throws CloneNotSupportedException {
 		GTreeNode nodeA = new TestNode("AAA");
 		assertEquals(nodeA, nodeA.clone());
