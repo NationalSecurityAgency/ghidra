@@ -1210,8 +1210,16 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				String symName = elfSymbol.getNameAsString();
 
 				// NO_ADDRESS signifies external symbol to be allocated to EXTERNAL block
-				boolean usingFakeExternal = false;
-				if (address == Address.NO_ADDRESS) {
+				boolean usingFakeExternal = false;			
+				boolean canExecute = this.elf.isExecutable(); 
+				ElfDynamicTable dynamicTable = elf.getDynamicTable();
+				if (dynamicTable != null) {	
+					if(dynamicTable.containsDynamicValue(ElfDynamicType.DT_FLAGS_1)){
+						canExecute = canExecute || ((dynamicTable.getDynamicValue(ElfDynamicType.DT_FLAGS_1) & ElfDynamicType.DF_1_PIE) > 0); 
+					}	
+				}	
+				if (address == Address.NO_ADDRESS || canExecute) {
+					// it shoud take into account DYNs that can be executable and have both imports and exports for best effect
 
 					if (symName == null) {
 						continue; // unexpected

@@ -186,4 +186,60 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;
+	
+	/* https://llvm.org/doxygen/BinaryFormat_2ELF_8h_source.html*/
+	public static final int DF_1_NOW = 0x00000001;
+	/** Set RTLD_NOW for this object.*/
+	public static final int DF_1_GLOBAL = 0x00000002;
+	/** Set RTLD_GLOBAL for this object.*/
+	public static final int DF_1_GROUP = 0x00000004;
+	/** Set RTLD_GROUP for this object.*/
+	public static final int DF_1_NODELETE = 0x00000008;
+	/** Set RTLD_NODELETE for this object.*/
+	public static final int DF_1_LOADFLTR = 0x00000010;
+	/** Trigger filtee loading at runtime.*/
+	public static final int DF_1_INITFIRST = 0x00000020;
+	/** Set RTLD_INITFIRST for this object.*/
+	public static final int DF_1_NOOPEN = 0x00000040;
+	/** Set RTLD_NOOPEN for this object.*/
+	public static final int DF_1_ORIGIN = 0x00000080;
+	/** $ORIGIN must be handled.*/
+	public static final int DF_1_DIRECT = 0x00000100;
+	/** Direct binding enabled.*/
+	public static final int DF_1_TRANS = 0x00000200;
+	public static final int DF_1_INTERPOSE = 0x00000400;
+	/** Object is used to interpose.*/
+	public static final int DF_1_NODEFLIB = 0x00000800;
+	/** Ignore default lib search path.*/
+	public static final int DF_1_NODUMP = 0x00001000;
+	/** Object can't be dldump'ed.*/
+	public static final int DF_1_CONFALT = 0x00002000;
+	/** Configuration alternative created.*/
+	public static final int DF_1_ENDFILTEE = 0x00004000;
+	/** Filtee terminates filters search.*/
+	public static final int DF_1_DISPRELDNE = 0x00008000;
+	/** Disp reloc applied at build time.*/
+	public static final int DF_1_DISPRELPND = 0x00010000;
+	/** Disp reloc applied at run-time.*/
+	public static final int DF_1_NODIRECT = 0x00020000;
+	/** Object has no-direct binding.*/
+	public static final int DF_1_IGNMULDEF = 0x00040000;
+	public static final int DF_1_NOKSYMS = 0x00080000;
+	public static final int DF_1_NOHDR = 0x00100000;
+	public static final int DF_1_EDITED = 0x00200000;
+	/** Object is modified after built.*/
+	public static final int DF_1_NORELOC = 0x00400000;
+	public static final int DF_1_SYMINTPOSE = 0x00800000;
+	/** Object has individual interposers.*/
+	public static final int DF_1_GLOBAUDIT = 0x01000000;
+	/** Global auditing required.*/
+	public static final int DF_1_SINGLETON = 0x02000000;
+	/** Singleton symbols are used.*/
+
+	
+
+	
+	
+	
+	
 }
