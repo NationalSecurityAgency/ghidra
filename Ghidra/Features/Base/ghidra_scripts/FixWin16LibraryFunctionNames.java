@@ -19,7 +19,6 @@
 // also converted.  This applies to Windows 16-bit apps.
 //
 //@category Repair
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,7 +34,6 @@ import ghidra.framework.Application;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Parameter;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -147,7 +145,6 @@ public class FixWin16LibraryFunctionNames extends GhidraScript {
 	        try
 	        {
 	    		ResourceFile file = Application.findDataFileInAnyModule("FunctionNames.properties");
-//	    		FileInputStream inputStream = new FileInputStream("D:/ReverseEngineering/FunctionNames.properties");
 	            prop.load(file.getInputStream());
 	        }
 	        catch (Exception e) {
