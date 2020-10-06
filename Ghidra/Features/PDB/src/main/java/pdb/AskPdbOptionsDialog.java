@@ -15,7 +15,8 @@
  */
 package pdb;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
 import javax.swing.*;
 
@@ -30,7 +31,7 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 
 	private boolean isCanceled;
 
-	private boolean useMsDiaParser = true;
+	private boolean useMsDiaParser;
 	private PdbApplicatorRestrictions restrictions = PdbApplicatorRestrictions.NONE;
 
 	/**
@@ -57,9 +58,10 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 		optionsPanel.add(new JLabel("PDB Parser:"));
 
 		if (isPdbFile) {
+			useMsDiaParser = false; // Use PDB Universal by default
 			if (PdbParser.onWindows) {
 				final GComboBox<String> combo =
-					new GComboBox<>(new String[] { "PDB MSDIA", "PDB Universal (Prototype)" });
+					new GComboBox<>(new String[] { "PDB Universal", "PDB MSDIA" });
 				combo.setSelectedIndex(0);
 				restrictionsCombo.setEnabled(!useMsDiaParser);
 				combo.addActionListener(e -> {
@@ -73,8 +75,8 @@ class AskPdbOptionsDialog extends DialogComponentProvider {
 			}
 			else {
 				useMsDiaParser = false;
-				JLabel label = new JLabel("PDB Universal (Prototype)");
-				label.setForeground(Color.red); // set color to emphasize prototype status
+				JLabel label = new JLabel("PDB Universal");
+				//label.setForeground(Color.red); // set color to emphasize prototype status
 				optionsPanel.add(label);
 			}
 		}

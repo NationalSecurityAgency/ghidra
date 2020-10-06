@@ -18,8 +18,14 @@ package ghidra.app.util.pdb.pdbapplicator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractPublicMsSymbol;
+import ghidra.app.util.datatype.microsoft.GuidDataType;
+import ghidra.app.util.datatype.microsoft.GuidUtil;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
@@ -56,9 +62,12 @@ public class PublicSymbolApplier extends MsSymbolApplier {
 	void apply() throws CancelledException, PdbException {
 
 		symbolAddress = applicator.getAddress(symbol);
-		if (applicator.isInvalidAddress(symbolAddress, symbol.getName())) {
+
+		String name = symbol.getName();
+		if (applicator.isInvalidAddress(symbolAddress, name)) {
 			return;
 		}
+
 		existingSymbolAddress = applicator.witnessSymbolNameAtAddress(getName(), symbolAddress);
 		// TODO: Consider... could add restriction of not putting down symbol if it is mangled,
 		//  as this would violate the uniqueness of the symbol... but we would also want to
@@ -67,7 +76,18 @@ public class PublicSymbolApplier extends MsSymbolApplier {
 			// Note: there might be issues of thunk functions getting the same mangled name
 			// as thunked functions, which violates the thesis of their being unique.
 			// TODO: investigate this.
-			applicator.createSymbol(symbolAddress, symbol.getName(), true);
+			applicator.createSymbol(symbolAddress, name, true);
+
+			Program program = applicator.getProgram();
+			if (GuidUtil.isGuidLabel(program, symbolAddress, name)) {
+				try {
+					DataUtilities.createData(program, symbolAddress, new GuidDataType(), -1, false,
+						ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+				}
+				catch (CodeUnitInsertionException e) {
+					// ignore
+				}
+			}
 		}
 	}
 

@@ -37,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
  * Finds and applies PDB debug information to the given Windows executable.
  */
 public class PdbAnalyzer extends AbstractAnalyzer {
-	static final String NAME = "PDB";
+	static final String NAME = "PDB MSDIA";
 	static final boolean DEFAULT_ENABLEMENT = !PdbUniversalAnalyzer.DEFAULT_ENABLEMENT;
 	private static final String DESCRIPTION =
 		"PDB Analyzer.\n" + "Requires MS DIA-SDK for raw PDB processing (Windows only).\n" +
