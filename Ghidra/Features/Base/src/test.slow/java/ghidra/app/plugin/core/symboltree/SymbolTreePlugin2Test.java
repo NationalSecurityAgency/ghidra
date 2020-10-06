@@ -422,7 +422,7 @@ public class SymbolTreePlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(createClassAction);
 		createNamespaceAction = getAction(plugin, "Create Namespace");
 		assertNotNull(createNamespaceAction);
-		convertToClassAction = getAction(plugin, "Convert To Class");
+		convertToClassAction = getAction(plugin, "Convert to Class");
 		assertNotNull(convertToClassAction);
 
 		goToToggleAction = (ToggleDockingAction) getAction(plugin, "Navigation");
