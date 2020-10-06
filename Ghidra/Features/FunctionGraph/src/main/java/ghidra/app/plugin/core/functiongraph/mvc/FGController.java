@@ -332,8 +332,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 	private boolean shouldSaveVertexChanges() {
-		return functionGraphOptions
-				.getNavigationHistoryChoice() == NavigationHistoryChoices.VERTEX_CHANGES;
+		return functionGraphOptions.getNavigationHistoryChoice() == NavigationHistoryChoices.VERTEX_CHANGES;
 	}
 
 	@Override
@@ -694,14 +693,16 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 			vertex = view.getEntryPointVertex();
 		}
 
+		PluginTool tool = plugin.getTool();
 		SetFormatDialogComponentProvider setFormatDialog =
 			new SetFormatDialogComponentProvider(getDefaultFormatManager(), minimalFormatManager,
-				plugin.getTool(), provider.getProgram(), vertex.getAddresses());
-		plugin.getTool().showDialogOnActiveWindow(setFormatDialog);
+				tool, provider.getProgram(), vertex.getAddresses());
+		tool.showDialog(setFormatDialog);
 		FormatManager newFormatManager = setFormatDialog.getNewFormatManager();
 		if (newFormatManager == null) {
 			return;
 		}
+
 		SaveState saveState = new SaveState();
 		newFormatManager.saveState(saveState);
 		minimalFormatManager.readState(saveState);

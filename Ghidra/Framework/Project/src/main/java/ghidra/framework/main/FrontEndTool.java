@@ -765,7 +765,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		if (logProvider == null) {
 			logProvider = new LogComponentProvider(this, logFile);
-			showDialog(logProvider, getToolFrame());
+			showDialog(logProvider);
 			return;
 		}
 
