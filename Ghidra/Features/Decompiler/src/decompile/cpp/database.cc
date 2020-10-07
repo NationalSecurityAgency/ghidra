@@ -15,6 +15,7 @@
  */
 #include "database.hh"
 #include "funcdata.hh"
+#include "crc32.hh"
 #include <ctype.h>
 
 uint8 Symbol::ID_BASE = 0x4000000000000000L;
@@ -812,38 +813,14 @@ MapIterator MapIterator::operator++(int4 i) {
   return tmp;
 }
 
-/// Sort first on name, then on dedupId
-/// \param op2 is the key to compare with \b this
-/// \return \b true if \b this should be ordered before the other key
-bool ScopeKey::operator<(const ScopeKey &op2) const
-
-{
-  int4 comp = name.compare(op2.name);
-  if (comp < 0) return true;
-  if (comp > 0) return false;
-  return (dedupId < op2.dedupId);	// Use dedupId to (possibly) allow scopes with same name
-}
-
 /// Attach the child as an immediate sub-scope of \b this.
 /// Take responsibility of the child's memory: the child will be freed when this is freed.
-/// May throw RecovError if there is a duplicate name issue
 /// \param child is the Scope to make a child
 void Scope::attachScope(Scope *child)
 
 {
   child->parent = this;
-  pair<const ScopeKey,Scope *> value(ScopeKey(child->name,child->uniqueId),child);
-  pair<ScopeMap::iterator,bool> res;
-  if (child->name.size()==0)
-    throw LowlevelError("Non-global scope has empty name");
-  res = children.insert(value);
-  if (res.second==false) {
-    ostringstream s;
-    s << "Duplicate scope name: ";
-    s << child->getFullName();
-    delete child;
-    throw RecovError(s.str());
-  }
+  children[child->uniqueId] = child;	// uniqueId is guaranteed to be unique by Database
 }
 
 /// The indicated child Scope is deleted
@@ -854,6 +831,29 @@ void Scope::detachScope(ScopeMap::iterator iter)
   Scope *child = (*iter).second;
   children.erase(iter);
   delete child;
+}
+
+/// \brief Create a Scope id based on the scope's name and its parent's id
+///
+/// Create a globally unique id for a scope simply from its name.
+/// \param baseId is the scope id of the parent scope
+/// \param nm is the name of scope
+/// \return the hash of the parent id and name
+uint8 Scope::hashScopeName(uint8 baseId,const string &nm)
+
+{
+  uint4 reg1 = (uint4)(baseId>>32);
+  uint4 reg2 = (uint4)baseId;
+  reg1 = crc_update(reg1, 0xa9);
+  reg2 = crc_update(reg2, reg1);
+  for(int4 i=0;i<nm.size();++i) {
+    uint4 val = nm[i];
+    reg1 = crc_update(reg1, val);
+    reg2 = crc_update(reg2, reg1);
+  }
+  uint8 res = reg1;
+  res = (res << 32) | reg2;
+  return res;
 }
 
 /// \brief Query for Symbols starting at a given address, which match a given \b usepoint
@@ -1270,20 +1270,40 @@ LabSymbol *Scope::queryCodeLabel(const Address &addr) const
   return res;
 }
 
-/// Look for the (last) immediate child of \b this with a given name
+/// Look for the immediate child of \b this with a given name
 /// \param name is the child's name
+/// \param strategy is \b true if hash of the name determines id
 /// \return the child Scope or NULL if there is no child with that name
-Scope *Scope::resolveScope(const string &name) const
+Scope *Scope::resolveScope(const string &name,bool strategy) const
 
 {
-  ScopeKey key(name,0xffffffff);
-  ScopeMap::const_iterator iter = children.upper_bound(key);
-  if (iter == children.begin()) return (Scope *)0;	// All children are after -name-
-  --iter;
- Scope *scope = (*iter).second;
- if (scope->name == name)
-   return scope;
- return (Scope *)0;
+  if (strategy) {
+    uint8 key = hashScopeName(uniqueId, name);
+    ScopeMap::const_iterator iter = children.find(key);
+    if (iter == children.end()) return (Scope *)0;
+    Scope *scope = (*iter).second;
+    if (scope->name == name)
+      return scope;
+  }
+  else if (name.length() > 0 && name[0] <= '9' && name[0] >= '0') {
+    // Allow the string to directly specify the id
+    istringstream s(name);
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    uint8 key;
+    s >> key;
+    ScopeMap::const_iterator iter = children.find(key);
+    if (iter == children.end()) return (Scope *)0;
+    return (*iter).second;
+  }
+  else {
+    ScopeMap::const_iterator iter;
+    for(iter=children.begin();iter!=children.end();++iter) {
+      Scope *scope = (*iter).second;
+      if (scope->name == name)
+	return scope;
+    }
+  }
+  return (Scope *)0;
 }
 
 /// Discover a sub-scope or containing Scope of \b this, that \e owns the given
@@ -1393,27 +1413,6 @@ string Scope::getFullName(void) const
     scope = scope->parent;
   }
   return fname;
-}
-
-/// Put the names of \b this and all its parent Scopes into an array in order.
-/// The name of the first entry will generally be the name of the global Scope
-/// \param vec is the array in which to store the names
-void Scope::getNameSegments(vector<string> &vec) const
-
-{
-  int4 count = 0;
-  const Scope *cur = this;
-  while(cur != (Scope *)0) { // Count number of segments
-    count += 1;
-    cur = cur->parent;
-  }
-  vec.resize(count);
-  cur = this;
-  while(cur != (Scope *)0) { // Copy each segment
-    count -= 1;
-    vec[count] = cur->name;
-    cur = cur->parent;
-  }
 }
 
 /// Put the parent scopes of \b this into an array in order, starting with the global scope.
@@ -1718,17 +1717,17 @@ bool Scope::isReadOnly(const Address &addr,int4 size,const Address &usepoint) co
   return ((flags & Varnode::readonly)!=0);
 }
 
-Scope *ScopeInternal::buildSubScope(const string &nm)
+Scope *ScopeInternal::buildSubScope(uint8 id,const string &nm)
 
 {
-  return new ScopeInternal(nm,glb);
+  return new ScopeInternal(id,nm,glb);
 }
 
 void ScopeInternal::addSymbolInternal(Symbol *sym)
 
 {
   if (sym->symbolId == 0) {
-    sym->symbolId = Symbol::ID_BASE + (((uint8)uniqueId & 0xffff) << 40) + nextUniqueId;
+    sym->symbolId = Symbol::ID_BASE + ((uniqueId & 0xffff) << 40) + nextUniqueId;
     nextUniqueId += 1;
   }
   try {
@@ -1857,17 +1856,18 @@ list<SymbolEntry>::iterator ScopeInternal::endDynamic(void)
   return dynamicentry.end();
 }
 
+/// \param id is the globally unique id associated with the scope
 /// \param nm is the name of the Scope
 /// \param g is the Architecture it belongs to
-ScopeInternal::ScopeInternal(const string &nm,Architecture *g)
-  : Scope(nm,g,this)
+ScopeInternal::ScopeInternal(uint8 id,const string &nm,Architecture *g)
+  : Scope(id,nm,g,this)
 {
   nextUniqueId = 0;
   maptable.resize(g->numSpaces(),(EntryMap *)0);
 }
 
-ScopeInternal::ScopeInternal(const string &nm,Architecture *g, Scope *own)
-  : Scope(nm,g,own)
+ScopeInternal::ScopeInternal(uint8 id,const string &nm,Architecture *g, Scope *own)
+  : Scope(id,nm,g,own)
 {
   nextUniqueId = 0;
   maptable.resize(g->numSpaces(),(EntryMap *)0);
@@ -2013,6 +2013,12 @@ void ScopeInternal::clearUnlockedCategory(int4 cat)
 	removeSymbol(sym);
     }
   }
+}
+
+void ScopeInternal::adjustCaches(void)
+
+{
+  maptable.resize(glb->numSpaces(),(EntryMap *)0);
 }
 
 void ScopeInternal::removeSymbolMappings(Symbol *symbol)
@@ -2509,45 +2515,18 @@ string ScopeInternal::makeNameUnique(const string &nm) const
   return resString;
 }
 
-/// Given a list of name strings, write out each one in an XML \<val> tag.
-/// \param s is the output stream
-/// \param vec is the list of names
-void ScopeInternal::savePathXml(ostream &s,const vector<string> &vec)
-
-{
-  for(int4 i=0;i<vec.size();++i) {
-    s << "<val>";
-    xml_escape(s,vec[i].c_str());
-    s << "</val>\n";
-  }
-}
-
-/// Given an element, parse all of its children (as \<val> tags) and
-/// put each of their content into a string array.
-/// \param vec will hold the resulting string array
-/// \param el is the XML element
-void ScopeInternal::restorePathXml(vector<string> &vec,const Element *el)
-
-{
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter)
-    vec.push_back( (*iter)->getContent() );
-}
-
 void ScopeInternal::saveXml(ostream &s) const
 
 {
   s << "<scope";
   a_v(s,"name",name);
+  a_v_u(s,"id",uniqueId);
   s << ">\n";
-  vector<string> fname;
-  getNameSegments(fname);
-  fname.pop_back();		// Pop 1 level to get parent path
-  s << "<parent>\n";
-  savePathXml(s,fname);
-  s << "</parent>\n";
+  if (getParent() != (const Scope *)0) {
+    s << "<parent";
+    a_v_u(s, "id", getParent()->getId());
+    s << "/>\n";
+  }
   getRangeTree().saveXml(s);
 
   if (!nametree.empty()) {
@@ -2669,8 +2648,11 @@ void ScopeInternal::restoreXml(const Element *el)
   const Element *subel;
 
   iter = list.begin();
-  ++iter;			// Skip <parent>, processed elsewhere
   subel = *iter;
+  if (subel->getName() == "parent") {
+    ++iter;		// Skip <parent> tag processed elsewhere
+    subel = *iter;
+  }
   if (subel->getName() == "rangelist") {
     RangeList newrangetree;
     newrangetree.restoreXml(subel,glb);
@@ -2804,17 +2786,18 @@ void Database::clearResolve(Scope *scope)
   }
 }
 
-/// This recursively performs clearResolve() on the Scope and any sub-scopes
+/// This recursively clears references in idmap or in resolvemap.
 /// \param scope is the given Scope to clear
-void Database::clearResolveRecursive(Scope *scope)
+void Database::clearReferences(Scope *scope)
 
 {
   ScopeMap::const_iterator iter = scope->children.begin();
   ScopeMap::const_iterator enditer = scope->children.end();
   while(iter != enditer) {
-    clearResolveRecursive((*iter).second);
+    clearReferences((*iter).second);
     ++iter;
   }
+  idmap.erase(scope->uniqueId);
   clearResolve(scope);
 }
 
@@ -2831,6 +2814,18 @@ void Database::fillResolve(Scope *scope)
     const Range &rng( *iter );
     resolvemap.insert(scope,rng.getFirstAddr(),rng.getLastAddr());
   }
+}
+
+/// Initialize a new symbol table, with no initial scopes or symbols.
+/// \param g is the Architecture that owns the symbol table
+/// \param isByName is \b true if scope ids are calculated as a hash of the scope name.
+Database::Database(Architecture *g,bool idByName)
+
+{
+  glb=g;
+  globalscope=(Scope *)0;
+  flagbase.defaultValue()=0;
+  idByNameHash=idByName;
 }
 
 Database::~Database(void)
@@ -2854,27 +2849,47 @@ void Database::attachScope(Scope *newscope,Scope *parent)
       throw LowlevelError("Multiple global scopes");
     if (newscope->name.size() != 0)
       throw LowlevelError("Global scope does not have empty name");
-    newscope->assignId(0);
     globalscope = newscope;
+    idmap[globalscope->uniqueId] = globalscope;
     return;
   }
-  newscope->assignId(nextScopeId);
-  nextScopeId += 1;
+  if (newscope->name.size()==0)
+    throw LowlevelError("Non-global scope has empty name");
+  pair<uint8,Scope *> value(newscope->uniqueId,newscope);
+  pair<ScopeMap::iterator,bool> res;
+  res = idmap.insert(value);
+  if (res.second==false) {
+    ostringstream s;
+    s << "Duplicate scope id: ";
+    s << newscope->getFullName();
+    delete newscope;
+    throw RecovError(s.str());
+  }
   parent->attachScope(newscope);
+}
+
+/// Give \b this database the chance to inform existing scopes of any change to the
+/// configuration, which may have changed since the initial scopes were created.
+void Database::adjustCaches(void)
+
+{
+  ScopeMap::iterator iter;
+  for(iter=idmap.begin();iter!=idmap.end();++iter) {
+    (*iter).second->adjustCaches();
+  }
 }
 
 /// \param scope is the given Scope
 void Database::deleteScope(Scope *scope)
 
 {
-  clearResolveRecursive(scope);
+  clearReferences(scope);
   if (globalscope == scope) {
     globalscope = (Scope *)0;
     delete scope;
   }
   else {
-    ScopeKey key(scope->name,scope->uniqueId);
-    ScopeMap::iterator iter = scope->parent->children.find(key);
+    ScopeMap::iterator iter = scope->parent->children.find(scope->uniqueId);
     if (iter == scope->parent->children.end())
       throw LowlevelError("Could not remove parent reference to: "+scope->name);
     scope->parent->detachScope(iter);
@@ -2892,7 +2907,7 @@ void Database::deleteSubScopes(Scope *scope)
   while(iter != enditer) {
     curiter = iter;
     ++iter;
-    clearResolveRecursive((*curiter).second);
+    clearReferences((*curiter).second);
     scope->detachScope(curiter);
   }
 }
@@ -2952,42 +2967,33 @@ void Database::removeRange(Scope *scope,AddrSpace *spc,uintb first,uintb last)
   fillResolve(scope);
 }
 
-/// Look for an immediate child scope by name in a given parent.  If does not exist,
-/// create a new scope with the name and attach it to the parent.
-/// \param nm is the base name of the desired subscope
+/// Look for a Scope by id.  If it does not exist, create a new scope
+/// with the given name and parent scope.
+/// \param id is the global id of the Scope
+/// \param nm is the given name of the Scope
 /// \param parent is the given parent scope to search
 /// \return the subscope object either found or created
-Scope *Database::findCreateSubscope(const string &nm,Scope *parent)
+Scope *Database::findCreateScope(uint8 id,const string &nm,Scope *parent)
 
 {
-  Scope *res = parent->resolveScope(nm);
+  Scope *res = resolveScope(id);
   if (res != (Scope *)0)
     return res;
-  res = globalscope->buildSubScope(nm);
+  res = globalscope->buildSubScope(id,nm);
   attachScope(res, parent);
   return res;
 }
 
-/// An \e absolute \e path of Scope names must be provided, from the global
-/// Scope down to the desired Scope.  If the first path name is blank (""), it
-/// matches the global Scope.  If the first path name is not blank, the
-/// global Scope is assumed, and the name is assumed to refer to a child.
-/// \param subnames is the \e path of names
-/// \return the desired Scope or NULL if a matching name isn't found
-Scope *Database::resolveScope(const vector<string> &subnames) const
+/// Find a Scope object, given its global id.  Return null if id is not mapped to a Scope.
+/// \param id is the global id
+/// \return the matching Scope or null
+Scope *Database::resolveScope(uint8 id) const
 
 {
-  if (subnames.size()==0) return (Scope *)0;
-  Scope *curScope = globalscope;
-  int4 i=0;
-  if (subnames[0].size()==0)		// blank name matches global scope
-    i += 1;
-  for(;i<subnames.size();++i) {
-    if (curScope == (Scope *)0)
-      break;
-    curScope = curScope->resolveScope(subnames[i]);
-  }
-  return curScope;
+  ScopeMap::const_iterator iter = idmap.find(id);
+  if (iter != idmap.end())
+    return (*iter).second;
+  return (Scope *)0;
 }
 
 /// \brief Get the Scope (and base name) associated with a qualified Symbol name
@@ -3014,7 +3020,7 @@ Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string 
     endmark = fullname.find(delim,mark);
     if (endmark == string::npos) break;
     string scopename = fullname.substr(mark,endmark-mark);
-    start = start->resolveScope(scopename);
+    start = start->resolveScope(scopename,idByNameHash);
     if (start == (Scope *)0)	// Was the scope name bad
       return start;
     mark = endmark + delim.size();
@@ -3038,6 +3044,8 @@ Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string 
 Scope *Database::findCreateScopeFromSymbolName(const string &fullname,const string &delim,string &basename,
 					       Scope *start)
 {
+  if (!idByNameHash)
+    throw LowlevelError("Scope name hashes not allowed");
   if (start == (Scope *)0)
     start = globalscope;
 
@@ -3047,7 +3055,8 @@ Scope *Database::findCreateScopeFromSymbolName(const string &fullname,const stri
     endmark = fullname.find(delim,mark);
     if (endmark == string::npos) break;
     string scopename = fullname.substr(mark,endmark-mark);
-    start = findCreateSubscope(scopename, start);
+    uint8 nameId = Scope::hashScopeName(start->uniqueId, scopename);
+    start = findCreateScope(nameId, scopename, start);
     mark = endmark + delim.size();
   }
   basename = fullname.substr(mark,endmark);
@@ -3130,7 +3139,10 @@ void Database::saveXml(ostream &s) const
 {
   partmap<Address,uint4>::const_iterator piter,penditer;
 
-  s << "<db>\n";
+  s << "<db";
+  if (idByNameHash)
+    a_v_b(s, "scopeidbyname", true);
+  s << ">\n";
   // Save the property change points
   piter = flagbase.begin();
   penditer = flagbase.end();
@@ -3148,34 +3160,22 @@ void Database::saveXml(ostream &s) const
   s << "</db>\n";
 }
 
-/// \brief Read an XML \<parent> tag for a Scope path
-///
-/// The \<parent> tag is assumed to either be the first child of
-/// the given element, or the first child of the first child.
-/// From the \<parent>, the \e name attribute is passed back and
-/// a Scope path is parsed from sub-tags.
-/// \param el is the given element (with \<parent> as a child)
-/// \param name will hold the \e name attribute
-/// \param parnames will hold the Scope path
-void Database::parseParentTag(const Element *el,string &name,vector<string> &parnames)
+/// Parse the given element for the scope id of the parent.
+/// Look up the parent scope and return it.
+/// Throw an error if there is no matching scope
+/// \param el is the given element
+/// \return the matching scope
+Scope *Database::parseParentTag(const Element *el)
 
 {
-  const List &list1(el->getChildren());
-
-  const Element *subel1 = *list1.begin();
-  if (subel1->getName() == "parent") {
-    name = el->getAttributeValue("name");
-    ScopeInternal::restorePathXml(parnames,subel1);
-    return;
-  }
-  
-  const List &list2(subel1->getChildren());
-  const Element *subel2 = *list2.begin();
-  if (subel2->getName() != "parent")
-    throw LowlevelError("Could not find scopes <parent> tag");
-  
-  name = subel1->getAttributeValue("name");
-  ScopeInternal::restorePathXml(parnames,subel2);
+  istringstream s(el->getAttributeValue("id"));
+  uint8 id = -1;
+  s.unsetf(ios::dec | ios::hex | ios::oct);
+  s >> id;
+  Scope *res = resolveScope(id);
+  if (res == (Scope *)0)
+    throw LowlevelError("Could not find scope matching id");
+  return res;
 }
 
 /// The children of a \<db> tag are examined to recover Scope and Symbol objects.
@@ -3183,6 +3183,11 @@ void Database::parseParentTag(const Element *el,string &name,vector<string> &par
 void Database::restoreXml(const Element *el)
 
 {
+  idByNameHash = false;		// Default
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    if (el->getAttributeName(i) == "scopeidbyname")
+      idByNameHash = xml_readbool(el->getAttributeValue(i));
+  }
   const List &list(el->getChildren());
   List::const_iterator iter;
 
@@ -3202,31 +3207,40 @@ void Database::restoreXml(const Element *el)
 
   for(;iter!=list.end();++iter) {
     const Element *subel = *iter;
-    string name;
-    vector<string> parnames;
-    parseParentTag(subel,name,parnames);
-    parnames.push_back(name);
-    Scope *new_scope = globalscope;
-    for(int4 i=1;i<parnames.size();++i)
-      new_scope = findCreateSubscope(parnames[i], new_scope);
-    new_scope->restoreXml(subel);
+    string name = subel->getAttributeValue("name");
+    istringstream s(subel->getAttributeValue("id"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    uint8 id;
+    s >> id;
+    const List &sublist(subel->getChildren());
+    Scope *parentScope = (Scope *)0;
+    if (!sublist.empty()) {
+      const Element *parTag = sublist.front();
+      if (parTag->getName() == "parent")
+	parentScope = parseParentTag(parTag);
+    }
+    Scope *newScope = findCreateScope(id, name, parentScope);
+    newScope->restoreXml(subel);
   }
 }
 
 /// This allows incremental building of the Database from multiple XML sources.
 /// An empty Scope must already be allocated.  It is registered with \b this Database,
-/// and then populated with Symbol objects based as the content of a given \<scope> tag.
+/// and then populated with Symbol objects based as the content of a given XML tag.
+/// The tag can either be a \<scope> itself, or another tag that wraps a \<scope> tag
+/// as its first child.
 /// \param el is the given \<scope> element
-/// \param new_scope is the empty Scope
-void Database::restoreXmlScope(const Element *el,Scope *new_scope)
+/// \param newScope is the empty Scope
+void Database::restoreXmlScope(const Element *el,Scope *newScope)
 
 {
-  Scope *par_scope;
-  vector<string> parnames;
-  parseParentTag(el,new_scope->name,parnames);		// Shove recovered basename straight into new_scope
-  par_scope = resolveScope(parnames);
-  if (par_scope == (Scope *)0)
-    throw LowlevelError("Bad parent scope");
-  attachScope(new_scope,par_scope);
-  new_scope->restoreXml(el);
+  const List &list(el->getChildren());
+  const Element *parTag = list.front();
+  if (el->getName() != "scope") {
+    const List &sublist(parTag->getChildren());
+    parTag = sublist.front();
+  }
+  Scope *parentScope = parseParentTag(parTag);
+  attachScope(newScope,parentScope);
+  newScope->restoreXml(el);
 }

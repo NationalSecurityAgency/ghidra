@@ -173,7 +173,7 @@ public class ImportBatchTask extends Task {
 				Msg.debug(this, "Batch Import cancelled");
 			}
 			catch (DuplicateNameException | InvalidNameException | VersionException
-					| IOException e) {
+					| IOException | IllegalArgumentException e) {
 				Msg.error(this, "Import failed for " + batchLoadConfig.getPreferredFileName(), e);
 			}
 		}

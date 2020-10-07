@@ -338,7 +338,13 @@ public class LocalSymbolMap {
 		resBuf.append("<scope");
 		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getFunction().getName());
 		resBuf.append(">\n");
-		HighFunction.createNamespaceTag(resBuf, namespace, false);
+		resBuf.append("<parent");
+		long parentid = Namespace.GLOBAL_NAMESPACE_ID;
+		if (!HighFunction.collapseToGlobal(namespace)) {
+			parentid = namespace.getID();
+		}
+		SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", parentid);
+		resBuf.append("/>\n");
 		resBuf.append("<rangelist/>\n");	// Empty address range
 		resBuf.append("<symbollist>\n");
 		Iterator<HighSymbol> iter = symbolMap.values().iterator();

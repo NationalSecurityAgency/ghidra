@@ -16,18 +16,19 @@
 #include "database_ghidra.hh"
 #include "funcdata.hh"
 
-Scope *ScopeGhidra::buildSubScope(const string &nm)
+Scope *ScopeGhidra::buildSubScope(uint8 id,const string &nm)
 
 {
-  return new ScopeGhidraNamespace(nm,ghidra);
+  return new ScopeGhidraNamespace(id,nm,ghidra);
 }
 
 /// \param g is the Architecture and connection to the Ghidra client
+///
 ScopeGhidra::ScopeGhidra(ArchitectureGhidra *g)
-  : Scope("",g,this)
+  : Scope(0,"",g,this)
 {
   ghidra = g;
-  cache = new ScopeInternal("",g,this);
+  cache = new ScopeInternal(0,"",g,this);
   cacheDirty = false;
 }
 
@@ -38,7 +39,7 @@ ScopeGhidra::~ScopeGhidra(void)
 }
 
 /// The Ghidra client reports a \e namespace id associated with
-/// Symbol. Determine if a matching \e namespac Scope already exists in the cache and build
+/// Symbol. Determine if a matching \e namespace Scope already exists in the cache and build
 /// it if it isn't. This may mean creating a new \e namespace Scope.
 /// \param id is the ID associated with the Ghidra namespace
 /// \return the Scope matching the id.
@@ -46,15 +47,16 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
 
 {
   if (id == 0) return cache;
-  map<uint8,Scope *>::const_iterator miter = namespaceMap.find(id);
-  if (miter != namespaceMap.end())
-    return (*miter).second;		// Scope was previously cached
+  Database *symboltab = ghidra->symboltab;
+  Scope *cacheScope = symboltab->resolveScope(id);
+  if (cacheScope != (Scope *)0)
+    return cacheScope;		// Scope was previously cached
 
   Document *doc = ghidra->getNamespacePath(id);
   if (doc == (Document *)0)
     throw LowlevelError("Could not get namespace info");
 
-  Scope *curscope = glb->symboltab->getGlobalScope();	// Get pointer to ourselves (which is not const)
+  Scope *curscope = symboltab->getGlobalScope();	// Get pointer to ourselves (which is not const)
   try {
     const List &list(doc->getRoot()->getChildren());
     List::const_iterator iter = list.begin();
@@ -66,16 +68,7 @@ Scope *ScopeGhidra::reresolveScope(uint8 id) const
       istringstream s(el->getAttributeValue("id"));
       s.unsetf(ios::dec | ios::hex | ios::oct);
       s >> scopeId;
-      miter = namespaceMap.find(scopeId);
-      if (miter == namespaceMap.end()) {
-	curscope = glb->symboltab->findCreateSubscope(el->getContent(), curscope);
-	ScopeGhidraNamespace *ghidraScope = (ScopeGhidraNamespace *)curscope;
-	if (ghidraScope->getClientId() == 0)
-	  ghidraScope->setClientId(scopeId);
-	namespaceMap[scopeId] = curscope;
-      }
-      else
-	curscope = (*miter).second;
+      curscope = symboltab->findCreateScope(scopeId, el->getContent(), curscope);
     }
     delete doc;
   }
@@ -260,7 +253,6 @@ void ScopeGhidra::clear(void)
 {
   cache->clear();
   holes.clear();
-  namespaceMap.clear();
   if (cacheDirty) {
     ghidra->symboltab->setProperties(flagbaseDefault); // Restore database properties to defaults
     cacheDirty = false;
@@ -415,6 +407,6 @@ bool ScopeGhidraNamespace::isNameUsed(const string &nm,const Scope *op2) const
   if (ArchitectureGhidra::isDynamicSymbolName(nm))
     return false;		// Just assume default FUN_ and DAT_ names don't collide
   const ScopeGhidraNamespace *otherScope = dynamic_cast<const ScopeGhidraNamespace *>(op2);
-  uint8 otherId = (otherScope != (const ScopeGhidraNamespace *)0) ? otherScope->getClientId() : 0;
-  return ghidra->isNameUsed(nm, scopeId, otherId);
+  uint8 otherId = (otherScope != (const ScopeGhidraNamespace *)0) ? otherScope->getId() : 0;
+  return ghidra->isNameUsed(nm, uniqueId, otherId);
 }

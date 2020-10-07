@@ -206,7 +206,7 @@ protected:
   void addNoHighPtr(const Range &rng); ///< Add a new region where pointers do not exist
 
   // Factory routines for building this architecture
-  virtual Scope *buildGlobalScope(void);			///< Build the global scope for this executable
+  virtual Scope *buildDatabase(DocumentStorage &store);		///< Build the database and global scope for this executable
 
   /// \brief Build the Translator object
   ///

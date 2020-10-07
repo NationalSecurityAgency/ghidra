@@ -377,18 +377,7 @@ public:
   }
 };
 
-/// \brief A key for looking up child symbol scopes within a parent, based on name
-///
-/// A key for mapping from name to Scope.  The class includes a deduplication component
-/// if Scopes with the same name are allowed.
-class ScopeKey {
-  string name;			///< The name of the Scope
-  uintb dedupId;		///< A duplication id for the Scope
-public:
-  ScopeKey(const string &nm,uint4 id) { name = nm; dedupId = id; }	///< Construct given a name and id
-  bool operator<(const ScopeKey &op2) const;				///< Comparison operator
-};
-typedef map<ScopeKey,Scope *> ScopeMap;		///< A map from ScopeKey to Scope
+typedef map<uint8,Scope *> ScopeMap;		///< A map from id to Scope
 
 /// \brief A collection of Symbol objects within a single (namespace or functional) scope
 ///
@@ -420,12 +409,12 @@ class Scope {
   ScopeMap children;				///< Sorted list of child scopes
   void attachScope(Scope *child);		///< Attach a new child Scope to \b this
   void detachScope(ScopeMap::iterator iter);	///< Detach a child Scope from \b this
-  void assignId(uint4 val) { uniqueId = val; }	///< Let the database assign a unique id to \b this scope
+  static uint8 hashScopeName(uint8 baseId,const string &nm);
 protected:
   Architecture *glb;				///< Architecture of \b this scope
   string name;					///< Name of \b this scope
   Funcdata *fd;					///< (If non-null) the function which \b this is the local Scope for
-  uint4 uniqueId;				///< Unique id for the scope, for deduping scope names, assigning symbol ids
+  uint8 uniqueId;				///< Unique id for the scope, for deduping scope names, assigning symbol ids
   static const Scope *stackAddr(const Scope *scope1,
 				     const Scope *scope2,
 				     const Address &addr,
@@ -460,9 +449,10 @@ protected:
   ///
   /// This is a Scope object \e factory, intended to be called off of the global scope for building
   /// global namespace scopes.  Function scopes are handled differently.
+  /// \param id is the globally unique id associated with the scope
   /// \param nm is the name of the new scope
   /// \return the new Scope object
-  virtual Scope *buildSubScope(const string &nm)=0;
+  virtual Scope *buildSubScope(uint8 id,const string &nm)=0;
 
   virtual void restrictScope(Funcdata *f);				///< Convert \b this to a local Scope
 
@@ -512,8 +502,8 @@ public:
   void turnOffDebug(void) const { debugon = false; }
 #endif
   /// \brief Construct an empty scope, given a name and Architecture
-  Scope(const string &nm,Architecture *g,Scope *own) {
-    name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; uniqueId = 0; owner=own;
+  Scope(uint8 id,const string &nm,Architecture *g,Scope *own) {
+    uniqueId = id; name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; owner=own;
 #ifdef OPACTION_DEBUG
     debugon = false;
 #endif
@@ -529,6 +519,11 @@ public:
   virtual void clearCategory(int4 cat)=0;			///< Clear all symbols of the given category from \b this scope
   virtual void clearUnlocked(void)=0;				///< Clear all unlocked symbols from \b this scope
   virtual void clearUnlockedCategory(int4 cat)=0;		///< Clear unlocked symbols of the given category from \b this scope
+
+  /// \brief Let scopes internally adjust any caches
+  ///
+  /// This is called once after Architecture configuration is complete.
+  virtual void adjustCaches(void)=0;
 
   /// \brief Query if the given range is owned by \b this Scope
   ///
@@ -680,6 +675,7 @@ public:
 				 const Address &addr,const Address &usepoint);
 
   const string &getName(void) const { return name; }		///< Get the name of the Scope
+  uint8 getId(void) const { return uniqueId; }			///< Get the globally unique id
   bool isGlobal(void) const { return (fd == (Funcdata *)0); }	///< Return \b true if \b this scope is global
 
   // The main global querying routines
@@ -695,7 +691,7 @@ public:
   Funcdata *queryExternalRefFunction(const Address &addr) const;	///< Look-up a function thru an \e external \e reference
   LabSymbol *queryCodeLabel(const Address &addr) const;			///< Look-up a code label by address
 
-  Scope *resolveScope(const string &name) const;			///< Find a child Scope of \b this
+  Scope *resolveScope(const string &name, bool strategy) const;		///< Find a child Scope of \b this
   Scope *discoverScope(const Address &addr,int4 sz,const Address &usepoint);	///< Find the owning Scope of a given memory range
   ScopeMap::const_iterator childrenBegin() const { return children.begin(); }	///< Beginning iterator of child scopes
   ScopeMap::const_iterator childrenEnd() const { return children.end(); }	///< Ending iterator of child scopes
@@ -705,7 +701,6 @@ public:
   void setThisPointer(Symbol *sym,bool val) { sym->setThisPointer(val); }	///< Toggle the given Symbol as the "this" pointer
   bool isSubScope(const Scope *scp) const;			///< Is this a sub-scope of the given Scope
   string getFullName(void) const;				///< Get the full name of \b this Scope
-  void getNameSegments(vector<string> &vec) const;		///< Get the fullname of \b this in segments
   void getScopePath(vector<const Scope *> &vec) const;		///< Get the ordered list of scopes up to \b this
   const Scope *findDistinguishingScope(const Scope *op2) const;	///< Find first ancestor of \b this not shared by given scope
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associated with \b this
@@ -735,7 +730,7 @@ class ScopeInternal : public Scope {
   void insertNameTree(Symbol *sym);
   SymbolNameTree::const_iterator findFirstByName(const string &name) const;
 protected:
-  virtual Scope *buildSubScope(const string &nm);	///< Build an unattached Scope to be associated as a sub-scope of \b this
+  virtual Scope *buildSubScope(uint8 id,const string &nm);	///< Build an unattached Scope to be associated as a sub-scope of \b this
   virtual void addSymbolInternal(Symbol *sym);
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,const RangeList &uselim);
   virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
@@ -747,13 +742,14 @@ protected:
   SymbolNameTree multiEntrySet;			///< Set of symbols with multiple entries
   uint8 nextUniqueId;				///< Next available symbol id
 public:
-  ScopeInternal(const string &nm,Architecture *g);	///< Construct the Scope
-  ScopeInternal(const string &nm,Architecture *g, Scope *own);	///< Construct as a cache
+  ScopeInternal(uint8 id,const string &nm,Architecture *g);	///< Construct the Scope
+  ScopeInternal(uint8 id,const string &nm,Architecture *g, Scope *own);	///< Construct as a cache
   virtual void clear(void);
   virtual void categorySanity(void);			///< Make sure Symbol categories are sane
   virtual void clearCategory(int4 cat);
   virtual void clearUnlocked(void);
   virtual void clearUnlockedCategory(int4 cat);
+  virtual void adjustCaches(void);
   virtual ~ScopeInternal(void);
   virtual MapIterator begin(void) const;
   virtual MapIterator end(void) const;
@@ -797,8 +793,6 @@ public:
   void assignDefaultNames(int4 &base);		///< Assign a default name (via buildVariableName) to any unnamed symbol
   set<Symbol *>::const_iterator beginMultiEntry(void) const { return multiEntrySet.begin(); }	///< Start of symbols with more than one entry
   set<Symbol *>::const_iterator endMultiEntry(void) const { return multiEntrySet.end(); }	///< End of symbols with more than one entry
-  static void savePathXml(ostream &s,const vector<string> &vec);	///< Save a path with \<val> tags
-  static void restorePathXml(vector<string> &vec,const Element *el);	///< Restore path from \<val> tags
 };
 
 /// \brief An Address range associated with the symbol Scope that owns it
@@ -850,19 +844,21 @@ typedef rangemap<ScopeMapper> ScopeResolve;		///< A map from address to the owni
 /// memory ranges.  This allows important properties like \e read-only and \e volatile to
 /// be put down even if the Symbols aren't yet known.
 class Database {
-  Architecture *glb;			///< The Architecture to which this symbol table is attached
-  Scope *globalscope;			///< A quick reference to the \e global Scope
-  ScopeResolve resolvemap;		///< The Address to \e namespace map
+  Architecture *glb;			///< Architecture to which this symbol table is attached
+  Scope *globalscope;			///< Quick reference to the \e global Scope
+  ScopeResolve resolvemap;		///< Address to \e namespace map
+  ScopeMap idmap;			///< Map from id to Scope
   partmap<Address,uint4> flagbase;	///< Map of global properties
-  uint4 nextScopeId;			///< Id for next attached scope (0 reserved for global scope)
+  bool idByNameHash;			///< True if scope ids are built from hash of name
   void clearResolve(Scope *scope);	///< Clear the \e ownership ranges associated with the given Scope
-  void clearResolveRecursive(Scope *scope);	///< Clear the \e ownership ranges of a given Scope and its children
+  void clearReferences(Scope *scope);	///< Clear any map references to the given Scope and its children
   void fillResolve(Scope *scope);	///< Add the \e ownership ranges of the given Scope to the map
-  static void parseParentTag(const Element *el,string &name,vector<string> &parnames);
+  Scope *parseParentTag(const Element *el);	///< Figure out parent scope given \<parent> tag.
 public:
-  Database(Architecture *g) { glb=g; globalscope=(Scope *)0; flagbase.defaultValue()=0; nextScopeId=1; }	///< Constructor
+  Database(Architecture *g,bool idByName);			///< Constructor
   ~Database(void);						///< Destructor
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associate with \b this
+  void adjustCaches(void);					///< Let scopes adjust after configuration is finished
   void attachScope(Scope *newscope,Scope *parent);		///< Register a new Scope
   void deleteScope(Scope *scope);				///< Delete the given Scope and all its sub-scopes
   void deleteSubScopes(Scope *scope);				///< Delete all sub-scopes of the given Scope
@@ -871,9 +867,9 @@ public:
   void addRange(Scope *scope,AddrSpace *spc,uintb first,uintb last);	///< Add an address range to the \e ownership of a Scope
   void removeRange(Scope *scope,AddrSpace *spc,uintb first,uintb last);	///< Remove an address range from \e ownership of a Scope
   Scope *getGlobalScope(void) const { return globalscope; }	///< Get the global Scope
-  Scope *resolveScope(const vector<string> &subnames) const;	///< Look-up a Scope by name
+  Scope *resolveScope(uint8 id) const;				///< Look-up a Scope by id
   Scope *resolveScopeFromSymbolName(const string &fullname,const string &delim,string &basename,Scope *start) const;
-  Scope *findCreateSubscope(const string &nm,Scope *parent);	/// Find (and if not found create) a specific subscope
+  Scope *findCreateScope(uint8,const string &nm,Scope *parent);	/// Find (and if not found create) a specific subscope
   Scope *findCreateScopeFromSymbolName(const string &fullname,const string &delim,string &basename,Scope *start);
   const Scope *mapScope(const Scope *qpoint,const Address &addr,const Address &usepoint) const;
   Scope *mapScope(Scope *qpoint,const Address &addr,const Address &usepoint);
@@ -883,7 +879,7 @@ public:
   const partmap<Address,uint4> &getProperties(void) const { return flagbase; }	///< Get the entire property map
   void saveXml(ostream &s) const;				///< Save the whole Database to an XML stream
   void restoreXml(const Element *el);				///< Recover the whole database from XML
-  void restoreXmlScope(const Element *el,Scope *new_scope);	///< Register and fill out a single Scope from XML
+  void restoreXmlScope(const Element *el,Scope *newScope);	///< Register and fill out a single Scope from  an XML \<scope> tag
 };
 
 /// \param sc is the scope containing the new symbol

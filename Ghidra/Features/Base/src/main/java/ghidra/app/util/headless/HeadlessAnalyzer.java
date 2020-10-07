@@ -1193,7 +1193,8 @@ public class HeadlessAnalyzer {
 			// This can never happen because there is no user interaction in headless!
 		}
 		catch (Exception exc) {
-			Msg.error(this, domFile.getPathname() + " Error during analysis: " + exc.getMessage());
+			Msg.error(this, domFile.getPathname() + " Error during analysis: " + exc.getMessage(),
+				exc);
 		}
 		finally {
 

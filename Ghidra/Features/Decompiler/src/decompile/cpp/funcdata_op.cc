@@ -923,7 +923,7 @@ void Funcdata::overrideFlow(const Address &addr,uint4 type)
   else if (type == Override::CALL)
     op = findPrimaryBranch(iter,enditer,true,false,true);
   else if (type == Override::CALL_RETURN)
-    op = findPrimaryBranch(iter,enditer,true,false,true);
+    op = findPrimaryBranch(iter,enditer,true,true,true);
   else if (type == Override::RETURN)
     op = findPrimaryBranch(iter,enditer,true,true,false);
 

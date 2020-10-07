@@ -616,21 +616,32 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
+	 * The decompiler treats some namespaces as equivalent to the "global" namespace.
+	 * Return true if the given namespace is treated as equivalent.
+	 * @param namespace is the namespace
+	 * @return true if equivalent
+	 */
+	static final public boolean collapseToGlobal(Namespace namespace) {
+		if (namespace instanceof Library) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Append an XML &lt;parent&gt; tag to the buffer describing the formal path elements
 	 * from the root (global) namespace up to the given namespace
 	 * @param buf is the buffer to write to
 	 * @param namespace is the namespace being described
-	 * @param includeId is true if the XML tag should include namespace ids
 	 */
-	static public void createNamespaceTag(StringBuilder buf, Namespace namespace,
-			boolean includeId) {
+	static public void createNamespaceTag(StringBuilder buf, Namespace namespace) {
 		buf.append("<parent>\n");
 		if (namespace != null) {
 			ArrayList<Namespace> arr = new ArrayList<Namespace>();
 			Namespace curspc = namespace;
 			while (curspc != null) {
 				arr.add(0, curspc);
-				if (curspc instanceof Library) {
+				if (collapseToGlobal(curspc)) {
 					break;		// Treat library namespace as root
 				}
 				curspc = curspc.getParentNamespace();
@@ -639,9 +650,7 @@ public class HighFunction extends PcodeSyntaxTree {
 			for (int i = 1; i < arr.size(); ++i) {
 				Namespace curScope = arr.get(i);
 				buf.append("<val");
-				if (includeId) {
-					SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", curScope.getID());
-				}
+				SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", curScope.getID());
 				buf.append('>');
 				SpecXmlUtils.xmlEscape(buf, curScope.getName());
 				buf.append("</val>\n");

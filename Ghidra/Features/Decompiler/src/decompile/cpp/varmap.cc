@@ -262,10 +262,11 @@ int4 RangeHint::compare(const RangeHint &op2) const
   return 0;
 }
 
+/// \param id is the globally unique id associated with the function scope
 /// \param spc is the (stack) address space associated with this function's local variables
 /// \param fd is the function associated with these local variables
 /// \param g is the Architecture
-ScopeLocal::ScopeLocal(AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInternal(fd->getName(),g)
+ScopeLocal::ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g) : ScopeInternal(id,fd->getName(),g)
 
 {
   space = spc;
