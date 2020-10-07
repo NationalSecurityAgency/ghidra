@@ -123,6 +123,11 @@ public class JPEGDataType extends BuiltIn implements Dynamic, Resource {
 		public ImageIcon getImageIcon() {
 			return new ImageIcon(data, "<JPEG-Image>");
 		}
+
+		@Override
+		public String getImageFileType() {
+			return "jpg";
+		}
 	}
 
 	@Override
