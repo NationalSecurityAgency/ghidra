@@ -528,15 +528,15 @@ public abstract class PdbDebugInfo {
 	 * @throws IOException Upon IOException writing to the {@link Writer}.
 	 */
 	protected void dump(Writer writer) throws IOException {
-		writer.write("DebugInfoHeader-------------------------------------\n");
+		writer.write("DebugInfoHeader---------------------------------------------\n");
 		dumpHeader(writer);
-		writer.write("\nEnd DebugInfoHeader---------------------------------\n");
-		writer.write("DebugInfoInternalSubstreams-------------------------\n");
+		writer.write("\nEnd DebugInfoHeader-----------------------------------------\n");
+		writer.write("DebugInfoInternalSubstreams---------------------------------\n");
 		dumpInternalSubstreams(writer);
-		writer.write("\nEnd DebugInfoInternalSubstreams---------------------\n");
-		writer.write("DebugInfoAdditionalSubstreams-----------------------\n");
+		writer.write("\nEnd DebugInfoInternalSubstreams-----------------------------\n");
+		writer.write("DebugInfoAdditionalSubstreams-------------------------------\n");
 		dumpAdditionalSubstreams(writer);
-		writer.write("\nEnd DebugInfoAdditionalSubstreams-------------------\n");
+		writer.write("\nEnd DebugInfoAdditionalSubstreams---------------------------\n");
 	}
 
 	/**

@@ -47,7 +47,7 @@ class LoadPdbTask extends Task {
 
 	LoadPdbTask(Program program, File pdbFile, boolean useMsDiaParser,
 			PdbApplicatorRestrictions restrictions, DataTypeManagerService service) {
-		super("Loading PDB...", true, false, false);
+		super("Load PDB", true, false, false);
 		this.program = program;
 		this.pdbFile = pdbFile;
 		this.useMsDiaParser = useMsDiaParser;
