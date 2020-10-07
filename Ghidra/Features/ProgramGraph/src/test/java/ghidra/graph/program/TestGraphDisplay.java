@@ -17,6 +17,7 @@ package ghidra.graph.program;
 
 import java.util.*;
 
+import docking.action.DockingAction;
 import docking.widgets.EventTrigger;
 import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
@@ -110,4 +111,20 @@ public class TestGraphDisplay implements GraphDisplay {
 	public void selectionChanged(List<String> vertexIds) {
 		listener.selectionChanged(vertexIds);
 	}
+
+	@Override
+	public void addAction(DockingAction action) {
+		// do nothing, actions are not supported by this display
+	}
+
+	@Override
+	public String getFocusedVertexId() {
+		return currentFocusedVertex;
+	}
+
+	@Override
+	public Set<String> getSelectedVertexIds() {
+		return new HashSet<String>(currentSelection);
+	}
+
 }

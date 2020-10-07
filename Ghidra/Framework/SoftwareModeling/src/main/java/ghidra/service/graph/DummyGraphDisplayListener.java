@@ -34,4 +34,9 @@ public class DummyGraphDisplayListener implements GraphDisplayListener {
 		// I'm a dummy
 	}
 
+	@Override
+	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
+		return new DummyGraphDisplayListener();
+	}
+
 }

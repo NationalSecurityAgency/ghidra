@@ -17,14 +17,15 @@ package ghidra.graph.program;
 
 import java.util.*;
 
+import docking.action.builder.ActionBuilder;
 import ghidra.app.plugin.core.graph.AddressBasedGraphDisplayListener;
+import ghidra.app.util.AddEditDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayListener;
+import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -39,6 +40,17 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 			GraphDisplay display) {
 		super(tool, blockModel.getProgram(), display);
 		this.blockModel = blockModel;
+		addActions(display);
+	}
+
+	private void addActions(GraphDisplay display) {
+		display.addAction(new ActionBuilder("Rename Vertex", "Block Graph")
+				.popupMenuPath("Rename Vertex")
+				.withContext(VertexGraphActionContext.class)
+				// only enable action when vertex corresponds to an address
+				.enabledWhen(c -> getAddress(c.getClickedVertex().getId()) != null)
+				.onAction(this::updateVertexName)
+				.build());
 	}
 
 	@Override
@@ -135,6 +147,26 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 			return false;
 		}
 		return program.getMemory().contains(addr) || addr.isExternalAddress();
+	}
+
+	private void updateVertexName(VertexGraphActionContext context) {
+		String vertexId = context.getClickedVertex().getId();
+		Address address = getAddressForVertexId(vertexId);
+		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
+
+		if (symbol == null) {
+			AddEditDialog dialog = new AddEditDialog("Create Label", tool);
+			dialog.addLabel(address, program, context.getComponentProvider());
+		}
+		else {
+			AddEditDialog dialog = new AddEditDialog("Edit Label", tool);
+			dialog.editLabel(symbol, program, context.getComponentProvider());
+		}
+	}
+
+	@Override
+	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
+		return new BlockModelGraphDisplayListener(tool, blockModel, graphDisplay);
 	}
 
 }

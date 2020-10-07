@@ -36,6 +36,7 @@ public class ASTGraphTask extends Task {
 	enum GraphType {
 		CONTROL_FLOW_GRAPH("AST Control Flow"), DATA_FLOW_GRAPH("AST Data Flow");
 		private String name;
+
 		GraphType(String name) {
 			this.name = name;
 		}
@@ -194,7 +195,8 @@ public class ASTGraphTask extends Task {
 		}
 	}
 
-	private AttributedVertex getOpVertex(AttributedGraph graph, PcodeOpAST op, TaskMonitor monitor) {
+	private AttributedVertex getOpVertex(AttributedGraph graph, PcodeOpAST op,
+			TaskMonitor monitor) {
 
 		String key = "O_" + Integer.toString(op.getSeqnum().getTime());
 		AttributedVertex vertex = graph.getVertex(key);
@@ -226,7 +228,8 @@ public class ASTGraphTask extends Task {
 		vertex.setAttribute(VERTEX_TYPE_ATTRIBUTE, vertexType);
 	}
 
-	private AttributedVertex getDataVertex(AttributedGraph graph, Varnode node, TaskMonitor monitor) {
+	private AttributedVertex getDataVertex(AttributedGraph graph, Varnode node,
+			TaskMonitor monitor) {
 
 		// TODO: Missing Varnode unique ID ??
 
@@ -288,7 +291,8 @@ public class ASTGraphTask extends Task {
 		}
 	}
 
-	private AttributedVertex getBlockVertex(AttributedGraph graph, PcodeBlock pblock, TaskMonitor monitor) {
+	private AttributedVertex getBlockVertex(AttributedGraph graph, PcodeBlock pblock,
+			TaskMonitor monitor) {
 
 		String key = Integer.toString(pblock.getIndex());
 		AttributedVertex vertex = graph.getVertex(key);
