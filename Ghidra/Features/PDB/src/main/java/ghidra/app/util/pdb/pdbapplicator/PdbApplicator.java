@@ -200,9 +200,8 @@ public class PdbApplicator {
 
 		pdbAddressManager.logReport();
 
-		String applicatorMetrics = pdbApplicatorMetrics.getPostProcessingReport();
-		Msg.info(this, applicatorMetrics);
-		PdbLog.message(applicatorMetrics);
+		pdbApplicatorMetrics.logReport();
+
 		Msg.info(this, "PDB Terminated Normally");
 	}
 
@@ -798,6 +797,10 @@ public class PdbApplicator {
 	boolean isInvalidAddress(Address address, String name) {
 		if (address == PdbAddressManager.BAD_ADDRESS) {
 			appendLogMsg("Invalid address encountered for: " + name);
+			return true;
+		}
+		if (address == PdbAddressManager.ZERO_ADDRESS) {
+			// Symbol OMAP resulted in 0 RVA - Discard silently
 			return true;
 		}
 		if (address == PdbAddressManager.EXTERNAL_ADDRESS) {

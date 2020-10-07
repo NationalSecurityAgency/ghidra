@@ -36,15 +36,20 @@ public class PdbAddressManager {
 
 	// This could be a valid address for the program, but we are using it as a flag.  We return
 	// it to designate that an address is an external address, and we use it outside of this class
-	// to test for it being an external address.
-	static final Address EXTERNAL_ADDRESS = AddressSpace.EXTERNAL_SPACE.getAddress(0);
-	static final Address BAD_ADDRESS = Address.NO_ADDRESS; // using NO_ADDRESS as a marker
+	// to test for it being an external address. These marker addresses should never be used
+	// for symbol creation.
+	static final Address EXTERNAL_ADDRESS = AddressSpace.EXTERNAL_SPACE.getAddress(1);
+	static final Address ZERO_ADDRESS = AddressSpace.EXTERNAL_SPACE.getAddress(0);
+	static final Address BAD_ADDRESS = Address.NO_ADDRESS;
 
 	//==============================================================================================
 	private Map<Integer, Long> realAddressesBySection;
+	private List<SegmentMapDescription> segmentMapList;
+	private List<ImageSectionHeader> imageSectionHeaders;
+	private SortedMap<Long, Long> omapFromSource;
 	private List<PeCoffGroupMsSymbol> memoryGroupRefinement;
 	private List<PeCoffSectionMsSymbol> memorySectionRefinement;
-	private List<SegmentInfo> allSegmentsInfo;
+	// private List<SegmentInfo> allSegmentsInfo;
 
 	// Map of Address by symbol name... if a name has appeared more than once, then the Address
 	// is written with Address.NO_ADDRESS to indicate that the name is found at more than one
@@ -81,11 +86,12 @@ public class PdbAddressManager {
 		realAddressesBySection = new HashMap<>();
 		memoryGroupRefinement = new ArrayList<>();
 		memorySectionRefinement = new ArrayList<>();
-		allSegmentsInfo = new ArrayList<>();
+		// TODO allSegmentInfo might go away if we use ImageSectionHeader. Under investigation.
+//		allSegmentsInfo = new ArrayList<>();
 		addressByPreExistingSymbolName = new HashMap<>();
 		primarySymbolByAddress = new HashMap<>();
-
 		determineMemoryBlocks();
+//		determineMemoryBlocks_orig();
 		mapPreExistingSymbols();
 		createAddressRemap();
 	}
@@ -140,22 +146,59 @@ public class PdbAddressManager {
 	 * {@code Address.EXTERNAL_ADDRESS} if the address is external to the program.
 	 */
 	Address getRawAddress(int segment, long offset) {
-		if (segment < 0 || segment > allSegmentsInfo.size()) {
+		if (segment < 0) {
 			return BAD_ADDRESS;
 		}
-		// We are lumping 0 and size as EXTERNAL... one or other could be image base... but not
-		// necessarily consistent... but that's OK... it is still "EXTERNAL" from the program.
-		else if (segment == 0 || segment == allSegmentsInfo.size()) {
-			// External address.
-			// Was getting issues of _IMAGE_DOSHEADER showing up with a segment index one
-			// beyond the end.
-			return EXTERNAL_ADDRESS;
+		Long relativeVirtualAddress = null;
+		if (imageSectionHeaders != null) {
+			if (segment > imageSectionHeaders.size() + 1) {
+				return BAD_ADDRESS;
+			}
+			else if (segment == 0 || segment == imageSectionHeaders.size() + 1) {
+				// External address.
+				return EXTERNAL_ADDRESS;
+			}
+			relativeVirtualAddress =
+				imageSectionHeaders.get(segment - 1).getVirtualAddress() + offset;
+			relativeVirtualAddress = applyOMap(relativeVirtualAddress);
+			if (relativeVirtualAddress == null) {
+				return BAD_ADDRESS;
+			}
+			if (relativeVirtualAddress == 0) {
+				return ZERO_ADDRESS;
+			}
 		}
-		SegmentInfo segmentInfo = allSegmentsInfo.get(segment);
-		if (offset >= segmentInfo.getLength()) {
-			return BAD_ADDRESS;
+		else {
+			// TODO: need to verify use of segments here!
+			if (segment > segmentMapList.size() + 1) {
+				return BAD_ADDRESS;
+			}
+			else if (segment == 0 || segment == segmentMapList.size() + 1) {
+				// External address.
+				return EXTERNAL_ADDRESS;
+			}
+			// TODO: Need to verify. Guessing at the moment
+			relativeVirtualAddress = segmentMapList.get(segment - 1).getSegmentOffset();
 		}
-		return segmentInfo.getStartAddress().add(offset);
+
+		return imageBase.add(relativeVirtualAddress);
+	}
+
+	private Long applyOMap(Long relativeVirtualAddress) {
+		if (omapFromSource == null) {
+			return relativeVirtualAddress;
+		}
+		// NOTE: Original map entries are 32-bit values zero-extended to a java long (64-bits)
+		SortedMap<Long, Long> headMap = omapFromSource.headMap(relativeVirtualAddress + 1);
+		if (headMap.isEmpty()) {
+			return null;
+		}
+		long from = headMap.lastKey();
+		long to = headMap.get(from);
+		if (to == 0) {
+			return 0L;
+		}
+		return to + (relativeVirtualAddress - from);
 	}
 
 	/**
@@ -232,6 +275,7 @@ public class PdbAddressManager {
 
 	//==============================================================================================
 	//==============================================================================================
+	// TODO: this class might go away if we use ImageSectionHeaders directly.
 	private class SegmentInfo {
 		private Address start;
 		private long length;
@@ -250,35 +294,50 @@ public class PdbAddressManager {
 		}
 	}
 
+//	private void determineMemoryBlocks_orig() {
+//		// Set section/segment 0 to image base. (should be what is header), but what is its size?
+//		// TODO... made up size for now... is there something else?  We could put null instead.
+//		// For now, the method that reads this information might report EXTERNAL instead of
+//		// trying to use this. 
+//		long segmentZeroLength = 0x7fffffff;
+//		allSegmentsInfo.add(new SegmentInfo(imageBase, segmentZeroLength));
+//		PdbDebugInfo dbi = applicator.getPdb().getDebugInfo();
+//		if (dbi instanceof PdbNewDebugInfo) {
+//			DebugData debugData = ((PdbNewDebugInfo) dbi).getDebugData();
+//			List<ImageSectionHeader> imageSectionHeaders = debugData.getImageSectionHeaders();
+//			for (ImageSectionHeader imageSectionHeader : imageSectionHeaders) {
+//				long virtualAddress = imageSectionHeader.getVirtualAddress();
+//				// TODO: not sure when unionPAVS is physical address vs. virtual size.  Perhaps
+//				// it keys off whether virtualAddress is not some special value such as
+//				// 0x00000000 or 0xffffffff.
+//				long size = imageSectionHeader.getUnionPAVS();
+//				allSegmentsInfo.add(new SegmentInfo(imageBase.add(virtualAddress), size));
+//			}
+//		}
+//		// else instance of PdbDebugInfo; TODO: what can we do here?
+//		// Maybe get information from the program itself.
+//
+//		// TODO: what should we do with these? Not doing anything at the moment
+//		AbstractPdb pdb = applicator.getPdb();
+//		List<SegmentMapDescription> segmentMapList = pdb.getDebugInfo().getSegmentMapList();
+//		for (SegmentMapDescription segmentMapDescription : segmentMapList) {
+//			segmentMapDescription.getSegmentOffset();
+//			segmentMapDescription.getLength();
+//		}
+//	}
+
 	private void determineMemoryBlocks() {
-		// Set section/segment 0 to image base. (should be what is header), but what is its size?
-		// TODO... made up size for now... is there something else?  We could put null instead.
-		// For now, the method that reads this information might report EXTERNAL instead of
-		// trying to use this. 
-		long segmentZeroLength = 0x7fffffff;
-		allSegmentsInfo.add(new SegmentInfo(imageBase, segmentZeroLength));
 		PdbDebugInfo dbi = applicator.getPdb().getDebugInfo();
+		segmentMapList = dbi.getSegmentMapList();
 		if (dbi instanceof PdbNewDebugInfo) {
 			DebugData debugData = ((PdbNewDebugInfo) dbi).getDebugData();
-			List<ImageSectionHeader> imageSectionHeaders = debugData.getImageSectionHeaders();
-			for (ImageSectionHeader imageSectionHeader : imageSectionHeaders) {
-				long virtualAddress = imageSectionHeader.getVirtualAddress();
-				// TODO: not sure when unionPAVS is physical address vs. virtual size.  Perhaps
-				// it keys off whether virtualAddress is not some special value such as
-				// 0x00000000 or 0xffffffff.
-				long size = imageSectionHeader.getUnionPAVS();
-				allSegmentsInfo.add(new SegmentInfo(imageBase.add(virtualAddress), size));
+			imageSectionHeaders = debugData.getImageSectionHeadersOrig();
+			if (imageSectionHeaders != null) {
+				omapFromSource = debugData.getOmapFromSource();
 			}
-		}
-		// else instance of PdbDebugInfo; TODO: what can we do here?
-		// Maybe get information from the program itself.
-
-		// TODO: what should we do with these? Not doing anything at the moment
-		AbstractPdb pdb = applicator.getPdb();
-		List<SegmentMapDescription> segmentMapList = pdb.getDebugInfo().getSegmentMapList();
-		for (SegmentMapDescription segmentMapDescription : segmentMapList) {
-			segmentMapDescription.getSegmentOffset();
-			segmentMapDescription.getLength();
+			else {
+				imageSectionHeaders = debugData.getImageSectionHeaders();
+			}
 		}
 	}
 
@@ -342,6 +401,7 @@ public class PdbAddressManager {
 		// Put in two basic entries so we do not have to do conditional tests before looking
 		// up values in the table.
 		remapAddressByAddress.put(BAD_ADDRESS, BAD_ADDRESS);
+		remapAddressByAddress.put(ZERO_ADDRESS, ZERO_ADDRESS);
 		remapAddressByAddress.put(EXTERNAL_ADDRESS, EXTERNAL_ADDRESS);
 	}
 

@@ -15,15 +15,17 @@
  */
 package ghidra.app.util.datatype.microsoft;
 
+import java.io.*;
+import java.util.Hashtable;
+
 import generic.jar.ResourceFile;
+import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.Application;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.*;
-
-import java.io.*;
-import java.util.Hashtable;
 
 public class GuidUtil {
 
@@ -63,8 +65,8 @@ public class GuidUtil {
 			return;
 		}
 		idTables = new Hashtable<GuidType, Hashtable<String, GuidInfo>>();
-		for (int i = 0; i < guidTypes.length; i++) {
-			idTables.put(guidTypes[i], new Hashtable<String, GuidInfo>());
+		for (GuidType guidType : guidTypes) {
+			idTables.put(guidType, new Hashtable<String, GuidInfo>());
 		}
 		buildGuidMap();
 		initialized = true;
@@ -81,11 +83,11 @@ public class GuidUtil {
 		}
 		initialize();
 		guidString = guidString.toUpperCase();
-		for (int i = 0; i < guidTypes.length; i++) {
-			if (guidTypes[i].equals(GuidType.SYNTAX)) {
+		for (GuidType guidType : guidTypes) {
+			if (guidType.equals(GuidType.SYNTAX)) {
 				continue;
 			}
-			Hashtable<String, GuidInfo> table = idTables.get(guidTypes[i]);
+			Hashtable<String, GuidInfo> table = idTables.get(guidType);
 			GuidInfo guidInfo = table.get(guidString);
 			if (guidInfo != null) {
 				return guidInfo;
@@ -106,11 +108,11 @@ public class GuidUtil {
 	}
 
 	private static void buildGuidMap() {
-		for (int i = 0; i < guidTypes.length; i++) {
-			Hashtable<String, GuidInfo> table = idTables.get(guidTypes[i]);
+		for (GuidType guidType : guidTypes) {
+			Hashtable<String, GuidInfo> table = idTables.get(guidType);
 
-			String filename = guidTypes[i].getFilename();
-			readGuidFile(guidTypes[i], filename, table);
+			String filename = guidType.getFilename();
+			readGuidFile(guidType, filename, table);
 		}
 	}
 
@@ -195,8 +197,8 @@ public class GuidUtil {
 	}
 
 	private static boolean isOK(long[] data) {
-		for (int i = 0; i < data.length; i++) {
-			if ((data[i] != 0) || (data[i] != 0xFFFFFFFFL)) {
+		for (long element : data) {
+			if ((element != 0) || (element != 0xFFFFFFFFL)) {
 				return true;
 			}
 		}
@@ -229,8 +231,9 @@ public class GuidUtil {
 		guidString += Conv.toHexString((short) (data[1] >> 16)) + delim;
 		for (int i = 0; i < 4; i++) {
 			guidString += Conv.toHexString((byte) (data[2] >> i * 8));
-			if (i == 1)
+			if (i == 1) {
 				guidString += delim;
+			}
 		}
 		for (int i = 0; i < 4; i++) {
 			guidString += Conv.toHexString((byte) (data[3] >> i * 8));
@@ -270,8 +273,9 @@ public class GuidUtil {
 		guidString += Conv.toHexString((short) (data[1] >> 16)) + delim;
 		for (int i = 0; i < 4; i++) {
 			guidString += Conv.toHexString((byte) (data[2] >> i * 8));
-			if (i == 1)
+			if (i == 1) {
 				guidString += delim;
+			}
 		}
 		for (int i = 0; i < 4; i++) {
 			guidString += Conv.toHexString((byte) (data[3] >> i * 8));
@@ -289,6 +293,34 @@ public class GuidUtil {
 		}
 
 		return guidString;
+	}
+
+	private static final String MS_GUID_PREFIX = "_GUID_";
+
+	/**
+	 * Verify that the specified label correpsonds to a Microsoft symbol name 
+	 * for the GUID stored at the specified address within program.
+	 * @param program program
+	 * @param address memory address
+	 * @param label symbol name to be checked
+	 * @return true if label is a valid GUID label which corresponds to the GUID
+	 * stored at address within program
+	 */
+	public static boolean isGuidLabel(Program program, Address address, String label) {
+		if (!label.startsWith(MS_GUID_PREFIX)) {
+			return false;
+		}
+		String guidString = label.substring(MS_GUID_PREFIX.length()).replace("_", "-");
+		try {
+			new GUID(guidString);
+		}
+		catch (Exception e) {
+			return false;
+		}
+		GuidDataType dt = new GuidDataType();
+		String guidRep = dt.getRepresentation(new DumbMemBufferImpl(program.getMemory(), address),
+			new SettingsImpl(), -1);
+		return guidRep.endsWith(guidString);
 	}
 
 }

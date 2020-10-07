@@ -18,10 +18,12 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.HashSet;
 import java.util.Set;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 
 /**
  * Metrics captured during the application of a PDB.  This is a Ghidra class separate from the
@@ -200,12 +202,12 @@ public class PdbApplicatorMetrics {
 	//==============================================================================================
 
 	/**
-	 * Return some post-processing metrics for applying the PDB
-	 * @return {@link String} of pretty output.
+	 * Generate some post-processing metrics and write to log
 	 */
-	String getPostProcessingReport() {
+	void logReport() {
+
 		StringBuilder builder = new StringBuilder();
-		builder.append("===Begin PdbApplicatorMetrics Report===\n");
+
 		builder.append(reportNonappliableTypes());
 		builder.append(reportUnunsualThisPointerTypes());
 		builder.append(reportUnunsualThisPointerUnderlyingTypes());
@@ -214,8 +216,17 @@ public class PdbApplicatorMetrics {
 		builder.append(reportUnexpectedPublicSymbols());
 		builder.append(reportUnexpectedGlobalSymbols());
 		builder.append(reportEnumerateNarrowing());
+
+		if (builder.length() == 0) {
+			return; // nothing reported
+		}
+
+		builder.insert(0, "===Begin PdbApplicatorMetrics Report===\n");
 		builder.append("====End PdbApplicatorMetrics Report====\n");
-		return builder.toString();
+		String text = builder.toString();
+
+		Msg.info(this, text);
+		PdbLog.message(text);
 	}
 
 	private String reportNonappliableTypes() {

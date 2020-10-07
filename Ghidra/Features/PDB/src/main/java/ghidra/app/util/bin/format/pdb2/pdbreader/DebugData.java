@@ -66,10 +66,13 @@ public class DebugData {
 	private AbstractPdb pdb;
 	private List<Integer> debugStreams = new ArrayList<>();
 
-	private List<FramePointerOmissionRecord> framePointerOmissionData = new ArrayList<>();
-	private List<ImageSectionHeader> imageSectionHeaders = new ArrayList<>();
+	private List<FramePointerOmissionRecord> framePointerOmissionData;
+	// private SortedMap<Long, Long> omapToSource;
+	private SortedMap<Long, Long> omapFromSource;
+	private List<ImageSectionHeader> imageSectionHeaders;
+	private List<ImageSectionHeader> imageSectionHeadersOrig;
 
-	private List<ImageFunctionEntry> pData = new ArrayList<>();
+	private List<ImageFunctionEntry> pData;
 
 	private RvaVaDebugHeader xDataHeader;
 	private PdbByteReader xDataReader;
@@ -87,11 +90,45 @@ public class DebugData {
 	}
 
 	/**
+	 * Returns the Frame Pointer Omission data
+	 * @return the framePointerOmissionData or null if does not exist.
+	 */
+	public List<FramePointerOmissionRecord> getFramePointerOmissionData() {
+		return framePointerOmissionData;
+	}
+
+//	/**
+//	 * Returns the OMAP_TO_SOURCE mapping of RVA to RVA
+//	 * @return the omapToSource or null if does not exist.
+//	 */
+//	public SortedMap<Long, Long> getOmapToSource() {
+//		return omapToSource;
+//	}
+
+	/**
+	 * Returns the OMAP_FROM_SOURCE mapping of RVA to RVA
+	 * @return the omapFromSource or null if does not exist.
+	 */
+	public SortedMap<Long, Long> getOmapFromSource() {
+		return omapFromSource;
+	}
+
+	/**
 	 * Returns the {@link List}&lt;{@link ImageSectionHeader}&gt;.
-	 * @return the imageSectionHeaders.
+	 * @return the imageSectionHeaders or null if does not exist.
 	 */
 	public List<ImageSectionHeader> getImageSectionHeaders() {
 		return imageSectionHeaders;
+	}
+
+	/**
+	 * Returns the {@link List}&lt;{@link ImageSectionHeader}&gt;.
+	 * When this return a non-null list the OMAP_FROM_SRC should be
+	 * used for remapping global symbols.
+	 * @return the imageSectionHeadersOrig or null if does not exist.
+	 */
+	public List<ImageSectionHeader> getImageSectionHeadersOrig() {
+		return imageSectionHeadersOrig;
 	}
 
 	/**
@@ -152,13 +189,13 @@ public class DebugData {
 					// TODO: implement.
 					break;
 				case OMAP_TO_SOURCE:
-					// TODO: implement.
+					// omapToSource = deserializeOMap(streamNum, monitor);
 					break;
 				case OMAP_FROM_SOURCE:
-					// TODO: implement.
+					omapFromSource = deserializeOMap(streamNum, monitor);
 					break;
 				case SECTION_HEADER:
-					deserializeSectionHeader(streamNum, monitor);
+					imageSectionHeaders = deserializeSectionHeaders(streamNum, monitor);
 					break;
 				case TOKEN_RID_MAP:
 					// TODO: implement.
@@ -173,7 +210,7 @@ public class DebugData {
 					// TODO: implement.
 					break;
 				case SECTION_HEADER_ORIG:
-					// TODO: implement.
+					imageSectionHeadersOrig = deserializeSectionHeaders(streamNum, monitor);
 					break;
 			}
 		}
@@ -183,6 +220,7 @@ public class DebugData {
 			throws PdbException, CancelledException, IOException {
 		// TODO: check implementation for completeness.
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
+		framePointerOmissionData = new ArrayList<>();
 		while (reader.hasMore()) {
 			monitor.checkCanceled();
 			FramePointerOmissionRecord framePointerOmissionRecord =
@@ -192,15 +230,30 @@ public class DebugData {
 		}
 	}
 
-	private void deserializeSectionHeader(int streamNum, TaskMonitor monitor)
+	private SortedMap<Long, Long> deserializeOMap(int streamNum, TaskMonitor monitor)
 			throws PdbException, CancelledException, IOException {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
+		SortedMap<Long, Long> omap = new TreeMap<>();
+		while (reader.hasMore()) {
+			monitor.checkCanceled();
+			long v1 = reader.parseUnsignedIntVal();
+			long v2 = reader.parseUnsignedIntVal();
+			omap.put(v1, v2);
+		}
+		return omap;
+	}
+
+	private List<ImageSectionHeader> deserializeSectionHeaders(int streamNum, TaskMonitor monitor)
+			throws PdbException, CancelledException, IOException {
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
+		List<ImageSectionHeader> sectionHeaders = new ArrayList<>();
 		while (reader.hasMore()) {
 			monitor.checkCanceled();
 			ImageSectionHeader imageSectionHeader = new ImageSectionHeader(pdb);
 			imageSectionHeader.parse(reader);
-			imageSectionHeaders.add(imageSectionHeader);
+			sectionHeaders.add(imageSectionHeader);
 		}
+		return sectionHeaders;
 	}
 
 	// TODO: This is incomplete.
@@ -239,6 +292,7 @@ public class DebugData {
 	private void deserializePData(int streamNum, TaskMonitor monitor)
 			throws PdbException, CancelledException, IOException {
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum, monitor);
+		pData = new ArrayList<>();
 		int streamLength = reader.getLimit();
 		RvaVaDebugHeader header = new RvaVaDebugHeader();
 		header.deserialize(reader);
@@ -294,23 +348,58 @@ public class DebugData {
 		dumpDebugStreamList(writer);
 
 		writer.write("FramePointerOmissionData------------------------------------\n");
-		for (FramePointerOmissionRecord framePointerOmissionRecord : framePointerOmissionData) {
-			framePointerOmissionRecord.dump(writer);
+		if (framePointerOmissionData != null) {
+			for (FramePointerOmissionRecord framePointerOmissionRecord : framePointerOmissionData) {
+				framePointerOmissionRecord.dump(writer);
+			}
 		}
 		writer.write("End FramePointerOmissionData--------------------------------\n");
 
-		int sectionNum = 0;
+//		writer.write("OmapToSource------------------------------------------------\n");
+//		if (omapToSource != null) {
+//			int num = 0;
+//			for (Map.Entry<Long, Long> entry : omapToSource.entrySet()) {
+//				writer.write(String.format("0X%08X: 0X%012X,  0X%012X\n", num++, entry.getKey(),
+//					entry.getValue()));
+//			}
+//		}
+//		writer.write("End OmapToSource--------------------------------------------\n");
+
+		writer.write("OmapFromSource----------------------------------------------\n");
+		if (omapFromSource != null) {
+			int num = 0;
+			for (Map.Entry<Long, Long> entry : omapFromSource.entrySet()) {
+				writer.write(String.format("0X%08X: 0X%012X,  0X%012X\n", num++, entry.getKey(),
+					entry.getValue()));
+			}
+		}
+		writer.write("End OmapFromSource------------------------------------------\n");
+
 		writer.write("ImageSectionHeaders-----------------------------------------\n");
-		for (ImageSectionHeader imageSectionHeader : imageSectionHeaders) {
-			imageSectionHeader.dump(writer, sectionNum++);
+		if (imageSectionHeaders != null) {
+			int sectionNum = 0;
+			for (ImageSectionHeader imageSectionHeader : imageSectionHeaders) {
+				imageSectionHeader.dump(writer, sectionNum++);
+			}
 		}
 		writer.write("End ImageSectionHeaders-------------------------------------\n");
 
+		writer.write("ImageSectionHeadersOrig-------------------------------------\n");
+		if (imageSectionHeadersOrig != null) {
+			int sectionNum = 0;
+			for (ImageSectionHeader imageSectionHeader : imageSectionHeadersOrig) {
+				imageSectionHeader.dump(writer, sectionNum++);
+			}
+		}
+		writer.write("End ImageSectionHeadersOrig---------------------------------\n");
+
 		writer.write("PData-------------------------------------------------------\n");
-		for (ImageFunctionEntry entry : pData) {
-			// TODO: need to output more if/when more PData is available (e.g., interpretation
-			//  of XData.
-			writer.append(entry.toString());
+		if (pData != null) {
+			for (ImageFunctionEntry entry : pData) {
+				// TODO: need to output more if/when more PData is available (e.g., interpretation
+				//  of XData.
+				writer.append(entry.toString());
+			}
 		}
 		writer.write("End PData---------------------------------------------------\n");
 

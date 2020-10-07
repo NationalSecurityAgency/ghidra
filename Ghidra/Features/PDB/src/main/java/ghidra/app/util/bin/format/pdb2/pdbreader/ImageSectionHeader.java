@@ -30,6 +30,22 @@ public class ImageSectionHeader {
 
 	private AbstractPdb pdb;
 
+	private String name;
+	// TODO:
+	// unionPAVS: DWORD (unsigned 32-bit). Either Physical Address of Virtual Size--not sure
+	//  what to key off of to interpret one over the other.  Guess that it has to do with
+	//  VirtualAddress--perhaps a value of 0x00000000 or 0xffffffff.
+	// See the to-do below (in dump()) regarding unionPAVS.
+	private long unionPAVS;
+	private long virtualAddress; // DWORD (unsigned 32-bit)
+	private long rawDataSize; // DWORD (unsigned 32-bit)
+	private long rawDataPointer; // DWORD (unsigned 32-bit)
+	private long relocationsPointer; // DWORD (unsigned 32-bit)
+	private long lineNumbersPointer; // DWORD (unsigned 32-bit)
+	private int numRelocations; // WORD (unsigned 16-bit)
+	private int numLineNumbers; // WORD (unsigned 16-bit)
+	private long characteristics; // DWORD (unsigned 32-bit)
+
 	/**
 	 * Constructor.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
@@ -37,6 +53,28 @@ public class ImageSectionHeader {
 	public ImageSectionHeader(AbstractPdb pdb) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
+	}
+
+	/**
+	 * Parse the values of this class.
+	 * @param reader the {@link PdbByteReader} from which to parse the values.
+	 * @throws PdbException upon no enough data to parse.
+	 */
+	public void parse(PdbByteReader reader) throws PdbException {
+		if (reader.numRemaining() < 40) {
+			throw new PdbException("Not enough data for ImageSectionHeader");
+		}
+		PdbByteReader nameReader = reader.getSubPdbByteReader(8);
+		name = nameReader.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
+		unionPAVS = reader.parseUnsignedIntVal();
+		virtualAddress = reader.parseUnsignedIntVal();
+		rawDataSize = reader.parseUnsignedIntVal();
+		rawDataPointer = reader.parseUnsignedIntVal();
+		relocationsPointer = reader.parseUnsignedIntVal();
+		lineNumbersPointer = reader.parseUnsignedIntVal();
+		numRelocations = reader.parseUnsignedShortVal();
+		numLineNumbers = reader.parseUnsignedShortVal();
+		characteristics = reader.parseUnsignedIntVal();
 	}
 
 	/**
@@ -118,39 +156,6 @@ public class ImageSectionHeader {
 	 */
 	public long getCharacteristics() {
 		return characteristics;
-	}
-
-	private String name;
-	// TODO:
-	// unionPAVS: DWORD (unsigned 32-bit). Either Physical Address of Virtual Size--not sure
-	//  what to key off of to interpret one over the other.  Guess that it has to do with
-	//  VirtualAddress--perhaps a value of 0x00000000 or 0xffffffff.
-	// See the to-do below (in dump()) regarding unionPAVS.
-	private long unionPAVS;
-	private long virtualAddress; // DWORD (unsigned 32-bit)
-	private long rawDataSize; // DWORD (unsigned 32-bit)
-	private long rawDataPointer; // DWORD (unsigned 32-bit)
-	private long relocationsPointer; // DWORD (unsigned 32-bit)
-	private long lineNumbersPointer; // DWORD (unsigned 32-bit)
-	private int numRelocations; // WORD (unsigned 16-bit)
-	private int numLineNumbers; // WORD (unsigned 16-bit)
-	private long characteristics; // DWORD (unsigned 32-bit)
-
-	public void parse(PdbByteReader reader) throws PdbException {
-		if (reader.numRemaining() < 40) {
-			throw new PdbException("Not enough data for ImageSectionHeader");
-		}
-		PdbByteReader nameReader = reader.getSubPdbByteReader(8);
-		name = nameReader.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
-		unionPAVS = reader.parseUnsignedIntVal();
-		virtualAddress = reader.parseUnsignedIntVal();
-		rawDataSize = reader.parseUnsignedIntVal();
-		rawDataPointer = reader.parseUnsignedIntVal();
-		relocationsPointer = reader.parseUnsignedIntVal();
-		lineNumbersPointer = reader.parseUnsignedIntVal();
-		numRelocations = reader.parseUnsignedShortVal();
-		numLineNumbers = reader.parseUnsignedShortVal();
-		characteristics = reader.parseUnsignedIntVal();
 	}
 
 	/**

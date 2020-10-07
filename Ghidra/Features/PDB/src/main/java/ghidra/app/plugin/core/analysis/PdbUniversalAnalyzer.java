@@ -61,9 +61,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	//==============================================================================================
 	static final String NAME = "PDB Universal";
 	// TODO: decide which PDB Analyzer should be enabled by default for release
-	static final boolean DEFAULT_ENABLEMENT = false;
+	static final boolean DEFAULT_ENABLEMENT = true;
 	private static final String DESCRIPTION =
-		"[Prototype V1] Platform-indepent PDB analyzer (No XML support).\n" +
+		"Platform-indepent PDB analyzer (No XML support).\n" +
 			"NOTE: still undergoing development, so options may change.";
 
 	//==============================================================================================
@@ -203,7 +203,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	//==============================================================================================
 	public PdbUniversalAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
-		setPrototype();
+		//setPrototype();
 		setDefaultEnablement(DEFAULT_ENABLEMENT);
 		setPriority(AnalysisPriority.FORMAT_ANALYSIS.after());
 		setSupportsOneTimeAnalysis();
