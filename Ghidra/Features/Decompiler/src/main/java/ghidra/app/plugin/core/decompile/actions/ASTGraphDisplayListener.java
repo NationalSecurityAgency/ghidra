@@ -27,6 +27,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.PcodeBlockBasic;
 import ghidra.service.graph.GraphDisplay;
+import ghidra.service.graph.GraphDisplayListener;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -110,6 +111,11 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 		catch (NumberFormatException e) {
 			throw new AssertException("Bad vertex id, expected a number but got " + vertexId);
 		}
+	}
+
+	@Override
+	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
+		return new ASTGraphDisplayListener(tool, graphDisplay, hfunction, graphType);
 	}
 
 }

@@ -169,7 +169,8 @@ public class GraphAST extends GhidraScript {
 		return vert;
 	}
 
-	protected AttributedVertex getVarnodeVertex(Map<Integer, AttributedVertex> vertices, VarnodeAST vn) {
+	protected AttributedVertex getVarnodeVertex(Map<Integer, AttributedVertex> vertices,
+			VarnodeAST vn) {
 		AttributedVertex res;
 		res = vertices.get(vn.getUniqueId());
 		if (res == null) {
@@ -258,6 +259,11 @@ public class GraphAST extends GhidraScript {
 			int firstSpace = vertexId.indexOf(' ');
 			String addrString = vertexId.substring(0, firstSpace);
 			return getAddress(addrString);
+		}
+
+		@Override
+		public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
+			return new ASTGraphDisplayListener(tool, graphDisplay, highfunc, currentProgram);
 		}
 	}
 }

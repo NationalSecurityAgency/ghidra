@@ -18,7 +18,7 @@ package ghidra.service.graph;
 import java.util.List;
 
 /**
- * Interface for being notified when the user interacts with a visual graph display.
+ * Interface for being notified when the user interacts with a visual graph display
  */
 public interface GraphDisplayListener {
 	/**
@@ -29,18 +29,24 @@ public interface GraphDisplayListener {
 	/**
 	 * Notification that the list of selected vertices has changed
 	 * 
-	 * @param vertexIds the list of vertex ids for the currently selected vertices.
+	 * @param vertexIds the list of vertex ids for the currently selected vertices
 	 */
 	public void selectionChanged(List<String> vertexIds);
 
 	/**
-	 * Notification that the "focused" (active) vertex has changed.
+	 * Notification that the "focused" (active) vertex has changed
 	 * @param vertexId the vertex id of the currently "focused" vertex
 	 */
 	public void locationFocusChanged(String vertexId);
 
-	default boolean updateVertexName(String vertexId, String oldName, String newName) {
-		// no op
-		return false;
-	}
+	/**
+	 * Makes a new GraphDisplayListener of the same type as the specific
+	 * instance of this GraphDisplayListener
+	 * 
+	 * @param graphDisplay the new {@link GraphDisplay} the new listener will support
+	 * @return A new instance of a GraphDisplayListener that is the same type as as the instance
+	 * on which it is called
+	 */
+	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay);
+
 }

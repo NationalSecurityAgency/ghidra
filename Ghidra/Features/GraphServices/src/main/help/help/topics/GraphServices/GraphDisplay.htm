@@ -37,44 +37,71 @@
       <li>Ctrl+MouseButton1+drag on an empty area will create a rectangular area and select enclosed vertices</li>
       <li>Ctrl+MouseButton1+drag over a vertex will reposition all selected vertices</li>
     </ul>
-    <H2>Upper-right Icon Buttons:</H2>
-    <ul>
-      <li>The <IMG src="images/locationIn.gif"> toggle button, when 'set' will cause a located vertex (red arrow) to be scrolled to the center of the view</li>
-      <li>The <IMG src="images/Lasso.png" width="16" height="16"> toggle button, when 'set' will allow the user to draw a free-form shape that encloses the vertices they wish to select.
-      <li>The <IMG src="images/sat2.png" width="16" height="16"> toggle button, when 'set' will open a satellite mini view of the graph in the lower right corner. The mini-view can be manipulated with the mouse to affect the main view</li>
-      <li>The <IMG src="images/reload3.png"> button will reset any visual transformations on the graph and center it at a best-effort size</li>
-      <li>The <IMG src="images/magnifier.png"> toggle button, when 'set' will open a rectangular magnification lens in the graph view</li>
-      <ul>
-        <li>MouseButton1 click-drag on the lens center circle to move the magnifier lens</li>
-        <li>MouseButton1 click-draw on a lens edge diamond to resize the magnifier lens </li>
-        <li>MouseButton1 click on the upper-right circle-cross to dispose of the magnifier lens</li>
-        <li>MouseWheel will change the magnification of the lens</li>
-      </ul>
-      <li>The <IMG src="images/filter_on.png"> button will open a Filter dialog. Select buttons in the dialog to hide specific vertices or edges in the display</li>
-      <ul>
-        <li>The Filter dialog buttons are created by examining the graph vertex/edge properties to discover candidates for filtering</li>
-      </ul>
-      <li>Pull-Down the <IMG src="images/katomic.png" width="16" height="16"> Arrangement menu to select one of several graph layout algorithms.</li>
-      <ul>
-        <li>Compact Hierarchical is the <b>TidierTree Layout Algorithm</b>. It builds a tree structure and attempts to reduce horizontal space.</li>
-        <li>Hierarchical is a basic Tree algorithm. It prioritizes 'important' edges while constructing the tree.</li>
-        <li>Hierarchical - Edge-Aware is a basic Tree algorithm that attempts to align important edges vertically.</li>
-        <li>Hierarchical Multi Row is the Tree algorithm above, but it will create new rows (typewriter fashion) to reduce horizontal spread.</li>
-        <li>Compact Radial is the <b>TidierTree Layout Algorithm</b> with the root(s) at the center and child vertices radiating outwards.</li>
-        <li>Hierarchical MinCross is the <b>Sugiyama Layout Algorithm</b>. It attempts to route edges around vertices in order to reduce crossing.</li>
-        <ul>There are four layering algorithms:
-          <li>Top Down - biases the vertices to the top</li>
-          <li>Longest Path - biases the vertices to the bottom</li>
-          <li>Network Simplex - layers after finding an 'optimal tree'</li>
-          <li>Coffman Graham - biases the vertices using a scheduling algorithm to minimize length</li>
-        </ul>
-        <li>Circle will arrange vertices in a Circle. If there are not too many edges (less than specified in the jungrapht.circle.reduceEdgeCrossingMaxEdges property with a default of 200), it will attempt to reduce edge crossing by rearranging the vertices.</li>
-        <li>Force Balanced is a <b>Force Directed Layout Algorithm</b> using the the <b>Kamada Kawai</b> approach. It attempts to balance the graph by considering vertices and edge connections.</li>
-        <li>Force Directed is a <b>Force Directed Layout Algorithm</b> using the <b>Fructermann Reingold</b> approach. It pushes unconnected vertices apart and draws connected vertices together.</li>
-        <li>Radial is a Tree structure with the root(s) at the center and child vertices radiating outwards.</li>
-        <li>Balloon is a Tree structure with the root(s) at the centers of circles in a radial pattern</li>
-        <li>GEM is a Force Directed layout with locally separated components </li>
-      </ul>
-    
+    <H2>Toolbar Buttons</H2>
+    	<P><A name="Scroll_To_Selection"/> The <IMG src="images/locationIn.gif"> toggle button, when 'set' will cause a focused vertex (red arrow) to be scrolled to the center of the view</P>
+     	<P><A name="Free_Form_Selection"/>The <IMG src="images/Lasso.png" width="16" height="16"> toggle button, when 'set' will allow the user to draw a free-form shape that encloses the vertices they wish to select.</P>
+      	<P><A name="SatelliteView"/>The <IMG src="images/sat2.png" width="16" height="16"> toggle button, when 'set' will open a satellite mini view of the graph in the lower right corner. The mini-view can be manipulated with the mouse to affect the main view</P>
+      	<P><A name="Reset_View"/>The <IMG src="images/reload3.png"> button will reset any visual transformations on the graph and center it at a best-effort size</P>
+      	<P><A name="View_Magnifier"/>The <IMG src="images/magnifier.png"> toggle button, when 'set' will open a rectangular magnification lens in the graph view</P>
+	 	<BLOCKQUOTE><BLOCKQUOTE>
+	       <ul>
+	        <li>MouseButton1 click-drag on the lens center circle to move the magnifier lens</li>
+	        <li>MouseButton1 click-draw on a lens edge diamond to resize the magnifier lens </li>
+	        <li>MouseButton1 click on the upper-right circle-cross to dispose of the magnifier lens</li>
+	        <li>MouseWheel will change the magnification of the lens</li>
+	      </ul>
+		</BLOCKQUOTE></BLOCKQUOTE>
+		
+		<P><A name="Show_Filters"/>The <IMG src="images/filter_on.png"> button will open a Filter dialog. Select buttons in the dialog to hide specific vertices or edges in the display.
+		The Filter dialog buttons are created by examining the graph vertex/edge properties to discover candidates for filtering.</P></BLOCKQUOTE></BLOCKQUOTE>
+      
+      	<P><A name="Arrangement"/>The <IMG src="images/katomic.png" width="16" height="16"> Arrangement menu is used to select one of several graph layout algorithms.</P>
+	     <BLOCKQUOTE><BLOCKQUOTE>
+
+	      <ul>
+	        <li><A name="Compact_Hierarchical"/><B>Compact Hierarchical</B> is the <b>TidierTree Layout Algorithm</b>. It builds a tree structure and attempts to reduce horizontal space.</li>
+	        <li><A name="Hierarchical"/><B>Hierarchical</B> is a basic Tree algorithm. It prioritizes 'important' edges while constructing the tree.</li>
+	        <li><A name="Compact Radial"/><B>Compact Radial</B> is the <b>TidierTree Layout Algorithm</b> with the root(s) at the center and child vertices radiating outwards.</li>
+	        <li><B>Hierarchical MinCross</B> is the <b>Sugiyama Layout Algorithm</b>. It attempts to route edges around vertices in order to reduce crossing.There are four layering algorithms:</li>
+	        	<ul>
+	          		<li><A name="Hierarchical_MinCross_Top_Down"/><B>Top Down</B> - biases the vertices to the top</li>
+	          		<li><A name="Hierarchical_MinCross_Longest_Path"/><B>Longest Path</B> - biases the vertices to the bottom</li>
+	         		<li><A name="Hierarchical_MinCross_Network_Simplex"/><B>Network Simplex</B> - layers after finding an 'optimal tree'</li>
+	          		<li><A name="Hierarchical_MinCross_Coffman_Graham"/><B>Coffman Graham</B> - biases the vertices using a scheduling algorithm to minimize length</li>
+	          </ul>
+	     
+	        <li><A name="Circle"/><B>Circle</B> will arrange vertices in a Circle. If there are not too many edges (less than specified in the jungrapht.circle.reduceEdgeCrossingMaxEdges property with a default of 200), it will attempt to reduce edge crossing by rearranging the vertices.</li>
+	        <li><A name="Force_Balanced"/><B>Force Balanced</B> is a <b>Force Directed Layout Algorithm</b> using the the <b>Kamada Kawai</b> approach. It attempts to balance the graph by considering vertices and edge connections.</li>
+	        <li><A name="Force_Directed"/><B>Force Directed</B> is a <b>Force Directed Layout Algorithm</b> using the <b>Fructermann Reingold</b> approach. It pushes unconnected vertices apart and draws connected vertices together.</li>
+	        <li><A name="Radial"/><B>Radial</B> is a Tree structure with the root(s) at the center and child vertices radiating outwards.</li>
+	        <li><A name="Balloon"/><B>Balloon</B> is a Tree structure with the root(s) at the centers of circles in a radial pattern</li>
+	        <li><A name="Gem__Graph_Embedder_"/><B>GEM</B> is a Force Directed layout with locally separated components </li>
+	      </ul>
+	      </BLOCKQUOTE></BLOCKQUOTE>
+	<H2>Popup Actions</H2>
+	<BLOCKQUOTE>
+		<H3> Standard Popup Actions</H3>
+			<ul>
+				<li><A name="Hide Selected"/><B>Hide Selected</B> - Causes the display to not show selected vertices. </li>
+				<li><A name="Hide Unselected"/><B>Hide Unselected</B> - Causes the display to not show unselected vertices.</li>
+				<li><A name="Invert Selection"/><B>Invert Selection</B> - Unselects all selected nodes and selects all unselected nodes.</li>
+				<li><A name="Grow Selection From Sources"/><B>Grow Selection From Sources</B> - Adds to the selection all vertices that have outgoing edges to the current selection.</li>
+				<li><A name="Grow Selection To Targets"/><B>Grow Selection To Targets</B> - Adds to the selection all vertices that have incoming edges from the current selection.</li>
+				<li><A name="Create Subgraph"/><B>Display Selected As New Graph</B> - Creates a new graph and display from the currently selected vertices.</li>
+			</ul>
+		<H3> Vertex Popup Actions</H3>
+			<ul>
+				<li><A name="Select Vertex"/><B>Select Vertex</B> - Selects the vertex that this action was invoked on.</li>
+				<li><A name="Deselect Vertex"/><B>Deselect Vertex</B> - Deselects the vertex that this action was invoked on.</li>
+			</ul>
+			
+		<H3> Edge Popup Actions</H3>
+			<ul>
+			<li><A name="Edge Source"/><B>Go To Edge Source</B> - Makes this edge's source vertex be the focused vertex.</li>
+			<li><A name="Edge Target"/><B>Go To Edge Target</B> - Makes this edge's destination vertex be the focused vertex.</li>
+			<li><A name="Select Edge"/><B>Select Edge</B> - Add this edge and its associated vertices to the selection</li>
+			<li><A name="Deselect Edge"/><B>Deselect Edge</B> - Removes this edge and its associated vertices from the selection </li>
+			</ul>
+    </BLOCKQUOTE>
   </BODY>
 </HTML>
