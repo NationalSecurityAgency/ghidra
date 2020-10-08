@@ -63,7 +63,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	// TODO: decide which PDB Analyzer should be enabled by default for release
 	static final boolean DEFAULT_ENABLEMENT = true;
 	private static final String DESCRIPTION =
-		"Platform-indepent PDB analyzer (No XML support).\n" +
+		"Platform-independent PDB analyzer (No XML support).\n" +
 			"NOTE: still undergoing development, so options may change.";
 
 	//==============================================================================================
