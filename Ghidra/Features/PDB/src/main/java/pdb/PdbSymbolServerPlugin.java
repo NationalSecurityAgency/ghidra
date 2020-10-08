@@ -217,8 +217,7 @@ public class PdbSymbolServerPlugin extends Plugin {
 			localDir = askForLocalStorageLocation();
 
 			// 3. See if PDB can be found locally
-			File pdbFile = PdbParser.findPDB(pdbAttributes, includePePdbPath,
-				localDir.getAbsolutePath(), fileType);
+			File pdbFile = PdbParser.findPDB(pdbAttributes, includePePdbPath, localDir, fileType);
 
 			// 4. If not found locally, ask if it should be retrieved
 			if (pdbFile != null && pdbFile.getName().endsWith(fileType.toString())) {

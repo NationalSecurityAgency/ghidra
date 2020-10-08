@@ -199,6 +199,9 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	private PdbReaderOptions pdbReaderOptions;
 	private PdbApplicatorOptions pdbApplicatorOptions;
 
+	// only try once per transaction due to extensive error logging which may get duplicated
+	private long lastTransactionId = -1;
+
 	//==============================================================================================
 	//==============================================================================================
 	public PdbUniversalAnalyzer() {
@@ -220,6 +223,18 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
+
+		// Only run once per transaction - avoid message duplication
+		long txId = program.getCurrentTransaction().getID();
+		if (txId == lastTransactionId) {
+			return false;
+		}
+		lastTransactionId = txId;
+
+		// Only run if restricted set corresponds to entire program
+		if (!set.contains(program.getMemory())) {
+			return false;
+		}
 
 // NOTE: Legacy PDB Analyzer currently yields to this analyzer if both are enabled
 //		if (PdbAnalyzer.isEnabled(program)) {
@@ -246,9 +261,10 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			Msg.info(this,
 				">> Clear 'PDB Loaded' program property or use Load PDB action if " +
 					"additional PDB processing required.");
+			return true;
 		}
-		if (programAttributes.isPdbLoaded() ||
-			failMissingFilename(programAttributes, log) ||
+
+		if (failMissingFilename(programAttributes, log) ||
 			failMissingAttributes(programAttributes, log)) {
 			return true;
 		}
