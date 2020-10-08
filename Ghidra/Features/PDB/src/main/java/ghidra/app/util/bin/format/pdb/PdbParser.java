@@ -29,6 +29,7 @@ import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.pdb.PdbLocator;
 import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.framework.*;
 import ghidra.framework.options.Options;
@@ -53,7 +54,6 @@ public class PdbParser {
 	private static final String README_FILENAME =
 		Application.getInstallationDirectory() + "\\docs\\README_PDB.html";
 
-	public final static File SPECIAL_PDB_LOCATION = new File("C:/WINDOWS/Symbols");
 	public final static String PDB_STORAGE_PROPERTY = "PDB Storage Directory";
 
 	static final String STRUCTURE_KIND = "Structure";
@@ -1070,12 +1070,12 @@ public class PdbParser {
 	 *
 	 * @param program  program for which to find a matching PDB
 	 * @param includePeSpecifiedPdbPath to also check the PE-header-specified PDB path
-	 * @param symbolsRepositoryPath  location where downloaded symbols are stored
+	 * @param symbolsRepositoryDir  location where downloaded symbols are stored
 	 * @return  matching PDB for program, or null
 	 */
 	public static File findPDB(Program program, boolean includePeSpecifiedPdbPath,
-			String symbolsRepositoryPath) {
-		return findPDB(getPdbAttributes(program), includePeSpecifiedPdbPath, symbolsRepositoryPath,
+			File symbolsRepositoryDir) {
+		return findPDB(getPdbAttributes(program), includePeSpecifiedPdbPath, symbolsRepositoryDir,
 			null);
 	}
 
@@ -1085,12 +1085,12 @@ public class PdbParser {
 	 *
 	 * @param pdbAttributes  PDB attributes associated with the program
 	 * @param includePeSpecifiedPdbPath to also check the PE-header-specified PDB path
-	 * @param symbolsRepositoryPath  location of the local symbols repository (can be null)
+	 * @param symbolsRepositoryDir  location of the local symbols repository (can be null)
 	 * @param fileType  type of file to search for (can be null)
 	 * @return matching PDB file (or null, if not found)
 	 */
 	public static File findPDB(PdbProgramAttributes pdbAttributes,
-			boolean includePeSpecifiedPdbPath, String symbolsRepositoryPath, PdbFileType fileType) {
+			boolean includePeSpecifiedPdbPath, File symbolsRepositoryDir, PdbFileType fileType) {
 
 		// Store potential names of PDB files and potential locations of those files,
 		// so that all possible combinations can be searched.
@@ -1107,7 +1107,7 @@ public class PdbParser {
 			guidSubdirPaths.add(File.separator + potentialName + File.separator + guidAgeString);
 		}
 
-		return checkPathsForPdb(symbolsRepositoryPath, guidSubdirPaths, potentialPdbNames, fileType,
+		return checkPathsForPdb(symbolsRepositoryDir, guidSubdirPaths, potentialPdbNames, fileType,
 			pdbAttributes, includePeSpecifiedPdbPath);
 	}
 
@@ -1128,7 +1128,7 @@ public class PdbParser {
 	 *  		symbolsRepositoryPath, then look for .pdb.xml file, then .pdb.xml file in other
 	 *  		directories.
 	 *
-	 * @param symbolsRepositoryPath  location of the local symbols repository (can be null)
+	 * @param symbolsRepositoryDir  location of the local symbols repository (can be null)
 	 * @param guidSubdirPaths  subdirectory paths (that include the PDB's GUID) that may contain
 	 * 							a matching PDB
 	 * @param potentialPdbNames  all potential filenames for the PDB file(s) that match the program
@@ -1136,13 +1136,13 @@ public class PdbParser {
 	 * @param pdbAttributes    PDB attributes associated with the program
 	 * @return  matching PDB file, if found (else null)
 	 */
-	private static File checkPathsForPdb(String symbolsRepositoryPath, Set<String> guidSubdirPaths,
+	private static File checkPathsForPdb(File symbolsRepositoryDir, Set<String> guidSubdirPaths,
 			List<String> potentialPdbNames, PdbFileType fileType,
 			PdbProgramAttributes pdbAttributes, boolean includePeSpecifiedPdbPath) {
 
 		File foundPdb = null;
 		Set<File> symbolsRepoPaths =
-			getSymbolsRepositoryPaths(symbolsRepositoryPath, guidSubdirPaths);
+			getSymbolsRepositoryPaths(symbolsRepositoryDir, guidSubdirPaths);
 		Set<File> predefinedPaths =
 			getPredefinedPaths(guidSubdirPaths, pdbAttributes, includePeSpecifiedPdbPath);
 		boolean fileTypeSpecified = (fileType != null);
@@ -1169,7 +1169,7 @@ public class PdbParser {
 		checkForXml = onWindows ? false : true;
 
 		// Start by searching in symbolsRepositoryPath, if available.
-		if (symbolsRepositoryPath != null) {
+		if (!symbolsRepoPaths.isEmpty()) {
 			foundPdb = checkSpecificPathsForPdb(symbolsRepoPaths, potentialPdbNames, checkForXml);
 		}
 
@@ -1195,26 +1195,23 @@ public class PdbParser {
 		return foundPdb;
 	}
 
-	private static Set<File> getSymbolsRepositoryPaths(String symbolsRepositoryPath,
+	private static Set<File> getSymbolsRepositoryPaths(File symbolsRepositoryDir,
 			Set<String> guidSubdirPaths) {
 
 		Set<File> symbolsRepoPaths = new LinkedHashSet<>();
 
 		// Collect sub-directories of the symbol repository that exist
-		File symRepoFile;
-
-		if (symbolsRepositoryPath != null &&
-			(symRepoFile = new File(symbolsRepositoryPath)).isDirectory()) {
+		if (symbolsRepositoryDir != null && symbolsRepositoryDir.isDirectory()) {
 
 			for (String guidSubdir : guidSubdirPaths) {
-				File testDir = new File(symRepoFile, guidSubdir);
+				File testDir = new File(symbolsRepositoryDir, guidSubdir);
 				if (testDir.isDirectory()) {
 					symbolsRepoPaths.add(testDir);
 				}
 			}
 
 			// Check outer folder last
-			symbolsRepoPaths.add(symRepoFile);
+			symbolsRepoPaths.add(symbolsRepositoryDir);
 		}
 
 		return symbolsRepoPaths;
@@ -1227,7 +1224,8 @@ public class PdbParser {
 		Set<File> predefinedPaths = new LinkedHashSet<>();
 
 		getPathsFromAttributes(pdbAttributes, includePeSpecifiedPdbPath, predefinedPaths);
-		getWindowsPaths(guidSubdirPaths, predefinedPaths);
+		getSymbolPaths(PdbLocator.DEFAULT_SYMBOLS_DIR, guidSubdirPaths, predefinedPaths);
+		getSymbolPaths(PdbLocator.WINDOWS_SYMBOLS_DIR, guidSubdirPaths, predefinedPaths);
 		getLibraryPaths(guidSubdirPaths, predefinedPaths);
 
 		return predefinedPaths;
@@ -1253,19 +1251,21 @@ public class PdbParser {
 		}
 	}
 
-	private static void getWindowsPaths(Set<String> guidSubdirPaths, Set<File> predefinedPaths) {
+	private static void getSymbolPaths(File symbolsDir, Set<String> guidSubdirPaths,
+			Set<File> predefinedPaths) {
 		// Don't have to call .exists(), since .isDirectory() does that already
-		if (onWindows && SPECIAL_PDB_LOCATION.isDirectory()) {
-			predefinedPaths.add(SPECIAL_PDB_LOCATION);
+		if (symbolsDir == null || !symbolsDir.isDirectory()) {
+			return;
+		}
+		predefinedPaths.add(symbolsDir);
 
-			// Check alternate locations
-			String specialPdbPath = SPECIAL_PDB_LOCATION.getAbsolutePath();
+		// Check alternate locations
+		String specialPdbPath = symbolsDir.getAbsolutePath();
 
-			for (String guidSubdir : guidSubdirPaths) {
-				File testDir = new File(specialPdbPath + guidSubdir);
-				if (testDir.isDirectory()) {
-					predefinedPaths.add(testDir);
-				}
+		for (String guidSubdir : guidSubdirPaths) {
+			File testDir = new File(specialPdbPath + guidSubdir);
+			if (testDir.isDirectory()) {
+				predefinedPaths.add(testDir);
 			}
 		}
 	}

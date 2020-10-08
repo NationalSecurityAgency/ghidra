@@ -28,7 +28,7 @@ import ghidra.program.model.listing.Program;
  */
 public class PdbProgramAttributes {
 
-	private String pdbAge;
+	private String pdbAge; // hex format
 	private String pdbGuid;
 	private String pdbSignature;
 
@@ -78,6 +78,10 @@ public class PdbProgramAttributes {
 		createGuidAgeString();
 	}
 
+	/**
+	 * PDB Age as a hex value
+	 * @return PDB Age as a hex value
+	 */
 	public String getPdbAge() {
 		return pdbAge;
 	}

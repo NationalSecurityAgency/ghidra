@@ -22,7 +22,6 @@ import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
 import ghidra.framework.options.CustomOptionsEditor;
-import ghidra.util.StringUtilities;
 import ghidra.util.layout.PairLayout;
 
 /**
@@ -102,7 +101,7 @@ public class StoredAnalyzerTimesPropertyEditor extends PropertyEditorSupport
 				continue;
 			}
 
-			JTextField valueField = new JTextField(formatTimeMS(timeMS));
+			JTextField valueField = new JTextField(StoredAnalyzerTimes.formatTimeMS(timeMS));
 			valueField.setEditable(false);
 			valueField.setHorizontalAlignment(SwingConstants.RIGHT);
 			panel.add(valueField);
@@ -112,7 +111,8 @@ public class StoredAnalyzerTimesPropertyEditor extends PropertyEditorSupport
 		label.setFont(label.getFont().deriveFont(Font.BOLD));
 		panel.add(label);
 
-		JTextField valueField = new JTextField(formatTimeMS(times.getTotalTime()));
+		JTextField valueField =
+			new JTextField(StoredAnalyzerTimes.formatTimeMS(times.getTotalTime()));
 		valueField.setEditable(false);
 		valueField.setHorizontalAlignment(SwingConstants.RIGHT);
 		valueField.setBorder(BorderFactory.createLineBorder(Color.black, 2));
@@ -121,11 +121,6 @@ public class StoredAnalyzerTimesPropertyEditor extends PropertyEditorSupport
 		return panel;
 	}
 
-	private String formatTimeMS(long timeMS) {
-		String str = Long.toUnsignedString(timeMS / 1000L);
-		str += ".";
-		str += StringUtilities.pad(Long.toUnsignedString(timeMS % 1000L), '0', 3);
-		return str;
-	}
+
 
 }

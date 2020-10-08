@@ -24,6 +24,7 @@ import ghidra.app.util.bin.format.pdb.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.pdb.PdbLocator;
+import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.AddressSetView;
@@ -48,10 +49,8 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	private static final String SYMBOLPATH_OPTION_NAME = "Symbol Repository Path";
 	private static final String SYMBOLPATH_OPTION_DESCRIPTION =
 		"Directory path to root of Microsoft Symbol Repository Directory";
-	private static final String SYMBOLPATH_OPTION_DEFAULT_VALUE =
-		PdbLocator.DEFAULT_SYMBOLS_DIR.getAbsolutePath();
 
-	private String symbolsRepositoryPath = SYMBOLPATH_OPTION_DEFAULT_VALUE;
+	private File symbolsRepositoryDir = PdbLocator.DEFAULT_SYMBOLS_DIR;
 
 	//==============================================================================================
 	// Include the PE-Header-Specified PDB path for searching for appropriate PDB file.
@@ -61,6 +60,9 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 		"If checked, specifically searching for PDB in PE-Header-Specified Location.";
 
 	private boolean includePeSpecifiedPdbPath = false;
+
+	// only try once per transaction due to extensive error logging which may get duplicated
+	private long lastTransactionId = -1;
 
 	//==============================================================================================
 	public PdbAnalyzer() {
@@ -73,7 +75,24 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) {
 
+		// Only run once per transaction - avoid message duplication
+		long txId = program.getCurrentTransaction().getID();
+		if (txId == lastTransactionId) {
+			return false;
+		}
+		lastTransactionId = txId;
+
+		// Only run if restricted set corresponds to entire program
+		if (!set.contains(program.getMemory())) {
+			return false;
+		}
+
 		if (PdbParser.isAlreadyLoaded(program)) {
+			if (!PdbUniversalAnalyzer.isEnabled(program)) { // yield to other analyzer complaining
+				Msg.info(this, "Skipping PDB analysis since it has previouslu run.");
+				Msg.info(this, ">> Clear 'PDB Loaded' program property or use Load PDB action if " +
+					"additional PDB processing required.");
+			}
 			return true;
 		}
 
@@ -105,7 +124,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 		try {
 
-			pdb = PdbParser.findPDB(program, includePeSpecifiedPdbPath, symbolsRepositoryPath);
+			pdb = PdbParser.findPDB(program, includePeSpecifiedPdbPath, symbolsRepositoryDir);
 
 			if (pdb == null) {
 
@@ -191,18 +210,15 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 		String pdbStorageLocation =
 			Preferences.getProperty(PdbParser.PDB_STORAGE_PROPERTY, null, true);
+
 		if (pdbStorageLocation != null) {
 			File pdbDirectory = new File(pdbStorageLocation);
-
 			if (pdbDirectory.isDirectory()) {
-				options.registerOption(SYMBOLPATH_OPTION_NAME, pdbStorageLocation, null,
-					SYMBOLPATH_OPTION_DESCRIPTION);
+				symbolsRepositoryDir = pdbDirectory;
 			}
 		}
-		else {
-			options.registerOption(SYMBOLPATH_OPTION_NAME, SYMBOLPATH_OPTION_DEFAULT_VALUE, null,
-				SYMBOLPATH_OPTION_DESCRIPTION);
-		}
+		options.registerOption(SYMBOLPATH_OPTION_NAME, OptionType.FILE_TYPE, symbolsRepositoryDir,
+			null, SYMBOLPATH_OPTION_DESCRIPTION);
 
 		options.registerOption(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath, null,
 			OPTION_DESCRIPTION_INCLUDE_PE_PDB_PATH);
@@ -210,19 +226,16 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
-		String symbolPath =
-			options.getString(SYMBOLPATH_OPTION_NAME, SYMBOLPATH_OPTION_DEFAULT_VALUE);
-		setSymbolsRepositoryPath(symbolPath);
+		
+		symbolsRepositoryDir =
+			options.getFile(SYMBOLPATH_OPTION_NAME, PdbLocator.DEFAULT_SYMBOLS_DIR);
 
-		Preferences.setProperty(PdbParser.PDB_STORAGE_PROPERTY, symbolPath);
+		Preferences.setProperty(PdbParser.PDB_STORAGE_PROPERTY,
+			symbolsRepositoryDir != null ? symbolsRepositoryDir.getAbsolutePath() : null);
 		Preferences.store();
 
 		includePeSpecifiedPdbPath =
 			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
-	}
-
-	public void setSymbolsRepositoryPath(String symbolPath) {
-		symbolsRepositoryPath = symbolPath;
 	}
 
 }

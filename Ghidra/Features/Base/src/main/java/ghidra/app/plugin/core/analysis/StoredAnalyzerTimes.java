@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.Program;
+import ghidra.util.StringUtilities;
 
 /**
  * <code>StoredAnalyzerTimes</code> provides a custom option container for 
@@ -29,6 +30,7 @@ public class StoredAnalyzerTimes implements CustomOption {
 	public static final String OPTIONS_LIST = Program.PROGRAM_INFO + ".Analysis Times";
 	public static final String OPTION_NAME = "Times";
 
+	// all times maintained in milliseconds
 	private Map<String, Long> taskTimes = new HashMap<>();
 	private Long totalTime;
 	private String[] names;
@@ -80,7 +82,7 @@ public class StoredAnalyzerTimes implements CustomOption {
 	/**
 	 * Add the specified time corresponding to the specified analysis taskName
 	 * @param taskName analysis task name
-	 * @param t time increment
+	 * @param t time increment in milliseconds
 	 */
 	public void addTime(String taskName, long t) {
 		long cumulativeTime = taskTimes.getOrDefault(taskName, 0L) + t;
@@ -92,7 +94,7 @@ public class StoredAnalyzerTimes implements CustomOption {
 	/**
 	 * Get the accumulated time for the specified analysis taskName
 	 * @param taskName analysis task name
-	 * @return accumulated task time or null if entry not found
+	 * @return accumulated task time in milliseconds or null if entry not found
 	 */
 	public Long getTime(String taskName) {
 		return taskTimes.get(taskName);
@@ -100,7 +102,8 @@ public class StoredAnalyzerTimes implements CustomOption {
 
 	/**
 	 * Get the total accumulated task time for all task entries
-	 * @return total accumuated task time
+	 * in milliseconds
+	 * @return total accumuated task time in milliseconds
 	 */
 	public long getTotalTime() {
 		if (totalTime == null) {
@@ -111,6 +114,11 @@ public class StoredAnalyzerTimes implements CustomOption {
 			totalTime = sum;
 		}
 		return totalTime;
+	}
+
+	@Override
+	public String toString() {
+		return formatTimeMS(getTotalTime()) + " seconds";
 	}
 
 	/**
@@ -165,6 +173,13 @@ public class StoredAnalyzerTimes implements CustomOption {
 	public static void setStoredAnalyzerTimes(Program program, StoredAnalyzerTimes times) {
 		Options options = program.getOptions(OPTIONS_LIST);
 		options.putObject(StoredAnalyzerTimes.OPTION_NAME, times);
+	}
+
+	static String formatTimeMS(long timeMS) {
+		String str = Long.toUnsignedString(timeMS / 1000L);
+		str += ".";
+		str += StringUtilities.pad(Long.toUnsignedString(timeMS % 1000L), '0', 3);
+		return str;
 	}
 
 }

@@ -2360,7 +2360,13 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		List<String> propNames = propList.getOptionNames();
 		Collections.sort(propNames);
 		for (String propName : propNames) {
-			metadata.put(propName, propList.getValueAsString(propName));
+			if (propName.indexOf(Options.DELIMITER) >= 0) {
+				continue; // ignore second tier options
+			}
+			String valueAsString = propList.getValueAsString(propName);
+			if (valueAsString != null) {
+				metadata.put(propName, propList.getValueAsString(propName));
+			}
 		}
 		return metadata;
 	}
