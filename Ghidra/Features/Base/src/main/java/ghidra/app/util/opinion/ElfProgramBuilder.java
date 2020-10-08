@@ -1133,8 +1133,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Create EXTERNAL memory block based upon start of {@link #freeAddressRange} and the
-	 * current {@link #nextFreeAddress}.
+	 * Create EXTERNAL memory block based upon {@link #externalBlockLimits} and
+	 * {@link #lastExternalBlockEntryAddress}.
 	 */
 	private void createExternalBlock() {
 		if (lastExternalBlockEntryAddress == null) {
@@ -1144,7 +1144,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		long size = lastExternalBlockEntryAddress.subtract(externalBlockAddress) + 1;
 		try {
 			MemoryBlock block =
-				memory.createUninitializedBlock("EXTERNAL", externalBlockAddress, size, false);
+				memory.createUninitializedBlock(MemoryBlock.EXTERNAL_BLOCK_NAME,
+					externalBlockAddress, size, false);
 
 			// assume any value in external is writable.
 			block.setWrite(true);

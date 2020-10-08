@@ -810,7 +810,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 		// something computed it into the memory
 		MemoryBlock block = program.getMemory().getBlock(target);
 		if (block == null || !block.isExecute() || !block.isInitialized() ||
-			block.getName().equals("EXTERNAL")) {
+			block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
 			return;
 		}
 		
