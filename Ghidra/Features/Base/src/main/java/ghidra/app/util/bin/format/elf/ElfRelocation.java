@@ -319,6 +319,19 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 	}
 
 	/**
+	 * Get the standard relocation size when one has notbeen specified
+	 * @param is64bit true if ELF 64-bit 
+	 * @param hasAddend true if relocation has addend
+	 * @return size of relocation entry
+	 */
+	public static int getStandardRelocationEntrySize(boolean is64bit, boolean hasAddend) {
+		if (is64bit) {
+			return hasAddend ? 24 : 16;
+		}
+		return hasAddend ? 12 : 8;
+	}
+
+	/**
 	 * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
 	 */
 	@Override
