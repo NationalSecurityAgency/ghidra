@@ -73,9 +73,9 @@ public class PdbLocator {
 	public static final boolean onWindows =
 		(Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS);
 
+	private static final String symbolServerEnvVar = "_NT_SYMBOL_PATH";
 	private static final File USER_HOME = new File(System.getProperty("user.home"));
-	public static final File DEFAULT_SYMBOLS_DIR =
-		onWindows ? new File("C:\\Symbols") : new File(USER_HOME, "Symbols");
+	public static final File DEFAULT_SYMBOLS_DIR = getDefaultSymbolsDir();
 	public final static File WINDOWS_SYMBOLS_DIR =
 		onWindows ? new File("C:/WINDOWS/Symbols") : null;
 
@@ -89,6 +89,34 @@ public class PdbLocator {
 		this.symbolsRepositoryDir = symbolsRepositoryDir;
 	}
 
+	private static File getDefaultSymbolsDir() {
+		// Expect the environment string to be of the form:
+		//    srv*[local cache]*[private symbol server]*https://msdl.microsoft.com/download/symbols
+		//    srv*c:\symbols*https://msdl.microsoft.com/download/symbols
+
+		File defaultSymbolsDir = onWindows ? new File("C:\\Symbols") : new File(USER_HOME, "Symbols");
+
+		String envString = System.getenv(symbolServerEnvVar);
+		if (envString == null) {
+			return defaultSymbolsDir;
+		}
+
+		if (!envString.startsWith("srv") && !envString.startsWith("SRV")) {
+			return defaultSymbolsDir;
+		}
+
+		String[] envParts = envString.split("\\*");
+
+		if (envParts.length < 3) {
+			return defaultSymbolsDir;
+		}
+
+		File storageDir = new File(envParts[1]);
+		if (storageDir.isDirectory()) {
+			return storageDir;
+		}
+		return defaultSymbolsDir;
+	}
 	//==============================================================================================
 	// TODO: Ideas for future.
 //	public SymbolPathSearcher(String message) {
