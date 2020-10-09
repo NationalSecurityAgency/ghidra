@@ -54,28 +54,28 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 	}
 
 	@Override
-	protected String getVertexIdForAddress(Address address) {
+	protected String getVertexId(Address address) {
 		try {
 			CodeBlock[] blocks = blockModel.getCodeBlocksContaining(address, TaskMonitor.DUMMY);
 			if (blocks != null && blocks.length > 0) {
-				return super.getVertexIdForAddress(blocks[0].getFirstStartAddress());
+				return super.getVertexId(blocks[0].getFirstStartAddress());
 			}
 		}
 		catch (CancelledException e) {
 			// Will not happen with dummyMonitor
 			// Model has already done the work when the graph was created
 		}
-		return super.getVertexIdForAddress(address);
+		return super.getVertexId(address);
 	}
 
 	@Override
-	protected List<String> getVertices(AddressSetView addrSet) {
+	protected Set<AttributedVertex> getVertices(AddressSetView addrSet) {
 		if (addrSet.isEmpty()) {
-			return Collections.emptyList();
+			return Collections.emptySet();
 		}
 
 		// Identify all blocks which have an entry point within the selection address set
-		ArrayList<String> blockList = new ArrayList<String>();
+		Set<AttributedVertex> vertices = new HashSet<>();
 		try {
 			SymbolTable symTable = program.getSymbolTable();
 			CodeBlockIterator cbIter =
@@ -91,7 +91,10 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 				else {
 					addrString = addr.toString();
 				}
-				blockList.add(addrString);
+				AttributedVertex vertex = graphDisplay.getGraph().getVertex(addrString);
+				if (vertex != null) {
+					vertices.add(vertex);
+				}
 			}
 		}
 		catch (CancelledException e) {
@@ -99,18 +102,18 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 			// Model has already done the work when the graph was created
 		}
 
-		return blockList;
+		return vertices;
 	}
 
 	@Override
-	protected AddressSet getAddressSetForVertices(List<String> vertexIds) {
+	protected AddressSet getAddresses(Set<AttributedVertex> vertices) {
 		AddressSet addrSet = new AddressSet();
 
 		try {
 			// for each address string, translate it into a block
 			//   and add it to the address set.
-			for (String vertexId : vertexIds) {
-				Address blockAddr = getAddressForVertexId(vertexId);
+			for (AttributedVertex vertex : vertices) {
+				Address blockAddr = getAddress(vertex);
 				if (!isValidAddress(blockAddr)) {
 					continue;
 				}
@@ -150,8 +153,8 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 	}
 
 	private void updateVertexName(VertexGraphActionContext context) {
-		String vertexId = context.getClickedVertex().getId();
-		Address address = getAddressForVertexId(vertexId);
+		AttributedVertex vertex = context.getClickedVertex();
+		Address address = getAddress(vertex);
 		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
 
 		if (symbol == null) {
@@ -165,8 +168,8 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 	}
 
 	@Override
-	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
-		return new BlockModelGraphDisplayListener(tool, blockModel, graphDisplay);
+	public GraphDisplayListener cloneWith(GraphDisplay newGraphDisplay) {
+		return new BlockModelGraphDisplayListener(tool, blockModel, newGraphDisplay);
 	}
 
 }

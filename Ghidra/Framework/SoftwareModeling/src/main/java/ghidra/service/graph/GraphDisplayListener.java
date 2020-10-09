@@ -15,7 +15,7 @@
  */
 package ghidra.service.graph;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Interface for being notified when the user interacts with a visual graph display
@@ -27,17 +27,17 @@ public interface GraphDisplayListener {
 	public void graphClosed();
 
 	/**
-	 * Notification that the list of selected vertices has changed
+	 * Notification that the set of selected vertices has changed
 	 * 
-	 * @param vertexIds the list of vertex ids for the currently selected vertices
+	 * @param vertices the set of currently selected vertices
 	 */
-	public void selectionChanged(List<String> vertexIds);
+	public void selectionChanged(Set<AttributedVertex> vertices);
 
 	/**
 	 * Notification that the "focused" (active) vertex has changed
-	 * @param vertexId the vertex id of the currently "focused" vertex
+	 * @param vertex the vertex that is currently "focused"
 	 */
-	public void locationFocusChanged(String vertexId);
+	public void locationFocusChanged(AttributedVertex vertex);
 
 	/**
 	 * Makes a new GraphDisplayListener of the same type as the specific

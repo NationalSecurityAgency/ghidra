@@ -607,8 +607,8 @@ public class MachoProgramBuilder {
 		}
 		Address start = getAddress();
 		try {
-			MemoryBlock block = memory.createUninitializedBlock("EXTERNAL", start,
-				undefinedSymbols.size() * machoHeader.getAddressSize(), false);
+			MemoryBlock block = memory.createUninitializedBlock(MemoryBlock.EXTERNAL_BLOCK_NAME,
+				start, undefinedSymbols.size() * machoHeader.getAddressSize(), false);
 			// assume any value in external is writable.
 			block.setWrite(true);
 			block.setSourceName(BLOCK_SOURCE_NAME);

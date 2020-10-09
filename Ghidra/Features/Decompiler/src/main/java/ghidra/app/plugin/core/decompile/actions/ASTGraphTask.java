@@ -124,9 +124,9 @@ public class ASTGraphTask extends Task {
 			display.setGraph(graph, description, false, monitor);
 			// set the graph location
 			if (location != null) {
-				String id = displayListener.getVertexIdForAddress(location);
+				AttributedVertex vertex = displayListener.getVertex(location);
 				// update graph location, but don't have it send out event
-				display.setLocationFocus(id, EventTrigger.INTERNAL_ONLY);
+				display.setFocusedVertex(vertex, EventTrigger.INTERNAL_ONLY);
 			}
 
 		}

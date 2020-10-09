@@ -232,16 +232,15 @@ public class GraphAST extends GhidraScript {
 		}
 
 		@Override
-		protected List<String> getVertices(AddressSetView selection) {
-			List<String> ids = new ArrayList<String>();
-			return ids;
+		protected Set<AttributedVertex> getVertices(AddressSetView selection) {
+			return Collections.emptySet();
 		}
 
 		@Override
-		protected AddressSet getAddressSetForVertices(List<String> vertexIds) {
+		protected AddressSet getAddresses(Set<AttributedVertex> vertices) {
 			AddressSet set = new AddressSet();
-			for (String id : vertexIds) {
-				Address address = getAddressForVertexId(id);
+			for (AttributedVertex vertex : vertices) {
+				Address address = getAddress(vertex);
 				if (address != null) {
 					set.add(address);
 				}
@@ -250,7 +249,11 @@ public class GraphAST extends GhidraScript {
 		}
 
 		@Override
-		protected Address getAddressForVertexId(String vertexId) {
+		protected Address getAddress(AttributedVertex vertex) {
+			if (vertex == null) {
+				return null;
+			}
+			String vertexId = vertex.getId();
 			int firstcolon = vertexId.indexOf(':');
 			if (firstcolon == -1) {
 				return null;

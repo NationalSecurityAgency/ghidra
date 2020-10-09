@@ -629,7 +629,7 @@ public class PseudoDisassembler {
 					//    it is probably a JUMP to an external function.
 					MemoryBlock block = memory.getBlock(target);
 					if (block == null || block.isInitialized() ||
-						!block.getName().equals("EXTERNAL")) {
+						!block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
 						return false;
 					}
 					targetList.remove(target);

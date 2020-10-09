@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import static ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.plugin.core.decompile.actions.ASTGraphTask.GraphType;
 import ghidra.app.plugin.core.graph.AddressBasedGraphDisplayListener;
@@ -26,8 +25,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.PcodeBlockBasic;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayListener;
+import ghidra.service.graph.*;
 import ghidra.util.exception.AssertException;
 
 /**
@@ -45,33 +43,37 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 	}
 
 	@Override
-	protected List<String> getVertices(AddressSetView selection) {
+	protected Set<AttributedVertex> getVertices(AddressSetView selection) {
 		if (graphType != CONTROL_FLOW_GRAPH) {
 			return null;
 		}
-		List<String> vertices = new ArrayList<>();
+		Set<AttributedVertex> vertices = new HashSet<>();
 		List<PcodeBlockBasic> blocks = hfunction.getBasicBlocks();
 		for (PcodeBlockBasic block : blocks) {
 			Address start = block.getStart();
 			Address stop = block.getStop();
 			if (selection.intersects(start, stop)) {
-				vertices.add(Integer.toString(block.getIndex()));
+				String id = Integer.toString(block.getIndex());
+				AttributedVertex vertex = graphDisplay.getGraph().getVertex(id);
+				if (vertex != null) {
+					vertices.add(vertex);
+				}
 			}
 		}
 		return vertices;
 	}
 
 	@Override
-	protected AddressSet getAddressSetForVertices(List<String> vertexIds) {
+	protected AddressSet getAddresses(Set<AttributedVertex> vertices) {
 		if (graphType != CONTROL_FLOW_GRAPH) {
 			return null;
 		}
 
 		AddressSet set = new AddressSet();
 		List<PcodeBlockBasic> blocks = hfunction.getBasicBlocks();
-		for (String vertixId : vertexIds) {
+		for (AttributedVertex vertex : vertices) {
 			try {
-				int index = Integer.parseInt(vertixId);
+				int index = Integer.parseInt(vertex.getId());
 				PcodeBlockBasic block = blocks.get(index);
 				Address start = block.getStart();
 				set.addRange(start, block.getStop());
@@ -84,7 +86,7 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 	}
 
 	@Override
-	protected String getVertexIdForAddress(Address address) {
+	protected String getVertexId(Address address) {
 		if (graphType != CONTROL_FLOW_GRAPH) {
 			return null;
 		}
@@ -96,25 +98,25 @@ public class ASTGraphDisplayListener extends AddressBasedGraphDisplayListener {
 				return Integer.toString(block.getIndex());
 			}
 		}
-		return super.getVertexIdForAddress(address);
+		return super.getVertexId(address);
 	}
 
 	@Override
-	protected Address getAddressForVertexId(String vertexId) {
+	protected Address getAddress(AttributedVertex vertex) {
 		List<PcodeBlockBasic> blocks = hfunction.getBasicBlocks();
 
 		try {
-			int index = Integer.parseInt(vertexId);
+			int index = Integer.parseInt(vertex.getId());
 			PcodeBlockBasic block = blocks.get(index);
 			return block.getStart();
 		}
 		catch (NumberFormatException e) {
-			throw new AssertException("Bad vertex id, expected a number but got " + vertexId);
+			throw new AssertException("Bad vertex id, expected a number but got " + vertex.getId());
 		}
 	}
 
 	@Override
-	public GraphDisplayListener cloneWith(GraphDisplay graphDisplay) {
+	public GraphDisplayListener cloneWith(GraphDisplay display) {
 		return new ASTGraphDisplayListener(tool, graphDisplay, hfunction, graphType);
 	}
 

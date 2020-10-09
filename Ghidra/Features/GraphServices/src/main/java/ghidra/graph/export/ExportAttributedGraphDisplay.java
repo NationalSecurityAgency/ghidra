@@ -15,7 +15,8 @@
  */
 package ghidra.graph.export;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
 
 import org.jgrapht.Graph;
 
@@ -57,15 +58,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 		// This display is not interactive, so N/A
 	}
 
-	@Override
-	public void selectVertices(List<String> vertexList, EventTrigger eventTrigger) {
-		// This display is not interactive, so N/A
-	}
 
-	@Override
-	public void setLocationFocus(String vertexID, EventTrigger eventTrigger) {
-		// This display is not interactive, so N/A
-	}
 
 	/**
 	 * set the {@link AttributedGraph} for visualization
@@ -108,7 +101,7 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void updateVertexName(String id, String newName) {
+	public void updateVertexName(AttributedVertex vertex, String newName) {
 		// do nothing
 	}
 
@@ -123,13 +116,28 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public String getFocusedVertexId() {
+	public AttributedVertex getFocusedVertex() {
 		return null;
 	}
 
 	@Override
-	public Set<String> getSelectedVertexIds() {
+	public Set<AttributedVertex> getSelectedVertices() {
 		return Collections.emptySet();
+	}
+
+	@Override
+	public void setFocusedVertex(AttributedVertex vertex, EventTrigger eventTrigger) {
+		// not interactive, so N/A
+	}
+
+	@Override
+	public AttributedGraph getGraph() {
+		return null;
+	}
+
+	@Override
+	public void selectVertices(Set<AttributedVertex> vertexList, EventTrigger eventTrigger) {
+		// not interactive, so N/A
 	}
 
 }

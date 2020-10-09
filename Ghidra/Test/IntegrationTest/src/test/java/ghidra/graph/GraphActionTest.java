@@ -40,6 +40,12 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 	private AttributedGraph graph;
 	private ComponentProvider graphComponentProvider;
 	private GraphDisplay display;
+	private AttributedVertex a;
+	private AttributedVertex b;
+	private AttributedVertex c;
+	private AttributedVertex d;
+	private AttributedVertex e;
+	private AttributedVertex f;
 
 	@Before
 	public void setUp() throws Exception {
@@ -60,7 +66,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSelectVertexAction() {
-		assertTrue(display.getSelectedVertexIds().isEmpty());
+		assertTrue(display.getSelectedVertices().isEmpty());
 
 		DockingActionIf action = getAction(tool, "Select Vertex");
 		VertexGraphActionContext context =
@@ -68,25 +74,24 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 				graph.getVertex("B"));
 		performAction(action, context, true);
 
-		Set<String> selectedVertexIds = display.getSelectedVertexIds();
-		assertEquals(1, selectedVertexIds.size());
-		assertTrue(selectedVertexIds.contains(graph.getVertex("B").getId()));
+		Set<AttributedVertex> selectedVertices = display.getSelectedVertices();
+		assertEquals(1, selectedVertices.size());
+		assertTrue(selectedVertices.contains(b));
 
 		// now try and select a second vertex
-		context = new VertexGraphActionContext(graphComponentProvider, graph, null, null,
-			graph.getVertex("D"));
+		context = new VertexGraphActionContext(graphComponentProvider, graph, null, null,d);
 		performAction(action, context, true);
-		selectedVertexIds = display.getSelectedVertexIds();
-		assertEquals(2, selectedVertexIds.size());
-		assertTrue(selectedVertexIds.contains(graph.getVertex("B").getId()));
-		assertTrue(selectedVertexIds.contains(graph.getVertex("D").getId()));
+		selectedVertices = display.getSelectedVertices();
+		assertEquals(2, selectedVertices.size());
+		assertTrue(selectedVertices.contains(b));
+		assertTrue(selectedVertices.contains(d));
 
 	}
 
 	@Test
 	public void testDeSelectVertexAction() {
-		display.selectVertices(Arrays.asList("A", "B", "C", "D"), EventTrigger.API_CALL);
-		assertEquals(4, display.getSelectedVertexIds().size());
+		select(a, b, c, d);
+		assertEquals(4, display.getSelectedVertices().size());
 
 		DockingActionIf action = getAction(tool, "Deselect Vertex");
 		VertexGraphActionContext context =
@@ -94,18 +99,18 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 				graph.getVertex("B"));
 		performAction(action, context, true);
 
-		Set<String> selectedVerticeIds = display.getSelectedVertexIds();
-		assertEquals(3, selectedVerticeIds.size());
-		assertTrue(selectedVerticeIds.contains(graph.getVertex("A").getId()));
-		assertTrue(selectedVerticeIds.contains(graph.getVertex("D").getId()));
-		assertTrue(selectedVerticeIds.contains(graph.getVertex("D").getId()));
-		assertFalse(selectedVerticeIds.contains(graph.getVertex("B").getId()));
+		Set<AttributedVertex> selected = display.getSelectedVertices();
+		assertEquals(3, selected.size());
+		assertTrue(selected.contains(a));
+		assertTrue(selected.contains(c));
+		assertTrue(selected.contains(d));
+		assertFalse(selected.contains(b));
 
 	}
 
 	@Test
 	public void testSelectEdgeAction() {
-		assertTrue(display.getSelectedVertexIds().isEmpty());
+		assertTrue(display.getSelectedVertices().isEmpty());
 
 		DockingActionIf action = getAction(tool, "Select Edge");
 		EdgeGraphActionContext context =
@@ -113,10 +118,10 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 				graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
 		performAction(action, context, true);
 
-		Set<String> selectedVerticeIds = display.getSelectedVertexIds();
+		Set<AttributedVertex> selectedVerticeIds = display.getSelectedVertices();
 		assertEquals(2, selectedVerticeIds.size());
-		assertTrue(selectedVerticeIds.contains(graph.getVertex("A").getId()));
-		assertTrue(selectedVerticeIds.contains(graph.getVertex("B").getId()));
+		assertTrue(selectedVerticeIds.contains(a));
+		assertTrue(selectedVerticeIds.contains(b));
 	}
 
 	@Test
@@ -127,85 +132,85 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 				graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
 		performAction(action, context, true);
 
-		Set<String> selectedVerticeIds = display.getSelectedVertexIds();
-		assertEquals(2, selectedVerticeIds.size());
+		Set<AttributedVertex> selectedVertices = display.getSelectedVertices();
+		assertEquals(2, selectedVertices.size());
 
 		action = getAction(tool, "Deselect Edge");
 
 		performAction(action, context, true);
 
-		selectedVerticeIds = display.getSelectedVertexIds();
-		assertEquals(0, selectedVerticeIds.size());
-
+		selectedVertices = display.getSelectedVertices();
+		assertEquals(0, selectedVertices.size());
 	}
 
 	@Test
 	public void testSelectEdgeSource() {
-		display.setLocationFocus("D", EventTrigger.INTERNAL_ONLY);
+		setFocusedVertex(d);
 		DockingActionIf action = getAction(tool, "Edge Source");
 		EdgeGraphActionContext context =
 			new EdgeGraphActionContext(graphComponentProvider, graph, null, null,
 				graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
 		performAction(action, context, true);
 
-		assertEquals("A", display.getFocusedVertexId());
+		assertEquals(a, display.getFocusedVertex());
 	}
 
 	@Test
 	public void testSelectEdgeTarget() {
-		display.setLocationFocus("D", EventTrigger.INTERNAL_ONLY);
+		setFocusedVertex(d);
 		DockingActionIf action = getAction(tool, "Edge Target");
 		EdgeGraphActionContext context =
 			new EdgeGraphActionContext(graphComponentProvider, graph, null, null,
-				graph.getEdge(graph.getVertex("A"), graph.getVertex("B")));
+				graph.getEdge(a, b));
 		performAction(action, context, true);
 
-		assertEquals("B", display.getFocusedVertexId());
+		assertEquals(b, display.getFocusedVertex());
 	}
 
 	@Test
 	public void testInvertSelection() {
-		display.selectVertices(List.of("A", "C", "E"), EventTrigger.INTERNAL_ONLY);
+		select(a, c, e);
 		DockingActionIf action = getAction(tool, "Invert Selection");
 		GraphActionContext context =
 			new GraphActionContext(graphComponentProvider, graph, null, null);
 		performAction(action, context, true);
 
-		Set<String> selectedVerticeIds = display.getSelectedVertexIds();
-		assertEquals(3, selectedVerticeIds.size());
-		assertTrue(selectedVerticeIds.contains("B"));
-		assertTrue(selectedVerticeIds.contains("D"));
-		assertTrue(selectedVerticeIds.contains("F"));
+		Set<AttributedVertex> selectedVertices = display.getSelectedVertices();
+		assertEquals(3, selectedVertices.size());
+		assertTrue(selectedVertices.contains(b));
+		assertTrue(selectedVertices.contains(d));
+		assertTrue(selectedVertices.contains(f));
 	}
 
 	@Test
 	public void testGrowSelectionOut() {
-		display.selectVertices(List.of("A"), EventTrigger.INTERNAL_ONLY);
+		select(a);
 		DockingActionIf action = getAction(tool, "Grow Selection To Targets");
 		GraphActionContext context =
 			new GraphActionContext(graphComponentProvider, graph, null, null);
 		performAction(action, context, true);
 
-		Set<String> selectedVerticeIds = display.getSelectedVertexIds();
+		Set<AttributedVertex> selectedVerticeIds = display.getSelectedVertices();
 		assertEquals(3, selectedVerticeIds.size());
-		assertTrue(selectedVerticeIds.contains("A"));
-		assertTrue(selectedVerticeIds.contains("B"));
-		assertTrue(selectedVerticeIds.contains("C"));
+		assertTrue(selectedVerticeIds.contains(a));
+		assertTrue(selectedVerticeIds.contains(b));
+		assertTrue(selectedVerticeIds.contains(c));
 	}
+
 
 	@Test
 	public void testGrowSelectionIn() {
-		display.selectVertices(List.of("D"), EventTrigger.INTERNAL_ONLY);
+		select(d);
 		DockingActionIf action = getAction(tool, "Grow Selection From Sources");
 		GraphActionContext context =
 			new GraphActionContext(graphComponentProvider, graph, null, null);
 		performAction(action, context, true);
 
-		Set<String> selectedVerticeIds = display.getSelectedVertexIds();
-		assertEquals(3, selectedVerticeIds.size());
-		assertTrue(selectedVerticeIds.contains("D"));
-		assertTrue(selectedVerticeIds.contains("B"));
-		assertTrue(selectedVerticeIds.contains("C"));
+		Set<AttributedVertex> selectedVertices = display.getSelectedVertices();
+		assertEquals(3, selectedVertices.size());
+		assertTrue(selectedVertices.contains(d));
+		assertTrue(selectedVertices.contains(b));
+		assertTrue(selectedVertices.contains(c));
 	}
 
 	@Test
@@ -216,7 +221,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, graphProviders.size());
 		DefaultGraphDisplayComponentProvider original = graphProviders.get(0);
 
-		display.selectVertices(List.of("B", "C", "D"), EventTrigger.INTERNAL_ONLY);
+		select(b, c, d);
 		DockingActionIf action = getAction(tool, "Create Subgraph");
 		GraphActionContext context =
 			new GraphActionContext(graphComponentProvider, graph, null, null);
@@ -241,8 +246,8 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertFalse(contains(newGraph, "F"));
 	}
 
-	private boolean contains(AttributedGraph graph, String vertexId) {
-		return graph.getVertex(vertexId) != null;
+	private boolean contains(AttributedGraph g, String vertexId) {
+		return g.getVertex(vertexId) != null;
 	}
 
 	private void showGraph() throws Exception {
@@ -251,6 +256,17 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		display = service.getGraphDisplay(false, TaskMonitor.DUMMY);
 		display.setGraph(graph, "test graph", false, TaskMonitor.DUMMY);
 		display.setGraphDisplayListener(new TestGraphDisplayListener("test"));
+	}
+
+	private void select(AttributedVertex... vertices) {
+		runSwing(() -> {
+			Set<AttributedVertex> vetexSet = new HashSet<>(Arrays.asList(vertices));
+			display.selectVertices(vetexSet, EventTrigger.INTERNAL_ONLY);
+		});
+	}
+
+	private void setFocusedVertex(AttributedVertex vertex) {
+		runSwing(() -> display.setFocusedVertex(vertex, EventTrigger.INTERNAL_ONLY));
 	}
 
 	class TestGraphDisplayListener implements GraphDisplayListener {
@@ -267,20 +283,20 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		@Override
-		public void selectionChanged(List<String> vertexIds) {
+		public void selectionChanged(Set<AttributedVertex> verrtices) {
 			StringBuilder buf = new StringBuilder();
 			buf.append(name);
 			buf.append(": selected: ");
-			for (String id : vertexIds) {
-				buf.append(id);
+			for (AttributedVertex vertex : verrtices) {
+				buf.append(vertex.getId());
 				buf.append(",");
 			}
 			listenerCalls.add(buf.toString());
 		}
 
 		@Override
-		public void locationFocusChanged(String vertexId) {
-			listenerCalls.add(name + ": focus: " + vertexId);
+		public void locationFocusChanged(AttributedVertex vertex) {
+			listenerCalls.add(name + ": focus: " + vertex.getId());
 		}
 
 		@Override
@@ -292,12 +308,12 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private AttributedGraph createGraph() {
 		AttributedGraph g = new AttributedGraph();
-		AttributedVertex a = g.addVertex("A");
-		AttributedVertex b = g.addVertex("B");
-		AttributedVertex c = g.addVertex("C");
-		AttributedVertex d = g.addVertex("D");
-		AttributedVertex e = g.addVertex("E");
-		AttributedVertex f = g.addVertex("F");
+		a = g.addVertex("A");
+		b = g.addVertex("B");
+		c = g.addVertex("C");
+		d = g.addVertex("D");
+		e = g.addVertex("E");
+		f = g.addVertex("F");
 
 		g.addEdge(a, b);
 		g.addEdge(a, c);

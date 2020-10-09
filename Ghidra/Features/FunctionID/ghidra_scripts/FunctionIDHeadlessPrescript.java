@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +17,9 @@
 //auto-analysis whilst running headless Ghidra for import and ingest
 //of programs (object files/libraries) for use in creating FID libraries
 //@category FunctionID
-import ghidra.app.script.GhidraScript;
-
 import java.util.Map;
+
+import ghidra.app.script.GhidraScript;
 
 public class FunctionIDHeadlessPrescript extends GhidraScript {
 	// must turn off FID and LID when analyzing libraries for FID
@@ -33,7 +32,8 @@ public class FunctionIDHeadlessPrescript extends GhidraScript {
 
 	private static final String FUNCTION_ID_ANALYZER = "Function ID";
 	private static final String LIBRARY_IDENTIFICATION = "Library Identification";
-	private static final String DEMANGLER_ANALYZER = "Demangler";
+	private static final String DEMANGLER_MS_ANALYZER = "Demangler Microsoft";
+	private static final String DEMANGLER_GNU_ANALYZER = "Demangler GNU";
 	private static final String SCALAR_OPERAND_ANALYZER = "Scalar Operand References";
 
 	@Override
@@ -45,8 +45,11 @@ public class FunctionIDHeadlessPrescript extends GhidraScript {
 		if (options.containsKey(LIBRARY_IDENTIFICATION)) {
 			setAnalysisOption(currentProgram, LIBRARY_IDENTIFICATION, "false");
 		}
-		if (options.containsKey(DEMANGLER_ANALYZER)) {
-			setAnalysisOption(currentProgram, DEMANGLER_ANALYZER, "false");
+		if (options.containsKey(DEMANGLER_MS_ANALYZER)) {
+			setAnalysisOption(currentProgram, DEMANGLER_MS_ANALYZER, "false");
+		}
+		if (options.containsKey(DEMANGLER_GNU_ANALYZER)) {
+			setAnalysisOption(currentProgram, DEMANGLER_GNU_ANALYZER, "false");
 		}
 		if (options.containsKey(SCALAR_OPERAND_ANALYZER)) {
 			setAnalysisOption(currentProgram, SCALAR_OPERAND_ANALYZER, "true");
