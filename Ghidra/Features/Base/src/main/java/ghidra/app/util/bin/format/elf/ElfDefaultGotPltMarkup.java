@@ -26,6 +26,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -61,8 +62,8 @@ public class ElfDefaultGotPltMarkup {
 		}
 		else {
 			processGOTSections(monitor);
+			processPLTSection(monitor);
 		}
-		processPLT(monitor);
 	}
 
 	/**
@@ -73,10 +74,9 @@ public class ElfDefaultGotPltMarkup {
 	private void processGOTSections(TaskMonitor monitor) throws CancelledException {
 		// look for .got section blocks
 		MemoryBlock[] blocks = memory.getBlocks();
-		for (int i = 0; i < blocks.length; i++) {
+		for (MemoryBlock gotBlock : blocks) {
 			monitor.checkCanceled();
 
-			MemoryBlock gotBlock = blocks[i];
 			if (!gotBlock.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
 				continue;
 			}
@@ -137,6 +137,7 @@ public class ElfDefaultGotPltMarkup {
 			Address gotEnd = defaultSpace.getAddress(
 				firstGotEntryOffset + (count * defaultSpace.getPointerSize()) - 1);
 			processGOT(gotStart, gotEnd, monitor);
+			processDynamicPLT(gotStart, gotEnd, monitor);
 		}
 		catch (NotFoundException e) {
 			throw new AssertException(e);
@@ -198,7 +199,7 @@ public class ElfDefaultGotPltMarkup {
 		}
 	}
 
-	private void processPLT(TaskMonitor monitor) throws CancelledException {
+	private void processPLTSection(TaskMonitor monitor) throws CancelledException {
 
 		// TODO: Handle case where PLT is non-executable pointer table
 
@@ -227,16 +228,48 @@ public class ElfDefaultGotPltMarkup {
 		processLinkageTable(ElfSectionHeaderConstants.dot_plt, minAddress, maxAddress, monitor);
 	}
 
+	private void processDynamicPLT(Address gotStart, Address gotEnd, TaskMonitor monitor)
+			throws CancelledException {
+
+		Address pltStart = null;
+		Address pltEnd = null;
+
+		for (Data gotPtr : listing.getDefinedData(new AddressSet(gotStart.next(), gotEnd), true)) {
+			monitor.checkCanceled();
+			if (!gotPtr.isPointer()) {
+				Msg.error(this, "ELF PLTGOT contains non-pointer");
+				return; // unexpected
+			}
+			Address ptr = (Address) gotPtr.getValue();
+			if (ptr.getOffset() == 0) {
+				continue;
+			}
+			MemoryBlock block = memory.getBlock(ptr);
+			if (block == null || block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
+				continue;
+			}
+			if (pltStart == null) {
+				pltStart = ptr;
+			}
+			pltEnd = ptr;
+		}
+
+		if (pltStart != null) {
+			processLinkageTable("PLT", pltStart, pltEnd, monitor);
+		}
+	}
+
 	/**
 	 * Perform disassembly and markup of specified external linkage table which 
 	 * consists of thunks to external functions.  If symbols are defined within the 
 	 * linkage table, these will be transitioned to external functions.
+	 * @param pltName name of PLT section for log messages
 	 * @param minAddress minimum address of linkage table
 	 * @param maxAddress maximum address of linkage table
 	 * @param monitor task monitor
 	 * @throws CancelledException task cancelled
 	 */
-	public void processLinkageTable(String name, Address minAddress, Address maxAddress,
+	public void processLinkageTable(String pltName, Address minAddress, Address maxAddress,
 			TaskMonitor monitor) throws CancelledException {
 
 		// Disassemble section.  
@@ -248,7 +281,7 @@ public class ElfDefaultGotPltMarkup {
 		// This can be seen with ARM Android examples.
 		int count = convertSymbolsToExternalFunctions(minAddress, maxAddress);
 		if (count > 0) {
-			log("Converted " + count + " " + name + " section symbols to external thunks");
+			log("Converted " + count + " " + pltName + " section symbols to external thunks");
 		}
 	}
 
@@ -348,8 +381,8 @@ public class ElfDefaultGotPltMarkup {
 	private void removeMemRefs(Data data) {
 		if (data != null) {
 			Reference[] refs = data.getValueReferences();
-			for (int i = 0; i < refs.length; i++) {
-				RemoveReferenceCmd cmd = new RemoveReferenceCmd(refs[i]);
+			for (Reference ref : refs) {
+				RemoveReferenceCmd cmd = new RemoveReferenceCmd(ref);
 				cmd.applyTo(data.getProgram());
 			}
 		}
