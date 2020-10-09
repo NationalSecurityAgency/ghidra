@@ -2236,7 +2236,11 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 				component.removeHierarchyListener(this);
 				DockingWindowManager dwm = getInstance(component);
-				ComponentProvider provider = dwm.getComponentProvider(component);
+				ComponentProvider provider = null;
+				if (dwm != null) {
+					provider = dwm.getComponentProvider(component);
+				}
+
 				listener.componentLoaded(dwm, provider);
 			}
 		});
