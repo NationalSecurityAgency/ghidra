@@ -179,6 +179,7 @@
     <li><I>Importer</I>. Fixed RuntimeException occurrence when trying to load NE programs with unknown resources. (GP-182, Issue #1596, #1713, #2012)</li>
     <li><I>Importer</I>. Fixed batch import to handle IllegalArgumentExceptions thrown by loaders. (GP-227, Issue #2328)</li>
     <li><I>Importer:ELF</I>. Corrected ELF relocation processing for ARM BE8 (mixed-endian). (GT-3527, Issue #1494)</li>
+    <li><I>Importer:ELF</I>. Corrected ELF import processing of <code>DT_JMPREL</code> relocations and markup of associated PLT entries. (GP-252, Issue #2334)</li>
     <li><I>Importer:PE</I>. Fixed an IndexOutOfBoundsException in the PeLoader that occurred when the size of a section extends past the end of the file. (GT-3433, Issue #1371)</li>
     <li><I>Listing:Comments</I>. Fixed bug in Comment field that prevented navigation when clicking on an address or symbol where tabs were present in the comment. (GT-3440)</li>
     <li><I>Memory</I>. Fixed bug where sometimes random bytes are inserted instead of <code>0x00</code> when expanding a memory block. (GT-3465)</li>
