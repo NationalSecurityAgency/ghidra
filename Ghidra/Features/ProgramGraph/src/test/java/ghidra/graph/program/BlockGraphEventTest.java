@@ -17,7 +17,8 @@ package ghidra.graph.program;
 
 import static org.junit.Assert.*;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -27,6 +28,7 @@ import ghidra.program.model.block.CodeBlockModel;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.service.graph.AttributedGraph;
+import ghidra.service.graph.AttributedVertex;
 import ghidra.util.task.TaskMonitor;
 
 public class BlockGraphEventTest extends AbstractBlockGraphTest {
@@ -54,13 +56,13 @@ public class BlockGraphEventTest extends AbstractBlockGraphTest {
 	@Test
 	public void testGhidraLocationChanged() {
 		codeBrowser.goTo(new ProgramLocation(program, addr(0x1002239)));
-		assertEquals("01002239", display.getFocusedVertex());
+		assertEquals("01002239", display.getFocusedVertex().getId());
 		codeBrowser.goTo(new ProgramLocation(program, addr(0x1002200)));
-		assertEquals("01002200", display.getFocusedVertex());
+		assertEquals("01002200", display.getFocusedVertex().getId());
 
 		// also try a location that is not the start of a block
 		codeBrowser.goTo(new ProgramLocation(program, addr(0x100223a)));
-		assertEquals("01002239", display.getFocusedVertex());
+		assertEquals("01002239", display.getFocusedVertex().getId());
 	}
 
 
@@ -71,38 +73,38 @@ public class BlockGraphEventTest extends AbstractBlockGraphTest {
 	@Test
 	public void testGhidraSelectionChanged() {
 		setSelection(addrSet(0x1002239, 0x1002241));
-		Set<String> selected = new HashSet<>(display.getSelectedVertices());
+		Set<AttributedVertex> selected = new HashSet<>(display.getSelectedVertices());
 		assertEquals(3, selected.size());
-		assertTrue(selected.contains("01002239"));
-		assertTrue(selected.contains("0100223c"));
-		assertTrue(selected.contains("0100223e"));
+		assertTrue(selected.contains(graph.getVertex("01002239")));
+		assertTrue(selected.contains(graph.getVertex("0100223c")));
+		assertTrue(selected.contains(graph.getVertex("0100223e")));
 
 		setSelection(new AddressSet(addr(0x1002200), addr(0x1002210)));
 		selected = new HashSet<>(display.getSelectedVertices());
 		assertEquals(2, selected.size());
-		assertTrue(selected.contains("01002200"));
-		assertTrue(selected.contains("01002203"));
+		assertTrue(selected.contains(graph.getVertex("01002200")));
+		assertTrue(selected.contains(graph.getVertex("01002203")));
 
 	}
 
 	@Test
 	public void testGraphNodeFocused() {
-		display.focusChanged("01002203");
+		display.focusChanged(graph.getVertex("01002203"));
 		assertEquals(addr(0x01002203), codeBrowser.getCurrentLocation().getAddress());
 
-		display.focusChanged("0100223c");
+		display.focusChanged(graph.getVertex("0100223c"));
 		assertEquals(addr(0x0100223c), codeBrowser.getCurrentLocation().getAddress());
 
 	}
 
 	@Test
 	public void testGraphNodesSelected() {
-		display.selectionChanged(Arrays.asList("01002239", "0100223c"));
+		display.selectionChanged(Set.of(graph.getVertex("01002239"), graph.getVertex("0100223c")));
 		ProgramSelection selection = codeBrowser.getCurrentSelection();
 		assertEquals(addr(0x01002239), selection.getMinAddress());
 		assertEquals(addr(0x0100223d), selection.getMaxAddress());
 
-		display.selectionChanged(Arrays.asList("01002200", "01002203"));
+		display.selectionChanged(Set.of(graph.getVertex("01002200"), graph.getVertex("01002203")));
 		selection = codeBrowser.getCurrentSelection();
 		assertEquals(addr(0x01002200), selection.getMinAddress());
 		assertEquals(addr(0x01002204), selection.getMaxAddress());
