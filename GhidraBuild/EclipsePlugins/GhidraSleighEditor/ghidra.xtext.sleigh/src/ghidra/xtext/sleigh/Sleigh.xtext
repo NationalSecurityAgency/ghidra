@@ -658,6 +658,7 @@ exprSingle returns Expression:
 	| pcodeop='ceil' '(' op1=expr ')'
 	| pcodeop='floor' '(' op1=expr ')'
 	| pcodeop='round' '(' op1=expr ')'
+	| pcodeop='popcount' '(' op1=expr ')'
 	| pcodeop='cpool' '(' op1=expr ',' op2=expr ',' op3=expr ')'
 	| pcodeop='newobject' '(' op1=newObjParams ')'
 	| op=[macroOrPcode] op1=paramlist
