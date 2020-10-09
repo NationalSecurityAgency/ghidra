@@ -128,6 +128,9 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 			throws IOException {
 
 		List<ElfRelocation> relocations = new ArrayList<>();
+		if (entrySize <= 0) {
+			entrySize = ElfRelocation.getStandardRelocationEntrySize(elfHeader.is64Bit(), addendTypeReloc);
+		}
 		int nRelocs = (int) (length / entrySize);
 		for (int relocationIndex = 0; relocationIndex < nRelocs; ++relocationIndex) {
 			relocations.add(ElfRelocation.createElfRelocation(reader, elfHeader, relocationIndex,
@@ -258,8 +261,8 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 	public byte[] toBytes(DataConverter dc) {
 		byte[] bytes = new byte[relocs.length * relocs[0].sizeof()];
 		int index = 0;
-		for (int i = 0; i < relocs.length; i++) {
-			byte[] relocBytes = relocs[i].toBytes(dc);
+		for (ElfRelocation reloc : relocs) {
+			byte[] relocBytes = reloc.toBytes(dc);
 			System.arraycopy(relocBytes, 0, bytes, index, relocBytes.length);
 			index += relocBytes.length;
 		}
