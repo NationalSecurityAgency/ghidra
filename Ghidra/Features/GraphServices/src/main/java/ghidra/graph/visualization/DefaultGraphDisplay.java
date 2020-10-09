@@ -539,9 +539,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				}
 			});
 			Set<AttributedVertex> selected = selectedVertexState.getSelected();
-			List<String> selectedIds =
-				selected.stream().map(AttributedVertex::getId).collect(Collectors.toList());
-			notifySelectionChanged(selectedIds);
+			notifySelectionChanged(selected);
 		}
 		finally {
 			switchableSelectionListener.setEnabled(true);
@@ -716,17 +714,18 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		setFocusedVertex(vertex, EventTrigger.API_CALL);
 	}
 
-	protected void setFocusedVertex(AttributedVertex vertex, EventTrigger eventTrigger) {
+	@Override
+	public void setFocusedVertex(AttributedVertex vertex, EventTrigger eventTrigger) {
 		boolean changed = this.focusedVertex != vertex;
 		this.focusedVertex = vertex;
 		if (focusedVertex != null) {
 			if (changed && eventTrigger != EventTrigger.INTERNAL_ONLY) {
-				notifyLocationFocusChanged(focusedVertex.getId());
+				notifyLocationFocusChanged(focusedVertex);
 			}
 			// make sure the vertex is visible, even if the vertex has not changed
 			scrollToSelected(focusedVertex);
-			viewer.repaint();
 		}
+		viewer.repaint();
 	}
 
 	/**
@@ -769,22 +768,22 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	/**
 	 * fire an event to notify the selected vertices changed
-	 * @param vertexIds the list of vertexes
+	 * @param selected the list of selected vertices
 	 */
-	private void notifySelectionChanged(List<String> vertexIds) {
-		Swing.runLater(() -> listener.selectionChanged(vertexIds));
+	private void notifySelectionChanged(Set<AttributedVertex> selected) {
+		Swing.runLater(() -> listener.selectionChanged(selected));
 	}
 
 	/**
 	 * fire and event to say the focused vertex changed
-	 * @param vertexId the id of the focused vertex
+	 * @param vertex the new focused vertex
 	 */
-	private void notifyLocationFocusChanged(String vertexId) {
-		Swing.runLater(() -> listener.locationFocusChanged(vertexId));
+	private void notifyLocationFocusChanged(AttributedVertex vertex) {
+		Swing.runLater(() -> listener.locationFocusChanged(vertex));
 	}
 
 	@Override
-	public void selectVertices(List<String> vertexIdList, EventTrigger eventTrigger) {
+	public void selectVertices(Set<AttributedVertex> selected, EventTrigger eventTrigger) {
 		// if we are not to fire events, turn off the selection listener we provided to the
 		// graphing library.
 		switchableSelectionListener.setEnabled(eventTrigger != EventTrigger.INTERNAL_ONLY);
@@ -792,8 +791,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		try {
 			MutableSelectedState<AttributedVertex> nodeSelectedState =
 				viewer.getSelectedVertexState();
-			Set<AttributedVertex> selected = getVertices(vertexIdList);
-			if (vertexIdList.isEmpty()) {
+			if (selected.isEmpty()) {
 				nodeSelectedState.clear();
 			}
 			else if (!Arrays.asList(nodeSelectedState.getSelectedObjects()).containsAll(selected)) {
@@ -809,30 +807,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		}
 	}
 
-	/**
-	 *
-	 * @param vertexIds vertex ids of interest
-	 * @return a {@code Set} containing the {@code AttributedVertex} for ths supplied ids
-	 */
-	private Set<AttributedVertex> getVertices(Collection<String> vertexIds) {
-		Set<String> vertexSet = new HashSet<>(vertexIds);
-		return graph.vertexSet()
-				.stream()
-				.filter(v -> vertexSet.contains(v.getId()))
-				.collect(Collectors.toSet());
-	}
-
-	@Override
-	public void setLocationFocus(String vertexID, EventTrigger eventTrigger) {
-		Optional<AttributedVertex> vertexToFocus =
-			graph.vertexSet().stream().filter(v -> vertexID.equals(v.getId())).findFirst();
-		log.fine("picking address:" + vertexID + " returned " + vertexToFocus);
-		viewer.repaint();
-		vertexToFocus.ifPresent(v -> {
-			setFocusedVertex(v, eventTrigger);
-		});
-		viewer.repaint();
-	}
 
 	/**
 	 * set the {@link AttributedGraph} for visualization
@@ -1066,23 +1040,15 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	/**
 	 * process a request to update the name attribute value of the vertex with the
 	 * supplied id
-	 * @param id the vertix id
+	 * @param vertex the vertex to update
 	 * @param newName the new name of the vertex
 	 */
 	@Override
-	public void updateVertexName(String id, String newName) {
-		// find the vertex, if present, change the name
-		Optional<AttributedVertex> optional = graph.vertexSet()
-				.stream()
-				.filter(v -> v.getId().equals(id))
-				.findFirst();
-		if (optional.isPresent()) {
-			AttributedVertex vertex = optional.get();
-			vertex.setName(newName);
-			vertex.clearCache();
-			iconCache.evict(vertex);
-			viewer.repaint();
-		}
+	public void updateVertexName(AttributedVertex vertex, String newName) {
+		vertex.setName(newName);
+		vertex.clearCache();
+		iconCache.evict(vertex);
+		viewer.repaint();
 	}
 
 	/**
@@ -1225,8 +1191,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			// vertices
 			if (e.getStateChange() == ItemEvent.SELECTED) {
 				Collection<AttributedVertex> selectedVertices = getVertices(e.getItem());
-				List<String> selectedVertexIds = toVertexIds(selectedVertices);
-				notifySelectionChanged(selectedVertexIds);
+				notifySelectionChanged(new HashSet<AttributedVertex>(selectedVertices));
 
 				if (selectedVertices.size() == 1) {
 					// if only one vertex was selected, make it the focused vertex
@@ -1239,7 +1204,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				}
 			}
 			else if (e.getStateChange() == ItemEvent.DESELECTED) {
-				notifySelectionChanged(Collections.emptyList());
+				notifySelectionChanged(Collections.emptySet());
 			}
 			viewer.repaint();
 		}
@@ -1255,14 +1220,13 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public String getFocusedVertexId() {
-		return focusedVertex == null ? null : focusedVertex.getId();
+	public AttributedVertex getFocusedVertex() {
+		return focusedVertex;
 	}
 
 	@Override
-	public Set<String> getSelectedVertexIds() {
-		Set<AttributedVertex> selectedVertices = getSelectedVertices();
-		return selectedVertices.stream().map(v -> v.getId()).collect(Collectors.toSet());
+	public Set<AttributedVertex> getSelectedVertices() {
+		return viewer.getSelectedVertexState().getSelected();
 	}
 
 	public ActionContext getActionContext(MouseEvent e) {
@@ -1284,9 +1248,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	}
 
-	private Set<AttributedVertex> getSelectedVertices() {
-		return viewer.getSelectedVertexState().getSelected();
-	}
 
 	/**
 	 * Use the hide selected action states to determine what vertices are shown:
@@ -1321,4 +1282,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		viewer.repaint();
 	}
 
+	@Override
+	public AttributedGraph getGraph() {
+		return graph;
+	}
 }

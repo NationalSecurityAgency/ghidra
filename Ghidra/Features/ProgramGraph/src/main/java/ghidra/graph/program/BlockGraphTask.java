@@ -157,13 +157,13 @@ public class BlockGraphTask extends Task {
 
 			if (location != null) {
 				// initialize the graph location, but don't have the graph send an event
-				String id = listener.getVertexIdForAddress(location.getAddress());
-				display.setLocationFocus(id, EventTrigger.INTERNAL_ONLY);
+				AttributedVertex vertex = listener.getVertex(location.getAddress());
+				display.setFocusedVertex(vertex, EventTrigger.INTERNAL_ONLY);
 			}
 			if (selection != null && !selection.isEmpty()) {
-				List<String> selectedVertices = listener.getVertices(selection);
+				Set<AttributedVertex> selectedVertices = listener.getVertices(selection);
 				if (selectedVertices != null) {
-					// intialize the graph selection, but don't have the graph send an event
+					// initialize the graph selection, but don't have the graph send an event
 					display.selectVertices(selectedVertices, EventTrigger.INTERNAL_ONLY);
 				}
 			}

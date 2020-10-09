@@ -15,7 +15,6 @@
  */
 package ghidra.service.graph;
 
-import java.util.List;
 import java.util.Set;
 
 import docking.action.DockingAction;
@@ -46,41 +45,46 @@ public interface GraphDisplay {
 	/**
 	 * Tells the graph display window to focus the vertex with the given id.
 	 * 
-	 * @param vertexID the id of the vertex to focus
+	 * @param vertex the vertex to focus
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
 	 * graph location so that the GraphDisplay can decide if it should send out a notification via
-	 * the {@link GraphDisplayListener#locationFocusChanged(String)}. For example, if we are updating
-	 * the the location due to an event from the main application, we don't want to notify the 
-	 * application the graph changed to avoid event cycles. See {@link EventTrigger} for more
-	 * information.
-	 * 
+	 * the {@link GraphDisplayListener#locationFocusChanged(AttributedVertex)}. For example, if we
+	 * are updating the the location due to an event from the main application, we don't want to
+	 * notify the application the graph changed to avoid event cycles. See {@link EventTrigger} for
+	 * more information.
 	 */
-	public void setLocationFocus(String vertexID, EventTrigger eventTrigger);
+	public void setFocusedVertex(AttributedVertex vertex, EventTrigger eventTrigger);
 
 	/**
-	 * Returns the currently focused vertexID or null if no vertex is focussed.
-	 * @return  the currently focused vertexID or null if no vertex is focussed.
+	 * Returns the graph for this display
+	 * @return the graph for this display
 	 */
-	public String getFocusedVertexId();
+	public AttributedGraph getGraph();
+
+	/**
+	 * Returns the currently focused vertex or null if no vertex is focused
+	 * @return  the currently focused vertex or null if no vertex is focused.
+	 */
+	public AttributedVertex getFocusedVertex();
 
 	/**
 	 * Tells the graph display window to select the vertices with the given ids
 	 * 
-	 * @param vertexList the list of vertex ids to select
+	 * @param vertexSet the set of vertices to select
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
 	 * graph location so that the GraphDisplay can decide if it should send out a notification via
-	 * the {@link GraphDisplayListener#locationFocusChanged(String)}. For example, if we are updating
+	 * the {@link GraphDisplayListener#selectionChanged(Set)}. For example, if we are updating
 	 * the the location due to an event from the main application, we don't want to notify the 
 	 * application the graph changed to avoid event cycles. See {@link EventTrigger} for more
 	 * information.
 	 */
-	public void selectVertices(List<String> vertexList, EventTrigger eventTrigger);
+	public void selectVertices(Set<AttributedVertex> vertexSet, EventTrigger eventTrigger);
 
 	/**
-	 * Returns a list of vertex ids for all the currently selected vertices
-	 * @return  a list of vertex ids for all the currently selected vertices
+	 * Returns a set of vertex ids for all the currently selected vertices
+	 * @return  a set of vertex ids for all the currently selected vertices
 	 */
-	public Set<String> getSelectedVertexIds();
+	public Set<AttributedVertex> getSelectedVertices();
 
 	/**
 	 * Closes this graph display window.
@@ -131,10 +135,10 @@ public interface GraphDisplay {
 
 	/**
 	 * Updates a vertex to a new name
-	 * @param id the vertex id
-	 * @param newName the new name of the vertex
+	 * @param vertex the vertex to rename
+	 * @param newName the new name for the vertex
 	 */
-	public void updateVertexName(String id, String newName);
+	public void updateVertexName(AttributedVertex vertex, String newName);
 
 	/**
 	 * Returns the description of the current graph
@@ -148,4 +152,5 @@ public interface GraphDisplay {
 	 * @param action the action to add.
 	 */
 	public void addAction(DockingAction action);
+
 }

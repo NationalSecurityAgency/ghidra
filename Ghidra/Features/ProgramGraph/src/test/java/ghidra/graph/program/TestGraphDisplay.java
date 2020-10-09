@@ -15,7 +15,8 @@
  */
 package ghidra.graph.program;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import docking.action.DockingAction;
 import docking.widgets.EventTrigger;
@@ -26,12 +27,11 @@ import ghidra.util.task.TaskMonitor;
 public class TestGraphDisplay implements GraphDisplay {
 	private Set<String> definedVertexAttributes = new HashSet<>();
 	private Set<String> definedEdgeAttributes = new HashSet<>();
-	private String vertexAttributeName;
 	private AttributedGraph graph;
 	private String graphDescription;
 	private GraphDisplayListener listener;
-	private String currentFocusedVertex;
-	private List<String> currentSelection;
+	private AttributedVertex focusedVertex;
+	private Set<AttributedVertex> currentSelection;
 
 	@Override
 	public void setGraphDisplayListener(GraphDisplayListener listener) {
@@ -39,20 +39,22 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setLocationFocus(String vertexID, EventTrigger eventTrigger) {
-		currentFocusedVertex = vertexID;
-	}
-
-	public String getFocusedVertex() {
-		return currentFocusedVertex;
+	public void setFocusedVertex(AttributedVertex vertex, EventTrigger eventTrigger) {
+		focusedVertex = vertex;
 	}
 
 	@Override
-	public void selectVertices(List<String> vertexList, EventTrigger eventTrigger) {
+	public AttributedVertex getFocusedVertex() {
+		return focusedVertex;
+	}
+
+	@Override
+	public void selectVertices(Set<AttributedVertex> vertexList, EventTrigger eventTrigger) {
 		currentSelection = vertexList;
 	}
 
-	public List<String> getSelectedVertices() {
+	@Override
+	public Set<AttributedVertex> getSelectedVertices() {
 		return currentSelection;
 	}
 
@@ -74,7 +76,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	@Override
 	public void setVertexLabel(String attributeName, int alignment, int size, boolean monospace,
 			int maxLines) {
-		vertexAttributeName = attributeName;
+		//  nothing
 	}
 
 	@Override
@@ -91,7 +93,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void updateVertexName(String id, String newName) {
+	public void updateVertexName(AttributedVertex vertex, String newName) {
 		// nothing
 	}
 
@@ -100,31 +102,22 @@ public class TestGraphDisplay implements GraphDisplay {
 		return graphDescription;
 	}
 
+	@Override
 	public AttributedGraph getGraph() {
 		return graph;
 	}
 
-	public void focusChanged(String vertexId) {
-		listener.locationFocusChanged(vertexId);
+	public void focusChanged(AttributedVertex vertex) {
+		listener.locationFocusChanged(vertex);
 	}
 
-	public void selectionChanged(List<String> vertexIds) {
-		listener.selectionChanged(vertexIds);
+	public void selectionChanged(Set<AttributedVertex> vertices) {
+		listener.selectionChanged(vertices);
 	}
 
 	@Override
 	public void addAction(DockingAction action) {
 		// do nothing, actions are not supported by this display
-	}
-
-	@Override
-	public String getFocusedVertexId() {
-		return currentFocusedVertex;
-	}
-
-	@Override
-	public Set<String> getSelectedVertexIds() {
-		return new HashSet<String>(currentSelection);
 	}
 
 }
