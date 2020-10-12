@@ -60,8 +60,21 @@ public class ApplicationUtilities {
 			try {
 				ResourceFile pathFile = new ResourceFile(new File(pathEntry).getCanonicalPath());
 				while (pathFile != null && pathFile.exists()) {
-					if (new ResourceFile(pathFile, ApplicationProperties.PROPERTY_FILE).exists()) {
-						return pathFile;
+					ResourceFile applicationPropertiesFile =
+						new ResourceFile(pathFile, ApplicationProperties.PROPERTY_FILE);
+					if (applicationPropertiesFile.exists()) {
+						try {
+							ApplicationProperties applicationProperties =
+								new ApplicationProperties(applicationPropertiesFile);
+							if (!applicationProperties.getApplicationName().isEmpty()) {
+								return pathFile;
+							}
+						}
+						catch (IOException e2) {
+							Msg.error(ApplicationUtilities.class,
+								"Failed to read: " + applicationPropertiesFile, e2);
+							break;
+						}
 					}
 					pathFile = pathFile.getParentFile();
 				}
