@@ -29,8 +29,8 @@ import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.FrontEndable;
-import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -100,25 +100,27 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 				}
 
 				@Override
-				public boolean isEnabledForContext(ActionContext context) {
-					if (!super.isEnabledForContext(context)) {
-						getMenuBarData().setMenuItemName(ACTION_NAME);
-						return false;
-					}
-					return true;
+				public boolean isValidContext(ActionContext context) {
+					updateMenuName(context);
+					return super.isValidContext(context);
 				}
 
-				@Override
-				public boolean isEnabledForContext(ProgramActionContext context) {
-					Program program = context.getProgram();
-					String menuName = "About " + program.getDomainFile().getName();
-					getMenuBarData().setMenuItemName(menuName);
-					return true;
+				private void updateMenuName(ActionContext context) {
+					if (context instanceof ProgramActionContext) {
+						ProgramActionContext pac = (ProgramActionContext) context;
+						Program program = pac.getProgram();
+						String menuName = "About " + program.getDomainFile().getName();
+						getMenuBarData().setMenuItemName(menuName);
+					}
+					else {
+						getMenuBarData().setMenuItemName(ACTION_NAME);
+					}
 				}
 			};
+			aboutAction.setSupportsDefaultToolContext(true);
 
-			aboutAction.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_HELP,
-				ACTION_NAME }, null, "ZZZ"));
+			aboutAction.setMenuBarData(
+				new MenuData(new String[] { ToolConstants.MENU_HELP, ACTION_NAME }, null, "ZZZ"));
 
 			aboutAction.setEnabled(false);
 		}
