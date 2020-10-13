@@ -110,54 +110,47 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		// they are inserted
 		int subGroupIndex = 0;
 
-		autoAnalyzeAction = new ActionBuilder("Auto Analyze", getName())
-				.menuPath("&Analysis", "&Auto Analyze...")
-				.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
-				.keyBinding("A")
-				.onAction(this::analyzeCallback)
-				.enabledWhen(this::canAnalyze)
-				.buildAndInstall(tool);
+		autoAnalyzeAction =
+			new ActionBuilder("Auto Analyze", getName())
+					.supportsDefaultToolContext(true)
+					.menuPath("&Analysis", "&Auto Analyze...")
+					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
+					.keyBinding("A")
+					.validContextWhen(ac -> {
+						updateActionName(ac);
+						return ac instanceof ListingActionContext;
+					})
+					.onAction(this::analyzeCallback)
+					.buildAndInstall(tool);
 
-		analyzeAllAction = new ActionBuilder("Analyze All Open", getName())
-				.menuPath("&Analysis", "Analyze All &Open...")
-				.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
-				.onAction(c -> analyzeAllCallback())
-				.enabledWhen(c -> getListingContext(c) != null)
-				.buildAndInstall(tool);
+		analyzeAllAction =
+			new ActionBuilder("Analyze All Open", getName())
+					.supportsDefaultToolContext(true)
+					.menuPath("&Analysis", "Analyze All &Open...")
+					.menuGroup(ANALYZE_GROUP_NAME, "" + subGroupIndex++)
+					.onAction(c -> analyzeAllCallback())
+					.validContextWhen(ac -> ac instanceof ListingActionContext)
+					.buildAndInstall(tool);
 
 		tool.setMenuGroup(new String[] { "Analysis", "One Shot" }, ANALYZE_GROUP_NAME);
 
 	}
 
-	private boolean canAnalyze(ActionContext context) {
-		ListingActionContext listingContext = getListingContext(context);
-		updateActionName(listingContext);
-		return listingContext != null;
-	}
-
-	private void updateActionName(ListingActionContext listingContext) {
+	private void updateActionName(ActionContext context) {
 		String programName = "";
-		if (listingContext != null) {
+		if (context instanceof ListingActionContext) {
+			ListingActionContext listingContext = (ListingActionContext) context;
 			programName = listingContext.getProgram().getDomainFile().getName();
 		}
 		MenuData menuBarData = autoAnalyzeAction.getMenuBarData();
 		menuBarData.setMenuItemName("&Auto Analyze '" + programName + "'...");
 	}
 
-	private ListingActionContext getListingContext(ActionContext context) {
-		if (context instanceof ListingActionContext) {
-			return (ListingActionContext) context;
-		}
-		ActionContext globalContext = context.getGlobalContext();
-		if (globalContext instanceof ListingActionContext) {
-			return (ListingActionContext) globalContext;
-		}
-		return null;
-	}
-
 	private void analyzeCallback(ActionContext context) {
-		ListingActionContext listingContext = getListingContext(context);
-		analyzeCallback(listingContext.getProgram(), listingContext.getSelection());
+		if (context instanceof ListingActionContext) {
+			ListingActionContext listingContext = (ListingActionContext) context;
+			analyzeCallback(listingContext.getProgram(), listingContext.getSelection());
+		}
 	}
 
 	private void addOneShotActions(Program program) {
@@ -276,11 +269,10 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	}
 
 	private void programActivated(final Program program) {
-		
+
 		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
-			.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE,
-				null, null, "Cumulative analysis task times",
-				new StoredAnalyzerTimesPropertyEditor());
+				.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
+					"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
 
 		// invokeLater() to ensure that all other plugins have been notified of the program
 		// activated.  This makes sure plugins like the Listing have opened and painted the 
@@ -334,8 +326,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 				"(These messages are also written to the application log file)\n\n" +
 					log.toString();
 			MultiLineMessageDialog dialog = new MultiLineMessageDialog("Auto Analysis Summary",
-				shortMessage, detailedMessage,
-				MultiLineMessageDialog.WARNING_MESSAGE, false);//modal?
+				shortMessage, detailedMessage, MultiLineMessageDialog.WARNING_MESSAGE, false);//modal?
 			DockingWindowManager.showDialog(null, dialog);
 		}
 	}
@@ -353,11 +344,15 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			setHelpLocation(new HelpLocation("AutoAnalysisPlugin", "Auto_Analyzers"));
 
 			setEnabled(false);
+			setSupportsDefaultToolContext(true);
 		}
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			ListingActionContext programContext = getListingContext(context);
+			if (!(context instanceof ListingActionContext)) {
+				return;
+			}
+			ListingActionContext programContext = (ListingActionContext) context;
 			AddressSetView set;
 			if (programContext.hasSelection()) {
 				set = programContext.getSelection();
@@ -383,10 +378,10 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
-			ListingActionContext programContext = getListingContext(context);
-			if (programContext == null) {
+			if (!(context instanceof ListingActionContext)) {
 				return false;
 			}
+			ListingActionContext programContext = (ListingActionContext) context;
 			Program p = programContext.getProgram();
 			if (p != canAnalyzeProgram) {
 				canAnalyzeProgram = p;

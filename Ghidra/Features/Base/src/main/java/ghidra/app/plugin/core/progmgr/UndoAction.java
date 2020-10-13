@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 
+import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.app.context.ProgramActionContext;
@@ -45,6 +46,7 @@ public class UndoAction extends ProgramContextAction {
 		setToolBarData(new ToolBarData(icon, "Undo"));
 		setDescription("Undo");
 		setKeyBindingData(new KeyBindingData("ctrl Z"));
+		setSupportsDefaultToolContext(true);
 	}
 
 	@Override
@@ -95,6 +97,15 @@ public class UndoAction extends ProgramContextAction {
 			setDescription("Undo");
 			setEnabled(false);
 		}
+	}
+
+	@Override
+	public boolean isValidContext(ActionContext context) {
+		if (!(context instanceof ProgramActionContext)) {
+			getMenuBarData().setMenuItemName("Undo ");
+			setDescription("");
+		}
+		return super.isValidContext(context);
 	}
 
 	@Override
