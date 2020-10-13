@@ -533,6 +533,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.menuPath(ToolConstants.MENU_FILE, "&Close")
 				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
 				.withContext(ProgramActionContext.class)
+				.supportsDefaultToolContext(true)
 				.onAction(c -> closeProgram(c.getProgram(), false))
 				.keyBinding("ctrl W")
 				.buildAndInstall(tool);
@@ -560,6 +561,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.toolBarGroup(ToolConstants.TOOLBAR_GROUP_ONE)
 				.keyBinding("ctrl S")
 				.withContext(ProgramActionContext.class)
+				.supportsDefaultToolContext(true)
 				.enabledWhen(c -> c.getProgram() != null && c.getProgram().isChanged())
 				.onAction(c -> programSaveMgr.saveProgram(c.getProgram()))
 				.buildAndInstall(tool);
@@ -568,6 +570,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.menuPath(ToolConstants.MENU_FILE, "Save &As...")
 				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
 				.withContext(ProgramActionContext.class)
+				.supportsDefaultToolContext(true)
 				.onAction(c -> programSaveMgr.saveAs(c.getProgram()))
 				.buildAndInstall(tool);
 
@@ -584,6 +587,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP,
 					ToolConstants.TOOL_OPTIONS_MENU_GROUP + "b")
 				.withContext(ProgramActionContext.class)
+				.supportsDefaultToolContext(true)
 				.onAction(c -> showProgramOptions(c.getProgram()))
 				.buildAndInstall(tool);
 
