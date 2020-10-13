@@ -330,9 +330,6 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 * @return a readable ascii version of the name
 	 */
 	public String getReadableName() {
-		if (name.isBlank()) {
-			return "<empty>";
-		}
 		StringBuffer buffer = new StringBuffer();
 		for (int i = 0; i < name.length(); ++i) {
 			char ch = name.charAt(i);
