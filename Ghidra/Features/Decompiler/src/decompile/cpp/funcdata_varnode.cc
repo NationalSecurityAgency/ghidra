@@ -1584,13 +1584,20 @@ bool Funcdata::ancestorOpUse(int4 maxlevel,const Varnode *invn,
     // as an "only use"
     if (def->isIndirectCreation())
       return false;
-    // fallthru
+    return ancestorOpUse(maxlevel-1,def->getIn(0),op,trial);
   case CPUI_MULTIEQUAL:
 				// Check if there is any ancestor whose only
 				// use is in this op
-    for(i=0;i<def->numInput();++i)
-      if (ancestorOpUse(maxlevel-1,def->getIn(i),op,trial)) return true;
-
+    if (def->isMark()) return false;	// Trim the loop
+    def->setMark();		// Mark that this MULTIEQUAL is on the path
+				// Note: onlyOpUse is using Varnode::setMark
+    for(i=0;i<def->numInput();++i) {
+      if (ancestorOpUse(maxlevel-1,def->getIn(i),op,trial)) {
+	def->clearMark();
+	return true;
+      }
+    }
+    def->clearMark();
     return false;
   case CPUI_COPY:
     if ((invn->getSpace()->getType()==IPTR_INTERNAL)||def->isIncidentalCopy()||def->getIn(0)->isIncidentalCopy()) {
