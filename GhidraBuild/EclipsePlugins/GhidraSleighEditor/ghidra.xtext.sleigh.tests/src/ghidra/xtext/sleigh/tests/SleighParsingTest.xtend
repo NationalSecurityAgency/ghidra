@@ -181,6 +181,7 @@ class SleighParsingTest {
 			@if defined(ENDIAN)
 			reg = tmp;
 			@endif
+			  tmp = popcount(CC);
 			}
 			
 			Dest: loc is op=0 [ loc = inst_next; ] { export loc; }

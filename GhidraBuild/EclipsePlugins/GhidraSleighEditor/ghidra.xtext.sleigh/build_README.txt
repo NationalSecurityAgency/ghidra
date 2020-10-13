@@ -13,13 +13,13 @@ have added 80Meg.
 
 Importing GhidraSleighEditor Eclipse projects (they are deactivated by default):
   1) Uncomment the line in settings.gradle that includes the GhidraSleighEditor project.
-  2) Run "gradle eclipse -PSleighEditor" to generate the GhidraSleighEditor Eclipse projects.
+  2) Run "gradle eclipse -PeclipseDSL" to generate the GhidraSleighEditor Eclipse projects.
   3) From Eclipse, File --> Import --> General --> Existing Projects into Workspace
   4) From the ghidra repo, import all "Eclipse GhidraSleighEditor *" projects.
  
   
 Generating all Sleigh XTEXT generated files:
-  1) open ghidra.xtext.sleigh project
+  1) open "Eclipse SleighEditor" project
   2) navigate to the file src --> ghidra.xtext.sleigh --> GenerateSleigh.mwe2
   3) NOTE: the following will download a jar file from the internet (not from NSA)
      unless you pre-download.
@@ -28,6 +28,8 @@ Generating all Sleigh XTEXT generated files:
      3c) Rename the file to .antlr-generator-3.2.0-patch.jar
   3) From the popup menu RunAs --> MWE2 Workflow
      - Files in xtend-gen and src-gen will be created
+  4) If there are any red bookmarks on any of the Eclipse Sliehg* projects,
+     - Select all the Eclipse Sleigh* projects, and refresh from the popup menu
      - The project should rebuild, and there should be no red Problem errors
 
 

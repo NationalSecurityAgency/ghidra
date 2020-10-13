@@ -353,7 +353,7 @@ public class ElfHeader implements StructConverter, Writeable {
 		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_RELA,
 			ElfDynamicType.DT_RELAENT, ElfDynamicType.DT_RELASZ, true);
 
-		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTREL)) {
+		if (dynamicTable != null && dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTREL)) {
 			try {
 				boolean isRela = (dynamicTable
 						.getDynamicValue(ElfDynamicType.DT_PLTREL) == ElfDynamicType.DT_RELA.value);
