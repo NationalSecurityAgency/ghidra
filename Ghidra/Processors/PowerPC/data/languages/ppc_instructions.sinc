@@ -3849,6 +3849,8 @@ define pcodeop lswxOp;
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	if (RESERVE == 0) goto inst_next;
 	*[ram]:8 EA = storeDoubleWordConditionalIndexed(S,RA_OR_ZERO,B);
+	# set when a stwcx. or stdcx. successfully completes
+	setCrBit(cr0, 2, 1);
 }
 
 #stdu r0,8(0)	0xf8 00 00 01	
@@ -4034,6 +4036,8 @@ define pcodeop stswxOp;
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	if (RESERVE == 0) goto inst_next;
 	*[ram]:4 EA = storeWordConditionalIndexed(S,RA_OR_ZERO,B);
+	# set when a stwcx. or stdcx. successfully completes
+	setCrBit(cr0, 2, 1);
 }
 
 #stwu r0,r0			0x94 00 00 00
