@@ -79,14 +79,15 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Get the id with the associated function symbol, if it exists
-	 * @return the id or 0 otherwise
+	 * Get the id with the associated function symbol, if it exists.
+	 * Otherwise return a dynamic id based on the entry point.
+	 * @return the symbol id, or possibly a dynamic id
 	 */
 	public long getID() {
 		if (func instanceof FunctionDB) {
 			return func.getSymbol().getID();
 		}
-		return 0;
+		return func.getProgram().getSymbolTable().getDynamicSymbolID(func.getEntryPoint());
 	}
 
 	/**
