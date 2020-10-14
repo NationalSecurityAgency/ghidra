@@ -659,19 +659,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		Program p = programMgr.getCurrentProgram();
 		updateCloseAction(p);
 		updateProgramOptionsAction(p);
-		updateSaveAction(p);
-		updateSaveAsAction(p);
+		updateProgramActions();
 		closeAllAction.setEnabled(p != null);
 		optionsAction.setEnabled(p != null);
 		Program[] programList = programMgr.getAllPrograms();
 		closeOthersAction.setEnabled(programList.length > 1);
-		saveAllAction.setEnabled(false);
-		for (Program element : programList) {
-			if (element.isChanged()) {
-				saveAllAction.setEnabled(true);
-				break;
-			}
-		}
 		tool.contextChanged(null);
 	}
 

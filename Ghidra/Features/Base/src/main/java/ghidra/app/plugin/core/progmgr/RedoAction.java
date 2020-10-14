@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 
-import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.app.context.ProgramActionContext;
@@ -91,15 +90,6 @@ public class RedoAction extends ProgramContextAction {
 			setEnabled(false);
 		}
 
-	}
-
-	@Override
-	public boolean isValidContext(ActionContext context) {
-		if (!(context instanceof ProgramActionContext)) {
-			getMenuBarData().setMenuItemName("Redo ");
-			setDescription("");
-		}
-		return super.isValidContext(context);
 	}
 
 	@Override
