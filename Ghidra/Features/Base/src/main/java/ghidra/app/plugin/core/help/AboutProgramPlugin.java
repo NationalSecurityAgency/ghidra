@@ -52,7 +52,7 @@ import ghidra.util.HelpLocation;
 //@formatter:on
 public class AboutProgramPlugin extends Plugin implements FrontEndable {
 	public final static String PLUGIN_NAME = "AboutProgramPlugin";
-	public final static String ACTION_NAME = "About program";
+	public final static String ACTION_NAME = "About Program";
 
 	private DockingAction aboutAction;
 
@@ -87,7 +87,8 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 					return context.getFileCount() == 1 && context.getFolderCount() == 0;
 				}
 			};
-			aboutAction.setPopupMenuData(new MenuData(new String[] { "About..." }, null, "AAA"));
+			aboutAction.setPopupMenuData(
+				new MenuData(new String[] { ACTION_NAME }, null, "AAA"));
 
 			aboutAction.setEnabled(true);
 		}
@@ -101,20 +102,17 @@ public class AboutProgramPlugin extends Plugin implements FrontEndable {
 
 				@Override
 				public boolean isValidContext(ActionContext context) {
-					updateMenuName(context);
-					return super.isValidContext(context);
-				}
-
-				private void updateMenuName(ActionContext context) {
-					if (context instanceof ProgramActionContext) {
+					if (super.isValidContext(context)) {
 						ProgramActionContext pac = (ProgramActionContext) context;
 						Program program = pac.getProgram();
-						String menuName = "About " + program.getDomainFile().getName();
-						getMenuBarData().setMenuItemName(menuName);
+						if (program != null) {
+							String menuName = "About " + program.getDomainFile().getName() + "...";
+							getMenuBarData().setMenuItemName(menuName);
+							return true;
+						}
 					}
-					else {
-						getMenuBarData().setMenuItemName(ACTION_NAME);
-					}
+					getMenuBarData().setMenuItemName(ACTION_NAME);
+					return false;
 				}
 			};
 			aboutAction.setSupportsDefaultToolContext(true);
