@@ -12,48 +12,57 @@
   <BODY lang="EN-US">
     <H1><A name="Load_PDB_File"></A>Load PDB File</H1>
 
-    <P>A program database (PDB) file holds debugging and project state information about programs
-    compiled using a Microsoft compiler and written in <CODE>C/C++</CODE>, <CODE>C#</CODE>, and 
-    <CODE>Visual Basic</CODE>. A user generates a PDB file using the <CODE>/ZI or /Zi</CODE> flag 
-    (for C/C++ programs) or the <CODE>/debug</CODE> flag (for Visual Basic/C# programs).</P>
+    <P>A program database (PDB) file holds debugging and project state information about a program
+    and can be created in a number of ways. Historically, it has been created using a Microsoft
+    compiler and written in <CODE>C/C++</CODE>, <CODE>C#</CODE>, and <CODE>Visual Basic</CODE>.
+    A user generates a PDB file using the <CODE>/ZI or /Zi</CODE> flag (for C/C++ programs) or the
+    <CODE>/debug</CODE> flag (for Visual Basic/C# programs).</P>
 
-	<P>Ghidra uses the <A href="#dia">DIA SDK</A> to read information from the PDB file.&nbsp; 
-	Therefore, Ghidra can only load *.PDB files while running on Windows platforms. However, while
-	on Windows, the user may create *.PDB.XML files that can be loaded on non-Windows platforms. 
-	*.PDB.XML files can be created in three different ways:
-	
-	<BLOCKQUOTE>
-	  <UL>
-	    <LI>From the Ghidra GUI in Windows, use the <A href="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm">Ghidra Script Manager</A>
-	    to run the <I>CreatePdbXmlFilesScript.java</I> script. Follow the prompts to choose
-	    the .PDB file (or directory containing .PDB file(s)) to be converted to .PDB.XML form. 
-	    When given a directory, the script recursively traverses all subfolders to find .PDB
-	    files. A created .PDB.XML file is placed in the same location as the corresponding original 
-	    .PDB file.</LI>
-	    <br>
-	    <LI>From a Windows command line, navigate to the following directory: <I>&lt;ghidra install root&gt;/support</I>
-	    and run the <I>createPdbXmlFiles.bat</I> script. The script takes one argument representing either
-	    one .PDB file or a directory of .PDB files. When given a directory, the script recursively
-	    traverses all subdirectories to find .PDB files. A created .PDB.XML file is placed in the
-	    same location as the corresponding original .PDB file. Sample calls to the script are shown below.
-	    <br><br>
-	        <CODE>&nbsp;&nbsp;&nbsp;&nbsp;createPdbXmlFiles.bat C:\Symbols\samplePdb.pdb</CODE>
-	    <br>
-	        <CODE>&nbsp;&nbsp;&nbsp;&nbsp;createPdbXmlFiles.bat C:\Symbols</CODE>
-	    <br>
-	    </LI>
-        <br>
-	    <LI>Run the included <I>pdb.exe</I> executable (found in the <I>&lt;ghidra install root&gt;/Ghidra/Features/PDB/os/win64</I>
-	    directory) and redirect (save) its output to an	XML file as shown below:
-	<br><br>
-	<CODE>&nbsp;&nbsp;&nbsp;&nbsp;pdb.exe samplePdb.pdb > samplePdb.pdb.xml</CODE>
-	    </LI>
-	  </UL>
-	</BLOCKQUOTE>
-	</P>
-	<P><B>NOTE:</B> Execution of <i>pdb.exe</i> has runtime dependencies which must be satisfied.
-	Please refer to the <a href="docs/README_PDB.html">README_PDB</a> document for details.</P>
-	
+    <P>There are two mechanisms for processing a PDB file. First, the platform-independent
+    PDB Universal Reader/Analyzer, which can read a raw PDB file and apply it. Its capabilities
+    are expected to be expanded in future releases.  Second, the legacy capability that uses the
+    <A href="#dia">DIA SDK</A> to read information from the PDB file. This mechanism can only run
+    on a Windows platform, however it creates an XML representation of information gleaned using
+    the DIA SDK. These XML files can be saved and then used on Windows and non-Windows platforms
+    hosting Ghidra.</P>
+
+    <P>If loading a PDB, this should be done prior to other analysis, except in special cases,
+    such as when only loading data types.</P>
+    
+    <P>Restricted loading of data types or public symbols is
+    supported by PDB Universal.</P>
+
+    <H2>To Load a PDB</H2>
+
+    <BLOCKQUOTE>
+      <OL>
+        <LI>From the menu-bar of a tool, select <B>File <IMG src="../../shared/arrow.gif" alt=""
+        width="18" height="14"> Load PDB File</B></LI>
+
+        <LI>In the file chooser, select the PDB file (*.PDB or *.PDB.XML)</LI>
+
+        <LI>Click the "Select PDB" button</LI>
+      </OL>
+
+      <BLOCKQUOTE><UL>
+        <LI>PDB Universal is automatically used for *.PDB on non-Windows platforms</LI>
+        <LI>PDB MSDIA is used for *.PDB.XML files</LI>
+      </UL></BLOCKQUOTE>
+        
+      <P>When a user chooses a PDB or XML file to load for a program, Ghidra will verify its
+      signature to be valid for the program.  At this time, the PDB MSDIA loader cannot be used to
+      force-load a mismatched PDB. To perform a force-load of a PDB file, the user must choose the
+      PDB Universal loader if given the option. Force-loading an mismatched file can have
+      consequences, such as loading incorrect data types and symbols located at the wrong
+      addresses.</P>
+
+      <P>
+      PDB files may also be loaded using the PDB Analyzer, which is available through 
+      <A HREF="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analyze">Auto Analysis</A> or as
+      a <A HREF="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Analyze_One_Shot">One Shot Analyzer</A>.
+      </P>
+    </BLOCKQUOTE>
+
     <H2>Information Loaded From PDB</H2>
 
     <BLOCKQUOTE>
@@ -76,24 +85,6 @@
       </OL>
     </BLOCKQUOTE>
 
-    <H2>To Load a PDB</H2>
-
-    <BLOCKQUOTE>
-      <OL>
-        <LI>From the menu-bar of a tool, select <B>File <IMG src="../../shared/arrow.gif" alt=""
-        width="18" height="14"> Load PDB File</B></LI>
-
-        <LI>In the file chooser, select the PDB file (*.PDB for Windows and *.PDB.XML for other platforms)</LI>
-
-        <LI>Click the "Select PDB" button</LI>
-      </OL>
-      <P>
-      PDB files may also be loaded using the PDB Analyzer, which is available through 
-      <A HREF="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analyze">Auto Analysis</A> or as
-      a <A HREF="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Analyze_One_Shot">One Shot Analyzer</A>.
-      </P>
-    </BLOCKQUOTE>
-
     <H2>Loading Errors</H2>
 
     <BLOCKQUOTE>
@@ -106,7 +97,45 @@
       <P align="center">Figure 1</P>
     </BLOCKQUOTE>
 
-    <H2><A name="dia"></A>Debug Interface Access SDK</H2>
+    <H2>The DIA SDK-Based Capability</H2>
+	 
+	<P>*.PDB.XML files can be created in three different ways:
+	
+	<BLOCKQUOTE><UL>
+	  <LI>From the Ghidra GUI in Windows, use the
+	  <A href="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm">Ghidra Script Manager</A>
+	  to run the <I>CreatePdbXmlFilesScript.java</I> script. Follow the prompts to choose
+	  the .PDB file (or directory containing .PDB file(s)) to be converted to .PDB.XML form. 
+	  When given a directory, the script recursively traverses all subfolders to find .PDB
+	  files. A created .PDB.XML file is placed in the same location as the corresponding original 
+	  .PDB file.</LI>
+	  <br>
+	  <LI>From a Windows command line, navigate to the following directory:
+	  <I>&lt;ghidra install root&gt;/support</I>
+	  and run the <I>createPdbXmlFiles.bat</I> script. The script takes one argument representing
+	  either one .PDB file or a directory of .PDB files. When given a directory, the script
+	  recursively traverses all subdirectories to find .PDB files. A created .PDB.XML file is
+	  placed in the same location as the corresponding original .PDB file. Sample calls to the
+	  script are shown below.
+	  <br><br>
+	      <CODE>&nbsp;&nbsp;&nbsp;&nbsp;createPdbXmlFiles.bat C:\Symbols\samplePdb.pdb</CODE>
+	  <br>
+	      <CODE>&nbsp;&nbsp;&nbsp;&nbsp;createPdbXmlFiles.bat C:\Symbols</CODE>
+	  <br>
+	  </LI>
+      <br>
+	  <LI>Run the included <I>pdb.exe</I> executable (found in the <I>&lt;ghidra install
+	  root&gt;/Ghidra/Features/PDB/os/win64</I> directory) and redirect (save) its output to an
+	  XML file as shown below:
+	  <br><br>
+	    <CODE>&nbsp;&nbsp;&nbsp;&nbsp;pdb.exe samplePdb.pdb > samplePdb.pdb.xml</CODE>
+	  </LI>
+	</UL></BLOCKQUOTE>
+	</P>
+	<P><B>NOTE:</B> Execution of <i>pdb.exe</i> has runtime dependencies which must be satisfied.
+	Please refer to the <a href="docs/README_PDB.html">README_PDB</a> document for details.</P>
+	
+	<H2><A name="dia"></A>Debug Interface Access SDK</H2>
 
     <BLOCKQUOTE>
       <P>The Microsoft Debug Interface Access Software Development Kit (DIA SDK) provides access to
@@ -122,8 +151,6 @@
       you will need to add and register one or more files on your computer. Refer to the 
       <a href="docs/README_PDB.html">README_PDB</a> document for detailed instructions. 
       </P> 
-      	
-      
     </BLOCKQUOTE>
   </BODY>
 </HTML>
