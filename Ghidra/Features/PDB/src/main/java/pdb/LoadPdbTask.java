@@ -47,7 +47,7 @@ class LoadPdbTask extends Task {
 
 	LoadPdbTask(Program program, File pdbFile, boolean useMsDiaParser,
 			PdbApplicatorRestrictions restrictions, DataTypeManagerService service) {
-		super("Loading PDB...", true, false, false);
+		super("Load PDB", true, false, false);
 		this.program = program;
 		this.pdbFile = pdbFile;
 		this.useMsDiaParser = useMsDiaParser;
@@ -88,12 +88,9 @@ class LoadPdbTask extends Task {
 			}
 		};
 
-
-
 		try {
 			AutoAnalysisManager.getAnalysisManager(program)
-					.scheduleWorker(worker, null, true,
-						monitor);
+					.scheduleWorker(worker, null, true, monitor);
 			if (log.hasMessages()) {
 				MultiLineMessageDialog dialog = new MultiLineMessageDialog("Load PDB File",
 					"There were warnings/errors loading the PDB file.", log.toString(),
@@ -151,9 +148,8 @@ class LoadPdbTask extends Task {
 
 		pdbApplicatorOptions.setRestrictions(restrictions);
 
-		try (AbstractPdb pdb =
-			ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser.parse(pdbFile.getAbsolutePath(),
-				pdbReaderOptions, monitor)) {
+		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser
+				.parse(pdbFile.getAbsolutePath(), pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize(monitor);
 			PdbApplicator applicator = new PdbApplicator(pdbFile.getAbsolutePath(), pdb);
@@ -166,7 +162,7 @@ class LoadPdbTask extends Task {
 		}
 		return false;
 	}
-	
+
 	private void analyzeSymbols(TaskMonitor monitor, MessageLog log) {
 
 		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();

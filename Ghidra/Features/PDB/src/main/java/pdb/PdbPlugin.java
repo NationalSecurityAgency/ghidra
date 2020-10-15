@@ -20,6 +20,7 @@ import java.io.File;
 import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramContextAction;
@@ -131,11 +132,14 @@ public class PdbPlugin extends Plugin {
 				return;
 			}
 
-			TaskLauncher
-					.launch(new LoadPdbTask(program, pdb, useMsDiaParser, restrictions, service));
+			// note: We intentionally use a 0-delay here.  Our underlying task may show modal
+			//       dialog prompts.  We want the task progress dialog to be showing before any
+			//       promts appear.
+			LoadPdbTask task = new LoadPdbTask(program, pdb, useMsDiaParser, restrictions, service);
+			new TaskLauncher(task, null, 0);
 		}
 		catch (Exception pe) {
-			Msg.showError(getClass(), null, "Error", pe.getMessage());
+			Msg.showError(getClass(), null, "Error Loading PDB", pe.getMessage(), pe);
 		}
 	}
 
@@ -145,7 +149,7 @@ public class PdbPlugin extends Plugin {
 			pdbChooser = new GhidraFileChooser(tool.getToolFrame());
 			pdbChooser.setTitle("Select PDB file to load:");
 			pdbChooser.setApproveButtonText("Select PDB");
-			pdbChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
+			pdbChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 			pdbChooser.setFileFilter(new ExtensionFileFilter(new String[] { "pdb", "xml" },
 				"Program Database Files and PDB XML Representations"));
 		}
