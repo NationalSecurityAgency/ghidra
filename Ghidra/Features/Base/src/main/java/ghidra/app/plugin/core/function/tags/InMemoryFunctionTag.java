@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
+import java.util.Objects;
+
 import ghidra.program.model.listing.FunctionTag;
 
 /**
@@ -22,23 +24,18 @@ import ghidra.program.model.listing.FunctionTag;
  * tags that are not yet ready to be inserted into the database. This was created
  * to allow tags to be imported from an external file and made available to the user
  * through the {@link FunctionTagsComponentProvider} UI without needing to formally
- * add them to the {@link FunctionTagAdapter} table.
+ * add them to the {@code FunctionTagAdapter} table.
  */
-class FunctionTagTemp implements FunctionTag {
+class InMemoryFunctionTag implements FunctionTag {
 
 	private final String name;
 	private final String comment;
 
-	FunctionTagTemp(String name, String comment) {
+	InMemoryFunctionTag(String name, String comment) {
 		this.name = name;
-		this.comment = comment;
+		this.comment = comment == null ? "" : comment;
 	}
 
-	/**
-	 * These objects are not in the database, so just return a bogus id.
-	 * 
-	 * @return
-	 */
 	@Override
 	public long getId() {
 		return -1;
@@ -93,23 +90,16 @@ class FunctionTagTemp implements FunctionTag {
 		if (!(obj instanceof FunctionTag)) {
 			return false;
 		}
+
 		FunctionTag other = (FunctionTag) obj;
-		if (comment == null) {
-			if (other.getComment() != null) {
-				return false;
-			}
-		}
-		else if (!comment.equals(other.getComment())) {
+		if (!Objects.equals(comment, other.getComment())) {
 			return false;
 		}
-		if (name == null) {
-			if (other.getName() != null) {
-				return false;
-			}
-		}
-		else if (!name.equals(other.getName())) {
+
+		if (!Objects.equals(name, other.getName())) {
 			return false;
 		}
+
 		return true;
 	}
 
@@ -118,4 +108,8 @@ class FunctionTagTemp implements FunctionTag {
 		// These items cannot be deleted, so do nothing
 	}
 
+	@Override
+	public String toString() {
+		return "In-memory tag: " + name;
+	}
 }

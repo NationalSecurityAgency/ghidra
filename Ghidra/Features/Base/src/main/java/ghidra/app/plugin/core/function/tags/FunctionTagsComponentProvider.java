@@ -16,10 +16,9 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -65,9 +64,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private JPanel mainPanel;
 
 	private JPanel inputPanel;
-	private JPanel filterPanel;
-	private HintTextField tagInputTF;
-	private HintTextField filterInputTF;
+	private HintTextField tagInputField;
 
 	private int MIN_WIDTH = 850;
 	private int MIN_HEIGHT = 350;
@@ -104,12 +101,8 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	public void reload() {
 
-		SystemUtilities.runSwingLater(() -> {
-
-			if (tagInputTF != null) {
-				tagInputTF.setText("");
-			}
-
+		Swing.runLater(() -> {
+			tagInputField.setText("");
 			updateTitle(currentLocation);
 			updateTagLists();
 		});
@@ -125,6 +118,10 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	@Override
 	public JComponent getComponent() {
 		return mainPanel;
+	}
+
+	HintTextField getTagInputField() {
+		return tagInputField;
 	}
 
 	/**
@@ -197,7 +194,6 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		JPanel bottomPanel = new JPanel();
 		bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
 		bottomPanel.add(createInputPanel());
-		bottomPanel.add(createFilterPanel());
 
 		mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 		mainPanel.setPreferredSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
@@ -254,10 +250,18 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			sourcePanel.clearSelection();
 		}
 
-		List<FunctionTag> sourceTags = sourcePanel.getSelectedTags();
-		List<FunctionTag> targetTags = targetPanel.getSelectedTags();
+		Set<FunctionTag> sourceTags = sourcePanel.getSelectedTags();
+		Set<FunctionTag> targetTags = targetPanel.getSelectedTags();
 		sourceTags.addAll(targetTags);
 		allFunctionsPanel.setSelectedTags(sourceTags);
+	}
+
+	TargetTagsPanel getTargetPanel() {
+		return targetPanel;
+	}
+
+	SourceTagsPanel getSourcePanel() {
+		return sourcePanel;
 	}
 
 	/**
@@ -319,11 +323,10 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		targetPanel.setProgram(program);
 		allFunctionsPanel.setProgram(program);
 
-		// Get the currently selected tags and use them to update the
-		// all functions panel. If there is no current selection, leave the
-		// table as-is.
-		List<FunctionTag> sTags = sourcePanel.getSelectedTags();
-		List<FunctionTag> tTags = targetPanel.getSelectedTags();
+		// Get the currently selected tags and use them to update the all functions panel. If 
+		// there is no current selection, leave the table as-is.
+		Set<FunctionTag> sTags = sourcePanel.getSelectedTags();
+		Set<FunctionTag> tTags = targetPanel.getSelectedTags();
 		sTags.addAll(tTags);
 		if (!sTags.isEmpty()) {
 			allFunctionsPanel.refresh(sTags);
@@ -369,7 +372,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private List<String> getInputNames() {
 
 		// First split the string on the delimiter to get all the entries.
-		String[] names = tagInputTF.getText().split(INPUT_DELIMITER);
+		String[] names = tagInputField.getText().split(INPUT_DELIMITER);
 
 		// Trim each item to remove any leading/trailing whitespace and add to
 		// the return list. 
@@ -384,41 +387,6 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Creates a panel that allows users to enter text that will be used
-	 * as a filter on the source and target lists.
-	 * 
-	 * @return the new filter panel
-	 */
-	private JPanel createFilterPanel() {
-		filterPanel = new JPanel(new BorderLayout());
-
-		filterInputTF = new HintTextField("");
-		filterInputTF.setName("filterInputTF");
-		filterInputTF.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyReleased(KeyEvent e) {
-				JTextField textField = (JTextField) e.getSource();
-				String text = textField.getText();
-				sourcePanel.setFilterText(text);
-				targetPanel.setFilterText(text);
-				allFunctionsPanel.setFilterText(text);
-
-				if (!text.isEmpty()) {
-					filterInputTF.setBackground(Color.YELLOW);
-				}
-				else {
-					filterInputTF.setBackground(Color.WHITE);
-				}
-			}
-		});
-
-		filterPanel.add(new GLabel(" Tag Filter:"), BorderLayout.WEST);
-		filterPanel.add(filterInputTF, BorderLayout.CENTER);
-
-		return filterPanel;
-	}
-
-	/**
 	 * Creates the text-entry panel for adding new tag names.
 	 * 
 	 * @return the new text input panel
@@ -426,12 +394,12 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private JPanel createInputPanel() {
 
 		inputPanel = new JPanel(new BorderLayout());
-		tagInputTF = new HintTextField("tag 1, tag 2, ...");
-		tagInputTF.setName("tagInputTF");
-		tagInputTF.addActionListener(e -> processCreates());
+		tagInputField = new HintTextField("tag 1, tag 2, ...");
+		tagInputField.setName("tagInputTF");
+		tagInputField.addActionListener(e -> processCreates());
 
 		inputPanel.add(new GLabel(" Create new tag(s):"), BorderLayout.WEST);
-		inputPanel.add(tagInputTF, BorderLayout.CENTER);
+		inputPanel.add(tagInputField, BorderLayout.CENTER);
 
 		return inputPanel;
 	}

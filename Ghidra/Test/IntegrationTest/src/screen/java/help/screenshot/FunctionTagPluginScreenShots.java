@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.Rectangle;
 
@@ -26,15 +26,12 @@ import org.junit.Test;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.InputDialog;
-import ghidra.app.plugin.core.function.tags.FunctionTagButtonPanel;
-import ghidra.app.plugin.core.function.tags.FunctionTagTableModel;
-import ghidra.app.plugin.core.function.tags.FunctionTagTable;
-import ghidra.app.plugin.core.function.tags.FunctionTagsComponentProvider;
-import ghidra.app.plugin.core.function.tags.SourceTagsPanel;
+import ghidra.app.plugin.core.function.tags.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionIterator;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Swing;
 import ghidra.util.exception.UsrException;
 
 public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
@@ -80,7 +77,7 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 		FunctionTagTable table = (FunctionTagTable) getInstanceField("table", sourcePanel);
 		Rectangle bounds = table.getCellRect(7, 0, false); // Cell 7 is an editable item
 		doubleClick(table, bounds.x, bounds.y);
-		
+
 		InputDialog warningDialog = waitForDialogComponent(InputDialog.class);
 
 		captureDialog(warningDialog);
@@ -138,7 +135,7 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 		FunctionTagTableModel model = (FunctionTagTableModel) table.getModel();
 		int row = -1;
-		for (int i=0; i<model.getRowCount(); i++) { 
+		for (int i = 0; i < model.getRowCount(); i++) {
 			String name = (String) table.getValueAt(i, 0);
 			if (name.equals(text)) {
 				row = i;
@@ -155,11 +152,13 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 	private void addTableData() {
 
 		FunctionTagsComponentProvider provider = getProvider(FunctionTagsComponentProvider.class);
-		provider.programActivated(program);
 
-		navigateToFunction(provider);
+		Swing.runNow(() -> {
+			provider.programActivated(program);
+			navigateToFunction(provider);
+		});
 
-		JTextField inputField = (JTextField) getInstanceField("tagInputTF", provider);
+		JTextField inputField = (JTextField) getInstanceField("tagInputField", provider);
 		setText(inputField, "Tag 2, Tag 3");
 		triggerEnter(inputField);
 

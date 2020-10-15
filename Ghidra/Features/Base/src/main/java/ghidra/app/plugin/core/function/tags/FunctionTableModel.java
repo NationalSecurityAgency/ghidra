@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.util.List;
+import java.util.Set;
 
 import docking.widgets.table.DiscoverableTableUtils;
 import docking.widgets.table.TableColumnDescriptor;
@@ -37,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 class FunctionTableModel extends AddressBasedTableModel<Function> {
 
 	// The function tags to display functions for
-	private List<FunctionTag> tags;
+	private Set<FunctionTag> tags;
 
 	/**
 	 * Constructor
@@ -104,7 +105,7 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 	 * 
 	 * @param tags the selected tags
 	 */
-	public void setSelectedTags(List<FunctionTag> tags) {
+	public void setSelectedTags(Set<FunctionTag> tags) {
 		this.tags = tags;
 		reload();
 	}
