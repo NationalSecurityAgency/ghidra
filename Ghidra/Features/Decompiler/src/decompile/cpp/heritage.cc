@@ -148,6 +148,54 @@ void Heritage::clearInfoList(void)
     (*iter).reset();
 }
 
+/// \brief Remove deprecated CPUI_MULTIEQUAL or CPUI_INDIRECT ops, preparing to re-heritage
+///
+/// If a previous Varnode was heritaged through a MULTIEQUAL or INDIRECT op, but now
+/// a larger range containing the Varnode is being heritaged, we throw away the op,
+/// letting the data-flow for the new larger range determine the data-flow for the
+/// old Varnode.  The original Varnode is redefined as the output of a SUBPIECE
+/// of a larger free Varnode.
+/// \param remove is the list of Varnodes written by MULTIEQUAL or INDIRECT
+/// \param addr is the start of the larger range
+/// \param size is the size of the range
+void Heritage::removeRevisitedMarkers(const vector<Varnode *> &remove,const Address &addr,int4 size)
+
+{
+  vector<Varnode *> newInputs;
+  list<PcodeOp *>::iterator pos;
+  for(int4 i=0;i<remove.size();++i) {
+    Varnode *vn = remove[i];
+    PcodeOp *op = vn->getDef();
+    BlockBasic *bl = op->getParent();
+    if (op->code() == CPUI_INDIRECT) {
+      Varnode *iopVn = op->getIn(1);
+      PcodeOp *targetOp =  PcodeOp::getOpFromConst(iopVn->getAddr());
+      if (targetOp->isDead())
+	pos = op->getBasicIter();
+      else
+	pos = targetOp->getBasicIter();
+      ++pos;		// Insert SUBPIECE after target of INDIRECT
+    }
+    else {
+      pos = op->getBasicIter();	// Insert SUBPIECE after all MULTIEQUALs in block
+      ++pos;
+      while(pos != bl->endOp() && (*pos)->code() == CPUI_MULTIEQUAL)
+	++pos;
+    }
+    int4 offset = vn->overlap(addr,size);
+    fd->opUninsert(op);
+    newInputs.clear();
+    Varnode *big = fd->newVarnode(size,addr);
+    big->setActiveHeritage();
+    newInputs.push_back(big);
+    newInputs.push_back(fd->newConstant(4, offset));
+    fd->opSetOpcode(op, CPUI_SUBPIECE);
+    fd->opSetAllInput(op, newInputs);
+    fd->opInsert(op, bl, pos);
+    vn->setWriteMask();
+  }
+}
+
 /// \brief Collect free reads, writes, and inputs in the given address range
 ///
 /// \param addr is the starting address of the range
@@ -155,10 +203,11 @@ void Heritage::clearInfoList(void)
 /// \param read will hold any read Varnodes in the range
 /// \param write will hold any written Varnodes
 /// \param input will hold any input Varnodes
+/// \param remove will hold any PcodeOps that need to be removed
 /// \return the maximum size of a write
 int4 Heritage::collect(Address addr,int4 size,
 		      vector<Varnode *> &read,vector<Varnode *> &write,
-		      vector<Varnode *> &input) const
+		      vector<Varnode *> &input,vector<Varnode *> &remove) const
 
 {
   Varnode *vn;
@@ -177,9 +226,13 @@ int4 Heritage::collect(Address addr,int4 size,
     vn = *viter;
     if (!vn->isWriteMask()) {
       if (vn->isWritten()) {
-	if (vn->getSize() > maxsize) // Look for maximum write size
-	  maxsize = vn->getSize();
-	write.push_back(vn);
+	if (vn->getSize() < size && vn->getDef()->isMarker())
+	  remove.push_back(vn);
+	else {
+	  if (vn->getSize() > maxsize) // Look for maximum write size
+	    maxsize = vn->getSize();
+	  write.push_back(vn);
+	}
       }
       else if ((!vn->isHeritageKnown())&&(!vn->hasNoDescend()))
 	read.push_back(vn);
@@ -2178,6 +2231,7 @@ void Heritage::placeMultiequals(void)
   vector<Varnode *> readvars;
   vector<Varnode *> writevars;
   vector<Varnode *> inputvars;
+  vector<Varnode *> removevars;
   PcodeOp *multiop;
   Varnode *vnin;
   BlockBasic *bl;
@@ -2189,7 +2243,8 @@ void Heritage::placeMultiequals(void)
     readvars.clear();
     writevars.clear();
     inputvars.clear();
-    max = collect(addr,size,readvars,writevars,inputvars); // Collect reads/writes
+    removevars.clear();
+    max = collect(addr,size,readvars,writevars,inputvars,removevars); // Collect reads/writes
     if ((size > 4)&&(max < size)) {
       if (refinement(addr,size,readvars,writevars,inputvars)) {
 	iter = disjoint.find(addr);
@@ -2197,11 +2252,14 @@ void Heritage::placeMultiequals(void)
 	readvars.clear();
 	writevars.clear();
 	inputvars.clear();
-	collect(addr,size,readvars,writevars,inputvars);
+	removevars.clear();
+	collect(addr,size,readvars,writevars,inputvars,removevars);
       }
     }
     if (readvars.empty() && (addr.getSpace()->getType() == IPTR_INTERNAL))
       continue;
+    if (!removevars.empty())
+      removeRevisitedMarkers(removevars, addr, size);
     guardInput(addr,size,inputvars);
     guard(addr,size,readvars,writevars,inputvars);
     if (readvars.empty()&&writevars.empty()) continue;

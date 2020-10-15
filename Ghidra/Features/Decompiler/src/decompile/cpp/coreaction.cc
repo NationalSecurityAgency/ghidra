@@ -1782,6 +1782,7 @@ void ActionReturnRecovery::buildReturnOutput(ParamActive *active,PcodeOp *retop,
     PcodeOp *newop = data.newOp(2,retop->getAddr());
     data.opSetOpcode(newop,CPUI_PIECE);
     Varnode *newwhole = data.newVarnodeOut(trialhi.getSize()+triallo.getSize(),joinaddr,newop);
+    newwhole->setWriteMask();		// Don't let new Varnode cause additional heritage
     data.opInsertBefore(newop,retop);
     newparam.pop_back();
     newparam.back() = newwhole;
@@ -1813,7 +1814,8 @@ void ActionReturnRecovery::buildReturnOutput(ParamActive *active,PcodeOp *retop,
 	if (vn->getAddr() < addr)
 	  addr = vn->getAddr();
 	Varnode *newout = data.newVarnodeOut(preexist->getSize()+vn->getSize(),addr,newop);
-	data.opSetInput(newop,vn,0); // Most sig part
+	newout->setWriteMask();		// Don't let new Varnode cause additional heritage
+	data.opSetInput(newop,vn,0);	// Most sig part
 	data.opSetInput(newop,preexist,1);
 	data.opInsertBefore(newop,retop);
 	preexist = newout;

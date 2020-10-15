@@ -289,7 +289,6 @@ void ScopeLocal::collectNameRecs(void)
   while(iter!=nametree.end()) {
     Symbol *sym = *iter++;
     if (sym->isNameLocked()&&(!sym->isTypeLocked())) {
-      addRecommendName(sym);
       if (sym->isThisPointer()) {		// If there is a "this" pointer
 	Datatype *dt = sym->getType();
 	if (dt->getMetatype() == TYPE_PTR) {
@@ -301,6 +300,7 @@ void ScopeLocal::collectNameRecs(void)
 	  }
 	}
       }
+      addRecommendName(sym);	// This deletes the symbol
     }
   }
 }
@@ -1209,8 +1209,12 @@ SymbolEntry *ScopeLocal::remapSymbol(Symbol *sym,const Address &addr,const Addre
   SymbolEntry *entry = sym->getFirstWholeMap();
   int4 size = entry->getSize();
   if (!entry->isDynamic()) {
-    if (entry->getAddr() == addr && entry->getFirstUseAddress() == usepoint)
-      return entry;
+    if (entry->getAddr() == addr) {
+      if (usepoint.isInvalid() && entry->getFirstUseAddress().isInvalid())
+	return entry;
+      if (entry->getFirstUseAddress() == usepoint)
+	return entry;
+    }
   }
   removeSymbolMappings(sym);
   RangeList rnglist;
