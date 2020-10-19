@@ -805,14 +805,18 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return resolvedDataType;
 		}
 		finally {
-			if (isResolveCacheOwner) {
-				flushResolveQueue(true);
+			try {
+				if (isResolveCacheOwner) {
+					flushResolveQueue(true); // may throw exception - incomplete resolve
+				}
 			}
-			if (isEquivalenceCacheOwner) {
-				clearEquivalenceCache();
+			finally {
+				if (isEquivalenceCacheOwner) {
+					clearEquivalenceCache();
+				}
+				currentHandler = originalHandler;
+				lock.release();
 			}
-			currentHandler = originalHandler;
-			lock.release();
 		}
 	}
 
@@ -3815,28 +3819,28 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	void flushResolveQueue(boolean deactivateCache) {
-		if (resolveQueue == null) {
+		try {
+			if (resolveQueue != null) {
+				DataTypeConflictHandler handler = getDependencyConflictHandler();
+				while (!resolveQueue.isEmpty()) {
+					ResolvePair resolvePair = resolveQueue.pollFirst();
+					DataTypeDB resolvedDt = resolvePair.resolvedDt;
+					try {
+						resolvedDt.postPointerResolve(resolvePair.definitionDt, handler);
+					}
+					// TODO: catch exceptions if needed
+					finally {
+						resolvedDt.resolving = false;
+						resolvedDt.pointerPostResolveRequired = false;
+					}
+				}
+			}
+		}
+		finally {
+			resolveQueue = null;
 			if (deactivateCache) {
 				resolveCache = null;
 			}
-			return;
-		}
-		DataTypeConflictHandler handler = getDependencyConflictHandler();
-		while (!resolveQueue.isEmpty()) {
-			ResolvePair resolvePair = resolveQueue.pollFirst();
-			DataTypeDB resolvedDt = resolvePair.resolvedDt;
-			try {
-				resolvedDt.postPointerResolve(resolvePair.definitionDt, handler);
-			}
-			// TODO: catch exceptions if needed
-			finally {
-				resolvedDt.resolving = false;
-				resolvedDt.pointerPostResolveRequired = false;
-			}
-		}
-		resolveQueue = null;
-		if (deactivateCache) {
-			resolveCache = null;
 		}
 	}
 
