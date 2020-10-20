@@ -1463,6 +1463,7 @@ bool CollapseStructure::ruleBlockIfNoExit(FlowBlock *bl)
 {
   FlowBlock *clauseblock;
   int4 i;
+  int4 bestIndex=-1;
 
   if (bl->sizeOut() != 2) return false; // Must be binary condition
   if (bl->isSwitchOut()) return false;
@@ -1480,15 +1481,56 @@ bool CollapseStructure::ruleBlockIfNoExit(FlowBlock *bl)
     //      bl->setGotoBranch(i);
     //      return true;
     //    }
-
-    if (i==0) {			// clause must be true out of bl
-      if (bl->negateCondition(true))
-	dataflow_changecount += 1;
+    if (bestIndex==-1){
+	bestIndex=i;
+    }else{ // both match
+	bestIndex = selectBestNoExit(bl->getOut(0),bl->getOut(1));
     }
-    graph.newBlockIf(bl,clauseblock);
-    return true;
   }
-  return false;
+  if(bestIndex==-1) return false; // no match
+  clauseblock = bl->getOut(bestIndex);
+  if (bestIndex==0) {			// clause must be true out of bl
+    if (bl->negateCondition(true))
+      dataflow_changecount += 1;
+  }
+  graph.newBlockIf(bl,clauseblock);
+  return true;
+}
+
+/// Select the best of two NoExit branch to be collapsed by ruleBlockIfNoExit.
+/// \param clause0 is the first NoExit branch
+/// \param clause1 is the second NoExit branch
+/// \return the index of the selected branch (0 or 1)
+int4 CollapseStructure::selectBestNoExit(FlowBlock *clause0,FlowBlock *clause1)
+
+{
+  // select lowest block depth
+  int4 depth0 = clause0->getBlockDepth();
+  int4 depth1 = clause1->getBlockDepth();
+  if (depth0<depth1)return 0;
+  if (depth1<depth0)return 1;
+
+  // same depth, prefer non return
+  bool isRet0 = clause0->lastOp()!=(PcodeOp *)0 && clause0->lastOp()->isStandardReturn();
+  bool isRet1 = clause1->lastOp()!=(PcodeOp *)0 && clause1->lastOp()->isStandardReturn();
+  if(isRet0 && !isRet1) return 1;
+  if(isRet1 && !isRet0) return 0;
+
+  // prefer block containing only return op
+  if(isRet0){ // both are return
+    FlowBlock* fb;
+    if(clause0->getType()==FlowBlock::t_copy){
+      fb = ((BlockCopy*)clause0)->subBlock(0);
+      if(fb->getType()==FlowBlock::t_basic && ((BlockBasic*)fb)->getOpSize()==1) return 0;
+    }
+    if(clause1->getType()==FlowBlock::t_copy){
+      fb = ((BlockCopy*)clause1)->subBlock(0);
+      if(fb->getType()==FlowBlock::t_basic && ((BlockBasic*)fb)->getOpSize()==1) return 1;
+    }
+  }
+
+  // fall back to previous behavior
+  return 0;
 }
 
 /// Try to find a while/do structure, starting with a given FlowBlock.

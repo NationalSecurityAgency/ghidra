@@ -1323,6 +1323,20 @@ void BlockGraph::restoreXmlBody(List::const_iterator &iter,List::const_iterator 
   }
 }
 
+int4 BlockGraph::getInnerBlockDepth(void)
+
+{
+  int4 depth;
+  int4 maxDepth = 0;
+  for(int4 i=0;i<list.size();++i){
+    depth = list[i]->getBlockDepth();
+    if(depth>maxDepth){
+	maxDepth=depth;
+    }
+  }
+  return maxDepth;
+}
+
 /// This is currently just a wrapper around the FlowBlock::restoreXml()
 /// that sets of the BlockMap resolver
 /// \param el is the root \<block> tag
@@ -2505,6 +2519,12 @@ bool BlockBasic::isDoNothing(void) const
   return hasOnlyMarkers();
 }
 
+int4 BlockBasic::getOpSize(void)
+
+{
+  return op.size();
+}
+
 /// In terms of machine instructions, a basic block always covers a range of addresses,
 /// from its first instruction to its last. This method establishes that range.
 /// \param beg is the address of the first instruction in the block
@@ -2747,6 +2767,13 @@ FlowBlock *BlockList::getSplitPoint(void)
   return getBlock(getSize()-1)->getSplitPoint();
 }
 
+int4 BlockList::getBlockDepth(void)
+
+{
+  // list join block together but don't increase block depth
+  return getInnerBlockDepth();
+}
+
 void BlockList::printHeader(ostream &s) const
 
 {
@@ -2829,6 +2856,13 @@ void BlockCondition::saveXmlHeader(ostream &s) const
   BlockGraph::saveXmlHeader(s);
   string nm(get_opname(opc));
   a_v(s,"opcode",nm);
+}
+
+int4 BlockCondition::getBlockDepth(void)
+
+{
+  // conditions join block together but don't increase block depth
+  return getInnerBlockDepth();
 }
 
 void BlockIf::markUnstructured(void)
@@ -3183,6 +3217,18 @@ FlowBlock *BlockSwitch::nextFlowAfter(const FlowBlock *bl) const
   // Otherwise we are at last block of switch, flow is to exit of switch
   if (getParent() == (const FlowBlock *)0) return (FlowBlock *)0;
   return getParent()->nextFlowAfter(this);
+}
+
+int4 BlockSwitch::getBlockDepth(void){
+  int4 i;
+  int4 maxDepth=0;
+  for(i=0;i<caseblocks.size();++i){
+      int4 depth=caseblocks[i].block->getBlockDepth();
+      if(depth>maxDepth){
+	  maxDepth=depth;
+      }
+  }
+  return maxDepth+2; // +1 for switch block and +1 for case/default block
 }
 
 BlockMap::BlockMap(const BlockMap &op2)

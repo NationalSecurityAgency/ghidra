@@ -181,6 +181,7 @@ public:
   /// \param enditer marks the end of the XML tags
   /// \param resolver is used to recover FlowBlock objects based on XML references
   virtual void restoreXmlBody(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver) {}
+  virtual int4 getBlockDepth(void) {return 0;}		///< Return the depth in code block of \b this
   void saveXmlEdges(ostream &s) const;			///< Save edge information to an XML stream
   void restoreXmlEdges(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver);
   void saveXml(ostream &s) const;			///< Write out \b this to an XML stream
@@ -299,6 +300,8 @@ public:
   virtual void finalizePrinting(const Funcdata &data) const;
   virtual void saveXmlBody(ostream &s) const;
   virtual void restoreXmlBody(List::const_iterator &iter,List::const_iterator enditer,BlockMap &resolver);
+  virtual int4 getInnerBlockDepth();					///< Return max depth of child blocks
+  virtual int4 getBlockDepth() {return getInnerBlockDepth()+1;}
   void restoreXml(const Element *el,const AddrSpaceManager *m);	///< Restore \b this BlockGraph from an XML stream
   void addEdge(FlowBlock *begin,FlowBlock *end);		///< Add a directed edge between component FlowBlocks
   void addLoopEdge(FlowBlock *begin,int4 outindex);		///< Mark a given edge as a \e loop edge
@@ -401,6 +404,7 @@ public:
   list<PcodeOp *>::const_iterator beginOp(void) const { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
   list<PcodeOp *>::const_iterator endOp(void) const { return op.end(); }	///< Return an iterator to the end of the PcodeOps
   bool emptyOp(void) const { return op.empty(); }		///< Return \b true if \b block contains no operations
+  int4 getOpSize(void);					///< Number of PcodeOps contained in \b this block
   static bool noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last);
 };
 
@@ -501,6 +505,7 @@ public:
   virtual PcodeOp *lastOp(void) const;
   virtual bool negateCondition(bool toporbottom);
   virtual FlowBlock *getSplitPoint(void);
+  virtual int4 getBlockDepth(void);
 };
 
 /// \brief Two conditional blocks combined into one conditional using BOOL_AND or BOOL_OR
@@ -530,6 +535,7 @@ public:
   virtual bool isComplex(void) const { return getBlock(0)->isComplex(); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void saveXmlHeader(ostream &s) const;
+  virtual int4 getBlockDepth(void);
 };
 
 /// \brief A basic "if" block
@@ -675,6 +681,7 @@ public:
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockSwitch(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void finalizePrinting(const Funcdata &data) const;
+  virtual int4 getBlockDepth(void);
 };
 
 /// \brief Helper class for resolving cross-references while deserializing BlockGraph objects
