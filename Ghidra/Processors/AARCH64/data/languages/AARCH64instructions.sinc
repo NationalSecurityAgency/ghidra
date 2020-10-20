@@ -32,7 +32,11 @@
 # and the destination is not the upper half of the register (ie, bit 30 q=0)
 # then the unused remaining upper bits must be set to 0.
 
+@if DATA_ENDIAN == "little"
 define endian=little;
+@else
+define endian=big;
+@endif
 define alignment=4;
 
 # Unlike the above, these are preprocessor macros.  Use them with e.g. $(TAG_GRANULE) in SLEIGH statements.
@@ -1008,7 +1012,7 @@ define context contextreg
 	ShowMemTag = (24,24) noflow
 ;
 
-define token instrAARCH64 (32)
+define token instrAARCH64 (32) endian = little
 
 	Rm = (16,20)
 	Rn = (5,9)
@@ -3898,112 +3902,59 @@ macro set_NZCV(value, condMask)
 
 # Macro to access simd lanes
 
-macro simd_address_at(dest, reg, elem, esize, vsize)
-{
-@if DATA_ENDIAN == "little"
-        dest = &reg + elem * esize;
-@else
-        dest = &reg + vsize - esize - elem * esize;
-@endif
-}
-
 # Macros to zero the high bits of the Z or Q registers
 # These are friendlier to the decompiler
 
 macro zext_zb(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[8,56] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[192,56] = 0;
-	reg[128,64] = 0;
-	reg[64,64] = 0;
-	reg[0,64] = 0;
-@endif
 }
 
 macro zext_zh(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[16,48] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[192,48] = 0;
-	reg[128,64] = 0;
-	reg[64,64] = 0;
-	reg[0,64] = 0;
-@endif
 }
 
 macro zext_zs(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[32,32] = 0;
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[192,32] = 0;
-	reg[128,64] = 0;
-	reg[64,64] = 0;
-	reg[0,64] = 0;
-@endif
 }
 
 macro zext_zd(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[64,64] = 0;
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[0,64] = 0;
-	reg[64,64] = 0;
-	reg[128,64] = 0;
-@endif
 }
 
 macro zext_zq(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[128,64] = 0;
 	reg[192,64] = 0;
-@else
-	reg[0,64] = 0;
-	reg[64,64] = 0;
-@endif
 }
 
 macro zext_rb(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[8,56] = 0;
-@else
-	reg[0,56] = 0;
-@endif
 }
 
 macro zext_rh(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[16,48] = 0;
-@else
-	reg[0,48] = 0;
-@endif
 }
 
 macro zext_rs(reg)
 {
-@if DATA_ENDIAN == "little"
 	reg[32,32] = 0;
-@else
-	reg[0,32] = 0;
-@endif
 }
 
 # SECTION instructions
