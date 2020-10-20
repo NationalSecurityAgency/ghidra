@@ -261,7 +261,7 @@ public:
   bool undefinePreprocValue(const string &nm);
 
   // Parser functions
-  TokenSymbol *defineToken(string *name,uintb *sz);
+  TokenSymbol *defineToken(string *name,uintb *sz,int4 endian);
   void addTokenField(TokenSymbol *sym,FieldQuality *qual);
   bool addContextField(VarnodeSymbol *sym,FieldQuality *qual);
   void newSpace(SpaceQuality *qual);

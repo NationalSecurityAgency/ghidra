@@ -889,9 +889,9 @@ public class SleighLanguage implements Language {
 		}
 		boolean isBigEndian = SpecXmlUtils.decodeBoolean(el.getAttribute("bigendian"));
 		// check the instruction endianess, not the program data endianess
-		if (isBigEndian ^ description.getInstructionEndian().isBigEndian()) {
+		if (isBigEndian ^ description.getEndian().isBigEndian()) {
 			throw new SleighException(
-				".ldefs says " + getLanguageID() + " is " + description.getInstructionEndian() +
+				".ldefs says " + getLanguageID() + " is " + description.getEndian() +
 					" but .sla says " + el.getAttribute("bigendian"));
 		}
 		uniqueBase = SpecXmlUtils.decodeLong(el.getAttribute("uniqbase"));

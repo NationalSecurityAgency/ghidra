@@ -1987,7 +1987,7 @@ bool SleighCompile::undefinePreprocValue(const string &nm)
 
 // Functions needed by the parser
 
-TokenSymbol *SleighCompile::defineToken(string *name,uintb *sz)
+TokenSymbol *SleighCompile::defineToken(string *name,uintb *sz,int4 endian)
 
 {
   uint4 size = *sz;
@@ -1998,7 +1998,12 @@ TokenSymbol *SleighCompile::defineToken(string *name,uintb *sz)
   }
   else
     size = size/8;
-  Token *newtoken = new Token(*name,size,isBigEndian(),tokentable.size());
+  bool isBig;
+  if (endian ==0)
+    isBig = isBigEndian();
+  else
+    isBig = (endian > 0);
+  Token *newtoken = new Token(*name,size,isBig,tokentable.size());
   tokentable.push_back(newtoken);
   delete name;
   TokenSymbol *res = new TokenSymbol(newtoken);
