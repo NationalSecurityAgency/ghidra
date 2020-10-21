@@ -28,7 +28,7 @@ import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 
 /**
- * 
+ *
  *
  * Class for communicating with a single decompiler process.
  * The process controls decompilation for a single Program.
@@ -116,7 +116,7 @@ public class DecompileProcess {
 		}
 		if (nativeProcess != null) {
 			// Something bad happened to the process or the interface
-			// and now we try to restart		    
+			// and now we try to restart
 			nativeProcess.destroy(); // Make sure previous bad process is killed           			
 			nativeProcess = null;
 		}
@@ -141,7 +141,7 @@ public class DecompileProcess {
 
 	private int readToBurst() throws IOException {
 		if (nativeIn == null) {
-			// we've been disposed!  
+			// we've been disposed!
 			// (not sure if throwing an exception the best)
 			throw new IOException("Decompiler disposed!");
 		}
@@ -542,7 +542,7 @@ public class DecompileProcess {
 		}
 		catch (IOException e) {
 			statusGood = false;
-			if (timerMonitor.didRun()) {
+			if (timerMonitor.didRun() && timeoutSecs > 0) {
 				// Timeout occurred
 				throw new DecompileException("process", "timeout");
 			}
