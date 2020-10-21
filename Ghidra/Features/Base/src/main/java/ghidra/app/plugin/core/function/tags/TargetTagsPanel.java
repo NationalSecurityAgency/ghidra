@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import ghidra.app.cmd.function.RemoveFunctionTagCmd;
 import ghidra.framework.cmd.Command;
@@ -40,7 +39,7 @@ public class TargetTagsPanel extends TagListPanel {
 	public TargetTagsPanel(FunctionTagsComponentProvider provider,
 			PluginTool tool, String title) {
 		super(provider, tool, title);
-		
+
 		table.setDisabled(false);
 	}
 
@@ -49,35 +48,33 @@ public class TargetTagsPanel extends TagListPanel {
 	 ******************************************************************************/
 
 	@Override
-	public void refresh(Function function) {
-		
+	public void refresh(Function newFunction) {
+
 		model.clear();
-		
-		this.function = function;
-		
+
+		this.function = newFunction;
+
 		if (function == null) {
 			setTitle("No Function Selected");
 		}
 		else {
-			setTitle(function.getName() + " " + "(" + function.getEntryPoint().toString() + ")");
+			setTitle(function.getName() + " (" + function.getEntryPoint().toString() + ')');
 		}
 
-		List<FunctionTag> assignedTags = getAssignedTags(function);
-		Collections.sort(assignedTags);
-		for (FunctionTag tag : assignedTags) {
-			model.addTag(tag);
-		}
-		
-		model.reload();
-		applyFilter();
 		table.setFunction(function);
+		model.reload();
+	}
+
+	@Override
+	protected Set<FunctionTag> backgroundLoadTags() {
+		return getAssignedTags(function);
 	}
 
 	/**
 	 * Removes selected tags from the currently-selected function.
 	 */
 	public void removeSelectedTags() {
-		List<FunctionTag> selectedTags = getSelectedTags();
+		Set<FunctionTag> selectedTags = getSelectedTags();
 		for (FunctionTag tag : selectedTags) {
 			Command cmd = new RemoveFunctionTagCmd(tag.getName(), function.getEntryPoint());
 			tool.execute(cmd, program);

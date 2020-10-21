@@ -15,7 +15,6 @@
  */
 package ghidra.program.model.listing;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
