@@ -32,8 +32,10 @@ public class MatchNameAnalysis {
 	private Set<String> finalNameList = null;
 	private TreeSet<String> rawNames = null;
 	private TreeSet<String> similarBaseNames = null;
+	private TreeSet<String> demangledNameNoTemplate = null;
 	private TreeSet<String> exactDemangledBaseNames = null;
 	private TreeSet<String> libraries = null;
+	private boolean demangleSelect = false;		// True if either deamngledNameNoTemplate or exactDemangledBaseNames is unique
 	
 	private int mostOptimisticCount;			// What is most optimistic (smallest) number of matches
 												// Once duplicates and similar base names are taken into account
@@ -41,6 +43,10 @@ public class MatchNameAnalysis {
 
 	public int numNames() {
 		return finalNameList.size();
+	}
+
+	public boolean isDemangled() {
+		return demangleSelect;
 	}
 
 	public Iterator<String> getRawNameIterator() {
@@ -80,7 +86,9 @@ public class MatchNameAnalysis {
 
 		rawNames = new TreeSet<String>();
 		similarBaseNames = new TreeSet<String>();
+		demangledNameNoTemplate = new TreeSet<String>();
 		exactDemangledBaseNames = new TreeSet<String>();
+		int cannotDetemplate = 0;
 		int cannotDemangle = 0;
 
 		for (FidMatch match : matches) {
@@ -93,6 +101,12 @@ public class MatchNameAnalysis {
 			if (nameVersions.rawName != null) {
 				rawNames.add(nameVersions.rawName);				// Dedup the raw names
 				similarBaseNames.add(nameVersions.similarName);	// Dedup names with underscores removed
+				if (nameVersions.demangledNoTemplate != null) {
+					demangledNameNoTemplate.add(nameVersions.demangledNoTemplate);
+				}
+				else {
+					cannotDetemplate += 1;
+				}
 				if (nameVersions.demangledBaseName != null) {
 					exactDemangledBaseNames.add(nameVersions.demangledBaseName);		// Dedup demangled base name
 				}
@@ -112,7 +126,20 @@ public class MatchNameAnalysis {
 			singleName = findCommonBaseName();
 			mostOptimisticCount = similarBaseNames.size();
 			if (singleName == null) {
+				singleName = findCommonNoTemplate(cannotDetemplate);
+				if (singleName != null) {
+					demangleSelect = true;
+				}
+				if (demangledNameNoTemplate.size() > 0 &&
+					demangledNameNoTemplate.size() < mostOptimisticCount) {
+					mostOptimisticCount = demangledNameNoTemplate.size();
+				}
+			}
+			if (singleName == null) {
 				singleName = findCommonDemangledBaseName(cannotDemangle);
+				if (singleName != null) {
+					demangleSelect = true;
+				}
 				if (exactDemangledBaseNames.size() > 0 &&
 					exactDemangledBaseNames.size() < mostOptimisticCount) {
 					mostOptimisticCount = exactDemangledBaseNames.size();
@@ -183,35 +210,14 @@ public class MatchNameAnalysis {
 		return null;
 	}
 
-	/**
-	 * If there exists an initial set of template parameters bracketed by '<' and '>'
-	 * in this name, strip them from the name.
-	 * @param name is the function name to strip
-	 * @return the stripped name or null if no parameters present
-	 */
-	public static String removeTemplateParams(String name) {
-		int pos1 = name.indexOf('<');
-		if (pos1 < 0) {
-			return null;
+	private String findCommonNoTemplate(int cannotDetemplate) {
+		if (cannotDetemplate > 0) {
+			return null;			// Couldn't remove a parameters from everything, so we can't have a common template
 		}
-		int nesting = 1;
-		int pos2;
-		for (pos2 = pos1 + 1; pos2 < name.length(); ++pos2) {
-			char c = name.charAt(pos2);
-			if (c == '<') {
-				nesting += 1;
-			}
-			else if (c == '>') {
-				nesting -= 1;
-				if (nesting == 0) {
-					break;
-				}
-			}
+		if (demangledNameNoTemplate.size() == 1) {
+			return demangledNameNoTemplate.first();
 		}
-		if (nesting != 0) {
-			return null;
-		}
-		return name.substring(0, pos1 + 1) + name.substring(pos2);
+		return null;
 	}
 
 	private String findCommonDemangledBaseName(int cannotDemangle) {
@@ -219,22 +225,8 @@ public class MatchNameAnalysis {
 			return null;			// Couldn't demangle everything, so no way we can have a common base
 		}
 		if (exactDemangledBaseNames.size() == 1) {
-			return exactDemangledBaseNames.iterator().next();
+			return exactDemangledBaseNames.first();
 		}
-		// If we don't have a unique demangled name, try excising template parameters
-		String finalName = null;
-		for (String name : exactDemangledBaseNames) {
-			String templateFree = removeTemplateParams(name);
-			if (templateFree == null) {
-				return null;		// At least one name has no template parameters
-			}
-			if (finalName == null) {
-				finalName = templateFree;
-			}
-			else if (!finalName.equals(templateFree)) {
-				return null;
-			}
-		}
-		return finalName;
+		return null;
 	}
 }
