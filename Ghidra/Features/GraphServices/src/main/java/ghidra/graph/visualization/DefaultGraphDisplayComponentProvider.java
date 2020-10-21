@@ -69,4 +69,10 @@ public class DefaultGraphDisplayComponentProvider extends ComponentProviderAdapt
 	public ActionContext getActionContext(MouseEvent event) {
 		return display.getActionContext(event);
 	}
+
+	// overridden to make it accessible
+	@Override
+	public void removeAllLocalActions() {
+		super.removeAllLocalActions();
+	}
 }

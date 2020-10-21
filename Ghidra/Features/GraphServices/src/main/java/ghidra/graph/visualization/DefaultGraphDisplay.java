@@ -1216,7 +1216,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	@Override
 	public void addAction(DockingAction action) {
-		componentProvider.addLocalAction(action);
+		Swing.runLater(() -> componentProvider.addLocalAction(action));
 	}
 
 	@Override
@@ -1286,4 +1286,19 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	public AttributedGraph getGraph() {
 		return graph;
 	}
+
+	/**
+	 * Removes all externally added actions. This is called before re-using the graph window for a
+	 * new graph which may add its own set of actions for that particular graph.
+	 */
+	void restoreToDefaultSetOfActions() {
+		Swing.runLater(() -> {
+			// remove all actions
+			componentProvider.removeAllLocalActions();
+			// put the standard graph actions back
+			createToolbarActions();
+			createPopupActions();
+		});
+	}
+
 }

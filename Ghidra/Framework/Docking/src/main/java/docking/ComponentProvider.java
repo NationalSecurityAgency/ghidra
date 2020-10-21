@@ -267,7 +267,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Removes the given action from the system.
+	 * Removes the given action from this component provider.
 	 * @param action The action to remove.
 	 */
 	protected void removeLocalAction(DockingAction action) {
@@ -275,6 +275,16 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		if (isInTool()) {
 			dockingTool.removeLocalAction(this, action);
 		}
+	}
+
+	/**
+	 * Removes all local actions from this component provider
+	 */
+	protected void removeAllLocalActions() {
+		if (isInTool()) {
+			actionSet.forEach(action -> dockingTool.removeLocalAction(this, action));
+		}
+		actionSet.clear();
 	}
 
 	/**
