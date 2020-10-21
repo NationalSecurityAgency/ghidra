@@ -59,6 +59,10 @@ public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
 		return ((AbstractComplexMsType) msType).getMsProperty().isForwardReference();
 	}
 
+	boolean isNested() {
+		return ((AbstractComplexMsType) msType).getMsProperty().isNestedClass();
+	}
+
 	boolean isFinal() {
 		return ((AbstractComplexMsType) msType).getMsProperty().isSealed();
 	}
