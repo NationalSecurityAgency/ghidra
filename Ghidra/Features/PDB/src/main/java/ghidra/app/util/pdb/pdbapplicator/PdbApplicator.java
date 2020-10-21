@@ -35,6 +35,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.CancelOnlyWrappingTaskMonitor;
@@ -62,6 +63,7 @@ import ghidra.util.task.TaskMonitor;
 public class PdbApplicator {
 
 	private static final String THUNK_NAME_PREFIX = "[thunk]:";
+	private static final SymbolPath DUMMY_SYMBOL_PATH = new SymbolPath("/");
 
 	//==============================================================================================
 	/**
@@ -141,6 +143,13 @@ public class PdbApplicator {
 	 */
 	private Map<SymbolPath, Boolean> isClassByNamespace;
 
+	/**
+	 * Map for tracking use of procedure type records by function symbols.
+	 * If a type record is used more than once it will get mapped to the
+	 * {@link #DUMMY_SYMBOL_PATH} to indicate non-unique use.
+	 */
+	private Map<RecordNumber, SymbolPath> procedureSymbolNameMap;
+
 	//==============================================================================================
 	private SymbolApplierFactory symbolApplierParser;
 
@@ -193,6 +202,7 @@ public class PdbApplicator {
 			case NONE:
 				processTypes();
 				processSymbols();
+				renameAnonymousFunctions();
 				break;
 			default:
 				throw new PdbException("Invalid Restriction");
@@ -305,6 +315,7 @@ public class PdbApplicator {
 		complexApplierMapper = new ComplexTypeApplierMapper(this);
 		applierDependencyGraph = new JungDirectedGraph<>();
 		isClassByNamespace = new TreeMap<>();
+		procedureSymbolNameMap = new HashMap<>();
 		if (program != null) {
 			// Currently, this must happen after symbolGroups are created.
 			PdbVbtManager pdbVbtManager = new PdbVbtManager(this);
@@ -1223,6 +1234,74 @@ public class PdbApplicator {
 			// skipping symbol
 			Msg.info(this, "Error applying symbol to program: " + e.toString());
 		}
+	}
+
+	void addFunctionUse(AbstractProcedureMsSymbol procedureSymbol, SymbolPath symbolPath) {
+		RecordNumber rn = procedureSymbol.getTypeRecordNumber();
+		SymbolPath n = procedureSymbolNameMap.get(rn);
+		if (n == null) {
+			procedureSymbolNameMap.put(rn, symbolPath);
+		}
+		else if (!symbolPath.equals(n)) {
+			procedureSymbolNameMap.put(rn, DUMMY_SYMBOL_PATH);
+		}
+	}
+
+	private void renameAnonymousFunctions() throws CancelledException {
+
+		monitor.setMessage("Renaming function definitions...");
+		monitor.setProgress(0);
+		monitor.setMaximum(procedureSymbolNameMap.size());
+		int cnt = 0;
+		int renamedCnt = 0;
+
+		for (RecordNumber rn : procedureSymbolNameMap.keySet()) {
+			monitor.checkCanceled();
+			monitor.setProgress(++cnt);
+			SymbolPath symbolPath = procedureSymbolNameMap.get(rn);
+			if (symbolPath != DUMMY_SYMBOL_PATH) {
+				// unique name exists for function definition (single use)
+				MsTypeApplier typeApplier = getTypeApplier(rn);
+				DataType dt = typeApplier.getDataType();
+				CategoryPath category = categoryUtils.getCategory(symbolPath.getParent());
+				Category newCategory = dataTypeManager.createCategory(category);
+				String newName = symbolPath.getName();
+
+				try {
+					if (newCategory.getDataType(newName) == null) {
+						// fast approach should generally work
+						dt.setName(newName);
+						dt.setCategoryPath(category);
+					}
+					else {
+						// use slow approach if conflict exists
+						DataType newDt = dt.copy(dataTypeManager);
+						newDt.setName(symbolPath.getName());
+						newDt.setCategoryPath(category);
+						newDt = resolve(newDt);
+						dataTypeManager.replaceDataType(dt, newDt, false);
+						typeApplier.resolvedDataType = newDt;
+					}
+					++renamedCnt;
+				}
+				catch (InvalidNameException | DuplicateNameException
+						| DataTypeDependencyException e) {
+					// unexpected - skip
+					Msg.error(this, "PDB Function definition rename failed: " + dt.getName() +
+						" -> " + symbolPath);
+				}
+			}
+		}
+		if (renamedCnt != 0) {
+			Msg.debug(this, "PDB Renamed " + renamedCnt + " of " + cnt + " function definitions");
+			Category anonymousCategory =
+				dataTypeManager.getCategory(getAnonymousFunctionsCategory());
+			if (anonymousCategory != null) {
+				Msg.debug(this, "PDB Remaining anonymous function definition count: " +
+					anonymousCategory.getDataTypes().length);
+			}
+		}
+
 	}
 
 	//==============================================================================================

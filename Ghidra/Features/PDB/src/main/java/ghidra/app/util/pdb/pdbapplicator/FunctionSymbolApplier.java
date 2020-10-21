@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.*;
+import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
@@ -300,6 +301,9 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			}
 		}
 
+
+		applicator.addFunctionUse(procedureSymbol, new SymbolPath(function.getSymbol()));
+
 		DataType dataType = applier.getDataType();
 		// Since we know the applier is an AbstractionFunctionTypeApplier, then dataType is either
 		//  FunctionDefinition or no type (typedef).
@@ -312,6 +316,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 					"failed to apply signature to function at address " + address.toString());
 				return false;
 			}
+			// TODO: Move datatype to correct category
 		}
 		return true;
 	}
