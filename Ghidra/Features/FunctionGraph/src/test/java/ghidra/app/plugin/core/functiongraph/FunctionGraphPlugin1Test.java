@@ -843,7 +843,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 	private void setNavigationHistoryOption(NavigationHistoryChoices choice) throws Exception {
 		FGController controller = getFunctionGraphController();
 		FunctionGraphOptions options = controller.getFunctionGraphOptions();
-		setInstanceField("navigationHistoryChoice", options, choice);
+		runSwing(() -> setInstanceField("navigationHistoryChoice", options, choice));
 		waitForSwing();
 	}
 

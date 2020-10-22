@@ -100,9 +100,6 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 		HighVariable variable = token.getHighVariable();
 		HighSymbol highSymbol = null;
 		if (variable == null) {
-			if (highFunction == null) {
-				return null;
-			}
 			// Token may be from a variable reference, in which case we have to dig to find the actual symbol
 			Function function = highFunction.getFunction();
 			if (function == null) {

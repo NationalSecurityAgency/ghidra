@@ -945,14 +945,14 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	private void refresh() {
 
 		DockingActionIf action = getAction(decompiler, "Refresh");
-		performAction(action);
+		performAction(action, provider.getActionContext(null), true);
 		waitForDecompiler();
 	}
 
 	private DecompilerProvider cloneDecompiler() {
 
 		DockingActionIf action = getAction(decompiler, "Decompile Clone");
-		performAction(action);
+		performAction(action, provider.getActionContext(null), true);
 		waitForSwing();
 
 		@SuppressWarnings("unchecked")
@@ -1035,7 +1035,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 	private void backwardSlice() {
 		DockingActionIf action = getAction(decompiler, BackwardsSliceAction.NAME);
-		performAction(action);
+		performAction(action, provider.getActionContext(null), true);
 	}
 
 	private void middleMouse() {
@@ -1064,7 +1064,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 	private void rename(String newName) {
 		DockingActionIf action = getAction(decompiler, "Rename Variable");
-		performAction(action, false);
+		performAction(action, provider.getActionContext(null), false);
 
 		InputDialog dialog = waitForDialogComponent(InputDialog.class);
 		runSwing(() -> dialog.setValue(newName));
@@ -1077,7 +1077,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		DockingActionIf highlightAction =
 			getAction(decompiler, RemoveAllSecondaryHighlightsAction.NAME);
-		performAction(highlightAction);
+		performAction(highlightAction, provider.getActionContext(null), true);
 	}
 
 	private Color highlight() {
@@ -1085,7 +1085,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		ClangToken token = getToken();
 
 		DockingActionIf highlightAction = getAction(decompiler, SetSecondaryHighlightAction.NAME);
-		performAction(highlightAction);
+		performAction(highlightAction, provider.getActionContext(null), true);
 
 		HighlightToken ht = getSecondaryHighlight(token);
 		assertNotNull("No highlight for token: " + token, ht);
@@ -1106,7 +1106,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		DockingActionIf highlightAction =
 			getAction(decompiler, SetSecondaryHighlightColorChooserAction.NAME);
-		performAction(highlightAction, false);
+		performAction(highlightAction, provider.getActionContext(null), false);
 
 		Window w = waitForWindow("Please Choose a Color");
 		GhidraColorChooser colorChooser = findComponent(w, GhidraColorChooser.class);
@@ -1238,7 +1238,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		for (DockingActionIf action : actions) {
 			Object service = getInstanceField("clipboardService", action);
 			if (service.getClass().toString().contains("Decomp")) {
-				performAction(action);
+				performAction(action, provider.getActionContext(null), true);
 				return;
 			}
 		}
