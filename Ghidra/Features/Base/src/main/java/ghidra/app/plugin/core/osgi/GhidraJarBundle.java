@@ -23,11 +23,13 @@ import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 import org.apache.felix.framework.util.manifestparser.ManifestParser;
+import org.osgi.framework.BundleException;
 import org.osgi.framework.wiring.BundleCapability;
 import org.osgi.framework.wiring.BundleRequirement;
 
 import aQute.bnd.osgi.Jar;
 import generic.jar.ResourceFile;
+import ghidra.util.exception.AssertException;
 
 /**
  * Proxy to an ordinary OSGi Jar bundle.  {@link GhidraJarBundle#build(PrintWriter)} does nothing.   
@@ -64,9 +66,12 @@ public class GhidraJarBundle extends GhidraBundle {
 		return bundleLocation;
 	}
 
-	protected ManifestParser createManifestParser() {
+	protected ManifestParser createManifestParser() throws GhidraBundleException {
 		try (Jar jar = new Jar(file.getFile(true))) {
 			Manifest manifest = jar.getManifest();
+			if (manifest == null) {
+				throw new GhidraBundleException(bundleLocation, "jar bundle with no manifest");
+			}
 			Attributes mainAttributes = manifest.getMainAttributes();
 			Map<String, Object> headerMap = mainAttributes.entrySet()
 					.stream()
@@ -74,8 +79,14 @@ public class GhidraJarBundle extends GhidraBundle {
 						Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
 			return new ManifestParser(null, null, null, headerMap);
 		}
+		catch (BundleException e) {
+			throw new GhidraBundleException(bundleLocation, "parsing manifest", e);
+		}
+		catch (GhidraBundleException e) {
+			throw e;
+		}
 		catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new AssertException("Unexpected exception while parsing manifest", e);
 		}
 	}
 

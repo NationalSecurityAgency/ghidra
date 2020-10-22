@@ -691,15 +691,9 @@ public class BundleHost {
 	public void activateAll(Collection<GhidraBundle> bundles, TaskMonitor monitor,
 			PrintWriter console) {
 
-		List<GhidraBundle> availableBundles = getGhidraBundles().stream()
-				.filter(GhidraBundle::isEnabled)
-				.collect(Collectors.toList());
-
-		BundleDependencyGraph dependencyGraph =
-			new BundleDependencyGraph(availableBundles, bundles, monitor);
+		BundleDependencyGraph dependencyGraph = new BundleDependencyGraph(bundles, monitor);
 
 		monitor.setMaximum(dependencyGraph.vertexSet().size());
-
 		for (GhidraBundle bundle : dependencyGraph.inTopologicalOrder()) {
 			if (monitor.isCancelled()) {
 				break;
@@ -728,21 +722,25 @@ public class BundleHost {
 	 */
 	public void activateInStages(Collection<GhidraBundle> bundles, TaskMonitor monitor,
 			PrintWriter console) {
-		List<GhidraBundle> bundlesRemaining = new ArrayList<>(bundles);
+		Map<GhidraBundle, List<BundleRequirement>> requirementMap = new HashMap<>();
+		for (GhidraBundle bundle : bundles) {
+			try {
+				requirementMap.put(bundle, bundle.getAllRequirements());
+			}
+			catch (GhidraBundleException e) {
+				fireBundleException(e);
+			}
+		}
+		List<GhidraBundle> bundlesRemaining = new ArrayList<>(requirementMap.keySet());
 
 		monitor.setMaximum(bundlesRemaining.size());
 		while (!bundlesRemaining.isEmpty() && !monitor.isCancelled()) {
-			List<GhidraBundle> resolvableBundles = bundlesRemaining.stream().filter(bundle -> {
-				try {
-					return canResolveAll(bundle.getAllRequirements());
-				}
-				catch (GhidraBundleException e) {
-					// failure in last round will set fireBundleException
-				}
-				return false;
-			}).collect(Collectors.toList());
+			List<GhidraBundle> resolvableBundles = bundlesRemaining.stream()
+					.filter(bundle -> canResolveAll(requirementMap.get(bundle)))
+					.collect(Collectors.toList());
 			if (resolvableBundles.isEmpty()) {
-				// final round, try everything we couldn't resolve to generate errors
+				// final round, try everything that hasn't already been eliminated.
+				// this can generate helpful error messages
 				resolvableBundles = bundlesRemaining;
 				bundlesRemaining = Collections.emptyList();
 			}
@@ -927,18 +925,29 @@ public class BundleHost {
 		// exists only to be distinguished by id
 	}
 
-	private static class BundleDependencyGraph
-			extends DirectedMultigraph<GhidraBundle, Dependency> {
+	/**
+	 *	Utility class to build a dependency graph from bundles where capabilities map to requirements.
+	 */
+	private class BundleDependencyGraph extends DirectedMultigraph<GhidraBundle, Dependency> {
 		final Map<GhidraBundle, List<BundleCapability>> capabilityMap = new HashMap<>();
 		final List<GhidraBundle> availableBundles;
 		final TaskMonitor monitor;
 
-		BundleDependencyGraph(List<GhidraBundle> availableBundles,
-				Collection<GhidraBundle> startingBundles, TaskMonitor monitor) {
+		BundleDependencyGraph(Collection<GhidraBundle> startingBundles, TaskMonitor monitor) {
 			super(null, null, false);
-			this.availableBundles = availableBundles;
 			this.monitor = monitor;
 
+			// maintain a list of bundles available for resolution, starting with all of the enabled bundles
+			this.availableBundles = new ArrayList<>();
+			for (GhidraBundle bundle : getGhidraBundles()) {
+				if (bundle.isEnabled()) {
+					addToAvailable(bundle);
+				}
+			}
+			// An edge A->B indicates that the capabilities of A resolve some requirement(s) of B
+
+			// "front" accumulates bundles and links to bundles already in the graph that they provide capabilities for.
+			//   e.g.  if front[A]=[B,...] then A->B, B is already in the graph, and we will add A next iteration. 
 			Map<GhidraBundle, Set<GhidraBundle>> front = new HashMap<>();
 			for (GhidraBundle bundle : startingBundles) {
 				front.put(bundle, null);
@@ -951,6 +960,7 @@ public class BundleHost {
 				for (GhidraBundle bundle : front.keySet()) {
 					resolve(bundle, newFront);
 				}
+
 				handleBackEdges(newFront);
 				front = newFront;
 			}
@@ -969,7 +979,9 @@ public class BundleHost {
 				GhidraBundle source = entry.getKey();
 				if (containsVertex(source)) {
 					for (GhidraBundle destination : entry.getValue()) {
-						addEdge(source, destination, new Dependency());
+						if (source != destination) {
+							addEdge(source, destination, new Dependency());
+						}
 					}
 					newFrontIter.remove();
 				}
@@ -979,31 +991,48 @@ public class BundleHost {
 		void addFront(Map<GhidraBundle, Set<GhidraBundle>> front) {
 			for (Entry<GhidraBundle, Set<GhidraBundle>> e : front.entrySet()) {
 				GhidraBundle source = e.getKey();
-				availableBundles.add(source);
-				addVertex(source);
-				Set<GhidraBundle> destinations = e.getValue();
-				if (destinations != null) {
-					for (GhidraBundle destination : destinations) {
-						addEdge(source, destination, new Dependency());
+				if (addToAvailable(source)) {
+					addVertex(source);
+					Set<GhidraBundle> destinations = e.getValue();
+					if (destinations != null) {
+						for (GhidraBundle destination : destinations) {
+							addEdge(source, destination, new Dependency());
+						}
 					}
 				}
 			}
 		}
 
+		boolean addToAvailable(GhidraBundle bundle) {
+			try {
+				capabilityMap.put(bundle, bundle.getAllCapabilities());
+				availableBundles.add(bundle);
+				return true;
+			}
+			catch (GhidraBundleException ex) {
+				fireBundleException(ex);
+				return false;
+			}
+		}
+
+		// populate newFront with edges depBundle -> bundle,
+		// where depBundle has a capability that resolves a requirement of bundle
 		void resolve(GhidraBundle bundle, Map<GhidraBundle, Set<GhidraBundle>> newFront) {
 			List<BundleRequirement> requirements;
 			try {
 				requirements = new ArrayList<>(bundle.getAllRequirements());
+				if (requirements.isEmpty()) {
+					return;
+				}
 			}
 			catch (GhidraBundleException e) {
-				throw new RuntimeException(e);
-			}
-			if (requirements.isEmpty()) {
+				fireBundleException(e);
+				removeVertex(bundle);
 				return;
 			}
 
 			for (GhidraBundle depBundle : availableBundles) {
-				for (BundleCapability capability : getCapabilities(depBundle)) {
+				for (BundleCapability capability : capabilityMap.get(depBundle)) {
 					if (monitor.isCancelled()) {
 						return;
 					}
@@ -1020,18 +1049,8 @@ public class BundleHost {
 					}
 				}
 			}
-		}
-
-		List<BundleCapability> getCapabilities(GhidraBundle bundle) {
-			return capabilityMap.computeIfAbsent(bundle, b -> {
-				try {
-					return b.getAllCapabilities();
-				}
-				catch (GhidraBundleException e) {
-					Msg.error(this, "getting capabilities", e);
-					return null;
-				}
-			});
+			// if requirements remain, some will be resolved by system 
+			//  and others will generate helpful errors for the user during activation
 		}
 	}
 
