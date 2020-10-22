@@ -82,7 +82,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 		} else if (shiftOffset > 0) {
 			shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
 		}
-		return dt.getName() + shiftSuffix + " *" + lenStr;
+		return dt.getName() + " *" + lenStr + shiftSuffix;
 	}
 
 	@Override
@@ -168,16 +168,16 @@ class PointerDB extends DataTypeDB implements Pointer {
 				}
 			}
 			else {
-				long shiftOffset = getShiftOffset();
-				String shiftSuffix = "";
-				if (shiftOffset < 0) {
-					shiftSuffix = "-0x" + Long.toHexString(-shiftOffset);
-				} else if (shiftOffset > 0) {
-					shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
-				}
-				localDisplayName = dt.getDisplayName() + shiftSuffix + " *";
+				localDisplayName = dt.getDisplayName() + " *";
 			}
-			displayName = localDisplayName;
+			long shiftOffset = getShiftOffset();
+			String shiftSuffix = "";
+			if (shiftOffset < 0) {
+				shiftSuffix = "-0x" + Long.toHexString(-shiftOffset);
+			} else if (shiftOffset > 0) {
+				shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
+			}
+			displayName = localDisplayName + shiftSuffix;
 		}
 		return localDisplayName;
 	}
@@ -198,7 +198,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 			} else if (shiftOffset > 0) {
 				shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
 			}
-			return dataType.getMnemonic(settings) + shiftSuffix + " *";
+			return dataType.getMnemonic(settings) + " *" + shiftSuffix;
 		}
 		finally {
 			lock.release();

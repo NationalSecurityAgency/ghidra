@@ -455,7 +455,7 @@ public class DataTypeParser {
 				continue;
 			}
 
-			if (c == '*' || c == '[' || c == ':' || c == '{' || c == '+' || c == '-') {
+			if (c == '*' || c == '[' || c == ':' || c == '{') {
 				return dataTypeString.substring(0, nextIndex).trim();
 			}
 			++nextIndex;
@@ -471,22 +471,15 @@ public class DataTypeParser {
 		List<String> list = new ArrayList<>();
 		int startIndex = 0;
 		int nextIndex = 0;
-		int shiftStartIndex = -1;
 		while (nextIndex < dataTypeModifiers.length()) {
 			char c = dataTypeModifiers.charAt(nextIndex);
-			if (c == '+' || c == '-') {
-				shiftStartIndex = nextIndex;
-			}
 			if (c == '*') {
-				if (shiftStartIndex == -1) shiftStartIndex = nextIndex;
-				list.add(dataTypeModifiers.substring(startIndex, shiftStartIndex));
-				startIndex = shiftStartIndex;
-				shiftStartIndex = -1;
+				list.add(dataTypeModifiers.substring(startIndex, nextIndex));
+				startIndex = nextIndex;
 			}
 			if (c == '[' || c == ':' || c == '{') {
 				list.add(dataTypeModifiers.substring(startIndex, nextIndex));
 				startIndex = nextIndex;
-				shiftStartIndex = -1;
 			}
 			++nextIndex;
 		}
@@ -577,22 +570,48 @@ public class DataTypeParser {
 		int pointerSize = -1;
 		
 		PointerSpecPiece(String piece) throws InvalidDataTypeException {
-			if (!piece.contains("*")) {
+			if (piece.charAt(0) != '*') {
 				throw new InvalidDataTypeException("invalid pointer specification: " + piece);
 			}
 			
 			// Parse the pointer specification
 			// It's structured in a following way
-			// (+/-offset)*(pointer size)
+			//*(pointer size) (+/-offset)
 			// Examples:
 			//	*
-			//	+0x4*
+			//	*+0x4
 			//	*8
-			//	-16*4
+			//	*4-16
 
+			
+			int shiftIndex;
+			if (piece.contains("+")) {
+				shiftIndex = piece.indexOf("+");
+			} else if (piece.contains("-")) {
+				shiftIndex = piece.indexOf("-");
+			} else {
+				shiftIndex = piece.length();
+			}
+			
+			// Parse pointer length
+			if (shiftIndex != 1) {
+				try {
+					pointerSize = Integer.parseInt(piece.substring(1, shiftIndex));
+				}
+				catch (NumberFormatException e) {
+					throw new InvalidDataTypeException("invalid pointer specification: " + piece);
+				}
+				int mod = pointerSize % 8;
+				pointerSize = pointerSize / 8;
+				if (mod != 0 || pointerSize <= 0 || pointerSize > 8) {
+					throw new InvalidDataTypeException("invalid pointer size: " + piece);
+				}
+				
+			}
+			
 			// Parse shift offset
-			if (piece.indexOf("*") != 0) {
-				switch(piece.charAt(0)) {
+			if (shiftIndex != piece.length()) {
+				switch(piece.charAt(shiftIndex)) {
 				case '+': 
 					shiftOffset = 1;
 					break;
@@ -604,25 +623,10 @@ public class DataTypeParser {
 				}
 				
 				try {
-					shiftOffset *= Integer.decode(piece.substring(1, piece.indexOf("*")).stripTrailing());
+					shiftOffset *= Integer.decode(piece.substring(shiftIndex + 1, piece.length()));
 				}
 				catch (NumberFormatException e) {
 					throw new InvalidDataTypeException("invalid pointer specification: " + piece);
-				}
-			}
-			
-			// Parse pointer length
-			if (piece.indexOf("*") != piece.length()-1) {
-				try {
-					pointerSize = Integer.parseInt(piece.substring(piece.indexOf("*")+1));
-				}
-				catch (NumberFormatException e) {
-					throw new InvalidDataTypeException("invalid pointer specification: " + piece);
-				}
-				int mod = pointerSize % 8;
-				pointerSize = pointerSize / 8;
-				if (mod != 0 || pointerSize <= 0 || pointerSize > 8) {
-					throw new InvalidDataTypeException("invalid pointer size: " + piece);
 				}
 			}
 		}

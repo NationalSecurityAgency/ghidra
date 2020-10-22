@@ -295,15 +295,16 @@ public class PointerDataType extends BuiltIn implements Pointer {
 				}
 			}
 			else {
-				String shiftSuffix = "";
-				if (shiftOffset < 0) {
-					shiftSuffix = "-0x" + Long.toHexString(-shiftOffset);
-				} else if (shiftOffset > 0) {
-					shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
-					
-				}
-				displayName = dt.getDisplayName() + shiftSuffix + " *";
+				displayName = dt.getDisplayName() + " *";
 			}
+			long shiftOffset = getShiftOffset();
+			String shiftSuffix = "";
+			if (shiftOffset < 0) {
+				shiftSuffix = "-0x" + Long.toHexString(-shiftOffset);
+			} else if (shiftOffset > 0) {
+				shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
+			}
+			displayName += shiftSuffix;
 		}
 		return displayName;
 	}
@@ -319,17 +320,17 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			}
 			return s;
 		}
+		String s = referencedDataType.getName() + " *";
+		if (ptrLength > 0) {
+			s += Integer.toString(8 * ptrLength);
+		}
 		String shiftSuffix = "";
 		if (shiftOffset < 0) {
 			shiftSuffix = "-0x" + Integer.toHexString(-shiftOffset);
 		} else if (shiftOffset > 0) {
 			shiftSuffix = "+0x" + Integer.toHexString(shiftOffset);
-			
 		}
-		String s = referencedDataType.getName() + shiftSuffix + " *";
-		if (ptrLength > 0) {
-			s += Integer.toString(8 * ptrLength);
-		}
+		s += shiftSuffix;
 		return s;
 	}
 
@@ -377,7 +378,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			shiftSuffix = "+0x" + Long.toHexString(shiftOffset);
 			
 	}
-		return referencedDataType.getMnemonic(settings) + shiftSuffix + " *";
+		return referencedDataType.getMnemonic(settings) + " *" + shiftSuffix;
 	}
 
 	@Override
