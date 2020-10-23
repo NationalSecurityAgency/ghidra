@@ -38,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 class ExportAttributedGraphDisplay implements GraphDisplay {
 
 	private final PluginTool pluginTool;
-	private String description;
+	private String title;
 
 	/**
 	 * Create the initial display, the graph-less visualization viewer, and its controls
@@ -86,9 +86,9 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setGraph(AttributedGraph graphData, String description, boolean append,
+	public void setGraph(AttributedGraph graphData, String title, boolean append,
 			TaskMonitor monitor) {
-		this.description = description;
+		this.title = title;
 		doSetGraphData(graphData);
 	}
 
@@ -106,8 +106,8 @@ class ExportAttributedGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public String getGraphDescription() {
-		return description;
+	public String getGraphTitle() {
+		return title;
 	}
 
 	@Override

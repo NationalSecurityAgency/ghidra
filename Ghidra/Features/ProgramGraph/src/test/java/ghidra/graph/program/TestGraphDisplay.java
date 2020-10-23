@@ -28,7 +28,7 @@ public class TestGraphDisplay implements GraphDisplay {
 	private Set<String> definedVertexAttributes = new HashSet<>();
 	private Set<String> definedEdgeAttributes = new HashSet<>();
 	private AttributedGraph graph;
-	private String graphDescription;
+	private String title;
 	private GraphDisplayListener listener;
 	private AttributedVertex focusedVertex;
 	private Set<AttributedVertex> currentSelection;
@@ -80,11 +80,11 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public void setGraph(AttributedGraph graph, String description, boolean append,
+	public void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor)
 			throws CancelledException {
 		this.graph = graph;
-		this.graphDescription = description;
+		this.title = title;
 	}
 
 	@Override
@@ -98,8 +98,8 @@ public class TestGraphDisplay implements GraphDisplay {
 	}
 
 	@Override
-	public String getGraphDescription() {
-		return graphDescription;
+	public String getGraphTitle() {
+		return title;
 	}
 
 	@Override
