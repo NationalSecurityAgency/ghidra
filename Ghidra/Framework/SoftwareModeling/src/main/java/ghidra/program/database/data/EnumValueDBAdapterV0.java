@@ -33,10 +33,11 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	static final int V0_ENUMVAL_NAME_COL = 0;
 	static final int V0_ENUMVAL_VALUE_COL = 1;
 	static final int V0_ENUMVAL_ID_COL = 2;
+	static final int V0_ENUMVAL_COMMENT_COL = 3;
 
 	static final Schema V0_ENUM_VALUE_SCHEMA = new Schema(0, "Enum Value ID", new Class[] {
-		StringField.class, LongField.class, LongField.class }, new String[] { "Name", "Value",
-		"Enum ID" });
+		StringField.class, LongField.class, LongField.class, StringField.class }, new String[] { "Name", "Value",
+		"Enum ID", "Comment" });
 
 	private Table valueTable;
 
@@ -74,11 +75,12 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public void createRecord(long enumID, String name, long value) throws IOException {
+	public void createRecord(long enumID, String name, long value, String comment) throws IOException {
 		Record record = V0_ENUM_VALUE_SCHEMA.createRecord(valueTable.getKey());
 		record.setLongValue(V0_ENUMVAL_ID_COL, enumID);
 		record.setString(V0_ENUMVAL_NAME_COL, name);
 		record.setLongValue(V0_ENUMVAL_VALUE_COL, value);
+		record.setString(V0_ENUMVAL_COMMENT_COL, comment);
 		valueTable.putRecord(record);
 	}
 

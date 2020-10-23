@@ -19,10 +19,12 @@ package ghidra.app.plugin.core.datamgr.editor;
 public class EnumEntry {
 	private String name;
 	private long value;
+	private String comment;
 
-	public EnumEntry(String name, long value) {
+	public EnumEntry(String name, long value, String comment) {
 		this.name = name;
 		this.value = value;
+		this.comment = comment;
 	}
 
 	public String getName() {
@@ -33,11 +35,19 @@ public class EnumEntry {
 		return value;
 	}
 
+	public String getComment() {
+		return comment;
+	}
+
 	public void setName(String newName) {
 		this.name = newName;
 	}
 
 	public void setValue(Long newValue) {
 		this.value = newValue;
+	}
+
+	public void setComment(String newComment) {
+		this.comment = newComment;
 	}
 }
