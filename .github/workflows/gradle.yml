@@ -20,16 +20,19 @@ jobs:
       - name: Build Dependencies (Linux)
         if: matrix.platform == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y bison flex
+        
       - name: Build Dependencies (macOS)
         if: matrix.platform == 'macos-latest'
         run: |
           brew install bison flex curl
+
       - name: Build Dependencies (Windows)
         if: matrix.platform == 'windows-2016'
         run: |
           choco install winflexbison
           ren "C:\ProgramData\chocolatey\bin\win_bison.exe" "bison.exe"
           ren "C:\ProgramData\chocolatey\bin\win_flex.exe" "flex.exe"
+
       - name: Fetch Dependencies
         run: gradle --init-script gradle/support/fetchDependencies.gradle init
 
@@ -45,7 +48,7 @@ jobs:
       - uses: actions/upload-artifact@v2          
         if: matrix.platform == 'windows-2016'
         with:
-          name: ghidra-linux-dev
+          name: ghidra-windows-dev
           path: build/dist/ghidra_*_win64.zip
 
       - uses: actions/upload-artifact@v2          
