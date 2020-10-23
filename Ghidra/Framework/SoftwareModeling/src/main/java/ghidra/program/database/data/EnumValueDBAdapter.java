@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,10 @@ abstract class EnumValueDBAdapter {
 	static final int ENUMVAL_NAME_COL = EnumValueDBAdapterV0.V0_ENUMVAL_NAME_COL;
 	static final int ENUMVAL_VALUE_COL = EnumValueDBAdapterV0.V0_ENUMVAL_VALUE_COL;
 	static final int ENUMVAL_ID_COL = EnumValueDBAdapterV0.V0_ENUMVAL_ID_COL;
+	static final int ENUMVAL_COMMENT_COL = EnumValueDBAdapterV0.V0_ENUMVAL_COMMENT_COL;
 
 	/**
-	 * Gets an adapter for working with the enumeration data type values database table. The adapter is based 
+	 * Gets an adapter for working with the enumeration data type values database table. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
@@ -87,10 +88,12 @@ abstract class EnumValueDBAdapter {
 	 * Create new enum value record corresponding to specified enum datatype ID
 	 * @param enumID enum datatype ID
 	 * @param name value name
-	 * @param value numeric value 
+	 * @param value numeric value
+	 * @param comment the field comment
 	 * @throws IOException if IO error occurs
 	 */
-	abstract void createRecord(long enumID, String name, long value) throws IOException;
+	abstract void createRecord(long enumID, String name, long value, String comment)
+			throws IOException;
 
 	/**
 	 * Get enum value record which corresponds to specified value record ID

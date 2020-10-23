@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	private Map<String, Long> nameMap; // name to value
 	private Map<Long, List<String>> valueMap; // value to names
+	private Map<String, String> commentMap; // name to comment
 	private int length;
 	private String description;
 	private List<BitGroup> bitGroups;
@@ -52,6 +53,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		}
 		nameMap = new HashMap<>();
 		valueMap = new HashMap<>();
+		commentMap = new HashMap<>();
 		this.length = length;
 	}
 
@@ -65,6 +67,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		}
 		nameMap = new HashMap<>();
 		valueMap = new HashMap<>();
+		commentMap = new HashMap<>();
 		this.length = length;
 	}
 
@@ -92,6 +95,15 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	@Override
+	public String getComment(String valueName) throws NoSuchElementException {
+		String valueNameComment = commentMap.get(valueName);
+		if (valueNameComment == null) {
+			valueNameComment = "";
+		}
+		return valueNameComment;
+	}
+
+	@Override
 	public long[] getValues() {
 		long[] values = valueMap.keySet().stream().mapToLong(Long::longValue).toArray();
 		Arrays.sort(values);
@@ -106,12 +118,23 @@ public class EnumDataType extends GenericDataType implements Enum {
 	}
 
 	@Override
+	public String[] getComments() {
+		return commentMap.values().toArray(new String[commentMap.size()]);
+	}
+
+	@Override
 	public int getCount() {
 		return nameMap.size();
 	}
 
 	@Override
 	public void add(String valueName, long value) {
+		String valueNameComment = "";
+		add(valueName, value, valueNameComment);
+	}
+
+	@Override
+	public void add(String valueName, long value, String valueNameComment) {
 		bitGroups = null;
 		checkValue(value);
 		if (nameMap.containsKey(valueName)) {
@@ -124,6 +147,10 @@ public class EnumDataType extends GenericDataType implements Enum {
 			valueMap.put(value, list);
 		}
 		list.add(valueName);
+		if (valueNameComment == null) {
+			valueNameComment = "";
+		}
+		commentMap.put(valueName, valueNameComment);
 	}
 
 	private void checkValue(long value) {
@@ -166,6 +193,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 			if (list.isEmpty()) {
 				valueMap.remove(value);
 			}
+			commentMap.remove(valueName);
 		}
 	}
 
@@ -356,7 +384,10 @@ public class EnumDataType extends GenericDataType implements Enum {
 			for (int i = 0; i < names.length; i++) {
 				long value = getValue(names[i]);
 				long otherValue = enumm.getValue(names[i]);
-				if (!names[i].equals(otherNames[i]) || value != otherValue) {
+				String comment = getComment(names[i]);
+				String otherComment = enumm.getComment(names[i]);
+				if (!names[i].equals(otherNames[i]) || value != otherValue ||
+					!comment.equals(otherComment)) {
 					return false;
 				}
 			}
@@ -376,10 +407,11 @@ public class EnumDataType extends GenericDataType implements Enum {
 		Enum enumm = (Enum) dataType;
 		nameMap = new HashMap<>();
 		valueMap = new HashMap<>();
+		commentMap = new HashMap<>();
 		setLength(enumm.getLength());
 		String[] names = enumm.getNames();
 		for (String name2 : names) {
-			add(name2, enumm.getValue(name2));
+			add(name2, enumm.getValue(name2), enumm.getComment(name2));
 		}
 		stateChanged(null);
 	}

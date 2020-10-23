@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,12 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.program.model.lang.ConstantPool.Record;
 import ghidra.util.exception.VersionException;
 
 /**
  * Version 0 implementation for the enumeration tables adapter.
- * 
+ *
  */
 class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	static final int VERSION = 0;
@@ -31,10 +32,15 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	static final int V0_ENUMVAL_NAME_COL = 0;
 	static final int V0_ENUMVAL_VALUE_COL = 1;
 	static final int V0_ENUMVAL_ID_COL = 2;
+	static final int V0_ENUMVAL_COMMENT_COL = 3;
 
 	static final Schema V0_ENUM_VALUE_SCHEMA = new Schema(0, "Enum Value ID",
 		new Field[] { StringField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE },
 		new String[] { "Name", "Value", "Enum ID" });
+
+//	static final Schema V1_ENUM_VALUE_SCHEMA = new Schema(0, "Enum Value ID",
+//		new Class[] { StringField.class, LongField.class, LongField.class, StringField.class },
+//		new String[] { "Name", "Value", "Enum ID", "Comment" });
 
 	private Table valueTable;
 
@@ -71,11 +77,13 @@ class EnumValueDBAdapterV0 extends EnumValueDBAdapter {
 	}
 
 	@Override
-	public void createRecord(long enumID, String name, long value) throws IOException {
-		DBRecord record = V0_ENUM_VALUE_SCHEMA.createRecord(valueTable.getKey());
+	public void createRecord(long enumID, String name, long value, String comment)
+			throws IOException {
+		Record record = V0_ENUM_VALUE_SCHEMA.createRecord(valueTable.getKey());
 		record.setLongValue(V0_ENUMVAL_ID_COL, enumID);
 		record.setString(V0_ENUMVAL_NAME_COL, name);
 		record.setLongValue(V0_ENUMVAL_VALUE_COL, value);
+		record.setString(V0_ENUMVAL_COMMENT_COL, comment);
 		valueTable.putRecord(record);
 	}
 

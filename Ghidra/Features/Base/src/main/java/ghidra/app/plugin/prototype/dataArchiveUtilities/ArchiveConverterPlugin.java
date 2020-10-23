@@ -408,13 +408,15 @@ public class ArchiveConverterPlugin extends ProgramPlugin {
 		else if (fieldId.compareToIgnoreCase("ENUM") == 0) {
 			ArrayList<String> fNames = new ArrayList<>();
 			ArrayList<String> fValues = new ArrayList<>();
+			ArrayList<String> fComments = new ArrayList<>();
 			while (tokenizer.hasMoreElements()) {
 				fNames.add(tokenizer.nextToken());
 				fValues.add(tokenizer.nextToken());
+				fComments.add(tokenizer.nextToken());
 			}
 			dt = new EnumDataType(cName.getCategoryPath(), cName.getName(), fNames.size(), null);
 			for (int i = 0; i < fNames.size(); i++) {
-				((EnumDataType) dt).add(fNames.get(i), new Long(fValues.get(i)).longValue());
+				((EnumDataType) dt).add(fNames.get(i), new Long(fValues.get(i)).longValue(), fComments.get(i));
 			}
 		}
 		else if (fieldId.compareToIgnoreCase("SYMBOL") == 0) {

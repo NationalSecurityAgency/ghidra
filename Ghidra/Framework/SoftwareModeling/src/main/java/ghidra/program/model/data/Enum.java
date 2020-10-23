@@ -38,6 +38,14 @@ public interface Enum extends DataType {
 	public String getName(long value);
 
 	/**
+	 * Get the comment for the given name.
+	 * @param name name of the entry
+	 * @return the comment
+	 * @throws NoSuchElementException if the name does not exist in this Enum
+	 */
+	public String getComment(String name) throws NoSuchElementException;
+
+	/**
 	 * Get the values of the enum entries.
 	 * @return values sorted in ascending order
 	 */
@@ -47,6 +55,11 @@ public interface Enum extends DataType {
 	 * Get the names of the enum entries.
 	 */
 	public String[] getNames();
+
+	/**
+	 * Get the comments of the enum entries.
+	 */
+	public String[] getComments();
 
 	/**
 	 * Get the number of entries in this Enum. 
@@ -59,6 +72,14 @@ public interface Enum extends DataType {
 	 * @param value value of the new entry
 	 */
 	public void add(String name, long value);
+
+	/**
+	 * Add a enum entry.
+	 * @param name name of the new entry
+	 * @param value value of the new entry
+	 * @param comment comment of the new entry
+	 */
+	public void add(String name, long value, String comment);
 
 	/**
 	 * Remove the enum entry with the given name. 
