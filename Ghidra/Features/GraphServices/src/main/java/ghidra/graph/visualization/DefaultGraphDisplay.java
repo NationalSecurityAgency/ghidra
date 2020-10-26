@@ -64,6 +64,7 @@ import ghidra.graph.job.GraphJobRunner;
 import ghidra.service.graph.*;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
 
@@ -128,10 +129,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * provides graph displays for supplied graphs
 	 */
 	private final DefaultGraphDisplayProvider graphDisplayProvider;
-	/**
-	 *  a 'busy' dialog to show while the layout algorithm is working
-	 */
-	private LayoutWorkingDialog layoutWorkingDialog;
 	/**
 	 * the vertex that has been nominated to be 'focused' in the graph display and listing
 	 */
@@ -359,20 +356,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.onActionStateChanged((s, t) -> layoutChanged(s.getName()))
 				.addStates(getLayoutActionStates())
 				.buildAndInstallLocal(componentProvider);
-
-		// show a 'busy' dialog while the layout algorithm is computing vertex locations
-		viewer.getVisualizationModel()
-				.getLayoutModel()
-				.getLayoutStateChangeSupport()
-				.addLayoutStateChangeListener(
-					evt -> {
-						if (evt.active) {
-							Swing.runLater(this::showLayoutWorking);
-						}
-						else {
-							Swing.runLater(this::hideLayoutWorking);
-						}
-					});
 	}
 
 	private void createPopupActions() {
@@ -569,7 +552,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 */
 	private void layoutChanged(String layoutName) {
 		if (layoutTransitionManager != null) {
-			layoutTransitionManager.setLayout(layoutName);
+			new TaskLauncher(new SetLayoutTask(viewer, layoutTransitionManager, layoutName), null,
+				1000);
 		}
 	}
 
@@ -585,27 +569,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			filterDialog = new FilterDialog(vertexFilters.getButtons(), edgeFilters.getButtons());
 		}
 		componentProvider.getTool().showDialog(filterDialog);
-	}
-
-	/**
-	 * show the 'busy' dialog indicating that the layout algorithm is working
-	 */
-	protected void showLayoutWorking() {
-		if (this.layoutWorkingDialog != null) {
-			layoutWorkingDialog.close();
-		}
-		this.layoutWorkingDialog =
-			new LayoutWorkingDialog(viewer.getVisualizationModel().getLayoutAlgorithm());
-		componentProvider.getTool().showDialog(layoutWorkingDialog);
-	}
-
-	/**
-	 * hide the 'busy' dialog for the layout algorithm work
-	 */
-	protected void hideLayoutWorking() {
-		if (this.layoutWorkingDialog != null) {
-			layoutWorkingDialog.close();
-		}
 	}
 
 	/**
@@ -1216,7 +1179,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	@Override
 	public void addAction(DockingAction action) {
-		componentProvider.addLocalAction(action);
+		Swing.runLater(() -> componentProvider.addLocalAction(action));
 	}
 
 	@Override
@@ -1286,4 +1249,19 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	public AttributedGraph getGraph() {
 		return graph;
 	}
+
+	/**
+	 * Removes all externally added actions. This is called before re-using the graph window for a
+	 * new graph which may add its own set of actions for that particular graph.
+	 */
+	void restoreToDefaultSetOfActions() {
+		Swing.runLater(() -> {
+			// remove all actions
+			componentProvider.removeAllLocalActions();
+			// put the standard graph actions back
+			createToolbarActions();
+			createPopupActions();
+		});
+	}
+
 }

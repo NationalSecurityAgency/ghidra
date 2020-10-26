@@ -273,6 +273,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	 * @return true if {@link #setIndeterminate(boolean)} with a value of <code>true</code> has
 	 * been called.
 	 */
+	@Override
 	public boolean isIndeterminate() {
 		return isIndeterminate.get();
 	}

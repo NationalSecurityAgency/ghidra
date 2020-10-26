@@ -744,7 +744,9 @@ public class MIPS_ElfExtension extends ElfExtension {
 				Address gotEntryAddr =
 					adjustTableEntryIfNonZero(gotBaseAddress, i, imageShift, elfLoadHelper);
 				Data pointerData = elfLoadHelper.createData(gotEntryAddr, PointerDataType.dataType);
-				setConstant(pointerData);
+				if (ElfDefaultGotPltMarkup.isValidPointer(pointerData)) {
+					ElfDefaultGotPltMarkup.setConstant(pointerData);
+				}
 			}
 
 			// process global/external symbol got entries
@@ -753,7 +755,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 				Address gotEntryAddr = adjustTableEntryIfNonZero(gotBaseAddress, gotIndex++,
 					imageShift, elfLoadHelper);
 				Data pointerData = elfLoadHelper.createData(gotEntryAddr, PointerDataType.dataType);
-				setConstant(pointerData);
+				ElfDefaultGotPltMarkup.setConstant(pointerData);
 				if (elfSymbols[i].isFunction() && elfSymbols[i].getSectionHeaderIndex() == 0) {
 					// ensure that external function/thunk are created in absence of sections
 					Address refAddr = (Address) pointerData.getValue();
@@ -811,7 +813,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 				Address gotEntryAddr = adjustTableEntryIfNonZero(mipsPltgotBase, ++gotEntryIndex,
 					imageShift, elfLoadHelper);
 				Data pointerData = elfLoadHelper.createData(gotEntryAddr, PointerDataType.dataType);
-				setConstant(pointerData);
+				ElfDefaultGotPltMarkup.setConstant(pointerData);
 			}
 		}
 		catch (NotFoundException e) {
@@ -820,17 +822,6 @@ public class MIPS_ElfExtension extends ElfExtension {
 		catch (MemoryAccessException e) {
 			elfLoadHelper.log("Failed to adjust MIPS GOT: " + e.getMessage());
 		}
-	}
-
-	private void setConstant(Data pointerData) {
-		Memory memory = pointerData.getProgram().getMemory();
-		MemoryBlock block = memory.getBlock(pointerData.getAddress());
-		if (!block.isWrite() || block.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
-			// .got blocks will be force to read-only by ElfDefaultGotPltMarkup
-			return;
-		}
-		pointerData.setLong(MutabilitySettingsDefinition.MUTABILITY,
-			MutabilitySettingsDefinition.CONSTANT);
 	}
 
 	private Address adjustTableEntryIfNonZero(Address tableBaseAddr, int entryIndex,

@@ -125,12 +125,19 @@ public final class DataUtilities {
 			existingDataLen = data.getLength();
 			existingDT = data.getDataType();
 
+			if (data.isDefined() && newDataType.isEquivalent(existingDT)) {
+				return data;
+			}
+
 			// Check for external reference on pointer
-			Reference[] refs = refMgr.getReferencesFrom(addr);
-			for (Reference ref : refs) {
-				if (ref.getOperandIndex() == 0 && ref.isExternalReference()) {
-					extRef = ref;
-					break;
+			if (existingDT instanceof Pointer) {
+				// TODO: This can probably be eliminated
+				Reference[] refs = refMgr.getReferencesFrom(addr);
+				for (Reference ref : refs) {
+					if (ref.getOperandIndex() == 0 && ref.isExternalReference()) {
+						extRef = ref;
+						break;
+					}
 				}
 			}
 		}
@@ -192,11 +199,11 @@ public final class DataUtilities {
 	private static void checkEnoughSpace(Program program, Address addr, int existingDataLen,
 			DataTypeInstance dti, ClearDataMode mode) throws CodeUnitInsertionException {
 		Listing listing = program.getListing();
-		int newSize = dti.getLength();
-		if (newSize <= existingDataLen) {
-			listing.clearCodeUnits(addr, addr, false);
-			return;
-		}
+//		int newSize = dti.getLength();
+//		if (newSize <= existingDataLen) {
+//			listing.clearCodeUnits(addr, addr, false);
+//			return;
+//		}
 		try {
 			Address end = addr.addNoWrap(existingDataLen - 1);
 			Address newEnd = addr.addNoWrap(dti.getLength() - 1);

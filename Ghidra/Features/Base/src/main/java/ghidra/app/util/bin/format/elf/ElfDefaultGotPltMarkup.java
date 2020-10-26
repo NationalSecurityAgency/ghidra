@@ -122,20 +122,37 @@ public class ElfDefaultGotPltMarkup {
 			if (relocationTable == null) {
 				return;
 			}
-			ElfRelocation[] relocations = relocationTable.getRelocations();
-			int count = relocations.length;
 
-			// First few entries of GOT do not correspond to dynamic symbols.
-			// First relocation address must be used to calculate GOT end address
-			// based upon the total number of relocation entries.
-			long firstGotEntryOffset = relocations[0].getOffset() + imageBaseAdj;
+			// External dynamic symbol entries in the PLTGOT, if any, will be placed
+			// after any local symbol entries.
+
+			// While DT_PLTGOT identifies the start of the PLTGOT it does not
+			// specify its length.  If there are dynamic non-local entries in the 
+			// PLTGOT they should have relocation entries in the table identified 
+			// by DT_JMPREL.  It is important to note that this relocation table
+			// can include entries which affect other processor-specific PLTGOT
+			// tables (e.g., MIPS_PLTGOT) so we must attempt to isolate the 
+			// entries which correspond to DT_PLTGOT.  
+
+			// WARNING: This implementation makes a potentially bad assumption that 
+			// the last relocation entry will identify the endof the PLTGOT if its
+			// offset is beyond the start of the PLTGOT.  This assumption could
+			// easily be violated by a processor-specific PLTGOT which falls after
+			// the standard PLTGOT in memory and shares the same relocation table.
 
 			long pltgot = elf.adjustAddressForPrelink(
-				dynamicTable.getDynamicValue(ElfDynamicType.DT_PLTGOT)) + imageBaseAdj;
+				dynamicTable.getDynamicValue(ElfDynamicType.DT_PLTGOT));
 
-			Address gotStart = defaultSpace.getAddress(pltgot);
-			Address gotEnd = defaultSpace.getAddress(
-				firstGotEntryOffset + (count * defaultSpace.getPointerSize()) - 1);
+			ElfRelocation[] relocations = relocationTable.getRelocations();
+
+			long lastGotOffset = relocations[relocations.length - 1].getOffset();
+			if (lastGotOffset < pltgot) {
+				return;
+			}
+
+			Address gotStart = defaultSpace.getAddress(pltgot + imageBaseAdj);
+			Address gotEnd = defaultSpace.getAddress(lastGotOffset + imageBaseAdj);
+
 			processGOT(gotStart, gotEnd, monitor);
 			processDynamicPLT(gotStart, gotEnd, monitor);
 		}
@@ -162,7 +179,7 @@ public class ElfDefaultGotPltMarkup {
 
 		try {
 			Address newImageBase = null;
-			while (gotStart.compareTo(gotEnd) < 0) {
+			while (gotStart.compareTo(gotEnd) <= 0) {
 				monitor.checkCanceled();
 
 				Data data = createPointer(gotStart, true);
@@ -350,7 +367,7 @@ public class ElfDefaultGotPltMarkup {
 			return null;
 		}
 		int pointerSize = program.getDataTypeManager().getDataOrganization().getPointerSize();
-		Pointer pointer = PointerDataType.dataType;
+		Pointer pointer = PointerDataType.dataType.clone(program.getDataTypeManager());
 		if (elf.is32Bit() && pointerSize != 4) {
 			pointer = Pointer32DataType.dataType;
 		}
@@ -364,18 +381,48 @@ public class ElfDefaultGotPltMarkup {
 			}
 			data = listing.createData(addr, pointer);
 		}
-		Address refAddr = (Address) data.getValue();
-		if (keepRefWhenValid) {
-			if (memory.contains(refAddr)) {
-				return data;
-			}
-			Symbol syms[] = program.getSymbolTable().getSymbols(refAddr);
-			if (syms != null && syms.length > 0 && syms[0].getSource() != SourceType.DEFAULT) {
-				return data;
-			}
+		if (keepRefWhenValid && isValidPointer(data)) {
+			setConstant(data);
 		}
-		removeMemRefs(data);
+		else {
+			removeMemRefs(data);
+		}
 		return data;
+	}
+
+	/**
+	 * Set specified data as constant if contained within a writable block.  It can be helpful
+	 * to the decompiler results if constant pointers are marked as such (e.g., GOT entries)
+	 * @param data program data
+	 */
+	public static void setConstant(Data data) {
+		Memory memory = data.getProgram().getMemory();
+		MemoryBlock block = memory.getBlock(data.getAddress());
+		if (!block.isWrite() || block.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
+			// .got blocks will be force to read-only by ElfDefaultGotPltMarkup
+			return;
+		}
+		data.setLong(MutabilitySettingsDefinition.MUTABILITY,
+			MutabilitySettingsDefinition.CONSTANT);
+	}
+
+	/**
+	 * Determine if pointerData refers to a valid memory address or symbol
+	 * @param pointerData pointer data
+	 * @return true if pointer data refers to valid memory address or symbol
+	 */
+	public static boolean isValidPointer(Data pointerData) {
+		Program program = pointerData.getProgram();
+		Memory memory = program.getMemory();
+		Address refAddr = (Address) pointerData.getValue();
+		if (memory.contains(refAddr)) {
+			return true;
+		}
+		Symbol syms[] = program.getSymbolTable().getSymbols(refAddr);
+		if (syms != null && syms.length > 0 && syms[0].getSource() != SourceType.DEFAULT) {
+			return true;
+		}
+		return false;
 	}
 
 	private void removeMemRefs(Data data) {

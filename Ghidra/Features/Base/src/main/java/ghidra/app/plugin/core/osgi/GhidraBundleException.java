@@ -54,6 +54,18 @@ public class GhidraBundleException extends OSGiException {
 	}
 
 	/**
+	 * Construct a new exception originating with the bundle having location identifier {@code bundleLocation}.
+	 * 
+	 * @param bundleLocation the bundle location identifier (since no bundle is available)
+	 * @param msg a contextual message
+	 */
+	public GhidraBundleException(String bundleLocation, String msg) {
+		super(msg);
+		this.bundle = null;
+		this.bundleLocation = bundleLocation;
+	}
+
+	/**
 	 * @return the associated bundle, or null.  If null, the bundle location identifier will be non-null
 	 */
 	public Bundle getBundle() {
