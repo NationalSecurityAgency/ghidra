@@ -516,23 +516,23 @@ public class PdbApplicator {
 		return categoryUtils.getAnonymousTypesCategory();
 	}
 
-	/**
-	 * Returns the name of what should be the next Anonymous Function (based on the count of
-	 * the number of anonymous functions) so that there is a unique name for the function.
-	 * @return the name for the next anonymous function.
-	 */
-	String getNextAnonymousFunctionName() {
-		return categoryUtils.getNextAnonymousFunctionName();
-	}
+//	/**
+//	 * Returns the name of what should be the next Anonymous Function (based on the count of
+//	 * the number of anonymous functions) so that there is a unique name for the function.
+//	 * @return the name for the next anonymous function.
+//	 */
+//	String getNextAnonymousFunctionName() {
+//		return categoryUtils.getNextAnonymousFunctionName();
+//	}
 
-	/**
-	 * Updates the count of the anonymous functions.  This is a separate call from
-	 * {@link #getNextAnonymousFunctionName()} because the count should only be updated after
-	 * the previous anonymous function has been successfully created/stored.
-	 */
-	void incrementNextAnonymousFunctionName() {
-		categoryUtils.incrementNextAnonymousFunctionName();
-	}
+//	/**
+//	 * Updates the count of the anonymous functions.  This is a separate call from
+//	 * {@link #getNextAnonymousFunctionName()} because the count should only be updated after
+//	 * the previous anonymous function has been successfully created/stored.
+//	 */
+//	void incrementNextAnonymousFunctionName() {
+//		categoryUtils.incrementNextAnonymousFunctionName();
+//	}
 
 	private PdbCategories setPdbCatogoryUtils(String pdbFilename)
 			throws CancelledException, PdbException {
