@@ -11,8 +11,10 @@ eclipse.project.name = 'Features Graph Services'
 dependencies {
 	compile project(":Base")
 
-	compile "com.github.tomnelson:jungrapht-visualization:1.0-RC9"
-	compile "com.github.tomnelson:jungrapht-layout:1.0-RC9"
+	compile "com.github.tomnelson:jungrapht-visualization:1.0-SNAPSHOT"
+	compile "com.github.tomnelson:jungrapht-layout:1.0-SNAPSHOT"
+//	compile "com.github.tomnelson:jungrapht-visualization:1.0-RC9"
+//	compile "com.github.tomnelson:jungrapht-layout:1.0-RC9"
 	compile "org.jgrapht:jgrapht-core:1.5.0"
 	
 	// not using jgrapht-io code that depends on antlr, so exclude antlr
