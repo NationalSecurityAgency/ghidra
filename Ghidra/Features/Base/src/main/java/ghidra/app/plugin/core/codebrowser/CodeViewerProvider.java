@@ -363,13 +363,15 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 		Point p = e.getLocation();
 		ProgramLocation loc = listingPanel.getProgramLocation(p);
+		if (loc == null) {
+			return false;
+		}
+
 		CodeViewerActionContext context = new CodeViewerActionContext(this, loc);
-		if (loc != null) {
-			for (ProgramDropProvider dropProvider : dropProviders) {
-				if (dropProvider.isDropOk(context, e)) {
-					curDropProvider = dropProvider;
-					return true;
-				}
+		for (ProgramDropProvider dropProvider : dropProviders) {
+			if (dropProvider.isDropOk(context, e)) {
+				curDropProvider = dropProvider;
+				return true;
 			}
 		}
 		return false;
