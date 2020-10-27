@@ -35,8 +35,8 @@ srcDirs.each {dirName ->
 // create and return a jar task for the given source directory
 def makeJarTask(dirName) {
 	return tasks.create("build${dirName}", Jar) {
-		archiveBaseName = dirName
-		archiveFileName = "${dirName}.jar"
+		baseName  dirName
+		archiveName "${dirName}.jar"
 		ext.dirName=dirName
 
 
@@ -76,7 +76,7 @@ eclipse {
 // "$rootProject.projectDir/gradle/support/extensionCommon.gradle"
 task zipExtensions(type: Zip, dependsOn:jarTasks) {
 	def p = this.project
-	archiveFileName = "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
+	archiveName "${rootProject.ext.ZIP_NAME_PREFIX}_${p.name}.zip"
 	destinationDir rootProject.ext.DISTRIBUTION_DIR
 
 	duplicatesStrategy 'exclude'
@@ -90,7 +90,7 @@ task zipExtensions(type: Zip, dependsOn:jarTasks) {
 	include "scripts_*.jar"
 
 	for(jarTask in jarTasks) {
-		from relativePath(jarTask.archiveFile)
+		from relativePath(jarTask.archivePath)
 		exclude jarTask.dirName
 	}
 
