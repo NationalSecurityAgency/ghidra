@@ -41,7 +41,6 @@ public class DefaultGraphDisplayComponentProvider extends ComponentProviderAdapt
 		setIcon(DefaultDisplayGraphIcons.PROGRAM_GRAPH_ICON);
 		setTransient();
 		setWindowGroup(WINDOW_GROUP);
-		setSubTitle(Integer.toString(display.getId()));
 	}
 
 	@Override

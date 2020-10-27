@@ -277,11 +277,11 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	}
 
 	private void graphBlockFlow() {
-		graph("Flow Graph", blockModelService.getActiveBlockModelName(), false);
+		graph("Block Flow Graph", blockModelService.getActiveBlockModelName(), false);
 	}
 
 	private void graphCodeFlow() {
-		graph("Code Graph", blockModelService.getActiveBlockModelName(), true);
+		graph("Code Flow Graph", blockModelService.getActiveBlockModelName(), true);
 	}
 
 	private void graphSubroutines() {
@@ -289,7 +289,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	}
 
 	private void graphSubroutinesUsing(String modelName) {
-		graph("Call Graph", modelName, false);
+		graph("Call Graph (" + modelName + ")", modelName, false);
 	}
 
 	private void graph(String actionName, String modelName, boolean showCode) {

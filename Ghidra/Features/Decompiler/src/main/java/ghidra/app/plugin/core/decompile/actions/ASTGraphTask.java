@@ -121,6 +121,7 @@ public class ASTGraphTask extends Task {
 
 			String description =
 				graphType == GraphType.DATA_FLOW_GRAPH ? "AST Data Flow" : "AST Control Flow";
+			description = description + " for " + hfunction.getFunction().getName();
 			display.setGraph(graph, description, false, monitor);
 			// set the graph location
 			if (location != null) {
