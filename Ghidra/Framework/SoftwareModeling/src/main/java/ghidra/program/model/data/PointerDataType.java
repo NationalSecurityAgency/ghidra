@@ -60,7 +60,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * organization when resolved.
 	 */
 	public PointerDataType() {
-		this(DataType.DEFAULT, -1, null);
+		this(null, -1, null);
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * @param dtm data-type manager whose data organization should be used
 	 */
 	public PointerDataType(DataTypeManager dtm) {
-		this(DataType.DEFAULT, -1, dtm);
+		this(null, -1, dtm);
 	}
 
 	/**
