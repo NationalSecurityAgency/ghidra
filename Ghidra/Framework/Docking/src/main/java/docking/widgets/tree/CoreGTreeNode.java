@@ -260,6 +260,11 @@ abstract class CoreGTreeNode implements Cloneable {
 		}
 	}
 
+	/**
+	 * This is used to dispose filtered "clone" nodes. When a filter is applied to the tree,
+	 * the nodes that matched are "shallow" cloned, so when the filter is removed, we don't
+	 * want to do a full dispose on the nodes, just clean up the parent-child references.
+	 */
 	final void disposeClones() {
 		List<GTreeNode> oldChildren;
 		synchronized (this) {

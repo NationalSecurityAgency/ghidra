@@ -1171,7 +1171,10 @@ class FSBActionManager {
 			public void actionPerformed(ActionContext context) {
 				FSRL containerFSRL = FSBUtils.getFileFSRLFromContext(context);
 				if (containerFSRL != null && context.getContextObject() instanceof FSBFileNode) {
-					FSBFileNode fileNode = (FSBFileNode) context.getContextObject();
+					FSBFileNode xfileNode = (FSBFileNode) context.getContextObject();
+					FSBFileNode modelFileNode =
+						(FSBFileNode) gTree.getModelNodeForPath(xfileNode.getTreePath());
+
 					gTree.runTask(monitor -> {
 						try {
 							FileSystemRef fsRef =
@@ -1185,17 +1188,12 @@ class FSBActionManager {
 								return;
 							}
 
-							FSBRootNode nestedRootNode = new FSBRootNode(fsRef, fileNode);
-							FSBRootNode containingFSBRootNode =
-								FSBNode.findContainingFileSystemFSBRootNode(fileNode);
-							if (containingFSBRootNode != null) {
-								containingFSBRootNode.getSubRootNodes().add(nestedRootNode);
-							}
+							FSBRootNode nestedRootNode = new FSBRootNode(fsRef, modelFileNode);
 							nestedRootNode.setChildren(nestedRootNode.generateChildren(monitor));
 
-							int indexInParent = fileNode.getIndexInParent();
-							GTreeNode parent = fileNode.getParent();
-							parent.removeNode(fileNode);
+							int indexInParent = modelFileNode.getIndexInParent();
+							GTreeNode parent = modelFileNode.getParent();
+							parent.removeNode(modelFileNode);
 							parent.addNode(indexInParent, nestedRootNode);
 							gTree.expandPath(nestedRootNode);
 						}

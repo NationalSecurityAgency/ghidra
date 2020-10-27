@@ -224,6 +224,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		if (function == null) {
 			return null;
 		}
+		if (!controller.hasDecompileResults()) {
+			return null;
+		}
+
 		Address entryPoint = function.getEntryPoint();
 		boolean isDecompiling = controller.isDecompiling();
 		return new DecompilerActionContext(this, entryPoint, isDecompiling);

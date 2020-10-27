@@ -31,7 +31,7 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	private final Set<DefaultGraphDisplay> displays = new HashSet<>();
 	private PluginTool pluginTool;
 	private Options options;
-	private int displayCounter;
+	private int displayCounter = 1;
 
 	@Override
 	public String getName() {

@@ -129,6 +129,11 @@ public final class DataUtilities {
 				return data;
 			}
 
+			if (clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA &&
+				!Undefined.isUndefined(existingDT)) {
+				throw new CodeUnitInsertionException("Could not create Data at address " + addr);
+			}
+
 			// Check for external reference on pointer
 			if (existingDT instanceof Pointer) {
 				// TODO: This can probably be eliminated
@@ -199,11 +204,6 @@ public final class DataUtilities {
 	private static void checkEnoughSpace(Program program, Address addr, int existingDataLen,
 			DataTypeInstance dti, ClearDataMode mode) throws CodeUnitInsertionException {
 		Listing listing = program.getListing();
-//		int newSize = dti.getLength();
-//		if (newSize <= existingDataLen) {
-//			listing.clearCodeUnits(addr, addr, false);
-//			return;
-//		}
 		try {
 			Address end = addr.addNoWrap(existingDataLen - 1);
 			Address newEnd = addr.addNoWrap(dti.getLength() - 1);

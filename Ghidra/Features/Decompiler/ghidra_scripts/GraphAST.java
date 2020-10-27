@@ -69,7 +69,9 @@ public class GraphAST extends GhidraScript {
 //        graphDisplay.defineVertexAttribute(CODE_ATTRIBUTE); //
 //        graphDisplay.defineVertexAttribute(SYMBOLS_ATTRIBUTE);
 //        graphDisplay.defineEdgeAttribute(EDGE_TYPE_ATTRIBUTE);
-		graphDisplay.setGraph(graph, "Data-flow AST", false, monitor);
+		String description = "AST Data Flow Graph For " + func.getName();
+
+		graphDisplay.setGraph(graph, description, false, monitor);
 
 		// Install a handler so the selection/location will map
 		graphDisplay.setGraphDisplayListener(

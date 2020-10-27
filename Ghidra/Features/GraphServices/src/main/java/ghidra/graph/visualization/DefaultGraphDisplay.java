@@ -81,7 +81,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	Logger log = Logger.getLogger(DefaultGraphDisplay.class.getName());
 
 	private GraphDisplayListener listener = new DummyGraphDisplayListener();
-	private String description;
+	private String title;
 
 	/**
 	 * the {@link Graph} to visualize
@@ -892,20 +892,21 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	/**
 	 * consume a {@link Graph} and display it
 	 * @param graph the graph to display or consume
-	 * @param description a description of the graph
+	 * @param title a title for the graph
 	 * @param append if true, append the new graph to any existing graph.
 	 * @param monitor a {@link TaskMonitor} which can be used to cancel the graphing operation
 	 */
 	@Override
-	public void setGraph(AttributedGraph graph, String description, boolean append,
+	public void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor) {
 		iconCache.clear();
 
-		if (append && Objects.equals(description, this.description) && this.graph != null) {
+		if (append && Objects.equals(title, this.title) && this.graph != null) {
 			graph = mergeGraphs(graph, this.graph);
 		}
 
-		this.description = description;
+		this.title = title;
+		componentProvider.setTitle(title);
 		int count = graph.getVertexCount();
 		if (count > MAX_NODES) {
 			Msg.showWarn(this, null, "Graph Not Rendered - Too many nodes!",
@@ -1014,13 +1015,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		viewer.repaint();
 	}
 
-	/**
-	 *
-	 * @return a description of this graph
-	 */
 	@Override
-	public String getGraphDescription() {
-		return description;
+	public String getGraphTitle() {
+		return title;
 	}
 
 	/**

@@ -119,12 +119,12 @@ public interface GraphDisplay {
 	/**
 	 * Sets the graph to be displayed or consumed by this graph display
 	 * @param graph the graph to display or consume
-	 * @param description a description of the graph
+	 * @param title a title for the graph
 	 * @param monitor a {@link TaskMonitor} which can be used to cancel the graphing operation
 	 * @param append if true, append the new graph to any existing graph.
 	 * @throws CancelledException thrown if the graphing operation was cancelled
 	 */
-	public void setGraph(AttributedGraph graph, String description, boolean append,
+	public void setGraph(AttributedGraph graph, String title, boolean append,
 			TaskMonitor monitor)
 			throws CancelledException;
 
@@ -141,10 +141,10 @@ public interface GraphDisplay {
 	public void updateVertexName(AttributedVertex vertex, String newName);
 
 	/**
-	 * Returns the description of the current graph
-	 * @return the description of the current graph
+	 * Returns the title of the current graph
+	 * @return the title of the current graph
 	 */
-	public String getGraphDescription();
+	public String getGraphTitle();
 
 	/**
 	 * Adds the action to the graph display. Not all GraphDisplays support adding custom

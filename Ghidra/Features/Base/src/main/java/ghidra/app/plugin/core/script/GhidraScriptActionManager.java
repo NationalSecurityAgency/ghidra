@@ -110,9 +110,13 @@ class GhidraScriptActionManager {
 	void restoreScriptsThatAreInTool(SaveState saveState) {
 		String[] array = saveState.getStrings(SCRIPT_ACTIONS_KEY, new String[0]);
 		for (String filename : array) {
-			ScriptInfo info = infoManager.findScriptInfoByName(filename);
-			if (info != null) { // the file may have been deleted from disk
-				provider.getActionManager().createAction(info.getSourceFile());
+			ResourceFile file = generic.util.Path.fromPathString(filename);
+			if (file.exists()) {
+				// restore happens early -- the next call will create a new ScriptInfo
+				ScriptInfo info = infoManager.getScriptInfo(file);
+				if (info != null) {
+					createAction(info.getSourceFile());
+				}
 			}
 			else {
 				Msg.info(this, "Cannot find script for keybinding: '" + filename + "'");
@@ -159,7 +163,7 @@ class GhidraScriptActionManager {
 		Set<ResourceFile> actionScriptFiles = actionMap.keySet();
 		Set<String> scriptPaths = new HashSet<>(actionScriptFiles.size());
 		for (ResourceFile file : actionScriptFiles) {
-			scriptPaths.add(file.getName());
+			scriptPaths.add(generic.util.Path.toPathString(file));
 		}
 
 		String[] array = scriptPaths.toArray(new String[scriptPaths.size()]);
