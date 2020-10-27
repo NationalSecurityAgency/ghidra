@@ -220,12 +220,17 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	}
 
 	/**
-	 * Shows the dialog window centered on the parent window.
-	 * Dialog display is delayed if delay greater than zero.
+	 * Shows the dialog window centered on the parent window. Dialog display is delayed if delay
+	 * greater than zero.
+	 *
 	 * @param delay number of milliseconds to delay displaying of the task dialog.  If the delay is
 	 * greater than {@link #MAX_DELAY}, then the delay will be {@link #MAX_DELAY};
+	 * @throws IllegalArgumentException if {@code delay} is negative
 	 */
 	public void show(int delay) {
+		if (delay < 0) {
+			throw new IllegalArgumentException("Task Dialog delay cannot be negative");
+		}
 		if (isModal()) {
 			doShowModal(delay);
 		}

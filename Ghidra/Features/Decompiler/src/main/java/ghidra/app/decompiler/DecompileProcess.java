@@ -28,7 +28,7 @@ import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 
 /**
- * 
+ *
  *
  * Class for communicating with a single decompiler process.
  * The process controls decompilation for a single Program.
@@ -116,7 +116,7 @@ public class DecompileProcess {
 		}
 		if (nativeProcess != null) {
 			// Something bad happened to the process or the interface
-			// and now we try to restart		    
+			// and now we try to restart
 			nativeProcess.destroy(); // Make sure previous bad process is killed           			
 			nativeProcess = null;
 		}
@@ -141,7 +141,7 @@ public class DecompileProcess {
 
 	private int readToBurst() throws IOException {
 		if (nativeIn == null) {
-			// we've been disposed!  
+			// we've been disposed!
 			// (not sure if throwing an exception the best)
 			throw new IOException("Decompiler disposed!");
 		}
@@ -525,12 +525,14 @@ public class DecompileProcess {
 	 */
 	public synchronized LimitedByteBuffer sendCommand1ParamTimeout(String command, String param,
 			int timeoutSecs) throws IOException, DecompileException {
+
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
+
 		LimitedByteBuffer resbuf = null;
-		GTimerMonitor timerMonitor = GTimer.scheduleRunnable(timeoutSecs * 1000, timeoutRunnable);
-//		GTimerMonitor timerMonitor = GTimer.scheduleRunnable(100 * timeoutSecs * 1000, timeoutRunnable); //epp change timeout for valgrind
+		int validatedTimeoutMs = getTimeoutMs(timeoutSecs);
+		GTimerMonitor timerMonitor = GTimer.scheduleRunnable(validatedTimeoutMs, timeoutRunnable);
 
 		try {
 			write(command_start);
@@ -552,6 +554,13 @@ public class DecompileProcess {
 			timerMonitor.cancel();
 		}
 		return resbuf;
+	}
+
+	private int getTimeoutMs(int timeoutSecs) {
+		if (timeoutSecs == 0) {
+			return -1;
+		}
+		return timeoutSecs * 1000;
 	}
 
 	/**
