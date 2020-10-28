@@ -38,29 +38,37 @@ import ghidra.util.exception.AssertException;
  * 
  * REL entry:
  * 
- * typedef struct {
- *     Elf32_Addr   r_offset;
- *     Elf32_Word   r_info;
- * } Elf32_Rel;
+ *    typedef struct {
+ *        Elf32_Addr   r_offset;
+ *        Elf32_Word   r_info;
+ *    } Elf32_Rel;
  * 
- * typedef struct {
- *     Elf64_Addr   r_offset;
- *     Elf64_Xword  r_info;
- * } Elf64_Rel;
+ *    typedef struct {
+ *        Elf64_Addr   r_offset;
+ *        Elf64_Xword  r_info;
+ *    } Elf64_Rel;
  * 
  * RELA entry with addend:
  * 
- *  * typedef struct {
- *     Elf32_Addr    r_offset;
- *     Elf32_Word    r_info;
- *     Elf32_Sword   r_addend;
- * } Elf32_Rela;
+ *    typedef struct {
+ *        Elf32_Addr    r_offset;
+ *        Elf32_Word    r_info;
+ *        Elf32_Sword   r_addend;
+ *    } Elf32_Rela;
  * 
- * typedef struct {
- *     Elf64_Addr    r_offset;   //Address
- *     Elf64_Xword   r_info;     //Relocation type and symbol index
- *     Elf64_Sxword  r_addend;   //Addend 
- * } Elf64_Rela;
+ *    typedef struct {
+ *        Elf64_Addr    r_offset;   //Address
+ *        Elf64_Xword   r_info;     //Relocation type and symbol index
+ *        Elf64_Sxword  r_addend;   //Addend 
+ *    } Elf64_Rela;
+ * 
+ * RELR entry (see SHT_RELR, DT_RELR):
+ *    NOTE: Relocation type is implied as Relative with addend stored at relocation offset.
+ *    The specific relocation type wil need to be obtained from processor extension.
+ * 
+ *    typedef Elf32_Word Elf32_Relr;
+ * 
+ *    typedef Elf64_Xword Elf64_Relr;
  *
  * </pre>
  */

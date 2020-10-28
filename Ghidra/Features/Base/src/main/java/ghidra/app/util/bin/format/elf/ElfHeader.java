@@ -372,6 +372,13 @@ public class ElfHeader implements StructConverter, Writeable {
 		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELA, null,
 			ElfDynamicType.DT_ANDROID_RELASZ, true);
 
+		// TODO:
+//		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_RELR,
+//			ElfDynamicType.DT_RELRENT, ElfDynamicType.DT_RELRSZ, false);
+//		
+//		parseDynamicRelocTable(relocationTableList, ElfDynamicType.DT_ANDROID_RELR,
+//			ElfDynamicType.DT_ANDROID_RELRENT, ElfDynamicType.DT_ANDROID_RELRSZ, false);
+
 		parseJMPRelocTable(relocationTableList);
 
 		// In general the above dynamic relocation tables should cover most cases, we will
