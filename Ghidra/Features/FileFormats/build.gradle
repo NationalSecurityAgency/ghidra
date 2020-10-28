@@ -5,9 +5,6 @@ apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply plugin: 'eclipse'
 
-
-
-
 eclipse.project.name = 'Features FileFormats'
 
 dependencies {
@@ -26,10 +23,10 @@ dependencies {
 	compile 'org.smali:dexlib:1.4.0'
 	compile 'org.smali:util:1.4.0'
 
-	compile 'net.sf.sevenzipjbinding:sevenzipjbinding:9.20-2.00beta'
+	compile 'net.sf.sevenzipjbinding:sevenzipjbinding:16.02-2.01'
 	compile ':AXMLPrinter2'
 	
-	runtime 'net.sf.sevenzipjbinding:sevenzipjbinding-all-platforms:9.20-2.00beta'
+	runtime 'net.sf.sevenzipjbinding:sevenzipjbinding-all-platforms:16.02-2.01'
 	
 	helpPath project(path: ":Base", configuration: 'helpPath')
 

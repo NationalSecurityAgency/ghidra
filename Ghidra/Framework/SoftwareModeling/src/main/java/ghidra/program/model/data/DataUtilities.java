@@ -129,13 +129,14 @@ public final class DataUtilities {
 				return data;
 			}
 
-			if (clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA &&
+			if (!stackPointers && clearMode == ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA &&
 				!Undefined.isUndefined(existingDT)) {
 				throw new CodeUnitInsertionException("Could not create Data at address " + addr);
 			}
 
 			// Check for external reference on pointer
-			if (existingDT instanceof Pointer) {
+			if ((stackPointers || newDataType instanceof Pointer) &&
+				existingDT instanceof Pointer) {
 				// TODO: This can probably be eliminated
 				Reference[] refs = refMgr.getReferencesFrom(addr);
 				for (Reference ref : refs) {
@@ -174,19 +175,26 @@ public final class DataUtilities {
 			throw new CodeUnitInsertionException(
 				"Could not create DataType " + newDataType.getDisplayName());
 		}
+
+		if (stackPointers && existingDT instanceof Pointer && newDataType instanceof Pointer) {
+			listing.clearCodeUnits(addr, addr, false);
+		}
+
+		Data newData;
 		try {
-			return listing.createData(addr, dti.getDataType(), dti.getLength());
+			newData = listing.createData(addr, dti.getDataType(), dti.getLength());
 		}
 		catch (CodeUnitInsertionException e) {
 			// ok lets see if we need to clear some code units
+			if (clearMode == ClearDataMode.CLEAR_SINGLE_DATA) {
+				listing.clearCodeUnits(addr, addr, false);
+			}
+			else {
+				checkEnoughSpace(program, addr, existingDataLen, dti, clearMode);
+			}
+			newData = listing.createData(addr, dti.getDataType(), dti.getLength());
 		}
-		if (clearMode == ClearDataMode.CLEAR_SINGLE_DATA) {
-			listing.clearCodeUnits(addr, addr, false);
-		}
-		else {
-			checkEnoughSpace(program, addr, existingDataLen, dti, clearMode);
-		}
-		Data newData = listing.createData(addr, dti.getDataType(), dti.getLength());
+
 		// if this was a pointer and had an external reference, put it back!
 		if ((newDataType instanceof Pointer) && extRef != null) {
 			ExternalLocation extLoc = ((ExternalReference) extRef).getExternalLocation();
@@ -203,6 +211,7 @@ public final class DataUtilities {
 
 	private static void checkEnoughSpace(Program program, Address addr, int existingDataLen,
 			DataTypeInstance dti, ClearDataMode mode) throws CodeUnitInsertionException {
+		// NOTE: method not invoked when clearMode == ClearDataMode.CLEAR_SINGLE_DATA
 		Listing listing = program.getListing();
 		try {
 			Address end = addr.addNoWrap(existingDataLen - 1);
