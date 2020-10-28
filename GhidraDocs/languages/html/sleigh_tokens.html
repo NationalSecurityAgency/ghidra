@@ -56,8 +56,22 @@ there are one or more field declarations specifying the name of the
 field and the range of bits within the token making up the field. The
 size of a field does <span class="emphasis"><em>not</em></span> need to be a multiple of
 8. The range is inclusive where the least significant bit in the token
-is labeled 0. The endianess of the processor will effect this labeling
-when defining tokens that are bigger than 1 byte.  After each field
+is labeled 0. When defining tokens that are bigger than 1 byte, the
+global endianess setting (See <a class="xref" href="sleigh_definitions.html#sleigh_endianess_definition" title="4.1. Endianess Definition">Section 4.1, &#8220;Endianess Definition&#8221;</a>)
+will affect this labeling. Although it is rarely required, it is possible to override
+the global endianess setting for a specific token by appending either the qualifier
+<span class="bold"><strong>endian=little</strong></span> or <span class="bold"><strong>endian=big</strong></span>
+immediately after the token name and size. For instance:
+</p>
+<div class="informalexample"><pre class="programlisting">
+  define token instr ( 32 ) endian=little op0=(0,15) <span class="weak">...</span>
+</pre></div>
+<p>
+The token <span class="emphasis"><em>instr</em></span> is overridden to be little endian.
+This override applies to all fields defined for the token but affects no other tokens.
+</p>
+<p>
+After each field
 declaration, there can be zero or more of the following attribute
 keywords:
 </p>
@@ -74,7 +88,7 @@ different names.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016193166064"></a>6.2. Fields as Family Symbols</h3></div></div></div>
+<a name="idm140526920800080"></a>6.2. Fields as Family Symbols</h3></div></div></div>
 <p>
 Fields are the most basic form of family symbol; they define a natural
 map from instruction bits to a specific symbol as follows. We take the
@@ -99,7 +113,7 @@ the <span class="bold"><strong>dec</strong></span> attribute is not supported]
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016193160240"></a>6.3. Attaching Alternate Meanings to Fields</h3></div></div></div>
+<a name="idm140526920794256"></a>6.3. Attaching Alternate Meanings to Fields</h3></div></div></div>
 <p>
 The default interpretation of a field is probably the most natural but
 of course processors interpret fields within an instruction in a wide
@@ -110,7 +124,7 @@ interpretations must be built up out of tables.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193158096"></a>6.3.1. Attaching Registers</h4></div></div></div>
+<a name="idm140526920792112"></a>6.3.1. Attaching Registers</h4></div></div></div>
 <p>
 Probably <span class="emphasis"><em>the</em></span> most common processor interpretation
 of a field is as an encoding of a particular register. In SLEIGH this
@@ -149,7 +163,7 @@ of the instruction.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193149824"></a>6.3.2. Attaching Other Integers</h4></div></div></div>
+<a name="idm140526920783840"></a>6.3.2. Attaching Other Integers</h4></div></div></div>
 <p>
 Sometimes a processor interprets a field as an integer but not the
 integer given by the default interpretation. A different integer
@@ -171,7 +185,7 @@ unspecified positions in the list using a &#8216;_&#8217;]
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140016193144192"></a>6.3.3. Attaching Names</h4></div></div></div>
+<a name="idm140526920778208"></a>6.3.3. Attaching Names</h4></div></div></div>
 <p>
 It is possible to just modify the display characteristics of a field
 without changing the semantic meaning. The need for this is rare, but
