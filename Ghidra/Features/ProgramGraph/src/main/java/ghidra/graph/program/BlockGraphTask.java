@@ -106,7 +106,7 @@ public class BlockGraphTask extends Task {
 	private CodeBlockModel blockModel;
 	private AddressSetView selection;
 	private ProgramLocation location;
-	private GraphDisplayProvider graphService;
+	private GraphDisplayProvider graphProvider;
 	private boolean reuseGraph;
 	private boolean appendGraph;
 	private PluginTool tool;
@@ -116,7 +116,7 @@ public class BlockGraphTask extends Task {
 	public BlockGraphTask(String actionName, boolean graphEntryPointNexus, boolean showCode,
 			boolean reuseGraph, boolean appendGraph, PluginTool tool, ProgramSelection selection,
 			ProgramLocation location, CodeBlockModel blockModel,
-			GraphDisplayProvider graphService) {
+			GraphDisplayProvider graphProvider) {
 
 		super("Graph Program", true, false, true);
 		this.actionName = actionName;
@@ -127,7 +127,7 @@ public class BlockGraphTask extends Task {
 		this.appendGraph = appendGraph;
 		this.tool = tool;
 		this.blockModel = blockModel;
-		this.graphService = graphService;
+		this.graphProvider = graphProvider;
 		this.colorizingService = tool.getService(ColorizingService.class);
 		this.selection = selection;
 		this.location = location;
@@ -142,7 +142,7 @@ public class BlockGraphTask extends Task {
 		AttributedGraph graph = createGraph();
 		monitor.setMessage("Generating Graph...");
 		try {
-			GraphDisplay display = graphService.getGraphDisplay(reuseGraph, monitor);
+			GraphDisplay display = graphProvider.getGraphDisplay(reuseGraph, monitor);
 			BlockModelGraphDisplayListener listener =
 				new BlockModelGraphDisplayListener(tool, blockModel, display);
 			display.setGraphDisplayListener(listener);
