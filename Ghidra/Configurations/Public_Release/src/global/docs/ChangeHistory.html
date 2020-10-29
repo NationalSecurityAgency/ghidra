@@ -120,6 +120,7 @@
     <li><I>API</I>. Fixed NullPointerException when attempting to delete all bookmarks from a script. (GT-3405)</li>
     <li><I>API</I>. Updated the Class Searcher so that Extension Points found in the <B>Ghidra/patch</B> directory get loaded. (GT-3547, Issue #1515)</li>
     <li><I>Build</I>. Updated dependency fetch script to use HTTPS when downloading CDT. (GP-69, Issue #2173)</li>
+    <li><I>Build</I>. Fixed resource leak in Ghidra jar builder. (GP-342)</li>
     <li><I>Byte Viewer</I>. Fixed Byte Viewer to correctly load the middle-mouse highlight color options change. (GT-3471, Issue #1464, #1465)</li>
     <li><I>Data Types</I>. Fixed decoding of static strings that have a character set with a smaller character size than the platform's character size. (GT-3333, Issue #1255)</li>
     <li><I>Data Types</I>. Correctly handle Java character sets that do not support the encoding operation. (GT-3407, Issue #1358)</li>
@@ -142,6 +143,7 @@
     <li><I>Decompiler</I>. Fixed a bug causing the Decompiler to miss a stack alias if its offset was, itself, stored on the stack. (GP-246)</li>
     <li><I>Decompiler</I>. Fixed a bug causing the Decompiler to lose Equate references to constants passed to functions that were called indirectly. (GP-247)</li>
     <li><I>Decompiler</I>. Addressed various situations where the Decompiler unexpectedly removes active instructions as dead code after renaming or retyping a stack location. If the location was really an array element or structure field, renaming forced the Decompiler to treat the location as a distinct variable. Subsequently, the Decompiler thought that indirect references based before the location could not alias any following stack locations, which could then by considered dead. As of the 9.2 release, the Decompiler's renaming action no longer switches an annotation to <code>forcing</code> if it wasn't already. A retyping action, although it is <code>forcing</code>, won't trigger alias blocking for atomic data-types (this is configurable). (GP-248, Issue #524, #873)</li>
+    <li><I>Decompiler</I>. Fixed decompiler memory issues reported by a community security researcher. (GP-267)</li>
     <li><I>Demangler</I>. Fixed the GnuDemangler to parse the full namespace for <code>operator</code> symbols. (GT-3474, Issue #1441, #1448)</li>
     <li><I>Demangler</I>. Fixed numerous GNU Demangler parsing issues.  Most notable is the added support for C++ Lambda functions. (GT-3545, Issue #1457, #1569)</li>
     <li><I>Demangler</I>. Updated the GNU Demangler to correctly parse and apply C++ strings using the <code>unnamed type</code> syntax. (GT-3645)</li>
@@ -175,6 +177,7 @@
     <li><I>Importer</I>. Corrected an NeLoader flags parsing error. (GT-3381, Issue #1312)</li>
     <li><I>Importer</I>. Fixed the <B>File -> Add to Program...</B> action to not show a memory conflict error when the user is creating an overlay. (GT-3491, Issue #1376)</li>
     <li><I>Importer</I>. Updated the XML Importer to apply repeatable comments. (GT-3492, Issue #1423)</li>
+    <li><I>Importer</I>. Fixed issue in Batch Import where only one item of a selection was removed when attempting to remove a selection of items. (GP-138)</li>
     <li><I>Importer</I>. Corrected various issues with processing crushed PNG images. (GP-146, Issue #1854, #1874, #1875, #2252)</li>
     <li><I>Importer</I>. Fixed RuntimeException occurrence when trying to load NE programs with unknown resources. (GP-182, Issue #1596, #1713, #2012)</li>
     <li><I>Importer</I>. Fixed batch import to handle IllegalArgumentExceptions thrown by loaders. (GP-227, Issue #2328)</li>
