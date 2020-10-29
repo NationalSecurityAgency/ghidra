@@ -112,9 +112,9 @@ public class TypeApplierFactory {
 					applier =
 						new MemberFunctionTypeApplier(applicator, (MemberFunction16MsType) type);
 					break;
-				case VtShapeMsType.PDB_ID:
-					applier = new VtShapeTypeApplier(applicator, (VtShapeMsType) type);
-					break;
+//				case VtShapeMsType.PDB_ID:
+//					applier = new VtShapeTypeApplier(applicator, (VtShapeMsType) type);
+//					break;
 //				case Cobol016MsType.PDB_ID:
 //					// Not evaluated/implemented yet.
 //					break;
