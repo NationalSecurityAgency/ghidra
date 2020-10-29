@@ -120,6 +120,10 @@ public abstract class AddressBasedGraphDisplayListener
 			return null;
 		}
 		String id = getVertexId(address);
+		if (id == null) {
+			return null;
+		}
+
 		return graphDisplay.getGraph().getVertex(id);
 	}
 
@@ -202,6 +206,9 @@ public abstract class AddressBasedGraphDisplayListener
 
 	private void handleSymbolAddedOrRenamed(Address address, Symbol symbol) {
 		AttributedVertex vertex = getVertex(address);
+		if (vertex == null) {
+			return;
+		}
 		graphDisplay.updateVertexName(vertex, symbol.getName());
 	}
 

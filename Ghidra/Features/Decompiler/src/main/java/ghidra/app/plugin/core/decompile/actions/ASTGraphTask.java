@@ -123,13 +123,7 @@ public class ASTGraphTask extends Task {
 				graphType == GraphType.DATA_FLOW_GRAPH ? "AST Data Flow" : "AST Control Flow";
 			description = description + " for " + hfunction.getFunction().getName();
 			display.setGraph(graph, description, false, monitor);
-			// set the graph location
-			if (location != null) {
-				AttributedVertex vertex = displayListener.getVertex(location);
-				// update graph location, but don't have it send out event
-				display.setFocusedVertex(vertex, EventTrigger.INTERNAL_ONLY);
-			}
-
+			setGraphLocation(display, displayListener);
 		}
 		catch (GraphException e) {
 			Msg.showError(this, null, "Graph Error", e.getMessage());
@@ -138,6 +132,20 @@ public class ASTGraphTask extends Task {
 			return;
 		}
 
+	}
+
+	private void setGraphLocation(GraphDisplay display, ASTGraphDisplayListener displayListener) {
+		if (location == null) {
+			return;
+		}
+
+		AttributedVertex vertex = displayListener.getVertex(location);
+		if (vertex == null) {
+			return; // location not in graph
+		}
+
+		// update graph location, but don't have it send out event
+		display.setFocusedVertex(vertex, EventTrigger.INTERNAL_ONLY);
 	}
 
 	protected void createDataFlowGraph(AttributedGraph graph, TaskMonitor monitor)

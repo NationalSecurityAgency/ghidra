@@ -798,7 +798,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		configureViewerPreferredSize();
 
 		Swing.runNow(() -> {
-			// set the graph but defer the layoutalgorithm setting
+			// set the graph but defer the layout algorithm setting
 			viewer.getVisualizationModel().setGraph(graph, false);
 			configureFilters();
 			LayoutAlgorithm<AttributedVertex> initialLayoutAlgorithm =
@@ -809,8 +809,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	/**
-	 * Determines if a vertex is a root.  For our purpose, a root either has no incomming edges
-	 * or has at least one outgoing "favored" edge and no incomming "favored" edge
+	 * Determines if a vertex is a root.  For our purpose, a root either has no incoming edges
+	 * or has at least one outgoing "favored" edge and no incoming "favored" edge
 	 * @param vertex the vertex to test if it is a root
 	 * @return true if the vertex is a root
 	 */
