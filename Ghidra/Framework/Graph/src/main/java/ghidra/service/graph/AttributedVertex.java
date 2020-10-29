@@ -15,9 +15,9 @@
  */
 package ghidra.service.graph;
 
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Graph vertex with attributes
@@ -85,16 +85,24 @@ public class AttributedVertex extends Attributed {
 	 * @return the html string
 	 */
 	public String getHtmlString() {
-		if (htmlString == null) {
-			StringBuilder buf = new StringBuilder("<html>");
-			for (Map.Entry<String, String> entry : entrySet()) {
-				buf.append(entry.getKey());
-				buf.append(":");
-				buf.append(StringEscapeUtils.escapeHtml4(entry.getValue()));
-				buf.append("<br>");
-			}
-			htmlString = buf.toString();
+
+		if (htmlString != null) {
+			return htmlString;
 		}
+
+		Set<Entry<String, String>> entries = entrySet();
+		if (entries.isEmpty()) {
+			return ""; // empty so tooltip clients can handle empty data
+		}
+
+		StringBuilder buf = new StringBuilder("<html>");
+		for (Map.Entry<String, String> entry : entries) {
+			buf.append(entry.getKey());
+			buf.append(":");
+			buf.append(entry.getValue());
+			buf.append("<br>");
+		}
+		htmlString = buf.toString();
 		return htmlString;
 	}
 

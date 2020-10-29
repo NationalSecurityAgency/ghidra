@@ -32,6 +32,7 @@ import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.AsSubgraph;
 import org.jungrapht.visualization.*;
@@ -58,9 +59,11 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.*;
 import docking.menu.ActionState;
 import docking.widgets.EventTrigger;
+import generic.util.WindowUtilities;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.graph.AttributeFilters;
 import ghidra.graph.job.GraphJobRunner;
+import ghidra.graph.viewer.popup.*;
 import ghidra.service.graph.*;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -169,23 +172,22 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * a new tab or new window
 	 */
 	Consumer<Graph<AttributedVertex, AttributedEdge>> subgraphConsumer = g -> {
-		try {
-			AttributedGraph attributedGraph = new AttributedGraph();
-			g.vertexSet().forEach(attributedGraph::addVertex);
-			g.edgeSet().forEach(e -> {
-				AttributedVertex source = g.getEdgeSource(e);
-				AttributedVertex target = g.getEdgeTarget(e);
-				attributedGraph.addEdge(source, target, e);
-			});
-			displaySubGraph(attributedGraph);
-		}
-		catch (CancelledException e) {
-			// noop
-		}
+
+		AttributedGraph attributedGraph = new AttributedGraph();
+		g.vertexSet().forEach(attributedGraph::addVertex);
+		g.edgeSet().forEach(e -> {
+			AttributedVertex source = g.getEdgeSource(e);
+			AttributedVertex target = g.getEdgeTarget(e);
+			attributedGraph.addEdge(source, target, e);
+		});
+		displaySubGraph(attributedGraph);
 	};
 	private ToggleDockingAction hideSelectedAction;
 	private ToggleDockingAction hideUnselectedAction;
 	private SwitchableSelectionItemListener switchableSelectionListener;
+
+	private ToggleDockingAction togglePopupsAction;
+	private PopupRegulator<AttributedVertex, AttributedEdge> popupRegulator;
 
 	/**
 	 * Create the initial display, the graph-less visualization viewer, and its controls
@@ -457,6 +459,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.enabledWhen(c -> !viewer.getSelectedVertexState().getSelected().isEmpty())
 				.onAction(c -> createAndDisplaySubGraph())
 				.buildAndInstallLocal(componentProvider);
+
+		togglePopupsAction = new ToggleActionBuilder("Display Popup Windows", actionOwnerName)
+				.popupMenuPath("Display Popup Windows")
+				.popupMenuGroup("zz", "1")
+				.description("Toggles whether or not to show popup windows, such as tool tips")
+				.selected(true)
+				.onAction(c -> popupRegulator.setPopupsVisible(togglePopupsAction.isSelected()))
+				.buildAndInstallLocal(componentProvider);
+		popupRegulator.setPopupsVisible(togglePopupsAction.isSelected());
+
 	}
 
 	private void createAndDisplaySubGraph() {
@@ -591,11 +603,17 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		viewer.repaint();
 	}
 
-	private void displaySubGraph(Graph<AttributedVertex, AttributedEdge> subGraph)
-			throws CancelledException {
-		GraphDisplay graphDisplay = graphDisplayProvider.getGraphDisplay(false, TaskMonitor.DUMMY);
-		graphDisplay.setGraph((AttributedGraph) subGraph, "SubGraph", false, TaskMonitor.DUMMY);
-		graphDisplay.setGraphDisplayListener(listener);
+	private void displaySubGraph(Graph<AttributedVertex, AttributedEdge> subGraph) {
+
+		try {
+			GraphDisplay graphDisplay =
+				graphDisplayProvider.getGraphDisplay(false, TaskMonitor.DUMMY);
+			graphDisplay.setGraph((AttributedGraph) subGraph, "SubGraph", false, TaskMonitor.DUMMY);
+			graphDisplay.setGraphDisplayListener(listener);
+		}
+		catch (CancelledException e) {
+			// can't happen while using a dummy monitor
+		}
 	}
 
 	/**
@@ -713,15 +731,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 					.contains(x, y);
 		}
 		return true;
-	}
-
-	/**
-	 * transform the supplied {@code AttributedVertex}s to a List of their ids
-	 * @param selectedVertices the collections of vertices.
-	 * @return a list of vertex ids
-	 */
-	private List<String> toVertexIds(Collection<AttributedVertex> selectedVertices) {
-		return selectedVertices.stream().map(AttributedVertex::getId).collect(Collectors.toList());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1062,9 +1071,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			}
 		});
 
+		// We control tooltips with the PopupRegulator.  Use null values to disable the default 
+		// tool tip mechanism
+		vv.setVertexToolTipFunction(v -> null);
+		vv.setEdgeToolTipFunction(e -> null);
+		vv.setToolTipText(null);
+
+		PopupSource<AttributedVertex, AttributedEdge> popupSource = new GraphDisplayPopupSource(vv);
+		popupRegulator = new PopupRegulator<>(popupSource);
+
 		this.iconCache = new GhidraIconCache();
-		vv.setVertexToolTipFunction(AttributedVertex::getHtmlString);
-		vv.setEdgeToolTipFunction(AttributedEdge::getHtmlString);
 		RenderContext<AttributedVertex, AttributedEdge> renderContext = vv.getRenderContext();
 
 		// set up the shape and color functions
@@ -1103,7 +1119,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		renderContext.setArrowFillPaintFunction(
 			e -> renderContext.getSelectedEdgeState().isSelected(e) ? Color.red
 					: Colors.getColor(e));
-		vv.setToolTipText("");
 
 		// assign the shapes to the modal renderer
 		ModalRenderer<AttributedVertex, AttributedEdge> modalRenderer = vv.getRenderer();
@@ -1265,4 +1280,135 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		});
 	}
 
+	// class passed to the PopupRegulator to help construct info popups for the graph
+	private class GraphDisplayPopupSource implements PopupSource<AttributedVertex, AttributedEdge> {
+
+		private VisualizationViewer<AttributedVertex, AttributedEdge> vv;
+
+		public GraphDisplayPopupSource(VisualizationViewer<AttributedVertex, AttributedEdge> vv) {
+			this.vv = vv;
+		}
+
+		@Override
+		public ToolTipInfo<?> getToolTipInfo(MouseEvent event) {
+
+			// check for a vertex hit first, otherwise, we get edge hits when we are hovering 
+			// over a vertex, due to how edges are interpreted as existing all the way to the 
+			// center point of a vertex
+			AttributedVertex vertex = getVertex(event);
+			if (vertex != null) {
+				return new VertexToolTipInfo(vertex, event);
+			}
+
+			AttributedEdge edge = getEdge(event);
+			if (edge != null) {
+				return new EdgeToolTipInfo(edge, event);
+			}
+
+			// no vertex or edge hit; just create a basic info that is essentially a null-object
+			// placeholder to prevent NPEs
+			return new VertexToolTipInfo(vertex, event);
+		}
+
+		@Override
+		public AttributedVertex getVertex(MouseEvent event) {
+
+			LayoutModel<AttributedVertex> layoutModel =
+				vv.getVisualizationModel().getLayoutModel();
+			Point2D p = vv.getTransformSupport().inverseTransform(vv, event.getPoint());
+			AttributedVertex vertex =
+				vv.getPickSupport().getVertex(layoutModel, p.getX(), p.getY());
+			return vertex;
+		}
+
+		@Override
+		public AttributedEdge getEdge(MouseEvent event) {
+			LayoutModel<AttributedVertex> layoutModel =
+				vv.getVisualizationModel().getLayoutModel();
+			Point2D p = vv.getTransformSupport().inverseTransform(vv, event.getPoint());
+			AttributedEdge edge = vv.getPickSupport().getEdge(layoutModel, p.getX(), p.getY());
+			return edge;
+		}
+
+		@Override
+		public void addMouseMotionListener(MouseMotionListener l) {
+			vv.getComponent().addMouseMotionListener(l);
+		}
+
+		@Override
+		public void repaint() {
+			vv.repaint();
+		}
+
+		@Override
+		public Window getPopupParent() {
+			return WindowUtilities.windowForComponent(vv.getComponent());
+		}
+	}
+
+	private class VertexToolTipInfo extends ToolTipInfo<AttributedVertex> {
+
+		VertexToolTipInfo(AttributedVertex vertex, MouseEvent event) {
+			super(event, vertex);
+		}
+
+		@Override
+		public JComponent createToolTipComponent() {
+			if (graphObject == null) {
+				return null;
+			}
+
+			String toolTip = graphObject.getHtmlString();
+			if (StringUtils.isBlank(toolTip)) {
+				return null;
+			}
+
+			JToolTip jToolTip = new JToolTip();
+			jToolTip.setTipText(toolTip);
+			return jToolTip;
+		}
+
+		@Override
+		protected void emphasize() {
+			// this graph display does not have a notion of emphasizing
+		}
+
+		@Override
+		protected void deEmphasize() {
+			// this graph display does not have a notion of emphasizing
+		}
+	}
+
+	private class EdgeToolTipInfo extends ToolTipInfo<AttributedEdge> {
+
+		EdgeToolTipInfo(AttributedEdge edge, MouseEvent event) {
+			super(event, edge);
+		}
+
+		@Override
+		protected JComponent createToolTipComponent() {
+			if (graphObject == null) {
+				return null;
+			}
+
+			String toolTip = graphObject.getHtmlString();
+			if (StringUtils.isBlank(toolTip)) {
+				return null;
+			}
+
+			JToolTip jToolTip = new JToolTip();
+			jToolTip.setTipText(toolTip);
+			return jToolTip;
+		}
+
+		@Override
+		protected void emphasize() {
+			// this graph display does not have a notion of emphasizing
+		}
+
+		@Override
+		protected void deEmphasize() {
+			// this graph display does not have a notion of emphasizing
+		}
+	}
 }
