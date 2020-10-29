@@ -44,18 +44,19 @@ define endian=little;
 </pre></div>
 <p>
 This defines how the processor interprets contiguous sequences of
-bytes as integers. It effects how integer fields within an instruction
-are interpreted (see <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1. Defining Tokens and Fields">Section 6.1, &#8220;Defining Tokens and Fields&#8221;</a>), and
-it also effects the details of how the processor is supposed to
-implement atomic operations like integer addition and integer
-compare. The specification designer should only need to worry about
-these details when labeling instruction fields, otherwise the
-specification language will hide endianess issues.
+bytes as integers or other values and globally affects values across
+all address spaces. It also affects how integer fields
+within an instruction are interpreted, (see <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1. Defining Tokens and Fields">Section 6.1, &#8220;Defining Tokens and Fields&#8221;</a>),
+although it is possible to override this setting in the rare case that endianess is
+different for data versus instruction encoding.
+The specification designer generally only needs to worry about
+endianess when labeling instruction fields and when defining overlapping registers,
+otherwise the specification language hides endianess issues.
 </p>
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016193284896"></a>4.2. Alignment Definition</h3></div></div></div>
+<a name="idm140526921098128"></a>4.2. Alignment Definition</h3></div></div></div>
 <p>
 An alignment definition looks like
 </p>
@@ -72,7 +73,7 @@ instruction as an error.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016193281872"></a>4.3. Space Definitions</h3></div></div></div>
+<a name="idm140526921095104"></a>4.3. Space Definitions</h3></div></div></div>
 <p>
 The definition of an address space looks like
 </p>
@@ -227,7 +228,7 @@ define register offset=0 size=1
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016193245424"></a>4.5. Bit Range Registers</h3></div></div></div>
+<a name="idm140526920875744"></a>4.5. Bit Range Registers</h3></div></div></div>
 <p>
 Many processors define registers that either consist of a single bit
 or otherwise don't use an integral number of bytes. A recurring
@@ -298,7 +299,7 @@ used as an alternate syntax for defining overlapping registers.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140016193233216"></a>4.6. User-Defined Operations</h3></div></div></div>
+<a name="idm140526920863712"></a>4.6. User-Defined Operations</h3></div></div></div>
 <p>
 The specification designer can define new p-code operations using
 a <span class="bold"><strong>define pcodeop</strong></span> statement.  This

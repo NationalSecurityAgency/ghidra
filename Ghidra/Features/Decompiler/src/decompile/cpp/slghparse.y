@@ -181,7 +181,9 @@ aligndef: DEFINE_KEY ALIGN_KEY '=' INTEGER ';' { slgh->setAlignment(*$4); delete
   ;
 tokendef: tokenprop ';'                {}
   ;
-tokenprop: DEFINE_KEY TOKEN_KEY STRING '(' INTEGER ')' { $$ = slgh->defineToken($3,$5); }
+tokenprop: DEFINE_KEY TOKEN_KEY STRING '(' INTEGER ')' { $$ = slgh->defineToken($3,$5,0); }
+  | DEFINE_KEY TOKEN_KEY STRING '(' INTEGER ')' ENDIAN_KEY '=' LITTLE_KEY { $$ = slgh->defineToken($3,$5,-1); }
+  | DEFINE_KEY TOKEN_KEY STRING '(' INTEGER ')' ENDIAN_KEY '=' BIG_KEY { $$ = slgh->defineToken($3,$5,1); }
   | tokenprop fielddef		       { $$ = $1; slgh->addTokenField($1,$2); }
   | DEFINE_KEY TOKEN_KEY anysymbol     { string errmsg=$3->getName()+": redefined as a token"; yyerror(errmsg.c_str()); YYERROR; }
   ;
