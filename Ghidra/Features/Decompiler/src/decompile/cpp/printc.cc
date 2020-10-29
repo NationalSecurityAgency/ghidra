@@ -268,8 +268,7 @@ void PrintC::pushTypeStart(const Datatype *ct,bool noident)
       const TypePointer *pt = (const TypePointer*) ct;
       pushMod();
       setMod(force_hex); 
-      if (pt->getShiftOffset() != 0) 
-        pushOp(&ptr_shift_space,(const PcodeOp *)0);
+      if (pt->getShiftOffset() != 0) pushOp(&ptr_shift_space,(const PcodeOp *)0);
       pushOp(&ptr_expr,(const PcodeOp *)0);
       if (pt->getShiftOffset() > 0) {
         pushOp(&unary_plus,(const PcodeOp *)0);
@@ -281,6 +280,7 @@ void PrintC::pushTypeStart(const Datatype *ct,bool noident)
         push_integer(-pt->getShiftOffset(),sizeof(intb),true,
           (const Varnode *)0,(const PcodeOp *)0);
       }
+      popMod();
     }
     else if (ct->getMetatype() == TYPE_ARRAY)
       pushOp(&array_expr,(const PcodeOp *)0);
