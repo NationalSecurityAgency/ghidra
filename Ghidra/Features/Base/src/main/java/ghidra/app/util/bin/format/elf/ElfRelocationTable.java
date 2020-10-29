@@ -34,7 +34,7 @@ import ghidra.util.Msg;
 public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 
 	public enum TableFormat {
-		DEFAULT, ANDROID;
+		DEFAULT, ANDROID, RELR;
 	}
 
 	private TableFormat format;
@@ -111,7 +111,10 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 		reader.setPointerIndex(fileOffset);
 
 		List<ElfRelocation> relocList;
-		if (format == TableFormat.ANDROID) {
+		if (format == TableFormat.RELR) {
+			relocList = parseRelrRelocations(reader);
+		}
+		else if (format == TableFormat.ANDROID) {
 			relocList = parseAndroidRelocations(reader);
 		}
 		else {
@@ -137,6 +140,57 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 				addendTypeReloc));
 		}
 		return relocations;
+	}
+
+	private long readNextRelrEntry(FactoryBundledWithBinaryReader reader) throws IOException {
+		return entrySize == 8 ? reader.readNextLong() : reader.readNextUnsignedInt();
+	}
+
+	private long addRelrEntry(long offset, List<ElfRelocation> relocList) {
+		relocList.add(ElfRelocation.createElfRelocation(factory, elfHeader, relocList.size(),
+			addendTypeReloc, offset, 0, 0));
+		return offset + entrySize;
+	}
+
+	private long addRelrEntries(long baseOffset, long entry, List<ElfRelocation> relocList) {
+
+		long offset = baseOffset;
+		while (entry != 0) {
+			entry >>>= 1;
+			if ((entry & 1) != 0) {
+				relocList.add(ElfRelocation.createElfRelocation(factory, elfHeader,
+					relocList.size(), addendTypeReloc, offset, 0, 0));
+			}
+			offset += entrySize;
+		}
+		long nBits = (entrySize * 8) - 1;
+		return baseOffset + (nBits * entrySize);
+	}
+
+	private List<ElfRelocation> parseRelrRelocations(FactoryBundledWithBinaryReader reader)
+			throws IOException {
+
+		// NOTE: Current implementation supports an entrySize of 8 or 4.  This could be 
+		// made more flexable if needed (applies to ElfRelrRelocationTableDataType as well)
+
+		List<ElfRelocation> relocList = new ArrayList<>();
+		long remaining = length; // limit to number of bytes specified for RELR table
+
+		long offset = readNextRelrEntry(reader);
+		offset = addRelrEntry(offset, relocList);
+		remaining -= entrySize;
+
+		while (remaining > 0) {
+			long nextValue = readNextRelrEntry(reader);
+			if ((nextValue & 1) == 1) {
+				offset = addRelrEntries(offset, nextValue, relocList);
+			}
+			else {
+				offset = addRelrEntry(nextValue, relocList);
+			}
+			remaining -= entrySize;
+		}
+		return relocList;
 	}
 
 	private List<ElfRelocation> parseAndroidRelocations(FactoryBundledWithBinaryReader reader)
@@ -288,6 +342,10 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 		return relocTableSection;
 	}
 
+	public boolean isRelrTable() {
+		return format == TableFormat.RELR;
+	}
+
 	@Override
 	public long getFileOffset() {
 		return fileOffset;
@@ -300,7 +358,12 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 
 	@Override
 	public DataType toDataType() {
-		if (format == TableFormat.ANDROID) {
+		if (format == TableFormat.RELR) {
+			String relrStructureName = "Elf_RelrRelocationTable_" + Long.toHexString(addrOffset);
+			return new ElfRelrRelocationTableDataType(relrStructureName, (int) length,
+				(int) entrySize);
+		}
+		else if (format == TableFormat.ANDROID) {
 			return new AndroidElfRelocationTableDataType();
 		}
 

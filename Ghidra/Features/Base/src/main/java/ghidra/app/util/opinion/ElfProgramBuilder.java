@@ -726,6 +726,16 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		ElfSymbol[] symbols = relocationTable.getAssociatedSymbolTable().getSymbols();
 		ElfRelocation[] relocs = relocationTable.getRelocations();
 
+		boolean relrTypeUnknown = false;
+		long relrRelocationType = 0;
+		if (relocationTable.isRelrTable() && context != null) {
+			relrRelocationType = context.getRelrRelocationType();
+			if (relrRelocationType == 0) {
+				relrTypeUnknown = true;
+				log("Failed to process RELR relocations - extension does not define RELR type");
+			}
+		}
+
 		for (ElfRelocation reloc : relocs) {
 
 			monitor.checkCanceled();
@@ -746,6 +756,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			byte[] bytes = elf.is64Bit() ? new byte[8] : new byte[4];
 
+			long type = reloc.getType();
+			if (relrRelocationType != 0) {
+				type = relrRelocationType;
+				reloc.setType(relrRelocationType);
+			}
+
 			try {
 				MemoryBlock relocBlock = memory.getBlock(relocAddr);
 				if (relocBlock == null) {
@@ -758,7 +774,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					catch (Exception e) {
 						Msg.error(this, "Unexpected Exception", e);
 						ElfRelocationHandler.markAsUninitializedMemory(program, relocAddr,
-							reloc.getType(), reloc.getSymbolIndex(), symbolName, log);
+							type, reloc.getSymbolIndex(), symbolName, log);
 						continue;
 					}
 				}
@@ -766,11 +782,15 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				memory.getBytes(relocAddr, bytes);
 
 				if (context != null && context.hasRelocationHandler()) {
-					context.processRelocation(reloc, relocAddr);
+					if (relrTypeUnknown) {
+						ElfRelocationHandler.markAsUnsupportedRelr(program, relocAddr);
+					}
+					else {
+						context.processRelocation(reloc, relocAddr);
+					}
 				}
 			}
 			catch (MemoryAccessException e) {
-				long type = reloc.getType();
 				if (type != 0) { // ignore if type 0 which is always NONE (no relocation performed)
 					log("Unable to perform relocation: Type = " + type + " (0x" +
 						Long.toHexString(type) + ") at " + relocAddr + " (Symbol = " + symbolName +
@@ -956,7 +976,14 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void markupRelocationTable(Address relocTableAddr, ElfRelocationTable relocTable,
 			TaskMonitor monitor) {
 		try {
-			listing.createData(relocTableAddr, relocTable.toDataType());
+			DataType dataType = relocTable.toDataType();
+			if (dataType != null) {
+				listing.createData(relocTableAddr, dataType);
+			}
+			else {
+				listing.setComment(relocTableAddr, CodeUnit.PRE_COMMENT,
+					"ELF Relocation Table (markup not yet supported)");
+			}
 		}
 		catch (Exception e) {
 			log("Failed to properly markup relocation table: " + getMessage(e));

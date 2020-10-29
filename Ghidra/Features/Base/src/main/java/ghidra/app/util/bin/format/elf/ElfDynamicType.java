@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.elf;
 import java.util.HashMap;
 import java.util.Map;
 
+import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -96,11 +97,11 @@ public class ElfDynamicType {
 
 	// Experimental RELR relocation support
 	// - see proposal at https://groups.google.com/forum/#!topic/generic-abi/bX460iggiKg
-	public static ElfDynamicType DT_RELRSZ = addDefaultDynamicType(35, "DT_RELSZ",
+	public static ElfDynamicType DT_RELRSZ = addDefaultDynamicType(35, "DT_RELRSZ",
 		"Total size of Relr relocs", ElfDynamicValueType.VALUE);
-	public static ElfDynamicType DT_RELR = addDefaultDynamicType(36, "DT_RELR",
-		"Address of Relr relocs", ElfDynamicValueType.ADDRESS);
-	public static ElfDynamicType DT_RELRENT = addDefaultDynamicType(37, "DT_RELSZ",
+	public static ElfDynamicType DT_RELR =
+		addDefaultDynamicType(36, "DT_RELR", "Address of Relr relocs", ElfDynamicValueType.ADDRESS);
+	public static ElfDynamicType DT_RELRENT = addDefaultDynamicType(37, "DT_RELRENT",
 		"Size of Relr relocation entry", ElfDynamicValueType.VALUE);
 
 	public static final int DF_ORIGIN = 0x1; 		// $ORIGIN processing required
@@ -131,9 +132,9 @@ public class ElfDynamicType {
 	public static ElfDynamicType DT_ANDROID_RELR = addDefaultDynamicType(0x6FFFE000,
 		"DT_ANDROID_RELR", "Address of Relr relocs", ElfDynamicValueType.ADDRESS);
 	public static ElfDynamicType DT_ANDROID_RELRSZ = addDefaultDynamicType(0x6FFFE001,
-		"DT_ANDROID_RELSZ", "Total size of Relr relocs", ElfDynamicValueType.VALUE);
+		"DT_ANDROID_RELRSZ", "Total size of Relr relocs", ElfDynamicValueType.VALUE);
 	public static ElfDynamicType DT_ANDROID_RELRENT = addDefaultDynamicType(0x6FFFE003,
-		"DT_ANDROID_RELSZ", "Size of Relr relocation entry", ElfDynamicValueType.VALUE);
+		"DT_ANDROID_RELRENT", "Size of Relr relocation entry", ElfDynamicValueType.VALUE);
 
 	// Value Range (??): 0x6ffffd00 - 0x6ffffdff
 
@@ -233,7 +234,9 @@ public class ElfDynamicType {
 			return type;
 		}
 		catch (DuplicateNameException e) {
-			throw new RuntimeException("ElfDynamicType initialization error", e);
+			// Make sure error is properly logged during static initialization
+			Msg.error(ElfDynamicType.class, "ElfDynamicType initialization error", e);
+			throw new RuntimeException(e);
 		}
 	}
 
