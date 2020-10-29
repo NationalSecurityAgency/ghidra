@@ -16,14 +16,19 @@
 package ghidra.service.graph;
 
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * Generic directed graph edge implementation
  */
 public class AttributedEdge extends Attributed {
 	private final String id;
+
 	/**
-	 * cache of the edge label parsed as html
+	 * Cache of the edge label parsed as html
 	 */
 	private String htmlString;
 
@@ -41,20 +46,27 @@ public class AttributedEdge extends Attributed {
 	}
 
 	/**
-	 * create (once) the html representation of the key/values for this edge
+	 * The html representation of the key/values for this edge
 	 * @return html formatted label for the edge
 	 */
 	public String getHtmlString() {
-		if (htmlString == null) {
-			StringBuilder buf = new StringBuilder("<html>");
-			for (Map.Entry<String, String> entry : entrySet()) {
-				buf.append(entry.getKey());
-				buf.append(":");
-				buf.append(entry.getValue());
-				buf.append("<br>");
-			}
-			htmlString = buf.toString();
+		if (htmlString != null) {
+			return htmlString;
 		}
+
+		Set<Entry<String, String>> entries = entrySet();
+		if (entries.isEmpty()) {
+			return ""; // empty so tooltip clients can handle empty data
+		}
+
+		StringBuilder buf = new StringBuilder("<html>");
+		for (Map.Entry<String, String> entry : entries) {
+			buf.append(entry.getKey());
+			buf.append(":");
+			buf.append(StringEscapeUtils.escapeHtml4(entry.getValue()));
+			buf.append("<br>");
+		}
+		htmlString = buf.toString();
 		return htmlString;
 	}
 
