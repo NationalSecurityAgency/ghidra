@@ -931,17 +931,19 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * @param rootXMLElement JDOM element from which to extract the state information.
 	 */
 	public void restoreFromXML(Element rootXMLElement) {
-		Element rootNodeElement = rootXMLElement.getChild(RootNode.ROOT_NODE_ELEMENT_NAME);
-		restoreWindowDataFromXml(rootNodeElement);
-		// load the tool preferences
+		restoreWindowDataFromXml(rootXMLElement);
 		restorePreferencesFromXML(rootXMLElement);
 	}
 
 	/**
 	 * Restore to the docking window manager the layout and positioning information from XML.
-	 * @param windowData The XML element containing the above information.
+	 * @param rootXMLElement JDOM element from which to extract the state information.
 	 */
-	public void restoreWindowDataFromXml(Element windowData) {
+	public void restoreWindowDataFromXml(Element rootXMLElement) {
+		Element windowData = rootXMLElement.getChild(RootNode.ROOT_NODE_ELEMENT_NAME);
+		if (windowData == null) {
+			return;
+		}
 		//
 		// Clear our focus history, as we are changing placeholders' providers, so the old focus
 		// is no longer relevant.
@@ -1576,7 +1578,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		return toolPreferencesElement;
 	}
 
-	private void restorePreferencesFromXML(Element rootElement) {
+	public void restorePreferencesFromXML(Element rootElement) {
 		Element toolPreferencesElement = rootElement.getChild(TOOL_PREFERENCES_XML_NAME);
 		if (toolPreferencesElement == null) {
 			return;

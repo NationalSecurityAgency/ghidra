@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import ghidra.framework.options.Options;
+import ghidra.framework.options.PreferenceState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.GraphDisplay;
 import ghidra.service.graph.GraphDisplayProvider;
@@ -28,10 +29,14 @@ import ghidra.util.task.TaskMonitor;
 
 public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 
+	private static final String PREFERENCES_KEY = "GRAPH_DISPLAY_SERVICE";
+	private static final String DEFAULT_SATELLITE_STATE = "DEFAULT_SATELLITE_STATE";
 	private final Set<DefaultGraphDisplay> displays = new HashSet<>();
 	private PluginTool pluginTool;
 	private Options options;
 	private int displayCounter = 1;
+	private boolean defaultSatelliteState;
+	private PreferenceState preferences;
 
 	@Override
 	public String getName() {
@@ -66,6 +71,12 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 	public void initialize(PluginTool tool, Options graphOptions) {
 		this.pluginTool = tool;
 		this.options = graphOptions;
+		preferences = pluginTool.getWindowManager().getPreferenceState(PREFERENCES_KEY);
+		if (preferences == null) {
+			preferences = new PreferenceState();
+			pluginTool.getWindowManager().putPreferenceState(PREFERENCES_KEY, preferences);
+		}
+		defaultSatelliteState = preferences.getBoolean(DEFAULT_SATELLITE_STATE, false);
 	}
 
 	/**
@@ -103,6 +114,16 @@ public class DefaultGraphDisplayProvider implements GraphDisplayProvider {
 
 	public void remove(DefaultGraphDisplay defaultGraphDisplay) {
 		displays.remove(defaultGraphDisplay);
+	}
+
+	boolean getDefaultSatelliteState() {
+		return defaultSatelliteState;
+	}
+
+	void setDefaultSatelliteState(boolean b) {
+		defaultSatelliteState = b;
+		preferences.putBoolean(DEFAULT_SATELLITE_STATE, b);
+
 	}
 
 }

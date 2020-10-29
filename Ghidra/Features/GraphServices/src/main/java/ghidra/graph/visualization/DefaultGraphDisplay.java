@@ -202,6 +202,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		componentProvider = new DefaultGraphDisplayComponentProvider(this, pluginTool);
 		componentProvider.addToTool();
 		satelliteViewer = createSatelliteViewer(viewer);
+		if (graphDisplayProvider.getDefaultSatelliteState()) {
+			viewer.getComponent().add(satelliteViewer.getComponent());
+		}
 		layoutTransitionManager =
 			new LayoutTransitionManager(viewer, this::isRoot);
 
@@ -321,6 +324,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		new ToggleActionBuilder("SatelliteView", actionOwnerName).description("Show Satellite View")
 				.toolBarIcon(DefaultDisplayGraphIcons.SATELLITE_VIEW_ICON)
 				.onAction(this::toggleSatellite)
+				.selected(graphDisplayProvider.getDefaultSatelliteState())
 				.buildAndInstallLocal(componentProvider);
 
 		// create an icon button to reset the view transformations to identity (scaled to layout)
@@ -576,7 +580,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * @param context information about the event
 	 */
 	private void toggleSatellite(ActionContext context) {
-		if (((AbstractButton) context.getSourceObject()).isSelected()) {
+		boolean selected = ((AbstractButton) context.getSourceObject()).isSelected();
+		graphDisplayProvider.setDefaultSatelliteState(selected);
+		if (selected) {
 			viewer.getComponent().add(satelliteViewer.getComponent());
 		}
 		else {
@@ -769,7 +775,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			switchableSelectionListener.setEnabled(true);
 		}
 	}
-
 
 	/**
 	 * set the {@link AttributedGraph} for visualization
@@ -1207,7 +1212,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			focusedVertex);
 
 	}
-
 
 	/**
 	 * Use the hide selected action states to determine what vertices are shown:
