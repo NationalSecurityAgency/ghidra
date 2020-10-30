@@ -125,7 +125,7 @@ public interface DataType {
 	 * @param name the new name for this dataType.
 	 * @throws InvalidNameException if the given name does not form a valid name.
 	 * @throws DuplicateNameException if name change on stored {@link DataType}
-	 * is a duplciate of another datatype within the same category (only applies to 
+	 * is a duplicate of another datatype within the same category (only applies to 
 	 * DB stored {@link DataType}).
 	 */
 	public void setName(String name) throws InvalidNameException, DuplicateNameException;
@@ -136,7 +136,7 @@ public interface DataType {
 	 * @param name the new name
 	 * @throws InvalidNameException if the name is invalid
 	 * @throws DuplicateNameException if name change on stored {@link DataType}
-	 * is a duplciate of another datatype within the same category (only applies to 
+	 * is a duplicate of another datatype within the same category (only applies to 
 	 * DB stored {@link DataType}).
 	 */
 	public void setNameAndCategory(CategoryPath path, String name)
