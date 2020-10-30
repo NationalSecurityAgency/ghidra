@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,9 @@
  */
 package ghidra.pcode.floatformat;
 
-
-public enum Floatclass {
-    normalized,
-    infinity,
-    zero,
-    nan,
-    denormalized;
+enum FloatKind {
+	FINITE, /* includes both normal and subnormal */
+	INFINITE,
+	QUIET_NAN,
+	SIGNALING_NAN;
 }
