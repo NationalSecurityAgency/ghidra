@@ -144,7 +144,7 @@ public class HighSymbol {
 	 */
 	public Symbol getSymbol() {
 		if (id != 0) {
-			return function.getFunction().getProgram().getSymbolTable().getSymbol(id);
+			return getProgram().getSymbolTable().getSymbol(id);
 		}
 		return null;
 	}
