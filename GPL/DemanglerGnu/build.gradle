@@ -142,7 +142,6 @@ model {
 		all{ b ->
 		
 			def version = b.getApplication().getName()
-			println "have binary: " + b 
 		
 			if (version.equals(v33_1)) {
 				if (toolChain in Gcc) {							
