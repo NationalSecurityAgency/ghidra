@@ -58,7 +58,7 @@ generateGrammarSource {
 		// contributing grammar files have changed.  Antlr plugin does not know
 		// about the SleighLexar.tokens dependency on changes to BaseLexer.g, 
 		// DisplayLexer.g or SemanticLexer.g
-		delete file("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/SleighLexar.tokens")
+		delete file("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/SleighLexer.tokens")
 	}
 
 	doLast {
