@@ -304,7 +304,13 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		String comment = "(FDE) PcRange";
 
 		intPcRange = (int) GccAnalysisUtils.readDWord(program, addr);
+		if (intPcRange < 0) {
+			return null;
+		}
 
+		if (intPcRange == 0) {
+			intPcRange = 1;
+		}
 		pcEndAddr = pcBeginAddr.add(intPcRange - 1);
 
 		DataType dataType = getAddressSizeDataType();

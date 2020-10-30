@@ -368,6 +368,9 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 					if (checkAlreadyInFunctionAbove(program, addr)) {
 						return false;
 					}
+					if (!checkForFunctionAbove(program, addr)) {
+						return false;
+					}
 				}
 				else if (name.startsWith("inst")) {
 					// make sure there is an end of function at location to check
@@ -402,10 +405,35 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			return true;
 		}
 
+		/**
+		 * Check for an existing function above the addr.  Addr should not be in the function.
+		 * @param program prpgram to check in
+		 * @param addr address to check
+		 * @return true if there is an existing function above addr that doesn't contain addr
+		 */
+		private boolean checkForFunctionAbove(Program program, Address addr) {
+			// make sure there is an end of function before this one, and addr is not in the function
+			Function func = null;
+			Address addrBefore = addr.previous();
+			func = program.getFunctionManager().getFunctionContaining(addrBefore);
+			// no function above
+			if (func == null) {
+				return false;
+			}
+			// addr is in function above
+			if (func.getBody().contains(addr)) {
+				return false;
+			}
+			return true;
+		}
+		
 		private boolean checkAlreadyInFunctionAbove(Program program, Address addr) {
 			// make sure there is an end of function before this one, and if just an instruction, doesn't fall into this one.
 			Function func = null;
 			Address addrBefore = addr.previous();
+			if (addrBefore == null) {
+				return false;
+			}
 			func = program.getFunctionManager().getFunctionContaining(addrBefore);
 			if (func == null) {
 				Instruction instr = program.getListing().getInstructionContaining(addrBefore);

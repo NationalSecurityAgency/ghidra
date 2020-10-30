@@ -21,8 +21,7 @@ import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
@@ -266,12 +265,15 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	boolean isValidFunctionStart(TaskMonitor monitor, Address address) {
 		// instruction above falls into this one
 		//   could be non-returning function, but we can't tell now
-		Instruction instructionBefore =
-			program.getListing().getInstructionContaining(address.subtract(1));
-		if (instructionBefore != null && address.equals(instructionBefore.getFallThrough())) {
-			return false;
+		Address addrBefore = address.previous();
+		if (addrBefore != null) {
+			Instruction instrBefore;
+			instrBefore = program.getListing().getInstructionContaining(addrBefore);
+			if (instrBefore != null && address.equals(instrBefore.getFallThrough())) {
+				return false;
+			}
 		}
-
+		
 		// check if part of a larger code-block
 		ReferenceIterator referencesTo = program.getReferenceManager().getReferencesTo(address);
 		for (Reference reference : referencesTo) {
