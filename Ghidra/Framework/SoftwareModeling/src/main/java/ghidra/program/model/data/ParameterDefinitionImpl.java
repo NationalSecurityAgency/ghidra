@@ -83,7 +83,12 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 			throw new IllegalArgumentException(kind +
 				" type must be specified with fixed-length data type: " + dataType.getName());
 		}
-		if (dataType instanceof VoidDataType) {
+		DataType baseType = dataType;
+		if(baseType instanceof TypedefDataType) {
+			baseType = ((TypedefDataType)baseType).getBaseDataType();
+		}
+		
+		if (baseType instanceof VoidDataType) {
 			if (!isReturn) {
 				throw new IllegalArgumentException(
 					"Parameter type may not specify the void datatype - empty parameter list should be used");
