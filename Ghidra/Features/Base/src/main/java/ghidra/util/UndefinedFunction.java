@@ -172,6 +172,9 @@ public class UndefinedFunction implements Function {
 				FlowType flowType = blockReference.getFlowType();
 				if (flowType.isCall())
 					continue;			// Don't follow call edges for within-function analysis
+				if (flowType.isIndirect() || flowType.isData()) {
+					continue;
+				}
 				count += 1;			// Count the existence of source that is NOT a call
 				Address sourceAddr = blockReference.getSourceAddress();
 				if (visitedAddresses.contains(sourceAddr))

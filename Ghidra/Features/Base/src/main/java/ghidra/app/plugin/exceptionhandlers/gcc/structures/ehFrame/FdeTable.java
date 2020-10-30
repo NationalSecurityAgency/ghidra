@@ -147,6 +147,7 @@ public class FdeTable {
 
 			// this is an indirect reference to code from the table,
 			//  so tag reference as an indirect code flow
+			// TODO: This should be a CODE flow, leaving as INDIRECTION until refactor
 			prog.getReferenceManager().addMemoryReference(locComponentAddr, locAddr,
 				RefType.INDIRECTION,
 				SourceType.ANALYSIS, 0);
