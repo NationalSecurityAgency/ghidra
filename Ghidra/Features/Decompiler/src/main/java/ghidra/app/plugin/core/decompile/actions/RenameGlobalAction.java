@@ -28,6 +28,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.HighCodeSymbol;
+import ghidra.program.model.pcode.HighFunctionShellSymbol;
 import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
@@ -62,7 +63,7 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 			return false;
 		}
 		HighSymbol highSymbol = findHighSymbolFromToken(tokenAtCursor, context.getHighFunction());
-		if (highSymbol == null) {
+		if (highSymbol == null || highSymbol instanceof HighFunctionShellSymbol) {
 			return false;
 		}
 		return highSymbol.isGlobal();
