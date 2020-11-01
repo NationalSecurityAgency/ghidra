@@ -136,7 +136,7 @@
 @endif
 
 @if ADDRSIZE == "32"
-@if FPSIZE == "32"
+@if FPSIZE == "32" || FPSIZE == "64"
 # c.fsw CD,Ck(Cs) 0000e000 0000e003 DWORD|DREF (32, 4) 
 :c.fsw cfr0204s,clwimm(cr0709s) is cfr0204s & cr0709s & cop0001=0x0 & cop1315=0x7 & clwimm
 {
