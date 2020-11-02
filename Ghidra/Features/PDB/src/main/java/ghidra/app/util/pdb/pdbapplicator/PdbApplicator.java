@@ -21,12 +21,14 @@ import java.util.*;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
+import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
+import ghidra.framework.options.Options;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphNavigator;
 import ghidra.graph.jung.JungDirectedGraph;
@@ -180,6 +182,10 @@ public class PdbApplicator {
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
 			TaskMonitor monitorParam, MessageLog logParam) throws PdbException, CancelledException {
 
+		// FIXME: should not support use of DataTypeManager-only since it will not have the correct data
+		// organization if it corresponds to a data type archive.  Need to evaulate archive use case
+		// and determine if a program must always be used.
+
 		initializeApplyTo(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, monitorParam, logParam);
 
@@ -196,6 +202,11 @@ public class PdbApplicator {
 				break;
 			default:
 				throw new PdbException("Invalid Restriction");
+		}
+
+		if (program == null) {
+			Options options = program.getOptions(Program.PROGRAM_INFO);
+			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 		}
 
 		pdbAddressManager.logReport();
