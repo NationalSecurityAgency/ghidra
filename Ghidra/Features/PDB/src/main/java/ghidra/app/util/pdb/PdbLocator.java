@@ -27,6 +27,7 @@ import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
+import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -78,6 +79,8 @@ public class PdbLocator {
 		onWindows ? new File("C:\\Symbols") : new File(USER_HOME, "Symbols");
 	public final static File WINDOWS_SYMBOLS_DIR =
 		onWindows ? new File("C:/WINDOWS/Symbols") : null;
+
+	public final static String PDB_SYMBOLS_DIR_PREFERENCE = "PDB Storage Directory";
 
 	private File symbolsRepositoryDir;
 	/**
@@ -675,6 +678,23 @@ public class PdbLocator {
 		}
 
 		return true;
+	}
+
+	public static File getDefaultPdbSymbolsDir() {
+		String pdbStorageLocation = Preferences.getProperty(PDB_SYMBOLS_DIR_PREFERENCE, null, true);
+		File defaultSymbolsDir = DEFAULT_SYMBOLS_DIR;
+		if (pdbStorageLocation != null) {
+			File pdbDirectory = new File(pdbStorageLocation);
+			if (pdbDirectory.isDirectory()) {
+				defaultSymbolsDir = pdbDirectory;
+			}
+		}
+		return defaultSymbolsDir;
+	}
+
+	public static void setDefaultPdbSymbolsDir(File symbolsDir) {
+		Preferences.setProperty(PDB_SYMBOLS_DIR_PREFERENCE, symbolsDir.getAbsolutePath());
+		Preferences.store();
 	}
 
 }

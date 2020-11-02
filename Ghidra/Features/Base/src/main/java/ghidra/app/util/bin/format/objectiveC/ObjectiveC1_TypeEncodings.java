@@ -71,6 +71,7 @@ public final class ObjectiveC1_TypeEncodings {
 	public final static char _C_BYCOPY = 'O';
 	public final static char _C_BYREF = 'R';
 	public final static char _C_ONEWAY = 'V';
+	public final static char _C_ATOMIC = 'A';
 
 	private final static String ANONYMOUS_PREFIX = "Anonymous";
 
@@ -410,8 +411,13 @@ public final class ObjectiveC1_TypeEncodings {
 				DataType dt = parseDataType(buffer);
 				return new TypedefDataType("ONEWAY " + dt.getDisplayName(), dt);
 			}
+			case _C_ATOMIC: {
+				buffer.deleteCharAt(0);
+				DataType dt = parseDataType(buffer);
+				return new TypedefDataType("ATOMIC " + dt.getDisplayName(), dt);
+			}
 		}
-		throw new UnsupportedOperationException("unrecognized format type: " + buffer.charAt(0));
+		throw new UnsupportedOperationException("Unsupported Objective C type encoding: " + buffer.charAt(0));
 	}
 
 	private Union parseBitFields(StringBuffer buffer) {

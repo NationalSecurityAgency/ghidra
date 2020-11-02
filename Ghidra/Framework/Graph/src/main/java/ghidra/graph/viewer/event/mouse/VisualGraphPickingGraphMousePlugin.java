@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,18 +38,17 @@ public class VisualGraphPickingGraphMousePlugin<V extends VisualVertex, E extend
 // ALERT: -this class was created because mouseDragged() has a bug that generates a NPE
 //        -also, mousePressed() has a bug in that it does not check the modifiers when the method is entered
 
-	// TODO for deprecated usage note, see the VisualGraphMousePlugin interface
 	public VisualGraphPickingGraphMousePlugin() {
-		super(InputEvent.BUTTON1_MASK,
-			InputEvent.BUTTON1_MASK | DockingUtils.CONTROL_KEY_MODIFIER_MASK_DEPRECATED);
+		super(InputEvent.BUTTON1_DOWN_MASK,
+			InputEvent.BUTTON1_DOWN_MASK | DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 	}
 
 	@Override
 	public boolean checkModifiers(MouseEvent e) {
-		if (e.getModifiers() == addToSelectionModifiers) {
+		if (e.getModifiersEx() == addToSelectionModifiers) {
 			return true;
 		}
-		return super.checkModifiers(e);
+		return e.getModifiersEx() == modifiers;
 	}
 
 	@Override
@@ -80,7 +78,7 @@ public class VisualGraphPickingGraphMousePlugin<V extends VisualVertex, E extend
 
 	private void increaseDragRectangle(MouseEvent e) {
 		Point2D out = e.getPoint();
-		int theModifiers = e.getModifiers();
+		int theModifiers = e.getModifiersEx();
 		if (theModifiers == addToSelectionModifiers || theModifiers == modifiers) {
 			if (down != null) {
 				rect.setFrameFromDiagonal(down, out);

@@ -253,7 +253,7 @@ public class DummyTool extends PluginTool {
 	}
 
 	@Override
-	public void restoreWindowingDataFromXml(Element windowData) {
+	public void restoreWindowingDataFromXml(Element element) {
 		//do nothing
 	}
 

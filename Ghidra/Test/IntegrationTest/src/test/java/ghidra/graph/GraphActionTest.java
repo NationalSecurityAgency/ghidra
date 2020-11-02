@@ -79,7 +79,7 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(selectedVertices.contains(b));
 
 		// now try and select a second vertex
-		context = new VertexGraphActionContext(graphComponentProvider, graph, null, null,d);
+		context = new VertexGraphActionContext(graphComponentProvider, graph, null, null, d);
 		performAction(action, context, true);
 		selectedVertices = display.getSelectedVertices();
 		assertEquals(2, selectedVertices.size());
@@ -196,7 +196,6 @@ public class GraphActionTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(selectedVerticeIds.contains(b));
 		assertTrue(selectedVerticeIds.contains(c));
 	}
-
 
 	@Test
 	public void testGrowSelectionIn() {

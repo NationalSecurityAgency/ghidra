@@ -404,7 +404,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 			"You cannot persist generic tools: " + getClass().getName());
 	}
 
-	public void restoreWindowingDataFromXml(Element windowData) {
+	public void restoreWindowingDataFromXml(Element element) {
 		throw new UnsupportedOperationException(
 			"You cannot persist generic tools: " + getClass().getName());
 	}
@@ -553,6 +553,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		}
 
 		restoreOptionsFromXml(root);
+		winMgr.restorePreferencesFromXML(root);
 		setDefaultOptionValues();
 		boolean hasErrors = false;
 		try {
@@ -563,7 +564,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 			Msg.showError(this, getToolFrame(), "Error Restoring Plugins", e.getMessage());
 		}
 
-		winMgr.restoreFromXML(root);
+		winMgr.restoreWindowDataFromXml(root);
 		winMgr.setToolName(fullName);
 		return hasErrors;
 	}

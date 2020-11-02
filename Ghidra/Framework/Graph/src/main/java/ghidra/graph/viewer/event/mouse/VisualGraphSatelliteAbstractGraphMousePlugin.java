@@ -29,7 +29,7 @@ public abstract class VisualGraphSatelliteAbstractGraphMousePlugin<V extends Vis
 		extends VisualGraphAbstractGraphMousePlugin<V, E> {
 
 	public VisualGraphSatelliteAbstractGraphMousePlugin() {
-		this(InputEvent.BUTTON1_MASK);
+		this(InputEvent.BUTTON1_DOWN_MASK);
 	}
 
 	public VisualGraphSatelliteAbstractGraphMousePlugin(int selectionModifiers) {

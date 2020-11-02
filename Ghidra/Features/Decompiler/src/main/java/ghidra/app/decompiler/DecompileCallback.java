@@ -526,6 +526,9 @@ public class DecompileCallback {
 
 	private Namespace getNameSpaceByID(long id) {
 		Symbol namespaceSym = program.getSymbolTable().getSymbol(id);
+		if (namespaceSym == null) {
+			return null;
+		}
 		Object namespace = namespaceSym.getObject();
 		if (namespace instanceof Namespace) {
 			return (Namespace) namespace;

@@ -29,10 +29,17 @@ public class VisualGraphCursorRestoringGraphMousePlugin<V, E> extends AbstractGr
 		super(0);
 	}
 
+	@Override
+	public boolean checkModifiers(MouseEvent e) {
+		return e.getModifiersEx() == modifiers;
+	}
+
+	@Override
 	public void mouseDragged(MouseEvent e) {
 		// don't care
 	}
 
+	@Override
 	public void mouseMoved(MouseEvent e) {
 		installCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR), e);
 	}

@@ -10,12 +10,13 @@ macro tzcntflags(input, output) {
 ####
 
 # TODO remove ANDN from ia.sinc ?????
-:ANDN Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf2; Reg32 ... & rm32
+:ANDN Reg32, vexVVVV_r32, rm32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf2; Reg32 ... & check_Reg32_dest ... &rm32
 {
   Reg32 = ~(vexVVVV_r32) & rm32;
   resultflags(Reg32);
   OF = 0;
   CF = 0;
+  build check_Reg32_dest;
 }
 
 @ifdef IA64
@@ -30,12 +31,13 @@ macro tzcntflags(input, output) {
 @endif
 
 
-:BEXTR Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & rm32
+:BEXTR Reg32, rm32, vexVVVV_r32 is $(VEX_NDS) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf7; Reg32 ... & check_Reg32_dest ... & rm32
 {
   sourceTmp:1 = vexVVVV_r32[0,8];
   lengthTmp:1 = vexVVVV_r32[8,8];
 
   Reg32 = (rm32 >> sourceTmp) & ((1 << lengthTmp) - 1);
+  build check_Reg32_dest;
 
   ZF = (Reg32 == 0);
   OF = 0;
@@ -59,9 +61,10 @@ macro tzcntflags(input, output) {
 @endif
 
 
-:BLSI vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=3 ... & rm32
+:BLSI vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=3 ... & check_vexVVVV_r32_dest ... & rm32
 {
   vexVVVV_r32 = -rm32 & rm32;
+  build check_vexVVVV_r32_dest;
 
   ZF = (vexVVVV_r32 == 0);
   SF = (vexVVVV_r32 s< 0);
@@ -84,12 +87,13 @@ macro tzcntflags(input, output) {
 @endif
 
 
-:BLSMSK vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=2 ... & rm32
+:BLSMSK vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=2 ... & check_vexVVVV_r32_dest ... &rm32
 {
   CF = (rm32 == 0);
   vexVVVV_r32 = (rm32 - 1) ^ rm32;
 
   SF = (vexVVVV_r32 s< 0);
+  build check_vexVVVV_r32_dest;
   ZF = 0;
   OF = 0;
   # AF and PF are undefined
@@ -109,10 +113,11 @@ macro tzcntflags(input, output) {
 @endif
 
 
-:BLSR vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=1 ... & rm32
+:BLSR vexVVVV_r32, rm32 is $(VEX_NDD) & $(VEX_LZ) & $(VEX_PRE_NONE) & $(VEX_0F38) & $(VEX_W0) & vexVVVV_r32; byte=0xf3; reg_opcode=1 ... & check_vexVVVV_r32_dest ... &rm32
 {
   CF = (rm32 == 0);
   vexVVVV_r32 = (rm32 - 1) & rm32;
+  build check_vexVVVV_r32_dest;
 
   ZF = (vexVVVV_r32 == 0);
   SF = (vexVVVV_r32 s< 0);
@@ -152,7 +157,7 @@ macro tzcntflags(input, output) {
  
 }
 
-:TZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBC; Reg32 ... & rm32 {
+:TZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBC; Reg32 ... & check_Reg32_dest ... & rm32 {
 
   countTmp:4 = 0;
   inputTmp:4 = rm32;
@@ -167,6 +172,7 @@ macro tzcntflags(input, output) {
  <loopend>
   tzcntflags(rm32, countTmp);
   Reg32 = countTmp;
+  build check_Reg32_dest;
 }
 
 @ifdef IA64

@@ -26,6 +26,7 @@ import ghidra.program.model.block.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.service.graph.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -47,6 +48,7 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 		display.addAction(new ActionBuilder("Rename Vertex", "Block Graph")
 				.popupMenuPath("Rename Vertex")
 				.withContext(VertexGraphActionContext.class)
+				.helpLocation(new HelpLocation("ProgramGraphPlugin", "Rename Vertex"))
 				// only enable action when vertex corresponds to an address
 				.enabledWhen(c -> getAddress(c.getClickedVertex().getId()) != null)
 				.onAction(this::updateVertexName)

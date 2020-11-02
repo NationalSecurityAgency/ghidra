@@ -1,7 +1,7 @@
 EXCLUDE FROM GHIDRA JAR: true
 
-MODULE FILE LICENSE: lib/jungrapht-visualization-1.0-RC9.jar BSD
-MODULE FILE LICENSE: lib/jungrapht-layout-1.0-RC9.jar BSD
+MODULE FILE LICENSE: lib/jungrapht-visualization-1.0.jar BSD
+MODULE FILE LICENSE: lib/jungrapht-layout-1.0.jar BSD
 MODULE FILE LICENSE: lib/jgrapht-core-1.5.0.jar LGPL 2.1
 MODULE FILE LICENSE: lib/jgrapht-io-1.5.0.jar LGPL 2.1
 MODULE FILE LICENSE: lib/jheaps-0.13.jar Apache License 2.0

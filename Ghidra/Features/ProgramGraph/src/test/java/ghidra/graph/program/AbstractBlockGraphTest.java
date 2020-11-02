@@ -30,16 +30,16 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.test.*;
 
 public class AbstractBlockGraphTest extends AbstractGhidraHeadedIntegrationTest {
+
+	protected static final String CALLER_FUNCTION_ADDRESS = "01002200";
+	protected static final String SIMPLE_FUNCTION_ADDRESS = "01002239";
+
 	protected PluginTool tool;
 	protected ProgramDB program;
 	protected TestEnv env;
 	protected BlockModelService blockModelService;
 	private ToyProgramBuilder builder;
 	protected CodeBrowserPlugin codeBrowser;
-
-	protected Address addr(long addr) {
-		return builder.getAddress(addr);
-	}
 
 	@Before
 	public void setUp() throws Exception {
@@ -50,7 +50,6 @@ public class AbstractBlockGraphTest extends AbstractGhidraHeadedIntegrationTest 
 		tool = env.getTool();
 
 		initializeTool();
-
 	}
 
 	@After
@@ -80,14 +79,15 @@ public class AbstractBlockGraphTest extends AbstractGhidraHeadedIntegrationTest 
 		builder = new ToyProgramBuilder("sample", true);
 		builder.createMemory("caller", "0x01002200", 8);
 		builder.createMemory("simple", "0x01002239", 8);
+		builder.createMemory("not_graphed", "0x01002300", 8);
 
-		buildCallerFunction(builder);
-		buildSimpleFunction(builder);
+		buildCallerFunction();
+		buildSimpleFunction();
 
 		program = builder.getProgram();
 	}
 
-	private void buildCallerFunction(ToyProgramBuilder builder) throws MemoryAccessException {
+	private void buildCallerFunction() throws MemoryAccessException {
 		// just a function that calls another
 		builder.addBytesNOP("0x01002200", 1);
 		builder.addBytesCall("0x01002201", "0x01002239");// jump to C
@@ -98,7 +98,7 @@ public class AbstractBlockGraphTest extends AbstractGhidraHeadedIntegrationTest 
 		builder.createLabel("0x01002200", "entry");// function label
 	}
 
-	private void buildSimpleFunction(ToyProgramBuilder builder) throws MemoryAccessException {
+	private void buildSimpleFunction() throws MemoryAccessException {
 		// just a function to render in the graph so that we can clear out settings/cache
 		// 01002239
 
@@ -126,6 +126,14 @@ public class AbstractBlockGraphTest extends AbstractGhidraHeadedIntegrationTest 
 		builder.disassemble("0x01002239", 8, true);
 		builder.createFunction("0x01002239");
 		builder.createLabel("0x01002239", "simple");// function label
+	}
+
+	protected Address addr(long addr) {
+		return builder.getAddress(addr);
+	}
+
+	protected Address addr(String addressString) {
+		return builder.addr(addressString);
 	}
 
 }

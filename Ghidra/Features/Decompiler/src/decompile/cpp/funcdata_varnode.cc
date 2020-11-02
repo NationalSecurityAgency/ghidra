@@ -1376,6 +1376,35 @@ Address Funcdata::findDisjointCover(Varnode *vn,int4 &sz)
   return addr;
 }
 
+/// \brief Make sure every Varnode in the given list has a Symbol it will link to
+///
+/// This is used when Varnodes overlap a locked Symbol but extend beyond it.
+/// An existing Symbol is passed in with a list of possibly overextending Varnodes.
+/// The list is in Address order.  We check that each Varnode has a Symbol that
+/// overlaps its first byte (to guarantee a link). If one doesn't exist it is created.
+/// \param entry is the existing Symbol entry
+/// \param list is the list of Varnodes
+void Funcdata::coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list)
+
+{
+  Scope *scope = entry->getSymbol()->getScope();
+  for(int4 i=0;i<list.size();++i) {
+    Varnode *vn = list[i];
+    // We only need to check once for all Varnodes at the same Address
+    // Of these, pick the biggest Varnode
+    if (i+1<list.size() && list[i+1]->getAddr() == vn->getAddr())
+      continue;
+    Address usepoint = vn->getUsePoint(*this);
+    SymbolEntry *overlapEntry = scope->findContainer(vn->getAddr(), vn->getSize(), usepoint);
+    if (overlapEntry == (SymbolEntry *)0) {
+      int4 diff = (int4)(vn->getOffset() - entry->getAddr().getOffset());
+      ostringstream s;
+      s << entry->getSymbol()->getName() << '_' << diff;
+      scope->addSymbol(s.str(),vn->getHigh()->getType(),vn->getAddr(),usepoint);
+    }
+  }
+}
+
 /// Search for \e addrtied Varnodes whose storage falls in the global Scope, then
 /// build a new global Symbol if one didn't exist before.
 void Funcdata::mapGlobals(void)
@@ -1386,6 +1415,7 @@ void Funcdata::mapGlobals(void)
   Varnode *vn,*maxvn;
   Datatype *ct;
   uint4 flags;
+  vector<Varnode *> uncoveredVarnodes;
   bool inconsistentuse = false;
 
   iter = vbank.beginLoc(); // Go through all varnodes for this space
@@ -1398,10 +1428,16 @@ void Funcdata::mapGlobals(void)
     maxvn = vn;
     Address addr = vn->getAddr();
     Address endaddr = addr + vn->getSize();
+    uncoveredVarnodes.clear();
     while(iter != enditer) {
       vn = *iter;
       if (!vn->isPersist()) break;
       if (vn->getAddr() < endaddr) {
+	// Varnodes at the same base address will get linked to the Symbol at that address
+	// even if the size doesn't match, but we check for internal Varnodes that
+	// do not have an attached Symbol as these won't get linked to anything
+	if (vn->getAddr() != addr && vn->getSymbolEntry() == (SymbolEntry *)0)
+	  uncoveredVarnodes.push_back(vn);
 	endaddr = vn->getAddr() + vn->getSize();
 	if (vn->getSize() > maxvn->getSize())
 	  maxvn = vn;
@@ -1429,8 +1465,11 @@ void Funcdata::mapGlobals(void)
 						      Varnode::addrtied|Varnode::persist);
       discover->addSymbol(symbolname,ct,addr,usepoint);
     }
-    else if ((addr.getOffset()+ct->getSize())-1 > (entry->getAddr().getOffset()+entry->getSize()) -1)
+    else if ((addr.getOffset()+ct->getSize())-1 > (entry->getAddr().getOffset()+entry->getSize()) -1) {
       inconsistentuse = true;
+      if (!uncoveredVarnodes.empty())	// Provide Symbols for any uncovered internal Varnodes
+	coverVarnodes(entry, uncoveredVarnodes);
+    }
   }
   if (inconsistentuse)
     warningHeader("Globals starting with '_' overlap smaller symbols at the same address");
