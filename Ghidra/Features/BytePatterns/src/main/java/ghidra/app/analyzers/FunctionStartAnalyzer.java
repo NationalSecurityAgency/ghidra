@@ -365,7 +365,11 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 
 				// if this place is already in a function, we shouldn't start one
 				if (name.startsWith("func")) {
-					if (checkAlreadyInFunctionAbove(program, addr)) {
+					Function funcAbove = getFunctionAbove(program, addr);
+					if (funcAbove == null) {
+						return false;
+					}
+					if (checkAlreadyInFunctionAbove(program, addr, funcAbove)) {
 						return false;
 					}
 				}
@@ -402,38 +406,76 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			return true;
 		}
 
+		/*
+		 * Check if address if addr is already part of a function just preceding this address.
+		 * If the address is part of another function that is different than the function right
+		 * above, then the pattern should be applied, because it is most likely a unique function
+		 * that is being used by another function as a shared return.
+		 */
 		private boolean checkAlreadyInFunctionAbove(Program program, Address addr) {
-			// make sure there is an end of function before this one, and if just an instruction, doesn't fall into this one.
-			Function func = null;
+			Function funcAbove = getFunctionAbove(program, addr);
+			return checkAlreadyInFunctionAbove(program, addr, funcAbove);
+		}
+		
+		/*
+		 * Check if in a function above
+		 * return true if already in function above, false otherwise even if in another function
+		 */
+		private boolean checkAlreadyInFunctionAbove(Program program, Address addr, Function funcAbove) {
+			// if no funcAbove, make sure an instruction, doesn't fall into this one.
 			Address addrBefore = addr.previous();
-			func = program.getFunctionManager().getFunctionContaining(addrBefore);
-			if (func == null) {
-				Instruction instr = program.getListing().getInstructionContaining(addrBefore);
-				if (instr != null && addr.equals(instr.getFallThrough())) {
-					return true;
-				}
-				// check for references to this function, address
-				ReferenceIterator referencesTo =
-					program.getReferenceManager().getReferencesTo(addr);
-				for (Reference reference : referencesTo) {
-					// someone flows to or reads/writes this location, shouldn't be a start
-					RefType referenceType = reference.getReferenceType();
-					if (referenceType.isData() &&
-						!(referenceType.isRead() || referenceType.isWrite())) {
-						continue;
-					}
-					// any other reference to here is bad, since a function or other flow should
-					//   have created the location
-					return true;
-				}
+			if (addrBefore == null) {
 				return false;
 			}
-			// don't do it if I'm in a function
-			Function myfunc = program.getFunctionManager().getFunctionContaining(addr);
-			if (myfunc != null && myfunc.getEntryPoint().equals(func.getEntryPoint())) {
+			if (funcAbove != null) {
+				// check if in function right above
+				Function myfunc = program.getFunctionManager().getFunctionContaining(addr);
+				if (myfunc != null && myfunc.getEntryPoint().equals(funcAbove.getEntryPoint())) {
+					return true;
+				}
+				// I could be in a different function, just not one above
+				return false;
+			}
+
+			// no function above, but check for references, that would make this a function
+			// or references that would imply it is part of another function.
+			Instruction instr = program.getListing().getInstructionContaining(addrBefore);
+			if (instr != null && addr.equals(instr.getFallThrough())) {
 				return true;
 			}
+			// check for references to this function, address
+			ReferenceIterator referencesTo =
+				program.getReferenceManager().getReferencesTo(addr);
+			for (Reference reference : referencesTo) {
+				// someone flows to or reads/writes this location, shouldn't be a start
+				RefType referenceType = reference.getReferenceType();
+				if (referenceType.isData() &&
+					!(referenceType.isRead() || referenceType.isWrite())) {
+					continue;
+				}
+				// any other reference to here is bad, since a function or other flow should
+				//   have created the location
+				return true;
+			}
+
 			return false;
+		}
+		
+		/**
+		 * Get an existing function right above the addr.
+		 * @param program program to check
+		 * @param addr address to check
+		 * @return true if there is an existing function above addr
+		 */				
+		private Function getFunctionAbove(Program program, Address addr) {
+			// make sure there is an end of function before this one, and addr is not in the function
+			Function func = null;
+			Address addrBefore = addr.previous();
+			if (addrBefore == null) {
+				return null;
+			}
+			func = program.getFunctionManager().getFunctionContaining(addrBefore);
+			return func;
 		}
 
 		void bookmarkAction(Program program, Address addr, Match match) {

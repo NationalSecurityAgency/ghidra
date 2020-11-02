@@ -871,9 +871,14 @@ public class DIEAggregate {
 			// else it was a DW_FORM_data value and is relative to the lowPC value
 			DWARFNumericAttribute low =
 				getAttribute(DWARFAttribute.DW_AT_low_pc, DWARFNumericAttribute.class);
-			if (low != null && highVal.getUnsignedValue() > 0) {
+			
+			long lhighVal = highVal.getUnsignedValue();
+			if (lhighVal == 0) {
+				lhighVal = 1;
+			}
+			if (low != null && lhighVal > 0) {
 				return low.getUnsignedValue() + getProgram().getProgramBaseAddressFixup() +
-					highVal.getUnsignedValue() - 1;
+						lhighVal - 1;
 			}
 		}
 		throw new IOException("Bad/unsupported DW_AT_high_pc attribute value or type");
