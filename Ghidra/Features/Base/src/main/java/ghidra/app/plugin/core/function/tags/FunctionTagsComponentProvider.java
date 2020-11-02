@@ -44,9 +44,9 @@ import ghidra.util.*;
  * 	<LI>Edit tags (both name and comment)</LI>
  * 	<LI>Delete tags</LI>
  * 	<LI>Assign tags to the currently selected function</LI>
- * 	<LI>Remove tags from the currently selected function</LI> 
+ * 	<LI>Remove tags from the currently selected function</LI>
  * </UL>
- * This provider can be shown by right-clicking on a function and selecting the 
+ * This provider can be shown by right-clicking on a function and selecting the
  * "Edit Tags" option, or by selecting the "Edit Function Tags" option from the
  * "Window" menu.
  */
@@ -69,7 +69,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private int MIN_WIDTH = 850;
 	private int MIN_HEIGHT = 350;
 
-	// The current program location selected in the listing. 
+	// The current program location selected in the listing.
 	private ProgramLocation currentLocation = null;
 
 	// Character used as a separator when entering multiple tags in
@@ -78,7 +78,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param plugin the function tag plugin
 	 * @param program the current program
 	 */
@@ -87,6 +87,9 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		this.program = program;
+
+		mainPanel = createWorkPanel();
+
 		addToTool();
 	}
 
@@ -95,7 +98,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 ******************************************************************************/
 
 	/**
-	 * Completely clears the UI and loads the tag table from scratch. Note that 
+	 * Completely clears the UI and loads the tag table from scratch. Note that
 	 * the model will be completely reset based on whatever the current location is
 	 * in the listing.
 	 */
@@ -110,7 +113,6 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 
 	@Override
 	public void componentShown() {
-		mainPanel = createWorkPanel();
 		updateTagLists();
 		updateTitle(currentLocation);
 	}
@@ -125,10 +127,10 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Invoked when a new location has been detected in the listing. When 
+	 * Invoked when a new location has been detected in the listing. When
 	 * this happens we need to update the tag list to show what tags are assigned
 	 * at the current location.
-	 * 
+	 *
 	 * @param loc the address selected in the listing
 	 */
 	public void locationChanged(ProgramLocation loc) {
@@ -153,8 +155,8 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 
 	/**
 	 * This class needs to listen for changes to the domain object (tag create, delete, etc...)
-	 * so it can update the display accordingly. 
-	 * 
+	 * so it can update the display accordingly.
+	 *
 	 * @param ev the change event
 	 */
 	@Override
@@ -208,8 +210,8 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
 
 		// If we don't set this, then the splitter won't be able to shrink the
-		// target panels below the size required by its header, which can be large 
-		// because of the amount of text displayed. Keep the minimum size setting on 
+		// target panels below the size required by its header, which can be large
+		// because of the amount of text displayed. Keep the minimum size setting on
 		// the source panel, however. That is generally small.
 		targetPanel.setMinimumSize(new Dimension(0, 0));
 
@@ -234,7 +236,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 * Updates the button panel depending on the selection state of the
 	 * tag lists. Also updates the {@link AllFunctionsPanel} so it can update
 	 * its list.
-	 * 
+	 *
 	 * @param panel the panel that generated the selection event
 	 */
 	public void selectionChanged(TagListPanel panel) {
@@ -267,7 +269,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	/**
 	 * Returns the {@link Function} at the given program location. If not a function, or
 	 * if the location is not a pointer to a function returns null.
-	 * 
+	 *
 	 * @param loc the program location
 	 * @return function containing the location, or null if not applicable
 	 */
@@ -283,7 +285,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 
 	/**
 	 * Retrieves the address of the function associated with the given program location.
-	 * 
+	 *
 	 * @param loc the program location
 	 * @return the entry point of the function, or null if not valid
 	 */
@@ -309,7 +311,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Refreshes the contents of the table with the current program and location. This 
+	 * Refreshes the contents of the table with the current program and location. This
 	 * should be called any time a program is activated or the location in the listing
 	 * has changed.
 	 */
@@ -323,7 +325,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		targetPanel.setProgram(program);
 		allFunctionsPanel.setProgram(program);
 
-		// Get the currently selected tags and use them to update the all functions panel. If 
+		// Get the currently selected tags and use them to update the all functions panel. If
 		// there is no current selection, leave the table as-is.
 		Set<FunctionTag> sTags = sourcePanel.getSelectedTags();
 		Set<FunctionTag> tTags = targetPanel.getSelectedTags();
@@ -338,7 +340,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Parses all items in the text input field and adds them as new tags. 
+	 * Parses all items in the text input field and adds them as new tags.
 	 */
 	private void processCreates() {
 
@@ -350,7 +352,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		List<String> names = getInputNames();
 		for (String name : names) {
 
-			// Only execute the create command if a tag with the given name does not 
+			// Only execute the create command if a tag with the given name does not
 			// already exist.
 			if (sourcePanel.tagExists(name) || targetPanel.tagExists(name)) {
 				Msg.showInfo(this, tool.getActiveWindow(), "Duplicate Tag Name",
@@ -366,7 +368,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	/**
 	 * Returns a list of tag names the user has entered in the input field.
 	 * Note: This assumes that multiple entries are comma-delimited.
-	 * 
+	 *
 	 * @return the list of tag names to create
 	 */
 	private List<String> getInputNames() {
@@ -375,7 +377,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		String[] names = tagInputField.getText().split(INPUT_DELIMITER);
 
 		// Trim each item to remove any leading/trailing whitespace and add to
-		// the return list. 
+		// the return list.
 		ArrayList<String> nameList = new ArrayList<>();
 		for (String name : names) {
 			if (!name.trim().isEmpty()) {
@@ -388,7 +390,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 
 	/**
 	 * Creates the text-entry panel for adding new tag names.
-	 * 
+	 *
 	 * @return the new text input panel
 	 */
 	private JPanel createInputPanel() {
