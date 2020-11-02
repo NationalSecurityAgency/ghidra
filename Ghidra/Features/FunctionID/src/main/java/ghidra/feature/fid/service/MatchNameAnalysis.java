@@ -30,66 +30,131 @@ import ghidra.util.task.TaskMonitor;
  */
 public class MatchNameAnalysis {
 	private Set<String> finalNameList = null;
+	private TreeMap<String, NameVersions> versionMap = null;
 	private TreeSet<String> rawNames = null;
 	private TreeSet<String> similarBaseNames = null;
 	private TreeSet<String> demangledNameNoTemplate = null;
 	private TreeSet<String> exactDemangledBaseNames = null;
 	private TreeSet<String> libraries = null;
-	private boolean demangleSelect = false;		// True if either deamngledNameNoTemplate or exactDemangledBaseNames is unique
 	
-	private int mostOptimisticCount;			// What is most optimistic (smallest) number of matches
-												// Once duplicates and similar base names are taken into account
 	private float overallScore = 0.0f;
 
+	/**
+	 * @return the number of deduped symbol names
+	 */
 	public int numNames() {
 		return finalNameList.size();
 	}
 
-	public boolean isDemangled() {
-		return demangleSelect;
-	}
-
+	/**
+	 * @return an iterator to the deduped list of raw names (similar names are not collapsed)
+	 */
 	public Iterator<String> getRawNameIterator() {
 		return rawNames.iterator();
 	}
 
+	/**
+	 * Check if the given name is contained in the list of matches
+	 * @param name is the given name
+	 * @return true if the name is in the list
+	 */
 	public boolean containsRawName(String name) {
 		return rawNames.contains(name);
 	}
 
+	/**
+	 * @return an iterator to the final list of deduped symbol names
+	 */
 	public Iterator<String> getNameIterator() {
 		return finalNameList.iterator();
 	}
 
-	public int numSimilarNames() {
-		return similarBaseNames.size();
-	}
-
+	/**
+	 * @return the number of symbols in the deduped list of matching libraries
+	 */
 	public int numLibraries() {
 		return libraries.size();
 	}
 
+	/**
+	 * @return an iterator to the deduped list of matching libraries
+	 */
 	public Iterator<String> getLibraryIterator() {
 		return libraries.iterator();
 	}
 
+	/**
+	 * Get an object with all the given versions of the given raw name
+	 * @param raw is the raw name
+	 * @return the corresponding NameVersions object
+	 */
+	public NameVersions getVersions(String raw) {
+		return versionMap.get(raw);
+	}
+
+	/**
+	 * Run through all deduping strategies and return the number of unique symbols given
+	 * by the best strategy.
+	 * @return number of unique symbols given by the optimal deduping strategy
+	 */
 	public int getMostOptimisticCount() {
-		return mostOptimisticCount;
+		int count = rawNames.size();
+		if (similarBaseNames.size() < count) {
+			count = similarBaseNames.size();
+		}
+		if (demangledNameNoTemplate != null && demangledNameNoTemplate.size() < count) {
+			count = demangledNameNoTemplate.size();
+		}
+		if (exactDemangledBaseNames != null && exactDemangledBaseNames.size() < count) {
+			count = exactDemangledBaseNames.size();
+		}
+		return count;
+	}
+
+	/**
+	 * Run through ALL deduping strategies and if one results in a single label, return that label.
+	 * Otherwise return null.
+	 * @return a unique name describing all matches or null
+	 */
+	public String getMostOptimisticName() {
+		if (rawNames.size() == 1) {
+			return rawNames.first();
+		}
+		if (similarBaseNames.size() == 1) {
+			return similarBaseNames.first();
+		}
+		if (demangledNameNoTemplate != null && demangledNameNoTemplate.size() == 1) {
+			return demangledNameNoTemplate.first();
+		}
+		if (exactDemangledBaseNames != null && exactDemangledBaseNames.size() == 1) {
+			return exactDemangledBaseNames.first();
+		}
+		return null;
 	}
 
 	public float getOverallScore() {
 		return overallScore;
 	}
 
+	/**
+	 * Analyze a list of FID matches from a single address, deciding on the final list of symbols
+	 * that will be associated with the address by deduping and omitting similar names.
+	 * The final list is in finalNameList.
+	 * Demangling and template stripping can produce an even shorter list than finalNameList.
+	 * This is optionally available through getMostOptimisticName().
+	 * @param matches is the set of FID matches to analyze
+	 * @param program is the Program
+	 * @param monitor is the monitor
+	 * @throws CancelledException if the user cancels the task
+	 */
 	public void analyzeNames(List<FidMatch> matches, Program program, TaskMonitor monitor)
 				throws CancelledException {
 
+		versionMap = new TreeMap<String, NameVersions>();
 		rawNames = new TreeSet<String>();
 		similarBaseNames = new TreeSet<String>();
 		demangledNameNoTemplate = new TreeSet<String>();
 		exactDemangledBaseNames = new TreeSet<String>();
-		int cannotDetemplate = 0;
-		int cannotDemangle = 0;
 
 		for (FidMatch match : matches) {
 			monitor.checkCanceled();
@@ -99,55 +164,27 @@ public class MatchNameAnalysis {
 			NameVersions nameVersions = NameVersions.generate(function.getName(), program);
 			// Put exact base names in a HashSet
 			if (nameVersions.rawName != null) {
+				versionMap.put(nameVersions.rawName, nameVersions);
 				rawNames.add(nameVersions.rawName);				// Dedup the raw names
 				similarBaseNames.add(nameVersions.similarName);	// Dedup names with underscores removed
-				if (nameVersions.demangledNoTemplate != null) {
+				if (nameVersions.demangledNoTemplate != null && demangledNameNoTemplate != null) {
 					demangledNameNoTemplate.add(nameVersions.demangledNoTemplate);
 				}
 				else {
-					cannotDetemplate += 1;
+					demangledNameNoTemplate = null;		// Get rid of container if we can't strip everything
 				}
-				if (nameVersions.demangledBaseName != null) {
+				if (nameVersions.demangledBaseName != null && exactDemangledBaseNames != null) {
 					exactDemangledBaseNames.add(nameVersions.demangledBaseName);		// Dedup demangled base name
 				}
 				else {
-					cannotDemangle += 1;
+					exactDemangledBaseNames = null;		// Get rid of container if we can't demangle everything
 				}
 			}
 		}
 
-		String singleName = null;
-		mostOptimisticCount = rawNames.size();
 		finalNameList = rawNames;
-		if (rawNames.size() == 1) {
-			singleName = rawNames.first();
-		}
-		else {
-			singleName = findCommonBaseName();
-			mostOptimisticCount = similarBaseNames.size();
-			if (singleName == null) {
-				singleName = findCommonNoTemplate(cannotDetemplate);
-				if (singleName != null) {
-					demangleSelect = true;
-				}
-				if (demangledNameNoTemplate.size() > 0 &&
-					demangledNameNoTemplate.size() < mostOptimisticCount) {
-					mostOptimisticCount = demangledNameNoTemplate.size();
-				}
-			}
-			if (singleName == null) {
-				singleName = findCommonDemangledBaseName(cannotDemangle);
-				if (singleName != null) {
-					demangleSelect = true;
-				}
-				if (exactDemangledBaseNames.size() > 0 &&
-					exactDemangledBaseNames.size() < mostOptimisticCount) {
-					mostOptimisticCount = exactDemangledBaseNames.size();
-				}
-			}
-		}
+		String singleName = findCommonBaseName();
 		if (singleName != null) {
-			mostOptimisticCount = 1;
 			finalNameList = Collections.singleton(singleName);
 		}
 		else if (rawNames.size() > similarBaseNames.size()) {
@@ -161,6 +198,15 @@ public class MatchNameAnalysis {
 		}
 	}
 	
+	/**
+	 * Collect strings describing the library descriptor of a set of FID matches.
+	 * Dedup the list trying to get the size down below a specified limit, stripping
+	 * version and family information from the library string if necessary.
+	 * @param matches is the set of FID matches
+	 * @param libraryLimit is the specified size limit
+	 * @param monitor is a task monitor
+	 * @throws CancelledException if the user cancels the task
+	 */
 	public void analyzeLibraries(Collection<FidMatch> matches,int libraryLimit,TaskMonitor monitor)
 			throws CancelledException {
 		libraries = new TreeSet<String>();
@@ -203,29 +249,14 @@ public class MatchNameAnalysis {
 		}
 	}
 
+	/**
+	 * Make a final decision based on the deduping strategies if there is a single
+	 * matching name that describes all matches.
+	 * @return the single matching name or null
+	 */
 	private String findCommonBaseName() {
-		if (similarBaseNames.size() == 1) {
-			return rawNames.iterator().next();
-		}
-		return null;
-	}
-
-	private String findCommonNoTemplate(int cannotDetemplate) {
-		if (cannotDetemplate > 0) {
-			return null;			// Couldn't remove a parameters from everything, so we can't have a common template
-		}
-		if (demangledNameNoTemplate.size() == 1) {
-			return demangledNameNoTemplate.first();
-		}
-		return null;
-	}
-
-	private String findCommonDemangledBaseName(int cannotDemangle) {
-		if (cannotDemangle > 0) {
-			return null;			// Couldn't demangle everything, so no way we can have a common base
-		}
-		if (exactDemangledBaseNames.size() == 1) {
-			return exactDemangledBaseNames.first();
+		if (rawNames.size() == 1 || similarBaseNames.size() == 1) {
+			return rawNames.first();
 		}
 		return null;
 	}

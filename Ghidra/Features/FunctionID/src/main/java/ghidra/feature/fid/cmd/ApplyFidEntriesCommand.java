@@ -128,18 +128,16 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 		nameAnalysis.analyzeLibraries(result.matches, MAGIC_MULTIPLE_LIBRARY_LIMIT, monitor);
 
 		String newFunctionName = null;
-		if (nameAnalysis.numNames() == 1) {
-			newFunctionName = nameAnalysis.getNameIterator().next();
-		}
-
-		if (nameAnalysis.numSimilarNames() == 1) { // If all names are the same, up to a difference in '_' prefix
+		if (nameAnalysis.numNames() == 1) { // If all names are the same, up to a difference in '_' prefix
 			bookmarkContents = "Library Function - Single Match, ";
 			plateCommentContents = "Library Function - Single Match";
+			newFunctionName = nameAnalysis.getNameIterator().next();
 		}
 		else { // If names are different in some way
 			bookmarkContents = "Library Function - Multiple Matches, ";
 			plateCommentContents = "Library Function - Multiple Matches";
-			if (nameAnalysis.numNames() == 1) {
+			if (nameAnalysis.getMostOptimisticCount() == 1) {
+				newFunctionName = nameAnalysis.getMostOptimisticName();
 				plateCommentContents = plateCommentContents + " With Same Base Name";
 				bookmarkContents = bookmarkContents + "Same ";
 			}
@@ -157,16 +155,26 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 			monitor);
 	}
 
+	/**
+	 * Construct list of names as they should appear in the comment for the function.
+	 * @param monitor is the task monitor
+	 * @return the list of names as a formatted String
+	 * @throws CancelledException if the user cancels the task
+	 */
 	private String listNames(TaskMonitor monitor) throws CancelledException {
 		StringBuilder buffer = new StringBuilder();
 
 		int counter = 0;
-
 		Iterator<String> iterator = nameAnalysis.getNameIterator();
 		while (iterator.hasNext()) {
 			monitor.checkCanceled();
+			String display = iterator.next();
+			NameVersions versions = nameAnalysis.getVersions(display);
+			if (versions != null && versions.demangledFull != null) {
+				display = versions.demangledFull;
+			}
 			buffer.append(' ');
-			buffer.append(iterator.next());
+			buffer.append(display);
 			buffer.append('\n');
 			counter++;
 			if (counter > 3) {

@@ -23,6 +23,7 @@ public class NameVersions {
 	public String similarName;		// Name with underscores removed
 	public String demangledNoTemplate;	// Demangled string with (first) template removed
 	public String demangledBaseName;	// Base name of the demangled string
+	public String demangledFull;	// The full demangled signature
 	
 	public NameVersions(String raw) {
 		rawName = raw;
@@ -121,6 +122,7 @@ public class NameVersions {
 		if (rawName != null) {
 			DemangledObject demangledObj = demangle(program, rawName);
 			if (demangledObj != null) {
+				result.demangledFull = demangledObj.getDemangledName();
 				result.demangledNoTemplate = removeTemplateParams(demangledObj);
 				result.demangledBaseName = constructBaseName(demangledObj);
 			}
