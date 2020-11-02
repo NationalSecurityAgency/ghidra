@@ -26,7 +26,6 @@ import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.pdb.PdbLocator;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
-import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -208,15 +207,8 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void registerOptions(Options options, Program program) {
 
-		String pdbStorageLocation =
-			Preferences.getProperty(PdbParser.PDB_STORAGE_PROPERTY, null, true);
+		symbolsRepositoryDir = PdbLocator.getDefaultPdbSymbolsDir();
 
-		if (pdbStorageLocation != null) {
-			File pdbDirectory = new File(pdbStorageLocation);
-			if (pdbDirectory.isDirectory()) {
-				symbolsRepositoryDir = pdbDirectory;
-			}
-		}
 		options.registerOption(SYMBOLPATH_OPTION_NAME, OptionType.FILE_TYPE, symbolsRepositoryDir,
 			null, SYMBOLPATH_OPTION_DESCRIPTION);
 
@@ -227,12 +219,11 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	@Override
 	public void optionsChanged(Options options, Program program) {
 		
-		symbolsRepositoryDir =
-			options.getFile(SYMBOLPATH_OPTION_NAME, PdbLocator.DEFAULT_SYMBOLS_DIR);
-
-		Preferences.setProperty(PdbParser.PDB_STORAGE_PROPERTY,
-			symbolsRepositoryDir != null ? symbolsRepositoryDir.getAbsolutePath() : null);
-		Preferences.store();
+		File symbolsDir = options.getFile(SYMBOLPATH_OPTION_NAME, symbolsRepositoryDir);
+		if (!symbolsDir.equals(symbolsRepositoryDir)) {
+			symbolsRepositoryDir = symbolsDir;
+			PdbLocator.setDefaultPdbSymbolsDir(symbolsDir);
+		}
 
 		includePeSpecifiedPdbPath =
 			options.getBoolean(OPTION_NAME_INCLUDE_PE_PDB_PATH, includePeSpecifiedPdbPath);
