@@ -265,13 +265,9 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	boolean isValidFunctionStart(TaskMonitor monitor, Address address) {
 		// instruction above falls into this one
 		//   could be non-returning function, but we can't tell now
-		Address addrBefore = address.previous();
-		if (addrBefore != null) {
-			Instruction instrBefore;
-			instrBefore = program.getListing().getInstructionContaining(addrBefore);
-			if (instrBefore != null && address.equals(instrBefore.getFallThrough())) {
-				return false;
-			}
+		Instruction instrBefore = getInstructionBefore(address);
+		if (instrBefore != null && address.equals(instrBefore.getFallThrough())) {
+			return false;
 		}
 		
 		// check if part of a larger code-block
@@ -290,6 +286,30 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Get the instruction directly before this address, makeing sure it is the
+	 * head instruction in a delayslot
+	 * 
+	 * @param address to get instruction before
+	 * @return instruction if found, null otherwise
+	 */
+	Instruction getInstructionBefore(Address address) {
+		Address addrBefore = address.previous();
+		Instruction instrBefore = null;
+
+		while (addrBefore != null) {
+			instrBefore = program.getListing().getInstructionContaining(addrBefore);
+			if (instrBefore == null) {
+				break;
+			}
+			if (!instrBefore.isInDelaySlot()) {
+				break;
+			}
+			addrBefore = instrBefore.getMinAddress().previous();
+		}
+		return instrBefore;
 	}
 
 	private void applyFunction(Symbol sym, FunctionDefinition fdef) {
