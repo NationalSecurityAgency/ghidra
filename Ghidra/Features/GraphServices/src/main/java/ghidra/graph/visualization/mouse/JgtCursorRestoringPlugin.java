@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.graph.viewer.event.mouse;
+package ghidra.graph.visualization.mouse;
 
 import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
+import org.jungrapht.visualization.VisualizationViewer;
+import org.jungrapht.visualization.control.AbstractGraphMousePlugin;
 
-public class VisualGraphCursorRestoringGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
+/**
+ * Restores the cursor after other graph mouse operations.
+ * 
+ * Future: this is copied from the Visual Graph counterpart--consolidate these
+ *
+ * @param <V> the vertex type
+ * @param <E> the edge type
+ */
+public class JgtCursorRestoringPlugin<V, E> extends AbstractGraphMousePlugin
 		implements MouseMotionListener {
 
-	public VisualGraphCursorRestoringGraphMousePlugin() {
+	public JgtCursorRestoringPlugin() {
 		super(0);
-	}
-
-	@Override
-	public boolean checkModifiers(MouseEvent e) {
-		return e.getModifiersEx() == modifiers;
 	}
 
 	@Override

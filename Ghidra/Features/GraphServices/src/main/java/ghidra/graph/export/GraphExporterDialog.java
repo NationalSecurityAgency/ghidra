@@ -74,7 +74,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 		addWorkPanel(buildWorkPanel());
 		addOKButton();
 		addCancelButton();
-		setHelpLocation(new HelpLocation("ExporterPlugin", "Exporter_Dialog"));
+		setHelpLocation(new HelpLocation("GraphServices", "Graph_Exporter"));
 		validate();
 	}
 

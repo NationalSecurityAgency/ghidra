@@ -443,6 +443,8 @@ src/main/help/help/topics/GhidraServer/GhidraServer.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/glossary.htm||GHIDRA||||END|
 src/main/help/help/topics/Glossary/images/BigEndian.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Glossary/images/LittleEndian.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Graph/GraphIntro.html||GHIDRA||||END|
+src/main/help/help/topics/Graph/GraphServicesIntro.html||GHIDRA||||END|
 src/main/help/help/topics/HeadlessAnalyzer/HeadlessAnalyzer.htm||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/images/About_pdb.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/ImporterPlugin/images/BatchImportDialog.png||GHIDRA||||END|
