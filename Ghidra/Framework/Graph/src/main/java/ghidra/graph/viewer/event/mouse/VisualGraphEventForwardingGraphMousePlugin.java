@@ -38,9 +38,9 @@ public class VisualGraphEventForwardingGraphMousePlugin<V extends VisualVertex,
 
 	private boolean isHandlingEvent = false;
 
-	// TODO for deprecated usage note, see the VisualGraphMousePlugin interface
 	public VisualGraphEventForwardingGraphMousePlugin() {
-		this(InputEvent.BUTTON1_MASK | InputEvent.BUTTON2_MASK | InputEvent.BUTTON3_MASK);
+		this(InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK |
+			InputEvent.BUTTON3_DOWN_MASK);
 	}
 
 	public VisualGraphEventForwardingGraphMousePlugin(int modifiers) {
@@ -50,18 +50,18 @@ public class VisualGraphEventForwardingGraphMousePlugin<V extends VisualVertex,
 
 	@Override
 	public boolean checkModifiers(MouseEvent e) {
-		int eventModifiers = e.getModifiers();
+		int eventModifiers = e.getModifiersEx();
 		eventModifiers = turnOffControlKey(eventModifiers);
 		return ((eventModifiers & getModifiers()) == eventModifiers);
 	}
 
 	private int turnOffControlKey(int eventModifiers) {
-		return eventModifiers & (~DockingUtils.CONTROL_KEY_MODIFIER_MASK_DEPRECATED);
+		return eventModifiers & (~DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 	}
 
 	private boolean isControlClick(MouseEvent e) {
-		int allModifiers = e.getModifiers();
-		int osSpecificMask = DockingUtils.CONTROL_KEY_MODIFIER_MASK_DEPRECATED;
+		int allModifiers = e.getModifiersEx();
+		int osSpecificMask = DockingUtils.CONTROL_KEY_MODIFIER_MASK;
 		return (allModifiers & osSpecificMask) == osSpecificMask;
 
 		// can't use this until we fix the old modifiers usage

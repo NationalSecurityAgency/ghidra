@@ -28,7 +28,6 @@ import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.renderer.*;
 
-
 /**
  * A simple plugin that allows clients to be notified of mouse events before any of the other
  * mouse plugins.
@@ -52,14 +51,15 @@ public class VisualGraphMouseTrackingGraphMousePlugin<V extends VisualVertex,
 	private int mouseMovedCount;
 
 	public VisualGraphMouseTrackingGraphMousePlugin(GraphViewer<V, E> viewer) {
-		super(InputEvent.BUTTON1_MASK | InputEvent.BUTTON2_MASK | InputEvent.BUTTON3_MASK);
+		super(InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK |
+			InputEvent.BUTTON3_DOWN_MASK);
 		this.viewer = Objects.requireNonNull(viewer);
 		viewer.addPostRenderPaintable(paintable);
 	}
 
 	@Override
 	public boolean checkModifiers(MouseEvent e) {
-		int eventModifiers = e.getModifiers();
+		int eventModifiers = e.getModifiersEx();
 		eventModifiers = turnOffControlKey(eventModifiers);
 		return ((eventModifiers & getModifiers()) == eventModifiers);
 	}

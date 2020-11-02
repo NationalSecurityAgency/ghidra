@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.graph.viewer.event.mouse;
+package ghidra.graph.visualization.mouse;
 
 import java.awt.Cursor;
-import java.awt.Point;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 
-import edu.uci.ics.jung.visualization.*;
-import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
-import edu.uci.ics.jung.visualization.control.TranslatingGraphMousePlugin;
-import edu.uci.ics.jung.visualization.transform.MutableTransformer;
-import ghidra.graph.viewer.*;
+import org.jungrapht.visualization.*;
+import org.jungrapht.visualization.MultiLayerTransformer.Layer;
+import org.jungrapht.visualization.control.TranslatingGraphMousePlugin;
+import org.jungrapht.visualization.transform.MutableTransformer;
 
 /**
  * Note: this class is based on {@link TranslatingGraphMousePlugin}.
@@ -36,36 +35,30 @@ import ghidra.graph.viewer.*;
  * @param <V> the vertex type
  * @param <E> the edge type
  */
-public class VisualGraphTranslatingGraphMousePlugin<V extends VisualVertex, E extends VisualEdge<V>>
-		extends AbstractGraphMousePlugin
-		implements MouseListener, MouseMotionListener, VisualGraphMousePlugin<V, E> {
+public class JgtTranslatingPlugin<V, E>
+		extends AbstractJgtGraphMousePlugin<V, E> {
 
 	private boolean panning;
 	private boolean isHandlingEvent;
 
-	public VisualGraphTranslatingGraphMousePlugin() {
+	public JgtTranslatingPlugin() {
 		this(InputEvent.BUTTON1_DOWN_MASK);
 	}
 
-	public VisualGraphTranslatingGraphMousePlugin(int modifiers) {
+	public JgtTranslatingPlugin(int modifiers) {
 		super(modifiers);
 		this.cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
 	}
 
 	@Override
-	public boolean checkModifiers(MouseEvent e) {
-		return e.getModifiersEx() == modifiers;
-	}
-
-	@Override
 	public void mousePressed(MouseEvent e) {
-		GraphViewer<V, E> viewer = getGraphViewer(e);
 		boolean accepted = checkModifiers(e) && isInDraggingArea(e);
 		if (!accepted) {
 			return;
 		}
 
 		down = e.getPoint();
+		VisualizationViewer<V, E> viewer = getGraphViewer(e);
 		viewer.setCursor(cursor);
 		isHandlingEvent = true;
 		e.consume();
@@ -90,7 +83,6 @@ public class VisualGraphTranslatingGraphMousePlugin<V extends VisualVertex, E ex
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		GraphViewer<V, E> viewer = getGraphViewer(e);
 		boolean accepted = checkModifiers(e);
 		if (!accepted) {
 			return;
@@ -102,6 +94,7 @@ public class VisualGraphTranslatingGraphMousePlugin<V extends VisualVertex, E ex
 
 		panning = true;
 
+		VisualizationViewer<V, E> viewer = getGraphViewer(e);
 		RenderContext<V, E> context = viewer.getRenderContext();
 		MultiLayerTransformer multiLayerTransformer = context.getMultiLayerTransformer();
 		MutableTransformer layoutTransformer = multiLayerTransformer.getTransformer(Layer.LAYOUT);
@@ -173,22 +166,11 @@ public class VisualGraphTranslatingGraphMousePlugin<V extends VisualVertex, E ex
 //==================================================================================================    
 
 	private boolean isInDraggingArea(MouseEvent e) {
-		GraphViewer<V, E> viewer = getGraphViewer(e);
-
-		// make sure we are not over a graph or edge
-		Point p = e.getPoint();
-		if (GraphViewerUtils.getVertexFromPointInViewSpace(viewer, p) != null) {
-			return false;
-		}
-
-		if (GraphViewerUtils.getEdgeFromPointInViewSpace(viewer, p) != null) {
-			return false;
-		}
-
-		return true;
+		return !(isOverVertex(e) || isOverEdge(e));
 	}
 
-	private void installCursor(Cursor newCursor, MouseEvent e) {
+	@Override
+	public void installCursor(Cursor newCursor, MouseEvent e) {
 		VisualizationViewer<V, E> viewer = getViewer(e);
 		viewer.setCursor(newCursor);
 	}

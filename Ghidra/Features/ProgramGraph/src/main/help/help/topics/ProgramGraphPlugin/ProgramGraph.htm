@@ -13,7 +13,7 @@
   <BODY lang="EN-US">
     <H1>Graphing the Program</H1>
     
-    <H3>Graph Output</H3>
+    <H2>Graph Output</H2>
      
 	<P>To display or export a graph, Ghidra supports multiple graph services. Ghidra has two
 	built-in graph services; one to display a graph and one to export a graph.  Before invoking
@@ -21,7 +21,7 @@
 	will direct the output of the graph function to the active graph service.  To select a graph
 	service, use the <B>Graph<IMG src="../../shared/arrow.gif">Graph Output</B></LI> menu.
 	
-	<H3>Graph types</H3>
+	<H2>Graph types</H2>
     <P>Program control flow Graphs can be created and then shown using an appropriate graph service.
     A control flow graph is a representation of the flow from one portion of the code to
     another. The nodes of the graph represent blocks of code and the edges represent flow between
@@ -49,7 +49,7 @@
 	<P>Selection and Location events are synchronized between each
     graph and the other windows in the tool.
 
-    <H3>Selection</H3>
+    <H2>Selection</H2>
 
     <P>The current selection within the graph display is represented by a red box around selected 
     nodes as shown below on the node labeled "00408133". A node is selected if any addresses it represents are contained within the
@@ -74,7 +74,7 @@
       from the basic blocks found within the selected subroutine.</P>
     </BLOCKQUOTE>
 
-    <H3>Location</H3>
+    <H2>Location</H2>
 
     <P>The node containing the current address location is marked with a large red arrow as shown
     below on the graph node labeled "00408133".</P>
@@ -95,7 +95,7 @@
     current address location within Ghidra to change to the minimum address represented by the
     graph node.</P>
 
-    <H3>Graph Representation</H3>
+    <H2>Graph Representation</H2>
 
     <P>By Default, the graphs use the following icons and colors to represent the nodes and edges.</P>
 
@@ -220,99 +220,7 @@
       </DIV>
     </CENTER>
 
-    <H2><A name="Graph_Block_Flow"></A>Block Flow Graph</H2>
-
-    <P>A Block Flow Graph consists of nodes that represent Basic blocks of contiguous instructions.
-    Basic blocks are broken up by any instruction that causes a change in execution flow. All Jump,
-    Call, Branch, and Return instructions can cause the execution flow to change. Arithmetic and
-    store/load instructions do not break a Basic block because they do not change the execution
-    flow. A labeled instruction will always start a block regardless of the instruction type.</P>
 	
-    <P>For example:</P>
-
-    <P align="center"><IMG src="images/BasicBlockExampleCode.png"></P>
-
-    <P>Would generate the following graph:</P>
-
-    <P align="center"><IMG src="images/BasicBlockGraph.png">
-    </P>
-
-    <BLOCKQUOTE>
-      <P><IMG src="../../shared/note.png"> If there is a current selection, the nodes and edges
-      will be restricted to blocks of code that fall within the selection.</P>
-    </BLOCKQUOTE>
-
-    <P>To Graph Block Flow Using the default model,</P>
-
-    <OL>
-      <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Block Flow</B></LI>
-
-      <LI>A new graph window is created</LI>
-    </OL>
-
-    <H2><A name="Graph_Code_Flow"></A>Graph Code Flow</H2>
-
-    <P align="left">A Code Flow Graph is an extension of a <A href="#Graph_Block_Flow">Block Flow
-    Graph</A> in which each graph node (i.e., vertex) contains the list of instructions contained
-    within the associated block. The list of instructions are passed to the graph as the vertex
-    label.</P>
-
-    <P align="center"><BR>
-    <BR>
-     <IMG src="images/CodeBlockGraph.png"></P>
-
-    <H2><A name="Graph_Calls_Using_Default_Model"></A>Graph Calls</H2>
-
-    <P>A graph of the call instruction flow from one subroutine to another can be created with
-    <B>Graph<IMG src="../../shared/arrow.gif"> Calls</B>. The graph is created using the default
-    Call Model. Several Subroutine Models are available. Each model provides a slightly 
-    different perspective on what constitutes a subroutine.</P>
-
-    <BLOCKQUOTE>
-      <BLOCKQUOTE>
-        <P><IMG src="../../shared/note.png"> If there is a current selection, the nodes and edges
-        will be restricted to blocks of code that fall within the selection.</P>
-      </BLOCKQUOTE>
-
-      <P>To Graph Calls Using the default model,</P>
-
-      <OL>
-        <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Calls</B></LI>
-
-        <LI>A new graph window is created</LI>
-      </OL>
-
-      <P><A name="Graph_Calls_Using_Model"></A>To Graph Calls Using a specific model*,</P>
-
-      <OL>
-        <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Calls Using Model<IMG src=
-        "../../shared/arrow.gif"></B> &lt;<I><B>a Call Model</B></I>&gt;</LI>
-
-        <LI>
-          Select one of 
-
-          <UL>
-            <LI>Isolated Entry Model</LI>
-
-            <LI>Multiple Entry Model</LI>
-
-            <LI>Overlapped Code Model</LI>
-
-            <LI>Partitioned Code Model</LI>
-          </UL>
-        </LI>
-
-        <LI>A new graph window is created</LI>
-      </OL>
-
-      <BLOCKQUOTE>
-        <P><IMG src="../../shared/note.png"> *For a more thorough description of each Call Block
-        Model (i.e., Subroutine Model), see <A href="help/topics/BlockModel/Block_Model.htm">Block
-        Models</A>. The specific list of models presented to the user may vary depending upon the
-        set of block models configured into the tool.</P>
-      </BLOCKQUOTE>
-    </BLOCKQUOTE>
-
     <H2><A name="Reuse_Graph"></A>Reuse Graph</H2>
 
     <P>When <I>Reuse Graph</I> is turned on, creating any new graphs will re-use the active graph
@@ -378,6 +286,123 @@
 
     <P>When Show Location is turned <U><I>off</I></U>, the graph view will not change as the
     current address location changes.</P>
+	
+
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<BR>
+	<HR WIDTH="90%">
+	<BR>
+	<BR>
+
+    <H2><A name="Graph_Block_Flow"></A>Block Flow Graph</H2>
+
+    <P>A Block Flow Graph consists of nodes that represent Basic blocks of contiguous instructions.
+    Basic blocks are broken up by any instruction that causes a change in execution flow. All Jump,
+    Call, Branch, and Return instructions can cause the execution flow to change. Arithmetic and
+    store/load instructions do not break a Basic block because they do not change the execution
+    flow. A labeled instruction will always start a block regardless of the instruction type.</P>
+	
+    <P>For example:</P>
+
+    <P align="center"><IMG src="images/BasicBlockExampleCode.png"></P>
+
+    <P>Would generate the following graph:</P>
+
+    <P align="center"><IMG src="images/BasicBlockGraph.png">
+    </P>
+
+    <BLOCKQUOTE>
+      <P><IMG src="../../shared/note.png"> If there is a current selection, the nodes and edges
+      will be restricted to blocks of code that fall within the selection.</P>
+    </BLOCKQUOTE>
+
+    <P>To Graph Block Flow Using the default model,</P>
+
+    <OL>
+      <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Block Flow</B></LI>
+
+      <LI>A new graph window is created</LI>
+    </OL>
+
+	<BLOCKQUOTE>
+    
+    	<H3><A NAME="Rename_Vertex"></A>Rename Vertex</H3>
+    	<BLOCKQUOTE>
+          <P>Allows the user to rename the symbol represented by the given vertex.
+          </P>
+        </BLOCKQUOTE>
+    
+    </BLOCKQUOTE>
+
+
+    <H2><A name="Graph_Code_Flow"></A>Graph Code Flow</H2>
+
+    <P align="left">A Code Flow Graph is an extension of a <A href="#Graph_Block_Flow">Block Flow
+    Graph</A> in which each graph node (i.e., vertex) contains the list of instructions contained
+    within the associated block. The list of instructions are passed to the graph as the vertex
+    label.</P>
+
+    <P align="center"><BR>
+    <BR>
+     <IMG src="images/CodeBlockGraph.png"></P>
+
+    <H2><A name="Graph_Calls_Using_Default_Model"></A>Graph Calls</H2>
+
+    <P>A graph of the call instruction flow from one subroutine to another can be created with
+    <B>Graph<IMG src="../../shared/arrow.gif"> Calls</B>. The graph is created using the default
+    Call Model. Several Subroutine Models are available. Each model provides a slightly 
+    different perspective on what constitutes a subroutine.</P>
+
+    <BLOCKQUOTE>
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.png"> If there is a current selection, the nodes and edges
+        will be restricted to blocks of code that fall within the selection.</P>
+      </BLOCKQUOTE>
+
+      <P>To Graph Calls Using the default model,</P>
+
+      <OL>
+        <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Calls</B></LI>
+
+        <LI>A new graph window is created</LI>
+      </OL>
+
+      <P><A name="Graph_Calls_Using_Model"></A>To Graph Calls Using a specific model*,</P>
+
+      <OL>
+        <LI>Select <B>Graph<IMG src="../../shared/arrow.gif"> Calls Using Model<IMG src=
+        "../../shared/arrow.gif"></B> &lt;<I><B>a Call Model</B></I>&gt;</LI>
+
+        <LI>
+          Select one of 
+
+          <UL>
+            <LI>Isolated Entry Model</LI>
+
+            <LI>Multiple Entry Model</LI>
+
+            <LI>Overlapped Code Model</LI>
+
+            <LI>Partitioned Code Model</LI>
+          </UL>
+        </LI>
+
+        <LI>A new graph window is created</LI>
+      </OL>
+
+      <BLOCKQUOTE>
+        <P><IMG src="../../shared/note.png"> *For a more thorough description of each Call Block
+        Model (i.e., Subroutine Model), see <A href="help/topics/BlockModel/Block_Model.htm">Block
+        Models</A>. The specific list of models presented to the user may vary depending upon the
+        set of block models configured into the tool.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
 
  
     <BR>
