@@ -38,7 +38,7 @@ public class PdbCategories {
 	private CategoryPath baseModuleTypedefsCategory;
 	private List<CategoryPath> typedefCategories = new ArrayList<>();
 
-	private int anonymousFunctionCount;
+//	private int anonymousFunctionCount;
 
 	//==============================================================================================
 	// NOTE: a TODO could be to add optional GUID and AGE values.  This could be as sub-categories
@@ -59,7 +59,7 @@ public class PdbCategories {
 		setTypedefCategoryPaths(moduleNames);
 
 		anonymousFunctionsCategory = new CategoryPath(pdbRootCategory, "!_anon_funcs_");
-		anonymousFunctionCount = 0;
+//		anonymousFunctionCount = 0;
 
 		anonymousTypesCategory = new CategoryPath(pdbRootCategory, "!_anon_types_");
 	}
@@ -190,22 +190,22 @@ public class PdbCategories {
 		return anonymousTypesCategory;
 	}
 
-	/**
-	 * Returns the name of what should be the next Anonymous Function (based on the count of
-	 * the number of anonymous functions) so that there is a unique name for the function.
-	 * @return the name for the next anonymous function.
-	 */
-	public String getNextAnonymousFunctionName() {
-		return String.format("_func_%08X", anonymousFunctionCount);
-	}
-
-	/**
-	 * Updates the count of the anonymous functions.  This is a separate call from
-	 * {@link #getNextAnonymousFunctionName()} because the count should only be updated after
-	 * the previous anonymous function has been successfully created/stored.
-	 */
-	public void incrementNextAnonymousFunctionName() {
-		anonymousFunctionCount++;
-	}
+//	/**
+//	 * Returns the name of what should be the next Anonymous Function (based on the count of
+//	 * the number of anonymous functions) so that there is a unique name for the function.
+//	 * @return the name for the next anonymous function.
+//	 */
+//	public String getNextAnonymousFunctionName() {
+//		return String.format("_func_%08X", anonymousFunctionCount);
+//	}
+//
+//	/**
+//	 * Updates the count of the anonymous functions.  This is a separate call from
+//	 * {@link #getNextAnonymousFunctionName()} because the count should only be updated after
+//	 * the previous anonymous function has been successfully created/stored.
+//	 */
+//	public void incrementNextAnonymousFunctionName() {
+//		anonymousFunctionCount++;
+//	}
 
 }
