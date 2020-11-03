@@ -4,9 +4,17 @@
   <programcounter register="pc"/>
   <context_data>
     <context_set space="ram">
-      <set name="RV64" val="1"/>
-      <set name="RVG" val="0x1F"/>
+      <set name="MXL" val="2"/>
+      <set name="RVA" val="1"/>
       <set name="RVC" val="1"/>
+      <set name="RVD" val="1"/>
+      <set name="RVF" val="1"/>
+      <set name="RVH" val="1"/>
+      <set name="RVI" val="1"/>
+      <set name="RVM" val="1"/>
+      <set name="RVQ" val="1"/>
+      <set name="RVS" val="1"/>
+      <set name="RVU" val="1"/>
     </context_set>
   </context_data>
 </processor_spec>
