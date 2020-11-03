@@ -177,49 +177,49 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	private void createActions() {
 
 		new ActionBuilder("Graph Block Flow", getName())
-			.menuPath(MENU_GRAPH, "&Block Flow")
-			.menuGroup("Graph", "A")
-			.onAction(c -> graphBlockFlow())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "&Block Flow")
+				.menuGroup("Graph", "A")
+				.onAction(c -> graphBlockFlow())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph Code Flow", getName())
-			.menuPath(MENU_GRAPH, "C&ode Flow")
-			.menuGroup("Graph", "B")
-			.onAction(c -> graphCodeFlow())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "C&ode Flow")
+				.menuGroup("Graph", "B")
+				.onAction(c -> graphCodeFlow())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		new ActionBuilder("Graph Calls Using Default Model", getName())
-			.menuPath(MENU_GRAPH, "&Calls")
-			.menuGroup("Graph", "C")
-			.onAction(c -> graphSubroutines())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "&Calls")
+				.menuGroup("Graph", "C")
+				.onAction(c -> graphSubroutines())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		reuseGraphAction = new ToggleActionBuilder("Reuse Graph", getName())
-			.menuPath(MENU_GRAPH, "Reuse Graph")
-			.menuGroup("Graph Options")
-			.selected(reuseGraph)
-			.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "Reuse Graph")
+				.menuGroup("Graph Options")
+				.selected(reuseGraph)
+				.onAction(c -> reuseGraph = reuseGraphAction.isSelected())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		appendGraphAction = new ToggleActionBuilder("Append Graph", getName())
-			.menuPath(MENU_GRAPH, "Append Graph")
-			.menuGroup("Graph Options")
-			.selected(false)
-			.onAction(c -> updateAppendAndReuseGraph())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "Append Graph")
+				.menuGroup("Graph Options")
+				.selected(false)
+				.onAction(c -> updateAppendAndReuseGraph())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		forceLocationVisibleAction = new ToggleActionBuilder("Show Location in Graph", getName())
-			.menuPath(MENU_GRAPH, "Show Location")
-			.description("Tell the graph to pan/scale as need to keep location changes visible")
-			.menuGroup("Graph Options")
-			.onAction(c -> toggleForceLocationVisible())
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath(MENU_GRAPH, "Show Location")
+				.description("Tell the graph to pan/scale as need to keep location changes visible")
+				.menuGroup("Graph Options")
+				.onAction(c -> toggleForceLocationVisible())
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 
 		updateSubroutineActions();
 	}
@@ -268,12 +268,12 @@ public class ProgramGraphPlugin extends ProgramPlugin
 
 	private DockingAction buildGraphActionWithModel(String blockModelName, HelpLocation helpLoc) {
 		return new ActionBuilder("Graph Calls using " + blockModelName, getName())
-			.menuPath("Graph", "Calls Using Model", blockModelName)
-			.menuGroup("Graph")
-			.helpLocation(helpLoc)
-			.onAction(c -> graphSubroutinesUsing(blockModelName))
-			.enabledWhen(this::canGraph)
-			.buildAndInstall(tool);
+				.menuPath("Graph", "Calls Using Model", blockModelName)
+				.menuGroup("Graph")
+				.helpLocation(helpLoc)
+				.onAction(c -> graphSubroutinesUsing(blockModelName))
+				.enabledWhen(this::canGraph)
+				.buildAndInstall(tool);
 	}
 
 	private void graphBlockFlow() {
