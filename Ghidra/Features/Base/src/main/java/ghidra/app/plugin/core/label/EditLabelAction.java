@@ -25,6 +25,7 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
 import ghidra.program.util.LabelFieldLocation;
 import ghidra.program.util.OperandFieldLocation;
 
@@ -62,6 +63,10 @@ class EditLabelAction extends ListingContextAction {
 		Symbol symbol = plugin.getSymbol(context);
 		if (symbol != null) {
 			if (symbol.isExternal()) {
+				return false;
+			}
+			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
+				// let the rename function action handle this
 				return false;
 			}
 			getPopupMenuData().setMenuItemName(EDIT_LABEL);
