@@ -372,19 +372,19 @@ public class PdbLocator {
 		return builder.toString();
 	}
 
-	private StringBuilder formatPdbIdentifiers(PdbProgramAttributes attributes) {
+	public static StringBuilder formatPdbIdentifiers(PdbProgramAttributes attributes) {
 		Integer signature = (attributes.getPdbSignature() == null) ? null
 				: Integer.valueOf(attributes.getPdbSignature());
 		return formatPdbIdentifiers(attributes.getPdbFile(), signature,
 			Integer.valueOf(attributes.getPdbAge(), 16), attributes.getPdbGuid());
 	}
 
-	private StringBuilder formatPdbIdentifiers(String file, PdbIdentifiers identifiers) {
+	public static StringBuilder formatPdbIdentifiers(String file, PdbIdentifiers identifiers) {
 		return formatPdbIdentifiers(file, identifiers.getSignature(), identifiers.getAge(),
 			identifiers.getGuid().toString());
 	}
 
-	private StringBuilder formatPdbIdentifiers(String file, Integer signature, int age,
+	private static StringBuilder formatPdbIdentifiers(String file, Integer signature, int age,
 			String guidString) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("  Location: ").append(file);
@@ -648,7 +648,7 @@ public class PdbLocator {
 	}
 
 	//==============================================================================================
-	private boolean verifyPdbSignature(PdbProgramAttributes programAttributes,
+	public static boolean verifyPdbSignature(PdbProgramAttributes programAttributes,
 			PdbIdentifiers identifiers) throws PdbException {
 
 		String attributesGuidString = programAttributes.getPdbGuid();

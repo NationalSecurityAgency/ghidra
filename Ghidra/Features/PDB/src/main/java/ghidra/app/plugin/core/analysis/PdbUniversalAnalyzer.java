@@ -22,8 +22,6 @@ import java.util.Date;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.services.*;
-//import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
@@ -309,9 +307,6 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			PdbApplicator applicator = new PdbApplicator(pdbFilename, pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
 				pdbApplicatorOptions, monitor, log);
-
-			Options options = program.getOptions(Program.PROGRAM_INFO);
-			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
 
 		}
 		catch (PdbException | IOException e) {
