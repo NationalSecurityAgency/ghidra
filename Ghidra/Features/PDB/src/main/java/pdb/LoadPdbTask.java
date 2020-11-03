@@ -20,15 +20,17 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 import docking.DockingWindowManager;
+import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.app.plugin.core.analysis.*;
 import ghidra.app.plugin.core.datamgr.archive.DuplicateIdException;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
 import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbReaderOptions;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.pdb.PdbLocator;
+import ghidra.app.util.pdb.PdbProgramAttributes;
 import ghidra.app.util.pdb.pdbapplicator.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -47,7 +49,7 @@ class LoadPdbTask extends Task {
 
 	LoadPdbTask(Program program, File pdbFile, boolean useMsDiaParser,
 			PdbApplicatorRestrictions restrictions, DataTypeManagerService service) {
-		super("Load PDB", true, false, false);
+		super("Load PDB", true, false, true, true);
 		this.program = program;
 		this.pdbFile = pdbFile;
 		this.useMsDiaParser = useMsDiaParser;
@@ -139,6 +141,9 @@ class LoadPdbTask extends Task {
 		return false;
 	}
 
+	// NOTE: OptionDialog will not display an empty line 
+	private static final String BLANK_LINE = " \n";
+
 	private boolean parseWithNewParser(MessageLog log, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
@@ -148,13 +153,38 @@ class LoadPdbTask extends Task {
 
 		pdbApplicatorOptions.setRestrictions(restrictions);
 
+		PdbProgramAttributes programAttributes = new PdbProgramAttributes(program);
+
 		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser
 				.parse(pdbFile.getAbsolutePath(), pdbReaderOptions, monitor)) {
+
+			PdbIdentifiers identifiers = pdb.getIdentifiers();
+			if (!PdbLocator.verifyPdbSignature(programAttributes, identifiers)) {
+
+				StringBuilder builder = new StringBuilder();
+				builder.append("Selected PDB does not match program's PDB specification!\n");
+				builder.append(BLANK_LINE);
+				builder.append("Program's PDB specification:\n");
+				builder.append(PdbLocator.formatPdbIdentifiers(programAttributes));
+				builder.append(BLANK_LINE);
+				builder.append("Selected PDB file specification:\n");
+				builder.append(
+					PdbLocator.formatPdbIdentifiers(pdbFile.getAbsolutePath(), identifiers));
+				builder.append(BLANK_LINE);
+				builder.append("Do you wish to force load this PDB?");
+
+				if (OptionDialog.YES_OPTION != OptionDialog.showYesNoDialog(null,
+					"Confirm PDB Load", builder.toString())) {
+					return false;
+				}
+			}
+
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize(monitor);
 			PdbApplicator applicator = new PdbApplicator(pdbFile.getAbsolutePath(), pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
 				pdbApplicatorOptions, monitor, log);
+
 			return true;
 		}
 		catch (ghidra.app.util.bin.format.pdb2.pdbreader.PdbException e) {
