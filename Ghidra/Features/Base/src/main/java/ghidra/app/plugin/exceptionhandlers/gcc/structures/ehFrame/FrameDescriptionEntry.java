@@ -269,14 +269,6 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
 		if (pcBeginAddr.getOffset() != 0x0) {
-			// if the program was moved from a preferred image base, need to adjust
-			// the beginning of frame pointer
-			Long oib = ElfLoader.getElfOriginalImageBase(program);
-			if (oib != null) {
-				long imageBaseOffset = program.getImageBase().getOffset() - oib;
-				pcBeginAddr = pcBeginAddr.add(imageBaseOffset);
-			}
-
 			program.getReferenceManager().addMemoryReference(addr, pcBeginAddr, RefType.DATA,
 				SourceType.ANALYSIS, 0);
 		}

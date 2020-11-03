@@ -65,7 +65,6 @@ public class BlockGraphEventTest extends AbstractBlockGraphTest {
 		assertEquals("01002239", display.getFocusedVertex().getId());
 	}
 
-
 	private AddressSet addrSet(long start, long end) {
 		return new AddressSet(addr(start), addr(end));
 	}

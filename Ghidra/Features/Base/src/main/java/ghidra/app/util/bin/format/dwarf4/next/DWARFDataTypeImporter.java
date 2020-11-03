@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
+import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
@@ -271,12 +272,6 @@ public class DWARFDataTypeImporter {
 			foundThisParam |= DWARFUtil.isThisParam(childDIEA);
 		}
 
-		if (dni.isAnon() && mangleAnonFuncNames) {
-			dni = dni.replaceName(
-				dni.getName() + "_" + getMangledFuncDefName(returnType.dataType, params),
-				dni.getOriginalName());
-		}
-
 		FunctionDefinitionDataType funcDef =
 			new FunctionDefinitionDataType(dni.getParentCP(), dni.getName(), dataTypeManager);
 		funcDef.setReturnType(returnType.dataType);
@@ -288,6 +283,12 @@ public class DWARFDataTypeImporter {
 
 		if (foundThisParam) {
 			funcDef.setGenericCallingConvention(GenericCallingConvention.thiscall);
+		}
+
+		if (dni.isAnon() && mangleAnonFuncNames) {
+			String mangledName =
+				DataTypeNamingUtil.setMangledAnonymousFunctionName(funcDef, dni.getName());
+			dni = dni.replaceName(mangledName, dni.getOriginalName());
 		}
 
 		for (int i = 0; i < funcDef.getArguments().length; i++) {
@@ -343,27 +344,27 @@ public class DWARFDataTypeImporter {
 		return refdDT;
 	}
 
-	/**
-	 * Mash parameter datatype names together to make a mangling suffix to append to
-	 * a function def name.
-	 * <p>
-	 * @param returnTypeDT
-	 * @param parameters
-	 * @return
-	 */
-	private String getMangledFuncDefName(DataType returnTypeDT,
-			List<ParameterDefinition> parameters) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(mangleDTName(returnTypeDT.getName()));
-		for (ParameterDefinition p : parameters) {
-			sb.append("_").append(mangleDTName(p.getDataType().getName()));
-		}
-		return sb.toString();
-	}
-
-	private String mangleDTName(String s) {
-		return s.replaceAll(" ", "_").replaceAll("\\*", "ptr");
-	}
+//	/**
+//	 * Mash parameter datatype names together to make a mangling suffix to append to
+//	 * a function def name.
+//	 * <p>
+//	 * @param returnTypeDT
+//	 * @param parameters
+//	 * @return
+//	 */
+//	private String getMangledFuncDefName(DataType returnTypeDT,
+//			List<ParameterDefinition> parameters) {
+//		StringBuilder sb = new StringBuilder();
+//		sb.append(mangleDTName(returnTypeDT.getName()));
+//		for (ParameterDefinition p : parameters) {
+//			sb.append("_").append(mangleDTName(p.getDataType().getName()));
+//		}
+//		return sb.toString();
+//	}
+//
+//	private String mangleDTName(String s) {
+//		return s.replaceAll(" ", "_").replaceAll("\\*", "ptr");
+//	}
 
 	/**
 	 * Creates a Ghidra {@link Enum} datatype.

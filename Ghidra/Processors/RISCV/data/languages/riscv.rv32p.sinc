@@ -1,0 +1,996 @@
+# RV32 P Extension
+
+
+# add16 rt, ra, rb 	 ; rt.H[_x_] = ra.H[_x_] + rb.H[_x_]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:add16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x20
+{
+	local tmp1:$(XLEN) = rs1;
+	local tmp2:$(XLEN) = rs2;
+	rd[ 0,16] = tmp1[ 0,16] + tmp2[ 0,16];
+	rd[16,16] = tmp1[16,16] + tmp2[16,16];
+@if ADDRSIZE == "64"
+	rd[32,16] = tmp1[32,16] + tmp2[32,16];
+	rd[48,16] = tmp1[48,16] + tmp2[48,16];
+@endif
+}
+
+
+# add64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = a64 + b64; + ; + ; r[tU].r[tL] = t64;
+:add64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x60
+{
+@if ADDRSIZE == "32"
+	local dst:$(XLEN) = &rd;
+	local src1:$(XLEN) = &rs1;
+	local src2:$(XLEN) = &rs2;
+    	*[register]:8 dst = *[register]:8 src1 + *[register]:8 src2;
+@else
+	rd = rs1 + rs2;
+@endif
+}
+
+
+# add8 rt, ra, rb 	 ; rt.B[_x_] = ra.B[_x_] + rb.B[_x_]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:add8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x24
+{
+	local tmp1:$(XLEN) = rs1;
+	local tmp2:$(XLEN) = rs2;
+	rd[ 0,8] = tmp1[ 0,8] + tmp2[ 0,8];
+	rd[ 8,8] = tmp1[ 8,8] + tmp2[ 8,8];
+	rd[16,8] = tmp1[16,8] + tmp2[16,8];
+	rd[24,8] = tmp1[24,8] + tmp2[24,8];
+@if ADDRSIZE == "64"
+	rd[32,8] = tmp1[32,8] + tmp2[32,8];
+	rd[40,8] = tmp1[40,8] + tmp2[40,8];
+	rd[48,8] = tmp1[48,8] + tmp2[48,8];
+	rd[56,8] = tmp1[56,8] + tmp2[56,8];
+@endif
+}
+
+
+# ave rt, ra, rb 	
+:ave rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x70
+{
+	local tmp:$(XLEN) = rs1 + rs2;
+	rd = (tmp / 2) + (tmp & 1);
+}
+
+
+# bitrev rt, ra, rb 	 ; msb = rb[4:0]; // RV32 ; msb = rb[5:0]; // RV64 ; rev[0:msb] = ra[msb:0]; ; rt = ZE(rev[msb:0]);
+:bitrev rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x73  unimpl
+
+
+# bitrevi rt, ra, imm5u 	 ; msb = imm5u; // RV32 ; msb = imm6u; // RV64 ; rev[0:msb] = ra[msb:0]; ; rt = ZE(rev[msb:0]);
+:bitrevi rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x74  unimpl
+
+
+# bpick rt, ra, rb, rc 	 ; rt[_i_] = rc[_i_]? ra[_i_] : rb[_i_]; + ; (RV32: __i__=31..0, RV64: __i__=63..0)
+:bpick rd,rs1,rs2,rs3 is op0006=0x3f & rd & rs1 & rs2 & rs3 & funct3=0x3 & funct7=0x00  unimpl
+
+
+# bpick rt, ra, rb, rc 	 ; rt[_i_] = rc[_i_]? ra[_i_] : rb[_i_]; + ; (RV32: __i__=31..0, RV64: __i__=63..0)
+:bpick rd,rs1,rs2,rs3 is op0006=0x3f & rd & rs1 & rs2 & rs3 & funct3=0x3 & funct7=0x04  unimpl
+
+
+# clo16 rt, ra 	
+:clo16 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x0a  unimpl
+
+
+# clo32 rt, ra 	 ; rt.W[_x_] = CLO(ra.W[_x_]) ; (RV32: __x__=0, RV64: __x__=1..0)
+:clo32 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x12  unimpl
+
+
+# clo8 rt, ra 	
+:clo8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x02  unimpl
+
+
+# clrs16 rt, ra 	
+:clrs16 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x08  unimpl
+
+
+# clrs32 rt, ra 	 ; rt.W[_x_] = CLRS(ra.W[_x_]) ; (RV32: __x__=0, RV64: __x__=1..0)
+:clrs32 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x10  unimpl
+
+
+# clrs8 rt, ra 	
+:clrs8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x00  unimpl
+
+
+# clz16 rt, ra 	
+:clz16 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x09  unimpl
+
+
+# clz32 rt, ra 	 ; rt.W[_x_] = CLZ(ra.W[_x_]) ; (RV32: __x__=0, RV64: __x__=1..0)
+:clz32 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x11  unimpl
+
+
+# clz8 rt, ra 	
+:clz8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x01  unimpl
+
+
+# cmpeq16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] == rb.H[_x_])? 0xffff : 0; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:cmpeq16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x26  unimpl
+
+
+# cmpeq8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] == rb.B[_x_])? 0xff : 0; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:cmpeq8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x27  unimpl
+
+
+# cras16 rt, ra, rb 	 ; rt.H[_x_] = ra.H[_x_] + rb.H[_x-1_]; + ; rt.H[_x-1_] = ra.H[_x-1_] – rb.H[_x_]; ; (RV32: __x__=1, RV64: __x__=1,3)
+:cras16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x22  unimpl
+
+
+# crsa16 rt, ra, rb 	 ; rt.H[_x_] = ra.H[_x_] - rb.H[_x-1_]; + ; rt.H[_x-1_] = ra.H[_x-1_] + rb.H[_x_]; ; (RV32: __x__=1, RV64: __x__=1,3)
+:crsa16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x23  unimpl
+
+
+# insb rt, ra, imm3u 	 ; byte_idx = imm2u; // RV32 ; byte_idx = imm3u; // RV64 ; rt.B[byte_idx] = ra.B[0];
+:insb rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x00  unimpl
+
+
+# kabs16 rt, ra 	 ; rt.H[_x_] = SAT.Q15(ABS(ra.H[_x_])); ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:kabs16 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x11  unimpl
+
+
+# kabs32 rt, ra 	 ; rt.W[_x_] = SAT.Q31(ABS(ra.W[_x_])); ; (RV64: __x__=1..0)
+:kabs32 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x12  unimpl
+
+
+# kabs8 rt, ra 	 ; rt.B[_x_] = SAT.Q7(ABS(ra.B[_x_])); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:kabs8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x10  unimpl
+
+
+# kabsw rt, ra 	 ; rt = SAT.Q31(ABS(ra)); // RV32 ; rt = SE(SAT.Q31(ABS(ra.W[_0_]))); // RV64
+:kabsw rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x14  unimpl
+
+
+# kadd16 rt, ra, rb 	 ; rt.H[_x_] = SAT.Q15(ra.H[_x_] + rb.H[_x_]); ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:kadd16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x08  unimpl
+
+
+# kadd64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = SAT.Q63(a64 + b64); + ; + ; r[tU].r[tL] = t64;
+:kadd64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x48  unimpl
+
+
+# kadd8 rt, ra, rb 	 ; rt.B[_x_] = SAT.Q7(ra.B[_x_] + rb.B[_x_]); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:kadd8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x0c  unimpl
+
+
+:kaddh rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x02  unimpl
+
+
+:kaddw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x00  unimpl
+
+
+# kcras16 rt, ra, rb 	 ; rt.H[_x_] = SAT.Q15(ra.H[_x_] + rb.H[_x-1_]); + ; rt.H[_x-1_] = SAT.Q15(ra.H[_x-1_] – rb.H[_x_]); ; (RV32: __x__=1, RV64: __x__=1,3)
+:kcras16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x0a  unimpl
+
+
+# kcrsa16 rt, ra, rb 	 ; rt.H[_x_] = SAT.Q15(ra.H[_x_] - rb.H[_x-1_]); + ; rt.H[_x-1_] = SAT.Q15(ra.H[_x-1_] + rb.H[_x_]); ; (RV32: __x__=1, RV64: __x__=1,3)
+:kcrsa16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x0b  unimpl
+
+
+:kdmabb rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x69  unimpl
+
+
+:kdmabb16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x6b  unimpl
+
+
+:kdmabt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x71  unimpl
+
+
+:kdmabt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x74  unimpl
+
+
+:kdmatt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x79  unimpl
+
+
+:kdmatt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x7c  unimpl
+
+
+:kdmbb rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x05  unimpl
+
+
+:kdmbb16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x6c  unimpl
+
+
+:kdmbt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x0d  unimpl
+
+
+:kdmbt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x75  unimpl
+
+
+:kdmtt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x15  unimpl
+
+
+:kdmtt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x7d  unimpl
+
+
+# khm16 rt, ra, rb 	 ; rt.H[_x_] = SAT.Q15((ra.H[_x_] s* rb.H[_x_]) >> 15); ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:khm16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x43  unimpl
+
+
+# khm8 rt, ra, rb 	 ; rt.B[_x_] = SAT.Q7((ra.B[_x_] s* rb.B[_x_]) >> 7); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:khm8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x47  unimpl
+
+
+:khmbb rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x06  unimpl
+
+
+:khmbb16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x6d  unimpl
+
+
+:khmbt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x0e  unimpl
+
+
+:khmbt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x76  unimpl
+
+
+:khmtt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x16  unimpl
+
+
+:khmtt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x7e  unimpl
+
+
+# khmx16 rt, ra, rb 	 ; rt.H[_x_] = SAT.Q15((ra.H[_x_] s* rb.H[_y_]) >> 15); ; (RV32: (_x,y_)=(1,0), (0,1), + ; RV64: (_x,y_)=(3,2),(2,3),(1,0), (0,1))
+:khmx16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x4b  unimpl
+
+
+# khmx8 rt, ra, rb 	 ; rt.B[_x_] = SAT.Q7((ra.B[_x_] s* rb.B[_y_]) >> 7); ; (RV32: (_x,y_)=(3,2),(2,3),(1,0), (0,1), + ; RV64: (_x,y_)=(7,6),(6,7),(5,4), (4,5), (3,2), (2,3), (1,0), (0,1))
+:khmx8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x4f  unimpl
+
+
+# kmabb rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + ra.W[_x_].H[0]*rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmabb rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x2d  unimpl
+
+
+# kmabt rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + ra.W[_x_].H[0]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmabt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x35  unimpl
+
+
+# kmada rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + ra.W[_x_].H[1]*rb.W[_x_].H[1] + ra.W[_x_].H[0]*rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmada rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x24  unimpl
+
+
+# kmadrs rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + ra.W[_x_].H[0]*rb.W[_x_].H[0] - ra.W[_x_].H[1]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmadrs rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x36  unimpl
+
+
+# kmads rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + ra.W[_x_].H[1]*rb.W[_x_].H[1] - ra.W[_x_].H[0]*rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmads rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x2e  unimpl
+
+
+# kmar64 rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = SAT.Q63(c64 + ra*rb); + ; + ; r[tU].r[tL] = t64;
+:kmar64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x4a  unimpl
+
+
+# kmatt rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + ra.W[_x_].H[1]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmatt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x3d  unimpl
+
+
+# kmaxda rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + ra.W[_x_].H[1]*rb.W[_x_].H[0] + ra.W[_x_].H[0]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmaxda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x25  unimpl
+
+
+# kmaxds rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + ra.W[_x_].H[1]*rb.W[_x_].H[0] - ra.W[_x_].H[0]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmaxds rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x3e  unimpl
+
+
+# kmda rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(ra.W[_x_].H[1]*rb.W[_x_].H[1] + ra.W[_x_].H[0]*rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x1c  unimpl
+
+
+# kmmac rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + (ra.W[_x_]*rb.W[_x_])[63:32]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmmac rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x30  unimpl
+
+
+:kmmac.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x38  unimpl
+
+
+# kmmawb rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + (ra.W[_x_]*rb.W[_x_].H[0])[47:16]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmmawb rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x23  unimpl
+
+
+:kmmawb.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x2b  unimpl
+
+
+# kmmawb2 rt, ra, rb 	 ; a[_x_]=ra.W[_x_]; b[_x_]=rb.W[_x_]; ; if ((a[_x_]==0x80000000) & (b[_x_].L==0x8000)) \{ ; t[_x_]=0x7fffffff; OV=1;} else \{ ; t[_x_]= ((a[_x_]*b[_x_].L)<<1)[47:16]; ; } ; rt.W[_x_] = SAT.Q31(rt.W[x] + t[_x_]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmmawb2 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x67  unimpl
+
+
+:kmmawb2.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x6e  unimpl
+
+
+# kmmawt rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] + (ra.W[_x_]*rb.W[_x_].H[1])[47:16]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmmawt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x33  unimpl
+
+
+:kmmawt.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x3b  unimpl
+
+
+# kmmsb rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] - (ra.W[_x_]*rb.W[_x_])[63:32]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmmsb rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x21  unimpl
+
+
+:kmmsb.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x29  unimpl
+
+
+# kmmwb2 rt, ra, rb 	 ; a[_x_]=ra.W[_x_]; b[_x_]=rb.W[_x_]; ; if ((a[_x_]==0x80000000) & (b[_x_].L==0x8000)) \{ ; t[_x_]=0x7fffffff; OV=1;} else \{ ; t[_x_]= ((a[_x_]*b[_x_].L)<<1)[47:16]; ; } ; rt.W[_x_] = t[_x_]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmmwb2 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x47  unimpl
+
+
+:kmmwb2.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x4f  unimpl
+
+
+# kmmwt2 rt, ra, rb 	 ; a[_x_]=ra.W[_x_]; b[_x_]=rb.W[_x_]; ; if ((a[_x_]==0x80000000) & (b[_x_].H==0x8000)) \{ ; t[_x_]=0x7fffffff; OV=1;} else \{ ; t[_x_]= ((a[_x_]*b[_x_].H)<<1)[47:16]; ; } ; rt.W[_x_] = t[_x_]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmmwt2 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x57  unimpl
+
+
+# kmmwt2 rt, ra, rb 	 ; a[_x_]=ra.W[_x_]; b[_x_]=rb.W[_x_]; ; if ((a[_x_]==0x80000000) & (b[_x_].H==0x8000)) \{ ; t[_x_]=0x7fffffff; OV=1;} else \{ ; t[_x_]= ((a[_x_]*b[_x_].H)<<1)[47:16]; ; } ; rt.W[_x_] = t[_x_]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmmwt2 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x77  unimpl
+
+
+:kmmwt2.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x5f  unimpl
+
+
+:kmmwt2.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x7f  unimpl
+
+
+# kmsda rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] - ra.W[_x_].H[1]*rb.W[_x_].H[1] - ra.W[_x_].H[0]*rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmsda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x26  unimpl
+
+
+# kmsr64 rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = SAT.Q63(c64 – ra*rb); + ; + ; r[tU].r[tL] = t64;
+:kmsr64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x4b  unimpl
+
+
+# kmsxda rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(rt.W[_x_] - ra.W[_x_].H[1]*rb.W[_x_].H[0] - ra.W[_x_].H[0]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmsxda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x27  unimpl
+
+
+# kmxda rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31(ra.W[_x_].H[1]*rb.W[_x_].H[0] + ra.W[_x_].H[0]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kmxda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x1d  unimpl
+
+
+:ksll rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x13  unimpl
+
+
+# ksll16 rt, ra, rb 	 ; rt.H[_x_] = SAT.Q15(ra.H[_x_] << im4u); ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:ksll16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x32  unimpl
+
+
+# ksll8 rt, ra, rb 	 ; rt.B[_x_] = SAT.Q7(ra.B[_x_] << rb[2:0]); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:ksll8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x36  unimpl
+
+
+:kslli rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x1b  unimpl
+
+
+# kslra16 rt, ra, rb 	 ; if (rb[4:0] < 0) + ; rt.H[_x_] = ra.H[_x_] s>> -rb[4:0]; ; if (rb[4:0] > 0) + ; rt.H[_x_] = SAT.Q15(ra.H[_x_] << rb[4:0]); ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:kslra16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x2b  unimpl
+
+
+:kslra16.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x33  unimpl
+
+
+# kslra8 rt, ra, rb 	 ; if (rb[3:0] < 0) + ; rt.B[_x_] = ra.B[_x_] s>> -rb[3:0]; ; if (rb[3:0] > 0) + ; rt.B[_x_] = SAT.Q7(ra.B[_x_] << rb[3:0]); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:kslra8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x2f  unimpl
+
+
+:kslra8.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x37  unimpl
+
+
+:kslraw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x37  unimpl
+
+
+:kslraw.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x3f  unimpl
+
+
+# ksub16 rt, ra, rb 	 ; rt.H[_x_] = SAT.Q15(ra.H[_x_] - rb.H[_x_]); ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:ksub16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x09  unimpl
+
+
+# ksub64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = SAT.Q63(a64 - b64); + ; + ; r[tU].r[tL] = t64;
+:ksub64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x49  unimpl
+
+
+# ksub8 rt, ra, rb 	 ; rt.B[_x_] = SAT.Q7(ra.B[_x_] - rb.B[_x_]); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:ksub8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x0d  unimpl
+
+
+:ksubh rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x03  unimpl
+
+
+:ksubw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x01  unimpl
+
+
+# kwmmul rt, ra, rb 	 ; rt.W[_x_] = SAT.Q31((ra.W[_x_]*rb.W[_x_] << 1)[63:32]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:kwmmul rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x31  unimpl
+
+
+:kwmmul.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x39  unimpl
+
+
+# maddr32 rt, ra, tb 	 ; 11
+:maddr32 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x62  unimpl
+
+
+# maxw rt, ra, rb 	 ; if (ra.W[0] >= rb.W[0]) \{ ; rt = SE(ra.W[0]); ; else \{ ; rt = SE(rb.W[0]); ; }
+:maxw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x79  unimpl
+
+
+# minw rt, ra, rb 	 ; if (ra.W[0] >= rb.W[0]) \{ ; rt = SE(rb.W[0]); ; else \{ ; rt = SE(ra.W[0]); ; }
+:minw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x78  unimpl
+
+
+# msubr32 rt, ra, tb 	 ; === ; <<< ; === RV64 Only Instructions ; The following tables list instructions that are only present in RV64. ; There are 30 SIMD 32-bit addition or subtraction instructions. ; .(RV64 Only) SIMD 32-bit Add/Subtract Instructions ; [cols="^.^1,<.^2,<.^2,<.^4",options="header",]
+:msubr32 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x63  unimpl
+
+
+:mtlbi rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x7c  unimpl
+
+
+:mtlei rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x7d  unimpl
+
+
+# mulr64 rt, ra, rb 	 ; RV32: ; mres[63:0] = ra u* rb; ; r[tU] = mres.W[1]; ; r[tL] = mres.W[0]; ; RV64: ; rt = ra.W[0] u* rb.W[0];
+:mulr64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x78  unimpl
+
+
+# mulsr64 rt, ra, rb 	 ; RV32: ; mres[63:0] = ra s* rb; ; r[tU] = mres.W[1]; ; r[tL] = mres.W[0]; ; RV64: ; rt = ra.W[0] s* rb.W[0];
+:mulsr64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x70  unimpl
+
+
+:oneop rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x56  unimpl
+
+
+:oneop2 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x57  unimpl
+
+
+# pbsad rt, ra, rb 	 ; absdiff[_x_] = ABS(ra.B[_x_] – rb.B[_x_]); ; rt = SUM(absdiff[_x_]); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:pbsad rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x7e  unimpl
+
+
+# pbsada rt, ra, rb 	 ; absdiff[_x_] = ABS(ra.B[_x_] – rb.B[_x_]); ; rt = rt + SUM(absdiff[_x_]); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:pbsada rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x7f  unimpl
+
+
+# pkbb16 rt, ra, rb 	 ; rt.W[_x_] = CONCAT(ra.W[_x_].H[0], rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:pkbb16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x07  unimpl
+
+
+# pkbt16 rt, ra, rb 	 ; rt.W[_x_] = CONCAT(ra.W[_x_].H[0], rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:pkbt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x0f  unimpl
+
+
+# pktb16 rt, ra, rb 	 ; rt.W[_x_] = CONCAT(ra.W[_x_].H[1], rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:pktb16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x1f  unimpl
+
+
+# pktt16 rt, ra, rb 	 ; rt.W[_x_] = CONCAT(ra.W[_x_].H[1], rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:pktt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x17  unimpl
+
+
+# radd16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] + rb.H[_x_]) s>> 1; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:radd16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x00  unimpl
+
+
+# radd64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = (a64 + b64) s>>1; + ; + ; r[tU].r[tL] = t64;
+:radd64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x40  unimpl
+
+
+# radd8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] + rb.B[_x_]) s>> 1; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:radd8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x04  unimpl
+
+
+# raddw rt, ra, rb 	 ; res = (ra.W[0] + rb.W[0]) s>> 1; ; rt = SE(res);
+:raddw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x10  unimpl
+
+
+# rcras16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] + rb.H[_x-1_]) s>> 1; + ; rt.H[_x-1_] = (ra.H[_x-1_] – rb.H[_x_]) s>> 1; ; (RV32: __x__=1, RV64: __x__=1,3)
+:rcras16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x02  unimpl
+
+
+# rcrsa16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] - rb.H[_x-1_]) s>> 1; + ; rt.H[_x-1_] = (ra.H[_x-1_] + rb.H[_x_]) s>> 1; ; (RV32: __x__=1, RV64: __x__=1,3)
+:rcrsa16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x03  unimpl
+
+
+# rsub16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] - rb.H[_x_]) s>> 1; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:rsub16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x01  unimpl
+
+
+# rsub64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = (a64 - b64) s>>1; + ; + ; r[tU].r[tL] = t64;
+:rsub64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x41  unimpl
+
+
+# rsub8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] - rb.B[_x_]) s>> 1; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:rsub8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x05  unimpl
+
+
+# rsubw rt, ra, rb 	 ; res = (ra.W[0] - rb.W[0]) s>> 1; ; rt = SE(res);
+:rsubw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x11  unimpl
+
+
+:sclip16 rd,rs1,imm4u is op0006=0x3f & rd & rs1 & imm4u & op2424=0 & funct3=0x0 & funct7=0x42  unimpl
+
+:uclip16 rd,rs1,imm4u is op0006=0x3f & rd & rs1 & imm4u & op2424=1 & funct3=0x0 & funct7=0x42  unimpl
+
+
+# sclip32 rt, ra, imm5u 	 ; n = imm5u; + ; rt = SAT.Qn(ra.W[_x_]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:sclip32 rd,rs1,imm5u is op0006=0x3f & rd & rs1 & imm5u & funct3=0x0 & funct7=0x72  unimpl
+
+
+:sclip8 rd,rs1,imm3u is op0006=0x3f & rd & rs1 & imm3u & op2324=0 & funct3=0x0 & funct7=0x46  unimpl
+
+:uclip8 rd,rs1,imm3u is op0006=0x3f & rd & rs1 & imm3u & op2324=2 & funct3=0x0 & funct7=0x46  unimpl
+
+
+# scmple16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] {le} rb.H[_x_])? 0xffff : 0; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:scmple16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x0e  unimpl
+
+
+# scmple8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] {le} rb.B[_x_])? 0xff : 0; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:scmple8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x0f  unimpl
+
+
+# scmplt16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] < rb.H[_x_])? 0xffff : 0; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:scmplt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x06  unimpl
+
+
+# scmplt8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] < rb.B[_x_])? 0xff : 0; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:scmplt8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x07  unimpl
+
+
+# sll16 rt, ra, rb 	 ; rt.H[_x_] = ra.H__x__ << rb[3:0]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:sll16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x2a  unimpl
+
+
+# sll8 rt, ra, rb 	 ; rt.B[_x_] = ra.B[_x_] << rb[2:0]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:sll8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x2e  unimpl
+
+
+:slli16 rd,rs1,imm4u is op0006=0x3f & rd & rs1 & imm4u & op2424=0 & funct3=0x0 & funct7=0x3a  unimpl
+
+
+:kslli16 rd,rs1,imm4u is op0006=0x3f & rd & rs1 & imm4u & op2424=1 & funct3=0x0 & funct7=0x3a  unimpl
+
+
+:slli8 rd,rs1,imm3u is op0006=0x3f & rd & rs1 & imm3u & op2324=0 & funct3=0x0 & funct7=0x3e  unimpl
+
+
+:kslli8 rd,rs1,imm3u is op0006=0x3f & rd & rs1 & imm3u & op2324=1 & funct3=0x0 & funct7=0x3e  unimpl
+
+
+# smal rt, ra, rb 	 ; RV32: ; a64 = r[aU].r[aL]; + ; t64 = a64 + rb.W[_0_].H[1]*rb.W[_0_].H[0]; + ; r[tU].r[tL] = t64; ; RV64: ; a64 = ra; + ; rt = a64 + rb.W[_1_].H[1]*rb.W[_1_].H[0] + rb.W[_0_].H[1]*rb.W[_0_].H[0];
+:smal rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x2f  unimpl
+
+
+# smalbb rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra.L*rb.L; + ; + ; r[tU].r[tL] = t64;
+:smalbb rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x44  unimpl
+
+
+# smalbt rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra.L*rb.H; + ; + ; r[tU].r[tL] = t64;
+:smalbt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x4c  unimpl
+
+
+# smalda rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra.H*rb.H + ra.L*rb.L; + ; + ; r[tU].r[tL] = t64;
+:smalda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x46  unimpl
+
+
+# smaldrs rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra.L*rb.L - ra.H*rb.H; + ; + ; r[tU].r[tL] = t64;
+:smaldrs rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x4d  unimpl
+
+
+# smalds rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra.H*rb.H - ra.L*rb.L; + ; + ; r[tU].r[tL] = t64;
+:smalds rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x45  unimpl
+
+
+# smaltt rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra.H*rb.H; + ; + ; r[tU].r[tL] = t64;
+:smaltt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x54  unimpl
+
+
+# smalxda rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra.H*rb.L + ra.L*rb.H; + ; + ; r[tU].r[tL] = t64;
+:smalxda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x4e  unimpl
+
+
+# smalxds rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra.H*rb.L - ra.L*rb.H; + ; + ; r[tU].r[tL] = t64;
+:smalxds rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x55  unimpl
+
+
+# smaqa rt, ra, rb 	 ; rt.W[x] = rt.W[x] + ra.W[x].B[3]*rb.W[x].B[3] + ra.W[x].B[2]*rb.W[x].B[2] ; + ra.W[x].B[1]*rb.W[x].B[1] + ra.W[x].B[0]*rb.W[x].B[0]); ; (RV32: x=0, RV64: x=1..0) ; Elements of ra and rb are signed numbers.
+:smaqa rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x64  unimpl
+
+
+# smaqa.su rt, ra, rb 	 ; rt.W[x] = rt.W[x] + ra.W[x].B[3]*rb.W[x].B[3] + ra.W[x].B[2]*rb.W[x].B[2] + ; ra.W[x].B[1]*rb.W[x].B[1] + ra.W[x].B[0]*rb.W[x].B[0]); ; (RV32: x=0, RV64: x=1..0) ; Elements of ra are signed numbers. ; Elements of rb are unsigned numbers.
+:smaqa.su rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x65  unimpl
+
+
+# smar64 rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra*rb; // signed + ; + ; r[tU].r[tL] = t64;
+:smar64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x42  unimpl
+
+
+# smax16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] > rb.H[_x_])? ra.H[_x_] : rb.H[_x_]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:smax16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x41  unimpl
+
+
+# smax8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] > rb.B[_x_])? ra.B[_x_] : rb.B[_x_]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:smax8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x45  unimpl
+
+
+# smbb16 rt, ra, rb 	 ; rt.W[_x_] = ra.W[_x_].H[0]*rb.W[_x_].H[0]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:smbb16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x04  unimpl
+
+
+# smbt16 rt, ra, rb 	 ; rt.W[_x_] = ra.W[_x_].H[0]*rb.W[_x_].H[1]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:smbt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x0c  unimpl
+
+
+# smdrs rt, ra, rb 	 ; rt.W[_x_] = (ra.W[_x_].H[0]*rb.W[_x_].H[0]) - (ra.W[_x_].H[1]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:smdrs rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x34  unimpl
+
+
+# smds rt, ra, rb 	 ; rt.W[_x_] = (ra.W[_x_].H[1]*rb.W[_x_].H[1]) - (ra.W[_x_].H[0]*rb.W[_x_].H[0]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:smds rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x2c  unimpl
+
+
+# smin16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] < rb.H[_x_])? ra.H[_x_] : rb.H[_x_]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:smin16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x40  unimpl
+
+
+# smin8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] < rb.B[_x_])? ra.B[_x_] : rb.B[_x_]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:smin8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x44  unimpl
+
+
+# smmul rt, ra, rb 	 ; rt.W[_x_] = (ra.W[_x_]*rb.W[_x_])[63:32]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:smmul rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x20  unimpl
+
+
+:smmul.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x28  unimpl
+
+
+# smmwb rt, ra, rb 	 ; rt.W[_x_] = (ra.W[_x_]*rb.W[_x_].H[0])[47:16]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:smmwb rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x22  unimpl
+
+
+:smmwb.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x2a  unimpl
+
+
+# smmwt rt, ra, rb 	 ; rt.W[_x_] = (ra.W[_x_]*rb.W[_x_].H[1])[47:16]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:smmwt rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x32  unimpl
+
+
+:smmwt.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x3a  unimpl
+
+
+# smslda rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 - ra.H*rb.H - ra.L*rb.L; + ; + ; r[tU].r[tL] = t64;
+:smslda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x56  unimpl
+
+
+# smslxda rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 - ra.H*rb.L - ra.L*rb.H; + ; + ; r[tU].r[tL] = t64;
+:smslxda rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x5e  unimpl
+
+
+# smsr64 rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 - ra*rb; // signed + ; + ; r[tU].r[tL] = t64;
+:smsr64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x43  unimpl
+
+
+# smtt16 rt, ra, rb 	 ; rt.W[_x_] = ra.W[_x_].H[1]*rb.W[_x_].H[1]; ; (RV32: __x__=0, RV64: __x__=1..0)
+:smtt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x14  unimpl
+
+
+# smul16 rt, ra, rb 	 ; RV32: ; r[tL] = ra.H[_0_] s* rb.H[_0_]; ; r[tH] = ra.H[_1_] s* rb.H[_1_]; ; RV64: ; rt.W[_0_] = ra.H[_0_] s* rb.H[_0_]; ; rt.W[_1_] = ra.H[_1_] s* rb.H[_1_];
+:smul16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x50  unimpl
+
+
+:smul16h rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x60  unimpl
+
+
+# smul8 rt, ra, rb 	 ; RV32: ; r[tL].H[_0_] = ra.B[_0_] s* rb.B[_0_]; ; r[tL].H[_1_] = ra.B[_1_] s* rb.B[_1_]; ; r[tH].H[_0_] = ra.B[_2_] s* rb.B[_2_]; ; r[tH].H[_1_] = ra.B[_3_] s* rb.B[_3_]; ; RV64: ; rt.H[_0_] = ra.B[_0_] s* rb.B[_0_]; ; rt.H[_1_] = ra.B[_1_] s* rb.B[_1_]; ; rt.H[_2_] = ra.B[_2_] s* rb.B[_2_]; ; rt.H[_3_] = ra.B[_3_] s* rb.B[_3_];
+:smul8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x54  unimpl
+
+
+# smulx16 rt, ra, rb 	 ; RV32: ; r[tL] = ra.H[_0_] s* rb.H[_1_]; ; r[tH] = ra.H[_1_] s* rb.H[_0_]; ; RV64: ; rt.W[_0_] = ra.H[_0_] s* rb.H[_1_]; ; rt.W[_1_] = ra.H[_1_] s* rb.H[_0_];
+:smulx16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x51  unimpl
+
+
+:smulx16h rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x61  unimpl
+
+
+# smulx8 rt, ra, rb 	 ; RV32: ; r[tL].H[_0_] = ra.B[_0_] s* rb.B[_1_]; ; r[tL].H[_1_] = ra.B[_1_] s* rb.B[_0_]; ; r[tH].H[_0_] = ra.B[_2_] s* rb.B[_3_]; ; r[tH].H[_1_] = ra.B[_3_] s* rb.B[_2_]; ; RV64: ; rt.H[_0_] = ra.B[_0_] s* rb.B[_1_]; ; rt.H[_1_] = ra.B[_1_] s* rb.B[_0_]; ; rt.H[_2_] = ra.B[_2_] s* rb.B[_3_]; ; rt.H[_3_] = ra.B[_3_] s* rb.B[_2_];
+:smulx8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x55  unimpl
+
+
+# smxds rt, ra, rb 	 ; rt.W[_x_] = (ra.W[_x_].H[1]*rb.W[_x_].H[0]) - (ra.W[_x_].H[0]*rb.W[_x_].H[1]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:smxds rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x3c  unimpl
+
+
+:sra.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x12  unimpl
+
+
+# sra16 rt, ra, rb 	 ; rt.H[_x_] = ra.H[_x_] s>> rb[3:0]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:sra16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x28  unimpl
+
+
+:sra16.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x30  unimpl
+
+
+# sra8 rt, ra, rb 	 ; rt.B[_x_] = ra.B[_x_] s>> rb[2:0]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:sra8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x2c  unimpl
+
+
+:sra8.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x34  unimpl
+
+
+:srai.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x6a  unimpl
+
+
+:srai16 rd,rs1,imm4u is op0006=0x3f & rd & rs1 & imm4u & op2424=0 & funct3=0x0 & funct7=0x38  unimpl
+
+
+:srai16.u rd,rs1,imm4u is op0006=0x3f & rd & rs1 & imm4u & op2424=1 & funct3=0x0 & funct7=0x38  unimpl
+
+
+:srai8 rd,rs1,imm3u is op0006=0x3f & rd & rs1 & imm3u & op2324=0 & funct3=0x0 & funct7=0x3c  unimpl
+
+
+:srai8.u rd,rs1,imm3u is op0006=0x3f & rd & rs1 & imm3u & op2324=1 & funct3=0x0 & funct7=0x3c  unimpl
+
+
+:sraiw.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x1a  unimpl
+
+
+# srl16 rt, ra, rb 	 ; rt.H[_x_] = ra.H[_x_] u>> rb[3:0]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:srl16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x29  unimpl
+
+
+:srl16.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x31  unimpl
+
+
+# srl8 rt, ra, rb 	 ; rt.B[_x_] = ra.B[_x_] u>> rb[2:0]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:srl8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x2d  unimpl
+
+
+:srl8.u rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x35  unimpl
+
+
+:srli16 rd,rs1,imm4u is op0006=0x3f & rd & rs1 & imm4u & op2424=0 & funct3=0x0 & funct7=0x39  unimpl
+
+
+:srli16.u rd,rs1,imm4u is op0006=0x3f & rd & rs1 & imm4u & op2424=1 & funct3=0x0 & funct7=0x39  unimpl
+
+
+:srli8 rd,rs1,imm3u is op0006=0x3f & rd & rs1 & imm3u & op2324=0 & funct3=0x0 & funct7=0x3d  unimpl
+
+
+:srli8.u rd,rs1,imm3u is op0006=0x3f & rd & rs1 & imm3u & op2324=1 & funct3=0x0 & funct7=0x3d  unimpl
+
+
+# sub16 rt, ra, rb 	 ; rt.H[_x_] = ra.H[_x_] - rb.H[_x_]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:sub16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x21  unimpl
+
+
+# sub64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = a64 - b64; + ; + ; r[tU].r[tL] = t64;
+:sub64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x61  unimpl
+
+
+# sub8 rt, ra, rb 	 ; rt.B[_x_] = ra.B[_x_] - rb.B[_x_]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:sub8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x25  unimpl
+
+
+# sunpkd810 rt, ra 	 ; rt.H[_x_] = SE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,1), (0,0) ; RV64: (_x,y_) = (3,5),(2,4),(1,1), (0,0)
+:sunpkd810 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x08  unimpl
+
+
+# sunpkd820 rt, ra 	 ; rt.H[_x_] = SE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,2), (0,0) ; RV64: (_x,y_) = (3,6),(2,4),(1,2), (0,0)
+:sunpkd820 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x09  unimpl
+
+
+# sunpkd830 rt, ra 	 ; rt.H[_x_] = SE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,3), (0,0) ; RV64: (_x,y_) = (3,7),(2,4),(1,3), (0,0)
+:sunpkd830 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x0a  unimpl
+
+
+# sunpkd831 rt, ra 	 ; rt.H[_x_] = SE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,3), (0,1) ; RV64: (_x,y_) = (3,7),(2,5),(1,3), (0,1)
+:sunpkd831 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x0b  unimpl
+
+
+# sunpkd832 rt, ra 	 ; rt.H[_x_] = SE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,3), (0,2) ; RV64: (_x,y_) = (3,7),(2,6),(1,3), (0,2)
+:sunpkd832 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x13  unimpl
+
+
+# swap16 rt, ra 	 ; === ; <<< ; ==== 8-bit Misc Instructions ; There are 11 instructions here. ; .SIMD 8-bit Miscellaneous Instructions ; [cols="^.^1,<.^2,<.^2,<.^4",options="header",]
+:swap16 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x19  unimpl
+
+
+# swap8 rt, ra 	 ; === ; <<< ; ==== 8-bit Unpacking Instructions ; There are 8 instructions here. ; .8-bit Unpacking Instructions ; [cols="^.^1,<.^2,<.^2,<.^4",options="header",]
+:swap8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x18  unimpl
+
+
+# uclip32 rt, ra, imm5u 	 ; m = imm5u; + ; rt = SAT.Um(ra.W[_x_]); ; (RV32: __x__=0, RV64: __x__=1..0)
+:uclip32 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x7a  unimpl
+
+
+# ucmple16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] u{le} rb.H[_x_])? 0xffff : 0; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:ucmple16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x1e  unimpl
+
+
+# ucmple8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] u{le} rb.B[_x_])? 0xff : 0; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:ucmple8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x1f  unimpl
+
+
+# ucmplt16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] u< rb.H[_x_])? 0xffff : 0; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:ucmplt16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x16  unimpl
+
+
+# ucmplt8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] u< rb.B[_x_])? 0xff : 0; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:ucmplt8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x17  unimpl
+
+
+# ukadd16 rt, ra, rb 	 ; rt.H[_x_] = SAT.U16(ra.H[_x_] + rb.H[_x_]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:ukadd16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x18  unimpl
+
+
+# ukadd64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = SAT.U64(a64 + b64); + ; + ; r[tU].r[tL] = t64;
+:ukadd64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x58  unimpl
+
+
+# ukadd8 rt, ra, rb 	 ; rt.B[_x_] = SAT.U8(ra.B[_x_] + rb.B[_x_]); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:ukadd8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x1c  unimpl
+
+
+:ukaddh rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x0a  unimpl
+
+
+:ukaddw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x08  unimpl
+
+
+# ukcras16 rt, ra, rb 	 ; rt.H[_x_] = SAT.U16(ra.H[_x_] + rb.H[_x-1_]); + ; rt.H[_x-1_] = SAT.U16(ra.H[_x-1_] – rb.H[_x_]); ; (RV32: __x__=1, RV64: __x__=1,3)
+:ukcras16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x1a  unimpl
+
+
+# ukcrsa16 rt, ra, rb 	 ; rt.H[_x_] = SAT.U16(ra.H[_x_] - rb.H[_x-1_]); + ; rt.H[_x-1_] = SAT.U16(ra.H[_x-1_] + rb.H[_x_]); ; (RV32: __x__=1, RV64: __x__=1,3)
+:ukcrsa16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x1b  unimpl
+
+
+# ukmar64 rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = SAT.U64(c64 + ra*rb); + ; + ; r[tU].r[tL] = t64;
+:ukmar64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x5a  unimpl
+
+
+# ukmsr64 rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = SAT.U64(c64 - ra*rb); + ; + ; r[tU].r[tL] = t64;
+:ukmsr64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x5b  unimpl
+
+
+# uksub16 rt, ra, rb 	 ; rt.H[_x_] = SAT.U16(ra.H[_x_] - rb.H[_x_]); ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:uksub16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x19  unimpl
+
+
+# uksub64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = SAT.U64(a64 - b64); + ; + ; r[tU].r[tL] = t64;
+:uksub64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x59  unimpl
+
+
+# uksub8 rt, ra, rb 	 ; rt.B[_x_] = SAT.U8(ra.B[_x_] - rb.B[_x_]); ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:uksub8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x1d  unimpl
+
+
+:uksubh rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x0b  unimpl
+
+
+:uksubw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x09  unimpl
+
+
+# umaqa rt, ra, rb 	 ; rt.W[x] = rt.W[x] + ra.W[x].B[3]*rb.W[x].B[3] + ra.W[x].B[2]*rb.W[x].B[2] ; + ra.W[x].B[1]*rb.W[x].B[1] + ra.W[x].B[0]*rb.W[x].B[0]); ; (RV32: x=0, RV64: x=1..0) ; Elements of ra and rb are unsigned numbers.
+:umaqa rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x66  unimpl
+
+
+# umar64 rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 + ra*rb; // unsigned + ; + ; r[tU].r[tL] = t64;
+:umar64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x52  unimpl
+
+
+# umax16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] u> rb.H[_x_])? ra.H[_x_] : rb.H[_x_]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:umax16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x49  unimpl
+
+
+# umax8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] u> rb.B[_x_])? ra.B[_x_] : rb.B[_x_]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:umax8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x4d  unimpl
+
+
+# umin16 rt, ra, rb 	 ; rt.H[_x_] = (ra.H[_x_] u< rb.H[_x_])? ra.H[_x_] : rb.H[_x_]; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:umin16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x48  unimpl
+
+
+# umin8 rt, ra, rb 	 ; rt.B[_x_] = (ra.B[_x_] u< rb.B[_x_])? ra.B[_x_] : rb.B[_x_]; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:umin8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x4c  unimpl
+
+
+# umsr64 rt, ra, rb 	 ; c64 = r[tU].r[tL]; + ; + ; t64 = c64 - ra*rb; // unsigned + ; + ; r[tU].r[tL] = t64;
+:umsr64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x53  unimpl
+
+
+# umul16 rt, ra, rb 	 ; RV32: ; r[tL] = ra.H[_0_] u* rb.H[_0_]; ; r[tH] = ra.H[_1_] u* rb.H[_1_]; ; RV64: ; rt.W[_0_] = ra.H[_0_] u* rb.H[_0_]; ; rt.W[_1_] = ra.H[_1_] u* rb.H[_1_];
+:umul16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x58  unimpl
+
+
+:umul16h rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x68  unimpl
+
+
+# umul8 rt, ra, rb 	 ; RV32: ; r[tL].H[_0_] = ra.B[_0_] u* rb.B[_0_]; ; r[tL].H[_1_] = ra.B[_1_] u* rb.B[_1_]; ; r[tH].H[_0_] = ra.B[_2_] u* rb.B[_2_]; ; r[tH].H[_1_] = ra.B[_3_] u* rb.B[_3_]; ; RV64: ; rt.H[_0_] = ra.B[_0_] u* rb.B[_0_]; ; rt.H[_1_] = ra.B[_1_] u* rb.B[_1_]; ; rt.H[_2_] = ra.B[_2_] u* rb.B[_2_]; ; rt.H[_3_] = ra.B[_3_] u* rb.B[_3_];
+:umul8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x5c  unimpl
+
+
+# umulx16 rt, ra, rb 	 ; RV32: ; r[tL] = ra.H[_0_] u* rb.H[_1_]; ; r[tH] = ra.H[_1_] u* rb.H[_0_]; ; RV64: ; rt.W[_0_] = ra.H[_0_] u* rb.H[_1_]; ; rt.W[_1_] = ra.H[_1_] u* rb.H[_0_];
+:umulx16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x59  unimpl
+
+
+:umulx16h rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x69  unimpl
+
+
+# umulx8 rt, ra, rb 	 ; RV32: ; r[tL].H[_0_] = ra.B[_0_] u* rb.B[_1_]; ; r[tL].H[_1_] = ra.B[_1_] u* rb.B[_0_]; ; r[tH].H[_0_] = ra.B[_2_] u* rb.B[_3_]; ; r[tH].H[_1_] = ra.B[_3_] u* rb.B[_2_]; ; RV64: ; rt.H[_0_] = ra.B[_0_] u* rb.B[_1_]; ; rt.H[_1_] = ra.B[_1_] u* rb.B[_0_]; ; rt.H[_2_] = ra.B[_2_] u* rb.B[_3_]; ; rt.H[_3_] = ra.B[_3_] u* rb.B[_2_];
+:umulx8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x5d  unimpl
+
+
+# uradd16 rt, ra, rb 	 ; rt.H[_x_] = (CONCAT(1'b0,ra.H[_x_]) + CONCAT(1'b0,rb.H[_x_])) >> 1; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:uradd16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x10  unimpl
+
+
+# uradd64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = (CONCAT(1'b0,a64) + CONCAT(1'b0,b64)) >>1; + ; + ; r[tU].r[tL] = t64;
+:uradd64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x50  unimpl
+
+
+# uradd8 rt, ra, rb 	 ; rt.B[_x_] = (CONCAT(1'b0,ra.B[_x_]) + CONCAT(1'b0,rb.B[_x_])) >> 1; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:uradd8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x14  unimpl
+
+
+# uraddw rt, ra, rb 	 ; res = (CONCAT(1'b0,ra.W[0]) + CONCAT(1'b0,rb.W[0])) >> 1; ; rt = SE(res);
+:uraddw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x18  unimpl
+
+
+# urcras16 rt, ra, rb 	 ; rt.H[_x_] = (CONCAT(1'b0,ra.H[_x_]) + CONCAT(1'b0,rb.H[_x-1_])) >> 1; + ; rt.H[_x-1_] = (CONCAT(1'b0,ra.H[_x-1_]) – CONCAT(1'b0,rb.H[_x_])) >> 1; ; (RV32: __x__=1, RV64: __x__=1,3)
+:urcras16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x12  unimpl
+
+
+# urcrsa16 rt, ra, rb 	 ; rt.H[_x_] = (CONCAT(1'b0,ra.H[_x_]) - CONCAT(1'b0,rb.H[_x-1_])) >> 1; + ; rt.H[_x-1_] = (CONCAT(1'b0,ra.H[_x-1_]) + CONCAT(1'b0,rb.H[_x_])) >> 1; ; (RV32: __x__=1, RV64: __x__=1,3)
+:urcrsa16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x13  unimpl
+
+
+# ursub16 rt, ra, rb 	 ; rt.H[_x_] = (CONCAT(1'b0,ra.H[_x_]) - CONCAT(1'b0,rb.H[_x_])) >> 1; ; (RV32: __x__=1..0, RV64: __x__=3..0)
+:ursub16 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x11  unimpl
+
+
+# ursub64 rt, ra, rb 	 ; a64 = r[aU].r[aL]; b64 = r[bU].r[bL]; + ; + ; t64 = (CONCAT(1'b0,a64) - CONCAT(1'b0,b64)) >>1; + ; + ; r[tU].r[tL] = t64;
+:ursub64 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x51  unimpl
+
+
+# ursub8 rt, ra, rb 	 ; rt.B[_x_] = (CONCAT(1'b0,ra.B[_x_]) - CONCAT(1'b0,rb.B[_x_])) >> 1; ; (RV32: __x__=3..0, RV64: __x__=7..0)
+:ursub8 rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x15  unimpl
+
+
+# ursubw rt, ra, rb 	 ; res = (CONCAT(1'b0,ra.W[0]) - CONCAT(1'b0,rb.W[0])) >> 1; ; rt = SE(res);
+:ursubw rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x1 & funct7=0x19  unimpl
+
+
+# wext rt, ra, rb 	 ; a64 = r[aU].r[aL]; // RV32 ; a64 = ra; // RV64 ; lsb = rb[4:0]; ; exword = a64[(31+lsb):lsb]; ; rt = SE(exword);
+:wext rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x67  unimpl
+
+
+# wexti rt, ra, imm5u 	 ; a64 = r[aU].r[aL]; // RV32 ; a64 = ra; // RV64 ; lsb = imm5u; ; exword = a64[(31+lsb):lsb]; ; rt = SE(exword);
+:wexti rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x6f  unimpl
+
+
+# zunpkd810 rt, ra 	 ; rt.H[_x_] = ZE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,1), (0,0) ; RV64: (_x,y_) = (3,5),(2,4),(1,1), (0,0)
+:zunpkd810 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x0c  unimpl
+
+
+# zunpkd820 rt, ra 	 ; rt.H[_x_] = ZE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,2), (0,0) ; RV64: (_x,y_) = (3,6),(2,4),(1,2), (0,0)
+:zunpkd820 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x0d  unimpl
+
+
+# zunpkd830 rt, ra 	 ; rt.H[_x_] = ZE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,3), (0,0) ; RV64: (_x,y_) = (3,7),(2,4),(1,3), (0,0)
+:zunpkd830 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x0e  unimpl
+
+
+# zunpkd831 rt, ra 	 ; rt.H[_x_] = ZE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,3), (0,1) ; RV64: (_x,y_) = (3,7),(2,5),(1,3), (0,1)
+:zunpkd831 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x0f  unimpl
+
+
+# zunpkd832 rt, ra 	 ; rt.H[_x_] = ZE16(ra.B[_y_]); ; RV32: (_x,y_) = (1,3), (0,2) ; RV64: (_x,y_) = (3,7),(2,6),(1,3), (0,2)
+:zunpkd832 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x56 & subf5=0x17  unimpl
+
+
