@@ -342,7 +342,9 @@
 # unimp  c0001073 ffffffff SIMPLE (0, 0) 
 :unimp  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x1 & op0711=0x0 & op1531=0x18000
 {
-	unimp();
+    local excaddr:$(XLEN) = inst_start;
+    local target:$(XLEN) = unimp(excaddr);
+    goto [target];
 }
 
 

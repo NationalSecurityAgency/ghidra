@@ -1,10 +1,5 @@
 # RISC-V Privileged Instructions
 
-define pcodeop dret;
-define pcodeop hret;
-define pcodeop mret;
-define pcodeop sret;
-define pcodeop uret;
 define pcodeop wfi;
 define pcodeop sfence.vm;
 define pcodeop sfence.vma;
@@ -15,33 +10,30 @@ define pcodeop sfence.vma;
 # dret  7b200073 ffffffff SIMPLE (0, 0) 
 :dret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0xf640
 {
-	dret();
+	return [dpc];
 }
 
-# hret  20200073 ffffffff SIMPLE (0, 0) 
-:hret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x4040
-{
-	hret();
-}
-
+# hret  20200073 ffffffff SIMPLE (0, 0)
+# deprecated instruction in latest spec
+#:hret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x4040
 
 # mret  30200073 ffffffff SIMPLE (0, 0) 
 :mret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x6040
 {
-	mret();
+	return [mepc];
 }
 
 # sret  10200073 ffffffff SIMPLE (0, 0) 
 :sret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x2040
 {
-	sret();
+	return [sepc];
 }
 
 
 # uret  00200073 ffffffff SIMPLE (0, 0) 
 :uret  is op0001=0x3 & op0204=0x4 & op0506=0x3 & funct3=0x0 & op0711=0x0 & op1531=0x40
 {
-	uret();
+	return [uepc];
 }
 
 

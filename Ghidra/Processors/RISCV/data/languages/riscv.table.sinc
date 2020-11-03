@@ -32,6 +32,7 @@ rs3: zero is zero & op2731=0 { export 0:$(XLEN); }
 
 rd: r0711 is r0711 { export r0711; }
 rd: zero is r0711 & zero & op0711=0 { export 0:$(XLEN); }
+rdDst: r0711 is r0711 { export r0711; }
 
 
 rs1W: r1519 is r1519 { local tmp:$(WXLEN) = r1519:$(WXLEN); export tmp; }
@@ -75,7 +76,6 @@ rdL: zero is r0711 & zero & op0711=0 { export 0:8; }
 # fmt: ".q" is op2526=3 { export $(QFLEN):1; }
 
 
-@if FPSIZE != "0"
 frd:  fr0711 is fr0711 { export fr0711; }
 frs1: fr1519 is fr1519 { export fr1519; }
 frs2: fr2024 is fr2024 { export fr2024; }
@@ -102,7 +102,6 @@ macro fassignS(dest, src) {
 	dest = zext(src);
 @endif
 }
-@endif
 
 
 macro assignW(dest, src) {
@@ -184,13 +183,11 @@ crd: zero is zero & cop0711=0 { export 0:$(XLEN); }
 crs2: cr0206 is cr0206 { export cr0206; }
 crs2: zero is cr0206 & zero & cop0206=0 { export 0:$(XLEN); }
 
-@if FPSIZE != "0"
 cfrs1: cfr0711 is cfr0711 { export cfr0711; }
 
 cfrd: cfr0711 is cfr0711 { export cfr0711; }
 
 cfrs2: cfr0206 is cfr0206 { export cfr0206; }
-@endif
 
 #ATTN  Not doing tables for the RVC registers since there is no
 #      zero register to worry about
