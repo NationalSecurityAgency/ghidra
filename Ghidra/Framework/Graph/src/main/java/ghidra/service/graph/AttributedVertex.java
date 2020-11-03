@@ -17,6 +17,9 @@ package ghidra.service.graph;
 
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.util.Set;
 
 /**
@@ -99,7 +102,7 @@ public class AttributedVertex extends Attributed {
 		for (Map.Entry<String, String> entry : entries) {
 			buf.append(entry.getKey());
 			buf.append(":");
-			buf.append(entry.getValue());
+			buf.append(StringEscapeUtils.escapeHtml4(entry.getValue()));
 			buf.append("<br>");
 		}
 		htmlString = buf.toString();

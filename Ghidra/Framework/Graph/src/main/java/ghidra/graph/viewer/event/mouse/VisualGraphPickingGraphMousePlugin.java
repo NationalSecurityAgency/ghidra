@@ -28,12 +28,11 @@ import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.*;
-import edu.uci.ics.jung.visualization.control.PickingGraphMousePlugin;
 import edu.uci.ics.jung.visualization.picking.PickedState;
 import ghidra.graph.viewer.*;
 
 public class VisualGraphPickingGraphMousePlugin<V extends VisualVertex, E extends VisualEdge<V>>
-		extends PickingGraphMousePlugin<V, E> implements VisualGraphMousePlugin<V, E> {
+		extends JungPickingGraphMousePlugin<V, E> implements VisualGraphMousePlugin<V, E> {
 
 // ALERT: -this class was created because mouseDragged() has a bug that generates a NPE
 //        -also, mousePressed() has a bug in that it does not check the modifiers when the method is entered
