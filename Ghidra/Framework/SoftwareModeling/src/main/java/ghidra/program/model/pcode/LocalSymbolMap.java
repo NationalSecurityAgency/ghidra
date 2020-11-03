@@ -476,12 +476,9 @@ public class LocalSymbolMap {
 		symbolMap.put(uniqueId, sym);
 	}
 
-	private void newEquateSymbol(long uniqueId, String nm, long val, long hash, Address addr,
-			TreeMap<String, HighSymbol> constantSymbolMap) {
-		HighSymbol eqSymbol = constantSymbolMap.get(nm);
-		if (eqSymbol != null) {
-			return;			// New reference to same symbol
-		}
+	private EquateSymbol newEquateSymbol(long uniqueId, String nm, long val, long hash,
+			Address addr) {
+		EquateSymbol eqSymbol;
 		if (uniqueId == 0) {
 			uniqueId = getNextId();
 		}
@@ -494,7 +491,7 @@ public class LocalSymbolMap {
 			eqSymbol = new EquateSymbol(uniqueId, conv, val, func, addr, hash);
 		}
 		//Do NOT setTypeLock
-		constantSymbolMap.put(nm, eqSymbol);
+		return eqSymbol;
 	}
 
 	/**
@@ -502,7 +499,7 @@ public class LocalSymbolMap {
 	 * @param dbFunction is the function to pull equates for
 	 */
 	private void grabEquates(Function dbFunction) {
-		TreeMap<String, HighSymbol> constantSymbolMap = null;
+		ArrayList<HighSymbol> equateSymbolList = null;
 		// Find named constants via Equates
 		Program program = dbFunction.getProgram();
 		EquateTable equateTable = program.getEquateTable();
@@ -516,12 +513,23 @@ public class LocalSymbolMap {
 					continue;
 				}
 				long hash[] = DynamicHash.calcConstantHash(instr, eq.getValue());
-				for (long element : hash) {
-					if (constantSymbolMap == null) {
-						constantSymbolMap = new TreeMap<String, HighSymbol>();
+				if (hash.length == 0) {
+					continue;
+				}
+				Arrays.sort(hash);		// Sort in preparation for deduping
+				String displayName = eq.getDisplayName();
+				long eqValue = eq.getValue();
+				if (equateSymbolList == null) {
+					equateSymbolList = new ArrayList<HighSymbol>();
+				}
+
+				EquateSymbol eqSymbol;
+				for (int i = 0; i < hash.length; ++i) {
+					if (i != 0 && hash[i - 1] == hash[i]) {
+						continue;		// Found a duplicate, skip it
 					}
-					newEquateSymbol(0, eq.getDisplayName(), eq.getValue(), element, defAddr,
-						constantSymbolMap);
+					eqSymbol = newEquateSymbol(0, displayName, eqValue, hash[i], defAddr);
+					equateSymbolList.add(eqSymbol);
 				}
 			}
 		}
@@ -540,10 +548,9 @@ public class LocalSymbolMap {
 //		
 
 // Add constant dynamic symbols to map
-		if (constantSymbolMap != null) {
-			for (HighSymbol sym : constantSymbolMap.values()) {
-				long id = getNextId();
-				symbolMap.put(id, sym);
+		if (equateSymbolList != null) {
+			for (HighSymbol sym : equateSymbolList) {
+				symbolMap.put(sym.getId(), sym);
 			}
 		}
 	}
