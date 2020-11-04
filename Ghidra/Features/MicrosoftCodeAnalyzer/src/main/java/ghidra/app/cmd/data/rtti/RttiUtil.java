@@ -15,16 +15,14 @@
  */
 package ghidra.app.cmd.data.rtti;
 
-import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.getAbsoluteAddress;
+import static ghidra.app.util.datatype.microsoft.MSDataTypeUtils.*;
 
-import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.cmd.data.TypeDescriptorModel;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.PseudoDisassembler;
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.datatype.microsoft.MSDataTypeUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.GhidraClass;
@@ -34,20 +32,23 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramMemoryUtil;
 import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
+import utility.function.TerminatingConsumer;
 
 /**
  * RttiUtil provides constants and static methods for processing RTTI information.
  */
 public class RttiUtil {
 
+	private static final String TYPE_INFO_NAMESPACE = "type_info";
+	private static final int MIN_MATCHING_VFTABLE_PTRS = 5;
 	static final String CONST_PREFIX = "const ";
-	public static final String TYPE_INFO_STRING = ".?AVtype_info@@";
+
 	public static final String TYPE_INFO_LABEL = "class_type_info_RTTI_Type_Descriptor";
-	private static final String MANGLED_TYPE_INFO_SYMBOL = "??_R0?AVtype_info@@@8";
+	public static final String TYPE_INFO_STRING = ".?AVtype_info@@";
+	private static final String CLASS_PREFIX_CHARS = ".?A";
+	private static Map<Program, Address> vftableMap = new WeakHashMap<>();
 
 	private RttiUtil() {
 		// utility class; can't create
@@ -151,6 +152,12 @@ public class RttiUtil {
 					: false) {
 				break; // Not pointing to text section.
 			}
+			
+			// any references after the first one ends the table
+			if (tableSize > 0 && program.getReferenceManager().hasReferencesTo(currentVfPointerAddress)) {
+				break;
+			}
+			
 			if (!pseudoDisassembler.isValidSubroutine(referencedAddress, true)) {
 				break; // Not pointing to possible function.
 			}
@@ -178,63 +185,185 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Gets the address of the base type_info structure in the provided program.
-	 * The descriptor will only be manually located if {@value TYPE_INFO_STRING} is present.
-	 * @param program the program
-	 * @return the address of the type_info structure or null if not found
+	 * Identify common TypeInfo address through examination of discovered VtTables
 	 */
-	public static Address getTypeInfoTypeDescriptorAddress(Program program) {
-		SymbolTable table = program.getSymbolTable();
-		List<Symbol> symbols = table.getGlobalSymbols(TYPE_INFO_LABEL);
-		if (symbols.isEmpty()) {
-			symbols = table.getGlobalSymbols(MANGLED_TYPE_INFO_SYMBOL);
+	private static class CommonRTTIMatchCounter implements TerminatingConsumer<Address> {
+		int matchingAddrCount = 0;
+		int defaultPointerSize = 4;
+		boolean terminationRequest = false;
+		Address commonVftableAddress = null;
+		Program program;
+		
+		public CommonRTTIMatchCounter(Program program) {
+			this.program = program;
+			defaultPointerSize = program.getDefaultPointerSize();
 		}
-		if (!symbols.isEmpty()) {
-			for (Symbol symbol : symbols) {
-				if (isTypeInfoTypeDescriptorAddress(program, symbol.getAddress())) {
-					return symbol.getAddress();
-				}
-			}
+		
+		public Address getinfoVfTable() {
+			return commonVftableAddress;
 		}
-		return locateTypeInfoAddress(program);
-	}
 
-	/**
-	 * Checks if the provided address is a TypeDescriptor containing the
-	 * {@value TYPE_INFO_STRING} component
-	 * @param program the program
-	 * @param address the descriptor address
-	 * @return true if {@value TYPE_INFO_STRING} is present in the descriptor at the address
-	 */
-	public static boolean isTypeInfoTypeDescriptorAddress(Program program, Address address) {
-		MemoryByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
-		try {
-			BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
-			String value = reader.readAsciiString(program.getDefaultPointerSize() * 2);
-			return TYPE_INFO_STRING.equals(value);
-		} catch (IOException e) {
-			return false;
+		@Override
+		public boolean terminationRequested() {
+			return terminationRequest;
+		}
+
+		@Override
+		public void accept(Address foundAddress) {
+			Address mangledClassNameAddress = foundAddress;
+
+			Address pointerToTypeInfoVftable =
+				mangledClassNameAddress.subtract(2 * defaultPointerSize);
+
+			Address possibleVftableAddress =
+				MSDataTypeUtils.getAbsoluteAddress(program, pointerToTypeInfoVftable);
+			if (possibleVftableAddress == null) {
+				return; // valid address not found
+			}
+			if (possibleVftableAddress.getOffset() == 0) {
+				return; // don't want zero_address to count
+			}
+			// if ever we find one that doesn't match, start count over
+			if (!possibleVftableAddress.equals(commonVftableAddress)) {
+				if (matchingAddrCount > 2) {
+					return;  // already have more than one match, assume this one was outlier, ignore
+				}
+				matchingAddrCount = 0;
+			}
+			
+			commonVftableAddress = possibleVftableAddress;
+			matchingAddrCount++;
+			
+			if (matchingAddrCount > MIN_MATCHING_VFTABLE_PTRS) {
+				// done finding good addresses have at Minimum matching number
+				terminationRequest = true;
+				return;
+			}
+			return;
 		}
 	}
 	
-	private static Address locateTypeInfoAddress(Program program) {
-		Memory memory = program.getMemory();
-		try {
-			List<MemoryBlock> dataBlocks = ProgramMemoryUtil.getMemoryBlocksStartingWithName(
-				program, program.getMemory(), ".data", TaskMonitor.DUMMY);
-			for (MemoryBlock memoryBlock : dataBlocks) {
-				Address typeInfoAddress =
-					memory.findBytes(memoryBlock.getStart(), memoryBlock.getEnd(),
-						TYPE_INFO_STRING.getBytes(), null, true, TaskMonitor.DUMMY);
-				if (typeInfoAddress != null) {
-					return TypeDescriptorModel.getBaseAddress(program, typeInfoAddress);
-				}
-			}
-		} catch (CancelledException e) {
-			// impossible
-			throw new AssertException(e);
+	/**
+	 * Method to figure out the type_info vftable address using pointed to value by all RTTI classes
+	 * @param program the current program
+	 * @param monitor the TaskMonitor
+	 * @return the type_info address or null if it cannot be determined
+	 * @throws CancelledException if cancelled
+	 */
+	public static Address findTypeInfoVftableAddress(Program program, TaskMonitor monitor)
+			throws CancelledException {
+
+		// Checked for cached value
+		if (vftableMap.containsKey(program)) {
+			return vftableMap.get(program);
 		}
+
+		// if type info vftable already a symbol, just use the address of the symbol
+		Address infoVftableAddress = findTypeInfoVftableLabel(program);
+		if (infoVftableAddress == null) {
+
+			// search for mangled class prefix names, and locate the vftable pointer relative to some
+			// minimum number that all point to the same location which should be the vftable
+			AddressSetView set = program.getMemory().getLoadedAndInitializedAddressSet();
+			List<MemoryBlock> dataBlocks =
+				ProgramMemoryUtil.getMemoryBlocksStartingWithName(program, set, ".data", monitor);
+
+			CommonRTTIMatchCounter vfTableAddrChecker = new CommonRTTIMatchCounter(program);
+
+			ProgramMemoryUtil.locateString(CLASS_PREFIX_CHARS, vfTableAddrChecker, program,
+				dataBlocks, set, monitor);
+			infoVftableAddress = vfTableAddrChecker.getinfoVfTable();
+		}
+		
+		// cache result of search
+		vftableMap.put(program, infoVftableAddress);
+
+		return infoVftableAddress;
+	}
+
+	/**
+	 * find type info vftable by existing type_info::vftable symbol
+	 * @param program program to check
+	 * @return return vftable addr if symbol exists
+	 */
+	private static Address findTypeInfoVftableLabel(Program program) {
+		SymbolTable symbolTable = program.getSymbolTable();
+		Namespace typeinfoNamespace =
+				symbolTable.getNamespace(TYPE_INFO_NAMESPACE, program.getGlobalNamespace());
+		Symbol vftableSymbol =
+				symbolTable.getLocalVariableSymbol("vftable", typeinfoNamespace);
+		if (vftableSymbol != null) {
+			return vftableSymbol.getAddress();
+		}
+		
+		vftableSymbol = symbolTable.getLocalVariableSymbol("`vftable'", typeinfoNamespace);
+		if (vftableSymbol != null) {
+			return vftableSymbol.getAddress();
+		}
+		
+		vftableSymbol = symbolTable.getLocalVariableSymbol("type_info", typeinfoNamespace);
+		if (vftableSymbol != null) {
+			return vftableSymbol.getAddress();
+		}
+
 		return null;
+	}
+
+	/**
+	 * Method to create type_info vftable label (and namespace if needed) at the given address
+	 * @param program the current program
+	 * @param address the given address
+	 */
+	public static void createTypeInfoVftableSymbol(Program program, Address address) {
+
+		SymbolTable symbolTable = program.getSymbolTable();
+
+		Namespace typeinfoNamespace =
+			symbolTable.getNamespace(TYPE_INFO_NAMESPACE, program.getGlobalNamespace());
+
+		if (typeinfoNamespace == null) {
+			try {
+				typeinfoNamespace = symbolTable.createClass(program.getGlobalNamespace(),
+					TYPE_INFO_NAMESPACE, SourceType.IMPORTED);
+			}
+			catch (DuplicateNameException e) {
+				Msg.error(RttiUtil.class, "Duplicate type_info class namespace at " +
+					program.getName() + " " + address + ". " + e.getMessage());
+				return;
+			}
+			catch (InvalidInputException e) {
+				Msg.error(RttiUtil.class, "Invalid input creating type_info class namespace " +
+					program.getName() + " " + address + ". " + e.getMessage());
+				return;
+			}
+		}
+
+		// check to see if symbol already exists both non-pdb and pdb versions
+		Symbol vftableSymbol = symbolTable.getSymbol(TYPE_INFO_NAMESPACE, address, typeinfoNamespace);
+		if (vftableSymbol != null) {
+			return;
+		}
+
+		vftableSymbol = symbolTable.getSymbol("`vftable'", address, typeinfoNamespace);
+		if (vftableSymbol != null) {
+			return;
+		}
+
+		try {
+			vftableSymbol =
+				symbolTable.createLabel(address, "vftable", typeinfoNamespace, SourceType.IMPORTED);
+			if (vftableSymbol == null) {
+				Msg.error(RttiUtil.class,
+					program.getName() + " Couldn't create type_info vftable symbol. ");
+				return;
+			}
+		}
+		catch (InvalidInputException e) {
+			Msg.error(RttiUtil.class,
+				program.getName() + " Couldn't create type_info vftable symbol. " + e.getMessage());
+			return;
+		}
+
 	}
 
 }
