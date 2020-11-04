@@ -24,9 +24,11 @@
     This framework includes a suite of full-featured, high-end software analysis tools that enable
     users to analyze compiled code on a variety of platforms including Windows, MacOS, and Linux.
     Capabilities include disassembly, assembly, decompilation, graphing, and scripting, along with
-    hundreds of other features.  Ghidra supports a wide variety of process instruction sets and 
+    hundreds of other features.  Ghidra supports a wide variety of processor instruction sets and 
     executable formats and can be run in both user-interactive and automated modes.  Users may also
-    develop their own Ghidra plug-in components and/or scripts using the exposed API.
+    develop their own Ghidra plug-in component and scripts using the exposed API.  In addition there are
+    numerous ways to extend Ghidra such as new processors, loaders/exporters, automated analyzers,
+    and new visualizations.
     </P>
     
     <P>
@@ -38,30 +40,150 @@
     </P>
     
     <BR />
-    <H1> What's New in Ghidra 9.1</H1>
+    <H1> What's New in Ghidra 9.2</H1>
         
-    <H2> <a id="finePrint91"/>The not-so-fine print: Please Read!</H2>
+    <H2> <a id="finePrint92"/>The not-so-fine print: Please Read!</H2>
     
-	<P>Ghidra 9.1 is fully backward compatible with project data from previous releases. However, programs opened in 9.1 may no 
-	longer be accessible by an earlier Ghidra version if the processor model has been updated. </P>
+	<P>Ghidra 9.2 is fully backward compatible with project data from previous releases. However, programs opened in 9.2 may no 
+	longer be accessible by an earlier Ghidra version if the processor model has been updated.  A processor version
+	number mismatch error is displayed if this occurs.  In almost all cases, it is better to use the latest version than to
+	attempt to use both Ghidra 9.2 and a previous release, unless absolutely necessary.</P>
 
-	<P>This release includes many new features and capabilities, performance improvements, quite a few bug fixes, and pull-request
-	contributions.  Many thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community
+	<P>This release includes many new features and capabilities, performance improvements, quite a few bug fixes, and many pull-request
+	contributions.  Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community
 	thanks you too!</P>
 
-	<P>NOTE: The Ghidra 9.0 server is compatible with Ghidra 9.0 and 9.1 clients, however the 9.1 server
-	now requires clients to use a TLS secure connection for the initial RMI registry port access.  
-	If the Ghidra multi-user server is upgraded to 9.1, then all clients must
-	upgrade to 9.1.  A 9.1 Ghidra client will fall back to a non-TLS connection when accessing the RMI Registry on
+	<P>NOTE: The Ghidra 9.0 server is compatible with Ghidra 9.x clients, however starting with 9.1 the server
+	requires clients to use a TLS secure connection for the initial RMI registry port access.  
+	If the Ghidra multi-user server is upgraded to 9.2, then all clients must
+	upgrade to 9.2.  A 9.x Ghidra client will fall back to a non-TLS connection when accessing the RMI Registry on
 	a 9.0 server.  Note that all other server interaction including authentication were and continue to be 
 	performed over a secure TLS connection.</P>
 	
-	<P>Minor Note: Ghidra-compiled .sla files are not backwards compatible due to the newly added OTHER space for syscalls
-	support.  In the pre-built ghidra, all .sla files are re-built from scratch.  However if you have local processor modules,
+	<P>Minor Note: If a processors instruction implementation has changed significantly, any generated .fidb files using that
+	processor definition may need to be regenerated.
+	Changes that could require regeneration include, change in instruction size, number of operands, the nature of
+	the operands, changes in register decoding for an operand.  The x86-64bit has had such changes, for example there were
+	changes to the decoded register for many instructions with prefix byte overrides.  All the provided .fidb files have
+	been regenerated, and new ones for VS 2017/2019 have been added.</P>
+	
+	<P>Minor Note: Ghidra-compiled .sla files are not always backwards compatible due to changes in the underlying .sla
+	specification.  In the pre-built ghidra, all .sla files are re-built from scratch.  However if you have local processor modules,
+	or are building ghidra from scratch, you may need to do a clean build.  Any processor modules with changes are normally recompiled
+	at Ghidra startup so this situation is rare.</P>
+	
+
+	<H2>Open Source Based Graphing</H2>
+	   <P>Ghidra has been integrated with an open source graph visualization package, called JUNGGRAPHT, to display interactive
+	   block graphs, call graphs, AST control flow graphs, as well as a general API to create graphs within plugins and scripts.
+       Prior to public release graphing had been provided by a legacy graphing package which was un-releasable publicly due to
+       licensing issues.</P>
+	   
+	   <P>Graphs are displayed in a new tabbed graph window. Current location and selection of vertices are kept in sync with other
+	   information displays such as the listing and decompiler. Each graph can be filtered and visualized with various
+	   layout algorithms to examine the program structure.   In addition, Graphs can be exported in several standard graph formats, such as
+	   CSV, GRAPHML, GML, JSON, and VISIO.  The exported file can then be imported into external tools.</P>
+	   
+	   <P>The graphing capability is implemented by a general service mechanism allowing other graph providers to be implemented to support
+	   a favorite graphing tool, however, users will most likely be satisfied with the new default implementation.
+	   There will be a follow up capabilities such as graph specific popup actions on the the nodes and edges that can be added by
+	   the creator of the graph before display. As in everything, the Ghidra team is interested in any feedback you might provide
+	   on this new capability.</P>
+	   
+    <H2>Dynamic Modules: OSGI model for scripting</H2>
+       <P>A change to scripting brings a powerful form of dynamic extensibilty to Ghidra scripting, where Java source code is (re)compiled, loaded, and
+       run without exiting Ghidra. When a script grows large or requires external dependencies, it might be worth the effort to split
+       up code into modules.  To support modularity while preserving the dynamic nature of scripts, Ghidra uses OSGi. The new feature
+       provides better script change detection, external jar dependencies, script lifecycle management, and modularity.</P>
+       <P>To find out more, bring up Help contents in Ghidra, and search for OSGi or Bundles.</P>
+       
+    <H2>JAVA based Univeral PDB</H2>
+       <P>Automatically applies.  Extract data types.  Mismatched PDB's. More to come.</P>
+       <P>Reader API</P>
+	
+	<H2>Performance Improvements</H2>
+	   <P>There have been major performance improvements in both analysis and the display or filtering of information within GUI components.
+	   These changes are most notable on large binaries, with reports of improvements from 24 plus hours to under an hour for analysis.  Some operations
+	   were done very inefficiently such that the end user might give up on analysis.  Please report if you notice any severe performance issues
+	   or binaries that take a large amount of time to process, if you can find an example binary that is easily obtainable that reproduces
+	   the issue we can identify the root cause and hopefully improve it.  There are some continued sore performance areas we are still working
+	   such as the non-returning function analyzer.  We hope you will find the binary analysis speed and interactivity much improved.</P>
+	   <P>Some specific areas of improvement are binaries with rich data type information, RTTI information, Exception records, large number
+	   of bytes, large number of defined symbols, and many symbols at a single address.</P>
+	   
+	<H2>Visual Studio RTTI information extraction</H2>
+	   <P>What does it do, what does it not</P>
+
+	<H2>Processor Specification</H2>
+	
+		<P>Minor changes have been made to the Build process of the Sleigh Editor.  For those trying to build it from scratch the
+		instructions are a little clearer and should work correctly.  In addition the new popcount operator is supported.
+		For those modifying or studying sleigh processor specifications, who were unaware of the Sleigh Editor, we encourage
+		you to give it a try.  We suggest you install/run the Sleigh Editor in a separate Eclipse installation, possibly the Eclipse
+		you use with the Ghidra runtime, from the one you are using with the entire Ghidra source code base imported.
+		To find out more read the <i>GhidraSleighEditor_README.html</i>.</P>
+		
+		<P>The External Disassembler is a plugin useful when developing or trouble-shooting sleigh processor specifications.  It is part of
+		the Xtra SleighDevTools project.  The plugin integrates with an external disassembler such as binutils, and provides a code browser
+		field that displays the disassembly from an external disassembler, such as bintutils, at each instruction or undefined byte in the listing.
+		The only external disassembler integration provided is binutils, however it is possible to add support for additional external disassemblers.
+		Previously the External Disassembler had trouble with instruction sets which have alternate mode set of instruction
+		such as Thumb or MicroMips.  The working aide field has new configuration files to feed different options to the external disassembler
+		to choose the correct alternate encoding set.  This also works well with several scripts that also aide in processor development such as
+		the <i>CompareSleighExternal</i> script.</P>
+		
+		<P>A new pcode operation POPCOUNT is supported in sleigh processor specifications, this was mainly added to deal with instructions
+		that needed to compute the parity of an operation.
+		In addition, the Sleigh compiler error messages have been reworked to be more comprehensible, consistent in format layout, and to provide
+		correct line numbers as close to the error as possible.  In addition, several cases have been caught during compilation that previously would
+		pass compilation but cause issues during use of the processor.</P>
+
+    <H2>Function Identification Improvements</H2>
+    
+        <P>Function Identification databases have been recreated from scratch, including new information for Visual Studio 2017 and 2019 libraries.
+        The databases have been cleaned and should overall result in more matches with fewer mis-matched or multiple matches for identified functions.
+        In addition the FID libraries had to be rebuilt from    scratch due to errors or differences in instruction set decode (especially in the 64-bit X86)
+        with prior versions of Ghidra.  The FID is sensitive to the actual instruction bytes, the mnemonic, register, and number of operands.</P>
+        
+        <P>There are several new improvements that have been identified that will be added in a future release.  Until then to get an even better increased
+        positive match rate to turn on the Shared Return Calls Analyzer option Assume Contiguous Functions Only, and possibly Allow Conditional Jumps.
+        For normal cleanly non-heavily optimized, non-malware or obfuscated binaries, these options should cause few issues.</P>
+	
+	<H2>Symbol Demangling</H2>
+	    <P>Both GNU and Microsoft symbol de-mangling has been greatly improved resulting in fewer unmangled symbols and better function signature recovery.</P>
+	    
+    <H2>Decompiler</H2>
+
+    <H2>Languages</H2>
+    	<P>Several new processor specifications added, from very old processors to more recent: CP1600, M6809, M8C, RISC-V, V850.</P>
+    	
+    	<P>Many improvements and bug fixes have been made to existing processor
+    	specifications: ARM, AARCH64, AVR8, CRC16C, PIC24/30, SH2, SH4, TriCore, X86, XGATE,
+    	6502, 68K, 6805, M6809, 8051, and others.  Of note, the AARCH64 has been updated to support all v8.6 spec instructions.
+    	Many of the processor improvements have been contributed by the Ghidra
+    	community.  Others were discovered and fixed with a currently internal tool which automates fuzzing
+    	of individual instructions against an external emulator or debugger.  We hope to put the tool
+    	out in a near term future release.</P>
+    	
+    <H2>Dynamic Analysis Framework - Debugger</H2>
+        <P>The debugger is very much still in progress. You may have seen some commits, in the Ghidra github master branch, to get in sync with the debugger.
+        Stay tuned for more to come soon after the 9.2 release.</P>
+    	    	
+    <H2>Bug Fixes and Enhancements</H2>
+    		<P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
+      
+    <BR />  
+    <BR />
+    <H1> What's New in Ghidra 9.1</H1>
+        
+    <H2> <a id="finePrint91"/>The not so fine print: Please Read!</H2>
+	
+	<P>Minor Note: Ghidra compiled .sla files are not backwards compatible due to the newly added OTHER space for syscalls
+	support.  In the pre-built ghidra all .sla files are re-built from scratch.  However if you have local processor modules,
 	or are building ghidra from scratch, you may need to do a clean build.  You will get an error if an old .sla file is loaded
 	without recompilation of the .slaspec file.  Any processor modules with changes are normally recompiled at Ghidra startup
 	so this situation is rare.</P>
-			
+	
 	<H2>Data Improvements</H2>
 	
 		<P>Bitfields within structures are now supported as a Ghidra data type.  Bitfield definitions
