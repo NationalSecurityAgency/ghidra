@@ -17,9 +17,12 @@ package ghidra.app.plugin.core.calltree;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 import javax.swing.tree.TreePath;
+
+import org.apache.commons.collections4.map.LazyMap;
 
 import docking.widgets.tree.GTreeNode;
 import ghidra.program.model.address.Address;
@@ -66,7 +69,7 @@ public abstract class OutgoingCallNode extends CallNode {
 	}
 
 	@Override
-	public Function getContainingFunction() {
+	public Function getRemoteFunction() {
 		return function;
 	}
 
@@ -75,7 +78,8 @@ public abstract class OutgoingCallNode extends CallNode {
 		AddressSetView functionBody = function.getBody();
 		Address entryPoint = function.getEntryPoint();
 		Set<Reference> references = getReferencesFrom(program, functionBody, monitor);
-		List<GTreeNode> nodes = new ArrayList<GTreeNode>();
+		LazyMap<Function, List<GTreeNode>> nodesByFunction =
+			LazyMap.lazyMap(new HashMap<>(), k -> new ArrayList<>());
 		FunctionManager functionManager = program.getFunctionManager();
 		for (Reference reference : references) {
 			monitor.checkCanceled();
@@ -85,15 +89,21 @@ public abstract class OutgoingCallNode extends CallNode {
 			}
 
 			Function calledFunction = functionManager.getFunctionAt(toAddress);
-			createNode(nodes, reference, calledFunction);
+			createNode(nodesByFunction, reference, calledFunction);
 		}
 
-		Collections.sort(nodes, new CallNodeComparator());
+		List<GTreeNode> children =
+			nodesByFunction.values()
+					.stream()
+					.flatMap(list -> list.stream())
+					.collect(Collectors.toList());
+		Collections.sort(children, new CallNodeComparator());
 
-		return nodes;
+		return children;
 	}
 
-	private void createNode(List<GTreeNode> nodes, Reference reference, Function calledFunction) {
+	private void createNode(LazyMap<Function, List<GTreeNode>> nodes, Reference reference,
+			Function calledFunction) {
 		if (calledFunction != null) {
 			if (isExternalCall(calledFunction)) {
 				CallNode node =
