@@ -41,7 +41,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 
 	private MatchNameAnalysis nameAnalysis = new MatchNameAnalysis();
 	private AddressSet affectedLocations = new AddressSet();
-	private TreeMap<String, Address> multiMatchNames = new TreeMap<String, Address>();
+	private TreeMap<String, List<Address>> multiMatchNames = new TreeMap<String, List<Address>>();
 	private LinkedList<Address> conflictFunctions = new LinkedList<Address>();
 	private boolean alwaysApplyFidLabels;
 	private float scoreThreshold;
@@ -340,31 +340,29 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 	// Also checks those locations to see if there is only one label left and if so, removes the "FID conflict" bookmark.
 	private void removeConflictSymbols(Function function, String matchName, TaskMonitor monitor) {
 
-		Address addr = multiMatchNames.get(matchName);
-		if (addr == null) {
+		List<Address> list = multiMatchNames.get(matchName);
+		if (list == null) {
 			return;
 		}
 		Program program = function.getProgram();
-		int numSymbols = deleteSymbol(matchName, addr, program);
-		if (numSymbols <= 1) {
-			// Only one symbol left, delete the "FID conflict" bookmark
-			BookmarkManager bookmarkManager = program.getBookmarkManager();
-			Bookmark bookmark = bookmarkManager.getBookmark(addr, BookmarkType.ANALYSIS,
-				FIDCONFLICT_BOOKMARK_CATEGORY);
-			if (bookmark != null) {
-				bookmarkManager.removeBookmark(bookmark);
+		for (Address addr : list) {
+			int numSymbols = deleteSymbol(matchName, addr, program);
+			if (numSymbols <= 1) {
+				// Only one symbol left, delete the "FID conflict" bookmark
+				BookmarkManager bookmarkManager = program.getBookmarkManager();
+				Bookmark bookmark = bookmarkManager.getBookmark(addr, BookmarkType.ANALYSIS,
+					FIDCONFLICT_BOOKMARK_CATEGORY);
+				if (bookmark != null) {
+					bookmarkManager.removeBookmark(bookmark);
+				}
 			}
 		}
 	}
 
-	private int addFunctionLabelMultipleMatches(Function function, TaskMonitor monitor)
+	private void addFunctionLabelMultipleMatches(Function function, TaskMonitor monitor)
 			throws CancelledException {
 
 		Program program = function.getProgram();
-
-		if (nameAnalysis.numNames() >= MAGIC_MULTIPLE_MATCH_LIMIT) {
-			return nameAnalysis.numNames();
-		}
 
 		Symbol symbol = function.getSymbol();
 		boolean preexistingSymbol = (symbol != null && symbol.getSource() != SourceType.DEFAULT);
@@ -376,7 +374,12 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 		for (String functionName : unusedNames) {
 			monitor.checkCanceled();
 			addSymbolToFunction(function, functionName);
-			multiMatchNames.put(functionName, addr);
+			List<Address> list = multiMatchNames.get(functionName);
+			if (list == null) {
+				list = new LinkedList<Address>();
+				multiMatchNames.put(functionName, list);
+			}
+			list.add(addr);
 		}
 
 		if (unusedNames.size() > 1) {
@@ -390,7 +393,6 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 				"Multiple likely matching functions");
 			}
 		}
-		return unusedNames.size();
 	}
 
 	/**
@@ -440,7 +442,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 	 * Takes a set of FID matching names and returns a subset that includes only names that don't exist
 	 * somewhere else in the program.
 	 */
-	private static Set<String> getFIDNamesThatDontExistSomewhereElse(Program program,
+	private Set<String> getFIDNamesThatDontExistSomewhereElse(Program program,
 			Iterator<String> iter) {
 
 		Set<String> unusedNames = new HashSet<String>();
@@ -449,27 +451,42 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 			String name = iter.next();
 			if (!nameExistsSomewhereElse(symbolTable, name)) {
 				unusedNames.add(name);
+				if (unusedNames.size() > MAGIC_MULTIPLE_MATCH_LIMIT) {
+					break;
+				}
 			}
 		}
 		return unusedNames;
 	}
 
+	private static boolean containsPrimarySymbol(SymbolTable symTab, String name) {
+		List<Symbol> syms = symTab.getSymbols(name, null);
+		for (Symbol symbol : syms) {
+			SymbolType type = symbol.getSymbolType();
+			if (type != SymbolType.FUNCTION && type != SymbolType.LABEL) {
+				continue;
+			}
+			if (symbol.isPrimary()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	//Check to see if other functions exist with the same baseName or _baseName or __baseName
-	private static boolean nameExistsSomewhereElse(SymbolTable symTab, String baseName) {
-
+	private boolean nameExistsSomewhereElse(SymbolTable symTab, String baseName) {
+		if (multiMatchNames.containsKey(baseName)) {
+			// If this name is part of a multimatch, don't treat as a definitive label
+			return false;
+		}
 		//I did it this way because doing it with an iterator and wildcard was really really slow
-		List<Symbol> globalSymbols = symTab.getLabelOrFunctionSymbols(baseName, null);
-		if (!globalSymbols.isEmpty()) {
+		if (containsPrimarySymbol(symTab, baseName)) {
 			return true;
 		}
-
-		globalSymbols = symTab.getLabelOrFunctionSymbols("_" + baseName, null);
-		if (!globalSymbols.isEmpty()) {
+		if (containsPrimarySymbol(symTab, "_" + baseName)) {
 			return true;
 		}
-
-		globalSymbols = symTab.getLabelOrFunctionSymbols("__" + baseName, null);
-		if (!globalSymbols.isEmpty()) {
+		if (containsPrimarySymbol(symTab, "__" + baseName)) {
 			return true;
 		}
 
