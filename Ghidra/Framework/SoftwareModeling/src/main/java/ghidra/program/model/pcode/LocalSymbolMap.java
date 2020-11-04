@@ -499,7 +499,6 @@ public class LocalSymbolMap {
 	 * @param dbFunction is the function to pull equates for
 	 */
 	private void grabEquates(Function dbFunction) {
-		ArrayList<HighSymbol> equateSymbolList = null;
 		// Find named constants via Equates
 		Program program = dbFunction.getProgram();
 		EquateTable equateTable = program.getEquateTable();
@@ -519,9 +518,6 @@ public class LocalSymbolMap {
 				Arrays.sort(hash);		// Sort in preparation for deduping
 				String displayName = eq.getDisplayName();
 				long eqValue = eq.getValue();
-				if (equateSymbolList == null) {
-					equateSymbolList = new ArrayList<HighSymbol>();
-				}
 
 				EquateSymbol eqSymbol;
 				for (int i = 0; i < hash.length; ++i) {
@@ -529,28 +525,8 @@ public class LocalSymbolMap {
 						continue;		// Found a duplicate, skip it
 					}
 					eqSymbol = newEquateSymbol(0, displayName, eqValue, hash[i], defAddr);
-					equateSymbolList.add(eqSymbol);
+					symbolMap.put(eqSymbol.getId(), eqSymbol);
 				}
-			}
-		}
-
-// TODO: Find typed constants via DataTypeReferences
-//		-- for each datatype reference within the scope of the function
-//		MappedVarKey key = new MappedVarKey(AddressSpace.HASH_SPACE.getAddress(hash),defAddr);
-//		DynamicSymbol sym = constantSymbolMap.get(key);
-//		String name = sym != null ? sym.getName() : null;
-//		sym = new DynamicSymbol(name, dt, dt.getLength(), hash, defAddr, func, 0); // format??
-//		if (name != null) {
-//			sym.setTypeLock(true);
-//		}
-//		sym.setTypeLock(true);
-//		sym.setReadOnly(true);
-//		
-
-// Add constant dynamic symbols to map
-		if (equateSymbolList != null) {
-			for (HighSymbol sym : equateSymbolList) {
-				symbolMap.put(sym.getId(), sym);
 			}
 		}
 	}
