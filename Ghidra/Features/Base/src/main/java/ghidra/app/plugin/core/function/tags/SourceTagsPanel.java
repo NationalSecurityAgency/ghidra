@@ -15,43 +15,19 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
-import java.util.*;
+import java.util.Set;
 
 import ghidra.app.cmd.function.AddFunctionTagCmd;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionTag;
-import resources.ResourceManager;
 
 /**
- * List for displaying all tags in the program that have NOT yet been assigned
- * to a function.
+ * List for displaying all tags in the programs
  */
 public class SourceTagsPanel extends TagListPanel {
-
-	/** 
-	 * Optional! If there is a file with this name which can be found by the 
-	 * {@link ResourceManager}, and it contains a valid list of tag names, 
-	 * they will be loaded. The file must be XML with the following
-	 * structure:
-	 * 
-	 * <tags>
-	 *	<tag>
-	 *		<name>TAG1</name>
-	 *  	<comment>tag comment</comment>
-	 *	</tag>
-	 * </tags> 
-	 * 
-	 */
-	private static String TAG_FILE = "functionTags.xml";
-
-	// Keeps a list of the original tags as loaded from file. This is necessary when switching 
-	// between programs where we need to know the original state of the disabled tags. Without 
-	// this we would need to reload from file on each new program activation.
-	private Set<FunctionTag> tagsFromFile;
 
 	/**
 	 * Constructor
@@ -60,11 +36,8 @@ public class SourceTagsPanel extends TagListPanel {
 	 * @param tool the plugin tool
 	 * @param title the title of the panel
 	 */
-	public SourceTagsPanel(FunctionTagsComponentProvider provider, PluginTool tool, String title) {
+	public SourceTagsPanel(FunctionTagProvider provider, PluginTool tool, String title) {
 		super(provider, tool, title);
-
-		// Load any tags from external sources
-		tagsFromFile = loadTags();
 
 		table.setDisabled(true);
 	}
@@ -106,13 +79,7 @@ public class SourceTagsPanel extends TagListPanel {
 
 	@Override
 	protected Set<FunctionTag> backgroundLoadTags() {
-
-		List<? extends FunctionTag> dbTags = getAllTagsFromDatabase();
-
-		// Add any tags from the file system that are not in the db
-		Set<FunctionTag> allTags = new HashSet<>(dbTags);
-		allTags.addAll(tagsFromFile);
-		return allTags;
+		return provider.backgroundLoadTags();
 	}
 
 	/**
@@ -128,31 +95,5 @@ public class SourceTagsPanel extends TagListPanel {
 		}
 
 		return true;
-	}
-
-	/******************************************************************************
-	 * PRIVATE METHODS
-	 ******************************************************************************/
-
-	/**
-	 * Returns an array of all tags stored in the database.
-	 * 
-	 * @return list of tags
-	 */
-	private List<? extends FunctionTag> getAllTagsFromDatabase() {
-		if (program == null) {
-			return Collections.emptyList();
-		}
-		FunctionManagerDB functionManagerDB = (FunctionManagerDB) program.getFunctionManager();
-		return functionManagerDB.getFunctionTagManager().getAllFunctionTags();
-	}
-
-	/**
-	 * Loads tags from the external file specified.
-	 * 
-	 * @return the loaded tags
-	 */
-	private Set<FunctionTag> loadTags() {
-		return FunctionTagLoader.loadTags(TAG_FILE);
 	}
 }

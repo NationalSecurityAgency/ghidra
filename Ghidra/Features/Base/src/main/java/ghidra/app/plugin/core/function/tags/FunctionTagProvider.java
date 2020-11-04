@@ -16,24 +16,29 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
+
+import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HintTextField;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
+import ghidra.util.task.SwingUpdateManager;
+import resources.ResourceManager;
 
 /**
  * Displays all the function tags in the database and identifies which ones have
@@ -50,7 +55,7 @@ import ghidra.util.*;
  * "Edit Tags" option, or by selecting the "Edit Function Tags" option from the
  * "Window" menu.
  */
-public class FunctionTagsComponentProvider extends ComponentProviderAdapter
+public class FunctionTagProvider extends ComponentProviderAdapter
 		implements DomainObjectListener {
 
 	private Color BORDER_COLOR = Color.GRAY;
@@ -69,12 +74,35 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private int MIN_WIDTH = 850;
 	private int MIN_HEIGHT = 350;
 
+	private SwingUpdateManager updater = new SwingUpdateManager(this::doUpdate);
+
 	// The current program location selected in the listing. 
 	private ProgramLocation currentLocation = null;
 
 	// Character used as a separator when entering multiple tags in
 	// the create tag entry field.
-	private static String INPUT_DELIMITER = ",";
+	private static final String INPUT_DELIMITER = ",";
+
+	/** 
+	 * Optional! If there is a file with this name which can be found by the 
+	 * {@link ResourceManager}, and it contains a valid list of tag names, 
+	 * they will be loaded. The file must be XML with the following
+	 * structure:
+	 * 
+	 * <tags>
+	 *	<tag>
+	 *		<name>TAG1</name>
+	 *  	<comment>tag comment</comment>
+	 *	</tag>
+	 * </tags> 
+	 * 
+	 */
+	private static String TAG_FILE = "functionTags.xml";
+
+	// Keeps a list of the original tags as loaded from file. This is necessary when switching 
+	// between programs where we need to know the original state of the disabled tags. Without 
+	// this we would need to reload from file on each new program activation.
+	private Set<FunctionTag> tagsFromFile;
 
 	/**
 	 * Constructor
@@ -82,7 +110,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 * @param plugin the function tag plugin
 	 * @param program the current program
 	 */
-	public FunctionTagsComponentProvider(FunctionTagPlugin plugin, Program program) {
+	public FunctionTagProvider(FunctionTagPlugin plugin, Program program) {
 		super(plugin.getTool(), "Function Tags", plugin.getName(), ProgramActionContext.class);
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
@@ -94,34 +122,18 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 * PUBLIC METHODS
 	 ******************************************************************************/
 
-	/**
-	 * Completely clears the UI and loads the tag table from scratch. Note that 
-	 * the model will be completely reset based on whatever the current location is
-	 * in the listing.
-	 */
-	public void reload() {
-
-		Swing.runLater(() -> {
-			tagInputField.setText("");
-			updateTitle(currentLocation);
-			updateTagLists();
-		});
-	}
-
 	@Override
 	public void componentShown() {
-		mainPanel = createWorkPanel();
-		updateTagLists();
-		updateTitle(currentLocation);
+		if (mainPanel == null) {
+			mainPanel = createWorkPanel();
+		}
+
+		updateView();
 	}
 
 	@Override
 	public JComponent getComponent() {
 		return mainPanel;
-	}
-
-	HintTextField getTagInputField() {
-		return tagInputField;
 	}
 
 	/**
@@ -133,8 +145,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	public void locationChanged(ProgramLocation loc) {
 		currentLocation = loc;
-		updateTitle(loc);
-		updateTagLists();
+		updateView();
 	}
 
 	public void programActivated(Program activatedProgram) {
@@ -143,7 +154,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		// Add a listener so we pick up domain object change events (add/delete/remove, etc...)
 		activatedProgram.addListener(this);
 
-		updateTagLists();
+		updateTagViews();
 	}
 
 	public void programDeactivated(Program deactivatedProgram) {
@@ -159,25 +170,54 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CHANGED) ||
+
+		if (!isVisible()) {
+			return;
+		}
+
+		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
 			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CREATED) ||
 			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_DELETED) ||
 			ev.containsEvent(ChangeManager.DOCR_TAG_REMOVED_FROM_FUNCTION) ||
 			ev.containsEvent(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION)) {
-			reload();
+			updater.updateLater();
+			return;
+		}
+
+		if (ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CHANGED)) {
+			repaint();
 		}
 	}
 
-	/******************************************************************************
-	 * PRIVATE METHODS
-	 ******************************************************************************/
+	private void doUpdate() {
+		reload();
+	}
+
+	private void reload() {
+		allFunctionsPanel.refresh();
+
+		Function function = getFunction(currentLocation);
+		sourcePanel.refresh(function);
+		targetPanel.refresh(function);
+	}
+
+	private void updateView() {
+		updateTitle(currentLocation);
+		updateTagViews();
+	}
+
+	private void repaint() {
+		sourcePanel.repaint();
+		targetPanel.repaint();
+		allFunctionsPanel.repaint();
+	}
 
 	private void updateTitle(ProgramLocation location) {
 		if (!isVisible()) {
 			return;
 		}
 
-		Function function = getFunctionAtLocation(location);
+		Function function = getFunction(location);
 		if (function == null) {
 			setSubTitle("NOT A FUNCTION");
 		}
@@ -239,7 +279,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	public void selectionChanged(TagListPanel panel) {
 
-		Function function = getFunctionAtLocation(currentLocation);
+		Function function = getFunction(currentLocation);
 
 		if (panel instanceof SourceTagsPanel) {
 			buttonPanel.sourcePanelSelectionChanged(function != null);
@@ -256,22 +296,70 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 		allFunctionsPanel.setSelectedTags(sourceTags);
 	}
 
-	TargetTagsPanel getTargetPanel() {
+	public AllFunctionsPanel getAllFunctionsPanel() {
+		return allFunctionsPanel;
+	}
+
+	public TargetTagsPanel getTargetPanel() {
 		return targetPanel;
 	}
 
-	SourceTagsPanel getSourcePanel() {
+	public HintTextField getTagInputField() {
+		return tagInputField;
+	}
+
+	public SourceTagsPanel getSourcePanel() {
 		return sourcePanel;
 	}
 
+	public FunctionTagButtonPanel getButtonPanel() {
+		return buttonPanel;
+	}
+
+	public JPanel getInputPanel() {
+		return inputPanel;
+	}
+
+	Set<FunctionTag> backgroundLoadTags() {
+		// Add any tags from the file system that are not in the db
+		List<? extends FunctionTag> dbTags = getAllTagsFromDatabase();
+		Set<FunctionTag> allTags = new HashSet<>(dbTags);
+		allTags.addAll(getFileTags());
+		return allTags;
+	}
+
 	/**
-	 * Returns the {@link Function} at the given program location. If not a function, or
-	 * if the location is not a pointer to a function returns null.
+	 * Loads tags from the external file specified.
+	 * 
+	 * @return the loaded tags
+	 */
+	private Set<FunctionTag> getFileTags() {
+		if (tagsFromFile == null) {
+			tagsFromFile = FunctionTagLoader.loadTags(TAG_FILE);
+		}
+		return tagsFromFile;
+	}
+
+	/**
+	 * Returns an array of all tags stored in the database.
+	 * 
+	 * @return list of tags
+	 */
+	private List<? extends FunctionTag> getAllTagsFromDatabase() {
+		if (program == null) {
+			return Collections.emptyList();
+		}
+		FunctionManagerDB functionManagerDB = (FunctionManagerDB) program.getFunctionManager();
+		return functionManagerDB.getFunctionTagManager().getAllFunctionTags();
+	}
+
+	/**
+	 * Returns the {@link Function} for the given program location
 	 * 
 	 * @param loc the program location
 	 * @return function containing the location, or null if not applicable
 	 */
-	private Function getFunctionAtLocation(ProgramLocation loc) {
+	private Function getFunction(ProgramLocation loc) {
 
 		Address functionAddress = getFunctionAddress(loc);
 		if (functionAddress == null) {
@@ -293,8 +381,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			return null;
 		}
 
-		// If the user clicks on an instruction within a function we want to show
-		// the tags.
+		// If the user clicks on an instruction within a function we want to show the tags
 		if (program.getFunctionManager().isInFunction(loc.getAddress())) {
 			return loc.getAddress();
 		}
@@ -309,13 +396,11 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Refreshes the contents of the table with the current program and location. This 
-	 * should be called any time a program is activated or the location in the listing
-	 * has changed.
+	 * Refreshes the contents of the tables with the current program and location
 	 */
-	private void updateTagLists() {
+	private void updateTagViews() {
 
-		if (sourcePanel == null || targetPanel == null || allFunctionsPanel == null) {
+		if (mainPanel == null || !isVisible()) {
 			return;
 		}
 
@@ -332,7 +417,7 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 			allFunctionsPanel.refresh(sTags);
 		}
 
-		Function function = getFunctionAtLocation(currentLocation);
+		Function function = getFunction(currentLocation);
 		sourcePanel.refresh(function);
 		targetPanel.refresh(function);
 	}
@@ -343,42 +428,52 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	private void processCreates() {
 
 		if (program == null) {
-			Msg.showInfo(this, tool.getActiveWindow(), "No program!",
+			Msg.showInfo(this, tool.getActiveWindow(), "No Program",
 				"You must load a program before trying to create tags");
 			return;
 		}
+
+		List<String> dropped = new ArrayList<>();
 		List<String> names = getInputNames();
 		for (String name : names) {
 
-			// Only execute the create command if a tag with the given name does not 
-			// already exist.
-			if (sourcePanel.tagExists(name) || targetPanel.tagExists(name)) {
-				Msg.showInfo(this, tool.getActiveWindow(), "Duplicate Tag Name",
-					"There is already a tag with the name [" + name + "]. Please try again.");
+			// only execute the create command if a tag with the given name does not already exist
+			// (note: this could fail if the model is not yet loaded, but this is unlikely.   The
+			// only fallout is that the error message would not be shown--the database will not add
+			// the tag twice.)
+			if (sourcePanel.tagExists(name)) {
+				dropped.add(name);
 			}
 			else {
 				Command cmd = new CreateFunctionTagCmd(name);
 				tool.execute(cmd, program);
 			}
 		}
+
+		if (!dropped.isEmpty()) {
+			String text = StringUtils.join(dropped, ", ");
+			Msg.showInfo(this, tool.getActiveWindow(), "Duplicate Tag Names",
+				"Tags aleady exist.  Ignoring the following tags: " + text);
+		}
+
+		Swing.runLater(() -> tagInputField.setText(""));
 	}
 
 	/**
-	 * Returns a list of tag names the user has entered in the input field.
+	 * Returns a list of tag names the user has entered in the input` field.
 	 * Note: This assumes that multiple entries are comma-delimited.
 	 * 
 	 * @return the list of tag names to create
 	 */
 	private List<String> getInputNames() {
 
-		// First split the string on the delimiter to get all the entries.
+		// first split the string on the delimiter to get all the entries
 		String[] names = tagInputField.getText().split(INPUT_DELIMITER);
 
-		// Trim each item to remove any leading/trailing whitespace and add to
-		// the return list. 
-		ArrayList<String> nameList = new ArrayList<>();
+		// trim each item to remove any leading/trailing whitespace and add to the return list 
+		List<String> nameList = new ArrayList<>();
 		for (String name : names) {
-			if (!name.trim().isEmpty()) {
+			if (!StringUtils.isBlank(name)) {
 				nameList.add(name.trim());
 			}
 		}
@@ -393,14 +488,20 @@ public class FunctionTagsComponentProvider extends ComponentProviderAdapter
 	 */
 	private JPanel createInputPanel() {
 
-		inputPanel = new JPanel(new BorderLayout());
 		tagInputField = new HintTextField("tag 1, tag 2, ...");
 		tagInputField.setName("tagInputTF");
 		tagInputField.addActionListener(e -> processCreates());
 
+		inputPanel = new JPanel();
+		Border outsideBorder = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
+		Border insideBorder = BorderFactory.createEmptyBorder(5, 2, 2, 2);
+		inputPanel.setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
+		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.LINE_AXIS));
 		inputPanel.add(new GLabel(" Create new tag(s):"), BorderLayout.WEST);
+		inputPanel.add(Box.createHorizontalStrut(5));
 		inputPanel.add(tagInputField, BorderLayout.CENTER);
 
 		return inputPanel;
 	}
+
 }

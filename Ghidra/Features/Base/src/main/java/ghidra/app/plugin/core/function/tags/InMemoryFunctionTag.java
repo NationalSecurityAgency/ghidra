@@ -23,7 +23,7 @@ import ghidra.program.model.listing.FunctionTag;
  * This class provides an implementation of the {@link FunctionTag} interface for
  * tags that are not yet ready to be inserted into the database. This was created
  * to allow tags to be imported from an external file and made available to the user
- * through the {@link FunctionTagsComponentProvider} UI without needing to formally
+ * through the {@link FunctionTagProvider} UI without needing to formally
  * add them to the {@code FunctionTagAdapter} table.
  */
 class InMemoryFunctionTag implements FunctionTag {

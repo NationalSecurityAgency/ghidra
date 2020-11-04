@@ -24,7 +24,7 @@ import resources.Icons;
 import resources.ResourceManager;
 
 /**
- * Provides buttons to be used with the {@link FunctionTagsComponentProvider}.
+ * Provides buttons to be used with the {@link FunctionTagProvider}.
  * These buttons allow users to add or remove tags from functions, or delete
  * tags altogether. 
  * <p>
