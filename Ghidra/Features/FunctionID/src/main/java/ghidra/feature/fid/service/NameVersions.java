@@ -122,7 +122,7 @@ public class NameVersions {
 		if (rawName != null) {
 			DemangledObject demangledObj = demangle(program, rawName);
 			if (demangledObj != null) {
-				result.demangledFull = demangledObj.getDemangledName();
+				result.demangledFull = demangledObj.getOriginalDemangled();
 				result.demangledNoTemplate = removeTemplateParams(demangledObj);
 				result.demangledBaseName = constructBaseName(demangledObj);
 			}
