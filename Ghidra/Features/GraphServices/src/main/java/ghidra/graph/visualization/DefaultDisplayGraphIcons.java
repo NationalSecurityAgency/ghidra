@@ -15,6 +15,8 @@
  */
 package ghidra.graph.visualization;
 
+import java.awt.*;
+
 import javax.swing.Icon;
 
 import resources.Icons;
@@ -27,10 +29,35 @@ final class DefaultDisplayGraphIcons {
 	private DefaultDisplayGraphIcons() {
 	}
 
-	public static final Icon SATELLITE_VIEW_ICON = Icons.get("images/network-wireless-16.png");
+	public static final Icon SATELLITE_VIEW_ICON = new SatelliteIcon();
 	public static final Icon VIEW_MAGNIFIER_ICON = Icons.get("images/magnifier.png");
 	public static final Icon PROGRAM_GRAPH_ICON = Icons.get("images/redspheregraph.png");
 	public static final Icon LAYOUT_ALGORITHM_ICON = Icons.get("images/katomic.png");
 	public static final Icon LASSO_ICON = Icons.get("images/Lasso.png");
 	public static final Icon FILTER_ICON = Icons.CONFIGURE_FILTER_ICON;
+
+	private static class SatelliteIcon implements Icon {
+
+		@Override
+		public void paintIcon(Component c, Graphics g, int x, int y) {
+			g.setColor(Color.WHITE);
+			g.fillRect(x, y, 16, 16);
+			g.setColor(Color.LIGHT_GRAY);
+			g.fillRect(x + 8, y + 8, 7, 7);
+			g.setColor(Color.DARK_GRAY);
+			g.drawRect(x, y, 16, 16);
+		}
+
+		@Override
+		public int getIconWidth() {
+			return 16;
+		}
+
+		@Override
+		public int getIconHeight() {
+			return 16;
+		}
+
+	}
+
 }
