@@ -22,8 +22,9 @@ class FunctionTagRowObject {
 	private FunctionTag tag;
 	private int count;
 
-	FunctionTagRowObject(FunctionTag tag) {
+	FunctionTagRowObject(FunctionTag tag, int count) {
 		this.tag = tag;
+		this.count = count;
 	}
 
 	FunctionTag getTag() {

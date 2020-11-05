@@ -21,7 +21,8 @@ import java.util.function.Predicate;
 
 import db.*;
 import generic.FilteredIterator;
-import ghidra.program.database.*;
+import ghidra.program.database.DBObjectCache;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.database.code.CodeManager;
 import ghidra.program.database.external.ExternalLocationDB;
 import ghidra.program.database.map.AddressMap;
@@ -48,7 +49,7 @@ import ghidra.util.task.TaskMonitor;
  * all function related calls are routed to this class.
  *
  */
-public class FunctionManagerDB implements ManagerDB, FunctionManager {
+public class FunctionManagerDB implements FunctionManager {
 
 	private final String CALLFIXUP_MAP = "CallFixup"; // string map used to store call-fixup name
 
@@ -64,7 +65,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 	private NamespaceManager namespaceMgr;
 	private SymbolManager symbolMgr;
 	private CodeManager codeMgr;
-	private FunctionTagManager functionTagManager;
+	private FunctionTagManagerDB functionTagManager;
 	private Namespace globalNamespace;
 
 	private Predicate<Function> functionFilter = f -> {
@@ -352,7 +353,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 				throw new IllegalArgumentException(
 					"Function entryPoint may not be created on defined data");
 			}
-			
+
 			if (namespaceMgr.overlapsNamespace(body) != null) {
 				throw new OverlappingFunctionException(entryPoint);
 			}
@@ -552,7 +553,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 
 			// Remove all tag mappings associated with this function
 			for (FunctionTag tag : function.getTags()) {
-				tag.delete();
+				function.removeTag(tag.getName());
 			}
 
 			long functionID = function.getID();
@@ -930,6 +931,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 	public void invalidateCache(boolean all) {
 		lock.acquire();
 		try {
+			functionTagManager.invalidateCache();
 			callFixupMap = null;
 			lastFuncID = -1;
 			cache.invalidate();
@@ -996,14 +998,16 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 		 */
 		FunctionIteratorDB(boolean external, boolean forward) {
 			if (external) {
-				it = program.getSymbolTable().getSymbols(
-					new AddressSet(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
-						AddressSpace.EXTERNAL_SPACE.getMaxAddress()),
-					SymbolType.FUNCTION, forward);
+				it = program.getSymbolTable()
+						.getSymbols(
+							new AddressSet(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
+								AddressSpace.EXTERNAL_SPACE.getMaxAddress()),
+							SymbolType.FUNCTION, forward);
 			}
 			else {
-				it = program.getSymbolTable().getSymbols(program.getMemory(), SymbolType.FUNCTION,
-					forward);
+				it = program.getSymbolTable()
+						.getSymbols(program.getMemory(), SymbolType.FUNCTION,
+							forward);
 			}
 		}
 
@@ -1144,8 +1148,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 				list.add(symbol);
 			}
 		}
-		for (int i = 0; i < list.size(); i++) {
-			Symbol symbol = list.get(i);
+		for (Symbol symbol : list) {
 			symbol.delete();
 		}
 	}
@@ -1477,6 +1480,7 @@ public class FunctionManagerDB implements ManagerDB, FunctionManager {
 		}
 	}
 
+	@Override
 	public FunctionTagManager getFunctionTagManager() {
 		return functionTagManager;
 	}

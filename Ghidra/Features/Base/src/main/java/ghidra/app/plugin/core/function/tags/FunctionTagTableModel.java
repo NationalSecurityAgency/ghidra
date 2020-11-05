@@ -15,10 +15,7 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
-import java.util.*;
-import java.util.function.Supplier;
-
-import org.apache.commons.collections4.map.LazyMap;
+import java.util.Set;
 
 import docking.widgets.table.AbstractDynamicTableColumnStub;
 import docking.widgets.table.TableColumnDescriptor;
@@ -27,7 +24,6 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.*;
 import ghidra.util.datastruct.Accumulator;
-import ghidra.util.datastruct.Counter;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -37,12 +33,12 @@ import ghidra.util.task.TaskMonitor;
 public class FunctionTagTableModel extends ThreadedTableModel<FunctionTagRowObject, Program> {
 
 	private Program program;
-	private Supplier<Set<FunctionTag>> tagLoader;
+	private TagListPanel tagListPanel;
 
 	protected FunctionTagTableModel(String modelName, ServiceProvider serviceProvider,
-			Supplier<Set<FunctionTag>> tagLoader) {
+			TagListPanel tagLoader) {
 		super(modelName, serviceProvider);
-		this.tagLoader = tagLoader;
+		this.tagListPanel = tagLoader;
 	}
 
 	public void setProgram(Program program) {
@@ -57,37 +53,15 @@ public class FunctionTagTableModel extends ThreadedTableModel<FunctionTagRowObje
 			return;
 		}
 
-		Map<String, Counter> countsByName = getFunctionTagCountsByName(monitor);
-		for (FunctionTag tag : tagLoader.get()) {
-
-			FunctionTagRowObject rowObject = new FunctionTagRowObject(tag);
-			Counter counter = countsByName.get(tag.getName());
-			rowObject.setCount(counter.count);
-			accumulator.add(rowObject);
-		}
-	}
-
-	private Map<String, Counter> getFunctionTagCountsByName(TaskMonitor monitor)
-			throws CancelledException {
-
 		FunctionManager functionManager = program.getFunctionManager();
-		monitor.initialize(functionManager.getFunctionCount());
-
-		Map<String, Counter> map = LazyMap.lazyMap(new HashMap<>(), () -> new Counter());
-		FunctionIterator it = functionManager.getFunctions(true);
-		for (Function function : it) {
+		FunctionTagManager tagManager = functionManager.getFunctionTagManager();
+		Set<FunctionTag> tags = tagListPanel.backgroundLoadTags();
+		monitor.initialize(tags.size());
+		for (FunctionTag tag : tags) {
 			monitor.checkCanceled();
-
-			Set<FunctionTag> functionTags = function.getTags();
-			for (FunctionTag tag : functionTags) {
-
-				String name = tag.getName();
-				map.get(name).count++;
-			}
-
+			accumulator.add(new FunctionTagRowObject(tag, tagManager.getUseCount(tag)));
 			monitor.incrementProgress(1);
 		}
-		return map;
 	}
 
 	@Override
@@ -115,11 +89,23 @@ public class FunctionTagTableModel extends ThreadedTableModel<FunctionTagRowObje
 	/**
 	 * Returns true if a function tag with a given name is in the model
 	 * 
-	 * @param name the tag name to search for
+	 * @param name the tag name
 	 * @return true if the tag exists in the model
 	 */
 	public boolean containsTag(String name) {
-		return getModelData().stream().anyMatch(row -> row.getName().equals(name));
+		return getRowObject(name) != null;
+	}
+
+	/**
+	 * Returns the row object that matches the given tag name
+	 * @param name the tag name
+	 * @return the row object
+	 */
+	public FunctionTagRowObject getRowObject(String name) {
+		return getAllData().stream()
+				.filter(row -> row.getName().equals(name))
+				.findFirst()
+				.orElseGet(() -> null);
 	}
 
 	/**

@@ -45,6 +45,7 @@ import ghidra.util.table.GhidraThreadedTablePanel;
 public abstract class TagListPanel extends JPanel {
 
 	protected PluginTool tool;
+	protected FunctionTagProvider provider;
 	protected Program program;
 	protected Function function;
 
@@ -61,13 +62,13 @@ public abstract class TagListPanel extends JPanel {
 	 * @param tool the plugin tool
 	 * @param title the title of the panel
 	 */
-	public TagListPanel(FunctionTagsComponentProvider provider, PluginTool tool, String title) {
+	public TagListPanel(FunctionTagProvider provider, PluginTool tool, String title) {
 		this.tool = tool;
+		this.provider = provider;
 
 		setLayout(new BorderLayout());
 
-		model = new FunctionTagTableModel("Function Tags", provider.getTool(),
-			this::backgroundLoadTags);
+		model = new FunctionTagTableModel("Function Tags", provider.getTool(), this);
 		GhidraThreadedTablePanel<FunctionTagRowObject> tablePanel =
 			new GhidraThreadedTablePanel<>(model) {
 				protected GTable createTable(ThreadedTableModel<FunctionTagRowObject, ?> tm) {
@@ -121,10 +122,6 @@ public abstract class TagListPanel extends JPanel {
 	 */
 	public abstract void refresh(Function newFunction);
 
-	/**
-	 * Called by a background thread to load the tags for this panel
-	 * @return the tags
-	 */
 	protected abstract Set<FunctionTag> backgroundLoadTags();
 
 	void editRow(int row) {
@@ -165,11 +162,11 @@ public abstract class TagListPanel extends JPanel {
 		});
 
 		DockingWindowManager.showDialog(tool.getActiveWindow(), dialog);
-		if (dialog.isCanceled()) {
-			return;
+		String[] results = dialog.getValues();
+		if (results[0] == null) {
+			return; // cancelled/closed
 		}
 
-		String[] results = dialog.getValues();
 		String newName = results[0].trim();
 		String newComment = results[1].trim();
 
@@ -192,7 +189,7 @@ public abstract class TagListPanel extends JPanel {
 		return model;
 	}
 
-	FunctionTagTable getTable() {
+	public FunctionTagTable getTable() {
 		return table;
 	}
 

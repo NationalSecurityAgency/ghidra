@@ -29,10 +29,7 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Interface to define methods available on a function. Functions
- * have a single entry point.
- * 
- *
+ * Interface to define methods available on a function. Functions have a single entry point.
  */
 public interface Function extends Namespace {
 
@@ -110,8 +107,8 @@ public interface Function extends Namespace {
 	public void setCallFixup(String name);
 
 	/**
-	 * Returns the current call-fixup name set on this instruction or null
-	 * if one has not been set.
+	 * Returns the current call-fixup name set on this instruction or null if one has not been set
+	 * @return the name
 	 */
 	public String getCallFixup();
 
@@ -131,6 +128,7 @@ public interface Function extends Namespace {
 	/**
 	 * Returns the function (same as plate) comment as an array of strings where
 	 * each item in the array is a line of text in the comment.
+	 * @return the comments
 	 */
 	public String[] getCommentAsArray();
 
@@ -194,11 +192,15 @@ public interface Function extends Namespace {
 
 	/**
 	 * Set the return data-type and storage.
-	 * <p>NOTE: The storage and source are ignored if the function does not have custom storage enabled.
-	 * @param type
-	 * @param storage
+	 * 
+	 * <p>NOTE: The storage and source are ignored if the function does not have custom storage 
+	 * enabled.
+	 * 
+	 * @param type the data type
+	 * @param storage the storage
 	 * @param source source to be combined with the overall signature source. 
-	 * @throws InvalidInputException if data type is not a fixed length or storage is improperly sized
+	 * @throws InvalidInputException if data type is not a fixed length or storage is improperly 
+	 *         sized
 	 */
 	public void setReturn(DataType type, VariableStorage storage, SourceType source)
 			throws InvalidInputException;
@@ -216,21 +218,22 @@ public interface Function extends Namespace {
 
 	/**
 	 * Get the function's signature.
-	 * <br><br>WARNING! It is important to note that the calling convention may not be properly retained 
-	 * by the returned signature object if a non-generic calling convention is used by this function as 
-	 * defined by the program's compiler specification.
+	 * <br><br>WARNING! It is important to note that the calling convention may not be properly 
+	 * retained by the returned signature object if a non-generic calling convention is used by 
+	 * this function as defined by the program's compiler specification.
+	 * 
 	 * @param formalSignature if true only original raw types will be retained and 
 	 * auto-params discarded (e.g., this, __return_storage_ptr__, etc.) within the returned 
 	 * signature.  If false, the effective signature will be returned where forced indirect 
 	 * and auto-params are reflected in the signature.  This option has no affect if the specified 
 	 * function has custom storage enabled.
-	 *
 	 * @return the function's signature
 	 */
 	public FunctionSignature getSignature(boolean formalSignature);
 
 	/**
 	 * Return a string representation of the function signature
+	 * 
 	 * @param formalSignature if true only original raw return/parameter types will be retained and 
 	 * auto-params discarded (e.g., this, __return_storage_ptr__, etc.) within the returned 
 	 * signature.  If false, the effective signature will be returned where forced indirect 
@@ -238,6 +241,7 @@ public interface Function extends Namespace {
 	 * function has custom storage enabled.
 	 * @param includeCallingConvention if true prototype will include call convention
 	 * declaration if known.
+	 * @return the prototype
 	 */
 	public String getPrototypeString(boolean formalSignature, boolean includeCallingConvention);
 
@@ -464,6 +468,7 @@ public interface Function extends Namespace {
 	 * @param fromOrdinal from ordinal position using the current numbering
 	 * @param toOrdinal the final position of the specified parameter
 	 * @return parameter which was moved
+	 * @throws InvalidInputException if either ordinal is invalid
 	 * @deprecated The use of this method is discouraged.  The function signature should generally be 
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
@@ -520,7 +525,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * Returns an array of all local and parameter variables
-	 * @return
+	 * @return the variables
 	 */
 	public Variable[] getAllVariables();
 
@@ -533,6 +538,7 @@ public interface Function extends Namespace {
 	 * @return the Variable added to the program.
 	 * @throws DuplicateNameException if another local variable or parameter already
 	 * has that name.
+	 * @throws InvalidInputException if there is an error or conflict when resolving the variable 
 	 */
 	public Variable addLocalVariable(Variable var, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
@@ -553,14 +559,16 @@ public interface Function extends Namespace {
 	public void setBody(AddressSetView newBody) throws OverlappingFunctionException;
 
 	/**
-	 * Returns true if this function has a variable argument list (VarArgs).
+	 * Returns true if this function has a variable argument list (VarArgs)
+	 * @return true if this function has a variable argument list (VarArgs)
 	 */
 	public boolean hasVarArgs();
 
 	/**
-	 * Set whether parameters can be passed as a VarArg (variable argument list).
+	 * Set whether parameters can be passed as a VarArg (variable argument list)
 	 * 
-	 * @param hasVarArgs true if this function has a variable argument list (ie printf(fmt, ...)).
+	 * @param hasVarArgs true if this function has a variable argument list 
+	 *        (e.g.,  printf(fmt, ...)).
 	 */
 	public void setVarArgs(boolean hasVarArgs);
 
@@ -595,7 +603,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * Set whether or not this function uses custom variable storage
-	 * @param hasCustomVariableStorage
+	 * @param hasCustomVariableStorage true if this function uses custom storage
 	 */
 	public void setCustomVariableStorage(boolean hasCustomVariableStorage);
 

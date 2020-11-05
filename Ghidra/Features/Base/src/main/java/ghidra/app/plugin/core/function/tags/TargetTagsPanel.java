@@ -24,8 +24,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionTag;
 
 /**
- * Displays a list of tags that have been assigned to the currently-selected
- * function in the listing
+ * Displays a list of tags that have been assigned to the current function
  */
 public class TargetTagsPanel extends TagListPanel {
 
@@ -36,7 +35,7 @@ public class TargetTagsPanel extends TagListPanel {
 	 * @param tool the plugin tool
 	 * @param title the panel title
 	 */
-	public TargetTagsPanel(FunctionTagsComponentProvider provider,
+	public TargetTagsPanel(FunctionTagProvider provider,
 			PluginTool tool, String title) {
 		super(provider, tool, title);
 
