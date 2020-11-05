@@ -21,11 +21,14 @@ import ghidra.program.model.listing.Program;
 public class NameVersions {
 	public String rawName;			// Original name
 	public String similarName;		// Name with underscores removed
+	public String demangledNoTemplate;	// Demangled string with (first) template removed
 	public String demangledBaseName;	// Base name of the demangled string
+	public String demangledFull;	// The full demangled signature
 	
 	public NameVersions(String raw) {
 		rawName = raw;
 		similarName = null;
+		demangledNoTemplate = null;
 		demangledBaseName = null;
 	}
 
@@ -53,6 +56,38 @@ public class NameVersions {
 			}
 		}
 		return name;
+	}
+
+	/**
+	 * If there exists an initial set of template parameters bracketed by '<' and '>'
+	 * in the given demangled name, strip them.
+	 * @param demangledObj is the object holding the demangled name
+	 * @return the stripped name or null if no parameters present
+	 */
+	private static String removeTemplateParams(DemangledObject demangledObj) {
+		String name = demangledObj.getDemangledName();
+		int pos1 = name.indexOf('<');
+		if (pos1 < 0) {
+			return null;
+		}
+		int nesting = 1;
+		int pos2;
+		for (pos2 = pos1 + 1; pos2 < name.length(); ++pos2) {
+			char c = name.charAt(pos2);
+			if (c == '<') {
+				nesting += 1;
+			}
+			else if (c == '>') {
+				nesting -= 1;
+				if (nesting == 0) {
+					break;
+				}
+			}
+		}
+		if (nesting != 0) {
+			return null;
+		}
+		return name.substring(0, pos1 + 1) + name.substring(pos2);
 	}
 
 	private static String constructBaseName(DemangledObject demangledObj) {
@@ -87,6 +122,8 @@ public class NameVersions {
 		if (rawName != null) {
 			DemangledObject demangledObj = demangle(program, rawName);
 			if (demangledObj != null) {
+				result.demangledFull = demangledObj.getOriginalDemangled();
+				result.demangledNoTemplate = removeTemplateParams(demangledObj);
 				result.demangledBaseName = constructBaseName(demangledObj);
 			}
 	
