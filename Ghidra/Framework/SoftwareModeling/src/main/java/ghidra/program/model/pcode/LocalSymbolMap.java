@@ -476,12 +476,9 @@ public class LocalSymbolMap {
 		symbolMap.put(uniqueId, sym);
 	}
 
-	private void newEquateSymbol(long uniqueId, String nm, long val, long hash, Address addr,
-			TreeMap<String, HighSymbol> constantSymbolMap) {
-		HighSymbol eqSymbol = constantSymbolMap.get(nm);
-		if (eqSymbol != null) {
-			return;			// New reference to same symbol
-		}
+	private EquateSymbol newEquateSymbol(long uniqueId, String nm, long val, long hash,
+			Address addr) {
+		EquateSymbol eqSymbol;
 		if (uniqueId == 0) {
 			uniqueId = getNextId();
 		}
@@ -494,7 +491,7 @@ public class LocalSymbolMap {
 			eqSymbol = new EquateSymbol(uniqueId, conv, val, func, addr, hash);
 		}
 		//Do NOT setTypeLock
-		constantSymbolMap.put(nm, eqSymbol);
+		return eqSymbol;
 	}
 
 	/**
@@ -502,7 +499,6 @@ public class LocalSymbolMap {
 	 * @param dbFunction is the function to pull equates for
 	 */
 	private void grabEquates(Function dbFunction) {
-		TreeMap<String, HighSymbol> constantSymbolMap = null;
 		// Find named constants via Equates
 		Program program = dbFunction.getProgram();
 		EquateTable equateTable = program.getEquateTable();
@@ -516,34 +512,21 @@ public class LocalSymbolMap {
 					continue;
 				}
 				long hash[] = DynamicHash.calcConstantHash(instr, eq.getValue());
-				for (long element : hash) {
-					if (constantSymbolMap == null) {
-						constantSymbolMap = new TreeMap<String, HighSymbol>();
-					}
-					newEquateSymbol(0, eq.getDisplayName(), eq.getValue(), element, defAddr,
-						constantSymbolMap);
+				if (hash.length == 0) {
+					continue;
 				}
-			}
-		}
+				Arrays.sort(hash);		// Sort in preparation for deduping
+				String displayName = eq.getDisplayName();
+				long eqValue = eq.getValue();
 
-// TODO: Find typed constants via DataTypeReferences
-//		-- for each datatype reference within the scope of the function
-//		MappedVarKey key = new MappedVarKey(AddressSpace.HASH_SPACE.getAddress(hash),defAddr);
-//		DynamicSymbol sym = constantSymbolMap.get(key);
-//		String name = sym != null ? sym.getName() : null;
-//		sym = new DynamicSymbol(name, dt, dt.getLength(), hash, defAddr, func, 0); // format??
-//		if (name != null) {
-//			sym.setTypeLock(true);
-//		}
-//		sym.setTypeLock(true);
-//		sym.setReadOnly(true);
-//		
-
-// Add constant dynamic symbols to map
-		if (constantSymbolMap != null) {
-			for (HighSymbol sym : constantSymbolMap.values()) {
-				long id = getNextId();
-				symbolMap.put(id, sym);
+				EquateSymbol eqSymbol;
+				for (int i = 0; i < hash.length; ++i) {
+					if (i != 0 && hash[i - 1] == hash[i]) {
+						continue;		// Found a duplicate, skip it
+					}
+					eqSymbol = newEquateSymbol(0, displayName, eqValue, hash[i], defAddr);
+					symbolMap.put(eqSymbol.getId(), eqSymbol);
+				}
 			}
 		}
 	}

@@ -5509,6 +5509,7 @@ int4 RuleEqual2Zero::applyOp(PcodeOp *op,Funcdata &data)
   if (vn2->isConstant()) {
     Address val(vn2->getSpace(),uintb_negate(vn2->getOffset()-1,vn2->getSize()));
     unnegvn = data.newVarnode(vn2->getSize(),val);
+    unnegvn->copySymbolIfValid(vn2);	// Propagate any markup
     posvn = vn;
   }
   else {
