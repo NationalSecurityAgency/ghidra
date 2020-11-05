@@ -33,5 +33,6 @@ final class DefaultDisplayGraphIcons {
 	public static final Icon LAYOUT_ALGORITHM_ICON = Icons.get("images/katomic.png");
 	public static final Icon LASSO_ICON = Icons.get("images/Lasso.png");
 	public static final Icon FILTER_ICON = Icons.CONFIGURE_FILTER_ICON;
+	public static final Icon FIT_TO_WINDOW = Icons.get("images/view-fullscreen.png");
 
 }

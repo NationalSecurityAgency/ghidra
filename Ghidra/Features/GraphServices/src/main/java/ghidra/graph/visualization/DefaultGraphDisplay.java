@@ -304,8 +304,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		// create an icon button to reset the view transformations to identity (scaled to layout)
 		new ActionBuilder("Reset View", ACTION_OWNER)
-				.description("Reset all view transforms to center graph in display")
-				.toolBarIcon(Icons.REFRESH_ICON)
+				.description("Fit Graph to Window")
+				.toolBarIcon(DefaultDisplayGraphIcons.FIT_TO_WINDOW)
 				.onAction(context -> viewer.scaleToLayout())
 				.buildAndInstallLocal(componentProvider);
 
