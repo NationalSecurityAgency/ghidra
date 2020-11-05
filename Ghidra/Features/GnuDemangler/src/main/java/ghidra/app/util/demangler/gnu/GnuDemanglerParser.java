@@ -47,6 +47,7 @@ public class GnuDemanglerParser {
 
 	private static final String OPERATOR = "operator";
 	private static final String LAMBDA = "lambda";
+	private static final String LAMBDA_START = "{lambda";
 	private static final String VAR_ARGS = "...";
 	private static final String THUNK = "thunk";
 	private static final String CONST = " const";
@@ -60,7 +61,7 @@ public class GnuDemanglerParser {
 	 *
 	 * Parts: -optional spaces 
 	 * 			-optional (const)  (non-capture group)
-	 *          -followed by '()' with optinal parameter text (capture group 1)
+	 *          -followed by '()' with optional parameter text (capture group 1)
 	 *          
 	 * Note:    this pattern is used for matching the arguments string, in the above examples it
 	 *          would be: 
@@ -191,16 +192,18 @@ public class GnuDemanglerParser {
 	 * Pattern for newer C++ lambda syntax:
 	 * 
 	 * Sample:  {lambda(void const*, unsigned int)#1}
+	 * 			{lambda(NS1::Class1 const&, int, int)#1} const&
 	 * 
-	 * Pattern: [optional text] brace lambda([parameters])#digits brace
+	 * Pattern: [optional text] brace lambda([parameters])#digits brace [optional modifiers]
 	 * 
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
 	 *  		-parameters of the lambda function (capture group 2)
 	 *  		-trailing id (capture group 3)
+	 *  		-trailing modifiers (e.g., const, &) (capture group 4)
 	 */
 	private static final Pattern LAMBDA_PATTERN =
-		Pattern.compile(".*(\\{" + LAMBDA + "\\((.*)\\)(#\\d+)\\})");
+		Pattern.compile(".*(\\{" + LAMBDA + "\\((.*)\\)(#\\d+)\\})(\\s*(?:const|\\*|\\&)*){0,1}");
 
 	/*
 	 * Sample:  {unnamed type#1}
@@ -396,7 +399,7 @@ public class GnuDemanglerParser {
 		if (lambdaName != null) {
 			String uniqueName = lambdaName.getFullText();
 			String escapedLambda = removeBadSpaces(uniqueName);
-			simpleName = simpleName.replace("{lambda", escapedLambda);
+			simpleName = simpleName.replace(LAMBDA_START, escapedLambda);
 			function = new DemangledLambda(mangledSource, demangled, null);
 			function.setSignature(lambdaName.getFullText());
 		}
@@ -440,6 +443,7 @@ public class GnuDemanglerParser {
 	}
 
 	private LambdaName getLambdaName(String name) {
+
 		Matcher matcher = LAMBDA_PATTERN.matcher(name);
 		if (!matcher.matches()) {
 			return null;
@@ -448,7 +452,8 @@ public class GnuDemanglerParser {
 		String fullText = matcher.group(1);
 		String params = matcher.group(2);
 		String trailing = matcher.group(3);
-		return new LambdaName(fullText, params, trailing);
+		String modifiers = matcher.group(4);
+		return new LambdaName(fullText, params, trailing, modifiers);
 	}
 
 	private String stripOffTemplates(String string) {
@@ -699,7 +704,11 @@ public class GnuDemanglerParser {
 				// 		e.g., unsigned long (*)(long const &)
 				// array pointer/refs
 				//  	e.g., short (&)[7]
-				//
+				// lambda function
+				//      e.g., {lambda(NS1::Class1 const&, int, int)#1} const&
+				// 
+
+				LambdaName lambdaName = getLambdaName(datatype);
 
 				// check for array case
 				Matcher arrayMatcher = ARRAY_POINTER_REFERENCE_PATTERN.matcher(datatype);
@@ -709,6 +718,13 @@ public class GnuDemanglerParser {
 					ddt = parseArrayPointerOrReference(datatype, name, arrayMatcher);
 					ddt.setNamespace(namespace);
 					i = arrayMatcher.end();
+				}
+				else if (lambdaName != null) {
+					String fullText = lambdaName.getFullText();
+					ddt.setName(fullText);
+					int offset = fullText.indexOf('(');
+					int remaining = fullText.length() - offset;
+					i = i + remaining;
 				}
 				else {
 					int startParenCount =
@@ -1003,7 +1019,8 @@ public class GnuDemanglerParser {
 		List<DemangledDataType> parameters = parseParameters(paramerterString);
 
 		DemangledFunctionPointer dfp = new DemangledFunctionPointer(mangledSource, demangledSource);
-		dfp.setReturnType(parseDataType(returnType));
+		DemangledDataType returnDataType = parseDataType(returnType);
+		dfp.setReturnType(returnDataType);
 		for (DemangledDataType parameter : parameters) {
 			dfp.addParameter(parameter);
 		}
@@ -1486,11 +1503,13 @@ public class GnuDemanglerParser {
 		private String fullText;
 		private String params;
 		private String trailing;
+		private String modifiers;
 
-		LambdaName(String fullText, String params, String trailing) {
+		LambdaName(String fullText, String params, String trailing, String modifiers) {
 			this.fullText = fullText;
 			this.params = params;
 			this.trailing = trailing;
+			this.modifiers = modifiers == null ? "" : modifiers;
 		}
 
 		String getFullText() {
@@ -1503,6 +1522,7 @@ public class GnuDemanglerParser {
 			return builder.append("fullText", fullText)
 					.append("params", params)
 					.append("trailing", trailing)
+					.append("modifiers", modifiers)
 					.toString();
 		}
 	}

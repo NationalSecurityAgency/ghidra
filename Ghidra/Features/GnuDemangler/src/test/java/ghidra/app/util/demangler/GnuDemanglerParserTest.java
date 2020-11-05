@@ -1461,6 +1461,40 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFunctionWithLambdaParameter() throws Exception {
+
+		//
+		// Mangled: _ZN3JSC9Structure3addILNS0_9ShouldPinE1EZNS_8JSObject35prepareToPutDirectWithoutTransitionERNS_2VMENS_12PropertyNameEjjPS0_EUlRKNS_24GCSafeConcurrentJSLockerEiiE_EEiS5_S6_jRKT0_ 
+		//
+		// Demangled: int 
+		//            JSC::Structure::add<
+		//						(JSC::Structure::ShouldPin)1, 
+		//						 JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&, JSC::PropertyName, unsigned int, unsigned int, JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1}
+		//								>(
+		//									JSC::VM&, JSC::PropertyName, 
+		//									unsigned int, 
+		//									JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&, JSC::PropertyName, unsigned int, unsigned int, JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1} const&
+		//								  )
+		//            
+		//
+
+		DemangledObject object = parser.parse(
+			"_ZN3JSC9Structure3addILNS0_9ShouldPinE1EZNS_8JSObject35prepareToPutDirectWithoutTransitionERNS_2VMENS_12PropertyNameEjjPS0_EUlRKNS_24GCSafeConcurrentJSLockerEiiE_EEiS5_S6_jRKT0_",
+			"int JSC::Structure::add<(JSC::Structure::ShouldPin)1, JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&, JSC::PropertyName, unsigned int, unsigned int, JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1}>(JSC::VM&, JSC::PropertyName, unsigned int, JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&, JSC::PropertyName, unsigned int, unsigned int, JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1} const&)");
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"add<(JSC::Structure::ShouldPin)1,JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&,JSC::PropertyName,unsigned_int,unsigned_int,JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker_const&,int,int)#1}>";
+		assertName(object, name, "JSC", "Structure");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"int JSC::Structure::add<(JSC::Structure::ShouldPin)1,JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&,JSC::PropertyName,unsigned_int,unsigned_int,JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker_const&,int,int)#1}>(JSC::VM &,JSC::PropertyName,unsigned int,JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&,JSC::PropertyName,unsigned_int,unsigned_int,JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1} const &)",
+			signature);
+	}
+
+	@Test
 	public void testFunctionInLambdaNamespace() throws Exception {
 
 		//
