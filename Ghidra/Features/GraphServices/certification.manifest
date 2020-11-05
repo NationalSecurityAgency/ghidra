@@ -5,6 +5,7 @@
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: MIT
 ##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
@@ -21,4 +22,5 @@ src/main/resources/images/project-open.png||Oxygen Icons - LGPL 3.0|||Oxygen ico
 src/main/resources/images/redspheregraph.png||GHIDRA||||END|
 src/main/resources/images/sat2.png||GHIDRA||||END|
 src/main/resources/images/tree.png||GHIDRA||||END|
+src/main/resources/images/view-fullscreen.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/jungrapht.properties||GHIDRA||||END|
