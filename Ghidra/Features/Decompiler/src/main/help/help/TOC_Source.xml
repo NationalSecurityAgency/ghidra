@@ -68,14 +68,13 @@
 	                text="Program Annotations Affecting the Decompiler"  
 	                target="help/topics/DecompilePlugin/DecompilerAnnotations.html">
 		  <tocdef id="AnnoteFunctionBody" sortgroup="a" text="Machine Instructions" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteFunctionBody"/>
-		  <!-- Space added to text="Comments" attribute below to distinguish it from the CommentsPlugin section of the same name -->
-		  <tocdef id="AnnoteComments" sortgroup="b" text="Comments " target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteComments"/>
+		  <tocdef id="AnnoteComments" sortgroup="b" text="Comments" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteComments"/>
 		  <tocdef id="AnnoteVariables" sortgroup="c" text="Variable Annotations" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteVariables"/>
 		  <tocdef id="AnnotePrototype" sortgroup="d" text="Function Prototypes" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnotePrototype"/>
 		  <tocdef id="AnnoteMutability" sortgroup="e" text="Data Mutability" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteMutability"/>
 		  <tocdef id="AnnoteConstants" sortgroup="f" text="Constant Annotations" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteConstants"/>
 		  <tocdef id="AnnoteRegister" sortgroup="g" text="Register Values" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteRegister"/>
-		</tocdef>
+		</tocdef> 
 	        <tocdef id="Decompiler Options"
 	        		sortgroup="c" 
 	                text="Decompiler Options"  
@@ -98,5 +97,5 @@
 		</tocdef>
 	   </tocdef>
 	 </tocref>
-
+ 
 </tocroot>
