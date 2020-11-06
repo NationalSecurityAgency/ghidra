@@ -272,39 +272,12 @@ public class DWARFDataTypeManager {
 	 * @return
 	 */
 	public Iterable<DataType> forAllConflicts(DataTypePath dtp) {
+		Category cat = dataTypeManager.getCategory(dtp.getCategoryPath());
+		List<DataType> list = (cat != null)
+				? cat.getDataTypesByBaseName(dtp.getDataTypeName())
+				: List.of();
 
-		return () -> new DataTypeConflictIterator(dtp);
-	}
-
-	private class DataTypeConflictIterator implements Iterator<DataType> {
-		private DataTypePath dtp;
-		private Category category;
-		private int conflictNum;
-		private DataType dataType;
-
-		public DataTypeConflictIterator(DataTypePath dtp) {
-			this.dtp = dtp;
-			this.category = dataTypeManager.getCategory(dtp.getCategoryPath());
-		}
-
-		String buildName() {
-			String s = dtp.getDataTypeName();
-			return conflictNum == 0 ? s
-					: (s + DataType.CONFLICT_SUFFIX + Integer.toString(conflictNum));
-		}
-
-		@Override
-		public boolean hasNext() {
-			dataType = (category != null) ? category.getDataType(buildName()) : null;
-			return dataType != null;
-		}
-
-		@Override
-		public DataType next() {
-			conflictNum++;
-			return dataType;
-		}
-
+		return list;
 	}
 
 	private DataType findGhidraType(String name) {
@@ -746,8 +719,9 @@ public class DWARFDataTypeManager {
 		DataType returnDataType = getDataType(diea.getTypeRef(), baseDataTypeVoid);
 		boolean foundThisParam = false;
 		List<ParameterDefinition> params = new ArrayList<>();
-		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren(
-			DWARFTag.DW_TAG_formal_parameter)) {
+		for (DebugInfoEntry childEntry : diea.getHeadFragment()
+				.getChildren(
+					DWARFTag.DW_TAG_formal_parameter)) {
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
 
 			String paramName = childDIEA.getName();
