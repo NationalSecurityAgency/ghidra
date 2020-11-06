@@ -33,6 +33,7 @@ import ghidra.app.util.opinion.MachoLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.Msg;
@@ -391,7 +392,7 @@ public class DWARFProgram implements Closeable {
 
 		// Name was not found
 		if (isAnonDWARFName(name)) {
-			name = "anon_" + DWARFUtil.getContainerTypeName(diea);
+			name = createAnonName("anon_" + DWARFUtil.getContainerTypeName(diea), diea);
 			isAnon = true;
 		}
 
@@ -415,19 +416,25 @@ public class DWARFProgram implements Closeable {
 		try {
 			int dwarfSize = diea.parseInt(DWARFAttribute.DW_AT_byte_size, 0);
 			int dwarfEncoding = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_encoding, -1);
-			String name =
-				"anon_basetype_" + DWARFEncoding.getTypeName(dwarfEncoding) + "_" + dwarfSize;
+			String name = createAnonName(
+				"anon_basetype_" + DWARFEncoding.getTypeName(dwarfEncoding) + "_" + dwarfSize,
+				diea);
 			return name;
 		}
 		catch (IOException | DWARFExpressionException e) {
-			return "anon_basetype_unknown";
+			return createAnonName("anon_basetype_unknown", diea);
 		}
 	}
 
 	private String getAnonEnumName(DIEAggregate diea) {
 		int enumSize = Math.max(1, (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_byte_size, 1));
-		String name = "anon_enum_" + (enumSize * 8);
+		String name = createAnonName("anon_enum_" + (enumSize * 8), diea);
 		return name;
+	}
+
+	private static String createAnonName(String baseName, DIEAggregate diea) {
+		return baseName + DataType.CONFLICT_SUFFIX + diea.getHexOffset();
+
 	}
 
 	/**
