@@ -26,7 +26,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 import generic.json.Json;
-import ghidra.app.util.SymbolPath;
+import ghidra.app.util.SymbolPathParser;
 import ghidra.app.util.demangler.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.symbol.Namespace;
@@ -43,8 +43,12 @@ public class GnuDemanglerParser {
 	private static final String TYPEINFO_FOR = "typeinfo for ";
 	private static final String COVARIANT_RETURN_THUNK = "covariant return thunk";
 
-	private static final Set<String> ADDRESS_TABLE_PREFIXES =
-		Set.of(CONSTRUCTION_VTABLE_FOR, VTT_FOR, VTABLE_FOR, TYPEINFO_FN_FOR, TYPEINFO_FOR);
+	private static final Set<String> ADDRESS_TABLE_PREFIXES = Set.of(
+		CONSTRUCTION_VTABLE_FOR,
+		VTT_FOR,
+		VTABLE_FOR,
+		TYPEINFO_FN_FOR,
+		TYPEINFO_FOR);
 
 	private static final String OPERATOR = "operator";
 	private static final String LAMBDA = "lambda";
@@ -918,9 +922,7 @@ public class GnuDemanglerParser {
 	}
 
 	private DemangledDataType createTypeInNamespace(String name) {
-		SymbolPath path = new SymbolPath(name);
-		List<String> names = path.asList();
-
+		List<String> names = SymbolPathParser.parse(name, false);
 		DemangledType namespace = null;
 		if (names.size() > 1) {
 			namespace = convertToNamespaces(names.subList(0, names.size() - 1));
@@ -934,9 +936,7 @@ public class GnuDemanglerParser {
 	}
 
 	private void setNameAndNamespace(DemangledObject object, String name) {
-		SymbolPath path = new SymbolPath(name);
-		List<String> names = path.asList();
-
+		List<String> names = SymbolPathParser.parse(name, false);
 		DemangledType namespace = null;
 		if (names.size() > 1) {
 			namespace = convertToNamespaces(names.subList(0, names.size() - 1));
@@ -950,8 +950,7 @@ public class GnuDemanglerParser {
 
 	private void setNamespace(DemangledObject object, String name) {
 
-		SymbolPath path = new SymbolPath(name);
-		List<String> names = path.asList();
+		List<String> names = SymbolPathParser.parse(name, false);
 		object.setNamespace(convertToNamespaces(names));
 	}
 
@@ -1382,8 +1381,8 @@ public class GnuDemanglerParser {
 
 			// shortReturnType: string
 			String templatelessReturnType = stripOffTemplates(fullReturnType);
-			SymbolPath path = new SymbolPath(templatelessReturnType);
-			String shortReturnTypeName = path.getName();
+			List<String> path = SymbolPathParser.parse(templatelessReturnType, false);
+			String shortReturnTypeName = path.get(path.size() - 1);
 
 			//
 			// The preferred name: 'operator basic_string()'

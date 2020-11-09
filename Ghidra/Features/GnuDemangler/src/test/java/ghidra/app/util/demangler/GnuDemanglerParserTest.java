@@ -1167,6 +1167,25 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testAnonymousNamespaceInParameter_FirstNamespace() throws Exception {
+		//
+		// Mangled: __ZL7pperrorPN12_GLOBAL__N_17ContextEPKc
+		//
+		// Demangled: pperror((anonymous namespace)::Context*, char const*)
+		//
+		String mangled = "_ZL7pperrorPN12_GLOBAL__N_17ContextEPKc";
+
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "pperror");
+
+		assertEquals("undefined pperror((anonymous_namespace)::Context *,char const *)",
+			object.getSignature(false));
+	}
+
+	@Test
 	public void testTemplatedParametersWithCast() throws Exception {
 		//
 		// Mangled: _ZN2Dr15ClipboardHelper17FTransferGvmlDataERN3Art11TransactionERKN3Ofc13TReferringPtrINS_10DrawingE2oEEEbNS4_7TCntPtrI11IDataObjectEERNS_18IClientDataCreatorERNS4_7TVectorINS4_8TWeakPtrINS_14DrawingElementEEELj0ELj4294967295EEERNS1_6Rect64E
