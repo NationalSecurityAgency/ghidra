@@ -1461,14 +1461,30 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testOperator_Equals_ExcessivelyTemplated() throws Exception {
+
+		DemangledObject object = parser.parse(
+			"__ZN3WTF8FunctionIFvvEEaSIZN7WebCore9IDBClient24TransactionOperationImplIJRKNS4_18IDBObjectStoreInfoEEEC1ERNS4_14IDBTransactionEMSB_FvRKNS4_13IDBResultDataEEMSB_FvRNS5_20TransactionOperationES9_ES9_EUlvE_vEERS2_OT_",
+			"WTF::Function<void ()>& WTF::Function<void ()>::operator=<WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo const&>::TransactionOperationImpl(WebCore::IDBTransaction&, void (WebCore::IDBTransaction::*)(WebCore::IDBResultData const&), void (WebCore::IDBTransaction::*)(WebCore::IDBClient::TransactionOperation&, WebCore::IDBObjectStoreInfo const&), WebCore::IDBObjectStoreInfo const&)::{lambda()#1}, void>(WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo const&>::TransactionOperationImpl(WebCore::IDBTransaction&, void (WebCore::IDBTransaction::*)(WebCore::IDBResultData const&), void (WebCore::IDBTransaction::*)(WebCore::IDBClient::TransactionOperation&, WebCore::IDBObjectStoreInfo const&), WebCore::IDBObjectStoreInfo const&)::{lambda()#1}&&)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"operator=";
+		assertName(object, name, "WTF", "Function<void()>");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WTF::Function<void ()> & WTF::Function<void()>::operator=<WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo_const&>::TransactionOperationImpl(WebCore::IDBTransaction&,void(WebCore::IDBTransaction::*)(WebCore::IDBResultData_const &,void ()(WebCore::IDBClient::TransactionOperation &,WebCore::IDBObjectStoreInfo_const &),WebCore::IDBObjectStoreInfo_const&)::{lambda()#1},void>(WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo const&>::TransactionOperationImpl(WebCore::IDBTransaction&, void (WebCore::IDBTransaction::*)(WebCore::IDBResultData const &,void ()(WebCore::IDBClient::TransactionOperation &,WebCore::IDBObjectStoreInfo const &),WebCore::IDBObjectStoreInfo const&)::{lambda()#1} &&)",
+			signature);
+
+	}
+
+	@Test
 	public void testLambdaWithTemplates() throws Exception {
 
-		// _ZN7brigand13for_each_argsIZN7WebCore9ConverterINS1_8IDLUnionIJNS1_12IDLDOMStringENS1_12IDLInterfaceINS1_14CanvasGradientEEENS5_INS1_13CanvasPatternEEEEEEE7convertERN3JSC9ExecStateENSC_7JSValueEEUlOT_E_JNS_5type_IS7_EENSJ_IS9_EEEEESG_SG_DpOT0_
-
-		// {lambda(auto:1&&)#1}
-
 		// {lambda(auto:1&&)#1}<NS1::NS2>>&&
-
 		DemangledObject object = parser.parse(
 			"_ZN3WTF6VectorINS_9RetainPtrI29AVAssetResourceLoadingRequestEELm0ENS_15CrashOnOverflowELm16ENS_10FastMallocEE17removeAllMatchingIZNS6_9removeAllIPS2_EEjRKT_EUlRKS3_E_EEjSC_m",
 			"WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1}, brigand::type_<WebCore::IDLInterface<WebCore::CanvasGradient> >, WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1}<WebCore::IDLInterface<WebCore::CanvasPattern> > >(WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1}, brigand::type_<WebCore::IDLInterface<WebCore::CanvasGradient> >&&, WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1}<WebCore::IDLInterface<WebCore::CanvasPattern> >&&)");

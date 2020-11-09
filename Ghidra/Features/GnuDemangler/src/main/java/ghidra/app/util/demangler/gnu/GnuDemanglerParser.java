@@ -30,6 +30,7 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.demangler.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.symbol.Namespace;
+import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 
 public class GnuDemanglerParser {
@@ -283,6 +284,7 @@ public class GnuDemanglerParser {
 		String extra = userDefinedLiteral;
 		alternated += '|' + extra;
 
+		// note: this capture group seems to fail with excessive templating
 		String operatorTemplates = "(<.+>){0,1}";
 		String operatorPrefix =
 			".*(.*" + OPERATOR + "(" + alternated + ")\\s*" + operatorTemplates + ".*)\\s*";
@@ -1274,14 +1276,8 @@ public class GnuDemanglerParser {
 			// NS1::operator<(NS1::Coordinate const &,NS1::Coordinate const &)
 			//
 			String operatorChars = matcher.group(2);
-			String templates = matcher.group(3);
 			int start = matcher.start(2); // operator chars start
-			int end = matcher.end(3); // templates end
-
-			if (templates == null) {
-				templates = "";
-				end = matcher.end(2); // no templates; end of the operator chars
-			}
+			int end = matcher.end(2); // operator chars start
 
 			//
 			// The 'operator' functions have symbols that confuse our default function parsing.  
@@ -1289,11 +1285,16 @@ public class GnuDemanglerParser {
 			// template parsing to fail.  To defeat the failure, we will install a temporary 
 			// function name here and then restore it after parsing is finished.
 			//
-			String rawPrefix = OPERATOR + demangled.substring(start, end);
-			String placeholder = "TEMPNAMEPLACEHOLDERVALUE";
-			String tempName = demangled.replace(rawPrefix, placeholder);
 
-			DemangledFunction function = (DemangledFunction) parseFunctionOrVariable(tempName);
+			String templates = getTemplates(end);
+			end = end + templates.length();
+
+			// a string to replace operator chars; this value will be overwritten the name is set
+			String placeholder = "TEMPNAMEPLACEHOLDERVALUE";
+			String baseOperator = OPERATOR + demangled.substring(start, end);
+			String fixedFunction = demangled.replace(baseOperator, placeholder);
+
+			DemangledFunction function = (DemangledFunction) parseFunctionOrVariable(fixedFunction);
 			function.setOverloadedOperator(true);
 
 			String simpleName = OPERATOR + operatorChars;
@@ -1309,6 +1310,30 @@ public class GnuDemanglerParser {
 
 			return function;
 		}
+
+		private String getTemplates(int start) {
+			String templates = "";
+			boolean hasTemplates = nextCharIs(demangled, start, '<');
+			if (hasTemplates) {
+				int templateStart = start;
+				int templateEnd = findTemplateEnd(demangled, templateStart);
+				if (templateEnd == -1) {
+					// should not happen
+					Msg.debug(this, "Unable to find template end for operator: " + demangled);
+					return templates;
+				}
+				templates = demangled.substring(templateStart, templateEnd + 1);
+			}
+			return templates;
+		}
+	}
+
+	private boolean nextCharIs(String text, int index, char c) {
+		char next = text.charAt(index);
+		while (next == ' ') {
+			next = text.charAt(++index);
+		}
+		return next == c;
 	}
 
 	private class ConversionOperatorHandler extends OperatorHandler {
