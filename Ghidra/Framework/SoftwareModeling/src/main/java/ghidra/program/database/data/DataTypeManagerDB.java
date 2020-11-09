@@ -683,14 +683,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public Category getCategory(CategoryPath path) {
-		if (path.equals(CategoryPath.ROOT)) {
-			return root;
+		Category cat = root;
+		for (String parent : path.asList()) {
+			cat = cat.getCategory(parent);
+			if (cat == null) {
+				return null;
+			}
 		}
-		Category parent = getCategory(path.getParent());
-		if (parent == null) {
-			return null;
-		}
-		return parent.getCategory(path.getName());
+		return cat;
 	}
 
 	CategoryDB getCategoryDB(long id) throws IOException {
