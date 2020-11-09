@@ -106,6 +106,8 @@ class LayoutTransitionManager {
 		}
 		if (layoutAlgorithm instanceof TreeLayout) {
 			((TreeLayout<AttributedVertex>) layoutAlgorithm).setRootPredicate(rootPredicate);
+			layoutAlgorithm.setAfter(new PostProcessRunnable<>(
+					visualizationServer.getVisualizationModel().getLayoutModel()));
 		}
 		// remove any previously added layout paintables
 		removePaintable(radialLayoutRings);
@@ -127,7 +129,9 @@ class LayoutTransitionManager {
 		if (layoutAlgorithm instanceof EdgeSorting) {
 			((EdgeSorting<AttributedEdge>) layoutAlgorithm).setEdgeComparator(edgeComparator);
 		}
-		LayoutAlgorithmTransition.apply(visualizationServer, layoutAlgorithm);
+		LayoutAlgorithmTransition.apply(visualizationServer,
+				layoutAlgorithm,
+				new PostProcessRunnable<>(visualizationServer.getVisualizationModel().getLayoutModel()));
 	}
 
 	private void removePaintable(VisualizationServer.Paintable paintable) {
@@ -146,6 +150,9 @@ class LayoutTransitionManager {
 					.setRootPredicate(rootPredicate);
 			((TreeLayout<AttributedVertex>) initialLayoutAlgorithm)
 					.setVertexBoundsFunction(vertexBoundsFunction);
+			initialLayoutAlgorithm.setAfter(new PostProcessRunnable<>(
+					visualizationServer.getVisualizationModel().getLayoutModel()));
+
 		}
 		if (initialLayoutAlgorithm instanceof EdgeSorting) {
 			((EdgeSorting<AttributedEdge>) initialLayoutAlgorithm)
