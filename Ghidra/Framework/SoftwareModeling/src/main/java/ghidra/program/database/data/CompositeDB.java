@@ -69,26 +69,20 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 	protected abstract void initialize();
 
 	/**
-	 * Get the preferred length for a new component. For Unions and internally
-	 * aligned structures the preferred component length for a fixed-length dataType
-	 * will be the length of that dataType. Otherwise the length returned will be no
-	 * larger than the specified length.
-	 * 
+	 * Get the preferred length for a new component. Constraining length of fixed-length datatype
+	 * may not be sustainable in response to datatype size changes over time.
 	 * @param dataType new component datatype
-	 * @param length   constrained length or -1 to force use of dataType size.
-	 *                 Dynamic types such as string must have a positive length
-	 *                 specified.
+	 * @param length   specified length required for Dynamic types such as string 
+	 * 				   which must have a positive length specified.
 	 * @return preferred component length
 	 */
 	protected int getPreferredComponentLength(DataType dataType, int length) {
-		if ((isInternallyAligned() || (this instanceof Union)) && !(dataType instanceof Dynamic)) {
-			length = -1; // force use of datatype size
+		if (length > 0 && (dataType instanceof Composite) &&
+			((Composite) dataType).isNotYetDefined()) {
+			return length;
 		}
 		int dtLength = dataType.getLength();
-		if (length <= 0) {
-			length = dtLength;
-		}
-		else if (dtLength > 0 && dtLength < length) {
+		if (dtLength > 0) {
 			length = dtLength;
 		}
 		if (length <= 0) {
@@ -789,4 +783,13 @@ abstract class CompositeDB extends DataTypeDB implements Composite {
 		}
 		return " pack(" + packingValue + ")";
 	}
+
+	/**
+	 * Perform any neccessary component adjustments based on
+	 * sizes and alignment of components differing from their 
+	 * specification which may be influenced by the data organization.
+	 * If this composite changes parents will not be
+	 * notified - handling this is the caller's responsibility.
+	 */
+	protected abstract void fixupComponents();
 }
