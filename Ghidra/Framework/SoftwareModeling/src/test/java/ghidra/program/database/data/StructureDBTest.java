@@ -86,6 +86,30 @@ public class StructureDBTest extends AbstractGTest {
 	}
 
 	@Test
+	public void testEmpty() throws Exception {
+		Structure s = new StructureDataType("foo", 0);
+		assertTrue(s.isNotYetDefined());
+		assertEquals(0, s.getNumComponents());
+		assertEquals(0, s.getNumDefinedComponents());
+		Structure s2 = (Structure) dataMgr.resolve(s, null);
+		assertTrue(s2.isNotYetDefined());
+		assertEquals(0, s2.getNumComponents());
+		assertEquals(0, s.getNumDefinedComponents());
+	}
+
+	@Test
+	public void testSizeOne() throws Exception {
+		Structure s = new StructureDataType("foo", 1);
+		assertFalse(s.isNotYetDefined());
+		assertEquals(1, s.getNumComponents());
+		assertEquals(0, s.getNumDefinedComponents());
+		Structure s2 = (Structure) dataMgr.resolve(s, null);
+		assertFalse(s2.isNotYetDefined());
+		assertEquals(1, s2.getNumComponents());
+		assertEquals(0, s2.getNumDefinedComponents());
+	}
+
+	@Test
 	public void testAdd() throws Exception {
 		assertEquals(8, struct.getLength());
 		assertEquals(4, struct.getNumComponents());

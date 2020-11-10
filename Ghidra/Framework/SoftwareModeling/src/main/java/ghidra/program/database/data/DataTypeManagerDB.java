@@ -28,6 +28,8 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.archive.BuiltInSourceArchive;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
+import ghidra.graph.*;
+import ghidra.graph.algo.GraphNavigator;
 import ghidra.program.database.*;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -2711,7 +2713,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	class StructureIterator implements Iterator<Structure> {
 		private RecordIterator it;
-		private Structure nextStruct;
+		private StructureDB nextStruct;
 
 		StructureIterator() throws IOException {
 			it = compositeAdapter.getRecords();
@@ -2731,9 +2733,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 
 		@Override
-		public Structure next() {
+		public StructureDB next() {
 			if (hasNext()) {
-				Structure s = nextStruct;
+				StructureDB s = nextStruct;
 				nextStruct = null;
 				return s;
 			}
@@ -2746,7 +2748,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 					Record rec = it.next();
 					DataType dt = getDataType(rec.getKey(), rec);
 					if (dt instanceof Structure) {
-						nextStruct = (Structure) dt;
+						nextStruct = (StructureDB) dt;
 						return;
 					}
 				}
@@ -2759,7 +2761,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	class CompositeIterator implements Iterator<Composite> {
 		private RecordIterator it;
-		private Composite nextComposite;
+		private CompositeDB nextComposite;
 
 		CompositeIterator() throws IOException {
 			it = compositeAdapter.getRecords();
@@ -2779,9 +2781,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 
 		@Override
-		public Composite next() {
+		public CompositeDB next() {
 			if (hasNext()) {
-				Composite c = nextComposite;
+				CompositeDB c = nextComposite;
 				nextComposite = null;
 				return c;
 			}
@@ -2792,7 +2794,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			try {
 				if (it.hasNext()) {
 					Record rec = it.next();
-					nextComposite = (Composite) getDataType(rec.getKey(), rec);
+					nextComposite = (CompositeDB) getDataType(rec.getKey(), rec);
 				}
 			}
 			catch (IOException e) {
@@ -3785,6 +3787,99 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Fixup all composites and thier components which may be affected by a data organization
+	 * change include primitive type size changes and alignment changes.  It is highly recommended
+	 * that this program be open with exclusive access before invoking this method to avoid 
+	 * excessive merge conflicts with other users.
+	 * @param monitor task monitor
+	 * @throws CancelledException if operation is cancelled
+	 */
+	public void fixupComposites(TaskMonitor monitor) throws CancelledException {
+		lock.acquire();
+		try {
+
+			// NOTE: Any composite could be indirectly affected by a component size change
+			// based upon type relationships
+
+			// NOTE: Composites brought in from archive may have incorrect component size
+			// if not aligned and should not be used to guage a primitive size change
+
+			// Unfortunately parent table does not track use of primitives so a brute
+			// force search is required.  Since all composites must be checked, this 
+			// is combined with the composite graph generation to get ordered list
+			// of composites for subsequent size change operation.
+
+			List<CompositeDB> orderedComposites = getAllCompositesInPostDependencyOrder(monitor);
+
+			monitor.setProgress(0);
+			monitor.setMaximum(orderedComposites.size());
+			monitor.setMessage("Updating Datatype Sizes...");
+			
+			int count = 0;
+			for (CompositeDB c : orderedComposites) {
+				monitor.checkCanceled();
+				c.fixupComponents();
+				monitor.setProgress(++count);
+			}
+
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	/**
+	 * Get composite base type which corresponds to a specified datatype.
+	 * Pointers to composites are ignored.  This method is intended to be
+	 * used by the {@link #getAllCompositesInPostDependencyOrder} method only.
+	 * @param dt datatype
+	 * @return base datatype if dt corresponds to a composite or array of composites, 
+	 * otherwise null is returned
+	 */
+	private CompositeDB getCompositeBaseType(DataType dt) {
+		while ((dt instanceof Array) || (dt instanceof TypeDef)) {
+			if (dt instanceof Array) {
+				dt = ((Array) dt).getDataType();
+			}
+			else {
+				dt = ((TypeDef) dt).getBaseDataType();
+			}
+		}
+		return (dt instanceof CompositeDB) ? (CompositeDB) dt : null;
+	}
+
+	/*
+	 * Graph all composites return an ordered list with leaves returned first and detect
+	 * primitve size changes based upon specified primitiveTypeIds.  It is assumed TypeDef
+	 * use of primitives have already be handled elsewhere.
+	 * All pointers are ignored and not followed during graph generation.
+	 * This method is intended to facilitate datatype size change propogation in an 
+	 * orderly fashion to reduce size change propogation.
+	
+	 * @param monitor task monitor
+	 * @return order list of composites
+	 * @throws CancelledException if task cancelled
+	 */
+	private List<CompositeDB> getAllCompositesInPostDependencyOrder(TaskMonitor monitor)
+			throws CancelledException {
+
+		GDirectedGraph<CompositeDB, GEdge<CompositeDB>> graph = GraphFactory.createDirectedGraph();
+		Iterator<Composite> allComposites = getAllComposites();
+		while (allComposites.hasNext()) {
+			monitor.checkCanceled();
+			CompositeDB c = (CompositeDB) allComposites.next();
+			graph.addVertex(c);
+			for (DataTypeComponent m : c.getDefinedComponents()) {
+				CompositeDB refC = getCompositeBaseType(m.getDataType());
+				if (refC != null) {
+					graph.addEdge(new DefaultGEdge<CompositeDB>(c, refC));
+				}
+			}
+		}
+		return GraphAlgorithms.getVerticesInPostOrder(graph, GraphNavigator.topDownNavigator());
 	}
 
 	/**
