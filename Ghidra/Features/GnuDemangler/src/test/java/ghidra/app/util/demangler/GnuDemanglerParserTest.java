@@ -1541,6 +1541,37 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFunctionParameterWithMultipleParentheses() throws Exception {
+
+		//
+		// Mangled: __ZN7WebCore12TextCodecICU14registerCodecsEPFvPKcON3WTF8FunctionIFNSt3__110unique_ptrINS_9TextCodecENS5_14default_deleteIS7_EEEEvEEEE
+		//
+		// Demangled: undefined WebCore::TextCodecICU::registerCodecs(void ()(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&)) 
+		//
+		// The regression tested here revolves around this parameter:
+		// 
+		// 		void ()(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&
+		//
+		// (note the trailing '()' chars)
+		//
+
+		DemangledObject object = parser.parse(
+			"__ZN7WebCore12TextCodecICU14registerCodecsEPFvPKcON3WTF8FunctionIFNSt3__110unique_ptrINS_9TextCodecENS5_14default_deleteIS7_EEEEvEEEE",
+			"undefined WebCore::TextCodecICU::registerCodecs(void ()(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&))");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name = "registerCodecs";
+		assertName(object, name, "WebCore", "TextCodecICU");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"undefined WebCore::TextCodecICU::registerCodecs(void ()(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&))",
+			signature);
+	}
+
+	@Test
 	public void testFunctionWithVarargsRvalueParameter() throws Exception {
 
 		// __ZN3WTF15__visit_helper2ILl1ELm1EJEE7__visitINS_7VisitorIZNKS_17TextBreakIterator9followingEjEUlRKT_E_JEEEJRKNS_7VariantIJNS_20TextBreakIteratorICUENS_19TextBreakIteratorCFEEEEEEENS_27__multi_visitor_return_typeIS5_JDpT0_EE6__typeERS5_DpOSH_

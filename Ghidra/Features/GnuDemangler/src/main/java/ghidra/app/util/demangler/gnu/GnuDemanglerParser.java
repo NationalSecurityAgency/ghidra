@@ -755,7 +755,7 @@ public class GnuDemanglerParser {
 				else {
 					int startParenCount =
 						StringUtilities.countOccurrences(datatype.substring(i), '(');
-					boolean hasPointerParens = startParenCount == 2;
+					boolean hasPointerParens = startParenCount >= 2;
 					if (hasPointerParens) {
 						Demangled namespace = ddt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunctionPointer(datatype);
