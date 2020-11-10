@@ -77,7 +77,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 
 			Address address = symbol.getAddress();
 			String mangled = cleanSymbol(address, symbol.getName());
-			DemangledObject demangled = demangle(mangled, options, log);
+			DemangledObject demangled = demangle(mangled, address, options, log);
 			if (demangled != null) {
 				apply(program, address, demangled, options, log, monitor);
 			}
@@ -172,11 +172,13 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	 * handled.
 	 *  
 	 * @param mangled the mangled string
+	 * @param address the symbol address
 	 * @param options the demangler options
 	 * @param log the error log
 	 * @return the demangled object; null if unsuccessful
 	 */
-	protected DemangledObject demangle(String mangled, DemanglerOptions options, MessageLog log) {
+	protected DemangledObject demangle(String mangled, Address address, DemanglerOptions options,
+			MessageLog log) {
 
 		DemangledObject demangled = null;
 		try {
@@ -192,7 +194,8 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			}
 
 			log.appendMsg(getName(),
-				"Unable to demangle symbol: " + mangled + ".  Message: " + e.getMessage());
+				"Unable to demangle symbol: " + mangled + " at " + address + ".  Message: " +
+					e.getMessage());
 			return null;
 		}
 

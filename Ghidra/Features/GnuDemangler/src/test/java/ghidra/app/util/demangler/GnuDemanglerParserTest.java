@@ -1503,6 +1503,40 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFunctionWithVarargsRvalueParameter() throws Exception {
+
+		// __ZN3WTF15__visit_helper2ILl1ELm1EJEE7__visitINS_7VisitorIZNKS_17TextBreakIterator9followingEjEUlRKT_E_JEEEJRKNS_7VariantIJNS_20TextBreakIteratorICUENS_19TextBreakIteratorCFEEEEEEENS_27__multi_visitor_return_typeIS5_JDpT0_EE6__typeERS5_DpOSH_
+
+		//
+		// this demangled string introduces a new construct:
+		//
+		// 		(WTF::__multi_visitor_return_type&&)...
+		//
+		// where the above is a parameter to function, where the params look like:
+		// (
+		//	WTF::Visitor<WTF::TextBreakIterator::following(unsigned int) const::{lambda(auto:1 const&)#1}>&, 
+		//	(WTF::__multi_visitor_return_type&&)...
+		// )
+		//
+
+		DemangledObject object = parser.parse(
+			"__ZN3WTF15__visit_helper2ILl1ELm1EJEE7__visitINS_7VisitorIZNKS_17TextBreakIterator9followingEjEUlRKT_E_JEEEJRKNS_7VariantIJNS_20TextBreakIteratorICUENS_19TextBreakIteratorCFEEEEEEENS_27__multi_visitor_return_typeIS5_JDpT0_EE6__typeERS5_DpOSH_",
+			"WTF::__multi_visitor_return_type<WTF::Visitor<WTF::TextBreakIterator::following(unsigned int) const::{lambda(auto:1 const&)#1}>, WTF::Variant<WTF::TextBreakIteratorICU, WTF::TextBreakIteratorCF> const&>::__type WTF::__visit_helper2<1l, 1ul>::__visit<WTF::Visitor<WTF::TextBreakIterator::following(unsigned int) const::{lambda(auto:1 const&)#1}>, WTF::Variant<WTF::TextBreakIteratorICU, WTF::TextBreakIteratorCF> const&>(WTF::Visitor<WTF::TextBreakIterator::following(unsigned int) const::{lambda(auto:1 const&)#1}>&, (WTF::__multi_visitor_return_type&&)...)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"__visit<WTF::Visitor<WTF::TextBreakIterator::following(unsigned_int)const::{lambda(auto:1_const&)#1}>,WTF::Variant<WTF::TextBreakIteratorICU,WTF::TextBreakIteratorCF>const&>";
+		assertName(object, name, "WTF", "__visit_helper2<1l,1ul>");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WTF::__multi_visitor_return_type<WTF::Visitor<WTF::TextBreakIterator::following(unsigned_int)const::{lambda(auto:1_const&)#1}>,WTF::Variant<WTF::TextBreakIteratorICU,WTF::TextBreakIteratorCF>const&>::__type WTF::__visit_helper2<1l,1ul>::__visit<WTF::Visitor<WTF::TextBreakIterator::following(unsigned_int)const::{lambda(auto:1_const&)#1}>,WTF::Variant<WTF::TextBreakIteratorICU,WTF::TextBreakIteratorCF>const&>(WTF::Visitor<WTF::TextBreakIterator::following(unsigned_int) const::{lambda(auto:1 const&)#1}> &,WTF::__multi_visitor_return_type &&)",
+			signature);
+	}
+
+	@Test
 	public void testOperator_Equals_ExcessivelyTemplated() throws Exception {
 
 		DemangledObject object = parser.parse(

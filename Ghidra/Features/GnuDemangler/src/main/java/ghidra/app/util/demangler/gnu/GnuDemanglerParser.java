@@ -65,8 +65,8 @@ public class GnuDemanglerParser {
 	 * Pattern: name(([const] [params]))
 	 *
 	 * Parts: -optional spaces 
-	 * 			-optional (const)  (non-capture group)
-	 *          -followed by '()' with optional parameter text (capture group 1)
+	 * 		  -optional (const)  (non-capture group)
+	 *        -followed by '()' with optional parameter text (capture group 1)
 	 *          
 	 * Note:    this pattern is used for matching the arguments string, in the above examples it
 	 *          would be: 
@@ -77,6 +77,22 @@ public class GnuDemanglerParser {
 	 */
 	private static final Pattern UNNECESSARY_PARENS_PATTERN =
 		Pattern.compile("\\s*(?:const){0,1}\\((.*)\\)\\s*");
+
+	/**
+	 * Captures the contents of a varargs parameter that is inside of parentheses.
+	 * 
+	 * Sample:  (NS1::type&&)...
+	 *
+	 * Pattern: (namespace::name[modifiers])...
+	 *
+	 * Parts: -open paren
+	 * 		  -contents (capture group 1)
+	 *        -close paren
+	 *        -varargs
+	 *          
+	 */
+	private static final Pattern VARARGS_IN_PARENS =
+		Pattern.compile("\\((.*)\\)" + Pattern.quote("..."));
 
 	/*
 	 * Sample: 	bob(short (&)[7])
@@ -452,7 +468,7 @@ public class GnuDemanglerParser {
 			return;
 		}
 
-		function.setReturnType(parseDataType(returnType));
+		function.setReturnType(parseReturnType(returnType));
 	}
 
 	private LambdaName getLambdaName(String name) {
@@ -630,22 +646,39 @@ public class GnuDemanglerParser {
 		List<DemangledDataType> parameters = new ArrayList<>();
 
 		for (String parameter : parameterStrings) {
-			DemangledDataType ddt = parseDataType(parameter);
+			DemangledDataType ddt = parseParameter(parameter);
 			parameters.add(ddt);
 		}
 
 		return parameters;
 	}
 
-	private DemangledDataType parseDataType(String fullDatatype) {
+	private DemangledDataType parseParameter(String parameter) {
 
-		Matcher castMatcher = CAST_PATTERN.matcher(fullDatatype);
+		Matcher castMatcher = CAST_PATTERN.matcher(parameter);
 		if (castMatcher.matches()) {
 			// special case: template parameter with a cast (just make the datatype
 			// be the name of the template parameter, since it will just be a display
 			// attribute for the templated type)
-			return new DemangledDataType(mangledSource, demangledSource, fullDatatype);
+			return new DemangledDataType(mangledSource, demangledSource, parameter);
 		}
+
+		Matcher matcher = VARARGS_IN_PARENS.matcher(parameter);
+		if (matcher.matches()) {
+			String inside = matcher.group(1);
+			DemangledDataType ddt = parseDataType(inside);
+			ddt.setVarArgs();
+			return ddt;
+
+		}
+		return parseDataType(parameter);
+	}
+
+	private DemangledDataType parseReturnType(String returnType) {
+		return parseDataType(returnType);
+	}
+
+	private DemangledDataType parseDataType(String fullDatatype) {
 
 		DemangledDataType ddt = createTypeInNamespace(fullDatatype);
 		String datatype = ddt.getDemangledName();
@@ -1028,7 +1061,7 @@ public class GnuDemanglerParser {
 		List<DemangledDataType> parameters = parseParameters(paramerterString);
 
 		DemangledFunctionPointer dfp = new DemangledFunctionPointer(mangledSource, demangledSource);
-		DemangledDataType returnDataType = parseDataType(returnType);
+		DemangledDataType returnDataType = parseReturnType(returnType);
 		dfp.setReturnType(returnDataType);
 		for (DemangledDataType parameter : parameters) {
 			dfp.addParameter(parameter);
@@ -1364,7 +1397,7 @@ public class GnuDemanglerParser {
 
 			DemangledFunction method =
 				new DemangledFunction(mangledSource, demangledSource, (String) null);
-			DemangledDataType returnType = parseDataType(fullReturnType);
+			DemangledDataType returnType = parseReturnType(fullReturnType);
 			if (isConst) {
 				returnType.setConst();
 			}
