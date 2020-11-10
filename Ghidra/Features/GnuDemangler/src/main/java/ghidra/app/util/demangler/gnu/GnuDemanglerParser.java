@@ -605,7 +605,14 @@ public class GnuDemanglerParser {
 					}
 				}
 
-				i = getFunctionPointerCloseParen(parameterString, i);
+				//
+				// we wish to move past two sets of parens for function pointers; however, sometimes
+				// we have code with only one set of parens; for example:
+				//   unsigned long (*)(long const &)
+				// or
+				//   iterator<boost::function<void ()>
+				//
+				i = findBalancedEnd(parameterString, i, '(', ')');
 			}
 		}
 		if (startIndex < parameterString.length()) {
@@ -613,40 +620,6 @@ public class GnuDemanglerParser {
 			parameters.add(ps.trim());
 		}
 		return parameters;
-	}
-
-	private int getFunctionPointerCloseParen(String parameterString, int currentIndex) {
-		int firstCloseParen = parameterString.indexOf(')', currentIndex);
-		if (firstCloseParen == -1) {
-			throw new DemanglerParseException(
-				"Unable to find closing paren for parameter string: " + parameterString);
-		}
-
-		//
-		// we wish to move past two sets of parens for function pointers; however, sometimes
-		// we have code with only one set of parens; for example:
-		//   unsigned long (*)(long const &)
-		// or
-		//   iterator<boost::function<void ()>
-		//
-		boolean foundNextStart = false;
-		int length = parameterString.length();
-		for (int i = currentIndex; i < length; i++) {
-			char ch = parameterString.charAt(i);
-			if (ch == ')') {
-				return i;
-			}
-			else if (ch == '(') {
-				foundNextStart = true;
-			}
-			else if (ch == ',') {
-				if (!foundNextStart) {
-					return firstCloseParen;// no new set of parens found
-				}
-			}
-		}
-
-		return firstCloseParen;
 	}
 
 	/**
@@ -868,26 +841,31 @@ public class GnuDemanglerParser {
 	}
 
 	/**
-	 * Scans the given string from the given offset looking for a template and reporting the 
-	 * index of the closing template character '>' or -1 if no templates are found
+	 * Scans the given string from the given offset looking for a balanced {@code close} 
+	 * character.   This algorithm will not report a match for the end character until the 
+	 * {@code open} character has first been found.   This allows clients to scan from anywhere
+	 * in a string to find an open and start character combination, including at or before the
+	 * desired opening character.
 	 *  
 	 * @param string the input string
 	 * @param start the start position within the string
-	 * @return the template end index; -1 if no templates found
+	 * @param open the open character (e.g, '(' or '<')
+	 * @param close the close character (e.g, ')' or '>')
+	 * @return the end index; -1 if no templates found
 	 */
-	private int findTemplateEnd(String string, int start) {
+	private int findBalancedEnd(String string, int start, char open, char close) {
 
 		boolean found = false;
 		int depth = 0;
 		for (int i = start; i < string.length(); i++) {
-			switch (string.charAt(i)) {
-				case '<':
-					depth++;
-					found = true;
-					break;
-				case '>':
-					depth--;
-					break;
+
+			char c = string.charAt(i);
+			if (c == open) {
+				depth++;
+				found = true;
+			}
+			else if (c == close) {
+				depth--;
 			}
 
 			if (found && depth == 0) {
@@ -898,27 +876,48 @@ public class GnuDemanglerParser {
 		return -1;
 	}
 
-	// assumption: the given index is in a template
-	// Walk backwards to find the template start
-	private int findMatchingTemplateStart(String string, int templateEnd) {
+	/**
+	 * Scans the given string from the given offset looking for a balanced {@code open} 
+	 * character.   This algorithm will not report a match for the open character until the 
+	 * {@code end} character has first been found.   This allows clients to scan from anywhere
+	 * in a string to find an open and start character combination, including at or before the
+	 * desired opening character.
+	 *  
+	 * @param string the input string
+	 * @param start the start position within the string
+	 * @param open the open character (e.g, '(' or '<')
+	 * @param close the close character (e.g, ')' or '>')
+	 * @return the end index; -1 if no templates found
+	 */
+	private int findBalancedStart(String string, int start, char open, char close) {
 
-		int depth = 1;
-		for (int i = templateEnd - 1; i >= 0; i--) {
-			switch (string.charAt(i)) {
-				case '<':
-					depth--;
-					break;
-				case '>':
-					depth++;
-					break;
+		boolean found = false;
+		int depth = 0;
+		for (int i = start; i >= 0; i--) {
+
+			char c = string.charAt(i);
+			if (c == open) {
+				depth--;
+			}
+			else if (c == close) {
+				depth++;
+				found = true;
 			}
 
-			if (depth == 0) {
-				return i;// found our opening tag
+			if (found && depth == 0) {
+				return i;
 			}
 		}
 
 		return -1;
+	}
+
+	private int findTemplateEnd(String string, int start) {
+		return findBalancedEnd(string, start, '<', '>');
+	}
+
+	private int findTemplateStart(String string, int templateEnd) {
+		return findBalancedStart(string, templateEnd, '<', '>');
 	}
 
 	private DemangledDataType createTypeInNamespace(String name) {
@@ -1477,7 +1476,7 @@ public class GnuDemanglerParser {
 			int templateEnd = findTemplateEnd(text, 0);
 			int templateStart = -1;
 			if (templateEnd != -1) {
-				templateStart = findMatchingTemplateStart(text, templateEnd);
+				templateStart = findTemplateStart(text, templateEnd);
 			}
 			if (paramStart > templateStart && paramStart < templateEnd) {
 				// ignore parentheses inside of templates (they are cast operators)

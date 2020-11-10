@@ -450,8 +450,9 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 					BigInteger value = context.getValue(isaModeSwitchRegister, false);
 					if (value != null && program.getListing().getInstructionAt(addr) == null) {
 						try {
-							program.getProgramContext().setValue(isaModeRegister, addr, addr,
-								value);
+							program.getProgramContext()
+									.setValue(isaModeRegister, addr, addr,
+										value);
 						}
 						catch (ContextChangeException e) {
 							// ignore
@@ -641,7 +642,6 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			return null;
 		}
 		try {
-			Msg.debug(CreateFunctionCmd.class, "Creating external function symbol: " + s.getName());
 			ExternalManager extMgr = program.getExternalManager();
 			ExternalLocation extLoc =
 				extMgr.addExtFunction(Library.UNKNOWN, s.getName(), null, s.getSource());

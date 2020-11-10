@@ -1480,6 +1480,29 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testNamespaceElementWithMultipleFunctionParentheses() throws Exception {
+
+		// __ZN7brigand13for_each_argsIZN7WebCore11JSConverterINS1_8IDLUnionIJNS1_7IDLNullENS1_12IDLDOMStringENS1_21IDLUnrestrictedDoubleEEEEE7convertERN3JSC9ExecStateERNS1_17JSDOMGlobalObjectERKN3WTF7VariantIJDnNSE_6StringEdEEEEUlOT_E_JNS_5type_INSt3__117integral_constantIlLl0EEEEENSN_INSP_IlLl1EEEEENSN_INSP_IlLl2EEEEEEEESK_SK_DpOT0_
+
+		DemangledObject object = parser.parse(
+			"__ZN7brigand13for_each_argsIZN7WebCore11JSConverterINS1_8IDLUnionIJNS1_7IDLNullENS1_12IDLDOMStringENS1_21IDLUnrestrictedDoubleEEEEE7convertERN3JSC9ExecStateERNS1_17JSDOMGlobalObjectERKN3WTF7VariantIJDnNSE_6StringEdEEEEUlOT_E_JNS_5type_INSt3__117integral_constantIlLl0EEEEENSN_INSP_IlLl1EEEEENSN_INSP_IlLl2EEEEEEEESK_SK_DpOT0_",
+			"WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}, brigand::type_<std::__1::integral_constant<long, 0l> >, WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}<std::__1<long, 1l> >, WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}<std::__1<long, 2l> > >(WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}, brigand::type_<std::__1::integral_constant<long, 0l> >&&, WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}<std::__1<long, 1l> >&&, WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}<std::__1<long, 2l> >&&)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,0l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,1l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,2l>>>";
+		assertName(object, name,
+			"brigand");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,0l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,1l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,2l>>>(WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,0l>> &&,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,1l>> &&,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,2l>> &&)",
+			signature);
+	}
+
+	@Test
 	public void testOperator_Equals_ExcessivelyTemplated() throws Exception {
 
 		DemangledObject object = parser.parse(
@@ -1495,7 +1518,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"WTF::Function<void ()> & WTF::Function<void()>::operator=<WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo_const&>::TransactionOperationImpl(WebCore::IDBTransaction&,void(WebCore::IDBTransaction::*)(WebCore::IDBResultData_const &,void ()(WebCore::IDBClient::TransactionOperation &,WebCore::IDBObjectStoreInfo_const &),WebCore::IDBObjectStoreInfo_const&)::{lambda()#1},void>(WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo const&>::TransactionOperationImpl(WebCore::IDBTransaction&, void (WebCore::IDBTransaction::*)(WebCore::IDBResultData const &,void ()(WebCore::IDBClient::TransactionOperation &,WebCore::IDBObjectStoreInfo const &),WebCore::IDBObjectStoreInfo const&)::{lambda()#1} &&)",
+			"WTF::Function<void ()> & WTF::Function<void()>::operator=<WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo_const&>::TransactionOperationImpl(WebCore::IDBTransaction&,void(WebCore::IDBTransaction::*)(WebCore::IDBResultData_const&),void(WebCore::IDBTransaction::*)(WebCore::IDBClient::TransactionOperation&,WebCore::IDBObjectStoreInfo_const&),WebCore::IDBObjectStoreInfo_const&)::{lambda()#1},void>(WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo_const&>::TransactionOperationImpl(WebCore::IDBTransaction&,void(WebCore::IDBTransaction::*)(WebCore::IDBResultData_const&),void(WebCore::IDBTransaction::*)(WebCore::IDBClient::TransactionOperation&,WebCore::IDBObjectStoreInfo_const&),WebCore::IDBObjectStoreInfo_const&)::{lambda()#1} &&)",
 			signature);
 
 	}
