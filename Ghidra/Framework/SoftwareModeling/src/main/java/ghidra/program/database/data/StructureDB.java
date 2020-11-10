@@ -590,8 +590,7 @@ class StructureDB extends CompositeDB implements Structure {
 			if (equals(dataType)) {
 				return true;
 			}
-			for (int i = 0; i < components.size(); i++) {
-				DataTypeComponent dtc = components.get(i);
+			for (DataTypeComponentDB dtc : components) {
 				DataType subDt = dtc.getDataType();
 				if (subDt instanceof Composite) {
 					if (((Composite) subDt).isPartOf(dataType)) {
@@ -1198,8 +1197,7 @@ class StructureDB extends CompositeDB implements Structure {
 		int oldLength = structLength;
 		int oldMinAlignment = getMinimumAlignment();
 
-		for (int i = 0; i < components.size(); i++) {
-			DataTypeComponentDB dtc = components.get(i);
+		for (DataTypeComponentDB dtc : components) {
 			dtc.getDataType().removeParent(this);
 			componentAdapter.removeRecord(dtc.getKey());
 		}
@@ -1364,41 +1362,98 @@ class StructureDB extends CompositeDB implements Structure {
 		try {
 			checkDeleted();
 			if (isInternallyAligned()) {
-				adjustInternalAlignment(true);
+				adjustComponents(true); // notifies parents
 				return;
 			}
 			boolean didChange = false;
+			boolean warn = false;
 			int n = components.size();
 			for (int i = 0; i < n; i++) {
 				DataTypeComponentDB dtc = components.get(i);
-				int nextIndex = i + 1;
 				if (dtc.getDataType() == dt) {
 					// assume no impact to bitfields since base types
 					// should not change size
-					int dtLen = dt.getLength();
 					int dtcLen = dtc.getLength();
-					if (dtLen < dtcLen) {
-						dtc.setLength(dtLen, true);
-						shiftOffsets(nextIndex, dtcLen - dtLen, 0);
+					int length = getPreferredComponentLength(dt, dtcLen);
+					if (length < dtcLen) {
+						dtc.setLength(length, true);
+						shiftOffsets(i + 1, dtcLen - length, 0);
 						didChange = true;
 					}
-					else if (dtLen > dtcLen) {
-						int consumed = consumeBytesAfter(i, dtLen - dtcLen);
+					else if (length > dtcLen) {
+						int consumed = consumeBytesAfter(i, length - dtcLen);
 						if (consumed > 0) {
 							dtc.updateRecord();
-							shiftOffsets(nextIndex, -consumed, 0);
+							shiftOffsets(i + 1, -consumed, 0);
 							didChange = true;
 						}
+					}
+					if (dtc.getLength() != length) {
+						warn = true;
 					}
 				}
 			}
 			if (didChange) {
-				adjustInternalAlignment(true);
-				notifySizeChanged();
+				adjustInternalAlignment(false);
+				notifySizeChanged(); // notifies parents
+			}
+			if (warn) {
+				Msg.warn(this,
+					"Failed to resize one or more structure components: " + getPathName());
 			}
 		}
 		finally {
 			lock.release();
+		}
+	}
+
+	@Override
+	protected void fixupComponents() {
+		if (isInternallyAligned()) {
+			// Do not notify parents
+			if (adjustComponents(false)) {
+				dataMgr.dataTypeChanged(this);
+			}
+			return;
+		}
+		boolean didChange = false;
+		boolean warn = false;
+		int n = components.size();
+		for (int i = 0; i < n; i++) {
+			DataTypeComponentDB dtc = components.get(i);
+			DataType dt = dtc.getDataType();
+			if (dt instanceof BitFieldDataType) {
+				// TODO: could get messy
+				continue;
+			}
+			int dtcLen = dtc.getLength();
+			int length = getPreferredComponentLength(dt, dtcLen);
+			if (dtcLen != length) {
+				if (length < dtcLen) {
+					dtc.setLength(length, true);
+					shiftOffsets(i + 1, dtcLen - length, 0);
+					didChange = true;
+				}
+				else if (length > dtcLen) {
+					int consumed = consumeBytesAfter(i, length - dtcLen);
+					if (consumed > 0) {
+						dtc.updateRecord();
+						shiftOffsets(i + 1, -consumed, 0);
+						didChange = true;
+					}
+				}
+				if (dtc.getLength() != length) {
+					warn = true;
+				}
+			}
+		}
+		if (didChange) {
+			// Do not notify parents
+			adjustInternalAlignment(false);
+			dataMgr.dataTypeChanged(this);
+		}
+		if (warn) {
+			Msg.warn(this, "Failed to resize one or more structure components: " + getPathName());
 		}
 	}
 
@@ -1808,8 +1863,7 @@ class StructureDB extends CompositeDB implements Structure {
 				flexibleArrayComponent = null;
 			}
 
-			for (int i = 0; i < components.size(); i++) {
-				DataTypeComponentDB dtc = components.get(i);
+			for (DataTypeComponentDB dtc : components) {
 				dtc.getDataType().removeParent(this);
 				try {
 					componentAdapter.removeRecord(dtc.getKey());
@@ -1885,12 +1939,14 @@ class StructureDB extends CompositeDB implements Structure {
 			changed |= updateComposite(packResult.numComponents, packResult.structureLength,
 				packResult.alignment, false);
 
-			if (notify & changed) {
-				if (oldLength != structLength) {
-					notifySizeChanged();
-				}
-				else {
-					dataMgr.dataTypeChanged(this);
+			if (changed) {
+				if (notify) {
+					if (oldLength != structLength) {
+						notifySizeChanged();
+					}
+					else {
+						dataMgr.dataTypeChanged(this);
+					}
 				}
 				return true;
 			}
