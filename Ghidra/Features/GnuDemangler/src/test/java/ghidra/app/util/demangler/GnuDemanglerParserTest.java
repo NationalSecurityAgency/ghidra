@@ -1503,10 +1503,48 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFunctionParameterWithMemberPointer() throws Exception {
+
+		//
+		// Mangled: __ZN7WebCore22FontSelectionAlgorithm16filterCapabilityEPbMS0_KFNS0_14DistanceResultENS_25FontSelectionCapabilitiesEEMS3_NS_18FontSelectionRangeE
+		//
+		// Demangled: WebCore::FontSelectionAlgorithm::filterCapability(bool*, WebCore::FontSelectionAlgorithm::DistanceResult (WebCore::FontSelectionAlgorithm::*)(WebCore::FontSelectionCapabilities) const, WebCore::FontSelectionRange WebCore::FontSelectionCapabilities::*)
+		//
+		//
+		// WebCore::FontSelectionAlgorithm::filterCapability
+		// (
+		//		bool*, 
+		//		WebCore::FontSelectionAlgorithm::DistanceResult (WebCore::FontSelectionAlgorithm::*)(WebCore::FontSelectionCapabilities) const, 
+		//		WebCore::FontSelectionRange WebCore::FontSelectionCapabilities::*
+		// )
+		//
+		// This demangled string introduces a new construct:
+		//
+		//		FontSelectionRange FontSelectionCapabilities::*
+		//
+		// where the type is 'FontSelectionRange' which is a member of 'FontSelectionCapabilities'
+		//
+		DemangledObject object = parser.parse(
+			"__ZN7WebCore22FontSelectionAlgorithm16filterCapabilityEPbMS0_KFNS0_14DistanceResultENS_25FontSelectionCapabilitiesEEMS3_NS_18FontSelectionRangeE",
+			"WebCore::FontSelectionAlgorithm::filterCapability(bool*, WebCore::FontSelectionAlgorithm::DistanceResult (WebCore::FontSelectionAlgorithm::*)(WebCore::FontSelectionCapabilities) const, WebCore::FontSelectionRange WebCore::FontSelectionCapabilities::*)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name = "filterCapability";
+		assertName(object, name, "WebCore", "FontSelectionAlgorithm");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"undefined WebCore::FontSelectionAlgorithm::filterCapability(bool *,WebCore::FontSelectionAlgorithm::DistanceResult ()(WebCore::FontSelectionCapabilities) const,WebCore::FontSelectionCapabilities::FontSelectionRange *)",
+			signature);
+	}
+
+	@Test
 	public void testFunctionWithVarargsRvalueParameter() throws Exception {
 
 		// __ZN3WTF15__visit_helper2ILl1ELm1EJEE7__visitINS_7VisitorIZNKS_17TextBreakIterator9followingEjEUlRKT_E_JEEEJRKNS_7VariantIJNS_20TextBreakIteratorICUENS_19TextBreakIteratorCFEEEEEEENS_27__multi_visitor_return_typeIS5_JDpT0_EE6__typeERS5_DpOSH_
-
+		//
 		//
 		// this demangled string introduces a new construct:
 		//

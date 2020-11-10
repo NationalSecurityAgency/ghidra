@@ -682,6 +682,11 @@ public class GnuDemanglerParser {
 
 		DemangledDataType ddt = createTypeInNamespace(fullDatatype);
 		String datatype = ddt.getDemangledName();
+
+		if ("*".equals(datatype)) {
+			return createMemberPointer(fullDatatype);
+		}
+
 		boolean finishedName = false;
 		for (int i = 0; i < datatype.length(); ++i) {
 			char ch = datatype.charAt(i);
@@ -850,6 +855,30 @@ public class GnuDemanglerParser {
 				}
 			}
 		}
+		return ddt;
+	}
+
+	private DemangledDataType createMemberPointer(String datatype) {
+		// this is temp code we expect to update as more samples arrive
+
+		// example: NS1::Type1 NS1::ParenType::*
+
+		String typeWithoutPointer = datatype.substring(0, datatype.length() - 3);
+		int space = typeWithoutPointer.indexOf(' ');
+		DemangledDataType ddt;
+		if (space != -1) {
+			String type = typeWithoutPointer.substring(0, space);
+			ddt = createTypeInNamespace(type);
+
+			String parentType = typeWithoutPointer.substring(space + 1);
+			DemangledDataType parentDdt = createTypeInNamespace(parentType);
+			ddt.setNamespace(parentDdt);
+		}
+		else {
+			ddt = createTypeInNamespace(typeWithoutPointer);
+		}
+
+		ddt.incrementPointerLevels();
 		return ddt;
 	}
 
