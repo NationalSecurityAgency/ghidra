@@ -680,7 +680,7 @@ define pcodeop coproc_moveto_Auxiliary_Control;
 define pcodeop coproc_moveto_Coprocessor_Access_Control;
 define pcodeop coproc_moveto_Secure_Configuration;
 define pcodeop coproc_moveto_Secure_Debug_Enable;
-define pcodeop coproc_moveto_Non-Secure_Access_Control;
+define pcodeop coproc_moveto_NonSecure_Access_Control;
 define pcodeop coproc_moveto_Translation_table_base_0;
 define pcodeop coproc_moveto_Translation_table_base_1;
 define pcodeop coproc_moveto_Translation_table_control;
@@ -733,7 +733,7 @@ define pcodeop coproc_movefrom_Auxiliary_Control;
 define pcodeop coproc_movefrom_Coprocessor_Access_Control;
 define pcodeop coproc_movefrom_Secure_Configuration;
 define pcodeop coproc_movefrom_Secure_Debug_Enable;
-define pcodeop coproc_movefrom_Non-Secure_Access_Control;
+define pcodeop coproc_movefrom_NonSecure_Access_Control;
 define pcodeop coproc_movefrom_Translation_table_base_0;
 define pcodeop coproc_movefrom_Translation_table_base_1;
 define pcodeop coproc_movefrom_Translation_table_control;
@@ -2987,7 +2987,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
         mcrOperands
 {
   build COND;
-  coproc_moveto_Non-Secure_Access_Control(Rd);
+  coproc_moveto_NonSecure_Access_Control(Rd);
 }
 
 
@@ -3667,7 +3667,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
         mcrOperands
 {
   build COND;
-  Rd = coproc_movefrom_Non-Secure_Access_Control();
+  Rd = coproc_movefrom_NonSecure_Access_Control();
 }
 
 
