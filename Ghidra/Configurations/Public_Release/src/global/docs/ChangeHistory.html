@@ -121,6 +121,8 @@
 <blockquote><p><u>Bugs</u></p>
 <ul>
     <li><I>Analysis</I>. Function start patterns found at 0x0, function signatures applied from the Data Type Manager at 0x0, and DWARF debug symbols applied at 0x0 will no longer cause stack traces.  In addition, DWARF symbols with zero length address range no longer stack trace. (GT-2817, Issue #386, #1560)</li>
+    <li><I>Analysis</I>. Constant propagation will treat an OR with zero (0) as a simple copy. (GT-3548, Issue #1531)</li>
+    <li><I>Analysis</I>. Corrected <B>Create Structure from Selection</B>, which failed to use proper data organization during the construction process.  This could result in improperly sized components such as pointers and primitive types. (GT-3587)</li>    
     <li><I>Analysis</I>. Fixed an issue where stored context is initializing the set of registers constantly. (GP-25)</li>
     <li><I>Analysis</I>. Fixed an RTTI Analyzer regression when analyzing RTTI0 structures with no RTTI4 references to them. (GP-62, Issue #2153)</li>
     <li><I>Analysis</I>. Fixed an issue where the RTTI analyzer was not filling out RTTI3 structures in some cases. (GP-111)</li>
@@ -135,6 +137,7 @@
     <li><I>Data Types</I>. Updated the DataTypeParser to handle data type names containing templates. (GT-3493, Issue #1417)</li>
     <li><I>Data Types</I>. Corrected pointer data type <code>isEquivalent()</code> method to properly check the equivalence of the base data type.  The old implementation could cause a pointer to be replaced by a conflicting pointer with the same name whose base datatype is not equivalent.  This change has a negative performance impact associated with it and can cause additional conflict datatypes due to the rigid datatype relationships. (GT-3557)</li>
     <li><I>Data Types</I>. Improved composite conflict resolution performance and corrected composite merge issues when composite bitfields and/or flexible arrays are present. (GT-3571)</li>
+    <li><I>Data Types</I>. Fixed bug in SymbolPathParser naive parse method that caused a less-than-adequate fall-back parse when angle bracket immediately followed the namespace delimiter. (GT-3620)</li>
     <li><I>Data Types</I>. Corrected size of <code><B>long</B></code> for AARCH64 per LP64 standard. (GP-175)</li>
     <li><I>Decompiler</I>. Fixed bug causing the Decompiler to miss symbol references when they are stored to the heap. (GT-3267)</li>
     <li><I>Decompiler</I>. Fixed bug in the Decompiler that caused <code>Deleting op with descendants</code> exception. (GT-3506)</li>
@@ -152,7 +155,7 @@
     <li><I>Decompiler</I>. Addressed various situations where the Decompiler unexpectedly removes active instructions as dead code after renaming or retyping a stack location. If the location was really an array element or structure field, renaming forced the Decompiler to treat the location as a distinct variable. Subsequently, the Decompiler thought that indirect references based before the location could not alias any following stack locations, which could then by considered dead. As of the 9.2 release, the Decompiler's renaming action no longer switches an annotation to <code>forcing</code> if it wasn't already. A retyping action, although it is <code>forcing</code>, won't trigger alias blocking for atomic data-types (this is configurable). (GP-248, Issue #524, #873)</li>
     <li><I>Decompiler</I>. Fixed decompiler memory issues reported by a community security researcher. (GP-267)</li>
     <li><I>Decompiler</I>. Fix for Decompiler error: <code>Pcode: XML comms: Missing symref attribute in &lt;high&gt; tag</code>. (GP-352, Issue #2360)</li>
-    <li><I>Decompiler</I>. Fixed bug preventing the decompiler from seeing Equates attached to "compare" instructions. (GP-369, Issue #2386)</li>
+    <li><I>Decompiler</I>. Fixed bug preventing the Decompiler from seeing Equates attached to <B>compare</B> instructions. (GP-369, Issue #2386)</li>
     <li><I>Demangler</I>. Fixed the GnuDemangler to parse the full namespace for <code>operator</code> symbols. (GT-3474, Issue #1441, #1448)</li>
     <li><I>Demangler</I>. Fixed numerous GNU Demangler parsing issues.  Most notable is the added support for C++ Lambda functions. (GT-3545, Issue #1457, #1569)</li>
     <li><I>Demangler</I>. Updated the GNU Demangler to correctly parse and apply C++ strings using the <code>unnamed type</code> syntax. (GT-3645)</li>
