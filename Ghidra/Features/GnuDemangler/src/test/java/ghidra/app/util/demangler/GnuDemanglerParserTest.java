@@ -1347,6 +1347,35 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testTemplatesThatContainFunctionSignatures_Regression() throws Exception {
+
+		//
+		// Mangled: _ZN7WebCore27ContentFilterUnblockHandlerC2EN3WTF6StringENSt3__18functionIFvNS4_IFvbEEEEEE
+		//
+		// Demangled: WebCore::ContentFilterUnblockHandler::ContentFilterUnblockHandler(WTF::String, std::__1::function<void (std::__1::function<void (bool)>)>)
+		//
+		// Note: this parameter name caused an infinite loop
+		//
+		// 		function<void (std::__1::function<void (bool)>)>)
+		//
+
+		DemangledObject object = parser.parse(
+			"_ZN7WebCore27ContentFilterUnblockHandlerC2EN3WTF6StringENSt3__18functionIFvNS4_IFvbEEEEEE",
+			"WebCore::ContentFilterUnblockHandler::ContentFilterUnblockHandler(WTF::String, std::__1::function<void (std::__1::function<void (bool)>)>)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name = "ContentFilterUnblockHandler";
+		assertName(object, name, "WebCore", "ContentFilterUnblockHandler");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"undefined WebCore::ContentFilterUnblockHandler::ContentFilterUnblockHandler(WTF::String,std::__1::function<void (std::__1::function<void (bool)>)>)",
+			signature);
+	}
+
+	@Test
 	public void testVtableParsingError_NoSpaceBeforeTrailingDigits() throws Exception {
 		//
 		// Mangled: _ZTCN6Crypto10HmacSha256E0_NS_3MacE

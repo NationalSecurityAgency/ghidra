@@ -628,7 +628,11 @@ public class GnuDemanglerParser {
 				// or
 				//   iterator<boost::function<void ()>
 				//
-				i = findBalancedEnd(parameterString, i, '(', ')');
+				int end = findBalancedEnd(parameterString, i, '(', ')');
+				if (end == -1) {
+					end = parameterString.length();
+				}
+				i = end;
 			}
 		}
 		if (startIndex < parameterString.length()) {
@@ -753,9 +757,8 @@ public class GnuDemanglerParser {
 					i = i - 1; // back up one space to catch optional templates on next loop pass
 				}
 				else {
-					int startParenCount =
-						StringUtilities.countOccurrences(datatype.substring(i), '(');
-					boolean hasPointerParens = startParenCount >= 2;
+					// e.g., unsigned long (*)(long const &)
+					boolean hasPointerParens = hasConsecutiveSetsOfParens(datatype.substring(i));
 					if (hasPointerParens) {
 						Demangled namespace = ddt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunctionPointer(datatype);
@@ -856,6 +859,25 @@ public class GnuDemanglerParser {
 			}
 		}
 		return ddt;
+	}
+
+	private boolean hasConsecutiveSetsOfParens(String text) {
+		int end = findBalancedEnd(text, 0, '(', ')');
+		if (end < -1) {
+			return false;
+		}
+
+		for (int i = end + 1; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c == '(') {
+				return true;
+			}
+			if (c != ' ') {
+				return false;
+			}
+		}
+
+		return false;
 	}
 
 	private DemangledDataType createMemberPointer(String datatype) {
@@ -1072,7 +1094,8 @@ public class GnuDemanglerParser {
 		//unsigned long (long const &)
 
 		int parenStart = functionString.indexOf('(', offset);
-		int parenEnd = functionString.indexOf(')', parenStart + 1);
+		int parenEnd = findBalancedEnd(functionString, parenStart, '(', ')');
+		//int parenEnd = functionString.indexOf(')', parenStart + 1);
 
 		String returnType = functionString.substring(0, parenStart).trim();
 
