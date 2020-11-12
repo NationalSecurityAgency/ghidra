@@ -418,14 +418,19 @@ class UnionDB extends CompositeDB implements Union {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		if (dt instanceof BitFieldDataType) {
+			return; // unsupported
+		}
 		lock.acquire();
 		try {
 			checkDeleted();
 			boolean changed = false;
 			for (DataTypeComponentDB dtc : components) {
-				int length = dtc.getLength();
 				if (dtc.getDataType() == dt) {
-					length = getPreferredComponentLength(dt, length);
+					int length = dt.getLength();
+					if (length <= 0) {
+						length = dtc.getLength();
+					}
 					dtc.setLength(length, true);
 					changed = true;
 				}
@@ -448,7 +453,10 @@ class UnionDB extends CompositeDB implements Union {
 				dt = adjustBitField(dt); // in case base type changed
 			}
 			int dtcLen = dtc.getLength();
-			int length = getPreferredComponentLength(dt, dtcLen);
+			int length = dt.getLength();
+			if (length <= 0) {
+				length = dtcLen;
+			}
 			if (length != dtcLen) {
 				dtc.setLength(length, true);
 				changed = true;

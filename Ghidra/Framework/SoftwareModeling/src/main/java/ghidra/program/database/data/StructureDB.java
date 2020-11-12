@@ -684,8 +684,9 @@ class StructureDB extends CompositeDB implements Structure {
 	}
 
 	/**
-	 * Create copy of structure for target dtm (source archive information is discarded). WARNING!
-	 * copying unaligned structures which contain bitfields can produce invalid results when
+	 * Create copy of structure for target dtm (source archive information is discarded). 
+	 * <p>
+	 * WARNING! copying unaligned structures which contain bitfields can produce invalid results when
 	 * switching endianess due to the differences in packing order.
 	 * 
 	 * @param dtm target data type manager
@@ -1281,7 +1282,22 @@ class StructureDB extends CompositeDB implements Structure {
 
 			DataType dt = resolvedDts[i]; // ancestry check already performed by caller
 
-			int length = getPreferredComponentLength(dt, dtc.getLength());
+			int length = dt.getLength();
+			if (length <= 0 || dtc.isBitFieldComponent()) {
+				length = dtc.getLength();
+			}
+			else {
+				// do not exceed available space
+				int maxOffset;
+				int nextIndex = i + 1;
+				if (nextIndex < otherComponents.length) {
+					maxOffset = otherComponents[nextIndex].getOffset();
+				}
+				else {
+					maxOffset = struct.getLength();
+				}
+				length = Math.min(length, maxOffset - dtc.getOffset());
+			}
 
 			Record rec = componentAdapter.createRecord(dataMgr.getResolvedID(dt), key, length,
 				dtc.getOrdinal(), dtc.getOffset(), dtc.getFieldName(), dtc.getComment());
@@ -1358,6 +1374,9 @@ class StructureDB extends CompositeDB implements Structure {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		if (dt instanceof BitFieldDataType) {
+			return; // unsupported
+		}
 		lock.acquire();
 		try {
 			checkDeleted();
@@ -1374,7 +1393,10 @@ class StructureDB extends CompositeDB implements Structure {
 					// assume no impact to bitfields since base types
 					// should not change size
 					int dtcLen = dtc.getLength();
-					int length = getPreferredComponentLength(dt, dtcLen);
+					int length = dt.getLength();
+					if (length <= 0) {
+						length = dtcLen;
+					}
 					if (length < dtcLen) {
 						dtc.setLength(length, true);
 						shiftOffsets(i + 1, dtcLen - length, 0);
@@ -1427,7 +1449,10 @@ class StructureDB extends CompositeDB implements Structure {
 				continue;
 			}
 			int dtcLen = dtc.getLength();
-			int length = getPreferredComponentLength(dt, dtcLen);
+			int length = dt.getLength();
+			if (length <= 0) {
+				length = dtcLen;
+			}
 			if (dtcLen != length) {
 				if (length < dtcLen) {
 					dtc.setLength(length, true);
@@ -1514,14 +1539,18 @@ class StructureDB extends CompositeDB implements Structure {
 				return false;
 			}
 
-			int myNumComps = getNumComponents();
-			int otherNumComps = struct.getNumComponents();
+			int myNumComps = components.size();
+			int otherNumComps = struct.getNumDefinedComponents();
 			if (myNumComps != otherNumComps) {
 				return false;
 			}
+			DataTypeComponent[] otherDefinedComponents = struct.getDefinedComponents();
+			if (otherDefinedComponents.length != myNumComps) { // safety check
+				return false;
+			}
 			for (int i = 0; i < myNumComps; i++) {
-				DataTypeComponent myDtc = getComponent(i);
-				DataTypeComponent otherDtc = struct.getComponent(i);
+				DataTypeComponent myDtc = components.get(i);
+				DataTypeComponent otherDtc = otherDefinedComponents[i];
 				if (!myDtc.isEquivalent(otherDtc)) {
 					return false;
 				}

@@ -797,15 +797,18 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 			return false;
 		}
 
-		int myNumComps = getNumComponents();
-		int otherNumComps = struct.getNumComponents();
+		int myNumComps = components.size();
+		int otherNumComps = struct.getNumDefinedComponents();
 		if (myNumComps != otherNumComps) {
 			return false;
 		}
+		DataTypeComponent[] otherDefinedComponents = struct.getDefinedComponents();
+		if (otherDefinedComponents.length != myNumComps) { // safety check
+			return false;
+		}
 		for (int i = 0; i < myNumComps; i++) {
-			DataTypeComponent myDtc = getComponent(i);
-			DataTypeComponent otherDtc = struct.getComponent(i);
-
+			DataTypeComponent myDtc = components.get(i);
+			DataTypeComponent otherDtc = otherDefinedComponents[i];
 			if (!myDtc.isEquivalent(otherDtc)) {
 				return false;
 			}
@@ -815,6 +818,9 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		if (dt instanceof BitFieldDataType) {
+			return; // unsupported
+		}
 		if (isInternallyAligned()) {
 			adjustInternalAlignment();
 			return;
@@ -823,21 +829,23 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		int n = components.size();
 		for (int i = 0; i < n; i++) {
 			DataTypeComponentImpl dtc = components.get(i);
-			int nextIndex = i + 1;
 			if (dtc.getDataType() == dt) {
-				// assume no impact to bitfields since base types 
+				// assume no impact to bitfields since base types
 				// should not change size
-				int dtLen = dt.getLength();
 				int dtcLen = dtc.getLength();
-				if (dtLen < dtcLen) {
-					dtc.setLength(dtLen);
-					shiftOffsets(nextIndex, dtcLen - dtLen, 0);
+				int length = dt.getLength();
+				if (length <= 0) {
+					length = dtcLen;
+				}
+				if (length < dtcLen) {
+					dtc.setLength(length);
+					shiftOffsets(i + 1, dtcLen - length, 0);
 					didChange = true;
 				}
-				else if (dtLen > dtcLen) {
-					int consumed = consumeBytesAfter(i, dtLen - dtcLen);
+				else if (length > dtcLen) {
+					int consumed = consumeBytesAfter(i, length - dtcLen);
 					if (consumed > 0) {
-						shiftOffsets(nextIndex, 0 - consumed, 0);
+						shiftOffsets(i + 1, 0 - consumed, 0);
 						didChange = true;
 					}
 				}
@@ -890,8 +898,9 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	/**
-	 * Create copy of structure for target dtm (source archive information is discarded). WARNING!
-	 * copying unaligned structures which contain bitfields can produce invalid results when
+	 * Create copy of structure for target dtm (source archive information is discarded). 
+	 * <p>
+	 * WARNING! copying unaligned structures which contain bitfields can produce invalid results when
 	 * switching endianess due to the differences in packing order.
 	 * 
 	 * @param dtm target data type manager
@@ -991,8 +1000,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	private void doReplaceWithAligned(Structure struct) {
 		// assumes components is clear and that alignment characteristics have been set
 		DataTypeComponent[] otherComponents = struct.getDefinedComponents();
-		for (int i = 0; i < otherComponents.length; i++) {
-			DataTypeComponent dtc = otherComponents[i];
+		for (DataTypeComponent dtc : otherComponents) {
 			DataType dt = dtc.getDataType();
 			int length = (dt instanceof Dynamic) ? dtc.getLength() : -1;
 			add(dt, length, dtc.getFieldName(), dtc.getComment());
@@ -1011,11 +1019,25 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 		DataTypeComponent[] otherComponents = struct.getDefinedComponents();
 		for (int i = 0; i < otherComponents.length; i++) {
 			DataTypeComponent dtc = otherComponents[i];
-
 			DataType dt = dtc.getDataType().clone(dataMgr);
 			checkAncestry(dt);
 
-			int length = getPreferredComponentLength(dt, dtc.getLength());
+			int length = dt.getLength();
+			if (length <= 0 || dtc.isBitFieldComponent()) {
+				length = dtc.getLength();
+			}
+			else {
+				// do not exceed available space
+				int maxOffset;
+				int nextIndex = i + 1;
+				if (nextIndex < otherComponents.length) {
+					maxOffset = otherComponents[nextIndex].getOffset();
+				}
+				else {
+					maxOffset = struct.getLength();
+				}
+				length = Math.min(length, maxOffset - dtc.getOffset());
+			}
 
 			components.add(new DataTypeComponentImpl(dt, this, length, dtc.getOrdinal(),
 				dtc.getOffset(), dtc.getFieldName(), dtc.getComment()));
@@ -1355,8 +1377,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 
 	@Override
 	public void deleteAll() {
-		for (int i = 0; i < components.size(); i++) {
-			DataTypeComponent dtc = components.get(i);
+		for (DataTypeComponentImpl dtc : components) {
 			dtc.getDataType().removeParent(this);
 		}
 		components.clear();

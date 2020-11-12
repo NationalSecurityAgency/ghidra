@@ -372,11 +372,16 @@ public class UnionDataType extends CompositeDataTypeImpl implements Union {
 
 	@Override
 	public void dataTypeSizeChanged(DataType dt) {
+		if (dt instanceof BitFieldDataType) {
+			return; // unsupported
+		}
 		boolean changed = false;
 		for (DataTypeComponentImpl dtc : components) {
-			int length = dtc.getLength();
 			if (dtc.getDataType() == dt) {
-				length = getPreferredComponentLength(dt, length);
+				int length = dt.getLength();
+				if (length <= 0) {
+					length = dtc.getLength();
+				}
 				dtc.setLength(length);
 				changed = true;
 			}
