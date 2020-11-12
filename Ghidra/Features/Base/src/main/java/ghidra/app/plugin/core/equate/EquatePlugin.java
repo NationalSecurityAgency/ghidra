@@ -739,7 +739,7 @@ public class EquatePlugin extends Plugin {
 
 			@Override
 			protected boolean isEnabledForContext(ListingActionContext context) {
-				return context.hasSelection();
+				return isEquatePermitted(context);
 			}
 		};
 		applyEnumAction.setHelpLocation(new HelpLocation("EquatePlugin", "Apply_Enum"));
