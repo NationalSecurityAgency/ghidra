@@ -1004,6 +1004,81 @@ public class GnuDemanglerParser {
 		return findBalancedStart(string, templateEnd, '<', '>');
 	}
 
+	/**
+	 * Walks backward from the given start position to find the next namespace separator.  This
+	 * allows clients to determine if a given position is inside of a namespace.
+	 * 
+	 * @param text the text to search
+	 * @param start the start position
+	 * @param stop the stop position
+	 * @return the start index of the namespace entry containing the current {@code start} 
+	 *         index; -1 if no namespace start is found
+	 */
+	private int findNamespaceStart(String text, int start, int stop) {
+
+		if (!text.contains(Namespace.DELIMITER)) {
+			return -1;
+		}
+
+		int nsCount = 0;
+		int parenDepth = 0;
+		int templateDepth = 0;
+		int braceDepth = 0;
+		boolean isNested = false;
+
+		for (int i = start; i >= stop; i--) {
+
+			char c = text.charAt(i);
+			switch (c) {
+				case ':': {
+					nsCount++;
+					if (nsCount == 2) {
+						if (!isNested) {
+							return i + 2;
+						}
+						nsCount = 0;
+					}
+					break;
+				}
+				case ' ': {
+					if (!isNested) {
+						return -1; // a space implies a return type when not nested
+					}
+					break;
+				}
+				case '(': {
+					isNested = --parenDepth > 0 || templateDepth > 0 || braceDepth > 0;
+					break;
+				}
+				case ')': {
+					isNested = ++parenDepth > 0 || templateDepth > 0 || braceDepth > 0;
+					break;
+				}
+				case '<': {
+					isNested = parenDepth > 0 || --templateDepth > 0 || braceDepth > 0;
+					break;
+				}
+				case '>': {
+					isNested = parenDepth > 0 || ++templateDepth > 0 || braceDepth > 0;
+					break;
+				}
+				case '{': {
+					isNested = parenDepth > 0 || templateDepth > 0 || --braceDepth > 0;
+					break;
+				}
+				case '}': {
+					isNested = parenDepth > 0 || templateDepth > 0 || ++braceDepth > 0;
+					break;
+				}
+
+				default:
+					continue;
+			}
+		}
+
+		return -1;
+	}
+
 	private DemangledDataType createTypeInNamespace(String name) {
 		List<String> names = SymbolPathParser.parse(name, false);
 		DemangledType namespace = null;
@@ -1342,7 +1417,17 @@ public class GnuDemanglerParser {
 		@Override
 		boolean matches(String text) {
 			matcher = OVERLOAD_OPERATOR_NAME_PATTERN.matcher(text);
-			return matcher.matches();
+			if (!matcher.matches()) {
+				return false;
+			}
+
+			int operatorStart = matcher.start(2);
+			int leafStart = findNamespaceStart(demangled, text.length() - 1, operatorStart);
+			if (leafStart > operatorStart) {
+				return false; // operator is inside of a non-leaf namespace entry
+			}
+
+			return true;
 		}
 
 		@Override

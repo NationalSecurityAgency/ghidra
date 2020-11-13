@@ -843,6 +843,32 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testOperatorAsNamespace() throws Exception {
+
+		//
+		// Mangled: __ZN3WTF15__visitor_tableINS_7VisitorIZZN7WebCore12SubtleCrypto11generateKeyERN3JSC9ExecStateEONS_7VariantIJNS4_6StrongINS4_8JSObjectEEENS_6StringEEEEbONS_6VectorINS2_14CryptoKeyUsageELm0ENS_15CrashOnOverflowELm16ENS_10FastMallocEEEONS_3RefINS2_15DeferredPromiseENS_13DumbPtrTraitsISL_EEEEEN4$_10clEONS7_IJNS_6RefPtrINS2_9CryptoKeyENSM_ISS_EEEENS2_13CryptoKeyPairEEEEEUlRSU_E_JZZNS3_11generateKeyES6_SD_bSJ_SP_ENSQ_clESX_EUlRSV_E_EEEJSU_SV_EE12__trampolineE
+		//
+		// Demangled: WTF::__visitor_table<WTF::Visitor<WebCore::SubtleCrypto::generateKey(JSC::ExecState&, WTF::Variant<JSC::Strong<JSC::JSObject>, WTF::String>&&, bool, WTF::Vector<WebCore::CryptoKeyUsage, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc>&&, WTF::Ref<WebCore::DeferredPromise, WTF::DumbPtrTraits<WebCore::DeferredPromise> >&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>&&)::{lambda(WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >&)#1}, WebCore::SubtleCrypto::generateKey(JSC::ExecState&, WTF::Variant<JSC::Strong<JSC::JSObject>, WTF::String>&&, bool, WTF::Vector<WebCore::CryptoKeyUsage, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc>&&, WTF::Ref<WebCore::DeferredPromise, WTF::DumbPtrTraits<WebCore::DeferredPromise> >&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>&&)::{lambda(WebCore::CryptoKeyPair&)#1}>, WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>::__trampoline
+		//
+
+		DemangledObject object = parser.parse(
+			"__ZN3WTF15__visitor_tableINS_7VisitorIZZN7WebCore12SubtleCrypto11generateKeyERN3JSC9ExecStateEONS_7VariantIJNS4_6StrongINS4_8JSObjectEEENS_6StringEEEEbONS_6VectorINS2_14CryptoKeyUsageELm0ENS_15CrashOnOverflowELm16ENS_10FastMallocEEEONS_3RefINS2_15DeferredPromiseENS_13DumbPtrTraitsISL_EEEEEN4$_10clEONS7_IJNS_6RefPtrINS2_9CryptoKeyENSM_ISS_EEEENS2_13CryptoKeyPairEEEEEUlRSU_E_JZZNS3_11generateKeyES6_SD_bSJ_SP_ENSQ_clESX_EUlRSV_E_EEEJSU_SV_EE12__trampolineE",
+			"WTF::__visitor_table<WTF::Visitor<WebCore::SubtleCrypto::generateKey(JSC::ExecState&, WTF::Variant<JSC::Strong<JSC::JSObject>, WTF::String>&&, bool, WTF::Vector<WebCore::CryptoKeyUsage, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc>&&, WTF::Ref<WebCore::DeferredPromise, WTF::DumbPtrTraits<WebCore::DeferredPromise> >&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>&&)::{lambda(WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >&)#1}, WebCore::SubtleCrypto::generateKey(JSC::ExecState&, WTF::Variant<JSC::Strong<JSC::JSObject>, WTF::String>&&, bool, WTF::Vector<WebCore::CryptoKeyUsage, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc>&&, WTF::Ref<WebCore::DeferredPromise, WTF::DumbPtrTraits<WebCore::DeferredPromise> >&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>&&)::{lambda(WebCore::CryptoKeyPair&)#1}>, WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>::__trampoline");
+
+		assertNotNull(object);
+		assertType(object, DemangledVariable.class);
+
+		String name = "__trampoline";
+		assertName(object, name, "WTF",
+			"__visitor_table<WTF::Visitor<WebCore::SubtleCrypto::generateKey(JSC::ExecState&,WTF::Variant<JSC::Strong<JSC::JSObject>,WTF::String>&&,bool,WTF::Vector<WebCore::CryptoKeyUsage,0ul,WTF::CrashOnOverflow,16ul,WTF::FastMalloc>&&,WTF::Ref<WebCore::DeferredPromise,WTF::DumbPtrTraits<WebCore::DeferredPromise>>&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>&&)::{lambda(WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>&)#1},WebCore::SubtleCrypto::generateKey(JSC::ExecState&,WTF::Variant<JSC::Strong<JSC::JSObject>,WTF::String>&&,bool,WTF::Vector<WebCore::CryptoKeyUsage,0ul,WTF::CrashOnOverflow,16ul,WTF::FastMalloc>&&,WTF::Ref<WebCore::DeferredPromise,WTF::DumbPtrTraits<WebCore::DeferredPromise>>&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>&&)::{lambda(WebCore::CryptoKeyPair&)#1}>,WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WTF::__visitor_table<WTF::Visitor<WebCore::SubtleCrypto::generateKey(JSC::ExecState&,WTF::Variant<JSC::Strong<JSC::JSObject>,WTF::String>&&,bool,WTF::Vector<WebCore::CryptoKeyUsage,0ul,WTF::CrashOnOverflow,16ul,WTF::FastMalloc>&&,WTF::Ref<WebCore::DeferredPromise,WTF::DumbPtrTraits<WebCore::DeferredPromise>>&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>&&)::{lambda(WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>&)#1},WebCore::SubtleCrypto::generateKey(JSC::ExecState&,WTF::Variant<JSC::Strong<JSC::JSObject>,WTF::String>&&,bool,WTF::Vector<WebCore::CryptoKeyUsage,0ul,WTF::CrashOnOverflow,16ul,WTF::FastMalloc>&&,WTF::Ref<WebCore::DeferredPromise,WTF::DumbPtrTraits<WebCore::DeferredPromise>>&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>&&)::{lambda(WebCore::CryptoKeyPair&)#1}>,WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>::__trampoline",
+			signature);
+	}
+
+	@Test
 	public void testOverloadedShiftOperatorTemplated_RightShift() {
 		parser = new GnuDemanglerParser();
 		DemangledObject object = parser.parse("fakemangled",
