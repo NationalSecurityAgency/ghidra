@@ -650,8 +650,8 @@ public class GnuDemanglerParser {
 		List<DemangledDataType> parameters = new ArrayList<>();
 
 		for (String parameter : parameterStrings) {
-			DemangledDataType ddt = parseParameter(parameter);
-			parameters.add(ddt);
+			DemangledDataType dt = parseParameter(parameter);
+			parameters.add(dt);
 		}
 
 		return parameters;
@@ -670,9 +670,9 @@ public class GnuDemanglerParser {
 		Matcher matcher = VARARGS_IN_PARENS.matcher(parameter);
 		if (matcher.matches()) {
 			String inside = matcher.group(1);
-			DemangledDataType ddt = parseDataType(inside);
-			ddt.setVarArgs();
-			return ddt;
+			DemangledDataType dt = parseDataType(inside);
+			dt.setVarArgs();
+			return dt;
 
 		}
 		return parseDataType(parameter);
@@ -684,8 +684,8 @@ public class GnuDemanglerParser {
 
 	private DemangledDataType parseDataType(String fullDatatype) {
 
-		DemangledDataType ddt = createTypeInNamespace(fullDatatype);
-		String datatype = ddt.getDemangledName();
+		DemangledDataType dt = createTypeInNamespace(fullDatatype);
+		String datatype = dt.getDemangledName();
 
 		if ("*".equals(datatype)) {
 			return createMemberPointer(fullDatatype);
@@ -703,11 +703,11 @@ public class GnuDemanglerParser {
 				finishedName = true;
 
 				if (VAR_ARGS.equals(datatype)) {
-					ddt.setVarArgs();
+					dt.setVarArgs();
 				}
 				else {
 					String name = datatype.substring(0, i).trim();
-					ddt.setName(name);
+					dt.setName(name);
 				}
 			}
 
@@ -723,7 +723,7 @@ public class GnuDemanglerParser {
 
 				String templateContent = datatype.substring(contentStart, templateEnd);
 				DemangledTemplate template = parseTemplate(templateContent);
-				ddt.setTemplate(template);
+				dt.setTemplate(template);
 				i = templateEnd;
 			}
 			else if (ch == '(') {// start of function pointer or array ref/pointer
@@ -742,15 +742,15 @@ public class GnuDemanglerParser {
 				// check for array case
 				Matcher arrayMatcher = ARRAY_POINTER_REFERENCE_PATTERN.matcher(datatype);
 				if (arrayMatcher.matches()) {
-					Demangled namespace = ddt.getNamespace();
+					Demangled namespace = dt.getNamespace();
 					String name = arrayMatcher.group(1);// group 0 is the entire string
-					ddt = parseArrayPointerOrReference(datatype, name, arrayMatcher);
-					ddt.setNamespace(namespace);
+					dt = parseArrayPointerOrReference(datatype, name, arrayMatcher);
+					dt.setNamespace(namespace);
 					i = arrayMatcher.end();
 				}
 				else if (lambdaName != null) {
 					String fullText = lambdaName.getFullText();
-					ddt.setName(fullText);
+					dt.setName(fullText);
 					int offset = fullText.indexOf('(');
 					int remaining = fullText.length() - offset;
 					i = i + remaining; // end of lambda's closing '}'
@@ -760,7 +760,7 @@ public class GnuDemanglerParser {
 					// e.g., unsigned long (*)(long const &)
 					boolean hasPointerParens = hasConsecutiveSetsOfParens(datatype.substring(i));
 					if (hasPointerParens) {
-						Demangled namespace = ddt.getNamespace();
+						Demangled namespace = dt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunctionPointer(datatype);
 						int firstParenEnd = datatype.indexOf(')', i + 1);
 						int secondParenEnd = datatype.indexOf(')', firstParenEnd + 1);
@@ -770,13 +770,13 @@ public class GnuDemanglerParser {
 						}
 
 						dfp.getReturnType().setNamespace(namespace);
-						ddt = dfp;
+						dt = dfp;
 						i = secondParenEnd + 1; // two sets of parens (normal case)
 					}
 					else {
 
 						// parse as a function pointer, but display as a function
-						Demangled namespace = ddt.getNamespace();
+						Demangled namespace = dt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunction(datatype, i);
 						int firstParenEnd = datatype.indexOf(')', i + 1);
 						if (firstParenEnd == -1) {
@@ -785,26 +785,26 @@ public class GnuDemanglerParser {
 						}
 
 						dfp.getReturnType().setNamespace(namespace);
-						ddt = dfp;
+						dt = dfp;
 						i = firstParenEnd + 1;// two sets of parens (normal case)
 					}
 				}
 			}
 			else if (ch == '*') {
-				ddt.incrementPointerLevels();
+				dt.incrementPointerLevels();
 				continue;
 			}
 			else if (ch == '&') {
-				if (!ddt.isReference()) {
-					ddt.setReference();
+				if (!dt.isReference()) {
+					dt.setReference();
 				}
 				else {
-					ddt.setRValueReference();
+					dt.setRValueReference();
 				}
 				continue;
 			}
 			else if (ch == '[') {
-				ddt.setArray(ddt.getArrayDimensions() + 1);
+				dt.setArray(dt.getArrayDimensions() + 1);
 				i = datatype.indexOf(']', i + 1);
 				continue;
 			}
@@ -812,53 +812,53 @@ public class GnuDemanglerParser {
 			String substr = datatype.substring(i);
 
 			if (substr.startsWith("const")) {
-				ddt.setConst();
+				dt.setConst();
 				i += 4;
 			}
 			else if (substr.startsWith("struct")) {
-				ddt.setStruct();
+				dt.setStruct();
 				i += 5;
 			}
 			else if (substr.startsWith("class")) {
-				ddt.setClass();
+				dt.setClass();
 				i += 4;
 			}
 			else if (substr.startsWith("enum")) {
-				ddt.setEnum();
+				dt.setEnum();
 				i += 3;
 			}
-			else if (ddt.getName().equals("long")) {
+			else if (dt.getName().equals("long")) {
 				if (substr.startsWith("long")) {
-					ddt.setName(DemangledDataType.LONG_LONG);
+					dt.setName(DemangledDataType.LONG_LONG);
 					i += 3;
 				}
 				else if (substr.startsWith("double")) {
-					ddt.setName(DemangledDataType.LONG_DOUBLE);
+					dt.setName(DemangledDataType.LONG_DOUBLE);
 					i += 5;
 				}
 			}
 			// unsigned can also mean unsigned long, int
-			else if (ddt.getName().equals("unsigned")) {
-				ddt.setUnsigned();
+			else if (dt.getName().equals("unsigned")) {
+				dt.setUnsigned();
 				if (substr.startsWith("long")) {
-					ddt.setName(DemangledDataType.LONG);
+					dt.setName(DemangledDataType.LONG);
 					i += 3;
 				}
 				else if (substr.startsWith("int")) {
-					ddt.setName(DemangledDataType.INT);
+					dt.setName(DemangledDataType.INT);
 					i += 2;
 				}
 				else if (substr.startsWith("short")) {
-					ddt.setName(DemangledDataType.SHORT);
+					dt.setName(DemangledDataType.SHORT);
 					i += 4;
 				}
 				else if (substr.startsWith("char")) {
-					ddt.setName(DemangledDataType.CHAR);
+					dt.setName(DemangledDataType.CHAR);
 					i += 3;
 				}
 			}
 		}
-		return ddt;
+		return dt;
 	}
 
 	private boolean hasConsecutiveSetsOfParens(String text) {
@@ -867,41 +867,32 @@ public class GnuDemanglerParser {
 			return false;
 		}
 
-		for (int i = end + 1; i < text.length(); i++) {
-			char c = text.charAt(i);
-			if (c == '(') {
-				return true;
-			}
-			if (c != ' ') {
-				return false;
-			}
-		}
-
-		return false;
+		String remaining = text.substring(end + 1).trim();
+		return remaining.startsWith("(");
 	}
 
 	private DemangledDataType createMemberPointer(String datatype) {
 		// this is temp code we expect to update as more samples arrive
 
 		// example: NS1::Type1 NS1::ParenType::*
-
-		String typeWithoutPointer = datatype.substring(0, datatype.length() - 3);
+		int trimLength = 3; // '::*'
+		String typeWithoutPointer = datatype.substring(0, datatype.length() - trimLength);
 		int space = typeWithoutPointer.indexOf(' ');
-		DemangledDataType ddt;
+		DemangledDataType dt;
 		if (space != -1) {
 			String type = typeWithoutPointer.substring(0, space);
-			ddt = createTypeInNamespace(type);
+			dt = createTypeInNamespace(type);
 
 			String parentType = typeWithoutPointer.substring(space + 1);
-			DemangledDataType parentDdt = createTypeInNamespace(parentType);
-			ddt.setNamespace(parentDdt);
+			DemangledDataType parentDt = createTypeInNamespace(parentType);
+			dt.setNamespace(parentDt);
 		}
 		else {
-			ddt = createTypeInNamespace(typeWithoutPointer);
+			dt = createTypeInNamespace(typeWithoutPointer);
 		}
 
-		ddt.incrementPointerLevels();
-		return ddt;
+		dt.incrementPointerLevels();
+		return dt;
 	}
 
 	private boolean isDataTypeNameCharacter(char ch) {
@@ -1020,7 +1011,7 @@ public class GnuDemanglerParser {
 			return -1;
 		}
 
-		int nsCount = 0;
+		int colonCount = 0;
 		int parenDepth = 0;
 		int templateDepth = 0;
 		int braceDepth = 0;
@@ -1031,12 +1022,12 @@ public class GnuDemanglerParser {
 			char c = text.charAt(i);
 			switch (c) {
 				case ':': {
-					nsCount++;
-					if (nsCount == 2) {
+					colonCount++;
+					if (colonCount == 2) {
 						if (!isNested) {
 							return i + 2;
 						}
-						nsCount = 0;
+						colonCount = 0;
 					}
 					break;
 				}
@@ -1087,10 +1078,10 @@ public class GnuDemanglerParser {
 		}
 
 		String datatypeName = names.get(names.size() - 1);
-		DemangledDataType ddt = new DemangledDataType(mangledSource, demangledSource, datatypeName);
-		ddt.setName(datatypeName);
-		ddt.setNamespace(namespace);
-		return ddt;
+		DemangledDataType dt = new DemangledDataType(mangledSource, demangledSource, datatypeName);
+		dt.setName(datatypeName);
+		dt.setNamespace(namespace);
+		return dt;
 	}
 
 	private void setNameAndNamespace(DemangledObject object, String name) {
@@ -1132,13 +1123,13 @@ public class GnuDemanglerParser {
 		// int (*)[8]
 		// char (&)[7]
 
-		DemangledDataType ddt = new DemangledDataType(mangledSource, demangledSource, name);
+		DemangledDataType dt = new DemangledDataType(mangledSource, demangledSource, name);
 		String type = matcher.group(2);
 		if (type.equals("*")) {
-			ddt.incrementPointerLevels();
+			dt.incrementPointerLevels();
 		}
 		else if (type.equals("&")) {
-			ddt.setReference();
+			dt.setReference();
 		}
 		else {
 			throw new DemanglerParseException("Unexpected charater inside of parens: " + type);
@@ -1146,9 +1137,9 @@ public class GnuDemanglerParser {
 
 		String arraySubscripts = matcher.group(3);
 		int n = StringUtilities.countOccurrences(arraySubscripts, '[');
-		ddt.setArray(n);
+		dt.setArray(n);
 
-		return ddt;
+		return dt;
 	}
 
 	private DemangledFunctionPointer parseFunctionPointer(String functionString) {
