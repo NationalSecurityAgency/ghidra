@@ -843,6 +843,32 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testOperatorAsNamespace() throws Exception {
+
+		//
+		// Mangled: __ZN3WTF15__visitor_tableINS_7VisitorIZZN7WebCore12SubtleCrypto11generateKeyERN3JSC9ExecStateEONS_7VariantIJNS4_6StrongINS4_8JSObjectEEENS_6StringEEEEbONS_6VectorINS2_14CryptoKeyUsageELm0ENS_15CrashOnOverflowELm16ENS_10FastMallocEEEONS_3RefINS2_15DeferredPromiseENS_13DumbPtrTraitsISL_EEEEEN4$_10clEONS7_IJNS_6RefPtrINS2_9CryptoKeyENSM_ISS_EEEENS2_13CryptoKeyPairEEEEEUlRSU_E_JZZNS3_11generateKeyES6_SD_bSJ_SP_ENSQ_clESX_EUlRSV_E_EEEJSU_SV_EE12__trampolineE
+		//
+		// Demangled: WTF::__visitor_table<WTF::Visitor<WebCore::SubtleCrypto::generateKey(JSC::ExecState&, WTF::Variant<JSC::Strong<JSC::JSObject>, WTF::String>&&, bool, WTF::Vector<WebCore::CryptoKeyUsage, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc>&&, WTF::Ref<WebCore::DeferredPromise, WTF::DumbPtrTraits<WebCore::DeferredPromise> >&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>&&)::{lambda(WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >&)#1}, WebCore::SubtleCrypto::generateKey(JSC::ExecState&, WTF::Variant<JSC::Strong<JSC::JSObject>, WTF::String>&&, bool, WTF::Vector<WebCore::CryptoKeyUsage, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc>&&, WTF::Ref<WebCore::DeferredPromise, WTF::DumbPtrTraits<WebCore::DeferredPromise> >&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>&&)::{lambda(WebCore::CryptoKeyPair&)#1}>, WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>::__trampoline
+		//
+
+		DemangledObject object = parser.parse(
+			"__ZN3WTF15__visitor_tableINS_7VisitorIZZN7WebCore12SubtleCrypto11generateKeyERN3JSC9ExecStateEONS_7VariantIJNS4_6StrongINS4_8JSObjectEEENS_6StringEEEEbONS_6VectorINS2_14CryptoKeyUsageELm0ENS_15CrashOnOverflowELm16ENS_10FastMallocEEEONS_3RefINS2_15DeferredPromiseENS_13DumbPtrTraitsISL_EEEEEN4$_10clEONS7_IJNS_6RefPtrINS2_9CryptoKeyENSM_ISS_EEEENS2_13CryptoKeyPairEEEEEUlRSU_E_JZZNS3_11generateKeyES6_SD_bSJ_SP_ENSQ_clESX_EUlRSV_E_EEEJSU_SV_EE12__trampolineE",
+			"WTF::__visitor_table<WTF::Visitor<WebCore::SubtleCrypto::generateKey(JSC::ExecState&, WTF::Variant<JSC::Strong<JSC::JSObject>, WTF::String>&&, bool, WTF::Vector<WebCore::CryptoKeyUsage, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc>&&, WTF::Ref<WebCore::DeferredPromise, WTF::DumbPtrTraits<WebCore::DeferredPromise> >&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>&&)::{lambda(WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >&)#1}, WebCore::SubtleCrypto::generateKey(JSC::ExecState&, WTF::Variant<JSC::Strong<JSC::JSObject>, WTF::String>&&, bool, WTF::Vector<WebCore::CryptoKeyUsage, 0ul, WTF::CrashOnOverflow, 16ul, WTF::FastMalloc>&&, WTF::Ref<WebCore::DeferredPromise, WTF::DumbPtrTraits<WebCore::DeferredPromise> >&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>&&)::{lambda(WebCore::CryptoKeyPair&)#1}>, WTF::RefPtr<WebCore::CryptoKey, WTF::DumbPtrTraits<WebCore::CryptoKey> >, WebCore::CryptoKeyPair>::__trampoline");
+
+		assertNotNull(object);
+		assertType(object, DemangledVariable.class);
+
+		String name = "__trampoline";
+		assertName(object, name, "WTF",
+			"__visitor_table<WTF::Visitor<WebCore::SubtleCrypto::generateKey(JSC::ExecState&,WTF::Variant<JSC::Strong<JSC::JSObject>,WTF::String>&&,bool,WTF::Vector<WebCore::CryptoKeyUsage,0ul,WTF::CrashOnOverflow,16ul,WTF::FastMalloc>&&,WTF::Ref<WebCore::DeferredPromise,WTF::DumbPtrTraits<WebCore::DeferredPromise>>&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>&&)::{lambda(WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>&)#1},WebCore::SubtleCrypto::generateKey(JSC::ExecState&,WTF::Variant<JSC::Strong<JSC::JSObject>,WTF::String>&&,bool,WTF::Vector<WebCore::CryptoKeyUsage,0ul,WTF::CrashOnOverflow,16ul,WTF::FastMalloc>&&,WTF::Ref<WebCore::DeferredPromise,WTF::DumbPtrTraits<WebCore::DeferredPromise>>&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>&&)::{lambda(WebCore::CryptoKeyPair&)#1}>,WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WTF::__visitor_table<WTF::Visitor<WebCore::SubtleCrypto::generateKey(JSC::ExecState&,WTF::Variant<JSC::Strong<JSC::JSObject>,WTF::String>&&,bool,WTF::Vector<WebCore::CryptoKeyUsage,0ul,WTF::CrashOnOverflow,16ul,WTF::FastMalloc>&&,WTF::Ref<WebCore::DeferredPromise,WTF::DumbPtrTraits<WebCore::DeferredPromise>>&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>&&)::{lambda(WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>&)#1},WebCore::SubtleCrypto::generateKey(JSC::ExecState&,WTF::Variant<JSC::Strong<JSC::JSObject>,WTF::String>&&,bool,WTF::Vector<WebCore::CryptoKeyUsage,0ul,WTF::CrashOnOverflow,16ul,WTF::FastMalloc>&&,WTF::Ref<WebCore::DeferredPromise,WTF::DumbPtrTraits<WebCore::DeferredPromise>>&&)::$_10::operator()(WTF::Variant<WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>&&)::{lambda(WebCore::CryptoKeyPair&)#1}>,WTF::RefPtr<WebCore::CryptoKey,WTF::DumbPtrTraits<WebCore::CryptoKey>>,WebCore::CryptoKeyPair>::__trampoline",
+			signature);
+	}
+
+	@Test
 	public void testOverloadedShiftOperatorTemplated_RightShift() {
 		parser = new GnuDemanglerParser();
 		DemangledObject object = parser.parse("fakemangled",
@@ -1167,6 +1193,25 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testAnonymousNamespaceInParameter_FirstNamespace() throws Exception {
+		//
+		// Mangled: __ZL7pperrorPN12_GLOBAL__N_17ContextEPKc
+		//
+		// Demangled: pperror((anonymous namespace)::Context*, char const*)
+		//
+		String mangled = "_ZL7pperrorPN12_GLOBAL__N_17ContextEPKc";
+
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertType(object, DemangledFunction.class);
+		assertName(object, "pperror");
+
+		assertEquals("undefined pperror((anonymous_namespace)::Context *,char const *)",
+			object.getSignature(false));
+	}
+
+	@Test
 	public void testTemplatedParametersWithCast() throws Exception {
 		//
 		// Mangled: _ZN2Dr15ClipboardHelper17FTransferGvmlDataERN3Art11TransactionERKN3Ofc13TReferringPtrINS_10DrawingE2oEEEbNS4_7TCntPtrI11IDataObjectEERNS_18IClientDataCreatorERNS4_7TVectorINS4_8TWeakPtrINS_14DrawingElementEEELj0ELj4294967295EEERNS1_6Rect64E
@@ -1233,7 +1278,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			parameters.get(0).getTemplate().toString());
 
 		assertEquals(
-			"undefined Core::AsyncFile::perform(WTF::F<WTF::F<void (Core::FileClient &)> (Core::File &)> * &)",
+			"undefined Core::AsyncFile::perform(WTF::F<WTF::F<void (Core::FileClient &)> (Core::File &)> &&)",
 			object.getSignature(false));
 
 	}
@@ -1325,6 +1370,35 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertEquals(
 			"undefined std::vector<boost::function<void()>,std::allocator<boost::function<void()>>>::_M_insert_aux(__gnu_cxx::__normal_iterator<boost::function<void ()> *,std::vector<boost::function<void ()>,std::allocator<boost::function<void ()>>>>,boost::function<void ()> const &)",
 			object.getSignature(false));
+	}
+
+	@Test
+	public void testTemplatesThatContainFunctionSignatures_Regression() throws Exception {
+
+		//
+		// Mangled: _ZN7WebCore27ContentFilterUnblockHandlerC2EN3WTF6StringENSt3__18functionIFvNS4_IFvbEEEEEE
+		//
+		// Demangled: WebCore::ContentFilterUnblockHandler::ContentFilterUnblockHandler(WTF::String, std::__1::function<void (std::__1::function<void (bool)>)>)
+		//
+		// Note: this parameter name caused an infinite loop
+		//
+		// 		function<void (std::__1::function<void (bool)>)>)
+		//
+
+		DemangledObject object = parser.parse(
+			"_ZN7WebCore27ContentFilterUnblockHandlerC2EN3WTF6StringENSt3__18functionIFvNS4_IFvbEEEEEE",
+			"WebCore::ContentFilterUnblockHandler::ContentFilterUnblockHandler(WTF::String, std::__1::function<void (std::__1::function<void (bool)>)>)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name = "ContentFilterUnblockHandler";
+		assertName(object, name, "WebCore", "ContentFilterUnblockHandler");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"undefined WebCore::ContentFilterUnblockHandler::ContentFilterUnblockHandler(WTF::String,std::__1::function<void (std::__1::function<void (bool)>)>)",
+			signature);
 	}
 
 	@Test
@@ -1457,6 +1531,208 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals("undefined cc::ScrollSnapType::operator!=(cc::ScrollSnapType const &)",
+			signature);
+	}
+
+	@Test
+	public void testNamespaceElementWithMultipleFunctionParentheses() throws Exception {
+
+		// __ZN7brigand13for_each_argsIZN7WebCore11JSConverterINS1_8IDLUnionIJNS1_7IDLNullENS1_12IDLDOMStringENS1_21IDLUnrestrictedDoubleEEEEE7convertERN3JSC9ExecStateERNS1_17JSDOMGlobalObjectERKN3WTF7VariantIJDnNSE_6StringEdEEEEUlOT_E_JNS_5type_INSt3__117integral_constantIlLl0EEEEENSN_INSP_IlLl1EEEEENSN_INSP_IlLl2EEEEEEEESK_SK_DpOT0_
+
+		DemangledObject object = parser.parse(
+			"__ZN7brigand13for_each_argsIZN7WebCore11JSConverterINS1_8IDLUnionIJNS1_7IDLNullENS1_12IDLDOMStringENS1_21IDLUnrestrictedDoubleEEEEE7convertERN3JSC9ExecStateERNS1_17JSDOMGlobalObjectERKN3WTF7VariantIJDnNSE_6StringEdEEEEUlOT_E_JNS_5type_INSt3__117integral_constantIlLl0EEEEENSN_INSP_IlLl1EEEEENSN_INSP_IlLl2EEEEEEEESK_SK_DpOT0_",
+			"WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}, brigand::type_<std::__1::integral_constant<long, 0l> >, WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}<std::__1<long, 1l> >, WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}<std::__1<long, 2l> > >(WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}, brigand::type_<std::__1::integral_constant<long, 0l> >&&, WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}<std::__1<long, 1l> >&&, WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull, WebCore::IDLDOMString, WebCore::IDLUnrestrictedDouble> >::convert(JSC::ExecState&, WebCore::JSDOMGlobalObject&, WTF::Variant<decltype(nullptr), WTF::String, double> const&)::{lambda(auto:1&&)#1}<std::__1<long, 2l> >&&)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,0l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,1l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,2l>>>";
+		assertName(object, name,
+			"brigand");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,0l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,1l>>,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,2l>>>(WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1},brigand::type_<std::__1::integral_constant<long,0l>> &&,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,1l>> &&,WebCore::JSConverter<WebCore::IDLUnion<WebCore::IDLNull,WebCore::IDLDOMString,WebCore::IDLUnrestrictedDouble>>::convert(JSC::ExecState&,WebCore::JSDOMGlobalObject&,WTF::Variant<decltype(nullptr),WTF::String,double>const&)::{lambda(auto:1&&)#1}<std::__1<long,2l>> &&)",
+			signature);
+	}
+
+	@Test
+	public void testFunctionParameterWithMemberPointer() throws Exception {
+
+		//
+		// Mangled: __ZN7WebCore22FontSelectionAlgorithm16filterCapabilityEPbMS0_KFNS0_14DistanceResultENS_25FontSelectionCapabilitiesEEMS3_NS_18FontSelectionRangeE
+		//
+		// Demangled: WebCore::FontSelectionAlgorithm::filterCapability(bool*, WebCore::FontSelectionAlgorithm::DistanceResult (WebCore::FontSelectionAlgorithm::*)(WebCore::FontSelectionCapabilities) const, WebCore::FontSelectionRange WebCore::FontSelectionCapabilities::*)
+		//
+		//
+		// WebCore::FontSelectionAlgorithm::filterCapability
+		// (
+		//		bool*, 
+		//		WebCore::FontSelectionAlgorithm::DistanceResult (WebCore::FontSelectionAlgorithm::*)(WebCore::FontSelectionCapabilities) const, 
+		//		WebCore::FontSelectionRange WebCore::FontSelectionCapabilities::*
+		// )
+		//
+		// This demangled string introduces a new construct:
+		//
+		//		FontSelectionRange FontSelectionCapabilities::*
+		//
+		// where the type is 'FontSelectionRange' which is a member of 'FontSelectionCapabilities'
+		//
+		DemangledObject object = parser.parse(
+			"__ZN7WebCore22FontSelectionAlgorithm16filterCapabilityEPbMS0_KFNS0_14DistanceResultENS_25FontSelectionCapabilitiesEEMS3_NS_18FontSelectionRangeE",
+			"WebCore::FontSelectionAlgorithm::filterCapability(bool*, WebCore::FontSelectionAlgorithm::DistanceResult (WebCore::FontSelectionAlgorithm::*)(WebCore::FontSelectionCapabilities) const, WebCore::FontSelectionRange WebCore::FontSelectionCapabilities::*)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name = "filterCapability";
+		assertName(object, name, "WebCore", "FontSelectionAlgorithm");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"undefined WebCore::FontSelectionAlgorithm::filterCapability(bool *,WebCore::FontSelectionAlgorithm::DistanceResult ()(WebCore::FontSelectionCapabilities) const,WebCore::FontSelectionCapabilities::FontSelectionRange *)",
+			signature);
+	}
+
+	@Test
+	public void testFunctionParameterWithMultipleParentheses() throws Exception {
+
+		//
+		// Mangled: __ZN7WebCore12TextCodecICU14registerCodecsEPFvPKcON3WTF8FunctionIFNSt3__110unique_ptrINS_9TextCodecENS5_14default_deleteIS7_EEEEvEEEE
+		//
+		// Demangled: undefined WebCore::TextCodecICU::registerCodecs(void ()(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&)) 
+		//
+		// The regression tested here revolves around this parameter:
+		// 
+		// 		void ()(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&
+		//
+		// (note the trailing '()' chars)
+		//
+
+		DemangledObject object = parser.parse(
+			"__ZN7WebCore12TextCodecICU14registerCodecsEPFvPKcON3WTF8FunctionIFNSt3__110unique_ptrINS_9TextCodecENS5_14default_deleteIS7_EEEEvEEEE",
+			"undefined WebCore::TextCodecICU::registerCodecs(void ()(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&))");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name = "registerCodecs";
+		assertName(object, name, "WebCore", "TextCodecICU");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"undefined WebCore::TextCodecICU::registerCodecs(void ()(char const *,WTF::Function<std::__1::unique_ptr<WebCore::TextCodec,std::__1::default_delete<WebCore::TextCodec>> ()> &&))",
+			signature);
+	}
+
+	@Test
+	public void testFunctionWithVarargsRvalueParameter() throws Exception {
+
+		// __ZN3WTF15__visit_helper2ILl1ELm1EJEE7__visitINS_7VisitorIZNKS_17TextBreakIterator9followingEjEUlRKT_E_JEEEJRKNS_7VariantIJNS_20TextBreakIteratorICUENS_19TextBreakIteratorCFEEEEEEENS_27__multi_visitor_return_typeIS5_JDpT0_EE6__typeERS5_DpOSH_
+		//
+		//
+		// this demangled string introduces a new construct:
+		//
+		// 		(WTF::__multi_visitor_return_type&&)...
+		//
+		// where the above is a parameter to function, where the params look like:
+		// (
+		//	WTF::Visitor<WTF::TextBreakIterator::following(unsigned int) const::{lambda(auto:1 const&)#1}>&, 
+		//	(WTF::__multi_visitor_return_type&&)...
+		// )
+		//
+
+		DemangledObject object = parser.parse(
+			"__ZN3WTF15__visit_helper2ILl1ELm1EJEE7__visitINS_7VisitorIZNKS_17TextBreakIterator9followingEjEUlRKT_E_JEEEJRKNS_7VariantIJNS_20TextBreakIteratorICUENS_19TextBreakIteratorCFEEEEEEENS_27__multi_visitor_return_typeIS5_JDpT0_EE6__typeERS5_DpOSH_",
+			"WTF::__multi_visitor_return_type<WTF::Visitor<WTF::TextBreakIterator::following(unsigned int) const::{lambda(auto:1 const&)#1}>, WTF::Variant<WTF::TextBreakIteratorICU, WTF::TextBreakIteratorCF> const&>::__type WTF::__visit_helper2<1l, 1ul>::__visit<WTF::Visitor<WTF::TextBreakIterator::following(unsigned int) const::{lambda(auto:1 const&)#1}>, WTF::Variant<WTF::TextBreakIteratorICU, WTF::TextBreakIteratorCF> const&>(WTF::Visitor<WTF::TextBreakIterator::following(unsigned int) const::{lambda(auto:1 const&)#1}>&, (WTF::__multi_visitor_return_type&&)...)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"__visit<WTF::Visitor<WTF::TextBreakIterator::following(unsigned_int)const::{lambda(auto:1_const&)#1}>,WTF::Variant<WTF::TextBreakIteratorICU,WTF::TextBreakIteratorCF>const&>";
+		assertName(object, name, "WTF", "__visit_helper2<1l,1ul>");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WTF::__multi_visitor_return_type<WTF::Visitor<WTF::TextBreakIterator::following(unsigned_int)const::{lambda(auto:1_const&)#1}>,WTF::Variant<WTF::TextBreakIteratorICU,WTF::TextBreakIteratorCF>const&>::__type WTF::__visit_helper2<1l,1ul>::__visit<WTF::Visitor<WTF::TextBreakIterator::following(unsigned_int)const::{lambda(auto:1_const&)#1}>,WTF::Variant<WTF::TextBreakIteratorICU,WTF::TextBreakIteratorCF>const&>(WTF::Visitor<WTF::TextBreakIterator::following(unsigned_int) const::{lambda(auto:1 const&)#1}> &,WTF::__multi_visitor_return_type &&)",
+			signature);
+	}
+
+	@Test
+	public void testOperator_Equals_ExcessivelyTemplated() throws Exception {
+
+		DemangledObject object = parser.parse(
+			"__ZN3WTF8FunctionIFvvEEaSIZN7WebCore9IDBClient24TransactionOperationImplIJRKNS4_18IDBObjectStoreInfoEEEC1ERNS4_14IDBTransactionEMSB_FvRKNS4_13IDBResultDataEEMSB_FvRNS5_20TransactionOperationES9_ES9_EUlvE_vEERS2_OT_",
+			"WTF::Function<void ()>& WTF::Function<void ()>::operator=<WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo const&>::TransactionOperationImpl(WebCore::IDBTransaction&, void (WebCore::IDBTransaction::*)(WebCore::IDBResultData const&), void (WebCore::IDBTransaction::*)(WebCore::IDBClient::TransactionOperation&, WebCore::IDBObjectStoreInfo const&), WebCore::IDBObjectStoreInfo const&)::{lambda()#1}, void>(WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo const&>::TransactionOperationImpl(WebCore::IDBTransaction&, void (WebCore::IDBTransaction::*)(WebCore::IDBResultData const&), void (WebCore::IDBTransaction::*)(WebCore::IDBClient::TransactionOperation&, WebCore::IDBObjectStoreInfo const&), WebCore::IDBObjectStoreInfo const&)::{lambda()#1}&&)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"operator=";
+		assertName(object, name, "WTF", "Function<void()>");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WTF::Function<void ()> & WTF::Function<void()>::operator=<WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo_const&>::TransactionOperationImpl(WebCore::IDBTransaction&,void(WebCore::IDBTransaction::*)(WebCore::IDBResultData_const&),void(WebCore::IDBTransaction::*)(WebCore::IDBClient::TransactionOperation&,WebCore::IDBObjectStoreInfo_const&),WebCore::IDBObjectStoreInfo_const&)::{lambda()#1},void>(WebCore::IDBClient::TransactionOperationImpl<WebCore::IDBObjectStoreInfo_const&>::TransactionOperationImpl(WebCore::IDBTransaction&,void(WebCore::IDBTransaction::*)(WebCore::IDBResultData_const&),void(WebCore::IDBTransaction::*)(WebCore::IDBClient::TransactionOperation&,WebCore::IDBObjectStoreInfo_const&),WebCore::IDBObjectStoreInfo_const&)::{lambda()#1} &&)",
+			signature);
+
+	}
+
+	@Test
+	public void testLambdaWithTemplates() throws Exception {
+
+		// {lambda(auto:1&&)#1}<NS1::NS2>>&&
+		DemangledObject object = parser.parse(
+			"_ZN3WTF6VectorINS_9RetainPtrI29AVAssetResourceLoadingRequestEELm0ENS_15CrashOnOverflowELm16ENS_10FastMallocEE17removeAllMatchingIZNS6_9removeAllIPS2_EEjRKT_EUlRKS3_E_EEjSC_m",
+			"WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1}, brigand::type_<WebCore::IDLInterface<WebCore::CanvasGradient> >, WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1}<WebCore::IDLInterface<WebCore::CanvasPattern> > >(WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1}, brigand::type_<WebCore::IDLInterface<WebCore::CanvasGradient> >&&, WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString, WebCore::IDLInterface<WebCore::CanvasGradient>, WebCore::IDLInterface<WebCore::CanvasPattern> > >::convert(JSC::ExecState&, JSC::JSValue)::{lambda(auto:1&&)#1}<WebCore::IDLInterface<WebCore::CanvasPattern> >&&)");
+
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"for_each_args<WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString,WebCore::IDLInterface<WebCore::CanvasGradient>,WebCore::IDLInterface<WebCore::CanvasPattern>>>::convert(JSC::ExecState&,JSC::JSValue)::{lambda(auto:1&&)#1},brigand::type_<WebCore::IDLInterface<WebCore::CanvasGradient>>,WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString,WebCore::IDLInterface<WebCore::CanvasGradient>,WebCore::IDLInterface<WebCore::CanvasPattern>>>::convert(JSC::ExecState&,JSC::JSValue)::{lambda(auto:1&&)#1}<WebCore::IDLInterface<WebCore::CanvasPattern>>>";
+		assertName(object, name, "brigand");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString,WebCore::IDLInterface<WebCore::CanvasGradient>,WebCore::IDLInterface<WebCore::CanvasPattern>>>::convert(JSC::ExecState&,JSC::JSValue)::{lambda(auto:1&&)#1} brigand::for_each_args<WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString,WebCore::IDLInterface<WebCore::CanvasGradient>,WebCore::IDLInterface<WebCore::CanvasPattern>>>::convert(JSC::ExecState&,JSC::JSValue)::{lambda(auto:1&&)#1},brigand::type_<WebCore::IDLInterface<WebCore::CanvasGradient>>,WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString,WebCore::IDLInterface<WebCore::CanvasGradient>,WebCore::IDLInterface<WebCore::CanvasPattern>>>::convert(JSC::ExecState&,JSC::JSValue)::{lambda(auto:1&&)#1}<WebCore::IDLInterface<WebCore::CanvasPattern>>>(WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString,WebCore::IDLInterface<WebCore::CanvasGradient>,WebCore::IDLInterface<WebCore::CanvasPattern>>>::convert(JSC::ExecState&,JSC::JSValue)::{lambda(auto:1&&)#1},brigand::type_<WebCore::IDLInterface<WebCore::CanvasGradient>> &&,WebCore::Converter<WebCore::IDLUnion<WebCore::IDLDOMString,WebCore::IDLInterface<WebCore::CanvasGradient>,WebCore::IDLInterface<WebCore::CanvasPattern>>>::convert(JSC::ExecState&,JSC::JSValue)::{lambda(auto:1&&)#1}<WebCore::IDLInterface<WebCore::CanvasPattern>> &&)",
+			signature);
+	}
+
+	@Test
+	public void testFunctionWithLambdaParameter() throws Exception {
+
+		//
+		// Mangled: _ZN3JSC9Structure3addILNS0_9ShouldPinE1EZNS_8JSObject35prepareToPutDirectWithoutTransitionERNS_2VMENS_12PropertyNameEjjPS0_EUlRKNS_24GCSafeConcurrentJSLockerEiiE_EEiS5_S6_jRKT0_ 
+		//
+		// Demangled: int 
+		//            JSC::Structure::add<
+		//						(JSC::Structure::ShouldPin)1, 
+		//						 JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&, JSC::PropertyName, unsigned int, unsigned int, JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1}
+		//								>(
+		//									JSC::VM&, JSC::PropertyName, 
+		//									unsigned int, 
+		//									JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&, JSC::PropertyName, unsigned int, unsigned int, JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1} const&
+		//								  )
+		//            
+		//
+
+		DemangledObject object = parser.parse(
+			"_ZN3JSC9Structure3addILNS0_9ShouldPinE1EZNS_8JSObject35prepareToPutDirectWithoutTransitionERNS_2VMENS_12PropertyNameEjjPS0_EUlRKNS_24GCSafeConcurrentJSLockerEiiE_EEiS5_S6_jRKT0_",
+			"int JSC::Structure::add<(JSC::Structure::ShouldPin)1, JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&, JSC::PropertyName, unsigned int, unsigned int, JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1}>(JSC::VM&, JSC::PropertyName, unsigned int, JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&, JSC::PropertyName, unsigned int, unsigned int, JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1} const&)");
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		String name =
+			"add<(JSC::Structure::ShouldPin)1,JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&,JSC::PropertyName,unsigned_int,unsigned_int,JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker_const&,int,int)#1}>";
+		assertName(object, name, "JSC", "Structure");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"int JSC::Structure::add<(JSC::Structure::ShouldPin)1,JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&,JSC::PropertyName,unsigned_int,unsigned_int,JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker_const&,int,int)#1}>(JSC::VM &,JSC::PropertyName,unsigned int,JSC::JSObject::prepareToPutDirectWithoutTransition(JSC::VM&,JSC::PropertyName,unsigned_int,unsigned_int,JSC::Structure*)::{lambda(JSC::GCSafeConcurrentJSLocker const&, int, int)#1} const &)",
 			signature);
 	}
 

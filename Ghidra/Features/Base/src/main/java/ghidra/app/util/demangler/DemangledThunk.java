@@ -25,6 +25,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
+import utility.function.Dummy;
 
 public class DemangledThunk extends DemangledObject {
 
@@ -176,8 +177,7 @@ public class DemangledThunk extends DemangledObject {
 		}
 
 		Symbol s = SymbolUtilities.getExpectedLabelOrFunctionSymbol(program,
-			mangled, err -> Msg.warn(this, err));
-
+			mangled, Dummy.consumer());
 		if (s == null) {
 			Address thunkedAddr =
 				CreateThunkFunctionCmd.getThunkedAddr(program, thunkAddress, false);
@@ -185,11 +185,13 @@ public class DemangledThunk extends DemangledObject {
 				s = program.getSymbolTable().getPrimarySymbol(thunkedAddr);
 			}
 		}
+
 		if (s == null || !block.contains(s.getAddress())) {
+			Msg.warn(this, "Unable to find or create thunk for " + mangled + " at " + thunkAddress);
 			return null;
 		}
-		Address addr = s.getAddress();
 
+		Address addr = s.getAddress();
 		DemanglerOptions subOptions = new DemanglerOptions(options);
 		subOptions.setApplySignature(true);
 
